@@ -1,0 +1,79 @@
+*{box-sizing:border-box;font-family:Arial;margin:0;padding:0}
+body{background:#0b0f16;color:#fff}
+.wrap{max-width:1100px;margin:auto;padding:20px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:10px;flex-wrap:wrap}
+.top-actions{display:flex;gap:10px;flex-wrap:wrap}
+
+.btn{
+  padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,0.15);
+  background:rgba(255,255,255,0.06);color:#fff;text-decoration:none;cursor:pointer;font-weight:900
+}
+.btn.primary{background:#facc15;color:#000;border:none}
+.btn.danger{background:#ef4444;border:none}
+.btn:hover{opacity:.92}
+
+.box{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:14px;
+  padding:14px;
+  margin-bottom:14px;
+}
+label{display:block;font-weight:900;margin-bottom:8px;opacity:.9}
+input, textarea, select{
+  width:100%;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.06);
+  color:#fff;
+  outline:none;
+}
+textarea{min-height:90px;white-space:pre-line}
+
+.list{display:flex;flex-direction:column;gap:14px}
+.card{
+  background:rgba(255,255,255,0.06);
+  border:1px solid rgba(255,255,255,0.10);
+  border-radius:14px;
+  padding:14px;
+}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px}
+.small{opacity:.7;font-size:12px;margin-top:6px}
+
+.planRow{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;margin-top:8px;align-items:center}
+.iconBtn{
+  padding:10px;border-radius:12px;border:none;cursor:pointer;font-weight:900;
+  background:rgba(255,255,255,0.10);color:#fff
+}
+.iconBtn.del{background:#ef4444}
+.add{
+  margin-top:14px;
+  width:100%;
+  padding:12px 14px;
+  border-radius:14px;
+  border:none;
+  font-weight:900;
+  cursor:pointer;
+  background:#22c55e;
+  color:#001b0b;
+}
+
+/* PIN ekranı */
+.lock{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.65);
+  display:flex; align-items:center; justify-content:center;
+  padding:18px;
+}
+.lock-box{
+  width:100%; max-width:380px;
+  background:rgba(17,24,39,0.96);
+  border:1px solid rgba(255,255,255,0.14);
+  border-radius:16px;
+  padding:18px;
+}
+.lock-box h2{margin-bottom:6px}
+.lock-box p{opacity:.7;margin-bottom:10px}
+.err{margin-top:10px;color:#ff6b6b;font-weight:900}
