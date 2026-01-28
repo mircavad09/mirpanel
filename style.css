@@ -1,0 +1,99 @@
+*{margin:0;padding:0;box-sizing:border-box;font-family:Arial, Helvetica, sans-serif;}
+body{background: radial-gradient(circle at top, #222 0%, #0b0f16 55%, #070a0f 100%);color:#fff;min-height:100vh;}
+.container{width:95%;max-width:1200px;margin:auto;padding:18px 0 24px;}
+
+.topbar{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.10);border-radius:18px;padding:14px;margin-bottom:14px;backdrop-filter: blur(10px);}
+.topbar h2{font-size:18px;font-weight:900;margin-bottom:6px;}
+.topbar p{opacity:.7;font-size:13px;line-height:1.25;}
+
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+.brand{display:flex;align-items:center;gap:12px;}
+.logo{width:44px;height:44px;object-fit:cover;border-radius:12px;}
+.brand h1{font-size:24px;font-weight:900;letter-spacing:0.3px;}
+
+.cats{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 10px;}
+.cat-btn{padding:10px 16px;border:none;background:#111827;color:#fff;border-radius:25px;cursor:pointer;transition:.2s;font-weight:900;font-size:14px;opacity:.85;}
+.cat-btn:hover{opacity:1;}
+.cat-btn.active{background:#2563eb;opacity:1;box-shadow:0 0 15px rgba(37,99,235,0.35);}
+
+.search-wrap{margin:10px 0 18px;}
+.search{
+  width:100%;
+  padding:12px 14px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,0.12);
+  background:rgba(255,255,255,0.06); /* ✅ düzəldildi */
+  color:#fff;
+  outline:none;
+  font-weight:800;
+}
+.search::placeholder{color:rgba(255,255,255,0.55);}
+
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:16px;}
+
+.card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.10);border-radius:18px;overflow:hidden;backdrop-filter: blur(10px);transition:.25s;position:relative;cursor:pointer;}
+.card:hover{transform:translateY(-3px);border-color:rgba(255,255,255,0.20);}
+
+.card-img{width:100%;height:200px;object-fit:cover;display:block;background:#0a0a0a;}
+.content{padding:14px 14px 16px;}
+.title{font-size:16px;font-weight:900;margin-bottom:6px;}
+.desc.long{font-size:13px;line-height:1.4;opacity:.85;margin-bottom:14px;}
+.bottom{display:flex;justify-content:space-between;align-items:center;gap:10px;}
+.hint{font-size:12px;opacity:.65;font-weight:800;}
+
+.btn{border:none;cursor:pointer;font-weight:900;padding:10px 16px;border-radius:14px;transition:.2s;white-space:nowrap;}
+.btn.light{background:#dff6ef;color:#0f3b2d;}
+.btn.light:hover{background:#c8efe3;transform:scale(1.03);}
+footer{opacity:.55;text-align:center;padding:24px 0 6px;font-size:12px;}
+
+/* SAĞ YUXARI QİYMƏT */
+.corner-price{
+  position:absolute; top:12px; right:12px;
+  background:rgba(0,0,0,0.45);
+  border:1px solid rgba(255,255,255,0.25);
+  color:#fff;
+  padding:6px 12px;
+  border-radius:999px;
+  font-size:12px;
+  font-weight:900;
+  z-index:3;
+  backdrop-filter: blur(8px);
+}
+
+/* MODAL */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,0.55);display:none;align-items:center;justify-content:center;padding:18px;z-index:999;}
+.modal.show{display:flex;}
+.modal-box{width:100%;max-width:560px;background:rgba(18,22,32,0.96);border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden;position:relative;backdrop-filter: blur(10px);}
+.close{position:absolute;top:10px;right:10px;border:none;cursor:pointer;width:36px;height:36px;border-radius:12px;background:rgba(255,255,255,0.08);color:#fff;font-size:16px;}
+.close:hover{background:rgba(255,255,255,0.14);}
+
+.modal-head{display:flex;gap:14px;padding:14px;}
+.modal-img{width:110px;height:110px;object-fit:cover;border-radius:16px;background:#0a0a0a;flex:0 0 auto;}
+.modal-title{font-size:18px;font-weight:900;margin-bottom:6px;}
+.modal-desc{opacity:.8;font-size:13px;line-height:1.35;}
+
+.modal-section{padding:0 14px 14px;}
+.modal-label{font-weight:900;margin:10px 0 10px;opacity:.9;}
+
+.modal-text{
+  white-space: pre-line;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 12px 12px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.35;
+  opacity: 0.95;
+}
+
+.plans{display:flex;flex-direction:column;gap:10px;}
+.plan{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:14px;border:1px solid rgba(255,255,255,0.12);background:rgba(255,255,255,0.06);cursor:pointer;}
+.plan:hover{border-color:rgba(255,255,255,0.22);}
+.plan-left{display:flex;align-items:center;gap:10px;}
+.radio{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,0.35);}
+.plan.selected .radio{border-color:#facc15;box-shadow:0 0 0 4px rgba(250,204,21,0.15) inset;}
+.plan-title{font-weight:900;}
+.plan-price{font-weight:900;opacity:.9;}
+
+.orderBtn{width:calc(100% - 28px);margin:0 14px 14px;padding:12px 14px;border:none;border-radius:14px;font-weight:900;cursor:pointer;background:#facc15;color:#000;}
+.orderBtn:disabled{opacity:.45;cursor:not-allowed;}
