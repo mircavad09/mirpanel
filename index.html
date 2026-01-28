@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#070707" />
+  <title>Mirpanel.com — Bütün Hüquqlar Qorunur</title>
+
+  <meta name="description" content="Premium və SMM xidmətləri. Qeydiyyat yoxdur. Sifariş yalnız WhatsApp üzərindən qəbul olunur." />
+  <link rel="canonical" href="https://mirpanel.com/" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Mirpanel.com — Premium & SMM Xidmətləri" />
+  <meta property="og:description" content="Qeydiyyat yoxdur. Sifariş yalnız WhatsAppla." />
+  <meta property="og:image" content="" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <link rel="icon" href="" />
+
+  <style>
+    :root{
+      --bg:#070707;--txt:#fff;--mut:rgba(255,255,255,.68);
+      --bd:rgba(255,255,255,.10);--acc:#00ff99;--acc2:#6a5cff;--sh:0 18px 65px rgba(0,0,0,.58);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      color:var(--txt);
+      background:
+        radial-gradient(900px 520px at 12% -10%, rgba(0,255,153,.16), transparent 60%),
+        radial-gradient(900px 520px at 92% 0%, rgba(106,92,255,.12), transparent 60%),
+        var(--bg);
+      overflow-x:hidden;
+    }
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1180px;margin:0 auto;padding:14px}
+    .top{
+      position:sticky;top:0;z-index:50;
+      backdrop-filter: blur(10px);
+      background:rgba(7,7,7,.72);
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .nav{
+      display:flex;gap:12px;align-items:center;justify-content:space-between;
+      padding:12px 14px;
+    }
+    .brand{display:flex;gap:10px;align-items:center;min-width:0;}
+    .logo{
+      width:44px;height:44px;border-radius:16px;object-fit:cover;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.03);
+      box-shadow:0 0 30px rgba(0,255,153,.12);
+      flex:0 0 auto;display:none;
+    }
+    .dot{
+      width:44px;height:44px;border-radius:16px;
+      background: radial-gradient(circle at 30% 20%, rgba(0,255,153,.95), rgba(106,92,255,.28) 60%, rgba(255,255,255,.06));
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 0 30px rgba(0,255,153,.10);
+      flex:0 0 auto;display:block;
+      animation: float 5.8s ease-in-out infinite;
+    }
+    @keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+    .brandName{font-weight:1000;letter-spacing:.2px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+    .brandSub{color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    .hero{
+      margin-top:14px;
+      border:1px solid var(--bd);
+      border-radius:22px;
+      background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow:var(--sh);
+      padding:14px;
+      overflow:hidden;
+      position:relative;
+    }
+    .hero:before{
+      content:"";
+      position:absolute;inset:-30%;
+      background:
+        radial-gradient(circle at 20% 25%, rgba(0,255,153,.18), transparent 40%),
+        radial-gradient(circle at 80% 20%, rgba(106,92,255,.14), transparent 45%);
+      filter: blur(10px);
+      pointer-events:none;
+    }
+    .heroIn{position:relative;display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;justify-content:space-between}
+    .heroTitle{font-weight:1100;font-size:22px;line-height:1.15;margin:0;}
+    .heroHint{color:var(--mut);font-size:12px;margin-top:8px;max-width:680px}
+    .search{
+      width:min(460px,100%);
+      border:1px solid var(--bd);
+      background:rgba(0,0,0,.15);
+      border-radius:16px;
+      padding:12px 12px;
+      color:#fff;outline:none;
+    }
+    .tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;}
+    .tab{
+      cursor:pointer;padding:10px 12px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.03);
+      color:rgba(255,255,255,.82);
+      font-weight:900;transition:.18s;user-select:none;
+    }
+    .tab.active{
+      background:linear-gradient(135deg, rgba(0,255,153,.95), rgba(0,255,153,.70));
+      color:#000;border-color:rgba(0,255,153,.30);
+      transform: translateY(-1px);
+    }
+
+    .grid{display:grid;grid-template-columns: repeat(3, 1fr);gap:12px;margin:14px 0 80px;}
+    @media(max-width:980px){.grid{grid-template-columns:1fr 1fr}}
+    @media(max-width:640px){.grid{grid-template-columns:1fr}}
+
+    .card{
+      border:1px solid var(--bd);
+      border-radius:20px;
+      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      box-shadow:0 12px 45px rgba(0,0,0,.45);
+      overflow:hidden;
+      transform: translateY(8px);
+      opacity:0;
+      animation: pop .45s ease forwards;
+    }
+    @keyframes pop {to{transform:translateY(0);opacity:1}}
+    .img{width:100%;height:150px;object-fit:cover;display:block;background:#111;}
+    .pad{padding:12px}
+    .topline{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .title{font-weight:1000;margin:0;font-size:15px;line-height:1.2}
+    .badge{
+      font-size:11px;font-weight:1000;padding:6px 10px;border-radius:999px;
+      border:1px solid rgba(0,255,153,.24);
+      background:rgba(0,255,153,.10);
+      color:rgba(255,255,255,.92);
+      white-space:nowrap;
+    }
+    .meta{margin-top:8px;color:var(--mut);font-size:12px;line-height:1.45}
+    .priceRow{margin-top:10px;display:flex;align-items:center;justify-content:space-between;gap:10px;}
+    .price{font-weight:1200;font-size:16px;}
+    .old{margin-left:8px;color:rgba(255,255,255,.55);text-decoration: line-through;font-size:12px;font-weight:900;}
+    .btn2{
+      cursor:pointer;padding:10px 12px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(255,255,255,.04);
+      color:#fff;font-weight:1000;
+      transition:transform .12s ease, filter .12s ease;
+    }
+    .btn2:active{transform:scale(.98)}
+    .btn2.primary{
+      border-color:rgba(0,255,153,.30);
+      background:linear-gradient(135deg, rgba(0,255,153,.95), rgba(0,255,153,.72));
+      color:#000;
+    }
+
+    .footer{
+      position:fixed;left:0;right:0;bottom:0;
+      background:rgba(7,7,7,.75);
+      border-top:1px solid rgba(255,255,255,.08);
+      backdrop-filter: blur(10px);
+      padding:10px 14px;
+    }
+    .footIn{max-width:1180px;margin:0 auto;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+    .tiny{color:rgba(255,255,255,.55);font-size:12px}
+  </style>
+</head>
+
+<body>
+  <div class="top">
+    <div class="nav wrap">
+      <div class="brand">
+        <img id="siteLogo" class="logo" alt="Mirpanel.com logo" />
+        <div id="dot" class="dot" aria-hidden="true"></div>
+        <div class="brandTxt">
+          <div class="brandName" id="brandName">Mirpanel.com</div>
+          <div class="brandSub" id="brandSub">Qeydiyyat yoxdur • Sifariş WhatsAppla</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap">
+    <div class="hero">
+      <div class="heroIn">
+        <div>
+          <h2 class="heroTitle">Xidməti seç → “Sifariş et” → WhatsApp-da linkini göndər</h2>
+          <div class="heroHint" id="heroHint">
+            Qeydiyyat yoxdur • Ödəniş öncədən alınmır • Sifariş yalnız WhatsApp üzərindən
+          </div>
+        </div>
+        <input id="q" class="search" placeholder="Axtar: real, bot, 1000, izlənmə, bəyəni..." />
+      </div>
+
+      <div class="tabs" id="tabs"></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+  </div>
+
+  <div class="footer">
+    <div class="footIn">
+      <div class="tiny" id="footL">©️ 2026 Mirpanel.com </div>
+      <div class="tiny" id="footR">ChatGPT ilə: Hazırlandı</div>
+    </div>
+  </div>
+
+<script>
+  const $ = (id)=>document.getElementById(id);
+  let DB=null;
+  let activeCat="all";
+  const q = $("q");
+
+  // Gizli admin giriş: Ctrl + Shift + A
+  document.addEventListener("keydown", (e) => {
+    if (e.ctrlKey && e.shiftKey && (e.key === "A" || e.key === "a")) {
+      window.location.href = "/admin.html";
+    }
+  });
+
+  async function loadDB(){
+    const res = await fetch("services.json?v=" + Date.now(), {cache:"no-store"});
+    if(!res.ok) throw new Error("services.json tapılmadı");
+    DB = await res.json();
+    normalize();
+    applyBrandSeo();
+    buildTabs();
+    render();
+  }
+
+  function normalize(){
+    DB.brand = DB.brand || "Mirpanel.com";
+    DB.whatsapp = DB.whatsapp || "https://wa.me/994559602617";
+    DB.ui = DB.ui || {logo:""};
+    DB.seo = DB.seo || {};
+    DB.categories = DB.categories || [];
+    DB.services = DB.services || [];
+  }
+
+  function applyBrandSeo(){
+    const brand = DB.brand;
+    $("brandName").textContent = brand;
+    $("footL").textContent = "©️ 2026 " + brand + " — Bütün Hüquqlar Qorunur";
+
+    // Logo
+    const logo = (DB.ui && DB.ui.logo) ? String(DB.ui.logo).trim() : "";
+    const img = $("siteLogo");
+    const dot = $("dot");
+    if(logo){
+      img.src = logo;
+      img.style.display="block";
+      dot.style.display="none";
+    }else{
+      img.style.display="none";
+      dot.style.display="block";
+    }
+
+    // SEO update
+    const seo = DB.seo || {};
+    if(seo.title) document.title = seo.title;
+    if(seo.description){
+      setMeta("description", seo.description);
+      setOG("og:description", seo.description);
+    }
+    if(seo.canonical) setCanonical(seo.canonical);
+    if(seo.theme_color) setTheme(seo.theme_color);
+
+    if(seo.og_image) setOG("og:image", seo.og_image);
+    if(seo.title) setOG("og:title", seo.title);
+    if(seo.favicon) setFavicon(seo.favicon);
+  }
+
+  function setMeta(name, content){
+    let m = document.querySelector(\`meta[name="\${name}"]\`);
+    if(!m){ m = document.createElement("meta"); m.setAttribute("name", name); document.head.appendChild(m); }
+    m.setAttribute("content", content);
+  }
+  function setOG(prop, content){
+    let m = document.querySelector(\`meta[property="\${prop}"]\`);
+    if(!m){ m = document.createElement("meta"); m.setAttribute("property", prop); document.head.appendChild(m); }
+    m.setAttribute("content", content);
+  }
+  function setCanonical(url){
+    let l = document.querySelector(\`link[rel="canonical"]\`);
+    if(!l){ l = document.createElement("link"); l.rel="canonical"; document.head.appendChild(l); }
+    l.href = url;
+  }
+  function setTheme(color){
+    let m = document.querySelector(\`meta[name="theme-color"]\`);
+    if(!m){ m = document.createElement("meta"); m.name="theme-color"; document.head.appendChild(m); }
+    m.content = color;
+  }
+  function setFavicon(url){
+    let l = document.querySelector(\`link[rel="icon"]\`);
+    if(!l){ l = document.createElement("link"); l.rel="icon"; document.head.appendChild(l); }
+    l.href = url;
+  }
+
+  function buildTabs(){
+    const tabs = $("tabs");
+    tabs.innerHTML = "";
+
+    const make = (key,label)=>{
+      const b = document.createElement("div");
+      b.className = "tab" + (activeCat===key ? " active":"");
+      b.textContent = label;
+      b.onclick = ()=>{
+        activeCat = key;
+        [...tabs.children].forEach(x=>x.classList.remove("active"));
+        b.classList.add("active");
+        render();
+      };
+      tabs.appendChild(b);
+    };
+
+    make("all","Hamısı");
+    (DB.categories||[]).forEach(c=> make(c.key, c.label));
+  }
+
+  function render(){
+    const v = (q.value || "").toLowerCase().trim();
+    const grid = $("grid");
+
+    const list = (DB.services||[])
+      .filter(s => activeCat==="all" ? true : s.category===activeCat)
+      .filter(s => {
+        if(!v) return true;
+        const blob = [
+          s.title, s.amount, s.desc, s.guarantee, s.speed, s.note, s.category, s.id
+        ].join(" ").toLowerCase();
+        return blob.includes(v);
+      });
+
+    grid.innerHTML = list.map((s, idx)=> cardHTML(s, idx)).join("");
+
+    grid.querySelectorAll("[data-order]").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const id = btn.getAttribute("data-order");
+        const s = (DB.services||[]).find(x=>x.id===id);
+        if(!s) return;
+        orderWhatsApp(s);
+      });
+    });
+  }
+
+  function cardHTML(s, idx){
+    const cur = s.currency || "AZN";
+    const badge = s.guarantee ? s.guarantee : (s.speed ? s.speed : "Xidmət");
+    const old = (s.price_old!=null && s.price_old!=="") ? \`<span class="old">\${escapeHtml(s.price_old)} \${escapeHtml(cur)}</span>\` : "";
+    const meta1 = [s.amount, s.speed].filter(Boolean).join(" • ");
+    const meta2 = [s.desc, s.note].filter(Boolean).join(" — ");
+    const img = s.image || "";
+
+    return \`
+      <div class="card" style="animation-delay:\${Math.min(idx*0.03,0.25)}s">
+        <img class="img" src="\${escapeHtml(img)}" alt="">
+        <div class="pad">
+          <div class="topline">
+            <h3 class="title">\${escapeHtml(s.title||"")}</h3>
+            <div class="badge">\${escapeHtml(badge)}</div>
+          </div>
+          <div class="meta">\${escapeHtml(meta1)}</div>
+          <div class="meta">\${escapeHtml(meta2)}</div>
+
+          <div class="priceRow">
+            <div class="price">\${escapeHtml(String(s.price))} \${escapeHtml(cur)} \${old}</div>
+            <button class="btn2 primary" data-order="\${escapeHtml(s.id)}">Sifariş et</button>
+          </div>
+        </div>
+      </div>
+    \`;
+  }
+
+  function orderWhatsApp(s){
+    const cur = s.currency || "AZN";
+    const text =
+\`Salam. Bu xidməti sifariş etmək istəyirəm:
+
+Xidmət: \${s.title}
+Miqdar: \${s.amount}
+Qiymət: \${s.price} \${cur}\${(s.price_old!=null && s.price_old!=="") ? " (Köhnə: "+s.price_old+" "+cur+")" : ""}
+Zəmanət: \${s.guarantee || "-"}
+İcra: \${s.speed || "-"}
+Qeyd: \${s.note || "-"}
+
+Linkimi göndərirəm:\`;
+
+    const url = DB.whatsapp || "https://wa.me/994559602617";
+    const sep = url.includes("?") ? "&" : "?";
+    const wa = url + sep + "text=" + encodeURIComponent(text);
+    window.open(wa, "_blank");
+  }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;");
+  }
+
+  q.addEventListener("input", render);
+  loadDB();
+</script>
+</body>
+</html>
