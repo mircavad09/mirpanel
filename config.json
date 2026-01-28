@@ -1,0 +1,17 @@
+{
+  "brandName": "Mirpanel",
+  "logo": "assets/logo.png",
+  "footer": "©️ 2026 Mirpanel",
+  "whatsappPhone": "994515243545",
+  "seoTitle": "Mirpanel — Premium Hesablar",
+  "seoDesc": "Netflix, Spotify, YouTube, CapCut, ChatGPT premium hesabları. Sifariş WhatsApp ilə.",
+  "seoKeywords": "premium hesab, netflix, spotify, youtube, capcut, chatgpt",
+  "categories": [
+    { "key": "all", "label": "Hamısı" },
+    { "key": "netflix", "label": "Netflix" },
+    { "key": "spotify", "label": "Spotify" },
+    { "key": "youtube", "label": "YouTube" },
+    { "key": "capcut", "label": "CapCut" },
+    { "key": "chatgpt", "label": "ChatGPT" }
+  ]
+}

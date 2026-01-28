@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mirpanel</title>
+
+  <meta id="seoDesc" name="description" content="">
+  <meta id="seoKeys" name="keywords" content="">
+
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+  <div class="container">
+
+    <div class="topbar">
+      <h2 id="topTitle">Xidməti seç → “Sifariş et” → WhatsApp-da</h2>
+      <p id="topDesc">Qeydiyyat yoxdur • Ödəniş öncədən alınmır • Sifariş yalnız WhatsApp üzərindən</p>
+    </div>
+
+    <div class="header">
+      <div class="brand">
+        <img id="logoImg" src="assets/logo.png" class="logo" alt="Mirpanel">
+        <h1 id="brandName">Mirpanel</h1>
+      </div>
+    </div>
+
+    <div class="cats" id="cats"></div>
+
+    <div class="search-wrap">
+      <input id="search" class="search" type="text" placeholder="Premium axtar... (Netflix, Spotify, 1 ay)">
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <footer id="footerText">©️ 2026 Mirpanel</footer>
+  </div>
+
+  <!-- MODAL -->
+  <div class="modal" id="modal">
+    <div class="modal-box">
+      <button class="close" id="closeModal">✕</button>
+
+      <div class="modal-head">
+        <img id="modalImg" class="modal-img" src="" alt="">
+        <div class="modal-info">
+          <div class="modal-title" id="modalTitle">Title</div>
+          <div class="modal-desc" id="modalDescText"></div>
+        </div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-label">Məlumat</div>
+        <div class="modal-text" id="modalText"></div>
+      </div>
+
+      <div class="modal-section">
+        <div class="modal-label">Müddət seçin</div>
+        <div class="plans" id="plans"></div>
+      </div>
+
+      <button class="orderBtn" id="orderBtn" disabled>Sifariş et</button>
+    </div>
+  </div>
+
+  <script>
+    // Gizli panel linki: ?panel=1 (səndəki kimi saxladım)
+    if (new URLSearchParams(location.search).has("panel")) {
+      location.replace("admin.html");
+    }
+  </script>
+
+  <script>
+    // ====== CONFIG & SERVICES LOADER ======
+    const LS_CFG = "MP_CFG_PREVIEW_V1";
+    const LS_SRV = "MP_SERVICES_PREVIEW_V1";
+
+    let cfg = null;
+    let services = [];
+
+    async function safeFetchJSON(url){
+      try{
+        const r = await fetch(url, {cache:"no-store"});
+        if(!r.ok) throw new Error("HTTP " + r.status);
+        return await r.json();
+      }catch(e){
+        return null;
+      }
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "").replace(/[&<>"']/g, m => ({
+        "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+      }[m]));
+    }
+
+    function applyCfg(c){
+      document.getElementById("brandName").textContent = c.brandName || "Mirpanel";
+      document.getElementById("logoImg").src = c.logo || "assets/logo.png";
+      document.getElementById("footerText").textContent = c.footer || "©️ 2026 Mirpanel";
+
+      // SEO
+      document.title = c.seoTitle || "Mirpanel";
+      document.getElementById("seoDesc").setAttribute("content", c.seoDesc || "");
+      document.getElementById("seoKeys").setAttribute("content", c.seoKeywords || "");
+
+      // categories
+      const cats = document.getElementById("cats");
+      cats.innerHTML = "";
+      const list = Array.isArray(c.categories) ? c.categories : [
+        {key:"all",label:"Hamısı"},
+        {key:"netflix",label:"Netflix"},
+        {key:"spotify",label:"Spotify"},
+        {key:"youtube",label:"YouTube"},
+        {key:"capcut",label:"CapCut"},
+        {key:"chatgpt",label:"ChatGPT"},
+      ];
+
+      list.forEach((x, i) => {
+        const b = document.createElement("button");
+        b.className = "cat-btn" + (i===0 ? " active" : "");
+        b.dataset.cat = x.key;
+        b.textContent = x.label;
+        b.onclick = () => {
+          document.querySelectorAll(".cat-btn").forEach(z=>z.classList.remove("active"));
+          b.classList.add("active");
+          state.cat = x.key;
+          render();
+        };
+        cats.appendChild(b);
+      });
+    }
+
+    const state = { cat:"all", q:"", selected:null, selectedPlan:null };
+
+    function cardHTML(item){
+      return `
+        <div class="card" data-id="${escapeHtml(item.id)}">
+          <div class="corner-price">${escapeHtml(item.cornerPrice || "")}</div>
+          <img class="card-img" src="${escapeHtml(item.img || "")}" alt="">
+          <div class="content">
+            <div class="title">${escapeHtml(item.title || "")}</div>
+            <div class="desc long">${escapeHtml(item.desc || "")}</div>
+            <div class="bottom">
+              <div class="hint">Kliklə → plan seç</div>
+              <button class="btn light">Bax</button>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function matchItem(item){
+      if(state.cat !== "all" && item.cat !== state.cat) return false;
+      const q = state.q.trim().toLowerCase();
+      if(!q) return true;
+      const hay = (item.title+" "+item.desc+" "+item.info+" "+(item.plans||[]).map(p=>p.name+" "+p.price).join(" ")).toLowerCase();
+      return hay.includes(q);
+    }
+
+    function render(){
+      const grid = document.getElementById("grid");
+      const filtered = services.filter(matchItem);
+      grid.innerHTML = filtered.map(cardHTML).join("");
+
+      grid.querySelectorAll(".card").forEach(card=>{
+        card.addEventListener("click", ()=>{
+          const id = card.getAttribute("data-id");
+          openModal(services.find(x=>x.id===id));
+        });
+      });
+    }
+
+    function openModal(item){
+      if(!item) return;
+      state.selected = item;
+      state.selectedPlan = null;
+
+      document.getElementById("modalImg").src = item.img || "";
+      document.getElementById("modalTitle").textContent = item.title || "";
+      document.getElementById("modalDescText").textContent = item.desc || "";
+      document.getElementById("modalText").textContent = item.info || "";
+
+      const plans = document.getElementById("plans");
+      plans.innerHTML = "";
+      (item.plans || []).forEach((p, idx)=>{
+        const div = document.createElement("div");
+        div.className = "plan";
+        div.innerHTML = `
+          <div class="plan-left">
+            <div class="radio"></div>
+            <div>
+              <div class="plan-title">${escapeHtml(p.name || "")}</div>
+            </div>
+          </div>
+          <div class="plan-price">${escapeHtml(p.price || "")}</div>
+        `;
+        div.onclick = ()=>{
+          plans.querySelectorAll(".plan").forEach(x=>x.classList.remove("selected"));
+          div.classList.add("selected");
+          state.selectedPlan = p;
+          document.getElementById("orderBtn").disabled = false;
+        };
+        plans.appendChild(div);
+      });
+
+      document.getElementById("orderBtn").disabled = true;
+      document.getElementById("modal").classList.add("show");
+    }
+
+    function closeModal(){
+      document.getElementById("modal").classList.remove("show");
+    }
+
+    document.getElementById("closeModal").onclick = closeModal;
+    document.getElementById("modal").addEventListener("click", (e)=>{
+      if(e.target.id === "modal") closeModal();
+    });
+
+    document.getElementById("search").addEventListener("input", (e)=>{
+      state.q = e.target.value || "";
+      render();
+    });
+
+    document.getElementById("orderBtn").onclick = ()=>{
+      if(!state.selected || !state.selectedPlan) return;
+
+      const phone = (cfg?.whatsappPhone || "").replace(/\D/g,"");
+      const wa = phone ? `https://wa.me/${phone}` : "https://wa.me/";
+
+      const msg =
+        `Salam! Sifariş vermək istəyirəm:%0A`+
+        `• Məhsul: ${encodeURIComponent(state.selected.title || "")}%0A`+
+        `• Plan: ${encodeURIComponent(state.selectedPlan.name || "")}%0A`+
+        `• Qiymət: ${encodeURIComponent(state.selectedPlan.price || "")}%0A`+
+        `• ID: ${encodeURIComponent(state.selected.id || "")}`;
+
+      window.open(`${wa}?text=${msg}`, "_blank");
+    };
+
+    async function init(){
+      // preview (admin paneldə "Yadda saxla" basanda) dərhal sayta təsir etsin:
+      const cfgPreview = localStorage.getItem(LS_CFG);
+      const srvPreview = localStorage.getItem(LS_SRV);
+
+      const cfgFromFile = await safeFetchJSON("config.json");
+      const srvFromFile = await safeFetchJSON("services.json");
+
+      cfg = cfgPreview ? JSON.parse(cfgPreview) : (cfgFromFile || {});
+      const srvObj = srvPreview ? JSON.parse(srvPreview) : (srvFromFile || {items:[]});
+      services = Array.isArray(srvObj.items) ? srvObj.items : [];
+
+      applyCfg(cfg);
+      render();
+    }
+
+    init();
+  </script>
+</body>
+</html>
