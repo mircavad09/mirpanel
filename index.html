@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="theme-color" content="#070707" />
+  <title>Mirpanel — Premium Abunəliklər</title>
+  <meta name="description" content="Netflix, Spotify, Prime Video, Duolingo, Canva, CapCut, ChatGPT Premium. Sifariş yalnız WhatsApp." />
+
+  <link rel="icon" href="assets/logo.png" />
+  <link rel="stylesheet" href="style.css?v=11" />
+</head>
+
+<body>
+  <header class="top">
+    <div class="wrap nav">
+      <div class="brand">
+        <img class="logo" src="assets/logo.png" alt="Mirpanel logo" onerror="this.style.display='none'">
+        <div class="brandTxt">
+          <div class="brandName">Mirpanel</div>
+          <div class="brandSub">Qeydiyyat yoxdur • Sifariş WhatsApp-la</div>
+        </div>
+      </div>
+
+      <!-- 🎵 NOW PLAYING -->
+      <div class="player" id="playerUI" aria-label="Music player">
+        <div class="track">
+          <div class="trackTitle" id="trackTitle">Mutlu Bir Son</div>
+          <div class="trackSub" id="trackSub">Adil Kulalı</div>
+        </div>
+
+        <button class="pBtn" id="prevBtn" type="button" aria-label="Əvvəlki">⟨⟨</button>
+        <button class="pBtn main" id="playBtn" type="button" aria-label="Play/Pause">▶️</button>
+        <button class="pBtn" id="nextBtn" type="button" aria-label="Növbəti">⟩⟩</button>
+
+        <div class="count" id="trackCount">1/1</div>
+      </div>
+
+      <audio id="bgAudio" preload="none"></audio>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="hero">
+      <div class="heroIn">
+        <div>
+          <h1 class="heroTitle">Premium seç → “Sifariş et” → WhatsApp-da yaz</h1>
+          <p class="heroHint">Netflix • Spotify • Prime Video • Duolingo • Canva • CapCut • ChatGPT</p>
+        </div>
+
+        <input id="q" class="search" placeholder="Axtar: netflix, musiqi, video edit, ai..." />
+      </div>
+
+      <div id="tabs" class="tabs"></div>
+    </section>
+
+    <section id="grid" class="grid"></section>
+  </main>
+
+  <!-- MODAL -->
+  <div class="modal" id="modal" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true">
+      <button class="close" id="closeModal" aria-label="Bağla">✕</button>
+
+      <div class="mTop">
+        <img id="mImg" class="mImg" alt="" />
+        <div class="mTxt">
+          <div id="mTitle" class="mTitle"></div>
+          <div id="mDesc" class="mDesc"></div>
+
+          <!-- ✅ seçməzdən əvvəl görünən məlumat qutusu -->
+          <div id="mInfoBox" class="mInfoBox"></div>
+        </div>
+      </div>
+
+      <div class="mPlansTitle">Müddəti seç:</div>
+      <div class="mPlans" id="mPlans"></div>
+
+      <div class="mBottom">
+        <div class="mInfo" id="mInfo"></div>
+        <div class="mForm" id="mForm"></div>
+        <div class="mSmall">Müddəti seçəndən sonra (lazım olsa) məlumat daxil edib WhatsApp-a göndərəcəksiniz.</div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    <div class="wrap footIn">
+      <div class="tiny">©️ 2026 Mirpanel — Bütün hüquqlar qorunur</div>
+      <div class="tiny">Hazırlandı: premium kataloq</div>
+    </div>
+  </footer>
+
+  <script src="app.js?v=11"></script>
+  <script src="snow.js"></script>
+</body>
+</html>
