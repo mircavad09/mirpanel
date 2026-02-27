@@ -1,0 +1,985 @@
+/* =========================================================
+   style.css — Mirpanel (FINAL + SPRING POPUP)
+   Qeyd: Bu faylı tam şəkildə style.css kimi qoy.
+   ========================================================= */
+
+:root{
+  --bg:#070707;
+  --txt:#fff;
+  --mut:rgba(255,255,255,.68);
+  --bd:rgba(255,255,255,.10);
+  --card:rgba(255,255,255,.04);
+  --sh:0 18px 65px rgba(0,0,0,.58);
+  --acc:#ffd400;
+}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+
+body{
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--txt);
+  background:
+    radial-gradient(900px 520px at 12% -10%, rgba(0,255,153,.14), transparent 60%),
+    radial-gradient(900px 520px at 92% 0%, rgba(106,92,255,.12), transparent 60%),
+    var(--bg);
+  overflow-x:hidden;
+}
+
+/* ✅ MODAL açıq olanda arxa səhifə scroll olmasın (iPhone fix) */
+html.modalOpen, body.modalOpen{
+  overflow:hidden !important;
+  height:100%;
+}
+body.modalOpen{touch-action:none}
+
+a{color:inherit;text-decoration:none}
+.wrap{max-width:1180px;margin:0 auto;padding:14px}
+
+/* TOP */
+.top{
+  position:sticky;top:0;z-index:30;
+  backdrop-filter: blur(10px);
+  background:rgba(7,7,7,.72);
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.nav{
+  display:flex;
+  gap:12px;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+}
+.brand{
+  display:flex;
+  gap:10px;
+  align-items:center;
+  min-width:0;
+  flex:1;
+}
+.logo{
+  width:44px;height:44px;border-radius:16px;object-fit:cover;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.03);
+  box-shadow:0 0 30px rgba(0,255,153,.10);
+  flex:0 0 auto;
+}
+.brandTxt{min-width:0}
+.brandName{font-weight:1000;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.brandSub{color:var(--mut);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* =========================
+   🎵 NOW PLAYING (Header Player)
+   ========================= */
+.player{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  padding:8px 10px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  backdrop-filter: blur(10px);
+
+  width:360px;
+  max-width:60vw;
+  margin-left:auto;
+  flex:0 1 auto;
+}
+
+.track{
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  margin-right:4px;
+  flex:1;
+}
+.trackTitle{
+  font-weight:1000;
+  font-size:13px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:170px;
+}
+.trackSub{
+  color:rgba(255,255,255,.62);
+  font-size:11px;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  max-width:170px;
+}
+
+.pBtn{
+  width:38px;height:38px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.22);
+  color:#fff;
+  font-weight:900;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  user-select:none;
+}
+.pBtn:active{transform:scale(.98)}
+
+.pBtn.main{
+  border-color: rgba(255,212,0,.35);
+  background: linear-gradient(135deg, rgba(255,212,0,.95), rgba(255,212,0,.70));
+  color:#000;
+}
+
+.player.playing .pBtn.main{
+  background: rgba(0,255,153,.18);
+  border-color: rgba(0,255,153,.35);
+  color:#fff;
+}
+
+.count{
+  color:rgba(255,255,255,.60);
+  font-size:11px;
+  font-weight:900;
+  margin-left:2px;
+  white-space:nowrap;
+}
+
+@media(max-width:760px){
+  .player{width:100%;max-width:100%;order:3}
+  .trackTitle,.trackSub{max-width:140px}
+}
+
+/* HERO */
+.hero{
+  margin-top:14px;
+  border:1px solid var(--bd);
+  border-radius:22px;
+  background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  box-shadow:var(--sh);
+  padding:14px;
+  position:relative;
+  overflow:hidden;
+}
+.hero:before{
+  content:"";
+  position:absolute;inset:-30%;
+  background:
+    radial-gradient(circle at 20% 25%, rgba(255,212,0,.14), transparent 45%),
+    radial-gradient(circle at 80% 20%, rgba(0,255,153,.12), transparent 45%);
+  filter: blur(10px);
+  pointer-events:none;
+}
+.heroIn{
+  position:relative;
+  display:flex;
+  gap:14px;
+  flex-wrap:wrap;
+  align-items:flex-end;
+  justify-content:space-between
+}
+.heroTitle{margin:0;font-weight:1000;font-size:22px;line-height:1.15}
+.heroHint{margin:8px 0 0 0;color:var(--mut);font-size:12px;max-width:700px}
+
+.search{
+  width:min(460px,100%);
+  border:1px solid var(--bd);
+  background:rgba(0,0,0,.15);
+  border-radius:16px;
+  padding:12px;
+  color:#fff;outline:none;
+}
+.search::placeholder{color:rgba(255,255,255,.45)}
+
+/* TABS */
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;position:relative}
+.tab{
+  cursor:pointer;
+  padding:10px 12px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);
+  color:rgba(255,255,255,.84);
+  font-weight:900;
+  transition:.18s;
+  user-select:none;
+}
+.tab:active{transform:scale(.99)}
+.tab.active{
+  background:linear-gradient(135deg, rgba(255,212,0,.95), rgba(255,212,0,.70));
+  color:#000;
+  border-color:rgba(255,212,0,.35);
+  transform: translateY(-1px);
+}
+
+/* =========================
+   ✅ GRID — PC: 5 yan yana, Telefon: 2 yan yana
+   ========================= */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(5, 1fr);
+  gap:12px;
+  margin:14px 0 90px;
+}
+@media(max-width:1200px){.grid{grid-template-columns:repeat(4, 1fr)}}
+@media(max-width:980px){.grid{grid-template-columns:repeat(3, 1fr)}}
+@media(max-width:640px){.grid{grid-template-columns:repeat(2, 1fr)}}
+
+.card{
+  border:1px solid var(--bd);
+  border-radius:20px;
+  background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+  box-shadow:0 12px 45px rgba(0,0,0,.45);
+  overflow:hidden;
+  transform: translateY(8px);
+  opacity:0;
+  animation: pop .45s ease forwards;
+}
+@keyframes pop {to{transform:translateY(0);opacity:1}}
+/* ✅ GRID: bütün kartlar eyni hündürlükdə olsun */
+.grid{
+  align-items: stretch;
+}
+
+/* ✅ BÜTÜN KARTLAR EYNİ BOY (Duolingo kimi) */
+.card{
+  height: 300px;               /* lazım olsa 370–410 arası oynada bilərsən */
+  display: flex;
+  flex-direction: column;
+}
+
+/* ✅ Şəkil hissəsi sabit olsun (hamıda eyni) */
+.card .imgWrap{
+  flex: 0 0 150px;             /* şəkil hündürlüyü */
+  height: 150px;
+  overflow: hidden;
+}
+
+/* ✅ İç hissə (yazılar + düymə) */
+.card .pad{
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+/* ✅ Başlıq maksimum 2 sətir */
+.card .title{
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ✅ Açıqlama maksimum 2 sətir */
+.card .meta{
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ✅ Düymə həmişə eyni yerdə (aşağıda) */
+.card .priceRow{
+  margin-top: auto;
+}
+/* ✅ Kart şəkli həmişə karta sığsın (böyük/daşma olmasın) */
+.card .imgWrap{
+  position:relative;
+  height:140px;
+  overflow:hidden;
+  border-radius:18px;
+}
+.card .imgWrap .img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+  background:#111;
+}
+
+.cornerPrice{
+  position:absolute;
+  top:10px; right:10px;
+  padding:8px 10px;
+  border-radius:999px;
+  font-weight:1000;
+  font-size:12px;
+  color:#000;
+  background:linear-gradient(135deg, rgba(255,212,0,.98), rgba(255,212,0,.70));
+  border:1px solid rgba(255,212,0,.35);
+  box-shadow:0 10px 25px rgba(0,0,0,.35);
+}
+
+.pad{padding:12px}
+.topline{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.title{margin:0;font-weight:1000;font-size:15px;line-height:1.2}
+.badge{
+  font-size:11px;font-weight:1000;padding:6px 10px;border-radius:999px;
+  border:1px solid rgba(255,212,0,.30);
+  background:rgba(255,212,0,.10);
+  color:rgba(255,255,255,.92);
+  white-space:nowrap;
+}
+.meta{margin-top:8px;color:var(--mut);font-size:12px;line-height:1.45}
+
+.priceRow{margin-top:10px;display:flex;align-items:center;justify-content:flex-end;gap:10px}
+
+.btn{
+  cursor:pointer;padding:10px 12px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  color:#fff;font-weight:1000;
+  transition:transform .12s ease, filter .12s ease;
+}
+.btn:hover{filter:brightness(1.03)}
+.btn:active{transform:scale(.98)}
+.btn.primary{
+  border-color:rgba(255,212,0,.35);
+  background:linear-gradient(135deg, rgba(255,212,0,.98), rgba(255,212,0,.72));
+  color:#000;
+}
+
+/* ✅ Spring kart içi düzülüş */
+.springRow{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.springTxt{min-width:0}
+
+/* FOOTER */
+.footer{
+  position:fixed;left:0;right:0;bottom:0;
+  background:rgba(7,7,7,.75);
+  border-top:1px solid rgba(255,255,255,.08);
+  backdrop-filter: blur(10px);
+  padding:10px 14px;
+  z-index:20;
+}
+.footIn{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.tiny{color:rgba(255,255,255,.55);font-size:12px}
+
+/* =========================
+   MODAL
+   ========================= */
+.modal{
+  position:fixed;inset:0;
+  background:rgba(0,0,0,.70);
+  display:none;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  z-index:60;
+}
+.modal.show{display:flex}
+
+.modalCard{
+  width:min(760px,100%);
+  max-height: calc(100vh - 28px);
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
+  border:1px solid rgba(255,255,255,.10);
+  border-radius:20px;
+  background:rgba(10,10,10,.92);
+  box-shadow:var(--sh);
+  padding:14px;
+  position:relative;
+}
+
+.close{
+  position:sticky;
+  top:10px;
+  float:right;
+  margin-left:auto;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.04);
+  color:#fff;
+  border-radius:12px;
+  padding:8px 10px;
+  cursor:pointer;
+}
+.close:active{transform:scale(.98)}
+
+.mTop{
+  display:flex;
+  gap:12px;
+  align-items:flex-start;
+  flex-wrap:nowrap;
+}
+
+/* ✅ MODAL ŞƏKİL: tam görünsün, kəsilməsin */
+.mImg{
+  width:100%;
+  max-height:280px;
+  object-fit:contain;
+  border-radius:14px;
+  display:block;
+  background:#111;
+  border:1px solid var(--bd);
+}
+
+.mTxt{
+  min-width:0;
+  flex:1;
+  width:100%;
+}
+
+.mTitle{font-weight:1000;font-size:18px}
+.mDesc{color:var(--mut);font-size:12px;margin-top:6px;max-width:none}
+
+/* ✅ info qutusu tam eni tutsun */
+.mInfoBox{
+  margin-top:10px;
+  width:100%;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  box-shadow:0 10px 30px rgba(0,0,0,.35);
+  display:none;
+}
+.mInfoHead{
+  font-weight:900;
+  font-size:13px;
+  margin-bottom:8px;
+  color:rgba(255,255,255,.95);
+}
+.mInfoBody{display:flex;flex-direction:column;gap:8px}
+.mInfoLine{
+  font-size:12px;
+  line-height:1.45;
+  color:rgba(255,255,255,.72);
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.25);
+}
+
+/* ✅ MOBIL: infoBox tam en */
+@media(max-width:640px){
+  .mTop{flex-direction:column}
+  .mTxt{width:100%}
+  .mInfoBox{width:100%}
+}
+
+.mPlansTitle{margin-top:12px;font-weight:1000;color:rgba(255,255,255,.9)}
+.mPlans{margin-top:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+@media(max-width:640px){.mPlans{grid-template-columns:1fr}}
+
+.plan{
+  width:100%;
+  text-align:left;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.03);
+  border-radius:16px;
+  padding:12px;
+  cursor:pointer;
+  transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease, background .12s ease;
+  display:block;
+  color:inherit;
+}
+.plan:active{transform:scale(.99)}
+.plan.active{
+  border-color: rgba(255, 210, 0, .9) !important;
+  box-shadow: 0 0 0 2px rgba(255, 210, 0, .35), 0 12px 30px rgba(0,0,0,.35) !important;
+  transform: translateY(-1px);
+  background: rgba(255, 212, 0, .06);
+}
+.planT{font-weight:900}
+.planP{margin-top:6px;color:var(--mut);font-size:12px}
+
+.mBottom{display:flex;gap:10px;flex-direction:column;margin-top:12px}
+.mSmall{color:rgba(255,255,255,.55);font-size:12px}
+.mInfo{color:var(--mut);font-size:12px;line-height:1.45}
+.mForm{}
+
+/* Form UI */
+.mpForm{
+  margin-top:12px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.35);
+}
+.mpFormTitle{font-weight:900;margin-bottom:10px;color:rgba(255,255,255,.92)}
+.mpHint{color:rgba(255,255,255,.70);font-size:12px;line-height:1.45}
+.mpGrid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:640px){.mpGrid2{grid-template-columns:1fr}}
+.mpLabel{font-size:12px;color:rgba(255,255,255,.85);margin-bottom:6px}
+.mpInput{
+  width:100%;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.60);
+  color:#fff;
+  outline:none;
+}
+.mpInput::placeholder{color:rgba(255,255,255,.45)}
+.mpBtn{
+  margin-top:12px;
+  width:100%;
+  cursor:pointer;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid rgba(255,212,0,.35);
+  background:linear-gradient(135deg, rgba(255,212,0,.98), rgba(255,212,0,.72));
+  color:#000;
+  font-weight:1000;
+}
+.mpBtn:active{transform:scale(.99)}
+
+.mpLabelRow{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:6px;
+}
+.mpMiniLink{
+  font-size:11px;
+  color:rgba(255,255,255,.72);
+  text-decoration:underline;
+  white-space:nowrap;
+}
+.mpMiniLink:active{opacity:.75}
+@media(max-width:640px){
+  .mpLabelRow{flex-direction:column; align-items:flex-start}
+  .mpMiniLink{white-space:normal}
+}
+
+/* ==================================================
+   🤖 MIRPANEL AI CHAT — FINAL
+   ================================================== */
+
+.chatFab{
+  position:fixed;
+  right:16px;
+  bottom:16px;
+  width:56px;
+  height:56px;
+  border-radius:50%;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  backdrop-filter: blur(10px);
+  color:#fff;
+  font-size:22px;
+  font-weight:900;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  z-index:9999;
+  box-shadow:0 12px 40px rgba(0,0,0,.45);
+}
+.chatFab:active{transform:scale(.97)}
+
+.chatBox{
+  position:fixed;
+  right:16px;
+  bottom:84px;
+  width:min(360px, 92vw);
+  height:520px;
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(10,10,10,.94);
+  backdrop-filter: blur(12px);
+  box-shadow:0 18px 65px rgba(0,0,0,.58);
+  overflow:hidden;
+  display:none;
+  flex-direction:column;
+  z-index:9999;
+}
+.chatBox.open{display:flex}
+.chatBox.show{display:flex}
+
+.chatHead{
+  padding:12px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  border-bottom:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.04);
+}
+.chatTitle{
+  font-weight:1000;
+  color:var(--acc);
+  letter-spacing:.2px;
+}
+.chatSub{
+  font-size:12px;
+  color:rgba(255,255,255,.62);
+  margin-top:2px;
+}
+
+.chatClose{
+  width:38px;
+  height:38px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.25);
+  color:#fff;
+  cursor:pointer;
+  display:grid;
+  place-items:center;
+  font-weight:900;
+}
+.chatClose:active{transform:scale(.97)}
+
+.chatMsgs{
+  flex:1;
+  padding:12px;
+  overflow:auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.msg{
+  max-width:85%;
+  padding:10px 12px;
+  border-radius:14px;
+  margin:8px 0;
+  line-height:1.35;
+  font-size:14px;
+  border:1px solid rgba(255,255,255,.10);
+  white-space:pre-wrap;
+}
+.msg.bot{
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.92);
+}
+.msg.user{
+  margin-left:auto;
+  background:rgba(255,212,0,.16);
+  border-color:rgba(255,212,0,.28);
+  color:#fff;
+  font-weight:600;
+}
+.msg.hint{
+  background:rgba(255,255,255,.04);
+  color:rgba(255,255,255,.70);
+  border-style:dashed;
+}
+.msg.err{
+  background:rgba(255,0,90,.10);
+  border-color:rgba(255,0,90,.25);
+  color:rgba(255,255,255,.92);
+}
+
+.chatInput{
+  display:flex;
+  gap:8px;
+  padding:10px 12px;
+  border-top:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.20);
+}
+.chatText{
+  flex:1;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:#fff;
+  padding:10px 12px;
+  border-radius:14px;
+  outline:none;
+}
+.chatText::placeholder{color:rgba(255,255,255,.45)}
+
+.chatSend{
+  border:none;
+  background:linear-gradient(135deg, rgba(255,212,0,.98), rgba(255,212,0,.72));
+  color:#000;
+  font-weight:1000;
+  padding:10px 14px;
+  border-radius:14px;
+  cursor:pointer;
+}
+.chatSend:active{transform:scale(.97)}
+
+/* ==================================================
+   🌸 SPRING POPUP — FINAL
+   ================================================== */
+
+html.springLock, body.springLock{
+  overflow:hidden !important;
+  height:100%;
+}
+
+.springPopup{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.72);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:14px;
+  z-index:99999;
+}
+
+.springCard{
+  width:min(520px, 100%);
+  max-height:90vh;
+  overflow:auto;
+  border-radius:22px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(10,10,10,.94);
+  box-shadow:0 18px 65px rgba(0,0,0,.62);
+  padding:14px;
+  position:relative;
+  backdrop-filter: blur(12px);
+}
+
+.springX{
+  position:absolute;
+  top:12px;
+  right:12px;
+  width:40px;height:40px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.25);
+  color:#fff;
+  cursor:pointer;
+  font-weight:900;
+}
+.springX:active{transform:scale(.97)}
+
+/* ✅ HEADER: şəkil solda, yazı sağda */
+.springTop{
+  display:flex;
+  gap:20px;
+  align-items:center;
+}
+
+/* Sol - şəkil */
+.springVisual{
+  flex:0 0 220px;
+}
+
+/* Şəkil (kəsilmir) */
+.springPoster{
+  width:100%;
+  height:auto;
+  max-height:260px;
+  object-fit:contain;
+  display:block;
+  margin:0 auto;
+  border-radius:12px;
+}
+
+/* Sağ - yazılar */
+.springRight{flex:1}
+
+.springBadge{
+  display:inline-flex;
+  gap:8px;
+  align-items:center;
+  padding:6px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,212,0,.35);
+  background:rgba(255,212,0,.10);
+  font-weight:1000;
+  font-size:12px;
+}
+.springTitle{margin-top:10px;font-weight:1000;font-size:18px}
+.springSub{margin-top:4px;color:rgba(255,255,255,.70);font-size:12px}
+
+/* Mobil: alt-alta */
+@media (max-width:640px){
+  .springTop{
+    flex-direction:column;
+    text-align:center;
+  }
+  .springVisual{
+    flex:unset;
+    width:100%;
+  }
+}
+
+.springTimer{
+  margin-top:10px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+}
+.springTimerT{font-weight:900;color:rgba(255,255,255,.92);font-size:12px}
+.springTimerV{margin-top:6px;font-weight:1000;font-size:14px;color:#ffd400}
+
+.springPrice{
+  margin-top:10px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.28);
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+}
+.springOld{color:rgba(255,255,255,.55);text-decoration:line-through;font-weight:900}
+.springNew{font-weight:1000;color:#fff}
+
+.springInfo{margin-top:10px;display:flex;flex-direction:column;gap:8px}
+.springLine{
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(0,0,0,.25);
+  color:rgba(255,255,255,.75);
+  font-size:12px;
+}
+
+.springForm{margin-top:12px}
+.springGrid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media(max-width:520px){ .springGrid{grid-template-columns:1fr;} }
+
+.springLabel{font-size:12px;color:rgba(255,255,255,.85);margin-bottom:6px}
+.springInput{
+  width:100%;
+  padding:11px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.55);
+  color:#fff;
+  outline:none;
+}
+.springInput::placeholder{color:rgba(255,255,255,.45)}
+
+.springBtn{
+  margin-top:12px;
+  width:100%;
+  cursor:pointer;
+  padding:12px 14px;
+  border-radius:16px;
+  border:1px solid rgba(255,212,0,.35);
+  background:linear-gradient(135deg, rgba(255,212,0,.98), rgba(255,212,0,.72));
+  color:#000;
+  font-weight:1000;
+}
+.springBtn:active{transform:scale(.99)}
+.springSmall{margin-top:10px;color:rgba(255,255,255,.55);font-size:12px}
+/* ✅ Böyük üst banneri gizlət */
+.hero{ display:none !important; }
+/* ================================
+   ✅ MODAL TOP LAYOUT FIX
+   şəkil solda, yazılar sağda
+   ================================ */
+
+.mTop{
+  display:flex;
+  gap:14px;
+  align-items:flex-start;
+  flex-wrap:nowrap; /* desktopda yan-yana qalsın */
+}
+
+/* modal şəkil */
+.mImg{
+  flex:0 0 260px;
+  width:260px;
+  height:150px;
+  border-radius:18px;
+  object-fit:cover;      /* tam doldursun (kəsə bilər) */
+  background:#111;
+  border:1px solid var(--bd);
+}
+
+/* yazılar */
+.mTxt{
+  flex:1;
+  min-width:0;
+}
+
+/* mobil: alt-alta düşsün */
+@media(max-width:640px){
+  .mTop{flex-direction:column; flex-wrap:wrap;}
+  .mImg{
+    width:100%;
+    flex:0 0 auto;
+    height:190px;
+    object-fit:cover;
+  }
+}
+/* SPRING POPUP X – FINAL FIX */
+
+.springCard{
+  position: relative;
+}
+
+.springX{
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 99999;
+
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  border: none;
+
+  background: rgba(0,0,0,0.85);
+  color: #fff;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: 0 0 15px rgba(0,0,0,.6);
+}
+/* 🔥 SPRING POPUP X – SUPER VISIBLE VERSION */
+
+.springCard{
+  position:relative;
+}
+
+.springX{
+  position:absolute;
+  top:16px;
+  right:16px;
+  z-index:99999;
+
+  width:52px;
+  height:52px;
+  border-radius:50%;
+  border:3px solid #fff;
+
+  background:#ffffff;       /* tam ağ */
+  color:#000;               /* qara X */
+  font-size:26px;           /* daha böyük */
+  font-weight:900;
+  cursor:pointer;
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  box-shadow:0 0 20px rgba(255,255,255,.8);
+}
+/* 🔥 SPRING POPUP – SMALL CENTERED VERSION */
+
+.springPopup{
+  position:fixed;
+  inset:0;
+  background:rgba(0,0,0,.55);   /* arxa hissə görünsün */
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+  z-index:9999;
+}
+
+.springCard{
+  width:100%;
+  max-width:520px;              /* 🔥 əsas ölçü */
+  max-height:85vh;              /* tam ekran olmasın */
+  overflow:auto;
+  border-radius:22px;
+  box-shadow:0 30px 80px rgba(0,0,0,.6);
+}
