@@ -111,7 +111,7 @@ const DATA = {
   id: "youtube",
   category: "musiqi",
   title: "YouTube Premium",
-  variant: "Ailə planı",
+  variant: "Yeni Gmail",
   image: "assets/youtube.png",
   badge: "Video",
   desc: "Reklamsız izləmə, arxa fonda işləmə, offline, YouTube Music daxil.",
@@ -1149,4 +1149,5 @@ function esc(s) {
 }
 
 /* START */
+
 boot();
