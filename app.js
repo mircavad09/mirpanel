@@ -198,7 +198,7 @@ const DATA = {
       desc: "Mətn, kod, yazı və planlama üçün güclü AI.",
       note: "Hesab biz tərəfdən hazır şəkildə verilir (şəxsi hesab).",
       currency: "₼",
-      plans: [{ months: 12, label: "1 illik", price: 59.99 }],
+      plans: [{ months: 12, label: "1 illik", price: 99.99 }],
     },
 
     {
@@ -1151,3 +1151,4 @@ function esc(s) {
 /* START */
 
 boot();
+
