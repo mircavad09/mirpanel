@@ -94,17 +94,20 @@ const DATA = {
     },
 
     {
-      id: "spotify",
-      category: "musiqi",
-      title: "Spotify Premium (3 AY)",
-      variant: "Yeni Gmail",
-      image: "assets/spotify.png",
-      badge: "Musiqi",
-      desc: "Reklamsız musiqi, offline dinləmə.",
-      note: "3 aylıq plan üçün yeni gmail ünvanını və şifrəni qeyd edin → WhatsApp-a göndər.",
-      currency: "₼",
-      plans: [{ months: 3, label: "3 aylıq", price: 8.99 }],
-    },
+  id: "spotify",
+  category: "musiqi",
+  title: "Spotify Premium",
+  variant: "Şəxsi hesab",
+  image: "assets/spotify.png",
+  badge: "Musiqi",
+  desc: "Reklamsız musiqi, offline dinləmə.",
+  note: "Şəxsi hesabınızda aktiv edirik. Plan seçdikdən sonra Gmailinizi və Spotify şifrənizi qeyd edib WhatsApp-a göndərin.",
+  currency: "₼",
+  plans: [
+    { months: 1, label: "1 aylıq", price: 4.80 },
+    { months: 3, label: "3 aylıq", price: 12.99 },
+  ],
+},
 
     {
       id: "surfshark",
@@ -559,15 +562,16 @@ const INFO_TEXTS = {
     ],
   },
 
-  spotify: {
-    title: "Spotify Premium",
-    lines: [
-      "✅ Yalnız 3 aylıq plan",
-      "📧 Yeni gmail ünvanını qeyd et",
-      "🔑 Şifrəni də qeyd et",
-      "💰 Qiymət: 8.99 ₼",
-    ],
-  },
+ spotify: {
+  title: "🎵 Spotify Premium",
+  lines: [
+    "🎧 Reklamsız musiqi",
+    "⬇️ Mahnıları yükləyib offline dinləmə",
+    "⏭️ Limitsiz skip edə bilərsiniz",
+    "🔊 Yüksək səs keyfiyyəti",
+    "👤 Sizin şəxsi hesabınızda aktiv edirik",
+  ],
+},
 
   youtube: {
     title: "YouTube Premium",
@@ -916,17 +920,17 @@ function showSpotifyForm(p, plan) {
       <div class="mpFormTitle">Spotify məlumatları</div>
 
       <div>
-        <div class="mpLabel">Yeni gmail ünvanını qeyd et</div>
+        <div class="mpLabel">Gmailinizi əlavə edin</div>
         <input id="sp_email" class="mpInput" placeholder="misal@gmail.com">
       </div>
 
       <div style="margin-top:10px">
-        <div class="mpLabel">Şifrə</div>
-        <input id="sp_pass" class="mpInput" type="text" placeholder="Şifrəni qeyd et">
+        <div class="mpLabel">Spotify şifrənizi qeyd edin</div>
+        <input id="sp_pass" class="mpInput" type="text" placeholder="Spotify şifrəniz">
       </div>
 
       <div class="mpHint" style="margin-top:10px">
-        Spotify üçün yalnız 3 aylıq plan mövcuddur.
+        Şəxsi hesabınızda aktiv edirik.
       </div>
 
       <button id="sp_send" type="button" class="mpBtn">WhatsApp-a göndər</button>
@@ -937,15 +941,15 @@ function showSpotifyForm(p, plan) {
     const email = ($("sp_email")?.value || "").trim();
     const pass = ($("sp_pass")?.value || "").trim();
 
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("Düzgün gmail yaz.");
-    if (!pass) return alert("Şifrəni qeyd et.");
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return alert("Düzgün Gmail yaz.");
+    if (!pass) return alert("Spotify şifrənizi qeyd edin.");
 
     const text =
 `Salam, ${fullName} sifariş etmək istəyirəm.
 Müddət: ${duration}
 Qiymət: ${priceText}
-Yeni gmail: ${email}
-Şifrə: ${pass}`;
+Gmail: ${email}
+Spotify şifrəsi: ${pass}`;
 
     window.open(PHONE_WA + "?text=" + encodeURIComponent(text), "_blank");
   };
