@@ -105,7 +105,7 @@ const DATA = {
   currency: "₼",
   plans: [
     { months: 1, label: "1 aylıq", price: 4.80 },
-    { months: 3, label: "3 aylıq", price: stokta yoxdur },
+    { months: 3, label: "stokta yoxdur", price: 0 },
   ],
 },
 
