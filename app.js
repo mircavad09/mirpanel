@@ -105,7 +105,7 @@ const DATA = {
   currency: "₼",
   plans: [
     { months: 1, label: "1 aylıq", price: 4.80 },
-    { months: 3, label: "3 aylıq", price: 12.99 },
+    { months: 3, label: "3 aylıq", price: stokta yoxdur },
   ],
 },
 
@@ -200,7 +200,7 @@ const DATA = {
       desc: "Mətn, kod, yazı və planlama üçün güclü AI.",
       note: "Hesab biz tərəfdən hazır şəkildə verilir (şəxsi hesab).",
       currency: "₼",
-      plans: [{ months: 12, label: "1 illik", price: 59.99 }],
+      plans: [{ months: 12, label: "Stokta yoxdur", price: 0 }],
     },
 
     {
