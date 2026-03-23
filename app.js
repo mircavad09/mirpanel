@@ -257,7 +257,7 @@ const DATA = {
       desc: "Daha güclü model, fayl/şəkil imkanları.",
       note: "Plan seç → Gmail yaz → WhatsApp-a göndər.",
       currency: "₼",
-      plans: [{ months: 1, label: "1 aylıq", price: 11.99 }],
+      plans: [{ months: 1, label: "Stokta yoxdur", price: 0 }],
     },
 
     {
