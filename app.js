@@ -186,7 +186,7 @@ const DATA = {
       desc: "Güclü model + şəkil/fayl analizi + real vaxt çıxışı.",
       note: "Hesab biz tərəfdən hazır şəkildə təqdim olunur (şəxsi hesab).",
       currency: "₼",
-      plans: [{ months: 1, label: "1 aylıq SuperGrok", price: 14.99 }],
+      plans: [{ months: 1, label: "1 aylıq SuperGrok", price: 17.99 }],
     },
 
     {
