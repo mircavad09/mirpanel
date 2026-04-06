@@ -220,7 +220,7 @@ a{color:inherit;text-decoration:none}
    ========================================= */
 .hero-section {
   display: flex;
-  flex-direction: column; /* Alt-alta sıralayır: Əvvəl Slayder, sonra qutular */
+  flex-direction: column;
   gap: 16px;
   margin-top: 14px;
 }
@@ -266,7 +266,7 @@ a{color:inherit;text-decoration:none}
 /* Aşağı Tərəf - Qutular Yan-Yana */
 .hero-side-boxes { 
   display: grid; 
-  grid-template-columns: 1fr 1fr; /* Qutuları tən yarıdan Yan-Yana düzür */
+  grid-template-columns: 1fr 1fr; 
   gap: 16px; 
   width: 100%;
 }
@@ -285,29 +285,14 @@ a{color:inherit;text-decoration:none}
 .support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0,255,153,0.15); }
 .support-box-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px; }
 
-/* Ekran kiçildikdə ölçülərin nizamlanması */
 @media (max-width: 980px) {
   .hero-slider-box { min-height: 280px; }
   .sp-title { font-size: 18px; }
 }
 
-/* MOBİL (Telefon) ÜÇÜN XÜSUSİ YIĞCAMLAŞDIRMA (Slayder altında yan-yana) */
-@media (max-width: 640px) {
-  .hero-side-boxes { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .hero-slider-box { min-height: 200px; border-radius: 16px; }
-  .full-slide-img { border-radius: 16px; }
-  .side-box { padding: 12px; border-radius: 16px; }
-  .support-box-img img { border-radius: 16px; }
-  
-  .sp-title { font-size: 13px; margin-bottom: 6px; }
-  .sp-title .highlight { padding: 2px 6px; border-radius: 6px; margin-top: 2px; font-size: 11px; }
-  .sp-desc { display: none; } 
-  .side-search { padding: 10px; font-size: 12px; border-radius: 10px; }
-}
-
 
 /* =========================================
-   TABS & MƏHSUL KARTLARI (5 Sütun)
+   TABS & MƏHSUL KARTLARI (MASAÜSTÜ)
    ========================================= */
 .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;position:relative}
 .tab{
@@ -339,7 +324,6 @@ a{color:inherit;text-decoration:none}
 }
 @media(max-width:1300px){.grid{grid-template-columns:repeat(4, 1fr)}}
 @media(max-width:980px){.grid{grid-template-columns:repeat(3, 1fr)}}
-@media(max-width:640px){.grid{grid-template-columns:repeat(2, 1fr)}}
 
 .card{
   position:relative;
@@ -357,9 +341,7 @@ a{color:inherit;text-decoration:none}
   transition:transform .25s ease, box-shadow .25s ease;
   cursor: pointer;
 }
-@keyframes pop {
-  to{ transform:translateY(0); opacity:1; }
-}
+@keyframes pop { to{ transform:translateY(0); opacity:1; } }
 .card:hover{
   transform:translateY(-6px) scale(1.02);
   box-shadow:0 20px 55px rgba(0,0,0,.65);
@@ -379,9 +361,7 @@ a{color:inherit;text-decoration:none}
   background:#111;
   transition:transform .35s ease;
 }
-.card:hover .img{
-  transform:scale(1.08);
-}
+.card:hover .img{ transform:scale(1.08); }
 .card .pad{
   flex:1;
   display:flex;
@@ -389,114 +369,46 @@ a{color:inherit;text-decoration:none}
   min-height:0;
   padding: 18px;
 }
-.card .title{
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
+.card .title, .card .meta {
+  display:-webkit-box; -webkit-box-orient:vertical; overflow:hidden;
 }
-.card .meta{
-  display:-webkit-box;
-  -webkit-line-clamp:2;
-  -webkit-box-orient:vertical;
-  overflow:hidden;
-}
-.card .priceRow{
-  margin-top:auto;
-}
+.card .title { -webkit-line-clamp:2; margin:0; font-weight:800; font-size:17px; line-height:1.3; }
+.card .meta { -webkit-line-clamp:2; margin-top:10px; color:var(--mut); font-size:13px; line-height:1.5; font-weight:400; }
+.card .priceRow{ margin-top:auto; display:flex; align-items:center; justify-content:flex-end; gap:10px; }
+
 .cornerPrice{
-  position:absolute;
-  top:12px;
-  right:12px;
-  padding:10px 16px;
-  border-radius:999px;
-  font-weight:800;
-  font-size:15px;
-  line-height:1;
-  color:#000;
+  position:absolute; top:12px; right:12px; padding:10px 16px; border-radius:999px; font-weight:800; font-size:15px; line-height:1; color:#000;
   background:linear-gradient(135deg, rgba(255,212,0,1), rgba(255,212,0,.76));
   border:1px solid rgba(255,212,0,.42);
   box-shadow: 0 10px 25px rgba(0,0,0,.35), 0 0 18px rgba(255,212,0,.22);
 }
 
 .topline{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-.title{margin:0;font-weight:800;font-size:17px;line-height:1.3;}
-.badge{
-  font-size:12px;
-  font-weight:700;
-  padding:6px 12px;
-  border-radius:999px;
-  border:1px solid rgba(255,212,0,.30);
-  background:rgba(255,212,0,.10);
-  color:rgba(255,255,255,.92);
-  white-space:nowrap;
-}
-.meta{margin-top:10px;color:var(--mut);font-size:13px;line-height:1.5; font-weight: 400;}
+.badge{ font-size:12px; font-weight:700; padding:6px 12px; border-radius:999px; border:1px solid rgba(255,212,0,.30); background:rgba(255,212,0,.10); color:rgba(255,255,255,.92); white-space:nowrap; }
 
-.priceRow{
-  margin-top:14px;
-  display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  gap:10px;
-}
-.btn{
-  cursor:pointer;
-  padding:10px 12px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.04);
-  color:#fff;
-  font-family: inherit;
-  font-weight:600;
-  transition:transform .18s ease, filter .18s ease, box-shadow .18s ease;
-}
+.btn{ cursor:pointer; padding:10px 12px; border-radius:14px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.04); color:#fff; font-family: inherit; font-weight:600; transition:transform .18s ease, filter .18s ease, box-shadow .18s ease; }
 .btn:hover{filter:brightness(1.03)}
 .btn:active{transform:scale(.98)}
 
 .btn.primary{
   border-color:rgba(255,212,0,.35);
   background:linear-gradient(135deg, rgba(255,212,0,.99), rgba(255,212,0,.76));
-  color:#000;
-  font-weight:800;
-  font-size:15px;
-  padding:14px 22px;
-  border-radius:24px;
-  min-height:48px;
-  box-shadow:0 6px 16px rgba(255,212,0,.16);
-  animation:btnPulse 2.5s infinite;
+  color:#000; font-weight:800; font-size:15px; padding:14px 22px; border-radius:24px; min-height:48px; box-shadow:0 6px 16px rgba(255,212,0,.16); animation:btnPulse 2.5s infinite;
 }
-.card:hover .btn.primary{
-  transform:translateY(-2px);
-  box-shadow:0 0 18px rgba(255,212,0,.75);
-}
-.btn.primary:active{
-  transform:scale(.96);
-}
-@keyframes btnPulse{
-  0%{box-shadow:0 0 0 rgba(255,212,0,0)}
-  50%{box-shadow:0 0 14px rgba(255,212,0,.65)}
-  100%{box-shadow:0 0 0 rgba(255,212,0,0)}
-}
-.card::before{
-  content:"";
-  position:absolute;
-  inset:0;
-  background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.08), transparent 70%);
-  opacity:0;
-  transition:opacity .3s ease;
-  pointer-events:none;
-}
+.card:hover .btn.primary{ transform:translateY(-2px); box-shadow:0 0 18px rgba(255,212,0,.75); }
+.btn.primary:active{ transform:scale(.96); }
+@keyframes btnPulse{ 0%{box-shadow:0 0 0 rgba(255,212,0,0)} 50%{box-shadow:0 0 14px rgba(255,212,0,.65)} 100%{box-shadow:0 0 0 rgba(255,212,0,0)} }
+
+.card::before{ content:""; position:absolute; inset:0; background:linear-gradient(120deg, transparent 30%, rgba(255,255,255,.08), transparent 70%); opacity:0; transition:opacity .3s ease; pointer-events:none; }
 .card:hover::before{opacity:1;}
 
 
 /* =========================================
-   YENİ HİBRİD MƏHSUL SƏHİFƏSİ (MASAÜSTÜ & MOBİL)
+   MƏHSUL DETALLARI SƏHİFƏSİ (HİBRİD MASAÜSTÜ & MOBİL)
    ========================================= */
 .pp-back-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 15px; cursor: pointer; transition: 0.2s; }
 .pp-back-btn:hover { background: rgba(255,255,255,0.05); }
 
-/* MASAÜSTÜ (Desktop) Görünüşü */
 .pp-top-grid { display: grid; grid-template-columns: 350px 1fr 320px; gap: 20px; align-items: start; }
 .pp-box { background: rgba(17,17,17,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(10px); }
 
@@ -514,7 +426,6 @@ a{color:inherit;text-decoration:none}
 .pp-delivery { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 25px; line-height: 1.5; }
 .pp-subtitle { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 12px; padding: 0; border: none;}
 
-/* PLANLAR */
 .pp-plans-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 5px; }
 .pp-plan-label { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; background: rgba(0,0,0,0.3); cursor: pointer; transition: 0.2s; }
 .pp-plan-label:hover { border-color: rgba(255,255,255,0.3); }
@@ -532,7 +443,6 @@ a{color:inherit;text-decoration:none}
 .pp-old-price { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: line-through; }
 .pp-new-price { font-size: 16px; color: #fff; font-weight: 700; }
 
-/* Oxşar Məhsullar */
 .pp-similar-list { display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
 .pp-similar-list::-webkit-scrollbar { width: 5px; }
 .pp-similar-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -543,26 +453,11 @@ a{color:inherit;text-decoration:none}
 .pp-sim-title { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.2;}
 .pp-sim-price { font-size: 13px; color: #ffd400; font-weight: 600;}
 
-/* Tablar */
 .pp-bottom-section { margin-top: 30px; }
 .pp-tabs { display: flex; gap: 10px; margin-bottom: -1px; z-index: 2; position: relative;}
 .pp-tab { flex: 1; padding: 16px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08); border-bottom: none; border-radius: 16px 16px 0 0; color: rgba(255,255,255,0.6); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: 0.2s;}
 .pp-tab.active { background: #ffd400; color: #000; border-color: #ffd400;}
 .pp-content { border-radius: 0 0 16px 16px; padding: 30px; line-height: 1.7; font-size: 15px; color: rgba(255,255,255,0.85); background: rgba(17,17,17,0.8); border-top: 1px solid #ffd400;}
-
-@media(max-width: 980px){
-  .pp-top-grid { grid-template-columns: 1fr; gap: 15px; }
-  .pp-left { background: transparent; border: none; padding: 0; box-shadow: none; backdrop-filter: none; }
-  .pp-img-wrap { aspect-ratio: 16/9; max-height: 250px; border-radius: 12px; margin-bottom: 0; }
-  .desktop-btn { display: none; }
-  .mobile-btn { display: flex; }
-  .pp-center, .pp-right { padding: 16px; border-radius: 16px; }
-  .pp-title { font-size: 20px; }
-  .pp-bottom-section { margin-top: 20px; }
-  .pp-tab { padding: 12px; font-size: 13px; border-radius: 12px 12px 0 0; }
-  .pp-content { padding: 16px; font-size: 14px; border-radius: 0 0 12px 12px; }
-}
-
 
 /* =========================================
    FOOTER
@@ -634,7 +529,6 @@ a{color:inherit;text-decoration:none}
 .mpFormTitle{font-size: 22px; font-weight:800; margin-bottom:20px; color:#ffd400; text-align:center;}
 .mpHint{color:rgba(255,255,255,.70);font-size:12px;line-height:1.45; font-weight: 400;}
 .mpGrid2{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-@media(max-width:640px){.mpGrid2{grid-template-columns:1fr}}
 .mpLabel{font-size:12px; font-weight: 600; color:rgba(255,255,255,.7); margin-bottom:6px; padding-left: 4px;}
 .mpInput{ width:100%; padding:14px; border-radius:12px; border:1px solid rgba(255,255,255,.1); background:rgba(0,0,0,.5); color:#fff; outline:none; font-family: inherit; font-size:14px; }
 .mpInput:focus { border-color: #ffd400; }
@@ -645,7 +539,7 @@ a{color:inherit;text-decoration:none}
 /* =========================
    YENİ BUNDLE (PAKET YARAT) MODALI 
    ========================= */
-.bundleFab { position: fixed; left: 16px; bottom: 16px; height: 56px; padding: 0 20px; border-radius: 30px; border: 1px solid rgba(255, 212, 0, 0.4); background: linear-gradient(135deg, rgba(255, 212, 0, 0.15), rgba(255, 212, 0, 0.05)); backdrop-filter: blur(12px); color: #ffd400; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; z-index: 9998; box-shadow: 0 10px 30px rgba(255, 212, 0, 0.15); transition: transform 0.2s ease, box-shadow 0.2s ease; }
+.bundleFab { position: fixed; left: 16px; bottom: 16px; height: 56px; padding: 0 20px; border-radius: 30px; border: 1px solid rgba(255, 212, 0, 0.4); background: linear-gradient(135deg, rgba(255, 212, 0, 0.15), rgba(255, 212, 0, 0.05)); backdrop-filter: blur(12px); color: #ffd400; font-family: inherit; font-size: 15px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; z-index: 9998; box-shadow: 0 10px 30px rgba(255, 212, 0, 0.15); transition: transform 0.2s ease, box-shadow 0.2s ease;}
 .bundleFab:hover { transform: translateY(-3px); box-shadow: 0 15px 40px rgba(255, 212, 0, 0.25); }
 .bundleFab:active { transform: scale(0.96); }
 
@@ -659,10 +553,6 @@ a{color:inherit;text-decoration:none}
 .bmClose:hover { background:rgba(255,255,255,0.05); color:#fff; }
 
 .bmGrid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
-@media(max-width:850px){ .bmGrid{ grid-template-columns:repeat(4, 1fr); } }
-@media(max-width:600px){ .bmGrid{ grid-template-columns:repeat(3, 1fr); } }
-@media(max-width:400px){ .bmGrid{ grid-template-columns:repeat(2, 1fr); } }
-
 .bmItem { background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:12px 6px; text-align:center; cursor:pointer; transition:all 0.2s ease; display:flex; flex-direction:column; align-items:center; justify-content: flex-start; gap:6px; }
 .bmItem:hover { background:rgba(255,255,255,0.06); transform:translateY(-2px); }
 .bmItem.active { border-color:#ff2a2a; background:rgba(255, 42, 42, 0.08); box-shadow:inset 0 0 0 1px #ff2a2a; }
@@ -679,7 +569,6 @@ a{color:inherit;text-decoration:none}
 .bmRow.final span:last-child { color:#ff2a2a; font-size:20px; }
 
 .bmForm { display:grid; grid-template-columns: 1fr 1fr; gap:12px; } 
-@media(max-width:640px){ .bmForm{ grid-template-columns: 1fr; } }
 .bmInputGrp { display:flex; flex-direction:column; gap:4px; }
 .bmInputGrp label { font-size:11px; font-weight:600; color:rgba(255,255,255,0.7); padding-left:4px; }
 .bmInputGrp input { width:100%; padding:10px 12px; border-radius:12px; border:1px solid rgba(255,255,255,0.1); background:rgba(0,0,0,0.5); color:#fff; font-family:inherit; outline:none; font-size: 13px;}
@@ -728,7 +617,6 @@ a{color:inherit;text-decoration:none}
 }
 
 .gameOptions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
-@media(max-width: 500px){ .gameOptions { grid-template-columns: 1fr; } }
 
 .gameOptCard { 
   background: linear-gradient(145deg, #111, #1a1a1a); 
@@ -911,29 +799,47 @@ a{color:inherit;text-decoration:none}
    MOBİL ÜÇÜN XÜSUSİ YIĞCAMLAŞDIRMA (KİÇİK EKRANLAR)
    ========================================= */
 @media(max-width: 640px) {
-  .grid{grid-template-columns:repeat(2, 1fr);gap:12px;}
-  .card{height:310px;}
-  .card .pad{padding:12px 12px 14px;}
-  .cornerPrice{top:9px;right:9px;padding:8px 12px;font-size:12px;}
-  .btn.primary{width:100%;padding:14px 0;font-size:15px;border-radius:30px;min-height:48px;}
-  .reveal, .reveal-left, .reveal-right{transition-duration:.45s;}
-  .banner-wrap {margin-top: 10px;}
-  .banner-box {padding: 8px 12px;border-radius: 10px;}
-  .banner-text {font-size: 12px;}
+  /* KARTLARIN YIĞCAMLAŞDIRILMASI */
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .card { height: 260px; border-radius: 18px; }
+  .card .imgWrap { flex: 0 0 130px; height: 130px; border-radius: 16px; }
+  .card .pad { padding: 10px; }
+  .title { font-size: 14px; line-height: 1.2; -webkit-line-clamp: 2; }
+  .meta { font-size: 11px; margin-top: 6px; -webkit-line-clamp: 1; }
+  .cornerPrice { top: 8px; right: 8px; padding: 6px 10px; font-size: 11px; }
+  .badge { font-size: 10px; padding: 4px 8px; }
+  .btn.primary { padding: 10px 0; font-size: 13px; border-radius: 16px; min-height: 38px; }
+  .priceRow { margin-top: 8px; }
 
-  /* Ümumi səhifə boşluqları */
+  /* ÜMUMİ BOŞLUQLAR VƏ HERO BÖLMƏSİ */
   .wrap { padding: 10px; }
+  .banner-wrap { margin-top: 10px; }
+  .banner-box { padding: 8px 12px; border-radius: 10px; }
+  .banner-text { font-size: 12px; }
   
-  /* Şəkil və Başlıqlar */
-  .pp-img-wrap { max-height: 180px; border-radius: 10px; margin-bottom: 12px; }
+  .hero-side-boxes { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hero-slider-box { min-height: 200px; border-radius: 16px; }
+  .full-slide-img { border-radius: 16px; }
+  .side-box { padding: 12px; border-radius: 16px; }
+  .support-box-img img { border-radius: 16px; }
+  .sp-title { font-size: 13px; margin-bottom: 6px; line-height: 1.2; }
+  .sp-title .highlight { padding: 2px 6px; border-radius: 6px; margin-top: 2px; font-size: 11px; }
+  .sp-desc { display: none; } 
+  .side-search { padding: 10px; font-size: 12px; border-radius: 10px; }
+
+  /* MƏHSUL DETALLARI (Product Page) YIĞCAMLIĞI */
+  .pp-top-grid { gap: 15px; }
+  .pp-left { background: transparent; border: none; padding: 0; box-shadow: none; backdrop-filter: none; }
+  .pp-img-wrap { aspect-ratio: 16/9; max-height: 180px; border-radius: 12px; margin-bottom: 12px; }
+  .desktop-btn { display: none; }
+  .mobile-btn { display: flex; }
+  
+  .pp-center, .pp-right { padding: 12px; border-radius: 12px; }
   .pp-title { font-size: 18px; margin-bottom: 4px; }
   .pp-delivery { font-size: 12px; margin-bottom: 15px; }
   .pp-subtitle { font-size: 14px; margin-bottom: 8px; padding-bottom: 5px; }
   
-  /* Əsas Qutuların iç boşluqları */
-  .pp-box { padding: 12px; border-radius: 12px; }
-  
-  /* Planlar (Ən çox yer tutan hissəni yığcamlaşdırırıq) */
+  /* PLANLARIN (MÜDDƏT SEÇİN) YIĞCAMLIĞI */
   .pp-plans-container { gap: 8px; margin-bottom: 15px; }
   .pp-plan-label { padding: 10px; border-radius: 10px; }
   .pp-radio-circle { width: 16px; height: 16px; }
@@ -942,32 +848,26 @@ a{color:inherit;text-decoration:none}
   .pp-plan-disc-badge { font-size: 10px; padding: 2px 4px; margin-left: 4px; }
   .pp-new-price { font-size: 14px; }
   .pp-old-price { font-size: 11px; }
-  
-  /* Sifariş Düyməsi */
   .pp-btn-solid { padding: 12px; font-size: 14px; border-radius: 10px; }
   
-  /* Alt Tablar (Məhsul haqqında və s.) */
+  /* ALT TABLAR */
   .pp-bottom-section { margin-top: 15px; }
   .pp-tab { padding: 10px; font-size: 12px; border-radius: 10px 10px 0 0; }
   .pp-content { padding: 14px; font-size: 13px; line-height: 1.5; border-radius: 0 0 10px 10px; }
   
-  /* Ekrandakı Üzən Düymələr (AI, Paket, Oyun) kiçildilir */
+  /* ÜZƏN DÜYMƏLƏR (AI, PAKET, OYUN) */
   .gameFab, .bundleFab { height: 40px; padding: 0 14px; font-size: 12px; border-radius: 20px; }
   .bundleFab { bottom: 12px; left: 12px; }
   .gameFab { bottom: 60px; left: 12px; }
   .chatFab { width: 44px; height: 44px; font-size: 16px; bottom: 12px; right: 12px; }
-  
-  /* Geri qayıt düyməsi */
   .pp-back-btn { padding: 6px 12px; font-size: 12px; margin-bottom: 10px; }
-  
-  /* MOBİL ÜÇÜN HERO BÖLMƏSİ (Slayder üstə, axtarış və dəstək altta yan-yana) */
-  .hero-side-boxes { grid-template-columns: 1fr 1fr; gap: 10px; }
-  .hero-slider-box { min-height: 200px; border-radius: 16px; }
-  .full-slide-img { border-radius: 16px; }
-  .side-box { padding: 12px; border-radius: 16px; }
-  .support-box-img img { border-radius: 16px; }
-  .sp-title { font-size: 13px; margin-bottom: 6px; }
-  .sp-title .highlight { padding: 2px 6px; border-radius: 6px; margin-top: 2px; font-size: 11px; }
-  .sp-desc { display: none; } 
-  .side-search { padding: 10px; font-size: 12px; border-radius: 10px; }
+
+  /* DİGƏR MODALLAR */
+  .bmGrid { grid-template-columns: repeat(3, 1fr); }
+  .bmForm { grid-template-columns: 1fr; }
+  .gameOptions { grid-template-columns: 1fr; }
+}
+
+@media(max-width: 400px) {
+  .bmGrid { grid-template-columns: repeat(2, 1fr); }
 }
