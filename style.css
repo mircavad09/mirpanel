@@ -1,5 +1,5 @@
 /* =========================================================
-   style.css — Mirpanel (FINAL PREMIUM: PRODUCT PAGE + FULL ORIGINAL)
+   style.css — Mirpanel (FINAL PREMIUM: HİBRİD MASAÜSTÜ & YIĞCAM MOBİL)
    ========================================================= */
 
 :root{
@@ -226,7 +226,7 @@ a{color:inherit;text-decoration:none}
   align-items: stretch;
 }
 
-/* Sol Tərəf - Slayder (Sənin Şəkillərin) */
+/* Sol Tərəf - Slayder */
 .hero-slider-box {
   position: relative;
   border-radius: 24px;
@@ -245,7 +245,6 @@ a{color:inherit;text-decoration:none}
   display: block; border-radius: 24px; 
 }
 
-/* Yenilik: Slayder Oxları */
 .slider-arrow {
   position: absolute;
   top: 50%;
@@ -270,7 +269,6 @@ a{color:inherit;text-decoration:none}
 .prev-arrow { left: 15px; }
 .next-arrow { right: 15px; }
 
-/* Nöqtələr */
 .slider-dots { 
   position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
   display: flex; gap: 8px; z-index: 5; 
@@ -279,12 +277,10 @@ a{color:inherit;text-decoration:none}
 .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: 0.3s; }
 .dot.active { background: #ffd400; width: 26px; border-radius: 10px; }
 
-
 /* Sağ Tərəf - Qutular */
 .hero-side-boxes { display: flex; flex-direction: column; gap: 16px; }
 .side-box { background: linear-gradient(145deg, #111, #1a1a1a); border-radius: 24px; padding: 24px; flex: 1; display: flex; flex-direction: column; justify-content: center; border: 1px solid rgba(255,255,255,0.06); position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 
-/* Axtarış Qutusu */
 .search-promo-box { text-align: center; }
 .sp-title { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 10px; line-height: 1.3;}
 .sp-title .highlight { background: #ffd400; color: #000; padding: 2px 10px; border-radius: 8px; display: inline-block; margin-top:4px;}
@@ -292,7 +288,6 @@ a{color:inherit;text-decoration:none}
 .side-search { width: 100%; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.5); border-radius: 14px; padding: 14px; color: #fff; font-family: inherit; font-size: 14px; text-align:center;}
 .side-search::placeholder { color: rgba(255,255,255,0.4); }
 
-/* Canlı Dəstək Qutusu - ŞƏKİL FORMATI */
 .support-box-img { padding: 0 !important; border: none !important; text-decoration: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: block;}
 .support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0,255,153,0.15); }
 
@@ -326,7 +321,6 @@ a{color:inherit;text-decoration:none}
   transform:translateY(-1px);
 }
 
-
 .grid{
   display:grid;
   grid-template-columns:repeat(5, 1fr);
@@ -352,7 +346,7 @@ a{color:inherit;text-decoration:none}
   display:flex;
   flex-direction:column;
   transition:transform .25s ease, box-shadow .25s ease;
-  cursor: pointer; /* Bütün kart kliklənə bilər */
+  cursor: pointer;
 }
 @keyframes pop {
   to{ transform:translateY(0); opacity:1; }
@@ -488,45 +482,48 @@ a{color:inherit;text-decoration:none}
 
 
 /* =========================================
-   YENİ: MƏHSUL DETALLARI SƏHİFƏSİ (PRODUCT PAGE VIEW)
+   YENİ HİBRİD MƏHSUL SƏHİFƏSİ (MASAÜSTÜ & MOBİL)
    ========================================= */
-.pp-back-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 10px 20px; border-radius: 12px; font-size: 15px; font-weight: 600; margin-top: 10px; margin-bottom: 20px; cursor: pointer; transition: 0.2s;}
+.pp-back-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 15px; cursor: pointer; transition: 0.2s; }
 .pp-back-btn:hover { background: rgba(255,255,255,0.05); }
 
-.pp-top-grid { display: grid; grid-template-columns: 350px 1fr 320px; gap: 20px; align-items: start;}
-.pp-box { background: rgba(17,17,17,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(10px);}
+/* MASAÜSTÜ (Desktop) Görünüşü */
+.pp-top-grid { display: grid; grid-template-columns: 350px 1fr 320px; gap: 20px; align-items: start; }
+.pp-box { background: rgba(17,17,17,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(10px); }
 
-/* Left: Şəkil və düymələr */
-.pp-left { display: flex; flex-direction: column; gap: 15px; }
-.pp-img-wrap { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 16px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);}
+.desktop-btn { display: flex; margin-top: 15px; }
+.mobile-btn { display: none; }
+
+.pp-img-wrap { width: 100%; aspect-ratio: 4/3; background: #000; border-radius: 16px; position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
 .pp-img-wrap img { width: 100%; height: 100%; object-fit: cover; }
-.pp-avail-badge { position: absolute; top: 12px; right: 12px; background: #00b894; color: #fff; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 99px; box-shadow: 0 4px 10px rgba(0, 184, 148, 0.4);}
-.pp-actions { display: flex; width: 100%; }
-.pp-btn-solid { width: 100%; padding: 14px; border: none; background: linear-gradient(135deg, rgba(255,212,0,1), rgba(255,212,0,0.8)); color: #000; border-radius: 99px; font-weight: 800; font-size: 16px; cursor: pointer; font-family: inherit; transition: 0.2s; box-shadow: 0 5px 15px rgba(255,212,0,0.3);}
+.pp-avail-badge { position: absolute; top: 12px; right: 12px; background: rgba(0, 184, 148, 0.2); color: #00b894; border: 1px solid #00b894; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 99px; }
+
+.pp-btn-solid { width: 100%; padding: 14px; border: none; background: linear-gradient(135deg, rgba(255,212,0,1), rgba(255,212,0,0.8)); color: #000; border-radius: 99px; font-weight: 800; font-size: 16px; cursor: pointer; transition: 0.2s; box-shadow: 0 5px 15px rgba(255,212,0,0.3); font-family: inherit;}
 .pp-btn-solid:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(255,212,0,0.4); }
 
-/* Center: Məlumat və Planlar */
-.pp-center { display: flex; flex-direction: column; }
-.pp-title { font-size: 26px; font-weight: 800; margin: 0 0 10px 0; line-height: 1.3;}
-.pp-delivery { font-size: 14px; color: #00ff99; margin-bottom: 25px; font-weight: 600;}
-.pp-subtitle { font-size: 16px; font-weight: 700; color: rgba(255,255,255,0.8); margin-bottom: 15px; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);}
+.pp-title { font-size: 26px; font-weight: 800; margin: 0 0 6px 0; line-height: 1.3; }
+.pp-delivery { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 25px; line-height: 1.5; }
+.pp-subtitle { font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 12px; padding: 0; border: none;}
 
-.pp-plans-container { display: flex; flex-direction: column; gap: 12px; }
-.pp-plan-label { display: flex; align-items: center; justify-content: space-between; padding: 16px; border: 2px solid rgba(255,255,255,0.1); border-radius: 14px; background: rgba(0,0,0,0.3); cursor: pointer; transition: 0.2s; }
-.pp-plan-label:hover { border-color: rgba(255,212,0,0.4); }
-.pp-plan-label.active { border-color: #ffd400; background: rgba(255,212,0,0.08); box-shadow: 0 5px 15px rgba(255,212,0,0.1); }
-.pp-plan-left { display: flex; align-items: center; gap: 12px; }
-.pp-radio-circle { width: 22px; height: 22px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.4); display: flex; align-items: center; justify-content: center; }
+/* PLANLAR */
+.pp-plans-container { display: flex; flex-direction: column; gap: 10px; margin-bottom: 5px; }
+.pp-plan-label { display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.15); border-radius: 12px; background: rgba(0,0,0,0.3); cursor: pointer; transition: 0.2s; }
+.pp-plan-label:hover { border-color: rgba(255,255,255,0.3); }
+.pp-plan-label.active { border-color: #ffd400; background: rgba(255,212,0,0.05); }
+
+.pp-plan-left { display: flex; align-items: center; gap: 10px; }
+.pp-radio-circle { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.3); display: flex; align-items: center; justify-content: center; transition: 0.2s;}
 .pp-plan-label.active .pp-radio-circle { border-color: #ffd400; }
-.pp-plan-label.active .pp-radio-circle::after { content: ""; width: 10px; height: 10px; background: #ffd400; border-radius: 50%; }
-.pp-plan-name { font-size: 15px; font-weight: 700; color: #fff;}
-.pp-plan-disc-badge { font-size: 11px; font-weight: 800; background: #00b894; color: #fff; padding: 2px 6px; border-radius: 6px; margin-left: 8px;}
-.pp-plan-right { display: flex; align-items: center; gap: 10px; }
-.pp-old-price { font-size: 14px; color: rgba(255,255,255,0.4); text-decoration: line-through; font-weight: 600;}
-.pp-new-price { font-size: 18px; color: #ffd400; font-weight: 800;}
+.pp-plan-label.active .pp-radio-circle::after { content: ""; width: 8px; height: 8px; background: #ffd400; border-radius: 50%; }
 
-/* Right: Oxşar Məhsullar */
-.pp-right { display: flex; flex-direction: column; }
+.pp-plan-name { font-size: 14px; font-weight: 600; color: #fff; }
+.pp-plan-disc-badge { font-size: 12px; color: rgba(255,255,255,0.6); margin-left: 4px; font-weight: normal; }
+
+.pp-plan-right { display: flex; align-items: center; gap: 8px; }
+.pp-old-price { font-size: 12px; color: rgba(255,255,255,0.4); text-decoration: line-through; }
+.pp-new-price { font-size: 16px; color: #fff; font-weight: 700; }
+
+/* Oxşar Məhsullar */
 .pp-similar-list { display: flex; flex-direction: column; gap: 12px; max-height: 400px; overflow-y: auto; padding-right: 5px; }
 .pp-similar-list::-webkit-scrollbar { width: 5px; }
 .pp-similar-list::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -537,17 +534,24 @@ a{color:inherit;text-decoration:none}
 .pp-sim-title { font-size: 14px; font-weight: 700; color: #fff; line-height: 1.2;}
 .pp-sim-price { font-size: 13px; color: #ffd400; font-weight: 600;}
 
-/* Bottom: Tablar */
+/* Tablar */
 .pp-bottom-section { margin-top: 30px; }
 .pp-tabs { display: flex; gap: 10px; margin-bottom: -1px; z-index: 2; position: relative;}
-.pp-tab { flex: 1; padding: 18px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08); border-bottom: none; border-radius: 16px 16px 0 0; color: rgba(255,255,255,0.6); font-size: 16px; font-weight: 700; cursor: pointer; font-family: inherit; transition: 0.2s;}
-.pp-tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
+.pp-tab { flex: 1; padding: 16px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08); border-bottom: none; border-radius: 16px 16px 0 0; color: rgba(255,255,255,0.6); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: 0.2s;}
 .pp-tab.active { background: #ffd400; color: #000; border-color: #ffd400;}
 .pp-content { border-radius: 0 0 16px 16px; padding: 30px; line-height: 1.7; font-size: 15px; color: rgba(255,255,255,0.85); background: rgba(17,17,17,0.8); border-top: 1px solid #ffd400;}
 
 @media(max-width: 980px){
-  .pp-top-grid { grid-template-columns: 1fr; }
-  .pp-left, .pp-center, .pp-right { width: 100%; }
+  .pp-top-grid { grid-template-columns: 1fr; gap: 15px; }
+  .pp-left { background: transparent; border: none; padding: 0; box-shadow: none; backdrop-filter: none; }
+  .pp-img-wrap { aspect-ratio: 16/9; max-height: 250px; border-radius: 12px; margin-bottom: 0; }
+  .desktop-btn { display: none; }
+  .mobile-btn { display: flex; }
+  .pp-center, .pp-right { padding: 16px; border-radius: 16px; }
+  .pp-title { font-size: 20px; }
+  .pp-bottom-section { margin-top: 20px; }
+  .pp-tab { padding: 12px; font-size: 13px; border-radius: 12px 12px 0 0; }
+  .pp-content { padding: 16px; font-size: 14px; border-radius: 0 0 12px 12px; }
 }
 
 
@@ -569,7 +573,7 @@ a{color:inherit;text-decoration:none}
 .tiny{color:rgba(255,255,255,.55);font-size:13px; font-weight: 400;}
 
 /* =========================================
-   STANDART MODAL (Həm köhnə məlumatlar, həm də Form üçün qorunur)
+   STANDART MODAL
    ========================================= */
 .modal{
   position:fixed;
@@ -612,7 +616,7 @@ a{color:inherit;text-decoration:none}
 .close:active{transform:scale(.98)}
 .close:hover { color: #fff; background: rgba(255,255,255,0.05);}
 
-.mTop, .mInfoBox, .mPlansTitle, .mPlans { display: none; } /* Orijinal modaldan istifadə edirik amma gizlədirik */
+.mTop, .mInfoBox, .mPlansTitle, .mPlans { display: none; }
 
 .mBottom{display:flex;gap:10px;flex-direction:column;margin-top:12px; text-align:center;}
 .mSmall{color:rgba(255,255,255,.55);font-size:12px}
@@ -676,7 +680,6 @@ a{color:inherit;text-decoration:none}
 .bmSubmit:hover { background:#ff1a1a; transform:translateY(-2px); box-shadow: 0 8px 20px rgba(230, 0, 0, 0.4);}
 .bmSubmit:active { transform:scale(0.98); }
 
-
 /* =========================
    LÜKS OYUN MƏRKƏZİ STİLLƏRİ
    ========================= */
@@ -738,7 +741,6 @@ a{color:inherit;text-decoration:none}
 .gmOverlay { position:absolute; inset:0; background:rgba(5,5,5,0.92); display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px; text-align:center; z-index:10; }
 .gmBigLogo { font-size: 70px; margin-bottom: 15px; filter: drop-shadow(0 0 20px rgba(255,212,0,0.5)); animation: floatLogo 2s ease-in-out infinite alternate;}
 @keyframes floatLogo { from {transform: translateY(-5px);} to {transform: translateY(5px);} }
-
 
 /* =========================
    AI CHAT
@@ -832,20 +834,6 @@ a{color:inherit;text-decoration:none}
 .reveal-right{opacity:0;transform:translateX(26px);transition:opacity .6s ease, transform .6s ease;will-change:opacity, transform;}
 .reveal-right.show{opacity:1;transform:translateX(0);}
 
-/* =========================
-   RESPONSIVE FIXES (Mobile)
-   ========================= */
-@media(max-width:640px){
-  .grid{grid-template-columns:repeat(2, 1fr);gap:12px;}
-  .card{height:310px;}
-  .card .pad{padding:12px 12px 14px;}
-  .cornerPrice{top:9px;right:9px;padding:8px 12px;font-size:12px;}
-  .btn.primary{width:100%;padding:14px 0;font-size:15px;border-radius:30px;min-height:48px;}
-  .reveal, .reveal-left, .reveal-right{transition-duration:.45s;}
-  .banner-wrap {margin-top: 10px;}
-  .banner-box {padding: 8px 12px;border-radius: 10px;}
-  .banner-text {font-size: 12px;}
-}
 
 /* =========================================================
    FINAL PREMIUM SPLASH SCREEN STİLLƏRİ
@@ -909,4 +897,58 @@ a{color:inherit;text-decoration:none}
 @keyframes premiumPulse {
   0% { transform: scale(0.98); opacity: 0.85; filter: drop-shadow(0 0 40px rgba(255, 212, 0, 0.2)); }
   100% { transform: scale(1.02); opacity: 1; filter: drop-shadow(0 0 70px rgba(255, 212, 0, 0.4)); }
+}
+
+/* =========================================
+   MOBİL ÜÇÜN XÜSUSİ YIĞCAMLAŞDIRMA (KİÇİK EKRANLAR)
+   ========================================= */
+@media(max-width: 640px) {
+  .grid{grid-template-columns:repeat(2, 1fr);gap:12px;}
+  .card{height:310px;}
+  .card .pad{padding:12px 12px 14px;}
+  .cornerPrice{top:9px;right:9px;padding:8px 12px;font-size:12px;}
+  .btn.primary{width:100%;padding:14px 0;font-size:15px;border-radius:30px;min-height:48px;}
+  .reveal, .reveal-left, .reveal-right{transition-duration:.45s;}
+  .banner-wrap {margin-top: 10px;}
+  .banner-box {padding: 8px 12px;border-radius: 10px;}
+  .banner-text {font-size: 12px;}
+
+  /* Ümumi səhifə boşluqları */
+  .wrap { padding: 10px; }
+  
+  /* Şəkil və Başlıqlar */
+  .pp-img-wrap { max-height: 180px; border-radius: 10px; margin-bottom: 12px; }
+  .pp-title { font-size: 18px; margin-bottom: 4px; }
+  .pp-delivery { font-size: 12px; margin-bottom: 15px; }
+  .pp-subtitle { font-size: 14px; margin-bottom: 8px; padding-bottom: 5px; }
+  
+  /* Əsas Qutuların iç boşluqları */
+  .pp-box { padding: 12px; border-radius: 12px; }
+  
+  /* Planlar (Ən çox yer tutan hissəni yığcamlaşdırırıq) */
+  .pp-plans-container { gap: 8px; margin-bottom: 15px; }
+  .pp-plan-label { padding: 10px; border-radius: 10px; }
+  .pp-radio-circle { width: 16px; height: 16px; }
+  .pp-plan-label.active .pp-radio-circle::after { width: 8px; height: 8px; }
+  .pp-plan-name { font-size: 13px; }
+  .pp-plan-disc-badge { font-size: 10px; padding: 2px 4px; margin-left: 4px; }
+  .pp-new-price { font-size: 14px; }
+  .pp-old-price { font-size: 11px; }
+  
+  /* Sifariş Düyməsi */
+  .pp-btn-solid { padding: 12px; font-size: 14px; border-radius: 10px; }
+  
+  /* Alt Tablar (Məhsul haqqında və s.) */
+  .pp-bottom-section { margin-top: 15px; }
+  .pp-tab { padding: 10px; font-size: 12px; border-radius: 10px 10px 0 0; }
+  .pp-content { padding: 14px; font-size: 13px; line-height: 1.5; border-radius: 0 0 10px 10px; }
+  
+  /* Ekrandakı Üzən Düymələr (AI, Paket, Oyun) kiçildilir */
+  .gameFab, .bundleFab { height: 40px; padding: 0 14px; font-size: 12px; border-radius: 20px; }
+  .bundleFab { bottom: 12px; left: 12px; }
+  .gameFab { bottom: 60px; left: 12px; }
+  .chatFab { width: 44px; height: 44px; font-size: 16px; bottom: 12px; right: 12px; }
+  
+  /* Geri qayıt düyməsi */
+  .pp-back-btn { padding: 6px 12px; font-size: 12px; margin-bottom: 10px; }
 }
