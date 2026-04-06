@@ -1512,7 +1512,7 @@ function showConfirmOnlyForm(p, plan) {
     </div>
   `;
   document.getElementById("c_send").onclick = () => {
-    sendWA(p, plan, "Sifariş növü: Hazır Hesab (Şifrə/Email tələb olunmur)");
+    sendWA(p, plan, "");
     closeModal();
   };
 }
