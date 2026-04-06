@@ -216,22 +216,22 @@ a{color:inherit;text-decoration:none}
 
 
 /* =========================================
-   YENİ HERO LAYOUT (SOL: ÖZƏL ŞƏKİLLİ SLAYDER, SAĞ: 2 QUTU)
+   HERO LAYOUT (YUXARI: SLAYDER, AŞAĞI: AXTARIŞ VƏ DƏSTƏK YAN-YANA)
    ========================================= */
 .hero-section {
-  display: grid;
-  grid-template-columns: 2fr 1fr;
+  display: flex;
+  flex-direction: column; /* Alt-alta sıralayır: Əvvəl Slayder, sonra qutular */
   gap: 16px;
   margin-top: 14px;
-  align-items: stretch;
 }
 
-/* Sol Tərəf - Slayder */
+/* Yuxarı Tərəf - Slayder (Tam En) */
 .hero-slider-box {
   position: relative;
   border-radius: 24px;
   overflow: hidden;
-  min-height: 340px;
+  width: 100%;
+  min-height: 420px;
   box-shadow: 0 15px 45px rgba(0,0,0,0.3);
   background: #000;
 }
@@ -245,30 +245,16 @@ a{color:inherit;text-decoration:none}
   display: block; border-radius: 24px; 
 }
 
+/* Slayder Oxları */
 .slider-arrow {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 45px;
-  height: 45px;
-  background: rgba(0,0,0,0.6);
-  color: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 50%;
-  cursor: pointer;
-  z-index: 10;
-  font-size: 20px;
-  transition: 0.3s;
-  border: 1px solid rgba(255,255,255,0.2);
-  backdrop-filter: blur(4px);
+  position: absolute; top: 50%; transform: translateY(-50%); width: 45px; height: 45px; background: rgba(0,0,0,0.6); color: #fff; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; z-index: 10; font-size: 20px; transition: 0.3s; border: 1px solid rgba(255,255,255,0.2); backdrop-filter: blur(4px);
 }
 .slider-arrow:hover { background: rgba(255,212,0,0.9); color: #000; border-color: #ffd400; transform: translateY(-50%) scale(1.1);}
 .slider-arrow:active { transform: translateY(-50%) scale(0.9);}
 .prev-arrow { left: 15px; }
 .next-arrow { right: 15px; }
 
+/* Nöqtələr */
 .slider-dots { 
   position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
   display: flex; gap: 8px; z-index: 5; 
@@ -277,23 +263,46 @@ a{color:inherit;text-decoration:none}
 .dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.4); cursor: pointer; transition: 0.3s; }
 .dot.active { background: #ffd400; width: 26px; border-radius: 10px; }
 
-/* Sağ Tərəf - Qutular */
-.hero-side-boxes { display: flex; flex-direction: column; gap: 16px; }
-.side-box { background: linear-gradient(145deg, #111, #1a1a1a); border-radius: 24px; padding: 24px; flex: 1; display: flex; flex-direction: column; justify-content: center; border: 1px solid rgba(255,255,255,0.06); position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
+/* Aşağı Tərəf - Qutular Yan-Yana */
+.hero-side-boxes { 
+  display: grid; 
+  grid-template-columns: 1fr 1fr; /* Qutuları tən yarıdan Yan-Yana düzür */
+  gap: 16px; 
+  width: 100%;
+}
+.side-box { background: linear-gradient(145deg, #111, #1a1a1a); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; justify-content: center; border: 1px solid rgba(255,255,255,0.06); position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
 
+/* Sol Qutu: Axtarış */
 .search-promo-box { text-align: center; }
-.sp-title { font-size: 20px; font-weight: 800; color: #fff; margin-bottom: 10px; line-height: 1.3;}
+.sp-title { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 10px; line-height: 1.3;}
 .sp-title .highlight { background: #ffd400; color: #000; padding: 2px 10px; border-radius: 8px; display: inline-block; margin-top:4px;}
-.sp-desc { font-size: 13px; color: rgba(255,255,255,0.6); margin-bottom: 20px; line-height: 1.5; padding: 0 10px;}
+.sp-desc { font-size: 14px; color: rgba(255,255,255,0.6); margin-bottom: 20px; line-height: 1.5; padding: 0 10px;}
 .side-search { width: 100%; border: 1px solid rgba(255,255,255,0.15); background: rgba(0,0,0,0.5); border-radius: 14px; padding: 14px; color: #fff; font-family: inherit; font-size: 14px; text-align:center;}
 .side-search::placeholder { color: rgba(255,255,255,0.4); }
 
-.support-box-img { padding: 0 !important; border: none !important; text-decoration: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: block;}
+/* Sağ Qutu: Canlı Dəstək Şəkli */
+.support-box-img { padding: 0 !important; border: none !important; text-decoration: none; cursor: pointer; transition: transform 0.2s, box-shadow 0.2s; display: block; height: 100%; min-height: 150px;}
 .support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px rgba(0,255,153,0.15); }
+.support-box-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 24px; }
 
+/* Ekran kiçildikdə ölçülərin nizamlanması */
 @media (max-width: 980px) {
-  .hero-section { grid-template-columns: 1fr; }
-  .hero-slider-box { min-height: 250px; }
+  .hero-slider-box { min-height: 280px; }
+  .sp-title { font-size: 18px; }
+}
+
+/* MOBİL (Telefon) ÜÇÜN XÜSUSİ YIĞCAMLAŞDIRMA (Slayder altında yan-yana) */
+@media (max-width: 640px) {
+  .hero-side-boxes { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hero-slider-box { min-height: 200px; border-radius: 16px; }
+  .full-slide-img { border-radius: 16px; }
+  .side-box { padding: 12px; border-radius: 16px; }
+  .support-box-img img { border-radius: 16px; }
+  
+  .sp-title { font-size: 13px; margin-bottom: 6px; }
+  .sp-title .highlight { padding: 2px 6px; border-radius: 6px; margin-top: 2px; font-size: 11px; }
+  .sp-desc { display: none; } 
+  .side-search { padding: 10px; font-size: 12px; border-radius: 10px; }
 }
 
 
@@ -834,7 +843,6 @@ a{color:inherit;text-decoration:none}
 .reveal-right{opacity:0;transform:translateX(26px);transition:opacity .6s ease, transform .6s ease;will-change:opacity, transform;}
 .reveal-right.show{opacity:1;transform:translateX(0);}
 
-
 /* =========================================================
    FINAL PREMIUM SPLASH SCREEN STİLLƏRİ
    ========================================================= */
@@ -951,4 +959,15 @@ a{color:inherit;text-decoration:none}
   
   /* Geri qayıt düyməsi */
   .pp-back-btn { padding: 6px 12px; font-size: 12px; margin-bottom: 10px; }
+  
+  /* MOBİL ÜÇÜN HERO BÖLMƏSİ (Slayder üstə, axtarış və dəstək altta yan-yana) */
+  .hero-side-boxes { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hero-slider-box { min-height: 200px; border-radius: 16px; }
+  .full-slide-img { border-radius: 16px; }
+  .side-box { padding: 12px; border-radius: 16px; }
+  .support-box-img img { border-radius: 16px; }
+  .sp-title { font-size: 13px; margin-bottom: 6px; }
+  .sp-title .highlight { padding: 2px 6px; border-radius: 6px; margin-top: 2px; font-size: 11px; }
+  .sp-desc { display: none; } 
+  .side-search { padding: 10px; font-size: 12px; border-radius: 10px; }
 }
