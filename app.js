@@ -113,14 +113,14 @@ const DATA = {
     },
     {
       id: "netflix", category: "film", image: "assets/netflix.png", currency: "₼",
-      title: "Netflix Premium Şəxsi", variant: "Şəxsi", badge: "Film",
+      title: "Netflix Şəxsi", variant: "Premium", badge: "Film",
       desc: "Filmlər, seriallar, yüksək keyfiyyət.",
       note: "Netflix Şəxsi otaq: Plan seç → Ad və 4 rəqəmli kod yaz.",
       plans: [{ months: 1, price: 5.99 }, { months: 3, price: 16.49 }, { months: 6, price: 29.99 }],
     },
     {
       id: "netflix_umumi", category: "film", image: "assets/netflix.png", currency: "₼",
-      title: "Netflix Premium Ümumi", variant: "Ümumi", badge: "Film",
+      title: "Netflix Ümumi", variant: "Premium", badge: "Film",
       desc: "Ümumi hesab (paylaşılan).",
       note: "Hazır hesab verilir. Sifarişi təsdiqləyin.",
       plans: [{ months: 1, price: 3.99 }],
