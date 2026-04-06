@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=final19" />
+  <link rel="stylesheet" href="style.css?v=final21" />
   <link rel="icon" href="assets/logo.png" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 </head>
@@ -121,24 +121,29 @@
           <span class="pp-avail-badge">Mövcuddur</span>
           <img id="pp-main-img" src="" alt="Product" />
         </div>
-        <div class="pp-actions">
-          <button class="pp-btn-solid" id="pp-order-btn" style="width: 100%;">Sifariş et</button>
+        <div class="pp-actions desktop-btn">
+          <button class="pp-btn-solid" onclick="document.getElementById('pp-order-btn').click()">Sifariş et</button>
         </div>
       </div>
 
       <div class="pp-box pp-center">
         <h1 id="pp-main-title" class="pp-title">Məhsul Adı</h1>
-        <div class="pp-delivery">7/24, dərhal təqdim olunur ✅⚡</div>
+        <div class="pp-delivery">
+          <strong style="color: #2ed573;">7/24, gün ərzində təqdim olunur.</strong> 
+          Sifariş müddəti ərzində hesab dəyişikliyi olmadan çalışır. ✔️
+        </div>
         
         <h3 class="pp-subtitle">Müddət seçin</h3>
-        <div id="pp-plans-container" class="pp-plans-container">
-          </div>
+        <div id="pp-plans-container" class="pp-plans-container"></div>
+        
+        <div class="pp-actions mobile-btn" style="margin-top: 15px;">
+          <button class="pp-btn-solid" id="pp-order-btn">Sifariş et</button>
+        </div>
       </div>
 
       <div class="pp-box pp-right">
         <h3 class="pp-subtitle">Oxşar Məhsullar</h3>
-        <div id="pp-similar-list" class="pp-similar-list">
-          </div>
+        <div id="pp-similar-list" class="pp-similar-list"></div>
       </div>
 
     </div>
@@ -148,8 +153,7 @@
         <button class="pp-tab active" data-target="tab-about">Məhsul Haqqında</button>
         <button class="pp-tab" data-target="tab-rules">İstifadə Qaydaları</button>
       </div>
-      <div class="pp-content pp-box" id="pp-content-box">
-        </div>
+      <div class="pp-content pp-box" id="pp-content-box"></div>
     </div>
 
   </div>
@@ -300,7 +304,7 @@
     </div>
   </div>
 
-  <script src="app.js?v=final19"></script>
-  <script src="app-ai.js?v=final19"></script>
+  <script src="app.js?v=final21"></script>
+  <script src="app-ai.js?v=final21"></script>
 </body>
 </html>
