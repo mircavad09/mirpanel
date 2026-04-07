@@ -30,7 +30,7 @@
     </div>
   </div>
 
-  <header class="top">
+  <header class="top" id="mainHeader">
     <div class="wrap nav">
       <div class="brand">
         <img src="assets/logo.png" alt="Mirpanel Logo" class="logo" />
@@ -306,5 +306,39 @@
 
   <script src="app.js?v=final21"></script>
   <script src="app-ai.js?v=final21"></script>
+  
+  <script>
+    document.addEventListener("DOMContentLoaded", () => {
+      // DOM elementlərini axtarırıq (JS-də səhifəni dəyişdiyiniz ehtimal edilən elementlər)
+      const homeView = document.getElementById("homePageView");
+      const productView = document.getElementById("productPageView");
+      const mainHeader = document.getElementById("mainHeader");
+      const backBtn = document.getElementById("btnBackToHome");
+      
+      // Funksiya: Header-i yoxlamaq
+      function checkHeaderVisibility() {
+        if (productView.style.display === "block" || productView.style.display === "flex" || productView.style.display === "") {
+            mainHeader.style.display = "none";
+        } else {
+            mainHeader.style.display = "block"; 
+        }
+      }
+
+      // MutationObserver vasitəsilə səhifənin display xüsusiyyəti dəyişəndə izləyirik
+      const observer = new MutationObserver(checkHeaderVisibility);
+      if (productView) {
+          observer.observe(productView, { attributes: true, attributeFilter: ["style"] });
+      }
+
+      // Geri qayıt düyməsinə klikləyəndə də yoxlayırıq (ehtiyat üçün)
+      if (backBtn) {
+          backBtn.addEventListener("click", () => {
+              setTimeout(() => {
+                  mainHeader.style.display = "block";
+              }, 50);
+          });
+      }
+    });
+  </script>
 </body>
 </html>
