@@ -42,15 +42,6 @@ a{color:inherit;text-decoration:none}
   background:rgba(7,7,7,.72);
   border-bottom:1px solid rgba(255,255,255,.08);
 }
-
-/* =========================================
-   YENİ: MƏHSUL SƏHİFƏSİNDƏ ÜST PANELİ GİZLƏTMƏK ÜÇÜN
-   Qeyd: Məhsul səhifəsinin <body> taqına class="hide-top-panel" əlavə edin.
-   ========================================= */
-body.hide-top-panel .top {
-  display: none !important;
-}
-
 .nav{
   display:flex;
   gap:12px;
@@ -844,12 +835,17 @@ body.hide-top-panel .top {
    RESPONSIVE FIXES (Mobile & Tablet)
    ========================= */
 @media(max-width:640px){
-  /* ÜMUMİ KARTLAR */
-  .grid { grid-template-columns: repeat(2, 1fr); gap: 12px; }
-  .card { height: 310px; }
-  .card .pad { padding: 12px 12px 14px; }
-  .cornerPrice { top: 9px; right: 9px; padding: 8px 12px; font-size: 12px; }
-  .btn.primary { width: 100%; padding: 14px 0; font-size: 15px; border-radius: 30px; min-height: 48px; }
+  /* ÜMUMİ KARTLAR (Mobildə yığcam və səliqəli - Based.az tərzi) */
+  .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .card { height: 260px; border-radius: 18px; }
+  .card .imgWrap { flex: 0 0 125px; height: 125px; }
+  .card .pad { padding: 10px 10px 12px 10px; }
+  .topline { align-items: center; margin-bottom: 4px; }
+  .title { font-size: 13px; line-height: 1.25; }
+  .badge { font-size: 10px; padding: 4px 6px; }
+  .cornerPrice { top: 6px; right: 6px; padding: 5px 8px; font-size: 11px; border-radius: 10px; }
+  .priceRow { margin-top: auto; }
+  .btn.primary { width: 100%; padding: 10px 0; font-size: 14px; border-radius: 14px; min-height: 38px; margin-top: 6px; box-shadow: 0 4px 12px rgba(255,212,0,.15); }
   .reveal, .reveal-left, .reveal-right { transition-duration: .45s; }
   
   /* BANNERS */
@@ -880,7 +876,7 @@ body.hide-top-panel .top {
   .bmRow.final { font-size: 14px; }
   .bmRow.final span:last-child { font-size: 18px; }
 
-  /* MƏHSUL DETALLARI YIĞCAMLIĞI (Bura Xüsusi Olaraq Kompres Olundu) */
+  /* MƏHSUL DETALLARI YIĞCAMLIĞI */
   .pp-top-grid { gap: 10px; }
   .pp-box { padding: 12px; border-radius: 16px; }
   .pp-img-wrap { max-height: 160px; border-radius: 12px; margin-bottom: 5px; }
