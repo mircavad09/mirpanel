@@ -220,7 +220,7 @@ a{color:inherit;text-decoration:none}
    ========================================= */
 .hero-section {
   display: flex;
-  flex-direction: column;
+  flex-direction: column; 
   gap: 16px;
   margin-top: 14px;
 }
@@ -288,6 +288,20 @@ a{color:inherit;text-decoration:none}
 @media (max-width: 980px) {
   .hero-slider-box { min-height: 280px; }
   .sp-title { font-size: 18px; }
+}
+
+/* MOBİL (Telefon) ÜÇÜN XÜSUSİ YIĞCAMLAŞDIRMA (Slayder altında yan-yana) */
+@media (max-width: 640px) {
+  .hero-side-boxes { grid-template-columns: 1fr 1fr; gap: 10px; }
+  .hero-slider-box { min-height: 200px; border-radius: 16px; }
+  .full-slide-img { border-radius: 16px; }
+  .side-box { padding: 12px; border-radius: 16px; }
+  .support-box-img img { border-radius: 16px; }
+  
+  .sp-title { font-size: 13px; margin-bottom: 6px; }
+  .sp-title .highlight { padding: 2px 6px; border-radius: 6px; margin-top: 2px; font-size: 11px; }
+  .sp-desc { display: none; } 
+  .side-search { padding: 10px; font-size: 12px; border-radius: 10px; }
 }
 
 
@@ -409,6 +423,7 @@ a{color:inherit;text-decoration:none}
 .pp-back-btn { background: transparent; border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 8px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; margin-bottom: 15px; cursor: pointer; transition: 0.2s; }
 .pp-back-btn:hover { background: rgba(255,255,255,0.05); }
 
+/* MASAÜSTÜ (Desktop) Görünüşü */
 .pp-top-grid { display: grid; grid-template-columns: 350px 1fr 320px; gap: 20px; align-items: start; }
 .pp-box { background: rgba(17,17,17,0.6); border: 1px solid rgba(255,255,255,0.08); border-radius: 20px; padding: 20px; backdrop-filter: blur(10px); }
 
@@ -456,6 +471,7 @@ a{color:inherit;text-decoration:none}
 .pp-bottom-section { margin-top: 30px; }
 .pp-tabs { display: flex; gap: 10px; margin-bottom: -1px; z-index: 2; position: relative;}
 .pp-tab { flex: 1; padding: 16px; background: rgba(0,0,0,0.5); border: 1px solid rgba(255,255,255,0.08); border-bottom: none; border-radius: 16px 16px 0 0; color: rgba(255,255,255,0.6); font-size: 15px; font-weight: 700; cursor: pointer; font-family: inherit; transition: 0.2s;}
+.pp-tab:hover { color: #fff; background: rgba(255,255,255,0.05); }
 .pp-tab.active { background: #ffd400; color: #000; border-color: #ffd400;}
 .pp-content { border-radius: 0 0 16px 16px; padding: 30px; line-height: 1.7; font-size: 15px; color: rgba(255,255,255,0.85); background: rgba(17,17,17,0.8); border-top: 1px solid #ffd400;}
 
@@ -505,23 +521,12 @@ a{color:inherit;text-decoration:none}
 }
 
 .close{
-  position:absolute;
-  top:15px;
-  right:15px;
-  border:1px solid rgba(255,255,255,.1);
-  background:transparent;
-  color:rgba(255,255,255,0.6);
-  border-radius:8px;
-  padding:8px 12px;
-  cursor:pointer;
-  font-family: inherit;
-  font-size: 12px;
+  position:absolute; top:15px; right:15px; border:1px solid rgba(255,255,255,.1); background:transparent; color:rgba(255,255,255,0.6); border-radius:8px; padding:8px 12px; cursor:pointer; font-family: inherit; font-size: 12px;
 }
 .close:active{transform:scale(.98)}
 .close:hover { color: #fff; background: rgba(255,255,255,0.05);}
 
 .mTop, .mInfoBox, .mPlansTitle, .mPlans { display: none; }
-
 .mBottom{display:flex;gap:10px;flex-direction:column;margin-top:12px; text-align:center;}
 .mSmall{color:rgba(255,255,255,.55);font-size:12px}
 
@@ -803,13 +808,15 @@ a{color:inherit;text-decoration:none}
   .grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .card { height: 260px; border-radius: 18px; }
   .card .imgWrap { flex: 0 0 130px; height: 130px; border-radius: 16px; }
-  .card .pad { padding: 10px; }
-  .title { font-size: 14px; line-height: 1.2; -webkit-line-clamp: 2; }
-  .meta { font-size: 11px; margin-top: 6px; -webkit-line-clamp: 1; }
+  .card .pad { padding: 10px; display: flex; flex-direction: column;}
+  .title { font-size: 14px; line-height: 1.2; -webkit-line-clamp: 2; margin-bottom: 2px;}
+  .meta { font-size: 11px; margin-top: 4px; -webkit-line-clamp: 1; }
   .cornerPrice { top: 8px; right: 8px; padding: 6px 10px; font-size: 11px; }
   .badge { font-size: 10px; padding: 4px 8px; }
-  .btn.primary { padding: 10px 0; font-size: 13px; border-radius: 16px; min-height: 38px; }
-  .priceRow { margin-top: 8px; }
+  
+  /* DÜYMƏLƏRİN TAM ENİ - YENİLƏNDİ */
+  .priceRow { margin-top: auto; width: 100%; display: block;}
+  .btn.primary { width: 100%; padding: 10px 0; font-size: 14px; border-radius: 12px; min-height: 38px; display: block; text-align: center; }
 
   /* ÜMUMİ BOŞLUQLAR VƏ HERO BÖLMƏSİ */
   .wrap { padding: 10px; }
