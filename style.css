@@ -222,6 +222,7 @@ body.hide-top-panel .top {
   animation-play-state: paused;
 }
 
+
 /* =========================================
    YENİ HERO LAYOUT (SOL: ÖZƏL ŞƏKİLLİ SLAYDER, SAĞ: 2 QUTU)
    ========================================= */
@@ -524,7 +525,6 @@ body.hide-top-panel .top {
 /* Right: Oxşar Məhsullar (YENİ 2 SÜTUNLU GRİD FORMASI) */
 .pp-right { display: flex; flex-direction: column; }
 .pp-similar-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-/* YENİ: Yalnız ilk 4 məhsulu göstərmək üçün 5 və sonrakı elementləri gizlədirik */
 .pp-similar-list .pp-sim-card:nth-child(n+5) { display: none !important; }
 
 .pp-sim-card { display: flex; flex-direction: column; align-items: center; padding: 12px; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; cursor: pointer; transition: 0.2s; text-align: center;}
@@ -865,7 +865,7 @@ body.hide-top-panel .top {
   .tabs { gap: 6px; margin-top: 10px; }
   .tab { padding: 7px 12px; font-size: 12px; font-weight: 500; }
 
-  /* YENİ: PAKET YARAT MODALI */
+  /* YENİ: PAKET YARAT MODALI (YIĞCAM VƏ 3 SÜTUN) */
   .bmGrid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
   .bmCard { padding: 16px; border-radius: 16px; }
   .bmTitle { font-size: 16px; }
@@ -906,6 +906,12 @@ body.hide-top-panel .top {
   .pp-sim-card { padding: 10px; border-radius: 14px; }
   .pp-sim-title { font-size: 12px; }
   .pp-sim-price { font-size: 13px; }
+
+  /* ÜZƏN DÜYMƏLƏRİ BALACALAŞDIRMAQ ÜÇÜN */
+  .bundleFab, .gameFab { height: 38px; padding: 0 14px; font-size: 12px; border-radius: 20px; }
+  .bundleFab { bottom: 14px; left: 12px; }
+  .gameFab { bottom: 60px; left: 12px; }
+  .chatFab { width: 44px; height: 44px; font-size: 18px; bottom: 14px; right: 12px; }
 }
 
 /* =========================================================
