@@ -121,10 +121,7 @@
           <span class="pp-avail-badge">Mövcuddur</span>
           <img id="pp-main-img" src="" alt="Product" />
         </div>
-        <div class="pp-actions desktop-btn">
-          <button class="pp-btn-solid" onclick="document.getElementById('pp-order-btn').click()">Sifariş et</button>
         </div>
-      </div>
 
       <div class="pp-box pp-center">
         <h1 id="pp-main-title" class="pp-title">Məhsul Adı</h1>
@@ -136,7 +133,7 @@
         <h3 class="pp-subtitle">Müddət seçin</h3>
         <div id="pp-plans-container" class="pp-plans-container"></div>
         
-        <div class="pp-actions mobile-btn" style="margin-top: 15px;">
+        <div class="pp-actions" style="margin-top: 15px;">
           <button class="pp-btn-solid" id="pp-order-btn">Sifariş et</button>
         </div>
       </div>
@@ -309,7 +306,7 @@
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // DOM elementlərini axtarırıq (JS-də səhifəni dəyişdiyiniz ehtimal edilən elementlər)
+      // DOM elementlərini axtarırıq
       const homeView = document.getElementById("homePageView");
       const productView = document.getElementById("productPageView");
       const mainHeader = document.getElementById("mainHeader");
@@ -330,7 +327,7 @@
           observer.observe(productView, { attributes: true, attributeFilter: ["style"] });
       }
 
-      // Geri qayıt düyməsinə klikləyəndə də yoxlayırıq (ehtiyat üçün)
+      // Geri qayıt düyməsinə klikləyəndə
       if (backBtn) {
           backBtn.addEventListener("click", () => {
               setTimeout(() => {
