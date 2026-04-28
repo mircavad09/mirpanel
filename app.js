@@ -109,7 +109,7 @@ const DATA = {
       title: "CapCut Pro", variant: "Pro", badge: "Video",
       desc: "Premium effektlər, export, template-lər.",
       note: "Hesab hazır verilir. Sifarişi təsdiqləyin.",
-      plans: [{ months: 1, price: 1.99 }, { months: 3, price: 12.99 }, { months: 6, price: 23.99 }],
+      plans: [{ months: 1, price: 4.99 }, { months: 3, price: 12.99 }, { months: 6, price: 23.99 }],
     },
     {
       id: "netflix", category: "film", image: "assets/netflix.png", currency: "₼",
@@ -137,7 +137,7 @@ const DATA = {
       title: "YouTube Premium", variant: "Gmail", badge: "Video",
       desc: "Reklamsız izləmə, YouTube Music daxil.",
       note: "Aktivləşmə üçün Gmailinizi qeyd edin.",
-      plans: [{ months: 1, price: 2.99 }],
+      plans: [{ months: 1, price: 3.49 }],
     },
     {
       id: "spotify", category: "musiqi", image: "assets/spotify.png", currency: "₼",
@@ -165,7 +165,7 @@ const DATA = {
       title: "Google AI Pro + VEO 3", variant: "Pro", badge: "AI",
       desc: "Ağıllı mətn, analiz və məhsuldarlıq.",
       note: "Aktivləşmə sizin Gmail hesabınız üzərindən edilir.",
-      plans: [{ months: 12, price: 22.99 }],
+      plans: [{ months: 4, price: 15.99 }],
     },
     {
       id: "google_ai_ultra", category: "ai", image: "assets/google-ai-ultra.png", currency: "₼",
@@ -179,7 +179,7 @@ const DATA = {
       title: "Captions AI", variant: "Şəxsi", badge: "AI",
       desc: "Videolar üçün avtomatik caption.",
       note: "Hesab biz tərəfdən hazır verilir.",
-      plans: [{ months: 1, price: 11.99, label: "1 aylıq PRO" }, { months: 1, price: 19.99, label: "1 aylıq MAX" }],
+      plans: [{ months: 1, price: 11.99, label: "1 aylıq PRO" }, { months: 1, price: 0 , label: "stokta yoxdur" }],
     },
     {
       id: "grok_supergrok", category: "ai", image: "assets/grok.png", currency: "₼",
@@ -221,7 +221,7 @@ const DATA = {
       title: "ChatGPT Plus", variant: "Plus", badge: "AI",
       desc: "Daha güclü model, fayl/şəkil imkanları.",
       note: "Hesabınızın Email və Şifrəsini qeyd edin.",
-      plans: [{ months: 1, price: 12.99, label: "1 Aylıq" }],
+      plans: [{ months: 1, price: 0, label: "stokta yoxdur" }],
     },
     {
       id: "adobecc", category: "dizayn", image: "assets/adobe.png", currency: "₼",
