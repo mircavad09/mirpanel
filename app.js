@@ -109,7 +109,7 @@ const DATA = {
       title: "CapCut Pro", variant: "Pro", badge: "Video",
       desc: "Premium effektlər, export, template-lər.",
       note: "Hesab hazır verilir. Sifarişi təsdiqləyin.",
-      plans: [{ months: 1, price: 4.99 }, { months: 3, price: 12.99 }, { months: 6, price: 23.99 }],
+      plans: [{ months: 1, price: 4.99 }, { months: 6, price: 24.99 }],
     },
     {
       id: "netflix", category: "film", image: "assets/netflix.png", currency: "₼",
@@ -151,7 +151,7 @@ const DATA = {
       title: "Surfshark VPN", variant: "VPN", badge: "VPN",
       desc: "IP gizlətmə, güclü şifrələmə.",
       note: "Hesab hazır şəkildə verilir.",
-      plans: [{ months: 1, price: 0 }],
+      plans: [{ months: 1, price: 3.99 }],
     },
     {
       id: "tiktok_jeton", category: "video", image: "assets/tiktok.png", currency: "₼",
