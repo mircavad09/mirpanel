@@ -151,7 +151,7 @@ const DATA = {
       title: "Surfshark VPN", variant: "VPN", badge: "VPN",
       desc: "IP gizlətmə, güclü şifrələmə.",
       note: "Hesab hazır şəkildə verilir.",
-      plans: [{ months: 1, price: 3.99 }],
+      plans: [{ months: 1, price: 0 }],
     },
     {
       id: "tiktok_jeton", category: "video", image: "assets/tiktok.png", currency: "₼",
