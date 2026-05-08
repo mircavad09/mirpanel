@@ -144,7 +144,7 @@ const DATA = {
       title: "Spotify Premium", variant: "Şəxsi hesab", badge: "Musiqi",
       desc: "Reklamsız musiqi, offline.",
       note: "Gmailinizi və Spotify şifrənizi qeyd edin.",
-      plans: [{ months: 1, price: 0 }],
+      plans: [{ months: 1, price: 4.80 }],
     },
     {
       id: "surfshark", category: "video", image: "assets/surfshark.png", currency: "₼",
