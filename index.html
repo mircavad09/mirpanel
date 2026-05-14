@@ -15,7 +15,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=final21" />
+  <link rel="stylesheet" href="style.css?v=final22" />
   <link rel="icon" href="assets/logo.png" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 </head>
@@ -41,15 +41,8 @@
       </div>
 
       <div class="headActions">
-        <div class="player" id="playerUI" aria-label="Musiqi pleyeri">
-          <div class="track">
-            <div class="trackTitle" id="trackTitle">—</div>
-            <div class="trackSub" id="trackSub">—</div>
-          </div>
-          <button class="pBtn" id="prevBtn" type="button">⏮</button>
-          <button class="pBtn main" id="playBtn" type="button">▶️</button>
-          <button class="pBtn" id="nextBtn" type="button">⏭</button>
-          <div class="count" id="trackCount">0/0</div>
+        <div class="langBox">
+          <button class="langBtn active">AZ</button>
         </div>
       </div>
     </div>
@@ -62,8 +55,6 @@
       </div>
     </div>
   </div>
-
-  <audio id="bgAudio" preload="none"></audio>
 
   <div id="homePageView" style="display: block;">
     <section class="wrap hero-section">
@@ -121,7 +112,7 @@
           <span class="pp-avail-badge">Mövcuddur</span>
           <img id="pp-main-img" src="" alt="Product" />
         </div>
-        </div>
+      </div>
 
       <div class="pp-box pp-center">
         <h1 id="pp-main-title" class="pp-title">Məhsul Adı</h1>
@@ -188,41 +179,6 @@
     </div>
   </div>
 
-  <button class="bundleFab" id="bundleFab" type="button">🎁 Paket Yarat</button>
-
-  <div class="bundleModal" id="bundleModal" aria-hidden="true">
-    <div class="bmCard">
-      <div class="bmHeader">
-        <div>
-          <div class="bmTitle">🎁 XÜSUSİ PAKET (ENDİRİMLİ)</div>
-          <div class="bmSub">İstədiyiniz məhsulları seçin və 5% paket endirimi qazanın! Bütün paketlər 1 aylıq hesablanır.</div>
-        </div>
-        <button class="bmClose" id="bundleClose">Bağla ✕</button>
-      </div>
-      
-      <div class="bmGrid" id="bmGrid"></div>
-      
-      <div class="bmSummary">
-        <div class="bmRow">
-          <span>Ümumi Qiymət:</span>
-          <span id="bmTotal">0.00 ₼</span>
-        </div>
-        <div class="bmRow discount">
-          <span>Paket Endirimi (5%):</span>
-          <span id="bmDiscount">-0.00 ₼</span>
-        </div>
-        <div class="bmRow final">
-          <span>Yekun Qiymət:</span>
-          <span id="bmFinal">0.00 ₼</span>
-        </div>
-      </div>
-      
-      <div class="bmForm" id="bmFormContainer"></div>
-      
-      <button class="bmSubmit" id="bmSubmit">WhatsApp-a göndər</button>
-    </div>
-  </div>
-
   <button class="gameFab" id="gameBtnOpen" type="button">🎮 Əylən & Oyna</button>
 
   <div class="gameModal" id="gameSelectModal" aria-hidden="true">
@@ -284,35 +240,16 @@
     </div>
   </div>
 
-  <button class="chatFab" id="aiFab" type="button">AI</button>
+  <a href="https://wa.me/994515243545" target="_blank" class="waFab" id="waFab">WA</a>
 
-  <div class="chatBox" id="aiBox" aria-hidden="true">
-    <div class="chatHead">
-      <div>
-        <div class="chatTitle">Mirpanel AI</div>
-        <div class="chatSub">Məhsullar haqqında sual verin</div>
-      </div>
-      <button class="chatClose" id="aiClose" type="button">✕</button>
-    </div>
-    <div class="chatMsgs" id="aiMsgs"></div>
-    <div class="chatInput">
-      <input type="text" id="aiText" class="chatText" placeholder="Məs: Netflix neçə aylıqdır?" autocomplete="off" />
-      <button class="chatSend" id="aiSend" type="button">Göndər</button>
-    </div>
-  </div>
-
-  <script src="app.js?v=final21"></script>
-  <script src="app-ai.js?v=final21"></script>
+  <script src="app.js?v=final22"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {
-      // DOM elementlərini axtarırıq
-      const homeView = document.getElementById("homePageView");
       const productView = document.getElementById("productPageView");
       const mainHeader = document.getElementById("mainHeader");
       const backBtn = document.getElementById("btnBackToHome");
       
-      // Funksiya: Header-i yoxlamaq
       function checkHeaderVisibility() {
         if (productView.style.display === "block" || productView.style.display === "flex" || productView.style.display === "") {
             mainHeader.style.display = "none";
@@ -321,13 +258,11 @@
         }
       }
 
-      // MutationObserver vasitəsilə səhifənin display xüsusiyyəti dəyişəndə izləyirik
       const observer = new MutationObserver(checkHeaderVisibility);
       if (productView) {
           observer.observe(productView, { attributes: true, attributeFilter: ["style"] });
       }
 
-      // Geri qayıt düyməsinə klikləyəndə
       if (backBtn) {
           backBtn.addEventListener("click", () => {
               setTimeout(() => {
