@@ -41,7 +41,7 @@
       </div>
 
       <div class="headActions" style="display: flex; gap: 10px; align-items: center;">
-        <button style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
+        <button id="menuOpenBtn" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -253,6 +253,21 @@
 
   <a href="https://wa.me/994515243545" target="_blank" class="waFab" id="waFab">WA</a>
 
+  <div class="side-menu-overlay" id="sideMenuOverlay"></div>
+  <div class="side-menu" id="sideMenu">
+    <button class="side-menu-close" id="sideMenuClose">✕</button>
+    <div class="side-menu-search">
+      <input type="text" placeholder="Məhsul axtar..." id="sideMenuInput" />
+    </div>
+    <ul class="side-menu-links">
+      <li><a href="#" class="sm-link">Ana Səhifə</a></li>
+      <li><a href="#" class="sm-link">Məhsullar</a></li>
+      <li><a href="#" class="sm-link">Haqqımızda</a></li>
+      <li><a href="#" class="sm-link">Şərtlər</a></li>
+      <li><a href="#" class="sm-link">Əlaqə</a></li>
+    </ul>
+  </div>
+
   <script src="app.js?v=final22"></script>
   
   <script>
@@ -261,6 +276,7 @@
       const mainHeader = document.getElementById("mainHeader");
       const backBtn = document.getElementById("btnBackToHome");
       
+      // Header yoxlanışı
       function checkHeaderVisibility() {
         if (productView.style.display === "block" || productView.style.display === "flex" || productView.style.display === "") {
             mainHeader.style.display = "none";
@@ -281,6 +297,36 @@
               }, 50);
           });
       }
+
+      // YENİ: YAN MENYU JS MƏNTİQİ
+      const menuOpenBtn = document.getElementById("menuOpenBtn");
+      const sideMenu = document.getElementById("sideMenu");
+      const sideMenuOverlay = document.getElementById("sideMenuOverlay");
+      const sideMenuClose = document.getElementById("sideMenuClose");
+
+      function openMenu() {
+        if(!sideMenu) return;
+        sideMenu.classList.add("active");
+        sideMenuOverlay.classList.add("active");
+        document.body.style.overflow = "hidden"; // Arxanın sürüşməsini bağla
+      }
+
+      function closeMenu() {
+        if(!sideMenu) return;
+        sideMenu.classList.remove("active");
+        sideMenuOverlay.classList.remove("active");
+        document.body.style.overflow = "";
+      }
+
+      if(menuOpenBtn) menuOpenBtn.addEventListener("click", openMenu);
+      if(sideMenuClose) sideMenuClose.addEventListener("click", closeMenu);
+      if(sideMenuOverlay) sideMenuOverlay.addEventListener("click", closeMenu);
+
+      // Linklərə kliklədikdə də menyu bağlansın
+      const smLinks = document.querySelectorAll(".sm-link");
+      smLinks.forEach(link => {
+        link.addEventListener("click", closeMenu);
+      });
     });
   </script>
 </body>
