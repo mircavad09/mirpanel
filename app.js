@@ -144,14 +144,14 @@ const DATA = {
       title: "Spotify Premium", variant: "Şəxsi hesab", badge: "Musiqi",
       desc: "Reklamsız musiqi, offline.",
       note: "Gmailinizi və Spotify şifrənizi qeyd edin.",
-      plans: [{ months: 1, price: 4.80 }],
+      plans: [{ months: 1, price: 4.99 }],
     },
     {
       id: "surfshark", category: "video", image: "assets/surfshark.png", currency: "₼",
       title: "Surfshark VPN", variant: "VPN", badge: "VPN",
       desc: "IP gizlətmə, güclü şifrələmə.",
       note: "Hesab hazır şəkildə verilir.",
-      plans: [{ months: 1, price: 3.99 }],
+      plans: [{ months: 1, price: 3.49 }],
     },
     {
       id: "tiktok_jeton", category: "video", image: "assets/tiktok.png", currency: "₼",
@@ -218,10 +218,10 @@ const DATA = {
     },
     {
       id: "chatgpt", category: "ai", image: "assets/chatgpt.png", currency: "₼",
-      title: "ChatGPT Plus", variant: "Plus", badge: "AI",
+      title: "ChatGPT Yeni Şəxsi hesab", variant: "Plus", badge: "AI",
       desc: "Daha güclü model, fayl/şəkil imkanları.",
       note: "Hesabınızın Email və Şifrəsini qeyd edin.",
-      plans: [{ months: 1, price: 0, label: "stokta yoxdur" }],
+      plans: [{ months: 1, price: 12.99, label: "Chatgpt Plus" }],
     },
     {
       id: "adobecc", category: "dizayn", image: "assets/adobe.png", currency: "₼",
