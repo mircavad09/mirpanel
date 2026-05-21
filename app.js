@@ -109,7 +109,7 @@ const DATA = {
       title: "CapCut Pro", variant: "Pro", badge: "Video",
       desc: "Premium effektlər, export, template-lər.",
       note: "Hesab hazır verilir. Sifarişi təsdiqləyin.",
-      plans: [{ months: 1, price: 0 }, { months: 6, price: 0 }],
+      plans: [{ months: 1, price: stokta yoxdur }, { months: 6, price: stokta yoxdur }],
     },
     {
       id: "netflix", category: "film", image: "assets/netflix.png", currency: "₼",
