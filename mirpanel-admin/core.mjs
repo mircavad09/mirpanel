@@ -3,6 +3,19 @@ import vm from "node:vm";
 const DATA_MARKER = "const DATA";
 const CONTENT_MARKER = "const ADMIN_CONTENT";
 const INFO_MARKER = "const INFO_TEXTS";
+const UI_MARKER = "const UI";
+
+const UI_DEFAULTS = {
+  brandSub: "",
+  bannerText: "",
+  heroTitle: "",
+  heroHint: "",
+  searchTitle: "",
+  searchDesc: "",
+  bmTitle: "",
+  bmSub: "",
+  footRights: ""
+};
 
 function findObjectBlock(source, marker) {
   const markerStart = source.indexOf(marker);
@@ -93,13 +106,19 @@ function evaluateObject(source, marker, fallback) {
       { timeout: 1000 }
     );
   } catch (error) {
-    if (fallback !== undefined) return fallback;
+    if (arguments.length >= 3) return fallback;
     throw error;
   }
 }
 
-function replaceObjectDeclaration(source, marker, object, beforeMarker = "") {
-  const formatted = `${marker} = ${JSON.stringify(object, null, 2)};\n\n`;
+function replaceObjectDeclaration(
+  source,
+  marker,
+  object,
+  beforeMarker = ""
+) {
+  const formatted =
+    `${marker} = ${JSON.stringify(object, null, 2)};\n\n`;
 
   if (source.includes(marker)) {
     const block = findObjectBlock(source, marker);
@@ -128,7 +147,9 @@ function replaceObjectDeclaration(source, marker, object, beforeMarker = "") {
 
 function normalizePlan(plan = {}) {
   return {
-    ...(plan.label ? { label: String(plan.label) } : {}),
+    ...(plan.label
+      ? { label: String(plan.label) }
+      : {}),
     months: Number(plan.months) || 1,
     price: Number(plan.price) || 0
   };
@@ -164,22 +185,37 @@ function normalizeProduct(product = {}, index = 0) {
 }
 
 export function normalizeAdminPayload(payload = {}) {
-  const categories = Array.isArray(payload.categories)
-    ? payload.categories.map((category) => ({
-        key: String(category.key || "").trim(),
-        name: String(category.name || category.label || "").trim()
-      }))
-    : [];
+  const sourceCategories =
+    Array.isArray(payload.categories)
+      ? payload.categories.map((category) => ({
+          key: String(category.key || "").trim(),
+          name: String(
+            category.name ||
+            category.label ||
+            ""
+          ).trim()
+        }))
+      : [];
 
   const products = Array.isArray(payload.products)
     ? payload.products.map(normalizeProduct)
     : [];
 
+  const categories = sourceCategories.length
+    ? sourceCategories
+    : [...new Set(
+        products.map((product) => product.category)
+      )]
+        .filter(Boolean)
+        .map((key) => ({ key, name: key }));
+
   const ids = new Set();
 
   for (const product of products) {
     if (ids.has(product.id)) {
-      throw new Error(`Təkrar məhsul ID-si: ${product.id}`);
+      throw new Error(
+        `Təkrar məhsul ID-si: ${product.id}`
+      );
     }
 
     ids.add(product.id);
@@ -188,9 +224,14 @@ export function normalizeAdminPayload(payload = {}) {
   const content = {};
 
   for (const product of products) {
-    const source = payload.content?.[product.id] || {};
-    const aboutHtml = String(source.aboutHtml || "").trim();
-    const rulesHtml = String(source.rulesHtml || "").trim();
+    const source =
+      payload.content?.[product.id] || {};
+
+    const aboutHtml =
+      String(source.aboutHtml || "").trim();
+
+    const rulesHtml =
+      String(source.rulesHtml || "").trim();
 
     if (aboutHtml || rulesHtml) {
       content[product.id] = {
@@ -208,7 +249,16 @@ export function normalizeAdminPayload(payload = {}) {
     ),
     categories,
     products,
-    content
+    content,
+    ui: Object.fromEntries(
+      Object.keys(UI_DEFAULTS).map((key) => [
+        key,
+        String(
+          payload.ui?.[key] ??
+          UI_DEFAULTS[key]
+        )
+      ])
+    )
   };
 }
 
@@ -223,10 +273,19 @@ function extractPhone(source) {
 
 export function extractAdminState(source) {
   const data = evaluateObject(source, DATA_MARKER);
-  const overrides = evaluateObject(source, CONTENT_MARKER, {});
-  const infoTexts = evaluateObject(source, INFO_MARKER, {});
 
-  const products = (data.products || []).map(normalizeProduct);
+  const overrides =
+    evaluateObject(source, CONTENT_MARKER, {});
+
+  const infoTexts =
+    evaluateObject(source, INFO_MARKER, {});
+
+  const ui =
+    evaluateObject(source, UI_MARKER, {});
+
+  const products =
+    (data.products || []).map(normalizeProduct);
+
   const content = {};
 
   for (const product of products) {
@@ -248,21 +307,61 @@ export function extractAdminState(source) {
     phone_wa: extractPhone(source),
     categories: data.categories,
     products,
-    content
+    content,
+    ui
   });
 }
 
 function patchRuntimeHooks(source) {
   let next = source;
 
-  if (!next.includes("ADMIN_CONTENT[p.id]?.aboutHtml ||")) {
+  if (
+    !next.includes(
+      "function applyAdminHomepageSettings()"
+    )
+  ) {
+    next = next.replace(
+      "function setupUI() {",
+      `function applyAdminHomepageSettings() {
+  const setHtml = (selector, value) => {
+    const element = document.querySelector(selector);
+    if (element && value) element.innerHTML = value;
+  };
+
+  setHtml(".brandSub", UI.brandSub);
+  setHtml(".banner-text", UI.bannerText);
+  setHtml(".sp-title", UI.searchTitle);
+  setHtml(".sp-desc", UI.searchDesc);
+  setHtml(".footer .tiny", UI.footRights);
+
+  document
+    .querySelectorAll('a[href^="https://wa.me/"]')
+    .forEach((link) => {
+      link.href = PHONE_WA;
+    });
+}
+
+function setupUI() {
+  applyAdminHomepageSettings();`
+    );
+  }
+
+  if (
+    !next.includes(
+      "ADMIN_CONTENT[p.id]?.aboutHtml ||"
+    )
+  ) {
     next = next.replace(
       "cBox.innerHTML = (info && info.htmlContent) ? info.htmlContent : `<p>${p.desc}</p><p>${p.note}</p>`;",
       "cBox.innerHTML = ADMIN_CONTENT[p.id]?.aboutHtml || ((info && info.htmlContent) ? info.htmlContent : `<p>${p.desc}</p><p>${p.note}</p>`);"
     );
   }
 
-  if (!next.includes("if (ADMIN_CONTENT[p.id]?.rulesHtml)")) {
+  if (
+    !next.includes(
+      "if (ADMIN_CONTENT[p.id]?.rulesHtml)"
+    )
+  ) {
     next = next.replace(
       '      if (p.id === "google_ai" || p.id === "google_ai_ultra") {',
       `      if (ADMIN_CONTENT[p.id]?.rulesHtml) {
@@ -274,12 +373,12 @@ function patchRuntimeHooks(source) {
 
   if (
     !next.includes(
-      "DATA.products.filter((p) => p.active !== false)"
+      "let list = DATA.products.filter((p) => p.active !== false).filter((p) => {"
     )
   ) {
     next = next.replace(
-      'const list = DATA.products.filter((p) => (activeCat === "all" ? true : p.category === activeCat)).filter((p) => {',
-      'const list = DATA.products.filter((p) => p.active !== false).filter((p) => (activeCat === "all" ? true : p.category === activeCat)).filter((p) => {'
+      "let list = DATA.products.filter((p) => {",
+      "let list = DATA.products.filter((p) => p.active !== false).filter((p) => {"
     );
   }
 
@@ -297,13 +396,24 @@ export function patchAppSource(source, payload) {
 
   let next = source.replace(
     /const\s+PHONE_WA\s*=\s*["'][^"']+["']\s*;/,
-    `const PHONE_WA = ${JSON.stringify(admin.phone_wa)};`
+    `const PHONE_WA = ${JSON.stringify(
+      admin.phone_wa
+    )};`
   );
 
   next = replaceObjectDeclaration(
     next,
     DATA_MARKER,
     data
+  );
+
+  next = replaceObjectDeclaration(
+    next,
+    UI_MARKER,
+    {
+      ...evaluateObject(next, UI_MARKER, {}),
+      ...admin.ui
+    }
   );
 
   next = replaceObjectDeclaration(
