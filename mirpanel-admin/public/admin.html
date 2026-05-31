@@ -15,7 +15,6 @@
     <aside class="sidebar">
       <div class="sidebarBrand">
         <div class="brandMark small">M</div>
-
         <div>
           <strong>Mirpanel</strong>
           <span>Admin panel</span>
@@ -23,24 +22,15 @@
       </div>
 
       <nav class="nav">
-        <button
-          class="navBtn active"
-          data-view="products"
-        >
+        <button class="navBtn active" data-view="products">
           Məhsullar
         </button>
 
-        <button
-          class="navBtn"
-          data-view="categories"
-        >
+        <button class="navBtn" data-view="categories">
           Kateqoriyalar
         </button>
 
-        <button
-          class="navBtn"
-          data-view="settings"
-        >
+        <button class="navBtn" data-view="settings">
           Ayarlar
         </button>
       </nav>
@@ -116,21 +106,10 @@
             <select id="categoryFilter"></select>
 
             <select id="statusFilter">
-              <option value="all">
-                Bütün statuslar
-              </option>
-
-              <option value="active">
-                Aktiv
-              </option>
-
-              <option value="inactive">
-                Deaktiv
-              </option>
-
-              <option value="soldout">
-                Stokda yoxdur
-              </option>
+              <option value="all">Bütün statuslar</option>
+              <option value="active">Aktiv</option>
+              <option value="inactive">Deaktiv</option>
+              <option value="soldout">Stokda yoxdur</option>
             </select>
           </div>
 
@@ -206,13 +185,8 @@
               <label>
                 Stok
                 <select id="productSoldOut">
-                  <option value="false">
-                    Satışda
-                  </option>
-
-                  <option value="true">
-                    Stokda yoxdur
-                  </option>
+                  <option value="false">Satışda</option>
+                  <option value="true">Stokda yoxdur</option>
                 </select>
               </label>
 
@@ -290,10 +264,7 @@
             <p>Məhsul filtrlərini idarə et</p>
           </div>
 
-          <button
-            class="btn primary"
-            id="addCategoryBtn"
-          >
+          <button class="btn primary" id="addCategoryBtn">
             Yeni kateqoriya
           </button>
         </div>
@@ -335,6 +306,41 @@
           <label>
             WhatsApp link
             <input id="settingPhone">
+          </label>
+
+          <label>
+            Brand alt mətni
+            <input id="settingBrandSub">
+          </label>
+
+          <label>
+            Bildiriş banneri
+            <textarea id="settingBannerText"></textarea>
+          </label>
+
+          <label>
+            Axtarış bölməsi başlığı
+            <input id="settingSearchTitle">
+          </label>
+
+          <label>
+            Axtarış bölməsi mətni
+            <textarea id="settingSearchDesc"></textarea>
+          </label>
+
+          <label>
+            Kampaniya başlığı
+            <input id="settingCampaignTitle">
+          </label>
+
+          <label>
+            Kampaniya mətni
+            <textarea id="settingCampaignText"></textarea>
+          </label>
+
+          <label>
+            Footer hüquq mətni
+            <input id="settingFootRights">
           </label>
         </div>
       </section>
