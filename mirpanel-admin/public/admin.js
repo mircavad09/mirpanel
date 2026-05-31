@@ -17,30 +17,32 @@ const flows = [
   ["out_of_stock", "Stokda yoxdur"]
 ];
 
-const imageUrl = (value) => {
-  if (/^https?:/i.test(value || "")) return value;
-  return `https://mirpanel.com/${value || "assets/your.png"}`;
-};
+const imageUrl = (path) =>
+  /^https?:/i.test(path || "")
+    ? path
+    : `https://mirpanel.com/${path || "assets/your.png"}`;
 
-const escapeHtml = (value) => String(value ?? "")
-  .replaceAll("&", "&amp;")
-  .replaceAll("<", "&lt;")
-  .replaceAll(">", "&gt;")
-  .replaceAll('"', "&quot;");
+const escapeHtml = (value) =>
+  String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 
-const slug = (value) => String(value || "")
-  .trim()
-  .toLowerCase()
-  .replaceAll("ə", "e")
-  .replaceAll("ı", "i")
-  .replaceAll("ö", "o")
-  .replaceAll("ü", "u")
-  .replaceAll("ş", "s")
-  .replaceAll("ç", "c")
-  .replaceAll("ğ", "g")
-  .replace(/[^a-z0-9_]+/g, "_")
-  .replace(/_+/g, "_")
-  .replace(/^_|_$/g, "");
+const slug = (value) =>
+  String(value || "")
+    .trim()
+    .toLowerCase()
+    .replaceAll("ə", "e")
+    .replaceAll("ı", "i")
+    .replaceAll("ö", "o")
+    .replaceAll("ü", "u")
+    .replaceAll("ş", "s")
+    .replaceAll("ç", "c")
+    .replaceAll("ğ", "g")
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/_+/g, "_")
+    .replace(/^_|_$/g, "");
 
 async function api(path, options = {}) {
   const response = await fetch(path, {
@@ -375,12 +377,8 @@ function renderProductForm() {
 
   if (!product) return;
 
-  $("previewImage").src =
-    imageUrl(product.image);
-
-  $("previewTitle").textContent =
-    product.title;
-
+  $("previewImage").src = imageUrl(product.image);
+  $("previewTitle").textContent = product.title;
   $("previewMeta").textContent =
     `${product.id} / ${product.category}`;
 
@@ -390,14 +388,9 @@ function renderProductForm() {
   $("productOrder").value =
     product.order ?? "";
 
-  $("productId").value =
-    product.id;
-
-  $("productTitle").value =
-    product.title;
-
-  $("productVariant").value =
-    product.variant;
+  $("productId").value = product.id;
+  $("productTitle").value = product.title;
+  $("productVariant").value = product.variant;
 
   $("productCategory").innerHTML =
     renderOptions(
@@ -411,28 +404,17 @@ function renderProductForm() {
     );
 
   $("productFlow").innerHTML =
-    renderOptions(
-      flows,
-      product.flow
-    );
+    renderOptions(flows, product.flow);
 
-  $("productImage").value =
-    product.image;
-
-  $("productBadge").value =
-    product.badge;
-
-  $("productCurrency").value =
-    product.currency;
+  $("productImage").value = product.image;
+  $("productBadge").value = product.badge;
+  $("productCurrency").value = product.currency;
 
   $("productSoldOut").value =
     String(Boolean(product.soldOut));
 
-  $("productDesc").value =
-    product.desc;
-
-  $("productNote").value =
-    product.note;
+  $("productDesc").value = product.desc;
+  $("productNote").value = product.note;
 
   $("aboutHtml").value =
     state.data.content[product.id]?.aboutHtml || "";
@@ -531,12 +513,14 @@ bindProductField("productNote", (product, element) => {
 
 bindProductField("aboutHtml", (product, element) => {
   state.data.content[product.id] ??= {};
+
   state.data.content[product.id].aboutHtml =
     element.value;
 });
 
 bindProductField("rulesHtml", (product, element) => {
   state.data.content[product.id] ??= {};
+
   state.data.content[product.id].rulesHtml =
     element.value;
 });
@@ -672,8 +656,7 @@ function renderCategories() {
             Number(input.dataset.cat)
           ];
 
-        const oldKey =
-          category.key;
+        const oldKey = category.key;
 
         category[input.dataset.catField] =
           input.dataset.catField === "key"
@@ -705,26 +688,41 @@ function renderCategories() {
 }
 
 function renderSettings() {
-  $("settingBrand").value =
-    state.data.brand;
+  const ui = state.data.ui || {};
 
-  $("settingPhone").value =
-    state.data.phone_wa;
+  $("settingBrand").value = state.data.brand;
+  $("settingPhone").value = state.data.phone_wa;
+  $("settingBrandSub").value = ui.brandSub || "";
+  $("settingBannerText").value = ui.bannerText || "";
+  $("settingSearchTitle").value = ui.searchTitle || "";
+  $("settingSearchDesc").value = ui.searchDesc || "";
+  $("settingCampaignTitle").value = ui.bmTitle || "";
+  $("settingCampaignText").value = ui.bmSub || "";
+  $("settingFootRights").value = ui.footRights || "";
 }
 
-$("settingBrand").addEventListener("input", () => {
-  state.data.brand =
-    $("settingBrand").value;
+function bindSetting(id, key, target = "ui") {
+  $(id).addEventListener("input", () => {
+    if (target === "root") {
+      state.data[key] = $(id).value;
+    } else {
+      state.data.ui ??= {};
+      state.data.ui[key] = $(id).value;
+    }
 
-  markDirty();
-});
+    markDirty();
+  });
+}
 
-$("settingPhone").addEventListener("input", () => {
-  state.data.phone_wa =
-    $("settingPhone").value;
-
-  markDirty();
-});
+bindSetting("settingBrand", "brand", "root");
+bindSetting("settingPhone", "phone_wa", "root");
+bindSetting("settingBrandSub", "brandSub");
+bindSetting("settingBannerText", "bannerText");
+bindSetting("settingSearchTitle", "searchTitle");
+bindSetting("settingSearchDesc", "searchDesc");
+bindSetting("settingCampaignTitle", "bmTitle");
+bindSetting("settingCampaignText", "bmSub");
+bindSetting("settingFootRights", "footRights");
 
 function showView(view) {
   ["products", "categories", "settings"]
