@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+  <title>Mirpanel Login</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+  <main class="loginScreen">
+    <form class="loginCard" id="loginForm">
+      <div class="brandMark">M</div>
+
+      <h1>Mirpanel Admin</h1>
+      <p>İdarəetmə panelinə daxil ol</p>
+
+      <label>
+        İstifadəçi adı
+        <input
+          id="username"
+          autocomplete="username"
+          required
+        >
+      </label>
+
+      <label>
+        Şifrə
+        <input
+          id="password"
+          type="password"
+          autocomplete="current-password"
+          required
+        >
+      </label>
+
+      <button
+        class="btn primary wide"
+        id="loginBtn"
+        type="submit"
+      >
+        Daxil ol
+      </button>
+
+      <div class="formError" id="loginError"></div>
+    </form>
+  </main>
+
+  <script src="login.js"></script>
+</body>
+</html>

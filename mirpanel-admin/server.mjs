@@ -1,0 +1,288 @@
+import crypto from "node:crypto";
+import fs from "node:fs";
+import http from "node:http";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+import { extractAdminState, patchAppSource } from "./core.mjs";
+
+const root = path.dirname(fileURLToPath(import.meta.url));
+const publicDir = path.join(root, "public");
+loadEnv(path.join(root, ".env"));
+
+const config = {
+  port: Number(process.env.PORT || 8787),
+  repo: process.env.MIRPANEL_GITHUB_REPO || "mircavad09/mirpanel",
+  branch: process.env.MIRPANEL_GITHUB_BRANCH || "main",
+  token: process.env.MIRPANEL_GITHUB_TOKEN || "",
+  username: process.env.ADMIN_USERNAME || "",
+  password: process.env.ADMIN_PASSWORD || "",
+  secureCookie: process.env.COOKIE_SECURE === "true"
+};
+
+const sessions = new Map();
+const sessionTtl = 8 * 60 * 60 * 1000;
+
+function loadEnv(file) {
+  if (!fs.existsSync(file)) return;
+  for (const line of fs.readFileSync(file, "utf8").split(/\r?\n/)) {
+    const value = line.trim();
+    if (!value || value.startsWith("#")) continue;
+    const index = value.indexOf("=");
+    if (index < 1) continue;
+    const key = value.slice(0, index).trim();
+    const content = value.slice(index + 1).trim().replace(/^['"]|['"]$/g, "");
+    if (!process.env[key]) process.env[key] = content;
+  }
+}
+
+function json(response, status, body, headers = {}) {
+  response.writeHead(status, {
+    "Content-Type": "application/json; charset=utf-8",
+    "Cache-Control": "no-store",
+    ...headers
+  });
+  response.end(JSON.stringify(body));
+}
+
+function safeEqual(left, right) {
+  const a = Buffer.from(String(left || ""));
+  const b = Buffer.from(String(right || ""));
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+function getCookies(request) {
+  return Object.fromEntries(
+    (request.headers.cookie || "")
+      .split(";")
+      .map((item) => item.trim().split("="))
+      .filter(([key]) => key)
+  );
+}
+
+function getSession(request) {
+  const id = getCookies(request).mirpanel_session;
+  const current = id && sessions.get(id);
+
+  if (!current || current.expiresAt < Date.now()) {
+    if (id) sessions.delete(id);
+    return null;
+  }
+
+  current.expiresAt = Date.now() + sessionTtl;
+  return current;
+}
+
+function sessionCookie(id, maxAge = sessionTtl / 1000) {
+  return [
+    `mirpanel_session=${id}`,
+    "HttpOnly",
+    "SameSite=Strict",
+    "Path=/",
+    `Max-Age=${maxAge}`,
+    config.secureCookie ? "Secure" : ""
+  ].filter(Boolean).join("; ");
+}
+
+async function readBody(request, limit = 1_500_000) {
+  let size = 0;
+  const chunks = [];
+
+  for await (const chunk of request) {
+    size += chunk.length;
+    if (size > limit) throw new Error("Göndərilən məlumat çox böyükdür.");
+    chunks.push(chunk);
+  }
+
+  return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+}
+
+async function github(pathname, options = {}) {
+  if (!config.token) throw new Error("MIRPANEL_GITHUB_TOKEN təyin edilməyib.");
+
+  const response = await fetch(`https://api.github.com${pathname}`, {
+    ...options,
+    headers: {
+      Accept: "application/vnd.github+json",
+      Authorization: `Bearer ${config.token}`,
+      "X-GitHub-Api-Version": "2022-11-28",
+      "User-Agent": "mirpanel-admin",
+      ...(options.headers || {})
+    }
+  });
+
+  const payload = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    const error = new Error(payload.message || `GitHub xətası: ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
+
+  return payload;
+}
+
+async function getAppFile() {
+  const file = await github(
+    `/repos/${config.repo}/contents/app.js?ref=${encodeURIComponent(config.branch)}`
+  );
+
+  return {
+    sha: file.sha,
+    source: Buffer.from(file.content.replace(/\n/g, ""), "base64").toString("utf8")
+  };
+}
+
+function requireAuth(request, response) {
+  if (getSession(request)) return true;
+  json(response, 401, { error: "Sessiya bitib. Yenidən daxil ol." });
+  return false;
+}
+
+async function handleApi(request, response) {
+  if (request.method === "POST" && request.url === "/api/login") {
+    const body = await readBody(request, 20_000);
+
+    if (!config.username || !config.password) {
+      return json(response, 500, {
+        error: "Login environment variable-ları təyin edilməyib."
+      });
+    }
+
+    if (
+      !safeEqual(body.username, config.username) ||
+      !safeEqual(body.password, config.password)
+    ) {
+      return json(response, 401, {
+        error: "İstifadəçi adı və ya şifrə yanlışdır."
+      });
+    }
+
+    const id = crypto.randomBytes(32).toString("hex");
+    sessions.set(id, { expiresAt: Date.now() + sessionTtl });
+
+    return json(response, 200, { ok: true }, {
+      "Set-Cookie": sessionCookie(id)
+    });
+  }
+
+  if (request.method === "POST" && request.url === "/api/logout") {
+    const id = getCookies(request).mirpanel_session;
+    if (id) sessions.delete(id);
+
+    return json(response, 200, { ok: true }, {
+      "Set-Cookie": sessionCookie("", 0)
+    });
+  }
+
+  if (!requireAuth(request, response)) return;
+
+  if (request.method === "GET" && request.url === "/api/session") {
+    return json(response, 200, { ok: true });
+  }
+
+  if (request.method === "GET" && request.url === "/api/admin/state") {
+    const file = await getAppFile();
+
+    return json(response, 200, {
+      sha: file.sha,
+      data: extractAdminState(file.source),
+      loadedAt: new Date().toISOString()
+    });
+  }
+
+  if (request.method === "POST" && request.url === "/api/admin/save") {
+    const body = await readBody(request);
+
+    if (!body.baseSha || !body.data) {
+      return json(response, 400, {
+        error: "baseSha və data tələb olunur."
+      });
+    }
+
+    const current = await getAppFile();
+
+    if (current.sha !== body.baseSha) {
+      return json(response, 409, {
+        error: "app.js GitHub-da başqa yerdə dəyişib. Səhifəni yenilə.",
+        currentSha: current.sha
+      });
+    }
+
+    const patched = patchAppSource(current.source, body.data);
+
+    const result = await github(`/repos/${config.repo}/contents/app.js`, {
+      method: "PUT",
+      body: JSON.stringify({
+        message: "Update Mirpanel content from admin panel",
+        content: Buffer.from(patched, "utf8").toString("base64"),
+        sha: current.sha,
+        branch: config.branch
+      })
+    });
+
+    return json(response, 200, {
+      sha: result.content.sha,
+      commitSha: result.commit.sha,
+      committedAt: new Date().toISOString()
+    });
+  }
+
+  return json(response, 404, { error: "Endpoint tapılmadı." });
+}
+
+const mime = {
+  ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".js": "text/javascript; charset=utf-8"
+};
+
+function serveFile(response, name) {
+  const file = path.join(publicDir, name);
+
+  if (!file.startsWith(publicDir) || !fs.existsSync(file)) {
+    return json(response, 404, { error: "Fayl tapılmadı." });
+  }
+
+  response.writeHead(200, {
+    "Content-Type": mime[path.extname(file)] || "application/octet-stream",
+    "Cache-Control": "no-store"
+  });
+
+  fs.createReadStream(file).pipe(response);
+}
+
+const server = http.createServer(async (request, response) => {
+  try {
+    if (request.url.startsWith("/api/")) {
+      return await handleApi(request, response);
+    }
+
+    if (request.url === "/" || request.url === "/login.html") {
+      return serveFile(response, "login.html");
+    }
+
+    if (request.url === "/admin.html") {
+      if (!getSession(request)) {
+        response.writeHead(302, { Location: "/login.html" });
+        return response.end();
+      }
+
+      return serveFile(response, "admin.html");
+    }
+
+    if (["/admin.css", "/admin.js", "/login.js"].includes(request.url)) {
+      return serveFile(response, request.url.slice(1));
+    }
+
+    return json(response, 404, { error: "Səhifə tapılmadı." });
+  } catch (error) {
+    console.error(error);
+    return json(response, error.status || 500, {
+      error: error.message || "Server xətası."
+    });
+  }
+});
+
+server.listen(config.port, () => {
+  console.log(`Mirpanel admin: http://localhost:${config.port}`);
+});

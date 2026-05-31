@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="az">
+<head>
+  <meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1"
+  >
+  <title>Mirpanel Admin</title>
+  <link rel="stylesheet" href="admin.css">
+</head>
+
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="sidebarBrand">
+        <div class="brandMark small">M</div>
+
+        <div>
+          <strong>Mirpanel</strong>
+          <span>Admin panel</span>
+        </div>
+      </div>
+
+      <nav class="nav">
+        <button
+          class="navBtn active"
+          data-view="products"
+        >
+          Məhsullar
+        </button>
+
+        <button
+          class="navBtn"
+          data-view="categories"
+        >
+          Kateqoriyalar
+        </button>
+
+        <button
+          class="navBtn"
+          data-view="settings"
+        >
+          Ayarlar
+        </button>
+      </nav>
+
+      <button class="navBtn logout" id="logoutBtn">
+        Çıxış
+      </button>
+    </aside>
+
+    <header class="topbar">
+      <div>
+        <div class="mobileTitle">Mirpanel Admin</div>
+        <div class="crumb" id="crumb">Məhsullar</div>
+      </div>
+
+      <div class="headerActions">
+        <div class="commitInfo" id="commitInfo">
+          Yüklənir...
+        </div>
+
+        <button class="btn" id="refreshBtn">
+          Yenilə
+        </button>
+
+        <button class="btn primary" id="saveBtn">
+          Saxla
+        </button>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="stats">
+        <div class="stat">
+          <strong id="statProducts">0</strong>
+          <span>Məhsul</span>
+        </div>
+
+        <div class="stat">
+          <strong id="statActive">0</strong>
+          <span>Aktiv</span>
+        </div>
+
+        <div class="stat">
+          <strong id="statCategories">0</strong>
+          <span>Kateqoriya</span>
+        </div>
+
+        <div class="stat">
+          <strong id="statDirty">Yoxdur</strong>
+          <span>Dəyişiklik</span>
+        </div>
+      </section>
+
+      <section class="workspace" id="productsView">
+        <div class="panel listPanel">
+          <div class="panelHead">
+            <div>
+              <h2>Məhsullar</h2>
+              <p>Sıra ilə idarə et</p>
+            </div>
+
+            <button class="btn primary" id="addProductBtn">
+              Yeni
+            </button>
+          </div>
+
+          <div class="filters">
+            <input
+              id="searchInput"
+              placeholder="Məhsul axtar..."
+            >
+
+            <select id="categoryFilter"></select>
+
+            <select id="statusFilter">
+              <option value="all">
+                Bütün statuslar
+              </option>
+
+              <option value="active">
+                Aktiv
+              </option>
+
+              <option value="inactive">
+                Deaktiv
+              </option>
+
+              <option value="soldout">
+                Stokda yoxdur
+              </option>
+            </select>
+          </div>
+
+          <div class="productList" id="productList"></div>
+        </div>
+
+        <div class="panel editorPanel">
+          <div class="emptyState" id="productEmpty">
+            Redaktə etmək üçün məhsul seç.
+          </div>
+
+          <form class="hidden" id="productForm">
+            <div class="editorHero">
+              <img id="previewImage" alt="">
+
+              <div>
+                <h2 id="previewTitle">Məhsul</h2>
+                <p id="previewMeta"></p>
+              </div>
+
+              <label class="switchLine">
+                <input id="productActive" type="checkbox">
+                <span>Aktiv</span>
+              </label>
+            </div>
+
+            <div class="formGrid">
+              <label>
+                Sıra
+                <input id="productOrder" type="number">
+              </label>
+
+              <label>
+                ID
+                <input id="productId">
+              </label>
+
+              <label>
+                Ad
+                <input id="productTitle">
+              </label>
+
+              <label>
+                Variant
+                <input id="productVariant">
+              </label>
+
+              <label>
+                Kateqoriya
+                <select id="productCategory"></select>
+              </label>
+
+              <label>
+                Flow
+                <select id="productFlow"></select>
+              </label>
+
+              <label>
+                Şəkil yolu
+                <input id="productImage">
+              </label>
+
+              <label>
+                Badge
+                <input id="productBadge">
+              </label>
+
+              <label>
+                Valyuta
+                <input id="productCurrency">
+              </label>
+
+              <label>
+                Stok
+                <select id="productSoldOut">
+                  <option value="false">
+                    Satışda
+                  </option>
+
+                  <option value="true">
+                    Stokda yoxdur
+                  </option>
+                </select>
+              </label>
+
+              <label class="full">
+                Qısa açıqlama
+                <textarea id="productDesc"></textarea>
+              </label>
+
+              <label class="full">
+                Qeyd
+                <textarea id="productNote"></textarea>
+              </label>
+            </div>
+
+            <div class="sectionHead">
+              <div>
+                <h3>Qiymətlər</h3>
+                <p>Müddət və məbləğ planları</p>
+              </div>
+
+              <button
+                class="btn"
+                id="addPlanBtn"
+                type="button"
+              >
+                Plan əlavə et
+              </button>
+            </div>
+
+            <div class="plans" id="plans"></div>
+
+            <div class="sectionHead">
+              <div>
+                <h3>Məzmun</h3>
+                <p>Saytda məhsul səhifəsində görünür</p>
+              </div>
+            </div>
+
+            <label class="block">
+              Məhsul haqqında
+              <textarea
+                class="codeArea"
+                id="aboutHtml"
+              ></textarea>
+            </label>
+
+            <label class="block">
+              İstifadə qaydaları
+              <textarea
+                class="codeArea"
+                id="rulesHtml"
+              ></textarea>
+            </label>
+
+            <div class="dangerZone">
+              <button
+                class="btn danger"
+                id="deleteProductBtn"
+                type="button"
+              >
+                Məhsulu sil
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section
+        class="panel singlePanel hidden"
+        id="categoriesView"
+      >
+        <div class="panelHead">
+          <div>
+            <h2>Kateqoriyalar</h2>
+            <p>Məhsul filtrlərini idarə et</p>
+          </div>
+
+          <button
+            class="btn primary"
+            id="addCategoryBtn"
+          >
+            Yeni kateqoriya
+          </button>
+        </div>
+
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Sıra</th>
+                <th>Key</th>
+                <th>Ad</th>
+                <th>Məhsul sayı</th>
+                <th></th>
+              </tr>
+            </thead>
+
+            <tbody id="categoriesBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section
+        class="panel singlePanel hidden"
+        id="settingsView"
+      >
+        <div class="panelHead">
+          <div>
+            <h2>Ayarlar</h2>
+            <p>Saytın ümumi məlumatları</p>
+          </div>
+        </div>
+
+        <div class="settingsForm">
+          <label>
+            Brand
+            <input id="settingBrand">
+          </label>
+
+          <label>
+            WhatsApp link
+            <input id="settingPhone">
+          </label>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="modal hidden" id="modal">
+    <div class="modalCard">
+      <div class="modalHead">
+        <h2 id="modalTitle"></h2>
+
+        <button
+          class="iconBtn"
+          id="modalClose"
+          type="button"
+        >
+          X
+        </button>
+      </div>
+
+      <div id="modalBody"></div>
+
+      <div class="modalActions">
+        <button
+          class="btn"
+          id="modalCancel"
+          type="button"
+        >
+          Ləğv et
+        </button>
+
+        <button
+          class="btn primary"
+          id="modalConfirm"
+          type="button"
+        >
+          Təsdiqlə
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading hidden" id="loading">
+    <div class="spinner"></div>
+    <span id="loadingText">Yüklənir...</span>
+  </div>
+
+  <div class="toasts" id="toasts"></div>
+
+  <script src="admin.js"></script>
+</body>
+</html>
