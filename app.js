@@ -139,14 +139,17 @@ const DATA = {
       "active": true,
       "plans": [
         {
+          "label": "Şəxsi hesab",
           "months": 1,
           "price": 7.99
         },
         {
-          "months": 3,
-          "price": 0
+          "label": "Ortaq hesab",
+          "months": 1,
+          "price": 5.99
         },
         {
+          "label": "Stokta yoxdur",
           "months": 6,
           "price": 0
         }
@@ -261,7 +264,7 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 2.99
+          "price": 3.49
         }
       ]
     },
@@ -282,7 +285,7 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 4.8
+          "price": 4.99
         }
       ]
     },
@@ -346,7 +349,7 @@ const DATA = {
       "plans": [
         {
           "months": 12,
-          "price": 22.99
+          "price": 29.99
         }
       ]
     },
