@@ -573,7 +573,7 @@ const DATA = {
       "note": "Hazır hesab kimi təqdim olunur.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 3,
@@ -594,7 +594,7 @@ const DATA = {
       "note": "Hazır hesab şəklində təqdim edilir.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 1,
@@ -615,7 +615,7 @@ const DATA = {
       "note": "Hazır hesab kimi verilir.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 1,
@@ -636,7 +636,7 @@ const DATA = {
       "note": "Hazır hesab kimi təqdim edilir.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 1,
@@ -657,7 +657,7 @@ const DATA = {
       "note": "Hesab hazır şəkildə təhvil verilir.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 3,
@@ -678,7 +678,7 @@ const DATA = {
       "note": "Hesabınız hazır olaraq verilir.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 1,
@@ -699,7 +699,7 @@ const DATA = {
       "note": "Hazır hesab kimi təqdim olunur.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 1,
@@ -720,7 +720,7 @@ const DATA = {
       "note": "Hazır hesab şəklində verilir.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 1,
@@ -741,7 +741,7 @@ const DATA = {
       "note": "Sizin şəxsi Gmail hesabınızda aktiv edilir.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 1,
