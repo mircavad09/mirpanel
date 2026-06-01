@@ -147,11 +147,6 @@ const DATA = {
           "label": "Ortaq hesab",
           "months": 1,
           "price": 5.99
-        },
-        {
-          "label": "Stokta yoxdur",
-          "months": 6,
-          "price": 0
         }
       ]
     },
