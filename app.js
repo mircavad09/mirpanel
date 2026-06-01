@@ -165,7 +165,7 @@ const DATA = {
       "note": "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "plans": [
         {
           "months": 1,
