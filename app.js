@@ -8,331 +8,750 @@ const PHONE_WA = "https://wa.me/994515243545";
    UI MƏTNLƏRİ (YALNIZ AZ)
    ========================= */
 const UI = {
-  brandSub: "Premium Hesablar • Etibarlı Aktivləşmə",
-  bannerText: "Diqqət! Saytımızda ödəniş sistemi yoxdur. Sifariş etdiyiniz zaman sayt sizi avtomatik WhatsApp-a yönləndirir.",
-  heroTitle: "Premium Hesablar — Sürətli və Etibarlı",
-  heroHint: "Netflix, ChatGPT Plus, Google AI, CapCut Pro və daha çox. Plan seç → məlumatları yaz → WhatsApp avtomatik açılır.",
-  footRights: "©️ 2026 Mirpanel • Bütün hüquqlar qorunur",
-  modalClose: "Bağla ✕",
-  modalPlan: "Plan seçin",
-  modalWait: "Sifariş etdikdə WhatsApp avtomatik açılacaq.",
-  chatTitle: "Mirpanel AI",
-  chatSub: "Məhsullar haqqında sual verin",
-  chatBtn: "Göndər",
-  search: "Məhsul axtar... (məs: Netflix, Zoom)",
-  month: "aylıq",
-  orderBtn: "Sifariş et",
-  noPlan: "Plan yoxdur (WhatsApp-da dəqiqləşdirilir).",
-  formTitle: "Məlumatları daxil et",
-  stokOut: "Stokta yoxdur",
-  nameLabel: "Ad",
-  codeLabel: "rəqəmli kod",
-  emailLabel: "Gmail ünvanı",
-  passLabel: "Şifrə",
-  sendWa: "WhatsApp-a göndər",
-  ttCoin: "Jeton sayı",
-  ttPrice: "Qiymət",
-  ttUser: "TikTok istifadəçi adı",
-  ttRule: "Minimum 500 jeton. 500 jeton = 10 ₼",
-  minCoin: "Minimum",
-  spNote: "Şəxsi hesabınızda aktiv edirik.",
-  reqName: "Zəhmət olmasa, adınızı yazın.",
-  reqCode: "Zəhmət olmasa, kodu düzgün yazın.",
-  reqEmail: "Zəhmət olmasa, e-poçt ünvanını düzgün yazın.",
-  reqPass: "Zəhmət olmasa, şifrəni və ya istifadəçi adını qeyd edin.",
-  reqCoin: "Minimum 500 jeton daxil et.",
-  namePlace: "Məs: Mələk",
-  codePlace: " rəqəmli kod", 
-  emailPlace: "məs: misal@gmail.com",
-  passPlace: "Şifrəni yazın...",
-  ttUserPlace: "@istifadeci_adi",
-  bundleBtn: "Paket Yarat", 
-  bmTitle: "XÜSUSİ PAKET (ENDİRİMLİ)", 
-  bmSub: "İstədiyiniz məhsulları seçin və 5% paket endirimi qazanın! Bütün paketlər 1 aylıq hesablanır.", 
-  bmTotal: "Ümumi Qiymət:", 
-  bmDisc: "Paket Endirimi (5%):",
-  bmFinal: "Yekun Qiymət:",
-  bmEmail: "Gmail",
-  bmNxCode: "Otaq Kodu (4 rəqəm)",
-  bmPrCode: "Prime Kodu (5 rəqəm)",
-  bmSpPass: "Spotify Şifrəsi",
-  bmTtUser: "TikTok İstifadəçi adı",
-  bmTtPass: "TikTok Şifrəsi",
-  bmSend: "WhatsApp-a göndər",
-  bmClose: "Bağla ✕",
-  available: "Mövcuddur",
-  deliveryFast: "7/24, dərhal təqdim olunur ✅⚡",
-  similarProds: "Oxşar Məhsullar",
-  tabAbout: "Məhsul Haqqında",
-  tabRules: "İstifadə Qaydaları",
-  searchTitle: "AXTARIŞ ET, <span class='highlight'>İSTƏDİYİNİ TAP!</span>",
-  searchDesc: "Bütün məlumatlar saytda mövcuddur. Axtarış bölməsindən istədiyiniz məhsulu rahatlıqla tapa bilərsiniz.",
-  buyNow: "İndi al",
-  addCart: "🛒 Səbətə At",
-  gameMainBtn: "Əylən & Oyna",
-  gameSelTitle: "ARCADE OYUNLARI",
-  gameSelSub: "Asudə vaxtını əyləncəli keçir. Öz rekordunu qır!",
-  game1Title: "Flappy Kosmos",
-  game1Desc: "15 xalı keç, yuxarı-aşağı hərəkət edən borulara diqqət et!",
-  game2Title: "Tort Qülləsi",
-  game2Desc: "İpdən sallanan tort təbəqələrini tam üst-üstə diz!",
-  gameStart: "Oyuna Başla",
-  gameRetry: "Yenidən Oyna",
-  gameBack: "Geri Qayıt",
-  gameWin: "ƏLA NƏTİCƏ 🎉",
-  gameLose: "OYUN BİTDİ 💥",
-  flappyRule: "Maneələrə dəymədən ekrana basaraq quşu uçurun. Maksimum rekordunuzu qırın!",
-  tapperRule: "Yuxarıdan sallanan tortları tam üst-üstə düzün. İpi kəsmək üçün toxunun. Rekord qırın!",
-  gameWinTxt: "Sənin topladığın xal: {score}. Əla nəticədir!",
-  gameLoseTxt: "Sənin topladığın xal: {score}. Növbəti dəfə daha yaxşı olar!"
+  "brandSub": "Premium Hesablar • Etibarlı Aktivləşmə",
+  "bannerText": "Diqqət! Saytımızda ödəniş sistemi yoxdur. Sifariş etdiyiniz zaman sayt sizi avtomatik WhatsApp-a yönləndirir.",
+  "heroTitle": "Premium Hesablar — Sürətli və Etibarlı",
+  "heroHint": "Netflix, ChatGPT Plus, Google AI, CapCut Pro və daha çox. Plan seç → məlumatları yaz → WhatsApp avtomatik açılır.",
+  "footRights": "©️ 2026 Mirpanel • Bütün hüquqlar qorunur",
+  "modalClose": "Bağla ✕",
+  "modalPlan": "Plan seçin",
+  "modalWait": "Sifariş etdikdə WhatsApp avtomatik açılacaq.",
+  "chatTitle": "Mirpanel AI",
+  "chatSub": "Məhsullar haqqında sual verin",
+  "chatBtn": "Göndər",
+  "search": "Məhsul axtar... (məs: Netflix, Zoom)",
+  "month": "aylıq",
+  "orderBtn": "Sifariş et",
+  "noPlan": "Plan yoxdur (WhatsApp-da dəqiqləşdirilir).",
+  "formTitle": "Məlumatları daxil et",
+  "stokOut": "Stokta yoxdur",
+  "nameLabel": "Ad",
+  "codeLabel": "rəqəmli kod",
+  "emailLabel": "Gmail ünvanı",
+  "passLabel": "Şifrə",
+  "sendWa": "WhatsApp-a göndər",
+  "ttCoin": "Jeton sayı",
+  "ttPrice": "Qiymət",
+  "ttUser": "TikTok istifadəçi adı",
+  "ttRule": "Minimum 500 jeton. 500 jeton = 10 ₼",
+  "minCoin": "Minimum",
+  "spNote": "Şəxsi hesabınızda aktiv edirik.",
+  "reqName": "Zəhmət olmasa, adınızı yazın.",
+  "reqCode": "Zəhmət olmasa, kodu düzgün yazın.",
+  "reqEmail": "Zəhmət olmasa, e-poçt ünvanını düzgün yazın.",
+  "reqPass": "Zəhmət olmasa, şifrəni və ya istifadəçi adını qeyd edin.",
+  "reqCoin": "Minimum 500 jeton daxil et.",
+  "namePlace": "Məs: Mələk",
+  "codePlace": " rəqəmli kod",
+  "emailPlace": "məs: misal@gmail.com",
+  "passPlace": "Şifrəni yazın...",
+  "ttUserPlace": "@istifadeci_adi",
+  "bundleBtn": "Paket Yarat",
+  "bmTitle": "XÜSUSİ PAKET (ENDİRİMLİ)",
+  "bmSub": "İstədiyiniz məhsulları seçin və 5% paket endirimi qazanın! Bütün paketlər 1 aylıq hesablanır.",
+  "bmTotal": "Ümumi Qiymət:",
+  "bmDisc": "Paket Endirimi (5%):",
+  "bmFinal": "Yekun Qiymət:",
+  "bmEmail": "Gmail",
+  "bmNxCode": "Otaq Kodu (4 rəqəm)",
+  "bmPrCode": "Prime Kodu (5 rəqəm)",
+  "bmSpPass": "Spotify Şifrəsi",
+  "bmTtUser": "TikTok İstifadəçi adı",
+  "bmTtPass": "TikTok Şifrəsi",
+  "bmSend": "WhatsApp-a göndər",
+  "bmClose": "Bağla ✕",
+  "available": "Mövcuddur",
+  "deliveryFast": "7/24, dərhal təqdim olunur ✅⚡",
+  "similarProds": "Oxşar Məhsullar",
+  "tabAbout": "Məhsul Haqqında",
+  "tabRules": "İstifadə Qaydaları",
+  "searchTitle": "AXTARIŞ ET, <span class='highlight'>İSTƏDİYİNİ TAP!</span>",
+  "searchDesc": "Bütün məlumatlar saytda mövcuddur. Axtarış bölməsindən istədiyiniz məhsulu rahatlıqla tapa bilərsiniz.",
+  "buyNow": "İndi al",
+  "addCart": "🛒 Səbətə At",
+  "gameMainBtn": "Əylən & Oyna",
+  "gameSelTitle": "ARCADE OYUNLARI",
+  "gameSelSub": "Asudə vaxtını əyləncəli keçir. Öz rekordunu qır!",
+  "game1Title": "Flappy Kosmos",
+  "game1Desc": "15 xalı keç, yuxarı-aşağı hərəkət edən borulara diqqət et!",
+  "game2Title": "Tort Qülləsi",
+  "game2Desc": "İpdən sallanan tort təbəqələrini tam üst-üstə diz!",
+  "gameStart": "Oyuna Başla",
+  "gameRetry": "Yenidən Oyna",
+  "gameBack": "Geri Qayıt",
+  "gameWin": "ƏLA NƏTİCƏ 🎉",
+  "gameLose": "OYUN BİTDİ 💥",
+  "flappyRule": "Maneələrə dəymədən ekrana basaraq quşu uçurun. Maksimum rekordunuzu qırın!",
+  "tapperRule": "Yuxarıdan sallanan tortları tam üst-üstə düzün. İpi kəsmək üçün toxunun. Rekord qırın!",
+  "gameWinTxt": "Sənin topladığın xal: {score}. Əla nəticədir!",
+  "gameLoseTxt": "Sənin topladığın xal: {score}. Növbəti dəfə daha yaxşı olar!"
 };
 
 /* =========================
    MƏHSUL BAZASI (DATA)
    ========================= */
 const DATA = {
-  brand: "Mirpanel",
-  products: [
+  "brand": "Mirpanel",
+  "categories": [
     {
-      id: "capcut", category: "video", image: "assets/capcut.png", currency: "₼",
-      title: "CapCut Pro", variant: "Pro", badge: "Video",
-      desc: "Premium effektlər, export, template-lər.",
-      note: "Hesab hazır verilir. Sifarişi təsdiqləyin.",
-      plans: [{ months: 1, price: 4.99 }, { months: 3, price: 12.99 }, { months: 6, price: 23.99 }],
+      "key": "video",
+      "name": "video"
     },
     {
-      id: "hbomax", category: "film", image: "assets/hbomax.png", currency: "₼",
-      title: "HBO Max(+VPN Hədiyyə)", variant: "Şəxsi Otaq", badge: "Film",
-      desc: "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
-      note: "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
-      plans: [{ months: 1, price: 5.99 }],
+      "key": "film",
+      "name": "film"
     },
     {
-      id: "netflix", category: "film", image: "assets/netflix.png", currency: "₼",
-      title: "Netflix Şəxsi", variant: "Premium", badge: "Film",
-      desc: "Filmlər, seriallar, yüksək keyfiyyət.",
-      note: "Netflix Şəxsi otaq: Plan seç → Ad və 4 rəqəmli kod yaz.",
-      plans: [{ months: 1, price: 5.99 }, { months: 3, price: 16.49 }, { months: 6, price: 29.99 }],
+      "key": "meeting",
+      "name": "meeting"
     },
     {
-      id: "netflix_umumi", category: "film", image: "assets/netflix.png", currency: "₼",
-      title: "Netflix Ümumi", variant: "Premium", badge: "Film",
-      desc: "Ümumi hesab (paylaşılan).",
-      note: "Hazır hesab verilir. Sifarişi təsdiqləyin.",
-      plans: [{ months: 1, price: 3.99 }],
+      "key": "musiqi",
+      "name": "musiqi"
     },
     {
-      id: "zoom", category: "meeting", image: "assets/zoom.png", currency: "₼",
-      title: "Zoom Pro", variant: "Pro", badge: "Görüş",
-      desc: "Peşəkar onlayn görüşlər.",
-      note: "Hesab aktiv və hazır şəkildə təqdim olunur.",
-      plans: [{ months: 1, price: 9.99 }],
+      "key": "ai",
+      "name": "ai"
     },
     {
-      id: "youtube", category: "musiqi", image: "assets/youtube.png", currency: "₼",
-      title: "YouTube Premium", variant: "Gmail", badge: "Video",
-      desc: "Reklamsız izləmə, YouTube Music daxil.",
-      note: "Aktivləşmə üçün Gmailinizi qeyd edin.",
-      plans: [{ months: 1, price: 2.99 }],
+      "key": "dil",
+      "name": "dil"
     },
     {
-      id: "spotify", category: "musiqi", image: "assets/spotify.png", currency: "₼",
-      title: "Spotify Premium", variant: "Şəxsi hesab", badge: "Musiqi",
-      desc: "Reklamsız musiqi, offline.",
-      note: "Gmailinizi və Spotify şifrənizi qeyd edin.",
-      plans: [{ months: 1, price: 4.80 }],
+      "key": "dizayn",
+      "name": "dizayn"
+    }
+  ],
+  "products": [
+    {
+      "id": "capcut",
+      "order": 0,
+      "category": "video",
+      "image": "assets/capcut.png",
+      "currency": "₼",
+      "title": "CapCut Pro",
+      "variant": "Pro",
+      "badge": "Video",
+      "desc": "Premium effektlər, export, template-lər.",
+      "note": "Hesab hazır verilir. Sifarişi təsdiqləyin.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 4.99
+        },
+        {
+          "months": 3,
+          "price": 12.99
+        },
+        {
+          "months": 6,
+          "price": 23.99
+        }
+      ]
     },
     {
-      id: "surfshark", category: "video", image: "assets/surfshark.png", currency: "₼",
-      title: "Surfshark VPN", variant: "VPN", badge: "VPN",
-      desc: "IP gizlətmə, güclü şifrələmə.",
-      note: "Hesab hazır şəkildə verilir.",
-      plans: [{ months: 1, price: 3.99 }],
+      "id": "hbomax",
+      "order": 1,
+      "category": "film",
+      "image": "assets/hbomax.png",
+      "currency": "₼",
+      "title": "HBO Max(+VPN Hədiyyə)",
+      "variant": "Şəxsi Otaq",
+      "badge": "Film",
+      "desc": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
+      "note": "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 5.99
+        }
+      ]
     },
     {
-      id: "tiktok_jeton", category: "video", image: "assets/tiktok.png", currency: "₼",
-      title: "TikTok Jeton", variant: "500+", badge: "TikTok",
-      desc: "Minimum 500 jeton.",
-      note: "500 jeton = 10 ₼. İstifadəçi adı və şifrə qeyd olunur.",
-      plans: [{ months: 1, price: 10.00, label: "Jeton sayını daxil et" }],
+      "id": "netflix",
+      "order": 2,
+      "category": "film",
+      "image": "assets/netflix.png",
+      "currency": "₼",
+      "title": "Netflix Şəxsi",
+      "variant": "Premium",
+      "badge": "Film",
+      "desc": "Filmlər, seriallar, yüksək keyfiyyət.",
+      "note": "Netflix Şəxsi otaq: Plan seç → Ad və 4 rəqəmli kod yaz.",
+      "flow": "name_code_4",
+      "soldOut": true,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 5.99
+        },
+        {
+          "months": 3,
+          "price": 16.49
+        },
+        {
+          "months": 6,
+          "price": 29.99
+        }
+      ]
     },
     {
-      id: "google_ai", category: "ai", image: "assets/google-ai.png", currency: "₼",
-      title: "Google AI Pro + VEO 3", variant: "Pro", badge: "AI",
-      desc: "Ağıllı mətn, analiz və məhsuldarlıq.",
-      note: "Aktivləşmə sizin Gmail hesabınız üzərindən edilir.",
-      plans: [{ months: 12, price: 22.99 }],
+      "id": "netflix_umumi",
+      "order": 3,
+      "category": "film",
+      "image": "assets/netflix.png",
+      "currency": "₼",
+      "title": "Netflix Ümumi",
+      "variant": "Premium",
+      "badge": "Film",
+      "desc": "Ümumi hesab (paylaşılan).",
+      "note": "Hazır hesab verilir. Sifarişi təsdiqləyin.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 3.99
+        }
+      ]
     },
     {
-      id: "google_ai_ultra", category: "ai", image: "assets/google-ai-ultra.png", currency: "₼",
-      title: "Google AI Ultra + VEO 3", variant: "Ultra", badge: "AI",
-      desc: "Peşəkar istifadə üçün ən yüksək AI.",
-      note: "Stokta yoxdur.",
-      plans: [{ months: 1, price: 0, label: "Stokta yoxdur" }],
+      "id": "zoom",
+      "order": 4,
+      "category": "meeting",
+      "image": "assets/zoom.png",
+      "currency": "₼",
+      "title": "Zoom Pro",
+      "variant": "Pro",
+      "badge": "Görüş",
+      "desc": "Peşəkar onlayn görüşlər.",
+      "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 9.99
+        }
+      ]
     },
     {
-      id: "captions", category: "ai", image: "assets/captions.png", currency: "₼",
-      title: "Captions AI", variant: "Şəxsi", badge: "AI",
-      desc: "Videolar üçün avtomatik caption.",
-      note: "Hesab biz tərəfdən hazır verilir.",
-      plans: [{ months: 1, price: 11.99, label: "1 aylıq PRO" }, { months: 1, price: 19.99, label: "1 aylıq MAX" }],
+      "id": "youtube",
+      "order": 5,
+      "category": "musiqi",
+      "image": "assets/youtube.png",
+      "currency": "₼",
+      "title": "YouTube Premium",
+      "variant": "Gmail",
+      "badge": "Video",
+      "desc": "Reklamsız izləmə, YouTube Music daxil.",
+      "note": "Aktivləşmə üçün Gmailinizi qeyd edin.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 2.99
+        }
+      ]
     },
     {
-      id: "grok_supergrok", category: "ai", image: "assets/grok.png", currency: "₼",
-      title: "Grok AI", variant: "SuperGrok", badge: "AI",
-      desc: "Güclü model + şəkil/fayl analizi.",
-      note: "Hesab hazır şəkildə təqdim olunur.",
-      plans: [{ months: 1, price: 17.99 }],
+      "id": "spotify",
+      "order": 6,
+      "category": "musiqi",
+      "image": "assets/spotify.png",
+      "currency": "₼",
+      "title": "Spotify Premium",
+      "variant": "Şəxsi hesab",
+      "badge": "Musiqi",
+      "desc": "Reklamsız musiqi, offline.",
+      "note": "Gmailinizi və Spotify şifrənizi qeyd edin.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 4.8
+        }
+      ]
     },
     {
-      id: "claude_ai", category: "ai", image: "assets/claude.png", currency: "₼",
-      title: "Claude AI", variant: "1 illik", badge: "AI",
-      desc: "Mətn, kod, yazı üçün güclü AI.",
-      note: "Stokta yoxdur.",
-      plans: [{ months: 12, price: 0, label: "Stokta yoxdur" }],
+      "id": "surfshark",
+      "order": 7,
+      "category": "video",
+      "image": "assets/surfshark.png",
+      "currency": "₼",
+      "title": "Surfshark VPN",
+      "variant": "VPN",
+      "badge": "VPN",
+      "desc": "IP gizlətmə, güclü şifrələmə.",
+      "note": "Hesab hazır şəkildə verilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 3.99
+        }
+      ]
     },
     {
-      id: "prime", category: "film", image: "assets/prime.png", currency: "₼",
-      title: "Amazon Prime Video", variant: "Premium", badge: "Film",
-      desc: "Prime Video filmlər və seriallar.",
-      note: "Plan seç → Ad və 5 rəqəmli kod yaz.",
-      plans: [{ months: 1, price: 3.99 }, { months: 6, price: 17.99 }],
+      "id": "tiktok_jeton",
+      "order": 8,
+      "category": "video",
+      "image": "assets/tiktok.png",
+      "currency": "₼",
+      "title": "TikTok Jeton",
+      "variant": "500+",
+      "badge": "TikTok",
+      "desc": "Minimum 500 jeton.",
+      "note": "500 jeton = 10 ₼. İstifadəçi adı və şifrə qeyd olunur.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "label": "Jeton sayını daxil et",
+          "months": 1,
+          "price": 10
+        }
+      ]
     },
     {
-      id: "duolingo", category: "dil", image: "assets/duolingo.png", currency: "₼",
-      title: "Duolingo Super", variant: "Super", badge: "Dil",
-      desc: "Xarici dil öyrənmək üçün premium imkanlar.",
-      note: "Hazır hesab kimi təqdim edilir.",
-      plans: [{ months: 1, price: 3.99 }],
+      "id": "google_ai",
+      "order": 9,
+      "category": "ai",
+      "image": "assets/google-ai.png",
+      "currency": "₼",
+      "title": "Google AI Pro + VEO 3",
+      "variant": "Pro",
+      "badge": "AI",
+      "desc": "Ağıllı mətn, analiz və məhsuldarlıq.",
+      "note": "Aktivləşmə sizin Gmail hesabınız üzərindən edilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 12,
+          "price": 22.99
+        }
+      ]
     },
     {
-      id: "canva", category: "dizayn", image: "assets/canva.png", currency: "₼",
-      title: "Canva Premium", variant: "Pro", badge: "Dizayn",
-      desc: "Premium template, elementlər.",
-      note: "Aktivləşmə üçün Gmail qeyd edin.",
-      plans: [{ months: 1, price: 1.49 }, { months: 12, price: 2.99 }],
+      "id": "google_ai_ultra",
+      "order": 10,
+      "category": "ai",
+      "image": "assets/google-ai-ultra.png",
+      "currency": "₼",
+      "title": "Google AI Ultra + VEO 3",
+      "variant": "Ultra",
+      "badge": "AI",
+      "desc": "Peşəkar istifadə üçün ən yüksək AI.",
+      "note": "Stokta yoxdur.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "label": "Stokta yoxdur",
+          "months": 1,
+          "price": 0
+        }
+      ]
     },
     {
-      id: "chatgpt", category: "ai", image: "assets/chatgpt.png", currency: "₼",
-      title: "ChatGPT Plus", variant: "Plus", badge: "AI",
-      desc: "Daha güclü model, fayl/şəkil imkanları.",
-      note: "Hesabınızın Email və Şifrəsini qeyd edin.",
-      plans: [{ months: 1, price: 12.99, label: "1 Aylıq" }],
+      "id": "captions",
+      "order": 11,
+      "category": "ai",
+      "image": "assets/captions.png",
+      "currency": "₼",
+      "title": "Captions AI",
+      "variant": "Şəxsi",
+      "badge": "AI",
+      "desc": "Videolar üçün avtomatik caption.",
+      "note": "Hesab biz tərəfdən hazır verilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "label": "1 aylıq PRO",
+          "months": 1,
+          "price": 11.99
+        },
+        {
+          "label": "1 aylıq MAX",
+          "months": 1,
+          "price": 19.99
+        }
+      ]
     },
     {
-      id: "adobecc", category: "dizayn", image: "assets/adobe.png", currency: "₼",
-      title: "Adobe Creative Cloud", variant: "Premium", badge: "Dizayn",
-      desc: "Photoshop, Illustrator və digərləri.",
-      note: "Hesab hazır şəkildə təqdim edilir.",
-      plans: [{ months: 1, price: 9.99 }, { months: 4, price: 22.99 }],
+      "id": "grok_supergrok",
+      "order": 12,
+      "category": "ai",
+      "image": "assets/grok.png",
+      "currency": "₼",
+      "title": "Grok AI",
+      "variant": "SuperGrok",
+      "badge": "AI",
+      "desc": "Güclü model + şəkil/fayl analizi.",
+      "note": "Hesab hazır şəkildə təqdim olunur.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 17.99
+        }
+      ]
     },
     {
-      id: "linkedin-premium",
-      category: "meeting",
-      image: "assets/linkedin.png", 
-      currency: "₼",
-      title: "Linkedin Premium", 
-      variant: "Biznes", 
-      badge: "İş",
-      desc: "Karyeranızı və şəbəkənizi növbəti səviyyəyə daşıyın.",
-      note: "Hazır hesab kimi təqdim olunur.",
-      plans: [{ months: 3, price: 19.99 }]
+      "id": "claude_ai",
+      "order": 13,
+      "category": "ai",
+      "image": "assets/claude.png",
+      "currency": "₼",
+      "title": "Claude AI",
+      "variant": "1 illik",
+      "badge": "AI",
+      "desc": "Mətn, kod, yazı üçün güclü AI.",
+      "note": "Stokta yoxdur.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "label": "Stokta yoxdur",
+          "months": 12,
+          "price": 0
+        }
+      ]
     },
     {
-      id: "elevenlabs-creator",
-      category: "ai",
-      image: "assets/elevenlabs.png",
-      currency: "₼",
-      title: "Elevenlabs Creator",
-      variant: "Səs AI", 
-      badge: "AI",
-      desc: "Mətnləri ən təbii insan səsi ilə səsləndirin.",
-      note: "Hazır hesab şəklində təqdim edilir.",
-      plans: [{ months: 1, price: 19.99 }]
+      "id": "prime",
+      "order": 14,
+      "category": "film",
+      "image": "assets/prime.png",
+      "currency": "₼",
+      "title": "Amazon Prime Video",
+      "variant": "Premium",
+      "badge": "Film",
+      "desc": "Prime Video filmlər və seriallar.",
+      "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 3.99
+        },
+        {
+          "months": 6,
+          "price": 17.99
+        }
+      ]
     },
     {
-      id: "semrush-premium",
-      category: "meeting",
-      image: "assets/semrush.png",
-      currency: "₼",
-      title: "Semrush Premium",
-      variant: "SEO", 
-      badge: "Biznes",
-      desc: "Rəqiblərinizi qabaqlayın, açar sözləri tapın.",
-      note: "Hazır hesab kimi verilir.",
-      plans: [{ months: 1, price: 6.99 }]
+      "id": "duolingo",
+      "order": 15,
+      "category": "dil",
+      "image": "assets/duolingo.png",
+      "currency": "₼",
+      "title": "Duolingo Super",
+      "variant": "Super",
+      "badge": "Dil",
+      "desc": "Xarici dil öyrənmək üçün premium imkanlar.",
+      "note": "Hazır hesab kimi təqdim edilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 3.99
+        }
+      ]
     },
     {
-      id: "adobe-express",
-      category: "dizayn",
-      image: "assets/adobe-express.png",
-      currency: "₼",
-      title: "Adobe Express",
-      variant: "Pro", 
-      badge: "Dizayn",
-      desc: "Peşəkar qrafiklər və sosial media postları.",
-      note: "Hazır hesab kimi təqdim edilir.",
-      plans: [{ months: 1, price: 9.99 }]
+      "id": "canva",
+      "order": 16,
+      "category": "dizayn",
+      "image": "assets/canva.png",
+      "currency": "₼",
+      "title": "Canva Premium",
+      "variant": "Pro",
+      "badge": "Dizayn",
+      "desc": "Premium template, elementlər.",
+      "note": "Aktivləşmə üçün Gmail qeyd edin.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 1.49
+        },
+        {
+          "months": 12,
+          "price": 2.99
+        }
+      ]
     },
     {
-      id: "notion-plus",
-      category: "meeting",
-      image: "assets/notion.png",
-      currency: "₼",
-      title: "Notion Plus",
-      variant: "Məhsuldarlıq", 
-      badge: "İş",
-      desc: "Bütün işlərinizi və qeydlərinizi idarə edin.",
-      note: "Hesab hazır şəkildə təhvil verilir.",
-      plans: [{ months: 3, price: 14.99 }]
+      "id": "chatgpt",
+      "order": 17,
+      "category": "ai",
+      "image": "assets/chatgpt.png",
+      "currency": "₼",
+      "title": "ChatGPT Plus",
+      "variant": "Plus",
+      "badge": "AI",
+      "desc": "Daha güclü model, fayl/şəkil imkanları.",
+      "note": "Hesabınızın Email və Şifrəsini qeyd edin.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "label": "1 Aylıq",
+          "months": 1,
+          "price": 12.99
+        }
+      ]
     },
     {
-      id: "picsart-premium",
-      category: "dizayn",
-      image: "assets/picsart.png",
-      currency: "₼",
-      title: "Picsart Premium",
-      variant: "Foto Edit", 
-      badge: "Dizayn",
-      desc: "Premium alətlər və süni intellekt filtirləri.",
-      note: "Hesabınız hazır olaraq verilir.",
-      plans: [{ months: 1, price: 2.89 }]
+      "id": "adobecc",
+      "order": 18,
+      "category": "dizayn",
+      "image": "assets/adobe.png",
+      "currency": "₼",
+      "title": "Adobe Creative Cloud",
+      "variant": "Premium",
+      "badge": "Dizayn",
+      "desc": "Photoshop, Illustrator və digərləri.",
+      "note": "Hesab hazır şəkildə təqdim edilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 9.99
+        },
+        {
+          "months": 4,
+          "price": 22.99
+        }
+      ]
     },
     {
-      id: "blink-starter",
-      category: "meeting",
-      image: "assets/blink.png",
-      currency: "₼",
-      title: "Blink Starter",
-      variant: "Starter", 
-      badge: "İş",
-      desc: "Sürətli və effektiv iş mühiti üçün.",
-      note: "Hazır hesab kimi təqdim olunur.",
-      plans: [{ months: 1, price: 16.99 }]
+      "id": "linkedin-premium",
+      "order": 19,
+      "category": "meeting",
+      "image": "assets/linkedin.png",
+      "currency": "₼",
+      "title": "Linkedin Premium",
+      "variant": "Biznes",
+      "badge": "İş",
+      "desc": "Karyeranızı və şəbəkənizi növbəti səviyyəyə daşıyın.",
+      "note": "Hazır hesab kimi təqdim olunur.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 3,
+          "price": 19.99
+        }
+      ]
     },
     {
-      id: "lightroom-photo",
-      category: "dizayn",
-      image: "assets/lightroom.png",
-      currency: "₼",
-      title: "Lightroom Photo",
-      variant: "Foto Edit", 
-      badge: "Dizayn",
-      desc: "Peşəkar rəng korreksiyası və retuş.",
-      note: "Hazır hesab şəklində verilir.",
-      plans: [{ months: 1, price: 6.99 }]
+      "id": "elevenlabs-creator",
+      "order": 20,
+      "category": "ai",
+      "image": "assets/elevenlabs.png",
+      "currency": "₼",
+      "title": "Elevenlabs Creator",
+      "variant": "Səs AI",
+      "badge": "AI",
+      "desc": "Mətnləri ən təbii insan səsi ilə səsləndirin.",
+      "note": "Hazır hesab şəklində təqdim edilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 19.99
+        }
+      ]
     },
     {
-      id: "gemini-ai-pro",
-      category: "ai",
-      image: "assets/gemini.png",
-      currency: "₼",
-      title: "Gemini AI Pro",
-      variant: "Google AI", 
-      badge: "AI",
-      desc: "Ən güclü süni intellekt modeli ilə sürətlənin.",
-      note: "Sizin şəxsi Gmail hesabınızda aktiv edilir.",
-      plans: [{ months: 1, price: 8.99 }, { months: 4, price: 14.99 }]
+      "id": "semrush-premium",
+      "order": 21,
+      "category": "meeting",
+      "image": "assets/semrush.png",
+      "currency": "₼",
+      "title": "Semrush Premium",
+      "variant": "SEO",
+      "badge": "Biznes",
+      "desc": "Rəqiblərinizi qabaqlayın, açar sözləri tapın.",
+      "note": "Hazır hesab kimi verilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 6.99
+        }
+      ]
+    },
+    {
+      "id": "adobe-express",
+      "order": 22,
+      "category": "dizayn",
+      "image": "assets/adobe-express.png",
+      "currency": "₼",
+      "title": "Adobe Express",
+      "variant": "Pro",
+      "badge": "Dizayn",
+      "desc": "Peşəkar qrafiklər və sosial media postları.",
+      "note": "Hazır hesab kimi təqdim edilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 9.99
+        }
+      ]
+    },
+    {
+      "id": "notion-plus",
+      "order": 23,
+      "category": "meeting",
+      "image": "assets/notion.png",
+      "currency": "₼",
+      "title": "Notion Plus",
+      "variant": "Məhsuldarlıq",
+      "badge": "İş",
+      "desc": "Bütün işlərinizi və qeydlərinizi idarə edin.",
+      "note": "Hesab hazır şəkildə təhvil verilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 3,
+          "price": 14.99
+        }
+      ]
+    },
+    {
+      "id": "picsart-premium",
+      "order": 24,
+      "category": "dizayn",
+      "image": "assets/picsart.png",
+      "currency": "₼",
+      "title": "Picsart Premium",
+      "variant": "Foto Edit",
+      "badge": "Dizayn",
+      "desc": "Premium alətlər və süni intellekt filtirləri.",
+      "note": "Hesabınız hazır olaraq verilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 2.89
+        }
+      ]
+    },
+    {
+      "id": "blink-starter",
+      "order": 25,
+      "category": "meeting",
+      "image": "assets/blink.png",
+      "currency": "₼",
+      "title": "Blink Starter",
+      "variant": "Starter",
+      "badge": "İş",
+      "desc": "Sürətli və effektiv iş mühiti üçün.",
+      "note": "Hazır hesab kimi təqdim olunur.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 16.99
+        }
+      ]
+    },
+    {
+      "id": "lightroom-photo",
+      "order": 26,
+      "category": "dizayn",
+      "image": "assets/lightroom.png",
+      "currency": "₼",
+      "title": "Lightroom Photo",
+      "variant": "Foto Edit",
+      "badge": "Dizayn",
+      "desc": "Peşəkar rəng korreksiyası və retuş.",
+      "note": "Hazır hesab şəklində verilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 6.99
+        }
+      ]
+    },
+    {
+      "id": "gemini-ai-pro",
+      "order": 27,
+      "category": "ai",
+      "image": "assets/gemini.png",
+      "currency": "₼",
+      "title": "Gemini AI Pro",
+      "variant": "Google AI",
+      "badge": "AI",
+      "desc": "Ən güclü süni intellekt modeli ilə sürətlənin.",
+      "note": "Sizin şəxsi Gmail hesabınızda aktiv edilir.",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "plans": [
+        {
+          "months": 1,
+          "price": 8.99
+        },
+        {
+          "months": 4,
+          "price": 14.99
+        }
+      ]
     }
   ]
 };
@@ -340,6 +759,85 @@ const DATA = {
 /* =========================
    MƏHSUL HAQQINDA BÖLMƏSİ (INFO_TEXTS)
    ========================= */
+const ADMIN_CONTENT = {
+  "capcut": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">CapCut PRO - Peşəkar Video Montaj</h3>\n      <p>CapCut PRO hesabı, keyfiyyətli və limitsiz şəkildə videolar hazırlanması üçün nəzərdə tutulmuş premium video montaj proqramıdır.</p>",
+    "rulesHtml": ""
+  },
+  "hbomax": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">HBO Max Premium (Şəxsi Otaq) + Surfshark VPN Hədiyyə</h3>\n      <p>HBO Max Premium hesabı, dünyaca məşhur serialları izləmək üçün ideal platformadır.</p>\n      <p><b>🎁 XÜSUSİ KAMPANİYA:</b> Bu paketi alan hər kəsə <b>Surfshark VPN</b> tamamilə pulsuz hədiyyə olunur!</p>",
+    "rulesHtml": ""
+  },
+  "netflix": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Netflix Premium (Şəxsi Otaq) - 4K Ultra HD</h3>\n      <p>Sizə təqdim edilən \"Şəxsi Otaq\" paketi vasitəsilə ümumi Premium hesab daxilində yalnız sizə aid olan xüsusi profilə sahib olursunuz.</p>",
+    "rulesHtml": ""
+  },
+  "netflix_umumi": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Netflix Premium (Ümumi Otaq) - Sərfəli Qiymət</h3>\n      <p>Bu paket büdcəsinə qənaət edərək, sadəcə bir cihazdan film və seriallardan həzz almaq istəyən şəxslər üçün ən ideal və sürətli həlldir.</p>",
+    "rulesHtml": ""
+  },
+  "zoom": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Zoom Pro - Peşəkar Video Konfrans</h3>\n      <p>Zoom Pro hesabı, onlayn görüşlərin, kəsintisiz, yüksək keyfiyyətli və limitsiz şəkildə həyata keçirilməsi üçün premium platformasıdır.</p>",
+    "rulesHtml": ""
+  },
+  "youtube": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">YouTube Premium - Reklamsız İzləmə</h3>\n      <p>YouTube Premium hesabı, videoları reklamsız izləmək və YouTube Music xidmətindən istifadə etmək üçündür.</p>",
+    "rulesHtml": ""
+  },
+  "spotify": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Spotify Premium - Reklamsız Musiqi</h3>\n      <p>Spotify Premium hesabı, musiqi və podkastlara reklamsız və kəsintisiz çıxış əldə etmək üçün rəqəmsal yayım platformasıdır.</p>",
+    "rulesHtml": ""
+  },
+  "surfshark": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Surfshark VPN - Təhlükəsiz İnternet</h3>\n      <p>İnternetdə tam anonim və təhlükəsiz gəzinmək üçün premium VPN xidməti.</p>",
+    "rulesHtml": ""
+  },
+  "tiktok_jeton": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">TikTok Jeton - Sürətli Yükləmə</h3>\n      <p>TikTok Jeton, canlı yayımlarda dəstək olmaq və hədiyyə göndərmək üçün istifadə olunan rəsmi virtual valyutadır.</p>",
+    "rulesHtml": ""
+  },
+  "google_ai": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Google AI Pro + VEO 3 (Gemini)</h3>\n      <p>Mürəkkəb mətn tapşırıqları və yüksək keyfiyyətli səsli videoların süni intellekt vasitəsilə hazırlanması üçün premium platforma.</p>",
+    "rulesHtml": ""
+  },
+  "google_ai_ultra": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Google AI Ultra + VEO 3 (Gemini)</h3>\n      <p>Ən mürəkkəb mətn və video generasiyası tapşırıqlarını maksimum peşəkarlıqla həyata keçirmək üçün ən güclü (Ultra) AI.</p>",
+    "rulesHtml": ""
+  },
+  "captions": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Captions AI - Peşəkar Altyazı Həlli</h3>\n      <p>Videolarınız üçün avtomatik altyazılar yaratmaq və səsi fərqli dillərə tərcümə etmək üçün premium platformadır.</p>",
+    "rulesHtml": ""
+  },
+  "grok_supergrok": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Grok AI Super - Real-Time Süni İntellekt</h3>\n      <p>xAI tərəfindən yaradılmış və X (Twitter) platformasının real-time məlumat bazasına birbaşa çıxışı olan premium AI.</p>",
+    "rulesHtml": ""
+  },
+  "claude_ai": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Claude AI (Pro) - Dərin Analiz</h3>\n      <p>Mürəkkəb mətnlərin yazılması, böyük həcmli məlumatların analizi üçün premium platformadır.</p>",
+    "rulesHtml": ""
+  },
+  "prime": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Amazon Prime Video</h3>\n      <p>Minlərlə populyar film və eksklüziv məzmunları ən yüksək keyfiyyətdə izləmək üçün qlobal rəqəmsal yayım platformasıdır.</p>",
+    "rulesHtml": ""
+  },
+  "duolingo": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Duolingo Super - Limitsiz Öyrənmə</h3>\n      <p>Duolingo Super hesabı, xarici dil öyrənmək prosesini daha sürətli, əyləncəli və limitsiz şəkildə həyata keçirmək üçündür.</p>",
+    "rulesHtml": ""
+  },
+  "canva": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Canva Premium (Pro) - Peşəkar Dizayn</h3>\n      <p>Canva Premium hesabı, istənilən növ qrafik dizayn, təqdimat və video materialların hazırlanması üçündür.</p>",
+    "rulesHtml": ""
+  },
+  "chatgpt": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">ChatGPT Plus - Qabaqcıl Süni İntellekt</h3>\n      <p>Mürəkkəb mətnlərin yazılması, məlumat analizi və yaradıcı tapşırıqlar üçün premium süni intellekt platformasıdır.</p>",
+    "rulesHtml": ""
+  },
+  "adobecc": {
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Adobe Creative Cloud - Peşəkar Dizayn Həlli</h3>\n      <p>Qrafik dizayn, video montaj və 3D modelləşdirmə layihələrinin hazırlanması üçün qabaqcıl proqramlar toplusudur.</p>",
+    "rulesHtml": ""
+  }
+};
+
 const INFO_TEXTS = {
   hbomax: {
     htmlContent: `
@@ -877,7 +1375,27 @@ function initSlider() {
 
 const $ = (id) => document.getElementById(id);
 
+function applyAdminHomepageSettings() {
+  const setHtml = (selector, value) => {
+    const element = document.querySelector(selector);
+    if (element && value) element.innerHTML = value;
+  };
+
+  setHtml(".brandSub", UI.brandSub);
+  setHtml(".banner-text", UI.bannerText);
+  setHtml(".sp-title", UI.searchTitle);
+  setHtml(".sp-desc", UI.searchDesc);
+  setHtml(".footer .tiny", UI.footRights);
+
+  document
+    .querySelectorAll('a[href^="https://wa.me/"]')
+    .forEach((link) => {
+      link.href = PHONE_WA;
+    });
+}
+
 function setupUI() {
+  applyAdminHomepageSettings();
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if(UI[key]) {
@@ -922,7 +1440,7 @@ function renderGrid() {
   const sortSelect = document.getElementById("sortSelect");
   const sortVal = sortSelect ? sortSelect.value : "default";
 
-  let list = DATA.products.filter((p) => {
+  let list = DATA.products.filter((p) => p.active !== false).filter((p) => {
     if (!q) return true;
     const blob = [p.title, p.desc, p.category, p.variant].join(" ").toLowerCase();
     return blob.includes(q);
