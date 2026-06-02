@@ -17,6 +17,38 @@ const flows = [
   ["out_of_stock", "Stokda yoxdur"]
 ];
 
+function defaultOrderConfirmation() {
+  return {
+    enabled: false,
+    title: "Sifarişi təsdiqləyin",
+    description: "",
+    confirmText: "Təsdiqləyirəm",
+    cancelText: "Ləğv et",
+    footerText:
+      "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+    helpLink: {
+      enabled: false,
+      label: "",
+      url: ""
+    }
+  };
+}
+
+function ensureOrderConfirmation(product) {
+  const defaults = defaultOrderConfirmation();
+
+  product.orderConfirmation = {
+    ...defaults,
+    ...(product.orderConfirmation || {}),
+    helpLink: {
+      ...defaults.helpLink,
+      ...(product.orderConfirmation?.helpLink || {})
+    }
+  };
+
+  return product.orderConfirmation;
+}
+
 const imageUrl = (path) =>
   /^https?:/i.test(path || "")
     ? path
@@ -141,6 +173,25 @@ async function loadState() {
 async function saveState() {
   if (!state.data || !state.dirty) {
     toast("Saxlanacaq dəyişiklik yoxdur.", "bad");
+    return;
+  }
+
+  const invalidProduct = state.data.products.find((product) => {
+    const confirmation = ensureOrderConfirmation(product);
+    const helpUrl = confirmation.helpLink.url.trim();
+
+    return (
+      confirmation.helpLink.enabled &&
+      helpUrl &&
+      !helpUrl.startsWith("https://")
+    );
+  });
+
+  if (invalidProduct) {
+    toast(
+      `${invalidProduct.title}: kömək linki https:// ilə başlamalıdır.`,
+      "bad"
+    );
     return;
   }
 
@@ -377,6 +428,8 @@ function renderProductForm() {
 
   if (!product) return;
 
+  const confirmation = ensureOrderConfirmation(product);
+
   $("previewImage").src = imageUrl(product.image);
   $("previewTitle").textContent = product.title;
   $("previewMeta").textContent =
@@ -422,7 +475,39 @@ function renderProductForm() {
   $("rulesHtml").value =
     state.data.content[product.id]?.rulesHtml || "";
 
+  $("orderConfirmationEnabled").checked =
+    confirmation.enabled;
+  $("orderConfirmationTitle").value =
+    confirmation.title;
+  $("orderConfirmationDescription").value =
+    confirmation.description;
+  $("orderConfirmationConfirmText").value =
+    confirmation.confirmText;
+  $("orderConfirmationCancelText").value =
+    confirmation.cancelText;
+  $("orderConfirmationFooterText").value =
+    confirmation.footerText;
+  $("orderConfirmationHelpEnabled").checked =
+    confirmation.helpLink.enabled;
+  $("orderConfirmationHelpLabel").value =
+    confirmation.helpLink.label;
+  $("orderConfirmationHelpUrl").value =
+    confirmation.helpLink.url;
+
+  updateOrderConfirmationHelpFields();
   renderPlans(product);
+}
+
+function updateOrderConfirmationHelpFields() {
+  const enabled = $("orderConfirmationHelpEnabled").checked;
+
+  $("orderConfirmationHelpFields").classList.toggle(
+    "hidden",
+    !enabled
+  );
+
+  $("orderConfirmationHelpLabel").disabled = !enabled;
+  $("orderConfirmationHelpUrl").disabled = !enabled;
 }
 
 function bindProductField(id, update) {
@@ -510,6 +595,80 @@ bindProductField("productDesc", (product, element) => {
 bindProductField("productNote", (product, element) => {
   product.note = element.value;
 });
+
+bindProductField(
+  "orderConfirmationEnabled",
+  (product, element) => {
+    ensureOrderConfirmation(product).enabled =
+      element.checked;
+  }
+);
+
+bindProductField(
+  "orderConfirmationTitle",
+  (product, element) => {
+    ensureOrderConfirmation(product).title =
+      element.value;
+  }
+);
+
+bindProductField(
+  "orderConfirmationDescription",
+  (product, element) => {
+    ensureOrderConfirmation(product).description =
+      element.value;
+  }
+);
+
+bindProductField(
+  "orderConfirmationConfirmText",
+  (product, element) => {
+    ensureOrderConfirmation(product).confirmText =
+      element.value;
+  }
+);
+
+bindProductField(
+  "orderConfirmationCancelText",
+  (product, element) => {
+    ensureOrderConfirmation(product).cancelText =
+      element.value;
+  }
+);
+
+bindProductField(
+  "orderConfirmationFooterText",
+  (product, element) => {
+    ensureOrderConfirmation(product).footerText =
+      element.value;
+  }
+);
+
+bindProductField(
+  "orderConfirmationHelpEnabled",
+  (product, element) => {
+    ensureOrderConfirmation(product).helpLink.enabled =
+      element.checked;
+
+    updateOrderConfirmationHelpFields();
+  }
+);
+
+bindProductField(
+  "orderConfirmationHelpLabel",
+  (product, element) => {
+    ensureOrderConfirmation(product).helpLink.label =
+      element.value;
+  }
+);
+
+bindProductField(
+  "orderConfirmationHelpUrl",
+  (product, element) => {
+    ensureOrderConfirmation(product).helpLink.url =
+      element.value.trim();
+  }
+);
 
 bindProductField("aboutHtml", (product, element) => {
   state.data.content[product.id] ??= {};
@@ -859,6 +1018,7 @@ $("addProductBtn").addEventListener("click", () => {
         flow: "whatsapp",
         soldOut: false,
         active: true,
+        orderConfirmation: defaultOrderConfirmation(),
         plans: [
           {
             months: 1,
@@ -978,6 +1138,64 @@ $("addPlanBtn").addEventListener("click", () => {
   renderPlans(product);
 });
 
+$("previewOrderConfirmationBtn").addEventListener(
+  "click",
+  () => {
+    const product = selectedProduct();
+
+    if (!product) return;
+
+    const confirmation =
+      ensureOrderConfirmation(product);
+
+    const helpUrl =
+      confirmation.helpLink.url.trim();
+
+    const showHelp =
+      confirmation.helpLink.enabled &&
+      helpUrl.startsWith("https://");
+
+    openModal(
+      confirmation.title || "Sifariş təsdiqi",
+      `
+        <div class="confirmationPreview">
+          <p>${escapeHtml(confirmation.description)}</p>
+
+          ${showHelp ? `
+            <a
+              href="${escapeHtml(helpUrl)}"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              ${escapeHtml(confirmation.helpLink.label)}
+            </a>
+          ` : ""}
+
+          <div class="confirmationPreviewActions">
+            <button class="btn" type="button" disabled>
+              ${escapeHtml(confirmation.cancelText)}
+            </button>
+
+            <button
+              class="btn primary"
+              type="button"
+              disabled
+            >
+              ${escapeHtml(confirmation.confirmText)}
+            </button>
+          </div>
+
+          <small>
+            ${escapeHtml(confirmation.footerText)}
+          </small>
+        </div>
+      `,
+      "Bağla",
+      closeModal
+    );
+  }
+);
+
 $("refreshBtn").addEventListener("click", () => {
   if (
     state.dirty &&
@@ -1025,6 +1243,12 @@ $("modalConfirm").addEventListener(
 
 $("modal").addEventListener("click", (event) => {
   if (event.target === $("modal")) {
+    closeModal();
+  }
+});
+
+document.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
     closeModal();
   }
 });
