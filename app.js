@@ -364,13 +364,13 @@ const DATA = {
       "orderConfirmation": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "Abunəlik şəxsi hesabınızda aktiv edilir və 1 ay tam zəmanət verilir. İstifadə zamanı Spotify tərəfindən \"şübhəli fəaliyyət\" aşkarlanarsa və hesab platforma tərəfindən ləğv edilərsə, bu hal xidmət göstərənin məsuliyyət dairəsinə daxil deyil. Bu növ bloklanma hallarında hesabın əvəzlənməsi və ya ödənişin geri qaytarılması həyata keçirilmir. Sifarişi tamamlayaraq yuxarıdakı şərtləri rəsmən qəbul etdiyinizi təsdiq edirsiniz.",
+        "description": "Abunəlik şəxsi hesabınızda aktiv edilir və Tam zəmanət verilir. İstifadə zamanı Spotify tərəfindən \"şübhəli fəaliyyət\" aşkarlanarsa və hesab platforma tərəfindən ləğv edilərsə, bu hal xidmət göstərənin məsuliyyət dairəsinə daxil deyil. Bu növ bloklanma hallarında hesabın əvəzlənməsi və ya ödənişin geri qaytarılması həyata keçirilmir. Sifarişi tamamlayaraq yuxarıdakı şərtləri rəsmən qəbul etdiyinizi təsdiq edirsiniz.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
           "enabled": true,
-          "label": "Şifrənizi unutmusunuzsa sıfırlayın👉",
+          "label": "👉Şifrənizi unutmusunuzsa sıfırlayın👈Toxunun",
           "url": "https://accounts.spotify.com/az/password-reset"
         }
       }
