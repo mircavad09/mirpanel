@@ -155,6 +155,88 @@ function normalizePlan(plan = {}) {
   };
 }
 
+function legacyOrderConfirmation(id) {
+  const defaults = {
+    enabled: false,
+    title: "Sifarişi təsdiqləyin",
+    description: "",
+    confirmText: "Təsdiqləyirəm",
+    cancelText: "Ləğv et",
+    footerText:
+      "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+    helpLink: {
+      enabled: false,
+      label: "",
+      url: ""
+    }
+  };
+
+  if (id === "spotify") {
+    return {
+      ...defaults,
+      enabled: true,
+      description:
+        "Şəxsi hesabınızda rəsmi Spotify Premium paketi aktivləşdirilir."
+    };
+  }
+
+  if (id === "chatgpt") {
+    return {
+      ...defaults,
+      enabled: true,
+      description:
+        "ChatGPT Plus birbaşa sizin şəxsi hesabınızda aktivləşdiriləcəkdir.",
+      confirmText: "Davam et"
+    };
+  }
+
+  if (id === "youtube") {
+    return {
+      ...defaults,
+      enabled: true,
+      description:
+        "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
+      confirmText: "Təsdiq edirəm"
+    };
+  }
+
+  return defaults;
+}
+
+function normalizeOrderConfirmation(source = {}, id = "") {
+  const fallback = legacyOrderConfirmation(id);
+  const helpSource = source.helpLink || {};
+  const helpUrl = String(helpSource.url || "").trim();
+
+  if (helpUrl && !helpUrl.startsWith("https://")) {
+    throw new Error(
+      `${id}: kömək linki yalnız https:// ilə başlamalıdır.`
+    );
+  }
+
+  return {
+    enabled: source.enabled ?? fallback.enabled,
+    title: String(source.title ?? fallback.title),
+    description: String(
+      source.description ?? fallback.description
+    ),
+    confirmText: String(
+      source.confirmText ?? fallback.confirmText
+    ),
+    cancelText: String(
+      source.cancelText ?? fallback.cancelText
+    ),
+    footerText: String(
+      source.footerText ?? fallback.footerText
+    ),
+    helpLink: {
+      enabled: Boolean(helpSource.enabled),
+      label: String(helpSource.label || ""),
+      url: helpUrl
+    }
+  };
+}
+
 function normalizeProduct(product = {}, index = 0) {
   const id = String(product.id || "").trim();
 
@@ -180,7 +262,11 @@ function normalizeProduct(product = {}, index = 0) {
     active: product.active !== false,
     plans: Array.isArray(product.plans)
       ? product.plans.map(normalizePlan)
-      : []
+      : [],
+    orderConfirmation: normalizeOrderConfirmation(
+      product.orderConfirmation,
+      id
+    )
   };
 }
 
