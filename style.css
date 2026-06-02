@@ -895,3 +895,42 @@ body.hide-top-panel .top {
   font-weight: 500;
   padding: 10px;
 }
+/* Məhsula xüsusi sifariş təsdiqi modalı */
+.orderConfirmationDesc {
+  color: #d1d5db;
+  font-size: 14px;
+  line-height: 1.65;
+  text-align: left;
+}
+
+.orderConfirmationHelp {
+  display: block;
+  margin-top: 14px;
+  color: #8fdcff;
+  font-size: 13px;
+  line-height: 1.5;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.orderConfirmationActions {
+  display: flex;
+  gap: 10px;
+}
+
+.orderConfirmationActions .mpBtn {
+  flex: 1;
+}
+
+.orderConfirmationCancel {
+  background: #374151;
+  color: #fff;
+}
+
+@media (max-width: 520px) {
+  .orderConfirmationActions {
+    flex-direction: column-reverse;
+    gap: 0;
+  }
+}
