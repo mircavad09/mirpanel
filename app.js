@@ -279,7 +279,7 @@ const DATA = {
       "badge": "Görüş",
       "desc": "Peşəkar onlayn görüşlər.",
       "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
-      "flow": "whatsapp",
+      "flow": "out_of_stock",
       "soldOut": false,
       "active": true,
       "plans": [
@@ -313,7 +313,7 @@ const DATA = {
       "badge": "Video",
       "desc": "Reklamsız izləmə, YouTube Music daxil.",
       "note": "Aktivləşmə üçün Gmailinizi qeyd edin.",
-      "flow": "whatsapp",
+      "flow": "out_of_stock",
       "soldOut": false,
       "active": true,
       "plans": [
@@ -345,9 +345,9 @@ const DATA = {
       "title": "Spotify Premium",
       "variant": "Şəxsi hesab",
       "badge": "Musiqi",
-      "desc": "Reklamsız musiqi, offline.",
-      "note": "Gmailinizi və Spotify şifrənizi qeyd edin.",
-      "flow": "whatsapp",
+      "desc": "Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.\n",
+      "note": "Abunəlik tamamilə rəsmi şəkildə sizin şəxsi hesabınızda aktivləşdirilir və 1 ay müddətinə tam zəmanət verilir.",
+      "flow": "spotify",
       "soldOut": false,
       "active": true,
       "plans": [
@@ -415,7 +415,7 @@ const DATA = {
       "badge": "TikTok",
       "desc": "Minimum 500 jeton.",
       "note": "500 jeton = 10 ₼. İstifadəçi adı və şifrə qeyd olunur.",
-      "flow": "whatsapp",
+      "flow": "spotify",
       "soldOut": false,
       "active": true,
       "plans": [
@@ -450,7 +450,7 @@ const DATA = {
       "badge": "AI",
       "desc": "Ağıllı mətn, analiz və məhsuldarlıq.",
       "note": "Aktivləşmə sizin Gmail hesabınız üzərindən edilir.",
-      "flow": "whatsapp",
+      "flow": "spotify",
       "soldOut": false,
       "active": true,
       "plans": [
@@ -484,7 +484,7 @@ const DATA = {
       "badge": "AI",
       "desc": "Peşəkar istifadə üçün ən yüksək AI.",
       "note": "Stokta yoxdur.",
-      "flow": "whatsapp",
+      "flow": "out_of_stock",
       "soldOut": false,
       "active": true,
       "plans": [
@@ -628,7 +628,7 @@ const DATA = {
       "badge": "Film",
       "desc": "Prime Video filmlər və seriallar.",
       "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
-      "flow": "whatsapp",
+      "flow": "name_code_5",
       "soldOut": false,
       "active": true,
       "plans": [
