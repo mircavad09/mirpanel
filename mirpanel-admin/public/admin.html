@@ -220,6 +220,92 @@
 
             <div class="sectionHead">
               <div>
+                <h3>Sifariş təsdiqi</h3>
+                <p>
+                  WhatsApp-dan əvvəl göstərilən məhsula xüsusi modal
+                </p>
+              </div>
+
+              <button
+                class="btn"
+                id="previewOrderConfirmationBtn"
+                type="button"
+              >
+                Önizləmə
+              </button>
+            </div>
+
+            <div class="confirmationSettings">
+              <label class="switchLine full">
+                <input
+                  id="orderConfirmationEnabled"
+                  type="checkbox"
+                >
+                <span>
+                  Sifarişdən əvvəl təsdiqləmə modalı göstərilsin
+                </span>
+              </label>
+
+              <div class="formGrid">
+                <label>
+                  Modal başlığı
+                  <input id="orderConfirmationTitle">
+                </label>
+
+                <label>
+                  Təsdiqləmə düyməsinin mətni
+                  <input id="orderConfirmationConfirmText">
+                </label>
+
+                <label>
+                  Ləğv düyməsinin mətni
+                  <input id="orderConfirmationCancelText">
+                </label>
+
+                <label class="full">
+                  Modal açıqlaması
+                  <textarea
+                    id="orderConfirmationDescription"
+                  ></textarea>
+                </label>
+
+                <label class="full">
+                  Alt məlumat mətni
+                  <textarea
+                    id="orderConfirmationFooterText"
+                  ></textarea>
+                </label>
+              </div>
+
+              <label class="switchLine full helpToggle">
+                <input
+                  id="orderConfirmationHelpEnabled"
+                  type="checkbox"
+                >
+                <span>Kömək linki göstərilsin</span>
+              </label>
+
+              <div
+                class="formGrid"
+                id="orderConfirmationHelpFields"
+              >
+                <label>
+                  Kömək linkinin mətni
+                  <input id="orderConfirmationHelpLabel">
+                </label>
+
+                <label>
+                  Kömək linkinin URL-i
+                  <input
+                    id="orderConfirmationHelpUrl"
+                    placeholder="https://..."
+                  >
+                </label>
+              </div>
+            </div>
+
+            <div class="sectionHead">
+              <div>
                 <h3>Məzmun</h3>
                 <p>Saytda məhsul səhifəsində görünür</p>
               </div>
