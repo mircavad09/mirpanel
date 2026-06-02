@@ -132,9 +132,9 @@ const DATA = {
       "title": "CapCut Pro",
       "variant": "Pro",
       "badge": "Video",
-      "desc": "Premium effektlər, export, template-lər.",
-      "note": "Hesab hazır verilir. Sifarişi təsdiqləyin.",
-      "flow": "whatsapp",
+      "desc": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
+      "note": "Sifariş tamamilə yeni Gmail hesabınıza rəsmi şəkildə aktivləşdirilir. 1 ay zəmanət verilir.",
+      "flow": "email",
       "soldOut": false,
       "active": true,
       "plans": [
@@ -142,23 +142,18 @@ const DATA = {
           "label": "Şəxsi hesab",
           "months": 1,
           "price": 7.99
-        },
-        {
-          "label": "Ortaq hesab",
-          "months": 1,
-          "price": 5.99
         }
       ],
       "orderConfirmation": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "CapCut Pro abunəliyi sizin təqdim edəcəyiniz yeni bir Gmail hesabına rəsmi şəkildə aktivləşdirilir. Təhlükəsizlik qaydalarına əsasən, hesaba eyni anda yalnız 1 cihaz daxil ola bilər; ikinci cihaz qoşulduqda hesab bloklanır. Qaydaların pozulması səbəbindən bloklanma hallarında əvəzləmə və ya geri ödəniş edilmir. Sifarişi tamamlayaraq bu şərtləri rəsmən qəbul edirsiniz.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
           "enabled": false,
-          "label": "",
+          "label": "Gmail yaradı",
           "url": ""
         }
       }
