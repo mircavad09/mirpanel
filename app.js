@@ -148,7 +148,20 @@ const DATA = {
           "months": 1,
           "price": 5.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "hbomax",
@@ -169,7 +182,20 @@ const DATA = {
           "months": 1,
           "price": 5.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "netflix",
@@ -198,7 +224,20 @@ const DATA = {
           "months": 6,
           "price": 29.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "netflix_umumi",
@@ -219,7 +258,20 @@ const DATA = {
           "months": 1,
           "price": 3.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "zoom",
@@ -240,7 +292,20 @@ const DATA = {
           "months": 1,
           "price": 9.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "youtube",
@@ -261,7 +326,20 @@ const DATA = {
           "months": 1,
           "price": 3.49
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
+        "confirmText": "Təsdiq edirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "spotify",
@@ -282,7 +360,20 @@ const DATA = {
           "months": 1,
           "price": 4.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "Abunəlik şəxsi hesabınızda aktiv edilir və 1 ay tam zəmanət verilir. İstifadə zamanı Spotify tərəfindən \"şübhəli fəaliyyət\" aşkarlanarsa və hesab platforma tərəfindən ləğv edilərsə, bu hal xidmət göstərənin məsuliyyət dairəsinə daxil deyil. Bu növ bloklanma hallarında hesabın əvəzlənməsi və ya ödənişin geri qaytarılması həyata keçirilmir. Sifarişi tamamlayaraq yuxarıdakı şərtləri rəsmən qəbul etdiyinizi təsdiq edirsiniz.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": true,
+          "label": "Şifrənizi unutmusunuzsa sıfırlayın👉",
+          "url": "https://accounts.spotify.com/az/password-reset"
+        }
+      }
     },
     {
       "id": "surfshark",
@@ -303,7 +394,20 @@ const DATA = {
           "months": 1,
           "price": 3.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "tiktok_jeton",
@@ -325,7 +429,20 @@ const DATA = {
           "months": 1,
           "price": 10
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "google_ai",
@@ -346,7 +463,20 @@ const DATA = {
           "months": 12,
           "price": 29.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "google_ai_ultra",
@@ -368,7 +498,20 @@ const DATA = {
           "months": 1,
           "price": 0
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "captions",
@@ -395,7 +538,20 @@ const DATA = {
           "months": 1,
           "price": 19.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "grok_supergrok",
@@ -416,7 +572,20 @@ const DATA = {
           "months": 1,
           "price": 17.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "claude_ai",
@@ -438,7 +607,20 @@ const DATA = {
           "months": 12,
           "price": 0
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "prime",
@@ -463,7 +645,20 @@ const DATA = {
           "months": 6,
           "price": 17.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "duolingo",
@@ -484,7 +679,20 @@ const DATA = {
           "months": 1,
           "price": 3.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "canva",
@@ -509,7 +717,20 @@ const DATA = {
           "months": 12,
           "price": 2.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "chatgpt",
@@ -531,7 +752,20 @@ const DATA = {
           "months": 1,
           "price": 12.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "ChatGPT Plus birbaşa sizin şəxsi hesabınızda aktivləşdiriləcəkdir.",
+        "confirmText": "Davam et",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "adobecc",
@@ -556,7 +790,20 @@ const DATA = {
           "months": 4,
           "price": 22.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "linkedin-premium",
@@ -577,7 +824,20 @@ const DATA = {
           "months": 3,
           "price": 19.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "elevenlabs-creator",
@@ -598,7 +858,20 @@ const DATA = {
           "months": 1,
           "price": 19.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "semrush-premium",
@@ -619,7 +892,20 @@ const DATA = {
           "months": 1,
           "price": 6.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "adobe-express",
@@ -640,7 +926,20 @@ const DATA = {
           "months": 1,
           "price": 9.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "notion-plus",
@@ -661,7 +960,20 @@ const DATA = {
           "months": 3,
           "price": 14.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "picsart-premium",
@@ -682,7 +994,20 @@ const DATA = {
           "months": 1,
           "price": 2.89
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "blink-starter",
@@ -703,7 +1028,20 @@ const DATA = {
           "months": 1,
           "price": 16.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "lightroom-photo",
@@ -724,7 +1062,20 @@ const DATA = {
           "months": 1,
           "price": 6.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "gemini-ai-pro",
@@ -749,7 +1100,20 @@ const DATA = {
           "months": 4,
           "price": 14.99
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     }
   ]
 };
