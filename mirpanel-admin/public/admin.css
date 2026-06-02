@@ -678,3 +678,41 @@ th {
     height: 42px;
   }
 }
+.confirmationSettings {
+  display: grid;
+  gap: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #0d0f10;
+  padding: 12px;
+}
+
+.helpToggle {
+  border-top: 1px solid var(--line);
+  padding-top: 12px;
+}
+
+.confirmationPreview {
+  display: grid;
+  gap: 12px;
+}
+
+.confirmationPreview h3,
+.confirmationPreview p {
+  margin: 0;
+}
+
+.confirmationPreview p,
+.confirmationPreview small {
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.confirmationPreview a {
+  color: #8fdcff;
+}
+
+.confirmationPreviewActions {
+  display: flex;
+  gap: 8px;
+}
