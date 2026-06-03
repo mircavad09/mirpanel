@@ -17,6 +17,22 @@ const flows = [
   ["out_of_stock", "Stokda yoxdur"]
 ];
 
+const formFieldTypes = [
+  ["text", "Mətn"],
+  ["tel", "Telefon"],
+  ["email", "Email"],
+  ["password", "Şifrə"],
+  ["textarea", "Uzun qeyd"],
+  ["number", "Rəqəm"]
+];
+
+const orderFlows = new Set([
+  "direct_whatsapp",
+  "form_then_whatsapp",
+  "confirm_then_whatsapp",
+  "form_confirm_whatsapp"
+]);
+
 function defaultOrderConfirmation() {
   return {
     enabled: false,
@@ -24,8 +40,7 @@ function defaultOrderConfirmation() {
     description: "",
     confirmText: "Təsdiqləyirəm",
     cancelText: "Ləğv et",
-    footerText:
-      "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+    footerText: "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
     helpLink: {
       enabled: false,
       label: "",
@@ -47,6 +62,136 @@ function ensureOrderConfirmation(product) {
   };
 
   return product.orderConfirmation;
+}
+
+function defaultWhatsAppSettings() {
+  return {
+    extraMessage: "",
+    includeSeller: true,
+    includeStock: false
+  };
+}
+
+function defaultFormField(index = 0) {
+  return {
+    key: `custom_${index + 1}`,
+    type: "text",
+    label: "Yeni sahə",
+    placeholder: "",
+    required: false,
+    enabled: true
+  };
+}
+
+function fieldsForLegacyFlow(flow, id = "") {
+  if (flow === "spotify" || id === "spotify") {
+    return [
+      {
+        key: "email",
+        type: "email",
+        label: "Email",
+        placeholder: "Spotify hesab emailinizi yazın",
+        required: true,
+        enabled: true
+      },
+      {
+        key: "password",
+        type: "password",
+        label: "Şifrə",
+        placeholder: "Spotify hesab şifrənizi yazın",
+        required: true,
+        enabled: true
+      }
+    ];
+  }
+
+  if (flow === "email") {
+    return [
+      {
+        key: "email",
+        type: "email",
+        label: "Email",
+        placeholder: "Gmail hesabınızı yazın",
+        required: true,
+        enabled: true
+      }
+    ];
+  }
+
+  if (flow === "name_code_4" || flow === "name_code_5") {
+    const digits = flow === "name_code_5" ? "5" : "4";
+
+    return [
+      {
+        key: "name",
+        type: "text",
+        label: "Ad",
+        placeholder: "Adınızı yazın",
+        required: true,
+        enabled: true
+      },
+      {
+        key: `code_${digits}`,
+        type: "text",
+        label: `${digits} rəqəmli kod`,
+        placeholder: `${digits} rəqəmli kodu yazın`,
+        required: true,
+        enabled: true
+      }
+    ];
+  }
+
+  return [];
+}
+
+function inferOrderFlow(product) {
+  if (orderFlows.has(product.orderFlow)) {
+    return product.orderFlow;
+  }
+
+  const hasFields =
+    Array.isArray(product.formFields) &&
+    product.formFields.some((field) => field.enabled !== false);
+  const hasModal = ensureOrderConfirmation(product).enabled;
+
+  if (hasFields && hasModal) return "form_confirm_whatsapp";
+  if (hasModal) return "confirm_then_whatsapp";
+  if (hasFields) return "form_then_whatsapp";
+
+  return "direct_whatsapp";
+}
+
+function ensureAdvancedProduct(product) {
+  const confirmation = ensureOrderConfirmation(product);
+
+  if (!product.confirmationModal) {
+    product.confirmationModal = confirmation;
+  }
+
+  product.orderConfirmation = {
+    ...confirmation,
+    ...product.confirmationModal,
+    helpLink: {
+      ...confirmation.helpLink,
+      ...(product.confirmationModal?.helpLink || {})
+    }
+  };
+
+  product.confirmationModal = product.orderConfirmation;
+  product.whatsapp = {
+    ...defaultWhatsAppSettings(),
+    ...(product.whatsapp || {})
+  };
+  product.formFields = Array.isArray(product.formFields)
+    ? product.formFields
+    : fieldsForLegacyFlow(product.flow, product.id);
+  product.orderFlow = inferOrderFlow(product);
+  product.seller = product.seller || "";
+  product.stock = product.stock ?? "";
+  product.stockEnabled = Boolean(product.stockEnabled);
+  product.bestSeller = Boolean(product.bestSeller);
+
+  return product;
 }
 
 const imageUrl = (path) =>
@@ -124,11 +269,13 @@ function markDirty() {
 }
 
 function selectedProduct() {
-  return (
+  const product = (
     state.data?.products.find(
       (product) => product.id === state.selectedId
     ) || null
   );
+
+  return product ? ensureAdvancedProduct(product) : null;
 }
 
 function minimumPrice(product) {
@@ -427,7 +574,6 @@ function renderProductForm() {
   );
 
   if (!product) return;
-
   const confirmation = ensureOrderConfirmation(product);
 
   $("previewImage").src = imageUrl(product.image);
@@ -459,12 +605,23 @@ function renderProductForm() {
   $("productFlow").innerHTML =
     renderOptions(flows, product.flow);
 
+  $("productOrderFlow").value = product.orderFlow;
+
   $("productImage").value = product.image;
   $("productBadge").value = product.badge;
   $("productCurrency").value = product.currency;
 
   $("productSoldOut").value =
     String(Boolean(product.soldOut));
+
+  $("productStock").value =
+    product.stock ?? "";
+  $("productStockEnabled").checked =
+    Boolean(product.stockEnabled);
+  $("productSeller").value =
+    product.seller || "";
+  $("productBestSeller").checked =
+    Boolean(product.bestSeller);
 
   $("productDesc").value = product.desc;
   $("productNote").value = product.note;
@@ -494,7 +651,15 @@ function renderProductForm() {
   $("orderConfirmationHelpUrl").value =
     confirmation.helpLink.url;
 
+  $("whatsappIncludeSeller").checked =
+    product.whatsapp.includeSeller !== false;
+  $("whatsappIncludeStock").checked =
+    Boolean(product.whatsapp.includeStock);
+  $("whatsappExtraMessage").value =
+    product.whatsapp.extraMessage || "";
+
   updateOrderConfirmationHelpFields();
+  renderFormFields(product);
   renderPlans(product);
 }
 
@@ -511,7 +676,7 @@ function updateOrderConfirmationHelpFields() {
 }
 
 function bindProductField(id, update) {
-  $(id).addEventListener("input", () => {
+  const handler = () => {
     const product = selectedProduct();
 
     if (!product) return;
@@ -519,7 +684,10 @@ function bindProductField(id, update) {
     update(product, $(id));
     markDirty();
     renderProducts();
-  });
+  };
+
+  $(id).addEventListener("input", handler);
+  $(id).addEventListener("change", handler);
 }
 
 bindProductField("productActive", (product, element) => {
@@ -569,6 +737,15 @@ bindProductField("productCategory", (product, element) => {
 
 bindProductField("productFlow", (product, element) => {
   product.flow = element.value;
+
+  if (!product.formFields?.length) {
+    product.formFields = fieldsForLegacyFlow(product.flow, product.id);
+    renderFormFields(product);
+  }
+});
+
+bindProductField("productOrderFlow", (product, element) => {
+  product.orderFlow = element.value;
 });
 
 bindProductField("productImage", (product, element) => {
@@ -588,6 +765,25 @@ bindProductField("productSoldOut", (product, element) => {
   product.soldOut = element.value === "true";
 });
 
+bindProductField("productStock", (product, element) => {
+  product.stock =
+    element.value === ""
+      ? null
+      : Math.max(0, Number(element.value) || 0);
+});
+
+bindProductField("productStockEnabled", (product, element) => {
+  product.stockEnabled = element.checked;
+});
+
+bindProductField("productSeller", (product, element) => {
+  product.seller = element.value;
+});
+
+bindProductField("productBestSeller", (product, element) => {
+  product.bestSeller = element.checked;
+});
+
 bindProductField("productDesc", (product, element) => {
   product.desc = element.value;
 });
@@ -596,79 +792,57 @@ bindProductField("productNote", (product, element) => {
   product.note = element.value;
 });
 
-bindProductField(
-  "orderConfirmationEnabled",
-  (product, element) => {
-    ensureOrderConfirmation(product).enabled =
-      element.checked;
-  }
-);
+bindProductField("orderConfirmationEnabled", (product, element) => {
+  ensureOrderConfirmation(product).enabled = element.checked;
+});
 
-bindProductField(
-  "orderConfirmationTitle",
-  (product, element) => {
-    ensureOrderConfirmation(product).title =
-      element.value;
-  }
-);
+bindProductField("orderConfirmationTitle", (product, element) => {
+  ensureOrderConfirmation(product).title = element.value;
+});
 
-bindProductField(
-  "orderConfirmationDescription",
-  (product, element) => {
-    ensureOrderConfirmation(product).description =
-      element.value;
-  }
-);
+bindProductField("orderConfirmationDescription", (product, element) => {
+  ensureOrderConfirmation(product).description = element.value;
+});
 
-bindProductField(
-  "orderConfirmationConfirmText",
-  (product, element) => {
-    ensureOrderConfirmation(product).confirmText =
-      element.value;
-  }
-);
+bindProductField("orderConfirmationConfirmText", (product, element) => {
+  ensureOrderConfirmation(product).confirmText = element.value;
+});
 
-bindProductField(
-  "orderConfirmationCancelText",
-  (product, element) => {
-    ensureOrderConfirmation(product).cancelText =
-      element.value;
-  }
-);
+bindProductField("orderConfirmationCancelText", (product, element) => {
+  ensureOrderConfirmation(product).cancelText = element.value;
+});
 
-bindProductField(
-  "orderConfirmationFooterText",
-  (product, element) => {
-    ensureOrderConfirmation(product).footerText =
-      element.value;
-  }
-);
+bindProductField("orderConfirmationFooterText", (product, element) => {
+  ensureOrderConfirmation(product).footerText = element.value;
+});
 
-bindProductField(
-  "orderConfirmationHelpEnabled",
-  (product, element) => {
-    ensureOrderConfirmation(product).helpLink.enabled =
-      element.checked;
+bindProductField("orderConfirmationHelpEnabled", (product, element) => {
+  ensureOrderConfirmation(product).helpLink.enabled = element.checked;
+  updateOrderConfirmationHelpFields();
+});
 
-    updateOrderConfirmationHelpFields();
-  }
-);
+bindProductField("orderConfirmationHelpLabel", (product, element) => {
+  ensureOrderConfirmation(product).helpLink.label = element.value;
+});
 
-bindProductField(
-  "orderConfirmationHelpLabel",
-  (product, element) => {
-    ensureOrderConfirmation(product).helpLink.label =
-      element.value;
-  }
-);
+bindProductField("orderConfirmationHelpUrl", (product, element) => {
+  ensureOrderConfirmation(product).helpLink.url = element.value.trim();
+});
 
-bindProductField(
-  "orderConfirmationHelpUrl",
-  (product, element) => {
-    ensureOrderConfirmation(product).helpLink.url =
-      element.value.trim();
-  }
-);
+bindProductField("whatsappIncludeSeller", (product, element) => {
+  product.whatsapp ??= defaultWhatsAppSettings();
+  product.whatsapp.includeSeller = element.checked;
+});
+
+bindProductField("whatsappIncludeStock", (product, element) => {
+  product.whatsapp ??= defaultWhatsAppSettings();
+  product.whatsapp.includeStock = element.checked;
+});
+
+bindProductField("whatsappExtraMessage", (product, element) => {
+  product.whatsapp ??= defaultWhatsAppSettings();
+  product.whatsapp.extraMessage = element.value;
+});
 
 bindProductField("aboutHtml", (product, element) => {
   state.data.content[product.id] ??= {};
@@ -683,6 +857,130 @@ bindProductField("rulesHtml", (product, element) => {
   state.data.content[product.id].rulesHtml =
     element.value;
 });
+
+function renderFormFields(product) {
+  ensureAdvancedProduct(product);
+
+  if (!product.formFields.length) {
+    $("formFields").innerHTML = `
+      <div class="emptyMini">
+        Forma sahəsi yoxdur. Bu məhsulda forma istifadə etmək istəyirsənsə,
+        "Sahə əlavə et" düyməsini bas.
+      </div>
+    `;
+    return;
+  }
+
+  $("formFields").innerHTML = product.formFields
+    .map((field, index) => `
+      <div class="formFieldRow">
+        <label class="switchLine">
+          <input
+            data-form-index="${index}"
+            data-form-field="enabled"
+            type="checkbox"
+            ${field.enabled !== false ? "checked" : ""}
+          >
+          <span>Aktiv</span>
+        </label>
+
+        <label>
+          Key
+          <input
+            data-form-index="${index}"
+            data-form-field="key"
+            value="${escapeHtml(field.key || "")}"
+          >
+        </label>
+
+        <label>
+          Tip
+          <select data-form-index="${index}" data-form-field="type">
+            ${renderOptions(formFieldTypes, field.type || "text")}
+          </select>
+        </label>
+
+        <label>
+          Label
+          <input
+            data-form-index="${index}"
+            data-form-field="label"
+            value="${escapeHtml(field.label || "")}"
+          >
+        </label>
+
+        <label>
+          Placeholder
+          <input
+            data-form-index="${index}"
+            data-form-field="placeholder"
+            value="${escapeHtml(field.placeholder || "")}"
+          >
+        </label>
+
+        <label class="switchLine">
+          <input
+            data-form-index="${index}"
+            data-form-field="required"
+            type="checkbox"
+            ${field.required ? "checked" : ""}
+          >
+          <span>Məcburi</span>
+        </label>
+
+        <button
+          class="iconBtn removeFormField"
+          data-form-index="${index}"
+          type="button"
+        >
+          X
+        </button>
+      </div>
+    `)
+    .join("");
+
+  document
+    .querySelectorAll("[data-form-field]")
+    .forEach((input) => {
+      input.addEventListener("input", () => {
+        updateFormField(product, input);
+      });
+      input.addEventListener("change", () => {
+        updateFormField(product, input);
+      });
+    });
+
+  document
+    .querySelectorAll(".removeFormField")
+    .forEach((button) => {
+      button.addEventListener("click", () => {
+        product.formFields.splice(
+          Number(button.dataset.formIndex),
+          1
+        );
+        markDirty();
+        renderFormFields(product);
+      });
+    });
+}
+
+function updateFormField(product, input) {
+  const field =
+    product.formFields[Number(input.dataset.formIndex)];
+  const key = input.dataset.formField;
+
+  if (!field) return;
+
+  if (input.type === "checkbox") {
+    field[key] = input.checked;
+  } else if (key === "key") {
+    field.key = slug(input.value || `custom_${input.dataset.formIndex}`);
+  } else {
+    field[key] = input.value;
+  }
+
+  markDirty();
+}
 
 function renderPlans(product) {
   $("plans").innerHTML = (product.plans || [])
@@ -712,6 +1010,22 @@ function renderPlans(product) {
           value="${escapeHtml(plan.price ?? "")}"
         >
 
+        <input
+          data-plan="${index}"
+          data-field="oldPrice"
+          type="number"
+          step="0.01"
+          placeholder="Köhnə qiymət"
+          value="${escapeHtml(plan.oldPrice ?? "")}"
+        >
+
+        <input
+          data-plan="${index}"
+          data-field="discount"
+          placeholder="Endirim"
+          value="${escapeHtml(plan.discount || "")}"
+        >
+
         <button
           class="iconBtn removePlan"
           data-plan="${index}"
@@ -730,10 +1044,16 @@ function renderPlans(product) {
         const plan =
           product.plans[Number(input.dataset.plan)];
 
-        plan[input.dataset.field] =
-          input.dataset.field === "label"
-            ? input.value
-            : Number(input.value);
+        if (
+          input.dataset.field === "label" ||
+          input.dataset.field === "discount"
+        ) {
+          plan[input.dataset.field] = input.value;
+        } else if (input.value === "") {
+          delete plan[input.dataset.field];
+        } else {
+          plan[input.dataset.field] = Number(input.value);
+        }
 
         markDirty();
         renderProducts();
@@ -1018,6 +1338,14 @@ $("addProductBtn").addEventListener("click", () => {
         flow: "whatsapp",
         soldOut: false,
         active: true,
+        stock: null,
+        stockEnabled: false,
+        seller: "",
+        bestSeller: false,
+        orderFlow: "direct_whatsapp",
+        formFields: [],
+        whatsapp: defaultWhatsAppSettings(),
+        confirmationModal: defaultOrderConfirmation(),
         orderConfirmation: defaultOrderConfirmation(),
         plans: [
           {
@@ -1138,63 +1466,64 @@ $("addPlanBtn").addEventListener("click", () => {
   renderPlans(product);
 });
 
-$("previewOrderConfirmationBtn").addEventListener(
-  "click",
-  () => {
-    const product = selectedProduct();
+$("addFormFieldBtn").addEventListener("click", () => {
+  const product = selectedProduct();
 
-    if (!product) return;
+  if (!product) return;
 
-    const confirmation =
-      ensureOrderConfirmation(product);
+  product.formFields.push(
+    defaultFormField(product.formFields.length)
+  );
 
-    const helpUrl =
-      confirmation.helpLink.url.trim();
-
-    const showHelp =
-      confirmation.helpLink.enabled &&
-      helpUrl.startsWith("https://");
-
-    openModal(
-      confirmation.title || "Sifariş təsdiqi",
-      `
-        <div class="confirmationPreview">
-          <p>${escapeHtml(confirmation.description)}</p>
-
-          ${showHelp ? `
-            <a
-              href="${escapeHtml(helpUrl)}"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              ${escapeHtml(confirmation.helpLink.label)}
-            </a>
-          ` : ""}
-
-          <div class="confirmationPreviewActions">
-            <button class="btn" type="button" disabled>
-              ${escapeHtml(confirmation.cancelText)}
-            </button>
-
-            <button
-              class="btn primary"
-              type="button"
-              disabled
-            >
-              ${escapeHtml(confirmation.confirmText)}
-            </button>
-          </div>
-
-          <small>
-            ${escapeHtml(confirmation.footerText)}
-          </small>
-        </div>
-      `,
-      "Bağla",
-      closeModal
-    );
+  if (product.orderFlow === "direct_whatsapp") {
+    product.orderFlow = "form_then_whatsapp";
+    $("productOrderFlow").value = product.orderFlow;
   }
-);
+
+  markDirty();
+  renderFormFields(product);
+});
+
+$("previewOrderConfirmationBtn").addEventListener("click", () => {
+  const product = selectedProduct();
+
+  if (!product) return;
+
+  const confirmation = ensureOrderConfirmation(product);
+  const helpUrl = confirmation.helpLink.url.trim();
+  const showHelp =
+    confirmation.helpLink.enabled &&
+    helpUrl.startsWith("https://");
+
+  openModal(
+    confirmation.title || "Sifariş təsdiqi",
+    `
+      <div class="confirmationPreview">
+        <p>${escapeHtml(confirmation.description)}</p>
+        ${showHelp ? `
+          <a
+            href="${escapeHtml(helpUrl)}"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            ${escapeHtml(confirmation.helpLink.label)}
+          </a>
+        ` : ""}
+        <div class="confirmationPreviewActions">
+          <button class="btn" type="button" disabled>
+            ${escapeHtml(confirmation.cancelText)}
+          </button>
+          <button class="btn primary" type="button" disabled>
+            ${escapeHtml(confirmation.confirmText)}
+          </button>
+        </div>
+        <small>${escapeHtml(confirmation.footerText)}</small>
+      </div>
+    `,
+    "Bağla",
+    closeModal
+  );
+});
 
 $("refreshBtn").addEventListener("click", () => {
   if (
