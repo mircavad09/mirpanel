@@ -163,7 +163,7 @@
               </label>
 
               <label>
-                Flow
+                Köhnə flow
                 <select id="productFlow"></select>
               </label>
 
@@ -188,6 +188,31 @@
                   <option value="false">Satışda</option>
                   <option value="true">Stokda yoxdur</option>
                 </select>
+              </label>
+
+              <label>
+                Stok sayı
+                <input
+                  id="productStock"
+                  type="number"
+                  min="0"
+                  placeholder="Boş saxlasan limitsiz sayılır"
+                >
+              </label>
+
+              <label class="switchLine">
+                <input id="productStockEnabled" type="checkbox">
+                <span>Stok sayını aktiv yoxla</span>
+              </label>
+
+              <label>
+                Satıcı adı
+                <input id="productSeller" placeholder="Məs: Mirpanel">
+              </label>
+
+              <label class="switchLine">
+                <input id="productBestSeller" type="checkbox">
+                <span>Ən çox satılan kimi sırala</span>
               </label>
 
               <label class="full">
@@ -220,10 +245,46 @@
 
             <div class="sectionHead">
               <div>
+                <h3>Sifariş flow</h3>
+                <p>Müştəri düyməyə basanda hansı ardıcıllıq işləsin</p>
+              </div>
+            </div>
+
+            <div class="confirmationSettings">
+              <div class="formGrid">
+                <label class="full">
+                  Sifariş tipi
+                  <select id="productOrderFlow">
+                    <option value="direct_whatsapp">Birbaşa WhatsApp</option>
+                    <option value="form_then_whatsapp">Əvvəl məlumat forması, sonra WhatsApp</option>
+                    <option value="confirm_then_whatsapp">Əvvəl təsdiqləmə modalı, sonra WhatsApp</option>
+                    <option value="form_confirm_whatsapp">Forma + təsdiqləmə modalı + WhatsApp</option>
+                  </select>
+                </label>
+              </div>
+            </div>
+
+            <div class="sectionHead">
+              <div>
+                <h3>Müştəri forması sahələri</h3>
+                <p>Aktiv etdiyin sahələr WhatsApp mesajına əlavə olunur</p>
+              </div>
+
+              <button
+                class="btn"
+                id="addFormFieldBtn"
+                type="button"
+              >
+                Sahə əlavə et
+              </button>
+            </div>
+
+            <div class="formFields" id="formFields"></div>
+
+            <div class="sectionHead">
+              <div>
                 <h3>Sifariş təsdiqi</h3>
-                <p>
-                  WhatsApp-dan əvvəl göstərilən məhsula xüsusi modal
-                </p>
+                <p>WhatsApp-dan əvvəl göstərilən məhsula xüsusi modal</p>
               </div>
 
               <button
@@ -241,9 +302,7 @@
                   id="orderConfirmationEnabled"
                   type="checkbox"
                 >
-                <span>
-                  Sifarişdən əvvəl təsdiqləmə modalı göstərilsin
-                </span>
+                <span>Sifarişdən əvvəl təsdiqləmə modalı göstərilsin</span>
               </label>
 
               <div class="formGrid">
@@ -264,16 +323,12 @@
 
                 <label class="full">
                   Modal açıqlaması
-                  <textarea
-                    id="orderConfirmationDescription"
-                  ></textarea>
+                  <textarea id="orderConfirmationDescription"></textarea>
                 </label>
 
                 <label class="full">
                   Alt məlumat mətni
-                  <textarea
-                    id="orderConfirmationFooterText"
-                  ></textarea>
+                  <textarea id="orderConfirmationFooterText"></textarea>
                 </label>
               </div>
 
@@ -285,10 +340,7 @@
                 <span>Kömək linki göstərilsin</span>
               </label>
 
-              <div
-                class="formGrid"
-                id="orderConfirmationHelpFields"
-              >
+              <div class="formGrid" id="orderConfirmationHelpFields">
                 <label>
                   Kömək linkinin mətni
                   <input id="orderConfirmationHelpLabel">
@@ -300,6 +352,35 @@
                     id="orderConfirmationHelpUrl"
                     placeholder="https://..."
                   >
+                </label>
+              </div>
+            </div>
+
+            <div class="sectionHead">
+              <div>
+                <h3>WhatsApp mesaj ayarları</h3>
+                <p>Məhsula görə sifariş mesajına əlavə edilən hissələr</p>
+              </div>
+            </div>
+
+            <div class="confirmationSettings">
+              <div class="formGrid">
+                <label class="switchLine">
+                  <input id="whatsappIncludeSeller" type="checkbox">
+                  <span>Satıcı mesajda görünsün</span>
+                </label>
+
+                <label class="switchLine">
+                  <input id="whatsappIncludeStock" type="checkbox">
+                  <span>Stok mesajda görünsün</span>
+                </label>
+
+                <label class="full">
+                  Əlavə WhatsApp mesaj hissəsi
+                  <textarea
+                    id="whatsappExtraMessage"
+                    placeholder="Məs: Aktivləşmə üçün hesab məlumatlarınızı düzgün göndərin."
+                  ></textarea>
                 </label>
               </div>
             </div>
