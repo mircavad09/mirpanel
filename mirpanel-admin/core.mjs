@@ -151,7 +151,186 @@ function normalizePlan(plan = {}) {
       ? { label: String(plan.label) }
       : {}),
     months: Number(plan.months) || 1,
-    price: Number(plan.price) || 0
+    price: Number(plan.price) || 0,
+    ...(Number(plan.oldPrice) > 0
+      ? { oldPrice: Number(plan.oldPrice) }
+      : {}),
+    ...(plan.discount
+      ? { discount: String(plan.discount) }
+      : {})
+  };
+}
+
+const ORDER_FLOWS = new Set([
+  "direct_whatsapp",
+  "form_then_whatsapp",
+  "confirm_then_whatsapp",
+  "form_confirm_whatsapp"
+]);
+
+const FIELD_TYPES = new Set([
+  "text",
+  "tel",
+  "email",
+  "password",
+  "textarea",
+  "number"
+]);
+
+function normalizeStock(value) {
+  if (value === "" || value === null || value === undefined) {
+    return null;
+  }
+
+  const stock = Number(value);
+  return Number.isFinite(stock) ? Math.max(0, stock) : null;
+}
+
+function defaultFieldsForFlow(flow = "", id = "") {
+  if (flow === "spotify" || id === "spotify") {
+    return [
+      {
+        key: "email",
+        type: "email",
+        label: "Email",
+        placeholder: "Spotify hesab emailinizi yazın",
+        required: true,
+        enabled: true
+      },
+      {
+        key: "password",
+        type: "password",
+        label: "Şifrə",
+        placeholder: "Spotify hesab şifrənizi yazın",
+        required: true,
+        enabled: true
+      }
+    ];
+  }
+
+  if (flow === "email") {
+    return [
+      {
+        key: "email",
+        type: "email",
+        label: "Email",
+        placeholder: "Gmail hesabınızı yazın",
+        required: true,
+        enabled: true
+      }
+    ];
+  }
+
+  if (flow === "name_code_4" || flow === "name_code_5") {
+    const digits = flow === "name_code_5" ? "5" : "4";
+
+    return [
+      {
+        key: "name",
+        type: "text",
+        label: "Ad",
+        placeholder: "Adınızı yazın",
+        required: true,
+        enabled: true
+      },
+      {
+        key: `code_${digits}`,
+        type: "text",
+        label: `${digits} rəqəmli kod`,
+        placeholder: `${digits} rəqəmli profil/PIN kodunu yazın`,
+        required: true,
+        enabled: true
+      }
+    ];
+  }
+
+  if (flow === "tiktok_jeton") {
+    return [
+      {
+        key: "username",
+        type: "text",
+        label: "TikTok istifadəçi adı",
+        placeholder: "@username",
+        required: true,
+        enabled: true
+      },
+      {
+        key: "password",
+        type: "password",
+        label: "Şifrə",
+        placeholder: "TikTok hesab şifrəsi",
+        required: true,
+        enabled: true
+      },
+      {
+        key: "note",
+        type: "textarea",
+        label: "Qeyd",
+        placeholder: "Əlavə qeydiniz varsa yazın",
+        required: false,
+        enabled: true
+      }
+    ];
+  }
+
+  return [];
+}
+
+function orderFlowFromProduct(product = {}) {
+  const source = String(product.orderFlow || "").trim();
+  if (ORDER_FLOWS.has(source)) return source;
+
+  const legacyFlow = String(product.flow || "").trim();
+  const fields = Array.isArray(product.formFields)
+    ? product.formFields.filter((field) => field?.enabled !== false)
+    : defaultFieldsForFlow(legacyFlow, product.id);
+
+  const modalSource =
+    product.confirmationModal ||
+    product.orderConfirmation ||
+    {};
+
+  const hasModal =
+    modalSource.enabled === true ||
+    ["spotify", "chatgpt", "youtube"].includes(product.id);
+
+  if (hasModal && fields.length) return "form_confirm_whatsapp";
+  if (hasModal) return "confirm_then_whatsapp";
+  if (fields.length) return "form_then_whatsapp";
+
+  return "direct_whatsapp";
+}
+
+function normalizeFormField(field = {}, index = 0) {
+  const key = String(field.key || `custom_${index + 1}`)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_]+/g, "_")
+    .replace(/^_|_$/g, "");
+
+  return {
+    key: key || `custom_${index + 1}`,
+    type: FIELD_TYPES.has(field.type) ? field.type : "text",
+    label: String(field.label || field.key || `Sahə ${index + 1}`),
+    placeholder: String(field.placeholder || ""),
+    required: Boolean(field.required),
+    enabled: field.enabled !== false
+  };
+}
+
+function normalizeFormFields(product = {}) {
+  const source = Array.isArray(product.formFields)
+    ? product.formFields
+    : defaultFieldsForFlow(product.flow, product.id);
+
+  return source.map(normalizeFormField);
+}
+
+function normalizeWhatsApp(source = {}) {
+  return {
+    extraMessage: String(source.extraMessage || ""),
+    includeSeller: source.includeSeller !== false,
+    includeStock: Boolean(source.includeStock)
   };
 }
 
@@ -162,8 +341,7 @@ function legacyOrderConfirmation(id) {
     description: "",
     confirmText: "Təsdiqləyirəm",
     cancelText: "Ləğv et",
-    footerText:
-      "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+    footerText: "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
     helpLink: {
       enabled: false,
       label: "",
@@ -175,8 +353,7 @@ function legacyOrderConfirmation(id) {
     return {
       ...defaults,
       enabled: true,
-      description:
-        "Şəxsi hesabınızda rəsmi Spotify Premium paketi aktivləşdirilir."
+      description: "Şəxsi hesabınızda rəsmi Spotify Premium paketi aktivləşdirilir."
     };
   }
 
@@ -184,8 +361,7 @@ function legacyOrderConfirmation(id) {
     return {
       ...defaults,
       enabled: true,
-      description:
-        "ChatGPT Plus birbaşa sizin şəxsi hesabınızda aktivləşdiriləcəkdir.",
+      description: "ChatGPT Plus birbaşa sizin şəxsi hesabınızda aktivləşdiriləcəkdir.",
       confirmText: "Davam et"
     };
   }
@@ -194,8 +370,7 @@ function legacyOrderConfirmation(id) {
     return {
       ...defaults,
       enabled: true,
-      description:
-        "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
+      description: "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
       confirmText: "Təsdiq edirəm"
     };
   }
@@ -244,6 +419,14 @@ function normalizeProduct(product = {}, index = 0) {
     throw new Error("Boş məhsul ID-si var.");
   }
 
+  const confirmationModal = normalizeOrderConfirmation(
+    product.confirmationModal ||
+      product.orderConfirmation,
+    id
+  );
+  const stock = normalizeStock(product.stock);
+  const formFields = normalizeFormFields(product);
+
   return {
     id,
     order: Number.isFinite(Number(product.order))
@@ -260,13 +443,22 @@ function normalizeProduct(product = {}, index = 0) {
     flow: String(product.flow || "whatsapp"),
     soldOut: Boolean(product.soldOut),
     active: product.active !== false,
+    stock,
+    stockEnabled: Boolean(product.stockEnabled),
+    seller: String(product.seller || ""),
+    bestSeller: Boolean(product.bestSeller),
+    orderFlow: orderFlowFromProduct({
+      ...product,
+      id,
+      formFields
+    }),
+    formFields,
+    confirmationModal,
+    whatsapp: normalizeWhatsApp(product.whatsapp),
     plans: Array.isArray(product.plans)
       ? product.plans.map(normalizePlan)
       : [],
-    orderConfirmation: normalizeOrderConfirmation(
-      product.orderConfirmation,
-      id
-    )
+    orderConfirmation: confirmationModal
   };
 }
 
