@@ -133,7 +133,7 @@ const DATA = {
       "variant": "Pro",
       "badge": "Video",
       "desc": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
-      "note": "Sifariş tamamilə yeni Gmail hesabınıza rəsmi şəkildə aktivləşdirilir. 1 ay zəmanət verilir.",
+      "note": "S",
       "flow": "email",
       "soldOut": false,
       "active": true,
