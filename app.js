@@ -516,7 +516,6 @@ const DATA = {
       "variant": "Şəxsi hesab",
       "badge": "Musiqi",
       "desc": "Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.\n",
-      "note": "Abunəlik tamamilə rəsmi şəkildə sizin şəxsi hesabınızda aktivləşdirilir və 1 ay müddətinə tam zəmanət verilir.",
       "flow": "spotify",
       "soldOut": false,
       "active": true,
