@@ -338,7 +338,7 @@
   </div>
 
   <script src="app.js?v=final22"></script>
-  <script src="order-confirmation.js?v=2"></script>
+  <script src="order-confirmation.js?v=4"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -381,7 +381,7 @@
         if(!sideMenu) return;
         sideMenu.classList.add("active");
         sideMenuOverlay.classList.add("active");
-        document.body.style.overflow = "hidden";
+        document.body.style.overflow = "hidden"; // Arxanın sürüşməsini bağla
       }
 
       function closeMenu() {
@@ -395,29 +395,32 @@
       if(sideMenuClose) sideMenuClose.addEventListener("click", closeMenu);
       if(sideMenuOverlay) sideMenuOverlay.addEventListener("click", closeMenu);
 
+      // Linklərə kliklədikdə də menyu bağlansın
       const smLinks = document.querySelectorAll(".sm-link");
       smLinks.forEach(link => {
         link.addEventListener("click", closeMenu);
       });
 
+      // Ana Səhifəyə Klik Məntiqi
       const linkHome = document.getElementById("linkHome");
       if(linkHome) {
         linkHome.addEventListener("click", (e) => {
           e.preventDefault();
           if(productView) productView.style.display = "none";
           if(homePageView) homePageView.style.display = "block";
-          if(heroSection) heroSection.style.display = "block";
+          if(heroSection) heroSection.style.display = "block"; // Hero-nu göstər
           window.scrollTo(0, 0);
         });
       }
 
+      // Məhsullar Klik Məntiqi
       const linkProducts = document.getElementById("linkProducts");
       if(linkProducts) {
         linkProducts.addEventListener("click", (e) => {
           e.preventDefault();
           if(productView) productView.style.display = "none";
           if(homePageView) homePageView.style.display = "block";
-          if(heroSection) heroSection.style.display = "none";
+          if(heroSection) heroSection.style.display = "none"; // Hero-nu gizlət
           window.scrollTo(0, 0);
         });
       }
