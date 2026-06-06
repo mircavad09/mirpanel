@@ -284,6 +284,21 @@
 
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
+      const message = String(payload.error || payload.code || "");
+      const stockSyncUnavailable =
+        response.status === 404 ||
+        response.status === 503 ||
+        message === "STOCK_SYNC_NOT_CONFIGURED" ||
+        message.includes("MIRPANEL_GITHUB_TOKEN");
+
+      if (stockSyncUnavailable) {
+        console.warn("Mirpanel stock sync is not available yet.", {
+          status: response.status,
+          code: payload.code || payload.error || ""
+        });
+        return { skipped: true, unavailable: true };
+      }
+
       throw new Error(payload.error || "Stok yenilənmədi.");
     }
 
