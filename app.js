@@ -1241,7 +1241,7 @@ const DATA = {
       "desc": "Daha güclü model, fayl/şəkil imkanları.",
       "note": "Hesabınızın Email və Şifrəsini qeyd edin.",
       "flow": "whatsapp",
-      "soldOut": false,
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
