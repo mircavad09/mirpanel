@@ -107,7 +107,12 @@ function encodeBase64(value) {
 
 async function github(env, pathname, init = {}) {
   const token = env.MIRPANEL_GITHUB_TOKEN;
-  if (!token) throw new Error("MIRPANEL_GITHUB_TOKEN təyin edilməyib.");
+  if (!token) {
+    const error = new Error("STOCK_SYNC_NOT_CONFIGURED");
+    error.status = 503;
+    error.publicCode = "STOCK_SYNC_NOT_CONFIGURED";
+    throw error;
+  }
 
   const response = await fetch(`https://api.github.com${pathname}`, {
     ...init,
@@ -236,10 +241,22 @@ export async function onRequestPost(context) {
         const retry = await decrementOnce(context.env, productId);
         return json(retry.body, retry.ok ? 200 : retry.status || 409);
       } catch (retryError) {
-        return json({ error: retryError.message || "Stok yenilənmədi." }, retryError.status || 500);
+        return json(
+          {
+            error: retryError.publicCode || "Stok yenilənmədi.",
+            code: retryError.publicCode || "STOCK_UPDATE_FAILED"
+          },
+          retryError.status || 500
+        );
       }
     }
 
-    return json({ error: error.message || "Stok yenilənmədi." }, error.status || 500);
+    return json(
+      {
+        error: error.publicCode || "Stok yenilənmədi.",
+        code: error.publicCode || "STOCK_UPDATE_FAILED"
+      },
+      error.status || 500
+    );
   }
 }
