@@ -28,100 +28,10 @@
       .replaceAll('"', "&quot;");
   }
 
-  function fieldDefaultsForFlow(flow = "", id = "") {
-    if (flow === "spotify" || id === "spotify") {
-      return [
-        {
-          key: "email",
-          type: "email",
-          label: "Email",
-          placeholder: "Spotify hesab emailinizi yazın",
-          required: true,
-          enabled: true
-        },
-        {
-          key: "password",
-          type: "password",
-          label: "Şifrə",
-          placeholder: "Spotify hesab şifrənizi yazın",
-          required: true,
-          enabled: true
-        }
-      ];
-    }
-
-    if (flow === "email") {
-      return [
-        {
-          key: "email",
-          type: "email",
-          label: "Email",
-          placeholder: "Gmail hesabınızı yazın",
-          required: true,
-          enabled: true
-        }
-      ];
-    }
-
-    if (flow === "name_code_4" || flow === "name_code_5") {
-      const digits = flow === "name_code_5" ? "5" : "4";
-
-      return [
-        {
-          key: "name",
-          type: "text",
-          label: "Ad",
-          placeholder: "Adınızı yazın",
-          required: true,
-          enabled: true
-        },
-        {
-          key: `code_${digits}`,
-          type: "text",
-          label: `${digits} rəqəmli kod`,
-          placeholder: `${digits} rəqəmli kodu yazın`,
-          required: true,
-          enabled: true
-        }
-      ];
-    }
-
-    if (flow === "tiktok_jeton") {
-      return [
-        {
-          key: "username",
-          type: "text",
-          label: "TikTok istifadəçi adı",
-          placeholder: "@username",
-          required: true,
-          enabled: true
-        },
-        {
-          key: "password",
-          type: "password",
-          label: "Şifrə",
-          placeholder: "TikTok hesab şifrəsi",
-          required: true,
-          enabled: true
-        },
-        {
-          key: "note",
-          type: "textarea",
-          label: "Qeyd",
-          placeholder: "Əlavə qeydiniz varsa yazın",
-          required: false,
-          enabled: true
-        }
-      ];
-    }
-
-    return [];
-  }
-
   function activeFields(product) {
     const fields = Array.isArray(product.formFields)
       ? product.formFields
-      : fieldDefaultsForFlow(product.flow, product.id);
+      : [];
 
     return fields.filter((field) => field.enabled !== false);
   }
@@ -179,7 +89,7 @@
 
   function planLabel(plan) {
     if (!plan) return "";
-    return plan.label || `${plan.months || 1} aylıq`;
+    return String(plan.label || "").trim();
   }
 
   function selectedPlan(product) {
@@ -188,6 +98,11 @@
 
   function priceText(product, plan) {
     return `${Number(plan?.price || 0).toFixed(2)} ${product.currency || "₼"}`;
+  }
+
+  function setFooter(text) {
+    const footer = document.querySelector("#modal .mSmall");
+    if (footer) footer.textContent = text || "";
   }
 
   function openBaseModal(product, plan) {
@@ -200,20 +115,19 @@
     const info = document.getElementById("mInfo");
     const infoBox = document.getElementById("mInfoBox");
     const plans = document.getElementById("mPlans");
+    const selectedPlanLabel = planLabel(plan);
 
     if (img) img.src = product.image || "";
     if (title) title.textContent = product.title || "";
     if (desc) desc.textContent = product.desc || "";
-    if (info) info.textContent = `${planLabel(plan)} / ${priceText(product, plan)}`;
+    if (info) {
+      info.textContent = selectedPlanLabel
+        ? `${selectedPlanLabel} / ${priceText(product, plan)}`
+        : priceText(product, plan);
+    }
     if (infoBox) infoBox.innerHTML = "";
     if (plans) plans.innerHTML = "";
-
-    setFooter("Sifariş etdikdə WhatsApp avtomatik açılacaq.");
-  }
-
-  function setFooter(text) {
-    const footer = document.querySelector("#modal .mSmall");
-    if (footer) footer.textContent = text || "";
+    setFooter("");
   }
 
   function renderModalContent(html) {
@@ -242,10 +156,15 @@
     const lines = [
       "Salam, sifariş etmək istəyirəm.",
       "",
-      `Məhsul: ${product.title || product.id}`,
-      `Plan: ${planLabel(plan)}`,
-      `Qiymət: ${priceText(product, plan)}`
+      `Məhsul: ${product.title || product.id}`
     ];
+
+    const selectedPlanLabel = planLabel(plan);
+    if (selectedPlanLabel) {
+      lines.push(`Plan: ${selectedPlanLabel}`);
+    }
+
+    lines.push(`Qiymət: ${priceText(product, plan)}`);
 
     if (product.variant) lines.push(`Variant: ${product.variant}`);
     if (settings.includeSeller && product.seller) {
@@ -292,14 +211,16 @@
       return;
     }
 
-    setFooter("Məlumatları doldurduqdan sonra sifariş WhatsApp-a göndəriləcək.");
+    setFooter("");
 
     renderModalContent(`
       <form class="mpForm universalOrderForm" id="universalOrderForm">
         <div class="mpFormTitle">Sifariş məlumatları</div>
-        <div class="orderConfirmationDesc">
-          ${escapeHtml(product.desc || "Zəhmət olmasa tələb olunan məlumatları daxil edin.")}
-        </div>
+        ${product.desc ? `
+          <div class="orderConfirmationDesc">
+            ${escapeHtml(product.desc)}
+          </div>
+        ` : ""}
 
         ${fields
           .map((field) => {
@@ -367,9 +288,11 @@
   function showConfirmation(product, plan, formData, onConfirm) {
     const settings = confirmationFor(product);
     const helpUrl = String(settings.helpLink?.url || "").trim();
+    const helpLabel = String(settings.helpLink?.label || "").trim();
     const showHelp =
       settings.helpLink?.enabled === true &&
-      helpUrl.startsWith("https://");
+      helpUrl.startsWith("https://") &&
+      helpLabel;
 
     setFooter(settings.footerText);
 
@@ -394,7 +317,7 @@
             target="_blank"
             rel="noopener noreferrer"
           >
-            ${escapeHtml(settings.helpLink.label || "Kömək linki")}
+            ${escapeHtml(helpLabel)}
           </a>
         ` : ""}
 
@@ -442,21 +365,23 @@
       flow === "form_confirm_whatsapp" ||
       (confirmation.enabled && flow === "direct_whatsapp");
 
-    const finish = (formData = {}) => {
-      if (needsConfirmation) {
-        showConfirmation(product, plan, formData, (confirmedData) => {
-          openWhatsApp(product, plan, confirmedData);
+    const continueToFormOrWhatsApp = () => {
+      if (needsForm) {
+        showForm(product, plan, (nextFormData) => {
+          openWhatsApp(product, plan, nextFormData);
         });
-      } else {
-        openWhatsApp(product, plan, formData);
+        return;
       }
+
+      openWhatsApp(product, plan, {});
     };
 
-    if (needsForm) {
-      showForm(product, plan, finish);
-    } else {
-      finish({});
+    if (needsConfirmation) {
+      showConfirmation(product, plan, {}, continueToFormOrWhatsApp);
+      return;
     }
+
+    continueToFormOrWhatsApp();
   }
 
   function decorateProductPage(product) {
