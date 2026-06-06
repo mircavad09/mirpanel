@@ -20,6 +20,9 @@
     "form_confirm_whatsapp"
   ]);
 
+  const GOOGLE_SCRIPT_URL =
+    "https://script.google.com/macros/s/AKfycbw8eRhDxBhq5Kf68eVQBAnqf9llgo1bQWKgdwpBa0utRgVwn6rKd9YUCP6e70iPbHTMOg/exec";
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -100,6 +103,31 @@
     return `${Number(plan?.price || 0).toFixed(2)} ${product.currency || "₼"}`;
   }
 
+  function createOrderId() {
+    return Math.floor(10000 + Math.random() * 90000);
+  }
+
+  function submitGoogleSheets(order) {
+    if (!GOOGLE_SCRIPT_URL) return;
+
+    const formData = new FormData();
+    formData.append("orderId", order.orderId);
+    formData.append("product", order.productTitle);
+    formData.append("plan", order.planText);
+    formData.append("price", order.price);
+    formData.append("extra", order.extraText);
+    formData.append("message", order.message);
+    formData.append("createdAt", new Date().toISOString());
+
+    fetch(GOOGLE_SCRIPT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      body: formData
+    }).catch((error) => {
+      console.error("Sheet Error:", error);
+    });
+  }
+
   function setFooter(text) {
     const footer = document.querySelector("#modal .mSmall");
     if (footer) footer.textContent = text || "";
@@ -145,7 +173,7 @@
     document.body.classList.remove("noScroll");
   }
 
-  function buildWhatsAppMessage(product, plan, formData = {}) {
+  function buildWhatsAppMessage(product, plan, formData = {}, orderId = createOrderId()) {
     const settings = {
       extraMessage: "",
       includeSeller: true,
@@ -156,6 +184,7 @@
     const lines = [
       "Salam, sifariş etmək istəyirəm.",
       "",
+      `Sifariş №: ${orderId}`,
       `Məhsul: ${product.title || product.id}`
     ];
 
@@ -166,7 +195,6 @@
 
     lines.push(`Qiymət: ${priceText(product, plan)}`);
 
-    if (product.variant) lines.push(`Variant: ${product.variant}`);
     if (settings.includeSeller && product.seller) {
       lines.push(`Satıcı: ${product.seller}`);
     }
@@ -185,19 +213,29 @@
       .map(([label, value]) => `${label}: ${value}`);
 
     if (formLines.length) {
-      lines.push("", "Müştəri məlumatları:", ...formLines);
+      lines.push("", ...formLines);
     }
 
-    if (product.note) lines.push("", `Qeyd: ${product.note}`);
     if (settings.extraMessage) lines.push("", settings.extraMessage);
 
-    return lines.join("\n");
+    return {
+      orderId,
+      message: lines.join("\n"),
+      planText: selectedPlanLabel || (plan?.months ? `${plan.months} aylıq` : ""),
+      price: priceText(product, plan),
+      extraText: formLines.join("\n")
+    };
   }
 
   function openWhatsApp(product, plan, formData = {}) {
-    const message = buildWhatsAppMessage(product, plan, formData);
+    const order = buildWhatsAppMessage(product, plan, formData);
+    submitGoogleSheets({
+      ...order,
+      productTitle: product.title || product.id
+    });
+
     const separator = PHONE_WA.includes("?") ? "&" : "?";
-    const url = `${PHONE_WA}${separator}text=${encodeURIComponent(message)}`;
+    const url = `${PHONE_WA}${separator}text=${encodeURIComponent(order.message)}`;
 
     window.open(url, "_blank", "noopener,noreferrer");
     closeOrderModal();
@@ -405,12 +443,25 @@
 
     if (delivery) {
       delivery.querySelector(".mpSellerLine")?.remove();
+      delivery.querySelector(".mpStockLine")?.remove();
 
       if (product.seller) {
         const seller = document.createElement("div");
         seller.className = "mpSellerLine";
         seller.textContent = `Satıcı: ${product.seller}`;
         delivery.appendChild(seller);
+      }
+
+      if (
+        product.stockEnabled &&
+        product.stock !== null &&
+        product.stock !== "" &&
+        product.stock !== undefined
+      ) {
+        const stock = document.createElement("div");
+        stock.className = "mpStockLine";
+        stock.textContent = available ? `Stok: ${product.stock}` : "Stokda yoxdur";
+        delivery.appendChild(stock);
       }
     }
   }
