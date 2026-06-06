@@ -280,8 +280,8 @@ const DATA = {
         {
           "key": "code_4",
           "type": "text",
-          "label": "4 rəqəmli kod",
-          "placeholder": "4 rəqəmli profil/PIN kodunu yazın",
+          "label": "Otaq kodu",
+          "placeholder": "Otaq 4 rəqəmli kod (PİN) təyin edin",
           "required": true,
           "enabled": true
         }
