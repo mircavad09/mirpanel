@@ -30,7 +30,7 @@ function loadEnv(file) {
     const index = value.indexOf("=");
     if (index < 1) continue;
     const key = value.slice(0, index).trim();
-    const content = value.slice(index + 1).trim().replace(/^['"]|['"]$/g, "");
+    const content = value.slice(index + 1).trim().replace(/^[']|[']$/g, "").replace(/^[\"]|[\"]$/g, "");
     if (!process.env[key]) process.env[key] = content;
   }
 }
@@ -121,15 +121,25 @@ async function github(pathname, options = {}) {
   return payload;
 }
 
-async function getAppFile() {
+async function getRepoFile(filePath) {
   const file = await github(
-    `/repos/${config.repo}/contents/app.js?ref=${encodeURIComponent(config.branch)}`
+    `/repos/${config.repo}/contents/${filePath}?ref=${encodeURIComponent(config.branch)}`
   );
 
   return {
     sha: file.sha,
     source: Buffer.from(file.content.replace(/\n/g, ""), "base64").toString("utf8")
   };
+}
+
+async function getAppFile() {
+  return getRepoFile("app.js");
+}
+
+function bumpAssetVersions(source, version) {
+  return source
+    .replace(/app\.js\?v=[^"]+/g, `app.js?v=${version}`)
+    .replace(/order-confirmation\.js\?v=[^"]+/g, `order-confirmation.js?v=${version}`);
 }
 
 function requireAuth(request, response) {
@@ -220,9 +230,32 @@ async function handleApi(request, response) {
       })
     });
 
+    let cacheCommitSha = "";
+    try {
+      const indexFile = await getRepoFile("index.html");
+      const version = `admin-${Date.now()}`;
+      const patchedIndex = bumpAssetVersions(indexFile.source, version);
+
+      if (patchedIndex !== indexFile.source) {
+        const cacheResult = await github(`/repos/${config.repo}/contents/index.html`, {
+          method: "PUT",
+          body: JSON.stringify({
+            message: "Bump Mirpanel asset cache version",
+            content: Buffer.from(patchedIndex, "utf8").toString("base64"),
+            sha: indexFile.sha,
+            branch: config.branch
+          })
+        });
+        cacheCommitSha = cacheResult.commit.sha;
+      }
+    } catch (error) {
+      console.error("Cache version bump failed:", error);
+    }
+
     return json(response, 200, {
       sha: result.content.sha,
       commitSha: result.commit.sha,
+      cacheCommitSha,
       committedAt: new Date().toISOString()
     });
   }
