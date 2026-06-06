@@ -23,6 +23,190 @@
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbw8eRhDxBhq5Kf68eVQBAnqf9llgo1bQWKgdwpBa0utRgVwn6rKd9YUCP6e70iPbHTMOg/exec";
 
+  function injectPremiumOrderFormStyles() {
+    if (document.getElementById("premiumOrderFormStyles")) return;
+
+    const style = document.createElement("style");
+    style.id = "premiumOrderFormStyles";
+    style.textContent = `
+      #modal.premiumOrderFormOpen .modalCard {
+        width: min(540px, calc(100vw - 28px));
+        border: 1px solid rgba(34, 211, 119, .72);
+        background:
+          radial-gradient(circle at 50% 0%, rgba(34, 211, 119, .12), transparent 38%),
+          linear-gradient(180deg, rgba(18, 24, 21, .98), rgba(7, 9, 8, .98));
+        box-shadow: 0 26px 80px rgba(0, 0, 0, .62), 0 0 34px rgba(34, 211, 119, .18);
+      }
+
+      #modal.premiumOrderFormOpen .mTop,
+      #modal.premiumOrderFormOpen .mPlansTitle,
+      #modal.premiumOrderFormOpen .mPlans,
+      #modal.premiumOrderFormOpen .mInfoBox,
+      #modal.premiumOrderFormOpen #mDesc {
+        display: none !important;
+      }
+
+      #modal.premiumOrderFormOpen #mForm {
+        margin-top: 0 !important;
+      }
+
+      #modal.premiumOrderFormOpen .mBottom {
+        margin-top: 18px;
+        padding-top: 12px;
+        border-top: 1px solid rgba(255, 255, 255, .08);
+      }
+
+      #modal.premiumOrderFormOpen #mInfo {
+        color: rgba(255, 255, 255, .92);
+        font-size: 17px;
+        font-weight: 800;
+        text-align: center;
+      }
+
+      #modal.premiumOrderFormOpen .mSmall {
+        display: none;
+      }
+
+      .universalOrderForm.premiumOrderForm {
+        display: grid;
+        gap: 18px;
+        padding: 28px 2px 0;
+      }
+
+      .premiumOrderForm .mpFormTitle {
+        margin: 0 0 8px;
+        text-align: center;
+        font-size: clamp(24px, 4vw, 30px);
+        font-weight: 900;
+        line-height: 1.15;
+        letter-spacing: 0;
+        color: #2dff86;
+        background: linear-gradient(135deg, #c9ffe1 0%, #2dff86 45%, #13b87c 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 24px rgba(45, 255, 134, .22);
+      }
+
+      .premiumOrderForm .premiumOrderFields {
+        display: grid;
+        gap: 14px;
+      }
+
+      .premiumOrderForm .universalField {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+      }
+
+      .premiumOrderForm .universalField span {
+        color: rgba(235, 255, 243, .9);
+        font-size: 13px;
+        font-weight: 800;
+      }
+
+      .premiumOrderForm .universalField input,
+      .premiumOrderForm .universalField textarea {
+        width: 100%;
+        min-height: 52px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 184, .28);
+        background: rgba(3, 8, 7, .74);
+        color: #f7fff9;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        outline: none;
+        padding: 14px 16px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 30px rgba(0, 0, 0, .22);
+        transition: border-color .22s ease, box-shadow .22s ease, background .22s ease, transform .18s ease;
+      }
+
+      .premiumOrderForm .universalField textarea {
+        min-height: 112px;
+        resize: vertical;
+      }
+
+      .premiumOrderForm .universalField input::placeholder,
+      .premiumOrderForm .universalField textarea::placeholder {
+        color: rgba(226, 232, 240, .48);
+        font-weight: 500;
+      }
+
+      .premiumOrderForm .universalField input:focus,
+      .premiumOrderForm .universalField textarea:focus {
+        border-color: rgba(45, 255, 134, .78);
+        background: rgba(4, 13, 10, .92);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 4px rgba(45, 255, 134, .1), 0 0 28px rgba(45, 255, 134, .16);
+      }
+
+      .premiumOrderForm .universalField input:invalid:not(:placeholder-shown),
+      .premiumOrderForm .universalField textarea:invalid:not(:placeholder-shown) {
+        border-color: rgba(255, 106, 106, .72);
+      }
+
+      .premiumOrderForm .orderConfirmationActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 6px;
+      }
+
+      .premiumOrderForm .mpBtn {
+        min-height: 56px;
+        border: 0;
+        border-radius: 16px;
+        color: #f8fff9;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: transform .18s ease, box-shadow .2s ease, filter .2s ease, background .2s ease;
+      }
+
+      .premiumOrderForm .mpBtn:not(.orderConfirmationCancel) {
+        background: linear-gradient(135deg, #2dde7d, #12a978);
+        box-shadow: 0 14px 34px rgba(18, 169, 120, .28), inset 0 1px 0 rgba(255, 255, 255, .2);
+      }
+
+      .premiumOrderForm .orderConfirmationCancel {
+        background: linear-gradient(135deg, rgba(71, 85, 105, .95), rgba(38, 48, 63, .95));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+      }
+
+      .premiumOrderForm .mpBtn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+      }
+
+      .premiumOrderForm .mpBtn:active {
+        transform: translateY(1px) scale(.99);
+      }
+
+      @media (max-width: 560px) {
+        #modal.premiumOrderFormOpen .modalCard {
+          width: min(100% - 20px, 520px);
+        }
+
+        .universalOrderForm.premiumOrderForm {
+          padding-top: 24px;
+          gap: 16px;
+        }
+
+        .premiumOrderForm .orderConfirmationActions {
+          grid-template-columns: 1fr;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  function setPremiumFormMode(enabled) {
+    document.getElementById("modal")?.classList.toggle("premiumOrderFormOpen", Boolean(enabled));
+  }
+
+  injectPremiumOrderFormStyles();
+
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -134,6 +318,7 @@
   }
 
   function openBaseModal(product, plan) {
+    setPremiumFormMode(false);
     document.getElementById("modal")?.classList.add("show");
     lockBodyScroll();
 
@@ -164,6 +349,7 @@
   }
 
   function closeOrderModal() {
+    setPremiumFormMode(false);
     if (typeof closeModal === "function") {
       closeModal();
       return;
@@ -249,46 +435,45 @@
       return;
     }
 
+    setPremiumFormMode(true);
     setFooter("");
 
     renderModalContent(`
-      <form class="mpForm universalOrderForm" id="universalOrderForm">
+      <form class="mpForm universalOrderForm premiumOrderForm" id="universalOrderForm">
         <div class="mpFormTitle">Sifariş məlumatları</div>
-        ${product.desc ? `
-          <div class="orderConfirmationDesc">
-            ${escapeHtml(product.desc)}
-          </div>
-        ` : ""}
 
-        ${fields
-          .map((field) => {
-            const inputType = field.type || "text";
-            const common = `
-              name="${escapeHtml(field.key)}"
-              data-label="${escapeHtml(field.label || field.key)}"
-              placeholder="${escapeHtml(field.placeholder || "")}"
-              ${field.required ? "required" : ""}
-            `;
+        <div class="premiumOrderFields">
+          ${fields
+            .map((field) => {
+              const inputType = field.type || "text";
+              const common = `
+                name="${escapeHtml(field.key)}"
+                data-label="${escapeHtml(field.label || field.key)}"
+                placeholder="${escapeHtml(field.placeholder || "")}"
+                autocomplete="${inputType === "password" ? "current-password" : "off"}"
+                ${field.required ? "required" : ""}
+              `;
 
-            if (inputType === "textarea") {
+              if (inputType === "textarea") {
+                return `
+                  <label class="universalField premiumUniversalField">
+                    <span>${escapeHtml(field.label || field.key)}</span>
+                    <textarea ${common}></textarea>
+                  </label>
+                `;
+              }
+
               return `
-                <label class="universalField">
+                <label class="universalField premiumUniversalField">
                   <span>${escapeHtml(field.label || field.key)}</span>
-                  <textarea ${common}></textarea>
+                  <input type="${escapeHtml(inputType)}" ${common}>
                 </label>
               `;
-            }
+            })
+            .join("")}
+        </div>
 
-            return `
-              <label class="universalField">
-                <span>${escapeHtml(field.label || field.key)}</span>
-                <input type="${escapeHtml(inputType)}" ${common}>
-              </label>
-            `;
-          })
-          .join("")}
-
-        <div class="orderConfirmationActions">
+        <div class="orderConfirmationActions premiumOrderActions">
           <button
             class="mpBtn orderConfirmationCancel"
             id="universalFormCancel"
@@ -296,7 +481,7 @@
           >
             Ləğv et
           </button>
-          <button class="mpBtn" type="submit">Davam et</button>
+          <button class="mpBtn premiumContinueBtn" type="submit">Davam et</button>
         </div>
       </form>
     `);
@@ -324,6 +509,7 @@
   }
 
   function showConfirmation(product, plan, formData, onConfirm) {
+    setPremiumFormMode(false);
     const settings = confirmationFor(product);
     const helpUrl = String(settings.helpLink?.url || "").trim();
     const helpLabel = String(settings.helpLink?.label || "").trim();
