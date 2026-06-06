@@ -399,9 +399,9 @@
       flow === "form_then_whatsapp" ||
       flow === "form_confirm_whatsapp";
     const needsConfirmation =
+      confirmation.enabled === true ||
       flow === "confirm_then_whatsapp" ||
-      flow === "form_confirm_whatsapp" ||
-      (confirmation.enabled && flow === "direct_whatsapp");
+      flow === "form_confirm_whatsapp";
 
     const continueToFormOrWhatsApp = () => {
       if (needsForm) {
