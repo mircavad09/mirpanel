@@ -18,6 +18,61 @@
   <link rel="stylesheet" href="style.css?v=final22" />
   <link rel="icon" href="assets/logo.png" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <style>
+    .desktopNav {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(18px, 3vw, 42px);
+      flex: 1 1 auto;
+      min-width: 420px;
+      padding: 0 18px;
+    }
+
+    .desktopNavLink {
+      position: relative;
+      color: rgba(255,255,255,.82);
+      font-size: 15px;
+      font-weight: 700;
+      white-space: nowrap;
+      transition: color .22s ease, text-shadow .22s ease;
+    }
+
+    .desktopNavLink::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -8px;
+      height: 2px;
+      border-radius: 99px;
+      background: linear-gradient(90deg, transparent, #ffd400, transparent);
+      opacity: 0;
+      transform: scaleX(.35);
+      transition: opacity .22s ease, transform .22s ease;
+    }
+
+    .desktopNavLink:hover,
+    .desktopNavLink.active {
+      color: #ffd400;
+      text-shadow: 0 0 18px rgba(255,212,0,.22);
+    }
+
+    .desktopNavLink:hover::after,
+    .desktopNavLink.active::after {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    #menuOpenBtn {
+      display: none !important;
+    }
+
+    @media(max-width:850px) {
+      .desktopNav { display: none; }
+      #menuOpenBtn { display: flex !important; }
+    }
+  </style>
 </head>
 
 <body>
@@ -39,6 +94,14 @@
           <div class="brandSub">Premium Hesablar • Etibarlı Aktivləşmə</div>
         </div>
       </div>
+
+      <nav class="desktopNav" aria-label="Əsas menyu">
+        <a href="#" class="desktopNavLink" data-nav="home">Ana Səhifə</a>
+        <a href="#" class="desktopNavLink" data-nav="products">Məhsullar</a>
+        <a href="#about" class="desktopNavLink">Haqqımızda</a>
+        <a href="#terms" class="desktopNavLink">Şərtlər</a>
+        <a href="#contact" class="desktopNavLink">Əlaqə</a>
+      </nav>
 
       <div class="headActions" style="display: flex; gap: 10px; align-items: center;">
         <button id="menuOpenBtn" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
@@ -318,7 +381,7 @@
         if(!sideMenu) return;
         sideMenu.classList.add("active");
         sideMenuOverlay.classList.add("active");
-        document.body.style.overflow = "hidden"; // Arxanın sürüşməsini bağla
+        document.body.style.overflow = "hidden";
       }
 
       function closeMenu() {
@@ -332,35 +395,49 @@
       if(sideMenuClose) sideMenuClose.addEventListener("click", closeMenu);
       if(sideMenuOverlay) sideMenuOverlay.addEventListener("click", closeMenu);
 
-      // Linklərə kliklədikdə də menyu bağlansın
       const smLinks = document.querySelectorAll(".sm-link");
       smLinks.forEach(link => {
         link.addEventListener("click", closeMenu);
       });
 
-      // Ana Səhifəyə Klik Məntiqi
       const linkHome = document.getElementById("linkHome");
       if(linkHome) {
         linkHome.addEventListener("click", (e) => {
           e.preventDefault();
           if(productView) productView.style.display = "none";
           if(homePageView) homePageView.style.display = "block";
-          if(heroSection) heroSection.style.display = "block"; // Hero-nu göstər
+          if(heroSection) heroSection.style.display = "block";
           window.scrollTo(0, 0);
         });
       }
 
-      // Məhsullar Klik Məntiqi
       const linkProducts = document.getElementById("linkProducts");
       if(linkProducts) {
         linkProducts.addEventListener("click", (e) => {
           e.preventDefault();
           if(productView) productView.style.display = "none";
           if(homePageView) homePageView.style.display = "block";
-          if(heroSection) heroSection.style.display = "none"; // Hero-nu gizlət
+          if(heroSection) heroSection.style.display = "none";
           window.scrollTo(0, 0);
         });
       }
+
+      document.querySelectorAll(".desktopNavLink[data-nav]").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          const target = link.getAttribute("data-nav");
+
+          if(productView) productView.style.display = "none";
+          if(homePageView) homePageView.style.display = "block";
+          if(heroSection) heroSection.style.display = target === "products" ? "none" : "block";
+
+          document.querySelectorAll(".desktopNavLink").forEach((item) => {
+            item.classList.toggle("active", item === link);
+          });
+
+          window.scrollTo(0, 0);
+        });
+      });
 
     });
   </script>
