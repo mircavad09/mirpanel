@@ -111,14 +111,8 @@ function evaluateObject(source, marker, fallback) {
   }
 }
 
-function replaceObjectDeclaration(
-  source,
-  marker,
-  object,
-  beforeMarker = ""
-) {
-  const formatted =
-    `${marker} = ${JSON.stringify(object, null, 2)};\n\n`;
+function replaceObjectDeclaration(source, marker, object, beforeMarker = "") {
+  const formatted = `${marker} = ${JSON.stringify(object, null, 2)};\n\n`;
 
   if (source.includes(marker)) {
     const block = findObjectBlock(source, marker);
@@ -130,34 +124,22 @@ function replaceObjectDeclaration(
     );
   }
 
-  const insertAt = beforeMarker
-    ? source.indexOf(beforeMarker)
-    : -1;
+  const insertAt = beforeMarker ? source.indexOf(beforeMarker) : -1;
 
   if (insertAt < 0) {
     return `${formatted}${source}`;
   }
 
-  return (
-    source.slice(0, insertAt) +
-    formatted +
-    source.slice(insertAt)
-  );
+  return source.slice(0, insertAt) + formatted + source.slice(insertAt);
 }
 
 function normalizePlan(plan = {}) {
   return {
-    ...(plan.label
-      ? { label: String(plan.label) }
-      : {}),
+    ...(plan.label ? { label: String(plan.label) } : {}),
     months: Number(plan.months) || 1,
     price: Number(plan.price) || 0,
-    ...(Number(plan.oldPrice) > 0
-      ? { oldPrice: Number(plan.oldPrice) }
-      : {}),
-    ...(plan.discount
-      ? { discount: String(plan.discount) }
-      : {})
+    ...(Number(plan.oldPrice) > 0 ? { oldPrice: Number(plan.oldPrice) } : {}),
+    ...(plan.discount ? { discount: String(plan.discount) } : {})
   };
 }
 
@@ -186,93 +168,7 @@ function normalizeStock(value) {
   return Number.isFinite(stock) ? Math.max(0, stock) : null;
 }
 
-function defaultFieldsForFlow(flow = "", id = "") {
-  if (flow === "spotify" || id === "spotify") {
-    return [
-      {
-        key: "email",
-        type: "email",
-        label: "Email",
-        placeholder: "Spotify hesab emailinizi yazın",
-        required: true,
-        enabled: true
-      },
-      {
-        key: "password",
-        type: "password",
-        label: "Şifrə",
-        placeholder: "Spotify hesab şifrənizi yazın",
-        required: true,
-        enabled: true
-      }
-    ];
-  }
-
-  if (flow === "email") {
-    return [
-      {
-        key: "email",
-        type: "email",
-        label: "Email",
-        placeholder: "Gmail hesabınızı yazın",
-        required: true,
-        enabled: true
-      }
-    ];
-  }
-
-  if (flow === "name_code_4" || flow === "name_code_5") {
-    const digits = flow === "name_code_5" ? "5" : "4";
-
-    return [
-      {
-        key: "name",
-        type: "text",
-        label: "Ad",
-        placeholder: "Adınızı yazın",
-        required: true,
-        enabled: true
-      },
-      {
-        key: `code_${digits}`,
-        type: "text",
-        label: `${digits} rəqəmli kod`,
-        placeholder: `${digits} rəqəmli profil/PIN kodunu yazın`,
-        required: true,
-        enabled: true
-      }
-    ];
-  }
-
-  if (flow === "tiktok_jeton") {
-    return [
-      {
-        key: "username",
-        type: "text",
-        label: "TikTok istifadəçi adı",
-        placeholder: "@username",
-        required: true,
-        enabled: true
-      },
-      {
-        key: "password",
-        type: "password",
-        label: "Şifrə",
-        placeholder: "TikTok hesab şifrəsi",
-        required: true,
-        enabled: true
-      },
-      {
-        key: "note",
-        type: "textarea",
-        label: "Qeyd",
-        placeholder: "Əlavə qeydiniz varsa yazın",
-        required: false,
-        enabled: true
-      }
-    ];
-  }
-
+function defaultFieldsForFlow() {
   return [];
 }
 
@@ -280,19 +176,16 @@ function orderFlowFromProduct(product = {}) {
   const source = String(product.orderFlow || "").trim();
   if (ORDER_FLOWS.has(source)) return source;
 
-  const legacyFlow = String(product.flow || "").trim();
   const fields = Array.isArray(product.formFields)
     ? product.formFields.filter((field) => field?.enabled !== false)
-    : defaultFieldsForFlow(legacyFlow, product.id);
+    : defaultFieldsForFlow();
 
   const modalSource =
     product.confirmationModal ||
     product.orderConfirmation ||
     {};
 
-  const hasModal =
-    modalSource.enabled === true ||
-    ["spotify", "chatgpt", "youtube"].includes(product.id);
+  const hasModal = modalSource.enabled === true;
 
   if (hasModal && fields.length) return "form_confirm_whatsapp";
   if (hasModal) return "confirm_then_whatsapp";
@@ -321,7 +214,7 @@ function normalizeFormField(field = {}, index = 0) {
 function normalizeFormFields(product = {}) {
   const source = Array.isArray(product.formFields)
     ? product.formFields
-    : defaultFieldsForFlow(product.flow, product.id);
+    : defaultFieldsForFlow();
 
   return source.map(normalizeFormField);
 }
@@ -334,8 +227,8 @@ function normalizeWhatsApp(source = {}) {
   };
 }
 
-function legacyOrderConfirmation(id) {
-  const defaults = {
+function defaultOrderConfirmation() {
+  return {
     enabled: false,
     title: "Sifarişi təsdiqləyin",
     description: "",
@@ -348,62 +241,24 @@ function legacyOrderConfirmation(id) {
       url: ""
     }
   };
-
-  if (id === "spotify") {
-    return {
-      ...defaults,
-      enabled: true,
-      description: "Şəxsi hesabınızda rəsmi Spotify Premium paketi aktivləşdirilir."
-    };
-  }
-
-  if (id === "chatgpt") {
-    return {
-      ...defaults,
-      enabled: true,
-      description: "ChatGPT Plus birbaşa sizin şəxsi hesabınızda aktivləşdiriləcəkdir.",
-      confirmText: "Davam et"
-    };
-  }
-
-  if (id === "youtube") {
-    return {
-      ...defaults,
-      enabled: true,
-      description: "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
-      confirmText: "Təsdiq edirəm"
-    };
-  }
-
-  return defaults;
 }
 
 function normalizeOrderConfirmation(source = {}, id = "") {
-  const fallback = legacyOrderConfirmation(id);
+  const fallback = defaultOrderConfirmation();
   const helpSource = source.helpLink || {};
   const helpUrl = String(helpSource.url || "").trim();
 
   if (helpUrl && !helpUrl.startsWith("https://")) {
-    throw new Error(
-      `${id}: kömək linki yalnız https:// ilə başlamalıdır.`
-    );
+    throw new Error(`${id}: kömək linki yalnız https:// ilə başlamalıdır.`);
   }
 
   return {
     enabled: source.enabled ?? fallback.enabled,
     title: String(source.title ?? fallback.title),
-    description: String(
-      source.description ?? fallback.description
-    ),
-    confirmText: String(
-      source.confirmText ?? fallback.confirmText
-    ),
-    cancelText: String(
-      source.cancelText ?? fallback.cancelText
-    ),
-    footerText: String(
-      source.footerText ?? fallback.footerText
-    ),
+    description: String(source.description ?? fallback.description),
+    confirmText: String(source.confirmText ?? fallback.confirmText),
+    cancelText: String(source.cancelText ?? fallback.cancelText),
+    footerText: String(source.footerText ?? fallback.footerText),
     helpLink: {
       enabled: Boolean(helpSource.enabled),
       label: String(helpSource.label || ""),
@@ -420,8 +275,7 @@ function normalizeProduct(product = {}, index = 0) {
   }
 
   const confirmationModal = normalizeOrderConfirmation(
-    product.confirmationModal ||
-      product.orderConfirmation,
+    product.confirmationModal || product.orderConfirmation,
     id
   );
   const stock = normalizeStock(product.stock);
@@ -429,9 +283,7 @@ function normalizeProduct(product = {}, index = 0) {
 
   return {
     id,
-    order: Number.isFinite(Number(product.order))
-      ? Number(product.order)
-      : index,
+    order: Number.isFinite(Number(product.order)) ? Number(product.order) : index,
     category: String(product.category || "all"),
     image: String(product.image || "assets/your.png"),
     currency: String(product.currency || "₼"),
@@ -455,25 +307,18 @@ function normalizeProduct(product = {}, index = 0) {
     formFields,
     confirmationModal,
     whatsapp: normalizeWhatsApp(product.whatsapp),
-    plans: Array.isArray(product.plans)
-      ? product.plans.map(normalizePlan)
-      : [],
+    plans: Array.isArray(product.plans) ? product.plans.map(normalizePlan) : [],
     orderConfirmation: confirmationModal
   };
 }
 
 export function normalizeAdminPayload(payload = {}) {
-  const sourceCategories =
-    Array.isArray(payload.categories)
-      ? payload.categories.map((category) => ({
-          key: String(category.key || "").trim(),
-          name: String(
-            category.name ||
-            category.label ||
-            ""
-          ).trim()
-        }))
-      : [];
+  const sourceCategories = Array.isArray(payload.categories)
+    ? payload.categories.map((category) => ({
+        key: String(category.key || "").trim(),
+        name: String(category.name || category.label || "").trim()
+      }))
+    : [];
 
   const products = Array.isArray(payload.products)
     ? payload.products.map(normalizeProduct)
@@ -481,9 +326,7 @@ export function normalizeAdminPayload(payload = {}) {
 
   const categories = sourceCategories.length
     ? sourceCategories
-    : [...new Set(
-        products.map((product) => product.category)
-      )]
+    : [...new Set(products.map((product) => product.category))]
         .filter(Boolean)
         .map((key) => ({ key, name: key }));
 
@@ -491,9 +334,7 @@ export function normalizeAdminPayload(payload = {}) {
 
   for (const product of products) {
     if (ids.has(product.id)) {
-      throw new Error(
-        `Təkrar məhsul ID-si: ${product.id}`
-      );
+      throw new Error(`Təkrar məhsul ID-si: ${product.id}`);
     }
 
     ids.add(product.id);
@@ -502,14 +343,9 @@ export function normalizeAdminPayload(payload = {}) {
   const content = {};
 
   for (const product of products) {
-    const source =
-      payload.content?.[product.id] || {};
-
-    const aboutHtml =
-      String(source.aboutHtml || "").trim();
-
-    const rulesHtml =
-      String(source.rulesHtml || "").trim();
+    const source = payload.content?.[product.id] || {};
+    const aboutHtml = String(source.aboutHtml || "").trim();
+    const rulesHtml = String(source.rulesHtml || "").trim();
 
     if (aboutHtml || rulesHtml) {
       content[product.id] = {
@@ -521,20 +357,14 @@ export function normalizeAdminPayload(payload = {}) {
 
   return {
     brand: String(payload.brand || "Mirpanel"),
-    phone_wa: String(
-      payload.phone_wa ||
-      "https://wa.me/994515243545"
-    ),
+    phone_wa: String(payload.phone_wa || "https://wa.me/994515243545"),
     categories,
     products,
     content,
     ui: Object.fromEntries(
       Object.keys(UI_DEFAULTS).map((key) => [
         key,
-        String(
-          payload.ui?.[key] ??
-          UI_DEFAULTS[key]
-        )
+        String(payload.ui?.[key] ?? UI_DEFAULTS[key])
       ])
     )
   };
@@ -542,28 +372,17 @@ export function normalizeAdminPayload(payload = {}) {
 
 function extractPhone(source) {
   return (
-    source.match(
-      /const\s+PHONE_WA\s*=\s*["']([^"']+)["']\s*;/
-    )?.[1] ||
+    source.match(/const\s+PHONE_WA\s*=\s*["']([^"']+)["']\s*;/)?.[1] ||
     "https://wa.me/994515243545"
   );
 }
 
 export function extractAdminState(source) {
   const data = evaluateObject(source, DATA_MARKER);
-
-  const overrides =
-    evaluateObject(source, CONTENT_MARKER, {});
-
-  const infoTexts =
-    evaluateObject(source, INFO_MARKER, {});
-
-  const ui =
-    evaluateObject(source, UI_MARKER, {});
-
-  const products =
-    (data.products || []).map(normalizeProduct);
-
+  const overrides = evaluateObject(source, CONTENT_MARKER, {});
+  const infoTexts = evaluateObject(source, INFO_MARKER, {});
+  const ui = evaluateObject(source, UI_MARKER, {});
+  const products = (data.products || []).map(normalizeProduct);
   const content = {};
 
   for (const product of products) {
@@ -573,10 +392,7 @@ export function extractAdminState(source) {
         infoTexts[product.id]?.htmlContent ||
         ""
       ),
-      rulesHtml: String(
-        overrides[product.id]?.rulesHtml ||
-        ""
-      )
+      rulesHtml: String(overrides[product.id]?.rulesHtml || "")
     };
   }
 
@@ -593,11 +409,7 @@ export function extractAdminState(source) {
 function patchRuntimeHooks(source) {
   let next = source;
 
-  if (
-    !next.includes(
-      "function applyAdminHomepageSettings()"
-    )
-  ) {
+  if (!next.includes("function applyAdminHomepageSettings()")) {
     next = next.replace(
       "function setupUI() {",
       `function applyAdminHomepageSettings() {
@@ -624,22 +436,14 @@ function setupUI() {
     );
   }
 
-  if (
-    !next.includes(
-      "ADMIN_CONTENT[p.id]?.aboutHtml ||"
-    )
-  ) {
+  if (!next.includes("ADMIN_CONTENT[p.id]?.aboutHtml ||")) {
     next = next.replace(
       "cBox.innerHTML = (info && info.htmlContent) ? info.htmlContent : `<p>${p.desc}</p><p>${p.note}</p>`;",
       "cBox.innerHTML = ADMIN_CONTENT[p.id]?.aboutHtml || ((info && info.htmlContent) ? info.htmlContent : `<p>${p.desc}</p><p>${p.note}</p>`);"
     );
   }
 
-  if (
-    !next.includes(
-      "if (ADMIN_CONTENT[p.id]?.rulesHtml)"
-    )
-  ) {
+  if (!next.includes("if (ADMIN_CONTENT[p.id]?.rulesHtml)")) {
     next = next.replace(
       '      if (p.id === "google_ai" || p.id === "google_ai_ultra") {',
       `      if (ADMIN_CONTENT[p.id]?.rulesHtml) {
@@ -649,11 +453,7 @@ function setupUI() {
     );
   }
 
-  if (
-    !next.includes(
-      "let list = DATA.products.filter((p) => p.active !== false).filter((p) => {"
-    )
-  ) {
+  if (!next.includes("let list = DATA.products.filter((p) => p.active !== false).filter((p) => {")) {
     next = next.replace(
       "let list = DATA.products.filter((p) => {",
       "let list = DATA.products.filter((p) => p.active !== false).filter((p) => {"
@@ -674,32 +474,17 @@ export function patchAppSource(source, payload) {
 
   let next = source.replace(
     /const\s+PHONE_WA\s*=\s*["'][^"']+["']\s*;/,
-    `const PHONE_WA = ${JSON.stringify(
-      admin.phone_wa
-    )};`
+    `const PHONE_WA = ${JSON.stringify(admin.phone_wa)};`
   );
 
-  next = replaceObjectDeclaration(
-    next,
-    DATA_MARKER,
-    data
-  );
+  next = replaceObjectDeclaration(next, DATA_MARKER, data);
 
-  next = replaceObjectDeclaration(
-    next,
-    UI_MARKER,
-    {
-      ...evaluateObject(next, UI_MARKER, {}),
-      ...admin.ui
-    }
-  );
+  next = replaceObjectDeclaration(next, UI_MARKER, {
+    ...evaluateObject(next, UI_MARKER, {}),
+    ...admin.ui
+  });
 
-  next = replaceObjectDeclaration(
-    next,
-    CONTENT_MARKER,
-    admin.content,
-    INFO_MARKER
-  );
+  next = replaceObjectDeclaration(next, CONTENT_MARKER, admin.content, INFO_MARKER);
 
   return patchRuntimeHooks(next);
 }
