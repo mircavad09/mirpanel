@@ -84,7 +84,7 @@ function parseData(source) {
   const block = findObjectBlock(source, "const DATA");
   return {
     block,
-    data: Function(`"use strict"; return (${block.text});`)()
+    data: JSON.parse(block.text)
   };
 }
 
@@ -218,30 +218,23 @@ async function decrementOnce(env, productId) {
 }
 
 export async function onRequestPost(context) {
+  let productId = "";
+
   try {
     const body = await context.request.json().catch(() => ({}));
-    const productId = String(body.productId || "").trim();
+    productId = String(body.productId || "").trim();
 
     if (!productId) {
       return json({ error: "productId tələb olunur." }, 400);
     }
 
-    let result = await decrementOnce(context.env, productId);
-
-    if (!result.ok && /sha|does not match|not fast-forward/i.test(String(result.body?.error || ""))) {
-      result = await decrementOnce(context.env, productId);
-    }
-
+    const result = await decrementOnce(context.env, productId);
     return json(result.body, result.ok ? 200 : result.status || 500);
   } catch (error) {
-    if (error.status === 409) {
+    if (error.status === 409 && productId) {
       try {
-        const body = await context.request.json().catch(() => ({}));
-        const productId = String(body.productId || "").trim();
-        if (productId) {
-          const retry = await decrementOnce(context.env, productId);
-          return json(retry.body, retry.ok ? 200 : retry.status || 409);
-        }
+        const retry = await decrementOnce(context.env, productId);
+        return json(retry.body, retry.ok ? 200 : retry.status || 409);
       } catch (retryError) {
         return json({ error: retryError.message || "Stok yenilənmədi." }, retryError.status || 500);
       }
