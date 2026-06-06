@@ -141,7 +141,7 @@ const DATA = {
       "stockEnabled": true,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
+      "orderFlow": "confirm_then_whatsapp",
       "formFields": [
         {
           "key": "email",
@@ -153,7 +153,7 @@ const DATA = {
         }
       ],
       "confirmationModal": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
         "description": "CapCut Pro abunəliyi sizin təqdim edəcəyiniz yeni bir Gmail hesabına rəsmi şəkildə aktivləşdirilir. Təhlükəsizlik qaydalarına əsasən, hesaba eyni anda yalnız 1 cihaz daxil ola bilər; ikinci cihaz qoşulduqda hesab bloklanır. Qaydaların pozulması səbəbindən bloklanma hallarında əvəzləmə və ya geri ödəniş edilmir. Sifarişi tamamlayaraq bu şərtləri rəsmən qəbul edirsiniz.",
         "confirmText": "Təsdiqləyirəm",
@@ -178,7 +178,7 @@ const DATA = {
         }
       ],
       "orderConfirmation": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
         "description": "CapCut Pro abunəliyi sizin təqdim edəcəyiniz yeni bir Gmail hesabına rəsmi şəkildə aktivləşdirilir. Təhlükəsizlik qaydalarına əsasən, hesaba eyni anda yalnız 1 cihaz daxil ola bilər; ikinci cihaz qoşulduqda hesab bloklanır. Qaydaların pozulması səbəbindən bloklanma hallarında əvəzləmə və ya geri ödəniş edilmir. Sifarişi tamamlayaraq bu şərtləri rəsmən qəbul edirsiniz.",
         "confirmText": "Təsdiqləyirəm",
@@ -1351,7 +1351,7 @@ const DATA = {
       }
     },
     {
-      "id": "linkedin-premium",
+      "id": "linkedin_premium",
       "order": 19,
       "category": "meeting",
       "image": "assets/linkedin.png",
@@ -1409,7 +1409,7 @@ const DATA = {
       }
     },
     {
-      "id": "elevenlabs-creator",
+      "id": "elevenlabs_creator",
       "order": 20,
       "category": "ai",
       "image": "assets/elevenlabs.png",
@@ -1467,7 +1467,7 @@ const DATA = {
       }
     },
     {
-      "id": "semrush-premium",
+      "id": "semrush_premium",
       "order": 21,
       "category": "meeting",
       "image": "assets/semrush.png",
@@ -1525,7 +1525,7 @@ const DATA = {
       }
     },
     {
-      "id": "adobe-express",
+      "id": "adobe_express",
       "order": 22,
       "category": "dizayn",
       "image": "assets/adobe-express.png",
@@ -1583,7 +1583,7 @@ const DATA = {
       }
     },
     {
-      "id": "notion-plus",
+      "id": "notion_plus",
       "order": 23,
       "category": "meeting",
       "image": "assets/notion.png",
@@ -1641,7 +1641,7 @@ const DATA = {
       }
     },
     {
-      "id": "picsart-premium",
+      "id": "picsart_premium",
       "order": 24,
       "category": "dizayn",
       "image": "assets/picsart.png",
@@ -1699,7 +1699,7 @@ const DATA = {
       }
     },
     {
-      "id": "blink-starter",
+      "id": "blink_starter",
       "order": 25,
       "category": "meeting",
       "image": "assets/blink.png",
@@ -1757,7 +1757,7 @@ const DATA = {
       }
     },
     {
-      "id": "lightroom-photo",
+      "id": "lightroom_photo",
       "order": 26,
       "category": "dizayn",
       "image": "assets/lightroom.png",
@@ -1815,7 +1815,7 @@ const DATA = {
       }
     },
     {
-      "id": "gemini-ai-pro",
+      "id": "gemini_ai_pro",
       "order": 27,
       "category": "ai",
       "image": "assets/gemini.png",
