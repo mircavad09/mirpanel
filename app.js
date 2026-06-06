@@ -133,15 +133,15 @@ const DATA = {
       "variant": "Pro",
       "badge": "Video",
       "desc": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
-      "note": "S",
+      "note": "",
       "flow": "whatsapp",
       "soldOut": false,
       "active": true,
-      "stock": null,
-      "stockEnabled": false,
+      "stock": 25,
+      "stockEnabled": true,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "form_then_whatsapp",
+      "orderFlow": "direct_whatsapp",
       "formFields": [
         {
           "key": "email",
@@ -149,7 +149,7 @@ const DATA = {
           "label": "Email",
           "placeholder": "Gmail hesabınızı yazın",
           "required": true,
-          "enabled": true
+          "enabled": false
         }
       ],
       "confirmationModal": {
@@ -174,7 +174,7 @@ const DATA = {
         {
           "label": "Şəxsi hesab",
           "months": 1,
-          "price": 5.98
+          "price": 5.99
         }
       ],
       "orderConfirmation": {
