@@ -402,7 +402,7 @@ const DATA = {
       "desc": "Peşəkar onlayn görüşlər.",
       "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
       "flow": "out_of_stock",
-      "soldOut": false,
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
@@ -466,8 +466,17 @@ const DATA = {
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
+      "orderFlow": "form_confirm_whatsapp",
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email / Gmail",
+          "placeholder": "Gmail ünvanınızı yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -802,7 +811,7 @@ const DATA = {
       "desc": "Peşəkar istifadə üçün ən yüksək AI.",
       "note": "Stokta yoxdur.",
       "flow": "out_of_stock",
-      "soldOut": false,
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
