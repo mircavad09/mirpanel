@@ -459,7 +459,7 @@ const DATA = {
       "badge": "Video",
       "desc": "Reklamsız izləmə, YouTube Music daxil.",
       "note": "Aktivləşmə üçün Gmailinizi qeyd edin.",
-      "flow": "out_of_stock",
+      "flow": "email",
       "soldOut": false,
       "active": true,
       "stock": null,
