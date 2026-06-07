@@ -106,7 +106,7 @@ function encodeBase64(value) {
 }
 
 async function github(env, pathname, init = {}) {
-  const token = env.MIRPANEL_GITHUB_TOKEN;
+  const token = env.MIRPANEL_GITHUB_TOKEN || env.GITHUB_TOKEN || env.GH_TOKEN;
   if (!token) {
     const error = new Error("STOCK_SYNC_NOT_CONFIGURED");
     error.status = 503;
@@ -155,22 +155,22 @@ async function decrementOnce(env, productId) {
   const product = data.products?.find((item) => item.id === productId);
 
   if (!product) {
-    return { ok: false, status: 404, body: { error: "Məhsul tapılmadı." } };
+    return { ok: false, status: 404, body: { ok: false, error: "PRODUCT_NOT_FOUND" } };
   }
 
-  if (product.active === false || product.soldOut === true) {
-    return { ok: false, status: 409, body: { error: "Stokda yoxdur." } };
+  if (product.active === false) {
+    return { ok: false, status: 409, body: { ok: false, error: "PRODUCT_INACTIVE" } };
   }
 
   if (product.stockEnabled !== true || product.stock === null || product.stock === "" || product.stock === undefined) {
-    return { ok: true, body: { skipped: true, productId, stockBefore: null, stockAfter: null } };
+    return { ok: true, body: { ok: true, skipped: true, productId, stockBefore: null, stockAfter: null } };
   }
 
   const before = Number(product.stock);
   if (!Number.isFinite(before) || before <= 0) {
     product.stock = 0;
     product.soldOut = true;
-    return { ok: false, status: 409, body: { error: "Stokda yoxdur.", stockBefore: Math.max(0, before || 0), stockAfter: 0 } };
+    return { ok: false, status: 409, body: { ok: false, error: "OUT_OF_STOCK", stockBefore: Math.max(0, before || 0), stockAfter: 0 } };
   }
 
   const after = Math.max(0, before - 1);
@@ -213,6 +213,7 @@ async function decrementOnce(env, productId) {
     ok: true,
     body: {
       productId,
+      ok: true,
       stockBefore: before,
       stockAfter: after,
       soldOut: after === 0,
