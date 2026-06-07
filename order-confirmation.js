@@ -16,6 +16,24 @@
     "form_confirm_whatsapp"
   ]);
 
+  const LEGACY_FLOW_FIELDS = {
+    name_code_4: [
+      { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
+      { key: "code_4", type: "text", label: "4 rəqəmli kod / PIN", placeholder: "4 rəqəmli kod yazın", required: true, enabled: true }
+    ],
+    name_code_5: [
+      { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
+      { key: "code_5", type: "text", label: "5 rəqəmli kod / PIN", placeholder: "5 rəqəmli kod yazın", required: true, enabled: true }
+    ],
+    email: [
+      { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true }
+    ],
+    spotify: [
+      { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
+      { key: "password", type: "password", label: "Şifrə", placeholder: "Şifrənizi yazın", required: true, enabled: true }
+    ]
+  };
+
   const GOOGLE_SCRIPT_URL =
     "https://script.google.com/macros/s/AKfycbw8eRhDxBhq5Kf68eVQBAnqf9llgo1bQWKgdwpBa0utRgVwn6rKd9YUCP6e70iPbHTMOg/exec";
   const STOCK_ENDPOINT = "/api/decrement-stock";
@@ -114,7 +132,9 @@
 
   function activeFields(product) {
     const fields = Array.isArray(product.formFields) ? product.formFields : [];
-    return fields.filter((field) => field.enabled !== false);
+    const active = fields.filter((field) => field.enabled !== false);
+    if (active.length) return active;
+    return LEGACY_FLOW_FIELDS[product?.flow] || [];
   }
 
   function confirmationFor(product) {
@@ -127,13 +147,12 @@
   }
 
   function flowFor(product) {
-    if (ORDER_FLOWS.has(product.orderFlow)) return product.orderFlow;
-
     const fields = activeFields(product);
     const confirmation = confirmationFor(product);
     if (confirmation.enabled && fields.length) return "form_confirm_whatsapp";
-    if (confirmation.enabled) return "confirm_then_whatsapp";
     if (fields.length) return "form_then_whatsapp";
+    if (ORDER_FLOWS.has(product.orderFlow)) return product.orderFlow;
+    if (confirmation.enabled) return "confirm_then_whatsapp";
     return "direct_whatsapp";
   }
 
@@ -144,15 +163,15 @@
   }
 
   function stockIsAvailable(product) {
+    if (product.active === false || product.soldOut === true || product.flow === "out_of_stock") return false;
     const stock = stockNumber(product);
     if (stock !== null) return stock > 0;
-    if (product.soldOut === true) return false;
     return true;
   }
 
   function stockBadge(product) {
     const stock = stockNumber(product);
-    if (stock === 0 || (stock === null && product.soldOut === true)) {
+    if (product.active === false || product.soldOut === true || product.flow === "out_of_stock" || stock === 0) {
       return { text: "Stokda yoxdur", className: "out" };
     }
     if (stock !== null && stock <= 5) {
