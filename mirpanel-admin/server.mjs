@@ -136,88 +136,6 @@ async function getAppFile() {
   return getRepoFile("app.js");
 }
 
-async function getJsonRepoFile(filePath, fallback) {
-  try {
-    const file = await getRepoFile(filePath);
-    return {
-      sha: file.sha,
-      data: JSON.parse(file.source || "null") ?? fallback
-    };
-  } catch (error) {
-    if (error.status === 404) {
-      return { sha: "", data: fallback };
-    }
-    throw error;
-  }
-}
-
-async function putRepoFile(filePath, source, sha, message) {
-  const body = {
-    message,
-    content: Buffer.from(source, "utf8").toString("base64"),
-    branch: config.branch
-  };
-  if (sha) body.sha = sha;
-
-  return github(`/repos/${config.repo}/contents/${filePath}`, {
-    method: "PUT",
-    body: JSON.stringify(body)
-  });
-}
-
-async function getPaymentOrders() {
-  const file = await getJsonRepoFile("data/payment-orders.json", []);
-  return {
-    sha: file.sha,
-    orders: Array.isArray(file.data) ? file.data : []
-  };
-}
-
-async function savePaymentOrders(orders, sha) {
-  return putRepoFile(
-    "data/payment-orders.json",
-    JSON.stringify(orders, null, 2) + "\n",
-    sha,
-    "Update Mirpanel payment orders"
-  );
-}
-
-async function decrementProductStock(productId) {
-  const current = await getAppFile();
-  const data = extractAdminState(current.source);
-  const product = data.products.find((item) => item.id === productId);
-
-  if (!product) throw new Error("Məhsul tapılmadı.");
-  if (product.stockEnabled !== true || product.stock === null || product.stock === "" || product.stock === undefined) {
-    return { skipped: true };
-  }
-
-  const before = Number(product.stock);
-  if (!Number.isFinite(before) || before <= 0) {
-    product.stock = 0;
-    product.soldOut = true;
-    throw new Error("Stokda yoxdur.");
-  }
-
-  const after = Math.max(0, before - 1);
-  product.stock = after;
-  product.soldOut = after === 0;
-
-  const patched = patchAppSource(current.source, data);
-  const result = await putRepoFile(
-    "app.js",
-    patched,
-    current.sha,
-    `Approve payment order and decrement stock for ${productId}`
-  );
-
-  return {
-    stockBefore: before,
-    stockAfter: after,
-    commitSha: result.commit.sha
-  };
-}
-
 function bumpAssetVersions(source, version) {
   return source
     .replace(/app\.js\?v=[^"]+/g, `app.js?v=${version}`)
@@ -279,55 +197,6 @@ async function handleApi(request, response) {
       sha: file.sha,
       data: extractAdminState(file.source),
       loadedAt: new Date().toISOString()
-    });
-  }
-
-  if (request.method === "GET" && request.url === "/api/admin/payment-orders") {
-    const file = await getPaymentOrders();
-    return json(response, 200, {
-      orders: file.orders.sort((a, b) => String(b.createdAt || "").localeCompare(String(a.createdAt || "")))
-    });
-  }
-
-  const statusMatch = request.url.match(/^\/api\/admin\/payment-orders\/([^/]+)\/status$/);
-  if (request.method === "PATCH" && statusMatch) {
-    const orderId = decodeURIComponent(statusMatch[1]);
-    const body = await readBody(request, 50_000);
-    const nextStatus = String(body.status || "").trim();
-    const allowed = new Set(["pending", "approved", "rejected", "completed"]);
-
-    if (!allowed.has(nextStatus)) {
-      return json(response, 400, { error: "Yanlış status." });
-    }
-
-    const file = await getPaymentOrders();
-    const order = file.orders.find((item) => item.orderId === orderId);
-
-    if (!order) {
-      return json(response, 404, { error: "Sifariş tapılmadı." });
-    }
-
-    const previousStatus = order.status || "pending";
-    let stockResult = null;
-
-    if (nextStatus === "approved" && previousStatus !== "approved") {
-      stockResult = await decrementProductStock(order.productId);
-    }
-
-    order.status = nextStatus;
-    order.updatedAt = new Date().toISOString();
-    if (stockResult) {
-      order.stockBefore = stockResult.stockBefore;
-      order.stockAfter = stockResult.stockAfter;
-      order.stockCommitSha = stockResult.commitSha;
-    }
-
-    const result = await savePaymentOrders(file.orders, file.sha);
-
-    return json(response, 200, {
-      ok: true,
-      order,
-      commitSha: result.commit.sha
     });
   }
 
@@ -407,20 +276,6 @@ function serveFile(response, name) {
     return json(response, 404, { error: "Fayl tapılmadı." });
   }
 
-  if (name === "admin.html") {
-    let html = fs.readFileSync(file, "utf8");
-    if (!html.includes("admin-orders.js")) {
-      html = html.replace("</body>", "  <script src=\"admin-orders.js\"></script>\n</body>");
-    }
-
-    response.writeHead(200, {
-      "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-store"
-    });
-    response.end(html);
-    return;
-  }
-
   response.writeHead(200, {
     "Content-Type": mime[path.extname(file)] || "application/octet-stream",
     "Cache-Control": "no-store"
@@ -448,7 +303,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/admin-orders.js", "/login.js"].includes(request.url)) {
+    if (["/admin.css", "/admin.js", "/login.js"].includes(request.url)) {
       return serveFile(response, request.url.slice(1));
     }
 
