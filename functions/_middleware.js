@@ -2,7 +2,7 @@ class PaymentScriptInjector {
   element(element) {
     const src = element.getAttribute("src") || "";
     if (src.includes("order-confirmation.js")) {
-      element.before('<script src="/admin-payment-order.js?v=payment-order-20260607-1"></script>', { html: true });
+      element.before('<script src="/admin-payment-order-v2.js?v=payment-order-20260607-2"></script>', { html: true });
     }
   }
 }
