@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "orderId": "MP-1780846657537-6193",
+    "productId": "capcut",
+    "productTitle": "CapCut Pro",
+    "plan": "Şəxsi hesab",
+    "price": "5.99 ₼",
+    "customerEmail": "mircavad009@gmail.com",
+    "bankName": "",
+    "cardHolderName": "",
+    "cardNumber": "",
+    "notifyEmail": "mircavad09@gmail.com",
+    "receiptFileUrl": "https://raw.githubusercontent.com/mircavad09/mirpanel/main/uploads/receipts/MP-1780846657537-6193-Screenshot-2026-03-10-230231.png",
+    "receiptFileName": "Screenshot-2026-03-10-230231.png",
+    "receiptMimeType": "image/png",
+    "receiptPath": "uploads/receipts/MP-1780846657537-6193-Screenshot-2026-03-10-230231.png",
+    "status": "pending",
+    "createdAt": "2026-06-07T15:37:38.896Z",
+    "updatedAt": "2026-06-07T15:37:38.896Z"
+  }
+]
