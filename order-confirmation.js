@@ -144,15 +144,15 @@
   }
 
   function stockIsAvailable(product) {
-    if (product.soldOut === true) return false;
     const stock = stockNumber(product);
     if (stock !== null) return stock > 0;
+    if (product.soldOut === true) return false;
     return true;
   }
 
   function stockBadge(product) {
     const stock = stockNumber(product);
-    if (product.soldOut === true || stock === 0) {
+    if (stock === 0 || (stock === null && product.soldOut === true)) {
       return { text: "Stokda yoxdur", className: "out" };
     }
     if (stock !== null && stock <= 5) {
@@ -297,6 +297,10 @@
           code: payload.code || payload.error || ""
         });
         return { skipped: true, unavailable: true };
+      }
+
+      if (message === "OUT_OF_STOCK") {
+        throw new Error("Stokda yoxdur.");
       }
 
       throw new Error(payload.error || "Stok yenilənmədi.");
