@@ -24,6 +24,24 @@ const orderFlows = [
   ["form_confirm_whatsapp", "Əvvəl təsdiqləmə modalı, sonra məlumat forması, sonra WhatsApp"]
 ];
 
+const legacyFlowDefaults = {
+  name_code_4: [
+    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
+    { key: "code_4", type: "text", label: "4 rəqəmli kod / PIN", placeholder: "4 rəqəmli kod yazın", required: true, enabled: true }
+  ],
+  name_code_5: [
+    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
+    { key: "code_5", type: "text", label: "5 rəqəmli kod / PIN", placeholder: "5 rəqəmli kod yazın", required: true, enabled: true }
+  ],
+  email: [
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true }
+  ],
+  spotify: [
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
+    { key: "password", type: "password", label: "Şifrə", placeholder: "Şifrənizi yazın", required: true, enabled: true }
+  ]
+};
+
 const formFieldTypes = [
   ["text", "Mətn"],
   ["tel", "Telefon"],
@@ -124,7 +142,35 @@ function activeFormFields(product) {
     : [];
 }
 
+function cloneLegacyFields(flow) {
+  return (legacyFlowDefaults[flow] || []).map((field) => ({ ...field }));
+}
+
+function syncLegacyFlow(product, overwriteFields = false) {
+  const confirmation = ensureConfirmation(product);
+  const legacyFields = cloneLegacyFields(product.flow);
+
+  if (product.flow === "out_of_stock") {
+    product.soldOut = true;
+    product.orderFlow = "direct_whatsapp";
+    return;
+  }
+
+  if (product.flow === "whatsapp") {
+    if (overwriteFields) product.formFields = [];
+    if (!activeFormFields(product).length) {
+      product.orderFlow = confirmation.enabled ? "confirm_then_whatsapp" : "direct_whatsapp";
+    }
+    return;
+  }
+
+  if (legacyFields.length && (overwriteFields || !activeFormFields(product).length)) {
+    product.formFields = legacyFields;
+  }
+}
+
 function syncOrderFlow(product) {
+  syncLegacyFlow(product);
   const confirmation = ensureConfirmation(product);
   const hasFields = activeFormFields(product).length > 0;
 
@@ -161,6 +207,7 @@ function ensureProduct(product) {
   product.plans = Array.isArray(product.plans) ? product.plans : [];
   ensureConfirmation(product);
   syncOrderFlow(product);
+  if (product.stockEnabled && Number(product.stock) > 0 && product.flow !== "out_of_stock") product.soldOut = false;
   return product;
 }
 
@@ -431,20 +478,36 @@ bindProductField("productId", (p, e) => {
 bindProductField("productTitle", (p, e) => { p.title = e.value; $("previewTitle").textContent = p.title; });
 bindProductField("productVariant", (p, e) => p.variant = e.value);
 bindProductField("productCategory", (p, e) => p.category = e.value);
-bindProductField("productFlow", (p, e) => p.flow = e.value);
+bindProductField("productFlow", (p, e) => {
+  p.flow = e.value;
+  syncLegacyFlow(p, true);
+});
 bindProductField("productOrderFlow", (p, e) => p.orderFlow = e.value);
 bindProductField("productImage", (p, e) => { p.image = e.value; $("previewImage").src = imageUrl(p.image); });
 bindProductField("productBadge", (p, e) => p.badge = e.value);
 bindProductField("productCurrency", (p, e) => p.currency = e.value);
-bindProductField("productSoldOut", (p, e) => p.soldOut = e.value === "true");
-bindProductField("productStock", (p, e) => p.stock = e.value === "" ? null : Math.max(0, Number(e.value) || 0));
-bindProductField("productStockEnabled", (p, e) => p.stockEnabled = e.checked);
+bindProductField("productSoldOut", (p, e) => {
+  p.soldOut = e.value === "true";
+  if (p.soldOut) p.flow = "out_of_stock";
+});
+bindProductField("productStock", (p, e) => {
+  p.stock = e.value === "" ? null : Math.max(0, Number(e.value) || 0);
+  if (p.stockEnabled && Number(p.stock) > 0 && p.flow !== "out_of_stock") p.soldOut = false;
+  if (p.stockEnabled && Number(p.stock) <= 0) p.soldOut = true;
+});
+bindProductField("productStockEnabled", (p, e) => {
+  p.stockEnabled = e.checked;
+  if (p.stockEnabled && Number(p.stock) > 0 && p.flow !== "out_of_stock") p.soldOut = false;
+  if (p.stockEnabled && Number(p.stock) <= 0) p.soldOut = true;
+});
 bindProductField("productSeller", (p, e) => p.seller = e.value);
 bindProductField("productBestSeller", (p, e) => p.bestSeller = e.checked);
 bindProductField("productDesc", (p, e) => p.desc = e.value);
 bindProductField("productNote", (p, e) => p.note = e.value);
 bindProductField("aboutHtml", (p, e) => { state.data.content[p.id] ??= {}; state.data.content[p.id].aboutHtml = e.value; });
 bindProductField("rulesHtml", (p, e) => { state.data.content[p.id] ??= {}; state.data.content[p.id].rulesHtml = e.value; });
+
+$("productFlow").addEventListener("change", () => renderProductForm());
 
 bindProductField("orderConfirmationEnabled", (p, e) => ensureConfirmation(p).enabled = e.checked);
 bindProductField("orderConfirmationTitle", (p, e) => ensureConfirmation(p).title = e.value);
