@@ -174,6 +174,12 @@
       });
     });
 
+    document.querySelectorAll('.navBtn[data-view]:not([data-view="orders"])').forEach((button) => {
+      if (button.dataset.ordersHideBound === "true") return;
+      button.dataset.ordersHideBound = "true";
+      button.addEventListener("click", () => get("ordersView")?.classList.add("hidden"));
+    });
+
     get("refreshOrdersBtn")?.addEventListener("click", loadOrders);
   }
 
