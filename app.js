@@ -172,7 +172,6 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "Şəxsi hesab",
           "months": 1,
           "price": 5.99
         }
