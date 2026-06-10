@@ -8,7 +8,6 @@
   }
 
   function stockNumber(product) {
-    if (product?.stockEnabled !== true) return null;
     const rawStock = product.stock ?? product.stockCount ?? product.stockQuantity;
     if (rawStock === null || rawStock === "" || rawStock === undefined) return null;
     const stock = Number(rawStock);
