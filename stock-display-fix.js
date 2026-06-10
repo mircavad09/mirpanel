@@ -8,6 +8,7 @@
   }
 
   function stockNumber(product) {
+    if (product?.stockEnabled === false) return null;
     const rawStock = product.stock ?? product.stockCount ?? product.stockQuantity;
     if (rawStock === null || rawStock === "" || rawStock === undefined) return null;
     const stock = Number(rawStock);
@@ -63,15 +64,19 @@
   function decorateDetail(product) {
     if (!product) return;
     const badgeData = stockBadgeData(product);
+    const imageBadge = document.querySelector(".pp-avail-badge");
+    if (imageBadge) imageBadge.style.display = "none";
+
+    document.querySelector(".pp-detail-stock-line")?.remove();
     if (!badgeData) return;
 
-    const badge = document.querySelector(".pp-avail-badge");
-    if (badge) {
-      badge.textContent = badgeData.text;
-      badge.classList.toggle("ok", badgeData.className === "ok");
-      badge.classList.toggle("low", badgeData.className === "low");
-      badge.classList.toggle("out", badgeData.className === "out");
-    }
+    const delivery = document.querySelector(".pp-delivery");
+    const stockLine = document.createElement("div");
+    stockLine.className = "pp-detail-stock-line";
+    stockLine.innerHTML = `<span class="mpStockBadge detailStockBadge ${badgeData.className}">${escapeHtml(
+      badgeData.className === "out" ? badgeData.text : badgeData.text.replace("Stok: ", "Stokda var • ") + " ədəd"
+    )}</span>`;
+    if (delivery) delivery.insertAdjacentElement("afterend", stockLine);
 
     if (badgeData.className === "out") {
       const button = document.getElementById("pp-order-btn");
