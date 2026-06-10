@@ -495,8 +495,12 @@
     }
 
     if (delivery) {
-      delivery.querySelector(".mpSellerLine")?.remove();
-      delivery.querySelector(".mpStockLine")?.remove();
+      document
+        .querySelectorAll("#productPageView .pp-detail-stock-line, #productPageView .detailStockBadge")
+        .forEach((element) => element.remove());
+      delivery
+        .querySelectorAll(".mpSellerLine, .mpStockLine")
+        .forEach((element) => element.remove());
 
       if (product.seller) {
         const seller = document.createElement("div");
