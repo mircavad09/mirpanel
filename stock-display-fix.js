@@ -63,20 +63,15 @@
 
   function decorateDetail(product) {
     if (!product) return;
-    const badgeData = stockBadgeData(product);
     const imageBadge = document.querySelector(".pp-avail-badge");
     if (imageBadge) imageBadge.style.display = "none";
 
-    document.querySelector(".pp-detail-stock-line")?.remove();
-    if (!badgeData) return;
+    document
+      .querySelectorAll("#productPageView .pp-detail-stock-line, #productPageView .detailStockBadge")
+      .forEach((element) => element.remove());
 
-    const delivery = document.querySelector(".pp-delivery");
-    const stockLine = document.createElement("div");
-    stockLine.className = "pp-detail-stock-line";
-    stockLine.innerHTML = `<span class="mpStockBadge detailStockBadge ${badgeData.className}">${escapeHtml(
-      badgeData.className === "out" ? badgeData.text : badgeData.text.replace("Stok: ", "Stokda var • ") + " ədəd"
-    )}</span>`;
-    if (delivery) delivery.insertAdjacentElement("afterend", stockLine);
+    const badgeData = stockBadgeData(product);
+    if (!badgeData) return;
 
     if (badgeData.className === "out") {
       const button = document.getElementById("pp-order-btn");
