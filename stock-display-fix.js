@@ -44,7 +44,7 @@
   function installCardRenderer() {
     if (typeof renderGrid !== "function") return;
 
-    window.cardHTML = function stockAwareCardHTML(product, index) {
+    cardHTML = window.cardHTML = function stockAwareCardHTML(product, index) {
       return `
         <div class="card" onclick="window.openProductPage('${escapeHtml(product.id)}')" style="animation-delay:${Math.min(index * 0.03, 0.25)}s">
           <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt=""><div class="cornerPrice">${priceText(product)}</div></div>
@@ -88,7 +88,7 @@
     if (typeof openProductPage !== "function") return;
     const originalOpenProductPage = openProductPage;
 
-    window.openProductPage = function stockAwareOpenProductPage(id) {
+    openProductPage = window.openProductPage = function stockAwareOpenProductPage(id) {
       originalOpenProductPage(id);
       setTimeout(() => {
         const product = DATA?.products?.find((item) => item.id === id);
