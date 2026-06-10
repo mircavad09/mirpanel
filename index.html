@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css?v=final22" />
-  <link rel="stylesheet" href="premium-compact-glow.css?v=20260608-1" />
+  <link rel="stylesheet" href="premium-compact-glow.css?v=20260610-2" />
   <link rel="stylesheet" href="stock-display-fix.css?v=20260610-1" />
   <link rel="icon" href="assets/logo.png" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
@@ -208,6 +208,7 @@
         
         <div class="pp-actions" style="margin-top: 15px;">
           <button class="pp-btn-solid" id="pp-order-btn">Sifariş et</button>
+          <button class="pp-btn-secondary" id="pp-about-btn" type="button">Məhsul haqqında</button>
         </div>
       </div>
 
@@ -341,7 +342,8 @@
 
   <script src="app.js?v=admin-1781093062964"></script>
   <script src="order-confirmation.js?v=admin-1781093062964"></script>
-  <script src="stock-display-fix.js?v=20260610-2"></script>
+  <script src="stock-display-fix.js?v=20260610-3"></script>
+  <script src="frontend-routing-detail-fix.js?v=20260610-1"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {
@@ -409,6 +411,7 @@
       if(linkHome) {
         linkHome.addEventListener("click", (e) => {
           e.preventDefault();
+          if (window.location.hash) history.replaceState("", document.title, window.location.pathname + window.location.search);
           if(productView) productView.style.display = "none";
           if(homePageView) homePageView.style.display = "block";
           if(heroSection) heroSection.style.display = "block"; // Hero-nu göstər
@@ -421,6 +424,7 @@
       if(linkProducts) {
         linkProducts.addEventListener("click", (e) => {
           e.preventDefault();
+          if (window.location.hash) history.replaceState("", document.title, window.location.pathname + window.location.search);
           if(productView) productView.style.display = "none";
           if(homePageView) homePageView.style.display = "block";
           if(heroSection) heroSection.style.display = "none"; // Hero-nu gizlət
@@ -432,6 +436,7 @@
         link.addEventListener("click", (e) => {
           e.preventDefault();
           const target = link.getAttribute("data-nav");
+          if (window.location.hash) history.replaceState("", document.title, window.location.pathname + window.location.search);
 
           if(productView) productView.style.display = "none";
           if(homePageView) homePageView.style.display = "block";
