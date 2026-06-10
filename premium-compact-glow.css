@@ -483,3 +483,184 @@ body {
     bottom: 14px !important;
   }
 }
+
+@media (max-width: 600px) {
+  #productPageView {
+    padding: 8px 10px 138px !important;
+  }
+
+  #productPageView .pp-back-btn {
+    padding: 7px 10px !important;
+    min-height: 34px !important;
+    margin-top: 4px !important;
+    margin-bottom: 7px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    line-height: 1.15 !important;
+  }
+
+  #productPageView .pp-top-grid {
+    gap: 8px !important;
+  }
+
+  #productPageView .pp-box {
+    padding: 10px !important;
+    border-radius: 15px !important;
+  }
+
+  #productPageView .pp-left {
+    gap: 8px !important;
+  }
+
+  #productPageView .pp-img-wrap {
+    height: min(54vw, 205px) !important;
+    max-height: 205px !important;
+    min-height: 168px !important;
+    aspect-ratio: auto !important;
+    padding: 10px !important;
+    border-radius: 13px !important;
+  }
+
+  #productPageView #pp-main-img {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 185px !important;
+    object-fit: contain !important;
+  }
+
+  #productPageView .pp-center {
+    gap: 0 !important;
+  }
+
+  #productPageView .pp-title {
+    font-size: clamp(23px, 6.4vw, 26px) !important;
+    line-height: 1.12 !important;
+    margin: 0 0 6px !important;
+  }
+
+  #productPageView .pp-delivery {
+    padding: 8px 10px !important;
+    margin: 0 0 8px !important;
+    border-radius: 12px !important;
+    font-size: 12px !important;
+    line-height: 1.35 !important;
+  }
+
+  #productPageView .mpStockLine {
+    margin-top: 6px !important;
+  }
+
+  #productPageView .mpStockBadge {
+    padding: 5px 8px !important;
+    font-size: 10px !important;
+  }
+
+  #productPageView .pp-subtitle {
+    margin: 8px 0 6px !important;
+    padding-bottom: 4px !important;
+    font-size: 13px !important;
+  }
+
+  #productPageView .pp-plans-container {
+    gap: 6px !important;
+  }
+
+  #productPageView .pp-plan-label {
+    min-height: 46px !important;
+    padding: 8px 10px !important;
+    border-width: 1px !important;
+    border-radius: 12px !important;
+    box-shadow: 0 5px 14px rgba(0,0,0,.18) !important;
+  }
+
+  #productPageView .pp-plan-left {
+    gap: 8px !important;
+  }
+
+  #productPageView .pp-radio-circle {
+    width: 15px !important;
+    height: 15px !important;
+    border-width: 1px !important;
+  }
+
+  #productPageView .pp-plan-label.active .pp-radio-circle::after {
+    width: 7px !important;
+    height: 7px !important;
+  }
+
+  #productPageView .pp-plan-name {
+    font-size: 12px !important;
+    line-height: 1.25 !important;
+  }
+
+  #productPageView .pp-plan-disc-badge {
+    padding: 2px 5px !important;
+    font-size: 9px !important;
+    border-radius: 6px !important;
+  }
+
+  #productPageView .pp-plan-right {
+    gap: 6px !important;
+  }
+
+  #productPageView .pp-old-price {
+    font-size: 10px !important;
+  }
+
+  #productPageView .pp-new-price {
+    font-size: 13px !important;
+  }
+
+  #productPageView .pp-actions {
+    margin-top: 8px !important;
+    gap: 7px !important;
+  }
+
+  #productPageView .pp-btn-solid,
+  #productPageView .pp-btn-secondary {
+    min-height: 44px !important;
+    padding: 9px 12px !important;
+    border-radius: 12px !important;
+    font-size: 13px !important;
+    line-height: 1.2 !important;
+  }
+
+  #productPageView .pp-bottom-section {
+    margin-top: 10px !important;
+  }
+
+  #productPageView .pp-tab {
+    padding: 9px 8px !important;
+    font-size: 11px !important;
+  }
+
+  #productPageView .pp-content {
+    padding: 12px !important;
+    font-size: 12px !important;
+    line-height: 1.55 !important;
+  }
+
+  #productPageView .pp-right {
+    display: none !important;
+  }
+
+  body:has(#productPageView[style*="block"]) .footer {
+    margin-bottom: 72px !important;
+  }
+
+  .gameFab {
+    bottom: calc(20px + env(safe-area-inset-bottom)) !important;
+    left: 10px !important;
+    height: 36px !important;
+    padding: 0 12px !important;
+    font-size: 11px !important;
+    max-width: calc(100vw - 88px) !important;
+  }
+
+  .waFab {
+    right: 10px !important;
+    bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+    width: 48px !important;
+    height: 48px !important;
+  }
+}
