@@ -461,7 +461,7 @@ const DATA = {
       "flow": "email",
       "soldOut": false,
       "active": true,
-      "stock": 5,
+      "stock": 4,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
