@@ -1049,14 +1049,14 @@ const DATA = {
       "badge": "Film",
       "desc": "Prime Video filmlər və seriallar.",
       "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
-      "flow": "name_code_5",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "form_then_whatsapp",
+      "orderFlow": "direct_whatsapp",
       "formFields": [
         {
           "key": "name",
