@@ -400,7 +400,7 @@ const DATA = {
       "badge": "Görüş",
       "desc": "Peşəkar onlayn görüşlər.",
       "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
-      "flow": "out_of_stock",
+      "flow": "whatsapp",
       "soldOut": true,
       "active": true,
       "stock": null,
