@@ -1049,7 +1049,7 @@ const DATA = {
       "badge": "Film",
       "desc": "Prime Video filmlər və seriallar.",
       "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
-      "flow": "out_of_stock",
+      "flow": "name_code_5",
       "soldOut": true,
       "active": true,
       "stock": null,
@@ -1069,8 +1069,8 @@ const DATA = {
         {
           "key": "code_5",
           "type": "text",
-          "label": "5 rəqəmli kod",
-          "placeholder": "5 rəqəmli profil/PIN kodunu yazın",
+          "label": "5 rəqəmli kod / PIN",
+          "placeholder": "5 rəqəmli kod yazın",
           "required": true,
           "enabled": true
         }
