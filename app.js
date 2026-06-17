@@ -1050,7 +1050,7 @@ const DATA = {
       "desc": "Prime Video filmlər və seriallar.",
       "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
       "flow": "name_code_5",
-      "soldOut": true,
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
