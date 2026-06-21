@@ -137,7 +137,7 @@ const DATA = {
       "flow": "whatsapp",
       "soldOut": false,
       "active": true,
-      "stock": 70,
+      "stock": 69,
       "stockEnabled": true,
       "seller": "",
       "bestSeller": true,
