@@ -135,7 +135,7 @@ const DATA = {
       "desc": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
       "note": "",
       "flow": "whatsapp",
-      "soldOut": true,
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
