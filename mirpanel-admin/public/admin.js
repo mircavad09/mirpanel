@@ -158,7 +158,7 @@ function syncLegacyFlow(product, overwriteFields = false) {
 
   if (product.flow === "whatsapp") {
     if (overwriteFields) product.formFields = [];
-    if (!activeFormFields(product).length) {
+    if (overwriteFields || !activeFormFields(product).length) {
       product.orderFlow = confirmation.enabled ? "confirm_then_whatsapp" : "direct_whatsapp";
     }
     return;
@@ -167,6 +167,10 @@ function syncLegacyFlow(product, overwriteFields = false) {
   if (legacyFields.length && (overwriteFields || !activeFormFields(product).length)) {
     product.formFields = legacyFields;
   }
+
+  if (legacyFields.length && (overwriteFields || !orderFlows.some(([value]) => value === product.orderFlow))) {
+    product.orderFlow = confirmation.enabled ? "form_confirm_whatsapp" : "form_then_whatsapp";
+  }
 }
 
 function syncOrderFlow(product) {
@@ -174,13 +178,12 @@ function syncOrderFlow(product) {
   const confirmation = ensureConfirmation(product);
   const hasFields = activeFormFields(product).length > 0;
 
-  if (confirmation.enabled) {
-    product.orderFlow = hasFields ? "form_confirm_whatsapp" : "confirm_then_whatsapp";
-    return;
-  }
-
   if (!orderFlows.some(([value]) => value === product.orderFlow)) {
     product.orderFlow = hasFields ? "form_then_whatsapp" : "direct_whatsapp";
+  }
+
+  if (confirmation.enabled && product.orderFlow === "direct_whatsapp") {
+    product.orderFlow = "confirm_then_whatsapp";
   }
 }
 
@@ -207,8 +210,26 @@ function ensureProduct(product) {
   product.plans = Array.isArray(product.plans) ? product.plans : [];
   ensureConfirmation(product);
   syncOrderFlow(product);
-  if (product.stockEnabled && Number(product.stock) > 0 && product.flow !== "out_of_stock") product.soldOut = false;
+  if (product.stockEnabled && product.stock !== null && Number(product.stock) > 0 && product.flow !== "out_of_stock") product.soldOut = false;
   return product;
+}
+
+function hasStockValue(product) {
+  return product.stock !== null && product.stock !== "" && product.stock !== undefined && Number.isFinite(Number(product.stock));
+}
+
+function applyStockState(product) {
+  if (!product.stockEnabled || !hasStockValue(product)) {
+    return;
+  }
+
+  const stock = Math.max(0, Number(product.stock));
+  product.stock = stock;
+  product.soldOut = stock <= 0;
+
+  if (stock > 0 && product.flow === "out_of_stock") {
+    product.flow = "whatsapp";
+  }
 }
 
 function syncAllProducts() {
@@ -365,7 +386,7 @@ function renderProducts() {
         status === "all" ||
         (status === "active" && product.active !== false) ||
         (status === "inactive" && product.active === false) ||
-        (status === "soldout" && (product.soldOut || (product.stockEnabled && Number(product.stock) <= 0)));
+        (status === "soldout" && (product.soldOut || (product.stockEnabled && hasStockValue(product) && Number(product.stock) <= 0)));
       return (!query || blob.includes(query)) &&
         (category === "all" || product.category === category) &&
         visibleByStatus;
@@ -489,16 +510,15 @@ bindProductField("productCurrency", (p, e) => p.currency = e.value);
 bindProductField("productSoldOut", (p, e) => {
   p.soldOut = e.value === "true";
   if (p.soldOut) p.flow = "out_of_stock";
+  else if (p.flow === "out_of_stock") p.flow = "whatsapp";
 });
 bindProductField("productStock", (p, e) => {
   p.stock = e.value === "" ? null : Math.max(0, Number(e.value) || 0);
-  if (p.stockEnabled && Number(p.stock) > 0 && p.flow !== "out_of_stock") p.soldOut = false;
-  if (p.stockEnabled && Number(p.stock) <= 0) p.soldOut = true;
+  applyStockState(p);
 });
 bindProductField("productStockEnabled", (p, e) => {
   p.stockEnabled = e.checked;
-  if (p.stockEnabled && Number(p.stock) > 0 && p.flow !== "out_of_stock") p.soldOut = false;
-  if (p.stockEnabled && Number(p.stock) <= 0) p.soldOut = true;
+  applyStockState(p);
 });
 bindProductField("productSeller", (p, e) => p.seller = e.value);
 bindProductField("productBestSeller", (p, e) => p.bestSeller = e.checked);
