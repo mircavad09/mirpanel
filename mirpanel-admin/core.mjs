@@ -168,17 +168,34 @@ function normalizeStock(value) {
   return Number.isFinite(stock) ? Math.max(0, stock) : null;
 }
 
-function defaultFieldsForFlow() {
-  return [];
+const LEGACY_FLOW_FIELDS = {
+  name_code_4: [
+    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
+    { key: "code_4", type: "text", label: "4 rəqəmli kod / PIN", placeholder: "4 rəqəmli kod yazın", required: true, enabled: true }
+  ],
+  name_code_5: [
+    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
+    { key: "code_5", type: "text", label: "5 rəqəmli kod / PIN", placeholder: "5 rəqəmli kod yazın", required: true, enabled: true }
+  ],
+  email: [
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true }
+  ],
+  spotify: [
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
+    { key: "password", type: "password", label: "Şifrə", placeholder: "Şifrənizi yazın", required: true, enabled: true }
+  ]
+};
+
+function defaultFieldsForFlow(flow) {
+  return (LEGACY_FLOW_FIELDS[flow] || []).map((field) => ({ ...field }));
 }
 
 function orderFlowFromProduct(product = {}) {
   const source = String(product.orderFlow || "").trim();
-  if (ORDER_FLOWS.has(source)) return source;
 
-  const fields = Array.isArray(product.formFields)
+  const fields = Array.isArray(product.formFields) && product.formFields.length
     ? product.formFields.filter((field) => field?.enabled !== false)
-    : defaultFieldsForFlow();
+    : defaultFieldsForFlow(product.flow);
 
   const modalSource =
     product.confirmationModal ||
@@ -186,6 +203,11 @@ function orderFlowFromProduct(product = {}) {
     {};
 
   const hasModal = modalSource.enabled === true;
+
+  if (ORDER_FLOWS.has(source)) {
+    if (hasModal && source === "direct_whatsapp") return "confirm_then_whatsapp";
+    return source;
+  }
 
   if (hasModal && fields.length) return "form_confirm_whatsapp";
   if (hasModal) return "confirm_then_whatsapp";
@@ -212,9 +234,9 @@ function normalizeFormField(field = {}, index = 0) {
 }
 
 function normalizeFormFields(product = {}) {
-  const source = Array.isArray(product.formFields)
+  const source = Array.isArray(product.formFields) && product.formFields.length
     ? product.formFields
-    : defaultFieldsForFlow();
+    : defaultFieldsForFlow(product.flow);
 
   return source.map(normalizeFormField);
 }
@@ -280,6 +302,10 @@ function normalizeProduct(product = {}, index = 0) {
   );
   const stock = normalizeStock(product.stock);
   const formFields = normalizeFormFields(product);
+  const soldOut =
+    Boolean(product.soldOut) ||
+    product.flow === "out_of_stock" ||
+    (Boolean(product.stockEnabled) && stock !== null && stock <= 0);
 
   return {
     id,
@@ -293,7 +319,7 @@ function normalizeProduct(product = {}, index = 0) {
     desc: String(product.desc || ""),
     note: String(product.note || ""),
     flow: String(product.flow || "whatsapp"),
-    soldOut: Boolean(product.soldOut),
+    soldOut,
     active: product.active !== false,
     stock,
     stockEnabled: Boolean(product.stockEnabled),
