@@ -149,16 +149,24 @@
   function flowFor(product) {
     const fields = activeFields(product);
     const confirmation = confirmationFor(product);
+    const source = String(product.orderFlow || "").trim();
+
+    if (ORDER_FLOWS.has(source)) {
+      if (confirmation.enabled && source === "direct_whatsapp") return "confirm_then_whatsapp";
+      return source;
+    }
+
     if (confirmation.enabled && fields.length) return "form_confirm_whatsapp";
-    if (fields.length) return "form_then_whatsapp";
-    if (ORDER_FLOWS.has(product.orderFlow)) return product.orderFlow;
     if (confirmation.enabled) return "confirm_then_whatsapp";
+    if (fields.length) return "form_then_whatsapp";
     return "direct_whatsapp";
   }
 
   function stockNumber(product) {
-    if (product?.stockEnabled !== true || product.stock === null || product.stock === "" || product.stock === undefined) return null;
-    const stock = Number(product.stock);
+    if (product?.stockEnabled === false) return null;
+    const rawStock = product.stock ?? product.stockCount ?? product.stockQuantity;
+    if (rawStock === null || rawStock === "" || rawStock === undefined) return null;
+    const stock = Number(rawStock);
     return Number.isFinite(stock) ? Math.max(0, stock) : null;
   }
 
@@ -274,7 +282,8 @@
     if (selectedPlanLabel) lines.push(`Plan: ${selectedPlanLabel}`);
     lines.push(`Qiymət: ${priceText(product, plan)}`);
     if (settings.includeSeller && product.seller) lines.push(`Satıcı: ${product.seller}`);
-    if (settings.includeStock && stockNumber(product) !== null) lines.push(`Stok: ${product.stock}`);
+    const stock = stockNumber(product);
+    if (settings.includeStock && stock !== null) lines.push(`Stok: ${stock}`);
 
     const formLines = Object.entries(formData)
       .filter(([, value]) => String(value || "").trim())
@@ -432,7 +441,7 @@
     renderModalContent(`
       <div class="mpForm orderConfirmation">
         <div class="mpFormTitle">${escapeHtml(settings.title)}</div>
-        <div class="orderConfirmationDesc">${escapeHtml(settings.description || product.desc || "")}</div>
+        <div class="orderConfirmationDesc">${escapeHtml(settings.description || "")}</div>
         ${product.note ? `<div class="orderConfirmationNote">${escapeHtml(product.note)}</div>` : ""}
         ${showHelp ? `<a class="orderConfirmationHelp" href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(helpLabel)}</a>` : ""}
         <div class="orderConfirmationActions">
