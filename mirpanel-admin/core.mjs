@@ -479,6 +479,31 @@ function setupUI() {
     );
   }
 
+  if (!next.includes("const adminContent = ADMIN_CONTENT[p.id] || {};")) {
+    next = next.replace(
+      `    if (tabName === "tab-about") {
+      const info = INFO_TEXTS[p.id];
+      cBox.innerHTML = (info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>Sifariş etmək üçün WhatsApp-a yönləndiriləcəksiniz.</p>\`;
+    } 
+    else if (tabName === "tab-rules") {`,
+      `    const adminContent = ADMIN_CONTENT[p.id] || {};
+
+    if (tabName === "tab-about") {
+      const info = INFO_TEXTS[p.id];
+      cBox.innerHTML = adminContent.aboutHtml || ((info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>Sifariş etmək üçün WhatsApp-a yönləndiriləcəksiniz.</p>\`);
+    } 
+    else if (tabName === "tab-rules") {`
+    );
+
+    next = next.replace(
+      '      if (p.id === "netflix" || p.id === "hbomax") {',
+      `      if (adminContent.rulesHtml) {
+        cBox.innerHTML = adminContent.rulesHtml;
+      }
+      else if (p.id === "netflix" || p.id === "hbomax") {`
+    );
+  }
+
   if (!next.includes("let list = DATA.products.filter((p) => p.active !== false).filter((p) => {")) {
     next = next.replace(
       "let list = DATA.products.filter((p) => {",
