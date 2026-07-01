@@ -1359,12 +1359,12 @@ const DATA = {
       }
     },
     {
-      "id": "linkedin_premium",
+      "id": "linkedin_career",
       "order": 19,
       "category": "meeting",
       "image": "assets/linkedin.png",
       "currency": "₼",
-      "title": "Linkedin Premium",
+      "title": "Linkedin Career",
       "variant": "Biznes",
       "badge": "İş",
       "desc": "Karyeranızı və şəbəkənizi növbəti səviyyəyə daşıyın.",
@@ -1964,7 +1964,7 @@ const ADMIN_CONTENT = {
     "rulesHtml": ""
   },
   "adobecc": {
-    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Adobe Creative Cloud - Peşəkar Dizayn Həlli</h3>\n      <p>Qrafik dizayn, video montaj və 3D modelləşdirmə layihələrinin hazırlanması üçün qabaqcıl proqramlar toplusudur.</p>",
+    "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">Adobe Creative Cloud - Peşəkar Dizayn, Foto, Video və Yaradıcı Alətlər Paketi</h3>\n<p>Adobe Creative Cloud, dizayn, foto redaktə, video montaj, animasiya, veb dizayn və kreativ kontent istehsalı ilə məşğul olan istifadəçilər üçün hazırlanmış peşəkar proqramlar paketidir. Standart redaktə alətlərindən fərqli olaraq, Creative Cloud Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü Adobe tətbiqlərini bir ekosistemdə birləşdirir. Peşəkar vizuallar, reklam materialları, video layihələr və brend dizaynları hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3 style=\"color:#ffd400; margin-top:15px;\">Məhsul Haqqında</h3>\n<p>Adobe Creative Cloud, istifadəçilərə foto retuşu, qrafik dizayn, loqo hazırlanması, video montaj, rəng korreksiyası, animasiya, sosial media kontenti və çap materialları yaratmaq üçün geniş imkanlar təqdim edir. Platforma bulud yaddaşı, proqramlararası inteqrasiya və peşəkar fayl formatları ilə yaradıcı iş prosesini daha rahat və məhsuldar edir. Dizaynerlər, video redaktorlar, fotoqraflar və marketinq komandaları üçün güclü yaradıcı ekosistemdir.</p>\n\n<h3 style=\"color:#ffd400; margin-top:15px;\">Adobe Creative Cloud Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Qrafik Dizaynerlər:</strong> Loqo, brend kimliyi, reklam bannerləri, posterlər və sosial media dizaynları hazırlayan mütəxəssislər.</li>\n  <li><strong>Fotoqraflar və Retuş Mütəxəssisləri:</strong> Şəkilləri peşəkar şəkildə redaktə etmək, rəngləmək və retuş etmək istəyənlər.</li>\n  <li><strong>Video Redaktorlar və Kontent Yaradıcıları:</strong> YouTube, TikTok, Instagram və reklam layihələri üçün peşəkar video montaj edənlər.</li>\n  <li><strong>Marketoloqlar və Biznes Komandaları:</strong> Brend üçün vizual materiallar, reklam kampaniyaları və təqdimat kontenti hazırlayanlar.</li>\n</ul>\n\n<h3 style=\"color:#ffd400; margin-top:15px;\">Adobe Creative Cloud-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎨 Peşəkar Adobe Proqramları:</strong> Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü yaradıcı tətbiqlərə giriş.</li>\n  <li><strong>🎬 Video və Animasiya İmkanları:</strong> Peşəkar video montaj, rəng korreksiyası, motion graphics və vizual effektlər hazırlamaq.</li>\n  <li><strong>📸 Foto Redaktə və Retuş:</strong> Şəkilləri yüksək keyfiyyətdə düzəltmək, rəngləmək, fon dəyişmək və peşəkar retuş etmək imkanı.</li>\n  <li><strong>☁️ Bulud və Fayl Sinxronizasiyası:</strong> Layihələri buludda saxlamaq, müxtəlif cihazlardan işləmək və faylları rahat paylaşmaq.</li>\n  <li><strong>🚀 Yaradıcı İş Axınında Məhsuldarlıq:</strong> Proqramlararası inteqrasiya və peşəkar alətlər sayəsində dizayn və montaj prosesini daha sürətli idarə etmək.</li>\n</ul>",
     "rulesHtml": ""
   }
 };
