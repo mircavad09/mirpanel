@@ -73,45 +73,72 @@
 @media (max-width: 640px) {
   .card {
     height: auto !important;
-    min-height: 218px !important;
+    min-height: 0 !important;
   }
 
   .card .imgWrap {
     flex: 0 0 115px !important;
   }
 
-  .card .meta {
-    display: none !important;
-    height: 0 !important;
-    min-height: 0 !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    line-height: 0 !important;
-    overflow: hidden !important;
-  }
-
   .card .pad {
     flex: 0 0 auto !important;
-    padding: 10px !important;
+    min-height: 0 !important;
+    height: auto !important;
+    padding: 8px 10px 10px !important;
+    gap: 4px !important;
+  }
+
+  .card .topline {
     gap: 6px !important;
+    align-items: flex-start !important;
+    min-height: 0 !important;
+    margin: 0 !important;
   }
 
   .card .title {
     -webkit-line-clamp: 2 !important;
-    min-height: 32px;
+    min-height: 0 !important;
+    font-size: 13px !important;
+    line-height: 1.16 !important;
+  }
+
+  .card .badge {
+    font-size: 10px !important;
+    line-height: 1 !important;
+    padding: 4px 6px !important;
+    border-radius: 999px !important;
+  }
+
+  .card .meta {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    max-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    overflow: hidden !important;
+    flex: 0 0 0 !important;
   }
 
   .card .priceRow {
-    margin-top: 8px !important;
+    margin-top: 6px !important;
     flex: none !important;
   }
 
+  .card .btn.primary {
+    margin-top: 0 !important;
+    min-height: 34px !important;
+    padding: 8px 0 !important;
+    font-size: 13px !important;
+  }
+
   .cardStockLine {
-    margin-top: 5px;
+    margin-top: 4px;
   }
 
   .card .mpStockBadge.cardStockBadge {
-    padding: 5px 7px;
-    font-size: 10px;
+    padding: 4px 6px;
+    font-size: 9px;
   }
 }
