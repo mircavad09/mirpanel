@@ -71,6 +71,41 @@
 }
 
 @media (max-width: 640px) {
+  .card {
+    height: auto !important;
+    min-height: 218px !important;
+  }
+
+  .card .imgWrap {
+    flex: 0 0 115px !important;
+  }
+
+  .card .meta {
+    display: none !important;
+    height: 0 !important;
+    min-height: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    line-height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  .card .pad {
+    flex: 0 0 auto !important;
+    padding: 10px !important;
+    gap: 6px !important;
+  }
+
+  .card .title {
+    -webkit-line-clamp: 2 !important;
+    min-height: 32px;
+  }
+
+  .card .priceRow {
+    margin-top: 8px !important;
+    flex: none !important;
+  }
+
   .cardStockLine {
     margin-top: 5px;
   }
