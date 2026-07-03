@@ -1056,7 +1056,7 @@ const DATA = {
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
+      "orderFlow": "form_then_whatsapp",
       "formFields": [
         {
           "key": "name",
