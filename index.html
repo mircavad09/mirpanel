@@ -93,16 +93,20 @@
         <img src="assets/logo.png" alt="Mirpanel Logo" class="logo" />
         <div class="brandTxt">
           <div class="brandName">Mirpanel</div>
-          <div class="brandSub">Premium Hesablar • Etibarlı Aktivləşmə</div>
+          <div class="langSwitch" aria-label="Dil seçimi">
+            <button class="langBtn" type="button" data-lang="az">AZE</button>
+            <button class="langBtn" type="button" data-lang="en">ENG</button>
+            <button class="langBtn" type="button" data-lang="ru">RUS</button>
+          </div>
         </div>
       </div>
 
       <nav class="desktopNav" aria-label="Əsas menyu">
-        <a href="#" class="desktopNavLink" data-nav="home">Ana Səhifə</a>
-        <a href="#" class="desktopNavLink" data-nav="products">Məhsullar</a>
-        <a href="#about" class="desktopNavLink">Haqqımızda</a>
-        <a href="#terms" class="desktopNavLink">Şərtlər</a>
-        <a href="#contact" class="desktopNavLink">Əlaqə</a>
+        <a href="#" class="desktopNavLink" data-nav="home" data-i18n="navHome">Ana Səhifə</a>
+        <a href="#" class="desktopNavLink" data-nav="products" data-i18n="products">Məhsullar</a>
+        <a href="#about" class="desktopNavLink" data-i18n="about">Haqqımızda</a>
+        <a href="#terms" class="desktopNavLink" data-i18n="terms">Şərtlər</a>
+        <a href="#contact" class="desktopNavLink" data-i18n="contact">Əlaqə</a>
       </nav>
 
       <div class="headActions" style="display: flex; gap: 10px; align-items: center;">
@@ -118,7 +122,7 @@
             <circle cx="11" cy="11" r="8"></circle>
             <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
           </svg>
-          <input type="text" placeholder="Məhsul və ya xidmət axtar..." style="background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 13px; width: 100%;" />
+          <input type="text" placeholder="Məhsul və ya xidmət axtar..." data-i18n-placeholder="searchHeader" style="background: transparent; border: none; outline: none; color: #fff; font-family: inherit; font-size: 13px; width: 100%;" />
         </div>
       </div>
     </div>
@@ -129,7 +133,7 @@
     <div id="hero-section">
       <div class="banner-wrap">
         <div class="banner-box">
-          <div class="banner-text">
+          <div class="banner-text" data-i18n="bannerText">
             Diqqət! Saytımızda ödəniş sistemi yoxdur. Sifariş etdiyiniz zaman sayt sizi avtomatik WhatsApp-a yönləndirir.
           </div>
         </div>
@@ -159,9 +163,9 @@
 
         <div class="hero-side-boxes">
           <div class="side-box search-promo-box">
-            <div class="sp-title">AXTARIŞ ET, <span class="highlight">İSTƏDİYİNİ TAP!</span></div>
-            <p class="sp-desc">Bütün məlumatlar saytda mövcuddur. Axtarış bölməsindən istədiyiniz məhsulu rahatlıqla tapa bilərsiniz.</p>
-            <input type="text" id="q" class="search side-search" placeholder="Məhsul axtar... (məs: Netflix, Zoom)" autocomplete="off" inputmode="search" />
+            <div class="sp-title" data-i18n="searchPromoTitle">AXTARIŞ ET, <span class="highlight">İSTƏDİYİNİ TAP!</span></div>
+            <p class="sp-desc" data-i18n="searchPromoDesc">Bütün məlumatlar saytda mövcuddur. Axtarış bölməsindən istədiyiniz məhsulu rahatlıqla tapa bilərsiniz.</p>
+            <input type="text" id="q" class="search side-search" placeholder="Məhsul axtar... (məs: Netflix, Zoom)" data-i18n-placeholder="searchShortExample" autocomplete="off" inputmode="search" />
           </div>
 
           <a href="https://wa.me/994515243545" target="_blank" class="side-box support-box-img">
@@ -185,13 +189,13 @@
 
   <div id="productPageView" class="wrap" style="display: none; padding-bottom: 100px;">
     
-    <button class="btn pp-back-btn" id="btnBackToHome">⟵ Geri Qayıt</button>
+    <button class="btn pp-back-btn" id="btnBackToHome" data-i18n="back">⟵ Geri Qayıt</button>
 
     <div class="pp-top-grid">
       
       <div class="pp-box pp-left">
         <div class="pp-img-wrap">
-          <span class="pp-avail-badge">Mövcuddur</span>
+          <span class="pp-avail-badge" data-i18n="available">Mövcuddur</span>
           <img id="pp-main-img" src="" alt="Product" />
         </div>
       </div>
@@ -203,17 +207,17 @@
           Sifariş müddəti ərzində hesab dəyişikliyi olmadan çalışır. ✔️
         </div>
         
-        <h3 class="pp-subtitle">Müddət seçin</h3>
+        <h3 class="pp-subtitle" data-i18n="chooseDuration">Müddət seçin</h3>
         <div id="pp-plans-container" class="pp-plans-container"></div>
         
         <div class="pp-actions" style="margin-top: 15px;">
-          <button class="pp-btn-solid" id="pp-order-btn">Sifariş et</button>
-          <button class="pp-btn-secondary" id="pp-about-btn" type="button">Məhsul haqqında</button>
+          <button class="pp-btn-solid" id="pp-order-btn" data-i18n="order">Sifariş et</button>
+          <button class="pp-btn-secondary" id="pp-about-btn" type="button" data-i18n="productAbout">Məhsul haqqında</button>
         </div>
       </div>
 
       <div class="pp-box pp-right">
-        <h3 class="pp-subtitle">Oxşar Məhsullar</h3>
+        <h3 class="pp-subtitle" data-i18n="similar">Oxşar Məhsullar</h3>
         <div id="pp-similar-list" class="pp-similar-list"></div>
       </div>
 
@@ -221,8 +225,8 @@
 
     <div class="pp-bottom-section">
       <div class="pp-tabs" id="pp-tabs-container">
-        <button class="pp-tab active" data-target="tab-about">Məhsul Haqqında</button>
-        <button class="pp-tab" data-target="tab-rules">İstifadə Qaydaları</button>
+        <button class="pp-tab active" data-target="tab-about" data-i18n="productAbout">Məhsul Haqqında</button>
+        <button class="pp-tab" data-target="tab-rules" data-i18n="rules">İstifadə Qaydaları</button>
       </div>
       <div class="pp-content pp-box" id="pp-content-box"></div>
     </div>
@@ -231,14 +235,14 @@
 
   <footer class="footer">
     <div class="wrap footIn">
-      <div class="tiny">©️ 2026 Mirpanel • Bütün hüquqlar qorunur</div>
-      <div class="tiny">WhatsApp: 051 524 35 45</div>
+      <div class="tiny" data-i18n="footerRights">©️ 2026 Mirpanel • Bütün hüquqlar qorunur</div>
+      <div class="tiny" data-i18n="footerWhatsApp">WhatsApp: 051 524 35 45</div>
     </div>
   </footer>
 
   <div class="modal" id="modal" aria-hidden="true">
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width: 500px;">
-      <button class="close" id="closeModal" type="button">Bağla ✕</button>
+      <button class="close" id="closeModal" type="button" data-i18n="closeWithX">Bağla ✕</button>
       
       <div class="mTop">
         <img src="" alt="" id="mImg" class="mImg" />
@@ -250,14 +254,14 @@
 
       <div id="mInfoBox" class="mInfoBox"></div>
 
-      <div class="mPlansTitle">Plan seçin</div>
+      <div class="mPlansTitle" data-i18n="choosePlan">Plan seçin</div>
       <div class="mPlans" id="mPlans"></div>
 
       <div class="mForm" id="mForm" style="margin-top: 25px;"></div>
 
       <div class="mBottom">
         <div class="mInfo" id="mInfo"></div>
-        <div class="mSmall">Sifariş etdikdə WhatsApp avtomatik açılacaq.</div>
+        <div class="mSmall" data-i18n="whatsappAuto">Sifariş etdikdə WhatsApp avtomatik açılacaq.</div>
       </div>
     </div>
   </div>
@@ -329,14 +333,14 @@
   <div class="side-menu" id="sideMenu">
     <button class="side-menu-close" id="sideMenuClose">✕</button>
     <div class="side-menu-search">
-      <input type="text" placeholder="Məhsul axtar..." id="sideMenuInput" />
+      <input type="text" placeholder="Məhsul axtar..." id="sideMenuInput" data-i18n-placeholder="searchShort" />
     </div>
     <ul class="side-menu-links">
-      <li><a href="#" class="sm-link" id="linkHome">Ana Səhifə</a></li>
-      <li><a href="#" class="sm-link" id="linkProducts">Məhsullar</a></li>
-      <li><a href="#" class="sm-link">Haqqımızda</a></li>
-      <li><a href="#" class="sm-link">Şərtlər</a></li>
-      <li><a href="#" class="sm-link">Əlaqə</a></li>
+      <li><a href="#" class="sm-link" id="linkHome" data-i18n="navHome">Ana Səhifə</a></li>
+      <li><a href="#" class="sm-link" id="linkProducts" data-i18n="products">Məhsullar</a></li>
+      <li><a href="#" class="sm-link" data-i18n="about">Haqqımızda</a></li>
+      <li><a href="#" class="sm-link" data-i18n="terms">Şərtlər</a></li>
+      <li><a href="#" class="sm-link" data-i18n="contact">Əlaqə</a></li>
     </ul>
   </div>
 
@@ -345,6 +349,7 @@
   <script src="stock-display-fix.js?v=20260704-search-dropdown-1"></script>
   <script src="search-suggestions-fix.js?v=20260704-spotify-flow-1"></script>
   <script src="frontend-routing-detail-fix.js?v=20260610-1"></script>
+  <script src="i18n.js?v=20260704-i18n-1"></script>
   
   <script>
     document.addEventListener("DOMContentLoaded", () => {
