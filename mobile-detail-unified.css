@@ -1,4 +1,22 @@
-/* Mobile-only product detail unification. Keeps desktop and home cards unchanged. */
+/* Product detail image polish. Home cards, banners and similar products are untouched. */
+#productPageView .pp-img-wrap {
+  padding: 0 !important;
+  overflow: hidden !important;
+  background:
+    radial-gradient(320px 160px at 50% 18%, rgba(47,128,255,.10), transparent 70%),
+    #050505 !important;
+}
+
+#productPageView #pp-main-img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: none !important;
+  max-height: none !important;
+  object-fit: cover !important;
+  object-position: center center !important;
+  display: block !important;
+}
+
 @media (max-width: 640px) {
   #productPageView .pp-top-grid {
     gap: 0 !important;
@@ -45,19 +63,10 @@
     max-height: 172px !important;
     min-height: 150px !important;
     margin-bottom: 0 !important;
-    padding: 5px !important;
+    padding: 0 !important;
     border-radius: 13px !important;
     border-color: rgba(255,212,0,.08) !important;
     box-shadow: none !important;
-  }
-
-  #productPageView #pp-main-img {
-    width: 100% !important;
-    height: 100% !important;
-    max-width: 100% !important;
-    max-height: 100% !important;
-    object-fit: contain !important;
-    display: block !important;
   }
 
   #productPageView .pp-right {
