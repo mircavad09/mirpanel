@@ -106,18 +106,219 @@
       .mpStockBadge.out { border-color: rgba(255, 96, 96, .42); color: #ffd5d5; background: linear-gradient(135deg, rgba(255, 70, 70, .18), rgba(29, 6, 8, .9)); box-shadow: 0 10px 28px rgba(255, 70, 70, .13), inset 0 1px 0 rgba(255, 255, 255, .06); }
       .mpStockBadge.out::before { background: #ff5b5b; box-shadow: 0 0 12px rgba(255, 91, 91, .75); }
 
+      #modal.spotifyConfirmationModal {
+        align-items: center;
+      }
+      #modal.spotifyConfirmationModal .modalCard {
+        width: min(520px, calc(100vw - 28px));
+        max-height: calc(100dvh - 120px);
+        overflow-y: auto;
+        border: 1px solid rgba(30, 215, 96, .62);
+        background: radial-gradient(circle at 50% 0%, rgba(30, 215, 96, .16), transparent 42%), linear-gradient(180deg, rgba(10, 20, 15, .98), rgba(5, 7, 6, .98));
+        box-shadow: 0 22px 70px rgba(0, 0, 0, .66), 0 0 34px rgba(30, 215, 96, .18);
+      }
+      #modal.spotifyConfirmationModal .mTop,
+      #modal.spotifyConfirmationModal .mPlansTitle,
+      #modal.spotifyConfirmationModal .mPlans,
+      #modal.spotifyConfirmationModal .mInfoBox,
+      #modal.spotifyConfirmationModal #mDesc {
+        display: none !important;
+      }
+      #modal.spotifyConfirmationModal #mForm {
+        margin-top: 0 !important;
+      }
+      #modal.spotifyConfirmationModal .mBottom {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, .08);
+      }
+      #modal.spotifyConfirmationModal .mSmall {
+        color: rgba(235, 255, 243, .64);
+        font-size: 12px;
+        line-height: 1.35;
+        text-align: center;
+      }
+      .spotifyConfirmationModal .orderConfirmation {
+        display: grid;
+        gap: 13px;
+        padding: 22px 2px 0;
+      }
+      .spotifyConfirmationModal .orderConfirmation .mpFormTitle {
+        margin: 0;
+        text-align: center;
+        font-size: clamp(24px, 4vw, 30px);
+        line-height: 1.08;
+        font-weight: 900;
+        color: #1ed760;
+        background: linear-gradient(135deg, #d9ffe6 0%, #1ed760 52%, #00a862 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 24px rgba(30, 215, 96, .24);
+      }
+      .spotifyConfirmationModal .orderConfirmationDesc {
+        max-height: 190px;
+        overflow-y: auto;
+        padding: 12px 13px;
+        border: 1px solid rgba(255, 255, 255, .08);
+        border-radius: 16px;
+        background: rgba(3, 8, 6, .55);
+        color: rgba(241, 255, 246, .82);
+        font-size: 13px;
+        line-height: 1.52;
+        font-weight: 600;
+      }
+      .spotifyHelpCta {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: center;
+        gap: 10px;
+        padding: 13px 14px;
+        border-radius: 18px;
+        border: 1px solid rgba(30, 215, 96, .46);
+        background: linear-gradient(135deg, rgba(30, 215, 96, .16), rgba(47, 128, 255, .11));
+        color: #f4fff7;
+        text-decoration: none;
+        box-shadow: 0 14px 34px rgba(30, 215, 96, .15), inset 0 1px 0 rgba(255, 255, 255, .08);
+        transition: transform .18s ease, border-color .2s ease, box-shadow .2s ease, background .2s ease;
+      }
+      .spotifyHelpCta:hover {
+        transform: translateY(-1px);
+        border-color: rgba(30, 215, 96, .74);
+        box-shadow: 0 18px 42px rgba(30, 215, 96, .22), 0 0 22px rgba(47, 128, 255, .13), inset 0 1px 0 rgba(255, 255, 255, .12);
+      }
+      .spotifyHelpCtaIcon {
+        width: 36px;
+        height: 36px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+        background: rgba(30, 215, 96, .14);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+      }
+      .spotifyHelpCtaText {
+        display: grid;
+        gap: 4px;
+        min-width: 0;
+      }
+      .spotifyHelpCtaText strong {
+        color: #ffffff;
+        font-size: 14px;
+        line-height: 1.2;
+        font-weight: 900;
+      }
+      .spotifyHelpCtaText small {
+        color: rgba(235, 255, 243, .68);
+        font-size: 11px;
+        line-height: 1.35;
+        font-weight: 600;
+      }
+      .spotifyHelpCtaArrow {
+        color: #1ed760;
+        font-size: 18px;
+        font-weight: 900;
+      }
+      .spotifyConfirmationModal .orderConfirmationActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 0;
+      }
+      .spotifyConfirmationModal .mpBtn {
+        min-height: 52px;
+        border-radius: 16px;
+      }
+
       @media (max-width: 560px) {
         #modal.premiumOrderFormOpen .modalCard { width: min(100% - 20px, 520px); }
         .universalOrderForm.premiumOrderForm { padding-top: 24px; gap: 16px; }
         .premiumOrderForm .orderConfirmationActions { grid-template-columns: 1fr; }
         .mpStockBadge { white-space: normal; line-height: 1.25; }
+        #modal.spotifyConfirmationModal {
+          align-items: flex-start;
+          padding: calc(12px + env(safe-area-inset-top)) 0 18px;
+        }
+        #modal.spotifyConfirmationModal .modalCard {
+          width: calc(100vw - 24px);
+          max-height: calc(100dvh - 120px);
+          padding: 18px 16px 16px;
+          border-radius: 22px;
+        }
+        #modal.spotifyConfirmationModal .close {
+          top: 12px;
+          right: 12px;
+          padding: 8px 11px;
+          border-radius: 12px;
+          font-size: 12px;
+        }
+        .spotifyConfirmationModal .orderConfirmation {
+          gap: 10px;
+          padding: 18px 0 0;
+        }
+        .spotifyConfirmationModal .orderConfirmation .mpFormTitle {
+          max-width: calc(100% - 82px);
+          margin: 0 auto;
+          font-size: 24px;
+        }
+        .spotifyConfirmationModal .orderConfirmationDesc {
+          max-height: 142px;
+          padding: 10px 11px;
+          border-radius: 14px;
+          font-size: 12px;
+          line-height: 1.42;
+        }
+        .spotifyHelpCta {
+          grid-template-columns: auto 1fr auto;
+          gap: 9px;
+          padding: 11px 12px;
+          border-radius: 16px;
+        }
+        .spotifyHelpCtaIcon {
+          width: 32px;
+          height: 32px;
+          border-radius: 11px;
+        }
+        .spotifyHelpCtaText strong {
+          font-size: 13px;
+        }
+        .spotifyHelpCtaText small {
+          font-size: 10.5px;
+        }
+        .spotifyConfirmationModal .orderConfirmationActions {
+          gap: 9px;
+        }
+        .spotifyConfirmationModal .mpBtn {
+          min-height: 48px;
+          font-size: 14px;
+        }
+        #modal.spotifyConfirmationModal .mBottom {
+          margin-top: 9px;
+          padding-top: 8px;
+        }
+        #modal.spotifyConfirmationModal .mSmall {
+          font-size: 11px;
+        }
+        body.spotifyConfirmationActive .gameFab,
+        body.spotifyConfirmationActive .waFab {
+          opacity: 0 !important;
+          pointer-events: none !important;
+          transform: translateY(14px) scale(.96) !important;
+        }
       }
     `;
     document.head.appendChild(style);
   }
 
+  function setSpotifyConfirmationMode(enabled) {
+    const modal = document.getElementById("modal");
+    modal?.classList.toggle("spotifyConfirmationModal", Boolean(enabled));
+    document.body.classList.toggle("spotifyConfirmationActive", Boolean(enabled));
+  }
+
   function setPremiumFormMode(enabled) {
     document.getElementById("modal")?.classList.toggle("premiumOrderFormOpen", Boolean(enabled));
+    if (enabled) setSpotifyConfirmationMode(false);
   }
 
   injectOrderStyles();
@@ -265,6 +466,7 @@
 
   function closeOrderModal() {
     setPremiumFormMode(false);
+    setSpotifyConfirmationMode(false);
     if (typeof closeModal === "function") {
       closeModal();
       return;
@@ -433,17 +635,32 @@
   function showConfirmation(product, plan, formData, onConfirm) {
     setPremiumFormMode(false);
     const settings = confirmationFor(product);
+    const isSpotify = String(product?.id || "").toLowerCase().includes("spotify") || String(product?.title || "").toLowerCase().includes("spotify");
     const helpUrl = String(settings.helpLink?.url || "").trim();
-    const helpLabel = String(settings.helpLink?.label || "").trim();
+    const defaultSpotifyHelpLabel = "Şifrənizi bilmirsiniz? Buradan sıfırlayın";
+    const helpLabel = isSpotify
+      ? defaultSpotifyHelpLabel
+      : String(settings.helpLink?.label || "").trim();
     const showHelp = settings.helpLink?.enabled === true && helpUrl.startsWith("https://") && helpLabel;
+
+    setSpotifyConfirmationMode(isSpotify);
 
     setFooter(settings.footerText);
     renderModalContent(`
-      <div class="mpForm orderConfirmation">
+      <div class="mpForm orderConfirmation${isSpotify ? " spotifyOrderConfirmation" : ""}">
         <div class="mpFormTitle">${escapeHtml(settings.title)}</div>
         <div class="orderConfirmationDesc">${escapeHtml(settings.description || "")}</div>
         ${product.note ? `<div class="orderConfirmationNote">${escapeHtml(product.note)}</div>` : ""}
-        ${showHelp ? `<a class="orderConfirmationHelp" href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(helpLabel)}</a>` : ""}
+        ${showHelp && isSpotify ? `
+          <a class="orderConfirmationHelp spotifyHelpCta" href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">
+            <span class="spotifyHelpCtaIcon" aria-hidden="true">🔐</span>
+            <span class="spotifyHelpCtaText">
+              <strong>${escapeHtml(helpLabel)}</strong>
+              <small>Spotify hesab şifrənizi unutmusunuzsa, sifarişdən əvvəl sıfırlayın.</small>
+            </span>
+            <span class="spotifyHelpCtaArrow" aria-hidden="true">↗</span>
+          </a>
+        ` : showHelp ? `<a class="orderConfirmationHelp" href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(helpLabel)}</a>` : ""}
         <div class="orderConfirmationActions">
           <button id="orderConfirmationCancel" class="mpBtn orderConfirmationCancel" type="button">${escapeHtml(settings.cancelText)}</button>
           <button id="orderConfirmationConfirm" class="mpBtn" type="button">${escapeHtml(settings.confirmText)}</button>
