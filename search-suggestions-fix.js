@@ -712,15 +712,9 @@
   }
 
   function installSpotifyLoginTransformer() {
-    const observer = new MutationObserver(transformSpotifyLoginForm);
-    observer.observe(document.body, {
-      childList: true,
-      subtree: true,
-      attributes: true,
-      attributeFilter: ["class", "style"]
-    });
-    document.addEventListener("click", () => setTimeout(transformSpotifyLoginForm, 0), true);
-    document.addEventListener("keydown", () => setTimeout(transformSpotifyLoginForm, 0), true);
+    document.addEventListener("click", () => setTimeout(transformSpotifyLoginForm, 80), true);
+    document.addEventListener("keydown", () => setTimeout(transformSpotifyLoginForm, 80), true);
+    document.addEventListener("submit", () => setTimeout(transformSpotifyLoginForm, 80), true);
     setTimeout(transformSpotifyLoginForm, 300);
   }
 
