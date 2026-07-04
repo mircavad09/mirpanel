@@ -366,6 +366,211 @@
       }
       .mirpanelSuggestText small { border-color: rgba(47,128,255,.24); background: rgba(47,128,255,.10); }
       .mirpanelSuggestPrice { color: #ffd400; white-space: nowrap; font: 900 13px/1 Poppins, system-ui, sans-serif; text-shadow: 0 0 14px rgba(255,212,0,.24); }
+
+      #modal.spotifyLoginOrderForm {
+        align-items: center;
+      }
+      #modal.spotifyLoginOrderForm .modalCard {
+        width: min(480px, calc(100vw - 28px));
+        max-height: calc(100dvh - 112px);
+        overflow-y: auto;
+        border: 1px solid rgba(30, 215, 96, .58);
+        background: radial-gradient(circle at 50% 0%, rgba(30, 215, 96, .15), transparent 38%), linear-gradient(180deg, rgba(14, 16, 15, .99), rgba(0, 0, 0, .99));
+        box-shadow: 0 24px 76px rgba(0, 0, 0, .7), 0 0 36px rgba(30, 215, 96, .17);
+      }
+      #modal.spotifyLoginOrderForm .mTop,
+      #modal.spotifyLoginOrderForm .mPlansTitle,
+      #modal.spotifyLoginOrderForm .mPlans,
+      #modal.spotifyLoginOrderForm .mInfoBox,
+      #modal.spotifyLoginOrderForm #mDesc,
+      #modal.spotifyLoginOrderForm .mBottom {
+        display: none !important;
+      }
+      #modal.spotifyLoginOrderForm #mForm {
+        margin-top: 0 !important;
+      }
+      .spotifyLoginOrderForm .spotifyLoginForm {
+        display: grid;
+        gap: 16px;
+        padding: 24px 4px 2px;
+      }
+      .spotifyLoginOrderForm .spotifyLoginTitle {
+        margin: 0 0 4px;
+        color: #fff;
+        font-size: clamp(27px, 5vw, 34px);
+        line-height: 1.08;
+        font-weight: 900;
+        letter-spacing: 0;
+        text-align: left;
+        -webkit-text-fill-color: #fff;
+        background: none;
+        text-shadow: none;
+      }
+      .spotifyLoginOrderForm .spotifyLoginFields {
+        display: grid;
+        gap: 13px;
+      }
+      .spotifyLoginOrderForm .spotifyLoginField {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+      }
+      .spotifyLoginOrderForm .spotifyLoginField span {
+        color: #f8fff9;
+        font-size: 13px;
+        line-height: 1.2;
+        font-weight: 900;
+      }
+      .spotifyLoginOrderForm .spotifyLoginField input {
+        width: 100%;
+        min-height: 56px;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, .42);
+        background: #121212;
+        color: #fff;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 650;
+        outline: none;
+        padding: 15px 16px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .04);
+        transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+      }
+      .spotifyLoginOrderForm .spotifyLoginField input::placeholder {
+        color: rgba(255, 255, 255, .52);
+        font-weight: 500;
+      }
+      .spotifyLoginOrderForm .spotifyLoginField input:focus {
+        border-color: #1ed760;
+        background: #0b0f0d;
+        box-shadow: 0 0 0 3px rgba(30, 215, 96, .18), 0 0 24px rgba(30, 215, 96, .13);
+      }
+      .spotifyLoginOrderForm .spotifyPasswordWrap {
+        position: relative;
+      }
+      .spotifyLoginOrderForm .spotifyPasswordWrap input {
+        padding-right: 54px;
+      }
+      .spotifyLoginOrderForm .spotifyPasswordToggle {
+        position: absolute;
+        top: 50%;
+        right: 10px;
+        width: 38px;
+        height: 38px;
+        transform: translateY(-50%);
+        border: 0;
+        border-radius: 999px;
+        background: transparent;
+        color: rgba(255, 255, 255, .74);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        transition: color .18s ease, background .18s ease, transform .18s ease;
+      }
+      .spotifyLoginOrderForm .spotifyPasswordToggle:hover {
+        color: #1ed760;
+        background: rgba(30, 215, 96, .1);
+      }
+      .spotifyLoginOrderForm .spotifyPasswordToggle:active {
+        transform: translateY(-50%) scale(.96);
+      }
+      .spotifyLoginOrderForm .spotifyPasswordToggle svg {
+        width: 20px;
+        height: 20px;
+        pointer-events: none;
+      }
+      .spotifyLoginOrderForm .spotifyLoginActions {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 11px;
+        margin-top: 2px;
+      }
+      .spotifyLoginOrderForm .spotifyLoginSubmit,
+      .spotifyLoginOrderForm .spotifyLoginCancel {
+        min-height: 54px;
+        border-radius: 999px;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 900;
+        cursor: pointer;
+        transition: transform .18s ease, box-shadow .2s ease, background .2s ease, border-color .2s ease;
+      }
+      .spotifyLoginOrderForm .spotifyLoginSubmit {
+        border: 0;
+        background: #1ed760;
+        color: #050505;
+        box-shadow: 0 14px 34px rgba(30, 215, 96, .25);
+      }
+      .spotifyLoginOrderForm .spotifyLoginSubmit:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 18px 44px rgba(30, 215, 96, .32);
+      }
+      .spotifyLoginOrderForm .spotifyLoginCancel {
+        border: 1px solid rgba(255, 255, 255, .34);
+        background: transparent;
+        color: #fff;
+      }
+      .spotifyLoginOrderForm .spotifyLoginCancel:hover {
+        border-color: rgba(30, 215, 96, .6);
+        background: rgba(255, 255, 255, .04);
+      }
+      .spotifyLoginOrderForm .spotifyLoginSubmit:active,
+      .spotifyLoginOrderForm .spotifyLoginCancel:active {
+        transform: translateY(1px) scale(.99);
+      }
+
+      @media (max-width: 560px) {
+        #modal.spotifyLoginOrderForm {
+          align-items: flex-start;
+          padding: calc(12px + env(safe-area-inset-top)) 0 18px;
+        }
+        #modal.spotifyLoginOrderForm .modalCard {
+          width: calc(100vw - 24px);
+          max-height: calc(100dvh - 112px);
+          padding: 18px 16px 16px;
+          border-radius: 22px;
+        }
+        #modal.spotifyLoginOrderForm .close {
+          top: 12px;
+          right: 12px;
+          padding: 8px 11px;
+          border-radius: 12px;
+          font-size: 12px;
+        }
+        .spotifyLoginOrderForm .spotifyLoginForm {
+          gap: 13px;
+          padding: 18px 0 0;
+        }
+        .spotifyLoginOrderForm .spotifyLoginTitle {
+          max-width: calc(100% - 82px);
+          font-size: 27px;
+        }
+        .spotifyLoginOrderForm .spotifyLoginFields {
+          gap: 11px;
+        }
+        .spotifyLoginOrderForm .spotifyLoginField {
+          gap: 7px;
+        }
+        .spotifyLoginOrderForm .spotifyLoginField input {
+          min-height: 52px;
+          padding: 13px 14px;
+        }
+        .spotifyLoginOrderForm .spotifyPasswordWrap input {
+          padding-right: 50px;
+        }
+        .spotifyLoginOrderForm .spotifyLoginSubmit,
+        .spotifyLoginOrderForm .spotifyLoginCancel {
+          min-height: 50px;
+          font-size: 15px;
+        }
+        body.spotifyLoginFormActive .gameFab,
+        body.spotifyLoginFormActive .waFab {
+          opacity: 0 !important;
+          pointer-events: none !important;
+          transform: translateY(14px) scale(.96) !important;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -397,10 +602,133 @@
     });
   }
 
+  function currentSpotifyProduct() {
+    try {
+      if (typeof currentProduct !== "undefined" && currentProduct) return currentProduct;
+    } catch (error) {
+      return null;
+    }
+    return window.currentProduct || null;
+  }
+
+  function isSpotifyProduct(product) {
+    const id = normalizeSearch(product?.id);
+    const title = normalizeSearch(product?.title);
+    return id.includes("spotify") || title.includes("spotify");
+  }
+
+  function spotifyLoginCandidate(form) {
+    const email = form?.querySelector("input[name='email'], input[type='email']");
+    const password = form?.querySelector("input[name='password'], input[type='password']");
+    return { email, password, ok: Boolean(email && password) };
+  }
+
+  function setSpotifyLoginClasses(enabled) {
+    document.getElementById("modal")?.classList.toggle("spotifyLoginOrderForm", Boolean(enabled));
+    document.body.classList.toggle("spotifyLoginFormActive", Boolean(enabled));
+  }
+
+  function relabelSpotifyField(input, label, placeholder) {
+    if (!input) return;
+    const field = input.closest("label");
+    field?.classList.add("spotifyLoginField");
+    const labelText = field?.querySelector("span");
+    if (labelText) labelText.textContent = label;
+    input.dataset.label = label;
+    input.placeholder = placeholder;
+  }
+
+  function ensureSpotifyPasswordToggle(passwordInput) {
+    if (!passwordInput || passwordInput.closest(".spotifyPasswordWrap")) return;
+
+    const wrapper = document.createElement("div");
+    wrapper.className = "spotifyPasswordWrap";
+    passwordInput.parentNode.insertBefore(wrapper, passwordInput);
+    wrapper.appendChild(passwordInput);
+
+    const button = document.createElement("button");
+    button.className = "spotifyPasswordToggle";
+    button.type = "button";
+    button.setAttribute("aria-label", "Şifrəni göstər");
+    button.setAttribute("aria-pressed", "false");
+    button.innerHTML = `
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M2 12s3.5-6 10-6 10 6 10 6-3.5 6-10 6-10-6-10-6z"></path>
+        <circle cx="12" cy="12" r="3"></circle>
+      </svg>
+    `;
+    button.addEventListener("click", () => {
+      const showPassword = passwordInput.type === "password";
+      passwordInput.type = showPassword ? "text" : "password";
+      button.setAttribute("aria-label", showPassword ? "Şifrəni gizlət" : "Şifrəni göstər");
+      button.setAttribute("aria-pressed", String(showPassword));
+    });
+    wrapper.appendChild(button);
+  }
+
+  function transformSpotifyLoginForm() {
+    const modal = document.getElementById("modal");
+    const form = document.getElementById("universalOrderForm");
+    const product = currentSpotifyProduct();
+    const { email, password, ok } = spotifyLoginCandidate(form);
+    const shouldTransform = Boolean(modal?.classList.contains("show") && form && ok && isSpotifyProduct(product));
+
+    if (!shouldTransform) {
+      setSpotifyLoginClasses(false);
+      return;
+    }
+
+    setSpotifyLoginClasses(true);
+    form.classList.add("spotifyLoginForm");
+    const title = form.querySelector(".mpFormTitle");
+    if (title) {
+      title.classList.add("spotifyLoginTitle");
+      title.textContent = "Parol ilə daxil olun";
+    }
+
+    const fieldBox = form.querySelector(".premiumOrderFields");
+    fieldBox?.classList.add("spotifyLoginFields");
+    relabelSpotifyField(email, "E-poçt", "E-poçt ünvanınızı yazın");
+    relabelSpotifyField(password, "Parol", "Parolunuzu yazın");
+    ensureSpotifyPasswordToggle(password);
+
+    const actions = form.querySelector(".orderConfirmationActions");
+    const cancel = form.querySelector("#universalFormCancel");
+    const submit = form.querySelector("button[type='submit']");
+    actions?.classList.add("spotifyLoginActions");
+    if (submit) {
+      submit.classList.add("spotifyLoginSubmit");
+      submit.classList.remove("premiumContinueBtn", "mpBtn");
+      submit.textContent = "Sifariş et";
+    }
+    if (cancel) {
+      cancel.classList.add("spotifyLoginCancel");
+      cancel.classList.remove("mpBtn");
+      cancel.textContent = "Ləğv et";
+    }
+    if (actions && submit && cancel && actions.firstElementChild !== submit) {
+      actions.insertBefore(submit, cancel);
+    }
+  }
+
+  function installSpotifyLoginTransformer() {
+    const observer = new MutationObserver(transformSpotifyLoginForm);
+    observer.observe(document.body, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      attributeFilter: ["class", "style"]
+    });
+    document.addEventListener("click", () => setTimeout(transformSpotifyLoginForm, 0), true);
+    document.addEventListener("keydown", () => setTimeout(transformSpotifyLoginForm, 0), true);
+    setTimeout(transformSpotifyLoginForm, 300);
+  }
+
   function boot() {
     injectStyles();
     bindInputs();
     installPanelEvents();
+    installSpotifyLoginTransformer();
     setTimeout(bindInputs, 350);
   }
 
