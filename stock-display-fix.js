@@ -169,6 +169,116 @@
         background: linear-gradient(135deg, rgba(54, 57, 66, .95), rgba(21, 23, 28, .96)) !important;
       }
 
+      @media (max-width: 600px) {
+        #modal.netflixOrderFormOpen {
+          align-items: flex-start !important;
+          padding: calc(14px + env(safe-area-inset-top)) 0 18px !important;
+        }
+
+        #modal.netflixOrderFormOpen .modalCard {
+          width: calc(100vw - 28px) !important;
+          max-width: 500px !important;
+          max-height: calc(100dvh - 120px) !important;
+          overflow-y: auto !important;
+          padding: 22px 18px 18px !important;
+          border-radius: 22px !important;
+          box-shadow: 0 18px 50px rgba(0, 0, 0, .64), 0 0 24px rgba(229, 9, 20, .20) !important;
+        }
+
+        #modal.netflixOrderFormOpen .close {
+          top: 14px !important;
+          right: 14px !important;
+          padding: 9px 12px !important;
+          border-radius: 12px !important;
+          font-size: 13px !important;
+        }
+
+        .netflixOrderForm.premiumOrderForm {
+          gap: 10px !important;
+          padding: 0 !important;
+        }
+
+        .netflixOrderForm .mpFormTitle {
+          max-width: calc(100% - 72px) !important;
+          margin: 0 auto 4px !important;
+          font-size: 28px !important;
+          line-height: 1.08 !important;
+          letter-spacing: 0 !important;
+        }
+
+        .netflixOrderSubtitle {
+          margin: 0 0 8px !important;
+          font-size: 14px !important;
+          line-height: 1.35 !important;
+        }
+
+        .netflixOrderForm .premiumOrderFields {
+          gap: 10px !important;
+        }
+
+        .netflixOrderForm .universalField {
+          gap: 7px !important;
+        }
+
+        .netflixOrderForm .universalField span {
+          font-size: 14px !important;
+          line-height: 1.2 !important;
+        }
+
+        .netflixOrderForm .universalField input {
+          min-height: 0 !important;
+          height: 54px !important;
+          padding: 0 16px !important;
+          border-radius: 18px !important;
+          font-size: 16px !important;
+        }
+
+        .netflixOrderForm input[name="code_4"] {
+          height: 52px !important;
+          font-size: 18px !important;
+          letter-spacing: .26em !important;
+        }
+
+        .netflixOrderForm .orderConfirmationActions,
+        .netflixOrderForm .premiumOrderActions {
+          gap: 10px !important;
+          margin-top: 8px !important;
+        }
+
+        .netflixOrderForm .mpBtn {
+          min-height: 0 !important;
+          height: 54px !important;
+          padding: 0 16px !important;
+          border-radius: 17px !important;
+          font-size: 16px !important;
+          line-height: 1 !important;
+        }
+
+        #modal.netflixOrderFormOpen .mBottom {
+          margin-top: 10px !important;
+          padding-top: 10px !important;
+        }
+
+        #modal.netflixOrderFormOpen .mInfo {
+          font-size: 20px !important;
+          line-height: 1.2 !important;
+          margin: 0 !important;
+        }
+
+        #modal.netflixOrderFormOpen .mSmall {
+          margin-top: 4px !important;
+          font-size: 11px !important;
+          line-height: 1.35 !important;
+        }
+
+        body.netflixOrderModalActive .gameFab,
+        body.netflixOrderModalActive .waFab {
+          opacity: 0 !important;
+          pointer-events: none !important;
+          transform: translateY(14px) scale(.96) !important;
+        }
+      }
+
       #${TOAST_ID} {
         position: fixed;
         top: calc(14px + env(safe-area-inset-top));
@@ -224,6 +334,7 @@
     if (!isCode4Form(form) || form.dataset.netflixDecorated === "1") return;
 
     document.getElementById("modal")?.classList.add("netflixOrderFormOpen");
+    document.body.classList.add("netflixOrderModalActive");
     form.classList.add("netflixOrderForm");
     form.dataset.netflixDecorated = "1";
 
@@ -263,6 +374,7 @@
     document.querySelectorAll("#universalOrderForm").forEach(decorateNetflixForm);
     if (!document.querySelector('#universalOrderForm input[name="code_4"]')) {
       document.getElementById("modal")?.classList.remove("netflixOrderFormOpen");
+      document.body.classList.remove("netflixOrderModalActive");
     }
   });
 
