@@ -28,6 +28,58 @@
       .replaceAll("ğ", "g");
   }
 
+  function allProducts() {
+    if (Array.isArray(window.DATA?.products)) return window.DATA.products;
+    try {
+      if (typeof DATA !== "undefined" && Array.isArray(DATA.products)) return DATA.products;
+    } catch (error) {
+      return [];
+    }
+    return [];
+  }
+
+  function productPlanText(product) {
+    return (product?.plans || []).map((plan) => [
+      plan.label,
+      plan.name,
+      plan.title,
+      plan.months,
+      plan.price
+    ].filter((part) => part !== null && part !== undefined && part !== "").join(" ")).join(" ");
+  }
+
+  function productSearchBlob(product) {
+    return [
+      product?.title,
+      product?.variant,
+      product?.badge,
+      product?.category,
+      product?.desc,
+      product?.note,
+      product?.id,
+      productPlanText(product)
+    ].filter(Boolean).join(" ");
+  }
+
+  function productRank(product, normalizedQuery) {
+    const title = normalizeSearch(product?.title);
+    const id = normalizeSearch(product?.id);
+    const variant = normalizeSearch(product?.variant);
+    const badge = normalizeSearch(product?.badge);
+    const category = normalizeSearch(product?.category);
+    const desc = normalizeSearch(product?.desc);
+    const plans = normalizeSearch(productPlanText(product));
+
+    if (title.startsWith(normalizedQuery)) return 0;
+    if (id.startsWith(normalizedQuery)) return 1;
+    if (title.includes(normalizedQuery)) return 2;
+    if (id.includes(normalizedQuery)) return 3;
+    if ([variant, badge, category].some((value) => value.includes(normalizedQuery))) return 4;
+    if (plans.includes(normalizedQuery)) return 5;
+    if (desc.includes(normalizedQuery)) return 6;
+    return 7;
+  }
+
   function minPrice(product) {
     if (typeof getMinPrice === "function") return getMinPrice(product);
     const prices = (product?.plans || []).map((plan) => Number(plan.price)).filter((price) => price > 0);
@@ -67,13 +119,14 @@
   function productsForQuery(query) {
     const normalized = normalizeSearch(query);
     if (!normalized) return [];
-    return (window.DATA?.products || [])
+    return allProducts()
       .filter((product) => product.active !== false)
-      .filter((product) => {
-        const blob = [product.title, product.variant, product.badge, product.category, product.desc, product.id].join(" ");
-        return normalizeSearch(blob).includes(normalized);
-      })
-      .sort((a, b) => Number(a.order ?? 9999) - Number(b.order ?? 9999));
+      .filter((product) => normalizeSearch(productSearchBlob(product)).includes(normalized))
+      .sort((a, b) => {
+        const rankDiff = productRank(a, normalized) - productRank(b, normalized);
+        if (rankDiff !== 0) return rankDiff;
+        return Number(a.order ?? 9999) - Number(b.order ?? 9999);
+      });
   }
 
   function syncInputs(value, source) {
@@ -217,7 +270,6 @@
     style.id = STYLE_ID;
     style.textContent = `
       @media (max-width: 850px) {
-        meta[name="viewport"] { content: width=device-width, initial-scale=1, viewport-fit=cover; }
         .headActions { position: relative; flex: 1 1 auto !important; min-width: 0 !important; }
         .headActions .mirpanelSearchShell {
           position: relative !important;
@@ -326,7 +378,11 @@
       const id = item.getAttribute("data-product-id");
       closePanel();
       syncInputs("", activeInput);
-      if (typeof window.openProductPage === "function") window.openProductPage(id);
+      if (typeof window.openProductPage === "function") {
+        window.openProductPage(id);
+      } else if (typeof openProductPage === "function") {
+        openProductPage(id);
+      }
     });
 
     window.addEventListener("resize", () => {
