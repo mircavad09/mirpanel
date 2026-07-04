@@ -41,6 +41,133 @@
       : "—";
   }
 
+  function normalizeSearch(value) {
+    return String(value ?? "")
+      .trim()
+      .toLocaleLowerCase("az")
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replaceAll("ə", "e")
+      .replaceAll("ı", "i")
+      .replaceAll("ö", "o")
+      .replaceAll("ü", "u")
+      .replaceAll("ş", "s")
+      .replaceAll("ç", "c")
+      .replaceAll("ğ", "g");
+  }
+
+  function searchInputs() {
+    const selectors = [
+      "#q",
+      "#sideMenuInput",
+      ".side-search",
+      ".headActions input[type='text']",
+      "header input[type='text']",
+      "input[placeholder*='Məhsul']",
+      "input[placeholder*='məhsul']"
+    ];
+
+    return [...new Set(selectors.flatMap((selector) => [...document.querySelectorAll(selector)]))]
+      .filter((input) => input && input.tagName === "INPUT");
+  }
+
+  function currentSearchQuery() {
+    const inputs = searchInputs();
+    const active = document.activeElement;
+    if (inputs.includes(active) && active.value.trim()) return active.value.trim();
+    return inputs.find((input) => input.value.trim())?.value.trim() || "";
+  }
+
+  function syncSearchInputs(value, source) {
+    searchInputs().forEach((input) => {
+      if (input !== source && input.value !== value) input.value = value;
+    });
+  }
+
+  function productMatches(product, query) {
+    if (!query) return true;
+    const blob = [
+      product.title,
+      product.variant,
+      product.badge,
+      product.category,
+      product.desc,
+      product.id,
+      product.note
+    ].join(" ");
+    return normalizeSearch(blob).includes(query);
+  }
+
+  function sortedProducts(products) {
+    const sortVal = document.getElementById("sortSelect")?.value || "default";
+    const getPrice = (product) => {
+      if (product.id === "tiktok_jeton") return 10;
+      const price = minPrice(product);
+      return price === Infinity || price === 0 ? 999999 : price;
+    };
+
+    return [...products].sort((a, b) => {
+      const priceA = getPrice(a);
+      const priceB = getPrice(b);
+
+      if (sortVal === "price-asc") return priceA - priceB;
+      if (sortVal === "price-desc") {
+        if (priceA === 999999) return 1;
+        if (priceB === 999999) return -1;
+        return priceB - priceA;
+      }
+      if (sortVal === "az") return String(a.title || "").localeCompare(String(b.title || ""), "az");
+      if (sortVal === "za") return String(b.title || "").localeCompare(String(a.title || ""), "az");
+      return (Number(a.order ?? 9999) - Number(b.order ?? 9999));
+    });
+  }
+
+  function installSearchRenderer() {
+    if (!Array.isArray(DATA?.products)) return;
+
+    renderGrid = window.renderGrid = function stockSearchAwareRenderGrid() {
+      const grid = document.getElementById("grid");
+      if (!grid) return;
+
+      const rawQuery = currentSearchQuery();
+      const query = normalizeSearch(rawQuery);
+      syncSearchInputs(rawQuery, document.activeElement);
+
+      const list = sortedProducts(
+        DATA.products
+          .filter((product) => product.active !== false)
+          .filter((product) => productMatches(product, query))
+      );
+
+      if (!list.length) {
+        grid.innerHTML = `<div class="mpNoSearchResult" style="grid-column:1/-1; padding:28px 18px; border:1px solid rgba(255,212,0,.18); border-radius:18px; background:rgba(255,255,255,.035); color:rgba(255,255,255,.82); text-align:center; font-weight:800;">Nəticə tapılmadı</div>`;
+        return;
+      }
+
+      grid.innerHTML = list.map((product, index) => cardHTML(product, index)).join("");
+    };
+  }
+
+  function installSearchInputs() {
+    const bind = () => {
+      searchInputs().forEach((input) => {
+        if (input.dataset.mirpanelSearchBound === "1") return;
+        input.dataset.mirpanelSearchBound = "1";
+        input.addEventListener("input", () => {
+          syncSearchInputs(input.value, input);
+          if (typeof renderGrid === "function") renderGrid();
+        });
+        input.addEventListener("search", () => {
+          syncSearchInputs(input.value, input);
+          if (typeof renderGrid === "function") renderGrid();
+        });
+      });
+    };
+
+    bind();
+    setTimeout(bind, 300);
+  }
+
   function installCardRenderer() {
     if (typeof renderGrid !== "function") return;
 
@@ -58,6 +185,8 @@
       `;
     };
 
+    installSearchRenderer();
+    installSearchInputs();
     renderGrid();
   }
 
