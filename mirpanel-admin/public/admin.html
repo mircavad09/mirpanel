@@ -172,6 +172,29 @@
                 <input id="productImage">
               </label>
 
+              <div class="imageUploadBox">
+                <div class="imageUploadActions">
+                  <button
+                    class="btn"
+                    id="productImagePickBtn"
+                    type="button"
+                  >
+                    Şəkil seç
+                  </button>
+
+                  <input
+                    class="hidden"
+                    id="productImageFile"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                  >
+                </div>
+
+                <small id="productImageUploadStatus">
+                  JPG, PNG, WEBP və SVG. Maksimum 5 MB.
+                </small>
+              </div>
+
               <label>
                 Badge
                 <input id="productBadge">
