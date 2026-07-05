@@ -21,6 +21,13 @@ const config = {
 
 const sessions = new Map();
 const sessionTtl = 8 * 60 * 60 * 1000;
+const maxProductImageSize = 5 * 1024 * 1024;
+const productImageTypes = new Map([
+  ["image/jpeg", "jpg"],
+  ["image/png", "png"],
+  ["image/webp", "webp"],
+  ["image/svg+xml", "svg"]
+]);
 
 function loadEnv(file) {
   if (!fs.existsSync(file)) return;
@@ -94,6 +101,35 @@ async function readBody(request, limit = 1_500_000) {
   }
 
   return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+}
+
+function safeUploadSlug(value) {
+  return String(value || "product")
+    .trim()
+    .toLowerCase()
+    .replaceAll("ə", "e")
+    .replaceAll("ı", "i")
+    .replaceAll("ö", "o")
+    .replaceAll("ü", "u")
+    .replaceAll("ş", "s")
+    .replaceAll("ç", "c")
+    .replaceAll("ğ", "g")
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "")
+    .slice(0, 60) || "product";
+}
+
+function extensionFromUpload(fileName, mimeType) {
+  const normalizedMime = String(mimeType || "").toLowerCase();
+  if (productImageTypes.has(normalizedMime)) return productImageTypes.get(normalizedMime);
+
+  const ext = path.extname(String(fileName || "")).slice(1).toLowerCase();
+  if (["jpg", "jpeg", "png", "webp", "svg"].includes(ext)) {
+    return ext === "jpeg" ? "jpg" : ext;
+  }
+
+  return "";
 }
 
 async function github(pathname, options = {}) {
@@ -197,6 +233,55 @@ async function handleApi(request, response) {
       sha: file.sha,
       data: extractAdminState(file.source),
       loadedAt: new Date().toISOString()
+    });
+  }
+
+  if (request.method === "POST" && request.url === "/api/upload-product-image") {
+    const body = await readBody(request, 7_500_000);
+    const extension = extensionFromUpload(body.fileName, body.mimeType);
+    const mimeType = String(body.mimeType || "").toLowerCase();
+
+    if (!extension || (mimeType && !productImageTypes.has(mimeType))) {
+      return json(response, 400, {
+        error: "Bu fayl tipi dəstəklənmir. JPG, PNG, WEBP və SVG qəbul edilir."
+      });
+    }
+
+    const contentBase64 = String(body.contentBase64 || "").replace(/^data:[^,]+,/, "").replace(/\s/g, "");
+    if (!contentBase64) {
+      return json(response, 400, { error: "Şəkil faylı göndərilməyib." });
+    }
+
+    const fileBuffer = Buffer.from(contentBase64, "base64");
+    if (!fileBuffer.length) {
+      return json(response, 400, { error: "Şəkil faylı oxunmadı." });
+    }
+
+    if (fileBuffer.length > maxProductImageSize) {
+      return json(response, 413, { error: "Fayl ölçüsü böyükdür. Maksimum 5 MB." });
+    }
+
+    const productId = safeUploadSlug(body.productId);
+    const stamp = Date.now();
+    const random = crypto.randomBytes(4).toString("hex");
+    const repoPath = `uploads/products/${productId}-${stamp}-${random}.${extension}`;
+
+    const result = await github(`/repos/${config.repo}/contents/${repoPath}`, {
+      method: "PUT",
+      body: JSON.stringify({
+        message: `Upload product image for ${productId}`,
+        content: fileBuffer.toString("base64"),
+        branch: config.branch
+      })
+    });
+
+    return json(response, 200, {
+      ok: true,
+      path: `${repoPath}?v=${stamp}`,
+      publicPath: `/${repoPath}?v=${stamp}`,
+      filePath: repoPath,
+      commitSha: result.commit.sha,
+      uploadedAt: new Date().toISOString()
     });
   }
 
