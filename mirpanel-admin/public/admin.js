@@ -8,6 +8,11 @@ const state = {
   modalAction: null
 };
 
+const productImageUpload = {
+  maxSize: 5 * 1024 * 1024,
+  allowedTypes: new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"])
+};
+
 const legacyFlows = [
   ["whatsapp", "Birbaşa WhatsApp"],
   ["name_code_4", "Ad + 4 rəqəm kod"],
@@ -113,9 +118,10 @@ function escapeHtml(value) {
 }
 
 function imageUrl(path) {
+  if (/^data:/i.test(path || "")) return path;
   return /^https?:/i.test(path || "")
     ? path
-    : `https://mirpanel.com/${path || "assets/your.png"}`;
+    : `https://mirpanel.com/${String(path || "assets/your.png").replace(/^\/+/, "")}`;
 }
 
 function ensureConfirmation(product) {
@@ -255,6 +261,77 @@ async function api(path, options = {}) {
     throw error;
   }
   return payload;
+}
+
+function readFileAsBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.addEventListener("load", () => {
+      const result = String(reader.result || "");
+      resolve(result.includes(",") ? result.split(",").pop() : result);
+    });
+    reader.addEventListener("error", () => reject(new Error("Şəkil faylı oxunmadı.")));
+    reader.readAsDataURL(file);
+  });
+}
+
+function setImageUploadStatus(text, type = "") {
+  const element = $("productImageUploadStatus");
+  if (!element) return;
+  element.textContent = text;
+  element.classList.toggle("good", type === "good");
+  element.classList.toggle("bad", type === "bad");
+}
+
+async function uploadProductImage(file) {
+  const product = selectedProduct();
+  if (!product) return toast("Əvvəl məhsul seç.", "bad");
+  if (!file) return;
+
+  if (!productImageUpload.allowedTypes.has(file.type)) {
+    setImageUploadStatus("Bu fayl tipi dəstəklənmir. JPG, PNG, WEBP və SVG qəbul edilir.", "bad");
+    toast("Bu fayl tipi dəstəklənmir.", "bad");
+    return;
+  }
+
+  if (file.size > productImageUpload.maxSize) {
+    setImageUploadStatus("Fayl ölçüsü böyükdür. Maksimum 5 MB.", "bad");
+    toast("Fayl ölçüsü böyükdür.", "bad");
+    return;
+  }
+
+  $("previewImage").src = URL.createObjectURL(file);
+  setImageUploadStatus("Şəkil yüklənir...");
+  setLoading(true, "Şəkil GitHub-a yüklənir...");
+
+  try {
+    const contentBase64 = await readFileAsBase64(file);
+    const payload = await api("/api/upload-product-image", {
+      method: "POST",
+      body: JSON.stringify({
+        productId: product.id,
+        fileName: file.name,
+        mimeType: file.type,
+        contentBase64
+      })
+    });
+
+    product.image = payload.path;
+    $("productImage").value = payload.path;
+    $("previewImage").src = imageUrl(payload.path);
+    markDirty();
+    renderProducts();
+    setImageUploadStatus(`Yükləndi: ${payload.path}`, "good");
+    toast("Şəkil yükləndi. İndi Saxla bas.", "good");
+  } catch (error) {
+    $("previewImage").src = imageUrl(product.image);
+    setImageUploadStatus(error.message || "Şəkil yüklənmədi.", "bad");
+    if (error.status === 401) location.href = "/login.html";
+    else toast(error.message || "Şəkil yüklənmədi.", "bad");
+  } finally {
+    setLoading(false);
+    $("productImageFile").value = "";
+  }
 }
 
 function setLoading(active, text = "Yüklənir...") {
@@ -437,6 +514,7 @@ function renderProductForm() {
   $("productFlow").innerHTML = renderOptions(legacyFlows, product.flow);
   $("productOrderFlow").innerHTML = renderOptions(orderFlows, product.orderFlow);
   setValue("productImage", product.image);
+  setImageUploadStatus("JPG, PNG, WEBP və SVG. Maksimum 5 MB.");
   setValue("productBadge", product.badge);
   setValue("productCurrency", product.currency);
   setValue("productSoldOut", String(Boolean(product.soldOut)));
@@ -816,6 +894,12 @@ $("addFormFieldBtn").addEventListener("click", () => {
   $("productOrderFlow").value = product.orderFlow;
   markDirty();
   renderFormFields(product);
+});
+
+$("productImagePickBtn").addEventListener("click", () => $("productImageFile").click());
+$("productImageFile").addEventListener("change", () => {
+  const file = $("productImageFile").files?.[0];
+  uploadProductImage(file);
 });
 
 $("previewOrderConfirmationBtn").addEventListener("click", () => {
