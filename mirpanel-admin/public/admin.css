@@ -323,6 +323,37 @@ textarea {
   border-radius: 10px;
 }
 
+.imageUploadBox {
+  display: grid;
+  align-content: end;
+  gap: 7px;
+  min-height: 68px;
+}
+
+.imageUploadActions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.imageUploadActions .btn {
+  width: 100%;
+}
+
+.imageUploadBox small {
+  color: var(--muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.imageUploadBox small.good {
+  color: var(--good);
+}
+
+.imageUploadBox small.bad {
+  color: var(--bad);
+}
+
 .editorHero div {
   flex: 1;
 }
