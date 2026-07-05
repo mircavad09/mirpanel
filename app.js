@@ -192,24 +192,41 @@ const DATA = {
     },
     {
       "id": "hbomax",
-      "order": 1,
+      "order": 4,
       "category": "film",
       "image": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
       "currency": "₼",
-      "title": "HBO Max(+VPN Hədiyyə)",
+      "title": "HBO Max",
       "variant": "Şəxsi Otaq",
       "badge": "Film",
       "desc": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
       "note": "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
-      "flow": "whatsapp",
+      "flow": "name_code_4",
       "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
+      "orderFlow": "form_then_whatsapp",
+      "formFields": [
+        {
+          "key": "name",
+          "type": "text",
+          "label": "Ad",
+          "placeholder": "Adınızı yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "code_4",
+          "type": "text",
+          "label": "4 rəqəmli kod / PIN",
+          "placeholder": "4 rəqəmli kod yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
