@@ -533,7 +533,7 @@ const DATA = {
     },
     {
       "id": "spotify",
-      "order": 6,
+      "order": 3,
       "category": "musiqi",
       "image": "assets/spotify.png",
       "currency": "₼",
