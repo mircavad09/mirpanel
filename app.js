@@ -192,7 +192,7 @@ const DATA = {
     },
     {
       "id": "hbomax",
-      "order": 4,
+      "order": 5,
       "category": "film",
       "image": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
       "currency": "₼",
@@ -408,7 +408,7 @@ const DATA = {
     },
     {
       "id": "zoom",
-      "order": 4,
+      "order": 14,
       "category": "meeting",
       "image": "assets/zoom.png",
       "currency": "₼",
@@ -466,7 +466,7 @@ const DATA = {
     },
     {
       "id": "youtube",
-      "order": 5,
+      "order": 6,
       "category": "musiqi",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -1057,7 +1057,7 @@ const DATA = {
     },
     {
       "id": "prime",
-      "order": 14,
+      "order": 4,
       "category": "film",
       "image": "assets/prime.png",
       "currency": "₼",
