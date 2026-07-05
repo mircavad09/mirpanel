@@ -92,6 +92,120 @@
       .premiumOrderForm .mpBtn:hover { transform: translateY(-1px); filter: brightness(1.05); }
       .premiumOrderForm .mpBtn:active { transform: translateY(1px) scale(.99); }
 
+      #modal.hboOrderFormOpen .modalCard {
+        width: min(540px, calc(100vw - 28px));
+        border: 1px solid rgba(122, 92, 255, .74);
+        background:
+          radial-gradient(circle at 22% 0%, rgba(122, 92, 255, .24), transparent 42%),
+          radial-gradient(circle at 88% 14%, rgba(34, 211, 238, .15), transparent 36%),
+          linear-gradient(180deg, rgba(11, 13, 26, .98), rgba(5, 7, 15, .99));
+        box-shadow: 0 26px 80px rgba(0, 0, 0, .66), 0 0 38px rgba(122, 92, 255, .20), 0 0 28px rgba(34, 211, 238, .10);
+      }
+
+      #modal.hboOrderFormOpen .mTop,
+      #modal.hboOrderFormOpen .mPlansTitle,
+      #modal.hboOrderFormOpen .mPlans,
+      #modal.hboOrderFormOpen .mInfoBox,
+      #modal.hboOrderFormOpen #mDesc { display: none !important; }
+      #modal.hboOrderFormOpen #mForm { margin-top: 0 !important; }
+      #modal.hboOrderFormOpen .mBottom { margin-top: 14px; padding-top: 11px; border-top: 1px solid rgba(122, 92, 255, .20); }
+      #modal.hboOrderFormOpen #mInfo { color: rgba(245, 248, 255, .94); font-size: 16px; font-weight: 900; text-align: center; }
+      #modal.hboOrderFormOpen .mSmall { display: none; }
+
+      .hboOrderForm {
+        display: grid;
+        gap: 16px;
+        padding: 25px 2px 0;
+      }
+      .hboOrderForm .mpFormTitle {
+        margin: 0;
+        text-align: center;
+        font-size: clamp(24px, 4vw, 30px);
+        line-height: 1.1;
+        font-weight: 950;
+        color: #a78bfa;
+        background: linear-gradient(135deg, #f1f5ff 0%, #a78bfa 45%, #22d3ee 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: 0 0 26px rgba(122, 92, 255, .24);
+      }
+      .hboOrderForm .hboOrderHint {
+        margin: -5px 0 2px;
+        color: rgba(226, 232, 255, .72);
+        font-size: 13px;
+        line-height: 1.45;
+        font-weight: 650;
+        text-align: center;
+      }
+      .hboOrderForm .premiumOrderFields {
+        display: grid;
+        gap: 13px;
+      }
+      .hboOrderForm .universalField {
+        display: grid;
+        gap: 8px;
+        margin: 0;
+      }
+      .hboOrderForm .universalField span {
+        color: rgba(235, 240, 255, .9);
+        font-size: 13px;
+        font-weight: 850;
+      }
+      .hboOrderForm .universalField input,
+      .hboOrderForm .universalField textarea {
+        width: 100%;
+        min-height: 52px;
+        border-radius: 16px;
+        border: 1px solid rgba(148, 163, 255, .34);
+        background: rgba(3, 7, 18, .76);
+        color: #f8fbff;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 650;
+        outline: none;
+        padding: 14px 16px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .05), 0 12px 30px rgba(0, 0, 0, .24);
+        transition: border-color .22s ease, box-shadow .22s ease, background .22s ease;
+      }
+      .hboOrderForm .universalField input::placeholder,
+      .hboOrderForm .universalField textarea::placeholder {
+        color: rgba(226, 232, 240, .48);
+      }
+      .hboOrderForm .universalField input:focus,
+      .hboOrderForm .universalField textarea:focus {
+        border-color: rgba(34, 211, 238, .78);
+        background: rgba(5, 11, 26, .92);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 4px rgba(34, 211, 238, .10), 0 0 30px rgba(122, 92, 255, .18);
+      }
+      .hboOrderForm .orderConfirmationActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 4px;
+      }
+      .hboOrderForm .mpBtn {
+        min-height: 54px;
+        border: 0;
+        border-radius: 16px;
+        color: #f8fbff;
+        font-family: inherit;
+        font-size: 16px;
+        font-weight: 950;
+        cursor: pointer;
+        transition: transform .18s ease, box-shadow .2s ease, filter .2s ease;
+      }
+      .hboOrderForm .mpBtn:not(.orderConfirmationCancel) {
+        background: linear-gradient(135deg, #7c3aed, #2563eb 55%, #06b6d4);
+        box-shadow: 0 15px 36px rgba(37, 99, 235, .27), 0 0 24px rgba(34, 211, 238, .14), inset 0 1px 0 rgba(255, 255, 255, .18);
+      }
+      .hboOrderForm .orderConfirmationCancel {
+        background: linear-gradient(135deg, rgba(55, 65, 81, .96), rgba(24, 31, 48, .96));
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+      }
+      .hboOrderForm .mpBtn:hover { transform: translateY(-1px); filter: brightness(1.05); }
+      .hboOrderForm .mpBtn:active { transform: translateY(1px) scale(.99); }
+
       .mpStockLine { margin-top: 12px; }
       .mpStockBadge {
         display: inline-flex; align-items: center; gap: 8px; max-width: 100%; padding: 9px 13px; border-radius: 999px;
@@ -234,6 +348,48 @@
         #modal.premiumOrderFormOpen .modalCard { width: min(100% - 20px, 520px); }
         .universalOrderForm.premiumOrderForm { padding-top: 24px; gap: 16px; }
         .premiumOrderForm .orderConfirmationActions { grid-template-columns: 1fr; }
+        #modal.hboOrderFormOpen {
+          align-items: flex-start;
+          padding: calc(12px + env(safe-area-inset-top)) 0 18px;
+        }
+        #modal.hboOrderFormOpen .modalCard {
+          width: calc(100vw - 24px);
+          max-height: calc(100dvh - 120px);
+          overflow-y: auto;
+          padding: 18px 16px 16px;
+          border-radius: 22px;
+        }
+        .hboOrderForm {
+          gap: 12px;
+          padding: 18px 0 0;
+        }
+        .hboOrderForm .mpFormTitle {
+          max-width: calc(100% - 78px);
+          margin: 0 auto;
+          font-size: 24px;
+        }
+        .hboOrderForm .hboOrderHint {
+          font-size: 12px;
+          line-height: 1.38;
+        }
+        .hboOrderForm .premiumOrderFields {
+          gap: 10px;
+        }
+        .hboOrderForm .universalField input,
+        .hboOrderForm .universalField textarea {
+          min-height: 48px;
+          border-radius: 14px;
+          font-size: 14px;
+          padding: 12px 14px;
+        }
+        .hboOrderForm .orderConfirmationActions {
+          grid-template-columns: 1fr;
+          gap: 9px;
+        }
+        .hboOrderForm .mpBtn {
+          min-height: 48px;
+          font-size: 14px;
+        }
         .mpStockBadge { white-space: normal; line-height: 1.25; }
         #modal.spotifyConfirmationModal {
           align-items: flex-start;
@@ -321,6 +477,10 @@
     if (enabled) setSpotifyConfirmationMode(false);
   }
 
+  function setHboFormMode(enabled) {
+    document.getElementById("modal")?.classList.toggle("hboOrderFormOpen", Boolean(enabled));
+  }
+
   injectOrderStyles();
 
   function escapeHtml(value) {
@@ -336,6 +496,40 @@
     const active = fields.filter((field) => field.enabled !== false);
     if (active.length) return active;
     return LEGACY_FLOW_FIELDS[product?.flow] || [];
+  }
+
+  function productToken(product) {
+    return [
+      product?.id,
+      product?.title,
+      product?.variant,
+      product?.badge,
+      product?.category
+    ].join(" ").toLowerCase();
+  }
+
+  function isHboProduct(product) {
+    const token = productToken(product);
+    return token.includes("hbomax") || token.includes("hbo max") || token.includes("hbo");
+  }
+
+  function isFourDigitCodeField(field) {
+    const key = String(field?.key || "").toLowerCase();
+    const label = String(field?.label || "").toLowerCase();
+    return key === "code_4" || key === "room_code" || key === "pin" || label.includes("4 rəqəm");
+  }
+
+  function toastMessage(text, type = "bad") {
+    const container = document.querySelector(".toasts") || document.getElementById("toasts");
+    if (container) {
+      const item = document.createElement("div");
+      item.className = `toast ${type}`;
+      item.textContent = text;
+      container.appendChild(item);
+      setTimeout(() => item.remove(), 3200);
+      return;
+    }
+    alert(text);
   }
 
   function confirmationFor(product) {
@@ -467,6 +661,7 @@
   function closeOrderModal() {
     setPremiumFormMode(false);
     setSpotifyConfirmationMode(false);
+    setHboFormMode(false);
     if (typeof closeModal === "function") {
       closeModal();
       return;
@@ -582,28 +777,43 @@
       return;
     }
 
-    setPremiumFormMode(true);
+    const isHbo = isHboProduct(product);
+    setPremiumFormMode(!isHbo);
+    setHboFormMode(isHbo);
     setFooter("");
+    const formClass = isHbo
+      ? "mpForm universalOrderForm hboOrderForm"
+      : "mpForm universalOrderForm premiumOrderForm";
+    const title = isHbo ? "HBO Max profil məlumatları" : "Sifariş məlumatları";
+    const hint = isHbo
+      ? `<p class="hboOrderHint">Profil adınızı və izləmə kodunu qeyd edin.</p>`
+      : "";
 
     renderModalContent(`
-      <form class="mpForm universalOrderForm premiumOrderForm" id="universalOrderForm">
-        <div class="mpFormTitle">Sifariş məlumatları</div>
+      <form class="${formClass}" id="universalOrderForm">
+        <div class="mpFormTitle">${escapeHtml(title)}</div>
+        ${hint}
         <div class="premiumOrderFields">
           ${fields.map((field) => {
             const inputType = field.type || "text";
+            const fourDigitCode = isHbo && isFourDigitCodeField(field);
+            const label = fourDigitCode ? "Profil kodu / PIN" : (field.label || field.key);
+            const placeholder = fourDigitCode ? "4 rəqəmli kod yazın" : (field.placeholder || "");
             const common = `
               name="${escapeHtml(field.key)}"
-              data-label="${escapeHtml(field.label || field.key)}"
-              placeholder="${escapeHtml(field.placeholder || "")}"
+              data-label="${escapeHtml(label)}"
+              ${fourDigitCode ? "data-code-length=\"4\"" : ""}
+              placeholder="${escapeHtml(placeholder)}"
               autocomplete="${inputType === "password" ? "current-password" : "off"}"
+              ${fourDigitCode ? "inputmode=\"numeric\" maxlength=\"4\" pattern=\"\\d{4}\"" : ""}
               ${field.required ? "required" : ""}
             `;
 
             if (inputType === "textarea") {
-              return `<label class="universalField premiumUniversalField"><span>${escapeHtml(field.label || field.key)}</span><textarea ${common}></textarea></label>`;
+              return `<label class="universalField premiumUniversalField"><span>${escapeHtml(label)}</span><textarea ${common}></textarea></label>`;
             }
 
-            return `<label class="universalField premiumUniversalField"><span>${escapeHtml(field.label || field.key)}</span><input type="${escapeHtml(inputType)}" ${common}></label>`;
+            return `<label class="universalField premiumUniversalField"><span>${escapeHtml(label)}</span><input type="${fourDigitCode ? "text" : escapeHtml(inputType)}" ${common}></label>`;
           }).join("")}
         </div>
         <div class="orderConfirmationActions premiumOrderActions">
@@ -614,6 +824,11 @@
     `);
 
     document.getElementById("universalFormCancel").onclick = closeOrderModal;
+    document.querySelectorAll("#universalOrderForm [data-code-length='4']").forEach((input) => {
+      input.addEventListener("input", () => {
+        input.value = input.value.replace(/\D/g, "").slice(0, 4);
+      });
+    });
     document.getElementById("universalOrderForm").onsubmit = (event) => {
       event.preventDefault();
       const values = {};
@@ -623,6 +838,11 @@
         const value = control.value.trim();
         if (control.required && !value) {
           control.focus();
+          return;
+        }
+        if (control.dataset.codeLength === "4" && !/^\d{4}$/.test(value)) {
+          control.focus();
+          toastMessage("Sadəcə 4 rəqəm yazmalısınız");
           return;
         }
         values[control.dataset.label || control.name] = value;
