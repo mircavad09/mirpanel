@@ -979,6 +979,22 @@
     };
   }
 
+  function patchLegacyNameCodeForm() {
+    if (typeof window.showNameCodeForm !== "function" || window.showNameCodeForm.__mirpanelHboMaxPatched) return;
+    const original = window.showNameCodeForm;
+
+    window.showNameCodeForm = function patchedNameCodeForm(product, plan, digits) {
+      if (isHboProduct(product)) {
+        openBaseModal(product, plan);
+        showForm(product, plan, (formData) => openWhatsApp(product, plan, formData));
+        return;
+      }
+      return original.call(this, product, plan, digits);
+    };
+
+    window.showNameCodeForm.__mirpanelHboMaxPatched = true;
+  }
+
   document.addEventListener(
     "click",
     (event) => {
@@ -1001,4 +1017,5 @@
   });
 
   wrapProductPage();
+  patchLegacyNameCodeForm();
 })();
