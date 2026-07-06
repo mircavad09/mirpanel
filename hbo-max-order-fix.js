@@ -1,6 +1,17 @@
 (function () {
   "use strict";
 
+  const HBO_TITLE = "HBO Max profil m\u0259lumatlar\u0131";
+  const HBO_DESC = "HBO Max profil ad\u0131n\u0131z\u0131 v\u0259 profil kodunuzu qeyd edin.";
+  const HBO_NAME_LABEL = "HBO Max profil ad\u0131";
+  const HBO_NAME_PLACEHOLDER = "Profil ad\u0131n\u0131z\u0131 yaz\u0131n";
+  const HBO_CODE_LABEL = "Profil kodu / PIN";
+  const HBO_CODE_PLACEHOLDER = "4 r\u0259q\u0259mli profil kodunu yaz\u0131n";
+  const HBO_CANCEL_TEXT = "L\u0259\u011fv et";
+  const HBO_CONTINUE_TEXT = "Davam et";
+  const HBO_CODE_ERROR = "Sad\u0259c\u0259 4 r\u0259q\u0259m yazmal\u0131s\u0131n\u0131z";
+  const HBO_NAME_ERROR = "Ad\u0131n\u0131z\u0131 yaz\u0131n";
+
   function productBrandText(product) {
     return [
       product?.id,
@@ -219,21 +230,21 @@
 
     formHost.innerHTML = `
       <div class="mpForm hboMaxOrderForm">
-        <div class="mpFormTitle">HBO Max profil məlumatları</div>
-        <p class="hboMaxOrderDesc">HBO Max profil adınızı və profil kodunuzu qeyd edin.</p>
+        <div class="mpFormTitle">${HBO_TITLE}</div>
+        <p class="hboMaxOrderDesc">${HBO_DESC}</p>
         <div class="hboMaxFields">
           <label class="hboMaxField">
-            <span class="mpLabel">HBO Max profil adı</span>
-            <input id="hbo_name" class="mpInput" placeholder="Profil adınızı yazın" autocomplete="name">
+            <span class="mpLabel">${HBO_NAME_LABEL}</span>
+            <input id="hbo_name" class="mpInput" placeholder="${HBO_NAME_PLACEHOLDER}" autocomplete="name">
           </label>
           <label class="hboMaxField">
-            <span class="mpLabel">Profil kodu / PIN</span>
-            <input id="hbo_code" class="mpInput" type="text" inputmode="numeric" maxlength="4" pattern="\\d{4}" placeholder="4 rəqəmli profil kodunu yazın" autocomplete="one-time-code">
+            <span class="mpLabel">${HBO_CODE_LABEL}</span>
+            <input id="hbo_code" class="mpInput" type="text" inputmode="numeric" maxlength="4" pattern="\\d{4}" placeholder="${HBO_CODE_PLACEHOLDER}" autocomplete="one-time-code">
           </label>
         </div>
         <div class="hboMaxActions">
-          <button id="hbo_cancel" type="button" class="mpBtn hboMaxCancel">Ləğv et</button>
-          <button id="hbo_send" type="button" class="mpBtn hboMaxContinue">Davam et</button>
+          <button id="hbo_cancel" type="button" class="mpBtn hboMaxCancel">${HBO_CANCEL_TEXT}</button>
+          <button id="hbo_send" type="button" class="mpBtn hboMaxContinue">${HBO_CONTINUE_TEXT}</button>
         </div>
       </div>`;
 
@@ -253,22 +264,70 @@
       const name = nameInput?.value.trim() || "";
       const code = codeInput?.value.trim() || "";
       if (!name) {
-        alert((typeof UI !== "undefined" && UI.reqName) || "Adınızı yazın");
+        alert((typeof UI !== "undefined" && UI.reqName) || HBO_NAME_ERROR);
         return;
       }
       if (!/^\d{4}$/.test(code)) {
         codeInput?.focus();
-        alert("Sadəcə 4 rəqəm yazmalısınız");
+        alert(HBO_CODE_ERROR);
         return;
       }
       if (typeof sendWA === "function") {
-        sendWA(product, plan, `HBO Max profil adı: ${name}\nProfil kodu / PIN: ${code}`);
+        sendWA(product, plan, `${HBO_NAME_LABEL}: ${name}\n${HBO_CODE_LABEL}: ${code}`);
       }
       if (typeof closeModal === "function") closeModal();
       else modal.classList.remove("show");
     });
 
     return true;
+  }
+
+  let hboRepairing = false;
+
+  function repairHboMaxModal() {
+    if (hboRepairing) return;
+
+    const product = getCurrentProductSafe();
+    if (getOrderFormBrand(product, product?.flow) !== "hbo") return;
+
+    const modal = document.getElementById("modal");
+    const form = document.querySelector("#mForm .mpForm");
+    if (!modal?.classList.contains("show") || !form) return;
+
+    const modalText = modal.innerText || "";
+    const hasNetflixLeak = /Netflix/i.test(modalText)
+      || modal.classList.contains("netflixOrderFormOpen")
+      || form.classList.contains("netflixOrderForm")
+      || document.querySelector("#mForm .mpFormTitle")?.textContent?.trim() !== HBO_TITLE;
+
+    if (!hasNetflixLeak) return;
+
+    hboRepairing = true;
+    try {
+      modal.classList.remove("netflixOrderFormOpen", "netflixOrderForm");
+      form.classList.remove("netflixOrderForm");
+      openHboMaxOrderForm(product, getSelectedPlanSafe(product));
+    } finally {
+      setTimeout(() => {
+        hboRepairing = false;
+      }, 0);
+    }
+  }
+
+  function installHboMaxModalGuard() {
+    const modal = document.getElementById("modal");
+    if (!modal || modal.__hboMaxModalGuardInstalled) return;
+
+    const observer = new MutationObserver(() => {
+      repairHboMaxModal();
+    });
+    observer.observe(modal, {
+      attributes: true,
+      attributeFilter: ["class"],
+      childList: true,
+      subtree: true
+    });
+    modal.__hboMaxModalGuardInstalled = true;
   }
 
   document.addEventListener("click", (event) => {
@@ -289,7 +348,16 @@
     event.preventDefault();
     event.stopImmediatePropagation();
     openHboMaxOrderForm(product, plan);
+    setTimeout(repairHboMaxModal, 0);
+    setTimeout(repairHboMaxModal, 120);
+    setTimeout(repairHboMaxModal, 300);
   }, true);
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", installHboMaxModalGuard, { once: true });
+  } else {
+    installHboMaxModalGuard();
+  }
 
   window.mirpanelHboMaxOrderFix = {
     isNetflixProduct,
