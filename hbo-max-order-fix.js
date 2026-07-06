@@ -11,6 +11,13 @@
   const HBO_CONTINUE_TEXT = "Davam et";
   const HBO_CODE_ERROR = "Sad\u0259c\u0259 4 r\u0259q\u0259m yazmal\u0131s\u0131n\u0131z";
   const HBO_NAME_ERROR = "Ad\u0131n\u0131z\u0131 yaz\u0131n";
+  const PRIME_TITLE = "Amazon Prime Video m\u0259lumatlar\u0131";
+  const PRIME_DESC = "Prime Video profil ad\u0131n\u0131z\u0131 v\u0259 5 r\u0259q\u0259mli kodunuzu qeyd edin.";
+  const PRIME_NAME_LABEL = "Ad";
+  const PRIME_NAME_PLACEHOLDER = "Ad\u0131n\u0131z\u0131 yaz\u0131n";
+  const PRIME_CODE_LABEL = "5 r\u0259q\u0259mli kod / PIN";
+  const PRIME_CODE_PLACEHOLDER = "5 r\u0259q\u0259mli kod yaz\u0131n";
+  const PRIME_CODE_ERROR = "Sad\u0259c\u0259 5 r\u0259q\u0259m yazmal\u0131s\u0131n\u0131z";
 
   function productBrandText(product) {
     return [
@@ -33,7 +40,13 @@
     return text.includes("hbomax") || text.includes("hbo max") || /\bhbo\b/.test(text);
   }
 
+  function isPrimeVideoProduct(product) {
+    const text = productBrandText(product);
+    return text.includes("prime video") || text.includes("amazon prime") || text.includes("amazon") || /\bprime\b/.test(text);
+  }
+
   function getOrderFormBrand(product, flow) {
+    if (isPrimeVideoProduct(product)) return "prime";
     if (isHboMaxProduct(product)) return "hbo";
     if (isNetflixProduct(product)) return "netflix";
     return "default";
@@ -84,11 +97,25 @@
       #modal.hboMaxOrderFormOpen .mPlansTitle,
       #modal.hboMaxOrderFormOpen .mPlans,
       #modal.hboMaxOrderFormOpen .mInfoBox,
-      #modal.hboMaxOrderFormOpen #mDesc {
+      #modal.hboMaxOrderFormOpen #mDesc,
+      #modal.primeVideoOrderFormOpen .mTop,
+      #modal.primeVideoOrderFormOpen .mPlansTitle,
+      #modal.primeVideoOrderFormOpen .mPlans,
+      #modal.primeVideoOrderFormOpen .mInfoBox,
+      #modal.primeVideoOrderFormOpen #mDesc {
         display: none !important;
       }
-      #modal.hboMaxOrderFormOpen #mForm {
+      #modal.hboMaxOrderFormOpen #mForm,
+      #modal.primeVideoOrderFormOpen #mForm {
         margin-top: 0 !important;
+      }
+      #modal.primeVideoOrderFormOpen .modalCard {
+        border: 1px solid rgba(56, 189, 248, .72) !important;
+        background:
+          radial-gradient(circle at 18% 0%, rgba(14, 165, 233, .22), transparent 34%),
+          radial-gradient(circle at 100% 15%, rgba(34, 211, 238, .14), transparent 34%),
+          linear-gradient(145deg, rgba(3, 12, 23, .98), rgba(2, 6, 23, .98)) !important;
+        box-shadow: 0 26px 70px rgba(2, 6, 23, .84), 0 0 42px rgba(14, 165, 233, .25), inset 0 1px 0 rgba(255, 255, 255, .08) !important;
       }
       .hboMaxOrderForm {
         display: grid;
@@ -173,40 +200,155 @@
         transform: translateY(-1px);
         filter: brightness(1.05);
       }
+      .primeVideoOrderForm {
+        display: grid;
+        gap: 14px;
+        padding: 18px 0 0;
+      }
+      .primeVideoOrderForm .mpFormTitle {
+        margin: 0;
+        text-align: center;
+        font-size: clamp(24px, 5vw, 31px);
+        line-height: 1.1;
+        font-weight: 950;
+        letter-spacing: 0;
+        color: #f8fbff !important;
+        text-shadow: 0 0 28px rgba(14, 165, 233, .34), 0 0 18px rgba(34, 211, 238, .18);
+      }
+      .primeVideoOrderForm .primeVideoOrderDesc {
+        margin: -4px 0 4px;
+        color: rgba(226, 242, 255, .77);
+        font-size: 13px;
+        line-height: 1.45;
+        text-align: center;
+      }
+      .primeVideoOrderForm .primeVideoFields {
+        display: grid;
+        gap: 12px;
+      }
+      .primeVideoOrderForm .primeVideoField {
+        display: grid;
+        gap: 7px;
+        margin: 0;
+      }
+      .primeVideoOrderForm .primeVideoField .mpLabel {
+        color: rgba(239, 249, 255, .94);
+        font-size: 13px;
+        font-weight: 850;
+      }
+      .primeVideoOrderForm .mpInput {
+        min-height: 52px;
+        border-radius: 16px;
+        border: 1px solid rgba(56, 189, 248, .36) !important;
+        background: rgba(2, 8, 23, .84) !important;
+        color: #f8fafc;
+        font-size: 16px;
+        font-weight: 750;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .07);
+        transition: border-color .22s ease, box-shadow .22s ease, background .22s ease;
+      }
+      .primeVideoOrderForm .mpInput::placeholder {
+        color: rgba(226, 232, 240, .50);
+      }
+      .primeVideoOrderForm .mpInput:focus {
+        outline: none;
+        border-color: rgba(34, 211, 238, .84) !important;
+        background: rgba(2, 12, 28, .96) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 4px rgba(14, 165, 233, .12), 0 0 30px rgba(34, 211, 238, .19) !important;
+      }
+      .primeVideoOrderForm .primeVideoActions {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 11px;
+        margin-top: 4px;
+      }
+      .primeVideoOrderForm .mpBtn {
+        min-height: 52px;
+        border: 0;
+        border-radius: 16px;
+        font-size: 15px;
+        font-weight: 950;
+        color: #fff;
+        transition: transform .18s ease, filter .2s ease, box-shadow .2s ease;
+      }
+      .primeVideoOrderForm .primeVideoCancel {
+        background: linear-gradient(135deg, rgba(51, 65, 85, .98), rgba(15, 23, 42, .98)) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
+      }
+      .primeVideoOrderForm .primeVideoContinue {
+        background: linear-gradient(135deg, #0284c7, #06b6d4 58%, #22d3ee) !important;
+        box-shadow: 0 16px 38px rgba(14, 165, 233, .31), 0 0 25px rgba(34, 211, 238, .16), inset 0 1px 0 rgba(255, 255, 255, .20) !important;
+      }
+      .primeVideoOrderForm .mpBtn:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.05);
+      }
+      .mirpanelOrderToast {
+        position: fixed;
+        top: max(18px, env(safe-area-inset-top));
+        left: 50%;
+        z-index: 999999;
+        transform: translate(-50%, -10px);
+        max-width: min(420px, calc(100vw - 28px));
+        padding: 13px 16px;
+        border: 1px solid rgba(34, 211, 238, .42);
+        border-radius: 16px;
+        background: linear-gradient(145deg, rgba(2, 8, 23, .96), rgba(3, 18, 34, .96));
+        color: #f8fafc;
+        box-shadow: 0 18px 40px rgba(2, 6, 23, .55), 0 0 28px rgba(34, 211, 238, .16);
+        font-size: 14px;
+        font-weight: 850;
+        text-align: center;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity .22s ease, transform .22s ease;
+      }
+      .mirpanelOrderToast.show {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
       @media (max-width: 640px) {
-        #modal.hboMaxOrderFormOpen {
+        #modal.hboMaxOrderFormOpen,
+        #modal.primeVideoOrderFormOpen {
           align-items: flex-start;
           padding: calc(12px + env(safe-area-inset-top)) 0 18px;
         }
-        #modal.hboMaxOrderFormOpen .modalCard {
+        #modal.hboMaxOrderFormOpen .modalCard,
+        #modal.primeVideoOrderFormOpen .modalCard {
           width: calc(100vw - 24px);
           max-height: calc(100dvh - 118px);
           overflow-y: auto;
           border-radius: 22px;
         }
-        .hboMaxOrderForm {
+        .hboMaxOrderForm,
+        .primeVideoOrderForm {
           gap: 11px;
           padding-top: 14px;
         }
-        .hboMaxOrderForm .mpFormTitle {
+        .hboMaxOrderForm .mpFormTitle,
+        .primeVideoOrderForm .mpFormTitle {
           max-width: calc(100% - 72px);
           margin: 0 auto;
           font-size: 23px;
         }
-        .hboMaxOrderForm .hboMaxOrderDesc {
+        .hboMaxOrderForm .hboMaxOrderDesc,
+        .primeVideoOrderForm .primeVideoOrderDesc {
           font-size: 12px;
         }
-        .hboMaxOrderForm .mpInput {
+        .hboMaxOrderForm .mpInput,
+        .primeVideoOrderForm .mpInput {
           min-height: 48px;
           border-radius: 14px;
-          font-size: 14px;
+          font-size: 16px;
           padding: 12px 14px;
         }
-        .hboMaxOrderForm .hboMaxActions {
+        .hboMaxOrderForm .hboMaxActions,
+        .primeVideoOrderForm .primeVideoActions {
           grid-template-columns: 1fr;
           gap: 9px;
         }
-        .hboMaxOrderForm .mpBtn {
+        .hboMaxOrderForm .mpBtn,
+        .primeVideoOrderForm .mpBtn {
           min-height: 48px;
           font-size: 14px;
         }
@@ -223,7 +365,7 @@
     if (!modal || !formHost) return false;
 
     modal.classList.add("show", "hboMaxOrderFormOpen");
-    modal.classList.remove("netflixOrderFormOpen", "netflixOrderForm");
+    modal.classList.remove("netflixOrderFormOpen", "netflixOrderForm", "primeVideoOrderFormOpen");
     try {
       if (typeof lockBodyScroll === "function") lockBodyScroll();
     } catch (_) {}
@@ -275,6 +417,91 @@
       if (typeof sendWA === "function") {
         sendWA(product, plan, `${HBO_NAME_LABEL}: ${name}\n${HBO_CODE_LABEL}: ${code}`);
       }
+      modal.classList.remove("hboMaxOrderFormOpen");
+      if (typeof closeModal === "function") closeModal();
+      else modal.classList.remove("show");
+    });
+
+    return true;
+  }
+
+  function showOrderToast(message) {
+    let toast = document.querySelector(".mirpanelOrderToast");
+    if (!toast) {
+      toast = document.createElement("div");
+      toast.className = "mirpanelOrderToast";
+      document.body.appendChild(toast);
+    }
+    toast.textContent = message;
+    toast.classList.add("show");
+    clearTimeout(toast.__hideTimer);
+    toast.__hideTimer = setTimeout(() => {
+      toast.classList.remove("show");
+    }, 2600);
+  }
+
+  function openPrimeVideoOrderForm(product, plan) {
+    ensureHboMaxOrderStyles();
+
+    const modal = document.getElementById("modal");
+    const formHost = document.getElementById("mForm");
+    if (!modal || !formHost) return false;
+
+    modal.classList.add("show", "primeVideoOrderFormOpen");
+    modal.classList.remove("netflixOrderFormOpen", "netflixOrderForm", "hboMaxOrderFormOpen");
+    try {
+      if (typeof lockBodyScroll === "function") lockBodyScroll();
+    } catch (_) {}
+
+    formHost.innerHTML = `
+      <div class="mpForm primeVideoOrderForm">
+        <div class="mpFormTitle">${PRIME_TITLE}</div>
+        <p class="primeVideoOrderDesc">${PRIME_DESC}</p>
+        <div class="primeVideoFields">
+          <label class="primeVideoField">
+            <span class="mpLabel">${PRIME_NAME_LABEL}</span>
+            <input id="prime_name" class="mpInput" placeholder="${PRIME_NAME_PLACEHOLDER}" autocomplete="name">
+          </label>
+          <label class="primeVideoField">
+            <span class="mpLabel">${PRIME_CODE_LABEL}</span>
+            <input id="prime_code" class="mpInput" type="text" inputmode="numeric" maxlength="5" pattern="\\d{5}" placeholder="${PRIME_CODE_PLACEHOLDER}" autocomplete="one-time-code">
+          </label>
+        </div>
+        <div class="primeVideoActions">
+          <button id="prime_cancel" type="button" class="mpBtn primeVideoCancel">${HBO_CANCEL_TEXT}</button>
+          <button id="prime_send" type="button" class="mpBtn primeVideoContinue">${HBO_CONTINUE_TEXT}</button>
+        </div>
+      </div>`;
+
+    const nameInput = document.getElementById("prime_name");
+    const codeInput = document.getElementById("prime_code");
+    codeInput?.addEventListener("input", () => {
+      codeInput.value = codeInput.value.replace(/\D/g, "").slice(0, 5);
+    });
+
+    document.getElementById("prime_cancel")?.addEventListener("click", () => {
+      modal.classList.remove("primeVideoOrderFormOpen");
+      if (typeof closeModal === "function") closeModal();
+      else modal.classList.remove("show");
+    });
+
+    document.getElementById("prime_send")?.addEventListener("click", () => {
+      const name = nameInput?.value.trim() || "";
+      const code = codeInput?.value.trim() || "";
+      if (!name) {
+        showOrderToast((typeof UI !== "undefined" && UI.reqName) || HBO_NAME_ERROR);
+        nameInput?.focus();
+        return;
+      }
+      if (!/^\d{5}$/.test(code)) {
+        codeInput?.focus();
+        showOrderToast(PRIME_CODE_ERROR);
+        return;
+      }
+      if (typeof sendWA === "function") {
+        sendWA(product, plan, `${PRIME_NAME_LABEL}: ${name}\n${PRIME_CODE_LABEL}: ${code}`);
+      }
+      modal.classList.remove("primeVideoOrderFormOpen");
       if (typeof closeModal === "function") closeModal();
       else modal.classList.remove("show");
     });
@@ -335,7 +562,11 @@
     if (!button) return;
 
     const product = getCurrentProductSafe();
-    if (getOrderFormBrand(product, product?.flow) !== "hbo") return;
+    const brand = getOrderFormBrand(product, product?.flow);
+    if (brand !== "hbo" && brand !== "prime") {
+      document.getElementById("modal")?.classList.remove("hboMaxOrderFormOpen", "primeVideoOrderFormOpen");
+      return;
+    }
 
     const plan = getSelectedPlanSafe(product);
     if (Number(plan?.price) <= 0) {
@@ -347,6 +578,10 @@
 
     event.preventDefault();
     event.stopImmediatePropagation();
+    if (brand === "prime") {
+      openPrimeVideoOrderForm(product, plan);
+      return;
+    }
     openHboMaxOrderForm(product, plan);
     setTimeout(repairHboMaxModal, 0);
     setTimeout(repairHboMaxModal, 120);
@@ -359,10 +594,17 @@
     installHboMaxModalGuard();
   }
 
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest("#closeModal")) return;
+    document.getElementById("modal")?.classList.remove("hboMaxOrderFormOpen", "primeVideoOrderFormOpen");
+  }, true);
+
   window.mirpanelHboMaxOrderFix = {
     isNetflixProduct,
     isHboMaxProduct,
+    isPrimeVideoProduct,
     getOrderFormBrand,
-    openHboMaxOrderForm
+    openHboMaxOrderForm,
+    openPrimeVideoOrderForm
   };
 })();
