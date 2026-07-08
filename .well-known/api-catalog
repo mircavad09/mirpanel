@@ -1,0 +1,23 @@
+{
+  "name": "Mirpanel",
+  "url": "https://mirpanel.com/",
+  "description": "Mirpanel public site discovery catalog.",
+  "resources": [
+    {
+      "name": "Homepage",
+      "url": "https://mirpanel.com/",
+      "type": "text/html"
+    },
+    {
+      "name": "Sitemap",
+      "url": "https://mirpanel.com/sitemap.xml",
+      "type": "application/xml"
+    },
+    {
+      "name": "Robots",
+      "url": "https://mirpanel.com/robots.txt",
+      "type": "text/plain"
+    }
+  ],
+  "apis": []
+}
