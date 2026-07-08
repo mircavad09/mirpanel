@@ -1,0 +1,12 @@
+{
+  "name": "Mirpanel",
+  "description": "Mirpanel public site agent discovery card.",
+  "url": "https://mirpanel.com/",
+  "homepage": "https://mirpanel.com/",
+  "api_catalog": "https://mirpanel.com/.well-known/api-catalog",
+  "sitemap": "https://mirpanel.com/sitemap.xml",
+  "robots": "https://mirpanel.com/robots.txt",
+  "capabilities": [
+    "public-site-discovery"
+  ]
+}
