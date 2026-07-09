@@ -16,6 +16,7 @@
     "skill": "https://mirpanel.com/auth.md",
     "identity_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
     "claim_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
+    "claim_uri": "https://mirpanel.com/.well-known/oauth-unavailable",
     "events_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
     "registration_methods_supported": [
       "auth.md"
