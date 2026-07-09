@@ -42,6 +42,12 @@
     "supported_identity_types": [
       "anonymous"
     ],
+    "anonymous": {
+      "credential_types_supported": [
+        "claim"
+      ],
+      "claim_uri": "https://mirpanel.com/.well-known/oauth-unavailable"
+    },
     "credential_types_supported": [],
     "identity_assertion": {
       "assertion_types_supported": []
