@@ -13,6 +13,14 @@
     "registration_available": false,
     "register_uri": "https://mirpanel.com/auth.md",
     "skill": "https://mirpanel.com/auth.md",
+    "registration_methods": [
+      {
+        "type": "auth.md",
+        "url": "https://mirpanel.com/auth.md",
+        "available": false,
+        "description": "Mirpanel publishes Auth.md for public discovery. Agent registration is not currently available."
+      }
+    ],
     "supported_identity_types": [],
     "credential_types_supported": [],
     "claim_url": "https://mirpanel.com/.well-known/oauth-unavailable",
