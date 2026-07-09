@@ -3,7 +3,9 @@
   "authorization_servers": [
     "https://mirpanel.com"
   ],
-  "scopes_supported": [],
+  "scopes_supported": [
+    "public_discovery"
+  ],
   "bearer_methods_supported": [],
   "resource_documentation": "https://mirpanel.com/auth.md"
 }
