@@ -1,5 +1,5 @@
 {
   "error": "oauth_not_available",
   "error_description": "Mirpanel does not currently expose protected public APIs for agent OAuth authentication.",
-  "documentation": "https://mirpanel.com/.well-known/api-docs"
+  "documentation": "https://mirpanel.com/auth.md"
 }
