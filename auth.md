@@ -6,6 +6,8 @@ Mirpanel currently exposes public discovery metadata for agents, but does not pr
 
 Public agent OAuth registration is not currently available.
 
+The `public_discovery` scope is a metadata marker for publicly readable discovery documents only. It does not grant protected API access and does not expose private admin endpoints.
+
 ## Public Resources
 
 - Homepage: https://mirpanel.com/
