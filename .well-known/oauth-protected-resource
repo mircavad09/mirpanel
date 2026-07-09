@@ -1,0 +1,9 @@
+{
+  "resource": "https://mirpanel.com/",
+  "authorization_servers": [
+    "https://mirpanel.com"
+  ],
+  "scopes_supported": [],
+  "bearer_methods_supported": [],
+  "resource_documentation": "https://mirpanel.com/.well-known/api-docs"
+}
