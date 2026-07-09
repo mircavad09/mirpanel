@@ -6,6 +6,8 @@
   "scopes_supported": [
     "public_discovery"
   ],
-  "bearer_methods_supported": [],
+  "bearer_methods_supported": [
+    "header"
+  ],
   "resource_documentation": "https://mirpanel.com/auth.md"
 }
