@@ -1,0 +1,5 @@
+{
+  "error": "mcp_not_available",
+  "error_description": "Mirpanel does not currently expose a public MCP transport endpoint.",
+  "documentation": "https://mirpanel.com/auth.md"
+}
