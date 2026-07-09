@@ -1,0 +1,82 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Mirpanel Public Discovery",
+    "version": "1.0.0",
+    "description": "Public discovery endpoints for Mirpanel. Admin, login, token and private API endpoints are intentionally not included."
+  },
+  "servers": [
+    {
+      "url": "https://mirpanel.com"
+    }
+  ],
+  "paths": {
+    "/.well-known/status": {
+      "get": {
+        "summary": "Public service status",
+        "operationId": "getPublicStatus",
+        "responses": {
+          "200": {
+            "description": "Public status response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": { "type": "string" },
+                    "service": { "type": "string" },
+                    "url": { "type": "string", "format": "uri" }
+                  },
+                  "required": ["status", "service", "url"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/api-catalog": {
+      "get": {
+        "summary": "RFC 9264 linkset API catalog",
+        "operationId": "getApiCatalog",
+        "responses": {
+          "200": {
+            "description": "Linkset catalog",
+            "content": {
+              "application/linkset+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "linkset": {
+                      "type": "array",
+                      "items": { "type": "object" }
+                    }
+                  },
+                  "required": ["linkset"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/.well-known/agent-card.json": {
+      "get": {
+        "summary": "Public agent discovery card",
+        "operationId": "getAgentCard",
+        "responses": {
+          "200": {
+            "description": "Public agent card",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
