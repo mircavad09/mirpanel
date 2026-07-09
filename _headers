@@ -1,7 +1,16 @@
 /
-  Link: </.well-known/api-catalog>; rel="api-catalog"; type="application/json", </sitemap.xml>; rel="sitemap"; type="application/xml"
+  Link: </.well-known/api-catalog>; rel="api-catalog"; type="application/linkset+json", </sitemap.xml>; rel="sitemap"; type="application/xml"
 
 /.well-known/api-catalog
+  Content-Type: application/linkset+json; charset=utf-8
+
+/.well-known/openapi.json
+  Content-Type: application/openapi+json; charset=utf-8
+
+/.well-known/api-docs
+  Content-Type: text/markdown; charset=utf-8
+
+/.well-known/status
   Content-Type: application/json; charset=utf-8
 
 /.well-known/agent-card.json
