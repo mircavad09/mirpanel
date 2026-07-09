@@ -5,5 +5,5 @@
   ],
   "scopes_supported": [],
   "bearer_methods_supported": [],
-  "resource_documentation": "https://mirpanel.com/.well-known/api-docs"
+  "resource_documentation": "https://mirpanel.com/auth.md"
 }
