@@ -1,0 +1,53 @@
+{
+  "schemaVersion": "2025-06-18",
+  "serverInfo": {
+    "name": "Mirpanel",
+    "version": "1.0.0"
+  },
+  "description": "Mirpanel public discovery server card. No private admin APIs are exposed.",
+  "homepage": "https://mirpanel.com/",
+  "transports": [
+    {
+      "type": "https",
+      "url": "https://mirpanel.com/.well-known/mcp/unavailable",
+      "description": "MCP transport is not currently available for public agent access."
+    }
+  ],
+  "capabilities": {
+    "tools": false,
+    "resources": true,
+    "prompts": false,
+    "logging": false
+  },
+  "resources": [
+    {
+      "name": "Homepage",
+      "uri": "https://mirpanel.com/",
+      "mimeType": "text/html"
+    },
+    {
+      "name": "API Catalog",
+      "uri": "https://mirpanel.com/.well-known/api-catalog",
+      "mimeType": "application/linkset+json"
+    },
+    {
+      "name": "Agent Card",
+      "uri": "https://mirpanel.com/.well-known/agent-card.json",
+      "mimeType": "application/json"
+    },
+    {
+      "name": "Sitemap",
+      "uri": "https://mirpanel.com/sitemap.xml",
+      "mimeType": "application/xml"
+    },
+    {
+      "name": "Auth Metadata",
+      "uri": "https://mirpanel.com/auth.md",
+      "mimeType": "text/markdown"
+    }
+  ],
+  "security": {
+    "authentication": "none",
+    "notes": "No protected public MCP tools are available. Admin/private APIs are not exposed."
+  }
+}
