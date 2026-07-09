@@ -9,10 +9,14 @@
   "token_endpoint_auth_methods_supported": [],
   "authorization_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
   "token_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
+  "revocation_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
   "agent_auth": {
     "registration_available": false,
     "register_uri": "https://mirpanel.com/auth.md",
     "skill": "https://mirpanel.com/auth.md",
+    "identity_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
+    "claim_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
+    "events_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
     "registration_methods_supported": [
       "auth.md"
     ],
@@ -32,8 +36,17 @@
         "description": "Mirpanel publishes Auth.md for public discovery. Agent registration is not currently available."
       }
     ],
-    "supported_identity_types": [],
+    "identity_types_supported": [
+      "anonymous"
+    ],
+    "supported_identity_types": [
+      "anonymous"
+    ],
     "credential_types_supported": [],
+    "identity_assertion": {
+      "assertion_types_supported": []
+    },
+    "events_supported": [],
     "claim_url": "https://mirpanel.com/.well-known/oauth-unavailable",
     "revocation_url": "https://mirpanel.com/.well-known/oauth-unavailable",
     "documentation": "https://mirpanel.com/auth.md"
