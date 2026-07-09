@@ -1,4 +1,4 @@
-# Mirpanel Agent Authentication
+# Auth.md - Mirpanel Agent Authentication
 
 Mirpanel currently exposes public discovery metadata for agents, but does not provide protected public APIs that require agent OAuth registration.
 
