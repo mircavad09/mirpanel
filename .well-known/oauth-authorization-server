@@ -12,6 +12,7 @@
   "agent_auth": {
     "registration_available": false,
     "register_uri": "https://mirpanel.com/auth.md",
+    "skill": "https://mirpanel.com/auth.md",
     "supported_identity_types": [],
     "credential_types_supported": [],
     "claim_url": "https://mirpanel.com/.well-known/oauth-unavailable",
