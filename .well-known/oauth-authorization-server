@@ -1,10 +1,19 @@
 {
   "issuer": "https://mirpanel.com",
-  "service_documentation": "https://mirpanel.com/.well-known/api-docs",
+  "service_documentation": "https://mirpanel.com/auth.md",
   "scopes_supported": [],
   "response_types_supported": [],
   "grant_types_supported": [],
   "token_endpoint_auth_methods_supported": [],
   "authorization_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
-  "token_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable"
+  "token_endpoint": "https://mirpanel.com/.well-known/oauth-unavailable",
+  "agent_auth": {
+    "registration_available": false,
+    "register_uri": "https://mirpanel.com/auth.md",
+    "supported_identity_types": [],
+    "credential_types_supported": [],
+    "claim_url": "https://mirpanel.com/.well-known/oauth-unavailable",
+    "revocation_url": "https://mirpanel.com/.well-known/oauth-unavailable",
+    "documentation": "https://mirpanel.com/auth.md"
+  }
 }
