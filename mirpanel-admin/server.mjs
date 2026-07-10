@@ -3,7 +3,7 @@ import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { extractAdminState, patchAppSource } from "./core.mjs";
+import { extractAdminState, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(root, "public");
@@ -178,6 +178,118 @@ function bumpAssetVersions(source, version) {
     .replace(/order-confirmation\.js\?v=[^"]+/g, `order-confirmation.js?v=${version}`);
 }
 
+const defaultSeoSlugs = {
+  capcut: "capcut-pro-almaq",
+  netflix: "netflix-sexsi-almaq",
+  netflix_umumi: "netflix-umumi-almaq",
+  spotify: "spotify-premium-almaq",
+  prime: "amazon-prime-video-almaq",
+  hbomax: "hbo-max-almaq",
+  youtube: "youtube-premium-almaq",
+  surfshark: "surfshark-vpn-almaq",
+  tiktok_jeton: "tiktok-jeton-almaq",
+  google_ai: "google-ai-pro-v3-almaq",
+  google_ai_ultra: "google-ai-pro-ultra-almaq",
+  captions: "captions-ai-almaq",
+  grok_supergrok: "super-grok-ai-almaq",
+  claude_ai: "cloud-ai-pro-almaq",
+  zoom: "zoom-pro-almaq",
+  duolingo: "duolingo-super-almaq",
+  canva: "canva-premium-almaq",
+  chatgpt: "chatgpt-plus-almaq",
+  adobecc: "adobe-creative-cloud-almaq"
+};
+
+const defaultSeoAliases = {
+  netflix: ["netflix-almaq", "netflix-aile-almaq"],
+  prime: ["prime-video-almaq"],
+  google_ai: ["gemini-pro-almaq"],
+  google_ai_ultra: ["gemini-ultra-almaq"],
+  grok_supergrok: ["grok-ai-almaq"],
+  claude_ai: ["cloud-ai-max-almaq", "claude-ai-almaq"],
+  canva: ["canva-pro-almaq"],
+  adobecc: ["adobe-cc-almaq"]
+};
+
+function seoSlug(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[əƏ]/g, "e")
+    .replace(/[ıİ]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[üÜ]/g, "u")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function productSeoSlug(product) {
+  return seoSlug(
+    product.seoSlug ||
+    defaultSeoSlugs[product.id] ||
+    `${product.title || product.id}-almaq`
+  );
+}
+
+function activeProductSlugs(products = []) {
+  const slugs = new Set();
+
+  for (const product of products) {
+    if (product.active === false) continue;
+    const slug = productSeoSlug(product);
+    if (slug) slugs.add(slug);
+    for (const alias of defaultSeoAliases[product.id] || []) {
+      const aliasSlug = seoSlug(alias);
+      if (aliasSlug) slugs.add(aliasSlug);
+    }
+  }
+
+  return [...slugs];
+}
+
+function generateSitemap(products = []) {
+  const lastmod = new Date().toISOString().slice(0, 10);
+  const productUrls = activeProductSlugs(products)
+    .map((slug) => `  <url><loc>https://mirpanel.com/${slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>`)
+    .join("\n");
+
+  return `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://mirpanel.com/</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
+${productUrls}
+</urlset>
+`;
+}
+
+function generateRedirects(products = []) {
+  return `${activeProductSlugs(products)
+    .map((slug) => `/${slug} /index.html 200`)
+    .join("\n")}\n`;
+}
+
+async function updateRepoTextFile(filePath, content, message) {
+  const current = await getRepoFile(filePath);
+
+  if (current.source === content) {
+    return "";
+  }
+
+  const result = await github(`/repos/${config.repo}/contents/${filePath}`, {
+    method: "PUT",
+    body: JSON.stringify({
+      message,
+      content: Buffer.from(content, "utf8").toString("base64"),
+      sha: current.sha,
+      branch: config.branch
+    })
+  });
+
+  return result.commit.sha;
+}
+
 function requireAuth(request, response) {
   if (getSession(request)) return true;
   json(response, 401, { error: "Sessiya bitib. Yenidən daxil ol." });
@@ -303,7 +415,8 @@ async function handleApi(request, response) {
       });
     }
 
-    const patched = patchAppSource(current.source, body.data);
+    const adminData = normalizeAdminPayload(body.data);
+    const patched = patchAppSource(current.source, adminData);
 
     const result = await github(`/repos/${config.repo}/contents/app.js`, {
       method: "PUT",
@@ -316,6 +429,23 @@ async function handleApi(request, response) {
     });
 
     let cacheCommitSha = "";
+    let sitemapCommitSha = "";
+    let redirectsCommitSha = "";
+    try {
+      sitemapCommitSha = await updateRepoTextFile(
+        "sitemap.xml",
+        generateSitemap(adminData.products),
+        "Update SEO sitemap from admin panel"
+      );
+      redirectsCommitSha = await updateRepoTextFile(
+        "_redirects",
+        generateRedirects(adminData.products),
+        "Update SEO route redirects from admin panel"
+      );
+    } catch (error) {
+      console.error("SEO route file update failed:", error);
+    }
+
     try {
       const indexFile = await getRepoFile("index.html");
       const version = `admin-${Date.now()}`;
@@ -341,6 +471,8 @@ async function handleApi(request, response) {
       sha: result.content.sha,
       commitSha: result.commit.sha,
       cacheCommitSha,
+      sitemapCommitSha,
+      redirectsCommitSha,
       committedAt: new Date().toISOString()
     });
   }
