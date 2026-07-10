@@ -1,0 +1,12 @@
+{
+  "$schema": "https://agentskills.io/schemas/skills-index-v0.2.json",
+  "skills": [
+    {
+      "name": "mirpanel-public-discovery",
+      "type": "skill",
+      "description": "Read-only public discovery skill for Mirpanel public resources.",
+      "url": "https://mirpanel.com/.well-known/agent-skills/mirpanel-public/SKILL.md",
+      "sha256": "06515a6f00fde1c9045f8e36cc51733abc070e6cfc1442f95d9c4a3ff4291f81"
+    }
+  ]
+}
