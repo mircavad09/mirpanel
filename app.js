@@ -391,7 +391,7 @@ const DATA = {
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "Netflix Ümumi Otaq abunəliyi üçün hazır hesab bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -415,7 +415,7 @@ const DATA = {
       "orderConfirmation": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "Netflix Ümumi Otaq abunəliyi üçün hazır hesab bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
