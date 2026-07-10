@@ -14,6 +14,7 @@ permissions:
 
 jobs:
   fill-product-seo:
+    # Keep this workflow available for one-click SEO data refreshes.
     if: ${{ !contains(github.event.head_commit.message || '', '[skip seo-autofill]') }}
     runs-on: ubuntu-latest
     steps:
