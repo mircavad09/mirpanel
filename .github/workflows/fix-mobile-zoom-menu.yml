@@ -1,0 +1,41 @@
+name: Fix mobile zoom and menu section links
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/fix-mobile-zoom-menu.mjs
+      - .github/workflows/fix-mobile-zoom-menu.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  apply-mobile-menu-fix:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip mobile-menu-fix]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply mobile zoom and menu fixes
+        run: node scripts/fix-mobile-zoom-menu.mjs
+
+      - name: Commit frontend fixes
+        run: |
+          if git diff --quiet -- index.html style.css; then
+            echo "Mobile zoom and menu fixes already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html style.css
+          git commit -m "Apply mobile zoom and menu section fixes [skip mobile-menu-fix]"
+          git push
