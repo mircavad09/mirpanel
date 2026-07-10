@@ -1,0 +1,41 @@
+name: Fill product SEO metadata
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - scripts/fill-product-seo.mjs
+      - .github/workflows/fill-product-seo.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  fill-product-seo:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip seo-autofill]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Fill SEO fields
+        run: node scripts/fill-product-seo.mjs
+
+      - name: Commit SEO data
+        run: |
+          if git diff --quiet -- app.js sitemap.xml _redirects; then
+            echo "SEO metadata already up to date."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js sitemap.xml _redirects
+          git commit -m "Apply product SEO metadata [skip seo-autofill]"
+          git push
