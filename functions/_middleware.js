@@ -67,111 +67,13 @@ const SEO_ROUTES = {
   "/adobe-creative-cloud-almaq": ["Adobe Creative Cloud", "Adobe Creative Cloud almaq | Adobe CC ucuz - Mirpanel", "Adobe Creative Cloud hesabını Azərbaycanda sərfəli qiymətə al. Photoshop, Illustrator, Premiere Pro və digər Adobe proqramları.", "/assets/adobe.png", "9.99"]
 };
 
-function wantsMarkdown(request) {
-  return (request.headers.get("Accept") || "").toLowerCase().includes("text/markdown");
-}
+function wantsMarkdown(request){return(request.headers.get("Accept")||"").toLowerCase().includes("text/markdown")}
+function isStaticAsset(pathname){return STATIC_ASSET_RE.test(pathname)}
+function isHtmlLikePath(pathname){if(pathname==="/"||pathname==="")return true;if(pathname.endsWith("/"))return true;if(pathname.endsWith(".html"))return true;return Boolean(SEO_ROUTES[pathname.replace(/\/+$/,"")||"/"])}
+function estimateTokens(markdown){const words=markdown.trim().split(/\s+/).filter(Boolean).length;return String(Math.max(1,Math.ceil(words*1.35)))}
+function absoluteUrl(path){return new URL(path||"/",BASE_URL).href}
+function escapeHtml(value){return String(value||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;")}
+function withSeoScripts(html){let next=html;if(!next.includes("seo.js?v=20260710-seo-1")){next=next.replace(/<script src="frontend-routing-detail-fix\.js[^>]*><\/script>/i,'<script src="seo.js?v=20260710-seo-1"></script>\n  $&')}if(!next.includes("seo-router.js?v=20260710-seo-1")){next=next.replace(/<script src="frontend-routing-detail-fix\.js[^>]*><\/script>/i,'$&\n  <script src="seo-router.js?v=20260710-seo-1"></script>')}return next}
+function injectMeta(html,route,data){const[name,title,description,imagePath,price]=data;const canonical=`${BASE_URL}${route}`;const image=absoluteUrl(imagePath||DEFAULT_IMAGE);const schema={"@context":"https://schema.org","@type":"Product",name,description,image,brand:{"@type":"Brand",name:"Mirpanel"},offers:{"@type":"Offer",price,priceCurrency:"AZN",availability:"https://schema.org/InStock",url:canonical}};let next=withSeoScripts(html).replace(/<title>[\s\S]*?<\/title>/i,`<title>${escapeHtml(title)}</title>`).replace(/<meta\s+name=["']description["'][^>]*>/i,`<meta name="description" content="${escapeHtml(description)}" />`).replace(/<meta\s+property=["']og:title["'][^>]*>/i,`<meta property="og:title" content="${escapeHtml(title)}" />`).replace(/<meta\s+property=["']og:description["'][^>]*>/i,`<meta property="og:description" content="${escapeHtml(description)}" />`).replace(/<meta\s+property=["']og:image["'][^>]*>/i,`<meta property="og:image" content="${image}" />`).replace(/<meta\s+property=["']og:type["'][^>]*>/i,'<meta property="og:type" content="product" />');if(next.match(/<link\s+rel=["']canonical["'][^>]*>/i)){next=next.replace(/<link\s+rel=["']canonical["'][^>]*>/i,`<link rel="canonical" href="${canonical}" />`)}else{next=next.replace(/<\/head>/i,`<link rel="canonical" href="${canonical}" />\n</head>`)}const extras=`\n<meta property="og:url" content="${canonical}" />\n<meta name="twitter:card" content="summary_large_image" />\n<meta name="twitter:title" content="${escapeHtml(title)}" />\n<meta name="twitter:description" content="${escapeHtml(description)}" />\n<meta name="twitter:image" content="${image}" />\n<script type="application/ld+json" id="mirpanel-edge-product-schema">${JSON.stringify(schema)}</script>`;return next.replace(/<\/head>/i,`${extras}\n</head>`)}
 
-function isStaticAsset(pathname) {
-  return STATIC_ASSET_RE.test(pathname);
-}
-
-function isHtmlLikePath(pathname) {
-  if (pathname === "/" || pathname === "") return true;
-  if (pathname.endsWith("/")) return true;
-  if (pathname.endsWith(".html")) return true;
-  return Boolean(SEO_ROUTES[pathname.replace(/\/+$/, "") || "/"]);
-}
-
-function estimateTokens(markdown) {
-  const words = markdown.trim().split(/\s+/).filter(Boolean).length;
-  return String(Math.max(1, Math.ceil(words * 1.35)));
-}
-
-function absoluteUrl(path) {
-  return new URL(path || "/", BASE_URL).href;
-}
-
-function escapeHtml(value) {
-  return String(value || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
-}
-
-function withSeoScript(html) {
-  if (html.includes("seo.js?v=20260710-seo-1")) return html;
-  return html.replace(/<script src="frontend-routing-detail-fix\.js[^>]*><\/script>/i, '<script src="seo.js?v=20260710-seo-1"></script>\n  $&');
-}
-
-function injectMeta(html, route, data) {
-  const [name, title, description, imagePath, price] = data;
-  const canonical = `${BASE_URL}${route}`;
-  const image = absoluteUrl(imagePath || DEFAULT_IMAGE);
-  const schema = {
-    "@context": "https://schema.org",
-    "@type": "Product",
-    name,
-    description,
-    image,
-    brand: { "@type": "Brand", name: "Mirpanel" },
-    offers: {
-      "@type": "Offer",
-      price,
-      priceCurrency: "AZN",
-      availability: "https://schema.org/InStock",
-      url: canonical
-    }
-  };
-  let next = withSeoScript(html)
-    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHtml(title)}</title>`)
-    .replace(/<meta\s+name=["']description["'][^>]*>/i, `<meta name="description" content="${escapeHtml(description)}" />`)
-    .replace(/<meta\s+property=["']og:title["'][^>]*>/i, `<meta property="og:title" content="${escapeHtml(title)}" />`)
-    .replace(/<meta\s+property=["']og:description["'][^>]*>/i, `<meta property="og:description" content="${escapeHtml(description)}" />`)
-    .replace(/<meta\s+property=["']og:image["'][^>]*>/i, `<meta property="og:image" content="${image}" />`)
-    .replace(/<meta\s+property=["']og:type["'][^>]*>/i, '<meta property="og:type" content="product" />');
-
-  if (next.match(/<link\s+rel=["']canonical["'][^>]*>/i)) {
-    next = next.replace(/<link\s+rel=["']canonical["'][^>]*>/i, `<link rel="canonical" href="${canonical}" />`);
-  } else {
-    next = next.replace(/<\/head>/i, `<link rel="canonical" href="${canonical}" />\n</head>`);
-  }
-
-  const extras = `
-<meta property="og:url" content="${canonical}" />
-<meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="${escapeHtml(title)}" />
-<meta name="twitter:description" content="${escapeHtml(description)}" />
-<meta name="twitter:image" content="${image}" />
-<script type="application/ld+json" id="mirpanel-edge-product-schema">${JSON.stringify(schema)}</script>`;
-  return next.replace(/<\/head>/i, `${extras}\n</head>`);
-}
-
-export async function onRequest(context) {
-  const { request } = context;
-  const url = new URL(request.url);
-  const pathname = url.pathname;
-  const route = pathname.replace(/\/+$/, "") || "/";
-
-  if (isStaticAsset(pathname)) return context.next();
-
-  if (wantsMarkdown(request) && isHtmlLikePath(pathname)) {
-    return new Response(MARKDOWN, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/markdown; charset=utf-8",
-        "Vary": "Accept",
-        "x-markdown-tokens": estimateTokens(MARKDOWN),
-        "Link": "</.well-known/api-catalog>; rel=\"api-catalog\"; type=\"application/json\", </sitemap.xml>; rel=\"sitemap\"; type=\"application/xml\""
-      }
-    });
-  }
-
-  const response = await context.next();
-  const contentType = response.headers.get("Content-Type") || "";
-  if (!contentType.includes("text/html")) return response;
-
-  let html = await response.text();
-  html = SEO_ROUTES[route] ? injectMeta(html, route, SEO_ROUTES[route]) : withSeoScript(html);
-
-  const headers = new Headers(response.headers);
-  headers.set("Content-Type", "text/html; charset=utf-8");
-  headers.append("Vary", "Accept");
-  return new Response(html, { status: response.status, headers });
-}
+export async function onRequest(context){const{request}=context;const url=new URL(request.url);const pathname=url.pathname;const route=pathname.replace(/\/+$/,"")||"/";if(isStaticAsset(pathname))return context.next();if(wantsMarkdown(request)&&isHtmlLikePath(pathname)){return new Response(MARKDOWN,{status:200,headers:{"Content-Type":"text/markdown; charset=utf-8","Vary":"Accept","x-markdown-tokens":estimateTokens(MARKDOWN),"Link":"</.well-known/api-catalog>; rel=\"api-catalog\"; type=\"application/json\", </sitemap.xml>; rel=\"sitemap\"; type=\"application/xml\""}})}const response=await context.next();const contentType=response.headers.get("Content-Type")||"";if(!contentType.includes("text/html"))return response;let html=await response.text();html=SEO_ROUTES[route]?injectMeta(html,route,SEO_ROUTES[route]):withSeoScripts(html);const headers=new Headers(response.headers);headers.set("Content-Type","text/html; charset=utf-8");headers.append("Vary","Accept");return new Response(html,{status:response.status,headers})}
