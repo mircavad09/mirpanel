@@ -2,7 +2,7 @@
 <html lang="az">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Mirpanel — Premium Hesablar</title>
   <meta name="description" content="Netflix, ChatGPT Plus, CapCut Pro, Google AI, Zoom Pro və digər premium hesablar. Sürətli və etibarlı aktivləşmə. Mirpanel." />
   <meta name="theme-color" content="#070707" />
@@ -75,6 +75,102 @@
       .desktopNav { display: none; }
       #menuOpenBtn { display: flex !important; }
     }
+
+    html {
+      touch-action: manipulation;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    .infoSections {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 18px;
+      margin-bottom: 110px;
+    }
+
+    .siteInfoCard {
+      scroll-margin-top: 96px;
+      border: 1px solid rgba(255,212,0,.14);
+      border-radius: 20px;
+      background:
+        radial-gradient(260px 110px at 100% 0%, rgba(255,212,0,.08), transparent 62%),
+        rgba(255,255,255,.035);
+      box-shadow: 0 14px 32px rgba(0,0,0,.22), inset 0 0 0 1px rgba(255,255,255,.025);
+      padding: 20px;
+    }
+
+    .siteInfoCard h2 {
+      margin: 0 0 10px;
+      color: #ffd400;
+      font-size: 18px;
+      line-height: 1.2;
+    }
+
+    .siteInfoCard p,
+    .siteInfoCard li {
+      color: rgba(255,255,255,.76);
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .siteInfoCard p { margin: 0; }
+    .siteInfoCard ul { margin: 0; padding-left: 18px; }
+
+    .siteInfoWaBtn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 14px;
+      padding: 11px 16px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,212,0,.35);
+      background: linear-gradient(135deg, #ffd400, #caa300);
+      color: #070707;
+      font-weight: 800;
+      box-shadow: 0 10px 22px rgba(255,212,0,.14);
+    }
+
+    @media(max-width:640px) {
+      input,
+      textarea,
+      select,
+      .headActions input[type="text"],
+      .side-menu-search input,
+      .side-search,
+      .mpInput,
+      .glass-sort-select,
+      .premiumOrderForm input,
+      .premiumOrderForm textarea,
+      .spotifyLoginOrderForm input,
+      .netflixOrderForm input,
+      .hboMaxOrderForm input,
+      .primeVideoOrderForm input {
+        font-size: 16px !important;
+      }
+
+      .infoSections {
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 12px;
+        margin-bottom: 96px;
+      }
+
+      .siteInfoCard {
+        scroll-margin-top: 78px;
+        border-radius: 16px;
+        padding: 16px;
+      }
+
+      .siteInfoCard h2 { font-size: 16px; }
+
+      .siteInfoCard p,
+      .siteInfoCard li {
+        font-size: 13px;
+        line-height: 1.58;
+      }
+    }
   </style>
 </head>
 
@@ -105,9 +201,9 @@
       <nav class="desktopNav" aria-label="Əsas menyu">
         <a href="#" class="desktopNavLink" data-nav="home" data-i18n="navHome">Ana Səhifə</a>
         <a href="#" class="desktopNavLink" data-nav="products" data-i18n="products">Məhsullar</a>
-        <a href="#about" class="desktopNavLink" data-i18n="about">Haqqımızda</a>
-        <a href="#terms" class="desktopNavLink" data-i18n="terms">Şərtlər</a>
-        <a href="#contact" class="desktopNavLink" data-i18n="contact">Əlaqə</a>
+        <a href="#haqqimizda" class="desktopNavLink" data-section-nav="haqqimizda" data-i18n="about">Haqqımızda</a>
+        <a href="#sertler" class="desktopNavLink" data-section-nav="sertler" data-i18n="terms">Şərtlər</a>
+        <a href="#elaqe" class="desktopNavLink" data-section-nav="elaqe" data-i18n="contact">Əlaqə</a>
       </nav>
 
       <div class="headActions" style="display: flex; gap: 10px; align-items: center;">
@@ -185,6 +281,29 @@
         <div class="grid" id="grid" aria-live="polite"></div>
       </main>
     </div>
+
+    <section class="wrap infoSections" aria-label="Mirpanel məlumat bölmələri">
+      <article class="siteInfoCard" id="haqqimizda">
+        <h2 data-i18n="about">Haqqımızda</h2>
+        <p>Mirpanel premium hesabların sürətli və etibarlı aktivləşdirilməsi üçün xidmət göstərir. Məhsullar WhatsApp üzərindən rahat sifariş olunur və dəstək komandası müştərilərə kömək edir.</p>
+      </article>
+
+      <article class="siteInfoCard" id="sertler">
+        <h2 data-i18n="terms">Şərtlər</h2>
+        <ul>
+          <li>Sifarişdən əvvəl məhsul məlumatlarını diqqətlə oxuyun.</li>
+          <li>Rəqəmsal məhsullarda aktivləşdirmə qaydası məhsula görə dəyişə bilər.</li>
+          <li>Yanlış daxil edilən məlumatlara görə gecikmə yarana bilər.</li>
+          <li>Dəstək WhatsApp üzərindən göstərilir.</li>
+        </ul>
+      </article>
+
+      <article class="siteInfoCard siteInfoContact" id="elaqe">
+        <h2 data-i18n="contact">Əlaqə</h2>
+        <p>WhatsApp: <strong>051 524 35 45</strong></p>
+        <a class="siteInfoWaBtn" href="https://wa.me/994515243545" target="_blank" rel="noopener noreferrer">WhatsApp ilə yaz</a>
+      </article>
+    </section>
 
   </div>
 
@@ -339,15 +458,15 @@
     <ul class="side-menu-links">
       <li><a href="#" class="sm-link" id="linkHome" data-i18n="navHome">Ana Səhifə</a></li>
       <li><a href="#" class="sm-link" id="linkProducts" data-i18n="products">Məhsullar</a></li>
-      <li><a href="#" class="sm-link" data-i18n="about">Haqqımızda</a></li>
-      <li><a href="#" class="sm-link" data-i18n="terms">Şərtlər</a></li>
-      <li><a href="#" class="sm-link" data-i18n="contact">Əlaqə</a></li>
+      <li><a href="#haqqimizda" class="sm-link" data-section-nav="haqqimizda" data-i18n="about">Haqqımızda</a></li>
+      <li><a href="#sertler" class="sm-link" data-section-nav="sertler" data-i18n="terms">Şərtlər</a></li>
+      <li><a href="#elaqe" class="sm-link" data-section-nav="elaqe" data-i18n="contact">Əlaqə</a></li>
     </ul>
   </div>
 
-  <script src="app.js?v=admin-1783723658177"></script>
+  <script src="app.js?v=admin-1783709133847"></script>
   <script src="hbo-max-order-fix.js?v=20260707-prime-video-1"></script>
-  <script src="order-confirmation.js?v=admin-1783723658177"></script>
+  <script src="order-confirmation.js?v=admin-1783709133847"></script>
   <script src="stock-display-fix.js?v=20260704-search-dropdown-1"></script>
   <script src="search-suggestions-fix.js?v=20260704-spotify-flow-1"></script>
   <script src="frontend-routing-detail-fix.js?v=20260610-1"></script>
@@ -409,6 +528,23 @@
       if(sideMenuClose) sideMenuClose.addEventListener("click", closeMenu);
       if(sideMenuOverlay) sideMenuOverlay.addEventListener("click", closeMenu);
 
+      function installZoomLock() {
+        document.addEventListener("gesturestart", (event) => event.preventDefault(), { passive: false });
+        document.addEventListener("gesturechange", (event) => event.preventDefault(), { passive: false });
+        document.addEventListener("touchmove", (event) => {
+          if (event.touches && event.touches.length > 1) event.preventDefault();
+        }, { passive: false });
+
+        let lastTouchEnd = 0;
+        document.addEventListener("touchend", (event) => {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) event.preventDefault();
+          lastTouchEnd = now;
+        }, { passive: false });
+      }
+
+      installZoomLock();
+
       // Linklərə kliklədikdə də menyu bağlansın
       const smLinks = document.querySelectorAll(".sm-link");
       smLinks.forEach(link => {
@@ -458,6 +594,34 @@
           window.scrollTo(0, 0);
         });
       });
+
+      function showHomeForSection(sectionId) {
+        const section = document.getElementById(sectionId);
+        if (!section) return;
+
+        if(productView) productView.style.display = "none";
+        if(homePageView) homePageView.style.display = "block";
+        if(heroSection) heroSection.style.display = "block";
+        if(mainHeader) mainHeader.style.display = "block";
+
+        history.replaceState("", document.title, `/#${sectionId}`);
+        setTimeout(() => {
+          section.scrollIntoView({ behavior: "smooth", block: "start" });
+        }, 60);
+      }
+
+      document.querySelectorAll("[data-section-nav]").forEach((link) => {
+        link.addEventListener("click", (e) => {
+          e.preventDefault();
+          closeMenu();
+          showHomeForSection(link.getAttribute("data-section-nav"));
+        });
+      });
+
+      const initialSection = window.location.hash.replace("#", "");
+      if (["haqqimizda", "sertler", "elaqe"].includes(initialSection)) {
+        setTimeout(() => showHomeForSection(initialSection), 120);
+      }
 
     });
   </script>
