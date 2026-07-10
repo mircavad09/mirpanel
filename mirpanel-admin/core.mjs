@@ -168,6 +168,21 @@ function normalizeStock(value) {
   return Number.isFinite(stock) ? Math.max(0, stock) : null;
 }
 
+function normalizeSeoSlug(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[əƏ]/g, "e")
+    .replace(/[ıİ]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[üÜ]/g, "u")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 const LEGACY_FLOW_FIELDS = {
   name_code_4: [
     { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
@@ -318,6 +333,13 @@ function normalizeProduct(product = {}, index = 0) {
     badge: String(product.badge || ""),
     desc: String(product.desc || ""),
     note: String(product.note || ""),
+    seoSlug: normalizeSeoSlug(product.seoSlug),
+    seoTitle: String(product.seoTitle || ""),
+    seoDescription: String(product.seoDescription || ""),
+    seoKeywords: Array.isArray(product.seoKeywords)
+      ? product.seoKeywords.map((keyword) => String(keyword).trim()).filter(Boolean).join(", ")
+      : String(product.seoKeywords || ""),
+    seoContent: String(product.seoContent || ""),
     flow: String(product.flow || "whatsapp"),
     soldOut,
     active: product.active !== false,
