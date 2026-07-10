@@ -204,6 +204,11 @@ function ensureProduct(product) {
   product.badge = product.badge || "";
   product.desc = product.desc || "";
   product.note = product.note || "";
+  product.seoSlug = product.seoSlug ? slug(product.seoSlug).replaceAll("_", "-") : "";
+  product.seoTitle = product.seoTitle || "";
+  product.seoDescription = product.seoDescription || "";
+  product.seoKeywords = product.seoKeywords || "";
+  product.seoContent = product.seoContent || "";
   product.flow = product.flow || "whatsapp";
   product.soldOut = Boolean(product.soldOut);
   product.active = product.active !== false;
@@ -524,6 +529,14 @@ function renderProductForm() {
   setValue("productBestSeller", product.bestSeller, "checked");
   setValue("productDesc", product.desc);
   setValue("productNote", product.note);
+  setValue("productSeoSlug", product.seoSlug || "");
+  setValue("productSeoTitle", product.seoTitle || "");
+  setValue("productSeoDescription", product.seoDescription || "");
+  setValue(
+    "productSeoKeywords",
+    Array.isArray(product.seoKeywords) ? product.seoKeywords.join(", ") : (product.seoKeywords || "")
+  );
+  setValue("productSeoContent", product.seoContent || "");
   setValue("aboutHtml", state.data.content[product.id]?.aboutHtml || "");
   setValue("rulesHtml", state.data.content[product.id]?.rulesHtml || "");
 
@@ -602,6 +615,11 @@ bindProductField("productSeller", (p, e) => p.seller = e.value);
 bindProductField("productBestSeller", (p, e) => p.bestSeller = e.checked);
 bindProductField("productDesc", (p, e) => p.desc = e.value);
 bindProductField("productNote", (p, e) => p.note = e.value);
+bindProductField("productSeoSlug", (p, e) => p.seoSlug = slug(e.value).replaceAll("_", "-"));
+bindProductField("productSeoTitle", (p, e) => p.seoTitle = e.value);
+bindProductField("productSeoDescription", (p, e) => p.seoDescription = e.value);
+bindProductField("productSeoKeywords", (p, e) => p.seoKeywords = e.value);
+bindProductField("productSeoContent", (p, e) => p.seoContent = e.value);
 bindProductField("aboutHtml", (p, e) => { state.data.content[p.id] ??= {}; state.data.content[p.id].aboutHtml = e.value; });
 bindProductField("rulesHtml", (p, e) => { state.data.content[p.id] ??= {}; state.data.content[p.id].rulesHtml = e.value; });
 
@@ -836,6 +854,11 @@ $("addProductBtn").addEventListener("click", () => {
       currency: "₼",
       title,
       badge: "Premium",
+      seoSlug: slug(`${title}-almaq`).replaceAll("_", "-"),
+      seoTitle: "",
+      seoDescription: "",
+      seoKeywords: "",
+      seoContent: "",
       plans: []
     }));
     state.data.content[id] = { aboutHtml: "", rulesHtml: "" };
