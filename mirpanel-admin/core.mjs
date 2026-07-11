@@ -2,6 +2,7 @@ import vm from "node:vm";
 
 const DATA_MARKER = "const DATA";
 const CONTENT_MARKER = "const ADMIN_CONTENT";
+const SITE_SECTIONS_MARKER = "const SITE_SECTIONS";
 const INFO_MARKER = "const INFO_TEXTS";
 const UI_MARKER = "const UI";
 
@@ -17,12 +18,84 @@ const UI_DEFAULTS = {
   footRights: ""
 };
 
+const SITE_SECTION_DEFAULTS = {
+  haqqimizda: {
+    enabled: true,
+    title: "HaqqД±mД±zda",
+    text: "Mirpanel premium hesablarД±n sГјrЙ™tli vЙ™ etibarlД± aktivlЙ™ЕџdirilmЙ™si ГјГ§Гјn xidmЙ™t gГ¶stЙ™rir. MЙ™hsullar WhatsApp ГјzЙ™rindЙ™n rahat sifariЕџ olunur vЙ™ dЙ™stЙ™k komandasД± mГјЕџtЙ™rilЙ™rЙ™ kГ¶mЙ™k edir.",
+    linkText: "",
+    order: 1
+  },
+  sertler: {
+    enabled: true,
+    title: "ЕћЙ™rtlЙ™r",
+    text: "",
+    items: [
+      "SifariЕџdЙ™n Й™vvЙ™l mЙ™hsul mЙ™lumatlarД±nД± diqqЙ™tlЙ™ oxuyun.",
+      "RЙ™qЙ™msal mЙ™hsullarda aktivlЙ™ЕџdirmЙ™ qaydasД± mЙ™hsula gГ¶rЙ™ dЙ™yiЕџЙ™ bilЙ™r.",
+      "YanlД±Еџ daxil edilЙ™n mЙ™lumatlara gГ¶rЙ™ gecikmЙ™ yarana bilЙ™r.",
+      "DЙ™stЙ™k WhatsApp ГјzЙ™rindЙ™n gГ¶stЙ™rilir."
+    ],
+    order: 2
+  },
+  elaqe: {
+    enabled: true,
+    title: "ЖЏlaqЙ™",
+    whatsappNumber: "051 524 35 45",
+    buttonText: "WhatsApp ilЙ™ yaz",
+    text: "",
+    order: 3
+  }
+};
+
+function normalizeLines(value) {
+  if (Array.isArray(value)) {
+    return value.map((item) => String(item).trim()).filter(Boolean);
+  }
+
+  return String(value || "")
+    .split(/\r?\n/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function normalizeSiteSections(source = {}) {
+  const next = {};
+
+  for (const [key, fallback] of Object.entries(SITE_SECTION_DEFAULTS)) {
+    const item = source[key] || {};
+    next[key] = {
+      ...fallback,
+      ...item,
+      enabled: item.enabled ?? fallback.enabled,
+      title: String(item.title ?? fallback.title),
+      text: String(item.text ?? fallback.text ?? ""),
+      order: Number.isFinite(Number(item.order)) ? Number(item.order) : fallback.order
+    };
+
+    if (key === "haqqimizda") {
+      next[key].linkText = String(item.linkText ?? fallback.linkText ?? "");
+    }
+
+    if (key === "sertler") {
+      next[key].items = normalizeLines(item.items ?? fallback.items);
+    }
+
+    if (key === "elaqe") {
+      next[key].whatsappNumber = String(item.whatsappNumber ?? fallback.whatsappNumber);
+      next[key].buttonText = String(item.buttonText ?? fallback.buttonText);
+    }
+  }
+
+  return next;
+}
+
 function findObjectBlock(source, marker) {
   const markerStart = source.indexOf(marker);
-  if (markerStart < 0) throw new Error(`${marker} tapılmadı.`);
+  if (markerStart < 0) throw new Error(`${marker} tapД±lmadД±.`);
 
   const start = source.indexOf("{", markerStart);
-  if (start < 0) throw new Error(`${marker} bloku tapılmadı.`);
+  if (start < 0) throw new Error(`${marker} bloku tapД±lmadД±.`);
 
   let depth = 0;
   let quote = "";
@@ -93,7 +166,7 @@ function findObjectBlock(source, marker) {
     }
   }
 
-  throw new Error(`${marker} bloku bağlanmayıb.`);
+  throw new Error(`${marker} bloku baДџlanmayД±b.`);
 }
 
 function evaluateObject(source, marker, fallback) {
@@ -172,32 +245,32 @@ function normalizeSeoSlug(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
-    .replace(/[əƏ]/g, "e")
-    .replace(/[ıİ]/g, "i")
-    .replace(/[öÖ]/g, "o")
-    .replace(/[üÜ]/g, "u")
-    .replace(/[şŞ]/g, "s")
-    .replace(/[çÇ]/g, "c")
-    .replace(/[ğĞ]/g, "g")
+    .replace(/[Й™ЖЏ]/g, "e")
+    .replace(/[Д±Д°]/g, "i")
+    .replace(/[Г¶Г–]/g, "o")
+    .replace(/[ГјГњ]/g, "u")
+    .replace(/[ЕџЕћ]/g, "s")
+    .replace(/[Г§Г‡]/g, "c")
+    .replace(/[ДџДћ]/g, "g")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
 
 const LEGACY_FLOW_FIELDS = {
   name_code_4: [
-    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
-    { key: "code_4", type: "text", label: "4 rəqəmli kod / PIN", placeholder: "4 rəqəmli kod yazın", required: true, enabled: true }
+    { key: "name", type: "text", label: "Ad", placeholder: "AdД±nД±zД± yazД±n", required: true, enabled: true },
+    { key: "code_4", type: "text", label: "4 rЙ™qЙ™mli kod / PIN", placeholder: "4 rЙ™qЙ™mli kod yazД±n", required: true, enabled: true }
   ],
   name_code_5: [
-    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
-    { key: "code_5", type: "text", label: "5 rəqəmli kod / PIN", placeholder: "5 rəqəmli kod yazın", required: true, enabled: true }
+    { key: "name", type: "text", label: "Ad", placeholder: "AdД±nД±zД± yazД±n", required: true, enabled: true },
+    { key: "code_5", type: "text", label: "5 rЙ™qЙ™mli kod / PIN", placeholder: "5 rЙ™qЙ™mli kod yazД±n", required: true, enabled: true }
   ],
   email: [
-    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true }
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ГјnvanД±nД±zД± yazД±n", required: true, enabled: true }
   ],
   spotify: [
-    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
-    { key: "password", type: "password", label: "Şifrə", placeholder: "Şifrənizi yazın", required: true, enabled: true }
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ГјnvanД±nД±zД± yazД±n", required: true, enabled: true },
+    { key: "password", type: "password", label: "ЕћifrЙ™", placeholder: "ЕћifrЙ™nizi yazД±n", required: true, enabled: true }
   ]
 };
 
@@ -241,7 +314,7 @@ function normalizeFormField(field = {}, index = 0) {
   return {
     key: key || `custom_${index + 1}`,
     type: FIELD_TYPES.has(field.type) ? field.type : "text",
-    label: String(field.label || field.key || `Sahə ${index + 1}`),
+    label: String(field.label || field.key || `SahЙ™ ${index + 1}`),
     placeholder: String(field.placeholder || ""),
     required: Boolean(field.required),
     enabled: field.enabled !== false
@@ -267,11 +340,11 @@ function normalizeWhatsApp(source = {}) {
 function defaultOrderConfirmation() {
   return {
     enabled: false,
-    title: "Sifarişi təsdiqləyin",
+    title: "SifariЕџi tЙ™sdiqlЙ™yin",
     description: "",
-    confirmText: "Təsdiqləyirəm",
-    cancelText: "Ləğv et",
-    footerText: "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+    confirmText: "TЙ™sdiqlЙ™yirЙ™m",
+    cancelText: "LЙ™Дџv et",
+    footerText: "SifariЕџi tЙ™sdiqlЙ™dikdЙ™ WhatsApp avtomatik aГ§Д±lacaq.",
     helpLink: {
       enabled: false,
       label: "",
@@ -286,7 +359,7 @@ function normalizeOrderConfirmation(source = {}, id = "") {
   const helpUrl = String(helpSource.url || "").trim();
 
   if (helpUrl && !helpUrl.startsWith("https://")) {
-    throw new Error(`${id}: kömək linki yalnız https:// ilə başlamalıdır.`);
+    throw new Error(`${id}: kГ¶mЙ™k linki yalnД±z https:// ilЙ™ baЕџlamalД±dД±r.`);
   }
 
   return {
@@ -308,7 +381,7 @@ function normalizeProduct(product = {}, index = 0) {
   const id = String(product.id || "").trim();
 
   if (!id) {
-    throw new Error("Boş məhsul ID-si var.");
+    throw new Error("BoЕџ mЙ™hsul ID-si var.");
   }
 
   const confirmationModal = normalizeOrderConfirmation(
@@ -327,7 +400,7 @@ function normalizeProduct(product = {}, index = 0) {
     order: Number.isFinite(Number(product.order)) ? Number(product.order) : index,
     category: String(product.category || "all"),
     image: String(product.image || "assets/your.png"),
-    currency: String(product.currency || "₼"),
+    currency: String(product.currency || "в‚ј"),
     title: String(product.title || id),
     variant: String(product.variant || ""),
     badge: String(product.badge || ""),
@@ -382,7 +455,7 @@ export function normalizeAdminPayload(payload = {}) {
 
   for (const product of products) {
     if (ids.has(product.id)) {
-      throw new Error(`Təkrar məhsul ID-si: ${product.id}`);
+      throw new Error(`TЙ™krar mЙ™hsul ID-si: ${product.id}`);
     }
 
     ids.add(product.id);
@@ -409,6 +482,7 @@ export function normalizeAdminPayload(payload = {}) {
     categories,
     products,
     content,
+    siteSections: normalizeSiteSections(payload.siteSections),
     ui: Object.fromEntries(
       Object.keys(UI_DEFAULTS).map((key) => [
         key,
@@ -430,6 +504,7 @@ export function extractAdminState(source) {
   const overrides = evaluateObject(source, CONTENT_MARKER, {});
   const infoTexts = evaluateObject(source, INFO_MARKER, {});
   const ui = evaluateObject(source, UI_MARKER, {});
+  const siteSections = evaluateObject(source, SITE_SECTIONS_MARKER, SITE_SECTION_DEFAULTS);
   const products = (data.products || []).map(normalizeProduct);
   const content = {};
 
@@ -450,12 +525,83 @@ export function extractAdminState(source) {
     categories: data.categories,
     products,
     content,
+    siteSections,
     ui
   });
 }
 
 function patchRuntimeHooks(source) {
   let next = source;
+
+  if (!next.includes("function renderSiteSectionsFromAdmin()")) {
+    const helper = `function escapeSectionHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function whatsappHrefFromSectionNumber(number) {
+  const digits = String(number || "").replace(/\\D/g, "");
+  if (!digits) return PHONE_WA;
+  const normalized = digits.startsWith("0") ? \`994\${digits.slice(1)}\` : digits;
+  return \`https://wa.me/\${normalized}\`;
+}
+
+function renderSiteSectionsFromAdmin() {
+  const container = document.getElementById("siteInfoSections") || document.querySelector(".infoSections");
+  if (!container) return;
+
+  const sections = SITE_SECTIONS || {};
+  const visible = Object.entries(sections)
+    .filter(([, section]) => section?.enabled !== false)
+    .sort((a, b) => (Number(a[1]?.order) || 0) - (Number(b[1]?.order) || 0));
+
+  container.innerHTML = visible.map(([key, section]) => {
+    const title = escapeSectionHtml(section.title || "");
+    const text = escapeSectionHtml(section.text || "").replace(/\\n/g, "<br>");
+
+    if (key === "sertler") {
+      const items = Array.isArray(section.items) ? section.items : [];
+      const list = items.map((item) => \`<li>\${escapeSectionHtml(item)}</li>\`).join("");
+      return \`<article class="siteInfoCard" id="sertler"><h2>\${title}</h2>\${text ? \`<p>\${text}</p>\` : ""}\${list ? \`<ul>\${list}</ul>\` : ""}</article>\`;
+    }
+
+    if (key === "elaqe") {
+      const number = escapeSectionHtml(section.whatsappNumber || "");
+      const buttonText = escapeSectionHtml(section.buttonText || "WhatsApp ilЙ™ yaz");
+      const href = whatsappHrefFromSectionNumber(section.whatsappNumber);
+      return \`<article class="siteInfoCard siteInfoContact" id="elaqe"><h2>\${title}</h2>\${text ? \`<p>\${text}</p>\` : ""}<p>WhatsApp: <strong>\${number}</strong></p><a class="siteInfoWaBtn" href="\${href}" target="_blank" rel="noopener noreferrer">\${buttonText}</a></article>\`;
+    }
+
+    const linkText = escapeSectionHtml(section.linkText || "");
+    return \`<article class="siteInfoCard" id="haqqimizda"><h2>\${title}</h2>\${text ? \`<p>\${text}</p>\` : ""}\${linkText ? \`<p class="siteInfoLinkText">\${linkText}</p>\` : ""}</article>\`;
+  }).join("");
+
+  ["haqqimizda", "sertler", "elaqe"].forEach((id) => {
+    const isVisible = visible.some(([key]) => key === id);
+    document.querySelectorAll(\`[data-section-nav="\${id}"]\`).forEach((link) => {
+      link.style.display = isVisible ? "" : "none";
+    });
+  });
+}
+
+`;
+
+    if (next.includes("function applyAdminHomepageSettings()")) {
+      next = next.replace("function applyAdminHomepageSettings() {", `${helper}function applyAdminHomepageSettings() {`);
+    } else {
+      next = next.replace("function setupUI() {", `${helper}function setupUI() {`);
+    }
+  }
+
+  if (!next.includes("renderSiteSectionsFromAdmin();")) {
+    next = next.replace(
+      "  applyAdminHomepageSettings();",
+      "  applyAdminHomepageSettings();\n  renderSiteSectionsFromAdmin();"
+    );
+  }
 
   if (!next.includes("function applyAdminHomepageSettings()")) {
     next = next.replace(
@@ -505,14 +651,14 @@ function setupUI() {
     next = next.replace(
       `    if (tabName === "tab-about") {
       const info = INFO_TEXTS[p.id];
-      cBox.innerHTML = (info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>Sifariş etmək üçün WhatsApp-a yönləndiriləcəksiniz.</p>\`;
+      cBox.innerHTML = (info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>SifariЕџ etmЙ™k ГјГ§Гјn WhatsApp-a yГ¶nlЙ™ndirilЙ™cЙ™ksiniz.</p>\`;
     } 
     else if (tabName === "tab-rules") {`,
       `    const adminContent = ADMIN_CONTENT[p.id] || {};
 
     if (tabName === "tab-about") {
       const info = INFO_TEXTS[p.id];
-      cBox.innerHTML = adminContent.aboutHtml || ((info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>Sifariş etmək üçün WhatsApp-a yönləndiriləcəksiniz.</p>\`);
+      cBox.innerHTML = adminContent.aboutHtml || ((info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>SifariЕџ etmЙ™k ГјГ§Гјn WhatsApp-a yГ¶nlЙ™ndirilЙ™cЙ™ksiniz.</p>\`);
     } 
     else if (tabName === "tab-rules") {`
     );
@@ -556,6 +702,8 @@ export function patchAppSource(source, payload) {
     ...evaluateObject(next, UI_MARKER, {}),
     ...admin.ui
   });
+
+  next = replaceObjectDeclaration(next, SITE_SECTIONS_MARKER, admin.siteSections, CONTENT_MARKER);
 
   next = replaceObjectDeclaration(next, CONTENT_MARKER, admin.content, INFO_MARKER);
 
