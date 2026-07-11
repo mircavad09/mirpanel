@@ -4,6 +4,14 @@
 /auth.md
   Content-Type: text/markdown; charset=utf-8
 
+/site-sections-render.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Type: text/javascript; charset=utf-8
+
+/admin-stock-save-fix.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Type: text/javascript; charset=utf-8
+
 /.well-known/api-catalog
   Content-Type: application/linkset+json; charset=utf-8
 
