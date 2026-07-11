@@ -3,7 +3,7 @@ name: Fix mobile zoom and menu section links
 on:
   push:
     branches:
-      - main
+      - codex/admin-managed-site-sections
     paths:
       - scripts/fix-mobile-zoom-menu.mjs
       - .github/workflows/fix-mobile-zoom-menu.yml
@@ -20,22 +20,23 @@ jobs:
       - uses: actions/checkout@v4
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ github.ref_name }}
 
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Apply mobile zoom and menu fixes
+      - name: Apply admin-managed site sections
         run: node scripts/fix-mobile-zoom-menu.mjs
 
-      - name: Commit frontend fixes
+      - name: Commit admin-managed site section fixes
         run: |
-          if git diff --quiet -- index.html style.css; then
-            echo "Mobile zoom and menu fixes already up to date."
+          if git diff --quiet -- app.js index.html mirpanel-admin/core.mjs mirpanel-admin/public/admin.html mirpanel-admin/public/admin.js; then
+            echo "Admin-managed site sections already up to date."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add index.html style.css
-          git commit -m "Apply mobile zoom and menu section fixes [skip mobile-menu-fix]"
-          git push
+          git add app.js index.html mirpanel-admin/core.mjs mirpanel-admin/public/admin.html mirpanel-admin/public/admin.js
+          git commit -m "Apply admin-managed site sections [skip mobile-menu-fix]"
+          git push origin HEAD:${{ github.ref_name }}
