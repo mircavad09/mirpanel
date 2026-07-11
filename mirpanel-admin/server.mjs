@@ -503,15 +503,23 @@ function serveFile(response, name) {
 
 const server = http.createServer(async (request, response) => {
   try {
-    if (request.url.startsWith("/api/")) {
+    const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+    const pathname = requestUrl.pathname;
+
+    if (pathname.startsWith("/api/")) {
       return await handleApi(request, response);
     }
 
-    if (request.url === "/" || request.url === "/login.html") {
+    if (pathname === "/" || pathname === "/login.html") {
       return serveFile(response, "login.html");
     }
 
-    if (request.url === "/admin.html") {
+    if (pathname === "/admin") {
+      response.writeHead(302, { Location: "/admin.html" });
+      return response.end();
+    }
+
+    if (pathname === "/admin.html") {
       if (!getSession(request)) {
         response.writeHead(302, { Location: "/login.html" });
         return response.end();
@@ -520,8 +528,8 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/login.js"].includes(request.url)) {
-      return serveFile(response, request.url.slice(1));
+    if (["/admin.css", "/admin.js", "/login.js"].includes(pathname)) {
+      return serveFile(response, pathname.slice(1));
     }
 
     return json(response, 404, { error: "Səhifə tapılmadı." });
