@@ -184,9 +184,26 @@ function productTitle(product) {
   return String(product?.seoTitle || `${name} almaq | Mirpanel`);
 }
 
+function productReviewBody(product) {
+  const text = `${product?.id || ""} ${product?.title || ""}`.toLowerCase();
+  if (text.includes("netflix")) return "Netflix sifarişi rahat tamamlandı və aktivləşdirmə sürətli edildi.";
+  if (text.includes("spotify")) return "Spotify Premium sifarişi rahat tamamlandı və hesab aktivləşdirildi.";
+  if (text.includes("capcut")) return "CapCut Pro sifarişi rahat tamamlandı və aktivləşdirmə sürətli edildi.";
+  if (text.includes("youtube")) return "YouTube Premium sifarişi rahat tamamlandı və xidmət aktivləşdirildi.";
+  if (text.includes("prime") || text.includes("amazon")) return "Amazon Prime Video sifarişi rahat tamamlandı və aktivləşdirmə sürətli edildi.";
+  if (text.includes("hbo")) return "HBO Max sifarişi rahat tamamlandı və xidmət aktivləşdirildi.";
+  if (text.includes("zoom")) return "Zoom Pro sifarişi rahat tamamlandı və aktivləşdirmə sürətli edildi.";
+  if (text.includes("canva")) return "Canva Premium sifarişi rahat tamamlandı və xidmət aktivləşdirildi.";
+  if (text.includes("chatgpt")) return "ChatGPT Plus sifarişi rahat tamamlandı və aktivləşdirmə sürətli edildi.";
+  return DEFAULT_REVIEW_BODY;
+}
+
 function productReview(product) {
-  const ratingValue = Number(product?.aggregateRating?.ratingValue ?? product?.ratingValue ?? 4.9);
-  const reviewCount = Number(product?.aggregateRating?.reviewCount ?? product?.reviewCount ?? 127);
+  const aggregate = product?.aggregateRating || {};
+  const ratingValue = Number(aggregate.ratingValue ?? product?.ratingValue ?? 4.9);
+  const reviewCount = Number(aggregate.reviewCount ?? product?.reviewCount ?? 127);
+  const bestRating = String(aggregate.bestRating ?? product?.bestRating ?? 5);
+  const worstRating = String(aggregate.worstRating ?? product?.worstRating ?? 1);
   const review = Array.isArray(product?.review) ? product.review[0] : product?.review;
 
   return {
@@ -194,24 +211,26 @@ function productReview(product) {
       "@type": "AggregateRating",
       ratingValue: Number.isFinite(ratingValue) ? String(ratingValue) : "4.9",
       reviewCount: Number.isFinite(reviewCount) ? String(Math.max(1, Math.round(reviewCount))) : "127",
-      bestRating: "5",
-      worstRating: "1"
+      bestRating,
+      worstRating
     },
-    review: {
-      "@type": "Review",
-      author: {
-        "@type": "Person",
-        name: review?.author?.name || review?.author || "Mirpanel müştərisi"
-      },
-      reviewRating: {
-        "@type": "Rating",
-        ratingValue: String(review?.reviewRating?.ratingValue || review?.ratingValue || 5),
-        bestRating: "5",
-        worstRating: "1"
-      },
-      reviewBody: review?.reviewBody || review?.body || DEFAULT_REVIEW_BODY,
-      datePublished: review?.datePublished || DEFAULT_REVIEW_DATE
-    }
+    review: [
+      {
+        "@type": "Review",
+        author: {
+          "@type": "Person",
+          name: review?.author?.name || review?.author || "Mirpanel müştərisi"
+        },
+        datePublished: review?.datePublished || DEFAULT_REVIEW_DATE,
+        reviewBody: review?.reviewBody || review?.body || productReviewBody(product),
+        reviewRating: {
+          "@type": "Rating",
+          ratingValue: String(review?.reviewRating?.ratingValue || review?.ratingValue || 5),
+          bestRating: String(review?.reviewRating?.bestRating || 5),
+          worstRating: String(review?.reviewRating?.worstRating || 1)
+        }
+      }
+    ]
   };
 }
 
@@ -282,8 +301,8 @@ function withSeoScripts(html) {
   if (!next.includes("site-sections-render.js?v=20260711-sections-1")) {
     next = next.replace(/<script src="app\.js[^>]*><\/script>/i, '$&\n  <script src="site-sections-render.js?v=20260711-sections-1"></script>');
   }
-  if (!next.includes("seo-structured-data-fix.js?v=20260711-rating-1")) {
-    next = next.replace(/<script src="seo\.js[^>]*><\/script>/i, '$&\n  <script src="seo-structured-data-fix.js?v=20260711-rating-1"></script>');
+  if (!next.includes("seo-structured-data-fix.js?v=20260713-rating-2")) {
+    next = next.replace(/<script src="seo\.js[^>]*><\/script>/i, '$&\n  <script src="seo-structured-data-fix.js?v=20260713-rating-2"></script>');
   }
   return next;
 }
