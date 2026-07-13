@@ -211,6 +211,12 @@ const defaultSeoAliases = {
   adobecc: ["adobe-cc-almaq"]
 };
 
+const defaultSitePageSlugs = {
+  haqqimizda: "haqqimizda",
+  sertler: "sertler",
+  elaqe: "elaqe"
+};
+
 function seoSlug(value) {
   return String(value || "")
     .trim()
@@ -250,24 +256,44 @@ function activeProductSlugs(products = []) {
   return [...slugs];
 }
 
-function generateSitemap(products = []) {
+function activeSitePageSlugs(siteSections = {}) {
+  const slugs = new Set();
+
+  for (const [key, fallbackSlug] of Object.entries(defaultSitePageSlugs)) {
+    const page = siteSections?.[key] || {};
+    if (page.enabled === false) continue;
+    const slug = seoSlug(page.slug || fallbackSlug);
+    if (slug) slugs.add(slug);
+  }
+
+  return [...slugs];
+}
+
+function generateSitemap(products = [], siteSections = {}) {
   const lastmod = new Date().toISOString().slice(0, 10);
+  const sitePageUrls = activeSitePageSlugs(siteSections)
+    .map((slug) => `  <url><loc>https://mirpanel.com/${slug}</loc><lastmod>${lastmod}</lastmod><changefreq>monthly</changefreq><priority>0.7</priority></url>`)
+    .join("\n");
   const productUrls = activeProductSlugs(products)
     .map((slug) => `  <url><loc>https://mirpanel.com/${slug}</loc><lastmod>${lastmod}</lastmod><changefreq>weekly</changefreq><priority>0.9</priority></url>`)
     .join("\n");
+  const urls = [sitePageUrls, productUrls].filter(Boolean).join("\n");
 
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://mirpanel.com/</loc><lastmod>${lastmod}</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
-${productUrls}
+${urls}
 </urlset>
 `;
 }
 
-function generateRedirects(products = []) {
-  return `${activeProductSlugs(products)
-    .map((slug) => `/${slug} /index.html 200`)
-    .join("\n")}\n`;
+function generateRedirects(products = [], siteSections = {}) {
+  const sitePageRoutes = activeSitePageSlugs(siteSections)
+    .flatMap((slug) => [`/${slug} /index.html 200`, `/${slug}/ /index.html 200`]);
+  const productRoutes = activeProductSlugs(products)
+    .map((slug) => `/${slug} /index.html 200`);
+
+  return `${[...sitePageRoutes, ...productRoutes].join("\n")}\n`;
 }
 
 async function updateRepoTextFile(filePath, content, message) {
@@ -434,12 +460,12 @@ async function handleApi(request, response) {
     try {
       sitemapCommitSha = await updateRepoTextFile(
         "sitemap.xml",
-        generateSitemap(adminData.products),
+        generateSitemap(adminData.products, adminData.siteSections),
         "Update SEO sitemap from admin panel"
       );
       redirectsCommitSha = await updateRepoTextFile(
         "_redirects",
-        generateRedirects(adminData.products),
+        generateRedirects(adminData.products, adminData.siteSections),
         "Update SEO route redirects from admin panel"
       );
     } catch (error) {
@@ -528,7 +554,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/login.js"].includes(pathname)) {
+    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 
