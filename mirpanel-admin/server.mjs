@@ -217,6 +217,12 @@ const defaultSitePageSlugs = {
   elaqe: "elaqe"
 };
 
+const adminRedirects = [
+  "/admin https://mirpanel-admin.onrender.com/ 302",
+  "/admin.html https://mirpanel-admin.onrender.com/ 302",
+  "/admin/* https://mirpanel-admin.onrender.com/:splat 302"
+];
+
 function seoSlug(value) {
   return String(value || "")
     .trim()
@@ -293,7 +299,7 @@ function generateRedirects(products = [], siteSections = {}) {
   const productRoutes = activeProductSlugs(products)
     .map((slug) => `/${slug} /index.html 200`);
 
-  return `${[...sitePageRoutes, ...productRoutes].join("\n")}\n`;
+  return `${[...adminRedirects, ...sitePageRoutes, ...productRoutes].join("\n")}\n`;
 }
 
 async function updateRepoTextFile(filePath, content, message) {
