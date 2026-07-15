@@ -2056,7 +2056,7 @@ const DATA = {
       "category": "all",
       "image": "assets/chatgpt.png",
       "currency": "₼",
-      "title": "Chatgpt Plus (Ortaq hesab0",
+      "title": "ChatGPT Plus (Ortaq hesab)",
       "variant": "",
       "badge": "Premium",
       "desc": "",
