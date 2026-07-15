@@ -1354,7 +1354,7 @@ const DATA = {
       "category": "ai",
       "image": "assets/chatgpt.png",
       "currency": "₼",
-      "title": "ChatGPT Plus",
+      "title": "ChatGPT Plus (Şəxsi hesab)",
       "variant": "Plus",
       "badge": "AI",
       "desc": "Daha güclü model, fayl/şəkil imkanları.",
