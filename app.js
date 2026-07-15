@@ -2093,7 +2093,13 @@ const DATA = {
         "includeSeller": false,
         "includeStock": false
       },
-      "plans": [],
+      "plans": [
+        {
+          "label": "1 ayliq",
+          "months": 1,
+          "price": 8.99
+        }
+      ],
       "orderConfirmation": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
