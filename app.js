@@ -1414,7 +1414,7 @@ const DATA = {
     },
     {
       "id": "adobecc",
-      "order": 18,
+      "order": 19,
       "category": "dizayn",
       "image": "assets/adobe.png",
       "currency": "₼",
@@ -2036,6 +2036,64 @@ const DATA = {
           "price": 14.99
         }
       ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "chatgpt_ortaq",
+      "order": 18,
+      "category": "all",
+      "image": "assets/chatgpt.png",
+      "currency": "₼",
+      "title": "Chatgpt Plus (Ortaq hesab0",
+      "variant": "",
+      "badge": "Premium",
+      "desc": "",
+      "note": "",
+      "seoSlug": "chatgpt-plus-ortaq-hesab0-almaq",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [],
       "orderConfirmation": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
