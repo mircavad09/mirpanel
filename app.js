@@ -1288,15 +1288,24 @@ const DATA = {
       "seoDescription": "Canva Premium və Canva Pro hesabını sərfəli qiymətə əldə et. Dizayn üçün premium alətlər Mirpanel-də.",
       "seoKeywords": "Canva Premium almaq, Canva Pro almaq, Canva ucuz, Canva Azərbaycan, Canva hesab almaq, Canva Pro hesab, Canva dizayn hesabı, Kanva almaq",
       "seoContent": "Canva Premium dizayn hazırlamaq, sosial media postları və təqdimatlar yaratmaq üçün premium imkanlar təqdim edir. Mirpanel Canva Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat seçimdir. Aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "flow": "whatsapp",
+      "flow": "email",
       "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
+      "orderFlow": "form_then_whatsapp",
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email / Gmail",
+          "placeholder": "Gmail ünvanınızı yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2047,6 +2056,53 @@ const DATA = {
 /* =========================
    MƏHSUL HAQQINDA BÖLMƏSİ (INFO_TEXTS)
    ========================= */
+const SITE_SECTIONS = {
+  "haqqimizda": {
+    "enabled": true,
+    "title": "HaqqД±mД±zda",
+    "text": "Mirpanel premium hesablarД±n sГјrЙ™tli vЙ™ etibarlД± aktivlЙ™ЕџdirilmЙ™si ГјГ§Гјn xidmЙ™t gГ¶stЙ™rir. MЙ™hsullar WhatsApp ГјzЙ™rindЙ™n rahat sifariЕџ olunur vЙ™ dЙ™stЙ™k komandasД± mГјЕџtЙ™rilЙ™rЙ™ kГ¶mЙ™k edir.",
+    "linkText": "",
+    "order": 1,
+    "slug": "haqqimizda",
+    "subtitle": "Mirpanel haqqında qısa məlumat",
+    "body": "Mirpanel premium hesablarД±n sГјrЙ™tli vЙ™ etibarlД± aktivlЙ™ЕџdirilmЙ™si ГјГ§Гјn xidmЙ™t gГ¶stЙ™rir. MЙ™hsullar WhatsApp ГјzЙ™rindЙ™n rahat sifariЕџ olunur vЙ™ dЙ™stЙ™k komandasД± mГјЕџtЙ™rilЙ™rЙ™ kГ¶mЙ™k edir.",
+    "blocks": [],
+    "seoTitle": "Haqqımızda | Mirpanel",
+    "seoDescription": "Mirpanel premium hesabların sürətli və etibarlı aktivləşdirilməsi üçün xidmət göstərir."
+  },
+  "sertler": {
+    "enabled": true,
+    "title": "ЕћЙ™rtlЙ™r",
+    "text": "",
+    "items": [
+      "SifariЕџdЙ™n Й™vvЙ™l mЙ™hsul mЙ™lumatlarД±nД± diqqЙ™tlЙ™ oxuyun.",
+      "RЙ™qЙ™msal mЙ™hsullarda aktivlЙ™ЕџdirmЙ™ qaydasД± mЙ™hsula gГ¶rЙ™ dЙ™yiЕџЙ™ bilЙ™r.",
+      "YanlД±Еџ daxil edilЙ™n mЙ™lumatlara gГ¶rЙ™ gecikmЙ™ yarana bilЙ™r.",
+      "DЙ™stЙ™k WhatsApp ГјzЙ™rindЙ™n gГ¶stЙ™rilir."
+    ],
+    "order": 2,
+    "slug": "sertler",
+    "subtitle": "Sifariş və istifadə şərtləri",
+    "body": "",
+    "seoTitle": "Şərtlər | Mirpanel",
+    "seoDescription": "Mirpanel sifariş və istifadə şərtləri."
+  },
+  "elaqe": {
+    "enabled": true,
+    "title": "ЖЏlaqЙ™",
+    "whatsappNumber": "051 524 35 45",
+    "buttonText": "WhatsApp ilЙ™ yaz",
+    "text": "",
+    "order": 3,
+    "slug": "elaqe",
+    "subtitle": "Mirpanel dəstək komandası ilə əlaqə",
+    "body": "",
+    "workHours": "Dəstək WhatsApp üzərindən göstərilir.",
+    "seoTitle": "Əlaqə | Mirpanel",
+    "seoDescription": "Mirpanel ilə WhatsApp üzərindən əlaqə saxlayın."
+  }
+};
+
 const ADMIN_CONTENT = {
   "capcut": {
     "aboutHtml": "<h3 style=\"color:#ffd400; margin-top:0;\">CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3 style=\"color:#ffd400; margin-top:15px;\">Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3 style=\"color:#ffd400; margin-top:15px;\">CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3 style=\"color:#ffd400; margin-top:15px;\">CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
@@ -2698,6 +2754,59 @@ function initSlider() {
 
 const $ = (id) => document.getElementById(id);
 
+function escapeSectionHtml(value) {
+  return String(value ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function whatsappHrefFromSectionNumber(number) {
+  const digits = String(number || "").replace(/\D/g, "");
+  if (!digits) return PHONE_WA;
+  const normalized = digits.startsWith("0") ? `994${digits.slice(1)}` : digits;
+  return `https://wa.me/${normalized}`;
+}
+
+function renderSiteSectionsFromAdmin() {
+  const container = document.getElementById("siteInfoSections") || document.querySelector(".infoSections");
+  if (!container) return;
+
+  const sections = SITE_SECTIONS || {};
+  const visible = Object.entries(sections)
+    .filter(([, section]) => section?.enabled !== false)
+    .sort((a, b) => (Number(a[1]?.order) || 0) - (Number(b[1]?.order) || 0));
+
+  container.innerHTML = visible.map(([key, section]) => {
+    const title = escapeSectionHtml(section.title || "");
+    const text = escapeSectionHtml(section.text || "").replace(/\n/g, "<br>");
+
+    if (key === "sertler") {
+      const items = Array.isArray(section.items) ? section.items : [];
+      const list = items.map((item) => `<li>${escapeSectionHtml(item)}</li>`).join("");
+      return `<article class="siteInfoCard" id="sertler"><h2>${title}</h2>${text ? `<p>${text}</p>` : ""}${list ? `<ul>${list}</ul>` : ""}</article>`;
+    }
+
+    if (key === "elaqe") {
+      const number = escapeSectionHtml(section.whatsappNumber || "");
+      const buttonText = escapeSectionHtml(section.buttonText || "WhatsApp ilЙ™ yaz");
+      const href = whatsappHrefFromSectionNumber(section.whatsappNumber);
+      return `<article class="siteInfoCard siteInfoContact" id="elaqe"><h2>${title}</h2>${text ? `<p>${text}</p>` : ""}<p>WhatsApp: <strong>${number}</strong></p><a class="siteInfoWaBtn" href="${href}" target="_blank" rel="noopener noreferrer">${buttonText}</a></article>`;
+    }
+
+    const linkText = escapeSectionHtml(section.linkText || "");
+    return `<article class="siteInfoCard" id="haqqimizda"><h2>${title}</h2>${text ? `<p>${text}</p>` : ""}${linkText ? `<p class="siteInfoLinkText">${linkText}</p>` : ""}</article>`;
+  }).join("");
+
+  ["haqqimizda", "sertler", "elaqe"].forEach((id) => {
+    const isVisible = visible.some(([key]) => key === id);
+    document.querySelectorAll(`[data-section-nav="${id}"]`).forEach((link) => {
+      link.style.display = isVisible ? "" : "none";
+    });
+  });
+}
+
 function applyAdminHomepageSettings() {
   const setHtml = (selector, value) => {
     const element = document.querySelector(selector);
@@ -2719,6 +2828,7 @@ function applyAdminHomepageSettings() {
 
 function setupUI() {
   applyAdminHomepageSettings();
+  renderSiteSectionsFromAdmin();
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
     if(UI[key]) {
