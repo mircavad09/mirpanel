@@ -2113,6 +2113,64 @@ const DATA = {
           "url": ""
         }
       }
+    },
+    {
+      "id": "youtube_sexsi",
+      "order": 29,
+      "category": "all",
+      "image": "assets/youtube.png",
+      "currency": "₼",
+      "title": "Youtube Eyni hesab",
+      "variant": "",
+      "badge": "Premium",
+      "desc": "",
+      "note": "",
+      "seoSlug": "youtube-eyni-hesab-almaq",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     }
   ]
 };
