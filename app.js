@@ -2137,12 +2137,12 @@ const DATA = {
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
+      "orderFlow": "confirm_then_whatsapp",
       "formFields": [],
       "confirmationModal": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": " Təqdim etdiyiniz hesab yeni açılmış Gmail olmalı və heç bir ailə qrupuna qoşulmamalıdır. Hesab tamamilə sıfırdan yaradılmalıdır. Hesabınızda Premium aktivləşdirildikdən sonra, hər ay ödəniş edərək eyni hesab üzərindən istifadəyə davam edə bilərsiniz.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -2157,11 +2157,17 @@ const DATA = {
         "includeSeller": false,
         "includeStock": false
       },
-      "plans": [],
+      "plans": [
+        {
+          "label": "1 ayliq",
+          "months": 1,
+          "price": 5.99
+        }
+      ],
       "orderConfirmation": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": " Təqdim etdiyiniz hesab yeni açılmış Gmail olmalı və heç bir ailə qrupuna qoşulmamalıdır. Hesab tamamilə sıfırdan yaradılmalıdır. Hesabınızda Premium aktivləşdirildikdən sonra, hər ay ödəniş edərək eyni hesab üzərindən istifadəyə davam edə bilərsiniz.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
