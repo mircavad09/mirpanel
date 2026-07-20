@@ -495,7 +495,7 @@ const DATA = {
       "category": "musiqi",
       "image": "assets/youtube.png",
       "currency": "₼",
-      "title": "YouTube Premium",
+      "title": "YouTube Yeni hesab",
       "variant": "Gmail",
       "badge": "Video",
       "desc": "Reklamsız izləmə, YouTube Music daxil.",
