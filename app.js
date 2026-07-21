@@ -787,7 +787,7 @@ const DATA = {
     },
     {
       "id": "google_ai",
-      "order": 9,
+      "order": 5,
       "category": "ai",
       "image": "assets/google-ai.png",
       "currency": "₼",
