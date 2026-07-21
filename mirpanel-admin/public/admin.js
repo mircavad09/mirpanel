@@ -14,46 +14,46 @@ const productImageUpload = {
 };
 
 const legacyFlows = [
-  ["whatsapp", "Birbaşa WhatsApp"],
-  ["name_code_4", "Ad + 4 rəqəm kod"],
-  ["name_code_5", "Ad + 5 rəqəm kod"],
+  ["whatsapp", "BirbaÅŸa WhatsApp"],
+  ["name_code_4", "Ad + 4 rÉ™qÉ™m kod"],
+  ["name_code_5", "Ad + 5 rÉ™qÉ™m kod"],
   ["email", "Gmail form"],
-  ["spotify", "Gmail + şifrə"],
+  ["spotify", "Gmail + ÅŸifrÉ™"],
   ["out_of_stock", "Stokda yoxdur"]
 ];
 
 const orderFlows = [
-  ["direct_whatsapp", "Birbaşa WhatsApp"],
-  ["form_then_whatsapp", "Əvvəl məlumat forması, sonra WhatsApp"],
-  ["confirm_then_whatsapp", "Əvvəl təsdiqləmə modalı, sonra WhatsApp"],
-  ["form_confirm_whatsapp", "Əvvəl təsdiqləmə modalı, sonra məlumat forması, sonra WhatsApp"]
+  ["direct_whatsapp", "BirbaÅŸa WhatsApp"],
+  ["form_then_whatsapp", "ÆvvÉ™l mÉ™lumat formasÄ±, sonra WhatsApp"],
+  ["confirm_then_whatsapp", "ÆvvÉ™l tÉ™sdiqlÉ™mÉ™ modalÄ±, sonra WhatsApp"],
+  ["form_confirm_whatsapp", "ÆvvÉ™l tÉ™sdiqlÉ™mÉ™ modalÄ±, sonra mÉ™lumat formasÄ±, sonra WhatsApp"]
 ];
 
 const legacyFlowDefaults = {
   name_code_4: [
-    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
-    { key: "code_4", type: "text", label: "4 rəqəmli kod / PIN", placeholder: "4 rəqəmli kod yazın", required: true, enabled: true }
+    { key: "name", type: "text", label: "Ad", placeholder: "AdÄ±nÄ±zÄ± yazÄ±n", required: true, enabled: true },
+    { key: "code_4", type: "text", label: "4 rÉ™qÉ™mli kod / PIN", placeholder: "4 rÉ™qÉ™mli kod yazÄ±n", required: true, enabled: true }
   ],
   name_code_5: [
-    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
-    { key: "code_5", type: "text", label: "5 rəqəmli kod / PIN", placeholder: "5 rəqəmli kod yazın", required: true, enabled: true }
+    { key: "name", type: "text", label: "Ad", placeholder: "AdÄ±nÄ±zÄ± yazÄ±n", required: true, enabled: true },
+    { key: "code_5", type: "text", label: "5 rÉ™qÉ™mli kod / PIN", placeholder: "5 rÉ™qÉ™mli kod yazÄ±n", required: true, enabled: true }
   ],
   email: [
-    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true }
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail Ã¼nvanÄ±nÄ±zÄ± yazÄ±n", required: true, enabled: true }
   ],
   spotify: [
-    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
-    { key: "password", type: "password", label: "Şifrə", placeholder: "Şifrənizi yazın", required: true, enabled: true }
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail Ã¼nvanÄ±nÄ±zÄ± yazÄ±n", required: true, enabled: true },
+    { key: "password", type: "password", label: "ÅžifrÉ™", placeholder: "ÅžifrÉ™nizi yazÄ±n", required: true, enabled: true }
   ]
 };
 
 const formFieldTypes = [
-  ["text", "Mətn"],
+  ["text", "MÉ™tn"],
   ["tel", "Telefon"],
   ["email", "Email"],
-  ["password", "Şifrə"],
+  ["password", "ÅžifrÉ™"],
   ["textarea", "Uzun qeyd"],
-  ["number", "Rəqəm"]
+  ["number", "RÉ™qÉ™m"]
 ];
 
 const defaultUi = {
@@ -69,11 +69,11 @@ const defaultUi = {
 function defaultConfirmation() {
   return {
     enabled: false,
-    title: "Sifarişi təsdiqləyin",
+    title: "SifariÅŸi tÉ™sdiqlÉ™yin",
     description: "",
-    confirmText: "Təsdiqləyirəm",
-    cancelText: "Ləğv et",
-    footerText: "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+    confirmText: "TÉ™sdiqlÉ™yirÉ™m",
+    cancelText: "LÉ™ÄŸv et",
+    footerText: "SifariÅŸi tÉ™sdiqlÉ™dikdÉ™ WhatsApp avtomatik aÃ§Ä±lacaq.",
     helpLink: { enabled: false, label: "", url: "" }
   };
 }
@@ -86,7 +86,7 @@ function defaultFormField(index = 0) {
   return {
     key: `custom_${index + 1}`,
     type: "text",
-    label: "Yeni sahə",
+    label: "Yeni sahÉ™",
     placeholder: "",
     required: false,
     enabled: true
@@ -97,13 +97,13 @@ function slug(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
-    .replaceAll("ə", "e")
-    .replaceAll("ı", "i")
-    .replaceAll("ö", "o")
-    .replaceAll("ü", "u")
-    .replaceAll("ş", "s")
-    .replaceAll("ç", "c")
-    .replaceAll("ğ", "g")
+    .replaceAll("É™", "e")
+    .replaceAll("Ä±", "i")
+    .replaceAll("Ã¶", "o")
+    .replaceAll("Ã¼", "u")
+    .replaceAll("ÅŸ", "s")
+    .replaceAll("Ã§", "c")
+    .replaceAll("ÄŸ", "g")
     .replace(/[^a-z0-9_]+/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_|_$/g, "");
@@ -198,7 +198,7 @@ function ensureProduct(product) {
   product.order = Number.isFinite(Number(product.order)) ? Number(product.order) : 0;
   product.category = product.category || "all";
   product.image = product.image || "assets/your.png";
-  product.currency = product.currency || "₼";
+  product.currency = product.currency || "â‚¼";
   product.title = product.title || product.id;
   product.variant = product.variant || "";
   product.badge = product.badge || "";
@@ -261,7 +261,7 @@ async function api(path, options = {}) {
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(payload.error || `Server xətası: ${response.status}`);
+    const error = new Error(payload.error || `Server xÉ™tasÄ±: ${response.status}`);
     error.status = response.status;
     throw error;
   }
@@ -275,7 +275,7 @@ function readFileAsBase64(file) {
       const result = String(reader.result || "");
       resolve(result.includes(",") ? result.split(",").pop() : result);
     });
-    reader.addEventListener("error", () => reject(new Error("Şəkil faylı oxunmadı.")));
+    reader.addEventListener("error", () => reject(new Error("ÅžÉ™kil faylÄ± oxunmadÄ±.")));
     reader.readAsDataURL(file);
   });
 }
@@ -290,24 +290,24 @@ function setImageUploadStatus(text, type = "") {
 
 async function uploadProductImage(file) {
   const product = selectedProduct();
-  if (!product) return toast("Əvvəl məhsul seç.", "bad");
+  if (!product) return toast("ÆvvÉ™l mÉ™hsul seÃ§.", "bad");
   if (!file) return;
 
   if (!productImageUpload.allowedTypes.has(file.type)) {
-    setImageUploadStatus("Bu fayl tipi dəstəklənmir. JPG, PNG, WEBP və SVG qəbul edilir.", "bad");
-    toast("Bu fayl tipi dəstəklənmir.", "bad");
+    setImageUploadStatus("Bu fayl tipi dÉ™stÉ™klÉ™nmir. JPG, PNG, WEBP vÉ™ SVG qÉ™bul edilir.", "bad");
+    toast("Bu fayl tipi dÉ™stÉ™klÉ™nmir.", "bad");
     return;
   }
 
   if (file.size > productImageUpload.maxSize) {
-    setImageUploadStatus("Fayl ölçüsü böyükdür. Maksimum 5 MB.", "bad");
-    toast("Fayl ölçüsü böyükdür.", "bad");
+    setImageUploadStatus("Fayl Ã¶lÃ§Ã¼sÃ¼ bÃ¶yÃ¼kdÃ¼r. Maksimum 5 MB.", "bad");
+    toast("Fayl Ã¶lÃ§Ã¼sÃ¼ bÃ¶yÃ¼kdÃ¼r.", "bad");
     return;
   }
 
   $("previewImage").src = URL.createObjectURL(file);
-  setImageUploadStatus("Şəkil yüklənir...");
-  setLoading(true, "Şəkil GitHub-a yüklənir...");
+  setImageUploadStatus("ÅžÉ™kil yÃ¼klÉ™nir...");
+  setLoading(true, "ÅžÉ™kil GitHub-a yÃ¼klÉ™nir...");
 
   try {
     const contentBase64 = await readFileAsBase64(file);
@@ -326,20 +326,20 @@ async function uploadProductImage(file) {
     $("previewImage").src = imageUrl(payload.path);
     markDirty();
     renderProducts();
-    setImageUploadStatus(`Yükləndi: ${payload.path}`, "good");
-    toast("Şəkil yükləndi. İndi Saxla bas.", "good");
+    setImageUploadStatus(`YÃ¼klÉ™ndi: ${payload.path}`, "good");
+    toast("ÅžÉ™kil yÃ¼klÉ™ndi. Ä°ndi Saxla bas.", "good");
   } catch (error) {
     $("previewImage").src = imageUrl(product.image);
-    setImageUploadStatus(error.message || "Şəkil yüklənmədi.", "bad");
+    setImageUploadStatus(error.message || "ÅžÉ™kil yÃ¼klÉ™nmÉ™di.", "bad");
     if (error.status === 401) location.href = "/login.html";
-    else toast(error.message || "Şəkil yüklənmədi.", "bad");
+    else toast(error.message || "ÅžÉ™kil yÃ¼klÉ™nmÉ™di.", "bad");
   } finally {
     setLoading(false);
     $("productImageFile").value = "";
   }
 }
 
-function setLoading(active, text = "Yüklənir...") {
+function setLoading(active, text = "YÃ¼klÉ™nir...") {
   $("loading").classList.toggle("hidden", !active);
   $("loadingText").textContent = text;
   $("saveBtn").disabled = active;
@@ -375,7 +375,7 @@ function minimumPrice(product) {
 }
 
 async function loadState() {
-  setLoading(true, "GitHub məlumatları oxunur...");
+  setLoading(true, "GitHub mÉ™lumatlarÄ± oxunur...");
   try {
     const payload = await api("/api/admin/state");
     state.data = payload.data;
@@ -386,7 +386,7 @@ async function loadState() {
     state.data.ui = { ...defaultUi, ...(state.data.ui || {}) };
     state.selectedId = state.data.products[0]?.id || "";
     state.dirty = false;
-    $("commitInfo").textContent = `Yükləndi: ${new Date(payload.loadedAt).toLocaleString("az-AZ")} / ${payload.sha.slice(0, 7)}`;
+    $("commitInfo").textContent = `YÃ¼klÉ™ndi: ${new Date(payload.loadedAt).toLocaleString("az-AZ")} / ${payload.sha.slice(0, 7)}`;
     renderAll();
   } catch (error) {
     if (error.status === 401) location.href = "/login.html";
@@ -399,7 +399,7 @@ async function loadState() {
 async function saveState() {
   if (!state.data) return;
   if (!state.dirty) {
-    toast("Saxlanacaq dəyişiklik yoxdur.", "bad");
+    toast("Saxlanacaq dÉ™yiÅŸiklik yoxdur.", "bad");
     return;
   }
 
@@ -411,11 +411,11 @@ async function saveState() {
   });
 
   if (invalidHelp) {
-    toast(`${invalidHelp.title}: kömək linki yalnız https:// ilə başlamalıdır.`, "bad");
+    toast(`${invalidHelp.title}: kÃ¶mÉ™k linki yalnÄ±z https:// ilÉ™ baÅŸlamalÄ±dÄ±r.`, "bad");
     return;
   }
 
-  setLoading(true, "Dəyişikliklər GitHub-a yazılır...");
+  setLoading(true, "DÉ™yiÅŸikliklÉ™r GitHub-a yazÄ±lÄ±r...");
   try {
     const payload = await api("/api/admin/save", {
       method: "POST",
@@ -425,10 +425,10 @@ async function saveState() {
     state.dirty = false;
     $("commitInfo").textContent = `Commit: ${payload.commitSha.slice(0, 7)} / ${new Date(payload.committedAt).toLocaleString("az-AZ")}`;
     renderStats();
-    toast(payload.cacheCommitSha ? "Saxlandı və cache versiyası yeniləndi." : "Saxlandı.");
+    toast(payload.cacheCommitSha ? "SaxlandÄ± vÉ™ cache versiyasÄ± yenilÉ™ndi." : "SaxlandÄ±.");
   } catch (error) {
     if (error.status === 401) location.href = "/login.html";
-    else if (error.status === 409) toast("Conflict: GitHub-da app.js dəyişib. Yenilə düyməsini bas.", "bad");
+    else if (error.status === 409) toast("Conflict: GitHub-da app.js dÉ™yiÅŸib. YenilÉ™ dÃ¼ymÉ™sini bas.", "bad");
     else toast(error.message, "bad");
   } finally {
     setLoading(false);
@@ -446,7 +446,7 @@ function renderStats() {
 function renderFilters() {
   const current = $("categoryFilter").value || "all";
   $("categoryFilter").innerHTML = `
-    <option value="all">Bütün kateqoriyalar</option>
+    <option value="all">BÃ¼tÃ¼n kateqoriyalar</option>
     ${state.data.categories.map((cat) => `
       <option value="${escapeHtml(cat.key)}">${escapeHtml(cat.name)}</option>
     `).join("")}
@@ -475,7 +475,7 @@ function renderProducts() {
     });
 
   if (!products.length) {
-    $("productList").innerHTML = `<div class="emptyState">Nəticə tapılmadı.</div>`;
+    $("productList").innerHTML = `<div class="emptyState">NÉ™ticÉ™ tapÄ±lmadÄ±.</div>`;
     return;
   }
 
@@ -519,7 +519,7 @@ function renderProductForm() {
   $("productFlow").innerHTML = renderOptions(legacyFlows, product.flow);
   $("productOrderFlow").innerHTML = renderOptions(orderFlows, product.orderFlow);
   setValue("productImage", product.image);
-  setImageUploadStatus("JPG, PNG, WEBP və SVG. Maksimum 5 MB.");
+  setImageUploadStatus("JPG, PNG, WEBP vÉ™ SVG. Maksimum 5 MB.");
   setValue("productBadge", product.badge);
   setValue("productCurrency", product.currency);
   setValue("productSoldOut", String(Boolean(product.soldOut)));
@@ -555,12 +555,30 @@ function renderProductForm() {
   setValue("whatsappExtraMessage", product.whatsapp.extraMessage);
 
   updateHelpFields();
-  renderPlans(product);
-  renderFormFields(product);
+  renderPlans(prod…311 tokens truncated…t.order)) ? Number(product.order) : Number.MAX_SAFE_INTEGER
+    }))
+    .filter(({ product }) => ![...reserved.values()].includes(product))
+    .sort((a, b) => a.order - b.order || a.index - b.index);
+
+  let order = 1;
+  for (const { product } of products) {
+    while (reserved.has(order)) order += 1;
+    product.order = order;
+    order += 1;
+  }
+
+  for (const [reservedOrder, product] of reserved) {
+    product.order = reservedOrder;
+  }
+
+  sortProductsByOrder();
 }
 
-function setValue(id, value, prop = "value") {
-  $(id)[prop] = value;
+function nextProductOrder() {
+  return state.data.products.reduce(
+    (highest, product) => Math.max(highest, validProductOrder(product) || 0),
+    0
+  ) + 1;
 }
 
 function bindProductField(id, update) {
@@ -577,7 +595,63 @@ function bindProductField(id, update) {
 }
 
 bindProductField("productActive", (p, e) => p.active = e.checked);
-bindProductField("productOrder", (p, e) => p.order = e.value === "" ? null : Number(e.value));
+$("productOrder").addEventListener("change", () => {
+  const product = selectedProduct();
+  if (!product) return;
+
+  const products = state.data.products;
+  const previousOrder = validProductOrder(product) || products.indexOf(product) + 1;
+  const requestedOrder = Number.parseInt($("productOrder").value, 10);
+
+  if (!Number.isFinite(requestedOrder)) {
+    $("productOrder").value = previousOrder;
+    return;
+  }
+
+  const nextOrder = Math.min(products.length, Math.max(1, requestedOrder));
+  const originalOrders = new Map(products.map((item) => [item, item.order]));
+  const targetProducts = products.filter(
+    (item) => item !== product && validProductOrder(item) === nextOrder
+  );
+  const displacedProduct = targetProducts[0] || null;
+  let collision = displacedProduct;
+  let collisionOrder = nextOrder;
+  let needsRenumber = targetProducts.length > 1;
+  const movedProducts = new Set([product]);
+
+  while (collision && !needsRenumber) {
+    if (collisionOrder <= 1) {
+      needsRenumber = true;
+      break;
+    }
+
+    const lowerOrder = collisionOrder - 1;
+    const lowerProducts = products.filter(
+      (item) => item !== product &&
+        !movedProducts.has(item) &&
+        validProductOrder(item) === lowerOrder
+    );
+
+    collision.order = lowerOrder;
+    movedProducts.add(collision);
+    collision = lowerProducts[0] || null;
+    collisionOrder = lowerOrder;
+    if (lowerProducts.length > 1) needsRenumber = true;
+  }
+
+  product.order = nextOrder;
+
+  if (needsRenumber || !hasUniqueProductOrders()) {
+    for (const [item, order] of originalOrders) item.order = order;
+    renumberProducts(product, nextOrder, displacedProduct);
+  } else {
+    sortProductsByOrder();
+  }
+
+  markDirty();
+  renderProducts();
+  renderProductForm();
+});
 bindProductField("productId", (p, e) => {
   const oldId = p.id;
   const nextId = slug(e.value);
@@ -650,8 +724,8 @@ function renderPlans(product) {
     <div class="planRow">
       <input data-plan="${index}" data-field="label" placeholder="Label" value="${escapeHtml(plan.label || "")}">
       <input data-plan="${index}" data-field="months" type="number" placeholder="Ay" value="${escapeHtml(plan.months ?? "")}">
-      <input data-plan="${index}" data-field="price" type="number" step="0.01" placeholder="Qiymət" value="${escapeHtml(plan.price ?? "")}">
-      <input data-plan="${index}" data-field="oldPrice" type="number" step="0.01" placeholder="Köhnə qiymət" value="${escapeHtml(plan.oldPrice ?? "")}">
+      <input data-plan="${index}" data-field="price" type="number" step="0.01" placeholder="QiymÉ™t" value="${escapeHtml(plan.price ?? "")}">
+      <input data-plan="${index}" data-field="oldPrice" type="number" step="0.01" placeholder="KÃ¶hnÉ™ qiymÉ™t" value="${escapeHtml(plan.oldPrice ?? "")}">
       <input data-plan="${index}" data-field="discount" placeholder="Endirim" value="${escapeHtml(plan.discount || "")}">
       <button class="iconBtn removePlan" data-plan="${index}" type="button">X</button>
     </div>
@@ -681,7 +755,7 @@ function renderPlans(product) {
 
 function renderFormFields(product) {
   if (!product.formFields.length) {
-    $("formFields").innerHTML = `<div class="emptyMini">Forma sahəsi yoxdur.</div>`;
+    $("formFields").innerHTML = `<div class="emptyMini">Forma sahÉ™si yoxdur.</div>`;
     return;
   }
 
@@ -692,7 +766,7 @@ function renderFormFields(product) {
       <label>Tip<select data-form-index="${index}" data-form-field="type">${renderOptions(formFieldTypes, field.type || "text")}</select></label>
       <label>Label<input data-form-index="${index}" data-form-field="label" value="${escapeHtml(field.label || "")}"></label>
       <label>Placeholder<input data-form-index="${index}" data-form-field="placeholder" value="${escapeHtml(field.placeholder || "")}"></label>
-      <label class="switchLine"><input data-form-index="${index}" data-form-field="required" type="checkbox" ${field.required ? "checked" : ""}><span>Məcburi</span></label>
+      <label class="switchLine"><input data-form-index="${index}" data-form-field="required" type="checkbox" ${field.required ? "checked" : ""}><span>MÉ™cburi</span></label>
       <button class="iconBtn removeFormField" data-form-index="${index}" type="button">X</button>
     </div>
   `).join("");
@@ -805,7 +879,7 @@ function showView(view) {
   document.querySelectorAll(".navBtn[data-view]").forEach((button) => {
     button.classList.toggle("active", button.dataset.view === view);
   });
-  $("crumb").textContent = { products: "Məhsullar", categories: "Kateqoriyalar", settings: "Ayarlar" }[view];
+  $("crumb").textContent = { products: "MÉ™hsullar", categories: "Kateqoriyalar", settings: "Ayarlar" }[view];
 }
 
 function openModal(title, body, confirmText, action) {
@@ -823,7 +897,7 @@ function closeModal() {
 
 function confirmDeleteCategory(index) {
   const category = state.data.categories[index];
-  openModal("Kateqoriyanı sil", `<p>${escapeHtml(category.name)} silinsin?</p>`, "Sil", () => {
+  openModal("KateqoriyanÄ± sil", `<p>${escapeHtml(category.name)} silinsin?</p>`, "Sil", () => {
     state.data.products.forEach((product) => {
       if (product.category === category.key) product.category = "all";
     });
@@ -835,23 +909,23 @@ function confirmDeleteCategory(index) {
 }
 
 $("addProductBtn").addEventListener("click", () => {
-  openModal("Yeni məhsul", `
+  openModal("Yeni mÉ™hsul", `
     <div class="modalGrid">
       <label>Ad<input id="newProductTitle"></label>
       <label>ID<input id="newProductId"></label>
-      <label>Şəkil yolu<input id="newProductImage" value="assets/your.png"></label>
+      <label>ÅžÉ™kil yolu<input id="newProductImage" value="assets/your.png"></label>
     </div>
-  `, "Əlavə et", () => {
+  `, "ÆlavÉ™ et", () => {
     const title = $("newProductTitle").value.trim();
     const id = slug($("newProductId").value || title);
-    if (!title || !id) return toast("Ad və ID tələb olunur.", "bad");
-    if (state.data.products.some((product) => product.id === id)) return toast("Bu ID artıq var.", "bad");
+    if (!title || !id) return toast("Ad vÉ™ ID tÉ™lÉ™b olunur.", "bad");
+    if (state.data.products.some((product) => product.id === id)) return toast("Bu ID artÄ±q var.", "bad");
     state.data.products.push(ensureProduct({
       id,
-      order: state.data.products.length,
+      order: nextProductOrder(),
       category: "all",
       image: $("newProductImage").value,
-      currency: "₼",
+      currency: "â‚¼",
       title,
       badge: "Premium",
       seoSlug: slug(`${title}-almaq`).replaceAll("_", "-"),
@@ -861,6 +935,7 @@ $("addProductBtn").addEventListener("click", () => {
       seoContent: "",
       plans: []
     }));
+    if (!hasUniqueProductOrders()) renumberProducts();
     state.data.content[id] = { aboutHtml: "", rulesHtml: "" };
     state.selectedId = id;
     markDirty();
@@ -872,8 +947,16 @@ $("addProductBtn").addEventListener("click", () => {
 $("deleteProductBtn").addEventListener("click", () => {
   const product = selectedProduct();
   if (!product) return;
-  openModal("Məhsulu sil", `<p>${escapeHtml(product.title)} silinsin?</p>`, "Sil", () => {
+  openModal("MÉ™hsulu sil", `<p>${escapeHtml(product.title)} silinsin?</p>`, "Sil", () => {
+    const deletedOrder = validProductOrder(product);
     state.data.products = state.data.products.filter((item) => item.id !== product.id);
+    if (deletedOrder !== null) {
+      state.data.products.forEach((item) => {
+        const order = validProductOrder(item);
+        if (order !== null && order > deletedOrder) item.order = order - 1;
+      });
+    }
+    if (!hasUniqueProductOrders()) renumberProducts();
     delete state.data.content[product.id];
     state.selectedId = state.data.products[0]?.id || "";
     markDirty();
@@ -888,11 +971,11 @@ $("addCategoryBtn").addEventListener("click", () => {
       <label>Ad<input id="newCategoryName"></label>
       <label>Key<input id="newCategoryKey"></label>
     </div>
-  `, "Əlavə et", () => {
+  `, "ÆlavÉ™ et", () => {
     const name = $("newCategoryName").value.trim();
     const key = slug($("newCategoryKey").value || name);
-    if (!name || !key) return toast("Ad və key tələb olunur.", "bad");
-    if (state.data.categories.some((category) => category.key === key)) return toast("Bu key artıq var.", "bad");
+    if (!name || !key) return toast("Ad vÉ™ key tÉ™lÉ™b olunur.", "bad");
+    if (state.data.categories.some((category) => category.key === key)) return toast("Bu key artÄ±q var.", "bad");
     state.data.categories.push({ key, name });
     markDirty();
     renderAll();
@@ -931,7 +1014,7 @@ $("previewOrderConfirmationBtn").addEventListener("click", () => {
   const c = ensureConfirmation(product);
   const helpUrl = c.helpLink.url.trim();
   const showHelp = c.helpLink.enabled && helpUrl.startsWith("https://") && c.helpLink.label.trim();
-  openModal(c.title || "Sifariş təsdiqi", `
+  openModal(c.title || "SifariÅŸ tÉ™sdiqi", `
     <div class="confirmationPreview">
       <p>${escapeHtml(c.description)}</p>
       ${showHelp ? `<a href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(c.helpLink.label)}</a>` : ""}
@@ -941,11 +1024,11 @@ $("previewOrderConfirmationBtn").addEventListener("click", () => {
       </div>
       <small>${escapeHtml(c.footerText)}</small>
     </div>
-  `, "Bağla", closeModal);
+  `, "BaÄŸla", closeModal);
 });
 
 $("refreshBtn").addEventListener("click", () => {
-  if (state.dirty && !confirm("Saxlanılmamış dəyişikliklər silinəcək. Davam et?")) return;
+  if (state.dirty && !confirm("SaxlanÄ±lmamÄ±ÅŸ dÉ™yiÅŸikliklÉ™r silinÉ™cÉ™k. Davam et?")) return;
   loadState();
 });
 $("saveBtn").addEventListener("click", saveState);
