@@ -2138,7 +2138,24 @@ const DATA = {
       "seller": "",
       "bestSeller": false,
       "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email / Gmail",
+          "placeholder": "Gmail ünvanınızı yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "password",
+          "type": "password",
+          "label": "Yeni sahə",
+          "placeholder": "Gmail şifrənizi yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
