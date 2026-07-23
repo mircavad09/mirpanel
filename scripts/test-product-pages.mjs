@@ -1,3 +1,6 @@
+Exit code: 0
+Wall time: 0.6 seconds
+Output:
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -17,6 +20,7 @@ import {
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
+const productPageCss = fs.readFileSync(path.join(projectRoot, "product-page.css"), "utf8");
 const state = extractAdminState(appSource);
 const active = activeProductsWithSlugs(state.products);
 const pages = generateProductPageFiles(state.products);
@@ -43,13 +47,22 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${slug}/"`), `${filePath}: canonical`);
   assert.ok(html.includes(`name="robots" content="index, follow"`), `${filePath}: robots`);
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
-  assert.ok(html.includes("@media(max-width:720px)"), `${filePath}: mobile CSS`);
+  assert.ok(html.includes(`/product-page.css?v=20260724-redesign-1`), `${filePath}: scoped CSS`);
   assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${slug}/"`), `${filePath}: Open Graph`);
   assert.ok(html.includes(`alt="${escapeAttribute(product.title)}"`), `${filePath}: image alt`);
   assert.ok(html.includes(`data-product-id="${escapeAttribute(product.id)}"`), `${filePath}: product id`);
   assert.ok(html.includes(`id="pp-order-btn"`), `${filePath}: order button`);
+  assert.ok(html.includes(`>Məhsul haqqında klik et</a>`), `${filePath}: about scroll button`);
+  assert.ok(html.includes(`>Sifariş et</button>`), `${filePath}: order button text`);
+  assert.ok(html.includes(`id="product-about"`), `${filePath}: stable about target`);
+  assert.ok(html.includes(`data-product-tab="about"`), `${filePath}: about tab`);
+  assert.ok(html.includes(`data-product-tab="rules"`), `${filePath}: rules tab`);
+  assert.ok(html.includes(`class="product-page-layout"`), `${filePath}: two-column layout`);
+  assert.ok(html.includes(`class="product-page-similar-list"`), `${filePath}: similar products`);
+  assert.ok(html.includes(`src="${escapeAttribute(rootRelativeUrl(product.image))}"`), `${filePath}: root-relative image`);
   assert.ok(html.includes(`href="/"`), `${filePath}: home link`);
   assert.equal(html.includes('target="_blank"'), false, `${filePath}: yeni tab`);
+  assert.equal(html.includes("Səbətə At"), false, `${filePath}: səbət mətni`);
 
   const jsonLdText = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
   assert.ok(jsonLdText, `${filePath}: JSON-LD`);
@@ -72,6 +85,12 @@ for (const { product, slug } of active) {
   );
   assert.ok(fs.existsSync(path.join(projectRoot, filePath)), `${filePath}: disk`);
 }
+
+assert.ok(productPageCss.includes(".product-page-layout"), "Scoped desktop product layout CSS");
+assert.ok(productPageCss.includes("object-fit: contain"), "Product images use contain");
+assert.ok(productPageCss.includes("@media (max-width: 1040px)"), "Tablet CSS");
+assert.ok(productPageCss.includes("@media (max-width: 760px)"), "Mobile CSS");
+assert.ok(productPageCss.includes("overflow-x: hidden"), "Horizontal overflow protection");
 
 for (const product of state.products.filter((item) => item.active === false)) {
   if (!product.seoSlug) continue;
@@ -176,6 +195,11 @@ function absoluteUrl(value) {
   return new URL(source.startsWith("/") ? source : `/${source}`, "https://mirpanel.com").href;
 }
 
+function rootRelativeUrl(value) {
+  const source = String(value || "").replace(/^https?:\/\/mirpanel\.com/i, "");
+  return source.startsWith("/") ? source : `/${source}`;
+}
+
 function escapeHtml(value) {
   return String(value ?? "").replace(/[&<>"']/g, (character) => ({
     "&": "&amp;",
@@ -189,3 +213,4 @@ function escapeHtml(value) {
 function escapeAttribute(value) {
   return escapeHtml(value).replace(/`/g, "&#096;");
 }
+
