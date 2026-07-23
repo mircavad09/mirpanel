@@ -27,16 +27,18 @@ jobs:
           node-version: '22'
 
       - name: Fill SEO fields
-        run: node scripts/fill-product-seo.mjs
+        run: |
+          node scripts/fill-product-seo.mjs
+          node scripts/generate-product-pages.mjs
 
       - name: Commit SEO data
         run: |
-          if git diff --quiet -- app.js sitemap.xml _redirects; then
+          if git diff --quiet; then
             echo "SEO metadata already up to date."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add app.js sitemap.xml _redirects
+          git add app.js sitemap.xml _redirects */index.html
           git commit -m "Apply product SEO metadata [skip seo-autofill]"
           git push

@@ -1,95 +1,50 @@
-(function(){
-  const HASH_PREFIX = '#product=';
-  let opening = false;
-
-  function products(){
-    try { if (typeof DATA !== 'undefined' && Array.isArray(DATA.products)) return DATA.products; } catch {}
-    return Array.isArray(window.DATA?.products) ? window.DATA.products : [];
+(function () {
+  function products() {
+    try {
+      if (typeof DATA !== "undefined" && Array.isArray(DATA.products)) return DATA.products;
+    } catch {}
+    return [];
   }
 
-  function productById(id){ return products().find((product) => product.id === id); }
-  function productIdFromHash(){
-    const hash = String(window.location.hash || '');
-    return hash.startsWith(HASH_PREFIX) ? decodeURIComponent(hash.slice(HASH_PREFIX.length)) : '';
-  }
-  function productIdFromPath(){
-    try { return window.MirpanelSEO?.productIdFromPath?.(window.location.pathname) || ''; } catch { return ''; }
+  function productPath(product) {
+    const slug = String(product?.seoSlug || "").replace(/^\/+|\/+$/g, "");
+    return slug ? `/${slug}/` : "";
   }
 
-  function showHome(){
-    const productView = document.getElementById('productPageView');
-    const homeView = document.getElementById('homePageView');
-    const hero = document.getElementById('hero-section');
-    const header = document.getElementById('mainHeader');
-    if (productView) productView.style.display = 'none';
-    if (homeView) homeView.style.display = 'block';
-    if (hero) hero.style.display = 'block';
-    if (header) header.style.display = 'block';
-    window.MirpanelSEO?.applyHomeSEO?.();
+  function productIdFromCard(card) {
+    const onclick = card?.getAttribute?.("onclick") || "";
+    return onclick.match(/openProductPage\('([^']+)'\)/)?.[1] || "";
   }
 
-  function syncPath(product){
-    const path = window.MirpanelSEO?.productPath?.(product);
-    if (!path) return;
-    if (window.location.pathname !== path || window.location.hash) {
-      history.replaceState({ productId: product.id }, '', path);
-    }
-    window.MirpanelSEO?.applyProductSEO?.(product);
+  function installCardNavigation() {
+    document.addEventListener("click", (event) => {
+      const card = event.target.closest?.(".card");
+      if (!card) return;
+      const product = products().find((item) => item.id === productIdFromCard(card));
+      const path = productPath(product);
+      if (!path) return;
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      window.location.assign(path);
+    }, true);
   }
 
-  function openSeoProduct(productId, push){
-    const product = productById(productId);
-    if (!product || typeof window.openProductPage !== 'function') return false;
-    const path = window.MirpanelSEO?.productPath?.(product);
-    opening = true;
-    if (push && path && window.location.pathname !== path) history.pushState({ productId }, '', path);
-    const targetHash = HASH_PREFIX + encodeURIComponent(productId);
-    if (window.location.hash !== targetHash) {
-      window.location.hash = targetHash;
-      setTimeout(() => { syncPath(product); opening = false; }, 80);
-    } else {
-      window.openProductPage(productId);
-      setTimeout(() => { syncPath(product); opening = false; }, 0);
-    }
-    return true;
-  }
+  function installProductNavigation() {
+    installCardNavigation();
+    if (typeof window.openProductPage !== "function") return;
+    const originalOpenProductPage = window.openProductPage;
 
-  function install(){
-    if (!window.MirpanelSEO || typeof window.openProductPage !== 'function') return;
-    const routedOpen = window.openProductPage;
-    window.openProductPage = function(productId){
-      if (opening) return routedOpen(productId);
-      const product = productById(productId);
-      if (!product) return routedOpen(productId);
-      return openSeoProduct(productId, true) || routedOpen(productId);
+    window.openProductPage = function openStandaloneProductPage(productId) {
+      const product = products().find((item) => item.id === productId);
+      const path = productPath(product);
+      if (!path) return originalOpenProductPage(productId);
+      window.location.assign(path);
     };
-
-    window.addEventListener('hashchange', () => {
-      const productId = productIdFromHash();
-      const product = productById(productId);
-      if (product) setTimeout(() => syncPath(product), 60);
-    });
-
-    window.addEventListener('popstate', () => {
-      const productId = productIdFromPath() || productIdFromHash();
-      if (productId) openSeoProduct(productId, false);
-      else showHome();
-    });
-
-    document.getElementById('btnBackToHome')?.addEventListener('click', () => {
-      history.pushState({}, '', '/');
-      showHome();
-    });
-
-    document.querySelector('.brand')?.addEventListener('click', () => {
-      history.pushState({}, '', '/');
-      showHome();
-    });
-
-    const initial = productIdFromPath();
-    if (initial) setTimeout(() => openSeoProduct(initial, false), 120);
   }
 
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', install);
-  else install();
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", installProductNavigation, { once: true });
+  } else {
+    installProductNavigation();
+  }
 })();

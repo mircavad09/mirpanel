@@ -172,16 +172,18 @@
     if (typeof renderGrid !== "function") return;
 
     cardHTML = window.cardHTML = function stockAwareCardHTML(product, index) {
+      const productSlug = String(product.seoSlug || "").replace(/^\/+|\/+$/g, "");
+      const productUrl = productSlug ? `/${productSlug}/` : "#";
       return `
-        <div class="card" onclick="window.openProductPage('${escapeHtml(product.id)}')" style="animation-delay:${Math.min(index * 0.03, 0.25)}s">
+        <a class="card" href="${productUrl}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s;text-decoration:none;color:inherit">
           <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt=""><div class="cornerPrice">${priceText(product)}</div></div>
           <div class="pad">
             <div class="topline"><h3 class="title">${escapeHtml(product.title)}</h3><div class="badge">${escapeHtml(product.badge)}</div></div>
             <div class="meta">${escapeHtml(product.desc)}</div>
             ${stockBadgeHTML(product)}
-            <div class="priceRow"><button class="btn primary" type="button">${escapeHtml(UI?.orderBtn || "Sifariş et")}</button></div>
+            <div class="priceRow"><span class="btn primary" style="display:inline-flex;align-items:center;justify-content:center">${escapeHtml(UI?.orderBtn || "Sifariş et")}</span></div>
           </div>
-        </div>
+        </a>
       `;
     };
 

@@ -555,7 +555,54 @@ function renderProductForm() {
   setValue("whatsappExtraMessage", product.whatsapp.extraMessage);
 
   updateHelpFields();
-  renderPlans(prod…311 tokens truncated…t.order)) ? Number(product.order) : Number.MAX_SAFE_INTEGER
+  renderPlans(product);
+  renderFormFields(product);
+}
+
+function setValue(id, value, prop = "value") {
+  $(id)[prop] = value;
+}
+
+function validProductOrder(product) {
+  const order = Number(product?.order);
+  return Number.isInteger(order) && order > 0 ? order : null;
+}
+
+function sortProductsByOrder() {
+  state.data.products = state.data.products
+    .map((product, index) => ({ product, index }))
+    .sort((a, b) => {
+      const aOrder = validProductOrder(a.product) ?? Number.MAX_SAFE_INTEGER;
+      const bOrder = validProductOrder(b.product) ?? Number.MAX_SAFE_INTEGER;
+      return aOrder - bOrder || a.index - b.index;
+    })
+    .map(({ product }) => product);
+}
+
+function hasUniqueProductOrders() {
+  const orders = state.data.products.map(validProductOrder);
+  return orders.every((order) => order !== null) && new Set(orders).size === orders.length;
+}
+
+function renumberProducts(selectedProduct = null, requestedOrder = null, displacedProduct = null) {
+  const total = state.data.products.length;
+  const targetOrder = selectedProduct
+    ? Math.min(total, Math.max(1, Number(requestedOrder) || 1))
+    : null;
+  const reserved = new Map();
+
+  if (selectedProduct && targetOrder !== null) {
+    reserved.set(targetOrder, selectedProduct);
+  }
+  if (displacedProduct && targetOrder > 1 && displacedProduct !== selectedProduct) {
+    reserved.set(targetOrder - 1, displacedProduct);
+  }
+
+  const products = state.data.products
+    .map((product, index) => ({
+      product,
+      index,
+      order: validProductOrder(product) ?? Number.MAX_SAFE_INTEGER
     }))
     .filter(({ product }) => ![...reserved.values()].includes(product))
     .sort((a, b) => a.order - b.order || a.index - b.index);

@@ -4,6 +4,12 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractAdminState, normalizeAdminPayload, patchAppSource } from "./core.mjs";
+import {
+  generateProductPageFiles,
+  generateRedirects as buildRedirects,
+  generateSitemap as buildSitemap,
+  removedProductPagePaths
+} from "./product-pages.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const publicDir = path.join(root, "public");
@@ -328,6 +334,72 @@ async function updateRepoTextFile(filePath, content, message) {
   return result.commit.sha;
 }
 
+async function getBranchHead() {
+  const reference = await github(
+    `/repos/${config.repo}/git/ref/heads/${encodeURIComponent(config.branch)}`
+  );
+  const commit = await github(`/repos/${config.repo}/git/commits/${reference.object.sha}`);
+  return {
+    commitSha: reference.object.sha,
+    treeSha: commit.tree.sha
+  };
+}
+
+async function createGitBlob(content) {
+  const blob = await github(`/repos/${config.repo}/git/blobs`, {
+    method: "POST",
+    body: JSON.stringify({
+      content: String(content),
+      encoding: "utf-8"
+    })
+  });
+  return blob.sha;
+}
+
+async function commitRepoFiles({ parent, files, removedPaths, message }) {
+  const blobEntries = await Promise.all(
+    [...files].map(async ([filePath, content]) => ({
+      path: filePath,
+      mode: "100644",
+      type: "blob",
+      sha: await createGitBlob(content)
+    }))
+  );
+  const removedEntries = [...new Set(removedPaths || [])].map((filePath) => ({
+    path: filePath,
+    mode: "100644",
+    type: "blob",
+    sha: null
+  }));
+  const tree = await github(`/repos/${config.repo}/git/trees`, {
+    method: "POST",
+    body: JSON.stringify({
+      base_tree: parent.treeSha,
+      tree: [...blobEntries, ...removedEntries]
+    })
+  });
+  const commit = await github(`/repos/${config.repo}/git/commits`, {
+    method: "POST",
+    body: JSON.stringify({
+      message,
+      tree: tree.sha,
+      parents: [parent.commitSha]
+    })
+  });
+  await github(
+    `/repos/${config.repo}/git/refs/heads/${encodeURIComponent(config.branch)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify({ sha: commit.sha, force: false })
+    }
+  );
+
+  return {
+    commitSha: commit.sha,
+    blobs: new Map(blobEntries.map((entry) => [entry.path, entry.sha]))
+  };
+}
+
 function requireAuth(request, response) {
   if (getSession(request)) return true;
   json(response, 401, { error: "Sessiya bitib. Yenidən daxil ol." });
@@ -453,64 +525,37 @@ async function handleApi(request, response) {
       });
     }
 
+    const previousData = extractAdminState(current.source);
     const adminData = normalizeAdminPayload(body.data);
     const patched = patchAppSource(current.source, adminData);
-
-    const result = await github(`/repos/${config.repo}/contents/app.js`, {
-      method: "PUT",
-      body: JSON.stringify({
-        message: "Update Mirpanel content from admin panel",
-        content: Buffer.from(patched, "utf8").toString("base64"),
-        sha: current.sha,
-        branch: config.branch
-      })
+    const indexFile = await getRepoFile("index.html");
+    const version = `admin-${Date.now()}`;
+    const patchedIndex = bumpAssetVersions(indexFile.source, version);
+    const productPages = generateProductPageFiles(adminData.products);
+    const files = new Map([
+      ["app.js", patched],
+      ["index.html", patchedIndex],
+      ["sitemap.xml", buildSitemap(adminData.products, adminData.siteSections)],
+      ["_redirects", buildRedirects(adminData.products, adminData.siteSections)],
+      ...productPages
+    ]);
+    const parent = await getBranchHead();
+    const result = await commitRepoFiles({
+      parent,
+      files,
+      removedPaths: removedProductPagePaths(previousData.products, adminData.products),
+      message: "Update Mirpanel content and product pages from admin panel"
     });
-
-    let cacheCommitSha = "";
-    let sitemapCommitSha = "";
-    let redirectsCommitSha = "";
-    try {
-      sitemapCommitSha = await updateRepoTextFile(
-        "sitemap.xml",
-        generateSitemap(adminData.products, adminData.siteSections),
-        "Update SEO sitemap from admin panel"
-      );
-      redirectsCommitSha = await updateRepoTextFile(
-        "_redirects",
-        generateRedirects(adminData.products, adminData.siteSections),
-        "Update SEO route redirects from admin panel"
-      );
-    } catch (error) {
-      console.error("SEO route file update failed:", error);
-    }
-
-    try {
-      const indexFile = await getRepoFile("index.html");
-      const version = `admin-${Date.now()}`;
-      const patchedIndex = bumpAssetVersions(indexFile.source, version);
-
-      if (patchedIndex !== indexFile.source) {
-        const cacheResult = await github(`/repos/${config.repo}/contents/index.html`, {
-          method: "PUT",
-          body: JSON.stringify({
-            message: "Bump Mirpanel asset cache version",
-            content: Buffer.from(patchedIndex, "utf8").toString("base64"),
-            sha: indexFile.sha,
-            branch: config.branch
-          })
-        });
-        cacheCommitSha = cacheResult.commit.sha;
-      }
-    } catch (error) {
-      console.error("Cache version bump failed:", error);
-    }
+    const appSha = result.blobs.get("app.js");
 
     return json(response, 200, {
-      sha: result.content.sha,
-      commitSha: result.commit.sha,
-      cacheCommitSha,
-      sitemapCommitSha,
-      redirectsCommitSha,
+      sha: appSha,
+      commitSha: result.commitSha,
+      cacheCommitSha: result.commitSha,
+      sitemapCommitSha: result.commitSha,
+      redirectsCommitSha: result.commitSha,
+      productPagesCommitSha: result.commitSha,
+      productPageCount: productPages.size,
       committedAt: new Date().toISOString()
     });
   }
