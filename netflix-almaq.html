@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Netflix Almaq – Azərbaycanda Netflix Premium | Mirpanel</title>
+  <meta name="description" content="Azərbaycanda Netflix Premium almaq üçün mövcud Netflix Şəxsi və Netflix Ümumi paketlərini, qiymətləri, müddətləri, sifariş qaydasını və istifadə şərtlərini müqayisə edin.">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://mirpanel.com/netflix-almaq">
+  <meta property="og:type" content="product">
+  <meta property="og:title" content="Netflix Almaq – Azərbaycanda Netflix Premium | Mirpanel">
+  <meta property="og:description" content="Netflix Şəxsi və Netflix Ümumi paketləri, aktual qiymətlər və WhatsApp üzərindən rahat sifariş.">
+  <meta property="og:url" content="https://mirpanel.com/netflix-almaq">
+  <meta property="og:image" content="https://mirpanel.com/assets/netflix.png">
+  <meta name="theme-color" content="#070707">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Poppins:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="icon" href="/assets/logo.png">
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #070707;
+      --panel: #101114;
+      --panel-soft: #17181c;
+      --text: #f7f7f7;
+      --muted: #b8bbc3;
+      --gold: #ffd400;
+      --line: rgba(255, 255, 255, 0.11);
+      --red: #e50914;
+    }
+
+    * { box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at 10% 0%, rgba(229, 9, 20, 0.14), transparent 30rem),
+        radial-gradient(circle at 90% 10%, rgba(255, 212, 0, 0.09), transparent 26rem),
+        var(--bg);
+      color: var(--text);
+      font-family: "Poppins", system-ui, sans-serif;
+      line-height: 1.7;
+    }
+
+    a { color: inherit; }
+
+    .seoWrap {
+      width: min(1120px, calc(100% - 32px));
+      margin: 0 auto;
+    }
+
+    .seoHeader {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--line);
+      background: rgba(7, 7, 7, 0.88);
+      backdrop-filter: blur(16px);
+    }
+
+    .seoHeaderInner {
+      min-height: 72px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .seoBrand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      text-decoration: none;
+      font-family: "Cinzel", serif;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .seoBrand img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+    }
+
+    .seoNav {
+      display: flex;
+      align-items: center;
+      gap: 18px;
+      color: var(--muted);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .seoNav a { text-decoration: none; }
+    .seoNav a:hover { color: var(--gold); }
+
+    main { padding: 56px 0 72px; }
+
+    .seoHero {
+      display: grid;
+      grid-template-columns: minmax(0, 1.3fr) minmax(280px, 0.7fr);
+      align-items: center;
+      gap: 44px;
+      padding-bottom: 48px;
+    }
+
+    .seoEyebrow {
+      margin: 0 0 10px;
+      color: var(--gold);
+      font-size: 13px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    h1, h2, h3 {
+      margin-top: 0;
+      line-height: 1.25;
+    }
+
+    h1 {
+      max-width: 780px;
+      margin-bottom: 18px;
+      font-family: "Cinzel", serif;
+      font-size: clamp(32px, 5vw, 58px);
+    }
+
+    h2 {
+      margin-bottom: 18px;
+      font-size: clamp(23px, 3vw, 34px);
+    }
+
+    h3 { margin-bottom: 9px; }
+
+    .seoLead {
+      max-width: 760px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+    }
+
+    .seoHeroActions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 26px;
+    }
+
+    .seoButton {
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 11px 18px;
+      border: 1px solid rgba(255, 212, 0, 0.35);
+      border-radius: 13px;
+      background: var(--gold);
+      color: #080808;
+      font-weight: 800;
+      text-decoration: none;
+    }
+
+    .seoButton.secondary {
+      background: transparent;
+      color: var(--gold);
+    }
+
+    .seoProductImage {
+      width: min(100%, 340px);
+      aspect-ratio: 1;
+      justify-self: center;
+      object-fit: contain;
+      border: 1px solid var(--line);
+      border-radius: 28px;
+      background: linear-gradient(145deg, rgba(229, 9, 20, 0.16), rgba(255, 255, 255, 0.03));
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.42);
+    }
+
+    .seoSection {
+      margin-top: 28px;
+      padding: clamp(24px, 4vw, 38px);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: linear-gradient(145deg, rgba(23, 24, 28, 0.96), rgba(12, 13, 16, 0.96));
+    }
+
+    .seoSection p,
+    .seoSection li { color: var(--muted); }
+
+    .planGrid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 18px;
+    }
+
+    .planCard {
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .planCardHead {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .stockBadge {
+      flex: 0 0 auto;
+      padding: 5px 9px;
+      border: 1px solid rgba(70, 211, 105, 0.28);
+      border-radius: 999px;
+      color: #74e58e;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .priceList {
+      display: grid;
+      gap: 8px;
+      margin: 18px 0;
+      padding: 0;
+      list-style: none;
+    }
+
+    .priceList li {
+      display: flex;
+      justify-content: space-between;
+      gap: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .priceList strong { color: var(--text); }
+
+    .infoGrid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .infoItem {
+      padding: 18px;
+      border-left: 3px solid var(--gold);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .infoItem p { margin: 0; }
+
+    .steps {
+      display: grid;
+      gap: 15px;
+      padding: 0;
+      list-style: none;
+      counter-reset: steps;
+    }
+
+    .steps li {
+      position: relative;
+      min-height: 44px;
+      padding-left: 56px;
+      counter-increment: steps;
+    }
+
+    .steps li::before {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: var(--gold);
+      color: #080808;
+      content: counter(steps);
+      font-weight: 900;
+    }
+
+    .rulesList { padding-left: 20px; }
+
+    details {
+      border-top: 1px solid var(--line);
+      padding: 16px 0;
+    }
+
+    details:first-of-type { border-top: 0; }
+
+    summary {
+      cursor: pointer;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    details p { margin: 10px 0 0; }
+
+    .seoFooter {
+      padding: 26px 0;
+      border-top: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 13px;
+      text-align: center;
+    }
+
+    @media (max-width: 760px) {
+      .seoWrap { width: min(100% - 22px, 1120px); }
+      .seoHeaderInner { min-height: 62px; }
+      .seoNav a:first-child { display: none; }
+      main { padding-top: 34px; }
+      .seoHero {
+        grid-template-columns: 1fr;
+        gap: 28px;
+        padding-bottom: 28px;
+      }
+      .seoProductImage {
+        width: min(78vw, 300px);
+        grid-row: 1;
+      }
+      .planGrid,
+      .infoGrid { grid-template-columns: 1fr; }
+      .seoSection {
+        margin-top: 18px;
+        padding: 21px 17px;
+        border-radius: 18px;
+      }
+      .seoButton { width: 100%; }
+      .planCard { padding: 18px 15px; }
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Product",
+        "name": "Netflix Şəxsi",
+        "description": "Netflix Premium şəxsi profil seçimi: filmlər, seriallar və yüksək keyfiyyətli izləmə.",
+        "image": "https://mirpanel.com/assets/netflix.png",
+        "sku": "netflix",
+        "brand": {
+          "@type": "Brand",
+          "name": "Netflix"
+        },
+        "offers": [
+          {
+            "@type": "Offer",
+            "name": "Netflix Şəxsi – 1 aylıq",
+            "price": "5.99",
+            "priceCurrency": "AZN",
+            "availability": "https://schema.org/InStock",
+            "url": "https://mirpanel.com/#product=netflix",
+            "seller": { "@type": "Organization", "name": "Mirpanel" }
+          },
+          {
+            "@type": "Offer",
+            "name": "Netflix Şəxsi – 3 aylıq",
+            "price": "16.49",
+            "priceCurrency": "AZN",
+            "availability": "https://schema.org/InStock",
+            "url": "https://mirpanel.com/#product=netflix",
+            "seller": { "@type": "Organization", "name": "Mirpanel" }
+          },
+          {
+            "@type": "Offer",
+            "name": "Netflix Şəxsi – 6 aylıq",
+            "price": "29.99",
+            "priceCurrency": "AZN",
+            "availability": "https://schema.org/InStock",
+            "url": "https://mirpanel.com/#product=netflix",
+            "seller": { "@type": "Organization", "name": "Mirpanel" }
+          }
+        ]
+      },
+      {
+        "@type": "Product",
+        "name": "Netflix Ümumi",
+        "description": "Netflix Premium paylaşılan hesab seçimi.",
+        "image": "https://mirpanel.com/assets/netflix.png",
+        "sku": "netflix_umumi",
+        "brand": {
+          "@type": "Brand",
+          "name": "Netflix"
+        },
+        "offers": {
+          "@type": "Offer",
+          "name": "Netflix Ümumi – 1 aylıq",
+          "price": "3.99",
+          "priceCurrency": "AZN",
+          "availability": "https://schema.org/InStock",
+          "url": "https://mirpanel.com/#product=netflix_umumi",
+          "seller": { "@type": "Organization", "name": "Mirpanel" }
+        }
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+  <header class="seoHeader">
+    <div class="seoWrap seoHeaderInner">
+      <a class="seoBrand" href="/" aria-label="Mirpanel ana səhifə">
+        <img src="/assets/logo.png" alt="Mirpanel">
+        <span>Mirpanel</span>
+      </a>
+      <nav class="seoNav" aria-label="Əsas naviqasiya">
+        <a href="/">Ana səhifə</a>
+        <a href="/#products-section">Məhsullar</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="seoWrap">
+    <section class="seoHero">
+      <div>
+        <p class="seoEyebrow">Netflix Premium Azərbaycan</p>
+        <h1>Netflix almaq – Azərbaycanda Netflix Premium</h1>
+        <p class="seoLead">
+          Mirpanel-də Netflix Şəxsi və Netflix Ümumi seçimlərini müqayisə edə,
+          uyğun müddəti seçə və mövcud sifariş sistemi vasitəsilə WhatsApp-da
+          sifarişi tamamlaya bilərsiniz. Paketlər film və serialları rahat
+          izləmək istəyən istifadəçilər üçün fərqli istifadə formaları təqdim edir.
+        </p>
+        <div class="seoHeroActions">
+          <a class="seoButton" href="#paketler">Paketlərə bax</a>
+          <a class="seoButton secondary" href="#sifaris">Sifariş qaydası</a>
+        </div>
+      </div>
+      <img class="seoProductImage" src="/assets/netflix.png" alt="Netflix Premium">
+    </section>
+
+    <section class="seoSection" aria-labelledby="haqqinda">
+      <h2 id="haqqinda">Netflix Premium haqqında</h2>
+      <p>
+        Netflix film, serial, sənədli film, animasiya və Netflix Originals
+        məzmunlarını telefon, kompüter, planşet və smart TV kimi cihazlarda
+        izləməyə imkan verən video yayım xidmətidir. Mirpanel-də iki mövcud
+        seçim var: şəxsi profil üçün Netflix Şəxsi və paylaşılan istifadə üçün
+        Netflix Ümumi.
+      </p>
+      <p>
+        Seçim edərkən yalnız qiyməti deyil, istifadə formasını da nəzərə alın.
+        Netflix Şəxsi paketində sifariş zamanı ad və otaq üçün dörd rəqəmli kod
+        daxil edilir. Netflix Ümumi paketində isə hazır paylaşılan hesab təqdim
+        olunur və həmin hesab üçün göstərilən cihaz qaydalarına əməl edilməlidir.
+      </p>
+    </section>
+
+    <section class="seoSection" id="paketler" aria-labelledby="paketlerBasliq">
+      <h2 id="paketlerBasliq">Netflix paketləri, qiymətlər və müddətlər</h2>
+      <div class="planGrid">
+        <article class="planCard">
+          <div class="planCardHead">
+            <div>
+              <h3>Netflix Şəxsi</h3>
+              <p>Şəxsi profil və seçdiyiniz otaq kodu ilə.</p>
+            </div>
+            <span class="stockBadge">Mövcuddur</span>
+          </div>
+          <ul class="priceList" aria-label="Netflix Şəxsi qiymətləri">
+            <li><span>1 aylıq</span><strong>5.99 ₼</strong></li>
+            <li><span>3 aylıq</span><strong>16.49 ₼</strong></li>
+            <li><span>6 aylıq</span><strong>29.99 ₼</strong></li>
+          </ul>
+          <a class="seoButton" href="/#product=netflix">Netflix Şəxsi sifariş et</a>
+        </article>
+
+        <article class="planCard">
+          <div class="planCardHead">
+            <div>
+              <h3>Netflix Ümumi</h3>
+              <p>Hazır, paylaşılan hesab seçimi.</p>
+            </div>
+            <span class="stockBadge">Mövcuddur</span>
+          </div>
+          <ul class="priceList" aria-label="Netflix Ümumi qiymətləri">
+            <li><span>1 aylıq</span><strong>3.99 ₼</strong></li>
+          </ul>
+          <a class="seoButton" href="/#product=netflix_umumi">Netflix Ümumi sifariş et</a>
+        </article>
+      </div>
+    </section>
+
+    <section class="seoSection" aria-labelledby="melumatBasliq">
+      <h2 id="melumatBasliq">Müddət və təqdim olunma vaxtı</h2>
+      <div class="infoGrid">
+        <article class="infoItem">
+          <h3>Müddət</h3>
+          <p>Şəxsi paket 1, 3 və 6 aylıq; ümumi paket 1 aylıq təqdim olunur.</p>
+        </article>
+        <article class="infoItem">
+          <h3>Təqdim olunma</h3>
+          <p>Sifariş məlumatları təsdiqləndikdən sonra təqdimat qısa müddətdə həyata keçirilir.</p>
+        </article>
+        <article class="infoItem">
+          <h3>Dəqiq vaxt</h3>
+          <p>Cari təqdim olunma vaxtı və sifariş detalları WhatsApp-da bildirilir.</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="seoSection" id="sifaris" aria-labelledby="sifarisBasliq">
+      <h2 id="sifarisBasliq">Netflix sifariş qaydası</h2>
+      <ol class="steps">
+        <li>Netflix Şəxsi və ya Netflix Ümumi paketini seçin.</li>
+        <li>Mövcud məhsul səhifəsində uyğun müddəti seçin.</li>
+        <li>Şəxsi paket üçün adınızı və otaq üçün dörd rəqəmli kodu daxil edin; ümumi paket üçün göstərilən şərtləri təsdiqləyin.</li>
+        <li>“Sifariş et” düyməsi ilə mövcud WhatsApp sifariş axınını açın.</li>
+        <li>Sifariş məlumatlarını WhatsApp-da yoxlayıb təqdim olunma detallarını dəqiqləşdirin.</li>
+      </ol>
+    </section>
+
+    <section class="seoSection" aria-labelledby="qaydalarBasliq">
+      <h2 id="qaydalarBasliq">İstifadə qaydaları</h2>
+      <ul class="rulesList">
+        <li>Sifarişdən əvvəl seçdiyiniz paketin adını, müddətini və qiymətini yoxlayın.</li>
+        <li>Netflix Şəxsi sifarişində ad və dörd rəqəmli otaq kodunu düzgün daxil edin.</li>
+        <li>Netflix Ümumi paylaşılan hesabdır; otaqda digər müştərilər də ola bilər.</li>
+        <li>Netflix Ümumi hesaba yalnız bir cihazla giriş etmək mümkündür və əlavə cihaz qoşulmamalıdır.</li>
+        <li>Giriş və istifadə məlumatlarını üçüncü şəxslərlə paylaşmayın.</li>
+        <li>Sifariş və dəstək WhatsApp üzərindən aparılır.</li>
+      </ul>
+    </section>
+
+    <section class="seoSection" aria-labelledby="faqBasliq">
+      <h2 id="faqBasliq">Netflix almaq haqqında tez-tez verilən suallar</h2>
+
+      <details>
+        <summary>Netflix üçün hansı paketlər mövcuddur?</summary>
+        <p>Netflix Şəxsi üçün 1, 3 və 6 aylıq, Netflix Ümumi üçün isə 1 aylıq seçim mövcuddur.</p>
+      </details>
+
+      <details>
+        <summary>Netflix qiymətləri nə qədərdir?</summary>
+        <p>Netflix Şəxsi 1 aylıq 5.99 ₼, 3 aylıq 16.49 ₼, 6 aylıq 29.99 ₼; Netflix Ümumi 1 aylıq 3.99 ₼-dir.</p>
+      </details>
+
+      <details>
+        <summary>Netflix Şəxsi və Netflix Ümumi arasında fərq nədir?</summary>
+        <p>Şəxsi paketdə sizin üçün ad və dörd rəqəmli kodla profil hazırlanır. Ümumi paket hazır, paylaşılan hesabdır və bir cihazla istifadə qaydası tətbiq olunur.</p>
+      </details>
+
+      <details>
+        <summary>Sifariş necə verilir?</summary>
+        <p>Paketin sifariş düyməsinə keçin, tələb olunan məlumatları daxil edin və mövcud WhatsApp sifariş axını ilə sifarişi tamamlayın.</p>
+      </details>
+
+      <details>
+        <summary>Netflix nə vaxt təqdim olunur?</summary>
+        <p>Məlumatlar təsdiqləndikdən sonra təqdimat qısa müddətdə həyata keçirilir. Cari dəqiq vaxt WhatsApp-da bildirilir.</p>
+      </details>
+
+      <details>
+        <summary>Netflix hansı cihazlarda işləyir?</summary>
+        <p>Netflix telefon, planşet, kompüter və smart TV kimi dəstəklənən cihazlarda istifadə oluna bilər. Netflix Ümumi paketində bir cihaz limiti nəzərə alınmalıdır.</p>
+      </details>
+    </section>
+  </main>
+
+  <footer class="seoFooter">
+    <div class="seoWrap">© 2026 Mirpanel • Bütün hüquqlar qorunur</div>
+  </footer>
+</body>
+</html>
+
