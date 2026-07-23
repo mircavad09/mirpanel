@@ -224,8 +224,8 @@ const adminRedirects = [
 ];
 
 const standaloneSeoRedirects = [
-  "/netflix-almaq /netflix-almaq.html 200",
-  "/netflix-almaq/ /netflix-almaq.html 200"
+  "/netflix-almaq /netflix-almaq/index.html 200",
+  "/netflix-almaq/ /netflix-almaq/index.html 200"
 ];
 
 function seoSlug(value) {
