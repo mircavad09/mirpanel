@@ -223,6 +223,11 @@ const adminRedirects = [
   "/admin/* https://mirpanel-admin.onrender.com/:splat 302"
 ];
 
+const standaloneSeoRedirects = [
+  "/netflix-almaq /netflix-almaq.html 200",
+  "/netflix-almaq/ /netflix-almaq.html 200"
+];
+
 function seoSlug(value) {
   return String(value || "")
     .trim()
@@ -297,9 +302,10 @@ function generateRedirects(products = [], siteSections = {}) {
   const sitePageRoutes = activeSitePageSlugs(siteSections)
     .flatMap((slug) => [`/${slug} /index.html 200`, `/${slug}/ /index.html 200`]);
   const productRoutes = activeProductSlugs(products)
+    .filter((slug) => slug !== "netflix-almaq")
     .map((slug) => `/${slug} /index.html 200`);
 
-  return `${[...adminRedirects, ...sitePageRoutes, ...productRoutes].join("\n")}\n`;
+  return `${[...adminRedirects, ...standaloneSeoRedirects, ...sitePageRoutes, ...productRoutes].join("\n")}\n`;
 }
 
 async function updateRepoTextFile(filePath, content, message) {
@@ -576,3 +582,4 @@ const server = http.createServer(async (request, response) => {
 server.listen(config.port, () => {
   console.log(`Mirpanel admin: http://localhost:${config.port}`);
 });
+
