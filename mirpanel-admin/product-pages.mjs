@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.7 seconds
-Output:
 const SITE_URL = "https://mirpanel.com";
 const DELIVERY_TEXT = "7/24, gün ərzində təqdim olunur.";
 
@@ -487,4 +484,3 @@ function escapeXml(value) {
 function safeJson(value) {
   return JSON.stringify(value).replace(/</g, "\\u003c");
 }
-

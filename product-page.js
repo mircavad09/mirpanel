@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.4 seconds
-Output:
 (function () {
   function productIdFromElement(element) {
     const explicit = element?.dataset?.productId;
@@ -118,4 +115,3 @@ Output:
     initializeProductPage();
   }
 })();
-

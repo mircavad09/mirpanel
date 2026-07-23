@@ -1,6 +1,3 @@
-Exit code: 0
-Wall time: 0.6 seconds
-Output:
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
@@ -213,4 +210,3 @@ function escapeHtml(value) {
 function escapeAttribute(value) {
   return escapeHtml(value).replace(/`/g, "&#096;");
 }
-
