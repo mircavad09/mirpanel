@@ -45,6 +45,7 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`name="robots" content="index, follow"`), `${filePath}: robots`);
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
   assert.ok(html.includes(`/product-page.css?v=20260724-refine-1`), `${filePath}: scoped CSS`);
+  assert.ok(html.includes(`/app.js?v=product-pages-20260724-refine-1`), `${filePath}: product data cache version`);
   assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${slug}/"`), `${filePath}: Open Graph`);
   assert.ok(html.includes(`alt="${escapeAttribute(product.title)}"`), `${filePath}: image alt`);
   assert.ok(html.includes(`data-product-id="${escapeAttribute(product.id)}"`), `${filePath}: product id`);
