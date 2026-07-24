@@ -101,8 +101,12 @@
     } catch {}
     document.querySelectorAll("#pp-plans-container .pp-plan-label").forEach((row, index) => {
       const plan = product?.plans?.[index] || {};
-      if (!plan.oldPrice) row.querySelector(".pp-old-price")?.remove();
-      if (!plan.discount) row.querySelector(".pp-plan-disc-badge")?.remove();
+      const price = Number(plan.price) || 0;
+      const regularPrice = Number(plan.regularPrice) || 0;
+      if (!(regularPrice > price && price > 0)) {
+        row.querySelector(".pp-old-price")?.remove();
+        row.querySelector(".pp-plan-disc-badge")?.remove();
+      }
     });
     normalizeProductImages(product);
     convertSimilarCardsToLinks();

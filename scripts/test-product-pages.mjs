@@ -44,13 +44,17 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${slug}/"`), `${filePath}: canonical`);
   assert.ok(html.includes(`name="robots" content="index, follow"`), `${filePath}: robots`);
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
-  assert.ok(html.includes(`/product-page.css?v=20260724-redesign-1`), `${filePath}: scoped CSS`);
+  assert.ok(html.includes(`/product-page.css?v=20260724-refine-1`), `${filePath}: scoped CSS`);
   assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${slug}/"`), `${filePath}: Open Graph`);
   assert.ok(html.includes(`alt="${escapeAttribute(product.title)}"`), `${filePath}: image alt`);
   assert.ok(html.includes(`data-product-id="${escapeAttribute(product.id)}"`), `${filePath}: product id`);
   assert.ok(html.includes(`id="pp-order-btn"`), `${filePath}: order button`);
-  assert.ok(html.includes(`>Məhsul haqqında klik et</a>`), `${filePath}: about scroll button`);
+  assert.ok(html.includes(`>Məhsul haqqında</a>`), `${filePath}: about scroll button`);
   assert.ok(html.includes(`>Sifariş et</button>`), `${filePath}: order button text`);
+  assert.ok(html.includes(`>Müddət seçin</h2>`), `${filePath}: plan heading`);
+  assert.ok(html.includes(`7/24 anında təqdim edilir`), `${filePath}: delivery text`);
+  assert.equal(html.includes(`class="product-page-back"`), false, `${filePath}: back link removed`);
+  assert.equal((html.match(/<svg aria-hidden="true"/g) || []).length, 4, `${filePath}: menu icons`);
   assert.ok(html.includes(`id="product-about"`), `${filePath}: stable about target`);
   assert.ok(html.includes(`data-product-tab="about"`), `${filePath}: about tab`);
   assert.ok(html.includes(`data-product-tab="rules"`), `${filePath}: rules tab`);
@@ -60,6 +64,18 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`href="/"`), `${filePath}: home link`);
   assert.equal(html.includes('target="_blank"'), false, `${filePath}: yeni tab`);
   assert.equal(html.includes("Səbətə At"), false, `${filePath}: səbət mətni`);
+
+  for (const plan of product.plans) {
+    const price = Number(plan.price) || 0;
+    const regularPrice = Number(plan.regularPrice) || 0;
+    const discount = regularPrice > price && price > 0
+      ? Math.round((regularPrice - price) / regularPrice * 100)
+      : 0;
+    if (discount > 0) {
+      assert.ok(html.includes(`${regularPrice.toFixed(2)} ${product.currency}`), `${filePath}: regularPrice`);
+      assert.ok(html.includes(`-${discount}%`), `${filePath}: calculated discount`);
+    }
+  }
 
   const jsonLdText = html.match(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
   assert.ok(jsonLdText, `${filePath}: JSON-LD`);
@@ -88,6 +104,8 @@ assert.ok(productPageCss.includes("object-fit: contain"), "Product images use co
 assert.ok(productPageCss.includes("@media (max-width: 1040px)"), "Tablet CSS");
 assert.ok(productPageCss.includes("@media (max-width: 760px)"), "Mobile CSS");
 assert.ok(productPageCss.includes("overflow-x: hidden"), "Horizontal overflow protection");
+assert.ok(productPageCss.includes("stroke: currentColor"), "Menu icons follow text color");
+assert.ok(productPageCss.includes("scroll-margin-top"), "About scroll target clears sticky header");
 
 for (const product of state.products.filter((item) => item.active === false)) {
   if (!product.seoSlug) continue;
@@ -166,10 +184,26 @@ const addedProduct = structuredClone(active[0].product);
 addedProduct.id = "seo-generator-test-product";
 addedProduct.title = "SEO Generator Test Product";
 addedProduct.seoSlug = "seo-generator-test-product-almaq";
+addedProduct.plans = [{ months: 1, price: 10, regularPrice: 20 }];
 addedProducts.push(addedProduct);
+const addedHtml = generateProductPageFiles(addedProducts).get("seo-generator-test-product-almaq/index.html");
 assert.ok(
-  generateProductPageFiles(addedProducts).has("seo-generator-test-product-almaq/index.html"),
+  addedHtml,
   "New active product page was not generated"
+);
+assert.ok(addedHtml.includes("20.00 ₼"), "New product regularPrice was not rendered");
+assert.ok(addedHtml.includes("-50%"), "New product discount was not calculated");
+
+const adminRegularPriceState = structuredClone(state);
+adminRegularPriceState.products[0].plans[0].regularPrice = 12.34;
+const adminRegularPriceSource = patchAppSource(
+  appSource,
+  normalizeAdminPayload(adminRegularPriceState)
+);
+assert.equal(
+  extractAdminState(adminRegularPriceSource).products[0].plans[0].regularPrice,
+  12.34,
+  "Admin regularPrice saxlayıb yenidən oxumadı"
 );
 
 const updatedProducts = structuredClone(state.products);

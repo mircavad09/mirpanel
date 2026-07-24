@@ -211,8 +211,7 @@ function normalizePlan(plan = {}) {
     ...(plan.label ? { label: String(plan.label) } : {}),
     months: Number(plan.months) || 1,
     price: Number(plan.price) || 0,
-    ...(Number(plan.oldPrice) > 0 ? { oldPrice: Number(plan.oldPrice) } : {}),
-    ...(plan.discount ? { discount: String(plan.discount) } : {})
+    ...(Number(plan.regularPrice) > 0 ? { regularPrice: Number(plan.regularPrice) } : {})
   };
 }
 

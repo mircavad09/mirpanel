@@ -472,7 +472,8 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 9.99
+          "price": 9.99,
+          "regularPrice": 27.18
         }
       ],
       "orderConfirmation": {
@@ -624,7 +625,8 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 4.99
+          "price": 4.99,
+          "regularPrice": 9.33
         }
       ],
       "orderConfirmation": {
@@ -687,7 +689,8 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 3.99
+          "price": 3.99,
+          "regularPrice": 26.27
         }
       ],
       "orderConfirmation": {
@@ -976,12 +979,14 @@ const DATA = {
         {
           "label": "1 aylıq PRO",
           "months": 1,
-          "price": 11.99
+          "price": 11.99,
+          "regularPrice": 16.98
         },
         {
           "label": "1 aylıq MAX",
           "months": 1,
-          "price": 19.99
+          "price": 19.99,
+          "regularPrice": 42.48
         }
       ],
       "orderConfirmation": {
@@ -1044,7 +1049,8 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 17.99
+          "price": 17.99,
+          "regularPrice": 51
         }
       ],
       "orderConfirmation": {
@@ -1395,7 +1401,8 @@ const DATA = {
         {
           "label": "1 Aylıq",
           "months": 1,
-          "price": 16.99
+          "price": 16.99,
+          "regularPrice": 34
         }
       ],
       "orderConfirmation": {
@@ -2534,12 +2541,14 @@ function renderProductPlans(p) {
   }
 
   plans.forEach((pl, idx) => {
-    let price = pl.price;
-    let oldPrice = pl.oldPrice || (price * 1.5 + 2).toFixed(2); 
-    let discount = pl.discount ? parseInt(pl.discount.toString().replace('-','').replace('%','')) : Math.round((1 - (price/oldPrice)) * 100);
+    const price = Number(pl.price) || 0;
+    const regularPrice = Number(pl.regularPrice) || 0;
+    let discount = regularPrice > price && price > 0
+      ? Math.round((regularPrice - price) / regularPrice * 100)
+      : 0;
 
     const isStockOut = price <= 0;
-    if(isStockOut) { oldPrice = 0; discount = 0; }
+    if(isStockOut) discount = 0;
 
     const labelName = pl.label ? pl.label : `${pl.months} ${UI.month}`;
 
@@ -2549,10 +2558,10 @@ function renderProductPlans(p) {
       <div class="pp-plan-left">
          <div class="pp-radio-circle"></div>
          <div class="pp-plan-name">${labelName}</div>
-         ${discount > 0 ? `<div class="pp-plan-disc-badge">🚩 -${discount}%</div>` : ''}
+         ${discount > 0 ? `<div class="pp-plan-disc-badge">-${discount}%</div>` : ''}
       </div>
       <div class="pp-plan-right">
-         ${discount > 0 ? `<div class="pp-old-price">${oldPrice} ₼</div>` : ''}
+         ${discount > 0 ? `<div class="pp-old-price">${regularPrice.toFixed(2)} ₼</div>` : ''}
          <div class="pp-new-price">${isStockOut ? pl.label : price.toFixed(2) + ' ₼'}</div>
       </div>
     `;

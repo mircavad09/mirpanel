@@ -24,7 +24,7 @@
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260705-detail-image-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=20260724-redesign-1">
+  <link rel="stylesheet" href="/product-page.css?v=20260724-refine-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/adobe-creative-cloud-almaq/#product","name":"Adobe Creative Cloud","description":"Adobe Creative Cloud hesabını sərfəli qiymətə əldə et. Photoshop, Illustrator və premium Adobe alətləri.","image":["https://mirpanel.com/assets/adobe.png"],"sku":"adobecc","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/adobe-creative-cloud-almaq/","price":"9.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition"},{"@type":"Offer","url":"https://mirpanel.com/adobe-creative-cloud-almaq/","price":"22.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition"}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/adobe-creative-cloud-almaq/#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Adobe Creative Cloud","item":"https://mirpanel.com/adobe-creative-cloud-almaq/"}]}]}</script>
 </head>
@@ -36,17 +36,15 @@
         <span>MIRPANEL</span>
       </a>
       <nav class="product-page-nav" aria-label="Əsas menyu">
-        <a href="/">Ana səhifə</a>
-        <a href="/#products-section">Məhsullar</a>
-        <a href="/#haqqimizda">Haqqımızda</a>
-        <a href="/#elaqe">Əlaqə</a>
+        <a href="/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg><span>Ana səhifə</span></a>
+        <a href="/#products-section"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/><path d="M12 11v10"/></svg><span>Məhsullar</span></a>
+        <a href="/#haqqimizda"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/></svg><span>Haqqımızda</span></a>
+        <a href="/#elaqe"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a>
       </nav>
     </div>
   </header>
 
   <main id="productPageView" class="product-page-root">
-    <a class="product-page-back" href="/">← Ana səhifəyə qayıt</a>
-
     <div class="product-page-layout">
       <article class="product-page-card">
         <div class="product-page-card-grid">
@@ -64,18 +62,17 @@
             <h1 id="pp-main-title" class="product-page-title">Adobe Creative Cloud</h1>
             <p class="product-page-description">Photoshop, Illustrator və digərləri.</p>
             <div class="product-page-delivery">
-              <strong>7/24, gün ərzində təqdim olunur.</strong>
-              <br>Hesab hazır şəkildə təqdim edilir.
+              <strong>7/24 anında təqdim edilir</strong>
             </div>
 
-            <h2 class="product-page-section-title">Mövcud planlar</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><strong>9.99 ₼</strong></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>4 aylıq</span><strong>22.99 ₼</strong></div></div>
+            <h2 class="product-page-section-title">Müddət seçin</h2>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><strong>9.99 ₼</strong></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>4 aylıq</span><span class="product-page-plan-prices"><strong>22.99 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
 
         <div class="product-page-actions">
-          <a class="product-page-action is-about" href="#product-about">Məhsul haqqında klik et</a>
+          <a class="product-page-action is-about" href="#product-about">Məhsul haqqında</a>
           <button class="product-page-action is-order" id="pp-order-btn" type="button">Sifariş et</button>
         </div>
       </article>
@@ -187,6 +184,6 @@
   <script src="/hbo-max-order-fix.js?v=20260707-prime-video-1"></script>
   <script src="/order-confirmation.js?v=product-pages-20260724"></script>
   <script src="/stock-display-fix.js?v=20260610-1"></script>
-  <script src="/product-page.js?v=20260724-redesign-1"></script>
+  <script src="/product-page.js?v=20260724-refine-1"></script>
 </body>
 </html>

@@ -772,8 +772,7 @@ function renderPlans(product) {
       <input data-plan="${index}" data-field="label" placeholder="Label" value="${escapeHtml(plan.label || "")}">
       <input data-plan="${index}" data-field="months" type="number" placeholder="Ay" value="${escapeHtml(plan.months ?? "")}">
       <input data-plan="${index}" data-field="price" type="number" step="0.01" placeholder="QiymÉ™t" value="${escapeHtml(plan.price ?? "")}">
-      <input data-plan="${index}" data-field="oldPrice" type="number" step="0.01" placeholder="KÃ¶hnÉ™ qiymÉ™t" value="${escapeHtml(plan.oldPrice ?? "")}">
-      <input data-plan="${index}" data-field="discount" placeholder="Endirim" value="${escapeHtml(plan.discount || "")}">
+      <input data-plan="${index}" data-field="regularPrice" type="number" min="0" step="0.01" placeholder="Müqayisə/list qiyməti" value="${escapeHtml(plan.regularPrice ?? "")}">
       <button class="iconBtn removePlan" data-plan="${index}" type="button">X</button>
     </div>
   `).join("");
@@ -782,7 +781,7 @@ function renderPlans(product) {
     input.addEventListener("input", () => {
       const plan = product.plans[Number(input.dataset.plan)];
       if (!plan) return;
-      if (["label", "discount"].includes(input.dataset.field)) plan[input.dataset.field] = input.value;
+      if (input.dataset.field === "label") plan[input.dataset.field] = input.value;
       else if (input.value === "") delete plan[input.dataset.field];
       else plan[input.dataset.field] = Number(input.value);
       markDirty();

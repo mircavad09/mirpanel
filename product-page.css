@@ -16,6 +16,7 @@
 }
 
 .product-page-header-inner {
+  position: relative;
   width: min(1240px, calc(100% - 32px));
   min-height: 66px;
   margin: 0 auto;
@@ -43,13 +44,19 @@
 }
 
 .product-page-nav {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 6px;
+  justify-content: center;
+  gap: 8px;
 }
 
 .product-page-nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   padding: 10px 12px;
   border-radius: 10px;
   color: rgba(255, 255, 255, .72);
@@ -57,6 +64,17 @@
   font-size: 12px;
   font-weight: 700;
   transition: color .2s ease, background .2s ease;
+}
+
+.product-page-nav svg {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .product-page-nav a:hover,
@@ -70,23 +88,6 @@
   width: min(1240px, calc(100% - 32px));
   margin: 0 auto;
   padding: 26px 0 48px;
-}
-
-.product-page-back {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  margin-bottom: 18px;
-  color: rgba(255, 255, 255, .66);
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.product-page-back:hover,
-.product-page-back:focus-visible {
-  color: #ffd400;
-  outline: none;
 }
 
 .product-page-layout {
@@ -124,7 +125,7 @@
   overflow: hidden;
   display: grid;
   place-items: center;
-  padding: clamp(22px, 4vw, 46px);
+  padding: clamp(8px, 1.5vw, 16px);
   border: 1px solid rgba(255, 212, 0, .14);
   border-radius: 18px;
   background: radial-gradient(circle at 50% 25%, rgba(255, 212, 0, .08), transparent 55%), #020202;
@@ -146,6 +147,29 @@
   max-height: 100% !important;
   object-fit: contain !important;
   object-position: center !important;
+  transform-origin: center;
+}
+
+.product-page-document[data-product-id="netflix"] #pp-main-img,
+.product-page-document[data-product-id="netflix_umumi"] #pp-main-img {
+  transform: scale(2.35);
+}
+
+.product-page-document[data-product-id="capcut"] #pp-main-img {
+  transform: scale(1.42);
+}
+
+.product-page-document[data-product-id="spotify"] #pp-main-img {
+  transform: scale(1.45);
+}
+
+.product-page-document[data-product-id="youtube"] #pp-main-img,
+.product-page-document[data-product-id="youtube_sexsi"] #pp-main-img {
+  transform: scale(2.45);
+}
+
+.product-page-document[data-product-id="surfshark"] #pp-main-img {
+  transform: scale(1.55);
 }
 
 .product-page-availability-badge {
@@ -309,6 +333,39 @@
   white-space: nowrap;
 }
 
+.product-page-plan-prices,
+.product-page-root #pp-plans-container .pp-plan-right {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 5px 8px;
+}
+
+.product-page-regular-price,
+.product-page-root #pp-plans-container .pp-old-price {
+  color: rgba(255, 255, 255, .48);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: line-through;
+  white-space: nowrap;
+}
+
+.product-page-discount,
+.product-page-root #pp-plans-container .pp-plan-disc-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 3px 7px;
+  border: 1px solid rgba(46, 213, 115, .28);
+  border-radius: 999px;
+  color: #62e59a;
+  background: rgba(46, 213, 115, .08);
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .product-page-root #pp-plans-container .pp-plan-label {
   cursor: pointer;
   transition: border-color .2s ease, background .2s ease, transform .2s ease;
@@ -323,11 +380,6 @@
   border: 2px solid #ffd400;
   background: rgba(255, 212, 0, .075);
   box-shadow: 0 8px 24px rgba(255, 212, 0, .08);
-}
-
-.product-page-root #pp-plans-container .pp-old-price,
-.product-page-root #pp-plans-container .pp-plan-disc-badge {
-  display: none !important;
 }
 
 .product-page-actions {
@@ -529,6 +581,10 @@
   font-size: 11px;
 }
 
+#product-about {
+  scroll-margin-top: 86px;
+}
+
 @media (max-width: 1040px) {
   .product-page-layout {
     grid-template-columns: 1fr;
@@ -543,7 +599,9 @@
 @media (max-width: 760px) {
   .product-page-header-inner {
     width: min(100% - 22px, 1240px);
-    min-height: 60px;
+    min-height: 0;
+    padding: 10px 0 9px;
+    flex-wrap: wrap;
     gap: 12px;
   }
 
@@ -556,13 +614,24 @@
     height: 34px;
   }
 
-  .product-page-nav a:nth-child(n + 3) {
-    display: none;
+  .product-page-nav {
+    position: static;
+    width: 100%;
+    order: 2;
+    transform: none;
+    justify-content: space-between;
+    gap: 3px;
   }
 
   .product-page-nav a {
-    padding: 8px;
+    min-width: 0;
+    padding: 7px 5px;
     font-size: 10px;
+  }
+
+  .product-page-nav svg {
+    width: 15px;
+    height: 15px;
   }
 
   .product-page-root {
@@ -583,7 +652,7 @@
   .product-page-media {
     width: 100%;
     max-height: 390px;
-    padding: clamp(24px, 10vw, 44px);
+    padding: clamp(6px, 2.5vw, 12px);
     border-radius: 14px;
   }
 
@@ -619,8 +688,15 @@
     width: min(100% - 16px, 1240px);
   }
 
-  .product-page-nav a:nth-child(n + 2) {
-    display: none;
+  .product-page-nav a {
+    gap: 3px;
+    padding-inline: 3px;
+    font-size: 9px;
+  }
+
+  .product-page-nav svg {
+    width: 14px;
+    height: 14px;
   }
 
   .product-page-similar-list {

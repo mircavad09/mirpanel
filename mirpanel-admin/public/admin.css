@@ -450,7 +450,7 @@ label textarea {
 
 .planRow {
   display: grid;
-  grid-template-columns: 1.2fr 0.55fr 0.7fr 0.7fr 0.7fr 42px;
+  grid-template-columns: 1.2fr 0.55fr 0.7fr 0.7fr 42px;
   gap: 8px;
 }
 

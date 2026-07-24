@@ -1,5 +1,5 @@
 const SITE_URL = "https://mirpanel.com";
-const DELIVERY_TEXT = "7/24, gün ərzində təqdim olunur.";
+const DELIVERY_TEXT = "7/24 anında təqdim edilir";
 
 const defaultSeoAliases = {
   netflix: ["netflix-almaq", "netflix-aile-almaq"],
@@ -242,7 +242,7 @@ export function generateProductPageHtml(product, slug, activeProducts) {
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260705-detail-image-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=20260724-redesign-1">
+  <link rel="stylesheet" href="/product-page.css?v=20260724-refine-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
@@ -254,17 +254,15 @@ export function generateProductPageHtml(product, slug, activeProducts) {
         <span>MIRPANEL</span>
       </a>
       <nav class="product-page-nav" aria-label="Əsas menyu">
-        <a href="/">Ana səhifə</a>
-        <a href="/#products-section">Məhsullar</a>
-        <a href="/#haqqimizda">Haqqımızda</a>
-        <a href="/#elaqe">Əlaqə</a>
+        <a href="/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg><span>Ana səhifə</span></a>
+        <a href="/#products-section"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/><path d="M12 11v10"/></svg><span>Məhsullar</span></a>
+        <a href="/#haqqimizda"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/></svg><span>Haqqımızda</span></a>
+        <a href="/#elaqe"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a>
       </nav>
     </div>
   </header>
 
   <main id="productPageView" class="product-page-root">
-    <a class="product-page-back" href="/">← Ana səhifəyə qayıt</a>
-
     <div class="product-page-layout">
       <article class="product-page-card">
         <div class="product-page-card-grid">
@@ -283,17 +281,16 @@ export function generateProductPageHtml(product, slug, activeProducts) {
             ${product.desc ? `<p class="product-page-description">${escapeHtml(product.desc)}</p>` : ""}
             <div class="product-page-delivery">
               <strong>${DELIVERY_TEXT}</strong>
-              ${product.note ? `<br>${escapeHtml(product.note)}` : ""}
             </div>
 
-            <h2 class="product-page-section-title">Mövcud planlar</h2>
+            <h2 class="product-page-section-title">Müddət seçin</h2>
             <div class="product-page-static-plans" data-static-product-plans>${planMarkup}</div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
 
         <div class="product-page-actions">
-          <a class="product-page-action is-about" href="#product-about">Məhsul haqqında klik et</a>
+          <a class="product-page-action is-about" href="#product-about">Məhsul haqqında</a>
           <button class="product-page-action is-order" id="pp-order-btn" type="button">Sifariş et</button>
         </div>
       </article>
@@ -355,7 +352,7 @@ export function generateProductPageHtml(product, slug, activeProducts) {
   <script src="/hbo-max-order-fix.js?v=20260707-prime-video-1"></script>
   <script src="/order-confirmation.js?v=product-pages-20260724"></script>
   <script src="/stock-display-fix.js?v=20260610-1"></script>
-  <script src="/product-page.js?v=20260724-redesign-1"></script>
+  <script src="/product-page.js?v=20260724-refine-1"></script>
 </body>
 </html>
 `.replace(/[ \t]+$/gm, "");
@@ -367,10 +364,17 @@ function renderPlans(product) {
   return plans.map((plan, index) => {
     const label = cleanText(plan.label) || `${Number(plan.months) || 1} aylıq`;
     const price = Number(plan.price);
+    const regularPrice = Number(plan.regularPrice);
+    const discount = regularPrice > price && price > 0
+      ? Math.round((regularPrice - price) / regularPrice * 100)
+      : 0;
     const priceText = price > 0
       ? `${price.toFixed(2)} ${cleanText(product.currency)}`
       : (cleanText(plan.label) || "Stokda yoxdur");
-    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${escapeHtml(label)}</span><strong>${escapeHtml(priceText)}</strong></div>`;
+    const priceMarkup = discount > 0
+      ? `<span class="product-page-plan-prices"><span class="product-page-regular-price">${escapeHtml(`${regularPrice.toFixed(2)} ${cleanText(product.currency)}`)}</span><strong>${escapeHtml(priceText)}</strong><span class="product-page-discount">-${discount}%</span></span>`
+      : `<span class="product-page-plan-prices"><strong>${escapeHtml(priceText)}</strong></span>`;
+    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${escapeHtml(label)}</span>${priceMarkup}</div>`;
   }).join("");
 }
 
