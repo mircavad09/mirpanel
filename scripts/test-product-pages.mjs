@@ -44,7 +44,7 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${slug}/"`), `${filePath}: canonical`);
   assert.ok(html.includes(`name="robots" content="index, follow"`), `${filePath}: robots`);
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
-  assert.ok(html.includes(`/product-page.css?v=20260724-refine-1`), `${filePath}: scoped CSS`);
+  assert.ok(html.includes(`/product-page.css?v=20260724-mobile-compact-1`), `${filePath}: scoped CSS`);
   assert.ok(html.includes(`/app.js?v=product-pages-20260724-refine-1`), `${filePath}: product data cache version`);
   assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${slug}/"`), `${filePath}: Open Graph`);
   assert.ok(html.includes(`alt="${escapeAttribute(product.title)}"`), `${filePath}: image alt`);
@@ -61,6 +61,7 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`data-product-tab="rules"`), `${filePath}: rules tab`);
   assert.ok(html.includes(`class="product-page-layout"`), `${filePath}: two-column layout`);
   assert.ok(html.includes(`class="product-page-similar-list"`), `${filePath}: similar products`);
+  assert.ok(html.includes(`class="product-page-similar-more"`), `${filePath}: mobile more-products link`);
   assert.ok(html.includes(`src="${escapeAttribute(rootRelativeUrl(product.image))}"`), `${filePath}: root-relative image`);
   assert.ok(html.includes(`href="/"`), `${filePath}: home link`);
   assert.equal(html.includes('target="_blank"'), false, `${filePath}: yeni tab`);
@@ -103,8 +104,12 @@ for (const { product, slug } of active) {
 assert.ok(productPageCss.includes(".product-page-layout"), "Scoped desktop product layout CSS");
 assert.ok(productPageCss.includes("object-fit: contain"), "Product images use contain");
 assert.ok(productPageCss.includes("@media (max-width: 1040px)"), "Tablet CSS");
-assert.ok(productPageCss.includes("@media (max-width: 760px)"), "Mobile CSS");
+assert.ok(productPageCss.includes("@media (max-width: 768px)"), "Mobile CSS");
 assert.ok(productPageCss.includes("overflow-x: hidden"), "Horizontal overflow protection");
+assert.ok(productPageCss.includes("100dvh"), "Dynamic viewport height");
+assert.ok(productPageCss.includes("env(safe-area-inset-top"), "iPhone top safe area");
+assert.ok(productPageCss.includes("env(safe-area-inset-bottom"), "iPhone bottom safe area");
+assert.ok(productPageCss.includes(".product-page-similar-card:nth-child(n + 5)"), "Mobile similar-product limit");
 assert.ok(productPageCss.includes("stroke: currentColor"), "Menu icons follow text color");
 assert.ok(productPageCss.includes("scroll-margin-top"), "About scroll target clears sticky header");
 

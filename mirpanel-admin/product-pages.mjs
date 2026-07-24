@@ -242,7 +242,7 @@ export function generateProductPageHtml(product, slug, activeProducts) {
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260705-detail-image-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=20260724-refine-1">
+  <link rel="stylesheet" href="/product-page.css?v=20260724-mobile-compact-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
@@ -298,6 +298,7 @@ export function generateProductPageHtml(product, slug, activeProducts) {
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
         <div id="pp-similar-list" class="product-page-similar-list">${similarMarkup}</div>
+        <a class="product-page-similar-more" href="/#products-section">Daha çox məhsul</a>
       </aside>
     </div>
 
