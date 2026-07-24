@@ -772,7 +772,7 @@ function renderPlans(product) {
       <input data-plan="${index}" data-field="label" placeholder="Label" value="${escapeHtml(plan.label || "")}">
       <input data-plan="${index}" data-field="months" type="number" placeholder="Ay" value="${escapeHtml(plan.months ?? "")}">
       <input data-plan="${index}" data-field="price" type="number" step="0.01" placeholder="QiymÉ™t" value="${escapeHtml(plan.price ?? "")}">
-      <input data-plan="${index}" data-field="regularPrice" type="number" min="0" step="0.01" placeholder="Müqayisə/list qiyməti" value="${escapeHtml(plan.regularPrice ?? "")}">
+      <input data-plan="${index}" data-field="regularPrice" type="number" min="0" step="0.01" aria-label="Əvvəlki qiymət" placeholder="Əvvəlki qiymət" value="${escapeHtml(plan.regularPrice ?? "")}">
       <button class="iconBtn removePlan" data-plan="${index}" type="button">X</button>
     </div>
   `).join("");
@@ -783,7 +783,11 @@ function renderPlans(product) {
       if (!plan) return;
       if (input.dataset.field === "label") plan[input.dataset.field] = input.value;
       else if (input.value === "") delete plan[input.dataset.field];
-      else plan[input.dataset.field] = Number(input.value);
+      else if (input.dataset.field === "regularPrice") {
+        const regularPrice = Math.max(0, Number(input.value) || 0);
+        input.value = String(regularPrice);
+        plan.regularPrice = regularPrice;
+      } else plan[input.dataset.field] = Number(input.value);
       markDirty();
       renderProducts();
     });

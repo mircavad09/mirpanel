@@ -18,6 +18,7 @@ import {
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const productPageCss = fs.readFileSync(path.join(projectRoot, "product-page.css"), "utf8");
+const adminSource = fs.readFileSync(path.join(projectRoot, "mirpanel-admin", "public", "admin.js"), "utf8");
 const state = extractAdminState(appSource);
 const active = activeProductsWithSlugs(state.products);
 const pages = generateProductPageFiles(state.products);
@@ -44,7 +45,7 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${slug}/"`), `${filePath}: canonical`);
   assert.ok(html.includes(`name="robots" content="index, follow"`), `${filePath}: robots`);
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
-  assert.ok(html.includes(`/product-page.css?v=20260724-mobile-balanced-1`), `${filePath}: scoped CSS`);
+  assert.ok(html.includes(`/product-page.css?v=20260724-mobile-pricing-1`), `${filePath}: scoped CSS`);
   assert.ok(html.includes(`/app.js?v=product-pages-20260724-refine-1`), `${filePath}: product data cache version`);
   assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${slug}/"`), `${filePath}: Open Graph`);
   assert.ok(html.includes(`alt="${escapeAttribute(product.title)}"`), `${filePath}: image alt`);
@@ -112,6 +113,11 @@ assert.ok(productPageCss.includes("env(safe-area-inset-bottom"), "iPhone bottom 
 assert.ok(productPageCss.includes(".product-page-similar-card:nth-child(n + 5)"), "Mobile similar-product limit");
 assert.ok(productPageCss.includes("stroke: currentColor"), "Menu icons follow text color");
 assert.ok(productPageCss.includes("scroll-margin-top"), "About scroll target clears sticky header");
+assert.ok(productPageCss.includes("height: clamp(170px, 50vw, 200px)"), "Mobile media is compact");
+assert.ok(productPageCss.includes("transform: none !important"), "Mobile product image is not scaled");
+assert.ok(productPageCss.includes(".product-page-variant {\n    display: none;"), "Mobile variant badge is hidden");
+assert.ok(adminSource.includes('aria-label="Əvvəlki qiymət"'), "Admin regularPrice label");
+assert.ok(adminSource.includes('data-field="regularPrice" type="number" min="0"'), "Admin regularPrice rejects negatives");
 
 for (const product of state.products.filter((item) => item.active === false)) {
   if (!product.seoSlug) continue;
