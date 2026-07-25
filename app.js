@@ -1399,9 +1399,21 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "1 Aylıq",
+          "label": "1 ayliq (20 gün zəmanətli)",
           "months": 1,
           "price": 16.99,
+          "regularPrice": 34
+        },
+        {
+          "label": "1 ayliq (25 gün zəmanətli)",
+          "months": 1,
+          "price": 19.99,
+          "regularPrice": 34
+        },
+        {
+          "label": "1 ayliq (30 gün zəmanətli)",
+          "months": 1,
+          "price": 21.99,
           "regularPrice": 34
         }
       ],
