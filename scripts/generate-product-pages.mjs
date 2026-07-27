@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractAdminState } from "../mirpanel-admin/core.mjs";
 import {
+  generateInfoPageFiles,
   generateProductPageFiles,
   generateRedirects,
   generateSitemap
@@ -11,7 +12,10 @@ import {
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const state = extractAdminState(appSource);
-const pages = generateProductPageFiles(state.products);
+const pages = new Map([
+  ...generateProductPageFiles(state.products, state.siteSections),
+  ...generateInfoPageFiles(state.siteSections, state.ui)
+]);
 
 for (const [filePath, content] of pages) {
   const absolutePath = path.join(projectRoot, filePath);
@@ -30,4 +34,4 @@ fs.writeFileSync(
   "utf8"
 );
 
-console.log(`Generated ${pages.size} active product pages.`);
+console.log(`Generated ${pages.size} active product and information pages.`);

@@ -5,9 +5,11 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { extractAdminState, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {
+  generateInfoPageFiles,
   generateProductPageFiles,
   generateRedirects as buildRedirects,
   generateSitemap as buildSitemap,
+  removedInfoPagePaths,
   removedProductPagePaths
 } from "./product-pages.mjs";
 
@@ -531,19 +533,24 @@ async function handleApi(request, response) {
     const indexFile = await getRepoFile("index.html");
     const version = `admin-${Date.now()}`;
     const patchedIndex = bumpAssetVersions(indexFile.source, version);
-    const productPages = generateProductPageFiles(adminData.products);
+    const productPages = generateProductPageFiles(adminData.products, adminData.siteSections);
+    const infoPages = generateInfoPageFiles(adminData.siteSections, adminData.ui);
     const files = new Map([
       ["app.js", patched],
       ["index.html", patchedIndex],
       ["sitemap.xml", buildSitemap(adminData.products, adminData.siteSections)],
       ["_redirects", buildRedirects(adminData.products, adminData.siteSections)],
-      ...productPages
+      ...productPages,
+      ...infoPages
     ]);
     const parent = await getBranchHead();
     const result = await commitRepoFiles({
       parent,
       files,
-      removedPaths: removedProductPagePaths(previousData.products, adminData.products),
+      removedPaths: [
+        ...removedProductPagePaths(previousData.products, adminData.products),
+        ...removedInfoPagePaths(previousData.siteSections, adminData.siteSections)
+      ],
       message: "Update Mirpanel content and product pages from admin panel"
     });
     const appSha = result.blobs.get("app.js");
@@ -556,6 +563,7 @@ async function handleApi(request, response) {
       redirectsCommitSha: result.commitSha,
       productPagesCommitSha: result.commitSha,
       productPageCount: productPages.size,
+      infoPageCount: infoPages.size,
       committedAt: new Date().toISOString()
     });
   }

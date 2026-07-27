@@ -9,9 +9,11 @@ import {
 } from "../mirpanel-admin/core.mjs";
 import {
   activeProductsWithSlugs,
+  generateInfoPageFiles,
   generateProductPageFiles,
   generateRedirects,
   generateSitemap,
+  removedInfoPagePaths,
   removedProductPagePaths
 } from "../mirpanel-admin/product-pages.mjs";
 
@@ -21,7 +23,8 @@ const productPageCss = fs.readFileSync(path.join(projectRoot, "product-page.css"
 const adminSource = fs.readFileSync(path.join(projectRoot, "mirpanel-admin", "public", "admin.js"), "utf8");
 const state = extractAdminState(appSource);
 const active = activeProductsWithSlugs(state.products);
-const pages = generateProductPageFiles(state.products);
+const pages = generateProductPageFiles(state.products, state.siteSections);
+const infoPages = generateInfoPageFiles(state.siteSections, state.ui);
 const sitemap = generateSitemap(state.products, state.siteSections, new Date("2026-07-24T00:00:00Z"));
 const redirects = generateRedirects(state.products, state.siteSections);
 
@@ -56,7 +59,10 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`>Müddət seçin</h2>`), `${filePath}: plan heading`);
   assert.ok(html.includes(`7/24 anında təqdim edilir`), `${filePath}: delivery text`);
   assert.equal(html.includes(`class="product-page-back"`), false, `${filePath}: back link removed`);
-  assert.equal((html.match(/<svg aria-hidden="true"/g) || []).length, 4, `${filePath}: menu icons`);
+  assert.equal((html.match(/<svg aria-hidden="true"/g) || []).length, 5, `${filePath}: menu icons`);
+  assert.ok(html.includes(`href="/haqqimizda/"`), `${filePath}: about link`);
+  assert.ok(html.includes(`href="/sertler/"`), `${filePath}: terms link`);
+  assert.ok(html.includes(`href="/elaqe/"`), `${filePath}: contact link`);
   assert.ok(html.includes(`id="product-about"`), `${filePath}: stable about target`);
   assert.ok(html.includes(`data-product-tab="about"`), `${filePath}: about tab`);
   assert.ok(html.includes(`data-product-tab="rules"`), `${filePath}: rules tab`);
@@ -134,7 +140,7 @@ for (const line of redirects.trim().split(/\r?\n/)) {
 }
 
 const orderSnapshot = state.products.map(({ id, order }) => ({ id, order }));
-generateProductPageFiles(state.products);
+generateProductPageFiles(state.products, state.siteSections);
 assert.deepEqual(
   state.products.map(({ id, order }) => ({ id, order })),
   orderSnapshot,
@@ -181,6 +187,71 @@ assert.equal(
   removedProductPagePaths(state.products, deactivated).length,
   1,
   "Deaktiv məhsul səhifəsinin çıxarılması"
+);
+
+const expectedInfoPages = {
+  haqqimizda: {
+    title: "Mirpanel haqqında | Premium hesablar Azərbaycan",
+    description: "Mirpanel, təqdim etdiyi premium hesab xidmətləri və sifariş prosesi haqqında məlumat.",
+    h1: "Mirpanel haqqında"
+  },
+  elaqe: {
+    title: "Mirpanel ilə əlaqə | WhatsApp dəstək",
+    description: "Mirpanel dəstək komandası ilə WhatsApp vasitəsilə əlaqə saxlayın.",
+    h1: "Mirpanel ilə əlaqə"
+  },
+  sertler: {
+    title: "İstifadə və sifariş şərtləri | Mirpanel",
+    description: "Mirpanel sifariş, istifadə və hesab təhlükəsizliyi şərtləri ilə tanış olun.",
+    h1: "İstifadə və sifariş şərtləri"
+  }
+};
+
+assert.equal(infoPages.size, 3, "Information page count");
+for (const [key, expected] of Object.entries(expectedInfoPages)) {
+  const html = infoPages.get(`${key}/index.html`);
+  assert.ok(html, `${key}: information page`);
+  assert.ok(html.includes(`<title>${expected.title}</title>`), `${key}: title`);
+  assert.ok(html.includes(`name="description" content="${expected.description}"`), `${key}: description`);
+  assert.ok(html.includes(`<h1>${expected.h1}</h1>`), `${key}: h1`);
+  assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${key}/"`), `${key}: canonical`);
+  assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${key}/"`), `${key}: Open Graph URL`);
+  assert.ok(html.includes(`name="robots" content="index, follow"`), `${key}: robots`);
+  assert.ok(html.includes(`"@type":"BreadcrumbList"`), `${key}: BreadcrumbList`);
+  assert.equal(html.includes('target="_blank"'), false, `${key}: no new tab`);
+  assert.ok(sitemap.includes(`https://mirpanel.com/${key}/`), `${key}: sitemap`);
+  assert.equal(sitemap.includes(`https://mirpanel.com/${key}<`), false, `${key}: redirect URL absent from sitemap`);
+  assert.ok(redirects.includes(`/${key} /${key}/ 301`), `${key}: permanent redirect`);
+  assert.ok(redirects.includes(`/${key}/ /${key}/index.html 200`), `${key}: final route`);
+}
+assert.ok(sitemap.includes("https://mirpanel.com/netflix-almaq/"), "Netflix final URL in sitemap");
+assert.equal(sitemap.includes("https://mirpanel.com/netflix-almaq<"), false, "Netflix redirect URL absent from sitemap");
+
+const disabledSections = structuredClone(state.siteSections);
+disabledSections.haqqimizda.enabled = false;
+assert.equal(
+  generateInfoPageFiles(disabledSections, state.ui).has("haqqimizda/index.html"),
+  false,
+  "Disabled information page generated"
+);
+assert.equal(
+  generateSitemap(state.products, disabledSections).includes("https://mirpanel.com/haqqimizda/"),
+  false,
+  "Disabled information page remained in sitemap"
+);
+assert.deepEqual(
+  removedInfoPagePaths(state.siteSections, disabledSections),
+  ["haqqimizda/index.html"],
+  "Disabled information page removal"
+);
+
+const updatedSections = structuredClone(state.siteSections);
+updatedSections.haqqimizda.body = "Admin məlumat səhifəsi yeniləmə testi.";
+assert.ok(
+  generateInfoPageFiles(updatedSections, state.ui)
+    .get("haqqimizda/index.html")
+    .includes("Admin məlumat səhifəsi yeniləmə testi."),
+  "Admin information text did not regenerate the page"
 );
 
 assert.equal(

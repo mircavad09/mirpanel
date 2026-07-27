@@ -201,9 +201,9 @@
       <nav class="desktopNav" aria-label="Əsas menyu">
         <a href="#" class="desktopNavLink" data-nav="home" data-i18n="navHome">Ana Səhifə</a>
         <a href="#" class="desktopNavLink" data-nav="products" data-i18n="products">Məhsullar</a>
-        <a href="#haqqimizda" class="desktopNavLink" data-section-nav="haqqimizda" data-i18n="about">Haqqımızda</a>
-        <a href="#sertler" class="desktopNavLink" data-section-nav="sertler" data-i18n="terms">Şərtlər</a>
-        <a href="#elaqe" class="desktopNavLink" data-section-nav="elaqe" data-i18n="contact">Əlaqə</a>
+        <a href="/haqqimizda/" class="desktopNavLink" data-section-nav="haqqimizda" data-i18n="about">Haqqımızda</a>
+        <a href="/sertler/" class="desktopNavLink" data-section-nav="sertler" data-i18n="terms">Şərtlər</a>
+        <a href="/elaqe/" class="desktopNavLink" data-section-nav="elaqe" data-i18n="contact">Əlaqə</a>
       </nav>
 
       <div class="headActions" style="display: flex; gap: 10px; align-items: center;">
@@ -458,9 +458,9 @@
     <ul class="side-menu-links">
       <li><a href="#" class="sm-link" id="linkHome" data-i18n="navHome">Ana Səhifə</a></li>
       <li><a href="#" class="sm-link" id="linkProducts" data-i18n="products">Məhsullar</a></li>
-      <li><a href="#haqqimizda" class="sm-link" data-section-nav="haqqimizda" data-i18n="about">Haqqımızda</a></li>
-      <li><a href="#sertler" class="sm-link" data-section-nav="sertler" data-i18n="terms">Şərtlər</a></li>
-      <li><a href="#elaqe" class="sm-link" data-section-nav="elaqe" data-i18n="contact">Əlaqə</a></li>
+      <li><a href="/haqqimizda/" class="sm-link" data-section-nav="haqqimizda" data-i18n="about">Haqqımızda</a></li>
+      <li><a href="/sertler/" class="sm-link" data-section-nav="sertler" data-i18n="terms">Şərtlər</a></li>
+      <li><a href="/elaqe/" class="sm-link" data-section-nav="elaqe" data-i18n="contact">Əlaqə</a></li>
     </ul>
   </div>
 
@@ -613,6 +613,7 @@
 
       document.querySelectorAll("[data-section-nav]").forEach((link) => {
         link.addEventListener("click", (e) => {
+          if (!(link.getAttribute("href") || "").startsWith("#")) return;
           e.preventDefault();
           closeMenu();
           showHomeForSection(link.getAttribute("data-section-nav"));

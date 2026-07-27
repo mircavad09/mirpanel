@@ -18,6 +18,24 @@ const defaultSitePageSlugs = {
   elaqe: "elaqe"
 };
 
+const infoPageMetadata = {
+  haqqimizda: {
+    title: "Mirpanel haqqında | Premium hesablar Azərbaycan",
+    description: "Mirpanel, təqdim etdiyi premium hesab xidmətləri və sifariş prosesi haqqında məlumat.",
+    h1: "Mirpanel haqqında"
+  },
+  elaqe: {
+    title: "Mirpanel ilə əlaqə | WhatsApp dəstək",
+    description: "Mirpanel dəstək komandası ilə WhatsApp vasitəsilə əlaqə saxlayın.",
+    h1: "Mirpanel ilə əlaqə"
+  },
+  sertler: {
+    title: "İstifadə və sifariş şərtləri | Mirpanel",
+    description: "Mirpanel sifariş, istifadə və hesab təhlükəsizliyi şərtləri ilə tanış olun.",
+    h1: "İstifadə və sifariş şərtləri"
+  }
+};
+
 const adminRedirects = [
   "/admin https://mirpanel-admin.onrender.com/ 302",
   "/admin.html https://mirpanel-admin.onrender.com/ 302",
@@ -25,7 +43,7 @@ const adminRedirects = [
 ];
 
 const standaloneSeoRoutes = [
-  "/netflix-almaq /netflix-almaq/index.html 200",
+  "/netflix-almaq /netflix-almaq/ 301",
   "/netflix-almaq/ /netflix-almaq/index.html 200"
 ];
 
@@ -75,22 +93,38 @@ export function activeProductPageSlugs(products = []) {
   return activeProductsWithSlugs(products).map(({ slug }) => slug);
 }
 
-function activeSitePageSlugs(siteSections = {}) {
+function activeSitePages(siteSections = {}) {
+  const pages = [];
   const slugs = new Set();
 
   for (const [key, fallbackSlug] of Object.entries(defaultSitePageSlugs)) {
     const page = siteSections?.[key] || {};
     if (page.enabled === false) continue;
     const slug = seoSlug(page.slug || fallbackSlug);
-    if (slug) slugs.add(slug);
+    if (slug && !slugs.has(slug)) {
+      slugs.add(slug);
+      pages.push({ key, slug, section: page });
+    }
   }
 
-  return [...slugs];
+  return pages;
+}
+
+function activeSitePageSlugs(siteSections = {}) {
+  return activeSitePages(siteSections).map(({ slug }) => slug);
 }
 
 export function removedProductPagePaths(previousProducts = [], nextProducts = []) {
   const previous = new Set(activeProductPageSlugs(previousProducts));
   const next = new Set(activeProductPageSlugs(nextProducts));
+  return [...previous]
+    .filter((slug) => !next.has(slug))
+    .map((slug) => `${slug}/index.html`);
+}
+
+export function removedInfoPagePaths(previousSiteSections = {}, nextSiteSections = {}) {
+  const previous = new Set(activeSitePageSlugs(previousSiteSections));
+  const next = new Set(activeSitePageSlugs(nextSiteSections));
   return [...previous]
     .filter((slug) => !next.has(slug))
     .map((slug) => `${slug}/index.html`);
@@ -106,9 +140,9 @@ export function generateSitemap(products = [], siteSections = {}, date = new Dat
 
   add("/", "daily", "1.0");
   for (const slug of activeSitePageSlugs(siteSections)) {
-    add(`/${slug}`, "monthly", "0.7");
+    add(`/${slug}/`, "monthly", "0.7");
   }
-  add("/netflix-almaq", "weekly", "0.9");
+  add("/netflix-almaq/", "weekly", "0.9");
   for (const slug of activeProductPageSlugs(products)) {
     add(`/${slug}/`, "weekly", "0.9");
   }
@@ -131,7 +165,7 @@ export function generateRedirects(products = [], siteSections = {}) {
   );
 
   for (const slug of activeSitePageSlugs(siteSections)) {
-    lines.push(`/${slug} /index.html 200`, `/${slug}/ /index.html 200`);
+    lines.push(`/${slug} /${slug}/ 301`, `/${slug}/ /${slug}/index.html 200`);
   }
 
   for (const slug of primaryById.values()) {
@@ -151,18 +185,28 @@ export function generateRedirects(products = [], siteSections = {}) {
   return `${[...new Set(lines)].join("\n")}\n`;
 }
 
-export function generateProductPageFiles(products = []) {
+export function generateProductPageFiles(products = [], siteSections = {}) {
   const active = activeProductsWithSlugs(products);
   const files = new Map();
 
   for (const { product, slug } of active) {
-    files.set(`${slug}/index.html`, generateProductPageHtml(product, slug, active));
+    files.set(`${slug}/index.html`, generateProductPageHtml(product, slug, active, siteSections));
   }
 
   return files;
 }
 
-export function generateProductPageHtml(product, slug, activeProducts) {
+export function generateInfoPageFiles(siteSections = {}, ui = {}) {
+  const files = new Map();
+
+  for (const page of activeSitePages(siteSections)) {
+    files.set(`${page.slug}/index.html`, generateInfoPageHtml(page, siteSections, ui));
+  }
+
+  return files;
+}
+
+export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}) {
   const canonical = `${SITE_URL}/${slug}/`;
   const title = cleanText(product.seoTitle) || `${cleanText(product.title)} | Mirpanel`;
   const description =
@@ -253,12 +297,7 @@ export function generateProductPageHtml(product, slug, activeProducts) {
         <img src="/assets/logo.png" alt="Mirpanel">
         <span>MIRPANEL</span>
       </a>
-      <nav class="product-page-nav" aria-label="Əsas menyu">
-        <a href="/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/></svg><span>Ana səhifə</span></a>
-        <a href="/#products-section"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/><path d="M12 11v10"/></svg><span>Məhsullar</span></a>
-        <a href="/#haqqimizda"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/></svg><span>Haqqımızda</span></a>
-        <a href="/#elaqe"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a>
-      </nav>
+      <nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections)}</nav>
     </div>
   </header>
 
@@ -357,6 +396,177 @@ export function generateProductPageHtml(product, slug, activeProducts) {
 </body>
 </html>
 `.replace(/[ \t]+$/gm, "");
+}
+
+function generateInfoPageHtml(page, siteSections, ui) {
+  const metadata = infoPageMetadata[page.key];
+  const canonical = `${SITE_URL}/${page.slug}/`;
+  const content = renderInfoPageContent(page.key, page.section, siteSections, ui);
+  const structuredData = safeJson({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Ana səhifə",
+        item: `${SITE_URL}/`
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: metadata.h1,
+        item: canonical
+      }
+    ]
+  });
+
+  return `<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>${escapeHtml(metadata.title)}</title>
+  <meta name="description" content="${escapeAttribute(metadata.description)}">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="${canonical}">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="${escapeAttribute(metadata.title)}">
+  <meta property="og:description" content="${escapeAttribute(metadata.description)}">
+  <meta property="og:url" content="${canonical}">
+  <meta property="og:image" content="${SITE_URL}/assets/logo.png">
+  <meta name="theme-color" content="#070707">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=final22">
+  <link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1">
+  <link rel="stylesheet" href="/info-page.css?v=20260728-1">
+  <link rel="icon" href="/assets/logo.png">
+  <script type="application/ld+json">${structuredData}</script>
+</head>
+<body class="product-page-document info-page-document">
+  <header class="product-page-header">
+    <div class="product-page-header-inner">
+      <a class="product-page-brand" href="/" aria-label="Mirpanel ana səhifə">
+        <img src="/assets/logo.png" alt="Mirpanel">
+        <span>MIRPANEL</span>
+      </a>
+      <nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections, page.key)}</nav>
+    </div>
+  </header>
+
+  <main class="info-page-root">
+    <nav class="info-page-breadcrumb" aria-label="Səhifə yolu">
+      <a href="/">Ana səhifə</a><span aria-hidden="true">/</span><span>${escapeHtml(metadata.h1)}</span>
+    </nav>
+    <article class="info-page-card">
+      <p class="info-page-kicker">MIRPANEL</p>
+      <h1>${escapeHtml(metadata.h1)}</h1>
+      ${content}
+    </article>
+  </main>
+
+  <footer class="product-page-footer">${escapeHtml(fixMojibake(ui.footRights) || "©️ 2026 Mirpanel • Bütün hüquqlar qorunur")}</footer>
+</body>
+</html>
+`.replace(/[ \t]+$/gm, "");
+}
+
+function renderInfoPageContent(key, section, siteSections, ui) {
+  if (key === "haqqimizda") {
+    const body = fixMojibake(section.body || section.text);
+    return `<div class="info-page-copy">${body ? `<p>${escapeHtml(body)}</p>` : ""}</div>
+      <div class="info-page-actions">
+        <a href="/">Ana səhifə</a>
+        <a class="is-primary" href="/#products-section">Məhsullara bax</a>
+      </div>`;
+  }
+
+  if (key === "elaqe") {
+    const number = fixMojibake(section.whatsappNumber);
+    const contactText = fixMojibake(section.body || section.text);
+    const supportText = fixMojibake(section.workHours);
+    const whatsappHref = whatsappHrefFromNumber(number);
+    return `<div class="info-page-copy">
+        ${contactText ? `<p>${escapeHtml(contactText)}</p>` : ""}
+        ${supportText ? `<p>${escapeHtml(supportText)}</p>` : ""}
+        ${number ? `<p class="info-page-contact"><strong>WhatsApp:</strong> <a href="${escapeAttribute(whatsappHref)}">${escapeHtml(number)}</a></p>` : ""}
+      </div>
+      <div class="info-page-actions">
+        <a href="/">Ana səhifə</a>
+        ${number ? `<a class="is-primary" href="${escapeAttribute(whatsappHref)}">${escapeHtml(fixMojibake(section.buttonText) || "WhatsApp ilə yaz")}</a>` : ""}
+      </div>`;
+  }
+
+  const items = (Array.isArray(section.items) ? section.items : [])
+    .map(fixMojibake)
+    .filter(Boolean);
+  const groups = [
+    ["Ümumi qaydalar", items[0] ? [items[0]] : []],
+    ["Sifariş prosesi", [fixMojibake(ui.bannerText), fixMojibake(ui.heroHint)].filter(Boolean)],
+    ["Hesabdan istifadə", items[1] ? [items[1]] : []],
+    ["Müştərinin məsuliyyəti", items[2] ? [items[2]] : []],
+    ["Dəstək və əlaqə", items[3] ? [items[3]] : []]
+  ].filter(([, paragraphs]) => paragraphs.length);
+  return `<div class="info-page-sections">${groups.map(([heading, paragraphs]) =>
+    `<section><h2>${escapeHtml(heading)}</h2>${paragraphs.map((text) => `<p>${escapeHtml(text)}</p>`).join("")}</section>`
+  ).join("")}</div>
+    <div class="info-page-actions">
+      <a href="/">Ana səhifə</a>
+      <a href="/#products-section">Məhsullara bax</a>
+      ${siteSections?.elaqe?.enabled === false ? "" : `<a class="is-primary" href="/${seoSlug(siteSections?.elaqe?.slug || defaultSitePageSlugs.elaqe)}/">Əlaqə</a>`}
+    </div>`;
+}
+
+function renderSiteNav(siteSections = {}, currentKey = null) {
+  const links = [
+    ["", "/", "Ana səhifə", `<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/>`],
+    ["products", "/#products-section", "Məhsullar", `<path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/><path d="M12 11v10"/>`]
+  ];
+  const labels = { haqqimizda: "Haqqımızda", sertler: "Şərtlər", elaqe: "Əlaqə" };
+  const icons = {
+    haqqimizda: `<circle cx="12" cy="12" r="9"/><path d="M12 11v6"/><path d="M12 7.5h.01"/>`,
+    sertler: `<path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3-7 3v-15a2 2 0 0 1 2-2Z"/><path d="M9 8h6M9 12h6"/>`,
+    elaqe: `<path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/>`
+  };
+
+  for (const { key, slug } of activeSitePages(siteSections)) {
+    links.push([key, `/${slug}/`, labels[key], icons[key]]);
+  }
+
+  return links.map(([key, href, label, icon]) =>
+    `<a href="${href}"${currentKey && key === currentKey ? ` aria-current="page"` : ""}><svg aria-hidden="true" viewBox="0 0 24 24">${icon}</svg><span>${label}</span></a>`
+  ).join("");
+}
+
+function whatsappHrefFromNumber(value) {
+  let digits = String(value || "").replace(/\D/g, "");
+  if (digits.startsWith("0")) digits = `994${digits.slice(1)}`;
+  return `https://wa.me/${digits}`;
+}
+
+function fixMojibake(value) {
+  const replacements = {
+    "Д±": "ı",
+    "Д°": "İ",
+    "Гј": "ü",
+    "Гњ": "Ü",
+    "Й™": "ə",
+    "ЖЏ": "Ə",
+    "Еџ": "ş",
+    "Ећ": "Ş",
+    "Г§": "ç",
+    "Г‡": "Ç",
+    "Г¶": "ö",
+    "Г–": "Ö",
+    "Дџ": "ğ",
+    "Дћ": "Ğ"
+  };
+  return Object.entries(replacements).reduce(
+    (text, [broken, correct]) => text.split(broken).join(correct),
+    cleanText(value)
+  );
 }
 
 function renderPlans(product) {
