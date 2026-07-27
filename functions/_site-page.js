@@ -139,12 +139,5 @@ export async function renderSitePage(context, key) {
     return Response.redirect(requestUrl, 301);
   }
 
-  const indexUrl = new URL(context.request.url);
-  indexUrl.pathname = `${canonicalPath}index.html`;
-  indexUrl.search = "";
-  const response = await context.env.ASSETS.fetch(new Request(indexUrl, context.request));
-  const headers = new Headers(response.headers);
-  headers.set("Content-Type", "text/html; charset=utf-8");
-  headers.set("Cache-Control", "no-cache");
-  return new Response(response.body, { status: response.status, headers });
+  return context.next();
 }
