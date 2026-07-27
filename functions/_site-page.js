@@ -132,13 +132,19 @@ export async function renderSitePage(context, key) {
   const page = normalizePage(key, pages[key]);
   if (page.enabled === false) return new Response("Not found", { status: 404 });
 
+  const requestUrl = new URL(context.request.url);
+  const canonicalPath = `/${page.slug}/`;
+  if (requestUrl.pathname !== canonicalPath) {
+    requestUrl.pathname = canonicalPath;
+    return Response.redirect(requestUrl, 301);
+  }
+
   const indexUrl = new URL(context.request.url);
-  indexUrl.pathname = "/index.html";
+  indexUrl.pathname = `${canonicalPath}index.html`;
   indexUrl.search = "";
   const response = await context.env.ASSETS.fetch(new Request(indexUrl, context.request));
-  const html = injectMeta(await response.text(), page);
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=utf-8");
   headers.set("Cache-Control", "no-cache");
-  return new Response(html, { status: response.status, headers });
+  return new Response(response.body, { status: response.status, headers });
 }
