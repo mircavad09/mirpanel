@@ -298,8 +298,8 @@ function withSeoScripts(html) {
   if (!next.includes("seo-router.js?v=20260710-seo-1")) {
     next = next.replace(/<script src="frontend-routing-detail-fix\.js[^>]*><\/script>/i, '$&\n  <script src="seo-router.js?v=20260710-seo-1"></script>');
   }
-  if (!next.includes("site-sections-render.js?v=20260711-sections-1")) {
-    next = next.replace(/<script src="app\.js[^>]*><\/script>/i, '$&\n  <script src="site-sections-render.js?v=20260711-sections-1"></script>');
+  if (!next.includes("site-sections-render.js?v=20260728-info-pages-1")) {
+    next = next.replace(/<script src="app\.js[^>]*><\/script>/i, '$&\n  <script src="site-sections-render.js?v=20260728-info-pages-1"></script>');
   }
   if (!next.includes("seo-structured-data-fix.js?v=20260713-rating-2")) {
     next = next.replace(/<script src="seo\.js[^>]*><\/script>/i, '$&\n  <script src="seo-structured-data-fix.js?v=20260713-rating-2"></script>');

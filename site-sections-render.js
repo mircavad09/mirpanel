@@ -223,7 +223,7 @@
     pageView.innerHTML = `<article class="sitePageCard"><a href="/" class="sitePageBack" data-site-home>← Ana səhifəyə qayıt</a><div class="sitePageEyebrow">Mirpanel</div><h1>${escapeHtml(page.title)}</h1>${page.subtitle ? `<p class="sitePageSubtitle">${escapeHtml(page.subtitle)}</p>` : ""}<div class="sitePageBody">${body}${extra}${items}${contact}</div></article>`;
     pageView.style.display = "block";
     applySeo(page);
-    if (!replaceOnly && window.location.pathname.replace(/^\/+|\/+$/g, "") !== page.slug) history.pushState({ sitePage: key }, "", `/${page.slug}`);
+    if (!replaceOnly && window.location.pathname.replace(/^\/+|\/+$/g, "") !== page.slug) history.pushState({ sitePage: key }, "", `/${page.slug}/`);
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
@@ -244,7 +244,7 @@
     Object.entries(map).forEach(([key, page]) => {
       document.querySelectorAll(`[data-section-nav="${key}"]`).forEach((link) => {
         link.style.display = page.enabled === false ? "none" : "";
-        link.setAttribute("href", `/${page.slug}`);
+        link.setAttribute("href", `/${page.slug}/`);
       });
     });
   }
@@ -262,7 +262,7 @@
       }
 
       const nav = event.target.closest("[data-section-nav]");
-      if (nav) {
+      if (nav && (nav.getAttribute("href") || "").startsWith("#")) {
         event.preventDefault();
         event.stopImmediatePropagation();
         const key = nav.getAttribute("data-section-nav");
