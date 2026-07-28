@@ -2,7 +2,7 @@
    app.js — Mirpanel (TAM FINAL: YENİ SIRALAMA BANNERİ VƏ YAN MENYU)
    ========================================================= */
 
-const PHONE_WA = "https://wa.me/994515243545";
+let PHONE_WA = "https://wa.me/994515243545";
 
 /* =========================
    UI MƏTNLƏRİ (YALNIZ AZ)
@@ -2220,6 +2220,199 @@ const DATA = {
 /* =========================
    MƏHSUL HAQQINDA BÖLMƏSİ (INFO_TEXTS)
    ========================= */
+const CMS_CONTENT = {
+  "schemaVersion": 1,
+  "site": {
+    "brandName": "Mirpanel",
+    "logo": "assets/logo.png",
+    "brandSubtitle": "Premium Hesablar • Etibarlı Aktivləşmə",
+    "whatsappNumber": "994515243545",
+    "phoneDisplay": "051 524 35 45"
+  },
+  "homepage": {
+    "announcement": {
+      "enabled": true,
+      "text": "Diqqət! Saytımızda ödəniş sistemi yoxdur. Sifariş etdiyiniz zaman sayt sizi avtomatik WhatsApp-a yönləndirir."
+    },
+    "hero": {
+      "title": "Premium Hesablar — Sürətli və Etibarlı",
+      "description": "Netflix, ChatGPT Plus, Google AI, CapCut Pro və daha çox. Plan seç → məlumatları yaz → WhatsApp avtomatik açılır."
+    },
+    "search": {
+      "title": "AXTARIŞ ET,",
+      "highlight": "İSTƏDİYİNİ TAP!",
+      "description": "Bütün məlumatlar saytda mövcuddur. Axtarış bölməsindən istədiyiniz məhsulu rahatlıqla tapa bilərsiniz.",
+      "placeholder": "Məhsul axtar... (məs: Netflix, Zoom)"
+    },
+    "bundle": {
+      "enabled": true,
+      "title": "XÜSUSİ PAKET (ENDİRİMLİ)",
+      "description": "İstədiyiniz məhsulları seçin və 5% paket endirimi qazanın! Bütün paketlər 1 aylıq hesablanır.",
+      "buttonText": "Paket yarat",
+      "discountPercent": 5
+    },
+    "sectionOrder": [
+      "announcement",
+      "hero",
+      "search",
+      "products",
+      "bundle",
+      "info"
+    ],
+    "sections": {
+      "announcement": true,
+      "hero": true,
+      "search": true,
+      "products": true,
+      "bundle": true,
+      "info": true,
+      "games": true,
+      "ai": true
+    },
+    "infoCards": {
+      "about": {
+        "title": "Haqqımızda",
+        "text": "Mirpanel premium hesabların sürətli və etibarlı aktivləşdirilməsi üçün xidmət göstərir.",
+        "linkText": "Ətraflı"
+      },
+      "contact": {
+        "title": "Əlaqə",
+        "text": "WhatsApp üzərindən dəstək",
+        "linkText": "WhatsApp ilə yaz"
+      },
+      "terms": {
+        "title": "Şərtlər",
+        "text": "Sifariş və istifadə şərtləri",
+        "linkText": "Ətraflı"
+      }
+    }
+  },
+  "navigation": [
+    {
+      "id": "home",
+      "label": "Ana Səhifə",
+      "url": "/",
+      "order": 1,
+      "enabled": true,
+      "icon": "home",
+      "newTab": false
+    },
+    {
+      "id": "products",
+      "label": "Məhsullar",
+      "url": "/#products-section",
+      "order": 2,
+      "enabled": true,
+      "icon": "products",
+      "newTab": false
+    },
+    {
+      "id": "about",
+      "label": "Haqqımızda",
+      "url": "/haqqimizda/",
+      "order": 3,
+      "enabled": true,
+      "icon": "info",
+      "newTab": false
+    },
+    {
+      "id": "terms",
+      "label": "Şərtlər",
+      "url": "/sertler/",
+      "order": 4,
+      "enabled": true,
+      "icon": "terms",
+      "newTab": false
+    },
+    {
+      "id": "contact",
+      "label": "Əlaqə",
+      "url": "/elaqe/",
+      "order": 5,
+      "enabled": true,
+      "icon": "contact",
+      "newTab": false
+    }
+  ],
+  "banners": [],
+  "footer": {
+    "copyrightText": "Bütün hüquqlar qorunur",
+    "year": 2026,
+    "brandName": "Mirpanel",
+    "phone": "051 524 35 45",
+    "whatsapp": "994515243545",
+    "shortText": "",
+    "links": [
+      {
+        "id": "about",
+        "label": "Haqqımızda",
+        "url": "/haqqimizda/",
+        "order": 1,
+        "enabled": true,
+        "icon": "info",
+        "newTab": false
+      },
+      {
+        "id": "terms",
+        "label": "Şərtlər",
+        "url": "/sertler/",
+        "order": 2,
+        "enabled": true,
+        "icon": "terms",
+        "newTab": false
+      },
+      {
+        "id": "contact",
+        "label": "Əlaqə",
+        "url": "/elaqe/",
+        "order": 3,
+        "enabled": true,
+        "icon": "contact",
+        "newTab": false
+      }
+    ]
+  },
+  "commonTexts": {
+    "available": "Mövcuddur",
+    "outOfStock": "Stokda yoxdur",
+    "selectDuration": "Müddət seçin",
+    "order": "Sifariş et",
+    "productAbout": "Məhsul haqqında",
+    "usageRules": "İstifadə qaydaları",
+    "relatedProducts": "Oxşar məhsullar",
+    "moreProducts": "Daha çox məhsul",
+    "instantDelivery": "7/24 anında təqdim edilir",
+    "close": "Bağla",
+    "confirm": "Təsdiqləyirəm",
+    "cancel": "Ləğv et",
+    "sendWhatsapp": "WhatsApp-a göndər",
+    "requiredField": "Bu sahə məcburidir.",
+    "invalidEmail": "Düzgün e-poçt ünvanı daxil edin.",
+    "noSearchResults": "Axtarışa uyğun məhsul tapılmadı.",
+    "bundleTitle": "Paket yarat",
+    "bundleButton": "Paket yarat"
+  },
+  "seo": {
+    "home": {
+      "slug": "",
+      "title": "Mirpanel | Premium hesablar Azərbaycanda",
+      "description": "Netflix, ChatGPT Plus, CapCut Pro və digər premium rəqəmsal xidmətləri Mirpanel-dən sifariş edin.",
+      "ogTitle": "Mirpanel",
+      "ogDescription": "Premium rəqəmsal xidmətlər üçün sürətli və rahat sifariş.",
+      "ogImage": "assets/logo.png",
+      "index": true,
+      "includeInSitemap": true
+    },
+    "robotsIndexing": true
+  },
+  "orderSettings": {
+    "whatsappButtonText": "WhatsApp",
+    "defaultExtraMessage": "",
+    "requireConfirmation": false
+  },
+  "media": []
+};
+
 const SITE_SECTIONS = {
   "haqqimizda": {
     "enabled": true,
@@ -2864,7 +3057,14 @@ function closeModal() {
 
 function getMinPrice(p) { return Math.min(...(p.plans||[]).filter(x => x.price > 0).map(x => x.price)); }
 function formatPrice(n) { return Number(n).toFixed(2); }
-function esc(s) { return String(s ?? "").replaceAll("<", "<").replaceAll(">", ">"); }
+function esc(s) {
+  return String(s ?? "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
 
 
 /* =========================

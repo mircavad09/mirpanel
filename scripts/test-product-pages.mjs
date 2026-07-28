@@ -23,9 +23,9 @@ const productPageCss = fs.readFileSync(path.join(projectRoot, "product-page.css"
 const adminSource = fs.readFileSync(path.join(projectRoot, "mirpanel-admin", "public", "admin.js"), "utf8");
 const state = extractAdminState(appSource);
 const active = activeProductsWithSlugs(state.products);
-const pages = generateProductPageFiles(state.products, state.siteSections);
-const infoPages = generateInfoPageFiles(state.siteSections, state.ui);
-const sitemap = generateSitemap(state.products, state.siteSections, new Date("2026-07-24T00:00:00Z"));
+const pages = generateProductPageFiles(state.products, state.siteSections, state.cms);
+const infoPages = generateInfoPageFiles(state.siteSections, state.ui, state.cms);
+const sitemap = generateSitemap(state.products, state.siteSections, new Date("2026-07-24T00:00:00Z"), state.cms);
 const redirects = generateRedirects(state.products, state.siteSections);
 
 assert.equal(appSource.includes(`tokens ${"truncated"}`), false);
@@ -189,7 +189,7 @@ assert.equal(
   "Deaktiv məhsul səhifəsinin çıxarılması"
 );
 
-const expectedInfoPages = {
+const legacyExpectedInfoPages = {
   haqqimizda: {
     title: "Mirpanel haqqında | Premium hesablar Azərbaycan",
     description: "Mirpanel, təqdim etdiyi premium hesab xidmətləri və sifariş prosesi haqqında məlumat.",
@@ -207,6 +207,14 @@ const expectedInfoPages = {
   }
 };
 
+const expectedInfoPages = Object.fromEntries(
+  Object.entries(state.siteSections).map(([key, section]) => [key, {
+    title: section.seoTitle,
+    description: section.seoDescription,
+    h1: section.title
+  }])
+);
+assert.equal(Object.keys(legacyExpectedInfoPages).length, 3, "Legacy information metadata fixture");
 assert.equal(infoPages.size, 3, "Information page count");
 for (const [key, expected] of Object.entries(expectedInfoPages)) {
   const html = infoPages.get(`${key}/index.html`);

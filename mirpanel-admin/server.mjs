@@ -2,6 +2,7 @@ import crypto from "node:crypto";
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
+import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import { extractAdminState, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {
@@ -33,8 +34,7 @@ const maxProductImageSize = 5 * 1024 * 1024;
 const productImageTypes = new Map([
   ["image/jpeg", "jpg"],
   ["image/png", "png"],
-  ["image/webp", "webp"],
-  ["image/svg+xml", "svg"]
+  ["image/webp", "webp"]
 ]);
 
 function loadEnv(file) {
@@ -133,11 +133,65 @@ function extensionFromUpload(fileName, mimeType) {
   if (productImageTypes.has(normalizedMime)) return productImageTypes.get(normalizedMime);
 
   const ext = path.extname(String(fileName || "")).slice(1).toLowerCase();
-  if (["jpg", "jpeg", "png", "webp", "svg"].includes(ext)) {
+  if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
     return ext === "jpeg" ? "jpg" : ext;
   }
 
   return "";
+}
+
+function matchesImageSignature(buffer, extension) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 12) return false;
+  if (extension === "jpg") return buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff;
+  if (extension === "png") {
+    return buffer.subarray(0, 8).equals(Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]));
+  }
+  if (extension === "webp") {
+    return buffer.subarray(0, 4).toString("ascii") === "RIFF" &&
+      buffer.subarray(8, 12).toString("ascii") === "WEBP";
+  }
+  return false;
+}
+
+function gitBlobSha(buffer) {
+  const content = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer);
+  return crypto
+    .createHash("sha1")
+    .update(Buffer.from(`blob ${content.length}\0`))
+    .update(content)
+    .digest("hex");
+}
+
+function validateGeneratedOutput(appSource, files) {
+  new vm.Script(appSource, { filename: "app.js" });
+  const residue = new RegExp([
+    ["tokens", "truncated"].join(" "),
+    ["Ran", "command"].join(" "),
+    ["Stopped", "command"].join(" "),
+    `^${["Exit", "code:"].join(" ")}`,
+    `^${["Wall", "time:"].join(" ")}`,
+    `^${"Out" + "put:"}`
+  ].join("|"), "m");
+  for (const [filePath, content] of files) {
+    if (residue.test(String(content))) {
+      throw new Error(`${filePath}: alət çıxışı qalığı aşkarlandı.`);
+    }
+    if (filePath.endsWith("/index.html")) {
+      if (!/<title>[\s\S]+<\/title>/.test(content) || !/<h1\b/.test(content)) {
+        throw new Error(`${filePath}: məcburi title və ya H1 yoxdur.`);
+      }
+    }
+  }
+}
+
+function sameOrigin(request) {
+  const origin = String(request.headers.origin || "");
+  if (!origin) return true;
+  try {
+    return new URL(origin).host === String(request.headers.host || "");
+  } catch {
+    return false;
+  }
 }
 
 async function github(pathname, options = {}) {
@@ -165,9 +219,9 @@ async function github(pathname, options = {}) {
   return payload;
 }
 
-async function getRepoFile(filePath) {
+async function getRepoFile(filePath, ref = config.branch) {
   const file = await github(
-    `/repos/${config.repo}/contents/${filePath}?ref=${encodeURIComponent(config.branch)}`
+    `/repos/${config.repo}/contents/${filePath}?ref=${encodeURIComponent(ref)}`
   );
 
   return {
@@ -226,9 +280,9 @@ const defaultSitePageSlugs = {
 };
 
 const adminRedirects = [
-  "/admin https://mirpanel-admin.onrender.com/ 302",
-  "/admin.html https://mirpanel-admin.onrender.com/ 302",
-  "/admin/* https://mirpanel-admin.onrender.com/:splat 302"
+  "/admin https://mirpanel.onrender.com/ 302",
+  "/admin.html https://mirpanel.onrender.com/ 302",
+  "/admin/* https://mirpanel.onrender.com/:splat 302"
 ];
 
 const standaloneSeoRedirects = [
@@ -348,11 +402,12 @@ async function getBranchHead() {
 }
 
 async function createGitBlob(content) {
+  const binary = Buffer.isBuffer(content);
   const blob = await github(`/repos/${config.repo}/git/blobs`, {
     method: "POST",
     body: JSON.stringify({
-      content: String(content),
-      encoding: "utf-8"
+      content: binary ? content.toString("base64") : String(content),
+      encoding: binary ? "base64" : "utf-8"
     })
   });
   return blob.sha;
@@ -408,6 +463,23 @@ function requireAuth(request, response) {
   return false;
 }
 
+function requireMutationAuth(request, response) {
+  const session = getSession(request);
+  if (!session) {
+    json(response, 401, { error: "Sessiya bitib. Yenidən daxil ol." });
+    return null;
+  }
+  if (!sameOrigin(request)) {
+    json(response, 403, { error: "Sorğunun mənbəyi etibarlı deyil." });
+    return null;
+  }
+  if (!safeEqual(request.headers["x-csrf-token"], session.csrfToken)) {
+    json(response, 403, { error: "Təhlükəsizlik tokeni yanlışdır. Səhifəni yeniləyin." });
+    return null;
+  }
+  return session;
+}
+
 async function handleApi(request, response) {
   if (request.method === "POST" && request.url === "/api/login") {
     const body = await readBody(request, 20_000);
@@ -428,7 +500,12 @@ async function handleApi(request, response) {
     }
 
     const id = crypto.randomBytes(32).toString("hex");
-    sessions.set(id, { expiresAt: Date.now() + sessionTtl });
+    sessions.set(id, {
+      expiresAt: Date.now() + sessionTtl,
+      csrfToken: crypto.randomBytes(24).toString("hex"),
+      preview: null,
+      pendingUploads: new Map()
+    });
 
     return json(response, 200, { ok: true }, {
       "Set-Cookie": sessionCookie(id)
@@ -447,7 +524,10 @@ async function handleApi(request, response) {
   if (!requireAuth(request, response)) return;
 
   if (request.method === "GET" && request.url === "/api/session") {
-    return json(response, 200, { ok: true });
+    return json(response, 200, {
+      ok: true,
+      csrfToken: getSession(request).csrfToken
+    });
   }
 
   if (request.method === "GET" && request.url === "/api/admin/state") {
@@ -456,11 +536,59 @@ async function handleApi(request, response) {
     return json(response, 200, {
       sha: file.sha,
       data: extractAdminState(file.source),
+      csrfToken: getSession(request).csrfToken,
       loadedAt: new Date().toISOString()
     });
   }
 
+  if (request.method === "GET" && request.url === "/api/admin/history") {
+    const commits = await github(
+      `/repos/${config.repo}/commits?sha=${encodeURIComponent(config.branch)}&path=app.js&per_page=20`
+    );
+    return json(response, 200, {
+      items: commits.map((commit) => ({
+        sha: commit.sha,
+        date: commit.commit?.committer?.date || "",
+        message: commit.commit?.message || "",
+        section: "Sayt məzmunu",
+        type: "Yayım",
+        deployStatus: "GitHub-a göndərilib"
+      }))
+    });
+  }
+
+  if (request.method === "GET" && request.url.startsWith("/api/admin/deploy-status")) {
+    const requestUrl = new URL(request.url, "http://localhost");
+    const expectedSha = String(requestUrl.searchParams.get("appSha") || "");
+    const [siteResult, adminResult] = await Promise.allSettled([
+      fetch(`https://mirpanel.com/app.js?deploy-check=${Date.now()}`, { redirect: "follow" }),
+      fetch("https://mirpanel.onrender.com/", { redirect: "follow" })
+    ]);
+    let liveAppSha = "";
+    let siteStatus = 0;
+    if (siteResult.status === "fulfilled") {
+      siteStatus = siteResult.value.status;
+      if (siteResult.value.ok) {
+        liveAppSha = gitBlobSha(Buffer.from(await siteResult.value.arrayBuffer()));
+      }
+    }
+    const adminStatus = adminResult.status === "fulfilled" ? adminResult.value.status : 0;
+    return json(response, 200, {
+      cloudflare: {
+        status: siteStatus,
+        live: Boolean(expectedSha && liveAppSha === expectedSha),
+        liveAppSha
+      },
+      render: {
+        url: "https://mirpanel.onrender.com/",
+        status: adminStatus,
+        live: adminStatus === 200
+      }
+    });
+  }
+
   if (request.method === "POST" && request.url === "/api/upload-product-image") {
+    if (!requireMutationAuth(request, response)) return;
     const body = await readBody(request, 7_500_000);
     const extension = extensionFromUpload(body.fileName, body.mimeType);
     const mimeType = String(body.mimeType || "").toLowerCase();
@@ -485,31 +613,98 @@ async function handleApi(request, response) {
       return json(response, 413, { error: "Fayl ölçüsü böyükdür. Maksimum 5 MB." });
     }
 
+    if (!matchesImageSignature(fileBuffer, extension)) {
+      return json(response, 400, {
+        error: "Faylın məzmunu seçilmiş şəkil formatına uyğun deyil."
+      });
+    }
+
     const productId = safeUploadSlug(body.productId);
     const stamp = Date.now();
     const random = crypto.randomBytes(4).toString("hex");
     const repoPath = `uploads/products/${productId}-${stamp}-${random}.${extension}`;
 
-    const result = await github(`/repos/${config.repo}/contents/${repoPath}`, {
-      method: "PUT",
-      body: JSON.stringify({
-        message: `Upload product image for ${productId}`,
-        content: fileBuffer.toString("base64"),
-        branch: config.branch
-      })
-    });
+    session.pendingUploads.set(repoPath, fileBuffer);
 
     return json(response, 200, {
       ok: true,
       path: `${repoPath}?v=${stamp}`,
       publicPath: `/${repoPath}?v=${stamp}`,
       filePath: repoPath,
-      commitSha: result.commit.sha,
+      previewDataUrl: `data:${mimeType};base64,${fileBuffer.toString("base64")}`,
+      staged: true,
       uploadedAt: new Date().toISOString()
     });
   }
 
+  if (request.method === "POST" && request.url === "/api/admin/preview") {
+    const session = requireMutationAuth(request, response);
+    if (!session) return;
+    const body = await readBody(request);
+    if (!body.baseSha || !body.data) {
+      return json(response, 400, { error: "baseSha və data tələb olunur." });
+    }
+    const current = await getAppFile();
+    if (current.sha !== body.baseSha) {
+      return json(response, 409, {
+        error: "Məzmun GitHub-da dəyişib. Səhifəni yeniləyin.",
+        currentSha: current.sha
+      });
+    }
+    const normalized = normalizeAdminPayload(body.data);
+    const previewProductPages = generateProductPageFiles(normalized.products, normalized.siteSections, normalized.cms, normalized.content);
+    const previewInfoPages = generateInfoPageFiles(normalized.siteSections, normalized.ui, normalized.cms);
+    validateGeneratedOutput(
+      patchAppSource(current.source, normalized),
+      new Map([...previewProductPages, ...previewInfoPages])
+    );
+    const digest = crypto
+      .createHash("sha256")
+      .update(JSON.stringify({ baseSha: body.baseSha, data: normalized }))
+      .digest("hex");
+    session.preview = { digest, baseSha: body.baseSha, at: Date.now() };
+    return json(response, 200, {
+      ok: true,
+      previewDigest: digest,
+      productCount: normalized.products.length,
+      activeProductCount: normalized.products.filter((item) => item.active !== false).length,
+      pageCount: previewProductPages.size + previewInfoPages.size,
+      warnings: normalized.cms?.seo?.robotsIndexing === false
+        ? ["Bütün saytın indekslənməsi söndürülüb."]
+        : []
+    });
+  }
+
+  if (request.method === "POST" && request.url === "/api/admin/restore-preview") {
+    const session = requireMutationAuth(request, response);
+    if (!session) return;
+    const body = await readBody(request, 20_000);
+    const targetSha = String(body.targetSha || "").trim();
+    if (!/^[a-f0-9]{40}$/i.test(targetSha)) {
+      return json(response, 400, { error: "Düzgün commit SHA tələb olunur." });
+    }
+    const [historical, current] = await Promise.all([
+      getRepoFile("app.js", targetSha),
+      getAppFile()
+    ]);
+    const normalized = extractAdminState(historical.source);
+    const digest = crypto
+      .createHash("sha256")
+      .update(JSON.stringify({ baseSha: current.sha, data: normalized }))
+      .digest("hex");
+    session.preview = { digest, baseSha: current.sha, at: Date.now(), restoredFrom: targetSha };
+    return json(response, 200, {
+      ok: true,
+      data: normalized,
+      baseSha: current.sha,
+      previewDigest: digest,
+      restoredFrom: targetSha
+    });
+  }
+
   if (request.method === "POST" && request.url === "/api/admin/save") {
+    const session = requireMutationAuth(request, response);
+    if (!session) return;
     const body = await readBody(request);
 
     if (!body.baseSha || !body.data) {
@@ -528,21 +723,48 @@ async function handleApi(request, response) {
     }
 
     const previousData = extractAdminState(current.source);
+    const previousIds = new Set(previousData.products.map((product) => product.id));
+    for (const product of body.data.products || []) {
+      const stableId = String(product._stableId || "");
+      if (stableId && previousIds.has(stableId) && stableId !== String(product.id || "")) {
+        return json(response, 400, {
+          error: `${stableId}: məhsul ID-si yaradıldıqdan sonra dəyişdirilə bilməz.`
+        });
+      }
+    }
     const adminData = normalizeAdminPayload(body.data);
+    const digest = crypto
+      .createHash("sha256")
+      .update(JSON.stringify({ baseSha: body.baseSha, data: adminData }))
+      .digest("hex");
+    if (
+      !body.previewDigest ||
+      !session.preview ||
+      session.preview.digest !== digest ||
+      session.preview.baseSha !== body.baseSha
+    ) {
+      return json(response, 400, {
+        error: "Yayımlamadan əvvəl cari dəyişiklikləri önizləyin."
+      });
+    }
     const patched = patchAppSource(current.source, adminData);
     const indexFile = await getRepoFile("index.html");
     const version = `admin-${Date.now()}`;
     const patchedIndex = bumpAssetVersions(indexFile.source, version);
-    const productPages = generateProductPageFiles(adminData.products, adminData.siteSections);
-    const infoPages = generateInfoPageFiles(adminData.siteSections, adminData.ui);
+    const productPages = generateProductPageFiles(adminData.products, adminData.siteSections, adminData.cms, adminData.content);
+    const infoPages = generateInfoPageFiles(adminData.siteSections, adminData.ui, adminData.cms);
     const files = new Map([
       ["app.js", patched],
       ["index.html", patchedIndex],
-      ["sitemap.xml", buildSitemap(adminData.products, adminData.siteSections)],
-      ["_redirects", buildRedirects(adminData.products, adminData.siteSections)],
+      ["sitemap.xml", buildSitemap(adminData.products, adminData.siteSections, new Date(), adminData.cms)],
+      ["_redirects", buildRedirects(adminData.products, adminData.siteSections, previousData)],
       ...productPages,
       ...infoPages
     ]);
+    for (const [filePath, buffer] of session.pendingUploads || []) {
+      files.set(filePath, buffer);
+    }
+    validateGeneratedOutput(patched, files);
     const parent = await getBranchHead();
     const result = await commitRepoFiles({
       parent,
@@ -554,6 +776,8 @@ async function handleApi(request, response) {
       message: "Update Mirpanel content and product pages from admin panel"
     });
     const appSha = result.blobs.get("app.js");
+    session.preview = null;
+    session.pendingUploads?.clear();
 
     return json(response, 200, {
       sha: appSha,
@@ -619,7 +843,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js"].includes(pathname)) {
+    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 

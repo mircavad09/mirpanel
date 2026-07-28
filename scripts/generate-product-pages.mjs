@@ -13,8 +13,8 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const state = extractAdminState(appSource);
 const pages = new Map([
-  ...generateProductPageFiles(state.products, state.siteSections),
-  ...generateInfoPageFiles(state.siteSections, state.ui)
+  ...generateProductPageFiles(state.products, state.siteSections, state.cms, state.content),
+  ...generateInfoPageFiles(state.siteSections, state.ui, state.cms)
 ]);
 
 for (const [filePath, content] of pages) {
@@ -25,7 +25,7 @@ for (const [filePath, content] of pages) {
 
 fs.writeFileSync(
   path.join(projectRoot, "sitemap.xml"),
-  generateSitemap(state.products, state.siteSections),
+  generateSitemap(state.products, state.siteSections, new Date(), state.cms),
   "utf8"
 );
 fs.writeFileSync(

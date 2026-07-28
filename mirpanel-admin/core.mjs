@@ -5,6 +5,282 @@ const CONTENT_MARKER = "const ADMIN_CONTENT";
 const SITE_SECTIONS_MARKER = "const SITE_SECTIONS";
 const INFO_MARKER = "const INFO_TEXTS";
 const UI_MARKER = "const UI";
+const CMS_MARKER = "const CMS_CONTENT";
+
+const SAFE_ICONS = new Set([
+  "home", "products", "search", "info", "contact", "terms", "whatsapp",
+  "sparkles", "game", "ai", "link", "image", "shield"
+]);
+
+const COMMON_TEXT_DEFAULTS = {
+  available: "Mövcuddur",
+  outOfStock: "Stokda yoxdur",
+  selectDuration: "Müddət seçin",
+  order: "Sifariş et",
+  productAbout: "Məhsul haqqında",
+  usageRules: "İstifadə qaydaları",
+  relatedProducts: "Oxşar məhsullar",
+  moreProducts: "Daha çox məhsul",
+  instantDelivery: "7/24 anında təqdim edilir",
+  close: "Bağla",
+  confirm: "Təsdiqləyirəm",
+  cancel: "Ləğv et",
+  sendWhatsapp: "WhatsApp-a göndər",
+  requiredField: "Bu sahə məcburidir.",
+  invalidEmail: "Düzgün e-poçt ünvanı daxil edin.",
+  noSearchResults: "Axtarışa uyğun məhsul tapılmadı.",
+  bundleTitle: "Paket yarat",
+  bundleButton: "Paket yarat"
+};
+
+function cleanText(value, fallback = "", max = 20_000) {
+  return String(value ?? fallback)
+    .replace(/\u0000/g, "")
+    .slice(0, max);
+}
+
+function repairLegacyText(value) {
+  const replacements = {
+    "Д±": "ı", "Д°": "İ", "Гј": "ü", "Гњ": "Ü", "Й™": "ə",
+    "ЖЏ": "Ə", "Еџ": "ş", "Ећ": "Ş", "Г§": "ç", "Г‡": "Ç",
+    "Г¶": "ö", "Г–": "Ö", "Дџ": "ğ", "Дћ": "Ğ",
+    "Ð”Â±": "ı", "Ð”Â°": "İ", "Ð“Ñ˜": "ü", "Ð“Ñš": "Ü",
+    "Ð™â„¢": "ə", "Ð–Ð": "Ə", "Ð•ÑŸ": "ş", "Ð•Ñ›": "Ş",
+    "Ð“Â§": "ç", "Ð“â€¡": "Ç", "Ð“Â¶": "ö", "Ð“â€“": "Ö"
+  };
+  return Object.entries(replacements).reduce(
+    (text, [broken, correct]) => text.split(broken).join(correct),
+    cleanText(value)
+  );
+}
+
+function normalizeSlug(value, fallback = "") {
+  return String(value || fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/[əƏ]/g, "e")
+    .replace(/[ıİ]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[üÜ]/g, "u")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+}
+
+function safeUrl(value, { allowRelative = true } = {}) {
+  const input = String(value || "").trim();
+  if (!input) return "";
+  if (
+    allowRelative &&
+    !input.includes("..") &&
+    /^(?:\/(?!\/))?(?:[a-zA-Z0-9]|#)[a-zA-Z0-9/_?&=.%#-]*$/.test(input)
+  ) return input;
+  try {
+    const parsed = new URL(input);
+    return ["https:", "http:"].includes(parsed.protocol) ? parsed.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function sanitizeRichText(value) {
+  let html = cleanText(value, "", 100_000);
+  html = html
+    .replace(/<!--[\s\S]*?-->/g, "")
+    .replace(/<(script|style|iframe|object|embed|form|input|button|textarea|select|option|svg|math)\b[\s\S]*?<\/\1\s*>/gi, "")
+    .replace(/<(script|style|iframe|object|embed|form|input|button|textarea|select|option|svg|math)\b[^>]*\/?>/gi, "");
+
+  return html.replace(/<\/?([a-z0-9]+)([^>]*)>/gi, (match, rawTag, rawAttrs) => {
+    const tag = rawTag.toLowerCase();
+    const allowed = new Set(["p", "br", "h2", "h3", "h4", "ul", "ol", "li", "strong", "b", "em", "i", "a"]);
+    if (!allowed.has(tag)) return "";
+    if (match.startsWith("</")) return `</${tag}>`;
+    if (tag === "br") return "<br>";
+    if (tag !== "a") return `<${tag}>`;
+    const href = rawAttrs.match(/\bhref\s*=\s*(["'])(.*?)\1/i)?.[2] || "";
+    const safeHref = safeUrl(href);
+    return safeHref ? `<a href="${safeHref.replaceAll("&", "&amp;").replaceAll('"', "&quot;")}">` : "<a>";
+  });
+}
+
+function normalizeSeo(source = {}, fallbackSlug = "") {
+  return {
+    slug: normalizeSlug(source.slug, fallbackSlug),
+    title: cleanText(source.title, "", 160),
+    description: cleanText(source.description, "", 320),
+    ogTitle: cleanText(source.ogTitle, "", 160),
+    ogDescription: cleanText(source.ogDescription, "", 320),
+    ogImage: safeUrl(source.ogImage),
+    index: source.index !== false,
+    includeInSitemap: source.includeInSitemap !== false
+  };
+}
+
+function normalizeLink(item = {}, index = 0) {
+  return {
+    id: normalizeSlug(item.id, `link-${index + 1}`),
+    label: cleanText(item.label, `Keçid ${index + 1}`, 100),
+    url: safeUrl(item.url) || "/",
+    order: Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1,
+    enabled: item.enabled !== false,
+    icon: SAFE_ICONS.has(item.icon) ? item.icon : "link",
+    newTab: Boolean(item.newTab)
+  };
+}
+
+function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
+  const whatsappNumber = String(phone_wa || "").replace(/\D/g, "") || "994515243545";
+  const searchMarkup = String(ui?.searchTitle || "");
+  const searchHighlight = searchMarkup.match(/<span[^>]*>([\s\S]*?)<\/span>/i)?.[1] || "";
+  const searchPrefix = searchMarkup.replace(/<span[^>]*>[\s\S]*?<\/span>/gi, "").replace(/<[^>]+>/g, "").trim();
+  return {
+    schemaVersion: 1,
+    site: {
+      brandName: cleanText(brand, "Mirpanel", 80),
+      logo: "",
+      brandSubtitle: cleanText(ui?.brandSub),
+      whatsappNumber,
+      phoneDisplay: cleanText(siteSections?.elaqe?.whatsappNumber, "051 524 35 45", 40)
+    },
+    homepage: {
+      announcement: { enabled: Boolean(ui?.bannerText), text: cleanText(ui?.bannerText) },
+      hero: { title: cleanText(ui?.heroTitle), description: cleanText(ui?.heroHint) },
+      search: {
+        title: cleanText(searchPrefix || ui?.searchTitle),
+        highlight: cleanText(searchHighlight),
+        description: cleanText(ui?.searchDesc),
+        placeholder: "Məhsul axtar..."
+      },
+      bundle: {
+        enabled: true,
+        title: cleanText(ui?.bmTitle, COMMON_TEXT_DEFAULTS.bundleTitle),
+        description: cleanText(ui?.bmSub),
+        buttonText: COMMON_TEXT_DEFAULTS.bundleButton,
+        discountPercent: 0
+      },
+      sectionOrder: ["announcement", "hero", "search", "products", "bundle", "info"],
+      sections: {
+        announcement: true, hero: true, search: true, products: true,
+        bundle: true, info: true, games: true, ai: true
+      },
+      infoCards: {
+        about: { title: cleanText(siteSections?.haqqimizda?.title, "Haqqımızda"), text: cleanText(siteSections?.haqqimizda?.text), linkText: cleanText(siteSections?.haqqimizda?.linkText, "Ətraflı") },
+        contact: { title: cleanText(siteSections?.elaqe?.title, "Əlaqə"), text: cleanText(siteSections?.elaqe?.text), linkText: cleanText(siteSections?.elaqe?.buttonText, "WhatsApp ilə yaz") },
+        terms: { title: cleanText(siteSections?.sertler?.title, "Şərtlər"), text: cleanText(siteSections?.sertler?.text), linkText: "Ətraflı" }
+      }
+    },
+    navigation: [
+      { id: "products", label: "Məhsullar", url: "/#products", order: 1, enabled: true, icon: "products", newTab: false },
+      { id: "about", label: "Haqqımızda", url: `/${normalizeSlug(siteSections?.haqqimizda?.slug, "haqqimizda")}`, order: 2, enabled: siteSections?.haqqimizda?.enabled !== false, icon: "info", newTab: false },
+      { id: "contact", label: "Əlaqə", url: `/${normalizeSlug(siteSections?.elaqe?.slug, "elaqe")}`, order: 3, enabled: siteSections?.elaqe?.enabled !== false, icon: "contact", newTab: false }
+    ],
+    banners: [],
+    footer: {
+      copyrightText: cleanText(ui?.footRights, "Bütün hüquqlar qorunur."),
+      year: new Date().getUTCFullYear(),
+      brandName: cleanText(brand, "Mirpanel", 80),
+      phone: cleanText(siteSections?.elaqe?.whatsappNumber, "051 524 35 45", 40),
+      whatsapp: whatsappNumber,
+      shortText: "",
+      links: []
+    },
+    commonTexts: { ...COMMON_TEXT_DEFAULTS },
+    seo: {
+      home: normalizeSeo({}, ""),
+      robotsIndexing: true
+    },
+    orderSettings: {
+      whatsappButtonText: "WhatsApp",
+      defaultExtraMessage: "",
+      requireConfirmation: false
+    },
+    media: []
+  };
+}
+
+function normalizeCms(source = {}, legacy = {}) {
+  source = source || {};
+  const defaults = cmsDefaults(legacy);
+  const site = source.site || {};
+  const homepage = source.homepage || {};
+  const footer = source.footer || {};
+  const bundle = homepage.bundle || {};
+  const search = homepage.search || {};
+  const hero = homepage.hero || {};
+  const announcement = homepage.announcement || {};
+  const allowedSections = defaults.homepage.sectionOrder;
+  const sectionOrder = Array.isArray(homepage.sectionOrder)
+    ? [...new Set(homepage.sectionOrder.filter((key) => allowedSections.includes(key)))]
+    : [...allowedSections];
+  for (const key of allowedSections) if (!sectionOrder.includes(key)) sectionOrder.push(key);
+
+  return {
+    schemaVersion: 1,
+    site: {
+      brandName: cleanText(site.brandName, defaults.site.brandName, 80),
+      logo: safeUrl(site.logo),
+      brandSubtitle: cleanText(site.brandSubtitle, defaults.site.brandSubtitle, 200),
+      whatsappNumber: String(site.whatsappNumber || defaults.site.whatsappNumber).replace(/\D/g, "").slice(0, 20),
+      phoneDisplay: cleanText(site.phoneDisplay, defaults.site.phoneDisplay, 40)
+    },
+    homepage: {
+      announcement: { enabled: announcement.enabled ?? defaults.homepage.announcement.enabled, text: cleanText(announcement.text, defaults.homepage.announcement.text, 500) },
+      hero: { title: cleanText(hero.title, defaults.homepage.hero.title, 300), description: cleanText(hero.description, defaults.homepage.hero.description, 1000) },
+      search: { title: cleanText(search.title, defaults.homepage.search.title, 300), highlight: cleanText(search.highlight, defaults.homepage.search.highlight, 300), description: cleanText(search.description, defaults.homepage.search.description, 1000), placeholder: cleanText(search.placeholder, defaults.homepage.search.placeholder, 120) },
+      bundle: { enabled: bundle.enabled ?? defaults.homepage.bundle.enabled, title: cleanText(bundle.title, defaults.homepage.bundle.title, 200), description: cleanText(bundle.description, defaults.homepage.bundle.description, 1000), buttonText: cleanText(bundle.buttonText, defaults.homepage.bundle.buttonText, 100), discountPercent: Math.min(100, Math.max(0, Number(bundle.discountPercent) || 0)) },
+      sectionOrder,
+      sections: Object.fromEntries(Object.keys(defaults.homepage.sections).map((key) => [key, homepage.sections?.[key] ?? defaults.homepage.sections[key]])),
+      infoCards: {
+        about: { ...defaults.homepage.infoCards.about, ...(homepage.infoCards?.about || {}) },
+        contact: { ...defaults.homepage.infoCards.contact, ...(homepage.infoCards?.contact || {}) },
+        terms: { ...defaults.homepage.infoCards.terms, ...(homepage.infoCards?.terms || {}) }
+      }
+    },
+    navigation: (Array.isArray(source.navigation) ? source.navigation : defaults.navigation).map(normalizeLink),
+    banners: (Array.isArray(source.banners) ? source.banners : []).map((banner, index) => ({
+      id: normalizeSlug(banner.id, `banner-${index + 1}`),
+      title: cleanText(banner.title, "", 200),
+      description: cleanText(banner.description, "", 1000),
+      alt: cleanText(banner.alt, "", 250),
+      url: safeUrl(banner.url),
+      order: Number.isFinite(Number(banner.order)) ? Number(banner.order) : index + 1,
+      enabled: banner.enabled !== false,
+      startAt: cleanText(banner.startAt, "", 40),
+      endAt: cleanText(banner.endAt, "", 40),
+      desktopImage: safeUrl(banner.desktopImage),
+      mobileImage: safeUrl(banner.mobileImage)
+    })),
+    footer: {
+      copyrightText: cleanText(footer.copyrightText, defaults.footer.copyrightText, 300),
+      year: Math.min(2200, Math.max(2000, Number(footer.year) || defaults.footer.year)),
+      brandName: cleanText(footer.brandName, defaults.footer.brandName, 80),
+      phone: cleanText(footer.phone, defaults.footer.phone, 40),
+      whatsapp: String(footer.whatsapp || defaults.footer.whatsapp).replace(/\D/g, "").slice(0, 20),
+      shortText: cleanText(footer.shortText, "", 500),
+      links: (Array.isArray(footer.links) ? footer.links : []).map(normalizeLink)
+    },
+    commonTexts: Object.fromEntries(Object.entries(COMMON_TEXT_DEFAULTS).map(([key, value]) => [key, cleanText(source.commonTexts?.[key], value, 500) || value])),
+    seo: {
+      home: normalizeSeo(source.seo?.home, ""),
+      robotsIndexing: source.seo?.robotsIndexing !== false
+    },
+    orderSettings: {
+      whatsappButtonText: cleanText(source.orderSettings?.whatsappButtonText, defaults.orderSettings.whatsappButtonText, 100),
+      defaultExtraMessage: cleanText(source.orderSettings?.defaultExtraMessage, "", 2000),
+      requireConfirmation: Boolean(source.orderSettings?.requireConfirmation)
+    },
+    media: (Array.isArray(source.media) ? source.media : []).map((item) => ({
+      path: safeUrl(item.path),
+      alt: cleanText(item.alt, "", 250),
+      size: Math.max(0, Number(item.size) || 0),
+      type: cleanText(item.type, "", 50),
+      uploadedAt: cleanText(item.uploadedAt, "", 40)
+    })).filter((item) => item.path)
+  };
+}
 
 const UI_DEFAULTS = {
   brandSub: "",
@@ -68,8 +344,24 @@ function normalizeSiteSections(source = {}) {
       ...fallback,
       ...item,
       enabled: item.enabled ?? fallback.enabled,
-      title: String(item.title ?? fallback.title),
-      text: String(item.text ?? fallback.text ?? ""),
+      slug: normalizeSlug(item.slug, key),
+      title: repairLegacyText(item.title ?? fallback.title),
+      text: repairLegacyText(item.text ?? fallback.text ?? ""),
+      subtitle: repairLegacyText(item.subtitle || "").slice(0, 1000),
+      body: sanitizeRichText(repairLegacyText(item.body ?? item.text ?? fallback.text ?? "")),
+      blocks: (Array.isArray(item.blocks) ? item.blocks : []).map((block, index) => ({
+        title: cleanText(block.title, "", 250),
+        text: sanitizeRichText(block.text || ""),
+        image: safeUrl(block.image),
+        order: Number.isFinite(Number(block.order)) ? Number(block.order) : index + 1
+      })),
+      seoTitle: cleanText(item.seoTitle || "", "", 160),
+      seoDescription: cleanText(item.seoDescription || "", "", 320),
+      ogTitle: cleanText(item.ogTitle || "", "", 160),
+      ogDescription: cleanText(item.ogDescription || "", "", 320),
+      ogImage: safeUrl(item.ogImage),
+      index: item.index !== false,
+      includeInSitemap: item.includeInSitemap !== false,
       order: Number.isFinite(Number(item.order)) ? Number(item.order) : fallback.order
     };
 
@@ -84,6 +376,8 @@ function normalizeSiteSections(source = {}) {
     if (key === "elaqe") {
       next[key].whatsappNumber = String(item.whatsappNumber ?? fallback.whatsappNumber);
       next[key].buttonText = String(item.buttonText ?? fallback.buttonText);
+      next[key].whatsappMessage = cleanText(item.whatsappMessage || "", "", 2000);
+      next[key].workHours = cleanText(item.workHours || "", "", 1000);
     }
   }
 
@@ -396,6 +690,7 @@ function normalizeProduct(product = {}, index = 0) {
 
   return {
     id,
+    _stableId: String(product._stableId || id),
     order: Number.isFinite(Number(product.order)) ? Number(product.order) : index,
     category: String(product.category || "all"),
     image: String(product.image || "assets/your.png"),
@@ -403,8 +698,13 @@ function normalizeProduct(product = {}, index = 0) {
     title: String(product.title || id),
     variant: String(product.variant || ""),
     badge: String(product.badge || ""),
+    imageAlt: cleanText(product.imageAlt, product.title || id, 250),
     desc: String(product.desc || ""),
     note: String(product.note || ""),
+    longDescription: sanitizeRichText(product.longDescription || product.seoContent || ""),
+    usageRules: sanitizeRichText(product.usageRules || ""),
+    deliveryText: cleanText(product.deliveryText || "", "", 1000),
+    availabilityText: cleanText(product.availabilityText || "", "", 250),
     seoSlug: normalizeSeoSlug(product.seoSlug),
     seoTitle: String(product.seoTitle || ""),
     seoDescription: String(product.seoDescription || ""),
@@ -412,6 +712,11 @@ function normalizeProduct(product = {}, index = 0) {
       ? product.seoKeywords.map((keyword) => String(keyword).trim()).filter(Boolean).join(", ")
       : String(product.seoKeywords || ""),
     seoContent: String(product.seoContent || ""),
+    seoIndex: product.seoIndex !== false,
+    includeInSitemap: product.includeInSitemap !== false,
+    seoOgTitle: cleanText(product.seoOgTitle || "", "", 160),
+    seoOgDescription: cleanText(product.seoOgDescription || "", "", 320),
+    seoOgImage: safeUrl(product.seoOgImage || product.image),
     flow: String(product.flow || "whatsapp"),
     soldOut,
     active: product.active !== false,
@@ -425,6 +730,7 @@ function normalizeProduct(product = {}, index = 0) {
       formFields
     }),
     formFields,
+    formTitle: cleanText(product.formTitle || "", "", 200),
     confirmationModal,
     whatsapp: normalizeWhatsApp(product.whatsapp),
     plans: Array.isArray(product.plans) ? product.plans.map(normalizePlan) : [],
@@ -434,9 +740,12 @@ function normalizeProduct(product = {}, index = 0) {
 
 export function normalizeAdminPayload(payload = {}) {
   const sourceCategories = Array.isArray(payload.categories)
-    ? payload.categories.map((category) => ({
+    ? payload.categories.map((category, index) => ({
         key: String(category.key || "").trim(),
-        name: String(category.name || category.label || "").trim()
+        name: String(category.name || category.label || "").trim(),
+        order: Number.isFinite(Number(category.order)) ? Number(category.order) : index + 1,
+        active: category.active !== false,
+        icon: SAFE_ICONS.has(category.icon) ? category.icon : "products"
       }))
     : [];
 
@@ -451,6 +760,11 @@ export function normalizeAdminPayload(payload = {}) {
         .map((key) => ({ key, name: key }));
 
   const ids = new Set();
+  const slugs = new Set();
+  const categoryKeys = new Set(categories.map((category) => category.key));
+  if (categoryKeys.size !== categories.length || categories.some((category) => !category.key)) {
+    throw new Error("Kateqoriya açarları boş və ya təkrarlanan ola bilməz.");
+  }
 
   for (const product of products) {
     if (ids.has(product.id)) {
@@ -458,14 +772,27 @@ export function normalizeAdminPayload(payload = {}) {
     }
 
     ids.add(product.id);
+    if (product.seoSlug) {
+      if (slugs.has(product.seoSlug)) throw new Error(`Təkrar SEO slug: ${product.seoSlug}`);
+      slugs.add(product.seoSlug);
+    }
+    if (product.category !== "all" && !categoryKeys.has(product.category)) {
+      throw new Error(`${product.id}: mövcud olmayan kateqoriya "${product.category}".`);
+    }
+  }
+  const siteSections = normalizeSiteSections(payload.siteSections);
+  for (const section of Object.values(siteSections)) {
+    if (section.enabled === false || !section.slug) continue;
+    if (slugs.has(section.slug)) throw new Error(`Səhifə və məhsul slug toqquşması: ${section.slug}`);
+    slugs.add(section.slug);
   }
 
   const content = {};
 
   for (const product of products) {
     const source = payload.content?.[product.id] || {};
-    const aboutHtml = String(source.aboutHtml || "").trim();
-    const rulesHtml = String(source.rulesHtml || "").trim();
+    const aboutHtml = sanitizeRichText(source.aboutHtml || "");
+    const rulesHtml = sanitizeRichText(source.rulesHtml || "");
 
     if (aboutHtml || rulesHtml) {
       content[product.id] = {
@@ -481,7 +808,13 @@ export function normalizeAdminPayload(payload = {}) {
     categories,
     products,
     content,
-    siteSections: normalizeSiteSections(payload.siteSections),
+    siteSections,
+    cms: normalizeCms(payload.cms, {
+      brand: payload.brand,
+      phone_wa: payload.phone_wa,
+      ui: payload.ui,
+      siteSections: payload.siteSections
+    }),
     ui: Object.fromEntries(
       Object.keys(UI_DEFAULTS).map((key) => [
         key,
@@ -504,6 +837,7 @@ export function extractAdminState(source) {
   const infoTexts = evaluateObject(source, INFO_MARKER, {});
   const ui = evaluateObject(source, UI_MARKER, {});
   const siteSections = evaluateObject(source, SITE_SECTIONS_MARKER, SITE_SECTION_DEFAULTS);
+  const cms = evaluateObject(source, CMS_MARKER, null);
   const products = (data.products || []).map(normalizeProduct);
   const content = {};
 
@@ -525,7 +859,8 @@ export function extractAdminState(source) {
     products,
     content,
     siteSections,
-    ui
+    ui,
+    cms
   });
 }
 
@@ -705,6 +1040,8 @@ export function patchAppSource(source, payload) {
   next = replaceObjectDeclaration(next, SITE_SECTIONS_MARKER, admin.siteSections, CONTENT_MARKER);
 
   next = replaceObjectDeclaration(next, CONTENT_MARKER, admin.content, INFO_MARKER);
+
+  next = replaceObjectDeclaration(next, CMS_MARKER, admin.cms, SITE_SECTIONS_MARKER);
 
   return patchRuntimeHooks(next);
 }

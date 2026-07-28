@@ -37,9 +37,9 @@ const infoPageMetadata = {
 };
 
 const adminRedirects = [
-  "/admin https://mirpanel-admin.onrender.com/ 302",
-  "/admin.html https://mirpanel-admin.onrender.com/ 302",
-  "/admin/* https://mirpanel-admin.onrender.com/:splat 302"
+  "/admin https://mirpanel.onrender.com/ 302",
+  "/admin.html https://mirpanel.onrender.com/ 302",
+  "/admin/* https://mirpanel.onrender.com/:splat 302"
 ];
 
 const standaloneSeoRoutes = [
@@ -130,7 +130,7 @@ export function removedInfoPagePaths(previousSiteSections = {}, nextSiteSections
     .map((slug) => `${slug}/index.html`);
 }
 
-export function generateSitemap(products = [], siteSections = {}, date = new Date()) {
+export function generateSitemap(products = [], siteSections = {}, date = new Date(), cms = {}) {
   const lastmod = date.toISOString().slice(0, 10);
   const urls = new Map();
   const add = (path, changefreq, priority) => {
@@ -138,13 +138,19 @@ export function generateSitemap(products = [], siteSections = {}, date = new Dat
     if (!urls.has(url)) urls.set(url, { changefreq, priority });
   };
 
-  add("/", "daily", "1.0");
-  for (const slug of activeSitePageSlugs(siteSections)) {
-    add(`/${slug}/`, "monthly", "0.7");
+  if (cms?.seo?.home?.includeInSitemap !== false && cms?.seo?.home?.index !== false) {
+    add("/", "daily", "1.0");
+  }
+  for (const { slug, section } of activeSitePages(siteSections)) {
+    if (section.includeInSitemap !== false && section.index !== false) {
+      add(`/${slug}/`, "monthly", "0.7");
+    }
   }
   add("/netflix-almaq/", "weekly", "0.9");
-  for (const slug of activeProductPageSlugs(products)) {
-    add(`/${slug}/`, "weekly", "0.9");
+  for (const { product, slug } of activeProductsWithSlugs(products)) {
+    if (product.includeInSitemap !== false && product.seoIndex !== false) {
+      add(`/${slug}/`, "weekly", "0.9");
+    }
   }
 
   const entries = [...urls].map(([url, meta]) =>
@@ -158,7 +164,7 @@ ${entries.join("\n")}
 `;
 }
 
-export function generateRedirects(products = [], siteSections = {}) {
+export function generateRedirects(products = [], siteSections = {}, previous = {}) {
   const lines = [...adminRedirects, ...standaloneSeoRoutes];
   const primaryById = new Map(
     activeProductsWithSlugs(products).map(({ product, slug }) => [product.id, slug])
@@ -182,31 +188,46 @@ export function generateRedirects(products = [], siteSections = {}) {
     }
   }
 
+  const previousProducts = activeProductsWithSlugs(previous.products || []);
+  for (const { product, slug: oldSlug } of previousProducts) {
+    const newSlug = primaryById.get(product.id);
+    if (newSlug && oldSlug !== newSlug) {
+      lines.push(`/${oldSlug} /${newSlug}/ 301`, `/${oldSlug}/ /${newSlug}/ 301`);
+    }
+  }
+  const nextSiteByKey = new Map(activeSitePages(siteSections).map((page) => [page.key, page.slug]));
+  for (const page of activeSitePages(previous.siteSections || {})) {
+    const newSlug = nextSiteByKey.get(page.key);
+    if (newSlug && page.slug !== newSlug) {
+      lines.push(`/${page.slug} /${newSlug}/ 301`, `/${page.slug}/ /${newSlug}/ 301`);
+    }
+  }
+
   return `${[...new Set(lines)].join("\n")}\n`;
 }
 
-export function generateProductPageFiles(products = [], siteSections = {}) {
+export function generateProductPageFiles(products = [], siteSections = {}, cms = {}, content = {}) {
   const active = activeProductsWithSlugs(products);
   const files = new Map();
 
   for (const { product, slug } of active) {
-    files.set(`${slug}/index.html`, generateProductPageHtml(product, slug, active, siteSections));
+    files.set(`${slug}/index.html`, generateProductPageHtml(product, slug, active, siteSections, cms, content[product.id] || {}));
   }
 
   return files;
 }
 
-export function generateInfoPageFiles(siteSections = {}, ui = {}) {
+export function generateInfoPageFiles(siteSections = {}, ui = {}, cms = {}) {
   const files = new Map();
 
   for (const page of activeSitePages(siteSections)) {
-    files.set(`${page.slug}/index.html`, generateInfoPageHtml(page, siteSections, ui));
+    files.set(`${page.slug}/index.html`, generateInfoPageHtml(page, siteSections, ui, cms));
   }
 
   return files;
 }
 
-export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}) {
+export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
   const canonical = `${SITE_URL}/${slug}/`;
   const title = cleanText(product.seoTitle) || `${cleanText(product.title)} | Mirpanel`;
   const description =
@@ -260,7 +281,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     ]
   });
 
-  return `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="az">
 <head>
   <meta charset="UTF-8">
@@ -396,9 +417,10 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 </body>
 </html>
 `.replace(/[ \t]+$/gm, "");
+  return applyCmsToProductHtml(html, product, cms, content);
 }
 
-function generateInfoPageHtml(page, siteSections, ui) {
+function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   const metadata = infoPageMetadata[page.key];
   const canonical = `${SITE_URL}/${page.slug}/`;
   const content = renderInfoPageContent(page.key, page.section, siteSections, ui);
@@ -421,7 +443,7 @@ function generateInfoPageHtml(page, siteSections, ui) {
     ]
   });
 
-  return `<!DOCTYPE html>
+  const html = `<!DOCTYPE html>
 <html lang="az">
 <head>
   <meta charset="UTF-8">
@@ -471,6 +493,7 @@ function generateInfoPageHtml(page, siteSections, ui) {
 </body>
 </html>
 `.replace(/[ \t]+$/gm, "");
+  return applyCmsToInfoHtml(html, page, cms, ui);
 }
 
 function renderInfoPageContent(key, section, siteSections, ui) {
@@ -517,6 +540,122 @@ function renderInfoPageContent(key, section, siteSections, ui) {
       <a href="/#products-section">Məhsullara bax</a>
       ${siteSections?.elaqe?.enabled === false ? "" : `<a class="is-primary" href="/${seoSlug(siteSections?.elaqe?.slug || defaultSitePageSlugs.elaqe)}/">Əlaqə</a>`}
     </div>`;
+}
+
+function cmsIcon(name) {
+  const icons = {
+    home: `<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/>`,
+    products: `<path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/>`,
+    search: `<circle cx="11" cy="11" r="7"/><path d="m16 16 4 4"/>`,
+    info: `<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>`,
+    contact: `<path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/>`,
+    terms: `<path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3-7 3v-15a2 2 0 0 1 2-2Z"/>`,
+    whatsapp: `<path d="M20 11.5a8 8 0 0 1-12 7L4 20l1.5-4A8 8 0 1 1 20 11.5Z"/>`,
+    image: `<rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 6"/>`,
+    shield: `<path d="M12 3 5 6v5c0 4.5 3 8 7 10 4-2 7-5.5 7-10V6l-7-3Z"/>`,
+    link: `<path d="M10 13a5 5 0 0 0 7.5.5l2-2a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7.5-.5l-2 2a5 5 0 0 0 7 7l1-1"/>`
+  };
+  return icons[name] || icons.link;
+}
+
+function renderCmsNav(cms = {}) {
+  const items = Array.isArray(cms.navigation) ? cms.navigation : [];
+  return items
+    .filter((item) => item.enabled !== false && cleanText(item.label) && cleanText(item.url))
+    .sort((a, b) => Number(a.order) - Number(b.order))
+    .map((item) => {
+      const url = cleanText(item.url);
+      const external = /^https?:\/\//i.test(url);
+      const newTab = item.newTab === true;
+      return `<a href="${escapeAttribute(url)}"${newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}><svg aria-hidden="true" viewBox="0 0 24 24">${cmsIcon(item.icon)}</svg><span>${escapeHtml(item.label)}</span></a>`;
+    })
+    .join("");
+}
+
+function renderCmsFooter(cms = {}, ui = {}) {
+  const footer = cms.footer || {};
+  const year = Number(footer.year) || new Date().getUTCFullYear();
+  const brand = cleanText(footer.brandName || cms.site?.brandName) || "Mirpanel";
+  const rights = cleanText(footer.copyrightText) || fixMojibake(ui.footRights) || "Bütün hüquqlar qorunur";
+  const links = (Array.isArray(footer.links) ? footer.links : [])
+    .filter((item) => item.enabled !== false && item.label && item.url)
+    .sort((a, b) => Number(a.order) - Number(b.order))
+    .map((item) => `<a href="${escapeAttribute(item.url)}"${item.newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}>${escapeHtml(item.label)}</a>`)
+    .join(" · ");
+  return `© ${year} ${escapeHtml(brand)} · ${escapeHtml(rights)}${links ? ` · ${links}` : ""}`;
+}
+
+function applyCmsBrandAndNav(html, cms, currentKey = null) {
+  const brand = cleanText(cms.site?.brandName) || "Mirpanel";
+  const logo = rootRelativeUrl(cms.site?.logo || "assets/logo.png");
+  const navigation = renderCmsNav(cms);
+  let next = html
+    .replace(/(<a class="product-page-brand"[^>]*>[\s\S]*?<img )src="[^"]*" alt="[^"]*"/, `$1src="${escapeAttribute(logo)}" alt="${escapeAttribute(brand)}"`)
+    .replace(/<span>MIRPANEL<\/span>/, `<span>${escapeHtml(brand.toUpperCase())}</span>`);
+  if (navigation) {
+    next = next.replace(/(<nav class="product-page-nav"[^>]*>)[\s\S]*?(<\/nav>)/, `$1${navigation}$2`);
+  }
+  return next;
+}
+
+function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
+  const texts = cms.commonTexts || {};
+  const seoTitle = cleanText(product.seoOgTitle || product.seoTitle || product.title);
+  const seoDescription = cleanText(product.seoOgDescription || product.seoDescription || product.desc);
+  const seoImage = absoluteUrl(product.seoOgImage || product.image);
+  const brand = cleanText(cms.site?.brandName) || "Mirpanel";
+  const availability = productAvailability(product);
+  const availabilityText = cleanText(product.availabilityText) ||
+    (availability.inStock ? cleanText(texts.available) : cleanText(texts.outOfStock)) ||
+    availability.label;
+  const about = cleanText(content.aboutHtml || product.longDescription || product.seoContent || product.desc);
+  const rules = cleanText(content.rulesHtml || product.usageRules || product.note || product.desc);
+  let next = applyCmsBrandAndNav(html, cms)
+    .replace(/<meta name="robots" content="index, follow">/, `<meta name="robots" content="${product.seoIndex === false ? "noindex, follow" : "index, follow"}">`)
+    .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttribute(seoTitle)}">`)
+    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttribute(seoDescription)}">`)
+    .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${escapeAttribute(seoImage)}">`)
+    .replace(/"brand":\{"@type":"Brand","name":"Mirpanel"\}/, `"brand":{"@type":"Brand","name":${safeJson(brand)}}`)
+    .replace(/(<img id="pp-main-img"[^>]* alt=")[^"]*(")/, `$1${escapeAttribute(product.imageAlt || product.title)}$2`)
+    .replace(/(<span class="product-page-availability-badge[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
+    .replace(/(<span class="product-page-status[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
+    .replace(/(<div class="product-page-delivery">\s*<strong>)[\s\S]*?(<\/strong>)/, `$1${escapeHtml(product.deliveryText || texts.instantDelivery || DELIVERY_TEXT)}$2`)
+    .replace(/(<h2 class="product-page-section-title">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(texts.selectDuration || "Müddət seçin")}$2`)
+    .replace(/(<a class="product-page-action is-about"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.productAbout || "Məhsul haqqında")}$2`)
+    .replace(/(<button class="product-page-action is-order"[^>]*>)[\s\S]*?(<\/button>)/, `$1${escapeHtml(texts.order || "Sifariş et")}$2`)
+    .replace(/(<h2 class="product-page-similar-heading">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(texts.relatedProducts || "Oxşar məhsullar")}$2`)
+    .replace(/(<a class="product-page-similar-more"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.moreProducts || "Daha çox məhsul")}$2`)
+    .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms)}</footer>`);
+  if (about) {
+    next = next.replace(/(<article class="product-page-panel" data-product-panel="about">)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(product.title)} ${escapeHtml(texts.productAbout || "haqqında")}</h2>${about}$2`);
+  }
+  if (rules) {
+    next = next.replace(/(<article class="product-page-panel" data-product-panel="rules" hidden>)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(texts.usageRules || "İstifadə qaydaları")}</h2>${rules}$2`);
+  }
+  return next;
+}
+
+function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
+  const section = page.section || {};
+  const fallback = infoPageMetadata[page.key];
+  const title = cleanText(section.seoTitle) || fallback.title;
+  const description = cleanText(section.seoDescription) || fallback.description;
+  const h1 = cleanText(section.title) || fallback.h1;
+  const blocks = (Array.isArray(section.blocks) ? section.blocks : [])
+    .sort((a, b) => Number(a.order) - Number(b.order))
+    .map((block) => `<section><h2>${escapeHtml(block.title)}</h2>${block.image ? `<img src="${escapeAttribute(rootRelativeUrl(block.image))}" alt="${escapeAttribute(block.title)}">` : ""}<div>${cleanText(block.text)}</div></section>`)
+    .join("");
+  let next = applyCmsBrandAndNav(html, cms, page.key)
+    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
+    .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${escapeAttribute(description)}">`)
+    .replace(/<meta name="robots" content="index, follow">/, `<meta name="robots" content="${section.index === false ? "noindex, follow" : "index, follow"}">`)
+    .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttribute(section.ogTitle || title)}">`)
+    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttribute(section.ogDescription || description)}">`)
+    .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${escapeAttribute(absoluteUrl(section.ogImage || cms.seo?.home?.ogImage || "assets/logo.png"))}">`)
+    .replace(/(<article class="info-page-card">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/, `$1${escapeHtml(h1)}$2`)
+    .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms, ui)}</footer>`);
+  if (blocks) next = next.replace(/(<\/article>\s*<\/main>)/, `<div class="info-page-sections">${blocks}</div>$1`);
+  return next;
 }
 
 function renderSiteNav(siteSections = {}, currentKey = null) {
