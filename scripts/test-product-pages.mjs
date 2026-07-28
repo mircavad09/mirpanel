@@ -21,6 +21,7 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const productPageCss = fs.readFileSync(path.join(projectRoot, "product-page.css"), "utf8");
 const adminSource = fs.readFileSync(path.join(projectRoot, "mirpanel-admin", "public", "admin.js"), "utf8");
+const confirmationSource = fs.readFileSync(path.join(projectRoot, "order-confirmation.js"), "utf8");
 const state = extractAdminState(appSource);
 const active = activeProductsWithSlugs(state.products);
 const pages = generateProductPageFiles(state.products, state.siteSections, state.cms);
@@ -50,6 +51,7 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
   assert.ok(html.includes(`/product-page.css?v=20260724-mobile-pricing-1`), `${filePath}: scoped CSS`);
   assert.ok(html.includes(`/app.js?v=product-pages-20260724-refine-1`), `${filePath}: product data cache version`);
+  assert.ok(html.includes(`/order-confirmation.js?v=confirmation-dialog-20260728-1`), `${filePath}: shared confirmation component`);
   assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${slug}/"`), `${filePath}: Open Graph`);
   assert.ok(html.includes(`alt="${escapeAttribute(product.title)}"`), `${filePath}: image alt`);
   assert.ok(html.includes(`data-product-id="${escapeAttribute(product.id)}"`), `${filePath}: product id`);
@@ -124,6 +126,15 @@ assert.ok(productPageCss.includes("transform: none !important"), "Mobile product
 assert.ok(productPageCss.includes(".product-page-variant {\n    display: none;"), "Mobile variant badge is hidden");
 assert.ok(adminSource.includes('aria-label="Əvvəlki qiymət"'), "Admin regularPrice label");
 assert.ok(adminSource.includes('data-field="regularPrice" type="number" min="0"'), "Admin regularPrice rejects negatives");
+assert.ok(confirmationSource.includes('class="orderConfirmationTitle"'), "Confirmation title component");
+assert.ok(confirmationSource.includes('class="orderConfirmationTerms"'), "Scrollable confirmation terms block");
+assert.ok(confirmationSource.includes('class="orderConfirmationWarningIcon"'), "Warning icon");
+assert.ok(confirmationSource.includes('"Oxudum və təsdiqləyirəm"'), "Confirmation button label");
+assert.ok(confirmationSource.includes("#modal.orderConfirmationModal .mBottom"), "Confirmation price/footer is hidden");
+assert.equal(confirmationSource.includes("spotifyHelpCtaIcon\" aria-hidden=\"true\">🔐"), false, "Large Spotify password block remains");
+assert.ok(confirmationSource.includes("formatConfirmationText(settings.description)"), "Confirmation text formatter");
+assert.ok(confirmationSource.includes('document.getElementById("orderConfirmationConfirm").onclick = () => onConfirm(formData);'), "Confirmation continues the existing order flow");
+assert.ok(confirmationSource.includes('window.open(url, "_blank", "noopener,noreferrer");'), "WhatsApp handoff remains connected");
 
 for (const product of state.products.filter((item) => item.active === false)) {
   if (!product.seoSlug) continue;

@@ -642,11 +642,11 @@ function normalizeWhatsApp(source = {}) {
 function defaultOrderConfirmation() {
   return {
     enabled: false,
-    title: "SifariЕџi tЙ™sdiqlЙ™yin",
+    title: "Diqqət!",
     description: "",
-    confirmText: "TЙ™sdiqlЙ™yirЙ™m",
-    cancelText: "LЙ™Дџv et",
-    footerText: "SifariЕџi tЙ™sdiqlЙ™dikdЙ™ WhatsApp avtomatik aГ§Д±lacaq.",
+    confirmText: "Oxudum və təsdiqləyirəm",
+    cancelText: "Ləğv et",
+    footerText: "",
     helpLink: {
       enabled: false,
       label: "",

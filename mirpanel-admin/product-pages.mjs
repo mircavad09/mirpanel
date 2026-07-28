@@ -420,7 +420,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 
   <script src="/app.js?v=product-pages-20260724-refine-1"></script>
   <script src="/hbo-max-order-fix.js?v=20260707-prime-video-1"></script>
-  <script src="/order-confirmation.js?v=product-pages-20260724"></script>
+  <script src="/order-confirmation.js?v=confirmation-dialog-20260728-1"></script>
   <script src="/stock-display-fix.js?v=20260610-1"></script>
   <script src="/product-page.js?v=20260724-refine-1"></script>
 </body>

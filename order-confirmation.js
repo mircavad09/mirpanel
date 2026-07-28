@@ -1,11 +1,11 @@
 (() => {
   const DEFAULT_CONFIRMATION = {
     enabled: false,
-    title: "Sifarişi təsdiqləyin",
+    title: "Diqqət!",
     description: "",
-    confirmText: "Təsdiqləyirəm",
+    confirmText: "Oxudum və təsdiqləyirəm",
     cancelText: "Ləğv et",
-    footerText: "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+    footerText: "",
     helpLink: { enabled: false, label: "", url: "" }
   };
 
@@ -462,6 +462,278 @@
           transform: translateY(14px) scale(.96) !important;
         }
       }
+
+      #modal.orderConfirmationModal {
+        align-items: center;
+        padding: 20px;
+        background: rgba(0, 0, 0, .78);
+        backdrop-filter: blur(7px);
+      }
+      #modal.orderConfirmationModal .modalCard {
+        display: flex;
+        flex-direction: column;
+        width: min(500px, calc(100vw - 32px));
+        max-height: min(720px, calc(100dvh - 40px));
+        overflow: hidden;
+        padding: 0;
+        border: 1px solid rgba(255, 255, 255, .11);
+        border-radius: 18px;
+        background: linear-gradient(180deg, #15171b 0%, #0f1114 100%);
+        box-shadow: 0 24px 70px rgba(0, 0, 0, .62);
+      }
+      #modal.orderConfirmationModal .close {
+        top: 12px;
+        right: 12px;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border: 0;
+        border-radius: 8px;
+        background: transparent;
+        color: rgba(255, 255, 255, .62);
+        font-size: 25px;
+        font-weight: 400;
+        line-height: 1;
+      }
+      #modal.orderConfirmationModal .close:hover {
+        background: rgba(255, 255, 255, .06);
+        color: #fff;
+      }
+      #modal.orderConfirmationModal .mTop,
+      #modal.orderConfirmationModal .mPlansTitle,
+      #modal.orderConfirmationModal .mPlans,
+      #modal.orderConfirmationModal .mInfoBox,
+      #modal.orderConfirmationModal #mDesc,
+      #modal.orderConfirmationModal .mBottom {
+        display: none !important;
+      }
+      #modal.orderConfirmationModal #mForm {
+        margin: 0 !important;
+        min-height: 0;
+      }
+      #modal.orderConfirmationModal .orderConfirmation {
+        display: grid;
+        gap: 14px;
+        margin: 0;
+        padding: 18px;
+        background: transparent;
+      }
+      .orderConfirmationHeader {
+        display: flex;
+        align-items: center;
+        min-height: 38px;
+        gap: 11px;
+        padding-right: 42px;
+      }
+      .orderConfirmationWarningIcon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        flex: 0 0 32px;
+        color: #f0c94b;
+      }
+      .orderConfirmationWarningIcon svg {
+        width: 28px;
+        height: 28px;
+        fill: none;
+        stroke: currentColor;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        stroke-width: 1.8;
+      }
+      #modal.orderConfirmationModal .orderConfirmationTitle {
+        margin: 0;
+        color: #f7f7f8;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.15;
+        letter-spacing: -.01em;
+      }
+      #modal.orderConfirmationModal .orderConfirmationProduct {
+        margin-top: 3px;
+        color: rgba(255, 255, 255, .58);
+        font-size: 13px;
+        font-weight: 600;
+        line-height: 1.35;
+      }
+      #modal.orderConfirmationModal .orderConfirmationTerms {
+        min-height: 0;
+        max-height: min(330px, 42dvh);
+        overflow-y: auto;
+        overscroll-behavior: contain;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(255, 255, 255, .2) transparent;
+        padding: 14px 15px;
+        border: 1px solid rgba(255, 255, 255, .08);
+        border-radius: 12px;
+        background: #090b0e;
+        color: rgba(244, 244, 245, .82);
+      }
+      #modal.orderConfirmationModal .orderConfirmationTerms::-webkit-scrollbar {
+        width: 6px;
+      }
+      #modal.orderConfirmationModal .orderConfirmationTerms::-webkit-scrollbar-thumb {
+        border-radius: 999px;
+        background: rgba(255, 255, 255, .2);
+      }
+      #modal.orderConfirmationModal .orderConfirmationDesc,
+      #modal.orderConfirmationModal .orderConfirmationNote {
+        color: inherit;
+        font-size: 13px;
+        font-weight: 450;
+        line-height: 1.55;
+        text-align: left;
+      }
+      #modal.orderConfirmationModal .orderConfirmationDesc p,
+      #modal.orderConfirmationModal .orderConfirmationNote p {
+        margin: 0 0 10px;
+      }
+      #modal.orderConfirmationModal .orderConfirmationDesc p:last-child,
+      #modal.orderConfirmationModal .orderConfirmationNote p:last-child {
+        margin-bottom: 0;
+      }
+      #modal.orderConfirmationModal .orderConfirmationDesc strong,
+      #modal.orderConfirmationModal .orderConfirmationNote strong {
+        color: #fff;
+        font-weight: 750;
+      }
+      #modal.orderConfirmationModal .orderConfirmationNote {
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, .07);
+      }
+      #modal.orderConfirmationModal .orderConfirmationHelpInline {
+        margin: 10px 0 0;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255, 255, 255, .07);
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+      #modal.orderConfirmationModal .orderConfirmationHelpInline a {
+        color: #e8d27a;
+        font-weight: 650;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      #modal.orderConfirmationModal .orderConfirmationActions {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        gap: 10px;
+        margin: 0;
+      }
+      #modal.orderConfirmationModal .orderConfirmationActions .mpBtn {
+        width: 100%;
+        min-height: 46px;
+        margin: 0;
+        padding: 10px 12px;
+        border: 1px solid transparent;
+        border-radius: 10px;
+        box-shadow: none;
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 750;
+        line-height: 1.25;
+        transition: border-color .16s ease, background .16s ease, color .16s ease;
+      }
+      #modal.orderConfirmationModal .orderConfirmationActions .mpBtn:hover {
+        transform: none;
+        box-shadow: none;
+      }
+      #modal.orderConfirmationModal .orderConfirmationCancel {
+        border-color: rgba(255, 255, 255, .1);
+        background: #202329;
+        color: rgba(255, 255, 255, .84);
+      }
+      #modal.orderConfirmationModal #orderConfirmationConfirm {
+        border-color: rgba(240, 201, 75, .42);
+        background: #e4bf49;
+        color: #17130a;
+      }
+      #modal.orderConfirmationModal .orderConfirmationCancel:hover {
+        background: #292d34;
+      }
+      #modal.orderConfirmationModal #orderConfirmationConfirm:hover {
+        background: #f0cc57;
+      }
+      body.orderConfirmationActive .gameFab,
+      body.orderConfirmationActive .waFab {
+        opacity: 0 !important;
+        pointer-events: none !important;
+      }
+
+      @media (max-width: 560px) {
+        #modal.orderConfirmationModal {
+          align-items: center;
+          padding:
+            max(14px, env(safe-area-inset-top))
+            14px
+            max(14px, env(safe-area-inset-bottom));
+        }
+        #modal.orderConfirmationModal .modalCard {
+          width: min(100%, 500px);
+          max-height: calc(100dvh - max(28px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+          padding: 0;
+          border-radius: 16px;
+        }
+        #modal.orderConfirmationModal .close {
+          top: 9px;
+          right: 9px;
+          width: 32px;
+          height: 32px;
+          padding: 0;
+          border-radius: 8px;
+          font-size: 23px;
+        }
+        #modal.orderConfirmationModal .orderConfirmation {
+          gap: 11px;
+          padding: 14px;
+        }
+        .orderConfirmationHeader {
+          min-height: 34px;
+          gap: 9px;
+          padding-right: 36px;
+        }
+        .orderConfirmationWarningIcon {
+          width: 29px;
+          height: 29px;
+          flex-basis: 29px;
+        }
+        .orderConfirmationWarningIcon svg {
+          width: 25px;
+          height: 25px;
+        }
+        #modal.orderConfirmationModal .orderConfirmationTitle {
+          font-size: 18px;
+        }
+        #modal.orderConfirmationModal .orderConfirmationProduct {
+          font-size: 12px;
+        }
+        #modal.orderConfirmationModal .orderConfirmationTerms {
+          max-height: min(310px, 44dvh);
+          padding: 12px 13px;
+          border-radius: 11px;
+        }
+        #modal.orderConfirmationModal .orderConfirmationDesc,
+        #modal.orderConfirmationModal .orderConfirmationNote {
+          font-size: 12.5px;
+          line-height: 1.5;
+        }
+        #modal.orderConfirmationModal .orderConfirmationActions {
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 8px;
+        }
+        #modal.orderConfirmationModal .orderConfirmationActions .mpBtn {
+          min-height: 44px;
+          padding: 9px 8px;
+          font-size: 12px;
+        }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -472,13 +744,36 @@
     document.body.classList.toggle("spotifyConfirmationActive", Boolean(enabled));
   }
 
+  function setOrderConfirmationMode(enabled) {
+    const modal = document.getElementById("modal");
+    const closeButton = document.getElementById("closeModal");
+    modal?.classList.toggle("orderConfirmationModal", Boolean(enabled));
+    document.body.classList.toggle("orderConfirmationActive", Boolean(enabled));
+    if (!closeButton) return;
+    if (enabled) {
+      closeButton.dataset.orderOriginalLabel ||= closeButton.textContent || "Bağla ✕";
+      closeButton.textContent = "×";
+      closeButton.setAttribute("aria-label", "Bağla");
+      closeButton.title = "Bağla";
+    } else if (closeButton.dataset.orderOriginalLabel) {
+      closeButton.textContent = closeButton.dataset.orderOriginalLabel;
+      closeButton.removeAttribute("aria-label");
+      closeButton.removeAttribute("title");
+      document.querySelector("#modal .modalCard")?.removeAttribute("aria-labelledby");
+    }
+  }
+
   function setPremiumFormMode(enabled) {
     document.getElementById("modal")?.classList.toggle("premiumOrderFormOpen", Boolean(enabled));
-    if (enabled) setSpotifyConfirmationMode(false);
+    if (enabled) {
+      setSpotifyConfirmationMode(false);
+      setOrderConfirmationMode(false);
+    }
   }
 
   function setHboFormMode(enabled) {
     document.getElementById("modal")?.classList.toggle("hboMaxOrderFormOpen", Boolean(enabled));
+    if (enabled) setOrderConfirmationMode(false);
   }
 
   injectOrderStyles();
@@ -489,6 +784,47 @@
       .replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;")
       .replaceAll('"', "&quot;");
+  }
+
+  function cleanConfirmationLabel(value) {
+    return String(value || "")
+      .replace(/[*_`#]+/g, "")
+      .replace(/[👉👈🔐↗]/gu, "")
+      .replace(/\s+/g, " ")
+      .trim();
+  }
+
+  function confirmationTitle(value) {
+    const title = cleanConfirmationLabel(value);
+    return !title || /^Sifarişi təsdiqləyin!?$/i.test(title) ? "Diqqət!" : title;
+  }
+
+  function confirmationButtonText(value) {
+    const label = cleanConfirmationLabel(value);
+    return /^(Təsdiqləyirəm|Təsdiq edirəm|Davam et|Sifarişi təsdiqlə)$/i.test(label)
+      ? "Oxudum və təsdiqləyirəm"
+      : (label || DEFAULT_CONFIRMATION.confirmText);
+  }
+
+  function formatConfirmationText(value) {
+    const normalized = String(value || "")
+      .replace(/\r/g, "")
+      .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+      .replace(/`+/g, "")
+      .trim();
+    if (!normalized) return "";
+
+    return escapeHtml(normalized)
+      .split(/\n{2,}/)
+      .map((paragraph) => paragraph
+        .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+        .replace(/__([^_\n]+)__/g, "<strong>$1</strong>")
+        .replace(/\*\*|__/g, "")
+        .replace(/^([^:<]{2,70}:)(\s|$)/, "<strong>$1</strong>$2")
+        .replace(/\n/g, "<br>"))
+      .filter(Boolean)
+      .map((paragraph) => `<p>${paragraph}</p>`)
+      .join("");
   }
 
   function activeFields(product) {
@@ -633,6 +969,9 @@
 
   function openBaseModal(product, plan) {
     setPremiumFormMode(false);
+    setOrderConfirmationMode(false);
+    setSpotifyConfirmationMode(false);
+    setHboFormMode(false);
     document.getElementById("modal")?.classList.add("show");
     lockBodyScroll();
 
@@ -661,6 +1000,7 @@
   function closeOrderModal() {
     setPremiumFormMode(false);
     setSpotifyConfirmationMode(false);
+    setOrderConfirmationMode(false);
     setHboFormMode(false);
     if (typeof closeModal === "function") {
       closeModal();
@@ -778,6 +1118,7 @@
     }
 
     const isHbo = isHboProduct(product);
+    setOrderConfirmationMode(false);
     setPremiumFormMode(!isHbo);
     setHboFormMode(isHbo);
     setFooter("");
@@ -859,36 +1200,48 @@
     const isSpotify = String(product?.id || "").toLowerCase().includes("spotify") || String(product?.title || "").toLowerCase().includes("spotify");
     const helpUrl = String(settings.helpLink?.url || "").trim();
     const defaultSpotifyHelpLabel = "Şifrənizi bilmirsiniz? Buradan sıfırlayın";
-    const helpLabel = isSpotify
+    const storedHelpLabel = cleanConfirmationLabel(settings.helpLink?.label);
+    const helpLabel = isSpotify && (!storedHelpLabel || /Toxunun|unutmusunuzsa/i.test(storedHelpLabel))
       ? defaultSpotifyHelpLabel
-      : String(settings.helpLink?.label || "").trim();
+      : storedHelpLabel;
     const showHelp = settings.helpLink?.enabled === true && helpUrl.startsWith("https://") && helpLabel;
+    const title = confirmationTitle(settings.title);
+    const confirmText = confirmationButtonText(settings.confirmText);
+    const cancelText = cleanConfirmationLabel(settings.cancelText) || DEFAULT_CONFIRMATION.cancelText;
+    const descriptionHtml = formatConfirmationText(settings.description);
+    const noteHtml = formatConfirmationText(product.note);
 
     setSpotifyConfirmationMode(isSpotify);
-
-    setFooter(settings.footerText);
+    setOrderConfirmationMode(true);
+    setFooter("");
     renderModalContent(`
       <div class="mpForm orderConfirmation${isSpotify ? " spotifyOrderConfirmation" : ""}">
-        <div class="mpFormTitle">${escapeHtml(settings.title)}</div>
-        <div class="orderConfirmationDesc">${escapeHtml(settings.description || "")}</div>
-        ${product.note ? `<div class="orderConfirmationNote">${escapeHtml(product.note)}</div>` : ""}
-        ${showHelp && isSpotify ? `
-          <a class="orderConfirmationHelp spotifyHelpCta" href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">
-            <span class="spotifyHelpCtaIcon" aria-hidden="true">🔐</span>
-            <span class="spotifyHelpCtaText">
-              <strong>${escapeHtml(helpLabel)}</strong>
-              <small>Spotify hesab şifrənizi unutmusunuzsa, sifarişdən əvvəl sıfırlayın.</small>
-            </span>
-            <span class="spotifyHelpCtaArrow" aria-hidden="true">↗</span>
-          </a>
-        ` : showHelp ? `<a class="orderConfirmationHelp" href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(helpLabel)}</a>` : ""}
+        <div class="orderConfirmationHeader">
+          <span class="orderConfirmationWarningIcon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M10.3 3.8 2.5 17.3A2 2 0 0 0 4.2 20h15.6a2 2 0 0 0 1.7-2.7L13.7 3.8a2 2 0 0 0-3.4 0Z"></path>
+              <path d="M12 9v4.5"></path>
+              <path d="M12 17h.01"></path>
+            </svg>
+          </span>
+          <div>
+            <h2 class="orderConfirmationTitle" id="orderConfirmationTitle">${escapeHtml(title)}</h2>
+            <div class="orderConfirmationProduct">${escapeHtml(product.title || product.id || "")}</div>
+          </div>
+        </div>
+        <div class="orderConfirmationTerms" tabindex="0" aria-label="${escapeHtml(product.title || "")} sifariş şərtləri">
+          <div class="orderConfirmationDesc">${descriptionHtml || "<p>Bu məhsul üçün sifariş şərtlərini oxuyub təsdiqləyin.</p>"}</div>
+          ${noteHtml ? `<div class="orderConfirmationNote">${noteHtml}</div>` : ""}
+          ${showHelp ? `<p class="orderConfirmationHelpInline"><a href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(helpLabel)}</a></p>` : ""}
+        </div>
         <div class="orderConfirmationActions">
-          <button id="orderConfirmationCancel" class="mpBtn orderConfirmationCancel" type="button">${escapeHtml(settings.cancelText)}</button>
-          <button id="orderConfirmationConfirm" class="mpBtn" type="button">${escapeHtml(settings.confirmText)}</button>
+          <button id="orderConfirmationCancel" class="mpBtn orderConfirmationCancel" type="button">${escapeHtml(cancelText)}</button>
+          <button id="orderConfirmationConfirm" class="mpBtn" type="button">${escapeHtml(confirmText)}</button>
         </div>
       </div>
     `);
 
+    document.querySelector("#modal .modalCard")?.setAttribute("aria-labelledby", "orderConfirmationTitle");
     document.getElementById("orderConfirmationCancel").onclick = closeOrderModal;
     document.getElementById("orderConfirmationConfirm").onclick = () => onConfirm(formData);
   }
@@ -1015,6 +1368,7 @@
     const modal = document.getElementById("modal");
     if (event.target === modal) closeOrderModal();
   });
+  document.getElementById("closeModal")?.addEventListener("click", closeOrderModal);
 
   wrapProductPage();
   patchLegacyNameCodeForm();

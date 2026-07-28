@@ -71,11 +71,11 @@ const defaultUi = {
 function defaultConfirmation() {
   return {
     enabled: false,
-    title: "SifariÅŸi tÉ™sdiqlÉ™yin",
+    title: "Diqqət!",
     description: "",
-    confirmText: "TÉ™sdiqlÉ™yirÉ™m",
-    cancelText: "LÉ™ÄŸv et",
-    footerText: "SifariÅŸi tÉ™sdiqlÉ™dikdÉ™ WhatsApp avtomatik aÃ§Ä±lacaq.",
+    confirmText: "Oxudum və təsdiqləyirəm",
+    cancelText: "Ləğv et",
+    footerText: "",
     helpLink: { enabled: false, label: "", url: "" }
   };
 }
