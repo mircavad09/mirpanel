@@ -1,4 +1,4 @@
-const ADMIN_ORIGIN = "https://mirpanel-admin.onrender.com/";
+const ADMIN_ORIGIN = "https://mirpanel.onrender.com/";
 
 export function onRequest() {
   return Response.redirect(ADMIN_ORIGIN, 302);

@@ -5,12 +5,14 @@ const state = {
   baseSha: "",
   selectedId: "",
   dirty: false,
-  modalAction: null
+  modalAction: null,
+  csrfToken: "",
+  previewDigest: ""
 };
 
 const productImageUpload = {
   maxSize: 5 * 1024 * 1024,
-  allowedTypes: new Set(["image/jpeg", "image/png", "image/webp", "image/svg+xml"])
+  allowedTypes: new Set(["image/jpeg", "image/png", "image/webp"])
 };
 
 const legacyFlows = [
@@ -195,20 +197,31 @@ function syncOrderFlow(product) {
 
 function ensureProduct(product) {
   product.id = slug(product.id || product.title || "product");
+  product._stableId = product._stableId || product.id;
   product.order = Number.isFinite(Number(product.order)) ? Number(product.order) : 0;
   product.category = product.category || "all";
   product.image = product.image || "assets/your.png";
+  product.imageAlt = product.imageAlt || product.title || product.id;
   product.currency = product.currency || "â‚¼";
   product.title = product.title || product.id;
   product.variant = product.variant || "";
   product.badge = product.badge || "";
   product.desc = product.desc || "";
   product.note = product.note || "";
+  product.longDescription = product.longDescription || product.seoContent || "";
+  product.usageRules = product.usageRules || "";
+  product.deliveryText = product.deliveryText || "";
+  product.availabilityText = product.availabilityText || "";
   product.seoSlug = product.seoSlug ? slug(product.seoSlug).replaceAll("_", "-") : "";
   product.seoTitle = product.seoTitle || "";
   product.seoDescription = product.seoDescription || "";
   product.seoKeywords = product.seoKeywords || "";
   product.seoContent = product.seoContent || "";
+  product.seoIndex = product.seoIndex !== false;
+  product.includeInSitemap = product.includeInSitemap !== false;
+  product.seoOgTitle = product.seoOgTitle || "";
+  product.seoOgDescription = product.seoOgDescription || "";
+  product.seoOgImage = product.seoOgImage || product.image;
   product.flow = product.flow || "whatsapp";
   product.soldOut = Boolean(product.soldOut);
   product.active = product.active !== false;
@@ -217,6 +230,7 @@ function ensureProduct(product) {
   product.seller = product.seller || "";
   product.bestSeller = Boolean(product.bestSeller);
   product.formFields = Array.isArray(product.formFields) ? product.formFields : [];
+  product.formTitle = product.formTitle || "";
   product.whatsapp = { ...defaultWhatsApp(), ...(product.whatsapp || {}) };
   product.plans = Array.isArray(product.plans) ? product.plans : [];
   ensureConfirmation(product);
@@ -257,7 +271,11 @@ function selectedProduct() {
 async function api(path, options = {}) {
   const response = await fetch(path, {
     ...options,
-    headers: { "Content-Type": "application/json", ...(options.headers || {}) }
+    headers: {
+      "Content-Type": "application/json",
+      ...(state.csrfToken ? { "X-CSRF-Token": state.csrfToken } : {}),
+      ...(options.headers || {})
+    }
   });
   const payload = await response.json().catch(() => ({}));
   if (!response.ok) {
@@ -323,7 +341,7 @@ async function uploadProductImage(file) {
 
     product.image = payload.path;
     $("productImage").value = payload.path;
-    $("previewImage").src = imageUrl(payload.path);
+    $("previewImage").src = payload.previewDataUrl || imageUrl(payload.path);
     markDirty();
     renderProducts();
     setImageUploadStatus(`YÃ¼klÉ™ndi: ${payload.path}`, "good");
@@ -356,6 +374,7 @@ function toast(text, type = "good") {
 
 function markDirty() {
   state.dirty = true;
+  state.previewDigest = "";
   renderStats();
 }
 
@@ -380,6 +399,8 @@ async function loadState() {
     const payload = await api("/api/admin/state");
     state.data = payload.data;
     state.baseSha = payload.sha;
+    state.csrfToken = payload.csrfToken || state.csrfToken;
+    state.previewDigest = "";
     state.data.products = (state.data.products || []).map(ensureProduct);
     state.data.categories = Array.isArray(state.data.categories) ? state.data.categories : [];
     state.data.content = state.data.content || {};
@@ -419,12 +440,18 @@ async function saveState() {
   try {
     const payload = await api("/api/admin/save", {
       method: "POST",
-      body: JSON.stringify({ baseSha: state.baseSha, data: state.data })
+      body: JSON.stringify({
+        baseSha: state.baseSha,
+        data: state.data,
+        previewDigest: state.previewDigest
+      })
     });
     state.baseSha = payload.sha;
+    state.previewDigest = "";
     state.dirty = false;
     $("commitInfo").textContent = `Commit: ${payload.commitSha.slice(0, 7)} / ${new Date(payload.committedAt).toLocaleString("az-AZ")}`;
     renderStats();
+    state.lastPublishResult = payload;
     toast(payload.cacheCommitSha ? "SaxlandÄ± vÉ™ cache versiyasÄ± yenilÉ™ndi." : "SaxlandÄ±.");
   } catch (error) {
     if (error.status === 401) location.href = "/login.html";
@@ -773,6 +800,8 @@ function renderPlans(product) {
       <input data-plan="${index}" data-field="months" type="number" placeholder="Ay" value="${escapeHtml(plan.months ?? "")}">
       <input data-plan="${index}" data-field="price" type="number" step="0.01" placeholder="QiymÉ™t" value="${escapeHtml(plan.price ?? "")}">
       <input data-plan="${index}" data-field="regularPrice" type="number" min="0" step="0.01" aria-label="Əvvəlki qiymət" placeholder="Əvvəlki qiymət" value="${escapeHtml(plan.regularPrice ?? "")}">
+      <button class="iconBtn movePlan" data-plan="${index}" data-direction="-1" type="button" aria-label="Yuxarı">↑</button>
+      <button class="iconBtn movePlan" data-plan="${index}" data-direction="1" type="button" aria-label="Aşağı">↓</button>
       <button class="iconBtn removePlan" data-plan="${index}" type="button">X</button>
     </div>
   `).join("");
@@ -799,6 +828,17 @@ function renderPlans(product) {
       markDirty();
       renderPlans(product);
       renderProducts();
+    });
+  });
+  document.querySelectorAll(".movePlan").forEach((button) => {
+    button.addEventListener("click", () => {
+      const from = Number(button.dataset.plan);
+      const to = from + Number(button.dataset.direction);
+      if (to < 0 || to >= product.plans.length) return;
+      const [plan] = product.plans.splice(from, 1);
+      product.plans.splice(to, 0, plan);
+      markDirty();
+      renderPlans(product);
     });
   });
 }
@@ -851,9 +891,14 @@ function renderFormFields(product) {
 function renderCategories() {
   $("categoriesBody").innerHTML = state.data.categories.map((category, index) => `
     <tr>
-      <td>${index + 1}</td>
+      <td><input type="number" min="1" data-cat="${index}" data-cat-field="order" value="${Number(category.order) || index + 1}"></td>
       <td><input data-cat="${index}" data-cat-field="key" value="${escapeHtml(category.key)}"></td>
       <td><input data-cat="${index}" data-cat-field="name" value="${escapeHtml(category.name)}"></td>
+      <td><select data-cat="${index}" data-cat-field="icon">${renderOptions(
+        ["products", "sparkles", "game", "ai", "image", "shield"].map((icon) => [icon, icon]),
+        category.icon || "products"
+      )}</select></td>
+      <td><input type="checkbox" data-cat="${index}" data-cat-field="active" ${category.active !== false ? "checked" : ""}></td>
       <td>${state.data.products.filter((p) => p.category === category.key).length}</td>
       <td><button class="btn danger deleteCat" data-cat="${index}">Sil</button></td>
     </tr>
@@ -863,7 +908,14 @@ function renderCategories() {
     input.addEventListener("input", () => {
       const category = state.data.categories[Number(input.dataset.cat)];
       const oldKey = category.key;
-      category[input.dataset.catField] = input.dataset.catField === "key" ? slug(input.value) : input.value;
+      const field = input.dataset.catField;
+      category[field] = field === "key"
+        ? slug(input.value)
+        : field === "order"
+          ? Math.max(1, Number(input.value) || 1)
+          : field === "active"
+            ? input.checked
+            : input.value;
       if (oldKey !== category.key) {
         state.data.products.forEach((product) => {
           if (product.category === oldKey) product.category = category.key;
@@ -1026,7 +1078,13 @@ $("addCategoryBtn").addEventListener("click", () => {
     const key = slug($("newCategoryKey").value || name);
     if (!name || !key) return toast("Ad vÉ™ key tÉ™lÉ™b olunur.", "bad");
     if (state.data.categories.some((category) => category.key === key)) return toast("Bu key artÄ±q var.", "bad");
-    state.data.categories.push({ key, name });
+    state.data.categories.push({
+      key,
+      name,
+      order: state.data.categories.length + 1,
+      active: true,
+      icon: "products"
+    });
     markDirty();
     renderAll();
     closeModal();
@@ -1081,7 +1139,7 @@ $("refreshBtn").addEventListener("click", () => {
   if (state.dirty && !confirm("SaxlanÄ±lmamÄ±ÅŸ dÉ™yiÅŸikliklÉ™r silinÉ™cÉ™k. Davam et?")) return;
   loadState();
 });
-$("saveBtn").addEventListener("click", saveState);
+$("saveBtn").addEventListener("click", () => showView("publish"));
 $("searchInput").addEventListener("input", renderProducts);
 $("categoryFilter").addEventListener("change", renderProducts);
 $("statusFilter").addEventListener("change", renderProducts);

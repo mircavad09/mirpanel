@@ -934,3 +934,15 @@ body.hide-top-panel .top {
     gap: 0;
   }
 }
+.cms-footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.cms-footer-links a {
+  color: inherit;
+  text-decoration: none;
+}
