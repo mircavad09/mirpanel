@@ -83,6 +83,17 @@
     text(".sp-desc", home.search?.description || UI?.searchDesc);
     const search = document.getElementById("q");
     if (search && home.search?.placeholder) search.placeholder = home.search.placeholder;
+    const cards = home.infoCards || {};
+    [
+      ["haqqimizda", cards.about],
+      ["elaqe", cards.contact],
+      ["sertler", cards.terms]
+    ].forEach(([id, card]) => {
+      if (!card) return;
+      text(`#${id} h2`, card.title);
+      text(`#${id} > p:not(.siteInfoLinkText):not(.info-page-contact)`, card.text);
+      text(`#${id} .siteInfoLinkText, #${id} .siteInfoWaBtn`, card.linkText);
+    });
 
     const sections = home.sections || {};
     const visibility = {

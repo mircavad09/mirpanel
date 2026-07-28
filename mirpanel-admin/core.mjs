@@ -131,6 +131,14 @@ function normalizeLink(item = {}, index = 0) {
   };
 }
 
+function normalizeInfoCard(item = {}, fallback = {}) {
+  return {
+    title: cleanText(item?.title, fallback.title, 200),
+    text: cleanText(item?.text, fallback.text, 1000),
+    linkText: cleanText(item?.linkText, fallback.linkText, 120)
+  };
+}
+
 function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
   const whatsappNumber = String(phone_wa || "").replace(/\D/g, "") || "994515243545";
   const searchMarkup = String(ui?.searchTitle || "");
@@ -234,9 +242,9 @@ function normalizeCms(source = {}, legacy = {}) {
       sectionOrder,
       sections: Object.fromEntries(Object.keys(defaults.homepage.sections).map((key) => [key, homepage.sections?.[key] ?? defaults.homepage.sections[key]])),
       infoCards: {
-        about: { ...defaults.homepage.infoCards.about, ...(homepage.infoCards?.about || {}) },
-        contact: { ...defaults.homepage.infoCards.contact, ...(homepage.infoCards?.contact || {}) },
-        terms: { ...defaults.homepage.infoCards.terms, ...(homepage.infoCards?.terms || {}) }
+        about: normalizeInfoCard(homepage.infoCards?.about, defaults.homepage.infoCards.about),
+        contact: normalizeInfoCard(homepage.infoCards?.contact, defaults.homepage.infoCards.contact),
+        terms: normalizeInfoCard(homepage.infoCards?.terms, defaults.homepage.infoCards.terms)
       }
     },
     navigation: (Array.isArray(source.navigation) ? source.navigation : defaults.navigation).map(normalizeLink),
@@ -362,7 +370,9 @@ function normalizeSiteSections(source = {}) {
       ogImage: safeUrl(item.ogImage),
       index: item.index !== false,
       includeInSitemap: item.includeInSitemap !== false,
-      order: Number.isFinite(Number(item.order)) ? Number(item.order) : fallback.order
+      order: Number.isFinite(Number(item.order)) ? Number(item.order) : fallback.order,
+      buttonText: cleanText(item.buttonText || "", fallback.buttonText || "", 120),
+      buttonUrl: safeUrl(item.buttonUrl || fallback.buttonUrl || "")
     };
 
     if (key === "haqqimizda") {
@@ -375,7 +385,6 @@ function normalizeSiteSections(source = {}) {
 
     if (key === "elaqe") {
       next[key].whatsappNumber = String(item.whatsappNumber ?? fallback.whatsappNumber);
-      next[key].buttonText = String(item.buttonText ?? fallback.buttonText);
       next[key].whatsappMessage = cleanText(item.whatsappMessage || "", "", 2000);
       next[key].workHours = cleanText(item.workHours || "", "", 1000);
     }

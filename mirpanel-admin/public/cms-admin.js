@@ -117,6 +117,15 @@
       ${field("Paket açıqlaması", "homepage.bundle.description", { type: "textarea", full: true })}
       ${field("Oyun bölməsi görünsün", "homepage.sections.games", { type: "checkbox" })}
       ${field("AI bölməsi görünsün", "homepage.sections.ai", { type: "checkbox" })}
+      ${field("Haqqımızda qısa kart başlığı", "homepage.infoCards.about.title")}
+      ${field("Haqqımızda qısa kart keçidi", "homepage.infoCards.about.linkText")}
+      ${field("Haqqımızda qısa kart mətni", "homepage.infoCards.about.text", { type: "textarea", full: true })}
+      ${field("Əlaqə qısa kart başlığı", "homepage.infoCards.contact.title")}
+      ${field("Əlaqə qısa kart keçidi", "homepage.infoCards.contact.linkText")}
+      ${field("Əlaqə qısa kart mətni", "homepage.infoCards.contact.text", { type: "textarea", full: true })}
+      ${field("Şərtlər qısa kart başlığı", "homepage.infoCards.terms.title")}
+      ${field("Şərtlər qısa kart keçidi", "homepage.infoCards.terms.linkText")}
+      ${field("Şərtlər qısa kart mətni", "homepage.infoCards.terms.text", { type: "textarea", full: true })}
     </div><div class="sectionHead"><div><h3>Bölmələrin sırası və görünməsi</h3></div></div><div id="homepageSections" class="cmsList"></div>`));
     createView("navigation", panel("Naviqasiya və header", "Daxili keçidlər eyni tabda açılır; yalnız təhlükəsiz ikonlar istifadə olunur", `<div class="formGrid">
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}

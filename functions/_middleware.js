@@ -366,7 +366,8 @@ export async function onRequest(context) {
   let html = await response.text();
   const dynamicRoutes = await productSeoRoutes(request);
   const product = dynamicRoutes[route];
-  html = product ? injectMeta(html, route, product) : withSeoScripts(html);
+  const canonicalRoute = route === "/" ? "/" : `${route}/`;
+  html = product ? injectMeta(html, canonicalRoute, product) : withSeoScripts(html);
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=utf-8");

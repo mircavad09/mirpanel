@@ -36,10 +36,14 @@ hostile.content[hostile.products[0].id] = {
   rulesHtml: '<ul><li><strong>Qayda</strong></li></ul><a href="javascript:alert(1)">Pis link</a>'
 };
 hostile.siteSections.sertler.body = '<p onmouseover="x()">Qayda</p><script>x()</script>';
+hostile.siteSections.haqqimizda.buttonUrl = "javascript:alert(1)";
+hostile.cms.homepage.infoCards.about.title = '<img src=x onerror="alert(1)">';
 const sanitized = normalizeAdminPayload(hostile);
 const sanitizedText = JSON.stringify(sanitized);
 assert.equal(/<script|<iframe|onclick|onmouseover|javascript:/i.test(sanitizedText), false, "Təhlükəli HTML saxlanıldı");
 assert.ok(sanitized.content[hostile.products[0].id].aboutHtml.includes("<h2>Başlıq</h2>"), "Təhlükəsiz başlıq itdi");
+
+assert.equal(sanitized.siteSections.haqqimizda.buttonUrl, "", "Unsafe page link was stored");
 
 const collision = structuredClone(state);
 collision.products[1].seoSlug = collision.products[0].seoSlug;
@@ -62,6 +66,10 @@ const pages = generateProductPageFiles(state.products, state.siteSections, state
 const infoPages = generateInfoPageFiles(state.siteSections, state.ui, state.cms);
 assert.equal(pages.size, 21);
 assert.equal(infoPages.size, 3);
+assert.ok(
+  infoPages.get(`${state.siteSections.elaqe.slug}/index.html`).includes(state.cms.site.phoneDisplay),
+  "Shared WhatsApp number is not connected to the contact page"
+);
 const firstPage = pages.values().next().value;
 assert.ok(firstPage.includes(state.cms.commonTexts.order), "Ümumi sifariş mətni məhsul səhifəsinə bağlanmayıb");
 assert.ok(firstPage.includes(state.cms.site.brandName.toUpperCase()), "Brend məhsul səhifəsinə bağlanmayıb");
@@ -104,5 +112,11 @@ for (const file of [
   ].join("|"), "m");
   assert.equal(residue.test(text), false, `${file}: alət çıxışı qalığı`);
 }
+
+const middleware = fs.readFileSync(new URL("../functions/_middleware.js", import.meta.url), "utf8");
+assert.ok(
+  middleware.includes('const canonicalRoute = route === "/" ? "/" : `${route}/`;'),
+  "Edge canonical does not match sitemap URLs"
+);
 
 console.log("PASS: CMS modeli, miqrasiya snapshot-ı, XSS sanitizasiyası, slug, generator və sitemap yoxlamaları.");

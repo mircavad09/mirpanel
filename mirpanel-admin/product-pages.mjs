@@ -221,7 +221,16 @@ export function generateInfoPageFiles(siteSections = {}, ui = {}, cms = {}) {
   const files = new Map();
 
   for (const page of activeSitePages(siteSections)) {
-    files.set(`${page.slug}/index.html`, generateInfoPageHtml(page, siteSections, ui, cms));
+    const effectivePage = page.key === "elaqe"
+      ? {
+          ...page,
+          section: {
+            ...page.section,
+            whatsappNumber: cms.site?.phoneDisplay || cms.site?.whatsappNumber || page.section.whatsappNumber
+          }
+        }
+      : page;
+    files.set(`${page.slug}/index.html`, generateInfoPageHtml(effectivePage, siteSections, ui, cms));
   }
 
   return files;
@@ -641,6 +650,8 @@ function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
   const title = cleanText(section.seoTitle) || fallback.title;
   const description = cleanText(section.seoDescription) || fallback.description;
   const h1 = cleanText(section.title) || fallback.h1;
+  const buttonText = cleanText(section.buttonText);
+  const buttonUrl = pageLinkUrl(section.buttonUrl);
   const blocks = (Array.isArray(section.blocks) ? section.blocks : [])
     .sort((a, b) => Number(a.order) - Number(b.order))
     .map((block) => `<section><h2>${escapeHtml(block.title)}</h2>${block.image ? `<img src="${escapeAttribute(rootRelativeUrl(block.image))}" alt="${escapeAttribute(block.title)}">` : ""}<div>${cleanText(block.text)}</div></section>`)
@@ -654,6 +665,9 @@ function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
     .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${escapeAttribute(absoluteUrl(section.ogImage || cms.seo?.home?.ogImage || "assets/logo.png"))}">`)
     .replace(/(<article class="info-page-card">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/, `$1${escapeHtml(h1)}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms, ui)}</footer>`);
+  if (buttonText && buttonUrl) {
+    next = next.replace(/(<div class="info-page-actions">[\s\S]*?)(<\/div>)/, `$1<a class="is-primary" href="${escapeAttribute(buttonUrl)}">${escapeHtml(buttonText)}</a>$2`);
+  }
   if (blocks) next = next.replace(/(<\/article>\s*<\/main>)/, `<div class="info-page-sections">${blocks}</div>$1`);
   return next;
 }
@@ -803,6 +817,12 @@ function schemaCurrency(value) {
 function rootRelativeUrl(value) {
   const source = cleanText(value).replace(/^https?:\/\/mirpanel\.com/i, "");
   return source.startsWith("/") ? source : `/${source}`;
+}
+
+function pageLinkUrl(value) {
+  const source = cleanText(value);
+  if (!source) return "";
+  return /^https?:\/\//i.test(source) ? source : rootRelativeUrl(source);
 }
 
 function absoluteUrl(value) {
