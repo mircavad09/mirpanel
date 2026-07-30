@@ -130,7 +130,7 @@
     createView("navigation", panel("Naviqasiya və header", "Daxili keçidlər eyni tabda açılır; yalnız təhlükəsiz ikonlar istifadə olunur", `<div class="formGrid">
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}
     </div><div class="sectionHead"><h3>Naviqasiya elementləri</h3><button class="btn" type="button" data-add-list="navigation">Keçid əlavə et</button></div><div id="navigationList" class="cmsList"></div>`));
-    createView("banners", panel("Bannerlər", "Desktop və mobil bannerləri tarix aralığı ilə idarə et", '<div class="sectionHead"><span></span><button class="btn primary" type="button" data-add-list="banners">Banner əlavə et</button></div><div id="bannerList" class="cmsList"></div>'));
+    createView("banners", panel("Bannerlər", "Ana səhifənin böyük slayder şəkillərini və Canlı Dəstək blokunu idarə et", '<div class="sectionHead"><h3>Böyük slayder bannerləri</h3><button class="btn primary" type="button" data-add-list="banners">Banner əlavə et</button></div><div id="bannerList" class="cmsList"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
     createView("about", pageForm("haqqimizda", "Haqqımızda"));
     createView("contact", contactForm());
     createView("terms", termsForm());
@@ -212,6 +212,7 @@
     document.querySelector(".main").addEventListener("input", (event) => {
       const target = event.target;
       if (target.dataset.cms) {
+        if (/^banners\.\d+\.order$/.test(target.dataset.cms)) return;
         const next = target.type === "checkbox" ? target.checked : target.type === "number" ? Number(target.value) : target.value;
         setValue(target.dataset.cms, next);
       }
@@ -221,9 +222,111 @@
         markDirty();
       }
     });
+    document.querySelector(".main").addEventListener("change", handleBannerChange);
     document.querySelector(".main").addEventListener("click", handleClick);
   }
+  function bannerImageOwner(path) {
+    const parts = path.split(".");
+    if (parts[0] === "banners") {
+      const banner = cms().banners[Number(parts[1])];
+      return { item: banner, field: parts[2], previewKey: parts[2] === "mobileImage" ? "_mobilePreview" : "_desktopPreview" };
+    }
+    return {
+      item: cms().supportCard,
+      field: parts[1],
+      previewKey: parts[1] === "mobileImage" ? "_mobilePreview" : "_desktopPreview"
+    };
+  }
+  async function uploadBannerImage(path, file) {
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
+      return toast("Yalnız JPG, PNG və WEBP, maksimum 5 MB.", "bad");
+    }
+    const previewElement = document.querySelector(`[data-banner-preview="${CSS.escape(path)}"]`);
+    const localPreview = URL.createObjectURL(file);
+    if (previewElement) {
+      previewElement.hidden = false;
+      previewElement.src = localPreview;
+    }
+    setLoading(true, "Banner şəkli yüklənir...");
+    try {
+      const contentBase64 = await readFileAsBase64(file);
+      const result = await api("/api/upload-product-image", {
+        method: "POST",
+        body: JSON.stringify({ productId: path.startsWith("supportCard") ? "support" : "banner", fileName: file.name, mimeType: file.type, contentBase64 })
+      });
+      const owner = bannerImageOwner(path);
+      setValue(path, result.publicPath);
+      owner.item[owner.previewKey] = result.previewDataUrl;
+      if (!cms().media.some((item) => item.path === result.publicPath)) {
+        cms().media.push({
+          path: result.publicPath,
+          _preview: result.previewDataUrl,
+          alt: owner.item.alt || file.name,
+          size: file.size,
+          type: file.type,
+          uploadedAt: result.uploadedAt
+        });
+      }
+      renderBanners();
+      renderMedia();
+      populateBoundInputs();
+      toast("Şəkil bannerə əlavə edildi və Media bölməsində saxlanıldı.");
+    } catch (error) {
+      toast(error.message, "bad");
+    } finally {
+      URL.revokeObjectURL(localPreview);
+      setLoading(false);
+    }
+  }
+  function handleBannerChange(event) {
+    const target = event.target;
+    if (target.dataset.bannerUpload) {
+      const file = target.files?.[0];
+      if (file) uploadBannerImage(target.dataset.bannerUpload, file);
+      return;
+    }
+    if (target.dataset.bannerMedia) {
+      const path = target.dataset.bannerMedia;
+      const selected = cms().media.find((item) => item.path === target.value);
+      setValue(path, target.value);
+      const owner = bannerImageOwner(path);
+      owner.item[owner.previewKey] = selected?._preview || "";
+      renderBanners();
+      populateBoundInputs();
+      return;
+    }
+    const orderMatch = target.dataset.cms?.match(/^banners\.(\d+)\.order$/);
+    if (orderMatch) {
+      const current = Number(orderMatch[1]);
+      const requested = Math.max(1, Math.min(cms().banners.length, Math.trunc(Number(target.value)) || 1)) - 1;
+      const [banner] = cms().banners.splice(current, 1);
+      cms().banners.splice(requested, 0, banner);
+      normalizeBannerOrders();
+      markDirty();
+      renderBanners();
+      populateBoundInputs();
+      return;
+    }
+    if (/^(?:banners\.\d+|supportCard)\.(?:desktopImage|mobileImage)$/.test(target.dataset.cms || "")) {
+      renderBanners();
+      populateBoundInputs();
+    }
+  }
   function handleClick(event) {
+    const moveBanner = event.target.closest("[data-move-banner]");
+    if (moveBanner) {
+      const current = Number(moveBanner.dataset.moveBanner);
+      const next = current + Number(moveBanner.dataset.direction);
+      if (next >= 0 && next < cms().banners.length) {
+        const [banner] = cms().banners.splice(current, 1);
+        cms().banners.splice(next, 0, banner);
+        normalizeBannerOrders();
+        markDirty();
+        renderBanners();
+        populateBoundInputs();
+      }
+      return;
+    }
     const addList = event.target.closest("[data-add-list]")?.dataset.addList;
     if (addList) addListItem(addList);
     const remove = event.target.closest("[data-remove-list]");
@@ -247,7 +350,9 @@
   }
   function removeListItem(type, index) {
     const list = type === "navigation" ? cms().navigation : type === "banners" ? cms().banners : cms().footer.links;
-    list.splice(index, 1); markDirty(); renderCms();
+    list.splice(index, 1);
+    if (type === "banners") normalizeBannerOrders();
+    markDirty(); renderCms();
   }
   function listInput(type, index, key, label, itemType = "text") {
     const path = type === "footerLinks" ? `footer.links.${index}.${key}` : `${type}.${index}.${key}`;
@@ -263,14 +368,62 @@
       ${listInput(type, index, "enabled", "Aktiv", "checkbox")}${listInput(type, index, "newTab", "Yeni tab", "checkbox")}
     </div><button class="btn danger" type="button" data-remove-list="${type}" data-index="${index}">Sil</button></div>`).join("");
   }
+  function normalizeBannerOrders() {
+    cms().banners.forEach((banner, index) => { banner.order = index + 1; });
+  }
+  function cmsImageUrl(value) {
+    const imagePath = String(value || "").trim();
+    if (!imagePath) return "";
+    if (/^(?:data:|blob:|https?:\/\/)/i.test(imagePath)) return imagePath;
+    return `https://mirpanel.com/${imagePath.replace(/^\/+/, "")}`;
+  }
+  function mediaOptions(selected) {
+    return `<option value="">Media seçin</option>${cms().media.map((item) =>
+      `<option value="${esc(item.path)}"${item.path === selected ? " selected" : ""}>${esc(item.alt || item.path)}</option>`
+    ).join("")}`;
+  }
+  function imageEditor(path, label, imagePath, preview) {
+    return `<div class="bannerImageEditor">
+      <strong>${esc(label)}</strong>
+      <img data-banner-preview="${esc(path)}" src="${esc(preview || cmsImageUrl(imagePath))}" alt=""${imagePath || preview ? "" : " hidden"}>
+      <label>Kompüterdən yüklə<input type="file" accept="image/jpeg,image/png,image/webp" data-banner-upload="${esc(path)}"></label>
+      <label>Media bölməsindən seç<select data-banner-media="${esc(path)}">${mediaOptions(imagePath)}</select></label>
+      <label>Şəkil yolu<input data-cms="${esc(path)}" value="${esc(imagePath)}"></label>
+      <small>JPG, PNG və ya WEBP · maksimum 5 MB</small>
+    </div>`;
+  }
   function renderBanners() {
-    el("bannerList").innerHTML = cms().banners.map((item, index) => `<div class="cmsListItem"><div class="formGrid">
-      ${listInput("banners", index, "title", "Başlıq")}${listInput("banners", index, "alt", "Alt mətni")}
-      ${listInput("banners", index, "description", "Açıqlama")}${listInput("banners", index, "url", "Keçid")}
-      ${listInput("banners", index, "desktopImage", "Desktop şəkli")}${listInput("banners", index, "mobileImage", "Mobil şəkli")}
-      ${listInput("banners", index, "startAt", "Başlama tarixi", "datetime-local")}${listInput("banners", index, "endAt", "Bitmə tarixi", "datetime-local")}
-      ${listInput("banners", index, "order", "Sıra", "number")}${listInput("banners", index, "enabled", "Aktiv", "checkbox")}
-    </div><button class="btn danger" type="button" data-remove-list="banners" data-index="${index}">Sil</button></div>`).join("");
+    normalizeBannerOrders();
+    el("bannerList").innerHTML = cms().banners.map((item, index) => `<div class="cmsListItem bannerEditorCard">
+      <div class="bannerEditorHead"><strong>Banner ${index + 1}</strong><div class="bannerOrderActions">
+        <button class="btn" type="button" data-move-banner="${index}" data-direction="-1"${index === 0 ? " disabled" : ""}>Yuxarı</button>
+        <button class="btn" type="button" data-move-banner="${index}" data-direction="1"${index === cms().banners.length - 1 ? " disabled" : ""}>Aşağı</button>
+      </div></div>
+      <div class="bannerImageGrid">
+        ${imageEditor(`banners.${index}.desktopImage`, "Desktop şəkli", item.desktopImage, item._desktopPreview)}
+        ${imageEditor(`banners.${index}.mobileImage`, "Mobil şəkli (boşdursa desktop işlənir)", item.mobileImage, item._mobilePreview || item._desktopPreview)}
+      </div>
+      <div class="formGrid">
+        ${listInput("banners", index, "title", "Başlıq")}${listInput("banners", index, "alt", "Alternativ mətn (alt)")}
+        ${listInput("banners", index, "description", "Açıqlama")}${listInput("banners", index, "url", "Keçid ünvanı")}
+        ${listInput("banners", index, "startAt", "Başlama tarixi", "datetime-local")}${listInput("banners", index, "endAt", "Bitmə tarixi", "datetime-local")}
+        ${listInput("banners", index, "order", "Sıra", "number")}${listInput("banners", index, "enabled", "Aktiv", "checkbox")}
+      </div><button class="btn danger" type="button" data-remove-list="banners" data-index="${index}">Banneri sil</button>
+    </div>`).join("");
+
+    cms().supportCard ||= { desktopImage: "assets/support.png", mobileImage: "", title: "", workHours: "", alt: "Canlı Dəstək", url: "", enabled: true };
+    const support = cms().supportCard;
+    el("supportCardEditor").innerHTML = `<div class="cmsListItem bannerEditorCard">
+      <div class="bannerImageGrid">
+        ${imageEditor("supportCard.desktopImage", "Desktop şəkli", support.desktopImage, support._desktopPreview)}
+        ${imageEditor("supportCard.mobileImage", "Mobil şəkli (boşdursa desktop işlənir)", support.mobileImage, support._mobilePreview || support._desktopPreview)}
+      </div>
+      <div class="formGrid">
+        ${field("Başlıq", "supportCard.title")}${field("İş saatı", "supportCard.workHours")}
+        ${field("Alternativ mətn (alt)", "supportCard.alt")}${field("Keçid ünvanı", "supportCard.url")}
+        ${field("Aktiv", "supportCard.enabled", { type: "checkbox" })}
+      </div>
+    </div>`;
   }
   function renderBlocks(key) {
     const container = document.querySelector(`[data-block-list="${key}"]`);

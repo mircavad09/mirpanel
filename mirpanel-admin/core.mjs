@@ -186,6 +186,15 @@ function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
       { id: "contact", label: "Əlaqə", url: `/${normalizeSlug(siteSections?.elaqe?.slug, "elaqe")}`, order: 3, enabled: siteSections?.elaqe?.enabled !== false, icon: "contact", newTab: false }
     ],
     banners: [],
+    supportCard: {
+      desktopImage: "assets/support.png",
+      mobileImage: "",
+      title: "",
+      workHours: "",
+      alt: "Canlı Dəstək",
+      url: `https://wa.me/${whatsappNumber}`,
+      enabled: true
+    },
     footer: {
       copyrightText: cleanText(ui?.footRights, "Bütün hüquqlar qorunur."),
       year: new Date().getUTCFullYear(),
@@ -219,6 +228,7 @@ function normalizeCms(source = {}, legacy = {}) {
   const search = homepage.search || {};
   const hero = homepage.hero || {};
   const announcement = homepage.announcement || {};
+  const supportCard = source.supportCard || {};
   const allowedSections = defaults.homepage.sectionOrder;
   const sectionOrder = Array.isArray(homepage.sectionOrder)
     ? [...new Set(homepage.sectionOrder.filter((key) => allowedSections.includes(key)))]
@@ -248,19 +258,35 @@ function normalizeCms(source = {}, legacy = {}) {
       }
     },
     navigation: (Array.isArray(source.navigation) ? source.navigation : defaults.navigation).map(normalizeLink),
-    banners: (Array.isArray(source.banners) ? source.banners : []).map((banner, index) => ({
-      id: normalizeSlug(banner.id, `banner-${index + 1}`),
-      title: cleanText(banner.title, "", 200),
-      description: cleanText(banner.description, "", 1000),
-      alt: cleanText(banner.alt, "", 250),
-      url: safeUrl(banner.url),
-      order: Number.isFinite(Number(banner.order)) ? Number(banner.order) : index + 1,
-      enabled: banner.enabled !== false,
-      startAt: cleanText(banner.startAt, "", 40),
-      endAt: cleanText(banner.endAt, "", 40),
-      desktopImage: safeUrl(banner.desktopImage),
-      mobileImage: safeUrl(banner.mobileImage)
-    })),
+    banners: (Array.isArray(source.banners) ? source.banners : [])
+      .map((banner, index) => ({
+        id: normalizeSlug(banner.id, `banner-${index + 1}`),
+        title: cleanText(banner.title, "", 200),
+        description: cleanText(banner.description, "", 1000),
+        alt: cleanText(banner.alt, "", 250),
+        url: safeUrl(banner.url),
+        order: Number.isFinite(Number(banner.order)) ? Math.max(1, Math.trunc(Number(banner.order))) : index + 1,
+        enabled: banner.enabled !== false,
+        startAt: cleanText(banner.startAt, "", 40),
+        endAt: cleanText(banner.endAt, "", 40),
+        desktopImage: safeUrl(banner.desktopImage),
+        mobileImage: safeUrl(banner.mobileImage),
+        _sourceIndex: index
+      }))
+      .sort((left, right) => left.order - right.order || left._sourceIndex - right._sourceIndex)
+      .map((banner, index) => {
+        const { _sourceIndex, ...normalizedBanner } = banner;
+        return { ...normalizedBanner, order: index + 1 };
+      }),
+    supportCard: {
+      desktopImage: safeUrl(supportCard.desktopImage || defaults.supportCard.desktopImage),
+      mobileImage: safeUrl(supportCard.mobileImage),
+      title: cleanText(supportCard.title, defaults.supportCard.title, 200),
+      workHours: cleanText(supportCard.workHours, defaults.supportCard.workHours, 200),
+      alt: cleanText(supportCard.alt, defaults.supportCard.alt, 250),
+      url: safeUrl(supportCard.url || defaults.supportCard.url),
+      enabled: supportCard.enabled !== false
+    },
     footer: {
       copyrightText: cleanText(footer.copyrightText, defaults.footer.copyrightText, 300),
       year: Math.min(2200, Math.max(2000, Number(footer.year) || defaults.footer.year)),

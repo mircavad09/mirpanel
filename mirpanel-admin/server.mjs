@@ -588,14 +588,15 @@ async function handleApi(request, response) {
   }
 
   if (request.method === "POST" && request.url === "/api/upload-product-image") {
-    if (!requireMutationAuth(request, response)) return;
+    const session = requireMutationAuth(request, response);
+    if (!session) return;
     const body = await readBody(request, 7_500_000);
     const extension = extensionFromUpload(body.fileName, body.mimeType);
     const mimeType = String(body.mimeType || "").toLowerCase();
 
     if (!extension || (mimeType && !productImageTypes.has(mimeType))) {
       return json(response, 400, {
-        error: "Bu fayl tipi dəstəklənmir. JPG, PNG, WEBP və SVG qəbul edilir."
+        error: "Bu fayl tipi dəstəklənmir. Yalnız JPG, PNG və WEBP qəbul edilir."
       });
     }
 

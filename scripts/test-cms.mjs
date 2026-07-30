@@ -25,10 +25,24 @@ assert.equal(state.products.filter((product) => product.active).length, 21, "Akt
 assert.equal(digest(orderSnapshot), "b67de45e1f435af2ee6991e5d63063907e6fc410c207076a17cae56638231689", "Məhsul sırası dəyişib");
 assert.equal(digest(commercialSnapshot), "c117ab5a7e0d54785f56b4dbb8bb4f8fab04e4d151fa24ab493d46a89d8c8d4d", "Qiymət, plan, slug və ya aktivlik dəyişib");
 assert.deepEqual(Object.keys(state.cms), [
-  "schemaVersion", "site", "homepage", "navigation", "banners", "footer",
-  "commonTexts", "seo", "orderSettings", "media"
+  "schemaVersion", "site", "homepage", "navigation", "banners", "supportCard",
+  "footer", "commonTexts", "seo", "orderSettings", "media"
 ]);
 assert.ok(Object.values(state.cms.commonTexts).every(Boolean), "Ümumi mətn fallback-i boşdur");
+assert.equal(state.cms.banners.length, 6, "Mövcud böyük bannerlər CMS-ə köçürülməyib");
+assert.equal(state.cms.banners.map((banner) => banner.order).join(","), "1,2,3,4,5,6", "Banner sırası ardıcıl deyil");
+assert.equal(
+  state.cms.banners.map((banner) => banner.desktopImage).join(","),
+  [1, 2, 3, 4, 5, 6].map((number) => `assets/slider${number}.png`).join(","),
+  "Mövcud banner şəkilləri dəyişib"
+);
+assert.equal(state.cms.supportCard.desktopImage, "assets/support.png", "Canlı Dəstək şəkli CMS-ə köçürülməyib");
+assert.equal(state.cms.media.filter((item) => /^assets\/(?:slider[1-6]|support)\.png$/.test(item.path)).length, 7, "Mövcud böyük şəkillər Media bölməsinə köçürülməyib");
+
+const duplicateBannerOrders = structuredClone(state);
+duplicateBannerOrders.cms.banners.forEach((banner) => { banner.order = 2; });
+const normalizedBannerOrders = normalizeAdminPayload(duplicateBannerOrders).cms.banners.map((banner) => banner.order);
+assert.equal(normalizedBannerOrders.join(","), "1,2,3,4,5,6", "Təkrar banner sırası serverdə düzəldilmədi");
 
 const hostile = structuredClone(state);
 hostile.content[hostile.products[0].id] = {
@@ -112,6 +126,24 @@ for (const file of [
   ].join("|"), "m");
   assert.equal(residue.test(text), false, `${file}: alət çıxışı qalığı`);
 }
+
+const homepage = fs.readFileSync(new URL("../index.html", import.meta.url), "utf8");
+const cmsSite = fs.readFileSync(new URL("../cms-site.js", import.meta.url), "utf8");
+const homepageCss = fs.readFileSync(new URL("../style.css", import.meta.url), "utf8");
+const cmsAdmin = fs.readFileSync(new URL("../mirpanel-admin/public/cms-admin.js", import.meta.url), "utf8");
+const adminServer = fs.readFileSync(new URL("../mirpanel-admin/server.mjs", import.meta.url), "utf8");
+assert.equal(homepage.includes('src="assets/slider1.png"'), false, "Banner hələ index.html-də hardcode edilib");
+assert.equal(homepage.includes('src="assets/support.png"'), false, "Canlı Dəstək şəkli hələ index.html-də hardcode edilib");
+assert.ok(cmsSite.includes("applySupportCard()"), "Canlı Dəstək renderer-i yoxdur");
+assert.ok(cmsSite.includes('window.initSlider'), "Dinamik bannerlər slayderə yenidən bağlanmır");
+assert.ok(cmsSite.includes('mobileImage'), "Mobil şəkil fallback-i yoxdur");
+assert.ok(homepageCss.includes("object-fit: contain"), "Banner şəkilləri contain istifadə etmir");
+assert.ok(cmsAdmin.includes("data-banner-upload"), "Banner üçün kompüterdən yükləmə yoxdur");
+assert.ok(cmsAdmin.includes("data-banner-media"), "Banner üçün Media seçimi yoxdur");
+assert.ok(cmsAdmin.includes("data-move-banner"), "Banner yuxarı-aşağı sıralaması yoxdur");
+assert.ok(adminServer.includes('["image/webp", "webp"]'), "WEBP yükləmə yoxlaması yoxdur");
+assert.equal(adminServer.includes('"image/svg+xml"'), false, "SVG yükləmə icazəsi qalıb");
+assert.ok(adminServer.includes("const session = requireMutationAuth(request, response);"), "Yükləmələr sessiyada təhlükəsiz mərhələlənmir");
 
 const middleware = fs.readFileSync(new URL("../functions/_middleware.js", import.meta.url), "utf8");
 assert.ok(

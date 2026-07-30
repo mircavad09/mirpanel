@@ -2715,7 +2715,95 @@ const CMS_CONTENT = {
       "newTab": false
     }
   ],
-  "banners": [],
+  "banners": [
+    {
+      "id": "spotify",
+      "title": "",
+      "description": "",
+      "alt": "Spotify Premium banneri",
+      "url": "/spotify-premium-almaq/",
+      "order": 1,
+      "enabled": true,
+      "startAt": "",
+      "endAt": "",
+      "desktopImage": "assets/slider1.png",
+      "mobileImage": ""
+    },
+    {
+      "id": "netflix",
+      "title": "",
+      "description": "",
+      "alt": "Netflix banneri",
+      "url": "/netflix-sexsi-almaq/",
+      "order": 2,
+      "enabled": true,
+      "startAt": "",
+      "endAt": "",
+      "desktopImage": "assets/slider2.png",
+      "mobileImage": ""
+    },
+    {
+      "id": "canva",
+      "title": "",
+      "description": "",
+      "alt": "Canva Premium banneri",
+      "url": "/canva-premium-almaq/",
+      "order": 3,
+      "enabled": true,
+      "startAt": "",
+      "endAt": "",
+      "desktopImage": "assets/slider3.png",
+      "mobileImage": ""
+    },
+    {
+      "id": "youtube",
+      "title": "",
+      "description": "",
+      "alt": "YouTube Premium banneri",
+      "url": "/youtube-premium-almaq/",
+      "order": 4,
+      "enabled": true,
+      "startAt": "",
+      "endAt": "",
+      "desktopImage": "assets/slider4.png",
+      "mobileImage": ""
+    },
+    {
+      "id": "capcut",
+      "title": "",
+      "description": "",
+      "alt": "CapCut Pro banneri",
+      "url": "/capcut-pro-almaq/",
+      "order": 5,
+      "enabled": true,
+      "startAt": "",
+      "endAt": "",
+      "desktopImage": "assets/slider5.png",
+      "mobileImage": ""
+    },
+    {
+      "id": "tiktok-jeton",
+      "title": "",
+      "description": "",
+      "alt": "TikTok Jeton banneri",
+      "url": "/tiktok-jeton-almaq/",
+      "order": 6,
+      "enabled": true,
+      "startAt": "",
+      "endAt": "",
+      "desktopImage": "assets/slider6.png",
+      "mobileImage": ""
+    }
+  ],
+  "supportCard": {
+    "desktopImage": "assets/support.png",
+    "mobileImage": "",
+    "title": "",
+    "workHours": "",
+    "alt": "Canlı Dəstək",
+    "url": "https://wa.me/994515243545",
+    "enabled": true
+  },
   "footer": {
     "copyrightText": "Bütün hüquqlar qorunur",
     "year": 2026,
@@ -2791,7 +2879,57 @@ const CMS_CONTENT = {
     "defaultExtraMessage": "",
     "requireConfirmation": false
   },
-  "media": []
+  "media": [
+    {
+      "path": "assets/slider1.png",
+      "alt": "Spotify Premium banneri",
+      "size": 8555028,
+      "type": "image/png",
+      "uploadedAt": ""
+    },
+    {
+      "path": "assets/slider2.png",
+      "alt": "Netflix banneri",
+      "size": 9355020,
+      "type": "image/png",
+      "uploadedAt": ""
+    },
+    {
+      "path": "assets/slider3.png",
+      "alt": "Canva Premium banneri",
+      "size": 8785009,
+      "type": "image/png",
+      "uploadedAt": ""
+    },
+    {
+      "path": "assets/slider4.png",
+      "alt": "YouTube Premium banneri",
+      "size": 5252146,
+      "type": "image/png",
+      "uploadedAt": ""
+    },
+    {
+      "path": "assets/slider5.png",
+      "alt": "CapCut Pro banneri",
+      "size": 8441107,
+      "type": "image/png",
+      "uploadedAt": ""
+    },
+    {
+      "path": "assets/slider6.png",
+      "alt": "TikTok Jeton banneri",
+      "size": 8957752,
+      "type": "image/png",
+      "uploadedAt": ""
+    },
+    {
+      "path": "assets/support.png",
+      "alt": "Canlı Dəstək",
+      "size": 5547663,
+      "type": "image/png",
+      "uploadedAt": ""
+    }
+  ]
 };
 
 const SITE_SECTIONS = {
@@ -3482,6 +3620,7 @@ function initSlider() {
   const dots = document.querySelectorAll('.dot');
   const nextBtn = document.querySelector('.next-arrow');
   const prevBtn = document.querySelector('.prev-arrow');
+  const slider = document.getElementById('heroSlider');
 
   if (!slides.length) return;
 
@@ -3519,8 +3658,27 @@ function initSlider() {
     slideInterval = setInterval(nextSlide, 3000);
   }
   function resetTimer() { startTimer(); }
+
+  if (slider) {
+    let touchStartX = 0;
+    slider.ontouchstart = (event) => {
+      touchStartX = event.touches?.[0]?.clientX || 0;
+    };
+    slider.ontouchend = (event) => {
+      const touchEndX = event.changedTouches?.[0]?.clientX || touchStartX;
+      const distance = touchEndX - touchStartX;
+      if (Math.abs(distance) < 45) return;
+      event.preventDefault();
+      if (distance < 0) nextSlide();
+      else prevSlide();
+      resetTimer();
+    };
+  }
+
   startTimer();
 }
+
+window.initSlider = initSlider;
 
 const $ = (id) => document.getElementById(id);
 

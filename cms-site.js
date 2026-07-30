@@ -23,6 +23,23 @@
     return "/";
   }
 
+  function optionalHref(value) {
+    const url = String(value || "").trim();
+    if (!url) return "";
+    return /^\/(?!\/)/.test(url) || /^https?:\/\//i.test(url) || /^#/.test(url) ? url : "";
+  }
+
+  function imageWithFallback(image, fallback) {
+    image.addEventListener("error", () => {
+      if (image.dataset.fallbackApplied === "true") {
+        image.hidden = true;
+        return;
+      }
+      image.dataset.fallbackApplied = "true";
+      image.src = fallback;
+    }, { once: false });
+  }
+
   function iconSvg(name) {
     const icons = {
       home: '<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/>',
@@ -163,36 +180,106 @@
 
   function applyBanners() {
     const banners = activeBanners();
-    if (!banners.length) return;
     const slider = document.getElementById("heroSlider");
     if (!slider) return;
     slider.querySelectorAll(".slide, .slider-dots").forEach((element) => element.remove());
+    slider.hidden = !banners.length;
+    if (!banners.length) return;
     const dots = document.createElement("div");
     dots.className = "slider-dots";
     banners.forEach((banner, index) => {
-      const link = document.createElement(banner.url ? "a" : "div");
+      const href = optionalHref(banner.url);
+      const link = document.createElement(href ? "a" : "div");
       link.className = `slide${index === 0 ? " active" : ""}`;
-      if (banner.url) link.href = safeHref(banner.url);
+      if (href) link.href = href;
+      if (banner.title || banner.alt) link.setAttribute("aria-label", banner.alt || banner.title);
       const picture = document.createElement("picture");
-      if (banner.mobileImage) {
+      const desktopImage = safeImage(banner.desktopImage);
+      const mobileImage = safeImage(banner.mobileImage);
+      if (mobileImage) {
         const mobile = document.createElement("source");
         mobile.media = "(max-width: 760px)";
-        mobile.srcset = safeImage(banner.mobileImage);
+        mobile.srcset = mobileImage;
         picture.appendChild(mobile);
       }
       const image = document.createElement("img");
-      image.src = safeImage(banner.desktopImage);
+      image.src = desktopImage || "assets/slider1.png";
       image.alt = banner.alt || banner.title || "";
       image.className = "full-slide-img";
+      imageWithFallback(image, "assets/slider1.png");
       picture.appendChild(image);
       link.appendChild(picture);
-      slider.insertBefore(link, dots);
+      if (banner.title || banner.description) {
+        const content = document.createElement("span");
+        content.className = "slide-content";
+        if (banner.title) {
+          const title = document.createElement("strong");
+          title.textContent = banner.title;
+          content.appendChild(title);
+        }
+        if (banner.description) {
+          const description = document.createElement("span");
+          description.textContent = banner.description;
+          content.appendChild(description);
+        }
+        link.appendChild(content);
+      }
+      slider.appendChild(link);
       const dot = document.createElement("span");
       dot.className = `dot${index === 0 ? " active" : ""}`;
       dot.dataset.index = String(index);
       dots.appendChild(dot);
     });
     slider.appendChild(dots);
+    if (typeof window.initSlider === "function") window.initSlider();
+  }
+
+  function applySupportCard() {
+    const host = document.getElementById("homeSupportCard");
+    if (!host) return;
+    const card = source.supportCard || {};
+    const desktopImage = safeImage(card.desktopImage) || "assets/support.png";
+    const mobileImage = safeImage(card.mobileImage);
+    host.hidden = card.enabled === false;
+    host.replaceChildren();
+    if (card.enabled === false) return;
+
+    const href = optionalHref(card.url);
+    const container = document.createElement(href ? "a" : "div");
+    container.className = "side-box support-box-img";
+    if (href) container.href = href;
+    if (card.alt || card.title) container.setAttribute("aria-label", card.alt || card.title);
+
+    const picture = document.createElement("picture");
+    if (mobileImage) {
+      const mobile = document.createElement("source");
+      mobile.media = "(max-width: 760px)";
+      mobile.srcset = mobileImage;
+      picture.appendChild(mobile);
+    }
+    const image = document.createElement("img");
+    image.src = desktopImage;
+    image.alt = card.alt || card.title || "Canlı Dəstək";
+    imageWithFallback(image, "assets/support.png");
+    picture.appendChild(image);
+    container.appendChild(picture);
+
+    if (card.title || card.workHours) {
+      const content = document.createElement("span");
+      content.className = "support-card-content";
+      if (card.title) {
+        const title = document.createElement("strong");
+        title.textContent = card.title;
+        content.appendChild(title);
+      }
+      if (card.workHours) {
+        const hours = document.createElement("span");
+        hours.textContent = card.workHours;
+        content.appendChild(hours);
+      }
+      container.appendChild(content);
+    }
+    host.appendChild(container);
   }
 
   function applyCommonTexts() {
@@ -274,6 +361,7 @@
   applyHomepage();
   applyNavigation();
   applyBanners();
+  applySupportCard();
   applyCommonTexts();
   applyFooter();
   applySeo();
@@ -283,6 +371,8 @@
       applyContact();
       applyHomepage();
       applyNavigation();
+      applyBanners();
+      applySupportCard();
       applyCommonTexts();
       applyFooter();
       applySeo();
