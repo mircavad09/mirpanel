@@ -869,6 +869,16 @@ th {
   gap: 18px;
 }
 
+.bannerProductPicker {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.bannerProductPicker select {
+  width: 100%;
+}
+
 .bannerEditorHead,
 .bannerOrderActions {
   display: flex;

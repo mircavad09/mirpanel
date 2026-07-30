@@ -722,15 +722,19 @@ function normalizeProduct(product = {}, index = 0) {
     Boolean(product.soldOut) ||
     product.flow === "out_of_stock" ||
     (Boolean(product.stockEnabled) && stock !== null && stock <= 0);
+  const productTitle = String(product.title || id);
+  const productImage = String(product.image || "assets/your.png");
+  const productOrder = Number.isFinite(Number(product.order)) ? Number(product.order) : index + 1;
+  const banner = product.banner || {};
 
   return {
     id,
     _stableId: String(product._stableId || id),
-    order: Number.isFinite(Number(product.order)) ? Number(product.order) : index,
+    order: productOrder,
     category: String(product.category || "all"),
-    image: String(product.image || "assets/your.png"),
+    image: productImage,
     currency: String(product.currency || "в‚ј"),
-    title: String(product.title || id),
+    title: productTitle,
     variant: String(product.variant || ""),
     badge: String(product.badge || ""),
     imageAlt: cleanText(product.imageAlt, product.title || id, 250),
@@ -751,7 +755,18 @@ function normalizeProduct(product = {}, index = 0) {
     includeInSitemap: product.includeInSitemap !== false,
     seoOgTitle: cleanText(product.seoOgTitle || "", "", 160),
     seoOgDescription: cleanText(product.seoOgDescription || "", "", 320),
-    seoOgImage: safeUrl(product.seoOgImage || product.image),
+    seoOgImage: safeUrl(product.seoOgImage || productImage),
+    banner: {
+      enabled: banner.enabled !== false,
+      desktopImage: safeUrl(banner.desktopImage || productImage),
+      mobileImage: safeUrl(banner.mobileImage),
+      title: cleanText(banner.title || productTitle, "", 200),
+      description: cleanText(banner.description || product.desc || "", "", 1000),
+      alt: cleanText(banner.alt || product.imageAlt || `${productTitle} banneri`, "", 250),
+      order: Number.isFinite(Number(banner.order))
+        ? Math.max(1, Math.trunc(Number(banner.order)))
+        : Math.max(1, Math.trunc(productOrder))
+    },
     flow: String(product.flow || "whatsapp"),
     soldOut,
     active: product.active !== false,
@@ -784,9 +799,42 @@ export function normalizeAdminPayload(payload = {}) {
       }))
     : [];
 
-  const products = Array.isArray(payload.products)
+  const rawProducts = Array.isArray(payload.products) ? payload.products : [];
+  const products = rawProducts.length
     ? payload.products.map(normalizeProduct)
     : [];
+  const legacyBanners = Array.isArray(payload.cms?.banners) ? payload.cms.banners : [];
+  const rawProductById = new Map(rawProducts.map((product) => [String(product.id || ""), product]));
+
+  for (const product of products) {
+    const rawProduct = rawProductById.get(product.id);
+    if (rawProduct?.banner) continue;
+    const legacy = legacyBanners.find((banner) => {
+      const legacyId = String(banner.id || "").replaceAll("-", "_");
+      const legacyUrl = String(banner.url || "").replace(/^https?:\/\/[^/]+/i, "");
+      return legacyId === product.id || (product.seoSlug && legacyUrl.includes(`/${product.seoSlug}/`));
+    });
+    if (!legacy) continue;
+    product.banner = {
+      ...product.banner,
+      enabled: legacy.enabled !== false,
+      desktopImage: safeUrl(legacy.desktopImage || product.image),
+      mobileImage: safeUrl(legacy.mobileImage),
+      title: cleanText(legacy.title || product.title, "", 200),
+      description: cleanText(legacy.description || product.desc, "", 1000),
+      alt: cleanText(legacy.alt || product.imageAlt || `${product.title} banneri`, "", 250),
+      order: Math.max(1, Math.trunc(Number(product.order)) || 1)
+    };
+  }
+
+  products
+    .map((product, index) => ({ product, index }))
+    .sort((left, right) =>
+      Number(left.product.banner.order) - Number(right.product.banner.order) ||
+      Number(left.product.order) - Number(right.product.order) ||
+      left.index - right.index
+    )
+    .forEach(({ product }, index) => { product.banner.order = index + 1; });
 
   const categories = sourceCategories.length
     ? sourceCategories
@@ -844,7 +892,7 @@ export function normalizeAdminPayload(payload = {}) {
     products,
     content,
     siteSections,
-    cms: normalizeCms(payload.cms, {
+    cms: normalizeCms({ ...(payload.cms || {}), banners: [] }, {
       brand: payload.brand,
       phone_wa: payload.phone_wa,
       ui: payload.ui,
@@ -873,7 +921,7 @@ export function extractAdminState(source) {
   const ui = evaluateObject(source, UI_MARKER, {});
   const siteSections = evaluateObject(source, SITE_SECTIONS_MARKER, SITE_SECTION_DEFAULTS);
   const cms = evaluateObject(source, CMS_MARKER, null);
-  const products = (data.products || []).map(normalizeProduct);
+  const products = Array.isArray(data.products) ? data.products : [];
   const content = {};
 
   for (const product of products) {

@@ -130,7 +130,7 @@
     createView("navigation", panel("Naviqasiya və header", "Daxili keçidlər eyni tabda açılır; yalnız təhlükəsiz ikonlar istifadə olunur", `<div class="formGrid">
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}
     </div><div class="sectionHead"><h3>Naviqasiya elementləri</h3><button class="btn" type="button" data-add-list="navigation">Keçid əlavə et</button></div><div id="navigationList" class="cmsList"></div>`));
-    createView("banners", panel("Bannerlər", "Ana səhifənin böyük slayder şəkillərini və Canlı Dəstək blokunu idarə et", '<div class="sectionHead"><h3>Böyük slayder bannerləri</h3><button class="btn primary" type="button" data-add-list="banners">Banner əlavə et</button></div><div id="bannerList" class="cmsList"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
+    createView("banners", panel("Bannerlər", "Hər məhsulun banneri həmin məhsulun vahid məlumatından avtomatik yaranır", '<div class="sectionHead"><h3>Məhsul bannerləri</h3></div><label class="bannerProductPicker">Məhsulu seç<select id="bannerProductSelect"></select></label><div id="bannerProductEditor"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
     createView("about", pageForm("haqqimizda", "Haqqımızda"));
     createView("contact", contactForm());
     createView("terms", termsForm());
@@ -212,9 +212,14 @@
     document.querySelector(".main").addEventListener("input", (event) => {
       const target = event.target;
       if (target.dataset.cms) {
-        if (/^banners\.\d+\.order$/.test(target.dataset.cms)) return;
         const next = target.type === "checkbox" ? target.checked : target.type === "number" ? Number(target.value) : target.value;
         setValue(target.dataset.cms, next);
+      }
+      if (target.dataset.productBanner) {
+        const owner = bannerImageOwner(target.dataset.productBanner);
+        if (!owner.item || owner.field === "order") return;
+        owner.item[owner.field] = target.type === "checkbox" ? target.checked : target.value;
+        markDirty();
       }
       if (target.dataset.site) {
         const [pageKey, fieldKey] = target.dataset.site.split(".");
@@ -227,8 +232,9 @@
   }
   function bannerImageOwner(path) {
     const parts = path.split(".");
-    if (parts[0] === "banners") {
-      const banner = cms().banners[Number(parts[1])];
+    if (parts[0] === "productBanner") {
+      const product = state.data.products.find((item) => item.id === parts[1]);
+      const banner = product ? ensureProductBanner(product) : null;
       return { item: banner, field: parts[2], previewKey: parts[2] === "mobileImage" ? "_mobilePreview" : "_desktopPreview" };
     }
     return {
@@ -252,10 +258,11 @@
       const contentBase64 = await readFileAsBase64(file);
       const result = await api("/api/upload-product-image", {
         method: "POST",
-        body: JSON.stringify({ productId: path.startsWith("supportCard") ? "support" : "banner", fileName: file.name, mimeType: file.type, contentBase64 })
+        body: JSON.stringify({ productId: path.startsWith("supportCard") ? "support" : path.split(".")[1], fileName: file.name, mimeType: file.type, contentBase64 })
       });
       const owner = bannerImageOwner(path);
-      setValue(path, result.publicPath);
+      owner.item[owner.field] = result.publicPath;
+      markDirty();
       owner.item[owner.previewKey] = result.previewDataUrl;
       if (!cms().media.some((item) => item.path === result.publicPath)) {
         cms().media.push({
@@ -288,43 +295,67 @@
     if (target.dataset.bannerMedia) {
       const path = target.dataset.bannerMedia;
       const selected = cms().media.find((item) => item.path === target.value);
-      setValue(path, target.value);
       const owner = bannerImageOwner(path);
+      owner.item[owner.field] = target.value;
       owner.item[owner.previewKey] = selected?._preview || "";
+      markDirty();
       renderBanners();
       populateBoundInputs();
       return;
     }
-    const orderMatch = target.dataset.cms?.match(/^banners\.(\d+)\.order$/);
-    if (orderMatch) {
-      const current = Number(orderMatch[1]);
-      const requested = Math.max(1, Math.min(cms().banners.length, Math.trunc(Number(target.value)) || 1)) - 1;
-      const [banner] = cms().banners.splice(current, 1);
-      cms().banners.splice(requested, 0, banner);
+    if (target.id === "bannerProductSelect") {
+      selectedBannerProductId = target.value;
+      renderBanners();
+      populateBoundInputs();
+      return;
+    }
+    if (target.dataset.productBanner?.endsWith(".order")) {
+      const productId = target.dataset.productBanner.split(".")[1];
+      const ordered = bannerProductsInOrder();
+      const current = ordered.findIndex((product) => product.id === productId);
+      const requested = Math.max(1, Math.min(ordered.length, Math.trunc(Number(target.value)) || 1)) - 1;
+      if (current >= 0) {
+        const [product] = ordered.splice(current, 1);
+        ordered.splice(requested, 0, product);
+        ordered.forEach((item, index) => { ensureProductBanner(item).order = index + 1; });
+      }
       normalizeBannerOrders();
       markDirty();
       renderBanners();
       populateBoundInputs();
       return;
     }
-    if (/^(?:banners\.\d+|supportCard)\.(?:desktopImage|mobileImage)$/.test(target.dataset.cms || "")) {
+    if (target.dataset.productBanner?.match(/\.(?:desktopImage|mobileImage)$/) ||
+        /^(?:supportCard)\.(?:desktopImage|mobileImage)$/.test(target.dataset.cms || "")) {
       renderBanners();
       populateBoundInputs();
     }
   }
   function handleClick(event) {
-    const moveBanner = event.target.closest("[data-move-banner]");
+    const moveBanner = event.target.closest("[data-move-product-banner]");
     if (moveBanner) {
-      const current = Number(moveBanner.dataset.moveBanner);
+      const ordered = bannerProductsInOrder();
+      const current = ordered.findIndex((product) => product.id === moveBanner.dataset.moveProductBanner);
       const next = current + Number(moveBanner.dataset.direction);
-      if (next >= 0 && next < cms().banners.length) {
-        const [banner] = cms().banners.splice(current, 1);
-        cms().banners.splice(next, 0, banner);
+      if (current >= 0 && next >= 0 && next < ordered.length) {
+        const [product] = ordered.splice(current, 1);
+        ordered.splice(next, 0, product);
+        ordered.forEach((item, index) => { ensureProductBanner(item).order = index + 1; });
         normalizeBannerOrders();
         markDirty();
         renderBanners();
         populateBoundInputs();
       }
+      return;
+    }
+    const clearImage = event.target.closest("[data-clear-banner-image]");
+    if (clearImage) {
+      const owner = bannerImageOwner(clearImage.dataset.clearBannerImage);
+      owner.item[owner.field] = "";
+      owner.item[owner.previewKey] = "";
+      markDirty();
+      renderBanners();
+      populateBoundInputs();
       return;
     }
     const addList = event.target.closest("[data-add-list]")?.dataset.addList;
@@ -344,14 +375,12 @@
   }
   function addListItem(type) {
     if (type === "navigation") cms().navigation.push({ id: `link-${Date.now()}`, label: "Yeni keçid", url: "/", order: cms().navigation.length + 1, enabled: true, icon: "link", newTab: false });
-    if (type === "banners") cms().banners.push({ id: `banner-${Date.now()}`, title: "", description: "", alt: "", url: "", order: cms().banners.length + 1, enabled: true, startAt: "", endAt: "", desktopImage: "", mobileImage: "" });
     if (type === "footerLinks") cms().footer.links.push({ id: `footer-${Date.now()}`, label: "Yeni keçid", url: "/", order: cms().footer.links.length + 1, enabled: true, icon: "link", newTab: false });
     markDirty(); renderCms();
   }
   function removeListItem(type, index) {
-    const list = type === "navigation" ? cms().navigation : type === "banners" ? cms().banners : cms().footer.links;
+    const list = type === "navigation" ? cms().navigation : cms().footer.links;
     list.splice(index, 1);
-    if (type === "banners") normalizeBannerOrders();
     markDirty(); renderCms();
   }
   function listInput(type, index, key, label, itemType = "text") {
@@ -368,8 +397,34 @@
       ${listInput(type, index, "enabled", "Aktiv", "checkbox")}${listInput(type, index, "newTab", "Yeni tab", "checkbox")}
     </div><button class="btn danger" type="button" data-remove-list="${type}" data-index="${index}">Sil</button></div>`).join("");
   }
+  let selectedBannerProductId = "";
+  function ensureProductBanner(product) {
+    product.banner ||= {};
+    product.banner.enabled = product.banner.enabled !== false;
+    product.banner.desktopImage ||= product.image || "";
+    product.banner.mobileImage ||= "";
+    product.banner.title ||= product.title || "";
+    product.banner.description ||= product.desc || "";
+    product.banner.alt ||= product.imageAlt || `${product.title || "Məhsul"} banneri`;
+    product.banner.order = Number.isFinite(Number(product.banner.order))
+      ? Math.max(1, Math.trunc(Number(product.banner.order)))
+      : Math.max(1, Math.trunc(Number(product.order)) || 1);
+    return product.banner;
+  }
+  function bannerProductsInOrder() {
+    return state.data.products
+      .map((product, index) => ({ product, index }))
+      .sort((left, right) =>
+        Number(ensureProductBanner(left.product).order) - Number(ensureProductBanner(right.product).order) ||
+        Number(left.product.order) - Number(right.product.order) ||
+        left.index - right.index
+      )
+      .map(({ product }) => product);
+  }
   function normalizeBannerOrders() {
-    cms().banners.forEach((banner, index) => { banner.order = index + 1; });
+    bannerProductsInOrder().forEach((product, index) => {
+      ensureProductBanner(product).order = index + 1;
+    });
   }
   function cmsImageUrl(value) {
     const imagePath = String(value || "").trim();
@@ -383,33 +438,56 @@
     ).join("")}`;
   }
   function imageEditor(path, label, imagePath, preview) {
+    const binding = path.startsWith("productBanner.") ? "data-product-banner" : "data-cms";
     return `<div class="bannerImageEditor">
       <strong>${esc(label)}</strong>
       <img data-banner-preview="${esc(path)}" src="${esc(preview || cmsImageUrl(imagePath))}" alt=""${imagePath || preview ? "" : " hidden"}>
       <label>Kompüterdən yüklə<input type="file" accept="image/jpeg,image/png,image/webp" data-banner-upload="${esc(path)}"></label>
       <label>Media bölməsindən seç<select data-banner-media="${esc(path)}">${mediaOptions(imagePath)}</select></label>
-      <label>Şəkil yolu<input data-cms="${esc(path)}" value="${esc(imagePath)}"></label>
+      <label>Şəkil yolu<input ${binding}="${esc(path)}" value="${esc(imagePath)}"></label>
+      <button class="btn" type="button" data-clear-banner-image="${esc(path)}">Şəkli sil</button>
       <small>JPG, PNG və ya WEBP · maksimum 5 MB</small>
     </div>`;
   }
   function renderBanners() {
     normalizeBannerOrders();
-    el("bannerList").innerHTML = cms().banners.map((item, index) => `<div class="cmsListItem bannerEditorCard">
-      <div class="bannerEditorHead"><strong>Banner ${index + 1}</strong><div class="bannerOrderActions">
-        <button class="btn" type="button" data-move-banner="${index}" data-direction="-1"${index === 0 ? " disabled" : ""}>Yuxarı</button>
-        <button class="btn" type="button" data-move-banner="${index}" data-direction="1"${index === cms().banners.length - 1 ? " disabled" : ""}>Aşağı</button>
+    const orderedProducts = bannerProductsInOrder();
+    if (!orderedProducts.some((product) => product.id === selectedBannerProductId)) {
+      selectedBannerProductId = orderedProducts.find((product) => product.active !== false)?.id || orderedProducts[0]?.id || "";
+    }
+    const selector = el("bannerProductSelect");
+    selector.innerHTML = orderedProducts.map((product) =>
+      `<option value="${esc(product.id)}"${product.id === selectedBannerProductId ? " selected" : ""}>${esc(product.title)}${product.active === false ? " (deaktiv)" : ""}</option>`
+    ).join("");
+    const product = orderedProducts.find((item) => item.id === selectedBannerProductId);
+    const editor = el("bannerProductEditor");
+    if (!product) {
+      editor.innerHTML = '<div class="emptyMini">Məhsul yoxdur.</div>';
+    } else {
+      const item = ensureProductBanner(product);
+      const index = orderedProducts.indexOf(product);
+      const path = `productBanner.${product.id}`;
+      const slug = String(product.seoSlug || product.id || "").replaceAll("_", "-");
+      editor.innerHTML = `<div class="cmsListItem bannerEditorCard">
+      <div class="bannerEditorHead"><div><strong>${esc(product.title)}</strong><small> · ${product.active === false ? "Məhsul deaktivdir, banner saytda görünmür" : "Aktiv məhsul banneri"}</small></div><div class="bannerOrderActions">
+        <button class="btn" type="button" data-move-product-banner="${esc(product.id)}" data-direction="-1"${index === 0 ? " disabled" : ""}>Yuxarı</button>
+        <button class="btn" type="button" data-move-product-banner="${esc(product.id)}" data-direction="1"${index === orderedProducts.length - 1 ? " disabled" : ""}>Aşağı</button>
       </div></div>
       <div class="bannerImageGrid">
-        ${imageEditor(`banners.${index}.desktopImage`, "Desktop şəkli", item.desktopImage, item._desktopPreview)}
-        ${imageEditor(`banners.${index}.mobileImage`, "Mobil şəkli (boşdursa desktop işlənir)", item.mobileImage, item._mobilePreview || item._desktopPreview)}
+        ${imageEditor(`${path}.desktopImage`, "Desktop şəkli", item.desktopImage, item._desktopPreview)}
+        ${imageEditor(`${path}.mobileImage`, "Mobil şəkli (boşdursa desktop işlənir)", item.mobileImage, item._mobilePreview || item._desktopPreview)}
       </div>
       <div class="formGrid">
-        ${listInput("banners", index, "title", "Başlıq")}${listInput("banners", index, "alt", "Alternativ mətn (alt)")}
-        ${listInput("banners", index, "description", "Açıqlama")}${listInput("banners", index, "url", "Keçid ünvanı")}
-        ${listInput("banners", index, "startAt", "Başlama tarixi", "datetime-local")}${listInput("banners", index, "endAt", "Bitmə tarixi", "datetime-local")}
-        ${listInput("banners", index, "order", "Sıra", "number")}${listInput("banners", index, "enabled", "Aktiv", "checkbox")}
-      </div><button class="btn danger" type="button" data-remove-list="banners" data-index="${index}">Banneri sil</button>
-    </div>`).join("");
+        <label>Başlıq<input data-product-banner="${esc(path)}.title" value="${esc(item.title)}"></label>
+        <label>Alternativ mətn (alt)<input data-product-banner="${esc(path)}.alt" value="${esc(item.alt)}"></label>
+        <label class="full">Açıqlama<textarea rows="3" data-product-banner="${esc(path)}.description">${esc(item.description)}</textarea></label>
+        <label>Canonical keçid<input value="https://mirpanel.com/${esc(slug)}/" readonly></label>
+        <label>Sıra<input type="number" min="1" max="${orderedProducts.length}" data-product-banner="${esc(path)}.order" value="${item.order}"></label>
+        <label class="switchLine"><input type="checkbox" data-product-banner="${esc(path)}.enabled"${item.enabled ? " checked" : ""}><span>Banner aktivdir</span></label>
+      </div>
+      <small>Banner şəkli boş olarsa məhsulun əsas şəkli avtomatik istifadə olunur. Keçid məhsulun SEO slug-ından yaranır və eyni tabda açılır.</small>
+    </div>`;
+    }
 
     cms().supportCard ||= { desktopImage: "assets/support.png", mobileImage: "", title: "", workHours: "", alt: "Canlı Dəstək", url: "", enabled: true };
     const support = cms().supportCard;
@@ -500,7 +578,7 @@
       ["Məhsullar", state.data.products.length],
       ["Aktiv məhsullar", state.data.products.filter((item) => item.active !== false).length],
       ["Kateqoriyalar", state.data.categories.length],
-      ["Bannerlər", cms().banners.filter((item) => item.enabled !== false).length],
+      ["Bannerlər", state.data.products.filter((item) => item.active !== false && ensureProductBanner(item).enabled !== false).length],
       ["Media", cms().media.length],
       ["Yayımlanmamış dəyişiklik", state.dirty ? "Var" : "Yoxdur"]
     ].map(([label, count]) => `<div class="stat"><strong>${esc(count)}</strong><span>${esc(label)}</span></div>`).join("");

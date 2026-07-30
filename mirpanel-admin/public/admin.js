@@ -222,6 +222,17 @@ function ensureProduct(product) {
   product.seoOgTitle = product.seoOgTitle || "";
   product.seoOgDescription = product.seoOgDescription || "";
   product.seoOgImage = product.seoOgImage || product.image;
+  product.banner = {
+    enabled: product.banner?.enabled !== false,
+    desktopImage: product.banner?.desktopImage || product.image,
+    mobileImage: product.banner?.mobileImage || "",
+    title: product.banner?.title || product.title,
+    description: product.banner?.description || product.desc,
+    alt: product.banner?.alt || product.imageAlt || `${product.title} banneri`,
+    order: Number.isFinite(Number(product.banner?.order))
+      ? Math.max(1, Math.trunc(Number(product.banner.order)))
+      : Math.max(1, Math.trunc(Number(product.order)) || 1)
+  };
   product.flow = product.flow || "whatsapp";
   product.soldOut = Boolean(product.soldOut);
   product.active = product.active !== false;

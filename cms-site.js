@@ -29,15 +29,25 @@
     return /^\/(?!\/)/.test(url) || /^https?:\/\//i.test(url) || /^#/.test(url) ? url : "";
   }
 
-  function imageWithFallback(image, fallback) {
+  function imageWithFallback(image, fallbacks) {
+    const queue = [...new Set((Array.isArray(fallbacks) ? fallbacks : [fallbacks]).map(safeImage).filter(Boolean))];
     image.addEventListener("error", () => {
-      if (image.dataset.fallbackApplied === "true") {
+      const fallback = queue.shift();
+      if (!fallback) {
         image.hidden = true;
         return;
       }
-      image.dataset.fallbackApplied = "true";
       image.src = fallback;
     }, { once: false });
+  }
+
+  function productSlug(product) {
+    return String(product?.seoSlug || `${product?.id || "mehsul"}-almaq`)
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
   }
 
   function iconSvg(name) {
@@ -167,15 +177,36 @@
   }
 
   function activeBanners() {
-    const now = Date.now();
-    return (Array.isArray(source.banners) ? source.banners : [])
-      .filter((banner) => {
-        if (banner.enabled === false || !safeImage(banner.desktopImage)) return false;
-        const start = banner.startAt ? Date.parse(banner.startAt) : 0;
-        const end = banner.endAt ? Date.parse(banner.endAt) : 0;
-        return (!start || start <= now) && (!end || end >= now);
+    const legacyBanners = Array.isArray(source.banners) ? source.banners : [];
+    const products = typeof DATA === "object" && Array.isArray(DATA.products) ? DATA.products : [];
+    return products
+      .filter((product) => product.active !== false)
+      .map((product, index) => {
+        const slug = productSlug(product);
+        const legacy = legacyBanners.find((banner) => {
+          const legacyId = String(banner.id || "").replaceAll("-", "_");
+          const legacyUrl = String(banner.url || "").replace(/^https?:\/\/[^/]+/i, "");
+          return legacyId === product.id || legacyUrl.includes(`/${slug}/`);
+        }) || {};
+        const configured = product.banner || {};
+        const hasConfiguredBanner = Object.keys(configured).length > 0;
+        const banner = hasConfiguredBanner ? configured : legacy;
+        return {
+          product,
+          enabled: banner.enabled !== false,
+          desktopImage: safeImage(banner.desktopImage) || safeImage(product.image),
+          mobileImage: safeImage(banner.mobileImage),
+          title: banner.title || product.title || "",
+          description: banner.description || product.desc || "",
+          alt: banner.alt || product.imageAlt || `${product.title || "Məhsul"} banneri`,
+          url: `/${slug}/`,
+          order: hasConfiguredBanner && Number.isFinite(Number(banner.order))
+            ? Number(banner.order)
+            : Number(product.order) || index + 1
+        };
       })
-      .sort((a, b) => Number(a.order) - Number(b.order));
+      .filter((banner) => banner.enabled && banner.desktopImage)
+      .sort((a, b) => Number(a.order) - Number(b.order) || Number(a.product.order) - Number(b.product.order));
   }
 
   function applyBanners() {
@@ -203,10 +234,15 @@
         picture.appendChild(mobile);
       }
       const image = document.createElement("img");
-      image.src = desktopImage || "assets/slider1.png";
+      image.src = desktopImage || safeImage(banner.product.image) || "assets/logo.png";
       image.alt = banner.alt || banner.title || "";
       image.className = "full-slide-img";
-      imageWithFallback(image, "assets/slider1.png");
+      image.loading = index === 0 ? "eager" : "lazy";
+      image.decoding = "async";
+      image.width = 1600;
+      image.height = 670;
+      if (index === 0) image.fetchPriority = "high";
+      imageWithFallback(image, [banner.product.image, "assets/logo.png"]);
       picture.appendChild(image);
       link.appendChild(picture);
       if (banner.title || banner.description) {
@@ -260,7 +296,11 @@
     const image = document.createElement("img");
     image.src = desktopImage;
     image.alt = card.alt || card.title || "Canlı Dəstək";
-    imageWithFallback(image, "assets/support.png");
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.width = 1600;
+    image.height = 670;
+    imageWithFallback(image, ["assets/support.png", "assets/logo.png"]);
     picture.appendChild(image);
     container.appendChild(picture);
 

@@ -29,20 +29,67 @@ assert.deepEqual(Object.keys(state.cms), [
   "footer", "commonTexts", "seo", "orderSettings", "media"
 ]);
 assert.ok(Object.values(state.cms.commonTexts).every(Boolean), "Ümumi mətn fallback-i boşdur");
-assert.equal(state.cms.banners.length, 6, "Mövcud böyük bannerlər CMS-ə köçürülməyib");
-assert.equal(state.cms.banners.map((banner) => banner.order).join(","), "1,2,3,4,5,6", "Banner sırası ardıcıl deyil");
-assert.equal(
-  state.cms.banners.map((banner) => banner.desktopImage).join(","),
-  [1, 2, 3, 4, 5, 6].map((number) => `assets/slider${number}.png`).join(","),
-  "Mövcud banner şəkilləri dəyişib"
+assert.equal(state.cms.banners.length, 0, "Məhsuldan ayrı banner bazası qalıb");
+const activeProducts = state.products.filter((product) => product.active);
+assert.equal(activeProducts.filter((product) => product.banner?.enabled !== false).length, 21, "Bütün aktiv məhsullar üçün banner yaranmayıb");
+assert.equal(new Set(state.products.map((product) => product.banner.order)).size, state.products.length, "Banner sıraları unikal deyil");
+assert.deepEqual(
+  Object.fromEntries(["spotify", "netflix", "canva", "youtube", "capcut", "tiktok_jeton"].map((id) => {
+    const product = state.products.find((item) => item.id === id);
+    return [id, product.banner.desktopImage];
+  })),
+  {
+    spotify: "assets/slider1.png",
+    netflix: "assets/slider2.png",
+    canva: "assets/slider3.png",
+    youtube: "assets/slider4.png",
+    capcut: "assets/slider5.png",
+    tiktok_jeton: "assets/slider6.png"
+  },
+  "Mövcud altı böyük banner şəkli məhsullara itkisiz bağlanmayıb"
+);
+assert.ok(
+  activeProducts.every((product) => product.banner.desktopImage || product.image),
+  "Aktiv məhsul bannerində təhlükəsiz şəkil fallback-i yoxdur"
 );
 assert.equal(state.cms.supportCard.desktopImage, "assets/support.png", "Canlı Dəstək şəkli CMS-ə köçürülməyib");
 assert.equal(state.cms.media.filter((item) => /^assets\/(?:slider[1-6]|support)\.png$/.test(item.path)).length, 7, "Mövcud böyük şəkillər Media bölməsinə köçürülməyib");
 
 const duplicateBannerOrders = structuredClone(state);
-duplicateBannerOrders.cms.banners.forEach((banner) => { banner.order = 2; });
-const normalizedBannerOrders = normalizeAdminPayload(duplicateBannerOrders).cms.banners.map((banner) => banner.order);
-assert.equal(normalizedBannerOrders.join(","), "1,2,3,4,5,6", "Təkrar banner sırası serverdə düzəldilmədi");
+duplicateBannerOrders.products.forEach((product) => { product.banner.order = 2; });
+const normalizedBannerOrders = normalizeAdminPayload(duplicateBannerOrders).products.map((product) => product.banner.order);
+assert.equal(new Set(normalizedBannerOrders).size, state.products.length, "Təkrar banner sırası serverdə düzəldilmədi");
+assert.equal(Math.min(...normalizedBannerOrders), 1, "Banner sırası 1-dən başlamır");
+assert.equal(Math.max(...normalizedBannerOrders), state.products.length, "Banner sırasında boşluq qalıb");
+
+const withNewProduct = structuredClone(state);
+withNewProduct.products.push({
+  id: "banner_test_product",
+  order: withNewProduct.products.length + 1,
+  category: "all",
+  image: "assets/your.png",
+  title: "Banner Test Məhsulu",
+  desc: "Test açıqlaması",
+  active: true,
+  seoSlug: "banner-test-mehsulu",
+  plans: []
+});
+const normalizedWithNewProduct = normalizeAdminPayload(withNewProduct);
+const newProduct = normalizedWithNewProduct.products.find((product) => product.id === "banner_test_product");
+assert.equal(newProduct.banner.desktopImage, newProduct.image, "Yeni məhsul banneri əsas şəkildən yaranmadı");
+assert.equal(newProduct.banner.title, newProduct.title, "Yeni məhsul banner başlığı məhsuldan yaranmadı");
+assert.equal(newProduct.banner.order, normalizedWithNewProduct.products.length, "Yeni məhsul banneri son sıranı almadı");
+const visibleBannerIds = (products) => products
+  .filter((product) => product.active !== false && product.banner?.enabled !== false)
+  .map((product) => product.id);
+newProduct.active = false;
+assert.equal(visibleBannerIds(normalizedWithNewProduct.products).includes(newProduct.id), false, "Deaktiv məhsulun banneri gizlənmədi");
+newProduct.active = true;
+assert.equal(visibleBannerIds(normalizedWithNewProduct.products).includes(newProduct.id), true, "Yenidən aktiv məhsulun banneri geri qayıtmadı");
+const originalBannerSlug = newProduct.seoSlug;
+newProduct.seoSlug = "banner-test-mehsulu-yeni";
+assert.notEqual(newProduct.seoSlug, originalBannerSlug, "Test slug-u dəyişmədi");
+assert.equal(Object.hasOwn(newProduct.banner, "url"), false, "Banner URL-i məhsul slug-ından ayrı saxlanılır");
 
 const hostile = structuredClone(state);
 hostile.content[hostile.products[0].id] = {
@@ -137,12 +184,21 @@ assert.equal(homepage.includes('src="assets/support.png"'), false, "Canlı Dəst
 assert.ok(cmsSite.includes("applySupportCard()"), "Canlı Dəstək renderer-i yoxdur");
 assert.ok(cmsSite.includes('window.initSlider'), "Dinamik bannerlər slayderə yenidən bağlanmır");
 assert.ok(cmsSite.includes('mobileImage'), "Mobil şəkil fallback-i yoxdur");
+assert.ok(cmsSite.includes("DATA.products"), "Bannerlər vahid məhsul məlumatından yaranmır");
+assert.ok(cmsSite.includes("productSlug"), "Banner keçidi məhsul slug-ından yaranmır");
+assert.ok(cmsSite.includes('"lazy"'), "Bannerlərdə lazy loading yoxdur");
+assert.ok(cmsSite.includes("fetchPriority"), "İlk banner üçün yüksək yükləmə prioriteti yoxdur");
+assert.ok(appSource.includes("ArrowRight") && appSource.includes("ArrowLeft"), "Banner klaviatura idarəsi yoxdur");
 assert.ok(homepageCss.includes("object-fit: contain"), "Banner şəkilləri contain istifadə etmir");
 assert.ok(cmsAdmin.includes("data-banner-upload"), "Banner üçün kompüterdən yükləmə yoxdur");
 assert.ok(cmsAdmin.includes("data-banner-media"), "Banner üçün Media seçimi yoxdur");
-assert.ok(cmsAdmin.includes("data-move-banner"), "Banner yuxarı-aşağı sıralaması yoxdur");
+assert.ok(cmsAdmin.includes("bannerProductSelect"), "Məhsul banner seçicisi yoxdur");
+assert.ok(cmsAdmin.includes("data-product-banner"), "Banner redaktoru məhsul məlumatına bağlanmayıb");
+assert.ok(cmsAdmin.includes("data-move-product-banner"), "Banner yuxarı-aşağı sıralaması yoxdur");
+assert.ok(cmsAdmin.includes("data-clear-banner-image"), "Banner şəklini təmizləmə imkanı yoxdur");
 assert.ok(adminServer.includes('["image/webp", "webp"]'), "WEBP yükləmə yoxlaması yoxdur");
 assert.equal(adminServer.includes('"image/svg+xml"'), false, "SVG yükləmə icazəsi qalıb");
+assert.ok(adminServer.includes('rawName.includes("..")') && adminServer.includes('/[\\\\/]/'), "Path traversal fayl adları bloklanmır");
 assert.ok(adminServer.includes("const session = requireMutationAuth(request, response);"), "Yükləmələr sessiyada təhlükəsiz mərhələlənmir");
 
 const middleware = fs.readFileSync(new URL("../functions/_middleware.js", import.meta.url), "utf8");

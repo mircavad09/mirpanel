@@ -129,15 +129,19 @@ function safeUploadSlug(value) {
 }
 
 function extensionFromUpload(fileName, mimeType) {
-  const normalizedMime = String(mimeType || "").toLowerCase();
-  if (productImageTypes.has(normalizedMime)) return productImageTypes.get(normalizedMime);
+  const rawName = String(fileName || "");
+  if (!rawName || rawName.includes("..") || /[\\/]/.test(rawName)) return "";
+  const fileExtension = path.extname(rawName).slice(1).toLowerCase();
+  if (!["jpg", "jpeg", "png", "webp"].includes(fileExtension)) return "";
 
-  const ext = path.extname(String(fileName || "")).slice(1).toLowerCase();
-  if (["jpg", "jpeg", "png", "webp"].includes(ext)) {
-    return ext === "jpeg" ? "jpg" : ext;
+  const normalizedMime = String(mimeType || "").toLowerCase();
+  if (productImageTypes.has(normalizedMime)) {
+    const mimeExtension = productImageTypes.get(normalizedMime);
+    const normalizedFileExtension = fileExtension === "jpeg" ? "jpg" : fileExtension;
+    return normalizedFileExtension === mimeExtension ? mimeExtension : "";
   }
 
-  return "";
+  return fileExtension === "jpeg" ? "jpg" : fileExtension;
 }
 
 function matchesImageSignature(buffer, extension) {

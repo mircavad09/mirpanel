@@ -3660,6 +3660,10 @@ function initSlider() {
   function resetTimer() { startTimer(); }
 
   if (slider) {
+    slider.tabIndex = 0;
+    slider.setAttribute('role', 'region');
+    slider.setAttribute('aria-label', 'Məhsul bannerləri');
+    slider.setAttribute('aria-roledescription', 'carousel');
     let touchStartX = 0;
     slider.ontouchstart = (event) => {
       touchStartX = event.touches?.[0]?.clientX || 0;
@@ -3672,6 +3676,18 @@ function initSlider() {
       if (distance < 0) nextSlide();
       else prevSlide();
       resetTimer();
+    };
+    slider.onkeydown = (event) => {
+      if (event.key === 'ArrowRight') {
+        event.preventDefault();
+        nextSlide();
+        resetTimer();
+      }
+      if (event.key === 'ArrowLeft') {
+        event.preventDefault();
+        prevSlide();
+        resetTimer();
+      }
     };
   }
 
