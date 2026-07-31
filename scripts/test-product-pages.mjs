@@ -101,7 +101,7 @@ const generatedLegalText = termsCopy
 assert.equal(generatedLegalText, normalizeLegalText(termsBody), "Hüquqi mətn HTML-ə çevrilərkən məzmun itirib və ya dəyişib");
 
 for (const { product, slug } of active) {
-  const filePath = `mehsul/${slug}/index.html`;
+  const filePath = `mehsul/${slug}.html`;
   const canonical = `https://mirpanel.com/mehsul/${slug}`;
   const html = pages.get(filePath);
   const expectedTitle = String(product.seoTitle || "").trim() || `${String(product.title || "").trim()} | Mirpanel`;
@@ -183,8 +183,8 @@ for (const { product, slug } of active) {
   const sitemapUrl = canonical;
   assert.equal(count(sitemap, `<loc>${sitemapUrl}</loc>`), 1, `${filePath}: sitemap təkrarı`);
   assert.ok(
-    redirects.includes(`/mehsul/${slug}/ /mehsul/${slug} 301`) && redirects.includes(`/mehsul/${slug} /mehsul/${slug}/index.html 200`),
-    `${filePath}: redirects`
+    !redirects.split(/\r?\n/).some((line) => line.startsWith(`/mehsul/${slug} `)),
+    `${filePath}: canonical məhsul URL-i _redirects qaydasına düşməməlidir`
   );
   const legacySlug = legacyById[product.id];
   assert.ok(legacySlug, `${product.id}: legacy URL xəritəsi yoxdur`);
@@ -408,7 +408,7 @@ addedProduct.title = "SEO Generator Test Product";
 addedProduct.seoSlug = "seo-generator-test-product-almaq";
 addedProduct.plans = [{ months: 1, price: 10, regularPrice: 20 }];
 addedProducts.push(addedProduct);
-const addedHtml = generateProductPageFiles(addedProducts).get("mehsul/seo-generator-test-product/index.html");
+const addedHtml = generateProductPageFiles(addedProducts).get("mehsul/seo-generator-test-product.html");
 assert.ok(
   addedHtml,
   "New active product page was not generated"
@@ -431,7 +431,7 @@ assert.equal(
 const updatedProducts = structuredClone(state.products);
 const updatedProduct = updatedProducts.find((product) => product.id === active[0].product.id);
 updatedProduct.seoTitle = "Generator update test title";
-const updatedHtml = generateProductPageFiles(updatedProducts).get(`mehsul/${active[0].slug}/index.html`);
+const updatedHtml = generateProductPageFiles(updatedProducts).get(`mehsul/${active[0].slug}.html`);
 assert.ok(
   updatedHtml.includes("<title>Generator update test title</title>"),
   "Product page did not reflect an admin metadata update"

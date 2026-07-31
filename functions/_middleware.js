@@ -300,7 +300,7 @@ export async function onRequest(context) {
     }
 
     const assetUrl = new URL(request.url);
-    assetUrl.pathname = `${canonicalPath}/index.html`;
+    assetUrl.pathname = `${canonicalPath}.html`;
     const response = await context.next(new Request(assetUrl, request));
     const contentType = response.headers.get("Content-Type") || "";
     if (!contentType.includes("text/html")) return response;

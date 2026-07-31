@@ -98,7 +98,7 @@ export function productCanonicalPath(slug) {
 }
 
 export function productPageFilePath(slug) {
-  return `mehsul/${cleanProductSlug(slug)}/index.html`;
+  return `mehsul/${cleanProductSlug(slug)}.html`;
 }
 
 export function activeProductsWithSlugs(products = []) {
@@ -208,11 +208,6 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
 
   for (const slug of activeSitePageSlugs(siteSections)) {
     lines.push(`/${slug} /${slug}/ 301`, `/${slug}/ /${slug}/index.html 200`);
-  }
-
-  for (const slug of primaryById.values()) {
-    const canonicalPath = productCanonicalPath(slug);
-    lines.push(`${canonicalPath}/ ${canonicalPath} 301`, `${canonicalPath} ${canonicalPath}/index.html 200`);
   }
 
   for (const [productId, aliases] of Object.entries(defaultSeoAliases)) {

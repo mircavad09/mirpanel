@@ -30,7 +30,7 @@ assert.equal(new Set(active.map(({ slug }) => slug)).size, 21, "Təmiz slug toqq
 for (const { product, slug } of active) {
   const route = `/mehsul/${slug}`;
   const canonical = `https://mirpanel.com${route}`;
-  const file = path.join(root, "mehsul", slug, "index.html");
+  const file = path.join(root, "mehsul", `${slug}.html`);
   const html = fs.readFileSync(file, "utf8");
   const legacy = legacyById[product.id];
 
@@ -40,10 +40,9 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`"url":"${canonical}"`), `${route}: Product URL`);
   assert.ok(html.includes(`"item":"${canonical}"`), `${route}: Breadcrumb URL`);
   assert.equal((sitemap.match(new RegExp(`<loc>${canonical.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}</loc>`, "g")) || []).length, 1, `${route}: sitemap`);
-  assert.equal(redirectMap.get(`${route}/`), route, `${route}/: slash 301`);
+  assert.equal(redirectMap.has(route), false, `${route}: canonical _redirects qaydasına düşməməlidir`);
   assert.equal(redirectMap.get(`/${legacy}`), route, `${legacy}: slash-sız legacy 301`);
   assert.equal(redirectMap.get(`/${legacy}/`), route, `${legacy}: slash-lı legacy 301`);
-  assert.equal(redirectMap.has(route), false, `${route}: canonical redirect olmamalıdır`);
   assert.equal(redirectMap.has(redirectMap.get(`/${legacy}`)), false, `${legacy}: redirect chain var`);
 
   const direct = await onRequest({
