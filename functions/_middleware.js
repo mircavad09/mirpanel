@@ -300,10 +300,9 @@ export async function onRequest(context) {
     }
 
     const assetUrl = new URL(request.url);
-    assetUrl.pathname = `${canonicalPath}.html`;
+    assetUrl.pathname = `${canonicalPath}.page`;
     const response = await context.next(new Request(assetUrl, request));
-    const contentType = response.headers.get("Content-Type") || "";
-    if (!contentType.includes("text/html")) return response;
+    if (!response.ok) return response;
     let html = withSeoScripts(await response.text());
     const headers = new Headers(response.headers);
     headers.set("Content-Type", "text/html; charset=utf-8");

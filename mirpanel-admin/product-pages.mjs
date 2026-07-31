@@ -98,7 +98,7 @@ export function productCanonicalPath(slug) {
 }
 
 export function productPageFilePath(slug) {
-  return `mehsul/${cleanProductSlug(slug)}.html`;
+  return `mehsul/${cleanProductSlug(slug)}.page`;
 }
 
 export function activeProductsWithSlugs(products = []) {

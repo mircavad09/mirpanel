@@ -30,7 +30,7 @@ assert.equal(new Set(active.map(({ slug }) => slug)).size, 21, "Təmiz slug toqq
 for (const { product, slug } of active) {
   const route = `/mehsul/${slug}`;
   const canonical = `https://mirpanel.com${route}`;
-  const file = path.join(root, "mehsul", `${slug}.html`);
+  const file = path.join(root, "mehsul", `${slug}.page`);
   const html = fs.readFileSync(file, "utf8");
   const legacy = legacyById[product.id];
 
@@ -51,10 +51,11 @@ for (const { product, slug } of active) {
       const requested = new URL(request?.url || canonical);
       const diskPath = path.join(root, requested.pathname.replace(/^\/+/, ""));
       if (!fs.existsSync(diskPath)) return new Response("Not found", { status: 404 });
-      return new Response(fs.readFileSync(diskPath, "utf8"), { status: 200, headers: { "Content-Type": "text/html" } });
+      return new Response(fs.readFileSync(diskPath, "utf8"), { status: 200, headers: { "Content-Type": "application/octet-stream" } });
     }
   });
   assert.equal(direct.status, 200, `${route}: middleware birbaşa 200`);
+  assert.equal(direct.headers.get("content-type"), "text/html; charset=utf-8", `${route}: HTML content type`);
 
   const slash = await onRequest({ request: new Request(`${canonical}/?ref=test`), next: async () => new Response("unexpected") });
   assert.equal(slash.status, 301, `${route}/: middleware 301`);
