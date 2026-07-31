@@ -32,6 +32,16 @@ const sitemap = generateSitemap(state.products, state.siteSections, new Date("20
 const redirects = generateRedirects(state.products, state.siteSections);
 const activeTitles = [];
 const activeDescriptions = [];
+const legacyById = {
+  capcut: "capcut-pro-almaq", hbomax: "hbo-max-almaq", netflix: "netflix-sexsi-almaq",
+  netflix_umumi: "netflix-umumi-almaq", zoom: "zoom-pro-almaq", youtube: "youtube-premium-almaq",
+  spotify: "spotify-premium-almaq", surfshark: "surfshark-vpn-almaq", tiktok_jeton: "tiktok-jeton-almaq",
+  google_ai: "google-ai-pro-v3-almaq", google_ai_ultra: "google-ai-pro-ultra-almaq", captions: "captions-ai-almaq",
+  grok_supergrok: "grok-ai-almaq", claude_ai: "cloud-ai-pro-almaq", prime: "amazon-prime-video-almaq",
+  duolingo: "duolingo-super-almaq", canva: "canva-premium-almaq", chatgpt: "chatgpt-plus-almaq",
+  adobecc: "adobe-creative-cloud-almaq", chatgpt_ortaq: "chatgpt-plus-ortaq-hesab0-almaq",
+  youtube_sexsi: "youtube-eyni-hesab-almaq"
+};
 
 assert.equal(appSource.includes(`tokens ${"truncated"}`), false);
 assert.equal(appSource.includes(`${408}${77}`), false);
@@ -91,7 +101,8 @@ const generatedLegalText = termsCopy
 assert.equal(generatedLegalText, normalizeLegalText(termsBody), "Hüquqi mətn HTML-ə çevrilərkən məzmun itirib və ya dəyişib");
 
 for (const { product, slug } of active) {
-  const filePath = `${slug}/index.html`;
+  const filePath = `mehsul/${slug}/index.html`;
+  const canonical = `https://mirpanel.com/mehsul/${slug}`;
   const html = pages.get(filePath);
   const expectedTitle = String(product.seoTitle || "").trim() || `${String(product.title || "").trim()} | Mirpanel`;
   const expectedDescription =
@@ -105,13 +116,13 @@ for (const { product, slug } of active) {
   assert.equal((html.match(/<h1\b/g) || []).length, 1, `${filePath}: H1 sayı`);
   assert.ok(html.includes(`<title>${escapeHtml(expectedTitle)}</title>`), `${filePath}: title`);
   assert.ok(html.includes(`name="description" content="${escapeAttribute(expectedDescription)}"`), `${filePath}: description`);
-  assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${slug}/"`), `${filePath}: canonical`);
+  assert.ok(html.includes(`rel="canonical" href="${canonical}"`), `${filePath}: canonical`);
   assert.ok(html.includes(`name="robots" content="index, follow"`), `${filePath}: robots`);
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
   assert.ok(html.includes(`/product-page.css?v=20260724-mobile-pricing-1`), `${filePath}: scoped CSS`);
   assert.ok(html.includes(`/app.js?v=product-pages-20260724-refine-1`), `${filePath}: product data cache version`);
   assert.ok(html.includes(`/order-confirmation.js?v=confirmation-dialog-20260728-1`), `${filePath}: shared confirmation component`);
-  assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${slug}/"`), `${filePath}: Open Graph`);
+  assert.ok(html.includes(`property="og:url" content="${canonical}"`), `${filePath}: Open Graph`);
   assert.ok(html.includes(`alt="${escapeAttribute(product.title)}"`), `${filePath}: image alt`);
   assert.ok(html.includes(`data-product-id="${escapeAttribute(product.id)}"`), `${filePath}: product id`);
   assert.ok(html.includes(`id="pp-order-btn"`), `${filePath}: order button`);
@@ -157,7 +168,7 @@ for (const { product, slug } of active) {
   const productSchema = graph.find((item) => item["@type"] === "Product");
   const breadcrumb = graph.find((item) => item["@type"] === "BreadcrumbList");
   assert.equal(productSchema.name, product.title, `${filePath}: schema name`);
-  assert.equal(productSchema.url, `https://mirpanel.com/${slug}/`, `${filePath}: schema URL`);
+  assert.equal(productSchema.url, canonical, `${filePath}: schema URL`);
   assert.equal(productSchema.image[0], absoluteUrl(product.image), `${filePath}: schema image`);
   assert.ok(Array.isArray(productSchema.offers), `${filePath}: offers`);
   assert.equal(productSchema.offers.length, product.plans.length, `${filePath}: offer count`);
@@ -169,12 +180,17 @@ for (const { product, slug } of active) {
   assert.equal(html.includes("AggregateRating"), false, `${filePath}: fake aggregate rating`);
   assert.equal(html.includes('"@type":"Review"'), false, `${filePath}: fake review`);
 
-  const sitemapUrl = `https://mirpanel.com/${slug}/`;
-  assert.equal(count(sitemap, sitemapUrl), 1, `${filePath}: sitemap təkrarı`);
+  const sitemapUrl = canonical;
+  assert.equal(count(sitemap, `<loc>${sitemapUrl}</loc>`), 1, `${filePath}: sitemap təkrarı`);
   assert.ok(
-    redirects.includes(`/${slug} /${slug}/ 301`) && redirects.includes(`/${slug}/ /${slug}/index.html 200`),
+    redirects.includes(`/mehsul/${slug}/ /mehsul/${slug} 301`) && redirects.includes(`/mehsul/${slug} /mehsul/${slug}/index.html 200`),
     `${filePath}: redirects`
   );
+  const legacySlug = legacyById[product.id];
+  assert.ok(legacySlug, `${product.id}: legacy URL xəritəsi yoxdur`);
+  assert.ok(redirects.includes(`/${legacySlug} /mehsul/${slug} 301`), `${filePath}: slash-sız köhnə URL 301`);
+  assert.ok(redirects.includes(`/${legacySlug}/ /mehsul/${slug} 301`), `${filePath}: slash-lı köhnə URL 301`);
+  assert.ok(html.includes(`item":"${canonical}`) || html.includes(`item":"${canonical}"`), `${filePath}: breadcrumb URL`);
   assert.ok(fs.existsSync(path.join(projectRoot, filePath)), `${filePath}: disk`);
 }
 
@@ -183,7 +199,9 @@ assert.equal(new Set(activeDescriptions).size, activeDescriptions.length, "Aktiv
 assert.ok(active.every(({ product }) => product.seoH1 && product.seoPrimaryKeyword), "Admin SEO H1/açar ifadə fallback-i boşdur");
 const sitemapLocs = [...sitemap.matchAll(/<loc>(.*?)<\/loc>/g)].map((match) => match[1]);
 assert.equal(new Set(sitemapLocs).size, sitemapLocs.length, "Sitemap-da təkrar URL var");
-assert.ok(sitemapLocs.every((url) => url.startsWith("https://mirpanel.com/") && url.endsWith("/")), "Sitemap canonical HTTPS/slash qaydasını pozur");
+assert.ok(sitemapLocs.every((url) => url.startsWith("https://mirpanel.com/")), "Sitemap HTTPS qaydasını pozur");
+assert.equal(sitemapLocs.filter((url) => url.includes("/mehsul/")).length, 21, "Sitemap-da 21 məhsul URL-si olmalıdır");
+assert.ok(sitemapLocs.filter((url) => url.includes("/mehsul/")).every((url) => !url.endsWith("/") && !url.includes("-almaq")), "Məhsul sitemap URL-ləri slash-sız və təmiz olmalıdır");
 assert.ok(robotsText.includes("User-agent: *") && !robotsText.includes("Disallow: /\n"), "robots.txt ümumi saytı bloklayır");
 assert.ok(robotsText.includes("Disallow: /admin") && robotsText.includes("Disallow: /api/"), "Texniki yollar robots.txt-də bloklanmayıb");
 assert.ok(homeHtml.includes('rel="canonical" href="https://mirpanel.com/"'), "Home canonical yoxdur");
@@ -221,7 +239,7 @@ assert.ok(confirmationSource.includes('window.open(url, "_blank", "noopener,nore
 for (const product of state.products.filter((item) => item.active === false)) {
   if (!product.seoSlug) continue;
   assert.equal(
-    sitemap.includes(`https://mirpanel.com/${product.seoSlug}/`),
+    sitemap.includes(`https://mirpanel.com/mehsul/${product.seoSlug}`),
     false,
     `${product.id}: deaktiv məhsul sitemap-da`
   );
@@ -326,8 +344,8 @@ for (const [key, expected] of Object.entries(expectedInfoPages)) {
   assert.ok(redirects.includes(`/${key}/ /${key}/index.html 200`), `${key}: final route`);
 }
 assert.equal(sitemap.includes("https://mirpanel.com/netflix-almaq/"), false, "Retired Netflix doorway URL remained in sitemap");
-assert.ok(redirects.includes("/netflix-almaq /netflix-sexsi-almaq/ 301"), "Netflix target redirect missing");
-assert.ok(redirects.includes("/netflix-almaq/ /netflix-sexsi-almaq/ 301"), "Netflix slash redirect missing");
+assert.ok(redirects.includes("/netflix-almaq /mehsul/netflix-sexsi 301"), "Netflix target redirect missing");
+assert.ok(redirects.includes("/netflix-almaq/ /mehsul/netflix-sexsi 301"), "Netflix slash redirect missing");
 
 const disabledSections = structuredClone(state.siteSections);
 disabledSections.haqqimizda.enabled = false;
@@ -377,7 +395,7 @@ assert.ok(unsafeAboutHtml.includes("<strong>Qalın mətn</strong>"), "Haqqımız
 
 assert.equal(
   generateSitemap(deactivated, state.siteSections).includes(
-    `https://mirpanel.com/${deactivatedProduct.seoSlug}/`
+    `https://mirpanel.com/mehsul/${deactivatedProduct.seoSlug}`
   ),
   false,
   "Inactive product remained in sitemap"
@@ -390,7 +408,7 @@ addedProduct.title = "SEO Generator Test Product";
 addedProduct.seoSlug = "seo-generator-test-product-almaq";
 addedProduct.plans = [{ months: 1, price: 10, regularPrice: 20 }];
 addedProducts.push(addedProduct);
-const addedHtml = generateProductPageFiles(addedProducts).get("seo-generator-test-product-almaq/index.html");
+const addedHtml = generateProductPageFiles(addedProducts).get("mehsul/seo-generator-test-product/index.html");
 assert.ok(
   addedHtml,
   "New active product page was not generated"
@@ -413,7 +431,7 @@ assert.equal(
 const updatedProducts = structuredClone(state.products);
 const updatedProduct = updatedProducts.find((product) => product.id === active[0].product.id);
 updatedProduct.seoTitle = "Generator update test title";
-const updatedHtml = generateProductPageFiles(updatedProducts).get(`${active[0].slug}/index.html`);
+const updatedHtml = generateProductPageFiles(updatedProducts).get(`mehsul/${active[0].slug}/index.html`);
 assert.ok(
   updatedHtml.includes("<title>Generator update test title</title>"),
   "Product page did not reflect an admin metadata update"

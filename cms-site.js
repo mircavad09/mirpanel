@@ -47,7 +47,11 @@
       .toLowerCase()
       .replace(/[^a-z0-9-]+/g, "-")
       .replace(/-+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replace(/^-|-$/g, "")
+      .replace(/-almaq$/, "")
+      .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab")
+      .replace(/-+/g, "-")
+      .replace(/^-+|-+$/g, "");
   }
 
   function iconSvg(name) {
@@ -186,7 +190,7 @@
         const legacy = legacyBanners.find((banner) => {
           const legacyId = String(banner.id || "").replaceAll("-", "_");
           const legacyUrl = String(banner.url || "").replace(/^https?:\/\/[^/]+/i, "");
-          return legacyId === product.id || legacyUrl.includes(`/${slug}/`);
+          return legacyId === product.id || legacyUrl.includes(`/${slug}/`) || legacyUrl.includes(`/mehsul/${slug}`);
         }) || {};
         const configured = product.banner || {};
         const hasConfiguredBanner = Object.keys(configured).length > 0;
@@ -199,7 +203,7 @@
           title: banner.title || product.title || "",
           description: banner.description || product.desc || "",
           alt: banner.alt || product.imageAlt || `${product.title || "Məhsul"} banneri`,
-          url: `/${slug}/`,
+          url: `/mehsul/${slug}`,
           order: hasConfiguredBanner && Number.isFinite(Number(banner.order))
             ? Number(banner.order)
             : Number(product.order) || index + 1

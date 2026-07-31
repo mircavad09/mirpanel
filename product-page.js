@@ -12,8 +12,11 @@
       if (typeof DATA !== "undefined" && Array.isArray(DATA.products)) products = DATA.products;
     } catch {}
     const product = products.find((item) => item.id === productId);
-    const slug = String(product?.seoSlug || "").replace(/^\/+|\/+$/g, "");
-    return slug ? `/${slug}/` : "/";
+    const slug = String(product?.seoSlug || "")
+      .replace(/^\/+|\/+$/g, "")
+      .replace(/-almaq$/, "")
+      .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab");
+    return slug ? `/mehsul/${slug}` : "/";
   }
 
   function rootRelativeImage(value) {

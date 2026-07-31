@@ -42,10 +42,29 @@ const adminRedirects = [
   "/admin/* https://mirpanel.onrender.com/:splat 302"
 ];
 
-const standaloneSeoRoutes = [
-  "/netflix-almaq /netflix-sexsi-almaq/ 301",
-  "/netflix-almaq/ /netflix-sexsi-almaq/ 301"
-];
+const legacyProductSlugs = {
+  capcut: ["capcut-pro-almaq"],
+  hbomax: ["hbo-max-almaq"],
+  netflix: ["netflix-sexsi-almaq", "netflix-almaq", "netflix-aile-almaq"],
+  netflix_umumi: ["netflix-umumi-almaq"],
+  zoom: ["zoom-pro-almaq"],
+  youtube: ["youtube-premium-almaq"],
+  spotify: ["spotify-premium-almaq"],
+  surfshark: ["surfshark-vpn-almaq"],
+  tiktok_jeton: ["tiktok-jeton-almaq"],
+  google_ai: ["google-ai-pro-v3-almaq", "gemini-pro-almaq"],
+  google_ai_ultra: ["google-ai-pro-ultra-almaq", "gemini-ultra-almaq"],
+  captions: ["captions-ai-almaq"],
+  grok_supergrok: ["grok-ai-almaq", "super-grok-ai-almaq"],
+  claude_ai: ["cloud-ai-pro-almaq", "cloud-ai-max-almaq", "claude-ai-almaq"],
+  prime: ["amazon-prime-video-almaq", "prime-video-almaq"],
+  duolingo: ["duolingo-super-almaq"],
+  canva: ["canva-premium-almaq", "canva-pro-almaq"],
+  chatgpt: ["chatgpt-plus-almaq"],
+  adobecc: ["adobe-creative-cloud-almaq", "adobe-cc-almaq"],
+  chatgpt_ortaq: ["chatgpt-plus-ortaq-hesab0-almaq", "chatgpt-plus-ortaq-hesab-almaq"],
+  youtube_sexsi: ["youtube-eyni-hesab-almaq"]
+};
 
 export function seoSlug(value) {
   return String(value || "")
@@ -63,7 +82,23 @@ export function seoSlug(value) {
 }
 
 export function productSeoSlug(product) {
-  return seoSlug(product?.seoSlug);
+  return cleanProductSlug(product?.seoSlug);
+}
+
+export function cleanProductSlug(value) {
+  return seoSlug(value)
+    .replace(/-almaq$/, "")
+    .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function productCanonicalPath(slug) {
+  return `/mehsul/${cleanProductSlug(slug)}`;
+}
+
+export function productPageFilePath(slug) {
+  return `mehsul/${cleanProductSlug(slug)}/index.html`;
 }
 
 export function activeProductsWithSlugs(products = []) {
@@ -75,9 +110,6 @@ export function activeProductsWithSlugs(products = []) {
     const slug = productSeoSlug(product);
     if (!slug) {
       throw new Error(`Aktiv məhsul üçün seoSlug boşdur: ${product?.id || product?.title || "naməlum"}`);
-    }
-    if (slug === "netflix-almaq") {
-      throw new Error(`seoSlug mövcud Netflix SEO səhifəsi ilə toqquşur: ${product.id}`);
     }
     if (owners.has(slug)) {
       throw new Error(`Təkrarlanan seoSlug "${slug}": ${owners.get(slug)} və ${product.id}`);
@@ -119,7 +151,7 @@ export function removedProductPagePaths(previousProducts = [], nextProducts = []
   const next = new Set(activeProductPageSlugs(nextProducts));
   return [...previous]
     .filter((slug) => !next.has(slug))
-    .map((slug) => `${slug}/index.html`);
+    .map((slug) => productPageFilePath(slug));
 }
 
 export function removedInfoPagePaths(previousSiteSections = {}, nextSiteSections = {}) {
@@ -131,7 +163,12 @@ export function removedInfoPagePaths(previousSiteSections = {}, nextSiteSections
 }
 
 export function generateSitemap(products = [], siteSections = {}, date = new Date(), cms = {}) {
-  const lastmod = date.toISOString().slice(0, 10);
+  const lastmod = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Baku",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(date);
   const urls = new Map();
   const add = (path, changefreq, priority) => {
     const url = `${SITE_URL}${path}`;
@@ -148,7 +185,7 @@ export function generateSitemap(products = [], siteSections = {}, date = new Dat
   }
   for (const { product, slug } of activeProductsWithSlugs(products)) {
     if (product.includeInSitemap !== false && product.seoIndex !== false) {
-      add(`/${slug}/`, "weekly", "0.9");
+      add(productCanonicalPath(slug), "weekly", "0.9");
     }
   }
 
@@ -164,7 +201,7 @@ ${entries.join("\n")}
 }
 
 export function generateRedirects(products = [], siteSections = {}, previous = {}) {
-  const lines = [...adminRedirects, ...standaloneSeoRoutes];
+  const lines = [...adminRedirects];
   const primaryById = new Map(
     activeProductsWithSlugs(products).map(({ product, slug }) => [product.id, slug])
   );
@@ -174,7 +211,8 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
   }
 
   for (const slug of primaryById.values()) {
-    lines.push(`/${slug} /${slug}/ 301`, `/${slug}/ /${slug}/index.html 200`);
+    const canonicalPath = productCanonicalPath(slug);
+    lines.push(`${canonicalPath}/ ${canonicalPath} 301`, `${canonicalPath} ${canonicalPath}/index.html 200`);
   }
 
   for (const [productId, aliases] of Object.entries(defaultSeoAliases)) {
@@ -182,8 +220,19 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
     if (!primary) continue;
     for (const aliasValue of aliases) {
       const alias = seoSlug(aliasValue);
-      if (!alias || alias === primary || alias === "netflix-almaq") continue;
-      lines.push(`/${alias} /${primary}/ 301`, `/${alias}/ /${primary}/ 301`);
+      if (!alias) continue;
+      const target = productCanonicalPath(primary);
+      lines.push(`/${alias} ${target} 301`, `/${alias}/ ${target} 301`);
+    }
+  }
+
+  for (const [productId, aliases] of Object.entries(legacyProductSlugs)) {
+    const primary = primaryById.get(productId);
+    if (!primary) continue;
+    const target = productCanonicalPath(primary);
+    for (const aliasValue of aliases) {
+      const alias = seoSlug(aliasValue);
+      if (alias) lines.push(`/${alias} ${target} 301`, `/${alias}/ ${target} 301`);
     }
   }
 
@@ -191,7 +240,8 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
   for (const { product, slug: oldSlug } of previousProducts) {
     const newSlug = primaryById.get(product.id);
     if (newSlug && oldSlug !== newSlug) {
-      lines.push(`/${oldSlug} /${newSlug}/ 301`, `/${oldSlug}/ /${newSlug}/ 301`);
+      const target = productCanonicalPath(newSlug);
+      lines.push(`/mehsul/${oldSlug} ${target} 301`, `/mehsul/${oldSlug}/ ${target} 301`);
     }
   }
   const nextSiteByKey = new Map(activeSitePages(siteSections).map((page) => [page.key, page.slug]));
@@ -210,7 +260,7 @@ export function generateProductPageFiles(products = [], siteSections = {}, cms =
   const files = new Map();
 
   for (const { product, slug } of active) {
-    files.set(`${slug}/index.html`, generateProductPageHtml(product, slug, active, siteSections, cms, content[product.id] || {}));
+    files.set(productPageFilePath(slug), generateProductPageHtml(product, slug, active, siteSections, cms, content[product.id] || {}));
   }
 
   return files;
@@ -236,7 +286,7 @@ export function generateInfoPageFiles(siteSections = {}, ui = {}, cms = {}) {
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
-  const canonical = `${SITE_URL}/${slug}/`;
+  const canonical = `${SITE_URL}${productCanonicalPath(slug)}`;
   const title = cleanText(product.seoTitle) || `${cleanText(product.title)} | Mirpanel`;
   const h1 = cleanText(product.seoH1) || cleanText(product.title);
   const description =
@@ -931,7 +981,7 @@ function renderSimilar(similar) {
     const priceText = price > 0
       ? `${price.toFixed(2)} ${cleanText(product.currency)}`
       : "Stokda yoxdur";
-    return `<a class="product-page-similar-card" href="/${escapeAttribute(slug)}/">
+    return `<a class="product-page-similar-card" href="${escapeAttribute(productCanonicalPath(slug))}">
       <img src="${escapeAttribute(rootRelativeUrl(product.image))}" class="product-page-similar-image" alt="${escapeAttribute(product.imageAlt || product.title)}" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title">${escapeHtml(product.title)}</div>
       ${product.category ? `<div class="product-page-similar-category">${escapeHtml(product.category)}</div>` : ""}

@@ -172,10 +172,13 @@
     if (typeof renderGrid !== "function") return;
 
     cardHTML = window.cardHTML = function stockAwareCardHTML(product, index) {
-      const productSlug = String(product.seoSlug || "").replace(/^\/+|\/+$/g, "");
-      const productUrl = productSlug ? `/${productSlug}/` : "#";
+      const productSlug = String(product.seoSlug || "")
+        .replace(/^\/+|\/+$/g, "")
+        .replace(/-almaq$/, "")
+        .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab");
+      const productUrl = productSlug ? `/mehsul/${productSlug}` : "#";
       return `
-        <a class="card" href="${productUrl}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s;text-decoration:none;color:inherit">
+        <a class="card" href="${productUrl}" data-product-id="${escapeHtml(product.id)}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s;text-decoration:none;color:inherit">
           <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt=""><div class="cornerPrice">${priceText(product)}</div></div>
           <div class="pad">
             <div class="topline"><h3 class="title">${escapeHtml(product.title)}</h3><div class="badge">${escapeHtml(product.badge)}</div></div>

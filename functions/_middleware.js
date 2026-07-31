@@ -166,7 +166,11 @@ function availability(product) {
 }
 
 function productSlug(product) {
-  return slug(product?.seoSlug || DEFAULT_SEO_SLUGS[product?.id] || `${product?.title || product?.id || "premium-hesab"}-almaq`);
+  return slug(product?.seoSlug || DEFAULT_SEO_SLUGS[product?.id] || product?.title || product?.id || "premium-hesab")
+    .replace(/-almaq$/, "")
+    .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function productDescription(product) {
@@ -219,7 +223,9 @@ async function productSeoRoutes(request) {
 
     for (const product of data.products || []) {
       if (product.active === false) continue;
-      const routeSlugs = [productSlug(product), ...(SEO_ALIASES[product.id] || []).map(slug)].filter(Boolean);
+      const canonicalSlug = productSlug(product);
+      routes[`/mehsul/${canonicalSlug}`] = product;
+      const routeSlugs = [slug(product?.seoSlug), ...(SEO_ALIASES[product.id] || []).map(slug)].filter(Boolean);
       for (const item of routeSlugs) {
         routes[`/${item}`] = product;
       }
@@ -283,6 +289,27 @@ export async function onRequest(context) {
   const route = pathname.replace(/\/+$/, "") || "/";
 
   if (isStaticAsset(pathname)) return context.next();
+
+  const productRoute = pathname.match(/^\/mehsul\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/);
+  if (productRoute) {
+    const canonicalPath = `/mehsul/${productRoute[1]}`;
+    if (pathname !== canonicalPath) {
+      const destination = new URL(request.url);
+      destination.pathname = canonicalPath;
+      return Response.redirect(destination.href, 301);
+    }
+
+    const assetUrl = new URL(request.url);
+    assetUrl.pathname = `${canonicalPath}/index.html`;
+    const response = await context.next(new Request(assetUrl, request));
+    const contentType = response.headers.get("Content-Type") || "";
+    if (!contentType.includes("text/html")) return response;
+    let html = withSeoScripts(await response.text());
+    const headers = new Headers(response.headers);
+    headers.set("Content-Type", "text/html; charset=utf-8");
+    headers.append("Vary", "Accept");
+    return new Response(html, { status: response.status, headers });
+  }
 
   if (wantsMarkdown(request) && isHtmlLikePath(pathname)) {
     return new Response(MARKDOWN, {

@@ -30,9 +30,10 @@
   function slug(v){return String(v||'').trim().toLowerCase().replace(/[əƏ]/g,'e').replace(/[ıİ]/g,'i').replace(/[öÖ]/g,'o').replace(/[üÜ]/g,'u').replace(/[şŞ]/g,'s').replace(/[çÇ]/g,'c').replace(/[ğĞ]/g,'g').replace(/[^a-z0-9]+/g,'-').replace(/^-+|-+$/g,'')}
   function profile(p){return SEO[p?.id]||{}}
   function seoFor(p){const pr=profile(p), name=p?.title||'Premium hesab', kws=String(p?.seoKeywords||'').split(',').map(x=>x.trim()).filter(Boolean);return{slug:slug(p?.seoSlug||pr.slug||`${name}-almaq`),title:String(p?.seoTitle||pr.title||`${name} almaq | Premium hesab - Mirpanel`),description:String(p?.seoDescription||pr.desc||`${name} hesabını Azərbaycanda sərfəli qiymətə əldə et. Mirpanel ilə sürətli aktivləşdirmə və WhatsApp sifarişi.`),keywords:[...new Set([...(kws.length?kws:(pr.kw||[])),...COMMON])],content:String(p?.seoContent||pr.text||`${name} almaq üçün Mirpanel premium hesab və rəqəmsal xidmətləri sərfəli qiymətə təqdim edir.`)}}
-  function productPath(p){return'/'+seoFor(p).slug}
+  function cleanProductSlug(v){return slug(v).replace(/-almaq$/,'').replace(/(^|-)hesab0(?=-|$)/g,'$1hesab')}
+  function productPath(p){return'/mehsul/'+cleanProductSlug(seoFor(p).slug)}
   function productUrl(p){return BASE+productPath(p)}
-  function productIdFromPath(path=location.pathname){const s=slug(String(path).replace(/^\/+|\/+$/g,''));if(!s)return'';const map=new Map;products().forEach(p=>{const pr=profile(p);[seoFor(p).slug,p.seoSlug,pr.slug,...(pr.aliases||[])].map(slug).filter(Boolean).forEach(x=>map.set(x,p.id))});return map.get(s)||''}
+  function productIdFromPath(path=location.pathname){const s=cleanProductSlug(String(path).replace(/^\/mehsul\//,'').replace(/^\/+|\/+$/g,''));if(!s)return'';const map=new Map;products().forEach(p=>{const pr=profile(p);[seoFor(p).slug,p.seoSlug,pr.slug,...(pr.aliases||[])].map(cleanProductSlug).filter(Boolean).forEach(x=>map.set(x,p.id))});return map.get(s)||''}
   function abs(src){try{return new URL(src||'/assets/logo.png',BASE).href}catch{return DEFAULT_IMG}}
   function meta(name,content,attr='name'){let e=document.head.querySelector(`meta[${attr}="${name}"]`);if(!e){e=document.createElement('meta');e.setAttribute(attr,name);document.head.appendChild(e)}e.setAttribute('content',content||'')}
   function canonical(url){let e=document.head.querySelector('link[rel="canonical"]');if(!e){e=document.createElement('link');e.rel='canonical';document.head.appendChild(e)}e.href=url}

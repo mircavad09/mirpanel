@@ -480,7 +480,12 @@
       const item = ensureProductBanner(product);
       const index = orderedProducts.indexOf(product);
       const path = `productBanner.${product.id}`;
-      const slug = String(product.seoSlug || product.id || "").replaceAll("_", "-");
+      const slug = String(product.seoSlug || product.id || "")
+        .replaceAll("_", "-")
+        .replace(/-almaq$/, "")
+        .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab")
+        .replace(/-+/g, "-")
+        .replace(/^-+|-+$/g, "");
       editor.innerHTML = `<div class="cmsListItem bannerEditorCard">
       <div class="bannerEditorHead"><div><strong>${esc(product.title)}</strong><small> · ${product.active === false ? "Məhsul deaktivdir, banner saytda görünmür" : "Aktiv məhsul banneri"}</small></div><div class="bannerOrderActions">
         <button class="btn" type="button" data-move-product-banner="${esc(product.id)}" data-direction="-1"${index === 0 ? " disabled" : ""}>Yuxarı</button>
@@ -494,7 +499,7 @@
         <label>Başlıq<input data-product-banner="${esc(path)}.title" value="${esc(item.title)}"></label>
         <label>Alternativ mətn (alt)<input data-product-banner="${esc(path)}.alt" value="${esc(item.alt)}"></label>
         <label class="full">Açıqlama<textarea rows="3" data-product-banner="${esc(path)}.description">${esc(item.description)}</textarea></label>
-        <label>Canonical keçid<input value="https://mirpanel.com/${esc(slug)}/" readonly></label>
+        <label>Canonical keçid<input value="https://mirpanel.com/mehsul/${esc(slug)}" readonly></label>
         <label>Sıra<input type="number" min="1" max="${orderedProducts.length}" data-product-banner="${esc(path)}.order" value="${item.order}"></label>
         <label class="switchLine"><input type="checkbox" data-product-banner="${esc(path)}.enabled"${item.enabled ? " checked" : ""}><span>Banner aktivdir</span></label>
       </div>

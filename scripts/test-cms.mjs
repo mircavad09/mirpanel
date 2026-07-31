@@ -16,7 +16,6 @@ const orderSnapshot = state.products.map((product) => [product.id, product.order
 const commercialSnapshot = state.products.map((product) => [
   product.id,
   product.active,
-  product.seoSlug,
   product.plans.map((plan) => [plan.label || "", plan.months, plan.price, plan.regularPrice || null])
 ]);
 const bannerSnapshot = state.products.map((product) => [
@@ -30,7 +29,8 @@ const bannerSnapshot = state.products.map((product) => [
 assert.equal(state.products.length, 30, "Məhsul sayı dəyişib");
 assert.equal(state.products.filter((product) => product.active).length, 21, "Aktiv məhsul sayı dəyişib");
 assert.equal(digest(orderSnapshot), "b67de45e1f435af2ee6991e5d63063907e6fc410c207076a17cae56638231689", "Məhsul sırası dəyişib");
-assert.equal(digest(commercialSnapshot), "c117ab5a7e0d54785f56b4dbb8bb4f8fab04e4d151fa24ab493d46a89d8c8d4d", "Qiymət, plan, slug və ya aktivlik dəyişib");
+assert.equal(digest(commercialSnapshot), "2cfd79bd9d59de4e4bcc05623e4618a8d9d19f84a3dd7da02a92ed782cc21779", "Qiymət, plan və ya aktivlik dəyişib");
+assert.ok(state.products.every((product) => !product.seoSlug.endsWith("-almaq") && !product.seoSlug.includes("hesab0")), "Məhsul slug miqrasiyası tamamlanmayıb");
 assert.equal(digest(bannerSnapshot), "0b2707a0e9d72bd26ad4ccfe9f9fd283e58615c77b283d18361e7e835fb56f90", "Banner məlumatı və ya aktivliyi dəyişib");
 assert.deepEqual(Object.keys(state.cms), [
   "schemaVersion", "site", "homepage", "navigation", "banners", "supportCard",
@@ -158,7 +158,7 @@ excluded.products[0].includeInSitemap = false;
 excluded.products[0].seoIndex = false;
 const excludedSlug = excluded.products[0].seoSlug;
 const sitemap = generateSitemap(excluded.products, excluded.siteSections, new Date("2026-07-28"), excluded.cms);
-assert.equal(sitemap.includes(`https://mirpanel.com/${excludedSlug}/`), false, "Noindex məhsul sitemap-da qaldı");
+assert.equal(sitemap.includes(`https://mirpanel.com/mehsul/${excludedSlug}`), false, "Noindex məhsul sitemap-da qaldı");
 
 const redirects = generateRedirects(state.products, state.siteSections);
 assert.ok(redirects.includes("https://mirpanel.onrender.com/"));
@@ -167,7 +167,7 @@ const renamed = structuredClone(state);
 const originalSlug = renamed.products[0].seoSlug;
 renamed.products[0].seoSlug = `${originalSlug}-yeni`;
 const renamedRedirects = generateRedirects(renamed.products, renamed.siteSections, state);
-assert.ok(renamedRedirects.includes(`/${originalSlug} /${originalSlug}-yeni/ 301`), "Köhnə məhsul slug redirect-i yaranmadı");
+assert.ok(renamedRedirects.includes(`/mehsul/${originalSlug} /mehsul/${originalSlug}-yeni 301`), "Köhnə məhsul slug redirect-i yaranmadı");
 for (const line of renamedRedirects.split(/\r?\n/).filter(Boolean)) {
   const [from, to, status] = line.trim().split(/\s+/);
   if (status === "301") assert.notEqual(from, to, `Redirect loop: ${line}`);

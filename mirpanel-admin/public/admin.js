@@ -99,6 +99,13 @@ function slug(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
+    .replace(/[əƏ]/g, "e")
+    .replace(/[ıİ]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[üÜ]/g, "u")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g")
     .replaceAll("É™", "e")
     .replaceAll("Ä±", "i")
     .replaceAll("Ã¶", "o")
@@ -109,6 +116,20 @@ function slug(value) {
     .replace(/[^a-z0-9_]+/g, "_")
     .replace(/_+/g, "_")
     .replace(/^_|_$/g, "");
+}
+
+function productUrlSlug(value) {
+  return slug(value)
+    .replaceAll("_", "-")
+    .replace(/-almaq$/, "")
+    .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+function updateProductSeoUrlPreview(value) {
+  const preview = $("productSeoUrlPreview");
+  if (preview) preview.textContent = `https://mirpanel.com/mehsul/${productUrlSlug(value)}`;
 }
 
 function escapeHtml(value) {
@@ -212,7 +233,7 @@ function ensureProduct(product) {
   product.usageRules = product.usageRules || "";
   product.deliveryText = product.deliveryText || "";
   product.availabilityText = product.availabilityText || "";
-  product.seoSlug = product.seoSlug ? slug(product.seoSlug).replaceAll("_", "-") : "";
+  product.seoSlug = product.seoSlug ? productUrlSlug(product.seoSlug) : "";
   product.seoTitle = product.seoTitle || "";
   product.seoDescription = product.seoDescription || "";
   product.seoH1 = product.seoH1 || product.title;
@@ -571,6 +592,7 @@ function renderProductForm() {
   setValue("productDesc", product.desc);
   setValue("productNote", product.note);
   setValue("productSeoSlug", product.seoSlug || "");
+  updateProductSeoUrlPreview(product.seoSlug || "");
   setValue("productSeoTitle", product.seoTitle || "");
   setValue("productSeoDescription", product.seoDescription || "");
   setValue("productSeoH1", product.seoH1 || product.title);
@@ -780,7 +802,24 @@ bindProductField("productSeller", (p, e) => p.seller = e.value);
 bindProductField("productBestSeller", (p, e) => p.bestSeller = e.checked);
 bindProductField("productDesc", (p, e) => p.desc = e.value);
 bindProductField("productNote", (p, e) => p.note = e.value);
-bindProductField("productSeoSlug", (p, e) => p.seoSlug = slug(e.value).replaceAll("_", "-"));
+function updateProductSeoSlug(showWarning = false) {
+  const product = selectedProduct();
+  const input = $("productSeoSlug");
+  if (!product || !input) return;
+  const original = input.value;
+  const cleaned = productUrlSlug(original);
+  input.value = cleaned;
+  product.seoSlug = cleaned;
+  updateProductSeoUrlPreview(cleaned);
+  syncOrderFlow(product);
+  markDirty();
+  renderProducts();
+  if (showWarning && original.trim() !== cleaned) {
+    toast("Slug təhlükəsiz formata çevrildi. Məhsul URL-si /mehsul/ altında və -almaq olmadan yaradılır.");
+  }
+}
+$("productSeoSlug").addEventListener("input", () => updateProductSeoSlug(false));
+$("productSeoSlug").addEventListener("change", () => updateProductSeoSlug(true));
 bindProductField("productSeoTitle", (p, e) => p.seoTitle = e.value);
 bindProductField("productSeoDescription", (p, e) => p.seoDescription = e.value);
 bindProductField("productSeoH1", (p, e) => p.seoH1 = e.value);
@@ -1050,7 +1089,7 @@ $("addProductBtn").addEventListener("click", () => {
       currency: "â‚¼",
       title,
       badge: "Premium",
-      seoSlug: slug(`${title}-almaq`).replaceAll("_", "-"),
+      seoSlug: productUrlSlug(title),
       seoTitle: "",
       seoDescription: "",
       seoH1: title,

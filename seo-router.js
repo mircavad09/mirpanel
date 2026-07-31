@@ -7,11 +7,15 @@
   }
 
   function productPath(product) {
-    const slug = String(product?.seoSlug || "").replace(/^\/+|\/+$/g, "");
-    return slug ? `/${slug}/` : "";
+    const slug = String(product?.seoSlug || "")
+      .replace(/^\/+|\/+$/g, "")
+      .replace(/-almaq$/, "")
+      .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab");
+    return slug ? `/mehsul/${slug}` : "";
   }
 
   function productIdFromCard(card) {
+    if (card?.dataset?.productId) return card.dataset.productId;
     const onclick = card?.getAttribute?.("onclick") || "";
     return onclick.match(/openProductPage\('([^']+)'\)/)?.[1] || "";
   }

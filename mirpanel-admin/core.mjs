@@ -589,6 +589,10 @@ function normalizeSeoSlug(value) {
     .replace(/[Г§Г‡]/g, "c")
     .replace(/[ДџДћ]/g, "g")
     .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/-almaq$/, "")
+    .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab")
+    .replace(/-+/g, "-")
     .replace(/^-+|-+$/g, "");
 }
 
