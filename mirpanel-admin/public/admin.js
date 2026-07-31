@@ -223,7 +223,7 @@ function ensureProduct(product) {
   product.seoOgDescription = product.seoOgDescription || "";
   product.seoOgImage = product.seoOgImage || product.image;
   product.banner = {
-    enabled: product.banner?.enabled !== false,
+    enabled: product.banner?.enabled === true,
     desktopImage: product.banner?.desktopImage || product.image,
     mobileImage: product.banner?.mobileImage || "",
     title: product.banner?.title || product.title,

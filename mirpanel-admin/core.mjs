@@ -757,7 +757,7 @@ function normalizeProduct(product = {}, index = 0) {
     seoOgDescription: cleanText(product.seoOgDescription || "", "", 320),
     seoOgImage: safeUrl(product.seoOgImage || productImage),
     banner: {
-      enabled: banner.enabled !== false,
+      enabled: banner.enabled === true,
       desktopImage: safeUrl(banner.desktopImage || productImage),
       mobileImage: safeUrl(banner.mobileImage),
       title: cleanText(banner.title || productTitle, "", 200),
@@ -817,7 +817,7 @@ export function normalizeAdminPayload(payload = {}) {
     if (!legacy) continue;
     product.banner = {
       ...product.banner,
-      enabled: legacy.enabled !== false,
+      enabled: legacy.enabled === true,
       desktopImage: safeUrl(legacy.desktopImage || product.image),
       mobileImage: safeUrl(legacy.mobileImage),
       title: cleanText(legacy.title || product.title, "", 200),

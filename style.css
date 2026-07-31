@@ -166,6 +166,13 @@ body.hide-top-panel .top {
   box-shadow: 0 15px 45px rgba(0,0,0,0.3);
   background: #000;
 }
+.hero-slider-box[hidden],
+.slider-arrow[hidden] {
+  display: none !important;
+}
+.hero-section.no-product-banners {
+  grid-template-columns: minmax(0, 1fr);
+}
 .slide {
   position: absolute; inset: 0; opacity: 0;
   transition: opacity 0.5s ease; display: block; cursor: pointer;

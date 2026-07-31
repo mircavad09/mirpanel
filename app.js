@@ -2723,7 +2723,7 @@ const CMS_CONTENT = {
       "alt": "Spotify Premium banneri",
       "url": "/spotify-premium-almaq/",
       "order": 1,
-      "enabled": true,
+      "enabled": false,
       "startAt": "",
       "endAt": "",
       "desktopImage": "assets/slider1.png",
@@ -2736,7 +2736,7 @@ const CMS_CONTENT = {
       "alt": "Netflix banneri",
       "url": "/netflix-sexsi-almaq/",
       "order": 2,
-      "enabled": true,
+      "enabled": false,
       "startAt": "",
       "endAt": "",
       "desktopImage": "assets/slider2.png",
@@ -2749,7 +2749,7 @@ const CMS_CONTENT = {
       "alt": "Canva Premium banneri",
       "url": "/canva-premium-almaq/",
       "order": 3,
-      "enabled": true,
+      "enabled": false,
       "startAt": "",
       "endAt": "",
       "desktopImage": "assets/slider3.png",
@@ -2762,7 +2762,7 @@ const CMS_CONTENT = {
       "alt": "YouTube Premium banneri",
       "url": "/youtube-premium-almaq/",
       "order": 4,
-      "enabled": true,
+      "enabled": false,
       "startAt": "",
       "endAt": "",
       "desktopImage": "assets/slider4.png",
@@ -2775,7 +2775,7 @@ const CMS_CONTENT = {
       "alt": "CapCut Pro banneri",
       "url": "/capcut-pro-almaq/",
       "order": 5,
-      "enabled": true,
+      "enabled": false,
       "startAt": "",
       "endAt": "",
       "desktopImage": "assets/slider5.png",
@@ -2788,7 +2788,7 @@ const CMS_CONTENT = {
       "alt": "TikTok Jeton banneri",
       "url": "/tiktok-jeton-almaq/",
       "order": 6,
-      "enabled": true,
+      "enabled": false,
       "startAt": "",
       "endAt": "",
       "desktopImage": "assets/slider6.png",
@@ -3622,6 +3622,7 @@ function initSlider() {
   const prevBtn = document.querySelector('.prev-arrow');
   const slider = document.getElementById('heroSlider');
 
+  clearInterval(slideInterval);
   if (!slides.length) return;
 
   function showSlide(n) {
@@ -3655,6 +3656,7 @@ function initSlider() {
 
   function startTimer() {
     clearInterval(slideInterval);
+    if (slides.length < 2) return;
     slideInterval = setInterval(nextSlide, 3000);
   }
   function resetTimer() { startTimer(); }

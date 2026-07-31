@@ -400,7 +400,7 @@
   let selectedBannerProductId = "";
   function ensureProductBanner(product) {
     product.banner ||= {};
-    product.banner.enabled = product.banner.enabled !== false;
+    product.banner.enabled = product.banner.enabled === true;
     product.banner.desktopImage ||= product.image || "";
     product.banner.mobileImage ||= "";
     product.banner.title ||= product.title || "";

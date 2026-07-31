@@ -193,7 +193,7 @@
         const banner = hasConfiguredBanner ? configured : legacy;
         return {
           product,
-          enabled: banner.enabled !== false,
+          enabled: banner.enabled === true,
           desktopImage: safeImage(banner.desktopImage) || safeImage(product.image),
           mobileImage: safeImage(banner.mobileImage),
           title: banner.title || product.title || "",
@@ -215,6 +215,10 @@
     if (!slider) return;
     slider.querySelectorAll(".slide, .slider-dots").forEach((element) => element.remove());
     slider.hidden = !banners.length;
+    slider.parentElement?.classList.toggle("no-product-banners", !banners.length);
+    slider.querySelectorAll(".slider-arrow").forEach((arrow) => {
+      arrow.hidden = banners.length < 2;
+    });
     if (!banners.length) return;
     const dots = document.createElement("div");
     dots.className = "slider-dots";
@@ -261,12 +265,14 @@
         link.appendChild(content);
       }
       slider.appendChild(link);
-      const dot = document.createElement("span");
-      dot.className = `dot${index === 0 ? " active" : ""}`;
-      dot.dataset.index = String(index);
-      dots.appendChild(dot);
+      if (banners.length > 1) {
+        const dot = document.createElement("span");
+        dot.className = `dot${index === 0 ? " active" : ""}`;
+        dot.dataset.index = String(index);
+        dots.appendChild(dot);
+      }
     });
-    slider.appendChild(dots);
+    if (banners.length > 1) slider.appendChild(dots);
     if (typeof window.initSlider === "function") window.initSlider();
   }
 

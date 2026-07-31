@@ -31,7 +31,8 @@ assert.deepEqual(Object.keys(state.cms), [
 assert.ok(Object.values(state.cms.commonTexts).every(Boolean), "Ümumi mətn fallback-i boşdur");
 assert.equal(state.cms.banners.length, 0, "Məhsuldan ayrı banner bazası qalıb");
 const activeProducts = state.products.filter((product) => product.active);
-assert.equal(activeProducts.filter((product) => product.banner?.enabled !== false).length, 21, "Bütün aktiv məhsullar üçün banner yaranmayıb");
+assert.equal(activeProducts.filter((product) => product.banner?.enabled === true).length, 0, "Aktiv məhsul bannerləri deaktiv edilməyib");
+assert.equal(activeProducts.filter((product) => product.banner).length, 21, "Banner məlumatı silinib");
 assert.equal(new Set(state.products.map((product) => product.banner.order)).size, state.products.length, "Banner sıraları unikal deyil");
 assert.deepEqual(
   Object.fromEntries(["spotify", "netflix", "canva", "youtube", "capcut", "tiktok_jeton"].map((id) => {
@@ -79,13 +80,18 @@ const newProduct = normalizedWithNewProduct.products.find((product) => product.i
 assert.equal(newProduct.banner.desktopImage, newProduct.image, "Yeni məhsul banneri əsas şəkildən yaranmadı");
 assert.equal(newProduct.banner.title, newProduct.title, "Yeni məhsul banner başlığı məhsuldan yaranmadı");
 assert.equal(newProduct.banner.order, normalizedWithNewProduct.products.length, "Yeni məhsul banneri son sıranı almadı");
+assert.equal(newProduct.banner.enabled, false, "Yeni məhsul banneri standart olaraq deaktiv yaranmadı");
 const visibleBannerIds = (products) => products
-  .filter((product) => product.active !== false && product.banner?.enabled !== false)
+  .filter((product) => product.active !== false && product.banner?.enabled === true)
   .map((product) => product.id);
+newProduct.banner.enabled = true;
+assert.deepEqual(visibleBannerIds(normalizedWithNewProduct.products), [newProduct.id], "Bir banner aktivləşdiriləndə digər bannerlər də aktivləşdi");
 newProduct.active = false;
 assert.equal(visibleBannerIds(normalizedWithNewProduct.products).includes(newProduct.id), false, "Deaktiv məhsulun banneri gizlənmədi");
 newProduct.active = true;
 assert.equal(visibleBannerIds(normalizedWithNewProduct.products).includes(newProduct.id), true, "Yenidən aktiv məhsulun banneri geri qayıtmadı");
+newProduct.banner.enabled = false;
+assert.equal(visibleBannerIds(normalizedWithNewProduct.products).includes(newProduct.id), false, "Banner ayrıca deaktiv edilmədi");
 const originalBannerSlug = newProduct.seoSlug;
 newProduct.seoSlug = "banner-test-mehsulu-yeni";
 assert.notEqual(newProduct.seoSlug, originalBannerSlug, "Test slug-u dəyişmədi");
@@ -188,8 +194,11 @@ assert.ok(cmsSite.includes("DATA.products"), "Bannerlər vahid məhsul məlumat�
 assert.ok(cmsSite.includes("productSlug"), "Banner keçidi məhsul slug-ından yaranmır");
 assert.ok(cmsSite.includes('"lazy"'), "Bannerlərdə lazy loading yoxdur");
 assert.ok(cmsSite.includes("fetchPriority"), "İlk banner üçün yüksək yükləmə prioriteti yoxdur");
+assert.ok(cmsSite.includes("banners.length < 2"), "0/1 banner üçün slayder idarələri gizlədilmir");
 assert.ok(appSource.includes("ArrowRight") && appSource.includes("ArrowLeft"), "Banner klaviatura idarəsi yoxdur");
+assert.ok(appSource.includes("if (slides.length < 2) return;"), "Tək banner üçün avtomatik keçid dayandırılmır");
 assert.ok(homepageCss.includes("object-fit: contain"), "Banner şəkilləri contain istifadə etmir");
+assert.ok(homepageCss.includes(".hero-slider-box[hidden]") && homepageCss.includes(".no-product-banners"), "Boş banner sahəsi tam gizlədilmir");
 assert.ok(cmsAdmin.includes("data-banner-upload"), "Banner üçün kompüterdən yükləmə yoxdur");
 assert.ok(cmsAdmin.includes("data-banner-media"), "Banner üçün Media seçimi yoxdur");
 assert.ok(cmsAdmin.includes("bannerProductSelect"), "Məhsul banner seçicisi yoxdur");
