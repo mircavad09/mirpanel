@@ -331,6 +331,7 @@ const UI_DEFAULTS = {
 const SITE_SECTION_DEFAULTS = {
   haqqimizda: {
     enabled: true,
+    kicker: "Haqqımızda",
     title: "HaqqД±mД±zda",
     text: "Mirpanel premium hesablarД±n sГјrЙ™tli vЙ™ etibarlД± aktivlЙ™ЕџdirilmЙ™si ГјГ§Гјn xidmЙ™t gГ¶stЙ™rir. MЙ™hsullar WhatsApp ГјzЙ™rindЙ™n rahat sifariЕџ olunur vЙ™ dЙ™stЙ™k komandasД± mГјЕџtЙ™rilЙ™rЙ™ kГ¶mЙ™k edir.",
     linkText: "",
@@ -403,6 +404,13 @@ function normalizeSiteSections(source = {}) {
 
     if (key === "haqqimizda") {
       next[key].linkText = String(item.linkText ?? fallback.linkText ?? "");
+      next[key].kicker = cleanText(item.kicker || "", "Haqqımızda", 80);
+      next[key].homeButtonText = cleanText(item.homeButtonText || "", "Ana səhifə", 120);
+      next[key].homeButtonUrl = safeUrl(item.homeButtonUrl || "/");
+      next[key].productsButtonText = cleanText(item.productsButtonText || "", "Məhsullara bax", 120);
+      next[key].productsButtonUrl = safeUrl(item.productsButtonUrl || "/#products-section");
+      next[key].contactLinkText = cleanText(item.contactLinkText || "", "Əlaqə səhifəsinə keçin", 160);
+      next[key].contactLinkUrl = safeUrl(item.contactLinkUrl || "/elaqe/");
     }
 
     if (key === "sertler") {

@@ -3228,13 +3228,57 @@ const SITE_SECTIONS = {
     "linkText": "",
     "order": 1,
     "slug": "haqqimizda",
-    "subtitle": "Mirpanel haqqında qısa məlumat",
-    "body": "# MirPanel – Rəqəmsal məhsul və onlayn xidmətlər üçün etibarlı seçim\n\n**MirPanel** 2024-cü ildən etibarən Azərbaycanda rəqəmsal məhsullar və onlayn xidmətlər təqdim edən platformadır. Əsas məqsədimiz istifadəçilərin ehtiyaclarına uyğun, keyfiyyətli və əlçatan məhsulları sürətli şəkildə təqdim etməkdir.\n\nPlatformamızda premium abunəliklər, proqram təminatları, oyun məhsulları, sosial media xidmətləri, elektron kodlar və digər rəqəmsal həllər mövcuddur. Təqdim etdiyimiz hər bir məhsul satışa çıxarılmazdan əvvəl tərəfimizdən yoxlanılır və istifadəyə hazır vəziyyətdə müştəriyə təhvil verilir.\n\n## Sürətli və rahat xidmət\n\nMirPanel üzərindən sifariş vermək sadə və rahatdır. Avtomatlaşdırılmış sistemimiz sifarişlərin mümkün qədər qısa müddətdə hazırlanmasına və istifadəçiyə çatdırılmasına imkan verir.\n\nFəaliyyətə başladığımız gündən bu günədək **3.500-dən çox istifadəçiyə xidmət göstərmiş və 20.000-dən çox sifarişi uğurla tamamlamışıq**. İstifadəçilərimizin bizə göstərdiyi etimad xidmətlərimizi daim inkişaf etdirməyimiz üçün əsas motivasiyadır.\n\n## Yoxlanılmış məhsullar və zəmanətli xidmət\n\nPlatformada təqdim edilən məhsulların işləkliyi və uyğunluğu əvvəlcədən yoxlanılır. Müştəriyə təqdim etdiyimiz hər bir məhsul və xidmətə müvafiq zəmanət verilir. Zəmanət müddəti və şərtləri məhsulun xüsusiyyətindən asılı olaraq dəyişə bilər və sifarişdən əvvəl istifadəçiyə bildirilir.\n\nMəhsul və ya xidmətlə bağlı texniki çətinlik yarandıqda dəstək komandamız problemi araşdırır və zəmanət şərtlərinə uyğun həll təqdim edir. Bizim üçün satışın tamamlanması xidmətin bitməsi demək deyil — istifadəçilərimizin məhsuldan rahat şəkildə yararlanması da xidmətimizin vacib hissəsidir.\n\n## Təhlükəsizlik və məlumatların qorunması\n\nİstifadəçilərin məxfiliyi MirPanel üçün əsas prioritetlərdən biridir. Sifariş zamanı təqdim edilən şəxsi məlumatlar yalnız xidmətin göstərilməsi, sifarişin icrası və zəruri dəstəyin təmin edilməsi məqsədilə istifadə olunur.\n\nMəlumatların təhlükəsiz saxlanılması üçün müvafiq qoruma tədbirləri tətbiq edilir. İstifadəçi məlumatları qanunvericiliyin tələb etdiyi hallar istisna olmaqla icazəsiz şəxslərə verilmir, satılmır və kommersiya məqsədilə paylaşılmır.\n\n## Müştəri məmnuniyyəti bizim üçün önəmlidir\n\nMirPanel fəaliyyətində şəffaflığa, məsuliyyətə və uzunmüddətli müştəri münasibətlərinə üstünlük verir. Məhsullar haqqında məlumatları aydın təqdim edir, istifadəçilərin suallarını operativ cavablandırmağa və yaranan çətinlikləri qısa müddətdə həll etməyə çalışırıq.\n\nXidmət çeşidimizi mütəmadi yeniləyir, istifadəçi rəylərini nəzərə alır və platformanı daha rahat etmək üçün davamlı çalışırıq.\n\n**MirPanel – yoxlanılmış rəqəmsal məhsulların, zəmanətli xidmətin və etibarlı dəstəyin bir araya gəldiyi platforma.**",
-    "blocks": [],
-    "seoTitle": "Haqqımızda | Mirpanel",
-    "seoDescription": "Mirpanel premium hesabların sürətli və etibarlı aktivləşdirilməsi üçün xidmət göstərir.",
-    "ogTitle": "",
-    "ogDescription": "",
+    "subtitle": "MirPanel rəqəmsal məhsul və xidmətlər üzrə mövcud seçimləri aydın şəkildə təqdim edən onlayn platformadır.",
+    "body": "",
+    "blocks": [
+      {
+        "title": "MirPanel haqqında qısa təqdimat",
+        "text": "**MirPanel** rəqəmsal məhsul və onlayn xidmətlər üçün mövcud planları bir yerdə nəzərdən keçirməyə və uyğun məhsulu sifariş etməyə imkan verən onlayn platformadır. Məqsədimiz məhsul məlumatlarını, qiymətləri və istifadə qaydalarını aydın təqdim etməkdir.",
+        "image": "",
+        "order": 1
+      },
+      {
+        "title": "Rəqəmsal məhsul və xidmətlər",
+        "text": "Saytda əyləncə, video və dizayn alətləri, süni intellekt xidmətləri və digər rəqəmsal məhsullar üzrə mövcud seçimlər göstərilir. Hər məhsul səhifəsində həmin məhsula aid plan, qiymət, mövcudluq və sifariş məlumatları ayrıca təqdim olunur.",
+        "image": "",
+        "order": 2
+      },
+      {
+        "title": "Məhsul məlumatı və təqdimat prosesi",
+        "text": "Sifarişdən əvvəl məhsul səhifəsindəki planı, təqdimat formasını və istifadə qaydalarını diqqətlə oxumaq tövsiyə olunur. Seçilən məhsul və plan barədə sifariş məlumatı mövcud WhatsApp axını ilə dəstək tərəfinə göndərilir; təqdimatın detalları məhsulun öz şərtlərinə əsasən dəqiqləşdirilir.",
+        "image": "",
+        "order": 3
+      },
+      {
+        "title": "Təhlükəsizlik və şəxsi məlumatların qorunması",
+        "text": "Sifariş sahələri məhsula görə dəyişə bilər. İstifadəçi məlumat daxil etməzdən əvvəl sahə başlıqlarını və məhsul qaydalarını yoxlamalı, sifariş üçün tələb olunmayan həssas məlumatları paylaşmamalıdır. Saytda göstərilən məlumatlar sifarişin hazırlanması və dəstək prosesinin aparılması üçün nəzərdə tutulur.",
+        "image": "",
+        "order": 4
+      },
+      {
+        "title": "Müştəri dəstəyi və xidmət prinsipləri",
+        "text": "Məhsulun mövcudluğu, uyğun planın seçilməsi və sifariş qaydası ilə bağlı suallar üçün MirPanel ilə WhatsApp vasitəsilə əlaqə saxlamaq mümkündür. Məhsul haqqında qərar verməzdən əvvəl bütün şərtləri aydınlaşdırmağınız tövsiyə olunur.",
+        "image": "",
+        "order": 5
+      },
+      {
+        "title": "Bizimlə əlaqə",
+        "text": "Sualınız varsa, aşağıdakı əlaqə keçidindən istifadə edərək MirPanel ilə əlaqə saxlaya bilərsiniz.",
+        "image": "",
+        "order": 6
+      }
+    ],
+    "kicker": "Haqqımızda",
+    "homeButtonText": "Ana səhifə",
+    "homeButtonUrl": "/",
+    "productsButtonText": "Məhsullara bax",
+    "productsButtonUrl": "/#products-section",
+    "contactLinkText": "Əlaqə səhifəsinə keçin",
+    "contactLinkUrl": "/elaqe/",
+    "seoTitle": "Haqqımızda | MirPanel",
+    "seoDescription": "MirPanel-in rəqəmsal məhsulları, sifariş prosesi, istifadə qaydaları və dəstək prinsipləri haqqında məlumat.",
+    "ogTitle": "MirPanel haqqında",
+    "ogDescription": "MirPanel-in rəqəmsal məhsulları, sifariş prosesi və xidmət prinsipləri ilə tanış olun.",
     "ogImage": "",
     "index": true,
     "includeInSitemap": true,

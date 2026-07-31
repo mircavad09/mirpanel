@@ -38,6 +38,18 @@ assert.equal(appSource.includes(`${408}${77}`), false);
 assert.equal(active.length, 21);
 assert.equal(pages.size, active.length);
 
+const aboutHtml = infoPages.get("haqqimizda/index.html");
+assert.ok(aboutHtml, "Haqqımızda səhifəsi yaradılmadı");
+assert.equal((aboutHtml.match(/<h1\b/g) || []).length, 1, "Haqqımızda səhifəsində bir H1 olmalıdır");
+assert.ok(aboutHtml.includes('info-page-document info-page-document--about'), "Haqqımızda səhifəsi ayrıca dizayn sinfini almadı");
+assert.ok(aboutHtml.includes('class="info-page-card info-page-card--about"'), "Haqqımızda geniş məzmun sinfini almadı");
+assert.ok(aboutHtml.includes('<p class="info-page-kicker">Haqqımızda</p>'), "Haqqımızda üst etiketi");
+assert.ok(aboutHtml.includes("<strong>MirPanel</strong>"), "Qalın Markdown real HTML-ə çevrilmədi");
+assert.ok(aboutHtml.includes('<a href="/elaqe/">Əlaqə səhifəsinə keçin</a>'), "Admin əlaqə keçidi real HTML-ə çevrilmədi");
+assert.equal(aboutHtml.includes("**MirPanel**"), false, "Haqqımızda səhifəsində Markdown qalığı var");
+assert.equal(/<p>\s*#{1,6}\s/.test(aboutHtml), false, "Haqqımızda səhifəsində başlıq Markdown qalığı var");
+assert.ok(aboutHtml.includes('rel="canonical" href="https://mirpanel.com/haqqimizda/"'), "Haqqımızda canonical dəyişib");
+
 for (const { product, slug } of active) {
   const filePath = `${slug}/index.html`;
   const html = pages.get(filePath);
@@ -297,12 +309,30 @@ assert.deepEqual(
 
 const updatedSections = structuredClone(state.siteSections);
 updatedSections.haqqimizda.body = "Admin məlumat səhifəsi yeniləmə testi.";
+updatedSections.haqqimizda.blocks = [];
 assert.ok(
   generateInfoPageFiles(updatedSections, state.ui)
     .get("haqqimizda/index.html")
     .includes("Admin məlumat səhifəsi yeniləmə testi."),
   "Admin information text did not regenerate the page"
 );
+
+const unsafeAboutState = structuredClone(state);
+unsafeAboutState.siteSections.haqqimizda.blocks = [{
+  title: "Təhlükəsiz bölmə",
+  text: "## Alt başlıq\n\n**Qalın mətn** və [əlaqə](/elaqe/).<script>alert(1)</script><iframe src=x></iframe>[pis](javascript:alert(1))",
+  order: 1
+}];
+const unsafeAboutHtml = generateInfoPageFiles(
+  normalizeAdminPayload(unsafeAboutState).siteSections,
+  state.ui,
+  state.cms
+).get("haqqimizda/index.html");
+assert.equal(unsafeAboutHtml.includes("<script>alert"), false, "Haqqımızda script sanitizasiyası");
+assert.equal(unsafeAboutHtml.includes("<iframe"), false, "Haqqımızda iframe sanitizasiyası");
+assert.equal(unsafeAboutHtml.includes("javascript:"), false, "Haqqımızda təhlükəli URL sanitizasiyası");
+assert.ok(unsafeAboutHtml.includes("<h2>Alt başlıq</h2>"), "Haqqımızda alt başlıq formatı");
+assert.ok(unsafeAboutHtml.includes("<strong>Qalın mətn</strong>"), "Haqqımızda qalın mətn formatı");
 
 assert.equal(
   generateSitemap(deactivated, state.siteSections).includes(

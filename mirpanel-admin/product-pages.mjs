@@ -487,11 +487,11 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=final22">
   <link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1">
-  <link rel="stylesheet" href="/info-page.css?v=20260728-1">
+  <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-1" : "20260728-1"}">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
-<body class="product-page-document info-page-document">
+<body class="product-page-document info-page-document${page.key === "haqqimizda" ? " info-page-document--about" : ""}">
   <header class="product-page-header">
     <div class="product-page-header-inner">
       <a class="product-page-brand" href="/" aria-label="Mirpanel ana səhifə">
@@ -506,9 +506,10 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
     <nav class="info-page-breadcrumb" aria-label="Səhifə yolu">
       <a href="/">Ana səhifə</a><span aria-hidden="true">/</span><span>${escapeHtml(metadata.h1)}</span>
     </nav>
-    <article class="info-page-card">
-      <p class="info-page-kicker">MIRPANEL</p>
+    <article class="info-page-card${page.key === "haqqimizda" ? " info-page-card--about" : ""}">
+      <p class="info-page-kicker">${escapeHtml(page.key === "haqqimizda" ? (cleanText(page.section.kicker) || "Haqqımızda") : "MIRPANEL")}</p>
       <h1>${escapeHtml(metadata.h1)}</h1>
+      ${page.key === "haqqimizda" && cleanText(page.section.subtitle) ? `<p class="about-page-lead">${escapeHtml(page.section.subtitle)}</p>` : ""}
       ${content}
     </article>
   </main>
@@ -520,13 +521,107 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   return applyCmsToInfoHtml(html, page, cms, ui);
 }
 
+function safeRichTextUrl(value) {
+  const source = String(value || "").trim();
+  if (/^(?:\/(?!\/)|#)/.test(source)) return source;
+  try {
+    const parsed = new URL(source);
+    return /^(?:https?:)$/.test(parsed.protocol) ? parsed.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function richTextHtmlToMarkdown(value) {
+  return String(value || "")
+    .replace(/<a\s+href="([^"]*)"[^>]*>([\s\S]*?)<\/a>/gi, (_, href, label) => `[${label}](${href})`)
+    .replace(/<(?:strong|b)>/gi, "**").replace(/<\/(?:strong|b)>/gi, "**")
+    .replace(/<(?:em|i)>/gi, "*").replace(/<\/(?:em|i)>/gi, "*")
+    .replace(/<h[1-4][^>]*>/gi, "\n## ").replace(/<\/h[1-4]>/gi, "\n")
+    .replace(/<li[^>]*>/gi, "\n- ").replace(/<\/li>/gi, "")
+    .replace(/<br\s*\/?>/gi, "\n").replace(/<\/p>/gi, "\n\n")
+    .replace(/<(?:p|ul|ol)[^>]*>/gi, "\n")
+    .replace(/<\/(?:ul|ol)>/gi, "\n")
+    .replace(/<[^>]+>/g, "");
+}
+
+function renderRichInline(value) {
+  const links = [];
+  let source = String(value || "").replace(/\[([^\]\n]+)\]\(([^)\s]+)\)/g, (_, label, href) => {
+    const safeHref = safeRichTextUrl(href);
+    if (!safeHref) return label;
+    const token = `RICH_LINK_${links.length}_TOKEN`;
+    links.push(`<a href="${escapeAttribute(safeHref)}">${escapeHtml(label)}</a>`);
+    return token;
+  });
+  source = escapeHtml(source)
+    .replace(/\*\*([^*\n]+)\*\*/g, "<strong>$1</strong>")
+    .replace(/__([^_\n]+)__/g, "<strong>$1</strong>")
+    .replace(/\*([^*\n]+)\*/g, "<em>$1</em>");
+  links.forEach((link, index) => { source = source.replace(`RICH_LINK_${index}_TOKEN`, link); });
+  return source;
+}
+
+function renderSafeRichText(value) {
+  const source = richTextHtmlToMarkdown(value).replace(/\r/g, "").trim();
+  if (!source) return "";
+  const output = [];
+  let paragraph = [];
+  let list = [];
+  const flushParagraph = () => {
+    const text = paragraph.join(" ").trim();
+    if (text) output.push(`<p>${renderRichInline(text)}</p>`);
+    paragraph = [];
+  };
+  const flushList = () => {
+    if (list.length) output.push(`<ul>${list.map((item) => `<li>${renderRichInline(item)}</li>`).join("")}</ul>`);
+    list = [];
+  };
+  for (const rawLine of source.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) { flushParagraph(); flushList(); continue; }
+    const heading = line.match(/^#{1,6}\s+(.+)$/);
+    if (heading) {
+      flushParagraph(); flushList();
+      const text = heading[1].trim();
+      if (text) output.push(`<h2>${renderRichInline(text)}</h2>`);
+      continue;
+    }
+    const listItem = line.match(/^(?:[-*+]\s+|\d+[.)]\s+)(.+)$/);
+    if (listItem) { flushParagraph(); list.push(listItem[1].trim()); continue; }
+    flushList();
+    paragraph.push(line);
+  }
+  flushParagraph(); flushList();
+  return output.join("");
+}
+
 function renderInfoPageContent(key, section, siteSections, ui) {
   if (key === "haqqimizda") {
     const body = fixMojibake(section.body || section.text);
-    return `<div class="info-page-copy">${body ? `<p>${escapeHtml(body)}</p>` : ""}</div>
+    const blocks = (Array.isArray(section.blocks) ? section.blocks : [])
+      .slice()
+      .sort((a, b) => Number(a.order) - Number(b.order))
+      .map((block) => {
+        const title = cleanText(fixMojibake(block.title));
+        const text = renderSafeRichText(fixMojibake(block.text));
+        if (!title && !text && !block.image) return "";
+        return `<section>${title ? `<h2>${escapeHtml(title)}</h2>` : ""}${block.image ? `<img src="${escapeAttribute(rootRelativeUrl(block.image))}" alt="${escapeAttribute(title || "MirPanel haqqında")}" loading="lazy">` : ""}${text}</section>`;
+      })
+      .filter(Boolean)
+      .join("");
+    const homeText = cleanText(fixMojibake(section.homeButtonText)) || "Ana səhifə";
+    const homeUrl = pageLinkUrl(section.homeButtonUrl) || "/";
+    const productsText = cleanText(fixMojibake(section.productsButtonText)) || "Məhsullara bax";
+    const productsUrl = pageLinkUrl(section.productsButtonUrl) || "/#products-section";
+    const contactText = cleanText(fixMojibake(section.contactLinkText));
+    const contactUrl = pageLinkUrl(section.contactLinkUrl);
+    return `<div class="info-page-copy about-page-copy">${blocks ? "" : renderSafeRichText(body)}</div>
+      ${blocks ? `<div class="info-page-sections about-page-sections">${blocks}</div>` : ""}
+      ${contactText && contactUrl ? `<p class="about-page-contact-link"><a href="${escapeAttribute(contactUrl)}">${escapeHtml(contactText)}</a></p>` : ""}
       <div class="info-page-actions">
-        <a href="/">Ana səhifə</a>
-        <a class="is-primary" href="/#products-section">Məhsullara bax</a>
+        <a href="${escapeAttribute(homeUrl)}">${escapeHtml(homeText)}</a>
+        <a class="is-primary" href="${escapeAttribute(productsUrl)}">${escapeHtml(productsText)}</a>
       </div>`;
   }
 
@@ -678,12 +773,12 @@ function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
     .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttribute(section.ogTitle || title)}">`)
     .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttribute(section.ogDescription || description)}">`)
     .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${escapeAttribute(absoluteUrl(section.ogImage || cms.seo?.home?.ogImage || "assets/logo.png"))}">`)
-    .replace(/(<article class="info-page-card">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/, `$1${escapeHtml(h1)}$2`)
+    .replace(/(<article class="info-page-card(?: info-page-card--about)?">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/, `$1${escapeHtml(h1)}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms, ui)}</footer>`);
   if (buttonText && buttonUrl) {
     next = next.replace(/(<div class="info-page-actions">[\s\S]*?)(<\/div>)/, `$1<a class="is-primary" href="${escapeAttribute(buttonUrl)}">${escapeHtml(buttonText)}</a>$2`);
   }
-  if (blocks) next = next.replace(/(<\/article>\s*<\/main>)/, `<div class="info-page-sections">${blocks}</div>$1`);
+  if (page.key !== "haqqimizda" && blocks) next = next.replace(/(<\/article>\s*<\/main>)/, `<div class="info-page-sections">${blocks}</div>$1`);
   return next;
 }
 

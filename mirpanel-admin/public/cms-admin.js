@@ -167,6 +167,20 @@
     createView("history", panel("Dəyişiklik tarixçəsi", "Məxfi məlumatlar göstərilmir", '<button class="btn" id="refreshHistory" type="button">Tarixçəni yenilə</button><div id="historyList" class="cmsList"></div>'));
   }
   function pageForm(key, label) {
+    if (key === "haqqimizda") {
+      return panel(label, "Haqqımızda səhifəsinin məzmunu, keçidləri və SEO məlumatları", `<div class="formGrid" data-site-page="${key}">
+        ${siteField("Aktivdir", key, "enabled", "checkbox")}${siteField("Slug", key, "slug")}
+        ${siteField("Kiçik üst etiket", key, "kicker")}${siteField("Əsas H1", key, "title")}
+        ${siteField("Giriş mətni", key, "subtitle", "textarea", true)}
+        ${siteField("Ana səhifə düyməsi", key, "homeButtonText")}${siteField("Ana səhifə keçidi", key, "homeButtonUrl")}
+        ${siteField("Məhsullar düyməsi", key, "productsButtonText")}${siteField("Məhsullar keçidi", key, "productsButtonUrl")}
+        ${siteField("Əlaqə keçidinin mətni", key, "contactLinkText")}${siteField("Əlaqə keçidinin URL-si", key, "contactLinkUrl")}
+        ${siteField("SEO title", key, "seoTitle")}${siteField("Meta description", key, "seoDescription", "textarea", true)}
+        ${siteField("Open Graph title", key, "ogTitle")}${siteField("Open Graph şəkli", key, "ogImage")}
+        ${siteField("Open Graph description", key, "ogDescription", "textarea", true)}
+        ${siteField("İndekslənsin", key, "index", "checkbox")}${siteField("Sitemap-a daxil olsun", key, "includeInSitemap", "checkbox")}
+      </div><div class="sectionHead"><h3>Məzmun bölmələri</h3><button class="btn" type="button" data-add-block="${key}">Bölmə əlavə et</button></div><p class="formHint">Bölmə mətnində abzas, **qalın mətn**, siyahı və [daxili keçid](/elaqe/) istifadə edilə bilər. Təhlükəli HTML bloklanır.</p><div class="cmsList" data-block-list="${key}"></div>`);
+    }
     return panel(label, `${label} səhifəsinin məzmunu və SEO məlumatları`, `<div class="formGrid" data-site-page="${key}">
       ${siteField("Aktivdir", key, "enabled", "checkbox")}${siteField("Slug", key, "slug")}
       ${siteField("H1", key, "title")}${siteField("Giriş mətni", key, "subtitle")}
@@ -652,7 +666,18 @@
         body: JSON.stringify({ baseSha: state.baseSha, data: state.data })
       });
       state.previewDigest = result.previewDigest;
-      el("cmsPreviewResult").innerHTML = `<strong>Önizləmə uğurludur.</strong><p>${result.productCount} məhsul, ${result.activeProductCount} aktiv məhsul, ${result.pageCount} statik səhifə.</p>${result.warnings.map((warning) => `<p class="bad">${esc(warning)}</p>`).join("")}`;
+      const previewResult = el("cmsPreviewResult");
+      previewResult.innerHTML = `<strong>Önizləmə uğurludur.</strong><p>${result.productCount} məhsul, ${result.activeProductCount} aktiv məhsul, ${result.pageCount} statik səhifə.</p>${result.warnings.map((warning) => `<p class="bad">${esc(warning)}</p>`).join("")}`;
+      if (result.aboutPreviewHtml) {
+        const heading = document.createElement("h3");
+        heading.textContent = "Haqqımızda səhifəsinin real önizləməsi";
+        const frame = document.createElement("iframe");
+        frame.className = "cmsPagePreview";
+        frame.title = "Haqqımızda səhifəsinin önizləməsi";
+        frame.setAttribute("sandbox", "");
+        frame.srcdoc = result.aboutPreviewHtml;
+        previewResult.append(heading, frame);
+      }
       toast("Önizləmə və yoxlamalar uğurla tamamlandı.");
     } catch (error) {
       state.previewDigest = "";

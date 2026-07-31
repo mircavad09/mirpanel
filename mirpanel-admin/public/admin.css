@@ -920,6 +920,16 @@ th {
   border-radius: 14px;
 }
 
+.cmsPagePreview {
+  display: block;
+  width: 100%;
+  min-height: 720px;
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: #070707;
+}
+
 @media (max-width: 760px) {
   .cmsListItem.compact {
     grid-template-columns: 1fr;

@@ -706,6 +706,15 @@ async function handleApi(request, response) {
       .createHash("sha256")
       .update(JSON.stringify({ baseSha: body.baseSha, data: normalized }))
       .digest("hex");
+    const aboutSlug = normalized.siteSections?.haqqimizda?.slug || "haqqimizda";
+    let aboutPreviewHtml = previewInfoPages.get(`${aboutSlug}/index.html`) || "";
+    if (aboutPreviewHtml) {
+      const previewCssPath = path.join(root, "..", "info-page.css");
+      const previewCss = fs.existsSync(previewCssPath) ? fs.readFileSync(previewCssPath, "utf8") : "";
+      aboutPreviewHtml = aboutPreviewHtml
+        .replace("<head>", '<head><base href="https://mirpanel.com/">')
+        .replace("</head>", `<style>${previewCss.replace(/<\/style/gi, "<\\/style")}</style></head>`);
+    }
     session.preview = { digest, baseSha: body.baseSha, at: Date.now() };
     return json(response, 200, {
       ok: true,
@@ -713,6 +722,7 @@ async function handleApi(request, response) {
       productCount: normalized.products.length,
       activeProductCount: normalized.products.filter((item) => item.active !== false).length,
       pageCount: previewProductPages.size + previewInfoPages.size,
+      aboutPreviewHtml,
       warnings: normalized.cms?.seo?.robotsIndexing === false
         ? ["Bütün saytın indekslənməsi söndürülüb."]
         : []
