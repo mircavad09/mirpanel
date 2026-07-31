@@ -215,6 +215,9 @@ function ensureProduct(product) {
   product.seoSlug = product.seoSlug ? slug(product.seoSlug).replaceAll("_", "-") : "";
   product.seoTitle = product.seoTitle || "";
   product.seoDescription = product.seoDescription || "";
+  product.seoH1 = product.seoH1 || product.title;
+  product.seoPrimaryKeyword = product.seoPrimaryKeyword || String(product.seoKeywords || "").split(",")[0].trim() || `${product.title} almaq`;
+  product.seoRelatedKeywords = product.seoRelatedKeywords || String(product.seoKeywords || "").split(",").slice(1).join(",").trim();
   product.seoKeywords = product.seoKeywords || "";
   product.seoContent = product.seoContent || "";
   product.seoIndex = product.seoIndex !== false;
@@ -570,6 +573,9 @@ function renderProductForm() {
   setValue("productSeoSlug", product.seoSlug || "");
   setValue("productSeoTitle", product.seoTitle || "");
   setValue("productSeoDescription", product.seoDescription || "");
+  setValue("productSeoH1", product.seoH1 || product.title);
+  setValue("productSeoPrimaryKeyword", product.seoPrimaryKeyword || "");
+  setValue("productSeoRelatedKeywords", product.seoRelatedKeywords || "");
   setValue(
     "productSeoKeywords",
     Array.isArray(product.seoKeywords) ? product.seoKeywords.join(", ") : (product.seoKeywords || "")
@@ -777,6 +783,9 @@ bindProductField("productNote", (p, e) => p.note = e.value);
 bindProductField("productSeoSlug", (p, e) => p.seoSlug = slug(e.value).replaceAll("_", "-"));
 bindProductField("productSeoTitle", (p, e) => p.seoTitle = e.value);
 bindProductField("productSeoDescription", (p, e) => p.seoDescription = e.value);
+bindProductField("productSeoH1", (p, e) => p.seoH1 = e.value);
+bindProductField("productSeoPrimaryKeyword", (p, e) => p.seoPrimaryKeyword = e.value);
+bindProductField("productSeoRelatedKeywords", (p, e) => p.seoRelatedKeywords = e.value);
 bindProductField("productSeoKeywords", (p, e) => p.seoKeywords = e.value);
 bindProductField("productSeoContent", (p, e) => p.seoContent = e.value);
 bindProductField("aboutHtml", (p, e) => { state.data.content[p.id] ??= {}; state.data.content[p.id].aboutHtml = e.value; });
@@ -1044,6 +1053,9 @@ $("addProductBtn").addEventListener("click", () => {
       seoSlug: slug(`${title}-almaq`).replaceAll("_", "-"),
       seoTitle: "",
       seoDescription: "",
+      seoH1: title,
+      seoPrimaryKeyword: `${title} almaq`,
+      seoRelatedKeywords: "",
       seoKeywords: "",
       seoContent: "",
       plans: []

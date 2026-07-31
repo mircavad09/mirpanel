@@ -602,6 +602,9 @@
       <label>Forma başlığı<input data-product-extra="formTitle"></label>
       <label class="full">Geniş açıqlama<textarea rows="6" data-product-extra="longDescription"></textarea></label>
       <label class="full">İstifadə qaydaları<textarea rows="6" data-product-extra="usageRules"></textarea></label>
+      <label>H1 başlığı<input data-product-extra="seoH1"></label>
+      <label>Əsas açar ifadə<input data-product-extra="seoPrimaryKeyword"></label>
+      <label class="full">Əlaqəli açar ifadələr<textarea data-product-extra="seoRelatedKeywords"></textarea></label>
       <label>Open Graph title<input data-product-extra="seoOgTitle"></label>
       <label>Open Graph şəkli<input data-product-extra="seoOgImage"></label>
       <label class="full">Open Graph description<textarea data-product-extra="seoOgDescription"></textarea></label>

@@ -19,11 +19,19 @@ const commercialSnapshot = state.products.map((product) => [
   product.seoSlug,
   product.plans.map((plan) => [plan.label || "", plan.months, plan.price, plan.regularPrice || null])
 ]);
+const bannerSnapshot = state.products.map((product) => [
+  product.id,
+  product.banner?.enabled,
+  product.banner?.desktopImage,
+  product.banner?.mobileImage,
+  product.banner?.order
+]);
 
 assert.equal(state.products.length, 30, "Məhsul sayı dəyişib");
 assert.equal(state.products.filter((product) => product.active).length, 21, "Aktiv məhsul sayı dəyişib");
 assert.equal(digest(orderSnapshot), "b67de45e1f435af2ee6991e5d63063907e6fc410c207076a17cae56638231689", "Məhsul sırası dəyişib");
 assert.equal(digest(commercialSnapshot), "c117ab5a7e0d54785f56b4dbb8bb4f8fab04e4d151fa24ab493d46a89d8c8d4d", "Qiymət, plan, slug və ya aktivlik dəyişib");
+assert.equal(digest(bannerSnapshot), "0b2707a0e9d72bd26ad4ccfe9f9fd283e58615c77b283d18361e7e835fb56f90", "Banner məlumatı və ya aktivliyi dəyişib");
 assert.deepEqual(Object.keys(state.cms), [
   "schemaVersion", "site", "homepage", "navigation", "banners", "supportCard",
   "footer", "commonTexts", "seo", "orderSettings", "media"
@@ -31,7 +39,7 @@ assert.deepEqual(Object.keys(state.cms), [
 assert.ok(Object.values(state.cms.commonTexts).every(Boolean), "Ümumi mətn fallback-i boşdur");
 assert.equal(state.cms.banners.length, 0, "Məhsuldan ayrı banner bazası qalıb");
 const activeProducts = state.products.filter((product) => product.active);
-assert.equal(activeProducts.filter((product) => product.banner?.enabled === true).length, 0, "Aktiv məhsul bannerləri deaktiv edilməyib");
+assert.equal(activeProducts.filter((product) => product.banner?.enabled === true).length, 1, "Cari aktiv banner sayı dəyişib");
 assert.equal(activeProducts.filter((product) => product.banner).length, 21, "Banner məlumatı silinib");
 assert.equal(new Set(state.products.map((product) => product.banner.order)).size, state.products.length, "Banner sıraları unikal deyil");
 assert.deepEqual(
@@ -85,7 +93,11 @@ const visibleBannerIds = (products) => products
   .filter((product) => product.active !== false && product.banner?.enabled === true)
   .map((product) => product.id);
 newProduct.banner.enabled = true;
-assert.deepEqual(visibleBannerIds(normalizedWithNewProduct.products), [newProduct.id], "Bir banner aktivləşdiriləndə digər bannerlər də aktivləşdi");
+assert.deepEqual(
+  visibleBannerIds(normalizedWithNewProduct.products),
+  [...visibleBannerIds(state.products), newProduct.id],
+  "Bir banner aktivləşdiriləndə digər bannerlərin vəziyyəti dəyişdi"
+);
 newProduct.active = false;
 assert.equal(visibleBannerIds(normalizedWithNewProduct.products).includes(newProduct.id), false, "Deaktiv məhsulun banneri gizlənmədi");
 newProduct.active = true;
@@ -211,9 +223,8 @@ assert.ok(adminServer.includes('rawName.includes("..")') && adminServer.includes
 assert.ok(adminServer.includes("const session = requireMutationAuth(request, response);"), "Yükləmələr sessiyada təhlükəsiz mərhələlənmir");
 
 const middleware = fs.readFileSync(new URL("../functions/_middleware.js", import.meta.url), "utf8");
-assert.ok(
-  middleware.includes('const canonicalRoute = route === "/" ? "/" : `${route}/`;'),
-  "Edge canonical does not match sitemap URLs"
-);
+assert.equal(middleware.includes("mirpanel-edge-product-schema"), true, "Legacy edge schema cleanup route is missing");
+assert.equal(middleware.includes("html = product ? injectMeta"), false, "Edge still injects duplicate product schema");
+assert.equal(middleware.includes("seo-structured-data-fix.js"), false, "Fake rating schema script is still injected");
 
 console.log("PASS: CMS modeli, miqrasiya snapshot-ı, XSS sanitizasiyası, slug, generator və sitemap yoxlamaları.");

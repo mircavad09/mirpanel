@@ -747,6 +747,17 @@ function normalizeProduct(product = {}, index = 0) {
     seoSlug: normalizeSeoSlug(product.seoSlug),
     seoTitle: String(product.seoTitle || ""),
     seoDescription: String(product.seoDescription || ""),
+    seoH1: cleanText(product.seoH1 || productTitle, productTitle, 200),
+    seoPrimaryKeyword: cleanText(
+      product.seoPrimaryKeyword || String(product.seoKeywords || "").split(",")[0] || `${productTitle} almaq`,
+      `${productTitle} almaq`,
+      160
+    ),
+    seoRelatedKeywords: cleanText(
+      product.seoRelatedKeywords || String(product.seoKeywords || "").split(",").slice(1).join(","),
+      "",
+      1000
+    ),
     seoKeywords: Array.isArray(product.seoKeywords)
       ? product.seoKeywords.map((keyword) => String(keyword).trim()).filter(Boolean).join(", ")
       : String(product.seoKeywords || ""),

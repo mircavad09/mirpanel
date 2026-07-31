@@ -54,6 +54,7 @@ function json(response, status, body, headers = {}) {
   response.writeHead(status, {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
+    "X-Robots-Tag": "noindex, nofollow",
     ...headers
   });
   response.end(JSON.stringify(body));
@@ -242,6 +243,44 @@ function bumpAssetVersions(source, version) {
   return source
     .replace(/app\.js\?v=[^"]+/g, `app.js?v=${version}`)
     .replace(/order-confirmation\.js\?v=[^"]+/g, `order-confirmation.js?v=${version}`);
+}
+
+function patchHomeStructuredData(source, cms = {}) {
+  const site = cms.site || {};
+  const brand = String(site.brandName || "Mirpanel").trim() || "Mirpanel";
+  const phone = String(site.whatsappNumber || "").replace(/\D/g, "");
+  const logoPath = String(site.logo || "assets/logo.png").replace(/^\/+/, "");
+  const organization = {
+    "@type": "Organization",
+    "@id": "https://mirpanel.com/#organization",
+    name: brand,
+    url: "https://mirpanel.com/",
+    logo: `https://mirpanel.com/${logoPath}`
+  };
+  if (phone) {
+    organization.contactPoint = {
+      "@type": "ContactPoint",
+      telephone: `+${phone}`,
+      contactType: "customer support",
+      availableLanguage: "az"
+    };
+  }
+  const schema = {
+    "@context": "https://schema.org",
+    "@graph": [organization, {
+      "@type": "WebSite",
+      "@id": "https://mirpanel.com/#website",
+      name: brand,
+      url: "https://mirpanel.com/",
+      publisher: { "@id": "https://mirpanel.com/#organization" },
+      inLanguage: "az"
+    }]
+  };
+  const jsonLd = JSON.stringify(schema).replace(/</g, "\\u003c");
+  return source.replace(
+    /(<script id="mirpanel-home-schema" type="application\/ld\+json">)[\s\S]*?(<\/script>)/,
+    `$1\n  ${jsonLd}\n  $2`
+  );
 }
 
 const defaultSeoSlugs = {
@@ -755,7 +794,7 @@ async function handleApi(request, response) {
     const patched = patchAppSource(current.source, adminData);
     const indexFile = await getRepoFile("index.html");
     const version = `admin-${Date.now()}`;
-    const patchedIndex = bumpAssetVersions(indexFile.source, version);
+    const patchedIndex = patchHomeStructuredData(bumpAssetVersions(indexFile.source, version), adminData.cms);
     const productPages = generateProductPageFiles(adminData.products, adminData.siteSections, adminData.cms, adminData.content);
     const infoPages = generateInfoPageFiles(adminData.siteSections, adminData.ui, adminData.cms);
     const files = new Map([
@@ -815,7 +854,8 @@ function serveFile(response, name) {
 
   response.writeHead(200, {
     "Content-Type": mime[path.extname(file)] || "application/octet-stream",
-    "Cache-Control": "no-store"
+    "Cache-Control": "no-store",
+    "X-Robots-Tag": "noindex, nofollow"
   });
 
   fs.createReadStream(file).pipe(response);

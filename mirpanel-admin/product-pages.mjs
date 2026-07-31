@@ -43,8 +43,8 @@ const adminRedirects = [
 ];
 
 const standaloneSeoRoutes = [
-  "/netflix-almaq /netflix-almaq/ 301",
-  "/netflix-almaq/ /netflix-almaq/index.html 200"
+  "/netflix-almaq /netflix-sexsi-almaq/ 301",
+  "/netflix-almaq/ /netflix-sexsi-almaq/ 301"
 ];
 
 export function seoSlug(value) {
@@ -146,7 +146,6 @@ export function generateSitemap(products = [], siteSections = {}, date = new Dat
       add(`/${slug}/`, "monthly", "0.7");
     }
   }
-  add("/netflix-almaq/", "weekly", "0.9");
   for (const { product, slug } of activeProductsWithSlugs(products)) {
     if (product.includeInSitemap !== false && product.seoIndex !== false) {
       add(`/${slug}/`, "weekly", "0.9");
@@ -175,7 +174,7 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
   }
 
   for (const slug of primaryById.values()) {
-    lines.push(`/${slug} /${slug}/index.html 200`, `/${slug}/ /${slug}/index.html 200`);
+    lines.push(`/${slug} /${slug}/ 301`, `/${slug}/ /${slug}/index.html 200`);
   }
 
   for (const [productId, aliases] of Object.entries(defaultSeoAliases)) {
@@ -239,6 +238,7 @@ export function generateInfoPageFiles(siteSections = {}, ui = {}, cms = {}) {
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
   const canonical = `${SITE_URL}/${slug}/`;
   const title = cleanText(product.seoTitle) || `${cleanText(product.title)} | Mirpanel`;
+  const h1 = cleanText(product.seoH1) || cleanText(product.title);
   const description =
     cleanText(product.seoDescription) ||
     cleanText(product.desc) ||
@@ -247,7 +247,8 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   const imageSrc = rootRelativeUrl(product.image);
   const availability = productAvailability(product);
   const currencyCode = schemaCurrency(product.currency);
-  const offers = productOffers(product, canonical, availability, currencyCode);
+  const sellerName = cleanText(cms.site?.brandName) || "Mirpanel";
+  const offers = productOffers(product, canonical, availability, currencyCode, sellerName);
   const similar = similarProducts(product, activeProducts);
   const usageText =
     cleanText(product.confirmationModal?.description) ||
@@ -262,6 +263,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
       {
         "@type": "Product",
         "@id": `${canonical}#product`,
+        url: canonical,
         name: cleanText(product.title),
         description,
         image: [imageUrl],
@@ -282,6 +284,12 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
           {
             "@type": "ListItem",
             position: 2,
+            name: "Məhsullar",
+            item: `${SITE_URL}/#products-section`
+          },
+          {
+            "@type": "ListItem",
+            position: 3,
             name: cleanText(product.title),
             item: canonical
           }
@@ -332,12 +340,17 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   </header>
 
   <main id="productPageView" class="product-page-root">
+    <nav class="product-page-breadcrumb" aria-label="Breadcrumb">
+      <a href="/">Ana səhifə</a><span aria-hidden="true">›</span>
+      <a href="/#products-section">Məhsullar</a><span aria-hidden="true">›</span>
+      <span aria-current="page">${escapeHtml(product.title)}</span>
+    </nav>
     <div class="product-page-layout">
       <article class="product-page-card">
         <div class="product-page-card-grid">
           <div class="product-page-media">
             <span class="product-page-availability-badge${availability.inStock ? "" : " is-out"}">${escapeHtml(availability.label)}</span>
-            <img id="pp-main-img" src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(product.title)}">
+            <img id="pp-main-img" src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(product.title)}" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
@@ -346,7 +359,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
               ${product.category ? `<span class="product-page-category">${escapeHtml(product.category)}</span>` : ""}
               <span class="product-page-status${availability.inStock ? "" : " is-out"}">${escapeHtml(availability.label)}</span>
             </div>
-            <h1 id="pp-main-title" class="product-page-title">${escapeHtml(product.title)}</h1>
+            <h1 id="pp-main-title" class="product-page-title">${escapeHtml(h1)}</h1>
             ${product.desc ? `<p class="product-page-description">${escapeHtml(product.desc)}</p>` : ""}
             <div class="product-page-delivery">
               <strong>${DELIVERY_TEXT}</strong>
@@ -388,6 +401,8 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         </article>
       </div>
     </section>
+
+    ${renderProductFaq(product)}
 
     <section class="pp-bottom-section" hidden aria-hidden="true">
       <div id="pp-tabs-container"></div>
@@ -762,7 +777,7 @@ function renderSimilar(similar) {
       ? `${price.toFixed(2)} ${cleanText(product.currency)}`
       : "Stokda yoxdur";
     return `<a class="product-page-similar-card" href="/${escapeAttribute(slug)}/">
-      <img src="${escapeAttribute(rootRelativeUrl(product.image))}" class="product-page-similar-image" alt="${escapeAttribute(product.title)}">
+      <img src="${escapeAttribute(rootRelativeUrl(product.image))}" class="product-page-similar-image" alt="${escapeAttribute(product.imageAlt || product.title)}" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title">${escapeHtml(product.title)}</div>
       ${product.category ? `<div class="product-page-similar-category">${escapeHtml(product.category)}</div>` : ""}
       <div class="product-page-similar-price">${escapeHtml(priceText)}</div>
@@ -770,7 +785,7 @@ function renderSimilar(similar) {
   }).join("");
 }
 
-function productOffers(product, canonical, availability, priceCurrency) {
+function productOffers(product, canonical, availability, priceCurrency, sellerName) {
   return (product.plans || [])
     .map((plan) => Number(plan.price))
     .filter((price) => Number.isFinite(price) && price >= 0)
@@ -780,8 +795,23 @@ function productOffers(product, canonical, availability, priceCurrency) {
       price: price.toFixed(2),
       priceCurrency,
       availability: availability.schema,
-      itemCondition: "https://schema.org/NewCondition"
+      itemCondition: "https://schema.org/NewCondition",
+      seller: { "@type": "Organization", name: sellerName, url: SITE_URL }
     }));
+}
+
+function renderProductFaq(product) {
+  const title = cleanText(product.title);
+  const plans = (product.plans || [])
+    .filter((plan) => Number.isFinite(Number(plan.price)))
+    .map((plan) => `${cleanText(plan.label) || `${Number(plan.months) || 1} aylıq plan`} — ${Number(plan.price).toFixed(2)} ${cleanText(product.currency) || "AZN"}`);
+  const planText = plans.length ? plans.join(", ") : "Hazırda sifariş üçün açıq plan yoxdur.";
+  return `<section class="product-page-faq" aria-labelledby="product-faq-title">
+    <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
+    <details><summary>${escapeHtml(title)} üçün hansı planlar mövcuddur?</summary><p>${escapeHtml(planText)}</p></details>
+    <details><summary>${escapeHtml(title)} sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
+    <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
+  </section>`;
 }
 
 function productAvailability(product) {
