@@ -3209,6 +3209,13 @@ const CMS_CONTENT = {
       "size": 5547663,
       "type": "image/png",
       "uploadedAt": ""
+    },
+    {
+      "path": "/uploads/products/media-1785511117501-4809285c.jpg?v=1785511117501",
+      "alt": "",
+      "size": 161840,
+      "type": "image/jpeg",
+      "uploadedAt": "2026-07-31T15:18:37.501Z"
     }
   ]
 };
