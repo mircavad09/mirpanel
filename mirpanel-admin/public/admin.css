@@ -930,6 +930,14 @@ th {
   background: #070707;
 }
 
+.legalTextEditor {
+  min-height: 620px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Consolas, "Liberation Mono", monospace;
+  line-height: 1.55;
+  tab-size: 2;
+}
+
 @media (max-width: 760px) {
   .cmsListItem.compact {
     grid-template-columns: 1fr;

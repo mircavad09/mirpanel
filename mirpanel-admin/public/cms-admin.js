@@ -199,12 +199,15 @@
     </div><div class="sectionHead"><h3>Əlavə bölmələr</h3><button class="btn" type="button" data-add-block="elaqe">Bölmə əlavə et</button></div><div class="cmsList" data-block-list="elaqe"></div>`);
   }
   function termsForm() {
-    return panel("Şərtlər", "Təhlükəsiz formatlı qayda bölmələri", `<div class="formGrid">
+    return panel("Şərtlər", "Uzun hüquqi mətn, formatlama və SEO məlumatları", `<div class="formGrid">
       ${siteField("Aktivdir", "sertler", "enabled", "checkbox")}${siteField("Slug", "sertler", "slug")}
-      ${siteField("H1", "sertler", "title")}${siteField("Giriş mətni", "sertler", "subtitle")}
-      ${siteField("Əsas mətn", "sertler", "body", "richtext", true)}
+      ${siteField("H1", "sertler", "title")}
+      <label class="full">Tam hüquqi mətn<textarea class="legalTextEditor" rows="32" data-site="sertler.body"></textarea><small># əsas bölmə, ## alt bölmə, - siyahı, **qalın mətn** və [keçid](URL) formatları dəstəklənir. Script, iframe və təhlükəli HTML bloklanır.</small></label>
       ${siteField("SEO title", "sertler", "seoTitle")}${siteField("Meta description", "sertler", "seoDescription", "textarea", true)}
-    </div><div class="sectionHead"><h3>Qayda bölmələri</h3><button class="btn" type="button" data-add-block="sertler">Qayda əlavə et</button></div><div class="cmsList" data-block-list="sertler"></div>`);
+      ${siteField("Open Graph title", "sertler", "ogTitle")}${siteField("Open Graph şəkli", "sertler", "ogImage")}
+      ${siteField("Open Graph description", "sertler", "ogDescription", "textarea", true)}
+      ${siteField("İndekslənsin", "sertler", "index", "checkbox")}${siteField("Sitemap-a daxil olsun", "sertler", "includeInSitemap", "checkbox")}
+    </div>`);
   }
   function siteField(label, page, key, type = "text", full = false) {
     const attrs = `data-site="${page}.${key}"`;
@@ -679,6 +682,16 @@
         frame.title = "Haqqımızda səhifəsinin önizləməsi";
         frame.setAttribute("sandbox", "");
         frame.srcdoc = result.aboutPreviewHtml;
+        previewResult.append(heading, frame);
+      }
+      if (result.termsPreviewHtml) {
+        const heading = document.createElement("h3");
+        heading.textContent = "Şərtlər səhifəsinin real önizləməsi";
+        const frame = document.createElement("iframe");
+        frame.className = "cmsPagePreview";
+        frame.title = "Şərtlər səhifəsinin önizləməsi";
+        frame.setAttribute("sandbox", "");
+        frame.srcdoc = result.termsPreviewHtml;
         previewResult.append(heading, frame);
       }
       toast("Önizləmə və yoxlamalar uğurla tamamlandı.");

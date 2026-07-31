@@ -1,0 +1,29 @@
+{
+  "savedAt": "2026-07-31",
+  "reason": "MIRPANEL.COM istifadəçi qaydaları və şərtləri mətnindən əvvəlki SITE_SECTIONS.sertler məzmunu",
+  "section": {
+    "enabled": true,
+    "title": "Şərtlər",
+    "text": "",
+    "items": [
+      "Sifarişdən əvvəl məhsul məlumatlarını diqqətlə oxuyun.",
+      "Rəqəmsal məhsullarda aktivləşdirmə qaydası məhsula görə dəyişə bilər.",
+      "Yanlış daxil edilən məlumatlara görə gecikmə yarana bilər.",
+      "Dəstək WhatsApp üzərindən göstərilir."
+    ],
+    "order": 2,
+    "slug": "sertler",
+    "subtitle": "Sifariş və istifadə şərtləri",
+    "body": "",
+    "seoTitle": "Şərtlər | Mirpanel",
+    "seoDescription": "Mirpanel sifariş və istifadə şərtləri.",
+    "blocks": [],
+    "ogTitle": "",
+    "ogDescription": "",
+    "ogImage": "",
+    "index": true,
+    "includeInSitemap": true,
+    "buttonText": "",
+    "buttonUrl": ""
+  }
+}

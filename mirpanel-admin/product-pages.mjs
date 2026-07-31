@@ -445,7 +445,12 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 }
 
 function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
-  const metadata = infoPageMetadata[page.key];
+  const fallbackMetadata = infoPageMetadata[page.key];
+  const metadata = page.key === "sertler" ? {
+    title: cleanText(page.section.seoTitle) || fallbackMetadata.title,
+    description: cleanText(page.section.seoDescription) || fallbackMetadata.description,
+    h1: cleanText(page.section.title) || fallbackMetadata.h1
+  } : fallbackMetadata;
   const canonical = `${SITE_URL}/${page.slug}/`;
   const content = renderInfoPageContent(page.key, page.section, siteSections, ui);
   const structuredData = safeJson({
@@ -487,11 +492,11 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=final22">
   <link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1">
-  <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-2" : "20260728-1"}">
+  <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-2" : page.key === "sertler" ? "20260731-terms-1" : "20260728-1"}">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
-<body class="product-page-document info-page-document${page.key === "haqqimizda" ? " info-page-document--about" : ""}">
+<body class="product-page-document info-page-document${page.key === "haqqimizda" ? " info-page-document--about" : page.key === "sertler" ? " info-page-document--terms" : ""}">
   <header class="product-page-header">
     <div class="product-page-header-inner">
       <a class="product-page-brand" href="/" aria-label="Mirpanel ana səhifə">
@@ -506,8 +511,8 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
     <nav class="info-page-breadcrumb" aria-label="Səhifə yolu">
       <a href="/">Ana səhifə</a><span aria-hidden="true">/</span><span>${escapeHtml(metadata.h1)}</span>
     </nav>
-    <article class="info-page-card${page.key === "haqqimizda" ? " info-page-card--about" : ""}">
-      <p class="info-page-kicker">${escapeHtml(page.key === "haqqimizda" ? (cleanText(page.section.kicker) || "Haqqımızda") : "MIRPANEL")}</p>
+    <article class="info-page-card${page.key === "haqqimizda" ? " info-page-card--about" : page.key === "sertler" ? " info-page-card--terms" : ""}">
+      <p class="info-page-kicker">${escapeHtml(page.key === "haqqimizda" ? (cleanText(page.section.kicker) || "Haqqımızda") : page.key === "sertler" ? "Şərtlər" : "MIRPANEL")}</p>
       <h1>${escapeHtml(metadata.h1)}</h1>
       ${content}
     </article>
@@ -599,6 +604,71 @@ function renderAboutRichText(value) {
   return renderSafeRichText(value).replace(/<h2>([\s\S]*?)<\/h2>/g, "<p><strong>$1</strong></p>");
 }
 
+function termsAnchorId(value) {
+  return `sertler-${String(value || "").replace(/\.+$/, "").replace(/\./g, "-")}`;
+}
+
+export function renderTermsMarkdown(value) {
+  const source = richTextHtmlToMarkdown(value).replace(/\r/g, "").trim();
+  if (!source) return "";
+
+  const output = [];
+  const toc = [];
+  let paragraph = [];
+  let list = [];
+  const flushParagraph = () => {
+    const text = paragraph.join(" ").trim();
+    if (text) output.push(`<p>${renderRichInline(text)}</p>`);
+    paragraph = [];
+  };
+  const flushList = () => {
+    if (list.length) output.push(`<ul>${list.map((item) => `<li>${renderRichInline(item)}</li>`).join("")}</ul>`);
+    list = [];
+  };
+
+  for (const rawLine of source.split("\n")) {
+    const line = rawLine.trim();
+    if (!line) { flushParagraph(); flushList(); continue; }
+    if (/^#\s+MIRPANEL\.COM\s+[–-]\s+İSTİFADƏÇİ QAYDALARI VƏ ŞƏRTLƏRİ\s*$/i.test(line)) {
+      flushParagraph(); flushList();
+      continue;
+    }
+    const mainHeading = line.match(/^#\s+(\d+)\.\s+(.+)$/);
+    if (mainHeading) {
+      flushParagraph(); flushList();
+      const id = termsAnchorId(mainHeading[1]);
+      const headingText = `${mainHeading[1]}. ${mainHeading[2].trim()}`;
+      toc.push({ id, text: headingText });
+      output.push(`<h2 id="${id}">${renderRichInline(headingText)}</h2>`);
+      continue;
+    }
+    const subHeading = line.match(/^##\s+(\d+\.\d+)\.?\s+(.+)$/);
+    if (subHeading) {
+      flushParagraph(); flushList();
+      const headingText = `${subHeading[1]}. ${subHeading[2].trim()}`;
+      output.push(`<h3 id="${termsAnchorId(subHeading[1])}">${renderRichInline(headingText)}</h3>`);
+      continue;
+    }
+    const heading = line.match(/^#{1,6}\s+(.+)$/);
+    if (heading) {
+      flushParagraph(); flushList();
+      const text = heading[1].trim();
+      if (text) output.push(`<h2 class="terms-warning-heading">${renderRichInline(text)}</h2>`);
+      continue;
+    }
+    const listItem = line.match(/^(?:[-*+]\s+)(.+)$/);
+    if (listItem) { flushParagraph(); list.push(listItem[1].trim()); continue; }
+    flushList();
+    paragraph.push(line);
+  }
+  flushParagraph(); flushList();
+
+  const tocHtml = toc.length
+    ? `<nav class="terms-toc" aria-label="Mündəricat"><details open><summary>Mündəricat</summary><ol>${toc.map((item) => `<li><a href="#${item.id}">${renderRichInline(item.text)}</a></li>`).join("")}</ol></details></nav>`
+    : "";
+  return `${tocHtml}<div class="info-page-copy terms-page-copy" id="terms-top">${output.join("")}</div><a class="terms-back-top" href="#terms-top">Yuxarı qayıt</a>`;
+}
+
 function renderInfoPageContent(key, section, siteSections, ui) {
   if (key === "haqqimizda") {
     const body = fixMojibake(section.body || section.text);
@@ -625,6 +695,10 @@ function renderInfoPageContent(key, section, siteSections, ui) {
         <a href="/">Ana səhifə</a>
         ${number ? `<a class="is-primary" href="${escapeAttribute(whatsappHref)}">${escapeHtml(fixMojibake(section.buttonText) || "WhatsApp ilə yaz")}</a>` : ""}
       </div>`;
+  }
+
+  if (key === "sertler" && cleanText(section.body)) {
+    return renderTermsMarkdown(fixMojibake(section.body));
   }
 
   const items = (Array.isArray(section.items) ? section.items : [])
@@ -759,7 +833,7 @@ function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
     .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttribute(section.ogTitle || title)}">`)
     .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttribute(section.ogDescription || description)}">`)
     .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${escapeAttribute(absoluteUrl(section.ogImage || cms.seo?.home?.ogImage || "assets/logo.png"))}">`)
-    .replace(/(<article class="info-page-card(?: info-page-card--about)?">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/, `$1${escapeHtml(h1)}$2`)
+    .replace(/(<article class="info-page-card(?: info-page-card--(?:about|terms))?">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/, `$1${escapeHtml(h1)}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms, ui)}</footer>`);
   if (buttonText && buttonUrl) {
     next = next.replace(/(<div class="info-page-actions">[\s\S]*?)(<\/div>)/, `$1<a class="is-primary" href="${escapeAttribute(buttonUrl)}">${escapeHtml(buttonText)}</a>$2`);

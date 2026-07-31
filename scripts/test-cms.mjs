@@ -223,6 +223,18 @@ assert.ok(cmsAdmin.includes('if (key === "haqqimizda")'), "Haqqımızda üçün 
 assert.ok(cmsAdmin.includes('frame.setAttribute("sandbox", "")'), "Haqqımızda önizləməsi sandbox ilə qorunmur");
 assert.ok(cmsAdmin.includes("frame.srcdoc = result.aboutPreviewHtml"), "Haqqımızda real generator önizləməsinə bağlanmayıb");
 assert.ok(adminServer.includes("aboutPreviewHtml"), "Haqqımızda önizləmə HTML-i serverdən qaytarılmır");
+assert.ok(cmsAdmin.includes('class="legalTextEditor"') && cmsAdmin.includes('rows="32"'), "Şərtlər üçün uzun hüquqi mətn redaktoru yoxdur");
+assert.ok(cmsAdmin.includes("frame.srcdoc = result.termsPreviewHtml"), "Şərtlər real generator önizləməsinə bağlanmayıb");
+assert.ok(adminServer.includes("termsPreviewHtml"), "Şərtlər önizləmə HTML-i serverdən qaytarılmır");
+assert.ok(adminServer.includes("limit = 1_500_000"), "Server uzun hüquqi mətn üçün kifayət qədər təhlükəsiz limit saxlamır");
+assert.equal((state.siteSections.sertler.body.match(/^# (?:[1-9]|1[0-4])\. /gm) || []).length, 14, "CMS-də 14 əsas hüquqi bölmə qorunmayıb");
+assert.equal((state.siteSections.sertler.body.match(/^## \d+\.\d+\./gm) || []).length, 6, "CMS-də alt hüquqi bölmələr qorunmayıb");
+assert.equal(/[ÃÄÅÉâ]/.test(state.siteSections.sertler.body), false, "CMS hüquqi mətnində kodlaşdırma pozuntusu var");
+const unsafeTerms = structuredClone(state);
+unsafeTerms.siteSections.sertler.body += '\n<script>alert(1)</script><iframe src="x"></iframe><p onclick="alert(1)">təhlükəsiz əğıöüşç</p><a href="javascript:alert(1)">keçid</a>';
+const sanitizedTerms = normalizeAdminPayload(unsafeTerms).siteSections.sertler.body;
+assert.equal(/script|iframe|onclick|javascript:/i.test(sanitizedTerms), false, "Şərtlər redaktorunda təhlükəli HTML bloklanmır");
+assert.ok(sanitizedTerms.includes("təhlükəsiz əğıöüşç"), "XSS sanitizasiyası Azərbaycan hərflərini pozur");
 assert.ok(adminServer.includes('["image/webp", "webp"]'), "WEBP yükləmə yoxlaması yoxdur");
 assert.equal(adminServer.includes('"image/svg+xml"'), false, "SVG yükləmə icazəsi qalıb");
 assert.ok(adminServer.includes('rawName.includes("..")') && adminServer.includes('/[\\\\/]/'), "Path traversal fayl adları bloklanmır");

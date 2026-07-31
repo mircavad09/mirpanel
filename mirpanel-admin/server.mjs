@@ -706,15 +706,17 @@ async function handleApi(request, response) {
       .createHash("sha256")
       .update(JSON.stringify({ baseSha: body.baseSha, data: normalized }))
       .digest("hex");
-    const aboutSlug = normalized.siteSections?.haqqimizda?.slug || "haqqimizda";
-    let aboutPreviewHtml = previewInfoPages.get(`${aboutSlug}/index.html`) || "";
-    if (aboutPreviewHtml) {
-      const previewCssPath = path.join(root, "..", "info-page.css");
-      const previewCss = fs.existsSync(previewCssPath) ? fs.readFileSync(previewCssPath, "utf8") : "";
-      aboutPreviewHtml = aboutPreviewHtml
+    const previewCssPath = path.join(root, "..", "info-page.css");
+    const previewCss = fs.existsSync(previewCssPath) ? fs.readFileSync(previewCssPath, "utf8") : "";
+    const prepareInfoPreview = (pageHtml) => pageHtml
         .replace("<head>", '<head><base href="https://mirpanel.com/">')
         .replace("</head>", `<style>${previewCss.replace(/<\/style/gi, "<\\/style")}</style></head>`);
-    }
+    const aboutSlug = normalized.siteSections?.haqqimizda?.slug || "haqqimizda";
+    const termsSlug = normalized.siteSections?.sertler?.slug || "sertler";
+    const rawAboutPreviewHtml = previewInfoPages.get(`${aboutSlug}/index.html`) || "";
+    const rawTermsPreviewHtml = previewInfoPages.get(`${termsSlug}/index.html`) || "";
+    const aboutPreviewHtml = rawAboutPreviewHtml ? prepareInfoPreview(rawAboutPreviewHtml) : "";
+    const termsPreviewHtml = rawTermsPreviewHtml ? prepareInfoPreview(rawTermsPreviewHtml) : "";
     session.preview = { digest, baseSha: body.baseSha, at: Date.now() };
     return json(response, 200, {
       ok: true,
@@ -723,6 +725,7 @@ async function handleApi(request, response) {
       activeProductCount: normalized.products.filter((item) => item.active !== false).length,
       pageCount: previewProductPages.size + previewInfoPages.size,
       aboutPreviewHtml,
+      termsPreviewHtml,
       warnings: normalized.cms?.seo?.robotsIndexing === false
         ? ["Bütün saytın indekslənməsi söndürülüb."]
         : []

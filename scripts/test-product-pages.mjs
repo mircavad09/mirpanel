@@ -55,6 +55,41 @@ assert.equal(aboutHtml.includes("about-page-sections"), false, "Haqqımızda mə
 assert.equal((aboutHtml.match(/<div class="info-page-copy about-page-copy">[\s\S]*?<\/div>/) || [""])[0].match(/<p>/g)?.length, 6, "Haqqımızda məzmunu 6 ardıcıl abzas olmalıdır");
 assert.ok(aboutHtml.includes('rel="canonical" href="https://mirpanel.com/haqqimizda/"'), "Haqqımızda canonical dəyişib");
 
+const termsHtml = infoPages.get("sertler/index.html");
+const termsBody = state.siteSections.sertler.body;
+assert.ok(termsHtml, "Şərtlər səhifəsi yaradılmadı");
+assert.equal((termsHtml.match(/<h1\b/g) || []).length, 1, "Şərtlər səhifəsində bir H1 olmalıdır");
+assert.equal((termsHtml.match(/<h2 id="sertler-(?:[1-9]|1[0-4])">/g) || []).length, 14, "14 əsas hüquqi bölmə göstərilməlidir");
+assert.equal((termsHtml.match(/<h3 id="sertler-\d+-\d+">/g) || []).length, 6, "Bütün alt bölmələr H3 kimi göstərilməlidir");
+assert.equal((termsHtml.match(/<li><a href="#sertler-(?:[1-9]|1[0-4])">/g) || []).length, 14, "Mündəricatda 14 bölmə olmalıdır");
+assert.ok(termsHtml.includes('info-page-document--terms'), "Şərtlər üçün ayrıca responsive dizayn sinfi yoxdur");
+assert.ok(termsHtml.includes('<p class="info-page-kicker">Şərtlər</p>'), "Şərtlər üst etiketi yoxdur");
+assert.ok(termsHtml.includes('<a href="https://mirpanel.com/">https://mirpanel.com/</a>'), "Canonical daxili sayt keçidi düzgün çevrilməyib");
+assert.equal(/target=["']_blank/.test(termsHtml), false, "Şərtlər səhifəsində keçid yeni tab açır");
+assert.equal(/[ÃÄÅÉâ]/.test(termsHtml), false, "Şərtlər səhifəsində kodlaşdırma pozuntusu var");
+assert.equal(/\*\*/.test(termsHtml) || /^\s*#{1,6}\s/m.test(termsHtml), false, "Şərtlər səhifəsində Markdown işarəsi görünür");
+assert.ok(/[əıöüşçğƏİÖÜŞÇĞ]/.test(termsHtml), "Azərbaycan hərfləri qorunmayıb");
+assert.ok(termsHtml.includes('rel="canonical" href="https://mirpanel.com/sertler/"'), "Şərtlər canonical dəyişib");
+assert.ok(termsHtml.includes('name="robots" content="index, follow"'), "Şərtlər səhifəsi indekslənə bilmir");
+
+const normalizeLegalText = (value) => String(value || "")
+  .replace(/^#\s+MIRPANEL\.COM[^\n]*\n+/i, "")
+  .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+  .replace(/^#{1,6}\s+/gm, "")
+  .replace(/^[-*+]\s+/gm, "")
+  .replace(/\*\*|__/g, "")
+  .replace(/\*([^*\n]+)\*/g, "$1")
+  .replace(/\s+/g, " ")
+  .trim();
+const termsCopy = termsHtml.match(/<div class="info-page-copy terms-page-copy" id="terms-top">([\s\S]*?)<\/div>/)?.[1] || "";
+const generatedLegalText = termsCopy
+  .replace(/<\/(?:p|h2|h3|li|ul)>/g, " ")
+  .replace(/<[^>]+>/g, "")
+  .replace(/&quot;/g, '"').replace(/&#39;/g, "'").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&amp;/g, "&")
+  .replace(/\s+/g, " ")
+  .trim();
+assert.equal(generatedLegalText, normalizeLegalText(termsBody), "Hüquqi mətn HTML-ə çevrilərkən məzmun itirib və ya dəyişib");
+
 for (const { product, slug } of active) {
   const filePath = `${slug}/index.html`;
   const html = pages.get(filePath);
