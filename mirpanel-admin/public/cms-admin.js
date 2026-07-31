@@ -171,15 +171,11 @@
       return panel(label, "Haqqımızda səhifəsinin məzmunu, keçidləri və SEO məlumatları", `<div class="formGrid" data-site-page="${key}">
         ${siteField("Aktivdir", key, "enabled", "checkbox")}${siteField("Slug", key, "slug")}
         ${siteField("Kiçik üst etiket", key, "kicker")}${siteField("Əsas H1", key, "title")}
-        ${siteField("Giriş mətni", key, "subtitle", "textarea", true)}
-        ${siteField("Ana səhifə düyməsi", key, "homeButtonText")}${siteField("Ana səhifə keçidi", key, "homeButtonUrl")}
-        ${siteField("Məhsullar düyməsi", key, "productsButtonText")}${siteField("Məhsullar keçidi", key, "productsButtonUrl")}
-        ${siteField("Əlaqə keçidinin mətni", key, "contactLinkText")}${siteField("Əlaqə keçidinin URL-si", key, "contactLinkUrl")}
         ${siteField("SEO title", key, "seoTitle")}${siteField("Meta description", key, "seoDescription", "textarea", true)}
         ${siteField("Open Graph title", key, "ogTitle")}${siteField("Open Graph şəkli", key, "ogImage")}
         ${siteField("Open Graph description", key, "ogDescription", "textarea", true)}
         ${siteField("İndekslənsin", key, "index", "checkbox")}${siteField("Sitemap-a daxil olsun", key, "includeInSitemap", "checkbox")}
-      </div><div class="sectionHead"><h3>Məzmun bölmələri</h3><button class="btn" type="button" data-add-block="${key}">Bölmə əlavə et</button></div><p class="formHint">Bölmə mətnində abzas, **qalın mətn**, siyahı və [daxili keçid](/elaqe/) istifadə edilə bilər. Təhlükəli HTML bloklanır.</p><div class="cmsList" data-block-list="${key}"></div>`);
+      </div><div class="sectionHead"><h3>Mətn abzasları</h3><button class="btn" type="button" data-add-block="${key}">Abzas əlavə et</button></div><p class="formHint">Hər element səhifədə sadə abzas kimi göstərilir. **Qalın mətn** və [daxili keçid](/elaqe/) istifadə edilə bilər. Təhlükəli HTML bloklanır.</p><div class="cmsList" data-block-list="${key}"></div>`);
     }
     return panel(label, `${label} səhifəsinin məzmunu və SEO məlumatları`, `<div class="formGrid" data-site-page="${key}">
       ${siteField("Aktivdir", key, "enabled", "checkbox")}${siteField("Slug", key, "slug")}
@@ -520,12 +516,19 @@
   function renderBlocks(key) {
     const container = document.querySelector(`[data-block-list="${key}"]`);
     if (!container) return;
+    if (key === "haqqimizda") {
+      container.innerHTML = ensurePage(key).blocks.map((block, index) => `<div class="cmsListItem"><div class="formGrid">
+        <label>Sıra<input type="number" data-page-block="${key}.${index}.order"></label>
+        <label class="full">Abzas mətni<textarea rows="5" data-page-block="${key}.${index}.text"></textarea></label>
+      </div><button class="btn danger" type="button" data-remove-block="${key}" data-index="${index}">Sil</button></div>`).join("");
+    } else {
     container.innerHTML = ensurePage(key).blocks.map((block, index) => `<div class="cmsListItem"><div class="formGrid">
       <label>Başlıq<input data-page-block="${key}.${index}.title"></label>
       <label>Sıra<input type="number" data-page-block="${key}.${index}.order"></label>
       <label class="full">Mətn<textarea rows="4" data-page-block="${key}.${index}.text"></textarea></label>
       <label class="full">Şəkil yolu<input data-page-block="${key}.${index}.image"></label>
     </div><button class="btn danger" type="button" data-remove-block="${key}" data-index="${index}">Sil</button></div>`).join("");
+    }
     container.querySelectorAll("[data-page-block]").forEach((input) => {
       const [, index, fieldKey] = input.dataset.pageBlock.split(".");
       input.value = ensurePage(key).blocks[Number(index)][fieldKey] ?? "";

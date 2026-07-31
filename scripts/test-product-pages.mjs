@@ -45,9 +45,14 @@ assert.ok(aboutHtml.includes('info-page-document info-page-document--about'), "H
 assert.ok(aboutHtml.includes('class="info-page-card info-page-card--about"'), "Haqqımızda geniş məzmun sinfini almadı");
 assert.ok(aboutHtml.includes('<p class="info-page-kicker">Haqqımızda</p>'), "Haqqımızda üst etiketi");
 assert.ok(aboutHtml.includes("<strong>MirPanel</strong>"), "Qalın Markdown real HTML-ə çevrilmədi");
-assert.ok(aboutHtml.includes('<a href="/elaqe/">Əlaqə səhifəsinə keçin</a>'), "Admin əlaqə keçidi real HTML-ə çevrilmədi");
+assert.ok(aboutHtml.includes('<a href="/elaqe/">Əlaqə səhifəsindən</a>'), "Admin daxili keçidi real HTML-ə çevrilmədi");
 assert.equal(aboutHtml.includes("**MirPanel**"), false, "Haqqımızda səhifəsində Markdown qalığı var");
 assert.equal(/<p>\s*#{1,6}\s/.test(aboutHtml), false, "Haqqımızda səhifəsində başlıq Markdown qalığı var");
+assert.equal((aboutHtml.match(/<h2\b/g) || []).length, 0, "Haqqımızda səhifəsində böyük bölmə başlığı qalıb");
+assert.equal(aboutHtml.includes("about-page-lead"), false, "Haqqımızda ortalanmış giriş mətni qalıb");
+assert.equal(aboutHtml.includes("info-page-actions"), false, "Haqqımızda daxili düymələri qalıb");
+assert.equal(aboutHtml.includes("about-page-sections"), false, "Haqqımızda məzmunu ayrıca dizayn bloklarına bölünüb");
+assert.equal((aboutHtml.match(/<div class="info-page-copy about-page-copy">[\s\S]*?<\/div>/) || [""])[0].match(/<p>/g)?.length, 6, "Haqqımızda məzmunu 6 ardıcıl abzas olmalıdır");
 assert.ok(aboutHtml.includes('rel="canonical" href="https://mirpanel.com/haqqimizda/"'), "Haqqımızda canonical dəyişib");
 
 for (const { product, slug } of active) {
@@ -331,7 +336,8 @@ const unsafeAboutHtml = generateInfoPageFiles(
 assert.equal(unsafeAboutHtml.includes("<script>alert"), false, "Haqqımızda script sanitizasiyası");
 assert.equal(unsafeAboutHtml.includes("<iframe"), false, "Haqqımızda iframe sanitizasiyası");
 assert.equal(unsafeAboutHtml.includes("javascript:"), false, "Haqqımızda təhlükəli URL sanitizasiyası");
-assert.ok(unsafeAboutHtml.includes("<h2>Alt başlıq</h2>"), "Haqqımızda alt başlıq formatı");
+assert.equal(unsafeAboutHtml.includes("<h2>"), false, "Haqqımızda mətnində böyük alt başlıq yaranmamalıdır");
+assert.ok(unsafeAboutHtml.includes("<p><strong>Alt başlıq</strong></p>"), "Haqqımızda başlıq sintaksisi sadə vurğulu abzas olmadı");
 assert.ok(unsafeAboutHtml.includes("<strong>Qalın mətn</strong>"), "Haqqımızda qalın mətn formatı");
 
 assert.equal(

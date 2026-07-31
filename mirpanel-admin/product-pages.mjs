@@ -487,7 +487,7 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=final22">
   <link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1">
-  <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-1" : "20260728-1"}">
+  <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-2" : "20260728-1"}">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
@@ -509,7 +509,6 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
     <article class="info-page-card${page.key === "haqqimizda" ? " info-page-card--about" : ""}">
       <p class="info-page-kicker">${escapeHtml(page.key === "haqqimizda" ? (cleanText(page.section.kicker) || "Haqqımızda") : "MIRPANEL")}</p>
       <h1>${escapeHtml(metadata.h1)}</h1>
-      ${page.key === "haqqimizda" && cleanText(page.section.subtitle) ? `<p class="about-page-lead">${escapeHtml(page.section.subtitle)}</p>` : ""}
       ${content}
     </article>
   </main>
@@ -596,33 +595,20 @@ function renderSafeRichText(value) {
   return output.join("");
 }
 
+function renderAboutRichText(value) {
+  return renderSafeRichText(value).replace(/<h2>([\s\S]*?)<\/h2>/g, "<p><strong>$1</strong></p>");
+}
+
 function renderInfoPageContent(key, section, siteSections, ui) {
   if (key === "haqqimizda") {
     const body = fixMojibake(section.body || section.text);
-    const blocks = (Array.isArray(section.blocks) ? section.blocks : [])
+    const paragraphs = (Array.isArray(section.blocks) ? section.blocks : [])
       .slice()
       .sort((a, b) => Number(a.order) - Number(b.order))
-      .map((block) => {
-        const title = cleanText(fixMojibake(block.title));
-        const text = renderSafeRichText(fixMojibake(block.text));
-        if (!title && !text && !block.image) return "";
-        return `<section>${title ? `<h2>${escapeHtml(title)}</h2>` : ""}${block.image ? `<img src="${escapeAttribute(rootRelativeUrl(block.image))}" alt="${escapeAttribute(title || "MirPanel haqqında")}" loading="lazy">` : ""}${text}</section>`;
-      })
+      .map((block) => renderAboutRichText(fixMojibake(block.text)))
       .filter(Boolean)
       .join("");
-    const homeText = cleanText(fixMojibake(section.homeButtonText)) || "Ana səhifə";
-    const homeUrl = pageLinkUrl(section.homeButtonUrl) || "/";
-    const productsText = cleanText(fixMojibake(section.productsButtonText)) || "Məhsullara bax";
-    const productsUrl = pageLinkUrl(section.productsButtonUrl) || "/#products-section";
-    const contactText = cleanText(fixMojibake(section.contactLinkText));
-    const contactUrl = pageLinkUrl(section.contactLinkUrl);
-    return `<div class="info-page-copy about-page-copy">${blocks ? "" : renderSafeRichText(body)}</div>
-      ${blocks ? `<div class="info-page-sections about-page-sections">${blocks}</div>` : ""}
-      ${contactText && contactUrl ? `<p class="about-page-contact-link"><a href="${escapeAttribute(contactUrl)}">${escapeHtml(contactText)}</a></p>` : ""}
-      <div class="info-page-actions">
-        <a href="${escapeAttribute(homeUrl)}">${escapeHtml(homeText)}</a>
-        <a class="is-primary" href="${escapeAttribute(productsUrl)}">${escapeHtml(productsText)}</a>
-      </div>`;
+    return `<div class="info-page-copy about-page-copy">${paragraphs || renderAboutRichText(body)}</div>`;
   }
 
   if (key === "elaqe") {

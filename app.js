@@ -3228,42 +3228,42 @@ const SITE_SECTIONS = {
     "linkText": "",
     "order": 1,
     "slug": "haqqimizda",
-    "subtitle": "MirPanel rəqəmsal məhsul və xidmətlər üzrə mövcud seçimləri aydın şəkildə təqdim edən onlayn platformadır.",
+    "subtitle": "",
     "body": "",
     "blocks": [
       {
-        "title": "MirPanel haqqında qısa təqdimat",
+        "title": "",
         "text": "**MirPanel** rəqəmsal məhsul və onlayn xidmətlər üçün mövcud planları bir yerdə nəzərdən keçirməyə və uyğun məhsulu sifariş etməyə imkan verən onlayn platformadır. Məqsədimiz məhsul məlumatlarını, qiymətləri və istifadə qaydalarını aydın təqdim etməkdir.",
         "image": "",
         "order": 1
       },
       {
-        "title": "Rəqəmsal məhsul və xidmətlər",
+        "title": "",
         "text": "Saytda əyləncə, video və dizayn alətləri, süni intellekt xidmətləri və digər rəqəmsal məhsullar üzrə mövcud seçimlər göstərilir. Hər məhsul səhifəsində həmin məhsula aid plan, qiymət, mövcudluq və sifariş məlumatları ayrıca təqdim olunur.",
         "image": "",
         "order": 2
       },
       {
-        "title": "Məhsul məlumatı və təqdimat prosesi",
+        "title": "",
         "text": "Sifarişdən əvvəl məhsul səhifəsindəki planı, təqdimat formasını və istifadə qaydalarını diqqətlə oxumaq tövsiyə olunur. Seçilən məhsul və plan barədə sifariş məlumatı mövcud WhatsApp axını ilə dəstək tərəfinə göndərilir; təqdimatın detalları məhsulun öz şərtlərinə əsasən dəqiqləşdirilir.",
         "image": "",
         "order": 3
       },
       {
-        "title": "Təhlükəsizlik və şəxsi məlumatların qorunması",
+        "title": "",
         "text": "Sifariş sahələri məhsula görə dəyişə bilər. İstifadəçi məlumat daxil etməzdən əvvəl sahə başlıqlarını və məhsul qaydalarını yoxlamalı, sifariş üçün tələb olunmayan həssas məlumatları paylaşmamalıdır. Saytda göstərilən məlumatlar sifarişin hazırlanması və dəstək prosesinin aparılması üçün nəzərdə tutulur.",
         "image": "",
         "order": 4
       },
       {
-        "title": "Müştəri dəstəyi və xidmət prinsipləri",
+        "title": "",
         "text": "Məhsulun mövcudluğu, uyğun planın seçilməsi və sifariş qaydası ilə bağlı suallar üçün MirPanel ilə WhatsApp vasitəsilə əlaqə saxlamaq mümkündür. Məhsul haqqında qərar verməzdən əvvəl bütün şərtləri aydınlaşdırmağınız tövsiyə olunur.",
         "image": "",
         "order": 5
       },
       {
-        "title": "Bizimlə əlaqə",
-        "text": "Sualınız varsa, aşağıdakı əlaqə keçidindən istifadə edərək MirPanel ilə əlaqə saxlaya bilərsiniz.",
+        "title": "",
+        "text": "Sualınız varsa, [Əlaqə səhifəsindən](/elaqe/) istifadə edərək MirPanel ilə əlaqə saxlaya bilərsiniz.",
         "image": "",
         "order": 6
       }

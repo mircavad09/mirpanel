@@ -218,8 +218,8 @@ assert.ok(cmsAdmin.includes("data-product-banner"), "Banner redaktoru məhsul m�
 assert.ok(cmsAdmin.includes("data-move-product-banner"), "Banner yuxarı-aşağı sıralaması yoxdur");
 assert.ok(cmsAdmin.includes("data-clear-banner-image"), "Banner şəklini təmizləmə imkanı yoxdur");
 assert.ok(cmsAdmin.includes('siteField("Kiçik üst etiket", key, "kicker")'), "Haqqımızda üst etiketi adminə bağlanmayıb");
-assert.ok(cmsAdmin.includes('siteField("Ana səhifə düyməsi", key, "homeButtonText")'), "Haqqımızda ana səhifə düyməsi adminə bağlanmayıb");
-assert.ok(cmsAdmin.includes('siteField("Məhsullar düyməsi", key, "productsButtonText")'), "Haqqımızda məhsullar düyməsi adminə bağlanmayıb");
+assert.ok(cmsAdmin.includes("Mətn abzasları") && cmsAdmin.includes("Abzas əlavə et"), "Haqqımızda abzas redaktoru yoxdur");
+assert.ok(cmsAdmin.includes('if (key === "haqqimizda")'), "Haqqımızda üçün sadə abzas redaktoru ayrılmayıb");
 assert.ok(cmsAdmin.includes('frame.setAttribute("sandbox", "")'), "Haqqımızda önizləməsi sandbox ilə qorunmur");
 assert.ok(cmsAdmin.includes("frame.srcdoc = result.aboutPreviewHtml"), "Haqqımızda real generator önizləməsinə bağlanmayıb");
 assert.ok(adminServer.includes("aboutPreviewHtml"), "Haqqımızda önizləmə HTML-i serverdən qaytarılmır");
