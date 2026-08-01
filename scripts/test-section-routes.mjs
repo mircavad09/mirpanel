@@ -37,10 +37,13 @@ const listing = fs.readFileSync(path.join(root, "mehsul.page"), "utf8");
 assert.equal((listing.match(/class="card"/g) || []).length, 21, "product listing count");
 assert.equal(listing.includes("/" + "#products-section"), false, "legacy product anchor");
 const sitemap = fs.readFileSync(path.join(root, "sitemap.xml"), "utf8");
+const redirects = fs.readFileSync(path.join(root, "_redirects"), "utf8");
 assert.equal((sitemap.match(/<url>/g) || []).length, 26, "sitemap URL count");
 for (const route of routes) {
   assert.ok(sitemap.includes(`<loc>https://mirpanel.com/${route}</loc>`));
   assert.equal(sitemap.includes(`<loc>https://mirpanel.com/${route}/</loc>`), false);
+  assert.ok(redirects.includes(`/${route} /${route}.page 200`));
+  assert.ok(redirects.includes(`/${route}/ /${route} 301`));
 }
 
 console.log("PASS: four slashless routes are direct 200, slash variants are one-hop 301, listing has 21 products, sitemap has 26 canonical URLs.");

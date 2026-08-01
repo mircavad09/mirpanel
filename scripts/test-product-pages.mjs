@@ -349,7 +349,8 @@ for (const [key, expected] of Object.entries(expectedInfoPages)) {
   assert.equal(html.includes('target="_blank"'), false, `${key}: no new tab`);
   assert.ok(sitemap.includes(`https://mirpanel.com/${key}<`), `${key}: sitemap`);
   assert.equal(sitemap.includes(`https://mirpanel.com/${key}/`), false, `${key}: slash URL absent from sitemap`);
-  assert.equal(redirects.includes(`/${key}/`), false, `${key}: slash route middleware tərəfindən idarə olunmalıdır`);
+  assert.ok(redirects.includes(`/${key} /${key}.page 200`), `${key}: slashless internal rewrite`);
+  assert.ok(redirects.includes(`/${key}/ /${key} 301`), `${key}: slash redirect`);
 }
 assert.equal(sitemap.includes("https://mirpanel.com/netflix-almaq/"), false, "Retired Netflix doorway URL remained in sitemap");
 assert.ok(redirects.includes("/netflix-almaq /mehsul/netflix-sexsi 301"), "Netflix target redirect missing");
