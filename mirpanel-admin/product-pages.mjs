@@ -159,7 +159,7 @@ export function removedInfoPagePaths(previousSiteSections = {}, nextSiteSections
   const next = new Set(activeSitePageSlugs(nextSiteSections));
   return [...previous]
     .filter((slug) => !next.has(slug))
-    .map((slug) => `${slug}.page`);
+    .map((slug) => slug);
 }
 
 export function generateSitemap(products = [], siteSections = {}, date = new Date(), cms = {}) {
@@ -209,7 +209,7 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
 
   lines.push("/mehsul /mehsul.page 200", "/mehsul/ /mehsul 301");
   for (const slug of activeSitePageSlugs(siteSections)) {
-    lines.push(`/${slug} /${slug}.page 200`, `/${slug}/ /${slug} 301`);
+    lines.push(`/${slug}/ /${slug} 301`);
   }
 
   for (const [productId, aliases] of Object.entries(defaultSeoAliases)) {
@@ -276,7 +276,7 @@ export function generateInfoPageFiles(siteSections = {}, ui = {}, cms = {}) {
           }
         }
       : page;
-    files.set(`${page.slug}.page`, generateInfoPageHtml(effectivePage, siteSections, ui, cms));
+    files.set(page.slug, generateInfoPageHtml(effectivePage, siteSections, ui, cms));
   }
 
   return files;

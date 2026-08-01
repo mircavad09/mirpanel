@@ -299,7 +299,7 @@ export async function onRequest(context) {
       return Response.redirect(destination.href, 301);
     }
     const assetUrl = new URL(request.url);
-    assetUrl.pathname = `${canonicalPath}.page`;
+    assetUrl.pathname = sectionRoute[1] === "mehsul" ? "/mehsul.page" : canonicalPath;
     const response = await context.next(new Request(assetUrl, request));
     if (!response.ok) return response;
     const headers = new Headers(response.headers);

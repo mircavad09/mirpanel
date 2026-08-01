@@ -42,7 +42,7 @@ assert.equal((sitemap.match(/<url>/g) || []).length, 26, "sitemap URL count");
 for (const route of routes) {
   assert.ok(sitemap.includes(`<loc>https://mirpanel.com/${route}</loc>`));
   assert.equal(sitemap.includes(`<loc>https://mirpanel.com/${route}/</loc>`), false);
-  assert.ok(redirects.includes(`/${route} /${route}.page 200`));
+  if (route === "mehsul") assert.ok(redirects.includes("/mehsul /mehsul.page 200"));
   assert.ok(redirects.includes(`/${route}/ /${route} 301`));
 }
 

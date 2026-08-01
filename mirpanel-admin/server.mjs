@@ -715,8 +715,8 @@ async function handleApi(request, response) {
         .replace("</head>", `<style>${previewCss.replace(/<\/style/gi, "<\\/style")}</style></head>`);
     const aboutSlug = normalized.siteSections?.haqqimizda?.slug || "haqqimizda";
     const termsSlug = normalized.siteSections?.sertler?.slug || "sertler";
-    const rawAboutPreviewHtml = previewInfoPages.get(`${aboutSlug}.page`) || "";
-    const rawTermsPreviewHtml = previewInfoPages.get(`${termsSlug}.page`) || "";
+    const rawAboutPreviewHtml = previewInfoPages.get(aboutSlug) || "";
+    const rawTermsPreviewHtml = previewInfoPages.get(termsSlug) || "";
     const aboutPreviewHtml = rawAboutPreviewHtml ? prepareInfoPreview(rawAboutPreviewHtml) : "";
     const termsPreviewHtml = rawTermsPreviewHtml ? prepareInfoPreview(rawTermsPreviewHtml) : "";
     session.preview = { digest, baseSha: body.baseSha, at: Date.now() };
