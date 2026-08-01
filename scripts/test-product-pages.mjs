@@ -22,6 +22,7 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const productPageCss = fs.readFileSync(path.join(projectRoot, "product-page.css"), "utf8");
 const adminSource = fs.readFileSync(path.join(projectRoot, "mirpanel-admin", "public", "admin.js"), "utf8");
+const cmsAdminSource = fs.readFileSync(path.join(projectRoot, "mirpanel-admin", "public", "cms-admin.js"), "utf8");
 const confirmationSource = fs.readFileSync(path.join(projectRoot, "order-confirmation.js"), "utf8");
 const homeHtml = fs.readFileSync(path.join(projectRoot, "index.html"), "utf8");
 const robotsText = fs.readFileSync(path.join(projectRoot, "robots.txt"), "utf8");
@@ -49,6 +50,7 @@ assert.equal(appSource.includes(`tokens ${"truncated"}`), false);
 assert.equal(appSource.includes(`${408}${77}`), false);
 assert.equal(active.length, 21);
 assert.equal(pages.size, active.length);
+assert.ok(cmsAdminSource.includes("Sosial paylaşım şəkli"), "Admin sosial paylaşım şəkli sahəsi yoxdur");
 assert.ok(listingHtml.includes('rel="canonical" href="https://mirpanel.com/mehsul"'));
 assert.equal((listingHtml.match(/class="card"/g) || []).length, active.length, "Aktiv məhsulların hamısı siyahıda olmalıdır");
 assert.deepEqual([...listingHtml.matchAll(/data-product-id="([^"]+)"/g)].map((match) => match[1]), active.map(({ product }) => product.id), "Məhsul sırası dəyişib");
@@ -132,6 +134,25 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`/app.js?v=product-pages-20260724-refine-1`), `${filePath}: product data cache version`);
   assert.ok(html.includes(`/order-confirmation.js?v=confirmation-dialog-20260728-1`), `${filePath}: shared confirmation component`);
   assert.ok(html.includes(`property="og:url" content="${canonical}"`), `${filePath}: Open Graph`);
+  const expectedSocialTitle = String(product.seoOgTitle || product.title || "").trim();
+  const expectedSocialDescription = String(product.seoOgDescription || product.desc || expectedDescription).trim();
+  const socialImage = html.match(/<meta property="og:image" content="([^"]+)">/)?.[1] || "";
+  const expectedImageType = /\.jpe?g(?:[?#]|$)/i.test(product.seoOgImage || product.image)
+    ? "image/jpeg"
+    : /\.webp(?:[?#]|$)/i.test(product.seoOgImage || product.image) ? "image/webp" : "image/png";
+  assert.ok(html.includes('<meta property="og:type" content="product">'), `${filePath}: og:type`);
+  assert.ok(html.includes(`property="og:title" content="${escapeAttribute(expectedSocialTitle)}"`), `${filePath}: og:title`);
+  assert.ok(html.includes(`property="og:description" content="${escapeAttribute(expectedSocialDescription)}"`), `${filePath}: og:description`);
+  assert.match(socialImage, /^https:\/\/mirpanel\.com\/.+\?[^"\s]*social=/, `${filePath}: versioned absolute og:image`);
+  assert.ok(html.includes(`property="og:image:secure_url" content="${socialImage}"`), `${filePath}: og:image:secure_url`);
+  assert.ok(html.includes(`property="og:image:type" content="${expectedImageType}"`), `${filePath}: og:image:type`);
+  assert.ok(html.includes('property="og:image:width" content="1200"'), `${filePath}: og:image:width`);
+  assert.ok(html.includes('property="og:image:height" content="630"'), `${filePath}: og:image:height`);
+  assert.ok(html.includes(`property="og:image:alt" content="${escapeAttribute(product.imageAlt || product.title)}"`), `${filePath}: og:image:alt`);
+  assert.ok(html.includes('<meta name="twitter:card" content="summary_large_image">'), `${filePath}: twitter:card`);
+  assert.ok(html.includes(`name="twitter:title" content="${escapeAttribute(expectedSocialTitle)}"`), `${filePath}: twitter:title`);
+  assert.ok(html.includes(`name="twitter:description" content="${escapeAttribute(expectedSocialDescription)}"`), `${filePath}: twitter:description`);
+  assert.ok(html.includes(`name="twitter:image" content="${socialImage}"`), `${filePath}: twitter:image`);
   assert.ok(html.includes(`alt="${escapeAttribute(product.title)}"`), `${filePath}: image alt`);
   assert.ok(html.includes(`data-product-id="${escapeAttribute(product.id)}"`), `${filePath}: product id`);
   assert.ok(html.includes(`id="pp-order-btn"`), `${filePath}: order button`);

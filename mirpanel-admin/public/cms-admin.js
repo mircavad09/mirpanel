@@ -631,7 +631,7 @@
       <label>Əsas açar ifadə<input data-product-extra="seoPrimaryKeyword"></label>
       <label class="full">Əlaqəli açar ifadələr<textarea data-product-extra="seoRelatedKeywords"></textarea></label>
       <label>Open Graph title<input data-product-extra="seoOgTitle"></label>
-      <label>Open Graph şəkli<input data-product-extra="seoOgImage"></label>
+      <label>Sosial paylaşım şəkli<input data-product-extra="seoOgImage" placeholder="Boş olduqda əsas məhsul şəkli istifadə edilir"></label>
       <label class="full">Open Graph description<textarea data-product-extra="seoOgDescription"></textarea></label>
       <label class="switchLine"><input type="checkbox" data-product-extra="seoIndex"><span>İndekslənsin</span></label>
       <label class="switchLine"><input type="checkbox" data-product-extra="includeInSitemap"><span>Sitemap-a daxil olsun</span></label>

@@ -8,14 +8,20 @@
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://mirpanel.com/mehsul/spotify-premium">
   <meta property="og:type" content="product">
-  <meta property="og:title" content="Spotify Premium almaq Azərbaycanda | Mirpanel">
-  <meta property="og:description" content="Spotify Premium hesabını sərfəli qiymətə al. Reklamsız musiqi, premium imkanlar və sürətli aktivləşdirmə.">
-  <meta property="og:image" content="https://mirpanel.com/assets/spotify.png">
+  <meta property="og:title" content="Spotify Premium">
+  <meta property="og:description" content="Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.">
+  <meta property="og:image" content="https://mirpanel.com/assets/spotify.png?social=m7l5y8">
+  <meta property="og:image:secure_url" content="https://mirpanel.com/assets/spotify.png?social=m7l5y8">
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Spotify Premium">
   <meta property="og:url" content="https://mirpanel.com/mehsul/spotify-premium">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Spotify Premium almaq Azərbaycanda | Mirpanel">
-  <meta name="twitter:description" content="Spotify Premium hesabını sərfəli qiymətə al. Reklamsız musiqi, premium imkanlar və sürətli aktivləşdirmə.">
-  <meta name="twitter:image" content="https://mirpanel.com/assets/spotify.png">
+  <meta name="twitter:title" content="Spotify Premium">
+  <meta name="twitter:description" content="Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.">
+  <meta name="twitter:image" content="https://mirpanel.com/assets/spotify.png?social=m7l5y8">
+  <meta name="twitter:image:alt" content="Spotify Premium">
   <meta name="theme-color" content="#070707">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

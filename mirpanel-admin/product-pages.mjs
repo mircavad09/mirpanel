@@ -321,6 +321,11 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     cleanText(product.desc) ||
     `${cleanText(product.title)} üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.`;
   const imageUrl = absoluteUrl(product.image);
+  const socialTitle = cleanText(product.seoOgTitle) || cleanText(product.title);
+  const socialDescription = cleanText(product.seoOgDescription) || cleanText(product.desc) || description;
+  const socialImageUrl = versionedSocialImageUrl(product.seoOgImage || product.image);
+  const socialImageType = imageMimeType(product.seoOgImage || product.image);
+  const socialImageAlt = cleanText(product.imageAlt) || cleanText(product.title);
   const imageSrc = rootRelativeUrl(product.image);
   const availability = productAvailability(product);
   const currencyCode = schemaCurrency(product.currency);
@@ -385,14 +390,20 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="${canonical}">
   <meta property="og:type" content="product">
-  <meta property="og:title" content="${escapeAttribute(title)}">
-  <meta property="og:description" content="${escapeAttribute(description)}">
-  <meta property="og:image" content="${escapeAttribute(imageUrl)}">
+  <meta property="og:title" content="${escapeAttribute(socialTitle)}">
+  <meta property="og:description" content="${escapeAttribute(socialDescription)}">
+  <meta property="og:image" content="${escapeAttribute(socialImageUrl)}">
+  <meta property="og:image:secure_url" content="${escapeAttribute(socialImageUrl)}">
+  <meta property="og:image:type" content="${socialImageType}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="${escapeAttribute(socialImageAlt)}">
   <meta property="og:url" content="${canonical}">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="${escapeAttribute(title)}">
-  <meta name="twitter:description" content="${escapeAttribute(description)}">
-  <meta name="twitter:image" content="${escapeAttribute(imageUrl)}">
+  <meta name="twitter:title" content="${escapeAttribute(socialTitle)}">
+  <meta name="twitter:description" content="${escapeAttribute(socialDescription)}">
+  <meta name="twitter:image" content="${escapeAttribute(socialImageUrl)}">
+  <meta name="twitter:image:alt" content="${escapeAttribute(socialImageAlt)}">
   <meta name="theme-color" content="#070707">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -856,9 +867,6 @@ function applyCmsBrandAndNav(html, cms, currentKey = null) {
 
 function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
   const texts = cms.commonTexts || {};
-  const seoTitle = cleanText(product.seoOgTitle || product.seoTitle || product.title);
-  const seoDescription = cleanText(product.seoOgDescription || product.seoDescription || product.desc);
-  const seoImage = absoluteUrl(product.seoOgImage || product.image);
   const brand = cleanText(cms.site?.brandName) || "Mirpanel";
   const availability = productAvailability(product);
   const availabilityText = cleanText(product.availabilityText) ||
@@ -868,9 +876,6 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
   const rules = cleanText(content.rulesHtml || product.usageRules || product.note || product.desc);
   let next = applyCmsBrandAndNav(html, cms)
     .replace(/<meta name="robots" content="index, follow">/, `<meta name="robots" content="${product.seoIndex === false ? "noindex, follow" : "index, follow"}">`)
-    .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttribute(seoTitle)}">`)
-    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttribute(seoDescription)}">`)
-    .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${escapeAttribute(seoImage)}">`)
     .replace(/"brand":\{"@type":"Brand","name":"Mirpanel"\}/, `"brand":{"@type":"Brand","name":${safeJson(brand)}}`)
     .replace(/(<img id="pp-main-img"[^>]* alt=")[^"]*(")/, `$1${escapeAttribute(product.imageAlt || product.title)}$2`)
     .replace(/(<span class="product-page-availability-badge[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
@@ -1100,6 +1105,25 @@ function absoluteUrl(value) {
   } catch {
     return `${SITE_URL}/assets/logo.png`;
   }
+}
+
+function versionedSocialImageUrl(value) {
+  const source = cleanText(value) || "assets/logo.png";
+  const url = new URL(absoluteUrl(source));
+  let hash = 2166136261;
+  for (let index = 0; index < source.length; index += 1) {
+    hash ^= source.charCodeAt(index);
+    hash = Math.imul(hash, 16777619);
+  }
+  url.searchParams.set("social", (hash >>> 0).toString(36));
+  return url.href;
+}
+
+function imageMimeType(value) {
+  const pathname = cleanText(value).split(/[?#]/, 1)[0].toLowerCase();
+  if (/\.jpe?g$/.test(pathname)) return "image/jpeg";
+  if (/\.webp$/.test(pathname)) return "image/webp";
+  return "image/png";
 }
 
 function cleanText(value) {
