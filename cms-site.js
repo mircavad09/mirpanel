@@ -112,6 +112,11 @@
       }
     }
     text(".sp-desc", home.search?.description || UI?.searchDesc);
+    const seoIntro = home.seoIntro || {};
+    const seoIntroSection = document.getElementById("homeSeoIntro");
+    if (seoIntroSection) seoIntroSection.hidden = seoIntro.enabled === false;
+    text("#homeSeoIntroTitle", seoIntro.title);
+    text("#homeSeoIntroText", seoIntro.text);
     const search = document.getElementById("q");
     if (search && home.search?.placeholder) search.placeholder = home.search.placeholder;
     const cards = home.infoCards || {};

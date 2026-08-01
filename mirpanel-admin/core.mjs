@@ -156,6 +156,11 @@ function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
     homepage: {
       announcement: { enabled: Boolean(ui?.bannerText), text: cleanText(ui?.bannerText) },
       hero: { title: cleanText(ui?.heroTitle), description: cleanText(ui?.heroHint) },
+      seoIntro: {
+        enabled: true,
+        title: "Azərbaycanda premium rəqəmsal məhsullar",
+        text: "Mirpanel rəqəmsal məhsulların mövcud planlarını, qiymətlərini və sifariş məlumatlarını bir yerdə nəzərdən keçirməyə imkan verir."
+      },
       search: {
         title: cleanText(searchPrefix || ui?.searchTitle),
         highlight: cleanText(searchHighlight),
@@ -227,6 +232,7 @@ function normalizeCms(source = {}, legacy = {}) {
   const bundle = homepage.bundle || {};
   const search = homepage.search || {};
   const hero = homepage.hero || {};
+  const seoIntro = homepage.seoIntro || {};
   const announcement = homepage.announcement || {};
   const supportCard = source.supportCard || {};
   const allowedSections = defaults.homepage.sectionOrder;
@@ -247,6 +253,11 @@ function normalizeCms(source = {}, legacy = {}) {
     homepage: {
       announcement: { enabled: announcement.enabled ?? defaults.homepage.announcement.enabled, text: cleanText(announcement.text, defaults.homepage.announcement.text, 500) },
       hero: { title: cleanText(hero.title, defaults.homepage.hero.title, 300), description: cleanText(hero.description, defaults.homepage.hero.description, 1000) },
+      seoIntro: {
+        enabled: seoIntro.enabled ?? defaults.homepage.seoIntro.enabled,
+        title: cleanText(seoIntro.title, defaults.homepage.seoIntro.title, 200),
+        text: cleanText(seoIntro.text, defaults.homepage.seoIntro.text, 1200)
+      },
       search: { title: cleanText(search.title, defaults.homepage.search.title, 300), highlight: cleanText(search.highlight, defaults.homepage.search.highlight, 300), description: cleanText(search.description, defaults.homepage.search.description, 1000), placeholder: cleanText(search.placeholder, defaults.homepage.search.placeholder, 120) },
       bundle: { enabled: bundle.enabled ?? defaults.homepage.bundle.enabled, title: cleanText(bundle.title, defaults.homepage.bundle.title, 200), description: cleanText(bundle.description, defaults.homepage.bundle.description, 1000), buttonText: cleanText(bundle.buttonText, defaults.homepage.bundle.buttonText, 100), discountPercent: Math.min(100, Math.max(0, Number(bundle.discountPercent) || 0)) },
       sectionOrder,

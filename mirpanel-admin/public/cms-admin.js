@@ -107,6 +107,9 @@
       ${field("Elan mətni", "homepage.announcement.text", { full: true })}
       ${field("Əsas başlıq", "homepage.hero.title", { full: true })}
       ${field("Əsas açıqlama", "homepage.hero.description", { type: "textarea", full: true })}
+      ${field("SEO təqdimatı görünsün", "homepage.seoIntro.enabled", { type: "checkbox" })}
+      ${field("SEO təqdimatı H1", "homepage.seoIntro.title", { full: true })}
+      ${field("SEO təqdimatı mətni", "homepage.seoIntro.text", { type: "textarea", full: true })}
       ${field("Axtarış başlığı", "homepage.search.title")}${field("Axtarış vurğusu", "homepage.search.highlight")}
       ${field("Axtarış placeholder-i", "homepage.search.placeholder")}
       ${field("Axtarış açıqlaması", "homepage.search.description", { type: "textarea", full: true })}

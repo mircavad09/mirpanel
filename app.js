@@ -2979,6 +2979,11 @@ const CMS_CONTENT = {
       "title": "Premium Hesablar — Sürətli və Etibarlı",
       "description": "Netflix, ChatGPT Plus, Google AI, CapCut Pro və daha çox. Plan seç → məlumatları yaz → WhatsApp avtomatik açılır."
     },
+    "seoIntro": {
+      "enabled": true,
+      "title": "Azərbaycanda premium rəqəmsal məhsullar",
+      "text": "Mirpanel rəqəmsal məhsulların mövcud planlarını, qiymətlərini və sifariş məlumatlarını bir yerdə nəzərdən keçirməyə imkan verir."
+    },
     "search": {
       "title": "AXTARIŞ ET,",
       "highlight": "İSTƏDİYİNİ TAP!",
@@ -3145,10 +3150,10 @@ const CMS_CONTENT = {
   "seo": {
     "home": {
       "slug": "",
-      "title": "Mirpanel | Premium hesablar Azərbaycanda",
-      "description": "Netflix, ChatGPT Plus, CapCut Pro və digər premium rəqəmsal xidmətləri Mirpanel-dən sifariş edin.",
-      "ogTitle": "Mirpanel",
-      "ogDescription": "Premium rəqəmsal xidmətlər üçün sürətli və rahat sifariş.",
+      "title": "Premium rəqəmsal məhsullar Azərbaycanda | Mirpanel",
+      "description": "Netflix, Spotify Premium, ChatGPT Plus, CapCut Pro və digər rəqəmsal məhsulların mövcud planlarını Mirpanel-də nəzərdən keçirin.",
+      "ogTitle": "Premium rəqəmsal məhsullar Azərbaycanda | Mirpanel",
+      "ogDescription": "Netflix, Spotify Premium, ChatGPT Plus, CapCut Pro və digər rəqəmsal məhsulların mövcud planlarını Mirpanel-də nəzərdən keçirin.",
       "ogImage": "assets/logo.png",
       "index": true,
       "includeInSitemap": true

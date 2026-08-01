@@ -293,22 +293,33 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
   }).join("");
   const structuredData = safeJson({
     "@context": "https://schema.org",
-    "@type": "CollectionPage",
-    name: "Məhsullar | Mirpanel",
-    url: canonical,
-    mainEntity: {
-      "@type": "ItemList",
-      itemListElement: active.map(({ product, slug }, index) => ({
-        "@type": "ListItem",
-        position: index + 1,
-        name: cleanText(product.title),
-        url: `${SITE_URL}${productCanonicalPath(slug)}`
-      }))
-    }
+    "@graph": [
+      {
+        "@type": "CollectionPage",
+        name: "Premium rəqəmsal məhsullar | Mirpanel",
+        url: canonical,
+        mainEntity: {
+          "@type": "ItemList",
+          itemListElement: active.map(({ product, slug }, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: cleanText(product.title),
+            url: `${SITE_URL}${productCanonicalPath(slug)}`
+          }))
+        }
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Ana səhifə", item: `${SITE_URL}/` },
+          { "@type": "ListItem", position: 2, name: "Məhsullar", item: canonical }
+        ]
+      }
+    ]
   });
   const html = `<!DOCTYPE html>
-<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də mövcud rəqəmsal məhsullara və planlara baxın."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də mövcud rəqəmsal məhsullara və planlara baxın."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=final22"><link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
-<body class="product-page-document"><header class="product-page-header"><div class="product-page-header-inner"><a class="product-page-brand" href="/"><img src="/assets/logo.png" alt="Mirpanel"><span>MIRPANEL</span></a><nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections, "products")}</nav></div></header><main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer></body></html>`;
+<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=final22"><link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
+<body class="product-page-document"><header class="product-page-header"><div class="product-page-header-inner"><a class="product-page-brand" href="/"><img src="/assets/logo.png" alt="Mirpanel"><span>MIRPANEL</span></a><nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections, "products")}</nav></div></header><main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer></body></html>`;
   return new Map([["mehsul.page", applyCmsBrandAndNav(html, cms, "products")]]);
 }
 

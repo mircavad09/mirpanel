@@ -52,6 +52,10 @@ assert.equal(active.length, 21);
 assert.equal(pages.size, active.length);
 assert.ok(cmsAdminSource.includes("Sosial paylaşım şəkli"), "Admin sosial paylaşım şəkli sahəsi yoxdur");
 assert.ok(listingHtml.includes('rel="canonical" href="https://mirpanel.com/mehsul"'));
+assert.ok(listingHtml.includes("<title>Premium rəqəmsal məhsullar | Mirpanel</title>"));
+assert.ok(listingHtml.includes("<h1>Premium rəqəmsal məhsullar</h1>"));
+assert.ok(listingHtml.includes('"@type":"ItemList"'), "Məhsul siyahısında ItemList yoxdur");
+assert.ok(listingHtml.includes('"@type":"BreadcrumbList"'), "Məhsul siyahısında BreadcrumbList yoxdur");
 assert.equal((listingHtml.match(/class="card"/g) || []).length, active.length, "Aktiv məhsulların hamısı siyahıda olmalıdır");
 assert.deepEqual([...listingHtml.matchAll(/data-product-id="([^"]+)"/g)].map((match) => match[1]), active.map(({ product }) => product.id), "Məhsul sırası dəyişib");
 const simulatedProducts = [...state.products, { ...structuredClone(state.products[0]), id: "future_product_test", title: "Future product test", seoSlug: "future-product-test", order: 999 }];
@@ -235,6 +239,11 @@ assert.ok(sitemapLocs.filter((url) => url.includes("/mehsul/")).every((url) => !
 assert.ok(robotsText.includes("User-agent: *") && !robotsText.includes("Disallow: /\n"), "robots.txt ümumi saytı bloklayır");
 assert.ok(robotsText.includes("Disallow: /admin") && robotsText.includes("Disallow: /api/"), "Texniki yollar robots.txt-də bloklanmayıb");
 assert.ok(homeHtml.includes('rel="canonical" href="https://mirpanel.com/"'), "Home canonical yoxdur");
+assert.equal((homeHtml.match(/<h1\b/g) || []).length, 1, "Ana səhifədə bir H1 olmalıdır");
+assert.ok(homeHtml.includes("Azərbaycanda premium rəqəmsal məhsullar"), "Ana səhifə SEO H1 yoxdur");
+for (const slug of ["netflix-sexsi", "spotify-premium", "chatgpt-plus", "capcut-pro", "youtube-premium", "canva-premium"]) {
+  assert.ok(homeHtml.includes(`href="/mehsul/${slug}"`), `Ana səhifədə ${slug} HTML keçidi yoxdur`);
+}
 const homeSchemaText = homeHtml.match(/<script id="mirpanel-home-schema" type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
 const homeGraph = JSON.parse(homeSchemaText)["@graph"];
 assert.ok(homeGraph.some((item) => item["@type"] === "Organization"), "Organization schema yoxdur");

@@ -246,8 +246,25 @@ function bumpAssetVersions(source, version) {
     .replace(/order-confirmation\.js\?v=[^"]+/g, `order-confirmation.js?v=${version}`);
 }
 
-function patchHomeStructuredData(source, cms = {}) {
+function escapeHomeHtml(value) {
+  return String(value || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function homeProductSlug(product = {}) {
+  return seoSlug(product.seoSlug || product.title || product.id)
+    .replace(/-almaq$/, "")
+    .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab");
+}
+
+function patchHomeStructuredData(source, cms = {}, products = []) {
   const site = cms.site || {};
+  const seo = cms.seo?.home || {};
+  const intro = cms.homepage?.seoIntro || {};
   const brand = String(site.brandName || "Mirpanel").trim() || "Mirpanel";
   const phone = String(site.whatsappNumber || "").replace(/\D/g, "");
   const logoPath = String(site.logo || "assets/logo.png").replace(/^\/+/, "");
@@ -278,10 +295,42 @@ function patchHomeStructuredData(source, cms = {}) {
     }]
   };
   const jsonLd = JSON.stringify(schema).replace(/</g, "\\u003c");
-  return source.replace(
+  let next = source.replace(
     /(<script id="mirpanel-home-schema" type="application\/ld\+json">)[\s\S]*?(<\/script>)/,
     `$1\n  ${jsonLd}\n  $2`
   );
+
+  const title = String(seo.title || "Premium rəqəmsal məhsullar Azərbaycanda | Mirpanel").trim();
+  const description = String(seo.description || "Netflix, Spotify Premium, ChatGPT Plus, CapCut Pro və digər rəqəmsal məhsulların mövcud planlarını Mirpanel-də nəzərdən keçirin.").trim();
+  const ogTitle = String(seo.ogTitle || title).trim();
+  const ogDescription = String(seo.ogDescription || description).trim();
+  next = next
+    .replace(/<title>[\s\S]*?<\/title>/i, `<title>${escapeHomeHtml(title)}</title>`)
+    .replace(/<meta\s+name="description"\s+content="[^"]*"\s*\/?\s*>/i, `<meta name="description" content="${escapeHomeHtml(description)}" />`)
+    .replace(/<meta\s+property="og:title"\s+content="[^"]*"\s*\/?\s*>/i, `<meta property="og:title" content="${escapeHomeHtml(ogTitle)}" />`)
+    .replace(/<meta\s+property="og:description"\s+content="[^"]*"\s*\/?\s*>/i, `<meta property="og:description" content="${escapeHomeHtml(ogDescription)}" />`);
+
+  const targets = [
+    ["netflix", "Netflix"],
+    ["spotify", "Spotify Premium"],
+    ["chatgpt", "ChatGPT Plus"],
+    ["capcut", "CapCut Pro"],
+    ["youtube", "YouTube Premium"],
+    ["canva", "Canva Premium"]
+  ];
+  const links = targets.flatMap(([id, label]) => {
+    const product = products.find((item) => item.id === id && item.active !== false);
+    const slug = product && homeProductSlug(product);
+    return slug ? [`<a href="/mehsul/${slug}">${escapeHomeHtml(label)}</a>`] : [];
+  });
+  const introTitle = String(intro.title || "Azərbaycanda premium rəqəmsal məhsullar").trim();
+  const introText = String(intro.text || "Mirpanel rəqəmsal məhsulların mövcud planlarını, qiymətlərini və sifariş məlumatlarını bir yerdə nəzərdən keçirməyə imkan verir.").trim();
+  const linksText = links.length
+    ? `Populyar seçimlər: ${links.slice(0, -1).join(", ")}${links.length > 1 ? " və " : ""}${links.at(-1)}. `
+    : "";
+  const introHtml = `<section class="wrap homeSeoIntro" id="homeSeoIntro" aria-labelledby="homeSeoIntroTitle"${intro.enabled === false ? " hidden" : ""}>\n      <h1 id="homeSeoIntroTitle">${escapeHomeHtml(introTitle)}</h1>\n      <p id="homeSeoIntroText">${escapeHomeHtml(introText)}</p>\n      <p class="homeSeoLinks">${linksText}<a href="/mehsul">Bütün məhsullara baxın</a>.</p>\n    </section>`;
+  next = next.replace(/<section class="wrap homeSeoIntro"[\s\S]*?<\/section>/, introHtml);
+  return next;
 }
 
 const defaultSeoSlugs = {
@@ -809,7 +858,7 @@ async function handleApi(request, response) {
     const patched = patchAppSource(current.source, adminData);
     const indexFile = await getRepoFile("index.html");
     const version = `admin-${Date.now()}`;
-    const patchedIndex = patchHomeStructuredData(bumpAssetVersions(indexFile.source, version), adminData.cms);
+    const patchedIndex = patchHomeStructuredData(bumpAssetVersions(indexFile.source, version), adminData.cms, adminData.products);
     const productPages = generateProductPageFiles(adminData.products, adminData.siteSections, adminData.cms, adminData.content);
     const productListing = generateProductListingPageFiles(adminData.products, adminData.siteSections, adminData.cms);
     const infoPages = generateInfoPageFiles(adminData.siteSections, adminData.ui, adminData.cms);
