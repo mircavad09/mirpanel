@@ -3041,7 +3041,7 @@ const CMS_CONTENT = {
     {
       "id": "products",
       "label": "Məhsullar",
-      "url": "/#products-section",
+      "url": "/mehsul",
       "order": 2,
       "enabled": true,
       "icon": "products",
@@ -3050,7 +3050,7 @@ const CMS_CONTENT = {
     {
       "id": "about",
       "label": "Haqqımızda",
-      "url": "/haqqimizda/",
+      "url": "/haqqimizda",
       "order": 3,
       "enabled": true,
       "icon": "info",
@@ -3059,7 +3059,7 @@ const CMS_CONTENT = {
     {
       "id": "terms",
       "label": "Şərtlər",
-      "url": "/sertler/",
+      "url": "/sertler",
       "order": 4,
       "enabled": true,
       "icon": "terms",
@@ -3068,7 +3068,7 @@ const CMS_CONTENT = {
     {
       "id": "contact",
       "label": "Əlaqə",
-      "url": "/elaqe/",
+      "url": "/elaqe",
       "order": 5,
       "enabled": true,
       "icon": "contact",
@@ -3096,7 +3096,7 @@ const CMS_CONTENT = {
       {
         "id": "about",
         "label": "Haqqımızda",
-        "url": "/haqqimizda/",
+        "url": "/haqqimizda",
         "order": 1,
         "enabled": true,
         "icon": "info",
@@ -3105,7 +3105,7 @@ const CMS_CONTENT = {
       {
         "id": "terms",
         "label": "Şərtlər",
-        "url": "/sertler/",
+        "url": "/sertler",
         "order": 2,
         "enabled": true,
         "icon": "terms",
@@ -3114,7 +3114,7 @@ const CMS_CONTENT = {
       {
         "id": "contact",
         "label": "Əlaqə",
-        "url": "/elaqe/",
+        "url": "/elaqe",
         "order": 3,
         "enabled": true,
         "icon": "contact",
@@ -3263,7 +3263,7 @@ const SITE_SECTIONS = {
       },
       {
         "title": "",
-        "text": "Sualınız varsa, [Əlaqə səhifəsindən](/elaqe/) istifadə edərək MirPanel ilə əlaqə saxlaya bilərsiniz.",
+        "text": "Sualınız varsa, [Əlaqə səhifəsindən](/elaqe) istifadə edərək MirPanel ilə əlaqə saxlaya bilərsiniz.",
         "image": "",
         "order": 6
       }
@@ -3272,9 +3272,9 @@ const SITE_SECTIONS = {
     "homeButtonText": "Ana səhifə",
     "homeButtonUrl": "/",
     "productsButtonText": "Məhsullara bax",
-    "productsButtonUrl": "/#products-section",
+    "productsButtonUrl": "/mehsul",
     "contactLinkText": "Əlaqə səhifəsinə keçin",
-    "contactLinkUrl": "/elaqe/",
+    "contactLinkUrl": "/elaqe",
     "seoTitle": "Haqqımızda | MirPanel",
     "seoDescription": "MirPanel-in rəqəmsal məhsulları, sifariş prosesi, istifadə qaydaları və dəstək prinsipləri haqqında məlumat.",
     "ogTitle": "MirPanel haqqında",
@@ -4257,13 +4257,7 @@ function initSidebar() {
 
   const linkProducts = document.getElementById("linkProducts");
   if(linkProducts) {
-    linkProducts.addEventListener("click", (e) => {
-      e.preventDefault();
-      if(productPageView) productPageView.style.display = "none";
-      if(homePageView) homePageView.style.display = "block";
-      if(heroSection) heroSection.style.display = "none";
-      window.scrollTo(0, 0);
-    });
+    linkProducts.addEventListener("click", closeMenu);
   }
 }
 

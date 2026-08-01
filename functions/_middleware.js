@@ -290,6 +290,24 @@ export async function onRequest(context) {
 
   if (isStaticAsset(pathname)) return context.next();
 
+  const sectionRoute = pathname.match(/^\/(mehsul|haqqimizda|sertler|elaqe)\/?$/);
+  if (sectionRoute) {
+    const canonicalPath = `/${sectionRoute[1]}`;
+    if (pathname !== canonicalPath) {
+      const destination = new URL(request.url);
+      destination.pathname = canonicalPath;
+      return Response.redirect(destination.href, 301);
+    }
+    const assetUrl = new URL(request.url);
+    assetUrl.pathname = `${canonicalPath}.page`;
+    const response = await context.next(new Request(assetUrl, request));
+    if (!response.ok) return response;
+    const headers = new Headers(response.headers);
+    headers.set("Content-Type", "text/html; charset=utf-8");
+    headers.append("Vary", "Accept");
+    return new Response(withSeoScripts(await response.text()), { status: response.status, headers });
+  }
+
   const productRoute = pathname.match(/^\/mehsul\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/);
   if (productRoute) {
     const canonicalPath = `/mehsul/${productRoute[1]}`;

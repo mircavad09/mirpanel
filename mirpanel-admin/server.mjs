@@ -7,6 +7,7 @@ import { fileURLToPath } from "node:url";
 import { extractAdminState, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {
   generateInfoPageFiles,
+  generateProductListingPageFiles,
   generateProductPageFiles,
   generateRedirects as buildRedirects,
   generateSitemap as buildSitemap,
@@ -697,10 +698,11 @@ async function handleApi(request, response) {
     }
     const normalized = normalizeAdminPayload(body.data);
     const previewProductPages = generateProductPageFiles(normalized.products, normalized.siteSections, normalized.cms, normalized.content);
+    const previewProductListing = generateProductListingPageFiles(normalized.products, normalized.siteSections, normalized.cms);
     const previewInfoPages = generateInfoPageFiles(normalized.siteSections, normalized.ui, normalized.cms);
     validateGeneratedOutput(
       patchAppSource(current.source, normalized),
-      new Map([...previewProductPages, ...previewInfoPages])
+      new Map([...previewProductPages, ...previewProductListing, ...previewInfoPages])
     );
     const digest = crypto
       .createHash("sha256")
@@ -713,8 +715,8 @@ async function handleApi(request, response) {
         .replace("</head>", `<style>${previewCss.replace(/<\/style/gi, "<\\/style")}</style></head>`);
     const aboutSlug = normalized.siteSections?.haqqimizda?.slug || "haqqimizda";
     const termsSlug = normalized.siteSections?.sertler?.slug || "sertler";
-    const rawAboutPreviewHtml = previewInfoPages.get(`${aboutSlug}/index.html`) || "";
-    const rawTermsPreviewHtml = previewInfoPages.get(`${termsSlug}/index.html`) || "";
+    const rawAboutPreviewHtml = previewInfoPages.get(`${aboutSlug}.page`) || "";
+    const rawTermsPreviewHtml = previewInfoPages.get(`${termsSlug}.page`) || "";
     const aboutPreviewHtml = rawAboutPreviewHtml ? prepareInfoPreview(rawAboutPreviewHtml) : "";
     const termsPreviewHtml = rawTermsPreviewHtml ? prepareInfoPreview(rawTermsPreviewHtml) : "";
     session.preview = { digest, baseSha: body.baseSha, at: Date.now() };
@@ -723,7 +725,7 @@ async function handleApi(request, response) {
       previewDigest: digest,
       productCount: normalized.products.length,
       activeProductCount: normalized.products.filter((item) => item.active !== false).length,
-      pageCount: previewProductPages.size + previewInfoPages.size,
+      pageCount: previewProductPages.size + previewProductListing.size + previewInfoPages.size,
       aboutPreviewHtml,
       termsPreviewHtml,
       warnings: normalized.cms?.seo?.robotsIndexing === false
@@ -809,6 +811,7 @@ async function handleApi(request, response) {
     const version = `admin-${Date.now()}`;
     const patchedIndex = patchHomeStructuredData(bumpAssetVersions(indexFile.source, version), adminData.cms);
     const productPages = generateProductPageFiles(adminData.products, adminData.siteSections, adminData.cms, adminData.content);
+    const productListing = generateProductListingPageFiles(adminData.products, adminData.siteSections, adminData.cms);
     const infoPages = generateInfoPageFiles(adminData.siteSections, adminData.ui, adminData.cms);
     const files = new Map([
       ["app.js", patched],
@@ -816,6 +819,7 @@ async function handleApi(request, response) {
       ["sitemap.xml", buildSitemap(adminData.products, adminData.siteSections, new Date(), adminData.cms)],
       ["_redirects", buildRedirects(adminData.products, adminData.siteSections, previousData)],
       ...productPages,
+      ...productListing,
       ...infoPages
     ]);
     for (const [filePath, buffer] of session.pendingUploads || []) {

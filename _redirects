@@ -1,12 +1,6 @@
 /admin https://mirpanel.onrender.com/ 302
 /admin.html https://mirpanel.onrender.com/ 302
 /admin/* https://mirpanel.onrender.com/:splat 302
-/haqqimizda /haqqimizda/ 301
-/haqqimizda/ /haqqimizda/index.html 200
-/sertler /sertler/ 301
-/sertler/ /sertler/index.html 200
-/elaqe /elaqe/ 301
-/elaqe/ /elaqe/index.html 200
 /netflix-almaq /mehsul/netflix-sexsi 301
 /netflix-almaq/ /mehsul/netflix-sexsi 301
 /netflix-aile-almaq /mehsul/netflix-sexsi 301

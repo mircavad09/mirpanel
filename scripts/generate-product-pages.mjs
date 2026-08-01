@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { extractAdminState } from "../mirpanel-admin/core.mjs";
 import {
   generateInfoPageFiles,
+  generateProductListingPageFiles,
   generateProductPageFiles,
   generateRedirects,
   generateSitemap
@@ -14,6 +15,7 @@ const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const state = extractAdminState(appSource);
 const pages = new Map([
   ...generateProductPageFiles(state.products, state.siteSections, state.cms, state.content),
+  ...generateProductListingPageFiles(state.products, state.siteSections, state.cms),
   ...generateInfoPageFiles(state.siteSections, state.ui, state.cms)
 ]);
 

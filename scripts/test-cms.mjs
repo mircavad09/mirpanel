@@ -146,7 +146,7 @@ const infoPages = generateInfoPageFiles(state.siteSections, state.ui, state.cms)
 assert.equal(pages.size, 21);
 assert.equal(infoPages.size, 3);
 assert.ok(
-  infoPages.get(`${state.siteSections.elaqe.slug}/index.html`).includes(state.cms.site.phoneDisplay),
+  infoPages.get(`${state.siteSections.elaqe.slug}.page`).includes(state.cms.site.phoneDisplay),
   "Shared WhatsApp number is not connected to the contact page"
 );
 const firstPage = pages.values().next().value;

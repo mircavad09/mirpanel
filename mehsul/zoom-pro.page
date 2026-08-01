@@ -26,7 +26,7 @@
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/zoom-pro#product","url":"https://mirpanel.com/mehsul/zoom-pro","name":"Zoom Pro","description":"Zoom Pro hesabını sərfəli qiymətə əldə et. Online görüşlər və premium Zoom imkanları Mirpanel-də.","image":["https://mirpanel.com/assets/zoom.png"],"sku":"zoom","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/zoom-pro","price":"9.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/zoom-pro#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/#products-section"},{"@type":"ListItem","position":3,"name":"Zoom Pro","item":"https://mirpanel.com/mehsul/zoom-pro"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/zoom-pro#product","url":"https://mirpanel.com/mehsul/zoom-pro","name":"Zoom Pro","description":"Zoom Pro hesabını sərfəli qiymətə əldə et. Online görüşlər və premium Zoom imkanları Mirpanel-də.","image":["https://mirpanel.com/assets/zoom.png"],"sku":"zoom","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/zoom-pro","price":"9.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/zoom-pro#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Zoom Pro","item":"https://mirpanel.com/mehsul/zoom-pro"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="zoom" data-product-slug="zoom-pro">
   <header class="product-page-header">
@@ -35,14 +35,14 @@
         <img src="/assets/logo.png" alt="Mirpanel">
         <span>MIRPANEL</span>
       </a>
-      <nav class="product-page-nav" aria-label="Əsas menyu"><a href="/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg><span>Ana Səhifə</span></a><a href="/#products-section"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/></svg><span>Məhsullar</span></a><a href="/haqqimizda/"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg><span>Haqqımızda</span></a><a href="/sertler/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3-7 3v-15a2 2 0 0 1 2-2Z"/></svg><span>Şərtlər</span></a><a href="/elaqe/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a></nav>
+      <nav class="product-page-nav" aria-label="Əsas menyu"><a href="/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg><span>Ana Səhifə</span></a><a href="/mehsul"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/></svg><span>Məhsullar</span></a><a href="/haqqimizda"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg><span>Haqqımızda</span></a><a href="/sertler"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3-7 3v-15a2 2 0 0 1 2-2Z"/></svg><span>Şərtlər</span></a><a href="/elaqe"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a></nav>
     </div>
   </header>
 
   <main id="productPageView" class="product-page-root">
     <nav class="product-page-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Ana səhifə</a><span aria-hidden="true">›</span>
-      <a href="/#products-section">Məhsullar</a><span aria-hidden="true">›</span>
+      <a href="/mehsul">Məhsullar</a><span aria-hidden="true">›</span>
       <span aria-current="page">Zoom Pro</span>
     </nav>
     <div class="product-page-layout">
@@ -130,7 +130,7 @@
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">Stokda yoxdur</div>
     </a></div>
-        <a class="product-page-similar-more" href="/#products-section">Daha çox məhsul</a>
+        <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
     </div>
 
@@ -179,7 +179,7 @@
     </section>
   </main>
 
-  <footer class="product-page-footer">© 2026 Mirpanel · Bütün hüquqlar qorunur · <a href="/haqqimizda/">Haqqımızda</a> · <a href="/sertler/">Şərtlər</a> · <a href="/elaqe/">Əlaqə</a></footer>
+  <footer class="product-page-footer">© 2026 Mirpanel · Bütün hüquqlar qorunur · <a href="/haqqimizda">Haqqımızda</a> · <a href="/sertler">Şərtlər</a> · <a href="/elaqe">Əlaqə</a></footer>
 
   <div class="modal" id="modal" aria-hidden="true">
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">

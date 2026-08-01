@@ -10,6 +10,7 @@ import {
 import {
   activeProductsWithSlugs,
   generateInfoPageFiles,
+  generateProductListingPageFiles,
   generateProductPageFiles,
   generateRedirects,
   generateSitemap,
@@ -28,6 +29,7 @@ const state = extractAdminState(appSource);
 const active = activeProductsWithSlugs(state.products);
 const pages = generateProductPageFiles(state.products, state.siteSections, state.cms);
 const infoPages = generateInfoPageFiles(state.siteSections, state.ui, state.cms);
+const listingHtml = generateProductListingPageFiles(state.products, state.siteSections, state.cms).get("mehsul.page");
 const sitemap = generateSitemap(state.products, state.siteSections, new Date("2026-07-24T00:00:00Z"), state.cms);
 const redirects = generateRedirects(state.products, state.siteSections);
 const activeTitles = [];
@@ -47,15 +49,22 @@ assert.equal(appSource.includes(`tokens ${"truncated"}`), false);
 assert.equal(appSource.includes(`${408}${77}`), false);
 assert.equal(active.length, 21);
 assert.equal(pages.size, active.length);
+assert.ok(listingHtml.includes('rel="canonical" href="https://mirpanel.com/mehsul"'));
+assert.equal((listingHtml.match(/class="card"/g) || []).length, active.length, "Aktiv məhsulların hamısı siyahıda olmalıdır");
+assert.deepEqual([...listingHtml.matchAll(/data-product-id="([^"]+)"/g)].map((match) => match[1]), active.map(({ product }) => product.id), "Məhsul sırası dəyişib");
+const simulatedProducts = [...state.products, { ...structuredClone(state.products[0]), id: "future_product_test", title: "Future product test", seoSlug: "future-product-test", order: 999 }];
+assert.ok(generateProductListingPageFiles(simulatedProducts, state.siteSections, state.cms).get("mehsul.page").includes('data-product-id="future_product_test"'), "Yeni aktiv məhsul avtomatik görünmədi");
+simulatedProducts.at(-1).active = false;
+assert.equal(generateProductListingPageFiles(simulatedProducts, state.siteSections, state.cms).get("mehsul.page").includes('data-product-id="future_product_test"'), false, "Deaktiv məhsul siyahıda qaldı");
 
-const aboutHtml = infoPages.get("haqqimizda/index.html");
+const aboutHtml = infoPages.get("haqqimizda.page");
 assert.ok(aboutHtml, "Haqqımızda səhifəsi yaradılmadı");
 assert.equal((aboutHtml.match(/<h1\b/g) || []).length, 1, "Haqqımızda səhifəsində bir H1 olmalıdır");
 assert.ok(aboutHtml.includes('info-page-document info-page-document--about'), "Haqqımızda səhifəsi ayrıca dizayn sinfini almadı");
 assert.ok(aboutHtml.includes('class="info-page-card info-page-card--about"'), "Haqqımızda geniş məzmun sinfini almadı");
 assert.ok(aboutHtml.includes('<p class="info-page-kicker">Haqqımızda</p>'), "Haqqımızda üst etiketi");
 assert.ok(aboutHtml.includes("<strong>MirPanel</strong>"), "Qalın Markdown real HTML-ə çevrilmədi");
-assert.ok(aboutHtml.includes('<a href="/elaqe/">Əlaqə səhifəsindən</a>'), "Admin daxili keçidi real HTML-ə çevrilmədi");
+assert.ok(aboutHtml.includes('<a href="/elaqe">Əlaqə səhifəsindən</a>'), "Admin daxili keçidi real HTML-ə çevrilmədi");
 assert.equal(aboutHtml.includes("**MirPanel**"), false, "Haqqımızda səhifəsində Markdown qalığı var");
 assert.equal(/<p>\s*#{1,6}\s/.test(aboutHtml), false, "Haqqımızda səhifəsində başlıq Markdown qalığı var");
 assert.equal((aboutHtml.match(/<h2\b/g) || []).length, 0, "Haqqımızda səhifəsində böyük bölmə başlığı qalıb");
@@ -63,9 +72,9 @@ assert.equal(aboutHtml.includes("about-page-lead"), false, "Haqqımızda ortalan
 assert.equal(aboutHtml.includes("info-page-actions"), false, "Haqqımızda daxili düymələri qalıb");
 assert.equal(aboutHtml.includes("about-page-sections"), false, "Haqqımızda məzmunu ayrıca dizayn bloklarına bölünüb");
 assert.equal((aboutHtml.match(/<div class="info-page-copy about-page-copy">[\s\S]*?<\/div>/) || [""])[0].match(/<p>/g)?.length, 6, "Haqqımızda məzmunu 6 ardıcıl abzas olmalıdır");
-assert.ok(aboutHtml.includes('rel="canonical" href="https://mirpanel.com/haqqimizda/"'), "Haqqımızda canonical dəyişib");
+assert.ok(aboutHtml.includes('rel="canonical" href="https://mirpanel.com/haqqimizda"'), "Haqqımızda canonical dəyişib");
 
-const termsHtml = infoPages.get("sertler/index.html");
+const termsHtml = infoPages.get("sertler.page");
 const termsBody = state.siteSections.sertler.body;
 assert.ok(termsHtml, "Şərtlər səhifəsi yaradılmadı");
 assert.equal((termsHtml.match(/<h1\b/g) || []).length, 1, "Şərtlər səhifəsində bir H1 olmalıdır");
@@ -79,7 +88,7 @@ assert.equal(/target=["']_blank/.test(termsHtml), false, "Şərtlər səhifəsin
 assert.equal(/[ÃÄÅÉâ]/.test(termsHtml), false, "Şərtlər səhifəsində kodlaşdırma pozuntusu var");
 assert.equal(/\*\*/.test(termsHtml) || /^\s*#{1,6}\s/m.test(termsHtml), false, "Şərtlər səhifəsində Markdown işarəsi görünür");
 assert.ok(/[əıöüşçğƏİÖÜŞÇĞ]/.test(termsHtml), "Azərbaycan hərfləri qorunmayıb");
-assert.ok(termsHtml.includes('rel="canonical" href="https://mirpanel.com/sertler/"'), "Şərtlər canonical dəyişib");
+assert.ok(termsHtml.includes('rel="canonical" href="https://mirpanel.com/sertler"'), "Şərtlər canonical dəyişib");
 assert.ok(termsHtml.includes('name="robots" content="index, follow"'), "Şərtlər səhifəsi indekslənə bilmir");
 
 const normalizeLegalText = (value) => String(value || "")
@@ -132,9 +141,9 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`7/24 anında təqdim edilir`), `${filePath}: delivery text`);
   assert.equal(html.includes(`class="product-page-back"`), false, `${filePath}: back link removed`);
   assert.equal((html.match(/<svg aria-hidden="true"/g) || []).length, 5, `${filePath}: menu icons`);
-  assert.ok(html.includes(`href="/haqqimizda/"`), `${filePath}: about link`);
-  assert.ok(html.includes(`href="/sertler/"`), `${filePath}: terms link`);
-  assert.ok(html.includes(`href="/elaqe/"`), `${filePath}: contact link`);
+  assert.ok(html.includes(`href="/haqqimizda"`), `${filePath}: about link`);
+  assert.ok(html.includes(`href="/sertler"`), `${filePath}: terms link`);
+  assert.ok(html.includes(`href="/elaqe"`), `${filePath}: contact link`);
   assert.ok(html.includes(`id="product-about"`), `${filePath}: stable about target`);
   assert.ok(html.includes(`data-product-tab="about"`), `${filePath}: about tab`);
   assert.ok(html.includes(`data-product-tab="rules"`), `${filePath}: rules tab`);
@@ -328,20 +337,19 @@ const expectedInfoPages = Object.fromEntries(
 assert.equal(Object.keys(legacyExpectedInfoPages).length, 3, "Legacy information metadata fixture");
 assert.equal(infoPages.size, 3, "Information page count");
 for (const [key, expected] of Object.entries(expectedInfoPages)) {
-  const html = infoPages.get(`${key}/index.html`);
+  const html = infoPages.get(`${key}.page`);
   assert.ok(html, `${key}: information page`);
   assert.ok(html.includes(`<title>${expected.title}</title>`), `${key}: title`);
   assert.ok(html.includes(`name="description" content="${expected.description}"`), `${key}: description`);
   assert.ok(html.includes(`<h1>${expected.h1}</h1>`), `${key}: h1`);
-  assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${key}/"`), `${key}: canonical`);
-  assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${key}/"`), `${key}: Open Graph URL`);
+  assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${key}"`), `${key}: canonical`);
+  assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${key}"`), `${key}: Open Graph URL`);
   assert.ok(html.includes(`name="robots" content="index, follow"`), `${key}: robots`);
   assert.ok(html.includes(`"@type":"BreadcrumbList"`), `${key}: BreadcrumbList`);
   assert.equal(html.includes('target="_blank"'), false, `${key}: no new tab`);
-  assert.ok(sitemap.includes(`https://mirpanel.com/${key}/`), `${key}: sitemap`);
-  assert.equal(sitemap.includes(`https://mirpanel.com/${key}<`), false, `${key}: redirect URL absent from sitemap`);
-  assert.ok(redirects.includes(`/${key} /${key}/ 301`), `${key}: permanent redirect`);
-  assert.ok(redirects.includes(`/${key}/ /${key}/index.html 200`), `${key}: final route`);
+  assert.ok(sitemap.includes(`https://mirpanel.com/${key}<`), `${key}: sitemap`);
+  assert.equal(sitemap.includes(`https://mirpanel.com/${key}/`), false, `${key}: slash URL absent from sitemap`);
+  assert.equal(redirects.includes(`/${key}/`), false, `${key}: slash route middleware tərəfindən idarə olunmalıdır`);
 }
 assert.equal(sitemap.includes("https://mirpanel.com/netflix-almaq/"), false, "Retired Netflix doorway URL remained in sitemap");
 assert.ok(redirects.includes("/netflix-almaq /mehsul/netflix-sexsi 301"), "Netflix target redirect missing");
@@ -350,18 +358,18 @@ assert.ok(redirects.includes("/netflix-almaq/ /mehsul/netflix-sexsi 301"), "Netf
 const disabledSections = structuredClone(state.siteSections);
 disabledSections.haqqimizda.enabled = false;
 assert.equal(
-  generateInfoPageFiles(disabledSections, state.ui).has("haqqimizda/index.html"),
+  generateInfoPageFiles(disabledSections, state.ui).has("haqqimizda.page"),
   false,
   "Disabled information page generated"
 );
 assert.equal(
-  generateSitemap(state.products, disabledSections).includes("https://mirpanel.com/haqqimizda/"),
+  generateSitemap(state.products, disabledSections).includes("https://mirpanel.com/haqqimizda"),
   false,
   "Disabled information page remained in sitemap"
 );
 assert.deepEqual(
   removedInfoPagePaths(state.siteSections, disabledSections),
-  ["haqqimizda/index.html"],
+  ["haqqimizda.page"],
   "Disabled information page removal"
 );
 
@@ -370,7 +378,7 @@ updatedSections.haqqimizda.body = "Admin məlumat səhifəsi yeniləmə testi.";
 updatedSections.haqqimizda.blocks = [];
 assert.ok(
   generateInfoPageFiles(updatedSections, state.ui)
-    .get("haqqimizda/index.html")
+    .get("haqqimizda.page")
     .includes("Admin məlumat səhifəsi yeniləmə testi."),
   "Admin information text did not regenerate the page"
 );
@@ -385,7 +393,7 @@ const unsafeAboutHtml = generateInfoPageFiles(
   normalizeAdminPayload(unsafeAboutState).siteSections,
   state.ui,
   state.cms
-).get("haqqimizda/index.html");
+).get("haqqimizda.page");
 assert.equal(unsafeAboutHtml.includes("<script>alert"), false, "Haqqımızda script sanitizasiyası");
 assert.equal(unsafeAboutHtml.includes("<iframe"), false, "Haqqımızda iframe sanitizasiyası");
 assert.equal(unsafeAboutHtml.includes("javascript:"), false, "Haqqımızda təhlükəli URL sanitizasiyası");

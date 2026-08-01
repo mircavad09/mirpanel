@@ -159,7 +159,7 @@ export function removedInfoPagePaths(previousSiteSections = {}, nextSiteSections
   const next = new Set(activeSitePageSlugs(nextSiteSections));
   return [...previous]
     .filter((slug) => !next.has(slug))
-    .map((slug) => `${slug}/index.html`);
+    .map((slug) => `${slug}.page`);
 }
 
 export function generateSitemap(products = [], siteSections = {}, date = new Date(), cms = {}) {
@@ -178,9 +178,10 @@ export function generateSitemap(products = [], siteSections = {}, date = new Dat
   if (cms?.seo?.home?.includeInSitemap !== false && cms?.seo?.home?.index !== false) {
     add("/", "daily", "1.0");
   }
+  add("/mehsul", "daily", "0.9");
   for (const { slug, section } of activeSitePages(siteSections)) {
     if (section.includeInSitemap !== false && section.index !== false) {
-      add(`/${slug}/`, "monthly", "0.7");
+      add(`/${slug}`, "monthly", "0.7");
     }
   }
   for (const { product, slug } of activeProductsWithSlugs(products)) {
@@ -205,10 +206,6 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
   const primaryById = new Map(
     activeProductsWithSlugs(products).map(({ product, slug }) => [product.id, slug])
   );
-
-  for (const slug of activeSitePageSlugs(siteSections)) {
-    lines.push(`/${slug} /${slug}/ 301`, `/${slug}/ /${slug}/index.html 200`);
-  }
 
   for (const [productId, aliases] of Object.entries(defaultSeoAliases)) {
     const primary = primaryById.get(productId);
@@ -243,7 +240,7 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
   for (const page of activeSitePages(previous.siteSections || {})) {
     const newSlug = nextSiteByKey.get(page.key);
     if (newSlug && page.slug !== newSlug) {
-      lines.push(`/${page.slug} /${newSlug}/ 301`, `/${page.slug}/ /${newSlug}/ 301`);
+      lines.push(`/${page.slug} /${newSlug} 301`, `/${page.slug}/ /${newSlug} 301`);
     }
   }
 
@@ -274,10 +271,43 @@ export function generateInfoPageFiles(siteSections = {}, ui = {}, cms = {}) {
           }
         }
       : page;
-    files.set(`${page.slug}/index.html`, generateInfoPageHtml(effectivePage, siteSections, ui, cms));
+    files.set(`${page.slug}.page`, generateInfoPageHtml(effectivePage, siteSections, ui, cms));
   }
 
   return files;
+}
+
+export function generateProductListingPageFiles(products = [], siteSections = {}, cms = {}) {
+  const active = activeProductsWithSlugs(products);
+  const canonical = `${SITE_URL}/mehsul`;
+  const cards = active.map(({ product, slug }, index) => {
+    const prices = (Array.isArray(product.plans) ? product.plans : [])
+      .map((plan) => Number(plan.price))
+      .filter((price) => Number.isFinite(price) && price > 0);
+    const shownPrice = product.id === "tiktok_jeton"
+      ? `10.00 ${cleanText(product.currency)}`
+      : prices.length ? `${Math.min(...prices).toFixed(2)} ${cleanText(product.currency)}` : "—";
+    return `<a class="card" href="${productCanonicalPath(slug)}" data-product-id="${escapeAttribute(product.id)}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s"><div class="imgWrap"><img class="img" src="${escapeAttribute(rootRelativeUrl(product.image))}" alt="${escapeAttribute(product.imageAlt || product.title)}"><div class="cornerPrice">${escapeHtml(shownPrice)}</div></div><div class="pad"><div class="topline"><h2 class="title">${escapeHtml(product.title)}</h2><div class="badge">${escapeHtml(product.badge)}</div></div><div class="meta">${escapeHtml(product.desc)}</div><div class="priceRow"><span class="btn primary">${escapeHtml(cms.commonTexts?.order || "Sifariş et")}</span></div></div></a>`;
+  }).join("");
+  const structuredData = safeJson({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Məhsullar | Mirpanel",
+    url: canonical,
+    mainEntity: {
+      "@type": "ItemList",
+      itemListElement: active.map(({ product, slug }, index) => ({
+        "@type": "ListItem",
+        position: index + 1,
+        name: cleanText(product.title),
+        url: `${SITE_URL}${productCanonicalPath(slug)}`
+      }))
+    }
+  });
+  const html = `<!DOCTYPE html>
+<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də mövcud rəqəmsal məhsullara və planlara baxın."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də mövcud rəqəmsal məhsullara və planlara baxın."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=final22"><link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
+<body class="product-page-document"><header class="product-page-header"><div class="product-page-header-inner"><a class="product-page-brand" href="/"><img src="/assets/logo.png" alt="Mirpanel"><span>MIRPANEL</span></a><nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections, "products")}</nav></div></header><main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer></body></html>`;
+  return new Map([["mehsul.page", applyCmsBrandAndNav(html, cms, "products")]]);
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
@@ -330,7 +360,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
             "@type": "ListItem",
             position: 2,
             name: "Məhsullar",
-            item: `${SITE_URL}/#products-section`
+            item: `${SITE_URL}/mehsul`
           },
           {
             "@type": "ListItem",
@@ -387,7 +417,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <main id="productPageView" class="product-page-root">
     <nav class="product-page-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Ana səhifə</a><span aria-hidden="true">›</span>
-      <a href="/#products-section">Məhsullar</a><span aria-hidden="true">›</span>
+      <a href="/mehsul">Məhsullar</a><span aria-hidden="true">›</span>
       <span aria-current="page">${escapeHtml(product.title)}</span>
     </nav>
     <div class="product-page-layout">
@@ -425,7 +455,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
         <div id="pp-similar-list" class="product-page-similar-list">${similarMarkup}</div>
-        <a class="product-page-similar-more" href="/#products-section">Daha çox məhsul</a>
+        <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
     </div>
 
@@ -496,7 +526,7 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
     description: cleanText(page.section.seoDescription) || fallbackMetadata.description,
     h1: cleanText(page.section.title) || fallbackMetadata.h1
   } : fallbackMetadata;
-  const canonical = `${SITE_URL}/${page.slug}/`;
+  const canonical = `${SITE_URL}/${page.slug}`;
   const content = renderInfoPageContent(page.key, page.section, siteSections, ui);
   const structuredData = safeJson({
     "@context": "https://schema.org",
@@ -761,8 +791,8 @@ function renderInfoPageContent(key, section, siteSections, ui) {
   ).join("")}</div>
     <div class="info-page-actions">
       <a href="/">Ana səhifə</a>
-      <a href="/#products-section">Məhsullara bax</a>
-      ${siteSections?.elaqe?.enabled === false ? "" : `<a class="is-primary" href="/${seoSlug(siteSections?.elaqe?.slug || defaultSitePageSlugs.elaqe)}/">Əlaqə</a>`}
+      <a href="/mehsul">Məhsullara bax</a>
+      ${siteSections?.elaqe?.enabled === false ? "" : `<a class="is-primary" href="/${seoSlug(siteSections?.elaqe?.slug || defaultSitePageSlugs.elaqe)}">Əlaqə</a>`}
     </div>`;
 }
 
@@ -788,7 +818,7 @@ function renderCmsNav(cms = {}) {
     .filter((item) => item.enabled !== false && cleanText(item.label) && cleanText(item.url))
     .sort((a, b) => Number(a.order) - Number(b.order))
     .map((item) => {
-      const url = cleanText(item.url);
+      const url = canonicalSiteUrl(item.url);
       const external = /^https?:\/\//i.test(url);
       const newTab = item.newTab === true;
       return `<a href="${escapeAttribute(url)}"${newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}><svg aria-hidden="true" viewBox="0 0 24 24">${cmsIcon(item.icon)}</svg><span>${escapeHtml(item.label)}</span></a>`;
@@ -804,7 +834,7 @@ function renderCmsFooter(cms = {}, ui = {}) {
   const links = (Array.isArray(footer.links) ? footer.links : [])
     .filter((item) => item.enabled !== false && item.label && item.url)
     .sort((a, b) => Number(a.order) - Number(b.order))
-    .map((item) => `<a href="${escapeAttribute(item.url)}"${item.newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}>${escapeHtml(item.label)}</a>`)
+    .map((item) => `<a href="${escapeAttribute(canonicalSiteUrl(item.url))}"${item.newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}>${escapeHtml(item.label)}</a>`)
     .join(" · ");
   return `© ${year} ${escapeHtml(brand)} · ${escapeHtml(rights)}${links ? ` · ${links}` : ""}`;
 }
@@ -890,7 +920,7 @@ function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
 function renderSiteNav(siteSections = {}, currentKey = null) {
   const links = [
     ["", "/", "Ana səhifə", `<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/>`],
-    ["products", "/#products-section", "Məhsullar", `<path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/><path d="M12 11v10"/>`]
+    ["products", "/mehsul", "Məhsullar", `<path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/><path d="M12 11v10"/>`]
   ];
   const labels = { haqqimizda: "Haqqımızda", sertler: "Şərtlər", elaqe: "Əlaqə" };
   const icons = {
@@ -900,7 +930,7 @@ function renderSiteNav(siteSections = {}, currentKey = null) {
   };
 
   for (const { key, slug } of activeSitePages(siteSections)) {
-    links.push([key, `/${slug}/`, labels[key], icons[key]]);
+    links.push([key, `/${slug}`, labels[key], icons[key]]);
   }
 
   return links.map(([key, href, label, icon]) =>
@@ -1052,7 +1082,14 @@ function rootRelativeUrl(value) {
 function pageLinkUrl(value) {
   const source = cleanText(value);
   if (!source) return "";
-  return /^https?:\/\//i.test(source) ? source : rootRelativeUrl(source);
+  return /^https?:\/\//i.test(source) ? source : canonicalSiteUrl(rootRelativeUrl(source));
+}
+
+function canonicalSiteUrl(value) {
+  const source = cleanText(value);
+  if (source === "/" + "#products-section") return "/mehsul";
+  if (/^\/(?:mehsul|haqqimizda|sertler|elaqe)\/$/.test(source)) return source.slice(0, -1);
+  return source;
 }
 
 function absoluteUrl(value) {

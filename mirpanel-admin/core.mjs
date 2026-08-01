@@ -408,9 +408,9 @@ function normalizeSiteSections(source = {}) {
       next[key].homeButtonText = cleanText(item.homeButtonText || "", "Ana səhifə", 120);
       next[key].homeButtonUrl = safeUrl(item.homeButtonUrl || "/");
       next[key].productsButtonText = cleanText(item.productsButtonText || "", "Məhsullara bax", 120);
-      next[key].productsButtonUrl = safeUrl(item.productsButtonUrl || "/#products-section");
+      next[key].productsButtonUrl = safeUrl(item.productsButtonUrl || "/mehsul");
       next[key].contactLinkText = cleanText(item.contactLinkText || "", "Əlaqə səhifəsinə keçin", 160);
-      next[key].contactLinkUrl = safeUrl(item.contactLinkUrl || "/elaqe/");
+      next[key].contactLinkUrl = safeUrl(item.contactLinkUrl || "/elaqe");
     }
 
     if (key === "sertler") {
