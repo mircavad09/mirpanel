@@ -8,6 +8,11 @@ import { renderSitePage } from "../functions/_site-page.js";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const routes = ["mehsul", "haqqimizda", "sertler", "elaqe"];
 const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
+const homeHtml = fs.readFileSync(path.join(root, "index.html"), "utf8");
+const notFoundHtml = fs.readFileSync(path.join(root, "404.html"), "utf8");
+
+assert.equal((homeHtml.match(/<h1(?:\s|>)/gi) || []).length, 1, "home page must have one H1");
+assert.ok(notFoundHtml.includes('name="robots" content="noindex, follow"'), "404 page must be noindex");
 
 async function request(pathname) {
   const request = new Request(`https://mirpanel.com${pathname}`);
