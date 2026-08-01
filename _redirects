@@ -3,9 +3,6 @@
 /admin/* https://mirpanel.onrender.com/:splat 302
 /mehsul /mehsul.page 200
 /mehsul/ /mehsul 301
-/haqqimizda/ /haqqimizda 301
-/sertler/ /sertler 301
-/elaqe/ /elaqe 301
 /netflix-almaq /mehsul/netflix-sexsi 301
 /netflix-almaq/ /mehsul/netflix-sexsi 301
 /netflix-aile-almaq /mehsul/netflix-sexsi 301

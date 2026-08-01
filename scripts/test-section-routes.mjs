@@ -3,9 +3,11 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { onRequest } from "../functions/_middleware.js";
+import { renderSitePage } from "../functions/_site-page.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const routes = ["mehsul", "haqqimizda", "sertler", "elaqe"];
+const appSource = fs.readFileSync(path.join(root, "app.js"), "utf8");
 
 async function request(pathname) {
   const request = new Request(`https://mirpanel.com${pathname}`);
@@ -17,6 +19,19 @@ async function request(pathname) {
       return new Response(fs.readFileSync(filePath), { status: 200 });
     }
   });
+}
+
+for (const route of ["haqqimizda", "sertler", "elaqe"]) {
+  const contextFor = (pathname) => ({
+    request: new Request(`https://mirpanel.com${pathname}`),
+    env: { ASSETS: { fetch: async () => new Response(appSource, { status: 200 }) } },
+    next: async () => new Response("page", { status: 200 })
+  });
+  const direct = await renderSitePage(contextFor(`/${route}`), route);
+  assert.equal(direct.status, 200, `${route}: exact Pages Function direct response`);
+  const slash = await renderSitePage(contextFor(`/${route}/`), route);
+  assert.equal(slash.status, 301, `${route}: exact Pages Function slash response`);
+  assert.equal(slash.headers.get("location"), `https://mirpanel.com/${route}`);
 }
 
 for (const route of routes) {
@@ -43,7 +58,10 @@ for (const route of routes) {
   assert.ok(sitemap.includes(`<loc>https://mirpanel.com/${route}</loc>`));
   assert.equal(sitemap.includes(`<loc>https://mirpanel.com/${route}/</loc>`), false);
   if (route === "mehsul") assert.ok(redirects.includes("/mehsul /mehsul.page 200"));
-  assert.ok(redirects.includes(`/${route}/ /${route} 301`));
+  if (route === "mehsul") assert.ok(redirects.includes("/mehsul/ /mehsul 301"));
 }
+
+const sitePageSource = fs.readFileSync(path.join(root, "functions", "_site-page.js"), "utf8");
+assert.equal(sitePageSource.includes("`${page.slug}/`"), false, "exact Pages Function must not add a trailing slash");
 
 console.log("PASS: four slashless routes are direct 200, slash variants are one-hop 301, listing has 21 products, sitemap has 26 canonical URLs.");

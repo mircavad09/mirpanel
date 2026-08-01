@@ -133,7 +133,7 @@ export async function renderSitePage(context, key) {
   if (page.enabled === false) return new Response("Not found", { status: 404 });
 
   const requestUrl = new URL(context.request.url);
-  const canonicalPath = `/${page.slug}/`;
+  const canonicalPath = `/${page.slug}`;
   if (requestUrl.pathname !== canonicalPath) {
     requestUrl.pathname = canonicalPath;
     return Response.redirect(requestUrl, 301);
