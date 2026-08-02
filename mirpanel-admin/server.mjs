@@ -4,7 +4,7 @@ import http from "node:http";
 import path from "node:path";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
-import { extractAdminState, normalizeAdminPayload, patchAppSource } from "./core.mjs";
+import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -756,7 +756,8 @@ async function handleApi(request, response) {
         currentSha: current.sha
       });
     }
-    const normalized = normalizeAdminPayload(body.data);
+    const currentData = extractAdminState(current.source);
+    const normalized = normalizeAdminPayload(mergeAdminPayload(currentData, body.data));
     const previewProductPages = generateProductPageFiles(normalized.products, normalized.siteSections, normalized.cms, normalized.content);
     const previewProductListing = generateProductListingPageFiles(normalized.products, normalized.siteSections, normalized.cms);
     const previewInfoPages = generateInfoPageFiles(normalized.siteSections, normalized.ui, normalized.cms);
@@ -851,7 +852,7 @@ async function handleApi(request, response) {
         });
       }
     }
-    const adminData = normalizeAdminPayload(body.data);
+    const adminData = normalizeAdminPayload(mergeAdminPayload(previousData, body.data));
     const digest = crypto
       .createHash("sha256")
       .update(JSON.stringify({ baseSha: body.baseSha, data: adminData }))

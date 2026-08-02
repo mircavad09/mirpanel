@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import crypto from "node:crypto";
 import fs from "node:fs";
-import { extractAdminState, normalizeAdminPayload, patchAppSource } from "../mirpanel-admin/core.mjs";
+import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "../mirpanel-admin/core.mjs";
 import {
   generateInfoPageFiles,
   generateProductPageFiles,
@@ -25,6 +25,49 @@ const bannerSnapshot = state.products.map((product) => [
   product.banner?.mobileImage,
   product.banner?.order
 ]);
+const protectedProductSnapshot = (products) => products.map((product) => ({
+  id: product.id,
+  active: product.active,
+  order: product.order,
+  stock: product.stock,
+  stockEnabled: product.stockEnabled,
+  soldOut: product.soldOut,
+  seoSlug: product.seoSlug,
+  currency: product.currency,
+  plans: product.plans,
+  banner: product.banner,
+  formFields: product.formFields
+}));
+
+const partialAbout = {
+  siteSections: {
+    haqqimizda: {
+      body: "Haqqımızda partial publish regression mətni"
+    }
+  }
+};
+const mergedAbout = normalizeAdminPayload(mergeAdminPayload(state, partialAbout));
+assert.equal(mergedAbout.siteSections.haqqimizda.body, partialAbout.siteSections.haqqimizda.body, "Haqqımızda partial dəyişiklik saxlanmadı");
+assert.equal(mergedAbout.siteSections.sertler.body, state.siteSections.sertler.body, "Haqqımızda dəyişəndə Şərtlər sıfırlandı");
+assert.equal(
+  JSON.stringify(protectedProductSnapshot(mergedAbout.products)),
+  JSON.stringify(protectedProductSnapshot(state.products)),
+  "Haqqımızda dəyişəndə qorunan məhsul məlumatları dəyişdi"
+);
+assert.equal(
+  JSON.stringify(mergedAbout.cms.footer),
+  JSON.stringify(state.cms.footer),
+  "Haqqımızda dəyişəndə footer dəyişdi"
+);
+
+const mergedSecondSection = normalizeAdminPayload(mergeAdminPayload(mergedAbout, {
+  cms: { homepage: { announcement: { text: "İkinci bölmə regression testi" } } }
+}));
+assert.equal(mergedSecondSection.siteSections.haqqimizda.body, partialAbout.siteSections.haqqimizda.body, "İkinci bölmə dəyişəndə Haqqımızda sıfırlandı");
+assert.equal(mergedSecondSection.cms.homepage.hero.title, state.cms.homepage.hero.title, "Göndərilməyən ana səhifə sahəsi default-la əvəzləndi");
+assert.equal({}.polluted, undefined, "Prototype əvvəlcədən çirklənib");
+mergeAdminPayload(state, JSON.parse('{"__proto__":{"polluted":true}}'));
+assert.equal({}.polluted, undefined, "Deep merge prototype pollution-a açıqdır");
 
 assert.equal(state.products.length, 30, "Məhsul sayı dəyişib");
 assert.equal(state.products.filter((product) => product.active).length, 21, "Aktiv məhsul sayı dəyişib");

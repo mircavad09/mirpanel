@@ -824,6 +824,29 @@ function normalizeProduct(product = {}, index = 0) {
   };
 }
 
+const BLOCKED_MERGE_KEYS = new Set(["__proto__", "prototype", "constructor"]);
+
+function isMergeObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
+}
+
+export function mergeAdminPayload(base = {}, patch = {}) {
+  const merge = (current, incoming) => {
+    if (incoming === undefined) return structuredClone(current);
+    if (Array.isArray(incoming)) return structuredClone(incoming);
+    if (!isMergeObject(incoming)) return incoming;
+
+    const result = isMergeObject(current) ? structuredClone(current) : {};
+    for (const [key, value] of Object.entries(incoming)) {
+      if (BLOCKED_MERGE_KEYS.has(key) || value === undefined) continue;
+      result[key] = merge(result[key], value);
+    }
+    return result;
+  };
+
+  return merge(base, patch);
+}
+
 export function normalizeAdminPayload(payload = {}) {
   const sourceCategories = Array.isArray(payload.categories)
     ? payload.categories.map((category, index) => ({
