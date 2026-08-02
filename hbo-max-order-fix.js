@@ -520,6 +520,7 @@
     const modal = document.getElementById("modal");
     const form = document.querySelector("#mForm .mpForm");
     if (!modal?.classList.contains("show") || !form) return;
+    if (modal.classList.contains("orderConfirmationModal")) return;
 
     const modalText = modal.innerText || "";
     const hasNetflixLeak = /Netflix/i.test(modalText)
@@ -578,6 +579,16 @@
 
     event.preventDefault();
     event.stopImmediatePropagation();
+    if (typeof window.mirpanelRequireOrderConsent === "function") {
+      window.mirpanelRequireOrderConsent(product, plan, () => {
+        if (brand === "prime") {
+          openPrimeVideoOrderForm(product, plan);
+          return;
+        }
+        openHboMaxOrderForm(product, plan);
+      });
+      return;
+    }
     if (brand === "prime") {
       openPrimeVideoOrderForm(product, plan);
       return;

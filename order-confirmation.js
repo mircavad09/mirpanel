@@ -8,6 +8,10 @@
     footerText: "",
     helpLink: { enabled: false, label: "", url: "" }
   };
+  const DEFAULT_AGREEMENT_TEXT = "İstifadə qaydalarını və şərtləri oxudum, qəbul edirəm.";
+  const AGREEMENT_LINK_TEXT = "İstifadə qaydalarını və şərtləri";
+  const AGREEMENT_ERROR = "Davam etmək üçün istifadə qaydalarını və şərtləri qəbul edin.";
+  let orderTermsAccepted = false;
 
   const ORDER_FLOWS = new Set([
     "direct_whatsapp",
@@ -661,6 +665,60 @@
       #modal.orderConfirmationModal #orderConfirmationConfirm:hover {
         background: #f0cc57;
       }
+      #modal.orderConfirmationModal #orderConfirmationConfirm:disabled {
+        border-color: rgba(255, 255, 255, .08);
+        background: #2a2c31;
+        color: rgba(255, 255, 255, .38);
+        cursor: not-allowed;
+        opacity: .78;
+      }
+      #modal.orderConfirmationModal .orderConfirmationConsentForm {
+        display: grid;
+        gap: 9px;
+        min-width: 0;
+      }
+      #modal.orderConfirmationModal .orderConfirmationConsent {
+        display: grid;
+        grid-template-columns: 18px minmax(0, 1fr);
+        align-items: start;
+        gap: 9px;
+        min-width: 0;
+        color: rgba(255, 255, 255, .78);
+        font-size: 12.5px;
+        font-weight: 550;
+        line-height: 1.45;
+        cursor: pointer;
+      }
+      #modal.orderConfirmationModal .orderConfirmationConsent input[type="checkbox"] {
+        appearance: auto;
+        width: 16px;
+        min-width: 16px;
+        height: 16px;
+        min-height: 16px;
+        margin: 1px 0 0;
+        padding: 0;
+        border-radius: 3px;
+        accent-color: #e4bf49;
+        cursor: pointer;
+      }
+      #modal.orderConfirmationModal .orderConfirmationConsent input[type="checkbox"]:focus-visible,
+      #modal.orderConfirmationModal .orderConfirmationConsent a:focus-visible {
+        outline: 2px solid #f0c94b;
+        outline-offset: 3px;
+      }
+      #modal.orderConfirmationModal .orderConfirmationConsent a {
+        color: #f0c94b;
+        font-weight: 700;
+        text-decoration: underline;
+        text-underline-offset: 3px;
+      }
+      #modal.orderConfirmationModal .orderConfirmationConsentError {
+        margin: 0;
+        color: #ffcf70;
+        font-size: 12px;
+        font-weight: 650;
+        line-height: 1.4;
+      }
       body.orderConfirmationActive .gameFab,
       body.orderConfirmationActive .waFab {
         opacity: 0 !important;
@@ -732,6 +790,17 @@
           min-height: 44px;
           padding: 9px 8px;
           font-size: 12px;
+        }
+        #modal.orderConfirmationModal .orderConfirmationConsent {
+          grid-template-columns: 17px minmax(0, 1fr);
+          gap: 8px;
+          font-size: 12px;
+        }
+        #modal.orderConfirmationModal .orderConfirmationConsent input[type="checkbox"] {
+          width: 15px;
+          min-width: 15px;
+          height: 15px;
+          min-height: 15px;
         }
       }
     `;
@@ -825,6 +894,49 @@
       .filter(Boolean)
       .map((paragraph) => `<p>${paragraph}</p>`)
       .join("");
+  }
+
+  function agreementText() {
+    const configured = typeof CMS_CONTENT !== "undefined"
+      ? CMS_CONTENT?.orderSettings?.agreementText
+      : "";
+    return cleanConfirmationLabel(configured) || DEFAULT_AGREEMENT_TEXT;
+  }
+
+  function agreementMarkup(value) {
+    const text = cleanConfirmationLabel(value) || DEFAULT_AGREEMENT_TEXT;
+    const phraseIndex = text.indexOf(AGREEMENT_LINK_TEXT);
+    const link = `<a href="/sertler">${escapeHtml(AGREEMENT_LINK_TEXT)}</a>`;
+    if (phraseIndex < 0) return `<a href="/sertler">${escapeHtml(text)}</a>`;
+    return `${escapeHtml(text.slice(0, phraseIndex))}${link}${escapeHtml(text.slice(phraseIndex + AGREEMENT_LINK_TEXT.length))}`;
+  }
+
+  function resetOrderConsent() {
+    orderTermsAccepted = false;
+    const checkbox = document.getElementById("orderTermsAgreement");
+    const confirmButton = document.getElementById("orderConfirmationConfirm");
+    const error = document.getElementById("orderConfirmationConsentError");
+    if (checkbox) {
+      checkbox.checked = false;
+      checkbox.setCustomValidity("");
+    }
+    if (confirmButton) {
+      confirmButton.disabled = true;
+      confirmButton.setAttribute("aria-disabled", "true");
+    }
+    if (error) error.hidden = true;
+  }
+
+  function showAgreementError() {
+    const checkbox = document.getElementById("orderTermsAgreement");
+    const error = document.getElementById("orderConfirmationConsentError");
+    orderTermsAccepted = false;
+    if (error) error.hidden = false;
+    if (checkbox) {
+      checkbox.setCustomValidity(AGREEMENT_ERROR);
+      checkbox.focus();
+    }
+    toastMessage(AGREEMENT_ERROR);
   }
 
   function activeFields(product) {
@@ -968,6 +1080,7 @@
   }
 
   function openBaseModal(product, plan) {
+    resetOrderConsent();
     setPremiumFormMode(false);
     setOrderConfirmationMode(false);
     setSpotifyConfirmationMode(false);
@@ -998,6 +1111,7 @@
   }
 
   function closeOrderModal() {
+    resetOrderConsent();
     setPremiumFormMode(false);
     setSpotifyConfirmationMode(false);
     setOrderConfirmationMode(false);
@@ -1018,6 +1132,7 @@
 
     if (selectedPlanLabel) lines.push(`Plan: ${selectedPlanLabel}`);
     lines.push(`Qiymət: ${priceText(product, plan)}`);
+    lines.push("İstifadə qaydaları və şərtlər qəbul edildi: Bəli");
     if (settings.includeSeller && product.seller) lines.push(`Satıcı: ${product.seller}`);
     const stock = stockNumber(product);
     if (settings.includeStock && stock !== null) lines.push(`Stok: ${stock}`);
@@ -1081,6 +1196,10 @@
   }
 
   async function openWhatsApp(product, plan, formData = {}) {
+    if (!orderTermsAccepted) {
+      showAgreementError();
+      return;
+    }
     if (!stockIsAvailable(product)) {
       decorateProductPage(product);
       alert("Stokda yoxdur.");
@@ -1195,6 +1314,7 @@
   }
 
   function showConfirmation(product, plan, formData, onConfirm) {
+    resetOrderConsent();
     setPremiumFormMode(false);
     const settings = confirmationFor(product);
     const isSpotify = String(product?.id || "").toLowerCase().includes("spotify") || String(product?.title || "").toLowerCase().includes("spotify");
@@ -1234,16 +1354,45 @@
           ${noteHtml ? `<div class="orderConfirmationNote">${noteHtml}</div>` : ""}
           ${showHelp ? `<p class="orderConfirmationHelpInline"><a href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(helpLabel)}</a></p>` : ""}
         </div>
-        <div class="orderConfirmationActions">
-          <button id="orderConfirmationCancel" class="mpBtn orderConfirmationCancel" type="button">${escapeHtml(cancelText)}</button>
-          <button id="orderConfirmationConfirm" class="mpBtn" type="button">${escapeHtml(confirmText)}</button>
-        </div>
+        <form id="orderConfirmationConsentForm" class="orderConfirmationConsentForm" novalidate>
+          <label class="orderConfirmationConsent" for="orderTermsAgreement">
+            <input id="orderTermsAgreement" name="orderTermsAgreement" type="checkbox" required aria-describedby="orderConfirmationConsentError">
+            <span>${agreementMarkup(agreementText())}</span>
+          </label>
+          <p id="orderConfirmationConsentError" class="orderConfirmationConsentError" role="alert" hidden>${escapeHtml(AGREEMENT_ERROR)}</p>
+          <div class="orderConfirmationActions">
+            <button id="orderConfirmationCancel" class="mpBtn orderConfirmationCancel" type="button">${escapeHtml(cancelText)}</button>
+            <button id="orderConfirmationConfirm" class="mpBtn" type="submit" disabled aria-disabled="true">${escapeHtml(confirmText)}</button>
+          </div>
+        </form>
       </div>
     `);
 
     document.querySelector("#modal .modalCard")?.setAttribute("aria-labelledby", "orderConfirmationTitle");
     document.getElementById("orderConfirmationCancel").onclick = closeOrderModal;
-    document.getElementById("orderConfirmationConfirm").onclick = () => onConfirm(formData);
+    const consentForm = document.getElementById("orderConfirmationConsentForm");
+    const consentCheckbox = document.getElementById("orderTermsAgreement");
+    const confirmButton = document.getElementById("orderConfirmationConfirm");
+    const consentError = document.getElementById("orderConfirmationConsentError");
+
+    consentCheckbox.addEventListener("change", () => {
+      orderTermsAccepted = consentCheckbox.checked;
+      consentCheckbox.setCustomValidity("");
+      confirmButton.disabled = !consentCheckbox.checked;
+      confirmButton.setAttribute("aria-disabled", String(!consentCheckbox.checked));
+      consentError.hidden = true;
+    });
+
+    consentForm.addEventListener("submit", (event) => {
+      event.preventDefault();
+      if (!consentCheckbox.checked) {
+        showAgreementError();
+        return;
+      }
+      consentCheckbox.setCustomValidity("");
+      orderTermsAccepted = true;
+      onConfirm(formData);
+    });
   }
 
   function runOrderFlow(product, plan) {
@@ -1255,9 +1404,8 @@
 
     openBaseModal(product, plan);
     const flow = flowFor(product);
-    const confirmation = confirmationFor(product);
     const needsForm = flow === "form_then_whatsapp" || flow === "form_confirm_whatsapp";
-    const needsConfirmation = confirmation.enabled === true || flow === "confirm_then_whatsapp" || flow === "form_confirm_whatsapp";
+    const needsConfirmation = true;
 
     const continueToFormOrWhatsApp = () => {
       if (needsForm) {
@@ -1273,6 +1421,18 @@
     }
 
     continueToFormOrWhatsApp();
+  }
+
+  function requireOrderConsent(product, plan, onAccepted) {
+    if (!stockIsAvailable(product) || !plan || Number(plan.price) <= 0) {
+      decorateProductPage(product);
+      alert("Stokda yoxdur.");
+      return;
+    }
+    openBaseModal(product, plan);
+    showConfirmation(product, plan, {}, () => {
+      if (typeof onAccepted === "function") onAccepted();
+    });
   }
 
   function decorateProductPage(product) {
@@ -1338,14 +1498,31 @@
 
     window.showNameCodeForm = function patchedNameCodeForm(product, plan, digits) {
       if (isHboProduct(product)) {
-        openBaseModal(product, plan);
-        showForm(product, plan, (formData) => openWhatsApp(product, plan, formData));
+        runOrderFlow(product, plan);
         return;
       }
       return original.call(this, product, plan, digits);
     };
 
     window.showNameCodeForm.__mirpanelHboMaxPatched = true;
+  }
+
+  function patchLegacySendWhatsApp() {
+    if (typeof window.sendWA !== "function" || window.sendWA.__mirpanelConsentPatched) return;
+    const original = window.sendWA;
+
+    window.sendWA = function consentProtectedSendWA(product, plan, extra) {
+      if (!orderTermsAccepted) {
+        showAgreementError();
+        return;
+      }
+      const consentLine = "İstifadə qaydaları və şərtlər qəbul edildi: Bəli";
+      const result = original.call(this, product, plan, [String(extra || "").trim(), consentLine].filter(Boolean).join("\n"));
+      orderTermsAccepted = false;
+      return result;
+    };
+
+    window.sendWA.__mirpanelConsentPatched = true;
   }
 
   document.addEventListener(
@@ -1372,4 +1549,6 @@
 
   wrapProductPage();
   patchLegacyNameCodeForm();
+  patchLegacySendWhatsApp();
+  window.mirpanelRequireOrderConsent = requireOrderConsent;
 })();

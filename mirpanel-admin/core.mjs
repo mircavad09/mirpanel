@@ -217,7 +217,8 @@ function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
     orderSettings: {
       whatsappButtonText: "WhatsApp",
       defaultExtraMessage: "",
-      requireConfirmation: false
+      requireConfirmation: false,
+      agreementText: "İstifadə qaydalarını və şərtləri oxudum, qəbul edirəm."
     },
     media: []
   };
@@ -315,7 +316,8 @@ function normalizeCms(source = {}, legacy = {}) {
     orderSettings: {
       whatsappButtonText: cleanText(source.orderSettings?.whatsappButtonText, defaults.orderSettings.whatsappButtonText, 100),
       defaultExtraMessage: cleanText(source.orderSettings?.defaultExtraMessage, "", 2000),
-      requireConfirmation: Boolean(source.orderSettings?.requireConfirmation)
+      requireConfirmation: Boolean(source.orderSettings?.requireConfirmation),
+      agreementText: cleanText(source.orderSettings?.agreementText, defaults.orderSettings.agreementText, 500) || defaults.orderSettings.agreementText
     },
     media: (Array.isArray(source.media) ? source.media : []).map((item) => ({
       path: safeUrl(item.path),

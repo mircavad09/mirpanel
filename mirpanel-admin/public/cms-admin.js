@@ -160,6 +160,7 @@
       ${field("WhatsApp nömrəsi", "site.whatsappNumber")}
       ${field("Ekranda görünən telefon", "site.phoneDisplay")}
       ${field("Standart əlavə mesaj", "orderSettings.defaultExtraMessage", { type: "textarea", full: true })}
+      ${field("Razılıq checkbox mətni", "orderSettings.agreementText", { full: true })}
       ${field("Standart təsdiq tələb olunsun", "orderSettings.requireConfirmation", { type: "checkbox" })}
     </div>`));
     createView("publish", panel("Önizləmə və yayımlama", "Dəyişikliklər doğrulanmadan GitHub-a göndərilmir", `<div class="publishFlow">
