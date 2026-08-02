@@ -3267,43 +3267,37 @@ const SITE_SECTIONS = {
     "blocks": [
       {
         "title": "",
-        "text": "",
+        "text": "# MirPanel – Rəqəmsal məhsul və onlayn xidmətlər üçün etibarlı seçim\n\n**MirPanel** 2024-cü ildən etibarən Azərbaycanda rəqəmsal məhsullar və onlayn xidmətlər təqdim edən platformadır. Əsas məqsədimiz istifadəçilərin ehtiyaclarına uyğun, keyfiyyətli və əlçatan məhsulları sürətli şəkildə təqdim etməkdir.\n\nPlatformamızda premium abunəliklər, proqram təminatları, oyun məhsulları, sosial media xidmətləri, elektron kodlar və digər rəqəmsal həllər mövcuddur. Təqdim etdiyimiz hər bir məhsul satışa çıxarılmazdan əvvəl tərəfimizdən yoxlanılır və istifadəyə hazır vəziyyətdə müştəriyə təhvil verilir.",
         "image": "",
         "order": 1
       },
       {
         "title": "",
-        "text": "",
+        "text": "## Sürətli və rahat xidmət\n\nMirPanel üzərindən sifariş vermək sadə və rahatdır. Avtomatlaşdırılmış sistemimiz sifarişlərin mümkün qədər qısa müddətdə hazırlanmasına və istifadəçiyə çatdırılmasına imkan verir.\n\nFəaliyyətə başladığımız gündən bu günədək **3.500-dən çox istifadəçiyə xidmət göstərmiş və 20.000-dən çox sifarişi uğurla tamamlamışıq**. İstifadəçilərimizin bizə göstərdiyi etimad xidmətlərimizi daim inkişaf etdirməyimiz üçün əsas motivasiyadır.",
         "image": "",
         "order": 2
       },
       {
         "title": "",
-        "text": "",
+        "text": "## Yoxlanılmış məhsullar və zəmanətli xidmət\n\nPlatformada təqdim edilən məhsulların işləkliyi və uyğunluğu əvvəlcədən yoxlanılır. Müştəriyə təqdim etdiyimiz hər bir məhsul və xidmətə müvafiq zəmanət verilir. Zəmanət müddəti və şərtləri məhsulun xüsusiyyətindən asılı olaraq dəyişə bilər və sifarişdən əvvəl istifadəçiyə bildirilir.\n\nMəhsul və ya xidmətlə bağlı texniki çətinlik yarandıqda dəstək komandamız problemi araşdırır və zəmanət şərtlərinə uyğun həll təqdim edir. Bizim üçün satışın tamamlanması xidmətin bitməsi demək deyil — istifadəçilərimizin məhsuldan rahat şəkildə yararlanması da xidmətimizin vacib hissəsidir.",
         "image": "",
         "order": 3
       },
       {
         "title": "",
-        "text": "",
+        "text": "## Təhlükəsizlik və məlumatların qorunması\n\nİstifadəçilərin məxfiliyi MirPanel üçün əsas prioritetlərdən biridir. Sifariş zamanı təqdim edilən şəxsi məlumatlar yalnız xidmətin göstərilməsi, sifarişin icrası və zəruri dəstəyin təmin edilməsi məqsədilə istifadə olunur.\n\nMəlumatların təhlükəsiz saxlanılması üçün müvafiq qoruma tədbirləri tətbiq edilir. İstifadəçi məlumatları qanunvericiliyin tələb etdiyi hallar istisna olmaqla icazəsiz şəxslərə verilmir, satılmır və kommersiya məqsədilə paylaşılmır.",
         "image": "",
         "order": 4
       },
       {
         "title": "",
-        "text": "",
+        "text": "## Müştəri məmnuniyyəti bizim üçün önəmlidir\n\nMirPanel fəaliyyətində şəffaflığa, məsuliyyətə və uzunmüddətli müştəri münasibətlərinə üstünlük verir. Məhsullar haqqında məlumatları aydın təqdim edir, istifadəçilərin suallarını operativ cavablandırmağa və yaranan çətinlikləri qısa müddətdə həll etməyə çalışırıq.\n\nXidmət çeşidimizi mütəmadi yeniləyir, istifadəçi rəylərini nəzərə alır və platformanı daha rahat etmək üçün davamlı çalışırıq.\n\n**MirPanel – yoxlanılmış rəqəmsal məhsulların, zəmanətli xidmətin və etibarlı dəstəyin bir araya gəldiyi platforma.**",
         "image": "",
         "order": 5
-      },
-      {
-        "title": "",
-        "text": "",
-        "image": "",
-        "order": 6
       }
     ],
     "seoTitle": "Haqqımızda | MirPanel",
-    "seoDescription": "# MirPanel – Rəqəmsal məhsul və onlayn xidmətlər üçün etibarlı seçim\n\n**MirPanel** 2024-cü ildən etibarən Azərbaycanda rəqəmsal məhsullar və onlayn xidmətlər təqdim edən platformadır. Əsas məqsədimiz istifadəçilərin ehtiyaclarına uyğun, keyfiyyətli və əlçatan məhsulları sürətli şəkildə təqdim etməkdir.\n\nPlatformamızda ",
+    "seoDescription": "MirPanel-in rəqəmsal məhsulları, sifariş prosesi, təqdimat qaydaları, təhlükəsizlik prinsipləri və müştəri dəstəyi haqqında məlumat.",
     "homeButtonText": "Ana səhifə",
     "homeButtonUrl": "",
     "productsButtonText": "Məhsullara bax",

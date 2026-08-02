@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -64,6 +65,14 @@ simulatedProducts.at(-1).active = false;
 assert.equal(generateProductListingPageFiles(simulatedProducts, state.siteSections, state.cms).get("mehsul.page").includes('data-product-id="future_product_test"'), false, "Deaktiv məhsul siyahıda qaldı");
 
 const aboutHtml = infoPages.get("haqqimizda");
+const aboutSection = state.siteSections.haqqimizda;
+const migratedAboutSource = aboutSection.blocks.map((block) => block.text).join("\n\n");
+assert.equal(aboutSection.blocks.length, 5, "Haqqımızda məzmun bloklarının sayı");
+assert.ok(aboutSection.blocks.every((block) => block.text.trim()), "Haqqımızda boş məzmun bloku qalıb");
+assert.equal(migratedAboutSource.length, 2743, "Haqqımızda məzmunu kəsilib");
+assert.equal(crypto.createHash("sha256").update(migratedAboutSource).digest("hex"), "0aeef190f211da58e298ee829c467fd885881fd4a2afb18ba8c0b0fb6c940601", "Tarixi Haqqımızda məzmunu semantik olaraq dəyişib");
+assert.ok(aboutSection.seoDescription.length >= 120 && aboutSection.seoDescription.length <= 160, "Haqqımızda SEO description 120–160 simvol deyil");
+assert.equal(/\*\*|^\s*#{1,6}\s/m.test(aboutSection.seoDescription), false, "Haqqımızda SEO description Markdown saxlayır");
 assert.ok(aboutHtml, "Haqqımızda səhifəsi yaradılmadı");
 assert.equal((aboutHtml.match(/<h1\b/g) || []).length, 1, "Haqqımızda səhifəsində bir H1 olmalıdır");
 assert.ok(aboutHtml.includes('info-page-document info-page-document--about'), "Haqqımızda səhifəsi ayrıca dizayn sinfini almadı");
@@ -82,6 +91,20 @@ const formattedAbout = generateInfoPageFiles(formattedSections, state.ui, state.
 assert.ok(((formattedAbout.match(/<div class="info-page-copy about-page-copy">[\s\S]*?<\/div>/) || [""])[0].match(/<p>/g) || []).length >= 1, "Haqqımızda məzmunu ardıcıl abzaslarla göstərilmir");
 assert.ok(formattedAbout.includes("<strong>MirPanel</strong>"), "Qalın Markdown real HTML-ə çevrilmədi");
 assert.ok(formattedAbout.includes('<a href="/elaqe">Əlaqə səhifəsindən</a>'), "Admin daxili keçidi real HTML-ə çevrilmədi");
+
+const editedState = structuredClone(state);
+editedState.siteSections.haqqimizda.blocks[0].text += "\n\nMiqrasiya regression sınağı.";
+const reloadedEditedState = extractAdminState(patchAppSource(appSource, normalizeAdminPayload(editedState)));
+assert.equal(reloadedEditedState.siteSections.haqqimizda.blocks[0].text, editedState.siteSections.haqqimizda.blocks[0].text, "Admin redaktə → publish → reload zamanı Haqqımızda məzmunu sıfırlandı");
+assert.equal(JSON.stringify(reloadedEditedState.siteSections.elaqe), JSON.stringify(state.siteSections.elaqe), "Haqqımızda publish Əlaqə məlumatını dəyişdi");
+assert.equal(JSON.stringify(reloadedEditedState.siteSections.sertler), JSON.stringify(state.siteSections.sertler), "Haqqımızda publish Şərtlər məlumatını dəyişdi");
+
+const unsafeState = structuredClone(state);
+unsafeState.siteSections.haqqimizda.blocks[0].text += '\n\n<script>alert(1)</script><iframe src="https://example.com"></iframe>[təhlükəli](javascript:alert(1))';
+const safeState = normalizeAdminPayload(unsafeState);
+const safeAboutHtml = generateInfoPageFiles(safeState.siteSections, safeState.ui, safeState.cms).get("haqqimizda");
+const safeAboutCopy = safeAboutHtml.match(/<div class="info-page-copy about-page-copy">([\s\S]*?)<\/div>/)?.[1] || "";
+assert.equal(/<script|<iframe|href=["']javascript:/i.test(safeAboutCopy), false, "Haqqımızda XSS sanitizasiyası uğursuzdur");
 
 const termsHtml = infoPages.get("sertler");
 const termsBody = state.siteSections.sertler.body;
