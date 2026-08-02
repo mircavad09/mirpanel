@@ -839,7 +839,7 @@ function cmsIcon(name) {
 function renderCmsNav(cms = {}) {
   const items = Array.isArray(cms.navigation) ? cms.navigation : [];
   return items
-    .filter((item) => item.enabled !== false && cleanText(item.label) && cleanText(item.url))
+    .filter((item) => item.enabled !== false && item.showHeader !== false && cleanText(item.label) && cleanText(item.url))
     .sort((a, b) => Number(a.order) - Number(b.order))
     .map((item) => {
       const url = canonicalSiteUrl(item.url);
@@ -855,7 +855,10 @@ function renderCmsFooter(cms = {}, ui = {}) {
   const year = Number(footer.year) || new Date().getUTCFullYear();
   const brand = cleanText(footer.brandName || cms.site?.brandName) || "Mirpanel";
   const rights = cleanText(footer.copyrightText) || fixMojibake(ui.footRights) || "Bütün hüquqlar qorunur";
-  const links = (Array.isArray(footer.links) ? footer.links : [])
+  const unifiedLinks = Array.isArray(cms.navigation) && cms.navigation.some((item) => item.showFooter !== undefined)
+    ? cms.navigation.filter((item) => item.showFooter === true)
+    : (Array.isArray(footer.links) ? footer.links : []);
+  const links = unifiedLinks
     .filter((item) => item.enabled !== false && item.label && item.url)
     .sort((a, b) => Number(a.order) - Number(b.order))
     .map((item) => `<a href="${escapeAttribute(canonicalSiteUrl(item.url))}"${item.newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}>${escapeHtml(item.label)}</a>`)

@@ -72,12 +72,17 @@ const expected = {
   about: "685a623c95c5a13b84d034e7619b020255f5ce4f4d1aabb993434503c148f8ee",
   contact: "8c4d97ecf6a88bd57eda60526f8561a17c8d70cf28d4465c7733ba481cb371bd",
   terms: "837a935c48adc697ac177d409374d5655ba00d3fba83d96e0b334fbce7b92be3",
-  navigation: "f41ca0e28f3cf26da8834388dfc397241e13bb911d37f36635b3b4117c601bfc",
-  footer: "4061a3a712b331ffedc35e7614564016013bba15179d1db16255975e5e33987f",
+  navigation: "7d36eb6554337d2398a0f1102c26b5d9dffae64a01774703eeeb6f6b3ec6027c",
+  footer: "408b61c875bd6bd400dae38abfef7a559ba448ae90167d53529201ec33f57b42",
   seo: "fe186afaf27e40b867de0ecfddad7e8492ab9c490e60ebe3b0878d4287da58ad",
   orderSettings: "a7308bf531d01c378eb1da0256ca771414eb6fdd474d75d00bfd4d5b30451520",
   formFields: "2df521d554313a36f92ce209b53e42873aaca6f976fc7de1d7982ac0476b82c9"
 };
 
 assert.deepEqual(snapshot, expected, "Admin/CMS təhlükəsizlik snapshot-ı dəyişib");
+const footerProjection = state.cms.navigation
+  .filter((item) => item.showFooter)
+  .map(({ showHeader, showFooter, ...item }) => item);
+assert.deepEqual(footerProjection, state.cms.footer.links, "Footer keçidləri vahid naviqasiya mənbəyindən yaranmır");
+assert.ok(state.cms.navigation.every((item) => typeof item.showHeader === "boolean" && typeof item.showFooter === "boolean"), "Naviqasiya görünüş seçimləri miqrasiya edilməyib");
 console.log("PASS: admin/CMS təhlükəsizlik snapshot-ı qorunur.");

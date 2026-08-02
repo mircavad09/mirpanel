@@ -127,7 +127,9 @@ function normalizeLink(item = {}, index = 0) {
     order: Number.isFinite(Number(item.order)) ? Number(item.order) : index + 1,
     enabled: item.enabled !== false,
     icon: SAFE_ICONS.has(item.icon) ? item.icon : "link",
-    newTab: Boolean(item.newTab)
+    newTab: Boolean(item.newTab),
+    showHeader: item.showHeader !== false,
+    showFooter: Boolean(item.showFooter)
   };
 }
 
@@ -145,7 +147,7 @@ function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
   const searchHighlight = searchMarkup.match(/<span[^>]*>([\s\S]*?)<\/span>/i)?.[1] || "";
   const searchPrefix = searchMarkup.replace(/<span[^>]*>[\s\S]*?<\/span>/gi, "").replace(/<[^>]+>/g, "").trim();
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     site: {
       brandName: cleanText(brand, "Mirpanel", 80),
       logo: "",
@@ -186,9 +188,9 @@ function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
       }
     },
     navigation: [
-      { id: "products", label: "Məhsullar", url: "/#products", order: 1, enabled: true, icon: "products", newTab: false },
-      { id: "about", label: "Haqqımızda", url: `/${normalizeSlug(siteSections?.haqqimizda?.slug, "haqqimizda")}`, order: 2, enabled: siteSections?.haqqimizda?.enabled !== false, icon: "info", newTab: false },
-      { id: "contact", label: "Əlaqə", url: `/${normalizeSlug(siteSections?.elaqe?.slug, "elaqe")}`, order: 3, enabled: siteSections?.elaqe?.enabled !== false, icon: "contact", newTab: false }
+      { id: "products", label: "Məhsullar", url: "/mehsul", order: 1, enabled: true, icon: "products", newTab: false, showHeader: true, showFooter: false },
+      { id: "about", label: "Haqqımızda", url: `/${normalizeSlug(siteSections?.haqqimizda?.slug, "haqqimizda")}`, order: 2, enabled: siteSections?.haqqimizda?.enabled !== false, icon: "info", newTab: false, showHeader: true, showFooter: true },
+      { id: "contact", label: "Əlaqə", url: `/${normalizeSlug(siteSections?.elaqe?.slug, "elaqe")}`, order: 3, enabled: siteSections?.elaqe?.enabled !== false, icon: "contact", newTab: false, showHeader: true, showFooter: true }
     ],
     banners: [],
     supportCard: {
@@ -241,9 +243,29 @@ function normalizeCms(source = {}, legacy = {}) {
     ? [...new Set(homepage.sectionOrder.filter((key) => allowedSections.includes(key)))]
     : [...allowedSections];
   for (const key of allowedSections) if (!sectionOrder.includes(key)) sectionOrder.push(key);
+  const sourceNavigation = Array.isArray(source.navigation) ? source.navigation : defaults.navigation;
+  const legacyFooterLinks = Array.isArray(footer.links) ? footer.links : [];
+  const navigation = sourceNavigation.map((item, index) => {
+    const footerMatch = legacyFooterLinks.find((candidate) =>
+      (candidate.id && candidate.id === item.id) || safeUrl(candidate.url) === safeUrl(item.url)
+    );
+    return normalizeLink({
+      ...item,
+      showHeader: item.showHeader ?? true,
+      showFooter: item.showFooter ?? Boolean(footerMatch)
+    }, index);
+  });
+  for (const item of legacyFooterLinks) {
+    if (navigation.some((candidate) => candidate.id === normalizeSlug(item.id) || candidate.url === safeUrl(item.url))) continue;
+    navigation.push(normalizeLink({ ...item, showHeader: false, showFooter: true }, navigation.length));
+  }
+  navigation.sort((left, right) => left.order - right.order);
+  const footerLinks = navigation
+    .filter((item) => item.showFooter)
+    .map(({ showHeader, showFooter, ...item }) => item);
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     site: {
       brandName: cleanText(site.brandName, defaults.site.brandName, 80),
       logo: safeUrl(site.logo),
@@ -269,7 +291,7 @@ function normalizeCms(source = {}, legacy = {}) {
         terms: normalizeInfoCard(homepage.infoCards?.terms, defaults.homepage.infoCards.terms)
       }
     },
-    navigation: (Array.isArray(source.navigation) ? source.navigation : defaults.navigation).map(normalizeLink),
+    navigation,
     banners: (Array.isArray(source.banners) ? source.banners : [])
       .map((banner, index) => ({
         id: normalizeSlug(banner.id, `banner-${index + 1}`),
@@ -306,7 +328,7 @@ function normalizeCms(source = {}, legacy = {}) {
       phone: cleanText(footer.phone, defaults.footer.phone, 40),
       whatsapp: String(footer.whatsapp || defaults.footer.whatsapp).replace(/\D/g, "").slice(0, 20),
       shortText: cleanText(footer.shortText, "", 500),
-      links: (Array.isArray(footer.links) ? footer.links : []).map(normalizeLink)
+      links: footerLinks
     },
     commonTexts: Object.fromEntries(Object.entries(COMMON_TEXT_DEFAULTS).map(([key, value]) => [key, cleanText(source.commonTexts?.[key], value, 500) || value])),
     seo: {
@@ -321,9 +343,12 @@ function normalizeCms(source = {}, legacy = {}) {
     },
     media: (Array.isArray(source.media) ? source.media : []).map((item) => ({
       path: safeUrl(item.path),
+      name: cleanText(item.name, "", 180),
       alt: cleanText(item.alt, "", 250),
       size: Math.max(0, Number(item.size) || 0),
       type: cleanText(item.type, "", 50),
+      width: Math.max(0, Math.trunc(Number(item.width) || 0)),
+      height: Math.max(0, Math.trunc(Number(item.height) || 0)),
       uploadedAt: cleanText(item.uploadedAt, "", 40)
     })).filter((item) => item.path)
   };
@@ -345,28 +370,28 @@ const SITE_SECTION_DEFAULTS = {
   haqqimizda: {
     enabled: true,
     kicker: "Haqqımızda",
-    title: "HaqqД±mД±zda",
-    text: "Mirpanel premium hesablarД±n sГјrЙ™tli vЙ™ etibarlД± aktivlЙ™ЕџdirilmЙ™si ГјГ§Гјn xidmЙ™t gГ¶stЙ™rir. MЙ™hsullar WhatsApp ГјzЙ™rindЙ™n rahat sifariЕџ olunur vЙ™ dЙ™stЙ™k komandasД± mГјЕџtЙ™rilЙ™rЙ™ kГ¶mЙ™k edir.",
+    title: "Haqqımızda",
+    text: "Mirpanel premium hesabların sürətli və etibarlı aktivləşdirilməsi üçün xidmət göstərir. Məhsullar WhatsApp üzərindən rahat sifariş olunur və dəstək komandası müştərilərə kömək edir.",
     linkText: "",
     order: 1
   },
   sertler: {
     enabled: true,
-    title: "ЕћЙ™rtlЙ™r",
+    title: "Şərtlər",
     text: "",
     items: [
-      "SifariЕџdЙ™n Й™vvЙ™l mЙ™hsul mЙ™lumatlarД±nД± diqqЙ™tlЙ™ oxuyun.",
-      "RЙ™qЙ™msal mЙ™hsullarda aktivlЙ™ЕџdirmЙ™ qaydasД± mЙ™hsula gГ¶rЙ™ dЙ™yiЕџЙ™ bilЙ™r.",
-      "YanlД±Еџ daxil edilЙ™n mЙ™lumatlara gГ¶rЙ™ gecikmЙ™ yarana bilЙ™r.",
-      "DЙ™stЙ™k WhatsApp ГјzЙ™rindЙ™n gГ¶stЙ™rilir."
+      "Sifarişdən əvvəl məhsul məlumatlarını diqqətlə oxuyun.",
+      "Rəqəmsal məhsullarda aktivləşdirmə qaydası məhsula görə dəyişə bilər.",
+      "Yanlış daxil edilən məlumatlara görə gecikmə yarana bilər.",
+      "Dəstək WhatsApp üzərindən göstərilir."
     ],
     order: 2
   },
   elaqe: {
     enabled: true,
-    title: "ЖЏlaqЙ™",
+    title: "Əlaqə",
     whatsappNumber: "051 524 35 45",
-    buttonText: "WhatsApp ilЙ™ yaz",
+    buttonText: "WhatsApp ilə yaz",
     text: "",
     order: 3
   }
@@ -442,10 +467,10 @@ function normalizeSiteSections(source = {}) {
 
 function findObjectBlock(source, marker) {
   const markerStart = source.indexOf(marker);
-  if (markerStart < 0) throw new Error(`${marker} tapД±lmadД±.`);
+  if (markerStart < 0) throw new Error(`${marker} tapılmadı.`);
 
   const start = source.indexOf("{", markerStart);
-  if (start < 0) throw new Error(`${marker} bloku tapД±lmadД±.`);
+  if (start < 0) throw new Error(`${marker} bloku tapılmadı.`);
 
   let depth = 0;
   let quote = "";
@@ -516,7 +541,7 @@ function findObjectBlock(source, marker) {
     }
   }
 
-  throw new Error(`${marker} bloku baДџlanmayД±b.`);
+  throw new Error(`${marker} bloku bağlanmayıb.`);
 }
 
 function evaluateObject(source, marker, fallback) {
@@ -578,7 +603,8 @@ const FIELD_TYPES = new Set([
   "email",
   "password",
   "textarea",
-  "number"
+  "number",
+  "select"
 ]);
 
 function normalizeStock(value) {
@@ -594,13 +620,13 @@ function normalizeSeoSlug(value) {
   return String(value || "")
     .trim()
     .toLowerCase()
-    .replace(/[Й™ЖЏ]/g, "e")
-    .replace(/[Д±Д°]/g, "i")
-    .replace(/[Г¶Г–]/g, "o")
-    .replace(/[ГјГњ]/g, "u")
-    .replace(/[ЕџЕћ]/g, "s")
-    .replace(/[Г§Г‡]/g, "c")
-    .replace(/[ДџДћ]/g, "g")
+    .replace(/[əƏ]/g, "e")
+    .replace(/[ıİ]/g, "i")
+    .replace(/[öÖ]/g, "o")
+    .replace(/[üÜ]/g, "u")
+    .replace(/[şŞ]/g, "s")
+    .replace(/[çÇ]/g, "c")
+    .replace(/[ğĞ]/g, "g")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .replace(/-almaq$/, "")
@@ -611,19 +637,19 @@ function normalizeSeoSlug(value) {
 
 const LEGACY_FLOW_FIELDS = {
   name_code_4: [
-    { key: "name", type: "text", label: "Ad", placeholder: "AdД±nД±zД± yazД±n", required: true, enabled: true },
-    { key: "code_4", type: "text", label: "4 rЙ™qЙ™mli kod / PIN", placeholder: "4 rЙ™qЙ™mli kod yazД±n", required: true, enabled: true }
+    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
+    { key: "code_4", type: "text", label: "4 rəqəmli kod / PIN", placeholder: "4 rəqəmli kod yazın", required: true, enabled: true }
   ],
   name_code_5: [
-    { key: "name", type: "text", label: "Ad", placeholder: "AdД±nД±zД± yazД±n", required: true, enabled: true },
-    { key: "code_5", type: "text", label: "5 rЙ™qЙ™mli kod / PIN", placeholder: "5 rЙ™qЙ™mli kod yazД±n", required: true, enabled: true }
+    { key: "name", type: "text", label: "Ad", placeholder: "Adınızı yazın", required: true, enabled: true },
+    { key: "code_5", type: "text", label: "5 rəqəmli kod / PIN", placeholder: "5 rəqəmli kod yazın", required: true, enabled: true }
   ],
   email: [
-    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ГјnvanД±nД±zД± yazД±n", required: true, enabled: true }
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true }
   ],
   spotify: [
-    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ГјnvanД±nД±zД± yazД±n", required: true, enabled: true },
-    { key: "password", type: "password", label: "ЕћifrЙ™", placeholder: "ЕћifrЙ™nizi yazД±n", required: true, enabled: true }
+    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
+    { key: "password", type: "password", label: "Şifrə", placeholder: "Şifrənizi yazın", required: true, enabled: true }
   ]
 };
 
@@ -664,14 +690,21 @@ function normalizeFormField(field = {}, index = 0) {
     .replace(/[^a-z0-9_]+/g, "_")
     .replace(/^_|_$/g, "");
 
-  return {
+  const normalized = {
     key: key || `custom_${index + 1}`,
     type: FIELD_TYPES.has(field.type) ? field.type : "text",
-    label: String(field.label || field.key || `SahЙ™ ${index + 1}`),
+    label: String(field.label || field.key || `Sahə ${index + 1}`),
     placeholder: String(field.placeholder || ""),
     required: Boolean(field.required),
     enabled: field.enabled !== false
   };
+  if (Number.isFinite(Number(field.minLength)) && Number(field.minLength) > 0) normalized.minLength = Math.trunc(Number(field.minLength));
+  if (Number.isFinite(Number(field.maxLength)) && Number(field.maxLength) > 0) normalized.maxLength = Math.trunc(Number(field.maxLength));
+  if (Number.isFinite(Number(field.order)) && Number(field.order) > 0) normalized.order = Math.trunc(Number(field.order));
+  if (normalized.type === "select") normalized.options = Array.isArray(field.options)
+    ? field.options.map((option) => cleanText(option, "", 120)).filter(Boolean).slice(0, 50)
+    : String(field.options || "").split(/\r?\n|,/).map((option) => cleanText(option, "", 120)).filter(Boolean).slice(0, 50);
+  return normalized;
 }
 
 function normalizeFormFields(product = {}) {
@@ -712,7 +745,7 @@ function normalizeOrderConfirmation(source = {}, id = "") {
   const helpUrl = String(helpSource.url || "").trim();
 
   if (helpUrl && !helpUrl.startsWith("https://")) {
-    throw new Error(`${id}: kГ¶mЙ™k linki yalnД±z https:// ilЙ™ baЕџlamalД±dД±r.`);
+    throw new Error(`${id}: kömək linki yalnız https:// ilə başlamalıdır.`);
   }
 
   return {
@@ -734,7 +767,7 @@ function normalizeProduct(product = {}, index = 0) {
   const id = String(product.id || "").trim();
 
   if (!id) {
-    throw new Error("BoЕџ mЙ™hsul ID-si var.");
+    throw new Error("Boş məhsul ID-si var.");
   }
 
   const confirmationModal = normalizeOrderConfirmation(
@@ -758,7 +791,7 @@ function normalizeProduct(product = {}, index = 0) {
     order: productOrder,
     category: String(product.category || "all"),
     image: productImage,
-    currency: String(product.currency || "в‚ј"),
+    currency: String(product.currency || "₼"),
     title: productTitle,
     variant: String(product.variant || ""),
     badge: String(product.badge || ""),
@@ -910,7 +943,7 @@ export function normalizeAdminPayload(payload = {}) {
 
   for (const product of products) {
     if (ids.has(product.id)) {
-      throw new Error(`TЙ™krar mЙ™hsul ID-si: ${product.id}`);
+      throw new Error(`Təkrar məhsul ID-si: ${product.id}`);
     }
 
     ids.add(product.id);
@@ -1046,7 +1079,7 @@ function renderSiteSectionsFromAdmin() {
 
     if (key === "elaqe") {
       const number = escapeSectionHtml(section.whatsappNumber || "");
-      const buttonText = escapeSectionHtml(section.buttonText || "WhatsApp ilЙ™ yaz");
+      const buttonText = escapeSectionHtml(section.buttonText || "WhatsApp ilə yaz");
       const href = whatsappHrefFromSectionNumber(section.whatsappNumber);
       return \`<article class="siteInfoCard siteInfoContact" id="elaqe"><h2>\${title}</h2>\${text ? \`<p>\${text}</p>\` : ""}<p>WhatsApp: <strong>\${number}</strong></p><a class="siteInfoWaBtn" href="\${href}" target="_blank" rel="noopener noreferrer">\${buttonText}</a></article>\`;
     }
@@ -1127,14 +1160,14 @@ function setupUI() {
     next = next.replace(
       `    if (tabName === "tab-about") {
       const info = INFO_TEXTS[p.id];
-      cBox.innerHTML = (info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>SifariЕџ etmЙ™k ГјГ§Гјn WhatsApp-a yГ¶nlЙ™ndirilЙ™cЙ™ksiniz.</p>\`;
+      cBox.innerHTML = (info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>Sifariş etmək üçün WhatsApp-a yönləndiriləcəksiniz.</p>\`;
     } 
     else if (tabName === "tab-rules") {`,
       `    const adminContent = ADMIN_CONTENT[p.id] || {};
 
     if (tabName === "tab-about") {
       const info = INFO_TEXTS[p.id];
-      cBox.innerHTML = adminContent.aboutHtml || ((info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>SifariЕџ etmЙ™k ГјГ§Гјn WhatsApp-a yГ¶nlЙ™ndirilЙ™cЙ™ksiniz.</p>\`);
+      cBox.innerHTML = adminContent.aboutHtml || ((info && info.htmlContent) ? info.htmlContent : \`<p>\${p.desc}</p><p>Sifariş etmək üçün WhatsApp-a yönləndiriləcəksiniz.</p>\`);
     } 
     else if (tabName === "tab-rules") {`
     );

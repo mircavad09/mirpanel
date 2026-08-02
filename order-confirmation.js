@@ -1266,12 +1266,19 @@
               ${fourDigitCode ? "data-code-length=\"4\"" : ""}
               placeholder="${escapeHtml(placeholder)}"
               autocomplete="${inputType === "password" ? "current-password" : "off"}"
+              ${field.minLength ? `minlength="${Number(field.minLength)}"` : ""}
+              ${field.maxLength ? `maxlength="${Number(field.maxLength)}"` : ""}
               ${fourDigitCode ? "inputmode=\"numeric\" maxlength=\"4\" pattern=\"\\d{4}\"" : ""}
               ${field.required ? "required" : ""}
             `;
 
             if (inputType === "textarea") {
               return `<label class="universalField premiumUniversalField"><span>${escapeHtml(label)}</span><textarea ${common}></textarea></label>`;
+            }
+
+            if (inputType === "select") {
+              const options = Array.isArray(field.options) ? field.options : [];
+              return `<label class="universalField premiumUniversalField"><span>${escapeHtml(label)}</span><select ${common}><option value="">${escapeHtml(placeholder || "Seçin")}</option>${options.map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join("")}</select></label>`;
             }
 
             return `<label class="universalField premiumUniversalField"><span>${escapeHtml(label)}</span><input type="${fourDigitCode ? "text" : escapeHtml(inputType)}" ${common}></label>`;
@@ -1293,7 +1300,7 @@
     document.getElementById("universalOrderForm").onsubmit = (event) => {
       event.preventDefault();
       const values = {};
-      const controls = event.currentTarget.querySelectorAll("input, textarea");
+      const controls = event.currentTarget.querySelectorAll("input, textarea, select");
 
       for (const control of controls) {
         const value = control.value.trim();

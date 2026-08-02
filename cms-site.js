@@ -148,7 +148,7 @@
 
   function applyNavigation() {
     const items = Array.isArray(source.navigation)
-      ? source.navigation.filter((item) => item.enabled !== false && item.label && item.url)
+      ? source.navigation.filter((item) => item.enabled !== false && item.showHeader !== false && item.label && item.url)
         .sort((a, b) => Number(a.order) - Number(b.order))
       : [];
     if (!items.length) return;
@@ -353,8 +353,12 @@
       footerLines[1].textContent = `WhatsApp: ${site.phoneDisplay || footer.phone || site.whatsappNumber || footer.whatsapp || ""}`;
     }
     const footerElement = document.querySelector(".footer .wrap");
-    const links = Array.isArray(footer.links)
-      ? footer.links.filter((item) => item.enabled !== false && item.label && item.url)
+    const hasUnifiedLinks = Array.isArray(source.navigation) && source.navigation.some((item) => item.showFooter !== undefined);
+    const links = hasUnifiedLinks
+      ? source.navigation.filter((item) => item.enabled !== false && item.showFooter === true && item.label && item.url)
+        .sort((a, b) => Number(a.order) - Number(b.order))
+      : Array.isArray(footer.links)
+        ? footer.links.filter((item) => item.enabled !== false && item.label && item.url)
         .sort((a, b) => Number(a.order) - Number(b.order))
       : [];
     if (footerElement && links.length) {
