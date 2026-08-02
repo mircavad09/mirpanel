@@ -147,7 +147,7 @@ const DATA = {
     {
       "id": "capcut",
       "_stableId": "capcut",
-      "order": 0,
+      "order": 1,
       "category": "video",
       "image": "assets/capcut.png",
       "currency": "₼",
@@ -241,75 +241,58 @@ const DATA = {
       }
     },
     {
-      "id": "hbomax",
-      "_stableId": "hbomax",
-      "order": 5,
+      "id": "netflix_umumi",
+      "_stableId": "netflix_umumi",
+      "order": 2,
       "category": "film",
-      "image": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
+      "image": "assets/netflix.png",
       "currency": "₼",
-      "title": "HBO Max",
-      "variant": "Şəxsi Otaq",
+      "title": "Netflix Ümumi",
+      "variant": "Premium",
       "badge": "Film",
-      "imageAlt": "HBO Max",
-      "desc": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
-      "note": "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
-      "longDescription": "HBO Max premium film və serial izləmək istəyənlər üçün geniş məzmun təqdim edir. Mirpanel HBO Max hesablarını Azərbaycanda sərfəli qiymətə təklif edir. Sifariş WhatsApp üzərindən rahat şəkildə tamamlanır.",
+      "imageAlt": "Netflix Ümumi",
+      "desc": "Ümumi hesab (paylaşılan).",
+      "note": "Hazır hesab verilir. Sifarişi təsdiqləyin.",
+      "longDescription": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
-      "seoSlug": "hbo-max",
-      "seoTitle": "HBO Max almaq | Ucuz HBO Max hesab Azərbaycan - Mirpanel",
-      "seoDescription": "HBO Max hesabını sərfəli qiymətə al. Film, serial və premium izləmə imkanları Mirpanel-də.",
-      "seoH1": "HBO Max",
-      "seoPrimaryKeyword": "HBO Max almaq",
-      "seoRelatedKeywords": " HBO Max ucuz, HBO Max qiyməti, HBO Max Azərbaycan, HBO Max hesab almaq, HBO Max aylıq, HBO Max premium, HBO Max film hesabı",
-      "seoKeywords": "HBO Max almaq, HBO Max ucuz, HBO Max qiyməti, HBO Max Azərbaycan, HBO Max hesab almaq, HBO Max aylıq, HBO Max premium, HBO Max film hesabı",
-      "seoContent": "HBO Max premium film və serial izləmək istəyənlər üçün geniş məzmun təqdim edir. Mirpanel HBO Max hesablarını Azərbaycanda sərfəli qiymətə təklif edir. Sifariş WhatsApp üzərindən rahat şəkildə tamamlanır.",
+      "seoSlug": "netflix-umumi",
+      "seoTitle": "Netflix ümumi hesab almaq | Mirpanel",
+      "seoDescription": "Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.",
+      "seoH1": "Netflix ümumi hesab almaq",
+      "seoPrimaryKeyword": "Netflix ümumi hesab almaq",
+      "seoRelatedKeywords": "Netflix ortaq hesab, Netflix ümumi profil, Netflix hesab qiyməti",
+      "seoKeywords": "Netflix ümumi almaq, Netflix ümumi hesab, Netflix almaq, Netflix ucuz almaq, Netflix Azərbaycan, Netflix Premium qiyməti, Netflix hesab qiyməti, Netflix paket almaq",
+      "seoContent": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
       "seoOgDescription": "",
-      "seoOgImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
+      "seoOgImage": "assets/netflix.png",
       "banner": {
         "enabled": false,
-        "desktopImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
+        "desktopImage": "assets/netflix.png",
         "mobileImage": "",
-        "title": "HBO Max",
-        "description": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
-        "alt": "HBO Max",
-        "order": 7
+        "title": "Netflix Ümumi",
+        "description": "Ümumi hesab (paylaşılan).",
+        "alt": "Netflix Ümumi",
+        "order": 3
       },
-      "flow": "name_code_4",
+      "flow": "whatsapp",
       "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "form_then_whatsapp",
-      "formFields": [
-        {
-          "key": "name",
-          "type": "text",
-          "label": "Ad",
-          "placeholder": "Adınızı yazın",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "code_4",
-          "type": "text",
-          "label": "4 rəqəmli kod / PIN",
-          "placeholder": "4 rəqəmli kod yazın",
-          "required": true,
-          "enabled": true
-        }
-      ],
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
       "formTitle": "",
       "confirmationModal": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -327,13 +310,13 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 5.99
+          "price": 3.99
         }
       ],
       "orderConfirmation": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -347,7 +330,7 @@ const DATA = {
     {
       "id": "netflix",
       "_stableId": "netflix",
-      "order": 2,
+      "order": 3,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -457,280 +440,9 @@ const DATA = {
       }
     },
     {
-      "id": "netflix_umumi",
-      "_stableId": "netflix_umumi",
-      "order": 3,
-      "category": "film",
-      "image": "assets/netflix.png",
-      "currency": "₼",
-      "title": "Netflix Ümumi",
-      "variant": "Premium",
-      "badge": "Film",
-      "imageAlt": "Netflix Ümumi",
-      "desc": "Ümumi hesab (paylaşılan).",
-      "note": "Hazır hesab verilir. Sifarişi təsdiqləyin.",
-      "longDescription": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "netflix-umumi",
-      "seoTitle": "Netflix ümumi hesab almaq | Mirpanel",
-      "seoDescription": "Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.",
-      "seoH1": "Netflix ümumi hesab almaq",
-      "seoPrimaryKeyword": "Netflix ümumi hesab almaq",
-      "seoRelatedKeywords": "Netflix ortaq hesab, Netflix ümumi profil, Netflix hesab qiyməti",
-      "seoKeywords": "Netflix ümumi almaq, Netflix ümumi hesab, Netflix almaq, Netflix ucuz almaq, Netflix Azərbaycan, Netflix Premium qiyməti, Netflix hesab qiyməti, Netflix paket almaq",
-      "seoContent": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/netflix.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/netflix.png",
-        "mobileImage": "",
-        "title": "Netflix Ümumi",
-        "description": "Ümumi hesab (paylaşılan).",
-        "alt": "Netflix Ümumi",
-        "order": 3
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 3.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "zoom",
-      "_stableId": "zoom",
-      "order": 14,
-      "category": "meeting",
-      "image": "assets/zoom.png",
-      "currency": "₼",
-      "title": "Zoom Pro",
-      "variant": "Pro",
-      "badge": "Görüş",
-      "imageAlt": "Zoom Pro",
-      "desc": "Peşəkar onlayn görüşlər.",
-      "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
-      "longDescription": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "zoom-pro",
-      "seoTitle": "Zoom Pro almaq | Ucuz Zoom hesab Azərbaycan - Mirpanel",
-      "seoDescription": "Zoom Pro hesabını sərfəli qiymətə əldə et. Online görüşlər və premium Zoom imkanları Mirpanel-də.",
-      "seoH1": "Zoom Pro",
-      "seoPrimaryKeyword": "Zoom Pro almaq",
-      "seoRelatedKeywords": " Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
-      "seoKeywords": "Zoom Pro almaq, Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
-      "seoContent": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/zoom.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/zoom.png",
-        "mobileImage": "",
-        "title": "Zoom Pro",
-        "description": "Peşəkar onlayn görüşlər.",
-        "alt": "Zoom Pro",
-        "order": 16
-      },
-      "flow": "whatsapp",
-      "soldOut": true,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 9.99,
-          "regularPrice": 27.18
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "youtube",
-      "_stableId": "youtube",
-      "order": 6,
-      "category": "musiqi",
-      "image": "assets/youtube.png",
-      "currency": "₼",
-      "title": "YouTube Yeni hesab",
-      "variant": "Gmail",
-      "badge": "Video",
-      "imageAlt": "YouTube Yeni hesab",
-      "desc": "Reklamsız izləmə, YouTube Music daxil.",
-      "note": "Aktivləşmə üçün Gmailinizi qeyd edin.",
-      "longDescription": "YouTube Premium ilə reklamsız video izləyə və YouTube Music imkanlarından istifadə edə bilərsiniz. Mirpanel YouTube Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə edilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "youtube-premium",
-      "seoTitle": "YouTube Premium almaq Azərbaycanda | Mirpanel",
-      "seoDescription": "YouTube Premium hesabını sərfəli qiymətə əldə et. Reklamsız video, YouTube Music və premium imkanlar.",
-      "seoH1": "YouTube Premium almaq",
-      "seoPrimaryKeyword": "YouTube Premium almaq",
-      "seoRelatedKeywords": "YouTube Premium qiyməti, YouTube Music almaq, YouTube Premium Azərbaycan",
-      "seoKeywords": "YouTube Premium almaq, YouTube Premium ucuz, YouTube Premium Azərbaycan, YouTube hesab almaq, YouTube reklamsız almaq, YouTube Music almaq, Youtube premium almaq, Yutub premium almaq",
-      "seoContent": "YouTube Premium ilə reklamsız video izləyə və YouTube Music imkanlarından istifadə edə bilərsiniz. Mirpanel YouTube Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə edilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/youtube.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/slider4.png",
-        "mobileImage": "",
-        "title": "YouTube Yeni hesab",
-        "description": "Reklamsız izləmə, YouTube Music daxil.",
-        "alt": "YouTube Premium banneri",
-        "order": 9
-      },
-      "flow": "email",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "form_confirm_whatsapp",
-      "formFields": [
-        {
-          "key": "email",
-          "type": "email",
-          "label": "Email / Gmail",
-          "placeholder": "Gmail ünvanınızı yazın",
-          "required": true,
-          "enabled": true
-        }
-      ],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
-        "confirmText": "Təsdiq edirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 3.49
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
-        "confirmText": "Təsdiq edirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 3,
+      "order": 4,
       "category": "musiqi",
       "image": "assets/spotify.png",
       "currency": "₼",
@@ -833,199 +545,6 @@ const DATA = {
       }
     },
     {
-      "id": "surfshark",
-      "_stableId": "surfshark",
-      "order": 7,
-      "category": "video",
-      "image": "assets/surfshark.png",
-      "currency": "₼",
-      "title": "Surfshark VPN",
-      "variant": "VPN",
-      "badge": "VPN",
-      "imageAlt": "Surfshark VPN",
-      "desc": "IP gizlətmə, güclü şifrələmə.",
-      "note": "Hesab hazır şəkildə verilir.",
-      "longDescription": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "surfshark-vpn",
-      "seoTitle": "Surfshark VPN almaq | Ucuz VPN Azərbaycan - Mirpanel",
-      "seoDescription": "Surfshark VPN hesabını sərfəli qiymətə al. Təhlükəsiz internet və premium VPN xidməti Mirpanel-də.",
-      "seoH1": "Surfshark VPN",
-      "seoPrimaryKeyword": "Surfshark VPN almaq",
-      "seoRelatedKeywords": " Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
-      "seoKeywords": "Surfshark VPN almaq, Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
-      "seoContent": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/surfshark.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/surfshark.png",
-        "mobileImage": "",
-        "title": "Surfshark VPN",
-        "description": "IP gizlətmə, güclü şifrələmə.",
-        "alt": "Surfshark VPN",
-        "order": 10
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 3.99,
-          "regularPrice": 26.27
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "tiktok_jeton",
-      "_stableId": "tiktok_jeton",
-      "order": 8,
-      "category": "video",
-      "image": "assets/tiktok.png",
-      "currency": "₼",
-      "title": "TikTok Jeton",
-      "variant": "500+",
-      "badge": "TikTok",
-      "imageAlt": "TikTok Jeton",
-      "desc": "Minimum 500 jeton.",
-      "note": "500 jeton = 10 ₼. İstifadəçi adı və şifrə qeyd olunur.",
-      "longDescription": "TikTok Jeton canlı yayımlarda hədiyyə göndərmək və balans artırmaq üçün istifadə olunur. Mirpanel TikTok jeton almaq istəyənlər üçün rahat və sərfəli sifariş imkanı təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən aparılır.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "tiktok-jeton",
-      "seoTitle": "TikTok Jeton almaq | Ucuz TikTok coin Azərbaycan - Mirpanel",
-      "seoDescription": "TikTok jeton və coin almaq üçün sərfəli seçim. Balans artırma və rahat sifariş Mirpanel-də.",
-      "seoH1": "TikTok Jeton",
-      "seoPrimaryKeyword": "TikTok Jeton almaq",
-      "seoRelatedKeywords": " TikTok jeton ucuz, TikTok jeton Azərbaycan, TikTok coin almaq, TikTok coin ucuz, TikTok balans artırmaq, TikTok hədiyyə jeton",
-      "seoKeywords": "TikTok Jeton almaq, TikTok jeton ucuz, TikTok jeton Azərbaycan, TikTok coin almaq, TikTok coin ucuz, TikTok balans artırmaq, TikTok hədiyyə jeton",
-      "seoContent": "TikTok Jeton canlı yayımlarda hədiyyə göndərmək və balans artırmaq üçün istifadə olunur. Mirpanel TikTok jeton almaq istəyənlər üçün rahat və sərfəli sifariş imkanı təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən aparılır.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/tiktok.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/slider6.png",
-        "mobileImage": "",
-        "title": "TikTok Jeton",
-        "description": "Minimum 500 jeton.",
-        "alt": "TikTok Jeton banneri",
-        "order": 11
-      },
-      "flow": "spotify",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "form_then_whatsapp",
-      "formFields": [
-        {
-          "key": "email",
-          "type": "email",
-          "label": "Email",
-          "placeholder": "Spotify hesab emailinizi yazın",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "password",
-          "type": "password",
-          "label": "Şifrə",
-          "placeholder": "Spotify hesab şifrənizi yazın",
-          "required": true,
-          "enabled": true
-        }
-      ],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "Jeton sayını daxil et",
-          "months": 1,
-          "price": 10
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
       "id": "google_ai",
       "_stableId": "google_ai",
       "order": 5,
@@ -1071,30 +590,22 @@ const DATA = {
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "form_then_whatsapp",
+      "orderFlow": "form_confirm_whatsapp",
       "formFields": [
         {
           "key": "email",
           "type": "email",
-          "label": "Email",
-          "placeholder": "Spotify hesab emailinizi yazın",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "password",
-          "type": "password",
-          "label": "Şifrə",
-          "placeholder": "Spotify hesab şifrənizi yazın",
+          "label": "Email / Gmail",
+          "placeholder": "Gmailinizi qeyd edin",
           "required": true,
           "enabled": true
         }
       ],
       "formTitle": "",
       "confirmationModal": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "📌 Sifariş zamanı aktivləşdirmə üçün istifadə etmək istədiyiniz Gmail ünvanını təqdim edirsiniz. Ödəniş təsdiqləndikdən sonra həmin ünvana xüsusi dəvət göndərilir.\n\nMüştəri Gmail hesabına daxil olaraq göndərilən dəvəti qəbul edir və paket birbaşa öz şəxsi Google hesabında aktivləşdirilir. Dəvəti qəbul edərkən düzgün Google hesabına daxil olduğunuzdan əmin olun.\n\n✅ Şəxsi Google hesabınızda 18 aylıq Gemini AI Pro abunəliyi aktivləşdirilir.\n\n🛡️ Xidmətə tərəfimizdən *1 aylıq zəmanət verilir*. Zəmanət 18 aylıq paket müddətini deyil, MirPanel tərəfindən göstərilən aktivləşdirmə xidmətini və mümkün texniki problemlər üzrə dəstəyi əhatə edir.\n\n⚠️ Gmail ünvanının düzgün təqdim edilməsinə görə məsuliyyət müştəriyə aiddir. Dəvət göndərildikdən sonra Gmail ünvanının dəyişdirilməsi mümkün olmaya bilər.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -1111,373 +622,15 @@ const DATA = {
       },
       "plans": [
         {
-          "months": 12,
-          "price": 29.99
+          "months": 18,
+          "price": 16.99,
+          "regularPrice": 700
         }
       ],
       "orderConfirmation": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "google_ai_ultra",
-      "_stableId": "google_ai_ultra",
-      "order": 10,
-      "category": "ai",
-      "image": "assets/google-ai-ultra.png",
-      "currency": "₼",
-      "title": "Google AI Ultra + VEO 3",
-      "variant": "Ultra",
-      "badge": "AI",
-      "imageAlt": "Google AI Ultra + VEO 3",
-      "desc": "Peşəkar istifadə üçün ən yüksək AI.",
-      "note": "Stokta yoxdur.",
-      "longDescription": "Google AI Pro Ultra daha güclü süni intellekt imkanları üçün premium hesab seçimidir. Mirpanel vasitəsilə Google AI Pro Ultra hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "google-ai-pro-ultra",
-      "seoTitle": "Google AI Pro Ultra almaq | Gemini Ultra hesab - Mirpanel",
-      "seoDescription": "Google AI Pro Ultra hesabını sərfəli qiymətə al. Premium AI imkanları və sürətli aktivləşdirmə.",
-      "seoH1": "Google AI Ultra + VEO 3",
-      "seoPrimaryKeyword": "Google AI Pro Ultra almaq",
-      "seoRelatedKeywords": " Google AI Ultra almaq, Google AI Ultra ucuz, Google Gemini Ultra almaq, Gemini Ultra almaq, Gemini Advanced almaq, Google AI premium hesab",
-      "seoKeywords": "Google AI Pro Ultra almaq, Google AI Ultra almaq, Google AI Ultra ucuz, Google Gemini Ultra almaq, Gemini Ultra almaq, Gemini Advanced almaq, Google AI premium hesab",
-      "seoContent": "Google AI Pro Ultra daha güclü süni intellekt imkanları üçün premium hesab seçimidir. Mirpanel vasitəsilə Google AI Pro Ultra hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/google-ai-ultra.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/google-ai-ultra.png",
-        "mobileImage": "",
-        "title": "Google AI Ultra + VEO 3",
-        "description": "Peşəkar istifadə üçün ən yüksək AI.",
-        "alt": "Google AI Ultra + VEO 3",
-        "order": 12
-      },
-      "flow": "out_of_stock",
-      "soldOut": true,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "Stokta yoxdur",
-          "months": 1,
-          "price": 0
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "captions",
-      "_stableId": "captions",
-      "order": 11,
-      "category": "ai",
-      "image": "assets/captions.png",
-      "currency": "₼",
-      "title": "Captions AI",
-      "variant": "Şəxsi",
-      "badge": "AI",
-      "imageAlt": "Captions AI",
-      "desc": "Videolar üçün avtomatik caption.",
-      "note": "Hesab biz tərəfdən hazır verilir.",
-      "longDescription": "Captions AI video kontent hazırlayanlar üçün süni intellekt əsaslı premium alətlər təqdim edir. Mirpanel Captions AI hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. AI video montaj üçün yaxşı seçimdir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "captions-ai",
-      "seoTitle": "Captions AI almaq | Ucuz Captions AI Pro - Mirpanel",
-      "seoDescription": "Captions AI hesabını sərfəli qiymətə əldə et. AI video montaj və premium alətlər Mirpanel-də.",
-      "seoH1": "Captions AI",
-      "seoPrimaryKeyword": "Captions AI almaq",
-      "seoRelatedKeywords": " Captions AI Pro almaq, Captions AI ucuz, Captions AI Azərbaycan, Captions AI hesab almaq, Captions premium almaq, AI video montaj almaq",
-      "seoKeywords": "Captions AI almaq, Captions AI Pro almaq, Captions AI ucuz, Captions AI Azərbaycan, Captions AI hesab almaq, Captions premium almaq, AI video montaj almaq",
-      "seoContent": "Captions AI video kontent hazırlayanlar üçün süni intellekt əsaslı premium alətlər təqdim edir. Mirpanel Captions AI hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. AI video montaj üçün yaxşı seçimdir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/captions.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/captions.png",
-        "mobileImage": "",
-        "title": "Captions AI",
-        "description": "Videolar üçün avtomatik caption.",
-        "alt": "Captions AI",
-        "order": 13
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 aylıq PRO",
-          "months": 1,
-          "price": 11.99,
-          "regularPrice": 16.98
-        },
-        {
-          "label": "1 aylıq MAX",
-          "months": 1,
-          "price": 19.99,
-          "regularPrice": 42.48
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "grok_supergrok",
-      "_stableId": "grok_supergrok",
-      "order": 12,
-      "category": "ai",
-      "image": "assets/grok.png",
-      "currency": "₼",
-      "title": "Grok AI",
-      "variant": "SuperGrok",
-      "badge": "AI",
-      "imageAlt": "Grok AI",
-      "desc": "Güclü model + şəkil/fayl analizi.",
-      "note": "Hesab hazır şəkildə təqdim olunur.",
-      "longDescription": "Grok AI süni intellekt imkanlarından istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel Grok AI hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş rahat şəkildə WhatsApp üzərindən tamamlanır.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "grok-ai",
-      "seoTitle": "Grok AI almaq | Ucuz Grok AI hesab Azərbaycan - Mirpanel",
-      "seoDescription": "Grok AI hesabını sərfəli qiymətə əldə et. Premium AI imkanları və rahat sifariş Mirpanel-də.",
-      "seoH1": "Grok AI",
-      "seoPrimaryKeyword": "Grok AI almaq",
-      "seoRelatedKeywords": " Grok AI Pro almaq, Grok AI ucuz, Grok AI Azərbaycan, Grok hesab almaq, Grok premium almaq, X AI Grok almaq, Super Grok almaq, Super Grok AI almaq",
-      "seoKeywords": "Grok AI almaq, Grok AI Pro almaq, Grok AI ucuz, Grok AI Azərbaycan, Grok hesab almaq, Grok premium almaq, X AI Grok almaq, Super Grok almaq, Super Grok AI almaq",
-      "seoContent": "Grok AI süni intellekt imkanlarından istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel Grok AI hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş rahat şəkildə WhatsApp üzərindən tamamlanır.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/grok.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/grok.png",
-        "mobileImage": "",
-        "title": "Grok AI",
-        "description": "Güclü model + şəkil/fayl analizi.",
-        "alt": "Grok AI",
-        "order": 14
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 17.99,
-          "regularPrice": 51
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "claude_ai",
-      "_stableId": "claude_ai",
-      "order": 13,
-      "category": "ai",
-      "image": "assets/claude.png",
-      "currency": "₼",
-      "title": "Claude AI",
-      "variant": "1 illik",
-      "badge": "AI",
-      "imageAlt": "Claude AI",
-      "desc": "Mətn, kod, yazı üçün güclü AI.",
-      "note": "Stokta yoxdur.",
-      "longDescription": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "cloud-ai-pro",
-      "seoTitle": "Claude AI almaq Azərbaycanda | Mirpanel",
-      "seoDescription": "Claude AI üçün mövcud planı, real qiyməti və stok vəziyyətini yoxlayın. Mirpanel sifarişi mövcud WhatsApp axını ilə tamamlanır.",
-      "seoH1": "Claude AI almaq",
-      "seoPrimaryKeyword": "Claude AI almaq",
-      "seoRelatedKeywords": "Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
-      "seoKeywords": "Claude AI almaq, Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
-      "seoContent": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/claude.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/claude.png",
-        "mobileImage": "",
-        "title": "Claude AI",
-        "description": "Mətn, kod, yazı üçün güclü AI.",
-        "alt": "Claude AI",
-        "order": 15
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "Stokta yoxdur",
-          "months": 12,
-          "price": 0
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "📌 Sifariş zamanı aktivləşdirmə üçün istifadə etmək istədiyiniz Gmail ünvanını təqdim edirsiniz. Ödəniş təsdiqləndikdən sonra həmin ünvana xüsusi dəvət göndərilir.\n\nMüştəri Gmail hesabına daxil olaraq göndərilən dəvəti qəbul edir və paket birbaşa öz şəxsi Google hesabında aktivləşdirilir. Dəvəti qəbul edərkən düzgün Google hesabına daxil olduğunuzdan əmin olun.\n\n✅ Şəxsi Google hesabınızda 18 aylıq Gemini AI Pro abunəliyi aktivləşdirilir.\n\n🛡️ Xidmətə tərəfimizdən *1 aylıq zəmanət verilir*. Zəmanət 18 aylıq paket müddətini deyil, MirPanel tərəfindən göstərilən aktivləşdirmə xidmətini və mümkün texniki problemlər üzrə dəstəyi əhatə edir.\n\n⚠️ Gmail ünvanının düzgün təqdim edilməsinə görə məsuliyyət müştəriyə aiddir. Dəvət göndərildikdən sonra Gmail ünvanının dəyişdirilməsi mümkün olmaya bilər.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -1491,7 +644,7 @@ const DATA = {
     {
       "id": "prime",
       "_stableId": "prime",
-      "order": 4,
+      "order": 6,
       "category": "film",
       "image": "assets/prime.png",
       "currency": "₼",
@@ -1597,9 +750,954 @@ const DATA = {
       }
     },
     {
+      "id": "youtube_sexsi",
+      "_stableId": "youtube_sexsi",
+      "order": 7,
+      "category": "all",
+      "image": "assets/youtube.png",
+      "currency": "₼",
+      "title": "Youtube Eyni hesab",
+      "variant": "",
+      "badge": "Premium",
+      "imageAlt": "Youtube Eyni hesab",
+      "desc": "",
+      "note": "",
+      "longDescription": "YouTube Premium eyni hesab variantı mövcud hesabında premium istifadəyə davam etmək istəyənlər üçün nəzərdə tutulur. Mövcud plan və qiymət məhsul məlumatından avtomatik göstərilir. Sifariş zamanı planı seçin və WhatsApp-a keçməzdən əvvəl məlumatları təsdiqləyin. Məhsula aid istifadə qaydalarını bu səhifədə ayrıca oxuya bilərsiniz.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "youtube-eyni-hesab",
+      "seoTitle": "YouTube Premium eyni hesabda almaq | Mirpanel",
+      "seoDescription": "YouTube Premium-u eyni hesabda istifadə etmək üçün mövcud planı və real qiyməti yoxlayın. Mirpanel sifarişi WhatsApp üzərindən tamamlanır.",
+      "seoH1": "YouTube Premium – eyni hesab",
+      "seoPrimaryKeyword": "YouTube Premium eyni hesabda almaq",
+      "seoRelatedKeywords": "YouTube Premium almaq, YouTube Premium qiyməti, eyni hesabda YouTube Premium",
+      "seoKeywords": "YouTube Premium eyni hesabda almaq, YouTube Premium almaq, YouTube Premium qiyməti, eyni hesabda YouTube Premium",
+      "seoContent": "YouTube Premium eyni hesab variantı mövcud hesabında premium istifadəyə davam etmək istəyənlər üçün nəzərdə tutulur. Mövcud plan və qiymət məhsul məlumatından avtomatik göstərilir. Sifariş zamanı planı seçin və WhatsApp-a keçməzdən əvvəl məlumatları təsdiqləyin. Məhsula aid istifadə qaydalarını bu səhifədə ayrıca oxuya bilərsiniz.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/youtube.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/youtube.png",
+        "mobileImage": "",
+        "title": "Youtube Eyni hesab",
+        "description": "",
+        "alt": "Youtube Eyni hesab",
+        "order": 6
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email / Gmail",
+          "placeholder": "Gmail ünvanınızı yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "password",
+          "type": "password",
+          "label": "Yeni sahə",
+          "placeholder": "Gmail şifrənizi yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": " Təqdim etdiyiniz hesab yeni açılmış Gmail olmalı və heç bir ailə qrupuna qoşulmamalıdır. Hesab tamamilə sıfırdan yaradılmalıdır. Hesabınızda Premium aktivləşdirildikdən sonra, hər ay ödəniş edərək eyni hesab üzərindən istifadəyə davam edə bilərsiniz.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 ayliq",
+          "months": 1,
+          "price": 5.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": " Təqdim etdiyiniz hesab yeni açılmış Gmail olmalı və heç bir ailə qrupuna qoşulmamalıdır. Hesab tamamilə sıfırdan yaradılmalıdır. Hesabınızda Premium aktivləşdirildikdən sonra, hər ay ödəniş edərək eyni hesab üzərindən istifadəyə davam edə bilərsiniz.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "youtube",
+      "_stableId": "youtube",
+      "order": 8,
+      "category": "musiqi",
+      "image": "assets/youtube.png",
+      "currency": "₼",
+      "title": "YouTube Yeni hesab",
+      "variant": "Gmail",
+      "badge": "Video",
+      "imageAlt": "YouTube Yeni hesab",
+      "desc": "Reklamsız izləmə, YouTube Music daxil.",
+      "note": "Aktivləşmə üçün Gmailinizi qeyd edin.",
+      "longDescription": "YouTube Premium ilə reklamsız video izləyə və YouTube Music imkanlarından istifadə edə bilərsiniz. Mirpanel YouTube Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə edilir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "youtube-premium",
+      "seoTitle": "YouTube Premium almaq Azərbaycanda | Mirpanel",
+      "seoDescription": "YouTube Premium hesabını sərfəli qiymətə əldə et. Reklamsız video, YouTube Music və premium imkanlar.",
+      "seoH1": "YouTube Premium almaq",
+      "seoPrimaryKeyword": "YouTube Premium almaq",
+      "seoRelatedKeywords": "YouTube Premium qiyməti, YouTube Music almaq, YouTube Premium Azərbaycan",
+      "seoKeywords": "YouTube Premium almaq, YouTube Premium ucuz, YouTube Premium Azərbaycan, YouTube hesab almaq, YouTube reklamsız almaq, YouTube Music almaq, Youtube premium almaq, Yutub premium almaq",
+      "seoContent": "YouTube Premium ilə reklamsız video izləyə və YouTube Music imkanlarından istifadə edə bilərsiniz. Mirpanel YouTube Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə edilir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/youtube.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/slider4.png",
+        "mobileImage": "",
+        "title": "YouTube Yeni hesab",
+        "description": "Reklamsız izləmə, YouTube Music daxil.",
+        "alt": "YouTube Premium banneri",
+        "order": 9
+      },
+      "flow": "email",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "form_confirm_whatsapp",
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email / Gmail",
+          "placeholder": "Gmail ünvanınızı yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
+        "confirmText": "Təsdiq edirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 3.49
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
+        "confirmText": "Təsdiq edirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "surfshark",
+      "_stableId": "surfshark",
+      "order": 9,
+      "category": "video",
+      "image": "assets/surfshark.png",
+      "currency": "₼",
+      "title": "Surfshark VPN",
+      "variant": "VPN",
+      "badge": "VPN",
+      "imageAlt": "Surfshark VPN",
+      "desc": "IP gizlətmə, güclü şifrələmə.",
+      "note": "Hesab hazır şəkildə verilir.",
+      "longDescription": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "surfshark-vpn",
+      "seoTitle": "Surfshark VPN almaq | Ucuz VPN Azərbaycan - Mirpanel",
+      "seoDescription": "Surfshark VPN hesabını sərfəli qiymətə al. Təhlükəsiz internet və premium VPN xidməti Mirpanel-də.",
+      "seoH1": "Surfshark VPN",
+      "seoPrimaryKeyword": "Surfshark VPN almaq",
+      "seoRelatedKeywords": " Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
+      "seoKeywords": "Surfshark VPN almaq, Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
+      "seoContent": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/surfshark.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/surfshark.png",
+        "mobileImage": "",
+        "title": "Surfshark VPN",
+        "description": "IP gizlətmə, güclü şifrələmə.",
+        "alt": "Surfshark VPN",
+        "order": 10
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 3.99,
+          "regularPrice": 26.27
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "hbomax",
+      "_stableId": "hbomax",
+      "order": 10,
+      "category": "film",
+      "image": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
+      "currency": "₼",
+      "title": "HBO Max",
+      "variant": "Şəxsi Otaq",
+      "badge": "Film",
+      "imageAlt": "HBO Max",
+      "desc": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
+      "note": "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
+      "longDescription": "HBO Max premium film və serial izləmək istəyənlər üçün geniş məzmun təqdim edir. Mirpanel HBO Max hesablarını Azərbaycanda sərfəli qiymətə təklif edir. Sifariş WhatsApp üzərindən rahat şəkildə tamamlanır.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "hbo-max",
+      "seoTitle": "HBO Max almaq | Ucuz HBO Max hesab Azərbaycan - Mirpanel",
+      "seoDescription": "HBO Max hesabını sərfəli qiymətə al. Film, serial və premium izləmə imkanları Mirpanel-də.",
+      "seoH1": "HBO Max",
+      "seoPrimaryKeyword": "HBO Max almaq",
+      "seoRelatedKeywords": " HBO Max ucuz, HBO Max qiyməti, HBO Max Azərbaycan, HBO Max hesab almaq, HBO Max aylıq, HBO Max premium, HBO Max film hesabı",
+      "seoKeywords": "HBO Max almaq, HBO Max ucuz, HBO Max qiyməti, HBO Max Azərbaycan, HBO Max hesab almaq, HBO Max aylıq, HBO Max premium, HBO Max film hesabı",
+      "seoContent": "HBO Max premium film və serial izləmək istəyənlər üçün geniş məzmun təqdim edir. Mirpanel HBO Max hesablarını Azərbaycanda sərfəli qiymətə təklif edir. Sifariş WhatsApp üzərindən rahat şəkildə tamamlanır.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
+        "mobileImage": "",
+        "title": "HBO Max",
+        "description": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
+        "alt": "HBO Max",
+        "order": 7
+      },
+      "flow": "name_code_4",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "form_then_whatsapp",
+      "formFields": [
+        {
+          "key": "name",
+          "type": "text",
+          "label": "Ad",
+          "placeholder": "Adınızı yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "code_4",
+          "type": "text",
+          "label": "4 rəqəmli kod / PIN",
+          "placeholder": "4 rəqəmli kod yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 5.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "tiktok_jeton",
+      "_stableId": "tiktok_jeton",
+      "order": 11,
+      "category": "video",
+      "image": "assets/tiktok.png",
+      "currency": "₼",
+      "title": "TikTok Jeton",
+      "variant": "500+",
+      "badge": "TikTok",
+      "imageAlt": "TikTok Jeton",
+      "desc": "Minimum 500 jeton.",
+      "note": "500 jeton = 10 ₼. İstifadəçi adı və şifrə qeyd olunur.",
+      "longDescription": "TikTok Jeton canlı yayımlarda hədiyyə göndərmək və balans artırmaq üçün istifadə olunur. Mirpanel TikTok jeton almaq istəyənlər üçün rahat və sərfəli sifariş imkanı təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən aparılır.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "tiktok-jeton",
+      "seoTitle": "TikTok Jeton almaq | Ucuz TikTok coin Azərbaycan - Mirpanel",
+      "seoDescription": "TikTok jeton və coin almaq üçün sərfəli seçim. Balans artırma və rahat sifariş Mirpanel-də.",
+      "seoH1": "TikTok Jeton",
+      "seoPrimaryKeyword": "TikTok Jeton almaq",
+      "seoRelatedKeywords": " TikTok jeton ucuz, TikTok jeton Azərbaycan, TikTok coin almaq, TikTok coin ucuz, TikTok balans artırmaq, TikTok hədiyyə jeton",
+      "seoKeywords": "TikTok Jeton almaq, TikTok jeton ucuz, TikTok jeton Azərbaycan, TikTok coin almaq, TikTok coin ucuz, TikTok balans artırmaq, TikTok hədiyyə jeton",
+      "seoContent": "TikTok Jeton canlı yayımlarda hədiyyə göndərmək və balans artırmaq üçün istifadə olunur. Mirpanel TikTok jeton almaq istəyənlər üçün rahat və sərfəli sifariş imkanı təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən aparılır.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/tiktok.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/slider6.png",
+        "mobileImage": "",
+        "title": "TikTok Jeton",
+        "description": "Minimum 500 jeton.",
+        "alt": "TikTok Jeton banneri",
+        "order": 11
+      },
+      "flow": "spotify",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "form_then_whatsapp",
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email",
+          "placeholder": "Spotify hesab emailinizi yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "password",
+          "type": "password",
+          "label": "Şifrə",
+          "placeholder": "Spotify hesab şifrənizi yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "Jeton sayını daxil et",
+          "months": 1,
+          "price": 10
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "google_ai_ultra",
+      "_stableId": "google_ai_ultra",
+      "order": 12,
+      "category": "ai",
+      "image": "assets/google-ai-ultra.png",
+      "currency": "₼",
+      "title": "Google AI Ultra + VEO 3",
+      "variant": "Ultra",
+      "badge": "AI",
+      "imageAlt": "Google AI Ultra + VEO 3",
+      "desc": "Peşəkar istifadə üçün ən yüksək AI.",
+      "note": "Stokta yoxdur.",
+      "longDescription": "Google AI Pro Ultra daha güclü süni intellekt imkanları üçün premium hesab seçimidir. Mirpanel vasitəsilə Google AI Pro Ultra hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "google-ai-pro-ultra",
+      "seoTitle": "Google AI Pro Ultra almaq | Gemini Ultra hesab - Mirpanel",
+      "seoDescription": "Google AI Pro Ultra hesabını sərfəli qiymətə al. Premium AI imkanları və sürətli aktivləşdirmə.",
+      "seoH1": "Google AI Ultra + VEO 3",
+      "seoPrimaryKeyword": "Google AI Pro Ultra almaq",
+      "seoRelatedKeywords": " Google AI Ultra almaq, Google AI Ultra ucuz, Google Gemini Ultra almaq, Gemini Ultra almaq, Gemini Advanced almaq, Google AI premium hesab",
+      "seoKeywords": "Google AI Pro Ultra almaq, Google AI Ultra almaq, Google AI Ultra ucuz, Google Gemini Ultra almaq, Gemini Ultra almaq, Gemini Advanced almaq, Google AI premium hesab",
+      "seoContent": "Google AI Pro Ultra daha güclü süni intellekt imkanları üçün premium hesab seçimidir. Mirpanel vasitəsilə Google AI Pro Ultra hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/google-ai-ultra.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/google-ai-ultra.png",
+        "mobileImage": "",
+        "title": "Google AI Ultra + VEO 3",
+        "description": "Peşəkar istifadə üçün ən yüksək AI.",
+        "alt": "Google AI Ultra + VEO 3",
+        "order": 12
+      },
+      "flow": "out_of_stock",
+      "soldOut": true,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "Stokta yoxdur",
+          "months": 1,
+          "price": 0
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "captions",
+      "_stableId": "captions",
+      "order": 13,
+      "category": "ai",
+      "image": "assets/captions.png",
+      "currency": "₼",
+      "title": "Captions AI",
+      "variant": "Şəxsi",
+      "badge": "AI",
+      "imageAlt": "Captions AI",
+      "desc": "Videolar üçün avtomatik caption.",
+      "note": "Hesab biz tərəfdən hazır verilir.",
+      "longDescription": "Captions AI video kontent hazırlayanlar üçün süni intellekt əsaslı premium alətlər təqdim edir. Mirpanel Captions AI hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. AI video montaj üçün yaxşı seçimdir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "captions-ai",
+      "seoTitle": "Captions AI almaq | Ucuz Captions AI Pro - Mirpanel",
+      "seoDescription": "Captions AI hesabını sərfəli qiymətə əldə et. AI video montaj və premium alətlər Mirpanel-də.",
+      "seoH1": "Captions AI",
+      "seoPrimaryKeyword": "Captions AI almaq",
+      "seoRelatedKeywords": " Captions AI Pro almaq, Captions AI ucuz, Captions AI Azərbaycan, Captions AI hesab almaq, Captions premium almaq, AI video montaj almaq",
+      "seoKeywords": "Captions AI almaq, Captions AI Pro almaq, Captions AI ucuz, Captions AI Azərbaycan, Captions AI hesab almaq, Captions premium almaq, AI video montaj almaq",
+      "seoContent": "Captions AI video kontent hazırlayanlar üçün süni intellekt əsaslı premium alətlər təqdim edir. Mirpanel Captions AI hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. AI video montaj üçün yaxşı seçimdir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/captions.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/captions.png",
+        "mobileImage": "",
+        "title": "Captions AI",
+        "description": "Videolar üçün avtomatik caption.",
+        "alt": "Captions AI",
+        "order": 13
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 aylıq PRO",
+          "months": 1,
+          "price": 11.99,
+          "regularPrice": 16.98
+        },
+        {
+          "label": "1 aylıq MAX",
+          "months": 1,
+          "price": 19.99,
+          "regularPrice": 42.48
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "grok_supergrok",
+      "_stableId": "grok_supergrok",
+      "order": 14,
+      "category": "ai",
+      "image": "assets/grok.png",
+      "currency": "₼",
+      "title": "Grok AI",
+      "variant": "SuperGrok",
+      "badge": "AI",
+      "imageAlt": "Grok AI",
+      "desc": "Güclü model + şəkil/fayl analizi.",
+      "note": "Hesab hazır şəkildə təqdim olunur.",
+      "longDescription": "Grok AI süni intellekt imkanlarından istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel Grok AI hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş rahat şəkildə WhatsApp üzərindən tamamlanır.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "grok-ai",
+      "seoTitle": "Grok AI almaq | Ucuz Grok AI hesab Azərbaycan - Mirpanel",
+      "seoDescription": "Grok AI hesabını sərfəli qiymətə əldə et. Premium AI imkanları və rahat sifariş Mirpanel-də.",
+      "seoH1": "Grok AI",
+      "seoPrimaryKeyword": "Grok AI almaq",
+      "seoRelatedKeywords": " Grok AI Pro almaq, Grok AI ucuz, Grok AI Azərbaycan, Grok hesab almaq, Grok premium almaq, X AI Grok almaq, Super Grok almaq, Super Grok AI almaq",
+      "seoKeywords": "Grok AI almaq, Grok AI Pro almaq, Grok AI ucuz, Grok AI Azərbaycan, Grok hesab almaq, Grok premium almaq, X AI Grok almaq, Super Grok almaq, Super Grok AI almaq",
+      "seoContent": "Grok AI süni intellekt imkanlarından istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel Grok AI hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş rahat şəkildə WhatsApp üzərindən tamamlanır.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/grok.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/grok.png",
+        "mobileImage": "",
+        "title": "Grok AI",
+        "description": "Güclü model + şəkil/fayl analizi.",
+        "alt": "Grok AI",
+        "order": 14
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 17.99,
+          "regularPrice": 51
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "claude_ai",
+      "_stableId": "claude_ai",
+      "order": 15,
+      "category": "ai",
+      "image": "assets/claude.png",
+      "currency": "₼",
+      "title": "Claude AI",
+      "variant": "1 illik",
+      "badge": "AI",
+      "imageAlt": "Claude AI",
+      "desc": "Mətn, kod, yazı üçün güclü AI.",
+      "note": "Stokta yoxdur.",
+      "longDescription": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "cloud-ai-pro",
+      "seoTitle": "Claude AI almaq Azərbaycanda | Mirpanel",
+      "seoDescription": "Claude AI üçün mövcud planı, real qiyməti və stok vəziyyətini yoxlayın. Mirpanel sifarişi mövcud WhatsApp axını ilə tamamlanır.",
+      "seoH1": "Claude AI almaq",
+      "seoPrimaryKeyword": "Claude AI almaq",
+      "seoRelatedKeywords": "Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
+      "seoKeywords": "Claude AI almaq, Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
+      "seoContent": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/claude.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/claude.png",
+        "mobileImage": "",
+        "title": "Claude AI",
+        "description": "Mətn, kod, yazı üçün güclü AI.",
+        "alt": "Claude AI",
+        "order": 15
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "Stokta yoxdur",
+          "months": 12,
+          "price": 0
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "zoom",
+      "_stableId": "zoom",
+      "order": 16,
+      "category": "meeting",
+      "image": "assets/zoom.png",
+      "currency": "₼",
+      "title": "Zoom Pro",
+      "variant": "Pro",
+      "badge": "Görüş",
+      "imageAlt": "Zoom Pro",
+      "desc": "Peşəkar onlayn görüşlər.",
+      "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
+      "longDescription": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "zoom-pro",
+      "seoTitle": "Zoom Pro almaq | Ucuz Zoom hesab Azərbaycan - Mirpanel",
+      "seoDescription": "Zoom Pro hesabını sərfəli qiymətə əldə et. Online görüşlər və premium Zoom imkanları Mirpanel-də.",
+      "seoH1": "Zoom Pro",
+      "seoPrimaryKeyword": "Zoom Pro almaq",
+      "seoRelatedKeywords": " Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
+      "seoKeywords": "Zoom Pro almaq, Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
+      "seoContent": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/zoom.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/zoom.png",
+        "mobileImage": "",
+        "title": "Zoom Pro",
+        "description": "Peşəkar onlayn görüşlər.",
+        "alt": "Zoom Pro",
+        "order": 16
+      },
+      "flow": "whatsapp",
+      "soldOut": true,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 9.99,
+          "regularPrice": 27.18
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
       "id": "duolingo",
       "_stableId": "duolingo",
-      "order": 15,
+      "order": 17,
       "category": "dil",
       "image": "assets/duolingo.png",
       "currency": "₼",
@@ -1686,7 +1784,7 @@ const DATA = {
     {
       "id": "canva",
       "_stableId": "canva",
-      "order": 16,
+      "order": 18,
       "category": "dizayn",
       "image": "assets/canva.png",
       "currency": "₼",
@@ -1786,7 +1884,7 @@ const DATA = {
     {
       "id": "chatgpt",
       "_stableId": "chatgpt",
-      "order": 17,
+      "order": 19,
       "category": "ai",
       "image": "assets/chatgpt.png",
       "currency": "₼",
@@ -1885,9 +1983,97 @@ const DATA = {
       }
     },
     {
+      "id": "chatgpt_ortaq",
+      "_stableId": "chatgpt_ortaq",
+      "order": 20,
+      "category": "all",
+      "image": "assets/chatgpt.png",
+      "currency": "₼",
+      "title": "ChatGPT Plus (Ortaq hesab)",
+      "variant": "",
+      "badge": "Premium",
+      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
+      "desc": "",
+      "note": "",
+      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "chatgpt-plus-ortaq-hesab",
+      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
+      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
+      "seoH1": "ChatGPT Plus ortaq hesab almaq",
+      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
+      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/chatgpt.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/chatgpt.png",
+        "mobileImage": "",
+        "title": "ChatGPT Plus (Ortaq hesab)",
+        "description": "",
+        "alt": "ChatGPT Plus (Ortaq hesab)",
+        "order": 20
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 ayliq",
+          "months": 1,
+          "price": 8.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
       "id": "adobecc",
       "_stableId": "adobecc",
-      "order": 19,
+      "order": 21,
       "category": "dizayn",
       "image": "assets/adobe.png",
       "currency": "₼",
@@ -1978,7 +2164,7 @@ const DATA = {
     {
       "id": "linkedin_career",
       "_stableId": "linkedin_career",
-      "order": 19,
+      "order": 22,
       "category": "meeting",
       "image": "assets/linkedin.png",
       "currency": "₼",
@@ -2065,7 +2251,7 @@ const DATA = {
     {
       "id": "elevenlabs_creator",
       "_stableId": "elevenlabs_creator",
-      "order": 20,
+      "order": 23,
       "category": "ai",
       "image": "assets/elevenlabs.png",
       "currency": "₼",
@@ -2152,7 +2338,7 @@ const DATA = {
     {
       "id": "semrush_premium",
       "_stableId": "semrush_premium",
-      "order": 21,
+      "order": 24,
       "category": "meeting",
       "image": "assets/semrush.png",
       "currency": "₼",
@@ -2239,7 +2425,7 @@ const DATA = {
     {
       "id": "adobe_express",
       "_stableId": "adobe_express",
-      "order": 22,
+      "order": 25,
       "category": "dizayn",
       "image": "assets/adobe-express.png",
       "currency": "₼",
@@ -2326,7 +2512,7 @@ const DATA = {
     {
       "id": "notion_plus",
       "_stableId": "notion_plus",
-      "order": 23,
+      "order": 26,
       "category": "meeting",
       "image": "assets/notion.png",
       "currency": "₼",
@@ -2413,7 +2599,7 @@ const DATA = {
     {
       "id": "picsart_premium",
       "_stableId": "picsart_premium",
-      "order": 24,
+      "order": 27,
       "category": "dizayn",
       "image": "assets/picsart.png",
       "currency": "₼",
@@ -2500,7 +2686,7 @@ const DATA = {
     {
       "id": "blink_starter",
       "_stableId": "blink_starter",
-      "order": 25,
+      "order": 28,
       "category": "meeting",
       "image": "assets/blink.png",
       "currency": "₼",
@@ -2587,7 +2773,7 @@ const DATA = {
     {
       "id": "lightroom_photo",
       "_stableId": "lightroom_photo",
-      "order": 26,
+      "order": 29,
       "category": "dizayn",
       "image": "assets/lightroom.png",
       "currency": "₼",
@@ -2674,7 +2860,7 @@ const DATA = {
     {
       "id": "gemini_ai_pro",
       "_stableId": "gemini_ai_pro",
-      "order": 27,
+      "order": 30,
       "category": "ai",
       "image": "assets/gemini.png",
       "currency": "₼",
@@ -2752,199 +2938,6 @@ const DATA = {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
         "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "chatgpt_ortaq",
-      "_stableId": "chatgpt_ortaq",
-      "order": 18,
-      "category": "all",
-      "image": "assets/chatgpt.png",
-      "currency": "₼",
-      "title": "ChatGPT Plus (Ortaq hesab)",
-      "variant": "",
-      "badge": "Premium",
-      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
-      "desc": "",
-      "note": "",
-      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "chatgpt-plus-ortaq-hesab",
-      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
-      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
-      "seoH1": "ChatGPT Plus ortaq hesab almaq",
-      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
-      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/chatgpt.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/chatgpt.png",
-        "mobileImage": "",
-        "title": "ChatGPT Plus (Ortaq hesab)",
-        "description": "",
-        "alt": "ChatGPT Plus (Ortaq hesab)",
-        "order": 20
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": false,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 ayliq",
-          "months": 1,
-          "price": 8.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "youtube_sexsi",
-      "_stableId": "youtube_sexsi",
-      "order": 4,
-      "category": "all",
-      "image": "assets/youtube.png",
-      "currency": "₼",
-      "title": "Youtube Eyni hesab",
-      "variant": "",
-      "badge": "Premium",
-      "imageAlt": "Youtube Eyni hesab",
-      "desc": "",
-      "note": "",
-      "longDescription": "YouTube Premium eyni hesab variantı mövcud hesabında premium istifadəyə davam etmək istəyənlər üçün nəzərdə tutulur. Mövcud plan və qiymət məhsul məlumatından avtomatik göstərilir. Sifariş zamanı planı seçin və WhatsApp-a keçməzdən əvvəl məlumatları təsdiqləyin. Məhsula aid istifadə qaydalarını bu səhifədə ayrıca oxuya bilərsiniz.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "youtube-eyni-hesab",
-      "seoTitle": "YouTube Premium eyni hesabda almaq | Mirpanel",
-      "seoDescription": "YouTube Premium-u eyni hesabda istifadə etmək üçün mövcud planı və real qiyməti yoxlayın. Mirpanel sifarişi WhatsApp üzərindən tamamlanır.",
-      "seoH1": "YouTube Premium – eyni hesab",
-      "seoPrimaryKeyword": "YouTube Premium eyni hesabda almaq",
-      "seoRelatedKeywords": "YouTube Premium almaq, YouTube Premium qiyməti, eyni hesabda YouTube Premium",
-      "seoKeywords": "YouTube Premium eyni hesabda almaq, YouTube Premium almaq, YouTube Premium qiyməti, eyni hesabda YouTube Premium",
-      "seoContent": "YouTube Premium eyni hesab variantı mövcud hesabında premium istifadəyə davam etmək istəyənlər üçün nəzərdə tutulur. Mövcud plan və qiymət məhsul məlumatından avtomatik göstərilir. Sifariş zamanı planı seçin və WhatsApp-a keçməzdən əvvəl məlumatları təsdiqləyin. Məhsula aid istifadə qaydalarını bu səhifədə ayrıca oxuya bilərsiniz.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/youtube.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/youtube.png",
-        "mobileImage": "",
-        "title": "Youtube Eyni hesab",
-        "description": "",
-        "alt": "Youtube Eyni hesab",
-        "order": 6
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [
-        {
-          "key": "email",
-          "type": "email",
-          "label": "Email / Gmail",
-          "placeholder": "Gmail ünvanınızı yazın",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "password",
-          "type": "password",
-          "label": "Yeni sahə",
-          "placeholder": "Gmail şifrənizi yazın",
-          "required": true,
-          "enabled": true
-        }
-      ],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": " Təqdim etdiyiniz hesab yeni açılmış Gmail olmalı və heç bir ailə qrupuna qoşulmamalıdır. Hesab tamamilə sıfırdan yaradılmalıdır. Hesabınızda Premium aktivləşdirildikdən sonra, hər ay ödəniş edərək eyni hesab üzərindən istifadəyə davam edə bilərsiniz.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": false,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 ayliq",
-          "months": 1,
-          "price": 5.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": " Təqdim etdiyiniz hesab yeni açılmış Gmail olmalı və heç bir ailə qrupuna qoşulmamalıdır. Hesab tamamilə sıfırdan yaradılmalıdır. Hesabınızda Premium aktivləşdirildikdən sonra, hər ay ödəniş edərək eyni hesab üzərindən istifadəyə davam edə bilərsiniz.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -3163,7 +3156,8 @@ const CMS_CONTENT = {
   "orderSettings": {
     "whatsappButtonText": "WhatsApp",
     "defaultExtraMessage": "",
-    "requireConfirmation": false
+    "requireConfirmation": false,
+    "agreementText": "İstifadə qaydalarını və şərtləri oxudum, qəbul edirəm."
   },
   "media": [
     {
@@ -3228,6 +3222,7 @@ const CMS_CONTENT = {
 const SITE_SECTIONS = {
   "haqqimizda": {
     "enabled": true,
+    "kicker": "Haqqımızda",
     "title": "Haqqımızda",
     "text": "Mirpanel premium hesabların sürətli və etibarlı aktivləşdirilməsi üçün xidmət göstərir. Məhsullar WhatsApp üzərindən rahat sifariş olunur və dəstək komandası müştərilərə kömək edir.",
     "linkText": "",
@@ -3238,50 +3233,49 @@ const SITE_SECTIONS = {
     "blocks": [
       {
         "title": "",
-        "text": "**MirPanel** rəqəmsal məhsul və onlayn xidmətlər üçün mövcud planları bir yerdə nəzərdən keçirməyə və uyğun məhsulu sifariş etməyə imkan verən onlayn platformadır. Məqsədimiz məhsul məlumatlarını, qiymətləri və istifadə qaydalarını aydın təqdim etməkdir.",
+        "text": "",
         "image": "",
         "order": 1
       },
       {
         "title": "",
-        "text": "Saytda əyləncə, video və dizayn alətləri, süni intellekt xidmətləri və digər rəqəmsal məhsullar üzrə mövcud seçimlər göstərilir. Hər məhsul səhifəsində həmin məhsula aid plan, qiymət, mövcudluq və sifariş məlumatları ayrıca təqdim olunur.",
+        "text": "",
         "image": "",
         "order": 2
       },
       {
         "title": "",
-        "text": "Sifarişdən əvvəl məhsul səhifəsindəki planı, təqdimat formasını və istifadə qaydalarını diqqətlə oxumaq tövsiyə olunur. Seçilən məhsul və plan barədə sifariş məlumatı mövcud WhatsApp axını ilə dəstək tərəfinə göndərilir; təqdimatın detalları məhsulun öz şərtlərinə əsasən dəqiqləşdirilir.",
+        "text": "",
         "image": "",
         "order": 3
       },
       {
         "title": "",
-        "text": "Sifariş sahələri məhsula görə dəyişə bilər. İstifadəçi məlumat daxil etməzdən əvvəl sahə başlıqlarını və məhsul qaydalarını yoxlamalı, sifariş üçün tələb olunmayan həssas məlumatları paylaşmamalıdır. Saytda göstərilən məlumatlar sifarişin hazırlanması və dəstək prosesinin aparılması üçün nəzərdə tutulur.",
+        "text": "",
         "image": "",
         "order": 4
       },
       {
         "title": "",
-        "text": "Məhsulun mövcudluğu, uyğun planın seçilməsi və sifariş qaydası ilə bağlı suallar üçün MirPanel ilə WhatsApp vasitəsilə əlaqə saxlamaq mümkündür. Məhsul haqqında qərar verməzdən əvvəl bütün şərtləri aydınlaşdırmağınız tövsiyə olunur.",
+        "text": "",
         "image": "",
         "order": 5
       },
       {
         "title": "",
-        "text": "Sualınız varsa, [Əlaqə səhifəsindən](/elaqe) istifadə edərək MirPanel ilə əlaqə saxlaya bilərsiniz.",
+        "text": "",
         "image": "",
         "order": 6
       }
     ],
-    "kicker": "Haqqımızda",
+    "seoTitle": "Haqqımızda | MirPanel",
+    "seoDescription": "MirPanel-in rəqəmsal məhsulları, sifariş prosesi, istifadə qaydaları və dəstək prinsipləri haqqında məlumat.",
     "homeButtonText": "Ana səhifə",
-    "homeButtonUrl": "/",
+    "homeButtonUrl": "",
     "productsButtonText": "Məhsullara bax",
     "productsButtonUrl": "/mehsul",
     "contactLinkText": "Əlaqə səhifəsinə keçin",
     "contactLinkUrl": "/elaqe",
-    "seoTitle": "Haqqımızda | MirPanel",
-    "seoDescription": "MirPanel-in rəqəmsal məhsulları, sifariş prosesi, istifadə qaydaları və dəstək prinsipləri haqqında məlumat.",
     "ogTitle": "MirPanel haqqında",
     "ogDescription": "MirPanel-in rəqəmsal məhsulları, sifariş prosesi və xidmət prinsipləri ilə tanış olun.",
     "ogImage": "",
@@ -3339,40 +3333,40 @@ const ADMIN_CONTENT = {
     "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
     "rulesHtml": ""
   },
-  "hbomax": {
-    "aboutHtml": "<h3>HBO Max - Premium Film və Serial İzləmə Platforması</h3>\n<p>HBO Max, yüksək keyfiyyətli filmlər, seriallar, sənədli filmlər və eksklüziv kontentləri izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım platformasıdır. Standart izləmə təcrübəsindən fərqli olaraq, HBO Max istifadəçilərə məşhur HBO serialları, Warner Bros. filmləri, orijinal istehsallar və geniş əyləncə kitabxanası təqdim edir. Keyfiyyətli kontent, rahat izləmə və premium əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>HBO Max, istifadəçilərə dram, komediya, fantastika, kriminal, animasiya, sənədli film və ailəvi kontent daxil olmaqla müxtəlif janrlarda geniş seçim imkanı yaradır. Platformada HBO Original serialları, məşhur filmlər, yeni buraxılışlar və seçilmiş premium kontentlər izlənilə bilir. Telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunduğu üçün sevdiyiniz kontentə istənilən vaxt giriş mümkündür.</p>\n\n<h3>HBO Max Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Keyfiyyətli filmlər, reytinqli seriallar və premium kontentləri izləmək istəyən istifadəçilər.</li>\n  <li><strong>HBO Original İzləyiciləri:</strong> HBO istehsalı olan məşhur və eksklüziv seriallara maraq göstərənlər.</li>\n  <li><strong>Ailəvi İzləyicilər:</strong> Evdə ailə ilə birlikdə film gecələri, animasiyalar və müxtəlif janrlarda kontent izləmək istəyənlər.</li>\n  <li><strong>Sənədli Film Sevərlər:</strong> Real hekayələr, bioqrafiyalar, tarix, kriminal və maarifləndirici sənədli filmlərə baxmaq istəyənlər.</li>\n</ul>\n\n<h3>HBO Max-in Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Premium Film və Serial Kitabxanası:</strong> Məşhur filmlər, reytinqli seriallar, sənədli filmlər və ailəvi kontentlərə geniş giriş imkanı.</li>\n  <li><strong>⭐ HBO Original Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, xüsusi istehsallar və yüksək keyfiyyətli layihələr.</li>\n  <li><strong>🍿 Warner Bros. və Populyar Filmlər:</strong> Məşhur kinostudiyaların seçilmiş filmlərini rahat şəkildə izləmək imkanı.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda hesabınıza daxil olaraq izləməyə davam etmək.</li>\n  <li><strong>🔊 Yüksək Keyfiyyətli İzləmə:</strong> Keyfiyyətli görüntü və səs imkanları ilə daha komfortlu film və serial təcrübəsi.</li>\n</ul>",
+  "netflix_umumi": {
+    "aboutHtml": "<h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>\n<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>\n\n<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>\n  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>\n  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>\n  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>\n</ul>\n\n<h3>Netflix Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>\n  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>\n  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>\n  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>\n  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>\n</ul>",
     "rulesHtml": ""
   },
   "netflix": {
     "aboutHtml": "<h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>\n<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>\n\n<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>\n  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>\n  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>\n  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>\n</ul>\n\n<h3>Netflix Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>\n  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>\n  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>\n  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>\n  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>\n</ul>",
     "rulesHtml": ""
   },
-  "netflix_umumi": {
-    "aboutHtml": "<h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>\n<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>\n\n<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>\n  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>\n  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>\n  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>\n</ul>\n\n<h3>Netflix Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>\n  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>\n  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>\n  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>\n  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>\n</ul>",
+  "spotify": {
+    "aboutHtml": "<h3>Spotify Premium - Reklamsız Musiqi və Podcast Təcrübəsi</h3>\n<p>Spotify Premium, musiqi və podcast dinləməyi daha rahat, keyfiyyətli və fasiləsiz etmək üçün hazırlanmış premium abunəlik xidmətidir. Standart versiyadan fərqli olaraq, Premium abunəliyi reklamsız dinləmə, offline yükləmə, istənilən mahnını seçərək dinləmə və daha yüksək səs keyfiyyəti təqdim edir. Gündəlik musiqi zövqünü daha sərbəst və komfortlu yaşamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Spotify Premium, istifadəçilərə milyonlarla mahnı, albom, playlist və podcasta limitsiz giriş imkanı verir. İstifadəçilər sevdikləri musiqiləri reklamsız dinləyə, internet bağlantısı olmadan istifadə üçün yükləyə və istədikləri mahnını istənilən vaxt seçə bilərlər. Premium abunəlik həm mobil cihazlarda, həm kompüterdə, həm də smart TV və digər dəstəklənən cihazlarda daha rahat musiqi təcrübəsi yaradır.</p>\n\n<h3>Spotify Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Musiqi Sevərlər:</strong> Sevdiyi mahnıları, albomları və playlistləri reklamsız və limitsiz dinləmək istəyənlər.</li>\n  <li><strong>Podcast Dinləyiciləri:</strong> Maarifləndirici, əyləncəli və motivasiyaedici podcastları fasiləsiz dinləmək istəyən istifadəçilər.</li>\n  <li><strong>Səyahət Edənlər və Mobil İstifadəçilər:</strong> Musiqiləri əvvəlcədən yükləyib internet olmadan dinləmək istəyənlər.</li>\n  <li><strong>İdman və İş Zamanı Musiqi Dinləyənlər:</strong> Məşq, iş, dərs və gündəlik fəaliyyətlər zamanı rahat musiqi axını istəyənlər.</li>\n</ul>\n\n<h3>Spotify Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🚫 Reklamsız Dinləmə:</strong> Mahnılar və podcastlar arasında reklam fasilələri olmadan daha axıcı dinləmə təcrübəsi.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz mahnıları, albomları və playlistləri cihazınıza yükləyərək internet olmadan dinləmək imkanı.</li>\n  <li><strong>🎵 İstənilən Mahnını Seçmə:</strong> Mobil cihazda belə istədiyiniz mahnını seçib dərhal dinləmək və limitsiz keçid etmək imkanı.</li>\n  <li><strong>🔊 Yüksək Səs Keyfiyyəti:</strong> Daha təmiz, aydın və keyfiyyətli musiqi dinləmə təcrübəsi.</li>\n  <li><strong>📱 Bütün Cihazlarda İstifadə:</strong> Telefon, kompüter, planşet, smart TV və digər dəstəklənən cihazlarda rahat istifadə.</li>\n</ul>",
     "rulesHtml": ""
   },
-  "zoom": {
-    "aboutHtml": "<h3>Zoom Pro - Peşəkar Onlayn Görüş və Video Konfrans Həlli</h3>\n<p>Zoom Pro, iş görüşləri, dərslər, vebinarlar və komanda toplantıları üçün hazırlanmış premium video konfrans platformasıdır. Standart versiyadan fərqli olaraq, Pro abunəliyi daha uzun görüş müddəti, daha geniş idarəetmə imkanları və peşəkar onlayn ünsiyyət üçün əlavə funksiyalar təqdim edir. Uzaqdan işləyən komandalar, müəllimlər, biznes sahibləri və onlayn xidmət göstərən şəxslər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Zoom Pro, istifadəçilərə yüksək keyfiyyətli video və audio ilə onlayn görüşlər keçirmək, ekran paylaşmaq, görüşləri qeyd etmək və iştirakçıları rahat idarə etmək imkanı verir. Platforma kompüter, telefon və planşet üzərindən istifadə oluna bilir və müxtəlif iş proseslərinə asanlıqla uyğunlaşır. Pro abunəliyi xüsusilə uzunmüddətli görüşlər, peşəkar təqdimatlar və müntəzəm onlayn toplantılar üçün daha rahat təcrübə yaradır.</p>\n\n<h3>Zoom Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Biznes Sahibləri və Komandalar:</strong> İş görüşləri, layihə müzakirələri və komanda toplantılarını onlayn şəkildə idarə edənlər.</li>\n  <li><strong>Müəllimlər və Təlimçilər:</strong> Onlayn dərslər, kurslar, təlimlər və seminarlar keçirən şəxslər.</li>\n  <li><strong>Frilanserlər və Konsultantlar:</strong> Müştərilərlə video zənglər, təqdimatlar və məsləhət görüşləri aparanlar.</li>\n  <li><strong>SMM və Rəqəmsal Xidmət Göstərənlər:</strong> Müştəri görüşləri, kontent planlaması və komanda koordinasiyası üçün stabil platformaya ehtiyac duyanlar.</li>\n</ul>\n\n<h3>Zoom Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>⏱️ Uzunmüddətli Görüşlər:</strong> Standart versiyadakı vaxt məhdudiyyətlərini azaltmaqla daha rahat və fasiləsiz toplantılar keçirmək imkanı.</li>\n  <li><strong>🎥 Yüksək Keyfiyyətli Video və Audio:</strong> Peşəkar görünüşlü görüşlər üçün stabil bağlantı, aydın səs və keyfiyyətli görüntü təcrübəsi.</li>\n  <li><strong>🖥️ Ekran Paylaşımı və Təqdimatlar:</strong> Sənədləri, slaydları, layihələri və tətbiqləri iştirakçılarla canlı şəkildə paylaşmaq imkanı.</li>\n  <li><strong>☁️ Görüş Qeydləri:</strong> Vacib görüşləri qeyd edərək daha sonra izləmək, paylaşmaq və arxivləmək üçün rahat imkanlar.</li>\n  <li><strong>🔐 Təhlükəsiz Görüş İdarəetməsi:</strong> Şifrə, gözləmə otağı, iştirakçı icazələri və idarəetmə alətləri ilə daha təhlükəsiz onlayn görüşlər.</li>\n</ul>",
+  "google_ai": {
+    "aboutHtml": "<h3>Google AI Pro + VEO 3 - Premium Süni İntellekt və Video Yaratma Həlli</h3>\n<p>Google AI Pro + VEO 3, süni intellekt vasitəsilə mətn yazmaq, ideya yaratmaq, kontent hazırlamaq və peşəkar səviyyədə AI video generasiya etmək istəyən istifadəçilər üçün hazırlanmış premium rəqəmsal xidmətdir. Standart AI alətlərindən fərqli olaraq, Google AI Pro daha güclü Gemini imkanları, geniş yaradıcılıq funksiyaları və VEO 3 ilə yüksək keyfiyyətli video yaratma təcrübəsi təqdim edir. Kontent istehsalı, biznes, təhsil və kreativ layihələr üçün ideal süni intellekt həllidir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Google AI Pro, istifadəçilərə Gemini süni intellekt modeli vasitəsilə mətn yazmaq, araşdırma aparmaq, ideyalar hazırlamaq, təqdimatlar üçün kontent yaratmaq və gündəlik iş proseslərini daha sürətli idarə etmək imkanı verir. VEO 3 dəstəyi isə mətn təsvirləri əsasında realistik, kreativ və yüksək keyfiyyətli videolar yaratmağa kömək edir. Bu xidmət həm fərdi istifadəçilər, həm də peşəkar kontent yaradıcıları üçün vaxt qazandıran güclü AI platformasıdır.</p>\n\n<h3>Google AI Pro + VEO 3 Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Sosial şəbəkələr üçün kreativ ideyalar, mətnlər, video ssenarilər və AI videolar hazırlamaq istəyənlər.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Reklam ideyaları, post mətnləri, kampaniya konseptləri və video kontent hazırlayan mütəxəssislər.</li>\n  <li><strong>Biznes Sahibləri və Sahibkarlar:</strong> Məhsul və xidmətlərini daha peşəkar təqdim etmək üçün süni intellektdən istifadə etmək istəyənlər.</li>\n  <li><strong>Tələbələr və Peşəkarlar:</strong> Araşdırma, yazı, təqdimat, planlama və gündəlik işlərdə AI dəstəyinə ehtiyac duyan istifadəçilər.</li>\n</ul>\n\n<h3>Google AI Pro + VEO 3-ün Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü Gemini AI İmkanları:</strong> Mətn yazmaq, suallara cavab almaq, ideya yaratmaq, analiz etmək və iş proseslərini sürətləndirmək üçün inkişaf etmiş süni intellekt dəstəyi.</li>\n  <li><strong>🎬 VEO 3 ilə AI Video Yaratma:</strong> Mətn təsvirləri əsasında kreativ, realistik və peşəkar görünüşlü videolar hazırlamaq imkanı.</li>\n  <li><strong>✨ Kontent İstehsalında Vaxta Qənaət:</strong> Sosial media postları, reklam ssenariləri, video ideyaları və təqdimat mətnlərini daha sürətli hazırlamaq.</li>\n  <li><strong>📚 Araşdırma və Planlama Dəstəyi:</strong> Mövzular üzrə məlumat toplamaq, struktur qurmaq, mətnləri təkmilləşdirmək və layihələri daha rahat planlamaq.</li>\n  <li><strong>🚀 Kreativ və Peşəkar Nəticələr:</strong> AI dəstəyi ilə daha keyfiyyətli vizuallar, ideyalar, mətnlər və video kontent hazırlayaraq rəqəmsal işlərdə fərqlənmək.</li>\n</ul>",
+    "rulesHtml": ""
+  },
+  "prime": {
+    "aboutHtml": "<h3>Prime Video - Premium Film və Serial İzləmə Platforması</h3>\n<p>Prime Video, film, serial, sənədli film və eksklüziv kontentləri yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım platformasıdır. Standart televiziya və təsadüfi video izləmə təcrübəsindən fərqli olaraq, Prime Video istifadəçilərə geniş kontent kitabxanası, orijinal istehsallar və müxtəlif cihazlardan rahat izləmə imkanı təqdim edir. Əyləncəni daha komfortlu, keyfiyyətli və əlçatan etmək istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Prime Video, istifadəçilərə müxtəlif janrlarda filmlər, seriallar, animasiyalar, sənədli filmlər və Amazon Originals kontentlərini izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda istifadə oluna bilir. İstifadəçilər sevdikləri kontenti istədikləri vaxt izləyə, bəzi məzmunları offline baxış üçün yükləyə və ailəvi əyləncə təcrübəsindən rahat şəkildə yararlana bilərlər.</p>\n\n<h3>Prime Video Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Geniş film və serial seçimini yüksək keyfiyyətdə izləmək istəyən istifadəçilər.</li>\n  <li><strong>Ailəvi İzləyicilər:</strong> Evdə ailə ilə birlikdə film gecələri, animasiyalar və müxtəlif janrlarda kontent izləmək istəyənlər.</li>\n  <li><strong>Səyahət Edənlər:</strong> Sevdikləri filmləri və serialları əvvəlcədən yükləyib internet olmayan yerlərdə izləmək istəyənlər.</li>\n  <li><strong>Eksklüziv Kontent İzləyənlər:</strong> Amazon Originals və platformaya məxsus xüsusi serial və filmləri izləmək istəyənlər.</li>\n</ul>\n\n<h3>Prime Video-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər və animasiyalara rahat giriş imkanı.</li>\n  <li><strong>⭐ Amazon Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və xüsusi istehsalları izləmək imkanı.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz kontentləri cihazınıza yükləyərək internet bağlantısı olmadan izləmək.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda rahat baxış təcrübəsi.</li>\n  <li><strong>🔊 Yüksək Keyfiyyətli İzləmə:</strong> Keyfiyyətli görüntü və səs imkanları ilə daha komfortlu film və serial təcrübəsi.</li>\n</ul>sıdır.</p>",
     "rulesHtml": ""
   },
   "youtube": {
     "aboutHtml": "<h3>YouTube Premium - Reklamsız İzləmə</h3>\n      <p>YouTube Premium hesabı, videoları reklamsız izləmək və YouTube Music xidmətindən istifadə etmək üçündür.</p>",
     "rulesHtml": ""
   },
-  "spotify": {
-    "aboutHtml": "<h3>Spotify Premium - Reklamsız Musiqi və Podcast Təcrübəsi</h3>\n<p>Spotify Premium, musiqi və podcast dinləməyi daha rahat, keyfiyyətli və fasiləsiz etmək üçün hazırlanmış premium abunəlik xidmətidir. Standart versiyadan fərqli olaraq, Premium abunəliyi reklamsız dinləmə, offline yükləmə, istənilən mahnını seçərək dinləmə və daha yüksək səs keyfiyyəti təqdim edir. Gündəlik musiqi zövqünü daha sərbəst və komfortlu yaşamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Spotify Premium, istifadəçilərə milyonlarla mahnı, albom, playlist və podcasta limitsiz giriş imkanı verir. İstifadəçilər sevdikləri musiqiləri reklamsız dinləyə, internet bağlantısı olmadan istifadə üçün yükləyə və istədikləri mahnını istənilən vaxt seçə bilərlər. Premium abunəlik həm mobil cihazlarda, həm kompüterdə, həm də smart TV və digər dəstəklənən cihazlarda daha rahat musiqi təcrübəsi yaradır.</p>\n\n<h3>Spotify Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Musiqi Sevərlər:</strong> Sevdiyi mahnıları, albomları və playlistləri reklamsız və limitsiz dinləmək istəyənlər.</li>\n  <li><strong>Podcast Dinləyiciləri:</strong> Maarifləndirici, əyləncəli və motivasiyaedici podcastları fasiləsiz dinləmək istəyən istifadəçilər.</li>\n  <li><strong>Səyahət Edənlər və Mobil İstifadəçilər:</strong> Musiqiləri əvvəlcədən yükləyib internet olmadan dinləmək istəyənlər.</li>\n  <li><strong>İdman və İş Zamanı Musiqi Dinləyənlər:</strong> Məşq, iş, dərs və gündəlik fəaliyyətlər zamanı rahat musiqi axını istəyənlər.</li>\n</ul>\n\n<h3>Spotify Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🚫 Reklamsız Dinləmə:</strong> Mahnılar və podcastlar arasında reklam fasilələri olmadan daha axıcı dinləmə təcrübəsi.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz mahnıları, albomları və playlistləri cihazınıza yükləyərək internet olmadan dinləmək imkanı.</li>\n  <li><strong>🎵 İstənilən Mahnını Seçmə:</strong> Mobil cihazda belə istədiyiniz mahnını seçib dərhal dinləmək və limitsiz keçid etmək imkanı.</li>\n  <li><strong>🔊 Yüksək Səs Keyfiyyəti:</strong> Daha təmiz, aydın və keyfiyyətli musiqi dinləmə təcrübəsi.</li>\n  <li><strong>📱 Bütün Cihazlarda İstifadə:</strong> Telefon, kompüter, planşet, smart TV və digər dəstəklənən cihazlarda rahat istifadə.</li>\n</ul>",
-    "rulesHtml": ""
-  },
   "surfshark": {
     "aboutHtml": "<h3>Surfshark VPN - Təhlükəsiz və Məxfi İnternet Təcrübəsi</h3>\n<p>Surfshark VPN, internetdə daha təhlükəsiz, məxfi və sərbəst şəkildə gəzmək istəyən istifadəçilər üçün hazırlanmış premium VPN xidmətidir. Standart internet bağlantısından fərqli olaraq, Surfshark məlumatlarınızı şifrələyir, IP ünvanınızı gizlədir və onlayn fəaliyyətlərinizi daha qorunan hala gətirir. Məxfilik, təhlükəsizlik və region məhdudiyyətlərini aşmaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Surfshark VPN, istifadəçilərə müxtəlif ölkələrdə yerləşən serverlərə qoşularaq internet bağlantısını daha təhlükəsiz və məxfi idarə etmək imkanı verir. Xidmət şəxsi məlumatların qorunmasına, ictimai Wi-Fi şəbəkələrində təhlükəsizliyə və bəzi region məhdudiyyətli kontentlərə girişə kömək edir. Telefon, kompüter, planşet və digər cihazlarda istifadə oluna bilir.</p>\n\n<h3>Surfshark VPN Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Məxfilik İstəyən İstifadəçilər:</strong> IP ünvanını gizlətmək və internet fəaliyyətlərini daha qorunan saxlamaq istəyənlər.</li>\n  <li><strong>Səyahət Edənlər:</strong> Xarici ölkələrdə təhlükəsiz internetdən istifadə etmək və bəzi yerli məhdudiyyətləri aşmaq istəyənlər.</li>\n  <li><strong>İctimai Wi-Fi İstifadəçiləri:</strong> Kafe, otel, hava limanı və digər açıq şəbəkələrdə məlumatlarını qorumaq istəyənlər.</li>\n  <li><strong>Remote İşçilər və Frilanserlər:</strong> Onlayn iş zamanı bağlantı təhlükəsizliyini artırmaq və şəxsi məlumatları qorumaq istəyənlər.</li>\n</ul>\n\n<h3>Surfshark VPN-in Üstünlükləri</h3>\n<ul>\n  <li><strong>🔐 Şifrələnmiş Bağlantı:</strong> İnternet trafikinizi qoruyaraq şəxsi məlumatların üçüncü şəxslər tərəfindən izlənməsini çətinləşdirir.</li>\n  <li><strong>🌍 Geniş Server Seçimi:</strong> Müxtəlif ölkələrdəki serverlərə qoşularaq daha sərbəst və çevik internet istifadəsi yaradır.</li>\n  <li><strong>🛡️ IP Ünvanının Gizlədilməsi:</strong> Real IP ünvanınızı gizlədərək onlayn məxfiliyinizi daha da gücləndirir.</li>\n  <li><strong>📶 İctimai Wi-Fi Təhlükəsizliyi:</strong> Açıq şəbəkələrdə bank, email və şəxsi hesab məlumatlarının qorunmasına kömək edir.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, kompüter, planşet və digər cihazlarda rahat istifadə imkanı təqdim edir.</li>\n</ul>",
     "rulesHtml": ""
   },
-  "tiktok_jeton": {
-    "aboutHtml": "<h3>TikTok Jeton - Sürətli Yükləmə</h3>\n      <p>TikTok Jeton, canlı yayımlarda dəstək olmaq və hədiyyə göndərmək üçün istifadə olunan rəsmi virtual valyutadır.</p>",
+  "hbomax": {
+    "aboutHtml": "<h3>HBO Max - Premium Film və Serial İzləmə Platforması</h3>\n<p>HBO Max, yüksək keyfiyyətli filmlər, seriallar, sənədli filmlər və eksklüziv kontentləri izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım platformasıdır. Standart izləmə təcrübəsindən fərqli olaraq, HBO Max istifadəçilərə məşhur HBO serialları, Warner Bros. filmləri, orijinal istehsallar və geniş əyləncə kitabxanası təqdim edir. Keyfiyyətli kontent, rahat izləmə və premium əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>HBO Max, istifadəçilərə dram, komediya, fantastika, kriminal, animasiya, sənədli film və ailəvi kontent daxil olmaqla müxtəlif janrlarda geniş seçim imkanı yaradır. Platformada HBO Original serialları, məşhur filmlər, yeni buraxılışlar və seçilmiş premium kontentlər izlənilə bilir. Telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunduğu üçün sevdiyiniz kontentə istənilən vaxt giriş mümkündür.</p>\n\n<h3>HBO Max Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Keyfiyyətli filmlər, reytinqli seriallar və premium kontentləri izləmək istəyən istifadəçilər.</li>\n  <li><strong>HBO Original İzləyiciləri:</strong> HBO istehsalı olan məşhur və eksklüziv seriallara maraq göstərənlər.</li>\n  <li><strong>Ailəvi İzləyicilər:</strong> Evdə ailə ilə birlikdə film gecələri, animasiyalar və müxtəlif janrlarda kontent izləmək istəyənlər.</li>\n  <li><strong>Sənədli Film Sevərlər:</strong> Real hekayələr, bioqrafiyalar, tarix, kriminal və maarifləndirici sənədli filmlərə baxmaq istəyənlər.</li>\n</ul>\n\n<h3>HBO Max-in Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Premium Film və Serial Kitabxanası:</strong> Məşhur filmlər, reytinqli seriallar, sənədli filmlər və ailəvi kontentlərə geniş giriş imkanı.</li>\n  <li><strong>⭐ HBO Original Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, xüsusi istehsallar və yüksək keyfiyyətli layihələr.</li>\n  <li><strong>🍿 Warner Bros. və Populyar Filmlər:</strong> Məşhur kinostudiyaların seçilmiş filmlərini rahat şəkildə izləmək imkanı.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda hesabınıza daxil olaraq izləməyə davam etmək.</li>\n  <li><strong>🔊 Yüksək Keyfiyyətli İzləmə:</strong> Keyfiyyətli görüntü və səs imkanları ilə daha komfortlu film və serial təcrübəsi.</li>\n</ul>",
     "rulesHtml": ""
   },
-  "google_ai": {
-    "aboutHtml": "<h3>Google AI Pro + VEO 3 - Premium Süni İntellekt və Video Yaratma Həlli</h3>\n<p>Google AI Pro + VEO 3, süni intellekt vasitəsilə mətn yazmaq, ideya yaratmaq, kontent hazırlamaq və peşəkar səviyyədə AI video generasiya etmək istəyən istifadəçilər üçün hazırlanmış premium rəqəmsal xidmətdir. Standart AI alətlərindən fərqli olaraq, Google AI Pro daha güclü Gemini imkanları, geniş yaradıcılıq funksiyaları və VEO 3 ilə yüksək keyfiyyətli video yaratma təcrübəsi təqdim edir. Kontent istehsalı, biznes, təhsil və kreativ layihələr üçün ideal süni intellekt həllidir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Google AI Pro, istifadəçilərə Gemini süni intellekt modeli vasitəsilə mətn yazmaq, araşdırma aparmaq, ideyalar hazırlamaq, təqdimatlar üçün kontent yaratmaq və gündəlik iş proseslərini daha sürətli idarə etmək imkanı verir. VEO 3 dəstəyi isə mətn təsvirləri əsasında realistik, kreativ və yüksək keyfiyyətli videolar yaratmağa kömək edir. Bu xidmət həm fərdi istifadəçilər, həm də peşəkar kontent yaradıcıları üçün vaxt qazandıran güclü AI platformasıdır.</p>\n\n<h3>Google AI Pro + VEO 3 Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Sosial şəbəkələr üçün kreativ ideyalar, mətnlər, video ssenarilər və AI videolar hazırlamaq istəyənlər.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Reklam ideyaları, post mətnləri, kampaniya konseptləri və video kontent hazırlayan mütəxəssislər.</li>\n  <li><strong>Biznes Sahibləri və Sahibkarlar:</strong> Məhsul və xidmətlərini daha peşəkar təqdim etmək üçün süni intellektdən istifadə etmək istəyənlər.</li>\n  <li><strong>Tələbələr və Peşəkarlar:</strong> Araşdırma, yazı, təqdimat, planlama və gündəlik işlərdə AI dəstəyinə ehtiyac duyan istifadəçilər.</li>\n</ul>\n\n<h3>Google AI Pro + VEO 3-ün Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü Gemini AI İmkanları:</strong> Mətn yazmaq, suallara cavab almaq, ideya yaratmaq, analiz etmək və iş proseslərini sürətləndirmək üçün inkişaf etmiş süni intellekt dəstəyi.</li>\n  <li><strong>🎬 VEO 3 ilə AI Video Yaratma:</strong> Mətn təsvirləri əsasında kreativ, realistik və peşəkar görünüşlü videolar hazırlamaq imkanı.</li>\n  <li><strong>✨ Kontent İstehsalında Vaxta Qənaət:</strong> Sosial media postları, reklam ssenariləri, video ideyaları və təqdimat mətnlərini daha sürətli hazırlamaq.</li>\n  <li><strong>📚 Araşdırma və Planlama Dəstəyi:</strong> Mövzular üzrə məlumat toplamaq, struktur qurmaq, mətnləri təkmilləşdirmək və layihələri daha rahat planlamaq.</li>\n  <li><strong>🚀 Kreativ və Peşəkar Nəticələr:</strong> AI dəstəyi ilə daha keyfiyyətli vizuallar, ideyalar, mətnlər və video kontent hazırlayaraq rəqəmsal işlərdə fərqlənmək.</li>\n</ul>",
+  "tiktok_jeton": {
+    "aboutHtml": "<h3>TikTok Jeton - Sürətli Yükləmə</h3>\n      <p>TikTok Jeton, canlı yayımlarda dəstək olmaq və hədiyyə göndərmək üçün istifadə olunan rəsmi virtual valyutadır.</p>",
     "rulesHtml": ""
   },
   "google_ai_ultra": {
@@ -3391,8 +3385,8 @@ const ADMIN_CONTENT = {
     "aboutHtml": "<h3>Claude AI Pro - Premium Süni İntellekt Köməkçisi</h3>\n<p>Claude AI Pro, mətn yazmaq, ideyalar yaratmaq, sənədləri analiz etmək, kodla işləmək və gündəlik tapşırıqları daha sürətli yerinə yetirmək istəyən istifadəçilər üçün hazırlanmış premium süni intellekt xidmətidir. Standart AI istifadəsindən fərqli olaraq, Pro abunəliyi daha geniş imkanlar, daha məhsuldar iş axını və peşəkar səviyyədə AI dəstəyi təqdim edir. Təhsil, biznes, kontent istehsalı və şəxsi məhsuldarlıq üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Claude AI Pro, istifadəçilərə suallara cavab almaq, mətnlər hazırlamaq, uzun sənədləri xülasələndirmək, ideyaları inkişaf etdirmək, kod yazmaq və müxtəlif mövzular üzrə analiz aparmaq imkanı verir. Platforma həm sadə gündəlik tapşırıqlar, həm də daha mürəkkəb peşəkar işlər üçün rahat AI köməkçisi kimi istifadə oluna bilər. Pro imkanları sayəsində istifadəçilər daha sürətli, daha çevik və daha effektiv süni intellekt təcrübəsi əldə edirlər.</p>\n\n<h3>Claude AI Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Kopirayterlər:</strong> Sosial media mətnləri, məqalələr, reklam yazıları, video ssenariləri və kreativ ideyalar hazırlayanlar.</li>\n  <li><strong>Tələbələr və Araşdırma Aparanlar:</strong> Mövzuları izah etmək, uzun mətnləri xülasələndirmək, esse və təqdimat strukturu qurmaq istəyənlər.</li>\n  <li><strong>Biznes Sahibləri və Peşəkarlar:</strong> Email, plan, hesabat, təqdimat və strategiya mətnlərini daha sürətli hazırlamaq istəyənlər.</li>\n  <li><strong>Proqramçılar və Texniki İstifadəçilər:</strong> Kod yazmaq, səhvləri izah etmək, texniki mətnləri analiz etmək və layihə ideyalarını inkişaf etdirmək istəyənlər.</li>\n</ul>\n\n<h3>Claude AI Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü AI Yazı Köməkçisi:</strong> Mətn hazırlamaq, redaktə etmək, ideya yaratmaq və mürəkkəb mövzuları sadə formada izah etmək imkanı.</li>\n  <li><strong>📄 Sənəd və Mətn Analizi:</strong> Uzun mətnləri oxumaq, xülasə etmək, əsas fikirləri çıxarmaq və məlumatları daha anlaşıqlı hala gətirmək.</li>\n  <li><strong>⚡ Məhsuldarlığın Artırılması:</strong> Gündəlik yazı, planlama, araşdırma və iş tapşırıqlarını daha qısa zamanda yerinə yetirməyə kömək edir.</li>\n  <li><strong>💻 Kod və Texniki Dəstək:</strong> Proqramlaşdırma, səhv izahı, kod nümunələri və texniki layihələr üçün faydalı AI dəstəyi.</li>\n  <li><strong>💼 Biznes və Təhsil Üçün Uyğun:</strong> Hesabatlar, təqdimatlar, dərs materialları, strategiya mətnləri və peşəkar yazışmalar üçün rahat istifadə.</li>\n</ul>",
     "rulesHtml": ""
   },
-  "prime": {
-    "aboutHtml": "<h3>Prime Video - Premium Film və Serial İzləmə Platforması</h3>\n<p>Prime Video, film, serial, sənədli film və eksklüziv kontentləri yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım platformasıdır. Standart televiziya və təsadüfi video izləmə təcrübəsindən fərqli olaraq, Prime Video istifadəçilərə geniş kontent kitabxanası, orijinal istehsallar və müxtəlif cihazlardan rahat izləmə imkanı təqdim edir. Əyləncəni daha komfortlu, keyfiyyətli və əlçatan etmək istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Prime Video, istifadəçilərə müxtəlif janrlarda filmlər, seriallar, animasiyalar, sənədli filmlər və Amazon Originals kontentlərini izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda istifadə oluna bilir. İstifadəçilər sevdikləri kontenti istədikləri vaxt izləyə, bəzi məzmunları offline baxış üçün yükləyə və ailəvi əyləncə təcrübəsindən rahat şəkildə yararlana bilərlər.</p>\n\n<h3>Prime Video Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Geniş film və serial seçimini yüksək keyfiyyətdə izləmək istəyən istifadəçilər.</li>\n  <li><strong>Ailəvi İzləyicilər:</strong> Evdə ailə ilə birlikdə film gecələri, animasiyalar və müxtəlif janrlarda kontent izləmək istəyənlər.</li>\n  <li><strong>Səyahət Edənlər:</strong> Sevdikləri filmləri və serialları əvvəlcədən yükləyib internet olmayan yerlərdə izləmək istəyənlər.</li>\n  <li><strong>Eksklüziv Kontent İzləyənlər:</strong> Amazon Originals və platformaya məxsus xüsusi serial və filmləri izləmək istəyənlər.</li>\n</ul>\n\n<h3>Prime Video-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər və animasiyalara rahat giriş imkanı.</li>\n  <li><strong>⭐ Amazon Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və xüsusi istehsalları izləmək imkanı.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz kontentləri cihazınıza yükləyərək internet bağlantısı olmadan izləmək.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda rahat baxış təcrübəsi.</li>\n  <li><strong>🔊 Yüksək Keyfiyyətli İzləmə:</strong> Keyfiyyətli görüntü və səs imkanları ilə daha komfortlu film və serial təcrübəsi.</li>\n</ul>sıdır.</p>",
+  "zoom": {
+    "aboutHtml": "<h3>Zoom Pro - Peşəkar Onlayn Görüş və Video Konfrans Həlli</h3>\n<p>Zoom Pro, iş görüşləri, dərslər, vebinarlar və komanda toplantıları üçün hazırlanmış premium video konfrans platformasıdır. Standart versiyadan fərqli olaraq, Pro abunəliyi daha uzun görüş müddəti, daha geniş idarəetmə imkanları və peşəkar onlayn ünsiyyət üçün əlavə funksiyalar təqdim edir. Uzaqdan işləyən komandalar, müəllimlər, biznes sahibləri və onlayn xidmət göstərən şəxslər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Zoom Pro, istifadəçilərə yüksək keyfiyyətli video və audio ilə onlayn görüşlər keçirmək, ekran paylaşmaq, görüşləri qeyd etmək və iştirakçıları rahat idarə etmək imkanı verir. Platforma kompüter, telefon və planşet üzərindən istifadə oluna bilir və müxtəlif iş proseslərinə asanlıqla uyğunlaşır. Pro abunəliyi xüsusilə uzunmüddətli görüşlər, peşəkar təqdimatlar və müntəzəm onlayn toplantılar üçün daha rahat təcrübə yaradır.</p>\n\n<h3>Zoom Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Biznes Sahibləri və Komandalar:</strong> İş görüşləri, layihə müzakirələri və komanda toplantılarını onlayn şəkildə idarə edənlər.</li>\n  <li><strong>Müəllimlər və Təlimçilər:</strong> Onlayn dərslər, kurslar, təlimlər və seminarlar keçirən şəxslər.</li>\n  <li><strong>Frilanserlər və Konsultantlar:</strong> Müştərilərlə video zənglər, təqdimatlar və məsləhət görüşləri aparanlar.</li>\n  <li><strong>SMM və Rəqəmsal Xidmət Göstərənlər:</strong> Müştəri görüşləri, kontent planlaması və komanda koordinasiyası üçün stabil platformaya ehtiyac duyanlar.</li>\n</ul>\n\n<h3>Zoom Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>⏱️ Uzunmüddətli Görüşlər:</strong> Standart versiyadakı vaxt məhdudiyyətlərini azaltmaqla daha rahat və fasiləsiz toplantılar keçirmək imkanı.</li>\n  <li><strong>🎥 Yüksək Keyfiyyətli Video və Audio:</strong> Peşəkar görünüşlü görüşlər üçün stabil bağlantı, aydın səs və keyfiyyətli görüntü təcrübəsi.</li>\n  <li><strong>🖥️ Ekran Paylaşımı və Təqdimatlar:</strong> Sənədləri, slaydları, layihələri və tətbiqləri iştirakçılarla canlı şəkildə paylaşmaq imkanı.</li>\n  <li><strong>☁️ Görüş Qeydləri:</strong> Vacib görüşləri qeyd edərək daha sonra izləmək, paylaşmaq və arxivləmək üçün rahat imkanlar.</li>\n  <li><strong>🔐 Təhlükəsiz Görüş İdarəetməsi:</strong> Şifrə, gözləmə otağı, iştirakçı icazələri və idarəetmə alətləri ilə daha təhlükəsiz onlayn görüşlər.</li>\n</ul>",
     "rulesHtml": ""
   },
   "duolingo": {
