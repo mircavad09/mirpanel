@@ -3269,7 +3269,7 @@ const SITE_SECTIONS = {
       }
     ],
     "seoTitle": "Haqqımızda | MirPanel",
-    "seoDescription": "MirPanel-in rəqəmsal məhsulları, sifariş prosesi, istifadə qaydaları və dəstək prinsipləri haqqında məlumat.",
+    "seoDescription": "# MirPanel – Rəqəmsal məhsul və onlayn xidmətlər üçün etibarlı seçim\n\n**MirPanel** 2024-cü ildən etibarən Azərbaycanda rəqəmsal məhsullar və onlayn xidmətlər təqdim edən platformadır. Əsas məqsədimiz istifadəçilərin ehtiyaclarına uyğun, keyfiyyətli və əlçatan məhsulları sürətli şəkildə təqdim etməkdir.\n\nPlatformamızda ",
     "homeButtonText": "Ana səhifə",
     "homeButtonUrl": "",
     "productsButtonText": "Məhsullara bax",
