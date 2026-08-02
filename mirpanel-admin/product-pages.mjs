@@ -546,8 +546,8 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   const fallbackMetadata = infoPageMetadata[page.key];
   const metadata = page.key === "sertler" ? {
-    title: cleanText(page.section.seoTitle) || fallbackMetadata.title,
-    description: cleanText(page.section.seoDescription) || fallbackMetadata.description,
+    title: plainMetadataText(page.section.seoTitle) || fallbackMetadata.title,
+    description: plainMetadataText(page.section.seoDescription) || fallbackMetadata.description,
     h1: cleanText(page.section.title) || fallbackMetadata.h1
   } : fallbackMetadata;
   const canonical = `${SITE_URL}/${page.slug}`;
@@ -913,8 +913,8 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
 function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
   const section = page.section || {};
   const fallback = infoPageMetadata[page.key];
-  const title = cleanText(section.seoTitle) || fallback.title;
-  const description = cleanText(section.seoDescription) || fallback.description;
+  const title = plainMetadataText(section.seoTitle) || fallback.title;
+  const description = plainMetadataText(section.seoDescription) || fallback.description;
   const h1 = cleanText(section.title) || fallback.h1;
   const buttonText = cleanText(section.buttonText);
   const buttonUrl = pageLinkUrl(section.buttonUrl);
@@ -926,8 +926,8 @@ function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
     .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(title)}</title>`)
     .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${escapeAttribute(description)}">`)
     .replace(/<meta name="robots" content="index, follow">/, `<meta name="robots" content="${section.index === false ? "noindex, follow" : "index, follow"}">`)
-    .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttribute(section.ogTitle || title)}">`)
-    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttribute(section.ogDescription || description)}">`)
+    .replace(/<meta property="og:title" content="[^"]*">/, `<meta property="og:title" content="${escapeAttribute(plainMetadataText(section.ogTitle) || title)}">`)
+    .replace(/<meta property="og:description" content="[^"]*">/, `<meta property="og:description" content="${escapeAttribute(plainMetadataText(section.ogDescription) || description)}">`)
     .replace(/<meta property="og:image" content="[^"]*">/, `<meta property="og:image" content="${escapeAttribute(absoluteUrl(section.ogImage || cms.seo?.home?.ogImage || "assets/logo.png"))}">`)
     .replace(/(<article class="info-page-card(?: info-page-card--(?:about|terms))?">[\s\S]*?<h1>)[\s\S]*?(<\/h1>)/, `$1${escapeHtml(h1)}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms, ui)}</footer>`);
@@ -1142,6 +1142,18 @@ function imageMimeType(value) {
 
 function cleanText(value) {
   return String(value ?? "").trim();
+}
+
+function plainMetadataText(value) {
+  return fixMojibake(value)
+    .replace(/!\[([^\]]*)\]\([^)]*\)/g, "$1")
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, "$1")
+    .replace(/^\s{0,3}#{1,6}\s+/gm, "")
+    .replace(/^\s*[-*+]\s+/gm, "")
+    .replace(/(\*\*|__|\*|_|~~|`)/g, "")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function escapeHtml(value) {

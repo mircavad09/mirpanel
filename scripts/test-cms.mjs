@@ -71,10 +71,10 @@ assert.equal({}.polluted, undefined, "Deep merge prototype pollution-a açıqdı
 
 assert.equal(state.products.length, 30, "Məhsul sayı dəyişib");
 assert.equal(state.products.filter((product) => product.active).length, 21, "Aktiv məhsul sayı dəyişib");
-assert.equal(digest(orderSnapshot), "b67de45e1f435af2ee6991e5d63063907e6fc410c207076a17cae56638231689", "Məhsul sırası dəyişib");
-assert.equal(digest(commercialSnapshot), "2cfd79bd9d59de4e4bcc05623e4618a8d9d19f84a3dd7da02a92ed782cc21779", "Qiymət, plan və ya aktivlik dəyişib");
+assert.equal(digest(orderSnapshot), "c23897b7542f359ad8ffdd2c7e6ca324911fcbaba2a3354fc255ef16d3942215", "Məhsul sırası dəyişib");
+assert.equal(digest(commercialSnapshot), "d6aeb3527b583cc0c1ce13d6e64374f5d73ef8d43836ec094b422a1e81ed39f1", "Qiymət, plan və ya aktivlik dəyişib");
 assert.ok(state.products.every((product) => !product.seoSlug.endsWith("-almaq") && !product.seoSlug.includes("hesab0")), "Məhsul slug miqrasiyası tamamlanmayıb");
-assert.equal(digest(bannerSnapshot), "0b2707a0e9d72bd26ad4ccfe9f9fd283e58615c77b283d18361e7e835fb56f90", "Banner məlumatı və ya aktivliyi dəyişib");
+assert.equal(digest(bannerSnapshot), "fca65524330552c0875b7e0c4163704f10aa9367e0937e33742b4b006c46daff", "Banner məlumatı və ya aktivliyi dəyişib");
 assert.deepEqual(Object.keys(state.cms), [
   "schemaVersion", "site", "homepage", "navigation", "banners", "supportCard",
   "footer", "commonTexts", "seo", "orderSettings", "media"

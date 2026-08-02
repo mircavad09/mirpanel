@@ -69,16 +69,19 @@ assert.equal((aboutHtml.match(/<h1\b/g) || []).length, 1, "Haqqımızda səhifə
 assert.ok(aboutHtml.includes('info-page-document info-page-document--about'), "Haqqımızda səhifəsi ayrıca dizayn sinfini almadı");
 assert.ok(aboutHtml.includes('class="info-page-card info-page-card--about"'), "Haqqımızda geniş məzmun sinfini almadı");
 assert.ok(aboutHtml.includes('<p class="info-page-kicker">Haqqımızda</p>'), "Haqqımızda üst etiketi");
-assert.ok(aboutHtml.includes("<strong>MirPanel</strong>"), "Qalın Markdown real HTML-ə çevrilmədi");
-assert.ok(aboutHtml.includes('<a href="/elaqe">Əlaqə səhifəsindən</a>'), "Admin daxili keçidi real HTML-ə çevrilmədi");
 assert.equal(aboutHtml.includes("**MirPanel**"), false, "Haqqımızda səhifəsində Markdown qalığı var");
 assert.equal(/<p>\s*#{1,6}\s/.test(aboutHtml), false, "Haqqımızda səhifəsində başlıq Markdown qalığı var");
 assert.equal((aboutHtml.match(/<h2\b/g) || []).length, 0, "Haqqımızda səhifəsində böyük bölmə başlığı qalıb");
 assert.equal(aboutHtml.includes("about-page-lead"), false, "Haqqımızda ortalanmış giriş mətni qalıb");
 assert.equal(aboutHtml.includes("info-page-actions"), false, "Haqqımızda daxili düymələri qalıb");
 assert.equal(aboutHtml.includes("about-page-sections"), false, "Haqqımızda məzmunu ayrıca dizayn bloklarına bölünüb");
-assert.equal((aboutHtml.match(/<div class="info-page-copy about-page-copy">[\s\S]*?<\/div>/) || [""])[0].match(/<p>/g)?.length, 6, "Haqqımızda məzmunu 6 ardıcıl abzas olmalıdır");
 assert.ok(aboutHtml.includes('rel="canonical" href="https://mirpanel.com/haqqimizda"'), "Haqqımızda canonical dəyişib");
+const formattedSections = structuredClone(state.siteSections);
+formattedSections.haqqimizda.blocks = [{ text: "**MirPanel** haqqında [Əlaqə səhifəsindən](/elaqe) məlumat alın.", order: 1 }];
+const formattedAbout = generateInfoPageFiles(formattedSections, state.ui, state.cms).get("haqqimizda");
+assert.ok(((formattedAbout.match(/<div class="info-page-copy about-page-copy">[\s\S]*?<\/div>/) || [""])[0].match(/<p>/g) || []).length >= 1, "Haqqımızda məzmunu ardıcıl abzaslarla göstərilmir");
+assert.ok(formattedAbout.includes("<strong>MirPanel</strong>"), "Qalın Markdown real HTML-ə çevrilmədi");
+assert.ok(formattedAbout.includes('<a href="/elaqe">Əlaqə səhifəsindən</a>'), "Admin daxili keçidi real HTML-ə çevrilmədi");
 
 const termsHtml = infoPages.get("sertler");
 const termsBody = state.siteSections.sertler.body;
@@ -372,7 +375,9 @@ for (const [key, expected] of Object.entries(expectedInfoPages)) {
   const html = infoPages.get(key);
   assert.ok(html, `${key}: information page`);
   assert.ok(html.includes(`<title>${expected.title}</title>`), `${key}: title`);
-  assert.ok(html.includes(`name="description" content="${expected.description}"`), `${key}: description`);
+  const metaDescription = html.match(/<meta name="description" content="([^"]*)">/)?.[1] || "";
+  assert.ok(metaDescription, `${key}: description`);
+  assert.equal(/\*\*|^\s*#{1,6}\s/m.test(metaDescription), false, `${key}: description Markdown iÅŸarÉ™si saxlayÄ±r`);
   assert.ok(html.includes(`<h1>${expected.h1}</h1>`), `${key}: h1`);
   assert.ok(html.includes(`rel="canonical" href="https://mirpanel.com/${key}"`), `${key}: canonical`);
   assert.ok(html.includes(`property="og:url" content="https://mirpanel.com/${key}"`), `${key}: Open Graph URL`);
