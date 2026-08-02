@@ -15,13 +15,13 @@
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="CapCut Pro">
+  <meta property="og:image:alt" content="CapCut Pro almaq Azərbaycanda | Mirpanel">
   <meta property="og:url" content="https://mirpanel.com/mehsul/capcut-pro">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="CapCut Pro">
   <meta name="twitter:description" content="Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.">
   <meta name="twitter:image" content="https://mirpanel.com/assets/capcut.png?social=tdz1ws">
-  <meta name="twitter:image:alt" content="CapCut Pro">
+  <meta name="twitter:image:alt" content="CapCut Pro almaq Azərbaycanda | Mirpanel">
   <meta name="theme-color" content="#070707">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -56,7 +56,7 @@
         <div class="product-page-card-grid">
           <div class="product-page-media">
             <span class="product-page-availability-badge">Mövcuddur</span>
-            <img id="pp-main-img" src="/assets/capcut.png" alt="CapCut Pro" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img id="pp-main-img" src="/assets/capcut.png" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">

@@ -154,7 +154,7 @@ const DATA = {
       "title": "CapCut Pro",
       "variant": "Pro",
       "badge": "Video",
-      "imageAlt": "CapCut Pro",
+      "imageAlt": "CapCut Pro almaq Azərbaycanda | Mirpanel",
       "desc": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
       "note": "",
       "longDescription": "CapCut Pro video montaj edən istifadəçilər üçün premium effektlər, şablonlar və əlavə funksiyalar təqdim edir. Mirpanel vasitəsilə CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə həyata keçirilir.",
@@ -2955,7 +2955,7 @@ const DATA = {
    MƏHSUL HAQQINDA BÖLMƏSİ (INFO_TEXTS)
    ========================= */
 const CMS_CONTENT = {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "site": {
     "brandName": "Mirpanel",
     "logo": "assets/logo.png",
@@ -3034,7 +3034,9 @@ const CMS_CONTENT = {
       "order": 1,
       "enabled": true,
       "icon": "home",
-      "newTab": false
+      "newTab": false,
+      "showHeader": true,
+      "showFooter": false
     },
     {
       "id": "products",
@@ -3043,7 +3045,9 @@ const CMS_CONTENT = {
       "order": 2,
       "enabled": true,
       "icon": "products",
-      "newTab": false
+      "newTab": false,
+      "showHeader": true,
+      "showFooter": false
     },
     {
       "id": "about",
@@ -3052,7 +3056,9 @@ const CMS_CONTENT = {
       "order": 3,
       "enabled": true,
       "icon": "info",
-      "newTab": false
+      "newTab": false,
+      "showHeader": true,
+      "showFooter": true
     },
     {
       "id": "terms",
@@ -3061,7 +3067,9 @@ const CMS_CONTENT = {
       "order": 4,
       "enabled": true,
       "icon": "terms",
-      "newTab": false
+      "newTab": false,
+      "showHeader": true,
+      "showFooter": true
     },
     {
       "id": "contact",
@@ -3070,7 +3078,9 @@ const CMS_CONTENT = {
       "order": 5,
       "enabled": true,
       "icon": "contact",
-      "newTab": false
+      "newTab": false,
+      "showHeader": true,
+      "showFooter": true
     }
   ],
   "banners": [],
@@ -3095,7 +3105,7 @@ const CMS_CONTENT = {
         "id": "about",
         "label": "Haqqımızda",
         "url": "/haqqimizda",
-        "order": 1,
+        "order": 3,
         "enabled": true,
         "icon": "info",
         "newTab": false
@@ -3104,7 +3114,7 @@ const CMS_CONTENT = {
         "id": "terms",
         "label": "Şərtlər",
         "url": "/sertler",
-        "order": 2,
+        "order": 4,
         "enabled": true,
         "icon": "terms",
         "newTab": false
@@ -3113,7 +3123,7 @@ const CMS_CONTENT = {
         "id": "contact",
         "label": "Əlaqə",
         "url": "/elaqe",
-        "order": 3,
+        "order": 5,
         "enabled": true,
         "icon": "contact",
         "newTab": false
@@ -3162,58 +3172,82 @@ const CMS_CONTENT = {
   "media": [
     {
       "path": "assets/slider1.png",
+      "name": "",
       "alt": "Spotify Premium banneri",
       "size": 8555028,
       "type": "image/png",
+      "width": 3200,
+      "height": 1342,
       "uploadedAt": ""
     },
     {
       "path": "assets/slider2.png",
+      "name": "",
       "alt": "Netflix banneri",
       "size": 9355020,
       "type": "image/png",
+      "width": 3202,
+      "height": 1312,
       "uploadedAt": ""
     },
     {
       "path": "assets/slider3.png",
+      "name": "",
       "alt": "Canva Premium banneri",
       "size": 8785009,
       "type": "image/png",
+      "width": 3200,
+      "height": 1340,
       "uploadedAt": ""
     },
     {
       "path": "assets/slider4.png",
+      "name": "",
       "alt": "YouTube Premium banneri",
       "size": 5252146,
       "type": "image/png",
+      "width": 3200,
+      "height": 1340,
       "uploadedAt": ""
     },
     {
       "path": "assets/slider5.png",
+      "name": "",
       "alt": "CapCut Pro banneri",
       "size": 8441107,
       "type": "image/png",
+      "width": 3200,
+      "height": 1340,
       "uploadedAt": ""
     },
     {
       "path": "assets/slider6.png",
+      "name": "",
       "alt": "TikTok Jeton banneri",
       "size": 8957752,
       "type": "image/png",
+      "width": 3200,
+      "height": 1340,
       "uploadedAt": ""
     },
     {
       "path": "assets/support.png",
+      "name": "",
       "alt": "Canlı Dəstək",
       "size": 5547663,
       "type": "image/png",
+      "width": 3196,
+      "height": 1344,
       "uploadedAt": ""
     },
     {
       "path": "/uploads/products/media-1785511117501-4809285c.jpg?v=1785511117501",
+      "name": "",
       "alt": "",
       "size": 161840,
       "type": "image/jpeg",
+      "width": 1376,
+      "height": 768,
       "uploadedAt": "2026-07-31T15:18:37.501Z"
     }
   ]
