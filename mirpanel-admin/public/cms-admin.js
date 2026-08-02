@@ -1,54 +1,18 @@
 (function () {
-  const viewLabels = [
-    ["dashboard", "İdarə paneli"],
-    ["products", "Məhsullar"],
-    ["categories", "Kateqoriyalar"],
-    ["homepage", "Ana səhifə"],
-    ["navigation", "Naviqasiya və header"],
-    ["banners", "Bannerlər"],
-    ["about", "Haqqımızda"],
-    ["contact", "Əlaqə"],
-    ["terms", "Şərtlər"],
-    ["footer", "Footer"],
-    ["texts", "Ümumi mətnlər"],
-    ["seo", "SEO və sitemap"],
-    ["media", "Media/şəkillər"],
-    ["orders", "Sifariş parametrləri"],
-    ["publish", "Önizləmə və yayımlama"],
-    ["history", "Dəyişiklik tarixçəsi"]
+  const viewGroups = [
+    ["Əsas idarəetmə", [["dashboard", "İdarə paneli"], ["products", "Məhsullar"], ["categories", "Kateqoriyalar"]]],
+    ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Bannerlər"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
+    ["Parametrlər", [["orders", "Sifariş parametrləri"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
   ];
+  const viewLabels = viewGroups.flatMap(([, items]) => items);
   const safeIcons = ["home", "products", "search", "info", "contact", "terms", "whatsapp", "sparkles", "game", "ai", "link", "image", "shield"];
+  let baselineData = null;
+  let baselineSha = "";
 
   function el(id) { return document.getElementById(id); }
   function esc(value) {
     return String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;")
       .replaceAll(">", "&gt;").replaceAll('"', "&quot;");
-  }
-  function repairText(value) {
-    const replacements = {
-      "Ã‰â„¢": "ə", "Ã†Â": "Ə", "Ã„Â±": "ı", "Ã„Â°": "İ",
-      "ÃƒÂ¶": "ö", "Ãƒâ€“": "Ö", "ÃƒÂ¼": "ü", "ÃƒÅ“": "Ü",
-      "Ã…Å¸": "ş", "Ã…Å¾": "Ş", "ÃƒÂ§": "ç", "Ãƒâ€¡": "Ç",
-      "Ã„Å¸": "ğ", "Ã„Å¾": "Ğ", "Ã¢â€šÂ¼": "₼",
-      "É™": "ə", "Æ": "Ə", "Ä±": "ı", "ÅŸ": "ş", "Åž": "Ş",
-      "Ã¶": "ö", "Ã¼": "ü", "Ã§": "ç", "ÄŸ": "ğ"
-    };
-    return Object.entries(replacements).reduce(
-      (text, [broken, correct]) => text.split(broken).join(correct),
-      String(value ?? "")
-    );
-  }
-  function repairAdminDom(root = document.body) {
-    const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
-    for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-      const repaired = repairText(node.nodeValue);
-      if (repaired !== node.nodeValue) node.nodeValue = repaired;
-    }
-    root.querySelectorAll?.("[placeholder], [title], [aria-label]").forEach((element) => {
-      ["placeholder", "title", "aria-label"].forEach((attribute) => {
-        if (element.hasAttribute(attribute)) element.setAttribute(attribute, repairText(element.getAttribute(attribute)));
-      });
-    });
   }
   function cms() { return state.data?.cms || null; }
   function value(path, fallback = "") {
@@ -62,7 +26,15 @@
       target = target[key];
     }
     target[parts.at(-1)] = next;
+    if (path.startsWith("navigation.")) syncFooterProjection();
     markDirty();
+  }
+  function syncFooterProjection() {
+    if (!cms()) return;
+    cms().footer ||= {};
+    cms().footer.links = (cms().navigation || [])
+      .filter((item) => item.showFooter === true)
+      .map(({ showHeader, showFooter, ...item }) => ({ ...item }));
   }
   function field(label, path, options = {}) {
     const type = options.type || "text";
@@ -90,19 +62,31 @@
   }
   function installNavigation() {
     const nav = document.querySelector(".nav");
-    nav.innerHTML = viewLabels.map(([id, label], index) =>
-      `<button class="navBtn${index === 0 ? " active" : ""}" type="button" data-view="${id}">${label}</button>`
-    ).join("");
+    nav.innerHTML = viewGroups.map(([group, items], groupIndex) => `<div class="navGroup">
+      <span class="navGroupTitle">${esc(group)}</span>
+      ${items.map(([id, label], index) => `<button class="navBtn${groupIndex === 0 && index === 0 ? " active" : ""}" type="button" data-view="${id}">${esc(label)}</button>`).join("")}
+    </div>`).join("");
     nav.addEventListener("click", (event) => {
       const button = event.target.closest("[data-view]");
-      if (button) showView(button.dataset.view);
+      if (button) activateView(button.dataset.view);
     });
+  }
+  function activateView(view) {
+    document.querySelectorAll(".workspace, .singlePanel, .cmsWorkspace").forEach((section) => section.classList.add("hidden"));
+    const target = el(`${view}View`);
+    if (target) target.classList.remove("hidden");
+    document.querySelectorAll(".navBtn[data-view]").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
+    el("crumb").textContent = viewLabels.find(([id]) => id === view)?.[1] || "İdarə paneli";
+    if (view === "history") loadHistory();
+    if (view === "dashboard") renderDashboard();
   }
   function createStaticViews() {
     createView("dashboard", panel("İdarə paneli", "Sayt məzmununun ümumi vəziyyəti", '<div class="cmsCards" id="cmsDashboardCards"></div>'));
-    createView("homepage", panel("Ana səhifə", "Mövcud dizaynı dəyişmədən ana səhifə mətnlərini idarə et", `<div class="formGrid">
+    createView("homepage", panel("Ana səhifə", "Mövcud dizaynı dəyişmədən ana səhifə mətnlərini idarə et", `<div class="sectionHead"><h3>Ümumi sayt məlumatları</h3></div><div class="formGrid">
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}
       ${field("Brend alt yazısı", "site.brandSubtitle", { full: true })}
+      ${field("Copyright ili", "footer.year", { type: "number", min: 2000, max: 2200 })}
+      ${field("Müəllif hüquqları mətni", "footer.copyrightText", { full: true })}
       ${field("Elan aktivdir", "homepage.announcement.enabled", { type: "checkbox" })}
       ${field("Elan mətni", "homepage.announcement.text", { full: true })}
       ${field("Əsas başlıq", "homepage.hero.title", { full: true })}
@@ -129,22 +113,15 @@
       ${field("Şərtlər qısa kart başlığı", "homepage.infoCards.terms.title")}
       ${field("Şərtlər qısa kart keçidi", "homepage.infoCards.terms.linkText")}
       ${field("Şərtlər qısa kart mətni", "homepage.infoCards.terms.text", { type: "textarea", full: true })}
-    </div><div class="sectionHead"><div><h3>Bölmələrin sırası və görünməsi</h3></div></div><div id="homepageSections" class="cmsList"></div>`));
-    createView("navigation", panel("Naviqasiya və header", "Daxili keçidlər eyni tabda açılır; yalnız təhlükəsiz ikonlar istifadə olunur", `<div class="formGrid">
+    </div><div class="sectionHead"><div><h3>Bölmələrin sırası və görünməsi</h3></div></div><div id="homepageSections" class="cmsList"></div><details class="adminAccordion"><summary>Ümumi sayt mətnləri</summary><p class="formHint">Düymələrdə, axtarışda və modal pəncərələrdə görünən ortaq mətnlər.</p><div class="formGrid" id="commonTextFields"></div></details>`));
+    createView("navigation", panel("Naviqasiya və keçidlər", "Keçidi bir dəfə yaradın, header və footer görünüşünü checkbox-larla seçin", `<div class="formGrid">
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}
-    </div><div class="sectionHead"><h3>Naviqasiya elementləri</h3><button class="btn" type="button" data-add-list="navigation">Keçid əlavə et</button></div><div id="navigationList" class="cmsList"></div>`));
-    createView("banners", panel("Bannerlər", "Hər məhsulun banneri həmin məhsulun vahid məlumatından avtomatik yaranır", '<div class="sectionHead"><h3>Məhsul bannerləri</h3></div><label class="bannerProductPicker">Məhsulu seç<select id="bannerProductSelect"></select></label><div id="bannerProductEditor"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
+      ${field("Footer mətni", "footer.shortText", { type: "textarea", full: true })}
+    </div><div class="sectionHead"><h3>Sayt keçidləri</h3><button class="btn" type="button" data-add-list="navigation">Keçid əlavə et</button></div><div id="navigationList" class="cmsList"></div>`));
+    createView("banners", panel("Bannerlər", "Məhsul bannerlərini sadə siyahıdan seçib redaktə edin", '<div class="sectionHead"><h3>Bütün məhsul bannerləri</h3></div><div id="bannerProductList" class="bannerManageList"></div><label class="bannerProductPicker hidden">Məhsulu seç<select id="bannerProductSelect"></select></label><div id="bannerProductEditor"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
     createView("about", pageForm("haqqimizda", "Haqqımızda"));
     createView("contact", contactForm());
     createView("terms", termsForm());
-    createView("footer", panel("Footer", "Bütün səhifələr üçün vahid footer məlumatları", `<div class="formGrid">
-      ${field("Müəllif hüquqları mətni", "footer.copyrightText", { full: true })}
-      ${field("İl", "footer.year", { type: "number", min: 2000, max: 2200 })}
-      ${field("Brend adı", "footer.brandName")}${field("Telefon", "footer.phone")}
-      ${field("WhatsApp nömrəsi", "footer.whatsapp")}
-      ${field("Əlavə qısa mətn", "footer.shortText", { type: "textarea", full: true })}
-    </div><div class="sectionHead"><h3>Footer keçidləri</h3><button class="btn" type="button" data-add-list="footerLinks">Keçid əlavə et</button></div><div id="footerLinkList" class="cmsList"></div>`));
-    createView("texts", panel("Ümumi mətnlər", "Boş sahələr saytda təhlükəsiz standart dəyərə qayıdır", '<div class="formGrid" id="commonTextFields"></div>'));
     createView("seo", panel("SEO və sitemap", "Canonical, Open Graph və indekslənmə parametrləri", `<div class="warningBox">“Noindex” seçimi səhifənin axtarış nəticələrindən çıxmasına səbəb ola bilər.</div><div class="formGrid">
       ${field("Ana səhifə SEO title", "seo.home.title")}
       ${field("Ana səhifə meta description", "seo.home.description", { type: "textarea", full: true })}
@@ -154,7 +131,7 @@
       ${field("Sayt indekslənsin", "seo.robotsIndexing", { type: "checkbox" })}
       ${field("Ana səhifə sitemap-a daxil olsun", "seo.home.includeInSitemap", { type: "checkbox" })}
     </div><div class="canonicalPreview">Canonical: https://mirpanel.com/</div><div id="seoProductWarnings"></div>`));
-    createView("media", panel("Media/şəkillər", "JPG, PNG və WEBP; maksimum 5 MB", `<div class="mediaUpload"><input id="cmsMediaFile" type="file" accept="image/jpeg,image/png,image/webp"><label>Alt mətn<input id="cmsMediaAlt"></label><button class="btn primary" id="cmsMediaUpload" type="button">Şəkil yüklə</button></div><div id="mediaList" class="mediaGrid"></div>`));
+    createView("media", panel("Şəkil kitabxanası", "Buraya yüklədiyiniz şəkilləri məhsullarda, bannerlərdə və saytın digər bölmələrində seçərək istifadə edə bilərsiniz.", `<div class="mediaUpload"><input class="hidden" id="cmsMediaFile" type="file" accept="image/jpeg,image/png,image/webp"><button class="btn" id="cmsMediaPick" type="button">Şəkil seç</button><span id="cmsMediaFileName">Şəkil seçilməyib</span><label>Alternativ mətn<input id="cmsMediaAlt"></label><button class="btn primary" id="cmsMediaUpload" type="button">Kitabxanaya yüklə</button><small>Yalnız JPG, PNG və WEBP. Maksimum fayl ölçüsü: 5 MB.</small></div><div id="mediaList" class="mediaGrid"></div>`));
     createView("orders", panel("Sifariş parametrləri", "Bütün məhsullar üçün ortaq sifariş və WhatsApp mətnləri", `<div class="formGrid">
       ${field("WhatsApp düyməsinin mətni", "orderSettings.whatsappButtonText")}
       ${field("WhatsApp nömrəsi", "site.whatsappNumber")}
@@ -163,12 +140,11 @@
       ${field("Razılıq checkbox mətni", "orderSettings.agreementText", { full: true })}
       ${field("Standart təsdiq tələb olunsun", "orderSettings.requireConfirmation", { type: "checkbox" })}
     </div>`));
-    createView("publish", panel("Önizləmə və yayımlama", "Dəyişikliklər doğrulanmadan GitHub-a göndərilmir", `<div class="publishFlow">
-      <div class="publishStep"><strong>1. Önizləmə</strong><p>Məlumat, slug, səhifə və təhlükəsizlik yoxlamalarını işə salır.</p><button class="btn" id="cmsPreviewBtn" type="button">Önizlə və yoxla</button></div>
-      <div class="publishStep"><strong>2. Yayımla</strong><p>Yalnız uğurlu önizləmədən sonra atomik GitHub commit yaradır.</p><button class="btn primary" id="cmsPublishBtn" type="button">Yayımla</button></div>
-      <div id="cmsPreviewResult" class="previewResult">Hələ önizləmə aparılmayıb.</div>
-    </div>`));
     createView("history", panel("Dəyişiklik tarixçəsi", "Məxfi məlumatlar göstərilmir", '<button class="btn" id="refreshHistory" type="button">Tarixçəni yenilə</button><div id="historyList" class="cmsList"></div>'));
+    const previewResult = document.createElement("div");
+    previewResult.id = "cmsPreviewResult";
+    previewResult.className = "previewResult hidden";
+    document.body.appendChild(previewResult);
   }
   function pageForm(key, label) {
     if (key === "haqqimizda") {
@@ -304,6 +280,11 @@
   }
   function handleBannerChange(event) {
     const target = event.target;
+    if (target.dataset.replaceMedia !== undefined) {
+      const file = target.files?.[0];
+      if (file) replaceMedia(Number(target.dataset.replaceMedia), file);
+      return;
+    }
     if (target.dataset.bannerUpload) {
       const file = target.files?.[0];
       if (file) uploadBannerImage(target.dataset.bannerUpload, file);
@@ -349,6 +330,47 @@
     }
   }
   function handleClick(event) {
+    const selectMedia = event.target.closest("[data-select-media]");
+    if (selectMedia) {
+      const item = cms().media[Number(selectMedia.dataset.selectMedia)];
+      if (item) navigator.clipboard?.writeText(item.path).then(() => toast("Şəkil seçildi və yolu köçürüldü.")).catch(() => toast("Şəkil yolu: " + item.path));
+      return;
+    }
+    const renameMedia = event.target.closest("[data-rename-media]");
+    if (renameMedia) {
+      const index = Number(renameMedia.dataset.renameMedia);
+      const item = cms().media[index];
+      openModal("Şəklin adını dəyiş", `<label>Şəkil adı<input id="mediaRenameValue" value="${esc(item?.name || String(item?.path || "").split("/").at(-1) || "")}"></label>`, "Yadda saxla", () => {
+        const name = el("mediaRenameValue").value.trim();
+        if (!name) return toast("Şəkil adı boş ola bilməz.", "bad");
+        item.name = name; markDirty(); renderMedia(); closeModal();
+      });
+      return;
+    }
+    const deleteMedia = event.target.closest("[data-delete-media]");
+    if (deleteMedia) {
+      const index = Number(deleteMedia.dataset.deleteMedia);
+      const usageCount = Number(deleteMedia.dataset.usageCount);
+      if (usageCount > 0) return toast(`Bu şəkil ${usageCount} yerdə istifadə olunur. Əvvəl həmin bölmələrdə şəkli dəyişin.`, "bad");
+      openModal("Şəkli kitabxanadan sil", "<p>Şəkil istifadə olunmur. Kitabxana qeydini silmək istəyirsiniz?</p>", "Sil", () => {
+        cms().media.splice(index, 1); markDirty(); renderMedia(); closeModal();
+      });
+      return;
+    }
+    const editBanner = event.target.closest("[data-edit-product-banner]");
+    if (editBanner) {
+      selectedBannerProductId = editBanner.dataset.editProductBanner;
+      renderBanners();
+      populateBoundInputs();
+      el("activeBannerEditor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    if (event.target.closest("[data-save-banner]")) {
+      syncFooterProjection();
+      markDirty();
+      toast("Banner dəyişiklikləri yadda saxlanıldı və yayıma hazırdır.");
+      return;
+    }
     const moveBanner = event.target.closest("[data-move-product-banner]");
     if (moveBanner) {
       const ordered = bannerProductsInOrder();
@@ -391,27 +413,28 @@
     }
   }
   function addListItem(type) {
-    if (type === "navigation") cms().navigation.push({ id: `link-${Date.now()}`, label: "Yeni keçid", url: "/", order: cms().navigation.length + 1, enabled: true, icon: "link", newTab: false });
-    if (type === "footerLinks") cms().footer.links.push({ id: `footer-${Date.now()}`, label: "Yeni keçid", url: "/", order: cms().footer.links.length + 1, enabled: true, icon: "link", newTab: false });
-    markDirty(); renderCms();
+    if (type === "navigation") cms().navigation.push({ id: `link-${Date.now()}`, label: "Yeni keçid", url: "/", order: cms().navigation.length + 1, enabled: true, icon: "link", newTab: false, showHeader: true, showFooter: false });
+    syncFooterProjection(); markDirty(); renderCms();
   }
   function removeListItem(type, index) {
-    const list = type === "navigation" ? cms().navigation : cms().footer.links;
-    list.splice(index, 1);
-    markDirty(); renderCms();
+    if (type !== "navigation") return;
+    cms().navigation.splice(index, 1);
+    syncFooterProjection(); markDirty(); renderCms();
   }
   function listInput(type, index, key, label, itemType = "text") {
-    const path = type === "footerLinks" ? `footer.links.${index}.${key}` : `${type}.${index}.${key}`;
+    const path = `${type}.${index}.${key}`;
     if (itemType === "checkbox") return `<label class="switchLine"><input type="checkbox" data-cms="${path}"><span>${label}</span></label>`;
     return `<label>${label}<input type="${itemType}" data-cms="${path}"></label>`;
   }
   function renderLinks(type, elementId) {
-    const list = type === "navigation" ? cms().navigation : cms().footer.links;
+    const list = cms().navigation;
     el(elementId).innerHTML = list.map((item, index) => `<div class="cmsListItem"><div class="formGrid">
-      ${listInput(type, index, "label", "Ad")}${listInput(type, index, "url", "URL")}
+      ${listInput(type, index, "label", "Keçidin adı")}${listInput(type, index, "url", "URL")}
       ${listInput(type, index, "order", "Sıra", "number")}
-      <label>İkon<select data-cms="${type === "footerLinks" ? `footer.links.${index}.icon` : `${type}.${index}.icon`}">${safeIcons.map((icon) => `<option value="${icon}">${icon}</option>`).join("")}</select></label>
-      ${listInput(type, index, "enabled", "Aktiv", "checkbox")}${listInput(type, index, "newTab", "Yeni tab", "checkbox")}
+      <label>İkon<select data-cms="${type}.${index}.icon">${safeIcons.map((icon) => `<option value="${icon}">${icon}</option>`).join("")}</select></label>
+      ${listInput(type, index, "showHeader", "Header-də göstər", "checkbox")}
+      ${listInput(type, index, "showFooter", "Footer-də göstər", "checkbox")}
+      ${listInput(type, index, "enabled", "Aktiv", "checkbox")}${listInput(type, index, "newTab", "Yeni tabda aç", "checkbox")}
     </div><button class="btn danger" type="button" data-remove-list="${type}" data-index="${index}">Sil</button></div>`).join("");
   }
   let selectedBannerProductId = "";
@@ -455,14 +478,13 @@
     ).join("")}`;
   }
   function imageEditor(path, label, imagePath, preview) {
-    const binding = path.startsWith("productBanner.") ? "data-product-banner" : "data-cms";
     return `<div class="bannerImageEditor">
       <strong>${esc(label)}</strong>
       <img data-banner-preview="${esc(path)}" src="${esc(preview || cmsImageUrl(imagePath))}" alt=""${imagePath || preview ? "" : " hidden"}>
-      <label>Kompüterdən yüklə<input type="file" accept="image/jpeg,image/png,image/webp" data-banner-upload="${esc(path)}"></label>
-      <label>Media bölməsindən seç<select data-banner-media="${esc(path)}">${mediaOptions(imagePath)}</select></label>
-      <label>Şəkil yolu<input ${binding}="${esc(path)}" value="${esc(imagePath)}"></label>
-      <button class="btn" type="button" data-clear-banner-image="${esc(path)}">Şəkli sil</button>
+      <label class="btn filePickerButton">Kompüterdən şəkil seç<input class="hidden" type="file" accept="image/jpeg,image/png,image/webp" data-banner-upload="${esc(path)}"></label>
+      <label>Şəkil kitabxanasından seç<select data-banner-media="${esc(path)}">${mediaOptions(imagePath)}</select></label>
+      <details><summary>Ətraflı məlumat</summary><code>${esc(imagePath || "Şəkil yolu seçilməyib")}</code></details>
+      <button class="btn" type="button" data-clear-banner-image="${esc(path)}">Seçimi təmizlə</button>
       <small>JPG, PNG və ya WEBP · maksimum 5 MB</small>
     </div>`;
   }
@@ -476,6 +498,17 @@
     selector.innerHTML = orderedProducts.map((product) =>
       `<option value="${esc(product.id)}"${product.id === selectedBannerProductId ? " selected" : ""}>${esc(product.title)}${product.active === false ? " (deaktiv)" : ""}</option>`
     ).join("");
+    el("bannerProductList").innerHTML = orderedProducts.map((item, index) => {
+      const banner = ensureProductBanner(item);
+      const reason = item.active === false ? "Məhsul deaktivdir" : banner.enabled ? "Banner aktivdir" : "Banner deaktivdir";
+      return `<article class="bannerManageRow${item.id === selectedBannerProductId ? " active" : ""}">
+        <img src="${esc(cmsImageUrl(banner.desktopImage || item.image))}" alt="${esc(item.title)}">
+        <div><strong>${esc(item.title)}</strong><small>${esc(reason)}</small></div>
+        <span class="statusPill ${banner.enabled && item.active !== false ? "active" : ""}">${banner.enabled && item.active !== false ? "Aktiv" : "Deaktiv"}</span>
+        <label>Sıra<input type="number" min="1" max="${orderedProducts.length}" data-product-banner="productBanner.${esc(item.id)}.order" value="${banner.order}"></label>
+        <div class="bannerOrderActions"><button class="btn" title="${index === 0 ? "Bu banner artıq birinci sıradadır" : "Bir pillə yuxarı keçir"}" type="button" data-move-product-banner="${esc(item.id)}" data-direction="-1"${index === 0 ? " disabled" : ""}>Yuxarı</button><button class="btn" title="${index === orderedProducts.length - 1 ? "Bu banner artıq son sıradadır" : "Bir pillə aşağı keçir"}" type="button" data-move-product-banner="${esc(item.id)}" data-direction="1"${index === orderedProducts.length - 1 ? " disabled" : ""}>Aşağı</button><button class="btn" type="button" data-edit-product-banner="${esc(item.id)}">Redaktə et</button></div>
+      </article>`;
+    }).join("");
     const product = orderedProducts.find((item) => item.id === selectedBannerProductId);
     const editor = el("bannerProductEditor");
     if (!product) {
@@ -490,24 +523,24 @@
         .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab")
         .replace(/-+/g, "-")
         .replace(/^-+|-+$/g, "");
-      editor.innerHTML = `<div class="cmsListItem bannerEditorCard">
+      editor.innerHTML = `<div class="cmsListItem bannerEditorCard" id="activeBannerEditor">
       <div class="bannerEditorHead"><div><strong>${esc(product.title)}</strong><small> · ${product.active === false ? "Məhsul deaktivdir, banner saytda görünmür" : "Aktiv məhsul banneri"}</small></div><div class="bannerOrderActions">
         <button class="btn" type="button" data-move-product-banner="${esc(product.id)}" data-direction="-1"${index === 0 ? " disabled" : ""}>Yuxarı</button>
         <button class="btn" type="button" data-move-product-banner="${esc(product.id)}" data-direction="1"${index === orderedProducts.length - 1 ? " disabled" : ""}>Aşağı</button>
       </div></div>
+      <label class="switchLine bannerEnabled"><input type="checkbox" data-product-banner="${esc(path)}.enabled"${item.enabled ? " checked" : ""}><span>Banner aktivdir</span></label>
       <div class="bannerImageGrid">
-        ${imageEditor(`${path}.desktopImage`, "Desktop şəkli", item.desktopImage, item._desktopPreview)}
-        ${imageEditor(`${path}.mobileImage`, "Mobil şəkli (boşdursa desktop işlənir)", item.mobileImage, item._mobilePreview || item._desktopPreview)}
+        ${imageEditor(`${path}.desktopImage`, "Desktop banner önizləməsi", item.desktopImage, item._desktopPreview)}
+        ${imageEditor(`${path}.mobileImage`, "Mobil banner önizləməsi", item.mobileImage, item._mobilePreview || item._desktopPreview)}
       </div>
       <div class="formGrid">
-        <label>Başlıq<input data-product-banner="${esc(path)}.title" value="${esc(item.title)}"></label>
         <label>Alternativ mətn (alt)<input data-product-banner="${esc(path)}.alt" value="${esc(item.alt)}"></label>
-        <label class="full">Açıqlama<textarea rows="3" data-product-banner="${esc(path)}.description">${esc(item.description)}</textarea></label>
-        <label>Canonical keçid<input value="https://mirpanel.com/mehsul/${esc(slug)}" readonly></label>
+        <label>Məhsul keçidi<input value="https://mirpanel.com/mehsul/${esc(slug)}" readonly></label>
         <label>Sıra<input type="number" min="1" max="${orderedProducts.length}" data-product-banner="${esc(path)}.order" value="${item.order}"></label>
-        <label class="switchLine"><input type="checkbox" data-product-banner="${esc(path)}.enabled"${item.enabled ? " checked" : ""}><span>Banner aktivdir</span></label>
       </div>
-      <small>Banner şəkli boş olarsa məhsulun əsas şəkli avtomatik istifadə olunur. Keçid məhsulun SEO slug-ından yaranır və eyni tabda açılır.</small>
+      <label class="switchLine"><input type="checkbox" checked disabled><span>Mobil şəkil boşdursa desktop şəkli istifadə edilsin</span></label>
+      <button class="btn primary" type="button" data-save-banner>Yadda saxla</button>
+      <small>Banner başlığı və açıqlaması məlumatda qorunur, amma şəklin üzərində göstərilmir. Keçid avtomatik yaranır və eyni tabda açılır.</small>
     </div>`;
     }
 
@@ -593,10 +626,54 @@
       footer: cms().footer,
       pages: state.data.siteSections
     });
-    el("mediaList").innerHTML = cms().media.map((item) => {
+    el("mediaList").innerHTML = cms().media.map((item, index) => {
       const usageCount = item.path ? serialized.split(item.path).length - 1 : 0;
-      return `<article class="mediaCard"><img src="${esc(item._preview || item.path)}" alt="${esc(item.alt)}"><strong>${esc(item.alt || "Adsız şəkil")}</strong><small>${esc(item.type)} · ${Math.ceil(Number(item.size || 0) / 1024)} KB</small><small>${usageCount ? `${usageCount} yerdə istifadə olunur` : "Hazırda istifadə olunmur"}</small><code>${esc(item.path)}</code></article>`;
+      const name = item.name || String(item.path || "").split("/").at(-1) || "Adsız şəkil";
+      return `<article class="mediaCard" data-media-card="${index}"><img src="${esc(item._preview || cmsImageUrl(item.path))}" alt="${esc(item.alt || name)}" data-media-dimensions="${index}"><strong>${esc(name)}</strong><small>${esc(item.type || "Naməlum format")} · ${Math.ceil(Number(item.size || 0) / 1024)} KB</small><small data-media-pixels="${index}">${item.width && item.height ? `${item.width} × ${item.height} px` : "Ölçü müəyyən edilir..."}</small><small>${usageCount ? `${usageCount} yerdə istifadə olunur` : "Hazırda istifadə olunmur"}</small><div class="mediaActions"><button class="btn" type="button" data-select-media="${index}">Seç</button><button class="btn" type="button" data-rename-media="${index}">Adını dəyiş</button><label class="btn filePickerButton">Əvəz et<input class="hidden" type="file" accept="image/jpeg,image/png,image/webp" data-replace-media="${index}"></label><button class="btn danger" type="button" data-delete-media="${index}" data-usage-count="${usageCount}">Sil</button></div><details><summary>Ətraflı məlumat</summary><code>${esc(item.path)}</code></details></article>`;
     }).join("");
+    el("mediaList").querySelectorAll("[data-media-dimensions]").forEach((image) => {
+      const update = () => {
+        const index = Number(image.dataset.mediaDimensions);
+        const item = cms().media[index];
+        if (!item || !image.naturalWidth) return;
+        item.width = image.naturalWidth;
+        item.height = image.naturalHeight;
+        const output = document.querySelector(`[data-media-pixels="${index}"]`);
+        if (output) output.textContent = `${item.width} × ${item.height} px`;
+      };
+      image.addEventListener("load", update, { once: true });
+      image.addEventListener("error", () => {
+        image.closest(".mediaCard")?.classList.add("broken");
+        const output = document.querySelector(`[data-media-pixels="${image.dataset.mediaDimensions}"]`);
+        if (output) output.textContent = "Şəkil yüklənmədi — fayl yolu və deploy vəziyyətini yoxlayın.";
+      }, { once: true });
+      if (image.complete) update();
+    });
+  }
+
+  function replacePathDeep(value, oldPath, newPath) {
+    if (Array.isArray(value)) return value.forEach((item) => replacePathDeep(item, oldPath, newPath));
+    if (!value || typeof value !== "object") return;
+    for (const [key, current] of Object.entries(value)) {
+      if (typeof current === "string" && current === oldPath) value[key] = newPath;
+      else replacePathDeep(current, oldPath, newPath);
+    }
+  }
+
+  async function replaceMedia(index, file) {
+    const item = cms().media[index];
+    if (!item || !file) return;
+    if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) return toast("Yalnız JPG, PNG və WEBP, maksimum 5 MB.", "bad");
+    setLoading(true, "Şəkil əvəz edilir...");
+    try {
+      const contentBase64 = await readFileAsBase64(file);
+      const result = await api("/api/upload-product-image", { method: "POST", body: JSON.stringify({ productId: "media", fileName: file.name, mimeType: file.type, contentBase64 }) });
+      const oldPath = item.path;
+      replacePathDeep(state.data, oldPath, result.publicPath);
+      Object.assign(item, { path: result.publicPath, _preview: result.previewDataUrl, name: file.name, size: file.size, type: file.type, uploadedAt: result.uploadedAt });
+      markDirty(); renderCms(); toast("Şəkil əvəz edildi. İstifadə olunan bölmələr yeni şəkilə bağlandı.");
+    } catch (error) { toast(error.message, "bad"); }
+    finally { setLoading(false); }
   }
   function renderDashboard() {
     if (!state.data || !cms()) {
@@ -614,8 +691,13 @@
   }
   function renderCms() {
     if (!cms()) return;
+    syncFooterProjection();
+    if (!state.dirty && (baselineSha !== state.baseSha || !baselineData)) {
+      baselineData = structuredClone(state.data);
+      baselineSha = state.baseSha;
+    }
     renderDashboard(); renderSections(); renderLinks("navigation", "navigationList");
-    renderLinks("footerLinks", "footerLinkList"); renderBanners(); renderTexts(); renderMedia();
+    renderBanners(); renderTexts(); renderMedia();
     ["haqqimizda", "elaqe", "sertler"].forEach(renderBlocks);
     populateBoundInputs();
   }
@@ -652,6 +734,67 @@
       product[key] = event.target.type === "checkbox" ? event.target.checked : event.target.value;
       markDirty();
     });
+    organizeProductForm(form, section);
+  }
+
+  function organizeProductForm(form, section) {
+    if (form.querySelector(".productFormGroups")) return;
+    const hero = form.querySelector(".editorHero");
+    const groups = document.createElement("div");
+    groups.className = "productFormGroups";
+    hero.insertAdjacentElement("afterend", groups);
+    const makeGroup = (title, description, open = false) => {
+      const details = document.createElement("details");
+      details.className = "adminAccordion productGroup";
+      details.open = open;
+      details.innerHTML = `<summary><span>${esc(title)}</span><small>${esc(description)}</small></summary><div class="productGroupBody"></div>`;
+      groups.appendChild(details);
+      return details.querySelector(".productGroupBody");
+    };
+    const basic = makeGroup("Əsas məlumatlar", "Ad, kateqoriya, şəkil və qısa təsvir", true);
+    const pricing = makeGroup("Qiymət və planlar", "Planlar, qiymətlər və stok vəziyyəti", true);
+    const orders = makeGroup("Sifariş və müştəri forması", "Sifariş addımları, forma sahələri və təsdiq", false);
+    const advanced = makeGroup("Geniş parametrlər", "SEO, schema, texniki ID və nadir parametrlər", false);
+    const grids = [basic, pricing, advanced].map((body) => {
+      const grid = document.createElement("div");
+      grid.className = "formGrid";
+      body.appendChild(grid);
+      return grid;
+    });
+    const moveControl = (id, target) => {
+      const control = el(id);
+      const owner = control?.closest("label") || control?.closest(".imageUploadBox");
+      if (owner) target.appendChild(owner);
+      return owner;
+    };
+    ["productOrder", "productTitle", "productVariant", "productCategory", "productImage", "productBadge", "productDesc", "productNote"].forEach((id) => moveControl(id, grids[0]));
+    const imageUpload = el("productImagePickBtn")?.closest(".imageUploadBox");
+    if (imageUpload) grids[0].appendChild(imageUpload);
+    ["productCurrency", "productSoldOut", "productStock", "productStockEnabled", "productBestSeller"].forEach((id) => {
+      moveControl(id, grids[1]);
+    });
+    form.querySelectorAll(".fieldHelp").forEach((help) => grids[1].appendChild(help));
+    ["productId", "productFlow", "productSeller"].forEach((id) => moveControl(id, grids[2]));
+    const moveSection = (controlId, target) => {
+      const control = el(controlId);
+      const block = control?.closest(".confirmationSettings") || control;
+      const heading = block?.previousElementSibling?.classList.contains("sectionHead") ? block.previousElementSibling : null;
+      if (heading) target.appendChild(heading);
+      if (block) target.appendChild(block);
+    };
+    const plans = el("plans");
+    if (plans) { if (plans.previousElementSibling?.classList.contains("sectionHead")) pricing.appendChild(plans.previousElementSibling); pricing.appendChild(plans); }
+    moveSection("productOrderFlow", orders);
+    const formFields = el("formFields");
+    if (formFields) { if (formFields.previousElementSibling?.classList.contains("sectionHead")) orders.appendChild(formFields.previousElementSibling); orders.appendChild(formFields); }
+    moveSection("orderConfirmationEnabled", orders);
+    moveSection("whatsappExtraMessage", orders);
+    moveSection("productSeoSlug", advanced);
+    ["aboutHtml", "rulesHtml"].forEach((id) => moveControl(id, advanced));
+    if (section.parentNode === form) advanced.appendChild(section);
+    const danger = el("deleteProductBtn")?.closest(".dangerZone");
+    if (danger) advanced.appendChild(danger);
+    form.querySelectorAll(":scope > .formGrid").forEach((grid) => { if (!grid.children.length) grid.remove(); });
   }
   function enhanceCategories() {
     const row = el("categoriesView")?.querySelector("thead tr");
@@ -704,11 +847,43 @@
         previewResult.append(heading, frame);
       }
       toast("Önizləmə və yoxlamalar uğurla tamamlandı.");
+      return result;
     } catch (error) {
       state.previewDigest = "";
       el("cmsPreviewResult").textContent = error.message;
       toast(error.message, "bad");
+      return null;
     } finally { setLoading(false); }
+  }
+  function changedSections() {
+    if (!baselineData || !state.data) return ["Sayt məlumatları"];
+    const checks = [
+      ["Məhsullar", "products"], ["Kateqoriyalar", "categories"], ["Ana səhifə", "cms.homepage"],
+      ["Naviqasiya və keçidlər", "cms.navigation"], ["Haqqımızda", "siteSections.haqqimizda"],
+      ["Əlaqə", "siteSections.elaqe"], ["Şərtlər", "siteSections.sertler"], ["Şəkil kitabxanası", "cms.media"],
+      ["Sifariş parametrləri", "cms.orderSettings"], ["SEO və sitemap", "cms.seo"]
+    ];
+    const get = (source, path) => path.split(".").reduce((current, key) => current?.[key], source);
+    return checks.filter(([, path]) => JSON.stringify(get(baselineData, path)) !== JSON.stringify(get(state.data, path))).map(([label]) => label);
+  }
+  async function showPublishDialog() {
+    if (!state.dirty) return toast("Yayımlanacaq dəyişiklik yoxdur.", "bad");
+    const sections = changedSections();
+    const result = await preview();
+    if (!result) return;
+    openModal("Dəyişiklikləri yoxlayın", `<div class="publishReview"><p>Avtomatik önizləmə və təhlükəsizlik yoxlamaları uğurla tamamlandı.</p><strong>Dəyişən bölmələr</strong><ul>${sections.map((section) => `<li>${esc(section)}</li>`).join("")}</ul><p>${result.productCount} məhsul · ${result.activeProductCount} aktiv məhsul · ${result.pageCount} statik səhifə</p>${result.warnings.map((warning) => `<p class="warningBox">${esc(warning)}</p>`).join("")}</div>`, "Təsdiqlə və yayımla", async () => {
+      const confirmButton = el("modalConfirm");
+      confirmButton.disabled = true;
+      await publishAndMonitor();
+      confirmButton.disabled = false;
+      if (state.lastPublishResult && !state.dirty) {
+        baselineData = structuredClone(state.data);
+        baselineSha = state.baseSha;
+        el("modalBody").innerHTML = `<div class="previewResult"><strong>Yayım uğurla başladıldı.</strong><p>Commit: ${esc(state.lastPublishResult.commitSha)}</p></div>`;
+        el("modalConfirm").classList.add("hidden");
+        el("modalCancel").textContent = "Bağla";
+      }
+    });
   }
   async function publishAndMonitor() {
     state.lastPublishResult = null;
@@ -767,25 +942,35 @@
             state.dirty = true;
             syncAllProducts();
             renderAll();
-            showView("publish");
-            el("cmsPreviewResult").textContent = `${restored.restoredFrom.slice(0, 12)} commitinin məzmunu önizləməyə gətirildi. Yayımla düyməsinə basmadan canlı sayt dəyişməyəcək.`;
+            toast(`${restored.restoredFrom.slice(0, 12)} commitinin məzmunu önizləməyə gətirildi. Yayımla düyməsinə basmadan canlı sayt dəyişməyəcək.`);
           } catch (error) { toast(error.message, "bad"); }
         });
       });
     } catch (error) { toast(error.message, "bad"); }
   }
   function installActions() {
-    el("cmsPreviewBtn").addEventListener("click", preview);
-    el("cmsPublishBtn").addEventListener("click", publishAndMonitor);
     el("cmsMediaUpload").addEventListener("click", uploadMedia);
+    el("cmsMediaPick").addEventListener("click", () => el("cmsMediaFile").click());
+    el("cmsMediaFile").addEventListener("change", () => {
+      el("cmsMediaFileName").textContent = el("cmsMediaFile").files?.[0]?.name || "Şəkil seçilməyib";
+    });
     el("refreshHistory").addEventListener("click", loadHistory);
+    el("saveBtn").addEventListener("click", (event) => {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      showPublishDialog();
+    }, true);
+    window.addEventListener("beforeunload", (event) => {
+      if (!state.dirty) return;
+      event.preventDefault();
+      event.returnValue = "";
+    });
   }
   function installHooks() {
     const originalRenderAll = renderAll;
     renderAll = function (...args) {
       const result = originalRenderAll.apply(this, args);
       renderCms(); renderProductExtras();
-      repairAdminDom(document.querySelector(".main"));
       return result;
     };
     const originalRenderProductForm = renderProductForm;
@@ -794,15 +979,7 @@
       renderProductExtras();
       return result;
     };
-    showView = function (view) {
-      document.querySelectorAll(".workspace").forEach((section) => section.classList.add("hidden"));
-      const target = el(`${view}View`);
-      if (target) target.classList.remove("hidden");
-      document.querySelectorAll(".navBtn[data-view]").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
-      el("crumb").textContent = viewLabels.find(([id]) => id === view)?.[1] || "İdarə paneli";
-      if (view === "history") loadHistory();
-      if (view === "dashboard") renderDashboard();
-    };
+    showView = activateView;
     confirmDeleteCategory = function (index) {
       const category = state.data.categories[index];
       const affected = state.data.products.filter((product) => product.category === category.key);
@@ -837,8 +1014,7 @@
     installActions();
     installHooks();
     if (state.data) renderCms();
-    showView("dashboard");
-    repairAdminDom();
+    activateView("dashboard");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();

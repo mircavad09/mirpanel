@@ -48,6 +48,7 @@
       </div>
 
       <div class="headerActions">
+        <div class="changeStatus" id="changeStatus" role="status">Bütün dəyişikliklər yayımlanıb</div>
         <div class="commitInfo" id="commitInfo">
           Yüklənir...
         </div>
@@ -144,8 +145,9 @@
               </label>
 
               <label>
-                ID
+                Texniki ID
                 <input id="productId">
+                <small>Məhsul yaradıldıqdan sonra dəyişdirilmir.</small>
               </label>
 
               <label>
@@ -154,8 +156,9 @@
               </label>
 
               <label>
-                Variant (yalnız məhsul adında istifadə olunsun)
+                Variant
                 <input id="productVariant">
+                <small>Yalnız məhsul adının yanında əlavə fərqləndirmə lazım olduqda istifadə olunur. Məsələn: Şəxsi hesab, Ortaq hesab, Premium.</small>
               </label>
 
               <label>
@@ -163,8 +166,8 @@
                 <select id="productCategory"></select>
               </label>
 
-              <label>
-                Köhnə flow
+              <label class="technicalHidden">
+                Uyğunluq rejimi
                 <select id="productFlow"></select>
               </label>
 
@@ -226,18 +229,21 @@
 
               <label class="switchLine">
                 <input id="productStockEnabled" type="checkbox">
-                <span>Stok sayını aktiv yoxla</span>
+                <span>Stok sayını saytda göstər</span>
               </label>
+              <small class="fieldHelp">Aktiv olduqda müştəri məhsul səhifəsində qalan stok sayını görəcək. Stok sayı boşdursa bu parametr istifadə edilmir.</small>
 
               <label>
                 Satıcı adı
                 <input id="productSeller" placeholder="Məs: Mirpanel">
+                <small>Google məhsul strukturunda satıcı adı kimi istifadə olunur və saytda müştəriyə ayrıca göstərilmir.</small>
               </label>
 
               <label class="switchLine">
                 <input id="productBestSeller" type="checkbox">
-                <span>Ən çox satılan kimi sırala</span>
+                <span>“Ən çox satılan” statusu</span>
               </label>
+              <small class="fieldHelp">Hazırkı sayt kodu bu statusu məhsul sırasına və görünüşünə tətbiq etmir; məlumat qorunur.</small>
 
               <label class="full">
                 Qısa açıqlama
@@ -269,21 +275,20 @@
 
             <div class="sectionHead">
               <div>
-                <h3>Sifariş flow</h3>
-                <p>Müştəri düyməyə basanda hansı ardıcıllıq işləsin</p>
+                <h3>Sifariş addımları</h3>
+                <p>Aktiv müştəri sahələrinə görə avtomatik seçilir</p>
               </div>
             </div>
 
             <div class="confirmationSettings">
               <div class="formGrid">
                 <label class="full">
-                  Sifariş tipi
-                  <select id="productOrderFlow">
-                    <option value="direct_whatsapp">Birbaşa WhatsApp</option>
-                    <option value="form_then_whatsapp">Əvvəl məlumat forması, sonra WhatsApp</option>
-                    <option value="confirm_then_whatsapp">Əvvəl təsdiqləmə modalı, sonra WhatsApp</option>
-                    <option value="form_confirm_whatsapp">Əvvəl təsdiqləmə, sonra forma, sonra WhatsApp</option>
+                  Avtomatik sifariş ardıcıllığı
+                  <select id="productOrderFlow" aria-describedby="orderFlowHelp">
+                    <option value="confirm_then_whatsapp">Sifariş təsdiqi → WhatsApp</option>
+                    <option value="form_confirm_whatsapp">Sifariş təsdiqi → Müştəri forması → WhatsApp</option>
                   </select>
+                  <small id="orderFlowHelp">Müştəri forması sahəsi yoxdursa birbaşa WhatsApp-a, aktiv sahə varsa əvvəl formaya keçir.</small>
                 </label>
               </div>
             </div>
