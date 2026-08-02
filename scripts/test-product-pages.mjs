@@ -278,6 +278,7 @@ assert.equal(confirmationSource.includes("spotifyHelpCtaIcon\" aria-hidden=\"tru
 assert.ok(confirmationSource.includes("formatConfirmationText(settings.description)"), "Confirmation text formatter");
 assert.ok(confirmationSource.includes('consentForm.addEventListener("submit"') && confirmationSource.includes("onConfirm(formData);"), "Confirmation continues the existing order flow");
 assert.ok(confirmationSource.includes('id="orderTermsAgreement"') && confirmationSource.includes("required"), "Mandatory terms consent is connected");
+assert.ok(confirmationSource.includes('return fields.length ? "form_confirm_whatsapp" : "confirm_then_whatsapp";'), "Aktiv mÃ¼ÅŸtÉ™ri sahÉ™lÉ™ri sifariÅŸ axÄ±nÄ± avtomatik seÃ§mir");
 assert.ok(confirmationSource.includes('window.open(url, "_blank", "noopener,noreferrer");'), "WhatsApp handoff remains connected");
 
 for (const product of state.products.filter((item) => item.active === false)) {

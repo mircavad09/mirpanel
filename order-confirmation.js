@@ -991,18 +991,7 @@
 
   function flowFor(product) {
     const fields = activeFields(product);
-    const confirmation = confirmationFor(product);
-    const source = String(product.orderFlow || "").trim();
-
-    if (ORDER_FLOWS.has(source)) {
-      if (confirmation.enabled && source === "direct_whatsapp") return "confirm_then_whatsapp";
-      return source;
-    }
-
-    if (confirmation.enabled && fields.length) return "form_confirm_whatsapp";
-    if (confirmation.enabled) return "confirm_then_whatsapp";
-    if (fields.length) return "form_then_whatsapp";
-    return "direct_whatsapp";
+    return fields.length ? "form_confirm_whatsapp" : "confirm_then_whatsapp";
   }
 
   function stockNumber(product) {
