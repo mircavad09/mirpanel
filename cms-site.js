@@ -258,21 +258,6 @@
       imageWithFallback(image, [banner.product.image, "assets/logo.png"]);
       picture.appendChild(image);
       link.appendChild(picture);
-      if (banner.title || banner.description) {
-        const content = document.createElement("span");
-        content.className = "slide-content";
-        if (banner.title) {
-          const title = document.createElement("strong");
-          title.textContent = banner.title;
-          content.appendChild(title);
-        }
-        if (banner.description) {
-          const description = document.createElement("span");
-          description.textContent = banner.description;
-          content.appendChild(description);
-        }
-        link.appendChild(content);
-      }
       slider.appendChild(link);
       if (banners.length > 1) {
         const dot = document.createElement("span");

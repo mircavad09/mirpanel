@@ -2980,7 +2980,7 @@ const CMS_CONTENT = {
       "description": "Netflix, ChatGPT Plus, Google AI, CapCut Pro və daha çox. Plan seç → məlumatları yaz → WhatsApp avtomatik açılır."
     },
     "seoIntro": {
-      "enabled": true,
+      "enabled": false,
       "title": "Azərbaycanda premium rəqəmsal məhsullar",
       "text": "Mirpanel rəqəmsal məhsulların mövcud planlarını, qiymətlərini və sifariş məlumatlarını bir yerdə nəzərdən keçirməyə imkan verir."
     },

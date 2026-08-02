@@ -207,6 +207,11 @@ assert.ok(cmsSite.includes("productSlug"), "Banner keçidi məhsul slug-ından y
 assert.ok(cmsSite.includes('"lazy"'), "Bannerlərdə lazy loading yoxdur");
 assert.ok(cmsSite.includes("fetchPriority"), "İlk banner üçün yüksək yükləmə prioriteti yoxdur");
 assert.ok(cmsSite.includes("banners.length < 2"), "0/1 banner üçün slayder idarələri gizlədilmir");
+assert.equal(cmsSite.includes('content.className = "slide-content"'), false, "Banner overlay elementi hələ yaradılır");
+assert.equal(homepageCss.includes(".slide-content"), false, "Banner overlay stili hələ mövcuddur");
+assert.equal(homepage.includes("homeSeoIntro"), false, "Deaktiv SEO təqdimatı ilkin HTML-də qalıb");
+assert.equal(state.cms.homepage.seoIntro.enabled, false, "SEO təqdimatı admin parametrində deaktiv deyil");
+assert.ok(state.products.every((product) => product.banner?.title !== undefined && product.banner?.description !== undefined), "Banner başlıq və açıqlama məlumatı silinib");
 assert.ok(appSource.includes("ArrowRight") && appSource.includes("ArrowLeft"), "Banner klaviatura idarəsi yoxdur");
 assert.ok(appSource.includes("if (slides.length < 2) return;"), "Tək banner üçün avtomatik keçid dayandırılmır");
 assert.ok(homepageCss.includes("object-fit: contain"), "Banner şəkilləri contain istifadə etmir");

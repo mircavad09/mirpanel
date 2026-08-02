@@ -242,7 +242,9 @@ async function getAppFile() {
 
 function bumpAssetVersions(source, version) {
   return source
+    .replace(/style\.css\?v=[^"]+/g, `style.css?v=${version}`)
     .replace(/app\.js\?v=[^"]+/g, `app.js?v=${version}`)
+    .replace(/cms-site\.js\?v=[^"]+/g, `cms-site.js?v=${version}`)
     .replace(/order-confirmation\.js\?v=[^"]+/g, `order-confirmation.js?v=${version}`);
 }
 
@@ -328,8 +330,17 @@ function patchHomeStructuredData(source, cms = {}, products = []) {
   const linksText = links.length
     ? `Populyar seçimlər: ${links.slice(0, -1).join(", ")}${links.length > 1 ? " və " : ""}${links.at(-1)}. `
     : "";
-  const introHtml = `<section class="wrap homeSeoIntro" id="homeSeoIntro" aria-labelledby="homeSeoIntroTitle"${intro.enabled === false ? " hidden" : ""}>\n      <h1 id="homeSeoIntroTitle">${escapeHomeHtml(introTitle)}</h1>\n      <p id="homeSeoIntroText">${escapeHomeHtml(introText)}</p>\n      <p class="homeSeoLinks">${linksText}<a href="/mehsul">Bütün məhsullara baxın</a>.</p>\n    </section>`;
-  next = next.replace(/<section class="wrap homeSeoIntro"[\s\S]*?<\/section>/, introHtml);
+  const introPattern = /\s*<section class="wrap homeSeoIntro"[\s\S]*?<\/section>\s*/;
+  if (intro.enabled === false) {
+    next = next.replace(introPattern, "\n\n    ");
+  } else {
+    const introHtml = `<section class="wrap homeSeoIntro" id="homeSeoIntro" aria-labelledby="homeSeoIntroTitle">\n      <h2 id="homeSeoIntroTitle">${escapeHomeHtml(introTitle)}</h2>\n      <p id="homeSeoIntroText">${escapeHomeHtml(introText)}</p>\n      <p class="homeSeoLinks">${linksText}<a href="/mehsul">Bütün məhsullara baxın</a>.</p>\n    </section>`;
+    if (introPattern.test(next)) {
+      next = next.replace(introPattern, `\n\n    ${introHtml}\n\n    `);
+    } else {
+      next = next.replace(/\n\s*<div id="products-section">/, `\n\n    ${introHtml}\n\n    <div id="products-section">`);
+    }
+  }
   return next;
 }
 

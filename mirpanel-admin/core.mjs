@@ -157,7 +157,7 @@ function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
       announcement: { enabled: Boolean(ui?.bannerText), text: cleanText(ui?.bannerText) },
       hero: { title: cleanText(ui?.heroTitle), description: cleanText(ui?.heroHint) },
       seoIntro: {
-        enabled: true,
+        enabled: false,
         title: "Azərbaycanda premium rəqəmsal məhsullar",
         text: "Mirpanel rəqəmsal məhsulların mövcud planlarını, qiymətlərini və sifariş məlumatlarını bir yerdə nəzərdən keçirməyə imkan verir."
       },

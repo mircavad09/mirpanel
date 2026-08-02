@@ -136,7 +136,7 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
   assert.ok(html.includes(`/product-page.css?v=20260724-mobile-pricing-1`), `${filePath}: scoped CSS`);
   assert.ok(html.includes(`/app.js?v=product-pages-20260724-refine-1`), `${filePath}: product data cache version`);
-  assert.ok(html.includes(`/order-confirmation.js?v=confirmation-dialog-20260728-1`), `${filePath}: shared confirmation component`);
+  assert.ok(html.includes(`/order-confirmation.js?v=mandatory-consent-20260802-1`), `${filePath}: shared confirmation component`);
   assert.ok(html.includes(`property="og:url" content="${canonical}"`), `${filePath}: Open Graph`);
   const expectedSocialTitle = String(product.seoOgTitle || product.title || "").trim();
   const expectedSocialDescription = String(product.seoOgDescription || product.desc || expectedDescription).trim();
@@ -240,10 +240,11 @@ assert.ok(robotsText.includes("User-agent: *") && !robotsText.includes("Disallow
 assert.ok(robotsText.includes("Disallow: /admin") && robotsText.includes("Disallow: /api/"), "Texniki yollar robots.txt-də bloklanmayıb");
 assert.ok(homeHtml.includes('rel="canonical" href="https://mirpanel.com/"'), "Home canonical yoxdur");
 assert.equal((homeHtml.match(/<h1\b/g) || []).length, 1, "Ana səhifədə bir H1 olmalıdır");
-assert.ok(homeHtml.includes("Azərbaycanda premium rəqəmsal məhsullar"), "Ana səhifə SEO H1 yoxdur");
-for (const slug of ["netflix-sexsi", "spotify-premium", "chatgpt-plus", "capcut-pro", "youtube-premium", "canva-premium"]) {
-  assert.ok(homeHtml.includes(`href="/mehsul/${slug}"`), `Ana səhifədə ${slug} HTML keçidi yoxdur`);
-}
+assert.ok(homeHtml.includes('<h1 class="premium-brand-text">MIRPANEL</h1>'), "Ana səhifə MIRPANEL H1 yoxdur");
+assert.equal(homeHtml.includes("homeSeoIntro"), false, "Deaktiv SEO təqdimatı ilkin HTML-də qalıb");
+assert.equal(homeHtml.includes("Populyar seçimlər"), false, "Deaktiv SEO keçidləri ilkin HTML-də qalıb");
+assert.ok(homeHtml.includes('href="/mehsul"'), "Ana səhifədə məhsullar siyahısına HTML keçidi yoxdur");
+assert.ok(appSource.includes('href="/mehsul/${productSlug}"'), "Məhsul kartlarının birbaşa HTML keçidi yoxdur");
 const homeSchemaText = homeHtml.match(/<script id="mirpanel-home-schema" type="application\/ld\+json">([\s\S]*?)<\/script>/)?.[1];
 const homeGraph = JSON.parse(homeSchemaText)["@graph"];
 assert.ok(homeGraph.some((item) => item["@type"] === "Organization"), "Organization schema yoxdur");
@@ -272,7 +273,8 @@ assert.ok(confirmationSource.includes('"Oxudum və təsdiqləyirəm"'), "Confirm
 assert.ok(confirmationSource.includes("#modal.orderConfirmationModal .mBottom"), "Confirmation price/footer is hidden");
 assert.equal(confirmationSource.includes("spotifyHelpCtaIcon\" aria-hidden=\"true\">🔐"), false, "Large Spotify password block remains");
 assert.ok(confirmationSource.includes("formatConfirmationText(settings.description)"), "Confirmation text formatter");
-assert.ok(confirmationSource.includes('document.getElementById("orderConfirmationConfirm").onclick = () => onConfirm(formData);'), "Confirmation continues the existing order flow");
+assert.ok(confirmationSource.includes('consentForm.addEventListener("submit"') && confirmationSource.includes("onConfirm(formData);"), "Confirmation continues the existing order flow");
+assert.ok(confirmationSource.includes('id="orderTermsAgreement"') && confirmationSource.includes("required"), "Mandatory terms consent is connected");
 assert.ok(confirmationSource.includes('window.open(url, "_blank", "noopener,noreferrer");'), "WhatsApp handoff remains connected");
 
 for (const product of state.products.filter((item) => item.active === false)) {

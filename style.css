@@ -189,7 +189,6 @@ body.hide-top-panel .top {
   background: #000;
   display: block; border-radius: 24px;
 }
-.slide-content,
 .support-card-content {
   position: absolute;
   left: 18px;
@@ -205,9 +204,7 @@ body.hide-top-panel .top {
   backdrop-filter: blur(8px);
   pointer-events: none;
 }
-.slide-content strong,
 .support-card-content strong { font-size: 16px; line-height: 1.25; }
-.slide-content span,
 .support-card-content span { font-size: 12px; line-height: 1.4; color: rgba(255,255,255,.78); }
 
 .slider-arrow {
@@ -722,11 +719,8 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
   .sp-desc { display: none; }
   .side-search { padding: 8px; font-size: 12px; border-radius: 10px; }
   .support-box-img { min-height: 100px; border-radius: 16px; }
-  .slide-content,
   .support-card-content { left: 10px; right: 10px; bottom: 10px; padding: 8px 10px; }
-  .slide-content strong,
   .support-card-content strong { font-size: 13px; }
-  .slide-content span,
   .support-card-content span { font-size: 10px; }
 
   .tabs { gap: 6px; margin-top: 10px; }
@@ -997,7 +991,7 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
   text-align: center;
 }
 
-.homeSeoIntro h1 {
+.homeSeoIntro h2 {
   margin: 0 auto 10px;
   max-width: 860px;
   color: #fff;
@@ -1024,7 +1018,7 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
     padding: 22px 18px 16px;
   }
 
-  .homeSeoIntro h1 {
+  .homeSeoIntro h2 {
     font-size: clamp(25px, 8vw, 34px);
   }
 
