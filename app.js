@@ -3591,6 +3591,10 @@ const INFO_TEXTS = {
 let currentProduct = null;
 let currentPlanIdx = 0;
 
+function publicProductTitle(value) {
+  return String(value || "").replace(/\s+almaq\s*$/i, "").trim();
+}
+
 window.openProductPage = (id) => {
   const p = DATA.products.find(x => x.id === id);
   if(!p) return;
@@ -3607,7 +3611,7 @@ window.openProductPage = (id) => {
   if(mainImg) mainImg.src = p.image;
   
   const titleEl = document.getElementById("pp-main-title");
-  if(titleEl) titleEl.textContent = p.seoH1 || (p.variant ? `${p.title} - (${p.variant})` : p.title);
+  if(titleEl) titleEl.textContent = publicProductTitle(p.seoH1 || (p.variant ? `${p.title} - (${p.variant})` : p.title));
 
   renderProductPlans(p);
   renderSimilarProducts(p);
@@ -3691,7 +3695,7 @@ function renderSimilarProducts(p) {
       <div class="pp-sim-card" onclick="window.openProductPage('${sp.id}')">
         <img src="${sp.image}" class="pp-sim-img" alt="">
         <div class="pp-sim-info">
-           <div class="pp-sim-title">${sp.title}</div>
+           <div class="pp-sim-title">${publicProductTitle(sp.title)}</div>
            <div class="pp-sim-price">${minP > 0 ? minP.toFixed(2) + ' ₼' : UI.stokOut}</div>
         </div>
       </div>
@@ -3717,7 +3721,7 @@ function renderProductTabs(p) {
       }
       else if (p.id === "netflix" || p.id === "hbomax") {
         cBox.innerHTML = `
-          <h3 style="color:#ffd400; margin-top:0;">Mirpanel: ${p.title} Qaydaları</h3>
+          <h3 style="color:#ffd400; margin-top:0;">Mirpanel: ${publicProductTitle(p.title)} Qaydaları</h3>
           <ul style="list-style-type: none; padding-left:0; margin-bottom:15px; line-height: 1.6;">
             <li>✅ Otaq yalnız sizə aiddir.</li>
             <li>✅ Otaq Adını və PIN-i dəyişə bilərsiniz.</li>
@@ -3822,7 +3826,7 @@ function showConfirmOnlyForm(p, plan) {
     <div class="mpForm">
       <div class="mpFormTitle" style="margin-bottom: 10px;">Sifarişi Təsdiqlə</div>
       <div style="text-align:center; color:#ccc; font-size:14px; margin-bottom:20px; line-height: 1.5;">
-         Siz <b>${p.title}</b> (${plan.label || plan.months + ' aylıq'}) sifariş edirsiniz.
+         Siz <b>${publicProductTitle(p.title)}</b> (${plan.label || plan.months + ' aylıq'}) sifariş edirsiniz.
       </div>
       <button id="c_send" class="mpBtn">Sifarişi Təsdiqlə</button>
     </div>
@@ -3929,19 +3933,20 @@ function showTikTokJetonForm(p, plan) {
 
 function sendWA(p, plan, extra) {
   const tPlan = plan.label ? plan.label : `${plan.months} aylıq`;
+  const orderProductTitle = publicProductTitle(p.title);
   const orderId = Math.floor(10000 + Math.random() * 90000);
   const GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbw8eRhDxBhq5Kf68eVQBAnqf9llgo1bQWKgdwpBa0utRgVwn6rKd9YUCP6e70iPbHTMOg/exec";
 
   const formData = new FormData();
   formData.append('orderId', orderId); 
-  formData.append('product', p.title);
+  formData.append('product', orderProductTitle);
   formData.append('plan', tPlan);
   formData.append('price', plan.price + ' ' + p.currency);
   formData.append('extra', extra); 
 
   fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: formData }).catch(err => { console.error("Sheet Error:", err); });
 
-  const waMessage = `Salam, sifariş etmək istəyirəm.\n\nSifariş №: ${orderId}\nMəhsul: ${p.title}\nMüddət: ${tPlan}\nQiymət: ${plan.price} ${p.currency}\n\n${extra}`;
+  const waMessage = `Salam, sifariş etmək istəyirəm.\n\nSifariş №: ${orderId}\nMəhsul: ${orderProductTitle}\nMüddət: ${tPlan}\nQiymət: ${plan.price} ${p.currency}\n\n${extra}`;
   window.open(PHONE_WA + "?text=" + encodeURIComponent(waMessage), "_blank");
 }
 
@@ -4217,7 +4222,7 @@ function cardHTML(p, idx) {
     <a class="card" href="/mehsul/${productSlug}" data-product-id="${p.id}" style="animation-delay:${Math.min(idx * 0.03, 0.25)}s">
       <div class="imgWrap"><img class="img" src="${p.image}" alt=""><div class="cornerPrice">${showPrice}</div></div>
       <div class="pad">
-        <div class="topline"><h3 class="title">${esc(p.title)}</h3><div class="badge">${esc(p.badge)}</div></div>
+        <div class="topline"><h3 class="title">${esc(publicProductTitle(p.title))}</h3><div class="badge">${esc(p.badge)}</div></div>
         <div class="meta">${esc(p.desc)}</div>
         <div class="priceRow"><span class="btn primary">${UI.orderBtn}</span></div>
       </div>
@@ -4247,28 +4252,65 @@ function initSidebar() {
   const heroSection = document.getElementById("hero-section");
   const homePageView = document.getElementById("homePageView");
   const productPageView = document.getElementById("productPageView");
+  let lastFocusedElement = null;
+
+  function focusableElements() {
+    if (!sideMenu) return [];
+    return [...sideMenu.querySelectorAll('button:not([disabled]), input:not([disabled]), a[href]')]
+      .filter((element) => !element.hidden && element.getAttribute("aria-hidden") !== "true");
+  }
 
   function openMenu() {
     if(!sideMenu) return;
+    lastFocusedElement = document.activeElement;
     sideMenu.classList.add("active");
     if(sideMenuOverlay) sideMenuOverlay.classList.add("active");
-    document.body.style.overflow = "hidden";
+    sideMenu.setAttribute("aria-hidden", "false");
+    sideMenuOverlay?.setAttribute("aria-hidden", "false");
+    menuOpenBtn?.setAttribute("aria-expanded", "true");
+    document.body.classList.add("side-menu-open");
+    (sideMenuClose || focusableElements()[0])?.focus();
   }
 
-  function closeMenu() {
+  function closeMenu({ restoreFocus = true } = {}) {
     if(!sideMenu) return;
     sideMenu.classList.remove("active");
     if(sideMenuOverlay) sideMenuOverlay.classList.remove("active");
-    document.body.style.overflow = "";
+    sideMenu.setAttribute("aria-hidden", "true");
+    sideMenuOverlay?.setAttribute("aria-hidden", "true");
+    menuOpenBtn?.setAttribute("aria-expanded", "false");
+    document.body.classList.remove("side-menu-open");
+    if (restoreFocus && lastFocusedElement instanceof HTMLElement) lastFocusedElement.focus();
   }
 
   if(menuOpenBtn) menuOpenBtn.addEventListener("click", openMenu);
   if(sideMenuClose) sideMenuClose.addEventListener("click", closeMenu);
   if(sideMenuOverlay) sideMenuOverlay.addEventListener("click", closeMenu);
 
+  document.addEventListener("keydown", (event) => {
+    if (!sideMenu?.classList.contains("active")) return;
+    if (event.key === "Escape") {
+      event.preventDefault();
+      closeMenu();
+      return;
+    }
+    if (event.key !== "Tab") return;
+    const focusable = focusableElements();
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  });
+
   const smLinks = document.querySelectorAll(".sm-link");
   smLinks.forEach(link => {
-    link.addEventListener("click", closeMenu);
+    link.addEventListener("click", () => closeMenu({ restoreFocus: false }));
   });
 
   const linkHome = document.getElementById("linkHome");

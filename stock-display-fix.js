@@ -7,6 +7,10 @@
       .replaceAll('"', "&quot;");
   }
 
+  function publicProductTitle(value) {
+    return String(value || "").replace(/\s+almaq\s*$/i, "").trim();
+  }
+
   function stockNumber(product) {
     if (product?.stockEnabled === false) return null;
     const rawStock = product.stock ?? product.stockCount ?? product.stockQuantity;
@@ -181,7 +185,7 @@
         <a class="card" href="${productUrl}" data-product-id="${escapeHtml(product.id)}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s;text-decoration:none;color:inherit">
           <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt=""><div class="cornerPrice">${priceText(product)}</div></div>
           <div class="pad">
-            <div class="topline"><h3 class="title">${escapeHtml(product.title)}</h3><div class="badge">${escapeHtml(product.badge)}</div></div>
+            <div class="topline"><h3 class="title">${escapeHtml(publicProductTitle(product.title))}</h3><div class="badge">${escapeHtml(product.badge)}</div></div>
             <div class="meta">${escapeHtml(product.desc)}</div>
             ${stockBadgeHTML(product)}
             <div class="priceRow"><span class="btn primary" style="display:inline-flex;align-items:center;justify-content:center">${escapeHtml(UI?.orderBtn || "Sifariş et")}</span></div>

@@ -13,6 +13,10 @@
   const AGREEMENT_ERROR = "Davam etmək üçün istifadə qaydalarını və şərtləri qəbul edin.";
   let orderTermsAccepted = false;
 
+  function publicProductTitle(value) {
+    return String(value || "").replace(/\s+almaq\s*$/i, "").trim();
+  }
+
   const ORDER_FLOWS = new Set([
     "direct_whatsapp",
     "form_then_whatsapp",
@@ -1086,7 +1090,7 @@
     const selectedPlanLabel = planLabel(plan);
 
     if (img) img.src = product.image || "";
-    if (title) title.textContent = product.title || "";
+    if (title) title.textContent = publicProductTitle(product.title);
     if (desc) desc.textContent = product.desc || "";
     if (info) info.textContent = selectedPlanLabel ? `${selectedPlanLabel} / ${priceText(product, plan)}` : priceText(product, plan);
     if (infoBox) infoBox.innerHTML = "";
@@ -1116,7 +1120,7 @@
 
   function buildWhatsAppMessage(product, plan, formData = {}, orderId = createOrderId()) {
     const settings = { extraMessage: "", includeSeller: true, includeStock: false, ...(product.whatsapp || {}) };
-    const lines = ["Salam, sifariş etmək istəyirəm.", "", `Sifariş №: ${orderId}`, `Məhsul: ${product.title || product.id}`];
+    const lines = ["Salam, sifariş etmək istəyirəm.", "", `Sifariş №: ${orderId}`, `Məhsul: ${publicProductTitle(product.title) || product.id}`];
     const selectedPlanLabel = planLabel(plan);
 
     if (selectedPlanLabel) lines.push(`Plan: ${selectedPlanLabel}`);
@@ -1207,7 +1211,7 @@
     const order = buildWhatsAppMessage(product, plan, formData);
     submitGoogleSheets({
       ...order,
-      productTitle: product.title || product.id,
+      productTitle: publicProductTitle(product.title) || product.id,
       stockBefore: stockResult?.stockBefore,
       stockAfter: stockResult?.stockAfter
     });
@@ -1342,10 +1346,10 @@
           </span>
           <div>
             <h2 class="orderConfirmationTitle" id="orderConfirmationTitle">${escapeHtml(title)}</h2>
-            <div class="orderConfirmationProduct">${escapeHtml(product.title || product.id || "")}</div>
+            <div class="orderConfirmationProduct">${escapeHtml(publicProductTitle(product.title) || product.id || "")}</div>
           </div>
         </div>
-        <div class="orderConfirmationTerms" tabindex="0" aria-label="${escapeHtml(product.title || "")} sifariş şərtləri">
+        <div class="orderConfirmationTerms" tabindex="0" aria-label="${escapeHtml(publicProductTitle(product.title))} sifariş şərtləri">
           <div class="orderConfirmationDesc">${descriptionHtml || "<p>Bu məhsul üçün sifariş şərtlərini oxuyub təsdiqləyin.</p>"}</div>
           ${noteHtml ? `<div class="orderConfirmationNote">${noteHtml}</div>` : ""}
           ${showHelp ? `<p class="orderConfirmationHelpInline"><a href="${escapeHtml(helpUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(helpLabel)}</a></p>` : ""}

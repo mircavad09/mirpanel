@@ -21,8 +21,8 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=admin-1785785781306" />
-  <link rel="stylesheet" href="premium-compact-glow.css?v=20260705-detail-image-1" />
+  <link rel="stylesheet" href="style.css?v=20260804-mobile-layout-1" />
+  <link rel="stylesheet" href="premium-compact-glow.css?v=20260804-mobile-layout-1" />
   <link rel="stylesheet" href="stock-display-fix.css?v=20260610-1" />
   <link rel="stylesheet" href="mobile-detail-unified.css?v=20260705-premium-layout-1" />
   <link rel="icon" href="assets/logo.png" />
@@ -213,7 +213,7 @@
       </nav>
 
       <div class="headActions" style="display: flex; gap: 10px; align-items: center;">
-        <button id="menuOpenBtn" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
+        <button id="menuOpenBtn" type="button" aria-label="Menyunu aç" aria-controls="sideMenu" aria-expanded="false" style="background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 10px 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="3" y1="12" x2="21" y2="12"></line>
             <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -437,9 +437,9 @@
 
   <a href="https://wa.me/994515243545" target="_blank" class="waFab" id="waFab">WA</a>
 
-  <div class="side-menu-overlay" id="sideMenuOverlay"></div>
-  <div class="side-menu" id="sideMenu">
-    <button class="side-menu-close" id="sideMenuClose">✕</button>
+  <div class="side-menu-overlay" id="sideMenuOverlay" aria-hidden="true"></div>
+  <div class="side-menu" id="sideMenu" role="dialog" aria-modal="true" aria-label="Mobil menyu" aria-hidden="true">
+    <button class="side-menu-close" id="sideMenuClose" type="button" aria-label="Menyunu bağla">✕</button>
     <div class="side-menu-search">
       <input type="text" placeholder="Məhsul axtar..." id="sideMenuInput" data-i18n-placeholder="searchShort" />
     </div>
@@ -452,11 +452,11 @@
     </ul>
   </div>
 
-  <script src="app.js?v=admin-1785785781306"></script>
+  <script src="app.js?v=20260804-mobile-layout-1"></script>
   <script src="cms-site.js?v=admin-1785785781306"></script>
   <script src="hbo-max-order-fix.js?v=mandatory-consent-20260802-1"></script>
-  <script src="order-confirmation.js?v=admin-1785785781306"></script>
-  <script src="stock-display-fix.js?v=20260724-product-pages-1"></script>
+  <script src="order-confirmation.js?v=20260804-mobile-layout-1"></script>
+  <script src="stock-display-fix.js?v=20260804-mobile-layout-1"></script>
   <script src="search-suggestions-fix.js?v=20260704-spotify-flow-1"></script>
   <script src="frontend-routing-detail-fix.js?v=20260610-1"></script>
   <script src="seo-router.js?v=20260724-product-pages-2"></script>
@@ -494,30 +494,6 @@
           });
       }
 
-      // YAN MENYU JS MƏNTİQİ
-      const menuOpenBtn = document.getElementById("menuOpenBtn");
-      const sideMenu = document.getElementById("sideMenu");
-      const sideMenuOverlay = document.getElementById("sideMenuOverlay");
-      const sideMenuClose = document.getElementById("sideMenuClose");
-
-      function openMenu() {
-        if(!sideMenu) return;
-        sideMenu.classList.add("active");
-        sideMenuOverlay.classList.add("active");
-        document.body.style.overflow = "hidden"; // Arxanın sürüşməsini bağla
-      }
-
-      function closeMenu() {
-        if(!sideMenu) return;
-        sideMenu.classList.remove("active");
-        sideMenuOverlay.classList.remove("active");
-        document.body.style.overflow = "";
-      }
-
-      if(menuOpenBtn) menuOpenBtn.addEventListener("click", openMenu);
-      if(sideMenuClose) sideMenuClose.addEventListener("click", closeMenu);
-      if(sideMenuOverlay) sideMenuOverlay.addEventListener("click", closeMenu);
-
       function installZoomLock() {
         document.addEventListener("gesturestart", (event) => event.preventDefault(), { passive: false });
         document.addEventListener("gesturechange", (event) => event.preventDefault(), { passive: false });
@@ -534,33 +510,6 @@
       }
 
       installZoomLock();
-
-      // Linklərə kliklədikdə də menyu bağlansın
-      const smLinks = document.querySelectorAll(".sm-link");
-      smLinks.forEach(link => {
-        link.addEventListener("click", closeMenu);
-      });
-
-      // Ana Səhifəyə Klik Məntiqi
-      const linkHome = document.getElementById("linkHome");
-      if(linkHome) {
-        linkHome.addEventListener("click", (e) => {
-          e.preventDefault();
-          if (window.location.hash) history.replaceState("", document.title, window.location.pathname + window.location.search);
-          if(productView) productView.style.display = "none";
-          if(homePageView) homePageView.style.display = "block";
-          if(heroSection) heroSection.style.display = "block"; // Hero-nu göstər
-          window.scrollTo(0, 0);
-        });
-      }
-
-      // Məhsullar Klik Məntiqi
-      const linkProducts = document.getElementById("linkProducts");
-      if(linkProducts) {
-        linkProducts.addEventListener("click", (e) => {
-          closeMenu();
-        });
-      }
 
       document.querySelectorAll(".desktopNavLink[data-nav]").forEach((link) => {
         link.addEventListener("click", (e) => {

@@ -128,6 +128,16 @@ function productUrlSlug(value) {
     .replace(/^-+|-+$/g, "");
 }
 
+function publicProductTitle(value) {
+  return String(value || "").replace(/\s+almaq\s*$/i, "").trim();
+}
+
+function updatePublicTitlePreview(product) {
+  if (!product) return;
+  $("previewTitle").textContent = publicProductTitle(product.seoH1 || product.title);
+  $("previewMeta").textContent = `İctimai başlıq · ${product.id} / ${product.category}`;
+}
+
 function updateProductSeoUrlPreview(value) {
   const preview = $("productSeoUrlPreview");
   if (preview) preview.textContent = `https://mirpanel.com/mehsul/${productUrlSlug(value)}`;
@@ -586,8 +596,7 @@ function renderProductForm() {
 
   const confirmation = ensureConfirmation(product);
   $("previewImage").src = imageUrl(product.image);
-  $("previewTitle").textContent = product.title;
-  $("previewMeta").textContent = `${product.id} / ${product.category}`;
+  updatePublicTitlePreview(product);
 
   setValue("productActive", product.active !== false, "checked");
   setValue("productOrder", product.order ?? "");
@@ -795,7 +804,7 @@ bindProductField("productId", (p, e) => {
   state.data.content[nextId] = state.data.content[oldId] || {};
   if (oldId !== nextId) delete state.data.content[oldId];
 });
-bindProductField("productTitle", (p, e) => { p.title = e.value; $("previewTitle").textContent = p.title; });
+bindProductField("productTitle", (p, e) => { p.title = e.value; updatePublicTitlePreview(p); });
 bindProductField("productVariant", (p, e) => p.variant = e.value);
 bindProductField("productCategory", (p, e) => p.category = e.value);
 bindProductField("productFlow", (p, e) => {
@@ -843,7 +852,7 @@ $("productSeoSlug").addEventListener("input", () => updateProductSeoSlug(false))
 $("productSeoSlug").addEventListener("change", () => updateProductSeoSlug(true));
 bindProductField("productSeoTitle", (p, e) => p.seoTitle = e.value);
 bindProductField("productSeoDescription", (p, e) => p.seoDescription = e.value);
-bindProductField("productSeoH1", (p, e) => p.seoH1 = e.value);
+bindProductField("productSeoH1", (p, e) => { p.seoH1 = e.value; updatePublicTitlePreview(p); });
 bindProductField("productSeoPrimaryKeyword", (p, e) => p.seoPrimaryKeyword = e.value);
 bindProductField("productSeoRelatedKeywords", (p, e) => p.seoRelatedKeywords = e.value);
 bindProductField("productSeoKeywords", (p, e) => p.seoKeywords = e.value);

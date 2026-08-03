@@ -289,7 +289,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
     const shownPrice = product.id === "tiktok_jeton"
       ? `10.00 ${cleanText(product.currency)}`
       : prices.length ? `${Math.min(...prices).toFixed(2)} ${cleanText(product.currency)}` : "—";
-    return `<a class="card" href="${productCanonicalPath(slug)}" data-product-id="${escapeAttribute(product.id)}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s"><div class="imgWrap"><img class="img" src="${escapeAttribute(rootRelativeUrl(product.image))}" alt="${escapeAttribute(product.imageAlt || product.title)}"><div class="cornerPrice">${escapeHtml(shownPrice)}</div></div><div class="pad"><div class="topline"><h2 class="title">${escapeHtml(product.title)}</h2><div class="badge">${escapeHtml(product.badge)}</div></div><div class="meta">${escapeHtml(product.desc)}</div><div class="priceRow"><span class="btn primary">${escapeHtml(cms.commonTexts?.order || "Sifariş et")}</span></div></div></a>`;
+    return `<a class="card" href="${productCanonicalPath(slug)}" data-product-id="${escapeAttribute(product.id)}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s"><div class="imgWrap"><img class="img" src="${escapeAttribute(rootRelativeUrl(product.image))}" alt="${escapeAttribute(product.imageAlt || product.title)}"><div class="cornerPrice">${escapeHtml(shownPrice)}</div></div><div class="pad"><div class="topline"><h2 class="title">${escapeHtml(publicProductTitle(product.title))}</h2><div class="badge">${escapeHtml(product.badge)}</div></div><div class="meta">${escapeHtml(product.desc)}</div><div class="priceRow"><span class="btn primary">${escapeHtml(cms.commonTexts?.order || "Sifariş et")}</span></div></div></a>`;
   }).join("");
   const structuredData = safeJson({
     "@context": "https://schema.org",
@@ -303,7 +303,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
           itemListElement: active.map(({ product, slug }, index) => ({
             "@type": "ListItem",
             position: index + 1,
-            name: cleanText(product.title),
+            name: publicProductTitle(product.title),
             url: `${SITE_URL}${productCanonicalPath(slug)}`
           }))
         }
@@ -318,7 +318,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
     ]
   });
   const html = `<!DOCTYPE html>
-<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=final22"><link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
+<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260804-mobile-layout-1"><link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document"><header class="product-page-header"><div class="product-page-header-inner"><a class="product-page-brand" href="/"><img src="/assets/logo.png" alt="Mirpanel"><span>MIRPANEL</span></a><nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections, "products")}</nav></div></header><main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer></body></html>`;
   return new Map([["mehsul.page", applyCmsBrandAndNav(html, cms, "products")]]);
 }
@@ -326,7 +326,8 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
   const canonical = `${SITE_URL}${productCanonicalPath(slug)}`;
   const title = cleanText(product.seoTitle) || `${cleanText(product.title)} | Mirpanel`;
-  const h1 = cleanText(product.seoH1) || cleanText(product.title);
+  const displayTitle = publicProductTitle(product.title);
+  const h1 = publicProductTitle(product.seoH1 || product.title);
   const description =
     cleanText(product.seoDescription) ||
     cleanText(product.desc) ||
@@ -357,7 +358,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         "@type": "Product",
         "@id": `${canonical}#product`,
         url: canonical,
-        name: cleanText(product.title),
+        name: displayTitle,
         description,
         image: [imageUrl],
         sku: String(product.id || ""),
@@ -383,7 +384,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
           {
             "@type": "ListItem",
             position: 3,
-            name: cleanText(product.title),
+            name: displayTitle,
             item: canonical
           }
         ]
@@ -419,11 +420,11 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=final22">
-  <link rel="stylesheet" href="/premium-compact-glow.css?v=20260705-detail-image-1">
+  <link rel="stylesheet" href="/style.css?v=20260804-mobile-layout-1">
+  <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1">
+  <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
@@ -434,7 +435,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         <img src="/assets/logo.png" alt="Mirpanel">
         <span>MIRPANEL</span>
       </a>
-      <nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections)}</nav>
+      <nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections, "products")}</nav>
     </div>
   </header>
 
@@ -442,14 +443,15 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     <nav class="product-page-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Ana səhifə</a><span aria-hidden="true">›</span>
       <a href="/mehsul">Məhsullar</a><span aria-hidden="true">›</span>
-      <span aria-current="page">${escapeHtml(product.title)}</span>
+      <span aria-current="page">${escapeHtml(displayTitle)}</span>
     </nav>
     <div class="product-page-layout">
       <article class="product-page-card">
         <div class="product-page-card-grid">
           <div class="product-page-media">
+            <img class="product-page-media-backdrop" src="${escapeAttribute(imageSrc)}" alt="" aria-hidden="true" decoding="async">
             <span class="product-page-availability-badge${availability.inStock ? "" : " is-out"}">${escapeHtml(availability.label)}</span>
-            <img id="pp-main-img" src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(product.title)}" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img id="pp-main-img" src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(displayTitle)}" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
@@ -490,7 +492,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
       </div>
       <div class="product-page-content-card">
         <article class="product-page-panel" data-product-panel="about">
-          <h2>${escapeHtml(product.title)} haqqında</h2>
+          <h2>${escapeHtml(displayTitle)} haqqında</h2>
           ${product.desc && product.desc !== aboutText ? `<p>${escapeHtml(product.desc)}</p>` : ""}
           <p>${escapeHtml(aboutText || `${product.title} üçün mövcud planları və qiymətləri bu səhifədə görə bilərsiniz.`)}</p>
         </article>
@@ -515,9 +517,9 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">
       <button class="close" id="closeModal" type="button">Bağla ✕</button>
       <div class="mTop">
-        <img src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(product.title)}" id="mImg" class="mImg">
+        <img src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(displayTitle)}" id="mImg" class="mImg">
         <div class="mTxt">
-          <div class="mTitle" id="mTitle">${escapeHtml(product.title)}</div>
+          <div class="mTitle" id="mTitle">${escapeHtml(displayTitle)}</div>
           <div class="mDesc" id="mDesc">${escapeHtml(product.desc || "")}</div>
         </div>
       </div>
@@ -532,10 +534,10 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     </div>
   </div>
 
-  <script src="/app.js?v=product-pages-20260724-refine-1"></script>
+  <script src="/app.js?v=20260804-mobile-layout-1"></script>
   <script src="/hbo-max-order-fix.js?v=mandatory-consent-20260802-1"></script>
-  <script src="/order-confirmation.js?v=mandatory-consent-20260802-1"></script>
-  <script src="/stock-display-fix.js?v=20260610-1"></script>
+  <script src="/order-confirmation.js?v=20260804-mobile-layout-1"></script>
+  <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
   <script src="/product-page.js?v=20260724-refine-1"></script>
 </body>
 </html>
@@ -589,8 +591,8 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=final22">
-  <link rel="stylesheet" href="/product-page.css?v=20260724-mobile-pricing-1">
+  <link rel="stylesheet" href="/style.css?v=20260804-mobile-layout-1">
+  <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-2" : page.key === "sertler" ? "20260731-terms-2" : "20260728-1"}">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
@@ -836,7 +838,7 @@ function cmsIcon(name) {
   return icons[name] || icons.link;
 }
 
-function renderCmsNav(cms = {}) {
+function renderCmsNav(cms = {}, currentKey = null) {
   const items = Array.isArray(cms.navigation) ? cms.navigation : [];
   return items
     .filter((item) => item.enabled !== false && item.showHeader !== false && cleanText(item.label) && cleanText(item.url))
@@ -845,7 +847,10 @@ function renderCmsNav(cms = {}) {
       const url = canonicalSiteUrl(item.url);
       const external = /^https?:\/\//i.test(url);
       const newTab = item.newTab === true;
-      return `<a href="${escapeAttribute(url)}"${newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}><svg aria-hidden="true" viewBox="0 0 24 24">${cmsIcon(item.icon)}</svg><span>${escapeHtml(item.label)}</span></a>`;
+      const isCurrent = currentKey === "products"
+        ? url === "/mehsul"
+        : currentKey && url === `/${defaultSitePageSlugs[currentKey] || currentKey}`;
+      return `<a href="${escapeAttribute(url)}"${isCurrent ? ` aria-current="page"` : ""}${newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}><svg aria-hidden="true" viewBox="0 0 24 24">${cmsIcon(item.icon)}</svg><span>${escapeHtml(item.label)}</span></a>`;
     })
     .join("");
 }
@@ -869,7 +874,7 @@ function renderCmsFooter(cms = {}, ui = {}) {
 function applyCmsBrandAndNav(html, cms, currentKey = null) {
   const brand = cleanText(cms.site?.brandName) || "Mirpanel";
   const logo = rootRelativeUrl(cms.site?.logo || "assets/logo.png");
-  const navigation = renderCmsNav(cms);
+  const navigation = renderCmsNav(cms, currentKey);
   let next = html
     .replace(/(<a class="product-page-brand"[^>]*>[\s\S]*?<img )src="[^"]*" alt="[^"]*"/, `$1src="${escapeAttribute(logo)}" alt="${escapeAttribute(brand)}"`)
     .replace(/<span>MIRPANEL<\/span>/, `<span>${escapeHtml(brand.toUpperCase())}</span>`);
@@ -888,7 +893,7 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
     availability.label;
   const about = cleanText(content.aboutHtml || product.longDescription || product.seoContent || product.desc);
   const rules = cleanText(content.rulesHtml || product.usageRules || product.note || product.desc);
-  let next = applyCmsBrandAndNav(html, cms)
+  let next = applyCmsBrandAndNav(html, cms, "products")
     .replace(/<meta name="robots" content="index, follow">/, `<meta name="robots" content="${product.seoIndex === false ? "noindex, follow" : "index, follow"}">`)
     .replace(/"brand":\{"@type":"Brand","name":"Mirpanel"\}/, `"brand":{"@type":"Brand","name":${safeJson(brand)}}`)
     .replace(/(<img id="pp-main-img"[^>]* alt=")[^"]*(")/, `$1${escapeAttribute(product.imageAlt || product.title)}$2`)
@@ -902,7 +907,7 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
     .replace(/(<a class="product-page-similar-more"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.moreProducts || "Daha çox məhsul")}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms)}</footer>`);
   if (about) {
-    next = next.replace(/(<article class="product-page-panel" data-product-panel="about">)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(product.title)} ${escapeHtml(texts.productAbout || "haqqında")}</h2>${about}$2`);
+    next = next.replace(/(<article class="product-page-panel" data-product-panel="about">)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(publicProductTitle(product.title))} ${escapeHtml(texts.productAbout || "haqqında")}</h2>${about}$2`);
   }
   if (rules) {
     next = next.replace(/(<article class="product-page-panel" data-product-panel="rules" hidden>)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(texts.usageRules || "İstifadə qaydaları")}</h2>${rules}$2`);
@@ -1029,7 +1034,7 @@ function renderSimilar(similar) {
       : "Stokda yoxdur";
     return `<a class="product-page-similar-card" href="${escapeAttribute(productCanonicalPath(slug))}">
       <img src="${escapeAttribute(rootRelativeUrl(product.image))}" class="product-page-similar-image" alt="${escapeAttribute(product.imageAlt || product.title)}" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title">${escapeHtml(product.title)}</div>
+      <div class="product-page-similar-title">${escapeHtml(publicProductTitle(product.title))}</div>
       ${product.category ? `<div class="product-page-similar-category">${escapeHtml(product.category)}</div>` : ""}
       <div class="product-page-similar-price">${escapeHtml(priceText)}</div>
     </a>`;
@@ -1142,6 +1147,10 @@ function imageMimeType(value) {
 
 function cleanText(value) {
   return String(value ?? "").trim();
+}
+
+function publicProductTitle(value) {
+  return cleanText(value).replace(/\s+almaq\s*$/i, "").trim();
 }
 
 function plainMetadataText(value) {

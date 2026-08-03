@@ -809,21 +809,29 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
 .side-menu {
   position: fixed;
   top: 0;
-  left: -320px; /* Soldan açılması üçün */
-  width: 300px;
-  max-width: 80vw;
-  height: 100%;
+  left: 0;
+  width: min(320px, calc(100vw - 44px));
+  height: 100dvh;
   background: #0f0f0f;
   border-right: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: 10px 0 30px rgba(0, 0, 0, 0.5);
   z-index: 100001;
-  padding: 24px 20px;
+  padding: max(18px, env(safe-area-inset-top)) 16px max(18px, env(safe-area-inset-bottom));
   display: flex;
   flex-direction: column;
-  transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1); /* Səlis animasiya */
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  transform: translateX(-105%);
+  transition: transform 0.32s cubic-bezier(0.25, 0.8, 0.25, 1);
 }
 .side-menu.active {
-  transform: translateX(320px);
+  transform: translateX(0);
+}
+
+body.side-menu-open {
+  overflow: hidden;
+  touch-action: none;
 }
 
 .side-menu-close {
@@ -840,7 +848,7 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
   justify-content: center;
   font-size: 14px;
   transition: 0.2s;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 .side-menu-close:hover {
   background: rgba(255, 212, 0, 0.2);
@@ -849,14 +857,15 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
 }
 
 .side-menu-search {
-  margin-bottom: 25px;
+  margin-bottom: 14px;
 }
 .side-menu-search input {
   width: 100%;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 99px;
-  padding: 14px 18px;
+  min-height: 44px;
+  padding: 10px 14px;
   color: #fff;
   font-family: inherit;
   font-size: 14px;
@@ -874,21 +883,47 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 15px; /* Geniş şaquli məsafə */
+  gap: 8px;
 }
 .side-menu-links li a {
-  display: block;
-  font-size: 16px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.85);
-  padding: 12px 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
+  background: rgba(255, 255, 255, 0.025);
   transition: 0.2s ease;
+}
+.side-menu-links li a svg {
+  width: 22px;
+  height: 22px;
+  max-width: 22px;
+  max-height: 22px;
+  flex: 0 0 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.side-menu-links li a span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .side-menu-links li a:hover {
   background: rgba(255, 255, 255, 0.05);
   color: #ffd400;
-  padding-left: 15px; /* Üzərinə gələndə cüzi sağa sürüşsün */
+  border-color: rgba(255, 212, 0, 0.28);
+}
+.side-menu-links li a:focus-visible,
+.side-menu-close:focus-visible {
+  outline: 2px solid #ffd400;
+  outline-offset: 2px;
 }
 /* =========================
    PREMIUM GLASSMORPHISM SORT BANNER
