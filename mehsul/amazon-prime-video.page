@@ -85,21 +85,26 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/netflix-umumi">
-      <img src="/assets/netflix.png" class="product-page-similar-image" alt="Netflix Ümumi" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title">Netflix Ümumi</div>
-      <div class="product-page-similar-category">film</div>
-      <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/netflix-sexsi">
       <img src="/assets/netflix.png" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title">Netflix Şəxsi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/netflix-umumi">
+      <img src="/assets/netflix.png" class="product-page-similar-image" alt="Netflix Ümumi" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title">Netflix Ümumi</div>
+      <div class="product-page-similar-category">film</div>
+      <div class="product-page-similar-price">3.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/hbo-max">
       <img src="/uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083" class="product-page-similar-image" alt="HBO Max" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title">HBO Max</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3">
+      <img src="/assets/google-ai.png" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title">Google AI Pro + VEO 3 (18  AYLIQ)</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">16.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro">
       <img src="/assets/capcut.png" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title">CapCut Pro</div>
@@ -110,11 +115,6 @@
       <div class="product-page-similar-title">Spotify Premium</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">4.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3">
-      <img src="/assets/google-ai.png" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title">Google AI Pro + VEO 3</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">16.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab">
       <img src="/assets/youtube.png" class="product-page-similar-image" alt="Youtube Eyni hesab" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title">Youtube Eyni hesab</div>
