@@ -66,6 +66,7 @@
         const active = tab.dataset.productTab === name;
         tab.classList.toggle("is-active", active);
         tab.setAttribute("aria-selected", String(active));
+        tab.setAttribute("tabindex", active ? "0" : "-1");
       });
       panels.forEach((panel) => {
         panel.hidden = panel.dataset.productPanel !== name;
@@ -74,6 +75,18 @@
 
     tabs.forEach((tab) => {
       tab.addEventListener("click", () => showPanel(tab.dataset.productTab));
+      tab.addEventListener("keydown", (event) => {
+        const currentIndex = tabs.indexOf(tab);
+        let nextIndex = currentIndex;
+        if (event.key === "ArrowRight") nextIndex = (currentIndex + 1) % tabs.length;
+        else if (event.key === "ArrowLeft") nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+        else if (event.key === "Home") nextIndex = 0;
+        else if (event.key === "End") nextIndex = tabs.length - 1;
+        else return;
+        event.preventDefault();
+        showPanel(tabs[nextIndex].dataset.productTab);
+        tabs[nextIndex].focus();
+      });
     });
     showPanel("about");
 

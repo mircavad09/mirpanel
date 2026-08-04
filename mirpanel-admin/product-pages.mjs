@@ -424,7 +424,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
+  <link rel="stylesheet" href="/product-page.css?v=20260804-desktop-layout-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
@@ -487,16 +487,16 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 
     <section class="product-page-content" id="product-about">
       <div class="product-page-tabs" role="tablist" aria-label="Məhsul məlumatı">
-        <button class="product-page-tab is-active" type="button" role="tab" aria-selected="true" data-product-tab="about">Məhsul haqqında</button>
-        <button class="product-page-tab" type="button" role="tab" aria-selected="false" data-product-tab="rules">İstifadə qaydaları</button>
+        <button id="product-tab-about" class="product-page-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="product-panel-about" tabindex="0" data-product-tab="about">Məhsul haqqında</button>
+        <button id="product-tab-rules" class="product-page-tab" type="button" role="tab" aria-selected="false" aria-controls="product-panel-rules" tabindex="-1" data-product-tab="rules">İstifadə qaydaları</button>
       </div>
       <div class="product-page-content-card">
-        <article class="product-page-panel" data-product-panel="about">
+        <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about">
           <h2>${escapeHtml(displayTitle)} haqqında</h2>
           ${product.desc && product.desc !== aboutText ? `<p>${escapeHtml(product.desc)}</p>` : ""}
           <p>${escapeHtml(aboutText || `${product.title} üçün mövcud planları və qiymətləri bu səhifədə görə bilərsiniz.`)}</p>
         </article>
-        <article class="product-page-panel" data-product-panel="rules" hidden>
+        <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden>
           <h2>İstifadə qaydaları</h2>
           <p>${escapeHtml(usageText || product.note || product.desc || "")}</p>
         </article>
@@ -538,7 +538,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/hbo-max-order-fix.js?v=mandatory-consent-20260802-1"></script>
   <script src="/order-confirmation.js?v=20260804-mobile-layout-1"></script>
   <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
-  <script src="/product-page.js?v=20260724-refine-1"></script>
+  <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
 </body>
 </html>
 `.replace(/[ \t]+$/gm, "");
@@ -912,10 +912,10 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
     .replace(/(<a class="product-page-similar-more"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.moreProducts || "Daha çox məhsul")}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms)}</footer>`);
   if (about) {
-    next = next.replace(/(<article class="product-page-panel" data-product-panel="about">)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(publicProductTitle(product.title))} ${escapeHtml(texts.productAbout || "haqqında")}</h2>${about}$2`);
+    next = next.replace(/(<article\b(?=[^>]*class="product-page-panel")(?=[^>]*data-product-panel="about")[^>]*>)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(publicProductTitle(product.title))} ${escapeHtml(texts.productAbout || "haqqında")}</h2>${about}$2`);
   }
   if (rules) {
-    next = next.replace(/(<article class="product-page-panel" data-product-panel="rules" hidden>)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(texts.usageRules || "İstifadə qaydaları")}</h2>${rules}$2`);
+    next = next.replace(/(<article\b(?=[^>]*class="product-page-panel")(?=[^>]*data-product-panel="rules")[^>]*>)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(texts.usageRules || "İstifadə qaydaları")}</h2>${rules}$2`);
   }
   return next;
 }
@@ -1037,9 +1037,10 @@ function renderSimilar(similar) {
     const priceText = price > 0
       ? `${price.toFixed(2)} ${cleanText(product.currency)}`
       : "Stokda yoxdur";
-    return `<a class="product-page-similar-card" href="${escapeAttribute(productCanonicalPath(slug))}">
+    const title = publicProductTitle(product.title);
+    return `<a class="product-page-similar-card" href="${escapeAttribute(productCanonicalPath(slug))}" aria-label="${escapeAttribute(`${title} — ${priceText}`)}" title="${escapeAttribute(title)}">
       <img src="${escapeAttribute(rootRelativeUrl(product.image))}" class="product-page-similar-image" alt="${escapeAttribute(product.imageAlt || product.title)}" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title">${escapeHtml(publicProductTitle(product.title))}</div>
+      <div class="product-page-similar-title" title="${escapeAttribute(title)}">${escapeHtml(title)}</div>
       ${product.category ? `<div class="product-page-similar-category">${escapeHtml(product.category)}</div>` : ""}
       <div class="product-page-similar-price">${escapeHtml(priceText)}</div>
     </a>`;
