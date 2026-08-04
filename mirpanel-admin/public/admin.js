@@ -5,6 +5,11 @@ const state = {
   baseSha: "",
   selectedId: "",
   dirty: false,
+  draftSaved: false,
+  draftConflict: false,
+  publishStatus: "saved",
+  pendingUploads: [],
+  lastPublishResult: null,
   modalAction: null,
   csrfToken: "",
   previewDigest: ""
@@ -420,6 +425,8 @@ function toast(text, type = "good") {
 
 function markDirty() {
   state.dirty = true;
+  state.draftSaved = false;
+  state.publishStatus = "unsaved";
   state.previewDigest = "";
   renderStats();
 }
@@ -456,6 +463,10 @@ async function loadState() {
     const payload = await api("/api/admin/state");
     state.data = payload.data;
     state.baseSha = payload.sha;
+    state.draftSaved = payload.draftSaved === true;
+    state.draftConflict = payload.draftConflict === true;
+    state.publishStatus = state.draftSaved ? "ready" : "saved";
+    state.pendingUploads = Array.isArray(payload.pendingUploads) ? payload.pendingUploads : [];
     state.csrfToken = payload.csrfToken || state.csrfToken;
     state.previewDigest = "";
     state.data.products = (state.data.products || []).map(ensureProduct);
@@ -463,7 +474,7 @@ async function loadState() {
     state.data.content = state.data.content || {};
     state.data.ui = { ...defaultUi, ...(state.data.ui || {}) };
     state.selectedId = state.data.products[0]?.id || "";
-    state.dirty = false;
+    state.dirty = state.draftSaved;
     $("commitInfo").textContent = `Yükləndi: ${new Date(payload.loadedAt).toLocaleString("az-AZ")} / ${payload.sha.slice(0, 7)}`;
     renderAll();
   } catch (error) {
@@ -493,6 +504,9 @@ async function saveState() {
     return;
   }
 
+  const hadSavedDraft = state.draftSaved;
+  state.publishStatus = "github";
+  renderStats();
   setLoading(true, "Dəyişikliklər GitHub-a yazılır...");
   try {
     const payload = await api("/api/admin/save", {
@@ -506,11 +520,20 @@ async function saveState() {
     state.baseSha = payload.sha;
     state.previewDigest = "";
     state.dirty = false;
+    state.draftSaved = false;
+    state.draftConflict = false;
+    state.publishStatus = "cloudflare";
+    state.pendingUploads = [];
     $("commitInfo").textContent = `Commit: ${payload.commitSha.slice(0, 7)} / ${new Date(payload.committedAt).toLocaleString("az-AZ")}`;
     renderStats();
     state.lastPublishResult = payload;
     toast(payload.cacheCommitSha ? "Saxlandı və cache versiyası yeniləndi." : "Saxlandı.");
   } catch (error) {
+    state.publishStatus = "failed";
+    state.dirty = true;
+    state.draftSaved = hadSavedDraft;
+    if (error.status === 409) state.draftConflict = true;
+    renderStats();
     if (error.status === 401) location.href = "/login.html";
     else if (error.status === 409) toast("Conflict: GitHub-da app.js dəyişib. Yenilə düyməsini bas.", "bad");
     else toast(error.message, "bad");
@@ -527,8 +550,18 @@ function renderStats() {
   $("statDirty").textContent = state.dirty ? "Var" : "Yoxdur";
   const changeStatus = $("changeStatus");
   if (changeStatus) {
-    changeStatus.textContent = state.dirty ? "Yadda saxlanmamış dəyişikliklər var" : "Bütün dəyişikliklər yayımlanıb";
-    changeStatus.classList.toggle("dirty", state.dirty);
+    const labels = {
+      saved: "Bütün dəyişikliklər yadda saxlanılıb",
+      unsaved: "Yadda saxlanmamış dəyişiklik var",
+      ready: state.draftConflict ? "Yayımlama dayandırılıb — GitHub məlumatı dəyişib" : "Yayımlanmağa hazırdır",
+      github: "GitHub-a göndərilir",
+      cloudflare: "Cloudflare yayımlayır",
+      live: "Sayt canlıdır",
+      failed: "Yayımlama uğursuz oldu — dəyişiklikləriniz qorunub"
+    };
+    changeStatus.textContent = labels[state.publishStatus] || labels.saved;
+    changeStatus.classList.toggle("dirty", ["unsaved", "failed"].includes(state.publishStatus));
+    changeStatus.dataset.status = state.publishStatus;
   }
 }
 
@@ -1241,7 +1274,7 @@ $("previewOrderConfirmationBtn").addEventListener("click", () => {
 });
 
 $("refreshBtn").addEventListener("click", () => {
-  if (state.dirty && !confirm("Saxlanılmamış dəyişikliklər silinəcək. Davam et?")) return;
+  if (state.dirty && !state.draftSaved && !confirm("Yadda saxlanmamış dəyişikliklər silinəcək. Davam et?")) return;
   loadState();
 });
 $("saveBtn").addEventListener("click", () => showView("publish"));

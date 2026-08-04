@@ -255,6 +255,7 @@
       });
       const owner = bannerImageOwner(path);
       owner.item[owner.field] = result.publicPath;
+      if (result.filePath && !state.pendingUploads.includes(result.filePath)) state.pendingUploads.push(result.filePath);
       markDirty();
       owner.item[owner.previewKey] = result.previewDataUrl;
       if (!cms().media.some((item) => item.path === result.publicPath)) {
@@ -329,7 +330,55 @@
       populateBoundInputs();
     }
   }
-  function handleClick(event) {
+  function withoutPreviewData(value) {
+    return JSON.parse(JSON.stringify(value, (key, current) => key.startsWith("_") ? undefined : current));
+  }
+  async function saveBannerDraft() {
+    const product = state.data.products.find((item) => item.id === selectedBannerProductId);
+    if (!product) return toast("Banner məhsulu tapılmadı.", "bad");
+    if (!state.dirty) return toast("Yadda saxlanacaq banner dəyişikliyi yoxdur.", "bad");
+    setLoading(true, "Banner dəyişiklikləri yadda saxlanılır...");
+    try {
+      const result = await api("/api/admin/banner-draft", {
+        method: "POST",
+        body: JSON.stringify({
+          baseSha: state.baseSha,
+          productId: product.id,
+          banner: withoutPreviewData(ensureProductBanner(product)),
+          media: withoutPreviewData(cms().media)
+        })
+      });
+      state.draftSaved = true;
+      state.draftConflict = result.draftConflict === true;
+      state.publishStatus = "ready";
+      renderStats();
+      toast(state.draftConflict
+        ? "Banner yadda saxlanıldı, amma GitHub məlumatı dəyişib. Yayımlamadan əvvəl konflikti həll edin."
+        : "Banner yadda saxlanıldı və yayımlanmağa hazırdır.", state.draftConflict ? "bad" : "good");
+    } catch (error) {
+      state.draftSaved = false;
+      state.publishStatus = "unsaved";
+      renderStats();
+      toast(error.message || "Banner yadda saxlanılmadı.", "bad");
+    } finally {
+      setLoading(false);
+    }
+  }
+  async function handleClick(event) {
+    const chooseBannerMedia = event.target.closest("[data-choose-banner-media]");
+    if (chooseBannerMedia) {
+      const path = chooseBannerMedia.dataset.chooseBannerMedia;
+      const item = cms().media[Number(chooseBannerMedia.dataset.mediaIndex)];
+      if (!item) return;
+      const owner = bannerImageOwner(path);
+      owner.item[owner.field] = item.path;
+      owner.item[owner.previewKey] = item._preview || "";
+      markDirty();
+      renderBanners();
+      populateBoundInputs();
+      toast("Şəkil kitabxanadan seçildi. Yadda saxla düyməsinə basın.");
+      return;
+    }
     const selectMedia = event.target.closest("[data-select-media]");
     if (selectMedia) {
       const item = cms().media[Number(selectMedia.dataset.selectMedia)];
@@ -366,9 +415,7 @@
       return;
     }
     if (event.target.closest("[data-save-banner]")) {
-      syncFooterProjection();
-      markDirty();
-      toast("Banner dəyişiklikləri yadda saxlanıldı və yayıma hazırdır.");
+      await saveBannerDraft();
       return;
     }
     const moveBanner = event.target.closest("[data-move-product-banner]");
@@ -389,12 +436,22 @@
     }
     const clearImage = event.target.closest("[data-clear-banner-image]");
     if (clearImage) {
-      const owner = bannerImageOwner(clearImage.dataset.clearBannerImage);
-      owner.item[owner.field] = "";
-      owner.item[owner.previewKey] = "";
-      markDirty();
-      renderBanners();
-      populateBoundInputs();
+      const imagePath = clearImage.dataset.clearBannerImage;
+      const owner = bannerImageOwner(imagePath);
+      const isMobile = owner.field === "mobileImage";
+      openModal(
+        isMobile ? "Mobil şəkli sil" : "Banner şəklini sil",
+        `<p>${isMobile ? "Mobil override silinəcək və əsas banner şəkli istifadə olunacaq." : "Seçilmiş banner şəkli silinəcək. Məhsulun əsas şəkli avtomatik fallback kimi göstəriləcək. Fallback istəmirsinizsə banneri deaktiv edin."}</p>`,
+        "Şəkli sil",
+        () => {
+          owner.item[owner.field] = "";
+          owner.item[owner.previewKey] = "";
+          markDirty();
+          renderBanners();
+          populateBoundInputs();
+          closeModal();
+        }
+      );
       return;
     }
     const addList = event.target.closest("[data-add-list]")?.dataset.addList;
@@ -470,21 +527,46 @@
     const imagePath = String(value || "").trim();
     if (!imagePath) return "";
     if (/^(?:data:|blob:|https?:\/\/)/i.test(imagePath)) return imagePath;
+    const cleanPath = imagePath.replace(/^\/+/, "").split("?")[0];
+    if (state.pendingUploads.includes(cleanPath)) {
+      return `/api/admin/pending-image?path=${encodeURIComponent(imagePath)}`;
+    }
     return `https://mirpanel.com/${imagePath.replace(/^\/+/, "")}`;
   }
-  function mediaOptions(selected) {
-    return `<option value="">Media seçin</option>${cms().media.map((item) =>
-      `<option value="${esc(item.path)}"${item.path === selected ? " selected" : ""}>${esc(item.alt || item.path)}</option>`
-    ).join("")}`;
+  function mediaDisplayName(item, index) {
+    const fileName = String(item?.path || "").split("/").at(-1)?.split("?")[0] || `şəkil-${index + 1}`;
+    return String(item?.name || item?.alt || fileName).trim();
   }
-  function imageEditor(path, label, imagePath, preview) {
+  function mediaUsageCount(mediaPath) {
+    if (!mediaPath) return 0;
+    const serialized = JSON.stringify({ products: state.data.products, supportCard: cms().supportCard, pages: state.data.siteSections });
+    return serialized.split(mediaPath).length - 1;
+  }
+  function bannerMediaLibrary(path, selected) {
+    const items = cms().media.map((item, index) => {
+      const name = mediaDisplayName(item, index);
+      const usage = mediaUsageCount(item.path);
+      return `<button class="bannerMediaChoice${item.path === selected ? " active" : ""}" type="button" data-choose-banner-media="${esc(path)}" data-media-index="${index}">
+        <img src="${esc(item._preview || cmsImageUrl(item.path))}" alt="${esc(item.alt || name)}">
+        <span><strong>${esc(name)}</strong><small>${usage ? `${usage} yerdə istifadə olunur` : "Hazırda istifadə olunmur"}</small></span>
+      </button>`;
+    }).join("");
+    return `<details class="bannerMediaLibrary"><summary>Şəkil kitabxanasından seç</summary><div class="bannerMediaEmpty">Kitabxanadan şəkil seçilməyib</div><div class="bannerMediaChoices">${items || '<div class="emptyMini">Şəkil kitabxanası boşdur.</div>'}</div></details>`;
+  }
+  function imageEditor(path, label, imagePath, preview, options = {}) {
+    const fallbackPath = options.fallbackPath || "";
+    const effectivePath = imagePath || fallbackPath;
+    const fallbackText = !imagePath && fallbackPath
+      ? `<small class="bannerFallback">Hazırda məhsulun əsas şəkli fallback kimi istifadə olunur.</small>`
+      : options.mobile
+        ? '<small class="bannerFallback">Mobil şəkil seçilməyib — əsas banner avtomatik istifadə olunur.</small>'
+        : "";
     return `<div class="bannerImageEditor">
       <strong>${esc(label)}</strong>
-      <img data-banner-preview="${esc(path)}" src="${esc(preview || cmsImageUrl(imagePath))}" alt=""${imagePath || preview ? "" : " hidden"}>
-      <label class="btn filePickerButton">Kompüterdən şəkil seç<input class="hidden" type="file" accept="image/jpeg,image/png,image/webp" data-banner-upload="${esc(path)}"></label>
-      <label>Şəkil kitabxanasından seç<select data-banner-media="${esc(path)}">${mediaOptions(imagePath)}</select></label>
-      <details><summary>Ətraflı məlumat</summary><code>${esc(imagePath || "Şəkil yolu seçilməyib")}</code></details>
-      <button class="btn" type="button" data-clear-banner-image="${esc(path)}">Seçimi təmizlə</button>
+      <img data-banner-preview="${esc(path)}" src="${esc(preview || cmsImageUrl(effectivePath))}" alt=""${effectivePath || preview ? "" : " hidden"}>
+      <div class="bannerImageActions"><label class="btn filePickerButton">Şəkli dəyiş<input class="hidden" type="file" accept="image/jpeg,image/png,image/webp" data-banner-upload="${esc(path)}"></label><button class="btn danger" type="button" data-clear-banner-image="${esc(path)}">Şəkli sil</button></div>
+      ${fallbackText}
+      ${bannerMediaLibrary(path, imagePath)}
       <small>JPG, PNG və ya WEBP · maksimum 5 MB</small>
     </div>`;
   }
@@ -529,18 +611,15 @@
         <button class="btn" type="button" data-move-product-banner="${esc(product.id)}" data-direction="1"${index === orderedProducts.length - 1 ? " disabled" : ""}>Aşağı</button>
       </div></div>
       <label class="switchLine bannerEnabled"><input type="checkbox" data-product-banner="${esc(path)}.enabled"${item.enabled ? " checked" : ""}><span>Banner aktivdir</span></label>
-      <div class="bannerImageGrid">
-        ${imageEditor(`${path}.desktopImage`, "Desktop banner önizləməsi", item.desktopImage, item._desktopPreview)}
-        ${imageEditor(`${path}.mobileImage`, "Mobil banner önizləməsi", item.mobileImage, item._mobilePreview || item._desktopPreview)}
-      </div>
+      ${imageEditor(`${path}.desktopImage`, "Banner şəkli", item.desktopImage, item._desktopPreview, { fallbackPath: product.image })}
+      <details class="adminAccordion bannerAdvanced"><summary>Ətraflı seçimlər — mobil üçün ayrıca şəkil</summary><p class="formHint">Bu sahə istəyə bağlıdır. Boş saxlanıldıqda əsas banner bütün ekranlarda istifadə olunur.</p>${imageEditor(`${path}.mobileImage`, "Mobil üçün ayrıca şəkil", item.mobileImage, item._mobilePreview, { fallbackPath: item.desktopImage || product.image, mobile: true })}</details>
       <div class="formGrid">
         <label>Alternativ mətn (alt)<input data-product-banner="${esc(path)}.alt" value="${esc(item.alt)}"></label>
         <label>Məhsul keçidi<input value="https://mirpanel.com/mehsul/${esc(slug)}" readonly></label>
         <label>Sıra<input type="number" min="1" max="${orderedProducts.length}" data-product-banner="${esc(path)}.order" value="${item.order}"></label>
       </div>
-      <label class="switchLine"><input type="checkbox" checked disabled><span>Mobil şəkil boşdursa desktop şəkli istifadə edilsin</span></label>
       <button class="btn primary" type="button" data-save-banner>Yadda saxla</button>
-      <small>Banner başlığı və açıqlaması məlumatda qorunur, amma şəklin üzərində göstərilmir. Keçid avtomatik yaranır və eyni tabda açılır.</small>
+      <small>Yadda saxla dəyişiklikləri yayıma hazırlayır. Canlı sayta çıxarmaq üçün yuxarıdakı Yayımla düyməsini basın.</small>
     </div>`;
     }
 
@@ -668,6 +747,7 @@
     try {
       const contentBase64 = await readFileAsBase64(file);
       const result = await api("/api/upload-product-image", { method: "POST", body: JSON.stringify({ productId: "media", fileName: file.name, mimeType: file.type, contentBase64 }) });
+      if (result.filePath && !state.pendingUploads.includes(result.filePath)) state.pendingUploads.push(result.filePath);
       const oldPath = item.path;
       replacePathDeep(state.data, oldPath, result.publicPath);
       Object.assign(item, { path: result.publicPath, _preview: result.previewDataUrl, name: file.name, size: file.size, type: file.type, uploadedAt: result.uploadedAt });
@@ -890,12 +970,21 @@
     await saveState();
     const published = state.lastPublishResult;
     if (!published) return;
+    state.publishStatus = "cloudflare";
+    renderStats();
+    const selectedProduct = state.data.products.find((item) => item.id === selectedBannerProductId);
+    const liveImagePath = selectedProduct
+      ? (ensureProductBanner(selectedProduct).desktopImage || selectedProduct.image || "")
+      : "";
     el("cmsPreviewResult").textContent = `Commit ${published.commitSha.slice(0, 12)} yaradıldı. Cloudflare və Render yoxlanılır...`;
     for (let attempt = 0; attempt < 18; attempt += 1) {
       try {
-        const status = await api(`/api/admin/deploy-status?appSha=${encodeURIComponent(published.sha)}`);
-        el("cmsPreviewResult").innerHTML = `<strong>Commit: ${esc(published.commitSha)}</strong><p>Cloudflare: HTTP ${status.cloudflare.status} — ${status.cloudflare.live ? "yeni məzmun canlıdır" : "deploy gözlənilir"}</p><p>Render: ${esc(status.render.url)} — HTTP ${status.render.status}</p>`;
+        const status = await api(`/api/admin/deploy-status?appSha=${encodeURIComponent(published.sha)}&imagePath=${encodeURIComponent(liveImagePath)}`);
+        const image = status.cloudflare.bannerImage || {};
+        el("cmsPreviewResult").innerHTML = `<strong>Commit: ${esc(published.commitSha)}</strong><p>Cloudflare: HTTP ${status.cloudflare.status} — ${status.cloudflare.live ? "yeni məzmun canlıdır" : "deploy gözlənilir"}</p>${liveImagePath ? `<p>Banner şəkli: HTTP ${Number(image.status || 0)} · ${esc(image.contentType || "yoxlanılır")}</p>` : ""}<p>Render: ${esc(status.render.url)} — HTTP ${status.render.status}</p>`;
         if (status.cloudflare.live && status.render.live) {
+          state.publishStatus = "live";
+          renderStats();
           toast("Cloudflare və Render canlı yoxlaması uğurludur.");
           return;
         }
@@ -904,6 +993,8 @@
       }
       await new Promise((resolve) => setTimeout(resolve, 5000));
     }
+    state.publishStatus = "cloudflare";
+    renderStats();
     toast("Commit yaradıldı, deploy hələ tamamlanmayıb. Statusu yenidən yoxlayın.", "bad");
   }
   async function uploadMedia() {
@@ -919,6 +1010,7 @@
         method: "POST",
         body: JSON.stringify({ productId: "media", fileName: file.name, mimeType: file.type, contentBase64 })
       });
+      if (result.filePath && !state.pendingUploads.includes(result.filePath)) state.pendingUploads.push(result.filePath);
       cms().media.push({ path: result.publicPath, _preview: result.previewDataUrl, alt: el("cmsMediaAlt").value, size: file.size, type: file.type, uploadedAt: result.uploadedAt });
       markDirty(); renderMedia(); toast("Şəkil media kitabxanasına əlavə edildi.");
     } catch (error) { toast(error.message, "bad"); }

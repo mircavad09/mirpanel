@@ -954,6 +954,107 @@ th {
   width: 100%;
 }
 
+.bannerImageActions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.bannerFallback,
+.bannerMediaEmpty {
+  color: var(--muted);
+}
+
+.bannerFallback {
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 212, 0, .2);
+  border-radius: 9px;
+  background: rgba(255, 212, 0, .04);
+}
+
+.bannerAdvanced {
+  margin: 0;
+}
+
+.bannerAdvanced > .bannerImageEditor {
+  margin-top: 12px;
+}
+
+.bannerMediaLibrary {
+  border-top: 1px solid var(--line);
+  padding-top: 9px;
+}
+
+.bannerMediaLibrary > summary {
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.bannerMediaEmpty {
+  padding: 9px 0;
+  font-size: 12px;
+}
+
+.bannerMediaChoices {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  max-height: 310px;
+  overflow-y: auto;
+}
+
+.bannerMediaChoice {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  min-width: 0;
+  padding: 8px;
+  color: var(--text);
+  text-align: left;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--panel);
+  cursor: pointer;
+}
+
+.bannerMediaChoice:hover,
+.bannerMediaChoice:focus-visible,
+.bannerMediaChoice.active {
+  border-color: var(--accent);
+  outline: none;
+}
+
+.bannerMediaChoice.active {
+  background: rgba(255, 212, 0, .08);
+}
+
+.bannerMediaChoice img {
+  width: 56px;
+  height: 42px;
+  object-fit: contain;
+  border-radius: 7px;
+  background: #080808;
+}
+
+.bannerMediaChoice span,
+.bannerMediaChoice strong,
+.bannerMediaChoice small {
+  display: block;
+  min-width: 0;
+}
+
+.bannerMediaChoice strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bannerMediaChoice small {
+  margin-top: 3px;
+  color: var(--muted);
+}
+
 .publishStep {
   padding: 16px;
   border: 1px solid var(--line);
@@ -992,6 +1093,11 @@ th {
     grid-template-columns: 1fr;
   }
 
+  .bannerImageActions,
+  .bannerMediaChoices {
+    grid-template-columns: 1fr;
+  }
+
   .bannerEditorHead {
     align-items: flex-start;
     flex-direction: column;
@@ -1000,6 +1106,10 @@ th {
   .bannerManageRow { grid-template-columns: 52px 1fr auto; }
   .bannerManageRow > label,
   .bannerManageRow .bannerOrderActions { grid-column: 2 / -1; }
+  .bannerManageRow .bannerOrderActions,
+  .bannerEditorHead .bannerOrderActions { flex-wrap: wrap; width: 100%; }
+  .bannerManageRow .bannerOrderActions .btn,
+  .bannerEditorHead .bannerOrderActions .btn { flex: 1 1 82px; min-width: 0; }
   .headerActions { flex-wrap: wrap; justify-content: flex-end; }
   .changeStatus { width: 100%; text-align: right; }
 }

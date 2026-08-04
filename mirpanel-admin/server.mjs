@@ -608,6 +608,7 @@ async function handleApi(request, response) {
       expiresAt: Date.now() + sessionTtl,
       csrfToken: crypto.randomBytes(24).toString("hex"),
       preview: null,
+      draft: null,
       pendingUploads: new Map()
     });
 
@@ -636,11 +637,18 @@ async function handleApi(request, response) {
 
   if (request.method === "GET" && request.url === "/api/admin/state") {
     const file = await getAppFile();
+    const session = getSession(request);
+    const draft = session.draft;
+    const hasDraft = Boolean(draft?.data && draft?.baseSha);
 
     return json(response, 200, {
-      sha: file.sha,
-      data: extractAdminState(file.source),
-      csrfToken: getSession(request).csrfToken,
+      sha: hasDraft ? draft.baseSha : file.sha,
+      currentSha: file.sha,
+      data: hasDraft ? draft.data : extractAdminState(file.source),
+      draftSaved: hasDraft,
+      draftConflict: hasDraft && draft.baseSha !== file.sha,
+      pendingUploads: [...(session.pendingUploads?.keys() || [])],
+      csrfToken: session.csrfToken,
       loadedAt: new Date().toISOString()
     });
   }
@@ -664,9 +672,16 @@ async function handleApi(request, response) {
   if (request.method === "GET" && request.url.startsWith("/api/admin/deploy-status")) {
     const requestUrl = new URL(request.url, "http://localhost");
     const expectedSha = String(requestUrl.searchParams.get("appSha") || "");
-    const [siteResult, adminResult] = await Promise.allSettled([
+    const requestedImage = String(requestUrl.searchParams.get("imagePath") || "").trim();
+    let imageUrl = "";
+    try {
+      const parsedImage = new URL(requestedImage || "/", "https://mirpanel.com/");
+      if (parsedImage.origin === "https://mirpanel.com" && requestedImage) imageUrl = parsedImage.href;
+    } catch { /* invalid image URL is reported below */ }
+    const [siteResult, adminResult, imageResult] = await Promise.allSettled([
       fetch(`https://mirpanel.com/app.js?deploy-check=${Date.now()}`, { redirect: "follow" }),
-      fetch("https://mirpanel.onrender.com/", { redirect: "follow" })
+      fetch("https://mirpanel.onrender.com/", { redirect: "follow" }),
+      imageUrl ? fetch(imageUrl, { redirect: "follow", headers: { Accept: "image/avif,image/webp,image/png,image/jpeg" } }) : Promise.resolve(null)
     ]);
     let liveAppSha = "";
     let siteStatus = 0;
@@ -677,11 +692,21 @@ async function handleApi(request, response) {
       }
     }
     const adminStatus = adminResult.status === "fulfilled" ? adminResult.value.status : 0;
+    const imageResponse = imageResult.status === "fulfilled" ? imageResult.value : null;
+    const imageStatus = imageResponse?.status || 0;
+    const imageType = imageResponse?.headers?.get("content-type") || "";
+    const imageLive = !imageUrl || (imageStatus === 200 && /^image\/(?:jpeg|png|webp)$/i.test(imageType));
     return json(response, 200, {
       cloudflare: {
         status: siteStatus,
-        live: Boolean(expectedSha && liveAppSha === expectedSha),
-        liveAppSha
+        live: Boolean(expectedSha && liveAppSha === expectedSha && imageLive),
+        liveAppSha,
+        bannerImage: {
+          url: imageUrl,
+          status: imageStatus,
+          contentType: imageType,
+          live: imageLive
+        }
       },
       render: {
         url: "https://mirpanel.onrender.com/",
@@ -689,6 +714,24 @@ async function handleApi(request, response) {
         live: adminStatus === 200
       }
     });
+  }
+
+  if (request.method === "GET" && request.url.startsWith("/api/admin/pending-image")) {
+    const session = getSession(request);
+    const requestUrl = new URL(request.url, "http://localhost");
+    const requestedPath = String(requestUrl.searchParams.get("path") || "")
+      .replace(/^\/+/, "")
+      .split("?")[0];
+    const fileBuffer = session.pendingUploads?.get(requestedPath);
+    if (!fileBuffer) return json(response, 404, { error: "Gözləyən şəkil tapılmadı." });
+    const extension = path.extname(requestedPath).toLowerCase();
+    const contentType = extension === ".png" ? "image/png" : extension === ".webp" ? "image/webp" : "image/jpeg";
+    response.writeHead(200, {
+      "Content-Type": contentType,
+      "Content-Length": fileBuffer.length,
+      "Cache-Control": "no-store"
+    });
+    return response.end(fileBuffer);
   }
 
   if (request.method === "POST" && request.url === "/api/upload-product-image") {
@@ -739,6 +782,42 @@ async function handleApi(request, response) {
       previewDataUrl: `data:${mimeType};base64,${fileBuffer.toString("base64")}`,
       staged: true,
       uploadedAt: new Date().toISOString()
+    });
+  }
+
+  if (request.method === "POST" && request.url === "/api/admin/banner-draft") {
+    const session = requireMutationAuth(request, response);
+    if (!session) return;
+    const body = await readBody(request);
+    const productId = String(body.productId || "").trim();
+    if (!body.baseSha || !productId || !body.banner) {
+      return json(response, 400, { error: "Banner, məhsul ID-si və baseSha tələb olunur." });
+    }
+    const parent = await getBranchHead();
+    const current = await getRepoFile("app.js", parent.commitSha);
+    const publishedData = extractAdminState(current.source);
+    const draftBase = session.draft?.baseSha === body.baseSha
+      ? session.draft.data
+      : publishedData;
+    const draftData = structuredClone(draftBase);
+    const product = draftData.products.find((item) => item.id === productId);
+    if (!product) return json(response, 404, { error: "Məhsul tapılmadı." });
+    product.banner = structuredClone(body.banner);
+    draftData.cms ||= {};
+    if (Array.isArray(body.media)) draftData.cms.media = structuredClone(body.media);
+    const normalized = normalizeAdminPayload(mergeAdminPayload(publishedData, draftData));
+    session.draft = {
+      baseSha: body.baseSha,
+      data: normalized,
+      savedAt: Date.now()
+    };
+    session.preview = null;
+    return json(response, 200, {
+      ok: true,
+      draftSaved: true,
+      draftConflict: current.sha !== body.baseSha,
+      currentSha: current.sha,
+      savedAt: new Date(session.draft.savedAt).toISOString()
     });
   }
 
@@ -833,7 +912,8 @@ async function handleApi(request, response) {
       });
     }
 
-    const current = await getAppFile();
+    const parent = await getBranchHead();
+    const current = await getRepoFile("app.js", parent.commitSha);
 
     if (current.sha !== body.baseSha) {
       return json(response, 409, {
@@ -868,7 +948,7 @@ async function handleApi(request, response) {
       });
     }
     const patched = patchAppSource(current.source, adminData);
-    const indexFile = await getRepoFile("index.html");
+    const indexFile = await getRepoFile("index.html", parent.commitSha);
     const version = `admin-${Date.now()}`;
     const patchedIndex = patchHomeStructuredData(bumpAssetVersions(indexFile.source, version), adminData.cms, adminData.products);
     const productPages = generateProductPageFiles(adminData.products, adminData.siteSections, adminData.cms, adminData.content);
@@ -887,7 +967,6 @@ async function handleApi(request, response) {
       files.set(filePath, buffer);
     }
     validateGeneratedOutput(patched, files);
-    const parent = await getBranchHead();
     const result = await commitRepoFiles({
       parent,
       files,
@@ -899,6 +978,7 @@ async function handleApi(request, response) {
     });
     const appSha = result.blobs.get("app.js");
     session.preview = null;
+    session.draft = null;
     session.pendingUploads?.clear();
 
     return json(response, 200, {

@@ -827,7 +827,7 @@ function normalizeProduct(product = {}, index = 0) {
     seoOgImage: safeUrl(product.seoOgImage || productImage),
     banner: {
       enabled: banner.enabled === true,
-      desktopImage: safeUrl(banner.desktopImage || productImage),
+      desktopImage: safeUrl(Object.hasOwn(banner, "desktopImage") ? banner.desktopImage : productImage),
       mobileImage: safeUrl(banner.mobileImage),
       title: cleanText(banner.title || productTitle, "", 200),
       description: cleanText(banner.description || product.desc || "", "", 1000),
