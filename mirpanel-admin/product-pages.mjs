@@ -318,7 +318,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
     ]
   });
   const html = `<!DOCTYPE html>
-<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260804-mobile-layout-1"><link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
+<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2"><link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document"><header class="product-page-header"><div class="product-page-header-inner"><a class="product-page-brand" href="/"><img src="/assets/logo.png" alt="Mirpanel"><span>MIRPANEL</span></a><nav class="product-page-nav" aria-label="Əsas menyu">${renderSiteNav(siteSections, "products")}</nav></div></header><main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer></body></html>`;
   return new Map([["mehsul.page", applyCmsBrandAndNav(html, cms, "products")]]);
 }
@@ -420,7 +420,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=20260804-mobile-layout-1">
+  <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
@@ -591,7 +591,7 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/style.css?v=20260804-mobile-layout-1">
+  <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
   <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-2" : page.key === "sertler" ? "20260731-terms-2" : "20260728-1"}">
   <link rel="icon" href="/assets/logo.png">
@@ -847,9 +847,14 @@ function renderCmsNav(cms = {}, currentKey = null) {
       const url = canonicalSiteUrl(item.url);
       const external = /^https?:\/\//i.test(url);
       const newTab = item.newTab === true;
-      const isCurrent = currentKey === "products"
-        ? url === "/mehsul"
-        : currentKey && url === `/${defaultSitePageSlugs[currentKey] || currentKey}`;
+      const currentUrl = currentKey === "home"
+        ? "/"
+        : currentKey === "products"
+          ? "/mehsul"
+          : currentKey
+            ? `/${defaultSitePageSlugs[currentKey] || currentKey}`
+            : "";
+      const isCurrent = Boolean(currentUrl) && url === currentUrl;
       return `<a href="${escapeAttribute(url)}"${isCurrent ? ` aria-current="page"` : ""}${newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}><svg aria-hidden="true" viewBox="0 0 24 24">${cmsIcon(item.icon)}</svg><span>${escapeHtml(item.label)}</span></a>`;
     })
     .join("");
@@ -945,7 +950,7 @@ function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
 
 function renderSiteNav(siteSections = {}, currentKey = null) {
   const links = [
-    ["", "/", "Ana səhifə", `<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/>`],
+    ["home", "/", "Ana səhifə", `<path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/><path d="M9.5 20v-6h5v6"/>`],
     ["products", "/mehsul", "Məhsullar", `<path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/><path d="M12 11v10"/>`]
   ];
   const labels = { haqqimizda: "Haqqımızda", sertler: "Şərtlər", elaqe: "Əlaqə" };

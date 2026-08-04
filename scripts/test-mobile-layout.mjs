@@ -17,6 +17,18 @@ const state = extractAdminState(app);
 const active = activeProductsWithSlugs(state.products);
 const pages = generateProductPageFiles(state.products, state.siteSections, state.cms, state.content);
 
+function assertPremiumNavigation(html, activeHref) {
+  const nav = html.match(/<nav class="product-page-nav(?: home-mobile-primary-nav)?"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || "";
+  assert.ok(nav, "Ortaq premium naviqasiya tapılmadı");
+  assert.equal((nav.match(/<a /g) || []).length, 5, "Naviqasiyada beş keçid olmalıdır");
+  assert.equal((nav.match(/<svg /g) || []).length, 5, "Hər keçidin SVG ikonu olmalıdır");
+  for (const href of ["/", "/mehsul", "/haqqimizda", "/sertler", "/elaqe"]) {
+    assert.ok(nav.includes(`href="${href}"`), `${href} keçidi çatışmır`);
+  }
+  assert.ok(nav.includes(`href="${activeHref}" aria-current="page"`), `${activeHref} aktiv deyil`);
+  assert.equal(nav.includes('target="_blank"'), false, "Daxili naviqasiya yeni tab açmamalıdır");
+}
+
 assert.equal(state.products.length, 30);
 assert.equal(active.length, 21);
 assert.match(style, /\.side-menu-links li a svg\s*\{[\s\S]*?width:\s*22px;[\s\S]*?height:\s*22px;/);
@@ -29,6 +41,13 @@ assert.match(productCss, /\.product-page-media \.product-page-media-backdrop/);
 assert.match(productCss, /\.product-page-nav a\[aria-current="page"\]/);
 assert.match(productCss, /font-size:\s*clamp\(24px,\s*7vw,\s*28px\)/);
 assert.match(admin, /İctimai başlıq/);
+assert.match(style, /\.product-page-nav\.product-page-nav a\[aria-current="page"\]/);
+assert.match(style, /\.home-mobile-primary-nav\s*\{[\s\S]*?display:\s*flex;/);
+assertPremiumNavigation(index, "/");
+assertPremiumNavigation(read("mehsul.page"), "/mehsul");
+assertPremiumNavigation(read("haqqimizda"), "/haqqimizda");
+assertPremiumNavigation(read("sertler"), "/sertler");
+assertPremiumNavigation(read("elaqe"), "/elaqe");
 
 for (const { product, slug } of active) {
   const html = pages.get(`mehsul/${slug}.page`);
@@ -38,6 +57,7 @@ for (const { product, slug } of active) {
   assert.ok(h1);
   assert.equal(/\salmaq\s*$/i.test(h1), false, `${slug} H1 sonunda almaq qalıb`);
   assert.match(html, /href="\/mehsul" aria-current="page"/);
+  assertPremiumNavigation(html, "/mehsul");
 }
 
 const future = {
