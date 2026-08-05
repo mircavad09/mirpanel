@@ -273,7 +273,7 @@ const DATA = {
       "seoOgImage": "assets/capcut.png",
       "banner": {
         "enabled": true,
-        "desktopImage": "assets/slider5.png",
+        "desktopImage": "assets/capcut.png",
         "mobileImage": "",
         "title": "CapCut Pro",
         "description": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
