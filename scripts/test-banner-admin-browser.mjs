@@ -11,12 +11,17 @@ const playwrightPath = process.env.MIRPANEL_PLAYWRIGHT_PATH;
 if (!playwrightPath) throw new Error("MIRPANEL_PLAYWRIGHT_PATH təyin edilməyib.");
 const { chromium } = await import(pathToFileURL(playwrightPath));
 const originalState = extractAdminState(fs.readFileSync(path.join(root, "app.js"), "utf8"));
+const capcutId = originalState.products.find((product) => /capcut/i.test(product.title))?.id;
+assert.ok(capcutId, "CapCut məhsulu tapılmadı");
 const mime = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 const tinyPng = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Wl2nPAAAAAASUVORK5CYII=", "base64");
 let draftState = null;
 let draftConflict = false;
+let failNextUpload = false;
+let failNextDraft = false;
 let uploadCounter = 0;
 const uploadPaths = [];
+const draftRequests = [];
 
 async function readJson(request) {
   const chunks = [];
@@ -41,15 +46,27 @@ const server = http.createServer(async (request, response) => {
   }
   if (request.url === "/api/admin/banner-draft" && request.method === "POST") {
     const body = await readJson(request);
+    if (failNextDraft) {
+      failNextDraft = false;
+      response.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+      return response.end(JSON.stringify({ error: "Sınaq draft xətası" }));
+    }
+    draftRequests.push(structuredClone(body));
     draftState = structuredClone(draftState || originalState);
     const product = draftState.products.find((item) => item.id === body.productId);
     product.banner = structuredClone(body.banner);
     draftState.cms.media = structuredClone(body.media);
     response.writeHead(200, { "Content-Type": "application/json; charset=utf-8" });
-    return response.end(JSON.stringify({ draftSaved: true, draftConflict, currentSha: draftConflict ? "changed-app-blob-sha" : body.baseSha }));
+    return response.end(JSON.stringify({ draftSaved: true, productId: body.productId, banner: product.banner, draftConflict, currentSha: draftConflict ? "changed-app-blob-sha" : body.baseSha }));
   }
   if (request.url === "/api/upload-product-image" && request.method === "POST") {
     await readJson(request);
+    await new Promise((resolve) => setTimeout(resolve, 250));
+    if (failNextUpload) {
+      failNextUpload = false;
+      response.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
+      return response.end(JSON.stringify({ error: "Sınaq upload xətası" }));
+    }
     uploadCounter += 1;
     const stamp = 1900000000000 + uploadCounter;
     const filePath = `uploads/products/banner-test-${stamp}-${uploadCounter}.png`;
@@ -104,6 +121,8 @@ try {
   page.on("pageerror", (error) => consoleErrors.push(error.message));
   await page.goto(`http://127.0.0.1:${address.port}/admin.html`, { waitUntil: "networkidle" });
   await page.locator('.navBtn[data-view="banners"]').click();
+  const capcutEdit = page.locator(`[data-edit-product-banner="${capcutId}"]`);
+  if (await capcutEdit.count()) await capcutEdit.click();
   await page.getByText("Banner şəkli", { exact: true }).waitFor();
   assert.equal(await page.getByText("Desktop banner önizləməsi", { exact: true }).count(), 0);
   assert.equal(await page.locator(".bannerAdvanced").evaluate((element) => element.open), false, "Mobil override standart açıqdır");
@@ -125,13 +144,35 @@ try {
   await page.locator('.navBtn[data-view="banners"]').click();
   assert.equal(await page.locator('#bannerProductEditor input[data-product-banner$=".alt"]').inputValue(), savedAlt, "Yadda saxlanmış banner reload zamanı itdi");
 
-  const mainUpload = page.locator('#bannerProductEditor input[data-banner-upload$=".desktopImage"]');
+  let mainUpload = page.locator('#bannerProductEditor input[data-banner-upload$=".desktopImage"]');
   const uploadFile = { name: "eyni-ad.png", mimeType: "image/png", buffer: tinyPng };
   await mainUpload.setInputFiles(uploadFile);
-  await page.getByText("Şəkil bannerə əlavə edildi və Media bölməsində saxlanıldı.", { exact: true }).waitFor();
+  assert.equal(await page.locator("#changeStatus").innerText(), "Şəkil yüklənir", "Fayl seçilən anda dirty/upload statusu yaranmadı");
+  await page.locator("[data-save-banner]").evaluate((button) => button.click());
+  await page.getByText("Yayımlanmağa hazırdır", { exact: true }).waitFor();
+  assert.equal(draftRequests.length > 0, true, "Upload-dan sonra banner draft endpoint-i çağırılmadı");
+  const firstUploadedPath = uploadPaths[0].publicPath;
+  assert.equal(draftRequests.at(-1).productId, capcutId, "Draft yanlış məhsul ID-si ilə göndərildi");
+  assert.equal(draftRequests.at(-1).banner.desktopImage, firstUploadedPath, "Yeni server şəkil yolu banner draft payload-ına yazılmadı");
+  assert.equal(await page.locator("#toasts").getByText("Yadda saxlanacaq banner dəyişikliyi yoxdur.", { exact: true }).count(), 0, "Şəkil seçildiyi halda dəyişiklik yoxdur xətası göstərildi");
+  await page.reload({ waitUntil: "networkidle" });
+  await page.locator('.navBtn[data-view="banners"]').click();
+  const capcutEditAfterReload = page.locator(`[data-edit-product-banner="${capcutId}"]`);
+  if (await capcutEditAfterReload.count()) await capcutEditAfterReload.click();
+  const reloadedPreview = await page.locator('#bannerProductEditor [data-banner-preview$=".desktopImage"]').first().getAttribute("src");
+  assert.equal(draftState.products.find((product) => product.id === capcutId).banner.desktopImage, firstUploadedPath, "Server draft yaddaşında yeni banner yolu itdi");
+  assert.ok(reloadedPreview?.includes("/api/admin/pending-image?path="), "Səhifə yeniləndikdən sonra yeni banner önizləməsi itdi");
+
+  mainUpload = page.locator('#bannerProductEditor input[data-banner-upload$=".desktopImage"]');
   await mainUpload.setInputFiles(uploadFile);
   await page.getByText("Şəkil bannerə əlavə edildi və Media bölməsində saxlanıldı.", { exact: true }).waitFor();
   assert.equal(new Set(uploadPaths.map((item) => item.filePath)).size, 2, "Eyni adlı upload üçün unikal yol yaranmadı");
+
+  failNextUpload = true;
+  mainUpload = page.locator('#bannerProductEditor input[data-banner-upload$=".desktopImage"]');
+  await mainUpload.setInputFiles(uploadFile);
+  await page.getByText("Sınaq upload xətası", { exact: true }).waitFor();
+  assert.equal(await page.locator("#changeStatus").innerText(), "Şəkil yüklənmədi — köhnə banner qorunub", "Upload xətası dürüst status göstərmədi");
 
   await page.locator('#bannerProductEditor [data-clear-banner-image$=".desktopImage"]').click();
   await page.getByRole("heading", { name: "Banner şəklini sil" }).waitFor();
@@ -140,6 +181,10 @@ try {
   const fallbackPreview = await page.locator('#bannerProductEditor [data-banner-preview$=".desktopImage"]').first().getAttribute("src");
   assert.ok(fallbackPreview && !fallbackPreview.includes("banner-test-"), "Şəkil silindikdə məhsul fallback-i önizləməyə qayıtmadı");
 
+  failNextDraft = true;
+  await page.locator("[data-save-banner]").click();
+  await page.getByText("Sınaq draft xətası", { exact: true }).waitFor();
+  assert.equal(await page.locator("#changeStatus").innerText(), "Yadda saxlanmamış dəyişiklik var", "Draft xətasında dəyişiklik state-i qorunmadı");
   await page.locator("[data-save-banner]").click();
   await page.getByText("Yayımlanmağa hazırdır", { exact: true }).waitFor();
   await page.locator("#saveBtn").click();

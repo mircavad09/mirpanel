@@ -815,9 +815,12 @@ async function handleApi(request, response) {
       savedAt: Date.now()
     };
     session.preview = null;
+    const savedProduct = normalized.products.find((item) => item.id === productId);
     return json(response, 200, {
       ok: true,
       draftSaved: true,
+      productId,
+      banner: savedProduct?.banner || null,
       draftConflict: current.sha !== body.baseSha,
       currentSha: current.sha,
       savedAt: new Date(session.draft.savedAt).toISOString()

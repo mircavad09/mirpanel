@@ -8,6 +8,8 @@
   const safeIcons = ["home", "products", "search", "info", "contact", "terms", "whatsapp", "sparkles", "game", "ai", "link", "image", "shield"];
   let baselineData = null;
   let baselineSha = "";
+  const bannerUploadJobs = new Map();
+  const dirtyBannerProductIds = new Set();
 
   function el(id) { return document.getElementById(id); }
   function esc(value) {
@@ -28,6 +30,17 @@
     target[parts.at(-1)] = next;
     if (path.startsWith("navigation.")) syncFooterProjection();
     markDirty();
+  }
+  function bannerProductId(path) {
+    const parts = String(path || "").split(".");
+    return parts[0] === "productBanner" ? parts[1] || "" : "";
+  }
+  function markBannerDirty(path, publishStatus = "unsaved") {
+    const productId = bannerProductId(path);
+    if (productId) dirtyBannerProductIds.add(productId);
+    markDirty();
+    state.publishStatus = publishStatus;
+    renderStats();
   }
   function syncFooterProjection() {
     if (!cms()) return;
@@ -212,7 +225,7 @@
         const owner = bannerImageOwner(target.dataset.productBanner);
         if (!owner.item || owner.field === "order") return;
         owner.item[owner.field] = target.type === "checkbox" ? target.checked : target.value;
-        markDirty();
+        markBannerDirty(target.dataset.productBanner);
       }
       if (target.dataset.site) {
         const [pageKey, fieldKey] = target.dataset.site.split(".");
@@ -240,12 +253,23 @@
     if (!["image/jpeg", "image/png", "image/webp"].includes(file.type) || file.size > 5 * 1024 * 1024) {
       return toast("Yalnız JPG, PNG və WEBP, maksimum 5 MB.", "bad");
     }
+    const owner = bannerImageOwner(path);
+    if (!owner.item) return { ok: false };
+    const previous = {
+      image: owner.item[owner.field],
+      preview: owner.item[owner.previewKey],
+      dirty: state.dirty,
+      draftSaved: state.draftSaved,
+      publishStatus: state.publishStatus,
+      bannerDirty: dirtyBannerProductIds.has(bannerProductId(path))
+    };
     const previewElement = document.querySelector(`[data-banner-preview="${CSS.escape(path)}"]`);
     const localPreview = URL.createObjectURL(file);
     if (previewElement) {
       previewElement.hidden = false;
       previewElement.src = localPreview;
     }
+    markBannerDirty(path, "uploading");
     setLoading(true, "Banner şəkli yüklənir...");
     try {
       const contentBase64 = await readFileAsBase64(file);
@@ -253,7 +277,6 @@
         method: "POST",
         body: JSON.stringify({ productId: path.startsWith("supportCard") ? "support" : path.split(".")[1], fileName: file.name, mimeType: file.type, contentBase64 })
       });
-      const owner = bannerImageOwner(path);
       owner.item[owner.field] = result.publicPath;
       if (result.filePath && !state.pendingUploads.includes(result.filePath)) state.pendingUploads.push(result.filePath);
       markDirty();
@@ -271,9 +294,22 @@
       renderBanners();
       renderMedia();
       populateBoundInputs();
+      state.publishStatus = "save-ready";
+      renderStats();
       toast("Şəkil bannerə əlavə edildi və Media bölməsində saxlanıldı.");
+      return { ok: true, result };
     } catch (error) {
+      owner.item[owner.field] = previous.image;
+      owner.item[owner.previewKey] = previous.preview;
+      if (!previous.bannerDirty) dirtyBannerProductIds.delete(bannerProductId(path));
+      state.dirty = previous.dirty;
+      state.draftSaved = previous.draftSaved;
+      state.publishStatus = "upload-failed";
+      renderBanners();
+      populateBoundInputs();
+      renderStats();
       toast(error.message, "bad");
+      return { ok: false, error };
     } finally {
       URL.revokeObjectURL(localPreview);
       setLoading(false);
@@ -288,7 +324,15 @@
     }
     if (target.dataset.bannerUpload) {
       const file = target.files?.[0];
-      if (file) uploadBannerImage(target.dataset.bannerUpload, file);
+      if (file) {
+        const path = target.dataset.bannerUpload;
+        const job = uploadBannerImage(path, file);
+        bannerUploadJobs.set(path, job);
+        job.finally(() => {
+          if (bannerUploadJobs.get(path) === job) bannerUploadJobs.delete(path);
+          target.value = "";
+        });
+      }
       return;
     }
     if (target.dataset.bannerMedia) {
@@ -297,7 +341,7 @@
       const owner = bannerImageOwner(path);
       owner.item[owner.field] = target.value;
       owner.item[owner.previewKey] = selected?._preview || "";
-      markDirty();
+      markBannerDirty(path);
       renderBanners();
       populateBoundInputs();
       return;
@@ -336,20 +380,42 @@
   async function saveBannerDraft() {
     const product = state.data.products.find((item) => item.id === selectedBannerProductId);
     if (!product) return toast("Banner məhsulu tapılmadı.", "bad");
-    if (!state.dirty) return toast("Yadda saxlanacaq banner dəyişikliyi yoxdur.", "bad");
+    const uploadPrefix = `productBanner.${product.id}.`;
+    const uploads = [...bannerUploadJobs.entries()]
+      .filter(([path]) => path.startsWith(uploadPrefix))
+      .map(([, job]) => job);
+    if (uploads.length) {
+      state.publishStatus = "uploading";
+      renderStats();
+      const uploaded = await Promise.all(uploads);
+      if (uploaded.some((item) => !item?.ok)) {
+        return toast("Şəkil yüklənmədiyi üçün banner yadda saxlanmadı. Köhnə banner qorunub.", "bad");
+      }
+    }
+    if (!dirtyBannerProductIds.has(product.id)) return toast("Yadda saxlanacaq banner dəyişikliyi yoxdur.", "bad");
     setLoading(true, "Banner dəyişiklikləri yadda saxlanılır...");
     try {
+      const bannerPayload = withoutPreviewData(ensureProductBanner(product));
       const result = await api("/api/admin/banner-draft", {
         method: "POST",
         body: JSON.stringify({
           baseSha: state.baseSha,
           productId: product.id,
-          banner: withoutPreviewData(ensureProductBanner(product)),
+          banner: bannerPayload,
           media: withoutPreviewData(cms().media)
         })
       });
+      if (
+        result.productId !== product.id ||
+        !result.banner ||
+        result.banner.desktopImage !== bannerPayload.desktopImage ||
+        result.banner.mobileImage !== bannerPayload.mobileImage
+      ) {
+        throw new Error("Server banner şəklinin yeni yolunu təsdiqləmədi. Dəyişikliklər brauzerdə qorunub.");
+      }
       state.draftSaved = true;
       state.draftConflict = result.draftConflict === true;
+      dirtyBannerProductIds.delete(product.id);
       state.publishStatus = "ready";
       renderStats();
       toast(state.draftConflict
@@ -373,7 +439,7 @@
       const owner = bannerImageOwner(path);
       owner.item[owner.field] = item.path;
       owner.item[owner.previewKey] = item._preview || "";
-      markDirty();
+      markBannerDirty(path);
       renderBanners();
       populateBoundInputs();
       toast("Şəkil kitabxanadan seçildi. Yadda saxla düyməsinə basın.");
@@ -446,7 +512,7 @@
         () => {
           owner.item[owner.field] = "";
           owner.item[owner.previewKey] = "";
-          markDirty();
+          markBannerDirty(imagePath);
           renderBanners();
           populateBoundInputs();
           closeModal();

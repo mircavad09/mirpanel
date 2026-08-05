@@ -553,6 +553,9 @@ function renderStats() {
     const labels = {
       saved: "Bütün dəyişikliklər yadda saxlanılıb",
       unsaved: "Yadda saxlanmamış dəyişiklik var",
+      uploading: "Şəkil yüklənir",
+      "save-ready": "Yadda saxlanmağa hazırdır",
+      "upload-failed": "Şəkil yüklənmədi — köhnə banner qorunub",
       ready: state.draftConflict ? "Yayımlama dayandırılıb — GitHub məlumatı dəyişib" : "Yayımlanmağa hazırdır",
       github: "GitHub-a göndərilir",
       cloudflare: "Cloudflare yayımlayır",
@@ -560,7 +563,7 @@ function renderStats() {
       failed: "Yayımlama uğursuz oldu — dəyişiklikləriniz qorunub"
     };
     changeStatus.textContent = labels[state.publishStatus] || labels.saved;
-    changeStatus.classList.toggle("dirty", ["unsaved", "failed"].includes(state.publishStatus));
+    changeStatus.classList.toggle("dirty", ["unsaved", "uploading", "save-ready", "upload-failed", "failed"].includes(state.publishStatus));
     changeStatus.dataset.status = state.publishStatus;
   }
 }

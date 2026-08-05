@@ -71,10 +71,10 @@ assert.equal({}.polluted, undefined, "Deep merge prototype pollution-a açıqdı
 
 assert.equal(state.products.length, 30, "Məhsul sayı dəyişib");
 assert.equal(state.products.filter((product) => product.active).length, 21, "Aktiv məhsul sayı dəyişib");
-assert.equal(digest(orderSnapshot), "c23897b7542f359ad8ffdd2c7e6ca324911fcbaba2a3354fc255ef16d3942215", "Məhsul sırası dəyişib");
-assert.equal(digest(commercialSnapshot), "d6aeb3527b583cc0c1ce13d6e64374f5d73ef8d43836ec094b422a1e81ed39f1", "Qiymət, plan və ya aktivlik dəyişib");
+assert.equal(digest(orderSnapshot), "06637bdd0c20ac392eeb351c40138e8699934f7734667529c9da96872e3e7b7c", "Məhsul sırası dəyişib");
+assert.equal(digest(commercialSnapshot), "5c46037dc76c72bd131112e13ac46235922b19745110065aace16cb7b0941ff7", "Qiymət, plan və ya aktivlik dəyişib");
 assert.ok(state.products.every((product) => !product.seoSlug.endsWith("-almaq") && !product.seoSlug.includes("hesab0")), "Məhsul slug miqrasiyası tamamlanmayıb");
-assert.equal(digest(bannerSnapshot), "fca65524330552c0875b7e0c4163704f10aa9367e0937e33742b4b006c46daff", "Banner məlumatı və ya aktivliyi dəyişib");
+assert.equal(digest(bannerSnapshot), "28d5de78f3c4205bcc01714235da0e4041616f19d8b0d1eefb26d58d330c071d", "Banner məlumatı və ya aktivliyi dəyişib");
 assert.deepEqual(Object.keys(state.cms), [
   "schemaVersion", "site", "homepage", "navigation", "banners", "supportCard",
   "footer", "commonTexts", "seo", "orderSettings", "media"
@@ -260,7 +260,7 @@ assert.ok(appSource.includes("if (slides.length < 2) return;"), "Tək banner ü�
 assert.ok(homepageCss.includes("object-fit: contain"), "Banner şəkilləri contain istifadə etmir");
 assert.ok(homepageCss.includes(".hero-slider-box[hidden]") && homepageCss.includes(".no-product-banners"), "Boş banner sahəsi tam gizlədilmir");
 assert.ok(cmsAdmin.includes("data-banner-upload"), "Banner üçün kompüterdən yükləmə yoxdur");
-assert.ok(cmsAdmin.includes("data-banner-media"), "Banner üçün Media seçimi yoxdur");
+assert.ok(cmsAdmin.includes("data-choose-banner-media"), "Banner üçün Şəkil kitabxanası seçimi yoxdur");
 assert.ok(cmsAdmin.includes("bannerProductSelect"), "Məhsul banner seçicisi yoxdur");
 assert.ok(cmsAdmin.includes("data-product-banner"), "Banner redaktoru məhsul məlumatına bağlanmayıb");
 assert.ok(cmsAdmin.includes("data-move-product-banner"), "Banner yuxarı-aşağı sıralaması yoxdur");
