@@ -11,6 +11,7 @@ import {
   generateProductPageFiles,
   generateRedirects as buildRedirects,
   generateSitemap as buildSitemap,
+  patchHomeHeader,
   removedInfoPagePaths,
   removedProductPagePaths
 } from "./product-pages.mjs";
@@ -243,6 +244,8 @@ async function getAppFile() {
 function bumpAssetVersions(source, version) {
   return source
     .replace(/style\.css\?v=[^"]+/g, `style.css?v=${version}`)
+    .replace(/site-header\.css\?v=[^"]+/g, `site-header.css?v=${version}`)
+    .replace(/site-header\.js\?v=[^"]+/g, `site-header.js?v=${version}`)
     .replace(/app\.js\?v=[^"]+/g, `app.js?v=${version}`)
     .replace(/cms-site\.js\?v=[^"]+/g, `cms-site.js?v=${version}`)
     .replace(/order-confirmation\.js\?v=[^"]+/g, `order-confirmation.js?v=${version}`);
@@ -950,7 +953,11 @@ async function handleApi(request, response) {
     const patched = patchAppSource(current.source, adminData);
     const indexFile = await getRepoFile("index.html", parent.commitSha);
     const version = `admin-${Date.now()}`;
-    const patchedIndex = patchHomeStructuredData(bumpAssetVersions(indexFile.source, version), adminData.cms, adminData.products);
+    const patchedIndex = patchHomeStructuredData(
+      patchHomeHeader(bumpAssetVersions(indexFile.source, version), adminData.siteSections, adminData.cms),
+      adminData.cms,
+      adminData.products
+    );
     const productPages = generateProductPageFiles(adminData.products, adminData.siteSections, adminData.cms, adminData.content);
     const productListing = generateProductListingPageFiles(adminData.products, adminData.siteSections, adminData.cms);
     const infoPages = generateInfoPageFiles(adminData.siteSections, adminData.ui, adminData.cms);

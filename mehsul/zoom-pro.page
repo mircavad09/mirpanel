@@ -31,18 +31,43 @@
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=20260804-desktop-layout-1">
+  <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/zoom-pro#product","url":"https://mirpanel.com/mehsul/zoom-pro","name":"Zoom Pro","description":"Zoom Pro hesabını sərfəli qiymətə əldə et. Online görüşlər və premium Zoom imkanları Mirpanel-də.","image":["https://mirpanel.com/assets/zoom.png"],"sku":"zoom","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/zoom-pro","price":"9.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/zoom-pro#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Zoom Pro","item":"https://mirpanel.com/mehsul/zoom-pro"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="zoom" data-product-slug="zoom-pro">
-  <header class="product-page-header">
-    <div class="product-page-header-inner">
-      <a class="product-page-brand" href="/" aria-label="Mirpanel ana səhifə">
+  <header class="product-page-header site-header" id="mainHeader">
+    <div class="product-page-header-inner site-header-inner">
+      <a class="product-page-brand site-header-brand" href="/" aria-label="Mirpanel ana səhifə">
         <img src="/assets/logo.png" alt="Mirpanel">
         <span>MIRPANEL</span>
       </a>
-      <nav class="product-page-nav" aria-label="Əsas menyu"><a href="/"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg><span>Ana Səhifə</span></a><a href="/mehsul" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/></svg><span>Məhsullar</span></a><a href="/haqqimizda"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg><span>Haqqımızda</span></a><a href="/sertler"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3-7 3v-15a2 2 0 0 1 2-2Z"/></svg><span>Şərtlər</span></a><a href="/elaqe"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a></nav>
+      <nav class="product-page-nav site-header-nav" aria-label="Əsas menyu"><a href="/" data-header-key="home"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg><span>Ana Səhifə</span></a><a href="/mehsul" data-header-key="products" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/></svg><span>Məhsullar</span></a><a href="/haqqimizda" data-header-key="about"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg><span>Haqqımızda</span></a><a href="/sertler" data-header-key="terms"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3-7 3v-15a2 2 0 0 1 2-2Z"/></svg><span>Şərtlər</span></a><a href="/elaqe" data-header-key="contact"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a></nav>
+      <div class="site-header-tools">
+        <div class="site-header-language" aria-label="Dil seçimi">
+          <button class="langBtn" type="button" data-lang="az">AZE</button>
+          <button class="langBtn" type="button" data-lang="en">ENG</button>
+          <button class="langBtn" type="button" data-lang="ru">RUS</button>
+        </div>
+        <label class="site-header-currency"><span>Valyuta</span><select aria-label="Valyuta seçimi" data-site-header-currency><option value="AZN">AZN</option></select></label>
+        <form class="site-header-search" role="search" data-site-header-search>
+          <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+          <input type="search" name="search" autocomplete="off" placeholder="Məhsul axtar..." aria-label="Məhsul axtar">
+        </form>
+        <button class="site-header-menu-button" type="button" aria-label="Menyunu aç" aria-expanded="false">
+          <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+      </div>
     </div>
+    <div class="site-header-overlay" aria-hidden="true"></div>
+    <aside class="site-header-drawer" aria-hidden="true" aria-label="Mobil menyu">
+      <div class="site-header-drawer-top"><strong>Menyu</strong><button type="button" class="site-header-menu-close" aria-label="Menyunu bağla">×</button></div>
+      <form class="site-header-search site-header-search-mobile" role="search" data-site-header-search>
+        <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+        <input type="search" name="search" autocomplete="off" placeholder="Məhsul axtar..." aria-label="Məhsul axtar">
+      </form>
+      <nav class="product-page-nav site-header-drawer-nav" aria-label="Mobil əsas menyu"><a href="/" data-header-key="home"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg><span>Ana Səhifə</span></a><a href="/mehsul" data-header-key="products" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/></svg><span>Məhsullar</span></a><a href="/haqqimizda" data-header-key="about"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg><span>Haqqımızda</span></a><a href="/sertler" data-header-key="terms"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3-7 3v-15a2 2 0 0 1 2-2Z"/></svg><span>Şərtlər</span></a><a href="/elaqe" data-header-key="contact"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a></nav>
+    </aside>
   </header>
 
   <main id="productPageView" class="product-page-root">
@@ -214,5 +239,6 @@
   <script src="/order-confirmation.js?v=20260804-mobile-layout-1"></script>
   <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
+  <script src="/site-header.js?v=20260805-shared-header-1"></script>
 </body>
 </html>

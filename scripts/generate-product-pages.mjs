@@ -7,7 +7,8 @@ import {
   generateProductListingPageFiles,
   generateProductPageFiles,
   generateRedirects,
-  generateSitemap
+  generateSitemap,
+  patchHomeHeader
 } from "../mirpanel-admin/product-pages.mjs";
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -24,6 +25,9 @@ for (const [filePath, content] of pages) {
   fs.mkdirSync(path.dirname(absolutePath), { recursive: true });
   fs.writeFileSync(absolutePath, content, "utf8");
 }
+
+const homePath = path.join(projectRoot, "index.html");
+fs.writeFileSync(homePath, patchHomeHeader(fs.readFileSync(homePath, "utf8"), state.siteSections, state.cms), "utf8");
 
 fs.writeFileSync(
   path.join(projectRoot, "sitemap.xml"),

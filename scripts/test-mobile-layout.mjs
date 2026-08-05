@@ -12,20 +12,22 @@ const index = read("index.html");
 const style = read("style.css");
 const compact = read("premium-compact-glow.css");
 const productCss = read("product-page.css");
+const headerCss = read("site-header.css");
+const headerJs = read("site-header.js");
 const admin = read("mirpanel-admin/public/admin.js");
 const state = extractAdminState(app);
 const active = activeProductsWithSlugs(state.products);
 const pages = generateProductPageFiles(state.products, state.siteSections, state.cms, state.content);
 
 function assertPremiumNavigation(html, activeHref) {
-  const nav = html.match(/<nav class="product-page-nav(?: home-mobile-primary-nav)?"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || "";
+  const nav = html.match(/<nav class="product-page-nav site-header-nav"[^>]*>([\s\S]*?)<\/nav>/)?.[1] || "";
   assert.ok(nav, "Ortaq premium naviqasiya tapılmadı");
   assert.equal((nav.match(/<a /g) || []).length, 5, "Naviqasiyada beş keçid olmalıdır");
   assert.equal((nav.match(/<svg /g) || []).length, 5, "Hər keçidin SVG ikonu olmalıdır");
   for (const href of ["/", "/mehsul", "/haqqimizda", "/sertler", "/elaqe"]) {
     assert.ok(nav.includes(`href="${href}"`), `${href} keçidi çatışmır`);
   }
-  assert.ok(nav.includes(`href="${activeHref}" aria-current="page"`), `${activeHref} aktiv deyil`);
+  assert.ok(new RegExp(`href="${activeHref.replace("/", "\\/")}"[^>]*aria-current="page"`).test(nav), `${activeHref} aktiv deyil`);
   assert.equal(nav.includes('target="_blank"'), false, "Daxili naviqasiya yeni tab açmamalıdır");
 }
 
@@ -38,11 +40,12 @@ assert.match(app, /document\.body\.classList\.add\("side-menu-open"\)/);
 assert.equal((index.match(/menuOpenBtn\.addEventListener/g) || []).length, 0, "Inline təkrar menyu idarəsi qalıb");
 assert.match(compact, /#products-section > main\.wrap\s*\{\s*padding-top:\s*10px;/);
 assert.match(productCss, /\.product-page-media \.product-page-media-backdrop/);
-assert.match(productCss, /\.product-page-nav a\[aria-current="page"\]/);
+assert.match(headerCss, /\.site-header-nav a\[aria-current="page"\]/);
+assert.match(headerCss, /\.site-header-drawer-nav/);
+assert.match(headerJs, /site-header-menu-open/);
+assert.match(headerJs, /event\.key === "Escape"/);
 assert.match(productCss, /font-size:\s*clamp\(24px,\s*7vw,\s*28px\)/);
 assert.match(admin, /İctimai başlıq/);
-assert.match(style, /\.product-page-nav\.product-page-nav a\[aria-current="page"\]/);
-assert.match(style, /\.home-mobile-primary-nav\s*\{[\s\S]*?display:\s*flex;/);
 assertPremiumNavigation(index, "/");
 assertPremiumNavigation(read("mehsul.page"), "/mehsul");
 assertPremiumNavigation(read("haqqimizda"), "/haqqimizda");
@@ -56,7 +59,7 @@ for (const { product, slug } of active) {
   const h1 = html.match(/<h1 id="pp-main-title" class="product-page-title">([^<]+)<\/h1>/)?.[1] || "";
   assert.ok(h1);
   assert.equal(/\salmaq\s*$/i.test(h1), false, `${slug} H1 sonunda almaq qalıb`);
-  assert.match(html, /href="\/mehsul" aria-current="page"/);
+  assert.match(html, /href="\/mehsul"[^>]*aria-current="page"/);
   assertPremiumNavigation(html, "/mehsul");
 }
 
