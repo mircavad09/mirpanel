@@ -967,7 +967,7 @@
     try {
       const result = await api("/api/admin/preview", {
         method: "POST",
-        body: JSON.stringify({ baseSha: state.baseSha, data: state.data })
+        body: JSON.stringify({ baseSha: state.baseSha, data: payloadWithoutTransientPreviews(state.data) })
       });
       state.previewDigest = result.previewDigest;
       const previewResult = el("cmsPreviewResult");

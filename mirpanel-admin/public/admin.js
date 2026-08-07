@@ -20,6 +20,10 @@ const productImageUpload = {
   allowedTypes: new Set(["image/jpeg", "image/png", "image/webp"])
 };
 
+function payloadWithoutTransientPreviews(value) {
+  return JSON.parse(JSON.stringify(value, (key, current) => key.startsWith("_") ? undefined : current));
+}
+
 const legacyFlows = [
   ["whatsapp", "Birbaşa WhatsApp"],
   ["name_code_4", "Ad + 4 rəqəm kod"],
@@ -513,7 +517,7 @@ async function saveState() {
       method: "POST",
       body: JSON.stringify({
         baseSha: state.baseSha,
-        data: state.data,
+        data: payloadWithoutTransientPreviews(state.data),
         previewDigest: state.previewDigest
       })
     });

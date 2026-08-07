@@ -22,6 +22,8 @@ let failNextDraft = false;
 let uploadCounter = 0;
 const uploadPaths = [];
 const draftRequests = [];
+const previewRequests = [];
+const publishRequests = [];
 
 async function readJson(request) {
   const chunks = [];
@@ -80,7 +82,7 @@ const server = http.createServer(async (request, response) => {
     return response.end(tinyPng);
   }
   if (request.url === "/api/admin/preview" && request.method === "POST") {
-    await readJson(request);
+    previewRequests.push(await readJson(request));
     if (draftConflict) {
       response.writeHead(409, { "Content-Type": "application/json; charset=utf-8" });
       return response.end(JSON.stringify({ error: "Məzmun GitHub-da dəyişib. Dəyişiklikləriniz qorunub." }));
@@ -89,7 +91,7 @@ const server = http.createServer(async (request, response) => {
     return response.end(JSON.stringify({ previewDigest: "local-preview", productCount: 30, activeProductCount: 21, pageCount: 26, warnings: [] }));
   }
   if (request.url === "/api/admin/save" && request.method === "POST") {
-    await readJson(request);
+    publishRequests.push(await readJson(request));
     response.writeHead(500, { "Content-Type": "application/json; charset=utf-8" });
     return response.end(JSON.stringify({ error: "Sınaq publish xətası" }));
   }
@@ -189,8 +191,10 @@ try {
   await page.getByText("Yayımlanmağa hazırdır", { exact: true }).waitFor();
   await page.locator("#saveBtn").click();
   await page.getByRole("heading", { name: "Dəyişiklikləri yoxlayın" }).waitFor();
+  assert.equal(JSON.stringify(previewRequests.at(-1)).includes("data:image/"), false, "Önizləmə payload-ında müvəqqəti data URL qaldı");
   await page.locator("#modalConfirm").click();
   await page.getByText("Sınaq publish xətası", { exact: true }).waitFor();
+  assert.equal(JSON.stringify(publishRequests.at(-1)).includes("data:image/"), false, "Yayımlama payload-ında müvəqqəti data URL qaldı");
   assert.equal(await page.locator('#bannerProductEditor input[data-product-banner$=".alt"]').inputValue(), savedAlt, "Publish xətasında banner state-i itdi");
   assert.ok((await page.locator("#changeStatus").innerText()).includes("dəyişiklikləriniz qorunub"));
   await page.locator("#modalCancel").click();
