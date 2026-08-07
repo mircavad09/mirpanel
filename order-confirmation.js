@@ -1188,7 +1188,7 @@
     return payload;
   }
 
-  async function openWhatsApp(product, plan, formData = {}) {
+  async function openWhatsApp(product, plan, formData = {}, paymentOrder = null) {
     if (!orderTermsAccepted) {
       showAgreementError();
       return;
@@ -1199,16 +1199,41 @@
       return;
     }
 
-    let stockResult;
+    if (!paymentOrder) {
+      if (!window.MirpanelPaymentFlow?.start) {
+        alert("Ödəniş sistemi hazırda əlçatan deyil. Bir qədər sonra yenidən cəhd edin.");
+        return;
+      }
+      paymentOrder = await window.MirpanelPaymentFlow.start({
+        product,
+        plan,
+        planIndex: Math.max(0, product?.plans?.indexOf(plan) ?? 0)
+      });
+      if (!paymentOrder) return;
+    }
+
+    let stockResult = { skipped: true };
     try {
       stockResult = await decrementStock(product);
     } catch (error) {
       decorateProductPage(product);
-      alert(error.message || "Stokda yoxdur.");
-      return;
+      console.warn("Ödəniş sifarişi saxlanılıb, stok sinxronizasiyası tamamlanmadı.", error.message);
     }
 
-    const order = buildWhatsAppMessage(product, plan, formData);
+    const order = buildWhatsAppMessage(product, plan, formData, paymentOrder.orderCode);
+    const extraLines = order.extraText ? ["", order.extraText] : [];
+    order.message = [
+      "Salam, ödəniş etmişəm. ✅",
+      "",
+      `Sifariş nömrəsi: ${paymentOrder.orderCode}`,
+      `Məhsul: ${publicProductTitle(paymentOrder.productTitle || product.title)}`,
+      `Plan: ${paymentOrder.planName || order.planText}`,
+      `Məbləğ: ${Number(paymentOrder.amount || plan.price).toFixed(2)} ${paymentOrder.currency || "₼"}`,
+      `Ödəniş üsulu: ${paymentOrder.paymentMethod}`,
+      ...extraLines,
+      "",
+      "Ödəniş çeki Mirpanel sisteminə yüklənib. Zəhmət olmasa sifarişi yoxlayıb təsdiqləyin."
+    ].join("\n");
     submitGoogleSheets({
       ...order,
       productTitle: publicProductTitle(product.title) || product.id,

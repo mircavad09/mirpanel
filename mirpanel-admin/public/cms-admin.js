@@ -2,7 +2,7 @@
   const viewGroups = [
     ["Əsas idarəetmə", [["dashboard", "İdarə paneli"], ["products", "Məhsullar"], ["categories", "Kateqoriyalar"]]],
     ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Bannerlər"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
-    ["Parametrlər", [["orders", "Sifariş parametrləri"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
+    ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentReviews", "Ödəniş yoxlamaları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
   const safeIcons = ["home", "products", "search", "info", "contact", "terms", "whatsapp", "sparkles", "game", "ai", "link", "image", "shield"];
@@ -132,6 +132,8 @@
       ${field("Footer mətni", "footer.shortText", { type: "textarea", full: true })}
     </div><div class="sectionHead"><h3>Sayt keçidləri</h3><button class="btn" type="button" data-add-list="navigation">Keçid əlavə et</button></div><div id="navigationList" class="cmsList"></div>`));
     createView("banners", panel("Bannerlər", "Məhsul bannerlərini sadə siyahıdan seçib redaktə edin", '<div class="sectionHead"><h3>Bütün məhsul bannerləri</h3></div><div id="bannerProductList" class="bannerManageList"></div><label class="bannerProductPicker hidden">Məhsulu seç<select id="bannerProductSelect"></select></label><div id="bannerProductEditor"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
+    createView("paymentMethods", panel("Ödəniş üsulları", "Kart və elektron cüzdanları təhlükəsiz idarə edin. Tam nömrə saxlandıqdan sonra yenidən göstərilmir.", '<div id="paymentMethodsStatus" class="previewResult hidden"></div><div class="sectionHead"><div><h3>Kart və cüzdanlar</h3><p>Standart gündəlik limit 5-dir. Limitsiz rejim yalnız əl ilə aktivləşdirilir.</p></div><button class="btn primary" type="button" id="paymentMethodAdd">Yeni üsul əlavə et</button></div><div id="paymentMethodsList" class="paymentMethodsAdminList"></div><div id="paymentMethodEditor"></div><div class="sectionHead"><h3>Bildiriş və çek saxlanması</h3></div><form id="paymentSettingsForm" class="paymentSettingsForm formGrid"><label>Bildiriş Gmail ünvanı<input id="paymentNotificationEmail" type="email" required></label><label>Çeklərin saxlanma müddəti (gün)<input id="paymentReceiptRetentionDays" type="number" min="1" max="3650" value="90"></label><div class="wide"><button class="btn" type="submit">Parametrləri saxla</button></div></form>'));
+    createView("paymentReviews", panel("Ödəniş yoxlamaları", "Private sistemə yüklənmiş çekləri yoxlayın və yalnız real ödənişi təsdiqləyin.", '<div class="sectionHead"><div><h3>Sifarişlər</h3><p>Təsdiq sayğacı yalnız “Ödənişi təsdiqlə” əməliyyatından sonra artır.</p></div><button class="btn" type="button" id="paymentReviewsRefresh">Yenilə</button></div><label class="paymentOrderSearch">Sifariş ID-si ilə axtar<input id="paymentOrderSearch" type="search" placeholder="MP-XXXXXX"></label><div id="paymentOrdersList" class="paymentOrdersAdminList"></div><div class="sectionHead"><h3>Gmail bildirişləri</h3></div><div id="paymentEmailsList" class="paymentEmailsAdminList"></div>'));
     createView("about", pageForm("haqqimizda", "Haqqımızda"));
     createView("contact", contactForm());
     createView("terms", termsForm());

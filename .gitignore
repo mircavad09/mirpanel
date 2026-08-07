@@ -1,0 +1,6 @@
+.env
+mirpanel-admin/.env
+node_modules/
+mirpanel-admin/node_modules/
+*.log
+payment-test-artifacts/

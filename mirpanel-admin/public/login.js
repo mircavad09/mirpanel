@@ -30,7 +30,8 @@ form.addEventListener("submit", async (event) => {
       );
     }
 
-    location.href = "/admin.html";
+    const next = new URLSearchParams(location.search).get("next");
+    location.href = next && next.startsWith("/admin.html") ? next : "/admin.html";
   } catch (error) {
     errorBox.textContent = error.message;
     button.disabled = false;

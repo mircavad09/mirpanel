@@ -5,6 +5,7 @@ import path from "node:path";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
+import { createPaymentSystem } from "./payment-api.mjs";
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -27,7 +28,24 @@ const config = {
   token: process.env.MIRPANEL_GITHUB_TOKEN || "",
   username: process.env.ADMIN_USERNAME || "",
   password: process.env.ADMIN_PASSWORD || "",
-  secureCookie: process.env.COOKIE_SECURE === "true"
+  secureCookie: process.env.COOKIE_SECURE === "true",
+  supabaseUrl: process.env.SUPABASE_URL || "",
+  supabaseSecretKey: process.env.SUPABASE_SECRET_KEY || "",
+  receiptsBucket: process.env.SUPABASE_RECEIPTS_BUCKET || "mirpanel-payment-receipts",
+  encryptionKey: process.env.PAYMENT_ENCRYPTION_KEY_B64 || "",
+  tokenSecret: process.env.PAYMENT_TOKEN_SECRET_B64 || "",
+  allowedOrigins: String(process.env.PAYMENT_ALLOWED_ORIGINS || "https://mirpanel.com,https://www.mirpanel.com")
+    .split(",").map((item) => item.trim()).filter(Boolean),
+  reservationMinutes: Math.max(1, Math.min(30, Number(process.env.PAYMENT_RESERVATION_MINUTES || 10))),
+  maxReceiptBytes: Math.max(1, Math.min(5 * 1024 * 1024, Number(process.env.PAYMENT_RECEIPT_MAX_BYTES || 5 * 1024 * 1024))),
+  adminBaseUrl: process.env.RENDER_EXTERNAL_URL || "https://mirpanel.onrender.com",
+  siteBaseUrl: process.env.MIRPANEL_SITE_URL || "https://mirpanel.com",
+  notificationEmail: process.env.PAYMENT_NOTIFICATION_EMAIL || "",
+  gmailClientId: process.env.GMAIL_CLIENT_ID || "",
+  gmailClientSecret: process.env.GMAIL_CLIENT_SECRET || "",
+  gmailRefreshToken: process.env.GMAIL_REFRESH_TOKEN || "",
+  gmailSenderEmail: process.env.GMAIL_SENDER_EMAIL || "",
+  gmailFromName: process.env.GMAIL_FROM_NAME || "Mirpanel"
 };
 
 const sessions = new Map();
@@ -57,6 +75,10 @@ function json(response, status, body, headers = {}) {
     "Content-Type": "application/json; charset=utf-8",
     "Cache-Control": "no-store",
     "X-Robots-Tag": "noindex, nofollow",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
     ...headers
   });
   response.end(JSON.stringify(body));
@@ -107,7 +129,7 @@ async function readBody(request, limit = 1_500_000) {
 
   for await (const chunk of request) {
     size += chunk.length;
-    if (size > limit) throw new Error("Göndərilən məlumat çox böyükdür.");
+    if (size > limit) throw Object.assign(new Error("Göndərilən məlumat çox böyükdür."), { status: 413 });
     chunks.push(chunk);
   }
 
@@ -248,6 +270,8 @@ function bumpAssetVersions(source, version) {
     .replace(/site-header\.js\?v=[^"]+/g, `site-header.js?v=${version}`)
     .replace(/app\.js\?v=[^"]+/g, `app.js?v=${version}`)
     .replace(/cms-site\.js\?v=[^"]+/g, `cms-site.js?v=${version}`)
+    .replace(/payment-flow\.js\?v=[^"]+/g, `payment-flow.js?v=${version}`)
+    .replace(/payment-flow\.css\?v=[^"]+/g, `payment-flow.css?v=${version}`)
     .replace(/order-confirmation\.js\?v=[^"]+/g, `order-confirmation.js?v=${version}`);
 }
 
@@ -588,7 +612,10 @@ function requireMutationAuth(request, response) {
 }
 
 async function handleApi(request, response) {
+  if (await paymentSystem.handle(request, response)) return;
+
   if (request.method === "POST" && request.url === "/api/login") {
+    await paymentSystem.guardLogin(request);
     const body = await readBody(request, 20_000);
 
     if (!config.username || !config.password) {
@@ -1013,6 +1040,18 @@ const mime = {
   ".js": "text/javascript; charset=utf-8"
 };
 
+const paymentSystem = createPaymentSystem({
+  config,
+  json,
+  readBody,
+  requireAuth,
+  requireMutationAuth,
+  actorName: config.username || "admin",
+  loadCatalog: async () => extractAdminState((await getAppFile()).source)
+});
+
+paymentSystem.start();
+
 function serveFile(response, name) {
   const file = path.join(publicDir, name);
 
@@ -1023,7 +1062,12 @@ function serveFile(response, name) {
   response.writeHead(200, {
     "Content-Type": mime[path.extname(file)] || "application/octet-stream",
     "Cache-Control": "no-store",
-    "X-Robots-Tag": "noindex, nofollow"
+    "X-Robots-Tag": "noindex, nofollow",
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
   });
 
   fs.createReadStream(file).pipe(response);
@@ -1047,6 +1091,15 @@ const server = http.createServer(async (request, response) => {
       return response.end();
     }
 
+    if (pathname === "/admin/review") {
+      const token = String(requestUrl.searchParams.get("token") || "");
+      const destination = getSession(request)
+        ? `/admin.html?reviewToken=${encodeURIComponent(token)}`
+        : `/login.html?next=${encodeURIComponent(`/admin.html?reviewToken=${token}`)}`;
+      response.writeHead(302, { Location: destination, "Cache-Control": "no-store" });
+      return response.end();
+    }
+
     if (pathname === "/admin.html") {
       if (!getSession(request)) {
         response.writeHead(302, { Location: "/login.html" });
@@ -1056,7 +1109,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js"].includes(pathname)) {
+    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/payment-admin.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 
