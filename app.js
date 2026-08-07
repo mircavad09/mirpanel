@@ -273,7 +273,7 @@ const DATA = {
       "seoOgImage": "assets/capcut.png",
       "banner": {
         "enabled": true,
-        "desktopImage": "assets/capcut.png",
+        "desktopImage": "/uploads/products/capcut-1786103247176-d7438ec7.jpg?v=1786103247176",
         "mobileImage": "",
         "title": "CapCut Pro",
         "description": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
@@ -3249,6 +3249,16 @@ const CMS_CONTENT = {
       "width": 1376,
       "height": 768,
       "uploadedAt": "2026-07-31T15:18:37.501Z"
+    },
+    {
+      "path": "/uploads/products/capcut-1786103247176-d7438ec7.jpg?v=1786103247176",
+      "name": "",
+      "alt": "CapCut Pro banneri",
+      "size": 790789,
+      "type": "image/jpeg",
+      "width": 3200,
+      "height": 1340,
+      "uploadedAt": "2026-08-07T11:47:27.177Z"
     }
   ]
 };
