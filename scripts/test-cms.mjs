@@ -74,7 +74,7 @@ assert.equal(state.products.filter((product) => product.active).length, 21, "Akt
 assert.equal(digest(orderSnapshot), "06637bdd0c20ac392eeb351c40138e8699934f7734667529c9da96872e3e7b7c", "Məhsul sırası dəyişib");
 assert.equal(digest(commercialSnapshot), "5c46037dc76c72bd131112e13ac46235922b19745110065aace16cb7b0941ff7", "Qiymət, plan və ya aktivlik dəyişib");
 assert.ok(state.products.every((product) => !product.seoSlug.endsWith("-almaq") && !product.seoSlug.includes("hesab0")), "Məhsul slug miqrasiyası tamamlanmayıb");
-assert.equal(digest(bannerSnapshot), "28d5de78f3c4205bcc01714235da0e4041616f19d8b0d1eefb26d58d330c071d", "Banner məlumatı və ya aktivliyi dəyişib");
+assert.equal(digest(bannerSnapshot), "b9d6c957fd3554fd0d7859e705b402a97ea53b0676494774193c9c1e00d72c6a", "Banner məlumatı və ya aktivliyi dəyişib");
 assert.deepEqual(Object.keys(state.cms), [
   "schemaVersion", "site", "homepage", "navigation", "banners", "supportCard",
   "footer", "commonTexts", "seo", "orderSettings", "media"
@@ -95,10 +95,10 @@ assert.deepEqual(
     netflix: "assets/slider2.png",
     canva: "assets/slider3.png",
     youtube: "assets/slider4.png",
-    capcut: "assets/slider5.png",
+    capcut: "assets/capcut.png",
     tiktok_jeton: "assets/slider6.png"
   },
-  "Mövcud altı böyük banner şəkli məhsullara itkisiz bağlanmayıb"
+  "Mövcud banner şəkilləri məhsullara düzgün bağlanmayıb"
 );
 assert.ok(
   activeProducts.every((product) => product.banner.desktopImage || product.image),
