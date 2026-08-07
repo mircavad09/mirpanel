@@ -32,6 +32,12 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
   result.code = known || "PAYMENT_STORE_ERROR";
   result.status = known?.includes("NOT_FOUND") ? 404 : known ? 409 : 500;
   result.cause = error;
+  result.diagnostic = safeText([
+    error?.code,
+    error?.message,
+    error?.details,
+    error?.hint
+  ].filter(Boolean).join(" · "), 1000);
   return result;
 }
 

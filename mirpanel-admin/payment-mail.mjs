@@ -141,9 +141,9 @@ export function createPaymentMailer(config, store) {
     },
     start() {
       if (!this.configured || timer) return;
-      timer = setInterval(() => this.drain(3).catch((error) => console.error("Payment email queue", error.message)), 30_000);
+      timer = setInterval(() => this.drain(3).catch((error) => console.error("Payment email queue", error.diagnostic || error.message)), 30_000);
       timer.unref?.();
-      this.drain(3).catch((error) => console.error("Payment email queue", error.message));
+      this.drain(3).catch((error) => console.error("Payment email queue", error.diagnostic || error.message));
     },
     stop() { if (timer) clearInterval(timer); timer = null; }
   };

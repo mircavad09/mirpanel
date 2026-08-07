@@ -82,6 +82,7 @@ assert.ok(api.includes("consentAccepted !== true"));
 assert.ok(api.includes("createSignedUrl") === false, "Signed URL yalnız store qatında olmalıdır");
 assert.ok(store.includes("createSignedUrl"));
 assert.ok(store.includes("consume_payment_review_token"));
+assert.ok(store.includes("result.diagnostic"));
 assert.ok(api.includes('request.method === "POST" && url.pathname === "/api/admin/payment-review-token"'));
 assert.ok(flow.includes('accept="image/jpeg,image/png,image/webp,application/pdf"'));
 assert.ok(flow.includes("if (!flow.receipt || !flow.reservation)"));

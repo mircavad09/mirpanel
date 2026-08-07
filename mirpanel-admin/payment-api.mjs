@@ -338,7 +338,7 @@ export function createPaymentSystem(options) {
     },
     start() {
       mailer.start();
-      const cleanup = () => store.cleanupExpiredReceipts().catch((error) => console.error("Payment receipt cleanup", error.message));
+      const cleanup = () => store.cleanupExpiredReceipts().catch((error) => console.error("Payment receipt cleanup", error.diagnostic || error.message));
       setTimeout(cleanup, 15_000).unref?.();
       const timer = setInterval(cleanup, 6 * 60 * 60_000);
       timer.unref?.();
@@ -352,6 +352,7 @@ export function createPaymentSystem(options) {
       } catch (error) {
         const isPublic = url.pathname.startsWith("/api/payments/");
         const status = errorStatus(error);
+        console.error("Payment API", error.code || "PAYMENT_ERROR", error.diagnostic || error.message);
         if (isPublic) publicJson(request, response, status, { error: error.message, code: error.code || "PAYMENT_ERROR" });
         else json(response, status, { error: error.message, code: error.code || "PAYMENT_ERROR" });
         return true;
