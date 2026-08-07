@@ -121,6 +121,35 @@
     await loadMethods();
   }
 
+  function paymentActionDialog({ title, message, label = "", value = "", required = false, confirmText = "Təsdiqlə", danger = false }) {
+    return new Promise((resolve) => {
+      const dialog = document.createElement("dialog");
+      dialog.className = "paymentActionDialog";
+      dialog.innerHTML = `<form method="dialog" class="paymentActionDialogCard">
+        <div class="sectionHead"><div><h3>${escp(title)}</h3><p>${escp(message)}</p></div><button class="btn" type="button" data-payment-dialog-close aria-label="Bağla">×</button></div>
+        ${label ? `<label>${escp(label)}<textarea data-payment-dialog-value maxlength="2000"${required ? " required" : ""}>${escp(value)}</textarea></label>` : ""}
+        <div class="paymentOrderActions"><button class="btn" type="button" data-payment-dialog-close>Ləğv et</button><button class="btn ${danger ? "danger" : "primary"}" type="submit">${escp(confirmText)}</button></div>
+      </form>`;
+      document.body.appendChild(dialog);
+      const finish = (result) => {
+        dialog.close();
+        dialog.remove();
+        resolve(result);
+      };
+      dialog.querySelectorAll("[data-payment-dialog-close]").forEach((button) => button.addEventListener("click", () => finish(null)));
+      dialog.addEventListener("cancel", (event) => { event.preventDefault(); finish(null); }, { once: true });
+      dialog.querySelector("form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        const input = dialog.querySelector("[data-payment-dialog-value]");
+        const result = input ? input.value.trim() : true;
+        if (required && !result) { input.setCustomValidity("Bu sahə məcburidir."); input.reportValidity(); return; }
+        finish(result);
+      });
+      dialog.showModal();
+      dialog.querySelector("[data-payment-dialog-value]")?.focus();
+    });
+  }
+
   async function handleOrderAction(card, action) {
     const id = card.dataset.paymentOrderId;
     if (action === "receipt") {
@@ -128,19 +157,26 @@
       window.open(result.url, "_blank", "noopener,noreferrer");
       return;
     }
-    if (action === "approve" && !confirm("Ödənişin real olduğunu yoxladınız və təsdiqləyirsiniz?")) return;
     let body = {};
     if (action === "note") body.note = card.querySelector("[data-payment-order-note]")?.value || "";
+    if (action === "approve") {
+      const approved = await paymentActionDialog({ title: "Ödənişi təsdiqlə", message: "Ödənişin real olduğunu yoxladığınızı təsdiqləyin.", confirmText: "Təsdiqlə" });
+      if (!approved) return;
+    }
     if (action === "reject") {
-      const reason = prompt("Rədd səbəbini yazın:");
+      const reason = await paymentActionDialog({ title: "Ödənişi rədd et", message: "Rədd səbəbini yazın. Bu məlumat audit tarixçəsində saxlanacaq.", label: "Rədd səbəbi", required: true, confirmText: "Rədd et", danger: true });
       if (!reason) return;
       body.reason = reason;
     }
-    if (action === "new-receipt") body.note = prompt("Müştəri üçün qeyd (istəyə bağlı):") || "Yeni ödəniş çeki tələb olunur.";
+    if (action === "new-receipt") {
+      const note = await paymentActionDialog({ title: "Yeni çek tələb et", message: "Müştəriyə göndəriləcək qeydi yazın.", label: "Qeyd", value: "Yeni ödəniş çeki tələb olunur.", confirmText: "Keçid yarat" });
+      if (note === null) return;
+      body.note = note || "Yeni ödəniş çeki tələb olunur.";
+    }
     const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: JSON.stringify(body) });
     if (action === "new-receipt" && result.replacementUrl) {
       await navigator.clipboard.writeText(result.replacementUrl).catch(() => {});
-      prompt("Müştəriyə WhatsApp-da göndərin. Keçid 24 saat etibarlıdır və bir dəfə işləyir:", result.replacementUrl);
+      await paymentActionDialog({ title: "Yeni çek keçidi hazırdır", message: "Keçid buferə kopyalandı. WhatsApp vasitəsilə müştəriyə göndərin. Keçid 24 saat etibarlıdır və bir dəfə işləyir.", label: "Keçid", value: result.replacementUrl, confirmText: "Bağla" });
     }
     toast("Sifariş vəziyyəti yeniləndi.");
     await loadOrders();

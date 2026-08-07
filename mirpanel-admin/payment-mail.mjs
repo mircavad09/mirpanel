@@ -5,6 +5,28 @@ function base64Url(value) {
   return Buffer.from(value, "utf8").toString("base64url");
 }
 
+function base64Mime(value) {
+  return Buffer.from(String(value || ""), "utf8")
+    .toString("base64")
+    .match(/.{1,76}/g)?.join("\r\n") || "";
+}
+
+function emailAddress(value) {
+  const normalized = String(value || "").trim();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)) throw new Error("Gmail e-poçt ünvanı düzgün deyil.");
+  return normalized;
+}
+
+function gmailError(response, payload, operation) {
+  const details = [
+    `Gmail ${operation} xətası: ${response.status}`,
+    payload?.error?.status,
+    payload?.error?.errors?.[0]?.reason,
+    payload?.error?.message || payload?.error_description || (typeof payload?.error === "string" ? payload.error : "")
+  ].filter(Boolean);
+  return safeText([...new Set(details)].join(" · "), 500);
+}
+
 function htmlEscape(value) {
   return String(value || "")
     .replace(/&/g, "&amp;")
@@ -54,29 +76,31 @@ export function createPaymentMailer(config, store) {
       body
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok || !payload.access_token) throw new Error(safeText(payload.error_description || payload.error || `Gmail OAuth xətası: ${response.status}`, 500));
+    if (!response.ok || !payload.access_token) throw new Error(gmailError(response, payload, "OAuth"));
     return payload.access_token;
   }
 
   async function send(row) {
     const boundary = `mirpanel-${crypto.randomUUID()}`;
+    const sender = emailAddress(config.gmailSenderEmail);
+    const recipient = emailAddress(row.recipient);
     const raw = [
-      `From: ${encodeSubject(config.gmailFromName)} <${config.gmailSenderEmail}>`,
-      `To: ${row.recipient}`,
+      `From: ${encodeSubject(config.gmailFromName)} <${sender}>`,
+      `To: ${recipient}`,
       `Subject: ${encodeSubject(row.subject)}`,
       "MIME-Version: 1.0",
       `Content-Type: multipart/alternative; boundary="${boundary}"`,
       "",
       `--${boundary}`,
       "Content-Type: text/plain; charset=UTF-8",
-      "Content-Transfer-Encoding: 8bit",
+      "Content-Transfer-Encoding: base64",
       "",
-      row.text_body,
+      base64Mime(row.text_body),
       `--${boundary}`,
       "Content-Type: text/html; charset=UTF-8",
-      "Content-Transfer-Encoding: 8bit",
+      "Content-Transfer-Encoding: base64",
       "",
-      row.html_body,
+      base64Mime(row.html_body),
       `--${boundary}--`
     ].join("\r\n");
     const token = await accessToken();
@@ -86,7 +110,7 @@ export function createPaymentMailer(config, store) {
       body: JSON.stringify({ raw: base64Url(raw) })
     });
     const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(safeText(payload.error?.message || `Gmail göndəriş xətası: ${response.status}`, 500));
+    if (!response.ok) throw new Error(gmailError(response, payload, "göndəriş"));
     return payload;
   }
 

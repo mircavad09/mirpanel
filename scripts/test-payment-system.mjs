@@ -76,6 +76,7 @@ const flow = read("payment-flow.js");
 const confirmation = read("order-confirmation.js");
 const server = read("mirpanel-admin/server.mjs");
 const index = read("index.html");
+const paymentAdmin = read("mirpanel-admin/public/payment-admin.js");
 assert.ok(api.includes("catalogSelection"));
 assert.ok(api.includes("consentAccepted !== true"));
 assert.ok(api.includes("createSignedUrl") === false, "Signed URL yalnız store qatında olmalıdır");
@@ -93,6 +94,9 @@ assert.ok(server.includes("await paymentSystem.guardLogin(request)"));
 assert.ok(server.includes("requireMutationAuth"));
 assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
+assert.ok(paymentAdmin.includes("paymentActionDialog"));
+assert.equal(/\bprompt\s*\(/.test(paymentAdmin), false, "Ödəniş adminində native prompt istifadə edilməməlidir");
+assert.ok(paymentAdmin.includes("body.reason = reason"));
 
 const mail = paymentEmailContent({
   order: { order_code: "MP-A1B2C3", product_title: "Test", plan_name: "1 aylıq", amount: 5.99, currency: "AZN", created_at: new Date().toISOString() },
@@ -104,6 +108,8 @@ const mail = paymentEmailContent({
 assert.ok(mail.textBody.includes("MP-A1B2C3"));
 assert.ok(mail.htmlBody.includes("Sifarişi yoxla"));
 assert.equal(mail.textBody.includes(fullNumber.replaceAll(" ", "")), false);
+assert.ok(read("mirpanel-admin/payment-mail.mjs").includes('Content-Transfer-Encoding: base64'));
+assert.ok(read("mirpanel-admin/payment-mail.mjs").includes("payload?.error?.errors?.[0]?.reason"));
 
 const snapshot = commercialSnapshot();
 assert.equal(snapshot.productCount, 30);
