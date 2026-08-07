@@ -420,6 +420,19 @@ $$;
 
 revoke all on all tables in schema public from anon, authenticated;
 revoke all on all sequences in schema public from anon, authenticated;
+grant select, insert, update, delete on table
+  public.payment_methods,
+  public.payment_method_daily_counters,
+  public.payment_reservations,
+  public.payment_orders,
+  public.payment_review_tokens,
+  public.payment_receipt_tokens,
+  public.payment_email_queue,
+  public.payment_audit_log,
+  public.payment_settings,
+  public.payment_rate_limits
+to service_role;
+grant usage, select on sequence public.payment_audit_log_id_seq to service_role;
 revoke execute on function public.payment_baku_date(timestamptz) from public, anon, authenticated;
 revoke execute on function public.expire_payment_reservations() from public, anon, authenticated;
 revoke execute on function public.consume_payment_rate_limit(text, integer, integer) from public, anon, authenticated;
