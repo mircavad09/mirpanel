@@ -133,20 +133,24 @@
     </div><div class="sectionHead"><h3>Sayt keçidləri</h3><button class="btn" type="button" data-add-list="navigation">Keçid əlavə et</button></div><div id="navigationList" class="cmsList"></div>`));
     createView("banners", panel("Bannerlər", "Məhsul bannerlərini sadə siyahıdan seçib redaktə edin", '<div class="sectionHead"><h3>Bütün məhsul bannerləri</h3></div><div id="bannerProductList" class="bannerManageList"></div><label class="bannerProductPicker hidden">Məhsulu seç<select id="bannerProductSelect"></select></label><div id="bannerProductEditor"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
     createView("paymentMethods", panel("Ödəniş üsulları", "Kart və elektron cüzdanları təhlükəsiz idarə edin. Tam nömrə saxlandıqdan sonra yenidən göstərilmir.", '<div id="paymentMethodsStatus" class="previewResult hidden"></div><div class="sectionHead"><div><h3>Kart və cüzdanlar</h3><p>Standart gündəlik limit 5-dir. Limitsiz rejim yalnız əl ilə aktivləşdirilir.</p></div><button class="btn primary" type="button" id="paymentMethodAdd">Yeni üsul əlavə et</button></div><div id="paymentMethodsList" class="paymentMethodsAdminList"></div><div id="paymentMethodEditor"></div><div class="sectionHead"><h3>Bildiriş və çek saxlanması</h3></div><form id="paymentSettingsForm" class="paymentSettingsForm formGrid"><label>Bildiriş Gmail ünvanı<input id="paymentNotificationEmail" type="email" required></label><label>Çeklərin saxlanma müddəti (gün)<input id="paymentReceiptRetentionDays" type="number" min="1" max="3650" value="90"></label><div class="wide"><button class="btn" type="submit">Parametrləri saxla</button></div></form>'));
-    createView("paymentOrders", panel("Sifarişlər", "Yeni, tamamlanmış və rədd edilmiş sifarişləri təhlükəsiz şəkildə idarə edin.", `<div class="paymentOrderToolbar">
+    createView("paymentOrders", panel("Sifarişlər", "Gözləyən sifarişləri yoxlayın, tamamlanmış satış tarixçəsini və müddəti bitən məhsulları izləyin.", `<div class="paymentOrderToolbar">
       <div class="paymentOrderTabs" role="tablist" aria-label="Sifariş statusları">
         <button class="paymentOrderTab active" type="button" role="tab" aria-selected="true" data-payment-order-tab="pending">Gözləyən sifarişlər (<span id="paymentPendingCount">0</span>)</button>
-        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="completed">Tamamlanmış sifarişlər (<span id="paymentCompletedCount">0</span>)</button>
+        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="today">Bu gün tamamlananlar (<span id="paymentTodayCount">0</span>)</button>
+        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="all">Ümumi sifarişlər (<span id="paymentAllCount">0</span>)</button>
+        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="expiring">Bitən məhsullar (<span id="paymentExpiringCount">0</span>)</button>
       </div>
       <button class="btn" type="button" id="paymentOrdersRefresh">Yenilə</button>
     </div>
+    <div id="paymentOrderStatistics" class="paymentOrderStatistics" aria-live="polite"></div>
     <form id="paymentOrderFilters" class="paymentOrderFilters" role="search">
       <label>Sifariş ID-si<input id="paymentOrderSearch" type="search" placeholder="MP-XXXXXX" autocomplete="off"></label>
       <label>Məhsul<select id="paymentOrderProduct"><option value="">Bütün məhsullar</option></select></label>
-      <label>Status<select id="paymentOrderStatus"><option value="">Seçilmiş tab</option><option value="reviewing">Yoxlanılır</option><option value="completed">Tamamlandı</option><option value="rejected">Rədd edilib</option><option value="expired">Vaxtı bitib</option></select></label>
+      <label>Plan<select id="paymentOrderPlan"><option value="">Bütün planlar</option></select></label>
       <label>Bank<select id="paymentOrderMethod"><option value="">Bütün banklar</option></select></label>
-      <label>Başlanğıc tarixi<input id="paymentOrderDateFrom" type="date"></label>
-      <label>Son tarix<input id="paymentOrderDateTo" type="date"></label>
+      <label>Müddət<select id="paymentOrderPeriod"><option value="">Bütün tarixçə</option><option value="1d">1 gün</option><option value="7d">Son 7 gün</option><option value="1m">Son 1 ay</option><option value="3m">Son 3 ay</option><option value="6m">Son 6 ay</option><option value="1y">Son 1 il</option><option value="custom">Xüsusi tarix</option></select></label>
+      <label class="paymentCustomDate">Başlanğıc tarixi<input id="paymentOrderDateFrom" type="date"></label>
+      <label class="paymentCustomDate">Son tarix<input id="paymentOrderDateTo" type="date"></label>
       <label>Sıralama<select id="paymentOrderSort"><option value="newest">Ən yeni</option><option value="oldest">Ən köhnə</option></select></label>
       <div class="paymentOrderFilterActions"><button class="btn primary" type="submit">Tətbiq et</button><button class="btn" type="button" id="paymentOrderFiltersClear">Təmizlə</button></div>
     </form>

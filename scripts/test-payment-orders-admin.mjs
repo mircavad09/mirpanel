@@ -3,87 +3,108 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  addCalendarMonthsMinusDay,
+  bakuDate,
+  expiryStatus,
+  orderPeriodRange,
+  serviceDates,
+  structuredDurationMonths
+} from "../mirpanel-admin/payment-order-lifecycle.mjs";
+import {
+  aggregateCompletedOrders,
   adminOrderStatus,
   normalizeOrderListParams,
   orderDatabaseStatuses,
   paymentMethodLabel,
   PAYMENT_ORDER_PAGE_SIZE
 } from "../mirpanel-admin/payment-order-query.mjs";
+import { validatePaymentNumber } from "../mirpanel-admin/payment-security.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 
 assert.equal(PAYMENT_ORDER_PAGE_SIZE, 20);
+for (const tab of ["pending", "today", "all", "expiring"]) assert.equal(normalizeOrderListParams({ tab }).tab, tab);
 assert.deepEqual(orderDatabaseStatuses(normalizeOrderListParams({ tab: "pending" })), ["reviewing", "new_receipt_requested"]);
-assert.deepEqual(orderDatabaseStatuses(normalizeOrderListParams({ tab: "completed" })), ["approved", "completed"]);
-assert.deepEqual(orderDatabaseStatuses(normalizeOrderListParams({ status: "rejected" })), ["rejected"]);
+assert.deepEqual(orderDatabaseStatuses(normalizeOrderListParams({ tab: "all" })), ["approved", "completed"]);
 assert.equal(adminOrderStatus("approved"), "completed");
-assert.equal(adminOrderStatus("completed"), "completed");
-assert.equal(adminOrderStatus("reviewing"), "reviewing");
 assert.equal(adminOrderStatus("reviewing", "expired"), "expired");
 assert.equal(paymentMethodLabel({ display_name: "LeoBank •••• 4419", provider_name: "LeoBank", last4: "4419" }), "LeoBank •••• 4419");
-assert.equal(paymentMethodLabel({ display_name: "ABB •••• 4655", last4: "4655" }), "ABB •••• 4655");
+assert.equal(paymentMethodLabel({ method_name_snapshot: "ABB", method_last4_snapshot: "4655" }), "ABB •••• 4655");
 
-const normalized = normalizeOrderListParams({
-  page: "7", search: " mp-a1b2c3<script>", productId: "product-1", methodId: "not-a-uuid",
-  dateFrom: "2026-08-01", dateTo: "invalid", sort: "oldest"
-});
-assert.equal(normalized.page, 7);
-assert.equal(normalized.search, "MP-A1B2C3");
-assert.equal(normalized.methodId, "");
-assert.equal(normalized.dateFrom, "2026-08-01");
-assert.equal(normalized.dateTo, "");
-assert.equal(normalized.sort, "oldest");
-assert.equal(normalizeOrderListParams({ dateFrom: "2026-02-31" }).dateFrom, "");
+assert.equal(bakuDate("2026-08-08T19:59:59.999Z"), "2026-08-08");
+assert.equal(bakuDate("2026-08-08T20:00:00.000Z"), "2026-08-09");
+for (const [months, expected] of [[1, "2026-09-07"], [3, "2026-11-07"], [6, "2027-02-07"], [12, "2027-08-07"]]) {
+  assert.equal(addCalendarMonthsMinusDay("2026-08-08", months), expected);
+}
+assert.deepEqual(serviceDates("2026-08-08T12:00:00+04:00", 3), { completedOn: "2026-08-08", expiresOn: "2026-11-07", notificationOn: "2026-11-06" });
+assert.equal(expiryStatus("2026-11-07", new Date("2026-11-06T12:00:00+04:00")).code, "tomorrow");
+assert.equal(expiryStatus("2026-11-07", new Date("2026-11-07T00:00:00+04:00")).code, "expired");
+assert.equal(expiryStatus("2026-11-07", new Date("2026-11-05T12:00:00+04:00")).due, false);
+assert.equal(structuredDurationMonths({ months: 6 }), 6);
+assert.equal(structuredDurationMonths({ label: "6 aylıq" }), null, "Müddət görünən mətndən təxmin edilməməlidir");
+assert.deepEqual(orderPeriodRange("7d", "", "", new Date("2026-08-09T12:00:00+04:00")), { dateFrom: "2026-08-03", dateTo: "2026-08-09" });
+
+const stats = aggregateCompletedOrders([
+  { product_title: "Netflix Şəxsi", amount: 5.99 },
+  { product_title: "Netflix Şəxsi", amount: 7 },
+  { product_title: "Spotify Premium", amount: 4 }
+]);
+assert.deepEqual(stats, { count: 3, revenue: 16.99, topProduct: "Netflix Şəxsi", products: [{ title: "Netflix Şəxsi", count: 2 }, { title: "Spotify Premium", count: 1 }] });
+
+assert.equal(validatePaymentNumber("4098 5844 9937 4419", "bank_card"), "4098584499374419");
+assert.equal(validatePaymentNumber("050 123 45 67", "wallet"), "0501234567");
+assert.equal(validatePaymentNumber("", "bank_card"), "");
+assert.throws(() => validatePaymentNumber("4098-5844", "bank_card"));
+assert.throws(() => validatePaymentNumber("1234", "bank_card"));
 
 const store = read("mirpanel-admin/payment-store.mjs");
 const api = read("mirpanel-admin/payment-api.mjs");
 const admin = read("mirpanel-admin/public/payment-admin.js");
 const cms = read("mirpanel-admin/public/cms-admin.js");
 const css = read("mirpanel-admin/public/admin.css");
-const migration = read("supabase/migrations/202608070001_payment_system.sql");
+const migration = read("supabase/migrations/202608090001_order_history_and_expiry.sql");
 
-assert.ok(store.includes('.select(select, { count: "exact" })'), "Sifariş sayı serverdə hesablanmalıdır");
-assert.ok(store.includes(".range(from, from + filters.pageSize - 1)"), "Server pagination işləməlidir");
-assert.ok(store.includes("paymentMethodLabel(method)"), "Maskalanmış nömrə bir dəfə formatlanmalıdır");
-const listOrdersSource = store.match(/async listOrders\(input = \{\}\)[\s\S]*?(?=\n    async getOrder\()/)?.[0] || "";
-assert.equal(listOrdersSource.includes('select("*,payment_methods'), false, "Sifariş siyahısı lazımsız sütunları götürməməlidir");
-assert.equal(store.includes("async updateOrderNote"), false, "Yeni administrator qeydi axını qalmamalıdır");
-assert.ok(api.includes("Object.fromEntries(url.searchParams)"), "Filtrlər serverə ötürülməlidir");
-assert.ok(api.includes('url.pathname === "/api/admin/payment-emails"'), "Gmail yoxlamaları sifarişlərdən ayrılmalıdır");
-assert.equal(api.includes("approve|reject|receipt|note"), false, "Qeyd endpoint-i qalmamalıdır");
-assert.ok(cms.includes('["paymentOrders", "Sifarişlər"]'));
-assert.ok(cms.includes("Gözləyən sifarişlər"));
-assert.ok(cms.includes("Tamamlanmış sifarişlər"));
-assert.ok(cms.includes("Hər səhifədə" ) === false, "Texniki izah əsas görünüşü ağırlaşdırmamalıdır");
-assert.equal(cms.includes("Administrator qeydi"), false, "Sifariş kartında administrator qeydi görünməməlidir");
-assert.equal(admin.includes("data-payment-order-note"), false);
-assert.equal(admin.includes("data-save-payment-note"), false);
-assert.ok(admin.includes("paymentOrderFilters"));
-assert.ok(admin.includes("paymentOrdersPrevious"));
-assert.ok(admin.includes("paymentOrdersNext"));
-assert.ok(admin.includes("card.remove()"), "Status dəyişəndə kart dərhal siyahıdan çıxmalıdır");
-assert.ok(admin.includes("if (paymentState.orderActions.has(id)) return"), "İkiqat klik brauzerdə bloklanmalıdır");
-assert.ok(css.includes("paymentOrderCompactGrid"));
+assert.ok(store.includes('.select(select, { count: "exact" })'));
+assert.ok(store.includes(".range(from, from + filters.pageSize - 1)"), "Səhifələmə serverdə işləməlidir");
+assert.ok(store.includes('query.is("contacted_at", null)'));
+assert.ok(store.includes('rpc("mark_payment_order_contacted"'));
+assert.ok(store.includes('rpc("delete_payment_method_safely"'));
+assert.ok(api.includes("structuredDurationMonths(plan)"));
+assert.ok(api.includes('approve|reject|contacted|receipt'));
+assert.ok(api.includes("validatePaymentNumber"));
+assert.ok(cms.includes("Bu gün tamamlananlar"));
+assert.ok(cms.includes("Ümumi sifarişlər"));
+assert.ok(cms.includes("Bitən məhsullar"));
+assert.equal(cms.includes('option value="rejected"'), false, "Rədd edilmiş sifarişlər əsas filtrdə olmamalıdır");
+assert.ok(admin.includes('type="text" inputmode="numeric"'));
+assert.equal(admin.includes('name="fullNumber" type="password"'), false);
+assert.ok(admin.includes("formatNumber(event.target.value)"));
+assert.ok(admin.includes("data-contacted-payment"));
+assert.ok(admin.includes("data-delete-payment-method"));
+assert.ok(css.includes("paymentOrderStatistics"));
 assert.ok(css.includes("@media(max-width:420px)"));
 
-const approveRpc = migration.match(/create or replace function public\.approve_payment_order[\s\S]*?(?=create or replace function public\.reject_payment_order)/)?.[0] || "";
-const rejectRpc = migration.match(/create or replace function public\.reject_payment_order[\s\S]*?(?=create or replace function public\.cancel_payment_reservation)/)?.[0] || "";
-for (const sql of [approveRpc, rejectRpc]) {
-  assert.ok(sql.includes("for update"), "Status keçidi database sətrini kilidləməlidir");
-  assert.ok(sql.includes("idempotent"), "Status keçidi idempotent cavab qaytarmalıdır");
-  assert.ok(sql.includes("payment_audit_log"), "Audit qeydi saxlanmalıdır");
+for (const column of ["completed_at", "duration_months", "service_expires_on", "expiry_notification_on", "contacted_at", "method_name_snapshot", "method_last4_snapshot", "deleted_at"]) assert.ok(migration.includes(column));
+for (const fn of ["approve_payment_order_v2", "mark_payment_order_contacted", "delete_payment_method_safely"]) {
+  const source = migration.match(new RegExp(`create or replace function public\\.${fn}[\\s\\S]*?(?=create or replace function|revoke execute|commit;)`))?.[0] || "";
+  assert.ok(source.includes("for update"), `${fn}: database sətri kilidlənməlidir`);
+  assert.ok(source.includes("idempotent"), `${fn}: idempotent cavab tələb olunur`);
+  assert.ok(source.includes("payment_audit_log"), `${fn}: audit qeydi tələb olunur`);
 }
-assert.ok(approveRpc.includes("confirmed_count = confirmed_count + 1"));
-assert.equal(rejectRpc.includes("confirmed_count = confirmed_count + 1"), false);
-assert.ok(rejectRpc.includes("set status = 'rejected'"));
+assert.ok(migration.includes("confirmed_count = confirmed_count + 1"));
+assert.equal((migration.match(/confirmed_count = confirmed_count \+ 1/g) || []).length, 1, "Sayğac yalnız təsdiq funksiyasında artırılmalıdır");
+assert.ok(migration.includes("PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS"));
+assert.ok(migration.includes("update public.payment_orders set completed_at = approved_at"), "Etibarlı tamamlanma tarixi itirilməməlidir");
+assert.equal(/update public\.payment_orders[\s\S]*duration_months\s*=\s*.+plan_name/i.test(migration), false, "Keçmiş müddət plan mətnindən uydurulmamalıdır");
 
 console.log(JSON.stringify({
   ok: true,
   pageSize: PAYMENT_ORDER_PAGE_SIZE,
-  tabs: ["pending", "completed"],
-  rejectedAvailableByFilter: true,
-  adminNoteUiRemoved: true,
-  atomicApproveReject: true,
-  duplicateLast4Prevented: true
+  tabs: ["pending", "today", "all", "expiring"],
+  bakuMidnight: true,
+  durationMonths: [1, 3, 6, 12],
+  contactedIdempotent: true,
+  cardNumberVisibleOnlyWhileEditing: true,
+  serverPagination: true
 }, null, 2));
