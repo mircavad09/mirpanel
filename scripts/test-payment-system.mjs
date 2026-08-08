@@ -106,6 +106,9 @@ assert.equal(paymentAdmin.includes("data-cancel-payment-reservation"), false, "A
 assert.equal(paymentAdmin.includes('label: "Rədd səbəbi"'), false, "Rədd səbəbi soruşulmamalıdır");
 assert.ok(paymentAdmin.includes("Bu sifarişi rədd etmək istəyirsiniz?"));
 assert.ok(paymentAdmin.includes("orderActions: new Set()"), "Təkrar admin klikləri brauzerdə bloklanmalıdır");
+assert.ok(paymentAdmin.includes('window.open("about:blank", "_blank")'), "Çek tabı istifadəçi klikində dərhal açılmalıdır");
+assert.ok(paymentAdmin.includes("receiptWindow.location.replace(result.url)"), "İmzalı çek URL-si əvvəlcədən açılmış taba yazılmalıdır");
+assert.ok(paymentAdmin.includes("else window.location.assign(result.url)"), "Popup bloklanarsa çek eyni tabda açılmalıdır");
 assert.equal(api.includes("new-receipt|cancel-reservation"), false, "İşləməyən admin route-ları qalmamalıdır");
 assert.ok(store.includes('p_reason: "Admin tərəfindən rədd edildi."'), "Rədd əməliyyatı sistem qeydi yazmalıdır");
 
@@ -144,7 +147,7 @@ for (const file of [
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 56,
+  tests: 59,
   commercialSnapshot: snapshot.sha256,
   products: snapshot.productCount,
   activeProducts: snapshot.activeProductCount,

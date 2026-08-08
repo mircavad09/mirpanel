@@ -153,8 +153,16 @@
   async function handleOrderAction(card, action) {
     const id = card.dataset.paymentOrderId;
     if (action === "receipt") {
-      const result = await paymentApi(`/api/admin/payment-orders/${id}/receipt`);
-      window.open(result.url, "_blank", "noopener,noreferrer");
+      const receiptWindow = window.open("about:blank", "_blank");
+      if (receiptWindow) receiptWindow.opener = null;
+      try {
+        const result = await paymentApi(`/api/admin/payment-orders/${id}/receipt`);
+        if (receiptWindow) receiptWindow.location.replace(result.url);
+        else window.location.assign(result.url);
+      } catch (error) {
+        receiptWindow?.close();
+        throw error;
+      }
       return;
     }
     if (paymentState.orderActions.has(id)) return;
