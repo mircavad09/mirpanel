@@ -146,7 +146,7 @@ for (const page of productPages) {
   const html = read(path.join("mehsul", page));
   assert.ok(html.includes("payment-flow.css?v=payment-whatsapp-20260808-2"), `${page}: payment CSS cache versiyası köhnədir`);
   assert.ok(html.includes("payment-flow.js?v=payment-whatsapp-20260808-2"), `${page}: payment JS cache versiyası köhnədir`);
-  assert.ok(html.includes("order-confirmation.js?v=payment-whatsapp-20260808-2"), `${page}: confirmation cache versiyası köhnədir`);
+  assert.ok(html.includes("order-confirmation.js?v=payment-whatsapp-20260808-3"), `${page}: confirmation cache versiyası köhnədir`);
 }
 
 for (const file of [

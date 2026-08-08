@@ -220,7 +220,7 @@
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
   <script src="/hbo-max-order-fix.js?v=mandatory-consent-20260802-1"></script>
   <script src="/payment-flow.js?v=payment-whatsapp-20260808-2"></script>
-  <script src="/order-confirmation.js?v=payment-whatsapp-20260808-2"></script>
+  <script src="/order-confirmation.js?v=payment-whatsapp-20260808-3"></script>
   <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
   <script src="/site-header.js?v=20260805-shared-header-1"></script>

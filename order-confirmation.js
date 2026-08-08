@@ -1258,7 +1258,7 @@
     const order = buildWhatsAppMessage(product, plan, formData, paymentOrder.orderCode);
     const extraLines = order.extraText ? ["", order.extraText] : [];
     order.message = [
-      "Salam, ödəniş etmişəm. ✅",
+      "Salam, ödəniş etmişəm.",
       "",
       `Sifariş nömrəsi: ${paymentOrder.orderCode}`,
       `Məhsul: ${publicProductTitle(paymentOrder.productTitle || product.title)}`,
