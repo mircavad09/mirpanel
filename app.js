@@ -9,7 +9,7 @@ let PHONE_WA = "https://wa.me/994515243545";
    ========================= */
 const UI = {
   "brandSub": "Premium Hesablar • Etibarlı Aktivləşmə",
-  "bannerText": "Diqqət! Saytımızda ödəniş sistemi yoxdur. Sifariş etdiyiniz zaman sayt sizi avtomatik WhatsApp-a yönləndirir.",
+  "bannerText": "Diqqət! Saytımızda qeydiyyat tələb olunmur. Məhsulu seçib ödənişi tamamladıqdan sonra WhatsApp avtomatik açılacaq.",
   "heroTitle": "Premium Hesablar — Sürətli və Etibarlı",
   "heroHint": "Netflix, ChatGPT Plus, Google AI, CapCut Pro və daha çox. Plan seç → məlumatları yaz → WhatsApp avtomatik açılır.",
   "footRights": "©️ 2026 Mirpanel • Bütün hüquqlar qorunur",
@@ -2966,7 +2966,7 @@ const CMS_CONTENT = {
   "homepage": {
     "announcement": {
       "enabled": true,
-      "text": "Diqqət! Saytımızda ödəniş sistemi yoxdur. Sifariş etdiyiniz zaman sayt sizi avtomatik WhatsApp-a yönləndirir."
+      "text": "Diqqət! Saytımızda qeydiyyat tələb olunmur. Məhsulu seçib ödənişi tamamladıqdan sonra WhatsApp avtomatik açılacaq."
     },
     "hero": {
       "title": "Premium Hesablar — Sürətli və Etibarlı",

@@ -13,7 +13,7 @@ import { commercialSnapshot } from "./payment-commercial-snapshot.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
-const expectedSnapshot = "e496120a2b9db0319d466b65b7735cd1dcc734dd8f201bcc9d1faf17fb652abf";
+const expectedSnapshot = "3e15b54f27ace96a246ee844dd320cba35151964e9e922bcabfb5c302e34ea16";
 
 function expectThrow(fn, pattern) {
   let thrown = null;

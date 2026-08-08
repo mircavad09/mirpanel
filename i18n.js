@@ -15,7 +15,7 @@
       searchShortExample: "Məhsul axtar... (məs: Netflix, Zoom)",
       searchPromoTitle: "AXTARIŞ ET, <span class=\"highlight\">İSTƏDİYİNİ TAP!</span>",
       searchPromoDesc: "Bütün məlumatlar saytda mövcuddur. Axtarış bölməsindən istədiyiniz məhsulu rahatlıqla tapa bilərsiniz.",
-      bannerText: "Diqqət! Saytımızda ödəniş sistemi yoxdur. Sifariş etdiyiniz zaman sayt sizi avtomatik WhatsApp-a yönləndirir.",
+      bannerText: "Diqqət! Saytımızda qeydiyyat tələb olunmur. Məhsulu seçib ödənişi tamamladıqdan sonra WhatsApp avtomatik açılacaq.",
       sortProducts: "Məhsulları Sırala",
       bestSelling: "Ən Çox Satılanlar",
       priceAsc: "Ucuzdan bahaya",
