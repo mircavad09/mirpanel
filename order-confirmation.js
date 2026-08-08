@@ -1188,6 +1188,41 @@
     return payload;
   }
 
+  function buildWhatsAppUrl(message) {
+    const configured = typeof PHONE_WA === "string" ? PHONE_WA.trim() : "";
+    let phone = "";
+    try {
+      const parsed = new URL(configured, window.location.origin);
+      phone = parsed.hostname === "wa.me" ? parsed.pathname : configured;
+    } catch {
+      phone = configured;
+    }
+    phone = String(phone).replace(/\D/g, "");
+    if (phone.startsWith("0")) phone = `994${phone.slice(1)}`;
+    if (!/^\d{8,15}$/.test(phone)) phone = "994515243545";
+
+    const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+    const verified = new URL(whatsappUrl);
+    if (verified.protocol !== "https:" || verified.hostname !== "wa.me" || !/^\/\d{8,15}$/.test(verified.pathname)) {
+      throw new Error("WhatsApp keçidi yaradıla bilmədi.");
+    }
+    return verified.href;
+  }
+
+  function showWhatsAppFallback(whatsappUrl, orderCode) {
+    setFooter("");
+    renderModalContent(`
+      <section class="paymentWhatsAppFallback" aria-labelledby="paymentWhatsAppFallbackTitle" aria-live="polite">
+        <h2 id="paymentWhatsAppFallbackTitle">Sifariş yaradıldı</h2>
+        <p>Sifariş nömrəsi: <strong>${escapeHtml(orderCode || "")}</strong></p>
+        <p>WhatsApp avtomatik açılmasa, aşağıdakı düyməyə toxunun.</p>
+        <a id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}" target="_self">WhatsApp-a keç</a>
+      </section>
+    `);
+  }
+
+  window.mirpanelBuildWhatsAppUrl = buildWhatsAppUrl;
+
   async function openWhatsApp(product, plan, formData = {}, paymentOrder = null) {
     if (!orderTermsAccepted) {
       showAgreementError();
@@ -1241,10 +1276,10 @@
       stockAfter: stockResult?.stockAfter
     });
 
-    const separator = PHONE_WA.includes("?") ? "&" : "?";
-    const url = `${PHONE_WA}${separator}text=${encodeURIComponent(order.message)}`;
-    closeOrderModal();
-    window.location.assign(url);
+    const whatsappUrl = buildWhatsAppUrl(order.message);
+    showWhatsAppFallback(whatsappUrl, paymentOrder.orderCode);
+    window.location.href = whatsappUrl;
+    return;
   }
 
   function showForm(product, plan, onDone) {

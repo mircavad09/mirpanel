@@ -86,12 +86,21 @@ assert.ok(store.includes("result.diagnostic"));
 assert.ok(api.includes('request.method === "POST" && url.pathname === "/api/admin/payment-review-token"'));
 assert.ok(flow.includes('accept="image/jpeg,image/png,image/webp,application/pdf"'));
 assert.ok(flow.includes("if (!flow.receipt || !flow.reservation)"));
+assert.ok(flow.includes('id="paymentReceiptForm"'));
+assert.ok(flow.includes('id="paymentSubmit" type="submit"'));
+assert.ok(flow.includes('addEventListener("submit", async (event)'));
+assert.ok(flow.includes("event.preventDefault()"));
+assert.ok(flow.includes("if (flow.submitting) return"));
 assert.equal(flow.includes("/api/payments/replacement-receipts"), false, "İşləməyən yeni çek axını qalmamalıdır");
 assert.equal(flow.includes("paymentReceiptToken"), false, "İşləməyən yeni çek tokeni qalmamalıdır");
 assert.ok(flow.includes("Göndər və WhatsApp-a keç"));
 assert.ok(confirmation.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"));
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));
-assert.ok(confirmation.includes("window.location.assign(url)"), "WhatsApp eyni tabda açılmalıdır");
+assert.ok(confirmation.includes("window.location.href = whatsappUrl"), "WhatsApp eyni tabda açılmalıdır");
+assert.ok(confirmation.includes("https://wa.me/${phone}?text=${encodeURIComponent(message)}"));
+assert.ok(confirmation.includes('verified.hostname !== "wa.me"'));
+assert.ok(confirmation.includes('target="_self">WhatsApp-a keç</a>'));
+assert.equal(confirmation.includes("closeOrderModal();\n    window.location"), false, "WhatsApp keçidindən əvvəl modal bağlanmamalıdır");
 assert.equal(confirmation.includes('window.open(url, "_blank"'), false, "Async WhatsApp popup istifadə edilməməlidir");
 assert.ok(server.includes("await paymentSystem.guardLogin(request)"));
 assert.ok(server.includes("requireMutationAuth"));
@@ -99,6 +108,7 @@ assert.ok(server.includes('Supabase server key format:'));
 assert.equal(server.includes("config.supabaseSecretKey.slice"), false);
 assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
+assert.ok(index.includes("payment-whatsapp-20260808-2"));
 assert.ok(paymentAdmin.includes("paymentActionDialog"));
 assert.equal(/\bprompt\s*\(/.test(paymentAdmin), false, "Ödəniş adminində native prompt istifadə edilməməlidir");
 assert.equal(paymentAdmin.includes("data-request-receipt"), false, "Yeni çek tələb et düyməsi qalmamalıdır");
@@ -130,6 +140,15 @@ assert.equal(snapshot.productCount, 30);
 assert.equal(snapshot.activeProductCount, 21);
 assert.equal(snapshot.sha256, expectedSnapshot, "Kommersiya/CMS snapshot dəyişib");
 
+const productPages = fs.readdirSync(path.join(root, "mehsul")).filter((name) => name.endsWith(".page"));
+assert.equal(productPages.length, 21);
+for (const page of productPages) {
+  const html = read(path.join("mehsul", page));
+  assert.ok(html.includes("payment-flow.css?v=payment-whatsapp-20260808-2"), `${page}: payment CSS cache versiyası köhnədir`);
+  assert.ok(html.includes("payment-flow.js?v=payment-whatsapp-20260808-2"), `${page}: payment JS cache versiyası köhnədir`);
+  assert.ok(html.includes("order-confirmation.js?v=payment-whatsapp-20260808-2"), `${page}: confirmation cache versiyası köhnədir`);
+}
+
 for (const file of [
   "mirpanel-admin/payment-api.mjs",
   "mirpanel-admin/payment-mail.mjs",
@@ -147,7 +166,7 @@ for (const file of [
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 59,
+  tests: 70,
   commercialSnapshot: snapshot.sha256,
   products: snapshot.productCount,
   activeProducts: snapshot.activeProductCount,

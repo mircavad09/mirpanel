@@ -82,14 +82,14 @@
   }
 
   function receiptMarkup() {
-    return `<section class="paymentReceiptBox">
+    return `<form id="paymentReceiptForm" class="paymentReceiptBox" action="" method="post" novalidate>
       <label class="paymentReceiptPicker" for="paymentReceiptInput"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>Ödəniş qəbzini yüklə</strong><span>JPG, PNG, WEBP və ya PDF · maksimum 5 MB</span></label>
       <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>
       <div id="paymentReceiptPreview" class="paymentReceiptPreview hidden"></div>
       <div id="paymentUploadProgress" class="paymentUploadProgress hidden"><span></span><b>0%</b></div>
       <p id="paymentReceiptError" class="paymentReceiptError" role="alert" hidden></p>
-      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><button id="paymentSubmit" type="button" disabled>Göndər və WhatsApp-a keç</button></div>
-    </section>`;
+      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><button id="paymentSubmit" type="submit" disabled>Göndər və WhatsApp-a keç</button></div>
+    </form>`;
   }
 
   function setMessage(text, type = "") {
@@ -119,7 +119,7 @@
   async function start({ product, plan, planIndex }) {
     if (activeFlow) await cancelReservation(activeFlow);
     renderShell(product, plan);
-    const flow = { product, plan, planIndex, reservation: null, receipt: null, stopTimer: null, settled: false };
+    const flow = { product, plan, planIndex, reservation: null, receipt: null, stopTimer: null, settled: false, submitting: false };
     activeFlow = flow;
     return new Promise(async (resolve) => {
       const finish = async (value, cancel = false) => {
@@ -188,10 +188,14 @@
                 flow.receipt = null; fileEvent.target.value = ""; preview.innerHTML = ""; preview.classList.add("hidden"); document.getElementById("paymentSubmit").disabled = true;
               };
             };
-            document.getElementById("paymentSubmit").onclick = async () => {
+            document.getElementById("paymentReceiptForm").addEventListener("submit", async (event) => {
+              event.preventDefault();
+              event.stopPropagation();
+              if (flow.submitting) return;
               const submit = document.getElementById("paymentSubmit");
               const error = document.getElementById("paymentReceiptError");
               if (!flow.receipt || !flow.reservation) { error.textContent = "Qəbz və aktiv rezerv tələb olunur."; error.hidden = false; return; }
+              flow.submitting = true;
               submit.disabled = true;
               error.hidden = true;
               const progress = document.getElementById("paymentUploadProgress");
@@ -209,12 +213,14 @@
                 updateProgress(100);
                 setMessage(`Çek yükləndi. Sifariş: ${order.orderCode}`, "success");
                 await finish(order, false);
+                return;
               } catch (submitError) {
+                flow.submitting = false;
                 error.textContent = submitError.message;
                 error.hidden = false;
                 submit.disabled = false;
               }
-            };
+            });
           } catch (reserveError) {
             choices.querySelectorAll("button").forEach((item) => { item.disabled = item.getAttribute("aria-disabled") === "true"; });
             setMessage(reserveError.message, "error");
