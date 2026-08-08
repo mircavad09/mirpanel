@@ -11,11 +11,13 @@
   }
 
   function methodCard(method) {
-    const limit = method.limitMode === "unlimited" ? "Limitsiz" : `${method.confirmedToday}/${method.dailyLimit} təsdiq · ${method.pendingReservations} rezerv`;
-    const reason = !method.hasNumber ? "Tam nömrə daxil edilməyib" : method.archived ? "Arxivdədir" : method.available ? "Müştəri üçün əlçatandır" : method.active ? "Limit və ya rezerv səbəbilə bağlıdır" : "Deaktivdir";
+    const limit = method.limitMode === "unlimited" ? "Limitsiz" : `Bu gün tamamlanıb: ${method.confirmedToday}/${method.dailyLimit}`;
+    const remaining = method.limitMode === "unlimited" ? "Qalan limit: limitsiz" : `Qalan limit: ${method.remaining}`;
+    const reset = method.lastResetAt ? new Date(method.lastResetAt).toLocaleString("az-AZ") : "Bu gün sayğac yaradılmayıb";
+    const reason = !method.hasNumber ? "Tam nömrə daxil edilməyib" : method.archived ? "Arxivdədir" : method.available ? "Aktivdir" : method.active ? "Limitdədir" : "Deaktivdir";
     return `<article class="paymentMethodAdminCard${method.available ? " isAvailable" : ""}" data-payment-method-id="${escp(method.id)}">
       <div class="paymentMethodColor" style="--payment-method-color:${escp(method.color)}"></div>
-      <div><strong>${escp(method.displayName)}</strong><span>${escp(method.maskedNumber)} · ${escp(method.providerName)}</span><small>${escp(limit)} · ${escp(reason)}</small></div>
+      <div><strong>${escp(method.displayName)}</strong><span>${escp(method.maskedNumber)} · ${escp(method.providerName)}</span><small>${escp(limit)} · Aktiv rezerv: ${Number(method.pendingReservations)} · ${escp(remaining)}</small><small>Son sıfırlanma: ${escp(reset)} · ${escp(reason)}</small></div>
       <div class="paymentMethodAdminActions"><span class="statusPill ${method.active ? "ok" : ""}">${method.active ? "Aktiv" : "Deaktiv"}</span><button class="btn" type="button" data-edit-payment-method="${escp(method.id)}">Redaktə et</button></div>
     </article>`;
   }
@@ -31,7 +33,7 @@
     const host = $p("paymentMethodEditor");
     if (!host) return;
     const isNew = !method;
-    const value = method || { displayName: "", type: "bank_card", providerName: "", holderName: "", color: "#151515", icon: "card", active: false, order: paymentState.methods.length + 1, dailyLimit: 5, limitMode: "limited", adminNote: "", maskedNumber: "" };
+    const value = method || { displayName: "", type: "bank_card", providerName: "", holderName: "", color: "#151515", icon: "card", theme: "auto", active: false, order: paymentState.methods.length + 1, dailyLimit: 5, limitMode: "limited", adminNote: "", maskedNumber: "" };
     host.innerHTML = `<form id="paymentMethodForm" class="paymentMethodEditorCard" autocomplete="off">
       <div class="sectionHead"><div><h3>${isNew ? "Yeni ödəniş üsulu" : escp(value.displayName)}</h3><p>${isNew ? "Tam nömrə yalnız şifrələnmiş formada saxlanacaq." : `Hazırkı nömrə: ${escp(value.maskedNumber)}. Dəyişmək üçün yeni tam nömrə daxil edin.`}</p></div><button class="btn" type="button" data-close-payment-editor>Bağla</button></div>
       <div class="formGrid">
@@ -41,6 +43,7 @@
         <label>Kart/cüzdan sahibi<input name="holderName" maxlength="120" value="${escp(value.holderName)}"></label>
         <label>${isNew ? "Tam nömrə" : "Yeni tam nömrə (dəyişmirsə boş saxla)"}<input name="fullNumber" type="password" inputmode="numeric" autocomplete="new-password" ${isNew ? "required" : ""} minlength="4" maxlength="40"><small>Tam nömrə admin siyahısına geri qaytarılmır.</small></label>
         <label>Rəng<input name="color" type="color" value="${escp(value.color)}"></label>
+        <label>Kart mövzusu<select name="theme"><option value="auto"${value.theme === "auto" ? " selected" : ""}>Avtomatik (bank adına görə)</option><option value="leo"${value.theme === "leo" ? " selected" : ""}>LeoBank — qara/qızılı</option><option value="abb"${value.theme === "abb" ? " selected" : ""}>ABB — tünd mavi</option><option value="kapital"${value.theme === "kapital" ? " selected" : ""}>Kapital Bank — qırmızı</option><option value="m10"${value.theme === "m10" ? " selected" : ""}>M10 — firuzəyi cüzdan</option><option value="neutral"${value.theme === "neutral" ? " selected" : ""}>Neytral</option></select><small>Avtomatik seçim bank adına görə mövzunu təyin edir; istəsəniz əl ilə dəyişə bilərsiniz.</small></label>
         <label>İkon<select name="icon"><option value="card"${value.icon === "card" ? " selected" : ""}>Kart</option><option value="bank"${value.icon === "bank" ? " selected" : ""}>Bank</option><option value="wallet"${value.icon === "wallet" ? " selected" : ""}>Cüzdan</option></select></label>
         <label>Sıra<input name="order" type="number" min="1" value="${Number(value.order) || 1}"></label>
         <label>Gündəlik limit<input name="dailyLimit" type="number" min="1" max="10000" value="${Number(value.dailyLimit) || 5}"></label>

@@ -14,7 +14,9 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
   const known = [
     "IDEMPOTENCY_CONFLICT", "PAYMENT_METHOD_UNAVAILABLE", "PAYMENT_METHOD_LIMIT_REACHED",
     "RESERVATION_NOT_FOUND", "RESERVATION_EXPIRED", "ORDER_NOT_FOUND", "ORDER_NOT_REVIEWABLE",
-    "ORDER_ALREADY_APPROVED", "REJECTION_REASON_REQUIRED", "RECEIPT_TOKEN_INVALID"
+    "ORDER_ALREADY_APPROVED", "REJECTION_REASON_REQUIRED", "RECEIPT_TOKEN_INVALID",
+    "CHECKOUT_KEY_REQUIRED", "ACTIVE_RESERVATION_EXISTS", "RESERVATION_ALREADY_SUBMITTED",
+    "RESERVATION_CHECKOUT_MISMATCH"
   ].find((code) => message.includes(code));
   const translated = {
     IDEMPOTENCY_CONFLICT: "Təkrar sorğu əvvəlki sifarişlə uyğun deyil.",
@@ -26,7 +28,11 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     ORDER_NOT_REVIEWABLE: "Bu sifariş artıq yoxlanıla bilməz.",
     ORDER_ALREADY_APPROVED: "Təsdiqlənmiş sifariş rədd edilə bilməz.",
     REJECTION_REASON_REQUIRED: "Rədd səbəbini yazın.",
-    RECEIPT_TOKEN_INVALID: "Yeni çek keçidi etibarsızdır, istifadə edilib və ya vaxtı bitib."
+    RECEIPT_TOKEN_INVALID: "Yeni çek keçidi etibarsızdır, istifadə edilib və ya vaxtı bitib.",
+    CHECKOUT_KEY_REQUIRED: "Təhlükəsiz ödəniş sessiyası yaradılmadı.",
+    ACTIVE_RESERVATION_EXISTS: "Bu ödəniş sessiyasında artıq aktiv rezerv var.",
+    RESERVATION_ALREADY_SUBMITTED: "Bu rezerv üzrə çek artıq göndərilib.",
+    RESERVATION_CHECKOUT_MISMATCH: "Rezerv bu ödəniş sessiyasına aid deyil."
   }[known];
   const result = new Error(translated || fallback);
   result.code = known || "PAYMENT_STORE_ERROR";
@@ -39,6 +45,19 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     error?.hint
   ].filter(Boolean).join(" · "), 1000);
   return result;
+}
+
+const PAYMENT_THEMES = new Set(["auto", "leo", "abb", "kapital", "m10", "neutral"]);
+
+function paymentTheme(value, providerName, methodType) {
+  const selected = PAYMENT_THEMES.has(value) ? value : "auto";
+  if (selected !== "auto") return selected;
+  const provider = String(providerName || "").toLocaleLowerCase("az-AZ");
+  if (provider.includes("leo")) return "leo";
+  if (provider.includes("abb")) return "abb";
+  if (provider.includes("kapital")) return "kapital";
+  if (provider.includes("m10") || methodType === "wallet") return "m10";
+  return "neutral";
 }
 
 function rowMethod(row, stats = {}) {
@@ -57,6 +76,8 @@ function rowMethod(row, stats = {}) {
     last4: row.last4,
     color: row.color,
     icon: row.icon,
+    theme: PAYMENT_THEMES.has(row.theme) ? row.theme : "auto",
+    resolvedTheme: paymentTheme(row.theme, row.provider_name, row.method_type),
     active: row.active,
     archived: row.archived,
     order: row.sort_order,
@@ -64,6 +85,7 @@ function rowMethod(row, stats = {}) {
     limitMode: row.limit_mode,
     confirmedToday: confirmed,
     pendingReservations: pending,
+    lastResetAt: stats.lastResetAt || null,
     remaining,
     available: row.active && !row.archived && Boolean(row.encrypted_number) && (unlimited || remaining > 0),
     hasNumber: Boolean(row.encrypted_number),
@@ -89,13 +111,17 @@ export function createPaymentStore(config) {
     await rpc("expire_payment_reservations");
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const [{ data: counters, error: counterError }, { data: reservations, error: reservationError }] = await Promise.all([
-      client.from("payment_method_daily_counters").select("method_id,confirmed_count").eq("counter_date", today).in("method_id", methodIds),
+      client.from("payment_method_daily_counters").select("method_id,confirmed_count,updated_at").eq("counter_date", today).in("method_id", methodIds),
       client.from("payment_reservations").select("method_id,status,expires_at").in("method_id", methodIds).in("status", ["reserved", "reviewing"])
     ]);
     if (counterError) throw paymentError(counterError);
     if (reservationError) throw paymentError(reservationError);
-    const stats = new Map(methodIds.map((id) => [id, { confirmed: 0, pending: 0 }]));
-    for (const row of counters || []) stats.get(row.method_id).confirmed = Number(row.confirmed_count || 0);
+    const resetAt = `${today}T00:00:00+04:00`;
+    const stats = new Map(methodIds.map((id) => [id, { confirmed: 0, pending: 0, lastResetAt: resetAt }]));
+    for (const row of counters || []) {
+      stats.get(row.method_id).confirmed = Number(row.confirmed_count || 0);
+      stats.get(row.method_id).lastResetAt = resetAt;
+    }
     for (const row of reservations || []) {
       if (row.status === "reviewing" || new Date(row.expires_at).getTime() > Date.now()) stats.get(row.method_id).pending += 1;
     }
@@ -165,6 +191,7 @@ export function createPaymentStore(config) {
         last4: number.slice(-4),
         color: safeColor(input.color),
         icon: ["card", "wallet", "bank"].includes(input.icon) ? input.icon : "card",
+        theme: PAYMENT_THEMES.has(input.theme) ? input.theme : "auto",
         active: Boolean(input.active && encryptedNumber),
         sort_order: Math.max(1, Number(input.order) || 1),
         daily_limit: Math.max(1, Math.min(10000, Number(input.dailyLimit) || 5)),
@@ -187,6 +214,7 @@ export function createPaymentStore(config) {
         holder_name: safeText(input.holderName, 120),
         color: safeColor(input.color),
         icon: ["card", "wallet", "bank"].includes(input.icon) ? input.icon : "card",
+        theme: PAYMENT_THEMES.has(input.theme) ? input.theme : "auto",
         sort_order: Math.max(1, Number(input.order) || 1),
         daily_limit: Math.max(1, Math.min(10000, Number(input.dailyLimit) || 5)),
         limit_mode: input.limitMode === "unlimited" ? "unlimited" : "limited",
@@ -218,13 +246,15 @@ export function createPaymentStore(config) {
       await client.from("payment_audit_log").insert({ actor_type: "admin", actor_ref: actor, action: "method.counter_reset", entity_type: "payment_method", entity_id: id });
     },
     async reserve(args) {
-      return rpc("reserve_payment_method", {
+      return rpc("reserve_payment_method_v2", {
         p_method_id: args.methodId,
         p_product_id: args.productId,
         p_plan_id: args.planId,
         p_amount: args.amount,
         p_currency: "AZN",
         p_idempotency_key: args.idempotencyKey,
+        p_checkout_key: args.checkoutKey,
+        p_previous_reservation_id: args.previousReservationId || null,
         p_minutes: config.reservationMinutes
       });
     },

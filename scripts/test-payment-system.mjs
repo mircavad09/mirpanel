@@ -51,6 +51,7 @@ expectThrow(() => receiptFromPayload({ mimeType: "application/pdf", contentBase6
 expectThrow(() => receiptFromPayload({ mimeType: "image/jpeg", contentBase64: Buffer.alloc(5 * 1024 * 1024 + 1, 1).toString("base64") }), /5 MB/i);
 
 const migration = read("supabase/migrations/202608070001_payment_system.sql");
+const checkoutMigration = read("supabase/migrations/202608080001_payment_checkout_reservations.sql");
 for (const required of [
   "enable row level security",
   "revoke all on all tables in schema public from anon, authenticated",
@@ -69,10 +70,22 @@ for (const required of [
 assert.equal((migration.match(/'bank_card'|'wallet'/g) || []).length >= 6, true);
 assert.equal((migration.match(/false, [1-6]\)/g) || []).length, 6, "İlkin üsullar deaktiv olmalıdır");
 assert.equal(/\b(?:[0-9][ -]?){12,19}\b/.test(migration.replace(/00000000-0000-4000-8000-[0-9]{12}/g, "")), false, "Tam kart nömrəsi migration-a düşməməlidir");
+for (const required of [
+  "checkout_key uuid",
+  "payment_reservations_one_active_checkout_idx",
+  "status in ('reserved', 'reviewing')",
+  "reserve_payment_method_v2",
+  "pg_advisory_xact_lock",
+  "p_previous_reservation_id",
+  "RESERVATION_ALREADY_SUBMITTED",
+  "reservation.replaced",
+  "payment_methods_theme_check"
+]) assert.ok(checkoutMigration.includes(required), `Checkout migration hissəsi çatışmır: ${required}`);
 
 const api = read("mirpanel-admin/payment-api.mjs");
 const store = read("mirpanel-admin/payment-store.mjs");
 const flow = read("payment-flow.js");
+const flowCss = read("payment-flow.css");
 const confirmation = read("order-confirmation.js");
 const server = read("mirpanel-admin/server.mjs");
 const index = read("index.html");
@@ -86,6 +99,20 @@ assert.ok(store.includes("result.diagnostic"));
 assert.ok(api.includes('request.method === "POST" && url.pathname === "/api/admin/payment-review-token"'));
 assert.ok(flow.includes('accept="image/jpeg,image/png,image/webp,application/pdf"'));
 assert.ok(flow.includes("if (!flow.receipt || !flow.reservation)"));
+assert.ok(flow.includes('const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1"'));
+assert.ok(flow.includes("previousReservationId: flow.reservation?.reservationId || flow.previousReservationId || null"));
+assert.ok(flow.includes("checkoutKey: flow.checkoutKey"));
+assert.ok(flow.includes("choices.replaceChildren()"), "Kart seçiləndən sonra seçimlər DOM-dan çıxarılmalıdır");
+assert.ok(flow.includes('id="changePaymentMethod"'));
+assert.ok(flow.includes("Əvvəlki rezerv təhlükəsiz ləğv edilir"));
+assert.ok(flow.includes('data-payment-stage="payment_method_selection"'));
+assert.ok(flow.includes('setStage(flow, "payment_details")'));
+assert.ok(flow.includes('setStage(flow, "receipt_upload")'));
+assert.ok(flow.includes("Ödənişi tamamlamaq üçün qalan vaxt"));
+assert.ok(flow.includes('role="timer"'));
+assert.ok(flow.includes("Bu gün limit dolub"));
+assert.equal(flow.includes("pendingReservations"), false, "Müştəri rezerv sayğacını görməməlidir");
+assert.equal(flow.includes("method.remaining"), false, "Müştəri qalan limit sayğacını görməməlidir");
 assert.ok(flow.includes('id="paymentReceiptForm"'));
 assert.ok(flow.includes('id="paymentSubmit" type="submit"'));
 assert.ok(flow.includes('addEventListener("submit", async (event)'));
@@ -108,7 +135,21 @@ assert.ok(server.includes('Supabase server key format:'));
 assert.equal(server.includes("config.supabaseSecretKey.slice"), false);
 assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
-assert.ok(index.includes("payment-whatsapp-20260808-2"));
+assert.ok(index.includes("payment-methods-20260808-1"));
+assert.equal(api.includes("pendingReservations: method.pendingReservations"), false, "Rezerv sayı public API-yə çıxmamalıdır");
+assert.equal(api.includes("remaining: method.remaining"), false, "Qalan limit public API-yə çıxmamalıdır");
+assert.ok(api.includes("checkoutKey"));
+assert.ok(store.includes('rpc("reserve_payment_method_v2"'));
+assert.ok(paymentAdmin.includes('name="theme"'), "Bank mövzusu admin paneldə seçilə bilməlidir");
+assert.ok(paymentAdmin.includes("Bu gün tamamlanıb:"));
+assert.ok(paymentAdmin.includes("Aktiv rezerv:"));
+assert.ok(paymentAdmin.includes("Son sıfırlanma:"));
+for (const theme of ["theme-leo", "theme-abb", "theme-kapital", "theme-m10", "theme-neutral"]) {
+  assert.ok(flowCss.includes(theme), `Ödəniş kartı mövzusu çatışmır: ${theme}`);
+}
+assert.ok(flowCss.includes("safe-area-inset-bottom"));
+assert.ok(flowCss.includes("paymentMagneticStripe"));
+assert.ok(flowCss.includes("payment-timer-pulse"));
 assert.ok(paymentAdmin.includes("paymentActionDialog"));
 assert.equal(/\bprompt\s*\(/.test(paymentAdmin), false, "Ödəniş adminində native prompt istifadə edilməməlidir");
 assert.equal(paymentAdmin.includes("data-request-receipt"), false, "Yeni çek tələb et düyməsi qalmamalıdır");
@@ -144,8 +185,8 @@ const productPages = fs.readdirSync(path.join(root, "mehsul")).filter((name) => 
 assert.equal(productPages.length, 21);
 for (const page of productPages) {
   const html = read(path.join("mehsul", page));
-  assert.ok(html.includes("payment-flow.css?v=payment-whatsapp-20260808-2"), `${page}: payment CSS cache versiyası köhnədir`);
-  assert.ok(html.includes("payment-flow.js?v=payment-whatsapp-20260808-2"), `${page}: payment JS cache versiyası köhnədir`);
+  assert.ok(html.includes("payment-flow.css?v=payment-methods-20260808-1"), `${page}: payment CSS cache versiyası köhnədir`);
+  assert.ok(html.includes("payment-flow.js?v=payment-methods-20260808-1"), `${page}: payment JS cache versiyası köhnədir`);
   assert.ok(html.includes("order-confirmation.js?v=payment-whatsapp-20260808-3"), `${page}: confirmation cache versiyası köhnədir`);
 }
 
@@ -157,7 +198,8 @@ for (const file of [
   "mirpanel-admin/public/payment-admin.js",
   "payment-flow.js",
   "payment-flow.css",
-  "supabase/migrations/202608070001_payment_system.sql"
+  "supabase/migrations/202608070001_payment_system.sql",
+  "supabase/migrations/202608080001_payment_checkout_reservations.sql"
 ]) {
   const value = read(file);
   assert.equal(value.includes("\uFFFD"), false, `${file}: UTF-8 replacement simvolu var`);

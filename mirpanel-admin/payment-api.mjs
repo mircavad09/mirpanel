@@ -16,6 +16,16 @@ function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
 }
 
+function resolvedPaymentTheme(method) {
+  if (["leo", "abb", "kapital", "m10", "neutral"].includes(method.theme)) return method.theme;
+  const provider = String(method.provider_name || "").toLocaleLowerCase("az-AZ");
+  if (provider.includes("leo")) return "leo";
+  if (provider.includes("abb")) return "abb";
+  if (provider.includes("kapital")) return "kapital";
+  if (provider.includes("m10") || method.method_type === "wallet") return "m10";
+  return "neutral";
+}
+
 function publicMethod(method) {
   return {
     id: method.id,
@@ -26,12 +36,10 @@ function publicMethod(method) {
     last4: method.last4,
     color: method.color,
     icon: method.icon,
+    theme: method.resolvedTheme,
     order: method.order,
-    limitMode: method.limitMode,
-    remaining: method.remaining,
-    pendingReservations: method.pendingReservations,
     available: method.available,
-    unavailableReason: method.available ? "" : "Kart gündəlik limitdədir"
+    unavailableReason: method.available ? "" : "Bu gün limit dolub"
   };
 }
 
@@ -125,10 +133,17 @@ export function createPaymentSystem(options) {
       await publicRate(request, "reserve", 600, 12);
       const body = await readBody(request, 50_000);
       const idempotencyKey = safeUuid(request.headers["x-idempotency-key"] || body.idempotencyKey);
+      const checkoutKey = safeUuid(body.checkoutKey);
+      const previousReservationId = body.previousReservationId ? safeUuid(body.previousReservationId) : null;
       const methodId = safeUuid(body.methodId);
-      if (!idempotencyKey || !methodId) throw Object.assign(new Error("Təhlükəsiz sifariş açarı və ödəniş üsulu tələb olunur."), { status: 400 });
+      if (!idempotencyKey || !checkoutKey || !methodId || (body.previousReservationId && !previousReservationId)) {
+        throw Object.assign(new Error("Təhlükəsiz sifariş və checkout açarı tələb olunur."), { status: 400 });
+      }
       const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
-      const reserved = await store.reserve({ methodId, productId: product.id, planId: String(planIndex), amount: Number(plan.price), idempotencyKey });
+      const reserved = await store.reserve({
+        methodId, productId: product.id, planId: String(planIndex), amount: Number(plan.price),
+        idempotencyKey, checkoutKey, previousReservationId
+      });
       const method = await store.rawMethod(methodId);
       publicJson(request, response, 200, {
         reservationId: reserved.id,
@@ -140,7 +155,8 @@ export function createPaymentSystem(options) {
           holderName: method.holder_name,
           number: publicPaymentNumber(security.decryptNumber(method.encrypted_number), method.method_type),
           type: method.method_type,
-          color: method.color
+          color: method.color,
+          theme: resolvedPaymentTheme(method)
         },
         amount: Number(plan.price),
         currency: "AZN"
