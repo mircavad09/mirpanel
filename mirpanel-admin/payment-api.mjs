@@ -8,9 +8,11 @@ import {
   receiptFromPayload,
   safeMultiline,
   safeText,
-  safeUuid
+  safeUuid,
+  validatePaymentNumber
 } from "./payment-security.mjs";
 import { createPaymentStore } from "./payment-store.mjs";
+import { structuredDurationMonths } from "./payment-order-lifecycle.mjs";
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -200,7 +202,8 @@ export function createPaymentSystem(options) {
           receiptPath,
           receiptMime: receipt.mimeType,
           receiptSize: receipt.buffer.length,
-          receiptSha256: receipt.sha256
+          receiptSha256: receipt.sha256,
+          durationMonths: structuredDurationMonths(plan)
         });
       } catch (error) {
         await store.removeReceipt(receiptPath).catch(() => {});
@@ -254,22 +257,27 @@ export function createPaymentSystem(options) {
     }
     if (request.method === "POST" && url.pathname === "/api/admin/payment-methods") {
       const body = await readBody(request, 50_000);
-      const encrypted = body.fullNumber ? security.encryptNumber(body.fullNumber) : null;
+      const number = validatePaymentNumber(body.fullNumber, body.type);
+      const encrypted = number ? security.encryptNumber(number) : null;
       json(response, 201, { method: await store.createMethod(body, encrypted, actorName) }); return true;
     }
-    const methodMatch = url.pathname.match(/^\/api\/admin\/payment-methods\/([0-9a-f-]+)(?:\/(archive|reset-counter))?$/i);
+    const methodMatch = url.pathname.match(/^\/api\/admin\/payment-methods\/([0-9a-f-]+)(?:\/(archive|delete|reset-counter))?$/i);
     if (methodMatch) {
       const id = safeUuid(methodMatch[1]);
       if (!id) throw Object.assign(new Error("Ödəniş üsulu ID-si düzgün deyil."), { status: 400 });
       if (request.method === "POST" && methodMatch[2] === "archive") {
         await store.archiveMethod(id, actorName); json(response, 200, { ok: true }); return true;
       }
+      if (request.method === "POST" && methodMatch[2] === "delete") {
+        json(response, 200, await store.deleteMethod(id, actorName)); return true;
+      }
       if (request.method === "POST" && methodMatch[2] === "reset-counter") {
         await store.resetMethodCounter(id, actorName); json(response, 200, { ok: true }); return true;
       }
       if (request.method === "POST" && !methodMatch[2]) {
         const body = await readBody(request, 50_000);
-        const encrypted = body.fullNumber ? security.encryptNumber(body.fullNumber) : null;
+        const number = validatePaymentNumber(body.fullNumber, body.type);
+        const encrypted = number ? security.encryptNumber(number) : null;
         json(response, 200, { method: await store.updateMethod(id, body, encrypted, actorName) }); return true;
       }
     }
@@ -287,7 +295,7 @@ export function createPaymentSystem(options) {
       const body = await readBody(request, 20_000);
       json(response, 200, { settings: await store.updateSettings(body, actorName) }); return true;
     }
-    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|receipt))?$/i);
+    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt))?$/i);
     if (orderMatch) {
       const id = safeUuid(orderMatch[1]);
       if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
@@ -298,10 +306,21 @@ export function createPaymentSystem(options) {
         json(response, 200, { url: await store.signedReceipt(order.receipt_path, 300, actorName, order.id), expiresIn: 300, mimeType: order.receipt_mime }); return true;
       }
       if (request.method === "POST" && action === "approve") {
-        const result = await store.approveOrder(id, actorName);
+        const order = await store.getOrder(id);
+        let durationMonths = order.duration_months || null;
+        if (!durationMonths) {
+          try {
+            const { plan } = await catalogSelection(order.product_id, order.plan_id);
+            durationMonths = structuredDurationMonths(plan);
+          } catch {
+            durationMonths = null;
+          }
+        }
+        const result = await store.approveOrder(id, durationMonths, actorName);
         json(response, 200, { ...result, status: result.status === "approved" ? "completed" : result.status }); return true;
       }
       if (request.method === "POST" && action === "reject") { json(response, 200, await store.rejectOrder(id, actorName)); return true; }
+      if (request.method === "POST" && action === "contacted") { json(response, 200, await store.contactOrder(id, actorName)); return true; }
     }
     const emailMatch = url.pathname.match(/^\/api\/admin\/payment-emails\/([0-9a-f-]+)\/retry$/i);
     if (request.method === "POST" && emailMatch) {

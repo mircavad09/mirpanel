@@ -53,6 +53,19 @@ export function normalizePaymentNumber(value) {
   return String(value || "").replace(/[^0-9]/g, "");
 }
 
+export function validatePaymentNumber(value, type = "bank_card") {
+  const raw = String(value || "").trim();
+  if (!raw) return "";
+  if (!/^[0-9 ]+$/.test(raw)) throw Object.assign(new Error("Kart/cüzdan nömrəsində yalnız rəqəm və boşluq istifadə edin."), { status: 400 });
+  const digits = normalizePaymentNumber(raw);
+  const minimum = type === "wallet" ? 7 : 12;
+  const maximum = 19;
+  if (digits.length < minimum || digits.length > maximum) {
+    throw Object.assign(new Error(`Kart/cüzdan nömrəsi ${minimum}–${maximum} rəqəm olmalıdır.`), { status: 400 });
+  }
+  return digits;
+}
+
 export function maskedPaymentNumber(last4) {
   return `•••• •••• •••• ${String(last4 || "").slice(-4)}`;
 }

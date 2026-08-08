@@ -1,6 +1,8 @@
+import { bakuDate, orderPeriodRange, safeCalendarDate } from "./payment-order-lifecycle.mjs";
+
 const PAGE_SIZE = 20;
-const ORDER_TABS = new Set(["pending", "completed", "rejected"]);
-const ORDER_STATUSES = new Set(["", "reviewing", "completed", "rejected", "expired"]);
+const ORDER_TABS = new Set(["pending", "today", "all", "expiring"]);
+const ORDER_PERIODS = new Set(["", "1d", "7d", "1m", "3m", "6m", "1y", "custom"]);
 
 function boundedText(value, max = 160) {
   return String(value || "").trim().slice(0, max);
@@ -11,28 +13,24 @@ function positiveInteger(value, fallback = 1) {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 }
 
-function safeDate(value) {
-  const text = String(value || "");
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) return "";
-  const parsed = new Date(`${text}T00:00:00Z`);
-  return Number.isNaN(parsed.getTime()) || !parsed.toISOString().startsWith(text) ? "" : text;
-}
-
-export function normalizeOrderListParams(input = {}) {
+export function normalizeOrderListParams(input = {}, now = new Date()) {
   const tab = ORDER_TABS.has(input.tab) ? input.tab : "pending";
-  const status = ORDER_STATUSES.has(input.status) ? input.status : "";
+  const period = ORDER_PERIODS.has(input.period) ? input.period : "";
   const rawSearch = boundedText(input.search, 20).toUpperCase().replace(/[^A-Z0-9-]/g, "");
   const search = rawSearch.match(/MP-[A-F0-9]{0,6}/)?.[0] || rawSearch.slice(0, 9);
-  const dateFrom = safeDate(input.dateFrom);
-  const dateTo = safeDate(input.dateTo);
+  const customFrom = safeCalendarDate(input.dateFrom);
+  const customTo = safeCalendarDate(input.dateTo);
+  const range = orderPeriodRange(period === "custom" ? "" : period, customFrom, customTo, now);
   return {
     tab,
-    status,
+    period,
     search,
     productId: boundedText(input.productId, 100),
+    planName: boundedText(input.planName, 160),
     methodId: /^[0-9a-f-]{36}$/i.test(String(input.methodId || "")) ? String(input.methodId) : "",
-    dateFrom,
-    dateTo,
+    dateFrom: range.dateFrom,
+    dateTo: range.dateTo,
+    today: bakuDate(now),
     sort: input.sort === "oldest" ? "oldest" : "newest",
     page: Math.min(100000, positiveInteger(input.page, 1)),
     pageSize: PAGE_SIZE
@@ -40,13 +38,7 @@ export function normalizeOrderListParams(input = {}) {
 }
 
 export function orderDatabaseStatuses(filters) {
-  if (filters.status === "reviewing") return ["reviewing", "new_receipt_requested"];
-  if (filters.status === "completed") return ["approved", "completed"];
-  if (filters.status === "rejected") return ["rejected"];
-  if (filters.status === "expired") return [];
-  if (filters.tab === "completed") return ["approved", "completed"];
-  if (filters.tab === "rejected") return ["rejected"];
-  return ["reviewing", "new_receipt_requested"];
+  return filters.tab === "pending" ? ["reviewing", "new_receipt_requested"] : ["approved", "completed"];
 }
 
 export function adminOrderStatus(status, reservationStatus = "") {
@@ -57,13 +49,32 @@ export function adminOrderStatus(status, reservationStatus = "") {
 }
 
 export function paymentMethodLabel(method = {}) {
-  const last4 = String(method.last4 || "").replace(/\D/g, "").slice(-4);
+  const last4 = String(method.last4 || method.method_last4_snapshot || "").replace(/\D/g, "").slice(-4);
+  const snapshot = boundedText(method.method_name_snapshot, 80);
   const provider = boundedText(method.provider_name, 80);
   const display = boundedText(method.display_name, 80)
     .replace(/\s*(?:[•*xX]{2,}|\.{3,})\s*\d{4}\s*$/u, "")
     .trim();
-  const name = provider || display || "Ödəniş üsulu";
+  const name = snapshot || provider || display || "Ödəniş üsulu";
   return last4 ? `${name} •••• ${last4}` : name;
+}
+
+export function aggregateCompletedOrders(rows = []) {
+  const byProduct = new Map();
+  let revenue = 0;
+  for (const row of rows) {
+    const title = boundedText(row.product_title ?? row.productTitle, 160) || "Məhsul";
+    revenue += Number(row.amount || 0);
+    byProduct.set(title, (byProduct.get(title) || 0) + 1);
+  }
+  const products = [...byProduct].map(([title, count]) => ({ title, count }))
+    .sort((a, b) => b.count - a.count || a.title.localeCompare(b.title, "az"));
+  return {
+    count: rows.length,
+    revenue: Number(revenue.toFixed(2)),
+    topProduct: products[0]?.title || "—",
+    products
+  };
 }
 
 export const PAYMENT_ORDER_PAGE_SIZE = PAGE_SIZE;

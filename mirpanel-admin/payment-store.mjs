@@ -14,6 +14,7 @@ import {
   orderDatabaseStatuses,
   paymentMethodLabel
 } from "./payment-order-query.mjs";
+import { bakuDayBounds, expiryStatus } from "./payment-order-lifecycle.mjs";
 
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
   const message = String(error?.message || fallback);
@@ -22,7 +23,8 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     "RESERVATION_NOT_FOUND", "RESERVATION_EXPIRED", "ORDER_NOT_FOUND", "ORDER_NOT_REVIEWABLE",
     "ORDER_ALREADY_APPROVED", "REJECTION_REASON_REQUIRED", "RECEIPT_TOKEN_INVALID",
     "CHECKOUT_KEY_REQUIRED", "ACTIVE_RESERVATION_EXISTS", "RESERVATION_ALREADY_SUBMITTED",
-    "RESERVATION_CHECKOUT_MISMATCH"
+    "RESERVATION_CHECKOUT_MISMATCH", "PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS",
+    "PAYMENT_METHOD_NOT_FOUND", "ORDER_NOT_COMPLETED", "INVALID_PLAN_DURATION"
   ].find((code) => message.includes(code));
   const translated = {
     IDEMPOTENCY_CONFLICT: "Təkrar sorğu əvvəlki sifarişlə uyğun deyil.",
@@ -38,7 +40,11 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     CHECKOUT_KEY_REQUIRED: "Təhlükəsiz ödəniş sessiyası yaradılmadı.",
     ACTIVE_RESERVATION_EXISTS: "Bu ödəniş sessiyasında artıq aktiv rezerv var.",
     RESERVATION_ALREADY_SUBMITTED: "Bu rezerv üzrə çek artıq göndərilib.",
-    RESERVATION_CHECKOUT_MISMATCH: "Rezerv bu ödəniş sessiyasına aid deyil."
+    RESERVATION_CHECKOUT_MISMATCH: "Rezerv bu ödəniş sessiyasına aid deyil.",
+    PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS: "Bu kartda aktiv rezerv var. Əvvəlcə kartı deaktiv edin və rezervlərin tamamlanmasını gözləyin.",
+    PAYMENT_METHOD_NOT_FOUND: "Ödəniş üsulu tapılmadı.",
+    ORDER_NOT_COMPLETED: "Yalnız tamamlanmış sifariş üçün əlaqə statusu dəyişdirilə bilər.",
+    INVALID_PLAN_DURATION: "Planın strukturlaşdırılmış müddəti düzgün deyil."
   }[known];
   const result = new Error(translated || fallback);
   result.code = known || "PAYMENT_STORE_ERROR";
@@ -79,6 +85,7 @@ function rowMethod(row, stats = {}) {
     providerName: row.provider_name,
     holderName: row.holder_name,
     maskedNumber: maskedPaymentNumber(row.last4),
+    adminMaskedNumber: maskedPaymentNumber(row.last4),
     last4: row.last4,
     color: row.color,
     icon: row.icon,
@@ -86,6 +93,8 @@ function rowMethod(row, stats = {}) {
     resolvedTheme: paymentTheme(row.theme, row.provider_name, row.method_type),
     active: row.active,
     archived: row.archived,
+    deletedAt: row.deleted_at || null,
+    deactivatedAt: row.deactivated_at || null,
     order: row.sort_order,
     dailyLimit: row.daily_limit,
     limitMode: row.limit_mode,
@@ -174,7 +183,8 @@ export function createPaymentStore(config) {
     client,
     rpc,
     async publicMethods() {
-      return (await listMethods()).filter((method) => method.active && !method.archived).map(({ adminNote, ...method }) => ({ ...method, adminNote: undefined }));
+      return (await listMethods()).filter((method) => method.active && !method.archived)
+        .map(({ adminNote, adminMaskedNumber, deletedAt, deactivatedAt, ...method }) => method);
     },
     adminMethods() {
       return listMethods({ includeArchived: true });
@@ -234,6 +244,7 @@ export function createPaymentStore(config) {
       }
       const current = await this.rawMethod(id);
       patch.active = Boolean(input.active && (encryptedNumber || current.encrypted_number));
+      patch.deactivated_at = patch.active ? null : (current.deactivated_at || new Date().toISOString());
       const { data, error } = await client.from("payment_methods").update(patch).eq("id", id).select("*").single();
       if (error) throw paymentError(error);
       await normalizeMethodOrder(data.id, patch.sort_order);
@@ -241,9 +252,13 @@ export function createPaymentStore(config) {
       return rowMethod(await this.rawMethod(data.id));
     },
     async archiveMethod(id, actor = "admin") {
-      const { error } = await client.from("payment_methods").update({ active: false, archived: true, updated_at: new Date().toISOString() }).eq("id", id);
+      const { error } = await client.from("payment_methods").update({ active: false, deactivated_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", id);
       if (error) throw paymentError(error);
-      await audit(actor, "method.archived", "payment_method", id);
+      await audit(actor, "method.deactivated", "payment_method", id);
+    },
+    async deleteMethod(id, actor = "admin") {
+      if (!safeUuid(id)) throw Object.assign(new Error("Ödəniş üsulu ID-si düzgün deyil."), { status: 400 });
+      return rpc("delete_payment_method_safely", { p_method_id: id, p_actor: actor });
     },
     async resetMethodCounter(id, actor) {
       const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -265,7 +280,7 @@ export function createPaymentStore(config) {
       });
     },
     async submitOrder(args) {
-      return rpc("submit_payment_order", {
+      const submitted = await rpc("submit_payment_order", {
         p_order_code: args.orderCode,
         p_reservation_id: args.reservationId,
         p_product_title: args.productTitle,
@@ -276,47 +291,66 @@ export function createPaymentStore(config) {
         p_receipt_size: args.receiptSize,
         p_receipt_sha256: args.receiptSha256
       });
+      if (args.durationMonths) {
+        await rpc("set_payment_order_duration", {
+          p_order_id: submitted.id,
+          p_duration_months: args.durationMonths
+        });
+      }
+      return submitted;
     },
     async listOrders(input = {}) {
       const filters = normalizeOrderListParams(input);
-      const relation = filters.status === "expired"
-        ? "payment_reservations!inner(status,expires_at)"
-        : "payment_reservations(status,expires_at)";
-      const select = `id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,rejected_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),${relation}`;
+      const todayBounds = bakuDayBounds(filters.today);
+      const select = "id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
-      const applyCommonFilters = (query) => {
+      const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
         if (filters.search) next = next.ilike("order_code", `%${filters.search}%`);
         if (filters.productId) next = next.eq("product_id", filters.productId);
+        if (filters.planName) next = next.eq("plan_name", filters.planName);
         if (filters.methodId) next = next.eq("method_id", filters.methodId);
-        if (filters.dateFrom) next = next.gte("created_at", `${filters.dateFrom}T00:00:00+04:00`);
-        if (filters.dateTo) next = next.lte("created_at", `${filters.dateTo}T23:59:59.999+04:00`);
+        if (filters.dateFrom) next = next.gte(dateColumn, `${filters.dateFrom}T00:00:00+04:00`);
+        if (filters.dateTo) next = next.lte(dateColumn, `${filters.dateTo}T23:59:59.999+04:00`);
         return next;
       };
 
-      let query = applyCommonFilters(client.from("payment_orders").select(select, { count: "exact" }));
+      let query = applyCommonFilters(client.from("payment_orders").select(select, { count: "exact" }), filters.tab === "pending" ? "created_at" : "completed_at");
       const statuses = orderDatabaseStatuses(filters);
-      if (statuses.length) query = query.in("status", statuses);
-      if (filters.status === "expired") query = query.eq("payment_reservations.status", "expired");
+      query = query.in("status", statuses);
+      if (filters.tab === "today") query = query.gte("completed_at", todayBounds.start).lte("completed_at", todayBounds.end);
+      if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
       const from = (filters.page - 1) * filters.pageSize;
       query = query
-        .order("created_at", { ascending: filters.sort === "oldest" })
+        .order(filters.tab === "pending" ? "created_at" : "completed_at", { ascending: filters.sort === "oldest" })
         .range(from, from + filters.pageSize - 1);
 
-      const countStatus = async (statusValues) => {
-        let countQuery = applyCommonFilters(client.from("payment_orders").select("id", { count: "exact", head: true })).in("status", statusValues);
+      const countStatus = async (statusValues, mutate = (value) => value) => {
+        let countQuery = client.from("payment_orders").select("id", { count: "exact", head: true }).in("status", statusValues);
+        countQuery = mutate(countQuery);
         const { count, error } = await countQuery;
         if (error) throw paymentError(error);
         return Number(count || 0);
       };
 
-      const [{ data, error, count }, pendingCount, completedCount, rejectedCount, productRows, methodRows] = await Promise.all([
+      const [{ data, error, count }, pendingCount, todayCount, completedCount, expiringCount, productRows, methodRows, statistics] = await Promise.all([
         query,
         countStatus(["reviewing", "new_receipt_requested"]),
+        countStatus(["approved", "completed"], (value) => value.gte("completed_at", todayBounds.start).lte("completed_at", todayBounds.end)),
         countStatus(["approved", "completed"]),
-        countStatus(["rejected"]),
-        client.from("payment_orders").select("product_id,product_title").order("product_title", { ascending: true }).limit(2000),
-        client.from("payment_methods").select("id,display_name,provider_name,last4").eq("archived", false).order("sort_order", { ascending: true })
+        countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
+        client.from("payment_orders").select("product_id,product_title,plan_name").order("product_title", { ascending: true }).limit(5000),
+        client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
+        rpc("payment_order_statistics", {
+          p_tab: filters.tab,
+          p_search: filters.search || null,
+          p_product_id: filters.productId || null,
+          p_plan_name: filters.planName || null,
+          p_method_id: filters.methodId || null,
+          p_date_from: filters.dateFrom || null,
+          p_date_to: filters.dateTo || null,
+          p_today: filters.today
+        })
       ]);
       if (error) throw paymentError(error);
       if (productRows.error) throw paymentError(productRows.error);
@@ -338,8 +372,10 @@ export function createPaymentStore(config) {
       }
 
       const products = new Map();
+      const plans = new Set();
       for (const row of productRows.data || []) {
         if (row.product_id && !products.has(row.product_id)) products.set(row.product_id, row.product_title);
+        if (row.plan_name) plans.add(row.plan_name);
       }
       const total = Number(count || 0);
       return {
@@ -358,9 +394,14 @@ export function createPaymentStore(config) {
             status: adminOrderStatus(order.status, reservation.status),
             reservationStatus: reservation.status || "",
             createdAt: order.created_at,
-            completedAt: order.approved_at || (adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
+            completedAt: order.completed_at || order.approved_at || (adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
+            durationMonths: order.duration_months,
+            expiresOn: order.service_expires_on,
+            expiryNotificationOn: order.expiry_notification_on,
+            expiry: expiryStatus(order.service_expires_on),
+            contactedAt: order.contacted_at,
             receiptAvailable: !order.receipt_deleted_at,
-            paymentMethodLabel: paymentMethodLabel(method),
+            paymentMethodLabel: paymentMethodLabel({ ...method, method_name_snapshot: order.method_name_snapshot, method_last4_snapshot: order.method_last4_snapshot }),
             auditHistory: history.get(order.id) || []
           };
         }),
@@ -370,9 +411,11 @@ export function createPaymentStore(config) {
           total,
           totalPages: Math.max(1, Math.ceil(total / filters.pageSize))
         },
-        counts: { pending: pendingCount, completed: completedCount, rejected: rejectedCount },
+        counts: { pending: pendingCount, today: todayCount, all: completedCount, expiring: expiringCount },
+        statistics: statistics || { count: 0, revenue: 0, topProduct: "—", products: [] },
         filters: {
           products: [...products].map(([id, title]) => ({ id, title })),
+          plans: [...plans].sort((a, b) => a.localeCompare(b, "az")),
           methods: (methodRows.data || []).map((method) => ({ id: method.id, label: paymentMethodLabel(method) }))
         }
       };
@@ -389,8 +432,15 @@ export function createPaymentStore(config) {
       if (error) throw paymentError(error);
       return data || null;
     },
-    approveOrder(id, actor) { return rpc("approve_payment_order", { p_order_id: id, p_actor: actor }); },
+    approveOrder(id, durationMonths, actor) {
+      return rpc("approve_payment_order_v2", {
+        p_order_id: id,
+        p_duration_months: durationMonths || null,
+        p_actor: actor
+      });
+    },
     rejectOrder(id, actor) { return rpc("reject_payment_order", { p_order_id: id, p_reason: "Admin tərəfindən rədd edildi.", p_actor: actor }); },
+    contactOrder(id, actor) { return rpc("mark_payment_order_contacted", { p_order_id: id, p_actor: actor }); },
     cancelReservation(id, actor) { return rpc("cancel_payment_reservation", { p_reservation_id: id, p_actor: actor }); },
     async createReviewToken(orderId, tokenHash, expiresAt) {
       const { error } = await client.from("payment_review_tokens").insert({ order_id: orderId, token_hash: tokenHash, expires_at: expiresAt });
