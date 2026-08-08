@@ -1,10 +1,20 @@
 (() => {
   "use strict";
 
-  const paymentState = { methods: [], orders: [], emails: [], selectedMethodId: "", loading: false, knownReviewingIds: null, orderActions: new Set() };
+  const paymentState = {
+    methods: [], orders: [], emails: [], selectedMethodId: "", loading: false,
+    knownPendingCount: null, orderActions: new Set(),
+    orderQuery: { tab: "pending", status: "", search: "", productId: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1 },
+    orderMeta: { counts: { pending: 0, completed: 0, rejected: 0 }, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], methods: [] } }
+  };
   const $p = (id) => document.getElementById(id);
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  const statusLabel = { reviewing: "Yoxlanılır", approved: "Təsdiqlənib", rejected: "Rədd edilib", new_receipt_requested: "Yeni çek gözlənilir" };
+  const statusLabel = { reviewing: "Yoxlanılır", completed: "Tamamlandı", rejected: "Rədd edilib", expired: "Vaxtı bitib" };
+  const reservationLabel = { reserved: "Rezerv edilib", reviewing: "Yoxlanılır", completed: "Tamamlandı", rejected: "Rədd edilib", cancelled: "Ləğv edilib", expired: "Vaxtı bitib" };
+  const auditLabel = {
+    "order.submitted": "Sifariş yaradıldı", "order.approved": "Ödəniş təsdiqləndi", "order.rejected": "Sifariş rədd edildi",
+    "receipt.signed_url_created": "Çek təhlükəsiz açıldı", "email.retry_queued": "Bildiriş yenidən növbəyə alındı"
+  };
 
   async function paymentApi(path, options) {
     return api(path, options);
@@ -72,43 +82,112 @@
   }
 
   function orderCard(order) {
-    const method = order.payment_methods || {};
-    const reservation = order.payment_reservations || {};
-    const history = (order.audit_history || []).map((item) => `<li><span>${escp(item.action)}</span><time>${escp(new Date(item.created_at).toLocaleString("az-AZ"))}</time></li>`).join("");
-    return `<article class="paymentOrderAdminCard" data-payment-order-id="${escp(order.id)}">
-      <div class="paymentOrderHead"><div><strong>${escp(order.order_code)}</strong><span class="statusPill status-${escp(order.status)}">${escp(statusLabel[order.status] || order.status)}</span></div><time>${escp(new Date(order.created_at).toLocaleString("az-AZ"))}</time></div>
-      <div class="paymentOrderGrid"><span><b>Məhsul</b>${escp(order.product_title)}</span><span><b>Plan</b>${escp(order.plan_name)}</span><span><b>Məbləğ</b>${Number(order.amount).toFixed(2)} ${escp(order.currency)}</span><span><b>Ödəniş üsulu</b>${escp(method.display_name || "")} •••• ${escp(method.last4 || "")}</span><span><b>Rezerv</b>${escp(reservation.status || "")}</span></div>
-      ${order.rejection_reason ? `<p class="bad">Rədd səbəbi: ${escp(order.rejection_reason)}</p>` : ""}
-      <label class="paymentOrderNote">Administrator qeydi<textarea maxlength="4000" data-payment-order-note>${escp(order.admin_note || "")}</textarea></label>
-      <div class="paymentOrderActions"><button class="btn" type="button" data-open-receipt>Çeki aç</button>${order.status !== "approved" && order.status !== "rejected" ? '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ""}</div>
-      <div class="paymentOrderActions"><button class="btn" type="button" data-save-payment-note>Qeydi saxla</button></div>
-      <details class="paymentAuditHistory"><summary>Əməliyyat tarixçəsi (${(order.audit_history || []).length})</summary><ul>${history || "<li>Audit qeydi yoxdur.</li>"}</ul></details>
+    const pending = order.status === "reviewing";
+    const history = (order.auditHistory || []).map((item) => `<li><span>${escp(auditLabel[item.action] || item.action)}</span><time>${escp(new Date(item.created_at).toLocaleString("az-AZ"))}</time></li>`).join("");
+    const displayDate = order.status === "completed" && order.completedAt ? order.completedAt : order.createdAt;
+    return `<article class="paymentOrderAdminCard status-${escp(order.status)}" data-payment-order-id="${escp(order.id)}">
+      <div class="paymentOrderHead"><div><strong title="${escp(order.orderCode)}">${escp(order.orderCode)}</strong><span class="statusPill status-${escp(order.status)}">${escp(statusLabel[order.status] || "Yoxlanılır")}</span></div><time datetime="${escp(displayDate)}">${escp(new Date(displayDate).toLocaleString("az-AZ"))}</time></div>
+      <div class="paymentOrderCompactGrid">
+        <span><b>Məhsul</b><em title="${escp(order.productTitle)}">${escp(order.productTitle)}</em></span>
+        <span><b>Plan</b><em title="${escp(order.planName)}">${escp(order.planName)}</em></span>
+        <span><b>Məbləğ</b><em>${Number(order.amount).toFixed(2)} ${escp(order.currency)}</em></span>
+        <span><b>Ödəniş üsulu</b><em>${escp(order.paymentMethodLabel)}</em></span>
+        ${pending ? `<span><b>Rezerv</b><em>${escp(reservationLabel[order.reservationStatus] || "Yoxlanılır")}</em></span>` : ""}
+      </div>
+      <div class="paymentOrderActions">
+        ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : '<span class="statusPill">Çek saxlanma müddəti bitib</span>'}
+        ${pending ? '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ""}
+      </div>
+      <details class="paymentAuditHistory"><summary>Əməliyyat tarixçəsi (${(order.auditHistory || []).length})</summary><ul>${history || "<li>Audit qeydi yoxdur.</li>"}</ul></details>
     </article>`;
   }
 
+  function updateOrderCounts(counts = paymentState.orderMeta.counts) {
+    paymentState.orderMeta.counts = counts;
+    if ($p("paymentPendingCount")) $p("paymentPendingCount").textContent = String(counts.pending || 0);
+    if ($p("paymentCompletedCount")) $p("paymentCompletedCount").textContent = String(counts.completed || 0);
+    const nav = document.querySelector('.navBtn[data-view="paymentOrders"]');
+    if (nav) {
+      nav.dataset.pendingCount = String(counts.pending || 0);
+      nav.setAttribute("aria-label", counts.pending ? `Sifarişlər, ${counts.pending} gözləyən sifariş` : "Sifarişlər");
+    }
+  }
+
+  function populateOrderFilters(filters = paymentState.orderMeta.filters) {
+    const product = $p("paymentOrderProduct");
+    const method = $p("paymentOrderMethod");
+    if (product) {
+      const selected = paymentState.orderQuery.productId;
+      product.innerHTML = '<option value="">Bütün məhsullar</option>' + (filters.products || []).map((item) => `<option value="${escp(item.id)}">${escp(item.title)}</option>`).join("");
+      product.value = selected;
+    }
+    if (method) {
+      const selected = paymentState.orderQuery.methodId;
+      method.innerHTML = '<option value="">Bütün banklar</option>' + (filters.methods || []).map((item) => `<option value="${escp(item.id)}">${escp(item.label)}</option>`).join("");
+      method.value = selected;
+    }
+  }
+
   function renderOrders() {
-    const query = ($p("paymentOrderSearch")?.value || "").trim().toLowerCase();
-    const orders = paymentState.orders.filter((item) => !query || item.order_code.toLowerCase().includes(query));
-    if ($p("paymentOrdersList")) $p("paymentOrdersList").innerHTML = orders.length ? orders.map(orderCard).join("") : '<div class="emptyState">Sifariş tapılmadı.</div>';
+    const list = $p("paymentOrdersList");
+    if (list) list.innerHTML = paymentState.orders.length ? paymentState.orders.map(orderCard).join("") : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';
+    const pagination = paymentState.orderMeta.pagination;
+    if ($p("paymentOrdersPageInfo")) $p("paymentOrdersPageInfo").textContent = `Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
+    if ($p("paymentOrdersPrevious")) $p("paymentOrdersPrevious").disabled = pagination.page <= 1;
+    if ($p("paymentOrdersNext")) $p("paymentOrdersNext").disabled = pagination.page >= pagination.totalPages;
+    document.querySelectorAll("[data-payment-order-tab]").forEach((button) => {
+      const active = button.dataset.paymentOrderTab === paymentState.orderQuery.tab && !paymentState.orderQuery.status;
+      button.classList.toggle("active", active);
+      button.setAttribute("aria-selected", String(active));
+    });
+    updateOrderCounts();
+    populateOrderFilters();
+  }
+
+  function renderEmails() {
     if ($p("paymentEmailsList")) $p("paymentEmailsList").innerHTML = paymentState.emails.length ? paymentState.emails.map((item) => `<article class="paymentEmailRow"><div><strong>${escp(item.status === "sent" ? "Göndərilib" : "Bildiriş gözləyir")}</strong><span>${escp(item.recipient)} · ${Number(item.attempts)} cəhd</span>${item.last_error ? `<small class="bad">${escp(item.last_error)}</small>` : ""}</div>${item.status !== "sent" ? `<button class="btn" type="button" data-retry-payment-email="${escp(item.id)}">Yenidən göndər</button>` : ""}</article>`).join("") : '<div class="emptyState">Bildiriş qeydi yoxdur.</div>';
   }
 
   async function loadOrders() {
-    const result = await paymentApi("/api/admin/payment-orders");
-    const reviewingIds = new Set((result.orders || []).filter((item) => item.status === "reviewing").map((item) => item.id));
-    if (paymentState.knownReviewingIds) {
-      const newCount = [...reviewingIds].filter((id) => !paymentState.knownReviewingIds.has(id)).length;
-      if (newCount) toast(`${newCount} yeni ödəniş yoxlaması var.`);
+    const status = $p("paymentOrdersStatus");
+    const list = $p("paymentOrdersList");
+    if (status) status.textContent = "Sifarişlər yüklənir…";
+    if (list) { list.setAttribute("aria-busy", "true"); list.innerHTML = '<div class="emptyState">Yüklənir…</div>'; }
+    const query = new URLSearchParams(Object.entries(paymentState.orderQuery).filter(([, value]) => value !== ""));
+    try {
+      const result = await paymentApi(`/api/admin/payment-orders?${query}`);
+      const nextPending = Number(result.counts?.pending || 0);
+      if (paymentState.knownPendingCount !== null && nextPending > paymentState.knownPendingCount) toast(`${nextPending - paymentState.knownPendingCount} yeni sifariş var.`);
+      paymentState.knownPendingCount = nextPending;
+      paymentState.orders = result.orders || [];
+      paymentState.orderMeta = { counts: result.counts || {}, pagination: result.pagination || {}, filters: result.filters || {} };
+      if (paymentState.orderQuery.page > paymentState.orderMeta.pagination.totalPages && paymentState.orderQuery.page > 1) {
+        paymentState.orderQuery.page = paymentState.orderMeta.pagination.totalPages;
+        return loadOrders();
+      }
+      renderOrders();
+      if (status) status.textContent = `${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
+    } catch (error) {
+      if (list) list.innerHTML = `<div class="emptyState bad">${escp(error.message || "Sifarişlər yüklənmədi.")}</div>`;
+      if (status) status.textContent = "Server xətası baş verdi.";
+      throw error;
+    } finally {
+      list?.removeAttribute("aria-busy");
     }
-    paymentState.knownReviewingIds = reviewingIds;
-    paymentState.orders = result.orders || [];
+  }
+
+  async function loadEmails() {
+    const result = await paymentApi("/api/admin/payment-emails");
     paymentState.emails = result.emails || [];
-    const nav = document.querySelector('.navBtn[data-view="paymentReviews"]');
-    if (nav) {
-      nav.dataset.pendingCount = String(reviewingIds.size);
-      nav.setAttribute("aria-label", reviewingIds.size ? `Ödəniş yoxlamaları, ${reviewingIds.size} yeni sifariş` : "Ödəniş yoxlamaları");
-    }
-    renderOrders();
+    renderEmails();
+  }
+
+  async function refreshPendingCount() {
+    const result = await paymentApi("/api/admin/payment-orders?tab=pending&page=1");
+    const nextPending = Number(result.counts?.pending || 0);
+    if (paymentState.knownPendingCount !== null && nextPending > paymentState.knownPendingCount) toast(`${nextPending - paymentState.knownPendingCount} yeni sifariş var.`);
+    paymentState.knownPendingCount = nextPending;
+    updateOrderCounts(result.counts || {});
   }
 
   async function saveMethod(form) {
@@ -172,8 +251,6 @@
     paymentState.orderActions.add(id);
     card.querySelectorAll("button").forEach((button) => { button.disabled = true; });
     try {
-      const body = {};
-      if (action === "note") body.note = card.querySelector("[data-payment-order-note]")?.value || "";
       if (action === "approve") {
         const approved = await paymentActionDialog({ title: "Ödənişi təsdiqlə", message: "Bu sifarişin ödənişini təsdiqləmək istəyirsiniz?", confirmText: "Təsdiqlə" });
         if (!approved) return;
@@ -182,8 +259,16 @@
         const rejected = await paymentActionDialog({ title: "Ödənişi rədd et", message: "Bu sifarişi rədd etmək istəyirsiniz?", confirmText: "Rədd et", danger: true });
         if (!rejected) return;
       }
-      const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: JSON.stringify(body) });
+      const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: "{}" });
       toast(result.idempotent ? "Sifariş artıq bu vəziyyətdədir." : "Sifariş vəziyyəti yeniləndi.");
+      if (!result.idempotent) {
+        card.remove();
+        const counts = paymentState.orderMeta.counts;
+        counts.pending = Math.max(0, Number(counts.pending || 0) - 1);
+        if (action === "approve") counts.completed = Number(counts.completed || 0) + 1;
+        if (action === "reject") counts.rejected = Number(counts.rejected || 0) + 1;
+        updateOrderCounts(counts);
+      }
       await loadOrders();
       await loadMethods();
     } finally {
@@ -197,7 +282,8 @@
       try {
         const viewButton = event.target.closest(".navBtn[data-view]");
         if (viewButton?.dataset.view === "paymentMethods") await loadMethods();
-        if (viewButton?.dataset.view === "paymentReviews") await loadOrders();
+        if (viewButton?.dataset.view === "paymentOrders") await loadOrders();
+        if (viewButton?.dataset.view === "paymentReviews") await loadEmails();
         if (event.target.closest("#paymentMethodAdd")) { paymentState.selectedMethodId = ""; renderMethodEditor(); }
         const edit = event.target.closest("[data-edit-payment-method]");
         if (edit) { paymentState.selectedMethodId = edit.dataset.editPaymentMethod; renderMethodEditor(paymentState.methods.find((item) => item.id === paymentState.selectedMethodId)); }
@@ -208,14 +294,35 @@
         if (event.target.closest("[data-archive-payment-method]") && paymentState.selectedMethodId && confirm("Ödəniş üsulu deaktiv edilərək arxivləşdirilsin?")) {
           await paymentApi(`/api/admin/payment-methods/${paymentState.selectedMethodId}/archive`, { method: "POST", body: "{}" }); paymentState.selectedMethodId = ""; $p("paymentMethodEditor").innerHTML = ""; await loadMethods();
         }
-        if (event.target.closest("#paymentReviewsRefresh")) await loadOrders();
+        if (event.target.closest("#paymentOrdersRefresh")) await loadOrders();
+        if (event.target.closest("#paymentReviewsRefresh")) await loadEmails();
+        const tab = event.target.closest("[data-payment-order-tab]");
+        if (tab) {
+          paymentState.orderQuery.tab = tab.dataset.paymentOrderTab;
+          paymentState.orderQuery.status = "";
+          paymentState.orderQuery.page = 1;
+          if ($p("paymentOrderStatus")) $p("paymentOrderStatus").value = "";
+          await loadOrders();
+        }
+        if (event.target.closest("#paymentOrdersPrevious") && paymentState.orderMeta.pagination.page > 1) {
+          paymentState.orderQuery.page -= 1;
+          await loadOrders();
+        }
+        if (event.target.closest("#paymentOrdersNext") && paymentState.orderMeta.pagination.page < paymentState.orderMeta.pagination.totalPages) {
+          paymentState.orderQuery.page += 1;
+          await loadOrders();
+        }
+        if (event.target.closest("#paymentOrderFiltersClear")) {
+          paymentState.orderQuery = { tab: "pending", status: "", search: "", productId: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1 };
+          $p("paymentOrderFilters")?.reset();
+          await loadOrders();
+        }
         const card = event.target.closest("[data-payment-order-id]");
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
         if (card && event.target.closest("[data-approve-payment]")) await handleOrderAction(card, "approve");
         if (card && event.target.closest("[data-reject-payment]")) await handleOrderAction(card, "reject");
-        if (card && event.target.closest("[data-save-payment-note]")) await handleOrderAction(card, "note");
         const retry = event.target.closest("[data-retry-payment-email]");
-        if (retry) { await paymentApi(`/api/admin/payment-emails/${retry.dataset.retryPaymentEmail}/retry`, { method: "POST", body: "{}" }); toast("Bildiriş yenidən növbəyə alındı."); await loadOrders(); }
+        if (retry) { await paymentApi(`/api/admin/payment-emails/${retry.dataset.retryPaymentEmail}/retry`, { method: "POST", body: "{}" }); toast("Bildiriş yenidən növbəyə alındı."); await loadEmails(); }
       } catch (error) { toast(error.message || "Ödəniş əməliyyatı tamamlanmadı."); }
     });
     document.addEventListener("submit", async (event) => {
@@ -227,20 +334,39 @@
         } catch (error) { toast(error.message || "Parametrlər saxlanmadı."); }
         return;
       }
+      if (event.target.id === "paymentOrderFilters") {
+        event.preventDefault();
+        paymentState.orderQuery.search = $p("paymentOrderSearch")?.value.trim() || "";
+        paymentState.orderQuery.productId = $p("paymentOrderProduct")?.value || "";
+        paymentState.orderQuery.status = $p("paymentOrderStatus")?.value || "";
+        paymentState.orderQuery.methodId = $p("paymentOrderMethod")?.value || "";
+        paymentState.orderQuery.dateFrom = $p("paymentOrderDateFrom")?.value || "";
+        paymentState.orderQuery.dateTo = $p("paymentOrderDateTo")?.value || "";
+        paymentState.orderQuery.sort = $p("paymentOrderSort")?.value || "newest";
+        if (paymentState.orderQuery.status === "completed") paymentState.orderQuery.tab = "completed";
+        else if (paymentState.orderQuery.status === "rejected") paymentState.orderQuery.tab = "rejected";
+        else if (paymentState.orderQuery.status === "reviewing") paymentState.orderQuery.tab = "pending";
+        paymentState.orderQuery.page = 1;
+        await loadOrders();
+        return;
+      }
       if (event.target.id !== "paymentMethodForm") return;
       event.preventDefault();
       try { await saveMethod(event.target); } catch (error) { toast(error.message || "Ödəniş üsulu saxlanmadı."); }
     });
-    document.addEventListener("input", (event) => { if (event.target.id === "paymentOrderSearch") renderOrders(); });
   }
 
   async function openReviewToken() {
     const token = new URLSearchParams(location.search).get("reviewToken");
     if (!token) return;
-    const button = document.querySelector('.navBtn[data-view="paymentReviews"]');
+    const button = document.querySelector('.navBtn[data-view="paymentOrders"]');
     button?.click();
     try {
       const result = await paymentApi("/api/admin/payment-review-token", { method: "POST", body: JSON.stringify({ token }) });
+      paymentState.orderQuery.search = result.order.order_code || "";
+      paymentState.orderQuery.status = result.order.status === "rejected" ? "rejected" : (["approved", "completed"].includes(result.order.status) ? "completed" : "reviewing");
+      paymentState.orderQuery.tab = paymentState.orderQuery.status === "completed" ? "completed" : (paymentState.orderQuery.status === "rejected" ? "rejected" : "pending");
+      paymentState.orderQuery.page = 1;
       await loadOrders();
       const card = document.querySelector(`[data-payment-order-id="${CSS.escape(result.order.id)}"]`);
       card?.classList.add("isHighlighted");
@@ -253,8 +379,12 @@
     bindEvents();
     setTimeout(openReviewToken, 400);
     const timer = setInterval(() => {
-      if (document.visibilityState === "visible") loadOrders().catch(() => {});
+      if (document.visibilityState !== "visible") return;
+      if (!$p("paymentOrdersView")?.classList.contains("hidden")) loadOrders().catch(() => {});
+      else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {});
+      else refreshPendingCount().catch(() => {});
     }, 45_000);
+    setTimeout(() => refreshPendingCount().catch(() => {}), 1000);
     window.addEventListener("beforeunload", () => clearInterval(timer), { once: true });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootPayments);

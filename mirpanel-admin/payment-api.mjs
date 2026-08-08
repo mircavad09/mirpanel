@@ -274,8 +274,11 @@ export function createPaymentSystem(options) {
       }
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-orders") {
-      const [orders, emails] = await Promise.all([store.listOrders(), store.pendingEmails()]);
-      json(response, 200, { orders, emails }); return true;
+      const orders = await store.listOrders(Object.fromEntries(url.searchParams));
+      json(response, 200, orders); return true;
+    }
+    if (request.method === "GET" && url.pathname === "/api/admin/payment-emails") {
+      json(response, 200, { emails: await store.pendingEmails() }); return true;
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-settings") {
       json(response, 200, { settings: await store.getSettings(), health: { database: true, privateStorage: true, gmailConfigured: mailer.configured } }); return true;
@@ -284,7 +287,7 @@ export function createPaymentSystem(options) {
       const body = await readBody(request, 20_000);
       json(response, 200, { settings: await store.updateSettings(body, actorName) }); return true;
     }
-    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|receipt|note))?$/i);
+    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|receipt))?$/i);
     if (orderMatch) {
       const id = safeUuid(orderMatch[1]);
       if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
@@ -294,10 +297,11 @@ export function createPaymentSystem(options) {
         if (order.receipt_deleted_at) throw Object.assign(new Error("Çekin saxlanma müddəti bitib və fayl təhlükəsiz silinib."), { status: 410 });
         json(response, 200, { url: await store.signedReceipt(order.receipt_path, 300, actorName, order.id), expiresIn: 300, mimeType: order.receipt_mime }); return true;
       }
-      const body = await readBody(request, 20_000);
-      if (request.method === "POST" && action === "approve") { json(response, 200, await store.approveOrder(id, actorName)); return true; }
+      if (request.method === "POST" && action === "approve") {
+        const result = await store.approveOrder(id, actorName);
+        json(response, 200, { ...result, status: result.status === "approved" ? "completed" : result.status }); return true;
+      }
       if (request.method === "POST" && action === "reject") { json(response, 200, await store.rejectOrder(id, actorName)); return true; }
-      if (request.method === "POST" && action === "note") { json(response, 200, await store.updateOrderNote(id, actorName, body.note)); return true; }
     }
     const emailMatch = url.pathname.match(/^\/api\/admin\/payment-emails\/([0-9a-f-]+)\/retry$/i);
     if (request.method === "POST" && emailMatch) {

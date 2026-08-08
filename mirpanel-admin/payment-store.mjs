@@ -8,6 +8,12 @@ import {
   safeText,
   safeUuid
 } from "./payment-security.mjs";
+import {
+  adminOrderStatus,
+  normalizeOrderListParams,
+  orderDatabaseStatuses,
+  paymentMethodLabel
+} from "./payment-order-query.mjs";
 
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
   const message = String(error?.message || fallback);
@@ -271,19 +277,105 @@ export function createPaymentStore(config) {
         p_receipt_sha256: args.receiptSha256
       });
     },
-    async listOrders() {
-      const { data, error } = await client.from("payment_orders").select("*,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)").order("created_at", { ascending: false }).limit(200);
+    async listOrders(input = {}) {
+      const filters = normalizeOrderListParams(input);
+      const relation = filters.status === "expired"
+        ? "payment_reservations!inner(status,expires_at)"
+        : "payment_reservations(status,expires_at)";
+      const select = `id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,rejected_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),${relation}`;
+
+      const applyCommonFilters = (query) => {
+        let next = query;
+        if (filters.search) next = next.ilike("order_code", `%${filters.search}%`);
+        if (filters.productId) next = next.eq("product_id", filters.productId);
+        if (filters.methodId) next = next.eq("method_id", filters.methodId);
+        if (filters.dateFrom) next = next.gte("created_at", `${filters.dateFrom}T00:00:00+04:00`);
+        if (filters.dateTo) next = next.lte("created_at", `${filters.dateTo}T23:59:59.999+04:00`);
+        return next;
+      };
+
+      let query = applyCommonFilters(client.from("payment_orders").select(select, { count: "exact" }));
+      const statuses = orderDatabaseStatuses(filters);
+      if (statuses.length) query = query.in("status", statuses);
+      if (filters.status === "expired") query = query.eq("payment_reservations.status", "expired");
+      const from = (filters.page - 1) * filters.pageSize;
+      query = query
+        .order("created_at", { ascending: filters.sort === "oldest" })
+        .range(from, from + filters.pageSize - 1);
+
+      const countStatus = async (statusValues) => {
+        let countQuery = applyCommonFilters(client.from("payment_orders").select("id", { count: "exact", head: true })).in("status", statusValues);
+        const { count, error } = await countQuery;
+        if (error) throw paymentError(error);
+        return Number(count || 0);
+      };
+
+      const [{ data, error, count }, pendingCount, completedCount, rejectedCount, productRows, methodRows] = await Promise.all([
+        query,
+        countStatus(["reviewing", "new_receipt_requested"]),
+        countStatus(["approved", "completed"]),
+        countStatus(["rejected"]),
+        client.from("payment_orders").select("product_id,product_title").order("product_title", { ascending: true }).limit(2000),
+        client.from("payment_methods").select("id,display_name,provider_name,last4").eq("archived", false).order("sort_order", { ascending: true })
+      ]);
       if (error) throw paymentError(error);
+      if (productRows.error) throw paymentError(productRows.error);
+      if (methodRows.error) throw paymentError(methodRows.error);
+
       const orders = data || [];
-      if (!orders.length) return orders;
-      const { data: auditRows, error: auditError } = await client.from("payment_audit_log").select("entity_id,actor_type,actor_ref,action,metadata,created_at").eq("entity_type", "order").in("entity_id", orders.map((item) => item.id)).order("created_at", { ascending: false });
-      if (auditError) throw paymentError(auditError);
       const history = new Map();
-      for (const row of auditRows || []) {
-        if (!history.has(row.entity_id)) history.set(row.entity_id, []);
-        history.get(row.entity_id).push(row);
+      if (orders.length) {
+        const { data: auditRows, error: auditError } = await client.from("payment_audit_log")
+          .select("entity_id,actor_type,action,created_at")
+          .eq("entity_type", "order")
+          .in("entity_id", orders.map((item) => item.id))
+          .order("created_at", { ascending: false });
+        if (auditError) throw paymentError(auditError);
+        for (const row of auditRows || []) {
+          if (!history.has(row.entity_id)) history.set(row.entity_id, []);
+          history.get(row.entity_id).push(row);
+        }
       }
-      return orders.map((order) => ({ ...order, audit_history: history.get(order.id) || [] }));
+
+      const products = new Map();
+      for (const row of productRows.data || []) {
+        if (row.product_id && !products.has(row.product_id)) products.set(row.product_id, row.product_title);
+      }
+      const total = Number(count || 0);
+      return {
+        orders: orders.map((order) => {
+          const method = Array.isArray(order.payment_methods) ? order.payment_methods[0] || {} : order.payment_methods || {};
+          const reservation = Array.isArray(order.payment_reservations) ? order.payment_reservations[0] || {} : order.payment_reservations || {};
+          return {
+            id: order.id,
+            orderCode: order.order_code,
+            productId: order.product_id,
+            productTitle: order.product_title,
+            planId: order.plan_id,
+            planName: order.plan_name,
+            amount: Number(order.amount),
+            currency: order.currency,
+            status: adminOrderStatus(order.status, reservation.status),
+            reservationStatus: reservation.status || "",
+            createdAt: order.created_at,
+            completedAt: order.approved_at || (adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
+            receiptAvailable: !order.receipt_deleted_at,
+            paymentMethodLabel: paymentMethodLabel(method),
+            auditHistory: history.get(order.id) || []
+          };
+        }),
+        pagination: {
+          page: filters.page,
+          pageSize: filters.pageSize,
+          total,
+          totalPages: Math.max(1, Math.ceil(total / filters.pageSize))
+        },
+        counts: { pending: pendingCount, completed: completedCount, rejected: rejectedCount },
+        filters: {
+          products: [...products].map(([id, title]) => ({ id, title })),
+          methods: (methodRows.data || []).map((method) => ({ id: method.id, label: paymentMethodLabel(method) }))
+        }
+      };
     },
     async getOrder(id) {
       let query = client.from("payment_orders").select("*,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)");
@@ -300,13 +392,6 @@ export function createPaymentStore(config) {
     approveOrder(id, actor) { return rpc("approve_payment_order", { p_order_id: id, p_actor: actor }); },
     rejectOrder(id, actor) { return rpc("reject_payment_order", { p_order_id: id, p_reason: "Admin tərəfindən rədd edildi.", p_actor: actor }); },
     cancelReservation(id, actor) { return rpc("cancel_payment_reservation", { p_reservation_id: id, p_actor: actor }); },
-    async updateOrderNote(id, actor, note) {
-      const value = safeMultiline(note, 4000);
-      const { data, error } = await client.from("payment_orders").update({ admin_note: value, updated_at: new Date().toISOString() }).eq("id", id).select("id,order_code,admin_note").single();
-      if (error) throw paymentError(error);
-      await audit(actor, "order.note_updated", "order", id, { hasNote: Boolean(value) });
-      return data;
-    },
     async createReviewToken(orderId, tokenHash, expiresAt) {
       const { error } = await client.from("payment_review_tokens").insert({ order_id: orderId, token_hash: tokenHash, expires_at: expiresAt });
       if (error) throw paymentError(error);

@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "start": "node server.mjs",
-    "test:payments": "node ../scripts/test-payment-system.mjs"
+    "test:payments": "node ../scripts/test-payment-system.mjs",
+    "test:payment-orders": "node ../scripts/test-payment-orders-admin.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.57.4"
