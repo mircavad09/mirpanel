@@ -224,30 +224,6 @@ export function createPaymentSystem(options) {
       });
       return true;
     }
-    if (request.method === "POST" && url.pathname === "/api/payments/replacement-receipts") {
-      await publicRate(request, "replace-receipt", 3600, 6);
-      const body = await readBody(request, Math.ceil(config.maxReceiptBytes * 1.42) + 100_000);
-      const token = safeText(body.token, 200);
-      if (token.length < 32) throw Object.assign(new Error("Yeni çek keçidi düzgün deyil."), { status: 400 });
-      const receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
-      const code = `replacement-${crypto.randomUUID()}`;
-      const now = new Date();
-      const receiptPath = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${code}.${receipt.extension}`;
-      await store.uploadReceipt(receiptPath, receipt);
-      let replaced;
-      try {
-        replaced = await store.replaceReceipt({
-          tokenHash: security.hashToken(token), receiptBucket: config.receiptsBucket,
-          receiptPath, receiptMime: receipt.mimeType, receiptSize: receipt.buffer.length, receiptSha256: receipt.sha256
-        });
-      } catch (error) {
-        await store.removeReceipt(receiptPath).catch(() => {});
-        throw error;
-      }
-      if (replaced.oldPath && replaced.oldPath !== receiptPath) await store.removeReceipt(replaced.oldPath).catch(() => {});
-      publicJson(request, response, 200, { ok: true, orderId: replaced.orderId, orderCode: replaced.orderCode, status: "reviewing" });
-      return true;
-    }
     return false;
   }
 
@@ -292,7 +268,7 @@ export function createPaymentSystem(options) {
       const body = await readBody(request, 20_000);
       json(response, 200, { settings: await store.updateSettings(body, actorName) }); return true;
     }
-    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|new-receipt|cancel-reservation|receipt|note))?$/i);
+    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|receipt|note))?$/i);
     if (orderMatch) {
       const id = safeUuid(orderMatch[1]);
       if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
@@ -304,17 +280,8 @@ export function createPaymentSystem(options) {
       }
       const body = await readBody(request, 20_000);
       if (request.method === "POST" && action === "approve") { json(response, 200, await store.approveOrder(id, actorName)); return true; }
-      if (request.method === "POST" && action === "reject") { json(response, 200, await store.rejectOrder(id, safeMultiline(body.reason, 2000), actorName)); return true; }
-      if (request.method === "POST" && action === "new-receipt") {
-        const order = await store.requestNewReceipt(id, actorName, body.note);
-        const token = security.randomToken();
-        await store.createReceiptToken(id, security.hashToken(token), new Date(Date.now() + 24 * 60 * 60_000).toISOString());
-        json(response, 200, { ...order, replacementUrl: `${config.siteBaseUrl}/?paymentReceiptToken=${encodeURIComponent(token)}`, expiresInHours: 24 }); return true;
-      }
+      if (request.method === "POST" && action === "reject") { json(response, 200, await store.rejectOrder(id, actorName)); return true; }
       if (request.method === "POST" && action === "note") { json(response, 200, await store.updateOrderNote(id, actorName, body.note)); return true; }
-      if (request.method === "POST" && action === "cancel-reservation") {
-        const order = await store.getOrder(id); json(response, 200, await store.cancelReservation(order.reservation_id, actorName)); return true;
-      }
     }
     const emailMatch = url.pathname.match(/^\/api\/admin\/payment-emails\/([0-9a-f-]+)\/retry$/i);
     if (request.method === "POST" && emailMatch) {

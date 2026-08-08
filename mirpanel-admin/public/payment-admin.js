@@ -1,7 +1,7 @@
 (() => {
   "use strict";
 
-  const paymentState = { methods: [], orders: [], emails: [], selectedMethodId: "", loading: false, knownReviewingIds: null };
+  const paymentState = { methods: [], orders: [], emails: [], selectedMethodId: "", loading: false, knownReviewingIds: null, orderActions: new Set() };
   const $p = (id) => document.getElementById(id);
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const statusLabel = { reviewing: "Yoxlanılır", approved: "Təsdiqlənib", rejected: "Rədd edilib", new_receipt_requested: "Yeni çek gözlənilir" };
@@ -77,7 +77,7 @@
       <div class="paymentOrderGrid"><span><b>Məhsul</b>${escp(order.product_title)}</span><span><b>Plan</b>${escp(order.plan_name)}</span><span><b>Məbləğ</b>${Number(order.amount).toFixed(2)} ${escp(order.currency)}</span><span><b>Ödəniş üsulu</b>${escp(method.display_name || "")} •••• ${escp(method.last4 || "")}</span><span><b>Rezerv</b>${escp(reservation.status || "")}</span></div>
       ${order.rejection_reason ? `<p class="bad">Rədd səbəbi: ${escp(order.rejection_reason)}</p>` : ""}
       <label class="paymentOrderNote">Administrator qeydi<textarea maxlength="4000" data-payment-order-note>${escp(order.admin_note || "")}</textarea></label>
-      <div class="paymentOrderActions"><button class="btn" type="button" data-open-receipt>Çeki aç</button>${order.status !== "approved" && order.status !== "rejected" ? '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button><button class="btn" type="button" data-request-receipt>Yeni çek tələb et</button><button class="btn" type="button" data-cancel-payment-reservation>Rezervi ləğv et</button>' : ""}</div>
+      <div class="paymentOrderActions"><button class="btn" type="button" data-open-receipt>Çeki aç</button>${order.status !== "approved" && order.status !== "rejected" ? '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ""}</div>
       <div class="paymentOrderActions"><button class="btn" type="button" data-save-payment-note>Qeydi saxla</button></div>
       <details class="paymentAuditHistory"><summary>Əməliyyat tarixçəsi (${(order.audit_history || []).length})</summary><ul>${history || "<li>Audit qeydi yoxdur.</li>"}</ul></details>
     </article>`;
@@ -157,30 +157,28 @@
       window.open(result.url, "_blank", "noopener,noreferrer");
       return;
     }
-    let body = {};
-    if (action === "note") body.note = card.querySelector("[data-payment-order-note]")?.value || "";
-    if (action === "approve") {
-      const approved = await paymentActionDialog({ title: "Ödənişi təsdiqlə", message: "Ödənişin real olduğunu yoxladığınızı təsdiqləyin.", confirmText: "Təsdiqlə" });
-      if (!approved) return;
+    if (paymentState.orderActions.has(id)) return;
+    paymentState.orderActions.add(id);
+    card.querySelectorAll("button").forEach((button) => { button.disabled = true; });
+    try {
+      const body = {};
+      if (action === "note") body.note = card.querySelector("[data-payment-order-note]")?.value || "";
+      if (action === "approve") {
+        const approved = await paymentActionDialog({ title: "Ödənişi təsdiqlə", message: "Bu sifarişin ödənişini təsdiqləmək istəyirsiniz?", confirmText: "Təsdiqlə" });
+        if (!approved) return;
+      }
+      if (action === "reject") {
+        const rejected = await paymentActionDialog({ title: "Ödənişi rədd et", message: "Bu sifarişi rədd etmək istəyirsiniz?", confirmText: "Rədd et", danger: true });
+        if (!rejected) return;
+      }
+      const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: JSON.stringify(body) });
+      toast(result.idempotent ? "Sifariş artıq bu vəziyyətdədir." : "Sifariş vəziyyəti yeniləndi.");
+      await loadOrders();
+      await loadMethods();
+    } finally {
+      paymentState.orderActions.delete(id);
+      if (card.isConnected) card.querySelectorAll("button").forEach((button) => { button.disabled = false; });
     }
-    if (action === "reject") {
-      const reason = await paymentActionDialog({ title: "Ödənişi rədd et", message: "Rədd səbəbini yazın. Bu məlumat audit tarixçəsində saxlanacaq.", label: "Rədd səbəbi", required: true, confirmText: "Rədd et", danger: true });
-      if (!reason) return;
-      body.reason = reason;
-    }
-    if (action === "new-receipt") {
-      const note = await paymentActionDialog({ title: "Yeni çek tələb et", message: "Müştəriyə göndəriləcək qeydi yazın.", label: "Qeyd", value: "Yeni ödəniş çeki tələb olunur.", confirmText: "Keçid yarat" });
-      if (note === null) return;
-      body.note = note || "Yeni ödəniş çeki tələb olunur.";
-    }
-    const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: JSON.stringify(body) });
-    if (action === "new-receipt" && result.replacementUrl) {
-      await navigator.clipboard.writeText(result.replacementUrl).catch(() => {});
-      await paymentActionDialog({ title: "Yeni çek keçidi hazırdır", message: "Keçid buferə kopyalandı. WhatsApp vasitəsilə müştəriyə göndərin. Keçid 24 saat etibarlıdır və bir dəfə işləyir.", label: "Keçid", value: result.replacementUrl, confirmText: "Bağla" });
-    }
-    toast("Sifariş vəziyyəti yeniləndi.");
-    await loadOrders();
-    await loadMethods();
   }
 
   function bindEvents() {
@@ -204,8 +202,6 @@
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
         if (card && event.target.closest("[data-approve-payment]")) await handleOrderAction(card, "approve");
         if (card && event.target.closest("[data-reject-payment]")) await handleOrderAction(card, "reject");
-        if (card && event.target.closest("[data-request-receipt]")) await handleOrderAction(card, "new-receipt");
-        if (card && event.target.closest("[data-cancel-payment-reservation]")) await handleOrderAction(card, "cancel-reservation");
         if (card && event.target.closest("[data-save-payment-note]")) await handleOrderAction(card, "note");
         const retry = event.target.closest("[data-retry-payment-email]");
         if (retry) { await paymentApi(`/api/admin/payment-emails/${retry.dataset.retryPaymentEmail}/retry`, { method: "POST", body: "{}" }); toast("Bildiriş yenidən növbəyə alındı."); await loadOrders(); }

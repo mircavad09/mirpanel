@@ -268,14 +268,8 @@ export function createPaymentStore(config) {
       return data || null;
     },
     approveOrder(id, actor) { return rpc("approve_payment_order", { p_order_id: id, p_actor: actor }); },
-    rejectOrder(id, reason, actor) { return rpc("reject_payment_order", { p_order_id: id, p_reason: reason, p_actor: actor }); },
+    rejectOrder(id, actor) { return rpc("reject_payment_order", { p_order_id: id, p_reason: "Admin tərəfindən rədd edildi.", p_actor: actor }); },
     cancelReservation(id, actor) { return rpc("cancel_payment_reservation", { p_reservation_id: id, p_actor: actor }); },
-    async requestNewReceipt(id, actor, note) {
-      const { data, error } = await client.from("payment_orders").update({ status: "new_receipt_requested", admin_note: safeMultiline(note, 4000), updated_at: new Date().toISOString() }).eq("id", id).eq("status", "reviewing").select("id,order_code,status").single();
-      if (error) throw paymentError(error);
-      await client.from("payment_audit_log").insert({ actor_type: "admin", actor_ref: actor, action: "order.new_receipt_requested", entity_type: "order", entity_id: id });
-      return data;
-    },
     async updateOrderNote(id, actor, note) {
       const value = safeMultiline(note, 4000);
       const { data, error } = await client.from("payment_orders").update({ admin_note: value, updated_at: new Date().toISOString() }).eq("id", id).select("id,order_code,admin_note").single();
@@ -286,20 +280,6 @@ export function createPaymentStore(config) {
     async createReviewToken(orderId, tokenHash, expiresAt) {
       const { error } = await client.from("payment_review_tokens").insert({ order_id: orderId, token_hash: tokenHash, expires_at: expiresAt });
       if (error) throw paymentError(error);
-    },
-    async createReceiptToken(orderId, tokenHash, expiresAt) {
-      const { error } = await client.from("payment_receipt_tokens").insert({ order_id: orderId, token_hash: tokenHash, expires_at: expiresAt });
-      if (error) throw paymentError(error);
-    },
-    async replaceReceipt(args) {
-      return rpc("replace_payment_order_receipt", {
-        p_token_hash: args.tokenHash,
-        p_receipt_bucket: args.receiptBucket,
-        p_receipt_path: args.receiptPath,
-        p_receipt_mime: args.receiptMime,
-        p_receipt_size: args.receiptSize,
-        p_receipt_sha256: args.receiptSha256
-      });
     },
     async consumeReviewToken(tokenHash) {
       try {

@@ -86,11 +86,13 @@ assert.ok(store.includes("result.diagnostic"));
 assert.ok(api.includes('request.method === "POST" && url.pathname === "/api/admin/payment-review-token"'));
 assert.ok(flow.includes('accept="image/jpeg,image/png,image/webp,application/pdf"'));
 assert.ok(flow.includes("if (!flow.receipt || !flow.reservation)"));
-assert.ok(flow.includes("/api/payments/replacement-receipts"));
-assert.ok(flow.includes("paymentReceiptToken"));
+assert.equal(flow.includes("/api/payments/replacement-receipts"), false, "İşləməyən yeni çek axını qalmamalıdır");
+assert.equal(flow.includes("paymentReceiptToken"), false, "İşləməyən yeni çek tokeni qalmamalıdır");
 assert.ok(flow.includes("Göndər və WhatsApp-a keç"));
 assert.ok(confirmation.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"));
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));
+assert.ok(confirmation.includes("window.location.assign(url)"), "WhatsApp eyni tabda açılmalıdır");
+assert.equal(confirmation.includes('window.open(url, "_blank"'), false, "Async WhatsApp popup istifadə edilməməlidir");
 assert.ok(server.includes("await paymentSystem.guardLogin(request)"));
 assert.ok(server.includes("requireMutationAuth"));
 assert.ok(server.includes('Supabase server key format:'));
@@ -99,7 +101,13 @@ assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
 assert.ok(paymentAdmin.includes("paymentActionDialog"));
 assert.equal(/\bprompt\s*\(/.test(paymentAdmin), false, "Ödəniş adminində native prompt istifadə edilməməlidir");
-assert.ok(paymentAdmin.includes("body.reason = reason"));
+assert.equal(paymentAdmin.includes("data-request-receipt"), false, "Yeni çek tələb et düyməsi qalmamalıdır");
+assert.equal(paymentAdmin.includes("data-cancel-payment-reservation"), false, "Ayrıca rezerv ləğvi düyməsi qalmamalıdır");
+assert.equal(paymentAdmin.includes('label: "Rədd səbəbi"'), false, "Rədd səbəbi soruşulmamalıdır");
+assert.ok(paymentAdmin.includes("Bu sifarişi rədd etmək istəyirsiniz?"));
+assert.ok(paymentAdmin.includes("orderActions: new Set()"), "Təkrar admin klikləri brauzerdə bloklanmalıdır");
+assert.equal(api.includes("new-receipt|cancel-reservation"), false, "İşləməyən admin route-ları qalmamalıdır");
+assert.ok(store.includes('p_reason: "Admin tərəfindən rədd edildi."'), "Rədd əməliyyatı sistem qeydi yazmalıdır");
 
 const mail = paymentEmailContent({
   order: { order_code: "MP-A1B2C3", product_title: "Test", plan_name: "1 aylıq", amount: 5.99, currency: "AZN", created_at: new Date().toISOString() },
@@ -136,7 +144,7 @@ for (const file of [
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 46,
+  tests: 56,
   commercialSnapshot: snapshot.sha256,
   products: snapshot.productCount,
   activeProducts: snapshot.activeProductCount,

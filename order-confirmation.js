@@ -1243,8 +1243,8 @@
 
     const separator = PHONE_WA.includes("?") ? "&" : "?";
     const url = `${PHONE_WA}${separator}text=${encodeURIComponent(order.message)}`;
-    window.open(url, "_blank", "noopener,noreferrer");
     closeOrderModal();
+    window.location.assign(url);
   }
 
   function showForm(product, plan, onDone) {
