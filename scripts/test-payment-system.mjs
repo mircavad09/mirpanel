@@ -135,7 +135,7 @@ assert.ok(server.includes('Supabase server key format:'));
 assert.equal(server.includes("config.supabaseSecretKey.slice"), false);
 assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
-assert.ok(index.includes("payment-methods-20260808-1"));
+assert.ok(index.includes("payment-compact-cancel-20260808-1"));
 assert.equal(api.includes("pendingReservations: method.pendingReservations"), false, "Rezerv sayı public API-yə çıxmamalıdır");
 assert.equal(api.includes("remaining: method.remaining"), false, "Qalan limit public API-yə çıxmamalıdır");
 assert.ok(api.includes("checkoutKey"));
@@ -150,6 +150,14 @@ for (const theme of ["theme-leo", "theme-abb", "theme-kapital", "theme-m10", "th
 assert.ok(flowCss.includes("safe-area-inset-bottom"));
 assert.ok(flowCss.includes("paymentMagneticStripe"));
 assert.ok(flowCss.includes("payment-timer-pulse"));
+assert.ok(flowCss.includes("aspect-ratio:1.586/1"), "Ödəniş kartı standart nisbətdə olmalıdır");
+assert.ok(flowCss.includes("max-width:380px"), "Ödəniş kartı maksimum 380px olmalıdır");
+assert.ok(flowCss.includes('grid-template-areas:"top top" "stripe stripe" "holder amount" "number number" "timer timer"'), "Kartın daxili yığcam layout-u çatışmır");
+assert.ok(flow.includes('window.location.href = "https://mirpanel.com/"'), "Uğurlu ləğvdən sonra eyni tabda ana səhifəyə keçilməlidir");
+assert.ok(flow.includes('await finish(null, { cancel: true, redirectHome: true })'), "Ləğv server təsdiqindən sonra yönləndirməlidir");
+assert.ok(flow.includes('event.preventDefault();\n              if (flow.cancelling || flow.submitting) return;'), "Ləğv düyməsi standart submit-i və təkrar kliki bloklamalıdır");
+assert.ok(flow.includes('window.confirm("Aktiv rezerv ləğv ediləcək.'), "X düyməsi aktiv rezerv barədə xəbərdarlıq etməlidir");
+assert.ok(api.includes("{ ok: true, cancellation }"), "Server ləğv nəticəsini brauzerə təsdiqləməlidir");
 assert.ok(paymentAdmin.includes("paymentActionDialog"));
 assert.equal(/\bprompt\s*\(/.test(paymentAdmin), false, "Ödəniş adminində native prompt istifadə edilməməlidir");
 assert.equal(paymentAdmin.includes("data-request-receipt"), false, "Yeni çek tələb et düyməsi qalmamalıdır");
@@ -162,6 +170,10 @@ assert.ok(paymentAdmin.includes("receiptWindow.location.replace(result.url)"), "
 assert.ok(paymentAdmin.includes("else window.location.assign(result.url)"), "Popup bloklanarsa çek eyni tabda açılmalıdır");
 assert.equal(api.includes("new-receipt|cancel-reservation"), false, "İşləməyən admin route-ları qalmamalıdır");
 assert.ok(store.includes('p_reason: "Admin tərəfindən rədd edildi."'), "Rədd əməliyyatı sistem qeydi yazmalıdır");
+const cancelRpcSql = migration.match(/create or replace function public\.cancel_payment_reservation[\s\S]*?(?=create or replace function public\.claim_payment_email)/)?.[0] || "";
+assert.ok(cancelRpcSql.includes("for update"), "Rezerv ləğvi database sətrini atomik kilidləməlidir");
+assert.ok(cancelRpcSql.includes("idempotent"), "Rezerv ləğvi idempotent nəticə qaytarmalıdır");
+assert.equal(cancelRpcSql.includes("payment_daily_usage"), false, "Rezerv ləğvi tamamlanmış istifadə sayğacını dəyişməməlidir");
 
 const mail = paymentEmailContent({
   order: { order_code: "MP-A1B2C3", product_title: "Test", plan_name: "1 aylıq", amount: 5.99, currency: "AZN", created_at: new Date().toISOString() },
@@ -185,8 +197,8 @@ const productPages = fs.readdirSync(path.join(root, "mehsul")).filter((name) => 
 assert.equal(productPages.length, 21);
 for (const page of productPages) {
   const html = read(path.join("mehsul", page));
-  assert.ok(html.includes("payment-flow.css?v=payment-methods-20260808-1"), `${page}: payment CSS cache versiyası köhnədir`);
-  assert.ok(html.includes("payment-flow.js?v=payment-methods-20260808-1"), `${page}: payment JS cache versiyası köhnədir`);
+  assert.ok(html.includes("payment-flow.css?v=payment-compact-cancel-20260808-1"), `${page}: payment CSS cache versiyası köhnədir`);
+  assert.ok(html.includes("payment-flow.js?v=payment-compact-cancel-20260808-1"), `${page}: payment JS cache versiyası köhnədir`);
   assert.ok(html.includes("order-confirmation.js?v=payment-whatsapp-20260808-3"), `${page}: confirmation cache versiyası köhnədir`);
 }
 
@@ -208,7 +220,7 @@ for (const file of [
 
 console.log(JSON.stringify({
   ok: true,
-  tests: 70,
+  tests: 81,
   commercialSnapshot: snapshot.sha256,
   products: snapshot.productCount,
   activeProducts: snapshot.activeProductCount,

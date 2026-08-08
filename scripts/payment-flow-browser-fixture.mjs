@@ -1,0 +1,60 @@
+import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const port = Number(process.argv[2] || process.env.PAYMENT_FIXTURE_PORT || 4179);
+const reservationId = "11111111-1111-4111-8111-111111111111";
+const methodId = "22222222-2222-4222-8222-222222222222";
+let activeReservations = 0;
+let cancelCalls = 0;
+let successfulCancellations = 0;
+let completedUses = 0;
+let failNextCancel = false;
+
+function json(response, status, value) {
+  response.writeHead(status, { "Content-Type": "application/json; charset=utf-8", "Access-Control-Allow-Origin": "*" });
+  response.end(JSON.stringify(value));
+}
+
+async function body(request) {
+  const chunks = [];
+  for await (const chunk of request) chunks.push(chunk);
+  return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+}
+
+const html = `<!doctype html><html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/payment-flow.css"><style>body{margin:0;background:#050505;color:#fff;font-family:Arial,sans-serif}.modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.75)}.modalCard{width:min(620px,calc(100vw - 28px));max-height:calc(100dvh - 20px);overflow:auto;background:#111;border-radius:16px;padding:14px}.hidden{display:none}</style></head><body><button id="start">Başla</button><div id="modal" class="modal"><div class="modalCard"><div id="mForm"></div></div></div><script>window.MIRPANEL_PAYMENT_API="http://127.0.0.1:${port}";</script><script src="/payment-flow.js"></script><script>document.getElementById("start").onclick=()=>window.MirpanelPaymentFlow.start({product:{id:"test",title:"Test məhsul"},plan:{name:"1 aylıq",price:5.99},planIndex:0});document.getElementById("start").click();</script></body></html>`;
+
+const server = http.createServer(async (request, response) => {
+  const url = new URL(request.url, `http://${request.headers.host}`);
+  if (url.pathname === "/") { response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }); response.end(html); return; }
+  if (url.pathname === "/payment-flow.js" || url.pathname === "/payment-flow.css") {
+    const file = path.join(root, url.pathname.slice(1));
+    response.writeHead(200, { "Content-Type": url.pathname.endsWith(".js") ? "text/javascript; charset=utf-8" : "text/css; charset=utf-8" });
+    response.end(fs.readFileSync(file)); return;
+  }
+  if (url.pathname === "/api/payments/methods") {
+    json(response, 200, { anyAvailable: true, methods: [{ id: methodId, displayName: "ABB", providerName: "ABB", type: "card", last4: "4655", color: "#174f91", theme: "abb", available: true }] }); return;
+  }
+  if (url.pathname === "/api/payments/reservations" && request.method === "POST") {
+    await body(request);
+    activeReservations = 1;
+    json(response, 201, { reservationId, expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(), amount: 5.99, currency: "AZN", method: { id: methodId, displayName: "ABB", providerName: "ABB", holderName: "MIRPANEL TEST", number: "4169 0000 0000 4655", type: "card", color: "#174f91", theme: "abb" } }); return;
+  }
+  if (url.pathname === "/api/payments/reservations/cancel" && request.method === "POST") {
+    const payload = await body(request);
+    cancelCalls += 1;
+    if (payload.reservationId !== reservationId) { json(response, 400, { error: "Yanlış rezerv" }); return; }
+    if (failNextCancel) { failNextCancel = false; json(response, 503, { error: "Sınaq server xətası" }); return; }
+    const idempotent = activeReservations === 0;
+    if (!idempotent) { activeReservations = 0; successfulCancellations += 1; }
+    json(response, 200, { ok: true, cancellation: { id: reservationId, status: "cancelled", idempotent } }); return;
+  }
+  if (url.pathname === "/test/fail-next-cancel" && request.method === "POST") { failNextCancel = true; json(response, 200, { ok: true }); return; }
+  if (url.pathname === "/test/state") { json(response, 200, { activeReservations, completedUses, cancelCalls, successfulCancellations, failNextCancel }); return; }
+  if (url.pathname === "/test/shutdown" && request.method === "POST") { json(response, 200, { ok: true }); setImmediate(() => server.close()); return; }
+  response.writeHead(404); response.end("Not found");
+});
+
+server.listen(port, "127.0.0.1", () => console.log(`payment fixture http://127.0.0.1:${port}`));

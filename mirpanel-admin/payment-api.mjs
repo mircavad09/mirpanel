@@ -168,8 +168,8 @@ export function createPaymentSystem(options) {
       const body = await readBody(request, 20_000);
       const reservationId = safeUuid(body.reservationId);
       if (!reservationId) throw Object.assign(new Error("Rezerv ID-si düzgün deyil."), { status: 400 });
-      await store.cancelReservation(reservationId, `customer:${security.ipHash(clientIp(request)).slice(0, 12)}`);
-      publicJson(request, response, 200, { ok: true });
+      const cancellation = await store.cancelReservation(reservationId, `customer:${security.ipHash(clientIp(request)).slice(0, 12)}`);
+      publicJson(request, response, 200, { ok: true, cancellation });
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/payments/orders") {

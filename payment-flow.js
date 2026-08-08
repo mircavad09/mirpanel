@@ -95,15 +95,14 @@
 
   function detailMarkup(reservation) {
     const method = reservation.method;
-    return `<article class="paymentSelectedCard theme-${esc(method.theme || "neutral")}" style="--payment-card-color:${esc(method.color)}">
+    return `<div class="paymentSelectedWrap"><article class="paymentSelectedCard theme-${esc(method.theme || "neutral")}" style="--payment-card-color:${esc(method.color)}">
       <div class="paymentSelectedTop"><div><small>Ödəniş üsulu</small><strong>${esc(method.providerName)}</strong></div><div class="paymentSelectedTopActions"><span>${method.type === "wallet" ? "Elektron cüzdan" : "Bank kartı"}</span><button id="changePaymentMethod" type="button">Kartı dəyiş</button></div></div>
       <div class="paymentMagneticStripe" aria-hidden="true"></div>
       <div class="paymentHolder"><small>Sahib</small><strong>${esc(method.holderName || "Mirpanel")}</strong></div>
       <div class="paymentNumber"><code>${esc(method.number)}</code><button id="copyPaymentNumber" type="button">Kopyala</button></div>
       <div class="paymentAmount"><span>Ödəniləcək məbləğ</span><strong>${Number(reservation.amount).toFixed(2)} ${esc(reservation.currency)}</strong></div>
-      <p>Nömrəni kopyalayın, ödənişi tamamlayın və qəbzin şəklini və ya PDF faylını aşağıdan yükləyin.</p>
       <div class="paymentReservationFooter"><div id="paymentReservationTimer" class="paymentReservationTime" role="timer" aria-live="polite"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span>Ödənişi tamamlamaq üçün qalan vaxt</span><strong id="paymentReservationCountdown">10:00</strong></div></div>
-    </article>`;
+    </article><p class="paymentSelectedHint">Nömrəni kopyalayın, ödənişi tamamlayın və qəbzin şəklini və ya PDF faylını aşağıdan yükləyin.</p></div>`;
   }
 
   function receiptMarkup() {
@@ -147,32 +146,66 @@
 
   async function cancelReservation(flow) {
     const id = flow.reservation?.reservationId || flow.previousReservationId;
-    if (!id) return;
-    await request("/api/payments/reservations/cancel", { method: "POST", body: JSON.stringify({ reservationId: id }) });
+    if (!id) return { ok: true, idempotent: true };
+    const result = await request("/api/payments/reservations/cancel", { method: "POST", body: JSON.stringify({ reservationId: id }) });
     flow.reservation = null;
     flow.previousReservationId = null;
-    flow.receipt = null;
+    clearReceipt(flow);
     clearStoredCheckout();
+    return result;
+  }
+
+  function clearReceipt(flow) {
+    if (flow.receiptPreviewUrl) URL.revokeObjectURL(flow.receiptPreviewUrl);
+    flow.receiptPreviewUrl = null;
+    flow.receipt = null;
+    const input = document.getElementById("paymentReceiptInput");
+    if (input) input.value = "";
+    const preview = document.getElementById("paymentReceiptPreview");
+    if (preview) { preview.replaceChildren(); preview.classList.add("hidden"); }
   }
 
   async function start({ product, plan, planIndex }) {
     if (activeFlow?.reservation || activeFlow?.previousReservationId) await cancelReservation(activeFlow);
     renderShell(product, plan);
     const previous = storedCheckout();
-    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, stage: "payment_method_selection" };
+    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
     activeFlow = flow;
     return new Promise(async (resolve) => {
-      const finish = async (value, cancel = false) => {
-        if (flow.settled) return;
+      const finish = async (value, options = {}) => {
+        const { cancel = false, redirectHome = false } = options;
+        if (flow.settled || flow.cancelling) return false;
+        if (cancel) {
+          flow.cancelling = true;
+          try {
+            if (flow.reservation || flow.previousReservationId) await cancelReservation(flow);
+          } catch (error) {
+            flow.cancelling = false;
+            throw error;
+          }
+        }
         flow.settled = true;
         flow.stopTimer?.();
-        if (cancel && (flow.reservation || flow.previousReservationId)) await cancelReservation(flow);
-        if (!cancel) clearStoredCheckout();
+        clearReceipt(flow);
+        clearStoredCheckout();
         document.getElementById("modal")?.classList.remove("paymentFlowOpen");
         if (activeFlow === flow) activeFlow = null;
         resolve(value);
+        if (redirectHome) {
+          window.location.href = "https://mirpanel.com/";
+          return true;
+        }
+        return true;
       };
-      document.querySelector(".paymentFlowClose").onclick = () => finish(null, true);
+      document.querySelector(".paymentFlowClose").onclick = async (event) => {
+        event.preventDefault();
+        if ((flow.reservation || flow.previousReservationId) && !window.confirm("Aktiv rezerv ləğv ediləcək. Pəncərəni bağlamaq istəyirsiniz?")) return;
+        try {
+          await finish(null, { cancel: true });
+        } catch (error) {
+          setMessage(`${error.message} Rezerv ləğv edilmədi, yenidən cəhd edin.`, "error");
+        }
+      };
       try {
         const result = await request("/api/payments/methods");
         const choices = document.getElementById("paymentMethodChoices");
@@ -228,7 +261,7 @@
               const expiredId = flow.reservation?.reservationId;
               flow.reservation = null;
               flow.previousReservationId = null;
-              flow.receipt = null;
+              clearReceipt(flow);
               clearStoredCheckout();
               document.getElementById("paymentMethodDetail").innerHTML = "";
               document.getElementById("paymentReceiptArea").innerHTML = "";
@@ -258,8 +291,22 @@
                 flow.changing = false;
               }
             };
-            document.getElementById("paymentCancel").onclick = async () => {
-              try { await finish(null, true); } catch (error) { setMessage(error.message, "error"); }
+            document.getElementById("paymentCancel").onclick = async (event) => {
+              event.preventDefault();
+              if (flow.cancelling || flow.submitting) return;
+              const cancelButton = document.getElementById("paymentCancel");
+              const closeButton = document.querySelector(".paymentFlowClose");
+              cancelButton.disabled = true;
+              if (closeButton) closeButton.disabled = true;
+              setMessage("Rezerv təhlükəsiz ləğv edilir...");
+              try {
+                await finish(null, { cancel: true, redirectHome: true });
+                return;
+              } catch (error) {
+                cancelButton.disabled = false;
+                if (closeButton) closeButton.disabled = false;
+                setMessage(`${error.message} Rezerv ləğv edilmədi, yenidən cəhd edin.`, "error");
+              }
             };
             document.getElementById("paymentReceiptInput").onchange = (fileEvent) => {
               const file = fileEvent.target.files?.[0];
@@ -270,14 +317,16 @@
                 error.hidden = false;
                 return;
               }
+              clearReceipt(flow);
               flow.receipt = file;
               setStage(flow, "receipt_upload");
               const preview = document.getElementById("paymentReceiptPreview");
               preview.classList.remove("hidden");
-              preview.innerHTML = file.type.startsWith("image/") ? `<img src="${URL.createObjectURL(file)}" alt="Yüklənəcək ödəniş qəbzi"><div><strong>${esc(file.name)}</strong><button id="removePaymentReceipt" type="button">Çeki sil və yenisini seç</button></div>` : `<div class="paymentPdfPreview"><strong>PDF</strong><span>${esc(file.name)}</span></div><button id="removePaymentReceipt" type="button">Çeki sil və yenisini seç</button>`;
+              flow.receiptPreviewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
+              preview.innerHTML = flow.receiptPreviewUrl ? `<img src="${flow.receiptPreviewUrl}" alt="Yüklənəcək ödəniş qəbzi"><div><strong>${esc(file.name)}</strong><button id="removePaymentReceipt" type="button">Çeki sil və yenisini seç</button></div>` : `<div class="paymentPdfPreview"><strong>PDF</strong><span>${esc(file.name)}</span></div><button id="removePaymentReceipt" type="button">Çeki sil və yenisini seç</button>`;
               document.getElementById("paymentSubmit").disabled = false;
               document.getElementById("removePaymentReceipt").onclick = () => {
-                flow.receipt = null; setStage(flow, "payment_details"); fileEvent.target.value = ""; preview.innerHTML = ""; preview.classList.add("hidden"); document.getElementById("paymentSubmit").disabled = true;
+                clearReceipt(flow); setStage(flow, "payment_details"); document.getElementById("paymentSubmit").disabled = true;
               };
             };
             document.getElementById("paymentReceiptForm").addEventListener("submit", async (event) => {
@@ -304,7 +353,7 @@
                 }, updateProgress);
                 updateProgress(100);
                 setMessage(`Çek yükləndi. Sifariş: ${order.orderCode}`, "success");
-                await finish(order, false);
+                await finish(order);
                 return;
               } catch (submitError) {
                 flow.submitting = false;
