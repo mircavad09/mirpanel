@@ -22,7 +22,9 @@ function gmailError(response, payload, operation) {
     `Gmail ${operation} xətası: ${response.status}`,
     payload?.error?.status,
     payload?.error?.errors?.[0]?.reason,
-    payload?.error?.message || payload?.error_description || (typeof payload?.error === "string" ? payload.error : "")
+    payload?.error?.message,
+    typeof payload?.error === "string" ? payload.error : "",
+    payload?.error_description
   ].filter(Boolean);
   return safeText([...new Set(details)].join(" · "), 500);
 }
