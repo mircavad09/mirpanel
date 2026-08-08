@@ -93,6 +93,8 @@ assert.ok(confirmation.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));
 assert.ok(server.includes("await paymentSystem.guardLogin(request)"));
 assert.ok(server.includes("requireMutationAuth"));
+assert.ok(server.includes('Supabase server key format:'));
+assert.equal(server.includes("config.supabaseSecretKey.slice"), false);
 assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
 assert.ok(paymentAdmin.includes("paymentActionDialog"));

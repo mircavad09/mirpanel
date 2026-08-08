@@ -1124,5 +1124,6 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(config.port, () => {
   console.log(`Mirpanel admin: http://localhost:${config.port}`);
+  console.log(`Supabase server key format: ${config.supabaseSecretKey.startsWith("sb_secret_") ? "new-secret" : "legacy-jwt"}`);
 });
 
