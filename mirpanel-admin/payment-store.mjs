@@ -348,7 +348,7 @@ export function createPaymentStore(config) {
     async listOrders(input = {}) {
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
-      const select = "id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
+      const select = "id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
@@ -387,7 +387,7 @@ export function createPaymentStore(config) {
         countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
         client.from("payment_orders").select("product_id,product_title,plan_name").order("product_title", { ascending: true }).limit(5000),
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
-        rpc("payment_order_profit_statistics", {
+        rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
           p_search: filters.search || null,
           p_product_id: filters.productId || null,
@@ -440,6 +440,8 @@ export function createPaymentStore(config) {
             costPriceSnapshot: order.cost_price_snapshot === null ? null : Number(order.cost_price_snapshot),
             profitSnapshot: order.profit_snapshot === null ? null : Number(order.profit_snapshot),
             profitMarginSnapshot: order.profit_margin_snapshot === null ? null : Number(order.profit_margin_snapshot),
+            costSource: order.cost_source || null,
+            costBackfilledAt: order.cost_backfilled_at || null,
             currency: order.currency,
             status: adminOrderStatus(order.status, reservation.status),
             reservationStatus: reservation.status || "",
@@ -462,7 +464,7 @@ export function createPaymentStore(config) {
           totalPages: Math.max(1, Math.ceil(total / filters.pageSize))
         },
         counts: { pending: pendingCount, today: todayCount, all: completedCount, expiring: expiringCount },
-        statistics: statistics || { count: 0, revenue: 0, topProduct: "—", products: [] },
+        statistics: statistics || { count: 0, revenue: 0, cost: 0, profit: 0, missingCostCount: 0, topProduct: "—", products: [], plans: [], days: [] },
         filters: {
           products: [...products].map(([id, title]) => ({ id, title })),
           plans: [...plans].sort((a, b) => a.localeCompare(b, "az")),
@@ -483,9 +485,18 @@ export function createPaymentStore(config) {
       return data || null;
     },
     approveOrder(id, durationMonths, actor) {
-      return rpc("approve_payment_order_v3", {
+      return rpc("approve_payment_order_v4", {
         p_order_id: id,
         p_duration_months: durationMonths || null,
+        p_actor: actor
+      });
+    },
+    financeSnapshot() { return rpc("payment_finance_snapshot"); },
+    costBackfillPreview() { return rpc("payment_cost_backfill_preview"); },
+    applyCostBackfill(expectedCount, expectedDigest, actor) {
+      return rpc("backfill_payment_order_cost_snapshots", {
+        p_expected_count: Number(expectedCount),
+        p_expected_digest: safeText(expectedDigest, 64),
         p_actor: actor
       });
     },

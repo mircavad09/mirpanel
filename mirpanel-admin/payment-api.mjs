@@ -275,6 +275,24 @@ export function createPaymentSystem(options) {
       json(response, 200, { ...result, rows: await store.planCosts(catalog) });
       return true;
     }
+    if (request.method === "GET" && url.pathname === "/api/admin/payment-cost-backfill-preview") {
+      json(response, 200, {
+        preview: await store.costBackfillPreview(),
+        snapshot: await store.financeSnapshot()
+      });
+      return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/admin/payment-cost-backfill") {
+      const body = await readBody(request, 10_000);
+      if (!Number.isInteger(Number(body.expectedCount)) || Number(body.expectedCount) < 0 || !/^[a-f0-9]{32}$/i.test(String(body.digest || ""))) {
+        throw Object.assign(new Error("Backfill preview məlumatı düzgün deyil."), { status: 400 });
+      }
+      const before = await store.financeSnapshot();
+      const result = await store.applyCostBackfill(body.expectedCount, body.digest, actorName);
+      const after = await store.financeSnapshot();
+      json(response, 200, { result, before, after, preview: await store.costBackfillPreview() });
+      return true;
+    }
     if (request.method === "POST" && url.pathname === "/api/admin/payment-methods") {
       const body = await readBody(request, 50_000);
       const number = validatePaymentNumber(body.fullNumber, body.type);

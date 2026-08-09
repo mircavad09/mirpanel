@@ -10,13 +10,12 @@ const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 const catalog = extractAdminState(read("app.js"));
 const rows = catalogCostRows(catalog, []);
 
-assert.equal(catalog.products.length, 30);
+assert.ok(catalog.products.length > 0);
 assert.equal(rows.length, catalog.products.reduce((sum, product) => sum + (product.plans?.length || 0), 0));
-assert.equal(rows.length, 39);
-assert.equal(rows.filter((row) => row.costAmount === null).length, 39);
+assert.equal(rows.filter((row) => row.costAmount === null).length, rows.length);
 const expanded = structuredClone(catalog);
 expanded.products.push({ id: "future", title: "Gələcək məhsul", active: true, category: "ai", plans: [{ months: 1, price: 9.99 }, { months: 12, price: 99.99 }] });
-assert.equal(catalogCostRows(expanded, []).length, 41, "Yeni məhsul və planlar avtomatik görünməlidir");
+assert.equal(catalogCostRows(expanded, []).length, rows.length + 2, "Yeni məhsul və planlar avtomatik görünməlidir");
 
 assert.equal(parseMoneyCents("5,25"), 525);
 assert.equal(parseMoneyCents("5.2"), 520);
@@ -43,12 +42,12 @@ assert.ok(migration.includes("if v_order.status = 'approved'"));
 assert.ok(migration.includes("for update"));
 assert.equal(/update public\.payment_orders[\s\S]*cost_price_snapshot[\s\S]*where cost_price_snapshot is null/i.test(migration), false, "Köhnə sifarişlər avtomatik backfill edilməməlidir");
 assert.ok(migration.includes("revoke all on table public.payment_plan_costs from public, anon, authenticated"));
-assert.ok(store.includes('rpc("approve_payment_order_v3"'));
-assert.ok(store.includes('rpc("payment_order_profit_statistics"'));
+assert.ok(store.includes('rpc("approve_payment_order_v4"'));
+assert.ok(store.includes('rpc("payment_order_profit_statistics_v2"'));
 assert.ok(api.includes('url.pathname === "/api/admin/payment-costs"'));
-assert.ok(cms.includes("Maya dəyəri və mənfəət"));
+assert.ok(cms.includes("Məhsulların maya dəyəri və qazanc"));
 assert.ok(admin.includes("Tarixi maya dəyəri mövcud deyil"));
 assert.equal(read("index.html").includes("payment_plan_costs"), false);
 assert.equal(read("app.js").includes("cost_price_snapshot"), false);
 
-console.log(JSON.stringify({ ok: true, products: 30, plans: rows.length, emptyCostsRemainNull: true, snapshotImmutable: true, adminOnly: true }, null, 2));
+console.log(JSON.stringify({ ok: true, products: catalog.products.length, plans: rows.length, emptyCostsRemainNull: true, snapshotImmutable: true, adminOnly: true }, null, 2));

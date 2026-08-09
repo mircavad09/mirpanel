@@ -49,22 +49,27 @@ export function serviceDates(completedAt, durationMonths) {
   };
 }
 
-function monthPeriodStart(today, months) {
-  const [year, month, day] = today.split("-").map(Number);
-  const target = new Date(Date.UTC(year, month - 1 - months, 1));
-  const lastDay = new Date(Date.UTC(target.getUTCFullYear(), target.getUTCMonth() + 1, 0)).getUTCDate();
-  const sameDay = `${target.getUTCFullYear()}-${pad(target.getUTCMonth() + 1)}-${pad(Math.min(day, lastDay))}`;
-  return shiftCalendarDays(sameDay, 1);
+function monthBoundary(today, offsetMonths = 0, end = false) {
+  const [year, month] = today.split("-").map(Number);
+  const target = new Date(Date.UTC(year, month - 1 + offsetMonths + (end ? 1 : 0), end ? 0 : 1));
+  return `${target.getUTCFullYear()}-${pad(target.getUTCMonth() + 1)}-${pad(target.getUTCDate())}`;
 }
 
 export function orderPeriodRange(period = "", dateFrom = "", dateTo = "", now = new Date()) {
   const today = bakuDate(now);
-  if (period === "1d") return { dateFrom: today, dateTo: today };
+  if (period === "1d" || period === "today") return { dateFrom: today, dateTo: today };
+  if (period === "yesterday") {
+    const yesterday = shiftCalendarDays(today, -1);
+    return { dateFrom: yesterday, dateTo: yesterday };
+  }
   if (period === "7d") return { dateFrom: shiftCalendarDays(today, -6), dateTo: today };
-  if (period === "1m") return { dateFrom: monthPeriodStart(today, 1), dateTo: today };
-  if (period === "3m") return { dateFrom: monthPeriodStart(today, 3), dateTo: today };
-  if (period === "6m") return { dateFrom: monthPeriodStart(today, 6), dateTo: today };
-  if (period === "1y") return { dateFrom: monthPeriodStart(today, 12), dateTo: today };
+  if (period === "30d") return { dateFrom: shiftCalendarDays(today, -29), dateTo: today };
+  if (period === "1m" || period === "this_month") return { dateFrom: monthBoundary(today), dateTo: today };
+  if (period === "last_month") return { dateFrom: monthBoundary(today, -1), dateTo: monthBoundary(today, -1, true) };
+  if (period === "3m") return { dateFrom: monthBoundary(today, -2), dateTo: today };
+  if (period === "6m") return { dateFrom: monthBoundary(today, -5), dateTo: today };
+  if (period === "1y" || period === "12m") return { dateFrom: monthBoundary(today, -11), dateTo: today };
+  if (period === "all") return { dateFrom: "", dateTo: "" };
   const from = safeCalendarDate(dateFrom);
   const to = safeCalendarDate(dateTo);
   return from && to && from <= to ? { dateFrom: from, dateTo: to } : { dateFrom: "", dateTo: "" };

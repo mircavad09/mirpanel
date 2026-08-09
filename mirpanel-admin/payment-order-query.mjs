@@ -2,7 +2,10 @@ import { bakuDate, orderPeriodRange, safeCalendarDate } from "./payment-order-li
 
 const PAGE_SIZE = 20;
 const ORDER_TABS = new Set(["pending", "today", "all", "expiring"]);
-const ORDER_PERIODS = new Set(["", "1d", "7d", "1m", "3m", "6m", "1y", "custom"]);
+const ORDER_PERIODS = new Set([
+  "", "all", "1d", "today", "yesterday", "7d", "30d", "1m", "this_month",
+  "last_month", "3m", "6m", "1y", "12m", "custom"
+]);
 
 function boundedText(value, max = 160) {
   return String(value || "").trim().slice(0, max);

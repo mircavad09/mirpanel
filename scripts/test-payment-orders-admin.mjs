@@ -44,6 +44,18 @@ assert.equal(expiryStatus("2026-11-07", new Date("2026-11-05T12:00:00+04:00")).d
 assert.equal(structuredDurationMonths({ months: 6 }), 6);
 assert.equal(structuredDurationMonths({ label: "6 aylıq" }), null, "Müddət görünən mətndən təxmin edilməməlidir");
 assert.deepEqual(orderPeriodRange("7d", "", "", new Date("2026-08-09T12:00:00+04:00")), { dateFrom: "2026-08-03", dateTo: "2026-08-09" });
+assert.deepEqual(orderPeriodRange("today", "", "", new Date("2026-08-31T23:59:59+04:00")), { dateFrom: "2026-08-31", dateTo: "2026-08-31" });
+assert.deepEqual(orderPeriodRange("today", "", "", new Date("2026-09-01T00:00:00+04:00")), { dateFrom: "2026-09-01", dateTo: "2026-09-01" });
+assert.deepEqual(orderPeriodRange("yesterday", "", "", new Date("2026-09-01T12:00:00+04:00")), { dateFrom: "2026-08-31", dateTo: "2026-08-31" });
+assert.deepEqual(orderPeriodRange("30d", "", "", new Date("2026-08-31T12:00:00+04:00")), { dateFrom: "2026-08-02", dateTo: "2026-08-31" });
+assert.deepEqual(orderPeriodRange("this_month", "", "", new Date("2026-09-15T12:00:00+04:00")), { dateFrom: "2026-09-01", dateTo: "2026-09-15" });
+assert.deepEqual(orderPeriodRange("last_month", "", "", new Date("2026-09-15T12:00:00+04:00")), { dateFrom: "2026-08-01", dateTo: "2026-08-31" });
+assert.deepEqual(orderPeriodRange("last_month", "", "", new Date("2024-03-15T12:00:00+04:00")), { dateFrom: "2024-02-01", dateTo: "2024-02-29" });
+assert.deepEqual(orderPeriodRange("last_month", "", "", new Date("2025-03-15T12:00:00+04:00")), { dateFrom: "2025-02-01", dateTo: "2025-02-28" });
+assert.deepEqual(orderPeriodRange("3m", "", "", new Date("2026-09-15T12:00:00+04:00")), { dateFrom: "2026-07-01", dateTo: "2026-09-15" });
+assert.deepEqual(orderPeriodRange("6m", "", "", new Date("2026-09-15T12:00:00+04:00")), { dateFrom: "2026-04-01", dateTo: "2026-09-15" });
+assert.deepEqual(orderPeriodRange("12m", "", "", new Date("2026-09-15T12:00:00+04:00")), { dateFrom: "2025-10-01", dateTo: "2026-09-15" });
+assert.deepEqual(orderPeriodRange("", "2026-08-02", "2026-08-21", new Date("2026-09-15T12:00:00+04:00")), { dateFrom: "2026-08-02", dateTo: "2026-08-21" });
 
 const stats = aggregateCompletedOrders([
   { product_title: "Netflix Şəxsi", amount: 5.99 },
@@ -65,6 +77,7 @@ const cms = read("mirpanel-admin/public/cms-admin.js");
 const css = read("mirpanel-admin/public/admin.css");
 const migration = read("supabase/migrations/202608090001_order_history_and_expiry.sql");
 const capacityMigration = read("supabase/migrations/202608090003_payment_method_capacity_and_admin.sql");
+const reportMigration = read("supabase/migrations/202608100001_calendar_reports_and_cost_backfill.sql");
 
 assert.ok(store.includes('.select(select, { count: "exact" })'));
 assert.ok(store.includes(".range(from, from + filters.pageSize - 1)"), "Səhifələmə serverdə işləməlidir");
@@ -95,6 +108,17 @@ assert.ok(capacityMigration.includes("PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS"));
 assert.ok(capacityMigration.includes("status = 'reviewing' or (status = 'reserved' and expires_at > now())"));
 assert.ok(css.includes("paymentOrderStatistics"));
 assert.ok(css.includes("@media(max-width:420px)"));
+for (const value of ["payment_order_profit_statistics_v2", "payment_cost_backfill_preview", "backfill_payment_order_cost_snapshots", "payment_cost_backfill_backups", "approve_payment_order_v4", "Asia/Baku"]) assert.ok(reportMigration.includes(value));
+assert.ok(reportMigration.includes("for update"), "Backfill targetləri transaction daxilində kilidlənməlidir");
+assert.ok(reportMigration.includes("BACKFILL_PREVIEW_CHANGED"), "Preview dəyişərsə backfill dayanmalıdır");
+assert.ok(reportMigration.includes("on conflict (order_id) do nothing"), "Backup idempotent olmalıdır");
+assert.ok(reportMigration.includes("o.product_id=c.product_id and o.plan_id=c.plan_id"), "Backfill yalnız sabit məhsul və plan ID-si ilə uyğunlaşmalıdır");
+assert.equal(/cost_price_snapshot\s*=\s*0/i.test(reportMigration), false, "Çatışmayan maya sıfır yazılmamalıdır");
+assert.ok(reportMigration.includes("revoke execute on function public.payment_cost_backfill_preview() from public,anon,authenticated"));
+assert.ok(api.includes("/api/admin/payment-cost-backfill-preview"));
+assert.ok(api.includes("/api/admin/payment-cost-backfill"));
+assert.ok(admin.includes("paymentOrderDay"));
+assert.ok(admin.includes("paymentCostBackfillPreview"));
 
 for (const column of ["completed_at", "duration_months", "service_expires_on", "expiry_notification_on", "contacted_at", "method_name_snapshot", "method_last4_snapshot", "deleted_at"]) assert.ok(migration.includes(column));
 for (const fn of ["approve_payment_order_v2", "mark_payment_order_contacted", "delete_payment_method_safely"]) {
