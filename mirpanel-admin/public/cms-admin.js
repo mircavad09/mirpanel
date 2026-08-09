@@ -2,7 +2,7 @@
   const viewGroups = [
     ["Əsas idarəetmə", [["dashboard", "İdarə paneli"], ["products", "Məhsullar"], ["categories", "Kateqoriyalar"]]],
     ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Bannerlər"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
-    ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentOrders", "Sifarişlər"], ["paymentReviews", "Ödəniş yoxlamaları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
+    ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentCosts", "Maya dəyəri və mənfəət"], ["paymentOrders", "Sifarişlər"], ["paymentReviews", "Ödəniş yoxlamaları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
   const safeIcons = ["home", "products", "search", "info", "contact", "terms", "whatsapp", "sparkles", "game", "ai", "link", "image", "shield"];
@@ -133,6 +133,17 @@
     </div><div class="sectionHead"><h3>Sayt keçidləri</h3><button class="btn" type="button" data-add-list="navigation">Keçid əlavə et</button></div><div id="navigationList" class="cmsList"></div>`));
     createView("banners", panel("Bannerlər", "Məhsul bannerlərini sadə siyahıdan seçib redaktə edin", '<div class="sectionHead"><h3>Bütün məhsul bannerləri</h3></div><div id="bannerProductList" class="bannerManageList"></div><label class="bannerProductPicker hidden">Məhsulu seç<select id="bannerProductSelect"></select></label><div id="bannerProductEditor"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
     createView("paymentMethods", panel("Ödəniş üsulları", "Kart və elektron cüzdanları təhlükəsiz idarə edin. Tam nömrə saxlandıqdan sonra yenidən göstərilmir.", '<div id="paymentMethodsStatus" class="previewResult hidden"></div><div class="sectionHead"><div><h3>Kart və cüzdanlar</h3><p>Standart gündəlik limit 5-dir. Limitsiz rejim yalnız əl ilə aktivləşdirilir.</p></div><button class="btn primary" type="button" id="paymentMethodAdd">Yeni üsul əlavə et</button></div><div id="paymentMethodsList" class="paymentMethodsAdminList"></div><div id="paymentMethodEditor"></div><div class="sectionHead"><h3>Bildiriş və çek saxlanması</h3></div><form id="paymentSettingsForm" class="paymentSettingsForm formGrid"><label>Bildiriş Gmail ünvanı<input id="paymentNotificationEmail" type="email" required></label><label>Çeklərin saxlanma müddəti (gün)<input id="paymentReceiptRetentionDays" type="number" min="1" max="3650" value="90"></label><div class="wide"><button class="btn" type="submit">Parametrləri saxla</button></div></form>'));
+    createView("paymentCosts", panel("Maya dəyəri və mənfəət", "Maya dəyərini plan üzrə daxil edin. Satış qiyməti və mənfəət avtomatik hesablanır; bu məlumatlar yalnız admin paneldə görünür.", `<div class="paymentCostToolbar">
+      <form id="paymentCostFilters" class="paymentCostFilters" role="search">
+        <label>Məhsul axtarışı<input id="paymentCostSearch" type="search" autocomplete="off" placeholder="Məhsul adı"></label>
+        <label>Vəziyyət<select id="paymentCostActive"><option value="">Hamısı</option><option value="active">Aktiv</option><option value="inactive">Deaktiv</option></select></label>
+        <label>Kateqoriya<select id="paymentCostCategory"><option value="">Bütün kateqoriyalar</option></select></label>
+        <label class="checkLabel"><input id="paymentCostMissing" type="checkbox"> Yalnız maya dəyəri qeyd edilməyənlər</label>
+      </form>
+      <button class="btn primary" type="button" id="paymentCostsSaveAll" disabled>Hamısını yadda saxla</button>
+    </div>
+    <div id="paymentCostsStatus" class="paymentOrdersStatus" role="status" aria-live="polite"></div>
+    <div id="paymentCostsList" class="paymentCostsList" aria-live="polite"></div>`));
     createView("paymentOrders", panel("Sifarişlər", "Gözləyən sifarişləri yoxlayın, tamamlanmış satış tarixçəsini və müddəti bitən məhsulları izləyin.", `<div class="paymentOrderToolbar">
       <div class="paymentOrderTabs" role="tablist" aria-label="Sifariş statusları">
         <button class="paymentOrderTab active" type="button" role="tab" aria-selected="true" data-payment-order-tab="pending">Gözləyən sifarişlər (<span id="paymentPendingCount">0</span>)</button>

@@ -5,6 +5,7 @@
   const paymentState = {
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), orderQuery: emptyQuery(),
+    costs: [], costDirty: new Set(), costSaving: false,
     orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] } }
   };
   const $p = (id) => document.getElementById(id);
@@ -93,7 +94,11 @@
       ["Məhsul", order.productTitle], ["Plan", order.planName], ["Məbləğ", money(order.amount, order.currency)], ["Ödəniş üsulu", order.paymentMethodLabel]
     ];
     if (pending) fields.push(["Rezerv", reservationLabel[order.reservationStatus] || "Yoxlanılır"]);
-    if (!pending) fields.push(["Təsdiqlənmə", dateTime(order.completedAt)], ["Bitmə tarixi", calendarDate(order.expiresOn)]);
+    if (!pending) {
+      fields.push(["Təsdiqlənmə", dateTime(order.completedAt)], ["Bitmə tarixi", calendarDate(order.expiresOn)]);
+      fields.push(["Snapshot maya", order.costPriceSnapshot === null ? "Tarixi maya dəyəri mövcud deyil" : money(order.costPriceSnapshot, order.currency)]);
+      fields.push(["Snapshot mənfəət", order.profitSnapshot === null ? "Hesablanmayıb" : `${money(order.profitSnapshot, order.currency)}${order.profitMarginSnapshot === null ? "" : ` · ${Number(order.profitMarginSnapshot).toFixed(2)}%`}`]);
+    }
     if (tab === "all") fields.push(["Əlaqə", order.contactedAt ? `Əlaqə saxlanıldı · ${dateTime(order.contactedAt)}` : "Əlaqə saxlanılmayıb"]);
     if (expiring) fields.push(["Vəziyyət", order.expiry?.label || "Müddət müəyyən edilməyib"]);
     return `<article class="paymentOrderAdminCard status-${escp(order.status)}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
@@ -135,8 +140,8 @@
     const host = $p("paymentOrderStatistics"); if (!host) return;
     const stats = paymentState.orderMeta.statistics || {};
     if (paymentState.orderQuery.tab === "pending") { host.innerHTML = ""; return; }
-    const productSummary = (stats.products || []).slice(0, 8).map((item) => `<span>${escp(item.title)}: <b>${Number(item.count)}</b></span>`).join("");
-    host.innerHTML = `<div><small>Tamamlanmış sifariş</small><strong>${Number(stats.count || 0)}</strong></div><div><small>Ümumi satış</small><strong>${money(stats.revenue || 0)}</strong></div><div><small>Ən çox satılan məhsul</small><strong>${escp(stats.topProduct || "—")}</strong></div>${productSummary ? `<div class="paymentProductStats"><small>Məhsullar üzrə</small>${productSummary}</div>` : ""}`;
+    const productSummary = (stats.products || []).map((item) => `<tr><td>${escp(item.title)}</td><td>${Number(item.count)}</td><td>${money(item.revenue || 0)}</td><td>${money(item.cost || 0)}</td><td class="${Number(item.profit || 0) < 0 ? "bad" : ""}">${money(item.profit || 0)}</td><td>${item.margin === null || item.margin === undefined ? "—" : `${Number(item.margin).toFixed(2)}%`}</td><td>${Number(item.missingCostCount || 0)}</td></tr>`).join("");
+    host.innerHTML = `<div><small>Tamamlanmış sifariş</small><strong>${Number(stats.count || 0)}</strong></div><div><small>Ümumi satış</small><strong>${money(stats.revenue || 0)}</strong></div><div><small>Ümumi maya</small><strong>${money(stats.cost || 0)}</strong></div><div><small>Xalis mənfəət</small><strong class="${Number(stats.profit || 0) < 0 ? "bad" : ""}">${money(stats.profit || 0)}</strong></div><div><small>Mənfəət faizi</small><strong>${stats.profitMargin === null || stats.profitMargin === undefined ? "—" : `${Number(stats.profitMargin).toFixed(2)}%`}</strong></div><div><small>Maya dəyəri çatışmayan</small><strong>${Number(stats.missingCostCount || 0)}</strong></div><div><small>Ən çox mənfəət gətirən</small><strong>${escp(stats.topProfitProduct || "—")}</strong></div>${Number(stats.missingCostCount || 0) ? `<p class="warningBox paymentProfitWarning">Bəzi sifarişlərin maya dəyəri qeyd edilməyib: ${Number(stats.missingCostCount)} sifariş mənfəət hesabına daxil edilmədi.</p>` : ""}${productSummary ? `<div class="paymentProductProfitTable"><table><thead><tr><th>Məhsul</th><th>Satış</th><th>Ümumi satış</th><th>Ümumi maya</th><th>Xalis mənfəət</th><th>Faiz</th><th>Çatışmır</th></tr></thead><tbody>${productSummary}</tbody></table></div>` : ""}`;
   }
 
   function renderOrders() {
@@ -155,6 +160,67 @@
 
   function renderEmails() {
     if ($p("paymentEmailsList")) $p("paymentEmailsList").innerHTML = paymentState.emails.length ? paymentState.emails.map((item) => `<article class="paymentEmailRow"><div><strong>${escp(item.status === "sent" ? "Göndərilib" : "Bildiriş gözləyir")}</strong><span>${escp(item.recipient)} · ${Number(item.attempts)} cəhd</span>${item.last_error ? `<small class="bad">${escp(item.last_error)}</small>` : ""}</div>${item.status !== "sent" ? `<button class="btn" type="button" data-retry-payment-email="${escp(item.id)}">Yenidən göndər</button>` : ""}</article>`).join("") : '<div class="emptyState">Bildiriş qeydi yoxdur.</div>';
+  }
+
+  function costKey(row) { return `${row.productId}:${row.planId}`; }
+  function costMetrics(row, rawCost) {
+    const normalized = String(rawCost ?? "").trim().replace(",", ".");
+    if (normalized === "") return { cost: null, profit: null, margin: null, invalid: false };
+    if (!/^\d+(?:\.\d{1,2})?$/.test(normalized) || Number(normalized) > 9999999.99) return { invalid: true };
+    const cost = Number(normalized); const sale = Number(row.salePrice);
+    const profit = Number((sale - cost).toFixed(2));
+    return { cost, profit, margin: sale ? Number((profit / sale * 100).toFixed(2)) : null, invalid: false };
+  }
+  function renderCosts() {
+    const host = $p("paymentCostsList"); if (!host) return;
+    const search = ($p("paymentCostSearch")?.value || "").trim().toLocaleLowerCase("az-AZ");
+    const active = $p("paymentCostActive")?.value || ""; const category = $p("paymentCostCategory")?.value || "";
+    const onlyMissing = Boolean($p("paymentCostMissing")?.checked);
+    const rows = paymentState.costs.filter((row) => (!search || row.productTitle.toLocaleLowerCase("az-AZ").includes(search)) &&
+      (!active || (active === "active") === row.productActive) && (!category || row.category === category) && (!onlyMissing || row.costAmount === null));
+    const groups = new Map(); for (const row of rows) { if (!groups.has(row.productId)) groups.set(row.productId, []); groups.get(row.productId).push(row); }
+    host.innerHTML = [...groups.values()].map((plans) => {
+      const first = plans[0];
+      return `<details class="paymentCostProduct" open><summary><strong>${escp(first.productTitle)}</strong><span class="statusPill ${first.productActive ? "ok" : ""}">${first.productActive ? "Aktiv" : "Deaktiv"}</span><small>${plans.length} plan</small></summary><div class="paymentCostPlanList">${plans.map((row) => {
+        const key = costKey(row); const dirty = paymentState.costDirty.has(key); const metrics = costMetrics(row, row.costAmount);
+        const negative = metrics.profit !== null && metrics.profit < 0;
+        return `<div class="paymentCostRow${dirty ? " isDirty" : ""}${negative ? " hasLoss" : ""}" data-payment-cost-key="${escp(key)}" data-product-id="${escp(row.productId)}" data-plan-id="${escp(row.planId)}">
+          <span><b>Plan</b><em>${escp(row.planName)}${row.durationMonths ? ` · ${Number(row.durationMonths)} ay` : ""}</em></span>
+          <span><b>Satış qiyməti</b><em>${money(row.salePrice)}</em></span>
+          <label><b>Maya dəyəri</b><input data-payment-cost-input inputmode="decimal" autocomplete="off" placeholder="Qeyd edilməyib" value="${row.costAmount === null ? "" : escp(row.costAmount)}"></label>
+          <span><b>Bir satışdan mənfəət</b><em data-cost-profit class="${negative ? "bad" : ""}">${metrics.invalid ? "Yanlış məbləğ" : metrics.profit === null ? "Qeyd edilməyib" : money(metrics.profit)}</em></span>
+          <span><b>Mənfəət faizi</b><em data-cost-margin class="${negative ? "bad" : ""}">${metrics.invalid ? "—" : metrics.margin === null ? "Qeyd edilməyib" : `${metrics.margin.toFixed(2)}%`}</em></span>
+          <span><b>Son yenilənmə</b><em>${row.updatedAt ? dateTime(row.updatedAt) : "Qeyd edilməyib"}</em></span>
+          <button class="btn compact" type="button" data-save-payment-cost ${dirty ? "" : "disabled"}>Yadda saxla</button>
+        </div>`;
+      }).join("")}</div></details>`;
+    }).join("") || '<div class="emptyState">Filtrə uyğun məhsul planı tapılmadı.</div>';
+    const saveAll = $p("paymentCostsSaveAll"); if (saveAll) saveAll.disabled = paymentState.costSaving || paymentState.costDirty.size === 0;
+    const status = $p("paymentCostsStatus"); if (status) status.textContent = paymentState.costDirty.size ? `${paymentState.costDirty.size} yadda saxlanmamış dəyişiklik var.` : `${paymentState.costs.length} plan · Bütün dəyişikliklər yadda saxlanılıb.`;
+  }
+  async function loadCosts() {
+    const status = $p("paymentCostsStatus"); if (status) status.textContent = "Maya dəyərləri yüklənir…";
+    const result = await paymentApi("/api/admin/payment-costs"); paymentState.costs = result.rows || []; paymentState.costDirty.clear();
+    const category = $p("paymentCostCategory"); if (category) category.innerHTML = '<option value="">Bütün kateqoriyalar</option>' + (result.categories || []).map((item) => `<option value="${escp(item)}">${escp(item)}</option>`).join("");
+    renderCosts();
+  }
+  async function saveCosts(keys) {
+    if (paymentState.costSaving) return;
+    const selected = [...new Set(keys)].filter((key) => paymentState.costDirty.has(key));
+    if (!selected.length) return toast("Yadda saxlanılacaq dəyişiklik yoxdur.");
+    const items = selected.map((key) => {
+      const row = paymentState.costs.find((item) => costKey(item) === key); const input = document.querySelector(`[data-payment-cost-key="${CSS.escape(key)}"] [data-payment-cost-input]`);
+      const value = String(input?.value ?? row?.costAmount ?? "").trim().replace(",", ".");
+      if (value && (!/^\d+(?:\.\d{1,2})?$/.test(value) || Number(value) > 9999999.99)) throw new Error("Maya dəyəri mənfi olmayan və maksimum iki onluq rəqəmli məbləğ olmalıdır.");
+      return { productId: row.productId, planId: row.planId, cost: value || null };
+    });
+    paymentState.costSaving = true; renderCosts();
+    try {
+      const result = await paymentApi("/api/admin/payment-costs", { method: "POST", body: JSON.stringify({ items }) });
+      paymentState.costs = result.rows || paymentState.costs; selected.forEach((key) => paymentState.costDirty.delete(key));
+      toast(result.idempotent ? "Bu dəyərlər artıq saxlanılıb." : "Maya dəyərləri təhlükəsiz saxlanıldı."); renderCosts();
+    } catch (error) { toast(error.message || "Maya dəyərləri saxlanmadı."); renderCosts(); throw error; }
+    finally { paymentState.costSaving = false; renderCosts(); }
   }
 
   async function loadOrders() {
@@ -225,12 +291,31 @@
   }
 
   function bindEvents() {
-    document.addEventListener("input", (event) => { if (event.target.matches('#paymentMethodForm input[name="fullNumber"]')) event.target.value = formatNumber(event.target.value); });
-    document.addEventListener("change", (event) => { if (event.target.id === "paymentOrderPeriod") document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", event.target.value === "custom")); });
+    document.addEventListener("input", (event) => {
+      if (event.target.matches('#paymentMethodForm input[name="fullNumber"]')) event.target.value = formatNumber(event.target.value);
+      if (event.target.id === "paymentCostSearch") renderCosts();
+      if (event.target.matches("[data-payment-cost-input]")) {
+        const host = event.target.closest("[data-payment-cost-key]"); const row = paymentState.costs.find((item) => costKey(item) === host?.dataset.paymentCostKey);
+        if (!row) return; row.costAmount = event.target.value; paymentState.costDirty.add(costKey(row));
+        const metrics = costMetrics(row, event.target.value); const negative = metrics.profit !== null && metrics.profit < 0;
+        host.classList.add("isDirty"); host.classList.toggle("hasLoss", negative);
+        const profit = host.querySelector("[data-cost-profit]"); const margin = host.querySelector("[data-cost-margin]");
+        if (profit) { profit.textContent = metrics.invalid ? "Yanlış məbləğ" : metrics.profit === null ? "Qeyd edilməyib" : money(metrics.profit); profit.classList.toggle("bad", negative || metrics.invalid); }
+        if (margin) { margin.textContent = metrics.invalid || metrics.margin === null ? "—" : `${metrics.margin.toFixed(2)}%`; margin.classList.toggle("bad", negative); }
+        host.querySelector("[data-save-payment-cost]")?.removeAttribute("disabled");
+        const saveAll = $p("paymentCostsSaveAll"); if (saveAll) saveAll.disabled = false;
+        if ($p("paymentCostsStatus")) $p("paymentCostsStatus").textContent = `${paymentState.costDirty.size} yadda saxlanmamış dəyişiklik var.`;
+      }
+    });
+    document.addEventListener("change", (event) => {
+      if (event.target.id === "paymentOrderPeriod") document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", event.target.value === "custom"));
+      if (["paymentCostActive", "paymentCostCategory", "paymentCostMissing"].includes(event.target.id)) renderCosts();
+    });
     document.addEventListener("click", async (event) => {
       try {
         const viewButton = event.target.closest(".navBtn[data-view]");
         if (viewButton?.dataset.view === "paymentMethods") await loadMethods();
+        if (viewButton?.dataset.view === "paymentCosts") await loadCosts();
         if (viewButton?.dataset.view === "paymentOrders") await loadOrders();
         if (viewButton?.dataset.view === "paymentReviews") await loadEmails();
         if (event.target.closest("#paymentMethodAdd")) { paymentState.selectedMethodId = ""; renderMethodEditor(); }
@@ -241,6 +326,9 @@
         if (event.target.closest("[data-delete-payment-method]") && paymentState.selectedMethodId && confirm("Bu kart aktiv ödəniş siyahısından silinsin? Tarixçə qorunacaq.")) { await paymentApi(`/api/admin/payment-methods/${paymentState.selectedMethodId}/delete`, { method: "POST", body: "{}" }); paymentState.selectedMethodId = ""; $p("paymentMethodEditor").innerHTML = ""; await loadMethods(); }
         if (event.target.closest("#paymentOrdersRefresh")) await loadOrders();
         if (event.target.closest("#paymentReviewsRefresh")) await loadEmails();
+        if (event.target.closest("#paymentCostsSaveAll")) await saveCosts([...paymentState.costDirty]);
+        const costRow = event.target.closest("[data-payment-cost-key]");
+        if (costRow && event.target.closest("[data-save-payment-cost]")) await saveCosts([costRow.dataset.paymentCostKey]);
         const tab = event.target.closest("[data-payment-order-tab]");
         if (tab) { paymentState.orderQuery.tab = tab.dataset.paymentOrderTab; paymentState.orderQuery.page = 1; await loadOrders(); }
         if (event.target.closest("#paymentOrdersPrevious") && paymentState.orderMeta.pagination.page > 1) { paymentState.orderQuery.page -= 1; await loadOrders(); }
@@ -285,7 +373,8 @@
   function bootPayments() {
     bindEvents(); setTimeout(openReviewToken, 400);
     const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) loadOrders().catch(() => {}); else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
-    setTimeout(() => refreshOrderCounts().catch(() => {}), 1000); window.addEventListener("beforeunload", () => clearInterval(timer), { once: true });
+    setTimeout(() => refreshOrderCounts().catch(() => {}), 1000);
+    window.addEventListener("beforeunload", (event) => { clearInterval(timer); if (paymentState.costDirty.size) { event.preventDefault(); event.returnValue = ""; } });
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootPayments); else bootPayments();
 })();

@@ -15,6 +15,7 @@ import {
   paymentMethodLabel
 } from "./payment-order-query.mjs";
 import { bakuDayBounds, expiryStatus } from "./payment-order-lifecycle.mjs";
+import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./payment-profit.mjs";
 
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
   const message = String(error?.message || fallback);
@@ -24,7 +25,8 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     "ORDER_ALREADY_APPROVED", "REJECTION_REASON_REQUIRED", "RECEIPT_TOKEN_INVALID",
     "CHECKOUT_KEY_REQUIRED", "ACTIVE_RESERVATION_EXISTS", "RESERVATION_ALREADY_SUBMITTED",
     "RESERVATION_CHECKOUT_MISMATCH", "PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS",
-    "PAYMENT_METHOD_NOT_FOUND", "ORDER_NOT_COMPLETED", "INVALID_PLAN_DURATION"
+    "PAYMENT_METHOD_NOT_FOUND", "ORDER_NOT_COMPLETED", "INVALID_PLAN_DURATION",
+    "INVALID_COST_BATCH", "INVALID_COST_KEY", "INVALID_COST_AMOUNT"
   ].find((code) => message.includes(code));
   const translated = {
     IDEMPOTENCY_CONFLICT: "Təkrar sorğu əvvəlki sifarişlə uyğun deyil.",
@@ -44,7 +46,10 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS: "Bu kartda aktiv rezerv var. Əvvəlcə kartı deaktiv edin və rezervlərin tamamlanmasını gözləyin.",
     PAYMENT_METHOD_NOT_FOUND: "Ödəniş üsulu tapılmadı.",
     ORDER_NOT_COMPLETED: "Yalnız tamamlanmış sifariş üçün əlaqə statusu dəyişdirilə bilər.",
-    INVALID_PLAN_DURATION: "Planın strukturlaşdırılmış müddəti düzgün deyil."
+    INVALID_PLAN_DURATION: "Planın strukturlaşdırılmış müddəti düzgün deyil.",
+    INVALID_COST_BATCH: "Maya dəyəri siyahısı düzgün deyil.",
+    INVALID_COST_KEY: "Məhsul və ya plan açarı düzgün deyil.",
+    INVALID_COST_AMOUNT: "Maya dəyəri düzgün məbləğ deyil."
   }[known];
   const result = new Error(translated || fallback);
   result.code = known || "PAYMENT_STORE_ERROR";
@@ -299,10 +304,29 @@ export function createPaymentStore(config) {
       }
       return submitted;
     },
+    async planCosts(catalog) {
+      const { data, error } = await client.from("payment_plan_costs")
+        .select("product_id,plan_id,cost_amount,updated_at")
+        .order("product_id", { ascending: true });
+      if (error) throw paymentError(error);
+      return catalogCostRows(catalog, data || []);
+    },
+    async savePlanCosts(items, catalog, actor = "admin") {
+      const valid = new Set((catalog?.products || []).flatMap((product) =>
+        (product.plans || []).map((plan, index) => `${product.id}:${planKey(plan, index)}`)));
+      const normalized = items.map((item) => {
+        const productId = safeText(item.productId, 100);
+        const planId = safeText(item.planId, 100);
+        if (!valid.has(`${productId}:${planId}`)) throw Object.assign(new Error("Məhsul və ya plan artıq mövcud deyil."), { status: 409 });
+        const cents = parseMoneyCents(item.cost);
+        return { productId, planId, cost: centsToDecimal(cents) };
+      });
+      return rpc("save_payment_plan_costs", { p_items: normalized, p_actor: actor });
+    },
     async listOrders(input = {}) {
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
-      const select = "id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
+      const select = "id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
@@ -341,7 +365,7 @@ export function createPaymentStore(config) {
         countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
         client.from("payment_orders").select("product_id,product_title,plan_name").order("product_title", { ascending: true }).limit(5000),
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
-        rpc("payment_order_statistics", {
+        rpc("payment_order_profit_statistics", {
           p_tab: filters.tab,
           p_search: filters.search || null,
           p_product_id: filters.productId || null,
@@ -390,6 +414,10 @@ export function createPaymentStore(config) {
             planId: order.plan_id,
             planName: order.plan_name,
             amount: Number(order.amount),
+            salePriceSnapshot: order.sale_price_snapshot === null ? Number(order.amount) : Number(order.sale_price_snapshot),
+            costPriceSnapshot: order.cost_price_snapshot === null ? null : Number(order.cost_price_snapshot),
+            profitSnapshot: order.profit_snapshot === null ? null : Number(order.profit_snapshot),
+            profitMarginSnapshot: order.profit_margin_snapshot === null ? null : Number(order.profit_margin_snapshot),
             currency: order.currency,
             status: adminOrderStatus(order.status, reservation.status),
             reservationStatus: reservation.status || "",
@@ -433,7 +461,7 @@ export function createPaymentStore(config) {
       return data || null;
     },
     approveOrder(id, durationMonths, actor) {
-      return rpc("approve_payment_order_v2", {
+      return rpc("approve_payment_order_v3", {
         p_order_id: id,
         p_duration_months: durationMonths || null,
         p_actor: actor

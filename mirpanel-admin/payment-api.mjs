@@ -255,6 +255,25 @@ export function createPaymentSystem(options) {
     if (request.method === "GET" && url.pathname === "/api/admin/payment-methods") {
       json(response, 200, { methods: await store.adminMethods() }); return true;
     }
+    if (request.method === "GET" && url.pathname === "/api/admin/payment-costs") {
+      const catalog = await loadCatalog();
+      const rows = await store.planCosts(catalog);
+      json(response, 200, {
+        rows,
+        productCount: (catalog.products || []).length,
+        planCount: rows.length,
+        categories: [...new Set(rows.map((row) => row.category))].sort((a, b) => a.localeCompare(b, "az"))
+      });
+      return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/admin/payment-costs") {
+      const body = await readBody(request, 100_000);
+      if (!Array.isArray(body.items) || body.items.length > 500) throw Object.assign(new Error("Maya dəyəri siyahısı düzgün deyil."), { status: 400 });
+      const catalog = await loadCatalog();
+      const result = await store.savePlanCosts(body.items, catalog, actorName);
+      json(response, 200, { ...result, rows: await store.planCosts(catalog) });
+      return true;
+    }
     if (request.method === "POST" && url.pathname === "/api/admin/payment-methods") {
       const body = await readBody(request, 50_000);
       const number = validatePaymentNumber(body.fullNumber, body.type);

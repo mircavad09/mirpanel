@@ -34,6 +34,9 @@ try {
     assert.equal(audit.tabs.length, 4);
     assert.equal(audit.pendingCards, 2);
     assert.equal(audit.noteFields, 0);
+    await page.click('.navBtn[data-view="paymentCosts"]');
+    await page.waitForSelector(".paymentCostRow");
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, `${width}px maya bölməsində üfüqi daşma var`);
     await page.close();
   }
 
@@ -72,9 +75,18 @@ try {
   assert.equal(await numberInput.inputValue(), "");
   await numberInput.fill("4098584499374419");
   assert.equal(await numberInput.inputValue(), "4098 5844 9937 4419");
+  await page.click('.navBtn[data-view="paymentCosts"]');
+  await page.waitForSelector(".paymentCostRow");
+  const missingCost = page.locator('[data-payment-cost-key="netflix:0"] [data-payment-cost-input]');
+  await missingCost.fill("4,25");
+  assert.equal(await page.locator("#paymentCostsSaveAll").isDisabled(), false);
+  assert.match(await page.textContent('[data-payment-cost-key="netflix:0"] [data-cost-profit]'), /3\.74/);
+  await page.click("#paymentCostsSaveAll");
+  await page.waitForFunction(() => document.getElementById("paymentCostsStatus")?.textContent.includes("Bütün dəyişikliklər"));
+  assert.equal(await missingCost.inputValue(), "4.25");
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
   await page.close();
-  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: 4, pagination: "20 + 7 after isolated approval", approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, consoleErrors: 0 }, null, 2));
+  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: 4, pagination: "20 + 7 after isolated approval", approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, profitEditor: true, consoleErrors: 0 }, null, 2));
 } finally {
   await browser.close();
   fixture.kill();
