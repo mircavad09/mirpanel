@@ -3,25 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Netflix ümumi hesab almaq | Mirpanel</title>
-  <meta name="description" content="Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.">
+  <title>Netflix şəxsi (Yeniləmək) | Mirpanel</title>
+  <meta name="description" content="Netflix şəxsi (Yeniləmək) üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.">
   <meta name="robots" content="index, follow">
-  <link rel="canonical" href="https://mirpanel.com/mehsul/netflix-umumi">
+  <link rel="canonical" href="https://mirpanel.com/mehsul/netflix-sexsi-yenilemek">
   <meta property="og:type" content="product">
-  <meta property="og:title" content="Netflix Ümumi">
-  <meta property="og:description" content="Ümumi hesab (paylaşılan).">
-  <meta property="og:image" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
-  <meta property="og:image:secure_url" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
+  <meta property="og:title" content="Netflix şəxsi (Yeniləmək)">
+  <meta property="og:description" content="Netflix şəxsi (Yeniləmək) üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.">
+  <meta property="og:image" content="https://mirpanel.com/assets/your.png?social=uxnwyj">
+  <meta property="og:image:secure_url" content="https://mirpanel.com/assets/your.png?social=uxnwyj">
   <meta property="og:image:type" content="image/png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
-  <meta property="og:image:alt" content="Netflix Ümumi">
-  <meta property="og:url" content="https://mirpanel.com/mehsul/netflix-umumi">
+  <meta property="og:image:alt" content="Netflix şəxsi (Yeniləmək)">
+  <meta property="og:url" content="https://mirpanel.com/mehsul/netflix-sexsi-yenilemek">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Netflix Ümumi">
-  <meta name="twitter:description" content="Ümumi hesab (paylaşılan).">
-  <meta name="twitter:image" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
-  <meta name="twitter:image:alt" content="Netflix Ümumi">
+  <meta name="twitter:title" content="Netflix şəxsi (Yeniləmək)">
+  <meta name="twitter:description" content="Netflix şəxsi (Yeniləmək) üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.">
+  <meta name="twitter:image" content="https://mirpanel.com/assets/your.png?social=uxnwyj">
+  <meta name="twitter:image:alt" content="Netflix şəxsi (Yeniləmək)">
   <meta name="theme-color" content="#070707">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -34,9 +34,9 @@
   <link rel="stylesheet" href="/payment-flow.css?v=payment-compact-cancel-20260808-1">
   <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/netflix-umumi#product","url":"https://mirpanel.com/mehsul/netflix-umumi","name":"Netflix Ümumi","description":"Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.","image":["https://mirpanel.com/assets/netflix.png"],"sku":"netflix_umumi","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-umumi","price":"3.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/netflix-umumi#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Netflix Ümumi","item":"https://mirpanel.com/mehsul/netflix-umumi"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/netflix-sexsi-yenilemek#product","url":"https://mirpanel.com/mehsul/netflix-sexsi-yenilemek","name":"Netflix şəxsi (Yeniləmək)","description":"Netflix şəxsi (Yeniləmək) üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.","image":["https://mirpanel.com/assets/netflix.png"],"sku":"netflix_sexsi","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-sexsi-yenilemek","price":"5.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-sexsi-yenilemek","price":"11.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-sexsi-yenilemek","price":"16.50","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-sexsi-yenilemek","price":"29.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/netflix-sexsi-yenilemek#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Netflix şəxsi (Yeniləmək)","item":"https://mirpanel.com/mehsul/netflix-sexsi-yenilemek"}]}]}</script>
 </head>
-<body class="product-page-document" data-product-id="netflix_umumi" data-product-slug="netflix-umumi">
+<body class="product-page-document" data-product-id="netflix_sexsi" data-product-slug="netflix-sexsi-yenilemek">
   <header class="product-page-header site-header" id="mainHeader">
     <div class="product-page-header-inner site-header-inner">
       <a class="product-page-brand site-header-brand" href="/" aria-label="Mirpanel ana səhifə">
@@ -75,7 +75,7 @@
     <nav class="product-page-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Ana səhifə</a><span aria-hidden="true">›</span>
       <a href="/mehsul">Məhsullar</a><span aria-hidden="true">›</span>
-      <span aria-current="page">Netflix Ümumi</span>
+      <span aria-current="page">Netflix şəxsi (Yeniləmək)</span>
     </nav>
     <div class="product-page-layout">
       <article class="product-page-card">
@@ -83,23 +83,23 @@
           <div class="product-page-media">
             <img class="product-page-media-backdrop" src="/assets/netflix.png" alt="" aria-hidden="true" decoding="async">
             <span class="product-page-availability-badge">Mövcuddur</span>
-            <img id="pp-main-img" src="/assets/netflix.png" alt="Netflix Ümumi" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img id="pp-main-img" src="/assets/netflix.png" alt="Netflix şəxsi (Yeniləmək)" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
             <div class="product-page-eyebrow">
-              <span class="product-page-variant">Premium</span>
+              <span class="product-page-variant">Yeniləmək</span>
               <span class="product-page-category">film</span>
               <span class="product-page-status">Mövcuddur</span>
             </div>
-            <h1 id="pp-main-title" class="product-page-title">Netflix ümumi hesab</h1>
-            <p class="product-page-description">Ümumi hesab (paylaşılan).</p>
+            <h1 id="pp-main-title" class="product-page-title">Netflix şəxsi (Yeniləmək)</h1>
+
             <div class="product-page-delivery">
               <strong>7/24 anında təqdim edilir</strong>
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><strong>3.99 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><strong>5.99 ₼</strong></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>2 aylıq</span><span class="product-page-plan-prices"><strong>11.99 ₼</strong></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>3 aylıq</span><span class="product-page-plan-prices"><strong>16.50 ₼</strong></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 aylıq</span><span class="product-page-plan-prices"><strong>29.99 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -117,6 +117,11 @@
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/netflix-umumi" aria-label="Netflix Ümumi — 3.99 ₼" title="Netflix Ümumi">
+      <img src="/assets/netflix.png" class="product-page-similar-image" alt="Netflix Ümumi" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Netflix Ümumi">Netflix Ümumi</div>
+      <div class="product-page-similar-category">film</div>
+      <div class="product-page-similar-price">3.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 3.99 ₼" title="Amazon Prime Video">
       <img src="/assets/prime.png" class="product-page-similar-image" alt="Amazon Prime Video" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
@@ -125,11 +130,6 @@
     </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 5.99 ₼" title="HBO Max">
       <img src="/uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083" class="product-page-similar-image" alt="HBO Max" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
-      <div class="product-page-similar-category">film</div>
-      <div class="product-page-similar-price">5.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi-yenilemek" aria-label="Netflix şəxsi (Yeniləmək) — 5.99 ₼" title="Netflix şəxsi (Yeniləmək)">
-      <img src="/assets/netflix.png" class="product-page-similar-image" alt="Netflix şəxsi (Yeniləmək)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Netflix şəxsi (Yeniləmək)">Netflix şəxsi (Yeniləmək)</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  AYLIQ) — 16.99 ₼" title="Google AI Pro + VEO 3 (18  AYLIQ)">
@@ -173,36 +173,22 @@
         <button id="product-tab-rules" class="product-page-tab" type="button" role="tab" aria-selected="false" aria-controls="product-panel-rules" tabindex="-1" data-product-tab="rules">İstifadə qaydaları</button>
       </div>
       <div class="product-page-content-card">
-        <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about"><h2>Netflix Ümumi Məhsul haqqında</h2><h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>
-<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>
+        <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about">
+          <h2>Netflix şəxsi (Yeniləmək) haqqında</h2>
 
-<h3>Məhsul Haqqında</h3>
-<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>
-
-<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>
-<ul>
-  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>
-  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>
-  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>
-  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>
-</ul>
-
-<h3>Netflix Premium-un Üstünlükləri</h3>
-<ul>
-  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>
-  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>
-  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>
-  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>
-  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>
-</ul></article>
-        <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden><h2>İstifadə qaydaları</h2>Hazır hesab verilir. Sifarişi təsdiqləyin.</article>
+          <p>Netflix şəxsi (Yeniləmək) üçün mövcud planları və qiymətləri bu səhifədə görə bilərsiniz.</p>
+        </article>
+        <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden>
+          <h2>İstifadə qaydaları</h2>
+          <p>Nəzərinizə çatdırırıq ki, sizə göndərilən Netflix hesabının abunəlik müddəti (növbəti ödəniş tarixi) artıq keçibsə, həmin hesabı mövcud paketlə yeniləmək təəssüf ki, mümkün deyil. Xidmətdən istifadəyə davam etmək üçün *yeni şəxsi otaq (profil) sifariş etməyiniz xahiş olunur*.</p>
+        </article>
       </div>
     </section>
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>Netflix Ümumi üçün hansı planlar mövcuddur?</summary><p>1 aylıq plan — 3.99 ₼</p></details>
-    <details><summary>Netflix Ümumi sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
+    <details><summary>Netflix şəxsi (Yeniləmək) üçün hansı planlar mövcuddur?</summary><p>1 aylıq plan — 5.99 ₼, 2 aylıq plan — 11.99 ₼, 3 aylıq plan — 16.50 ₼, 6 aylıq plan — 29.99 ₼</p></details>
+    <details><summary>Netflix şəxsi (Yeniləmək) sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>
 
@@ -218,10 +204,10 @@
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">
       <button class="close" id="closeModal" type="button">Bağla ✕</button>
       <div class="mTop">
-        <img src="/assets/netflix.png" alt="Netflix Ümumi" id="mImg" class="mImg">
+        <img src="/assets/netflix.png" alt="Netflix şəxsi (Yeniləmək)" id="mImg" class="mImg">
         <div class="mTxt">
-          <div class="mTitle" id="mTitle">Netflix Ümumi</div>
-          <div class="mDesc" id="mDesc">Ümumi hesab (paylaşılan).</div>
+          <div class="mTitle" id="mTitle">Netflix şəxsi (Yeniləmək)</div>
+          <div class="mDesc" id="mDesc"></div>
         </div>
       </div>
       <div id="mInfoBox" class="mInfoBox"></div>

@@ -1882,9 +1882,196 @@ const DATA = {
       }
     },
     {
+      "id": "chatgpt_ortaq",
+      "_stableId": "chatgpt_ortaq",
+      "order": 19,
+      "category": "all",
+      "image": "assets/chatgpt.png",
+      "currency": "₼",
+      "title": "ChatGPT Plus (Ortaq hesab)",
+      "variant": "",
+      "badge": "Premium",
+      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
+      "desc": "",
+      "note": "",
+      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "chatgpt-plus-ortaq-hesab",
+      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
+      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
+      "seoH1": "ChatGPT Plus ortaq hesab almaq",
+      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
+      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/chatgpt.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/chatgpt.png",
+        "mobileImage": "",
+        "title": "ChatGPT Plus (Ortaq hesab)",
+        "description": "",
+        "alt": "ChatGPT Plus (Ortaq hesab)",
+        "order": 20
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 ayliq",
+          "months": 1,
+          "price": 8.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "netflix_sexsi",
+      "_stableId": "netflix_sexsi",
+      "order": 20,
+      "category": "film",
+      "image": "assets/netflix.png",
+      "currency": "₼",
+      "title": "Netflix şəxsi (Yeniləmək)",
+      "variant": "Yeniləmək",
+      "badge": "Premium",
+      "imageAlt": "Netflix şəxsi (Yeniləmək)",
+      "desc": "",
+      "note": "",
+      "longDescription": "",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "netflix-sexsi-yenilemek",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoH1": "Netflix şəxsi (Yeniləmək)",
+      "seoPrimaryKeyword": "Netflix şəxsi (Yeniləmək) almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/your.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/your.png",
+        "mobileImage": "",
+        "title": "Netflix şəxsi (Yeniləmək)",
+        "description": "",
+        "alt": "Netflix şəxsi (Yeniləmək)",
+        "order": 31
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Diqqət!",
+        "description": "Nəzərinizə çatdırırıq ki, sizə göndərilən Netflix hesabının abunəlik müddəti (növbəti ödəniş tarixi) artıq keçibsə, həmin hesabı mövcud paketlə yeniləmək təəssüf ki, mümkün deyil. Xidmətdən istifadəyə davam etmək üçün *yeni şəxsi otaq (profil) sifariş etməyiniz xahiş olunur*.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": true,
+          "label": "👉Yeni netflix şəxsi otaq almaq 👈",
+          "url": "https://mirpanel.com/mehsul/netflix-sexsi"
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 5.99
+        },
+        {
+          "months": 2,
+          "price": 11.99
+        },
+        {
+          "months": 3,
+          "price": 16.5
+        },
+        {
+          "months": 6,
+          "price": 29.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Diqqət!",
+        "description": "Nəzərinizə çatdırırıq ki, sizə göndərilən Netflix hesabının abunəlik müddəti (növbəti ödəniş tarixi) artıq keçibsə, həmin hesabı mövcud paketlə yeniləmək təəssüf ki, mümkün deyil. Xidmətdən istifadəyə davam etmək üçün *yeni şəxsi otaq (profil) sifariş etməyiniz xahiş olunur*.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": true,
+          "label": "👉Yeni netflix şəxsi otaq almaq 👈",
+          "url": "https://mirpanel.com/mehsul/netflix-sexsi"
+        }
+      }
+    },
+    {
       "id": "chatgpt",
       "_stableId": "chatgpt",
-      "order": 19,
+      "order": 21,
       "category": "ai",
       "image": "assets/chatgpt.png",
       "currency": "₼",
@@ -1983,97 +2170,9 @@ const DATA = {
       }
     },
     {
-      "id": "chatgpt_ortaq",
-      "_stableId": "chatgpt_ortaq",
-      "order": 20,
-      "category": "all",
-      "image": "assets/chatgpt.png",
-      "currency": "₼",
-      "title": "ChatGPT Plus (Ortaq hesab)",
-      "variant": "",
-      "badge": "Premium",
-      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
-      "desc": "",
-      "note": "",
-      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "chatgpt-plus-ortaq-hesab",
-      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
-      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
-      "seoH1": "ChatGPT Plus ortaq hesab almaq",
-      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
-      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/chatgpt.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/chatgpt.png",
-        "mobileImage": "",
-        "title": "ChatGPT Plus (Ortaq hesab)",
-        "description": "",
-        "alt": "ChatGPT Plus (Ortaq hesab)",
-        "order": 20
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": false,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 ayliq",
-          "months": 1,
-          "price": 8.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
       "id": "adobecc",
       "_stableId": "adobecc",
-      "order": 21,
+      "order": 22,
       "category": "dizayn",
       "image": "assets/adobe.png",
       "currency": "₼",
@@ -2164,7 +2263,7 @@ const DATA = {
     {
       "id": "linkedin_career",
       "_stableId": "linkedin_career",
-      "order": 22,
+      "order": 23,
       "category": "meeting",
       "image": "assets/linkedin.png",
       "currency": "₼",
@@ -2251,7 +2350,7 @@ const DATA = {
     {
       "id": "elevenlabs_creator",
       "_stableId": "elevenlabs_creator",
-      "order": 23,
+      "order": 24,
       "category": "ai",
       "image": "assets/elevenlabs.png",
       "currency": "₼",
@@ -2338,7 +2437,7 @@ const DATA = {
     {
       "id": "semrush_premium",
       "_stableId": "semrush_premium",
-      "order": 24,
+      "order": 25,
       "category": "meeting",
       "image": "assets/semrush.png",
       "currency": "₼",
@@ -2425,7 +2524,7 @@ const DATA = {
     {
       "id": "adobe_express",
       "_stableId": "adobe_express",
-      "order": 25,
+      "order": 26,
       "category": "dizayn",
       "image": "assets/adobe-express.png",
       "currency": "₼",
@@ -2512,7 +2611,7 @@ const DATA = {
     {
       "id": "notion_plus",
       "_stableId": "notion_plus",
-      "order": 26,
+      "order": 27,
       "category": "meeting",
       "image": "assets/notion.png",
       "currency": "₼",
@@ -2599,7 +2698,7 @@ const DATA = {
     {
       "id": "picsart_premium",
       "_stableId": "picsart_premium",
-      "order": 27,
+      "order": 28,
       "category": "dizayn",
       "image": "assets/picsart.png",
       "currency": "₼",
@@ -2686,7 +2785,7 @@ const DATA = {
     {
       "id": "blink_starter",
       "_stableId": "blink_starter",
-      "order": 28,
+      "order": 29,
       "category": "meeting",
       "image": "assets/blink.png",
       "currency": "₼",
@@ -2773,7 +2872,7 @@ const DATA = {
     {
       "id": "lightroom_photo",
       "_stableId": "lightroom_photo",
-      "order": 29,
+      "order": 30,
       "category": "dizayn",
       "image": "assets/lightroom.png",
       "currency": "₼",
@@ -2860,7 +2959,7 @@ const DATA = {
     {
       "id": "gemini_ai_pro",
       "_stableId": "gemini_ai_pro",
-      "order": 30,
+      "order": 31,
       "category": "ai",
       "image": "assets/gemini.png",
       "currency": "₼",
