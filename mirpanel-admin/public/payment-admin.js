@@ -1,11 +1,11 @@
 (() => {
   "use strict";
 
-  const emptyQuery = () => ({ tab: "pending", period: "", search: "", productId: "", planName: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1 });
+  const emptyQuery = () => ({ tab: "pending", period: "all", search: "", productId: "", planName: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1 });
   const paymentState = {
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), orderQuery: emptyQuery(),
-    costs: [], costDirty: new Set(), costSaving: false,
+    costs: [], costDirty: new Set(), costSaving: false, costBackfillPreview: null, costBackfillBusy: false,
     orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] } }
   };
   const $p = (id) => document.getElementById(id);
@@ -157,12 +157,32 @@
     const stats = paymentState.orderMeta.statistics || {};
     if (paymentState.orderQuery.tab === "pending") { host.innerHTML = ""; return; }
     const productSummary = (stats.products || []).map((item) => `<tr><td>${escp(item.title)}</td><td>${Number(item.count)}</td><td>${money(item.revenue || 0)}</td><td>${money(item.cost || 0)}</td><td class="${Number(item.profit || 0) < 0 ? "bad" : ""}">${money(item.profit || 0)}</td><td>${item.margin === null || item.margin === undefined ? "—" : `${Number(item.margin).toFixed(2)}%`}</td><td>${Number(item.missingCostCount || 0)}</td></tr>`).join("");
-    host.innerHTML = `<div><small>Tamamlanmış sifariş</small><strong>${Number(stats.count || 0)}</strong></div><div><small>Ümumi satış</small><strong>${money(stats.revenue || 0)}</strong></div><div><small>Ümumi maya</small><strong>${money(stats.cost || 0)}</strong></div><div><small>Xalis mənfəət</small><strong class="${Number(stats.profit || 0) < 0 ? "bad" : ""}">${money(stats.profit || 0)}</strong></div><div><small>Mənfəət faizi</small><strong>${stats.profitMargin === null || stats.profitMargin === undefined ? "—" : `${Number(stats.profitMargin).toFixed(2)}%`}</strong></div><div><small>Maya dəyəri çatışmayan</small><strong>${Number(stats.missingCostCount || 0)}</strong></div><div><small>Ən çox mənfəət gətirən</small><strong>${escp(stats.topProfitProduct || "—")}</strong></div>${Number(stats.missingCostCount || 0) ? `<p class="warningBox paymentProfitWarning">Bəzi sifarişlərin maya dəyəri qeyd edilməyib: ${Number(stats.missingCostCount)} sifariş mənfəət hesabına daxil edilmədi.</p>` : ""}${productSummary ? `<div class="paymentProductProfitTable"><table><thead><tr><th>Məhsul</th><th>Satış</th><th>Ümumi satış</th><th>Ümumi maya</th><th>Xalis mənfəət</th><th>Faiz</th><th>Çatışmır</th></tr></thead><tbody>${productSummary}</tbody></table></div>` : ""}`;
+    const planSummary = (stats.plans || []).map((item) => `<tr><td>${escp(item.productTitle)}</td><td>${escp(item.planName)}</td><td>${Number(item.count)}</td><td>${money(item.revenue || 0)}</td><td>${money(item.cost || 0)}</td><td class="${Number(item.profit || 0) < 0 ? "bad" : ""}">${money(item.profit || 0)}</td><td>${Number(item.missingCostCount || 0)}</td></tr>`).join("");
+    host.innerHTML = `<div><small>Tamamlanmış sifariş</small><strong>${Number(stats.count || 0)}</strong></div><div><small>Ümumi satış</small><strong>${money(stats.revenue || 0)}</strong></div><div><small>Ümumi maya</small><strong>${money(stats.cost || 0)}</strong></div><div><small>Xalis qazanc</small><strong class="${Number(stats.profit || 0) < 0 ? "bad" : ""}">${money(stats.profit || 0)}</strong></div><div><small>Mənfəət faizi</small><strong>${stats.profitMargin === null || stats.profitMargin === undefined ? "—" : `${Number(stats.profitMargin).toFixed(2)}%`}</strong></div><div><small>Maya məlumatı çatışmayan</small><strong>${Number(stats.missingCostCount || 0)}</strong></div><div><small>Ən çox satılan məhsul</small><strong>${escp(stats.topProduct || "—")}</strong></div>${Number(stats.missingCostCount || 0) ? `<p class="warningBox paymentProfitWarning">${Number(stats.missingCostCount)} sifarişdə maya snapshot-u yoxdur və həmin sifarişlərə saxta 0 maya yazılmayıb.</p>` : ""}${productSummary ? `<details class="paymentReportTable" open><summary>Məhsullar üzrə hesabat</summary><div class="paymentProductProfitTable"><table><thead><tr><th>Məhsul</th><th>Satış</th><th>Ümumi satış</th><th>Ümumi maya</th><th>Xalis qazanc</th><th>Faiz</th><th>Çatışmır</th></tr></thead><tbody>${productSummary}</tbody></table></div></details>` : ""}${planSummary ? `<details class="paymentReportTable"><summary>Planlar üzrə hesabat</summary><div class="paymentProductProfitTable"><table><thead><tr><th>Məhsul</th><th>Plan</th><th>Satış</th><th>Ümumi satış</th><th>Ümumi maya</th><th>Xalis qazanc</th><th>Çatışmır</th></tr></thead><tbody>${planSummary}</tbody></table></div></details>` : ""}`;
+  }
+
+  function bakuOrderDay(value) {
+    return value ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)) : "";
+  }
+
+  function completedOrderGroups() {
+    const statsByDay = new Map((paymentState.orderMeta.statistics?.days || []).map((item) => [String(item.date), item]));
+    const groups = new Map();
+    for (const order of paymentState.orders) {
+      const day = bakuOrderDay(order.completedAt);
+      if (!groups.has(day)) groups.set(day, []);
+      groups.get(day).push(order);
+    }
+    return [...groups].map(([day, orders]) => {
+      const stat = statsByDay.get(day) || {};
+      const label = day ? new Date(`${day}T00:00:00+04:00`).toLocaleDateString("az-AZ", { day: "numeric", month: "long", year: "numeric" }) : "Tarix yoxdur";
+      return `<details class="paymentOrderDay" open><summary><strong>${escp(label)}</strong><span>${Number(stat.count || orders.length)} sifariş · Satış ${money(stat.revenue || 0)} · Maya ${money(stat.cost || 0)} · Xalis qazanc ${money(stat.profit || 0)}</span></summary><div class="paymentOrderDayList">${orders.map(orderCard).join("")}</div></details>`;
+    }).join("");
   }
 
   function renderOrders() {
     const list = $p("paymentOrdersList");
-    if (list) list.innerHTML = paymentState.orders.length ? paymentState.orders.map(orderCard).join("") : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';
+    if (list) list.innerHTML = paymentState.orders.length ? (paymentState.orderQuery.tab === "pending" || paymentState.orderQuery.tab === "expiring" ? paymentState.orders.map(orderCard).join("") : completedOrderGroups()) : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';
     const pagination = paymentState.orderMeta.pagination;
     if ($p("paymentOrdersPageInfo")) $p("paymentOrdersPageInfo").textContent = `Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
     if ($p("paymentOrdersPrevious")) $p("paymentOrdersPrevious").disabled = pagination.page <= 1;
@@ -220,6 +240,38 @@
     const category = $p("paymentCostCategory"); if (category) category.innerHTML = '<option value="">Bütün kateqoriyalar</option>' + (result.categories || []).map((item) => `<option value="${escp(item)}">${escp(item)}</option>`).join("");
     renderCosts();
   }
+  function renderCostBackfill() {
+    const host = $p("paymentCostBackfillResult"); const apply = $p("paymentCostBackfillApply");
+    if (!host || !apply) return;
+    const preview = paymentState.costBackfillPreview;
+    apply.disabled = paymentState.costBackfillBusy || !preview || Number(preview.matchedCount || 0) === 0;
+    if (paymentState.costBackfillBusy) { host.textContent = "Məlumat yoxlanılır…"; return; }
+    if (!preview) { host.textContent = "Əvvəl preview yaradın. Heç bir sifariş preview və ayrıca təsdiq olmadan dəyişdirilmir."; return; }
+    const unmatched = (preview.items || []).filter((item) => !item.matched);
+    const matchedRows = (preview.items || []).filter((item) => item.matched).map((item) => `<tr><td>${escp(item.orderCode)}</td><td>${escp(item.productTitle)}</td><td>${escp(item.planName)}</td><td>${money(item.sale)}</td><td>${money(item.cost)}</td><td class="${Number(item.profit) < 0 ? "bad" : ""}">${money(item.profit)}</td></tr>`).join("");
+    host.innerHTML = `<div class="paymentBackfillStats"><span>Snapshot çatışmır: <strong>${Number(preview.missingCount || 0)}</strong></span><span>Dəqiq uyğunlaşdı: <strong>${Number(preview.matchedCount || 0)}</strong></span><span>Uyğunlaşmadı: <strong>${Number(preview.unmatchedCount || 0)}</strong></span><span>Ümumi maya: <strong>${money(preview.cost || 0)}</strong></span><span>Xalis qazanc: <strong>${money(preview.profit || 0)}</strong></span></div>${unmatched.length ? `<p class="warningBox">${unmatched.length} sifarişə maya yazılmayacaq: ${unmatched.map((item) => `${escp(item.orderCode)} — ${escp(item.productTitle)} / ${escp(item.planName)}`).join("; ")}</p>` : ""}${matchedRows ? `<div class="paymentProductProfitTable"><table><thead><tr><th>Sifariş</th><th>Məhsul</th><th>Plan</th><th>Satış</th><th>Tətbiq ediləcək maya</th><th>Xalis qazanc</th></tr></thead><tbody>${matchedRows}</tbody></table></div>` : '<div class="emptyState">Tətbiq ediləcək dəqiq uyğunluq yoxdur.</div>'}`;
+  }
+  async function loadCostBackfillPreview() {
+    if (paymentState.costBackfillBusy) return;
+    paymentState.costBackfillBusy = true; renderCostBackfill();
+    try {
+      const result = await paymentApi("/api/admin/payment-cost-backfill-preview");
+      paymentState.costBackfillPreview = result.preview || null;
+    } finally { paymentState.costBackfillBusy = false; renderCostBackfill(); }
+  }
+  async function applyCostBackfill() {
+    const preview = paymentState.costBackfillPreview;
+    if (!preview || paymentState.costBackfillBusy || Number(preview.matchedCount || 0) === 0) return;
+    const confirmed = await paymentActionDialog({ title: "Maya snapshot-larını yaz", message: `${Number(preview.matchedCount)} sifariş dəqiq məhsul və plan ID-si ilə uyğunlaşdırılıb. Preview dəyişməyibsə atomik tətbiq edilsin?`, confirmText: "Təsdiqlə və tətbiq et" });
+    if (!confirmed) return;
+    paymentState.costBackfillBusy = true; renderCostBackfill();
+    try {
+      const result = await paymentApi("/api/admin/payment-cost-backfill", { method: "POST", body: JSON.stringify({ expectedCount: Number(preview.matchedCount), digest: preview.digest }) });
+      paymentState.costBackfillPreview = result.preview || null;
+      toast(`${Number(result.result?.changed || 0)} sifarişin maya snapshot-u atomik yeniləndi.`);
+      await Promise.all([loadOrders(), loadCosts()]);
+    } finally { paymentState.costBackfillBusy = false; renderCostBackfill(); }
+  }
   async function saveCosts(keys) {
     if (paymentState.costSaving) return;
     const selected = [...new Set(keys)].filter((key) => paymentState.costDirty.has(key));
@@ -234,6 +286,7 @@
     try {
       const result = await paymentApi("/api/admin/payment-costs", { method: "POST", body: JSON.stringify({ items }) });
       paymentState.costs = result.rows || paymentState.costs; selected.forEach((key) => paymentState.costDirty.delete(key));
+      paymentState.costBackfillPreview = null; renderCostBackfill();
       toast(result.idempotent ? "Bu dəyərlər artıq saxlanılıb." : "Maya dəyərləri təhlükəsiz saxlanıldı."); renderCosts();
     } catch (error) { toast(error.message || "Maya dəyərləri saxlanmadı."); renderCosts(); throw error; }
     finally { paymentState.costSaving = false; renderCosts(); }
@@ -375,6 +428,8 @@
         if (event.target.closest("#paymentOrdersRefresh")) await loadOrders();
         if (event.target.closest("#paymentReviewsRefresh")) await loadEmails();
         if (event.target.closest("#paymentCostsSaveAll")) await saveCosts([...paymentState.costDirty]);
+        if (event.target.closest("#paymentCostBackfillPreview")) await loadCostBackfillPreview();
+        if (event.target.closest("#paymentCostBackfillApply")) await applyCostBackfill();
         const costRow = event.target.closest("[data-payment-cost-key]");
         if (costRow && event.target.closest("[data-save-payment-cost]")) await saveCosts([costRow.dataset.paymentCostKey]);
         const tab = event.target.closest("[data-payment-order-tab]");

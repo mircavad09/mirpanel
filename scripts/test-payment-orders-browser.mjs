@@ -53,6 +53,7 @@ try {
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 0);
   await page.click('[data-payment-order-tab="all"]');
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 20);
+  assert.ok(await page.locator(".paymentOrderDay").count() >= 1, "Tamamlanmış sifarişlər gün üzrə accordion-da qruplaşmalıdır");
   assert.match(await page.textContent("#paymentOrdersPageInfo"), /1 \/ 2/);
   await page.click("#paymentOrdersNext");
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 7);
@@ -84,9 +85,14 @@ try {
   await page.click("#paymentCostsSaveAll");
   await page.waitForFunction(() => document.getElementById("paymentCostsStatus")?.textContent.includes("Bütün dəyişikliklər"));
   assert.equal(await missingCost.inputValue(), "4.25");
+  await page.click(".paymentBackfillPanel > summary");
+  await page.click("#paymentCostBackfillPreview");
+  await page.waitForFunction(() => document.getElementById("paymentCostBackfillResult")?.textContent.includes("Dəqiq uyğunlaşdı"));
+  assert.match(await page.textContent("#paymentCostBackfillResult"), /Uyğunlaşmadı: 1/);
+  assert.equal(await page.locator("#paymentCostBackfillApply").isDisabled(), false);
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
   await page.close();
-  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: 4, pagination: "20 + 7 after isolated approval", approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, profitEditor: true, consoleErrors: 0 }, null, 2));
+  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: 4, pagination: "20 + 7 after isolated approval", dayGrouping: true, approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, profitEditor: true, backfillPreview: true, consoleErrors: 0 }, null, 2));
 } finally {
   await browser.close();
   fixture.kill();
