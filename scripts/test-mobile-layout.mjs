@@ -31,8 +31,8 @@ function assertPremiumNavigation(html, activeHref) {
   assert.equal(nav.includes('target="_blank"'), false, "Daxili naviqasiya yeni tab açmamalıdır");
 }
 
-assert.equal(state.products.length, 30);
-assert.equal(active.length, 21);
+assert.equal(state.products.length, 31);
+assert.equal(active.length, 22);
 assert.match(style, /\.side-menu-links li a svg\s*\{[\s\S]*?width:\s*22px;[\s\S]*?height:\s*22px;/);
 assert.match(style, /\.side-menu\s*\{[\s\S]*?height:\s*100dvh;[\s\S]*?overflow-y:\s*auto;/);
 assert.match(app, /event\.key === "Escape"/);

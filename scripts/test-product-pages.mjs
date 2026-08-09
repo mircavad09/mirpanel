@@ -49,7 +49,7 @@ const legacyById = {
 
 assert.equal(appSource.includes(`tokens ${"truncated"}`), false);
 assert.equal(appSource.includes(`${408}${77}`), false);
-assert.equal(active.length, 21);
+assert.equal(active.length, 22);
 assert.equal(pages.size, active.length);
 assert.ok(cmsAdminSource.includes("Sosial paylaşım şəkli"), "Admin sosial paylaşım şəkli sahəsi yoxdur");
 assert.ok(listingHtml.includes('rel="canonical" href="https://mirpanel.com/mehsul"'));
@@ -162,7 +162,8 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
   assert.ok(html.includes(`/product-page.css?v=20260724-mobile-pricing-1`), `${filePath}: scoped CSS`);
   assert.ok(html.includes(`/app.js?v=product-pages-20260724-refine-1`), `${filePath}: product data cache version`);
-  assert.ok(html.includes(`/order-confirmation.js?v=mandatory-consent-20260802-1`), `${filePath}: shared confirmation component`);
+  assert.ok(html.includes(`/order-confirmation.js?v=unified-payment-flow-20260810-1`), `${filePath}: shared confirmation component`);
+  assert.ok(!html.includes("hbo-max-order-fix.js"), `${filePath}: legacy product-specific order handler must not override the shared flow`);
   assert.ok(html.includes(`property="og:url" content="${canonical}"`), `${filePath}: Open Graph`);
   const expectedSocialTitle = String(product.seoOgTitle || product.title || "").trim();
   const expectedSocialDescription = String(product.seoOgDescription || product.desc || expectedDescription).trim();

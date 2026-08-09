@@ -135,7 +135,8 @@ assert.ok(server.includes('Supabase server key format:'));
 assert.equal(server.includes("config.supabaseSecretKey.slice"), false);
 assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
-assert.ok(index.includes("payment-capacity-20260809-1"));
+assert.ok(index.includes("order-confirmation.js?v=unified-payment-flow-20260810-1"));
+assert.equal(index.includes("hbo-max-order-fix.js"), false, "Ana səhifədə legacy məhsul handler-i qalmamalıdır");
 assert.equal(api.includes("pendingReservations: method.pendingReservations"), false, "Rezerv sayı public API-yə çıxmamalıdır");
 assert.equal(api.includes("remaining: method.remaining"), false, "Qalan limit public API-yə çıxmamalıdır");
 assert.ok(api.includes("checkoutKey"));
@@ -202,7 +203,8 @@ for (const page of productPages) {
   const html = read(path.join("mehsul", page));
   assert.ok(html.includes("payment-flow.css?v="), `${page}: payment CSS bağlantısı yoxdur`);
   assert.ok(html.includes("payment-flow.js?v="), `${page}: payment JS bağlantısı yoxdur`);
-  assert.ok(html.includes("order-confirmation.js?v=payment-whatsapp-20260808-3"), `${page}: confirmation cache versiyası köhnədir`);
+  assert.ok(html.includes("order-confirmation.js?v=unified-payment-flow-20260810-1"), `${page}: confirmation cache versiyası köhnədir`);
+  assert.equal(html.includes("hbo-max-order-fix.js"), false, `${page}: legacy məhsul handler-i vahid axını kəsməməlidir`);
 }
 assert.ok(read("mirpanel-admin/product-pages.mjs").includes("payment-capacity-20260809-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
 

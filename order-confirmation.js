@@ -965,10 +965,12 @@
     return token.includes("hbomax") || token.includes("hbo max") || token.includes("hbo");
   }
 
-  function isFourDigitCodeField(field) {
+  function codeLengthForField(field) {
     const key = String(field?.key || "").toLowerCase();
     const label = String(field?.label || "").toLowerCase();
-    return key === "code_4" || key === "room_code" || key === "pin" || label.includes("4 rəqəm");
+    if (key === "code_4" || key === "room_code" || key === "pin" || label.includes("4 rəqəm")) return 4;
+    if (key === "code_5" || label.includes("5 rəqəm")) return 5;
+    return 0;
   }
 
   function toastMessage(text, type = "bad") {
@@ -1008,6 +1010,7 @@
 
   function stockIsAvailable(product) {
     if (product.active === false || product.soldOut === true || product.flow === "out_of_stock") return false;
+    if (!(product?.plans || []).some((plan) => Number(plan.price) > 0)) return false;
     const stock = stockNumber(product);
     if (stock !== null) return stock > 0;
     return true;
@@ -1309,19 +1312,20 @@
         <div class="premiumOrderFields">
           ${fields.map((field) => {
             const inputType = field.type || "text";
-            const fourDigitCode = isHbo && isFourDigitCodeField(field);
+            const codeLength = codeLengthForField(field);
+            const fourDigitCode = isHbo && codeLength === 4;
             const isNameField = isHbo && String(field.key || "").toLowerCase() === "name";
             const label = fourDigitCode ? "Profil kodu / PIN" : (isNameField ? "HBO Max profil adı" : (field.label || field.key));
             const placeholder = fourDigitCode ? "Profil kodu / PIN yazın" : (isNameField ? "HBO Max profil adınızı yazın" : (field.placeholder || ""));
             const common = `
               name="${escapeHtml(field.key)}"
               data-label="${escapeHtml(label)}"
-              ${fourDigitCode ? "data-code-length=\"4\"" : ""}
+              ${codeLength ? `data-code-length="${codeLength}"` : ""}
               placeholder="${escapeHtml(placeholder)}"
               autocomplete="${inputType === "password" ? "current-password" : "off"}"
               ${field.minLength ? `minlength="${Number(field.minLength)}"` : ""}
               ${field.maxLength ? `maxlength="${Number(field.maxLength)}"` : ""}
-              ${fourDigitCode ? "inputmode=\"numeric\" maxlength=\"4\" pattern=\"\\d{4}\"" : ""}
+              ${codeLength ? `inputmode="numeric" maxlength="${codeLength}" pattern="\\d{${codeLength}}"` : ""}
               ${field.required ? "required" : ""}
             `;
 
@@ -1334,7 +1338,7 @@
               return `<label class="universalField premiumUniversalField"><span>${escapeHtml(label)}</span><select ${common}><option value="">${escapeHtml(placeholder || "Seçin")}</option>${options.map((option) => `<option value="${escapeHtml(option)}">${escapeHtml(option)}</option>`).join("")}</select></label>`;
             }
 
-            return `<label class="universalField premiumUniversalField"><span>${escapeHtml(label)}</span><input type="${fourDigitCode ? "text" : escapeHtml(inputType)}" ${common}></label>`;
+            return `<label class="universalField premiumUniversalField"><span>${escapeHtml(label)}</span><input type="${codeLength ? "text" : escapeHtml(inputType)}" ${common}></label>`;
           }).join("")}
         </div>
         <div class="orderConfirmationActions premiumOrderActions">
@@ -1345,9 +1349,10 @@
     `);
 
     document.getElementById("universalFormCancel").onclick = closeOrderModal;
-    document.querySelectorAll("#universalOrderForm [data-code-length='4']").forEach((input) => {
+    document.querySelectorAll("#universalOrderForm [data-code-length]").forEach((input) => {
       input.addEventListener("input", () => {
-        input.value = input.value.replace(/\D/g, "").slice(0, 4);
+        const codeLength = Number(input.dataset.codeLength) || 0;
+        input.value = input.value.replace(/\D/g, "").slice(0, codeLength);
       });
     });
     document.getElementById("universalOrderForm").onsubmit = (event) => {
@@ -1361,9 +1366,10 @@
           control.focus();
           return;
         }
-        if (control.dataset.codeLength === "4" && !/^\d{4}$/.test(value)) {
+        const codeLength = Number(control.dataset.codeLength) || 0;
+        if (codeLength && !new RegExp(`^\\d{${codeLength}}$`).test(value)) {
           control.focus();
-          toastMessage("Sadəcə 4 rəqəm yazmalısınız");
+          toastMessage(`Sadəcə ${codeLength} rəqəm yazmalısınız`);
           return;
         }
         values[control.dataset.label || control.name] = value;

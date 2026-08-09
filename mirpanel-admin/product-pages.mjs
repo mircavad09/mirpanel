@@ -529,9 +529,8 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   </div>
 
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
-  <script src="/hbo-max-order-fix.js?v=mandatory-consent-20260802-1"></script>
   <script src="/payment-flow.js?v=payment-capacity-20260809-1"></script>
-  <script src="/order-confirmation.js?v=payment-whatsapp-20260808-3"></script>
+  <script src="/order-confirmation.js?v=unified-payment-flow-20260810-1"></script>
   <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
   <script src="/site-header.js?v=20260805-shared-header-1"></script>
@@ -1118,6 +1117,7 @@ function renderProductFaq(product) {
 
 function productAvailability(product) {
   const rawStock = product.stock ?? product.stockCount ?? product.stockQuantity;
+  const hasPurchasablePlan = (product.plans || []).some((plan) => Number(plan.price) > 0);
   const exhausted =
     (product.stockEnabled === true &&
       rawStock !== null &&
@@ -1125,7 +1125,8 @@ function productAvailability(product) {
       rawStock !== undefined &&
       Number(rawStock) <= 0) ||
     product.soldOut === true ||
-    product.flow === "out_of_stock";
+    product.flow === "out_of_stock" ||
+    !hasPurchasablePlan;
   return exhausted
     ? { inStock: false, label: "Stokda yoxdur", schema: "https://schema.org/OutOfStock" }
     : { inStock: true, label: "Mövcuddur", schema: "https://schema.org/InStock" };

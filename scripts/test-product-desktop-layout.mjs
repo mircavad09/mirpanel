@@ -19,7 +19,7 @@ const pages = generateProductPageFiles(
   state.content
 );
 
-assert.equal(active.length, 21, "Aktiv məhsul sayı dəyişib");
+assert.equal(active.length, 22, "Aktiv məhsul sayı dəyişib");
 assert.equal(pages.size, active.length, "Bütün aktiv məhsul səhifələri generasiya edilməyib");
 
 for (const { product, slug } of active) {
