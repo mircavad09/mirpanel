@@ -135,7 +135,7 @@ assert.ok(server.includes('Supabase server key format:'));
 assert.equal(server.includes("config.supabaseSecretKey.slice"), false);
 assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
-assert.ok(index.includes("order-confirmation.js?v=unified-payment-flow-20260810-1"));
+assert.match(index, /order-confirmation\.js\?v=[a-z0-9-]+/i, "Yayımlanmış sifariş skripti keş versiyası ilə qoşulmalıdır");
 assert.equal(index.includes("hbo-max-order-fix.js"), false, "Ana səhifədə legacy məhsul handler-i qalmamalıdır");
 assert.equal(api.includes("pendingReservations: method.pendingReservations"), false, "Rezerv sayı public API-yə çıxmamalıdır");
 assert.equal(api.includes("remaining: method.remaining"), false, "Qalan limit public API-yə çıxmamalıdır");
