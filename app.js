@@ -302,7 +302,7 @@ const DATA = {
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "CapCut Pro abunəliyi sizin təqdim edəcəyiniz yeni bir Gmail hesabına rəsmi şəkildə aktivləşdirilir. Təhlükəsizlik qaydalarına əsasən, hesaba eyni anda yalnız 1 cihaz daxil ola bilər; ikinci cihaz qoşulduqda hesab bloklanır. Qaydaların pozulması səbəbindən bloklanma hallarında əvəzləmə və ya geri ödəniş edilmir. Sifarişi tamamlayaraq bu şərtləri rəsmən qəbul edirsiniz.",
+        "description": "Sifarişinizi tamamlamazdan öncə qaydalarla tanış olun:\n\nTəhvil: CapCut Pro bizim tərəfimizdən hazır hesab kimi 30-60 saniyə ərzində təhvil verilir.\n\nQayda: Hesaba eyni anda yalnız 1 cihaz daxil ola bilər. İkinci cihaz qoşulduqda hesab bloklana bilər.\n\nMəsuliyyət: Qayda pozuntusuna görə hesab bloklanarsa, geri ödəniş edilmir və hesab əvəzlənmir.\nSifarişi təsdiqləməklə bu şərtləri tam qəbul etmiş sayılırsınız",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -326,7 +326,7 @@ const DATA = {
       "orderConfirmation": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "CapCut Pro abunəliyi sizin təqdim edəcəyiniz yeni bir Gmail hesabına rəsmi şəkildə aktivləşdirilir. Təhlükəsizlik qaydalarına əsasən, hesaba eyni anda yalnız 1 cihaz daxil ola bilər; ikinci cihaz qoşulduqda hesab bloklanır. Qaydaların pozulması səbəbindən bloklanma hallarında əvəzləmə və ya geri ödəniş edilmir. Sifarişi tamamlayaraq bu şərtləri rəsmən qəbul edirsiniz.",
+        "description": "Sifarişinizi tamamlamazdan öncə qaydalarla tanış olun:\n\nTəhvil: CapCut Pro bizim tərəfimizdən hazır hesab kimi 30-60 saniyə ərzində təhvil verilir.\n\nQayda: Hesaba eyni anda yalnız 1 cihaz daxil ola bilər. İkinci cihaz qoşulduqda hesab bloklana bilər.\n\nMəsuliyyət: Qayda pozuntusuna görə hesab bloklanarsa, geri ödəniş edilmir və hesab əvəzlənmir.\nSifarişi təsdiqləməklə bu şərtləri tam qəbul etmiş sayılırsınız",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
