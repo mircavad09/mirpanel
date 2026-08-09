@@ -1978,7 +1978,7 @@ const DATA = {
       "currency": "₼",
       "title": "Netflix şəxsi (Yeniləmək)",
       "variant": "Yeniləmək",
-      "badge": "Premium",
+      "badge": "film",
       "imageAlt": "Netflix şəxsi (Yeniləmək)",
       "desc": "",
       "note": "",
