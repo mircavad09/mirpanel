@@ -22,16 +22,25 @@
   const dateTime = (value) => value ? new Date(value).toLocaleString("az-AZ", { timeZone: "Asia/Baku" }) : "—";
   const calendarDate = (value) => value ? new Date(`${value}T00:00:00+04:00`).toLocaleDateString("az-AZ") : "Müddət müəyyən edilməyib";
   const formatNumber = (value) => String(value || "").replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim();
+  function resolvedTheme(theme, providerName, type) {
+    if (theme && theme !== "auto") return theme;
+    const provider = String(providerName || "").toLocaleLowerCase("az-AZ");
+    if (provider.includes("leo")) return "leo";
+    if (provider.includes("abb")) return "abb";
+    if (provider.includes("kapital")) return "kapital";
+    if (provider.includes("m10") || type === "wallet") return "m10";
+    return "neutral";
+  }
 
   function methodCard(method) {
     const limit = method.limitMode === "unlimited" ? "Limitsiz" : `Bu gün tamamlanıb: ${method.confirmedToday}/${method.dailyLimit}`;
     const remaining = method.limitMode === "unlimited" ? "Qalan limit: limitsiz" : `Qalan limit: ${method.remaining}`;
     const reset = method.lastResetAt ? dateTime(method.lastResetAt) : "Bu gün sayğac yaradılmayıb";
-    const reason = !method.hasNumber ? "Tam nömrə daxil edilməyib" : method.archived ? "Silinib" : method.available ? "Aktivdir" : method.active ? "Limitdədir" : "Deaktivdir";
+    const reason = !method.hasNumber ? "Tam nömrə daxil edilməyib" : method.available ? "Aktivdir" : method.active ? "Limitdədir" : "Deaktivdir";
     return `<article class="paymentMethodAdminCard${method.available ? " isAvailable" : ""}" data-payment-method-id="${escp(method.id)}">
       <div class="paymentMethodColor" style="--payment-method-color:${escp(method.color)}"></div>
-      <div><strong>${escp(method.displayName)}</strong><span>${escp(method.adminMaskedNumber || method.maskedNumber)} · ${escp(method.providerName)}</span><small>${escp(limit)} · Aktiv rezerv: ${Number(method.pendingReservations)} · ${escp(remaining)}</small><small>Son sıfırlanma: ${escp(reset)} · ${escp(reason)}</small></div>
-      <div class="paymentMethodAdminActions"><span class="statusPill ${method.active && !method.archived ? "ok" : ""}">${method.archived ? "Silinib" : method.active ? "Aktiv" : "Deaktiv"}</span>${method.archived ? "" : `<button class="btn" type="button" data-edit-payment-method="${escp(method.id)}">Redaktə et</button>`}</div>
+      <div><strong>${escp(method.displayName)}</strong><span>${escp(method.adminMaskedNumber || method.maskedNumber)} · ${escp(method.providerName)}</span><small>${escp(limit)} · Aktiv rezerv: ${Number(method.activeReservations)} · Yoxlanılan çek: ${Number(method.reviewingReceipts)}</small><small>Doluluq: ${Number(method.occupiedToday)}${method.limitMode === "limited" ? `/${Number(method.dailyLimit)}` : " · limitsiz"} · ${escp(remaining)}</small><small>Son sıfırlanma: ${escp(reset)} · ${escp(reason)}</small></div>
+      <div class="paymentMethodAdminActions"><span class="statusPill ${method.active ? "ok" : ""}">${method.active ? "Aktiv" : "Deaktiv"}</span><button class="btn" type="button" data-edit-payment-method="${escp(method.id)}">Redaktə et</button></div>
     </article>`;
   }
 
@@ -46,24 +55,31 @@
     const host = $p("paymentMethodEditor");
     if (!host) return;
     const isNew = !method;
-    const value = method || { displayName: "", type: "bank_card", providerName: "", holderName: "", color: "#151515", icon: "card", theme: "auto", active: false, order: paymentState.methods.filter((item) => !item.archived).length + 1, dailyLimit: 5, limitMode: "limited", adminNote: "", maskedNumber: "" };
+    const value = method || { displayName: "", type: "bank_card", providerName: "", holderName: "", color: "#151515", icon: "card", theme: "auto", active: false, order: paymentState.methods.length + 1, dailyLimit: 5, limitMode: "limited", adminNote: "", maskedNumber: "", activeReservations: 0, reviewingReceipts: 0 };
+    const previewTheme = resolvedTheme(value.theme, value.providerName, value.type);
     host.innerHTML = `<form id="paymentMethodForm" class="paymentMethodEditorCard" autocomplete="off">
       <div class="sectionHead"><div><h3>${isNew ? "Yeni ödəniş üsulu" : escp(value.displayName)}</h3><p>${isNew ? "Tam nömrə yalnız şifrələnmiş formada saxlanacaq." : `Hazırkı nömrə: ${escp(value.adminMaskedNumber || value.maskedNumber)}. Dəyişmək üçün yeni tam nömrə daxil edin.`}</p></div><button class="btn" type="button" data-close-payment-editor>Bağla</button></div>
-      <div class="formGrid">
+      <fieldset class="paymentMethodFieldset"><legend>Əsas məlumatlar</legend><div class="formGrid">
         <label>Göstərilən ad<input name="displayName" required maxlength="80" value="${escp(value.displayName)}"></label>
         <label>Növ<select name="type"><option value="bank_card"${value.type === "bank_card" ? " selected" : ""}>Bank kartı</option><option value="wallet"${value.type === "wallet" ? " selected" : ""}>Elektron cüzdan</option></select></label>
         <label>Bank/xidmət adı<input name="providerName" required maxlength="80" value="${escp(value.providerName)}"></label>
         <label>Kart/cüzdan sahibi<input name="holderName" maxlength="120" value="${escp(value.holderName)}"></label>
-        <label>${isNew ? "Tam nömrə" : "Yeni tam nömrə — dəyişmirsə boş saxla"}<input name="fullNumber" type="text" inputmode="numeric" autocomplete="off" ${isNew ? "required" : ""} minlength="7" maxlength="23" placeholder="4098 5844 9937 4419"><small>Nömrəni yadda saxlamazdan əvvəl görə bilərsiniz; saxlandıqdan sonra sahə təmizlənəcək.</small></label>
-        <label>Mövzu<select name="theme"><option value="auto"${value.theme === "auto" ? " selected" : ""}>Avtomatik</option><option value="leo"${value.theme === "leo" ? " selected" : ""}>LeoBank</option><option value="abb"${value.theme === "abb" ? " selected" : ""}>ABB</option><option value="kapital"${value.theme === "kapital" ? " selected" : ""}>Kapital Bank</option><option value="m10"${value.theme === "m10" ? " selected" : ""}>M10</option><option value="neutral"${value.theme === "neutral" ? " selected" : ""}>Neytral</option></select></label>
+        <label>${isNew ? "Tam nömrə" : "Yeni tam nömrə — dəyişmirsə boş saxla"}<input name="fullNumber" type="text" inputmode="numeric" autocomplete="off" ${isNew ? "required" : ""} minlength="7" maxlength="23" placeholder="4098 5844 9937 4419"><small>Nömrə saxlanıldıqdan sonra brauzerə geri qaytarılmır.</small></label>
+      </div></fieldset>
+      <fieldset class="paymentMethodFieldset"><legend>Kartın görünüşü</legend><div class="formGrid">
+        <label>Rəng mövzusu<select name="theme"><option value="auto"${value.theme === "auto" ? " selected" : ""}>Avtomatik</option><option value="leo"${value.theme === "leo" ? " selected" : ""}>LeoBank</option><option value="abb"${value.theme === "abb" ? " selected" : ""}>ABB</option><option value="kapital"${value.theme === "kapital" ? " selected" : ""}>Kapital Bank</option><option value="m10"${value.theme === "m10" ? " selected" : ""}>M10</option><option value="neutral"${value.theme === "neutral" ? " selected" : ""}>Neytral</option></select><small>Avtomatik seçim bank adına görə müştəri kartının rəngini təyin edir.</small></label>
         <label>Rəng<input name="color" type="color" value="${escp(value.color)}"></label>
         <label>İkon<select name="icon"><option value="card"${value.icon === "card" ? " selected" : ""}>Kart</option><option value="bank"${value.icon === "bank" ? " selected" : ""}>Bank</option><option value="wallet"${value.icon === "wallet" ? " selected" : ""}>Cüzdan</option></select></label>
+        <div class="paymentThemePreview theme-${escp(previewTheme)}" data-payment-theme-preview><small>Kart dizaynı</small><strong>${escp(value.providerName || "Bank adı")}</strong><span>${escp(value.maskedNumber || "•••• 0000")}</span></div>
+      </div></fieldset>
+      <fieldset class="paymentMethodFieldset"><legend>Limit və görünmə</legend><div class="formGrid">
         <label>Sıra<input name="order" type="number" min="1" value="${Number(value.order)}"></label>
         <label>Gündəlik limit<input name="dailyLimit" type="number" min="1" max="10000" value="${Number(value.dailyLimit)}"></label>
         <label>Limit rejimi<select name="limitMode"><option value="limited"${value.limitMode === "limited" ? " selected" : ""}>Məhdud</option><option value="unlimited"${value.limitMode === "unlimited" ? " selected" : ""}>Limitsiz</option></select></label>
-        <label class="checkLabel"><input name="active" type="checkbox"${value.active ? " checked" : ""}> Aktivdir</label>
+        <label class="paymentActiveToggle"><input name="active" type="checkbox" role="switch" aria-describedby="paymentActiveHelp"${value.active ? " checked" : ""}><span aria-hidden="true"></span><b data-payment-active-label>${value.active ? "Aktivdir" : "Deaktivdir"}</b></label>
+        <p id="paymentActiveHelp" class="wide paymentFieldHelp">Aktiv kart müştəri seçimində görünür. Aktiv rezerv və ya yoxlanılan çek varsa deaktiv etmə təhlükəsizlik üçün bloklanır.</p>
         <label class="wide">Administrator qeydi<textarea name="adminNote" maxlength="2000">${escp(value.adminNote)}</textarea></label>
-      </div>
+      </div></fieldset>
       <div class="paymentEditorActions"><button class="btn primary" type="submit">Yadda saxla</button>${!isNew ? '<button class="btn" type="button" data-reset-payment-counter>Bugünkü sayğacı sıfırla</button><button class="btn danger" type="button" data-delete-payment-method>Kartı sil</button>' : ""}</div>
     </form>`;
   }
@@ -293,6 +309,13 @@
   function bindEvents() {
     document.addEventListener("input", (event) => {
       if (event.target.matches('#paymentMethodForm input[name="fullNumber"]')) event.target.value = formatNumber(event.target.value);
+      if (event.target.matches('#paymentMethodForm input[name="providerName"]')) {
+        const methodForm = event.target.form;
+        const preview = methodForm.querySelector("[data-payment-theme-preview]");
+        const theme = resolvedTheme(methodForm.elements.theme.value, event.target.value, methodForm.elements.type.value);
+        preview.className = `paymentThemePreview theme-${theme}`;
+        preview.querySelector("strong").textContent = event.target.value || "Bank adı";
+      }
       if (event.target.id === "paymentCostSearch") renderCosts();
       if (event.target.matches("[data-payment-cost-input]")) {
         const host = event.target.closest("[data-payment-cost-key]"); const row = paymentState.costs.find((item) => costKey(item) === host?.dataset.paymentCostKey);
@@ -310,6 +333,21 @@
     document.addEventListener("change", (event) => {
       if (event.target.id === "paymentOrderPeriod") document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", event.target.value === "custom"));
       if (["paymentCostActive", "paymentCostCategory", "paymentCostMissing"].includes(event.target.id)) renderCosts();
+      const methodForm = event.target.closest("#paymentMethodForm");
+      if (methodForm && ["theme", "providerName", "type"].includes(event.target.name)) {
+        const preview = methodForm.querySelector("[data-payment-theme-preview]");
+        const theme = resolvedTheme(methodForm.elements.theme.value, methodForm.elements.providerName.value, methodForm.elements.type.value);
+        preview.className = `paymentThemePreview theme-${theme}`;
+        preview.querySelector("strong").textContent = methodForm.elements.providerName.value || "Bank adı";
+      }
+      if (methodForm && event.target.name === "active") {
+        const method = paymentState.methods.find((item) => item.id === paymentState.selectedMethodId);
+        if (!event.target.checked && method && Number(method.activeReservations) + Number(method.reviewingReceipts) > 0) {
+          event.target.checked = true;
+          toast(`Bu kartda ${Number(method.activeReservations)} aktiv rezerv və ${Number(method.reviewingReceipts)} yoxlanılan çek var. Tamamlanmadan deaktiv edilə bilməz.`);
+        }
+        methodForm.querySelector("[data-payment-active-label]").textContent = event.target.checked ? "Aktivdir" : "Deaktivdir";
+      }
     });
     document.addEventListener("click", async (event) => {
       try {
@@ -320,7 +358,17 @@
         if (viewButton?.dataset.view === "paymentReviews") await loadEmails();
         if (event.target.closest("#paymentMethodAdd")) { paymentState.selectedMethodId = ""; renderMethodEditor(); }
         const edit = event.target.closest("[data-edit-payment-method]");
-        if (edit) { paymentState.selectedMethodId = edit.dataset.editPaymentMethod; renderMethodEditor(paymentState.methods.find((item) => item.id === paymentState.selectedMethodId)); }
+        if (edit) {
+          paymentState.selectedMethodId = edit.dataset.editPaymentMethod;
+          renderMethodEditor(paymentState.methods.find((item) => item.id === paymentState.selectedMethodId));
+          requestAnimationFrame(() => {
+            const editor = $p("paymentMethodEditor");
+            editor?.classList.add("isFocused");
+            editor?.scrollIntoView({ behavior: "smooth", block: "start" });
+            editor?.querySelector('input[name="displayName"]')?.focus({ preventScroll: true });
+            setTimeout(() => editor?.classList.remove("isFocused"), 1600);
+          });
+        }
         if (event.target.closest("[data-close-payment-editor]")) { paymentState.selectedMethodId = ""; $p("paymentMethodEditor").innerHTML = ""; }
         if (event.target.closest("[data-reset-payment-counter]") && paymentState.selectedMethodId && confirm("Bu kartın bugünkü təsdiq sayğacı sıfırlansın?")) { await paymentApi(`/api/admin/payment-methods/${paymentState.selectedMethodId}/reset-counter`, { method: "POST", body: "{}" }); await loadMethods(); }
         if (event.target.closest("[data-delete-payment-method]") && paymentState.selectedMethodId && confirm("Bu kart aktiv ödəniş siyahısından silinsin? Tarixçə qorunacaq.")) { await paymentApi(`/api/admin/payment-methods/${paymentState.selectedMethodId}/delete`, { method: "POST", body: "{}" }); paymentState.selectedMethodId = ""; $p("paymentMethodEditor").innerHTML = ""; await loadMethods(); }

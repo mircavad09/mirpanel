@@ -169,8 +169,9 @@ export function createPaymentSystem(options) {
       await publicRate(request, "cancel", 600, 20);
       const body = await readBody(request, 20_000);
       const reservationId = safeUuid(body.reservationId);
-      if (!reservationId) throw Object.assign(new Error("Rezerv ID-si düzgün deyil."), { status: 400 });
-      const cancellation = await store.cancelReservation(reservationId, `customer:${security.ipHash(clientIp(request)).slice(0, 12)}`);
+      const checkoutKey = safeUuid(body.checkoutKey);
+      if (!reservationId || !checkoutKey) throw Object.assign(new Error("Rezerv və checkout açarı düzgün deyil."), { status: 400 });
+      const cancellation = await store.cancelCustomerReservation(reservationId, checkoutKey, `customer:${security.ipHash(clientIp(request)).slice(0, 12)}`);
       publicJson(request, response, 200, { ok: true, cancellation });
       return true;
     }

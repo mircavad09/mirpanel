@@ -64,6 +64,7 @@ const admin = read("mirpanel-admin/public/payment-admin.js");
 const cms = read("mirpanel-admin/public/cms-admin.js");
 const css = read("mirpanel-admin/public/admin.css");
 const migration = read("supabase/migrations/202608090001_order_history_and_expiry.sql");
+const capacityMigration = read("supabase/migrations/202608090003_payment_method_capacity_and_admin.sql");
 
 assert.ok(store.includes('.select(select, { count: "exact" })'));
 assert.ok(store.includes(".range(from, from + filters.pageSize - 1)"), "Səhifələmə serverdə işləməlidir");
@@ -82,6 +83,16 @@ assert.equal(admin.includes('name="fullNumber" type="password"'), false);
 assert.ok(admin.includes("formatNumber(event.target.value)"));
 assert.ok(admin.includes("data-contacted-payment"));
 assert.ok(admin.includes("data-delete-payment-method"));
+assert.equal(admin.includes(">Mövzu<"), false, "Anlaşılmaz Mövzu adı qalmamalıdır");
+assert.ok(admin.includes("Rəng mövzusu"));
+assert.ok(admin.includes("data-payment-theme-preview"));
+assert.ok(admin.includes("activeReservations"));
+assert.ok(admin.includes("reviewingReceipts"));
+assert.ok(admin.includes("scrollIntoView"));
+assert.ok(store.includes('.is("deleted_at", null)'), "Silinmiş kartlar normal siyahıdan çıxmalıdır");
+assert.ok(store.includes('rpc("update_payment_method_admin"'), "Kart redaktəsi atomik server funksiyasından keçməlidir");
+assert.ok(capacityMigration.includes("PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS"));
+assert.ok(capacityMigration.includes("status = 'reviewing' or (status = 'reserved' and expires_at > now())"));
 assert.ok(css.includes("paymentOrderStatistics"));
 assert.ok(css.includes("@media(max-width:420px)"));
 

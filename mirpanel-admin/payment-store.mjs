@@ -25,7 +25,7 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     "ORDER_ALREADY_APPROVED", "REJECTION_REASON_REQUIRED", "RECEIPT_TOKEN_INVALID",
     "CHECKOUT_KEY_REQUIRED", "ACTIVE_RESERVATION_EXISTS", "RESERVATION_ALREADY_SUBMITTED",
     "RESERVATION_CHECKOUT_MISMATCH", "PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS",
-    "PAYMENT_METHOD_NOT_FOUND", "ORDER_NOT_COMPLETED", "INVALID_PLAN_DURATION",
+    "PAYMENT_METHOD_NOT_FOUND", "PAYMENT_METHOD_NUMBER_REQUIRED", "ORDER_NOT_COMPLETED", "INVALID_PLAN_DURATION",
     "INVALID_COST_BATCH", "INVALID_COST_KEY", "INVALID_COST_AMOUNT"
   ].find((code) => message.includes(code));
   const translated = {
@@ -45,6 +45,7 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     RESERVATION_CHECKOUT_MISMATCH: "Rezerv bu ödəniş sessiyasına aid deyil.",
     PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS: "Bu kartda aktiv rezerv var. Əvvəlcə kartı deaktiv edin və rezervlərin tamamlanmasını gözləyin.",
     PAYMENT_METHOD_NOT_FOUND: "Ödəniş üsulu tapılmadı.",
+    PAYMENT_METHOD_NUMBER_REQUIRED: "Kartı aktivləşdirmək üçün tam nömrəni daxil edin.",
     ORDER_NOT_COMPLETED: "Yalnız tamamlanmış sifariş üçün əlaqə statusu dəyişdirilə bilər.",
     INVALID_PLAN_DURATION: "Planın strukturlaşdırılmış müddəti düzgün deyil.",
     INVALID_COST_BATCH: "Maya dəyəri siyahısı düzgün deyil.",
@@ -79,7 +80,9 @@ function paymentTheme(value, providerName, methodType) {
 
 function rowMethod(row, stats = {}) {
   const confirmed = Number(stats.confirmed || 0);
-  const pending = Number(stats.pending || 0);
+  const activeReservations = Number(stats.activeReservations || 0);
+  const reviewingReceipts = Number(stats.reviewingReceipts || 0);
+  const pending = activeReservations + reviewingReceipts;
   const unlimited = row.limit_mode === "unlimited";
   const remaining = unlimited ? null : Math.max(0, Number(row.daily_limit) - confirmed - pending);
   return {
@@ -104,10 +107,13 @@ function rowMethod(row, stats = {}) {
     dailyLimit: row.daily_limit,
     limitMode: row.limit_mode,
     confirmedToday: confirmed,
+    activeReservations,
+    reviewingReceipts,
+    occupiedToday: confirmed + pending,
     pendingReservations: pending,
     lastResetAt: stats.lastResetAt || null,
     remaining,
-    available: row.active && !row.archived && Boolean(row.encrypted_number) && (unlimited || remaining > 0),
+    available: row.active && !row.archived && !row.deleted_at && Boolean(row.encrypted_number) && (unlimited || remaining > 0),
     hasNumber: Boolean(row.encrypted_number),
     adminNote: row.admin_note,
     updatedAt: row.updated_at
@@ -137,19 +143,21 @@ export function createPaymentStore(config) {
     if (counterError) throw paymentError(counterError);
     if (reservationError) throw paymentError(reservationError);
     const resetAt = `${today}T00:00:00+04:00`;
-    const stats = new Map(methodIds.map((id) => [id, { confirmed: 0, pending: 0, lastResetAt: resetAt }]));
+    const stats = new Map(methodIds.map((id) => [id, { confirmed: 0, activeReservations: 0, reviewingReceipts: 0, lastResetAt: resetAt }]));
     for (const row of counters || []) {
       stats.get(row.method_id).confirmed = Number(row.confirmed_count || 0);
       stats.get(row.method_id).lastResetAt = resetAt;
     }
     for (const row of reservations || []) {
-      if (row.status === "reviewing" || new Date(row.expires_at).getTime() > Date.now()) stats.get(row.method_id).pending += 1;
+      if (row.status === "reviewing") stats.get(row.method_id).reviewingReceipts += 1;
+      else if (new Date(row.expires_at).getTime() > Date.now()) stats.get(row.method_id).activeReservations += 1;
     }
     return stats;
   }
 
-  async function listMethods({ includeArchived = false } = {}) {
+  async function listMethods({ includeArchived = false, includeDeleted = false } = {}) {
     let query = client.from("payment_methods").select("*").order("sort_order", { ascending: true });
+    if (!includeDeleted) query = query.is("deleted_at", null);
     if (!includeArchived) query = query.eq("archived", false);
     const { data, error } = await query;
     if (error) throw paymentError(error);
@@ -158,7 +166,7 @@ export function createPaymentStore(config) {
   }
 
   async function normalizeMethodOrder(movedId, requestedOrder) {
-    const { data, error } = await client.from("payment_methods").select("id,sort_order").eq("archived", false).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
+    const { data, error } = await client.from("payment_methods").select("id,sort_order").eq("archived", false).is("deleted_at", null).order("sort_order", { ascending: true }).order("created_at", { ascending: true });
     if (error) throw paymentError(error);
     const ordered = (data || []).filter((item) => item.id !== movedId);
     const moved = (data || []).find((item) => item.id === movedId);
@@ -248,13 +256,27 @@ export function createPaymentStore(config) {
         patch.last4 = number.slice(-4);
       }
       const current = await this.rawMethod(id);
-      patch.active = Boolean(input.active && (encryptedNumber || current.encrypted_number));
-      patch.deactivated_at = patch.active ? null : (current.deactivated_at || new Date().toISOString());
-      const { data, error } = await client.from("payment_methods").update(patch).eq("id", id).select("*").single();
-      if (error) throw paymentError(error);
-      await normalizeMethodOrder(data.id, patch.sort_order);
-      await audit(actor, "method.updated", "payment_method", data.id, { numberChanged: Boolean(encryptedNumber), active: patch.active });
-      return rowMethod(await this.rawMethod(data.id));
+      const active = Boolean(input.active && (encryptedNumber || current.encrypted_number));
+      const updated = await rpc("update_payment_method_admin", {
+        p_method_id: id,
+        p_display_name: patch.display_name,
+        p_method_type: patch.method_type,
+        p_provider_name: patch.provider_name,
+        p_holder_name: patch.holder_name,
+        p_encrypted_number: encryptedNumber || null,
+        p_last4: encryptedNumber ? normalizePaymentNumber(input.fullNumber).slice(-4) : null,
+        p_color: patch.color,
+        p_icon: patch.icon,
+        p_theme: patch.theme,
+        p_active: active,
+        p_sort_order: patch.sort_order,
+        p_daily_limit: patch.daily_limit,
+        p_limit_mode: patch.limit_mode,
+        p_admin_note: patch.admin_note,
+        p_actor: actor
+      });
+      await normalizeMethodOrder(id, patch.sort_order);
+      return rowMethod(await this.rawMethod(updated.id || id));
     },
     async archiveMethod(id, actor = "admin") {
       const { error } = await client.from("payment_methods").update({ active: false, deactivated_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("id", id);
@@ -469,7 +491,9 @@ export function createPaymentStore(config) {
     },
     rejectOrder(id, actor) { return rpc("reject_payment_order", { p_order_id: id, p_reason: "Admin tərəfindən rədd edildi.", p_actor: actor }); },
     contactOrder(id, actor) { return rpc("mark_payment_order_contacted", { p_order_id: id, p_actor: actor }); },
-    cancelReservation(id, actor) { return rpc("cancel_payment_reservation", { p_reservation_id: id, p_actor: actor }); },
+    cancelCustomerReservation(id, checkoutKey, actor) {
+      return rpc("cancel_customer_payment_reservation", { p_reservation_id: id, p_checkout_key: checkoutKey, p_actor: actor });
+    },
     async createReviewToken(orderId, tokenHash, expiresAt) {
       const { error } = await client.from("payment_review_tokens").insert({ order_id: orderId, token_hash: tokenHash, expires_at: expiresAt });
       if (error) throw paymentError(error);

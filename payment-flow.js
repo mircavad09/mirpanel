@@ -147,7 +147,7 @@
   async function cancelReservation(flow) {
     const id = flow.reservation?.reservationId || flow.previousReservationId;
     if (!id) return { ok: true, idempotent: true };
-    const result = await request("/api/payments/reservations/cancel", { method: "POST", body: JSON.stringify({ reservationId: id }) });
+    const result = await request("/api/payments/reservations/cancel", { method: "POST", body: JSON.stringify({ reservationId: id, checkoutKey: flow.checkoutKey }) });
     flow.reservation = null;
     flow.previousReservationId = null;
     clearReceipt(flow);
@@ -267,7 +267,7 @@
               document.getElementById("paymentReceiptArea").innerHTML = "";
               renderChoices();
               setMessage("Rezerv vaxtı bitdi. Ödəniş üsulunu yenidən seçin.", "error");
-              if (expiredId) await request("/api/payments/reservations/cancel", { method: "POST", body: JSON.stringify({ reservationId: expiredId }) }).catch(() => {});
+              if (expiredId) await request("/api/payments/reservations/cancel", { method: "POST", body: JSON.stringify({ reservationId: expiredId, checkoutKey: flow.checkoutKey }) }).catch(() => {});
             });
             document.getElementById("copyPaymentNumber").onclick = async () => {
               await navigator.clipboard.writeText(reserved.method.number);

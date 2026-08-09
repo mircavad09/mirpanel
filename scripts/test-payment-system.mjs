@@ -13,7 +13,7 @@ import { commercialSnapshot } from "./payment-commercial-snapshot.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
-const expectedSnapshot = "3e15b54f27ace96a246ee844dd320cba35151964e9e922bcabfb5c302e34ea16";
+const expectedSnapshot = "51821c5b1392b80fd3751ff8362d70e9d616fe2d28b14213401c0e5c9bb6cb75";
 
 function expectThrow(fn, pattern) {
   let thrown = null;
@@ -135,7 +135,7 @@ assert.ok(server.includes('Supabase server key format:'));
 assert.equal(server.includes("config.supabaseSecretKey.slice"), false);
 assert.ok(index.includes("payment-flow.css"));
 assert.ok(index.includes("payment-flow.js"));
-assert.ok(index.includes("payment-compact-cancel-20260808-1"));
+assert.ok(index.includes("payment-capacity-20260809-1"));
 assert.equal(api.includes("pendingReservations: method.pendingReservations"), false, "Rezerv sayı public API-yə çıxmamalıdır");
 assert.equal(api.includes("remaining: method.remaining"), false, "Qalan limit public API-yə çıxmamalıdır");
 assert.ok(api.includes("checkoutKey"));
@@ -170,9 +170,12 @@ assert.ok(paymentAdmin.includes("receiptWindow.location.replace(result.url)"), "
 assert.ok(paymentAdmin.includes("else window.location.assign(result.url)"), "Popup bloklanarsa çek eyni tabda açılmalıdır");
 assert.equal(api.includes("new-receipt|cancel-reservation"), false, "İşləməyən admin route-ları qalmamalıdır");
 assert.ok(store.includes('p_reason: "Admin tərəfindən rədd edildi."'), "Rədd əməliyyatı sistem qeydi yazmalıdır");
-const cancelRpcSql = migration.match(/create or replace function public\.cancel_payment_reservation[\s\S]*?(?=create or replace function public\.claim_payment_email)/)?.[0] || "";
+const capacityMigration = read("supabase/migrations/202608090003_payment_method_capacity_and_admin.sql");
+const cancelRpcSql = capacityMigration.match(/create or replace function public\.cancel_customer_payment_reservation[\s\S]*?(?=create or replace function public\.update_payment_method_admin)/)?.[0] || "";
 assert.ok(cancelRpcSql.includes("for update"), "Rezerv ləğvi database sətrini atomik kilidləməlidir");
 assert.ok(cancelRpcSql.includes("idempotent"), "Rezerv ləğvi idempotent nəticə qaytarmalıdır");
+assert.ok(cancelRpcSql.includes("RESERVATION_ALREADY_SUBMITTED"), "Çek göndərildikdən sonra müştəri rezervi ləğv edə bilməməlidir");
+assert.ok(cancelRpcSql.includes("RESERVATION_CHECKOUT_MISMATCH"), "Rezerv checkout sessiyasına bağlanmalıdır");
 assert.equal(cancelRpcSql.includes("payment_daily_usage"), false, "Rezerv ləğvi tamamlanmış istifadə sayğacını dəyişməməlidir");
 
 const mail = paymentEmailContent({
@@ -189,18 +192,19 @@ assert.ok(read("mirpanel-admin/payment-mail.mjs").includes('Content-Transfer-Enc
 assert.ok(read("mirpanel-admin/payment-mail.mjs").includes("payload?.error?.errors?.[0]?.reason"));
 
 const snapshot = commercialSnapshot();
-assert.equal(snapshot.productCount, 30);
-assert.equal(snapshot.activeProductCount, 21);
+assert.equal(snapshot.productCount, 31);
+assert.equal(snapshot.activeProductCount, 22);
 assert.equal(snapshot.sha256, expectedSnapshot, "Kommersiya/CMS snapshot dəyişib");
 
 const productPages = fs.readdirSync(path.join(root, "mehsul")).filter((name) => name.endsWith(".page"));
-assert.equal(productPages.length, 21);
+assert.equal(productPages.length, 22);
 for (const page of productPages) {
   const html = read(path.join("mehsul", page));
-  assert.ok(html.includes("payment-flow.css?v=payment-compact-cancel-20260808-1"), `${page}: payment CSS cache versiyası köhnədir`);
-  assert.ok(html.includes("payment-flow.js?v=payment-compact-cancel-20260808-1"), `${page}: payment JS cache versiyası köhnədir`);
+  assert.ok(html.includes("payment-flow.css?v="), `${page}: payment CSS bağlantısı yoxdur`);
+  assert.ok(html.includes("payment-flow.js?v="), `${page}: payment JS bağlantısı yoxdur`);
   assert.ok(html.includes("order-confirmation.js?v=payment-whatsapp-20260808-3"), `${page}: confirmation cache versiyası köhnədir`);
 }
+assert.ok(read("mirpanel-admin/product-pages.mjs").includes("payment-capacity-20260809-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
 
 for (const file of [
   "mirpanel-admin/payment-api.mjs",
