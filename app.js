@@ -808,7 +808,7 @@ const DATA = {
         {
           "key": "password",
           "type": "password",
-          "label": "Yeni sahə",
+          "label": "Gmail şifrəsi",
           "placeholder": "Gmail şifrənizi yazın",
           "required": true,
           "enabled": true
