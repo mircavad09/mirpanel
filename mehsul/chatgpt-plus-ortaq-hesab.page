@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="/payment-flow.css?v=payment-capacity-20260809-1">
   <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab#product","url":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab","name":"ChatGPT Plus (Ortaq hesab)","description":"ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.","image":["https://mirpanel.com/assets/chatgpt.png"],"sku":"chatgpt_ortaq","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab","price":"8.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"ChatGPT Plus (Ortaq hesab)","item":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab#product","url":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab","name":"ChatGPT Plus (Ortaq hesab)","description":"ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.","image":["https://mirpanel.com/assets/chatgpt.png"],"sku":"chatgpt_ortaq","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab","price":"8.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"ChatGPT Plus (Ortaq hesab)","item":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="chatgpt_ortaq" data-product-slug="chatgpt-plus-ortaq-hesab">
   <header class="product-page-header site-header" id="mainHeader">
@@ -82,7 +82,7 @@
         <div class="product-page-card-grid">
           <div class="product-page-media">
             <img class="product-page-media-backdrop" src="/assets/chatgpt.png" alt="" aria-hidden="true" decoding="async">
-            <span class="product-page-availability-badge">Mövcuddur</span>
+            <span class="product-page-availability-badge is-out">Stokda yoxdur</span>
             <img id="pp-main-img" src="/assets/chatgpt.png" alt="ChatGPT Plus (Ortaq hesab)" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
@@ -90,7 +90,7 @@
             <div class="product-page-eyebrow">
 
               <span class="product-page-category">all</span>
-              <span class="product-page-status">Mövcuddur</span>
+              <span class="product-page-status is-out">Stokda yoxdur</span>
             </div>
             <h1 id="pp-main-title" class="product-page-title">ChatGPT Plus ortaq hesab</h1>
 
