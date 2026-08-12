@@ -5,6 +5,7 @@ import {
   normalizePaymentNumber,
   orderCode,
   publicPaymentNumber,
+  receiptFromBuffer,
   receiptFromPayload,
   safeMultiline,
   safeText,
@@ -49,8 +50,33 @@ function errorStatus(error) {
   return Number(error?.status) || (error?.code === "PAYMENT_METHOD_LIMIT_REACHED" ? 409 : 500);
 }
 
+export async function paymentOrderFromMultipart(rawBody, contentType, maxReceiptBytes = 5 * 1024 * 1024) {
+  let form;
+  try {
+    form = await new Request("http://localhost/api/payments/orders", {
+      method: "POST",
+      headers: { "Content-Type": String(contentType || "") },
+      body: rawBody
+    }).formData();
+  } catch {
+    throw Object.assign(new Error("Çek məlumatı düzgün göndərilməyib."), { status: 400 });
+  }
+  const uploaded = form.get("receipt");
+  if (!uploaded || typeof uploaded.arrayBuffer !== "function") throw Object.assign(new Error("Ödəniş qəbzi seçilməyib."), { status: 400 });
+  if (Number(uploaded.size) > maxReceiptBytes) throw Object.assign(new Error("Qəbz maksimum 5 MB ola bilər."), { status: 413 });
+  return {
+    body: {
+      reservationId: form.get("reservationId"),
+      productId: form.get("productId"),
+      planIndex: form.get("planIndex"),
+      consentAccepted: form.get("consentAccepted") === "true"
+    },
+    receipt: receiptFromBuffer(Buffer.from(await uploaded.arrayBuffer()), uploaded.type, maxReceiptBytes)
+  };
+}
+
 export function createPaymentSystem(options) {
-  const { config, json, readBody, requireAuth, requireMutationAuth, loadCatalog, actorName } = options;
+  const { config, json, readBody, readRawBody, requireAuth, requireMutationAuth, loadCatalog, actorName } = options;
   const required = [config.supabaseUrl, config.supabaseSecretKey, config.receiptsBucket, config.encryptionKey, config.tokenSecret];
   if (required.some((item) => !item)) {
     return {
@@ -177,7 +203,17 @@ export function createPaymentSystem(options) {
     }
     if (request.method === "POST" && url.pathname === "/api/payments/orders") {
       await publicRate(request, "submit", 3600, 10);
-      const body = await readBody(request, Math.ceil(config.maxReceiptBytes * 1.42) + 100_000);
+      const contentType = String(request.headers["content-type"] || "");
+      let body;
+      let receipt;
+      if (contentType.toLowerCase().startsWith("multipart/form-data;")) {
+        if (typeof readRawBody !== "function") throw Object.assign(new Error("Fayl yükləmə xidməti hazır deyil."), { status: 503 });
+        const rawBody = await readRawBody(request, config.maxReceiptBytes + 150_000);
+        ({ body, receipt } = await paymentOrderFromMultipart(rawBody, contentType, config.maxReceiptBytes));
+      } else {
+        body = await readBody(request, Math.ceil(config.maxReceiptBytes * 1.42) + 100_000);
+        receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
+      }
       const reservationId = safeUuid(body.reservationId);
       if (!reservationId || body.consentAccepted !== true) throw Object.assign(new Error("Rezerv və məcburi razılıq tələb olunur."), { status: 400 });
       const existing = await store.getOrderByReservation(reservationId);
@@ -187,7 +223,6 @@ export function createPaymentSystem(options) {
         return true;
       }
       const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
-      const receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
       const code = orderCode();
       const now = new Date();
       const receiptPath = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${code}-${crypto.randomUUID()}.${receipt.extension}`;

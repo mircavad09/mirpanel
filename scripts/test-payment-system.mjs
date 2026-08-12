@@ -6,8 +6,10 @@ import { fileURLToPath } from "node:url";
 import {
   createPaymentSecurity,
   detectReceiptType,
+  receiptFromBuffer,
   receiptFromPayload
 } from "../mirpanel-admin/payment-security.mjs";
+import { paymentOrderFromMultipart } from "../mirpanel-admin/payment-api.mjs";
 import { paymentEmailContent } from "../mirpanel-admin/payment-mail.mjs";
 import { commercialSnapshot } from "./payment-commercial-snapshot.mjs";
 
@@ -37,18 +39,34 @@ expectThrow(() => security.decryptNumber(tampered));
 assert.equal(security.hashToken("one-time-token"), security.hashToken("one-time-token"));
 assert.notEqual(security.hashToken("one-time-token"), "one-time-token");
 
-const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 1, 2, 3, 4, 5, 6, 7]);
-const png = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.alloc(8)]);
-const webp = Buffer.concat([Buffer.from("RIFF"), Buffer.alloc(4), Buffer.from("WEBP"), Buffer.alloc(4)]);
+const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0, 1, 2, 3, 4, 5, 0xff, 0xd9]);
+const png = Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.alloc(4), Buffer.from("IHDR"), Buffer.alloc(8)]);
+const webp = Buffer.concat([Buffer.from("RIFF"), Buffer.from([8, 0, 0, 0]), Buffer.from("WEBP"), Buffer.alloc(4)]);
 const pdf = Buffer.from("%PDF-1.7\n1 0 obj\n<< /Type /Catalog >>\nendobj\n%%EOF", "ascii");
 assert.equal(detectReceiptType(jpeg).mimeType, "image/jpeg");
 assert.equal(detectReceiptType(png).mimeType, "image/png");
 assert.equal(detectReceiptType(webp).mimeType, "image/webp");
 assert.equal(detectReceiptType(pdf).mimeType, "application/pdf");
 assert.equal(receiptFromPayload({ mimeType: "application/pdf", contentBase64: pdf.toString("base64") }).extension, "pdf");
+assert.equal(receiptFromBuffer(jpeg, "image/jpeg").extension, "jpg");
 expectThrow(() => receiptFromPayload({ mimeType: "image/png", contentBase64: jpeg.toString("base64") }), /real format/i);
-expectThrow(() => receiptFromPayload({ mimeType: "application/pdf", contentBase64: Buffer.from("%PDF-1.7\n/OpenAction /JavaScript", "ascii").toString("base64") }), /Aktiv məzmun/i);
+expectThrow(() => receiptFromPayload({ mimeType: "application/pdf", contentBase64: Buffer.from("%PDF-1.7\n/OpenAction /JavaScript\n%%EOF", "ascii").toString("base64") }), /Aktiv məzmun/i);
 expectThrow(() => receiptFromPayload({ mimeType: "image/jpeg", contentBase64: Buffer.alloc(5 * 1024 * 1024 + 1, 1).toString("base64") }), /5 MB/i);
+expectThrow(() => receiptFromBuffer(Buffer.from([0xff, 0xd8, 0xff, 0, 1, 2, 3, 4, 5, 6, 7, 8]), "image/jpeg"), /zədələnib/i);
+expectThrow(() => receiptFromBuffer(Buffer.concat([Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]), Buffer.alloc(16)]), "image/png"), /zədələnib/i);
+
+const multipart = new FormData();
+multipart.append("reservationId", "11111111-1111-4111-8111-111111111111");
+multipart.append("productId", "test-product");
+multipart.append("planIndex", "2");
+multipart.append("consentAccepted", "true");
+multipart.append("receipt", new Blob([png], { type: "image/png" }), "receipt.png");
+const multipartRequest = new Request("http://localhost/api/payments/orders", { method: "POST", body: multipart });
+const parsedMultipart = await paymentOrderFromMultipart(Buffer.from(await multipartRequest.arrayBuffer()), multipartRequest.headers.get("content-type"), 5 * 1024 * 1024);
+assert.equal(parsedMultipart.body.productId, "test-product");
+assert.equal(parsedMultipart.body.planIndex, "2");
+assert.equal(parsedMultipart.body.consentAccepted, true);
+assert.equal(parsedMultipart.receipt.mimeType, "image/png");
 
 const migration = read("supabase/migrations/202608070001_payment_system.sql");
 const checkoutMigration = read("supabase/migrations/202608080001_payment_checkout_reservations.sql");
@@ -98,6 +116,13 @@ assert.ok(store.includes("consume_payment_review_token"));
 assert.ok(store.includes("result.diagnostic"));
 assert.ok(api.includes('request.method === "POST" && url.pathname === "/api/admin/payment-review-token"'));
 assert.ok(flow.includes('accept="image/jpeg,image/png,image/webp,application/pdf"'));
+assert.ok(flow.includes("new FormData()"), "Çek birbaşa multipart FormData ilə göndərilməlidir");
+assert.ok(flow.includes('formData.append("receipt", flow.receipt'), "Orijinal File obyekti FormData-ya əlavə edilməlidir");
+assert.equal(flow.includes("FileReader"), false, "Yeni çek axını FileReader-dən asılı olmamalıdır");
+assert.equal(flow.includes("contentBase64"), false, "Yeni çek axını base64 yaratmamalıdır");
+assert.ok(flow.includes("URL.createObjectURL(file)"));
+assert.ok(flow.includes("URL.revokeObjectURL(flow.receiptPreviewUrl)"));
+assert.ok(flow.includes("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."));
 assert.ok(flow.includes("if (!flow.receipt || !flow.reservation)"));
 assert.ok(flow.includes('const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1"'));
 assert.ok(flow.includes("previousReservationId: flow.reservation?.reservationId || flow.previousReservationId || null"));
@@ -206,7 +231,7 @@ for (const page of productPages) {
   assert.ok(html.includes("order-confirmation.js?v=unified-payment-flow-20260810-1"), `${page}: confirmation cache versiyası köhnədir`);
   assert.equal(html.includes("hbo-max-order-fix.js"), false, `${page}: legacy məhsul handler-i vahid axını kəsməməlidir`);
 }
-assert.ok(read("mirpanel-admin/product-pages.mjs").includes("payment-capacity-20260809-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
+assert.ok(read("mirpanel-admin/product-pages.mjs").includes("receipt-formdata-20260812-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
 
 for (const file of [
   "mirpanel-admin/payment-api.mjs",

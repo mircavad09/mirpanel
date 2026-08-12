@@ -108,9 +108,21 @@ export function receiptFromPayload(body, maxBytes = 5 * 1024 * 1024) {
   if (!buffer.length || buffer.length > maxBytes) {
     throw Object.assign(new Error("Qəbz maksimum 5 MB ola bilər."), { status: buffer.length > maxBytes ? 413 : 400 });
   }
+  return receiptFromBuffer(buffer, mimeType, maxBytes);
+}
+
+export function receiptFromBuffer(buffer, declaredMimeType, maxBytes = 5 * 1024 * 1024) {
+  const mimeType = String(declaredMimeType || "").toLowerCase();
+  if (!allowedReceiptTypes.has(mimeType)) throw Object.assign(new Error("Yalnız JPG, PNG, WEBP və PDF qəbul edilir."), { status: 400 });
+  if (!Buffer.isBuffer(buffer) || !buffer.length || buffer.length > maxBytes) {
+    throw Object.assign(new Error("Qəbz maksimum 5 MB ola bilər."), { status: buffer?.length > maxBytes ? 413 : 400 });
+  }
   const detected = detectReceiptType(buffer);
   if (!detected || detected.mimeType !== mimeType) {
     throw Object.assign(new Error("Faylın real formatı seçilmiş formatla uyğun deyil."), { status: 400 });
+  }
+  if (!hasValidReceiptStructure(buffer, detected.extension)) {
+    throw Object.assign(new Error("Fayl zədələnib və ya tam yüklənməyib."), { status: 400 });
   }
   if (detected.extension === "pdf") {
     const sample = buffer.subarray(0, Math.min(buffer.length, 1_000_000)).toString("latin1");
@@ -124,6 +136,17 @@ export function receiptFromPayload(body, maxBytes = 5 * 1024 * 1024) {
     extension: detected.extension,
     sha256: crypto.createHash("sha256").update(buffer).digest("hex")
   };
+}
+
+function hasValidReceiptStructure(buffer, extension) {
+  if (extension === "jpg") return buffer.lastIndexOf(Buffer.from([0xff, 0xd9])) >= 3;
+  if (extension === "png") return buffer.length >= 24 && buffer.subarray(12, 16).toString("ascii") === "IHDR";
+  if (extension === "webp") {
+    const declaredSize = buffer.readUInt32LE(4);
+    return declaredSize >= 4 && declaredSize + 8 <= buffer.length;
+  }
+  if (extension === "pdf") return buffer.subarray(Math.max(0, buffer.length - 4096)).toString("latin1").includes("%%EOF");
+  return false;
 }
 
 export function detectReceiptType(buffer) {

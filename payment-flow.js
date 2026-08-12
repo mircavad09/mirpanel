@@ -3,6 +3,7 @@
 
   const API_BASE = window.MIRPANEL_PAYMENT_API || "https://mirpanel.onrender.com";
   const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1";
+  const RECEIPT_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
   let activeFlow = null;
 
   const esc = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -41,31 +42,25 @@
     return payload;
   }
 
-  function fileBase64(file, progress) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onprogress = (event) => { if (event.lengthComputable) progress(Math.round((event.loaded / event.total) * 20)); };
-      reader.onerror = () => reject(new Error("Qəbz faylı oxunmadı."));
-      reader.onload = () => resolve(String(reader.result || "").split(",")[1] || "");
-      reader.readAsDataURL(file);
-    });
-  }
-
-  function submitWithProgress(path, body, progress) {
+  function submitWithProgress(path, formData, progress, idempotencyKey) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("POST", `${API_BASE}${path}`);
-      xhr.setRequestHeader("Content-Type", "application/json");
+      xhr.timeout = 60_000;
+      xhr.setRequestHeader("X-Idempotency-Key", idempotencyKey);
       xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) progress(20 + Math.round((event.loaded / event.total) * 80));
+        if (event.lengthComputable) progress(5 + Math.round((event.loaded / event.total) * 90));
       };
-      xhr.onerror = () => reject(new Error("Çek serverə göndərilmədi. İnternet bağlantısını yoxlayın."));
+      xhr.onerror = () => reject(Object.assign(new Error("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."), { userMessage: "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin." }));
+      xhr.ontimeout = xhr.onerror;
       xhr.onload = () => {
-        const payload = JSON.parse(xhr.responseText || "{}");
-        if (xhr.status < 200 || xhr.status >= 300) reject(new Error(payload.error || "Sifariş yaradılmadı."));
+        let payload = {};
+        try { payload = JSON.parse(xhr.responseText || "{}"); } catch {}
+        if (xhr.status < 200 || xhr.status >= 300) reject(Object.assign(new Error(payload.error || "Sifariş yaradılmadı."), { userMessage: payload.error || "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin." }));
         else resolve(payload);
       };
-      xhr.send(JSON.stringify(body));
+      progress(2);
+      xhr.send(formData);
     });
   }
 
@@ -169,7 +164,7 @@
     if (activeFlow?.reservation || activeFlow?.previousReservationId) await cancelReservation(activeFlow);
     renderShell(product, plan);
     const previous = storedCheckout();
-    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
+    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: uuid(), stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
     activeFlow = flow;
     return new Promise(async (resolve) => {
       const finish = async (value, options = {}) => {
@@ -312,8 +307,10 @@
               const file = fileEvent.target.files?.[0];
               const error = document.getElementById("paymentReceiptError");
               error.hidden = true;
-              if (!file || file.size > 5 * 1024 * 1024) {
-                error.textContent = file ? "Qəbz maksimum 5 MB ola bilər." : "Qəbz seçilməyib.";
+              if (!file || file.size > 5 * 1024 * 1024 || !RECEIPT_TYPES.has(String(file.type || "").toLowerCase())) {
+                clearReceipt(flow);
+                document.getElementById("paymentSubmit").disabled = true;
+                error.textContent = !file ? "Qəbz seçilməyib." : file.size > 5 * 1024 * 1024 ? "Qəbz maksimum 5 MB ola bilər." : "Yalnız JPG, PNG, WEBP və PDF qəbul edilir.";
                 error.hidden = false;
                 return;
               }
@@ -324,7 +321,9 @@
               preview.classList.remove("hidden");
               flow.receiptPreviewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
               preview.innerHTML = flow.receiptPreviewUrl ? `<img src="${flow.receiptPreviewUrl}" alt="Yüklənəcək ödəniş qəbzi"><div><strong>${esc(file.name)}</strong><button id="removePaymentReceipt" type="button">Çeki sil və yenisini seç</button></div>` : `<div class="paymentPdfPreview"><strong>PDF</strong><span>${esc(file.name)}</span></div><button id="removePaymentReceipt" type="button">Çeki sil və yenisini seç</button>`;
-              document.getElementById("paymentSubmit").disabled = false;
+              const submitButton = document.getElementById("paymentSubmit");
+              submitButton.disabled = false;
+              submitButton.textContent = "Göndər və WhatsApp-a keç";
               document.getElementById("removePaymentReceipt").onclick = () => {
                 clearReceipt(flow); setStage(flow, "payment_details"); document.getElementById("paymentSubmit").disabled = true;
               };
@@ -341,25 +340,27 @@
               error.hidden = true;
               const progress = document.getElementById("paymentUploadProgress");
               progress.classList.remove("hidden");
+              progress.classList.remove("isError");
               const updateProgress = (value) => { progress.querySelector("span").style.width = `${value}%`; progress.querySelector("b").textContent = `${value}%`; };
               try {
-                const contentBase64 = await fileBase64(flow.receipt, updateProgress);
-                const order = await submitWithProgress("/api/payments/orders", {
-                  reservationId: flow.reservation.reservationId,
-                  productId: product.id,
-                  planIndex,
-                  consentAccepted: true,
-                  receipt: { fileName: flow.receipt.name, mimeType: flow.receipt.type, contentBase64 }
-                }, updateProgress);
+                const formData = new FormData();
+                formData.append("reservationId", flow.reservation.reservationId);
+                formData.append("productId", product.id);
+                formData.append("planIndex", String(planIndex));
+                formData.append("consentAccepted", "true");
+                formData.append("receipt", flow.receipt, flow.receipt.name || "receipt");
+                const order = await submitWithProgress("/api/payments/orders", formData, updateProgress, flow.orderIdempotencyKey);
                 updateProgress(100);
                 setMessage(`Çek yükləndi. Sifariş: ${order.orderCode}`, "success");
                 await finish(order);
                 return;
               } catch (submitError) {
                 flow.submitting = false;
-                error.textContent = submitError.message;
+                progress.classList.add("isError");
+                error.textContent = submitError.userMessage || "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.";
                 error.hidden = false;
                 submit.disabled = false;
+                submit.textContent = "Yenidən cəhd et";
               }
             });
           } catch (reserveError) {

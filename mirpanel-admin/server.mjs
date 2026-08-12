@@ -123,7 +123,7 @@ function sessionCookie(id, maxAge = sessionTtl / 1000) {
   ].filter(Boolean).join("; ");
 }
 
-async function readBody(request, limit = 1_500_000) {
+async function readRawBody(request, limit = 1_500_000) {
   let size = 0;
   const chunks = [];
 
@@ -133,7 +133,11 @@ async function readBody(request, limit = 1_500_000) {
     chunks.push(chunk);
   }
 
-  return JSON.parse(Buffer.concat(chunks).toString("utf8") || "{}");
+  return Buffer.concat(chunks);
+}
+
+async function readBody(request, limit = 1_500_000) {
+  return JSON.parse((await readRawBody(request, limit)).toString("utf8") || "{}");
 }
 
 function safeUploadSlug(value) {
@@ -1044,6 +1048,7 @@ const paymentSystem = createPaymentSystem({
   config,
   json,
   readBody,
+  readRawBody,
   requireAuth,
   requireMutationAuth,
   actorName: config.username || "admin",
