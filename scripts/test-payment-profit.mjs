@@ -42,7 +42,7 @@ assert.ok(migration.includes("if v_order.status = 'approved'"));
 assert.ok(migration.includes("for update"));
 assert.equal(/update public\.payment_orders[\s\S]*cost_price_snapshot[\s\S]*where cost_price_snapshot is null/i.test(migration), false, "Köhnə sifarişlər avtomatik backfill edilməməlidir");
 assert.ok(migration.includes("revoke all on table public.payment_plan_costs from public, anon, authenticated"));
-assert.ok(store.includes('rpc("approve_payment_order_v4"'));
+assert.ok(store.includes('rpc("approve_payment_order_v5"'));
 assert.ok(store.includes('rpc("payment_order_profit_statistics_v2"'));
 assert.ok(api.includes('url.pathname === "/api/admin/payment-costs"'));
 assert.ok(cms.includes("Məhsulların maya dəyəri və qazanc"));
@@ -51,3 +51,4 @@ assert.equal(read("index.html").includes("payment_plan_costs"), false);
 assert.equal(read("app.js").includes("cost_price_snapshot"), false);
 
 console.log(JSON.stringify({ ok: true, products: catalog.products.length, plans: rows.length, emptyCostsRemainNull: true, snapshotImmutable: true, adminOnly: true }, null, 2));
+

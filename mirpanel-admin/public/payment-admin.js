@@ -4,7 +4,7 @@
   const emptyQuery = () => ({ tab: "pending", period: "all", search: "", productId: "", planName: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1 });
   const paymentState = {
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
-    orderActions: new Set(), orderQuery: emptyQuery(),
+    orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
     costs: [], costDirty: new Set(), costSaving: false, costBackfillPreview: null, costBackfillBusy: false,
     orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] } }
   };
@@ -424,7 +424,32 @@
         }
         if (event.target.closest("[data-close-payment-editor]")) { paymentState.selectedMethodId = ""; $p("paymentMethodEditor").innerHTML = ""; }
         if (event.target.closest("[data-reset-payment-counter]") && paymentState.selectedMethodId && confirm("Bu kartın bugünkü təsdiq sayğacı sıfırlansın?")) { await paymentApi(`/api/admin/payment-methods/${paymentState.selectedMethodId}/reset-counter`, { method: "POST", body: "{}" }); await loadMethods(); }
-        if (event.target.closest("[data-delete-payment-method]") && paymentState.selectedMethodId && confirm("Bu kart aktiv ödəniş siyahısından silinsin? Tarixçə qorunacaq.")) { await paymentApi(`/api/admin/payment-methods/${paymentState.selectedMethodId}/delete`, { method: "POST", body: "{}" }); paymentState.selectedMethodId = ""; $p("paymentMethodEditor").innerHTML = ""; await loadMethods(); }
+        const deleteMethodButton = event.target.closest("[data-delete-payment-method]");
+        if (deleteMethodButton && paymentState.selectedMethodId) {
+          const methodId = paymentState.selectedMethodId;
+          if (paymentState.methodActions.has(methodId)) return;
+          const confirmed = await paymentActionDialog({
+            title: "Kartı siyahıdan çıxar",
+            message: "Kart yeni ödənişlər üçün bağlanacaq və siyahıdan çıxacaq. Köhnə sifariş tarixçəsi qorunacaq.",
+            confirmText: "Kartı sil",
+            danger: true
+          });
+          if (!confirmed) return;
+          paymentState.methodActions.add(methodId);
+          deleteMethodButton.disabled = true;
+          try {
+            const result = await paymentApi(`/api/admin/payment-methods/${methodId}/delete`, { method: "POST", body: "{}" });
+            if (paymentState.selectedMethodId === methodId) {
+              paymentState.selectedMethodId = "";
+              $p("paymentMethodEditor").innerHTML = "";
+            }
+            await loadMethods();
+            toast(result.idempotent ? "Kart artıq siyahıdan çıxarılıb." : "Kart yeni ödənişlər üçün bağlandı. Köhnə sifarişlər qorunur.");
+          } finally {
+            paymentState.methodActions.delete(methodId);
+            if (deleteMethodButton.isConnected) deleteMethodButton.disabled = false;
+          }
+        }
         if (event.target.closest("#paymentOrdersRefresh")) await loadOrders();
         if (event.target.closest("#paymentReviewsRefresh")) await loadEmails();
         if (event.target.closest("#paymentCostsSaveAll")) await saveCosts([...paymentState.costDirty]);
@@ -481,3 +506,4 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootPayments); else bootPayments();
 })();
+

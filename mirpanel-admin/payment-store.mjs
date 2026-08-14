@@ -138,7 +138,7 @@ export function createPaymentStore(config) {
     const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
     const [{ data: counters, error: counterError }, { data: reservations, error: reservationError }] = await Promise.all([
       client.from("payment_method_daily_counters").select("method_id,confirmed_count,updated_at").eq("counter_date", today).in("method_id", methodIds),
-      client.from("payment_reservations").select("method_id,status,expires_at").in("method_id", methodIds).in("status", ["reserved", "reviewing"])
+      client.from("payment_reservations").select("method_id,status,expires_at,usage_day").eq("usage_day", today).in("method_id", methodIds).in("status", ["reserved", "reviewing"])
     ]);
     if (counterError) throw paymentError(counterError);
     if (reservationError) throw paymentError(reservationError);
@@ -485,7 +485,7 @@ export function createPaymentStore(config) {
       return data || null;
     },
     approveOrder(id, durationMonths, actor) {
-      return rpc("approve_payment_order_v4", {
+      return rpc("approve_payment_order_v5", {
         p_order_id: id,
         p_duration_months: durationMonths || null,
         p_actor: actor
@@ -596,3 +596,4 @@ export function createPaymentStore(config) {
     }
   };
 }
+

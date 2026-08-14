@@ -6,6 +6,7 @@
     "start": "node server.mjs",
     "test:payments": "node ../scripts/test-payment-system.mjs",
     "test:payment-orders": "node ../scripts/test-payment-orders-admin.mjs",
+    "test:payment-usage-day": "node ../scripts/test-payment-usage-day.mjs",
     "test:payment-orders:browser": "node ../scripts/test-payment-orders-browser.mjs",
     "test:payment-profit": "node ../scripts/test-payment-profit.mjs"
   },
@@ -13,3 +14,4 @@
     "@supabase/supabase-js": "^2.57.4"
   }
 }
+
