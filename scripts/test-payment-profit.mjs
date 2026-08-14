@@ -51,4 +51,3 @@ assert.equal(read("index.html").includes("payment_plan_costs"), false);
 assert.equal(read("app.js").includes("cost_price_snapshot"), false);
 
 console.log(JSON.stringify({ ok: true, products: catalog.products.length, plans: rows.length, emptyCostsRemainNull: true, snapshotImmutable: true, adminOnly: true }, null, 2));
-

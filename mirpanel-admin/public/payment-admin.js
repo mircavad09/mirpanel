@@ -506,4 +506,3 @@
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", bootPayments); else bootPayments();
 })();
-

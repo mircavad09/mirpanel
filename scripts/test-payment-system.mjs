@@ -259,4 +259,3 @@ console.log(JSON.stringify({
   rls: true,
   privateBucket: true
 }, null, 2));
-

@@ -596,4 +596,3 @@ export function createPaymentStore(config) {
     }
   };
 }
-

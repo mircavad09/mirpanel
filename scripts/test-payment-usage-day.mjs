@@ -66,4 +66,3 @@ console.log(JSON.stringify({
   softDeletePreservesActiveProcesses: true,
   counterBackupAndBackfill: true
 }, null, 2));
-

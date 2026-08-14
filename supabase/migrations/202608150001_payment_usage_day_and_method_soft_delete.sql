@@ -278,4 +278,3 @@ grant execute on function public.approve_payment_order_v5(uuid,integer,text) to 
 grant execute on function public.delete_payment_method_safely(uuid,text) to service_role;
 
 commit;
-
