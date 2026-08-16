@@ -145,9 +145,96 @@ const DATA = {
   ],
   "products": [
     {
+      "id": "adobecc",
+      "_stableId": "adobecc",
+      "order": 1,
+      "category": "dizayn",
+      "image": "assets/adobe.png",
+      "currency": "₼",
+      "title": "Adobe Creative Cloud",
+      "variant": "Premium",
+      "badge": "Dizayn",
+      "imageAlt": "Adobe Creative Cloud",
+      "desc": "Photoshop, Illustrator və digərləri.",
+      "note": "Hesab hazır şəkildə təqdim edilir.",
+      "longDescription": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "adobe-creative-cloud",
+      "seoTitle": "Adobe Creative Cloud almaq | Ucuz Adobe hesab - Mirpanel",
+      "seoDescription": "Adobe Creative Cloud hesabını sərfəli qiymətə əldə et. Photoshop, Illustrator və premium Adobe alətləri.",
+      "seoH1": "Adobe Creative Cloud",
+      "seoPrimaryKeyword": "Adobe Creative Cloud almaq",
+      "seoRelatedKeywords": " Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
+      "seoKeywords": "Adobe Creative Cloud almaq, Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
+      "seoContent": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/adobe.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/adobe.png",
+        "mobileImage": "",
+        "title": "Adobe Creative Cloud",
+        "description": "Photoshop, Illustrator və digərləri.",
+        "alt": "Adobe Creative Cloud",
+        "order": 21
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "📌 Sifariş təsdiqləndikdən sonra müştəriyə **4 aylıq Adobe Creative Cloud abunəliyi aktiv olan hazır hesab** təqdim edilir. Hesab e-poçt ünvanı və giriş məlumatları ilə birlikdə verilir və istifadəyə hazır olur.\n\n✅ Abunəlik müddəti: **4 ay**  \n🛡️ MirPanel zəmanəti: **1 ay**\n\n**Zəmanət haqqında:** Hesabda təqdim edildiyi tarixdən etibarən ilk 1 ay ərzində MirPanel-dən asılı olmayan deaktivasiya və ya giriş problemi yaranarsa, vəziyyət yoxlanılır və uyğun olduğu halda hesabın bərpası və ya əvəzlənməsi təmin edilir.\n\n1 aylıq zəmanət hesabın abunəlik müddəti deyil. Hesab normal şəraitdə **4 aylıq istifadə üçün** təqdim olunur, zəmanət isə yalnız ilk ay ərzində yarana biləcək problemlərə qarşı əlavə xidmət təminatıdır.\n\n### Sifarişdən əvvəl nəzərə alın ⚠️\n\nAdobe tərəfindən aparılan təhlükəsizlik yoxlamaları, sistem yenilikləri və daxili qayda dəyişiklikləri səbəbindən hesabın məhdudlaşdırılması və ya deaktiv edilməsi ehtimalı mövcuddur. Belə vəziyyət yaranarsa, zəmanət müddəti ərzində MirPanel-in rəsmi WhatsApp dəstəyinə müraciət edin.\n\nHesab məlumatlarının başqa şəxslərlə paylaşılması, icazəsiz dəyişdirilməsi və istifadə təlimatlarına əməl edilməməsi nəticəsində yaranan problemlər zəmanətə daxil olmaya bilər.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 4,
+          "price": 22.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "📌 Sifariş təsdiqləndikdən sonra müştəriyə **4 aylıq Adobe Creative Cloud abunəliyi aktiv olan hazır hesab** təqdim edilir. Hesab e-poçt ünvanı və giriş məlumatları ilə birlikdə verilir və istifadəyə hazır olur.\n\n✅ Abunəlik müddəti: **4 ay**  \n🛡️ MirPanel zəmanəti: **1 ay**\n\n**Zəmanət haqqında:** Hesabda təqdim edildiyi tarixdən etibarən ilk 1 ay ərzində MirPanel-dən asılı olmayan deaktivasiya və ya giriş problemi yaranarsa, vəziyyət yoxlanılır və uyğun olduğu halda hesabın bərpası və ya əvəzlənməsi təmin edilir.\n\n1 aylıq zəmanət hesabın abunəlik müddəti deyil. Hesab normal şəraitdə **4 aylıq istifadə üçün** təqdim olunur, zəmanət isə yalnız ilk ay ərzində yarana biləcək problemlərə qarşı əlavə xidmət təminatıdır.\n\n### Sifarişdən əvvəl nəzərə alın ⚠️\n\nAdobe tərəfindən aparılan təhlükəsizlik yoxlamaları, sistem yenilikləri və daxili qayda dəyişiklikləri səbəbindən hesabın məhdudlaşdırılması və ya deaktiv edilməsi ehtimalı mövcuddur. Belə vəziyyət yaranarsa, zəmanət müddəti ərzində MirPanel-in rəsmi WhatsApp dəstəyinə müraciət edin.\n\nHesab məlumatlarının başqa şəxslərlə paylaşılması, icazəsiz dəyişdirilməsi və istifadə təlimatlarına əməl edilməməsi nəticəsində yaranan problemlər zəmanətə daxil olmaya bilər.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
       "id": "google_ai",
       "_stableId": "google_ai",
-      "order": 1,
+      "order": 2,
       "category": "ai",
       "image": "assets/google-ai.png",
       "currency": "₼",
@@ -244,7 +331,7 @@ const DATA = {
     {
       "id": "capcut",
       "_stableId": "capcut",
-      "order": 2,
+      "order": 3,
       "category": "video",
       "image": "assets/capcut.png",
       "currency": "₼",
@@ -340,7 +427,7 @@ const DATA = {
     {
       "id": "netflix",
       "_stableId": "netflix",
-      "order": 3,
+      "order": 4,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -452,7 +539,7 @@ const DATA = {
     {
       "id": "netflix_umumi",
       "_stableId": "netflix_umumi",
-      "order": 4,
+      "order": 5,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -539,7 +626,7 @@ const DATA = {
     {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 5,
+      "order": 6,
       "category": "musiqi",
       "image": "assets/spotify.png",
       "currency": "₼",
@@ -644,7 +731,7 @@ const DATA = {
     {
       "id": "prime",
       "_stableId": "prime",
-      "order": 6,
+      "order": 7,
       "category": "film",
       "image": "assets/prime.png",
       "currency": "₼",
@@ -752,7 +839,7 @@ const DATA = {
     {
       "id": "youtube_sexsi",
       "_stableId": "youtube_sexsi",
-      "order": 7,
+      "order": 8,
       "category": "all",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -857,7 +944,7 @@ const DATA = {
     {
       "id": "youtube",
       "_stableId": "youtube",
-      "order": 8,
+      "order": 9,
       "category": "musiqi",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -953,7 +1040,7 @@ const DATA = {
     {
       "id": "surfshark",
       "_stableId": "surfshark",
-      "order": 9,
+      "order": 10,
       "category": "video",
       "image": "assets/surfshark.png",
       "currency": "₼",
@@ -1041,7 +1128,7 @@ const DATA = {
     {
       "id": "hbomax",
       "_stableId": "hbomax",
-      "order": 10,
+      "order": 11,
       "category": "film",
       "image": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
       "currency": "₼",
@@ -1145,7 +1232,7 @@ const DATA = {
     {
       "id": "tiktok_jeton",
       "_stableId": "tiktok_jeton",
-      "order": 11,
+      "order": 12,
       "category": "video",
       "image": "assets/tiktok.png",
       "currency": "₼",
@@ -1250,7 +1337,7 @@ const DATA = {
     {
       "id": "google_ai_ultra",
       "_stableId": "google_ai_ultra",
-      "order": 12,
+      "order": 13,
       "category": "ai",
       "image": "assets/google-ai-ultra.png",
       "currency": "₼",
@@ -1338,7 +1425,7 @@ const DATA = {
     {
       "id": "captions",
       "_stableId": "captions",
-      "order": 13,
+      "order": 14,
       "category": "ai",
       "image": "assets/captions.png",
       "currency": "₼",
@@ -1433,7 +1520,7 @@ const DATA = {
     {
       "id": "grok_supergrok",
       "_stableId": "grok_supergrok",
-      "order": 14,
+      "order": 15,
       "category": "ai",
       "image": "assets/grok.png",
       "currency": "₼",
@@ -1521,7 +1608,7 @@ const DATA = {
     {
       "id": "claude_ai",
       "_stableId": "claude_ai",
-      "order": 15,
+      "order": 16,
       "category": "ai",
       "image": "assets/claude.png",
       "currency": "₼",
@@ -1609,7 +1696,7 @@ const DATA = {
     {
       "id": "zoom",
       "_stableId": "zoom",
-      "order": 16,
+      "order": 17,
       "category": "meeting",
       "image": "assets/zoom.png",
       "currency": "₼",
@@ -1697,7 +1784,7 @@ const DATA = {
     {
       "id": "duolingo",
       "_stableId": "duolingo",
-      "order": 17,
+      "order": 18,
       "category": "dil",
       "image": "assets/duolingo.png",
       "currency": "₼",
@@ -1784,7 +1871,7 @@ const DATA = {
     {
       "id": "canva",
       "_stableId": "canva",
-      "order": 18,
+      "order": 19,
       "category": "dizayn",
       "image": "assets/canva.png",
       "currency": "₼",
@@ -1884,7 +1971,7 @@ const DATA = {
     {
       "id": "chatgpt_ortaq",
       "_stableId": "chatgpt_ortaq",
-      "order": 19,
+      "order": 20,
       "category": "all",
       "image": "assets/chatgpt.png",
       "currency": "₼",
@@ -1972,7 +2059,7 @@ const DATA = {
     {
       "id": "netflix_sexsi",
       "_stableId": "netflix_sexsi",
-      "order": 20,
+      "order": 21,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -2071,7 +2158,7 @@ const DATA = {
     {
       "id": "chatgpt",
       "_stableId": "chatgpt",
-      "order": 21,
+      "order": 22,
       "category": "ai",
       "image": "assets/chatgpt.png",
       "currency": "₼",
@@ -2160,97 +2247,6 @@ const DATA = {
         "title": "Sifarişi təsdiqləyin",
         "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
         "confirmText": "Davam et",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "adobecc",
-      "_stableId": "adobecc",
-      "order": 22,
-      "category": "dizayn",
-      "image": "assets/adobe.png",
-      "currency": "₼",
-      "title": "Adobe Creative Cloud",
-      "variant": "Premium",
-      "badge": "Dizayn",
-      "imageAlt": "Adobe Creative Cloud",
-      "desc": "Photoshop, Illustrator və digərləri.",
-      "note": "Hesab hazır şəkildə təqdim edilir.",
-      "longDescription": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "adobe-creative-cloud",
-      "seoTitle": "Adobe Creative Cloud almaq | Ucuz Adobe hesab - Mirpanel",
-      "seoDescription": "Adobe Creative Cloud hesabını sərfəli qiymətə əldə et. Photoshop, Illustrator və premium Adobe alətləri.",
-      "seoH1": "Adobe Creative Cloud",
-      "seoPrimaryKeyword": "Adobe Creative Cloud almaq",
-      "seoRelatedKeywords": " Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
-      "seoKeywords": "Adobe Creative Cloud almaq, Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
-      "seoContent": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/adobe.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/adobe.png",
-        "mobileImage": "",
-        "title": "Adobe Creative Cloud",
-        "description": "Photoshop, Illustrator və digərləri.",
-        "alt": "Adobe Creative Cloud",
-        "order": 21
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 9.99
-        },
-        {
-          "months": 4,
-          "price": 22.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
@@ -3466,6 +3462,10 @@ const SITE_SECTIONS = {
 };
 
 const ADMIN_CONTENT = {
+  "adobecc": {
+    "aboutHtml": "<h3>Adobe Creative Cloud - Peşəkar Dizayn, Foto, Video və Yaradıcı Alətlər Paketi</h3>\n<p>Adobe Creative Cloud, dizayn, foto redaktə, video montaj, animasiya, veb dizayn və kreativ kontent istehsalı ilə məşğul olan istifadəçilər üçün hazırlanmış peşəkar proqramlar paketidir. Standart redaktə alətlərindən fərqli olaraq, Creative Cloud Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü Adobe tətbiqlərini bir ekosistemdə birləşdirir. Peşəkar vizuallar, reklam materialları, video layihələr və brend dizaynları hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Adobe Creative Cloud, istifadəçilərə foto retuşu, qrafik dizayn, loqo hazırlanması, video montaj, rəng korreksiyası, animasiya, sosial media kontenti və çap materialları yaratmaq üçün geniş imkanlar təqdim edir. Platforma bulud yaddaşı, proqramlararası inteqrasiya və peşəkar fayl formatları ilə yaradıcı iş prosesini daha rahat və məhsuldar edir. Dizaynerlər, video redaktorlar, fotoqraflar və marketinq komandaları üçün güclü yaradıcı ekosistemdir.</p>\n\n<h3>Adobe Creative Cloud Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Qrafik Dizaynerlər:</strong> Loqo, brend kimliyi, reklam bannerləri, posterlər və sosial media dizaynları hazırlayan mütəxəssislər.</li>\n  <li><strong>Fotoqraflar və Retuş Mütəxəssisləri:</strong> Şəkilləri peşəkar şəkildə redaktə etmək, rəngləmək və retuş etmək istəyənlər.</li>\n  <li><strong>Video Redaktorlar və Kontent Yaradıcıları:</strong> YouTube, TikTok, Instagram və reklam layihələri üçün peşəkar video montaj edənlər.</li>\n  <li><strong>Marketoloqlar və Biznes Komandaları:</strong> Brend üçün vizual materiallar, reklam kampaniyaları və təqdimat kontenti hazırlayanlar.</li>\n</ul>\n\n<h3>Adobe Creative Cloud-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎨 Peşəkar Adobe Proqramları:</strong> Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü yaradıcı tətbiqlərə giriş.</li>\n  <li><strong>🎬 Video və Animasiya İmkanları:</strong> Peşəkar video montaj, rəng korreksiyası, motion graphics və vizual effektlər hazırlamaq.</li>\n  <li><strong>📸 Foto Redaktə və Retuş:</strong> Şəkilləri yüksək keyfiyyətdə düzəltmək, rəngləmək, fon dəyişmək və peşəkar retuş etmək imkanı.</li>\n  <li><strong>☁️ Bulud və Fayl Sinxronizasiyası:</strong> Layihələri buludda saxlamaq, müxtəlif cihazlardan işləmək və faylları rahat paylaşmaq.</li>\n  <li><strong>🚀 Yaradıcı İş Axınında Məhsuldarlıq:</strong> Proqramlararası inteqrasiya və peşəkar alətlər sayəsində dizayn və montaj prosesini daha sürətli idarə etmək.</li>\n</ul>",
+    "rulesHtml": ""
+  },
   "google_ai": {
     "aboutHtml": "<h3>Google AI Pro + VEO 3 - Premium Süni İntellekt və Video Yaratma Həlli</h3>\n<p>Google AI Pro + VEO 3, süni intellekt vasitəsilə mətn yazmaq, ideya yaratmaq, kontent hazırlamaq və peşəkar səviyyədə AI video generasiya etmək istəyən istifadəçilər üçün hazırlanmış premium rəqəmsal xidmətdir. Standart AI alətlərindən fərqli olaraq, Google AI Pro daha güclü Gemini imkanları, geniş yaradıcılıq funksiyaları və VEO 3 ilə yüksək keyfiyyətli video yaratma təcrübəsi təqdim edir. Kontent istehsalı, biznes, təhsil və kreativ layihələr üçün ideal süni intellekt həllidir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Google AI Pro, istifadəçilərə Gemini süni intellekt modeli vasitəsilə mətn yazmaq, araşdırma aparmaq, ideyalar hazırlamaq, təqdimatlar üçün kontent yaratmaq və gündəlik iş proseslərini daha sürətli idarə etmək imkanı verir. VEO 3 dəstəyi isə mətn təsvirləri əsasında realistik, kreativ və yüksək keyfiyyətli videolar yaratmağa kömək edir. Bu xidmət həm fərdi istifadəçilər, həm də peşəkar kontent yaradıcıları üçün vaxt qazandıran güclü AI platformasıdır.</p>\n\n<h3>Google AI Pro + VEO 3 Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Sosial şəbəkələr üçün kreativ ideyalar, mətnlər, video ssenarilər və AI videolar hazırlamaq istəyənlər.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Reklam ideyaları, post mətnləri, kampaniya konseptləri və video kontent hazırlayan mütəxəssislər.</li>\n  <li><strong>Biznes Sahibləri və Sahibkarlar:</strong> Məhsul və xidmətlərini daha peşəkar təqdim etmək üçün süni intellektdən istifadə etmək istəyənlər.</li>\n  <li><strong>Tələbələr və Peşəkarlar:</strong> Araşdırma, yazı, təqdimat, planlama və gündəlik işlərdə AI dəstəyinə ehtiyac duyan istifadəçilər.</li>\n</ul>\n\n<h3>Google AI Pro + VEO 3-ün Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü Gemini AI İmkanları:</strong> Mətn yazmaq, suallara cavab almaq, ideya yaratmaq, analiz etmək və iş proseslərini sürətləndirmək üçün inkişaf etmiş süni intellekt dəstəyi.</li>\n  <li><strong>🎬 VEO 3 ilə AI Video Yaratma:</strong> Mətn təsvirləri əsasında kreativ, realistik və peşəkar görünüşlü videolar hazırlamaq imkanı.</li>\n  <li><strong>✨ Kontent İstehsalında Vaxta Qənaət:</strong> Sosial media postları, reklam ssenariləri, video ideyaları və təqdimat mətnlərini daha sürətli hazırlamaq.</li>\n  <li><strong>📚 Araşdırma və Planlama Dəstəyi:</strong> Mövzular üzrə məlumat toplamaq, struktur qurmaq, mətnləri təkmilləşdirmək və layihələri daha rahat planlamaq.</li>\n  <li><strong>🚀 Kreativ və Peşəkar Nəticələr:</strong> AI dəstəyi ilə daha keyfiyyətli vizuallar, ideyalar, mətnlər və video kontent hazırlayaraq rəqəmsal işlərdə fərqlənmək.</li>\n</ul>",
     "rulesHtml": ""
@@ -3536,10 +3536,6 @@ const ADMIN_CONTENT = {
   },
   "chatgpt": {
     "aboutHtml": "<h3>ChatGPT Plus - Premium Süni İntellekt Köməkçisi</h3>\n<p>ChatGPT Plus, gündəlik işləri daha sürətli yerinə yetirmək, mətn yazmaq, ideya yaratmaq, suallara cavab almaq və müxtəlif mövzularda peşəkar AI dəstəyi əldə etmək istəyən istifadəçilər üçün hazırlanmış premium süni intellekt xidmətidir. Standart istifadədən fərqli olaraq, Plus abunəliyi daha güclü model imkanları, daha sürətli cavablar və daha məhsuldar iş təcrübəsi təqdim edir. Təhsil, biznes, kontent istehsalı və şəxsi inkişaf üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>ChatGPT Plus, istifadəçilərə mətn hazırlamaq, tərcümə etmək, ideyaları inkişaf etdirmək, kod yazmaq, plan qurmaq, araşdırma aparmaq və gündəlik tapşırıqları daha rahat idarə etmək imkanı verir. Platforma həm sadə suallar, həm də daha mürəkkəb peşəkar işlər üçün ağıllı köməkçi kimi istifadə oluna bilər. Plus imkanları sayəsində istifadəçi daha sürətli, daha çevik və daha effektiv süni intellekt təcrübəsi əldə edir.</p>\n\n<h3>ChatGPT Plus Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Tələbələr və Araşdırma Aparanlar:</strong> Mövzuları izah etmək, xülasə hazırlamaq, esse və təqdimat strukturu qurmaq istəyənlər.</li>\n  <li><strong>Kontent Yaradıcıları və Kopirayterlər:</strong> Sosial media mətnləri, reklam yazıları, video ssenariləri və kreativ ideyalar hazırlayanlar.</li>\n  <li><strong>Biznes Sahibləri və Peşəkarlar:</strong> Email, plan, hesabat, təqdimat və strategiya mətnlərini daha sürətli hazırlamaq istəyənlər.</li>\n  <li><strong>Proqramçılar və Texniki İstifadəçilər:</strong> Kod yazmaq, səhvləri izah etmək, texniki mövzuları analiz etmək və layihə ideyalarını inkişaf etdirmək istəyənlər.</li>\n</ul>\n\n<h3>ChatGPT Plus-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü AI Dəstəyi:</strong> Mətn yazmaq, suallara cavab vermək, ideya yaratmaq və mürəkkəb mövzuları daha sadə izah etmək imkanı.</li>\n  <li><strong>⚡ Daha Sürətli Cavablar:</strong> Gündəlik yazı, araşdırma, planlama və iş tapşırıqlarını daha qısa zamanda yerinə yetirməyə kömək edir.</li>\n  <li><strong>📚 Təhsil və Araşdırma Üçün Faydalı:</strong> Mövzuları öyrənmək, xülasə çıxarmaq, mətnləri təkmilləşdirmək və məlumatları strukturlaşdırmaq.</li>\n  <li><strong>💻 Kod və Texniki Yardım:</strong> Proqramlaşdırma, kod nümunələri, səhv izahı və texniki layihələr üçün faydalı AI köməkçisi.</li>\n  <li><strong>💼 Biznes və Kontent Üçün Uyğun:</strong> Reklam mətnləri, strategiya ideyaları, təqdimatlar, email yazışmaları və sosial media kontenti hazırlamaq.</li>\n</ul>",
-    "rulesHtml": ""
-  },
-  "adobecc": {
-    "aboutHtml": "<h3>Adobe Creative Cloud - Peşəkar Dizayn, Foto, Video və Yaradıcı Alətlər Paketi</h3>\n<p>Adobe Creative Cloud, dizayn, foto redaktə, video montaj, animasiya, veb dizayn və kreativ kontent istehsalı ilə məşğul olan istifadəçilər üçün hazırlanmış peşəkar proqramlar paketidir. Standart redaktə alətlərindən fərqli olaraq, Creative Cloud Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü Adobe tətbiqlərini bir ekosistemdə birləşdirir. Peşəkar vizuallar, reklam materialları, video layihələr və brend dizaynları hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Adobe Creative Cloud, istifadəçilərə foto retuşu, qrafik dizayn, loqo hazırlanması, video montaj, rəng korreksiyası, animasiya, sosial media kontenti və çap materialları yaratmaq üçün geniş imkanlar təqdim edir. Platforma bulud yaddaşı, proqramlararası inteqrasiya və peşəkar fayl formatları ilə yaradıcı iş prosesini daha rahat və məhsuldar edir. Dizaynerlər, video redaktorlar, fotoqraflar və marketinq komandaları üçün güclü yaradıcı ekosistemdir.</p>\n\n<h3>Adobe Creative Cloud Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Qrafik Dizaynerlər:</strong> Loqo, brend kimliyi, reklam bannerləri, posterlər və sosial media dizaynları hazırlayan mütəxəssislər.</li>\n  <li><strong>Fotoqraflar və Retuş Mütəxəssisləri:</strong> Şəkilləri peşəkar şəkildə redaktə etmək, rəngləmək və retuş etmək istəyənlər.</li>\n  <li><strong>Video Redaktorlar və Kontent Yaradıcıları:</strong> YouTube, TikTok, Instagram və reklam layihələri üçün peşəkar video montaj edənlər.</li>\n  <li><strong>Marketoloqlar və Biznes Komandaları:</strong> Brend üçün vizual materiallar, reklam kampaniyaları və təqdimat kontenti hazırlayanlar.</li>\n</ul>\n\n<h3>Adobe Creative Cloud-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎨 Peşəkar Adobe Proqramları:</strong> Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü yaradıcı tətbiqlərə giriş.</li>\n  <li><strong>🎬 Video və Animasiya İmkanları:</strong> Peşəkar video montaj, rəng korreksiyası, motion graphics və vizual effektlər hazırlamaq.</li>\n  <li><strong>📸 Foto Redaktə və Retuş:</strong> Şəkilləri yüksək keyfiyyətdə düzəltmək, rəngləmək, fon dəyişmək və peşəkar retuş etmək imkanı.</li>\n  <li><strong>☁️ Bulud və Fayl Sinxronizasiyası:</strong> Layihələri buludda saxlamaq, müxtəlif cihazlardan işləmək və faylları rahat paylaşmaq.</li>\n  <li><strong>🚀 Yaradıcı İş Axınında Məhsuldarlıq:</strong> Proqramlararası inteqrasiya və peşəkar alətlər sayəsində dizayn və montaj prosesini daha sürətli idarə etmək.</li>\n</ul>",
     "rulesHtml": ""
   },
   "linkedin_career": {
