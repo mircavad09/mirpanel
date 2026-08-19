@@ -2194,8 +2194,8 @@ const DATA = {
         "alt": "ChatGPT Plus (Şəxsi hesab)",
         "order": 19
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "whatsapp",
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
