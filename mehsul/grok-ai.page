@@ -137,11 +137,6 @@
       <div class="product-page-similar-title" title="ChatGPT Plus (Şəxsi hesab)">ChatGPT Plus (Şəxsi hesab)</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">16.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/adobe-creative-cloud" aria-label="Adobe Creative Cloud — 22.99 ₼" title="Adobe Creative Cloud">
-      <img src="/assets/adobe.png" class="product-page-similar-image" alt="Adobe Creative Cloud" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Adobe Creative Cloud">Adobe Creative Cloud</div>
-      <div class="product-page-similar-category">dizayn</div>
-      <div class="product-page-similar-price">22.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 5.99 ₼" title="CapCut Pro">
       <img src="/assets/capcut.png" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
@@ -162,6 +157,11 @@
       <div class="product-page-similar-title" title="Spotify Premium">Spotify Premium</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">4.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 3.99 ₼" title="Amazon Prime Video">
+      <img src="/assets/prime.png" class="product-page-similar-image" alt="Amazon Prime Video" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
+      <div class="product-page-similar-category">film</div>
+      <div class="product-page-similar-price">3.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>

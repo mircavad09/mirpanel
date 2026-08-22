@@ -145,43 +145,43 @@ const DATA = {
   ],
   "products": [
     {
-      "id": "adobecc",
-      "_stableId": "adobecc",
+      "id": "capcut",
+      "_stableId": "capcut",
       "order": 1,
-      "category": "dizayn",
-      "image": "assets/adobe.png",
+      "category": "video",
+      "image": "assets/capcut.png",
       "currency": "₼",
-      "title": "Adobe Creative Cloud",
-      "variant": "Premium",
-      "badge": "Dizayn",
-      "imageAlt": "Adobe Creative Cloud",
-      "desc": "Photoshop, Illustrator və digərləri.",
-      "note": "Hesab hazır şəkildə təqdim edilir.",
-      "longDescription": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
+      "title": "CapCut Pro",
+      "variant": "Pro",
+      "badge": "Video",
+      "imageAlt": "CapCut Pro almaq Azərbaycanda | Mirpanel",
+      "desc": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
+      "note": "",
+      "longDescription": "CapCut Pro video montaj edən istifadəçilər üçün premium effektlər, şablonlar və əlavə funksiyalar təqdim edir. Mirpanel vasitəsilə CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə həyata keçirilir.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
-      "seoSlug": "adobe-creative-cloud",
-      "seoTitle": "Adobe Creative Cloud almaq | Ucuz Adobe hesab - Mirpanel",
-      "seoDescription": "Adobe Creative Cloud hesabını sərfəli qiymətə əldə et. Photoshop, Illustrator və premium Adobe alətləri.",
-      "seoH1": "Adobe Creative Cloud",
-      "seoPrimaryKeyword": "Adobe Creative Cloud almaq",
-      "seoRelatedKeywords": " Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
-      "seoKeywords": "Adobe Creative Cloud almaq, Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
-      "seoContent": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
+      "seoSlug": "capcut-pro",
+      "seoTitle": "CapCut Pro almaq Azərbaycanda | Mirpanel",
+      "seoDescription": "CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə et. Video montaj üçün premium funksiyalar və sürətli aktivləşdirmə.",
+      "seoH1": "CapCut Pro almaq",
+      "seoPrimaryKeyword": "CapCut Pro almaq",
+      "seoRelatedKeywords": "CapCut Pro qiyməti, CapCut Premium almaq, CapCut Pro Azərbaycan",
+      "seoKeywords": "CapCut Pro almaq, CapCut Pro ucuz, CapCut Pro Azərbaycan, CapCut hesab almaq, CapCut premium, CapCut Pro video montaj, CapCut Pro aktivləşdirmə, CapCut Pro qiyməti, CapCut Pro hazır hesab",
+      "seoContent": "CapCut Pro video montaj edən istifadəçilər üçün premium effektlər, şablonlar və əlavə funksiyalar təqdim edir. Mirpanel vasitəsilə CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə həyata keçirilir.",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
       "seoOgDescription": "",
-      "seoOgImage": "assets/adobe.png",
+      "seoOgImage": "assets/capcut.png",
       "banner": {
-        "enabled": false,
-        "desktopImage": "assets/adobe.png",
+        "enabled": true,
+        "desktopImage": "/uploads/products/capcut-1786103247176-d7438ec7.jpg?v=1786103247176",
         "mobileImage": "",
-        "title": "Adobe Creative Cloud",
-        "description": "Photoshop, Illustrator və digərləri.",
-        "alt": "Adobe Creative Cloud",
-        "order": 21
+        "title": "CapCut Pro",
+        "description": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
+        "alt": "CapCut Pro banneri",
+        "order": 1
       },
       "flow": "whatsapp",
       "soldOut": false,
@@ -189,20 +189,29 @@ const DATA = {
       "stock": null,
       "stockEnabled": false,
       "seller": "",
-      "bestSeller": false,
+      "bestSeller": true,
       "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Email",
+          "placeholder": "Gmail hesabınızı yazın",
+          "required": true,
+          "enabled": false
+        }
+      ],
       "formTitle": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "📌 Sifariş təsdiqləndikdən sonra müştəriyə **4 aylıq Adobe Creative Cloud abunəliyi aktiv olan hazır hesab** təqdim edilir. Hesab e-poçt ünvanı və giriş məlumatları ilə birlikdə verilir və istifadəyə hazır olur.\n\n✅ Abunəlik müddəti: **4 ay**  \n🛡️ MirPanel zəmanəti: **1 ay**\n\n**Zəmanət haqqında:** Hesabda təqdim edildiyi tarixdən etibarən ilk 1 ay ərzində MirPanel-dən asılı olmayan deaktivasiya və ya giriş problemi yaranarsa, vəziyyət yoxlanılır və uyğun olduğu halda hesabın bərpası və ya əvəzlənməsi təmin edilir.\n\n1 aylıq zəmanət hesabın abunəlik müddəti deyil. Hesab normal şəraitdə **4 aylıq istifadə üçün** təqdim olunur, zəmanət isə yalnız ilk ay ərzində yarana biləcək problemlərə qarşı əlavə xidmət təminatıdır.\n\n### Sifarişdən əvvəl nəzərə alın ⚠️\n\nAdobe tərəfindən aparılan təhlükəsizlik yoxlamaları, sistem yenilikləri və daxili qayda dəyişiklikləri səbəbindən hesabın məhdudlaşdırılması və ya deaktiv edilməsi ehtimalı mövcuddur. Belə vəziyyət yaranarsa, zəmanət müddəti ərzində MirPanel-in rəsmi WhatsApp dəstəyinə müraciət edin.\n\nHesab məlumatlarının başqa şəxslərlə paylaşılması, icazəsiz dəyişdirilməsi və istifadə təlimatlarına əməl edilməməsi nəticəsində yaranan problemlər zəmanətə daxil olmaya bilər.",
+        "description": "Sifarişinizi tamamlamazdan öncə qaydalarla tanış olun:\n\nTəhvil: CapCut Pro bizim tərəfimizdən hazır hesab kimi 30-60 saniyə ərzində təhvil verilir.\n\nQayda: Hesaba eyni anda yalnız 1 cihaz daxil ola bilər. İkinci cihaz qoşulduqda hesab bloklana bilər.\n\nMəsuliyyət: Qayda pozuntusuna görə hesab bloklanarsa, geri ödəniş edilmir və hesab əvəzlənmir.\nSifarişi təsdiqləməklə bu şərtləri tam qəbul etmiş sayılırsınız",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
           "enabled": false,
-          "label": "",
+          "label": "Gmail yaradı",
           "url": ""
         }
       },
@@ -213,20 +222,20 @@ const DATA = {
       },
       "plans": [
         {
-          "months": 4,
-          "price": 22.99
+          "months": 1,
+          "price": 5.99
         }
       ],
       "orderConfirmation": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "📌 Sifariş təsdiqləndikdən sonra müştəriyə **4 aylıq Adobe Creative Cloud abunəliyi aktiv olan hazır hesab** təqdim edilir. Hesab e-poçt ünvanı və giriş məlumatları ilə birlikdə verilir və istifadəyə hazır olur.\n\n✅ Abunəlik müddəti: **4 ay**  \n🛡️ MirPanel zəmanəti: **1 ay**\n\n**Zəmanət haqqında:** Hesabda təqdim edildiyi tarixdən etibarən ilk 1 ay ərzində MirPanel-dən asılı olmayan deaktivasiya və ya giriş problemi yaranarsa, vəziyyət yoxlanılır və uyğun olduğu halda hesabın bərpası və ya əvəzlənməsi təmin edilir.\n\n1 aylıq zəmanət hesabın abunəlik müddəti deyil. Hesab normal şəraitdə **4 aylıq istifadə üçün** təqdim olunur, zəmanət isə yalnız ilk ay ərzində yarana biləcək problemlərə qarşı əlavə xidmət təminatıdır.\n\n### Sifarişdən əvvəl nəzərə alın ⚠️\n\nAdobe tərəfindən aparılan təhlükəsizlik yoxlamaları, sistem yenilikləri və daxili qayda dəyişiklikləri səbəbindən hesabın məhdudlaşdırılması və ya deaktiv edilməsi ehtimalı mövcuddur. Belə vəziyyət yaranarsa, zəmanət müddəti ərzində MirPanel-in rəsmi WhatsApp dəstəyinə müraciət edin.\n\nHesab məlumatlarının başqa şəxslərlə paylaşılması, icazəsiz dəyişdirilməsi və istifadə təlimatlarına əməl edilməməsi nəticəsində yaranan problemlər zəmanətə daxil olmaya bilər.",
+        "description": "Sifarişinizi tamamlamazdan öncə qaydalarla tanış olun:\n\nTəhvil: CapCut Pro bizim tərəfimizdən hazır hesab kimi 30-60 saniyə ərzində təhvil verilir.\n\nQayda: Hesaba eyni anda yalnız 1 cihaz daxil ola bilər. İkinci cihaz qoşulduqda hesab bloklana bilər.\n\nMəsuliyyət: Qayda pozuntusuna görə hesab bloklanarsa, geri ödəniş edilmir və hesab əvəzlənmir.\nSifarişi təsdiqləməklə bu şərtləri tam qəbul etmiş sayılırsınız",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
           "enabled": false,
-          "label": "",
+          "label": "Gmail yaradı",
           "url": ""
         }
       }
@@ -329,105 +338,9 @@ const DATA = {
       }
     },
     {
-      "id": "capcut",
-      "_stableId": "capcut",
-      "order": 3,
-      "category": "video",
-      "image": "assets/capcut.png",
-      "currency": "₼",
-      "title": "CapCut Pro",
-      "variant": "Pro",
-      "badge": "Video",
-      "imageAlt": "CapCut Pro almaq Azərbaycanda | Mirpanel",
-      "desc": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
-      "note": "",
-      "longDescription": "CapCut Pro video montaj edən istifadəçilər üçün premium effektlər, şablonlar və əlavə funksiyalar təqdim edir. Mirpanel vasitəsilə CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "capcut-pro",
-      "seoTitle": "CapCut Pro almaq Azərbaycanda | Mirpanel",
-      "seoDescription": "CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə et. Video montaj üçün premium funksiyalar və sürətli aktivləşdirmə.",
-      "seoH1": "CapCut Pro almaq",
-      "seoPrimaryKeyword": "CapCut Pro almaq",
-      "seoRelatedKeywords": "CapCut Pro qiyməti, CapCut Premium almaq, CapCut Pro Azərbaycan",
-      "seoKeywords": "CapCut Pro almaq, CapCut Pro ucuz, CapCut Pro Azərbaycan, CapCut hesab almaq, CapCut premium, CapCut Pro video montaj, CapCut Pro aktivləşdirmə, CapCut Pro qiyməti, CapCut Pro hazır hesab",
-      "seoContent": "CapCut Pro video montaj edən istifadəçilər üçün premium effektlər, şablonlar və əlavə funksiyalar təqdim edir. Mirpanel vasitəsilə CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/capcut.png",
-      "banner": {
-        "enabled": true,
-        "desktopImage": "/uploads/products/capcut-1786103247176-d7438ec7.jpg?v=1786103247176",
-        "mobileImage": "",
-        "title": "CapCut Pro",
-        "description": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
-        "alt": "CapCut Pro banneri",
-        "order": 1
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": true,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [
-        {
-          "key": "email",
-          "type": "email",
-          "label": "Email",
-          "placeholder": "Gmail hesabınızı yazın",
-          "required": true,
-          "enabled": false
-        }
-      ],
-      "formTitle": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "Sifarişinizi tamamlamazdan öncə qaydalarla tanış olun:\n\nTəhvil: CapCut Pro bizim tərəfimizdən hazır hesab kimi 30-60 saniyə ərzində təhvil verilir.\n\nQayda: Hesaba eyni anda yalnız 1 cihaz daxil ola bilər. İkinci cihaz qoşulduqda hesab bloklana bilər.\n\nMəsuliyyət: Qayda pozuntusuna görə hesab bloklanarsa, geri ödəniş edilmir və hesab əvəzlənmir.\nSifarişi təsdiqləməklə bu şərtləri tam qəbul etmiş sayılırsınız",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "Gmail yaradı",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 5.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "Sifarişinizi tamamlamazdan öncə qaydalarla tanış olun:\n\nTəhvil: CapCut Pro bizim tərəfimizdən hazır hesab kimi 30-60 saniyə ərzində təhvil verilir.\n\nQayda: Hesaba eyni anda yalnız 1 cihaz daxil ola bilər. İkinci cihaz qoşulduqda hesab bloklana bilər.\n\nMəsuliyyət: Qayda pozuntusuna görə hesab bloklanarsa, geri ödəniş edilmir və hesab əvəzlənmir.\nSifarişi təsdiqləməklə bu şərtləri tam qəbul etmiş sayılırsınız",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "Gmail yaradı",
-          "url": ""
-        }
-      }
-    },
-    {
       "id": "netflix",
       "_stableId": "netflix",
-      "order": 4,
+      "order": 3,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -539,7 +452,7 @@ const DATA = {
     {
       "id": "netflix_umumi",
       "_stableId": "netflix_umumi",
-      "order": 5,
+      "order": 4,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -626,7 +539,7 @@ const DATA = {
     {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 6,
+      "order": 5,
       "category": "musiqi",
       "image": "assets/spotify.png",
       "currency": "₼",
@@ -731,7 +644,7 @@ const DATA = {
     {
       "id": "prime",
       "_stableId": "prime",
-      "order": 7,
+      "order": 6,
       "category": "film",
       "image": "assets/prime.png",
       "currency": "₼",
@@ -839,7 +752,7 @@ const DATA = {
     {
       "id": "youtube_sexsi",
       "_stableId": "youtube_sexsi",
-      "order": 8,
+      "order": 7,
       "category": "all",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -944,7 +857,7 @@ const DATA = {
     {
       "id": "youtube",
       "_stableId": "youtube",
-      "order": 9,
+      "order": 8,
       "category": "musiqi",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -1028,6 +941,93 @@ const DATA = {
         "title": "Sifarişi təsdiqləyin",
         "description": "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
         "confirmText": "Təsdiq edirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "adobecc",
+      "_stableId": "adobecc",
+      "order": 9,
+      "category": "dizayn",
+      "image": "assets/adobe.png",
+      "currency": "₼",
+      "title": "Adobe Creative Cloud",
+      "variant": "Premium",
+      "badge": "Dizayn",
+      "imageAlt": "Adobe Creative Cloud",
+      "desc": "Photoshop, Illustrator və digərləri.",
+      "note": "Hesab hazır şəkildə təqdim edilir.",
+      "longDescription": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "adobe-creative-cloud",
+      "seoTitle": "Adobe Creative Cloud almaq | Ucuz Adobe hesab - Mirpanel",
+      "seoDescription": "Adobe Creative Cloud hesabını sərfəli qiymətə əldə et. Photoshop, Illustrator və premium Adobe alətləri.",
+      "seoH1": "Adobe Creative Cloud",
+      "seoPrimaryKeyword": "Adobe Creative Cloud almaq",
+      "seoRelatedKeywords": " Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
+      "seoKeywords": "Adobe Creative Cloud almaq, Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
+      "seoContent": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/adobe.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/adobe.png",
+        "mobileImage": "",
+        "title": "Adobe Creative Cloud",
+        "description": "Photoshop, Illustrator və digərləri.",
+        "alt": "Adobe Creative Cloud",
+        "order": 21
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "📌 Sifariş təsdiqləndikdən sonra müştəriyə **4 aylıq Adobe Creative Cloud abunəliyi aktiv olan hazır hesab** təqdim edilir. Hesab e-poçt ünvanı və giriş məlumatları ilə birlikdə verilir və istifadəyə hazır olur.\n\n✅ Abunəlik müddəti: **4 ay**  \n🛡️ MirPanel zəmanəti: **1 ay**\n\n**Zəmanət haqqında:** Hesabda təqdim edildiyi tarixdən etibarən ilk 1 ay ərzində MirPanel-dən asılı olmayan deaktivasiya və ya giriş problemi yaranarsa, vəziyyət yoxlanılır və uyğun olduğu halda hesabın bərpası və ya əvəzlənməsi təmin edilir.\n\n1 aylıq zəmanət hesabın abunəlik müddəti deyil. Hesab normal şəraitdə **4 aylıq istifadə üçün** təqdim olunur, zəmanət isə yalnız ilk ay ərzində yarana biləcək problemlərə qarşı əlavə xidmət təminatıdır.\n\n### Sifarişdən əvvəl nəzərə alın ⚠️\n\nAdobe tərəfindən aparılan təhlükəsizlik yoxlamaları, sistem yenilikləri və daxili qayda dəyişiklikləri səbəbindən hesabın məhdudlaşdırılması və ya deaktiv edilməsi ehtimalı mövcuddur. Belə vəziyyət yaranarsa, zəmanət müddəti ərzində MirPanel-in rəsmi WhatsApp dəstəyinə müraciət edin.\n\nHesab məlumatlarının başqa şəxslərlə paylaşılması, icazəsiz dəyişdirilməsi və istifadə təlimatlarına əməl edilməməsi nəticəsində yaranan problemlər zəmanətə daxil olmaya bilər.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 4,
+          "price": 22.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "📌 Sifariş təsdiqləndikdən sonra müştəriyə **4 aylıq Adobe Creative Cloud abunəliyi aktiv olan hazır hesab** təqdim edilir. Hesab e-poçt ünvanı və giriş məlumatları ilə birlikdə verilir və istifadəyə hazır olur.\n\n✅ Abunəlik müddəti: **4 ay**  \n🛡️ MirPanel zəmanəti: **1 ay**\n\n**Zəmanət haqqında:** Hesabda təqdim edildiyi tarixdən etibarən ilk 1 ay ərzində MirPanel-dən asılı olmayan deaktivasiya və ya giriş problemi yaranarsa, vəziyyət yoxlanılır və uyğun olduğu halda hesabın bərpası və ya əvəzlənməsi təmin edilir.\n\n1 aylıq zəmanət hesabın abunəlik müddəti deyil. Hesab normal şəraitdə **4 aylıq istifadə üçün** təqdim olunur, zəmanət isə yalnız ilk ay ərzində yarana biləcək problemlərə qarşı əlavə xidmət təminatıdır.\n\n### Sifarişdən əvvəl nəzərə alın ⚠️\n\nAdobe tərəfindən aparılan təhlükəsizlik yoxlamaları, sistem yenilikləri və daxili qayda dəyişiklikləri səbəbindən hesabın məhdudlaşdırılması və ya deaktiv edilməsi ehtimalı mövcuddur. Belə vəziyyət yaranarsa, zəmanət müddəti ərzində MirPanel-in rəsmi WhatsApp dəstəyinə müraciət edin.\n\nHesab məlumatlarının başqa şəxslərlə paylaşılması, icazəsiz dəyişdirilməsi və istifadə təlimatlarına əməl edilməməsi nəticəsində yaranan problemlər zəmanətə daxil olmaya bilər.",
+        "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
@@ -3468,16 +3468,12 @@ const SITE_SECTIONS = {
 };
 
 const ADMIN_CONTENT = {
-  "adobecc": {
-    "aboutHtml": "<h3>Adobe Creative Cloud - Peşəkar Dizayn, Foto, Video və Yaradıcı Alətlər Paketi</h3>\n<p>Adobe Creative Cloud, dizayn, foto redaktə, video montaj, animasiya, veb dizayn və kreativ kontent istehsalı ilə məşğul olan istifadəçilər üçün hazırlanmış peşəkar proqramlar paketidir. Standart redaktə alətlərindən fərqli olaraq, Creative Cloud Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü Adobe tətbiqlərini bir ekosistemdə birləşdirir. Peşəkar vizuallar, reklam materialları, video layihələr və brend dizaynları hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Adobe Creative Cloud, istifadəçilərə foto retuşu, qrafik dizayn, loqo hazırlanması, video montaj, rəng korreksiyası, animasiya, sosial media kontenti və çap materialları yaratmaq üçün geniş imkanlar təqdim edir. Platforma bulud yaddaşı, proqramlararası inteqrasiya və peşəkar fayl formatları ilə yaradıcı iş prosesini daha rahat və məhsuldar edir. Dizaynerlər, video redaktorlar, fotoqraflar və marketinq komandaları üçün güclü yaradıcı ekosistemdir.</p>\n\n<h3>Adobe Creative Cloud Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Qrafik Dizaynerlər:</strong> Loqo, brend kimliyi, reklam bannerləri, posterlər və sosial media dizaynları hazırlayan mütəxəssislər.</li>\n  <li><strong>Fotoqraflar və Retuş Mütəxəssisləri:</strong> Şəkilləri peşəkar şəkildə redaktə etmək, rəngləmək və retuş etmək istəyənlər.</li>\n  <li><strong>Video Redaktorlar və Kontent Yaradıcıları:</strong> YouTube, TikTok, Instagram və reklam layihələri üçün peşəkar video montaj edənlər.</li>\n  <li><strong>Marketoloqlar və Biznes Komandaları:</strong> Brend üçün vizual materiallar, reklam kampaniyaları və təqdimat kontenti hazırlayanlar.</li>\n</ul>\n\n<h3>Adobe Creative Cloud-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎨 Peşəkar Adobe Proqramları:</strong> Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü yaradıcı tətbiqlərə giriş.</li>\n  <li><strong>🎬 Video və Animasiya İmkanları:</strong> Peşəkar video montaj, rəng korreksiyası, motion graphics və vizual effektlər hazırlamaq.</li>\n  <li><strong>📸 Foto Redaktə və Retuş:</strong> Şəkilləri yüksək keyfiyyətdə düzəltmək, rəngləmək, fon dəyişmək və peşəkar retuş etmək imkanı.</li>\n  <li><strong>☁️ Bulud və Fayl Sinxronizasiyası:</strong> Layihələri buludda saxlamaq, müxtəlif cihazlardan işləmək və faylları rahat paylaşmaq.</li>\n  <li><strong>🚀 Yaradıcı İş Axınında Məhsuldarlıq:</strong> Proqramlararası inteqrasiya və peşəkar alətlər sayəsində dizayn və montaj prosesini daha sürətli idarə etmək.</li>\n</ul>",
+  "capcut": {
+    "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
     "rulesHtml": ""
   },
   "google_ai": {
     "aboutHtml": "<h3>Google AI Pro + VEO 3 - Premium Süni İntellekt və Video Yaratma Həlli</h3>\n<p>Google AI Pro + VEO 3, süni intellekt vasitəsilə mətn yazmaq, ideya yaratmaq, kontent hazırlamaq və peşəkar səviyyədə AI video generasiya etmək istəyən istifadəçilər üçün hazırlanmış premium rəqəmsal xidmətdir. Standart AI alətlərindən fərqli olaraq, Google AI Pro daha güclü Gemini imkanları, geniş yaradıcılıq funksiyaları və VEO 3 ilə yüksək keyfiyyətli video yaratma təcrübəsi təqdim edir. Kontent istehsalı, biznes, təhsil və kreativ layihələr üçün ideal süni intellekt həllidir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Google AI Pro, istifadəçilərə Gemini süni intellekt modeli vasitəsilə mətn yazmaq, araşdırma aparmaq, ideyalar hazırlamaq, təqdimatlar üçün kontent yaratmaq və gündəlik iş proseslərini daha sürətli idarə etmək imkanı verir. VEO 3 dəstəyi isə mətn təsvirləri əsasında realistik, kreativ və yüksək keyfiyyətli videolar yaratmağa kömək edir. Bu xidmət həm fərdi istifadəçilər, həm də peşəkar kontent yaradıcıları üçün vaxt qazandıran güclü AI platformasıdır.</p>\n\n<h3>Google AI Pro + VEO 3 Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Sosial şəbəkələr üçün kreativ ideyalar, mətnlər, video ssenarilər və AI videolar hazırlamaq istəyənlər.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Reklam ideyaları, post mətnləri, kampaniya konseptləri və video kontent hazırlayan mütəxəssislər.</li>\n  <li><strong>Biznes Sahibləri və Sahibkarlar:</strong> Məhsul və xidmətlərini daha peşəkar təqdim etmək üçün süni intellektdən istifadə etmək istəyənlər.</li>\n  <li><strong>Tələbələr və Peşəkarlar:</strong> Araşdırma, yazı, təqdimat, planlama və gündəlik işlərdə AI dəstəyinə ehtiyac duyan istifadəçilər.</li>\n</ul>\n\n<h3>Google AI Pro + VEO 3-ün Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü Gemini AI İmkanları:</strong> Mətn yazmaq, suallara cavab almaq, ideya yaratmaq, analiz etmək və iş proseslərini sürətləndirmək üçün inkişaf etmiş süni intellekt dəstəyi.</li>\n  <li><strong>🎬 VEO 3 ilə AI Video Yaratma:</strong> Mətn təsvirləri əsasında kreativ, realistik və peşəkar görünüşlü videolar hazırlamaq imkanı.</li>\n  <li><strong>✨ Kontent İstehsalında Vaxta Qənaət:</strong> Sosial media postları, reklam ssenariləri, video ideyaları və təqdimat mətnlərini daha sürətli hazırlamaq.</li>\n  <li><strong>📚 Araşdırma və Planlama Dəstəyi:</strong> Mövzular üzrə məlumat toplamaq, struktur qurmaq, mətnləri təkmilləşdirmək və layihələri daha rahat planlamaq.</li>\n  <li><strong>🚀 Kreativ və Peşəkar Nəticələr:</strong> AI dəstəyi ilə daha keyfiyyətli vizuallar, ideyalar, mətnlər və video kontent hazırlayaraq rəqəmsal işlərdə fərqlənmək.</li>\n</ul>",
-    "rulesHtml": ""
-  },
-  "capcut": {
-    "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
     "rulesHtml": ""
   },
   "netflix": {
@@ -3498,6 +3494,10 @@ const ADMIN_CONTENT = {
   },
   "youtube": {
     "aboutHtml": "<h3>YouTube Premium - Reklamsız İzləmə</h3>\n      <p>YouTube Premium hesabı, videoları reklamsız izləmək və YouTube Music xidmətindən istifadə etmək üçündür.</p>",
+    "rulesHtml": ""
+  },
+  "adobecc": {
+    "aboutHtml": "<h3>Adobe Creative Cloud - Peşəkar Dizayn, Foto, Video və Yaradıcı Alətlər Paketi</h3>\n<p>Adobe Creative Cloud, dizayn, foto redaktə, video montaj, animasiya, veb dizayn və kreativ kontent istehsalı ilə məşğul olan istifadəçilər üçün hazırlanmış peşəkar proqramlar paketidir. Standart redaktə alətlərindən fərqli olaraq, Creative Cloud Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü Adobe tətbiqlərini bir ekosistemdə birləşdirir. Peşəkar vizuallar, reklam materialları, video layihələr və brend dizaynları hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Adobe Creative Cloud, istifadəçilərə foto retuşu, qrafik dizayn, loqo hazırlanması, video montaj, rəng korreksiyası, animasiya, sosial media kontenti və çap materialları yaratmaq üçün geniş imkanlar təqdim edir. Platforma bulud yaddaşı, proqramlararası inteqrasiya və peşəkar fayl formatları ilə yaradıcı iş prosesini daha rahat və məhsuldar edir. Dizaynerlər, video redaktorlar, fotoqraflar və marketinq komandaları üçün güclü yaradıcı ekosistemdir.</p>\n\n<h3>Adobe Creative Cloud Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Qrafik Dizaynerlər:</strong> Loqo, brend kimliyi, reklam bannerləri, posterlər və sosial media dizaynları hazırlayan mütəxəssislər.</li>\n  <li><strong>Fotoqraflar və Retuş Mütəxəssisləri:</strong> Şəkilləri peşəkar şəkildə redaktə etmək, rəngləmək və retuş etmək istəyənlər.</li>\n  <li><strong>Video Redaktorlar və Kontent Yaradıcıları:</strong> YouTube, TikTok, Instagram və reklam layihələri üçün peşəkar video montaj edənlər.</li>\n  <li><strong>Marketoloqlar və Biznes Komandaları:</strong> Brend üçün vizual materiallar, reklam kampaniyaları və təqdimat kontenti hazırlayanlar.</li>\n</ul>\n\n<h3>Adobe Creative Cloud-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎨 Peşəkar Adobe Proqramları:</strong> Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü yaradıcı tətbiqlərə giriş.</li>\n  <li><strong>🎬 Video və Animasiya İmkanları:</strong> Peşəkar video montaj, rəng korreksiyası, motion graphics və vizual effektlər hazırlamaq.</li>\n  <li><strong>📸 Foto Redaktə və Retuş:</strong> Şəkilləri yüksək keyfiyyətdə düzəltmək, rəngləmək, fon dəyişmək və peşəkar retuş etmək imkanı.</li>\n  <li><strong>☁️ Bulud və Fayl Sinxronizasiyası:</strong> Layihələri buludda saxlamaq, müxtəlif cihazlardan işləmək və faylları rahat paylaşmaq.</li>\n  <li><strong>🚀 Yaradıcı İş Axınında Məhsuldarlıq:</strong> Proqramlararası inteqrasiya və peşəkar alətlər sayəsində dizayn və montaj prosesini daha sürətli idarə etmək.</li>\n</ul>",
     "rulesHtml": ""
   },
   "surfshark": {
