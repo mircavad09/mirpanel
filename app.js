@@ -838,6 +838,10 @@ const DATA = {
           "label": "1 ayliq",
           "months": 1,
           "price": 5.99
+        },
+        {
+          "months": 2,
+          "price": 11.49
         }
       ],
       "orderConfirmation": {
