@@ -225,6 +225,11 @@ const DATA = {
           "months": 1,
           "price": 5.49,
           "regularPrice": 5.99
+        },
+        {
+          "months": 6,
+          "price": 26.99,
+          "regularPrice": 36
         }
       ],
       "orderConfirmation": {
