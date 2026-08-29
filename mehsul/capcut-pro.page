@@ -99,7 +99,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><span class="product-page-regular-price">5.99 ₼</span><strong>5.49 ₼</strong><span class="product-page-discount">-8%</span></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 aylıq</span><span class="product-page-plan-prices"><span class="product-page-regular-price">36.00 ₼</span><strong>26.99 ₼</strong><span class="product-page-discount">-25%</span></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><span class="product-page-regular-price">16.99 ₼</span><strong>5.49 ₼</strong><span class="product-page-discount">-68%</span></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 aylıq</span><span class="product-page-plan-prices"><span class="product-page-regular-price">101.99 ₼</span><strong>26.99 ₼</strong><span class="product-page-discount">-74%</span></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
