@@ -64,7 +64,7 @@ await assert.rejects(harness(async () => { throw new Error("must not fetch"); })
 const loginSource = fs.readFileSync(new URL("../mirpanel-admin/public/login.js", import.meta.url), "utf8");
 for (const mode of ["html", "timeout", "401", "429", "500", "empty", "success"]) {
   let submit;
-  const elements = { loginForm: { addEventListener(_, fn) { submit = fn; } }, loginBtn: { disabled: false }, loginError: {}, username: { value: "test" }, password: { value: "test" } };
+  const elements = { loginForm: { addEventListener(_, fn) { submit = fn; } }, loginBtn: { disabled: false }, loginError: {setAttribute(){},removeAttribute(){}}, username: { value: "test" }, password: { value: "test" } };
   const location = { search: "", href: "" };
   const context = vm.createContext({ document: { getElementById: (id) => elements[id] }, location, URLSearchParams, AbortController,
     setTimeout: (fn) => setTimeout(fn, 15), clearTimeout,

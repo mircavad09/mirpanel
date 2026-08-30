@@ -330,6 +330,7 @@ async function api(path, options = {}) {
   const response = await fetch(path, {
     ...options,
     signal: controller.signal,
+    credentials: "same-origin",
     cache: "no-store",
     headers: {
       "Content-Type": "application/json",
@@ -343,6 +344,7 @@ async function api(path, options = {}) {
   if (!response.ok) {
     const error = new Error(payload.error || `Server xətası: ${response.status}`);
     error.status = response.status;
+    error.code = payload.code;
     throw error;
   }
   return payload;
@@ -419,7 +421,7 @@ async function uploadProductImage(file) {
   } catch (error) {
     $("previewImage").src = imageUrl(product.image);
     setImageUploadStatus(error.message || "Şəkil yüklənmədi.", "bad");
-    if (error.status === 401) location.href = "/login.html";
+    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") location.href = "/login.html?reason=session_required";
     else toast(error.message || "Şəkil yüklənmədi.", "bad");
   } finally {
     setLoading(false);
@@ -500,8 +502,13 @@ async function loadState() {
     $("commitInfo").textContent = `Yükləndi: ${new Date(payload.loadedAt).toLocaleString("az-AZ")} / ${payload.sha.slice(0, 7)}`;
     renderAll();
   } catch (error) {
-    if (error.status === 401) location.href = "/login.html";
-    else toast(error.message, "bad");
+    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") location.href = "/login.html?reason=session_required";
+    else {
+      $("commitInfo").textContent = error.code === "GITHUB_ACCESS_FAILED"
+        ? "Giriş uğurludur · GitHub bağlantısına icazə verilmədi"
+        : "Məlumatlar yüklənmədi · Yenilə düyməsi ilə təkrar cəhd edin";
+      toast(error.message, "bad");
+    }
   } finally {
     setLoading(false);
   }
@@ -556,7 +563,7 @@ async function saveState() {
     state.draftSaved = hadSavedDraft;
     if (error.status === 409) state.draftConflict = true;
     renderStats();
-    if (error.status === 401) location.href = "/login.html";
+    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") location.href = "/login.html?reason=session_required";
     else if (error.status === 409) toast("Conflict: GitHub-da app.js dəyişib. Yenilə düyməsini bas.", "bad");
     else toast(error.message, "bad");
   } finally {

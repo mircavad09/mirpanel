@@ -248,8 +248,13 @@ async function github(pathname, options = {}) {
   const payload = await response.json();
 
   if (!response.ok) {
-    const error = new Error(payload.message || `GitHub xətası: ${response.status}`);
-    error.status = response.status;
+    // Upstream credentials are not the browser's admin session.
+    const accessError = response.status === 401 || response.status === 403;
+    const error = new Error(accessError
+      ? `Admin girişi uğurludur, lakin GitHub bağlantısına icazə verilmədi (GitHub ${response.status}). Render-də GitHub inteqrasiyasının giriş icazəsini yoxlayın. Sessiyanız bağlanmayıb.`
+      : payload.message || `GitHub xətası: ${response.status}`);
+    error.status = accessError || response.status >= 500 ? 502 : response.status;
+    error.code = accessError ? "GITHUB_ACCESS_FAILED" : "GITHUB_UPSTREAM_ERROR";
     throw error;
   }
 
@@ -598,14 +603,15 @@ async function commitRepoFiles({ parent, files, removedPaths, message }) {
 
 function requireAuth(request, response) {
   if (getSession(request)) return true;
-  json(response, 401, { error: "Sessiya bitib. Yenidən daxil ol." });
+  json(response, 401, { error: "Sessiya bitib. Yenidən daxil ol.", code: "ADMIN_SESSION_REQUIRED",
+    reason: getCookies(request).mirpanel_session ? "session_not_found" : "cookie_not_received" });
   return false;
 }
 
 function requireMutationAuth(request, response) {
   const session = getSession(request);
   if (!session) {
-    json(response, 401, { error: "Sessiya bitib. Yenidən daxil ol." });
+    json(response, 401, { error: "Sessiya bitib. Yenidən daxil ol.", code: "ADMIN_SESSION_REQUIRED" });
     return null;
   }
   if (!sameOrigin(request)) {
@@ -637,7 +643,7 @@ async function handleApi(request, response) {
       !safeEqual(body.password, config.password)
     ) {
       return json(response, 401, {
-        error: "İstifadəçi adı və ya şifrə yanlışdır."
+        error: "İstifadəçi adı və ya şifrə yanlışdır.", code: "INVALID_CREDENTIALS"
       });
     }
 
@@ -1111,7 +1117,7 @@ const server = http.createServer(async (request, response) => {
 
     if (pathname === "/admin.html") {
       if (!getSession(request)) {
-        response.writeHead(302, { Location: "/login.html" });
+        response.writeHead(302, { Location: "/login.html?reason=session_required", "Cache-Control": "no-store" });
         return response.end();
       }
 
@@ -1126,7 +1132,8 @@ const server = http.createServer(async (request, response) => {
   } catch (error) {
     console.error(error);
     return json(response, error.status || 500, {
-      error: error.message || "Server xətası."
+      error: error.message || "Server xətası.",
+      ...(error.code === "GITHUB_ACCESS_FAILED" || error.code === "GITHUB_UPSTREAM_ERROR" ? { code: error.code } : {})
     });
   }
 });
