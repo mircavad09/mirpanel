@@ -324,21 +324,36 @@ function selectedProduct() {
 }
 
 async function api(path, options = {}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), !options.method || options.method === "GET" ? 25000 : 120000);
+  try {
   const response = await fetch(path, {
     ...options,
+    signal: controller.signal,
+    cache: "no-store",
     headers: {
       "Content-Type": "application/json",
       ...(state.csrfToken ? { "X-CSRF-Token": state.csrfToken } : {}),
       ...(options.headers || {})
     }
   });
-  const payload = await response.json().catch(() => ({}));
+  if (!/application\/json\b/i.test(response.headers.get("content-type") || "")) throw new Error("Server düzgün cavab göndərmədi. Yenidən cəhd edin.");
+  const payload = await response.json();
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Server məlumatı düzgün deyil. Yenidən cəhd edin.");
   if (!response.ok) {
     const error = new Error(payload.error || `Server xətası: ${response.status}`);
     error.status = response.status;
     throw error;
   }
   return payload;
+  } catch (error) {
+    if (error.name === "AbortError" || error instanceof TypeError || error instanceof SyntaxError) {
+      throw new Error("Admin xidməti hazırda cavab vermir. Yenidən cəhd edin; daxil etdiyiniz dəyişikliklər qorunub.");
+    }
+    throw error;
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 function readFileAsBase64(file) {
@@ -465,6 +480,9 @@ async function loadState() {
   setLoading(true, "GitHub məlumatları oxunur...");
   try {
     const payload = await api("/api/admin/state");
+    if (!payload.data || !Array.isArray(payload.data.products) || typeof payload.sha !== "string" || !payload.csrfToken) {
+      throw new Error("Admin məlumatları tam yüklənmədi. Yenilə düyməsi ilə yenidən cəhd edin.");
+    }
     state.data = payload.data;
     state.baseSha = payload.sha;
     state.draftSaved = payload.draftSaved === true;

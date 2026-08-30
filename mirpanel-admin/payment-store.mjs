@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import { createClient } from "@supabase/supabase-js";
+import { boundedReadFetch } from "./bounded-read-fetch.mjs";
 import {
   maskedPaymentNumber,
   normalizePaymentNumber,
@@ -123,6 +124,7 @@ function rowMethod(row, stats = {}) {
 export function createPaymentStore(config) {
   if (!config.supabaseUrl || !config.supabaseSecretKey) throw new Error("Supabase ödəniş konfiqurasiyası tamamlanmayıb.");
   const client = createClient(config.supabaseUrl, config.supabaseSecretKey, {
+    global: { fetch: boundedReadFetch },
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
   });
 

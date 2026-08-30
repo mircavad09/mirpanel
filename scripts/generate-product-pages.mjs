@@ -14,10 +14,11 @@ import {
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const state = extractAdminState(appSource);
+const productsOnly = process.argv.includes("--products-only");
 const pages = new Map([
   ...generateProductPageFiles(state.products, state.siteSections, state.cms, state.content),
-  ...generateProductListingPageFiles(state.products, state.siteSections, state.cms),
-  ...generateInfoPageFiles(state.siteSections, state.ui, state.cms)
+  ...(productsOnly ? [] : generateProductListingPageFiles(state.products, state.siteSections, state.cms)),
+  ...(productsOnly ? [] : generateInfoPageFiles(state.siteSections, state.ui, state.cms))
 ]);
 
 for (const [filePath, content] of pages) {
@@ -26,6 +27,7 @@ for (const [filePath, content] of pages) {
   fs.writeFileSync(absolutePath, content, "utf8");
 }
 
+if (!productsOnly) {
 const homePath = path.join(projectRoot, "index.html");
 fs.writeFileSync(homePath, patchHomeHeader(fs.readFileSync(homePath, "utf8"), state.siteSections, state.cms), "utf8");
 
@@ -39,5 +41,6 @@ fs.writeFileSync(
   generateRedirects(state.products, state.siteSections),
   "utf8"
 );
+}
 
 console.log(`Generated ${pages.size} active product and information pages.`);

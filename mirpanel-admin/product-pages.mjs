@@ -425,7 +425,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=20260804-desktop-layout-1">
-  <link rel="stylesheet" href="/payment-flow.css?v=payment-capacity-20260809-1">
+  <link rel="stylesheet" href="/payment-flow.css?v=resilience-20260830-1">
   <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
@@ -529,7 +529,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   </div>
 
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
-  <script src="/payment-flow.js?v=receipt-formdata-20260812-1"></script>
+  <script src="/payment-flow.js?v=resilience-20260830-1"></script>
   <script src="/order-confirmation.js?v=unified-payment-flow-20260810-1"></script>
   <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>

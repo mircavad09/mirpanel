@@ -15,7 +15,8 @@ import { commercialSnapshot } from "./payment-commercial-snapshot.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
-const expectedSnapshot = "0bee312869703b8caeff684ba36268eb8cf6ea6973a98b6381576f9f2022d86b";
+// Baseline from main 2f931819, before the service-resilience changes.
+const expectedSnapshot = "3c65186881cde085e590866ea15924be76f20db44106bb6a392e9fd51e26640d";
 
 function expectThrow(fn, pattern) {
   let thrown = null;
@@ -231,7 +232,7 @@ for (const page of productPages) {
   assert.ok(html.includes("order-confirmation.js?v=unified-payment-flow-20260810-1"), `${page}: confirmation cache versiyası köhnədir`);
   assert.equal(html.includes("hbo-max-order-fix.js"), false, `${page}: legacy məhsul handler-i vahid axını kəsməməlidir`);
 }
-assert.ok(read("mirpanel-admin/product-pages.mjs").includes("receipt-formdata-20260812-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
+assert.ok(read("mirpanel-admin/product-pages.mjs").includes("resilience-20260830-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
 
 for (const file of [
   "mirpanel-admin/payment-api.mjs",

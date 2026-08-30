@@ -5,6 +5,21 @@
   const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1";
   const RECEIPT_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
   let activeFlow = null;
+  const SERVICE_ERROR = "Ödəniş xidməti hazırda cavab vermir. Yenidən cəhd edin";
+
+  function validPayload(path, payload) {
+    if (!payload || typeof payload !== "object" || Array.isArray(payload)) return false;
+    if (path === "/api/payments/methods") {
+      return Array.isArray(payload.methods) && typeof payload.anyAvailable === "boolean" &&
+        payload.methods.every((item) => item && typeof item.id === "string" && typeof item.providerName === "string" &&
+          typeof item.available === "boolean" && /^\d{4}$/.test(item.last4)) &&
+        payload.anyAvailable === payload.methods.some((item) => item.available);
+    }
+    if (path === "/api/payments/reservations") return typeof payload.reservationId === "string" &&
+      Number.isFinite(Date.parse(payload.expiresAt)) && payload.method && typeof payload.method.number === "string";
+    if (path.endsWith("/cancel")) return payload.ok === true;
+    return true;
+  }
 
   const esc = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const uuid = () => crypto.randomUUID();
@@ -33,13 +48,39 @@
   }
 
   async function request(path, options = {}) {
-    const response = await fetch(`${API_BASE}${path}`, {
-      ...options,
-      headers: { "Content-Type": "application/json", ...(options.headers || {}) }
-    });
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(payload.error || "Ödəniş serveri cavab vermədi.");
-    return payload;
+    const read = !options.method || options.method === "GET";
+    for (let attempt = 0; attempt < (read ? 3 : 1); attempt += 1) {
+      if (options.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+      const controller = new AbortController();
+      const abort = () => controller.abort();
+      options.signal?.addEventListener("abort", abort, { once: true });
+      const timer = setTimeout(abort, read ? 12000 : 30000);
+      let failure;
+      try {
+        const response = await fetch(`${API_BASE}${path}`, {
+          ...options, signal: controller.signal, cache: "no-store",
+          headers: { Accept: "application/json", ...(read ? {} : { "Content-Type": "application/json" }), ...(options.headers || {}) }
+        });
+        if (!/application\/json\b/i.test(response.headers.get("content-type") || "")) throw new Error(SERVICE_ERROR);
+        const payload = await response.json();
+        if (!response.ok) {
+          throw Object.assign(new Error(response.status < 500 && typeof payload?.error === "string" ? payload.error : SERVICE_ERROR),
+            { retryable: response.status >= 500 || response.status === 408, status: response.status });
+        }
+        if (!validPayload(path, payload)) throw new Error(SERVICE_ERROR);
+        return payload;
+      } catch (error) {
+        failure = error;
+      } finally {
+        clearTimeout(timer);
+        options.signal?.removeEventListener("abort", abort);
+      }
+      if (options.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+      if (!read || attempt === 2 || failure.retryable === false) {
+        throw Object.assign(new Error(failure.status && failure.status < 500 ? failure.message : SERVICE_ERROR), { status: failure.status });
+      }
+      await new Promise((resolve) => setTimeout(resolve, (attempt + 1) * 2000));
+    }
   }
 
   function submitWithProgress(path, formData, progress, idempotencyKey) {
@@ -54,9 +95,14 @@
       xhr.onerror = () => reject(Object.assign(new Error("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."), { userMessage: "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin." }));
       xhr.ontimeout = xhr.onerror;
       xhr.onload = () => {
-        let payload = {};
-        try { payload = JSON.parse(xhr.responseText || "{}"); } catch {}
+        let payload;
+        try {
+          if (!/application\/json\b/i.test(xhr.getResponseHeader("Content-Type") || "")) throw new Error("invalid response");
+          payload = JSON.parse(xhr.responseText);
+          if (!payload || typeof payload !== "object") throw new Error("invalid response");
+        } catch { xhr.onerror(); return; }
         if (xhr.status < 200 || xhr.status >= 300) reject(Object.assign(new Error(payload.error || "Sifariş yaradılmadı."), { userMessage: payload.error || "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin." }));
+        else if (typeof payload.orderId !== "string" || !/^MP-[A-Z0-9]+$/.test(payload.orderCode || "")) xhr.onerror();
         else resolve(payload);
       };
       progress(2);
@@ -73,6 +119,7 @@
     form.innerHTML = `<section class="paymentFlow" data-payment-stage="payment_method_selection" aria-labelledby="paymentFlowTitle">
       <div class="paymentFlowHead"><div><span>Ödəniş</span><h2 id="paymentFlowTitle">Ödəniş üsulunu seçin</h2><p>${esc(product.title)} · ${Number(plan.price).toFixed(2)} ₼</p></div><button class="paymentFlowClose" type="button" aria-label="Ödənişi bağla">×</button></div>
       <div id="paymentFlowMessage" class="paymentFlowMessage" role="status">Aktiv ödəniş üsulları yüklənir...</div>
+      <button id="paymentMethodsRetry" type="button" hidden>Yenidən cəhd et</button>
       <div id="paymentMethodChoices" class="paymentMethodChoices" data-payment-stage-panel="payment_method_selection" aria-label="Ödəniş üsulları"></div>
       <div id="paymentMethodDetail" data-payment-stage-panel="payment_details"></div>
       <div id="paymentReceiptArea" data-payment-stage-panel="receipt_upload"></div>
@@ -161,12 +208,19 @@
   }
 
   async function start({ product, plan, planIndex }) {
+    if (activeFlow && !activeFlow.settled) {
+      if (activeFlow.shell === document.querySelector(".paymentFlow")) return activeFlow.promise;
+      // A parent modal may have been closed/replaced while the read was pending.
+      await activeFlow.finish(null, { cancel: true });
+    }
     if (activeFlow?.reservation || activeFlow?.previousReservationId) await cancelReservation(activeFlow);
     renderShell(product, plan);
     const previous = storedCheckout();
     const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: uuid(), stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
     activeFlow = flow;
-    return new Promise(async (resolve) => {
+    flow.shell = document.querySelector(".paymentFlow");
+    flow.reservationKeys = new Map();
+    flow.promise = new Promise((resolve) => {
       const finish = async (value, options = {}) => {
         const { cancel = false, redirectHome = false } = options;
         if (flow.settled || flow.cancelling) return false;
@@ -180,6 +234,7 @@
           }
         }
         flow.settled = true;
+        flow.readController?.abort();
         flow.stopTimer?.();
         clearReceipt(flow);
         clearStoredCheckout();
@@ -192,6 +247,7 @@
         }
         return true;
       };
+      flow.finish = finish;
       document.querySelector(".paymentFlowClose").onclick = async (event) => {
         event.preventDefault();
         if ((flow.reservation || flow.previousReservationId) && !window.confirm("Aktiv rezerv ləğv ediləcək. Pəncərəni bağlamaq istəyirsiniz?")) return;
@@ -201,21 +257,33 @@
           setMessage(`${error.message} Rezerv ləğv edilmədi, yenidən cəhd edin.`, "error");
         }
       };
+      const retry = document.getElementById("paymentMethodsRetry");
+      const loadMethods = async () => {
+        if (flow.loadingMethods || flow.settled) return;
+        flow.loadingMethods = true;
+        flow.readController = new AbortController();
+        retry.hidden = true;
+        retry.disabled = true;
+        setMessage("Aktiv ödəniş üsulları yüklənir. Server gecikərsə, sorğu avtomatik təkrarlanacaq...");
+        document.getElementById("paymentMethodChoices")?.setAttribute("aria-busy", "true");
       try {
-        const result = await request("/api/payments/methods");
+        const result = await request("/api/payments/methods", { signal: flow.readController.signal });
+        if (flow.settled || activeFlow !== flow) return;
         const choices = document.getElementById("paymentMethodChoices");
         const renderChoices = () => {
           setStage(flow, "payment_method_selection");
           choices.hidden = false;
-          choices.innerHTML = methodButtons(result.methods || []);
+          choices.innerHTML = methodButtons(result.methods);
           document.getElementById("paymentMethodDetail").innerHTML = "";
           document.getElementById("paymentReceiptArea").innerHTML = "";
         };
         renderChoices();
-        if (!result.anyAvailable) setMessage("Hazırda aktiv ödəniş üsulu yoxdur. Dəstəklə əlaqə saxlayın.", "error");
+        if (!result.methods.length) setMessage("Hazırda aktiv ödəniş üsulu yoxdur. Dəstəklə əlaqə saxlayın.", "error");
+        else if (!result.anyAvailable) setMessage("Hazırda bütün kartların limiti dolub. Daha sonra yenidən yoxlayın və ya dəstəklə əlaqə saxlayın.", "error");
         else setMessage("Ödəniş edəcəyiniz kartı və ya cüzdanı özünüz seçin.");
+        retry.hidden = result.anyAvailable;
 
-        choices.addEventListener("click", async (event) => {
+        choices.onclick = async (event) => {
           const button = event.target.closest("[data-payment-method]");
           if (!button || button.disabled || flow.reserving) return;
           flow.reserving = true;
@@ -224,7 +292,9 @@
           choices.querySelectorAll("button").forEach((item) => { item.disabled = true; });
           setMessage("Kart üçün 10 dəqiqəlik rezerv yaradılır...");
           try {
-            const idempotencyKey = uuid();
+            const methodId = button.dataset.paymentMethod;
+            if (!flow.reservationKeys.has(methodId)) flow.reservationKeys.set(methodId, uuid());
+            const idempotencyKey = flow.reservationKeys.get(methodId);
             const reserved = await request("/api/payments/reservations", {
               method: "POST",
               headers: { "X-Idempotency-Key": idempotencyKey },
@@ -258,6 +328,7 @@
               flow.previousReservationId = null;
               clearReceipt(flow);
               clearStoredCheckout();
+              flow.reservationKeys.clear();
               document.getElementById("paymentMethodDetail").innerHTML = "";
               document.getElementById("paymentReceiptArea").innerHTML = "";
               renderChoices();
@@ -276,6 +347,7 @@
               setMessage("Əvvəlki rezerv təhlükəsiz ləğv edilir...");
               try {
                 await cancelReservation(flow);
+                flow.reservationKeys.clear();
                 flow.stopTimer?.();
                 renderChoices();
                 setMessage("Yeni ödəniş üsulunu seçin.");
@@ -371,11 +443,22 @@
           } finally {
             flow.reserving = false;
           }
-        });
+        };
       } catch (error) {
-        setMessage(error.message, "error");
+        if (!flow.settled && activeFlow === flow) {
+          setMessage(error.message, "error");
+          retry.hidden = false;
+        }
+      } finally {
+        flow.loadingMethods = false;
+        retry.disabled = false;
+        if (!flow.settled) document.getElementById("paymentMethodChoices")?.setAttribute("aria-busy", "false");
       }
+      };
+      retry.onclick = () => { void loadMethods(); };
+      void loadMethods();
     });
+    return flow.promise;
   }
 
   window.MirpanelPaymentFlow = { start };

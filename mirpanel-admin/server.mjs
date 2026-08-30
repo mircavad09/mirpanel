@@ -232,6 +232,7 @@ async function github(pathname, options = {}) {
 
   const response = await fetch(`https://api.github.com${pathname}`, {
     ...options,
+    ...(!options.method || options.method === "GET" ? { signal: AbortSignal.timeout(15000) } : {}),
     headers: {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${config.token}`,
@@ -241,7 +242,10 @@ async function github(pathname, options = {}) {
     }
   });
 
-  const payload = await response.json().catch(() => ({}));
+  if (!/application\/json\b/i.test(response.headers.get("content-type") || "")) {
+    throw Object.assign(new Error("GitHub məlumat xidməti düzgün cavab vermədi. Yenidən cəhd edin."), { status: 502 });
+  }
+  const payload = await response.json();
 
   if (!response.ok) {
     const error = new Error(payload.message || `GitHub xətası: ${response.status}`);
