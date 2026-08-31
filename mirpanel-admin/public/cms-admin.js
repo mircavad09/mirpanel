@@ -2,7 +2,7 @@
   const viewGroups = [
     ["Əsas idarəetmə", [["dashboard", "İdarə paneli"], ["products", "Məhsullar"], ["categories", "Kateqoriyalar"]]],
     ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Bannerlər"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
-    ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentCosts", "Məhsulların maya dəyəri və qazanc"], ["paymentOrders", "Sifarişlər"], ["paymentReviews", "Ödəniş yoxlamaları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
+    ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentCosts", "Məhsulların maya dəyəri və qazanc"], ["paymentOrders", "Sifarişlər"], ["paymentReviews", "Ödəniş yoxlamaları"], ["netflixAccounts", "Netflix hesabları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
   const safeIcons = ["home", "products", "search", "info", "contact", "terms", "whatsapp", "sparkles", "game", "ai", "link", "image", "shield"];
@@ -92,6 +92,12 @@
     el("crumb").textContent = viewLabels.find(([id]) => id === view)?.[1] || "İdarə paneli";
     if (view === "history") loadHistory();
     if (view === "dashboard") renderDashboard();
+    if (view === "netflixAccounts") loadNetflixAccounts();
+  }
+  async function loadNetflixAccounts() {
+    const list = el("netflixAccountsList"); if (!list) return;
+    list.textContent = "Yüklənir...";
+    try { const q = el("netflixAccountSearch")?.value || ""; const result = await api(`/api/admin/netflix-accounts?q=${encodeURIComponent(q)}`); list.innerHTML = (result.items || []).map((item) => `<div class="cmsListItem compact"><strong>${esc(item.email)}</strong><span>${item.active ? "Aktiv" : "Deaktiv"}</span><div><button class="btn" type="button" data-netflix-toggle="${esc(item.email)}" data-active="${item.active ? "false" : "true"}">${item.active ? "Deaktiv et" : "Aktiv et"}</button><button class="btn danger" type="button" data-netflix-delete="${esc(item.email)}">Sil</button></div></div>`).join("") || "Hesab əlavə edilməyib."; } catch { list.textContent = "Hesablar yüklənmədi."; }
   }
   function createStaticViews() {
     createView("dashboard", panel("İdarə paneli", "Sayt məzmununun ümumi vəziyyəti", '<div class="cmsCards" id="cmsDashboardCards"></div>'));
@@ -170,6 +176,7 @@
     <div id="paymentOrdersList" class="paymentOrdersAdminList" aria-live="polite"></div>
     <nav class="paymentOrderPagination" aria-label="Sifariş səhifələri"><button class="btn" type="button" id="paymentOrdersPrevious">Əvvəlki</button><span id="paymentOrdersPageInfo">Səhifə 1 / 1</span><button class="btn" type="button" id="paymentOrdersNext">Növbəti</button></nav>`));
     createView("paymentReviews", panel("Ödəniş yoxlamaları", "Gmail bildirişlərinin göndərilmə vəziyyətini izləyin.", '<div class="sectionHead"><div><h3>Gmail bildirişləri</h3><p>Uğursuz bildirişləri təhlükəsiz şəkildə yenidən növbəyə ala bilərsiniz.</p></div><button class="btn" type="button" id="paymentReviewsRefresh">Yenilə</button></div><div id="paymentEmailsList" class="paymentEmailsAdminList"></div>'));
+    createView("netflixAccounts", panel("Netflix hesabları", "Ünvanı əlavə etmək yönləndirməni avtomatik qurmur. Mənbə Gmail-də yönləndirmə ayrıca təsdiqlənməlidir.", '<div class="formGrid"><label>Gmail ünvanı<input id="netflixAccountEmail" type="email" autocomplete="off"></label><div><button class="btn primary" type="button" id="netflixAccountAdd">Əlavə et</button></div><label class="wide">Axtarış<input id="netflixAccountSearch" type="search" placeholder="Gmail üzrə axtar"></label></div><div id="netflixAccountsList" class="cmsList"></div>'));
     createView("about", pageForm("haqqimizda", "Haqqımızda"));
     createView("contact", contactForm());
     createView("terms", termsForm());
@@ -1151,6 +1158,9 @@
       el("cmsMediaFileName").textContent = el("cmsMediaFile").files?.[0]?.name || "Şəkil seçilməyib";
     });
     el("refreshHistory").addEventListener("click", loadHistory);
+    el("netflixAccountAdd")?.addEventListener("click", async () => { const input = el("netflixAccountEmail"); try { await api("/api/admin/netflix-accounts", { method: "POST", body: JSON.stringify({ email: input.value }) }); input.value = ""; await loadNetflixAccounts(); toast("Netflix hesabı əlavə edildi."); } catch (error) { toast(error.message, "bad"); } });
+    el("netflixAccountSearch")?.addEventListener("input", () => loadNetflixAccounts());
+    el("netflixAccountsList")?.addEventListener("click", async (event) => { const toggle = event.target.closest("[data-netflix-toggle]"); const remove = event.target.closest("[data-netflix-delete]"); try { if (toggle) { await api(`/api/admin/netflix-accounts/${encodeURIComponent(toggle.dataset.netflixToggle)}`, { method: "PATCH", body: JSON.stringify({ active: toggle.dataset.active === "true" }) }); await loadNetflixAccounts(); } else if (remove && confirm("Bu Netflix hesabı siyahıdan deaktiv ediləcək. Davam edilsin?")) { await api(`/api/admin/netflix-accounts/${encodeURIComponent(remove.dataset.netflixDelete)}`, { method: "DELETE" }); await loadNetflixAccounts(); } } catch (error) { toast(error.message, "bad"); } });
     el("saveBtn").addEventListener("click", (event) => {
       event.preventDefault();
       event.stopImmediatePropagation();

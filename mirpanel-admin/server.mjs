@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
 import http from "node:http";
 import path from "node:path";
@@ -6,6 +7,10 @@ import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import { createPaymentSystem } from "./payment-api.mjs";
+import { createNetflixConfirmationEndpoint } from "./netflix-confirmation-endpoint.mjs";
+import { createConfirmationGate } from "./netflix-verification-policy.mjs";
+import { createNetflixAccountRepository } from "./netflix-account-repository.mjs";
+import { createNetflixRequestGuard } from "./netflix-request-guard.mjs";
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -45,7 +50,8 @@ const config = {
   gmailClientSecret: process.env.GMAIL_CLIENT_SECRET || "",
   gmailRefreshToken: process.env.GMAIL_REFRESH_TOKEN || "",
   gmailSenderEmail: process.env.GMAIL_SENDER_EMAIL || "",
-  gmailFromName: process.env.GMAIL_FROM_NAME || "Mirpanel"
+  gmailFromName: process.env.GMAIL_FROM_NAME || "Mirpanel",
+  netflixVerificationEnabled: process.env.NETFLIX_VERIFICATION_ENABLED === "true"
 };
 
 const sessions = new Map();
@@ -626,6 +632,7 @@ function requireMutationAuth(request, response) {
 }
 
 async function handleApi(request, response) {
+  if (await netflixConfirmationEndpoint(request, response)) return;
   if (await paymentSystem.handle(request, response)) return;
 
   if (request.method === "POST" && request.url === "/api/login") {
@@ -671,6 +678,29 @@ async function handleApi(request, response) {
   }
 
   if (!requireAuth(request, response)) return;
+
+  if (request.method === "GET" && request.url.startsWith("/api/admin/netflix-accounts")) {
+    if (!netflixAccounts) return json(response, 503, { error: "Netflix hesab repository-si hazır deyil." });
+    const url = new URL(request.url, "http://localhost");
+    const active = url.searchParams.has("active") ? url.searchParams.get("active") === "true" : undefined;
+    return json(response, 200, { items: await netflixAccounts.list({ search: url.searchParams.get("q") || "", active }) });
+  }
+
+  if (request.method === "POST" && request.url === "/api/admin/netflix-accounts") {
+    if (!netflixAccounts) return json(response, 503, { error: "Netflix hesab repository-si hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    const body = await readBody(request, 20_000);
+    return json(response, 200, await netflixAccounts.add(body.email));
+  }
+
+  if ((request.method === "PATCH" || request.method === "DELETE") && request.url.startsWith("/api/admin/netflix-accounts/")) {
+    if (!netflixAccounts) return json(response, 503, { error: "Netflix hesab repository-si hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    const email = decodeURIComponent(request.url.slice("/api/admin/netflix-accounts/".length));
+    if (request.method === "DELETE") return json(response, 200, { account: await netflixAccounts.remove(email) });
+    const body = await readBody(request, 10_000);
+    return json(response, 200, { account: await netflixAccounts.setActive(email, body.active === true) });
+  }
 
   if (request.method === "GET" && request.url === "/api/session") {
     return json(response, 200, {
@@ -1063,6 +1093,26 @@ const paymentSystem = createPaymentSystem({
   requireMutationAuth,
   actorName: config.username || "admin",
   loadCatalog: async () => extractAdminState((await getAppFile()).source)
+});
+
+// Netflix confirmation is deliberately fail-closed: no reviewed production
+// profiles or account repository are wired yet, so disabled deployments never
+// contact Gmail. This endpoint uses only NETFLIX_* configuration when enabled.
+const netflixSupabase = config.supabaseUrl && config.supabaseSecretKey
+  ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false } })
+  : null;
+const netflixAccounts = netflixSupabase ? createNetflixAccountRepository(netflixSupabase) : null;
+const netflixRequestGuard = createNetflixRequestGuard();
+const netflixGate = createConfirmationGate({
+  getAccount: (email) => netflixAccounts?.get(email),
+  getCandidates: async () => [],
+  verify: async () => null,
+  isEnabled: async () => config.netflixVerificationEnabled
+});
+const netflixConfirmationEndpoint = createNetflixConfirmationEndpoint({
+  gate: netflixGate,
+  enabled: () => config.netflixVerificationEnabled,
+  rateLimit: (request) => netflixRequestGuard.allow(request.headers["cf-connecting-ip"] || request.socket?.remoteAddress || "anonymous")
 });
 
 paymentSystem.start();
