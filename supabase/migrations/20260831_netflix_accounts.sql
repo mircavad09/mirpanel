@@ -7,7 +7,7 @@ create table if not exists public.netflix_accounts (
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   version integer not null default 1,
-  constraint netflix_accounts_email_check check (email ~ '^[a-z0-9]+@gmail\\.com$')
+  constraint netflix_accounts_email_check check (email ~ '^[a-z0-9]+@gmail\.com$')
 );
 create index if not exists netflix_accounts_active_email_idx on public.netflix_accounts(active, email);
 alter table public.netflix_accounts enable row level security;
