@@ -1743,7 +1743,7 @@ const DATA = {
         "order": 16
       },
       "flow": "whatsapp",
-      "soldOut": true,
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
@@ -1773,7 +1773,7 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 9.99,
+          "price": 11.95,
           "regularPrice": 27.18
         }
       ],
