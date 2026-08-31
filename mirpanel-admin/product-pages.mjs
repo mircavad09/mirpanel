@@ -959,6 +959,46 @@ function renderSiteNav(siteSections = {}, currentKey = null) {
   ).join("");
 }
 
+export function generateNetflixConfirmationPageFiles(siteSections = {}, cms = {}) {
+  const canonical = `${SITE_URL}/netflix_tesdiq`;
+  const html = `<!DOCTYPE html>
+<html lang="az">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Netflix Təsdiqi | Mirpanel</title>
+  <meta name="robots" content="noindex, nofollow, noarchive">
+  <link rel="canonical" href="${canonical}">
+  <meta name="theme-color" content="#070707">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
+  <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
+  <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
+  <link rel="stylesheet" href="/netflix-confirmation.css?v=20260901-1">
+  <link rel="icon" href="/assets/logo.png">
+</head>
+<body class="product-page-document netflix-confirmation-document">
+  ${renderSharedHeader(siteSections, "netflix_confirmation")}
+  <main class="netflix-confirmation-root" role="main">
+    <section class="netflix-confirmation-card" aria-labelledby="netflixConfirmationTitle">
+      <h1 id="netflixConfirmationTitle">Netflix Təsdiqi</h1>
+      <p>Sizə verilmiş Gmail ünvanını daxil edin.</p>
+      <form id="netflixConfirmationForm" novalidate>
+        <input id="netflixConfirmationEmail" name="email" type="email" inputmode="email" autocomplete="off" autocapitalize="none" spellcheck="false" aria-label="Gmail ünvanı" placeholder="Gmail ünvanı" required>
+        <button type="submit">Təsdiqi al</button>
+      </form>
+      <p id="netflixConfirmationStatus" class="netflix-confirmation-status" role="status" aria-live="polite" hidden></p>
+    </section>
+  </main>
+  <script src="/site-header.js?v=20260901-netflix-link-1"></script>
+  <script src="/netflix-confirmation.js?v=20260901-1"></script>
+</body>
+</html>`;
+  return new Map([["netflix_tesdiq/index.html", applyCmsBrandAndNav(html, cms, "netflix_confirmation")]]);
+}
+
 function renderSharedHeader(siteSections = {}, currentKey = null) {
   const navigation = renderSiteNav(siteSections, currentKey);
   return `<header class="product-page-header site-header" id="mainHeader">

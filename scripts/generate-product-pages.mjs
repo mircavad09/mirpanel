@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { extractAdminState } from "../mirpanel-admin/core.mjs";
 import {
   generateInfoPageFiles,
+  generateNetflixConfirmationPageFiles,
   generateProductListingPageFiles,
   generateProductPageFiles,
   generateRedirects,
@@ -18,7 +19,8 @@ const productsOnly = process.argv.includes("--products-only");
 const pages = new Map([
   ...generateProductPageFiles(state.products, state.siteSections, state.cms, state.content),
   ...(productsOnly ? [] : generateProductListingPageFiles(state.products, state.siteSections, state.cms)),
-  ...(productsOnly ? [] : generateInfoPageFiles(state.siteSections, state.ui, state.cms))
+  ...(productsOnly ? [] : generateInfoPageFiles(state.siteSections, state.ui, state.cms)),
+  ...(productsOnly ? [] : generateNetflixConfirmationPageFiles(state.siteSections, state.cms))
 ]);
 
 for (const [filePath, content] of pages) {

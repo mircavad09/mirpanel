@@ -4,10 +4,22 @@
   const LANGUAGE_KEY = "mirpanel_language";
   const CURRENCY_KEY = "mirpanel_currency";
   const HEADER_TEXT = {
-    az: { home: "Ana səhifə", products: "Məhsullar", about: "Haqqımızda", terms: "Şərtlər", contact: "Əlaqə", search: "Məhsul axtar..." },
-    en: { home: "Home", products: "Products", about: "About", terms: "Terms", contact: "Contact", search: "Search products..." },
-    ru: { home: "Главная", products: "Товары", about: "О нас", terms: "Условия", contact: "Контакты", search: "Поиск товаров..." }
+    az: { home: "Ana səhifə", products: "Məhsullar", about: "Haqqımızda", terms: "Şərtlər", contact: "Əlaqə", netflixVerification: "Netflix Təsdiqi", search: "Məhsul axtar..." },
+    en: { home: "Home", products: "Products", about: "About", terms: "Terms", contact: "Contact", netflixVerification: "Netflix Confirmation", search: "Search products..." },
+    ru: { home: "Главная", products: "Товары", about: "О нас", terms: "Условия", contact: "Контакты", netflixVerification: "Подтверждение Netflix", search: "Поиск товаров..." }
   };
+
+  function addNetflixVerificationLink(header) {
+    header.querySelectorAll(".site-header-nav, .site-header-drawer-nav").forEach((nav) => {
+      if (nav.querySelector('a[href="/netflix_tesdiq"]')) return;
+      const link = document.createElement("a");
+      link.href = "/netflix_tesdiq";
+      link.dataset.headerKey = "netflixVerification";
+      if (location.pathname.replace(/\/+$/, "") === "/netflix_tesdiq") link.setAttribute("aria-current", "page");
+      link.innerHTML = '<svg aria-hidden="true" viewBox="0 0 24 24"><path d="M12 3 4.5 6v5c0 4.7 3.1 8.6 7.5 10 4.4-1.4 7.5-5.3 7.5-10V6L12 3Z"/><path d="m8.8 12 2.1 2.1 4.4-4.5"/></svg><span>Netflix Təsdiqi</span>';
+      nav.append(link);
+    });
+  }
 
   function normalize(value) {
     return String(value || "").toLocaleLowerCase("az").trim();
@@ -136,7 +148,10 @@
     });
   }
 
-  document.querySelectorAll(".site-header").forEach(initHeader);
+  document.querySelectorAll(".site-header").forEach((header) => {
+    addNetflixVerificationLink(header);
+    initHeader(header);
+  });
 
   const query = new URLSearchParams(location.search).get("search") || "";
   if (query) {

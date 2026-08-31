@@ -1112,7 +1112,8 @@ const netflixGate = createConfirmationGate({
 const netflixConfirmationEndpoint = createNetflixConfirmationEndpoint({
   gate: netflixGate,
   enabled: () => config.netflixVerificationEnabled,
-  rateLimit: (request) => netflixRequestGuard.allow(request.headers["cf-connecting-ip"] || request.socket?.remoteAddress || "anonymous")
+  rateLimit: (request) => netflixRequestGuard.allow(request.headers["cf-connecting-ip"] || request.socket?.remoteAddress || "anonymous"),
+  allowedOrigins: config.allowedOrigins
 });
 
 paymentSystem.start();

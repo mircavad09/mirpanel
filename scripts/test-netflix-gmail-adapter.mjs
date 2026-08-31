@@ -36,13 +36,15 @@ test("invalid message ids fail before upstream request", async () => {
   await assert.rejects(() => adapter.getMessage("../secret"), /MESSAGE_ID_INVALID/);
 });
 test("endpoint stays closed while feature flag is false", async () => {
-  let status; let payload;
-  const response = { writeHead: (code) => { status = code; }, end: (value) => { payload = JSON.parse(value); } };
-  const request = { method: "POST", url: "/api/netflix/confirmation", async *[Symbol.asyncIterator]() { yield Buffer.from(JSON.stringify({ email: "pilot@gmail.com" })); } };
-  const handled = await createNetflixConfirmationEndpoint({ gate: async () => ({ status: "available" }) })(request, response);
+  let status; let payload; let headers;
+  const response = { writeHead: (code, nextHeaders) => { status = code; headers = nextHeaders; }, end: (value) => { payload = JSON.parse(value); } };
+  const request = { method: "POST", url: "/api/netflix/confirmation", headers: { origin: "https://mirpanel.com" }, async *[Symbol.asyncIterator]() { yield Buffer.from(JSON.stringify({ email: "pilot@gmail.com" })); } };
+  const handled = await createNetflixConfirmationEndpoint({ gate: async () => ({ status: "available" }), allowedOrigins: ["https://mirpanel.com"] })(request, response);
   assert.equal(handled, true);
   assert.equal(status, 404);
   assert.equal(payload.status, "unavailable");
+  assert.equal(headers["Access-Control-Allow-Origin"], "https://mirpanel.com");
+  assert.equal(headers["Cache-Control"], "no-store");
 });
 
 const fixture = (language, subject, marker) => ({ id: `fixture-${language}`, headers: [
