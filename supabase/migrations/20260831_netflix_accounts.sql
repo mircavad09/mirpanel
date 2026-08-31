@@ -15,3 +15,7 @@ drop policy if exists netflix_accounts_no_anon on public.netflix_accounts;
 create policy netflix_accounts_no_anon on public.netflix_accounts for all to anon using (false) with check (false);
 drop policy if exists netflix_accounts_no_authenticated on public.netflix_accounts;
 create policy netflix_accounts_no_authenticated on public.netflix_accounts for all to authenticated using (false) with check (false);
+
+-- The Render server uses the Supabase service role; it bypasses RLS but still
+-- needs explicit table privileges. Do not grant these to anon/authenticated.
+grant select, insert, update on table public.netflix_accounts to service_role;

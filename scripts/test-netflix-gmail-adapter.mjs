@@ -113,4 +113,5 @@ test("Supabase migration is idempotent in shape and denies public table access",
   assert.match(sql, /enable row level security/i);
   assert.match(sql, /for all to anon using \(false\) with check \(false\)/i);
   assert.match(sql, /for all to authenticated using \(false\) with check \(false\)/i);
+  assert.match(sql, /grant select, insert, update on table public\.netflix_accounts to service_role/i);
 });
