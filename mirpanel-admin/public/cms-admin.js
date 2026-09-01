@@ -151,30 +151,28 @@
     <div id="paymentCostsStatus" class="paymentOrdersStatus" role="status" aria-live="polite"></div>
     <div id="paymentCostsList" class="paymentCostsList" aria-live="polite"></div>
     <details class="paymentBackfillPanel"><summary>Köhnə sifarişlərin maya snapshot-u</summary><p>Maya snapshot-u olmayan tamamlanmış sifarişlər yalnız məhsul ID-si və plan ID-si tam uyğun gəldikdə hesablanır. Sıfır və ya təxmini maya yazılmır.</p><div class="paymentOrderActions"><button class="btn" type="button" id="paymentCostBackfillPreview">Preview yarat</button><button class="btn primary" type="button" id="paymentCostBackfillApply" disabled>Təsdiqlə və tətbiq et</button></div><div id="paymentCostBackfillResult" class="paymentOrdersStatus" aria-live="polite"></div></details>`));
-    createView("paymentOrders", panel("Sifarişlər", "Gözləyən sifarişləri yoxlayın, tamamlanmış satış tarixçəsini və müddəti bitən məhsulları izləyin.", `<div class="paymentOrderToolbar">
-      <div class="paymentOrderTabs" role="tablist" aria-label="Sifariş statusları">
-        <button class="paymentOrderTab active" type="button" role="tab" aria-selected="true" data-payment-order-tab="pending">Gözləyən sifarişlər (<span id="paymentPendingCount">0</span>)</button>
-        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="today">Bu gün tamamlananlar (<span id="paymentTodayCount">0</span>)</button>
-        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="all">Ümumi sifarişlər (<span id="paymentAllCount">0</span>)</button>
-        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="expiring">Bitən məhsullar (<span id="paymentExpiringCount">0</span>)</button>
+    createView("paymentOrders", panel("Sifarişlər", "Cari dövrü, aylıq arxivi və ümumi sifariş tarixçəsini ayrı bölmələrdə izləyin.", `<div class="paymentOrderToolbar">
+      <div class="paymentOrderTabs paymentReportTabs" role="tablist" aria-label="Sifariş hesabatları">
+        <button class="paymentOrderTab active" type="button" role="tab" aria-selected="true" data-payment-report-tab="current">Cari ay</button>
+        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-report-tab="archive">Aylıq arxiv</button>
+        <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-report-tab="all">Bütün sifarişlər</button>
       </div>
       <button class="btn" type="button" id="paymentOrdersRefresh">Yenilə</button>
     </div>
-    <section class="paymentMonthlyReports" aria-label="Aylıq maliyyə hesabatı">
-      <div class="sectionHead"><div><h3>Cari ayın hesabatı</h3><p id="paymentCurrentMonthLabel">Bakı vaxtı ilə cari ayın tamamlanmış sifarişləri</p></div><button class="btn compact" type="button" id="paymentMonthlyReportsRefresh">Yenilə</button></div>
-      <div id="paymentCurrentMonthReport" class="paymentMonthlyReportCards" aria-live="polite"></div>
-      <div class="paymentMonthlyArchiveHead"><button class="btn" type="button" id="paymentMonthlyArchiveToggle" aria-expanded="false">Aylıq arxiv</button><div id="paymentMonthlyArchiveControls" class="paymentMonthlyArchiveControls" hidden><label>Ay<select id="paymentMonthlyArchiveMonth" aria-label="Arxiv ayı"></select></label><button class="btn compact" type="button" id="paymentMonthlyArchiveOrders">Sifarişləri aç</button></div></div>
-      <div id="paymentMonthlyArchiveReport" class="paymentMonthlyArchiveReport" hidden aria-live="polite"></div>
+    <section class="paymentMonthlyReports" aria-label="Sifariş maliyyə hesabatı">
+      <div id="paymentCurrentReportPanel"><div class="sectionHead"><div><h3>Cari ay</h3><p id="paymentCurrentMonthLabel">Bakı vaxtı ilə cari ayın tamamlanmış sifarişləri</p></div></div><div id="paymentCurrentMonthReport" class="paymentMonthlyReportCards" aria-live="polite"></div><details id="paymentCurrentMonthDetails" class="paymentReportDetails"><summary>Ətraflı hesabatlar</summary><div id="paymentCurrentMonthBreakdown"></div></details></div>
+      <div id="paymentArchiveReportPanel" hidden><div class="sectionHead"><div><h3>Aylıq arxiv</h3><p>Bağlanmış ayın dəyişməz maliyyə snapshot-u</p></div><label class="paymentArchiveSelect">Ay<select id="paymentMonthlyArchiveMonth" aria-label="Arxiv ayı"></select></label></div><div id="paymentMonthlyArchiveReport" class="paymentMonthlyReportCards" aria-live="polite"></div><details id="paymentMonthlyArchiveDetails" class="paymentReportDetails"><summary>Ətraflı hesabatlar</summary><div id="paymentMonthlyArchiveBreakdown"></div></details></div>
+      <div id="paymentAllReportPanel" hidden><div class="sectionHead"><div><h3>Bütün sifarişlər</h3><p>Bütün tarixçə üzrə tamamlanmış sifarişlərin hesabatı</p></div></div><div id="paymentOrderStatistics" class="paymentOrderStatistics" aria-live="polite"></div></div>
     </section>
-    <div id="paymentOrderStatistics" class="paymentOrderStatistics" aria-live="polite"></div>
     <form id="paymentOrderFilters" class="paymentOrderFilters" role="search">
+      <label class="paymentAllOnly">Sifariş görünüşü<select id="paymentOrderView"><option value="all">Tamamlanmış sifarişlər</option><option value="pending">Gözləyən sifarişlər</option><option value="today">Bu gün tamamlananlar</option><option value="expiring">Bitən məhsullar</option></select></label>
       <label>Sifariş ID-si<input id="paymentOrderSearch" type="search" placeholder="MP-XXXXXX" autocomplete="off"></label>
       <label>Məhsul<select id="paymentOrderProduct"><option value="">Bütün məhsullar</option></select></label>
       <label>Plan<select id="paymentOrderPlan"><option value="">Bütün planlar</option></select></label>
       <label>Bank<select id="paymentOrderMethod"><option value="">Bütün banklar</option></select></label>
-      <label>Müddət<select id="paymentOrderPeriod"><option value="all">Bütün tarixlər</option><option value="today">Bu gün</option><option value="yesterday">Dünən</option><option value="7d">Son 7 gün</option><option value="30d">Son 30 gün</option><option value="this_month">Bu ay</option><option value="last_month">Keçən ay</option><option value="3m">Son 3 ay</option><option value="6m">Son 6 ay</option><option value="12m">Son 12 ay</option><option value="custom">Xüsusi tarix</option></select></label>
-      <label class="paymentCustomDate">Başlanğıc tarixi<input id="paymentOrderDateFrom" type="date"></label>
-      <label class="paymentCustomDate">Son tarix<input id="paymentOrderDateTo" type="date"></label>
+      <label class="paymentAllOnly">Müddət<select id="paymentOrderPeriod"><option value="all">Bütün tarixlər</option><option value="today">Bu gün</option><option value="yesterday">Dünən</option><option value="7d">Son 7 gün</option><option value="30d">Son 30 gün</option><option value="this_month">Bu ay</option><option value="last_month">Keçən ay</option><option value="3m">Son 3 ay</option><option value="6m">Son 6 ay</option><option value="12m">Son 12 ay</option><option value="custom">Xüsusi tarix</option></select></label>
+      <label class="paymentCustomDate paymentAllOnly">Başlanğıc tarixi<input id="paymentOrderDateFrom" type="date"></label>
+      <label class="paymentCustomDate paymentAllOnly">Son tarix<input id="paymentOrderDateTo" type="date"></label>
       <label>Sıralama<select id="paymentOrderSort"><option value="newest">Ən yeni</option><option value="oldest">Ən köhnə</option></select></label>
       <div class="paymentOrderFilterActions"><button class="btn primary" type="submit">Tətbiq et</button><button class="btn" type="button" id="paymentOrderFiltersClear">Təmizlə</button></div>
     </form>

@@ -18,9 +18,12 @@ assert.match(migration, /date_trunc\('month', public\.payment_baku_date\(\)\)/);
 assert.match(store, /async monthlyReports\(\)/);
 assert.match(store, /archive_due_payment_monthly_reports/);
 assert.match(api, /\/api\/admin\/payment-monthly-reports/);
-assert.match(template, /Cari ayın hesabatı/);
+assert.match(template, /data-payment-report-tab="current"/);
 assert.match(template, /Aylıq arxiv/);
-assert.match(ui, /openArchiveOrders/);
+assert.match(template, /data-payment-report-tab="all"/);
+assert.match(ui, /archiveOrderQuery/);
+assert.match(ui, /paymentContextHidden/);
+assert.match(ui, /reportPrimaryMarkup/);
 
 // Simulates the rule implemented in SQL: only immutable completed snapshots
 // are financial inputs; closing a month twice cannot create a second archive.
