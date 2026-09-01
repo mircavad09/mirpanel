@@ -34,7 +34,7 @@
   <link rel="stylesheet" href="/payment-flow.css?v=resilience-20260830-1">
   <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/grok-ai#product","url":"https://mirpanel.com/mehsul/grok-ai","name":"Grok AI","description":"Grok AI hesabını sərfəli qiymətə əldə et. Premium AI imkanları və rahat sifariş Mirpanel-də.","image":["https://mirpanel.com/assets/grok.png"],"sku":"grok_supergrok","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/grok-ai","price":"17.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/grok-ai#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Grok AI","item":"https://mirpanel.com/mehsul/grok-ai"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/grok-ai#product","url":"https://mirpanel.com/mehsul/grok-ai","name":"Grok AI","description":"Grok AI hesabını sərfəli qiymətə əldə et. Premium AI imkanları və rahat sifariş Mirpanel-də.","image":["https://mirpanel.com/assets/grok.png"],"sku":"grok_supergrok","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/grok-ai","price":"29.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/grok-ai#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Grok AI","item":"https://mirpanel.com/mehsul/grok-ai"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="grok_supergrok" data-product-slug="grok-ai">
   <header class="product-page-header site-header" id="mainHeader">
@@ -99,7 +99,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><span class="product-page-regular-price">51.00 ₼</span><strong>17.99 ₼</strong><span class="product-page-discount">-65%</span></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><span class="product-page-regular-price">51.00 ₼</span><strong>29.99 ₼</strong><span class="product-page-discount">-41%</span></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -201,7 +201,7 @@
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>Grok AI üçün hansı planlar mövcuddur?</summary><p>1 aylıq plan — 17.99 ₼</p></details>
+    <details><summary>Grok AI üçün hansı planlar mövcuddur?</summary><p>1 aylıq plan — 29.99 ₼</p></details>
     <details><summary>Grok AI sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>
