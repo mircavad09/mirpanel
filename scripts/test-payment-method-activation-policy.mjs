@@ -5,6 +5,7 @@ import path from "node:path";
 const root = path.resolve(import.meta.dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const migration = read("supabase/migrations/202609010001_payment_method_activation_policy.sql");
+const noRestoreMigration = read("supabase/migrations/202609020001_disable_payment_method_restore.sql");
 const store = read("mirpanel-admin/payment-store.mjs");
 const api = read("mirpanel-admin/payment-api.mjs");
 const admin = read("mirpanel-admin/public/payment-admin.js");
@@ -25,8 +26,11 @@ assert.equal(/delete from public\.payment_methods/i.test(migration), false);
 assert.match(store, /rpc\("refresh_payment_method_automation"\)/);
 assert.ok(store.includes('rpc("reserve_payment_method_v3"'));
 assert.ok(store.includes('rpc("approve_payment_order_v6"'));
-assert.match(api, /archive\|delete\|restore\|activate\|deactivate\|reset-counter/);
-for (const value of ["Aktiv", "Deaktiv", "Gözləmədə", "Limit dolub", "Silinib", "data-toggle-payment-method", "data-restore-payment-method", "data-delete-payment-method", "Növbəti sıfırlanma"]) assert.ok(admin.includes(value), `admin UI missing ${value}`);
+assert.match(api, /archive\|delete\|activate\|deactivate\|reset-counter/);
+for (const value of ["Aktiv", "Deaktiv", "Gözləmədə", "Limit dolub", "Silinib", "data-toggle-payment-method", "data-delete-payment-method", "Növbəti sıfırlanma"]) assert.ok(admin.includes(value), `admin UI missing ${value}`);
+assert.equal(admin.includes("data-restore-payment-method"), false, "Silinmiş kart üçün bərpa düyməsi olmamalıdır");
+assert.equal(api.includes("|restore|"), false, "Kart bərpa endpoint-i olmamalıdır");
+assert.match(noRestoreMigration, /revoke execute on function public\.restore_payment_method_safely/i);
 
 function simulate(day, methods, saturatedIds) {
   const seeded = methods.map((item) => ({ ...item, active: !item.manualDisabled && item.priority <= 4 }));

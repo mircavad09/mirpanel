@@ -83,11 +83,8 @@ try {
   await page.waitForFunction(() => document.querySelector("[data-toggle-payment-method]")?.textContent.includes("Deaktiv et"));
   await page.locator("[data-delete-payment-method]").click();
   await page.locator('.paymentActionDialog button[type="submit"]').click();
-  await page.waitForFunction(() => document.querySelector("[data-restore-payment-method]")?.textContent.includes("Bərpa et"));
-  await page.locator("[data-restore-payment-method]").click();
-  await page.locator('.paymentActionDialog button[type="submit"]').click();
-  await page.waitForFunction(() => document.querySelector("[data-toggle-payment-method]")?.textContent.includes("Aktiv et"));
-  assert.match(await page.textContent(".paymentMethodAdminCard .statusPill"), /Deaktiv/);
+  await page.waitForFunction(() => document.querySelectorAll(".paymentMethodAdminCard").length === 0);
+  assert.equal(await page.locator("[data-restore-payment-method]").count(), 0);
   await page.click('.navBtn[data-view="paymentCosts"]');
   await page.waitForSelector(".paymentCostRow");
   const missingCost = page.locator('[data-payment-cost-key="netflix:0"] [data-payment-cost-input]');

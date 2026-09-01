@@ -211,7 +211,9 @@ export function createPaymentStore(config) {
         .map(({ adminNote, adminMaskedNumber, deletedAt, deactivatedAt, ...method }) => method);
     },
     adminMethods() {
-      return listMethods({ includeArchived: true, includeDeleted: true });
+      // Deleted cards stay in the audit trail only. They are not returned to
+      // the operational admin list and cannot be restored through this API.
+      return listMethods();
     },
     async rawMethod(id) {
       const { data, error } = await client.from("payment_methods").select("*").eq("id", id).single();
@@ -302,10 +304,6 @@ export function createPaymentStore(config) {
     async deleteMethod(id, actor = "admin") {
       if (!safeUuid(id)) throw Object.assign(new Error("Ödəniş üsulu ID-si düzgün deyil."), { status: 400 });
       return rpc("delete_payment_method_safely", { p_method_id: id, p_actor: actor });
-    },
-    async restoreMethod(id, actor = "admin") {
-      if (!safeUuid(id)) throw Object.assign(new Error("Ödəniş üsulu ID-si düzgün deyil."), { status: 400 });
-      return rpc("restore_payment_method_safely", { p_method_id: id, p_actor: actor });
     },
     async resetMethodCounter(id, actor) {
       const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());

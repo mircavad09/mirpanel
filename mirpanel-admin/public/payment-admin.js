@@ -40,9 +40,7 @@
     const nextReset = method.nextResetAt ? dateTime(method.nextResetAt) : "—";
     const status = method.status || (method.active ? "active" : "inactive");
     const reason = !method.hasNumber ? "Tam nömrə daxil edilməyib" : (methodStatusLabel[status] || "Deaktiv");
-    const actions = status === "deleted"
-      ? `<button class="btn" type="button" data-restore-payment-method="${escp(method.id)}">Bərpa et</button>`
-      : `<button class="btn" type="button" data-edit-payment-method="${escp(method.id)}">Redaktə et</button><button class="btn" type="button" data-toggle-payment-method="${escp(method.id)}" data-next-active="${method.active ? "false" : "true"}">${method.active ? "Deaktiv et" : "Aktiv et"}</button><button class="btn danger" type="button" data-delete-payment-method="${escp(method.id)}">Sil</button>`;
+    const actions = `<button class="btn" type="button" data-edit-payment-method="${escp(method.id)}">Redaktə et</button><button class="btn" type="button" data-toggle-payment-method="${escp(method.id)}" data-next-active="${method.active ? "false" : "true"}">${method.active ? "Deaktiv et" : "Aktiv et"}</button><button class="btn danger" type="button" data-delete-payment-method="${escp(method.id)}">Sil</button>`;
     return `<article class="paymentMethodAdminCard${method.available ? " isAvailable" : ""}" data-payment-method-id="${escp(method.id)}">
       <div class="paymentMethodColor" style="--payment-method-color:${escp(method.color)}"></div>
       <div><strong>${escp(method.displayName)}</strong><span>${escp(method.adminMaskedNumber || method.maskedNumber)} · ${escp(method.providerName)}</span><small>${escp(limit)} · Aktiv rezerv: ${Number(method.activeReservations)} · Yoxlanılan çek: ${Number(method.reviewingReceipts)}</small><small>${escp(remaining)} · Son sıfırlanma: ${escp(reset)} · Növbəti sıfırlanma: ${escp(nextReset)}</small><small>${escp(reason)}</small></div>
@@ -432,20 +430,6 @@
             await paymentApi(`/api/admin/payment-methods/${methodId}/${toggleMethod.dataset.nextActive === "true" ? "activate" : "deactivate"}`, { method: "POST", body: "{}" });
             await loadMethods();
           } finally { paymentState.methodActions.delete(methodId); if (toggleMethod.isConnected) toggleMethod.disabled = false; }
-        }
-        const restoreMethodButton = event.target.closest("[data-restore-payment-method]");
-        if (restoreMethodButton) {
-          const methodId = restoreMethodButton.dataset.restorePaymentMethod;
-          if (!methodId || paymentState.methodActions.has(methodId)) return;
-          const confirmed = await paymentActionDialog({
-            title: "Kartı bərpa et",
-            message: "Kart bərpa ediləcək, lakin təhlükəsizlik üçün deaktiv qalacaq.",
-            confirmText: "Bərpa et"
-          });
-          if (!confirmed) return;
-          paymentState.methodActions.add(methodId); restoreMethodButton.disabled = true;
-          try { await paymentApi(`/api/admin/payment-methods/${methodId}/restore`, { method: "POST", body: "{}" }); await loadMethods(); }
-          finally { paymentState.methodActions.delete(methodId); if (restoreMethodButton.isConnected) restoreMethodButton.disabled = false; }
         }
         if (event.target.closest("[data-close-payment-editor]")) { paymentState.selectedMethodId = ""; $p("paymentMethodEditor").innerHTML = ""; }
         if (event.target.closest("[data-reset-payment-counter]") && paymentState.selectedMethodId && confirm("Bu kartın bugünkü təsdiq sayğacı sıfırlansın?")) { await paymentApi(`/api/admin/payment-methods/${paymentState.selectedMethodId}/reset-counter`, { method: "POST", body: "{}" }); await loadMethods(); }
