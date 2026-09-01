@@ -18,11 +18,12 @@ assert.match(migration, /date_trunc\('month', public\.payment_baku_date\(\)\)/);
 assert.match(store, /async monthlyReports\(\)/);
 assert.match(store, /archive_due_payment_monthly_reports/);
 assert.match(api, /\/api\/admin\/payment-monthly-reports/);
-assert.match(template, /data-payment-report-tab="current"/);
+assert.match(template, /data-payment-order-tab="pending"/);
 assert.match(template, /Aylıq arxiv/);
-assert.match(template, /data-payment-report-tab="all"/);
-assert.match(ui, /archiveOrderQuery/);
-assert.match(ui, /paymentContextHidden/);
+assert.match(template, /data-payment-order-tab="all"/);
+assert.match(template, /id="paymentMonthlyReports"[^>]*hidden/);
+assert.match(ui, /tab !== "all"/);
+assert.match(ui, /renderOrderContext/);
 assert.match(ui, /reportPrimaryMarkup/);
 
 // Simulates the rule implemented in SQL: only immutable completed snapshots

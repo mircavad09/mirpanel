@@ -4,7 +4,7 @@
   const emptyQuery = () => ({ tab: "pending", period: "all", search: "", productId: "", planName: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1 });
   const paymentState = {
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
-    orderActions: new Set(), methodActions: new Set(), reportTab: "current", orderQuery: { ...emptyQuery(), tab: "all", period: "this_month" },
+    orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
     costs: [], costDirty: new Set(), costSaving: false, costBackfillPreview: null, costBackfillBusy: false,
     orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] } },
     monthlyReports: { current: null, archives: [], selectedMonth: "", archiveOpen: false }
@@ -196,49 +196,34 @@
     renderMonthlyReports();
   }
 
-  function archiveOrderQuery() {
-    const month = paymentState.monthlyReports.selectedMonth;
-    if (!/^\d{4}-\d{2}-01$/.test(month || "")) return;
-    const end = new Date(`${month}T00:00:00+04:00`); end.setMonth(end.getMonth() + 1); end.setDate(0);
-    const endDate = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
-    return { ...emptyQuery(), tab: "all", period: "custom", dateFrom: month, dateTo: endDate, page: 1 };
-  }
-
   function syncOrderFilterControls() {
     const query = paymentState.orderQuery;
-    if ($p("paymentOrderView")) $p("paymentOrderView").value = query.tab;
     if ($p("paymentOrderPeriod")) $p("paymentOrderPeriod").value = query.period;
     if ($p("paymentOrderDateFrom")) $p("paymentOrderDateFrom").value = query.dateFrom;
     if ($p("paymentOrderDateTo")) $p("paymentOrderDateTo").value = query.dateTo;
-    document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", paymentState.reportTab === "all" && query.period === "custom"));
+    document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", query.period === "custom"));
   }
 
-  function renderReportTab() {
-    const tab = paymentState.reportTab;
-    $p("paymentCurrentReportPanel")?.toggleAttribute("hidden", tab !== "current");
-    $p("paymentArchiveReportPanel")?.toggleAttribute("hidden", tab !== "archive");
-    $p("paymentAllReportPanel")?.toggleAttribute("hidden", tab !== "all");
-    document.querySelectorAll(".paymentAllOnly").forEach((item) => item.classList.toggle("paymentContextHidden", tab !== "all"));
-    document.querySelectorAll("[data-payment-report-tab]").forEach((button) => {
-      const active = button.dataset.paymentReportTab === tab;
+  function renderOrderContext() {
+    const tab = paymentState.orderQuery.tab;
+    $p("paymentMonthlyReports")?.toggleAttribute("hidden", tab !== "all");
+    document.querySelectorAll("[data-payment-order-tab]").forEach((button) => {
+      const active = button.dataset.paymentOrderTab === tab;
       button.classList.toggle("active", active); button.setAttribute("aria-selected", String(active));
     });
     syncOrderFilterControls();
   }
 
-  async function setReportTab(tab) {
-    paymentState.reportTab = ["current", "archive", "all"].includes(tab) ? tab : "current";
-    if (paymentState.reportTab === "current") paymentState.orderQuery = { ...emptyQuery(), tab: "all", period: "this_month" };
-    if (paymentState.reportTab === "archive") paymentState.orderQuery = archiveOrderQuery() || { ...emptyQuery(), tab: "all", period: "custom" };
-    if (paymentState.reportTab === "all") paymentState.orderQuery = { ...emptyQuery(), tab: "all", period: "all" };
-    renderReportTab();
+  async function setOrderTab(tab) {
+    paymentState.orderQuery = { ...emptyQuery(), tab: ["pending", "today", "all", "expiring"].includes(tab) ? tab : "pending" };
+    renderOrderContext();
     await loadOrders();
   }
 
   function renderStatistics() {
     const host = $p("paymentOrderStatistics"); if (!host) return;
     const stats = paymentState.orderMeta.statistics || {};
-    if (paymentState.reportTab !== "all" || paymentState.orderQuery.tab === "pending") { host.innerHTML = ""; return; }
+    if (paymentState.orderQuery.tab !== "all") { host.innerHTML = ""; return; }
     const productSummary = (stats.products || []).map((item) => `<tr><td>${escp(item.title)}</td><td>${Number(item.count)}</td><td>${money(item.revenue || 0)}</td><td>${money(item.cost || 0)}</td><td class="${Number(item.profit || 0) < 0 ? "bad" : ""}">${money(item.profit || 0)}</td><td>${item.margin === null || item.margin === undefined ? "—" : `${Number(item.margin).toFixed(2)}%`}</td><td>${Number(item.missingCostCount || 0)}</td></tr>`).join("");
     const planSummary = (stats.plans || []).map((item) => `<tr><td>${escp(item.productTitle)}</td><td>${escp(item.planName)}</td><td>${Number(item.count)}</td><td>${money(item.revenue || 0)}</td><td>${money(item.cost || 0)}</td><td class="${Number(item.profit || 0) < 0 ? "bad" : ""}">${money(item.profit || 0)}</td><td>${Number(item.missingCostCount || 0)}</td></tr>`).join("");
     host.innerHTML = `<div><small>Tamamlanmış sifariş</small><strong>${Number(stats.count || 0)}</strong></div><div><small>Ümumi satış</small><strong>${money(stats.revenue || 0)}</strong></div><div><small>Ümumi maya</small><strong>${money(stats.cost || 0)}</strong></div><div><small>Xalis qazanc</small><strong class="${Number(stats.profit || 0) < 0 ? "bad" : ""}">${money(stats.profit || 0)}</strong></div>${productSummary ? `<details class="paymentReportTable"><summary>Məhsullar üzrə hesabat</summary><div class="paymentProductProfitTable"><table><thead><tr><th>Məhsul</th><th>Satış</th><th>Ümumi satış</th><th>Ümumi maya</th><th>Xalis qazanc</th><th>Faiz</th><th>Çatışmır</th></tr></thead><tbody>${productSummary}</tbody></table></div></details>` : ""}${planSummary ? `<details class="paymentReportTable"><summary>Planlar üzrə hesabat</summary><div class="paymentProductProfitTable"><table><thead><tr><th>Məhsul</th><th>Plan</th><th>Satış</th><th>Ümumi satış</th><th>Ümumi maya</th><th>Xalis qazanc</th><th>Çatışmır</th></tr></thead><tbody>${planSummary}</tbody></table></div></details>` : ""}`;
@@ -270,7 +255,7 @@
     if ($p("paymentOrdersPageInfo")) $p("paymentOrdersPageInfo").textContent = `Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
     if ($p("paymentOrdersPrevious")) $p("paymentOrdersPrevious").disabled = pagination.page <= 1;
     if ($p("paymentOrdersNext")) $p("paymentOrdersNext").disabled = pagination.page >= pagination.totalPages;
-    updateOrderCounts(); populateOrderFilters(); syncOrderFilterControls(); renderStatistics();
+    updateOrderCounts(); populateOrderFilters(); renderOrderContext(); renderStatistics();
   }
 
   function renderEmails() {
@@ -463,9 +448,8 @@
       }
     });
     document.addEventListener("change", (event) => {
-      if (event.target.id === "paymentOrderPeriod") document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", paymentState.reportTab === "all" && event.target.value === "custom"));
-      if (event.target.id === "paymentMonthlyArchiveMonth") { paymentState.monthlyReports.selectedMonth = event.target.value; renderMonthlyReports(); if (paymentState.reportTab === "archive") setReportTab("archive").catch((error) => toast(error.message || "Arxiv sifarişləri yüklənmədi.")); }
-      if (event.target.id === "paymentOrderView" && paymentState.reportTab === "all") { paymentState.orderQuery.tab = event.target.value; paymentState.orderQuery.page = 1; loadOrders().catch((error) => toast(error.message || "Sifarişlər yüklənmədi.")); }
+      if (event.target.id === "paymentOrderPeriod") document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", event.target.value === "custom"));
+      if (event.target.id === "paymentMonthlyArchiveMonth") { paymentState.monthlyReports.selectedMonth = event.target.value; renderMonthlyReports(); }
       if (["paymentCostActive", "paymentCostCategory", "paymentCostMissing"].includes(event.target.id)) renderCosts();
       const methodForm = event.target.closest("#paymentMethodForm");
       if (methodForm && ["theme", "providerName", "type"].includes(event.target.name)) {
@@ -483,7 +467,7 @@
         const viewButton = event.target.closest(".navBtn[data-view]");
         if (viewButton?.dataset.view === "paymentMethods") await loadMethods();
         if (viewButton?.dataset.view === "paymentCosts") await loadCosts();
-        if (viewButton?.dataset.view === "paymentOrders") { await Promise.all([loadOrders(), loadMonthlyReports()]); renderReportTab(); }
+        if (viewButton?.dataset.view === "paymentOrders") { await Promise.all([loadOrders(), loadMonthlyReports()]); renderOrderContext(); }
         if (viewButton?.dataset.view === "paymentReviews") await loadEmails();
         if (event.target.closest("#paymentMethodAdd")) { paymentState.selectedMethodId = ""; renderMethodEditor(); }
         const edit = event.target.closest("[data-edit-payment-method]");
@@ -544,11 +528,11 @@
         if (event.target.closest("#paymentCostBackfillApply")) await applyCostBackfill();
         const costRow = event.target.closest("[data-payment-cost-key]");
         if (costRow && event.target.closest("[data-save-payment-cost]")) await saveCosts([costRow.dataset.paymentCostKey]);
-        const reportTab = event.target.closest("[data-payment-report-tab]");
-        if (reportTab) await setReportTab(reportTab.dataset.paymentReportTab);
+        const orderTab = event.target.closest("[data-payment-order-tab]");
+        if (orderTab) await setOrderTab(orderTab.dataset.paymentOrderTab);
         if (event.target.closest("#paymentOrdersPrevious") && paymentState.orderMeta.pagination.page > 1) { paymentState.orderQuery.page -= 1; await loadOrders(); }
         if (event.target.closest("#paymentOrdersNext") && paymentState.orderMeta.pagination.page < paymentState.orderMeta.pagination.totalPages) { paymentState.orderQuery.page += 1; await loadOrders(); }
-        if (event.target.closest("#paymentOrderFiltersClear")) { $p("paymentOrderFilters")?.reset(); await setReportTab(paymentState.reportTab); }
+        if (event.target.closest("#paymentOrderFiltersClear")) { $p("paymentOrderFilters")?.reset(); await setOrderTab(paymentState.orderQuery.tab); }
         const card = event.target.closest("[data-payment-order-id]");
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
@@ -563,7 +547,7 @@
       if (event.target.id === "paymentSettingsForm") { event.preventDefault(); try { await paymentApi("/api/admin/payment-settings", { method: "POST", body: JSON.stringify({ notificationEmail: $p("paymentNotificationEmail").value, receiptRetentionDays: Number($p("paymentReceiptRetentionDays").value) }) }); toast("Ödəniş parametrləri saxlanıldı."); } catch (error) { toast(error.message || "Parametrlər saxlanmadı."); } return; }
       if (event.target.id === "paymentOrderFilters") {
         event.preventDefault();
-        Object.assign(paymentState.orderQuery, { tab: paymentState.reportTab === "all" ? ($p("paymentOrderView")?.value || "all") : "all", search: $p("paymentOrderSearch")?.value.trim() || "", productId: $p("paymentOrderProduct")?.value || "", planName: $p("paymentOrderPlan")?.value || "", methodId: $p("paymentOrderMethod")?.value || "", period: paymentState.reportTab === "all" ? ($p("paymentOrderPeriod")?.value || "") : paymentState.orderQuery.period, dateFrom: paymentState.reportTab === "all" ? ($p("paymentOrderDateFrom")?.value || "") : paymentState.orderQuery.dateFrom, dateTo: paymentState.reportTab === "all" ? ($p("paymentOrderDateTo")?.value || "") : paymentState.orderQuery.dateTo, sort: $p("paymentOrderSort")?.value || "newest", page: 1 });
+        Object.assign(paymentState.orderQuery, { search: $p("paymentOrderSearch")?.value.trim() || "", productId: $p("paymentOrderProduct")?.value || "", planName: $p("paymentOrderPlan")?.value || "", methodId: $p("paymentOrderMethod")?.value || "", period: $p("paymentOrderPeriod")?.value || "all", dateFrom: $p("paymentOrderDateFrom")?.value || "", dateTo: $p("paymentOrderDateTo")?.value || "", sort: $p("paymentOrderSort")?.value || "newest", page: 1 });
         await loadOrders(); return;
       }
       if (event.target.id !== "paymentMethodForm") return;
@@ -579,9 +563,8 @@
       if (result.order.status === "rejected") { toast("Bu sifariş rədd edilib və əsas siyahılarda göstərilmir."); return; }
       paymentState.orderQuery.search = result.order.order_code || "";
       paymentState.orderQuery.tab = ["approved", "completed"].includes(result.order.status) ? "all" : "pending";
-      paymentState.reportTab = "all";
       paymentState.orderQuery.page = 1;
-      renderReportTab();
+      renderOrderContext();
       await loadOrders();
       const card = document.querySelector(`[data-payment-order-id="${CSS.escape(result.order.id)}"]`); card?.classList.add("isHighlighted"); card?.scrollIntoView({ behavior: "smooth", block: "center" });
     } catch (error) { toast(error.message || "Yoxlama keçidi etibarsızdır."); }

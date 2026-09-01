@@ -24,20 +24,18 @@ try {
     await page.goto("http://127.0.0.1:10081", { waitUntil: "networkidle" });
     await page.click('.navBtn[data-view="paymentOrders"]');
     await page.waitForSelector(".paymentOrderAdminCard");
-    await page.waitForFunction(() => document.querySelector("#paymentCurrentMonthReport")?.textContent.includes("Ümumi satış"));
-    assert.match(await page.textContent("#paymentCurrentMonthReport"), /31\.96/);
     const audit = await page.evaluate(() => ({
       overflow: document.documentElement.scrollWidth - innerWidth,
-      tabs: [...document.querySelectorAll("[data-payment-report-tab]")].map((item) => item.textContent.trim()),
+      tabs: [...document.querySelectorAll("[data-payment-order-tab]")].map((item) => item.dataset.paymentOrderTab),
       pendingCards: document.querySelectorAll(".paymentOrderAdminCard").length,
       noteFields: document.querySelectorAll("textarea[data-payment-order-note]").length,
-      currentDetailsOpen: document.querySelector("#paymentCurrentMonthDetails")?.open
+      monthlyHidden: document.querySelector("#paymentMonthlyReports")?.hidden
     }));
     assert.ok(audit.overflow <= 0, `${width}px üfüqi daşma: ${audit.overflow}`);
-    assert.deepEqual(audit.tabs, ["Cari ay", "Aylıq arxiv", "Bütün sifarişlər"]);
-    assert.equal(audit.pendingCards, 20);
+    assert.deepEqual(audit.tabs, ["pending", "today", "all", "expiring"]);
+    assert.equal(audit.pendingCards, 2);
     assert.equal(audit.noteFields, 0);
-    assert.equal(audit.currentDetailsOpen, false);
+    assert.equal(audit.monthlyHidden, true);
     await page.click('.navBtn[data-view="paymentCosts"]');
     await page.waitForSelector(".paymentCostRow");
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, `${width}px maya bölməsində üfüqi daşma var`);
@@ -49,34 +47,31 @@ try {
   await page.goto("http://127.0.0.1:10081", { waitUntil: "networkidle" });
   await page.click('.navBtn[data-view="paymentOrders"]');
   await page.waitForSelector(".paymentOrderAdminCard");
-  await page.click('[data-payment-report-tab="archive"]');
-  await page.waitForFunction(() => !document.getElementById("paymentArchiveReportPanel").hidden);
-  assert.match(await page.textContent("#paymentMonthlyArchiveReport"), /180\.00/);
-  await page.waitForFunction(() => document.getElementById("paymentOrderPeriod")?.value === "custom");
-  await page.waitForFunction(() => document.getElementById("paymentOrderPeriod")?.value === "custom");
-  assert.equal(await page.locator("#paymentOrderDateFrom").inputValue(), "2026-08-01");
-  await page.click('[data-payment-report-tab="all"]');
-  await page.waitForFunction(() => document.getElementById("paymentOrderPeriod")?.value === "all");
-  await page.selectOption("#paymentOrderView", "pending");
-  await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 2);
   await page.locator("[data-approve-payment]").first().click();
   await page.locator('.paymentActionDialog button[type="submit"]').click();
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 1);
   await page.locator("[data-reject-payment]").first().click();
   await page.locator('.paymentActionDialog button[type="submit"]').click();
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 0);
-  await page.selectOption("#paymentOrderView", "all");
+  await page.click('[data-payment-order-tab="all"]');
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 20);
+  await page.waitForFunction(() => !document.getElementById("paymentMonthlyReports").hidden);
+  await page.waitForFunction(() => document.querySelector("#paymentCurrentMonthReport")?.textContent.includes("Ümumi satış"));
+  assert.match(await page.textContent("#paymentCurrentMonthReport"), /31\.96/);
+  assert.equal(await page.locator("#paymentCurrentMonthDetails").getAttribute("open"), null);
+  assert.equal(await page.locator("#paymentMonthlyArchivePanel").getAttribute("open"), null);
+  await page.click("#paymentMonthlyArchivePanel > summary");
+  assert.match(await page.textContent("#paymentMonthlyArchiveReport"), /180\.00/);
   assert.ok(await page.locator(".paymentOrderDay").count() >= 1, "Tamamlanmış sifarişlər gün üzrə accordion-da qruplaşmalıdır");
   assert.match(await page.textContent("#paymentOrdersPageInfo"), /1 \/ 2/);
   await page.click("#paymentOrdersNext");
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 7);
-  await page.selectOption("#paymentOrderView", "today");
+  await page.click('[data-payment-order-tab="today"]');
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 3);
-  assert.match(await page.textContent("#paymentOrderStatistics"), /Tamamlanmış sifariş/);
+  assert.equal(await page.locator("#paymentMonthlyReports").isHidden(), true);
   await page.selectOption("#paymentOrderPeriod", "custom");
   assert.equal(await page.locator(".paymentCustomDate.isActive").count(), 2);
-  await page.selectOption("#paymentOrderView", "expiring");
+  await page.click('[data-payment-order-tab="expiring"]');
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 2);
   await page.locator("[data-contacted-payment]").first().click();
   await page.locator('.paymentActionDialog button[type="submit"]').click();
@@ -115,7 +110,7 @@ try {
   assert.equal(await page.locator("#paymentCostBackfillApply").isDisabled(), false);
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
   await page.close();
-  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: ["current", "archive", "all"], pagination: "20 + 7 after isolated approval", dayGrouping: true, approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, profitEditor: true, backfillPreview: true, consoleErrors: 0 }, null, 2));
+  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: ["pending", "today", "all", "expiring"], monthlyReportOnlyInAll: true, pagination: "20 + 7 after isolated approval", dayGrouping: true, approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, profitEditor: true, backfillPreview: true, consoleErrors: 0 }, null, 2));
 } finally {
   await browser.close();
   fixture.kill();

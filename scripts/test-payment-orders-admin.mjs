@@ -87,8 +87,11 @@ assert.ok(store.includes('rpc("delete_payment_method_safely"'));
 assert.ok(api.includes("structuredDurationMonths(plan)"));
 assert.ok(api.includes('approve|reject|contacted|receipt'));
 assert.ok(api.includes("validatePaymentNumber"));
-for (const tab of ["Cari ay", "Aylıq arxiv", "Bütün sifarişlər"]) assert.ok(cms.includes(`data-payment-report-tab=\"${tab === "Cari ay" ? "current" : tab === "Aylıq arxiv" ? "archive" : "all"}\"`));
-for (const option of ["Bu gün tamamlananlar", "Gözləyən sifarişlər", "Bitən məhsullar"]) assert.ok(cms.includes(option), `${option} görünüş filtri qorunmalıdır`);
+for (const [tab, label] of [["pending", "Gözləyən sifarişlər"], ["today", "Bu gün tamamlananlar"], ["all", "Ümumi sifarişlər"], ["expiring", "Bitən məhsullar"]]) {
+  assert.ok(cms.includes(`data-payment-order-tab=\"${tab}\"`), `${label} əsas tabı qorunmalıdır`);
+}
+assert.match(cms, /id="paymentMonthlyReports"[^>]*hidden/);
+assert.ok(admin.includes('toggleAttribute("hidden", tab !== "all")'), "Aylıq hesabat yalnız Ümumi sifarişlərdə görünməlidir");
 assert.equal(cms.includes('option value="rejected"'), false, "Rədd edilmiş sifarişlər əsas filtrdə olmamalıdır");
 assert.ok(admin.includes('type="text" inputmode="numeric"'));
 assert.equal(admin.includes('name="fullNumber" type="password"'), false);
