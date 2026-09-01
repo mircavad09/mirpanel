@@ -160,6 +160,12 @@
       </div>
       <button class="btn" type="button" id="paymentOrdersRefresh">Yenilə</button>
     </div>
+    <section class="paymentMonthlyReports" aria-label="Aylıq maliyyə hesabatı">
+      <div class="sectionHead"><div><h3>Cari ayın hesabatı</h3><p id="paymentCurrentMonthLabel">Bakı vaxtı ilə cari ayın tamamlanmış sifarişləri</p></div><button class="btn compact" type="button" id="paymentMonthlyReportsRefresh">Yenilə</button></div>
+      <div id="paymentCurrentMonthReport" class="paymentMonthlyReportCards" aria-live="polite"></div>
+      <div class="paymentMonthlyArchiveHead"><button class="btn" type="button" id="paymentMonthlyArchiveToggle" aria-expanded="false">Aylıq arxiv</button><div id="paymentMonthlyArchiveControls" class="paymentMonthlyArchiveControls" hidden><label>Ay<select id="paymentMonthlyArchiveMonth" aria-label="Arxiv ayı"></select></label><button class="btn compact" type="button" id="paymentMonthlyArchiveOrders">Sifarişləri aç</button></div></div>
+      <div id="paymentMonthlyArchiveReport" class="paymentMonthlyArchiveReport" hidden aria-live="polite"></div>
+    </section>
     <div id="paymentOrderStatistics" class="paymentOrderStatistics" aria-live="polite"></div>
     <form id="paymentOrderFilters" class="paymentOrderFilters" role="search">
       <label>Sifariş ID-si<input id="paymentOrderSearch" type="search" placeholder="MP-XXXXXX" autocomplete="off"></label>

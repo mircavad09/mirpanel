@@ -363,7 +363,31 @@ export function createPaymentStore(config) {
       });
       return rpc("save_payment_plan_costs", { p_items: normalized, p_actor: actor });
     },
+    async monthlyReports() {
+      // This is deliberately called on an ordinary admin read. If Render was
+      // asleep at midnight, the first authenticated request creates each
+      // missing closed-month snapshot once, without touching any order.
+      await rpc("archive_due_payment_monthly_reports");
+      const [current, { data: archives, error: archiveError }] = await Promise.all([
+        rpc("current_payment_month_report"),
+        client.from("payment_monthly_reports")
+          .select("month_start,completed_count,revenue,cost,profit,missing_cost_count,top_product,products,payment_methods,archived_at")
+          .order("month_start", { ascending: false })
+      ]);
+      if (archiveError) throw paymentError(archiveError);
+      const normalize = (item = {}) => ({
+        monthStart: item.monthStart || item.month_start,
+        completedCount: Number(item.completedCount ?? item.completed_count ?? 0),
+        revenue: Number(item.revenue || 0), cost: Number(item.cost || 0), profit: Number(item.profit || 0),
+        missingCostCount: Number(item.missingCostCount ?? item.missing_cost_count ?? 0),
+        topProduct: item.topProduct || item.top_product || "—",
+        products: item.products || [], paymentMethods: item.paymentMethods || item.payment_methods || [],
+        archivedAt: item.archivedAt || item.archived_at || null
+      });
+      return { current: normalize(current || {}), archives: (archives || []).map(normalize) };
+    },
     async listOrders(input = {}) {
+      await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
       const select = "id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";

@@ -24,6 +24,8 @@ try {
     await page.goto("http://127.0.0.1:10081", { waitUntil: "networkidle" });
     await page.click('.navBtn[data-view="paymentOrders"]');
     await page.waitForSelector(".paymentOrderAdminCard");
+    await page.waitForFunction(() => document.querySelector("#paymentCurrentMonthReport")?.textContent.includes("Ümumi satış"));
+    assert.match(await page.textContent("#paymentCurrentMonthReport"), /31\.96/);
     const audit = await page.evaluate(() => ({
       overflow: document.documentElement.scrollWidth - innerWidth,
       tabs: [...document.querySelectorAll("[data-payment-order-tab]")].map((item) => item.textContent.trim()),
@@ -45,6 +47,12 @@ try {
   await page.goto("http://127.0.0.1:10081", { waitUntil: "networkidle" });
   await page.click('.navBtn[data-view="paymentOrders"]');
   await page.waitForSelector(".paymentOrderAdminCard");
+  await page.click("#paymentMonthlyArchiveToggle");
+  await page.waitForFunction(() => !document.getElementById("paymentMonthlyArchiveReport").hidden);
+  assert.match(await page.textContent("#paymentMonthlyArchiveReport"), /2026/);
+  await page.click("#paymentMonthlyArchiveOrders");
+  await page.waitForFunction(() => document.getElementById("paymentOrderPeriod")?.value === "custom");
+  assert.equal(await page.locator("#paymentOrderDateFrom").inputValue(), "2026-08-01");
   await page.locator("[data-approve-payment]").first().click();
   await page.locator('.paymentActionDialog button[type="submit"]').click();
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 1);

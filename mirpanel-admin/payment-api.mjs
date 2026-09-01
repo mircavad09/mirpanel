@@ -364,6 +364,9 @@ export function createPaymentSystem(options) {
       const orders = await store.listOrders(Object.fromEntries(url.searchParams));
       json(response, 200, orders); return true;
     }
+    if (request.method === "GET" && url.pathname === "/api/admin/payment-monthly-reports") {
+      json(response, 200, await store.monthlyReports()); return true;
+    }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-emails") {
       json(response, 200, { emails: await store.pendingEmails() }); return true;
     }

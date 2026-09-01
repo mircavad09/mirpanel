@@ -6,7 +6,8 @@
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
     costs: [], costDirty: new Set(), costSaving: false, costBackfillPreview: null, costBackfillBusy: false,
-    orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] } }
+    orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] } },
+    monthlyReports: { current: null, archives: [], selectedMonth: "", archiveOpen: false }
   };
   const $p = (id) => document.getElementById(id);
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -22,6 +23,7 @@
   const money = (value, currency = "AZN") => `${Number(value || 0).toFixed(2)} ${currency === "AZN" ? "₼" : currency}`;
   const dateTime = (value) => value ? new Date(value).toLocaleString("az-AZ", { timeZone: "Asia/Baku" }) : "—";
   const calendarDate = (value) => value ? new Date(`${value}T00:00:00+04:00`).toLocaleDateString("az-AZ") : "Müddət müəyyən edilməyib";
+  const monthLabel = (value) => value ? new Intl.DateTimeFormat("az-AZ", { month: "long", year: "numeric", timeZone: "Asia/Baku" }).format(new Date(`${value}T00:00:00+04:00`)) : "—";
   const formatNumber = (value) => String(value || "").replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim();
   function resolvedTheme(theme, providerName, type) {
     if (theme && theme !== "auto") return theme;
@@ -154,6 +156,55 @@
     fill("paymentOrderProduct", "Bütün məhsullar", filters.products, paymentState.orderQuery.productId, (item) => item.id, (item) => item.title);
     fill("paymentOrderPlan", "Bütün planlar", filters.plans, paymentState.orderQuery.planName, (item) => item, (item) => item);
     fill("paymentOrderMethod", "Bütün banklar", filters.methods, paymentState.orderQuery.methodId, (item) => item.id, (item) => item.label);
+  }
+
+  function reportMarkup(report, emptyText = "Bu dövr üçün tamamlanmış sifariş yoxdur.") {
+    if (!report || !Number(report.completedCount || 0)) return `<div class="emptyState">${escp(emptyText)}</div>`;
+    const products = (report.products || []).slice(0, 5);
+    const methods = (report.paymentMethods || []).slice(0, 8);
+    return `<div class="paymentMonthlyMetric"><small>Tamamlanmış sifariş</small><strong>${Number(report.completedCount || 0)}</strong></div>
+      <div class="paymentMonthlyMetric"><small>Ümumi satış</small><strong>${money(report.revenue)}</strong></div>
+      <div class="paymentMonthlyMetric"><small>Ümumi maya</small><strong>${money(report.cost)}</strong></div>
+      <div class="paymentMonthlyMetric ${Number(report.profit) < 0 ? "bad" : ""}"><small>Xalis qazanc</small><strong>${money(report.profit)}</strong></div>
+      ${Number(report.missingCostCount || 0) ? `<div class="paymentMonthlyMetric warning"><small>Maya məlumatı çatışmır</small><strong>${Number(report.missingCostCount)}</strong></div>` : ""}
+      <div class="paymentMonthlyBreakdown"><b>Ən çox satılan məhsullar</b>${products.length ? products.map((item) => `<span>${escp(item.title)} · ${Number(item.count)} satış</span>`).join("") : "<span>—</span>"}</div>
+      <div class="paymentMonthlyBreakdown"><b>Ödəniş üsulu üzrə satış</b>${methods.length ? methods.map((item) => `<span>${escp(item.label)} · ${money(item.revenue)}</span>`).join("") : "<span>—</span>"}</div>`;
+  }
+
+  function renderMonthlyReports() {
+    const state = paymentState.monthlyReports;
+    const current = $p("paymentCurrentMonthReport");
+    const currentLabel = $p("paymentCurrentMonthLabel");
+    if (current) current.innerHTML = reportMarkup(state.current);
+    if (currentLabel && state.current?.monthStart) currentLabel.textContent = `${monthLabel(state.current.monthStart)} · Bakı vaxtı ilə tamamlanmış sifarişlər`;
+    const controls = $p("paymentMonthlyArchiveControls"); const archive = $p("paymentMonthlyArchiveReport"); const select = $p("paymentMonthlyArchiveMonth"); const toggle = $p("paymentMonthlyArchiveToggle");
+    if (!controls || !archive || !select || !toggle) return;
+    if (!state.selectedMonth && state.archives[0]) state.selectedMonth = state.archives[0].monthStart;
+    select.innerHTML = state.archives.length ? state.archives.map((item) => `<option value="${escp(item.monthStart)}"${item.monthStart === state.selectedMonth ? " selected" : ""}>${escp(monthLabel(item.monthStart))}</option>`).join("") : '<option value="">Bağlanmış ay yoxdur</option>';
+    const selected = state.archives.find((item) => item.monthStart === state.selectedMonth);
+    controls.hidden = !state.archiveOpen; archive.hidden = !state.archiveOpen;
+    toggle.setAttribute("aria-expanded", String(state.archiveOpen));
+    archive.innerHTML = selected ? `<div class="paymentMonthlyArchiveTitle"><strong>${escp(monthLabel(selected.monthStart))}</strong><small>Bu arxiv bağlanıb və sonradan dəyişdirilmir.</small></div><div class="paymentMonthlyReportCards">${reportMarkup(selected)}</div>` : '<div class="emptyState">Bağlanmış aylıq hesabat yoxdur.</div>';
+  }
+
+  async function loadMonthlyReports() {
+    const result = await paymentApi("/api/admin/payment-monthly-reports");
+    paymentState.monthlyReports.current = result.current || null;
+    paymentState.monthlyReports.archives = result.archives || [];
+    renderMonthlyReports();
+  }
+
+  function openArchiveOrders() {
+    const month = paymentState.monthlyReports.selectedMonth;
+    if (!/^\d{4}-\d{2}-01$/.test(month || "")) return;
+    const end = new Date(`${month}T00:00:00+04:00`); end.setMonth(end.getMonth() + 1); end.setDate(0);
+    const endDate = `${end.getFullYear()}-${String(end.getMonth() + 1).padStart(2, "0")}-${String(end.getDate()).padStart(2, "0")}`;
+    paymentState.orderQuery = { ...emptyQuery(), tab: "all", period: "custom", dateFrom: month, dateTo: endDate, page: 1 };
+    const period = $p("paymentOrderPeriod"); if (period) period.value = "custom";
+    if ($p("paymentOrderDateFrom")) $p("paymentOrderDateFrom").value = month;
+    if ($p("paymentOrderDateTo")) $p("paymentOrderDateTo").value = endDate;
+    document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.add("isActive"));
+    loadOrders();
   }
 
   function renderStatistics() {
@@ -389,6 +440,7 @@
     });
     document.addEventListener("change", (event) => {
       if (event.target.id === "paymentOrderPeriod") document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", event.target.value === "custom"));
+      if (event.target.id === "paymentMonthlyArchiveMonth") { paymentState.monthlyReports.selectedMonth = event.target.value; renderMonthlyReports(); }
       if (["paymentCostActive", "paymentCostCategory", "paymentCostMissing"].includes(event.target.id)) renderCosts();
       const methodForm = event.target.closest("#paymentMethodForm");
       if (methodForm && ["theme", "providerName", "type"].includes(event.target.name)) {
@@ -406,7 +458,7 @@
         const viewButton = event.target.closest(".navBtn[data-view]");
         if (viewButton?.dataset.view === "paymentMethods") await loadMethods();
         if (viewButton?.dataset.view === "paymentCosts") await loadCosts();
-        if (viewButton?.dataset.view === "paymentOrders") await loadOrders();
+        if (viewButton?.dataset.view === "paymentOrders") await Promise.all([loadOrders(), loadMonthlyReports()]);
         if (viewButton?.dataset.view === "paymentReviews") await loadEmails();
         if (event.target.closest("#paymentMethodAdd")) { paymentState.selectedMethodId = ""; renderMethodEditor(); }
         const edit = event.target.closest("[data-edit-payment-method]");
@@ -459,7 +511,10 @@
             if (deleteMethodButton.isConnected) deleteMethodButton.disabled = false;
           }
         }
-        if (event.target.closest("#paymentOrdersRefresh")) await loadOrders();
+        if (event.target.closest("#paymentOrdersRefresh")) await Promise.all([loadOrders(), loadMonthlyReports()]);
+        if (event.target.closest("#paymentMonthlyReportsRefresh")) await loadMonthlyReports();
+        if (event.target.closest("#paymentMonthlyArchiveToggle")) { paymentState.monthlyReports.archiveOpen = !paymentState.monthlyReports.archiveOpen; renderMonthlyReports(); }
+        if (event.target.closest("#paymentMonthlyArchiveOrders")) openArchiveOrders();
         if (event.target.closest("#paymentReviewsRefresh")) await loadEmails();
         if (event.target.closest("#paymentCostsSaveAll")) await saveCosts([...paymentState.costDirty]);
         if (event.target.closest("#paymentCostBackfillPreview")) await loadCostBackfillPreview();
