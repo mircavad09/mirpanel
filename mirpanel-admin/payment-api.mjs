@@ -334,7 +334,7 @@ export function createPaymentSystem(options) {
       const encrypted = number ? security.encryptNumber(number) : null;
       json(response, 201, { method: await store.createMethod(body, encrypted, actorName) }); return true;
     }
-    const methodMatch = url.pathname.match(/^\/api\/admin\/payment-methods\/([0-9a-f-]+)(?:\/(archive|delete|reset-counter))?$/i);
+    const methodMatch = url.pathname.match(/^\/api\/admin\/payment-methods\/([0-9a-f-]+)(?:\/(archive|delete|restore|activate|deactivate|reset-counter))?$/i);
     if (methodMatch) {
       const id = safeUuid(methodMatch[1]);
       if (!id) throw Object.assign(new Error("Ödəniş üsulu ID-si düzgün deyil."), { status: 400 });
@@ -343,6 +343,15 @@ export function createPaymentSystem(options) {
       }
       if (request.method === "POST" && methodMatch[2] === "delete") {
         json(response, 200, await store.deleteMethod(id, actorName)); return true;
+      }
+      if (request.method === "POST" && methodMatch[2] === "restore") {
+        json(response, 200, await store.restoreMethod(id, actorName)); return true;
+      }
+      if (request.method === "POST" && methodMatch[2] === "activate") {
+        json(response, 200, await store.setMethodActive(id, true, actorName)); return true;
+      }
+      if (request.method === "POST" && methodMatch[2] === "deactivate") {
+        json(response, 200, await store.setMethodActive(id, false, actorName)); return true;
       }
       if (request.method === "POST" && methodMatch[2] === "reset-counter") {
         await store.resetMethodCounter(id, actorName); json(response, 200, { ok: true }); return true;

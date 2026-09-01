@@ -43,7 +43,7 @@ assert.ok(softDelete.includes("archived = true"));
 assert.ok(softDelete.includes("deleted_at = coalesce(deleted_at, now())"));
 assert.equal(softDelete.includes("delete from payment_methods"), false);
 assert.ok(store.includes('.eq("usage_day", today)'));
-assert.ok(store.includes('rpc("approve_payment_order_v5"'));
+assert.ok(store.includes('rpc("approve_payment_order_v6"'));
 assert.ok(admin.includes("paymentState.methodActions.has(methodId)"));
 assert.ok(admin.includes("Köhnə sifariş tarixçəsi qorunacaq."));
 

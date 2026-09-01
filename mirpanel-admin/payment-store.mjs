@@ -86,6 +86,9 @@ function rowMethod(row, stats = {}) {
   const pending = activeReservations + reviewingReceipts;
   const unlimited = row.limit_mode === "unlimited";
   const remaining = unlimited ? null : Math.max(0, Number(row.daily_limit) - confirmed - pending);
+  const status = row.deleted_at || row.archived ? "deleted" :
+    (!unlimited && remaining <= 0) ? "limit_reached" :
+    row.active ? "active" : row.manual_disabled ? "inactive" : "pending";
   return {
     id: row.id,
     stableCode: row.stable_code,
@@ -103,6 +106,8 @@ function rowMethod(row, stats = {}) {
     active: row.active,
     archived: row.archived,
     deletedAt: row.deleted_at || null,
+    manualDisabled: Boolean(row.manual_disabled),
+    autoPriority: Number(row.auto_priority || 1000),
     deactivatedAt: row.deactivated_at || null,
     order: row.sort_order,
     dailyLimit: row.daily_limit,
@@ -113,8 +118,10 @@ function rowMethod(row, stats = {}) {
     occupiedToday: confirmed + pending,
     pendingReservations: pending,
     lastResetAt: stats.lastResetAt || null,
+    nextResetAt: stats.nextResetAt || null,
     remaining,
-    available: row.active && !row.archived && !row.deleted_at && Boolean(row.encrypted_number) && (unlimited || remaining > 0),
+    status,
+    available: status === "active" && Boolean(row.encrypted_number) && (unlimited || remaining > 0),
     hasNumber: Boolean(row.encrypted_number),
     adminNote: row.admin_note,
     updatedAt: row.updated_at
@@ -145,7 +152,8 @@ export function createPaymentStore(config) {
     if (counterError) throw paymentError(counterError);
     if (reservationError) throw paymentError(reservationError);
     const resetAt = `${today}T00:00:00+04:00`;
-    const stats = new Map(methodIds.map((id) => [id, { confirmed: 0, activeReservations: 0, reviewingReceipts: 0, lastResetAt: resetAt }]));
+    const nextResetAt = new Date(new Date(resetAt).getTime() + 24 * 60 * 60 * 1000).toISOString();
+    const stats = new Map(methodIds.map((id) => [id, { confirmed: 0, activeReservations: 0, reviewingReceipts: 0, lastResetAt: resetAt, nextResetAt }]));
     for (const row of counters || []) {
       stats.get(row.method_id).confirmed = Number(row.confirmed_count || 0);
       stats.get(row.method_id).lastResetAt = resetAt;
@@ -158,6 +166,7 @@ export function createPaymentStore(config) {
   }
 
   async function listMethods({ includeArchived = false, includeDeleted = false } = {}) {
+    await rpc("refresh_payment_method_automation");
     let query = client.from("payment_methods").select("*").order("sort_order", { ascending: true });
     if (!includeDeleted) query = query.is("deleted_at", null);
     if (!includeArchived) query = query.eq("archived", false);
@@ -198,11 +207,11 @@ export function createPaymentStore(config) {
     client,
     rpc,
     async publicMethods() {
-      return (await listMethods()).filter((method) => method.active && !method.archived)
+      return (await listMethods()).filter((method) => method.available)
         .map(({ adminNote, adminMaskedNumber, deletedAt, deactivatedAt, ...method }) => method);
     },
     adminMethods() {
-      return listMethods({ includeArchived: true });
+      return listMethods({ includeArchived: true, includeDeleted: true });
     },
     async rawMethod(id) {
       const { data, error } = await client.from("payment_methods").select("*").eq("id", id).single();
@@ -224,6 +233,7 @@ export function createPaymentStore(config) {
         icon: ["card", "wallet", "bank"].includes(input.icon) ? input.icon : "card",
         theme: PAYMENT_THEMES.has(input.theme) ? input.theme : "auto",
         active: Boolean(input.active && encryptedNumber),
+        manual_disabled: false,
         sort_order: Math.max(1, Number(input.order) || 1),
         daily_limit: Math.max(1, Math.min(10000, Number(input.dailyLimit) || 5)),
         limit_mode: input.limitMode === "unlimited" ? "unlimited" : "limited",
@@ -285,9 +295,17 @@ export function createPaymentStore(config) {
       if (error) throw paymentError(error);
       await audit(actor, "method.deactivated", "payment_method", id);
     },
+    async setMethodActive(id, active, actor = "admin") {
+      if (!safeUuid(id)) throw Object.assign(new Error("Ödəniş üsulu ID-si düzgün deyil."), { status: 400 });
+      return rpc("set_payment_method_active_admin", { p_method_id: id, p_active: Boolean(active), p_actor: actor });
+    },
     async deleteMethod(id, actor = "admin") {
       if (!safeUuid(id)) throw Object.assign(new Error("Ödəniş üsulu ID-si düzgün deyil."), { status: 400 });
       return rpc("delete_payment_method_safely", { p_method_id: id, p_actor: actor });
+    },
+    async restoreMethod(id, actor = "admin") {
+      if (!safeUuid(id)) throw Object.assign(new Error("Ödəniş üsulu ID-si düzgün deyil."), { status: 400 });
+      return rpc("restore_payment_method_safely", { p_method_id: id, p_actor: actor });
     },
     async resetMethodCounter(id, actor) {
       const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date());
@@ -296,7 +314,7 @@ export function createPaymentStore(config) {
       await client.from("payment_audit_log").insert({ actor_type: "admin", actor_ref: actor, action: "method.counter_reset", entity_type: "payment_method", entity_id: id });
     },
     async reserve(args) {
-      return rpc("reserve_payment_method_v2", {
+      return rpc("reserve_payment_method_v3", {
         p_method_id: args.methodId,
         p_product_id: args.productId,
         p_plan_id: args.planId,
@@ -487,7 +505,7 @@ export function createPaymentStore(config) {
       return data || null;
     },
     approveOrder(id, durationMonths, actor) {
-      return rpc("approve_payment_order_v5", {
+      return rpc("approve_payment_order_v6", {
         p_order_id: id,
         p_duration_months: durationMonths || null,
         p_actor: actor

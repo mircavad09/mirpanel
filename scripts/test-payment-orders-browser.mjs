@@ -76,6 +76,18 @@ try {
   assert.equal(await numberInput.inputValue(), "");
   await numberInput.fill("4098584499374419");
   assert.equal(await numberInput.inputValue(), "4098 5844 9937 4419");
+  await page.locator("[data-close-payment-editor]").click();
+  await page.locator("[data-toggle-payment-method]").click();
+  await page.waitForFunction(() => document.querySelector("[data-toggle-payment-method]")?.textContent.includes("Aktiv et"));
+  await page.locator("[data-toggle-payment-method]").click();
+  await page.waitForFunction(() => document.querySelector("[data-toggle-payment-method]")?.textContent.includes("Deaktiv et"));
+  await page.locator("[data-delete-payment-method]").click();
+  await page.locator('.paymentActionDialog button[type="submit"]').click();
+  await page.waitForFunction(() => document.querySelector("[data-restore-payment-method]")?.textContent.includes("Bərpa et"));
+  await page.locator("[data-restore-payment-method]").click();
+  await page.locator('.paymentActionDialog button[type="submit"]').click();
+  await page.waitForFunction(() => document.querySelector("[data-toggle-payment-method]")?.textContent.includes("Aktiv et"));
+  assert.match(await page.textContent(".paymentMethodAdminCard .statusPill"), /Deaktiv/);
   await page.click('.navBtn[data-view="paymentCosts"]');
   await page.waitForSelector(".paymentCostRow");
   const missingCost = page.locator('[data-payment-cost-key="netflix:0"] [data-payment-cost-input]');

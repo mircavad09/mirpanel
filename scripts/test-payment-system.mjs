@@ -166,7 +166,7 @@ assert.equal(index.includes("hbo-max-order-fix.js"), false, "Ana səhifədə leg
 assert.equal(api.includes("pendingReservations: method.pendingReservations"), false, "Rezerv sayı public API-yə çıxmamalıdır");
 assert.equal(api.includes("remaining: method.remaining"), false, "Qalan limit public API-yə çıxmamalıdır");
 assert.ok(api.includes("checkoutKey"));
-assert.ok(store.includes('rpc("reserve_payment_method_v2"'));
+assert.ok(store.includes('rpc("reserve_payment_method_v3"'));
 assert.ok(paymentAdmin.includes('name="theme"'), "Bank mövzusu admin paneldə seçilə bilməlidir");
 assert.ok(paymentAdmin.includes("Bu gün tamamlanıb:"));
 assert.ok(paymentAdmin.includes("Aktiv rezerv:"));
