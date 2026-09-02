@@ -124,7 +124,9 @@ assert.equal(flow.includes("contentBase64"), false, "Yeni çek axını base64 ya
 assert.ok(flow.includes("URL.createObjectURL(file)"));
 assert.ok(flow.includes("URL.revokeObjectURL(flow.receiptPreviewUrl)"));
 assert.ok(flow.includes("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."));
-assert.ok(flow.includes("if (!flow.receipt || !flow.reservation)"));
+assert.ok(flow.includes("if (!flow.receipt) { promptForReceipt(); return; }"));
+assert.ok(flow.includes('if (!flow.reservation) { error.textContent = "Aktiv rezerv tələb olunur."'));
+assert.ok(flow.includes("Əvvəlcə ödəniş çekini yükləyin."));
 assert.ok(flow.includes('const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1"'));
 assert.ok(flow.includes("previousReservationId: flow.previousReservationId || null"));
 assert.ok(flow.includes("checkoutKey: flow.checkoutKey"));
@@ -146,7 +148,7 @@ assert.ok(flow.includes("event.preventDefault()"));
 assert.ok(flow.includes("if (flow.submitting) return"));
 assert.equal(flow.includes("/api/payments/replacement-receipts"), false, "İşləməyən yeni çek axını qalmamalıdır");
 assert.equal(flow.includes("paymentReceiptToken"), false, "İşləməyən yeni çek tokeni qalmamalıdır");
-assert.ok(flow.includes("Göndər və WhatsApp-a keç"));
+assert.ok(flow.includes("2. Sifarişi göndər və WhatsApp-a keç"));
 assert.ok(confirmation.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"));
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));
 assert.ok(confirmation.includes("window.location.assign(whatsappUrl)"), "WhatsApp eyni tabda açılmalıdır");
@@ -232,7 +234,7 @@ for (const page of productPages) {
   assert.ok(html.includes("order-confirmation.js?v=checkout-recovery-20260902-1"), `${page}: confirmation cache versiyası köhnədir`);
   assert.equal(html.includes("hbo-max-order-fix.js"), false, `${page}: legacy məhsul handler-i vahid axını kəsməməlidir`);
 }
-assert.ok(read("mirpanel-admin/product-pages.mjs").includes("checkout-recovery-20260902-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
+assert.ok(read("mirpanel-admin/product-pages.mjs").includes("receipt-ux-20260902-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
 
 for (const file of [
   "mirpanel-admin/payment-api.mjs",

@@ -175,13 +175,36 @@
 
   function receiptMarkup() {
     return `<form id="paymentReceiptForm" class="paymentReceiptBox" action="" method="post" novalidate>
-      <label class="paymentReceiptPicker" for="paymentReceiptInput"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>Ödəniş qəbzini yüklə</strong><span>JPG, PNG, WEBP və ya PDF · maksimum 5 MB</span></label>
+      <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>1. Çeki yüklə</strong><span id="paymentReceiptPickerDescription">Ödəniş çekinin şəklini və ya PDF faylını buraya əlavə edin.</span><em id="paymentReceiptPickerWarning">Çeki WhatsApp-a göndərməyin — bu hissəyə yükləyin.</em><small id="paymentReceiptPickerFormats">JPG, PNG, WEBP və ya PDF · maksimum 5 MB</small></label>
       <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>
       <div id="paymentReceiptPreview" class="paymentReceiptPreview hidden"></div>
       <div id="paymentUploadProgress" class="paymentUploadProgress hidden"><span></span><b>0%</b></div>
       <p id="paymentReceiptError" class="paymentReceiptError" role="alert" hidden></p>
-      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><button id="paymentSubmit" type="submit" disabled>Göndər və WhatsApp-a keç</button></div>
+      <p id="paymentReceiptRequiredHint" class="paymentReceiptRequiredHint">Davam etmək üçün əvvəlcə çeki yükləyin.</p>
+      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><div id="paymentSubmitGuard" class="paymentSubmitGuard isBlocked"><button id="paymentSubmit" type="submit" disabled>2. Sifarişi göndər və WhatsApp-a keç</button></div></div>
     </form>`;
+  }
+
+  function setReceiptSubmitReady(ready) {
+    const submit = document.getElementById("paymentSubmit");
+    const guard = document.getElementById("paymentSubmitGuard");
+    const hint = document.getElementById("paymentReceiptRequiredHint");
+    if (submit) submit.disabled = !ready;
+    guard?.classList.toggle("isBlocked", !ready);
+    if (hint) hint.hidden = ready;
+  }
+
+  function promptForReceipt() {
+    const picker = document.querySelector(".paymentReceiptPicker");
+    const error = document.getElementById("paymentReceiptError");
+    if (error) {
+      error.textContent = "Əvvəlcə ödəniş çekini yükləyin.";
+      error.hidden = false;
+    }
+    picker?.classList.add("needsReceipt");
+    picker?.scrollIntoView({ behavior: "smooth", block: "center" });
+    picker?.focus({ preventScroll: true });
+    window.setTimeout(() => picker?.classList.remove("needsReceipt"), 2200);
   }
 
   function setMessage(text, type = "") {
@@ -341,6 +364,15 @@
             choices.hidden = true;
             document.getElementById("paymentMethodDetail").innerHTML = detailMarkup(reserved);
             document.getElementById("paymentReceiptArea").innerHTML = receiptMarkup();
+            const receiptPicker = document.querySelector(".paymentReceiptPicker");
+            receiptPicker.onkeydown = (event) => {
+              if (event.key !== "Enter" && event.key !== " ") return;
+              event.preventDefault();
+              document.getElementById("paymentReceiptInput")?.click();
+            };
+            document.getElementById("paymentSubmitGuard").onclick = () => {
+              if (!flow.receipt && !flow.submitting) promptForReceipt();
+            };
             setMessage("Rezerv yaradıldı. Ödənişdən sonra qəbzi yükləyin.", "success");
             setTimeout(() => {
               if (flow.reservation?.reservationId === reserved.reservationId && !flow.settled) setMessage("Ödəniş məlumatı hazırdır.", "success compact");
@@ -412,7 +444,7 @@
               error.hidden = true;
               if (!file || file.size > 5 * 1024 * 1024 || !RECEIPT_TYPES.has(String(file.type || "").toLowerCase())) {
                 clearReceipt(flow);
-                document.getElementById("paymentSubmit").disabled = true;
+                setReceiptSubmitReady(false);
                 error.textContent = !file ? "Qəbz seçilməyib." : file.size > 5 * 1024 * 1024 ? "Qəbz maksimum 5 MB ola bilər." : "Yalnız JPG, PNG, WEBP və PDF qəbul edilir.";
                 error.hidden = false;
                 return;
@@ -423,12 +455,14 @@
               const preview = document.getElementById("paymentReceiptPreview");
               preview.classList.remove("hidden");
               flow.receiptPreviewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
-              preview.innerHTML = flow.receiptPreviewUrl ? `<img src="${flow.receiptPreviewUrl}" alt="Yüklənəcək ödəniş qəbzi"><div><strong>${esc(file.name)}</strong><button id="removePaymentReceipt" type="button">Çeki sil və yenisini seç</button></div>` : `<div class="paymentPdfPreview"><strong>PDF</strong><span>${esc(file.name)}</span></div><button id="removePaymentReceipt" type="button">Çeki sil və yenisini seç</button>`;
+              const filePreview = flow.receiptPreviewUrl ? `<img src="${flow.receiptPreviewUrl}" alt="Yüklənəcək ödəniş qəbzi">` : `<div class="paymentPdfPreview" aria-label="PDF qəbzi"><strong>PDF</strong></div>`;
+              preview.innerHTML = `${filePreview}<div class="paymentReceiptPreviewInfo"><strong>${esc(file.name)}</strong><span class="paymentReceiptSuccess" role="status">Çek uğurla yükləndi</span><div class="paymentReceiptPreviewActions"><button id="changePaymentReceipt" type="button">Dəyiş</button><button id="removePaymentReceipt" type="button">Sil</button></div></div>`;
               const submitButton = document.getElementById("paymentSubmit");
-              submitButton.disabled = false;
-              submitButton.textContent = "Göndər və WhatsApp-a keç";
+              setReceiptSubmitReady(true);
+              submitButton.textContent = "2. Sifarişi göndər və WhatsApp-a keç";
+              document.getElementById("changePaymentReceipt").onclick = () => document.getElementById("paymentReceiptInput")?.click();
               document.getElementById("removePaymentReceipt").onclick = () => {
-                clearReceipt(flow); setStage(flow, "payment_details"); document.getElementById("paymentSubmit").disabled = true;
+                clearReceipt(flow); setStage(flow, "payment_details"); setReceiptSubmitReady(false);
               };
             };
             document.getElementById("paymentReceiptForm").addEventListener("submit", async (event) => {
@@ -437,13 +471,14 @@
               if (flow.submitting) return;
               const submit = document.getElementById("paymentSubmit");
               const error = document.getElementById("paymentReceiptError");
-              if (!flow.receipt || !flow.reservation) { error.textContent = "Qəbz və aktiv rezerv tələb olunur."; error.hidden = false; return; }
+              if (!flow.receipt) { promptForReceipt(); return; }
+              if (!flow.reservation) { error.textContent = "Aktiv rezerv tələb olunur."; error.hidden = false; return; }
               flow.submitting = true;
               flow.submissionStarted = true;
               storeCheckout(flow);
               submit.disabled = true;
               submit.textContent = "Çek yüklənir...";
-              const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentCancel, #paymentReceiptInput, #removePaymentReceipt");
+              const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentCancel, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
               lockedControls.forEach((control) => { control.disabled = true; });
               error.hidden = true;
               const progress = document.getElementById("paymentUploadProgress");

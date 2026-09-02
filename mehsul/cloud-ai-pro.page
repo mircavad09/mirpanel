@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=20260804-desktop-layout-1">
-  <link rel="stylesheet" href="/payment-flow.css?v=resilience-20260830-1">
+  <link rel="stylesheet" href="/payment-flow.css?v=receipt-ux-20260902-1">
   <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/cloud-ai-pro#product","url":"https://mirpanel.com/mehsul/cloud-ai-pro","name":"Claude AI","description":"Claude AI üçün mövcud planı, real qiyməti və stok vəziyyətini yoxlayın. Mirpanel sifarişi mövcud WhatsApp axını ilə tamamlanır.","image":["https://mirpanel.com/assets/claude.png"],"sku":"claude_ai","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/cloud-ai-pro","price":"0.00","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/cloud-ai-pro#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Claude AI","item":"https://mirpanel.com/mehsul/cloud-ai-pro"}]}]}</script>
@@ -236,7 +236,7 @@
   </div>
 
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
-  <script src="/payment-flow.js?v=checkout-recovery-20260902-1"></script>
+  <script src="/payment-flow.js?v=receipt-ux-20260902-1"></script>
   <script src="/order-confirmation.js?v=checkout-recovery-20260902-1"></script>
   <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>

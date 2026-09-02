@@ -44,8 +44,18 @@ try {
   await page.reload({waitUntil:"networkidle"});
   await page.waitForSelector("#paymentReceiptInput", {state:"attached"});
   assert.equal(await page.locator("[data-payment-method]").count(),0,"Reload must resume without reserving again");
+  assert.equal(await page.isDisabled("#paymentSubmit"), true, "Çeksiz göndərmə passiv olmalıdır");
+  assert.equal(await page.textContent("#paymentReceiptRequiredHint"), "Davam etmək üçün əvvəlcə çeki yükləyin.");
+  await page.click("#paymentSubmitGuard");
+  assert.equal(await page.textContent("#paymentReceiptError"), "Əvvəlcə ödəniş çekini yükləyin.");
+  assert.equal(await page.locator(".paymentReceiptPicker.needsReceipt").count(), 1, "Çek sahəsi vurğulanmalıdır");
   await page.setInputFiles("#paymentReceiptInput", { name: "camera-receipt.jpg", mimeType: "image/jpeg", buffer: jpeg });
   assert.match(await page.getAttribute("#paymentReceiptPreview img", "src"), /^blob:/);
+  assert.equal(await page.textContent(".paymentReceiptSuccess"), "Çek uğurla yükləndi");
+  assert.equal(await page.textContent("#changePaymentReceipt"), "Dəyiş");
+  assert.equal(await page.textContent("#removePaymentReceipt"), "Sil");
+  assert.equal(await page.isEnabled("#paymentSubmit"), true);
+  assert.equal(await page.isHidden("#paymentReceiptRequiredHint"), true);
   await page.evaluate(() => { document.getElementById("paymentSubmit").click(); document.getElementById("paymentSubmit").click(); });
   await page.waitForFunction(() => window.__paymentOrder?.orderCode === "10001");
   const state = await (await fetch(`http://127.0.0.1:${port}/test/state`)).json();

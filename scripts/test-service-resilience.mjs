@@ -13,7 +13,7 @@ function harness(fetcher) {
   const delays = [];
   const context = vm.createContext({ window: {}, fetch: fetcher, AbortController, DOMException, console,
     setTimeout(fn, ms) { delays.push(ms); return setTimeout(fn, ms >= 12000 ? 15 : 1); }, clearTimeout });
-  vm.runInContext(source.replace("window.MirpanelPaymentFlow = { start };", "window.testRequest = request; window.MirpanelPaymentFlow = { start };"), context);
+  vm.runInContext(source.replace("window.MirpanelPaymentFlow = {", "window.testRequest = request; window.MirpanelPaymentFlow = {"), context);
   return { request: context.window.testRequest, delays };
 }
 let tests = 0;
@@ -21,7 +21,7 @@ let tests = 0;
 const oldSource = execFileSync("git", ["show", "origin/main:payment-flow.js"], { encoding: "utf8" });
 if (oldSource.includes("response.json().catch(() => ({}))")) {
   const oldContext = vm.createContext({ window: {}, fetch: async () => new Response("<html>Service waking up</html>", { headers: { "Content-Type": "text/html" } }) });
-  vm.runInContext(oldSource.replace("window.MirpanelPaymentFlow = { start };", "window.testRequest = request;"), oldContext);
+  vm.runInContext(oldSource.replace("window.MirpanelPaymentFlow = {", "window.testRequest = request; window.MirpanelPaymentFlow = {"), oldContext);
   assert.equal(JSON.stringify(await oldContext.window.testRequest("/api/payments/methods")), "{}", "Old HTML response was incorrectly accepted");
   tests++;
 }
@@ -113,7 +113,7 @@ const snapshot = commercialSnapshot(after);
 const data = extractAdminState(after);
 const pages = generateProductPageFiles(data.products, data.siteSections, data.cms, data.content);
 for (const [name, html] of pages) {
-  assert.match(html, /payment-flow.js\?v=resilience-20260830-1/, name);
-  assert.match(html, /payment-flow.css\?v=resilience-20260830-1/, name);
+  assert.match(html, /payment-flow.js\?v=receipt-ux-20260902-1/, name);
+  assert.match(html, /payment-flow.css\?v=receipt-ux-20260902-1/, name);
 }
 console.log(JSON.stringify({ ok: true, tests, generatedPages: pages.size, commercialHash: snapshot.sha256, products: snapshot.productCount, activeProducts: snapshot.activeProductCount }, null, 2));
