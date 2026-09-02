@@ -1300,23 +1300,20 @@
     const formClass = isHbo
       ? "mpForm universalOrderForm hboMaxOrderForm"
       : "mpForm universalOrderForm premiumOrderForm";
-    const title = isHbo ? "HBO Max profil məlumatları" : "Sifariş məlumatları";
-    const hint = isHbo
-      ? `<p class="hboMaxOrderHint">HBO Max profil məlumatlarınızı qeyd edin.</p>`
-      : "";
+    const title = product.formTitle || (isHbo ? "HBO Max profil məlumatları" : "Sifariş məlumatları");
+    const formDescription = product.formDescription || (isHbo ? "HBO Max profil adını və 4 rəqəmli profil kodunu daxil edin." : "");
+    const hint = formDescription ? `<p class="hboMaxOrderHint">${escapeHtml(formDescription)}</p>` : "";
 
     renderModalContent(`
-      <form class="${formClass}" id="universalOrderForm">
+      <form class="${formClass}" id="universalOrderForm" data-product-id="${escapeHtml(product.id || "")}">
         <div class="mpFormTitle">${escapeHtml(title)}</div>
         ${hint}
         <div class="premiumOrderFields">
           ${fields.map((field) => {
             const inputType = field.type || "text";
             const codeLength = codeLengthForField(field);
-            const fourDigitCode = isHbo && codeLength === 4;
-            const isNameField = isHbo && String(field.key || "").toLowerCase() === "name";
-            const label = fourDigitCode ? "Profil kodu / PIN" : (isNameField ? "HBO Max profil adı" : (field.label || field.key));
-            const placeholder = fourDigitCode ? "Profil kodu / PIN yazın" : (isNameField ? "HBO Max profil adınızı yazın" : (field.placeholder || ""));
+            const label = field.label || field.key;
+            const placeholder = field.placeholder || "";
             const common = `
               name="${escapeHtml(field.key)}"
               data-label="${escapeHtml(label)}"
@@ -1325,6 +1322,11 @@
               autocomplete="${inputType === "password" ? "current-password" : "off"}"
               ${field.minLength ? `minlength="${Number(field.minLength)}"` : ""}
               ${field.maxLength ? `maxlength="${Number(field.maxLength)}"` : ""}
+              ${Number.isFinite(Number(field.min)) ? `min="${Number(field.min)}"` : ""}
+              ${Number.isFinite(Number(field.max)) ? `max="${Number(field.max)}"` : ""}
+              ${Number.isFinite(Number(field.step)) ? `step="${Number(field.step)}"` : ""}
+              ${field.defaultValue !== undefined ? `value="${escapeHtml(field.defaultValue)}"` : ""}
+              ${field.readOnly === true ? "readonly" : ""}
               ${codeLength ? `inputmode="numeric" maxlength="${codeLength}" pattern="\\d{${codeLength}}"` : ""}
               ${field.required ? "required" : ""}
             `;

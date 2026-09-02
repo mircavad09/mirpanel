@@ -463,13 +463,17 @@
     return Boolean(form?.querySelector('input[name="code_4"]'));
   }
 
+  function isNetflixCode4Form(form) {
+    return isCode4Form(form) && String(form?.dataset?.productId || "").toLowerCase() === "netflix";
+  }
+
   function cleanCodeInput(input) {
     const clean = input.value.replace(/\D/g, "").slice(0, 4);
     if (input.value !== clean) input.value = clean;
   }
 
   function decorateNetflixForm(form) {
-    if (!isCode4Form(form) || form.dataset.netflixDecorated === "1") return;
+    if (!isNetflixCode4Form(form) || form.dataset.netflixDecorated === "1") return;
 
     document.getElementById("modal")?.classList.add("netflixOrderFormOpen");
     document.body.classList.add("netflixOrderModalActive");
@@ -510,7 +514,8 @@
 
   const observer = new MutationObserver(() => {
     document.querySelectorAll("#universalOrderForm").forEach(decorateNetflixForm);
-    if (!document.querySelector('#universalOrderForm input[name="code_4"]')) {
+    const activeNetflixForm = [...document.querySelectorAll("#universalOrderForm")].some(isNetflixCode4Form);
+    if (!activeNetflixForm) {
       document.getElementById("modal")?.classList.remove("netflixOrderFormOpen");
       document.body.classList.remove("netflixOrderModalActive");
     }

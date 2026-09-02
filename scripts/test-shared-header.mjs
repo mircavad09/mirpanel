@@ -41,6 +41,9 @@ for (const [route, file] of Object.entries(routes)) {
   if (route !== "/netflix_tesdiq") assert.ok(html.includes(`href="${expectedActive[route]}" data-header-key=`), `${route}: active target missing`);
   assert.match(html, /site-header\.css\?v=/, `${route}: shared CSS missing`);
   assert.match(html, /site-header\.js\?v=/, `${route}: shared JS missing`);
+  for (const removed of ["site-header-language", "langBtn", "data-site-header-currency", ">AZE<", ">ENG<", ">RUS<", ">Valyuta<"]) {
+    assert.equal(html.includes(removed), false, `${route}: silinmiş dil/valyuta elementi qalıb: ${removed}`);
+  }
 }
 
 const server = http.createServer((request, response) => {
@@ -82,12 +85,16 @@ try {
           menuVisible: getComputedStyle(header.querySelector(".site-header-menu-button")).display !== "none",
           overlap: brand && nav && tools ? brand.right > nav.left || nav.right > tools.left : false,
           linkCount: header.querySelectorAll(".site-header-nav a").length,
+          languageControls: header.querySelectorAll(".langBtn, .site-header-language").length,
+          currencyControls: header.querySelectorAll("[data-site-header-currency], .site-header-currency").length,
           expected: activeHref
         };
       }, expectedActive[route]);
       assert.equal(audit.activeDesktop, expectedActive[route], `${route}@${width}: desktop active link`);
       assert.equal(audit.activeMobile, expectedActive[route], `${route}@${width}: mobile active link`);
       assert.equal(audit.linkCount, 6, `${route}@${width}: desktop link count`);
+      assert.equal(audit.languageControls, 0, `${route}@${width}: dil seçimi görünür`);
+      assert.equal(audit.currencyControls, 0, `${route}@${width}: valyuta seçimi görünür`);
       assert.ok(audit.overflow <= 0, `${route}@${width}: horizontal overflow ${audit.overflow}`);
       if (width > 900) {
         assert.equal(audit.desktopVisible, true, `${route}@${width}: desktop nav hidden`);

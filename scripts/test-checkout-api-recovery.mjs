@@ -25,7 +25,8 @@ const store = {
     const r=reservations.get(args.reservationId);
     if(Date.parse(r.expires_at)<=Date.now()) throw Object.assign(new Error("Rezerv vaxtı bitib"),{status:409});
     const order={id:crypto.randomUUID(),order_code:String(next++),method_id:method.id,product_title:args.productTitle,
-      plan_name:args.planName,amount:r.amount,currency:"AZN",status:"reviewing",receipt_path:args.receiptPath,receipt_mime:args.receiptMime};
+      plan_name:args.planName,amount:r.amount,currency:"AZN",status:"reviewing",receipt_path:args.receiptPath,receipt_mime:args.receiptMime,
+      method_name_snapshot:method.provider_name,method_last4_snapshot:method.last4};
     orders.set(args.reservationId,order); r.status="reviewing";
     if(loseRpcResponse) {loseRpcResponse=false; throw Object.assign(new Error("Upstream response lost"),{status:500});}
     return {id:order.id,idempotent:false};
@@ -63,6 +64,8 @@ try {
   equal(new Set(results.map(r=>r.body.orderCode)).size,1); equal(results[0].body.orderCode,"10001");
   equal(orders.size,1);equal(files.size,1);equal(queueCount,1);
   equal(results[0].body.amount,5.99); // reserved price, not changed catalog price 99
+  equal(results[0].body.paymentMethod,"Fixture Bank •••• 0000");
+  equal(JSON.stringify(results[0].body).includes("0000000000000000"),false);
   const resumed=await call("/api/payments/checkout/resume",{reservationId:r.id,checkoutKey:r.checkout_key});
   equal(resumed.body.state,"submitted");equal(resumed.body.order.orderCode,"10001");equal(resumed.headers["Cache-Control"],"no-store");
   equal(JSON.stringify(resumed.body).includes("receipt_path"),false);equal(JSON.stringify(resumed.body).includes("0000000000000000"),false);

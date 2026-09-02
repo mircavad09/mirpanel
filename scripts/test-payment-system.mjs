@@ -231,7 +231,7 @@ for (const page of productPages) {
   const html = read(path.join("mehsul", page));
   assert.ok(html.includes("payment-flow.css?v="), `${page}: payment CSS bağlantısı yoxdur`);
   assert.ok(html.includes("payment-flow.js?v="), `${page}: payment JS bağlantısı yoxdur`);
-  assert.ok(html.includes("order-confirmation.js?v=checkout-recovery-20260902-1"), `${page}: confirmation cache versiyası köhnədir`);
+  assert.ok(html.includes("order-confirmation.js?v=product-forms-20260902-1"), `${page}: confirmation cache versiyası köhnədir`);
   assert.equal(html.includes("hbo-max-order-fix.js"), false, `${page}: legacy məhsul handler-i vahid axını kəsməməlidir`);
 }
 assert.ok(read("mirpanel-admin/product-pages.mjs").includes("receipt-ux-20260902-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");

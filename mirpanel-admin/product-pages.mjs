@@ -318,8 +318,8 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
     ]
   });
   const html = `<!DOCTYPE html>
-<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
-<body class="product-page-document">${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=20260805-shared-header-1"></script></body></html>`;
+<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
+<body class="product-page-document">${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=20260902-controls-removed-1"></script></body></html>`;
   return new Map([["mehsul.page", applyCmsBrandAndNav(html, cms, "products")]]);
 }
 
@@ -426,7 +426,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=20260804-desktop-layout-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-ux-20260902-1">
-  <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
+  <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
@@ -530,10 +530,10 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
   <script src="/payment-flow.js?v=receipt-ux-20260902-1"></script>
-  <script src="/order-confirmation.js?v=checkout-recovery-20260902-1"></script>
-  <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
+  <script src="/order-confirmation.js?v=product-forms-20260902-1"></script>
+  <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
-  <script src="/site-header.js?v=20260805-shared-header-1"></script>
+  <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>
 `.replace(/[ \t]+$/gm, "");
@@ -588,7 +588,7 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
   <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
-  <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
+  <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-2" : page.key === "sertler" ? "20260731-terms-2" : "20260728-1"}">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
@@ -608,7 +608,7 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   </main>
 
   <footer class="product-page-footer">${escapeHtml(fixMojibake(ui.footRights) || "©️ 2026 Mirpanel • Bütün hüquqlar qorunur")}</footer>
-  <script src="/site-header.js?v=20260805-shared-header-1"></script>
+  <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>
 `.replace(/[ \t]+$/gm, "");
@@ -975,7 +975,7 @@ export function generateNetflixConfirmationPageFiles(siteSections = {}, cms = {}
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
   <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
-  <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
+  <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/netflix-confirmation.css?v=20260901-1">
   <link rel="icon" href="/assets/logo.png">
 </head>
@@ -992,7 +992,7 @@ export function generateNetflixConfirmationPageFiles(siteSections = {}, cms = {}
       <p id="netflixConfirmationStatus" class="netflix-confirmation-status" role="status" aria-live="polite" hidden></p>
     </section>
   </main>
-  <script src="/site-header.js?v=20260901-netflix-link-1"></script>
+  <script src="/site-header.js?v=20260902-controls-removed-1"></script>
   <script src="/netflix-confirmation.js?v=20260901-1"></script>
 </body>
 </html>`;
@@ -1009,12 +1009,6 @@ function renderSharedHeader(siteSections = {}, currentKey = null) {
       </a>
       <nav class="product-page-nav site-header-nav" aria-label="Əsas menyu">${navigation}</nav>
       <div class="site-header-tools">
-        <div class="site-header-language" aria-label="Dil seçimi">
-          <button class="langBtn" type="button" data-lang="az">AZE</button>
-          <button class="langBtn" type="button" data-lang="en">ENG</button>
-          <button class="langBtn" type="button" data-lang="ru">RUS</button>
-        </div>
-        <label class="site-header-currency"><span>Valyuta</span><select aria-label="Valyuta seçimi" data-site-header-currency><option value="AZN">AZN</option></select></label>
         <form class="site-header-search" role="search" data-site-header-search>
           <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
           <input type="search" name="search" autocomplete="off" placeholder="Məhsul axtar..." aria-label="Məhsul axtar">
@@ -1040,11 +1034,16 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
   const header = applyCmsBrandAndNav(renderSharedHeader(siteSections, "home"), cms, "home");
   let next = String(source || "").replace(/<header class="(?:top|product-page-header site-header)" id="mainHeader">[\s\S]*?<\/header>/, header);
   if (!next.includes("site-header.css")) {
-    next = next.replace(/(<link rel="stylesheet" href="[^"]*style\.css[^>]*>)/, `$1\n  <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">`);
+    next = next.replace(/(<link rel="stylesheet" href="[^"]*style\.css[^>]*>)/, `$1\n  <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">`);
   }
   if (!next.includes("site-header.js")) {
-    next = next.replace(/<\/body>/, `  <script src="/site-header.js?v=20260805-shared-header-1"></script>\n</body>`);
+    next = next.replace(/<\/body>/, `  <script src="/site-header.js?v=20260902-controls-removed-1"></script>\n</body>`);
   }
+  next = next
+    .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
+    .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=20260902-controls-removed-1")
+    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=product-forms-20260902-1");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=20260902-form-scope-1");
   return next;
 }
 

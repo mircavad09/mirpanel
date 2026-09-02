@@ -1,14 +1,6 @@
 (function () {
   "use strict";
 
-  const LANGUAGE_KEY = "mirpanel_language";
-  const CURRENCY_KEY = "mirpanel_currency";
-  const HEADER_TEXT = {
-    az: { home: "Ana səhifə", products: "Məhsullar", about: "Haqqımızda", terms: "Şərtlər", contact: "Əlaqə", netflixVerification: "Netflix Təsdiqi", search: "Məhsul axtar..." },
-    en: { home: "Home", products: "Products", about: "About", terms: "Terms", contact: "Contact", netflixVerification: "Netflix Confirmation", search: "Search products..." },
-    ru: { home: "Главная", products: "Товары", about: "О нас", terms: "Условия", contact: "Контакты", netflixVerification: "Подтверждение Netflix", search: "Поиск товаров..." }
-  };
-
   function addNetflixVerificationLink(header) {
     header.querySelectorAll(".site-header-nav, .site-header-drawer-nav").forEach((nav) => {
       if (nav.querySelector('a[href="/netflix_tesdiq"]')) return;
@@ -30,18 +22,6 @@
     const value = normalize(query);
     document.querySelectorAll(".grid .card").forEach((card) => {
       card.hidden = Boolean(value) && !normalize(card.textContent).includes(value);
-    });
-  }
-
-  function applyHeaderLanguage(header, language) {
-    const texts = HEADER_TEXT[language] || HEADER_TEXT.az;
-    header.querySelectorAll("[data-header-key]").forEach((link) => {
-      const text = link.querySelector("span");
-      if (text && texts[link.dataset.headerKey]) text.textContent = texts[link.dataset.headerKey];
-    });
-    header.querySelectorAll('[data-site-header-search] input[type="search"]').forEach((input) => {
-      input.placeholder = texts.search;
-      input.setAttribute("aria-label", texts.search);
     });
   }
 
@@ -107,24 +87,6 @@
         runSearch(form);
       });
     });
-
-    header.querySelectorAll(".langBtn[data-lang]").forEach((button) => {
-      button.addEventListener("click", () => {
-        const nextLanguage = button.dataset.lang || "az";
-        localStorage.setItem(LANGUAGE_KEY, nextLanguage);
-        header.querySelectorAll(".langBtn[data-lang]").forEach((item) => item.classList.toggle("active", item === button));
-        applyHeaderLanguage(header, nextLanguage);
-      });
-    });
-    const language = localStorage.getItem(LANGUAGE_KEY) || "az";
-    header.querySelectorAll(".langBtn[data-lang]").forEach((button) => button.classList.toggle("active", button.dataset.lang === language));
-    applyHeaderLanguage(header, language);
-
-    const currency = header.querySelector("[data-site-header-currency]");
-    if (currency) {
-      currency.value = localStorage.getItem(CURRENCY_KEY) || "AZN";
-      currency.addEventListener("change", () => localStorage.setItem(CURRENCY_KEY, currency.value));
-    }
 
     document.addEventListener("keydown", (event) => {
       if (!header.classList.contains("is-menu-open")) return;

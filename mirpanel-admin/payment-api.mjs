@@ -12,6 +12,7 @@ import {
 } from "./payment-security.mjs";
 import { createPaymentStore } from "./payment-store.mjs";
 import { structuredDurationMonths } from "./payment-order-lifecycle.mjs";
+import { paymentMethodLabel } from "./payment-order-query.mjs";
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -117,9 +118,13 @@ export function createPaymentSystem(options) {
 
   async function orderResult(order, idempotent = true) {
     const method = await store.rawMethod(order.method_id);
+    const methodLabel = paymentMethodLabel({
+      method_name_snapshot: order.method_name_snapshot || method?.provider_name || method?.display_name,
+      method_last4_snapshot: order.method_last4_snapshot || method?.last4
+    });
     return {
       orderId: order.id, orderCode: order.order_code, status: order.status, idempotent,
-      paymentMethod: method.provider_name,
+      paymentMethod: methodLabel,
       productTitle: order.product_title, planName: order.plan_name,
       amount: Number(order.amount), currency: order.currency,
       receiptUploaded: Boolean(order.receipt_path && !order.receipt_deleted_at)

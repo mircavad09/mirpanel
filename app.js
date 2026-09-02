@@ -1186,21 +1186,22 @@ const DATA = {
         {
           "key": "name",
           "type": "text",
-          "label": "Ad",
-          "placeholder": "Adınızı yazın",
+          "label": "HBO Max profil adı",
+          "placeholder": "HBO Max profil adınızı yazın",
           "required": true,
           "enabled": true
         },
         {
           "key": "code_4",
           "type": "text",
-          "label": "4 rəqəmli kod / PIN",
-          "placeholder": "4 rəqəmli kod yazın",
+          "label": "Profil kodu / PIN",
+          "placeholder": "4 rəqəmli profil kodunu yazın",
           "required": true,
           "enabled": true
         }
       ],
-      "formTitle": "",
+      "formTitle": "HBO Max profil məlumatları",
+      "formDescription": "HBO Max profil adını və 4 rəqəmli profil kodunu daxil edin.",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1251,7 +1252,7 @@ const DATA = {
       "badge": "TikTok",
       "imageAlt": "TikTok Jeton",
       "desc": "Minimum 500 jeton.",
-      "note": "500 jeton = 10 ₼. İstifadəçi adı və şifrə qeyd olunur.",
+      "note": "500 jeton = 10 ₼. TikTok istifadəçi adı qeyd olunur.",
       "longDescription": "TikTok Jeton canlı yayımlarda hədiyyə göndərmək və balans artırmaq üçün istifadə olunur. Mirpanel TikTok jeton almaq istəyənlər üçün rahat və sərfəli sifariş imkanı təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən aparılır.",
       "usageRules": "",
       "deliveryText": "",
@@ -1278,7 +1279,7 @@ const DATA = {
         "alt": "TikTok Jeton banneri",
         "order": 11
       },
-      "flow": "spotify",
+      "flow": "tiktok_jeton",
       "soldOut": false,
       "active": true,
       "stock": null,
@@ -1288,23 +1289,28 @@ const DATA = {
       "orderFlow": "form_then_whatsapp",
       "formFields": [
         {
-          "key": "email",
-          "type": "email",
-          "label": "Email",
-          "placeholder": "Spotify hesab emailinizi yazın",
+          "key": "tiktok_username",
+          "type": "text",
+          "label": "TikTok istifadəçi identifikatoru",
+          "placeholder": "@istifadeci_adi",
           "required": true,
           "enabled": true
         },
         {
-          "key": "password",
-          "type": "password",
-          "label": "Şifrə",
-          "placeholder": "Spotify hesab şifrənizi yazın",
+          "key": "jeton_quantity",
+          "type": "number",
+          "label": "Jeton miqdarı",
+          "placeholder": "500",
           "required": true,
-          "enabled": true
+          "enabled": true,
+          "min": 500,
+          "max": 500,
+          "step": 500,
+          "defaultValue": "500",
+          "readOnly": true
         }
       ],
-      "formTitle": "",
+      "formTitle": "TikTok Jeton məlumatları",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -4020,36 +4026,9 @@ function showEmailOnlyForm(p, plan) {
 }
 
 function showTikTokJetonForm(p, plan) {
-  document.getElementById("mForm").innerHTML = `
-    <div class="mpForm">
-      <div class="mpFormTitle">TikTok Jeton</div>
-      <div class="mpGrid2">
-        <div><div class="mpLabel">${UI.ttCoin}</div><input id="tt_coin" class="mpInput" type="number" value="500"></div>
-        <div><div class="mpLabel">${UI.ttPrice}</div><input id="tt_price" class="mpInput" value="10.00 ₼" readonly></div>
-      </div>
-      <div style="margin-top:10px">
-        <div class="mpLabel">${UI.ttUser}</div>
-        <input id="tt_user" class="mpInput" placeholder="${UI.ttUserPlace}">
-      </div>
-      <div style="margin-top:10px">
-        <div class="mpLabel">${UI.passLabel}</div>
-        <input id="tt_pass" class="mpInput" placeholder="TikTok Şifrəniz">
-      </div>
-      <button id="tt_send" class="mpBtn">${UI.sendWa}</button>
-    </div>`;
-  
-  const coinEl = document.getElementById("tt_coin"), priceEl = document.getElementById("tt_price");
-  coinEl.oninput = () => { 
-      const c = Number(coinEl.value); 
-      priceEl.value = c < 500 ? "Min 500" : ((c / 500) * 10).toFixed(2) + " ₼"; 
-  };
-  
-  document.getElementById("tt_send").onclick = () => {
-    const c = Number(coinEl.value), user = document.getElementById("tt_user").value.trim(), pass = document.getElementById("tt_pass").value.trim();
-    if(c < 500 || !user || !pass) return alert("Zəhmət olmasa bütün məlumatları doldurun və minimum 500 jeton seçin.");
-    sendWA(p, plan, `Say: ${c}\nİstifadəçi: ${user}\nŞifrə: ${pass}`);
-    closeModal();
-  };
+  // Product checkout is rendered by the shared payment flow. Keep this
+  // legacy hook inert so an old listener can never reintroduce credentials.
+  return undefined;
 }
 
 function sendWA(p, plan, extra) {

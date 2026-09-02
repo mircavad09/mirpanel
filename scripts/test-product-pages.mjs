@@ -168,7 +168,7 @@ for (const { product, slug } of active) {
   assert.ok(html.includes(`name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"`), `${filePath}: viewport`);
   assert.match(html, /href="\/product-page\.css\?v=[^"\s]+"/, `${filePath}: versioned scoped CSS`);
   assert.match(html, /src="\/app\.js\?v=[^"\s]+"/, `${filePath}: product data cache version`);
-  assert.ok(html.includes(`/order-confirmation.js?v=checkout-recovery-20260902-1`), `${filePath}: shared confirmation component`);
+  assert.ok(html.includes(`/order-confirmation.js?v=product-forms-20260902-1`), `${filePath}: shared confirmation component`);
   assert.ok(!html.includes("hbo-max-order-fix.js"), `${filePath}: legacy product-specific order handler must not override the shared flow`);
   assert.ok(html.includes(`property="og:url" content="${canonical}"`), `${filePath}: Open Graph`);
   const expectedSocialTitle = String(product.seoOgTitle || product.title || "").trim();

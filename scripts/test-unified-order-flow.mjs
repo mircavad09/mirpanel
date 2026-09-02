@@ -87,6 +87,7 @@ async function fillCustomerForm(page) {
     }
     const codeLength = Number(await control.getAttribute("data-code-length")) || 0;
     const type = await control.getAttribute("type");
+    if (await control.getAttribute("readonly") !== null) continue;
     const value = codeLength ? "1".repeat(codeLength) : type === "email" ? "test@example.com" : type === "number" ? "1" : "Test məlumatı";
     await control.fill(value);
   }
@@ -139,6 +140,24 @@ try {
   }
 
   await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto("http://127.0.0.1:10082/mehsul/tiktok-jeton", { waitUntil: "networkidle" });
+  await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
+  assert.equal(await page.locator('#universalOrderForm input[name="tiktok_username"]').count(), 1, "TikTok identifikator sahəsi yoxdur");
+  assert.equal(await page.locator('#universalOrderForm input[name="jeton_quantity"]').inputValue(), "500", "TikTok jeton miqdarı cari 10 ₼ planına uyğun deyil");
+  assert.equal(await page.locator('#universalOrderForm input[type="password"]').count(), 0, "TikTok formunda şifrə sahəsi qalıb");
+  assert.equal((await page.locator("#universalOrderForm").innerText()).includes("Spotify"), false, "TikTok formunda Spotify mətni qalıb");
+
+  await page.goto("http://127.0.0.1:10082/mehsul/hbo-max", { waitUntil: "networkidle" });
+  await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
+  assert.match(await page.locator("#universalOrderForm").innerText(), /HBO Max profil məlumatları/);
+  assert.match(await page.locator("#universalOrderForm").innerText(), /HBO Max profil adı/);
+  assert.match(await page.locator("#universalOrderForm").innerText(), /Profil kodu \/ PIN/);
+
+  await page.goto("http://127.0.0.1:10082/mehsul/spotify-premium", { waitUntil: "networkidle" });
+  await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
+  assert.equal(await page.locator('#universalOrderForm input[type="email"]').count(), 1, "Spotify email sahəsi dəyişib");
+  assert.equal(await page.locator('#universalOrderForm input[type="password"]').count(), 1, "Spotify şifrə sahəsi dəyişib");
+
   await page.goto("http://127.0.0.1:10082/mehsul/hbo-max", { waitUntil: "networkidle" });
   await page.dblclick("#pp-order-btn");
   assert.equal(await page.locator("#orderConfirmationConsentForm").count(), 1, "Təkrar klik iki təsdiq pəncərəsi yaratdı");

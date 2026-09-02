@@ -700,6 +700,11 @@ function normalizeFormField(field = {}, index = 0) {
   };
   if (Number.isFinite(Number(field.minLength)) && Number(field.minLength) > 0) normalized.minLength = Math.trunc(Number(field.minLength));
   if (Number.isFinite(Number(field.maxLength)) && Number(field.maxLength) > 0) normalized.maxLength = Math.trunc(Number(field.maxLength));
+  if (Number.isFinite(Number(field.min))) normalized.min = Number(field.min);
+  if (Number.isFinite(Number(field.max))) normalized.max = Number(field.max);
+  if (Number.isFinite(Number(field.step)) && Number(field.step) > 0) normalized.step = Number(field.step);
+  if (field.defaultValue !== undefined) normalized.defaultValue = cleanText(field.defaultValue, "", 250);
+  if (field.readOnly === true) normalized.readOnly = true;
   if (Number.isFinite(Number(field.order)) && Number(field.order) > 0) normalized.order = Math.trunc(Number(field.order));
   if (normalized.type === "select") normalized.options = Array.isArray(field.options)
     ? field.options.map((option) => cleanText(option, "", 120)).filter(Boolean).slice(0, 50)
@@ -850,6 +855,7 @@ function normalizeProduct(product = {}, index = 0) {
     }),
     formFields,
     formTitle: cleanText(product.formTitle || "", "", 200),
+    formDescription: cleanText(product.formDescription || "", "", 500),
     confirmationModal,
     whatsapp: normalizeWhatsApp(product.whatsapp),
     plans: Array.isArray(product.plans) ? product.plans.map(normalizePlan) : [],

@@ -108,7 +108,11 @@ try {
 } finally { globalThis.fetch = originalFetch; }
 const before = execFileSync("git", ["show", "origin/main:app.js"], { encoding: "utf8", maxBuffer: 20e6 });
 const after = fs.readFileSync(new URL("../app.js", import.meta.url), "utf8");
-assert.equal(after, before, "All catalog and CMS source bytes preserved");
+const beforeCommercial = commercialSnapshot(before);
+const afterCommercial = commercialSnapshot(after);
+assert.equal(afterCommercial.sha256, beforeCommercial.sha256, "Qiymət/stok/sıra/banner/SEO kommersiya məlumatı dəyişib");
+assert.equal(afterCommercial.productCount, beforeCommercial.productCount, "Məhsul sayı dəyişib");
+assert.equal(afterCommercial.activeProductCount, beforeCommercial.activeProductCount, "Aktiv məhsul sayı dəyişib");
 const snapshot = commercialSnapshot(after);
 const data = extractAdminState(after);
 const pages = generateProductPageFiles(data.products, data.siteSections, data.cms, data.content);

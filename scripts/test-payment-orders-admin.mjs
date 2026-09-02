@@ -31,6 +31,9 @@ assert.equal(adminOrderStatus("approved"), "completed");
 assert.equal(adminOrderStatus("reviewing", "expired"), "expired");
 assert.equal(paymentMethodLabel({ display_name: "LeoBank •••• 4419", provider_name: "LeoBank", last4: "4419" }), "LeoBank •••• 4419");
 assert.equal(paymentMethodLabel({ method_name_snapshot: "ABB", method_last4_snapshot: "4655" }), "ABB •••• 4655");
+assert.equal(paymentMethodLabel({ method_name_snapshot: "M10", method_last4_snapshot: "0909" }), "M10 •••• 0909");
+assert.equal(paymentMethodLabel({ method_name_snapshot: "Kapital Bank", method_last4_snapshot: "8332" }), "Kapital Bank •••• 8332");
+assert.equal(paymentMethodLabel({ method_name_snapshot: "LeoBank", method_last4_snapshot: "7350" }), "LeoBank •••• 7350");
 
 assert.equal(bakuDate("2026-08-08T19:59:59.999Z"), "2026-08-08");
 assert.equal(bakuDate("2026-08-08T20:00:00.000Z"), "2026-08-09");

@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=20260804-desktop-layout-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-ux-20260902-1">
-  <link rel="stylesheet" href="/site-header.css?v=20260805-shared-header-1">
+  <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/netflix-sexsi#product","url":"https://mirpanel.com/mehsul/netflix-sexsi","name":"Netflix Şəxsi","description":"Netflix şəxsi hesabını sərfəli qiymətə əldə et. Premium izləmə, rahat sifariş və sürətli aktivləşdirmə Mirpanel-də.","image":["https://mirpanel.com/assets/netflix.png"],"sku":"netflix","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-sexsi","price":"5.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-sexsi","price":"16.49","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-sexsi","price":"29.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/netflix-sexsi#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Netflix Şəxsi","item":"https://mirpanel.com/mehsul/netflix-sexsi"}]}]}</script>
 </head>
@@ -45,12 +45,6 @@
       </a>
       <nav class="product-page-nav site-header-nav" aria-label="Əsas menyu"><a href="/" data-header-key="home"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5"/><path d="M5.5 10.5V20h13v-9.5"/></svg><span>Ana Səhifə</span></a><a href="/mehsul" data-header-key="products" aria-current="page"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="m4 7 8-4 8 4-8 4-8-4Z"/><path d="m4 7 8 4 8-4v10l-8 4-8-4V7Z"/></svg><span>Məhsullar</span></a><a href="/haqqimizda" data-header-key="about"><svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/></svg><span>Haqqımızda</span></a><a href="/sertler" data-header-key="terms"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M7 3.5h10a2 2 0 0 1 2 2v15l-7-3-7 3v-15a2 2 0 0 1 2-2Z"/></svg><span>Şərtlər</span></a><a href="/elaqe" data-header-key="contact"><svg aria-hidden="true" viewBox="0 0 24 24"><path d="M6.5 3.5h3l1.5 4-2 1.5a15 15 0 0 0 6 6l1.5-2 4 1.5v3a3 3 0 0 1-3 3C9.8 20.5 3.5 14.2 3.5 6.5a3 3 0 0 1 3-3Z"/></svg><span>Əlaqə</span></a></nav>
       <div class="site-header-tools">
-        <div class="site-header-language" aria-label="Dil seçimi">
-          <button class="langBtn" type="button" data-lang="az">AZE</button>
-          <button class="langBtn" type="button" data-lang="en">ENG</button>
-          <button class="langBtn" type="button" data-lang="ru">RUS</button>
-        </div>
-        <label class="site-header-currency"><span>Valyuta</span><select aria-label="Valyuta seçimi" data-site-header-currency><option value="AZN">AZN</option></select></label>
         <form class="site-header-search" role="search" data-site-header-search>
           <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
           <input type="search" name="search" autocomplete="off" placeholder="Məhsul axtar..." aria-label="Məhsul axtar">
@@ -237,9 +231,9 @@
 
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
   <script src="/payment-flow.js?v=receipt-ux-20260902-1"></script>
-  <script src="/order-confirmation.js?v=checkout-recovery-20260902-1"></script>
-  <script src="/stock-display-fix.js?v=20260804-mobile-layout-1"></script>
+  <script src="/order-confirmation.js?v=product-forms-20260902-1"></script>
+  <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
-  <script src="/site-header.js?v=20260805-shared-header-1"></script>
+  <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>
