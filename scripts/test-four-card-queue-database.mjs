@@ -29,8 +29,10 @@ try {
   // Only synthetic records are added to this isolated engine.
   for(let i=0;i<ids.length;i++) await q("insert into payment_methods(id,stable_code,display_name,provider_name,method_type,last4,encrypted_number,sort_order) values($1,$2,'Fixture','Same bank','bank_card',$3,'fixture-encrypted-placeholder',$4)",[ids[i],`fixture-${i}`,String(i).padStart(4,'0'),i+1]);
   const before=await q('select * from payment_methods order by id');
-  if(real) await db.exec('begin; '+fs.readFileSync('scripts/four-card-release-backup.sql','utf8')+' commit;');
   await db.exec(migration); await db.exec(migration);
+  if(real) await db.exec('begin; '+fs.readFileSync('scripts/bank-slot-release-backup.sql','utf8')+' commit;');
+  await db.exec(sql('202609020007_payment_method_bank_slot_policy'));
+  await db.exec(sql('202609020007_payment_method_bank_slot_policy'));
   check(await q('select * from payment_methods order by id'),before);
   check(await active(),[1,2,3,4]);
   if(real) {
@@ -47,6 +49,29 @@ try {
     check(new Set(replays.map(r=>r.id)).size,1);
     await q('select cancel_customer_payment_reservation($1,$2)',[replays[0].id,checkout]);
   }
+  // Provider-aware policy: one primary per requested provider, same-provider
+  // replacement first, and M10 fallback from another unused standby method.
+  const providers=['M10','ABB','LeoBank','Kapital Bank','LeoBank','ABB','Kapital Bank',...Array(7).fill('Other Bank')];
+  for(let i=0;i<ids.length;i++) await q('update payment_methods set provider_name=$2,display_name=$2 where id=$1',[ids[i],providers[i]]);
+  await db.exec('delete from payment_method_daily_counters; delete from payment_method_daily_activations; delete from payment_method_activation_days; update payment_methods set active=false;');
+  check(await active(),[1,2,3,4]);
+  await counter(3,5); check(await active(),[1,2,4,5]);
+  await counter(2,5); check(await active(),[1,4,5,6]);
+  await counter(4,5); check(await active(),[1,5,6,7]);
+  await counter(1,5);
+  const afterM10=await active();
+  check(afterM10.length,4);
+  check(afterM10.slice(0,3),[5,6,7]);
+  check(afterM10[3]>=8 && afterM10[3]<=14,true);
+  const bankVisible=(await snapshot()).map(m=>rowMethod(m,m.queue_stats)).filter(m=>!m.manualDisabled&&m.hasNumber&&(m.active||(m.activatedToday&&m.status==='limit_reached')));
+  check(bankVisible.filter(m=>m.status==='limit_reached').length,4);
+  check(bankVisible.filter(m=>m.status==='limit_reached').every(m=>!m.available),true);
+  check(bankVisible.slice(0,4).every(m=>m.status==='active'),true);
+  check(bankVisible.slice(4).every(m=>m.status==='limit_reached'),true);
+
+  // Reset only synthetic fixtures before the generic >10-card/concurrency suite.
+  await db.exec("delete from payment_reservations; delete from payment_orders; delete from payment_method_daily_counters; delete from payment_method_daily_activations; delete from payment_method_activation_days; update payment_methods set active=false,provider_name='Same bank',display_name='Fixture';");
+  check(await active(),[1,2,3,4]);
   await counter(2,5); check(await active(),[1,3,4,5]);
   await counter(4,5); check(await active(),[1,3,5,6]);
   const visible=(await snapshot()).map(m=>rowMethod(m,m.queue_stats)).filter(m=>!m.manualDisabled && m.hasNumber && (m.active || (m.activatedToday && m.status==='limit_reached')));
@@ -124,11 +149,11 @@ try {
   if(real) {
     const orderRows=await q('select * from payment_orders order by id');
     const counterRows=await q('select * from payment_method_daily_counters order by method_id,counter_date');
-    await db.exec(fs.readFileSync('scripts/four-card-release-rollback.sql','utf8'));
+    await db.exec(fs.readFileSync('scripts/bank-slot-release-rollback.sql','utf8'));
     check(await q('select * from payment_orders order by id'),orderRows);
     check(await q('select * from payment_method_daily_counters order by method_id,counter_date'),counterRows);
-    check((await q("select has_function_privilege('service_role','payment_method_queue_snapshot(boolean,boolean)','execute') as allowed"))[0].allowed,false);
-    await db.exec(migration);
+    check((await q("select has_function_privilege('service_role','payment_method_queue_snapshot(boolean,boolean)','execute') as allowed"))[0].allowed,true);
+    await db.exec(sql('202609020007_payment_method_bank_slot_policy'));
     check((await q("select has_function_privilege('service_role','payment_method_queue_snapshot(boolean,boolean)','execute') as allowed"))[0].allowed,true);
   }
   console.log(JSON.stringify({ok:true,checks,engine:real?'Supabase PostgreSQL':'PostgreSQL/PGlite',cards:14,realDataAccess:false,multiConnectionConcurrency:real?'12 independent backends; 24 racing reserves; 12 idempotent retries':'Not provided by single-session PGlite',overnightIdentityPreserved:true,testSchema:db.schema}));
