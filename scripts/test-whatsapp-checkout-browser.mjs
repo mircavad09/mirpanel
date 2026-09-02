@@ -30,8 +30,8 @@ try {
       let body;
       if(endpoint.endsWith("/methods"))body={anyAvailable:true,methods:[{id:"22222222-2222-4222-8222-222222222222",providerName:"Fixture Bank",last4:"0000",available:true}]};
       else if(endpoint.endsWith("/reservations")){reserves++;body={reservationId:"11111111-1111-4111-8111-111111111111",expiresAt:new Date(Date.now()+600000).toISOString(),amount:5.99,currency:"AZN",method:{number:"0000 0000 0000 0000",providerName:"Fixture Bank",theme:"abb",type:"bank_card"}};}
-      else if(endpoint.endsWith("/orders")){orders++;await new Promise(r=>setTimeout(r,250));body={orderId:"33333333-3333-4333-8333-333333333333",orderCode:"971",status:"reviewing",productTitle:"Snapshot product",planName:"Snapshot plan",amount:5.99,currency:"AZN",paymentMethod:"Fixture Bank",receiptUploaded:true};}
-      else if(endpoint.endsWith("/resume")){body={state:"submitted",order:{orderId:"33333333-3333-4333-8333-333333333333",orderCode:"971",status:"reviewing",productTitle:"Snapshot product",planName:"Snapshot plan",amount:5.99,currency:"AZN",paymentMethod:"Fixture Bank",receiptUploaded:true,idempotent:true}};}
+      else if(endpoint.endsWith("/orders")){orders++;await new Promise(r=>setTimeout(r,250));body={orderId:"33333333-3333-4333-8333-333333333333",orderCode:"10001",status:"reviewing",productTitle:"Snapshot product",planName:"Snapshot plan",amount:5.99,currency:"AZN",paymentMethod:"Fixture Bank",receiptUploaded:true};}
+      else if(endpoint.endsWith("/resume")){body={state:"submitted",order:{orderId:"33333333-3333-4333-8333-333333333333",orderCode:"10001",status:"reviewing",productTitle:"Snapshot product",planName:"Snapshot plan",amount:5.99,currency:"AZN",paymentMethod:"Fixture Bank",receiptUploaded:true,idempotent:true}};}
       else {await route.fulfill({status:404,contentType:"application/json",body:"{}"});return;}
       await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(body)});
     });
@@ -45,7 +45,7 @@ try {
     await page.evaluate(()=>{document.getElementById("paymentSubmit").click();document.getElementById("paymentSubmit").click();});
     await page.waitForURL("https://wa.me/**");
     assert.equal(target.hostname,"wa.me");assert.equal(target.protocol,"https:");assert.match(target.pathname,/^\/\d{8,15}$/);
-    const message=target.searchParams.get("text");for(const text of ["971","Snapshot product","Snapshot plan","5.99","Fixture Bank","çeki Mirpanel sisteminə yüklənib"])assert.ok(message.includes(text));
+    const message=target.searchParams.get("text");for(const text of ["10001","Snapshot product","Snapshot plan","5.99","Fixture Bank","çeki Mirpanel sisteminə yüklənib"])assert.ok(message.includes(text));
     assert.equal(message.includes("0000 0000"),false);assert.equal(orders,1);assert.equal(reserves,1);assert.equal(popups,0);
     // Back/failed app opening retains the real, same-tab fallback and order ID.
     await page.goBack({waitUntil:"domcontentloaded"});
@@ -53,7 +53,7 @@ try {
     await fallback.waitFor({state:"visible"});
     if(await fallback.count()){
       assert.equal(new URL(await fallback.getAttribute("href")).hostname,"wa.me");assert.equal(await fallback.getAttribute("target"),"_self");
-      assert.match(await page.locator(".paymentWhatsAppFallback").textContent(),/971/);
+      assert.match(await page.locator(".paymentWhatsAppFallback").textContent(),/10001/);
     } else throw new Error("Back navigation did not preserve the WhatsApp fallback");
     results.push({profile:profile.name,httpsSameTab:true,fallback:true,orders,reserves,popups});
     await context.close();

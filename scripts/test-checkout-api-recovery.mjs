@@ -11,7 +11,7 @@ const config = {supabaseUrl:"https://fixture.invalid",supabaseSecretKey:"fixture
 const security = createPaymentSecurity(config);
 const method = {id:crypto.randomUUID(),provider_name:"Fixture Bank",display_name:"Fixture Bank",last4:"0000",encrypted_number:security.encryptNumber("0000000000000000"),method_type:"bank_card"};
 const reservations = new Map(), orders = new Map(), files = new Set();
-let next = 971, queueCount = 0, uploadFails = false, loseRpcResponse = false;
+let next = 10001, queueCount = 0, uploadFails = false, loseRpcResponse = false;
 const store = {
   rateLimit: async () => {},
   rawMethod: async () => method,
@@ -60,11 +60,11 @@ try {
   equal((await call("/api/payments/orders",form(r,png,"image/png",crypto.randomUUID()),{"x-idempotency-key":key})).status,404);
   equal(files.size,0);
   const results=await Promise.all(Array.from({length:8},()=>call("/api/payments/orders",form(r),{"x-idempotency-key":key})));
-  equal(new Set(results.map(r=>r.body.orderCode)).size,1); equal(results[0].body.orderCode,"971");
+  equal(new Set(results.map(r=>r.body.orderCode)).size,1); equal(results[0].body.orderCode,"10001");
   equal(orders.size,1);equal(files.size,1);equal(queueCount,1);
   equal(results[0].body.amount,5.99); // reserved price, not changed catalog price 99
   const resumed=await call("/api/payments/checkout/resume",{reservationId:r.id,checkoutKey:r.checkout_key});
-  equal(resumed.body.state,"submitted");equal(resumed.body.order.orderCode,"971");equal(resumed.headers["Cache-Control"],"no-store");
+  equal(resumed.body.state,"submitted");equal(resumed.body.order.orderCode,"10001");equal(resumed.headers["Cache-Control"],"no-store");
   equal(JSON.stringify(resumed.body).includes("receipt_path"),false);equal(JSON.stringify(resumed.body).includes("0000000000000000"),false);
   const lost=reserve();loseRpcResponse=true;
   const reconciled=await call("/api/payments/orders",form(lost),{"x-idempotency-key":crypto.randomUUID()});
@@ -78,6 +78,7 @@ try {
   equal((await call("/api/payments/orders",form(pending),{"x-idempotency-key":key,origin:"https://evil.invalid"})).status,403);
   const out={};await system.handle({method:"GET",url:`/api/admin/payment-orders/${results[0].body.orderId}/receipt`,headers:{}},out);equal(out.status,401);
   const allowed={};await system.handle({method:"GET",url:`/api/admin/payment-orders/${results[0].body.orderId}/receipt`,headers:{testadmin:true}},allowed);equal(allowed.status,200);equal(allowed.body.expiresIn,300);
-  equal(normalizeOrderListParams({search:"971"}).search,"971");equal(normalizeOrderListParams({search:"MP-ABC123"}).search,"MP-ABC123");
+  equal(normalizeOrderListParams({search:"10001"}).search,"10001");equal(normalizeOrderListParams({search:"MP-ABC123"}).search,"MP-ABC123");
+  equal(normalizeOrderListParams({search:"971"}).search,"971");
   console.log(JSON.stringify({ok:true,checks,realApiHandler:true,isolatedStore:true,duplicateOrders:0,linkedReceiptPreserved:true,legacySearch:true,liveDataTouched:false}));
 } finally {console.error=originalError;}

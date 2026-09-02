@@ -47,7 +47,7 @@ try {
   await page.setInputFiles("#paymentReceiptInput", { name: "camera-receipt.jpg", mimeType: "image/jpeg", buffer: jpeg });
   assert.match(await page.getAttribute("#paymentReceiptPreview img", "src"), /^blob:/);
   await page.evaluate(() => { document.getElementById("paymentSubmit").click(); document.getElementById("paymentSubmit").click(); });
-  await page.waitForFunction(() => window.__paymentOrder?.orderCode === "971");
+  await page.waitForFunction(() => window.__paymentOrder?.orderCode === "10001");
   const state = await (await fetch(`http://127.0.0.1:${port}/test/state`)).json();
   assert.equal(state.orderCalls, 1);
   assert.equal(state.reservationCalls, 1);
@@ -59,7 +59,7 @@ try {
   assert.equal(await page.evaluate(() => globalThis.FileReader), undefined);
   assert.deepEqual(await page.evaluate(() => globalThis.__receiptUrls), { created: 1, revoked: 1 });
   await page.reload({waitUntil:"networkidle"});
-  await page.waitForFunction(() => window.__paymentOrder?.orderCode === "971");
+  await page.waitForFunction(() => window.__paymentOrder?.orderCode === "10001");
   assert.equal((await (await fetch(`http://127.0.0.1:${port}/test/state`)).json()).orderCalls,1);
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
 

@@ -11,7 +11,7 @@ Existing UUID primary keys and MP-* display codes remain unchanged.
 - `test-whatsapp-checkout-browser.mjs`: generated CapCut page and actual shared scripts, intercepted HTTPS navigation to wa.me, snapshot message, numeric ID, same-tab fallback after back navigation, no popups or duplicate orders. Chromium at phone/desktop sizes, **not physical iOS Safari**.
 - `test-unified-order-flow.mjs`: all 22 active product pages (18 purchasable and 4 unavailable), generated future product, no reservation requests before selecting a card.
 - Existing payment-system, order-admin, usage-day, monthly-report, card-activation and admin browser checks passed. The payment-system commercial baseline was independently updated from unchanged main `857ba7b` before this work, not from an assumed old hash.
-- Two unrelated baseline suites still fail on both unchanged main and working tree: `test-product-pages.mjs` (existing About content assertion), `test-payment-profit.mjs` (expects approval RPC v5 although main uses v6). Their application code was not changed to suppress failures.
+- Follow-up: both stale baseline suites now pass with test-only corrections. Profit tests verify the actual v6 -> v5 delegation, locked/idempotent approval and financial snapshots. Product tests use isolated About paragraphs instead of a historical CMS hash, current asset/breakpoint expectations, current catalog sitemap counts and same-tab WhatsApp instead of the obsolete popup expectation. No production CMS, styles or approval code was changed to satisfy these tests.
 
 ## Data and rollout
 
@@ -27,3 +27,32 @@ The same reservation and receipt SHA-256 use the same private object path. A los
 Local browser tests require `MIRPANEL_NODE_MODULES` (Playwright + sharp) and `MIRPANEL_BROWSER_PATH` (Chromium). SQL test requires `MIRPANEL_PGLITE` pointing to the PGlite ESM entry, defaulting to the ignored local test-artifact runtime. No secrets or live connections are used by these tests.
 
 Physical iPhone with/without WhatsApp, physical Android, live receipt submission and actual customer navigation require separately observed results. No live test reservation/order was created, so 971 was not consumed by a synthetic test.
+
+## Counter advance to 10001 (follow-up)
+
+`202609020005_advance_order_counter_10001.sql` changes only the persistent counter to
+`greatest(current_counter, 10000, highest_existing_numeric_code)`. It acquires the
+counter lock before the order-table lock, matching the submission write order.
+It never updates an existing order, reservation, receipt, status or audit row;
+an in-transaction fingerprint assertion protects all existing order rows.
+The counter update is transactional, monotonic and safe to rerun. No count-based
+allocation, runtime reset, frontend change or cache-version change is needed.
+
+Isolated PostgreSQL/WASM: 39 checks, 1,035 legacy fixtures, preserved 971 on retry,
+first advanced code 10001, 80 repeated submissions, 0 duplicate codes, migration
+rerun without rollback of the counter, existing 20000 -> next 20001. This is still
+a single-connection engine, not a live multi-connection load test. The live
+database has UNIQUE constraints on order code, reservation and receipt path.
+
+Before this advance, read-only live checks found 1,036 orders: 1,035 unchanged
+legacy orders and one numeric order 971. Its reservation/product/plan/amount
+matched; its private Storage object existed with matching MIME and size. No
+receipt content or checkout secret was accessed. Live customer WhatsApp navigation
+was not observed; isolated Chromium intercepts verified HTTPS wa.me, message,
+same-tab handoff and fallback with 10001. No physical iOS/Android claim is made.
+
+Live advance succeeded: counter 971 -> 10000, next 10001, 1,036 orders and 0
+duplicate codes before/after. Full row fingerprints were identical before/after
+for orders (`4c01f4cc30de3e69fba83464925b3ac0`), reservations
+(`fd041b637faa3f862d40032284ebcf1c`) and daily usage counters
+(`226bfb4ed44907ff726147a0bda17e45`). No synthetic live order was created.
