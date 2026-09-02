@@ -18,7 +18,14 @@
     if (path === "/api/payments/reservations") return typeof payload.reservationId === "string" &&
       Number.isFinite(Date.parse(payload.expiresAt)) && payload.method && typeof payload.method.number === "string";
     if (path.endsWith("/cancel")) return payload.ok === true;
+    if (path === "/api/payments/checkout/resume") return payload.state === "expired" ||
+      (payload.state === "submitted" && validOrder(payload.order)) ||
+      (payload.state === "reserved" && validPayload("/api/payments/reservations", payload.reservation));
     return true;
+  }
+
+  function validOrder(order) {
+    return order && typeof order.orderId === "string" && /^(?:MP-[A-Z0-9]+|[1-9]\d*)$/.test(order.orderCode || "") && order.receiptUploaded === true;
   }
 
   const esc = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -27,7 +34,7 @@
   function storedCheckout() {
     try {
       const value = JSON.parse(sessionStorage.getItem(CHECKOUT_STORAGE_KEY) || "null");
-      if (!value?.checkoutKey || !value?.reservationId || new Date(value.expiresAt).getTime() <= Date.now()) return null;
+      if (!value?.checkoutKey || !value?.reservationId) return null;
       return value;
     } catch { return null; }
   }
@@ -38,7 +45,11 @@
       sessionStorage.setItem(CHECKOUT_STORAGE_KEY, JSON.stringify({
         checkoutKey: flow.checkoutKey,
         reservationId: flow.reservation.reservationId,
-        expiresAt: flow.reservation.expiresAt
+        expiresAt: flow.reservation.expiresAt,
+        orderIdempotencyKey: flow.orderIdempotencyKey,
+        productId: flow.product.id,
+        planIndex: flow.planIndex,
+        submissionStarted: Boolean(flow.submissionStarted)
       }));
     } catch {}
   }
@@ -92,8 +103,8 @@
       xhr.upload.onprogress = (event) => {
         if (event.lengthComputable) progress(5 + Math.round((event.loaded / event.total) * 90));
       };
-      xhr.onerror = () => reject(Object.assign(new Error("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."), { userMessage: "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin." }));
-      xhr.ontimeout = xhr.onerror;
+      xhr.onerror = () => reject(Object.assign(new Error("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."), { userMessage: "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.", retryable: true }));
+      xhr.ontimeout = () => reject(Object.assign(new Error("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."), { userMessage: "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.", retryable: true }));
       xhr.onload = () => {
         let payload;
         try {
@@ -101,13 +112,28 @@
           payload = JSON.parse(xhr.responseText);
           if (!payload || typeof payload !== "object") throw new Error("invalid response");
         } catch { xhr.onerror(); return; }
-        if (xhr.status < 200 || xhr.status >= 300) reject(Object.assign(new Error(payload.error || "Sifariş yaradılmadı."), { userMessage: payload.error || "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin." }));
-        else if (typeof payload.orderId !== "string" || !/^MP-[A-Z0-9]+$/.test(payload.orderCode || "")) xhr.onerror();
+        if (xhr.status < 200 || xhr.status >= 300) reject(Object.assign(new Error(payload.error || "Sifariş yaradılmadı."), { userMessage: payload.error || "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.", retryable: xhr.status >= 500 || xhr.status === 408 || xhr.status === 429 }));
+        else if (!validOrder(payload)) xhr.onerror();
         else resolve(payload);
       };
       progress(2);
       xhr.send(formData);
     });
+  }
+
+  async function submitReceiptWithRetry(path, formData, progress, idempotencyKey) {
+    let lastError;
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        return await submitWithProgress(path, formData, progress, idempotencyKey);
+      } catch (error) {
+        lastError = error;
+        if (!error?.retryable || attempt === 1) throw error;
+        progress(4);
+        await new Promise((resolve) => setTimeout(resolve, 900));
+      }
+    }
+    throw lastError;
   }
 
   function renderShell(product, plan) {
@@ -216,13 +242,13 @@
     if (activeFlow?.reservation || activeFlow?.previousReservationId) await cancelReservation(activeFlow);
     renderShell(product, plan);
     const previous = storedCheckout();
-    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: uuid(), stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
+    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: previous?.orderIdempotencyKey || uuid(), stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
     activeFlow = flow;
     flow.shell = document.querySelector(".paymentFlow");
     flow.reservationKeys = new Map();
     flow.promise = new Promise((resolve) => {
       const finish = async (value, options = {}) => {
-        const { cancel = false, redirectHome = false } = options;
+        const { cancel = false, redirectHome = false, preserveModal = false } = options;
         if (flow.settled || flow.cancelling) return false;
         if (cancel) {
           flow.cancelling = true;
@@ -237,8 +263,10 @@
         flow.readController?.abort();
         flow.stopTimer?.();
         clearReceipt(flow);
-        clearStoredCheckout();
-        document.getElementById("modal")?.classList.remove("paymentFlowOpen");
+        // Preserve only the checkout capability, never the card/receipt. A reload
+        // can recover a committed order even when its HTTP response was lost.
+        if (!value) clearStoredCheckout();
+        if (!preserveModal) document.getElementById("modal")?.classList.remove("paymentFlowOpen");
         if (activeFlow === flow) activeFlow = null;
         resolve(value);
         if (redirectHome) {
@@ -250,6 +278,7 @@
       flow.finish = finish;
       document.querySelector(".paymentFlowClose").onclick = async (event) => {
         event.preventDefault();
+        if (flow.submitting) return;
         if ((flow.reservation || flow.previousReservationId) && !window.confirm("Aktiv rezerv ləğv ediləcək. Pəncərəni bağlamaq istəyirsiniz?")) return;
         try {
           await finish(null, { cancel: true });
@@ -267,6 +296,24 @@
         setMessage("Aktiv ödəniş üsulları yüklənir. Server gecikərsə, sorğu avtomatik təkrarlanacaq...");
         document.getElementById("paymentMethodChoices")?.setAttribute("aria-busy", "true");
       try {
+        let recovered;
+        if (flow.previousReservationId && !flow.reservation) {
+          recovered = await request("/api/payments/checkout/resume", {
+            method: "POST", signal: flow.readController.signal,
+            body: JSON.stringify({ reservationId: flow.previousReservationId, checkoutKey: flow.checkoutKey })
+          });
+          if (recovered.state === "submitted") {
+            await finish(recovered.order, { preserveModal: true });
+            return;
+          }
+          if (recovered.state === "expired") {
+            clearStoredCheckout();
+            flow.previousReservationId = null;
+          } else if (recovered.productId !== product.id || recovered.planIndex !== Number(planIndex)) {
+            // Never create another reservation while an older checkout is active.
+            throw new Error("Başqa məhsul üçün aktiv rezerv var. Əvvəl həmin ödənişi tamamlayın və ya pəncərənin bağlama düyməsi ilə ləğv edin.");
+          }
+        }
         const result = await request("/api/payments/methods", { signal: flow.readController.signal });
         if (flow.settled || activeFlow !== flow) return;
         const choices = document.getElementById("paymentMethodChoices");
@@ -283,33 +330,11 @@
         else setMessage("Ödəniş edəcəyiniz kartı və ya cüzdanı özünüz seçin.");
         retry.hidden = result.anyAvailable;
 
-        choices.onclick = async (event) => {
-          const button = event.target.closest("[data-payment-method]");
-          if (!button || button.disabled || flow.reserving) return;
-          flow.reserving = true;
-          button.classList.add("selected");
-          button.setAttribute("aria-pressed", "true");
-          choices.querySelectorAll("button").forEach((item) => { item.disabled = true; });
-          setMessage("Kart üçün 10 dəqiqəlik rezerv yaradılır...");
-          try {
-            const methodId = button.dataset.paymentMethod;
-            if (!flow.reservationKeys.has(methodId)) flow.reservationKeys.set(methodId, uuid());
-            const idempotencyKey = flow.reservationKeys.get(methodId);
-            const reserved = await request("/api/payments/reservations", {
-              method: "POST",
-              headers: { "X-Idempotency-Key": idempotencyKey },
-              body: JSON.stringify({
-                methodId: button.dataset.paymentMethod,
-                productId: product.id,
-                planIndex,
-                idempotencyKey,
-                checkoutKey: flow.checkoutKey,
-                previousReservationId: flow.reservation?.reservationId || flow.previousReservationId || null
-              })
-            });
+        const showReservation = (reserved) => {
             flow.reservation = reserved;
             flow.previousReservationId = reserved.reservationId;
             flow.changing = false;
+            flow.submissionStarted = false;
             storeCheckout(flow);
             setStage(flow, "payment_details");
             choices.replaceChildren();
@@ -323,6 +348,12 @@
             document.getElementById("paymentMethodDetail")?.scrollIntoView({ behavior: "smooth", block: "start" });
             flow.stopTimer?.();
             flow.stopTimer = startCountdown(reserved.expiresAt, async () => {
+              if (flow.submissionStarted) {
+                // Submission may have committed. Keep its recovery key and never
+                // cancel it from a client timer while the response is uncertain.
+                document.getElementById("paymentMethodDetail").innerHTML = "";
+                return;
+              }
               const expiredId = flow.reservation?.reservationId;
               flow.reservation = null;
               flow.previousReservationId = null;
@@ -408,7 +439,12 @@
               const error = document.getElementById("paymentReceiptError");
               if (!flow.receipt || !flow.reservation) { error.textContent = "Qəbz və aktiv rezerv tələb olunur."; error.hidden = false; return; }
               flow.submitting = true;
+              flow.submissionStarted = true;
+              storeCheckout(flow);
               submit.disabled = true;
+              submit.textContent = "Çek yüklənir...";
+              const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentCancel, #paymentReceiptInput, #removePaymentReceipt");
+              lockedControls.forEach((control) => { control.disabled = true; });
               error.hidden = true;
               const progress = document.getElementById("paymentUploadProgress");
               progress.classList.remove("hidden");
@@ -417,17 +453,19 @@
               try {
                 const formData = new FormData();
                 formData.append("reservationId", flow.reservation.reservationId);
+                formData.append("checkoutKey", flow.checkoutKey);
                 formData.append("productId", product.id);
                 formData.append("planIndex", String(planIndex));
                 formData.append("consentAccepted", "true");
                 formData.append("receipt", flow.receipt, flow.receipt.name || "receipt");
-                const order = await submitWithProgress("/api/payments/orders", formData, updateProgress, flow.orderIdempotencyKey);
+                const order = await submitReceiptWithRetry("/api/payments/orders", formData, updateProgress, flow.orderIdempotencyKey);
                 updateProgress(100);
-                setMessage(`Çek yükləndi. Sifariş: ${order.orderCode}`, "success");
-                await finish(order);
+                setMessage(`Çek uğurla əlavə edildi. Sifariş: ${order.orderCode}`, "success");
+                await finish(order, { preserveModal: true });
                 return;
               } catch (submitError) {
                 flow.submitting = false;
+                lockedControls.forEach((control) => { control.disabled = false; });
                 progress.classList.add("isError");
                 error.textContent = submitError.userMessage || "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.";
                 error.hidden = false;
@@ -435,6 +473,30 @@
                 submit.textContent = "Yenidən cəhd et";
               }
             });
+        };
+        if (recovered?.state === "reserved") {
+          showReservation(recovered.reservation);
+          setMessage("Rezerv bərpa edildi. Göndərilməmiş çeki yenidən seçin.", "success");
+        }
+        choices.onclick = async (event) => {
+          const button = event.target.closest("[data-payment-method]");
+          if (!button || button.disabled || flow.reserving || flow.reservation) return;
+          flow.reserving = true;
+          button.classList.add("selected");
+          button.setAttribute("aria-pressed", "true");
+          choices.querySelectorAll("button").forEach((item) => { item.disabled = true; });
+          setMessage("Kart üçün 10 dəqiqəlik rezerv yaradılır...");
+          try {
+            const methodId = button.dataset.paymentMethod;
+            if (!flow.reservationKeys.has(methodId)) flow.reservationKeys.set(methodId, uuid());
+            const idempotencyKey = flow.reservationKeys.get(methodId);
+            const reserved = await request("/api/payments/reservations", {
+              method: "POST",
+              headers: { "X-Idempotency-Key": idempotencyKey },
+              body: JSON.stringify({ methodId, productId: product.id, planIndex, idempotencyKey,
+                checkoutKey: flow.checkoutKey, previousReservationId: flow.previousReservationId || null })
+            });
+            showReservation(reserved);
           } catch (reserveError) {
             choices.querySelectorAll("button").forEach((item) => { item.disabled = item.getAttribute("aria-disabled") === "true"; });
             button.classList.remove("selected");
@@ -461,5 +523,16 @@
     return flow.promise;
   }
 
-  window.MirpanelPaymentFlow = { start };
+  window.MirpanelPaymentFlow = {
+    start,
+    isSubmitting: () => Boolean(activeFlow?.submitting),
+    forgetCompleted: () => { if (!activeFlow) clearStoredCheckout(); },
+    async recoverSubmitted() {
+      const previous = storedCheckout();
+      if (!previous?.submissionStarted || activeFlow) return null;
+      const result = await request("/api/payments/checkout/resume", { method: "POST",
+        body: JSON.stringify({ reservationId: previous.reservationId, checkoutKey: previous.checkoutKey }) });
+      return result.state === "submitted" ? result.order : null;
+    }
+  };
 })();

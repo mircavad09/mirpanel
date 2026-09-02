@@ -1,6 +1,8 @@
 import http from "node:http";
 import fs from "node:fs";
 import path from "node:path";
+import crypto from "node:crypto";
+import { receiptFromBuffer } from "../mirpanel-admin/payment-security.mjs";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -15,6 +17,10 @@ let reservationCalls = 0;
 let orderCalls = 0;
 let lastUpload = null;
 let failNextOrder = false;
+let failuresLeft = 0;
+const reservations = new Map();
+const orders = new Map();
+const keys = [];
 let failNextCancel = false;
 
 function json(response, status, value) {
@@ -42,10 +48,21 @@ const server = http.createServer(async (request, response) => {
     json(response, 200, { anyAvailable: true, methods: [{ id: methodId, displayName: "ABB", providerName: "ABB", type: "card", last4: "4655", color: "#174f91", theme: "abb", available: true }] }); return;
   }
   if (url.pathname === "/api/payments/reservations" && request.method === "POST") {
-    await body(request);
+    const input = await body(request);
     reservationCalls += 1;
     activeReservations = 1;
-    json(response, 201, { reservationId, expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(), amount: 5.99, currency: "AZN", method: { id: methodId, displayName: "ABB", providerName: "ABB", holderName: "MIRPANEL TEST", number: "4169 0000 0000 4655", type: "card", color: "#174f91", theme: "abb" } }); return;
+    const existing = [...reservations.values()].find(r => r.checkoutKey === input.checkoutKey);
+    const value = existing || { reservationId: crypto.randomUUID(), expiresAt: new Date(Date.now() + 10 * 60_000).toISOString(), amount: 5.99, currency: "AZN", method: { id: methodId, displayName: "ABB", providerName: "ABB", holderName: "MIRPANEL TEST", number: "4169 0000 0000 4655", type: "card", color: "#174f91", theme: "abb" } };
+    reservations.set(value.reservationId, {...value, checkoutKey:input.checkoutKey});
+    json(response, 201, value); return;
+  }
+  if (url.pathname === "/api/payments/checkout/resume") {
+    const input = await body(request);
+    const value = reservations.get(input.reservationId);
+    if (!value || value.checkoutKey !== input.checkoutKey) { json(response,404,{error:"Rezerv tapılmadı"}); return; }
+    const order = orders.get(input.reservationId);
+    if (order) { json(response,200,{state:"submitted",order:{...order,idempotent:true}}); return; }
+    json(response,200,{state:"reserved",productId:"test",planIndex:0,reservation:value}); return;
   }
   if (url.pathname === "/api/payments/orders" && request.method === "POST") {
     orderCalls += 1;
@@ -62,23 +79,29 @@ const server = http.createServer(async (request, response) => {
       reservationId: String(form.get("reservationId") || ""),
       productId: String(form.get("productId") || "")
     };
-    if (failNextOrder) { failNextOrder = false; json(response, 503, { error: "Sınaq upload xətası" }); return; }
+    keys.push(lastUpload.idempotencyKey);
+    if (failuresLeft > 0) { failuresLeft--; json(response,503,{error:"Sınaq upload xətası"}); return; }
+    try { receiptFromBuffer(Buffer.from(await receipt.arrayBuffer()),receipt.type); }
+    catch(error) { json(response,error.status || 400,{error:error.message}); return; }
+    const existingOrder = orders.get(lastUpload.reservationId);
+    if (existingOrder) { json(response,200,{...existingOrder,idempotent:true}); return; }
     activeReservations = 0;
-    completedUses += 1;
-    json(response, 201, { orderId: "33333333-3333-4333-8333-333333333333", orderCode: "MP-ABC123", status: "reviewing", paymentMethod: "ABB", receiptUploaded: true }); return;
+    const order = { orderId: crypto.randomUUID(), orderCode: String(971 + orders.size), status: "reviewing", paymentMethod: "ABB", productTitle:"Test məhsul",planName:"1 aylıq",amount:5.99,currency:"AZN", receiptUploaded: true };
+    orders.set(lastUpload.reservationId,order);
+    json(response, 201, order); return;
   }
   if (url.pathname === "/api/payments/reservations/cancel" && request.method === "POST") {
     const payload = await body(request);
     cancelCalls += 1;
-    if (payload.reservationId !== reservationId) { json(response, 400, { error: "Yanlış rezerv" }); return; }
+    if (!reservations.has(payload.reservationId)) { json(response, 400, { error: "Yanlış rezerv" }); return; }
     if (failNextCancel) { failNextCancel = false; json(response, 503, { error: "Sınaq server xətası" }); return; }
     const idempotent = activeReservations === 0;
     if (!idempotent) { activeReservations = 0; successfulCancellations += 1; }
     json(response, 200, { ok: true, cancellation: { id: reservationId, status: "cancelled", idempotent } }); return;
   }
   if (url.pathname === "/test/fail-next-cancel" && request.method === "POST") { failNextCancel = true; json(response, 200, { ok: true }); return; }
-  if (url.pathname === "/test/fail-next-order" && request.method === "POST") { failNextOrder = true; json(response, 200, { ok: true }); return; }
-  if (url.pathname === "/test/state") { json(response, 200, { activeReservations, completedUses, reservationCalls, orderCalls, lastUpload, cancelCalls, successfulCancellations, failNextCancel, failNextOrder }); return; }
+  if (url.pathname === "/test/fail-next-order" && request.method === "POST") { failuresLeft = Number(url.searchParams.get("count") || 2); json(response, 200, { ok: true }); return; }
+  if (url.pathname === "/test/state") { json(response, 200, { activeReservations, completedUses, reservationCalls, orderCalls, lastUpload, cancelCalls, successfulCancellations, failNextCancel, failNextOrder, uniqueOrders:orders.size, keys }); return; }
   if (url.pathname === "/test/shutdown" && request.method === "POST") { json(response, 200, { ok: true }); setImmediate(() => server.close()); return; }
   response.writeHead(404); response.end("Not found");
 });

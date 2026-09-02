@@ -168,7 +168,7 @@
     </section>
     <div id="paymentOrderStatistics" class="paymentOrderStatistics" aria-live="polite"></div>
     <form id="paymentOrderFilters" class="paymentOrderFilters" role="search">
-      <label>Sifariş ID-si<input id="paymentOrderSearch" type="search" placeholder="MP-XXXXXX" autocomplete="off"></label>
+      <label>Sifariş ID-si<input id="paymentOrderSearch" type="search" placeholder="971 və ya MP-XXXXXX" autocomplete="off"></label>
       <label>Məhsul<select id="paymentOrderProduct"><option value="">Bütün məhsullar</option></select></label>
       <label>Plan<select id="paymentOrderPlan"><option value="">Bütün planlar</option></select></label>
       <label>Bank<select id="paymentOrderMethod"><option value="">Bütün banklar</option></select></label>

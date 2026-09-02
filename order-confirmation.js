@@ -1107,6 +1107,7 @@
   }
 
   function closeOrderModal() {
+    if (window.MirpanelPaymentFlow?.isSubmitting()) return;
     resetOrderConsent();
     setPremiumFormMode(false);
     setSpotifyConfirmationMode(false);
@@ -1154,6 +1155,8 @@
 
     const response = await fetch(STOCK_ENDPOINT, {
       method: "POST",
+      signal: AbortSignal.timeout(4000),
+      keepalive: true,
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ productId: product.id })
     });
@@ -1219,9 +1222,14 @@
         <h2 id="paymentWhatsAppFallbackTitle">Sifariş yaradıldı</h2>
         <p>Sifariş nömrəsi: <strong>${escapeHtml(orderCode || "")}</strong></p>
         <p>WhatsApp avtomatik açılmasa, aşağıdakı düyməyə toxunun.</p>
-        <a id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}" target="_self">WhatsApp-a keç</a>
+        <a id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}" target="_self">WhatsApp-a yenidən keç</a>
+        <button id="paymentStartNewOrder" type="button">Yeni sifariş</button>
       </section>
     `);
+    document.getElementById("paymentStartNewOrder")?.addEventListener("click", () => {
+      window.MirpanelPaymentFlow?.forgetCompleted();
+      closeOrderModal();
+    });
   }
 
   window.mirpanelBuildWhatsAppUrl = buildWhatsAppUrl;
@@ -1250,14 +1258,6 @@
       if (!paymentOrder) return;
     }
 
-    let stockResult = { skipped: true };
-    try {
-      stockResult = await decrementStock(product);
-    } catch (error) {
-      decorateProductPage(product);
-      console.warn("Ödəniş sifarişi saxlanılıb, stok sinxronizasiyası tamamlanmadı.", error.message);
-    }
-
     const order = buildWhatsAppMessage(product, plan, formData, paymentOrder.orderCode);
     const extraLines = order.extraText ? ["", order.extraText] : [];
     order.message = [
@@ -1266,22 +1266,22 @@
       `Sifariş nömrəsi: ${paymentOrder.orderCode}`,
       `Məhsul: ${publicProductTitle(paymentOrder.productTitle || product.title)}`,
       `Plan: ${paymentOrder.planName || order.planText}`,
-      `Məbləğ: ${Number(paymentOrder.amount || plan.price).toFixed(2)} ${paymentOrder.currency || "₼"}`,
+      `Məbləğ: ${Number(paymentOrder.amount ?? plan.price).toFixed(2)} ${paymentOrder.currency || "₼"}`,
       `Ödəniş üsulu: ${paymentOrder.paymentMethod}`,
       ...extraLines,
       "",
       "Ödəniş çeki Mirpanel sisteminə yüklənib. Zəhmət olmasa sifarişi yoxlayıb təsdiqləyin."
     ].join("\n");
-    submitGoogleSheets({
-      ...order,
-      productTitle: publicProductTitle(product.title) || product.id,
-      stockBefore: stockResult?.stockBefore,
-      stockAfter: stockResult?.stockAfter
-    });
-
     const whatsappUrl = buildWhatsAppUrl(order.message);
     showWhatsAppFallback(whatsappUrl, paymentOrder.orderCode);
-    window.location.href = whatsappUrl;
+    if (!paymentOrder.idempotent) {
+      // Optional stock/Sheets synchronization must not hold a paid checkout open.
+      void decrementStock(product).catch(() => ({ skipped: true })).then((stockResult) => {
+        submitGoogleSheets({ ...order, productTitle: publicProductTitle(product.title) || product.id,
+          stockBefore: stockResult?.stockBefore, stockAfter: stockResult?.stockAfter });
+      });
+    }
+    window.location.assign(whatsappUrl);
     return;
   }
 
@@ -1617,4 +1617,18 @@
   patchLegacyNameCodeForm();
   patchLegacySendWhatsApp();
   window.mirpanelRequireOrderConsent = requireOrderConsent;
+  // Reload/back recovery only shows the already-created order; it never creates
+  // a reservation or automatically navigates away again.
+  void Promise.resolve(window.MirpanelPaymentFlow?.recoverSubmitted?.()).then((order) => {
+    const modal = document.getElementById("modal");
+    if (!order || !modal || modal.classList.contains("show")) return;
+    const message = ["Salam, ödəniş etmişəm.", "", `Sifariş nömrəsi: ${order.orderCode}`,
+      `Məhsul: ${order.productTitle}`, `Plan: ${order.planName}`,
+      `Məbləğ: ${Number(order.amount).toFixed(2)} ${order.currency}`,
+      `Ödəniş üsulu: ${order.paymentMethod}`, "",
+      "Ödəniş çeki Mirpanel sisteminə yüklənib. Zəhmət olmasa sifarişi yoxlayıb təsdiqləyin."].join("\n");
+    modal.classList.add("show", "paymentFlowOpen");
+    document.body.classList.add("noScroll");
+    showWhatsAppFallback(buildWhatsAppUrl(message), order.orderCode);
+  }).catch(() => {});
 })();

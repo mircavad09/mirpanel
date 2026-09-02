@@ -20,7 +20,7 @@ export function normalizeOrderListParams(input = {}, now = new Date()) {
   const tab = ORDER_TABS.has(input.tab) ? input.tab : "pending";
   const period = ORDER_PERIODS.has(input.period) ? input.period : "";
   const rawSearch = boundedText(input.search, 20).toUpperCase().replace(/[^A-Z0-9-]/g, "");
-  const search = rawSearch.match(/MP-[A-F0-9]{0,6}/)?.[0] || rawSearch.slice(0, 9);
+  const search = rawSearch.match(/^MP-[A-F0-9]{0,6}$/)?.[0] || rawSearch.match(/^\d{1,18}$/)?.[0] || rawSearch.slice(0, 20);
   const customFrom = safeCalendarDate(input.dateFrom);
   const customTo = safeCalendarDate(input.dateTo);
   const range = orderPeriodRange(period === "custom" ? "" : period, customFrom, customTo, now);

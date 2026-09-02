@@ -131,7 +131,13 @@ function rowMethod(row, stats = {}) {
 export function createPaymentStore(config) {
   if (!config.supabaseUrl || !config.supabaseSecretKey) throw new Error("Supabase ödəniş konfiqurasiyası tamamlanmayıb.");
   const client = createClient(config.supabaseUrl, config.supabaseSecretKey, {
-    global: { fetch: boundedReadFetch },
+    global: { fetch: (input, init = {}) => {
+      const url = String(input?.url || input);
+      const checkoutWrite = url.endsWith("/rpc/submit_payment_order_v2") || url.includes("/storage/v1/object/");
+      if (!checkoutWrite) return boundedReadFetch(input, init);
+      const timeout = AbortSignal.timeout(25000);
+      return fetch(input, { ...init, signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout });
+    } },
     auth: { persistSession: false, autoRefreshToken: false, detectSessionInUrl: false }
   });
 
@@ -325,24 +331,28 @@ export function createPaymentStore(config) {
       });
     },
     async submitOrder(args) {
-      const submitted = await rpc("submit_payment_order", {
-        p_order_code: args.orderCode,
+      const submitted = await rpc("submit_payment_order_v2", {
         p_reservation_id: args.reservationId,
+        p_checkout_key: args.checkoutKey,
+        p_product_id: args.productId,
+        p_plan_id: args.planId,
         p_product_title: args.productTitle,
         p_plan_name: args.planName,
         p_receipt_bucket: args.receiptBucket,
         p_receipt_path: args.receiptPath,
         p_receipt_mime: args.receiptMime,
         p_receipt_size: args.receiptSize,
-        p_receipt_sha256: args.receiptSha256
+        p_receipt_sha256: args.receiptSha256,
+        p_duration_months: args.durationMonths || null
       });
-      if (args.durationMonths) {
-        await rpc("set_payment_order_duration", {
-          p_order_id: submitted.id,
-          p_duration_months: args.durationMonths
-        });
-      }
       return submitted;
+    },
+    async checkoutReservation(reservationId, checkoutKey) {
+      const { data, error } = await client.from("payment_reservations").select("id,checkout_key,product_id,plan_id,amount,currency,status,expires_at,method_id")
+        .eq("id", reservationId).eq("checkout_key", checkoutKey).maybeSingle();
+      if (error) throw paymentError(error);
+      if (!data) throw Object.assign(new Error("Rezerv bu ödəniş sessiyasına aid deyil."), { status: 404 });
+      return data;
     },
     async planCosts(catalog) {
       const { data, error } = await client.from("payment_plan_costs")
@@ -591,6 +601,7 @@ export function createPaymentStore(config) {
     },
     async uploadReceipt(path, receipt) {
       const { error } = await client.storage.from(config.receiptsBucket).upload(path, receipt.buffer, { contentType: receipt.mimeType, upsert: false, cacheControl: "0" });
+      if (Number(error?.statusCode) === 409 && path.endsWith(`/${receipt.sha256}.${receipt.extension}`)) return;
       if (error) throw paymentError(error, "Çek private yaddaşa yüklənmədi.");
     },
     async removeReceipt(path) {

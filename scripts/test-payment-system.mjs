@@ -15,8 +15,8 @@ import { commercialSnapshot } from "./payment-commercial-snapshot.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
-// Baseline from main 2f931819, before the service-resilience changes.
-const expectedSnapshot = "3c65186881cde085e590866ea15924be76f20db44106bb6a392e9fd51e26640d";
+// Independently checked against unchanged main 857ba7b before checkout changes.
+const expectedSnapshot = "9847f529dabb2c79afeaa6604e5069b0713e23c77a02a3c268c526b958a14fcb";
 
 function expectThrow(fn, pattern) {
   let thrown = null;
@@ -126,7 +126,7 @@ assert.ok(flow.includes("URL.revokeObjectURL(flow.receiptPreviewUrl)"));
 assert.ok(flow.includes("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."));
 assert.ok(flow.includes("if (!flow.receipt || !flow.reservation)"));
 assert.ok(flow.includes('const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1"'));
-assert.ok(flow.includes("previousReservationId: flow.reservation?.reservationId || flow.previousReservationId || null"));
+assert.ok(flow.includes("previousReservationId: flow.previousReservationId || null"));
 assert.ok(flow.includes("checkoutKey: flow.checkoutKey"));
 assert.ok(flow.includes("choices.replaceChildren()"), "Kart seçiləndən sonra seçimlər DOM-dan çıxarılmalıdır");
 assert.ok(flow.includes('id="changePaymentMethod"'));
@@ -149,10 +149,10 @@ assert.equal(flow.includes("paymentReceiptToken"), false, "İşləməyən yeni �
 assert.ok(flow.includes("Göndər və WhatsApp-a keç"));
 assert.ok(confirmation.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"));
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));
-assert.ok(confirmation.includes("window.location.href = whatsappUrl"), "WhatsApp eyni tabda açılmalıdır");
+assert.ok(confirmation.includes("window.location.assign(whatsappUrl)"), "WhatsApp eyni tabda açılmalıdır");
 assert.ok(confirmation.includes("https://wa.me/${phone}?text=${encodeURIComponent(message)}"));
 assert.ok(confirmation.includes('verified.hostname !== "wa.me"'));
-assert.ok(confirmation.includes('target="_self">WhatsApp-a keç</a>'));
+assert.ok(confirmation.includes('target="_self">WhatsApp-a yenidən keç</a>'));
 assert.equal(confirmation.includes("closeOrderModal();\n    window.location"), false, "WhatsApp keçidindən əvvəl modal bağlanmamalıdır");
 assert.equal(confirmation.includes('window.open(url, "_blank"'), false, "Async WhatsApp popup istifadə edilməməlidir");
 assert.ok(server.includes("await paymentSystem.guardLogin(request)"));
@@ -229,10 +229,10 @@ for (const page of productPages) {
   const html = read(path.join("mehsul", page));
   assert.ok(html.includes("payment-flow.css?v="), `${page}: payment CSS bağlantısı yoxdur`);
   assert.ok(html.includes("payment-flow.js?v="), `${page}: payment JS bağlantısı yoxdur`);
-  assert.ok(html.includes("order-confirmation.js?v=unified-payment-flow-20260810-1"), `${page}: confirmation cache versiyası köhnədir`);
+  assert.ok(html.includes("order-confirmation.js?v=checkout-recovery-20260902-1"), `${page}: confirmation cache versiyası köhnədir`);
   assert.equal(html.includes("hbo-max-order-fix.js"), false, `${page}: legacy məhsul handler-i vahid axını kəsməməlidir`);
 }
-assert.ok(read("mirpanel-admin/product-pages.mjs").includes("resilience-20260830-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
+assert.ok(read("mirpanel-admin/product-pages.mjs").includes("checkout-recovery-20260902-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
 
 for (const file of [
   "mirpanel-admin/payment-api.mjs",

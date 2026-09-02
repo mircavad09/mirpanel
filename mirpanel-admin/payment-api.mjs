@@ -1,9 +1,7 @@
-import crypto from "node:crypto";
 import { createPaymentMailer, paymentEmailContent } from "./payment-mail.mjs";
 import {
   createPaymentSecurity,
   normalizePaymentNumber,
-  orderCode,
   publicPaymentNumber,
   receiptFromBuffer,
   receiptFromPayload,
@@ -67,6 +65,7 @@ export async function paymentOrderFromMultipart(rawBody, contentType, maxReceipt
   return {
     body: {
       reservationId: form.get("reservationId"),
+      checkoutKey: form.get("checkoutKey"),
       productId: form.get("productId"),
       planIndex: form.get("planIndex"),
       consentAccepted: form.get("consentAccepted") === "true"
@@ -92,8 +91,8 @@ export function createPaymentSystem(options) {
   }
 
   const security = createPaymentSecurity(config);
-  const store = createPaymentStore(config);
-  const mailer = createPaymentMailer(config, store);
+  const store = options.store || createPaymentStore(config);
+  const mailer = options.mailer || createPaymentMailer(config, store);
   const allowedOrigins = new Set(config.allowedOrigins);
 
   function clientIp(request) {
@@ -113,7 +112,18 @@ export function createPaymentSystem(options) {
   }
 
   function publicJson(request, response, status, body) {
-    json(response, status, body, corsHeaders(request));
+    json(response, status, body, { ...corsHeaders(request), "Cache-Control": "no-store" });
+  }
+
+  async function orderResult(order, idempotent = true) {
+    const method = await store.rawMethod(order.method_id);
+    return {
+      orderId: order.id, orderCode: order.order_code, status: order.status, idempotent,
+      paymentMethod: method.provider_name,
+      productTitle: order.product_title, planName: order.plan_name,
+      amount: Number(order.amount), currency: order.currency,
+      receiptUploaded: Boolean(order.receipt_path && !order.receipt_deleted_at)
+    };
   }
 
   async function publicRate(request, action, seconds, maxHits) {
@@ -201,6 +211,38 @@ export function createPaymentSystem(options) {
       publicJson(request, response, 200, { ok: true, cancellation });
       return true;
     }
+    if (request.method === "POST" && url.pathname === "/api/payments/checkout/resume") {
+      await publicRate(request, "resume", 600, 30);
+      const body = await readBody(request, 20_000);
+      const reservationId = safeUuid(body.reservationId);
+      const checkoutKey = safeUuid(body.checkoutKey);
+      if (!reservationId || !checkoutKey) throw Object.assign(new Error("Rezerv və checkout açarı düzgün deyil."), { status: 400 });
+      const reservation = await store.checkoutReservation(reservationId, checkoutKey);
+      const order = await store.getOrderByReservation(reservationId);
+      if (order) {
+        publicJson(request, response, 200, { state: "submitted", order: await orderResult(order) });
+        return true;
+      }
+      if (reservation.status !== "reserved" || Date.parse(reservation.expires_at) <= Date.now()) {
+        publicJson(request, response, 200, { state: "expired" });
+        return true;
+      }
+      const method = await store.rawMethod(reservation.method_id);
+      publicJson(request, response, 200, {
+        state: "reserved", productId: reservation.product_id, planIndex: Number(reservation.plan_id),
+        reservation: {
+          reservationId, expiresAt: reservation.expires_at,
+          amount: Number(reservation.amount), currency: reservation.currency,
+          method: {
+            id: method.id, displayName: method.display_name, providerName: method.provider_name,
+            holderName: method.holder_name,
+            number: publicPaymentNumber(security.decryptNumber(method.encrypted_number), method.method_type),
+            type: method.method_type, color: method.color, theme: resolvedPaymentTheme(method)
+          }
+        }
+      });
+      return true;
+    }
     if (request.method === "POST" && url.pathname === "/api/payments/orders") {
       await publicRate(request, "submit", 3600, 10);
       const contentType = String(request.headers["content-type"] || "");
@@ -215,23 +257,31 @@ export function createPaymentSystem(options) {
         receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
       }
       const reservationId = safeUuid(body.reservationId);
-      if (!reservationId || body.consentAccepted !== true) throw Object.assign(new Error("Rezerv və məcburi razılıq tələb olunur."), { status: 400 });
+      const checkoutKey = safeUuid(body.checkoutKey);
+      const idempotencyKey = safeUuid(request.headers["x-idempotency-key"]);
+      if (!checkoutKey) throw Object.assign(new Error("Ödəniş səhifəsi yenilənib. Səhifəni yeniləyib yenidən cəhd edin; rezerviniz qorunur."), { status: 400 });
+      if (!reservationId || !checkoutKey || !idempotencyKey || body.consentAccepted !== true) throw Object.assign(new Error("Rezerv, checkout açarı və məcburi razılıq tələb olunur."), { status: 400 });
+      const reservation = await store.checkoutReservation(reservationId, checkoutKey);
+      if (reservation.product_id !== body.productId || reservation.plan_id !== String(body.planIndex)) {
+        throw Object.assign(new Error("Təkrar sorğu əvvəlki sifarişlə uyğun deyil."), { status: 409 });
+      }
       const existing = await store.getOrderByReservation(reservationId);
       if (existing) {
-        const method = await store.rawMethod(existing.method_id);
-        publicJson(request, response, 200, { orderId: existing.id, orderCode: existing.order_code, status: existing.status, idempotent: true, paymentMethod: method.display_name });
+        publicJson(request, response, 200, await orderResult(existing));
         return true;
       }
       const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
-      const code = orderCode();
-      const now = new Date();
-      const receiptPath = `${now.getUTCFullYear()}/${String(now.getUTCMonth() + 1).padStart(2, "0")}/${code}-${crypto.randomUUID()}.${receipt.extension}`;
+      // Same reservation + identical validated bytes always target one private
+      // object, even if a timeout hides a successful storage response.
+      const receiptPath = `${reservationId}/${receipt.sha256}.${receipt.extension}`;
       await store.uploadReceipt(receiptPath, receipt);
       let submitted;
       try {
         submitted = await store.submitOrder({
-          orderCode: code,
           reservationId,
+          checkoutKey,
+          productId: product.id,
+          planId: String(planIndex),
           productTitle: safeText(product.title, 160),
           planName: planName(plan),
           receiptBucket: config.receiptsBucket,
@@ -242,11 +292,23 @@ export function createPaymentSystem(options) {
           durationMonths: structuredDurationMonths(plan)
         });
       } catch (error) {
-        await store.removeReceipt(receiptPath).catch(() => {});
-        throw error;
+        // A lost RPC response is not proof of rollback. Never delete a possibly linked receipt.
+        const reconciled = await store.getOrderByReservation(reservationId).catch(() => null);
+        if (reconciled) {
+          if (reconciled.receipt_path !== receiptPath) await store.removeReceipt(receiptPath).catch(() => {});
+          submitted = { id: reconciled.id, idempotent: true };
+        } else {
+          if (error.status >= 400 && error.status < 500) await store.removeReceipt(receiptPath).catch(() => {});
+          throw error;
+        }
       }
       const order = await store.getOrder(submitted.id);
+      if (submitted.idempotent && order.receipt_path !== receiptPath) await store.removeReceipt(receiptPath).catch(() => {});
       const method = await store.rawMethod(order.method_id);
+      if (submitted.idempotent) {
+        publicJson(request, response, 200, await orderResult(order));
+        return true;
+      }
       const reviewToken = security.randomToken();
       const reviewUrl = `${config.adminBaseUrl}/admin/review?token=${encodeURIComponent(reviewToken)}`;
       try {
@@ -266,17 +328,7 @@ export function createPaymentSystem(options) {
       } catch (error) {
         console.error("Payment notification queue", order.order_code, error.message);
       }
-      publicJson(request, response, 201, {
-        orderId: order.id,
-        orderCode: order.order_code,
-        status: order.status,
-        paymentMethod: method.display_name,
-        productTitle: product.title,
-        planName: planName(plan),
-        amount: Number(plan.price),
-        currency: "AZN",
-        receiptUploaded: true
-      });
+      publicJson(request, response, 201, await orderResult(order, false));
       return true;
     }
     return false;
