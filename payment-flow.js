@@ -158,7 +158,10 @@
   }
 
   function methodButtons(methods) {
-    return methods.map((method) => `<button class="paymentMethodChoice theme-${esc(method.theme || "neutral")}" type="button" data-payment-method="${esc(method.id)}"${method.available ? "" : " disabled"} aria-disabled="${method.available ? "false" : "true"} aria-pressed="false" aria-label="${esc(`${method.providerName}, son dörd rəqəm ${method.last4}${method.available ? "" : ", bu gün limit dolub"}`)}">${methodIcon(method.type)}<span>${esc(method.providerName)}</span><small>${method.available ? `•••• ${esc(method.last4)}` : "Bu gün limit dolub"}</small><i aria-hidden="true">✓</i></button>`).join("");
+    return methods.map((method) => {
+      const reason = method.available ? "" : method.unavailableReason || (method.status === "limit_reached" ? "Bu gün limit dolub" : "Müvəqqəti rezervdədir");
+      return `<button class="paymentMethodChoice theme-${esc(method.theme || "neutral")}" type="button" data-payment-method="${esc(method.id)}"${method.available ? "" : " disabled"} aria-disabled="${method.available ? "false" : "true"} aria-pressed="false" aria-label="${esc(`${method.providerName}, son dörd rəqəm ${method.last4}${reason ? `, ${reason}` : ""}`)}">${methodIcon(method.type)}<span>${esc(method.providerName)}</span><small>•••• ${esc(method.last4)}</small>${reason ? `<small>${esc(reason)}</small>` : ""}<i aria-hidden="true">✓</i></button>`;
+    }).join("");
   }
 
   function detailMarkup(reservation) {
@@ -283,6 +286,7 @@
           }
         }
         flow.settled = true;
+        clearInterval(flow.queueRefreshTimer);
         flow.readController?.abort();
         flow.stopTimer?.();
         clearReceipt(flow);
@@ -339,6 +343,7 @@
         }
         const result = await request("/api/payments/methods", { signal: flow.readController.signal });
         if (flow.settled || activeFlow !== flow) return;
+        if (!recovered && (flow.reservation || flow.reserving)) return;
         const choices = document.getElementById("paymentMethodChoices");
         const renderChoices = () => {
           setStage(flow, "payment_method_selection");
@@ -349,7 +354,9 @@
         };
         renderChoices();
         if (!result.methods.length) setMessage("Hazırda aktiv ödəniş üsulu yoxdur. Dəstəklə əlaqə saxlayın.", "error");
-        else if (!result.anyAvailable) setMessage("Hazırda bütün kartların limiti dolub. Daha sonra yenidən yoxlayın və ya dəstəklə əlaqə saxlayın.", "error");
+        else if (!result.anyAvailable) setMessage(result.methods.every((method) => method.status === "limit_reached")
+          ? "Hazırda bütün kartların limiti dolub. Daha sonra yenidən yoxlayın və ya dəstəklə əlaqə saxlayın."
+          : "Kartlar müvəqqəti rezervlərlə tutulub. Bir qədər sonra yenidən cəhd edin.", "error");
         else setMessage("Ödəniş edəcəyiniz kartı və ya cüzdanı özünüz seçin.");
         retry.hidden = result.anyAvailable;
 
@@ -554,6 +561,10 @@
       };
       retry.onclick = () => { void loadMethods(); };
       void loadMethods();
+      flow.queueRefreshTimer = setInterval(() => {
+        if (flow.settled || !flow.shell.isConnected) { clearInterval(flow.queueRefreshTimer); return; }
+        if (flow.stage === "payment_method_selection" && !flow.reserving && !flow.reservation && !flow.previousReservationId && !flow.cancelling) void loadMethods();
+      }, 15000);
     });
     return flow.promise;
   }

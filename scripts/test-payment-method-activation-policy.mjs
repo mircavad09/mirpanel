@@ -23,7 +23,7 @@ assert.match(migration, /primary key \(usage_day, source_method_id\)/i);
 assert.match(migration, /deleted_at is null[\s\S]*archived = false/i);
 assert.match(migration, /manual_disabled = not p_active/i);
 assert.equal(/delete from public\.payment_methods/i.test(migration), false);
-assert.match(store, /rpc\("refresh_payment_method_automation"\)/);
+assert.match(store, /rpc\("payment_method_queue_snapshot"/);
 assert.ok(store.includes('rpc("reserve_payment_method_v3"'));
 assert.ok(store.includes('rpc("approve_payment_order_v6"'));
 assert.match(api, /archive\|delete\|activate\|deactivate\|reset-counter/);

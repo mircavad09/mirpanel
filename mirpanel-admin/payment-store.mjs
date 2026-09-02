@@ -21,7 +21,7 @@ import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./pay
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
   const message = String(error?.message || fallback);
   const known = [
-    "IDEMPOTENCY_CONFLICT", "PAYMENT_METHOD_UNAVAILABLE", "PAYMENT_METHOD_LIMIT_REACHED",
+    "IDEMPOTENCY_CONFLICT", "PAYMENT_METHOD_UNAVAILABLE", "PAYMENT_METHOD_LIMIT_REACHED", "PAYMENT_METHOD_TEMPORARILY_BUSY",
     "RESERVATION_NOT_FOUND", "RESERVATION_EXPIRED", "ORDER_NOT_FOUND", "ORDER_NOT_REVIEWABLE",
     "ORDER_ALREADY_APPROVED", "REJECTION_REASON_REQUIRED", "RECEIPT_TOKEN_INVALID",
     "CHECKOUT_KEY_REQUIRED", "ACTIVE_RESERVATION_EXISTS", "RESERVATION_ALREADY_SUBMITTED",
@@ -33,6 +33,7 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     IDEMPOTENCY_CONFLICT: "Təkrar sorğu əvvəlki sifarişlə uyğun deyil.",
     PAYMENT_METHOD_UNAVAILABLE: "Ödəniş üsulu artıq əlçatan deyil.",
     PAYMENT_METHOD_LIMIT_REACHED: "Kart gündəlik limitdədir.",
+    PAYMENT_METHOD_TEMPORARILY_BUSY: "Kart müvəqqəti rezervlərlə tutulub. Bir qədər sonra yenidən cəhd edin.",
     RESERVATION_NOT_FOUND: "Ödəniş rezervi tapılmadı.",
     RESERVATION_EXPIRED: "10 dəqiqəlik ödəniş rezervinin vaxtı bitib.",
     ORDER_NOT_FOUND: "Sifariş tapılmadı.",
@@ -79,7 +80,7 @@ function paymentTheme(value, providerName, methodType) {
   return "neutral";
 }
 
-function rowMethod(row, stats = {}) {
+export function rowMethod(row, stats = {}) {
   const confirmed = Number(stats.confirmed || 0);
   const activeReservations = Number(stats.activeReservations || 0);
   const reviewingReceipts = Number(stats.reviewingReceipts || 0);
@@ -87,8 +88,9 @@ function rowMethod(row, stats = {}) {
   const unlimited = row.limit_mode === "unlimited";
   const remaining = unlimited ? null : Math.max(0, Number(row.daily_limit) - confirmed - pending);
   const status = row.deleted_at || row.archived ? "deleted" :
-    (!unlimited && remaining <= 0) ? "limit_reached" :
-    row.active ? "active" : row.manual_disabled ? "inactive" : "pending";
+    row.manual_disabled ? "inactive" :
+    (!unlimited && confirmed >= Number(row.daily_limit)) ? "limit_reached" :
+    row.active ? ((!unlimited && remaining <= 0) ? "temporarily_busy" : "active") : "pending";
   return {
     id: row.id,
     stableCode: row.stable_code,
@@ -104,6 +106,7 @@ function rowMethod(row, stats = {}) {
     theme: PAYMENT_THEMES.has(row.theme) ? row.theme : "auto",
     resolvedTheme: paymentTheme(row.theme, row.provider_name, row.method_type),
     active: row.active,
+    activatedToday: Boolean(row.activated_today),
     archived: row.archived,
     deletedAt: row.deleted_at || null,
     manualDisabled: Boolean(row.manual_disabled),
@@ -172,14 +175,10 @@ export function createPaymentStore(config) {
   }
 
   async function listMethods({ includeArchived = false, includeDeleted = false } = {}) {
-    await rpc("refresh_payment_method_automation");
-    let query = client.from("payment_methods").select("*").order("sort_order", { ascending: true });
-    if (!includeDeleted) query = query.is("deleted_at", null);
-    if (!includeArchived) query = query.eq("archived", false);
-    const { data, error } = await query;
-    if (error) throw paymentError(error);
-    const stats = await statsForMethods((data || []).map((item) => item.id));
-    return (data || []).map((item) => rowMethod(item, stats.get(item.id)));
+    const data = await rpc("payment_method_queue_snapshot", {
+      p_include_archived: includeArchived, p_include_deleted: includeDeleted
+    });
+    return (data || []).map((item) => rowMethod(item, item.queue_stats));
   }
 
   async function normalizeMethodOrder(movedId, requestedOrder) {
@@ -213,7 +212,8 @@ export function createPaymentStore(config) {
     client,
     rpc,
     async publicMethods() {
-      return (await listMethods()).filter((method) => method.available)
+      return (await listMethods()).filter((method) => !method.manualDisabled && method.hasNumber &&
+        (method.active || (method.activatedToday && method.status === "limit_reached")))
         .map(({ adminNote, adminMaskedNumber, deletedAt, deactivatedAt, ...method }) => method);
     },
     adminMethods() {
@@ -240,7 +240,7 @@ export function createPaymentStore(config) {
         color: safeColor(input.color),
         icon: ["card", "wallet", "bank"].includes(input.icon) ? input.icon : "card",
         theme: PAYMENT_THEMES.has(input.theme) ? input.theme : "auto",
-        active: Boolean(input.active && encryptedNumber),
+        active: false, // Queue refresh selects at most four eligible methods.
         manual_disabled: false,
         sort_order: Math.max(1, Number(input.order) || 1),
         daily_limit: Math.max(1, Math.min(10000, Number(input.dailyLimit) || 5)),

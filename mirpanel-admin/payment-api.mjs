@@ -41,7 +41,8 @@ function publicMethod(method) {
     theme: method.resolvedTheme,
     order: method.order,
     available: method.available,
-    unavailableReason: method.available ? "" : "Bu gün limit dolub"
+    status: method.status,
+    unavailableReason: method.available ? "" : method.status === "limit_reached" ? "Bu gün limit dolub" : "Müvəqqəti rezervdədir"
   };
 }
 

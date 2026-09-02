@@ -117,7 +117,7 @@ const snapshot = commercialSnapshot(after);
 const data = extractAdminState(after);
 const pages = generateProductPageFiles(data.products, data.siteSections, data.cms, data.content);
 for (const [name, html] of pages) {
-  assert.match(html, /payment-flow.js\?v=receipt-ux-20260902-1/, name);
+  assert.match(html, /payment-flow.js\?v=four-card-queue-20260902-1/, name);
   assert.match(html, /payment-flow.css\?v=receipt-ux-20260902-1/, name);
 }
 console.log(JSON.stringify({ ok: true, tests, generatedPages: pages.size, commercialHash: snapshot.sha256, products: snapshot.productCount, activeProducts: snapshot.activeProductCount }, null, 2));
