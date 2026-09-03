@@ -31,7 +31,7 @@ async function setup(width, options = {}) {
     if (url.pathname === '/app.js' && options.delay) await new Promise(r => setTimeout(r, options.delay));
     if (url.pathname === '/splash.js' && options.missing) return route.fulfill({status:200, contentType:'text/javascript', body:''});
     if (url.pathname === '/splash.css' && options.missingCSS) return route.fulfill({status:200, contentType:'text/css', body:''});
-    if (url.pathname === '/splash.js' && options.failure) return route.fulfill({contentType:'text/javascript', body:fs.readFileSync(path.join(root,'splash.js'),'utf8').replace('observer = new MutationObserver(check);', 'throw new Error("fixture splash failure");')});
+    if (url.pathname === '/splash.js' && options.failure) return route.fulfill({contentType:'text/javascript', body:fs.readFileSync(path.join(root,'splash.js'),'utf8').replace("status.querySelector('button').addEventListener", 'throw new Error("fixture splash failure");\n    status.querySelector(\'button\').addEventListener')});
     return route.continue();
   });
   await context.addInitScript(() => {
@@ -74,7 +74,7 @@ try {
     await page.waitForLoadState('domcontentloaded');
     await hidden(page);
     const firstMs = await timing(page);
-    assert.ok(firstMs <= 3000, `first visit maximum: ${firstMs}`);
+    assert.ok(firstMs >= 2850 && firstMs <= 3000, `first visit is approximately three seconds: ${firstMs}`);
     assert.equal(await page.locator('#splashLoadStatus').isVisible(), false);
     await page.screenshot({path:path.join(out,`home-${width}.png`)});
     await functional(page,width);
@@ -97,8 +97,8 @@ try {
       await page.screenshot({path:path.join(out,'sequence-2.1s.png')});
       await hidden(page);
       assert.ok(await timing(page) <= 3000, 'slow network animation is bounded');
-      assert.equal(await page.locator('#splashLoadStatus').isVisible(),true,'slow network has an explicit loading state');
-      assert.equal(await page.locator('#mainHeader').isVisible(),true,'static home shell remains visible');
+      assert.equal(await page.locator('#splashLoadStatus').isVisible(),false,'slow network does not extend splash with a frozen screen');
+      assert.equal(await page.locator('#mainHeader').isVisible(),true,'site is revealed at the deadline');
       await page.screenshot({path:path.join(out,'slow-network.png')});
     }
     await page.waitForLoadState('domcontentloaded');
@@ -115,7 +115,7 @@ try {
       }
       if (mode === 'missing' || mode === 'failure') assert.ok(duration <= 100, 'script failure opens immediately');
       await functional(page,390);
-      if (mode === 'slow') assert.equal(await page.locator('#splashLoadStatus').isVisible(),false,'loading state clears on readiness');
+      if (mode === 'slow') assert.equal(await page.locator('#splashLoadStatus').isVisible(),false,'no loading overlay remains');
       results.push({mode,durationMs:duration,pass:true});
     }
     assert.deepEqual(errors,[]);
