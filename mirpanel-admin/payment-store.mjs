@@ -16,6 +16,7 @@ import {
   paymentMethodLabel
 } from "./payment-order-query.mjs";
 import { bakuDayBounds, expiryStatus } from "./payment-order-lifecycle.mjs";
+import { normalizeFinancialStatistics } from "./payment-order-report.mjs";
 import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./payment-profit.mjs";
 
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
@@ -409,14 +410,14 @@ export function createPaymentStore(config) {
         if (filters.planName) next = next.eq("plan_name", filters.planName);
         if (filters.methodId) next = next.eq("method_id", filters.methodId);
         if (filters.dateFrom) next = next.gte(dateColumn, `${filters.dateFrom}T00:00:00+04:00`);
-        if (filters.dateTo) next = next.lte(dateColumn, `${filters.dateTo}T23:59:59.999+04:00`);
+        if (filters.dateTo) next = next.lt(dateColumn, bakuDayBounds(filters.dateTo).endExclusive);
         return next;
       };
 
       let query = applyCommonFilters(client.from("payment_orders").select(select, { count: "exact" }), filters.tab === "pending" ? "created_at" : "completed_at");
       const statuses = orderDatabaseStatuses(filters);
       query = query.in("status", statuses);
-      if (filters.tab === "today") query = query.gte("completed_at", todayBounds.start).lte("completed_at", todayBounds.end);
+      if (filters.tab === "today") query = query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive);
       if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
       const from = (filters.page - 1) * filters.pageSize;
       query = query
@@ -434,7 +435,7 @@ export function createPaymentStore(config) {
       const [{ data, error, count }, pendingCount, todayCount, completedCount, expiringCount, productRows, methodRows, statistics] = await Promise.all([
         query,
         countStatus(["reviewing", "new_receipt_requested"]),
-        countStatus(["approved", "completed"], (value) => value.gte("completed_at", todayBounds.start).lte("completed_at", todayBounds.end)),
+        countStatus(["approved", "completed"], (value) => value.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive)),
         countStatus(["approved", "completed"]),
         countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
         client.from("payment_orders").select("product_id,product_title,plan_name").order("product_title", { ascending: true }).limit(5000),
@@ -515,8 +516,14 @@ export function createPaymentStore(config) {
           total,
           totalPages: Math.max(1, Math.ceil(total / filters.pageSize))
         },
-        counts: { pending: pendingCount, today: todayCount, all: completedCount, expiring: expiringCount },
-        statistics: statistics || { count: 0, revenue: 0, cost: 0, profit: 0, missingCostCount: 0, topProduct: "—", products: [], plans: [], days: [] },
+        counts: {
+          pending: pendingCount,
+          today: filters.tab === "today" ? total : todayCount,
+          all: filters.tab === "all" ? total : completedCount,
+          expiring: expiringCount
+        },
+        statistics: normalizeFinancialStatistics(statistics || { count: 0, revenue: 0, cost: 0, profit: 0, missingCostCount: 0, topProduct: "—", products: [], plans: [], days: [] }),
+        appliedFilters: filters,
         filters: {
           products: [...products].map(([id, title]) => ({ id, title })),
           plans: [...plans].sort((a, b) => a.localeCompare(b, "az")),

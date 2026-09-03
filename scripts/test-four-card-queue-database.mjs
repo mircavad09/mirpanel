@@ -25,7 +25,7 @@ const reserve=async(i,key=crypto.randomUUID(),checkout=crypto.randomUUID()) => {
 try {
   await db.exec('create role anon; create role authenticated; create role service_role bypassrls; create schema storage; create table storage.buckets(id text primary key,name text,public boolean,file_size_limit integer,allowed_mime_types text[]);');
   await db.exec(sql('202608070001_payment_system').replace('create extension if not exists pgcrypto;',''));
-  for(const name of ['202608080001_payment_checkout_reservations','202608090001_order_history_and_expiry','202608090002_payment_costs_and_profit','202608090003_payment_method_capacity_and_admin','202608100001_calendar_reports_and_cost_backfill','202608150001_payment_usage_day_and_method_soft_delete','202609010001_payment_method_activation_policy','202609020001_disable_payment_method_restore','202609020004_numeric_payment_order_codes']) await db.exec(sql(name));
+  for(const name of ['202608080001_payment_checkout_reservations','202608090001_order_history_and_expiry','202608090002_payment_costs_and_profit','202608090003_payment_method_capacity_and_admin','202608100001_calendar_reports_and_cost_backfill','202608150001_payment_usage_day_and_method_soft_delete','202609010001_payment_method_activation_policy','202609020001_disable_payment_method_restore','202609020004_numeric_payment_order_codes','202609030001_filtered_order_finance_methods']) await db.exec(sql(name));
   // Only synthetic records are added to this isolated engine.
   for(let i=0;i<ids.length;i++) await q("insert into payment_methods(id,stable_code,display_name,provider_name,method_type,last4,encrypted_number,sort_order) values($1,$2,'Fixture','Same bank','bank_card',$3,'fixture-encrypted-placeholder',$4)",[ids[i],`fixture-${i}`,String(i).padStart(4,'0'),i+1]);
   const before=await q('select * from payment_methods order by id');
@@ -99,6 +99,8 @@ try {
   const approved=await order(holds[2]);
   await q('select approve_payment_order_v6($1,1)',[approved.id]);
   await q('select approve_payment_order_v6($1,1)',[approved.id]);
+  const finance=(await q("select payment_order_profit_statistics_v2('all',null,null,null,null,null,null,payment_baku_date()) as value"))[0].value;
+  check(finance.count,1); check(finance.paymentMethods.length,1); check(finance.paymentMethods[0].count,1);
   check((await q('select confirmed_count from payment_method_daily_counters where method_id=$1 and counter_date=payment_baku_date()',[ids[0]]))[0].confirmed_count,1);
   const rejected=await order(holds[3]);
   await q("select reject_payment_order($1,'Fixture reject')",[rejected.id]);

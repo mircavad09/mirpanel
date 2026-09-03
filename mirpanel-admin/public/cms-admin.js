@@ -161,22 +161,22 @@
       <button class="btn" type="button" id="paymentOrdersRefresh">Yenilə</button>
     </div>
     <section id="paymentMonthlyReports" class="paymentMonthlyReports" aria-label="Aylıq maliyyə hesabatı" hidden>
-      <div class="sectionHead"><div><h3>Cari ayın qazancı</h3><p id="paymentCurrentMonthLabel">Bakı vaxtı ilə cari ayın tamamlanmış sifarişləri</p></div><button class="btn compact" type="button" id="paymentMonthlyReportsRefresh">Yenilə</button></div>
+      <div class="sectionHead"><div><h3 id="paymentReportTitle">Filtr üzrə maliyyə hesabatı</h3><p id="paymentCurrentMonthLabel">Bakı vaxtı ilə tamamlanmış sifarişlər</p></div><button class="btn compact" type="button" id="paymentMonthlyReportsRefresh">Yenilə</button></div>
       <div id="paymentCurrentMonthReport" class="paymentMonthlyReportCards" aria-live="polite"></div>
-      <details id="paymentCurrentMonthDetails" class="paymentReportDetails"><summary>Ətraflı cari ay hesabatı</summary><div id="paymentCurrentMonthBreakdown"></div></details>
-      <details id="paymentMonthlyArchivePanel" class="paymentReportDetails paymentMonthlyArchivePanel"><summary>Aylıq arxiv</summary><div class="paymentArchiveBody"><label class="paymentArchiveSelect">Ay<select id="paymentMonthlyArchiveMonth" aria-label="Arxiv ayı"></select></label><div id="paymentMonthlyArchiveReport" class="paymentMonthlyReportCards" aria-live="polite"></div><details id="paymentMonthlyArchiveDetails" class="paymentReportDetails"><summary>Arxiv üzrə ətraflı hesabat</summary><div id="paymentMonthlyArchiveBreakdown"></div></details></div></details>
+      <details id="paymentCurrentMonthDetails" class="paymentReportDetails"><summary>Məhsul və plan üzrə ətraflı hesabat</summary><div id="paymentCurrentMonthBreakdown"></div></details>
+      <details id="paymentMonthlyArchivePanel" class="paymentReportDetails paymentMonthlyArchivePanel"><summary>Aylıq arxiv</summary><div class="paymentArchiveBody"><label class="paymentArchiveSelect">Ay<select id="paymentMonthlyArchiveMonth" aria-label="Arxiv ayı"></select></label><p>Ay seçildikdə siyahı və bütün maliyyə göstəriciləri həmin ayın filtrinə keçirilir.</p></div></details>
     </section>
-    <div id="paymentOrderStatistics" class="paymentOrderStatistics" aria-live="polite"></div>
     <form id="paymentOrderFilters" class="paymentOrderFilters" role="search">
       <label>Sifariş ID-si<input id="paymentOrderSearch" type="search" placeholder="971 və ya MP-XXXXXX" autocomplete="off"></label>
       <label>Məhsul<select id="paymentOrderProduct"><option value="">Bütün məhsullar</option></select></label>
       <label>Plan<select id="paymentOrderPlan"><option value="">Bütün planlar</option></select></label>
       <label>Bank<select id="paymentOrderMethod"><option value="">Bütün banklar</option></select></label>
-      <label>Müddət<select id="paymentOrderPeriod"><option value="all">Bütün tarixlər</option><option value="today">Bu gün</option><option value="yesterday">Dünən</option><option value="7d">Son 7 gün</option><option value="30d">Son 30 gün</option><option value="this_month">Bu ay</option><option value="last_month">Keçən ay</option><option value="3m">Son 3 ay</option><option value="6m">Son 6 ay</option><option value="12m">Son 12 ay</option><option value="custom">Xüsusi tarix</option></select></label>
-      <label class="paymentCustomDate">Başlanğıc tarixi<input id="paymentOrderDateFrom" type="date"></label>
-      <label class="paymentCustomDate">Son tarix<input id="paymentOrderDateTo" type="date"></label>
+      <label>Müddət<select id="paymentOrderPeriod"><option value="today">Bu gün</option><option value="this_month">Cari ay</option><option value="last_month">Keçən ay</option><option value="12m">Son 12 ay</option><option value="custom">Xüsusi tarix</option><option value="all">Bütün tarixlər</option></select></label>
+      <label class="paymentCustomDate paymentCalendarField">Başlanğıc tarixi<input id="paymentOrderDateFrom" type="date" inputmode="numeric" aria-describedby="paymentOrderDateError"></label>
+      <label class="paymentCustomDate paymentCalendarField">Son tarix<input id="paymentOrderDateTo" type="date" inputmode="numeric" aria-describedby="paymentOrderDateError"></label>
       <label>Sıralama<select id="paymentOrderSort"><option value="newest">Ən yeni</option><option value="oldest">Ən köhnə</option></select></label>
-      <div class="paymentOrderFilterActions"><button class="btn primary" type="submit">Tətbiq et</button><button class="btn" type="button" id="paymentOrderFiltersClear">Təmizlə</button></div>
+      <p id="paymentOrderDateError" class="paymentOrderDateError wide" role="alert" aria-live="polite"></p>
+      <div class="paymentOrderFilterActions"><button class="btn primary" type="submit" id="paymentOrderFiltersApply">Tətbiq et</button><button class="btn" type="button" id="paymentOrderFiltersClear">Təmizlə</button></div>
     </form>
     <div id="paymentOrdersStatus" class="paymentOrdersStatus" role="status" aria-live="polite"></div>
     <div id="paymentOrdersList" class="paymentOrdersAdminList" aria-live="polite"></div>

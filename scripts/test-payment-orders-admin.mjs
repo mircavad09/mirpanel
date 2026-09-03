@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import {
   addCalendarMonthsMinusDay,
+  bakuDayBounds,
   bakuDate,
   expiryStatus,
   orderPeriodRange,
@@ -18,6 +19,7 @@ import {
   paymentMethodLabel,
   PAYMENT_ORDER_PAGE_SIZE
 } from "../mirpanel-admin/payment-order-query.mjs";
+import { aggregateSnapshotRows, normalizeFinancialStatistics } from "../mirpanel-admin/payment-order-report.mjs";
 import { validatePaymentNumber } from "../mirpanel-admin/payment-security.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -25,6 +27,11 @@ const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 
 assert.equal(PAYMENT_ORDER_PAGE_SIZE, 20);
 for (const tab of ["pending", "today", "all", "expiring"]) assert.equal(normalizeOrderListParams({ tab }).tab, tab);
+assert.equal(normalizeOrderListParams({ tab: "all" }, new Date("2026-09-03T12:00:00+04:00")).period, "this_month");
+assert.equal(normalizeOrderListParams({ tab: "today" }).period, "today");
+assert.deepEqual(bakuDayBounds("2026-08-31"), { start: "2026-08-31T00:00:00+04:00", endExclusive: "2026-09-01T00:00:00+04:00" });
+assert.throws(() => normalizeOrderListParams({ tab: "all", period: "custom", dateFrom: "2026-08-10" }), /Başlanğıc və son/);
+assert.throws(() => normalizeOrderListParams({ tab: "all", period: "custom", dateFrom: "2026-08-19", dateTo: "2026-08-10" }), /böyük ola bilməz/);
 assert.deepEqual(orderDatabaseStatuses(normalizeOrderListParams({ tab: "pending" })), ["reviewing", "new_receipt_requested"]);
 assert.deepEqual(orderDatabaseStatuses(normalizeOrderListParams({ tab: "all" })), ["approved", "completed"]);
 assert.equal(adminOrderStatus("approved"), "completed");
@@ -66,6 +73,12 @@ const stats = aggregateCompletedOrders([
   { product_title: "Spotify Premium", amount: 4 }
 ]);
 assert.deepEqual(stats, { count: 3, revenue: 16.99, topProduct: "Netflix Şəxsi", products: [{ title: "Netflix Şəxsi", count: 2 }, { title: "Spotify Premium", count: 1 }] });
+assert.deepEqual(aggregateSnapshotRows([
+  { status: "completed", completed_at: "2026-08-10T00:00:00+04:00", sale_price_snapshot: "0.10", cost_price_snapshot: "0.03" },
+  { status: "approved", completed_at: "2026-08-10T01:00:00+04:00", sale_price_snapshot: "0.20", cost_price_snapshot: "0.07" },
+  { status: "reviewing", completed_at: null, sale_price_snapshot: "999.00", cost_price_snapshot: "0.00" }
+]), { count: 2, revenue: "0.30", cost: "0.10", profit: "0.20" });
+assert.equal(normalizeFinancialStatistics({ revenue: "10.00", cost: "3.25", profit: "999.00" }).profit, "6.75");
 
 assert.equal(validatePaymentNumber("4098 5844 9937 4419", "bank_card"), "4098584499374419");
 assert.equal(validatePaymentNumber("050 123 45 67", "wallet"), "0501234567");
@@ -94,7 +107,10 @@ for (const [tab, label] of [["pending", "Gözləyən sifarişlər"], ["today", "
   assert.ok(cms.includes(`data-payment-order-tab=\"${tab}\"`), `${label} əsas tabı qorunmalıdır`);
 }
 assert.match(cms, /id="paymentMonthlyReports"[^>]*hidden/);
-assert.ok(admin.includes('toggleAttribute("hidden", tab !== "all")'), "Aylıq hesabat yalnız Ümumi sifarişlərdə görünməlidir");
+assert.ok(admin.includes('["today", "all"].includes(tab)'), "Hesab kartları Bu gün və Ümumi sifarişlərdə görünməlidir");
+assert.ok(admin.includes("orderRequestSequence"), "Köhnə sorğu yeni filtr nəticəsini üstələməməlidir");
+assert.ok(admin.includes("fullDateLabel"), "Tarix başlıqları Azərbaycan lokalı ilə formatlanmalıdır");
+assert.ok(store.includes("endExclusive") && store.includes(".lt("), "Tarix intervalı növbəti günün başlanğıcına qədər yarıaçıq olmalıdır");
 assert.equal(cms.includes('option value="rejected"'), false, "Rədd edilmiş sifarişlər əsas filtrdə olmamalıdır");
 assert.ok(admin.includes('type="text" inputmode="numeric"'));
 assert.equal(admin.includes('name="fullNumber" type="password"'), false);

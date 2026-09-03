@@ -1,13 +1,18 @@
 (() => {
   "use strict";
 
-  const emptyQuery = () => ({ tab: "pending", period: "all", search: "", productId: "", planName: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1 });
+  const emptyQuery = (tab = "pending") => ({
+    tab,
+    period: tab === "today" ? "today" : tab === "all" ? "this_month" : "all",
+    search: "", productId: "", planName: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1
+  });
   const paymentState = {
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
     costs: [], costDirty: new Set(), costSaving: false, costBackfillPreview: null, costBackfillBusy: false,
-    orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] } },
-    monthlyReports: { current: null, archives: [], selectedMonth: "", archiveOpen: false }
+    orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] }, appliedFilters: {} },
+    monthlyReports: { current: null, archives: [], selectedMonth: "", archiveOpen: false },
+    orderRequestSequence: 0
   };
   const $p = (id) => document.getElementById(id);
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -24,6 +29,18 @@
   const dateTime = (value) => value ? new Date(value).toLocaleString("az-AZ", { timeZone: "Asia/Baku" }) : "—";
   const calendarDate = (value) => value ? new Date(`${value}T00:00:00+04:00`).toLocaleDateString("az-AZ") : "Müddət müəyyən edilməyib";
   const monthLabel = (value) => value ? new Intl.DateTimeFormat("az-AZ", { month: "long", year: "numeric", timeZone: "Asia/Baku" }).format(new Date(`${value}T00:00:00+04:00`)) : "—";
+  const azMonths = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr"];
+  const fullDateLabel = (value) => {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
+    if (!match) return "Tarix yoxdur";
+    return `${Number(match[3])} ${azMonths[Number(match[2]) - 1]} ${match[1]}`;
+  };
+  const nextMonthLastDay = (monthStart) => {
+    const match = /^(\d{4})-(\d{2})-01$/.exec(String(monthStart || ""));
+    if (!match) return "";
+    const date = new Date(Date.UTC(Number(match[1]), Number(match[2]), 0));
+    return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}-${String(date.getUTCDate()).padStart(2, "0")}`;
+  };
   const formatNumber = (value) => String(value || "").replace(/\D/g, "").slice(0, 19).replace(/(.{4})/g, "$1 ").trim();
   function resolvedTheme(theme, providerName, type) {
     if (theme && theme !== "auto") return theme;
@@ -159,7 +176,7 @@
   }
 
   function reportPrimaryMarkup(report, emptyText = "Bu dövr üçün tamamlanmış sifariş yoxdur.") {
-    if (!report || !Number(report.completedCount || 0)) return `<div class="emptyState">${escp(emptyText)}</div>`;
+    if (!report) return `<div class="emptyState">${escp(emptyText)}</div>`;
     return `<div class="paymentMonthlyMetric"><small>Tamamlanmış sifariş</small><strong>${Number(report.completedCount || 0)}</strong></div>
       <div class="paymentMonthlyMetric"><small>Ümumi satış</small><strong>${money(report.revenue)}</strong></div>
       <div class="paymentMonthlyMetric"><small>Ümumi maya</small><strong>${money(report.cost)}</strong></div>
@@ -168,25 +185,19 @@
 
   function reportBreakdownMarkup(report) {
     const products = (report?.products || []).slice(0, 8);
-    const methods = (report?.paymentMethods || []).slice(0, 10);
+    const plans = (report?.plans || []).slice(0, 12);
+    const methods = (report?.paymentMethods || []).slice(0, 12);
     return `<div class="paymentMonthlyBreakdown"><b>Ən çox satılan məhsullar</b>${products.length ? products.map((item) => `<span>${escp(item.title)} · ${Number(item.count)} satış</span>`).join("") : "<span>—</span>"}</div>
-      <div class="paymentMonthlyBreakdown"><b>Ödəniş üsulu üzrə satış</b>${methods.length ? methods.map((item) => `<span>${escp(item.label)} · ${money(item.revenue)}</span>`).join("") : "<span>—</span>"}</div>`;
+      <div class="paymentMonthlyBreakdown"><b>Planlar üzrə hesabat</b>${plans.length ? plans.map((item) => `<span>${escp(item.productTitle)} · ${escp(item.planName)} · ${Number(item.count)} satış</span>`).join("") : "<span>—</span>"}</div>
+      <div class="paymentMonthlyBreakdown"><b>Ödəniş üsulu üzrə satış</b>${methods.length ? methods.map((item) => `<span>${escp(item.label)} · ${Number(item.count)} satış · ${money(item.revenue)}</span>`).join("") : "<span>—</span>"}</div>`;
   }
 
   function renderMonthlyReports() {
     const state = paymentState.monthlyReports;
-    const current = $p("paymentCurrentMonthReport"); const currentBreakdown = $p("paymentCurrentMonthBreakdown");
-    const currentLabel = $p("paymentCurrentMonthLabel");
-    if (current) current.innerHTML = reportPrimaryMarkup(state.current);
-    if (currentBreakdown) currentBreakdown.innerHTML = reportBreakdownMarkup(state.current);
-    if (currentLabel && state.current?.monthStart) currentLabel.textContent = `${monthLabel(state.current.monthStart)} · Bakı vaxtı ilə tamamlanmış sifarişlər`;
-    const archive = $p("paymentMonthlyArchiveReport"); const archiveBreakdown = $p("paymentMonthlyArchiveBreakdown"); const select = $p("paymentMonthlyArchiveMonth");
-    if (!archive || !select) return;
+    const select = $p("paymentMonthlyArchiveMonth");
+    if (!select) return;
     if (!state.selectedMonth && state.archives[0]) state.selectedMonth = state.archives[0].monthStart;
     select.innerHTML = state.archives.length ? state.archives.map((item) => `<option value="${escp(item.monthStart)}"${item.monthStart === state.selectedMonth ? " selected" : ""}>${escp(monthLabel(item.monthStart))}</option>`).join("") : '<option value="">Bağlanmış ay yoxdur</option>';
-    const selected = state.archives.find((item) => item.monthStart === state.selectedMonth);
-    archive.innerHTML = reportPrimaryMarkup(selected, "Bağlanmış aylıq hesabat yoxdur.");
-    if (archiveBreakdown) archiveBreakdown.innerHTML = reportBreakdownMarkup(selected);
   }
 
   async function loadMonthlyReports() {
@@ -202,11 +213,24 @@
     if ($p("paymentOrderDateFrom")) $p("paymentOrderDateFrom").value = query.dateFrom;
     if ($p("paymentOrderDateTo")) $p("paymentOrderDateTo").value = query.dateTo;
     document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", query.period === "custom"));
+    validateCustomDates(false);
+  }
+
+  function validateCustomDates(showMessage = true) {
+    const custom = ($p("paymentOrderPeriod")?.value || paymentState.orderQuery.period) === "custom";
+    const from = $p("paymentOrderDateFrom")?.value || ""; const to = $p("paymentOrderDateTo")?.value || "";
+    let message = "";
+    if (custom && (!from || !to)) message = "Başlanğıc və son tarixini seçin.";
+    else if (custom && from > to) message = "Başlanğıc tarixi son tarixdən böyük ola bilməz.";
+    const error = $p("paymentOrderDateError"); if (error) error.textContent = showMessage ? message : "";
+    const apply = $p("paymentOrderFiltersApply"); if (apply) apply.disabled = Boolean(message);
+    return !message;
   }
 
   function renderOrderContext() {
     const tab = paymentState.orderQuery.tab;
-    $p("paymentMonthlyReports")?.toggleAttribute("hidden", tab !== "all");
+    $p("paymentMonthlyReports")?.toggleAttribute("hidden", !["today", "all"].includes(tab));
+    $p("paymentMonthlyArchivePanel")?.toggleAttribute("hidden", tab !== "all");
     document.querySelectorAll("[data-payment-order-tab]").forEach((button) => {
       const active = button.dataset.paymentOrderTab === tab;
       button.classList.toggle("active", active); button.setAttribute("aria-selected", String(active));
@@ -215,22 +239,28 @@
   }
 
   async function setOrderTab(tab) {
-    paymentState.orderQuery = { ...emptyQuery(), tab: ["pending", "today", "all", "expiring"].includes(tab) ? tab : "pending" };
+    const safeTab = ["pending", "today", "all", "expiring"].includes(tab) ? tab : "pending";
+    paymentState.orderQuery = emptyQuery(safeTab);
     renderOrderContext();
     await loadOrders();
   }
 
   function renderStatistics() {
-    const host = $p("paymentOrderStatistics"); if (!host) return;
+    const host = $p("paymentCurrentMonthReport"); const breakdown = $p("paymentCurrentMonthBreakdown");
+    const label = $p("paymentCurrentMonthLabel"); const title = $p("paymentReportTitle");
+    if (!host) return;
     const stats = paymentState.orderMeta.statistics || {};
-    if (paymentState.orderQuery.tab !== "all") { host.innerHTML = ""; return; }
-    const productSummary = (stats.products || []).map((item) => `<tr><td>${escp(item.title)}</td><td>${Number(item.count)}</td><td>${money(item.revenue || 0)}</td><td>${money(item.cost || 0)}</td><td class="${Number(item.profit || 0) < 0 ? "bad" : ""}">${money(item.profit || 0)}</td><td>${item.margin === null || item.margin === undefined ? "—" : `${Number(item.margin).toFixed(2)}%`}</td><td>${Number(item.missingCostCount || 0)}</td></tr>`).join("");
-    const planSummary = (stats.plans || []).map((item) => `<tr><td>${escp(item.productTitle)}</td><td>${escp(item.planName)}</td><td>${Number(item.count)}</td><td>${money(item.revenue || 0)}</td><td>${money(item.cost || 0)}</td><td class="${Number(item.profit || 0) < 0 ? "bad" : ""}">${money(item.profit || 0)}</td><td>${Number(item.missingCostCount || 0)}</td></tr>`).join("");
-    host.innerHTML = `<div><small>Tamamlanmış sifariş</small><strong>${Number(stats.count || 0)}</strong></div><div><small>Ümumi satış</small><strong>${money(stats.revenue || 0)}</strong></div><div><small>Ümumi maya</small><strong>${money(stats.cost || 0)}</strong></div><div><small>Xalis qazanc</small><strong class="${Number(stats.profit || 0) < 0 ? "bad" : ""}">${money(stats.profit || 0)}</strong></div>${productSummary ? `<details class="paymentReportTable"><summary>Məhsullar üzrə hesabat</summary><div class="paymentProductProfitTable"><table><thead><tr><th>Məhsul</th><th>Satış</th><th>Ümumi satış</th><th>Ümumi maya</th><th>Xalis qazanc</th><th>Faiz</th><th>Çatışmır</th></tr></thead><tbody>${productSummary}</tbody></table></div></details>` : ""}${planSummary ? `<details class="paymentReportTable"><summary>Planlar üzrə hesabat</summary><div class="paymentProductProfitTable"><table><thead><tr><th>Məhsul</th><th>Plan</th><th>Satış</th><th>Ümumi satış</th><th>Ümumi maya</th><th>Xalis qazanc</th><th>Çatışmır</th></tr></thead><tbody>${planSummary}</tbody></table></div></details>` : ""}`;
+    if (!["today", "all"].includes(paymentState.orderQuery.tab)) { host.innerHTML = ""; if (breakdown) breakdown.innerHTML = ""; return; }
+    host.innerHTML = reportPrimaryMarkup({ completedCount: stats.count, revenue: stats.revenue, cost: stats.cost, profit: stats.profit });
+    if (breakdown) breakdown.innerHTML = reportBreakdownMarkup(stats);
+    if (title) title.textContent = paymentState.orderQuery.tab === "today" ? "Bu günün hesabatı" : "Filtr üzrə maliyyə hesabatı";
+    if (label) label.textContent = paymentState.orderQuery.tab === "today" ? "Bakı vaxtı ilə bu gün tamamlanan sifarişlər" : `${fullDateLabel(paymentState.orderMeta.appliedFilters?.dateFrom)} – ${fullDateLabel(paymentState.orderMeta.appliedFilters?.dateTo)} · Bakı vaxtı`;
   }
 
   function bakuOrderDay(value) {
-    return value ? new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(value)) : "";
+    if (!value) return "";
+    const parts = Object.fromEntries(new Intl.DateTimeFormat("en", { timeZone: "Asia/Baku", year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date(value)).map((part) => [part.type, part.value]));
+    return `${parts.year}-${parts.month}-${parts.day}`;
   }
 
   function completedOrderGroups() {
@@ -243,7 +273,7 @@
     }
     return [...groups].map(([day, orders]) => {
       const stat = statsByDay.get(day) || {};
-      const label = day ? new Date(`${day}T00:00:00+04:00`).toLocaleDateString("az-AZ", { day: "numeric", month: "long", year: "numeric" }) : "Tarix yoxdur";
+      const label = fullDateLabel(day);
       return `<details class="paymentOrderDay" open><summary><strong>${escp(label)}</strong><span>${Number(stat.count || orders.length)} sifariş · Satış ${money(stat.revenue || 0)} · Maya ${money(stat.cost || 0)} · Xalis qazanc ${money(stat.profit || 0)}</span></summary><div class="paymentOrderDayList">${orders.map(orderCard).join("")}</div></details>`;
     }).join("");
   }
@@ -358,23 +388,30 @@
 
   async function loadOrders() {
     const status = $p("paymentOrdersStatus"); const list = $p("paymentOrdersList");
+    const requestSequence = ++paymentState.orderRequestSequence;
     if (status) status.textContent = "Sifarişlər yüklənir…";
     if (list) { list.setAttribute("aria-busy", "true"); list.innerHTML = '<div class="emptyState">Yüklənir…</div>'; }
+    paymentState.orderMeta.statistics = {};
+    if ($p("paymentCurrentMonthReport")) $p("paymentCurrentMonthReport").innerHTML = '<div class="emptyState">Hesabat yüklənir…</div>';
+    if ($p("paymentCurrentMonthBreakdown")) $p("paymentCurrentMonthBreakdown").innerHTML = "";
     const query = new URLSearchParams(Object.entries(paymentState.orderQuery).filter(([, value]) => value !== ""));
     try {
       const result = await paymentApi(`/api/admin/payment-orders?${query}`);
+      if (requestSequence !== paymentState.orderRequestSequence) return;
       const nextPending = Number(result.counts?.pending || 0);
       if (paymentState.knownPendingCount !== null && nextPending > paymentState.knownPendingCount) toast(`${nextPending - paymentState.knownPendingCount} yeni sifariş var.`);
       paymentState.knownPendingCount = nextPending;
       paymentState.orders = result.orders || [];
-      paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {} };
+      paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {} };
       if (paymentState.orderQuery.page > paymentState.orderMeta.pagination.totalPages && paymentState.orderQuery.page > 1) { paymentState.orderQuery.page = paymentState.orderMeta.pagination.totalPages; return loadOrders(); }
       renderOrders(); if (status) status.textContent = `${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
     } catch (error) {
-      if (list) list.innerHTML = `<div class="emptyState bad">${escp(error.message || "Sifarişlər yüklənmədi.")}</div>`;
+      if (requestSequence !== paymentState.orderRequestSequence) return;
+      if (list) list.innerHTML = `<div class="emptyState bad">${escp(error.message || "Sifarişlər yüklənmədi.")}<br><button class="btn" type="button" data-retry-payment-orders>Yenidən yoxla</button></div>`;
+      if ($p("paymentCurrentMonthReport")) $p("paymentCurrentMonthReport").innerHTML = '<div class="emptyState bad">Maliyyə hesabatı yüklənmədi.</div>';
       if (status) status.textContent = "Server xətası baş verdi.";
       throw error;
-    } finally { list?.removeAttribute("aria-busy"); }
+    } finally { if (requestSequence === paymentState.orderRequestSequence) list?.removeAttribute("aria-busy"); }
   }
 
   async function loadEmails() { const result = await paymentApi("/api/admin/payment-emails"); paymentState.emails = result.emails || []; renderEmails(); }
@@ -425,6 +462,7 @@
 
   function bindEvents() {
     document.addEventListener("input", (event) => {
+      if (["paymentOrderDateFrom", "paymentOrderDateTo"].includes(event.target.id)) validateCustomDates(true);
       if (event.target.matches('#paymentMethodForm input[name="fullNumber"]')) event.target.value = formatNumber(event.target.value);
       if (event.target.matches('#paymentMethodForm input[name="providerName"]')) {
         const methodForm = event.target.form;
@@ -447,9 +485,26 @@
         if ($p("paymentCostsStatus")) $p("paymentCostsStatus").textContent = `${paymentState.costDirty.size} yadda saxlanmamış dəyişiklik var.`;
       }
     });
-    document.addEventListener("change", (event) => {
-      if (event.target.id === "paymentOrderPeriod") document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", event.target.value === "custom"));
-      if (event.target.id === "paymentMonthlyArchiveMonth") { paymentState.monthlyReports.selectedMonth = event.target.value; renderMonthlyReports(); }
+    document.addEventListener("change", async (event) => {
+      if (event.target.id === "paymentOrderPeriod") {
+        const period = event.target.value;
+        document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", period === "custom"));
+        paymentState.orderQuery.period = period; paymentState.orderQuery.page = 1;
+        if (period !== "custom") {
+          paymentState.orderQuery.dateFrom = ""; paymentState.orderQuery.dateTo = "";
+          if ($p("paymentOrderDateFrom")) $p("paymentOrderDateFrom").value = "";
+          if ($p("paymentOrderDateTo")) $p("paymentOrderDateTo").value = "";
+          validateCustomDates(false); await loadOrders();
+        } else validateCustomDates(true);
+      }
+      if (event.target.id === "paymentMonthlyArchiveMonth") {
+        const monthStart = event.target.value; const monthEnd = nextMonthLastDay(monthStart);
+        paymentState.monthlyReports.selectedMonth = monthStart; renderMonthlyReports();
+        if (monthStart && monthEnd) {
+          Object.assign(paymentState.orderQuery, { tab: "all", period: "custom", dateFrom: monthStart, dateTo: monthEnd, page: 1 });
+          renderOrderContext(); await loadOrders();
+        }
+      }
       if (["paymentCostActive", "paymentCostCategory", "paymentCostMissing"].includes(event.target.id)) renderCosts();
       const methodForm = event.target.closest("#paymentMethodForm");
       if (methodForm && ["theme", "providerName", "type"].includes(event.target.name)) {
@@ -521,7 +576,8 @@
           }
         }
         if (event.target.closest("#paymentOrdersRefresh")) await Promise.all([loadOrders(), loadMonthlyReports()]);
-        if (event.target.closest("#paymentMonthlyReportsRefresh")) await loadMonthlyReports();
+        if (event.target.closest("[data-retry-payment-orders]")) await loadOrders();
+        if (event.target.closest("#paymentMonthlyReportsRefresh")) await Promise.all([loadOrders(), loadMonthlyReports()]);
         if (event.target.closest("#paymentReviewsRefresh")) await loadEmails();
         if (event.target.closest("#paymentCostsSaveAll")) await saveCosts([...paymentState.costDirty]);
         if (event.target.closest("#paymentCostBackfillPreview")) await loadCostBackfillPreview();
@@ -532,7 +588,7 @@
         if (orderTab) await setOrderTab(orderTab.dataset.paymentOrderTab);
         if (event.target.closest("#paymentOrdersPrevious") && paymentState.orderMeta.pagination.page > 1) { paymentState.orderQuery.page -= 1; await loadOrders(); }
         if (event.target.closest("#paymentOrdersNext") && paymentState.orderMeta.pagination.page < paymentState.orderMeta.pagination.totalPages) { paymentState.orderQuery.page += 1; await loadOrders(); }
-        if (event.target.closest("#paymentOrderFiltersClear")) { $p("paymentOrderFilters")?.reset(); await setOrderTab(paymentState.orderQuery.tab); }
+        if (event.target.closest("#paymentOrderFiltersClear")) { $p("paymentOrderFilters")?.reset(); if ($p("paymentOrderDateError")) $p("paymentOrderDateError").textContent = ""; await setOrderTab(paymentState.orderQuery.tab); }
         const card = event.target.closest("[data-payment-order-id]");
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
@@ -547,6 +603,7 @@
       if (event.target.id === "paymentSettingsForm") { event.preventDefault(); try { await paymentApi("/api/admin/payment-settings", { method: "POST", body: JSON.stringify({ notificationEmail: $p("paymentNotificationEmail").value, receiptRetentionDays: Number($p("paymentReceiptRetentionDays").value) }) }); toast("Ödəniş parametrləri saxlanıldı."); } catch (error) { toast(error.message || "Parametrlər saxlanmadı."); } return; }
       if (event.target.id === "paymentOrderFilters") {
         event.preventDefault();
+        if (!validateCustomDates(true)) return;
         Object.assign(paymentState.orderQuery, { search: $p("paymentOrderSearch")?.value.trim() || "", productId: $p("paymentOrderProduct")?.value || "", planName: $p("paymentOrderPlan")?.value || "", methodId: $p("paymentOrderMethod")?.value || "", period: $p("paymentOrderPeriod")?.value || "all", dateFrom: $p("paymentOrderDateFrom")?.value || "", dateTo: $p("paymentOrderDateTo")?.value || "", sort: $p("paymentOrderSort")?.value || "newest", page: 1 });
         await loadOrders(); return;
       }

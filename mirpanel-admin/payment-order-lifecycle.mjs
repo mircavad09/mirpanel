@@ -27,6 +27,10 @@ export function shiftCalendarDays(date, days) {
   return `${result.getUTCFullYear()}-${pad(result.getUTCMonth() + 1)}-${pad(result.getUTCDate())}`;
 }
 
+export function nextCalendarDay(date) {
+  return shiftCalendarDays(date, 1);
+}
+
 export function addCalendarMonthsMinusDay(date, months) {
   const safe = safeCalendarDate(date);
   const count = Number.parseInt(String(months || ""), 10);
@@ -77,7 +81,10 @@ export function orderPeriodRange(period = "", dateFrom = "", dateTo = "", now = 
 
 export function bakuDayBounds(date) {
   const safe = safeCalendarDate(date);
-  return safe ? { start: `${safe}T00:00:00${BAKU_OFFSET}`, end: `${safe}T23:59:59.999${BAKU_OFFSET}` } : { start: "", end: "" };
+  return safe ? {
+    start: `${safe}T00:00:00${BAKU_OFFSET}`,
+    endExclusive: `${nextCalendarDay(safe)}T00:00:00${BAKU_OFFSET}`
+  } : { start: "", endExclusive: "" };
 }
 
 export function expiryStatus(expiresOn, now = new Date()) {
