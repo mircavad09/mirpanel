@@ -23,13 +23,14 @@ export async function createTestDatabase() {
     .replace(/nspname\s*=\s*'public'/g,`nspname='${schema}'`)
     .replace(/schemaname\s*=\s*'public'/g,`schemaname='${schema}'`)
     .replace(/mirpanel_queue_backup_20260902/g,`${schema}_backup`)
-    .replace(/mirpanel_bank_slot_backup_20260902/g,`${schema}_bank_slot_backup`);
+    .replace(/mirpanel_bank_slot_backup_20260902/g,`${schema}_bank_slot_backup`)
+    .replace(/mirpanel_status_queue_backup_20260903/g,`${schema}_status_backup`);
   const db={
     real:true,schema,
     query:async(s,p=[])=>({rows:Array.from(await client.unsafe(rewrite(s),p))}),
     exec:async s=>{const c=await client.reserve();try{await c.unsafe(rewrite(s)).simple();}catch(e){await c.unsafe('rollback');throw e;}finally{c.release();}},
     close:async()=>{
-      await client.unsafe(`drop schema if exists ${schema}_bank_slot_backup cascade; drop schema if exists ${storage} cascade; drop schema if exists ${schema} cascade;`);
+      await client.unsafe(`drop schema if exists ${schema}_status_backup cascade; drop schema if exists ${schema}_bank_slot_backup cascade; drop schema if exists ${storage} cascade; drop schema if exists ${schema} cascade;`);
       await client.end({timeout:5});
     },
     connectionProof:async()=>{

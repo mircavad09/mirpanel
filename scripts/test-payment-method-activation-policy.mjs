@@ -6,6 +6,7 @@ const root = path.resolve(import.meta.dirname, "..");
 const read = (file) => fs.readFileSync(path.join(root, file), "utf8");
 const migration = read("supabase/migrations/202609010001_payment_method_activation_policy.sql");
 const noRestoreMigration = read("supabase/migrations/202609020001_disable_payment_method_restore.sql");
+const statusQueueMigration = read("supabase/migrations/202609030002_payment_method_status_queue_regression.sql");
 const store = read("mirpanel-admin/payment-store.mjs");
 const api = read("mirpanel-admin/payment-api.mjs");
 const admin = read("mirpanel-admin/public/payment-admin.js");
@@ -31,6 +32,9 @@ for (const value of ["Aktiv", "Deaktiv", "Gözləmədə", "Limit dolub", "Silini
 assert.equal(admin.includes("data-restore-payment-method"), false, "Silinmiş kart üçün bərpa düyməsi olmamalıdır");
 assert.equal(api.includes("|restore|"), false, "Kart bərpa endpoint-i olmamalıdır");
 assert.match(noRestoreMigration, /revoke execute on function public\.restore_payment_method_safely/i);
+assert.match(statusQueueMigration, /not exists[\s\S]*payment_reservations[\s\S]*status='reviewing'/i);
+assert.match(statusQueueMigration, /when q\.active[\s\S]*then 0[\s\S]*when q\.active[\s\S]*then 1[\s\S]*confirmed_count>=q\.daily_limit then 2/i);
+assert.match(statusQueueMigration, /pg_advisory_xact_lock\(714025001\)/i);
 
 function simulate(day, methods, saturatedIds) {
   const seeded = methods.map((item) => ({ ...item, active: !item.manualDisabled && item.priority <= 4 }));

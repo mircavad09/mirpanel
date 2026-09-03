@@ -29,10 +29,13 @@ try {
     assert.match(await full.innerText(),/ABB[\s\S]*0002[\s\S]*Bu gün limit dolub/);
     await full.dispatchEvent('click');
     assert.equal(writes,0);
-    state=[card(1,'temporarily_busy'),card(2,'limit_reached'),card(3),card(4),card(5)];
+    state=[card(3),card(4),card(5),card(1,'temporarily_busy'),card(2,'limit_reached')];
     await page.getByText('Müvəqqəti rezervdədir',{exact:true}).waitFor();
     assert.equal(await page.locator('.paymentMethodChoice').count(),5);
     assert.equal(await page.locator('.paymentMethodChoice:not(:disabled)').count(),3);
+    assert.deepEqual(await page.locator('.paymentMethodChoice').evaluateAll(elements=>elements.map(el=>el.disabled?'disabled':'active')),['active','active','active','disabled','disabled']);
+    assert.match(await page.locator('.paymentMethodChoice').nth(3).innerText(),/Müvəqqəti rezervdədir/);
+    assert.match(await page.locator('.paymentMethodChoice').nth(4).innerText(),/Bu gün limit dolub/);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
     assert.equal(await page.locator('.paymentFlow').evaluate(el=>el.scrollWidth>el.clientWidth+1),false);
     assert.equal(await page.locator('.paymentMethodChoice').evaluateAll(elements=>elements.some(el=>el.getBoundingClientRect().height<44)),false);

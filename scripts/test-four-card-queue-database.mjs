@@ -13,6 +13,7 @@ let checks=0;
 const check=(actual,expected)=>{assert.deepEqual(actual,expected);checks++;};
 const sql=name=>fs.readFileSync(`supabase/migrations/${name}.sql`,'utf8');
 const migration=sql('202609020006_four_active_payment_methods');
+const statusQueueMigration=sql('202609030002_payment_method_status_queue_regression');
 const q=async(s,p=[]) => (await db.query(s,p)).rows;
 const ids=Array.from({length:14},(_,i)=>`10000000-0000-4000-8000-${String(i+1).padStart(12,'0')}`);
 const snapshot=async()=> (await q('select payment_method_queue_snapshot() as value'))[0].value;
@@ -33,6 +34,9 @@ try {
   if(real) await db.exec('begin; '+fs.readFileSync('scripts/bank-slot-release-backup.sql','utf8')+' commit;');
   await db.exec(sql('202609020007_payment_method_bank_slot_policy'));
   await db.exec(sql('202609020007_payment_method_bank_slot_policy'));
+  const releaseBody=statusQueueMigration.replace(/^begin;\s*/,'').replace(/commit;\s*$/,'');
+  await db.exec('begin; '+fs.readFileSync('scripts/status-queue-release-backup.sql','utf8')+releaseBody+fs.readFileSync('scripts/status-queue-release-verify.sql','utf8')+' commit;');
+  await db.exec(statusQueueMigration);
   check(await q('select * from payment_methods order by id'),before);
   check(await active(),[1,2,3,4]);
   if(real) {
@@ -42,7 +46,7 @@ try {
     const wins=attempts.filter(r=>r.status==='fulfilled').map(r=>r.value);
     check(wins.length,5);
     check(attempts.filter(r=>r.status==='rejected').every(r=>/TEMPORARILY_BUSY/.test(r.reason.message)),true);
-    check(await active(),[1,2,3,4]);
+    check(await active(),[2,3,4,1]);
     await Promise.all(wins.map(r=>q('select cancel_customer_payment_reservation($1,$2)',[r.id,r.checkout])));
     const key=crypto.randomUUID(), checkout=crypto.randomUUID();
     const replays=await Promise.all(Array.from({length:12},()=>reserve(1,key,checkout)));
@@ -58,6 +62,12 @@ try {
   await counter(3,5); check(await active(),[1,2,4,5]);
   await counter(2,5); check(await active(),[1,4,5,6]);
   await counter(4,5); check(await active(),[1,5,6,7]);
+  const busyHolds=await Promise.all(Array.from({length:5},()=>reserve(1)));
+  const statusOrdered=(await snapshot()).map(m=>rowMethod(m,m.queue_stats)).filter(m=>!m.manualDisabled&&m.hasNumber&&(m.active||(m.activatedToday&&m.status==='limit_reached')));
+  check(statusOrdered.slice(0,3).every(m=>m.status==='active'),true);
+  check(statusOrdered[3].status,'temporarily_busy');
+  check(statusOrdered.slice(4).every(m=>m.status==='limit_reached'),true);
+  await Promise.all(busyHolds.map(r=>q('select cancel_customer_payment_reservation($1,$2)',[r.id,r.checkout])));
   await counter(1,5);
   const afterM10=await active();
   check(afterM10.length,4);
@@ -68,6 +78,27 @@ try {
   check(bankVisible.filter(m=>m.status==='limit_reached').every(m=>!m.available),true);
   check(bankVisible.slice(0,4).every(m=>m.status==='active'),true);
   check(bankVisible.slice(4).every(m=>m.status==='limit_reached'),true);
+
+  // If Kapital has no same-provider standby, the earliest safe standby fills
+  // the slot instead of leaving a hole.
+  await db.exec("delete from payment_reservations; delete from payment_method_daily_counters; delete from payment_method_daily_activations; delete from payment_method_activation_days; update payment_methods set active=false;");
+  await q("update payment_methods set provider_name='Other Bank',display_name='Other Bank' where id=$1",[ids[6]]);
+  check(await active(),[1,2,3,4]);
+  await counter(4,5); check(await active(),[1,2,3,5]);
+
+  // A standby card with a live hold (for example after an admin queue change)
+  // must not be used as a limit replacement. Its reservation stays untouched.
+  await db.exec("delete from payment_reservations; delete from payment_method_daily_counters; delete from payment_method_daily_activations; delete from payment_method_activation_days; update payment_methods set active=false;");
+  await q("update payment_methods set provider_name='Kapital Bank',display_name='Kapital Bank' where id=$1",[ids[6]]);
+  check(await active(),[1,2,3,4]);
+  const standbyHoldId=crypto.randomUUID();
+  await q("insert into payment_reservations(id,method_id,product_id,plan_id,amount,currency,idempotency_key,checkout_key,status,expires_at,usage_day) values($1,$2,'fixture','0',5.99,'AZN',$3,$4,'reserved',now()+interval '10 minutes',payment_baku_date())",[standbyHoldId,ids[6],crypto.randomUUID(),crypto.randomUUID()]);
+  const standbyBefore=await q('select * from payment_reservations where id=$1',[standbyHoldId]);
+  await counter(4,5);
+  await Promise.all(Array.from({length:12},()=>snapshot()));
+  check(await active(),[1,2,3,5]);
+  check(await q('select * from payment_reservations where id=$1',[standbyHoldId]),standbyBefore);
+  check((await q('select count(*)::int as n from payment_method_daily_activations where method_id=$1 and usage_day=payment_baku_date()',[ids[4]]))[0].n,1);
 
   // Reset only synthetic fixtures before the generic >10-card/concurrency suite.
   await db.exec("delete from payment_reservations; delete from payment_orders; delete from payment_method_daily_counters; delete from payment_method_daily_activations; delete from payment_method_activation_days; update payment_methods set active=false,provider_name='Same bank',display_name='Fixture';");
@@ -82,7 +113,7 @@ try {
   // Temporary capacity does not advance the queue, even with no counter row.
   const holds=await Promise.all(Array.from({length:5},()=>reserve(1)));
   await assert.rejects(reserve(1),/TEMPORARILY_BUSY/); checks++;
-  check(await active(),[1,3,5,6]);
+  check(await active(),[3,5,6,1]);
   const busy=(await snapshot()).find(m=>m.id===ids[0]);
   check(rowMethod(busy,busy.queue_stats).status,'temporarily_busy');
   const again=await reserve(1,holds[0].key,holds[0].checkout); check(again.id,holds[0].id);
@@ -139,7 +170,7 @@ try {
   await q("update payment_methods set limit_mode='unlimited' where id=$1",[ids[0]]); await counter(1,100);
   check((await snapshot()).find(m=>m.id===ids[0]).active,true);
   const ordersBefore=await q('select * from payment_orders order by id'); const reservationsBefore=await q('select * from payment_reservations order by id');
-  await db.exec(migration);
+  await db.exec(statusQueueMigration);
   check(await q('select * from payment_orders order by id'),ordersBefore);
   check(await q('select * from payment_reservations order by id'),reservationsBefore);
   for(const role of ['anon','authenticated']) {
@@ -148,6 +179,14 @@ try {
   }
   check((await q("select relrowsecurity from pg_class where relname='payment_method_daily_activations'"))[0].relrowsecurity,true);
   check((await q("select has_function_privilege('service_role','payment_method_queue_snapshot(boolean,boolean)','execute') as allowed"))[0].allowed,true);
+  const beforeRollbackOrders=await q('select * from payment_orders order by id');
+  const beforeRollbackReservations=await q('select * from payment_reservations order by id');
+  const beforeRollbackCounters=await q('select * from payment_method_daily_counters order by method_id,counter_date');
+  await db.exec(fs.readFileSync('scripts/status-queue-release-rollback.sql','utf8'));
+  check(await q('select * from payment_orders order by id'),beforeRollbackOrders);
+  check(await q('select * from payment_reservations order by id'),beforeRollbackReservations);
+  check(await q('select * from payment_method_daily_counters order by method_id,counter_date'),beforeRollbackCounters);
+  await db.exec(statusQueueMigration);
   if(real) {
     const orderRows=await q('select * from payment_orders order by id');
     const counterRows=await q('select * from payment_method_daily_counters order by method_id,counter_date');
@@ -156,6 +195,7 @@ try {
     check(await q('select * from payment_method_daily_counters order by method_id,counter_date'),counterRows);
     check((await q("select has_function_privilege('service_role','payment_method_queue_snapshot(boolean,boolean)','execute') as allowed"))[0].allowed,true);
     await db.exec(sql('202609020007_payment_method_bank_slot_policy'));
+    await db.exec(statusQueueMigration);
     check((await q("select has_function_privilege('service_role','payment_method_queue_snapshot(boolean,boolean)','execute') as allowed"))[0].allowed,true);
   }
   console.log(JSON.stringify({ok:true,checks,engine:real?'Supabase PostgreSQL':'PostgreSQL/PGlite',cards:14,realDataAccess:false,multiConnectionConcurrency:real?'12 independent backends; 24 racing reserves; 12 idempotent retries':'Not provided by single-session PGlite',overnightIdentityPreserved:true,testSchema:db.schema}));
