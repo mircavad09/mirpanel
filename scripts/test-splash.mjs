@@ -13,7 +13,15 @@ let writes = 0;
 const server = http.createServer((req, res) => {
   if (req.method !== 'GET') { writes++; res.writeHead(405); return res.end(); }
   const url = new URL(req.url, 'http://localhost');
-  const file = path.resolve(root, '.' + (url.pathname === '/' ? '/index.html' : url.pathname));
+  // Product routes are document navigations in production and resolve to the
+  // same shell. Mirror that here without involving checkout APIs.
+  const nestedAsset = url.pathname.match(/^\/mehsul\/([^/]+)$/);
+  const candidatePath = nestedAsset ? `/${nestedAsset[1]}` : null;
+  const nestedAssetPath = candidatePath ? path.resolve(root, `.${candidatePath}`) : null;
+  const requestPath = nestedAssetPath && fs.existsSync(nestedAssetPath) && fs.statSync(nestedAssetPath).isFile()
+    ? candidatePath
+    : (url.pathname === '/' || url.pathname.startsWith('/mehsul/') ? '/index.html' : url.pathname);
+  const file = path.resolve(root, '.' + requestPath);
   if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); return res.end(); }
   res.setHeader('Content-Type', ({'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webp':'image/webp'})[path.extname(file)] || 'application/octet-stream');
   res.end(fs.readFileSync(file));
@@ -63,8 +71,11 @@ async function functional(page, width) {
   assert.ok(titles.length > 0 && titles.every(t => /netflix/i.test(t)), 'search after splash');
   await page.locator('#q').fill('');
   assert.equal(await page.evaluate(() => document.body.style.position), '', 'no scroll lock');
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'no horizontal overflow');
 }
 try {
+  assert.doesNotMatch(fs.readFileSync(path.join(root, 'splash.js'), 'utf8'), /(?:sessionStorage|localStorage|document\.cookie)/,
+    'splash does not persist a once-per-session state');
   for (const width of [320,390,768,1440]) {
     const {context,page,errors} = await setup(width, {delay:900});
     await page.goto(origin, {waitUntil:'commit'});
@@ -79,10 +90,18 @@ try {
     await page.screenshot({path:path.join(out,`home-${width}.png`)});
     await functional(page,width);
     await page.reload({waitUntil:'domcontentloaded'}); await hidden(page);
-    const repeatMs = await timing(page);
-    assert.ok(repeatMs <= 250, 'repeat session skips animation');
+    const reloadMs = await timing(page);
+    assert.ok(reloadMs >= 2850 && reloadMs <= 3000, `reload gets the full splash: ${reloadMs}`);
+    await page.goto(`${origin}/mehsul/netflix`, {waitUntil:'commit'}); await page.waitForFunction(() => window.splashTiming.start !== null); await hidden(page);
+    const productDirectMs = await timing(page);
+    assert.ok(productDirectMs >= 2850 && productDirectMs <= 3000, `direct product document load gets splash: ${productDirectMs}`);
+    // A payment cancellation that chooses a full-document return uses the same
+    // navigation path. This makes no checkout API request and creates no data.
+    await page.goto(`${origin}/?checkout-cancelled=1`, {waitUntil:'commit'}); await page.waitForFunction(() => window.splashTiming.start !== null); await hidden(page);
+    const checkoutCancelReloadMs = await timing(page);
+    assert.ok(checkoutCancelReloadMs >= 2850 && checkoutCancelReloadMs <= 3000, `checkout cancellation reload gets splash: ${checkoutCancelReloadMs}`);
     assert.deepEqual(errors, []);
-    results.push({width,firstMs,repeatMs,homeMenuSearch:true,consoleErrors:errors.length});
+    results.push({width,firstMs,reloadMs,productDirectMs,checkoutCancelReloadMs,homeMenuSearch:true,consoleErrors:errors.length});
     await context.close();
   }
   for (const mode of ['slow','reduced','missing','failure','missingCSS','noJS']) {

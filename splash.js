@@ -20,17 +20,15 @@
   }
   try {
     status.querySelector('button').addEventListener('click', () => location.reload());
-    let seen = false;
-    try { seen = sessionStorage.getItem('mirpanel:splash:seen') === '1'; sessionStorage.setItem('mirpanel:splash:seen', '1'); } catch { /* Storage can be disabled; the deadline still applies. */ }
     const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // First visits keep the full premium sequence. The watchdog and CSS both
-    // reveal the site by three seconds, regardless of network readiness.
-    deadline = setTimeout(() => { hide(); status.hidden = true; cleanup(); }, seen ? 0 : reduced ? 150 : 2950);
+    // Every full document load gets the premium sequence. The watchdog and CSS
+    // both reveal the site by three seconds, regardless of network readiness.
+    deadline = setTimeout(() => { hide(); status.hidden = true; cleanup(); }, reduced ? 150 : 2950);
     window.addEventListener('error', failOpen, true);
     window.addEventListener('unhandledrejection', failOpen);
     splash.addEventListener('animationend', event => {
       if (event.target === splash) { hide(); status.hidden = true; cleanup(); }
     });
-    if (!seen && document.readyState === 'loading') { splash.style.display = 'flex'; splash.hidden = false; }
+    if (document.readyState === 'loading') { splash.style.display = 'flex'; splash.hidden = false; }
   } catch { hide(); cleanup(); }
 })();
