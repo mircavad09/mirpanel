@@ -60,9 +60,20 @@ async function hidden(page) { await page.waitForFunction(() => document.getEleme
 async function timing(page) { return page.evaluate(() => { const t=window.splashTiming; return t.start === null ? 0 : Math.round((t.end ?? performance.now()) - t.start); }); }
 async function functional(page, width) {
   assert.ok(await page.locator('#grid .card').count() > 0, 'homepage rendered');
-  assert.ok(await page.locator('#homeDiscoverySearch').isVisible(), 'prominent home search is visible');
+  assert.equal(await page.locator('input#q').count(), 1, 'only one home product search exists');
+  const compactLayout = width <= 768;
+  if (compactLayout) {
+    assert.ok(await page.locator('.home-discovery').isVisible(), 'one prominent mobile home search is visible');
+    assert.ok(await page.locator('#q').isVisible(), 'mobile product search is visible');
+    assert.equal(await page.locator('.search-promo-box').isVisible(), false, 'legacy duplicate search block is hidden');
+    assert.equal(await page.locator('.site-header-nav').isVisible(), false, 'mobile header keeps only the hamburger menu');
+    assert.ok(await page.locator('.banner-text').isVisible(), 'mobile announcement remains visible');
+  } else {
+    assert.equal(await page.locator('.home-discovery').isVisible(), false, 'mobile discovery block is hidden on desktop');
+    assert.ok(await page.locator('.site-header-tools .site-header-search').isVisible(), 'desktop header search is visible');
+  }
   const quickLinks = page.locator('#homeQuickLinks .home-quick-link');
-  assert.ok(await quickLinks.count() >= 3 && await quickLinks.count() <= 5, '3–5 active quick links are shown');
+  assert.ok(await quickLinks.count() >= 3 && await quickLinks.count() <= 4, '3–4 active quick links are shown');
   for (const href of await quickLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href')))) {
     assert.match(href || '', /^\/mehsul\/[a-z0-9-]+$/, 'quick link uses an existing product detail route');
   }
@@ -89,11 +100,10 @@ async function functional(page, width) {
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('.site-header-menu-button').getAttribute('aria-expanded'),'false');
   } else assert.ok(await page.locator('.site-header-nav a').count() >= 5);
-  await page.locator('#homeDiscoverySearch').fill('Netflix');
+  await page.locator('#q').fill('Netflix');
   const titles = await page.locator('#grid .card .title').allTextContents();
   assert.ok(titles.length > 0 && titles.every(t => /netflix/i.test(t)), 'search after splash');
-  assert.equal(await page.locator('#q').inputValue(), 'Netflix', 'home search reuses existing search state');
-  await page.locator('#homeDiscoverySearch').fill('');
+  await page.locator('#q').fill('');
   assert.equal(await page.evaluate(() => document.body.style.position), '', 'no scroll lock');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'no horizontal overflow');
 }

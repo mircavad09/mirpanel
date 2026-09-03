@@ -4310,7 +4310,7 @@ function renderHomeDiscovery() {
   const quickLinks = document.getElementById("homeQuickLinks");
   if (quickLinks) {
     const preferred = ["netflix", "capcut", "spotify"];
-    const chosen = [...preferred.map((id) => activeProducts.find((product) => product.id === id)).filter(Boolean), ...activeProducts.filter((product) => !preferred.includes(product.id))].slice(0, 5);
+    const chosen = [...preferred.map((id) => activeProducts.find((product) => product.id === id)).filter(Boolean), ...activeProducts.filter((product) => !preferred.includes(product.id))].slice(0, 4);
     quickLinks.replaceChildren(...chosen.map((product) => {
       const link = document.createElement("a");
       link.className = "home-quick-link";
@@ -4322,11 +4322,6 @@ function renderHomeDiscovery() {
     }));
     quickLinks.hidden = !chosen.length;
   }
-  const homeSearch = document.getElementById("homeDiscoverySearch");
-  const sideSearch = document.getElementById("q");
-  const syncSearch = (source) => { if (homeSearch && homeSearch !== source) homeSearch.value = source.value; if (sideSearch && sideSearch !== source) sideSearch.value = source.value; renderGrid(); };
-  homeSearch?.addEventListener("input", () => syncSearch(homeSearch));
-  sideSearch?.addEventListener("input", () => syncSearch(sideSearch));
 }
 
 function buildTabs() {
@@ -4512,8 +4507,9 @@ function initSidebar() {
 
 function boot() {
   setupUI();
-  initSlider(); 
-  initSidebar(); 
+  initSlider();
+  initSidebar();
+  document.getElementById("q")?.addEventListener("input", renderGrid);
   document.getElementById("closeModal")?.addEventListener("click", closeModal);
   document.getElementById("modal")?.addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
 }

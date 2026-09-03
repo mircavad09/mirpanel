@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=admin-1788445901674" />
+  <link rel="stylesheet" href="style.css?v=home-ui-cleanup-20260903-1" />
   <link rel="stylesheet" href="splash.css?v=20260903-1" />
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="premium-compact-glow.css?v=20260804-mobile-layout-1" />
@@ -183,7 +183,7 @@
   </style>
 </head>
 
-<body>
+<body class="home-page">
 
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
     <div class="premium-splash-content">
@@ -230,9 +230,9 @@
     
     <div id="hero-section">
       <section class="wrap home-discovery" aria-label="Məhsul axtarışı və tez keçidlər">
-        <label class="home-discovery-search" for="homeDiscoverySearch">
+        <label class="home-discovery-search" for="q">
           <span class="home-discovery-search-icon" aria-hidden="true">⌕</span>
-          <input type="search" id="homeDiscoverySearch" placeholder="Məhsul axtar..." autocomplete="off" inputmode="search" enterkeyhint="search" />
+          <input type="search" id="q" class="search" placeholder="Məhsul axtar..." data-i18n-placeholder="searchShortExample" autocomplete="off" inputmode="search" enterkeyhint="search" />
         </label>
         <nav class="home-quick-links" id="homeQuickLinks" aria-label="Tez keçidlər" hidden></nav>
       </section>
@@ -254,7 +254,6 @@
           <div class="side-box search-promo-box">
             <div class="sp-title" data-i18n="searchPromoTitle">AXTARIŞ ET, <span class="highlight">İSTƏDİYİNİ TAP!</span></div>
             <p class="sp-desc" data-i18n="searchPromoDesc">Bütün məlumatlar saytda mövcuddur. Axtarış bölməsindən istədiyiniz məhsulu rahatlıqla tapa bilərsiniz.</p>
-            <input type="text" id="q" class="search side-search" placeholder="Məhsul axtar... (məs: Netflix, Zoom)" data-i18n-placeholder="searchShortExample" autocomplete="off" inputmode="search" />
           </div>
 
           <div id="homeSupportCard"></div>
@@ -454,7 +453,7 @@
     </ul>
   </div>
 
-  <script src="app.js?v=home-discovery-20260903-1"></script>
+  <script src="app.js?v=home-ui-cleanup-20260903-1"></script>
   <script src="cms-site.js?v=admin-1788445901674"></script>
   <script src="payment-flow.js?v=admin-1788445901674"></script>
   <script src="order-confirmation.js?v=product-forms-20260902-1"></script>
