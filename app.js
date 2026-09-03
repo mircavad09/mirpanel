@@ -235,8 +235,15 @@ const DATA = {
           "regularPrice": 16.99
         },
         {
+          "label": "6 Ayliq               (Telefon)",
           "months": 6,
           "price": 26.99,
+          "regularPrice": 101.99
+        },
+        {
+          "label": "6 Ayliq               (Telefon & Kompyuter)",
+          "months": 6,
+          "price": 29.99,
           "regularPrice": 101.99
         }
       ],
