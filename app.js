@@ -225,7 +225,7 @@ const DATA = {
         {
           "label": "1 Ayliq               (Telefon)",
           "months": 1,
-          "price": 5.49,
+          "price": 5.29,
           "regularPrice": 16.99
         },
         {
