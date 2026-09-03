@@ -4310,7 +4310,7 @@ function renderHomeDiscovery() {
   const quickLinks = document.getElementById("homeQuickLinks");
   if (quickLinks) {
     const preferred = ["netflix", "capcut", "spotify"];
-    const chosen = [...preferred.map((id) => activeProducts.find((product) => product.id === id)).filter(Boolean), ...activeProducts.filter((product) => !preferred.includes(product.id))].slice(0, 4);
+    const chosen = [...preferred.map((id) => activeProducts.find((product) => product.id === id)).filter(Boolean), ...activeProducts.filter((product) => !preferred.includes(product.id))].slice(0, 5);
     quickLinks.replaceChildren(...chosen.map((product) => {
       const link = document.createElement("a");
       link.className = "home-quick-link";
@@ -4330,10 +4330,10 @@ function buildTabs() {
   const activeProducts = DATA.products.filter((product) => product.active !== false);
   const hasPremium = activeProducts.some((product) => product.badge === "Premium");
   const hasBestSeller = activeProducts.some((product) => product.bestSeller === true);
+  homeFilter = hasBestSeller ? "best" : "all";
   tabs.innerHTML = `
     <div class="home-filter-tabs" role="tablist" aria-label="Məhsul filtrləri">
-      <button type="button" class="home-filter-tab active" data-home-filter="all" role="tab" aria-selected="true">Hamısı</button>
-      ${hasBestSeller ? '<button type="button" class="home-filter-tab" data-home-filter="best" role="tab" aria-selected="false">Ən çox satılanlar</button>' : ''}
+      ${hasBestSeller ? '<button type="button" class="home-filter-tab active" data-home-filter="best" role="tab" aria-selected="true">Ən çox satılanlar</button>' : ''}
       ${hasPremium ? '<button type="button" class="home-filter-tab" data-home-filter="premium" role="tab" aria-selected="false">Premium</button>' : ''}
     </div>
     <div class="glass-sort-container">
@@ -4364,8 +4364,8 @@ function renderGrid() {
     const blob = [p.title, p.desc, p.category, p.variant].join(" ").toLowerCase();
     return blob.includes(q);
   });
-  if (homeFilter === "best") list = list.filter((product) => product.bestSeller === true);
-  if (homeFilter === "premium") list = list.filter((product) => product.badge === "Premium");
+  if (!q && homeFilter === "best") list = list.filter((product) => product.bestSeller === true);
+  if (!q && homeFilter === "premium") list = list.filter((product) => product.badge === "Premium");
   
   list.sort((a, b) => {
      const getPrice = (prod) => {

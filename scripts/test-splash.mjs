@@ -63,17 +63,21 @@ async function functional(page, width) {
   assert.equal(await page.locator('input#q').count(), 1, 'only one home product search exists');
   const compactLayout = width <= 768;
   if (compactLayout) {
-    assert.ok(await page.locator('.home-discovery').isVisible(), 'one prominent mobile home search is visible');
-    assert.ok(await page.locator('#q').isVisible(), 'mobile product search is visible');
+    assert.ok(await page.locator('.home-discovery').isVisible(), 'mobile quick links are visible');
+    assert.ok(await page.locator('.site-header-tools #q').isVisible(), 'mobile product search shares the hamburger row');
     assert.equal(await page.locator('.search-promo-box').isVisible(), false, 'legacy duplicate search block is hidden');
     assert.equal(await page.locator('.site-header-nav').isVisible(), false, 'mobile header keeps only the hamburger menu');
-    assert.ok(await page.locator('.banner-text').isVisible(), 'mobile announcement remains visible');
+    assert.equal(await page.locator('.banner-wrap').isVisible(), false, 'announcement is not a separate mobile banner');
+    assert.equal(await page.locator('#homeSupportCard').isVisible(), false, 'support is not a separate mobile banner');
+    assert.ok(await page.locator('#heroSlider .slide').count() >= 2, 'support joins the main mobile slider');
+    assert.ok(await page.locator('#heroSlider .slider-dots .dot').count() >= 2, 'mobile slider has dots');
+    assert.ok(await page.locator('#heroSlider .slider-arrow:not([hidden])').count() === 2, 'mobile slider has arrows');
   } else {
     assert.equal(await page.locator('.home-discovery').isVisible(), false, 'mobile discovery block is hidden on desktop');
     assert.ok(await page.locator('.site-header-tools .site-header-search').isVisible(), 'desktop header search is visible');
   }
   const quickLinks = page.locator('#homeQuickLinks .home-quick-link');
-  assert.ok(await quickLinks.count() >= 3 && await quickLinks.count() <= 4, '3–4 active quick links are shown');
+  assert.ok(await quickLinks.count() >= 3 && await quickLinks.count() <= 5, '3–5 active quick links are shown');
   for (const href of await quickLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href')))) {
     assert.match(href || '', /^\/mehsul\/[a-z0-9-]+$/, 'quick link uses an existing product detail route');
   }
@@ -83,17 +87,17 @@ async function functional(page, width) {
     assert.equal(await page.locator('#heroSlider .slide.active').count(), 1, 'banner slider remains usable after interaction');
   }
   const filters = page.locator('[data-home-filter]');
-  assert.ok(await filters.count() >= 2, 'metadata-backed product filters are shown');
-  const allProductCount = await page.locator('#grid .card').count();
-  await page.locator('[data-home-filter="best"]').click();
+  assert.ok(await filters.count() >= 1, 'metadata-backed product filters are shown');
   const bestSellerCount = await page.locator('#grid .card').count();
-  assert.ok(bestSellerCount > 0 && bestSellerCount <= allProductCount, 'best seller filter updates visible cards');
+  assert.ok(bestSellerCount > 0, 'best seller products are the default view');
+  assert.equal(await page.locator('[data-home-filter="best"]').getAttribute('aria-selected'), 'true');
+  await page.locator('[data-home-filter="best"]').click();
   assert.equal(await page.locator('[data-home-filter="best"]').getAttribute('aria-selected'), 'true');
   if (await page.locator('[data-home-filter="premium"]').count()) {
     await page.locator('[data-home-filter="premium"]').click();
     assert.ok(await page.locator('#grid .card').count() > 0, 'premium filter uses existing product badge metadata');
   }
-  await page.locator('[data-home-filter="all"]').click();
+  await page.locator('[data-home-filter="best"]').click();
   if (width < 850) {
     await page.locator('.site-header-menu-button').click();
     assert.equal(await page.locator('.site-header-menu-button').getAttribute('aria-expanded'),'true');

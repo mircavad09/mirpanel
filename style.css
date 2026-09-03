@@ -912,12 +912,34 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
 }
 
 @media (max-width: 768px) {
+  .home-page .site-header .site-header-inner { grid-template-columns:minmax(0,1fr); gap:8px; }
+  .home-page .site-header .site-header-brand { grid-column:1; }
+  .home-page .site-header .site-header-tools { grid-column:1; grid-row:2; width:100%; display:flex; gap:8px; justify-content:stretch; }
+  .home-page .site-header .site-header-menu-button { order:1; flex:0 0 42px; }
+  .home-page .site-header .site-header-tools > .site-header-search { display:flex; order:2; flex:1 1 auto; width:auto; height:42px; }
   .home-page .site-header .site-header-nav.product-page-nav { display:none; }
-  .home-discovery { display:grid; }
-  .search-promo-box { display:none; }
-  .hero-side-boxes { display:block; }
-  #homeSupportCard { width:100%; }
-  .home-page .banner-text { width:100%; white-space:normal; text-align:center; animation:none; }
+  .home-page .home-discovery { display:block; margin-top:0; padding-top:8px; padding-bottom:4px; }
+  .home-page .home-quick-links { display:flex; gap:8px; overflow-x:auto; padding:0 1px 2px; scrollbar-width:none; scroll-snap-type:x proximity; }
+  .home-page .home-quick-links::-webkit-scrollbar { display:none; }
+  .home-page .home-quick-link { flex:0 0 118px; min-height:38px; padding:6px 8px; border-radius:11px; scroll-snap-align:start; font-size:11px; }
+  .home-page .home-quick-link img { width:22px; height:22px; flex-basis:22px; }
+  .home-page .banner-wrap { display:none; }
+  .home-page .hero-section { display:block; margin-top:0; padding-top:6px; }
+  .home-page .hero-slider-box { min-height:0; height:auto; aspect-ratio:1600 / 670; border-radius:16px; }
+  .home-page .hero-side-boxes,
+  .home-page #homeSupportCard { display:none; }
+  .home-page .slider-arrow { width:32px; height:32px; font-size:16px; }
+  .home-page .prev-arrow { left:9px; }
+  .home-page .next-arrow { right:9px; }
+  .home-page .slider-dots { bottom:8px; gap:5px; padding:4px 7px; }
+  .home-page .dot { width:6px; height:6px; }
+  .home-page .dot.active { width:16px; }
+  .home-page .mobile-slider-announcement { position:absolute; z-index:6; top:8px; left:8px; right:8px; margin:0; padding:5px 8px; border-radius:8px; background:rgba(0,0,0,.58); color:#ffd400; font-size:9px; font-weight:650; line-height:1.25; text-align:center; pointer-events:none; }
+  .home-page .tabs { margin-top:4px; gap:0; }
+  .home-page .home-filter-tabs { flex-wrap:nowrap; overflow-x:auto; padding:0 0 4px; scrollbar-width:none; }
+  .home-page .home-filter-tabs::-webkit-scrollbar { display:none; }
+  .home-page .home-filter-tab { flex:0 0 auto; min-height:34px; padding:6px 11px; }
+  .home-page .glass-sort-container { display:none; }
 }
 
 .side-menu {

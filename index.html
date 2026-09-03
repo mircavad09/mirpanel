@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=home-ui-cleanup-20260903-1" />
+  <link rel="stylesheet" href="style.css?v=home-mobile-flow-20260903-1" />
   <link rel="stylesheet" href="splash.css?v=20260903-1" />
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="premium-compact-glow.css?v=20260804-mobile-layout-1" />
@@ -208,7 +208,7 @@
       <div class="site-header-tools">
         <form class="site-header-search" role="search" data-site-header-search>
           <svg aria-hidden="true" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-          <input type="search" name="search" autocomplete="off" placeholder="Məhsul axtar..." aria-label="Məhsul axtar">
+          <input type="search" id="q" class="search" name="search" autocomplete="off" placeholder="Məhsul axtar..." aria-label="Məhsul axtar">
         </form>
         <button class="site-header-menu-button" type="button" aria-label="Menyunu aç" aria-expanded="false">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
@@ -230,10 +230,6 @@
     
     <div id="hero-section">
       <section class="wrap home-discovery" aria-label="Məhsul axtarışı və tez keçidlər">
-        <label class="home-discovery-search" for="q">
-          <span class="home-discovery-search-icon" aria-hidden="true">⌕</span>
-          <input type="search" id="q" class="search" placeholder="Məhsul axtar..." data-i18n-placeholder="searchShortExample" autocomplete="off" inputmode="search" enterkeyhint="search" />
-        </label>
         <nav class="home-quick-links" id="homeQuickLinks" aria-label="Tez keçidlər" hidden></nav>
       </section>
       <div class="banner-wrap">
@@ -453,8 +449,8 @@
     </ul>
   </div>
 
-  <script src="app.js?v=home-ui-cleanup-20260903-1"></script>
-  <script src="cms-site.js?v=admin-1788445901674"></script>
+  <script src="app.js?v=home-mobile-flow-20260903-1"></script>
+  <script src="cms-site.js?v=home-mobile-flow-20260903-1"></script>
   <script src="payment-flow.js?v=admin-1788445901674"></script>
   <script src="order-confirmation.js?v=product-forms-20260902-1"></script>
   <script src="stock-display-fix.js?v=20260902-form-scope-1"></script>
