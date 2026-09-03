@@ -61,6 +61,7 @@ try {
   assert.equal(await page.locator("#paymentCurrentMonthDetails").getAttribute("open"), null);
   assert.equal(await page.locator("#paymentMonthlyArchivePanel").getAttribute("open"), null);
   await page.click("#paymentMonthlyArchivePanel > summary");
+  assert.equal(await page.locator('#paymentMonthlyArchiveMonth option[value="2026-08-01"]').textContent(), "Avqust 2026");
   await page.selectOption("#paymentMonthlyArchiveMonth", "2026-08-01");
   await page.waitForFunction(() => document.getElementById("paymentOrderPeriod")?.value === "custom");
   assert.ok(await page.locator(".paymentOrderDay").count() >= 1, "Tamamlanmış sifarişlər gün üzrə accordion-da qruplaşmalıdır");
@@ -128,7 +129,7 @@ try {
   assert.equal(await page.locator("#paymentCostBackfillApply").isDisabled(), false);
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
   await page.close();
-  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: ["pending", "today", "all", "expiring"], filteredFinanceTodayAndAll: true, customDateValidation: true, azDateHeading: true, pagination: "20 + 7 after isolated approval", dayGrouping: true, approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, profitEditor: true, backfillPreview: true, consoleErrors: 0 }, null, 2));
+  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: ["pending", "today", "all", "expiring"], filteredFinanceTodayAndAll: true, customDateValidation: true, azDateHeading: true, azArchiveMonthLabel: "Avqust 2026", pagination: "20 + 7 after isolated approval", dayGrouping: true, approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, profitEditor: true, backfillPreview: true, consoleErrors: 0 }, null, 2));
 } finally {
   await browser.close();
   fixture.kill();

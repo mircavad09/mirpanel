@@ -3,7 +3,7 @@
 
   const API_BASE = window.MIRPANEL_PAYMENT_API || "https://mirpanel.onrender.com";
   const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1";
-  const RECEIPT_TYPES = new Set(["image/jpeg", "image/png", "image/webp", "application/pdf"]);
+  const APPLE_RECEIPT_TYPES = new Set(["image/heic", "image/heif"]);
   let activeFlow = null;
   const SERVICE_ERROR = "Ödəniş xidməti hazırda cavab vermir. Yenidən cəhd edin";
 
@@ -179,7 +179,7 @@
   function receiptMarkup() {
     return `<form id="paymentReceiptForm" class="paymentReceiptBox" action="" method="post" novalidate>
       <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>1. Çeki yüklə</strong><span id="paymentReceiptPickerDescription">Ödəniş çekinin şəklini və ya PDF faylını buraya əlavə edin.</span><em id="paymentReceiptPickerWarning">Çeki WhatsApp-a göndərməyin — bu hissəyə yükləyin.</em><small id="paymentReceiptPickerFormats">JPG, PNG, WEBP və ya PDF · maksimum 5 MB</small></label>
-      <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf" hidden>
+      <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" hidden>
       <div id="paymentReceiptPreview" class="paymentReceiptPreview hidden"></div>
       <div id="paymentUploadProgress" class="paymentUploadProgress hidden"><span></span><b>0%</b></div>
       <p id="paymentReceiptError" class="paymentReceiptError" role="alert" hidden></p>
@@ -449,10 +449,13 @@
               const file = fileEvent.target.files?.[0];
               const error = document.getElementById("paymentReceiptError");
               error.hidden = true;
-              if (!file || file.size > 5 * 1024 * 1024 || !RECEIPT_TYPES.has(String(file.type || "").toLowerCase())) {
+              const declaredType = String(file?.type || "").toLowerCase();
+              const extension = String(file?.name || "").split(".").pop().toLowerCase();
+              const isAppleReceipt = APPLE_RECEIPT_TYPES.has(declaredType) || extension === "heic" || extension === "heif";
+              if (!file || file.size > 5 * 1024 * 1024 || isAppleReceipt) {
                 clearReceipt(flow);
                 setReceiptSubmitReady(false);
-                error.textContent = !file ? "Qəbz seçilməyib." : file.size > 5 * 1024 * 1024 ? "Qəbz maksimum 5 MB ola bilər." : "Yalnız JPG, PNG, WEBP və PDF qəbul edilir.";
+                error.textContent = !file ? "Qəbz seçilməyib." : file.size > 5 * 1024 * 1024 ? "Qəbz maksimum 5 MB ola bilər." : "HEIC/HEIF formatı dəstəklənmir. Şəkli JPG və ya PNG kimi saxlayıb yenidən seçin.";
                 error.hidden = false;
                 return;
               }
@@ -461,9 +464,10 @@
               setStage(flow, "receipt_upload");
               const preview = document.getElementById("paymentReceiptPreview");
               preview.classList.remove("hidden");
-              flow.receiptPreviewUrl = file.type.startsWith("image/") ? URL.createObjectURL(file) : null;
+              const looksLikeImage = declaredType.startsWith("image/") || ["jpg", "jpeg", "png", "webp"].includes(extension);
+              flow.receiptPreviewUrl = looksLikeImage ? URL.createObjectURL(file) : null;
               const filePreview = flow.receiptPreviewUrl ? `<img src="${flow.receiptPreviewUrl}" alt="Yüklənəcək ödəniş qəbzi">` : `<div class="paymentPdfPreview" aria-label="PDF qəbzi"><strong>PDF</strong></div>`;
-              preview.innerHTML = `${filePreview}<div class="paymentReceiptPreviewInfo"><strong>${esc(file.name)}</strong><span class="paymentReceiptSuccess" role="status">Çek uğurla yükləndi</span><div class="paymentReceiptPreviewActions"><button id="changePaymentReceipt" type="button">Dəyiş</button><button id="removePaymentReceipt" type="button">Sil</button></div></div>`;
+              preview.innerHTML = `${filePreview}<div class="paymentReceiptPreviewInfo"><strong>${esc(file.name)}</strong><span class="paymentReceiptPending" role="status">Çek seçildi — göndərildikdə təhlükəsiz yoxlanacaq.</span><div class="paymentReceiptPreviewActions"><button id="changePaymentReceipt" type="button">Dəyiş</button><button id="removePaymentReceipt" type="button">Sil</button></div></div>`;
               const submitButton = document.getElementById("paymentSubmit");
               setReceiptSubmitReady(true);
               submitButton.textContent = "2. Sifarişi göndər və WhatsApp-a keç";

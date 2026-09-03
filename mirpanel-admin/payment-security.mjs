@@ -1,12 +1,5 @@
 import crypto from "node:crypto";
 
-const allowedReceiptTypes = new Map([
-  ["image/jpeg", "jpg"],
-  ["image/png", "png"],
-  ["image/webp", "webp"],
-  ["application/pdf", "pdf"]
-]);
-
 function decodeKey(value, name) {
   const buffer = Buffer.from(String(value || ""), "base64");
   if (buffer.length !== 32) throw new Error(`${name} 32-bayt Base64 açar olmalıdır.`);
@@ -100,8 +93,6 @@ export function orderCode() {
 
 export function receiptFromPayload(body, maxBytes = 5 * 1024 * 1024) {
   const mimeType = String(body?.mimeType || "").toLowerCase();
-  const expectedExtension = allowedReceiptTypes.get(mimeType);
-  if (!expectedExtension) throw Object.assign(new Error("Yalnız JPG, PNG, WEBP və PDF qəbul edilir."), { status: 400 });
   const raw = String(body?.contentBase64 || "").replace(/^data:[^,]+,/, "").replace(/\s/g, "");
   if (!raw) throw Object.assign(new Error("Ödəniş qəbzi seçilməyib."), { status: 400 });
   const buffer = Buffer.from(raw, "base64");
@@ -112,14 +103,15 @@ export function receiptFromPayload(body, maxBytes = 5 * 1024 * 1024) {
 }
 
 export function receiptFromBuffer(buffer, declaredMimeType, maxBytes = 5 * 1024 * 1024) {
-  const mimeType = String(declaredMimeType || "").toLowerCase();
-  if (!allowedReceiptTypes.has(mimeType)) throw Object.assign(new Error("Yalnız JPG, PNG, WEBP və PDF qəbul edilir."), { status: 400 });
   if (!Buffer.isBuffer(buffer) || !buffer.length || buffer.length > maxBytes) {
     throw Object.assign(new Error("Qəbz maksimum 5 MB ola bilər."), { status: buffer?.length > maxBytes ? 413 : 400 });
   }
   const detected = detectReceiptType(buffer);
-  if (!detected || detected.mimeType !== mimeType) {
-    throw Object.assign(new Error("Faylın real formatı seçilmiş formatla uyğun deyil."), { status: 400 });
+  if (!detected) {
+    if (detectAppleReceiptType(buffer)) {
+      throw Object.assign(new Error("HEIC/HEIF formatı dəstəklənmir. Şəkli JPG və ya PNG kimi saxlayıb yenidən seçin."), { status: 400, code: "RECEIPT_HEIC_UNSUPPORTED" });
+    }
+    throw Object.assign(new Error("Fayl zədələnib və ya dəstəklənən JPG, PNG, WEBP, PDF formatında deyil."), { status: 400 });
   }
   if (!hasValidReceiptStructure(buffer, detected.extension)) {
     throw Object.assign(new Error("Fayl zədələnib və ya tam yüklənməyib."), { status: 400 });
@@ -156,4 +148,10 @@ export function detectReceiptType(buffer) {
   if (buffer.subarray(0, 4).toString("ascii") === "RIFF" && buffer.subarray(8, 12).toString("ascii") === "WEBP") return { mimeType: "image/webp", extension: "webp" };
   if (buffer.subarray(0, 5).toString("ascii") === "%PDF-") return { mimeType: "application/pdf", extension: "pdf" };
   return null;
+}
+
+function detectAppleReceiptType(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 12 || buffer.subarray(4, 8).toString("ascii") !== "ftyp") return null;
+  const brands = buffer.subarray(8, Math.min(buffer.length, 64)).toString("ascii").toLowerCase();
+  return /(?:heic|heix|hevc|hevx|heim|heis|mif1|msf1)/.test(brands) ? "heic" : null;
 }

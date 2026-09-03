@@ -75,9 +75,12 @@ try {
   const pending=reserve();uploadFails=true;
   equal((await call("/api/payments/orders",form(pending),{"x-idempotency-key":key})).status,503);
   equal(orders.has(pending.id),false);equal(pending.status,"reserved"); uploadFails=false;
-  for(const [bytes,mime,status] of [[Buffer.alloc(5242881),"image/png",413],[png,"image/jpeg",400],[Buffer.from("<html>bad</html>"),"image/png",400]]) {
+  for(const [bytes,mime,status] of [[Buffer.alloc(5242881),"image/png",413],[Buffer.from("<html>bad</html>"),"image/png",400]]) {
     equal((await call("/api/payments/orders",form(pending,bytes,mime),{"x-idempotency-key":key})).status,status);
   }
+  const mismatched=reserve();
+  equal((await call("/api/payments/orders",form(mismatched,png,"image/jpeg"),{"x-idempotency-key":crypto.randomUUID()})).status,201);
+  equal(orders.get(mismatched.id).receipt_mime,"image/png");
   equal((await call("/api/payments/orders",form(pending),{"x-idempotency-key":key,origin:"https://evil.invalid"})).status,403);
   const out={};await system.handle({method:"GET",url:`/api/admin/payment-orders/${results[0].body.orderId}/receipt`,headers:{}},out);equal(out.status,401);
   const allowed={};await system.handle({method:"GET",url:`/api/admin/payment-orders/${results[0].body.orderId}/receipt`,headers:{testadmin:true}},allowed);equal(allowed.status,200);equal(allowed.body.expiresIn,300);

@@ -28,8 +28,13 @@
   const money = (value, currency = "AZN") => `${Number(value || 0).toFixed(2)} ${currency === "AZN" ? "₼" : currency}`;
   const dateTime = (value) => value ? new Date(value).toLocaleString("az-AZ", { timeZone: "Asia/Baku" }) : "—";
   const calendarDate = (value) => value ? new Date(`${value}T00:00:00+04:00`).toLocaleDateString("az-AZ") : "Müddət müəyyən edilməyib";
-  const monthLabel = (value) => value ? new Intl.DateTimeFormat("az-AZ", { month: "long", year: "numeric", timeZone: "Asia/Baku" }).format(new Date(`${value}T00:00:00+04:00`)) : "—";
   const azMonths = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr"];
+  const monthLabel = (value) => {
+    const match = /^(\d{4})-(\d{2})-01$/.exec(String(value || ""));
+    if (!match) return "—";
+    const month = azMonths[Number(match[2]) - 1];
+    return month ? `${month.charAt(0).toLocaleUpperCase("az-AZ")}${month.slice(1)} ${match[1]}` : "—";
+  };
   const fullDateLabel = (value) => {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(value || ""));
     if (!match) return "Tarix yoxdur";

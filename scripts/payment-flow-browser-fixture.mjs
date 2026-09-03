@@ -81,8 +81,11 @@ const server = http.createServer(async (request, response) => {
     };
     keys.push(lastUpload.idempotencyKey);
     if (failuresLeft > 0) { failuresLeft--; json(response,503,{error:"Sınaq upload xətası"}); return; }
-    try { receiptFromBuffer(Buffer.from(await receipt.arrayBuffer()),receipt.type); }
+    let validatedReceipt;
+    try { validatedReceipt = receiptFromBuffer(Buffer.from(await receipt.arrayBuffer()),receipt.type); }
     catch(error) { json(response,error.status || 400,{error:error.message}); return; }
+    lastUpload.detectedType = validatedReceipt.mimeType;
+    lastUpload.detectedExtension = validatedReceipt.extension;
     const existingOrder = orders.get(lastUpload.reservationId);
     if (existingOrder) { json(response,200,{...existingOrder,idempotent:true}); return; }
     activeReservations = 0;
