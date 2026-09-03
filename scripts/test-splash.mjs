@@ -60,16 +60,40 @@ async function hidden(page) { await page.waitForFunction(() => document.getEleme
 async function timing(page) { return page.evaluate(() => { const t=window.splashTiming; return t.start === null ? 0 : Math.round((t.end ?? performance.now()) - t.start); }); }
 async function functional(page, width) {
   assert.ok(await page.locator('#grid .card').count() > 0, 'homepage rendered');
+  assert.ok(await page.locator('#homeDiscoverySearch').isVisible(), 'prominent home search is visible');
+  const quickLinks = page.locator('#homeQuickLinks .home-quick-link');
+  assert.ok(await quickLinks.count() >= 3 && await quickLinks.count() <= 5, '3–5 active quick links are shown');
+  for (const href of await quickLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href')))) {
+    assert.match(href || '', /^\/mehsul\/[a-z0-9-]+$/, 'quick link uses an existing product detail route');
+  }
+  const activeSlideBefore = await page.locator('#heroSlider .slide.active').count();
+  if (activeSlideBefore && await page.locator('#heroSlider .slider-dots .dot').count() > 1) {
+    await page.locator('#heroSlider .next-arrow').click();
+    assert.equal(await page.locator('#heroSlider .slide.active').count(), 1, 'banner slider remains usable after interaction');
+  }
+  const filters = page.locator('[data-home-filter]');
+  assert.ok(await filters.count() >= 2, 'metadata-backed product filters are shown');
+  const allProductCount = await page.locator('#grid .card').count();
+  await page.locator('[data-home-filter="best"]').click();
+  const bestSellerCount = await page.locator('#grid .card').count();
+  assert.ok(bestSellerCount > 0 && bestSellerCount <= allProductCount, 'best seller filter updates visible cards');
+  assert.equal(await page.locator('[data-home-filter="best"]').getAttribute('aria-selected'), 'true');
+  if (await page.locator('[data-home-filter="premium"]').count()) {
+    await page.locator('[data-home-filter="premium"]').click();
+    assert.ok(await page.locator('#grid .card').count() > 0, 'premium filter uses existing product badge metadata');
+  }
+  await page.locator('[data-home-filter="all"]').click();
   if (width < 850) {
     await page.locator('.site-header-menu-button').click();
     assert.equal(await page.locator('.site-header-menu-button').getAttribute('aria-expanded'),'true');
     await page.keyboard.press('Escape');
     assert.equal(await page.locator('.site-header-menu-button').getAttribute('aria-expanded'),'false');
   } else assert.ok(await page.locator('.site-header-nav a').count() >= 5);
-  await page.locator('#q').fill('Netflix');
+  await page.locator('#homeDiscoverySearch').fill('Netflix');
   const titles = await page.locator('#grid .card .title').allTextContents();
   assert.ok(titles.length > 0 && titles.every(t => /netflix/i.test(t)), 'search after splash');
-  await page.locator('#q').fill('');
+  assert.equal(await page.locator('#q').inputValue(), 'Netflix', 'home search reuses existing search state');
+  await page.locator('#homeDiscoverySearch').fill('');
   assert.equal(await page.evaluate(() => document.body.style.position), '', 'no scroll lock');
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'no horizontal overflow');
 }

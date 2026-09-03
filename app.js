@@ -4117,6 +4117,7 @@ function esc(s) {
    ========================= */
 let currentSlide = 0;
 let slideInterval;
+let sliderPauseUntil = 0;
 
 function initSlider() {
   const slides = document.querySelectorAll('.slide');
@@ -4157,12 +4158,13 @@ function initSlider() {
     });
   });
 
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   function startTimer() {
     clearInterval(slideInterval);
-    if (slides.length < 2) return;
-    slideInterval = setInterval(nextSlide, 3000);
+    if (slides.length < 2 || reducedMotion) return;
+    slideInterval = setInterval(() => { if (Date.now() >= sliderPauseUntil) nextSlide(); }, 6000);
   }
-  function resetTimer() { startTimer(); }
+  function resetTimer() { sliderPauseUntil = Date.now() + 12000; startTimer(); }
 
   if (slider) {
     slider.tabIndex = 0;
@@ -4292,14 +4294,53 @@ function setupUI() {
   const searchInp = document.getElementById("q");
   if(searchInp) searchInp.placeholder = UI.search;
 
-  buildTabs(); 
+  renderHomeDiscovery();
+  buildTabs();
   renderGrid();
+}
+
+let homeFilter = "all";
+
+function productSlugForHome(product) {
+  return String(product?.seoSlug || product?.id || "").replace(/-almaq$/, "").replace(/(^|-)hesab0(?=-|$)/g, "$1hesab").replace(/^\/+|\/+$/g, "");
+}
+
+function renderHomeDiscovery() {
+  const activeProducts = DATA.products.filter((product) => product.active !== false);
+  const quickLinks = document.getElementById("homeQuickLinks");
+  if (quickLinks) {
+    const preferred = ["netflix", "capcut", "spotify"];
+    const chosen = [...preferred.map((id) => activeProducts.find((product) => product.id === id)).filter(Boolean), ...activeProducts.filter((product) => !preferred.includes(product.id))].slice(0, 5);
+    quickLinks.replaceChildren(...chosen.map((product) => {
+      const link = document.createElement("a");
+      link.className = "home-quick-link";
+      link.href = `/mehsul/${productSlugForHome(product)}`;
+      link.setAttribute("aria-label", `${publicProductTitle(product.title)} səhifəsinə keç`);
+      const image = document.createElement("img"); image.src = product.image; image.alt = ""; image.loading = "lazy"; image.addEventListener("error", () => image.remove(), { once: true });
+      const label = document.createElement("span"); label.textContent = publicProductTitle(product.title);
+      link.append(image, label); return link;
+    }));
+    quickLinks.hidden = !chosen.length;
+  }
+  const homeSearch = document.getElementById("homeDiscoverySearch");
+  const sideSearch = document.getElementById("q");
+  const syncSearch = (source) => { if (homeSearch && homeSearch !== source) homeSearch.value = source.value; if (sideSearch && sideSearch !== source) sideSearch.value = source.value; renderGrid(); };
+  homeSearch?.addEventListener("input", () => syncSearch(homeSearch));
+  sideSearch?.addEventListener("input", () => syncSearch(sideSearch));
 }
 
 function buildTabs() {
   const tabs = document.getElementById("tabs");
   if (!tabs) return;
+  const activeProducts = DATA.products.filter((product) => product.active !== false);
+  const hasPremium = activeProducts.some((product) => product.badge === "Premium");
+  const hasBestSeller = activeProducts.some((product) => product.bestSeller === true);
   tabs.innerHTML = `
+    <div class="home-filter-tabs" role="tablist" aria-label="Məhsul filtrləri">
+      <button type="button" class="home-filter-tab active" data-home-filter="all" role="tab" aria-selected="true">Hamısı</button>
+      ${hasBestSeller ? '<button type="button" class="home-filter-tab" data-home-filter="best" role="tab" aria-selected="false">Ən çox satılanlar</button>' : ''}
+      ${hasPremium ? '<button type="button" class="home-filter-tab" data-home-filter="premium" role="tab" aria-selected="false">Premium</button>' : ''}
+    </div>
     <div class="glass-sort-container">
       <select id="sortSelect" class="glass-sort-select">
           <option value="default">↕ Məhsulları Sırala (Ən Çox Satılanlar)</option>
@@ -4311,6 +4352,7 @@ function buildTabs() {
     </div>
   `;
   document.getElementById("sortSelect").addEventListener("change", renderGrid);
+  tabs.querySelectorAll("[data-home-filter]").forEach((button) => button.addEventListener("click", () => { homeFilter = button.dataset.homeFilter || "all"; tabs.querySelectorAll("[data-home-filter]").forEach((tab) => { const selected = tab === button; tab.classList.toggle("active", selected); tab.setAttribute("aria-selected", String(selected)); }); renderGrid(); }));
 }
 
 function renderGrid() {
@@ -4327,6 +4369,8 @@ function renderGrid() {
     const blob = [p.title, p.desc, p.category, p.variant].join(" ").toLowerCase();
     return blob.includes(q);
   });
+  if (homeFilter === "best") list = list.filter((product) => product.bestSeller === true);
+  if (homeFilter === "premium") list = list.filter((product) => product.badge === "Premium");
   
   list.sort((a, b) => {
      const getPrice = (prod) => {
@@ -4444,7 +4488,6 @@ function initSidebar() {
       first.focus();
     }
   });
-
   const smLinks = document.querySelectorAll(".sm-link");
   smLinks.forEach(link => {
     link.addEventListener("click", () => closeMenu({ restoreFocus: false }));
@@ -4471,7 +4514,6 @@ function boot() {
   setupUI();
   initSlider(); 
   initSidebar(); 
-  document.getElementById("q")?.addEventListener("input", renderGrid);
   document.getElementById("closeModal")?.addEventListener("click", closeModal);
   document.getElementById("modal")?.addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
 }
