@@ -1,6 +1,21 @@
 const SITE_URL = "https://mirpanel.com";
 const DELIVERY_TEXT = "7/24 anında təqdim edilir";
 
+function renderSplashMarkup() {
+  return `<div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
+    <div class="premium-splash-content">
+      <div class="splash-logo-frame"><img src="/assets/logo.png" alt="Mirpanel Logo" class="premium-logo" width="150" height="150"></div>
+      <h1 class="premium-brand-text">MIRPANEL</h1>
+      <p class="premium-sub-text">Premium Hesablar • Etibarlı Aktivləşmə</p>
+    </div>
+  </div>
+  <div id="splashLoadStatus" role="status" hidden>
+    <span>Səhifə yüklənir. Zəhmət olmasa, gözləyin.</span>
+    <button type="button" hidden>Yenidən yoxla</button>
+  </div>
+  <script src="/splash.js?v=20260903-3"></script>`;
+}
+
 const defaultSeoAliases = {
   netflix: ["netflix-almaq", "netflix-aile-almaq"],
   prime: ["prime-video-almaq"],
@@ -318,8 +333,8 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
     ]
   });
   const html = `<!DOCTYPE html>
-<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
-<body class="product-page-document">${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=20260902-controls-removed-1"></script></body></html>`;
+<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
+<body class="product-page-document">${renderSplashMarkup()}${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=20260902-controls-removed-1"></script></body></html>`;
   return new Map([["mehsul.page", applyCmsBrandAndNav(html, cms, "products")]]);
 }
 
@@ -427,10 +442,12 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/product-page.css?v=20260903-plan-rows-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-ux-20260902-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
+  <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
 <body class="product-page-document" data-product-id="${escapeAttribute(product.id)}" data-product-slug="${escapeAttribute(slug)}">
+  ${renderSplashMarkup()}
   ${renderSharedHeader(siteSections, "products")}
 
   <main id="productPageView" class="product-page-root">
@@ -589,12 +606,14 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
   <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
+  <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-2" : page.key === "sertler" ? "20260731-terms-2" : "20260728-1"}">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">${structuredData}</script>
 </head>
 <body class="product-page-document info-page-document${page.key === "haqqimizda" ? " info-page-document--about" : page.key === "sertler" ? " info-page-document--terms" : ""}">
-  ${renderSharedHeader(siteSections, page.key)}
+   ${renderSplashMarkup()}
+   ${renderSharedHeader(siteSections, page.key)}
 
   <main class="info-page-root">
     <nav class="info-page-breadcrumb" aria-label="Səhifə yolu">
@@ -976,10 +995,12 @@ export function generateNetflixConfirmationPageFiles(siteSections = {}, cms = {}
   <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
   <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
+  <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="stylesheet" href="/netflix-confirmation.css?v=20260901-1">
   <link rel="icon" href="/assets/logo.png">
 </head>
 <body class="product-page-document netflix-confirmation-document">
+  ${renderSplashMarkup()}
   ${renderSharedHeader(siteSections, "netflix_confirmation")}
   <main class="netflix-confirmation-root" role="main">
     <section class="netflix-confirmation-card" aria-labelledby="netflixConfirmationTitle">

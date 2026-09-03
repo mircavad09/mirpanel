@@ -33,10 +33,23 @@
   <link rel="stylesheet" href="/product-page.css?v=20260903-plan-rows-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-ux-20260902-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
+  <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
   <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/youtube-eyni-hesab#product","url":"https://mirpanel.com/mehsul/youtube-eyni-hesab","name":"Youtube Eyni hesab","description":"YouTube Premium-u eyni hesabda istifadə etmək üçün mövcud planı və real qiyməti yoxlayın. Mirpanel sifarişi WhatsApp üzərindən tamamlanır.","image":["https://mirpanel.com/assets/youtube.png"],"sku":"youtube_sexsi","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/youtube-eyni-hesab","price":"5.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/youtube-eyni-hesab","price":"11.49","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/youtube-eyni-hesab#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Youtube Eyni hesab","item":"https://mirpanel.com/mehsul/youtube-eyni-hesab"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="youtube_sexsi" data-product-slug="youtube-eyni-hesab">
+  <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
+    <div class="premium-splash-content">
+      <div class="splash-logo-frame"><img src="/assets/logo.png" alt="Mirpanel Logo" class="premium-logo" width="150" height="150"></div>
+      <h1 class="premium-brand-text">MIRPANEL</h1>
+      <p class="premium-sub-text">Premium Hesablar • Etibarlı Aktivləşmə</p>
+    </div>
+  </div>
+  <div id="splashLoadStatus" role="status" hidden>
+    <span>Səhifə yüklənir. Zəhmət olmasa, gözləyin.</span>
+    <button type="button" hidden>Yenidən yoxla</button>
+  </div>
+  <script src="/splash.js?v=20260903-3"></script>
   <header class="product-page-header site-header" id="mainHeader">
     <div class="product-page-header-inner site-header-inner">
       <a class="product-page-brand site-header-brand" href="/" aria-label="Mirpanel ana səhifə">

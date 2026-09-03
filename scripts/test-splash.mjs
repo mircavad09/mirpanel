@@ -13,17 +13,16 @@ let writes = 0;
 const server = http.createServer((req, res) => {
   if (req.method !== 'GET') { writes++; res.writeHead(405); return res.end(); }
   const url = new URL(req.url, 'http://localhost');
-  // Product routes are document navigations in production and resolve to the
-  // same shell. Mirror that here without involving checkout APIs.
-  const nestedAsset = url.pathname.match(/^\/mehsul\/([^/]+)$/);
-  const candidatePath = nestedAsset ? `/${nestedAsset[1]}` : null;
-  const nestedAssetPath = candidatePath ? path.resolve(root, `.${candidatePath}`) : null;
-  const requestPath = nestedAssetPath && fs.existsSync(nestedAssetPath) && fs.statSync(nestedAssetPath).isFile()
-    ? candidatePath
-    : (url.pathname === '/' || url.pathname.startsWith('/mehsul/') ? '/index.html' : url.pathname);
+  // Product routes are static document navigations in production. Mirror the
+  // deployed .page files here without involving checkout APIs.
+  const productPage = url.pathname.match(/^\/mehsul\/([a-z0-9-]+)$/);
+  const productPagePath = productPage ? path.resolve(root, `./mehsul/${productPage[1]}.page`) : null;
+  const requestPath = productPagePath && fs.existsSync(productPagePath)
+    ? `/mehsul/${productPage[1]}.page`
+    : (url.pathname === '/' ? '/index.html' : url.pathname);
   const file = path.resolve(root, '.' + requestPath);
   if (!file.startsWith(root + path.sep) || !fs.existsSync(file) || !fs.statSync(file).isFile()) { res.writeHead(404); return res.end(); }
-  res.setHeader('Content-Type', ({'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webp':'image/webp'})[path.extname(file)] || 'application/octet-stream');
+  res.setHeader('Content-Type', ({'.html':'text/html; charset=utf-8','.page':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.webp':'image/webp'})[path.extname(file)] || 'application/octet-stream');
   res.end(fs.readFileSync(file));
 });
 await new Promise(r => server.listen(0, '127.0.0.1', r));
@@ -93,7 +92,7 @@ try {
     await page.reload({waitUntil:'domcontentloaded'}); await hidden(page);
     const reloadMs = await timing(page);
     assert.ok(reloadMs >= 2850 && reloadMs <= 3000, `reload gets the full splash: ${reloadMs}`);
-    await page.goto(`${origin}/mehsul/netflix`, {waitUntil:'commit'}); await page.waitForFunction(() => window.splashTiming.start !== null); await hidden(page);
+    await page.goto(`${origin}/mehsul/netflix-sexsi`, {waitUntil:'commit'}); await page.waitForFunction(() => window.splashTiming.start !== null); await hidden(page);
     const productDirectMs = await timing(page);
     assert.ok(productDirectMs >= 2850 && productDirectMs <= 3000, `direct product document load gets splash: ${productDirectMs}`);
     // A payment cancellation that chooses a full-document return uses the same
