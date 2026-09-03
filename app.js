@@ -223,9 +223,15 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "(Telefon)",
+          "label": "1 Ayliq               (Telefon)",
           "months": 1,
           "price": 5.49,
+          "regularPrice": 16.99
+        },
+        {
+          "label": "1 Ayliq               (Telefon & Kompyuter)",
+          "months": 1,
+          "price": 6.99,
           "regularPrice": 16.99
         },
         {
