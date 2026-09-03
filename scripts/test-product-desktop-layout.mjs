@@ -35,7 +35,7 @@ for (const { product, slug } of active) {
     new RegExp(`class="product-page-similar-card"[^>]+href="/mehsul/${slug}"`),
     `${file}: cari məhsul oxşar məhsullara düşüb`
   );
-  assert.match(html, /product-page\.css\?v=20260804-desktop-layout-1/, `${file}: yeni CSS keş açarı yoxdur`);
+  assert.match(html, /product-page\.css\?v=20260903-plan-rows-1/, `${file}: yeni CSS keş açarı yoxdur`);
   assert.match(html, /product-page\.js\?v=20260804-desktop-layout-1/, `${file}: yeni tab davranışı yoxdur`);
   assert.ok(product.id, `${file}: məhsul ID-si boşdur`);
 }
