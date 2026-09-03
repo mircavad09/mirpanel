@@ -202,6 +202,7 @@ const DATA = {
         }
       ],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -222,6 +223,7 @@ const DATA = {
       },
       "plans": [
         {
+          "label": "(Telefon)",
           "months": 1,
           "price": 5.49,
           "regularPrice": 16.99
@@ -304,6 +306,7 @@ const DATA = {
         }
       ],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -409,6 +412,7 @@ const DATA = {
         }
       ],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -504,6 +508,7 @@ const DATA = {
       "orderFlow": "confirm_then_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -608,6 +613,7 @@ const DATA = {
         }
       ],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -713,6 +719,7 @@ const DATA = {
         }
       ],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -821,6 +828,7 @@ const DATA = {
         }
       ],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -922,6 +930,7 @@ const DATA = {
         }
       ],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -1009,6 +1018,7 @@ const DATA = {
       "orderFlow": "confirm_then_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -1096,6 +1106,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1311,6 +1322,7 @@ const DATA = {
         }
       ],
       "formTitle": "TikTok Jeton məlumatları",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1399,6 +1411,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1487,6 +1500,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1582,6 +1596,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1670,6 +1685,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1758,6 +1774,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1846,6 +1863,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -1948,6 +1966,7 @@ const DATA = {
         }
       ],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2039,6 +2058,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2127,6 +2147,7 @@ const DATA = {
       "orderFlow": "confirm_then_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Diqqət!",
@@ -2226,6 +2247,7 @@ const DATA = {
       "orderFlow": "confirm_then_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -2327,6 +2349,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2414,6 +2437,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2501,6 +2525,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2588,6 +2613,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2675,6 +2701,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2762,6 +2789,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2849,6 +2877,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -2936,6 +2965,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -3023,6 +3053,7 @@ const DATA = {
       "orderFlow": "direct_whatsapp",
       "formFields": [],
       "formTitle": "",
+      "formDescription": "",
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
