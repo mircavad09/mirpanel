@@ -222,16 +222,13 @@
     const banners = activeBanners();
     const slider = document.getElementById("heroSlider");
     if (!slider) return;
-    const support = source.supportCard || {};
-    const mobileSupport = window.matchMedia?.("(max-width: 768px)").matches && support.enabled !== false;
-    const totalSlides = banners.length + (mobileSupport ? 1 : 0);
-    slider.querySelectorAll(".slide, .slider-dots, .mobile-slider-announcement").forEach((element) => element.remove());
-    slider.hidden = totalSlides === 0;
-    slider.parentElement?.classList.toggle("no-product-banners", totalSlides === 0);
+    slider.querySelectorAll(".slide, .slider-dots").forEach((element) => element.remove());
+    slider.hidden = banners.length === 0;
+    slider.parentElement?.classList.toggle("no-product-banners", banners.length === 0);
     slider.querySelectorAll(".slider-arrow").forEach((arrow) => {
-      arrow.hidden = totalSlides < 2;
+      arrow.hidden = banners.length < 2;
     });
-    if (!totalSlides) return;
+    if (!banners.length) return;
     const dots = document.createElement("div");
     dots.className = "slider-dots";
     banners.forEach((banner, index) => {
@@ -262,58 +259,42 @@
       picture.appendChild(image);
       link.appendChild(picture);
       slider.appendChild(link);
-      if (totalSlides > 1) {
+      if (banners.length > 1) {
         const dot = document.createElement("span");
         dot.className = `dot${index === 0 ? " active" : ""}`;
         dot.dataset.index = String(index);
         dots.appendChild(dot);
       }
     });
-    if (mobileSupport) {
-      const href = optionalHref(support.url);
-      const slide = document.createElement(href ? "a" : "div");
-      slide.className = `slide mobile-support-slide${banners.length === 0 ? " active" : ""}`;
-      if (href) slide.href = href;
-      slide.setAttribute("aria-label", support.alt || support.title || "Canlı Dəstək");
-      const picture = document.createElement("picture");
-      const image = document.createElement("img");
-      image.className = "full-slide-img";
-      image.src = safeImage(support.mobileImage) || safeImage(support.desktopImage) || "assets/support.png";
-      image.alt = support.alt || support.title || "Canlı Dəstək";
-      image.loading = "lazy";
-      image.decoding = "async";
-      image.width = 1600;
-      image.height = 670;
-      imageWithFallback(image, ["assets/support.png", "assets/logo.png"]);
-      picture.appendChild(image);
-      slide.appendChild(picture);
-      slider.appendChild(slide);
-      const dot = document.createElement("span");
-      dot.className = "dot";
-      dot.dataset.index = String(banners.length);
-      dots.appendChild(dot);
-    }
-    if (totalSlides > 1) slider.appendChild(dots);
-    if (mobileSupport) {
-      const announcement = document.querySelector(".banner-text")?.textContent?.trim();
-      if (announcement) {
-        const message = document.createElement("p");
-        message.className = "mobile-slider-announcement";
-        message.textContent = announcement;
-        slider.appendChild(message);
-      }
-    }
+    if (banners.length > 1) slider.appendChild(dots);
     if (typeof window.initSlider === "function") window.initSlider();
+  }
+
+  function applySecondaryProductBanner() {
+    const host = document.getElementById("homeSecondaryProductBanner");
+    if (!host) return;
+    const products = typeof DATA === "object" && Array.isArray(DATA.products) ? DATA.products : [];
+    const product = products.find((item) => item.id === "youtube" && item.active !== false)
+      || products.find((item) => item.id === "youtube_sexsi" && item.active !== false);
+    host.replaceChildren();
+    host.hidden = !product;
+    if (!product) return;
+    host.href = `/mehsul/${productSlug(product)}`;
+    host.setAttribute("aria-label", product.banner?.alt || "YouTube Premium banneri");
+    const image = document.createElement("img");
+    image.src = safeImage(product.banner?.desktopImage) || safeImage(product.image) || "assets/youtube.png";
+    image.alt = product.banner?.alt || "YouTube Premium banneri";
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.width = 3200;
+    image.height = 1340;
+    imageWithFallback(image, [product.image, "assets/youtube.png", "assets/logo.png"]);
+    host.appendChild(image);
   }
 
   function applySupportCard() {
     const host = document.getElementById("homeSupportCard");
     if (!host) return;
-    if (window.matchMedia?.("(max-width: 768px)").matches) {
-      host.hidden = true;
-      host.replaceChildren();
-      return;
-    }
     const card = source.supportCard || {};
     const desktopImage = safeImage(card.desktopImage) || "assets/support.png";
     const mobileImage = safeImage(card.mobileImage);
@@ -446,6 +427,7 @@
   applyHomepage();
   applyNavigation();
   applyBanners();
+  applySecondaryProductBanner();
   applySupportCard();
   applyCommonTexts();
   applyFooter();
@@ -457,6 +439,7 @@
       applyHomepage();
       applyNavigation();
       applyBanners();
+      applySecondaryProductBanner();
       applySupportCard();
       applyCommonTexts();
       applyFooter();

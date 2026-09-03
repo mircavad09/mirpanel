@@ -4309,18 +4309,43 @@ function renderHomeDiscovery() {
   const activeProducts = DATA.products.filter((product) => product.active !== false);
   const quickLinks = document.getElementById("homeQuickLinks");
   if (quickLinks) {
-    const preferred = ["netflix", "capcut", "spotify"];
-    const chosen = [...preferred.map((id) => activeProducts.find((product) => product.id === id)).filter(Boolean), ...activeProducts.filter((product) => !preferred.includes(product.id))].slice(0, 5);
-    quickLinks.replaceChildren(...chosen.map((product) => {
+    const preferred = ["youtube", "netflix", "capcut", "spotify"];
+    const chosen = [...preferred.map((id) => activeProducts.find((product) => product.id === id)).filter(Boolean), ...activeProducts.filter((product) => !preferred.includes(product.id))].slice(0, 6);
+    const buildLink = (product, duplicate = false) => {
+      const quickTitle = ["youtube", "youtube_sexsi"].includes(String(product.id || ""))
+        ? "YouTube Premium"
+        : publicProductTitle(product.title);
       const link = document.createElement("a");
       link.className = "home-quick-link";
       link.href = `/mehsul/${productSlugForHome(product)}`;
-      link.setAttribute("aria-label", `${publicProductTitle(product.title)} səhifəsinə keç`);
+      link.setAttribute("aria-label", `${quickTitle} səhifəsinə keç`);
+      if (duplicate) link.tabIndex = -1;
       const image = document.createElement("img"); image.src = product.image; image.alt = ""; image.loading = "lazy"; image.addEventListener("error", () => image.remove(), { once: true });
-      const label = document.createElement("span"); label.textContent = publicProductTitle(product.title);
+      const label = document.createElement("span"); label.textContent = quickTitle;
       link.append(image, label); return link;
-    }));
+    };
+    const track = document.createElement("div");
+    track.className = "home-quick-track";
+    const primary = document.createElement("div");
+    primary.className = "home-quick-group";
+    primary.append(...chosen.map((product) => buildLink(product)));
+    const duplicate = document.createElement("div");
+    duplicate.className = "home-quick-group";
+    duplicate.setAttribute("aria-hidden", "true");
+    duplicate.append(...chosen.map((product) => buildLink(product, true)));
+    track.append(primary, duplicate);
+    quickLinks.replaceChildren(track);
     quickLinks.hidden = !chosen.length;
+    quickLinks.onpointerdown = () => {
+      quickLinks.classList.add("is-interacting");
+      clearTimeout(quickLinks._resumeTimer);
+    };
+    const resume = () => {
+      clearTimeout(quickLinks._resumeTimer);
+      quickLinks._resumeTimer = setTimeout(() => quickLinks.classList.remove("is-interacting"), 3200);
+    };
+    quickLinks.onpointerup = resume;
+    quickLinks.onpointercancel = resume;
   }
 }
 

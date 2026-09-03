@@ -68,16 +68,20 @@ async function functional(page, width) {
     assert.equal(await page.locator('.search-promo-box').isVisible(), false, 'legacy duplicate search block is hidden');
     assert.equal(await page.locator('.site-header-nav').isVisible(), false, 'mobile header keeps only the hamburger menu');
     assert.equal(await page.locator('.banner-wrap').isVisible(), false, 'announcement is not a separate mobile banner');
-    assert.equal(await page.locator('#homeSupportCard').isVisible(), false, 'support is not a separate mobile banner');
-    assert.ok(await page.locator('#heroSlider .slide').count() >= 2, 'support joins the main mobile slider');
-    assert.ok(await page.locator('#heroSlider .slider-dots .dot').count() >= 2, 'mobile slider has dots');
-    assert.ok(await page.locator('#heroSlider .slider-arrow:not([hidden])').count() === 2, 'mobile slider has arrows');
+    assert.ok(await page.locator('.home-announcement-ticker').isVisible(), 'ticker sits beside the mobile logo');
+    assert.equal(await page.locator('.home-announcement-track').evaluate((element) => getComputedStyle(element).whiteSpace), 'nowrap');
   } else {
     assert.equal(await page.locator('.home-discovery').isVisible(), false, 'mobile discovery block is hidden on desktop');
     assert.ok(await page.locator('.site-header-tools .site-header-search').isVisible(), 'desktop header search is visible');
   }
-  const quickLinks = page.locator('#homeQuickLinks .home-quick-link');
-  assert.ok(await quickLinks.count() >= 3 && await quickLinks.count() <= 5, '3–5 active quick links are shown');
+  assert.ok(await page.locator('#heroSlider .slide').count() >= 1, 'one main banner is rendered');
+  assert.equal(await page.locator('#homeSecondaryBanners > :not([hidden])').count(), 2, 'two real secondary banners are rendered');
+  const secondarySources = await page.locator('#homeSecondaryBanners img').evaluateAll((images) => images.map((image) => image.getAttribute('src')));
+  assert.ok(secondarySources.some((source) => /slider4\.png/.test(source || '')), 'YouTube repository banner is used');
+  assert.ok(secondarySources.some((source) => /support\.png/.test(source || '')), 'support repository banner is used');
+  const quickLinks = page.locator('#homeQuickLinks .home-quick-group').first().locator('.home-quick-link');
+  assert.ok(await quickLinks.count() >= 4 && await quickLinks.count() <= 6, '4–6 active products are shown in the logo ribbon');
+  assert.ok((await quickLinks.allTextContents()).some((title) => /youtube/i.test(title)), 'YouTube Premium is in the logo ribbon');
   for (const href of await quickLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href')))) {
     assert.match(href || '', /^\/mehsul\/[a-z0-9-]+$/, 'quick link uses an existing product detail route');
   }
