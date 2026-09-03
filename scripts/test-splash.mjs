@@ -37,6 +37,7 @@ async function setup(width, options = {}) {
     if (url.origin !== origin) return route.abort();
     if (route.request().method() !== 'GET') { writes++; return route.abort(); }
     if (url.pathname === '/app.js' && options.delay) await new Promise(r => setTimeout(r, options.delay));
+    if (url.pathname === '/splash.js' && options.delaySplash) await new Promise(r => setTimeout(r, options.delaySplash));
     if (url.pathname === '/splash.js' && options.missing) return route.fulfill({status:200, contentType:'text/javascript', body:''});
     if (url.pathname === '/splash.css' && options.missingCSS) return route.fulfill({status:200, contentType:'text/css', body:''});
     if (url.pathname === '/splash.js' && options.failure) return route.fulfill({contentType:'text/javascript', body:fs.readFileSync(path.join(root,'splash.js'),'utf8').replace("status.querySelector('button').addEventListener", 'throw new Error("fixture splash failure");\n    status.querySelector(\'button\').addEventListener')});
@@ -104,8 +105,8 @@ try {
     results.push({width,firstMs,reloadMs,productDirectMs,checkoutCancelReloadMs,homeMenuSearch:true,consoleErrors:errors.length});
     await context.close();
   }
-  for (const mode of ['slow','reduced','missing','failure','missingCSS','noJS']) {
-    const options = mode === 'slow' ? {delay:4400} : {[mode]:true, delay:mode === 'reduced' ? 900 : 0};
+  for (const mode of ['slow','late','reduced','missing','failure','missingCSS','noJS']) {
+    const options = mode === 'slow' ? {delay:4400} : mode === 'late' ? {delaySplash:900} : {[mode]:true, delay:mode === 'reduced' ? 900 : 0};
     const {context,page,errors} = await setup(390,options);
     await page.goto(origin,{waitUntil:'commit'});
     if (mode === 'slow') {
@@ -132,6 +133,7 @@ try {
         assert.ok(duration <= 250, 'reduced motion duration');
         assert.equal(await page.locator('.premium-logo').evaluate(e => getComputedStyle(e).animationName),'none');
       }
+      if (mode === 'late') assert.ok(duration >= 2850 && duration <= 3000, 'a late cached async splash script still shows the full sequence');
       if (mode === 'missing' || mode === 'failure') assert.ok(duration <= 100, 'script failure opens immediately');
       await functional(page,390);
       if (mode === 'slow') assert.equal(await page.locator('#splashLoadStatus').isVisible(),false,'no loading overlay remains');

@@ -29,6 +29,9 @@
     splash.addEventListener('animationend', event => {
       if (event.target === splash) { hide(); status.hidden = true; cleanup(); }
     });
-    if (document.readyState === 'loading') { splash.style.display = 'flex'; splash.hidden = false; }
+    // `async` scripts can arrive after DOMContentLoaded from the browser cache.
+    // Always show on a document load; otherwise a cached script could skip it.
+    splash.style.display = 'flex';
+    splash.hidden = false;
   } catch { hide(); cleanup(); }
 })();
