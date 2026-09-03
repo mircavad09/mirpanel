@@ -1,0 +1,113 @@
+/* Homepage splash only. Never hide or reposition the page beneath it. */
+#newSplashScreen[hidden], #splashLoadStatus[hidden], #splashLoadStatus button[hidden] { display: none !important; }
+#newSplashScreen {
+  background: #070707;
+  pointer-events: none;
+  overflow: hidden;
+  transition: none;
+  animation: splash-exit .45s ease 2.5s forwards;
+}
+#newSplashScreen .premium-splash-content {
+  position: relative;
+  width: min(100% - 32px, 440px);
+  gap: 18px;
+  text-align: center;
+  animation: none;
+}
+#newSplashScreen .splash-logo-frame { position: relative; width: 150px; height: 150px; isolation: isolate; }
+#newSplashScreen .splash-logo-frame::before {
+  content: "";
+  position: absolute;
+  inset: -55px;
+  z-index: -1;
+  background: radial-gradient(circle, rgba(210,169,54,.15), transparent 68%);
+  opacity: 0;
+  animation: splash-glow .6s ease-out forwards;
+}
+#newSplashScreen .splash-logo-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 20px;
+  background: linear-gradient(110deg, transparent 35%, rgba(249,222,141,.2) 49%, transparent 63%);
+  background-size: 300% 100%;
+  opacity: 0;
+  animation: splash-sheen .65s ease .75s both;
+}
+#newSplashScreen .premium-logo {
+  display: block;
+  width: 150px;
+  height: 150px;
+  filter: none;
+  opacity: 0;
+  transform: scale(.96);
+  animation: splash-logo 1s ease .4s forwards;
+}
+#newSplashScreen .premium-brand-text {
+  font-size: clamp(26px, 7vw, 32px);
+  color: #fceea7;
+  text-shadow: none;
+  opacity: 0;
+  letter-spacing: .25em;
+  animation: splash-wordmark .9s ease 1.1s forwards;
+}
+#newSplashScreen .premium-sub-text {
+  font-size: clamp(10px, 2.9vw, 13px);
+  line-height: 1.6;
+  letter-spacing: .025em;
+  text-wrap: balance;
+  opacity: 0;
+  animation: splash-glow .8s ease 1.7s forwards;
+}
+#newSplashScreen.is-finishing { animation: splash-exit .18s ease forwards; }
+#newSplashScreen.is-finishing :is(.premium-logo, .premium-brand-text, .premium-sub-text) {
+  animation: none; opacity: 1; transform: none; letter-spacing: inherit;
+}
+#newSplashScreen.is-finishing .premium-brand-text { letter-spacing: .14em; }
+#newSplashScreen.is-finishing .splash-logo-frame::after { animation: none; opacity: 0; }
+#splashLoadStatus {
+  position: fixed;
+  z-index: 999999;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  padding: 24px;
+  background: #070707;
+  color: #eee;
+  font: 13px/1.5 system-ui, sans-serif;
+  text-align: center;
+}
+/* A static loading state, not a longer branded animation or a blank catalogue.
+   Runtime errors fail open to the page with only a compact retry notice. */
+#splashLoadStatus[data-error] {
+  inset: auto auto max(20px, env(safe-area-inset-bottom)) 50%;
+  transform: translateX(-50%);
+  width: max-content; max-width: calc(100% - 32px);
+  padding: 12px 16px;
+  border: 1px solid rgba(212,175,55,.3);
+  border-radius: 12px;
+  background: #111;
+}
+#splashLoadStatus button {
+  display: block; margin: 8px auto 0; padding: 8px 12px;
+  border: 1px solid #bca044; border-radius: 8px;
+  background: transparent; color: #fceea7; cursor: pointer; font: inherit;
+}
+@keyframes splash-glow { to { opacity: 1; } }
+@keyframes splash-logo { to { opacity: 1; transform: scale(1); } }
+@keyframes splash-sheen {
+  0% { background-position: 100% 0; opacity: 0; }
+  25%, 65% { opacity: 1; }
+  100% { background-position: 0 0; opacity: 0; }
+}
+@keyframes splash-wordmark { to { opacity: 1; letter-spacing: .14em; } }
+@keyframes splash-exit { to { opacity: 0; visibility: hidden; } }
+@media (prefers-reduced-motion: reduce) {
+  #newSplashScreen, #newSplashScreen.is-finishing { animation: splash-exit .15s ease forwards; }
+  #newSplashScreen :is(.premium-logo, .premium-brand-text, .premium-sub-text) { animation: none; opacity: 1; transform: none; }
+  #newSplashScreen .premium-brand-text { letter-spacing: .14em; }
+  #newSplashScreen .splash-logo-frame::before, #newSplashScreen .splash-logo-frame::after { animation: none; display: none; }
+}

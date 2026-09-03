@@ -4378,13 +4378,6 @@ let savedScrollY = 0;
 function lockBodyScroll() { savedScrollY = window.scrollY || 0; document.documentElement.classList.add("modalOpen"); document.body.classList.add("modalOpen"); document.body.style.position = "fixed"; document.body.style.top = `-${savedScrollY}px`; document.body.style.width = "100%"; }
 function unlockBodyScroll() { document.body.style.position = ""; document.body.style.top = ""; document.body.style.width = ""; document.documentElement.classList.remove("modalOpen"); document.body.classList.remove("modalOpen"); window.scrollTo(0, savedScrollY); }
 
-function initSplash() {
-  const splash = document.getElementById('newSplashScreen');
-  if (splash) {
-    setTimeout(() => { splash.style.opacity = '0'; splash.style.visibility = 'hidden'; splash.style.pointerEvents = 'none'; }, 1500); 
-  }
-}
-
 /* =========================
    YAN MENYU (SIDEBAR) VƏ NAVİQASİYA
    ========================= */
@@ -4475,7 +4468,6 @@ function initSidebar() {
 }
 
 function boot() {
-  initSplash();
   setupUI();
   initSlider(); 
   initSidebar(); 

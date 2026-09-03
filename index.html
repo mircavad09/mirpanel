@@ -22,6 +22,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css?v=admin-1788445901674" />
+  <link rel="stylesheet" href="splash.css?v=20260903-1" />
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="premium-compact-glow.css?v=20260804-mobile-layout-1" />
   <link rel="stylesheet" href="stock-display-fix.css?v=20260610-1" />
@@ -184,13 +185,18 @@
 
 <body>
 
-  <div id="newSplashScreen" class="premium-splash">
+  <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
     <div class="premium-splash-content">
-      <img src="assets/logo.png" alt="Mirpanel Logo" class="premium-logo" />
+      <div class="splash-logo-frame"><img src="assets/logo.png" alt="Mirpanel Logo" class="premium-logo" width="150" height="150" /></div>
       <h1 class="premium-brand-text">MIRPANEL</h1>
-      <p class="premium-sub-text">Premium Hesablar • Etibarlı Aktivləşdirmə</p>
+      <p class="premium-sub-text">Premium Hesablar • Etibarlı Aktivləşmə</p>
     </div>
   </div>
+  <div id="splashLoadStatus" role="status" hidden>
+    <span>Səhifə yüklənir. Zəhmət olmasa, gözləyin.</span>
+    <button type="button" hidden>Yenidən yoxla</button>
+  </div>
+  <script src="splash.js?v=20260903-1" async></script>
 
   <header class="product-page-header site-header" id="mainHeader">
     <div class="product-page-header-inner site-header-inner">
@@ -441,7 +447,7 @@
     </ul>
   </div>
 
-  <script src="app.js?v=admin-1788445901674"></script>
+  <script src="app.js?v=splash-20260903-1"></script>
   <script src="cms-site.js?v=admin-1788445901674"></script>
   <script src="payment-flow.js?v=admin-1788445901674"></script>
   <script src="order-confirmation.js?v=product-forms-20260902-1"></script>
