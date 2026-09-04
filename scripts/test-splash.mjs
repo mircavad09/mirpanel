@@ -73,12 +73,21 @@ async function functional(page, width) {
   } else {
     assert.ok(await page.locator('.home-discovery').isVisible(), 'product ribbon is visible on desktop');
     assert.ok(await page.locator('.site-header-tools .site-header-search').isVisible(), 'desktop header search is visible');
+    assert.ok(await page.locator('.home-announcement-ticker').isVisible(), 'desktop announcement ticker is visible');
     assert.equal(await page.locator('.banner-wrap').isVisible(), false, 'desktop ribbon follows the header without a duplicate announcement banner');
     const mainHeight = (await page.locator('#heroSlider').boundingBox()).height;
     const secondaryHeight = (await page.locator('#homeSecondaryProductBanner').boundingBox()).height;
-    if (width === 1440) assert.ok(mainHeight >= 340 && mainHeight <= 430, `1440 main banner height is balanced: ${mainHeight}`);
-    if (width === 1920) assert.ok(mainHeight >= 430 && mainHeight <= 480, `1920 main banner height is balanced: ${mainHeight}`);
-    assert.ok(secondaryHeight >= 180 && secondaryHeight <= 250, `secondary banner height is compact: ${secondaryHeight}`);
+    if (width >= 1024) {
+      const panel = await page.locator('.home-banner-layout').boundingBox();
+      const secondaryPanel = await page.locator('#homeSecondaryBanners').boundingBox();
+      const filterTabs = await page.locator('.home-filter-tabs').boundingBox();
+      const sort = await page.locator('.glass-sort-container').boundingBox();
+      assert.ok(panel.height <= 400.5, `desktop banner panel is at most 400px: ${panel.height}`);
+      assert.ok(Math.abs(mainHeight - panel.height) <= 1, 'main banner fills the left column');
+      assert.ok(secondaryPanel.x > (await page.locator('#heroSlider').boundingBox()).x, 'secondary banners occupy the right column');
+      assert.ok(secondaryHeight < mainHeight / 2, 'secondary banners are stacked compactly');
+      assert.ok(Math.abs(filterTabs.y - sort.y) <= 2, 'filters and sorting share one desktop row');
+    }
     assert.equal(await page.locator('.footer').evaluate((element) => getComputedStyle(element).position), 'static', 'desktop footer stays in document flow');
     const contentBottom = (await page.locator('#products-section').boundingBox()).y + (await page.locator('#products-section').boundingBox()).height;
     assert.ok((await page.locator('.footer').boundingBox()).y >= contentBottom, 'desktop footer follows all homepage products');

@@ -1008,6 +1008,59 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
   .home-page .gameFab { margin-left:max(8px,calc((100% - 1140px) / 2)); }
 }
 
+@media (min-width: 1024px) {
+  .home-page .home-banner-layout {
+    width:min(calc(100% - 32px),1440px);
+    height:min(400px,calc((100vw - 32px) * 400 / 1408));
+    padding:0;
+    box-sizing:border-box;
+    grid-template-columns:minmax(0,2fr) minmax(0,1fr);
+    align-items:stretch;
+    gap:14px;
+  }
+  .home-page .home-banner-layout .hero-slider-box {
+    width:100%;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    aspect-ratio:auto;
+    box-sizing:border-box;
+  }
+  .home-page .home-secondary-banners {
+    height:auto;
+    min-height:0;
+    grid-template-columns:minmax(0,1fr);
+    grid-template-rows:repeat(2,minmax(0,1fr));
+    gap:14px;
+  }
+  .home-page .home-secondary-banner,
+  .home-page .home-secondary-banners #homeSupportCard {
+    width:100%;
+    height:auto;
+    min-height:0;
+    max-height:none;
+    aspect-ratio:auto;
+    box-sizing:border-box;
+  }
+  .home-page #products-section > .wrap:first-child { padding-top:14px; }
+  .home-page .tabs {
+    min-height:56px;
+    margin-top:0 !important;
+    padding:8px;
+    box-sizing:border-box;
+    flex-wrap:nowrap;
+    align-items:center;
+    gap:10px;
+    border:1px solid rgba(255,212,0,.16);
+    border-radius:18px;
+    background:rgba(255,255,255,.025);
+  }
+  .home-page .home-filter-tabs { width:auto; flex:0 0 auto; flex-wrap:nowrap; }
+  .home-page .glass-sort-container { width:min(360px,32vw); margin:0 0 0 auto !important; }
+  .home-page .glass-sort-select { height:40px !important; min-height:40px !important; padding-block:8px !important; box-sizing:border-box; }
+  .home-page .grid { margin-top:12px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .home-page .home-announcement-track,
   .home-page .home-quick-track { animation:none; transform:none; }
