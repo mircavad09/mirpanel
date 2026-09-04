@@ -996,11 +996,11 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
   .home-page .home-quick-links:hover .home-quick-track,
   .home-page .home-quick-links:focus-within .home-quick-track { animation-play-state:paused; }
 
-  .home-page .home-banner-layout { width:min(calc(100% - 28px),clamp(960px,70vw,1140px)); padding:8px 0 0; gap:10px; }
-  .home-page .home-banner-layout .hero-slider-box { max-height:480px; }
+  .home-page .home-banner-layout { width:min(calc(100% - 32px),1000px); padding:8px 0 0; gap:10px; }
+  .home-page .home-banner-layout .hero-slider-box { max-height:340px; }
   .home-page .home-secondary-banners { gap:10px; }
   .home-page .home-secondary-banner,
-  .home-page .home-secondary-banners #homeSupportCard { max-height:240px; }
+  .home-page .home-secondary-banners #homeSupportCard { width:100%; height:min(165px,calc((100vw - 42px) * 670 / 3200)); max-height:165px; aspect-ratio:auto; }
   .home-page .footer { position:static; display:block !important; margin-top:30px; z-index:auto; backdrop-filter:none; }
   .home-page .footer .footIn { padding-inline:76px; }
   .home-page .gameFab,
