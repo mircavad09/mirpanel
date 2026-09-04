@@ -30,7 +30,7 @@ const origin = `http://127.0.0.1:${server.address().port}`;
 const browser = await chromium.launch({headless:true, executablePath:process.env.MIRPANEL_BROWSER_PATH});
 const results = [];
 async function setup(width, options = {}) {
-  const context = await browser.newContext({viewport:{width,height:900}, reducedMotion:options.reduced ? 'reduce' : 'no-preference', javaScriptEnabled:!options.noJS});
+  const context = await browser.newContext({viewport:{width,height:options.height || 900}, reducedMotion:options.reduced ? 'reduce' : 'no-preference', javaScriptEnabled:!options.noJS});
   await context.route('**/*', async route => {
     const url = new URL(route.request().url());
     if (url.origin !== origin) return route.abort();
@@ -71,8 +71,19 @@ async function functional(page, width) {
     assert.ok(await page.locator('.home-announcement-ticker').isVisible(), 'ticker sits beside the mobile logo');
     assert.equal(await page.locator('.home-announcement-track').evaluate((element) => getComputedStyle(element).whiteSpace), 'nowrap');
   } else {
-    assert.equal(await page.locator('.home-discovery').isVisible(), false, 'mobile discovery block is hidden on desktop');
+    assert.ok(await page.locator('.home-discovery').isVisible(), 'product ribbon is visible on desktop');
     assert.ok(await page.locator('.site-header-tools .site-header-search').isVisible(), 'desktop header search is visible');
+    assert.equal(await page.locator('.banner-wrap').isVisible(), false, 'desktop ribbon follows the header without a duplicate announcement banner');
+    const mainHeight = (await page.locator('#heroSlider').boundingBox()).height;
+    const secondaryHeight = (await page.locator('#homeSecondaryProductBanner').boundingBox()).height;
+    if (width === 1440) assert.ok(mainHeight >= 340 && mainHeight <= 430, `1440 main banner height is balanced: ${mainHeight}`);
+    if (width === 1920) assert.ok(mainHeight >= 430 && mainHeight <= 480, `1920 main banner height is balanced: ${mainHeight}`);
+    assert.ok(secondaryHeight >= 180 && secondaryHeight <= 250, `secondary banner height is compact: ${secondaryHeight}`);
+    assert.equal(await page.locator('.footer').evaluate((element) => getComputedStyle(element).position), 'static', 'desktop footer stays in document flow');
+    const contentBottom = (await page.locator('#products-section').boundingBox()).y + (await page.locator('#products-section').boundingBox()).height;
+    assert.ok((await page.locator('.footer').boundingBox()).y >= contentBottom, 'desktop footer follows all homepage products');
+    assert.equal(await page.locator('#gameBtnOpen').evaluate((element) => getComputedStyle(element).position), 'static', 'desktop game button does not cover content');
+    assert.equal(await page.locator('#waFab').evaluate((element) => getComputedStyle(element).position), 'static', 'desktop WhatsApp button does not cover content');
   }
   assert.ok(await page.locator('#heroSlider .slide').count() >= 1, 'one main banner is rendered');
   assert.equal(await page.locator('#homeSecondaryBanners > :not([hidden])').count(), 2, 'two real secondary banners are rendered');
@@ -121,8 +132,8 @@ async function functional(page, width) {
 try {
   assert.doesNotMatch(fs.readFileSync(path.join(root, 'splash.js'), 'utf8'), /(?:sessionStorage|localStorage|document\.cookie)/,
     'splash does not persist a once-per-session state');
-  for (const width of [320,390,768,1440]) {
-    const {context,page,errors} = await setup(width, {delay:900});
+  for (const width of [320,390,768,1440,1920]) {
+    const {context,page,errors} = await setup(width, {delay:900, height:width === 1920 ? 1080 : 900});
     await page.goto(origin, {waitUntil:'commit'});
     await page.waitForFunction(() => window.splashTiming.start !== null);
     await page.waitForTimeout(500);
