@@ -310,7 +310,7 @@ assert.ok(confirmationSource.includes("formatConfirmationText(settings.descripti
 assert.ok(confirmationSource.includes('consentForm.addEventListener("submit"') && confirmationSource.includes("onConfirm(formData);"), "Confirmation continues the existing order flow");
 assert.ok(confirmationSource.includes('id="orderTermsAgreement"') && confirmationSource.includes("required"), "Mandatory terms consent is connected");
 assert.ok(confirmationSource.includes('return fields.length ? "form_confirm_whatsapp" : "confirm_then_whatsapp";'), "Aktiv mÃ¼ÅŸtÉ™ri sahÉ™lÉ™ri sifariÅŸ axÄ±nÄ± avtomatik seÃ§mir");
-assert.ok(confirmationSource.includes('window.location.assign(whatsappUrl);'), "WhatsApp eyni tabda açılmalıdır");
+assert.ok(confirmationSource.includes('preparedWindow.location.replace(whatsappUrl);'), "WhatsApp əvvəlcədən hazırlanmış tabda açılmalıdır");
 assert.equal(/window\.open\s*\(/.test(confirmationSource), false, "Async popup geri qayıtmamalıdır");
 
 for (const product of state.products.filter((item) => item.active === false)) {

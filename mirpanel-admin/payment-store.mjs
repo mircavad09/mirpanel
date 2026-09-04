@@ -91,7 +91,8 @@ export function rowMethod(row, stats = {}) {
   const status = row.deleted_at || row.archived ? "deleted" :
     row.manual_disabled ? "inactive" :
     (!unlimited && confirmed >= Number(row.daily_limit)) ? "limit_reached" :
-    row.active ? ((!unlimited && remaining <= 0) ? "temporarily_busy" : "active") : "pending";
+    pending > 0 && row.activated_today ? "temporarily_busy" :
+    row.active ? "active" : "pending";
   return {
     id: row.id,
     stableCode: row.stable_code,
@@ -214,7 +215,7 @@ export function createPaymentStore(config) {
     rpc,
     async publicMethods() {
       return (await listMethods()).filter((method) => !method.manualDisabled && method.hasNumber &&
-        (method.active || (method.activatedToday && method.status === "limit_reached")))
+        (method.active || (method.activatedToday && ["temporarily_busy", "limit_reached"].includes(method.status))))
         .map(({ adminNote, adminMaskedNumber, deletedAt, deactivatedAt, ...method }) => method);
     },
     adminMethods() {

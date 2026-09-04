@@ -58,6 +58,24 @@
     try { sessionStorage.removeItem(CHECKOUT_STORAGE_KEY); } catch {}
   }
 
+  function prepareWhatsAppWindow(flow) {
+    if (flow.whatsappWindow && !flow.whatsappWindow.closed) return flow.whatsappWindow;
+    try {
+      const popup = window.open("about:blank", `mirpanel-whatsapp-${flow.checkoutKey}`);
+      if (!popup) return null;
+      popup.opener = null;
+      popup.document.title = "Mirpanel · WhatsApp hazırlanır";
+      popup.document.body.textContent = "Sifariş təhlükəsiz tamamlanır. WhatsApp bir qədər sonra açılacaq…";
+      flow.whatsappWindow = popup;
+      return popup;
+    } catch { return null; }
+  }
+
+  function closeWhatsAppWindow(flow) {
+    try { if (flow.whatsappWindow && !flow.whatsappWindow.closed) flow.whatsappWindow.close(); } catch {}
+    flow.whatsappWindow = null;
+  }
+
   async function request(path, options = {}) {
     const read = !options.method || options.method === "GET";
     for (let attempt = 0; attempt < (read ? 3 : 1); attempt += 1) {
@@ -268,7 +286,7 @@
     if (activeFlow?.reservation || activeFlow?.previousReservationId) await cancelReservation(activeFlow);
     renderShell(product, plan);
     const previous = storedCheckout();
-    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: previous?.orderIdempotencyKey || uuid(), stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
+    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: previous?.orderIdempotencyKey || uuid(), whatsappWindow: null, stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
     activeFlow = flow;
     flow.shell = document.querySelector(".paymentFlow");
     flow.reservationKeys = new Map();
@@ -484,6 +502,7 @@
               const error = document.getElementById("paymentReceiptError");
               if (!flow.receipt) { promptForReceipt(); return; }
               if (!flow.reservation) { error.textContent = "Aktiv rezerv tələb olunur."; error.hidden = false; return; }
+              prepareWhatsAppWindow(flow);
               flow.submitting = true;
               flow.submissionStarted = true;
               storeCheckout(flow);
@@ -505,11 +524,14 @@
                 formData.append("consentAccepted", "true");
                 formData.append("receipt", flow.receipt, flow.receipt.name || "receipt");
                 const order = await submitReceiptWithRetry("/api/payments/orders", formData, updateProgress, flow.orderIdempotencyKey);
+                Object.defineProperty(order, "whatsappWindow", { value: flow.whatsappWindow, enumerable: false });
+                flow.whatsappWindow = null;
                 updateProgress(100);
                 setMessage(`Çek uğurla əlavə edildi. Sifariş: ${order.orderCode}`, "success");
                 await finish(order, { preserveModal: true });
                 return;
               } catch (submitError) {
+                closeWhatsAppWindow(flow);
                 flow.submitting = false;
                 lockedControls.forEach((control) => { control.disabled = false; });
                 progress.classList.add("isError");

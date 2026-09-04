@@ -12,6 +12,18 @@
   Cache-Control: no-cache, no-store, must-revalidate
   Content-Type: text/javascript; charset=utf-8
 
+/payment-flow.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Type: text/javascript; charset=utf-8
+
+/order-confirmation.js
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Type: text/javascript; charset=utf-8
+
+/payment-flow.css
+  Cache-Control: no-cache, no-store, must-revalidate
+  Content-Type: text/css; charset=utf-8
+
 /.well-known/api-catalog
   Content-Type: application/linkset+json; charset=utf-8
 

@@ -1215,20 +1215,51 @@
     return verified.href;
   }
 
-  function showWhatsAppFallback(whatsappUrl, orderCode) {
+  function showWhatsAppFallback(whatsappUrl, orderCode, message) {
     setFooter("");
     renderModalContent(`
       <section class="paymentWhatsAppFallback" aria-labelledby="paymentWhatsAppFallbackTitle" aria-live="polite">
         <h2 id="paymentWhatsAppFallbackTitle">Sifariş yaradıldı</h2>
         <p>Sifariş nömrəsi: <strong>${escapeHtml(orderCode || "")}</strong></p>
         <p>WhatsApp avtomatik açılmasa, aşağıdakı düyməyə toxunun.</p>
-        <a id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}" target="_self">WhatsApp-a yenidən keç</a>
+        <a id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer">WhatsApp-a keç</a>
+        <button id="paymentWhatsAppCopy" type="button">Mesajı kopyala</button>
         <button id="paymentStartNewOrder" type="button">Yeni sifariş</button>
       </section>
     `);
     document.getElementById("paymentStartNewOrder")?.addEventListener("click", () => {
       window.MirpanelPaymentFlow?.forgetCompleted();
       closeOrderModal();
+    });
+    document.getElementById("paymentWhatsAppCopy")?.addEventListener("click", async (event) => {
+      const button = event.currentTarget;
+      try {
+        const text = message || "";
+        let copied = false;
+        if (navigator.clipboard?.writeText) {
+          try {
+            await Promise.race([
+              navigator.clipboard.writeText(text),
+              new Promise((_, reject) => setTimeout(() => reject(new Error("CLIPBOARD_TIMEOUT")), 1500))
+            ]);
+            copied = true;
+          } catch {}
+        }
+        if (!copied) {
+          const textarea = document.createElement("textarea");
+          textarea.value = text;
+          textarea.setAttribute("readonly", "");
+          textarea.style.cssText = "position:fixed;opacity:0;pointer-events:none";
+          document.body.appendChild(textarea);
+          textarea.select();
+          copied = document.execCommand("copy");
+          textarea.remove();
+        }
+        if (!copied) throw new Error("COPY_FAILED");
+        button.textContent = "Mesaj kopyalandı";
+      } catch {
+        button.textContent = "Kopyalama alınmadı";
+      }
     });
   }
 
@@ -1273,7 +1304,7 @@
       "Ödəniş çeki Mirpanel sisteminə yüklənib. Zəhmət olmasa sifarişi yoxlayıb təsdiqləyin."
     ].join("\n");
     const whatsappUrl = buildWhatsAppUrl(order.message);
-    showWhatsAppFallback(whatsappUrl, paymentOrder.orderCode);
+    showWhatsAppFallback(whatsappUrl, paymentOrder.orderCode, order.message);
     if (!paymentOrder.idempotent) {
       // Optional stock/Sheets synchronization must not hold a paid checkout open.
       void decrementStock(product).catch(() => ({ skipped: true })).then((stockResult) => {
@@ -1281,7 +1312,13 @@
           stockBefore: stockResult?.stockBefore, stockAfter: stockResult?.stockAfter });
       });
     }
-    window.location.assign(whatsappUrl);
+    const preparedWindow = paymentOrder.whatsappWindow;
+    if (preparedWindow && !preparedWindow.closed) {
+      try {
+        preparedWindow.location.replace(whatsappUrl);
+        preparedWindow.focus();
+      } catch {}
+    }
     return;
   }
 
@@ -1631,6 +1668,6 @@
       "Ödəniş çeki Mirpanel sisteminə yüklənib. Zəhmət olmasa sifarişi yoxlayıb təsdiqləyin."].join("\n");
     modal.classList.add("show", "paymentFlowOpen");
     document.body.classList.add("noScroll");
-    showWhatsAppFallback(buildWhatsAppUrl(message), order.orderCode);
+    showWhatsAppFallback(buildWhatsAppUrl(message), order.orderCode, message);
   }).catch(() => {});
 })();
