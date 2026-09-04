@@ -81,7 +81,10 @@ async function functional(page, width) {
   assert.ok(secondarySources.some((source) => /support\.png/.test(source || '')), 'support repository banner is used');
   const quickLinks = page.locator('#homeQuickLinks .home-quick-group').first().locator('.home-quick-link');
   assert.ok(await quickLinks.count() >= 4 && await quickLinks.count() <= 6, '4–6 active products are shown in the logo ribbon');
-  assert.ok((await quickLinks.allTextContents()).some((title) => /youtube/i.test(title)), 'YouTube Premium is in the logo ribbon');
+  const quickTitles = (await quickLinks.locator('.home-quick-label').allTextContents()).map((title) => title.trim());
+  for (const expected of ['YouTube', 'Netflix', 'CapCut Pro', 'Spotify']) assert.ok(quickTitles.includes(expected), `${expected} uses its full short ribbon label`);
+  assert.ok(quickTitles.every((title) => !title.includes('...') && !title.includes('…')), 'ribbon labels never use ellipsis');
+  assert.equal(await quickLinks.locator('.home-quick-logo img').count(), await quickLinks.count(), 'every ribbon card uses a real logo');
   for (const href of await quickLinks.evaluateAll((links) => links.map((link) => link.getAttribute('href')))) {
     assert.match(href || '', /^\/mehsul\/[a-z0-9-]+$/, 'quick link uses an existing product detail route');
   }
