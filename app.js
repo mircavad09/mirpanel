@@ -567,7 +567,7 @@ const DATA = {
       "category": "musiqi",
       "image": "assets/spotify.png",
       "currency": "₼",
-      "title": "Spotify Premium",
+      "title": "Spotify Premium (Öz hesabınız)",
       "variant": "Şəxsi hesab",
       "badge": "Musiqi",
       "imageAlt": "Spotify Premium",
@@ -647,6 +647,7 @@ const DATA = {
       },
       "plans": [
         {
+          "label": "1 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 1,
           "price": 4.99,
           "regularPrice": 9.33
