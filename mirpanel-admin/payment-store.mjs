@@ -91,7 +91,7 @@ export function rowMethod(row, stats = {}) {
   const status = row.deleted_at || row.archived ? "deleted" :
     row.manual_disabled ? "inactive" :
     (!unlimited && confirmed >= Number(row.daily_limit)) ? "limit_reached" :
-    pending > 0 && row.activated_today ? "temporarily_busy" :
+    !unlimited && remaining <= 0 && pending > 0 && row.activated_today ? "temporarily_busy" :
     row.active ? "active" : "pending";
   return {
     id: row.id,
