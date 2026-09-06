@@ -973,8 +973,14 @@ const DATA = {
       },
       "plans": [
         {
+          "label": "1 Ayliq (Yenilemek Mövcud deyil)",
           "months": 1,
-          "price": 3.49
+          "price": 3.29
+        },
+        {
+          "label": "1 ayliq (Yenilemek Mövcuddur)",
+          "months": 1,
+          "price": 3.79
         }
       ],
       "orderConfirmation": {
