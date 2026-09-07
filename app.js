@@ -1036,8 +1036,8 @@ const DATA = {
         "alt": "Adobe Creative Cloud",
         "order": 21
       },
-      "flow": "whatsapp",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
