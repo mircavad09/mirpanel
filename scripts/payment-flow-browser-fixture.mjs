@@ -18,6 +18,7 @@ let orderCalls = 0;
 let lastUpload = null;
 let failNextOrder = false;
 let failuresLeft = 0;
+let failureStatus = 503;
 const reservations = new Map();
 const orders = new Map();
 const keys = [];
@@ -80,7 +81,7 @@ const server = http.createServer(async (request, response) => {
       productId: String(form.get("productId") || "")
     };
     keys.push(lastUpload.idempotencyKey);
-    if (failuresLeft > 0) { failuresLeft--; json(response,503,{error:"Sınaq upload xətası"}); return; }
+    if (failuresLeft > 0) { failuresLeft--; json(response,failureStatus,{error:"Sınaq upload xətası",code:"RECEIPT_STORAGE_TEMPORARY"}); return; }
     let validatedReceipt;
     try { validatedReceipt = receiptFromBuffer(Buffer.from(await receipt.arrayBuffer()),receipt.type); }
     catch(error) { json(response,error.status || 400,{error:error.message}); return; }
@@ -103,7 +104,7 @@ const server = http.createServer(async (request, response) => {
     json(response, 200, { ok: true, cancellation: { id: reservationId, status: "cancelled", idempotent } }); return;
   }
   if (url.pathname === "/test/fail-next-cancel" && request.method === "POST") { failNextCancel = true; json(response, 200, { ok: true }); return; }
-  if (url.pathname === "/test/fail-next-order" && request.method === "POST") { failuresLeft = Number(url.searchParams.get("count") || 2); json(response, 200, { ok: true }); return; }
+  if (url.pathname === "/test/fail-next-order" && request.method === "POST") { failuresLeft = Number(url.searchParams.get("count") || 4); failureStatus = Number(url.searchParams.get("status") || 503); json(response, 200, { ok: true }); return; }
   if (url.pathname === "/test/state") { json(response, 200, { activeReservations, completedUses, reservationCalls, orderCalls, lastUpload, cancelCalls, successfulCancellations, failNextCancel, failNextOrder, uniqueOrders:orders.size, keys }); return; }
   if (url.pathname === "/test/shutdown" && request.method === "POST") { json(response, 200, { ok: true }); setImmediate(() => server.close()); return; }
   response.writeHead(404); response.end("Not found");

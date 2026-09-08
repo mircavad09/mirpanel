@@ -4,6 +4,8 @@
   const API_BASE = window.MIRPANEL_PAYMENT_API || "https://mirpanel.onrender.com";
   const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1";
   const APPLE_RECEIPT_TYPES = new Set(["image/heic", "image/heif"]);
+  const RECEIPT_UPLOAD_TIMEOUT_MS = 120_000;
+  const RECEIPT_UPLOAD_RETRIES = 3;
   let activeFlow = null;
   const SERVICE_ERROR = "Ödəniş xidməti hazırda cavab vermir. Yenidən cəhd edin";
 
@@ -112,43 +114,91 @@
     }
   }
 
-  function submitWithProgress(path, formData, progress, idempotencyKey) {
+  function uploadError(message, options = {}) {
+    return Object.assign(new Error(message), { userMessage: message, ...options });
+  }
+
+  function receiptResponseError(payload, status) {
+    const code = String(payload?.code || "");
+    const messages = {
+      RECEIPT_TOO_LARGE: "Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin.",
+      RECEIPT_HEIC_UNSUPPORTED: "iPhone şəklini JPG və ya PDF formatına çevirib yenidən yükləyin.",
+      RECEIPT_UNSUPPORTED_TYPE: "Yalnız JPG, PNG, WEBP və ya PDF yükləyin.",
+      RECEIPT_DAMAGED: "Fayl zədələnib və ya dəstəklənən formatda deyil.",
+      RECEIPT_STORAGE_TIMEOUT: "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.",
+      RECEIPT_STORAGE_TEMPORARY: "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin."
+    };
+    const retryable = [408, 429, 502, 503, 504].includes(status) || code === "RECEIPT_STORAGE_TIMEOUT" || code === "RECEIPT_STORAGE_TEMPORARY";
+    const message = messages[code] || (status >= 500
+      ? "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin."
+      : String(payload?.error || "Çek faylı qəbul edilmədi."));
+    return uploadError(message, { code: code || "RECEIPT_UPLOAD_REJECTED", status, retryable });
+  }
+
+  function submitWithProgress(path, formData, events, idempotencyKey, signal) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
-      xhr.open("POST", `${API_BASE}${path}`);
-      xhr.timeout = 60_000;
-      xhr.setRequestHeader("X-Idempotency-Key", idempotencyKey);
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) progress(5 + Math.round((event.loaded / event.total) * 90));
+      let settled = false;
+      const finish = (callback, value) => {
+        if (settled) return;
+        settled = true;
+        signal?.removeEventListener("abort", abort);
+        callback(value);
       };
-      xhr.onerror = () => reject(Object.assign(new Error("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."), { userMessage: "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.", retryable: true }));
-      xhr.ontimeout = () => reject(Object.assign(new Error("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."), { userMessage: "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.", retryable: true }));
+      const abort = () => xhr.abort();
+      xhr.open("POST", `${API_BASE}${path}`);
+      xhr.timeout = RECEIPT_UPLOAD_TIMEOUT_MS;
+      xhr.setRequestHeader("X-Idempotency-Key", idempotencyKey);
+      signal?.addEventListener("abort", abort, { once: true });
+      xhr.upload.onloadstart = () => events.onStart?.();
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable && event.total > 0 && event.loaded > 0) {
+          events.onProgress?.(Math.min(100, Math.round((event.loaded / event.total) * 100)), event.loaded, event.total);
+        }
+      };
+      xhr.upload.onload = () => events.onProcessing?.();
+      xhr.onerror = () => finish(reject, uploadError("Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir.", { code: "RECEIPT_NETWORK_ERROR", retryable: true }));
+      xhr.ontimeout = () => finish(reject, uploadError("Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir.", { code: "RECEIPT_UPLOAD_TIMEOUT", status: 408, retryable: true }));
+      xhr.onabort = () => finish(reject, uploadError("Yükləmə dayandırıldı. Seçilmiş çek qorunub.", { code: "RECEIPT_UPLOAD_CANCELLED", retryable: false }));
       xhr.onload = () => {
         let payload;
         try {
           if (!/application\/json\b/i.test(xhr.getResponseHeader("Content-Type") || "")) throw new Error("invalid response");
           payload = JSON.parse(xhr.responseText);
           if (!payload || typeof payload !== "object") throw new Error("invalid response");
-        } catch { xhr.onerror(); return; }
-        if (xhr.status < 200 || xhr.status >= 300) reject(Object.assign(new Error(payload.error || "Sifariş yaradılmadı."), { userMessage: payload.error || "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.", retryable: xhr.status >= 500 || xhr.status === 408 || xhr.status === 429 }));
-        else if (!validOrder(payload)) xhr.onerror();
-        else resolve(payload);
+        } catch {
+          finish(reject, uploadError("Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.", { code: "RECEIPT_INVALID_RESPONSE", status: xhr.status || 502, retryable: true }));
+          return;
+        }
+        if (xhr.status < 200 || xhr.status >= 300) finish(reject, receiptResponseError(payload, xhr.status));
+        else if (!validOrder(payload)) finish(reject, uploadError("Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.", { code: "RECEIPT_INVALID_RESPONSE", status: 502, retryable: true }));
+        else finish(resolve, payload);
       };
-      progress(2);
+      if (signal?.aborted) { abort(); return; }
       xhr.send(formData);
     });
   }
 
-  async function submitReceiptWithRetry(path, formData, progress, idempotencyKey) {
+  async function submitReceiptWithRetry(path, formDataFactory, events, idempotencyKey, signal) {
     let lastError;
-    for (let attempt = 0; attempt < 2; attempt += 1) {
+    const totalAttempts = RECEIPT_UPLOAD_RETRIES + 1;
+    for (let attempt = 1; attempt <= totalAttempts; attempt += 1) {
+      if (signal?.aborted) throw uploadError("Yükləmə dayandırıldı. Seçilmiş çek qorunub.", { code: "RECEIPT_UPLOAD_CANCELLED", retryable: false });
+      events.onAttempt?.(attempt, totalAttempts);
       try {
-        return await submitWithProgress(path, formData, progress, idempotencyKey);
+        return await submitWithProgress(path, formDataFactory(), events, idempotencyKey, signal);
       } catch (error) {
         lastError = error;
-        if (!error?.retryable || attempt === 1) throw error;
-        progress(4);
-        await new Promise((resolve) => setTimeout(resolve, 900));
+        if (!error?.retryable || attempt === totalAttempts) {
+          if (error?.retryable) error.userMessage = "Çek hələ göndərilmədi. “Yenidən cəhd et” düyməsinə basın.";
+          throw error;
+        }
+        const delay = attempt * 1500;
+        events.onRetry?.(error, attempt + 1, totalAttempts, delay);
+        await new Promise((resolve, reject) => {
+          const timer = setTimeout(resolve, delay);
+          signal?.addEventListener("abort", () => { clearTimeout(timer); reject(uploadError("Yükləmə dayandırıldı. Seçilmiş çek qorunub.", { code: "RECEIPT_UPLOAD_CANCELLED", retryable: false })); }, { once: true });
+        });
       }
     }
     throw lastError;
@@ -199,7 +249,7 @@
       <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>1. Çeki yüklə</strong><span id="paymentReceiptPickerDescription">Ödəniş çekinin şəklini və ya PDF faylını buraya əlavə edin.</span><em id="paymentReceiptPickerWarning">Çeki WhatsApp-a göndərməyin — bu hissəyə yükləyin.</em><small id="paymentReceiptPickerFormats">JPG, PNG, WEBP və ya PDF · maksimum 5 MB</small></label>
       <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" hidden>
       <div id="paymentReceiptPreview" class="paymentReceiptPreview hidden"></div>
-      <div id="paymentUploadProgress" class="paymentUploadProgress hidden"><span></span><b>0%</b></div>
+      <div id="paymentUploadProgress" class="paymentUploadProgress hidden" role="status" aria-live="polite"><span></span><b>Yüklənir…</b></div>
       <p id="paymentReceiptError" class="paymentReceiptError" role="alert" hidden></p>
       <p id="paymentReceiptRequiredHint" class="paymentReceiptRequiredHint">Davam etmək üçün əvvəlcə çeki yükləyin.</p>
       <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><div id="paymentSubmitGuard" class="paymentSubmitGuard isBlocked"><button id="paymentSubmit" type="submit" disabled>2. Sifarişi göndər və WhatsApp-a keç</button></div></div>
@@ -448,7 +498,12 @@
             };
             document.getElementById("paymentCancel").onclick = async (event) => {
               event.preventDefault();
-              if (flow.cancelling || flow.submitting) return;
+              if (flow.cancelling) return;
+              if (flow.submitting) {
+                flow.uploadController?.abort();
+                setMessage("Çek yükləməsi təhlükəsiz dayandırılır. Seçilmiş fayl qorunacaq.");
+                return;
+              }
               const cancelButton = document.getElementById("paymentCancel");
               const closeButton = document.querySelector(".paymentFlowClose");
               cancelButton.disabled = true;
@@ -473,7 +528,7 @@
               if (!file || file.size > 5 * 1024 * 1024 || isAppleReceipt) {
                 clearReceipt(flow);
                 setReceiptSubmitReady(false);
-                error.textContent = !file ? "Qəbz seçilməyib." : file.size > 5 * 1024 * 1024 ? "Qəbz maksimum 5 MB ola bilər." : "HEIC/HEIF formatı dəstəklənmir. Şəkli JPG və ya PNG kimi saxlayıb yenidən seçin.";
+                error.textContent = !file ? "Qəbz seçilməyib." : file.size > 5 * 1024 * 1024 ? "Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin." : "iPhone şəklini JPG və ya PDF formatına çevirib yenidən yükləyin.";
                 error.hidden = false;
                 return;
               }
@@ -505,38 +560,73 @@
               prepareWhatsAppWindow(flow);
               flow.submitting = true;
               flow.submissionStarted = true;
+              flow.uploadController = new AbortController();
               storeCheckout(flow);
               submit.disabled = true;
               submit.textContent = "Çek yüklənir...";
-              const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentCancel, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
+              const cancelButton = document.getElementById("paymentCancel");
+              cancelButton.textContent = "Yükləməni dayandır";
+              const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
               lockedControls.forEach((control) => { control.disabled = true; });
               error.hidden = true;
               const progress = document.getElementById("paymentUploadProgress");
               progress.classList.remove("hidden");
               progress.classList.remove("isError");
-              const updateProgress = (value) => { progress.querySelector("span").style.width = `${value}%`; progress.querySelector("b").textContent = `${value}%`; };
+              progress.classList.add("isIndeterminate");
+              const receiptStatus = document.querySelector(".paymentReceiptPending");
+              const setProgress = (value, text) => {
+                const numeric = Number.isFinite(value);
+                progress.classList.toggle("isIndeterminate", !numeric);
+                progress.querySelector("span").style.width = numeric ? `${Math.max(0, Math.min(100, value))}%` : "0%";
+                progress.querySelector("b").textContent = text;
+                if (receiptStatus) receiptStatus.textContent = text;
+              };
               try {
-                const formData = new FormData();
-                formData.append("reservationId", flow.reservation.reservationId);
-                formData.append("checkoutKey", flow.checkoutKey);
-                formData.append("productId", product.id);
-                formData.append("planIndex", String(planIndex));
-                formData.append("consentAccepted", "true");
-                formData.append("receipt", flow.receipt, flow.receipt.name || "receipt");
-                const order = await submitReceiptWithRetry("/api/payments/orders", formData, updateProgress, flow.orderIdempotencyKey);
+                const formDataFactory = () => {
+                  const formData = new FormData();
+                  formData.append("reservationId", flow.reservation.reservationId);
+                  formData.append("checkoutKey", flow.checkoutKey);
+                  formData.append("productId", product.id);
+                  formData.append("planIndex", String(planIndex));
+                  formData.append("consentAccepted", "true");
+                  formData.append("uploadKey", flow.orderIdempotencyKey);
+                  formData.append("receipt", flow.receipt, flow.receipt.name || "receipt");
+                  return formData;
+                };
+                const order = await submitReceiptWithRetry("/api/payments/orders", formDataFactory, {
+                  onAttempt: (attempt, total) => setProgress(null, attempt === 1 ? "Yüklənir…" : `Yenidən cəhd edilir (${attempt}/${total})…`),
+                  onStart: () => setProgress(null, "Yüklənir…"),
+                  onProgress: (value) => setProgress(value, `${value}%`),
+                  onProcessing: () => setProgress(100, "Server çeki yoxlayır…"),
+                  onRetry: (uploadFailure, next, total) => {
+                    setProgress(null, `Yenidən cəhd edilir (${next}/${total})…`);
+                    error.textContent = uploadFailure.code === "RECEIPT_NETWORK_ERROR" || uploadFailure.code === "RECEIPT_UPLOAD_TIMEOUT"
+                      ? "Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir."
+                      : "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.";
+                    error.hidden = false;
+                  }
+                }, flow.orderIdempotencyKey, flow.uploadController.signal);
                 Object.defineProperty(order, "whatsappWindow", { value: flow.whatsappWindow, enumerable: false });
                 flow.whatsappWindow = null;
-                updateProgress(100);
+                flow.uploadController = null;
+                setProgress(100, "Çek uğurla yükləndi");
+                receiptStatus?.classList.replace("paymentReceiptPending", "paymentReceiptSuccess");
                 setMessage(`Çek uğurla əlavə edildi. Sifariş: ${order.orderCode}`, "success");
                 await finish(order, { preserveModal: true });
                 return;
               } catch (submitError) {
                 closeWhatsAppWindow(flow);
+                flow.uploadController = null;
                 flow.submitting = false;
                 lockedControls.forEach((control) => { control.disabled = false; });
                 progress.classList.add("isError");
-                error.textContent = submitError.userMessage || "Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin.";
+                progress.classList.remove("isIndeterminate");
+                progress.querySelector("span").style.width = "0%";
+                progress.querySelector("b").textContent = "Göndərilmədi";
+                if (receiptStatus) receiptStatus.textContent = "Çek seçildi — yenidən göndərilə bilər.";
+                error.textContent = submitError.userMessage || "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.";
                 error.hidden = false;
+                cancelButton.textContent = "Ləğv et";
                 submit.disabled = false;
                 submit.textContent = "Yenidən cəhd et";
               }

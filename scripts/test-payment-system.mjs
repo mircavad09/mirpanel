@@ -15,8 +15,8 @@ import { commercialSnapshot } from "./payment-commercial-snapshot.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
-// Independently checked against unchanged main 857ba7b before checkout changes.
-const expectedSnapshot = "9847f529dabb2c79afeaa6604e5069b0713e23c77a02a3c268c526b958a14fcb";
+// Independently checked against the unchanged commercial content at main ff53b8c.
+const expectedSnapshot = "1835ed8147773999f57ec03ad6f0f02f0bbf636c576827d059edd7c0793395f0";
 
 function expectThrow(fn, pattern) {
   let thrown = null;
@@ -55,8 +55,8 @@ assert.equal(receiptFromPayload({ mimeType: "image/png", contentBase64: jpeg.toS
 assert.equal(receiptFromBuffer(png, "").mimeType, "image/png");
 assert.equal(receiptFromBuffer(webp, "application/octet-stream").mimeType, "image/webp");
 assert.equal(receiptFromBuffer(pdf, "text/plain").mimeType, "application/pdf");
-expectThrow(() => receiptFromBuffer(heic, "image/heic"), /HEIC\/HEIF/);
-expectThrow(() => receiptFromBuffer(Buffer.from("not a receipt"), "image/jpeg"), /zədələnib|dəstəklənən/i);
+expectThrow(() => receiptFromBuffer(heic, "image/heic"), /iPhone şəklini JPG və ya PDF/);
+expectThrow(() => receiptFromBuffer(Buffer.from("not a receipt"), "image/jpeg"), /Yalnız JPG, PNG, WEBP və ya PDF/i);
 expectThrow(() => receiptFromPayload({ mimeType: "application/pdf", contentBase64: Buffer.from("%PDF-1.7\n/OpenAction /JavaScript\n%%EOF", "ascii").toString("base64") }), /Aktiv məzmun/i);
 expectThrow(() => receiptFromPayload({ mimeType: "image/jpeg", contentBase64: Buffer.alloc(5 * 1024 * 1024 + 1, 1).toString("base64") }), /5 MB/i);
 expectThrow(() => receiptFromBuffer(Buffer.from([0xff, 0xd8, 0xff, 0, 1, 2, 3, 4, 5, 6, 7, 8]), "image/jpeg"), /zədələnib/i);
@@ -131,7 +131,11 @@ assert.equal(flow.includes("FileReader"), false, "Yeni çek axını FileReader-d
 assert.equal(flow.includes("contentBase64"), false, "Yeni çek axını base64 yaratmamalıdır");
 assert.ok(flow.includes("URL.createObjectURL(file)"));
 assert.ok(flow.includes("URL.revokeObjectURL(flow.receiptPreviewUrl)"));
-assert.ok(flow.includes("Çek yüklənmədi. İnternet bağlantısını yoxlayıb yenidən cəhd edin."));
+assert.ok(flow.includes("Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir."));
+assert.ok(flow.includes("RECEIPT_UPLOAD_RETRIES = 3"));
+assert.ok(flow.includes("RECEIPT_UPLOAD_TIMEOUT_MS = 120_000"));
+assert.equal(flow.includes("progress(2)"), false, "Saxta 2% göstəricisi olmamalıdır");
+assert.ok(flow.includes("Çek hələ göndərilmədi. “Yenidən cəhd et” düyməsinə basın."));
 assert.ok(flow.includes("if (!flow.receipt) { promptForReceipt(); return; }"));
 assert.ok(flow.includes('if (!flow.reservation) { error.textContent = "Aktiv rezerv tələb olunur."'));
 assert.ok(flow.includes("Əvvəlcə ödəniş çekini yükləyin."));
@@ -194,7 +198,7 @@ assert.ok(flowCss.includes("max-width:380px"), "Ödəniş kartı maksimum 380px 
 assert.ok(flowCss.includes('grid-template-areas:"top top" "stripe stripe" "holder amount" "number number" "timer timer"'), "Kartın daxili yığcam layout-u çatışmır");
 assert.ok(flow.includes('window.location.href = "https://mirpanel.com/"'), "Uğurlu ləğvdən sonra eyni tabda ana səhifəyə keçilməlidir");
 assert.ok(flow.includes('await finish(null, { cancel: true, redirectHome: true })'), "Ləğv server təsdiqindən sonra yönləndirməlidir");
-assert.ok(flow.includes('event.preventDefault();\n              if (flow.cancelling || flow.submitting) return;'), "Ləğv düyməsi standart submit-i və təkrar kliki bloklamalıdır");
+assert.match(flow, /if \(flow\.submitting\) \{\s*flow\.uploadController\?\.abort\(\);/, "Upload zamanı Ləğv et yalnız cari yükləməni dayandırmalıdır");
 assert.ok(flow.includes('window.confirm("Aktiv rezerv ləğv ediləcək.'), "X düyməsi aktiv rezerv barədə xəbərdarlıq etməlidir");
 assert.ok(api.includes("{ ok: true, cancellation }"), "Server ləğv nəticəsini brauzerə təsdiqləməlidir");
 assert.ok(paymentAdmin.includes("paymentActionDialog"));
@@ -244,7 +248,7 @@ for (const page of productPages) {
   assert.ok(html.includes("order-confirmation.js?v=product-forms-20260902-1"), `${page}: confirmation cache versiyası köhnədir`);
   assert.equal(html.includes("hbo-max-order-fix.js"), false, `${page}: legacy məhsul handler-i vahid axını kəsməməlidir`);
 }
-assert.ok(read("mirpanel-admin/product-pages.mjs").includes("receipt-ux-20260902-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
+assert.ok(read("mirpanel-admin/product-pages.mjs").includes("receipt-upload-20260908-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
 
 for (const file of [
   "mirpanel-admin/payment-api.mjs",

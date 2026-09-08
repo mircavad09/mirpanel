@@ -63,7 +63,7 @@ export async function paymentOrderFromMultipart(rawBody, contentType, maxReceipt
   }
   const uploaded = form.get("receipt");
   if (!uploaded || typeof uploaded.arrayBuffer !== "function") throw Object.assign(new Error("Ödəniş qəbzi seçilməyib."), { status: 400 });
-  if (Number(uploaded.size) > maxReceiptBytes) throw Object.assign(new Error("Qəbz maksimum 5 MB ola bilər."), { status: 413 });
+  if (Number(uploaded.size) > maxReceiptBytes) throw Object.assign(new Error("Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin."), { status: 413, code: "RECEIPT_TOO_LARGE" });
   return {
     body: {
       reservationId: form.get("reservationId"),
@@ -256,7 +256,13 @@ export function createPaymentSystem(options) {
       let receipt;
       if (contentType.toLowerCase().startsWith("multipart/form-data;")) {
         if (typeof readRawBody !== "function") throw Object.assign(new Error("Fayl yükləmə xidməti hazır deyil."), { status: 503 });
-        const rawBody = await readRawBody(request, config.maxReceiptBytes + 150_000);
+        let rawBody;
+        try {
+          rawBody = await readRawBody(request, config.maxReceiptBytes + 150_000);
+        } catch (error) {
+          if (Number(error?.status) === 413) throw Object.assign(new Error("Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin."), { status: 413, code: "RECEIPT_TOO_LARGE" });
+          throw error;
+        }
         ({ body, receipt } = await paymentOrderFromMultipart(rawBody, contentType, config.maxReceiptBytes));
       } else {
         body = await readBody(request, Math.ceil(config.maxReceiptBytes * 1.42) + 100_000);

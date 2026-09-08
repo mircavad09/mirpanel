@@ -104,17 +104,20 @@ export function receiptFromPayload(body, maxBytes = 5 * 1024 * 1024) {
 
 export function receiptFromBuffer(buffer, declaredMimeType, maxBytes = 5 * 1024 * 1024) {
   if (!Buffer.isBuffer(buffer) || !buffer.length || buffer.length > maxBytes) {
-    throw Object.assign(new Error("Qəbz maksimum 5 MB ola bilər."), { status: buffer?.length > maxBytes ? 413 : 400 });
+    throw Object.assign(new Error(buffer?.length > maxBytes ? "Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin." : "Ödəniş qəbzi seçilməyib."), {
+      status: buffer?.length > maxBytes ? 413 : 400,
+      code: buffer?.length > maxBytes ? "RECEIPT_TOO_LARGE" : "RECEIPT_DAMAGED"
+    });
   }
   const detected = detectReceiptType(buffer);
   if (!detected) {
     if (detectAppleReceiptType(buffer)) {
-      throw Object.assign(new Error("HEIC/HEIF formatı dəstəklənmir. Şəkli JPG və ya PNG kimi saxlayıb yenidən seçin."), { status: 400, code: "RECEIPT_HEIC_UNSUPPORTED" });
+      throw Object.assign(new Error("iPhone şəklini JPG və ya PDF formatına çevirib yenidən yükləyin."), { status: 400, code: "RECEIPT_HEIC_UNSUPPORTED" });
     }
-    throw Object.assign(new Error("Fayl zədələnib və ya dəstəklənən JPG, PNG, WEBP, PDF formatında deyil."), { status: 400 });
+    throw Object.assign(new Error("Yalnız JPG, PNG, WEBP və ya PDF yükləyin."), { status: 400, code: "RECEIPT_UNSUPPORTED_TYPE" });
   }
   if (!hasValidReceiptStructure(buffer, detected.extension)) {
-    throw Object.assign(new Error("Fayl zədələnib və ya tam yüklənməyib."), { status: 400 });
+    throw Object.assign(new Error("Fayl zədələnib və ya tam yüklənməyib."), { status: 400, code: "RECEIPT_DAMAGED" });
   }
   if (detected.extension === "pdf") {
     const sample = buffer.subarray(0, Math.min(buffer.length, 1_000_000)).toString("latin1");

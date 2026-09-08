@@ -21,12 +21,14 @@ await new Promise((resolve, reject) => {
 const browser = await chromium.launch({ headless: true, executablePath: browserPath });
 const image = sharp({create:{width:10,height:10,channels:3,background:"#dddddd"}});
 const jpeg = await image.clone().jpeg().toBuffer();
+const nearLimitJpeg = Buffer.concat([jpeg.subarray(0, -2), Buffer.alloc(5 * 1024 * 1024 - jpeg.length), jpeg.subarray(-2)]);
 const additionalReceipts = [
   { name: "receipt.png", mimeType: "image/png", buffer: await image.clone().png().toBuffer() },
   { name: "receipt.webp", mimeType: "image/webp", buffer: await image.clone().webp().toBuffer() },
   { name: "receipt.pdf", mimeType: "application/pdf", buffer: Buffer.from("%PDF-1.7\n%%EOF", "ascii") },
   { name: "browser-says-png.png", mimeType: "image/png", buffer: jpeg, detectedType: "image/jpeg" },
-  { name: "wrong-extension.pdf", mimeType: "application/octet-stream", buffer: jpeg, detectedType: "image/jpeg" }
+  { name: "wrong-extension.pdf", mimeType: "application/octet-stream", buffer: jpeg, detectedType: "image/jpeg" },
+  { name: "near-five-megabytes.jpg", mimeType: "image/jpeg", buffer: nearLimitJpeg }
 ];
 const errors = [];
 try {
@@ -100,18 +102,35 @@ try {
   await retryPage.setInputFiles("#paymentReceiptInput", { name: "retry.jpg", mimeType: "image/jpeg", buffer: jpeg });
   await fetch(`http://127.0.0.1:${port}/test/fail-next-order`, { method: "POST" });
   await retryPage.click("#paymentSubmit");
-  await retryPage.waitForFunction(() => !document.getElementById("paymentReceiptError").hidden);
-  assert.equal(await retryPage.textContent("#paymentReceiptError"), "Sınaq upload xətası");
+  await retryPage.waitForFunction(() => document.getElementById("paymentSubmit").textContent === "Yenidən cəhd et");
+  assert.equal(await retryPage.textContent("#paymentReceiptError"), "Çek hələ göndərilmədi. “Yenidən cəhd et” düyməsinə basın.");
   assert.equal(await retryPage.textContent("#paymentSubmit"), "Yenidən cəhd et");
   assert.equal(await retryPage.locator("#paymentReceiptPreview img").count(), 1, "Xətadan sonra seçilmiş çek qorunmalıdır");
   await retryPage.click("#paymentSubmit");
   await retryPage.waitForFunction(() => /^\d+$/.test(window.__paymentOrder?.orderCode || ""));
   const retryState = await (await fetch(`http://127.0.0.1:${port}/test/state`)).json();
-  assert.equal(retryState.orderCalls, 9);
-  assert.equal(new Set(retryState.keys.slice(-3)).size,1,"Automatic and manual retries keep the same key");
-  assert.equal(retryState.uniqueOrders,7);
+  assert.equal(retryState.orderCalls, 12);
+  assert.equal(new Set(retryState.keys.slice(-5)).size,1,"Automatic and manual retries keep the same key");
+  assert.equal(retryState.uniqueOrders,8);
   assert.equal(retryState.completedUses,0,"Uploading never confirms a payment");
-  assert.equal(retryState.reservationCalls, 7, "Retry əlavə rezerv yaratmamalıdır");
+  assert.equal(retryState.reservationCalls, 8, "Retry əlavə rezerv yaratmamalıdır");
+
+  for (const status of [502, 503, 504]) {
+    const transientPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+    transientPage.on("pageerror", (error) => errors.push(`${status}: ${error.message}`));
+    await transientPage.goto(`http://127.0.0.1:${port}`, { waitUntil: "networkidle" });
+    await transientPage.click("[data-payment-method]");
+    await transientPage.setInputFiles("#paymentReceiptInput", { name: `temporary-${status}.jpg`, mimeType: "image/jpeg", buffer: jpeg });
+    const beforeTransient = await (await fetch(`http://127.0.0.1:${port}/test/state`)).json();
+    await fetch(`http://127.0.0.1:${port}/test/fail-next-order?count=3&status=${status}`, { method: "POST" });
+    await transientPage.click("#paymentSubmit");
+    await transientPage.waitForFunction(() => /^\d+$/.test(window.__paymentOrder?.orderCode || ""));
+    const afterTransient = await (await fetch(`http://127.0.0.1:${port}/test/state`)).json();
+    assert.equal(afterTransient.uniqueOrders, beforeTransient.uniqueOrders + 1, `${status} retry bir sifariş yaratmalıdır`);
+    assert.equal(afterTransient.reservationCalls, beforeTransient.reservationCalls, `${status} retry yeni rezerv yaratmamalıdır`);
+    assert.equal(new Set(afterTransient.keys.slice(-4)).size, 1, `${status} retry eyni idempotency açarını saxlamalıdır`);
+    await transientPage.close();
+  }
 
   const boundaryPage = await browser.newPage({ viewport: { width: 320, height: 568 } });
   await boundaryPage.addInitScript(() => Object.defineProperty(globalThis, "FileReader", { value: undefined, configurable: true }));
@@ -130,20 +149,20 @@ try {
   assert.equal(await boundaryPage.isEnabled("#paymentSubmit"), true, "5 MB sərhədi qəbul edilməlidir");
   await boundaryPage.setInputFiles("#paymentReceiptInput", { name: "too-large.jpg", mimeType: "image/jpeg", buffer: Buffer.alloc(5 * 1024 * 1024 + 1) });
   assert.equal(await boundaryPage.isEnabled("#paymentSubmit"), false, "5 MB-dan böyük fayl bloklanmalıdır");
-  assert.match(await boundaryPage.textContent("#paymentReceiptError"), /maksimum 5 MB/);
+  assert.match(await boundaryPage.textContent("#paymentReceiptError"), /5 MB-dan böyükdür/);
   await boundaryPage.setInputFiles("#paymentReceiptInput", { name: "fake.html", mimeType: "text/html", buffer: Buffer.from("<script>alert(1)</script>") });
   assert.equal(await boundaryPage.isEnabled("#paymentSubmit"), true, "Brauzer MIME-si serverin magic-byte yoxlamasını əvəz etməməlidir");
   await boundaryPage.click("#paymentSubmit");
   await boundaryPage.waitForFunction(() => !document.getElementById("paymentReceiptError").hidden);
-  assert.match(await boundaryPage.textContent("#paymentReceiptError"), /zədələnib|dəstəklənən/);
+  assert.match(await boundaryPage.textContent("#paymentReceiptError"), /Yalnız JPG, PNG, WEBP və ya PDF/);
   assert.equal(await boundaryPage.locator(".paymentReceiptSuccess").count(), 0, "Rədd edilmiş faylda uğur statusu görünməməlidir");
   await boundaryPage.setInputFiles("#paymentReceiptInput",{name:"damaged.jpg",mimeType:"image/jpeg",buffer:Buffer.from("not an image")});
   await boundaryPage.click("#paymentSubmit");
   await boundaryPage.waitForFunction(() => !document.getElementById("paymentReceiptError").hidden);
-  assert.match(await boundaryPage.textContent("#paymentReceiptError"), /zədələnib|dəstəklənən/);
+  assert.match(await boundaryPage.textContent("#paymentReceiptError"), /Yalnız JPG, PNG, WEBP və ya PDF/);
   await boundaryPage.setInputFiles("#paymentReceiptInput",{name:"camera.heic",mimeType:"image/heic",buffer:Buffer.concat([Buffer.from([0,0,0,24]),Buffer.from("ftypheic"),Buffer.alloc(16)])});
   assert.equal(await boundaryPage.isEnabled("#paymentSubmit"),false);
-  assert.match(await boundaryPage.textContent("#paymentReceiptError"),/HEIC\/HEIF/);
+  assert.match(await boundaryPage.textContent("#paymentReceiptError"),/iPhone şəklini JPG və ya PDF/);
   assert.equal(await boundaryPage.locator(".paymentReceiptSuccess").count(),0);
   for (const width of [320,390,768,1440]) {
     await boundaryPage.setViewportSize({width,height:900});
@@ -155,7 +174,7 @@ try {
     if(mode === "timeout") await networkPage.addInitScript(()=>{
       const Base=XMLHttpRequest;
       window.XMLHttpRequest=class extends Base {
-        set timeout(value){super.timeout=value===60000?100:value}
+        set timeout(value){super.timeout=value===120000?100:value}
         get timeout(){return super.timeout}
       };
     });
@@ -168,7 +187,7 @@ try {
       await new Promise(resolve=>setTimeout(resolve,300));await route.abort().catch(()=>{});
     });
     await networkPage.click("#paymentSubmit");
-    await networkPage.waitForFunction(()=>!document.getElementById("paymentReceiptError").hidden);
+    await networkPage.waitForFunction(()=>document.getElementById("paymentSubmit").textContent==="Yenidən cəhd et");
     assert.equal(await networkPage.isEnabled("#paymentSubmit"),true);
     assert.equal(await networkPage.locator("#paymentReceiptPreview img").count(),1);
     assert.equal((await (await fetch(`http://127.0.0.1:${port}/test/state`)).json()).uniqueOrders,before.uniqueOrders);
@@ -181,7 +200,7 @@ try {
     await networkPage.close();
   }
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
-  console.log(JSON.stringify({ ok: true, fileReaderUndefined: true, multipart: true, receiptTypes: ["JPG", "PNG", "WEBP", "PDF"], iphoneSafariJpeg:true, androidChromePng:true, magicByteAuthoritative:true, wrongExtensionAccepted:true, heicRejectedClearly:true, falseSuccessPrevented:true, fiveMegabyteBoundary: true, unsupportedContentBlocked: true, retryPreservesReceipt: true, offlineRetry:true, timeoutRetry:true, refreshRecovery:true, duplicateOrders: 0, objectUrlsRevoked: true, viewports: [320, 390, 768, 1440], consoleErrors: 0 }, null, 2));
+  console.log(JSON.stringify({ ok: true, fileReaderUndefined: true, multipart: true, receiptTypes: ["JPG", "PNG", "WEBP", "PDF"], iphoneSafariProfileJpeg:true, androidChromePng:true, magicByteAuthoritative:true, wrongExtensionAccepted:true, heicRejectedClearly:true, falseSuccessPrevented:true, fiveMegabyteBoundary: true, nearFiveMegabyteUpload:true, transientStatusesRetried:[502,503,504], automaticRetries:3, manualRetry:true, unsupportedContentBlocked: true, retryPreservesReceipt: true, offlineRetry:true, timeoutRetry:true, refreshRecovery:true, duplicateOrders: 0, objectUrlsRevoked: true, viewports: [320, 390, 768, 1440], consoleErrors: 0 }, null, 2));
 } finally {
   await browser.close();
   fixture.kill();

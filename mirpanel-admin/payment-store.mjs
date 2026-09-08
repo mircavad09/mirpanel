@@ -608,9 +608,19 @@ export function createPaymentStore(config) {
       return data.signedUrl;
     },
     async uploadReceipt(path, receipt) {
-      const { error } = await client.storage.from(config.receiptsBucket).upload(path, receipt.buffer, { contentType: receipt.mimeType, upsert: false, cacheControl: "0" });
+      const upload = client.storage.from(config.receiptsBucket).upload(path, receipt.buffer, { contentType: receipt.mimeType, upsert: false, cacheControl: "0" });
+      const timeout = new Promise((_, reject) => {
+        const timer = setTimeout(() => reject(Object.assign(new Error("Private storage cavabı gecikdi."), {
+          status: 504, code: "RECEIPT_STORAGE_TIMEOUT", diagnostic: "Receipt storage upload exceeded 75 seconds"
+        })), 75_000);
+        timer.unref?.();
+      });
+      const { error } = await Promise.race([upload, timeout]);
       if (Number(error?.statusCode) === 409 && path.endsWith(`/${receipt.sha256}.${receipt.extension}`)) return;
-      if (error) throw paymentError(error, "Çek private yaddaşa yüklənmədi.");
+      if (error) throw Object.assign(paymentError(error, "Çek private yaddaşa yüklənmədi."), {
+        status: [408, 429, 500, 502, 503, 504].includes(Number(error.statusCode)) ? Number(error.statusCode) : 503,
+        code: "RECEIPT_STORAGE_TEMPORARY"
+      });
     },
     async removeReceipt(path) {
       await client.storage.from(config.receiptsBucket).remove([path]);
