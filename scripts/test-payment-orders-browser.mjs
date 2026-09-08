@@ -36,6 +36,9 @@ try {
     assert.equal(audit.pendingCards, 2);
     assert.equal(audit.noteFields, 0);
     assert.equal(audit.monthlyHidden, true);
+    await page.click('[data-payment-order-tab="expiring"]');
+    await page.waitForFunction(() => !document.getElementById("paymentExpiringBatch")?.hidden);
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, `${width}px toplu təsdiq görünüşündə üfüqi daşma var`);
     await page.click('.navBtn[data-view="paymentCosts"]');
     await page.waitForSelector(".paymentCostRow");
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, `${width}px maya bölməsində üfüqi daşma var`);
@@ -47,6 +50,18 @@ try {
   await page.goto("http://127.0.0.1:10081", { waitUntil: "networkidle" });
   await page.click('.navBtn[data-view="paymentOrders"]');
   await page.waitForSelector(".paymentOrderAdminCard");
+  for (const tab of ["pending", "today", "all", "expiring"]) {
+    await page.click(`[data-payment-order-tab="${tab}"]`);
+    await page.waitForFunction((expected) => document.querySelector('[data-payment-order-tab].active')?.dataset.paymentOrderTab === expected, tab);
+    assert.ok((await page.locator("#paymentOrderProduct option").allTextContents()).includes("Spotify Premium"), `${tab}: Spotify məhsul kataloqunda görünməlidir`);
+    await page.selectOption("#paymentOrderProduct", "spotify");
+    await page.locator("#paymentOrderFilters").evaluate((form) => form.requestSubmit());
+    await page.waitForFunction(() => document.getElementById("paymentOrdersStatus")?.textContent.includes("0 nəticə"));
+    assert.equal(await page.locator(".paymentOrderAdminCard").count(), 0, `${tab}: Spotify olmadıqda 0 nəticə göstərilməlidir`);
+    await page.click(`[data-payment-order-tab="${tab}"]`);
+  }
+  await page.click('[data-payment-order-tab="pending"]');
+  await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 2);
   await page.locator("[data-approve-payment]").first().click();
   await page.locator('.paymentActionDialog button[type="submit"]').click();
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 1);
@@ -92,9 +107,24 @@ try {
   assert.match(await page.textContent("#paymentCurrentMonthReport"), /222\.00/);
   await page.click('[data-payment-order-tab="expiring"]');
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 2);
-  await page.locator("[data-contacted-payment]").first().click();
-  await page.locator('.paymentActionDialog button[type="submit"]').click();
+  await page.selectOption("#paymentOrderProduct", "netflix");
+  await page.locator("#paymentOrderFilters").evaluate((form) => form.requestSubmit());
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 1);
+  await page.click("#paymentSelectAllFiltered");
+  assert.match(await page.textContent("#paymentConfirmSelected"), /1 sifarişi təsdiqlə/);
+  await page.selectOption("#paymentOrderProduct", "capcut");
+  assert.match(await page.textContent("#paymentConfirmSelected"), /Seçilənləri təsdiqlə/);
+  await page.selectOption("#paymentOrderProduct", "netflix");
+  await page.locator("#paymentOrderFilters").evaluate((form) => form.requestSubmit());
+  await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 1);
+  await page.click("#paymentSelectAllFiltered");
+  await page.click("#paymentConfirmSelected");
+  assert.match(await page.textContent(".paymentActionDialog"), /1 bitən Netflix Şəxsi sifarişini/);
+  await page.locator('.paymentActionDialog button[type="submit"]').click();
+  await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 0);
+  await page.waitForFunction(() => document.getElementById("paymentBatchStatus")?.textContent.includes("tamamlanmadı"));
+  assert.match(await page.textContent("#paymentBatchStatus"), /1 tamamlandı, 0 tamamlanmadı/);
+  assert.equal(await page.evaluate(() => window.__fixtureState.calls.filter((call) => call.path === "/api/admin/payment-orders/batch-contacted").length), 1);
 
   await page.evaluate(() => { document.querySelector('.navBtn[data-view="paymentMethods"]').click(); document.getElementById("paymentMethodsView").classList.remove("hidden"); });
   await page.waitForFunction(() => document.querySelectorAll("[data-edit-payment-method]").length === 1);
@@ -129,7 +159,7 @@ try {
   assert.equal(await page.locator("#paymentCostBackfillApply").isDisabled(), false);
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
   await page.close();
-  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: ["pending", "today", "all", "expiring"], filteredFinanceTodayAndAll: true, customDateValidation: true, azDateHeading: true, azArchiveMonthLabel: "Avqust 2026", pagination: "20 + 7 after isolated approval", dayGrouping: true, approveAndRejectMoveRows: true, contactedRemovesRow: true, visibleCardInput: true, profitEditor: true, backfillPreview: true, consoleErrors: 0 }, null, 2));
+  console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: ["pending", "today", "all", "expiring"], fullCatalogInEveryTab: true, spotifyInEveryTab: true, filteredFinanceTodayAndAll: true, customDateValidation: true, azDateHeading: true, azArchiveMonthLabel: "Avqust 2026", pagination: "20 + 7 after isolated approval", dayGrouping: true, approveAndRejectMoveRows: true, expiringBatchFilteredAndIdempotent: true, selectionClearsOnFilterChange: true, visibleCardInput: true, profitEditor: true, backfillPreview: true, consoleErrors: 0 }, null, 2));
 } finally {
   await browser.close();
   fixture.kill();

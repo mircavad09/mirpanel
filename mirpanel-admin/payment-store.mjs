@@ -425,6 +425,20 @@ export function createPaymentStore(config) {
         .order(filters.tab === "pending" ? "created_at" : "completed_at", { ascending: filters.sort === "oldest" })
         .range(from, from + filters.pageSize - 1);
 
+      let selectionQuery = Promise.resolve({ data: [], error: null });
+      if (filters.tab === "expiring") {
+        selectionQuery = applyCommonFilters(
+          client.from("payment_orders").select("id,product_id,product_title"),
+          "completed_at"
+        )
+          .in("status", statuses)
+          .is("contacted_at", null)
+          .not("expiry_notification_on", "is", null)
+          .lte("expiry_notification_on", filters.today)
+          .order("completed_at", { ascending: filters.sort === "oldest" })
+          .limit(5000);
+      }
+
       const countStatus = async (statusValues, mutate = (value) => value) => {
         let countQuery = client.from("payment_orders").select("id", { count: "exact", head: true }).in("status", statusValues);
         countQuery = mutate(countQuery);
@@ -433,7 +447,7 @@ export function createPaymentStore(config) {
         return Number(count || 0);
       };
 
-      const [{ data, error, count }, pendingCount, todayCount, completedCount, expiringCount, productRows, methodRows, statistics] = await Promise.all([
+      const [{ data, error, count }, pendingCount, todayCount, completedCount, expiringCount, productRows, methodRows, statistics, selectionRows] = await Promise.all([
         query,
         countStatus(["reviewing", "new_receipt_requested"]),
         countStatus(["approved", "completed"], (value) => value.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive)),
@@ -450,11 +464,13 @@ export function createPaymentStore(config) {
           p_date_from: filters.dateFrom || null,
           p_date_to: filters.dateTo || null,
           p_today: filters.today
-        })
+        }),
+        selectionQuery
       ]);
       if (error) throw paymentError(error);
       if (productRows.error) throw paymentError(productRows.error);
       if (methodRows.error) throw paymentError(methodRows.error);
+      if (selectionRows.error) throw paymentError(selectionRows.error);
 
       const orders = data || [];
       const history = new Map();
@@ -529,7 +545,11 @@ export function createPaymentStore(config) {
           products: [...products].map(([id, title]) => ({ id, title })),
           plans: [...plans].sort((a, b) => a.localeCompare(b, "az")),
           methods: (methodRows.data || []).map((method) => ({ id: method.id, label: paymentMethodLabel(method) }))
-        }
+        },
+        selection: filters.tab === "expiring" ? {
+          ids: (selectionRows.data || []).map((item) => item.id),
+          total: (selectionRows.data || []).length
+        } : { ids: [], total: 0 }
       };
     },
     async getOrder(id) {
@@ -562,6 +582,28 @@ export function createPaymentStore(config) {
     },
     rejectOrder(id, actor) { return rpc("reject_payment_order", { p_order_id: id, p_reason: "Admin tərəfindən rədd edildi.", p_actor: actor }); },
     contactOrder(id, actor) { return rpc("mark_payment_order_contacted", { p_order_id: id, p_actor: actor }); },
+    async contactExpiringOrders(ids, actor) {
+      const uniqueIds = [...new Set((ids || []).map(safeUuid).filter(Boolean))].slice(0, 500);
+      const completed = [];
+      const skipped = [];
+      const today = bakuDate(new Date());
+      for (const id of uniqueIds) {
+        try {
+          const order = await this.getOrder(id);
+          const eligibleStatus = ["approved", "completed"].includes(order.status);
+          if (!eligibleStatus || order.contacted_at || !order.expiry_notification_on || order.expiry_notification_on > today) {
+            skipped.push({ id, orderCode: order.order_code || "", reason: "Sifarişin vəziyyəti dəyişib." });
+            continue;
+          }
+          const result = await this.contactOrder(id, actor);
+          if (result?.idempotent) skipped.push({ id, orderCode: order.order_code || "", reason: "Sifariş artıq təsdiqlənib." });
+          else completed.push({ id, orderCode: order.order_code || "" });
+        } catch {
+          skipped.push({ id, orderCode: "", reason: "Sifariş təhlükəsiz yoxlamadan keçmədi." });
+        }
+      }
+      return { requested: uniqueIds.length, completed, skipped };
+    },
     cancelCustomerReservation(id, checkoutKey, actor) {
       return rpc("cancel_customer_payment_reservation", { p_reservation_id: id, p_checkout_key: checkoutKey, p_actor: actor });
     },

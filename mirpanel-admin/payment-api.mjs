@@ -426,7 +426,21 @@ export function createPaymentSystem(options) {
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-orders") {
       const orders = await store.listOrders(Object.fromEntries(url.searchParams));
+      const catalog = await loadCatalog();
+      orders.filters ||= {};
+      orders.filters.products = (catalog.products || [])
+        .filter((product) => product && product.active !== false && product.id)
+        .map((product) => ({ id: safeText(product.id, 100), title: safeText(product.title || product.name || "Məhsul", 160) }))
+        .sort((a, b) => a.title.localeCompare(b.title, "az"));
       json(response, 200, orders); return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/admin/payment-orders/batch-contacted") {
+      const body = await readBody(request, 100_000);
+      const ids = Array.isArray(body.ids) ? body.ids : [];
+      if (!ids.length || ids.length > 500 || ids.some((id) => !safeUuid(id))) {
+        throw Object.assign(new Error("Seçilmiş sifariş siyahısı düzgün deyil."), { status: 400, code: "ORDER_BATCH_INVALID" });
+      }
+      json(response, 200, await store.contactExpiringOrders(ids, actorName)); return true;
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-monthly-reports") {
       json(response, 200, await store.monthlyReports()); return true;

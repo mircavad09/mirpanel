@@ -9,8 +9,9 @@
   const paymentState = {
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
+    selectedOrderIds: new Set(), batchBusy: false,
     costs: [], costDirty: new Set(), costSaving: false, costBackfillPreview: null, costBackfillBusy: false,
-    orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] }, appliedFilters: {} },
+    orderMeta: { counts: { pending: 0, today: 0, all: 0, expiring: 0 }, statistics: {}, pagination: { page: 1, pageSize: 20, total: 0, totalPages: 1 }, filters: { products: [], plans: [], methods: [] }, appliedFilters: {}, selection: { ids: [], total: 0 } },
     monthlyReports: { current: null, archives: [], selectedMonth: "", archiveOpen: false },
     orderRequestSequence: 0
   };
@@ -145,8 +146,9 @@
     }
     if (tab === "all") fields.push(["Əlaqə", order.contactedAt ? `Əlaqə saxlanıldı · ${dateTime(order.contactedAt)}` : "Əlaqə saxlanılmayıb"]);
     if (expiring) fields.push(["Vəziyyət", order.expiry?.label || "Müddət müəyyən edilməyib"]);
-    return `<article class="paymentOrderAdminCard status-${escp(order.status)}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
-      <div class="paymentOrderHead"><div><strong title="${escp(order.orderCode)}">${escp(order.orderCode)}</strong>${copyButton(order)}<span class="statusPill status-${escp(expiring ? order.expiry?.code : order.status)}">${escp(expiring ? order.expiry?.label : statusLabel[order.status] || "Yoxlanılır")}</span></div><time datetime="${escp(displayDate || "")}">${escp(dateTime(displayDate))}</time></div>
+    const selected = expiring && paymentState.selectedOrderIds.has(order.id);
+    return `<article class="paymentOrderAdminCard status-${escp(order.status)}${selected ? " isSelected" : ""}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
+      <div class="paymentOrderHead"><div>${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}<strong title="${escp(order.orderCode)}">${escp(order.orderCode)}</strong>${copyButton(order)}<span class="statusPill status-${escp(expiring ? order.expiry?.code : order.status)}">${escp(expiring ? order.expiry?.label : statusLabel[order.status] || "Yoxlanılır")}</span></div><time datetime="${escp(displayDate || "")}">${escp(dateTime(displayDate))}</time></div>
       <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
       <div class="paymentOrderActions">
         ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : '<span class="statusPill">Çek saxlanma müddəti bitib</span>'}
@@ -243,9 +245,38 @@
     syncOrderFilterControls();
   }
 
+  function clearOrderSelection() {
+    paymentState.selectedOrderIds.clear();
+    renderBatchControls();
+  }
+
+  function renderBatchControls() {
+    const expiring = paymentState.orderQuery.tab === "expiring";
+    const panel = $p("paymentExpiringBatch");
+    panel?.toggleAttribute("hidden", !expiring);
+    if (!expiring) return;
+    const allowed = new Set(paymentState.orderMeta.selection?.ids || []);
+    for (const id of [...paymentState.selectedOrderIds]) if (!allowed.has(id)) paymentState.selectedOrderIds.delete(id);
+    const count = paymentState.selectedOrderIds.size;
+    const total = Number(paymentState.orderMeta.selection?.total || 0);
+    if ($p("paymentSelectAllFiltered")) $p("paymentSelectAllFiltered").textContent = `Filtrdəki bütün nəticələri seç (${total})`;
+    if ($p("paymentConfirmSelected")) {
+      $p("paymentConfirmSelected").textContent = count ? `${count} sifarişi təsdiqlə` : "Seçilənləri təsdiqlə";
+      $p("paymentConfirmSelected").disabled = !count || paymentState.batchBusy;
+    }
+    for (const button of [$p("paymentSelectPage"), $p("paymentSelectAllFiltered"), $p("paymentClearSelection")]) if (button) button.disabled = paymentState.batchBusy;
+    document.querySelectorAll("[data-expiring-order-select]").forEach((input) => {
+      const card = input.closest("[data-payment-order-id]");
+      input.checked = paymentState.selectedOrderIds.has(card?.dataset.paymentOrderId || "");
+      input.disabled = paymentState.batchBusy;
+      card?.classList.toggle("isSelected", input.checked);
+    });
+  }
+
   async function setOrderTab(tab) {
     const safeTab = ["pending", "today", "all", "expiring"].includes(tab) ? tab : "pending";
     paymentState.orderQuery = emptyQuery(safeTab);
+    clearOrderSelection();
     renderOrderContext();
     await loadOrders();
   }
@@ -290,7 +321,42 @@
     if ($p("paymentOrdersPageInfo")) $p("paymentOrdersPageInfo").textContent = `Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
     if ($p("paymentOrdersPrevious")) $p("paymentOrdersPrevious").disabled = pagination.page <= 1;
     if ($p("paymentOrdersNext")) $p("paymentOrdersNext").disabled = pagination.page >= pagination.totalPages;
-    updateOrderCounts(); populateOrderFilters(); renderOrderContext(); renderStatistics();
+    updateOrderCounts(); populateOrderFilters(); renderOrderContext(); renderStatistics(); renderBatchControls();
+  }
+
+  async function confirmSelectedExpiringOrders() {
+    if (paymentState.batchBusy || paymentState.orderQuery.tab !== "expiring") return;
+    const allowed = new Set(paymentState.orderMeta.selection?.ids || []);
+    const ids = [...paymentState.selectedOrderIds].filter((id) => allowed.has(id));
+    if (!ids.length) return clearOrderSelection();
+    const productSelect = $p("paymentOrderProduct");
+    const productLabel = paymentState.orderQuery.productId && productSelect?.selectedOptions?.[0]?.textContent
+      ? productSelect.selectedOptions[0].textContent.trim() : "filtrdəki";
+    const confirmed = await paymentActionDialog({
+      title: "Bitən sifarişləri təsdiqlə",
+      message: `${ids.length} bitən ${productLabel} sifarişini təsdiqləmək istəyirsiniz?`,
+      confirmText: "Təsdiqlə"
+    });
+    if (!confirmed) return;
+    paymentState.batchBusy = true; renderBatchControls();
+    const status = $p("paymentBatchStatus");
+    const completed = []; const skipped = [];
+    try {
+      for (let offset = 0; offset < ids.length; offset += 5) {
+        const chunk = ids.slice(offset, offset + 5);
+        if (status) status.textContent = `${completed.length + skipped.length}/${ids.length} yoxlanılır…`;
+        const result = await paymentApi("/api/admin/payment-orders/batch-contacted", { method: "POST", body: JSON.stringify({ ids: chunk }) });
+        completed.push(...(result.completed || [])); skipped.push(...(result.skipped || []));
+        if (status) status.textContent = `${Math.min(ids.length, offset + chunk.length)}/${ids.length} yoxlanıldı…`;
+      }
+      clearOrderSelection();
+      await loadOrders();
+      const summary = `${completed.length} tamamlandı, ${skipped.length} tamamlanmadı.`;
+      if (status) status.textContent = skipped.length ? `${summary} ${skipped.map((item) => item.orderCode || item.id).join(", ")}` : summary;
+      toast(summary);
+    } finally {
+      paymentState.batchBusy = false; renderBatchControls();
+    }
   }
 
   function renderEmails() {
@@ -407,7 +473,7 @@
       if (paymentState.knownPendingCount !== null && nextPending > paymentState.knownPendingCount) toast(`${nextPending - paymentState.knownPendingCount} yeni sifariş var.`);
       paymentState.knownPendingCount = nextPending;
       paymentState.orders = result.orders || [];
-      paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {} };
+      paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
       if (paymentState.orderQuery.page > paymentState.orderMeta.pagination.totalPages && paymentState.orderQuery.page > 1) { paymentState.orderQuery.page = paymentState.orderMeta.pagination.totalPages; return loadOrders(); }
       renderOrders(); if (status) status.textContent = `${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
     } catch (error) {
@@ -467,6 +533,7 @@
 
   function bindEvents() {
     document.addEventListener("input", (event) => {
+      if (event.target.closest?.("#paymentOrderFilters")) clearOrderSelection();
       if (["paymentOrderDateFrom", "paymentOrderDateTo"].includes(event.target.id)) validateCustomDates(true);
       if (event.target.matches('#paymentMethodForm input[name="fullNumber"]')) event.target.value = formatNumber(event.target.value);
       if (event.target.matches('#paymentMethodForm input[name="providerName"]')) {
@@ -491,7 +558,15 @@
       }
     });
     document.addEventListener("change", async (event) => {
+      if (event.target.matches("[data-expiring-order-select]")) {
+        const id = event.target.closest("[data-payment-order-id]")?.dataset.paymentOrderId;
+        if (id) event.target.checked ? paymentState.selectedOrderIds.add(id) : paymentState.selectedOrderIds.delete(id);
+        renderBatchControls();
+        return;
+      }
+      if (event.target.closest?.("#paymentOrderFilters")) clearOrderSelection();
       if (event.target.id === "paymentOrderPeriod") {
+        clearOrderSelection();
         const period = event.target.value;
         document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", period === "custom"));
         paymentState.orderQuery.period = period; paymentState.orderQuery.page = 1;
@@ -594,6 +669,10 @@
         if (event.target.closest("#paymentOrdersPrevious") && paymentState.orderMeta.pagination.page > 1) { paymentState.orderQuery.page -= 1; await loadOrders(); }
         if (event.target.closest("#paymentOrdersNext") && paymentState.orderMeta.pagination.page < paymentState.orderMeta.pagination.totalPages) { paymentState.orderQuery.page += 1; await loadOrders(); }
         if (event.target.closest("#paymentOrderFiltersClear")) { $p("paymentOrderFilters")?.reset(); if ($p("paymentOrderDateError")) $p("paymentOrderDateError").textContent = ""; await setOrderTab(paymentState.orderQuery.tab); }
+        if (event.target.closest("#paymentSelectPage")) { paymentState.orders.forEach((order) => paymentState.selectedOrderIds.add(order.id)); renderBatchControls(); }
+        if (event.target.closest("#paymentSelectAllFiltered")) { paymentState.selectedOrderIds = new Set(paymentState.orderMeta.selection?.ids || []); renderBatchControls(); }
+        if (event.target.closest("#paymentClearSelection")) clearOrderSelection();
+        if (event.target.closest("#paymentConfirmSelected")) await confirmSelectedExpiringOrders();
         const card = event.target.closest("[data-payment-order-id]");
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
@@ -609,6 +688,7 @@
       if (event.target.id === "paymentOrderFilters") {
         event.preventDefault();
         if (!validateCustomDates(true)) return;
+        clearOrderSelection();
         Object.assign(paymentState.orderQuery, { search: $p("paymentOrderSearch")?.value.trim() || "", productId: $p("paymentOrderProduct")?.value || "", planName: $p("paymentOrderPlan")?.value || "", methodId: $p("paymentOrderMethod")?.value || "", period: $p("paymentOrderPeriod")?.value || "all", dateFrom: $p("paymentOrderDateFrom")?.value || "", dateTo: $p("paymentOrderDateTo")?.value || "", sort: $p("paymentOrderSort")?.value || "newest", page: 1 });
         await loadOrders(); return;
       }

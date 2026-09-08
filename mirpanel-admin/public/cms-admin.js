@@ -178,6 +178,15 @@
       <p id="paymentOrderDateError" class="paymentOrderDateError wide" role="alert" aria-live="polite"></p>
       <div class="paymentOrderFilterActions"><button class="btn primary" type="submit" id="paymentOrderFiltersApply">Tətbiq et</button><button class="btn" type="button" id="paymentOrderFiltersClear">Təmizlə</button></div>
     </form>
+    <section id="paymentExpiringBatch" class="paymentExpiringBatch" hidden aria-label="Bitən məhsullar üçün toplu təsdiq">
+      <div class="paymentExpiringBatchActions">
+        <button class="btn" type="button" id="paymentSelectPage">Bu səhifədəkiləri seç</button>
+        <button class="btn" type="button" id="paymentSelectAllFiltered">Filtrdəki bütün nəticələri seç (0)</button>
+        <button class="btn" type="button" id="paymentClearSelection">Seçimi təmizlə</button>
+        <button class="btn primary" type="button" id="paymentConfirmSelected" disabled>Seçilənləri təsdiqlə</button>
+      </div>
+      <p id="paymentBatchStatus" class="paymentOrdersStatus" role="status" aria-live="polite"></p>
+    </section>
     <div id="paymentOrdersStatus" class="paymentOrdersStatus" role="status" aria-live="polite"></div>
     <div id="paymentOrdersList" class="paymentOrdersAdminList" aria-live="polite"></div>
     <nav class="paymentOrderPagination" aria-label="Sifariş səhifələri"><button class="btn" type="button" id="paymentOrdersPrevious">Əvvəlki</button><span id="paymentOrdersPageInfo">Səhifə 1 / 1</span><button class="btn" type="button" id="paymentOrdersNext">Növbəti</button></nav>`));
