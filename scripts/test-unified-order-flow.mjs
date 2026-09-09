@@ -9,6 +9,7 @@ import { activeProductsWithSlugs, generateProductPageFiles } from "../mirpanel-a
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const nodeModules = process.env.MIRPANEL_NODE_MODULES;
 const browserPath = process.env.MIRPANEL_BROWSER_PATH;
+const visualDir = process.env.MIRPANEL_VISUAL_DIR || "";
 if (!nodeModules || !browserPath) throw new Error("Browser test runtime paths are required.");
 const { chromium } = await import(pathToFileURL(path.join(nodeModules, "playwright", "index.mjs")));
 
@@ -85,6 +86,9 @@ async function fillCustomerForm(page) {
       if (values[0]) await control.selectOption(values[0]);
       continue;
     }
+    const pinDigit = await control.getAttribute("data-pin-digit");
+    if (pinDigit !== null) { await control.fill("1"); continue; }
+    if (await control.getAttribute("aria-hidden") === "true") continue;
     const codeLength = Number(await control.getAttribute("data-code-length")) || 0;
     const type = await control.getAttribute("type");
     if (await control.getAttribute("readonly") !== null) continue;
@@ -139,6 +143,55 @@ try {
     }
   }
 
+  const netflixModalChecks = [];
+  for (const width of [320, 390, 768, 1440]) {
+    await page.setViewportSize({ width, height: width < 500 ? 720 : 900 });
+    await page.goto("http://127.0.0.1:10082/mehsul/netflix-sexsi", { waitUntil: "networkidle" });
+    await page.waitForTimeout(3100);
+    await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
+    const modal = page.locator("#modal.netflixPersonalFormOpen");
+    assert.equal(await modal.count(), 1, `${width}px: Netflix Şəxsi modal sinfi yoxdur`);
+    assert.match(await modal.innerText(), /NETFLIX · ŞƏXSİ PROFİL/);
+    assert.match(await modal.innerText(), /Bu, sayt qeydiyyatı deyil/);
+    assert.match(await modal.innerText(), /Netflix profilinizi yaradın/);
+    assert.match(await modal.innerText(), /Saytda hesab və ya qeydiyyat yaratmırsınız/);
+    assert.equal(await modal.locator(".netflixPersonalPrice").count(), 1, `${width}px: qiymət bir dəfə görünmür`);
+    assert.equal(await modal.locator(".netflixPinDigit").count(), 4, `${width}px: PIN qutuları dörd deyil`);
+    assert.equal(await modal.locator('input[name="name"]').count(), 1, "name backend açarı dəyişib");
+    assert.equal(await modal.locator('input[name="code_4"]').count(), 1, "code_4 backend açarı dəyişib");
+    assert.equal(await page.locator("#netflixContinueButton").isDisabled(), true);
+    assert.equal(await page.evaluate(() => document.activeElement?.id), "netflixProfileName", "İlk fokus profil adı deyil");
+    await page.fill("#netflixProfileName", "Aysel");
+    await page.locator('.netflixPinDigit').first().focus();
+    await page.keyboard.type("1234");
+    assert.equal(await page.inputValue("#netflixPinValue"), "1234");
+    assert.equal(await page.locator("#netflixContinueButton").isEnabled(), true);
+    await page.locator('.netflixPinDigit').nth(3).press("Backspace");
+    assert.equal(await page.inputValue("#netflixPinValue"), "123");
+    assert.equal(await page.locator("#netflixContinueButton").isDisabled(), true);
+    await page.locator('.netflixPinDigit').first().evaluate((element) => {
+      const event = new Event("paste", { bubbles: true, cancelable: true });
+      Object.defineProperty(event, "clipboardData", { value: { getData: () => "9876" } });
+      element.dispatchEvent(event);
+    });
+    assert.equal(await page.inputValue("#netflixPinValue"), "9876", "4 rəqəmli paste paylanmadı");
+    assert.equal(await page.locator("#netflixContinueButton").isEnabled(), true);
+    const geometry = await page.evaluate(() => ({
+      pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+      card: (() => { const el=document.querySelector("#modal .modalCard"); const r=el.getBoundingClientRect(); const s=getComputedStyle(el); return { left:r.left,right:r.right,width:r.width,cssWidth:s.width,border:s.borderColor,styleLoaded:document.getElementById("mirpanelOrderRuntimeStyles")?.textContent.includes("netflixPersonalFormOpen") }; })(),
+      bottomVisible: document.querySelector("#modal .mBottom")?.offsetParent !== null
+    }));
+    assert.equal(geometry.pageOverflow, false, `${width}px: üfüqi daşma`);
+    assert.ok(geometry.card.left >= 15 && geometry.card.right <= width - 15, `${width}px: modal 16px kənar boşluğunu pozur ${JSON.stringify(geometry.card)}`);
+    assert.equal(geometry.bottomVisible, false, `${width}px: köhnə qiymət sətri görünür`);
+    if (visualDir) {
+      fs.mkdirSync(visualDir, { recursive: true });
+      await page.screenshot({ path: path.join(visualDir, `netflix-personal-${width}.png`), fullPage: false });
+    }
+    netflixModalChecks.push({ width, modalWidth: Math.round(geometry.card.width), overflow: false });
+    await page.click("#universalFormCancel");
+  }
+
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("http://127.0.0.1:10082/mehsul/tiktok-jeton", { waitUntil: "networkidle" });
   await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
@@ -172,6 +225,7 @@ try {
     unavailableProducts: results.filter((item) => item.result === "unavailable").length,
     futureProduct: "payment",
     viewports: [320, 390, 768, 1440],
+    netflixPersonalModal: netflixModalChecks,
     reservationRequests,
     consoleErrors: pageErrors.length
   }, null, 2));

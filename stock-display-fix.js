@@ -464,7 +464,7 @@
   }
 
   function isNetflixCode4Form(form) {
-    return isCode4Form(form) && String(form?.dataset?.productId || "").toLowerCase() === "netflix";
+    return isCode4Form(form) && !form?.classList?.contains("netflixPersonalForm") && String(form?.dataset?.productId || "").toLowerCase() === "netflix";
   }
 
   function cleanCodeInput(input) {

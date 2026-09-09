@@ -100,6 +100,95 @@
       .premiumOrderForm .mpBtn:hover { transform: translateY(-1px); filter: brightness(1.05); }
       .premiumOrderForm .mpBtn:active { transform: translateY(1px) scale(.99); }
 
+      #modal.netflixPersonalFormOpen {
+        backdrop-filter: blur(18px) saturate(.82);
+        -webkit-backdrop-filter: blur(18px) saturate(.82);
+      }
+      #modal.netflixPersonalFormOpen .modalCard {
+        width: min(520px, calc(100vw - 32px)) !important;
+        max-width: calc(100vw - 32px) !important;
+        border: 1px solid rgba(229, 9, 20, .38);
+        border-radius: 24px;
+        background:
+          radial-gradient(circle at 14% -8%, rgba(229, 9, 20, .19), transparent 38%),
+          linear-gradient(155deg, rgba(18, 18, 21, .985), rgba(5, 5, 7, .99));
+        box-shadow: 0 30px 90px rgba(0, 0, 0, .72), 0 0 34px rgba(229, 9, 20, .12), inset 0 1px 0 rgba(255, 255, 255, .055);
+        padding: 24px;
+      }
+      #modal.netflixPersonalFormOpen .mTop,
+      #modal.netflixPersonalFormOpen .mPlansTitle,
+      #modal.netflixPersonalFormOpen .mPlans,
+      #modal.netflixPersonalFormOpen .mInfoBox,
+      #modal.netflixPersonalFormOpen #mDesc,
+      #modal.netflixPersonalFormOpen .mBottom { display: none !important; }
+      #modal.netflixPersonalFormOpen #mForm { margin-top: 0 !important; }
+      #modal.netflixPersonalFormOpen .close {
+        top: 17px; right: 17px; z-index: 4; width: 36px; height: 36px; padding: 0;
+        border: 1px solid rgba(255, 255, 255, .1); border-radius: 12px; background: rgba(255, 255, 255, .055);
+        color: rgba(255, 255, 255, .76); font-size: 25px; font-weight: 400; line-height: 1;
+      }
+      #modal.netflixPersonalFormOpen .close:hover,
+      #modal.netflixPersonalFormOpen .close:focus-visible { border-color: rgba(229, 9, 20, .48); color: #fff; box-shadow: 0 0 0 3px rgba(229, 9, 20, .1); }
+      .netflixPersonalForm { display: grid; gap: 18px; padding-top: 0; }
+      .netflixPersonalHeader { display: grid; gap: 16px; padding-right: 42px; }
+      .netflixPersonalTopline { display: flex; align-items: center; gap: 10px; min-width: 0; }
+      .netflixPersonalLogo {
+        width: 32px; height: 32px; flex: 0 0 32px; object-fit: contain; border-radius: 9px;
+        background: #070707; box-shadow: 0 0 18px rgba(229, 9, 20, .2);
+      }
+      .netflixPersonalEyebrow { color: #ff5a62; font-size: 11px; line-height: 1.2; font-weight: 850; letter-spacing: .12em; white-space: nowrap; }
+      .netflixPersonalPrice {
+        margin-left: auto; flex: 0 0 auto; padding: 7px 10px; border: 1px solid rgba(229, 9, 20, .32); border-radius: 999px;
+        background: rgba(229, 9, 20, .105); color: #fff; font-size: 13px; line-height: 1; font-weight: 850;
+      }
+      .netflixPersonalTitle { margin: 0; color: #fff; font-size: clamp(24px, 5vw, 31px); line-height: 1.12; font-weight: 880; letter-spacing: -.025em; }
+      .netflixPersonalIntro { margin: -8px 0 0; color: rgba(244, 244, 245, .75); font-size: 14px; line-height: 1.55; }
+      .netflixPersonalIntro strong { color: #fff; font-weight: 800; }
+      .netflixPersonalFields { display: grid; gap: 16px; }
+      .netflixPersonalField { display: grid; gap: 8px; min-width: 0; margin: 0; padding: 0; border: 0; }
+      .netflixPersonalFieldLabel { color: rgba(255, 255, 255, .92); font-size: 13px; line-height: 1.3; font-weight: 800; }
+      .netflixPersonalField input:not(.netflixPinSource) {
+        width: 100%; min-height: 54px; padding: 14px 16px; border: 1px solid rgba(255, 255, 255, .13); border-radius: 15px;
+        outline: none; background: rgba(2, 2, 4, .72); color: #fff; font: 650 16px/1.2 inherit;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, .035); transition: border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      }
+      .netflixPersonalField input:not(.netflixPinSource)::placeholder { color: rgba(255, 255, 255, .36); font-weight: 500; }
+      .netflixPersonalField input:not(.netflixPinSource):focus { border-color: rgba(229, 9, 20, .72); background: rgba(9, 3, 4, .88); box-shadow: 0 0 0 4px rgba(229, 9, 20, .1), 0 0 24px rgba(229, 9, 20, .1); }
+      .netflixPersonalHelp { margin: 0; color: rgba(228, 228, 231, .57); font-size: 12px; line-height: 1.45; }
+      .netflixPinSource { position: absolute !important; width: 1px !important; height: 1px !important; overflow: hidden !important; opacity: 0 !important; pointer-events: none !important; }
+      .netflixPinBoxes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; max-width: 310px; }
+      .netflixPinBoxes .netflixPinDigit {
+        min-width: 0; width: 100%; height: 58px; min-height: 58px; padding: 0 !important; text-align: center;
+        border-radius: 15px !important; font-size: 22px !important; font-weight: 850 !important; font-variant-numeric: tabular-nums;
+      }
+      .netflixPersonalNote { margin: -2px 0 0; padding: 10px 12px; border-left: 2px solid rgba(229, 9, 20, .62); border-radius: 0 10px 10px 0; background: rgba(229, 9, 20, .055); color: rgba(255, 255, 255, .72); font-size: 12px; line-height: 1.4; }
+      .netflixPersonalActions { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; margin-top: 0; }
+      .netflixPersonalActions .mpBtn { min-height: 52px; border-radius: 14px; font: 850 15px/1 inherit; transition: transform .18s ease, filter .18s ease, opacity .18s ease, box-shadow .18s ease; }
+      .netflixPersonalActions .orderConfirmationCancel { border: 1px solid rgba(255, 255, 255, .12); background: rgba(255, 255, 255, .055); color: rgba(255, 255, 255, .8); }
+      .netflixPersonalActions .netflixContinueBtn { border: 1px solid rgba(255, 93, 101, .24); background: linear-gradient(135deg, #e50914, #a90810); color: #fff; box-shadow: 0 14px 30px rgba(229, 9, 20, .22), inset 0 1px 0 rgba(255, 255, 255, .18); }
+      .netflixPersonalActions .netflixContinueBtn:disabled { cursor: not-allowed; opacity: .42; filter: saturate(.45); box-shadow: none; }
+      .netflixPersonalActions .mpBtn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.06); }
+      @media (max-width: 390px) {
+        #modal.netflixPersonalFormOpen .modalCard { width: calc(100vw - 32px) !important; padding: 20px 16px 17px; border-radius: 20px; max-height: calc(100dvh - 24px); overflow-y: auto; }
+        .netflixPersonalForm { gap: 15px; }
+        .netflixPersonalHeader { gap: 13px; padding-right: 34px; }
+        .netflixPersonalTopline { gap: 8px; }
+        .netflixPersonalLogo { width: 29px; height: 29px; flex-basis: 29px; }
+        .netflixPersonalEyebrow { font-size: 9px; letter-spacing: .085em; }
+        .netflixPersonalPrice { padding: 6px 8px; font-size: 11px; }
+        .netflixPersonalTitle { font-size: 23px; }
+        .netflixPersonalIntro { font-size: 12.5px; line-height: 1.48; }
+        .netflixPersonalFields { gap: 13px; }
+        .netflixPersonalField input:not(.netflixPinSource) { min-height: 49px; font-size: 15px; }
+        .netflixPinBoxes { gap: 7px; max-width: none; }
+        .netflixPinBoxes .netflixPinDigit { height: 51px; min-height: 51px; font-size: 20px !important; }
+        .netflixPersonalActions .mpBtn { min-height: 48px; font-size: 14px; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        #modal.netflixPersonalFormOpen .modalCard, #modal.netflixPersonalFormOpen .mpBtn, #modal.netflixPersonalFormOpen input { transition: none !important; animation: none !important; }
+        #modal.netflixPersonalFormOpen .modalCard { box-shadow: 0 24px 70px rgba(0, 0, 0, .68); }
+      }
+
       #modal.hboMaxOrderFormOpen .modalCard {
         width: min(540px, calc(100vw - 28px));
         border: 1px solid rgba(122, 92, 255, .74);
@@ -844,6 +933,26 @@
     }
   }
 
+  function setNetflixPersonalFormMode(enabled) {
+    const modal = document.getElementById("modal");
+    const closeButton = document.getElementById("closeModal");
+    modal?.classList.toggle("netflixPersonalFormOpen", Boolean(enabled));
+    document.body.classList.toggle("netflixPersonalFormActive", Boolean(enabled));
+    if (!closeButton) return;
+    if (enabled) {
+      closeButton.dataset.netflixOriginalLabel ||= closeButton.textContent || "Bağla ✕";
+      closeButton.textContent = "×";
+      closeButton.setAttribute("aria-label", "Bağla");
+      closeButton.title = "Bağla";
+    } else if (closeButton.dataset.netflixOriginalLabel) {
+      closeButton.textContent = closeButton.dataset.netflixOriginalLabel;
+      closeButton.removeAttribute("aria-label");
+      closeButton.removeAttribute("title");
+      delete closeButton.dataset.netflixOriginalLabel;
+      document.querySelector("#modal .modalCard")?.removeAttribute("aria-labelledby");
+    }
+  }
+
   function setHboFormMode(enabled) {
     document.getElementById("modal")?.classList.toggle("hboMaxOrderFormOpen", Boolean(enabled));
     if (enabled) setOrderConfirmationMode(false);
@@ -965,6 +1074,10 @@
     return token.includes("hbomax") || token.includes("hbo max") || token.includes("hbo");
   }
 
+  function isNetflixPersonalProduct(product) {
+    return String(product?.id || "").toLowerCase() === "netflix";
+  }
+
   function codeLengthForField(field) {
     const key = String(field?.key || "").toLowerCase();
     const label = String(field?.label || "").toLowerCase();
@@ -1081,6 +1194,7 @@
     setOrderConfirmationMode(false);
     setSpotifyConfirmationMode(false);
     setHboFormMode(false);
+    setNetflixPersonalFormMode(false);
     document.getElementById("modal")?.classList.add("show");
     lockBodyScroll();
 
@@ -1113,6 +1227,7 @@
     setSpotifyConfirmationMode(false);
     setOrderConfirmationMode(false);
     setHboFormMode(false);
+    setNetflixPersonalFormMode(false);
     if (typeof closeModal === "function") {
       closeModal();
       return;
@@ -1330,9 +1445,11 @@
     }
 
     const isHbo = isHboProduct(product);
+    const isNetflixPersonal = isNetflixPersonalProduct(product);
     setOrderConfirmationMode(false);
-    setPremiumFormMode(!isHbo);
+    setPremiumFormMode(!isHbo && !isNetflixPersonal);
     setHboFormMode(isHbo);
+    setNetflixPersonalFormMode(isNetflixPersonal);
     setFooter("");
     const formClass = isHbo
       ? "mpForm universalOrderForm hboMaxOrderForm"
@@ -1341,7 +1458,45 @@
     const formDescription = product.formDescription || (isHbo ? "HBO Max profil adını və 4 rəqəmli profil kodunu daxil edin." : "");
     const hint = formDescription ? `<p class="hboMaxOrderHint">${escapeHtml(formDescription)}</p>` : "";
 
-    renderModalContent(`
+    if (isNetflixPersonal) {
+      const nameField = fields.find((field) => field.key === "name") || fields[0];
+      const pinField = fields.find((field) => field.key === "code_4") || fields.find((field) => codeLengthForField(field) === 4);
+      const initialPin = String(pinField?.defaultValue || "").replace(/\D/g, "").slice(0, 4);
+      renderModalContent(`
+        <form class="mpForm universalOrderForm netflixPersonalForm" id="universalOrderForm" data-product-id="${escapeHtml(product.id || "")}" novalidate>
+          <header class="netflixPersonalHeader">
+            <div class="netflixPersonalTopline">
+              <img class="netflixPersonalLogo" src="/assets/netflix.png" alt="" aria-hidden="true">
+              <span class="netflixPersonalEyebrow">NETFLIX · ŞƏXSİ PROFİL</span>
+              <span class="netflixPersonalPrice" aria-label="Seçilmiş planın qiyməti">${escapeHtml(priceText(product, plan))}</span>
+            </div>
+            <h2 class="netflixPersonalTitle" id="netflixPersonalTitle">Netflix profilinizi yaradın</h2>
+            <p class="netflixPersonalIntro"><strong>Bu, sayt qeydiyyatı deyil.</strong> Netflix hesabında sizə açılacaq şəxsi profil üçün adınızı və 4 rəqəmli PIN kodunuzu yazın.</p>
+          </header>
+          <div class="netflixPersonalFields">
+            <label class="netflixPersonalField" for="netflixProfileName">
+              <span class="netflixPersonalFieldLabel">Profil adı</span>
+              <input id="netflixProfileName" type="text" name="${escapeHtml(nameField?.key || "name")}" data-label="${escapeHtml(nameField?.label || "Ad")}" placeholder="Məsələn: Aysel" autocomplete="name" value="${escapeHtml(nameField?.defaultValue || "")}" ${nameField?.required === false ? "" : "required"}>
+              <small class="netflixPersonalHelp">Bu ad Netflix profilinizdə görünəcək.</small>
+            </label>
+            <fieldset class="netflixPersonalField" aria-describedby="netflixPinHelp">
+              <legend class="netflixPersonalFieldLabel">4 rəqəmli profil PIN-i</legend>
+              <input class="netflixPinSource" id="netflixPinValue" type="text" name="${escapeHtml(pinField?.key || "code_4")}" data-label="${escapeHtml(pinField?.label || "Otaq kodu")}" data-code-length="4" inputmode="numeric" maxlength="4" pattern="\d{4}" value="${escapeHtml(initialPin)}" ${pinField?.required === false ? "" : "required"} tabindex="-1" aria-hidden="true">
+              <div class="netflixPinBoxes" role="group" aria-label="4 rəqəmli profil PIN-i">
+                ${[0, 1, 2, 3].map((index) => `<input class="netflixPinDigit" data-pin-digit="${index}" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="PIN ${index + 1}-ci rəqəm" value="${escapeHtml(initialPin[index] || "")}">`).join("")}
+              </div>
+              <small class="netflixPersonalHelp" id="netflixPinHelp">Bu kod yalnız Netflix profilinizə giriş üçündür. PIN-i yadda saxlayın.</small>
+            </fieldset>
+          </div>
+          <p class="netflixPersonalNote">Saytda hesab və ya qeydiyyat yaratmırsınız.</p>
+          <div class="netflixPersonalActions">
+            <button class="mpBtn orderConfirmationCancel" id="universalFormCancel" type="button">Ləğv et</button>
+            <button class="mpBtn netflixContinueBtn" id="netflixContinueButton" type="submit" disabled aria-disabled="true">Davam et →</button>
+          </div>
+        </form>
+      `);
+      document.querySelector("#modal .modalCard")?.setAttribute("aria-labelledby", "netflixPersonalTitle");
+    } else renderModalContent(`
       <form class="${formClass}" id="universalOrderForm" data-product-id="${escapeHtml(product.id || "")}">
         <div class="mpFormTitle">${escapeHtml(title)}</div>
         ${hint}
@@ -1388,6 +1543,46 @@
     `);
 
     document.getElementById("universalFormCancel").onclick = closeOrderModal;
+    if (isNetflixPersonal) {
+      const form = document.getElementById("universalOrderForm");
+      const nameInput = document.getElementById("netflixProfileName");
+      const sourceInput = document.getElementById("netflixPinValue");
+      const digits = [...form.querySelectorAll("[data-pin-digit]")];
+      const continueButton = document.getElementById("netflixContinueButton");
+      const syncPin = () => {
+        sourceInput.value = digits.map((input) => input.value.replace(/\D/g, "").slice(0, 1)).join("");
+        const ready = Boolean(nameInput.value.trim()) && /^\d{4}$/.test(sourceInput.value);
+        continueButton.disabled = !ready;
+        continueButton.setAttribute("aria-disabled", String(!ready));
+      };
+      const distributePin = (value, start = 0) => {
+        const numbers = String(value || "").replace(/\D/g, "").slice(0, 4 - start);
+        [...numbers].forEach((number, offset) => { digits[start + offset].value = number; });
+        syncPin();
+        digits[Math.min(start + numbers.length, 3)]?.focus();
+      };
+      nameInput.addEventListener("input", syncPin);
+      digits.forEach((input, index) => {
+        input.addEventListener("input", () => {
+          const numbers = input.value.replace(/\D/g, "");
+          input.value = numbers.slice(-1);
+          syncPin();
+          if (input.value && index < digits.length - 1) digits[index + 1].focus();
+        });
+        input.addEventListener("keydown", (event) => {
+          if (event.key === "Backspace" && !input.value && index > 0) {
+            event.preventDefault(); digits[index - 1].value = ""; digits[index - 1].focus(); syncPin();
+          }
+          if (event.key === "ArrowLeft" && index > 0) { event.preventDefault(); digits[index - 1].focus(); }
+          if (event.key === "ArrowRight" && index < digits.length - 1) { event.preventDefault(); digits[index + 1].focus(); }
+        });
+        input.addEventListener("paste", (event) => {
+          event.preventDefault(); distributePin(event.clipboardData?.getData("text") || "", index);
+        });
+      });
+      syncPin();
+      requestAnimationFrame(() => nameInput.focus());
+    }
     document.querySelectorAll("#universalOrderForm [data-code-length]").forEach((input) => {
       input.addEventListener("input", () => {
         const codeLength = Number(input.dataset.codeLength) || 0;
@@ -1397,7 +1592,7 @@
     document.getElementById("universalOrderForm").onsubmit = (event) => {
       event.preventDefault();
       const values = {};
-      const controls = event.currentTarget.querySelectorAll("input, textarea, select");
+      const controls = event.currentTarget.querySelectorAll("input:not([data-pin-digit]), textarea, select");
 
       for (const control of controls) {
         const value = control.value.trim();
@@ -1643,7 +1838,19 @@
   );
 
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && document.getElementById("modal")?.classList.contains("show")) closeOrderModal();
+    const modal = document.getElementById("modal");
+    if (event.key === "Escape" && modal?.classList.contains("show")) {
+      closeOrderModal();
+      return;
+    }
+    if (event.key !== "Tab" || !modal?.classList.contains("show") || !modal.classList.contains("netflixPersonalFormOpen")) return;
+    const focusable = [...modal.querySelectorAll('button:not([disabled]), input:not([disabled]):not([tabindex="-1"]), [href], [tabindex]:not([tabindex="-1"])')]
+      .filter((element) => element.offsetParent !== null);
+    if (!focusable.length) return;
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+    if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
   });
 
   document.addEventListener("click", (event) => {
