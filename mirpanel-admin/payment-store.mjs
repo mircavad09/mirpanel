@@ -565,7 +565,7 @@ export function createPaymentStore(config) {
       return data || null;
     },
     approveOrder(id, durationMonths, actor) {
-      return rpc("approve_payment_order_v6", {
+      return rpc("approve_payment_order_v7", {
         p_order_id: id,
         p_duration_months: durationMonths || null,
         p_actor: actor

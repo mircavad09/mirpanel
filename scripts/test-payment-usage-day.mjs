@@ -10,7 +10,7 @@ const migration = read("supabase/migrations/202608150001_payment_usage_day_and_m
 const store = read("mirpanel-admin/payment-store.mjs");
 const admin = read("mirpanel-admin/public/payment-admin.js");
 
-const functionSource = (name) => migration.match(
+const functionSource = (name, source = migration) => source.match(
   new RegExp(`create or replace function public\\.${name}[\\s\\S]*?(?=create or replace function|revoke execute|commit;)`)
 )?.[0] || "";
 
@@ -43,7 +43,15 @@ assert.ok(softDelete.includes("archived = true"));
 assert.ok(softDelete.includes("deleted_at = coalesce(deleted_at, now())"));
 assert.equal(softDelete.includes("delete from payment_methods"), false);
 assert.ok(store.includes('.eq("usage_day", today)'));
-assert.ok(store.includes('rpc("approve_payment_order_v6"'));
+assert.ok(store.includes('rpc("approve_payment_order_v7"'));
+
+const oldOrderMigration = read("supabase/migrations/202609090001_old_order_approval_limit_isolation.sql");
+const approveV7 = functionSource("approve_payment_order_v7", oldOrderMigration);
+assert.ok(approveV7.includes("payment_baku_date(v_reservation.created_at)"));
+assert.ok(approveV7.includes("v_count_limit := v_limit_day=v_current_day"));
+assert.ok(approveV7.includes("if v_count_limit then"));
+assert.ok(approveV7.includes("completed_at=v_completed_at"));
+assert.ok(approveV7.includes("'limitCounted',v_count_limit"));
 assert.ok(admin.includes("paymentState.methodActions.has(methodId)"));
 assert.ok(admin.includes("Köhnə sifariş tarixçəsi qorunacaq."));
 
