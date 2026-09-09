@@ -169,20 +169,28 @@
       .netflixPersonalActions .netflixContinueBtn:disabled { cursor: not-allowed; opacity: .42; filter: saturate(.45); box-shadow: none; }
       .netflixPersonalActions .mpBtn:not(:disabled):hover { transform: translateY(-1px); filter: brightness(1.06); }
       @media (max-width: 390px) {
-        #modal.netflixPersonalFormOpen .modalCard { width: calc(100vw - 32px) !important; padding: 20px 16px 17px; border-radius: 20px; max-height: calc(100dvh - 24px); overflow-y: auto; }
-        .netflixPersonalForm { gap: 15px; }
-        .netflixPersonalHeader { gap: 13px; padding-right: 34px; }
+        #modal.netflixPersonalFormOpen { inset: var(--netflix-vv-top, 0px) 0 auto; height: var(--netflix-vv-height, 100dvh); padding: max(8px, env(safe-area-inset-top, 0px)) 8px max(8px, env(safe-area-inset-bottom, 0px)); overflow: hidden; overscroll-behavior: none; }
+        #modal.netflixPersonalFormOpen .modalCard { width: calc(100vw - 24px) !important; padding: 14px 14px 12px; border-radius: 20px; max-height: calc(100vh - 16px); max-height: calc(var(--netflix-vv-height, 100dvh) - max(16px, env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))); overflow: hidden; }
+        .netflixPersonalForm { gap: 9px; }
+        .netflixPersonalHeader { gap: 7px; padding-right: 32px; }
         .netflixPersonalTopline { gap: 8px; }
         .netflixPersonalLogo { width: 29px; height: 29px; flex-basis: 29px; }
         .netflixPersonalEyebrow { font-size: 9px; letter-spacing: .085em; }
         .netflixPersonalPrice { padding: 6px 8px; font-size: 11px; }
-        .netflixPersonalTitle { font-size: 23px; }
-        .netflixPersonalIntro { font-size: 12.5px; line-height: 1.48; }
-        .netflixPersonalFields { gap: 13px; }
-        .netflixPersonalField input:not(.netflixPinSource) { min-height: 49px; font-size: 15px; }
+        .netflixPersonalTitle { font-size: 21px; line-height: 1.08; }
+        .netflixPersonalIntro { margin-top: -2px; font-size: 12px; line-height: 1.38; }
+        .netflixPersonalFields { gap: 9px; }
+        .netflixPersonalField { gap: 5px; }
+        .netflixPersonalField input:not(.netflixPinSource) { min-height: 46px; padding: 11px 13px; font-size: 15px; }
+        .netflixPersonalHelp { font-size: 11px; line-height: 1.25; }
         .netflixPinBoxes { gap: 7px; max-width: none; }
-        .netflixPinBoxes .netflixPinDigit { height: 51px; min-height: 51px; font-size: 20px !important; }
+        .netflixPinBoxes .netflixPinDigit { height: 46px; min-height: 46px; font-size: 20px !important; }
         .netflixPersonalActions .mpBtn { min-height: 48px; font-size: 14px; }
+        body.netflixKeyboardOpen #modal.netflixPersonalFormOpen { align-items: flex-end; }
+        body.netflixKeyboardOpen .netflixPersonalHeader, body.netflixKeyboardOpen .netflixPersonalHelp { display: none; }
+        body.netflixKeyboardOpen #modal.netflixPersonalFormOpen .modalCard { padding: 10px 12px; }
+        body.netflixKeyboardOpen .netflixPersonalForm, body.netflixKeyboardOpen .netflixPersonalFields { gap: 6px; }
+        body.netflixKeyboardOpen .netflixPersonalField input:not(.netflixPinSource), body.netflixKeyboardOpen .netflixPinBoxes .netflixPinDigit { min-height: 42px; height: 42px; }
       }
       @media (prefers-reduced-motion: reduce) {
         #modal.netflixPersonalFormOpen .modalCard, #modal.netflixPersonalFormOpen .mpBtn, #modal.netflixPersonalFormOpen input { transition: none !important; animation: none !important; }
@@ -938,6 +946,12 @@
     const closeButton = document.getElementById("closeModal");
     modal?.classList.toggle("netflixPersonalFormOpen", Boolean(enabled));
     document.body.classList.toggle("netflixPersonalFormActive", Boolean(enabled));
+    if (enabled) syncNetflixVisualViewport();
+    else {
+      document.body.classList.remove("netflixKeyboardOpen");
+      modal?.style.removeProperty("--netflix-vv-height");
+      modal?.style.removeProperty("--netflix-vv-top");
+    }
     if (!closeButton) return;
     if (enabled) {
       closeButton.dataset.netflixOriginalLabel ||= closeButton.textContent || "Bağla ✕";
@@ -952,6 +966,20 @@
       document.querySelector("#modal .modalCard")?.removeAttribute("aria-labelledby");
     }
   }
+
+  function syncNetflixVisualViewport() {
+    const modal = document.getElementById("modal");
+    const viewport = window.visualViewport;
+    if (!modal?.classList.contains("netflixPersonalFormOpen") || window.innerWidth > 390) return;
+    const visibleHeight = viewport?.height || window.innerHeight;
+    const keyboardOpen = Boolean(viewport && window.innerHeight - visibleHeight > 120);
+    modal.style.setProperty("--netflix-vv-height", `${Math.round(visibleHeight)}px`);
+    modal.style.setProperty("--netflix-vv-top", `${Math.round(viewport?.offsetTop || 0)}px`);
+    document.body.classList.toggle("netflixKeyboardOpen", keyboardOpen);
+  }
+
+  window.visualViewport?.addEventListener("resize", syncNetflixVisualViewport);
+  window.visualViewport?.addEventListener("scroll", syncNetflixVisualViewport);
 
   function setHboFormMode(enabled) {
     document.getElementById("modal")?.classList.toggle("hboMaxOrderFormOpen", Boolean(enabled));
@@ -1471,13 +1499,13 @@
               <span class="netflixPersonalPrice" aria-label="Seçilmiş planın qiyməti">${escapeHtml(priceText(product, plan))}</span>
             </div>
             <h2 class="netflixPersonalTitle" id="netflixPersonalTitle">Netflix profilinizi yaradın</h2>
-            <p class="netflixPersonalIntro"><strong>Bu, sayt qeydiyyatı deyil.</strong> Netflix hesabında sizə açılacaq şəxsi profil üçün adınızı və 4 rəqəmli PIN kodunuzu yazın.</p>
+            <p class="netflixPersonalIntro"><strong>Bu, sayt qeydiyyatı deyil.</strong> Netflix profiliniz üçün ad və 4 rəqəmli PIN seçin.</p>
           </header>
           <div class="netflixPersonalFields">
             <label class="netflixPersonalField" for="netflixProfileName">
               <span class="netflixPersonalFieldLabel">Profil adı</span>
               <input id="netflixProfileName" type="text" name="${escapeHtml(nameField?.key || "name")}" data-label="${escapeHtml(nameField?.label || "Ad")}" placeholder="Məsələn: Aysel" autocomplete="name" value="${escapeHtml(nameField?.defaultValue || "")}" ${nameField?.required === false ? "" : "required"}>
-              <small class="netflixPersonalHelp">Bu ad Netflix profilinizdə görünəcək.</small>
+              <small class="netflixPersonalHelp">Profilinizdə görünəcək.</small>
             </label>
             <fieldset class="netflixPersonalField" aria-describedby="netflixPinHelp">
               <legend class="netflixPersonalFieldLabel">4 rəqəmli profil PIN-i</legend>
@@ -1485,10 +1513,9 @@
               <div class="netflixPinBoxes" role="group" aria-label="4 rəqəmli profil PIN-i">
                 ${[0, 1, 2, 3].map((index) => `<input class="netflixPinDigit" data-pin-digit="${index}" type="text" inputmode="numeric" maxlength="1" pattern="[0-9]" aria-label="PIN ${index + 1}-ci rəqəm" value="${escapeHtml(initialPin[index] || "")}">`).join("")}
               </div>
-              <small class="netflixPersonalHelp" id="netflixPinHelp">Bu kod yalnız Netflix profilinizə giriş üçündür. PIN-i yadda saxlayın.</small>
+              <small class="netflixPersonalHelp" id="netflixPinHelp">PIN-i yadda saxlayın.</small>
             </fieldset>
           </div>
-          <p class="netflixPersonalNote">Saytda hesab və ya qeydiyyat yaratmırsınız.</p>
           <div class="netflixPersonalActions">
             <button class="mpBtn orderConfirmationCancel" id="universalFormCancel" type="button">Ləğv et</button>
             <button class="mpBtn netflixContinueBtn" id="netflixContinueButton" type="submit" disabled aria-disabled="true">Davam et →</button>

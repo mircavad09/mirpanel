@@ -144,8 +144,15 @@ try {
   }
 
   const netflixModalChecks = [];
-  for (const width of [320, 390, 768, 1440]) {
-    await page.setViewportSize({ width, height: width < 500 ? 720 : 900 });
+  for (const { width, height } of [
+    { width: 320, height: 568 },
+    { width: 320, height: 640 },
+    { width: 390, height: 844 },
+    { width: 390, height: 932 },
+    { width: 768, height: 900 },
+    { width: 1440, height: 900 }
+  ]) {
+    await page.setViewportSize({ width, height });
     await page.goto("http://127.0.0.1:10082/mehsul/netflix-sexsi", { waitUntil: "networkidle" });
     await page.waitForTimeout(3100);
     await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
@@ -154,7 +161,8 @@ try {
     assert.match(await modal.innerText(), /NETFLIX · ŞƏXSİ PROFİL/);
     assert.match(await modal.innerText(), /Bu, sayt qeydiyyatı deyil/);
     assert.match(await modal.innerText(), /Netflix profilinizi yaradın/);
-    assert.match(await modal.innerText(), /Saytda hesab və ya qeydiyyat yaratmırsınız/);
+    assert.match(await modal.innerText(), /Netflix profiliniz üçün ad və 4 rəqəmli PIN seçin/);
+    assert.equal((await modal.innerText()).includes("Saytda hesab və ya qeydiyyat yaratmırsınız"), false);
     assert.equal(await modal.locator(".netflixPersonalPrice").count(), 1, `${width}px: qiymət bir dəfə görünmür`);
     assert.equal(await modal.locator(".netflixPinDigit").count(), 4, `${width}px: PIN qutuları dörd deyil`);
     assert.equal(await modal.locator('input[name="name"]').count(), 1, "name backend açarı dəyişib");
@@ -179,18 +187,49 @@ try {
     const geometry = await page.evaluate(() => ({
       pageOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       card: (() => { const el=document.querySelector("#modal .modalCard"); const r=el.getBoundingClientRect(); const s=getComputedStyle(el); return { left:r.left,right:r.right,width:r.width,cssWidth:s.width,border:s.borderColor,styleLoaded:document.getElementById("mirpanelOrderRuntimeStyles")?.textContent.includes("netflixPersonalFormOpen") }; })(),
-      bottomVisible: document.querySelector("#modal .mBottom")?.offsetParent !== null
+      bottomVisible: document.querySelector("#modal .mBottom")?.offsetParent !== null,
+      cardScroll: (() => { const el=document.querySelector("#modal .modalCard"); return { scrollHeight:el.scrollHeight, clientHeight:el.clientHeight, overflowY:getComputedStyle(el).overflowY }; })(),
+      actions: (() => { const r=document.querySelector(".netflixPersonalActions").getBoundingClientRect(); return { top:r.top,bottom:r.bottom,visible:r.top >= 0 && r.bottom <= innerHeight }; })()
     }));
     assert.equal(geometry.pageOverflow, false, `${width}px: üfüqi daşma`);
     assert.ok(geometry.card.left >= 15 && geometry.card.right <= width - 15, `${width}px: modal 16px kənar boşluğunu pozur ${JSON.stringify(geometry.card)}`);
     assert.equal(geometry.bottomVisible, false, `${width}px: köhnə qiymət sətri görünür`);
+    assert.equal(geometry.actions.visible, true, `${width}x${height}: düymələr görünən sahədə deyil`);
+    if (width <= 390) {
+      assert.equal(geometry.cardScroll.scrollHeight, geometry.cardScroll.clientHeight, `${width}x${height}: modal daxilində scrollbar var`);
+      assert.notEqual(geometry.cardScroll.overflowY, "auto", `${width}x${height}: modal auto-scroll istifadə edir`);
+    }
     if (visualDir) {
       fs.mkdirSync(visualDir, { recursive: true });
-      await page.screenshot({ path: path.join(visualDir, `netflix-personal-${width}.png`), fullPage: false });
+      await page.screenshot({ path: path.join(visualDir, `netflix-personal-${width}x${height}.png`), fullPage: false });
     }
-    netflixModalChecks.push({ width, modalWidth: Math.round(geometry.card.width), overflow: false });
+    netflixModalChecks.push({ width, height, modalWidth: Math.round(geometry.card.width), modalHeight: geometry.cardScroll.clientHeight, overflow: false, actionsVisible: true });
     await page.click("#universalFormCancel");
   }
+
+  await page.setViewportSize({ width: 320, height: 360 });
+  await page.goto("http://127.0.0.1:10082/mehsul/netflix-sexsi", { waitUntil: "networkidle" });
+  await page.waitForTimeout(3100);
+  await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
+  await page.focus("#netflixProfileName");
+  await page.evaluate(() => {
+    document.body.classList.add("netflixKeyboardOpen");
+    const modal = document.getElementById("modal");
+    modal.style.setProperty("--netflix-vv-height", "360px");
+    modal.style.setProperty("--netflix-vv-top", "0px");
+  });
+  const keyboardGeometry = await page.evaluate(() => {
+    const focused = document.activeElement.getBoundingClientRect();
+    const actions = document.querySelector(".netflixPersonalActions").getBoundingClientRect();
+    const card = document.querySelector("#modal .modalCard");
+    return {
+      focusedVisible: focused.top >= 0 && focused.bottom <= innerHeight,
+      actionsVisible: actions.top >= 0 && actions.bottom <= innerHeight,
+      scrollFree: card.scrollHeight === card.clientHeight && getComputedStyle(card).overflowY !== "auto"
+    };
+  });
+  assert.deepEqual(keyboardGeometry, { focusedVisible: true, actionsVisible: true, scrollFree: true }, "Mobil klaviatura görünüşü fokus/düymələri qorumur");
+  await page.click("#universalFormCancel");
 
   await page.setViewportSize({ width: 390, height: 844 });
   await page.goto("http://127.0.0.1:10082/mehsul/tiktok-jeton", { waitUntil: "networkidle" });
@@ -224,8 +263,9 @@ try {
     purchasableProducts: results.filter((item) => item.result === "payment").length - 1,
     unavailableProducts: results.filter((item) => item.result === "unavailable").length,
     futureProduct: "payment",
-    viewports: [320, 390, 768, 1440],
+    viewports: ["320x568", "320x640", "390x844", "390x932", "768x900", "1440x900"],
     netflixPersonalModal: netflixModalChecks,
+    keyboardViewport: keyboardGeometry,
     reservationRequests,
     consoleErrors: pageErrors.length
   }, null, 2));
