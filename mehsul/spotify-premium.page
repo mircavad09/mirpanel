@@ -150,6 +150,11 @@
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">3.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
+      <img src="/assets/claude.png" class="product-page-similar-image" alt="Claude AI" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">37.40 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab" aria-label="Youtube Eyni hesab — 5.99 ₼" title="Youtube Eyni hesab">
       <img src="/assets/youtube.png" class="product-page-similar-image" alt="Youtube Eyni hesab" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Youtube Eyni hesab">Youtube Eyni hesab</div>
@@ -165,11 +170,6 @@
       <div class="product-page-similar-title" title="Surfshark VPN">Surfshark VPN</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 5.99 ₼" title="HBO Max">
-      <img src="/uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083" class="product-page-similar-image" alt="HBO Max" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
-      <div class="product-page-similar-category">film</div>
-      <div class="product-page-similar-price">5.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>

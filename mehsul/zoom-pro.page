@@ -139,16 +139,21 @@
       <div class="product-page-similar-title" title="Netflix Ümumi">Netflix Ümumi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 4.99 ₼" title="Spotify Premium (Öz hesabınız)">
-      <img src="/assets/spotify.png" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
-      <div class="product-page-similar-category">musiqi</div>
-      <div class="product-page-similar-price">4.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 3.99 ₼" title="Amazon Prime Video">
       <img src="/assets/prime.png" class="product-page-similar-image" alt="Amazon Prime Video" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">3.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
+      <img src="/assets/claude.png" class="product-page-similar-image" alt="Claude AI" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">37.40 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 4.99 ₼" title="Spotify Premium (Öz hesabınız)">
+      <img src="/assets/spotify.png" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
+      <div class="product-page-similar-category">musiqi</div>
+      <div class="product-page-similar-price">4.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab" aria-label="Youtube Eyni hesab — 5.99 ₼" title="Youtube Eyni hesab">
       <img src="/assets/youtube.png" class="product-page-similar-image" alt="Youtube Eyni hesab" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Youtube Eyni hesab">Youtube Eyni hesab</div>
@@ -164,11 +169,6 @@
       <div class="product-page-similar-title" title="Adobe Creative Cloud">Adobe Creative Cloud</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">22.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/surfshark-vpn" aria-label="Surfshark VPN — 3.99 ₼" title="Surfshark VPN">
-      <img src="/assets/surfshark.png" class="product-page-similar-image" alt="Surfshark VPN" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Surfshark VPN">Surfshark VPN</div>
-      <div class="product-page-similar-category">video</div>
-      <div class="product-page-similar-price">3.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
