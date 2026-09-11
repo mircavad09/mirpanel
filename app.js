@@ -1746,9 +1746,10 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "Stokta yoxdur",
-          "months": 12,
-          "price": 0
+          "label": "1 Ayliq",
+          "months": 1,
+          "price": 38.99,
+          "regularPrice": 50.55
         }
       ],
       "orderConfirmation": {

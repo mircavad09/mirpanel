@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/cloud-ai-pro#product","url":"https://mirpanel.com/mehsul/cloud-ai-pro","name":"Claude AI","description":"Claude AI üçün mövcud planı, real qiyməti və stok vəziyyətini yoxlayın. Mirpanel sifarişi mövcud WhatsApp axını ilə tamamlanır.","image":["https://mirpanel.com/assets/claude.png"],"sku":"claude_ai","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/cloud-ai-pro","price":"0.00","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/cloud-ai-pro#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Claude AI","item":"https://mirpanel.com/mehsul/cloud-ai-pro"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/cloud-ai-pro#product","url":"https://mirpanel.com/mehsul/cloud-ai-pro","name":"Claude AI","description":"Claude AI üçün mövcud planı, real qiyməti və stok vəziyyətini yoxlayın. Mirpanel sifarişi mövcud WhatsApp axını ilə tamamlanır.","image":["https://mirpanel.com/assets/claude.png"],"sku":"claude_ai","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/cloud-ai-pro","price":"38.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/cloud-ai-pro#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Claude AI","item":"https://mirpanel.com/mehsul/cloud-ai-pro"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="claude_ai" data-product-slug="cloud-ai-pro">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -89,7 +89,7 @@
         <div class="product-page-card-grid">
           <div class="product-page-media">
             <img class="product-page-media-backdrop" src="/assets/claude.png" alt="" aria-hidden="true" decoding="async">
-            <span class="product-page-availability-badge is-out">Stokda yoxdur</span>
+            <span class="product-page-availability-badge">Mövcuddur</span>
             <img id="pp-main-img" src="/assets/claude.png" alt="Claude AI" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
@@ -97,7 +97,7 @@
             <div class="product-page-eyebrow">
               <span class="product-page-variant">1 illik</span>
               <span class="product-page-category">ai</span>
-              <span class="product-page-status is-out">Stokda yoxdur</span>
+              <span class="product-page-status">Mövcuddur</span>
             </div>
             <h1 id="pp-main-title" class="product-page-title">Claude AI</h1>
             <p class="product-page-description">Mətn, kod, yazı üçün güclü AI.</p>
@@ -106,7 +106,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>Stokta yoxdur</span><span class="product-page-plan-prices"><strong>Stokta yoxdur</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 Ayliq</span><span class="product-page-plan-prices"><span class="product-page-regular-price">50.55 ₼</span><strong>38.99 ₼</strong><span class="product-page-discount">-23%</span></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -208,7 +208,7 @@
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>Claude AI üçün hansı planlar mövcuddur?</summary><p>Stokta yoxdur — 0.00 ₼</p></details>
+    <details><summary>Claude AI üçün hansı planlar mövcuddur?</summary><p>1 Ayliq — 38.99 ₼</p></details>
     <details><summary>Claude AI sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>
