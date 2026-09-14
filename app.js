@@ -398,14 +398,14 @@ const DATA = {
         "alt": "Netflix banneri",
         "order": 2
       },
-      "flow": "name_code_4",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "form_then_whatsapp",
+      "orderFlow": "direct_whatsapp",
       "formFields": [
         {
           "key": "name",
@@ -511,8 +511,8 @@ const DATA = {
         "alt": "Netflix Ümumi",
         "order": 3
       },
-      "flow": "whatsapp",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
