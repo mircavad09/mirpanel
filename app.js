@@ -398,8 +398,8 @@ const DATA = {
         "alt": "Netflix banneri",
         "order": 2
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "whatsapp",
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
@@ -511,8 +511,8 @@ const DATA = {
         "alt": "Netflix Ümumi",
         "order": 3
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "whatsapp",
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
