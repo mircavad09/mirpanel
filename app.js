@@ -225,7 +225,7 @@ const DATA = {
         {
           "label": "1 Ayliq               (Telefon)",
           "months": 1,
-          "price": 5.29,
+          "price": 5.5,
           "regularPrice": 16.99
         },
         {
@@ -848,19 +848,19 @@ const DATA = {
         {
           "label": "1 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 1,
-          "price": 4.99,
+          "price": 5.99,
           "regularPrice": 9.33
         },
         {
           "label": "2 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 2,
-          "price": 9.99,
+          "price": 11.5,
           "regularPrice": 18.74
         },
         {
           "label": "3 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 3,
-          "price": 14.99,
+          "price": 15.99,
           "regularPrice": 27.53
         }
       ],
