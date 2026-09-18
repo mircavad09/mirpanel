@@ -119,11 +119,11 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/canva-premium" aria-label="Canva Premium — 1.99 ₼" title="Canva Premium">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/canva-premium" aria-label="Canva Premium — 2.99 ₼" title="Canva Premium">
       <img src="/assets/canva.png" class="product-page-similar-image" alt="Canva Premium" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">dizayn</div>
-      <div class="product-page-similar-price">1.99 ₼</div>
+      <div class="product-page-similar-price">2.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 5.50 ₼" title="CapCut Pro">
       <img src="/assets/capcut.png" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
@@ -164,11 +164,11 @@
       <div class="product-page-similar-title" title="Youtube Eyni hesab">Youtube Eyni hesab</div>
       <div class="product-page-similar-category">all</div>
       <div class="product-page-similar-price">5.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Yeni hesab — 3.29 ₼" title="YouTube Yeni hesab">
+    </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Yeni hesab — 3.59 ₼" title="YouTube Yeni hesab">
       <img src="/assets/youtube.png" class="product-page-similar-image" alt="YouTube Yeni hesab" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="YouTube Yeni hesab">YouTube Yeni hesab</div>
       <div class="product-page-similar-category">musiqi</div>
-      <div class="product-page-similar-price">3.29 ₼</div>
+      <div class="product-page-similar-price">3.59 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
