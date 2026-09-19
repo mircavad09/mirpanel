@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/tiktok-jeton#product","url":"https://mirpanel.com/mehsul/tiktok-jeton","name":"TikTok Jeton","description":"TikTok jeton və coin almaq üçün sərfəli seçim. Balans artırma və rahat sifariş Mirpanel-də.","image":["https://mirpanel.com/assets/tiktok.png"],"sku":"tiktok_jeton","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/tiktok-jeton","price":"10.00","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/tiktok-jeton#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"TikTok Jeton","item":"https://mirpanel.com/mehsul/tiktok-jeton"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/tiktok-jeton#product","url":"https://mirpanel.com/mehsul/tiktok-jeton","name":"TikTok Jeton","description":"TikTok jeton və coin almaq üçün sərfəli seçim. Balans artırma və rahat sifariş Mirpanel-də.","image":["https://mirpanel.com/assets/tiktok.png"],"sku":"tiktok_jeton","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/tiktok-jeton","price":"11.00","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/tiktok-jeton","price":"21.00","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/tiktok-jeton#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"TikTok Jeton","item":"https://mirpanel.com/mehsul/tiktok-jeton"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="tiktok_jeton" data-product-slug="tiktok-jeton">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -106,7 +106,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>Jeton sayını daxil et</span><span class="product-page-plan-prices"><strong>10.00 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>500 jeton</span><span class="product-page-plan-prices"><strong>11.00 ₼</strong></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1000 jeton</span><span class="product-page-plan-prices"><strong>21.00 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -188,7 +188,7 @@
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>TikTok Jeton üçün hansı planlar mövcuddur?</summary><p>Jeton sayını daxil et — 10.00 ₼</p></details>
+    <details><summary>TikTok Jeton üçün hansı planlar mövcuddur?</summary><p>500 jeton — 11.00 ₼, 1000 jeton — 21.00 ₼</p></details>
     <details><summary>TikTok Jeton sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>

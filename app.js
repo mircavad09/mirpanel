@@ -1473,9 +1473,14 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "Jeton sayını daxil et",
+          "label": "500 jeton",
           "months": 1,
-          "price": 10
+          "price": 11
+        },
+        {
+          "label": "1000 jeton",
+          "months": 1,
+          "price": 21
         }
       ],
       "orderConfirmation": {
