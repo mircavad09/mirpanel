@@ -41,6 +41,8 @@ alter table public.story_categories enable row level security;
 alter table public.story_items enable row level security;
 revoke all on public.story_categories from anon, authenticated;
 revoke all on public.story_items from anon, authenticated;
+grant select, insert, update, delete on public.story_categories to service_role;
+grant select, insert, update, delete on public.story_items to service_role;
 
 insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 values ('mirpanel-stories', 'mirpanel-stories', false, 26214400, array['image/jpeg','image/png','image/webp','video/mp4','video/webm'])

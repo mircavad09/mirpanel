@@ -112,4 +112,6 @@ assert.ok(server.indexOf('request.url === "/api/admin/stories"') > server.indexO
 assert.match(migration, /public, file_size_limit[\s\S]*false, 26214400/);
 assert.match(migration, /enable row level security/g);
 assert.match(migration, /revoke all .* anon, authenticated/g);
+assert.match(migration, /grant select, insert, update, delete on public\.story_categories to service_role/);
+assert.match(migration, /grant select, insert, update, delete on public\.story_items to service_role/);
 console.log(JSON.stringify({ ok:true, create:true, update:true, ordering:true, activeFiltering:true, imageUpload:true, videoUpload:true, privateSignedUrls:true, deleteCleanup:true, publicReadOnly:true, adminProtected:true }, null, 2));
