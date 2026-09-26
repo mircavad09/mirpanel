@@ -17,3 +17,35 @@
 .paymentUploadProgress.isIndeterminate span{width:34%!important;animation:paymentUploadIndeterminate 1.2s ease-in-out infinite}.paymentUploadProgress.isIndeterminate b{color:#f5f5f5;text-shadow:0 1px 2px #000}.paymentUploadProgress.isError span{animation:none;background:#d99b14}@keyframes paymentUploadIndeterminate{0%{transform:translateX(-110%)}100%{transform:translateX(310%)}}@media(prefers-reduced-motion:reduce){.paymentUploadProgress.isIndeterminate span{animation:none;width:100%!important;opacity:.45}}
 @media(max-width:560px){.paymentSelectedCard{width:min(100%,380px);padding:10px 12px;gap:4px}.paymentMagneticStripe{height:18px;margin-inline:-12px}.paymentSelectedTop{align-items:center}.paymentSelectedTopActions{align-items:center;flex-wrap:nowrap}.paymentNumber{align-items:center;flex-direction:row}.paymentNumber button{align-self:auto}.paymentReservationFooter{align-items:center;flex-direction:row}.paymentReservationTime{grid-template-columns:16px minmax(0,1fr) auto}.paymentSelectedHint{font-size:11px}.paymentReceiptPicker{min-height:82px}.paymentReceiptPicker svg{width:24px;height:24px}.paymentReceiptPicker strong{font-size:13px}.paymentReceiptPicker span{font-size:10px}}
 @media(max-width:340px){.paymentSelectedCard{padding:9px 10px}.paymentMagneticStripe{height:16px;margin-inline:-10px}.paymentSelectedTopActions>span{display:none}.paymentSelectedTop strong,.paymentHolder strong{font-size:12px}.paymentNumber{padding:3px 6px}.paymentNumber code{font-size:10.5px}.paymentNumber button,#changePaymentMethod{min-height:30px;padding:4px 6px;font-size:10px}.paymentAmount strong{font-size:15px}.paymentReservationTime strong{font-size:17px}.paymentReservationTime span{font-size:8px}}
+
+/* Mobile receipt stage: keep preview, status and both actions inside one viewport. */
+@media(max-width:560px){
+  #modal.paymentFlowOpen{padding:max(7px,env(safe-area-inset-top,0px)) 6px max(7px,env(safe-area-inset-bottom,0px));overflow:hidden;overscroll-behavior:none}
+  #modal.paymentFlowOpen .modalCard{box-sizing:border-box;width:calc(100vw - 12px)!important;max-width:calc(100vw - 12px)!important;max-height:calc(100vh - 14px);max-height:calc(100dvh - max(14px,env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px)));overflow:hidden;padding:10px 10px max(10px,env(safe-area-inset-bottom,0px))}
+  .paymentFlow[data-payment-stage="payment_details"],.paymentFlow[data-payment-stage="receipt_upload"]{gap:6px}
+  .paymentFlow[data-payment-stage="payment_details"] .paymentFlowHead,.paymentFlow[data-payment-stage="receipt_upload"] .paymentFlowHead{position:static;align-items:center;padding:0 0 2px}
+  .paymentFlow[data-payment-stage="payment_details"] .paymentFlowHead span,.paymentFlow[data-payment-stage="receipt_upload"] .paymentFlowHead span{font-size:9px}
+  .paymentFlow[data-payment-stage="payment_details"] .paymentFlowHead h2,.paymentFlow[data-payment-stage="receipt_upload"] .paymentFlowHead h2{margin:1px 0;font-size:17px;line-height:1.1}
+  .paymentFlow[data-payment-stage="payment_details"] .paymentFlowHead p,.paymentFlow[data-payment-stage="receipt_upload"] .paymentFlowHead p{font-size:10px;line-height:1.2}
+  .paymentFlow[data-payment-stage="payment_details"] .paymentFlowClose,.paymentFlow[data-payment-stage="receipt_upload"] .paymentFlowClose{min-width:38px;min-height:38px;font-size:25px}
+  .paymentFlow[data-payment-stage="payment_details"] .paymentFlowMessage,.paymentFlow[data-payment-stage="receipt_upload"] .paymentFlowMessage{padding:5px 8px;font-size:10px;line-height:1.25}
+  .paymentFlow[data-payment-stage="payment_details"] .paymentSelectedCard,.paymentFlow[data-payment-stage="receipt_upload"] .paymentSelectedCard{width:min(100%,330px);max-height:178px;padding:8px 10px;gap:3px}
+  .paymentFlow[data-payment-stage="payment_details"] .paymentSelectedHint,.paymentFlow[data-payment-stage="receipt_upload"] .paymentSelectedHint{display:none}
+  .paymentReceiptBox{gap:6px;min-height:0}
+  .paymentReceiptPicker{min-height:72px;padding:7px 9px;grid-template-columns:24px 1fr;grid-template-areas:"icon title" "description description" "warning warning" "formats formats";column-gap:7px;row-gap:2px;text-align:left;place-items:center start}
+  .paymentReceiptPicker svg{grid-area:icon;width:22px;height:22px}.paymentReceiptPicker strong{grid-area:title;margin:0;font-size:13px}.paymentReceiptPicker span{grid-area:description;font-size:10px;line-height:1.2}.paymentReceiptPicker em{grid-area:warning;font-size:10px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}.paymentReceiptPicker small{grid-area:formats;font-size:9px;line-height:1.2}
+  .paymentReceiptBox.hasReceipt .paymentReceiptPicker{display:none}
+  .paymentReceiptPreview{align-items:center;gap:8px;min-height:62px;padding:7px 8px}
+  .paymentReceiptPreview img,.paymentPdfPreview{flex:0 0 48px;width:48px;height:48px}
+  .paymentReceiptPreview>div{gap:3px}.paymentReceiptPreview strong{font-size:12px}.paymentReceiptPreview .paymentReceiptPending,.paymentReceiptPreview .paymentReceiptSuccess{font-size:10px;line-height:1.2}
+  .paymentReceiptPreviewActions{gap:5px!important}.paymentReceiptPreviewActions button{min-height:30px!important;padding:4px 9px!important;font-size:10px!important}
+  .paymentUploadProgress{height:18px}.paymentUploadProgress b{font-size:9px}
+  .paymentReceiptError{max-height:30px;overflow:hidden;font-size:10px;line-height:1.25}
+  .paymentReceiptRequiredHint{font-size:9.5px;line-height:1.2;text-align:center}
+  .paymentSubmitActions{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr);gap:7px;position:relative;z-index:2}
+  .paymentSubmitActions button{min-height:48px;padding:7px 8px;font-size:12px}
+  .paymentSubmitActions #paymentSubmit{background:#ffd400;border-color:#ffd400;color:#111}
+  .paymentReceiptBox.isUploading .paymentReceiptPreviewActions{display:none!important}
+  .paymentReceiptBox.uploadFailed .paymentReceiptPreview{border-color:#795221;background:#2b210e}
+  .paymentReceiptBox.uploadSucceeded .paymentReceiptPreview{border-color:#3c9a5d;background:#102318}
+}

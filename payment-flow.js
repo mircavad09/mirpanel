@@ -246,13 +246,13 @@
 
   function receiptMarkup() {
     return `<form id="paymentReceiptForm" class="paymentReceiptBox" action="" method="post" novalidate>
-      <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>1. Çeki yüklə</strong><span id="paymentReceiptPickerDescription">Ödəniş çekinin şəklini və ya PDF faylını buraya əlavə edin.</span><em id="paymentReceiptPickerWarning">Çeki WhatsApp-a göndərməyin — bu hissəyə yükləyin.</em><small id="paymentReceiptPickerFormats">JPG, PNG, WEBP və ya PDF · maksimum 5 MB</small></label>
+      <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>1. Çeki yüklə</strong><span id="paymentReceiptPickerDescription">Çekin şəklini və ya PDF faylını seçin.</span><em id="paymentReceiptPickerWarning">Çeki WhatsApp-a göndərməyin — burada yükləyin.</em><small id="paymentReceiptPickerFormats">JPG, PNG, WEBP və ya PDF · maksimum 5 MB</small></label>
       <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" hidden>
       <div id="paymentReceiptPreview" class="paymentReceiptPreview hidden"></div>
       <div id="paymentUploadProgress" class="paymentUploadProgress hidden" role="status" aria-live="polite"><span></span><b>Yüklənir…</b></div>
       <p id="paymentReceiptError" class="paymentReceiptError" role="alert" hidden></p>
-      <p id="paymentReceiptRequiredHint" class="paymentReceiptRequiredHint">Davam etmək üçün əvvəlcə çeki yükləyin.</p>
-      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><div id="paymentSubmitGuard" class="paymentSubmitGuard isBlocked"><button id="paymentSubmit" type="submit" disabled>2. Sifarişi göndər və WhatsApp-a keç</button></div></div>
+      <p id="paymentReceiptRequiredHint" class="paymentReceiptRequiredHint">Çekin yüklənməsi tamamlanandan sonra davam edə bilərsiniz.</p>
+      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><div id="paymentSubmitGuard" class="paymentSubmitGuard isBlocked"><button id="paymentSubmit" type="submit" disabled>Davam et →</button></div></div>
     </form>`;
   }
 
@@ -325,6 +325,7 @@
     if (input) input.value = "";
     const preview = document.getElementById("paymentReceiptPreview");
     if (preview) { preview.replaceChildren(); preview.classList.add("hidden"); }
+    document.getElementById("paymentReceiptForm")?.classList.remove("hasReceipt", "isUploading", "uploadFailed", "uploadSucceeded");
   }
 
   async function start({ product, plan, planIndex }) {
@@ -535,6 +536,7 @@
               clearReceipt(flow);
               flow.receipt = file;
               setStage(flow, "receipt_upload");
+              document.getElementById("paymentReceiptForm")?.classList.add("hasReceipt");
               const preview = document.getElementById("paymentReceiptPreview");
               preview.classList.remove("hidden");
               const looksLikeImage = declaredType.startsWith("image/") || ["jpg", "jpeg", "png", "webp"].includes(extension);
@@ -543,7 +545,7 @@
               preview.innerHTML = `${filePreview}<div class="paymentReceiptPreviewInfo"><strong>${esc(file.name)}</strong><span class="paymentReceiptPending" role="status">Çek seçildi — göndərildikdə təhlükəsiz yoxlanacaq.</span><div class="paymentReceiptPreviewActions"><button id="changePaymentReceipt" type="button">Dəyiş</button><button id="removePaymentReceipt" type="button">Sil</button></div></div>`;
               const submitButton = document.getElementById("paymentSubmit");
               setReceiptSubmitReady(true);
-              submitButton.textContent = "2. Sifarişi göndər və WhatsApp-a keç";
+              submitButton.textContent = "Davam et →";
               document.getElementById("changePaymentReceipt").onclick = () => document.getElementById("paymentReceiptInput")?.click();
               document.getElementById("removePaymentReceipt").onclick = () => {
                 clearReceipt(flow); setStage(flow, "payment_details"); setReceiptSubmitReady(false);
@@ -559,6 +561,7 @@
               if (!flow.reservation) { error.textContent = "Aktiv rezerv tələb olunur."; error.hidden = false; return; }
               prepareWhatsAppWindow(flow);
               flow.submitting = true;
+              document.getElementById("paymentReceiptForm")?.classList.add("isUploading");
               flow.submissionStarted = true;
               flow.uploadController = new AbortController();
               storeCheckout(flow);
@@ -611,13 +614,18 @@
                 flow.uploadController = null;
                 setProgress(100, "Çek uğurla yükləndi");
                 receiptStatus?.classList.replace("paymentReceiptPending", "paymentReceiptSuccess");
+                document.getElementById("paymentReceiptForm")?.classList.remove("isUploading");
+                document.getElementById("paymentReceiptForm")?.classList.add("uploadSucceeded");
                 setMessage(`Çek uğurla əlavə edildi. Sifariş: ${order.orderCode}`, "success");
+                await new Promise((resolve) => requestAnimationFrame(resolve));
                 await finish(order, { preserveModal: true });
                 return;
               } catch (submitError) {
                 closeWhatsAppWindow(flow);
                 flow.uploadController = null;
                 flow.submitting = false;
+                document.getElementById("paymentReceiptForm")?.classList.remove("isUploading", "uploadSucceeded");
+                document.getElementById("paymentReceiptForm")?.classList.add("uploadFailed");
                 lockedControls.forEach((control) => { control.disabled = false; });
                 progress.classList.add("isError");
                 progress.classList.remove("isIndeterminate");

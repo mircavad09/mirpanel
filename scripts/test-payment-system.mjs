@@ -160,7 +160,7 @@ assert.ok(flow.includes("event.preventDefault()"));
 assert.ok(flow.includes("if (flow.submitting) return"));
 assert.equal(flow.includes("/api/payments/replacement-receipts"), false, "İşləməyən yeni çek axını qalmamalıdır");
 assert.equal(flow.includes("paymentReceiptToken"), false, "İşləməyən yeni çek tokeni qalmamalıdır");
-assert.ok(flow.includes("2. Sifarişi göndər və WhatsApp-a keç"));
+assert.ok(flow.includes("Davam et →"));
 assert.ok(confirmation.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"));
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));
 assert.ok(flow.includes('window.open("about:blank"'), "WhatsApp tabı istifadəçi toxunuşunda hazırlanmalıdır");

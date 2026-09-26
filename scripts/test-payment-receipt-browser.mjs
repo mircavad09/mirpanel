@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import fs from "node:fs";
 import path from "node:path";
 import { spawn } from "node:child_process";
 import { fileURLToPath, pathToFileURL } from "node:url";
@@ -7,6 +8,7 @@ import { createRequire } from "node:module";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const nodeModules = process.env.MIRPANEL_NODE_MODULES;
 const browserPath = process.env.MIRPANEL_BROWSER_PATH;
+const visualDir = process.env.MIRPANEL_VISUAL_DIR || "";
 if (!nodeModules || !browserPath) throw new Error("Browser test runtime paths are required.");
 const { chromium } = await import(pathToFileURL(path.join(nodeModules, "playwright", "index.mjs")));
 const sharp = createRequire(import.meta.url)(path.join(nodeModules, "sharp"));
@@ -49,11 +51,16 @@ try {
   await page.waitForSelector("#paymentReceiptInput", {state:"attached"});
   assert.equal(await page.locator("[data-payment-method]").count(),0,"Reload must resume without reserving again");
   assert.equal(await page.isDisabled("#paymentSubmit"), true, "Çeksiz göndərmə passiv olmalıdır");
-  assert.equal(await page.textContent("#paymentReceiptRequiredHint"), "Davam etmək üçün əvvəlcə çeki yükləyin.");
+  assert.equal(await page.textContent("#paymentReceiptRequiredHint"), "Çekin yüklənməsi tamamlanandan sonra davam edə bilərsiniz.");
+  assert.equal(await page.isDisabled("#paymentSubmit"), true);
+  const emptyLayout = await page.evaluate(() => { const card=document.querySelector("#modal .modalCard"); const actions=document.querySelector(".paymentSubmitActions").getBoundingClientRect(); return {scrollFree:card.scrollHeight===card.clientHeight,actionsVisible:actions.top>=0&&actions.bottom<=innerHeight}; });
+  assert.deepEqual(emptyLayout,{scrollFree:true,actionsVisible:true},"Boş upload vəziyyətində düymələr görünməlidir");
+  if(visualDir){fs.mkdirSync(visualDir,{recursive:true});await page.screenshot({path:path.join(visualDir,"receipt-empty-390x844.png")});}
   await page.click("#paymentSubmitGuard");
   assert.equal(await page.textContent("#paymentReceiptError"), "Əvvəlcə ödəniş çekini yükləyin.");
   assert.equal(await page.locator(".paymentReceiptPicker.needsReceipt").count(), 1, "Çek sahəsi vurğulanmalıdır");
   await page.setInputFiles("#paymentReceiptInput", { name: "camera-receipt.jpg", mimeType: "image/jpeg", buffer: jpeg });
+  assert.equal(await page.isHidden(".paymentReceiptPicker"), true, "Fayl seçiləndə böyük upload sahəsi yığışmalıdır");
   assert.match(await page.getAttribute("#paymentReceiptPreview img", "src"), /^blob:/);
   assert.equal(await page.textContent(".paymentReceiptPending"), "Çek seçildi — göndərildikdə təhlükəsiz yoxlanacaq.");
   assert.equal(await page.locator(".paymentReceiptSuccess").count(), 0, "Server cavabından əvvəl uğur statusu olmamalıdır");
@@ -61,8 +68,31 @@ try {
   assert.equal(await page.textContent("#removePaymentReceipt"), "Sil");
   assert.equal(await page.isEnabled("#paymentSubmit"), true);
   assert.equal(await page.isHidden("#paymentReceiptRequiredHint"), true);
+  const selectedMobileLayout = await page.evaluate(() => {
+    const card = document.querySelector("#modal .modalCard");
+    const actions = document.querySelector(".paymentSubmitActions").getBoundingClientRect();
+    return { scrollFree: card.scrollHeight === card.clientHeight, actionsVisible: actions.top >= 0 && actions.bottom <= innerHeight, horizontalOverflow: document.documentElement.scrollWidth > innerWidth };
+  });
+  assert.deepEqual(selectedMobileLayout, { scrollFree: true, actionsVisible: true, horizontalOverflow: false });
+  if(visualDir)await page.screenshot({path:path.join(visualDir,"receipt-selected-390x844.png")});
+  await page.evaluate(() => {
+    globalThis.__receiptSuccessLayout = null;
+    new MutationObserver(() => {
+      if (!document.querySelector(".paymentReceiptSuccess")) return;
+      const card = document.querySelector("#modal .modalCard");
+      const actions = document.querySelector(".paymentSubmitActions")?.getBoundingClientRect();
+      globalThis.__receiptSuccessLayout = { preview: Boolean(document.querySelector("#paymentReceiptPreview:not(.hidden)")), scrollFree: card.scrollHeight === card.clientHeight, actionsVisible: Boolean(actions && actions.top >= 0 && actions.bottom <= innerHeight) };
+    }).observe(document.getElementById("paymentReceiptForm"), { subtree: true, childList: true, characterData: true, attributes: true });
+  });
+  await page.route("**/api/payments/orders",async(route)=>{await new Promise(resolve=>setTimeout(resolve,450));await route.continue();},{times:1});
   await page.evaluate(() => { document.getElementById("paymentSubmit").click(); document.getElementById("paymentSubmit").click(); });
+  await page.waitForFunction(()=>document.querySelector("#paymentReceiptForm.isUploading")&&document.querySelector(".paymentReceiptPending")?.textContent.includes("Yüklənir"));
+  assert.equal(await page.isDisabled("#paymentSubmit"),true,"Upload gedərkən davam düyməsi passiv olmalıdır");
+  const uploadingLayout=await page.evaluate(()=>{const card=document.querySelector("#modal .modalCard");const actions=document.querySelector(".paymentSubmitActions").getBoundingClientRect();return{scrollFree:card.scrollHeight===card.clientHeight,actionsVisible:actions.top>=0&&actions.bottom<=innerHeight};});
+  assert.deepEqual(uploadingLayout,{scrollFree:true,actionsVisible:true},"Upload zamanı düymələr görünməlidir");
+  if(visualDir)await page.screenshot({path:path.join(visualDir,"receipt-uploading-390x844.png")});
   await page.waitForFunction(() => window.__paymentOrder?.orderCode === "10001");
+  assert.deepEqual(await page.evaluate(() => globalThis.__receiptSuccessLayout), { preview: true, scrollFree: true, actionsVisible: true }, "Uğurlu upload vəziyyəti yığcam və görünən qalmalıdır");
   const state = await (await fetch(`http://127.0.0.1:${port}/test/state`)).json();
   assert.equal(state.orderCalls, 1);
   assert.equal(state.reservationCalls, 1);
@@ -106,6 +136,10 @@ try {
   assert.equal(await retryPage.textContent("#paymentReceiptError"), "Çek hələ göndərilmədi. “Yenidən cəhd et” düyməsinə basın.");
   assert.equal(await retryPage.textContent("#paymentSubmit"), "Yenidən cəhd et");
   assert.equal(await retryPage.locator("#paymentReceiptPreview img").count(), 1, "Xətadan sonra seçilmiş çek qorunmalıdır");
+  assert.equal(await retryPage.isHidden(".paymentReceiptPicker"), true, "Xətadan sonra böyük upload sahəsi qayıtmamalıdır");
+  const retryLayout = await retryPage.evaluate(() => { const card=document.querySelector("#modal .modalCard"); const actions=document.querySelector(".paymentSubmitActions").getBoundingClientRect(); return {scrollFree:card.scrollHeight===card.clientHeight,actionsVisible:actions.top>=0&&actions.bottom<=innerHeight}; });
+  assert.deepEqual(retryLayout,{scrollFree:true,actionsVisible:true},"320x568 xəta vəziyyətində düymələr görünməlidir");
+  if(visualDir)await retryPage.screenshot({path:path.join(visualDir,"receipt-error-320x568.png")});
   await retryPage.click("#paymentSubmit");
   await retryPage.waitForFunction(() => /^\d+$/.test(window.__paymentOrder?.orderCode || ""));
   const retryState = await (await fetch(`http://127.0.0.1:${port}/test/state`)).json();
@@ -164,8 +198,8 @@ try {
   assert.equal(await boundaryPage.isEnabled("#paymentSubmit"),false);
   assert.match(await boundaryPage.textContent("#paymentReceiptError"),/iPhone şəklini JPG və ya PDF/);
   assert.equal(await boundaryPage.locator(".paymentReceiptSuccess").count(),0);
-  for (const width of [320,390,768,1440]) {
-    await boundaryPage.setViewportSize({width,height:900});
+  for (const {width,height} of [{width:320,height:568},{width:320,height:640},{width:390,height:844},{width:390,height:932},{width:768,height:900},{width:1440,height:900}]) {
+    await boundaryPage.setViewportSize({width,height});
     assert.ok(await boundaryPage.evaluate(() => document.documentElement.scrollWidth <= innerWidth),`overflow ${width}`);
   }
   for (const mode of ["offline", "timeout"]) {
@@ -200,7 +234,7 @@ try {
     await networkPage.close();
   }
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
-  console.log(JSON.stringify({ ok: true, fileReaderUndefined: true, multipart: true, receiptTypes: ["JPG", "PNG", "WEBP", "PDF"], iphoneSafariProfileJpeg:true, androidChromePng:true, magicByteAuthoritative:true, wrongExtensionAccepted:true, heicRejectedClearly:true, falseSuccessPrevented:true, fiveMegabyteBoundary: true, nearFiveMegabyteUpload:true, transientStatusesRetried:[502,503,504], automaticRetries:3, manualRetry:true, unsupportedContentBlocked: true, retryPreservesReceipt: true, offlineRetry:true, timeoutRetry:true, refreshRecovery:true, duplicateOrders: 0, objectUrlsRevoked: true, viewports: [320, 390, 768, 1440], consoleErrors: 0 }, null, 2));
+  console.log(JSON.stringify({ ok: true, fileReaderUndefined: true, multipart: true, receiptTypes: ["JPG", "PNG", "WEBP", "PDF"], iphoneSafariProfileJpeg:true, androidChromePng:true, magicByteAuthoritative:true, wrongExtensionAccepted:true, heicRejectedClearly:true, falseSuccessPrevented:true, fiveMegabyteBoundary: true, nearFiveMegabyteUpload:true, transientStatusesRetried:[502,503,504], automaticRetries:3, manualRetry:true, unsupportedContentBlocked: true, retryPreservesReceipt: true, offlineRetry:true, timeoutRetry:true, refreshRecovery:true, duplicateOrders: 0, objectUrlsRevoked: true, compactReceiptStates:["empty","selected","uploading","success","error"], viewports: ["320x568","320x640","390x844","390x932","768x900","1440x900"], consoleErrors: 0 }, null, 2));
 } finally {
   await browser.close();
   fixture.kill();
