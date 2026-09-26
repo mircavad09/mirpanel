@@ -35,7 +35,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab#product","url":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab","name":"ChatGPT Plus (Ortaq hesab)","description":"ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.","image":["https://mirpanel.com/assets/chatgpt.png"],"sku":"chatgpt_ortaq","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab","price":"8.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"ChatGPT Plus (Ortaq hesab)","item":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab#product","url":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab","name":"ChatGPT Plus (Ortaq hesab)","description":"ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.","image":["https://mirpanel.com/assets/chatgpt.png"],"sku":"chatgpt_ortaq","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab","price":"3.49","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"ChatGPT Plus (Ortaq hesab)","item":"https://mirpanel.com/mehsul/chatgpt-plus-ortaq-hesab"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="chatgpt_ortaq" data-product-slug="chatgpt-plus-ortaq-hesab">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -106,7 +106,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ayliq</span><span class="product-page-plan-prices"><strong>8.99 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ayliq (Zəmanətsiz)</span><span class="product-page-plan-prices"><strong>3.49 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -183,14 +183,35 @@
         <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about"><h2>ChatGPT Plus (Ortaq hesab) Məhsul haqqında</h2>ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.</article>
         <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden>
           <h2>İstifadə qaydaları</h2>
-          <p></p>
+          <p>⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!
+⚠️ Əgər hesabınızda aktiv və ya əvvəldən qalma hər hansı məhdudiyyət varsa, qeyd olunan şərtləri nəzərə alaraq sifariş keçin.
+ChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.
+Mirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.
+
+⚠️ ƏSAS RİSK ŞƏRTİ
+ChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.
+Bu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.
+• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.
+• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.
+
+⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ
+Sifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.
+Sifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.
+
+Hesab məlumatları ilə bağlı vacib qeyd:
+• Təqdim olunan giriş məlumatlarını düzgün istifadə edin
+• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın
+• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır
+
+⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔
+CHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.</p>
         </article>
       </div>
     </section>
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>ChatGPT Plus (Ortaq hesab) üçün hansı planlar mövcuddur?</summary><p>1 ayliq — 8.99 ₼</p></details>
+    <details><summary>ChatGPT Plus (Ortaq hesab) üçün hansı planlar mövcuddur?</summary><p>1 ayliq (Zəmanətsiz) — 3.49 ₼</p></details>
     <details><summary>ChatGPT Plus (Ortaq hesab) sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>

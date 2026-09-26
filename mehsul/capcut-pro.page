@@ -129,6 +129,11 @@
       <div class="product-page-similar-title" title="TikTok Jeton">TikTok Jeton</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">11.00 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus-ortaq-hesab" aria-label="ChatGPT Plus (Ortaq hesab) — 3.49 ₼" title="ChatGPT Plus (Ortaq hesab)">
+      <img src="/assets/chatgpt.png" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
+      <div class="product-page-similar-category">all</div>
+      <div class="product-page-similar-price">3.49 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  AYLIQ) — 16.99 ₼" title="Google AI Pro + VEO 3 (18  AYLIQ)">
       <img src="/assets/google-ai.png" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  AYLIQ)">Google AI Pro + VEO 3 (18  AYLIQ)</div>
@@ -164,11 +169,6 @@
       <div class="product-page-similar-title" title="Youtube Eyni hesab">Youtube Eyni hesab</div>
       <div class="product-page-similar-category">all</div>
       <div class="product-page-similar-price">5.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Yeni hesab — 3.59 ₼" title="YouTube Yeni hesab">
-      <img src="/assets/youtube.png" class="product-page-similar-image" alt="YouTube Yeni hesab" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="YouTube Yeni hesab">YouTube Yeni hesab</div>
-      <div class="product-page-similar-category">musiqi</div>
-      <div class="product-page-similar-price">3.59 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>

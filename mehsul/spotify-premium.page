@@ -125,6 +125,11 @@
       <div class="product-page-similar-title" title="YouTube Yeni hesab">YouTube Yeni hesab</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">3.59 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus-ortaq-hesab" aria-label="ChatGPT Plus (Ortaq hesab) — 3.49 ₼" title="ChatGPT Plus (Ortaq hesab)">
+      <img src="/assets/chatgpt.png" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
+      <div class="product-page-similar-category">all</div>
+      <div class="product-page-similar-price">3.49 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 5.50 ₼" title="CapCut Pro">
       <img src="/assets/capcut.png" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
@@ -165,11 +170,6 @@
       <div class="product-page-similar-title" title="Adobe Creative Cloud">Adobe Creative Cloud</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">22.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/surfshark-vpn" aria-label="Surfshark VPN — 3.99 ₼" title="Surfshark VPN">
-      <img src="/assets/surfshark.png" class="product-page-similar-image" alt="Surfshark VPN" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Surfshark VPN">Surfshark VPN</div>
-      <div class="product-page-similar-category">video</div>
-      <div class="product-page-similar-price">3.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
