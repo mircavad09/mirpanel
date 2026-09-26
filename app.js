@@ -183,8 +183,8 @@ const DATA = {
         "alt": "ChatGPT Plus (Ortaq hesab)",
         "order": 20
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "whatsapp",
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
