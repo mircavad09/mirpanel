@@ -28,6 +28,7 @@
   <link rel="stylesheet" href="stock-display-fix.css?v=20260610-1" />
   <link rel="stylesheet" href="mobile-detail-unified.css?v=20260705-premium-layout-1" />
   <link rel="stylesheet" href="payment-flow.css?v=admin-1789831735282" />
+  <link rel="stylesheet" href="stories.css?v=20260926-1" />
   <link rel="icon" href="assets/logo.png" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <style>
@@ -245,10 +246,9 @@
           <div class="slider-arrow prev-arrow">❮</div>
           <div class="slider-arrow next-arrow">❯</div>
         </div>
-        <div class="home-secondary-banners" id="homeSecondaryBanners">
-          <a class="home-secondary-banner" id="homeSecondaryProductBanner" hidden></a>
-          <div id="homeSupportCard"></div>
-        </div>
+      </section>
+      <section class="wrap home-stories" id="homeStories" aria-label="Stories" hidden>
+        <div class="home-stories-track" id="homeStoriesTrack"></div>
       </section>
     </div>
 
@@ -285,6 +285,24 @@
       </article>
     </section>
 
+  </div>
+
+  <div class="story-viewer" id="storyViewer" role="dialog" aria-modal="true" aria-label="Story baxışı" hidden>
+    <div class="story-viewer-card">
+      <div class="story-progress" id="storyProgress" aria-hidden="true"></div>
+      <header class="story-viewer-head">
+        <img id="storyViewerCover" alt="">
+        <strong id="storyViewerTitle"></strong>
+        <button id="storyViewerClose" type="button" aria-label="Story-ni bağla">×</button>
+      </header>
+      <div class="story-stage" id="storyStage">
+        <div class="story-media" id="storyMedia"></div>
+        <p id="storyCaption" hidden></p>
+        <button class="story-play" id="storyPlay" type="button" hidden>Videonu oynat</button>
+        <button class="story-zone story-zone-prev" id="storyPrev" type="button" aria-label="Əvvəlki story"></button>
+        <button class="story-zone story-zone-next" id="storyNext" type="button" aria-label="Növbəti story"></button>
+      </div>
+    </div>
   </div>
 
   <div id="productPageView" class="wrap" style="display: none; padding-bottom: 100px;">
@@ -446,6 +464,7 @@
 
   <script src="app.js?v=admin-1789831735282"></script>
   <script src="cms-site.js?v=admin-1789831735282"></script>
+  <script src="stories.js?v=20260926-1"></script>
   <script src="payment-flow.js?v=admin-1789831735282"></script>
   <script src="order-confirmation.js?v=product-forms-20260902-1"></script>
   <script src="stock-display-fix.js?v=20260902-form-scope-1"></script>

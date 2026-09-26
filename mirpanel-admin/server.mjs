@@ -11,6 +11,7 @@ import { createNetflixConfirmationEndpoint } from "./netflix-confirmation-endpoi
 import { createConfirmationGate } from "./netflix-verification-policy.mjs";
 import { createNetflixAccountRepository } from "./netflix-account-repository.mjs";
 import { createNetflixRequestGuard } from "./netflix-request-guard.mjs";
+import { createStoriesRepository } from "./stories-repository.mjs";
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -37,6 +38,7 @@ const config = {
   supabaseUrl: process.env.SUPABASE_URL || "",
   supabaseSecretKey: process.env.SUPABASE_SECRET_KEY || "",
   receiptsBucket: process.env.SUPABASE_RECEIPTS_BUCKET || "mirpanel-payment-receipts",
+  storiesBucket: process.env.SUPABASE_STORIES_BUCKET || "mirpanel-stories",
   encryptionKey: process.env.PAYMENT_ENCRYPTION_KEY_B64 || "",
   tokenSecret: process.env.PAYMENT_TOKEN_SECRET_B64 || "",
   allowedOrigins: String(process.env.PAYMENT_ALLOWED_ORIGINS || "https://mirpanel.com,https://www.mirpanel.com")
@@ -635,6 +637,23 @@ async function handleApi(request, response) {
   if (await netflixConfirmationEndpoint(request, response)) return;
   if (await paymentSystem.handle(request, response)) return;
 
+  if ((request.method === "GET" || request.method === "OPTIONS") && request.url === "/api/stories") {
+    const origin = String(request.headers.origin || "");
+    const allowedOrigin = config.allowedOrigins.includes(origin) ? origin : "";
+    const corsHeaders = {
+      ...(allowedOrigin ? { "Access-Control-Allow-Origin": allowedOrigin } : {}),
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Content-Type",
+      Vary: "Origin"
+    };
+    if (request.method === "OPTIONS") {
+      response.writeHead(204, corsHeaders);
+      return response.end();
+    }
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." }, corsHeaders);
+    return json(response, 200, { stories: await storiesRepository.listPublic() }, corsHeaders);
+  }
+
   if (request.method === "POST" && request.url === "/api/login") {
     await paymentSystem.guardLogin(request);
     const body = await readBody(request, 20_000);
@@ -678,6 +697,52 @@ async function handleApi(request, response) {
   }
 
   if (!requireAuth(request, response)) return;
+
+  if (request.method === "GET" && request.url === "/api/admin/stories") {
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
+    const stories = await storiesRepository.listAdmin();
+    return json(response, 200, {
+      stories,
+      activeStories: stories.filter((story) => story.active && story.items.some((item) => item.active)).length,
+      activeItems: stories.flatMap((story) => story.items).filter((item) => item.active).length,
+      limits: { imageMb: 5, videoMb: 25 }
+    });
+  }
+
+  if (request.method === "POST" && request.url === "/api/admin/stories") {
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    return json(response, 201, { story: await storiesRepository.createStory(await readBody(request, 8_000_000)) });
+  }
+
+  const storyMatch = request.url.match(/^\/api\/admin\/stories\/([0-9a-f-]+)$/i);
+  if (storyMatch && (request.method === "PATCH" || request.method === "DELETE")) {
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    if (request.method === "DELETE") {
+      await storiesRepository.deleteStory(storyMatch[1]);
+      return json(response, 200, { ok: true });
+    }
+    return json(response, 200, { story: await storiesRepository.updateStory(storyMatch[1], await readBody(request, 8_000_000)) });
+  }
+
+  const storyItemCreateMatch = request.url.match(/^\/api\/admin\/stories\/([0-9a-f-]+)\/items$/i);
+  if (storyItemCreateMatch && request.method === "POST") {
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    return json(response, 201, { item: await storiesRepository.createItem(storyItemCreateMatch[1], await readBody(request, 36_000_000)) });
+  }
+
+  const storyItemMatch = request.url.match(/^\/api\/admin\/story-items\/([0-9a-f-]+)$/i);
+  if (storyItemMatch && (request.method === "PATCH" || request.method === "DELETE")) {
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    if (request.method === "DELETE") {
+      await storiesRepository.deleteItem(storyItemMatch[1]);
+      return json(response, 200, { ok: true });
+    }
+    return json(response, 200, { item: await storiesRepository.updateItem(storyItemMatch[1], await readBody(request, 36_000_000)) });
+  }
 
   if (request.method === "GET" && request.url.startsWith("/api/admin/netflix-accounts")) {
     if (!netflixAccounts) return json(response, 503, { error: "Netflix hesab repository-si hazır deyil." });
@@ -1102,6 +1167,10 @@ const netflixSupabase = config.supabaseUrl && config.supabaseSecretKey
   ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false } })
   : null;
 const netflixAccounts = netflixSupabase ? createNetflixAccountRepository(netflixSupabase) : null;
+const storiesSupabase = config.supabaseUrl && config.supabaseSecretKey
+  ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false } })
+  : null;
+const storiesRepository = storiesSupabase ? createStoriesRepository(storiesSupabase, { bucket: config.storiesBucket }) : null;
 const netflixRequestGuard = createNetflixRequestGuard();
 const netflixGate = createConfirmationGate({
   getAccount: (email) => netflixAccounts?.get(email),
@@ -1133,7 +1202,7 @@ function serveFile(response, name) {
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
   });
 
   fs.createReadStream(file).pipe(response);
@@ -1175,7 +1244,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/payment-admin.js"].includes(pathname)) {
+    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/payment-admin.js", "/stories-admin.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 
