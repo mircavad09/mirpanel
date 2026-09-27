@@ -36,7 +36,7 @@
         <h3>Yeni story kateqoriyası</h3>
         <label>Başlıq<input name="title" maxlength="80" required></label>
         <label>Sıra<input name="sortOrder" type="number" min="1" value="1" required></label>
-        <label>Cover şəkli<input name="cover" type="file" accept="image/jpeg,image/png,image/webp" required><small>JPG, PNG və WEBP · maksimum 5 MB</small></label>
+        <label>Cover şəkli<input name="cover" type="file" accept="image/jpeg,image/png,image/webp" required><small>Yalnız dairədə görünür. Ana səhifə üçün aşağıdan ən azı 1 aktiv element əlavə edin.</small></label>
         <label class="switchLine"><input name="active" type="checkbox" checked><span>Aktiv</span></label>
         <button class="btn primary" type="submit">Story yarat</button>
       </form>
@@ -75,7 +75,7 @@
         <select data-item-type><option value="image" ${item.media_type === "image" ? "selected" : ""}>Şəkil</option><option value="video" ${item.media_type === "video" ? "selected" : ""}>Video</option></select>
         <button class="btn" type="button" data-item-save="${item.id}">Yadda saxla</button>
         <button class="btn danger" type="button" data-item-delete="${item.id}">Sil</button>
-      </div>`).join("") || '<p class="emptyState">Bu story-də media elementi yoxdur.</p>'}</div>
+      </div>`).join("") || '<p class="emptyState bad">Bu story ana səhifədə görünmür: cover yalnız dairə üçündür. Aşağıdan ən azı 1 aktiv şəkil və ya video elementi əlavə edin.</p>'}</div>
       <form class="storyItemCreate" data-item-create="${story.id}">
         <h4>Yeni element</h4><select name="mediaType"><option value="image">Şəkil</option><option value="video">Video</option></select>
         <input name="media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" required>
@@ -100,7 +100,7 @@
     event.preventDefault(); const form = event.currentTarget; const button = form.querySelector("button[type=submit]"); button.disabled = true;
     try {
       await api("/api/admin/stories", { method: "POST", body: JSON.stringify({ title: form.title.value, sortOrder: form.sortOrder.value, active: form.active.checked, cover: await uploadPayload(form.cover.files[0], "image") }) });
-      form.reset(); form.sortOrder.value = "1"; form.active.checked = true; toast("Story yaradıldı."); await loadStories();
+      form.reset(); form.sortOrder.value = "1"; form.active.checked = true; toast("Story yaradıldı. Ana səhifədə görünməsi üçün aktiv element əlavə edin."); await loadStories();
     } catch (error) { toast(error.message, "bad"); } finally { button.disabled = false; }
   }
 

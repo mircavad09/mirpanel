@@ -645,6 +645,8 @@ async function handleApi(request, response) {
       ...(allowedOrigin ? { "Access-Control-Allow-Origin": allowedOrigin } : {}),
       "Access-Control-Allow-Methods": "GET, OPTIONS",
       "Access-Control-Allow-Headers": "Content-Type",
+      "Cache-Control": "no-store, max-age=0",
+      Pragma: "no-cache",
       Vary: "Origin"
     };
     if (request.method === "OPTIONS") {

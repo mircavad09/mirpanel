@@ -108,6 +108,8 @@ assert.ok(index.includes('id="heroSlider"'));
 assert.ok(index.includes('id="homeStories"'));
 assert.equal(index.includes('id="homeSecondaryBanners"'), false);
 assert.ok(server.indexOf('request.url === "/api/stories"') < server.indexOf('if (!requireAuth(request, response)) return'));
+assert.match(server, /"Cache-Control": "no-store, max-age=0"/);
+assert.match(server, /Pragma: "no-cache"/);
 assert.ok(server.indexOf('request.url === "/api/admin/stories"') > server.indexOf('if (!requireAuth(request, response)) return'));
 assert.match(migration, /public, file_size_limit[\s\S]*false, 26214400/);
 assert.match(migration, /enable row level security/g);
