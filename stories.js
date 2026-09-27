@@ -16,6 +16,16 @@
   const progress = document.getElementById("storyProgress");
   const caption = document.getElementById("storyCaption");
   const playButton = document.getElementById("storyPlay");
+  const soundButton = document.getElementById("storySound");
+  let soundMuted = false;
+
+  function updateSoundButton(video) {
+    if (!soundButton) return;
+    soundButton.hidden = !video;
+    if (!video) return;
+    soundButton.textContent = video.muted ? "🔇" : "🔊";
+    soundButton.setAttribute("aria-label", video.muted ? "Səsi aç" : "Səsi bağla");
+  }
 
   function stopCurrent() {
     clearTimeout(timer);
@@ -61,6 +71,8 @@
   function showItem() {
     stopCurrent();
     playButton.hidden = true;
+    playButton.textContent = "Videonu oynat";
+    updateSoundButton(null);
     const story = stories[storyIndex];
     const item = story.items[itemIndex];
     document.getElementById("storyViewerTitle").textContent = story.title;
@@ -73,14 +85,24 @@
     if (item.media_type === "video") {
       setProgress(story, 60000);
       const video = document.createElement("video");
-      video.muted = true; video.autoplay = true; video.playsInline = true; video.preload = "metadata";
+      video.muted = soundMuted; video.volume = 1; video.autoplay = true; video.playsInline = true; video.preload = "metadata";
       video.src = item.mediaUrl;
       video.addEventListener("loadedmetadata", () => setProgress(story, Math.max(1000, video.duration * 1000)), { once: true });
       video.addEventListener("ended", () => move(1), { once: true });
       video.addEventListener("error", () => fallback("Video yüklənmədi.", true), { once: true });
       media.replaceChildren(video);
-      const play = () => video.play().catch(() => { fallback("Video avtomatik başlamadı.", true); playButton.onclick = () => { media.replaceChildren(video); playButton.hidden = true; video.play(); }; });
-      play();
+      updateSoundButton(video);
+      video.play().catch(() => {
+        video.muted = true;
+        updateSoundButton(video);
+        video.play().catch(() => {});
+        playButton.textContent = "Səsi aç";
+        playButton.hidden = false;
+        playButton.onclick = () => {
+          video.muted = false; video.volume = 1;
+          video.play().then(() => { soundMuted = false; playButton.hidden = true; updateSoundButton(video); }).catch(() => { video.muted = true; updateSoundButton(video); });
+        };
+      });
       return;
     }
 
@@ -131,6 +153,13 @@
   }
 
   document.getElementById("storyViewerClose").addEventListener("click", closeViewer);
+  soundButton?.addEventListener("click", () => {
+    const video = media.querySelector("video");
+    if (!video) return;
+    if (!video.muted) { video.muted = true; soundMuted = true; playButton.hidden = true; return updateSoundButton(video); }
+    video.muted = false; video.volume = 1;
+    video.play().then(() => { soundMuted = false; playButton.hidden = true; updateSoundButton(video); }).catch(() => { video.muted = true; updateSoundButton(video); playButton.textContent = "Səsi aç"; playButton.hidden = false; });
+  });
   document.getElementById("storyPrev").addEventListener("click", () => move(-1));
   document.getElementById("storyNext").addEventListener("click", () => move(1));
   viewer.addEventListener("keydown", (event) => {
