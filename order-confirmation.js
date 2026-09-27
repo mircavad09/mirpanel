@@ -1362,10 +1362,10 @@
     setFooter("");
     renderModalContent(`
       <section class="paymentWhatsAppFallback" aria-labelledby="paymentWhatsAppFallbackTitle" aria-live="polite">
-        <h2 id="paymentWhatsAppFallbackTitle">Sifariş yaradıldı</h2>
+        <h2 id="paymentWhatsAppFallbackTitle">Sifarişiniz hazırdır</h2>
         <p>Sifariş nömrəsi: <strong>${escapeHtml(orderCode || "")}</strong></p>
-        <p>WhatsApp avtomatik açılmasa, aşağıdakı düyməyə toxunun.</p>
-        <a id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}" target="_blank" rel="noopener noreferrer">WhatsApp-a keç</a>
+        <p>Sifarişiniz hazırdır. WhatsApp avtomatik açılmadı.</p>
+        <a id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}">WhatsApp-a keç</a>
         <button id="paymentWhatsAppCopy" type="button">Mesajı kopyala</button>
         <button id="paymentStartNewOrder" type="button">Yeni sifariş</button>
       </section>
@@ -1424,44 +1424,38 @@
         alert("Ödəniş sistemi hazırda əlçatan deyil. Bir qədər sonra yenidən cəhd edin.");
         return;
       }
+      const draft = buildWhatsAppMessage(product, plan, formData, "PENDING");
       paymentOrder = await window.MirpanelPaymentFlow.start({
         product,
         plan,
-        planIndex: Math.max(0, product?.plans?.indexOf(plan) ?? 0)
+        planIndex: Math.max(0, product?.plans?.indexOf(plan) ?? 0),
+        whatsappExtraText: draft.extraText
       });
       if (!paymentOrder) return;
     }
 
-    const order = buildWhatsAppMessage(product, plan, formData, paymentOrder.orderCode);
-    const extraLines = order.extraText ? ["", order.extraText] : [];
-    order.message = [
-      "Salam, ödəniş etmişəm.",
-      "",
-      `Sifariş nömrəsi: ${paymentOrder.orderCode}`,
-      `Məhsul: ${publicProductTitle(paymentOrder.productTitle || product.title)}`,
-      `Plan: ${paymentOrder.planName || order.planText}`,
-      `Məbləğ: ${Number(paymentOrder.amount ?? plan.price).toFixed(2)} ${paymentOrder.currency || "₼"}`,
-      `Ödəniş üsulu: ${paymentOrder.paymentMethod}`,
-      ...extraLines,
-      "",
-      "Ödəniş çeki Mirpanel sisteminə yüklənib. Zəhmət olmasa sifarişi yoxlayıb təsdiqləyin."
-    ].join("\n");
-    const whatsappUrl = buildWhatsAppUrl(order.message);
-    showWhatsAppFallback(whatsappUrl, paymentOrder.orderCode, order.message);
+    const whatsappUrl = String(paymentOrder.whatsappUrl || "");
+    const whatsappMessage = String(paymentOrder.whatsappMessage || "");
+    const verified = new URL(whatsappUrl);
+    if (verified.protocol !== "https:" || verified.hostname !== "wa.me" || !/^\/\d{8,15}$/.test(verified.pathname) || !whatsappMessage) {
+      throw new Error("WhatsApp keçidi server tərəfindən hazırlanmadı.");
+    }
+    showWhatsAppFallback(verified.href, paymentOrder.orderCode, whatsappMessage);
     if (!paymentOrder.idempotent) {
       // Optional stock/Sheets synchronization must not hold a paid checkout open.
+      const order = buildWhatsAppMessage(product, plan, formData, paymentOrder.orderCode);
       void decrementStock(product).catch(() => ({ skipped: true })).then((stockResult) => {
         submitGoogleSheets({ ...order, productTitle: publicProductTitle(product.title) || product.id,
           stockBefore: stockResult?.stockBefore, stockAfter: stockResult?.stockAfter });
       });
     }
-    const preparedWindow = paymentOrder.whatsappWindow;
-    if (preparedWindow && !preparedWindow.closed) {
-      try {
-        preparedWindow.location.replace(whatsappUrl);
-        preparedWindow.focus();
-      } catch {}
-    }
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    try {
+      const navigate = typeof window.mirpanelWhatsAppNavigate === "function"
+        ? window.mirpanelWhatsAppNavigate
+        : (url) => { window.location.assign(url); return true; };
+      navigate(verified.href);
+    } catch {}
     return;
   }
 
@@ -1895,13 +1889,11 @@
   void Promise.resolve(window.MirpanelPaymentFlow?.recoverSubmitted?.()).then((order) => {
     const modal = document.getElementById("modal");
     if (!order || !modal || modal.classList.contains("show")) return;
-    const message = ["Salam, ödəniş etmişəm.", "", `Sifariş nömrəsi: ${order.orderCode}`,
-      `Məhsul: ${order.productTitle}`, `Plan: ${order.planName}`,
-      `Məbləğ: ${Number(order.amount).toFixed(2)} ${order.currency}`,
-      `Ödəniş üsulu: ${order.paymentMethod}`, "",
-      "Ödəniş çeki Mirpanel sisteminə yüklənib. Zəhmət olmasa sifarişi yoxlayıb təsdiqləyin."].join("\n");
+    const message = String(order.whatsappMessage || "");
+    const url = new URL(String(order.whatsappUrl || ""));
+    if (!message || url.protocol !== "https:" || url.hostname !== "wa.me" || !/^\/\d{8,15}$/.test(url.pathname)) return;
     modal.classList.add("show", "paymentFlowOpen");
     document.body.classList.add("noScroll");
-    showWhatsAppFallback(buildWhatsAppUrl(message), order.orderCode, message);
+    showWhatsAppFallback(url.href, order.orderCode, message);
   }).catch(() => {});
 })();

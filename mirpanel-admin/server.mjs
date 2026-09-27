@@ -47,6 +47,7 @@ const config = {
   maxReceiptBytes: Math.max(1, Math.min(5 * 1024 * 1024, Number(process.env.PAYMENT_RECEIPT_MAX_BYTES || 5 * 1024 * 1024))),
   adminBaseUrl: process.env.RENDER_EXTERNAL_URL || "https://mirpanel.onrender.com",
   siteBaseUrl: process.env.MIRPANEL_SITE_URL || "https://mirpanel.com",
+  whatsappPhone: process.env.MIRPANEL_WHATSAPP_PHONE || "994515243545",
   notificationEmail: process.env.PAYMENT_NOTIFICATION_EMAIL || "",
   gmailClientId: process.env.GMAIL_CLIENT_ID || "",
   gmailClientSecret: process.env.GMAIL_CLIENT_SECRET || "",

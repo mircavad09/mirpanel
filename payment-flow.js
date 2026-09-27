@@ -27,7 +27,11 @@
   }
 
   function validOrder(order) {
-    return order && typeof order.orderId === "string" && /^(?:MP-[A-Z0-9]+|[1-9]\d*)$/.test(order.orderCode || "") && order.receiptUploaded === true;
+    if (!order || typeof order.orderId !== "string" || !/^(?:MP-[A-Z0-9]+|[1-9]\d*)$/.test(order.orderCode || "") || order.receiptUploaded !== true) return false;
+    try {
+      const whatsapp = new URL(order.whatsappUrl);
+      return whatsapp.protocol === "https:" && whatsapp.hostname === "wa.me" && /^\/\d{8,15}$/.test(whatsapp.pathname) && typeof order.whatsappMessage === "string";
+    } catch { return false; }
   }
 
   const esc = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -58,24 +62,6 @@
 
   function clearStoredCheckout() {
     try { sessionStorage.removeItem(CHECKOUT_STORAGE_KEY); } catch {}
-  }
-
-  function prepareWhatsAppWindow(flow) {
-    if (flow.whatsappWindow && !flow.whatsappWindow.closed) return flow.whatsappWindow;
-    try {
-      const popup = window.open("about:blank", `mirpanel-whatsapp-${flow.checkoutKey}`);
-      if (!popup) return null;
-      popup.opener = null;
-      popup.document.title = "Mirpanel · WhatsApp hazırlanır";
-      popup.document.body.textContent = "Sifariş təhlükəsiz tamamlanır. WhatsApp bir qədər sonra açılacaq…";
-      flow.whatsappWindow = popup;
-      return popup;
-    } catch { return null; }
-  }
-
-  function closeWhatsAppWindow(flow) {
-    try { if (flow.whatsappWindow && !flow.whatsappWindow.closed) flow.whatsappWindow.close(); } catch {}
-    flow.whatsappWindow = null;
   }
 
   async function request(path, options = {}) {
@@ -328,7 +314,7 @@
     document.getElementById("paymentReceiptForm")?.classList.remove("hasReceipt", "isUploading", "uploadFailed", "uploadSucceeded");
   }
 
-  async function start({ product, plan, planIndex }) {
+  async function start({ product, plan, planIndex, whatsappExtraText = "" }) {
     if (activeFlow && !activeFlow.settled) {
       if (activeFlow.shell === document.querySelector(".paymentFlow")) return activeFlow.promise;
       // A parent modal may have been closed/replaced while the read was pending.
@@ -337,7 +323,7 @@
     if (activeFlow?.reservation || activeFlow?.previousReservationId) await cancelReservation(activeFlow);
     renderShell(product, plan);
     const previous = storedCheckout();
-    const flow = { product, plan, planIndex, checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: previous?.orderIdempotencyKey || uuid(), whatsappWindow: null, stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
+    const flow = { product, plan, planIndex, whatsappExtraText: String(whatsappExtraText || "").slice(0, 2000), checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: previous?.orderIdempotencyKey || uuid(), stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
     activeFlow = flow;
     flow.shell = document.querySelector(".paymentFlow");
     flow.reservationKeys = new Map();
@@ -559,14 +545,14 @@
               const error = document.getElementById("paymentReceiptError");
               if (!flow.receipt) { promptForReceipt(); return; }
               if (!flow.reservation) { error.textContent = "Aktiv rezerv tələb olunur."; error.hidden = false; return; }
-              prepareWhatsAppWindow(flow);
               flow.submitting = true;
               document.getElementById("paymentReceiptForm")?.classList.add("isUploading");
               flow.submissionStarted = true;
               flow.uploadController = new AbortController();
               storeCheckout(flow);
               submit.disabled = true;
-              submit.textContent = "Çek yüklənir...";
+              submit.textContent = "WhatsApp açılır…";
+              setMessage("Sifariş hazırlanır, WhatsApp açılır…");
               const cancelButton = document.getElementById("paymentCancel");
               cancelButton.textContent = "Yükləməni dayandır";
               const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
@@ -593,6 +579,7 @@
                   formData.append("planIndex", String(planIndex));
                   formData.append("consentAccepted", "true");
                   formData.append("uploadKey", flow.orderIdempotencyKey);
+                  formData.append("whatsappExtraText", flow.whatsappExtraText);
                   formData.append("receipt", flow.receipt, flow.receipt.name || "receipt");
                   return formData;
                 };
@@ -609,8 +596,6 @@
                     error.hidden = false;
                   }
                 }, flow.orderIdempotencyKey, flow.uploadController.signal);
-                Object.defineProperty(order, "whatsappWindow", { value: flow.whatsappWindow, enumerable: false });
-                flow.whatsappWindow = null;
                 flow.uploadController = null;
                 setProgress(100, "Çek uğurla yükləndi");
                 receiptStatus?.classList.replace("paymentReceiptPending", "paymentReceiptSuccess");
@@ -621,7 +606,6 @@
                 await finish(order, { preserveModal: true });
                 return;
               } catch (submitError) {
-                closeWhatsAppWindow(flow);
                 flow.uploadController = null;
                 flow.submitting = false;
                 document.getElementById("paymentReceiptForm")?.classList.remove("isUploading", "uploadSucceeded");
@@ -632,7 +616,7 @@
                 progress.querySelector("span").style.width = "0%";
                 progress.querySelector("b").textContent = "Göndərilmədi";
                 if (receiptStatus) receiptStatus.textContent = "Çek seçildi — yenidən göndərilə bilər.";
-                error.textContent = submitError.userMessage || "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.";
+                error.textContent = submitError.userMessage || "Sifariş hazırlanmadı. Yenidən cəhd edin.";
                 error.hidden = false;
                 cancelButton.textContent = "Ləğv et";
                 submit.disabled = false;

@@ -32,8 +32,8 @@ try {
       let body;
       if(endpoint.endsWith("/methods"))body={anyAvailable:true,methods:[{id:"22222222-2222-4222-8222-222222222222",providerName:"Fixture Bank",last4:"0000",available:true}]};
       else if(endpoint.endsWith("/reservations")){reserves++;body={reservationId:"11111111-1111-4111-8111-111111111111",expiresAt:new Date(Date.now()+600000).toISOString(),amount:5.99,currency:"AZN",method:{number:"0000 0000 0000 0000",providerName:"Fixture Bank",theme:"abb",type:"bank_card"}};}
-      else if(endpoint.endsWith("/orders")){orders++;await new Promise(r=>setTimeout(r,250));body={orderId:"33333333-3333-4333-8333-333333333333",orderCode:"10001",status:"reviewing",productTitle:"Snapshot product",planName:"Snapshot plan",amount:5.99,currency:"AZN",paymentMethod:"LeoBank •••• 7350",receiptUploaded:true};}
-      else if(endpoint.endsWith("/resume")){body={state:"submitted",order:{orderId:"33333333-3333-4333-8333-333333333333",orderCode:"10001",status:"reviewing",productTitle:"Snapshot product",planName:"Snapshot plan",amount:5.99,currency:"AZN",paymentMethod:"LeoBank •••• 7350",receiptUploaded:true,idempotent:true}};}
+      else if(endpoint.endsWith("/orders")){orders++;await new Promise(r=>setTimeout(r,250));const whatsappMessage="Sifariş nömrəsi: 10001\nMəhsul: Snapshot product\nPlan: Snapshot plan\nMəbləğ: 5.99 AZN\nÖdəniş üsulu: LeoBank •••• 7350\nTikTok istifadəçi identifikatoru: @fixture_user\nJeton miqdarı: 500\nÖdəniş çeki Mirpanel sisteminə yüklənib.";body={orderId:"33333333-3333-4333-8333-333333333333",orderCode:"10001",status:"reviewing",productTitle:"Snapshot product",planName:"Snapshot plan",amount:5.99,currency:"AZN",paymentMethod:"LeoBank •••• 7350",receiptUploaded:true,whatsappMessage,whatsappUrl:`https://wa.me/994515243545?text=${encodeURIComponent(whatsappMessage)}`};}
+      else if(endpoint.endsWith("/resume")){const whatsappMessage="Sifariş nömrəsi: 10001";body={state:"submitted",order:{orderId:"33333333-3333-4333-8333-333333333333",orderCode:"10001",status:"reviewing",productTitle:"Snapshot product",planName:"Snapshot plan",amount:5.99,currency:"AZN",paymentMethod:"LeoBank •••• 7350",receiptUploaded:true,idempotent:true,whatsappMessage,whatsappUrl:`https://wa.me/994515243545?text=${encodeURIComponent(whatsappMessage)}`}};}
       else {await route.fulfill({status:404,contentType:"application/json",body:"{}"});return;}
       await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(body)});
     });
@@ -46,41 +46,30 @@ try {
     await page.click('#universalOrderForm button[type="submit"]');
     await page.click("[data-payment-method]");
     await page.setInputFiles("#paymentReceiptInput",{name:"fixture.pdf",mimeType:"application/pdf",buffer:Buffer.from("%PDF-1.7\n%%EOF")});
-    const popupPromise=page.waitForEvent("popup");
     await page.evaluate(()=>{document.getElementById("paymentSubmit").click();document.getElementById("paymentSubmit").click();});
-    const popup=await popupPromise;
-    assert.equal(popup.url(),"about:blank");
-    await popup.waitForURL("https://wa.me/**");
+    await page.waitForURL("https://wa.me/**");
     assert.equal(target.hostname,"wa.me");assert.equal(target.protocol,"https:");assert.match(target.pathname,/^\/\d{8,15}$/);
     const message=target.searchParams.get("text");for(const text of ["10001","Snapshot product","Snapshot plan","5.99","LeoBank •••• 7350","TikTok istifadəçi identifikatoru: @fixture_user","Jeton miqdarı: 500","çeki Mirpanel sisteminə yüklənib"])assert.ok(message.includes(text));
     assert.equal(message.includes("Şifrə:"),false);assert.equal(message.includes("Spotify"),false);
-    assert.equal(message.includes("0000 0000"),false);assert.equal(orders,1);assert.equal(reserves,1);assert.equal(popups,1);
-    // Original checkout always retains the direct fallback and order ID.
-    const fallback=page.locator("#paymentWhatsAppFallbackLink");
-    await fallback.waitFor({state:"visible"});
-    if(await fallback.count()){
-      assert.equal(new URL(await fallback.getAttribute("href")).hostname,"wa.me");assert.equal(await fallback.getAttribute("target"),"_blank");
-      assert.match(await page.locator(".paymentWhatsAppFallback").textContent(),/10001/);
-      assert.ok(await page.locator("#paymentWhatsAppCopy").isVisible());
-      assert.ok(await fallback.evaluate(element=>element.getBoundingClientRect().height>=44));
-    } else throw new Error("Back navigation did not preserve the WhatsApp fallback");
-    results.push({browser:browserName,profile:profile.name,preopenedOnUserGesture:true,httpsWhatsApp:true,fallback:true,copy:true,orders,reserves,popups});
+    assert.equal(message.includes("0000 0000"),false);
+    assert.equal(popups,0);assert.equal(orders,1);assert.equal(reserves,1);
+    results.push({browser:browserName,profile:profile.name,sameTabNavigation:true,httpsWhatsApp:true,orders,reserves,popups});
     await context.close();
   }
 
-  // A blocked popup must not create a second order. The original tab keeps a
-  // direct user-gesture link and a copyable, already encoded-once message.
+  // A blocked same-tab navigation must not create a second order. The checkout
+  // keeps a direct user-gesture link and a copyable, already encoded-once message.
   {
     const context=await browser.newContext({viewport:{width:390,height:900},isMobile:true,
       ...(process.env.MIRPANEL_BROWSER_ENGINE==="webkit"?{}:{permissions:["clipboard-read","clipboard-write"]})});
-    await context.addInitScript(()=>{window.open=()=>null;});
+    await context.addInitScript(()=>{window.open=()=>{throw new Error("UNEXPECTED_POPUP")};window.mirpanelWhatsAppNavigate=()=>false;});
     const page=await context.newPage();page.on("pageerror",e=>errors.push(e.message));
     let orders=0,reserves=0;
     await page.route("**/api/payments/**",async route=>{
       const endpoint=new URL(route.request().url()).pathname;let body;
       if(endpoint.endsWith("/methods"))body={anyAvailable:true,methods:[{id:"22222222-2222-4222-8222-222222222222",providerName:"Fixture Bank",last4:"0000",available:true}]};
       else if(endpoint.endsWith("/reservations")){reserves++;body={reservationId:"11111111-1111-4111-8111-111111111111",expiresAt:new Date(Date.now()+600000).toISOString(),amount:5.99,currency:"AZN",method:{number:"0000 0000 0000 0000",providerName:"Fixture Bank",theme:"abb",type:"bank_card"}};}
-      else if(endpoint.endsWith("/orders")){orders++;await new Promise(r=>setTimeout(r,650));body={orderId:"33333333-3333-4333-8333-333333333333",orderCode:"10001",status:"reviewing",productTitle:"Azərbaycan məhsulu",planName:"Şəxsi plan",amount:5.99,currency:"AZN",paymentMethod:"LeoBank •••• 7350",receiptUploaded:true};}
+      else if(endpoint.endsWith("/orders")){orders++;await new Promise(r=>setTimeout(r,650));const whatsappMessage="Sifariş nömrəsi: 10001\nMəhsul: Azərbaycan məhsulu\nÖdəniş üsulu: LeoBank •••• 7350";body={orderId:"33333333-3333-4333-8333-333333333333",orderCode:"10001",status:"reviewing",productTitle:"Azərbaycan məhsulu",planName:"Şəxsi plan",amount:5.99,currency:"AZN",paymentMethod:"LeoBank •••• 7350",receiptUploaded:true,whatsappMessage,whatsappUrl:`https://wa.me/994515243545?text=${encodeURIComponent(whatsappMessage)}`};}
       else {await route.fulfill({status:404,contentType:"application/json",body:"{}"});return;}
       await route.fulfill({status:200,contentType:"application/json",body:JSON.stringify(body)});
     });
@@ -93,6 +82,13 @@ try {
     await page.locator("#paymentWhatsAppFallbackLink").waitFor({state:"visible"});
     const href=new URL(await page.locator("#paymentWhatsAppFallbackLink").getAttribute("href"));
     assert.equal(href.hostname,"wa.me");assert.ok(href.searchParams.get("text").includes("Azərbaycan məhsulu"));assert.ok(href.searchParams.get("text").includes("LeoBank •••• 7350"));
+    assert.equal(await page.locator("#paymentWhatsAppFallbackLink").getAttribute("target"),null);
+    assert.match(await page.locator(".paymentWhatsAppFallback").textContent(),/Sifarişiniz hazırdır\. WhatsApp avtomatik açılmadı\./);
+    for(const width of [320,390]){
+      await page.setViewportSize({width,height:844});
+      const layout=await page.evaluate(()=>{const card=document.querySelector("#modal .modalCard");const link=document.getElementById("paymentWhatsAppFallbackLink").getBoundingClientRect();return{overflow:document.documentElement.scrollWidth>innerWidth,linkVisible:link.top>=0&&link.bottom<=innerHeight,scrollFree:card.scrollHeight===card.clientHeight};});
+      assert.deepEqual(layout,{overflow:false,linkVisible:true,scrollFree:true},`${width}px fallback görünüşü`);
+    }
     await page.locator("#paymentWhatsAppCopy").click();
     await page.waitForFunction(()=>document.getElementById("paymentWhatsAppCopy")?.textContent!=="Mesajı kopyala");
     assert.equal(await page.locator("#paymentWhatsAppCopy").textContent(),"Mesaj kopyalandı");

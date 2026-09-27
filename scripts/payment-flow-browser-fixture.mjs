@@ -90,7 +90,9 @@ const server = http.createServer(async (request, response) => {
     const existingOrder = orders.get(lastUpload.reservationId);
     if (existingOrder) { json(response,200,{...existingOrder,idempotent:true}); return; }
     activeReservations = 0;
-    const order = { orderId: crypto.randomUUID(), orderCode: String(10001 + orders.size), status: "reviewing", paymentMethod: "ABB", productTitle:"Test məhsul",planName:"1 aylıq",amount:5.99,currency:"AZN", receiptUploaded: true };
+    const orderCode = String(10001 + orders.size);
+    const whatsappMessage = `Sifariş nömrəsi: ${orderCode}\nMəhsul: Test məhsul\nPlan: 1 aylıq\nMəbləğ: 5.99 AZN\nÖdəniş üsulu: ABB`;
+    const order = { orderId: crypto.randomUUID(), orderCode, status: "reviewing", paymentMethod: "ABB", productTitle:"Test məhsul",planName:"1 aylıq",amount:5.99,currency:"AZN", receiptUploaded: true, whatsappMessage, whatsappUrl:`https://wa.me/994515243545?text=${encodeURIComponent(whatsappMessage)}` };
     orders.set(lastUpload.reservationId,order);
     json(response, 201, order); return;
   }

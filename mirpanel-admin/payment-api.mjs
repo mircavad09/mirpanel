@@ -18,6 +18,24 @@ function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
 }
 
+export function buildCanonicalWhatsApp(order, methodLabel, extraText, configuredPhone) {
+  let phone = String(configuredPhone || "").replace(/\D/g, "");
+  if (phone.startsWith("0")) phone = `994${phone.slice(1)}`;
+  if (!/^\d{8,15}$/.test(phone)) phone = "994515243545";
+  const extra = safeMultiline(extraText, 2000);
+  const message = [
+    "Salam, ödəniş etmişəm.", "",
+    `Sifariş nömrəsi: ${order.order_code}`,
+    `Məhsul: ${safeText(order.product_title, 160)}`,
+    `Plan: ${safeText(order.plan_name, 160)}`,
+    `Məbləğ: ${Number(order.amount).toFixed(2)} ${safeText(order.currency || "₼", 8)}`,
+    `Ödəniş üsulu: ${methodLabel}`,
+    ...(extra ? ["", extra] : []), "",
+    "Ödəniş çeki Mirpanel sisteminə yüklənib. Zəhmət olmasa sifarişi yoxlayıb təsdiqləyin."
+  ].join("\n");
+  return { whatsappMessage: message, whatsappUrl: `https://wa.me/${phone}?text=${encodeURIComponent(message)}` };
+}
+
 function resolvedPaymentTheme(method) {
   if (["leo", "abb", "kapital", "m10", "neutral"].includes(method.theme)) return method.theme;
   const provider = String(method.provider_name || "").toLocaleLowerCase("az-AZ");
@@ -70,7 +88,8 @@ export async function paymentOrderFromMultipart(rawBody, contentType, maxReceipt
       checkoutKey: form.get("checkoutKey"),
       productId: form.get("productId"),
       planIndex: form.get("planIndex"),
-      consentAccepted: form.get("consentAccepted") === "true"
+      consentAccepted: form.get("consentAccepted") === "true",
+      whatsappExtraText: form.get("whatsappExtraText")
     },
     receipt: receiptFromBuffer(Buffer.from(await uploaded.arrayBuffer()), uploaded.type, maxReceiptBytes)
   };
@@ -117,7 +136,7 @@ export function createPaymentSystem(options) {
     json(response, status, body, { ...corsHeaders(request), "Cache-Control": "no-store" });
   }
 
-  async function orderResult(order, idempotent = true) {
+  async function orderResult(order, idempotent = true, whatsappExtraText = "") {
     const method = await store.rawMethod(order.method_id);
     const methodLabel = paymentMethodLabel({
       method_name_snapshot: order.method_name_snapshot || method?.provider_name || method?.display_name,
@@ -128,7 +147,8 @@ export function createPaymentSystem(options) {
       paymentMethod: methodLabel,
       productTitle: order.product_title, planName: order.plan_name,
       amount: Number(order.amount), currency: order.currency,
-      receiptUploaded: Boolean(order.receipt_path && !order.receipt_deleted_at)
+      receiptUploaded: Boolean(order.receipt_path && !order.receipt_deleted_at),
+      ...buildCanonicalWhatsApp(order, methodLabel, whatsappExtraText, config.whatsappPhone)
     };
   }
 
@@ -279,7 +299,7 @@ export function createPaymentSystem(options) {
       }
       const existing = await store.getOrderByReservation(reservationId);
       if (existing) {
-        publicJson(request, response, 200, await orderResult(existing));
+        publicJson(request, response, 200, await orderResult(existing, true, body.whatsappExtraText));
         return true;
       }
       const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
@@ -318,7 +338,7 @@ export function createPaymentSystem(options) {
       if (submitted.idempotent && order.receipt_path !== receiptPath) await store.removeReceipt(receiptPath).catch(() => {});
       const method = await store.rawMethod(order.method_id);
       if (submitted.idempotent) {
-        publicJson(request, response, 200, await orderResult(order));
+        publicJson(request, response, 200, await orderResult(order, true, body.whatsappExtraText));
         return true;
       }
       const reviewToken = security.randomToken();
@@ -340,7 +360,7 @@ export function createPaymentSystem(options) {
       } catch (error) {
         console.error("Payment notification queue", order.order_code, error.message);
       }
-      publicJson(request, response, 201, await orderResult(order, false));
+      publicJson(request, response, 201, await orderResult(order, false, body.whatsappExtraText));
       return true;
     }
     return false;
