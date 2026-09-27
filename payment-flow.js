@@ -28,9 +28,6 @@
 
   function validOrder(order) {
     if (!order || typeof order.orderId !== "string" || !/^(?:MP-[A-Z0-9]+|[1-9]\d*)$/.test(order.orderCode || "") || order.receiptUploaded !== true) return false;
-    if (order.deliveryUrl) {
-      try { const delivery = new URL(order.deliveryUrl); return delivery.protocol === "https:" && delivery.hostname === "mirpanel.com" && delivery.pathname === "/capcut-sifaris.html" && delivery.hash.length > 20; } catch { return false; }
-    }
     try {
       const whatsapp = new URL(order.whatsappUrl);
       return whatsapp.protocol === "https:" && whatsapp.hostname === "wa.me" && /^\/\d{8,15}$/.test(whatsapp.pathname) && typeof order.whatsappMessage === "string";
@@ -202,7 +199,6 @@
     form.innerHTML = `<section class="paymentFlow" data-payment-stage="payment_method_selection" aria-labelledby="paymentFlowTitle">
       <div class="paymentFlowHead"><div><span>Ödəniş</span><h2 id="paymentFlowTitle">Ödəniş üsulunu seçin</h2><p>${esc(product.title)} · ${Number(plan.price).toFixed(2)} ₼</p></div><button class="paymentFlowClose" type="button" aria-label="Ödənişi bağla">×</button></div>
       <div id="paymentFlowMessage" class="paymentFlowMessage" role="status">Aktiv ödəniş üsulları yüklənir...</div>
-      ${product.id === "capcut" ? '<label class="capcutPhoneField">WhatsApp nömrəniz<input id="capcutCustomerPhone" type="tel" inputmode="tel" autocomplete="tel" placeholder="050 123 45 67" maxlength="19"><small>Yalnız sifariş və dəstək əlaqəsi üçün.</small><b id="capcutPhoneError" hidden></b></label>' : ""}
       <button id="paymentMethodsRetry" type="button" hidden>Yenidən cəhd et</button>
       <div id="paymentMethodChoices" class="paymentMethodChoices" data-payment-stage-panel="payment_method_selection" aria-label="Ödəniş üsulları"></div>
       <div id="paymentMethodDetail" data-payment-stage-panel="payment_details"></div>
@@ -584,7 +580,6 @@
                   formData.append("consentAccepted", "true");
                   formData.append("uploadKey", flow.orderIdempotencyKey);
                   formData.append("whatsappExtraText", flow.whatsappExtraText);
-                  if (product.id === "capcut") formData.append("customerPhone", document.getElementById("capcutCustomerPhone")?.value || "");
                   formData.append("receipt", flow.receipt, flow.receipt.name || "receipt");
                   return formData;
                 };
@@ -608,12 +603,6 @@
                 document.getElementById("paymentReceiptForm")?.classList.add("uploadSucceeded");
                 setMessage(`Çek uğurla əlavə edildi. Sifariş: ${order.orderCode}`, "success");
                 await new Promise((resolve) => requestAnimationFrame(resolve));
-                if (product.id === "capcut" && order.deliveryUrl) {
-                  clearStoredCheckout();
-                  window.location.assign(order.deliveryUrl);
-                  await finish(null, { preserveModal: true });
-                  return;
-                }
                 await finish(order, { preserveModal: true });
                 return;
               } catch (submitError) {
@@ -642,12 +631,6 @@
         choices.onclick = async (event) => {
           const button = event.target.closest("[data-payment-method]");
           if (!button || button.disabled || flow.reserving || flow.reservation) return;
-          if (product.id === "capcut") {
-            const input = document.getElementById("capcutCustomerPhone"); const error = document.getElementById("capcutPhoneError");
-            let digits = String(input?.value || "").replace(/\D/g, ""); if (digits.startsWith("0")) digits = `994${digits.slice(1)}`;
-            if (!/^994(?:10|50|51|55|60|70|77|99)\d{7}$/.test(digits)) { error.textContent = "WhatsApp nömrəsini düzgün Azərbaycan mobil formatında yazın."; error.hidden = false; input?.focus(); return; }
-            error.hidden = true;
-          }
           flow.reserving = true;
           button.classList.add("selected");
           button.setAttribute("aria-pressed", "true");

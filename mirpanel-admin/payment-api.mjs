@@ -90,7 +90,6 @@ export async function paymentOrderFromMultipart(rawBody, contentType, maxReceipt
       planIndex: form.get("planIndex"),
       consentAccepted: form.get("consentAccepted") === "true",
       whatsappExtraText: form.get("whatsappExtraText"),
-      customerPhone: form.get("customerPhone")
     },
     receipt: receiptFromBuffer(Buffer.from(await uploaded.arrayBuffer()), uploaded.type, maxReceiptBytes)
   };
@@ -116,23 +115,6 @@ export function createPaymentSystem(options) {
   const store = options.store || createPaymentStore(config);
   const mailer = options.mailer || createPaymentMailer(config, store);
   const allowedOrigins = new Set(config.allowedOrigins);
-
-  function azPhone(value) {
-    let digits = String(value || "").replace(/\D/g, "");
-    if (digits.startsWith("0")) digits = `994${digits.slice(1)}`;
-    if (!/^994(?:10|50|51|55|60|70|77|99)\d{7}$/.test(digits)) throw Object.assign(new Error("WhatsApp nömrəsini düzgün Azərbaycan mobil formatında yazın."), { status: 400, code: "CAPCUT_PHONE_INVALID" });
-    return digits;
-  }
-
-  async function ensureCapcut(order, phone) {
-    let delivery = await store.capcutDeliveryByOrder(order.id);
-    if (!delivery) {
-      const token = security.randomToken(36);
-      delivery = await store.ensureCapcutDelivery(order.id, azPhone(phone), security.hashToken(token), security.encryptSecret(token));
-    }
-    const token = security.decryptSecret(delivery.token_cipher);
-    return { deliveryUrl: `https://mirpanel.com/capcut-sifaris.html#${encodeURIComponent(token)}`, customerPhone: delivery.customer_phone };
-  }
 
   function clientIp(request) {
     return String(request.headers["cf-connecting-ip"] || request.headers["x-forwarded-for"] || request.socket?.remoteAddress || "unknown").split(",")[0].trim();
@@ -160,14 +142,12 @@ export function createPaymentSystem(options) {
       method_name_snapshot: order.method_name_snapshot || method?.provider_name || method?.display_name,
       method_last4_snapshot: order.method_last4_snapshot || method?.last4
     });
-    const capcut = order.product_id === "capcut" ? await ensureCapcut(order, order._customerPhone) : null;
     return {
       orderId: order.id, orderCode: order.order_code, status: order.status, idempotent,
       paymentMethod: methodLabel,
       productTitle: order.product_title, planName: order.plan_name,
       amount: Number(order.amount), currency: order.currency,
       receiptUploaded: Boolean(order.receipt_path && !order.receipt_deleted_at),
-      ...(capcut || {}),
       ...buildCanonicalWhatsApp(order, methodLabel, whatsappExtraText, config.whatsappPhone)
     };
   }
@@ -317,10 +297,8 @@ export function createPaymentSystem(options) {
       if (reservation.product_id !== body.productId || reservation.plan_id !== String(body.planIndex)) {
         throw Object.assign(new Error("Təkrar sorğu əvvəlki sifarişlə uyğun deyil."), { status: 409 });
       }
-      if (reservation.product_id === "capcut") azPhone(body.customerPhone);
       const existing = await store.getOrderByReservation(reservationId);
       if (existing) {
-        if (existing.product_id === "capcut") existing._customerPhone = body.customerPhone;
         publicJson(request, response, 200, await orderResult(existing, true, body.whatsappExtraText));
         return true;
       }
@@ -357,7 +335,6 @@ export function createPaymentSystem(options) {
         }
       }
       const order = await store.getOrder(submitted.id);
-      if (order.product_id === "capcut") order._customerPhone = body.customerPhone;
       if (submitted.idempotent && order.receipt_path !== receiptPath) await store.removeReceipt(receiptPath).catch(() => {});
       const method = await store.rawMethod(order.method_id);
       if (submitted.idempotent) {
