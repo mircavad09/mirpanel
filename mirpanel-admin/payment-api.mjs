@@ -89,7 +89,8 @@ export async function paymentOrderFromMultipart(rawBody, contentType, maxReceipt
       productId: form.get("productId"),
       planIndex: form.get("planIndex"),
       consentAccepted: form.get("consentAccepted") === "true",
-      whatsappExtraText: form.get("whatsappExtraText")
+      whatsappExtraText: form.get("whatsappExtraText"),
+      customerPhone: form.get("customerPhone")
     },
     receipt: receiptFromBuffer(Buffer.from(await uploaded.arrayBuffer()), uploaded.type, maxReceiptBytes)
   };
@@ -115,6 +116,23 @@ export function createPaymentSystem(options) {
   const store = options.store || createPaymentStore(config);
   const mailer = options.mailer || createPaymentMailer(config, store);
   const allowedOrigins = new Set(config.allowedOrigins);
+
+  function azPhone(value) {
+    let digits = String(value || "").replace(/\D/g, "");
+    if (digits.startsWith("0")) digits = `994${digits.slice(1)}`;
+    if (!/^994(?:10|50|51|55|60|70|77|99)\d{7}$/.test(digits)) throw Object.assign(new Error("WhatsApp nömrəsini düzgün Azərbaycan mobil formatında yazın."), { status: 400, code: "CAPCUT_PHONE_INVALID" });
+    return digits;
+  }
+
+  async function ensureCapcut(order, phone) {
+    let delivery = await store.capcutDeliveryByOrder(order.id);
+    if (!delivery) {
+      const token = security.randomToken(36);
+      delivery = await store.ensureCapcutDelivery(order.id, azPhone(phone), security.hashToken(token), security.encryptSecret(token));
+    }
+    const token = security.decryptSecret(delivery.token_cipher);
+    return { deliveryUrl: `https://mirpanel.com/capcut-sifaris.html#${encodeURIComponent(token)}`, customerPhone: delivery.customer_phone };
+  }
 
   function clientIp(request) {
     return String(request.headers["cf-connecting-ip"] || request.headers["x-forwarded-for"] || request.socket?.remoteAddress || "unknown").split(",")[0].trim();
@@ -142,12 +160,14 @@ export function createPaymentSystem(options) {
       method_name_snapshot: order.method_name_snapshot || method?.provider_name || method?.display_name,
       method_last4_snapshot: order.method_last4_snapshot || method?.last4
     });
+    const capcut = order.product_id === "capcut" ? await ensureCapcut(order, order._customerPhone) : null;
     return {
       orderId: order.id, orderCode: order.order_code, status: order.status, idempotent,
       paymentMethod: methodLabel,
       productTitle: order.product_title, planName: order.plan_name,
       amount: Number(order.amount), currency: order.currency,
       receiptUploaded: Boolean(order.receipt_path && !order.receipt_deleted_at),
+      ...(capcut || {}),
       ...buildCanonicalWhatsApp(order, methodLabel, whatsappExtraText, config.whatsappPhone)
     };
   }
@@ -297,8 +317,10 @@ export function createPaymentSystem(options) {
       if (reservation.product_id !== body.productId || reservation.plan_id !== String(body.planIndex)) {
         throw Object.assign(new Error("Təkrar sorğu əvvəlki sifarişlə uyğun deyil."), { status: 409 });
       }
+      if (reservation.product_id === "capcut") azPhone(body.customerPhone);
       const existing = await store.getOrderByReservation(reservationId);
       if (existing) {
+        if (existing.product_id === "capcut") existing._customerPhone = body.customerPhone;
         publicJson(request, response, 200, await orderResult(existing, true, body.whatsappExtraText));
         return true;
       }
@@ -335,6 +357,7 @@ export function createPaymentSystem(options) {
         }
       }
       const order = await store.getOrder(submitted.id);
+      if (order.product_id === "capcut") order._customerPhone = body.customerPhone;
       if (submitted.idempotent && order.receipt_path !== receiptPath) await store.removeReceipt(receiptPath).catch(() => {});
       const method = await store.rawMethod(order.method_id);
       if (submitted.idempotent) {
@@ -363,17 +386,67 @@ export function createPaymentSystem(options) {
       publicJson(request, response, 201, await orderResult(order, false, body.whatsappExtraText));
       return true;
     }
+    const deliveryMatch = url.pathname.match(/^\/api\/payments\/capcut\/delivery\/([A-Za-z0-9_-]{32,})$/);
+    if (deliveryMatch && request.method === "GET") {
+      await publicRate(request, "capcut-delivery", 60, 60);
+      const delivery = await store.capcutDeliveryByTokenHash(security.hashToken(deliveryMatch[1]));
+      if (!delivery) throw Object.assign(new Error("Gizli sifariş keçidi tapılmadı."), { status: 404, code: "CAPCUT_DELIVERY_NOT_FOUND" });
+      const order = delivery.payment_orders || {};
+      const base = { status: delivery.status, orderCode: order.order_code, product: "CapCut Pro", plan: order.plan_name, amount: Number(order.amount), currency: order.currency, createdAt: delivery.created_at };
+      if (delivery.status === "approved") {
+        const account = await store.capcutAccount(delivery.account_id);
+        if (!account || !["assigned", "delivered"].includes(account.status)) throw Object.assign(new Error("Hesab məlumatı hazır deyil."), { status: 409 });
+        const template = await store.capcutTemplate();
+        Object.assign(base, { account: { email: security.decryptSecret(account.email_cipher), password: security.decryptSecret(account.password_cipher), expiresOn: account.expires_on }, template: { title: template.title, loginRules: template.login_rules, prohibitions: template.prohibitions, supportText: template.support_text, footerText: template.footer_text } });
+      }
+      publicJson(request, response, 200, base); return true;
+    }
+    const notifyMatch = url.pathname.match(/^\/api\/payments\/capcut\/delivery\/([A-Za-z0-9_-]{32,})\/notify$/);
+    if (notifyMatch && request.method === "POST") {
+      await publicRate(request, "capcut-notify", 600, 10);
+      const delivery = await store.capcutDeliveryByTokenHash(security.hashToken(notifyMatch[1]));
+      if (!delivery) throw Object.assign(new Error("Gizli sifariş keçidi tapılmadı."), { status: 404 });
+      await store.markCapcutNotified(delivery.order_id);
+      const order = delivery.payment_orders || {};
+      const message = `Salam. CapCut sifarişimin yoxlanmasını gözləyirəm.\nSifariş: ${safeText(order.order_code, 30)}\nMüştəri nömrəsi: +${delivery.customer_phone}\nMəhsul: CapCut\nMəbləğ: ${Number(order.amount).toFixed(2)} ${safeText(order.currency || "AZN", 8)}\nÇek yüklənib, yoxlama gözlənilir.`;
+      const phone = String(config.whatsappPhone || "994515243545").replace(/\D/g, "");
+      publicJson(request, response, 200, { status: delivery.status, whatsappUrl: `https://wa.me/${phone}?text=${encodeURIComponent(message)}` }); return true;
+    }
     return false;
   }
 
   async function handleAdmin(request, response, url) {
-    if (!url.pathname.startsWith("/api/admin/payment")) return false;
+    if (!url.pathname.startsWith("/api/admin/payment") && !url.pathname.startsWith("/api/admin/capcut")) return false;
     if (request.method === "GET") {
       if (!requireAuth(request, response)) return true;
     } else if (!requireMutationAuth(request, response)) return true;
 
     if (request.method === "GET" && url.pathname === "/api/admin/payment-methods") {
       json(response, 200, { methods: await store.adminMethods() }); return true;
+    }
+    if (request.method === "GET" && url.pathname === "/api/admin/capcut") {
+      const snapshot = await store.capcutAdminSnapshot();
+      const accounts = snapshot.accounts.map((row) => ({ id: row.id, email: security.decryptSecret(row.email_cipher), password: security.decryptSecret(row.password_cipher), expiresOn: row.expires_on, note: row.admin_note, status: row.status, assignedOrderId: row.assigned_order_id }));
+      const deliveries = snapshot.deliveries.map((row) => ({ orderId: row.order_id, status: row.status, phone: row.customer_phone, notifiedAt: row.notified_at, approvedAt: row.approved_at, createdAt: row.created_at, accountId: row.account_id, order: row.payment_orders ? { orderCode: row.payment_orders.order_code, planName: row.payment_orders.plan_name, amount: Number(row.payment_orders.amount), currency: row.payment_orders.currency, receiptUploaded: Boolean(row.payment_orders.receipt_path) } : null, customerUrl: `https://mirpanel.com/capcut-sifaris.html#${encodeURIComponent(security.decryptSecret(row.token_cipher))}` }));
+      const template = await store.capcutTemplate();
+      json(response, 200, { accounts, deliveries, template, counts: { available: accounts.filter((x) => x.status === "available").length, waiting: deliveries.filter((x) => x.status === "waiting").length, delivered: deliveries.filter((x) => x.status === "approved").length, cancelled: deliveries.filter((x) => x.status === "cancelled").length } }); return true;
+    }
+    if (request.method === "POST" && url.pathname === "/api/admin/capcut/accounts") {
+      const body = await readBody(request, 100_000); const items = Array.isArray(body.items) ? body.items : [body];
+      if (!items.length || items.length > 500) throw Object.assign(new Error("Hesab siyahısı düzgün deyil."), { status: 400 });
+      const errors = [], rows = [];
+      items.forEach((item, index) => { const email = safeText(item.email, 254).toLowerCase(), password = String(item.password || ""), expires = String(item.expiresOn || ""); if (!/^\S+@\S+\.\S+$/.test(email) || !password || !/^\d{4}-\d{2}-\d{2}$/.test(expires)) errors.push({ line: index + 1, error: "E-poçt, şifrə və bitmə tarixi tələb olunur." }); else rows.push({ email_cipher: security.encryptSecret(email), password_cipher: security.encryptSecret(password), expires_on: expires, admin_note: safeText(item.note, 500) }); });
+      const created = rows.length ? await store.addCapcutAccounts(rows) : [];
+      json(response, errors.length ? 207 : 201, { created: created.length, errors }); return true;
+    }
+    if (request.method === "PUT" && url.pathname === "/api/admin/capcut/template") {
+      const body = await readBody(request, 50_000); const template = await store.saveCapcutTemplate({ title: safeText(body.title, 160), login_rules: safeMultiline(body.loginRules, 8000), prohibitions: safeMultiline(body.prohibitions, 8000), support_text: safeMultiline(body.supportText, 4000), footer_text: safeText(body.footerText, 500) }); json(response, 200, { template }); return true;
+    }
+    const capcutOrder = url.pathname.match(/^\/api\/admin\/capcut\/orders\/([0-9a-f-]+)\/(approve|reject|cancel)$/i);
+    if (request.method === "POST" && capcutOrder) {
+      const id = safeUuid(capcutOrder[1]); if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
+      const action = capcutOrder[2]; const result = action === "approve" ? await store.approveCapcutDelivery(id, actorName) : action === "reject" ? await store.rejectCapcutDelivery(id, actorName) : await store.cancelCapcutDelivery(id, actorName);
+      json(response, 200, result); return true;
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-costs") {
       const catalog = await loadCatalog();
@@ -533,7 +606,7 @@ export function createPaymentSystem(options) {
       const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
       try {
         if (url.pathname.startsWith("/api/payments/")) return await handlePublic(request, response, url);
-        if (url.pathname.startsWith("/api/admin/payment")) return await handleAdmin(request, response, url);
+        if (url.pathname.startsWith("/api/admin/payment") || url.pathname.startsWith("/api/admin/capcut")) return await handleAdmin(request, response, url);
         return false;
       } catch (error) {
         const isPublic = url.pathname.startsWith("/api/payments/");

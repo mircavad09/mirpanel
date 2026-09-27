@@ -49,3 +49,4 @@
   .paymentReceiptBox.uploadFailed .paymentReceiptPreview{border-color:#795221;background:#2b210e}
   .paymentReceiptBox.uploadSucceeded .paymentReceiptPreview{border-color:#3c9a5d;background:#102318}
 }
+.capcutPhoneField{display:grid;gap:6px;margin:10px 0;padding:12px;border:1px solid rgba(255,210,0,.25);border-radius:12px;background:#121212;color:#f4f4f4;font-weight:700}.capcutPhoneField input{min-height:48px;border:1px solid #3b3b3b;border-radius:10px;background:#080808;color:#fff;padding:0 12px;font-size:16px}.capcutPhoneField small{color:#aaa;font-weight:400}.capcutPhoneField b{color:#ff9292;font-size:13px}

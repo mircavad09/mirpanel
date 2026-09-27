@@ -10,26 +10,32 @@ export function createPaymentSecurity(config) {
   const encryptionKey = decodeKey(config.encryptionKey, "PAYMENT_ENCRYPTION_KEY_B64");
   const tokenKey = decodeKey(config.tokenSecret, "PAYMENT_TOKEN_SECRET_B64");
 
+  function encryptText(value) {
+    const plain = String(value ?? "");
+    if (!plain || Buffer.byteLength(plain, "utf8") > 4096) throw new Error("Gizli məlumat düzgün deyil.");
+    const iv = crypto.randomBytes(12);
+    const cipher = crypto.createCipheriv("aes-256-gcm", encryptionKey, iv);
+    const encrypted = Buffer.concat([cipher.update(plain, "utf8"), cipher.final()]);
+    const tag = cipher.getAuthTag();
+    return `v1.${iv.toString("base64url")}.${tag.toString("base64url")}.${encrypted.toString("base64url")}`;
+  }
+  function decryptText(value) {
+    const [version, ivPart, tagPart, encryptedPart] = String(value || "").split(".");
+    if (version !== "v1" || !ivPart || !tagPart || !encryptedPart) throw new Error("Şifrəli məlumat formatı düzgün deyil.");
+    const decipher = crypto.createDecipheriv("aes-256-gcm", encryptionKey, Buffer.from(ivPart, "base64url"));
+    decipher.setAuthTag(Buffer.from(tagPart, "base64url"));
+    return Buffer.concat([decipher.update(Buffer.from(encryptedPart, "base64url")), decipher.final()]).toString("utf8");
+  }
+
   return {
+    encryptSecret: encryptText,
+    decryptSecret: decryptText,
     encryptNumber(value) {
       const normalized = normalizePaymentNumber(value);
       if (normalized.length < 4 || normalized.length > 32) throw new Error("Kart/cüzdan nömrəsi düzgün deyil.");
-      const iv = crypto.randomBytes(12);
-      const cipher = crypto.createCipheriv("aes-256-gcm", encryptionKey, iv);
-      const encrypted = Buffer.concat([cipher.update(normalized, "utf8"), cipher.final()]);
-      const tag = cipher.getAuthTag();
-      return `v1.${iv.toString("base64url")}.${tag.toString("base64url")}.${encrypted.toString("base64url")}`;
+      return encryptText(normalized);
     },
-    decryptNumber(value) {
-      const [version, ivPart, tagPart, encryptedPart] = String(value || "").split(".");
-      if (version !== "v1" || !ivPart || !tagPart || !encryptedPart) throw new Error("Şifrəli nömrə formatı düzgün deyil.");
-      const decipher = crypto.createDecipheriv("aes-256-gcm", encryptionKey, Buffer.from(ivPart, "base64url"));
-      decipher.setAuthTag(Buffer.from(tagPart, "base64url"));
-      return Buffer.concat([
-        decipher.update(Buffer.from(encryptedPart, "base64url")),
-        decipher.final()
-      ]).toString("utf8");
-    },
+    decryptNumber: decryptText,
     hashToken(value) {
       return crypto.createHmac("sha256", tokenKey).update(String(value || "")).digest("hex");
     },

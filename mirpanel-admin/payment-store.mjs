@@ -28,7 +28,8 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     "CHECKOUT_KEY_REQUIRED", "ACTIVE_RESERVATION_EXISTS", "RESERVATION_ALREADY_SUBMITTED",
     "RESERVATION_CHECKOUT_MISMATCH", "PAYMENT_METHOD_HAS_ACTIVE_RESERVATIONS",
     "PAYMENT_METHOD_NOT_FOUND", "PAYMENT_METHOD_NUMBER_REQUIRED", "ORDER_NOT_COMPLETED", "INVALID_PLAN_DURATION",
-    "INVALID_COST_BATCH", "INVALID_COST_KEY", "INVALID_COST_AMOUNT"
+    "INVALID_COST_BATCH", "INVALID_COST_KEY", "INVALID_COST_AMOUNT", "CAPCUT_STOCK_EMPTY",
+    "CAPCUT_DELIVERY_NOT_FOUND", "CAPCUT_ORDER_REQUIRED", "CAPCUT_ORDER_NOT_REVIEWABLE"
   ].find((code) => message.includes(code));
   const translated = {
     IDEMPOTENCY_CONFLICT: "Təkrar sorğu əvvəlki sifarişlə uyğun deyil.",
@@ -53,7 +54,11 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     INVALID_PLAN_DURATION: "Planın strukturlaşdırılmış müddəti düzgün deyil.",
     INVALID_COST_BATCH: "Maya dəyəri siyahısı düzgün deyil.",
     INVALID_COST_KEY: "Məhsul və ya plan açarı düzgün deyil.",
-    INVALID_COST_AMOUNT: "Maya dəyəri düzgün məbləğ deyil."
+    INVALID_COST_AMOUNT: "Maya dəyəri düzgün məbləğ deyil.",
+    CAPCUT_STOCK_EMPTY: "Boş CapCut stoku yoxdur.",
+    CAPCUT_DELIVERY_NOT_FOUND: "CapCut çatdırılma sifarişi tapılmadı.",
+    CAPCUT_ORDER_REQUIRED: "Bu sifariş CapCut məhsuluna aid deyil.",
+    CAPCUT_ORDER_NOT_REVIEWABLE: "Bu CapCut sifarişi artıq təsdiqlənə bilməz."
   }[known];
   const result = new Error(translated || fallback);
   result.code = known || "PAYMENT_STORE_ERROR";
@@ -563,6 +568,61 @@ export function createPaymentStore(config) {
       const { data, error } = await client.from("payment_orders").select("*").eq("reservation_id", reservationId).maybeSingle();
       if (error) throw paymentError(error);
       return data || null;
+    },
+    async ensureCapcutDelivery(orderId, customerPhone, tokenHash, tokenCipher) {
+      const existing = await client.from("capcut_deliveries").select("*").eq("order_id", orderId).maybeSingle();
+      if (existing.error) throw paymentError(existing.error);
+      if (existing.data) return existing.data;
+      const inserted = await client.from("capcut_deliveries").insert({ order_id: orderId, customer_phone: customerPhone, token_hash: tokenHash, token_cipher: tokenCipher }).select("*").single();
+      if (inserted.error) {
+        const recovered = await client.from("capcut_deliveries").select("*").eq("order_id", orderId).single();
+        if (recovered.error) throw paymentError(inserted.error);
+        return recovered.data;
+      }
+      return inserted.data;
+    },
+    async capcutDeliveryByOrder(orderId) {
+      const { data, error } = await client.from("capcut_deliveries").select("*").eq("order_id", orderId).maybeSingle();
+      if (error) throw paymentError(error); return data || null;
+    },
+    async capcutDeliveryByTokenHash(tokenHash) {
+      const { data, error } = await client.from("capcut_deliveries").select("*,payment_orders(*)").eq("token_hash", tokenHash).maybeSingle();
+      if (error) throw paymentError(error); return data || null;
+    },
+    async capcutAccount(id) {
+      const { data, error } = await client.from("capcut_accounts").select("*").eq("id", id).maybeSingle();
+      if (error) throw paymentError(error); return data || null;
+    },
+    async capcutTemplate() {
+      const { data, error } = await client.from("capcut_delivery_template").select("*").eq("singleton", true).single();
+      if (error) throw paymentError(error); return data;
+    },
+    async saveCapcutTemplate(row) {
+      const { data, error } = await client.from("capcut_delivery_template").upsert({ singleton: true, ...row, updated_at: new Date().toISOString() }).select("*").single();
+      if (error) throw paymentError(error); return data;
+    },
+    async addCapcutAccounts(rows) {
+      const { data, error } = await client.from("capcut_accounts").insert(rows).select("*");
+      if (error) throw paymentError(error); return data || [];
+    },
+    async capcutAdminSnapshot() {
+      const [accounts, deliveries] = await Promise.all([
+        client.from("capcut_accounts").select("*").order("created_at"),
+        client.from("capcut_deliveries").select("*,payment_orders(*)").order("created_at", { ascending: false })
+      ]);
+      if (accounts.error) throw paymentError(accounts.error); if (deliveries.error) throw paymentError(deliveries.error);
+      return { accounts: accounts.data || [], deliveries: deliveries.data || [] };
+    },
+    approveCapcutDelivery(id, actor) { return rpc("approve_capcut_delivery", { p_order_id: id, p_actor: actor }); },
+    cancelCapcutDelivery(id, actor) { return rpc("cancel_capcut_delivery", { p_order_id: id, p_actor: actor }); },
+    async rejectCapcutDelivery(id, actor) {
+      const result = await this.rejectOrder(id, actor);
+      const { error } = await client.from("capcut_deliveries").update({ status: "rejected", rejected_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("order_id", id).eq("status", "waiting");
+      if (error) throw paymentError(error); return result;
+    },
+    async markCapcutNotified(orderId) {
+      const { error } = await client.from("capcut_deliveries").update({ notified_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("order_id", orderId).is("notified_at", null);
+      if (error) throw paymentError(error);
     },
     approveOrder(id, durationMonths, actor) {
       return rpc("approve_payment_order_v7", {
