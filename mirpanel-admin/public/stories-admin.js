@@ -1,6 +1,7 @@
 (() => {
   const escs = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
-  let snapshot = { stories: [], activeStories: 0, activeItems: 0, limits: { imageMb: 5, videoMb: 25 } };
+  const VIDEO_LIMIT_BYTES = 1024 * 1024 * 1024;
+  let snapshot = { stories: [], activeStories: 0, activeItems: 0, limits: { imageMb: 5, videoMb: 1024 } };
 
   function fileBase64(file) {
     return new Promise((resolve, reject) => {
@@ -13,9 +14,51 @@
 
   async function uploadPayload(file, kind) {
     if (!file) return null;
+    if (kind === "video") throw new Error("Video birbaşa private storage-a yüklənməlidir.");
     const limit = (kind === "video" ? snapshot.limits.videoMb : snapshot.limits.imageMb) * 1024 * 1024;
     if (file.size > limit) throw new Error(`Fayl maksimum ${kind === "video" ? snapshot.limits.videoMb : snapshot.limits.imageMb} MB ola bilər.`);
     return { fileName: file.name, mimeType: file.type, contentBase64: await fileBase64(file) };
+  }
+
+  function uploadSignedFile(url, file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", url, true);
+      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
+      xhr.setRequestHeader("Cache-Control", "3600");
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
+      });
+      xhr.addEventListener("load", () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error("Video private storage-a yüklənmədi.")));
+      xhr.addEventListener("error", () => reject(new Error("Bağlantı kəsildi. Eyni videonu yenidən göndərə bilərsiniz.")));
+      xhr.addEventListener("abort", () => reject(new Error("Video yüklənməsi dayandırıldı.")));
+      xhr.send(file);
+    });
+  }
+
+  async function directVideoUpload(storyId, file, button, statusNode) {
+    if (!file) return null;
+    if (file.size > VIDEO_LIMIT_BYTES) throw new Error("Video maksimum 1 GB ola bilər.");
+    const extension = file.name.toLowerCase().split(".").pop();
+    if (!(["video/mp4", "video/webm"].includes(file.type) || ["mp4", "webm"].includes(extension))) throw new Error("Yalnız MP4 və WEBM videosu qəbul edilir.");
+    const originalLabel = button.textContent;
+    let operationId = "";
+    try {
+      const prepared = await api(`/api/admin/stories/${storyId}/video-uploads`, { method: "POST", body: JSON.stringify({ fileName: file.name, mimeType: file.type, size: file.size }) });
+      operationId = prepared.upload.operationId;
+      statusNode && (statusNode.textContent = "Yüklənir… 0%");
+      await uploadSignedFile(prepared.upload.signedUrl, file, (percent) => {
+        button.textContent = `Yüklənir… ${percent}%`;
+        statusNode && (statusNode.textContent = `Yüklənir… ${percent}%`);
+      });
+      statusNode && (statusNode.textContent = "Yükləmə tamamlandı, yoxlanır…");
+      return operationId;
+    } catch (error) {
+      if (operationId) await api(`/api/admin/story-video-uploads/${operationId}`, { method: "DELETE" }).catch(() => {});
+      throw error;
+    } finally {
+      button.textContent = originalLabel;
+    }
   }
 
   function installView() {
@@ -73,7 +116,7 @@
         <label class="switchLine"><input data-item-active type="checkbox" ${item.active ? "checked" : ""}><span>Aktiv</span></label>
         <label>Medianı dəyiş<input data-item-file type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"></label>
         <select data-item-type><option value="image" ${item.media_type === "image" ? "selected" : ""}>Şəkil</option><option value="video" ${item.media_type === "video" ? "selected" : ""}>Video</option></select>
-        <button class="btn" type="button" data-item-save="${item.id}">Yadda saxla</button>
+        <button class="btn" type="button" data-item-save="${item.id}">Yadda saxla</button><small data-upload-status aria-live="polite"></small>
         <button class="btn danger" type="button" data-item-delete="${item.id}">Sil</button>
       </div>`).join("") || '<p class="emptyState bad">Bu story ana səhifədə görünmür: cover yalnız dairə üçündür. Aşağıdan ən azı 1 aktiv şəkil və ya video elementi əlavə edin.</p>'}</div>
       <form class="storyItemCreate" data-item-create="${story.id}">
@@ -83,7 +126,7 @@
         <input name="sortOrder" type="number" min="1" value="${story.items.length + 1}" aria-label="Sıra">
         <label class="switchLine"><input name="active" type="checkbox" checked><span>Aktiv</span></label>
         <button class="btn primary" type="submit">Element əlavə et</button>
-        <small>Şəkil: 5 MB · Video: 25 MB. JPG, PNG, WEBP, MP4 və WEBM.</small>
+        <small data-upload-status aria-live="polite">Şəkil: 5 MB · MP4 və WEBM · maksimum 1 GB</small>
       </form>
     </article>`).join("") || '<p class="emptyState">Hələ story yaradılmayıb.</p>';
     document.querySelectorAll("[data-item-create]").forEach((form) => form.addEventListener("submit", createItem));
@@ -107,8 +150,9 @@
   async function createItem(event) {
     event.preventDefault(); const form = event.currentTarget; const button = form.querySelector("button[type=submit]"); button.disabled = true;
     try {
-      const kind = form.mediaType.value;
-      await api(`/api/admin/stories/${form.dataset.itemCreate}/items`, { method: "POST", body: JSON.stringify({ mediaType: kind, media: await uploadPayload(form.media.files[0], kind), caption: form.caption.value, sortOrder: form.sortOrder.value, active: form.active.checked }) });
+      const kind = form.mediaType.value; const storyId = form.dataset.itemCreate; const file = form.media.files[0];
+      const directUploadId = kind === "video" ? await directVideoUpload(storyId, file, button, form.querySelector("[data-upload-status]")) : null;
+      await api(`/api/admin/stories/${storyId}/items`, { method: "POST", body: JSON.stringify({ mediaType: kind, media: kind === "image" ? await uploadPayload(file, kind) : null, directUploadId, caption: form.caption.value, sortOrder: form.sortOrder.value, active: form.active.checked }) });
       toast("Story elementi əlavə edildi."); await loadStories();
     } catch (error) { toast(error.message, "bad"); } finally { button.disabled = false; }
   }
@@ -131,8 +175,9 @@
         await api(`/api/admin/story-items/${itemDelete.dataset.itemDelete}`, { method: "DELETE" }); toast("Story elementi silindi."); return loadStories();
       }
       if (itemSave) {
-        const card = itemSave.closest("[data-item-card]"); const kind = card.querySelector("[data-item-type]").value; itemSave.disabled = true;
-        await api(`/api/admin/story-items/${itemSave.dataset.itemSave}`, { method: "PATCH", body: JSON.stringify({ mediaType: kind, media: await uploadPayload(card.querySelector("[data-item-file]").files[0], kind), caption: card.querySelector("[data-item-caption]").value, sortOrder: card.querySelector("[data-item-order]").value, active: card.querySelector("[data-item-active]").checked }) });
+        const card = itemSave.closest("[data-item-card]"); const kind = card.querySelector("[data-item-type]").value; const file = card.querySelector("[data-item-file]").files[0]; const storyId = itemSave.closest("[data-story-card]").dataset.storyCard; itemSave.disabled = true;
+        const directUploadId = kind === "video" && file ? await directVideoUpload(storyId, file, itemSave, card.querySelector("[data-upload-status]")) : null;
+        await api(`/api/admin/story-items/${itemSave.dataset.itemSave}`, { method: "PATCH", body: JSON.stringify({ mediaType: kind, media: kind === "image" ? await uploadPayload(file, kind) : null, directUploadId, caption: card.querySelector("[data-item-caption]").value, sortOrder: card.querySelector("[data-item-order]").value, active: card.querySelector("[data-item-active]").checked }) });
         toast("Story elementi yeniləndi."); return loadStories();
       }
     } catch (error) { toast(error.message, "bad"); storySave && (storySave.disabled = false); itemSave && (itemSave.disabled = false); }

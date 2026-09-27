@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
 
 const IMAGE_LIMIT = 5 * 1024 * 1024;
-const VIDEO_LIMIT = 25 * 1024 * 1024;
+const VIDEO_LIMIT = 1024 * 1024 * 1024;
+const DIRECT_UPLOAD_TTL = 2 * 60 * 60 * 1000;
 
 function cleanText(value, limit = 160) {
   return String(value || "").trim().replace(/[\u0000-\u001f\u007f]/g, " ").slice(0, limit);
@@ -27,6 +28,13 @@ export function detectStoryMedia(buffer) {
   return null;
 }
 
+export function detectStoryVideoPrefix(buffer) {
+  if (!Buffer.isBuffer(buffer) || buffer.length < 12) return null;
+  if (buffer.subarray(4, 8).toString("ascii") === "ftyp" && buffer.readUInt32BE(0) >= 16) return { kind: "video", extension: "mp4", mimeType: "video/mp4", limit: VIDEO_LIMIT };
+  if (buffer.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))) return { kind: "video", extension: "webm", mimeType: "video/webm", limit: VIDEO_LIMIT };
+  return null;
+}
+
 export function decodeStoryUpload(upload, expectedKind) {
   if (!upload?.contentBase64) throw Object.assign(new Error("Media faylı seçilməyib."), { status: 400, code: "STORY_FILE_REQUIRED" });
   const encoded = String(upload.contentBase64).replace(/^data:[^,]+,/, "").replace(/\s/g, "");
@@ -37,15 +45,97 @@ export function decodeStoryUpload(upload, expectedKind) {
     throw Object.assign(new Error(message), { status: 400, code: "STORY_FILE_UNSUPPORTED" });
   }
   if (buffer.length > detected.limit) {
-    const limit = detected.kind === "image" ? "5 MB" : "25 MB";
-    throw Object.assign(new Error(`Fayl ${limit}-dan böyükdür.`), { status: 413, code: "STORY_FILE_TOO_LARGE" });
+    const message = detected.kind === "image" ? "Şəkil maksimum 5 MB ola bilər." : "Video maksimum 1 GB ola bilər.";
+    throw Object.assign(new Error(message), { status: 413, code: "STORY_FILE_TOO_LARGE" });
   }
   return { ...detected, buffer };
 }
 
-export function createStoriesRepository(client, { bucket = "mirpanel-stories", signedUrlSeconds = 3600 } = {}) {
+export function createStoriesRepository(client, { bucket = "mirpanel-stories", signedUrlSeconds = 3600, inspectDirectObject = null } = {}) {
   const categories = () => client.from("story_categories");
   const items = () => client.from("story_items");
+  const pendingUploads = new Map();
+
+  function directUploadError(message, status = 400, code = "STORY_DIRECT_UPLOAD_INVALID") {
+    return Object.assign(new Error(message), { status, code });
+  }
+
+  async function storyExists(storyId) {
+    const { data, error } = await categories().select("id").eq("id", storyId).single();
+    dbError(error, "Story tapılmadı.");
+    return Boolean(data);
+  }
+
+  async function beginVideoUpload(storyId, payload = {}) {
+    await storyExists(storyId);
+    const size = Number(payload.size);
+    if (!Number.isSafeInteger(size) || size <= 0) throw directUploadError("Video faylının ölçüsü düzgün deyil.");
+    if (size > VIDEO_LIMIT) throw directUploadError("Video maksimum 1 GB ola bilər.", 413, "STORY_FILE_TOO_LARGE");
+    const mimeType = String(payload.mimeType || "").toLowerCase();
+    const fileName = String(payload.fileName || "").toLowerCase();
+    const extension = mimeType === "video/webm" || fileName.endsWith(".webm") ? "webm" : mimeType === "video/mp4" || fileName.endsWith(".mp4") ? "mp4" : "";
+    if (!extension) throw directUploadError("Yalnız MP4 və WEBM videosu qəbul edilir.", 400, "STORY_FILE_UNSUPPORTED");
+    const operationId = crypto.randomUUID();
+    const path = `items/${storyId}/${Date.now()}-${crypto.randomBytes(8).toString("hex")}.${extension}`;
+    const { data, error } = await client.storage.from(bucket).createSignedUploadUrl(path, { upsert: false });
+    storageError(error, "Video üçün təhlükəsiz upload keçidi hazırlanmadı.");
+    const cleanupTimer = setTimeout(async () => {
+      const expired = pendingUploads.get(operationId);
+      if (!expired) return;
+      pendingUploads.delete(operationId);
+      await client.storage.from(bucket).remove([expired.path]).catch(() => {});
+    }, DIRECT_UPLOAD_TTL);
+    cleanupTimer.unref?.();
+    pendingUploads.set(operationId, { storyId, path, size, extension, mimeType: `video/${extension === "mp4" ? "mp4" : "webm"}`, expiresAt: Date.now() + DIRECT_UPLOAD_TTL, busy: false, cleanupTimer });
+    return { operationId, path, signedUrl: data?.signedUrl, token: data?.token, expiresIn: DIRECT_UPLOAD_TTL / 1000 };
+  }
+
+  async function inspectUploadedVideo(pending) {
+    if (inspectDirectObject) return inspectDirectObject(pending);
+    const slash = pending.path.lastIndexOf("/");
+    const folder = pending.path.slice(0, slash);
+    const name = pending.path.slice(slash + 1);
+    const { data: listed, error: listError } = await client.storage.from(bucket).list(folder, { search: name, limit: 10 });
+    storageError(listError, "Yüklənmiş video yoxlanmadı.");
+    const object = (listed || []).find((entry) => entry.name === name);
+    const storedSize = Number(object?.metadata?.size ?? object?.metadata?.contentLength ?? object?.metadata?.content_length);
+    if (!object || storedSize !== pending.size || storedSize > VIDEO_LIMIT) throw directUploadError("Video private storage-a tam yazılmayıb.", 409, "STORY_UPLOAD_INCOMPLETE");
+    const { data: signedData, error: signedError } = await client.storage.from(bucket).createSignedUrl(pending.path, 60);
+    storageError(signedError, "Video yoxlama keçidi hazırlanmadı.");
+    const response = await fetch(signedData.signedUrl, { headers: { Range: "bytes=0-63" } });
+    if (!response.ok) throw directUploadError("Yüklənmiş video oxunmadı.", 502, "STORY_STORAGE_ERROR");
+    const reader = response.body?.getReader();
+    const first = reader ? await reader.read() : { value: new Uint8Array(await response.arrayBuffer()) };
+    await reader?.cancel();
+    const detected = detectStoryVideoPrefix(Buffer.from(first.value || []));
+    if (!detected || detected.extension !== pending.extension) throw directUploadError("Yalnız etibarlı MP4 və WEBM videosu qəbul edilir.", 400, "STORY_FILE_UNSUPPORTED");
+    return { path: pending.path, kind: "video" };
+  }
+
+  async function cancelVideoUpload(operationId) {
+    const pending = pendingUploads.get(operationId);
+    if (!pending) return;
+    pendingUploads.delete(operationId);
+    clearTimeout(pending.cleanupTimer);
+    await client.storage.from(bucket).remove([pending.path]);
+  }
+
+  async function consumeVideoUpload(operationId, storyId) {
+    const pending = pendingUploads.get(String(operationId || ""));
+    if (!pending || pending.expiresAt <= Date.now() || pending.storyId !== storyId || pending.busy) throw directUploadError("Video upload əməliyyatı etibarsızdır və ya artıq istifadə olunub.", 409);
+    pending.busy = true;
+    try {
+      const result = await inspectUploadedVideo(pending);
+      pendingUploads.delete(operationId);
+      clearTimeout(pending.cleanupTimer);
+      return result;
+    } catch (error) {
+      pendingUploads.delete(operationId);
+      clearTimeout(pending.cleanupTimer);
+      await client.storage.from(bucket).remove([pending.path]).catch(() => {});
+      throw error;
+    }
+  }
 
   async function signed(path) {
     if (!path) return "";
@@ -143,7 +233,9 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
 
   async function createItem(storyId, payload) {
     const requestedKind = payload.mediaType === "video" ? "video" : "image";
-    const upload = await uploadFile(payload.media, requestedKind, `items/${storyId}`);
+    const upload = requestedKind === "video" && payload.directUploadId
+      ? await consumeVideoUpload(payload.directUploadId, storyId)
+      : await uploadFile(payload.media, requestedKind, `items/${storyId}`);
     const { data, error } = await items().insert({ story_id: storyId, media_type: upload.kind, media_path: upload.path, caption: cleanText(payload.caption, 240), sort_order: Math.max(1, Number(payload.sortOrder) || 1), active: payload.active !== false }).select().single();
     if (error) { await client.storage.from(bucket).remove([upload.path]); dbError(error, "Story elementi yaradılmadı."); }
     return data;
@@ -153,7 +245,8 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
     const { data: current, error: currentError } = await items().select("*").eq("id", id).single();
     dbError(currentError, "Story elementi tapılmadı.");
     let uploaded = null;
-    if (payload.media?.contentBase64) uploaded = await uploadFile(payload.media, payload.mediaType === "video" ? "video" : "image", `items/${current.story_id}`);
+    if (payload.directUploadId) uploaded = await consumeVideoUpload(payload.directUploadId, current.story_id);
+    else if (payload.media?.contentBase64) uploaded = await uploadFile(payload.media, payload.mediaType === "video" ? "video" : "image", `items/${current.story_id}`);
     const { data, error } = await items().update({
       caption: cleanText(payload.caption ?? current.caption, 240),
       sort_order: Math.max(1, Number(payload.sortOrder ?? current.sort_order) || 1),
@@ -173,7 +266,7 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
     await removePathsIfUnused([current.media_path]);
   }
 
-  return { listPublic: () => list(false), listAdmin: () => list(true), createStory, updateStory, deleteStory, createItem, updateItem, deleteItem };
+  return { listPublic: () => list(false), listAdmin: () => list(true), createStory, updateStory, deleteStory, createItem, updateItem, deleteItem, beginVideoUpload, cancelVideoUpload };
 }
 
 export const STORY_LIMITS = { imageBytes: IMAGE_LIMIT, videoBytes: VIDEO_LIMIT };

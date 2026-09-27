@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { createStoriesRepository, decodeStoryUpload, detectStoryMedia } from "../mirpanel-admin/stories-repository.mjs";
+import { createStoriesRepository, decodeStoryUpload, detectStoryMedia, detectStoryVideoPrefix, STORY_LIMITS } from "../mirpanel-admin/stories-repository.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const jpg = Buffer.from([0xff,0xd8,0xff,0xe0,0,0,0,0,0,0,0,0,0,0,0xff,0xd9]);
@@ -13,6 +13,8 @@ assert.equal(detectStoryMedia(jpg)?.mimeType, "image/jpeg");
 assert.equal(detectStoryMedia(png)?.mimeType, "image/png");
 assert.equal(detectStoryMedia(mp4)?.mimeType, "video/mp4");
 assert.equal(detectStoryMedia(webm)?.mimeType, "video/webm");
+assert.equal(detectStoryVideoPrefix(mp4)?.mimeType, "video/mp4");
+assert.equal(STORY_LIMITS.videoBytes, 1073741824);
 assert.equal(detectStoryMedia(Buffer.alloc(20)), null);
 assert.throws(() => decodeStoryUpload({ contentBase64: mp4.toString("base64") }, "image"), /Yalnız JPG/);
 
@@ -58,6 +60,8 @@ function fakeSupabase() {
     storage: { from: () => ({
       upload: async (key, buffer, options) => { if (objects.has(key)) return { error: { message: "exists" } }; objects.set(key, { buffer, ...options }); return { error: null }; },
       remove: async (keys) => { keys.forEach((key) => objects.delete(key)); return { error: null }; },
+      createSignedUploadUrl: async (key) => ({ data: { signedUrl: `https://upload.test/${key}?token=short-lived`, token: "short-lived" }, error: null }),
+      list: async (folder, options) => ({ data: [...objects.entries()].filter(([key]) => key.startsWith(`${folder}/`) && key.endsWith(options.search)).map(([key,value]) => ({ name:key.split("/").at(-1), metadata:{ size:value.buffer.length } })), error: null }),
       createSignedUrl: async (key) => objects.has(key) ? { data: { signedUrl: `https://signed.test/${key}?token=private` }, error: null } : { data: null, error: { message: "missing" } }
     }) }
   };
@@ -101,9 +105,26 @@ assert.equal(client.tables.story_categories.length, 0);
 assert.equal(client.tables.story_items.length, 0);
 assert.equal(client.objects.size, 0, "Story silindikdə yalnız onun istifadəsiz mediası qalmalıdır");
 
+const directClient = fakeSupabase();
+const directRepo = createStoriesRepository(directClient, { inspectDirectObject: async (pending) => {
+  const object = directClient.objects.get(pending.path);
+  if (!object || object.buffer.length !== pending.size || !detectStoryVideoPrefix(object.buffer)) throw Object.assign(new Error("incomplete"), { status:409 });
+  return { path:pending.path, kind:"video" };
+} });
+const directStory = await directRepo.createStory({ title:"Direct", cover:{ contentBase64:jpg.toString("base64") } });
+const prepared = await directRepo.beginVideoUpload(directStory.id, { fileName:"clip.mp4", mimeType:"video/mp4", size:mp4.length });
+assert.match(prepared.signedUrl, /token=short-lived/);
+assert.equal(directClient.tables.story_items.length, 0, "Upload bitmədən media qeydi yaranmamalıdır");
+directClient.objects.set(prepared.path, { buffer:mp4, contentType:"video/mp4" });
+const directItem = await directRepo.createItem(directStory.id, { mediaType:"video", directUploadId:prepared.operationId, active:true });
+assert.equal(directItem.media_path, prepared.path);
+await assert.rejects(() => directRepo.createItem(directStory.id, { mediaType:"video", directUploadId:prepared.operationId }), /etibarsızdır/);
+await assert.rejects(() => directRepo.beginVideoUpload(directStory.id, { fileName:"too-big.mp4", mimeType:"video/mp4", size:STORY_LIMITS.videoBytes + 1 }), /maksimum 1 GB/);
+
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const server = fs.readFileSync(path.join(root, "mirpanel-admin/server.mjs"), "utf8");
 const migration = fs.readFileSync(path.join(root, "supabase/migrations/202609260001_stories.sql"), "utf8");
+const videoMigration = fs.readFileSync(path.join(root, "supabase/migrations/202609270001_story_video_1gb.sql"), "utf8");
 assert.ok(index.includes('id="heroSlider"'));
 assert.ok(index.includes('id="homeStories"'));
 assert.equal(index.includes('id="homeSecondaryBanners"'), false);
@@ -116,4 +137,6 @@ assert.match(migration, /enable row level security/g);
 assert.match(migration, /revoke all .* anon, authenticated/g);
 assert.match(migration, /grant select, insert, update, delete on public\.story_categories to service_role/);
 assert.match(migration, /grant select, insert, update, delete on public\.story_items to service_role/);
-console.log(JSON.stringify({ ok:true, create:true, update:true, ordering:true, activeFiltering:true, imageUpload:true, videoUpload:true, privateSignedUrls:true, deleteCleanup:true, publicReadOnly:true, adminProtected:true }, null, 2));
+assert.match(videoMigration, /public = false/);
+assert.match(videoMigration, /file_size_limit = 1073741824/);
+console.log(JSON.stringify({ ok:true, create:true, update:true, ordering:true, activeFiltering:true, imageUpload:true, directVideoUpload:true, videoLimitBytes:STORY_LIMITS.videoBytes, pendingNotPublic:true, idempotentFinalize:true, privateSignedUrls:true, deleteCleanup:true, publicReadOnly:true, adminProtected:true }, null, 2));

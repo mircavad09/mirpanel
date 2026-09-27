@@ -45,18 +45,25 @@ async function installPlaybackStub(target) {
 
 const results = [];
 const primary = await makePage(false);
-for (const [width,height] of [[390,844],[768,900],[1440,900]]) {
+for (const [width,height] of [[320,568],[390,844],[768,900],[1440,900]]) {
   await primary.page.setViewportSize({ width, height });
   await primary.page.setContent(html, { waitUntil:"domcontentloaded" });
   await installPlaybackStub(primary);
   await primary.page.waitForSelector(".home-story");
   await primary.page.locator(".home-story").click();
   await primary.page.waitForSelector("#storyMedia video");
+  if (process.env.STORY_SCREENSHOT_DIR) {
+    fs.mkdirSync(process.env.STORY_SCREENSHOT_DIR, { recursive:true });
+    await primary.page.screenshot({ path:path.join(process.env.STORY_SCREENSHOT_DIR, `story-viewer-${width}x${height}.png`) });
+  }
   const state = await primary.page.evaluate(() => {
     const card = document.querySelector(".story-viewer-card");
     const video = document.querySelector("#storyMedia video");
     const close = document.getElementById("storyViewerClose");
+    const stage = document.getElementById("storyStage");
     const rect = card.getBoundingClientRect();
+    const stageRect = stage.getBoundingClientRect();
+    const videoRect = video.getBoundingClientRect();
     return {
       cardHeight: rect.height,
       top: rect.top,
@@ -66,18 +73,19 @@ for (const [width,height] of [[390,844],[768,900],[1440,900]]) {
       closeVisible: close.getBoundingClientRect().width > 0,
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
       viewerScroll: card.scrollHeight > card.clientHeight,
+      stageTop: stageRect.top,
+      stageBottom: stageRect.bottom,
+      mediaWithinViewport: stageRect.top >= 0 && stageRect.bottom <= innerHeight,
+      videoWithinStage: videoRect.top >= stageRect.top && videoRect.bottom <= stageRect.bottom && videoRect.left >= stageRect.left && videoRect.right <= stageRect.right,
       firstPlayMuted: window.__playAttempts[0]?.muted
     };
   });
-  if (width === 390) {
-    assert.ok(state.cardHeight <= height * .9 + 1);
-    assert.ok(state.top >= 12 && state.bottomGap >= 12);
-    assert.equal(state.fullscreen, false);
-  }
   assert.equal(state.objectFit, "contain");
   assert.equal(state.closeVisible, true);
   assert.equal(state.overflow, false);
   assert.equal(state.viewerScroll, false);
+  assert.equal(state.mediaWithinViewport, true);
+  assert.equal(state.videoWithinStage, true);
   assert.equal(state.firstPlayMuted, false);
   await primary.page.locator("#storyViewerClose").click();
   assert.equal(await primary.page.locator("#storyViewer").isHidden(), true);

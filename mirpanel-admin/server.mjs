@@ -708,7 +708,7 @@ async function handleApi(request, response) {
       stories,
       activeStories: stories.filter((story) => story.active && story.items.some((item) => item.active)).length,
       activeItems: stories.flatMap((story) => story.items).filter((item) => item.active).length,
-      limits: { imageMb: 5, videoMb: 25 }
+      limits: { imageMb: 5, videoMb: 1024 }
     });
   }
 
@@ -734,6 +734,21 @@ async function handleApi(request, response) {
     if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
     if (!requireMutationAuth(request, response)) return;
     return json(response, 201, { item: await storiesRepository.createItem(storyItemCreateMatch[1], await readBody(request, 36_000_000)) });
+  }
+
+  const storyUploadMatch = request.url.match(/^\/api\/admin\/stories\/([0-9a-f-]+)\/video-uploads$/i);
+  if (storyUploadMatch && request.method === "POST") {
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    return json(response, 201, { upload: await storiesRepository.beginVideoUpload(storyUploadMatch[1], await readBody(request, 20_000)) });
+  }
+
+  const storyUploadCancelMatch = request.url.match(/^\/api\/admin\/story-video-uploads\/([0-9a-f-]+)$/i);
+  if (storyUploadCancelMatch && request.method === "DELETE") {
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    await storiesRepository.cancelVideoUpload(storyUploadCancelMatch[1]);
+    return json(response, 200, { ok: true });
   }
 
   const storyItemMatch = request.url.match(/^\/api\/admin\/story-items\/([0-9a-f-]+)$/i);
