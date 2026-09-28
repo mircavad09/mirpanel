@@ -229,7 +229,7 @@
   </div>
 
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
-  <script src="/payment-flow.js?v=receipt-upload-20260908-1"></script>
+  <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=product-forms-20260902-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>

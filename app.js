@@ -312,19 +312,19 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "1 Ayliq               (Telefon)",
+          "label": "1 Ayliq               (Telefon)  (0-500 kredi)",
           "months": 1,
           "price": 5.5,
           "regularPrice": 16.99
         },
         {
-          "label": "1 Ayliq               (Telefon & Kompyuter)",
+          "label": "1 Ayliq               (Telefon & Kompyuter) (1200 kredi)",
           "months": 1,
-          "price": 6.99,
+          "price": 7.99,
           "regularPrice": 16.99
         },
         {
-          "label": "6 Ayliq               (Telefon)",
+          "label": "6 Ayliq               (Telefon) ",
           "months": 6,
           "price": 26.99,
           "regularPrice": 101.99
