@@ -13,7 +13,7 @@ const rows = new Map(ids.map((id, index) => [id, {
   order_code: `TEST-${index + 1}`,
   status: "completed",
   contacted_at: null,
-  expiry_notification_on: index === 5 ? null : index % 2 ? "2026-09-30" : "2026-10-01"
+  expiry_notification_on: index === 5 ? null : index === 0 ? "2025-01-01" : index % 2 ? "2026-09-30" : "2026-10-01"
 }]));
 const store = createPaymentStore({ supabaseUrl: "https://example.supabase.co", supabaseSecretKey: "test", receiptsBucket: "test" });
 store.getOrder = async (id) => ({ ...rows.get(id) });
@@ -34,4 +34,4 @@ assert.equal(repeated.completed.length, 0);
 assert.equal(repeated.skipped.length, 5);
 assert.ok(repeated.skipped.every((item) => item.reason === "Sifariş artıq bitən məhsullar siyahısına uyğun deyil."));
 
-console.log(JSON.stringify({ ok: true, octoberWindow: { oct8: false, oct9: true, oct10: true }, batchCompleted: 5, duplicateCompleted: 0 }, null, 2));
+console.log(JSON.stringify({ ok: true, octoberWindow: { oct8: false, oct9: true, oct10AndLater: true }, oldBacklogCompleted: first.completed.some((item) => item.id === ids[0]), batchCompleted: 5, duplicateCompleted: 0 }, null, 2));
