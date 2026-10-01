@@ -30,7 +30,10 @@ export function detectStoryMedia(buffer) {
 
 export function detectStoryVideoPrefix(buffer) {
   if (!Buffer.isBuffer(buffer) || buffer.length < 12) return null;
-  if (buffer.subarray(4, 8).toString("ascii") === "ftyp" && buffer.readUInt32BE(0) >= 16) return { kind: "video", extension: "mp4", mimeType: "video/mp4", limit: VIDEO_LIMIT };
+  if (buffer.subarray(4, 8).toString("ascii") === "ftyp" && buffer.readUInt32BE(0) >= 16) {
+    const quickTime = buffer.subarray(8, 12).toString("ascii") === "qt  ";
+    return { kind: "video", extension: quickTime ? "mov" : "mp4", mimeType: quickTime ? "video/quicktime" : "video/mp4", limit: VIDEO_LIMIT };
+  }
   if (buffer.subarray(0, 4).equals(Buffer.from([0x1a, 0x45, 0xdf, 0xa3]))) return { kind: "video", extension: "webm", mimeType: "video/webm", limit: VIDEO_LIMIT };
   return null;
 }
@@ -73,8 +76,9 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
     if (size > VIDEO_LIMIT) throw directUploadError("Video maksimum 1 GB ola bilər.", 413, "STORY_FILE_TOO_LARGE");
     const mimeType = String(payload.mimeType || "").toLowerCase();
     const fileName = String(payload.fileName || "").toLowerCase();
-    const extension = mimeType === "video/webm" || fileName.endsWith(".webm") ? "webm" : mimeType === "video/mp4" || fileName.endsWith(".mp4") ? "mp4" : "";
-    if (!extension) throw directUploadError("Yalnız MP4 və WEBM videosu qəbul edilir.", 400, "STORY_FILE_UNSUPPORTED");
+    if (mimeType.startsWith("audio/") || /\.(?:mp3|wav|aac|m4a|ogg)$/.test(fileName)) throw directUploadError("Yalnız video faylı seçin.", 400, "STORY_FILE_UNSUPPORTED");
+    const extension = fileName.endsWith(".webm") ? "webm" : fileName.endsWith(".mov") ? "mov" : fileName.endsWith(".mp4") ? "mp4" : mimeType === "video/webm" ? "webm" : mimeType === "video/quicktime" ? "mov" : mimeType === "video/mp4" ? "mp4" : "";
+    if (!extension) throw directUploadError("Yalnız MP4, MOV və WebM video faylı seçin.", 400, "STORY_FILE_UNSUPPORTED");
     const operationId = crypto.randomUUID();
     const path = `items/${storyId}/${Date.now()}-${crypto.randomBytes(8).toString("hex")}.${extension}`;
     const { data, error } = await client.storage.from(bucket).createSignedUploadUrl(path, { upsert: false });
@@ -86,7 +90,8 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
       await client.storage.from(bucket).remove([expired.path]).catch(() => {});
     }, DIRECT_UPLOAD_TTL);
     cleanupTimer.unref?.();
-    pendingUploads.set(operationId, { storyId, path, size, extension, mimeType: `video/${extension === "mp4" ? "mp4" : "webm"}`, expiresAt: Date.now() + DIRECT_UPLOAD_TTL, busy: false, cleanupTimer });
+    const storedMimeType = extension === "mov" ? "video/quicktime" : `video/${extension}`;
+    pendingUploads.set(operationId, { storyId, path, size, extension, mimeType: storedMimeType, expiresAt: Date.now() + DIRECT_UPLOAD_TTL, busy: false, cleanupTimer });
     return { operationId, path, signedUrl: data?.signedUrl, token: data?.token, expiresIn: DIRECT_UPLOAD_TTL / 1000 };
   }
 
@@ -108,7 +113,7 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
     const first = reader ? await reader.read() : { value: new Uint8Array(await response.arrayBuffer()) };
     await reader?.cancel();
     const detected = detectStoryVideoPrefix(Buffer.from(first.value || []));
-    if (!detected || detected.extension !== pending.extension) throw directUploadError("Yalnız etibarlı MP4 və WEBM videosu qəbul edilir.", 400, "STORY_FILE_UNSUPPORTED");
+    if (!detected || detected.extension !== pending.extension) throw directUploadError("Yalnız etibarlı MP4, MOV və WebM video faylı seçin.", 400, "STORY_FILE_UNSUPPORTED");
     return { path: pending.path, kind: "video" };
   }
 

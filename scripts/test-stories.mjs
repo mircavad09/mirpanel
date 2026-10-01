@@ -8,12 +8,14 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const jpg = Buffer.from([0xff,0xd8,0xff,0xe0,0,0,0,0,0,0,0,0,0,0,0xff,0xd9]);
 const png = Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=","base64");
 const mp4 = Buffer.concat([Buffer.from([0,0,0,20]),Buffer.from("ftypisomisom"),Buffer.alloc(4)]);
+const mov = Buffer.concat([Buffer.from([0,0,0,20]),Buffer.from("ftypqt  "),Buffer.alloc(8)]);
 const webm = Buffer.from([0x1a,0x45,0xdf,0xa3,0,0,0,0,0,0,0,0,0,0,0,0]);
 assert.equal(detectStoryMedia(jpg)?.mimeType, "image/jpeg");
 assert.equal(detectStoryMedia(png)?.mimeType, "image/png");
 assert.equal(detectStoryMedia(mp4)?.mimeType, "video/mp4");
 assert.equal(detectStoryMedia(webm)?.mimeType, "video/webm");
 assert.equal(detectStoryVideoPrefix(mp4)?.mimeType, "video/mp4");
+assert.equal(detectStoryVideoPrefix(mov)?.mimeType, "video/quicktime");
 assert.equal(STORY_LIMITS.videoBytes, 1073741824);
 assert.equal(detectStoryMedia(Buffer.alloc(20)), null);
 assert.throws(() => decodeStoryUpload({ contentBase64: mp4.toString("base64") }, "image"), /Yalnız JPG/);
@@ -120,11 +122,16 @@ const directItem = await directRepo.createItem(directStory.id, { mediaType:"vide
 assert.equal(directItem.media_path, prepared.path);
 await assert.rejects(() => directRepo.createItem(directStory.id, { mediaType:"video", directUploadId:prepared.operationId }), /etibarsızdır/);
 await assert.rejects(() => directRepo.beginVideoUpload(directStory.id, { fileName:"too-big.mp4", mimeType:"video/mp4", size:STORY_LIMITS.videoBytes + 1 }), /maksimum 1 GB/);
+const movPrepared = await directRepo.beginVideoUpload(directStory.id, { fileName:"iphone.mov", mimeType:"video/quicktime", size:mov.length });
+assert.match(movPrepared.path, /\.mov$/);
+await directRepo.cancelVideoUpload(movPrepared.operationId);
+await assert.rejects(() => directRepo.beginVideoUpload(directStory.id, { fileName:"sound.mp3", mimeType:"audio/mpeg", size:100 }), /Yalnız video faylı seçin/);
 
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
 const server = fs.readFileSync(path.join(root, "mirpanel-admin/server.mjs"), "utf8");
 const migration = fs.readFileSync(path.join(root, "supabase/migrations/202609260001_stories.sql"), "utf8");
 const videoMigration = fs.readFileSync(path.join(root, "supabase/migrations/202609270001_story_video_1gb.sql"), "utf8");
+const movMigration = fs.readFileSync(path.join(root, "supabase/migrations/202610010001_story_mov_upload.sql"), "utf8");
 assert.ok(index.includes('id="heroSlider"'));
 assert.ok(index.includes('id="homeStories"'));
 assert.equal(index.includes('id="homeSecondaryBanners"'), false);
@@ -139,4 +146,6 @@ assert.match(migration, /grant select, insert, update, delete on public\.story_c
 assert.match(migration, /grant select, insert, update, delete on public\.story_items to service_role/);
 assert.match(videoMigration, /public = false/);
 assert.match(videoMigration, /file_size_limit = 1073741824/);
+assert.match(movMigration, /file_size_limit = 1073741824/);
+assert.match(movMigration, /video\/quicktime/);
 console.log(JSON.stringify({ ok:true, create:true, update:true, ordering:true, activeFiltering:true, imageUpload:true, directVideoUpload:true, videoLimitBytes:STORY_LIMITS.videoBytes, pendingNotPublic:true, idempotentFinalize:true, privateSignedUrls:true, deleteCleanup:true, publicReadOnly:true, adminProtected:true }, null, 2));

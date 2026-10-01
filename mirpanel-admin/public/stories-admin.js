@@ -1,6 +1,8 @@
 (() => {
   const escs = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
   const VIDEO_LIMIT_BYTES = 1024 * 1024 * 1024;
+  const VIDEO_EXTENSIONS = new Set(["mp4", "mov", "webm"]);
+  const VIDEO_MIME_TYPES = new Set(["video/mp4", "video/quicktime", "video/webm"]);
   let snapshot = { stories: [], activeStories: 0, activeItems: 0, limits: { imageMb: 5, videoMb: 1024 } };
 
   function fileBase64(file) {
@@ -36,11 +38,55 @@
     });
   }
 
+  function videoExtension(file) {
+    return String(file?.name || "").toLowerCase().split(".").pop();
+  }
+
+  function validateVideoSelection(file) {
+    const type = String(file?.type || "").toLowerCase();
+    const extension = videoExtension(file);
+    if (type.startsWith("audio/") || ["mp3", "wav", "aac", "m4a", "ogg"].includes(extension)) throw new Error("Yalnız video faylı seçin.");
+    if (!(VIDEO_MIME_TYPES.has(type) || ((!type || type === "application/octet-stream") && VIDEO_EXTENSIONS.has(extension)))) throw new Error("Yalnız MP4, MOV və WebM video faylı seçin.");
+  }
+
+  function showVideoSelection(input, file) {
+    const scope = input.closest("form,[data-item-card]");
+    const status = scope?.querySelector("[data-upload-status]");
+    if (!scope || !status) return;
+    scope.querySelector(".storyUploadSelection")?.remove();
+    const preview = document.createElement("div"); preview.className = "storyUploadSelection";
+    const video = document.createElement("video");
+    video.src = URL.createObjectURL(file); video.controls = true; video.muted = true; video.playsInline = true; video.preload = "metadata";
+    video.addEventListener("loadedmetadata", () => URL.revokeObjectURL(video.src), { once: true });
+    video.addEventListener("error", () => { status.textContent = "Video preview açıla bilmədi. Uyğun MP4, MOV və ya WebM seçin."; }, { once: true });
+    const text = document.createElement("span"); text.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MB · Video seçildi`;
+    preview.append(video, text); status.before(preview);
+    status.textContent = "Video: MP4, MOV və WebM · maksimum 1 GB";
+  }
+
+  function handleMediaSelection(event) {
+    const input = event.target.closest('input[name="media"],[data-item-file]');
+    const file = input?.files?.[0];
+    if (!input || !file) return;
+    const type = String(file.type || "").toLowerCase(); const extension = videoExtension(file);
+    if (type.startsWith("video/") || type.startsWith("audio/") || VIDEO_EXTENSIONS.has(extension) || ["mp3", "wav", "aac", "m4a", "ogg"].includes(extension)) {
+      try {
+        validateVideoSelection(file);
+        const selector = input.closest("form,[data-item-card]")?.querySelector('select[name="mediaType"],[data-item-type]');
+        if (selector) selector.value = "video";
+        showVideoSelection(input, file);
+      } catch (error) {
+        input.value = "";
+        input.closest("form,[data-item-card]")?.querySelector(".storyUploadSelection")?.remove();
+        toast(error.message, "bad");
+      }
+    }
+  }
+
   async function directVideoUpload(storyId, file, button, statusNode) {
     if (!file) return null;
     if (file.size > VIDEO_LIMIT_BYTES) throw new Error("Video maksimum 1 GB ola bilər.");
-    const extension = file.name.toLowerCase().split(".").pop();
-    if (!(["video/mp4", "video/webm"].includes(file.type) || ["mp4", "webm"].includes(extension))) throw new Error("Yalnız MP4 və WEBM videosu qəbul edilir.");
+    validateVideoSelection(file);
     const originalLabel = button.textContent;
     let operationId = "";
     try {
@@ -89,6 +135,7 @@
     document.getElementById("storiesRefresh").addEventListener("click", loadStories);
     document.getElementById("storyCreateForm").addEventListener("submit", createStory);
     document.getElementById("storiesAdminList").addEventListener("click", handleAction);
+    document.getElementById("storiesAdminList").addEventListener("change", handleMediaSelection);
   }
 
   function mediaPreview(item) {
@@ -114,19 +161,19 @@
         <label>Qısa izah<input data-item-caption maxlength="240" value="${escs(item.caption)}"></label>
         <label>Sıra<input data-item-order type="number" min="1" value="${item.sort_order}"></label>
         <label class="switchLine"><input data-item-active type="checkbox" ${item.active ? "checked" : ""}><span>Aktiv</span></label>
-        <label>Medianı dəyiş<input data-item-file type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm"></label>
+        <label>Medianı dəyiş<input data-item-file type="file" accept="image/jpeg,image/png,image/webp,video/*,.mp4,.mov,.webm"></label>
         <select data-item-type><option value="image" ${item.media_type === "image" ? "selected" : ""}>Şəkil</option><option value="video" ${item.media_type === "video" ? "selected" : ""}>Video</option></select>
         <button class="btn" type="button" data-item-save="${item.id}">Yadda saxla</button><small data-upload-status aria-live="polite"></small>
         <button class="btn danger" type="button" data-item-delete="${item.id}">Sil</button>
       </div>`).join("") || '<p class="emptyState bad">Bu story ana səhifədə görünmür: cover yalnız dairə üçündür. Aşağıdan ən azı 1 aktiv şəkil və ya video elementi əlavə edin.</p>'}</div>
       <form class="storyItemCreate" data-item-create="${story.id}">
         <h4>Yeni element</h4><select name="mediaType"><option value="image">Şəkil</option><option value="video">Video</option></select>
-        <input name="media" type="file" accept="image/jpeg,image/png,image/webp,video/mp4,video/webm" required>
+        <input name="media" type="file" accept="image/jpeg,image/png,image/webp,video/*,.mp4,.mov,.webm" required>
         <input name="caption" maxlength="240" placeholder="Qısa izah (istəyə bağlı)">
         <input name="sortOrder" type="number" min="1" value="${story.items.length + 1}" aria-label="Sıra">
         <label class="switchLine"><input name="active" type="checkbox" checked><span>Aktiv</span></label>
         <button class="btn primary" type="submit">Element əlavə et</button>
-        <small data-upload-status aria-live="polite">Şəkil: 5 MB · MP4 və WEBM · maksimum 1 GB</small>
+        <small data-upload-status aria-live="polite">Şəkil: 5 MB · Video: MP4, MOV və WebM · maksimum 1 GB</small>
       </form>
     </article>`).join("") || '<p class="emptyState">Hələ story yaradılmayıb.</p>';
     document.querySelectorAll("[data-item-create]").forEach((form) => form.addEventListener("submit", createItem));
