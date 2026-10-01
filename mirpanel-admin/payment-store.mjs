@@ -15,7 +15,7 @@ import {
   orderDatabaseStatuses,
   paymentMethodLabel
 } from "./payment-order-query.mjs";
-import { bakuDayBounds, expiryStatus } from "./payment-order-lifecycle.mjs";
+import { bakuDate, bakuDayBounds, expiryStatus, shiftCalendarDays } from "./payment-order-lifecycle.mjs";
 import { normalizeFinancialStatistics } from "./payment-order-report.mjs";
 import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./payment-profit.mjs";
 
@@ -407,6 +407,7 @@ export function createPaymentStore(config) {
       await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
+      const expiringFrom = shiftCalendarDays(filters.today, -1);
       const select = "id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
@@ -424,7 +425,7 @@ export function createPaymentStore(config) {
       const statuses = orderDatabaseStatuses(filters);
       query = query.in("status", statuses);
       if (filters.tab === "today") query = query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive);
-      if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
+      if (filters.tab === "expiring") query = query.is("contacted_at", null).gte("expiry_notification_on", expiringFrom).lte("expiry_notification_on", filters.today);
       const from = (filters.page - 1) * filters.pageSize;
       query = query
         .order(filters.tab === "pending" ? "created_at" : "completed_at", { ascending: filters.sort === "oldest" })
@@ -438,7 +439,7 @@ export function createPaymentStore(config) {
         )
           .in("status", statuses)
           .is("contacted_at", null)
-          .not("expiry_notification_on", "is", null)
+          .gte("expiry_notification_on", expiringFrom)
           .lte("expiry_notification_on", filters.today)
           .order("completed_at", { ascending: filters.sort === "oldest" })
           .limit(5000);
@@ -457,7 +458,7 @@ export function createPaymentStore(config) {
         countStatus(["reviewing", "new_receipt_requested"]),
         countStatus(["approved", "completed"], (value) => value.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive)),
         countStatus(["approved", "completed"]),
-        countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
+        countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).gte("expiry_notification_on", expiringFrom).lte("expiry_notification_on", filters.today)),
         client.from("payment_orders").select("product_id,product_title,plan_name").order("product_title", { ascending: true }).limit(5000),
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
         rpc("payment_order_profit_statistics_v2", {
@@ -642,17 +643,22 @@ export function createPaymentStore(config) {
     },
     rejectOrder(id, actor) { return rpc("reject_payment_order", { p_order_id: id, p_reason: "Admin tərəfindən rədd edildi.", p_actor: actor }); },
     contactOrder(id, actor) { return rpc("mark_payment_order_contacted", { p_order_id: id, p_actor: actor }); },
-    async contactExpiringOrders(ids, actor) {
+    async contactExpiringOrders(ids, actor, now = new Date()) {
       const uniqueIds = [...new Set((ids || []).map(safeUuid).filter(Boolean))].slice(0, 500);
       const completed = [];
       const skipped = [];
-      const today = bakuDate(new Date());
+      const today = bakuDate(now);
+      const earliestNotification = shiftCalendarDays(today, -1);
       for (const id of uniqueIds) {
         try {
           const order = await this.getOrder(id);
           const eligibleStatus = ["approved", "completed"].includes(order.status);
-          if (!eligibleStatus || order.contacted_at || !order.expiry_notification_on || order.expiry_notification_on > today) {
-            skipped.push({ id, orderCode: order.order_code || "", reason: "Sifarişin vəziyyəti dəyişib." });
+          if (!order.expiry_notification_on) {
+            skipped.push({ id, orderCode: order.order_code || "", reason: "Bitmə tarixi müəyyən edilməyib." });
+            continue;
+          }
+          if (!eligibleStatus || order.contacted_at || order.expiry_notification_on < earliestNotification || order.expiry_notification_on > today) {
+            skipped.push({ id, orderCode: order.order_code || "", reason: "Sifariş artıq bitən məhsullar siyahısına uyğun deyil." });
             continue;
           }
           const result = await this.contactOrder(id, actor);
