@@ -39,6 +39,7 @@
   function uploadSignedFile(url, file, onProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
+      const storageOrigin = (() => { try { return new URL(url).origin; } catch { return "invalid"; } })();
       xhr.open("PUT", url, true);
       xhr.timeout = 15 * 60 * 1000;
       xhr.setRequestHeader("x-upsert", "false");
@@ -48,11 +49,21 @@
       xhr.addEventListener("load", () => {
         if (xhr.status >= 200 && xhr.status < 300) return resolve();
         const retryable = [408, 429, 500, 502, 503, 504].includes(xhr.status);
-        reject(Object.assign(new Error(retryable ? "Storage müvəqqəti cavab vermədi." : `Storage videonu qəbul etmədi (${xhr.status}).`), { retryable }));
+        const code = `STORY_STORAGE_HTTP_${xhr.status}`;
+        console.warn("[story-upload] Storage upload rejected", { code, status: xhr.status, origin: storageOrigin, response: String(xhr.responseText || "").slice(0, 300) });
+        reject(Object.assign(new Error(retryable ? "Storage müvəqqəti cavab vermədi." : `Storage videonu qəbul etmədi (${xhr.status}).`), { retryable, code, status: xhr.status }));
       });
-      xhr.addEventListener("error", () => reject(Object.assign(new Error("Storage ilə bağlantı qurulmadı."), { retryable: true })));
-      xhr.addEventListener("timeout", () => reject(Object.assign(new Error("Video yükləmə vaxtı bitdi."), { retryable: true })));
-      xhr.addEventListener("abort", () => reject(Object.assign(new Error("Video yüklənməsi dayandırıldı."), { retryable: false })));
+      xhr.addEventListener("error", () => {
+        const code = "STORY_STORAGE_NETWORK";
+        console.warn("[story-upload] Storage request failed before an HTTP response", { code, status: xhr.status, readyState: xhr.readyState, origin: storageOrigin, online: navigator.onLine });
+        reject(Object.assign(new Error("Storage ilə bağlantı qurulmadı."), { retryable: true, code }));
+      });
+      xhr.addEventListener("timeout", () => {
+        const code = "STORY_STORAGE_TIMEOUT";
+        console.warn("[story-upload] Storage upload timed out", { code, origin: storageOrigin, timeoutMs: xhr.timeout });
+        reject(Object.assign(new Error("Video yükləmə vaxtı bitdi."), { retryable: true, code }));
+      });
+      xhr.addEventListener("abort", () => reject(Object.assign(new Error("Video yüklənməsi dayandırıldı."), { retryable: false, code: "STORY_STORAGE_ABORTED" })));
       const body = new FormData();
       body.append("cacheControl", "3600");
       body.append("", file, file.name);

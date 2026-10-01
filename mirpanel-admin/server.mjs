@@ -1196,6 +1196,13 @@ const storiesSupabase = config.supabaseUrl && config.supabaseSecretKey
   ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false } })
   : null;
 const storiesRepository = storiesSupabase ? createStoriesRepository(storiesSupabase, { bucket: config.storiesBucket }) : null;
+const storiesStorageOrigin = (() => {
+  try {
+    return config.supabaseUrl ? new URL(config.supabaseUrl).origin : "";
+  } catch {
+    return "";
+  }
+})();
 const netflixRequestGuard = createNetflixRequestGuard();
 const netflixGate = createConfirmationGate({
   getAccount: (email) => netflixAccounts?.get(email),
@@ -1227,7 +1234,7 @@ function serveFile(response, name) {
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-    "Content-Security-Policy": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'"
+    "Content-Security-Policy": `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'${storiesStorageOrigin ? ` ${storiesStorageOrigin}` : ""}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`
   });
 
   fs.createReadStream(file).pipe(response);
