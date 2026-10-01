@@ -91,7 +91,7 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
     }, DIRECT_UPLOAD_TTL);
     cleanupTimer.unref?.();
     const storedMimeType = extension === "mov" ? "video/quicktime" : `video/${extension}`;
-    pendingUploads.set(operationId, { storyId, path, size, extension, mimeType: storedMimeType, expiresAt: Date.now() + DIRECT_UPLOAD_TTL, busy: false, cleanupTimer });
+    pendingUploads.set(operationId, { storyId, path, size, extension, mimeType: storedMimeType, expiresAt: Date.now() + DIRECT_UPLOAD_TTL, busy: false, verified: false, cleanupTimer });
     return { operationId, path, signedUrl: data?.signedUrl, token: data?.token, expiresIn: DIRECT_UPLOAD_TTL / 1000 };
   }
 
@@ -125,12 +125,30 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
     await client.storage.from(bucket).remove([pending.path]);
   }
 
+  async function verifyVideoUpload(operationId) {
+    const pending = pendingUploads.get(String(operationId || ""));
+    if (!pending || pending.expiresAt <= Date.now() || pending.busy) throw directUploadError("Video upload əməliyyatı etibarsızdır və ya artıq istifadə olunub.", 409);
+    pending.busy = true;
+    try {
+      await inspectUploadedVideo(pending);
+      pending.verified = true;
+      return { ok: true };
+    } catch (error) {
+      pendingUploads.delete(operationId);
+      clearTimeout(pending.cleanupTimer);
+      await client.storage.from(bucket).remove([pending.path]).catch(() => {});
+      throw error;
+    } finally {
+      if (pendingUploads.has(operationId)) pending.busy = false;
+    }
+  }
+
   async function consumeVideoUpload(operationId, storyId) {
     const pending = pendingUploads.get(String(operationId || ""));
     if (!pending || pending.expiresAt <= Date.now() || pending.storyId !== storyId || pending.busy) throw directUploadError("Video upload əməliyyatı etibarsızdır və ya artıq istifadə olunub.", 409);
     pending.busy = true;
     try {
-      const result = await inspectUploadedVideo(pending);
+      const result = pending.verified ? { path: pending.path, kind: "video" } : await inspectUploadedVideo(pending);
       pendingUploads.delete(operationId);
       clearTimeout(pending.cleanupTimer);
       return result;
@@ -271,7 +289,7 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
     await removePathsIfUnused([current.media_path]);
   }
 
-  return { listPublic: () => list(false), listAdmin: () => list(true), createStory, updateStory, deleteStory, createItem, updateItem, deleteItem, beginVideoUpload, cancelVideoUpload };
+  return { listPublic: () => list(false), listAdmin: () => list(true), createStory, updateStory, deleteStory, createItem, updateItem, deleteItem, beginVideoUpload, verifyVideoUpload, cancelVideoUpload };
 }
 
 export const STORY_LIMITS = { imageBytes: IMAGE_LIMIT, videoBytes: VIDEO_LIMIT };

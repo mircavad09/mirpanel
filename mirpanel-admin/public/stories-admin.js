@@ -1,6 +1,7 @@
 (() => {
   const escs = (value) => String(value ?? "").replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
   const VIDEO_LIMIT_BYTES = 1024 * 1024 * 1024;
+  const VIDEO_RETRY_DELAYS = [1500, 3000, 4500];
   const VIDEO_EXTENSIONS = new Set(["mp4", "mov", "webm"]);
   const VIDEO_MIME_TYPES = new Set(["video/mp4", "video/quicktime", "video/webm"]);
   let snapshot = { stories: [], activeStories: 0, activeItems: 0, limits: { imageMb: 5, videoMb: 1024 } };
@@ -33,19 +34,29 @@
     return { fileName: file.name, mimeType: file.type, contentBase64: await fileBase64(file) };
   }
 
+  function wait(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+
   function uploadSignedFile(url, file, onProgress) {
     return new Promise((resolve, reject) => {
       const xhr = new XMLHttpRequest();
       xhr.open("PUT", url, true);
-      xhr.setRequestHeader("Content-Type", file.type || "application/octet-stream");
-      xhr.setRequestHeader("Cache-Control", "3600");
+      xhr.timeout = 15 * 60 * 1000;
+      xhr.setRequestHeader("x-upsert", "false");
       xhr.upload.addEventListener("progress", (event) => {
         if (event.lengthComputable) onProgress(Math.min(100, Math.round((event.loaded / event.total) * 100)));
       });
-      xhr.addEventListener("load", () => xhr.status >= 200 && xhr.status < 300 ? resolve() : reject(new Error("Video private storage-a yüklənmədi.")));
-      xhr.addEventListener("error", () => reject(new Error("Bağlantı kəsildi. Eyni videonu yenidən göndərə bilərsiniz.")));
-      xhr.addEventListener("abort", () => reject(new Error("Video yüklənməsi dayandırıldı.")));
-      xhr.send(file);
+      xhr.addEventListener("load", () => {
+        if (xhr.status >= 200 && xhr.status < 300) return resolve();
+        const retryable = [408, 429, 500, 502, 503, 504].includes(xhr.status);
+        reject(Object.assign(new Error(retryable ? "Storage müvəqqəti cavab vermədi." : `Storage videonu qəbul etmədi (${xhr.status}).`), { retryable }));
+      });
+      xhr.addEventListener("error", () => reject(Object.assign(new Error("Storage ilə bağlantı qurulmadı."), { retryable: true })));
+      xhr.addEventListener("timeout", () => reject(Object.assign(new Error("Video yükləmə vaxtı bitdi."), { retryable: true })));
+      xhr.addEventListener("abort", () => reject(Object.assign(new Error("Video yüklənməsi dayandırıldı."), { retryable: false })));
+      const body = new FormData();
+      body.append("cacheControl", "3600");
+      body.append("", file, file.name);
+      xhr.send(body);
     });
   }
 
@@ -69,10 +80,37 @@
     const video = document.createElement("video");
     video.src = URL.createObjectURL(file); video.controls = true; video.muted = true; video.playsInline = true; video.preload = "metadata";
     video.addEventListener("loadedmetadata", () => URL.revokeObjectURL(video.src), { once: true });
-    video.addEventListener("error", () => { status.textContent = "Video preview açıla bilmədi. Uyğun MP4, MOV və ya WebM seçin."; }, { once: true });
+    video.addEventListener("error", () => {
+      if (!scope.dataset.uploading && !scope.dataset.directUploadId) status.textContent = "Video preview açıla bilmədi. Uyğun MP4, MOV və ya WebM seçin.";
+    }, { once: true });
     const text = document.createElement("span"); text.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(1)} MB · Video seçildi`;
     preview.append(video, text); status.before(preview);
     status.textContent = "Video: MP4, MOV və WebM · maksimum 1 GB";
+  }
+
+  async function startVideoUpload(scope, input, file) {
+    const button = finalSaveButton(scope);
+    const status = scope.querySelector("[data-upload-status]");
+    const retryButton = scope.querySelector("[data-upload-retry]");
+    if (scope.dataset.uploading === "true") return;
+    scope.dataset.uploading = "true";
+    delete scope.dataset.directUploadId;
+    setUnsaved(scope, true);
+    button.disabled = true; retryButton.hidden = true; retryButton.disabled = true;
+    try {
+      const storyId = scope.dataset.itemCreate || scope.closest("[data-story-card]")?.dataset.storyCard;
+      const directUploadId = await directVideoUpload(storyId, file, status);
+      scope.dataset.directUploadId = directUploadId;
+      status.textContent = "Video yükləndi. Story-ni yadda saxlayın.";
+      button.disabled = false;
+      button.scrollIntoView({ behavior: "auto", block: "center" });
+    } catch (error) {
+      status.textContent = navigator.onLine === false ? "İnternet bağlantısı yoxdur. Video seçimi qorunub." : "Video yüklənmədi.";
+      retryButton.hidden = false; retryButton.disabled = false;
+      toast(error.message || "Video yüklənmədi.", "bad");
+    } finally {
+      delete scope.dataset.uploading;
+    }
   }
 
   async function handleMediaSelection(event) {
@@ -89,24 +127,12 @@
         const selector = scope?.querySelector('select[name="mediaType"],[data-item-type]');
         if (selector) selector.value = "video";
         showVideoSelection(input, file);
-        if (scope.dataset.directUploadId) {
-          await api(`/api/admin/story-video-uploads/${scope.dataset.directUploadId}`, { method: "DELETE" }).catch(() => {});
-          delete scope.dataset.directUploadId;
-        }
-        scope.dataset.uploading = "true";
-        setUnsaved(scope, true);
-        button.disabled = true;
-        const storyId = scope.dataset.itemCreate || scope.closest("[data-story-card]")?.dataset.storyCard;
-        const directUploadId = await directVideoUpload(storyId, file, button, status);
-        scope.dataset.directUploadId = directUploadId;
-        delete scope.dataset.uploading;
-        button.disabled = false;
-        status.textContent = "Video yükləndi. Story-ni yadda saxlayın.";
-        button.scrollIntoView({ behavior: "auto", block: "center" });
+        if (scope.dataset.directUploadId) await api(`/api/admin/story-video-uploads/${scope.dataset.directUploadId}`, { method: "DELETE" }).catch(() => {});
+        await startVideoUpload(scope, input, file);
       } catch (error) {
         delete scope.dataset.uploading;
         delete scope.dataset.directUploadId;
-        input.value = "";
+        if (/Yalnız (video|MP4)/.test(error.message)) input.value = "";
         button.disabled = true;
         status.textContent = error.message;
         toast(error.message, "bad");
@@ -124,28 +150,33 @@
     if (scope) setUnsaved(scope, true);
   }
 
-  async function directVideoUpload(storyId, file, button, statusNode) {
+  async function directVideoUpload(storyId, file, statusNode) {
     if (!file) return null;
     if (file.size > VIDEO_LIMIT_BYTES) throw new Error("Video maksimum 1 GB ola bilər.");
     validateVideoSelection(file);
-    const originalLabel = button.textContent;
-    let operationId = "";
-    try {
-      const prepared = await api(`/api/admin/stories/${storyId}/video-uploads`, { method: "POST", body: JSON.stringify({ fileName: file.name, mimeType: file.type, size: file.size }) });
-      operationId = prepared.upload.operationId;
-      statusNode && (statusNode.textContent = "Yüklənir… 0%");
-      await uploadSignedFile(prepared.upload.signedUrl, file, (percent) => {
-        button.textContent = `Yüklənir… ${percent}%`;
-        statusNode && (statusNode.textContent = `Yüklənir… ${percent}%`);
-      });
-      statusNode && (statusNode.textContent = "Yükləmə tamamlandı, yoxlanır…");
-      return operationId;
-    } catch (error) {
-      if (operationId) await api(`/api/admin/story-video-uploads/${operationId}`, { method: "DELETE" }).catch(() => {});
-      throw error;
-    } finally {
-      button.textContent = originalLabel;
+    let lastError;
+    for (let attempt = 0; attempt <= VIDEO_RETRY_DELAYS.length; attempt += 1) {
+      let operationId = "";
+      try {
+        if (attempt > 0) {
+          statusNode.textContent = `Bağlantı yenidən qurulur — yenidən cəhd edilir (${attempt}/3)`;
+          await wait(VIDEO_RETRY_DELAYS[attempt - 1]);
+        }
+        const prepared = await api(`/api/admin/stories/${storyId}/video-uploads`, { method: "POST", body: JSON.stringify({ fileName: file.name, mimeType: file.type, size: file.size }) });
+        operationId = prepared.upload.operationId;
+        statusNode.textContent = "Video yüklənir… 0%";
+        await uploadSignedFile(prepared.upload.signedUrl, file, (percent) => { statusNode.textContent = `Video yüklənir… ${percent}%`; });
+        statusNode.textContent = "Yükləmə tamamlandı, yoxlanır…";
+        await api(`/api/admin/story-video-uploads/${operationId}/verify`, { method: "POST" });
+        return operationId;
+      } catch (error) {
+        lastError = error;
+        if (operationId) await api(`/api/admin/story-video-uploads/${operationId}`, { method: "DELETE" }).catch(() => {});
+        const retryable = error.retryable || !error.status || [408, 429, 500, 502, 503, 504].includes(error.status);
+        if (!retryable || attempt === VIDEO_RETRY_DELAYS.length) throw error;
+      }
     }
+    throw lastError || new Error("Video yüklənmədi.");
   }
 
   function installView() {
@@ -208,7 +239,7 @@
         <label class="switchLine"><input data-item-active type="checkbox" ${item.active ? "checked" : ""}><span>Aktiv</span></label>
         <label>Medianı dəyiş<input data-item-file type="file" accept="image/jpeg,image/png,image/webp,video/*,.mp4,.mov,.webm"></label>
         <select data-item-type><option value="image" ${item.media_type === "image" ? "selected" : ""}>Şəkil</option><option value="video" ${item.media_type === "video" ? "selected" : ""}>Video</option></select>
-        <small data-upload-status aria-live="polite"></small><button class="btn primary storyFinalSave" type="button" data-item-save="${item.id}" disabled>Dəyişiklikləri yadda saxla</button>
+        <small data-upload-status aria-live="polite"></small><button class="btn storyUploadRetry" type="button" data-upload-retry hidden>Yenidən cəhd et</button><button class="btn primary storyFinalSave" type="button" data-item-save="${item.id}" disabled>Dəyişiklikləri yadda saxla</button>
         <button class="btn danger" type="button" data-item-delete="${item.id}">Sil</button>
       </div>`).join("") || '<p class="emptyState bad">Bu story ana səhifədə görünmür: cover yalnız dairə üçündür. Aşağıdan ən azı 1 aktiv şəkil və ya video elementi əlavə edin.</p>'}</div>
       <form class="storyItemCreate" data-item-create="${story.id}">
@@ -218,6 +249,7 @@
         <input name="sortOrder" type="number" min="1" value="${story.items.length + 1}" aria-label="Sıra">
         <label class="switchLine"><input name="active" type="checkbox" checked><span>Aktiv</span></label>
         <small data-upload-status aria-live="polite">Şəkil: 5 MB · Video: MP4, MOV və WebM · maksimum 1 GB</small>
+        <button class="btn storyUploadRetry" data-upload-retry type="button" hidden>Yenidən cəhd et</button>
         <button class="btn primary storyFinalSave" data-story-final-save type="submit" disabled>Story-ni yadda saxla</button>
       </form>
     </article>`).join("") || '<p class="emptyState">Hələ story yaradılmayıb.</p>';
@@ -255,7 +287,14 @@
   async function handleAction(event) {
     const storySave = event.target.closest("[data-story-save]"); const storyDelete = event.target.closest("[data-story-delete]");
     const itemSave = event.target.closest("[data-item-save]"); const itemDelete = event.target.closest("[data-item-delete]");
+    const uploadRetry = event.target.closest("[data-upload-retry]");
     try {
+      if (uploadRetry) {
+        const scope = uploadRetry.closest("[data-item-create],[data-item-card]");
+        const input = scope.querySelector('input[name="media"],[data-item-file]');
+        if (!input.files[0]) return toast("Video seçimi tapılmadı. Videonu yenidən seçin.", "bad");
+        return startVideoUpload(scope, input, input.files[0]);
+      }
       if (storyDelete) {
         if (!confirm("Bu story və bütün elementləri silinsin? Bu əməliyyat geri qaytarılmır.")) return;
         await api(`/api/admin/stories/${storyDelete.dataset.storyDelete}`, { method: "DELETE" }); toast("Story silindi."); return loadStories();

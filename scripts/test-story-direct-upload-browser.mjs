@@ -19,7 +19,7 @@ const server = http.createServer((request, response) => {
     request.on("end", () => { received = Buffer.concat(chunks); response.writeHead(200, { "Access-Control-Allow-Origin":"*" }).end("ok"); });
     return;
   }
-  if (request.method === "OPTIONS") { response.writeHead(204, { "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Methods":"PUT,OPTIONS", "Access-Control-Allow-Headers":"Content-Type,Cache-Control" }).end(); return; }
+  if (request.method === "OPTIONS") { response.writeHead(204, { "Access-Control-Allow-Origin":"*", "Access-Control-Allow-Methods":"PUT,OPTIONS", "Access-Control-Allow-Headers":"Content-Type,x-upsert" }).end(); return; }
   response.writeHead(404).end();
 });
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -30,6 +30,8 @@ window.__calls=[]; window.__toast=''; window.toast=(text)=>{ window.__toast=text
 window.api=async(url,options={})=>{ window.__calls.push({url,options});
  if(url==='/api/admin/stories'&&!options.method)return {stories:[{id:'${storyId}',title:'Test',coverUrl:'',sort_order:1,active:true,items:[{id:'item-existing',media_type:'video',mediaUrl:'',caption:'Köhnə',sort_order:1,active:true}]}],activeStories:1,activeItems:1,limits:{imageMb:5,videoMb:1024}};
  if(url.endsWith('/video-uploads')&&options.method==='POST')return {upload:{operationId:'11111111-1111-4111-8111-111111111111',signedUrl:'http://127.0.0.1:${port}/signed?token=short-lived'}};
+ if(url.endsWith('/verify')&&options.method==='POST')return {ok:true};
+ if(url.startsWith('/api/admin/story-video-uploads/')&&options.method==='DELETE')return {ok:true};
  if(url.endsWith('/items')&&options.method==='POST')return {item:{id:'item'}};
  if(url==='/api/admin/story-items/item-existing'&&options.method==='PATCH')return {item:{id:'item-existing'}};
  if(url==='/api/admin/story-items/item-existing'&&options.method==='DELETE')return {ok:true};
@@ -65,7 +67,8 @@ const calls = await page.evaluate(() => window.__calls);
 assert.equal(calls.filter((entry) => entry.url.endsWith('/items') && entry.options.method === 'POST').length, 1, "İkiqat klik yalnız bir Story elementi yaratmalıdır");
 const finalize = calls.find((entry) => entry.url.endsWith('/items') && entry.options.method === 'POST');
 const payload = JSON.parse(finalize.options.body);
-assert.equal(received.equals(mp4), true, "Video byte-ları birbaşa signed URL-ə getməlidir");
+assert.equal(received.includes(mp4), true, "Video byte-ları multipart ilə birbaşa signed URL-ə getməlidir");
+assert.match(received.toString('latin1'), /cacheControl/);
 assert.equal(payload.directUploadId, "11111111-1111-4111-8111-111111111111");
 assert.equal(payload.media, null, "Video base64 JSON ilə Render serverinə göndərilməməlidir");
 const existingCard = page.locator('[data-item-card="item-existing"]');

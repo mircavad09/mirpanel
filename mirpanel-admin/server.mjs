@@ -744,6 +744,13 @@ async function handleApi(request, response) {
   }
 
   const storyUploadCancelMatch = request.url.match(/^\/api\/admin\/story-video-uploads\/([0-9a-f-]+)$/i);
+  const storyUploadVerifyMatch = request.url.match(/^\/api\/admin\/story-video-uploads\/([0-9a-f-]+)\/verify$/i);
+  if (storyUploadVerifyMatch && request.method === "POST") {
+    if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
+    if (!requireMutationAuth(request, response)) return;
+    return json(response, 200, await storiesRepository.verifyVideoUpload(storyUploadVerifyMatch[1]));
+  }
+
   if (storyUploadCancelMatch && request.method === "DELETE") {
     if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
     if (!requireMutationAuth(request, response)) return;

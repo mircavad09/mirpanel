@@ -118,6 +118,8 @@ const prepared = await directRepo.beginVideoUpload(directStory.id, { fileName:"c
 assert.match(prepared.signedUrl, /token=short-lived/);
 assert.equal(directClient.tables.story_items.length, 0, "Upload bitmədən media qeydi yaranmamalıdır");
 directClient.objects.set(prepared.path, { buffer:mp4, contentType:"video/mp4" });
+assert.deepEqual(await directRepo.verifyVideoUpload(prepared.operationId), { ok:true });
+assert.equal(directClient.tables.story_items.length, 0, "Server yoxlaması final yadda saxlamadan media qeydi yaratmamalıdır");
 const directItem = await directRepo.createItem(directStory.id, { mediaType:"video", directUploadId:prepared.operationId, active:true });
 assert.equal(directItem.media_path, prepared.path);
 await assert.rejects(() => directRepo.createItem(directStory.id, { mediaType:"video", directUploadId:prepared.operationId }), /etibarsızdır/);
