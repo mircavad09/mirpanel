@@ -5,6 +5,17 @@
   const VIDEO_MIME_TYPES = new Set(["video/mp4", "video/quicktime", "video/webm"]);
   let snapshot = { stories: [], activeStories: 0, activeItems: 0, limits: { imageMb: 5, videoMb: 1024 } };
 
+  function finalSaveButton(scope) {
+    return scope?.querySelector("[data-story-final-save],[data-item-save]");
+  }
+
+  function setUnsaved(scope, unsaved = true) {
+    if (!scope) return;
+    scope.dataset.unsaved = unsaved ? "true" : "false";
+    const button = finalSaveButton(scope);
+    if (button && unsaved && !scope.dataset.uploading) button.disabled = false;
+  }
+
   function fileBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -64,23 +75,53 @@
     status.textContent = "Video: MP4, MOV və WebM · maksimum 1 GB";
   }
 
-  function handleMediaSelection(event) {
+  async function handleMediaSelection(event) {
     const input = event.target.closest('input[name="media"],[data-item-file]');
     const file = input?.files?.[0];
     if (!input || !file) return;
+    const scope = input.closest("form,[data-item-card]");
+    const button = finalSaveButton(scope);
+    const status = scope?.querySelector("[data-upload-status]");
     const type = String(file.type || "").toLowerCase(); const extension = videoExtension(file);
     if (type.startsWith("video/") || type.startsWith("audio/") || VIDEO_EXTENSIONS.has(extension) || ["mp3", "wav", "aac", "m4a", "ogg"].includes(extension)) {
       try {
         validateVideoSelection(file);
-        const selector = input.closest("form,[data-item-card]")?.querySelector('select[name="mediaType"],[data-item-type]');
+        const selector = scope?.querySelector('select[name="mediaType"],[data-item-type]');
         if (selector) selector.value = "video";
         showVideoSelection(input, file);
+        if (scope.dataset.directUploadId) {
+          await api(`/api/admin/story-video-uploads/${scope.dataset.directUploadId}`, { method: "DELETE" }).catch(() => {});
+          delete scope.dataset.directUploadId;
+        }
+        scope.dataset.uploading = "true";
+        setUnsaved(scope, true);
+        button.disabled = true;
+        const storyId = scope.dataset.itemCreate || scope.closest("[data-story-card]")?.dataset.storyCard;
+        const directUploadId = await directVideoUpload(storyId, file, button, status);
+        scope.dataset.directUploadId = directUploadId;
+        delete scope.dataset.uploading;
+        button.disabled = false;
+        status.textContent = "Video yükləndi. Story-ni yadda saxlayın.";
+        button.scrollIntoView({ behavior: "auto", block: "center" });
       } catch (error) {
+        delete scope.dataset.uploading;
+        delete scope.dataset.directUploadId;
         input.value = "";
-        input.closest("form,[data-item-card]")?.querySelector(".storyUploadSelection")?.remove();
+        button.disabled = true;
+        status.textContent = error.message;
         toast(error.message, "bad");
       }
+      return;
     }
+    const selector = scope?.querySelector('select[name="mediaType"],[data-item-type]');
+    if (selector) selector.value = "image";
+    setUnsaved(scope, true);
+  }
+
+  function handleStoriesChange(event) {
+    if (event.target.matches('input[name="media"],[data-item-file]')) return void handleMediaSelection(event);
+    const scope = event.target.closest("[data-item-create],[data-item-card]");
+    if (scope) setUnsaved(scope, true);
   }
 
   async function directVideoUpload(storyId, file, button, statusNode) {
@@ -135,7 +176,11 @@
     document.getElementById("storiesRefresh").addEventListener("click", loadStories);
     document.getElementById("storyCreateForm").addEventListener("submit", createStory);
     document.getElementById("storiesAdminList").addEventListener("click", handleAction);
-    document.getElementById("storiesAdminList").addEventListener("change", handleMediaSelection);
+    document.getElementById("storiesAdminList").addEventListener("change", handleStoriesChange);
+    window.addEventListener("beforeunload", (event) => {
+      if (!document.querySelector('[data-unsaved="true"]')) return;
+      event.preventDefault(); event.returnValue = "";
+    });
   }
 
   function mediaPreview(item) {
@@ -163,7 +208,7 @@
         <label class="switchLine"><input data-item-active type="checkbox" ${item.active ? "checked" : ""}><span>Aktiv</span></label>
         <label>Medianı dəyiş<input data-item-file type="file" accept="image/jpeg,image/png,image/webp,video/*,.mp4,.mov,.webm"></label>
         <select data-item-type><option value="image" ${item.media_type === "image" ? "selected" : ""}>Şəkil</option><option value="video" ${item.media_type === "video" ? "selected" : ""}>Video</option></select>
-        <button class="btn" type="button" data-item-save="${item.id}">Yadda saxla</button><small data-upload-status aria-live="polite"></small>
+        <small data-upload-status aria-live="polite"></small><button class="btn primary storyFinalSave" type="button" data-item-save="${item.id}" disabled>Dəyişiklikləri yadda saxla</button>
         <button class="btn danger" type="button" data-item-delete="${item.id}">Sil</button>
       </div>`).join("") || '<p class="emptyState bad">Bu story ana səhifədə görünmür: cover yalnız dairə üçündür. Aşağıdan ən azı 1 aktiv şəkil və ya video elementi əlavə edin.</p>'}</div>
       <form class="storyItemCreate" data-item-create="${story.id}">
@@ -172,8 +217,8 @@
         <input name="caption" maxlength="240" placeholder="Qısa izah (istəyə bağlı)">
         <input name="sortOrder" type="number" min="1" value="${story.items.length + 1}" aria-label="Sıra">
         <label class="switchLine"><input name="active" type="checkbox" checked><span>Aktiv</span></label>
-        <button class="btn primary" type="submit">Element əlavə et</button>
         <small data-upload-status aria-live="polite">Şəkil: 5 MB · Video: MP4, MOV və WebM · maksimum 1 GB</small>
+        <button class="btn primary storyFinalSave" data-story-final-save type="submit" disabled>Story-ni yadda saxla</button>
       </form>
     </article>`).join("") || '<p class="emptyState">Hələ story yaradılmayıb.</p>';
     document.querySelectorAll("[data-item-create]").forEach((form) => form.addEventListener("submit", createItem));
@@ -198,9 +243,12 @@
     event.preventDefault(); const form = event.currentTarget; const button = form.querySelector("button[type=submit]"); button.disabled = true;
     try {
       const kind = form.mediaType.value; const storyId = form.dataset.itemCreate; const file = form.media.files[0];
-      const directUploadId = kind === "video" ? await directVideoUpload(storyId, file, button, form.querySelector("[data-upload-status]")) : null;
+      if (form.dataset.uploading) throw new Error("Video yüklənir. Yükləmə tamamlanandan sonra yadda saxlayın.");
+      const directUploadId = kind === "video" ? form.dataset.directUploadId : null;
+      if (kind === "video" && !directUploadId) throw new Error("Video hələ yüklənməyib. Yükləmə tamamlanandan sonra yadda saxlayın.");
       await api(`/api/admin/stories/${storyId}/items`, { method: "POST", body: JSON.stringify({ mediaType: kind, media: kind === "image" ? await uploadPayload(file, kind) : null, directUploadId, caption: form.caption.value, sortOrder: form.sortOrder.value, active: form.active.checked }) });
-      toast("Story elementi əlavə edildi."); await loadStories();
+      setUnsaved(form, false); delete form.dataset.directUploadId;
+      toast("Story uğurla yadda saxlanıldı."); await loadStories();
     } catch (error) { toast(error.message, "bad"); } finally { button.disabled = false; }
   }
 
@@ -219,13 +267,23 @@
       }
       if (itemDelete) {
         if (!confirm("Bu story elementi silinsin?")) return;
-        await api(`/api/admin/story-items/${itemDelete.dataset.itemDelete}`, { method: "DELETE" }); toast("Story elementi silindi."); return loadStories();
+        const card = itemDelete.closest("[data-item-card]"); card.dataset.pendingDelete = "true";
+        card.querySelector("[data-upload-status]").textContent = "Silinmə yadda saxlanmayıb. Dəyişiklikləri yadda saxlayın.";
+        itemDelete.disabled = true; setUnsaved(card, true); return;
       }
       if (itemSave) {
-        const card = itemSave.closest("[data-item-card]"); const kind = card.querySelector("[data-item-type]").value; const file = card.querySelector("[data-item-file]").files[0]; const storyId = itemSave.closest("[data-story-card]").dataset.storyCard; itemSave.disabled = true;
-        const directUploadId = kind === "video" && file ? await directVideoUpload(storyId, file, itemSave, card.querySelector("[data-upload-status]")) : null;
+        const card = itemSave.closest("[data-item-card]"); itemSave.disabled = true;
+        if (card.dataset.pendingDelete === "true") {
+          await api(`/api/admin/story-items/${itemSave.dataset.itemSave}`, { method: "DELETE" });
+          setUnsaved(card, false); toast("Story uğurla yadda saxlanıldı."); return loadStories();
+        }
+        if (card.dataset.uploading) throw new Error("Video yüklənir. Yükləmə tamamlanandan sonra yadda saxlayın.");
+        const kind = card.querySelector("[data-item-type]").value; const file = card.querySelector("[data-item-file]").files[0];
+        const directUploadId = kind === "video" && file ? card.dataset.directUploadId : null;
+        if (kind === "video" && file && !directUploadId) throw new Error("Video hələ yüklənməyib. Yükləmə tamamlanandan sonra yadda saxlayın.");
         await api(`/api/admin/story-items/${itemSave.dataset.itemSave}`, { method: "PATCH", body: JSON.stringify({ mediaType: kind, media: kind === "image" ? await uploadPayload(file, kind) : null, directUploadId, caption: card.querySelector("[data-item-caption]").value, sortOrder: card.querySelector("[data-item-order]").value, active: card.querySelector("[data-item-active]").checked }) });
-        toast("Story elementi yeniləndi."); return loadStories();
+        setUnsaved(card, false); delete card.dataset.directUploadId;
+        toast("Story uğurla yadda saxlanıldı."); return loadStories();
       }
     } catch (error) { toast(error.message, "bad"); storySave && (storySave.disabled = false); itemSave && (itemSave.disabled = false); }
   }

@@ -10,6 +10,7 @@ const browserPath = process.env.MIRPANEL_BROWSER_PATH;
 if (!nodeModules || !browserPath) throw new Error("Browser test runtime paths are required.");
 const { chromium } = await import(pathToFileURL(path.join(nodeModules, "playwright", "index.mjs")));
 const adminJs = fs.readFileSync(path.join(root, "mirpanel-admin/public/stories-admin.js"), "utf8");
+const adminCss = fs.readFileSync(path.join(root, "mirpanel-admin/public/admin.css"), "utf8");
 let received = Buffer.alloc(0);
 const server = http.createServer((request, response) => {
   if (request.method === "PUT" && request.url.startsWith("/signed")) {
@@ -24,20 +25,23 @@ const server = http.createServer((request, response) => {
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const port = server.address().port;
 const storyId = "00000000-0000-4000-8000-000000000001";
-const html = `<!doctype html><html><body><button class="navBtn" data-view="banners"></button><div id="crumb"></div><main class="main"></main><script>
+const html = `<!doctype html><html><head><style>${adminCss}</style></head><body><button class="navBtn" data-view="banners"></button><div id="crumb"></div><main class="main"></main><script>
 window.__calls=[]; window.__toast=''; window.toast=(text)=>{ window.__toast=text; };
 window.api=async(url,options={})=>{ window.__calls.push({url,options});
- if(url==='/api/admin/stories'&&!options.method)return {stories:[{id:'${storyId}',title:'Test',coverUrl:'',sort_order:1,active:true,items:[]}],activeStories:0,activeItems:0,limits:{imageMb:5,videoMb:1024}};
+ if(url==='/api/admin/stories'&&!options.method)return {stories:[{id:'${storyId}',title:'Test',coverUrl:'',sort_order:1,active:true,items:[{id:'item-existing',media_type:'video',mediaUrl:'',caption:'Köhnə',sort_order:1,active:true}]}],activeStories:1,activeItems:1,limits:{imageMb:5,videoMb:1024}};
  if(url.endsWith('/video-uploads')&&options.method==='POST')return {upload:{operationId:'11111111-1111-4111-8111-111111111111',signedUrl:'http://127.0.0.1:${port}/signed?token=short-lived'}};
  if(url.endsWith('/items')&&options.method==='POST')return {item:{id:'item'}};
+ if(url==='/api/admin/story-items/item-existing'&&options.method==='PATCH')return {item:{id:'item-existing'}};
+ if(url==='/api/admin/story-items/item-existing'&&options.method==='DELETE')return {ok:true};
  throw new Error('Unexpected '+url);
 };
 </script><script>${adminJs}</script></body></html>`;
 const browser = await chromium.launch({ executablePath: browserPath, headless:true });
-const page = await browser.newPage();
+const page = await browser.newPage({ viewport:{ width:390, height:844 } });
 const errors=[]; page.on("console",(message)=>message.type()==="error"&&errors.push(message.text())); page.on("pageerror",(error)=>errors.push(error.message));
 await page.setContent(html, { waitUntil:"domcontentloaded" });
 await page.locator('.navBtn[data-view="stories"]').click();
+await page.locator('#storiesView').evaluate((view) => view.classList.remove('hidden'));
 const form = page.locator(`[data-item-create="${storyId}"]`);
 assert.match(await form.locator('input[name="media"]').getAttribute("accept"), /video\/\*/);
 await form.locator('select[name="mediaType"]').selectOption("video");
@@ -45,14 +49,39 @@ const mp4 = Buffer.concat([Buffer.from([0,0,0,20]),Buffer.from("ftypisomisom"),B
 await form.locator('input[name="media"]').setInputFiles({ name:"small.mp4", mimeType:"video/mp4", buffer:mp4 });
 assert.equal(await form.locator('select[name="mediaType"]').inputValue(), "video");
 assert.match(await form.locator('.storyUploadSelection').innerText(), /small\.mp4.*Video seçildi/);
-await form.locator('button[type="submit"]').click();
+await page.waitForFunction(() => {
+  const button = document.querySelector('[data-story-final-save]');
+  return button && !button.disabled && button.textContent.includes('Story-ni yadda saxla');
+});
+await page.waitForTimeout(150);
+assert.equal((await page.evaluate(() => window.__calls)).filter((entry) => entry.url.endsWith('/items')).length, 0, "Final düymədən əvvəl Story databazaya yazılmamalıdır");
+const mobileSave = await form.locator('[data-story-final-save]').evaluate((button) => { const rect=button.getBoundingClientRect(); return {text:button.textContent.trim(),top:rect.top,bottom:rect.bottom,overflow:document.documentElement.scrollWidth-document.documentElement.clientWidth}; });
+assert.equal(mobileSave.text, "Story-ni yadda saxla");
+assert.ok(mobileSave.top >= 0 && mobileSave.bottom <= 844, `Mobil yadda saxla düyməsi görünmür: ${JSON.stringify(mobileSave)}`);
+assert.ok(mobileSave.overflow <= 0, `Mobil üfüqi daşma var: ${mobileSave.overflow}`);
+await form.locator('[data-story-final-save]').dblclick();
 await page.waitForFunction(() => window.__calls.some((entry) => entry.url.endsWith('/items') && entry.options.method === 'POST'));
 const calls = await page.evaluate(() => window.__calls);
+assert.equal(calls.filter((entry) => entry.url.endsWith('/items') && entry.options.method === 'POST').length, 1, "İkiqat klik yalnız bir Story elementi yaratmalıdır");
 const finalize = calls.find((entry) => entry.url.endsWith('/items') && entry.options.method === 'POST');
 const payload = JSON.parse(finalize.options.body);
 assert.equal(received.equals(mp4), true, "Video byte-ları birbaşa signed URL-ə getməlidir");
 assert.equal(payload.directUploadId, "11111111-1111-4111-8111-111111111111");
 assert.equal(payload.media, null, "Video base64 JSON ilə Render serverinə göndərilməməlidir");
+const existingCard = page.locator('[data-item-card="item-existing"]');
+assert.equal((await existingCard.locator('[data-item-save]').innerText()).trim(), "Dəyişiklikləri yadda saxla");
+await existingCard.locator('[data-item-caption]').fill('Yenilənib');
+await existingCard.locator('[data-item-caption]').press('Tab');
+await page.waitForFunction(() => !document.querySelector('[data-item-save="item-existing"]')?.disabled);
+await existingCard.locator('[data-item-save]').click();
+await page.waitForFunction(() => window.__calls.some((entry) => entry.url === '/api/admin/story-items/item-existing' && entry.options.method === 'PATCH'));
+assert.equal((await page.evaluate(() => window.__calls)).filter((entry) => entry.url === '/api/admin/story-items/item-existing' && entry.options.method === 'PATCH').length, 1);
+page.once('dialog', (dialog) => dialog.accept());
+await existingCard.locator('[data-item-delete]').click();
+assert.equal((await page.evaluate(() => window.__calls)).filter((entry) => entry.url === '/api/admin/story-items/item-existing' && entry.options.method === 'DELETE').length, 0, "Silinmə final yadda saxlamadan tətbiq edilməməlidir");
+await existingCard.locator('[data-item-save]').click();
+await page.waitForFunction(() => window.__calls.some((entry) => entry.url === '/api/admin/story-items/item-existing' && entry.options.method === 'DELETE'));
+assert.equal((await page.evaluate(() => window.__calls)).filter((entry) => entry.url === '/api/admin/story-items/item-existing' && entry.options.method === 'DELETE').length, 1);
 const mov = Buffer.concat([Buffer.from([0,0,0,20]),Buffer.from("ftypqt  "),Buffer.alloc(4)]);
 await form.locator('input[name="media"]').setInputFiles({ name:"iphone.mov", mimeType:"video/quicktime", buffer:mov });
 assert.equal(await form.locator('select[name="mediaType"]').inputValue(), "video");
@@ -61,9 +90,10 @@ const webm = Buffer.concat([Buffer.from([0x1a,0x45,0xdf,0xa3]),Buffer.alloc(16)]
 await form.locator('input[name="media"]').setInputFiles({ name:"desktop.webm", mimeType:"video/webm", buffer:webm });
 assert.equal(await form.locator('input[name="media"]').evaluate((input) => input.files.length), 1, "Desktop WebM seçimi saxlanmalıdır");
 await form.locator('input[name="media"]').setInputFiles({ name:"sound.mp3", mimeType:"audio/mpeg", buffer:Buffer.from("ID3audio") });
+await page.waitForFunction(() => document.querySelector('input[name="media"]')?.files.length === 0);
 assert.equal(await form.locator('input[name="media"]').evaluate((input) => input.files.length), 0, "MP3 seçimdən təmizlənməlidir");
 assert.equal(await page.evaluate(() => window.__toast), "Yalnız video faylı seçin.");
 assert.equal(errors.length, 0, errors.join(" | "));
 await browser.close();
 await new Promise((resolve) => server.close(resolve));
-console.log(JSON.stringify({ ok:true, directBytes:received.length, base64ToServer:false, signedUrl:true, consoleErrors:0 }, null, 2));
+console.log(JSON.stringify({ ok:true, directBytes:received.length, base64ToServer:false, signedUrl:true, mobile390SaveVisible:true, duplicateCreates:0, consoleErrors:0 }, null, 2));
