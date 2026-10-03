@@ -11,6 +11,7 @@
   const DEFAULT_AGREEMENT_TEXT = "İstifadə qaydalarını və şərtləri oxudum, qəbul edirəm.";
   const AGREEMENT_LINK_TEXT = "İstifadə qaydalarını və şərtləri";
   const AGREEMENT_ERROR = "Davam etmək üçün istifadə qaydalarını və şərtləri qəbul edin.";
+  const DEFAULT_SPOTIFY_RESET_URL = "https://accounts.spotify.com/az/password-reset";
   let orderTermsAccepted = false;
 
   function publicProductTitle(value) {
@@ -37,8 +38,9 @@
       { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true }
     ],
     spotify: [
-      { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
-      { key: "password", type: "password", label: "Şifrə", placeholder: "Şifrənizi yazın", required: true, enabled: true }
+      { key: "email", type: "email", label: "Gmail ünvanınız", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
+      { key: "password", type: "password", label: "Spotify şifrəniz", placeholder: "Spotify şifrənizi yazın", required: true, enabled: true },
+      { key: "password_confirm", type: "password", label: "Spotify şifrənizi təkrar yazın", placeholder: "Şifrənizi yenidən yazın", required: true, enabled: true }
     ]
   };
 
@@ -99,6 +101,30 @@
       .premiumOrderForm .orderConfirmationCancel { background: linear-gradient(135deg, rgba(71, 85, 105, .95), rgba(38, 48, 63, .95)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08); }
       .premiumOrderForm .mpBtn:hover { transform: translateY(-1px); filter: brightness(1.05); }
       .premiumOrderForm .mpBtn:active { transform: translateY(1px) scale(.99); }
+      .spotifyCredentialsForm { gap: 14px !important; }
+      .spotifyCredentialsForm .premiumOrderFields { gap: 12px; }
+      .spotifyPasswordField { display: grid; gap: 8px; margin: 0; }
+      .spotifyPasswordField > span { color: rgba(235, 255, 243, .9); font-size: 13px; font-weight: 800; }
+      .spotifyPasswordControl { position: relative; min-width: 0; }
+      .spotifyPasswordControl input { width: 100%; padding-right: 52px !important; }
+      .spotifyPasswordToggle {
+        position: absolute; top: 50%; right: 7px; transform: translateY(-50%); display: grid; place-items: center;
+        width: 40px; height: 40px; padding: 0; border: 0; border-radius: 12px; cursor: pointer;
+        color: rgba(235, 255, 243, .82); background: rgba(255, 255, 255, .06);
+      }
+      .spotifyPasswordToggle:hover, .spotifyPasswordToggle:focus-visible { color: #2dff86; background: rgba(45, 255, 134, .11); outline: 2px solid rgba(45, 255, 134, .42); outline-offset: 1px; }
+      .spotifyPasswordToggle svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+      .spotifyPasswordError { margin: -3px 0 0; color: #ff9e9e; font-size: 12px; font-weight: 750; line-height: 1.4; }
+      .spotifyPasswordReset { margin: -2px 0 0; color: rgba(235, 255, 243, .68); font-size: 13px; line-height: 1.45; }
+      .spotifyPasswordReset a { color: #45e884; font-weight: 850; text-underline-offset: 3px; }
+      .spotifyCredentialsForm .premiumContinueBtn:disabled { cursor: not-allowed; opacity: .42; filter: saturate(.35); box-shadow: none; transform: none; }
+      @media (max-width: 390px) {
+        .spotifyCredentialsForm { padding-top: 19px !important; gap: 12px !important; }
+        .spotifyCredentialsForm .premiumOrderFields { gap: 10px; }
+        .spotifyCredentialsForm .universalField input, .spotifyCredentialsForm .spotifyPasswordField input { min-height: 50px; font-size: 16px; }
+        .spotifyCredentialsForm .orderConfirmationActions { grid-template-columns: 1fr 1fr; gap: 9px; }
+        .spotifyCredentialsForm .mpBtn { min-height: 50px; font-size: 14px; }
+      }
 
       #modal.netflixPersonalFormOpen {
         backdrop-filter: blur(18px) saturate(.82);
@@ -1468,6 +1494,7 @@
 
     const isHbo = isHboProduct(product);
     const isNetflixPersonal = isNetflixPersonalProduct(product);
+    const isSpotify = String(product?.id || "").toLowerCase() === "spotify" || String(product?.flow || "").toLowerCase() === "spotify";
     setOrderConfirmationMode(false);
     setPremiumFormMode(!isHbo && !isNetflixPersonal);
     setHboFormMode(isHbo);
@@ -1517,6 +1544,29 @@
         </form>
       `);
       document.querySelector("#modal .modalCard")?.setAttribute("aria-labelledby", "netflixPersonalTitle");
+    } else if (isSpotify) {
+      const configuredResetUrl = String(product?.spotifyPasswordResetUrl || "").trim();
+      let resetUrl = DEFAULT_SPOTIFY_RESET_URL;
+      try {
+        const candidate = new URL(configuredResetUrl || DEFAULT_SPOTIFY_RESET_URL);
+        if (candidate.protocol === "https:") resetUrl = candidate.href;
+      } catch {}
+      renderModalContent(`
+        <form class="mpForm universalOrderForm premiumOrderForm spotifyCredentialsForm" id="universalOrderForm" data-product-id="${escapeHtml(product.id || "")}" novalidate>
+          <div class="mpFormTitle">Spotify hesab məlumatları</div>
+          <div class="premiumOrderFields">
+            <label class="universalField premiumUniversalField" for="spotifyEmail"><span>Gmail ünvanınız</span><input id="spotifyEmail" type="email" name="email" data-label="Gmail ünvanınız" placeholder="Gmail ünvanınızı yazın" autocomplete="email" inputmode="email" required></label>
+            <label class="spotifyPasswordField" for="spotifyPassword"><span>Spotify şifrəniz</span><span class="spotifyPasswordControl"><input id="spotifyPassword" type="password" name="password" data-label="Spotify şifrəniz" placeholder="Spotify şifrənizi yazın" autocomplete="current-password" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPassword" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
+            <label class="spotifyPasswordField" for="spotifyPasswordConfirm"><span>Spotify şifrənizi təkrar yazın</span><span class="spotifyPasswordControl"><input id="spotifyPasswordConfirm" type="password" data-private-confirmation="true" placeholder="Şifrənizi yenidən yazın" autocomplete="current-password" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPasswordConfirm" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
+            <p class="spotifyPasswordError" id="spotifyPasswordError" role="alert" hidden>Şifrələr eyni deyil. Zəhmət olmasa yenidən yoxlayın.</p>
+            <p class="spotifyPasswordReset">Şifrənizi unutmusunuz? <a href="${escapeHtml(resetUrl)}" target="_blank" rel="noopener noreferrer">Şifrənizi sıfırlayın.</a></p>
+          </div>
+          <div class="orderConfirmationActions premiumOrderActions">
+            <button class="mpBtn orderConfirmationCancel" id="universalFormCancel" type="button">Ləğv et</button>
+            <button class="mpBtn premiumContinueBtn" id="spotifyContinueButton" type="submit" disabled aria-disabled="true">Davam et</button>
+          </div>
+        </form>
+      `);
     } else renderModalContent(`
       <form class="${formClass}" id="universalOrderForm" data-product-id="${escapeHtml(product.id || "")}">
         <div class="mpFormTitle">${escapeHtml(title)}</div>
@@ -1603,6 +1653,37 @@
       });
       syncPin();
       requestAnimationFrame(() => nameInput.focus());
+    } else if (isSpotify) {
+      const form = document.getElementById("universalOrderForm");
+      const email = document.getElementById("spotifyEmail");
+      const password = document.getElementById("spotifyPassword");
+      const confirmation = document.getElementById("spotifyPasswordConfirm");
+      const error = document.getElementById("spotifyPasswordError");
+      const continueButton = document.getElementById("spotifyContinueButton");
+      let confirmationTouched = false;
+      const syncSpotifyValidity = () => {
+        const mismatch = Boolean(password.value && confirmation.value && password.value !== confirmation.value);
+        error.hidden = !(confirmationTouched && mismatch);
+        confirmation.setCustomValidity(mismatch ? "Şifrələr eyni deyil. Zəhmət olmasa yenidən yoxlayın." : "");
+        const ready = email.validity.valid && Boolean(email.value.trim()) && Boolean(password.value) && Boolean(confirmation.value) && !mismatch;
+        continueButton.disabled = !ready;
+        continueButton.setAttribute("aria-disabled", String(!ready));
+      };
+      email.addEventListener("input", syncSpotifyValidity);
+      password.addEventListener("input", syncSpotifyValidity);
+      confirmation.addEventListener("input", () => { confirmationTouched = true; syncSpotifyValidity(); });
+      form.querySelectorAll("[data-password-toggle]").forEach((button) => {
+        button.addEventListener("click", () => {
+          const input = document.getElementById(button.dataset.passwordToggle);
+          const reveal = input.type === "password";
+          input.type = reveal ? "text" : "password";
+          const label = reveal ? "Şifrəni gizlət" : "Şifrəni göstər";
+          button.setAttribute("aria-label", label);
+          button.title = label;
+          input.focus({ preventScroll: true });
+        });
+      });
+      syncSpotifyValidity();
     }
     document.querySelectorAll("#universalOrderForm [data-code-length]").forEach((input) => {
       input.addEventListener("input", () => {
@@ -1612,6 +1693,21 @@
     });
     document.getElementById("universalOrderForm").onsubmit = (event) => {
       event.preventDefault();
+      if (isSpotify) {
+        const email = document.getElementById("spotifyEmail");
+        const password = document.getElementById("spotifyPassword");
+        const confirmation = document.getElementById("spotifyPasswordConfirm");
+        if (!email.checkValidity()) { email.reportValidity(); email.focus(); return; }
+        if (!password.value) { password.focus(); return; }
+        if (password.value !== confirmation.value) {
+          document.getElementById("spotifyPasswordError").hidden = false;
+          confirmation.setCustomValidity("Şifrələr eyni deyil. Zəhmət olmasa yenidən yoxlayın.");
+          confirmation.focus();
+          return;
+        }
+        onDone({ "Gmail ünvanınız": email.value.trim(), "Spotify şifrəniz": password.value });
+        return;
+      }
       const values = {};
       const controls = event.currentTarget.querySelectorAll("input:not([data-pin-digit]), textarea, select");
 
@@ -1627,7 +1723,7 @@
           toastMessage(`Sadəcə ${codeLength} rəqəm yazmalısınız`);
           return;
         }
-        values[control.dataset.label || control.name] = value;
+        if (control.dataset.privateConfirmation !== "true") values[control.dataset.label || control.name] = value;
       }
 
       onDone(values);
@@ -1645,7 +1741,7 @@
     const helpLabel = isSpotify && (!storedHelpLabel || /Toxunun|unutmusunuzsa/i.test(storedHelpLabel))
       ? defaultSpotifyHelpLabel
       : storedHelpLabel;
-    const showHelp = settings.helpLink?.enabled === true && helpUrl.startsWith("https://") && helpLabel;
+    const showHelp = !isSpotify && settings.helpLink?.enabled === true && helpUrl.startsWith("https://") && helpLabel;
     const title = confirmationTitle(settings.title);
     const confirmText = confirmationButtonText(settings.confirmText);
     const cancelText = cleanConfirmationLabel(settings.cancelText) || DEFAULT_CONFIRMATION.cancelText;

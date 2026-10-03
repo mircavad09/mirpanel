@@ -19,6 +19,7 @@ const productImageUpload = {
   maxSize: 5 * 1024 * 1024,
   allowedTypes: new Set(["image/jpeg", "image/png", "image/webp"])
 };
+const DEFAULT_SPOTIFY_RESET_URL = "https://accounts.spotify.com/az/password-reset";
 
 function payloadWithoutTransientPreviews(value) {
   return JSON.parse(JSON.stringify(value, (key, current) => key.startsWith("_") ? undefined : current));
@@ -53,10 +54,20 @@ const legacyFlowDefaults = {
     { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true }
   ],
   spotify: [
-    { key: "email", type: "email", label: "Email / Gmail", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
-    { key: "password", type: "password", label: "Şifrə", placeholder: "Şifrənizi yazın", required: true, enabled: true }
+    { key: "email", type: "email", label: "Gmail ünvanınız", placeholder: "Gmail ünvanınızı yazın", required: true, enabled: true },
+    { key: "password", type: "password", label: "Spotify şifrəniz", placeholder: "Spotify şifrənizi yazın", required: true, enabled: true },
+    { key: "password_confirm", type: "password", label: "Spotify şifrənizi təkrar yazın", placeholder: "Şifrənizi yenidən yazın", required: true, enabled: true }
   ]
 };
+
+function validHttpsUrl(value) {
+  try {
+    const parsed = new URL(String(value || "").trim());
+    return parsed.protocol === "https:" && Boolean(parsed.hostname);
+  } catch {
+    return false;
+  }
+}
 
 const formFieldTypes = [
   ["text", "Mətn"],
@@ -284,6 +295,9 @@ function ensureProduct(product) {
   product.stockEnabled = Boolean(product.stockEnabled);
   product.seller = product.seller || "";
   product.bestSeller = Boolean(product.bestSeller);
+  if (product.id === "spotify") {
+    product.spotifyPasswordResetUrl = product.spotifyPasswordResetUrl || DEFAULT_SPOTIFY_RESET_URL;
+  }
   product.formFields = Array.isArray(product.formFields) ? product.formFields : [];
   product.formTitle = product.formTitle || "";
   product.whatsapp = { ...defaultWhatsApp(), ...(product.whatsapp || {}) };
@@ -523,6 +537,16 @@ async function saveState() {
 
   syncAllProducts();
 
+  const spotify = state.data.products.find((product) => product.id === "spotify");
+  if (spotify && !validHttpsUrl(spotify.spotifyPasswordResetUrl)) {
+    toast("Spotify şifrə sıfırlama linki etibarlı https:// URL olmalıdır.", "bad");
+    state.selectedId = spotify.id;
+    showView("products");
+    renderProductForm();
+    $("spotifyPasswordResetUrl").focus();
+    return;
+  }
+
   const invalidHelp = state.data.products.find((product) => {
     const help = ensureConfirmation(product).helpLink;
     return help.enabled && help.url && !help.url.startsWith("https://");
@@ -710,6 +734,11 @@ function renderProductForm() {
   setValue("orderConfirmationHelpEnabled", confirmation.helpLink.enabled, "checked");
   setValue("orderConfirmationHelpLabel", confirmation.helpLink.label);
   setValue("orderConfirmationHelpUrl", confirmation.helpLink.url);
+  const spotifySettings = $("spotifyPasswordResetSettings");
+  const isSpotify = product.id === "spotify";
+  spotifySettings.classList.toggle("hidden", !isSpotify);
+  $("spotifyPasswordResetUrl").disabled = !isSpotify;
+  setValue("spotifyPasswordResetUrl", isSpotify ? (product.spotifyPasswordResetUrl || DEFAULT_SPOTIFY_RESET_URL) : "");
 
   setValue("whatsappIncludeSeller", product.whatsapp.includeSeller, "checked");
   setValue("whatsappIncludeStock", product.whatsapp.includeStock, "checked");
@@ -936,6 +965,11 @@ bindProductField("orderConfirmationFooterText", (p, e) => ensureConfirmation(p).
 bindProductField("orderConfirmationHelpEnabled", (p, e) => { ensureConfirmation(p).helpLink.enabled = e.checked; updateHelpFields(); });
 bindProductField("orderConfirmationHelpLabel", (p, e) => ensureConfirmation(p).helpLink.label = e.value);
 bindProductField("orderConfirmationHelpUrl", (p, e) => ensureConfirmation(p).helpLink.url = e.value.trim());
+bindProductField("spotifyPasswordResetUrl", (p, e) => {
+  if (p.id !== "spotify") return;
+  p.spotifyPasswordResetUrl = e.value.trim();
+  e.setCustomValidity(validHttpsUrl(e.value) ? "" : "Yalnız etibarlı https:// URL daxil edin.");
+});
 bindProductField("whatsappIncludeSeller", (p, e) => p.whatsapp.includeSeller = e.checked);
 bindProductField("whatsappIncludeStock", (p, e) => p.whatsapp.includeStock = e.checked);
 bindProductField("whatsappExtraMessage", (p, e) => p.whatsapp.extraMessage = e.value);

@@ -248,7 +248,7 @@ try {
   await page.goto("http://127.0.0.1:10082/mehsul/spotify-premium", { waitUntil: "networkidle" });
   await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
   assert.equal(await page.locator('#universalOrderForm input[type="email"]').count(), 1, "Spotify email sahəsi dəyişib");
-  assert.equal(await page.locator('#universalOrderForm input[type="password"]').count(), 1, "Spotify şifrə sahəsi dəyişib");
+  assert.equal(await page.locator('#universalOrderForm input[type="password"]').count(), 2, "Spotify şifrə və təkrar şifrə sahələri yoxdur");
 
   await page.goto("http://127.0.0.1:10082/mehsul/hbo-max", { waitUntil: "networkidle" });
   await page.dblclick("#pp-order-btn");

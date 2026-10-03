@@ -894,21 +894,30 @@ const DATA = {
       "stockEnabled": false,
       "seller": "",
       "bestSeller": true,
+      "spotifyPasswordResetUrl": "https://accounts.spotify.com/az/password-reset",
       "orderFlow": "form_confirm_whatsapp",
       "formFields": [
         {
           "key": "email",
           "type": "email",
-          "label": "Email",
-          "placeholder": "Spotify hesab emailinizi yazın",
+          "label": "Gmail ünvanınız",
+          "placeholder": "Gmail ünvanınızı yazın",
           "required": true,
           "enabled": true
         },
         {
           "key": "password",
           "type": "password",
-          "label": "Şifrə",
-          "placeholder": "Spotify hesab şifrənizi yazın",
+          "label": "Spotify şifrəniz",
+          "placeholder": "Spotify şifrənizi yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "password_confirm",
+          "type": "password",
+          "label": "Spotify şifrənizi təkrar yazın",
+          "placeholder": "Şifrənizi yenidən yazın",
           "required": true,
           "enabled": true
         }

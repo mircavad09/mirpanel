@@ -547,7 +547,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
-  <script src="/order-confirmation.js?v=product-forms-20260902-1"></script>
+  <script src="/order-confirmation.js?v=spotify-form-20261003-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
@@ -1063,7 +1063,7 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
   next = next
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=20260902-controls-removed-1")
-    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=product-forms-20260902-1");
+    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=spotify-form-20261003-1");
   next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=20260902-form-scope-1");
   return next;
 }

@@ -789,6 +789,16 @@ function normalizeProduct(product = {}, index = 0) {
   const productImage = String(product.image || "assets/your.png");
   const productOrder = Number.isFinite(Number(product.order)) ? Number(product.order) : index + 1;
   const banner = product.banner || {};
+  const spotifyPasswordResetUrl = String(product.spotifyPasswordResetUrl || "").trim();
+
+  if (id === "spotify" && spotifyPasswordResetUrl) {
+    try {
+      const parsedSpotifyResetUrl = new URL(spotifyPasswordResetUrl);
+      if (parsedSpotifyResetUrl.protocol !== "https:" || !parsedSpotifyResetUrl.hostname) throw new Error("unsafe");
+    } catch {
+      throw new Error(`${id}: Spotify şifrə sıfırlama linki etibarlı https:// URL olmalıdır.`);
+    }
+  }
 
   return {
     id,
@@ -848,6 +858,9 @@ function normalizeProduct(product = {}, index = 0) {
     stockEnabled: Boolean(product.stockEnabled),
     seller: String(product.seller || ""),
     bestSeller: Boolean(product.bestSeller),
+    ...(id === "spotify" ? {
+      spotifyPasswordResetUrl: spotifyPasswordResetUrl || "https://accounts.spotify.com/az/password-reset"
+    } : {}),
     orderFlow: orderFlowFromProduct({
       ...product,
       id,
