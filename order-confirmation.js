@@ -81,6 +81,7 @@
       .premiumOrderForm .universalField { display: grid; gap: 8px; margin: 0; }
       .premiumOrderForm .universalField span { color: rgba(235, 255, 243, .9); font-size: 13px; font-weight: 800; }
       .premiumOrderForm .universalField input,
+      .premiumOrderForm .spotifyPasswordControl input,
       .premiumOrderForm .universalField textarea {
         width: 100%; min-height: 52px; border-radius: 16px; border: 1px solid rgba(148, 163, 184, .28); background: rgba(3, 8, 7, .74);
         color: #f7fff9; font-family: inherit; font-size: 15px; font-weight: 600; outline: none; padding: 14px 16px;
@@ -89,8 +90,10 @@
       }
       .premiumOrderForm .universalField textarea { min-height: 112px; resize: vertical; }
       .premiumOrderForm .universalField input::placeholder,
+      .premiumOrderForm .spotifyPasswordControl input::placeholder,
       .premiumOrderForm .universalField textarea::placeholder { color: rgba(226, 232, 240, .48); font-weight: 500; }
       .premiumOrderForm .universalField input:focus,
+      .premiumOrderForm .spotifyPasswordControl input:focus,
       .premiumOrderForm .universalField textarea:focus {
         border-color: rgba(45, 255, 134, .78); background: rgba(4, 13, 10, .92);
         box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08), 0 0 0 4px rgba(45, 255, 134, .1), 0 0 28px rgba(45, 255, 134, .16);
@@ -104,15 +107,15 @@
       .spotifyCredentialsForm { gap: 14px !important; }
       .spotifyCredentialsForm .premiumOrderFields { gap: 12px; }
       .spotifyPasswordField { display: grid; gap: 8px; margin: 0; }
-      .spotifyPasswordField > span { color: rgba(235, 255, 243, .9); font-size: 13px; font-weight: 800; }
+      .spotifyPasswordField > span:first-child { color: rgba(235, 255, 243, .9); font-size: 13px; font-weight: 800; }
       .spotifyPasswordControl { position: relative; min-width: 0; }
-      .spotifyPasswordControl input { width: 100%; padding-right: 52px !important; }
+      .spotifyPasswordControl input { width: 100%; padding-right: 60px !important; }
       .spotifyPasswordToggle {
-        position: absolute; top: 50%; right: 7px; transform: translateY(-50%); display: grid; place-items: center;
-        width: 40px; height: 40px; padding: 0; border: 0; border-radius: 12px; cursor: pointer;
-        color: rgba(235, 255, 243, .82); background: rgba(255, 255, 255, .06);
+        position: absolute; z-index: 1; top: 50%; right: 4px; transform: translateY(-50%); display: grid; place-items: center;
+        width: 44px; height: 44px; min-width: 44px; min-height: 44px; padding: 0; border: 1px solid rgba(45, 255, 134, .28); border-radius: 12px; cursor: pointer;
+        color: #8fffc0; background: rgba(10, 37, 25, .94); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .08);
       }
-      .spotifyPasswordToggle:hover, .spotifyPasswordToggle:focus-visible { color: #2dff86; background: rgba(45, 255, 134, .11); outline: 2px solid rgba(45, 255, 134, .42); outline-offset: 1px; }
+      .spotifyPasswordToggle:hover, .spotifyPasswordToggle:focus-visible { color: #d7ffe8; background: rgba(24, 95, 61, .96); outline: 2px solid rgba(45, 255, 134, .56); outline-offset: 1px; }
       .spotifyPasswordToggle svg { width: 21px; height: 21px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
       .spotifyPasswordError { margin: -3px 0 0; color: #ff9e9e; font-size: 12px; font-weight: 750; line-height: 1.4; }
       .spotifyPasswordReset { margin: -2px 0 0; color: rgba(235, 255, 243, .68); font-size: 13px; line-height: 1.45; }
