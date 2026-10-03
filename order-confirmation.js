@@ -1487,14 +1487,14 @@
 
   function showForm(product, plan, onDone) {
     const fields = activeFields(product);
-    if (!fields.length) {
+    const isSpotify = String(product?.id || "").toLowerCase() === "spotify" || String(product?.flow || "").toLowerCase() === "spotify";
+    if (!fields.length && !isSpotify) {
       onDone({});
       return;
     }
 
     const isHbo = isHboProduct(product);
     const isNetflixPersonal = isNetflixPersonalProduct(product);
-    const isSpotify = String(product?.id || "").toLowerCase() === "spotify" || String(product?.flow || "").toLowerCase() === "spotify";
     setOrderConfirmationMode(false);
     setPremiumFormMode(!isHbo && !isNetflixPersonal);
     setHboFormMode(isHbo);
