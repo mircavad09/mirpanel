@@ -26,6 +26,8 @@ try {
     page.on('response',response=>{if(response.status()>=400) resourceErrors.push({status:response.status(),url:response.url()});});
     await page.route('**/*',async route=>{
       const req=route.request();
+      // Disable host telemetry in the read-only live fixture; it is not an order operation.
+      if(new URL(req.url()).pathname==='/cdn-cgi/rum') return route.fulfill({status:204});
       if(req.method()!=='GET') { operations.push(req.url()); return route.abort(); }
       return route.continue();
     });
