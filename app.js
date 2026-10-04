@@ -312,27 +312,27 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "1 Ayliq               (Telefon)  (0-500 kredi)",
+          "label": "1 Ayliq (0-500 AI kredit) endirim",
           "months": 1,
-          "price": 5.5,
+          "price": 4.85,
           "regularPrice": 16.99
         },
         {
-          "label": "1 Ayliq               (Telefon & Kompyuter) (1200 kredi)",
+          "label": "1 Ayliq (1600 AI kredit)  ",
           "months": 1,
-          "price": 7.99,
+          "price": 6.99,
           "regularPrice": 16.99
         },
         {
-          "label": "6 Ayliq               (Telefon) ",
-          "months": 6,
-          "price": 26.99,
+          "label": "3 ayliq (hər ay 0-1200 AI kredit)",
+          "months": 3,
+          "price": 14.99,
           "regularPrice": 101.99
         },
         {
-          "label": "6 Ayliq               (Telefon & Kompyuter)",
+          "label": "6 Ayliq (hər ay 0-1200 AI kredit) ",
           "months": 6,
-          "price": 29.99,
+          "price": 24.99,
           "regularPrice": 101.99
         }
       ],
