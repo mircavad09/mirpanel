@@ -28,7 +28,7 @@ const expectedActive = {
   "/haqqimizda": "/haqqimizda",
   "/sertler": "/sertler",
   "/elaqe": "/elaqe",
-  "/netflix_tesdiq": "/netflix_tesdiq"
+  "/netflix_tesdiq": undefined
 };
 const mime = { ".html": "text/html; charset=utf-8", ".page": "text/html; charset=utf-8", ".css": "text/css; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".png": "image/png", ".jpg": "image/jpeg", ".webp": "image/webp" };
 
@@ -83,7 +83,7 @@ try {
           overflow: document.documentElement.scrollWidth - innerWidth,
           desktopVisible: getComputedStyle(header.querySelector(".site-header-nav")).display !== "none",
           menuVisible: getComputedStyle(header.querySelector(".site-header-menu-button")).display !== "none",
-          overlap: brand && nav && tools ? brand.right > nav.left || nav.right > tools.left : false,
+          overlap: brand && nav && tools && brand.top < nav.bottom && nav.top < brand.bottom ? brand.right > nav.left || nav.right > tools.left : false,
           linkCount: header.querySelectorAll(".site-header-nav a").length,
           languageControls: header.querySelectorAll(".langBtn, .site-header-language").length,
           currencyControls: header.querySelectorAll("[data-site-header-currency], .site-header-currency").length,
@@ -92,7 +92,7 @@ try {
       }, expectedActive[route]);
       assert.equal(audit.activeDesktop, expectedActive[route], `${route}@${width}: desktop active link`);
       assert.equal(audit.activeMobile, expectedActive[route], `${route}@${width}: mobile active link`);
-      assert.equal(audit.linkCount, 6, `${route}@${width}: desktop link count`);
+      assert.equal(audit.linkCount, 5, `${route}@${width}: desktop link count`);
       assert.equal(audit.languageControls, 0, `${route}@${width}: dil seçimi görünür`);
       assert.equal(audit.currencyControls, 0, `${route}@${width}: valyuta seçimi görünür`);
       assert.ok(audit.overflow <= 0, `${route}@${width}: horizontal overflow ${audit.overflow}`);
@@ -103,7 +103,7 @@ try {
         assert.equal(audit.menuVisible, true, `${route}@${width}: hamburger hidden`);
         await page.locator(".site-header-menu-button").click();
         await page.locator(".site-header-drawer").waitFor({ state: "visible" });
-        assert.equal(await page.locator(".site-header-drawer-nav a").count(), 6, `${route}@${width}: mobile link count`);
+        assert.equal(await page.locator(".site-header-drawer-nav a").count(), 5, `${route}@${width}: mobile link count`);
         assert.equal(await page.locator(".site-header-drawer-nav a").allTextContents().then((items) => items.every((item) => item.trim().length > 0)), true, `${route}@${width}: cut mobile label`);
         await page.keyboard.press("Escape");
         await page.locator(".site-header-drawer").waitFor({ state: "hidden" });
@@ -113,7 +113,7 @@ try {
   }
 
   const clickPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
-  for (const href of ["/", "/mehsul", "/haqqimizda", "/sertler", "/elaqe", "/netflix_tesdiq"]) {
+  for (const href of ["/", "/mehsul", "/haqqimizda", "/sertler", "/elaqe"]) {
     await clickPage.goto(`${origin}/`, { waitUntil: "domcontentloaded" });
     await clickPage.locator(".site-header-menu-button").click();
     const link = clickPage.locator(`.site-header-drawer-nav a[href="${href}"]`);

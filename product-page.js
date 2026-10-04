@@ -37,6 +37,14 @@
   function normalizeProductImages(product) {
     const mainImage = document.getElementById("pp-main-img");
     if (mainImage && product?.image) mainImage.src = rootRelativeImage(product.image);
+    if (mainImage) {
+      const fitMedia = () => {
+        if (!mainImage.naturalWidth || !mainImage.naturalHeight) return;
+        mainImage.closest('.product-page-media')?.style.setProperty('--product-image-ratio', String(mainImage.naturalWidth / mainImage.naturalHeight));
+      };
+      mainImage.addEventListener('load', fitMedia);
+      fitMedia();
+    }
     document.querySelectorAll(".product-page-root img").forEach((image) => {
       const source = image.getAttribute("src");
       if (source) image.setAttribute("src", rootRelativeImage(source));

@@ -163,6 +163,19 @@
 
 body.site-header-menu-open { overflow: hidden; }
 
+/* Isolate shared navigation from legacy product navigation styles. */
+.site-header .site-header-nav.product-page-nav {
+  position: static; left: auto; transform: none; width: auto;
+  display: flex; gap: 10px; overflow: visible;
+}
+.site-header .site-header-nav.product-page-nav a {
+  flex: 0 0 auto; min-width: max-content; width: auto; max-width: none;
+  flex-direction: row; gap: 7px; padding: 9px 12px; line-height: 1.3;
+  white-space: nowrap;
+}
+.site-header .site-header-nav a span,
+.site-header .site-header-drawer-nav a span { flex: 0 0 auto; }
+
 @media (max-width: 1180px) {
   .site-header-inner { grid-template-columns: auto minmax(420px, 1fr) auto; gap: 12px; }
   .site-header-nav { gap: 4px; }
@@ -184,7 +197,7 @@ body.site-header-menu-open { overflow: hidden; }
   .site-header-menu-button { display: grid; }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .site-header-inner {
     width: calc(100% - 24px);
     min-height: 0;
@@ -270,6 +283,16 @@ body.site-header-menu-open { overflow: hidden; }
   }
 
   .site-header-drawer-nav svg { width: 21px; height: 21px; flex-basis: 21px; }
+  .site-header .site-header-nav.product-page-nav { display: none; }
+  .site-header .site-header-drawer-nav.product-page-nav {
+    position: static; left: auto; transform: none; width: 100%;
+    display: grid; grid-template-columns: 1fr; gap: 8px; overflow: visible;
+  }
+  .site-header .site-header-drawer-nav.product-page-nav a {
+    flex: none; width: 100%; min-width: 0; min-height: 48px;
+    flex-direction: row; justify-content: flex-start; gap: 12px;
+    padding: 12px 14px; font-size: 14px; line-height: 1.4; white-space: normal;
+  }
 }
 
 @media (max-width: 350px) {
