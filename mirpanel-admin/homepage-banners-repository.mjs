@@ -1,6 +1,6 @@
 import crypto from 'node:crypto';
 import { detectStoryMedia } from './stories-repository.mjs';
-export const BANNER_IMAGE_MAX_BYTES = 40 * 1024 * 1024;
+export const BANNER_IMAGE_MAX_BYTES = 20 * 1024 * 1024;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const fail = (message, status = 400, code = 'BANNER_INVALID') => Object.assign(new Error(message), {status, code});
 const check = (result) => {
@@ -21,7 +21,7 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     if(await managed()) return;
     const catalog = await loadCatalog();
     const seed = (catalog.products || []).filter(p=>p.active!==false && p.banner?.enabled===true).map((p,index)=>({
-      id:crypto.randomUUID(),legacy_image:String(p.banner.desktopImage || p.image || ''),title:String(p.banner.alt || p.title || '').slice(0,200),sort_order:Math.max(1,Math.trunc(Number(p.banner.order)||index+1))
+      id:crypto.randomUUID(),legacy_image:String(p.banner.desktopImage || p.image || ''),title:String(p.banner.alt || p.title || 'Mirpanel ana səhifə banneri').slice(0,200),sort_order:Math.max(1,Math.trunc(Number(p.banner.order)||index+1)),options:{...p.banner,url:p.banner.url || `/mehsul/${String(p.seoSlug || `${p.id || 'mehsul'}-almaq`).trim().toLowerCase().replace(/[^a-z0-9-]+/g,'-').replace(/^-+|-+$/g,'')}`}
     })).filter(p=>/^\/?(?:assets|uploads)\//.test(p.legacy_image) && !p.legacy_image.includes('..'));
     check(await client.rpc('initialize_homepage_banners',{seed}));
   }
@@ -35,7 +35,9 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
       }
       image = cached.url;
     } else image = new URL(image, 'https://mirpanel.com/').href;
-    return {id:row.id,image,title:row.title,order:row.sort_order,active:row.active,version:row.updated_at};
+    const href=String(row.options?.url || '');
+    const url=/^(https:\/\/|\/(?!\/))/.test(href) ? href : '';
+    return {id:row.id,image,title:row.title || 'Mirpanel ana səhifə banneri',url,newTab:row.options?.newTab===true,order:row.sort_order,active:row.active,version:row.updated_at};
   }
   async function list(admin=false) {
     if(admin) await initialize();
@@ -54,7 +56,7 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     if(!uuid.test(key)) throw fail('Upload əməliyyatı düzgün deyil.');
     const size = Number(payload.size), ext = /\.(jpe?g|png|webp)$/i.exec(String(payload.fileName||''))?.[1]?.toLowerCase().replace('jpeg','jpg');
     if(!ext) throw fail('Yalnız JPG, PNG və WebP şəkli seçin.');
-    if(!Number.isSafeInteger(size) || size<=0 || size>BANNER_IMAGE_MAX_BYTES) throw fail('Şəkil maksimum 40 MB ola bilər.',413);
+    if(!Number.isSafeInteger(size) || size<=0 || size>BANNER_IMAGE_MAX_BYTES) throw fail('Şəkil maksimum 20 MiB ola bilər.',413);
     const path = `homepage-banners/${key}.${ext}`;
     const existing = check(await table().select('*').eq('media_path',path).maybeSingle());
     if(existing) return {completed:await present(existing)};
@@ -103,14 +105,25 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     if(!uuid.test(id)) throw fail('Banner tapılmadı.',404);
     const order=Number(payload.order);
     if(!Number.isSafeInteger(order)||order<1||order>100000 || typeof payload.active!=='boolean' || typeof payload.version!=='string') throw fail('Sıra və aktivlik düzgün deyil.');
-    const saved=check(await table().update({sort_order:order,active:payload.active,updated_at:new Date(now()).toISOString()}).eq('id',id).eq('updated_at',payload.version).select('*').maybeSingle());
+    const values={sort_order:order,active:payload.active,updated_at:new Date(now()).toISOString()};
+    if(payload.url!==undefined) {
+      if(typeof payload.url!=='string' || (payload.url && !/^(https:\/\/|\/(?!\/))/.test(payload.url)) || payload.url.length>2000) throw fail('Keçid üçün HTTPS ünvanı və ya sayt daxilində yol yazın.');
+      const previous=await one(id); if(!previous) throw fail('Banner tapılmadı.',404);
+      values.options={...previous.options,url:payload.url};
+    }
+    const saved=check(await table().update(values).eq('id',id).eq('updated_at',payload.version).select('*').maybeSingle());
     if(!saved) throw fail('Banner başqa pəncərədə dəyişib. Siyahını yeniləyin.',409);
     return present(saved);
+  }
+  async function reorder(items) {
+    if(!Array.isArray(items) || !items.length || items.length>1000 || items.some(i=>!uuid.test(i.id) || typeof i.version!=='string') || new Set(items.map(i=>i.id)).size!==items.length) throw fail('Banner sırası düzgün deyil.');
+    check(await client.rpc('reorder_homepage_banners',{items}));
+    return list(true);
   }
   async function remove(id,version) {
     const deleted=check(await table().delete().eq('id',id).eq('updated_at',version).select('*').maybeSingle());
     if(!deleted) throw fail('Banner başqa pəncərədə dəyişib. Siyahını yeniləyin.',409);
     if(deleted.media_path) await cleanup(deleted.media_path).catch(()=>{});
   }
-  return {list,begin,complete,update,remove};
+  return {list,begin,complete,update,reorder,remove};
 }

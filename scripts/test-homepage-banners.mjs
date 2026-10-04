@@ -9,10 +9,10 @@ const {chromium}=await import(pathToFileURL(path.join(process.env.MIRPANEL_NODE_
 const root=process.cwd(), objects=new Map(), db=[], settings={initialized:false};
 let origin, failStorage=false, loseComplete=false, uploads=0, signs=0;
 class Query {
-  constructor(name){this.name=name;this.filters=[];this.action='read';}
+  constructor(name){this.name=name;this.filters=[];this.action='read';this.orders=[];}
   select(){return this;}
   eq(k,v){this.filters.push([k,v]);return this;}
-  order(){return this;}
+  order(key){this.orders.push(key);return this;}
   insert(value){this.action='insert';this.value=value;return this;}
   update(value){this.action='update';this.value=value;return this;}
   delete(){this.action='delete';return this;}
@@ -23,6 +23,7 @@ class Query {
     if(this.action==='insert') {if(db.some(row=>row.id===this.value.id)) return Promise.resolve({data:null,error:{message:'unique'}}).then(resolve,reject);const row={...this.value};db.push(row);data=[row];}
     if(this.action==='update') data.forEach(row=>Object.assign(row,this.value));
     if(this.action==='delete') for(const row of data) db.splice(db.indexOf(row),1);
+    if(this.orders.length) data=[...data].sort((a,b)=>{for(const k of this.orders){if(a[k]!==b[k])return a[k]<b[k]?-1:1;}return 0;});
     return Promise.resolve({data:this.singular?structuredClone(data[0]||null):structuredClone(data),error:null}).then(resolve,reject);
   }catch(error){return Promise.reject(error).then(resolve,reject);}}
 }
@@ -33,8 +34,13 @@ const storage={
   async download(key){return {data:new Blob([objects.get(key)])};},
   async remove(keys){keys.forEach(key=>objects.delete(key));return {data:{}};}
 };
-const client={from:name=>new Query(name),storage:{from:()=>storage},async rpc(name,{seed}){assert.equal(name,'initialize_homepage_banners');if(!settings.initialized){db.push(...seed.map(row=>({...row,media_path:null,active:true,updated_at:new Date().toISOString()})));settings.initialized=true;}return {data:null};}};
-const repository=createHomepageBannersRepository(client,{bucket:'private-test',loadCatalog:async()=>({products:[{title:'Existing',active:true,image:'/assets/capcut.png',banner:{enabled:true,desktopImage:'/assets/capcut.png',order:1}}]})});
+const client={from:name=>new Query(name),storage:{from:()=>storage},async rpc(name,{seed,items}){
+  if(name==='reorder_homepage_banners') {
+    if(items.length!==db.length || items.some(i=>!db.some(r=>r.id===i.id && r.updated_at===i.version))) return {error:{code:'CONFLICT'}};
+    items.forEach((i,n)=>Object.assign(db.find(r=>r.id===i.id),{sort_order:n+1,updated_at:new Date(Date.now()+n).toISOString()}));return {data:null};
+  }
+  assert.equal(name,'initialize_homepage_banners');if(!settings.initialized){db.push(...seed.map(row=>({...row,media_path:null,active:true,updated_at:new Date().toISOString()})));settings.initialized=true;}return {data:null};}};
+const repository=createHomepageBannersRepository(client,{bucket:'private-test',loadCatalog:async()=>({products:[{title:'Existing',active:true,image:'/assets/capcut.png',banner:{enabled:true,desktopImage:'/assets/capcut.png',order:1,url:'/mehsul/capcut-pro',mobileImage:'/assets/capcut.png'}}]})});
 const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
 const server=http.createServer(async(req,res)=>{try{
   const url=new URL(req.url,'http://localhost'), route=url.pathname;
@@ -44,6 +50,7 @@ const server=http.createServer(async(req,res)=>{try{
   if(route.startsWith('/api/admin/homepage-banners')) {
     if(req.headers['x-csrf-token']!=='test') return json(res,401,{error:'Sessiya tələb olunur.'});
     const payload=body.length?JSON.parse(body):{};
+    if(route.endsWith('/reorder')) return json(res,200,await repository.reorder(payload.items));
     if(route.endsWith('/uploads')) return json(res,200,await repository.begin(payload,'test'));
     if(route.endsWith('/complete')) {
       const banner=await repository.complete(route.split('/').at(-2),'test');
@@ -93,7 +100,8 @@ try {
   await admin.evaluate(()=>{const file=document.querySelector('[data-banner-file]');if(!file.onchange){document.querySelector('[data-banner-add]').click();}});
   await admin.locator('[data-banner-file]').setInputFiles(image);
   await admin.waitForFunction(()=>document.querySelectorAll('[data-banner-id]').length===2);
-  assert.equal(db.length,2);assert.equal(objects.size,1);assert.equal(await admin.locator('.homepageBannerJob').textContent().then(t=>t.includes('yayımlandı')),true);
+  assert.equal(db.length,2);assert.equal(objects.size,1);assert.equal(await admin.locator('[data-banner-message]').textContent().then(t=>t.includes('yayımlandı')),true);
+  assert.equal(await admin.locator('.homepageBannerJob').count(),0);
   const uploaded=db.find(row=>row.media_path);
   await home.waitForFunction(()=>document.querySelectorAll('#heroSlider .slide').length===2);
   results.push({upload:'4K PNG verified and auto-published in isolated fixture',visibleAfterMs:Date.now()-start});
@@ -112,8 +120,10 @@ try {
     if(visual)await admin.screenshot({path:path.join(visual,`admin-${width}.png`)});
   }
   const uploadedCard=admin.locator(`[data-banner-id="${uploaded.id}"]`);
-  await uploadedCard.locator('[data-banner-order]').fill('1');await uploadedCard.locator('[data-banner-order]').dispatchEvent('change');
-  await admin.waitForFunction(id=>document.querySelector(`[data-banner-id="${id}"] [data-banner-order]`).disabled===false,uploaded.id);
+  await uploadedCard.locator('[data-banner-up]').click();
+  await admin.waitForFunction(id=>document.querySelector('[data-banner-id]').dataset.bannerId===id && !document.querySelector('[data-banner-active]').disabled,uploaded.id);
+  assert.equal((await repository.list(true)).banners.find(b=>b.id!==uploaded.id).url,'/mehsul/capcut-pro');
+  assert.equal(db.find(r=>r.id!==uploaded.id).options.mobileImage,'/assets/capcut.png');
   await uploadedCard.locator('[data-banner-active]').uncheck();
   await home.waitForFunction(()=>document.querySelectorAll('#heroSlider .slide').length===1);
   let record=db.find(r=>r.id===uploaded.id);
@@ -128,7 +138,7 @@ try {
   await admin.locator('.homepageBannerJob button').waitFor({state:'visible'});
   assert.equal(record.media_path,oldPath);
   const oldSigns=signs;await admin.locator('.homepageBannerJob button').click();
-  await admin.waitForFunction(()=>document.querySelector('.homepageBannerJob [data-job-status]').textContent.includes('yayımlandı'));
+  await admin.waitForFunction(()=>!document.querySelector('.homepageBannerJob') && document.querySelector('[data-banner-message]').textContent.includes('yayımlandı'));
   assert.ok(signs>oldSigns);assert.equal(db.length,2);assert.equal(objects.size,1);
   // A response lost AFTER commit cannot create a second banner on retry.
   loseComplete=true;
@@ -137,7 +147,8 @@ try {
   assert.equal(db.length,3);
   await admin.locator('.homepageBannerJob').last().locator('button').click();
   await admin.waitForFunction(()=>document.querySelectorAll('[data-banner-id]').length===3);assert.equal(db.length,3);
-  await assert.rejects(repository.begin({operationId:crypto.randomUUID(),size:BANNER_IMAGE_MAX_BYTES+1,fileName:'big.png'},'test'),/40 MB/);
+  assert.equal(BANNER_IMAGE_MAX_BYTES,20*1024*1024);
+  await assert.rejects(repository.begin({operationId:crypto.randomUUID(),size:BANNER_IMAGE_MAX_BYTES+1,fileName:'big.png'},'test'),/20 MiB/);
   const formatResults=[];
   for(const [extension,mime] of [['jpg','image/jpeg'],['webp','image/webp']]) {
     const data=Buffer.from(await admin.evaluate(mime=>{const c=document.createElement('canvas');c.width=3840;c.height=2160;return c.toDataURL(mime).split(',')[1];},mime),'base64');

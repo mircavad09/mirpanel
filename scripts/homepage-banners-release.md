@@ -6,6 +6,13 @@ that `homepage_banners` and `homepage_banner_settings` do not already exist.
 The migration only adds these tables and its initialization function. It does
 not touch products, stories, orders, payments, or storage bucket policies.
 
+The frontend and banner signing/finalization checks use 20 MiB (20,971,520 bytes).
+The shared private bucket also contains story videos, so its global limit must
+NOT be reduced to 20 MiB. Confirm a banner-prefix storage-side size restriction
+in the real test project before release; this has not been verified locally.
+Original images remain intact; lazy loading is used, but no unverified paid
+Supabase image-transform service is enabled.
+
 Apply first to an isolated Supabase test project, with the existing private
 stories-bucket configuration. Test image upload, retry, mutation and public reads.
 Then apply `supabase/migrations/202610040001_homepage_banners.sql` to production.

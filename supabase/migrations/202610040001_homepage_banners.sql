@@ -9,6 +9,7 @@ create table public.homepage_banners (
   media_path text unique check (media_path like 'homepage-banners/%'),
   legacy_image text,
   title text not null default '' check (char_length(title) <= 200),
+  options jsonb not null default '{}'::jsonb,
   sort_order integer not null default 1 check (sort_order > 0),
   active boolean not null default true,
   updated_at timestamptz not null default now(),
@@ -30,12 +31,32 @@ language plpgsql security invoker set search_path = public as $$
 begin
   perform 1 from homepage_banner_settings where singleton for update;
   if (select initialized from homepage_banner_settings where singleton) then return; end if;
-  insert into homepage_banners(id,legacy_image,title,sort_order,active)
+  insert into homepage_banners(id,legacy_image,title,sort_order,active,options)
     select (entry->>'id')::uuid, entry->>'legacy_image', entry->>'title',
-      (entry->>'sort_order')::integer, true from jsonb_array_elements(seed) entry;
+      (entry->>'sort_order')::integer, true, coalesce(entry->'options','{}'::jsonb) from jsonb_array_elements(seed) entry;
   update homepage_banner_settings set initialized = true where singleton;
 end;
 $$;
 revoke all on function public.initialize_homepage_banners(jsonb) from public, anon, authenticated;
 grant execute on function public.initialize_homepage_banners(jsonb) to service_role;
+create function public.reorder_homepage_banners(items jsonb) returns void
+language plpgsql security invoker set search_path = public as $$
+declare item jsonb; position integer := 0;
+begin
+  perform 1 from homepage_banner_settings where singleton for update;
+  perform 1 from homepage_banners order by id for update;
+  if jsonb_array_length(items) <> (select count(*) from homepage_banners) then
+    raise exception 'Banner siyahısı dəyişib. Siyahını yeniləyin.';
+  end if;
+  for item in select * from jsonb_array_elements(items) loop
+    position := position + 1;
+    if not exists(select 1 from homepage_banners where id=(item->>'id')::uuid and updated_at=(item->>'version')::timestamptz) then
+      raise exception 'Banner başqa pəncərədə dəyişib. Siyahını yeniləyin.';
+    end if;
+    update homepage_banners set sort_order=position where id=(item->>'id')::uuid;
+  end loop;
+end;
+$$;
+revoke all on function public.reorder_homepage_banners(jsonb) from public, anon, authenticated;
+grant execute on function public.reorder_homepage_banners(jsonb) to service_role;
 commit;

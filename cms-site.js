@@ -243,6 +243,7 @@
       const link = document.createElement(href ? "a" : "div");
       link.className = `slide${index === 0 ? " active" : ""}`;
       if (href) link.href = href;
+      if (href && banner.newTab) {link.target='_blank';link.rel='noopener noreferrer';}
       if (banner.title || banner.alt) link.setAttribute("aria-label", banner.alt || banner.title);
       const picture = document.createElement("picture");
       const desktopImage = safeImage(banner.desktopImage);
@@ -295,7 +296,7 @@
       if(payload.managed!==true || !Array.isArray(payload.banners)) return;
       const revision=JSON.stringify(payload.banners);
       if(revision===bannerRevision) return;
-      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,title:b.title,alt:b.title,order:b.order,id:b.id})).sort((a,b)=>a.order-b.order);
+      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,title:b.title,alt:b.title,url:b.url,newTab:b.newTab,order:b.order,id:b.id})).sort((a,b)=>a.order-b.order);
       if(next.length) {
         const first=new Image(); first.fetchPriority='high'; first.src=next[0].desktopImage;
         let imageTimeout;

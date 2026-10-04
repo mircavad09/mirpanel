@@ -726,6 +726,11 @@ async function handleApi(request, response) {
     if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'});
     return json(response,200,{banner:await homepageBanners.complete(bannerUpload[1],session.csrfToken)});
   }
+  if(request.url==='/api/admin/homepage-banners/reorder' && request.method==='POST') {
+    if(!requireMutationAuth(request,response)) return;
+    if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'});
+    return json(response,200,await homepageBanners.reorder((await readBody(request,200000)).items));
+  }
   const homepageBanner=request.url.match(/^\/api\/admin\/homepage-banners\/([0-9a-f-]+)$/i);
   if(homepageBanner && ['PATCH','DELETE'].includes(request.method)) {
     if(!requireMutationAuth(request,response)) return;
