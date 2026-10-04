@@ -1152,24 +1152,27 @@ body.product-page-document #productPageView.product-page-root :is(.product-page-
   grid-template-columns: minmax(0, 1fr) max-content;
   align-items: center;
   gap: 12px;
-  min-height: 66px !important;
-  padding: 12px 14px !important;
+  min-height: 48px !important;
+  padding: 7px 14px !important;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
   border-width: 1px !important;
   background: rgba(255, 255, 255, .025);
   box-shadow: none !important;
   text-shadow: none;
   transform: none;
-  transition: border-color .18s ease, background-color .18s ease;
+  transition: border-color .18s ease, background-color .18s ease, padding .18s ease, min-height .18s ease;
 }
 
 body.product-page-document #productPageView.product-page-root :is(.product-page-static-plan.is-selected, #pp-plans-container .pp-plan-label.active) {
   border-color: #ffd400;
   background: rgba(255, 212, 0, .045);
+  padding-block: 10px !important;
+  min-height: 54px !important;
 }
 
 body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-plan-left {
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr) 40px;
+  grid-template-columns: 18px minmax(0, 1fr);
   align-items: center;
   gap: 9px !important;
   min-width: 0;
@@ -1201,14 +1204,15 @@ body.product-page-document #productPageView.product-page-root #pp-plans-containe
   align-items: flex-end;
   justify-content: center;
   flex-wrap: nowrap;
-  gap: 3px !important;
+  gap: 1px !important;
   min-width: 76px;
   font-variant-numeric: tabular-nums;
 }
 
 body.product-page-document #productPageView.product-page-root :is(.product-page-static-plan strong, #pp-plans-container .pp-new-price) {
   font-size: 18px !important;
-  font-weight: 700;
+  font-weight: 600;
+  color: #fff !important;
   line-height: 1.25;
   white-space: nowrap;
 }
@@ -1226,9 +1230,9 @@ body.product-page-document #productPageView.product-page-root :is(.product-page-
   position: static;
   justify-self: center;
   justify-content: center;
-  min-height: 20px !important;
+  min-height: 12px !important;
   margin: 0;
-  padding: 2px 5px !important;
+  padding: 0 4px !important;
   border-radius: 6px;
   font-size: 10px !important;
   font-weight: 500;
@@ -1266,12 +1270,26 @@ body.product-page-document #productPageView.product-page-root .product-page-medi
 
 @media (max-width: 768px) {
   body.product-page-document #productPageView.product-page-root :is(.product-page-static-plan, #pp-plans-container .pp-plan-label) {
-    min-height: 62px !important;
-    padding: 11px 10px !important;
-    gap: 8px;
+    min-height: 46px !important;
+    padding: 6px 8px !important;
+    gap: 6px;
   }
-  body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-plan-left { gap: 7px !important; grid-template-columns: 18px minmax(0, 1fr) 36px; }
+  body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-plan-left { gap: 5px !important; grid-template-columns: 16px minmax(0, 1fr) !important; }
+  body.product-page-document #productPageView.product-page-root :is(.product-page-static-radio, #pp-plans-container .pp-radio-circle) { width: 16px !important; height: 16px !important; flex-basis: 16px; }
+  body.product-page-document #productPageView.product-page-root :is(.product-page-static-plan-name, #pp-plans-container .pp-plan-name) { font-size: 12px !important; line-height: 1.4 !important; }
+  body.product-page-document #productPageView.product-page-root :is(.product-page-static-plan.is-selected, #pp-plans-container .pp-plan-label.active) { padding-block: 9px !important; min-height: 52px !important; }
   body.product-page-document #productPageView.product-page-root :is(.product-page-static-plan strong, #pp-plans-container .pp-new-price) { font-size: 16px !important; }
-  body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-plan-right { min-width: 68px; }
+  body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-plan-right { min-width: 58px; }
+  body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-old-price { font-size: 9px !important; }
+  body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-plan-disc-badge { font-size: 9px !important; }
+  body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-plan-price-meta { gap: 3px; }
   body.product-page-document #productPageView.product-page-root .product-page-plan-prices { grid-template-columns: 36px minmax(68px, max-content); column-gap: 8px; }
+}
+
+body.product-page-document #productPageView.product-page-root #pp-plans-container .pp-plan-price-meta {
+  display: flex; align-items: center; justify-content: flex-end; gap: 5px;
+}
+body.product-page-document #productPageView.product-page-root :is(.product-page-static-plan, #pp-plans-container .pp-plan-label)[data-price-emphasis="discount-month"] :is(strong, .pp-new-price) { color: #ffd400 !important; }
+@media (prefers-reduced-motion: reduce) {
+  body.product-page-document #productPageView.product-page-root :is(.product-page-static-plan, #pp-plans-container .pp-plan-label) { transition: none; }
 }

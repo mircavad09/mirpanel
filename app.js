@@ -3872,21 +3872,22 @@ function renderProductPlans(p) {
 
     const div = document.createElement("div");
     div.className = `pp-plan-label ${idx === currentPlanIdx ? 'active' : ''}`;
+    const hasNamedMonthlyOffer = plans.some(plan => Number(plan.months) === 1 && /endirim/i.test(plan.label || '') && Number(plan.regularPrice) > Number(plan.price));
+    div.dataset.priceEmphasis = Number(pl.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(pl.label || '')) ? 'discount-month' : 'standard';
     div.innerHTML = `
       <div class="pp-plan-left">
          <div class="pp-radio-circle"></div>
          <div class="pp-plan-name">${labelName}</div>
-         ${discount > 0 ? `<div class="pp-plan-disc-badge">-${discount}%</div>` : ''}
       </div>
       <div class="pp-plan-right">
-         ${discount > 0 ? `<div class="pp-old-price">${regularPrice.toFixed(2)} ₼</div>` : ''}
+        ${discount > 0 ? `<div class="pp-plan-price-meta"><div class="pp-old-price">${regularPrice.toFixed(2)} ₼</div><div class="pp-plan-disc-badge">-${discount}%</div></div>` : ''}
          <div class="pp-new-price">${isStockOut ? pl.label : price.toFixed(2) + ' ₼'}</div>
       </div>
     `;
 
     div.onclick = () => {
       currentPlanIdx = idx;
-      renderProductPlans(p); 
+      container.querySelectorAll('.pp-plan-label').forEach(row => row.classList.toggle('active', row === div));
     };
 
     container.appendChild(div);

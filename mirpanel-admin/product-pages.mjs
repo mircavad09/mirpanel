@@ -1113,7 +1113,9 @@ function renderPlans(product) {
     const priceMarkup = discount > 0
       ? `<span class="product-page-plan-prices"><span class="product-page-regular-price">${escapeHtml(`${regularPrice.toFixed(2)} ${cleanText(product.currency)}`)}</span><strong>${escapeHtml(priceText)}</strong><span class="product-page-discount">-${discount}%</span></span>`
       : `<span class="product-page-plan-prices"><strong>${escapeHtml(priceText)}</strong></span>`;
-    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${escapeHtml(label)}</span>${priceMarkup}</div>`;
+    const hasNamedMonthlyOffer = plans.some(item => Number(item.months) === 1 && /endirim/i.test(item.label || '') && Number(item.regularPrice) > Number(item.price));
+    const emphasis = Number(plan.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(plan.label || '')) ? 'discount-month' : 'standard';
+    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}" data-price-emphasis="${emphasis}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${escapeHtml(label)}</span>${priceMarkup}</div>`;
   }).join("");
 }
 
