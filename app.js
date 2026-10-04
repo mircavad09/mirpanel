@@ -4161,6 +4161,7 @@ function esc(s) {
 let currentSlide = 0;
 let slideInterval;
 let sliderPauseUntil = 0;
+let sliderVisibilityHandler;
 
 function initSlider() {
   const slides = document.querySelectorAll('.slide');
@@ -4170,9 +4171,18 @@ function initSlider() {
   const slider = document.getElementById('heroSlider');
 
   clearInterval(slideInterval);
+  if(sliderVisibilityHandler) document.removeEventListener('visibilitychange',sliderVisibilityHandler);
   if (!slides.length) return;
 
   function showSlide(n) {
+    const index=(n+slides.length)%slides.length;
+    const image=slides[index].querySelector('img');
+    if(image?.dataset.src) {image.src=image.dataset.src; delete image.dataset.src;}
+    if(image && !image.complete) {
+      image.decode().then(()=>{if(slider?.contains(slides[index])) showSlide(index);}).catch(()=>{});
+      return;
+    }
+    if(image && !image.naturalWidth) return;
     slides.forEach(s => s.classList.remove('active'));
     dots.forEach(d => d.classList.remove('active'));
     
@@ -4204,8 +4214,8 @@ function initSlider() {
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   function startTimer() {
     clearInterval(slideInterval);
-    if (slides.length < 2 || reducedMotion) return;
-    slideInterval = setInterval(() => { if (Date.now() >= sliderPauseUntil) nextSlide(); }, 6000);
+    if (slides.length < 2 || reducedMotion || document.hidden) return;
+    slideInterval = setInterval(() => { if (Date.now() >= sliderPauseUntil) nextSlide(); }, 5000);
   }
   function resetTimer() { sliderPauseUntil = Date.now() + 12000; startTimer(); }
 
@@ -4241,6 +4251,9 @@ function initSlider() {
     };
   }
 
+  sliderVisibilityHandler=()=>{if(document.hidden) clearInterval(slideInterval); else startTimer();};
+  document.addEventListener('visibilitychange',sliderVisibilityHandler);
+  currentSlide=0;
   startTimer();
 }
 

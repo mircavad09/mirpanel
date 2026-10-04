@@ -1321,3 +1321,5 @@ body.side-menu-open {
     font-size: 14px;
   }
 }
+.home-page .home-banner-layout[hidden] { display:none !important; }
+.home-page #heroSlider .full-slide-img { object-fit:contain; object-position:center; }

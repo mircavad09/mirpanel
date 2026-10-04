@@ -3,6 +3,12 @@
   const site = source.site || {};
   const home = source.homepage || {};
   const common = source.commonTexts || {};
+  // Do not revive a deleted static banner while the first CMS read is pending.
+  let liveBanners = [];
+  let bannersManaged = false;
+  let bannerRevision = '';
+  let bannerPollTimer;
+  let bannerPollBusy = false;
 
   function text(selector, value) {
     if (value === undefined || value === null || value === "") return;
@@ -219,16 +225,17 @@
   }
 
   function applyBanners() {
-    const banners = activeBanners();
+    const banners = liveBanners === null ? activeBanners() : liveBanners;
     const slider = document.getElementById("heroSlider");
     if (!slider) return;
     slider.querySelectorAll(".slide, .slider-dots").forEach((element) => element.remove());
     slider.hidden = banners.length === 0;
+    slider.parentElement.hidden = banners.length === 0;
     slider.parentElement?.classList.toggle("no-product-banners", banners.length === 0);
     slider.querySelectorAll(".slider-arrow").forEach((arrow) => {
       arrow.hidden = banners.length < 2;
     });
-    if (!banners.length) return;
+    if (!banners.length) { window.initSlider?.(); return; }
     const dots = document.createElement("div");
     dots.className = "slider-dots";
     banners.forEach((banner, index) => {
@@ -247,7 +254,8 @@
         picture.appendChild(mobile);
       }
       const image = document.createElement("img");
-      image.src = desktopImage || safeImage(banner.product.image) || "assets/logo.png";
+      if(index===0) image.src = desktopImage;
+      else image.dataset.src = desktopImage;
       image.alt = banner.alt || banner.title || "";
       image.className = "full-slide-img";
       image.loading = index === 0 ? "eager" : "lazy";
@@ -255,7 +263,7 @@
       image.width = 1600;
       image.height = 670;
       if (index === 0) image.fetchPriority = "high";
-      imageWithFallback(image, [banner.product.image, "assets/logo.png"]);
+      if(liveBanners===null) imageWithFallback(image, [banner.product?.image, "assets/logo.png"]);
       picture.appendChild(image);
       link.appendChild(picture);
       slider.appendChild(link);
@@ -268,6 +276,39 @@
     });
     if (banners.length > 1) slider.appendChild(dots);
     if (typeof window.initSlider === "function") window.initSlider();
+  }
+
+  async function pollHomepageBanners() {
+    clearTimeout(bannerPollTimer);
+    if(document.hidden || bannerPollBusy || !document.getElementById('heroSlider')) return;
+    bannerPollBusy=true;
+    const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),10000);
+    try {
+      const base=window.MIRPANEL_ADMIN_BASE || 'https://mirpanel.onrender.com';
+      const response=await fetch(`${base}/api/homepage-banners`,{cache:'no-store',signal:controller.signal});
+      if(!response.ok) return;
+      const payload=await response.json();
+      if(payload.managed===false && !bannersManaged) {
+        if(bannerRevision!=='legacy') {liveBanners=null;bannerRevision='legacy';applyBanners();}
+        return;
+      }
+      if(payload.managed!==true || !Array.isArray(payload.banners)) return;
+      const revision=JSON.stringify(payload.banners);
+      if(revision===bannerRevision) return;
+      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,title:b.title,alt:b.title,order:b.order,id:b.id})).sort((a,b)=>a.order-b.order);
+      if(next.length) {
+        const first=new Image(); first.fetchPriority='high'; first.src=next[0].desktopImage;
+        let imageTimeout;
+        try {await Promise.race([first.decode(),new Promise((_,reject)=>{imageTimeout=setTimeout(()=>reject(new Error('Banner image timeout')),8000);})]);}
+        finally {clearTimeout(imageTimeout);}
+      }
+      // Keep a functioning slider intact when an API or image request fails.
+      liveBanners=next; bannersManaged=true; bannerRevision=revision; applyBanners();
+    } catch { /* retain the last functioning banners */ }
+    finally {
+      clearTimeout(timeout); bannerPollBusy=false;
+      if(!document.hidden) bannerPollTimer=setTimeout(pollHomepageBanners,3000);
+    }
   }
 
   function applySecondaryProductBanner() {
@@ -427,6 +468,11 @@
   applyHomepage();
   applyNavigation();
   applyBanners();
+  void pollHomepageBanners();
+  document.addEventListener('visibilitychange',()=>{
+    clearTimeout(bannerPollTimer);
+    if(!document.hidden) void pollHomepageBanners();
+  });
   applySecondaryProductBanner();
   applySupportCard();
   applyCommonTexts();

@@ -1,7 +1,7 @@
 (function () {
   const viewGroups = [
     ["Əsas idarəetmə", [["dashboard", "İdarə paneli"], ["products", "Məhsullar"], ["categories", "Kateqoriyalar"]]],
-    ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Bannerlər"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
+    ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
     ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentCosts", "Məhsulların maya dəyəri və qazanc"], ["paymentOrders", "Sifarişlər"], ["paymentReviews", "Ödəniş yoxlamaları"], ["netflixAccounts", "Netflix hesabları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
@@ -137,7 +137,7 @@
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}
       ${field("Footer mətni", "footer.shortText", { type: "textarea", full: true })}
     </div><div class="sectionHead"><h3>Sayt keçidləri</h3><button class="btn" type="button" data-add-list="navigation">Keçid əlavə et</button></div><div id="navigationList" class="cmsList"></div>`));
-    createView("banners", panel("Bannerlər", "Məhsul bannerlərini sadə siyahıdan seçib redaktə edin", '<div class="sectionHead"><h3>Bütün məhsul bannerləri</h3></div><div id="bannerProductList" class="bannerManageList"></div><label class="bannerProductPicker hidden">Məhsulu seç<select id="bannerProductSelect"></select></label><div id="bannerProductEditor"></div><div class="sectionHead"><h3>Canlı Dəstək böyük şəkli</h3></div><div id="supportCardEditor"></div>'));
+    createView("banners", panel("Ana səhifə bannerləri", "Şəkil yüklənib yoxlanandan sonra avtomatik yayımlanır. Əlavə yadda saxlama və deploy lazım deyil.", '<div id="homepageBannersAdmin"></div>'));
     createView("paymentMethods", panel("Ödəniş üsulları", "Kart və elektron cüzdanları təhlükəsiz idarə edin. Tam nömrə saxlandıqdan sonra yenidən göstərilmir.", '<div id="paymentMethodsStatus" class="previewResult hidden"></div><div class="sectionHead"><div><h3>Kart və cüzdanlar</h3><p>Standart gündəlik limit 5-dir. Limitsiz rejim yalnız əl ilə aktivləşdirilir.</p></div><button class="btn primary" type="button" id="paymentMethodAdd">Yeni üsul əlavə et</button></div><div id="paymentMethodsList" class="paymentMethodsAdminList"></div><div id="paymentMethodEditor"></div><div class="sectionHead"><h3>Bildiriş və çek saxlanması</h3></div><form id="paymentSettingsForm" class="paymentSettingsForm formGrid"><label>Bildiriş Gmail ünvanı<input id="paymentNotificationEmail" type="email" required></label><label>Çeklərin saxlanma müddəti (gün)<input id="paymentReceiptRetentionDays" type="number" min="1" max="3650" value="90"></label><div class="wide"><button class="btn" type="submit">Parametrləri saxla</button></div></form>'));
     createView("paymentCosts", panel("Məhsulların maya dəyəri və qazanc", "Maya dəyərini plan üzrə daxil edin. Satış qiyməti və xalis qazanc avtomatik hesablanır; bu məlumatlar yalnız admin paneldə görünür.", `<div class="paymentCostToolbar">
       <form id="paymentCostFilters" class="paymentCostFilters" role="search">
@@ -697,6 +697,7 @@
     </div>`;
   }
   function renderBanners() {
+    if(el('homepageBannersAdmin')) { window.MirpanelHomepageBanners?.mount(el('homepageBannersAdmin')); return; }
     normalizeBannerOrders();
     const orderedProducts = bannerProductsInOrder();
     if (!orderedProducts.some((product) => product.id === selectedBannerProductId)) {

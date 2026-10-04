@@ -12,6 +12,7 @@ import { createConfirmationGate } from "./netflix-verification-policy.mjs";
 import { createNetflixAccountRepository } from "./netflix-account-repository.mjs";
 import { createNetflixRequestGuard } from "./netflix-request-guard.mjs";
 import { createStoriesRepository } from "./stories-repository.mjs";
+import { createHomepageBannersRepository } from "./homepage-banners-repository.mjs";
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -635,6 +636,15 @@ function requireMutationAuth(request, response) {
 }
 
 async function handleApi(request, response) {
+  if ((request.method === 'GET' || request.method === 'OPTIONS') && request.url === '/api/homepage-banners') {
+    const origin = String(request.headers.origin || '');
+    const headers = {'Cache-Control':'no-store, max-age=0',Vary:'Origin',
+      ...(config.allowedOrigins.includes(origin) ? {'Access-Control-Allow-Origin':origin} : {}),
+      'Access-Control-Allow-Methods':'GET, OPTIONS'};
+    if(request.method==='OPTIONS') {response.writeHead(204,headers); return response.end();}
+    if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'},headers);
+    return json(response,200,await homepageBanners.list(),headers);
+  }
   if (await netflixConfirmationEndpoint(request, response)) return;
   if (await paymentSystem.handle(request, response)) return;
 
@@ -700,6 +710,30 @@ async function handleApi(request, response) {
   }
 
   if (!requireAuth(request, response)) return;
+
+  if(request.url==='/api/admin/homepage-banners' && request.method==='GET') {
+    if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'});
+    return json(response,200,await homepageBanners.list(true));
+  }
+  if(request.url==='/api/admin/homepage-banners/uploads' && request.method==='POST') {
+    const session=requireMutationAuth(request,response); if(!session) return;
+    if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'});
+    return json(response,200,await homepageBanners.begin(await readBody(request,20000),session.csrfToken));
+  }
+  const bannerUpload=request.url.match(/^\/api\/admin\/homepage-banners\/uploads\/([0-9a-f-]+)\/complete$/i);
+  if(bannerUpload && request.method==='POST') {
+    const session=requireMutationAuth(request,response); if(!session) return;
+    if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'});
+    return json(response,200,{banner:await homepageBanners.complete(bannerUpload[1],session.csrfToken)});
+  }
+  const homepageBanner=request.url.match(/^\/api\/admin\/homepage-banners\/([0-9a-f-]+)$/i);
+  if(homepageBanner && ['PATCH','DELETE'].includes(request.method)) {
+    if(!requireMutationAuth(request,response)) return;
+    if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'});
+    const body=await readBody(request,20000);
+    if(request.method==='DELETE') {await homepageBanners.remove(homepageBanner[1],body.version); return json(response,200,{ok:true});}
+    return json(response,200,{banner:await homepageBanners.update(homepageBanner[1],body)});
+  }
 
   if (request.method === "GET" && request.url === "/api/admin/stories") {
     if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
@@ -1196,6 +1230,9 @@ const storiesSupabase = config.supabaseUrl && config.supabaseSecretKey
   ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false } })
   : null;
 const storiesRepository = storiesSupabase ? createStoriesRepository(storiesSupabase, { bucket: config.storiesBucket }) : null;
+const homepageBanners = storiesSupabase ? createHomepageBannersRepository(storiesSupabase, {
+  bucket:config.storiesBucket,loadCatalog:async()=>extractAdminState((await getAppFile()).source)
+}) : null;
 const storiesStorageOrigin = (() => {
   try {
     return config.supabaseUrl ? new URL(config.supabaseUrl).origin : "";
@@ -1276,7 +1313,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/payment-admin.js", "/stories-admin.js"].includes(pathname)) {
+    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/stories-admin.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 
