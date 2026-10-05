@@ -314,7 +314,7 @@ const DATA = {
         {
           "label": "1 Ayliq (0-500 AI kredit) endirim (Telefon)",
           "months": 1,
-          "price": 4.85,
+          "price": 4.99,
           "regularPrice": 16.99
         },
         {
@@ -326,13 +326,13 @@ const DATA = {
         {
           "label": "3 ayliq (hər ay 0-1200 AI kredit) (Telefon)",
           "months": 3,
-          "price": 14.99,
+          "price": 12.99,
           "regularPrice": 101.99
         },
         {
           "label": "6 Ayliq (hər ay 0-1200 AI kredit) (Telefon)",
           "months": 6,
-          "price": 24.99,
+          "price": 22.99,
           "regularPrice": 101.99
         }
       ],
