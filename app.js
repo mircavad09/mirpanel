@@ -977,18 +977,6 @@ const DATA = {
           "label": "1 ayliq",
           "months": 1,
           "price": 5.99
-        },
-        {
-          "months": 2,
-          "price": 11.99
-        },
-        {
-          "months": 3,
-          "price": 15.99
-        },
-        {
-          "months": 4,
-          "price": 19.99
         }
       ],
       "orderConfirmation": {
