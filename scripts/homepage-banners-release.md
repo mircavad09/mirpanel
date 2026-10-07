@@ -2,7 +2,9 @@
 
 Before production migration: retain the currently deployed commit and export the
 CMS product banner settings from the existing admin state (read-only). Confirm
-that `homepage_banners` and `homepage_banner_settings` do not already exist.
+whether `homepage_banners` and `homepage_banner_settings` already exist.
+The migration can be rerun: it retains initialized settings and banner rows,
+creates missing structures only, and replaces functions without reseeding.
 The migration only adds these tables and its initialization function. It does
 not touch products, stories, orders, payments, or storage bucket policies.
 
