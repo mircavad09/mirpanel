@@ -106,7 +106,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><strong>5.99 ₼</strong></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>3 aylıq</span><span class="product-page-plan-prices"><strong>16.49 ₼</strong></span></div><div class="product-page-static-plan"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 aylıq</span><span class="product-page-plan-prices"><strong>29.99 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><strong>5.99 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>3 aylıq</span><span class="product-page-plan-prices"><strong>16.49 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 aylıq</span><span class="product-page-plan-prices"><strong>29.99 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -139,16 +139,11 @@
       <div class="product-page-similar-title" title="Netflix şəxsi (Yeniləmək)">Netflix şəxsi (Yeniləmək)</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus-ortaq-hesab" aria-label="ChatGPT Plus (Ortaq hesab) — 3.49 ₼" title="ChatGPT Plus (Ortaq hesab)">
-      <img src="/assets/chatgpt.png" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
-      <div class="product-page-similar-category">all</div>
-      <div class="product-page-similar-price">3.49 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.85 ₼" title="CapCut Pro">
+    </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
       <img src="/assets/capcut.png" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
-      <div class="product-page-similar-price">4.85 ₼</div>
+      <div class="product-page-similar-price">4.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  AYLIQ) — 16.99 ₼" title="Google AI Pro + VEO 3 (18  AYLIQ)">
       <img src="/assets/google-ai.png" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  AYLIQ)">Google AI Pro + VEO 3 (18  AYLIQ)</div>
@@ -169,6 +164,11 @@
       <div class="product-page-similar-title" title="Youtube Eyni hesab">Youtube Eyni hesab</div>
       <div class="product-page-similar-category">all</div>
       <div class="product-page-similar-price">5.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Yeni hesab — 3.59 ₼" title="YouTube Yeni hesab">
+      <img src="/assets/youtube.png" class="product-page-similar-image" alt="YouTube Yeni hesab" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="YouTube Yeni hesab">YouTube Yeni hesab</div>
+      <div class="product-page-similar-category">musiqi</div>
+      <div class="product-page-similar-price">3.59 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>

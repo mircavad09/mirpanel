@@ -145,98 +145,9 @@ const DATA = {
   ],
   "products": [
     {
-      "id": "chatgpt_ortaq",
-      "_stableId": "chatgpt_ortaq",
-      "order": 1,
-      "category": "all",
-      "image": "assets/chatgpt.png",
-      "currency": "₼",
-      "title": "ChatGPT Plus (Ortaq hesab)",
-      "variant": "",
-      "badge": "Premium",
-      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
-      "desc": "",
-      "note": "",
-      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "chatgpt-plus-ortaq-hesab",
-      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
-      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
-      "seoH1": "ChatGPT Plus ortaq hesab almaq",
-      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
-      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/chatgpt.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/chatgpt.png",
-        "mobileImage": "",
-        "title": "ChatGPT Plus (Ortaq hesab)",
-        "description": "",
-        "alt": "ChatGPT Plus (Ortaq hesab)",
-        "order": 20
-      },
-      "flow": "out_of_stock",
-      "soldOut": true,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": false,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 ayliq (Zəmanətsiz)",
-          "months": 1,
-          "price": 3.49
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
       "id": "capcut",
       "_stableId": "capcut",
-      "order": 2,
+      "order": 1,
       "category": "video",
       "image": "assets/capcut.png",
       "currency": "₼",
@@ -312,27 +223,27 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "1 Ayliq (0-500 AI kredit) endirim",
+          "label": "1 Ayliq (0-500 AI kredit) endirim (Telefon)",
           "months": 1,
-          "price": 4.85,
+          "price": 4.99,
           "regularPrice": 16.99
         },
         {
-          "label": "1 Ayliq (1600 AI kredit)  ",
+          "label": "1 Ayliq (1600 AI kredit)  (Telefon&Kompyuter)",
           "months": 1,
           "price": 6.99,
           "regularPrice": 16.99
         },
         {
-          "label": "3 ayliq (hər ay 0-1200 AI kredit)",
+          "label": "3 ayliq (hər ay 0-1200 AI kredit) (Telefon)",
           "months": 3,
-          "price": 14.99,
+          "price": 12.99,
           "regularPrice": 101.99
         },
         {
-          "label": "6 Ayliq (hər ay 0-1200 AI kredit) ",
+          "label": "6 Ayliq (hər ay 0-1200 AI kredit) (Telefon)",
           "months": 6,
-          "price": 24.99,
+          "price": 22.99,
           "regularPrice": 101.99
         }
       ],
@@ -353,7 +264,7 @@ const DATA = {
     {
       "id": "google_ai",
       "_stableId": "google_ai",
-      "order": 3,
+      "order": 2,
       "category": "ai",
       "image": "assets/google-ai.png",
       "currency": "₼",
@@ -451,7 +362,7 @@ const DATA = {
     {
       "id": "netflix",
       "_stableId": "netflix",
-      "order": 4,
+      "order": 3,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -564,7 +475,7 @@ const DATA = {
     {
       "id": "netflix_umumi",
       "_stableId": "netflix_umumi",
-      "order": 5,
+      "order": 4,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -652,7 +563,7 @@ const DATA = {
     {
       "id": "prime",
       "_stableId": "prime",
-      "order": 6,
+      "order": 5,
       "category": "film",
       "image": "assets/prime.png",
       "currency": "₼",
@@ -761,7 +672,7 @@ const DATA = {
     {
       "id": "claude_ai",
       "_stableId": "claude_ai",
-      "order": 7,
+      "order": 6,
       "category": "ai",
       "image": "assets/claude.png",
       "currency": "₼",
@@ -851,7 +762,7 @@ const DATA = {
     {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 8,
+      "order": 7,
       "category": "musiqi",
       "image": "assets/spotify.png",
       "currency": "₼",
@@ -979,7 +890,7 @@ const DATA = {
     {
       "id": "youtube_sexsi",
       "_stableId": "youtube_sexsi",
-      "order": 9,
+      "order": 8,
       "category": "all",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -1066,18 +977,6 @@ const DATA = {
           "label": "1 ayliq",
           "months": 1,
           "price": 5.99
-        },
-        {
-          "months": 2,
-          "price": 11.99
-        },
-        {
-          "months": 3,
-          "price": 15.99
-        },
-        {
-          "months": 4,
-          "price": 19.99
         }
       ],
       "orderConfirmation": {
@@ -1097,7 +996,7 @@ const DATA = {
     {
       "id": "youtube",
       "_stableId": "youtube",
-      "order": 10,
+      "order": 9,
       "category": "musiqi",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -1200,7 +1099,7 @@ const DATA = {
     {
       "id": "adobecc",
       "_stableId": "adobecc",
-      "order": 11,
+      "order": 10,
       "category": "dizayn",
       "image": "assets/adobe.png",
       "currency": "₼",
@@ -1288,7 +1187,7 @@ const DATA = {
     {
       "id": "surfshark",
       "_stableId": "surfshark",
-      "order": 12,
+      "order": 11,
       "category": "video",
       "image": "assets/surfshark.png",
       "currency": "₼",
@@ -1377,7 +1276,7 @@ const DATA = {
     {
       "id": "hbomax",
       "_stableId": "hbomax",
-      "order": 13,
+      "order": 12,
       "category": "film",
       "image": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
       "currency": "₼",
@@ -1482,7 +1381,7 @@ const DATA = {
     {
       "id": "tiktok_jeton",
       "_stableId": "tiktok_jeton",
-      "order": 14,
+      "order": 13,
       "category": "video",
       "image": "assets/tiktok.png",
       "currency": "₼",
@@ -1598,7 +1497,7 @@ const DATA = {
     {
       "id": "google_ai_ultra",
       "_stableId": "google_ai_ultra",
-      "order": 15,
+      "order": 14,
       "category": "ai",
       "image": "assets/google-ai-ultra.png",
       "currency": "₼",
@@ -1687,7 +1586,7 @@ const DATA = {
     {
       "id": "captions",
       "_stableId": "captions",
-      "order": 16,
+      "order": 15,
       "category": "ai",
       "image": "assets/captions.png",
       "currency": "₼",
@@ -1783,7 +1682,7 @@ const DATA = {
     {
       "id": "grok_supergrok",
       "_stableId": "grok_supergrok",
-      "order": 17,
+      "order": 16,
       "category": "ai",
       "image": "assets/grok.png",
       "currency": "₼",
@@ -1872,7 +1771,7 @@ const DATA = {
     {
       "id": "zoom",
       "_stableId": "zoom",
-      "order": 18,
+      "order": 17,
       "category": "meeting",
       "image": "assets/zoom.png",
       "currency": "₼",
@@ -1961,7 +1860,7 @@ const DATA = {
     {
       "id": "duolingo",
       "_stableId": "duolingo",
-      "order": 19,
+      "order": 18,
       "category": "dil",
       "image": "assets/duolingo.png",
       "currency": "₼",
@@ -2055,7 +1954,7 @@ const DATA = {
     {
       "id": "canva",
       "_stableId": "canva",
-      "order": 20,
+      "order": 19,
       "category": "dizayn",
       "image": "assets/canva.png",
       "currency": "₼",
@@ -2156,7 +2055,7 @@ const DATA = {
     {
       "id": "netflix_sexsi",
       "_stableId": "netflix_sexsi",
-      "order": 21,
+      "order": 20,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -2256,7 +2155,7 @@ const DATA = {
     {
       "id": "chatgpt",
       "_stableId": "chatgpt",
-      "order": 22,
+      "order": 21,
       "category": "ai",
       "image": "assets/chatgpt.png",
       "currency": "₼",
@@ -2358,7 +2257,7 @@ const DATA = {
     {
       "id": "linkedin_career",
       "_stableId": "linkedin_career",
-      "order": 23,
+      "order": 22,
       "category": "meeting",
       "image": "assets/linkedin.png",
       "currency": "₼",
@@ -2446,7 +2345,7 @@ const DATA = {
     {
       "id": "elevenlabs_creator",
       "_stableId": "elevenlabs_creator",
-      "order": 24,
+      "order": 23,
       "category": "ai",
       "image": "assets/elevenlabs.png",
       "currency": "₼",
@@ -2534,7 +2433,7 @@ const DATA = {
     {
       "id": "semrush_premium",
       "_stableId": "semrush_premium",
-      "order": 25,
+      "order": 24,
       "category": "meeting",
       "image": "assets/semrush.png",
       "currency": "₼",
@@ -2622,7 +2521,7 @@ const DATA = {
     {
       "id": "adobe_express",
       "_stableId": "adobe_express",
-      "order": 26,
+      "order": 25,
       "category": "dizayn",
       "image": "assets/adobe-express.png",
       "currency": "₼",
@@ -2710,7 +2609,7 @@ const DATA = {
     {
       "id": "notion_plus",
       "_stableId": "notion_plus",
-      "order": 27,
+      "order": 26,
       "category": "meeting",
       "image": "assets/notion.png",
       "currency": "₼",
@@ -2798,7 +2697,7 @@ const DATA = {
     {
       "id": "picsart_premium",
       "_stableId": "picsart_premium",
-      "order": 28,
+      "order": 27,
       "category": "dizayn",
       "image": "assets/picsart.png",
       "currency": "₼",
@@ -2886,7 +2785,7 @@ const DATA = {
     {
       "id": "blink_starter",
       "_stableId": "blink_starter",
-      "order": 29,
+      "order": 28,
       "category": "meeting",
       "image": "assets/blink.png",
       "currency": "₼",
@@ -2974,7 +2873,7 @@ const DATA = {
     {
       "id": "lightroom_photo",
       "_stableId": "lightroom_photo",
-      "order": 30,
+      "order": 29,
       "category": "dizayn",
       "image": "assets/lightroom.png",
       "currency": "₼",
@@ -3049,6 +2948,95 @@ const DATA = {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
         "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "chatgpt_ortaq",
+      "_stableId": "chatgpt_ortaq",
+      "order": 30,
+      "category": "all",
+      "image": "assets/chatgpt.png",
+      "currency": "₼",
+      "title": "ChatGPT Plus (Ortaq hesab)",
+      "variant": "",
+      "badge": "Premium",
+      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
+      "desc": "",
+      "note": "",
+      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "chatgpt-plus-ortaq-hesab",
+      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
+      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
+      "seoH1": "ChatGPT Plus ortaq hesab almaq",
+      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
+      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/chatgpt.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/chatgpt.png",
+        "mobileImage": "",
+        "title": "ChatGPT Plus (Ortaq hesab)",
+        "description": "",
+        "alt": "ChatGPT Plus (Ortaq hesab)",
+        "order": 20
+      },
+      "flow": "out_of_stock",
+      "soldOut": true,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 ayliq (Zəmanətsiz)",
+          "months": 1,
+          "price": 3.49
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
