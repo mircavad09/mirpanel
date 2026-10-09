@@ -1,4 +1,5 @@
 import { bakuDate, orderPeriodRange, safeCalendarDate } from "./payment-order-lifecycle.mjs";
+import { normalizeDurationFilter } from "./payment-order-duration.mjs";
 
 const PAGE_SIZE = 20;
 const ORDER_TABS = new Set(["pending", "today", "all", "expiring"]);
@@ -38,7 +39,7 @@ export function normalizeOrderListParams(input = {}, now = new Date()) {
     period,
     search,
     productId: boundedText(input.productId, 100),
-    planName: boundedText(input.planName, 160),
+    durationMonths: normalizeDurationFilter(input.durationMonths, boundedText(input.planName, 160)),
     methodId: /^[0-9a-f-]{36}$/i.test(String(input.methodId || "")) ? String(input.methodId) : "",
     dateFrom: range.dateFrom,
     dateTo: range.dateTo,

@@ -169,7 +169,7 @@
     <form id="paymentOrderFilters" class="paymentOrderFilters" role="search">
       <label>Sifariş ID-si<input id="paymentOrderSearch" type="search" placeholder="971 və ya MP-XXXXXX" autocomplete="off"></label>
       <label>Məhsul<select id="paymentOrderProduct"><option value="">Bütün məhsullar</option></select></label>
-      <label>Plan<select id="paymentOrderPlan"><option value="">Bütün planlar</option></select></label>
+      <label>Plan<select id="paymentOrderPlan"><option value="">Bütün müddətlər</option></select></label>
       <label>Bank<select id="paymentOrderMethod"><option value="">Bütün banklar</option></select></label>
       <label>Müddət<select id="paymentOrderPeriod"><option value="today">Bu gün</option><option value="this_month">Cari ay</option><option value="last_month">Keçən ay</option><option value="12m">Son 12 ay</option><option value="custom">Xüsusi tarix</option><option value="all">Bütün tarixlər</option></select></label>
       <label class="paymentCustomDate paymentCalendarField">Başlanğıc tarixi<input id="paymentOrderDateFrom" type="date" inputmode="numeric" aria-describedby="paymentOrderDateError"></label>

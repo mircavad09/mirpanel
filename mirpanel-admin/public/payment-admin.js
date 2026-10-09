@@ -4,7 +4,7 @@
   const emptyQuery = (tab = "pending") => ({
     tab,
     period: tab === "today" ? "today" : tab === "all" ? "this_month" : "all",
-    search: "", productId: "", planName: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1
+    search: "", productId: "", durationMonths: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1
   });
   const paymentState = {
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
@@ -178,7 +178,7 @@
       select.value = value;
     };
     fill("paymentOrderProduct", "Bütün məhsullar", filters.products, paymentState.orderQuery.productId, (item) => item.id, (item) => item.title);
-    fill("paymentOrderPlan", "Bütün planlar", filters.plans, paymentState.orderQuery.planName, (item) => item, (item) => item);
+    fill("paymentOrderPlan", "Bütün müddətlər", filters.durations, paymentState.orderQuery.durationMonths, (item) => item.value, (item) => item.label);
     fill("paymentOrderMethod", "Bütün banklar", filters.methods, paymentState.orderQuery.methodId, (item) => item.id, (item) => item.label);
   }
 
@@ -232,6 +232,15 @@
     const error = $p("paymentOrderDateError"); if (error) error.textContent = showMessage ? message : "";
     const apply = $p("paymentOrderFiltersApply"); if (apply) apply.disabled = Boolean(message);
     return !message;
+  }
+
+  function readOrderFilterControls() {
+    Object.assign(paymentState.orderQuery, {
+      search: $p("paymentOrderSearch")?.value.trim() || "", productId: $p("paymentOrderProduct")?.value || "",
+      durationMonths: $p("paymentOrderPlan")?.value || "", methodId: $p("paymentOrderMethod")?.value || "",
+      period: $p("paymentOrderPeriod")?.value || "all", dateFrom: $p("paymentOrderDateFrom")?.value || "",
+      dateTo: $p("paymentOrderDateTo")?.value || "", sort: $p("paymentOrderSort")?.value || "newest", page: 1
+    });
   }
 
   function renderOrderContext() {
@@ -474,6 +483,10 @@
       paymentState.knownPendingCount = nextPending;
       paymentState.orders = result.orders || [];
       paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
+      // The chosen duration may disappear after another filter changes. The
+      // server already re-ran the page without it; keep the controls in sync.
+      paymentState.orderQuery.durationMonths = result.appliedFilters?.durationMonths || "";
+      paymentState.orderQuery.page = result.pagination?.page || paymentState.orderQuery.page;
       if (paymentState.orderQuery.page > paymentState.orderMeta.pagination.totalPages && paymentState.orderQuery.page > 1) { paymentState.orderQuery.page = paymentState.orderMeta.pagination.totalPages; return loadOrders(); }
       renderOrders(); if (status) status.textContent = `${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
     } catch (error) {
@@ -569,13 +582,19 @@
         clearOrderSelection();
         const period = event.target.value;
         document.querySelectorAll(".paymentCustomDate").forEach((item) => item.classList.toggle("isActive", period === "custom"));
-        paymentState.orderQuery.period = period; paymentState.orderQuery.page = 1;
         if (period !== "custom") {
-          paymentState.orderQuery.dateFrom = ""; paymentState.orderQuery.dateTo = "";
           if ($p("paymentOrderDateFrom")) $p("paymentOrderDateFrom").value = "";
           if ($p("paymentOrderDateTo")) $p("paymentOrderDateTo").value = "";
-          validateCustomDates(false); await loadOrders();
+          readOrderFilterControls(); validateCustomDates(false);
+          try { await loadOrders(); } catch (error) { toast(error.message || "Sifarişlər yüklənmədi."); }
         } else validateCustomDates(true);
+        return;
+      }
+      if (event.target.closest?.("#paymentOrderFilters")) {
+        if (!validateCustomDates(true)) return;
+        readOrderFilterControls();
+        try { await loadOrders(); } catch (error) { toast(error.message || "Sifarişlər yüklənmədi."); }
+        return;
       }
       if (event.target.id === "paymentMonthlyArchiveMonth") {
         const monthStart = event.target.value; const monthEnd = nextMonthLastDay(monthStart);
@@ -689,7 +708,7 @@
         event.preventDefault();
         if (!validateCustomDates(true)) return;
         clearOrderSelection();
-        Object.assign(paymentState.orderQuery, { search: $p("paymentOrderSearch")?.value.trim() || "", productId: $p("paymentOrderProduct")?.value || "", planName: $p("paymentOrderPlan")?.value || "", methodId: $p("paymentOrderMethod")?.value || "", period: $p("paymentOrderPeriod")?.value || "all", dateFrom: $p("paymentOrderDateFrom")?.value || "", dateTo: $p("paymentOrderDateTo")?.value || "", sort: $p("paymentOrderSort")?.value || "newest", page: 1 });
+        readOrderFilterControls();
         await loadOrders(); return;
       }
       if (event.target.id !== "paymentMethodForm") return;

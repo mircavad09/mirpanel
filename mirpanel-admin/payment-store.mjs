@@ -17,6 +17,7 @@ import {
 } from "./payment-order-query.mjs";
 import { bakuDate, bakuDayBounds, expiryStatus } from "./payment-order-lifecycle.mjs";
 import { normalizeFinancialStatistics } from "./payment-order-report.mjs";
+import { durationOptions, durationStatistics, orderDuration } from "./payment-order-duration.mjs";
 import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./payment-profit.mjs";
 
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
@@ -413,36 +414,44 @@ export function createPaymentStore(config) {
         let next = query;
         if (filters.search) next = next.ilike("order_code", `%${filters.search}%`);
         if (filters.productId) next = next.eq("product_id", filters.productId);
-        if (filters.planName) next = next.eq("plan_name", filters.planName);
         if (filters.methodId) next = next.eq("method_id", filters.methodId);
         if (filters.dateFrom) next = next.gte(dateColumn, `${filters.dateFrom}T00:00:00+04:00`);
         if (filters.dateTo) next = next.lt(dateColumn, bakuDayBounds(filters.dateTo).endExclusive);
         return next;
       };
 
-      let query = applyCommonFilters(client.from("payment_orders").select(select, { count: "exact" }), filters.tab === "pending" ? "created_at" : "completed_at");
       const statuses = orderDatabaseStatuses(filters);
-      query = query.in("status", statuses);
-      if (filters.tab === "today") query = query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive);
-      if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
-      const from = (filters.page - 1) * filters.pageSize;
-      query = query
-        .order(filters.tab === "pending" ? "created_at" : "completed_at", { ascending: filters.sort === "oldest" })
-        .range(from, from + filters.pageSize - 1);
-
-      let selectionQuery = Promise.resolve({ data: [], error: null });
-      if (filters.tab === "expiring") {
-        selectionQuery = applyCommonFilters(
-          client.from("payment_orders").select("id,product_id,product_title"),
-          "completed_at"
-        )
-          .in("status", statuses)
-          .is("contacted_at", null)
-          .not("expiry_notification_on", "is", null)
-          .lte("expiry_notification_on", filters.today)
-          .order("completed_at", { ascending: filters.sort === "oldest" })
-          .limit(5000);
+      const dateColumn = filters.tab === "pending" ? "created_at" : "completed_at";
+      const matchingQuery = (columns, options) => {
+        let query = applyCommonFilters(client.from("payment_orders").select(columns, options), dateColumn).in("status", statuses);
+        if (filters.tab === "today") query = query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive);
+        if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
+        return query.order(dateColumn, { ascending: filters.sort === "oldest" }).order("id", { ascending: filters.sort === "oldest" });
+      };
+      // Facets exclude only the duration filter, not product/bank/date/ID/tab.
+      // Read every matching row in bounded pages: neither a UI page nor a 5000-row
+      // cap can determine the available durations or the filtered batch selection.
+      const facetColumns = "id,product_id,product_title,plan_id,plan_name,duration_months,status,completed_at,amount,sale_price_snapshot,cost_price_snapshot,profit_snapshot";
+      const facetRows = [];
+      let facetTotal;
+      do {
+        const result = await matchingQuery(facetColumns, { count: "exact" }).range(facetRows.length, facetRows.length + 999);
+        if (result.error) throw paymentError(result.error);
+        facetTotal = Number(result.count || 0);
+        if (!result.data?.length && facetRows.length < facetTotal) throw paymentError(null, "Müddət seçimləri tam yüklənmədi. Yenidən cəhd edin.");
+        facetRows.push(...(result.data || []));
+      } while (facetRows.length < facetTotal);
+      const durations = durationOptions(facetRows);
+      if (filters.durationMonths && !durations.some((item) => item.value === filters.durationMonths)) {
+        filters.durationMonths = "";
+        filters.page = 1;
       }
+      const matchedRows = filters.durationMonths ? facetRows.filter((row) => orderDuration(row) === filters.durationMonths) : facetRows;
+      const from = (filters.page - 1) * filters.pageSize;
+      const pageIds = matchedRows.slice(from, from + filters.pageSize).map((row) => row.id);
+      const query = filters.durationMonths
+        ? (pageIds.length ? matchingQuery(select).in("id", pageIds) : Promise.resolve({ data: [], error: null }))
+        : matchingQuery(select, { count: "exact" }).range(from, from + filters.pageSize - 1);
 
       const countStatus = async (statusValues, mutate = (value) => value) => {
         let countQuery = client.from("payment_orders").select("id", { count: "exact", head: true }).in("status", statusValues);
@@ -452,30 +461,26 @@ export function createPaymentStore(config) {
         return Number(count || 0);
       };
 
-      const [{ data, error, count }, pendingCount, todayCount, completedCount, expiringCount, productRows, methodRows, statistics, selectionRows] = await Promise.all([
+      const [{ data, error }, pendingCount, todayCount, completedCount, expiringCount, methodRows, statistics] = await Promise.all([
         query,
         countStatus(["reviewing", "new_receipt_requested"]),
         countStatus(["approved", "completed"], (value) => value.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive)),
         countStatus(["approved", "completed"]),
         countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
-        client.from("payment_orders").select("product_id,product_title,plan_name").order("product_title", { ascending: true }).limit(5000),
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
-        rpc("payment_order_profit_statistics_v2", {
+        filters.durationMonths ? Promise.resolve(durationStatistics(matchedRows)) : rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
           p_search: filters.search || null,
           p_product_id: filters.productId || null,
-          p_plan_name: filters.planName || null,
+          p_plan_name: null,
           p_method_id: filters.methodId || null,
           p_date_from: filters.dateFrom || null,
           p_date_to: filters.dateTo || null,
           p_today: filters.today
-        }),
-        selectionQuery
+        })
       ]);
       if (error) throw paymentError(error);
-      if (productRows.error) throw paymentError(productRows.error);
       if (methodRows.error) throw paymentError(methodRows.error);
-      if (selectionRows.error) throw paymentError(selectionRows.error);
 
       const orders = data || [];
       const history = new Map();
@@ -493,12 +498,10 @@ export function createPaymentStore(config) {
       }
 
       const products = new Map();
-      const plans = new Set();
-      for (const row of productRows.data || []) {
+      for (const row of facetRows) {
         if (row.product_id && !products.has(row.product_id)) products.set(row.product_id, row.product_title);
-        if (row.plan_name) plans.add(row.plan_name);
       }
-      const total = Number(count || 0);
+      const total = matchedRows.length;
       return {
         orders: orders.map((order) => {
           const method = Array.isArray(order.payment_methods) ? order.payment_methods[0] || {} : order.payment_methods || {};
@@ -542,18 +545,18 @@ export function createPaymentStore(config) {
           pending: pendingCount,
           today: filters.tab === "today" ? total : todayCount,
           all: filters.tab === "all" ? total : completedCount,
-          expiring: expiringCount
+          expiring: filters.tab === "expiring" ? total : expiringCount
         },
         statistics: normalizeFinancialStatistics(statistics || { count: 0, revenue: 0, cost: 0, profit: 0, missingCostCount: 0, topProduct: "—", products: [], plans: [], days: [] }),
         appliedFilters: filters,
         filters: {
           products: [...products].map(([id, title]) => ({ id, title })),
-          plans: [...plans].sort((a, b) => a.localeCompare(b, "az")),
+          durations,
           methods: (methodRows.data || []).map((method) => ({ id: method.id, label: paymentMethodLabel(method) }))
         },
         selection: filters.tab === "expiring" ? {
-          ids: (selectionRows.data || []).map((item) => item.id),
-          total: (selectionRows.data || []).length
+          ids: matchedRows.map((item) => item.id),
+          total: matchedRows.length
         } : { ids: [], total: 0 }
       };
     },
