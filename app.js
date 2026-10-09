@@ -926,8 +926,8 @@ const DATA = {
         "alt": "Youtube Eyni hesab",
         "order": 6
       },
-      "flow": "whatsapp",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
@@ -1032,14 +1032,14 @@ const DATA = {
         "alt": "YouTube Premium banneri",
         "order": 9
       },
-      "flow": "email",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "form_confirm_whatsapp",
+      "orderFlow": "confirm_then_whatsapp",
       "formFields": [
         {
           "key": "email",
