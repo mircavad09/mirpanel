@@ -37,6 +37,9 @@ try {
   // No test can contact a mutation, payment API, receipt endpoint or WhatsApp.
   await context.route("**/*", async route => {
     const req = route.request(), url = new URL(req.url());
+    // Keep the real SRI-protected beacon script, but never send analytics.
+    if (url.pathname === "/cdn-cgi/rum") return route.fulfill({ status: 204 });
+    if (req.method() === "GET" && url.hostname === "static.cloudflareinsights.com") return route.continue();
     if (!["GET", "HEAD"].includes(req.method()) || /\/api\/(payments|orders|receipts)|wa\.me|script\.google/.test(req.url())) {
       forbidden.push({ method: req.method(), path: url.pathname });
       return route.fulfill({ status: 403, body: "Test safety guard" });
@@ -114,6 +117,10 @@ try {
       checks.push({ product: product.id, plan: planIndex, width: page.viewportSize().width, metrics });
     } else {
       assert.equal(await page.locator("#universalOrderForm, #spotifyEmail, .netflixPinDigit").count(), 0);
+      if (process.env.MIRPANEL_VISUAL_DIR && product.id === "capcut" && planIndex === 0) {
+        fs.mkdirSync(process.env.MIRPANEL_VISUAL_DIR, { recursive: true });
+        await page.screenshot({ path: path.join(process.env.MIRPANEL_VISUAL_DIR, `${live ? "live" : "local"}-capcut-${page.viewportSize().width}.png`) });
+      }
       checks.push({ product: product.id, plan: planIndex, width: page.viewportSize().width, standard: true });
     }
     return true;
