@@ -224,7 +224,7 @@
 
   <script src="/app.js?v=20260804-mobile-layout-1"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
-  <script src="/order-confirmation.js?v=spotify-form-20261003-1"></script>
+  <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
   <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>

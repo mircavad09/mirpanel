@@ -13,6 +13,7 @@
   const AGREEMENT_ERROR = "Davam etmək üçün istifadə qaydalarını və şərtləri qəbul edin.";
   const DEFAULT_SPOTIFY_RESET_URL = "https://accounts.spotify.com/az/password-reset";
   let orderTermsAccepted = false;
+  let modalSession = 0;
 
   function publicProductTitle(value) {
     return String(value || "").replace(/\s+almaq\s*$/i, "").trim();
@@ -70,6 +71,7 @@
       #modal.premiumOrderFormOpen .mBottom { margin-top: 18px; padding-top: 12px; border-top: 1px solid rgba(255, 255, 255, .08); }
       #modal.premiumOrderFormOpen #mInfo { color: rgba(255, 255, 255, .92); font-size: 17px; font-weight: 800; text-align: center; }
       #modal.premiumOrderFormOpen .mSmall { display: none; }
+      #modal.premiumOrderFormOpen .close { width: 32px; height: 32px; padding: 0; font-size: 23px; }
 
       .universalOrderForm.premiumOrderForm { display: grid; gap: 18px; padding: 28px 2px 0; }
       .premiumOrderForm .mpFormTitle {
@@ -78,6 +80,7 @@
         -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; text-shadow: 0 0 24px rgba(45, 255, 134, .22);
       }
       .premiumOrderForm .premiumOrderFields { display: grid; gap: 14px; }
+      .orderFormProduct { margin: -8px 0 0; color: rgba(235,255,243,.76); text-align: center; font-size: 13px; line-height: 1.35; }
       .premiumOrderForm .universalField { display: grid; gap: 8px; margin: 0; }
       .premiumOrderForm .universalField span { color: rgba(235, 255, 243, .9); font-size: 13px; font-weight: 800; }
       .premiumOrderForm .universalField input,
@@ -933,6 +936,24 @@
           min-height: 15px;
         }
       }
+      @media (max-width: 767px) {
+        #modal #universalOrderForm input,
+        #modal #universalOrderForm textarea,
+        #modal #universalOrderForm select { font-size: 16px; }
+        #modal #universalOrderForm .orderConfirmationActions { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+        #modal.hboMaxOrderFormOpen .modalCard { max-height: calc(100dvh - max(28px, env(safe-area-inset-top, 0px) + env(safe-area-inset-bottom, 0px))); }
+      }
+      @media (max-width: 560px) and (max-height: 650px) {
+        #modal.premiumOrderFormOpen .modalCard { padding: 14px 16px; }
+        #modal .spotifyCredentialsForm { padding-top: 8px !important; gap: 8px !important; }
+        #modal .spotifyCredentialsForm .mpFormTitle { font-size: 22px; margin-bottom: 0; }
+        #modal .spotifyCredentialsForm .premiumOrderFields { gap: 7px; }
+        #modal .spotifyCredentialsForm .universalField,
+        #modal .spotifyCredentialsForm .spotifyPasswordField { gap: 4px; }
+        #modal .spotifyCredentialsForm input { min-height: 48px; padding-top: 10px; padding-bottom: 10px; }
+        #modal .spotifyCredentialsForm .mpBtn { min-height: 48px; }
+        #modal.premiumOrderFormOpen .mBottom { margin-top: 8px; padding-top: 8px; }
+      }
     `;
     document.head.appendChild(style);
   }
@@ -1110,29 +1131,25 @@
   }
 
   function activeFields(product) {
+    // Only catalog-owned configuration may select a customer-information form.
+    if (!DATA.products.some((item) => item.id === product?.id)) return [];
     const fields = Array.isArray(product.formFields) ? product.formFields : [];
     const active = fields.filter((field) => field.enabled !== false);
-    if (active.length) return active;
-    return LEGACY_FLOW_FIELDS[product?.flow] || [];
+    if (fields.length) return active;
+    const legacyByProduct = { spotify: "spotify", netflix: "name_code_4", hbomax: "name_code_4", prime: "name_code_5", canva: "email", google_ai: "email" };
+    return LEGACY_FLOW_FIELDS[legacyByProduct[product.id]] || [];
   }
 
-  function productToken(product) {
-    return [
-      product?.id,
-      product?.title,
-      product?.variant,
-      product?.badge,
-      product?.category
-    ].join(" ").toLowerCase();
+  function isSpotifyProduct(product) {
+    return product?.id === "spotify";
   }
 
   function isHboProduct(product) {
-    const token = productToken(product);
-    return token.includes("hbomax") || token.includes("hbo max") || token.includes("hbo");
+    return product?.id === "hbomax";
   }
 
   function isNetflixPersonalProduct(product) {
-    return String(product?.id || "").toLowerCase() === "netflix";
+    return product?.id === "netflix";
   }
 
   function codeLengthForField(field) {
@@ -1202,7 +1219,7 @@
 
   function planLabel(plan) {
     if (!plan) return "";
-    return String(plan.label || "").trim();
+    return String(plan.label || (Number(plan.months) > 0 ? `${plan.months} aylıq` : "")).trim();
   }
 
   function selectedPlan(product) {
@@ -1246,6 +1263,10 @@
   }
 
   function openBaseModal(product, plan) {
+    modalSession += 1;
+    renderModalContent("");
+    document.querySelector("#modal .modalCard")?.removeAttribute("aria-labelledby");
+    document.getElementById("modal")?.classList.remove("paymentFlowOpen");
     resetOrderConsent();
     setPremiumFormMode(false);
     setOrderConfirmationMode(false);
@@ -1279,6 +1300,9 @@
 
   function closeOrderModal() {
     if (window.MirpanelPaymentFlow?.isSubmitting()) return;
+    modalSession += 1;
+    renderModalContent("");
+    document.querySelector("#modal .modalCard")?.removeAttribute("aria-labelledby");
     resetOrderConsent();
     setPremiumFormMode(false);
     setSpotifyConfirmationMode(false);
@@ -1489,8 +1513,9 @@
   }
 
   function showForm(product, plan, onDone) {
+    const session = modalSession;
     const fields = activeFields(product);
-    const isSpotify = String(product?.id || "").toLowerCase() === "spotify" || String(product?.flow || "").toLowerCase() === "spotify";
+    const isSpotify = isSpotifyProduct(product);
     if (!fields.length && !isSpotify) {
       onDone({});
       return;
@@ -1502,6 +1527,12 @@
     setPremiumFormMode(!isHbo && !isNetflixPersonal);
     setHboFormMode(isHbo);
     setNetflixPersonalFormMode(isNetflixPersonal);
+    const closeButton = document.getElementById("closeModal");
+    if (closeButton) {
+      closeButton.textContent = "×";
+      closeButton.setAttribute("aria-label", "Bağla");
+      closeButton.title = "Bağla";
+    }
     setFooter("");
     const formClass = isHbo
       ? "mpForm universalOrderForm hboMaxOrderForm"
@@ -1573,6 +1604,7 @@
     } else renderModalContent(`
       <form class="${formClass}" id="universalOrderForm" data-product-id="${escapeHtml(product.id || "")}">
         <div class="mpFormTitle">${escapeHtml(title)}</div>
+        <p class="orderFormProduct">${escapeHtml(publicProductTitle(product.title))}</p>
         ${hint}
         <div class="premiumOrderFields">
           ${fields.map((field) => {
@@ -1696,6 +1728,7 @@
     });
     document.getElementById("universalOrderForm").onsubmit = (event) => {
       event.preventDefault();
+      if (session !== modalSession) return;
       if (isSpotify) {
         const email = document.getElementById("spotifyEmail");
         const password = document.getElementById("spotifyPassword");
@@ -1734,10 +1767,11 @@
   }
 
   function showConfirmation(product, plan, formData, onConfirm) {
+    const session = modalSession;
     resetOrderConsent();
     setPremiumFormMode(false);
     const settings = confirmationFor(product);
-    const isSpotify = String(product?.id || "").toLowerCase().includes("spotify") || String(product?.title || "").toLowerCase().includes("spotify");
+    const isSpotify = isSpotifyProduct(product);
     const helpUrl = String(settings.helpLink?.url || "").trim();
     const defaultSpotifyHelpLabel = "Şifrənizi bilmirsiniz? Buradan sıfırlayın";
     const storedHelpLabel = cleanConfirmationLabel(settings.helpLink?.label);
@@ -1805,6 +1839,7 @@
 
     consentForm.addEventListener("submit", (event) => {
       event.preventDefault();
+      if (session !== modalSession) return;
       if (!consentCheckbox.checked) {
         showAgreementError();
         return;
@@ -1816,6 +1851,14 @@
   }
 
   function runOrderFlow(product, plan) {
+    const catalogProduct = DATA.products.find((item) => item.id === product?.id);
+    if (catalogProduct) {
+      if (!(catalogProduct.plans || []).includes(plan)) {
+        toastMessage("Seçilmiş paket bu məhsula aid deyil. Paketi yenidən seçin.");
+        return;
+      }
+      product = catalogProduct;
+    }
     if (!stockIsAvailable(product) || !plan || Number(plan.price) <= 0) {
       decorateProductPage(product);
       alert("Stokda yoxdur.");
@@ -1823,13 +1866,17 @@
     }
 
     openBaseModal(product, plan);
+    const session = modalSession;
     const flow = flowFor(product);
     const needsForm = flow === "form_then_whatsapp" || flow === "form_confirm_whatsapp";
     const needsConfirmation = true;
 
     const continueToFormOrWhatsApp = () => {
+      if (session !== modalSession) return;
       if (needsForm) {
-        showForm(product, plan, (nextFormData) => openWhatsApp(product, plan, nextFormData));
+        showForm(product, plan, (nextFormData) => {
+          if (session === modalSession) openWhatsApp(product, plan, nextFormData);
+        });
         return;
       }
       openWhatsApp(product, plan, {});
