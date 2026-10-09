@@ -341,7 +341,7 @@ const DATA = {
       "plans": [
         {
           "months": 18,
-          "price": 16.99,
+          "price": 12.99,
           "regularPrice": 700
         }
       ],
