@@ -1032,8 +1032,8 @@ const DATA = {
         "alt": "YouTube Premium banneri",
         "order": 9
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "whatsapp",
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
@@ -1073,11 +1073,6 @@ const DATA = {
       "plans": [
         {
           "label": "1 Ayliq (Yenilemek Mövcud deyil)",
-          "months": 1,
-          "price": 3.59
-        },
-        {
-          "label": "1 ayliq (Yenilemek Mövcuddur)",
           "months": 1,
           "price": 3.99
         }
