@@ -4150,21 +4150,27 @@ let currentSlide = 0;
 let slideInterval;
 let sliderPauseUntil = 0;
 let sliderVisibilityHandler;
+let sliderFocusInHandler, sliderFocusOutHandler, sliderFocusTimer;
 
 function initSlider() {
-  const slides = document.querySelectorAll('.slide');
-  const dots = document.querySelectorAll('.dot');
-  const nextBtn = document.querySelector('.next-arrow');
-  const prevBtn = document.querySelector('.prev-arrow');
   const slider = document.getElementById('heroSlider');
+  const slides = slider?.querySelectorAll('.slide') || [];
+  const dots = slider?.querySelectorAll('.dot') || [];
+  const nextBtn = slider?.querySelector('.next-arrow');
+  const prevBtn = slider?.querySelector('.prev-arrow');
 
   clearInterval(slideInterval);
+  clearTimeout(sliderFocusTimer);
+  if(sliderFocusInHandler) slider?.removeEventListener('focusin',sliderFocusInHandler);
+  if(sliderFocusOutHandler) slider?.removeEventListener('focusout',sliderFocusOutHandler);
   if(sliderVisibilityHandler) document.removeEventListener('visibilitychange',sliderVisibilityHandler);
+  sliderVisibilityHandler=null;
   if (!slides.length) return;
 
   function showSlide(n) {
     const index=(n+slides.length)%slides.length;
     const image=slides[index].querySelector('img');
+    slides[index].querySelectorAll('source[data-srcset]').forEach(source=>{source.srcset=source.dataset.srcset;delete source.dataset.srcset;});
     if(image?.dataset.src) {image.src=image.dataset.src; delete image.dataset.src;}
     if(image && !image.complete) {
       image.decode().then(()=>{if(slider?.contains(slides[index])) showSlide(index);}).catch(()=>{});
@@ -4176,6 +4182,8 @@ function initSlider() {
     
     currentSlide = (n + slides.length) % slides.length;
     slides[currentSlide].classList.add('active');
+    slides.forEach((slide,index)=>slide.setAttribute('aria-hidden',String(index!==currentSlide)));
+    dots.forEach((dot,index)=>dot.setAttribute('aria-current',String(index===currentSlide)));
     if (dots[currentSlide]) dots[currentSlide].classList.add('active');
   }
 
@@ -4190,28 +4198,34 @@ function initSlider() {
   });
 
   slides.forEach(slide => {
-    slide.addEventListener('click', (e) => {
+    slide.onclick = (e) => {
       if (e.target.classList.contains('slider-arrow') || e.target.closest('.slider-arrow')) return;
       if (e.target.classList.contains('dot') || e.target.closest('.slider-dots')) return;
 
       const targetId = slide.getAttribute('data-target');
       if (targetId) window.openProductPage(targetId);
-    });
+    };
   });
 
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   function startTimer() {
     clearInterval(slideInterval);
-    if (slides.length < 2 || reducedMotion || document.hidden) return;
+    if (slides.length < 2 || reducedMotion || document.hidden || slider.matches(':hover') || slider.contains(document.activeElement)) return;
     slideInterval = setInterval(() => { if (Date.now() >= sliderPauseUntil) nextSlide(); }, 5000);
   }
-  function resetTimer() { sliderPauseUntil = Date.now() + 12000; startTimer(); }
+  function resetTimer() { sliderPauseUntil = 0; startTimer(); }
 
   if (slider) {
     slider.tabIndex = 0;
     slider.setAttribute('role', 'region');
     slider.setAttribute('aria-label', 'Məhsul bannerləri');
     slider.setAttribute('aria-roledescription', 'carousel');
+    slider.onmouseenter=()=>clearInterval(slideInterval);
+    slider.onmouseleave=startTimer;
+    sliderFocusInHandler=()=>clearInterval(slideInterval);
+    sliderFocusOutHandler=()=>{clearTimeout(sliderFocusTimer);sliderFocusTimer=setTimeout(startTimer,0);};
+    slider.addEventListener('focusin',sliderFocusInHandler);
+    slider.addEventListener('focusout',sliderFocusOutHandler);
     let touchStartX = 0;
     slider.ontouchstart = (event) => {
       touchStartX = event.touches?.[0]?.clientX || 0;
@@ -4241,7 +4255,7 @@ function initSlider() {
 
   sliderVisibilityHandler=()=>{if(document.hidden) clearInterval(slideInterval); else startTimer();};
   document.addEventListener('visibilitychange',sliderVisibilityHandler);
-  currentSlide=0;
+  currentSlide=Math.max(0,[...slides].findIndex(slide=>slide.classList.contains('active')));
   startTimer();
 }
 

@@ -21,7 +21,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="style.css?v=admin-1791555206013" />
+  <link rel="stylesheet" href="style.css?v=hero-20261010-1" />
   <link rel="stylesheet" href="splash.css?v=20260903-1" />
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="premium-compact-glow.css?v=20260804-mobile-layout-1" />
@@ -241,11 +241,12 @@
         </div>
       </div>
 
-      <section class="wrap hero-section home-banner-layout">
+      <section class="wrap hero-section home-banner-layout" id="homeHero">
         <div class="hero-slider-box" id="heroSlider">
-          <div class="slider-arrow prev-arrow">❮</div>
-          <div class="slider-arrow next-arrow">❯</div>
+          <button type="button" class="slider-arrow prev-arrow" aria-label="Əvvəlki banner">❮</button>
+          <button type="button" class="slider-arrow next-arrow" aria-label="Növbəti banner">❯</button>
         </div>
+        <div class="home-side-banners" id="homeSideBanners" aria-label="Kampaniya bannerləri" hidden></div>
       </section>
       <section class="wrap home-stories" id="homeStories" aria-label="Stories" hidden>
         <div class="home-stories-track" id="homeStoriesTrack"></div>
@@ -463,8 +464,8 @@
     </ul>
   </div>
 
-  <script src="app.js?v=admin-1791555206013"></script>
-  <script src="cms-site.js?v=admin-1791555206013"></script>
+  <script src="app.js?v=hero-20261010-1"></script>
+  <script src="cms-site.js?v=hero-20261010-1"></script>
   <script src="stories.js?v=20260927-2"></script>
   <script src="payment-flow.js?v=admin-1791555206013"></script>
   <script src="order-confirmation.js?v=canonical-forms-20261009-1"></script>

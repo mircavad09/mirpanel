@@ -724,7 +724,8 @@ async function handleApi(request, response) {
   if(bannerUpload && request.method==='POST') {
     const session=requireMutationAuth(request,response); if(!session) return;
     if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'});
-    return json(response,200,{banner:await homepageBanners.complete(bannerUpload[1],session.csrfToken)});
+    const body=await readBody(request,20000);
+    return json(response,200,{banner:await homepageBanners.complete(bannerUpload[1],session.csrfToken,body.options)});
   }
   if(request.url==='/api/admin/homepage-banners/reorder' && request.method==='POST') {
     if(!requireMutationAuth(request,response)) return;
@@ -1334,6 +1335,9 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(config.port, () => {
   console.log(`Mirpanel admin: http://localhost:${config.port}`);
+  // Trusted, banner-only rollout: preserve the existing main image and import
+  // existing Mirpanel campaign assets once. No public request can trigger writes.
+  if(homepageBanners) void homepageBanners.list(true).catch(error=>console.error('HOMEPAGE_BANNER_INIT_FAILED',error.code || 'BANNER_BACKEND_ERROR'));
   console.log(`Supabase server key format: ${config.supabaseSecretKey.startsWith("sb_secret_") ? "new-secret" : "legacy-jwt"}`);
 });
 

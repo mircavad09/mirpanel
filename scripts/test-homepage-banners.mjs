@@ -5,6 +5,8 @@ import http from 'node:http';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHomepageBannersRepository, BANNER_IMAGE_MAX_BYTES} from '../mirpanel-admin/homepage-banners-repository.mjs';
+import {extractAdminState} from '../mirpanel-admin/core.mjs';
+import {bannerLink} from '../mirpanel-admin/homepage-banners-repository.mjs';
 const {chromium}=await import(pathToFileURL(path.join(process.env.MIRPANEL_NODE_MODULES,'playwright/index.mjs')));
 const root=process.cwd(), objects=new Map(), db=[], settings={initialized:false};
 let origin, failStorage=false, loseComplete=false, uploads=0, signs=0;
@@ -20,7 +22,7 @@ class Query {
   maybeSingle(){this.singular=true;return this;}
   then(resolve,reject){try{
     let data=this.name==='homepage_banner_settings'?[settings]:db.filter(row=>this.filters.every(([k,v])=>row[k]===v));
-    if(this.action==='insert') {if(db.some(row=>row.id===this.value.id)) return Promise.resolve({data:null,error:{message:'unique'}}).then(resolve,reject);const row={...this.value};db.push(row);data=[row];}
+    if(this.action==='insert') {if(db.some(row=>row.id===this.value.id)) return Promise.resolve({data:null,error:{code:'23505',message:'unique'}}).then(resolve,reject);const row={media_path:null,active:true,options:{},updated_at:new Date().toISOString(),...this.value};db.push(row);data=[row];}
     if(this.action==='update') data.forEach(row=>Object.assign(row,this.value));
     if(this.action==='delete') for(const row of data) db.splice(db.indexOf(row),1);
     if(this.orders.length) data=[...data].sort((a,b)=>{for(const k of this.orders){if(a[k]!==b[k])return a[k]<b[k]?-1:1;}return 0;});
@@ -40,7 +42,8 @@ const client={from:name=>new Query(name),storage:{from:()=>storage},async rpc(na
     items.forEach((i,n)=>Object.assign(db.find(r=>r.id===i.id),{sort_order:n+1,updated_at:new Date(Date.now()+n).toISOString()}));return {data:null};
   }
   assert.equal(name,'initialize_homepage_banners');if(!settings.initialized){db.push(...seed.map(row=>({...row,media_path:null,active:true,updated_at:new Date().toISOString()})));settings.initialized=true;}return {data:null};}};
-const repository=createHomepageBannersRepository(client,{bucket:'private-test',loadCatalog:async()=>({products:[{title:'Existing',active:true,image:'/assets/capcut.png',banner:{enabled:true,desktopImage:'/assets/capcut.png',order:1,url:'/mehsul/capcut-pro',mobileImage:'/assets/capcut.png'}}]})});
+let catalog={products:[{title:'Existing',active:true,image:'/assets/capcut.png',banner:{enabled:true,desktopImage:'/assets/capcut.png',order:1,url:'/mehsul/capcut-pro',mobileImage:'/assets/capcut.png'}}]};
+const repository=createHomepageBannersRepository(client,{bucket:'private-test',loadCatalog:async()=>catalog});
 const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
 const server=http.createServer(async(req,res)=>{try{
   const url=new URL(req.url,'http://localhost'), route=url.pathname;
@@ -53,7 +56,7 @@ const server=http.createServer(async(req,res)=>{try{
     if(route.endsWith('/reorder')) return json(res,200,await repository.reorder(payload.items));
     if(route.endsWith('/uploads')) return json(res,200,await repository.begin(payload,'test'));
     if(route.endsWith('/complete')) {
-      const banner=await repository.complete(route.split('/').at(-2),'test');
+      const banner=await repository.complete(route.split('/').at(-2),'test',payload.options);
       if(loseComplete){loseComplete=false;return json(res,503,{error:'Cavab itkisi sınağı'});}
       return json(res,200,{banner});
     }
@@ -90,7 +93,9 @@ try {
   await admin.goto(`${origin}/banner-admin-test`);await admin.waitForFunction(()=>document.querySelectorAll('[data-banner-id]').length===1);
   const first=db[0]; first.legacy_image=`${origin}/assets/capcut.png`;
   const home=await browser.newPage({viewport:{width:390,height:844}});home.on('pageerror',e=>errors.push(e.message));
+  await home.route('https://mirpanel.com/**',async route=>{const file=path.join(root,new URL(route.request().url()).pathname);if(fs.existsSync(file)&&fs.statSync(file).isFile())return route.fulfill({body:fs.readFileSync(file),contentType:file.endsWith('.png')?'image/png':'image/jpeg'});return route.continue();});
   await home.addInitScript(base=>{window.MIRPANEL_ADMIN_BASE=base;},origin);
+  await home.addInitScript(()=>{const start=window.setInterval.bind(window),stop=window.clearInterval.bind(window);window.heroTestTimers=new Set();window.setInterval=(fn,ms,...args)=>{const id=start(fn,ms,...args);if(ms===5000)heroTestTimers.add(id);return id;};window.clearInterval=id=>{heroTestTimers.delete(id);stop(id);};});
   await home.goto(origin,{waitUntil:'networkidle'});await home.waitForTimeout(3200);
   const unchanged=await home.evaluate(()=>({products:document.getElementById('grid').innerHTML,stories:document.getElementById('homeStories').innerHTML}));
   const png=Buffer.from(await admin.evaluate(()=>{const c=document.createElement('canvas');c.width=3840;c.height=2160;const x=c.getContext('2d');x.fillStyle='#132933';x.fillRect(0,0,c.width,c.height);x.fillStyle='#ffd400';x.font='120px sans-serif';x.fillText('4K banner test • 3840 × 2160',150,220);for(const [a,b] of [[0,0],[3720,0],[0,2040],[3720,2040]]){x.fillStyle='#ff3535';x.fillRect(a,b,120,120);}return c.toDataURL('image/png').split(',')[1];}),'base64');
@@ -113,7 +118,7 @@ try {
   for(const width of [320,390,1440]) {
     await home.setViewportSize({width,height:width<500?844:900});await home.waitForTimeout(100);
     const measure=await home.evaluate(()=>{const s=document.getElementById('heroSlider'),i=s.querySelector('.slide.active img'),r=s.getBoundingClientRect();return {width:r.width,height:r.height,fit:getComputedStyle(i).objectFit,overflow:document.documentElement.scrollWidth>innerWidth};});
-    assert.equal(measure.fit,'contain');assert.equal(measure.overflow,false);results.push({viewport:width,...measure});
+    assert.equal(measure.fit,'cover');assert.equal(measure.overflow,false);results.push({viewport:width,...measure});
     if(visual)await home.screenshot({path:path.join(visual,`home-${width}.png`)});
     await admin.setViewportSize({width,height:width<500?844:900});
     assert.equal(await admin.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
@@ -162,6 +167,96 @@ try {
   for(const row of [...db]) await repository.remove(row.id,row.updated_at);
   await home.waitForFunction(()=>document.querySelector('.home-banner-layout').hidden);
   assert.equal((await repository.list()).managed,true);assert.equal(objects.size,0);
+  // Upgrade the old main-only manager using ONLY existing Mirpanel assets.
+  catalog=extractAdminState(fs.readFileSync(path.join(root,'app.js'),'utf8'));
+  const capcut=catalog.products.find(product=>product.id==='capcut');
+  const mainId=crypto.randomUUID();
+  db.push({id:mainId,title:'CapCut Pro banneri',legacy_image:capcut.banner.desktopImage,media_path:null,active:true,sort_order:1,updated_at:new Date().toISOString(),options:{url:'/mehsul/capcut-pro'}});
+  await repository.list(true);
+  assert.equal(db.length,3,'One main + existing YouTube/Support presets');
+  await repository.list(true); assert.equal(db.length,3,'Admin retry cannot duplicate presets');
+  assert.equal(db.find(row=>row.id===mainId).legacy_image,capcut.banner.desktopImage);
+  const sideRows=db.filter(row=>row.options.placement==='side');
+  assert.equal(sideRows.length,2);
+  await home.waitForFunction(()=>document.querySelectorAll('.home-side-banner').length===2);
+  const dimensions=[];
+  for(const [width,height] of [[320,568],[390,844],[768,900],[1024,768],[1440,900],[1920,1080]]) {
+    await home.setViewportSize({width,height}); await home.waitForTimeout(150);
+    const geometry=await home.evaluate(()=>{
+      const box=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};
+      const image=document.querySelector('#heroSlider .active img'), frame=box('#heroSlider');
+      return {frame,layout:box('.home-banner-layout'),sides:[...document.querySelectorAll('.home-side-banner')].map(node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};}),fit:getComputedStyle(image).objectFit,overflow:document.documentElement.scrollWidth-innerWidth,storyTop:document.getElementById('homeStories').getBoundingClientRect().top};
+    });
+    assert.equal(geometry.fit,'cover'); assert.equal(geometry.overflow,0);
+    if(visual)await home.screenshot({path:path.join(visual,`hero-${width}.png`)});
+    console.log('HERO',width,JSON.stringify(geometry));
+    if(width>=1024) {
+      assert.ok(geometry.sides[0].x>geometry.frame.x+geometry.frame.width);
+      assert.ok(Math.abs(geometry.sides[0].y-geometry.frame.y)<1);
+      assert.ok(Math.abs(geometry.sides[1].bottom-geometry.frame.bottom)<1);
+      assert.ok(geometry.frame.height<=400);
+    } else if(width>=768) {
+      assert.ok(geometry.sides[0].y>=geometry.frame.bottom);
+      assert.equal(geometry.sides[0].width,geometry.sides[1].width);
+    } else {
+      assert.ok(geometry.sides[0].y>=geometry.frame.bottom);
+      const offset=await home.evaluate(()=>{const host=document.getElementById('homeSideBanners');host.scrollTo({left:host.scrollWidth,behavior:'instant'});return host.scrollLeft;});
+      assert.ok(offset>0,'Mobile side swipe/scroll works');
+      await home.evaluate(()=>document.getElementById('homeSideBanners').scrollTo({left:0,behavior:'instant'}));
+    }
+    dimensions.push({viewport:`${width}x${height}`,...geometry});
+    if(visual)await home.screenshot({path:path.join(visual,`hero-${width}.png`)});
+  }
+  const primary=await repository.list(true);
+  await repository.update(mainId,{order:1,active:true,version:primary.banners.find(b=>b.id===mainId).version,focus:'right'});
+  await home.waitForFunction(()=>getComputedStyle(document.querySelector('#heroSlider .active img')).objectPosition==='100% 50%');
+  await assert.rejects(repository.update(mainId,{order:1,active:true,version:db.find(r=>r.id===mainId).updated_at,url:'javascript:alert(1)'}),/HTTPS/);
+  for(const url of ['https://','http://evil.test','//evil.test','https://user:password@evil.test','https://evil.test\\path','relative']) assert.throws(()=>bannerLink(url));
+  assert.equal(bannerLink('/mehsul/capcut-pro'),'/mehsul/capcut-pro');
+  await admin.reload();await admin.waitForFunction(()=>document.querySelectorAll('[data-banner-id]').length===3);
+  const sideCard=admin.locator(`[data-banner-id="${sideRows[0].id}"]`);
+  await sideCard.locator('[data-banner-placement]').selectOption('main');
+  await home.waitForFunction(()=>document.querySelectorAll('#heroSlider .slide').length===2 && document.querySelectorAll('.home-side-banner').length===1);
+  await sideCard.locator('[data-banner-placement]').selectOption('side');
+  await home.waitForFunction(()=>document.querySelectorAll('.home-side-banner').length===2);
+  // Optional mobile replacement is a private upload on the SAME banner row.
+  await admin.locator(`[data-banner-id="${mainId}"] details`).evaluate(node=>node.open=true);
+  await admin.locator(`[data-banner-id="${mainId}"] [data-banner-mobile]`).click();
+  await admin.locator('[data-banner-file]').setInputFiles(image);
+  await admin.waitForFunction(()=>!!document.querySelector('[data-banner-mobile-clear]'));
+  assert.equal(db.length,3); assert.ok(db.find(row=>row.id===mainId).options.mobileMediaPath);
+  await admin.locator(`[data-banner-id="${mainId}"] details`).evaluate(node=>node.open=true);
+  await admin.locator(`[data-banner-id="${mainId}"] [data-banner-mobile-clear]`).click();
+  await admin.waitForFunction(()=>!document.querySelector('[data-banner-mobile-clear]'));
+  assert.equal(objects.size,0);
+  await home.setViewportSize({width:1440,height:900});
+  for(let count=1;count>=0;count--) {
+    for(let i=0;i<sideRows.length;i++) {const r=db.find(r=>r.id===sideRows[i].id); await repository.update(r.id,{order:r.sort_order,active:i<count,version:r.updated_at});}
+    await home.waitForFunction(n=>document.querySelectorAll('.home-side-banner').length===n,count);
+    const state=await home.evaluate(()=>({width:document.getElementById('heroSlider').getBoundingClientRect().width,root:document.querySelector('.home-banner-layout').getBoundingClientRect().width,sideHeight:document.querySelector('.home-side-banner')?.getBoundingClientRect().height,mainHeight:document.getElementById('heroSlider').getBoundingClientRect().height}));
+    if(count===0) assert.ok(Math.abs(state.width-state.root)<1);
+    else assert.ok(Math.abs(state.sideHeight-state.mainHeight)<1);
+    assert.equal(await home.locator('.slider-arrow:visible').count(),0,'Single main hides controls');
+    if(visual) await home.screenshot({path:path.join(visual,`hero-side-${count}.png`)});
+  }
+  for(const r of sideRows) await repository.update(r.id,{order:r.sort_order,active:true,version:db.find(row=>row.id===r.id).updated_at});
+  const thirdId=crypto.randomUUID();db.push({...sideRows[0],id:thirdId,sort_order:100,updated_at:new Date().toISOString()});
+  await home.waitForFunction(()=>document.querySelectorAll('.home-side-banner').length===2);
+  assert.equal(await home.locator(`[data-banner-id="${thirdId}"]`).count(),0,'Only first two active side banners render');
+  const deleted=db.find(r=>r.id===sideRows[0].id);await repository.remove(deleted.id,deleted.updated_at);
+  await repository.list(true);assert.equal(db.some(r=>r.id===deleted.id),false,'Deleted preset never returns');
+  // Re-initializing the same slider cannot multiply timers/listeners.
+  const extraMain=crypto.randomUUID();db.push({...db.find(r=>r.id===mainId),id:extraMain,sort_order:101,updated_at:new Date().toISOString()});
+  await home.waitForFunction(()=>document.querySelectorAll('#heroSlider .slide').length===2);
+  await home.mouse.move(0,0);await home.evaluate(()=>document.activeElement?.blur());
+  await home.evaluate(()=>{for(let i=0;i<6;i++) initSlider();});
+  assert.equal(await home.evaluate(()=>heroTestTimers.size),1,'Exactly one 5-second timer after repeated initialization');
+  const beforeIndex=await home.evaluate(()=>currentSlide);await home.waitForTimeout(5200);
+  assert.equal(await home.evaluate(()=>currentSlide),1-beforeIndex);
+  await home.locator('#heroSlider').focus();assert.equal(await home.evaluate(()=>heroTestTimers.size),0,'Focus pauses timer');
+  await home.evaluate(()=>document.activeElement.blur());await home.waitForTimeout(100);assert.equal(await home.evaluate(()=>heroTestTimers.size),1);
+  assert.equal(await home.locator('.home-side-banner').count(),2);
+  assert.deepEqual(await home.evaluate(()=>({products:document.getElementById('grid').innerHTML,stories:document.getElementById('homeStories').innerHTML})),unchanged);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({results,formats:formatResults,slider:'5s advance and loop passed',retry:'fresh signature, no duplicate, old image retained',activeAndDeletion:'passed',javascriptErrors:errors.length,storage:'isolated in-memory Supabase protocol fixture; NOT real Supabase/PostgreSQL'},null,2));
+  console.log(JSON.stringify({results,dimensions,formats:formatResults,slider:'5s advance and loop passed',sideCases:'0/1/2/3, initial existing assets, no resurrection, focus and placement PASS',mobileUpload:'same row, private storage, clear/cleanup PASS',retry:'fresh signature, no duplicate, old image retained',activeAndDeletion:'passed',javascriptErrors:errors.length,storage:'isolated in-memory Supabase protocol fixture; NOT real Supabase/PostgreSQL'},null,2));
 }finally{await browser.close();await new Promise(r=>server.close(r));objects.clear();db.length=0;}

@@ -1190,3 +1190,12 @@ th {
 .homepageBannerControls details input {width:100%;min-width:0;}
 .homepageBannerControls .btn {min-height:44px;}
 @media(max-width:600px) { .homepageBannerCard, .homepageBannerJob {grid-template-columns:minmax(0,1fr);} .homepageBannerJob img {height:110px;} }
+.homepageBannerNewPlacement {display:inline-grid;gap:5px;margin:12px;max-width:100%;}
+.homepageBannerPreview {min-width:0;position:relative;}
+.homepageBannerPreview picture {display:block;aspect-ratio:var(--preview-ratio,2.38);overflow:hidden;border-radius:10px;background:#0b0b0b;}
+.homepageBannerPreview picture img {height:100%;object-fit:cover;object-position:var(--banner-focus,center);}
+.homepageBannerPreview small {display:block;margin-top:6px;color:#a99e78;font-size:12px;}
+.homepageBannerControls label {min-width:0;max-width:100%;}
+.homepageBannerControls select,.homepageBannerJob select,.homepageBannerNewPlacement select {max-width:100%;min-height:44px;font-size:16px;}
+.homepageBannerControls details .btn {margin-top:10px;}
+@media(max-width:1023px) {.homepageBannerPreview picture {aspect-ratio:1600/670;}}

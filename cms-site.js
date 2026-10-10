@@ -225,13 +225,24 @@
   }
 
   function applyBanners() {
-    const banners = liveBanners === null ? activeBanners() : liveBanners;
+    const all = liveBanners === null ? activeBanners() : liveBanners;
+    const banners = all.filter(banner=>banner.placement!=='side');
+    const sides = all.filter(banner=>banner.placement==='side').slice(0,2);
     const slider = document.getElementById("heroSlider");
     if (!slider) return;
+    const activeId=slider.querySelector('.slide.active')?.dataset.bannerId;
+    const activeIndex=Math.max(0,banners.findIndex(b=>b.id===activeId));
+    const layout=slider.closest('.home-banner-layout'), sideHost=document.getElementById('homeSideBanners');
     slider.querySelectorAll(".slide, .slider-dots").forEach((element) => element.remove());
     slider.hidden = banners.length === 0;
-    slider.parentElement.hidden = banners.length === 0;
-    slider.parentElement?.classList.toggle("no-product-banners", banners.length === 0);
+    layout.hidden = banners.length+sides.length === 0;
+    layout.classList.toggle('has-side-banners',sides.length>0);
+    layout.classList.toggle('no-main-banner',!banners.length);
+    if(sideHost) {
+      sideHost.replaceChildren(); sideHost.hidden=!sides.length;
+      sideHost.dataset.count=String(sides.length);
+      sides.forEach(banner=>sideHost.appendChild(bannerPanel(banner,false,false)));
+    }
     slider.querySelectorAll(".slider-arrow").forEach((arrow) => {
       arrow.hidden = banners.length < 2;
     });
@@ -239,44 +250,52 @@
     const dots = document.createElement("div");
     dots.className = "slider-dots";
     banners.forEach((banner, index) => {
-      const href = optionalHref(banner.url);
-      const link = document.createElement(href ? "a" : "div");
-      link.className = `slide${index === 0 ? " active" : ""}`;
-      if (href) link.href = href;
-      if (href && banner.newTab) {link.target='_blank';link.rel='noopener noreferrer';}
-      if (banner.title || banner.alt) link.setAttribute("aria-label", banner.alt || banner.title);
-      const picture = document.createElement("picture");
-      const desktopImage = safeImage(banner.desktopImage);
-      const mobileImage = safeImage(banner.mobileImage);
-      if (mobileImage) {
-        const mobile = document.createElement("source");
-        mobile.media = "(max-width: 760px)";
-        mobile.srcset = mobileImage;
-        picture.appendChild(mobile);
-      }
-      const image = document.createElement("img");
-      if(index===0) image.src = desktopImage;
-      else image.dataset.src = desktopImage;
-      image.alt = banner.alt || banner.title || "";
-      image.className = "full-slide-img";
-      image.loading = index === 0 ? "eager" : "lazy";
-      image.decoding = "async";
-      image.width = 1600;
-      image.height = 670;
-      if (index === 0) image.fetchPriority = "high";
-      if(liveBanners===null) imageWithFallback(image, [banner.product?.image, "assets/logo.png"]);
-      picture.appendChild(image);
-      link.appendChild(picture);
+      const link=bannerPanel(banner,true,index===activeIndex);
       slider.appendChild(link);
       if (banners.length > 1) {
-        const dot = document.createElement("span");
-        dot.className = `dot${index === 0 ? " active" : ""}`;
+        const dot = document.createElement("button");
+        dot.type='button'; dot.setAttribute('aria-label',`${index+1}-ci banner`);
+        dot.className = `dot${index === activeIndex ? " active" : ""}`;
         dot.dataset.index = String(index);
         dots.appendChild(dot);
       }
     });
     if (banners.length > 1) slider.appendChild(dots);
     if (typeof window.initSlider === "function") window.initSlider();
+  }
+
+  function bannerPanel(banner, main, active) {
+      const href = optionalHref(banner.url);
+      const link = document.createElement(href ? "a" : "div");
+      link.className = main ? `slide${active ? " active" : ""}` : 'home-side-banner';
+      link.dataset.bannerId=banner.id || '';
+      link.style.setProperty('--banner-focus',['left','right'].includes(banner.focus)?banner.focus:'center');
+      if (href) link.href = href;
+      if (href && (banner.newTab || new URL(href,location.href).origin!==location.origin)) {link.target='_blank';link.rel='noopener noreferrer';}
+      if (banner.title || banner.alt) link.setAttribute("aria-label", banner.alt || banner.title);
+      const picture = document.createElement("picture");
+      const desktopImage = safeImage(banner.desktopImage);
+      const mobileImage = safeImage(banner.mobileImage);
+      if (mobileImage) {
+        const mobile = document.createElement("source");
+        mobile.media = "(max-width: 767px)";
+        if(main && !active) mobile.dataset.srcset=mobileImage; else mobile.srcset=mobileImage;
+        picture.appendChild(mobile);
+      }
+      const image = document.createElement("img");
+      if(!main || active) image.src = desktopImage;
+      else image.dataset.src = desktopImage;
+      image.alt = banner.alt || banner.title || "";
+      image.className = "full-slide-img";
+      image.loading = main && active ? "eager" : "lazy";
+      image.decoding = "async";
+      image.width = 1600;
+      image.height = 670;
+      if (main && active) image.fetchPriority = "high";
+      image.addEventListener('error',()=>{image.hidden=true;link.classList.add('banner-image-error');},{once:true});
+      picture.appendChild(image);
+      link.appendChild(picture);
+      return link;
   }
 
   async function pollHomepageBanners() {
@@ -296,9 +315,10 @@
       if(payload.managed!==true || !Array.isArray(payload.banners)) return;
       const revision=JSON.stringify(payload.banners);
       if(revision===bannerRevision) return;
-      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,title:b.title,alt:b.title,url:b.url,newTab:b.newTab,order:b.order,id:b.id})).sort((a,b)=>a.order-b.order);
+      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus})).sort((a,b)=>a.order-b.order || String(a.id).localeCompare(String(b.id)));
       if(next.length) {
-        const first=new Image(); first.fetchPriority='high'; first.src=next[0].desktopImage;
+        const banner=next.find(b=>b.placement==='main') || next[0];
+        const first=new Image(); first.fetchPriority='high'; first.src=innerWidth<768 && banner.mobileImage?banner.mobileImage:banner.desktopImage;
         let imageTimeout;
         try {await Promise.race([first.decode(),new Promise((_,reject)=>{imageTimeout=setTimeout(()=>reject(new Error('Banner image timeout')),8000);})]);}
         finally {clearTimeout(imageTimeout);}
