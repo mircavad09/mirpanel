@@ -24,6 +24,7 @@ try {
     await page.waitForFunction(()=>document.querySelectorAll('.home-side-banner').length===2);
     await page.waitForFunction(()=>[...document.querySelectorAll('#homeHero img')].every(i=>i.complete&&i.naturalWidth));
     await page.waitForFunction(()=>document.querySelectorAll('.home-story').length===2);
+    await page.waitForFunction(()=>{const splash=document.getElementById('newSplashScreen');return !splash || splash.hidden || getComputedStyle(splash).display==='none';});
     const geometry=await page.evaluate(()=>{const rect=node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};return {root:rect(document.getElementById('homeHero')),main:rect(document.getElementById('heroSlider')),sides:[...document.querySelectorAll('.home-side-banner')].map(rect),fit:[...document.querySelectorAll('#homeHero img')].map(i=>getComputedStyle(i).objectFit),overflow:Math.max(0,document.documentElement.scrollWidth-innerWidth),storyCount:document.querySelectorAll('.home-story').length};});
     assert.equal(geometry.overflow,0);assert.ok(geometry.fit.every(f=>f==='cover'));
     if(width>=1024){assert.ok(Math.abs(geometry.main.bottom-geometry.sides[1].bottom)<1);assert.ok(Math.abs(geometry.main.y-geometry.sides[0].y)<1);}
