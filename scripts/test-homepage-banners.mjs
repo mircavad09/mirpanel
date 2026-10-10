@@ -220,21 +220,14 @@ try {
   await sideCard.locator('[data-banner-placement]').selectOption('side');
   await home.waitForFunction(()=>document.querySelectorAll('.home-side-banner').length===2);
   // Optional mobile replacement is a private upload on the SAME banner row.
-  await admin.locator(`[data-banner-id="${mainId}"] details:not(.homepageBannerMobilePreview)`).evaluate(node=>node.open=true);
+  await admin.locator(`[data-banner-id="${mainId}"] details`).evaluate(node=>node.open=true);
   await admin.locator(`[data-banner-id="${mainId}"] [data-banner-mobile]`).click();
   await admin.locator('[data-banner-file]').setInputFiles(image);
   await admin.waitForFunction(()=>!!document.querySelector('[data-banner-mobile-clear]'));
   assert.equal(db.length,3); assert.ok(db.find(row=>row.id===mainId).options.mobileMediaPath);
-  await admin.locator(`[data-banner-id="${mainId}"] details:not(.homepageBannerMobilePreview)`).evaluate(node=>node.open=true);
+  await admin.locator(`[data-banner-id="${mainId}"] details`).evaluate(node=>node.open=true);
   await admin.locator(`[data-banner-id="${mainId}"] [data-banner-mobile-clear]`).click();
   await admin.waitForFunction(()=>!document.querySelector('[data-banner-mobile-clear]'));
-  assert.equal(await admin.locator(`[data-banner-id="${mainId}"] .homepageBannerMobileWarning`).textContent(),'Mobil görünüş üçün ayrıca şəkil əlavə etmək tövsiyə olunur.');
-  await admin.setViewportSize({width:390,height:844});
-  const mobilePreview=admin.locator(`[data-banner-id="${mainId}"] .homepageBannerMobilePreview`);
-  await mobilePreview.evaluate(node=>node.open=true);
-  assert.ok((await mobilePreview.locator('div').boundingBox()).width<=366);
-  assert.equal(await mobilePreview.locator('img').evaluate(n=>getComputedStyle(n).objectFit),'cover');
-  if(visual){await mobilePreview.scrollIntoViewIfNeeded();await admin.screenshot({path:path.join(visual,'admin-mobile-preview-390.png')});}
   assert.equal(objects.size,0);
   await home.setViewportSize({width:1440,height:900});
   for(let count=1;count>=0;count--) {

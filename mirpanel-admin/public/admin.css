@@ -1199,6 +1199,3 @@ th {
 .homepageBannerControls select,.homepageBannerJob select,.homepageBannerNewPlacement select {max-width:100%;min-height:44px;font-size:16px;}
 .homepageBannerControls details .btn {margin-top:10px;}
 @media(max-width:1023px) {.homepageBannerPreview picture {aspect-ratio:1600/670;}}
-.homepageBannerMobileWarning {flex-basis:100%;color:#ffd400;font-size:13px;}
-.homepageBannerMobilePreview>div {width:min(366px,100%);aspect-ratio:1600/670;overflow:hidden;border-radius:18px;background:#0b0b0b;margin:10px auto;}
-.homepageBannerMobilePreview>div img {width:100%;height:100%;object-fit:cover;object-position:var(--banner-focus,center);}
