@@ -39,7 +39,7 @@
 .home-page #grid .badge {font-size:10px;line-height:14px;height:24px;padding:4px 8px;box-sizing:border-box;max-width:100%;overflow:hidden;white-space:nowrap;}
 .home-page #grid .meta {height:38px;line-height:19px;font-size:12px;overflow:hidden;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;}
 .home-page #grid .priceRow {margin-top:auto!important;width:100%;}
-.home-page #grid .btn.primary {width:100%;min-height:44px;box-sizing:border-box;display:flex;align-items:center;justify-content:center;margin:0;font-size:13px;}
+.home-page #grid .btn.primary {width:100%;min-height:44px!important;box-sizing:border-box;display:flex;align-items:center;justify-content:center;margin:0;font-size:13px;}
 .home-card-highlight {outline:2px solid #ffd400;outline-offset:3px;}
 .home-empty {grid-column:1/-1;padding:32px 16px;color:#d8d6cb;text-align:center;min-height:160px;}
 .home-page #products-section {scroll-margin-top:120px;}
