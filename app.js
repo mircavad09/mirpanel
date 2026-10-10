@@ -4384,7 +4384,7 @@ function renderHomeDiscovery() {
       link.setAttribute("aria-label", `${presentation.title} səhifəsinə keç`);
       if (duplicate) link.tabIndex = -1;
       const logo = document.createElement("span"); logo.className = "home-quick-logo"; logo.setAttribute("aria-hidden", "true");
-      const image = document.createElement("img"); image.src = presentation.logo; image.alt = ""; image.loading = "lazy"; image.addEventListener("error", () => logo.remove(), { once: true });
+      const image = document.createElement("img"); image.src = presentation.logo; image.alt = ""; image.width=42;image.height=42;image.loading = "lazy"; image.addEventListener("error", () => logo.remove(), { once: true });
       const label = document.createElement("span"); label.className = "home-quick-label"; label.textContent = presentation.title;
       logo.appendChild(image); link.append(logo, label); return link;
     };
@@ -4399,6 +4399,9 @@ function renderHomeDiscovery() {
     duplicate.append(...chosen.map((product) => buildLink(product, true)));
     track.append(primary, duplicate);
     quickLinks.replaceChildren(track);
+    quickLinks._fillObserver?.disconnect();
+    const fill=()=>{primary.querySelectorAll('[data-fill-copy]').forEach(node=>node.remove());const originals=[...primary.children];let count=0;while(primary.scrollWidth<quickLinks.clientWidth+150 && count++<8){for(const original of originals){const copy=original.cloneNode(true);copy.dataset.fillCopy='true';copy.tabIndex=-1;copy.setAttribute('aria-hidden','true');primary.appendChild(copy);}}duplicate.replaceChildren(...[...primary.children].map(node=>{const copy=node.cloneNode(true);copy.tabIndex=-1;return copy;}));};
+    quickLinks._fillObserver=new ResizeObserver(fill);quickLinks._fillObserver.observe(quickLinks);fill();
     quickLinks.hidden = !chosen.length;
     quickLinks.onpointerdown = () => {
       quickLinks.classList.add("is-interacting");
@@ -4422,6 +4425,7 @@ function buildTabs() {
   homeFilter = hasBestSeller ? "best" : "all";
   tabs.innerHTML = `
     <div class="home-filter-tabs" role="tablist" aria-label="Məhsul filtrləri">
+      <button type="button" class="home-filter-tab" data-home-filter="all" role="tab" aria-selected="false">Bütün məhsullar</button>
       ${hasBestSeller ? '<button type="button" class="home-filter-tab active" data-home-filter="best" role="tab" aria-selected="true">Ən çox satılanlar</button>' : ''}
       ${hasPremium ? '<button type="button" class="home-filter-tab" data-home-filter="premium" role="tab" aria-selected="false">Premium</button>' : ''}
     </div>
@@ -4443,18 +4447,19 @@ function renderGrid() {
   const grid = document.getElementById("grid");
   if (!grid) return;
   const searchInp = document.getElementById("q");
-  const q = (searchInp?.value || "").trim().toLowerCase();
+  const normalize=value=>String(value||'').toLocaleLowerCase('az').normalize('NFD').replace(/\p{M}/gu,'').replaceAll('ı','i');
+  const q = normalize(searchInp?.value).trim();
   
   const sortSelect = document.getElementById("sortSelect");
   const sortVal = sortSelect ? sortSelect.value : "default";
 
   let list = DATA.products.filter((p) => p.active !== false).filter((p) => {
     if (!q) return true;
-    const blob = [p.title, p.desc, p.category, p.variant].join(" ").toLowerCase();
+    const blob = normalize([p.title, p.desc, p.category, p.variant].join(" "));
     return blob.includes(q);
   });
-  if (!q && homeFilter === "best") list = list.filter((product) => product.bestSeller === true);
-  if (!q && homeFilter === "premium") list = list.filter((product) => product.badge === "Premium");
+  if (homeFilter === "best") list = list.filter((product) => product.bestSeller === true);
+  if (homeFilter === "premium") list = list.filter((product) => product.badge === "Premium");
   
   list.sort((a, b) => {
      const getPrice = (prod) => {
@@ -4481,6 +4486,8 @@ function renderGrid() {
   });
 
   grid.innerHTML = list.map((p, idx) => cardHTML(p, idx)).join("");
+  if(!list.length)grid.innerHTML='<p class="home-empty" role="status">Uyğun məhsul tapılmadı. Axtarışı və ya filtri dəyişin.</p>';
+  window.dispatchEvent(new Event('mirpanel:grid-rendered'));
 }
 
 function cardHTML(p, idx) {
@@ -4492,9 +4499,9 @@ function cardHTML(p, idx) {
     .replace(/^\/+|\/+$/g, "");
   return `
     <a class="card" href="/mehsul/${productSlug}" data-product-id="${p.id}" style="animation-delay:${Math.min(idx * 0.03, 0.25)}s">
-      <div class="imgWrap"><img class="img" src="${p.image}" alt=""><div class="cornerPrice">${showPrice}</div></div>
+      <div class="imgWrap"><img class="img" src="${p.image}" alt="" width="400" height="400" loading="lazy" decoding="async"><div class="cornerPrice">${showPrice}</div></div>
       <div class="pad">
-        <div class="topline"><h3 class="title">${esc(publicProductTitle(p.title))}</h3><div class="badge">${esc(p.badge)}</div></div>
+        <div class="topline"><h3 class="title" title="${esc(publicProductTitle(p.title))}" aria-label="${esc(publicProductTitle(p.title))}">${esc(publicProductTitle(p.title))}</h3><div class="badge">${esc(p.badge)}</div></div>
         <div class="meta">${esc(p.desc)}</div>
         <div class="priceRow"><span class="btn primary">${UI.orderBtn}</span></div>
       </div>

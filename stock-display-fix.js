@@ -141,20 +141,24 @@
         DATA.products
           .filter((product) => product.active !== false)
           .filter((product) => productMatches(product, query))
+          .filter((product)=>!document.body.classList.contains('home-page') || typeof homeFilter==='undefined' || (homeFilter==='best'?product.bestSeller===true:homeFilter==='premium'?product.badge==='Premium':true))
       );
 
       if (!list.length) {
-        grid.innerHTML = `<div class="mpNoSearchResult" style="grid-column:1/-1; padding:28px 18px; border:1px solid rgba(255,212,0,.18); border-radius:18px; background:rgba(255,255,255,.035); color:rgba(255,255,255,.82); text-align:center; font-weight:800;">Nəticə tapılmadı</div>`;
+        grid.innerHTML = `<div class="mpNoSearchResult home-empty" role="status" style="grid-column:1/-1; padding:28px 18px; border:1px solid rgba(255,212,0,.18); border-radius:18px; background:rgba(255,255,255,.035); color:rgba(255,255,255,.82); text-align:center;">Uyğun məhsul tapılmadı. Axtarışı və ya filtri dəyişin.</div>`;
+        window.dispatchEvent(new Event('mirpanel:grid-rendered'));
         return;
       }
 
       grid.innerHTML = list.map((product, index) => cardHTML(product, index)).join("");
+      window.dispatchEvent(new Event('mirpanel:grid-rendered'));
     };
   }
 
   function installSearchInputs() {
     const bind = () => {
       searchInputs().forEach((input) => {
+        if(input.id==='q') return; // app.js owns this input; one listener only.
         if (input.dataset.mirpanelSearchBound === "1") return;
         input.dataset.mirpanelSearchBound = "1";
         input.addEventListener("input", () => {
@@ -183,9 +187,9 @@
       const productUrl = productSlug ? `/mehsul/${productSlug}` : "#";
       return `
         <a class="card" href="${productUrl}" data-product-id="${escapeHtml(product.id)}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s;text-decoration:none;color:inherit">
-          <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt=""><div class="cornerPrice">${priceText(product)}</div></div>
+          <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt="" width="400" height="400" loading="lazy" decoding="async"><div class="cornerPrice">${priceText(product)}</div></div>
           <div class="pad">
-            <div class="topline"><h3 class="title">${escapeHtml(publicProductTitle(product.title))}</h3><div class="badge">${escapeHtml(product.badge)}</div></div>
+            <div class="topline"><h3 class="title" title="${escapeHtml(publicProductTitle(product.title))}" aria-label="${escapeHtml(publicProductTitle(product.title))}">${escapeHtml(publicProductTitle(product.title))}</h3><div class="badge">${escapeHtml(product.badge)}</div></div>
             <div class="meta">${escapeHtml(product.desc)}</div>
             ${stockBadgeHTML(product)}
             <div class="priceRow"><span class="btn primary" style="display:inline-flex;align-items:center;justify-content:center">${escapeHtml(UI?.orderBtn || "Sifariş et")}</span></div>

@@ -16,13 +16,12 @@
   function runSearch(form) {
     const input = form.querySelector('input[type="search"]');
     const query = String(input?.value || "").trim();
-    if (!query) return;
+    if (!query && location.pathname !== '/') return;
     if (location.pathname === "/") {
       const homeSearch = document.getElementById("q");
       if (homeSearch) {
         homeSearch.value = query;
         homeSearch.dispatchEvent(new Event("input", { bubbles: true }));
-        document.getElementById("products-section")?.scrollIntoView({ behavior: "smooth", block: "start" });
         return;
       }
     }
@@ -35,6 +34,8 @@
   }
 
   function initHeader(header) {
+    if(header.dataset.headerBound) return;
+    header.dataset.headerBound='true';
     const menuButton = header.querySelector(".site-header-menu-button");
     const closeButton = header.querySelector(".site-header-menu-close");
     const overlay = header.querySelector(".site-header-overlay");
@@ -73,6 +74,7 @@
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         runSearch(form);
+        if(drawer?.contains(form) && document.body.classList.contains('home-page')) closeMenu(false);
       });
     });
 
