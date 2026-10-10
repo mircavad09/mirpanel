@@ -515,6 +515,7 @@ async function loadState() {
     state.dirty = state.draftSaved;
     $("commitInfo").textContent = `Yükləndi: ${new Date(payload.loadedAt).toLocaleString("az-AZ")} / ${payload.sha.slice(0, 7)}`;
     renderAll();
+    window.dispatchEvent(new Event('mirpanel:product-catalog-loaded'));
   } catch (error) {
     if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") location.href = "/login.html?reason=session_required";
     else {
@@ -710,6 +711,9 @@ function renderProductForm() {
   setValue("productBestSeller", product.bestSeller, "checked");
   setValue("productDesc", product.desc);
   setValue("productNote", product.note);
+  setValue("productDeliveryType", product.deliveryType || 'manual');
+  setValue("productDeliveryText", product.deliveryText || '');
+  setValue("productCommissionFree", product.commissionFree === true, 'checked');
   setValue("productSeoSlug", product.seoSlug || "");
   updateProductSeoUrlPreview(product.seoSlug || "");
   setValue("productSeoTitle", product.seoTitle || "");
@@ -926,6 +930,9 @@ bindProductField("productSeller", (p, e) => p.seller = e.value);
 bindProductField("productBestSeller", (p, e) => p.bestSeller = e.checked);
 bindProductField("productDesc", (p, e) => p.desc = e.value);
 bindProductField("productNote", (p, e) => p.note = e.value);
+bindProductField('productDeliveryType', (p,e) => p.deliveryType=e.value);
+bindProductField('productDeliveryText', (p,e) => p.deliveryText=e.value);
+bindProductField('productCommissionFree', (p,e) => p.commissionFree=e.checked);
 function updateProductSeoSlug(showWarning = false) {
   const product = selectedProduct();
   const input = $("productSeoSlug");
@@ -985,26 +992,58 @@ function renderPlans(product) {
   $("plans").innerHTML = (product.plans || []).map((plan, index) => `
     <div class="planRow">
       <input data-plan="${index}" data-field="label" placeholder="Label" value="${escapeHtml(plan.label || "")}">
-      <input data-plan="${index}" data-field="months" type="number" placeholder="Ay" value="${escapeHtml(plan.months ?? "")}">
-      <input data-plan="${index}" data-field="price" type="number" step="0.01" placeholder="Qiymət" value="${escapeHtml(plan.price ?? "")}">
+      <input data-plan="${index}" data-field="months" type="number" min="1" step="1" aria-label="Müddət, ayla" placeholder="Ay" value="${escapeHtml(plan.months ?? "")}">
+      <input data-plan="${index}" data-field="price" type="number" min="0" step="0.01" aria-label="Cari qiymət" placeholder="Qiymət" value="${escapeHtml(plan.price ?? "")}">
       <input data-plan="${index}" data-field="regularPrice" type="number" min="0" step="0.01" aria-label="Əvvəlki qiymət" placeholder="Əvvəlki qiymət" value="${escapeHtml(plan.regularPrice ?? "")}">
       <button class="iconBtn movePlan" data-plan="${index}" data-direction="-1" type="button" aria-label="Yuxarı">↑</button>
       <button class="iconBtn movePlan" data-plan="${index}" data-direction="1" type="button" aria-label="Aşağı">↓</button>
       <button class="iconBtn removePlan" data-plan="${index}" type="button">X</button>
+      <div class="planMetadata">
+        <label>Zəmanət<select data-plan="${index}" data-planmeta="warrantyMode"><option value="inherit" ${!plan.warrantyMode || plan.warrantyMode==='inherit'?'selected':''}>Köhnə plan məlumatı</option><option value="guaranteed" ${plan.warrantyMode==='guaranteed'?'selected':''}>Zəmanət var</option><option value="none" ${plan.warrantyMode==='none'?'selected':''}>Zəmanətsiz</option></select></label>
+        <label>Zəmanət müddəti<input type="number" min="1" step="1" data-plan="${index}" data-planmeta="warrantyDuration" value="${escapeHtml(plan.warrantyDuration ?? '')}"></label>
+        <label>Vahid<select data-plan="${index}" data-planmeta="warrantyUnit"><option value="month">Ay</option><option value="day" ${plan.warrantyUnit==='day'?'selected':''}>Gün</option></select></label>
+        <label>Zəmanət mətni<input type="text" maxlength="300" data-plan="${index}" data-planmeta="warrantyText" value="${escapeHtml(plan.warrantyText || '')}"></label>
+        <label>Stok görünüşü<select data-plan="${index}" data-planmeta="stockVisibility"><option value="hide">Stok mətnini gizlət</option><option value="show" ${plan.stockVisibility==='show'?'selected':''}>Real stoku göstər</option></select></label>
+        <label class="switchLine"><input type="checkbox" data-plan="${index}" data-planmeta="active" ${plan.active!==false?'checked':''}>Aktiv plan</label>
+        <label class="switchLine"><input type="checkbox" data-plan="${index}" data-planmeta="bestValue" ${plan.bestValue===true?'checked':''}>Ən sərfəli — override</label>
+        <p class="planMetadataHint">Plan üzrə real stok mənbəyi yoxdursa stok gizlənir. Məhsulun ümumi stoku planlara köçürülmür.${Number(plan.regularPrice)>0 && Number(plan.regularPrice)<=Number(plan.price)?' Əvvəlki qiymət cari qiymətdən yüksək deyil; endirim göstərilməyəcək.':''}</p>
+      </div>
     </div>
   `).join("");
+
+  $("plans").querySelectorAll('[data-planmeta]').forEach(input => input.addEventListener('change',()=>{
+    const plan=product.plans[Number(input.dataset.plan)], field=input.dataset.planmeta;
+    if(!plan) return;
+    if (field==='warrantyText' && /[<>]/u.test(input.value)) { input.setCustomValidity('Yalnız adi mətn yazın.'); input.reportValidity(); return; }
+    input.setCustomValidity('');
+    if (!input.checkValidity()) { input.reportValidity(); return; }
+    if (input.type==='checkbox') {
+      plan[field]=input.checked;
+      if (field==='bestValue' && input.checked) product.plans.forEach((p,i)=>{if(i!==Number(input.dataset.plan)) p.bestValue=false;});
+    } else if (input.type==='number') {
+      if (input.value==='') delete plan[field]; else plan[field]=Number(input.value);
+    } else plan[field]=input.value;
+    markDirty();
+    if (field==='bestValue') renderPlans(product);
+  }));
 
   document.querySelectorAll("[data-field]").forEach((input) => {
     input.addEventListener("input", () => {
       const plan = product.plans[Number(input.dataset.plan)];
       if (!plan) return;
       if (input.dataset.field === "label") plan[input.dataset.field] = input.value;
-      else if (input.value === "") delete plan[input.dataset.field];
+      else if (input.value === "") {
+        delete plan[input.dataset.field];
+        if(input.dataset.field==='months') delete plan.duration_months;
+      }
       else if (input.dataset.field === "regularPrice") {
         const regularPrice = Math.max(0, Number(input.value) || 0);
         input.value = String(regularPrice);
         plan.regularPrice = regularPrice;
-      } else plan[input.dataset.field] = Number(input.value);
+      } else {
+        plan[input.dataset.field] = Number(input.value);
+        if (input.dataset.field==='months') plan.duration_months=Number(input.value);
+      }
       markDirty();
       renderProducts();
     });
@@ -1295,9 +1334,12 @@ $("addCategoryBtn").addEventListener("click", () => {
   });
 });
 
+let lastPlanAddition = 0;
 $("addPlanBtn").addEventListener("click", () => {
+  if (Date.now() - lastPlanAddition < 500) return;
   const product = selectedProduct();
   if (!product) return;
+  lastPlanAddition = Date.now();
   product.plans.push({ label: "", months: 1, price: 0 });
   markDirty();
   renderPlans(product);

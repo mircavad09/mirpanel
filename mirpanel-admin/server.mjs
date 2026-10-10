@@ -13,6 +13,7 @@ import { createNetflixAccountRepository } from "./netflix-account-repository.mjs
 import { createNetflixRequestGuard } from "./netflix-request-guard.mjs";
 import { createStoriesRepository } from "./stories-repository.mjs";
 import { createHomepageBannersRepository } from "./homepage-banners-repository.mjs";
+import { createProductSalesRepository } from './product-sales-repository.mjs';
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -636,6 +637,16 @@ function requireMutationAuth(request, response) {
 }
 
 async function handleApi(request, response) {
+  const salesUrl = new URL(request.url, 'http://localhost');
+  if (salesUrl.pathname === '/api/product-sales' && ['GET','OPTIONS'].includes(request.method)) {
+    const origin = String(request.headers.origin || '');
+    const headers = {'Cache-Control':'no-store',Vary:'Origin','Access-Control-Allow-Methods':'GET, OPTIONS',
+      ...(config.allowedOrigins.includes(origin) ? {'Access-Control-Allow-Origin':origin} : {})};
+    if (request.method === 'OPTIONS') { response.writeHead(204,headers); return response.end(); }
+    if (!productSales) return json(response,503,{error:'Satış statistikası xidməti hazır deyil.'},headers);
+    try { return json(response,200,await productSales.publicProduct(salesUrl.searchParams.get('productId') || ''),headers); }
+    catch(error) { return json(response,error.status || 503,{error:error.message},headers); }
+  }
   if ((request.method === 'GET' || request.method === 'OPTIONS') && request.url === '/api/homepage-banners') {
     const origin = String(request.headers.origin || '');
     const headers = {'Cache-Control':'no-store, max-age=0',Vary:'Origin',
@@ -710,6 +721,21 @@ async function handleApi(request, response) {
   }
 
   if (!requireAuth(request, response)) return;
+  if (request.url === '/api/admin/product-sales') {
+    if (!productSales) return json(response,503,{error:'Satış statistikası xidməti hazır deyil.'});
+    if (request.method === 'GET') return json(response,200,await productSales.snapshot());
+    if (request.method === 'PATCH') {
+      if (!requireMutationAuth(request,response)) return;
+      return json(response,200,await productSales.save(await readBody(request,150000),config.username || 'admin'));
+    }
+  }
+  if (request.url === '/api/admin/product-sales/initialize' && request.method === 'POST') {
+    if (!requireMutationAuth(request,response)) return;
+    if (!productSales) return json(response,503,{error:'Satış statistikası xidməti hazır deyil.'});
+    const body = await readBody(request,1000);
+    if (body.confirm !== true) return json(response,400,{error:'Tarixi bölgü üçün təsdiq tələb olunur.'});
+    return json(response,200,await productSales.initialize(config.username || 'admin'));
+  }
 
   if(request.url==='/api/admin/homepage-banners' && request.method==='GET') {
     if(!homepageBanners) return json(response,503,{error:'Banner xidməti hazır deyil.'});
@@ -1211,7 +1237,8 @@ async function handleApi(request, response) {
 const mime = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
-  ".js": "text/javascript; charset=utf-8"
+  ".js": "text/javascript; charset=utf-8",
+  ".mjs": "text/javascript; charset=utf-8"
 };
 
 const paymentSystem = createPaymentSystem({
@@ -1236,6 +1263,9 @@ const storiesSupabase = config.supabaseUrl && config.supabaseSecretKey
   ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false } })
   : null;
 const storiesRepository = storiesSupabase ? createStoriesRepository(storiesSupabase, { bucket: config.storiesBucket }) : null;
+const productSales = storiesSupabase ? createProductSalesRepository(storiesSupabase, {
+  loadCatalog:async()=>extractAdminState((await getAppFile()).source)
+}) : null;
 const homepageBanners = storiesSupabase ? createHomepageBannersRepository(storiesSupabase, {
   bucket:config.storiesBucket,loadCatalog:async()=>extractAdminState((await getAppFile()).source)
 }) : null;
@@ -1319,7 +1349,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/stories-admin.js"].includes(pathname)) {
+    if (["/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/stories-admin.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 

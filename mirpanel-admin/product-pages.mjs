@@ -1,3 +1,4 @@
+import { planMetrics, deliveryText } from './public/product-plan-utils.mjs';
 const SITE_URL = "https://mirpanel.com";
 const DELIVERY_TEXT = "7/24 anında təqdim edilir";
 
@@ -411,6 +412,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 <html lang="az">
 <head>
   <meta charset="UTF-8">
+  <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeAttribute(description)}">
@@ -439,7 +441,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=20260903-plan-rows-1">
+  <link rel="stylesheet" href="/product-page.css?v=detail-20261010-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-upload-20260908-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -474,7 +476,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
             <h1 id="pp-main-title" class="product-page-title">${escapeHtml(h1)}</h1>
             ${product.desc ? `<p class="product-page-description">${escapeHtml(product.desc)}</p>` : ""}
             <div class="product-page-delivery">
-              <strong>${DELIVERY_TEXT}</strong>
+              <strong>${escapeHtml(deliveryText(product))}</strong>
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
@@ -484,7 +486,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         </div>
 
         <div class="product-page-actions">
-          <a class="product-page-action is-about" href="#product-about">Məhsul haqqında</a>
+          <a class="product-page-action is-about" href="${productCanonicalPath(slug)}#product-about">Məhsul haqqında</a>
           <button class="product-page-action is-order" id="pp-order-btn" type="button">Sifariş et</button>
         </div>
       </article>
@@ -549,7 +551,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
-  <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
+  <script src="/product-page.js?v=detail-20261010-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>
@@ -1101,12 +1103,12 @@ function renderPlans(product) {
   const plans = Array.isArray(product.plans) ? product.plans : [];
   if (!plans.length) return `<p>Mövcud plan yoxdur.</p>`;
   return plans.map((plan, index) => {
+    if (plan.active === false) return '';
     const label = cleanText(plan.label) || `${Number(plan.months) || 1} aylıq`;
-    const price = Number(plan.price);
-    const regularPrice = Number(plan.regularPrice);
-    const discount = regularPrice > price && price > 0
-      ? Math.round((regularPrice - price) / regularPrice * 100)
-      : 0;
+    const metrics = planMetrics(plan);
+    const price = metrics.price;
+    const regularPrice = metrics.oldPrice;
+    const discount = metrics.discount || 0;
     const priceText = price > 0
       ? `${price.toFixed(2)} ${cleanText(product.currency)}`
       : (cleanText(plan.label) || "Stokda yoxdur");

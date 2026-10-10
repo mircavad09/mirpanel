@@ -2,6 +2,7 @@
 <html lang="az">
 <head>
   <meta charset="UTF-8">
+  <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Claude AI almaq Azərbaycanda | Mirpanel</title>
   <meta name="description" content="Claude AI üçün mövcud planı, real qiyməti və stok vəziyyətini yoxlayın. Mirpanel sifarişi mövcud WhatsApp axını ilə tamamlanır.">
@@ -30,7 +31,7 @@
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=20260903-plan-rows-1">
+  <link rel="stylesheet" href="/product-page.css?v=detail-20261010-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-upload-20260908-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -112,7 +113,7 @@
         </div>
 
         <div class="product-page-actions">
-          <a class="product-page-action is-about" href="#product-about">Məhsul haqqında</a>
+          <a class="product-page-action is-about" href="/mehsul/cloud-ai-pro#product-about">Məhsul haqqında</a>
           <button class="product-page-action is-order" id="pp-order-btn" type="button">Sifariş et</button>
         </div>
       </article>
@@ -246,7 +247,7 @@
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
-  <script src="/product-page.js?v=20260804-desktop-layout-1"></script>
+  <script src="/product-page.js?v=detail-20261010-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>

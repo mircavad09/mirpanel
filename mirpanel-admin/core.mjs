@@ -1,4 +1,5 @@
 import vm from "node:vm";
+import { normalizePlanMetadata } from './public/product-plan-utils.mjs';
 
 const DATA_MARKER = "const DATA";
 const CONTENT_MARKER = "const ADMIN_CONTENT";
@@ -581,8 +582,13 @@ function replaceObjectDeclaration(source, marker, object, beforeMarker = "") {
   return source.slice(0, insertAt) + formatted + source.slice(insertAt);
 }
 
+function normalizeDeliveryType(value) {
+  if (!['manual','automatic','ready_account'].includes(value)) throw new Error('Çatdırılma tipi etibarsızdır.');
+  return value;
+}
 function normalizePlan(plan = {}) {
   return {
+    ...normalizePlanMetadata(plan),
     ...(plan.label ? { label: String(plan.label) } : {}),
     months: Number(plan.months) || 1,
     price: Number(plan.price) || 0,
@@ -799,6 +805,9 @@ function normalizeProduct(product = {}, index = 0) {
       throw new Error(`${id}: Spotify şifrə sıfırlama linki etibarlı https:// URL olmalıdır.`);
     }
   }
+  if ((product.plans || []).filter(plan=>plan.bestValue === true).length > 1) {
+    throw new Error('Bir məhsulda yalnız bir Ən sərfəli override seçilə bilər.');
+  }
 
   return {
     id,
@@ -816,6 +825,8 @@ function normalizeProduct(product = {}, index = 0) {
     longDescription: sanitizeRichText(product.longDescription || product.seoContent || ""),
     usageRules: sanitizeRichText(product.usageRules || ""),
     deliveryText: cleanText(product.deliveryText || "", "", 1000),
+    ...(product.deliveryType != null ? {deliveryType: normalizeDeliveryType(product.deliveryType)} : {}),
+    ...(product.commissionFree != null ? {commissionFree: product.commissionFree === true} : {}),
     availabilityText: cleanText(product.availabilityText || "", "", 250),
     seoSlug: normalizeSeoSlug(product.seoSlug),
     seoTitle: String(product.seoTitle || ""),
