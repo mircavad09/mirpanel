@@ -223,28 +223,51 @@ const DATA = {
       },
       "plans": [
         {
+          "bestValue": false,
           "label": "1 Ayliq (0-500 AI kredit) endirim (Telefon)",
           "months": 1,
           "price": 4.99,
           "regularPrice": 16.99
         },
         {
+          "bestValue": false,
           "label": "1 Ayliq (1600 AI kredit)  (Telefon&Kompyuter)",
           "months": 1,
           "price": 6.99,
           "regularPrice": 16.99
         },
         {
+          "bestValue": true,
           "label": "3 ayliq (hər ay 0-1200 AI kredit) (Telefon)",
           "months": 3,
           "price": 12.99,
           "regularPrice": 101.99
         },
         {
+          "duration_months": 3,
+          "bestValue": false,
+          "label": "3 ayliq (hər ay 0-1200 AI kredit) (Telefon&Kompyuter)",
+          "months": 3,
+          "price": 17.99,
+          "regularPrice": 101.99
+        },
+        {
+          "warrantyMode": "guaranteed",
+          "warrantyDuration": 6,
+          "bestValue": false,
           "label": "6 Ayliq (hər ay 0-1200 AI kredit) (Telefon)",
           "months": 6,
           "price": 22.99,
           "regularPrice": 101.99
+        },
+        {
+          "duration_months": 6,
+          "warrantyMode": "guaranteed",
+          "warrantyDuration": 6,
+          "bestValue": false,
+          "label": "6 Ayliq (hər ay 0-1200 AI kredit) (Telefon&Kompyuter)",
+          "months": 6,
+          "price": 29.99
         }
       ],
       "orderConfirmation": {
