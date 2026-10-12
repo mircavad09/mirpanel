@@ -1273,7 +1273,7 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 3.99,
+          "price": 4.99,
           "regularPrice": 26.27
         }
       ],
