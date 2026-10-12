@@ -145,9 +145,98 @@ const DATA = {
   ],
   "products": [
     {
+      "id": "surfshark",
+      "_stableId": "surfshark",
+      "order": 1,
+      "category": "video",
+      "image": "assets/surfshark.png",
+      "currency": "₼",
+      "title": "Surfshark VPN ",
+      "variant": "VPN",
+      "badge": "VPN",
+      "imageAlt": "Surfshark VPN",
+      "desc": "IP gizlətmə, güclü şifrələmə.",
+      "note": "Hesab hazır şəkildə verilir.",
+      "longDescription": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "surfshark-vpn",
+      "seoTitle": "Surfshark VPN almaq | Ucuz VPN Azərbaycan - Mirpanel",
+      "seoDescription": "Surfshark VPN hesabını sərfəli qiymətə al. Təhlükəsiz internet və premium VPN xidməti Mirpanel-də.",
+      "seoH1": "Surfshark VPN",
+      "seoPrimaryKeyword": "Surfshark VPN almaq",
+      "seoRelatedKeywords": " Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
+      "seoKeywords": "Surfshark VPN almaq, Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
+      "seoContent": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/surfshark.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/surfshark.png",
+        "mobileImage": "",
+        "title": "Surfshark VPN",
+        "description": "IP gizlətmə, güclü şifrələmə.",
+        "alt": "Surfshark VPN",
+        "order": 10
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 4.99,
+          "regularPrice": 26.27
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
       "id": "capcut",
       "_stableId": "capcut",
-      "order": 1,
+      "order": 2,
       "category": "video",
       "image": "assets/capcut.png",
       "currency": "₼",
@@ -287,7 +376,7 @@ const DATA = {
     {
       "id": "google_ai",
       "_stableId": "google_ai",
-      "order": 2,
+      "order": 3,
       "category": "ai",
       "image": "assets/google-ai.png",
       "currency": "₼",
@@ -385,7 +474,7 @@ const DATA = {
     {
       "id": "netflix",
       "_stableId": "netflix",
-      "order": 3,
+      "order": 4,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -498,7 +587,7 @@ const DATA = {
     {
       "id": "netflix_umumi",
       "_stableId": "netflix_umumi",
-      "order": 4,
+      "order": 5,
       "category": "film",
       "image": "assets/netflix.png",
       "currency": "₼",
@@ -586,7 +675,7 @@ const DATA = {
     {
       "id": "prime",
       "_stableId": "prime",
-      "order": 5,
+      "order": 6,
       "category": "film",
       "image": "assets/prime.png",
       "currency": "₼",
@@ -695,7 +784,7 @@ const DATA = {
     {
       "id": "claude_ai",
       "_stableId": "claude_ai",
-      "order": 6,
+      "order": 7,
       "category": "ai",
       "image": "assets/claude.png",
       "currency": "₼",
@@ -785,7 +874,7 @@ const DATA = {
     {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 7,
+      "order": 8,
       "category": "musiqi",
       "image": "assets/spotify.png",
       "currency": "₼",
@@ -913,7 +1002,7 @@ const DATA = {
     {
       "id": "youtube_sexsi",
       "_stableId": "youtube_sexsi",
-      "order": 8,
+      "order": 9,
       "category": "all",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -1019,7 +1108,7 @@ const DATA = {
     {
       "id": "youtube",
       "_stableId": "youtube",
-      "order": 9,
+      "order": 10,
       "category": "musiqi",
       "image": "assets/youtube.png",
       "currency": "₼",
@@ -1117,7 +1206,7 @@ const DATA = {
     {
       "id": "adobecc",
       "_stableId": "adobecc",
-      "order": 10,
+      "order": 11,
       "category": "dizayn",
       "image": "assets/adobe.png",
       "currency": "₼",
@@ -1192,95 +1281,6 @@ const DATA = {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
         "description": "📌 Sifariş təsdiqləndikdən sonra müştəriyə **4 aylıq Adobe Creative Cloud abunəliyi aktiv olan hazır hesab** təqdim edilir. Hesab e-poçt ünvanı və giriş məlumatları ilə birlikdə verilir və istifadəyə hazır olur.\n\n✅ Abunəlik müddəti: **4 ay**  \n🛡️ MirPanel zəmanəti: **1 ay**\n\n**Zəmanət haqqında:** Hesabda təqdim edildiyi tarixdən etibarən ilk 1 ay ərzində MirPanel-dən asılı olmayan deaktivasiya və ya giriş problemi yaranarsa, vəziyyət yoxlanılır və uyğun olduğu halda hesabın bərpası və ya əvəzlənməsi təmin edilir.\n\n1 aylıq zəmanət hesabın abunəlik müddəti deyil. Hesab normal şəraitdə **4 aylıq istifadə üçün** təqdim olunur, zəmanət isə yalnız ilk ay ərzində yarana biləcək problemlərə qarşı əlavə xidmət təminatıdır.\n\n### Sifarişdən əvvəl nəzərə alın ⚠️\n\nAdobe tərəfindən aparılan təhlükəsizlik yoxlamaları, sistem yenilikləri və daxili qayda dəyişiklikləri səbəbindən hesabın məhdudlaşdırılması və ya deaktiv edilməsi ehtimalı mövcuddur. Belə vəziyyət yaranarsa, zəmanət müddəti ərzində MirPanel-in rəsmi WhatsApp dəstəyinə müraciət edin.\n\nHesab məlumatlarının başqa şəxslərlə paylaşılması, icazəsiz dəyişdirilməsi və istifadə təlimatlarına əməl edilməməsi nəticəsində yaranan problemlər zəmanətə daxil olmaya bilər.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "surfshark",
-      "_stableId": "surfshark",
-      "order": 11,
-      "category": "video",
-      "image": "assets/surfshark.png",
-      "currency": "₼",
-      "title": "Surfshark VPN",
-      "variant": "VPN",
-      "badge": "VPN",
-      "imageAlt": "Surfshark VPN",
-      "desc": "IP gizlətmə, güclü şifrələmə.",
-      "note": "Hesab hazır şəkildə verilir.",
-      "longDescription": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "surfshark-vpn",
-      "seoTitle": "Surfshark VPN almaq | Ucuz VPN Azərbaycan - Mirpanel",
-      "seoDescription": "Surfshark VPN hesabını sərfəli qiymətə al. Təhlükəsiz internet və premium VPN xidməti Mirpanel-də.",
-      "seoH1": "Surfshark VPN",
-      "seoPrimaryKeyword": "Surfshark VPN almaq",
-      "seoRelatedKeywords": " Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
-      "seoKeywords": "Surfshark VPN almaq, Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
-      "seoContent": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/surfshark.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/surfshark.png",
-        "mobileImage": "",
-        "title": "Surfshark VPN",
-        "description": "IP gizlətmə, güclü şifrələmə.",
-        "alt": "Surfshark VPN",
-        "order": 10
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 4.99,
-          "regularPrice": 26.27
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -3576,6 +3576,10 @@ const SITE_SECTIONS = {
 };
 
 const ADMIN_CONTENT = {
+  "surfshark": {
+    "aboutHtml": "<h3>Surfshark VPN - Təhlükəsiz və Məxfi İnternet Təcrübəsi</h3>\n<p>Surfshark VPN, internetdə daha təhlükəsiz, məxfi və sərbəst şəkildə gəzmək istəyən istifadəçilər üçün hazırlanmış premium VPN xidmətidir. Standart internet bağlantısından fərqli olaraq, Surfshark məlumatlarınızı şifrələyir, IP ünvanınızı gizlədir və onlayn fəaliyyətlərinizi daha qorunan hala gətirir. Məxfilik, təhlükəsizlik və region məhdudiyyətlərini aşmaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Surfshark VPN, istifadəçilərə müxtəlif ölkələrdə yerləşən serverlərə qoşularaq internet bağlantısını daha təhlükəsiz və məxfi idarə etmək imkanı verir. Xidmət şəxsi məlumatların qorunmasına, ictimai Wi-Fi şəbəkələrində təhlükəsizliyə və bəzi region məhdudiyyətli kontentlərə girişə kömək edir. Telefon, kompüter, planşet və digər cihazlarda istifadə oluna bilir.</p>\n\n<h3>Surfshark VPN Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Məxfilik İstəyən İstifadəçilər:</strong> IP ünvanını gizlətmək və internet fəaliyyətlərini daha qorunan saxlamaq istəyənlər.</li>\n  <li><strong>Səyahət Edənlər:</strong> Xarici ölkələrdə təhlükəsiz internetdən istifadə etmək və bəzi yerli məhdudiyyətləri aşmaq istəyənlər.</li>\n  <li><strong>İctimai Wi-Fi İstifadəçiləri:</strong> Kafe, otel, hava limanı və digər açıq şəbəkələrdə məlumatlarını qorumaq istəyənlər.</li>\n  <li><strong>Remote İşçilər və Frilanserlər:</strong> Onlayn iş zamanı bağlantı təhlükəsizliyini artırmaq və şəxsi məlumatları qorumaq istəyənlər.</li>\n</ul>\n\n<h3>Surfshark VPN-in Üstünlükləri</h3>\n<ul>\n  <li><strong>🔐 Şifrələnmiş Bağlantı:</strong> İnternet trafikinizi qoruyaraq şəxsi məlumatların üçüncü şəxslər tərəfindən izlənməsini çətinləşdirir.</li>\n  <li><strong>🌍 Geniş Server Seçimi:</strong> Müxtəlif ölkələrdəki serverlərə qoşularaq daha sərbəst və çevik internet istifadəsi yaradır.</li>\n  <li><strong>🛡️ IP Ünvanının Gizlədilməsi:</strong> Real IP ünvanınızı gizlədərək onlayn məxfiliyinizi daha da gücləndirir.</li>\n  <li><strong>📶 İctimai Wi-Fi Təhlükəsizliyi:</strong> Açıq şəbəkələrdə bank, email və şəxsi hesab məlumatlarının qorunmasına kömək edir.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, kompüter, planşet və digər cihazlarda rahat istifadə imkanı təqdim edir.</li>\n</ul>",
+    "rulesHtml": ""
+  },
   "capcut": {
     "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
     "rulesHtml": ""
@@ -3610,10 +3614,6 @@ const ADMIN_CONTENT = {
   },
   "adobecc": {
     "aboutHtml": "<h3>Adobe Creative Cloud - Peşəkar Dizayn, Foto, Video və Yaradıcı Alətlər Paketi</h3>\n<p>Adobe Creative Cloud, dizayn, foto redaktə, video montaj, animasiya, veb dizayn və kreativ kontent istehsalı ilə məşğul olan istifadəçilər üçün hazırlanmış peşəkar proqramlar paketidir. Standart redaktə alətlərindən fərqli olaraq, Creative Cloud Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü Adobe tətbiqlərini bir ekosistemdə birləşdirir. Peşəkar vizuallar, reklam materialları, video layihələr və brend dizaynları hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Adobe Creative Cloud, istifadəçilərə foto retuşu, qrafik dizayn, loqo hazırlanması, video montaj, rəng korreksiyası, animasiya, sosial media kontenti və çap materialları yaratmaq üçün geniş imkanlar təqdim edir. Platforma bulud yaddaşı, proqramlararası inteqrasiya və peşəkar fayl formatları ilə yaradıcı iş prosesini daha rahat və məhsuldar edir. Dizaynerlər, video redaktorlar, fotoqraflar və marketinq komandaları üçün güclü yaradıcı ekosistemdir.</p>\n\n<h3>Adobe Creative Cloud Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Qrafik Dizaynerlər:</strong> Loqo, brend kimliyi, reklam bannerləri, posterlər və sosial media dizaynları hazırlayan mütəxəssislər.</li>\n  <li><strong>Fotoqraflar və Retuş Mütəxəssisləri:</strong> Şəkilləri peşəkar şəkildə redaktə etmək, rəngləmək və retuş etmək istəyənlər.</li>\n  <li><strong>Video Redaktorlar və Kontent Yaradıcıları:</strong> YouTube, TikTok, Instagram və reklam layihələri üçün peşəkar video montaj edənlər.</li>\n  <li><strong>Marketoloqlar və Biznes Komandaları:</strong> Brend üçün vizual materiallar, reklam kampaniyaları və təqdimat kontenti hazırlayanlar.</li>\n</ul>\n\n<h3>Adobe Creative Cloud-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎨 Peşəkar Adobe Proqramları:</strong> Photoshop, Illustrator, Premiere Pro, After Effects, Lightroom və digər güclü yaradıcı tətbiqlərə giriş.</li>\n  <li><strong>🎬 Video və Animasiya İmkanları:</strong> Peşəkar video montaj, rəng korreksiyası, motion graphics və vizual effektlər hazırlamaq.</li>\n  <li><strong>📸 Foto Redaktə və Retuş:</strong> Şəkilləri yüksək keyfiyyətdə düzəltmək, rəngləmək, fon dəyişmək və peşəkar retuş etmək imkanı.</li>\n  <li><strong>☁️ Bulud və Fayl Sinxronizasiyası:</strong> Layihələri buludda saxlamaq, müxtəlif cihazlardan işləmək və faylları rahat paylaşmaq.</li>\n  <li><strong>🚀 Yaradıcı İş Axınında Məhsuldarlıq:</strong> Proqramlararası inteqrasiya və peşəkar alətlər sayəsində dizayn və montaj prosesini daha sürətli idarə etmək.</li>\n</ul>",
-    "rulesHtml": ""
-  },
-  "surfshark": {
-    "aboutHtml": "<h3>Surfshark VPN - Təhlükəsiz və Məxfi İnternet Təcrübəsi</h3>\n<p>Surfshark VPN, internetdə daha təhlükəsiz, məxfi və sərbəst şəkildə gəzmək istəyən istifadəçilər üçün hazırlanmış premium VPN xidmətidir. Standart internet bağlantısından fərqli olaraq, Surfshark məlumatlarınızı şifrələyir, IP ünvanınızı gizlədir və onlayn fəaliyyətlərinizi daha qorunan hala gətirir. Məxfilik, təhlükəsizlik və region məhdudiyyətlərini aşmaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Surfshark VPN, istifadəçilərə müxtəlif ölkələrdə yerləşən serverlərə qoşularaq internet bağlantısını daha təhlükəsiz və məxfi idarə etmək imkanı verir. Xidmət şəxsi məlumatların qorunmasına, ictimai Wi-Fi şəbəkələrində təhlükəsizliyə və bəzi region məhdudiyyətli kontentlərə girişə kömək edir. Telefon, kompüter, planşet və digər cihazlarda istifadə oluna bilir.</p>\n\n<h3>Surfshark VPN Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Məxfilik İstəyən İstifadəçilər:</strong> IP ünvanını gizlətmək və internet fəaliyyətlərini daha qorunan saxlamaq istəyənlər.</li>\n  <li><strong>Səyahət Edənlər:</strong> Xarici ölkələrdə təhlükəsiz internetdən istifadə etmək və bəzi yerli məhdudiyyətləri aşmaq istəyənlər.</li>\n  <li><strong>İctimai Wi-Fi İstifadəçiləri:</strong> Kafe, otel, hava limanı və digər açıq şəbəkələrdə məlumatlarını qorumaq istəyənlər.</li>\n  <li><strong>Remote İşçilər və Frilanserlər:</strong> Onlayn iş zamanı bağlantı təhlükəsizliyini artırmaq və şəxsi məlumatları qorumaq istəyənlər.</li>\n</ul>\n\n<h3>Surfshark VPN-in Üstünlükləri</h3>\n<ul>\n  <li><strong>🔐 Şifrələnmiş Bağlantı:</strong> İnternet trafikinizi qoruyaraq şəxsi məlumatların üçüncü şəxslər tərəfindən izlənməsini çətinləşdirir.</li>\n  <li><strong>🌍 Geniş Server Seçimi:</strong> Müxtəlif ölkələrdəki serverlərə qoşularaq daha sərbəst və çevik internet istifadəsi yaradır.</li>\n  <li><strong>🛡️ IP Ünvanının Gizlədilməsi:</strong> Real IP ünvanınızı gizlədərək onlayn məxfiliyinizi daha da gücləndirir.</li>\n  <li><strong>📶 İctimai Wi-Fi Təhlükəsizliyi:</strong> Açıq şəbəkələrdə bank, email və şəxsi hesab məlumatlarının qorunmasına kömək edir.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, kompüter, planşet və digər cihazlarda rahat istifadə imkanı təqdim edir.</li>\n</ul>",
     "rulesHtml": ""
   },
   "hbomax": {
