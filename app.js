@@ -1144,8 +1144,8 @@ const DATA = {
         "alt": "YouTube Premium banneri",
         "order": 9
       },
-      "flow": "whatsapp",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
