@@ -469,11 +469,6 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "27-29 günlük",
-          "months": 1,
-          "price": 4.99
-        },
-        {
           "months": 1,
           "price": 5.99
         },
