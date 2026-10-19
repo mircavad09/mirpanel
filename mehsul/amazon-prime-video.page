@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/amazon-prime-video#product","url":"https://mirpanel.com/mehsul/amazon-prime-video","name":"Amazon Prime Video","description":"Amazon Prime Video hesabını sərfəli qiymətə əldə et. Film və serial izləmək üçün premium hesab Mirpanel-də.","image":["https://mirpanel.com/assets/prime.png"],"sku":"prime","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/amazon-prime-video","price":"3.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/amazon-prime-video","price":"17.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/amazon-prime-video#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Amazon Prime Video","item":"https://mirpanel.com/mehsul/amazon-prime-video"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/amazon-prime-video#product","url":"https://mirpanel.com/mehsul/amazon-prime-video","name":"Amazon Prime Video","description":"Amazon Prime Video hesabını sərfəli qiymətə əldə et. Film və serial izləmək üçün premium hesab Mirpanel-də.","image":["https://mirpanel.com/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093"],"sku":"prime","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/amazon-prime-video","price":"3.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/amazon-prime-video","price":"17.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/amazon-prime-video#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Amazon Prime Video","item":"https://mirpanel.com/mehsul/amazon-prime-video"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="prime" data-product-slug="amazon-prime-video">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -89,9 +89,9 @@
       <article class="product-page-card">
         <div class="product-page-card-grid">
           <div class="product-page-media">
-            <img class="product-page-media-backdrop" src="/assets/prime.png" alt="" aria-hidden="true" decoding="async">
+            <img class="product-page-media-backdrop" src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" alt="" aria-hidden="true" decoding="async">
             <span class="product-page-availability-badge">Mövcuddur</span>
-            <img id="pp-main-img" src="/assets/prime.png" alt="Amazon Prime Video" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img id="pp-main-img" src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" alt="Amazon Prime Video" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
@@ -121,12 +121,12 @@
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
         <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
-      <img src="/assets/netflix.png" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/netflix-umumi" aria-label="Netflix Ümumi — 3.99 ₼" title="Netflix Ümumi">
-      <img src="/assets/netflix.png" class="product-page-similar-image" alt="Netflix Ümumi" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068" class="product-page-similar-image" alt="Netflix Ümumi" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Netflix Ümumi">Netflix Ümumi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">3.99 ₼</div>
@@ -141,7 +141,7 @@
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
-      <img src="/assets/capcut.png" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
@@ -226,7 +226,7 @@
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">
       <button class="close" id="closeModal" type="button">Bağla ✕</button>
       <div class="mTop">
-        <img src="/assets/prime.png" alt="Amazon Prime Video" id="mImg" class="mImg">
+        <img src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" alt="Amazon Prime Video" id="mImg" class="mImg">
         <div class="mTxt">
           <div class="mTitle" id="mTitle">Amazon Prime Video</div>
           <div class="mDesc" id="mDesc">Prime Video filmlər və seriallar.</div>
