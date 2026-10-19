@@ -121,12 +121,12 @@
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
         <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/tiktok-jeton" aria-label="TikTok Jeton — 11.00 ₼" title="TikTok Jeton">
-      <img src="/assets/tiktok.png" class="product-page-similar-image" alt="TikTok Jeton" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473" class="product-page-similar-image" alt="TikTok Jeton" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="TikTok Jeton">TikTok Jeton</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">11.00 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/surfshark-vpn" aria-label="Surfshark VPN — 4.99 ₼" title="Surfshark VPN">
-      <img src="/assets/surfshark.png" class="product-page-similar-image" alt="Surfshark VPN" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/surfshark-1792448333121-dcfb98b1.png?v=1792448333121" class="product-page-similar-image" alt="Surfshark VPN" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Surfshark VPN">Surfshark VPN</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>

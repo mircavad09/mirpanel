@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/tiktok-jeton#product","url":"https://mirpanel.com/mehsul/tiktok-jeton","name":"TikTok Jeton","description":"TikTok jeton və coin almaq üçün sərfəli seçim. Balans artırma və rahat sifariş Mirpanel-də.","image":["https://mirpanel.com/assets/tiktok.png"],"sku":"tiktok_jeton","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/tiktok-jeton","price":"11.00","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/tiktok-jeton","price":"21.00","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/tiktok-jeton#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"TikTok Jeton","item":"https://mirpanel.com/mehsul/tiktok-jeton"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/tiktok-jeton#product","url":"https://mirpanel.com/mehsul/tiktok-jeton","name":"TikTok Jeton","description":"TikTok jeton və coin almaq üçün sərfəli seçim. Balans artırma və rahat sifariş Mirpanel-də.","image":["https://mirpanel.com/uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473"],"sku":"tiktok_jeton","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/tiktok-jeton","price":"11.00","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/tiktok-jeton","price":"21.00","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/tiktok-jeton#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"TikTok Jeton","item":"https://mirpanel.com/mehsul/tiktok-jeton"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="tiktok_jeton" data-product-slug="tiktok-jeton">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -89,9 +89,9 @@
       <article class="product-page-card">
         <div class="product-page-card-grid">
           <div class="product-page-media">
-            <img class="product-page-media-backdrop" src="/assets/tiktok.png" alt="" aria-hidden="true" decoding="async">
+            <img class="product-page-media-backdrop" src="/uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473" alt="" aria-hidden="true" decoding="async">
             <span class="product-page-availability-badge">Mövcuddur</span>
-            <img id="pp-main-img" src="/assets/tiktok.png" alt="TikTok Jeton" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img id="pp-main-img" src="/uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473" alt="TikTok Jeton" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
@@ -126,7 +126,7 @@
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/surfshark-vpn" aria-label="Surfshark VPN — 4.99 ₼" title="Surfshark VPN">
-      <img src="/assets/surfshark.png" class="product-page-similar-image" alt="Surfshark VPN" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/surfshark-1792448333121-dcfb98b1.png?v=1792448333121" class="product-page-similar-image" alt="Surfshark VPN" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Surfshark VPN">Surfshark VPN</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
@@ -206,7 +206,7 @@
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">
       <button class="close" id="closeModal" type="button">Bağla ✕</button>
       <div class="mTop">
-        <img src="/assets/tiktok.png" alt="TikTok Jeton" id="mImg" class="mImg">
+        <img src="/uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473" alt="TikTok Jeton" id="mImg" class="mImg">
         <div class="mTxt">
           <div class="mTitle" id="mTitle">TikTok Jeton</div>
           <div class="mDesc" id="mDesc">Minimum 500 jeton.</div>
