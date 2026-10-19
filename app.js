@@ -289,7 +289,7 @@ const DATA = {
       "_stableId": "google_ai",
       "order": 2,
       "category": "ai",
-      "image": "assets/google-ai.png",
+      "image": "uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071",
       "currency": "₼",
       "title": "Google AI Pro + VEO 3 (18  AYLIQ)",
       "variant": "Pro",
