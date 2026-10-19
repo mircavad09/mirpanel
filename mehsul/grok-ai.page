@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/grok-ai#product","url":"https://mirpanel.com/mehsul/grok-ai","name":"Grok AI","description":"Grok AI hesabını sərfəli qiymətə əldə et. Premium AI imkanları və rahat sifariş Mirpanel-də.","image":["https://mirpanel.com/assets/grok.png"],"sku":"grok_supergrok","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/grok-ai","price":"29.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/grok-ai#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Grok AI","item":"https://mirpanel.com/mehsul/grok-ai"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/grok-ai#product","url":"https://mirpanel.com/mehsul/grok-ai","name":"Grok AI","description":"Grok AI hesabını sərfəli qiymətə əldə et. Premium AI imkanları və rahat sifariş Mirpanel-də.","image":["https://mirpanel.com/uploads/products/grok_supergrok-1792448632619-5d302a16.png?v=1792448632619"],"sku":"grok_supergrok","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/grok-ai","price":"29.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/grok-ai#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Grok AI","item":"https://mirpanel.com/mehsul/grok-ai"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="grok_supergrok" data-product-slug="grok-ai">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -89,9 +89,9 @@
       <article class="product-page-card">
         <div class="product-page-card-grid">
           <div class="product-page-media">
-            <img class="product-page-media-backdrop" src="/assets/grok.png" alt="" aria-hidden="true" decoding="async">
+            <img class="product-page-media-backdrop" src="/uploads/products/grok_supergrok-1792448632619-5d302a16.png?v=1792448632619" alt="" aria-hidden="true" decoding="async">
             <span class="product-page-availability-badge">Mövcuddur</span>
-            <img id="pp-main-img" src="/assets/grok.png" alt="Grok AI" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img id="pp-main-img" src="/uploads/products/grok_supergrok-1792448632619-5d302a16.png?v=1792448632619" alt="Grok AI" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
@@ -226,7 +226,7 @@
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">
       <button class="close" id="closeModal" type="button">Bağla ✕</button>
       <div class="mTop">
-        <img src="/assets/grok.png" alt="Grok AI" id="mImg" class="mImg">
+        <img src="/uploads/products/grok_supergrok-1792448632619-5d302a16.png?v=1792448632619" alt="Grok AI" id="mImg" class="mImg">
         <div class="mTxt">
           <div class="mTitle" id="mTitle">Grok AI</div>
           <div class="mDesc" id="mDesc">Güclü model + şəkil/fayl analizi.</div>
