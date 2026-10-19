@@ -121,7 +121,7 @@
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
         <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
-      <img src="/assets/claude.png" class="product-page-similar-image" alt="Claude AI" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631" class="product-page-similar-image" alt="Claude AI" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">37.40 ₼</div>
