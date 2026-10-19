@@ -140,6 +140,7 @@ export function rowMethod(row, stats = {}) {
 }
 
 export function createPaymentStore(config) {
+  let receiptCleanupOffset = 0;
   if (!config.supabaseUrl || !config.supabaseSecretKey) throw new Error("Supabase ödəniş konfiqurasiyası tamamlanmayıb.");
   const client = createClient(config.supabaseUrl, config.supabaseSecretKey, {
     global: { fetch: (input, init = {}) => {
@@ -730,6 +731,32 @@ export function createPaymentStore(config) {
         status: [408, 429, 500, 502, 503, 504].includes(Number(error.statusCode)) ? Number(error.statusCode) : 503,
         code: "RECEIPT_STORAGE_TEMPORARY"
       });
+    },
+    async verifyUploadedReceipt(path, size) {
+      const slash = path.lastIndexOf('/');
+      const {data,error} = await client.storage.from(config.receiptsBucket).list(path.slice(0,slash), {search:path.slice(slash+1),limit:100});
+      if (error) throw Object.assign(paymentError(error, 'Private storage yoxlaması alınmadı.'), {status:503,code:'RECEIPT_STORAGE_TEMPORARY'});
+      const file = data?.find(item=>item.name===path.slice(slash+1));
+      if (!file || Number(file.metadata?.size)!==Number(size)) throw Object.assign(new Error('Çek private yaddaşda təsdiqlənmədi. Yenidən yükləyin.'), {status:409,code:'RECEIPT_CONFIRMATION_INVALID'});
+    },
+    async cleanupStagedReceipts() {
+      const cutoff = new Date(Date.now()-2*60*60_000).toISOString();
+      const {data,error} = await client.storage.from(config.receiptsBucket).list('pending',{limit:100,offset:receiptCleanupOffset,sortBy:{column:'name',order:'asc'}});
+      if (error) throw paymentError(error);
+      receiptCleanupOffset = data?.length===100 ? receiptCleanupOffset+100 : 0;
+      let removed=0;
+      for (const folder of data || []) {
+        const reservationId=safeUuid(folder.name);
+        if(!reservationId)continue;
+        const prefix=`pending/${reservationId}`;
+        const result=await client.storage.from(config.receiptsBucket).list(prefix,{limit:100});
+        if (result.error) throw paymentError(result.error);
+        const order=await this.getOrderByReservation(reservationId);
+        const paths=(result.data || []).filter(file=>Date.parse(file.created_at)<Date.parse(cutoff))
+          .map(file=>`${prefix}/${file.name}`).filter(path=>path!==order?.receipt_path);
+        if(paths.length){const cleanup=await client.storage.from(config.receiptsBucket).remove(paths);if(cleanup.error)throw paymentError(cleanup.error);removed+=paths.length;}
+      }
+      return removed;
     },
     async removeReceipt(path) {
       await client.storage.from(config.receiptsBucket).remove([path]);

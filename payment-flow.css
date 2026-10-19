@@ -50,3 +50,43 @@
   .paymentReceiptBox.uploadSucceeded .paymentReceiptPreview{border-color:#3c9a5d;background:#102318}
 }
 .capcutPhoneField{display:grid;gap:6px;margin:10px 0;padding:12px;border:1px solid rgba(255,210,0,.25);border-radius:12px;background:#121212;color:#f4f4f4;font-weight:700}.capcutPhoneField input{min-height:48px;border:1px solid #3b3b3b;border-radius:10px;background:#080808;color:#fff;padding:0 12px;font-size:16px}.capcutPhoneField small{color:#aaa;font-weight:400}.capcutPhoneField b{color:#ff9292;font-size:13px}
+
+/* Receipt-only guidance and verified-upload gate. */
+.paymentReceiptSteps{display:flex;gap:6px;list-style:none;padding:0;margin:0;color:#a5a5a5;font-size:12px;line-height:1.3}
+.paymentReceiptSteps li{position:relative;flex:1;min-width:0;padding:7px 5px;border:1px solid #454545;border-radius:7px;text-align:center}
+.paymentReceiptSteps li:not(:last-child)::after{content:'→';position:absolute;right:-7px;top:50%;transform:translateY(-50%);font-size:9px;color:#dfca70;z-index:1}
+.paymentReceiptSteps li.active{color:#ffe15c;border-color:#e7c428;background:#2b260e;font-weight:750}
+.paymentReceiptPicker{border:2px solid #e3bf25;background:linear-gradient(145deg,#29230d,#17160e);gap:5px;padding:13px;min-height:160px}
+.paymentReceiptPicker strong{font-size:16px;line-height:1.3;color:#ffe574}
+.paymentReceiptSelectButton{display:grid;place-items:center;min-height:44px;padding:7px 12px;border-radius:9px;background:#ffd400;color:#111!important;font-size:16px!important;font-weight:800;box-sizing:border-box}
+.paymentReceiptWarning{margin:0;padding:8px 10px;border:1px solid #b58f26;border-radius:9px;background:#2c230b;color:#ffe59a;font-size:12px;line-height:1.4}
+.paymentReceiptRetry{min-height:44px;border:1px solid #ffd400;border-radius:9px;background:#211d0d;color:#ffdc42;font:700 16px/1.25 inherit}
+.paymentReceiptRetry[hidden]{display:none!important}
+.paymentReceiptBox.hasReceipt .paymentReceiptPicker{display:none}
+.paymentSubmitGuard.isBlocked #paymentSubmit{opacity:1;background:#393939;border-color:#565656;color:#c5c5c5}
+.paymentReceiptBox.uploadSucceeded .paymentUploadProgress{display:none}
+.receiptAttention .paymentReceiptPicker,.receiptAttention .paymentReceiptPreview{border-color:#ffe77c;box-shadow:0 0 0 3px #ffd40044,0 0 22px #ffd40033}
+.paymentReceiptPreviewActions button{min-height:44px!important}
+@media(max-width:560px){
+ #modal.paymentFlowOpen .modalCard{overflow:hidden}
+ .paymentFlow{max-height:calc(100vh - 38px);max-height:calc(100dvh - max(38px,env(safe-area-inset-top,0px) + env(safe-area-inset-bottom,0px)));overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+ .paymentFlow:is([data-payment-stage="payment_details"],[data-payment-stage="receipt_upload"],[data-payment-stage="receipt_ready"]){gap:6px}
+ .paymentFlow[data-payment-stage="receipt_ready"] .paymentFlowHead{position:static;align-items:center;padding:0 0 2px}
+ .paymentFlow[data-payment-stage="receipt_ready"] .paymentFlowHead span{font-size:9px}
+ .paymentFlow[data-payment-stage="receipt_ready"] .paymentFlowHead h2{margin:1px 0;font-size:17px;line-height:1.1}
+ .paymentFlow[data-payment-stage="receipt_ready"] .paymentFlowHead p{font-size:10px;line-height:1.2}
+ .paymentFlow[data-payment-stage="receipt_ready"] .paymentFlowMessage{padding:5px 8px;font-size:10px;line-height:1.25}
+ .paymentFlow[data-payment-stage="receipt_ready"] .paymentSelectedCard{width:min(100%,330px);max-height:178px;padding:8px 10px;gap:3px}
+ .paymentFlow[data-payment-stage="receipt_ready"] .paymentSelectedHint{display:none}
+ .paymentReceiptSteps{gap:4px;font-size:10px}.paymentReceiptSteps li{padding:5px 3px}
+ .paymentReceiptPicker{grid-template-columns:24px minmax(0,1fr);grid-template-areas:"icon title" "select select" "description description" "formats formats";padding:9px;row-gap:5px;min-height:134px;text-align:left}
+ .paymentReceiptPicker strong{font-size:12px;line-height:1.3}.paymentReceiptPicker .paymentReceiptSelectButton{grid-area:select;width:100%;font-size:13px!important}
+ .paymentReceiptPicker span#paymentReceiptPickerDescription{font-size:11px}.paymentReceiptPicker small{font-size:10px}
+ .paymentReceiptWarning{padding:6px 8px;font-size:11px;line-height:1.3}
+ .paymentReceiptError{max-height:none;overflow:visible;font-size:11px}
+ .paymentReceiptPreviewActions button{min-height:44px!important;font-size:12px!important}
+ .paymentReceiptPreview :is(.paymentReceiptPending,.paymentReceiptSuccess){white-space:normal}
+ .paymentSubmitActions{position:sticky;bottom:0;background:#111;padding:5px 0 max(2px,env(safe-area-inset-bottom,0px));grid-template-columns:minmax(0,.8fr) minmax(0,1.6fr)}
+ .paymentSubmitActions button{min-height:48px;font-size:12px;line-height:1.25}
+ .paymentFlow input{font-size:16px}
+}

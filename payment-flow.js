@@ -157,7 +157,7 @@
           return;
         }
         if (xhr.status < 200 || xhr.status >= 300) finish(reject, receiptResponseError(payload, xhr.status));
-        else if (!validOrder(payload)) finish(reject, uploadError("Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.", { code: "RECEIPT_INVALID_RESPONSE", status: 502, retryable: true }));
+        else if (!(path === '/api/payments/receipts' ? payload.receiptUploaded === true && typeof payload.receiptUploadToken === 'string' && payload.receiptUploadToken.length > 30 : validOrder(payload))) finish(reject, uploadError("Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.", { code: "RECEIPT_INVALID_RESPONSE", status: 502, retryable: true }));
         else finish(resolve, payload);
       };
       if (signal?.aborted) { abort(); return; }
@@ -202,6 +202,7 @@
       <button id="paymentMethodsRetry" type="button" hidden>Yenidən cəhd et</button>
       <div id="paymentMethodChoices" class="paymentMethodChoices" data-payment-stage-panel="payment_method_selection" aria-label="Ödəniş üsulları"></div>
       <div id="paymentMethodDetail" data-payment-stage-panel="payment_details"></div>
+      <ol class="paymentReceiptSteps" aria-label="Sifariş mərhələləri"><li data-receipt-step="1">1. Ödəniş et</li><li data-receipt-step="2">2. Çeki bura yüklə</li><li data-receipt-step="3">3. Sifarişi göndər</li></ol>
       <div id="paymentReceiptArea" data-payment-stage-panel="receipt_upload"></div>
     </section>`;
     return form;
@@ -232,13 +233,15 @@
 
   function receiptMarkup() {
     return `<form id="paymentReceiptForm" class="paymentReceiptBox" action="" method="post" novalidate>
-      <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>1. Çeki yüklə</strong><span id="paymentReceiptPickerDescription">Çekin şəklini və ya PDF faylını seçin.</span><em id="paymentReceiptPickerWarning">Çeki WhatsApp-a göndərməyin — burada yükləyin.</em><small id="paymentReceiptPickerFormats">JPG, PNG, WEBP və ya PDF · maksimum 5 MB</small></label>
+      <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>SİFARİŞİ TAMAMLAMAQ ÜÇÜN ÇEKİ BURAYA YÜKLƏYİN</strong><span class="paymentReceiptSelectButton">📎 QALEREYADAN ÇEKİ SEÇ</span><span id="paymentReceiptPickerDescription">Ödəniş çekinin şəklini və ya PDF faylını seçin.</span><small id="paymentReceiptPickerFormats">JPG, PNG, WEBP və ya PDF · maksimum 5 MB</small></label>
       <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf" hidden>
       <div id="paymentReceiptPreview" class="paymentReceiptPreview hidden"></div>
       <div id="paymentUploadProgress" class="paymentUploadProgress hidden" role="status" aria-live="polite"><span></span><b>Yüklənir…</b></div>
       <p id="paymentReceiptError" class="paymentReceiptError" role="alert" hidden></p>
+      <button id="paymentReceiptRetry" class="paymentReceiptRetry" type="button" hidden>Yenidən cəhd et</button>
+      <p id="paymentReceiptPickerWarning" class="paymentReceiptWarning">❗ Çeki WhatsApp-a göndərməyin. WhatsApp-a göndərilən çek sifarişə əlavə olunmur. Sifarişiniz yalnız çek bu bölməyə yükləndikdən sonra yoxlanılacaq.</p>
       <p id="paymentReceiptRequiredHint" class="paymentReceiptRequiredHint">Çekin yüklənməsi tamamlanandan sonra davam edə bilərsiniz.</p>
-      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><div id="paymentSubmitGuard" class="paymentSubmitGuard isBlocked"><button id="paymentSubmit" type="submit" disabled>Davam et →</button></div></div>
+      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><div id="paymentSubmitGuard" class="paymentSubmitGuard isBlocked"><button id="paymentSubmit" type="submit" disabled>Əvvəlcə çeki yükləyin</button></div></div>
     </form>`;
   }
 
@@ -246,7 +249,7 @@
     const submit = document.getElementById("paymentSubmit");
     const guard = document.getElementById("paymentSubmitGuard");
     const hint = document.getElementById("paymentReceiptRequiredHint");
-    if (submit) submit.disabled = !ready;
+    if (submit) { submit.disabled = !ready; submit.textContent = ready ? 'ÇEKİ GÖNDƏR VƏ DAVAM ET →' : 'Əvvəlcə çeki yükləyin'; }
     guard?.classList.toggle("isBlocked", !ready);
     if (hint) hint.hidden = ready;
   }
@@ -273,6 +276,12 @@
     flow.stage = stage;
     const shell = document.querySelector(".paymentFlow");
     if (shell) shell.dataset.paymentStage = stage;
+    const current = stage === 'receipt_ready' ? 3 : stage === 'receipt_upload' ? 2 : 1;
+    document.querySelectorAll('[data-receipt-step]').forEach(el=>{
+      const active = Number(el.dataset.receiptStep) === current;
+      el.classList.toggle('active',active);
+      if(active) el.setAttribute('aria-current','step'); else el.removeAttribute('aria-current');
+    });
     const title = document.getElementById("paymentFlowTitle");
     if (title) title.textContent = stage === "payment_method_selection" ? "Ödəniş üsulunu seçin" : "Ödənişi tamamlayın";
   }
@@ -296,14 +305,21 @@
     const id = flow.reservation?.reservationId || flow.previousReservationId;
     if (!id) return { ok: true, idempotent: true };
     const result = await request("/api/payments/reservations/cancel", { method: "POST", body: JSON.stringify({ reservationId: id, checkoutKey: flow.checkoutKey }) });
+    clearReceipt(flow);
     flow.reservation = null;
     flow.previousReservationId = null;
-    clearReceipt(flow);
     clearStoredCheckout();
     return result;
   }
 
-  function clearReceipt(flow) {
+  function discardReceipt(flow, token, keepUploadToken) {
+    if (!token || !flow.reservation) return;
+    void request('/api/payments/receipts/discard', {method:'POST',body:JSON.stringify({reservationId:flow.reservation.reservationId,checkoutKey:flow.checkoutKey,receiptUploadToken:token,keepUploadToken})}).catch(()=>{});
+  }
+
+  function clearReceipt(flow, preserveUploaded = false) {
+    if (!preserveUploaded) { discardReceipt(flow, flow.receiptUploadToken); discardReceipt(flow, flow.previousReceiptUploadToken); flow.previousReceiptUploadToken = null; }
+    flow.receiptUploadToken = null;
     if (flow.receiptPreviewUrl) URL.revokeObjectURL(flow.receiptPreviewUrl);
     flow.receiptPreviewUrl = null;
     flow.receipt = null;
@@ -311,6 +327,9 @@
     if (input) input.value = "";
     const preview = document.getElementById("paymentReceiptPreview");
     if (preview) { preview.replaceChildren(); preview.classList.add("hidden"); }
+    document.getElementById('paymentUploadProgress')?.classList.add('hidden');
+    const receiptError=document.getElementById('paymentReceiptError');if(receiptError)receiptError.hidden=true;
+    const receiptRetry=document.getElementById('paymentReceiptRetry');if(receiptRetry)receiptRetry.hidden=true;
     document.getElementById("paymentReceiptForm")?.classList.remove("hasReceipt", "isUploading", "uploadFailed", "uploadSucceeded");
   }
 
@@ -461,8 +480,15 @@
               if (expiredId) await request("/api/payments/reservations/cancel", { method: "POST", body: JSON.stringify({ reservationId: expiredId, checkoutKey: flow.checkoutKey }) }).catch(() => {});
             });
             document.getElementById("copyPaymentNumber").onclick = async () => {
-              await navigator.clipboard.writeText(reserved.method.number);
-              document.getElementById("copyPaymentNumber").textContent = "Kopyalandı";
+              try {
+                await navigator.clipboard.writeText(reserved.method.number);
+                document.getElementById("copyPaymentNumber").textContent = "Kopyalandı";
+              } catch { setMessage('Kopyalama alınmadı. Nömrəni basılı saxlayıb kopyalayın.', 'error'); }
+              if (!flow.receiptUploadToken) setStage(flow,'receipt_upload');
+              const area = document.getElementById('paymentReceiptArea');
+              area?.scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'auto':'smooth',block:'nearest'});
+              area?.classList.add('receiptAttention');
+              window.setTimeout(()=>area?.classList.remove('receiptAttention'),2500);
             };
             document.getElementById("changePaymentMethod").onclick = async () => {
               if (flow.changing || flow.submitting) return;
@@ -507,6 +533,7 @@
             };
             document.getElementById("paymentReceiptInput").onchange = (fileEvent) => {
               const file = fileEvent.target.files?.[0];
+              if (!file || flow.submitting) return;
               const error = document.getElementById("paymentReceiptError");
               error.hidden = true;
               const declaredType = String(file?.type || "").toLowerCase();
@@ -519,7 +546,8 @@
                 error.hidden = false;
                 return;
               }
-              clearReceipt(flow);
+              flow.previousReceiptUploadToken = flow.receiptUploadToken || flow.previousReceiptUploadToken;
+              clearReceipt(flow, true);
               flow.receipt = file;
               setStage(flow, "receipt_upload");
               document.getElementById("paymentReceiptForm")?.classList.add("hasReceipt");
@@ -530,16 +558,17 @@
               const filePreview = flow.receiptPreviewUrl ? `<img src="${flow.receiptPreviewUrl}" alt="Yüklənəcək ödəniş qəbzi">` : `<div class="paymentPdfPreview" aria-label="PDF qəbzi"><strong>PDF</strong></div>`;
               preview.innerHTML = `${filePreview}<div class="paymentReceiptPreviewInfo"><strong>${esc(file.name)}</strong><span class="paymentReceiptPending" role="status">Çek seçildi — göndərildikdə təhlükəsiz yoxlanacaq.</span><div class="paymentReceiptPreviewActions"><button id="changePaymentReceipt" type="button">Dəyiş</button><button id="removePaymentReceipt" type="button">Sil</button></div></div>`;
               const submitButton = document.getElementById("paymentSubmit");
-              setReceiptSubmitReady(true);
-              submitButton.textContent = "Davam et →";
+              setReceiptSubmitReady(false);
               document.getElementById("changePaymentReceipt").onclick = () => document.getElementById("paymentReceiptInput")?.click();
               document.getElementById("removePaymentReceipt").onclick = () => {
+                if (flow.submitting) return;
                 clearReceipt(flow); setStage(flow, "payment_details"); setReceiptSubmitReady(false);
+                document.getElementById('paymentReceiptRetry').hidden = true;
+                document.getElementById('paymentUploadProgress').classList.add('hidden');
               };
+              void uploadSelectedReceipt();
             };
-            document.getElementById("paymentReceiptForm").addEventListener("submit", async (event) => {
-              event.preventDefault();
-              event.stopPropagation();
+            const uploadSelectedReceipt = async () => {
               if (flow.submitting) return;
               const submit = document.getElementById("paymentSubmit");
               const error = document.getElementById("paymentReceiptError");
@@ -551,8 +580,9 @@
               flow.uploadController = new AbortController();
               storeCheckout(flow);
               submit.disabled = true;
-              submit.textContent = "WhatsApp açılır…";
-              setMessage("Sifariş hazırlanır, WhatsApp açılır…");
+              submit.textContent = "Çek yüklənir — gözləyin";
+              document.getElementById('paymentReceiptRetry').hidden = true;
+              setMessage("Çek yüklənir — gözləyin");
               const cancelButton = document.getElementById("paymentCancel");
               cancelButton.textContent = "Yükləməni dayandır";
               const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
@@ -583,7 +613,7 @@
                   formData.append("receipt", flow.receipt, flow.receipt.name || "receipt");
                   return formData;
                 };
-                const order = await submitReceiptWithRetry("/api/payments/orders", formDataFactory, {
+                const uploaded = await submitReceiptWithRetry("/api/payments/receipts", formDataFactory, {
                   onAttempt: (attempt, total) => setProgress(null, attempt === 1 ? "Yüklənir…" : `Yenidən cəhd edilir (${attempt}/${total})…`),
                   onStart: () => setProgress(null, "Yüklənir…"),
                   onProgress: (value) => setProgress(value, `${value}%`),
@@ -597,13 +627,22 @@
                   }
                 }, flow.orderIdempotencyKey, flow.uploadController.signal);
                 flow.uploadController = null;
-                setProgress(100, "Çek uğurla yükləndi");
+                flow.receiptUploadToken = uploaded.receiptUploadToken;
+                flow.submitting = false;
+                flow.submissionStarted = false;
+                storeCheckout(flow);
+                discardReceipt(flow, flow.previousReceiptUploadToken, flow.receiptUploadToken);
+                flow.previousReceiptUploadToken = null;
+                setProgress(100, "✓ Çek uğurla əlavə edildi");
                 receiptStatus?.classList.replace("paymentReceiptPending", "paymentReceiptSuccess");
                 document.getElementById("paymentReceiptForm")?.classList.remove("isUploading");
                 document.getElementById("paymentReceiptForm")?.classList.add("uploadSucceeded");
-                setMessage(`Çek uğurla əlavə edildi. Sifariş: ${order.orderCode}`, "success");
-                await new Promise((resolve) => requestAnimationFrame(resolve));
-                await finish(order, { preserveModal: true });
+                lockedControls.forEach(control=>{control.disabled=false;});
+                cancelButton.textContent = 'Ləğv et';
+                error.hidden = true;
+                setReceiptSubmitReady(true);
+                setStage(flow,'receipt_ready');
+                setMessage('Çek qəbul edildi. İndi sifarişi göndərin.', 'success');
                 return;
               } catch (submitError) {
                 flow.uploadController = null;
@@ -619,8 +658,37 @@
                 error.textContent = submitError.userMessage || "Sifariş hazırlanmadı. Yenidən cəhd edin.";
                 error.hidden = false;
                 cancelButton.textContent = "Ləğv et";
-                submit.disabled = false;
-                submit.textContent = "Yenidən cəhd et";
+                setReceiptSubmitReady(false);
+                document.getElementById('paymentReceiptRetry').hidden = false;
+              }
+            };
+            document.getElementById('paymentReceiptRetry').onclick = () => { void uploadSelectedReceipt(); };
+            document.getElementById('paymentReceiptForm').addEventListener('submit', async event=>{
+              event.preventDefault(); event.stopPropagation();
+              if (flow.submitting || flow.settled) return;
+              if (!flow.receiptUploadToken || !flow.reservation) { promptForReceipt(); return; }
+              flow.submitting = true;
+              const submit = document.getElementById('paymentSubmit');
+              const finalControls = document.querySelectorAll('.paymentFlowClose,#changePaymentMethod,#changePaymentReceipt,#removePaymentReceipt,#paymentReceiptInput,#paymentCancel');
+              finalControls.forEach(control=>{control.disabled=true;});
+              submit.disabled = true; submit.textContent = 'Sifariş göndərilir…';
+              try {
+                flow.submissionStarted = true; storeCheckout(flow);
+                const order = await request('/api/payments/orders',{method:'POST',headers:{'X-Idempotency-Key':flow.orderIdempotencyKey},
+                  body:JSON.stringify({reservationId:flow.reservation.reservationId,checkoutKey:flow.checkoutKey,productId:product.id,planIndex,consentAccepted:true,whatsappExtraText:flow.whatsappExtraText,receiptUploadToken:flow.receiptUploadToken})});
+                if (!validOrder(order)) throw new Error('Server çeki təsdiqləmədi. Yenidən cəhd edin.');
+                await finish(order,{preserveModal:true});
+              } catch (error) {
+                flow.submitting = false;
+                finalControls.forEach(control=>{control.disabled=false;});
+                if (error.status===400 || error.status===409) {
+                  flow.receiptUploadToken=null; setReceiptSubmitReady(false); document.getElementById('paymentReceiptRetry').hidden=false;
+                  const receiptStatus=document.querySelector('.paymentReceiptSuccess');
+                  if(receiptStatus){receiptStatus.classList.replace('paymentReceiptSuccess','paymentReceiptPending');receiptStatus.textContent='Çeki yenidən yükləyib yoxlayın.';}
+                  document.getElementById('paymentReceiptForm')?.classList.remove('uploadSucceeded');
+                }
+                else setReceiptSubmitReady(true);
+                const box=document.getElementById('paymentReceiptError');box.textContent=error.message;box.hidden=false;
               }
             });
         };

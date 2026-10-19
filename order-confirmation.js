@@ -1976,17 +1976,10 @@
 
   function patchLegacySendWhatsApp() {
     if (typeof window.sendWA !== "function" || window.sendWA.__mirpanelConsentPatched) return;
-    const original = window.sendWA;
-
-    window.sendWA = function consentProtectedSendWA(product, plan, extra) {
-      if (!orderTermsAccepted) {
-        showAgreementError();
-        return;
-      }
-      const consentLine = "İstifadə qaydaları və şərtlər qəbul edildi: Bəli";
-      const result = original.call(this, product, plan, [String(extra || "").trim(), consentLine].filter(Boolean).join("\n"));
-      orderTermsAccepted = false;
-      return result;
+    window.sendWA = function receiptProtectedSendWA(product, plan) {
+      // Legacy controls must enter the same server-verified receipt checkout,
+      // never the old direct WhatsApp popup / client-only order-number path.
+      return runOrderFlow(product, plan);
     };
 
     window.sendWA.__mirpanelConsentPatched = true;

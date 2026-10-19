@@ -156,6 +156,23 @@ export function createPaymentSystem(options) {
     await store.rateLimit(`${action}:${security.ipHash(clientIp(request))}`, seconds, maxHits);
   }
 
+  // An authenticated-encrypted receipt capability, not a public storage URL.
+  function uploadedReceipt(token, reservationId, checkoutKey) {
+    try {
+      const parts=String(token || '').split('.');
+      if(parts.length!==4 || parts[0]!=='v1' || parts.slice(1).some(part=>Buffer.from(part,'base64url').toString('base64url')!==part)) throw new Error();
+      const value = JSON.parse(security.decryptSecret(String(token || '')));
+      if (value.purpose !== 'payment-receipt' || value.reservationId !== reservationId ||
+          value.checkoutHash !== security.hashToken(checkoutKey) || !Number.isFinite(value.expiresAt) || value.expiresAt < Date.now() ||
+          !/^[a-f0-9]{64}$/.test(value.sha256) || !['jpg','png','webp','pdf'].includes(value.extension) ||
+          !Number.isSafeInteger(value.size) || value.size <= 0 || value.size > config.maxReceiptBytes ||
+          value.path !== `pending/${reservationId}/${value.sha256}.${value.extension}`) throw new Error();
+      return value;
+    } catch {
+      throw Object.assign(new Error('Çek təsdiqi etibarlı deyil. Çeki yenidən yükləyin.'), {status:400,code:'RECEIPT_CONFIRMATION_INVALID'});
+    }
+  }
+
   async function catalogSelection(productId, planIndex) {
     const data = await loadCatalog();
     const product = data.products.find((item) => item.id === productId && item.active !== false);
@@ -269,8 +286,19 @@ export function createPaymentSystem(options) {
       });
       return true;
     }
-    if (request.method === "POST" && url.pathname === "/api/payments/orders") {
-      await publicRate(request, "submit", 3600, 10);
+    if (request.method === 'POST' && url.pathname === '/api/payments/receipts/discard') {
+      await publicRate(request, 'receipt-discard', 600, 30);
+      const body = await readBody(request, 20000);
+      const reservationId = safeUuid(body.reservationId), checkoutKey = safeUuid(body.checkoutKey);
+      const receipt = uploadedReceipt(body.receiptUploadToken, reservationId, checkoutKey);
+      await store.checkoutReservation(reservationId, checkoutKey);
+      // Do not race an in-flight final submission by deleting a valid capability's object.
+      // Unlinked pending objects are collected only after every capability has expired.
+      publicJson(request,response,200,{ok:true}); return true;
+    }
+    if (request.method === "POST" && ['/api/payments/orders','/api/payments/receipts'].includes(url.pathname)) {
+      const uploadOnly = url.pathname === '/api/payments/receipts';
+      await publicRate(request, uploadOnly ? 'receipt-upload' : 'submit', 3600, uploadOnly ? 30 : 10);
       const contentType = String(request.headers["content-type"] || "");
       let body;
       let receipt;
@@ -286,7 +314,9 @@ export function createPaymentSystem(options) {
         ({ body, receipt } = await paymentOrderFromMultipart(rawBody, contentType, config.maxReceiptBytes));
       } else {
         body = await readBody(request, Math.ceil(config.maxReceiptBytes * 1.42) + 100_000);
-        receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
+        if (body.receiptUploadToken) {
+          receipt = uploadedReceipt(body.receiptUploadToken, safeUuid(body.reservationId), safeUuid(body.checkoutKey));
+        } else receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
       }
       const reservationId = safeUuid(body.reservationId);
       const checkoutKey = safeUuid(body.checkoutKey);
@@ -298,15 +328,34 @@ export function createPaymentSystem(options) {
         throw Object.assign(new Error("Təkrar sorğu əvvəlki sifarişlə uyğun deyil."), { status: 409 });
       }
       const existing = await store.getOrderByReservation(reservationId);
+      if (uploadOnly) {
+        if (existing || !receipt.buffer || reservation.status !== 'reserved' || Date.parse(reservation.expires_at) <= Date.now()) {
+          throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'), {status:409,code:'RECEIPT_RESERVATION_INVALID'});
+        }
+        const path = `pending/${reservationId}/${receipt.sha256}.${receipt.extension}`;
+        try { await store.uploadReceipt(path, receipt); }
+        catch (error) {
+          // A lost upload response or a duplicate immutable hash object is recoverable.
+          try { await store.verifyUploadedReceipt(path, receipt.buffer.length); }
+          catch { throw error; }
+        }
+        const proof = {purpose:'payment-receipt',reservationId,checkoutHash:security.hashToken(checkoutKey),path,
+          sha256:receipt.sha256,extension:receipt.extension,mimeType:receipt.mimeType,size:receipt.buffer.length,expiresAt:Date.now()+3600000};
+        await store.verifyUploadedReceipt(path, proof.size);
+        publicJson(request,response,200,{receiptUploaded:true,receiptUploadToken:security.encryptSecret(JSON.stringify(proof))});
+        return true;
+      }
       if (existing) {
+        if (body.receiptUploadToken) await store.verifyUploadedReceipt(existing.receipt_path, existing.receipt_size);
         publicJson(request, response, 200, await orderResult(existing, true, body.whatsappExtraText));
         return true;
       }
       const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
       // Same reservation + identical validated bytes always target one private
       // object, even if a timeout hides a successful storage response.
-      const receiptPath = `${reservationId}/${receipt.sha256}.${receipt.extension}`;
-      await store.uploadReceipt(receiptPath, receipt);
+      const receiptPath = receipt.path || `${reservationId}/${receipt.sha256}.${receipt.extension}`;
+      if (receipt.buffer) await store.uploadReceipt(receiptPath, receipt);
+      else await store.verifyUploadedReceipt(receiptPath, receipt.size);
       let submitted;
       try {
         submitted = await store.submitOrder({
@@ -319,7 +368,7 @@ export function createPaymentSystem(options) {
           receiptBucket: config.receiptsBucket,
           receiptPath,
           receiptMime: receipt.mimeType,
-          receiptSize: receipt.buffer.length,
+          receiptSize: receipt.size || receipt.buffer.length,
           receiptSha256: receipt.sha256,
           durationMonths: structuredDurationMonths(plan)
         });
@@ -575,9 +624,12 @@ export function createPaymentSystem(options) {
     start() {
       mailer.start();
       const cleanup = () => store.cleanupExpiredReceipts().catch((error) => console.error("Payment receipt cleanup", error.diagnostic || error.message));
+      const stagedCleanup = () => store.cleanupStagedReceipts().catch(error=>console.error('Receipt staging cleanup',error.code || 'STORAGE_ERROR'));
       setTimeout(cleanup, 15_000).unref?.();
+      setTimeout(stagedCleanup, 30000).unref?.();
       const timer = setInterval(cleanup, 6 * 60 * 60_000);
       timer.unref?.();
+      setInterval(stagedCleanup, 60 * 60_000).unref?.();
     },
     async handle(request, response) {
       const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);

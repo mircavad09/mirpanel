@@ -122,6 +122,11 @@ export function receiptFromBuffer(buffer, declaredMimeType, maxBytes = 5 * 1024 
     }
     throw Object.assign(new Error("Yalnız JPG, PNG, WEBP və ya PDF yükləyin."), { status: 400, code: "RECEIPT_UNSUPPORTED_TYPE" });
   }
+  const declared = String(declaredMimeType || '').toLowerCase().split(';')[0];
+  if (declared && declared !== 'application/octet-stream' &&
+      (declared === 'image/jpg' ? 'image/jpeg' : declared) !== detected.mimeType) {
+    throw Object.assign(new Error('Faylın formatı uyğun deyil. JPG, PNG, WEBP və ya PDF faylını yenidən seçin.'), {status:400,code:'RECEIPT_UNSUPPORTED_TYPE'});
+  }
   if (!hasValidReceiptStructure(buffer, detected.extension)) {
     throw Object.assign(new Error("Fayl zədələnib və ya tam yüklənməyib."), { status: 400, code: "RECEIPT_DAMAGED" });
   }
