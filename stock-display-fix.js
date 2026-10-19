@@ -45,6 +45,62 @@
       : "—";
   }
 
+  // Home card presentation only. Keep the catalog, filtering and navigation unchanged.
+  function homeCardHTML(product, index, productUrl) {
+    const price = product.id === 'tiktok_jeton' ? 10 : minPrice(product);
+    const plan = (product.plans || []).find(item=>Number(item.price)===price);
+    const cents = Math.round(price*100), oldCents = Math.round(Number(plan?.regularPrice)*100);
+    const discounted = Number.isSafeInteger(cents) && cents>0 && Number.isSafeInteger(oldCents) && oldCents>cents;
+    const percent = discounted ? Math.round((oldCents-cents)/oldCents*100) : 0;
+    const title = publicProductTitle(product.title), id=escapeHtml(product.id);
+    const labels = [product.bestSeller===true?'🔥 Ən çox satılan':'',product.deliveryType==='automatic'?'⚡ Anında':''].filter(Boolean);
+    return `<article class="card homeProductCard" data-product-id="${id}" aria-labelledby="home-card-${id}" style="animation-delay:${Math.min(index*.03,.25)}s">
+      <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || title)}" loading="lazy" decoding="async">
+        ${percent>0?`<span class="homeCardDiscount">-${percent}%</span>`:''}
+        ${labels.length?`<div class="homeCardLabels">${labels.map(label=>`<span>${label}</span>`).join('')}</div>`:''}
+      </div>
+      <div class="pad homeCardBody">
+        <h3 class="title" id="home-card-${id}" title="${escapeHtml(title)}">${escapeHtml(title)}</h3>
+        <div class="homeCardPrices"><strong>${escapeHtml(priceText(product))}</strong>${discounted?`<del>${(oldCents/100).toFixed(2)} ${escapeHtml(product.currency || '₼')}</del>`:''}</div>
+        <p class="homeCardSales" data-home-sales-id="${id}" hidden></p>
+        <a class="homeCardOrder" href="${escapeHtml(productUrl)}" aria-label="Sifariş et" aria-describedby="home-card-${id}" title="Sifariş et"><span aria-hidden="true">→</span></a>
+        ${stockBadgeHTML(product)}
+      </div>
+    </article>`;
+  }
+
+  const homeSalesCache = new Map(), homeSalesPending = new Map(), homeSalesQueue = [];
+  let homeSalesActive = 0;
+  function pumpHomeSales() {
+    while(homeSalesActive<4 && homeSalesQueue.length){
+      const {id,resolve}=homeSalesQueue.shift();homeSalesActive++;
+      const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+      fetch(`https://mirpanel.onrender.com/api/product-sales?productId=${encodeURIComponent(id)}`,{cache:'no-store',signal:controller.signal})
+        .then(response=>response.ok?response.json():null).then(value=>{
+          const valid=value?.productId===id && value.initialized===true && Number.isSafeInteger(value.productTotal) && value.productTotal>=0;
+          const count=valid?value.productTotal:null;
+          homeSalesCache.set(id,{count,expires:Date.now()+60000});resolve(count);
+        }).catch(()=>resolve(null)).finally(()=>{clearTimeout(timeout);homeSalesActive--;homeSalesPending.delete(id);pumpHomeSales();});
+    }
+  }
+  function hydrateHomeCardSales() {
+    if(!document.body.classList.contains('home-page'))return;
+    document.querySelectorAll('#grid [data-home-sales-id]').forEach(line=>{
+      const id=line.dataset.homeSalesId, cached=homeSalesCache.get(id);
+      let result;
+      if(cached && cached.expires>Date.now())result=Promise.resolve(cached.count);
+      else {
+        if(!homeSalesPending.has(id))homeSalesPending.set(id,new Promise(resolve=>homeSalesQueue.push({id,resolve})));
+        result=homeSalesPending.get(id);pumpHomeSales();
+      }
+      void result.then(count=>{
+        if(!line.isConnected || count===null)return;
+        line.textContent=`≈ ${new Intl.NumberFormat('en-US').format(count).replaceAll(',',' ')}+ satılıb`;
+        line.hidden=false;
+      });
+    });
+  }
+
   function normalizeSearch(value) {
     return String(value ?? "")
       .trim()
@@ -149,6 +205,7 @@
       }
 
       grid.innerHTML = list.map((product, index) => cardHTML(product, index)).join("");
+      hydrateHomeCardSales();
     };
   }
 
@@ -181,6 +238,7 @@
         .replace(/-almaq$/, "")
         .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab");
       const productUrl = productSlug ? `/mehsul/${productSlug}` : "#";
+      if(document.body.classList.contains('home-page'))return homeCardHTML(product,index,productUrl);
       return `
         <a class="card" href="${productUrl}" data-product-id="${escapeHtml(product.id)}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s;text-decoration:none;color:inherit">
           <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt=""><div class="cornerPrice">${priceText(product)}</div></div>
