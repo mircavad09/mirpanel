@@ -159,12 +159,13 @@
     if (product) {
       try {
         const metrics = await import('/mirpanel-admin/public/product-plan-utils.mjs?v=detail-20261010-1');
-        initializeDetailMetadata(product, metrics);
+        const compact = product.id === 'capcut' ? await import('/capcut-detail.mjs?v=20261020-1') : null;
+        initializeDetailMetadata(product, metrics, compact);
       } catch { /* Keep the existing functioning page if enhancement cannot load. */ }
     }
   }
 
-  function initializeDetailMetadata(product, utils) {
+  function initializeDetailMetadata(product, utils, compact = null) {
     const root = document.getElementById('productPageView');
     if (!root || root.dataset.detailEnhanced) return;
     root.dataset.detailEnhanced = 'true';
@@ -179,7 +180,13 @@
     trust.append(text('li','','2024-dən fəaliyyət göstərir'));
     const total = text('li','',''); total.hidden = true; trust.append(total);
     trust.append(text('li','',utils.deliveryText(product)));
-    if (product.commissionFree === true) trust.append(text('li','','Komissiyasız ödəniş — əlavə məbləğ tutulmur'));
+    if (product.commissionFree === true || (compact && product.commissionFree !== false)) trust.append(text('li','','Komissiyasız ödəniş — əlavə məbləğ tutulmur'));
+    if (compact) {
+      const hours = compact.serviceHoursMilestone(Date.now());
+      if (hours !== null) trust.append(text('li','capcut-service-hours',`${new Intl.NumberFormat('en-US').format(hours).replaceAll(',',' ')}+ saat aktiv xidmət`));
+      const actions = root.querySelector('.product-page-actions');
+      root.querySelector('.product-page-info')?.append(actions);
+    }
     left.append(trust);
     root.querySelector('.product-page-delivery strong').textContent = utils.deliveryText(product);
     const summary = text('section','product-detail-summary','');
@@ -234,7 +241,7 @@
       if (m.oldPrice !== null) prices.append(text('del','',`${utils.formatPrice(m.oldPrice)} ₼`));
       if (m.discount !== null) prices.append(text('span','product-detail-best',`-${m.discount}%`));
       summary.append(prices);
-      if (m.savings !== null) summary.append(text('p','product-detail-savings',`Qənaət: ${utils.formatPrice(m.savings)} ₼`));
+      if (m.savings !== null) summary.append(text('p','product-detail-savings',compact ? `✓ Bu paketlə ${utils.formatPrice(m.savings)} ₼ qənaət edirsiniz` : `Qənaət: ${utils.formatPrice(m.savings)} ₼`));
     };
     container.addEventListener('click', update);
     if (!rows.some(row=>row.classList.contains('active') && !row.hidden)) rows.find(row=>!row.hidden)?.click();
@@ -249,8 +256,8 @@
         if (!response.ok) return;
         const value = await response.json();
         if (value.productId !== product.id || !value.initialized || !Number.isSafeInteger(value.productTotal) || !Number.isSafeInteger(value.siteTotal)) return;
-        sales.textContent = `2024-dən bəri təxminən ${number.format(value.productTotal)} satış`; sales.hidden = false;
-        total.textContent = `${number.format(value.siteTotal)}+ tamamlanmış ümumi sifariş`; total.hidden = false;
+        sales.textContent = compact ? `Bu məhsul təxminən ${new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')}+ dəfə satılıb` : `2024-dən bəri təxminən ${number.format(value.productTotal)} satış`; sales.hidden = false;
+        total.textContent = compact && value.siteTotal >= 10000 ? '10 000+ tamamlanmış sifariş' : `${number.format(value.siteTotal)}+ tamamlanmış ümumi sifariş`; total.hidden = false;
       } catch { /* A network error never creates invented sales numbers. */ }
       finally { loading = false; }
     }

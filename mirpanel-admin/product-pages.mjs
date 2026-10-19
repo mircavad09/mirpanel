@@ -367,7 +367,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     cleanText(product.note);
   const aboutText = cleanText(product.seoContent) || cleanText(product.desc);
   const planMarkup = renderPlans(product);
-  const similarMarkup = renderSimilar(similar);
+  const similarMarkup = renderSimilar(product.id === 'capcut' ? similar.slice(0,8) : similar, product.id === 'capcut');
   const structuredData = safeJson({
     "@context": "https://schema.org",
     "@graph": [
@@ -442,7 +442,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=product-images-20261020-1">
+  <link rel="stylesheet" href="/product-page.css?v=${product.id === 'capcut' ? 'capcut-compact-20261020-1' : 'product-images-20261020-1'}">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-upload-20260908-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -552,7 +552,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
-  <script src="/product-page.js?v=product-images-20261020-1"></script>
+  <script src="/product-page.js?v=${product.id === 'capcut' ? 'capcut-compact-20261020-1' : 'product-images-20261020-1'}"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>
@@ -1135,15 +1135,16 @@ function similarProducts(product, activeProducts) {
   return [...sameCategory, ...others].slice(0, 10);
 }
 
-function renderSimilar(similar) {
+function renderSimilar(similar, compact = false) {
   return similar.map(({ product, slug }) => {
     const price = minimumPrice(product);
     const priceText = price > 0
       ? `${price.toFixed(2)} ${cleanText(product.currency)}`
       : "Stokda yoxdur";
     const title = publicProductTitle(product.title);
+    const metrics = compact ? planMetrics((product.plans || []).find(plan => Number(plan.price) === price) || {}) : null;
     return `<a class="product-page-similar-card" href="${escapeAttribute(productCanonicalPath(slug))}" aria-label="${escapeAttribute(`${title} — ${priceText}`)}" title="${escapeAttribute(title)}">
-      <img src="${escapeAttribute(rootRelativeUrl(product.image))}" class="product-page-similar-image" alt="${escapeAttribute(product.imageAlt || product.title)}" width="320" height="320" loading="lazy" decoding="async">
+      <img src="${escapeAttribute(rootRelativeUrl(product.image))}" class="product-page-similar-image" alt="${escapeAttribute(product.imageAlt || product.title)}" width="320" height="320" loading="lazy" decoding="async">${compact && metrics.discount > 0 ? `\n      <span class="capcut-similar-discount">-${metrics.discount}%</span>` : ''}
       <div class="product-page-similar-title" title="${escapeAttribute(title)}">${escapeHtml(title)}</div>
       ${product.category ? `<div class="product-page-similar-category">${escapeHtml(product.category)}</div>` : ""}
       <div class="product-page-similar-price">${escapeHtml(priceText)}</div>
