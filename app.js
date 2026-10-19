@@ -2175,7 +2175,7 @@ const DATA = {
       "_stableId": "chatgpt",
       "order": 21,
       "category": "ai",
-      "image": "assets/chatgpt.png",
+      "image": "uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091",
       "currency": "₼",
       "title": "ChatGPT Plus (Şəxsi hesab)",
       "variant": "Plus",
