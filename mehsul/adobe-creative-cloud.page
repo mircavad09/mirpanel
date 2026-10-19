@@ -121,7 +121,7 @@
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
         <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/canva-premium" aria-label="Canva Premium — 2.99 ₼" title="Canva Premium">
-      <img src="/assets/canva.png" class="product-page-similar-image" alt="Canva Premium" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882" class="product-page-similar-image" alt="Canva Premium" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">2.99 ₼</div>

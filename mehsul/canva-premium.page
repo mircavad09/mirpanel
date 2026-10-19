@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/canva-premium#product","url":"https://mirpanel.com/mehsul/canva-premium","name":"Canva Premium","description":"Canva Premium və Canva Pro hesabını sərfəli qiymətə əldə et. Dizayn üçün premium alətlər Mirpanel-də.","image":["https://mirpanel.com/assets/canva.png"],"sku":"canva","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/canva-premium","price":"2.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/canva-premium","price":"4.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/canva-premium#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Canva Premium","item":"https://mirpanel.com/mehsul/canva-premium"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/canva-premium#product","url":"https://mirpanel.com/mehsul/canva-premium","name":"Canva Premium","description":"Canva Premium və Canva Pro hesabını sərfəli qiymətə əldə et. Dizayn üçün premium alətlər Mirpanel-də.","image":["https://mirpanel.com/uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882"],"sku":"canva","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/canva-premium","price":"2.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/canva-premium","price":"4.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/canva-premium#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Canva Premium","item":"https://mirpanel.com/mehsul/canva-premium"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="canva" data-product-slug="canva-premium">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -89,9 +89,9 @@
       <article class="product-page-card">
         <div class="product-page-card-grid">
           <div class="product-page-media">
-            <img class="product-page-media-backdrop" src="/assets/canva.png" alt="" aria-hidden="true" decoding="async">
+            <img class="product-page-media-backdrop" src="/uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882" alt="" aria-hidden="true" decoding="async">
             <span class="product-page-availability-badge">Mövcuddur</span>
-            <img id="pp-main-img" src="/assets/canva.png" alt="Canva Premium" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img id="pp-main-img" src="/uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882" alt="Canva Premium" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
@@ -226,7 +226,7 @@
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">
       <button class="close" id="closeModal" type="button">Bağla ✕</button>
       <div class="mTop">
-        <img src="/assets/canva.png" alt="Canva Premium" id="mImg" class="mImg">
+        <img src="/uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882" alt="Canva Premium" id="mImg" class="mImg">
         <div class="mTxt">
           <div class="mTitle" id="mTitle">Canva Premium</div>
           <div class="mDesc" id="mDesc">Premium template, elementlər.</div>
