@@ -787,7 +787,7 @@ const DATA = {
       "_stableId": "spotify",
       "order": 7,
       "category": "musiqi",
-      "image": "assets/spotify.png",
+      "image": "uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574",
       "currency": "₼",
       "title": "Spotify Premium (Öz hesabınız)",
       "variant": "Şəxsi hesab",
