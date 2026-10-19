@@ -3833,7 +3833,9 @@ window.openProductPage = (id) => {
   if(titleEl) titleEl.textContent = publicProductTitle(p.seoH1 || (p.variant ? `${p.title} - (${p.variant})` : p.title));
 
   renderProductPlans(p);
-  renderSimilarProducts(p);
+  // Canonical detail HTML already contains active, correctly resolved similar images.
+  // Do not briefly request inactive legacy assets before product-page.js restores it.
+  if (!document.body.classList.contains('product-page-document')) renderSimilarProducts(p);
   renderProductTabs(p);
 };
 

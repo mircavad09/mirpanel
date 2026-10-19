@@ -1324,11 +1324,11 @@ body.product-page-document #productPageView.product-page-root :is(.product-page-
   .product-page-root :is(.product-page-card-grid,.product-detail-left,.product-page-info) { display:contents; }
   body.product-page-document #productPageView.product-page-root .product-page-media {
     order:0; width:min(100%,calc(var(--product-image-ratio,1) * clamp(160px,45vw,190px)));
-    height:clamp(160px,45vw,190px); max-height:190px; flex-shrink:0; margin:0 auto 2px;
+    height:auto; max-height:190px; flex-shrink:0; margin:0 auto 2px;
     border-radius:12px;
   }
   body.product-page-document #productPageView.product-page-root .product-page-media #pp-main-img {
-    width:100% !important; height:100% !important; max-height:190px !important; object-fit:contain !important;
+    width:100% !important; height:auto !important; max-height:190px !important; object-fit:contain !important;
   }
   .product-page-root .product-page-availability-badge { top:7px; right:7px; padding:4px 7px; font-size:11px; }
   .product-page-root .product-page-eyebrow { order:1; margin:0; gap:5px; }

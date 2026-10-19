@@ -1,4 +1,5 @@
 import { planMetrics, deliveryText } from './public/product-plan-utils.mjs';
+import { createHash } from 'node:crypto';
 const SITE_URL = "https://mirpanel.com";
 const DELIVERY_TEXT = "7/24 anında təqdim edilir";
 
@@ -441,7 +442,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=mobile-compact-20261010-2">
+  <link rel="stylesheet" href="/product-page.css?v=product-images-20261020-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-upload-20260908-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -547,11 +548,11 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     </div>
   </div>
 
-  <script src="/app.js?v=20260804-mobile-layout-1"></script>
+  <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
-  <script src="/product-page.js?v=detail-20261010-1"></script>
+  <script src="/product-page.js?v=product-images-20261020-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>

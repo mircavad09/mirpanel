@@ -38,11 +38,32 @@
     const mainImage = document.getElementById("pp-main-img");
     if (mainImage && product?.image) mainImage.src = rootRelativeImage(product.image);
     if (mainImage) {
+      // The catalog's canonical image is also the source for the media backdrop.
+      const media = mainImage.closest('.product-page-media');
+      const backdrop = media?.querySelector('.product-page-media-backdrop');
+      if (backdrop && product?.image) backdrop.src = rootRelativeImage(product.image);
+      const showFallback = () => {
+        if (!media || media.querySelector('[data-product-image-fallback]')) return;
+        const fallback = document.createElement('span');
+        fallback.dataset.productImageFallback = '';
+        fallback.setAttribute('role','img');
+        fallback.setAttribute('aria-label', product?.title || 'Məhsul şəkli');
+        fallback.textContent = 'Şəkil hazırda yüklənmir';
+        fallback.style.cssText = 'display:grid;place-items:center;min-height:160px;padding:16px;color:#b8b8c0;background:#111;text-align:center';
+        mainImage.hidden = true;
+        mainImage.style.setProperty('display','none','important');
+        media.append(fallback);
+      };
       const fitMedia = () => {
         if (!mainImage.naturalWidth || !mainImage.naturalHeight) return;
+        mainImage.hidden = false;
+        mainImage.style.removeProperty('display');
+        media?.querySelector('[data-product-image-fallback]')?.remove();
         mainImage.closest('.product-page-media')?.style.setProperty('--product-image-ratio', String(mainImage.naturalWidth / mainImage.naturalHeight));
       };
+      mainImage.addEventListener('error', showFallback);
       mainImage.addEventListener('load', fitMedia);
+      if (mainImage.complete && !mainImage.naturalWidth) showFallback();
       fitMedia();
     }
     document.querySelectorAll(".product-page-root img").forEach((image) => {
