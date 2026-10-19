@@ -1119,7 +1119,7 @@ const DATA = {
       "_stableId": "adobecc",
       "order": 10,
       "category": "dizayn",
-      "image": "assets/adobe.png",
+      "image": "uploads/products/adobecc-1792450954538-64c5979f.png?v=1792450954538",
       "currency": "₼",
       "title": "Adobe Creative Cloud",
       "variant": "Premium",
