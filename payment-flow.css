@@ -53,6 +53,7 @@
 .capcutPhoneField{display:grid;gap:6px;margin:10px 0;padding:12px;border:1px solid rgba(255,210,0,.25);border-radius:12px;background:#121212;color:#f4f4f4;font-weight:700}.capcutPhoneField input{min-height:48px;border:1px solid #3b3b3b;border-radius:10px;background:#080808;color:#fff;padding:0 12px;font-size:16px}.capcutPhoneField small{color:#aaa;font-weight:400}.capcutPhoneField b{color:#ff9292;font-size:13px}
 
 /* Payment selection: keep provider themes and separate selection from reservation. */
+#modal.paymentFlowOpen #closeModal{display:none!important}
 #modal.paymentFlowOpen .modalCard:has(.paymentFlow[data-payment-stage="payment_method_selection"]){border-radius:22px;background:linear-gradient(145deg,#191a1b,#101112 70%);border-color:#393b3e;box-shadow:0 24px 80px #0009,inset 0 1px #ffffff09}
 .paymentFlow[data-payment-stage="payment_method_selection"]{gap:13px}
 .paymentFlow[data-payment-stage="payment_method_selection"] .paymentFlowHead{background:transparent}

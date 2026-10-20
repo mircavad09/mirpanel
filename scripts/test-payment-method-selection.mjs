@@ -29,6 +29,9 @@ try{
    await page.goto(fixture.origin,{waitUntil:'networkidle'});await page.screenshot({path:path.join(visual,`before-${width}.png`)});
   }
   await page.goto(fixture.origin,{waitUntil:'networkidle'});
+  await page.evaluate(()=>{const old=document.createElement('button');old.id='closeModal';old.textContent='Bağla';document.querySelector('.modalCard').prepend(old);});
+  assert.equal(await page.locator('#closeModal').isVisible(),false);
+  assert.equal(await page.locator('.paymentFlowClose').isVisible(),true);
   const next=page.locator('#paymentMethodContinue'),cards=page.locator('[data-payment-method]');
   assert.equal(await next.isDisabled(),true);assert.equal(await page.locator('.paymentMethodChoice.selected').count(),0);
   assert.equal(await activeStep(page),'1');assert.match(await next.textContent(),/Bu kartla davam et · 5\.99 ₼/);
