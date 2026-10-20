@@ -442,7 +442,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=${product.id === 'capcut' ? 'capcut-compact-20261020-1' : 'product-images-20261020-1'}">
+  <link rel="stylesheet" href="/product-page.css?v=detail-accordion-20261020-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-upload-20260908-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -464,17 +464,14 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         <div class="product-page-card-grid">
           <div class="product-page-media">
             <img class="product-page-media-backdrop" src="${escapeAttribute(imageSrc)}" alt="" aria-hidden="true" decoding="async">
-            <span class="product-page-availability-badge${availability.inStock ? "" : " is-out"}">${escapeHtml(availability.label)}</span>
             <img id="pp-main-img" src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(displayTitle)}" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
-            <div class="product-page-eyebrow">
-              ${product.variant ? `<span class="product-page-variant">${escapeHtml(product.variant)}</span>` : ""}
-              ${product.category ? `<span class="product-page-category">${escapeHtml(product.category)}</span>` : ""}
+            <div class="product-detail-heading">
+              <h1 id="pp-main-title" class="product-page-title">${escapeHtml(h1)}</h1>
               <span class="product-page-status${availability.inStock ? "" : " is-out"}">${escapeHtml(availability.label)}</span>
             </div>
-            <h1 id="pp-main-title" class="product-page-title">${escapeHtml(h1)}</h1>
             ${product.desc ? `<p class="product-page-description">${escapeHtml(product.desc)}</p>` : ""}
             <div class="product-page-delivery">
               <strong>${escapeHtml(deliveryText(product))}</strong>
@@ -552,7 +549,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
-  <script src="/product-page.js?v=${product.id === 'capcut' ? 'capcut-compact-20261020-1' : 'product-images-20261020-1'}"></script>
+  <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>

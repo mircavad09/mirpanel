@@ -1444,3 +1444,44 @@ body[data-product-id="capcut"] #productPageView .product-page-tab { min-height:4
   .product-page-root .product-page-similar-image { grid-row:1; width:100%; height:64px; margin:0; padding:0; object-fit:contain; }
   .product-page-root .product-page-similar-title { height:32px; min-height:32px; font-size:11px; line-height:1.4; }
 }
+
+/* Shared detail presentation; never targets homepage cards or order modals. */
+body.product-page-document #productPageView.product-page-root .product-detail-heading { display:flex; flex-wrap:wrap; align-items:baseline; justify-content:space-between; gap:5px 10px; min-width:0; }
+body.product-page-document #productPageView.product-page-root .product-detail-heading > * { order:0!important; }
+body.product-page-document #productPageView.product-page-root .product-detail-heading h1 { flex:1 1 140px; margin:0; min-width:0; }
+body.product-page-document #productPageView.product-page-root .product-detail-heading .product-page-status { flex:none; margin:0; font-size:11px; line-height:1.3; white-space:nowrap; }
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-sales { display:inline-flex; flex-wrap:wrap; align-items:center; align-self:start; gap:3px; width:fit-content; max-width:100%; margin:8px 0; padding:6px 9px; border:1px solid #b9974b65; border-radius:9px; background:linear-gradient(110deg,#39224975,#3b341b65); color:#ded7e6; box-shadow:0 0 12px #c6a4490c; font-size:12px; line-height:1.4; }
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-sales strong { color:#ffe078; font-weight:700; }
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-sales[hidden] { display:none; }
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-savings { display:inline-flex; flex-wrap:wrap; gap:3px; max-width:100%; margin:7px 0 0; padding:5px 8px; border:1px solid #36c88745; border-radius:8px; color:#9ce9c4; background:#163b2a80; box-shadow:0 0 12px #28c4810d; font-size:11px; line-height:1.35; }
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-savings strong { color:#70ffc0; font-weight:700; }
+body.product-page-document #productPageView.product-page-root.detail-v2 #pp-plans-container { align-items:start; }
+body.product-page-document #productPageView.product-page-root.detail-v2 #pp-plans-container .pp-plan-label { position:relative; flex-wrap:wrap; min-height:44px!important; align-self:start; }
+body.product-page-document #productPageView.product-page-root.detail-v2 #pp-plans-container .product-detail-plan-notes { display:flex; flex-wrap:wrap; flex:1 0 100%; width:100%; gap:4px 6px; margin:4px 0 0; font-size:10px; line-height:1.35; }
+body.product-page-document #productPageView.product-page-root.detail-v2 #pp-plans-container .product-detail-plan-notes[hidden] { display:none!important; }
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-monthly { display:inline-flex; gap:3px; align-items:baseline; padding:3px 6px; color:#a4eee2; background:#123a3780; border:1px solid #41cbb344; border-radius:6px; }
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-monthly strong { color:#72f1cc; }
+body.product-page-document #productPageView.product-page-root.detail-v2 #pp-plans-container .pp-plan-label:focus-visible { outline:2px solid #ffe376; outline-offset:3px; }
+@media(min-width:1024px) {
+ body.product-page-document[data-product-id="capcut"] #productPageView.product-page-root.detail-v2 #pp-plans-container .pp-plan-label { min-height:66px!important; }
+}
+@media(max-width:767px) {
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-page-card { gap:4px; padding:8px; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-page-media { width:min(100%,calc(var(--product-image-ratio,1) * clamp(120px,34vw,150px))); max-height:150px; margin:0 auto 3px; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-page-media #pp-main-img { max-height:150px!important; }
+ body.product-page-document #productPageView.product-page-root .product-detail-heading { order:2; gap:4px 7px; margin:0; }
+ body.product-page-document #productPageView.product-page-root .product-detail-heading h1 { font-size:20px; line-height:1.2; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-page-description { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; font-size:11px; line-height:1.35; margin:0; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-sales { font-size:11px; margin:2px 0; padding:5px 7px; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary { padding:7px 8px; margin:2px 0; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary-label { font-size:11px; line-height:1.3; margin:0 0 3px; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary-prices { gap:4px 7px; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary-prices strong { font-size:21px; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-savings { font-size:10px; margin-top:4px; padding:4px 6px; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-page-delivery { margin:2px 0; line-height:1.3; }
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-page-section-title { margin:2px 0 0; }
+}
+@media(prefers-reduced-motion:no-preference) {
+ body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-plan-notes:not([hidden]) { animation:detailNotesIn .16s ease-out; }
+}
+@keyframes detailNotesIn { from {opacity:0;translate:0 -2px} to {opacity:1;translate:0 0} }

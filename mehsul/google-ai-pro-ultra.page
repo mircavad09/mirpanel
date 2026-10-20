@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=product-images-20261020-1">
+  <link rel="stylesheet" href="/product-page.css?v=detail-accordion-20261020-1">
   <link rel="stylesheet" href="/payment-flow.css?v=receipt-upload-20260908-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -90,17 +90,14 @@
         <div class="product-page-card-grid">
           <div class="product-page-media">
             <img class="product-page-media-backdrop" src="/assets/google-ai-ultra.png" alt="" aria-hidden="true" decoding="async">
-            <span class="product-page-availability-badge is-out">Stokda yoxdur</span>
             <img id="pp-main-img" src="/assets/google-ai-ultra.png" alt="Google AI Ultra + VEO 3" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
-            <div class="product-page-eyebrow">
-              <span class="product-page-variant">Ultra</span>
-              <span class="product-page-category">ai</span>
+            <div class="product-detail-heading">
+              <h1 id="pp-main-title" class="product-page-title">Google AI Ultra + VEO 3</h1>
               <span class="product-page-status is-out">Stokda yoxdur</span>
             </div>
-            <h1 id="pp-main-title" class="product-page-title">Google AI Ultra + VEO 3</h1>
             <p class="product-page-description">Peşəkar istifadə üçün ən yüksək AI.</p>
             <div class="product-page-delivery">
               <strong>7/24 anında təqdim edilir</strong>
@@ -227,7 +224,7 @@
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
-  <script src="/product-page.js?v=product-images-20261020-1"></script>
+  <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
 </html>

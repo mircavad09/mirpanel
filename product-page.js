@@ -160,7 +160,8 @@
       try {
         const metrics = await import('/mirpanel-admin/public/product-plan-utils.mjs?v=detail-20261010-1');
         const compact = product.id === 'capcut' ? await import('/capcut-detail.mjs?v=20261020-1') : null;
-        initializeDetailMetadata(product, metrics, compact);
+        const display = await import('/product-detail-display.mjs?v=20261020-1');
+        initializeDetailMetadata(product, {...metrics,...display}, compact);
       } catch { /* Keep the existing functioning page if enhancement cannot load. */ }
     }
   }
@@ -169,6 +170,7 @@
     const root = document.getElementById('productPageView');
     if (!root || root.dataset.detailEnhanced) return;
     root.dataset.detailEnhanced = 'true';
+    root.classList.add('detail-v2');
     const text = (tag, className, value) => {
       const el = document.createElement(tag); el.className = className; el.textContent = value; return el;
     };
@@ -197,21 +199,27 @@
     const plans = product.plans || [];
     const unavailable = product.soldOut === true || product.flow === 'out_of_stock' ||
       (product.stockEnabled === true && product.stock != null && Number(product.stock) <= 0);
-    const best = unavailable ? -1 : utils.bestValueIndex(plans);
+    const best = utils.detailBestValueIndex(plans, unavailable);
     rows.forEach((row, index) => {
-      const plan = plans[index], m = utils.planMetrics(plan);
+      const plan = plans[index], m = utils.detailPlanMetrics(plan);
       row.hidden = plan.active === false;
       row.setAttribute('role','radio'); row.tabIndex = row.hidden ? -1 : 0;
       row.setAttribute('aria-label',plan.label || `${m.months || ''} aylıq`);
       const name = row.querySelector('.pp-plan-name');
       name.textContent = plan.label || `${m.months || ''} aylıq`;
       const notes = text('span','product-detail-plan-notes','');
-      if (m.monthly !== null && m.months > 1) notes.append(text('span','',`ayda ${utils.formatPrice(m.monthly)} ₼`));
+      notes.id = `plan-details-${product.id}-${index}`;
+      notes.setAttribute('role','region'); notes.setAttribute('aria-label','Paketin əlavə məlumatları');
+      row.setAttribute('aria-controls',notes.id);
+      if (m.monthly !== null && m.months > 1) {
+        const monthly = text('span','product-detail-monthly','Ayda cəmi ');
+        monthly.append(text('strong','',`${utils.formatPrice(m.monthly)} ₼`));notes.append(monthly);
+      }
       if (m.warranty) notes.append(text('span','',m.warranty));
       // There is currently no plan-level inventory source: do not invent per-plan stock
       // from the global product stock. visibleStock deliberately requires an inventory read.
       if (index === best) notes.append(text('span','product-detail-best','Ən sərfəli'));
-      name.append(notes);
+      row.append(notes);
       const price = row.querySelector('.pp-new-price');
       if (m.price !== null && m.price > 0) price.textContent = `${utils.formatPrice(m.price)} ₼`;
       row.querySelector('.pp-plan-price-meta')?.remove();
@@ -222,13 +230,22 @@
       }
       row.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); row.click(); }
+        if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(event.key)) {
+          event.preventDefault();const available=rows.filter(item=>!item.hidden),at=available.indexOf(row);
+          const next=available[(at+(event.key==='ArrowDown'||event.key==='ArrowRight'?1:-1)+available.length)%available.length];next?.click();next?.focus();
+        }
       });
     });
     container.setAttribute('role','radiogroup');
     const update = () => {
       const index = rows.findIndex(row=>row.classList.contains('active') && !row.hidden);
       summary.replaceChildren();
-      rows.forEach((row,i)=>row.setAttribute('aria-checked',String(i===index)));
+      rows.forEach((row,i)=>{
+        row.setAttribute('aria-checked',String(i===index));row.tabIndex=i===index?0:-1;
+        const notes=row.querySelector('.product-detail-plan-notes');
+        const expanded=i===index && notes.childElementCount>0;
+        notes.hidden=!expanded;row.setAttribute('aria-expanded',String(expanded));
+      });
       if (index < 0) {
         summary.append(text('p','','Aktiv paket yoxdur.'));
         const button=document.getElementById('pp-order-btn');button.disabled=true;button.classList.add('disabled');
@@ -241,7 +258,10 @@
       if (m.oldPrice !== null) prices.append(text('del','',`${utils.formatPrice(m.oldPrice)} ₼`));
       if (m.discount !== null) prices.append(text('span','product-detail-best',`-${m.discount}%`));
       summary.append(prices);
-      if (m.savings !== null) summary.append(text('p','product-detail-savings',compact ? `✓ Bu paketlə ${utils.formatPrice(m.savings)} ₼ qənaət edirsiniz` : `Qənaət: ${utils.formatPrice(m.savings)} ₼`));
+      if (m.savings !== null) {
+        const saving = text('p','product-detail-savings','✓ Bu paketlə ');
+        saving.append(text('strong','',`${utils.formatPrice(m.savings)} ₼`),document.createTextNode(' qənaət edirsiniz'));summary.append(saving);
+      }
     };
     container.addEventListener('click', update);
     if (!rows.some(row=>row.classList.contains('active') && !row.hidden)) rows.find(row=>!row.hidden)?.click();
@@ -256,7 +276,8 @@
         if (!response.ok) return;
         const value = await response.json();
         if (value.productId !== product.id || !value.initialized || !Number.isSafeInteger(value.productTotal) || !Number.isSafeInteger(value.siteTotal)) return;
-        sales.textContent = compact ? `Bu məhsul təxminən ${new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')}+ dəfə satılıb` : `2024-dən bəri təxminən ${number.format(value.productTotal)} satış`; sales.hidden = false;
+        sales.replaceChildren(text('span','product-detail-sales-icon','↗'),document.createTextNode(' Bu məhsul '),text('strong','',`≈ ${new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')}+`),document.createTextNode(' dəfə satılıb'));
+        sales.title='Satış göstəricisi təxmini tarixi bölgü və tamamlanmış sayt sifarişlərinin cəmidir.';sales.hidden = false;
         total.textContent = compact && value.siteTotal >= 10000 ? '10 000+ tamamlanmış sifariş' : `${number.format(value.siteTotal)}+ tamamlanmış ümumi sifariş`; total.hidden = false;
       } catch { /* A network error never creates invented sales numbers. */ }
       finally { loading = false; }
