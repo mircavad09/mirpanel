@@ -21,7 +21,7 @@ const server = live ? null : http.createServer((request, response) => {
   }
   const file = path.resolve(root, "." + pathname);
   if (file.startsWith(root + path.sep) && fs.existsSync(file) && fs.statSync(file).isFile()) {
-    const type = file.endsWith(".js") ? "application/javascript" : file.endsWith(".css") ? "text/css" : file.endsWith(".png") ? "image/png" : "application/octet-stream";
+    const type = (file.endsWith(".js") || file.endsWith(".mjs")) ? "application/javascript" : file.endsWith(".css") ? "text/css" : file.endsWith(".png") ? "image/png" : "application/octet-stream";
     response.writeHead(200, { "Content-Type": type });
     return response.end(fs.readFileSync(file));
   }
@@ -130,7 +130,8 @@ try {
     await page.setViewportSize(viewport);
     await page.goto(origin + "/mehsul/capcut-pro", { waitUntil: "networkidle" });
     await ready();
-    const list = live ? active.filter(({ product }) => ["spotify", "google_ai", "netflix", "capcut"].includes(product.id)) : active;
+    const selectedIds=process.env.MIRPANEL_ORDER_TEST_PRODUCTS?.split(',');
+    const list = selectedIds ? active.filter(({product})=>selectedIds.includes(product.id)) : live ? active.filter(({ product }) => ["spotify", "google_ai", "netflix", "capcut"].includes(product.id)) : active;
     for (const { product } of list) {
       if (live) { await page.goto(origin + "/mehsul/" + product.seoSlug, { waitUntil: "networkidle" }); await ready(); }
       for (let i = 0; i < product.plans.length; i++) {
@@ -166,6 +167,13 @@ try {
   }
   function spotifyResetUrl() { return state.products.find(p => p.id === "spotify").spotifyPasswordResetUrl || "https://accounts.spotify.com/az/password-reset"; }
   if (!live) {
+    await open(state.products.find(p=>p.id==='spotify'));
+    await page.fill('#spotifyEmail','isolated@example.com');await page.fill('#spotifyPassword','isolated-test-only');await page.fill('#spotifyPasswordConfirm','isolated-test-only');
+    await page.evaluate(()=>{window.previousSpotifyInputs=[...document.querySelectorAll('.spotifyCredentialsForm input')];});
+    await close();
+    await open(state.products.find(p=>p.id==='google_ai'));
+    assert.equal(await page.evaluate(()=>previousSpotifyInputs.every(input=>input.value==='')),true,'Product switch must wipe old Spotify values');
+    assert.equal(await page.locator('#spotifyPassword').count(),0);await close();
     // A misleading legacy flow/title is never a special-form selector.
     const unknown = { id: "unknown_order_fixture", title: "Spotify HBO test", flow: "spotify", active: true, formFields: [], plans: [{ months: 1, price: 1 }] };
     await page.evaluate(p => DATA.products.push(p), unknown);

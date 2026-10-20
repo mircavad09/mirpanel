@@ -123,6 +123,7 @@
       .spotifyPasswordError { margin: -3px 0 0; color: #ff9e9e; font-size: 12px; font-weight: 750; line-height: 1.4; }
       .spotifyPasswordReset { margin: -2px 0 0; color: rgba(235, 255, 243, .68); font-size: 13px; line-height: 1.45; }
       .spotifyPasswordReset a { color: #45e884; font-weight: 850; text-underline-offset: 3px; }
+      .spotifyCredentialsHint { margin: 0; color: #d6ecdf; font-size: 12px; line-height: 1.4; overflow-wrap: anywhere; }
       .spotifyCredentialsForm .premiumContinueBtn:disabled { cursor: not-allowed; opacity: .42; filter: saturate(.35); box-shadow: none; transform: none; }
       @media (max-width: 390px) {
         .spotifyCredentialsForm { padding-top: 19px !important; gap: 12px !important; }
@@ -946,6 +947,9 @@
       @media (max-width: 560px) and (max-height: 650px) {
         #modal.premiumOrderFormOpen .modalCard { padding: 14px 16px; }
         #modal .spotifyCredentialsForm { padding-top: 8px !important; gap: 8px !important; }
+        #modal.premiumOrderFormOpen:has(.spotifyCredentialsForm) .modalCard { padding: 10px 16px; }
+        #modal .spotifyCredentialsForm { padding-top: 0 !important; gap: 6px !important; }
+        #modal .spotifyCredentialsForm .spotifyCredentialsHint { font-size: 11px; line-height: 1.3; }
         #modal .spotifyCredentialsForm .mpFormTitle { font-size: 22px; margin-bottom: 0; }
         #modal .spotifyCredentialsForm .premiumOrderFields { gap: 7px; }
         #modal .spotifyCredentialsForm .universalField,
@@ -1293,8 +1297,18 @@
     setFooter("");
   }
 
+  function clearSpotifyCredentials() {
+    // Clear even detached Spotify input references before replacing the modal.
+    document.querySelectorAll('#mForm .spotifyCredentialsForm input').forEach(input => {
+      input.value = '';
+      input.defaultValue = '';
+      if (input.autocomplete === 'current-password') input.type = 'password';
+    });
+  }
+
   function renderModalContent(html) {
     const form = document.getElementById("mForm");
+    clearSpotifyCredentials();
     if (form) form.innerHTML = html;
   }
 
@@ -1588,10 +1602,11 @@
       renderModalContent(`
         <form class="mpForm universalOrderForm premiumOrderForm spotifyCredentialsForm" id="universalOrderForm" data-product-id="${escapeHtml(product.id || "")}" novalidate>
           <div class="mpFormTitle">Spotify hesab məlumatları</div>
+          <p class="spotifyCredentialsHint" id="spotifyCredentialsHint">Spotify hesabınızın mövcud şifrəsini yazın. Yeni və ya avtomatik yaradılmış şifrə istifadə etməyin.</p>
           <div class="premiumOrderFields">
-            <label class="universalField premiumUniversalField" for="spotifyEmail"><span>Gmail ünvanınız</span><input id="spotifyEmail" type="email" name="email" data-label="Gmail ünvanınız" placeholder="Gmail ünvanınızı yazın" autocomplete="email" inputmode="email" required></label>
-            <label class="spotifyPasswordField" for="spotifyPassword"><span>Spotify şifrəniz</span><span class="spotifyPasswordControl"><input id="spotifyPassword" type="password" name="password" data-label="Spotify şifrəniz" placeholder="Spotify şifrənizi yazın" autocomplete="current-password" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPassword" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
-            <label class="spotifyPasswordField" for="spotifyPasswordConfirm"><span>Spotify şifrənizi təkrar yazın</span><span class="spotifyPasswordControl"><input id="spotifyPasswordConfirm" type="password" data-private-confirmation="true" placeholder="Şifrənizi yenidən yazın" autocomplete="current-password" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPasswordConfirm" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
+            <label class="universalField premiumUniversalField" for="spotifyEmail"><span>Gmail ünvanınız</span><input id="spotifyEmail" type="email" name="email" data-label="Gmail ünvanınız" placeholder="Gmail ünvanınızı yazın" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" required></label>
+            <label class="spotifyPasswordField" for="spotifyPassword"><span>Spotify şifrəniz</span><span class="spotifyPasswordControl"><input id="spotifyPassword" type="password" name="password" data-label="Spotify şifrəniz" placeholder="Mövcud Spotify şifrənizi yazın" autocomplete="current-password" aria-describedby="spotifyCredentialsHint" autocapitalize="none" spellcheck="false" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPassword" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
+            <label class="spotifyPasswordField" for="spotifyPasswordConfirm"><span>Spotify şifrənizi təkrar yazın</span><span class="spotifyPasswordControl"><input id="spotifyPasswordConfirm" type="password" data-private-confirmation="true" placeholder="Eyni mövcud Spotify şifrəsini təkrar yazın" autocomplete="current-password" aria-describedby="spotifyCredentialsHint" autocapitalize="none" spellcheck="false" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPasswordConfirm" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
             <p class="spotifyPasswordError" id="spotifyPasswordError" role="alert" hidden>Şifrələr eyni deyil. Zəhmət olmasa yenidən yoxlayın.</p>
             <p class="spotifyPasswordReset">Şifrənizi unutmusunuz? <a href="${escapeHtml(resetUrl)}" target="_blank" rel="noopener noreferrer">Şifrənizi sıfırlayın.</a></p>
           </div>
@@ -1741,7 +1756,9 @@
           confirmation.focus();
           return;
         }
-        onDone({ "Gmail ünvanınız": email.value.trim(), "Spotify şifrəniz": password.value });
+        const credentials = { "Gmail ünvanınız": email.value.trim(), "Spotify şifrəniz": password.value };
+        clearSpotifyCredentials();
+        onDone(credentials);
         return;
       }
       const values = {};
@@ -2018,6 +2035,11 @@
     if (event.target === modal) closeOrderModal();
   });
   document.getElementById("closeModal")?.addEventListener("click", closeOrderModal);
+  const spotifyModal = document.getElementById('modal');
+  if (spotifyModal) new MutationObserver(() => {
+    // Legacy Escape/back handlers can hide the modal without replacing its DOM.
+    if (!spotifyModal.classList.contains('show')) clearSpotifyCredentials();
+  }).observe(spotifyModal, {attributes:true,attributeFilter:['class']});
 
   wrapProductPage();
   patchLegacyNameCodeForm();
