@@ -4175,9 +4175,6 @@ let sliderFocusInHandler, sliderFocusOutHandler, sliderFocusTimer;
 function initSlider() {
   const slider = document.getElementById('heroSlider');
   const slides = slider?.querySelectorAll('.slide') || [];
-  const dots = slider?.querySelectorAll('.dot') || [];
-  const nextBtn = slider?.querySelector('.next-arrow');
-  const prevBtn = slider?.querySelector('.prev-arrow');
 
   clearInterval(slideInterval);
   clearTimeout(sliderFocusTimer);
@@ -4198,34 +4195,14 @@ function initSlider() {
     }
     if(image && !image.naturalWidth) return;
     slides.forEach(s => s.classList.remove('active'));
-    dots.forEach(d => d.classList.remove('active'));
     
     currentSlide = (n + slides.length) % slides.length;
     slides[currentSlide].classList.add('active');
-    slides.forEach((slide,index)=>slide.setAttribute('aria-hidden',String(index!==currentSlide)));
-    dots.forEach((dot,index)=>dot.setAttribute('aria-current',String(index===currentSlide)));
-    if (dots[currentSlide]) dots[currentSlide].classList.add('active');
+    slides.forEach((slide,index)=>{slide.setAttribute('aria-hidden',String(index!==currentSlide));slide.tabIndex=index===currentSlide?0:-1;});
   }
 
   function nextSlide() { showSlide(currentSlide + 1); }
-  function prevSlide() { showSlide(currentSlide - 1); }
-
-  if (nextBtn) nextBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); nextSlide(); resetTimer(); };
-  if (prevBtn) prevBtn.onclick = (e) => { e.preventDefault(); e.stopPropagation(); prevSlide(); resetTimer(); };
-
-  dots.forEach((dot, idx) => {
-    dot.onclick = (e) => { e.preventDefault(); e.stopPropagation(); showSlide(idx); resetTimer(); };
-  });
-
-  slides.forEach(slide => {
-    slide.onclick = (e) => {
-      if (e.target.classList.contains('slider-arrow') || e.target.closest('.slider-arrow')) return;
-      if (e.target.classList.contains('dot') || e.target.closest('.slider-dots')) return;
-
-      const targetId = slide.getAttribute('data-target');
-      if (targetId) window.openProductPage(targetId);
-    };
-  });
+  slides.forEach(slide => {slide.onclick=null;slide.draggable=false;slide.tabIndex=slide.classList.contains('active')?0:-1;slide.setAttribute('aria-hidden',String(!slide.classList.contains('active')));});
 
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   function startTimer() {
@@ -4233,7 +4210,6 @@ function initSlider() {
     if (slides.length < 2 || reducedMotion || document.hidden || slider.matches(':hover') || slider.contains(document.activeElement)) return;
     slideInterval = setInterval(() => { if (Date.now() >= sliderPauseUntil) nextSlide(); }, 5000);
   }
-  function resetTimer() { sliderPauseUntil = 0; startTimer(); }
 
   if (slider) {
     slider.tabIndex = 0;
@@ -4246,31 +4222,10 @@ function initSlider() {
     sliderFocusOutHandler=()=>{clearTimeout(sliderFocusTimer);sliderFocusTimer=setTimeout(startTimer,0);};
     slider.addEventListener('focusin',sliderFocusInHandler);
     slider.addEventListener('focusout',sliderFocusOutHandler);
-    let touchStartX = 0;
-    slider.ontouchstart = (event) => {
-      touchStartX = event.touches?.[0]?.clientX || 0;
-    };
-    slider.ontouchend = (event) => {
-      const touchEndX = event.changedTouches?.[0]?.clientX || touchStartX;
-      const distance = touchEndX - touchStartX;
-      if (Math.abs(distance) < 45) return;
-      event.preventDefault();
-      if (distance < 0) nextSlide();
-      else prevSlide();
-      resetTimer();
-    };
-    slider.onkeydown = (event) => {
-      if (event.key === 'ArrowRight') {
-        event.preventDefault();
-        nextSlide();
-        resetTimer();
-      }
-      if (event.key === 'ArrowLeft') {
-        event.preventDefault();
-        prevSlide();
-        resetTimer();
-      }
-    };
+    slider.ontouchstart=null;
+    slider.ontouchend=null;
+    slider.onkeydown=null;
+    slider.ondragstart=event=>event.preventDefault();
   }
 
   sliderVisibilityHandler=()=>{if(document.hidden) clearInterval(slideInterval); else startTimer();};

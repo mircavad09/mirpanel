@@ -233,7 +233,7 @@
     const activeId=slider.querySelector('.slide.active')?.dataset.bannerId;
     const activeIndex=Math.max(0,banners.findIndex(b=>b.id===activeId));
     const layout=slider.closest('.home-banner-layout'), sideHost=document.getElementById('homeSideBanners');
-    slider.querySelectorAll(".slide, .slider-dots").forEach((element) => element.remove());
+    slider.querySelectorAll(".slide, .slider-dots, .slider-arrow").forEach((element) => element.remove());
     slider.hidden = banners.length === 0;
     layout.hidden = banners.length+sides.length === 0;
     layout.classList.toggle('has-side-banners',sides.length>0);
@@ -243,24 +243,11 @@
       sideHost.dataset.count=String(sides.length);
       sides.forEach(banner=>sideHost.appendChild(bannerPanel(banner,false,false)));
     }
-    slider.querySelectorAll(".slider-arrow").forEach((arrow) => {
-      arrow.hidden = banners.length < 2;
-    });
     if (!banners.length) { window.initSlider?.(); return; }
-    const dots = document.createElement("div");
-    dots.className = "slider-dots";
     banners.forEach((banner, index) => {
       const link=bannerPanel(banner,true,index===activeIndex);
       slider.appendChild(link);
-      if (banners.length > 1) {
-        const dot = document.createElement("button");
-        dot.type='button'; dot.setAttribute('aria-label',`${index+1}-ci banner`);
-        dot.className = `dot${index === activeIndex ? " active" : ""}`;
-        dot.dataset.index = String(index);
-        dots.appendChild(dot);
-      }
     });
-    if (banners.length > 1) slider.appendChild(dots);
     if (typeof window.initSlider === "function") window.initSlider();
   }
 
@@ -269,6 +256,7 @@
       const link = document.createElement(href ? "a" : "div");
       link.className = main ? `slide${active ? " active" : ""}` : 'home-side-banner';
       link.dataset.bannerId=banner.id || '';
+      link.draggable=false;
       if(banner.productId)link.dataset.productId=banner.productId;
       link.style.setProperty('--banner-focus',['left','right'].includes(banner.focus)?banner.focus:'center');
       if (href) {
@@ -296,6 +284,7 @@
         picture.appendChild(mobile);
       }
       const image = document.createElement("img");
+      image.draggable=false;
       if(!main || active) image.src = desktopImage;
       else image.dataset.src = desktopImage;
       image.alt = banner.alt || banner.title || "";

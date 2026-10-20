@@ -113,8 +113,14 @@ try {
   results.push({upload:'4K PNG verified and auto-published in isolated fixture',visibleAfterMs:Date.now()-start});
   await home.waitForTimeout(5200);assert.equal(await home.evaluate(()=>currentSlide),1);
   await home.waitForTimeout(5200);assert.equal(await home.evaluate(()=>currentSlide),0);
-  await home.locator('.next-arrow').click();await home.waitForTimeout(600);
-  assert.equal(await home.evaluate(()=>currentSlide),1);
+  assert.equal(await home.locator('.slider-arrow:visible,.slider-dots:visible').count(),0);
+  await home.locator('#heroSlider').focus();
+  const manualIndex=await home.evaluate(()=>currentSlide);
+  await home.evaluate(()=>{const s=document.getElementById('heroSlider');s.dispatchEvent(new TouchEvent('touchstart',{touches:[new Touch({identifier:1,target:s,clientX:220,clientY:50})]}));s.dispatchEvent(new TouchEvent('touchend',{changedTouches:[new Touch({identifier:1,target:s,clientX:30,clientY:50})]}));});
+  await home.keyboard.press('ArrowRight');assert.equal(await home.evaluate(()=>currentSlide),manualIndex,'Manual touch/arrow switching is disabled');
+  assert.equal(await home.locator('#heroSlider').evaluate(el=>el.dispatchEvent(new DragEvent('dragstart',{bubbles:true,cancelable:true}))),false,'Native hero drag is blocked');
+  assert.equal(await home.locator('#heroSlider .slide img').first().evaluate(el=>el.draggable),false);
+  await home.evaluate(()=>document.activeElement.blur());
   assert.deepEqual(await home.evaluate(()=>({products:document.getElementById('grid').innerHTML,stories:document.getElementById('homeStories').innerHTML})),unchanged);
   for(const width of [320,390,430,768,1024,1440]) {
     await home.setViewportSize({width,height:width<500?844:900});await home.waitForTimeout(100);
@@ -182,7 +188,7 @@ try {
   assert.equal(sideRows.length,2);
   await home.waitForFunction(()=>document.querySelectorAll('.home-side-banner').length===2);
   const dimensions=[];
-  for(const [width,height] of [[320,568],[390,844],[768,900],[1024,768],[1440,900],[1920,1080]]) {
+  for(const [width,height] of [[320,568],[360,800],[390,844],[430,932],[768,900],[1024,768],[1366,900],[1440,900]]) {
     await home.setViewportSize({width,height}); await home.waitForTimeout(150);
     const geometry=await home.evaluate(()=>{
       const box=selector=>{const r=document.querySelector(selector).getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};};
@@ -190,6 +196,7 @@ try {
       return {frame,layout:box('.home-banner-layout'),sides:[...document.querySelectorAll('.home-side-banner')].map(node=>{const r=node.getBoundingClientRect();return {x:r.x,y:r.y,width:r.width,height:r.height,bottom:r.bottom};}),fit:getComputedStyle(image).objectFit,overflow:document.documentElement.scrollWidth-innerWidth,storyTop:document.getElementById('homeStories').getBoundingClientRect().top};
     });
     assert.equal(geometry.fit,'cover'); assert.equal(geometry.overflow,0);
+    assert.equal(await home.locator('.slider-arrow:visible,.slider-dots:visible').count(),0);
     if(visual)await home.screenshot({path:path.join(visual,`hero-${width}.png`)});
     console.log('HERO',width,JSON.stringify(geometry));
     if(width>=1024) {
@@ -203,7 +210,10 @@ try {
     } else {
       assert.ok(geometry.sides[0].y>=geometry.frame.bottom);
       const offset=await home.evaluate(()=>{const host=document.getElementById('homeSideBanners');host.scrollTo({left:host.scrollWidth,behavior:'instant'});return host.scrollLeft;});
-      assert.ok(offset>0,'Mobile side swipe/scroll works');
+      assert.equal(offset,0,'Mobile side banners do not scroll');
+      assert.ok(geometry.sides[1].x+geometry.sides[1].width<=width,'Both side banners stay inside viewport');
+      assert.equal(geometry.sides[0].width,geometry.sides[1].width);
+      assert.ok(geometry.frame.height>geometry.sides[0].height*1.8,'Main banner is clearly larger');
       await home.evaluate(()=>document.getElementById('homeSideBanners').scrollTo({left:0,behavior:'instant'}));
     }
     dimensions.push({viewport:`${width}x${height}`,...geometry});
@@ -235,11 +245,16 @@ try {
   for(let count=1;count>=0;count--) {
     for(let i=0;i<sideRows.length;i++) {const r=db.find(r=>r.id===sideRows[i].id); await repository.update(r.id,{order:r.sort_order,active:i<count,version:r.updated_at});}
     await home.waitForFunction(n=>document.querySelectorAll('.home-side-banner').length===n,count);
-    const state=await home.evaluate(()=>({width:document.getElementById('heroSlider').getBoundingClientRect().width,root:document.querySelector('.home-banner-layout').getBoundingClientRect().width,sideHeight:document.querySelector('.home-side-banner')?.getBoundingClientRect().height,mainHeight:document.getElementById('heroSlider').getBoundingClientRect().height}));
+    const state=await home.evaluate(()=>({width:document.getElementById('heroSlider').getBoundingClientRect().width,root:document.querySelector('.home-banner-layout').clientWidth-parseFloat(getComputedStyle(document.querySelector('.home-banner-layout')).paddingLeft)-parseFloat(getComputedStyle(document.querySelector('.home-banner-layout')).paddingRight),sideHeight:document.querySelector('.home-side-banner')?.getBoundingClientRect().height,mainHeight:document.getElementById('heroSlider').getBoundingClientRect().height}));
     if(count===0) assert.ok(Math.abs(state.width-state.root)<1);
     else assert.ok(Math.abs(state.sideHeight-state.mainHeight)<1);
     assert.equal(await home.locator('.slider-arrow:visible').count(),0,'Single main hides controls');
     if(visual) await home.screenshot({path:path.join(visual,`hero-side-${count}.png`)});
+    for(const width of [320,360,390,430,768,1024,1366,1440]) {
+      await home.setViewportSize({width,height:width<500?844:900});
+      const safe=await home.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,scroll:document.getElementById('homeSideBanners').scrollLeft,inside:[...document.querySelectorAll('.home-side-banner')].every(el=>{const r=el.getBoundingClientRect();return r.left>=0&&r.right<=innerWidth;})}));
+      assert.equal(safe.overflow,0);assert.equal(safe.scroll,0);assert.equal(safe.inside,true);
+    }
   }
   for(const r of sideRows) await repository.update(r.id,{order:r.sort_order,active:true,version:db.find(row=>row.id===r.id).updated_at});
   const thirdId=crypto.randomUUID();db.push({...sideRows[0],id:thirdId,sort_order:100,updated_at:new Date().toISOString()});
@@ -297,5 +312,5 @@ try {
   }
   assert.deepEqual(await home.evaluate(()=>({products:document.getElementById('grid').innerHTML,stories:document.getElementById('homeStories').innerHTML})),unchanged);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({results,dimensions,formats:formatResults,slider:'5s advance and loop passed',sideCases:'0/1/2/3, initial existing assets, no resurrection, focus and placement PASS',mobileUpload:'same row, private storage, clear/cleanup PASS',retry:'fresh signature, no duplicate, old image retained',activeAndDeletion:'passed',javascriptErrors:errors.length,storage:'isolated in-memory Supabase protocol fixture; NOT real Supabase/PostgreSQL'},null,2));
+  console.log(JSON.stringify({results,dimensions,formats:formatResults,slider:'5s fade/loop; manual touch/drag/arrow disabled; one timer',sideCases:'0/1/2/3, mobile two-column grid without scrolling, focus/placement preserved',mobileUpload:'same row, private storage, clear/cleanup PASS',retry:'fresh signature, no duplicate, old image retained',activeAndDeletion:'passed',javascriptErrors:errors.length,storage:'isolated in-memory Supabase protocol fixture; NOT real Supabase/PostgreSQL'},null,2));
 }finally{await browser.close();await new Promise(r=>server.close(r));objects.clear();db.length=0;}
