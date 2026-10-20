@@ -42,7 +42,7 @@ const client={from:name=>new Query(name),storage:{from:()=>storage},async rpc(na
     items.forEach((i,n)=>Object.assign(db.find(r=>r.id===i.id),{sort_order:n+1,updated_at:new Date(Date.now()+n).toISOString()}));return {data:null};
   }
   assert.equal(name,'initialize_homepage_banners');if(!settings.initialized){db.push(...seed.map(row=>({...row,media_path:null,active:true,updated_at:new Date().toISOString()})));settings.initialized=true;}return {data:null};}};
-let catalog={products:[{title:'Existing',active:true,image:'/assets/capcut.png',banner:{enabled:true,desktopImage:'/assets/capcut.png',order:1,url:'/mehsul/capcut-pro',mobileImage:'/assets/capcut.png'}}]};
+let catalog={products:[{id:'capcut',seoSlug:'capcut-pro',title:'Existing',active:true,image:'/assets/capcut.png',banner:{enabled:true,desktopImage:'/assets/capcut.png',order:1,url:'/mehsul/capcut-pro',mobileImage:'/assets/capcut.png'}}]};
 const repository=createHomepageBannersRepository(client,{bucket:'private-test',loadCatalog:async()=>catalog});
 const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(data));};
 const server=http.createServer(async(req,res)=>{try{
@@ -104,6 +104,7 @@ try {
   // Trigger the actual picker selection handler without opening a native chooser.
   await admin.evaluate(()=>{const file=document.querySelector('[data-banner-file]');if(!file.onchange){document.querySelector('[data-banner-add]').click();}});
   await admin.locator('[data-banner-file]').setInputFiles(image);
+  await admin.locator('.homepageBannerJob [data-banner-product-pick="capcut"]').click();
   await admin.waitForFunction(()=>document.querySelectorAll('[data-banner-id]').length===2);
   assert.equal(db.length,2);assert.equal(objects.size,1);assert.equal(await admin.locator('[data-banner-message]').textContent().then(t=>t.includes('yayımlandı')),true);
   assert.equal(await admin.locator('.homepageBannerJob').count(),0);
@@ -115,7 +116,7 @@ try {
   await home.locator('.next-arrow').click();await home.waitForTimeout(600);
   assert.equal(await home.evaluate(()=>currentSlide),1);
   assert.deepEqual(await home.evaluate(()=>({products:document.getElementById('grid').innerHTML,stories:document.getElementById('homeStories').innerHTML})),unchanged);
-  for(const width of [320,390,1440]) {
+  for(const width of [320,390,430,768,1024,1440]) {
     await home.setViewportSize({width,height:width<500?844:900});await home.waitForTimeout(100);
     const measure=await home.evaluate(()=>{const s=document.getElementById('heroSlider'),i=s.querySelector('.slide.active img'),r=s.getBoundingClientRect();return {width:r.width,height:r.height,fit:getComputedStyle(i).objectFit,overflow:document.documentElement.scrollWidth>innerWidth};});
     assert.equal(measure.fit,'cover');assert.equal(measure.overflow,false);results.push({viewport:width,...measure});
@@ -140,24 +141,25 @@ try {
   const oldPath=record.media_path;failStorage=true;
   await admin.locator(`[data-banner-id="${uploaded.id}"] [data-banner-replace]`).click();
   await admin.locator('[data-banner-file]').setInputFiles(image);
-  await admin.locator('.homepageBannerJob button').waitFor({state:'visible'});
+  await admin.locator('.homepageBannerJob [data-job-retry]').waitFor({state:'visible'});
   assert.equal(record.media_path,oldPath);
-  const oldSigns=signs;await admin.locator('.homepageBannerJob button').click();
+  const oldSigns=signs;await admin.locator('.homepageBannerJob [data-job-retry]').click();
   await admin.waitForFunction(()=>!document.querySelector('.homepageBannerJob') && document.querySelector('[data-banner-message]').textContent.includes('yayımlandı'));
   assert.ok(signs>oldSigns);assert.equal(db.length,2);assert.equal(objects.size,1);
   // A response lost AFTER commit cannot create a second banner on retry.
   loseComplete=true;
   await admin.locator('[data-banner-add]').click();await admin.locator('[data-banner-file]').setInputFiles(image);
-  await admin.locator('.homepageBannerJob').last().locator('button').waitFor({state:'visible'});
+  await admin.locator('.homepageBannerJob [data-banner-product-pick="capcut"]').click();
+  await admin.locator('.homepageBannerJob').last().locator('[data-job-retry]').waitFor({state:'visible'});
   assert.equal(db.length,3);
-  await admin.locator('.homepageBannerJob').last().locator('button').click();
+  await admin.locator('.homepageBannerJob').last().locator('[data-job-retry]').click();
   await admin.waitForFunction(()=>document.querySelectorAll('[data-banner-id]').length===3);assert.equal(db.length,3);
   assert.equal(BANNER_IMAGE_MAX_BYTES,20*1024*1024);
   await assert.rejects(repository.begin({operationId:crypto.randomUUID(),size:BANNER_IMAGE_MAX_BYTES+1,fileName:'big.png'},'test'),/20 MiB/);
   const formatResults=[];
   for(const [extension,mime] of [['jpg','image/jpeg'],['webp','image/webp']]) {
     const data=Buffer.from(await admin.evaluate(mime=>{const c=document.createElement('canvas');c.width=3840;c.height=2160;return c.toDataURL(mime).split(',')[1];},mime),'base64');
-    const key=crypto.randomUUID(), prepared=await repository.begin({operationId:key,fileName:`4k.${extension}`,size:data.length},'test');
+    const key=crypto.randomUUID(), prepared=await repository.begin({operationId:key,fileName:`4k.${extension}`,size:data.length,options:{linkType:'none'}},'test');
     const form=new FormData();form.append('cacheControl','3600');form.append('',new File([data],`4k.${extension}`,{type:mime}));
     assert.equal((await fetch(prepared.signedUrl,{method:'PUT',body:form})).status,200);
     const banner=await repository.complete(key,'test');assert.ok(banner.image);
@@ -256,6 +258,41 @@ try {
   await home.locator('#heroSlider').focus();assert.equal(await home.evaluate(()=>heroTestTimers.size),0,'Focus pauses timer');
   await home.evaluate(()=>document.activeElement.blur());await home.waitForTimeout(100);assert.equal(await home.evaluate(()=>heroTestTimers.size),1);
   assert.equal(await home.locator('.home-side-banner').count(),2);
+  // Canonical persistence, product search and validation in the real admin UI.
+  await admin.reload();await admin.waitForSelector('[data-banner-id]');
+  const targetCard=admin.locator(`[data-banner-id="${mainId}"]`);
+  await targetCard.locator('[data-banner-product-search]').fill('Zoom');
+  const zoom=catalog.products.find(p=>p.id==='zoom');assert.ok(zoom);
+  await targetCard.locator('[data-banner-product-pick="zoom"]').click();
+  await admin.waitForFunction(id=>document.querySelector(`[data-banner-id="${id}"] [data-banner-product-id]`).value==='zoom' && !document.querySelector(`[data-banner-id="${id}"] [data-banner-active]`).disabled,mainId);
+  await admin.reload();await admin.waitForSelector(`[data-banner-id="${mainId}"] [data-banner-product-pick]`);
+  assert.equal(await targetCard.locator('[data-banner-product-id]').inputValue(),'zoom');
+  const stored=db.find(r=>r.id===mainId);assert.equal(stored.options.productId,'zoom');assert.equal(stored.options.url,undefined);
+  await home.waitForFunction(()=>document.querySelector('#heroSlider .slide')?.getAttribute('href')==='/mehsul/zoom-pro');
+  await assert.rejects(repository.begin({operationId:crypto.randomUUID(),size:10,fileName:'x.png'},'test'),/Məhsul seçin/);
+  await assert.rejects(repository.update(stored.id,{order:1,active:true,version:stored.updated_at,linkType:'product',productId:'unknown'}),/aktiv məhsul/);
+  // Slug changes resolve by ID without rewriting the saved banner.
+  const oldSlug=zoom.seoSlug;zoom.seoSlug='zoom-renamed-test';
+  assert.equal((await repository.list()).banners.find(b=>b.id===mainId).url,'/mehsul/zoom-renamed-test');zoom.seoSlug=oldSlug;
+  const sample=catalog.products.filter(p=>p.active!==false).slice(0,6), sourceRow={...stored};
+  for(const count of [0,1,2,6]) {
+    db.splice(0,db.length,...sample.slice(0,count).map((p,i)=>({...sourceRow,id:crypto.randomUUID(),sort_order:i+1,options:{placement:'main',focus:'center',linkType:'product',productId:p.id}})));
+    await home.waitForFunction(n=>document.querySelectorAll('#heroSlider .slide').length===n,count);
+    assert.equal(await home.evaluate(()=>heroTestTimers.size),count>1?1:0);
+    if(count) {
+      const links=await home.locator('#heroSlider .slide').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href')));
+      assert.deepEqual(links,(await repository.list()).banners.map(b=>b.url));
+      // Observe native navigation intent without leaving the fixture or creating data.
+      await home.evaluate(()=>{window.bannerClicks=[];if(window.bannerClickObserver)return;window.bannerClickObserver=true;document.addEventListener('click',event=>{if(event.target.closest('#heroSlider .slide')){bannerClicks.push({blocked:event.defaultPrevented,href:event.target.closest('a')?.getAttribute('href')});event.preventDefault();}});});
+      const link=home.locator('#heroSlider .slide.active');
+      await link.evaluate(el=>{el.dispatchEvent(new PointerEvent('pointerdown',{clientX:10,clientY:10}));el.dispatchEvent(new PointerEvent('pointermove',{clientX:60,clientY:10}));el.dispatchEvent(new MouseEvent('click',{bubbles:true,cancelable:true,detail:1}));});
+      assert.equal(await home.evaluate(()=>bannerClicks.at(-1).blocked),true,'Swipe must not navigate');
+      await link.focus();await home.keyboard.press('Space');
+      assert.equal(await home.evaluate(()=>bannerClicks.at(-1).blocked),false,'Space activates link');
+      await link.evaluate(el=>el.click());assert.equal(await home.evaluate(()=>bannerClicks.at(-1).blocked),true,'Duplicate click suppressed');
+      await home.waitForTimeout(650);await home.keyboard.press('Enter');assert.equal(await home.evaluate(()=>bannerClicks.at(-1).blocked),false,'Enter activates link');
+    }
+  }
   assert.deepEqual(await home.evaluate(()=>({products:document.getElementById('grid').innerHTML,stories:document.getElementById('homeStories').innerHTML})),unchanged);
   assert.deepEqual(errors,[]);
   console.log(JSON.stringify({results,dimensions,formats:formatResults,slider:'5s advance and loop passed',sideCases:'0/1/2/3, initial existing assets, no resurrection, focus and placement PASS',mobileUpload:'same row, private storage, clear/cleanup PASS',retry:'fresh signature, no duplicate, old image retained',activeAndDeletion:'passed',javascriptErrors:errors.length,storage:'isolated in-memory Supabase protocol fixture; NOT real Supabase/PostgreSQL'},null,2));

@@ -269,10 +269,23 @@
       const link = document.createElement(href ? "a" : "div");
       link.className = main ? `slide${active ? " active" : ""}` : 'home-side-banner';
       link.dataset.bannerId=banner.id || '';
+      if(banner.productId)link.dataset.productId=banner.productId;
       link.style.setProperty('--banner-focus',['left','right'].includes(banner.focus)?banner.focus:'center');
-      if (href) link.href = href;
+      if (href) {
+        link.href = href;
+        let start=null,dragged=false,lastClick=-Infinity;
+        link.addEventListener('pointerdown',event=>{start={x:event.clientX,y:event.clientY};dragged=false;},{passive:true});
+        link.addEventListener('pointermove',event=>{if(start && Math.hypot(event.clientX-start.x,event.clientY-start.y)>10)dragged=true;},{passive:true});
+        link.addEventListener('pointercancel',()=>{dragged=true;start=null;},{passive:true});
+        link.addEventListener('click',event=>{
+          if((event.detail!==0 && dragged) || performance.now()-lastClick<600){event.preventDefault();return;}
+          lastClick=performance.now();
+        });
+        link.addEventListener('keydown',event=>{if(event.key===' '){event.preventDefault();if(!event.repeat)link.click();}});
+      }
       if (href && (banner.newTab || new URL(href,location.href).origin!==location.origin)) {link.target='_blank';link.rel='noopener noreferrer';}
       if (banner.title || banner.alt) link.setAttribute("aria-label", banner.alt || banner.title);
+      if(banner.productTitle)link.setAttribute('aria-label',`${banner.productTitle} məhsuluna keç`);
       const picture = document.createElement("picture");
       const desktopImage = safeImage(banner.desktopImage);
       const mobileImage = safeImage(banner.mobileImage);
@@ -315,7 +328,7 @@
       if(payload.managed!==true || !Array.isArray(payload.banners)) return;
       const revision=JSON.stringify(payload.banners);
       if(revision===bannerRevision) return;
-      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus})).sort((a,b)=>a.order-b.order || String(a.id).localeCompare(String(b.id)));
+      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,productId:b.productId,productTitle:b.productTitle,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus})).sort((a,b)=>a.order-b.order || String(a.id).localeCompare(String(b.id)));
       if(next.length) {
         const banner=next.find(b=>b.placement==='main') || next[0];
         const first=new Image(); first.fetchPriority='high'; first.src=innerWidth<768 && banner.mobileImage?banner.mobileImage:banner.desktopImage;

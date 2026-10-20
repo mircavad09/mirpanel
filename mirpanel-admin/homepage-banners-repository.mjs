@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import {bannerProducts,resolveBannerTarget} from './banner-target.mjs';
 import { detectStoryMedia } from './stories-repository.mjs';
 export const BANNER_IMAGE_MAX_BYTES = 20 * 1024 * 1024;
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -28,6 +29,11 @@ function bannerOptions(payload={}, previous={}) {
     if(payload[key]!==undefined) {if(!allowed.includes(payload[key])) throw fail('Banner yerləşməsi və fokus mövqeyi düzgün deyil.');result[key]=payload[key];}
   }
   if(payload.url!==undefined) result.url=bannerLink(payload.url);
+  if(payload.linkType!==undefined) {
+    if(!['product','custom','none'].includes(payload.linkType)) throw fail('Bannerin keçid növünü seçin.');
+    result.linkType=payload.linkType;
+  }
+  if(payload.productId!==undefined) result.productId=String(payload.productId).slice(0,200);
   if(payload.newTab!==undefined) {if(typeof payload.newTab!=='boolean') throw fail('Keçid seçimi düzgün deyil.');result.newTab=payload.newTab;}
   if(payload.mobileImage!==undefined) {
     if(payload.mobileImage && !legacyImage(payload.mobileImage)) throw fail('Mobil banner şəkli düzgün deyil.');
@@ -39,11 +45,29 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
   const table = () => client.from('homepage_banners');
   const storage = () => client.storage.from(bucket);
   const pending = new Map(), urls = new Map();
+  async function targetOptions(payload,previous={},active=true) {
+    const options=bannerOptions(payload,previous), products=bannerProducts(await loadCatalog());
+    if(!options.linkType && !Object.keys(previous).length && !options.url) throw fail('Məhsul seçin və ya keçidsiz banner seçimini açıq şəkildə seçin.');
+    const target=resolveBannerTarget(options,products);
+    if(target.linkType==='product' && (!products.some(p=>p.id===target.productId) || (active && !target.url))) throw fail('Banner üçün mövcud aktiv məhsul seçin.');
+    if(target.linkType==='custom' && !bannerLink(options.url)) throw fail('Xüsusi keçid ünvanını yazın.');
+    const result={...options,linkType:target.linkType};
+    if(target.linkType==='product'){result.productId=target.productId;delete result.url;}
+    else {delete result.productId;if(target.linkType==='none')delete result.url;}
+    return result;
+  }
   async function rows() { return check(await table().select('*').order('sort_order').order('id')) || []; }
   async function one(id) { return check(await table().select('*').eq('id',id).maybeSingle()); }
   async function managed() { return Boolean(check(await client.from('homepage_banner_settings').select('initialized').eq('singleton',true).single())?.initialized); }
   async function initialize() {
     if(await managed()) {
+      const products=bannerProducts(await loadCatalog());
+      for(const row of (await rows()).filter(row=>!row.options?.linkType)) {
+        const target=resolveBannerTarget(row.options,products);
+        const options={...row.options,linkType:target.linkType};
+        if(target.linkType==='product'){options.productId=target.productId;delete options.url;}
+        check(await table().update({options}).eq('id',row.id).eq('updated_at',row.updated_at));
+      }
       const current=await rows(), legacy=current.filter(row=>row.options?.placement===undefined);
       if(!legacy.length) return;
       // One-time upgrade of the old banner manager, only in an authenticated
@@ -89,14 +113,16 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
       }
       return cached.url;
   }
-  async function present(row) {
+  async function present(row,products) {
+    products ||= bannerProducts(await loadCatalog());
     const image = row.media_path ? await privateImage(row.media_path) : new URL(row.legacy_image, 'https://mirpanel.com/').href;
     let mobileImage=legacyImage(row.options?.mobileImage);
     if(row.options?.mobileMediaPath?.startsWith('homepage-banners/')) {
       mobileImage=await privateImage(row.options.mobileMediaPath);
     } else if(mobileImage) mobileImage=new URL(mobileImage,'https://mirpanel.com/').href;
-    let url=''; try {url=bannerLink(row.options?.url);} catch { /* do not render unsafe legacy links */ }
-    return {id:row.id,image,mobileImage,title:row.title || 'Mirpanel ana səhifə banneri',url,newTab:row.options?.newTab===true,
+    const target=resolveBannerTarget(row.options,products);
+    let url=''; try {url=bannerLink(target.url);} catch { /* do not render unsafe legacy links */ }
+    return {id:row.id,image,mobileImage,title:row.title || 'Mirpanel ana səhifə banneri',...target,url,newTab:target.linkType==='custom' && row.options?.newTab===true,
       placement:row.options?.placement==='side'?'side':'main',focus:['left','right'].includes(row.options?.focus)?row.options.focus:'center',
       order:row.sort_order,active:row.active,version:row.updated_at};
   }
@@ -104,7 +130,9 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     if(admin) await initialize();
     if(!await managed()) return {managed:false,banners:[]};
     const data = (await rows()).filter(row=>admin || row.active);
-    return {managed:true,banners:await Promise.all(data.map(present)),maxBytes:BANNER_IMAGE_MAX_BYTES};
+    const products=bannerProducts(await loadCatalog());
+    const banners=await Promise.all(data.map(row=>present(row,products)));
+    return {managed:true,banners:admin?banners:banners.filter(b=>b.linkType!=='product'||b.url),...(admin?{products}:{}),maxBytes:BANNER_IMAGE_MAX_BYTES};
   }
   async function cleanup(path) {
     if(!path?.startsWith('homepage-banners/')) return;
@@ -121,13 +149,13 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     const path = `homepage-banners/${key}.${ext}`;
     const role=payload.imageRole==='mobile'?'mobile':'desktop';
     if(role==='mobile' && !payload.targetId) throw fail('Əvvəl əsas banneri əlavə edin.');
-    const options=bannerOptions(payload.options || {});
     const existing = (await rows()).find(row=>row.media_path===path || row.options?.mobileMediaPath===path);
     if(existing) return {completed:await present(existing)};
     const previous = pending.get(key);
     if(previous && (previous.owner!==owner || previous.size!==size || previous.path!==path || previous.targetId!==payload.targetId || previous.role!==role)) throw fail('Upload məlumatı dəyişib.',409);
     let target = null;
     if(payload.targetId) { target=await one(payload.targetId); if(!target) throw fail('Banner tapılmadı.',404); }
+    const options=await targetOptions(payload.options || {},target?.options,target?.active!==false);
     const job = previous || {owner,size,path,ext,role,options,targetId:payload.targetId,targetVersion:target?.updated_at};
     job.until=now()+2*3600000; pending.set(key,job);
     if(!previous) {
@@ -157,7 +185,7 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
       if(job.targetId && (!old || old.updated_at!==job.targetVersion)) {await cleanup(job.path); throw fail('Banner başqa pəncərədə dəyişib. Siyahını yeniləyin.',409);}
       const values={updated_at:new Date(now()).toISOString()};
       if(job.role==='mobile') values.options={...old.options,mobileMediaPath:job.path,mobileImage:''};
-      else Object.assign(values,{media_path:job.path,legacy_image:null,options:bannerOptions(options || job.options,{placement:'main',focus:'center',...old?.options})});
+      else Object.assign(values,{media_path:job.path,legacy_image:null,options:await targetOptions({...job.options,...options},{placement:'main',focus:'center',...old?.options},old?.active!==false)});
       let saved;
       if(old) saved=check(await table().update(values).eq('id',old.id).eq('updated_at',old.updated_at).select('*').maybeSingle());
       else saved=check(await table().insert({...values,id:key,title:'',sort_order:Math.max(0,...(await rows()).map(r=>r.sort_order))+1,active:true}).select('*').single());
@@ -174,7 +202,7 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     if(!Number.isSafeInteger(order)||order<1||order>100000 || typeof payload.active!=='boolean' || typeof payload.version!=='string') throw fail('Sıra və aktivlik düzgün deyil.');
     const values={sort_order:order,active:payload.active,updated_at:new Date(now()).toISOString()};
     const previous=await one(id); if(!previous) throw fail('Banner tapılmadı.',404);
-    values.options=bannerOptions(payload,previous.options);
+    values.options=await targetOptions(payload,previous.options,payload.active);
     const saved=check(await table().update(values).eq('id',id).eq('updated_at',payload.version).select('*').maybeSingle());
     if(!saved) throw fail('Banner başqa pəncərədə dəyişib. Siyahını yeniləyin.',409);
     if(previous.options?.mobileMediaPath && !saved.options?.mobileMediaPath) await cleanup(previous.options.mobileMediaPath).catch(()=>{});

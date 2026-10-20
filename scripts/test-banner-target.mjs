@@ -1,0 +1,17 @@
+import assert from 'node:assert/strict';
+import {bannerProducts,resolveBannerTarget} from '../mirpanel-admin/banner-target.mjs';
+const catalog={products:[{id:'zoom-id',title:'Zoom Pro',seoSlug:'zoom-pro',active:true},{id:'netflix',title:'Netflix Şəxsi',seoSlug:'netflix-sexsi',active:true},{id:'netflix_general',title:'Netflix Ümumi',seoSlug:'netflix-umumi',active:true},{id:'off',title:'Inactive',seoSlug:'off',active:false}]};
+const products=bannerProducts(catalog);
+assert.equal(resolveBannerTarget({url:'https://mirpanel.com/mehsul/zoom-pro'},products).productId,'zoom-id');
+assert.equal(resolveBannerTarget({url:'/mehsul/netflix-sexsi'},products).productId,'netflix');
+assert.equal(resolveBannerTarget({url:'/mehsul/netflix-umumi'},products).productId,'netflix_general');
+assert.equal(resolveBannerTarget({url:'https://external.test/mehsul/zoom-pro'},products).linkType,'custom');
+assert.equal(resolveBannerTarget({url:'/unknown'},products).linkType,'custom');
+assert.equal(resolveBannerTarget({linkType:'product',productId:'missing',url:'/mehsul/zoom-pro'},products).url,'');
+assert.equal(resolveBannerTarget({linkType:'product',productId:'off'},products).url,'');
+assert.equal(resolveBannerTarget({linkType:'none'},products).url,'');
+catalog.products[0].seoSlug='zoom-updated';
+assert.equal(resolveBannerTarget({linkType:'product',productId:'zoom-id'},bannerProducts(catalog)).url,'/mehsul/zoom-updated');
+catalog.products[0].title='Completely renamed';
+assert.equal(resolveBannerTarget({linkType:'product',productId:'zoom-id'},bannerProducts(catalog)).productId,'zoom-id');
+console.log('PASS: canonical IDs, renamed slugs/titles, variant isolation, inactive/missing targets, exact legacy mapping and custom links.');
