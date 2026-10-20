@@ -12,7 +12,7 @@ const errors=[],results=[];
 const visual=process.env.MIRPANEL_VISUAL_DIR;
 if(visual)fs.mkdirSync(visual,{recursive:true});
 const baseline=Object.fromEntries(['js','css'].map(ext=>[ext,execFileSync('git',['show',`8b69dc3:payment-flow.${ext}`],{encoding:'utf8'})]));
-const cards=async page=>page.locator('[data-payment-method]').evaluateAll(items=>items.map(el=>({text:el.textContent,disabled:el.disabled,background:getComputedStyle(el).background,border:getComputedStyle(el).borderColor,color:getComputedStyle(el).color})));
+const cards=async page=>page.locator('[data-payment-method]').evaluateAll(items=>items.map(el=>({disabled:el.disabled,background:getComputedStyle(el).background,border:getComputedStyle(el).borderColor,color:getComputedStyle(el).color})));
 try{
  for(const width of [320,390,430,768,1440]){
   const page=await browser.newPage({viewport:{width,height:width<500?844:900}});
@@ -39,11 +39,12 @@ try{
   if(visual)await page.screenshot({path:path.join(visual,`after-${width}.png`)});
   // Only the in-memory fixture handles this selection; production is never contacted.
   await page.click('[data-payment-method]');
+  await page.click('#paymentMethodContinue');
   await page.waitForSelector('#paymentReceiptInput',{state:'attached'});
   assert.equal(await page.isDisabled('#paymentSubmit'),true);
   assert.equal(await page.locator('.paymentMethodExplanationNote').count(),0,'Selection-only note must not persist into payment details');
   assert.equal(fixture.orders.size,0);
-  results.push({width,...layout,cardAppearanceUnchanged:true,fixtureSelectionPassed:true});
+  results.push({width,...layout,bankColorsUnchanged:true,fixtureSelectionPassed:true});
   await page.close();
  }
  assert.deepEqual(errors,[]);

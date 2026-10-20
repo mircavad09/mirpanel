@@ -52,6 +52,36 @@
 }
 .capcutPhoneField{display:grid;gap:6px;margin:10px 0;padding:12px;border:1px solid rgba(255,210,0,.25);border-radius:12px;background:#121212;color:#f4f4f4;font-weight:700}.capcutPhoneField input{min-height:48px;border:1px solid #3b3b3b;border-radius:10px;background:#080808;color:#fff;padding:0 12px;font-size:16px}.capcutPhoneField small{color:#aaa;font-weight:400}.capcutPhoneField b{color:#ff9292;font-size:13px}
 
+/* Payment selection: keep provider themes and separate selection from reservation. */
+#modal.paymentFlowOpen .modalCard:has(.paymentFlow[data-payment-stage="payment_method_selection"]){border-radius:22px;background:linear-gradient(145deg,#191a1b,#101112 70%);border-color:#393b3e;box-shadow:0 24px 80px #0009,inset 0 1px #ffffff09}
+.paymentFlow[data-payment-stage="payment_method_selection"]{gap:13px}
+.paymentFlow[data-payment-stage="payment_method_selection"] .paymentFlowHead{background:transparent}
+.paymentFlowMessage.paymentMethodExplanation{position:relative;padding-left:39px;background:#242527;border:1px solid #ffffff07}
+.paymentMethodExplanation::before{content:'ⓘ';position:absolute;left:12px;top:12px;color:#e8cc73;font-size:18px;line-height:1}
+.paymentFlow[data-payment-stage="payment_method_selection"] .paymentMethodChoice{min-height:120px;gap:4px;padding:12px;box-shadow:0 5px 14px #0003,inset 0 1px #ffffff30;transition:transform .18s,border-color .18s,box-shadow .18s}
+.paymentMethodChoice::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,#ffffff0b,transparent 47%,#ffffff04);border-radius:inherit}
+.paymentFlow .paymentMethodChoice>span{font-size:15px;line-height:1.2;overflow-wrap:anywhere}
+.paymentFlow .paymentMethodChoice>small{font-size:11px;line-height:1.25}
+.paymentFlow .paymentMethodChoice i{width:auto;height:auto;right:8px;top:9px;padding:3px 5px;border:1px solid #f6d77488;background:#28220e;color:#ffe48c;border-radius:20px;font-size:10px;line-height:1.2;white-space:nowrap}
+.paymentFlow .paymentMethodChoice.selected:not(:disabled){border-color:#f7d45b;box-shadow:0 0 0 1px #e7c14e,0 4px 18px #ebbd2925,inset 0 1px #ffffff30;transform:translateY(-1px)}
+.paymentFlow .paymentMethodChoice:disabled{filter:none;opacity:.48}
+.paymentMethodContinue{display:flex;align-items:center;justify-content:center;gap:12px;min-height:52px;width:100%;box-sizing:border-box;border:1px solid #ffe45b;border-radius:12px;padding:12px 14px;background:linear-gradient(135deg,#ffdf48,#ffd000);color:#171300;font-family:inherit;font-size:16px;font-weight:750;line-height:1.25;cursor:pointer;box-shadow:0 5px 18px #d3a90017}
+.paymentMethodContinue span{font-size:23px;line-height:1}
+.paymentMethodContinue:disabled{background:#38362c;border-color:#57513a;color:#a9a48e;box-shadow:none;cursor:not-allowed}
+.paymentMethodContinue:hover:not(:disabled){filter:brightness(1.05)}
+.paymentMethodContinue:focus-visible{outline:3px solid #ffe78b;outline-offset:3px}
+.paymentMethodContinue[hidden]{display:none!important}
+.paymentFlow .paymentReceiptSteps{gap:0;font-size:11px;padding:4px 0}
+.paymentFlow .paymentReceiptSteps li{display:grid;justify-items:center;align-content:start;gap:5px;border:0;background:none;padding:0 3px;font-weight:500}
+.paymentFlow .paymentReceiptSteps li b{display:grid;place-items:center;width:23px;height:23px;border-radius:50%;border:1px solid #515355;background:#202123;color:#aaa;font-size:11px;box-sizing:border-box;z-index:1}
+.paymentFlow .paymentReceiptSteps li:not(:last-child)::after{content:'';height:1px;width:calc(100% - 28px);background:#444;top:11px;left:calc(50% + 14px);right:auto;transform:none}
+.paymentFlow .paymentReceiptSteps li.active{color:#ffe271;background:none;border:0}
+.paymentFlow .paymentReceiptSteps li.active b,.paymentFlow .paymentReceiptSteps li.complete b{border-color:#e5c650;background:#332d14;color:#ffe271}
+.paymentFlow .paymentReceiptSteps li.complete{color:#cfc589}
+.paymentFlow .paymentReceiptSteps li.complete::after{background:#9f8a39}
+@media(max-width:560px){.paymentFlow[data-payment-stage="payment_method_selection"]{gap:10px}.paymentFlow[data-payment-stage="payment_method_selection"] .paymentFlowHead h2{font-size:22px}.paymentFlow[data-payment-stage="payment_method_selection"] .paymentFlowHead p{font-size:13px}.paymentFlowMessage.paymentMethodExplanation{font-size:12px;line-height:1.35;padding:10px 10px 10px 34px}.paymentMethodExplanationNote{font-size:11px}.paymentMethodExplanation::before{left:10px;font-size:16px}.paymentFlow[data-payment-stage="payment_method_selection"] .paymentMethodChoice{min-height:112px;padding:10px;gap:3px}.paymentMethodContinue{font-size:14px}.paymentFlow .paymentReceiptSteps{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.paymentFlow .paymentMethodChoice{transition:none;transform:none!important}}
+
 /* Receipt-only guidance and verified-upload gate. */
 .paymentReceiptSteps{display:flex;gap:6px;list-style:none;padding:0;margin:0;color:#a5a5a5;font-size:12px;line-height:1.3}
 .paymentReceiptSteps li{position:relative;flex:1;min-width:0;padding:7px 5px;border:1px solid #454545;border-radius:7px;text-align:center}

@@ -21,9 +21,10 @@ async function open(w=390,h=844,before=false,shortTimeout=false){
  await page.context().grantPermissions(['clipboard-write','clipboard-read']);
  if(shortTimeout)await page.addInitScript(()=>{const Base=XMLHttpRequest;window.__receiptTimeouts=0;window.XMLHttpRequest=class extends Base{constructor(){super();this.addEventListener('timeout',()=>window.__receiptTimeouts++);}set timeout(value){super.timeout=value===120000?80:value;}get timeout(){return super.timeout;}};});
  await page.goto(origin+(before?'/?before':'/'),{waitUntil:'networkidle'});await page.click('[data-payment-method]');
+ if(!before)await page.click('#paymentMethodContinue');
  await page.waitForSelector('#paymentReceiptInput',{state:'attached'});return page;
 }
-async function ready(page){await page.waitForSelector('.paymentReceiptSuccess');assert.equal(await page.isDisabled('#paymentSubmit'),false);assert.equal(await page.textContent('.paymentReceiptSuccess'),'✓ Çek uğurla əlavə edildi');}
+async function ready(page){await page.waitForSelector('.paymentReceiptSuccess');assert.equal(await page.isDisabled('#paymentSubmit'),false);assert.equal(await page.textContent('.paymentReceiptSuccess'),'✓ Çek uğurla əlavə edildi');assert.equal(await page.getAttribute('[aria-current="step"]','data-receipt-step'),'3');}
 async function layout(page,w,h){
  const value=await page.evaluate(()=>{const actions=document.querySelector('.paymentSubmitActions').getBoundingClientRect();return{overflow:document.documentElement.scrollWidth-innerWidth,buttonsVisible:actions.top>=0&&actions.bottom<=innerHeight,hitAreas:[...document.querySelectorAll('.paymentSubmitActions button')].every(e=>e.getBoundingClientRect().height>=44),scale:visualViewport.scale};});
  assert.equal(value.overflow,0);assert.equal(value.buttonsVisible,true,`${w}x${h} actions offscreen`);assert.equal(value.hitAreas,true);assert.equal(value.scale,1);return value;
@@ -72,7 +73,7 @@ try{
   let resume;const hold=new Promise(r=>resume=r);await page.route('**/api/payments/receipts',async route=>{await hold;await route.continue();},{times:1});
   await page.setInputFiles('#paymentReceiptInput',receipts[0]);
   await page.waitForFunction(()=>document.getElementById('paymentSubmit').textContent==='Çek yüklənir — gözləyin');assert.equal(await page.isDisabled('#paymentSubmit'),true);
-  assert.equal(await page.locator('.paymentReceiptSuccess').count(),0);assert.equal(orders.size,baseOrders);
+  assert.equal(await page.locator('.paymentReceiptSuccess').count(),0);assert.equal(orders.size,baseOrders);assert.equal(await page.getAttribute('[aria-current="step"]','data-receipt-step'),'2');
   await page.evaluate(()=>document.getElementById('paymentReceiptForm').requestSubmit());assert.equal(orders.size,baseOrders);
   if(visual)await page.screenshot({path:path.join(visual,`uploading-${w}-${h}.png`)});resume();await ready(page);
   const g=await layout(page,w,h);assert.equal(orders.size,baseOrders,'Upload must not create an order');

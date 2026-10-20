@@ -201,8 +201,9 @@
       <div id="paymentFlowMessage" class="paymentFlowMessage" role="status">Aktiv ödəniş üsulları yüklənir...</div>
       <button id="paymentMethodsRetry" type="button" hidden>Yenidən cəhd et</button>
       <div id="paymentMethodChoices" class="paymentMethodChoices" data-payment-stage-panel="payment_method_selection" aria-label="Ödəniş üsulları"></div>
+      <button id="paymentMethodContinue" class="paymentMethodContinue" type="button" disabled>Bu kartla davam et · ${Number(plan.price).toFixed(2)} ₼ <span aria-hidden="true">→</span></button>
       <div id="paymentMethodDetail" data-payment-stage-panel="payment_details"></div>
-      <ol class="paymentReceiptSteps" aria-label="Sifariş mərhələləri"><li data-receipt-step="1">1. Ödəniş et</li><li data-receipt-step="2">2. Çeki bura yüklə</li><li data-receipt-step="3">3. Sifarişi göndər</li></ol>
+      <ol class="paymentReceiptSteps" aria-label="Sifariş mərhələləri"><li data-receipt-step="1" class="active" aria-current="step"><b aria-hidden="true">1</b><span>Kartı seç</span></li><li data-receipt-step="2"><b aria-hidden="true">2</b><span>Çeki yüklə</span></li><li data-receipt-step="3"><b aria-hidden="true">3</b><span>Sifarişi göndər</span></li></ol>
       <div id="paymentReceiptArea" data-payment-stage-panel="receipt_upload"></div>
     </section>`;
     return form;
@@ -215,7 +216,7 @@
   function methodButtons(methods) {
     return methods.map((method) => {
       const reason = method.available ? "" : method.unavailableReason || (method.status === "limit_reached" ? "Bu gün limit dolub" : "Müvəqqəti rezervdədir");
-      return `<button class="paymentMethodChoice theme-${esc(method.theme || "neutral")}" type="button" data-payment-method="${esc(method.id)}"${method.available ? "" : " disabled"} aria-disabled="${method.available ? "false" : "true"} aria-pressed="false" aria-label="${esc(`${method.providerName}, son dörd rəqəm ${method.last4}${reason ? `, ${reason}` : ""}`)}">${methodIcon(method.type)}<span>${esc(method.providerName)}</span><small>•••• ${esc(method.last4)}</small>${reason ? `<small>${esc(reason)}</small>` : ""}<i aria-hidden="true">✓</i></button>`;
+      return `<button class="paymentMethodChoice theme-${esc(method.theme || "neutral")}" type="button" data-payment-method="${esc(method.id)}"${method.available ? "" : " disabled tabindex=\"-1\""} aria-disabled="${method.available ? "false" : "true"}" aria-pressed="false" aria-label="${esc(`${method.providerName}, son dörd rəqəm ${method.last4}${reason ? `, ${reason}` : ""}`)}">${methodIcon(method.type)}<span>${esc(method.providerName)}</span><small>${method.type === "wallet" ? "Elektron cüzdan" : "Bank kartı"}</small><small>•••• ${esc(method.last4)}</small>${reason ? `<small>${esc(reason)}</small>` : ""}<i aria-hidden="true">✓ Seçildi</i></button>`;
     }).join("");
   }
 
@@ -282,10 +283,13 @@
     flow.stage = stage;
     const shell = document.querySelector(".paymentFlow");
     if (shell) shell.dataset.paymentStage = stage;
-    const current = stage === 'receipt_ready' ? 3 : stage === 'receipt_upload' ? 2 : 1;
+    const current = stage === 'receipt_ready' ? 3 : stage === 'payment_method_selection' ? 1 : 2;
+    const next = document.getElementById('paymentMethodContinue');
+    if (next) next.hidden = stage !== 'payment_method_selection';
     document.querySelectorAll('[data-receipt-step]').forEach(el=>{
       const active = Number(el.dataset.receiptStep) === current;
       el.classList.toggle('active',active);
+      el.classList.toggle('complete',Number(el.dataset.receiptStep) < current);
       if(active) el.setAttribute('aria-current','step'); else el.removeAttribute('aria-current');
     });
     const title = document.getElementById("paymentFlowTitle");
@@ -385,7 +389,7 @@
       flow.finish = finish;
       document.querySelector(".paymentFlowClose").onclick = async (event) => {
         event.preventDefault();
-        if (flow.submitting) return;
+        if (flow.submitting || flow.reserving) return;
         if ((flow.reservation || flow.previousReservationId) && !window.confirm("Aktiv rezerv ləğv ediləcək. Pəncərəni bağlamaq istəyirsiniz?")) return;
         try {
           await finish(null, { cancel: true });
@@ -397,6 +401,8 @@
       const loadMethods = async () => {
         if (flow.loadingMethods || flow.settled) return;
         flow.loadingMethods = true;
+        const pendingContinue = document.getElementById('paymentMethodContinue');
+        if (pendingContinue) pendingContinue.disabled = true;
         flow.readController = new AbortController();
         retry.hidden = true;
         retry.disabled = true;
@@ -429,6 +435,13 @@
           setStage(flow, "payment_method_selection");
           choices.hidden = false;
           choices.innerHTML = methodButtons(result.methods);
+          if (!result.methods.some(method => method.id === flow.selectedMethodId && method.available)) flow.selectedMethodId = null;
+          choices.querySelectorAll('[data-payment-method]').forEach(item => {
+            const selected = item.dataset.paymentMethod === flow.selectedMethodId;
+            item.classList.toggle('selected', selected);
+            item.setAttribute('aria-pressed', String(selected));
+          });
+          document.getElementById('paymentMethodContinue').disabled = !flow.selectedMethodId;
           document.getElementById("paymentMethodDetail").innerHTML = "";
           document.getElementById("paymentReceiptArea").innerHTML = "";
         };
@@ -506,6 +519,7 @@
                 await cancelReservation(flow);
                 flow.reservationKeys.clear();
                 flow.stopTimer?.();
+                flow.selectedMethodId = null;
                 renderChoices();
                 setMessage("Yeni ödəniş üsulunu seçin.");
               } catch (error) {
@@ -689,6 +703,7 @@
                 finalControls.forEach(control=>{control.disabled=false;});
                 if (error.status===400 || error.status===409) {
                   flow.receiptUploadToken=null; setReceiptSubmitReady(false); document.getElementById('paymentReceiptRetry').hidden=false;
+                  setStage(flow,'receipt_upload');
                   const receiptStatus=document.querySelector('.paymentReceiptSuccess');
                   if(receiptStatus){receiptStatus.classList.replace('paymentReceiptSuccess','paymentReceiptPending');receiptStatus.textContent='Çeki yenidən yükləyib yoxlayın.';}
                   document.getElementById('paymentReceiptForm')?.classList.remove('uploadSucceeded');
@@ -702,12 +717,23 @@
           showReservation(recovered.reservation);
           setMessage("Rezerv bərpa edildi. Göndərilməmiş çeki yenidən seçin.", "success");
         }
-        choices.onclick = async (event) => {
+        const continueButton = document.getElementById('paymentMethodContinue');
+        choices.onclick = (event) => {
           const button = event.target.closest("[data-payment-method]");
-          if (!button || button.disabled || flow.reserving || flow.reservation) return;
+          if (!button || button.disabled || flow.reserving || flow.reservation || flow.settled || flow.loadingMethods) return;
+          flow.selectedMethodId = button.dataset.paymentMethod;
+          choices.querySelectorAll('[data-payment-method]').forEach(item => {
+            const selected = item === button;
+            item.classList.toggle('selected', selected);
+            item.setAttribute('aria-pressed', String(selected));
+          });
+          continueButton.disabled = false;
+        };
+        continueButton.onclick = async () => {
+          const button = [...choices.querySelectorAll('[data-payment-method]')].find(item => item.dataset.paymentMethod === flow.selectedMethodId);
+          if (!button || button.disabled || flow.reserving || flow.reservation || flow.settled || flow.loadingMethods || flow.stage !== 'payment_method_selection') return;
           flow.reserving = true;
-          button.classList.add("selected");
-          button.setAttribute("aria-pressed", "true");
+          continueButton.disabled = true;
           choices.querySelectorAll("button").forEach((item) => { item.disabled = true; });
           setMessage("Kart üçün 10 dəqiqəlik rezerv yaradılır...");
           try {
@@ -725,6 +751,7 @@
             choices.querySelectorAll("button").forEach((item) => { item.disabled = item.getAttribute("aria-disabled") === "true"; });
             button.classList.remove("selected");
             button.setAttribute("aria-pressed", "false");
+            flow.selectedMethodId = null;
             setMessage(reserveError.message, "error");
           } finally {
             flow.reserving = false;
