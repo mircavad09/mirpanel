@@ -917,7 +917,7 @@ const DATA = {
       "category": "all",
       "image": "uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347",
       "currency": "₼",
-      "title": "Youtube Eyni hesab",
+      "title": "Youtube Yenilemek",
       "variant": "",
       "badge": "Premium",
       "imageAlt": "Youtube Eyni hesab",

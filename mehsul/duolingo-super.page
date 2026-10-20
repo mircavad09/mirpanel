@@ -155,9 +155,9 @@
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">5.49 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab" aria-label="Youtube Eyni hesab — 5.99 ₼" title="Youtube Eyni hesab">
+    </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab" aria-label="Youtube Yenilemek — 5.99 ₼" title="Youtube Yenilemek">
       <img src="/uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347" class="product-page-similar-image" alt="Youtube Eyni hesab" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Youtube Eyni hesab">Youtube Eyni hesab</div>
+      <div class="product-page-similar-title" title="Youtube Yenilemek">Youtube Yenilemek</div>
       <div class="product-page-similar-category">all</div>
       <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Yeni hesab — 3.99 ₼" title="YouTube Yeni hesab">
@@ -243,7 +243,7 @@
     </div>
   </div>
 
-  <script src="/app.js?v=catalog-fff4924d83d5cf53"></script>
+  <script src="/app.js?v=catalog-bcde460551fadfff"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
