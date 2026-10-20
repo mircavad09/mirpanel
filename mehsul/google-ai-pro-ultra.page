@@ -117,9 +117,9 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  AYLIQ) — 12.99 ₼" title="Google AI Pro + VEO 3 (18  AYLIQ)">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  aylıq) — 12.99 ₼" title="Google AI Pro + VEO 3 (18  aylıq)">
       <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  AYLIQ)">Google AI Pro + VEO 3 (18  AYLIQ)</div>
+      <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  aylıq)">Google AI Pro + VEO 3 (18  aylıq)</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">12.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
@@ -220,6 +220,7 @@
     </div>
   </div>
 
+  <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-bcde460551fadfff"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>

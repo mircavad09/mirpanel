@@ -104,7 +104,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ayliq (20 gün zəmanətli)</span><span class="product-page-plan-prices"><span class="product-page-regular-price">34.00 ₼</span><strong>16.99 ₼</strong><span class="product-page-discount">-50%</span></span></div><div class="product-page-static-plan" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ayliq (25 gün zəmanətli)</span><span class="product-page-plan-prices"><span class="product-page-regular-price">34.00 ₼</span><strong>19.99 ₼</strong><span class="product-page-discount">-41%</span></span></div><div class="product-page-static-plan" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ayliq (30 gün zəmanətli)</span><span class="product-page-plan-prices"><span class="product-page-regular-price">34.00 ₼</span><strong>21.99 ₼</strong><span class="product-page-discount">-35%</span></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq (20 gün zəmanətli)</span><span class="product-page-plan-prices"><span class="product-page-regular-price">34.00 ₼</span><strong>16.99 ₼</strong><span class="product-page-discount">-50%</span></span></div><div class="product-page-static-plan" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq (25 gün zəmanətli)</span><span class="product-page-plan-prices"><span class="product-page-regular-price">34.00 ₼</span><strong>19.99 ₼</strong><span class="product-page-discount">-41%</span></span></div><div class="product-page-static-plan" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq (30 gün zəmanətli)</span><span class="product-page-plan-prices"><span class="product-page-regular-price">34.00 ₼</span><strong>21.99 ₼</strong><span class="product-page-discount">-35%</span></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -117,9 +117,9 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  AYLIQ) — 12.99 ₼" title="Google AI Pro + VEO 3 (18  AYLIQ)">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  aylıq) — 12.99 ₼" title="Google AI Pro + VEO 3 (18  aylıq)">
       <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  AYLIQ)">Google AI Pro + VEO 3 (18  AYLIQ)</div>
+      <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  aylıq)">Google AI Pro + VEO 3 (18  aylıq)</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">12.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
@@ -206,7 +206,7 @@
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>ChatGPT Plus (Şəxsi hesab) üçün hansı planlar mövcuddur?</summary><p>1 ayliq (20 gün zəmanətli) — 16.99 ₼, 1 ayliq (25 gün zəmanətli) — 19.99 ₼, 1 ayliq (30 gün zəmanətli) — 21.99 ₼</p></details>
+    <details><summary>ChatGPT Plus (Şəxsi hesab) üçün hansı planlar mövcuddur?</summary><p>1 aylıq (20 gün zəmanətli) — 16.99 ₼, 1 aylıq (25 gün zəmanətli) — 19.99 ₼, 1 aylıq (30 gün zəmanətli) — 21.99 ₼</p></details>
     <details><summary>ChatGPT Plus (Şəxsi hesab) sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>
@@ -240,6 +240,7 @@
     </div>
   </div>
 
+  <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-bcde460551fadfff"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>

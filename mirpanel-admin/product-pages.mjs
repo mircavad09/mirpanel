@@ -1,5 +1,7 @@
 import { planMetrics, deliveryText } from './public/product-plan-utils.mjs';
 import { createHash } from 'node:crypto';
+import displayLabels from '../display-labels.js';
+const { normalizeDisplayLabel } = displayLabels;
 const SITE_URL = "https://mirpanel.com";
 const DELIVERY_TEXT = "7/24 anında təqdim edilir";
 
@@ -337,7 +339,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
   const html = `<!DOCTYPE html>
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document">${renderSplashMarkup()}${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=20260902-controls-removed-1"></script></body></html>`;
-  return new Map([["mehsul.page", applyCmsBrandAndNav(html, cms, "products")]]);
+  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('</body>', '<script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
@@ -545,6 +547,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     </div>
   </div>
 
+  <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
@@ -1102,7 +1105,7 @@ function renderPlans(product) {
   if (!plans.length) return `<p>Mövcud plan yoxdur.</p>`;
   return plans.map((plan, index) => {
     if (plan.active === false) return '';
-    const label = cleanText(plan.label) || `${Number(plan.months) || 1} aylıq`;
+    const label = normalizeDisplayLabel(cleanText(plan.label)) || `${Number(plan.months) || 1} aylıq`;
     const metrics = planMetrics(plan);
     const price = metrics.price;
     const regularPrice = metrics.oldPrice;
@@ -1168,7 +1171,7 @@ function renderProductFaq(product) {
   const title = cleanText(product.title);
   const plans = (product.plans || [])
     .filter((plan) => Number.isFinite(Number(plan.price)))
-    .map((plan) => `${cleanText(plan.label) || `${Number(plan.months) || 1} aylıq plan`} — ${Number(plan.price).toFixed(2)} ${cleanText(product.currency) || "AZN"}`);
+    .map((plan) => `${normalizeDisplayLabel(cleanText(plan.label)) || `${Number(plan.months) || 1} aylıq plan`} — ${Number(plan.price).toFixed(2)} ${cleanText(product.currency) || "AZN"}`);
   const planText = plans.length ? plans.join(", ") : "Hazırda sifariş üçün açıq plan yoxdur.";
   return `<section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
@@ -1260,7 +1263,7 @@ function cleanText(value) {
 }
 
 function publicProductTitle(value) {
-  return cleanText(value).replace(/\s+almaq\s*$/i, "").trim();
+  return normalizeDisplayLabel(cleanText(value).replace(/\s+almaq\s*$/i, "").trim());
 }
 
 function plainMetadataText(value) {

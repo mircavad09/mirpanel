@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/youtube-eyni-hesab#product","url":"https://mirpanel.com/mehsul/youtube-eyni-hesab","name":"Youtube Yenilemek","description":"YouTube Premium-u eyni hesabda istifadə etmək üçün mövcud planı və real qiyməti yoxlayın. Mirpanel sifarişi WhatsApp üzərindən tamamlanır.","image":["https://mirpanel.com/uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347"],"sku":"youtube_sexsi","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/youtube-eyni-hesab","price":"5.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/youtube-eyni-hesab#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Youtube Yenilemek","item":"https://mirpanel.com/mehsul/youtube-eyni-hesab"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/youtube-eyni-hesab#product","url":"https://mirpanel.com/mehsul/youtube-eyni-hesab","name":"YouTube Yenilemek","description":"YouTube Premium-u eyni hesabda istifadə etmək üçün mövcud planı və real qiyməti yoxlayın. Mirpanel sifarişi WhatsApp üzərindən tamamlanır.","image":["https://mirpanel.com/uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347"],"sku":"youtube_sexsi","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/youtube-eyni-hesab","price":"5.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/youtube-eyni-hesab#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"YouTube Yenilemek","item":"https://mirpanel.com/mehsul/youtube-eyni-hesab"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="youtube_sexsi" data-product-slug="youtube-eyni-hesab">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -83,7 +83,7 @@
     <nav class="product-page-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Ana səhifə</a><span aria-hidden="true">›</span>
       <a href="/mehsul">Məhsullar</a><span aria-hidden="true">›</span>
-      <span aria-current="page">Youtube Yenilemek</span>
+      <span aria-current="page">YouTube Yenilemek</span>
     </nav>
     <div class="product-page-layout">
       <article class="product-page-card">
@@ -104,7 +104,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ayliq</span><span class="product-page-plan-prices"><strong>5.99 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><strong>5.99 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -127,9 +127,9 @@
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  AYLIQ) — 12.99 ₼" title="Google AI Pro + VEO 3 (18  AYLIQ)">
+    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  aylıq) — 12.99 ₼" title="Google AI Pro + VEO 3 (18  aylıq)">
       <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  AYLIQ)">Google AI Pro + VEO 3 (18  AYLIQ)</div>
+      <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  aylıq)">Google AI Pro + VEO 3 (18  aylıq)</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">12.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
@@ -178,7 +178,7 @@
         <button id="product-tab-rules" class="product-page-tab" type="button" role="tab" aria-selected="false" aria-controls="product-panel-rules" tabindex="-1" data-product-tab="rules">İstifadə qaydaları</button>
       </div>
       <div class="product-page-content-card">
-        <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about"><h2>Youtube Yenilemek Məhsul haqqında</h2>YouTube Premium eyni hesab variantı mövcud hesabında premium istifadəyə davam etmək istəyənlər üçün nəzərdə tutulur. Mövcud plan və qiymət məhsul məlumatından avtomatik göstərilir. Sifariş zamanı planı seçin və WhatsApp-a keçməzdən əvvəl məlumatları təsdiqləyin. Məhsula aid istifadə qaydalarını bu səhifədə ayrıca oxuya bilərsiniz.</article>
+        <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about"><h2>YouTube Yenilemek Məhsul haqqında</h2>YouTube Premium eyni hesab variantı mövcud hesabında premium istifadəyə davam etmək istəyənlər üçün nəzərdə tutulur. Mövcud plan və qiymət məhsul məlumatından avtomatik göstərilir. Sifariş zamanı planı seçin və WhatsApp-a keçməzdən əvvəl məlumatları təsdiqləyin. Məhsula aid istifadə qaydalarını bu səhifədə ayrıca oxuya bilərsiniz.</article>
         <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden>
           <h2>İstifadə qaydaları</h2>
           <p>Təqdim etdiyiniz hesab yeni açılmış Gmail olmalı və heç bir ailə qrupuna qoşulmamalıdır. Hesab tamamilə sıfırdan yaradılmalıdır. Hesabınızda Premium aktivləşdirildikdən sonra, hər ay ödəniş edərək eyni hesab üzərindən istifadəyə davam edə bilərsiniz.</p>
@@ -188,7 +188,7 @@
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>Youtube Yenilemek üçün hansı planlar mövcuddur?</summary><p>1 ayliq — 5.99 ₼</p></details>
+    <details><summary>Youtube Yenilemek üçün hansı planlar mövcuddur?</summary><p>1 aylıq — 5.99 ₼</p></details>
     <details><summary>Youtube Yenilemek sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>
@@ -205,9 +205,9 @@
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">
       <button class="close" id="closeModal" type="button">Bağla ✕</button>
       <div class="mTop">
-        <img src="/uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347" alt="Youtube Yenilemek" id="mImg" class="mImg">
+        <img src="/uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347" alt="YouTube Yenilemek" id="mImg" class="mImg">
         <div class="mTxt">
-          <div class="mTitle" id="mTitle">Youtube Yenilemek</div>
+          <div class="mTitle" id="mTitle">YouTube Yenilemek</div>
           <div class="mDesc" id="mDesc"></div>
         </div>
       </div>
@@ -222,6 +222,7 @@
     </div>
   </div>
 
+  <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-bcde460551fadfff"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>

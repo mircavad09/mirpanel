@@ -127,9 +127,9 @@
       <div class="product-page-similar-title" title="TikTok Jeton">TikTok Jeton</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">11.00 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  AYLIQ) — 12.99 ₼" title="Google AI Pro + VEO 3 (18  AYLIQ)">
+    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Google AI Pro + VEO 3 (18  aylıq) — 12.99 ₼" title="Google AI Pro + VEO 3 (18  aylıq)">
       <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  AYLIQ)">Google AI Pro + VEO 3 (18  AYLIQ)</div>
+      <div class="product-page-similar-title" title="Google AI Pro + VEO 3 (18  aylıq)">Google AI Pro + VEO 3 (18  aylıq)</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">12.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
@@ -157,9 +157,9 @@
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">5.49 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab" aria-label="Youtube Yenilemek — 5.99 ₼" title="Youtube Yenilemek">
+    </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab" aria-label="YouTube Yenilemek — 5.99 ₼" title="YouTube Yenilemek">
       <img src="/uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347" class="product-page-similar-image" alt="Youtube Eyni hesab" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Youtube Yenilemek">Youtube Yenilemek</div>
+      <div class="product-page-similar-title" title="YouTube Yenilemek">YouTube Yenilemek</div>
       <div class="product-page-similar-category">all</div>
       <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Yeni hesab — 3.99 ₼" title="YouTube Yeni hesab">
@@ -240,6 +240,7 @@
     </div>
   </div>
 
+  <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-bcde460551fadfff"></script>
   <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>

@@ -18,6 +18,22 @@
   const playButton = document.getElementById("storyPlay");
   const soundButton = document.getElementById("storySound");
   let soundMuted = false;
+  const viewedKey = 'mirpanel-story-viewed-v1';
+  let viewed;
+  try { const saved = JSON.parse(localStorage.getItem(viewedKey) || '[]'); viewed = new Set(Array.isArray(saved) ? saved.filter(v => typeof v === 'string') : []); }
+  catch { viewed = new Set(); }
+  const itemKey = (story, item) => `${story.id}:${item.id}:${item.updated_at || ''}`;
+  function updateViewed(story) {
+    const seen = story.items.every(item => viewed.has(itemKey(story, item)));
+    const button = [...track.children].find(el => el.dataset.storyId === String(story.id));
+    button?.classList.toggle('is-viewed', seen);
+    button?.setAttribute('aria-label', `${story.title} story-sinə bax${seen ? ' — baxılıb' : ' — baxılmayıb'}`);
+  }
+  function markViewed(story, item) {
+    viewed.add(itemKey(story, item));
+    try { localStorage.setItem(viewedKey, JSON.stringify([...viewed].slice(-1000))); } catch { /* Private browsing can deny persistence. */ }
+    updateViewed(story);
+  }
 
   function updateSoundButton(video) {
     if (!soundButton) return;
@@ -87,6 +103,7 @@
       const video = document.createElement("video");
       video.muted = soundMuted; video.volume = 1; video.autoplay = true; video.playsInline = true; video.preload = "metadata";
       video.src = item.mediaUrl;
+      video.addEventListener('loadeddata', () => markViewed(story, item), {once:true});
       video.addEventListener("loadedmetadata", () => setProgress(story, Math.max(1000, video.duration * 1000)), { once: true });
       video.addEventListener("ended", () => move(1), { once: true });
       video.addEventListener("error", () => fallback("Video yüklənmədi.", true), { once: true });
@@ -110,6 +127,7 @@
     const image = new Image();
     image.alt = item.caption || story.title;
     image.decoding = "async";
+    image.addEventListener('load', () => markViewed(story, item), {once:true});
     image.addEventListener("error", () => fallback("Şəkil yüklənmədi."), { once: true });
     image.src = item.mediaUrl;
     media.replaceChildren(image);
@@ -117,6 +135,7 @@
   }
 
   function openViewer(index, button) {
+    if (!viewer.hidden) return;
     storyIndex = index; itemIndex = 0; returnFocus = button;
     viewer.hidden = false;
     document.documentElement.classList.add("story-viewer-open");
@@ -129,6 +148,7 @@
     track.replaceChildren(...stories.map((story, index) => {
       const button = document.createElement("button");
       button.type = "button"; button.className = "home-story";
+      button.dataset.storyId = String(story.id);
       button.setAttribute("aria-label", `${story.title} story-sinə bax`);
       const cover = document.createElement("span"); cover.className = "home-story-cover";
       const inner = document.createElement("span"); inner.className = "home-story-cover-inner";
@@ -139,6 +159,7 @@
       button.addEventListener("click", () => openViewer(index, button));
       return button;
     }));
+    stories.forEach(updateViewed);
     section.hidden = !stories.length;
   }
 

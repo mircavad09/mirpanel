@@ -13,7 +13,7 @@ const js = fs.readFileSync(path.join(root, "stories.js"), "utf8");
 const html = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>html,body{margin:0;background:#070707;color:white;font-family:Arial}.wrap{box-sizing:border-box}.home-banner-layout{width:min(calc(100% - 16px),1000px);margin:auto}.hero-slider-box{height:210px;background:#311f55;border-radius:18px}.home-filter-tabs{height:44px;margin:8px;background:#222}</style><style>${css}</style></head><body class="home-page"><section class="wrap home-banner-layout"><div class="hero-slider-box" id="heroSlider"></div></section><section class="wrap home-stories" id="homeStories" hidden><div class="home-stories-track" id="homeStoriesTrack"></div></section><div class="home-filter-tabs"></div><div class="story-viewer" id="storyViewer" role="dialog" hidden><div class="story-viewer-card"><div id="storyProgress" class="story-progress"></div><header class="story-viewer-head"><img id="storyViewerCover"><strong id="storyViewerTitle"></strong><button id="storyViewerClose">×</button></header><div class="story-stage" id="storyStage"><div id="storyMedia" class="story-media"></div><p id="storyCaption" hidden></p><button id="storyPlay" class="story-play" hidden>Videonu oynat</button><button id="storyPrev" class="story-zone story-zone-prev"></button><button id="storyNext" class="story-zone story-zone-next"></button></div></div></div><script>${js}</script></body></html>`;
 const stories = [
   { id:"s1", title:"Müştəri məmnuniyyəti", coverUrl:"https://media.test/cover.jpg", active:true, items:[{id:"i1",media_type:"image",mediaUrl:"https://media.test/photo.jpg",caption:"Rəy",active:true},{id:"i2",media_type:"video",mediaUrl:"https://media.test/video.mp4",caption:"Video",active:true}] },
-  { id:"s2", title:"Yeni məhsullar və kampaniyalar", coverUrl:"https://media.test/cover2.jpg", active:true, items:[{id:"i3",media_type:"image",mediaUrl:"https://media.test/photo2.jpg",caption:"Yeni",active:true}] }
+  { id:"s2", title:"Yeni məhsullar və kampaniyalar", coverUrl:"https://media.test/cover2.jpg", active:true, items:Array.from({length:6},(_,i)=>({id:`i${i+3}`,media_type:"image",mediaUrl:`https://media.test/photo${i+2}.jpg`,caption:"Yeni",active:true})) }
 ];
 const browser = await chromium.launch({ executablePath: browserPath, headless:true });
 const context = await browser.newContext();
@@ -34,6 +34,15 @@ assert.equal(await page.locator('video[src*="video.mp4"]').count(),0,"Video view
 await page.locator(".home-story").first().click(); assert.equal(await page.locator("#storyViewer").isVisible(),true); assert.equal(await page.locator("#storyMedia img").count(),1);
 await page.locator("#storyNext").click(); assert.equal(await page.locator("#storyMedia video").count(),1); assert.equal(await page.locator("#storyMedia video").getAttribute("playsinline"),"");
 await page.locator("#storyViewerClose").click(); assert.equal(await page.locator("#storyViewer").isHidden(),true); assert.equal(await page.evaluate(()=>document.body.classList.contains("story-viewer-open")),false);
+assert.equal(stories.length,2);assert.equal(stories.reduce((sum,s)=>sum+s.items.length,0),8);
+await page.locator('.home-story').nth(1).click();
+for(let i=0;i<6;i++){
+  await page.waitForFunction(()=>{const img=document.querySelector('#storyMedia img');return img?.complete&&img.naturalWidth;});
+  if(i<5){assert.equal(await page.locator('.home-story.is-viewed').count(),0);await page.locator('#storyNext').click();}
+}
+await page.waitForSelector('.home-story.is-viewed');assert.equal(await page.locator('.home-story.is-viewed').count(),1);
+assert.match(await page.locator('.home-story').nth(1).getAttribute('aria-label'),/baxılıb/);
+await page.locator('#storyViewerClose').click();
 assert.equal(errors.length,0,errors.join(" | "));
 const empty = await context.newPage(); await empty.route("**/api/stories",(route)=>route.fulfill({status:200,contentType:"application/json",body:'{"stories":[]}'})); await empty.setContent(html); await empty.waitForTimeout(100); assert.equal(await empty.locator("#homeStories").isHidden(),true);
 await browser.close();
