@@ -267,9 +267,15 @@
     window.setTimeout(() => picker?.classList.remove("needsReceipt"), 2200);
   }
 
-  function setMessage(text, type = "") {
+  function setMessage(text, type = "", note = "") {
     const box = document.getElementById("paymentFlowMessage");
     if (box) { box.textContent = text; box.className = `paymentFlowMessage ${type}`; }
+    if (box && note) {
+      const detail = document.createElement("small");
+      detail.className = "paymentMethodExplanationNote";
+      detail.textContent = note;
+      box.append(detail);
+    }
   }
 
   function setStage(flow, stage) {
@@ -431,7 +437,7 @@
         else if (!result.anyAvailable) setMessage(result.methods.every((method) => method.status === "limit_reached")
           ? "Hazırda bütün kartların limiti dolub. Daha sonra yenidən yoxlayın və ya dəstəklə əlaqə saxlayın."
           : "Kartlar müvəqqəti rezervlərlə tutulub. Bir qədər sonra yenidən cəhd edin.", "error");
-        else setMessage("Ödəniş edəcəyiniz kartı və ya cüzdanı özünüz seçin.");
+        else setMessage("Ödəniş üçün aşağıdakı kartlardan birini seçin.", "paymentMethodExplanation", "Bu kartlar Mirpanel-ə aiddir. Seçdiyiniz karta ödəniş etməlisiniz.");
         retry.hidden = result.anyAvailable;
 
         const showReservation = (reserved) => {
