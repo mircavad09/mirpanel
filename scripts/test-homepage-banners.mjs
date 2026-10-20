@@ -273,7 +273,9 @@ try {
   await assert.rejects(repository.update(stored.id,{order:1,active:true,version:stored.updated_at,linkType:'product',productId:'unknown'}),/aktiv məhsul/);
   // Slug changes resolve by ID without rewriting the saved banner.
   const oldSlug=zoom.seoSlug;zoom.seoSlug='zoom-renamed-test';
+  await repository.list(true);
   assert.equal((await repository.list()).banners.find(b=>b.id===mainId).url,'/mehsul/zoom-renamed-test');zoom.seoSlug=oldSlug;
+  await repository.list(true);
   const sample=catalog.products.filter(p=>p.active!==false).slice(0,6), sourceRow={...stored};
   for(const count of [0,1,2,6]) {
     db.splice(0,db.length,...sample.slice(0,count).map((p,i)=>({...sourceRow,id:crypto.randomUUID(),sort_order:i+1,options:{placement:'main',focus:'center',linkType:'product',productId:p.id}})));

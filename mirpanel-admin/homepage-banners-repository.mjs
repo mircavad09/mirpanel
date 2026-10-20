@@ -45,8 +45,17 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
   const table = () => client.from('homepage_banners');
   const storage = () => client.storage.from(bucket);
   const pending = new Map(), urls = new Map();
+  // The public endpoint is polled every 3s: coalesce catalog reads across visitors.
+  let catalogCache=null,catalogUntil=0,catalogRead=null;
+  async function catalogProducts(fresh=false) {
+    if(!fresh && catalogCache && catalogUntil>now())return catalogCache;
+    if(!fresh && catalogRead)return catalogRead;
+    const read=loadCatalog().then(catalog=>{catalogCache=bannerProducts(catalog);catalogUntil=now()+2500;return catalogCache;});
+    if(!fresh)catalogRead=read;
+    try{return await read;}finally{if(catalogRead===read)catalogRead=null;}
+  }
   async function targetOptions(payload,previous={},active=true) {
-    const options=bannerOptions(payload,previous), products=bannerProducts(await loadCatalog());
+    const options=bannerOptions(payload,previous), products=await catalogProducts(true);
     if(!options.linkType && !Object.keys(previous).length && !options.url) throw fail('Məhsul seçin və ya keçidsiz banner seçimini açıq şəkildə seçin.');
     const target=resolveBannerTarget(options,products);
     if(target.linkType==='product' && (!products.some(p=>p.id===target.productId) || (active && !target.url))) throw fail('Banner üçün mövcud aktiv məhsul seçin.');
@@ -61,7 +70,7 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
   async function managed() { return Boolean(check(await client.from('homepage_banner_settings').select('initialized').eq('singleton',true).single())?.initialized); }
   async function initialize() {
     if(await managed()) {
-      const products=bannerProducts(await loadCatalog());
+      const products=await catalogProducts(true);
       for(const row of (await rows()).filter(row=>!row.options?.linkType)) {
         const target=resolveBannerTarget(row.options,products);
         const options={...row.options,linkType:target.linkType};
@@ -114,7 +123,7 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
       return cached.url;
   }
   async function present(row,products) {
-    products ||= bannerProducts(await loadCatalog());
+    products ||= await catalogProducts();
     const image = row.media_path ? await privateImage(row.media_path) : new URL(row.legacy_image, 'https://mirpanel.com/').href;
     let mobileImage=legacyImage(row.options?.mobileImage);
     if(row.options?.mobileMediaPath?.startsWith('homepage-banners/')) {
@@ -130,7 +139,7 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     if(admin) await initialize();
     if(!await managed()) return {managed:false,banners:[]};
     const data = (await rows()).filter(row=>admin || row.active);
-    const products=bannerProducts(await loadCatalog());
+    const products=await catalogProducts(admin);
     const banners=await Promise.all(data.map(row=>present(row,products)));
     return {managed:true,banners:admin?banners:banners.filter(b=>b.linkType!=='product'||b.url),...(admin?{products}:{}),maxBytes:BANNER_IMAGE_MAX_BYTES};
   }
