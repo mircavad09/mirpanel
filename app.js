@@ -949,8 +949,8 @@ const DATA = {
         "alt": "Youtube Eyni hesab",
         "order": 6
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "whatsapp",
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
