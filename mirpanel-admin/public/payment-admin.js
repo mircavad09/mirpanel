@@ -139,7 +139,7 @@
       ["Məhsul", order.productTitle], ["Plan", order.planName], ["Məbləğ", money(order.amount, order.currency)], ["Ödəniş üsulu", order.paymentMethodLabel]
     ];
     if (pending) fields.push(["Rezerv", reservationLabel[order.reservationStatus] || "Yoxlanılır"]);
-    if(order.workforce){const flow=order.workforce;fields.push(["İşçi",flow.employeeName?`${flow.employeeName} · İşçi qəbul edib · ${dateTime(flow.acceptedAt)}`:"İşçiyə verilməyib"],["İşçi axını",({NEW:"Yeni sifariş",EMPLOYEE_ACCEPTED:"İşçi qəbul edib",STOCK_RESERVED:"Stok ayrılıb",DELIVERED_PENDING_ADMIN:"Admin təsdiqi gözlənilir",RETURNED_TO_EMPLOYEE:"Düzəlişə qaytarılıb",COMPLETED:"Tamamlanıb",CANCELLED:"Ləğv edilib"})[flow.state]||flow.state]);}
+    if(order.workforce){const flow=order.workforce;fields.push(["İşçi",flow.employeeName?`${flow.employeeName} · İşçi qəbul edib · ${dateTime(flow.acceptedAt)}`:"İşçiyə verilməyib"],["İşçi axını",({NEW:"Yeni sifariş",EMPLOYEE_ACCEPTED:"İşçi qəbul edib",STOCK_RESERVED:"Stok ayrılıb",DELIVERED_PENDING_ADMIN:"İşçi tamamlayıb — admin yoxlaması gözlənilir",RETURNED_TO_EMPLOYEE:"Düzəlişə qaytarılıb",COMPLETED:"Tamamlanıb",CANCELLED:"Ləğv edilib"})[flow.state]||flow.state]);}
     if (!pending) {
       fields.push(["Təsdiqlənmə", dateTime(order.completedAt)], ["Bitmə tarixi", calendarDate(order.expiresOn)]);
       fields.push(["Snapshot maya", order.costPriceSnapshot === null ? "Tarixi maya dəyəri mövcud deyil" : money(order.costPriceSnapshot, order.currency)]);

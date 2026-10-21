@@ -1,5 +1,5 @@
 import {spawn} from 'node:child_process';import fs from 'node:fs';
-const suites=['test-employee-reporting','test-employee-panel-db','test-employee-http','test-employee-release','test-employee-admin-bridge','test-employee-key','test-employee-real-postgres','test-employee-browser','test-payment-system','test-payment-orders-admin','test-admin-auth-boundary','test-payment-method-selection','test-payment-receipt-browser','test-payment-orders-browser','test-order-duration-filter','test-product-order-isolation','test-old-order-approval-database'];
+const suites=['test-employee-reporting','test-employee-panel-db','test-employee-http','test-employee-release','test-employee-admin-bridge','test-employee-key','test-employee-real-postgres','test-employee-browser','test-employee-review','test-employee-review-postgres','test-employee-review-browser','test-payment-system','test-payment-orders-admin','test-admin-auth-boundary','test-payment-method-selection','test-payment-receipt-browser','test-payment-orders-browser','test-order-duration-filter','test-product-order-isolation','test-old-order-approval-database'];
 const results=[];
 for(const suite of suites){
  console.log('RUN '+suite);

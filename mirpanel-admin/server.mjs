@@ -1279,11 +1279,11 @@ const employeeSystem=createEmployeeSystem({client:storiesSupabase,config,json,re
  isAdmin:request=>getSession(request)?.role==='admin',adminMutation:requireMutationAuth,sameOrigin,
  loadCatalog:async()=>extractAdminState((await getAppFile()).source),guardLogin:request=>paymentSystem.guardLogin(request)});
 // Read-only deployment gate. Missing SQL never exposes a half-working employee API.
-// An explicit false is the emergency off switch; otherwise a committed v2 migration enables it.
+// An explicit false is the emergency off switch; v3 separates worker delivery from final admin review.
 if(storiesSupabase && process.env.EMPLOYEE_PANEL_ENABLED!=='false') {
  try {
   const probe=await Promise.race([storiesSupabase.rpc('employee_system_ready'),new Promise(resolve=>setTimeout(()=>resolve({error:true}),5000))]);
-  config.employeeEnabled=!probe.error && probe.data===2;
+  config.employeeEnabled=!probe.error && probe.data>=3;
  } catch {config.employeeEnabled=false;}
 }
 config.employeeEnabled=employeeSystem.enabled();

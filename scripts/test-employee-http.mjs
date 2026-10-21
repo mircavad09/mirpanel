@@ -10,7 +10,7 @@ try{
  r=await request('/api/employee/login',{body:{login:'worker',password}});eq(r.status,200);const cookie=r.headers.get('set-cookie');assert.match(cookie,/HttpOnly; SameSite=Strict/);checks++;
  const headers={Cookie:cookie.split(';')[0]};r=await request('/api/employee/session',{headers});eq(r.status,200);const session=await r.json();eq(session.role,'employee');headers['X-CSRF-Token']=session.csrfToken;
  for(const path of ['/api/admin/workforce/accounts','/api/admin/payment-methods','/api/admin/state','/api/publish','/admin.html','/admin/workforce'])eq((await request(path,{headers})).status,403);
- for(const [path,body] of [['/api/admin/workforce/accounts',{login:'evil',password}],['/api/admin/workforce/stock',{items:[]}],['/api/admin/payment-methods',{}],['/api/publish',{}],['/api/employee/orders/00000000-0000-4000-8000-000000000001/complete',{}],['/api/employee/accounts/'+a.id+'/salary',{}],['/api/employee/audit/delete',{}]]){const r=await request(path,{headers,body});eq(r.status,path.includes('/orders/')?404:403);}
+ for(const [path,body] of [['/api/admin/workforce/accounts',{login:'evil',password}],['/api/admin/workforce/stock',{items:[]}],['/api/admin/payment-methods',{}],['/api/publish',{}],['/api/employee/orders/00000000-0000-4000-8000-000000000001/complete',{}],['/api/employee/accounts/'+a.id+'/salary',{}],['/api/employee/audit/delete',{}]]){const r=await request(path,{headers,body});eq(r.status,403);}
  eq((await request('/api/employee/stock/units',{headers})).status,403);
  eq((await request('/api/employee/logout',{headers:{Cookie:headers.Cookie},body:{}})).status,403);
  const stats=await(await request('/api/employee/dashboard',{headers})).json();eq(stats.totalOrders,0);eq(stats.totalQuantity,0);eq(stats.orderBonusCents,0);
@@ -20,8 +20,9 @@ try{
  const plan=(await f.db.query('select id from employee_catalog_plans limit 1')).rows[0].id,order=crypto.randomUUID();
  await f.db.query(`insert into payment_orders(id,order_code,product_id,canonical_plan_id,quantity,customer_name,customer_phone,amount,payment_verified_at) values($1,'HTTP-ROLE','capcut',$2,1,'Fixture','994500000000',5,clock_timestamp())`,[order,plan]);
  eq((await request(`/api/employee/orders/${order}/complete`,{headers,body:{}})).status,403);
- eq((await request(`/api/employee/orders/${order}/verify`,{headers,body:{}})).status,403);
+ eq((await request(`/api/admin/workforce/orders/${order}/verify`,{headers:owner,body:{}})).status,403);
  eq((await request(`/api/employee/orders/${order}/accept`,{headers,body:{}})).status,200);
+ eq((await request(`/api/employee/orders/${order}/verify`,{headers,body:{decision:'verified'}})).status,200);
  eq((await request(`/api/employee/orders/${order}/accept`,{headers,body:{}})).status,409);
  eq((await request('/api/admin/workforce/template',{headers:owner,body:{productId:'capcut',planKey:'0',template:'Salam {{customerName}} — {{code}}'}})).status,200);
  eq((await(await request('/api/admin/workforce/template?productId=capcut&planKey=0',{headers:owner})).json()).template,'Salam {{customerName}} — {{code}}');

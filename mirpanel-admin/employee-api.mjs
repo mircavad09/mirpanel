@@ -18,15 +18,17 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
  async function blockAdmin(req,res){if(isAdmin(req))return false;if(!enabled()||!client)return false;if(await session(req)){json(res,403,{error:'İşçinin admin funksiyalarına icazəsi yoxdur.'});return true;}return false;}
  async function ownOrder(actor,id){const o=await result(client.from('payment_orders').select('*').eq('id',uuid(id)).maybeSingle());if(!o)throw fail('Sifariş tapılmadı.',404);if(actor.role==='employee'){
   const a=await result(client.from('employee_order_assignments').select('*').eq('order_id',o.id).maybeSingle());
-  if(!actor.account.employee_started_at||Date.parse(o.created_at)<Date.parse(actor.account.employee_started_at)||!o.payment_verified_at||(a&&a.employee_id!==actor.id)||(!a&&!['reviewing','new_receipt_requested'].includes(o.status)))throw fail('Bu sifarişə icazə yoxdur.',403);
+  if(!actor.account.employee_started_at||Date.parse(o.created_at)<Date.parse(actor.account.employee_started_at)||(a&&a.employee_id!==actor.id)||(!a&&!['reviewing','new_receipt_requested'].includes(o.status)))throw fail('Bu sifarişə icazə yoxdur.',403);
  }return o;}
  async function catalog(){const c=await loadCatalog(),counts=await rpc('employee_inventory_counts');return (c.products||[]).map(p=>({id:p.id,title:p.title,image:p.image,active:p.active!==false,plans:(p.plans||[]).map((pl,i)=>{const row=counts.find(v=>v.product_id===p.id&&v.source_plan_key===planKey(pl,i));return {key:planKey(pl,i),id:row?.plan_id||null,label:pl.label||`${pl.months} aylıq`,months:pl.duration_months??pl.durationMonths??pl.months??null,active:pl.active!==false,available:row?.available??null,tracked:row?.inventory_tracked===true,lowStock:row?.low_stock??3,mappingValid:!row||row.signature===signature(pl)};})}));}
  async function resolve(productId,key){const c=await loadCatalog(),p=c.products.find(p=>p.id===productId&&p.active!==false),pl=p?.plans?.find((v,i)=>planKey(v,i)===String(key)&&v.active!==false);if(!p||!pl)throw fail('Məhsul və ya plan tapılmadı.',404);return rpc('employee_plan_resolve',{p_product:p.id,p_key:String(key),p_signature:signature(pl),p_label:pl.label||`${pl.months} aylıq`});}
- async function message(actor,id,key,action='preview'){const o=await ownOrder(actor,id);await rpc('employee_order_action',{p_order:o.id,p_action:action,p_role:actor.role,p_actor:actor.ref,p_employee:actor.id,p_key:key});
+ async function message(actor,id,key,action='preview'){const o=await ownOrder(actor,id);
   const rows=await result(client.from('employee_stock_units').select('id,product_id,plan_id,secret_cipher').eq('reserved_order_id',o.id).in('state',['RESERVED','DELIVERY_PENDING']));
   const plan=await result(client.from('employee_catalog_plans').select('message_template').eq('id',o.canonical_plan_id).single());
   const crypt=createStockCrypto(config.encryptionKey),units=rows.map(u=>crypt.decrypt(u.secret_cipher,`${u.id}:${u.product_id}:${u.plan_id}`));
-  const body=renderDelivery(plan.message_template,o,units);return action==='whatsapp'?whatsAppAdapter(o.customer_phone,body):{message:body,expiresIn:30};}
+  const body=renderDelivery(plan.message_template,o,units);
+  await rpc('employee_order_action_v3',{p_order:o.id,p_action:action,p_role:actor.role,p_actor:actor.ref,p_employee:actor.id,p_key:key,p_details:{messageCipher:crypt.encrypt({message:body},`employee-review:${o.id}`)}});
+  return action==='whatsapp'?whatsAppAdapter(o.customer_phone,body):{message:body,expiresIn:30};}
  async function handle(req,res){const u=new URL(req.url,'http://localhost'),employee=u.pathname.startsWith('/api/employee/'),admin=u.pathname.startsWith('/api/admin/workforce');if(!employee&&!admin)return false;
   try{
    if(u.pathname==='/api/employee/capabilities'&&req.method==='GET'){json(res,200,{enabled:enabled()});return true;}
@@ -54,17 +56,26 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
     if(u.pathname==='/api/employee/logout'&&req.method==='POST'){sessions.delete(cookies(req).mirpanel_employee_session);json(res,200,{ok:true},{'Set-Cookie':cookie('',0)});return true;}
    }
    const base=admin?'/api/admin/workforce':'/api/employee',suffix=u.pathname.slice(base.length);
+   if(suffix==='/review-summary'&&req.method==='GET'){if(!admin)throw fail('Əməliyyata icazə yoxdur.',403);json(res,200,await rpc('employee_review_summary'));return true;}
    if(req.method!=='GET'){const now=Date.now();for(const [key,v] of mutations)if(v.until<now)mutations.delete(key);const key=actor.role+':'+actor.ref,v=mutations.get(key)||{n:0,until:now+60000};if(++v.n>60)throw fail('Çox əməliyyat edildi. Bir dəqiqə sonra yenidən cəhd edin.',429);mutations.set(key,v);}
    if(suffix==='/products'&&req.method==='GET'){const list=await catalog();json(res,200,{products:admin?list:list.filter(p=>p.active).map(p=>({...p,plans:p.plans.filter(pl=>pl.active)}))});return true;}
    if(suffix==='/orders'&&req.method==='GET'){const tab=u.searchParams.get('tab')||'NEW';if(!['all','NEW','EMPLOYEE_ACCEPTED','STOCK_RESERVED','DELIVERED_PENDING_ADMIN','RETURNED_TO_EMPLOYEE','today'].includes(tab))throw fail('Filtr düzgün deyil.');json(res,200,{orders:await rpc('employee_order_list',{p_employee:actor.id,p_tab:tab,p_page:Math.max(0,Math.min(10000,Number(u.searchParams.get('page'))||0))})});return true;}
    if(suffix==='/stock'&&req.method==='GET'){json(res,200,{counts:await rpc('employee_inventory_counts')});return true;}
    if(suffix==='/dashboard'&&req.method==='GET'){const id=admin?uuid(u.searchParams.get('employeeId')):actor.id;const s=await rpc('employee_reporting_snapshot',{p_employee_id:id});const stock=await catalog();const ready=await rpc('employee_order_list',{p_employee:id,p_tab:'NEW',p_page:0});json(res,200,{...s,alerts:admin?await rpc('employee_stock_alerts'):[],newOrders:s.employeeStartedAt?Number(await rpc('employee_queue_count',{p_employee:id})):0,exhausted:[...new Set(stock.filter(p=>p.active&&p.plans.some(pl=>pl.active&&pl.tracked&&Number(pl.available)===0)).map(p=>p.id))],low:[...new Set(stock.filter(p=>p.active&&p.plans.some(pl=>pl.active&&pl.tracked&&Number(pl.available)>0&&Number(pl.available)<=pl.lowStock)).map(p=>p.id))]});return true;}
    if(suffix==='/payroll'&&req.method==='GET'){const month=u.searchParams.get('month')||new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit'}).format(new Date());if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw fail('Ay düzgün deyil.');json(res,200,await rpc('employee_monthly_pay',{p_employee:admin?uuid(u.searchParams.get('employeeId')):actor.id,p_month:month+'-01'}));return true;}
-   const action=suffix.match(/^\/orders\/([0-9a-f-]+)\/(accept|reserve|preview|whatsapp|sent|submit|verify|return|complete|cancel|receipt|fill)$/i);
-   if(action){const id=uuid(action[1]),op=action[2];const o=await ownOrder(actor,id);
+   const action=suffix.match(/^\/orders\/([0-9a-f-]+)\/(accept|reserve|preview|whatsapp|sent|submit|verify|return|complete|cancel|receipt|fill|review)$/i);
+   if(action){const id=uuid(action[1]),op=action[2];
+    if(!admin&&['complete','return','cancel','fill','review'].includes(op))throw fail('Əməliyyata icazə yoxdur.',403);
+    const o=await ownOrder(actor,id);
+    if(op==='review'&&req.method==='GET'){
+     const assignment=await result(client.from('employee_order_assignments').select('*').eq('order_id',id).single());
+     const events=await result(client.from('employee_work_audit').select('actor_role,action,created_at,stock_ids,review_reason').eq('order_id',id).order('created_at'));
+     const message=assignment.message_cipher?createStockCrypto(config.encryptionKey).decrypt(assignment.message_cipher,`employee-review:${id}`).message:null;
+     json(res,200,{message,events,expiresIn:30});return true;
+    }
     if(op==='receipt'&&req.method==='GET'){if(o.receipt_deleted_at)throw fail('Çek saxlanma müddəti bitib.',410);const {data,error}=await client.storage.from(o.receipt_bucket).createSignedUrl(o.receipt_path,60);if(error)throw fail('Çek yüklənmədi.',503);await audit(actor.role,actor.ref,'receipt.viewed',id);json(res,200,{url:data.signedUrl,mime:o.receipt_mime});return true;}
     if(req.method!=='POST')throw fail('Əməliyyata icazə yoxdur.',403);
-    if((admin&&!['verify','return','complete','cancel','fill'].includes(op))||(!admin&&!['accept','reserve','preview','whatsapp','sent','submit'].includes(op)))throw fail('Əməliyyata icazə yoxdur.',403);
+    if((admin&&!['return','complete','cancel','fill'].includes(op))||(!admin&&!['accept','verify','reserve','preview','whatsapp','sent','submit'].includes(op)))throw fail('Əməliyyata icazə yoxdur.',403);
     const b=await readBody(req,10000),key=uuid(req.headers['x-idempotency-key']);
     if(op==='fill'){
      const starts=await result(client.from('employee_accounts').select('employee_started_at').not('employee_started_at','is',null).order('employee_started_at').limit(1));
@@ -74,7 +85,10 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
      json(res,200,await rpc('employee_fill_legacy',{p_order:id,p_plan:pid,p_customer:d,p_actor:actor.ref}));return true;
     }
     if(['preview','whatsapp'].includes(op)){json(res,200,await message(actor,id,key,op));return true;}
-    try{json(res,200,await rpc('employee_order_action',{p_order:id,p_action:op,p_role:actor.role,p_actor:actor.ref,p_employee:actor.id,p_key:key,p_quantity:quantity(b.quantity)}));}
+    const details={};if(op==='return'){details.reason=text(b.reason,1000);if(details.reason.length<3)throw fail('Geri qaytarma səbəbini yazın.');}
+    if(op==='submit')details.note=text(b.note,1000);
+    if(op==='verify'){if(b.decision!=='verified')throw fail('Çeki yoxladığınızı təsdiqləyin.');details.decision='verified';details.note=text(b.note,1000);}
+    try{json(res,200,await rpc('employee_order_action_v3',{p_order:id,p_action:op,p_role:actor.role,p_actor:actor.ref,p_employee:actor.id,p_key:key,p_quantity:quantity(b.quantity),p_details:details}));}
     catch(error){if(op==='reserve'&&error.code==='STOCK_EMPTY')await audit(actor.role,actor.ref,'stock.empty',id);throw error;}return true;
    }
    if(!admin)throw fail('İşçi üçün bu əməliyyata icazə yoxdur.',403);
