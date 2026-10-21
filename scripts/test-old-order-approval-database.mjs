@@ -81,6 +81,6 @@ try {
   assert.equal(Number((await q("select confirmed_count from payment_method_daily_counters where method_id=$1 and counter_date=payment_baku_date()",[parallelMethod]))[0].confirmed_count),1);
   assert.equal(Number((await q("select count(*) count from payment_audit_log where entity_id=$1 and action='order.approved'",[parallel.orderId]))[0].count),1);
 
-  console.log(JSON.stringify({ok:true,engine:'Supabase PostgreSQL',oldOrderLimitCounted:false,oldAndCurrentCountersUnchanged:true,
+  console.log(JSON.stringify({ok:true,engine:db.engine||'Supabase PostgreSQL',oldOrderLimitCounted:false,oldAndCurrentCountersUnchanged:true,
     completedToday:true,financeSnapshots:true,baku2359Boundary:true,sameDayLimitCounted:true,parallelAttempts:12,appliedOnce:1,idempotentReplays:11,auditRows:1,syntheticOnly:true}));
 } finally { await db.close(); }

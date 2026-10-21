@@ -1286,6 +1286,7 @@ if(storiesSupabase && process.env.EMPLOYEE_PANEL_ENABLED!=='false') {
   config.employeeEnabled=!probe.error && probe.data===2;
  } catch {config.employeeEnabled=false;}
 }
+config.employeeEnabled=employeeSystem.enabled();
 const storiesStorageOrigin = (() => {
   try {
     return config.supabaseUrl ? new URL(config.supabaseUrl).origin : "";

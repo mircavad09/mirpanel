@@ -5,7 +5,9 @@ const uuid=v=>{if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 const safeAccount=a=>({id:a.id,login:a.login,name:a.display_name,active:a.active,employeeStartedAt:a.employee_started_at});
 export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminMutation,sameOrigin,loadCatalog,guardLogin=async()=>{}}){
  const sessions=new Map(),attempts=new Map(),mutations=new Map(),ttl=8*3600000;
- const enabled=()=>config.employeeEnabled===true;
+ let stockKeyReady=false;
+ try{createStockCrypto(config.encryptionKey);stockKeyReady=true;}catch{/* Fail closed; never log key material. */}
+ const enabled=()=>config.employeeEnabled===true&&stockKeyReady&&Boolean(client);
  const cookies=req=>Object.fromEntries(String(req.headers.cookie||'').split(';').map(v=>v.trim().split('=')));
  const cookie=(id,age=28800)=>`mirpanel_employee_session=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}${config.secureCookie||config.adminBaseUrl?.startsWith('https:')?'; Secure':''}`;
  async function result(query){const {data,error}=await query;if(error)throw fail('Əməliyyat saxlanılmadı. Yenidən cəhd edin.',409);return data;}

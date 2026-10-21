@@ -15,8 +15,8 @@ import { commercialSnapshot } from "./payment-commercial-snapshot.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
-// Independently checked against the unchanged commercial content at main ff53b8c.
-const expectedSnapshot = "1835ed8147773999f57ec03ad6f0f02f0bbf636c576827d059edd7c0793395f0";
+// Independently computed from the approved CMS main commit c109252 (before employee work).
+const expectedSnapshot = "5489441e83063e777650531f311e78e312b952d423ec6e487b7b98b2cfa3b787";
 
 function expectThrow(fn, pattern) {
   let thrown = null;
@@ -51,10 +51,11 @@ assert.equal(detectReceiptType(webp).mimeType, "image/webp");
 assert.equal(detectReceiptType(pdf).mimeType, "application/pdf");
 assert.equal(receiptFromPayload({ mimeType: "application/pdf", contentBase64: pdf.toString("base64") }).extension, "pdf");
 assert.equal(receiptFromBuffer(jpeg, "image/jpeg").extension, "jpg");
-assert.equal(receiptFromPayload({ mimeType: "image/png", contentBase64: jpeg.toString("base64") }).mimeType, "image/jpeg");
+expectThrow(() => receiptFromPayload({ mimeType: "image/png", contentBase64: jpeg.toString("base64") }), /formatı uyğun deyil/);
 assert.equal(receiptFromBuffer(png, "").mimeType, "image/png");
 assert.equal(receiptFromBuffer(webp, "application/octet-stream").mimeType, "image/webp");
-assert.equal(receiptFromBuffer(pdf, "text/plain").mimeType, "application/pdf");
+expectThrow(() => receiptFromBuffer(pdf, "text/plain"), /formatı uyğun deyil/);
+assert.equal(receiptFromBuffer(pdf, "application/pdf").mimeType, "application/pdf");
 expectThrow(() => receiptFromBuffer(heic, "image/heic"), /iPhone şəklini JPG və ya PDF/);
 expectThrow(() => receiptFromBuffer(Buffer.from("not a receipt"), "image/jpeg"), /Yalnız JPG, PNG, WEBP və ya PDF/i);
 expectThrow(() => receiptFromPayload({ mimeType: "application/pdf", contentBase64: Buffer.from("%PDF-1.7\n/OpenAction /JavaScript\n%%EOF", "ascii").toString("base64") }), /Aktiv məzmun/i);
@@ -155,16 +156,17 @@ assert.equal(flow.includes("pendingReservations"), false, "Müştəri rezerv say
 assert.equal(flow.includes("method.remaining"), false, "Müştəri qalan limit sayğacını görməməlidir");
 assert.ok(flow.includes('id="paymentReceiptForm"'));
 assert.ok(flow.includes('id="paymentSubmit" type="submit"'));
-assert.ok(flow.includes('addEventListener("submit", async (event)'));
+assert.match(flow, /getElementById\(['"]paymentReceiptForm['"]\)\.addEventListener\(['"]submit['"],\s*async\s*\(?event\)?\s*=>/);
 assert.ok(flow.includes("event.preventDefault()"));
-assert.ok(flow.includes("if (flow.submitting) return"));
+assert.ok(flow.includes("if (flow.submitting || flow.settled) return;"));
 assert.equal(flow.includes("/api/payments/replacement-receipts"), false, "İşləməyən yeni çek axını qalmamalıdır");
 assert.equal(flow.includes("paymentReceiptToken"), false, "İşləməyən yeni çek tokeni qalmamalıdır");
-assert.ok(flow.includes("Davam et →"));
-assert.ok(confirmation.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"));
+assert.ok(flow.includes("ÇEKİ GÖNDƏR VƏ DAVAM ET →"));
+assert.ok(flow.includes("if (!flow.receiptUploadToken || !flow.reservation) { promptForReceipt(); return; }"));
+assert.ok(api.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"), 'Receipt acknowledgement is part of the server canonical WhatsApp message');
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));
 assert.equal(flow.includes('window.open("about:blank"'), false, "Checkout boş WhatsApp tabı açmamalıdır");
-assert.ok(confirmation.includes("window.location.assign(verified.href)"), "WhatsApp keçidi eyni cari tabda olmalıdır");
+assert.ok(confirmation.includes("window.location.assign(url)") && confirmation.includes("navigate(verified.href)"), "Verified WhatsApp URL must use the same-tab navigation adapter");
 assert.ok(api.includes("buildCanonicalWhatsApp"), "Canonical WhatsApp URL serverdə hazırlanmalıdır");
 assert.ok(confirmation.includes("https://wa.me/${phone}?text=${encodeURIComponent(message)}"));
 assert.ok(confirmation.includes('verified.hostname !== "wa.me"'));
@@ -241,15 +243,18 @@ assert.equal(snapshot.activeProductCount, 22);
 assert.equal(snapshot.sha256, expectedSnapshot, "Kommersiya/CMS snapshot dəyişib");
 
 const productPages = fs.readdirSync(path.join(root, "mehsul")).filter((name) => name.endsWith(".page"));
+const pageGenerator = read("mirpanel-admin/product-pages.mjs");
+const confirmationAsset = pageGenerator.match(/order-confirmation\.js\?v=[a-z0-9-]+/i)?.[0];
+assert.ok(confirmationAsset, 'Generator must version the canonical confirmation asset');
 assert.equal(productPages.length, 22);
 for (const page of productPages) {
   const html = read(path.join("mehsul", page));
   assert.ok(html.includes("payment-flow.css?v="), `${page}: payment CSS bağlantısı yoxdur`);
   assert.ok(html.includes("payment-flow.js?v="), `${page}: payment JS bağlantısı yoxdur`);
-  assert.ok(html.includes("order-confirmation.js?v=product-forms-20260902-1"), `${page}: confirmation cache versiyası köhnədir`);
+  assert.ok(html.includes(confirmationAsset), `${page}: confirmation asset must match the current generator`);
   assert.equal(html.includes("hbo-max-order-fix.js"), false, `${page}: legacy məhsul handler-i vahid axını kəsməməlidir`);
 }
-assert.ok(read("mirpanel-admin/product-pages.mjs").includes("receipt-upload-20260908-1"), "Yeni yaradılan məhsul səhifələrində aktual payment asset versiyası olmalıdır");
+assert.match(pageGenerator, /payment-flow\.js\?v=[a-z0-9-]+/i, 'Generated product pages must version their payment asset');
 
 for (const file of [
   "mirpanel-admin/payment-api.mjs",

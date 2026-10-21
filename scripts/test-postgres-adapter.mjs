@@ -3,6 +3,13 @@ import fs from 'node:fs';
 import crypto from 'node:crypto';
 
 export async function createTestDatabase() {
+  if(process.env.MIRPANEL_TEST_LOCAL_ONLY==='1') {
+    const {localEmployeeDatabase}=await import('./employee-local-postgres.mjs');
+    const local=await localEmployeeDatabase();
+    return {real:true,engine:'local PostgreSQL (127.0.0.1)',schema:'public',query:async(s,p=[])=>({rows:Array.from(await local.sql.unsafe(s,p))}),
+      exec:s=>local.exec(s.replace(/create role anon; create role authenticated; create role service_role bypassrls;/g,'')),
+      close:()=>local.close(),connectionProof:async()=>new Set(await Promise.all(Array.from({length:12},()=>local.sql.begin(async tx=>{const [row]=await tx`select pg_backend_pid() as pid`;await tx`select pg_sleep(0.5)`;return row.pid;})))).size};
+  }
   const password=process.env.MIRPANEL_TEST_DB_PASSWORD;
   delete process.env.MIRPANEL_TEST_DB_PASSWORD;
   if(!password) throw new Error('TEST_PASSWORD_MISSING');

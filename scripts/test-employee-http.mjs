@@ -21,6 +21,8 @@ try{
  await f.db.query(`insert into payment_orders(id,order_code,product_id,canonical_plan_id,quantity,customer_name,customer_phone,amount,payment_verified_at) values($1,'HTTP-ROLE','capcut',$2,1,'Fixture','994500000000',5,clock_timestamp())`,[order,plan]);
  eq((await request(`/api/employee/orders/${order}/complete`,{headers,body:{}})).status,403);
  eq((await request(`/api/employee/orders/${order}/verify`,{headers,body:{}})).status,403);
+ eq((await request(`/api/employee/orders/${order}/accept`,{headers,body:{}})).status,200);
+ eq((await request(`/api/employee/orders/${order}/accept`,{headers,body:{}})).status,409);
  eq((await request('/api/admin/workforce/template',{headers:owner,body:{productId:'capcut',planKey:'0',template:'Salam {{customerName}} — {{code}}'}})).status,200);
  eq((await(await request('/api/admin/workforce/template?productId=capcut&planKey=0',{headers:owner})).json()).template,'Salam {{customerName}} — {{code}}');
  eq((await request('/api/employee/template?productId=capcut&planKey=0',{headers})).status,403);

@@ -5,7 +5,7 @@
 Kod, ayrıca UI, server API, migration/rollback və izolyasiya edilmiş testlər hazırlanıb.
 Production SQL bağlantısı bu terminalda yoxdur. Production backup/migration **icra edilməyib**,
 real işçi hesabı, sifariş, stok, maaş, rezerv və WhatsApp mesajı yaradılmayıb.
-Production migration təsdiqinə qədər push/deploy saxlanılır; canlı panel yoxlanılmış sayılmır.
+Production migration və ayrıca buraxılış icazəsinə qədər push/deploy saxlanılır; canlı panel yoxlanılmış sayılmır.
 Mövcud ana səhifə, kataloq mənbəyi, qiymətlər, tarixi satış bölgüsü, Story və banner faylları dəyişmir.
 
 ## Sahibin etməli olduğu bir manual buraxılış addımı
@@ -15,7 +15,7 @@ Bu paket ardıcıllıqla legacy payment RPC-lərini yoxlayır, private backup al
 iki migration-u REPEATABLE READ transaction-da tətbiq edir. Xəta olarsa transaction geri qaytarılır.
 Sonda manifestdə `payment_orders` və `payment_reservations` backup sətirləri, schema version `2` görünməlidir.
 Heç bir şifrə/açarı çata göndərməyin. Yalnız nəticəni təsdiqləyin.
-Təsdiqdən sonra agent commit-i main-ə göndərib Render/Cloudflare və canlı girişləri yoxlamalıdır.
+Təsdiqdən sonra agent əvvəl nəticəni yoxlamalı, push/deploy üçün ayrıca göstərişi gözləməlidir.
 
 Bu paket işçini avtomatik yaratmır/aktiv etmir. Buraxılışdan sonra sahibin normal istifadəsi:
 `/admin/workforce` → İşçi hesabları → ayrıca şifrə ilə hesab yarat →
@@ -101,10 +101,12 @@ Sifarişlər legacy siyahıdan silinmir; duration/bank/tarix/pagination filtrlə
 |---|---|
 | `node scripts/test-employee-reporting.mjs` | 62 yoxlama; əvvəlki foundation suite qorunub |
 | `node scripts/test-employee-panel-db.mjs` | 42 yoxlama; PostgreSQL/PGlite; stok, checkout, final approval/bonus, retry, açıqlanmış stokun təkrar verilməməsi |
-| `node scripts/test-employee-http.mjs` | 41 yoxlama; 401/403, CSRF, revocation, metadata, şablon/legacy UI qaydası |
+| `node scripts/test-employee-http.mjs` | 43 yoxlama; 401/403/409, CSRF, revocation, metadata, şablon/legacy UI qaydası |
 | `node scripts/test-employee-release.mjs` | 14 yoxlama; tam SQL/rollback 2 dəfə, backup/say/fingerprint, seed 0 |
-| `node scripts/test-employee-browser.mjs` | 145 yoxlama; işçi/admin UI, tam fixture axını, checkout metadata, 8 viewport |
+| `node scripts/test-employee-browser.mjs` | 151 yoxlama; işçi/admin UI, tam fixture axını, checkout metadata + receipt + final submit, 8 viewport |
 | `node scripts/test-employee-admin-bridge.mjs` | 18 yoxlama; legacy admin kartında işçi məlumatı, pre-start owner axını və doğru idarə keçidi |
+| `node scripts/test-employee-key.mjs` | 29 yoxlama; canonical açar formatı, fail-closed API, rotation round-trip |
+| `node scripts/test-employee-real-postgres.mjs` | 60 yoxlama; real PostgreSQL 18.4, ayrı backend-lər, migration/rollback/checkout |
 | `node scripts/test-admin-auth-boundary.mjs` | keçdi; əvvəlki owner giriş sərhədi |
 | `node scripts/test-payment-method-selection.mjs` | keçdi; seçim/rezerv düyməsi regressiyası |
 | `node scripts/test-payment-receipt-browser.mjs` | keçdi; formatlar, retry, timeout, server təsdiqi və davam gate-i |
@@ -116,13 +118,12 @@ app console error 0, 404 0; görünən işçi düymələri minimum 44 px.
 Şəkillər izolə testdə fixture assetləridir, canlı storage testi kimi təqdim edilmir.
 Screenshot-lar: `C:/Users/user/.codex/visualizations/2026/07/21/019f86ca-a67d-70e2-8827-51cc8588f307/employee-panel-20261021/employee-*.png`.
 
-Məhdudiyyətlər açıqdır: PGlite tək backend-dir; müstəqil PostgreSQL bağlantıları arasında real paralellik testi
-və production migration/live employee sessiyası yoxlanmayıb. `test-old-order-approval-database.mjs` təhlükəsiz test DB girişi olmadığına görə bloklanıb.
-Köhnə `test-payment-system.mjs` mövcud təhlükəsizlik qaydasına zidd olaraq JPEG baytlarını `image/png` kimi qəbul etməyi gözləyir və bu yerdə dayanır;
-bu buraxılış receipt security-ni zəiflətmir. Yeni/ayrıca receipt browser suite keçib. Bu köhnə geniş test “keçdi” sayılmır.
-`test-payment-orders-admin.mjs` də əvvəldən köhnəlmiş source-string assertion-da dayanır
-(`.select(select, { count: "exact" })` literalını gözləyir; duration repository artıq `matchingQuery` işlədir).
-Mövcud funksional payment-orders browser və duration API/browser testləri ayrıca keçib.
+Yekun release gate: **17/17 paket yaşıl**, **419 işçi yoxlaması**, uğursuz paket **0**.
+İki əvvəl uğursuz testin pre-employee `c109252` arxivində eyni xətaları verdiyi ayrıca təsdiqlənib;
+MIME/handler/cache/CMS/query assertion-ları təsdiqlənmiş davranışa uyğun yenilənib və hər iki paket indi keçir.
+Real PostgreSQL 18.4-də ayrı backend-lər, connection termination, atomic dry-run və rollback də yoxlanıb;
+köhnə approval testi lokal DB-də 12 backend ilə keçir. Production migration və canlı employee sessiyası hələ yoxlanmayıb.
+Tam səbəb, sübut, açarın adı/formatı/rotasiyası və runtime qeydləri: `docs/employee-release-blockers.md`.
 
 ## Deploy sonrası agent yoxlaması
 
@@ -133,10 +134,11 @@ Mövcud funksional payment-orders browser və duration API/browser testləri ayr
 
 ## Dəyişən faylların tam siyahısı
 
-Bu buraxılışda 33 fayl:
+İlkin `499d1a5` və bloker düzəlişi birlikdə 42 əlaqəli fayl:
 
 - `docs/employee-panel-release.md`
 - `docs/employee-reporting-foundation.md`
+- `docs/employee-release-blockers.md`
 - `mirpanel-admin/employee-api.mjs`
 - `mirpanel-admin/employee-reporting.mjs`
 - `mirpanel-admin/employee-security.mjs`
@@ -154,13 +156,21 @@ Bu buraxılışda 33 fayl:
 - `payment-flow.js`
 - `payment-flow.css`
 - `scripts/employee-http-fixture.mjs`
+- `scripts/employee-local-postgres.mjs`
 - `scripts/receipt-gate-fixture.mjs`
 - `scripts/test-employee-admin-bridge.mjs`
 - `scripts/test-employee-browser.mjs`
 - `scripts/test-employee-http.mjs`
+- `scripts/test-employee-key.mjs`
+- `scripts/test-employee-real-postgres.mjs`
+- `scripts/test-employee-release-gate.mjs`
 - `scripts/test-employee-panel-db.mjs`
 - `scripts/test-employee-release.mjs`
 - `scripts/test-employee-reporting.mjs`
+- `scripts/test-old-order-approval-database.mjs`
+- `scripts/test-payment-orders-admin.mjs`
+- `scripts/test-payment-system.mjs`
+- `scripts/test-postgres-adapter.mjs`
 - `supabase/employee-pre-release-backup.sql`
 - `supabase/employee-release.sql`
 - `supabase/employee-release-rollback.sql`

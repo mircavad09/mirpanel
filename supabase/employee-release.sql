@@ -307,7 +307,8 @@ begin
   select * into e from employee_accounts where id=p_employee for update;
   if not found or not e.active or e.employee_started_at is null or o.created_at<e.employee_started_at or o.payment_verified_at is null
    or o.status not in ('reviewing','new_receipt_requested') or (a.order_id is not null and a.employee_id<>e.id) then raise exception 'ORDER_NOT_READY';end if;
-  if a.order_id is null and (select count(*) from employee_stock_units where plan_id=o.canonical_plan_id and state='AVAILABLE')<o.quantity then raise exception 'ORDER_NOT_READY';end if;
+  if a.order_id is not null then raise exception 'ORDER_ALREADY_ASSIGNED';end if;
+  if (select count(*) from employee_stock_units where plan_id=o.canonical_plan_id and state='AVAILABLE')<o.quantity then raise exception 'ORDER_NOT_READY';end if;
   if a.order_id is null then
    insert into employee_order_assignments(order_id,employee_id,period_id,quantity,state,payment_verified_at,assigned_at,accepted_at)
    values(o.id,e.id,e.current_period_id,o.quantity,'EMPLOYEE_ACCEPTED',o.payment_verified_at,clock_timestamp(),clock_timestamp());
