@@ -139,6 +139,7 @@
       ["Məhsul", order.productTitle], ["Plan", order.planName], ["Məbləğ", money(order.amount, order.currency)], ["Ödəniş üsulu", order.paymentMethodLabel]
     ];
     if (pending) fields.push(["Rezerv", reservationLabel[order.reservationStatus] || "Yoxlanılır"]);
+    if(order.workforce){const flow=order.workforce;fields.push(["İşçi",flow.employeeName?`${flow.employeeName} · İşçi qəbul edib · ${dateTime(flow.acceptedAt)}`:"İşçiyə verilməyib"],["İşçi axını",({NEW:"Yeni sifariş",EMPLOYEE_ACCEPTED:"İşçi qəbul edib",STOCK_RESERVED:"Stok ayrılıb",DELIVERED_PENDING_ADMIN:"Admin təsdiqi gözlənilir",RETURNED_TO_EMPLOYEE:"Düzəlişə qaytarılıb",COMPLETED:"Tamamlanıb",CANCELLED:"Ləğv edilib"})[flow.state]||flow.state]);}
     if (!pending) {
       fields.push(["Təsdiqlənmə", dateTime(order.completedAt)], ["Bitmə tarixi", calendarDate(order.expiresOn)]);
       fields.push(["Snapshot maya", order.costPriceSnapshot === null ? "Tarixi maya dəyəri mövcud deyil" : money(order.costPriceSnapshot, order.currency)]);
@@ -152,7 +153,7 @@
       <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
       <div class="paymentOrderActions">
         ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : '<span class="statusPill">Çek saxlanma müddəti bitib</span>'}
-        ${pending ? '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ""}
+        ${pending ? order.workforce ? '<a class="btn primary" href="/admin/workforce">İşçi axınında yoxla və idarə et</a>' : '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ""}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
       </div>${pending || expiring ? orderHistory(order) : ""}
     </article>`;

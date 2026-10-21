@@ -14,6 +14,7 @@ import { createNetflixRequestGuard } from "./netflix-request-guard.mjs";
 import { createStoriesRepository } from "./stories-repository.mjs";
 import { createHomepageBannersRepository } from "./homepage-banners-repository.mjs";
 import { createProductSalesRepository } from './product-sales-repository.mjs';
+import { createEmployeeSystem } from './employee-api.mjs';
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -30,6 +31,7 @@ const publicDir = path.join(root, "public");
 loadEnv(path.join(root, ".env"));
 
 const config = {
+  employeeEnabled: process.env.EMPLOYEE_PANEL_ENABLED === 'true',
   port: Number(process.env.PORT || 8787),
   repo: process.env.MIRPANEL_GITHUB_REPO || "mircavad09/mirpanel",
   branch: process.env.MIRPANEL_GITHUB_BRANCH || "main",
@@ -637,6 +639,9 @@ function requireMutationAuth(request, response) {
 }
 
 async function handleApi(request, response) {
+  if (await employeeSystem.handle(request,response)) return;
+  const employeePath=new URL(request.url,'http://localhost').pathname;
+  if (!['/api/login','/api/product-sales','/api/stories','/api/homepage-banners'].includes(employeePath) && !employeePath.startsWith('/api/payments/') && await employeeSystem.blockAdmin(request,response)) return;
   const salesUrl = new URL(request.url, 'http://localhost');
   if (salesUrl.pathname === '/api/product-sales' && ['GET','OPTIONS'].includes(request.method)) {
     const origin = String(request.headers.origin || '');
@@ -699,6 +704,7 @@ async function handleApi(request, response) {
 
     const id = crypto.randomBytes(32).toString("hex");
     sessions.set(id, {
+      role:'admin',
       expiresAt: Date.now() + sessionTtl,
       csrfToken: crypto.randomBytes(24).toString("hex"),
       preview: null,
@@ -1269,6 +1275,17 @@ const productSales = storiesSupabase ? createProductSalesRepository(storiesSupab
 const homepageBanners = storiesSupabase ? createHomepageBannersRepository(storiesSupabase, {
   bucket:config.storiesBucket,loadCatalog:async()=>extractAdminState((await getAppFile()).source)
 }) : null;
+const employeeSystem=createEmployeeSystem({client:storiesSupabase,config,json,readBody,
+ isAdmin:request=>getSession(request)?.role==='admin',adminMutation:requireMutationAuth,sameOrigin,
+ loadCatalog:async()=>extractAdminState((await getAppFile()).source),guardLogin:request=>paymentSystem.guardLogin(request)});
+// Read-only deployment gate. Missing SQL never exposes a half-working employee API.
+// An explicit false is the emergency off switch; otherwise a committed v2 migration enables it.
+if(storiesSupabase && process.env.EMPLOYEE_PANEL_ENABLED!=='false') {
+ try {
+  const probe=await Promise.race([storiesSupabase.rpc('employee_system_ready'),new Promise(resolve=>setTimeout(()=>resolve({error:true}),5000))]);
+  config.employeeEnabled=!probe.error && probe.data===2;
+ } catch {config.employeeEnabled=false;}
+}
 const storiesStorageOrigin = (() => {
   try {
     return config.supabaseUrl ? new URL(config.supabaseUrl).origin : "";
@@ -1325,6 +1342,19 @@ const server = http.createServer(async (request, response) => {
     if (pathname === "/" || pathname === "/login.html") {
       return serveFile(response, "login.html");
     }
+    if (['/employee','/employee/','/employee/login'].includes(pathname)) {
+      if(pathname==='/employee/login') return serveFile(response,'employee-login.html');
+      if(!employeeSystem.enabled()) return json(response,503,{error:'İşçi paneli hələ aktiv deyil.'});
+      if(!await employeeSystem.session(request)){response.writeHead(302,{Location:'/employee/login','Cache-Control':'no-store'});return response.end();}
+      return serveFile(response,'employee.html');
+    }
+    if(pathname==='/admin/workforce'){
+      if(await employeeSystem.blockAdmin(request,response))return;
+      if(!requireAuth(request,response))return;
+      return serveFile(response,'workforce-admin.html');
+    }
+    if(['/employee.js','/employee.css','/employee-login.js'].includes(pathname))return serveFile(response,pathname.slice(1));
+    if(pathname.startsWith('/admin')&&await employeeSystem.blockAdmin(request,response))return;
 
     if (pathname === "/admin") {
       response.writeHead(302, { Location: "/admin.html" });

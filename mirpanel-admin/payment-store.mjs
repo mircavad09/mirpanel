@@ -340,7 +340,7 @@ export function createPaymentStore(config) {
       });
     },
     async submitOrder(args) {
-      const submitted = await rpc("submit_payment_order_v2", {
+      const params = {
         p_reservation_id: args.reservationId,
         p_checkout_key: args.checkoutKey,
         p_product_id: args.productId,
@@ -353,8 +353,8 @@ export function createPaymentStore(config) {
         p_receipt_size: args.receiptSize,
         p_receipt_sha256: args.receiptSha256,
         p_duration_months: args.durationMonths || null
-      });
-      return submitted;
+      };
+      return args.customer ? rpc('employee_submit_checkout',{p_args:params,p_customer:args.customer}) : rpc('submit_payment_order_v2',params);
     },
     async checkoutReservation(reservationId, checkoutKey) {
       const { data, error } = await client.from("payment_reservations").select("id,checkout_key,product_id,plan_id,amount,currency,status,expires_at,method_id")
@@ -404,6 +404,14 @@ export function createPaymentStore(config) {
         archivedAt: item.archivedAt || item.archived_at || null
       });
       return { current: normalize(current || {}), archives: (archives || []).map(normalize) };
+    },
+    async workforceOrders(ids) {
+      if(!ids.length)return new Map();
+      const {data:employees,error:accountError}=await client.from('employee_accounts').select('employee_started_at').eq('active',true).not('employee_started_at','is',null);
+      if(accountError)throw paymentError(accountError);
+      const {data,error}=await client.from('payment_orders').select('id,created_at,canonical_plan_id,payment_verified_at,employee_order_assignments(state,accepted_at,employee_accounts(display_name))').in('id',ids);
+      if(error)throw paymentError(error);
+      return new Map((data||[]).map(row=>{const a=Array.isArray(row.employee_order_assignments)?row.employee_order_assignments[0]:row.employee_order_assignments;const employee=Array.isArray(a?.employee_accounts)?a.employee_accounts[0]:a?.employee_accounts;const eligible=row.canonical_plan_id&&(employees||[]).some(e=>Date.parse(row.created_at)>=Date.parse(e.employee_started_at));return [row.id,eligible||a?{state:a?.state||'NEW',employeeName:employee?.display_name||'',acceptedAt:a?.accepted_at||null,paymentVerifiedAt:row.payment_verified_at}:null];}));
     },
     async listOrders(input = {}) {
       await rpc("archive_due_payment_monthly_reports");
@@ -629,7 +637,7 @@ export function createPaymentStore(config) {
       if (error) throw paymentError(error);
     },
     approveOrder(id, durationMonths, actor) {
-      return rpc("approve_payment_order_v7", {
+      return rpc(config.employeeEnabled ? 'employee_approve_direct' : 'approve_payment_order_v7', {
         p_order_id: id,
         p_duration_months: durationMonths || null,
         p_actor: actor

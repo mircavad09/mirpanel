@@ -56,6 +56,7 @@
         productId: flow.product.id,
         planIndex: flow.planIndex,
         submissionStarted: Boolean(flow.submissionStarted)
+        ,customer:flow.customer || null
       }));
     } catch {}
   }
@@ -199,6 +200,7 @@
     form.innerHTML = `<section class="paymentFlow" data-payment-stage="payment_method_selection" aria-labelledby="paymentFlowTitle">
       <div class="paymentFlowHead"><div><span>Ödəniş</span><h2 id="paymentFlowTitle">Ödəniş üsulunu seçin</h2><p>${esc(product.title)} · ${Number(plan.price).toFixed(2)} ₼</p></div><button class="paymentFlowClose" type="button" aria-label="Ödənişi bağla">×</button></div>
       <div id="paymentFlowMessage" class="paymentFlowMessage" role="status">Aktiv ödəniş üsulları yüklənir...</div>
+      <fieldset id="paymentCustomerDetails" hidden><legend>Sifariş məlumatları</legend><label>Adınız<input id="paymentCustomerName" autocomplete="name" maxlength="120" required></label><label>WhatsApp nömrəsi — ölkə kodu ilə<input id="paymentCustomerPhone" type="tel" autocomplete="tel" inputmode="tel" placeholder="994…" required></label><label>Miqdar<input id="paymentCustomerQuantity" type="number" inputmode="numeric" min="1" max="100" value="1" required></label></fieldset>
       <button id="paymentMethodsRetry" type="button" hidden>Yenidən cəhd et</button>
       <div id="paymentMethodChoices" class="paymentMethodChoices" data-payment-stage-panel="payment_method_selection" aria-label="Ödəniş üsulları"></div>
       <button id="paymentMethodContinue" class="paymentMethodContinue" type="button" disabled>Bu kartla davam et · ${Number(plan.price).toFixed(2)} ₼ <span aria-hidden="true">→</span></button>
@@ -432,6 +434,12 @@
         if (!recovered && (flow.reservation || flow.reserving)) return;
         const choices = document.getElementById("paymentMethodChoices");
         const renderChoices = () => {
+          flow.customerDetailsRequired=result.customerDetailsRequired===true;
+          const details=document.getElementById('paymentCustomerDetails');details.hidden=!flow.customerDetailsRequired;
+          details.querySelectorAll('input').forEach(i=>i.readOnly=Boolean(flow.reservation));
+          const readCustomer=()=>({name:document.getElementById('paymentCustomerName').value.trim(),phone:document.getElementById('paymentCustomerPhone').value.replace(/[\s()+-]/g,''),quantity:Number(document.getElementById('paymentCustomerQuantity').value)});
+          if(previous?.customer&&!flow.customer){flow.customer=previous.customer;document.getElementById('paymentCustomerName').value=flow.customer.name||'';document.getElementById('paymentCustomerPhone').value=flow.customer.phone||'';document.getElementById('paymentCustomerQuantity').value=flow.customer.quantity||1;}
+          details.oninput=()=>{if(flow.reservation||flow.reserving)return;flow.customer=readCustomer();const amount=Number(plan.price)*(Number.isInteger(flow.customer.quantity)&&flow.customer.quantity>0?flow.customer.quantity:1);document.querySelector(".paymentFlowHead p").textContent=`${product.title} · ${amount.toFixed(2)} ₼`;document.getElementById('paymentMethodContinue').innerHTML=`Bu kartla davam et · ${amount.toFixed(2)} ₼ <span aria-hidden="true">→</span>`;};
           setStage(flow, "payment_method_selection");
           choices.hidden = false;
           choices.innerHTML = methodButtons(result.methods);
@@ -695,7 +703,7 @@
               try {
                 flow.submissionStarted = true; storeCheckout(flow);
                 const order = await request('/api/payments/orders',{method:'POST',headers:{'X-Idempotency-Key':flow.orderIdempotencyKey},
-                  body:JSON.stringify({reservationId:flow.reservation.reservationId,checkoutKey:flow.checkoutKey,productId:product.id,planIndex,consentAccepted:true,whatsappExtraText:flow.whatsappExtraText,receiptUploadToken:flow.receiptUploadToken})});
+                  body:JSON.stringify({reservationId:flow.reservation.reservationId,checkoutKey:flow.checkoutKey,productId:product.id,planIndex,consentAccepted:true,whatsappExtraText:flow.whatsappExtraText,receiptUploadToken:flow.receiptUploadToken,customer:flow.customer})});
                 if (!validOrder(order)) throw new Error('Server çeki təsdiqləmədi. Yenidən cəhd edin.');
                 await finish(order,{preserveModal:true});
               } catch (error) {
@@ -732,6 +740,7 @@
         continueButton.onclick = async () => {
           const button = [...choices.querySelectorAll('[data-payment-method]')].find(item => item.dataset.paymentMethod === flow.selectedMethodId);
           if (!button || button.disabled || flow.reserving || flow.reservation || flow.settled || flow.loadingMethods || flow.stage !== 'payment_method_selection') return;
+          if(flow.customerDetailsRequired){const name=document.getElementById('paymentCustomerName'),phone=document.getElementById('paymentCustomerPhone'),q=document.getElementById('paymentCustomerQuantity');flow.customer={name:name.value.trim(),phone:phone.value.replace(/[\s()+-]/g,''),quantity:Number(q.value)};if(flow.customer.name.length<2||!/^[1-9]\d{7,14}$/.test(flow.customer.phone)||!Number.isInteger(flow.customer.quantity)||flow.customer.quantity<1||flow.customer.quantity>100){setMessage('Ad, ölkə kodu ilə WhatsApp nömrəsi və 1–100 miqdarını düzgün daxil edin.','error');return;}}
           flow.reserving = true;
           continueButton.disabled = true;
           choices.querySelectorAll("button").forEach((item) => { item.disabled = true; });
@@ -744,9 +753,10 @@
               method: "POST",
               headers: { "X-Idempotency-Key": idempotencyKey },
               body: JSON.stringify({ methodId, productId: product.id, planIndex, idempotencyKey,
-                checkoutKey: flow.checkoutKey, previousReservationId: flow.previousReservationId || null })
+                checkoutKey: flow.checkoutKey, previousReservationId: flow.previousReservationId || null,customer:flow.customer })
             });
             showReservation(reserved);
+            document.querySelectorAll('#paymentCustomerDetails input').forEach(i=>i.readOnly=true);
           } catch (reserveError) {
             choices.querySelectorAll("button").forEach((item) => { item.disabled = item.getAttribute("aria-disabled") === "true"; });
             button.classList.remove("selected");
