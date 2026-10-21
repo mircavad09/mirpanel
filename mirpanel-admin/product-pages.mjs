@@ -57,6 +57,10 @@ const infoPageMetadata = {
 
 const adminRedirects = [
   "/admin https://mirpanel.onrender.com/ 302",
+  "/employee/login https://mirpanel.onrender.com/employee/login 302",
+  "/employee https://mirpanel.onrender.com/employee 302",
+  "/employee/ https://mirpanel.onrender.com/employee 302",
+  "/admin/workforce https://mirpanel.onrender.com/admin/workforce 302",
   "/admin.html https://mirpanel.onrender.com/ 302",
   "/admin/* https://mirpanel.onrender.com/:splat 302"
 ];

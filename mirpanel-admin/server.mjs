@@ -1345,8 +1345,8 @@ const server = http.createServer(async (request, response) => {
     }
     if (['/employee','/employee/','/employee/login'].includes(pathname)) {
       if(pathname==='/employee/login') return serveFile(response,'employee-login.html');
-      if(!employeeSystem.enabled()) return json(response,503,{error:'İşçi paneli hələ aktiv deyil.'});
       if(!await employeeSystem.session(request)){response.writeHead(302,{Location:'/employee/login','Cache-Control':'no-store'});return response.end();}
+      if(!employeeSystem.enabled()) return json(response,503,{error:'İşçi paneli hələ aktiv deyil.'});
       return serveFile(response,'employee.html');
     }
     if(pathname==='/admin/workforce'){

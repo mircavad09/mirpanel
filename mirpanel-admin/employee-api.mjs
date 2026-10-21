@@ -30,6 +30,10 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
  async function handle(req,res){const u=new URL(req.url,'http://localhost'),employee=u.pathname.startsWith('/api/employee/'),admin=u.pathname.startsWith('/api/admin/workforce');if(!employee&&!admin)return false;
   try{
    if(u.pathname==='/api/employee/capabilities'&&req.method==='GET'){json(res,200,{enabled:enabled()});return true;}
+   if(!enabled()&&client&&stockKeyReady&&u.pathname!=='/api/employee/login'){
+    if(admin&&!isAdmin(req)){if(await session(req)){json(res,403,{error:'İşçinin admin funksiyalarına icazəsi yoxdur.'});return true;}throw fail('Admin sessiyası tələb olunur.',401);}
+    if(employee&&!await session(req))throw fail('İşçi sessiyası tələb olunur.',401);
+   }
    if(!enabled()||!client)throw fail('İşçi paneli migration və server konfiqurasiyasını gözləyir.',503);
    if(u.pathname==='/api/employee/login'&&req.method==='POST'){
     if(!sameOrigin(req))throw fail('Sorğunun mənbəyi etibarlı deyil.',403);await guardLogin(req);
