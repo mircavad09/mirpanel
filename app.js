@@ -291,7 +291,7 @@ const DATA = {
       "category": "ai",
       "image": "uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071",
       "currency": "₼",
-      "title": "Google AI Pro + VEO 3 (18  AYLIQ)",
+      "title": "Gemini ai pro + 5TB yaddaş",
       "variant": "Pro",
       "badge": "AI",
       "imageAlt": "Google AI Pro + VEO 3",
@@ -364,7 +364,7 @@ const DATA = {
       "plans": [
         {
           "months": 18,
-          "price": 12.99,
+          "price": 6.99,
           "regularPrice": 700
         }
       ],
