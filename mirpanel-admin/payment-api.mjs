@@ -13,7 +13,7 @@ import {
 import { createPaymentStore } from "./payment-store.mjs";
 import { structuredDurationMonths } from "./payment-order-lifecycle.mjs";
 import { paymentMethodLabel } from "./payment-order-query.mjs";
-import {customerDetails,quantity,signature} from './employee-security.mjs';
+import {signature} from './employee-security.mjs';
 import {planKey} from './payment-profit.mjs';
 
 function planName(plan) {
@@ -209,7 +209,7 @@ export function createPaymentSystem(options) {
     if (request.method === "GET" && url.pathname === "/api/payments/methods") {
       await publicRate(request, "methods", 60, 60);
       const methods = (await store.publicMethods()).map(publicMethod);
-      publicJson(request, response, 200, { methods, anyAvailable: methods.some((item) => item.available), reservationMinutes: config.reservationMinutes,customerDetailsRequired:config.employeeEnabled===true });
+      publicJson(request, response, 200, { methods, anyAvailable: methods.some((item) => item.available), reservationMinutes: config.reservationMinutes,customerDetailsRequired:false });
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/payments/reservations") {
@@ -223,8 +223,7 @@ export function createPaymentSystem(options) {
         throw Object.assign(new Error("Təhlükəsiz sifariş və checkout açarı tələb olunur."), { status: 400 });
       }
       const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
-      const orderQuantity=config.employeeEnabled ? quantity(body.customer?.quantity) : 1;
-      if(config.employeeEnabled)customerDetails(body.customer);
+      const orderQuantity=1;
       const reserved = await store.reserve({
         methodId, productId: product.id, planId: String(planIndex), amount: Number((Number(plan.price)*orderQuantity).toFixed(2)),
         idempotencyKey, checkoutKey, previousReservationId
@@ -355,7 +354,7 @@ export function createPaymentSystem(options) {
         return true;
       }
       const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
-      const checkoutCustomer=config.employeeEnabled ? {...customerDetails(body.customer),unitPrice:Number(plan.price),signature:signature(plan),sourcePlanKey:planKey(plan,planIndex)} : null;
+      const checkoutMetadata=config.employeeEnabled ? {unitPrice:Number(plan.price),signature:signature(plan),sourcePlanKey:planKey(plan,planIndex)} : null;
       // Same reservation + identical validated bytes always target one private
       // object, even if a timeout hides a successful storage response.
       const receiptPath = receipt.path || `${reservationId}/${receipt.sha256}.${receipt.extension}`;
@@ -376,7 +375,7 @@ export function createPaymentSystem(options) {
           receiptSize: receipt.size || receipt.buffer.length,
           receiptSha256: receipt.sha256,
           durationMonths: structuredDurationMonths(plan)
-          ,customer:checkoutCustomer
+          ,checkoutMetadata
         });
       } catch (error) {
         // A lost RPC response is not proof of rollback. Never delete a possibly linked receipt.

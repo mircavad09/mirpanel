@@ -122,4 +122,3 @@
  .paymentSubmitActions button{min-height:48px;font-size:12px;line-height:1.25}
  .paymentFlow input{font-size:16px}
 }
-#paymentCustomerDetails{margin:12px 0;padding:12px;border:1px solid #45454f;border-radius:12px;display:grid;gap:10px;min-width:0}#paymentCustomerDetails[hidden]{display:none}#paymentCustomerDetails label{display:grid;gap:5px;font-size:13px}#paymentCustomerDetails input{box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:44px;font-size:16px;color:#fff;background:#19191c;border:1px solid #555;border-radius:8px;padding:8px}

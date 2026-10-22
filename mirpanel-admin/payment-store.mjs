@@ -354,7 +354,18 @@ export function createPaymentStore(config) {
         p_receipt_sha256: args.receiptSha256,
         p_duration_months: args.durationMonths || null
       };
-      return args.customer ? rpc('employee_submit_checkout',{p_args:params,p_customer:args.customer}) : rpc('submit_payment_order_v2',params);
+      // Public checkout collects no customer identity or quantity. Resolve only
+      // canonical plan metadata; keep the legacy transactional receipt/payment RPC.
+      const metadata=args.checkoutMetadata;
+      const canonicalPlanId=metadata ? await rpc('employee_plan_resolve',{p_product:args.productId,p_key:metadata.sourcePlanKey,p_signature:metadata.signature,p_label:args.planName}) : null;
+      const result=await rpc('submit_payment_order_v2',params);
+      if(metadata){
+        const snapshot={productId:args.productId,planId:canonicalPlanId,productName:args.productTitle,planName:args.planName,unitPrice:metadata.unitPrice,quantity:1,amount:metadata.unitPrice};
+        const {error}=await client.from('payment_orders').update({quantity:1,canonical_plan_id:canonicalPlanId,checkout_snapshot:snapshot})
+          .eq('id',result.id).is('quantity',null).is('canonical_plan_id',null).is('customer_name',null).is('customer_phone',null);
+        if(error)throw paymentError(error);
+      }
+      return result;
     },
     async checkoutReservation(reservationId, checkoutKey) {
       const { data, error } = await client.from("payment_reservations").select("id,checkout_key,product_id,plan_id,amount,currency,status,expires_at,method_id")

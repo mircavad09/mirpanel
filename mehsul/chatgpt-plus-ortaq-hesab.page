@@ -32,7 +32,7 @@
   <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=detail-accordion-20261020-1">
-  <link rel="stylesheet" href="/payment-flow.css?v=receipt-upload-20260908-1">
+  <link rel="stylesheet" href="/payment-flow.css?v=checkout-no-customer-20261022-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
@@ -244,7 +244,7 @@ CHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ 
 
   <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-2a16c68420f02ab1"></script>
-  <script src="/payment-flow.js?v=capcut-delivery-20260927-1"></script>
+  <script src="/payment-flow.js?v=checkout-no-customer-20261022-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
   <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
