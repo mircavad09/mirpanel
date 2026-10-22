@@ -291,7 +291,7 @@ const DATA = {
       "category": "ai",
       "image": "uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071",
       "currency": "₼",
-      "title": "Google AI Pro + VEO 3 (18  AYLIQ)",
+      "title": "Gemini ai pro + 5TB yaddaş",
       "variant": "Pro",
       "badge": "AI",
       "imageAlt": "Google AI Pro + VEO 3",
@@ -346,7 +346,7 @@ const DATA = {
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "📌 Sifariş zamanı aktivləşdirmə üçün istifadə etmək istədiyiniz Gmail ünvanını təqdim edirsiniz. Ödəniş təsdiqləndikdən sonra həmin ünvana xüsusi dəvət göndərilir.\n\nMüştəri Gmail hesabına daxil olaraq göndərilən dəvəti qəbul edir və paket birbaşa öz şəxsi Google hesabında aktivləşdirilir. Dəvəti qəbul edərkən düzgün Google hesabına daxil olduğunuzdan əmin olun.\n\n✅ Şəxsi Google hesabınızda 18 aylıq Gemini AI Pro abunəliyi aktivləşdirilir.\n\n🛡️ Xidmətə tərəfimizdən *1 aylıq zəmanət verilir*. Zəmanət 18 aylıq paket müddətini deyil, MirPanel tərəfindən göstərilən aktivləşdirmə xidmətini və mümkün texniki problemlər üzrə dəstəyi əhatə edir.\n\n⚠️ Gmail ünvanının düzgün təqdim edilməsinə görə məsuliyyət müştəriyə aiddir. Dəvət göndərildikdən sonra Gmail ünvanının dəyişdirilməsi mümkün olmaya bilər.",
+        "description": "⚠️ SİFARİŞ ETMƏZDƏN ƏVVƏL DİQQƏTLƏ OXUYUN! ⚠️\n\nSalam! Gemini AI Pro + 5 TB Yaddaş (18 Aylıq) paketi ilə bağlı şərtlər aşağıdakı kimidir:\n\n🔗 Aktivasiya Qaydası:\n• Ödənişdən sonra sizə xüsusi aktivasiya linki təqdim olunur.\n• Həmin linkə daxil olaraq cəmi tək bir kliklə xidməti öz şəxsi Gmail hesabınızda aktivləşdirirsiniz.\n\n📌 Vacib Şərtlər və Qaydalar:\n• Xidmət Növü: Bu, birbaşa Google tərəfindən təqdim olunan xüsusi kampaniya təklifidir. Təklif yalnız 27 Oktyabr tarixinə qədər qüvvədədir.\n• Zəmanət (Qarantiya): Bu paket üçün Mirpanel tərəfindən heç bir zəmanət verilmir və geri ödəniş edilmir.\n• İstifadə Müddəti: Kampaniya 18 aylıq nəzərdə tutulsa da, fəaliyyət tamamilə Google-un daxili siyasətindən asılıdır (hesab 1 ay da işləyə bilər, 18 ay da).\n• Texniki Dəstək: Aktivasiyadan sonra yarana biləcək texniki problemlərə və Google tərəfindən tətbiq edilə biləcək məhdudiyyətlərə görə Mirpanel heç bir məsuliyyət daşımır.\n\nQeyd olunan bütün şərtlərlə razısınızsa, təsdiq edin, sifarişinizi tamamlayaq. 🤝⚡",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -364,14 +364,14 @@ const DATA = {
       "plans": [
         {
           "months": 18,
-          "price": 12.99,
+          "price": 6.99,
           "regularPrice": 700
         }
       ],
       "orderConfirmation": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "📌 Sifariş zamanı aktivləşdirmə üçün istifadə etmək istədiyiniz Gmail ünvanını təqdim edirsiniz. Ödəniş təsdiqləndikdən sonra həmin ünvana xüsusi dəvət göndərilir.\n\nMüştəri Gmail hesabına daxil olaraq göndərilən dəvəti qəbul edir və paket birbaşa öz şəxsi Google hesabında aktivləşdirilir. Dəvəti qəbul edərkən düzgün Google hesabına daxil olduğunuzdan əmin olun.\n\n✅ Şəxsi Google hesabınızda 18 aylıq Gemini AI Pro abunəliyi aktivləşdirilir.\n\n🛡️ Xidmətə tərəfimizdən *1 aylıq zəmanət verilir*. Zəmanət 18 aylıq paket müddətini deyil, MirPanel tərəfindən göstərilən aktivləşdirmə xidmətini və mümkün texniki problemlər üzrə dəstəyi əhatə edir.\n\n⚠️ Gmail ünvanının düzgün təqdim edilməsinə görə məsuliyyət müştəriyə aiddir. Dəvət göndərildikdən sonra Gmail ünvanının dəyişdirilməsi mümkün olmaya bilər.",
+        "description": "⚠️ SİFARİŞ ETMƏZDƏN ƏVVƏL DİQQƏTLƏ OXUYUN! ⚠️\n\nSalam! Gemini AI Pro + 5 TB Yaddaş (18 Aylıq) paketi ilə bağlı şərtlər aşağıdakı kimidir:\n\n🔗 Aktivasiya Qaydası:\n• Ödənişdən sonra sizə xüsusi aktivasiya linki təqdim olunur.\n• Həmin linkə daxil olaraq cəmi tək bir kliklə xidməti öz şəxsi Gmail hesabınızda aktivləşdirirsiniz.\n\n📌 Vacib Şərtlər və Qaydalar:\n• Xidmət Növü: Bu, birbaşa Google tərəfindən təqdim olunan xüsusi kampaniya təklifidir. Təklif yalnız 27 Oktyabr tarixinə qədər qüvvədədir.\n• Zəmanət (Qarantiya): Bu paket üçün Mirpanel tərəfindən heç bir zəmanət verilmir və geri ödəniş edilmir.\n• İstifadə Müddəti: Kampaniya 18 aylıq nəzərdə tutulsa da, fəaliyyət tamamilə Google-un daxili siyasətindən asılıdır (hesab 1 ay da işləyə bilər, 18 ay da).\n• Texniki Dəstək: Aktivasiyadan sonra yarana biləcək texniki problemlərə və Google tərəfindən tətbiq edilə biləcək məhdudiyyətlərə görə Mirpanel heç bir məsuliyyət daşımır.\n\nQeyd olunan bütün şərtlərlə razısınızsa, təsdiq edin, sifarişinizi tamamlayaq. 🤝⚡",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
