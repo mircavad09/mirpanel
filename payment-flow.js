@@ -56,7 +56,6 @@
         productId: flow.product.id,
         planIndex: flow.planIndex,
         submissionStarted: Boolean(flow.submissionStarted)
-        
       }));
     } catch {}
   }
