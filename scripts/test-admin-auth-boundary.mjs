@@ -23,6 +23,11 @@ try {
     child.once('exit',()=>{clearTimeout(timeout);reject(Error('Test server exited'));});
   });
   const base=`http://127.0.0.1:${port}`;
+  // Exercise the production static allowlist, not the employee fixture's generic file server.
+  for(const asset of ['employee-review-admin.js','employee.js','employee.css','employee-login.js','payment-admin.js']){
+    const response=await fetch(base+'/'+asset+'?v=review-release');assert.equal(response.status,200,asset);
+    assert.equal((await response.text()).replace(/\r\n/g,'\n'),fs.readFileSync(new URL('mirpanel-admin/public/'+asset,root),'utf8').replace(/\r\n/g,'\n'),asset+' content');
+  }
   const denied=await fetch(base+'/api/session'); assert.equal(denied.status,401);
   const bad=await fetch(base+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password:'wrong-test-value'})});
   assert.equal(bad.status,401);

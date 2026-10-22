@@ -1380,7 +1380,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/stories-admin.js"].includes(pathname)) {
+    if (["/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 
