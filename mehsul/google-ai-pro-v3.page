@@ -117,7 +117,12 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
+      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">19.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
       <img src="/uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631" class="product-page-similar-image" alt="Claude AI" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
       <div class="product-page-similar-category">ai</div>
@@ -137,11 +142,6 @@
       <div class="product-page-similar-title" title="Grok AI">Grok AI</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">29.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Şəxsi hesab)">
-      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="ChatGPT Plus (Şəxsi hesab)">ChatGPT Plus (Şəxsi hesab)</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">19.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
       <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-5d29e24baa500d1a"></script>
+  <script src="/app.js?v=catalog-c17d586b2eddc9b1"></script>
   <script src="/payment-flow.js?v=checkout-no-customer-20261022-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
