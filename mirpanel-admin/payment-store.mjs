@@ -418,11 +418,8 @@ export function createPaymentStore(config) {
     },
     async workforceOrders(ids) {
       if(!ids.length)return new Map();
-      const {data:employees,error:accountError}=await client.from('employee_accounts').select('employee_started_at').eq('active',true).not('employee_started_at','is',null);
-      if(accountError)throw paymentError(accountError);
-      const {data,error}=await client.from('payment_orders').select('id,created_at,canonical_plan_id,payment_verified_at,employee_order_assignments(state,accepted_at,employee_accounts(display_name))').in('id',ids);
-      if(error)throw paymentError(error);
-      return new Map((data||[]).map(row=>{const a=Array.isArray(row.employee_order_assignments)?row.employee_order_assignments[0]:row.employee_order_assignments;const employee=Array.isArray(a?.employee_accounts)?a.employee_accounts[0]:a?.employee_accounts;const eligible=row.canonical_plan_id&&(employees||[]).some(e=>Date.parse(row.created_at)>=Date.parse(e.employee_started_at));return [row.id,eligible||a?{state:a?.state||'NEW',employeeName:employee?.display_name||'',acceptedAt:a?.accepted_at||null,paymentVerifiedAt:row.payment_verified_at}:null];}));
+      const rows=await rpc('employee_order_workflow',{p_ids:ids});
+      return new Map(rows.map(({id,...workflow})=>[id,workflow]));
     },
     async listOrders(input = {}) {
       await rpc("archive_due_payment_monthly_reports");

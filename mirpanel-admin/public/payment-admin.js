@@ -139,7 +139,7 @@
       ["Məhsul", order.productTitle], ["Plan", order.planName], ["Məbləğ", money(order.amount, order.currency)], ["Ödəniş üsulu", order.paymentMethodLabel]
     ];
     if (pending) fields.push(["Rezerv", reservationLabel[order.reservationStatus] || "Yoxlanılır"]);
-    if(order.workforce){const flow=order.workforce;fields.push(["İşçi",flow.employeeName?`${flow.employeeName} · İşçi qəbul edib · ${dateTime(flow.acceptedAt)}`:"İşçiyə verilməyib"],["İşçi axını",({NEW:"Yeni sifariş",EMPLOYEE_ACCEPTED:"İşçi qəbul edib",STOCK_RESERVED:"Stok ayrılıb",DELIVERED_PENDING_ADMIN:"İşçi tamamlayıb — admin yoxlaması gözlənilir",RETURNED_TO_EMPLOYEE:"Düzəlişə qaytarılıb",COMPLETED:"Tamamlanıb",CANCELLED:"Ləğv edilib"})[flow.state]||flow.state]);}
+    if(order.workforce){const flow=order.workforce;fields.push(["İcra",flow.state==='DELIVERED_PENDING_ADMIN'?'İşçi tamamlayıb — Admin təsdiqi gözlənilir':flow.ownerRole==='admin'?'Admin icra edir':flow.ownerRole==='employee'?'İşçi icra edir':'Yeni sifariş'],["İşçi",flow.employeeName||'—'],["Götürülüb",dateTime(flow.acceptedAt)],["Təqdim edilib",dateTime(flow.deliveredAt)]);}
     if (!pending) {
       fields.push(["Təsdiqlənmə", dateTime(order.completedAt)], ["Bitmə tarixi", calendarDate(order.expiresOn)]);
       fields.push(["Snapshot maya", order.costPriceSnapshot === null ? "Tarixi maya dəyəri mövcud deyil" : money(order.costPriceSnapshot, order.currency)]);
@@ -153,7 +153,7 @@
       <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
       <div class="paymentOrderActions">
         ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : '<span class="statusPill">Çek saxlanma müddəti bitib</span>'}
-        ${pending ? order.workforce ? '<a class="btn primary" href="/admin/workforce">İşçi axınında yoxla və idarə et</a>' : '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ""}
+        ${pending ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : `${order.workforce&&!order.workforce.ownerRole?'<button class="btn" type="button" data-claim-payment>Üzərinə götür</button>':''}<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>` : ""}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
       </div>${pending || expiring ? orderHistory(order) : ""}
     </article>`;
@@ -696,6 +696,11 @@
         const card = event.target.closest("[data-payment-order-id]");
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
+        if (card && event.target.closest("[data-claim-payment]")) {
+          if(paymentState.orderActions.has(card.dataset.paymentOrderId))return;
+          paymentState.orderActions.add(card.dataset.paymentOrderId);
+          try{const b=event.target.closest('[data-claim-payment]');b.dataset.key||=crypto.randomUUID();await paymentApi(`/api/admin/workforce/orders/${card.dataset.paymentOrderId}/claim`,{method:'POST',headers:{'X-Idempotency-Key':b.dataset.key},body:'{}'});await loadOrders();}finally{paymentState.orderActions.delete(card.dataset.paymentOrderId);}
+        }
         if (card && event.target.closest("[data-approve-payment]")) await handleOrderAction(card, "approve");
         if (card && event.target.closest("[data-reject-payment]")) await handleOrderAction(card, "reject");
         if (card && event.target.closest("[data-contacted-payment]")) await handleOrderAction(card, "contacted");

@@ -11,7 +11,7 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
  const cookies=req=>Object.fromEntries(String(req.headers.cookie||'').split(';').map(v=>v.trim().split('=')));
  const cookie=(id,age=28800)=>`mirpanel_employee_session=${id}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${age}${config.secureCookie||config.adminBaseUrl?.startsWith('https:')?'; Secure':''}`;
  async function result(query){const {data,error}=await query;if(error)throw fail('Əməliyyat saxlanılmadı. Yenidən cəhd edin.',409);return data;}
- async function rpc(name,args={}){const {data,error}=await client.rpc(name,args);if(error){const code=String(error.message||'').match(/(?:STOCK_EMPTY|IDEMPOTENCY_CONFLICT|PLAN_MAPPING_REVIEW_REQUIRED|ORDER_FINALIZED|ORDER_NOT_READY|FORBIDDEN|EMPLOYEE_[A-Z_]+|[A-Z_]+_REQUIRED|INVALID_QUANTITY|STOCK_QUANTITY_INCOMPLETE|OPEN_ORDERS_EXIST)/)?.[0];throw Object.assign(fail(({STOCK_EMPTY:'Stok bitib. Adminə məlumat verin.',PLAN_MAPPING_REVIEW_REQUIRED:'Plan dəyişib; adminin plan uyğunluğunu yoxlaması tələb olunur.',IDEMPOTENCY_CONFLICT:'Təkrar sorğu əvvəlki məlumatlarla uyğun deyil.'})[code]||'Əməliyyat bu vəziyyətdə mümkün deyil.',code==='FORBIDDEN'?403:409),{code});}return data;}
+ async function rpc(name,args={}){const {data,error}=await client.rpc(name,args);if(error){const code=String(error.message||'').match(/(?:ORDER_ALREADY_CLAIMED|ORDER_ALREADY_ASSIGNED|STOCK_EMPTY|IDEMPOTENCY_CONFLICT|PLAN_MAPPING_REVIEW_REQUIRED|ORDER_FINALIZED|ORDER_NOT_READY|FORBIDDEN|EMPLOYEE_[A-Z_]+|[A-Z_]+_REQUIRED|INVALID_QUANTITY|STOCK_QUANTITY_INCOMPLETE|OPEN_ORDERS_EXIST)/)?.[0];throw Object.assign(fail(({ORDER_ALREADY_CLAIMED:'Bu sifariş artıq icraya götürülüb.',ORDER_ALREADY_ASSIGNED:'Bu sifariş artıq icraya götürülüb.',STOCK_EMPTY:'Stok bitib. Adminə məlumat verin.',PLAN_MAPPING_REVIEW_REQUIRED:'Plan dəyişib; adminin plan uyğunluğunu yoxlaması tələb olunur.',IDEMPOTENCY_CONFLICT:'Təkrar sorğu əvvəlki məlumatlarla uyğun deyil.'})[code]||'Əməliyyat bu vəziyyətdə mümkün deyil.',code==='FORBIDDEN'?403:409),{code});}return data;}
  async function account(id){return result(client.from('employee_accounts').select('*').eq('id',id).maybeSingle());}
  async function session(req){const id=cookies(req).mirpanel_employee_session,s=sessions.get(id);if(!s||s.expires<Date.now()){sessions.delete(id);return null;}const a=await account(s.id);if(!a?.active||a.session_version!==s.version){sessions.delete(id);return null;}s.expires=Date.now()+ttl;return {...s,account:a};}
  async function audit(role,actor,action,order=null,ids=null){await result(client.from('employee_work_audit').insert({actor_role:role,actor_ref:actor,action,order_id:order,stock_ids:ids}));}
@@ -63,19 +63,19 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
    if(suffix==='/stock'&&req.method==='GET'){json(res,200,{counts:await rpc('employee_inventory_counts')});return true;}
    if(suffix==='/dashboard'&&req.method==='GET'){const id=admin?uuid(u.searchParams.get('employeeId')):actor.id;const s=await rpc('employee_reporting_snapshot',{p_employee_id:id});const stock=await catalog();const ready=await rpc('employee_order_list',{p_employee:id,p_tab:'NEW',p_page:0});json(res,200,{...s,alerts:admin?await rpc('employee_stock_alerts'):[],newOrders:s.employeeStartedAt?Number(await rpc('employee_queue_count',{p_employee:id})):0,exhausted:[...new Set(stock.filter(p=>p.active&&p.plans.some(pl=>pl.active&&pl.tracked&&Number(pl.available)===0)).map(p=>p.id))],low:[...new Set(stock.filter(p=>p.active&&p.plans.some(pl=>pl.active&&pl.tracked&&Number(pl.available)>0&&Number(pl.available)<=pl.lowStock)).map(p=>p.id))]});return true;}
    if(suffix==='/payroll'&&req.method==='GET'){const month=u.searchParams.get('month')||new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit'}).format(new Date());if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw fail('Ay düzgün deyil.');json(res,200,await rpc('employee_monthly_pay',{p_employee:admin?uuid(u.searchParams.get('employeeId')):actor.id,p_month:month+'-01'}));return true;}
-   const action=suffix.match(/^\/orders\/([0-9a-f-]+)\/(accept|reserve|preview|whatsapp|sent|submit|verify|return|complete|cancel|receipt|fill|review)$/i);
+   const action=suffix.match(/^\/orders\/([0-9a-f-]+)\/(claim|accept|reserve|preview|whatsapp|sent|submit|verify|return|complete|cancel|receipt|fill|review)$/i);
    if(action){const id=uuid(action[1]),op=action[2];
-    if(!admin&&['complete','return','cancel','fill','review'].includes(op))throw fail('Əməliyyata icazə yoxdur.',403);
+    if(!admin&&['claim','complete','return','cancel','fill','review'].includes(op))throw fail('Əməliyyata icazə yoxdur.',403);
     const o=await ownOrder(actor,id);
     if(op==='review'&&req.method==='GET'){
      const assignment=await result(client.from('employee_order_assignments').select('*').eq('order_id',id).single());
      const events=await result(client.from('employee_work_audit').select('actor_role,action,created_at,stock_ids,review_reason').eq('order_id',id).order('created_at'));
      const message=assignment.message_cipher?createStockCrypto(config.encryptionKey).decrypt(assignment.message_cipher,`employee-review:${id}`).message:null;
-     json(res,200,{message,events,expiresIn:30});return true;
+     const employee=await account(assignment.employee_id);const method=o.method_id?await result(client.from('payment_methods').select('display_name,last4').eq('id',o.method_id).maybeSingle()):null;json(res,200,{order:{id:o.id,orderCode:o.order_code,product:o.product_title,plan:o.plan_name,amount:o.amount,currency:o.currency,paymentMethod:o.method_name_snapshot||method?.display_name||'Məlumat yoxdur',last4:o.method_last4_snapshot||method?.last4||'',createdAt:o.created_at,employeeName:employee?.display_name,acceptedAt:assignment.employee_accepted_at,deliveredAt:assignment.employee_delivered_at},message,events,expiresIn:30});return true;
     }
     if(op==='receipt'&&req.method==='GET'){if(o.receipt_deleted_at)throw fail('Çek saxlanma müddəti bitib.',410);const {data,error}=await client.storage.from(o.receipt_bucket).createSignedUrl(o.receipt_path,60);if(error)throw fail('Çek yüklənmədi.',503);await audit(actor.role,actor.ref,'receipt.viewed',id);json(res,200,{url:data.signedUrl,mime:o.receipt_mime});return true;}
     if(req.method!=='POST')throw fail('Əməliyyata icazə yoxdur.',403);
-    if((admin&&!['return','complete','cancel','fill'].includes(op))||(!admin&&!['accept','verify','reserve','preview','whatsapp','sent','submit'].includes(op)))throw fail('Əməliyyata icazə yoxdur.',403);
+    if((admin&&!['claim','return','complete','cancel','fill'].includes(op))||(!admin&&!['accept','verify','reserve','preview','whatsapp','sent','submit'].includes(op)))throw fail('Əməliyyata icazə yoxdur.',403);
     const b=await readBody(req,10000),key=uuid(req.headers['x-idempotency-key']);
     if(op==='fill'){
      const starts=await result(client.from('employee_accounts').select('employee_started_at').not('employee_started_at','is',null).order('employee_started_at').limit(1));
@@ -86,9 +86,9 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
     }
     if(['preview','whatsapp'].includes(op)){json(res,200,await message(actor,id,key,op));return true;}
     const details={};if(op==='return'){details.reason=text(b.reason,1000);if(details.reason.length<3)throw fail('Geri qaytarma səbəbini yazın.');}
-    if(op==='submit')details.note=text(b.note,1000);
+    if(op==='submit'){if(b.delivered!==true)throw fail('Məhsulu müştəriyə təqdim etdiyinizi təsdiqləyin.');details.note=text(b.note,1000);details.delivered=true;}
     if(op==='verify'){if(b.decision!=='verified')throw fail('Çeki yoxladığınızı təsdiqləyin.');details.decision='verified';details.note=text(b.note,1000);}
-    try{json(res,200,await rpc('employee_order_action_v3',{p_order:id,p_action:op,p_role:actor.role,p_actor:actor.ref,p_employee:actor.id,p_key:key,p_quantity:quantity(b.quantity),p_details:details}));}
+    try{json(res,200,await rpc('employee_order_action_v4',{p_order:id,p_action:op,p_role:actor.role,p_actor:actor.ref,p_employee:actor.id,p_key:key,p_quantity:quantity(b.quantity),p_details:details}));}
     catch(error){if(op==='reserve'&&error.code==='STOCK_EMPTY')await audit(actor.role,actor.ref,'stock.empty',id);throw error;}return true;
    }
    if(!admin)throw fail('İşçi üçün bu əməliyyata icazə yoxdur.',403);

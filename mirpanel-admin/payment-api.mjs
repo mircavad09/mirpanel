@@ -15,6 +15,7 @@ import { structuredDurationMonths } from "./payment-order-lifecycle.mjs";
 import { paymentMethodLabel } from "./payment-order-query.mjs";
 import {signature} from './employee-security.mjs';
 import {planKey} from './payment-profit.mjs';
+import {customerOrderStatus} from './employee-order-status.mjs';
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -139,6 +140,7 @@ export function createPaymentSystem(options) {
   }
 
   async function orderResult(order, idempotent = true, whatsappExtraText = "") {
+    const workflow=config.employeeEnabled&&store.workforceOrders?(await store.workforceOrders([order.id])).get(order.id):null;
     const method = await store.rawMethod(order.method_id);
     const methodLabel = paymentMethodLabel({
       method_name_snapshot: order.method_name_snapshot || method?.provider_name || method?.display_name,
@@ -146,6 +148,7 @@ export function createPaymentSystem(options) {
     });
     return {
       orderId: order.id, orderCode: order.order_code, status: order.status, idempotent,
+      statusMessage:customerOrderStatus(order.status,workflow?.state),
       paymentMethod: methodLabel,
       productTitle: order.product_title, planName: order.plan_name,
       amount: Number(order.amount), currency: order.currency,

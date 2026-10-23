@@ -22,11 +22,11 @@ try{
  eq((await action('verify',headers,{decision:'verified',note:'Çek yoxlanılıb'})).status,200);await zero();
  const reserve=id();eq((await action('reserve',headers,{},reserve)).status,200);eq((await action('reserve',headers,{},reserve)).status,200);
  eq((await action('preview')).status,200);eq((await action('sent')).status,200);
- const submit=id(),forged={note:'Təqdimat yoxlanılıb',role:'admin',state:'COMPLETED',status:'approved',admin_reviewed_at:new Date().toISOString(),completed_at:new Date().toISOString()};eq((await action('submit',headers,forged,submit)).status,200);eq((await action('submit',headers,forged,submit)).status,200);await zero();
+ const submit=id(),forged={delivered:true,note:'Təqdimat yoxlanılıb',role:'admin',state:'COMPLETED',status:'approved',admin_reviewed_at:new Date().toISOString(),completed_at:new Date().toISOString()};eq((await action('submit',headers,forged,submit)).status,200);eq((await action('submit',headers,forged,submit)).status,200);await zero();
  eq(await scalar('select state as v from employee_order_assignments where order_id=$1',[order]),'DELIVERED_PENDING_ADMIN');
  const a=(await f.db.query('select * from employee_order_assignments where order_id=$1',[order])).rows[0];
  for(const k of ['employee_accepted_at','payment_verified_at','stock_reserved_at','employee_delivered_at','employee_submitted_for_review_at']){assert.ok(a[k]);checks++;}eq(a.admin_reviewed_at,null);assert.ok(!a.message_cipher.includes('isolated-stock-secret'));checks++;
- for(const op of ['reserve','preview','sent','verify'])eq((await action(op,headers,op==='verify'?{decision:'verified'}:{})).status,403);
+ for(const op of ['reserve','preview','sent','verify'])eq((await action(op,headers,op==='verify'?{decision:'verified'}:{})).status,op==='verify'?409:403);
  eq((await action('complete')).status,403);eq((await action('return',headers,{reason:'forged'})).status,403);eq((await action('review')).status,403);
  eq((await(await req('/api/admin/workforce/review-summary')).json()).pendingReview,1);
  r=await req(`/api/admin/workforce/orders/${order}/review`);eq(r.status,200);const detail=await r.json();assert.ok(detail.message.includes('isolated-stock-secret'));checks++;assert.ok(detail.events.some(e=>e.action==='submit'));checks++;
@@ -35,13 +35,13 @@ try{
  eq((await(await req('/api/employee/orders?tab=RETURNED_TO_EMPLOYEE',headers)).json()).orders[0].return_note,'Təlimatı yenidən yoxlayın');
  eq(await scalar("select review_reason as v from employee_work_audit where order_id=$1 and action='return'",[order]),'Təlimatı yenidən yoxlayın');
  const stockId=await scalar('select id as v from employee_stock_units where reserved_order_id=$1',[order]);eq((await action('reserve')).status,409);
- eq((await action('preview')).status,200);eq((await action('sent')).status,200);eq((await action('submit',headers,{note:'Düzəliş edildi'})).status,200);await zero();
+ eq((await action('preview')).status,200);eq((await action('sent')).status,200);eq((await action('submit',headers,{delivered:true,note:'Düzəliş edildi'})).status,200);await zero();
  const complete=id();eq((await action('complete',owner,{},complete)).status,200);eq((await action('complete',owner,{},complete)).status,200);eq((await action('complete',owner)).status,409);
  eq(await scalar("select count(*)::int as v from payment_orders where status in ('approved','completed')"),1);eq((await scalar('select product_sales_snapshot() as v')).realTotal,1);eq(await scalar('select count(*)::int as v from employee_order_bonus_events'),1);eq(Number(await scalar("select sum(amount) as v from payment_orders where status in ('approved','completed')")),5);
  eq(await scalar('select state as v from employee_order_assignments where order_id=$1',[order]),'COMPLETED');eq(await scalar("select id as v from employee_stock_units where delivered_order_id=$1 and state='DELIVERED'",[order]),stockId);
  assert.ok(await scalar('select completed_at as v from payment_orders where id=$1',[order]));checks++;
  eq((await(await req('/api/admin/workforce/review-summary')).json()).pendingReview,0);
  eq(await scalar("select count(*)::int as v from employee_work_audit where to_jsonb(employee_work_audit)::text like '%isolated-stock-secret%'"),0);
- const stable=await scalar('select to_jsonb(a) as v from employee_order_assignments a where order_id=$1',[order]);await f.db.exec(fs.readFileSync('supabase/migrations/202610210003_employee_review.sql','utf8'));eq(await scalar('select to_jsonb(a) as v from employee_order_assignments a where order_id=$1',[order]),stable);
+ const stable=await scalar('select to_jsonb(a) as v from employee_order_assignments a where order_id=$1',[order]);await f.db.exec(fs.readFileSync('supabase/migrations/202610230001_employee_orders.sql','utf8'));eq(await scalar('select to_jsonb(a) as v from employee_order_assignments a where order_id=$1',[order]),stable);
  console.log(JSON.stringify({ok:true,checks,noAdminPreRelease:true,employeeSubmitSalesBonusFinanceDelta:0,adminFinalDelta:1,duplicateStock:0,duplicateBonus:0,productionWrites:0},null,2));
 }finally{await f.close();}
