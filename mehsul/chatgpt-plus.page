@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/chatgpt-plus#product","url":"https://mirpanel.com/mehsul/chatgpt-plus","name":"ChatGPT Plus (Hazır Şəxsi hesab)","description":"ChatGPT Plus hesabını sərfəli qiymətə əldə et. Premium AI imkanları və sürətli aktivləşdirmə Mirpanel-də.","image":["https://mirpanel.com/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091"],"sku":"chatgpt","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/chatgpt-plus","price":"19.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/chatgpt-plus#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"ChatGPT Plus (Hazır Şəxsi hesab)","item":"https://mirpanel.com/mehsul/chatgpt-plus"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/chatgpt-plus#product","url":"https://mirpanel.com/mehsul/chatgpt-plus","name":"ChatGPT Plus (Hazır Şəxsi hesab)","description":"ChatGPT Plus hesabını sərfəli qiymətə əldə et. Premium AI imkanları və sürətli aktivləşdirmə Mirpanel-də.","image":["https://mirpanel.com/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091"],"sku":"chatgpt","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/chatgpt-plus","price":"19.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/chatgpt-plus#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"ChatGPT Plus (Hazır Şəxsi hesab)","item":"https://mirpanel.com/mehsul/chatgpt-plus"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="chatgpt" data-product-slug="chatgpt-plus">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -96,7 +96,7 @@
           <div class="product-page-info">
             <div class="product-detail-heading">
               <h1 id="pp-main-title" class="product-page-title">ChatGPT Plus şəxsi hesab</h1>
-              <span class="product-page-status is-out">Stokda yoxdur</span>
+              <span class="product-page-status">Mövcuddur</span>
             </div>
             <p class="product-page-description">Daha güclü model, fayl/şəkil imkanları.</p>
             <div class="product-page-delivery">
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-0a981d6f75d7fe62"></script>
+  <script src="/app.js?v=catalog-eaa97bc8a162857b"></script>
   <script src="/payment-flow.js?v=checkout-no-customer-20261022-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
