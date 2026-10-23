@@ -2242,7 +2242,7 @@ const DATA = {
         {
           "label": "1 ayliq (20 gün zəmanətli)",
           "months": 1,
-          "price": 16.99,
+          "price": 19.99,
           "regularPrice": 34
         },
         {
