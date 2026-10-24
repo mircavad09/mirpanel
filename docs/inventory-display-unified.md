@@ -12,7 +12,7 @@ Checkout yeni başlanğıcda fresh inventory preflight edir; preflight ikiqat ç
 
 ## Testlər
 
-- `test-inventory-availability.mjs`: 85 yoxlama, 22 real kataloq məhsulu, gələcək məhsul fixture-i, 1→0→1, plan qismən/tam bitməsi, ad/qiymət uyğunluğunun qorunması.
+- `test-inventory-availability.mjs`: 87 yoxlama, 22 real kataloq məhsulu, gələcək məhsul fixture-i, 1→0→1, plan qismən/tam bitməsi, ad/qiymət uyğunluğunun qorunması.
 - `test-inventory-api.mjs`: 40; birbaşa API bypass 409, inactive/0 plan, gələcək məhsul, sessiyasız 401/employee 403.
 - `test-inventory-browser.mjs`: 40; canlı yenilənmə fixture-i, 6 ölçü, planın avtomatik ötürülməsi.
 - `test-inventory-catalog-browser.mjs`: 281; bütün 22 məhsul və hər birində 320/390/430/768/1024/1440; qismən/tam bitmiş plan, klaviatura, birbaşa checkout, gələcək məhsul.
@@ -24,7 +24,7 @@ Checkout yeni başlanğıcda fresh inventory preflight edir; preflight ikiqat ç
 - `test-payment-method-selection.mjs`: 6 responsive ssenari; dinamik məbləğ testi yeni async inventory preflight tamamlandıqdan sonra yoxlanılır, test üçün ayrıca uyğun inventory fixture-i verilir.
 - `test-receipt-confirmation-gate.mjs`: 6 responsive ssenari + JPG/PNG/WEBP/PDF, retry, timeout, server təsdiqi və double-click.
 
-9 sayılan paketdə 724 yoxlama və əlavə 2 browser ssenari paketi keçib. Yekun uğursuz paket 0. Ölçülər üzrə overflow, console/JS xətası, qırıq görünən şəkil, 404 və testdən production yazısı 0.
+9 sayılan paketdə 726 yoxlama və əlavə 2 browser ssenari paketi keçib. Yekun uğursuz paket 0. Ölçülər üzrə overflow, console/JS xətası, qırıq görünən şəkil, 404 və testdən production yazısı 0.
 
 ## Məhsullar (canonical ID)
 

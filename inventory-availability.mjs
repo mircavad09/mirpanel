@@ -7,7 +7,9 @@ export function inventoryAvailability(product, ledger) {
   const available = scope === 'product' ? count(ledger?.available ?? 0) : null;
   const plans = (product.plans || []).map((plan, index) => {
     const item = ledger?.plans?.find(p => p.planKey === String(index));
-    const tracked = scope === 'product' || (scope === 'plan' && item?.tracked === true);
+    // A newly added plan in a plan-managed product fails closed until configured.
+    // Explicitly untracked plans retain their existing unlimited/manual flow.
+    const tracked = scope === 'product' || (scope === 'plan' && item?.tracked !== false);
     const quantity = scope === 'product' ? available : tracked ? count(item?.available ?? 0) : null;
     const active = plan.active !== false && Number.isFinite(Number(plan.price)) && Number(plan.price) > 0;
     return {planKey:String(index), active, tracked, available:quantity,
