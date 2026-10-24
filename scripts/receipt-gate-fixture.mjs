@@ -7,10 +7,11 @@ import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 export async function receiptFixture({employeeEnabled=false}={}){
  const config={supabaseUrl:'https://test.invalid',supabaseSecretKey:'test-only',receiptsBucket:'private-test',encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64'),allowedOrigins:[],maxReceiptBytes:5*1024*1024,notificationEmail:'test@example.invalid',adminBaseUrl:'https://admin.invalid',whatsappPhone:'994515243545'};
  const security=createPaymentSecurity(config),methodId=crypto.randomUUID(),reservations=new Map(),orders=new Map(),files=new Map();
- config.employeeEnabled=employeeEnabled;
+ config.employeeEnabled=employeeEnabled;config.inventoryEnabled=true;
  const state={uploadCalls:0,orderCalls:0,reservationCalls:0,failures:0,failureStatus:503,delay:0,uploadKeys:[],removed:0};
  const method={id:methodId,provider_name:'ABB',display_name:'ABB',holder_name:'TEST ONLY',method_type:'bank_card',encrypted_number:security.encryptNumber('4169000000004655'),color:'#174f91',theme:'abb',last4:'4655'};
  const store={
+  inventorySnapshot:async()=>[],
   rateLimit:async()=>({allowed:true}),
   publicMethods:async()=>[{id:methodId,providerName:'ABB',type:'card',last4:'4655',available:true,status:'active',resolvedTheme:'abb'}],
   rawMethod:async()=>method,

@@ -1192,24 +1192,20 @@
   }
 
   function stockNumber(product) {
-    if (product?.stockEnabled === false) return null;
-    const rawStock = product.stock ?? product.stockCount ?? product.stockQuantity;
-    if (rawStock === null || rawStock === "" || rawStock === undefined) return null;
-    const stock = Number(rawStock);
-    return Number.isFinite(stock) ? Math.max(0, stock) : null;
+    return window.MirpanelInventory?.productState(product).available ?? null;
   }
 
-  function stockIsAvailable(product) {
+  function stockIsAvailable(product, plan) {
+    if(window.MirpanelInventory){const state=window.MirpanelInventory.productState(product);return plan?window.MirpanelInventory.planState(product,product.plans.indexOf(plan))?.canOrder===true:state.canOrder;}
     if (product.active === false || product.soldOut === true || product.flow === "out_of_stock") return false;
     if (!(product?.plans || []).some((plan) => Number(plan.price) > 0)) return false;
-    const stock = stockNumber(product);
-    if (stock !== null) return stock > 0;
+    if(product.stockEnabled===true)return false;
     return true;
   }
 
   function stockBadge(product) {
     const stock = stockNumber(product);
-    if (product.active === false || product.soldOut === true || product.flow === "out_of_stock" || stock === 0) {
+    if (!stockIsAvailable(product)) {
       return { text: "Stokda yoxdur", className: "out" };
     }
     if (stock !== null && stock <= 5) {
@@ -1360,48 +1356,9 @@
     };
   }
 
-  async function decrementStock(product) {
-    if (stockNumber(product) === null) return { skipped: true };
-
-    const response = await fetch(STOCK_ENDPOINT, {
-      method: "POST",
-      signal: AbortSignal.timeout(4000),
-      keepalive: true,
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ productId: product.id })
-    });
-
-    const payload = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      const message = String(payload.error || payload.code || "");
-      const stockSyncUnavailable =
-        response.status === 404 ||
-        response.status === 503 ||
-        message === "STOCK_SYNC_NOT_CONFIGURED" ||
-        message.includes("MIRPANEL_GITHUB_TOKEN");
-
-      if (stockSyncUnavailable) {
-        console.warn("Mirpanel stock sync is not available yet.", {
-          status: response.status,
-          code: payload.code || payload.error || ""
-        });
-        return { skipped: true, unavailable: true };
-      }
-
-      if (message === "OUT_OF_STOCK") {
-        throw new Error("Stokda yoxdur.");
-      }
-
-      throw new Error(payload.error || "Stok yenilənmədi.");
-    }
-
-    if (typeof payload.stockAfter === "number") {
-      product.stock = payload.stockAfter;
-      product.soldOut = payload.stockAfter <= 0;
-      decorateProductPage(product);
-    }
-
-    return payload;
+  async function decrementStock() {
+    // Reservation/final delivery already belong to the server ledger. Never update a second CMS counter.
+    return {skipped:true};
   }
 
   function buildWhatsAppUrl(message) {
@@ -1486,7 +1443,7 @@
       showAgreementError();
       return;
     }
-    if (!stockIsAvailable(product)) {
+    if (!stockIsAvailable(product, plan)) {
       decorateProductPage(product);
       alert("Stokda yoxdur.");
       return;
@@ -1865,7 +1822,7 @@
       }
       product = catalogProduct;
     }
-    if (!stockIsAvailable(product) || !plan || Number(plan.price) <= 0) {
+    if (!stockIsAvailable(product, plan) || !plan || Number(plan.price) <= 0) {
       decorateProductPage(product);
       alert("Stokda yoxdur.");
       return;
@@ -1897,7 +1854,7 @@
   }
 
   function requireOrderConsent(product, plan, onAccepted) {
-    if (!stockIsAvailable(product) || !plan || Number(plan.price) <= 0) {
+    if (!stockIsAvailable(product, plan) || !plan || Number(plan.price) <= 0) {
       decorateProductPage(product);
       alert("Stokda yoxdur.");
       return;

@@ -7,6 +7,7 @@
   const RECEIPT_UPLOAD_TIMEOUT_MS = 120_000;
   const RECEIPT_UPLOAD_RETRIES = 3;
   let activeFlow = null;
+  let preparingFlow = null;
   const SERVICE_ERROR = "Ödəniş xidməti hazırda cavab vermir. Yenidən cəhd edin";
 
   function validPayload(path, payload) {
@@ -350,6 +351,15 @@
       await activeFlow.finish(null, { cancel: true });
     }
     if (activeFlow?.reservation || activeFlow?.previousReservationId) await cancelReservation(activeFlow);
+    if(preparingFlow)return preparingFlow;
+    let releasePreparing;preparingFlow=new Promise(resolve=>{releasePreparing=resolve;});
+    // Existing server-validated reservations must remain resumable after taking the last unit.
+    if(!storedCheckout()?.reservationId){
+      try{
+        if(window.MirpanelInventory)await window.MirpanelInventory.assertCanOrder(product,planIndex);
+        else{const snapshot=await request('/api/payments/inventory'),row=snapshot.products?.find(p=>p.productId===product.id);if(!row?.canOrder||!row.plans?.find(p=>p.planKey===String(planIndex))?.canOrder)throw Error('Stokda yoxdur.');}
+      }catch(error){releasePreparing(null);preparingFlow=null;alert(error.message);return null;}
+    }
     renderShell(product, plan);
     const previous = storedCheckout();
     const flow = { product, plan, planIndex, whatsappExtraText: String(whatsappExtraText || "").slice(0, 2000), checkoutKey: previous?.checkoutKey || uuid(), previousReservationId: previous?.reservationId || null, reservation: null, receipt: null, receiptPreviewUrl: null, orderIdempotencyKey: previous?.orderIdempotencyKey || uuid(), stopTimer: null, settled: false, submitting: false, reserving: false, changing: false, cancelling: false, stage: "payment_method_selection" };
@@ -775,6 +785,7 @@
         if (flow.stage === "payment_method_selection" && !flow.reserving && !flow.reservation && !flow.previousReservationId && !flow.cancelling) void loadMethods();
       }, 15000);
     });
+    releasePreparing(flow.promise);preparingFlow=null;
     return flow.promise;
   }
 

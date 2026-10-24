@@ -61,10 +61,11 @@ try{
   checks.push({width,...layout,duplicateReservations:0});await page.close();
  }
  const pricePage=await browser.newPage();
+ await pricePage.route('**/api/payments/inventory',route=>route.fulfill({json:{products:[{productId:'test',canOrder:true,plans:[{planKey:'0',canOrder:true}]},{productId:'another',canOrder:true,plans:[{planKey:'2',canOrder:true}]}]}}));
  await pricePage.route('**/api/payments/methods',route=>route.fulfill({json:{anyAvailable:true,methods}}));
  await pricePage.goto(fixture.origin,{waitUntil:'networkidle'});await pricePage.click('.paymentFlowClose');
  await pricePage.evaluate(()=>{void MirpanelPaymentFlow.start({product:{id:'another',title:'Digər məhsul'},plan:{price:12.99},planIndex:2});});
- await pricePage.waitForSelector('[data-payment-method]');assert.match(await pricePage.textContent('#paymentMethodContinue'),/12\.99 ₼/);assert.match(await pricePage.textContent('.paymentFlowHead p'),/Digər məhsul · 12\.99 ₼/);
+ await pricePage.waitForFunction(()=>document.getElementById('paymentMethodContinue')?.textContent.includes('12.99'));await pricePage.waitForSelector('[data-payment-method]');assert.match(await pricePage.textContent('#paymentMethodContinue'),/12\.99 ₼/);assert.match(await pricePage.textContent('.paymentFlowHead p'),/Digər məhsul · 12\.99 ₼/);
  assert.equal(await pricePage.isDisabled('#paymentMethodContinue'),true);await pricePage.close();
  const refresh=await browser.newPage();await refresh.clock.install();let loads=0,available=true;
  await refresh.route('**/api/payments/methods',route=>{loads++;return route.fulfill({json:{anyAvailable:true,methods:methods.map((m,i)=>i===0?{...m,available}:m)}});});

@@ -446,7 +446,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
-  <link rel="stylesheet" href="/stock-display-fix.css?v=20260610-1">
+  <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=detail-accordion-20261020-1">
   <link rel="stylesheet" href="/payment-flow.css?v=checkout-no-customer-20261022-1">
@@ -553,9 +553,9 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 
   <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
-  <script src="/payment-flow.js?v=checkout-no-customer-20261022-1"></script>
-  <script src="/order-confirmation.js?v=spotify-single-password-20261024-1"></script>
-  <script src="/stock-display-fix.js?v=inventory-20261024-1"></script>
+  <script src="/payment-flow.js?v=stock-unified-20261024-2"></script>
+  <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
+  <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
   <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
 </body>
@@ -1070,8 +1070,8 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
   next = next
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=20260902-controls-removed-1")
-    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=spotify-single-password-20261024-1");
-  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=inventory-20261024-1");
+    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=stock-unified-20261024-2");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=stock-unified-20261024-2");
   return next;
 }
 
