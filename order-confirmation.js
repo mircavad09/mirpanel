@@ -1608,12 +1608,9 @@
       renderModalContent(`
         <form class="mpForm universalOrderForm premiumOrderForm spotifyCredentialsForm" id="universalOrderForm" data-product-id="${escapeHtml(product.id || "")}" novalidate>
           <div class="mpFormTitle">Spotify hesab məlumatları</div>
-          <p class="spotifyCredentialsHint" id="spotifyCredentialsHint">Spotify hesabınızın mövcud şifrəsini yazın. Yeni və ya avtomatik yaradılmış şifrə istifadə etməyin.</p>
           <div class="premiumOrderFields">
             <label class="universalField premiumUniversalField" for="spotifyEmail"><span>Gmail ünvanınız</span><input id="spotifyEmail" type="email" name="email" data-label="Gmail ünvanınız" placeholder="Gmail ünvanınızı yazın" autocomplete="username" autocapitalize="none" spellcheck="false" inputmode="email" required></label>
-            <label class="spotifyPasswordField" for="spotifyPassword"><span>Spotify şifrəniz</span><span class="spotifyPasswordControl"><input id="spotifyPassword" type="password" name="password" data-label="Spotify şifrəniz" placeholder="Mövcud Spotify şifrənizi yazın" autocomplete="current-password" aria-describedby="spotifyCredentialsHint" autocapitalize="none" spellcheck="false" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPassword" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
-            <label class="spotifyPasswordField" for="spotifyPasswordConfirm"><span>Spotify şifrənizi təkrar yazın</span><span class="spotifyPasswordControl"><input id="spotifyPasswordConfirm" type="password" data-private-confirmation="true" placeholder="Eyni mövcud Spotify şifrəsini təkrar yazın" autocomplete="current-password" aria-describedby="spotifyCredentialsHint" autocapitalize="none" spellcheck="false" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPasswordConfirm" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
-            <p class="spotifyPasswordError" id="spotifyPasswordError" role="alert" hidden>Şifrələr eyni deyil. Zəhmət olmasa yenidən yoxlayın.</p>
+            <label class="spotifyPasswordField" for="spotifyPassword"><span>Spotify şifrəniz</span><span class="spotifyPasswordControl"><input id="spotifyPassword" type="password" name="spotifyCurrentPassword" data-label="Spotify şifrəniz" placeholder="Spotify şifrənizi yazın" autocomplete="current-password" autocapitalize="none" spellcheck="false" required><button class="spotifyPasswordToggle" type="button" data-password-toggle="spotifyPassword" aria-label="Şifrəni göstər" title="Şifrəni göstər"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2.5 12s3.5-6 9.5-6 9.5 6 9.5 6-3.5 6-9.5 6-9.5-6-9.5-6Z"></path><circle cx="12" cy="12" r="2.7"></circle></svg></button></span></label>
             <p class="spotifyPasswordReset">Şifrənizi unutmusunuz? <a href="${escapeHtml(resetUrl)}" target="_blank" rel="noopener noreferrer">Şifrənizi sıfırlayın.</a></p>
           </div>
           <div class="orderConfirmationActions premiumOrderActions">
@@ -1713,21 +1710,14 @@
       const form = document.getElementById("universalOrderForm");
       const email = document.getElementById("spotifyEmail");
       const password = document.getElementById("spotifyPassword");
-      const confirmation = document.getElementById("spotifyPasswordConfirm");
-      const error = document.getElementById("spotifyPasswordError");
       const continueButton = document.getElementById("spotifyContinueButton");
-      let confirmationTouched = false;
       const syncSpotifyValidity = () => {
-        const mismatch = Boolean(password.value && confirmation.value && password.value !== confirmation.value);
-        error.hidden = !(confirmationTouched && mismatch);
-        confirmation.setCustomValidity(mismatch ? "Şifrələr eyni deyil. Zəhmət olmasa yenidən yoxlayın." : "");
-        const ready = email.validity.valid && Boolean(email.value.trim()) && Boolean(password.value) && Boolean(confirmation.value) && !mismatch;
+        const ready = email.validity.valid && Boolean(email.value.trim()) && Boolean(password.value);
         continueButton.disabled = !ready;
         continueButton.setAttribute("aria-disabled", String(!ready));
       };
       email.addEventListener("input", syncSpotifyValidity);
       password.addEventListener("input", syncSpotifyValidity);
-      confirmation.addEventListener("input", () => { confirmationTouched = true; syncSpotifyValidity(); });
       form.querySelectorAll("[data-password-toggle]").forEach((button) => {
         button.addEventListener("click", () => {
           const input = document.getElementById(button.dataset.passwordToggle);
@@ -1753,15 +1743,8 @@
       if (isSpotify) {
         const email = document.getElementById("spotifyEmail");
         const password = document.getElementById("spotifyPassword");
-        const confirmation = document.getElementById("spotifyPasswordConfirm");
         if (!email.checkValidity()) { email.reportValidity(); email.focus(); return; }
         if (!password.value) { password.focus(); return; }
-        if (password.value !== confirmation.value) {
-          document.getElementById("spotifyPasswordError").hidden = false;
-          confirmation.setCustomValidity("Şifrələr eyni deyil. Zəhmət olmasa yenidən yoxlayın.");
-          confirmation.focus();
-          return;
-        }
         const credentials = { "Gmail ünvanınız": email.value.trim(), "Spotify şifrəniz": password.value };
         clearSpotifyCredentials();
         onDone(credentials);

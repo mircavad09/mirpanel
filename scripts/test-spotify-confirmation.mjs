@@ -17,7 +17,6 @@ const state = extractAdminState(appSource);
 const spotify = state.products.find((product) => product.id === "spotify");
 assert.ok(spotify, "Spotify məhsulu tapılmadı");
 assert.equal(spotify.spotifyPasswordResetUrl, "https://accounts.spotify.com/az/password-reset");
-assert.equal(spotify.formFields.filter((field) => field.type === "password").length, 2);
 
 const custom = structuredClone(state);
 custom.products.find((product) => product.id === "spotify").spotifyPasswordResetUrl = "https://example.com/spotify-reset";
@@ -58,101 +57,26 @@ const server = http.createServer((request, response) => {
 
 await new Promise((resolve) => server.listen(10084, "127.0.0.1", resolve));
 const browser = await chromium.launch({ headless: true, executablePath: browserPath });
-const consoleErrors = [];
+const consoleErrors=[],missing=[],widths=[320,390,430,768,1440];let checks=0;
+const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
 try {
-  const page = await browser.newPage();
-  await page.route('**/api/product-sales*',route=>route.fulfill({status:200,contentType:'application/json',body:'{"initialized":false}'}));
-  page.on("pageerror", (error) => consoleErrors.push(error.message));
-  page.on("console", (message) => { if (message.type() === "error" && !message.text().startsWith("Failed to load resource:")) consoleErrors.push(message.text()); });
-
-  for (const viewport of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 430, height: 932 }, { width: 768, height: 900 }, { width: 1440, height: 900 }]) {
-    await page.setViewportSize(viewport);
-    await page.goto("http://127.0.0.1:10084/mehsul/spotify-premium", { waitUntil: "networkidle" });
-    await page.waitForFunction(()=>{const splash=document.getElementById('newSplashScreen');return !splash||splash.hidden||getComputedStyle(splash).display==='none';});
-    if (viewport.width === 1440) {
-      await page.evaluate(() => {
-        DATA.products.find((product) => product.id === "spotify").spotifyPasswordResetUrl = "https://example.com/spotify-reset";
-      });
-    }
-    await page.click("#pp-order-btn");
-    await page.check("#orderTermsAgreement");
-    await page.click("#orderConfirmationConfirm");
-    assert.equal(await page.locator('#spotifyEmail[type="email"]').count(), 1);
-    assert.equal(await page.locator('#spotifyPassword[type="password"]').count(), 1);
-    assert.equal(await page.locator('#spotifyPasswordConfirm[type="password"]').count(), 1);
-    assert.equal(await page.locator(".spotifyPasswordToggle").count(), 2);
-    assert.equal(await page.getAttribute('#spotifyEmail','autocomplete'),'username');
-    assert.equal(await page.getAttribute('#spotifyEmail','autocapitalize'),'none');
-    assert.equal(await page.getAttribute('#spotifyEmail','spellcheck'),'false');
-    assert.equal(await page.locator('.spotifyCredentialsForm [autocomplete="new-password"]').count(),0);
-    for(const id of ['spotifyPassword','spotifyPasswordConfirm'])assert.equal(await page.getAttribute('#'+id,'autocomplete'),'current-password');
-    assert.equal(await page.textContent('#spotifyCredentialsHint'),'Spotify hesabınızın mövcud şifrəsini yazın. Yeni və ya avtomatik yaradılmış şifrə istifadə etməyin.');
-    // Keep detached references to prove values are cleared, not merely hidden.
-    await page.fill('#spotifyEmail','old@example.com');await page.fill('#spotifyPassword','old-test-only');await page.fill('#spotifyPasswordConfirm','old-test-only');
-    await page.evaluate(()=>{window.oldSpotifyInputs=[...document.querySelectorAll('.spotifyCredentialsForm input')];});
-    await page.click('#universalFormCancel');
-    assert.equal(await page.evaluate(()=>oldSpotifyInputs.every(el=>el.value==='' && el.defaultValue==='')),true);
-    await page.click('#pp-order-btn');await page.check('#orderTermsAgreement');await page.click('#orderConfirmationConfirm');
-    for(const id of ['spotifyEmail','spotifyPassword','spotifyPasswordConfirm'])assert.equal(await page.inputValue('#'+id),'');
-    await page.fill('#spotifyPassword','escape-test-only');await page.evaluate(()=>{window.escapeSpotifyInput=document.getElementById('spotifyPassword');});await page.keyboard.press('Escape');
-    assert.equal(await page.evaluate(()=>escapeSpotifyInput.value),'');
-    await page.click('#pp-order-btn');await page.check('#orderTermsAgreement');await page.click('#orderConfirmationConfirm');
-    assert.equal(await page.locator("#spotifyContinueButton").isDisabled(), true);
-    const reset = page.locator(".spotifyPasswordReset a");
-    const geometry=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,hintOverflow:document.getElementById('spotifyCredentialsHint').scrollWidth-document.getElementById('spotifyCredentialsHint').clientWidth,fonts:[...document.querySelectorAll('.spotifyCredentialsForm input')].map(el=>parseFloat(getComputedStyle(el).fontSize))}));
-    assert.equal(geometry.overflow,0);assert.equal(geometry.hintOverflow,0);
-    if(viewport.width<768)assert.ok(geometry.fonts.every(size=>size>=16));
-    if(process.env.MIRPANEL_VISUAL_DIR){fs.mkdirSync(process.env.MIRPANEL_VISUAL_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.MIRPANEL_VISUAL_DIR,`spotify-${viewport.width}.png`)});}
-    assert.equal(await reset.textContent(), "Şifrənizi sıfırlayın.");
-    assert.equal(await reset.getAttribute("href"), viewport.width === 1440 ? "https://example.com/spotify-reset" : "https://accounts.spotify.com/az/password-reset");
-    assert.equal(await reset.getAttribute("target"), "_blank");
-    assert.equal(await reset.getAttribute("rel"), "noopener noreferrer");
-
-    await page.fill("#spotifyEmail", "səhv-email");
-    await page.fill("#spotifyPassword", "birinci");
-    await page.fill("#spotifyPasswordConfirm", "ikinci");
-    assert.equal(await page.locator("#spotifyContinueButton").isDisabled(), true);
-    assert.equal(await page.locator("#spotifyPasswordError").isVisible(), true);
-    await page.evaluate(()=>document.getElementById('universalOrderForm').requestSubmit());
-    assert.equal(await page.locator('.paymentFlow').count(),0,'Mismatch must not enter payment');
-    assert.match(await page.locator("#spotifyPasswordError").textContent(), /Şifrələr eyni deyil/);
-
-    await page.locator('[data-password-toggle="spotifyPassword"]').click();
-    assert.equal(await page.locator("#spotifyPassword").getAttribute("type"), "text");
-    assert.equal(await page.locator('[data-password-toggle="spotifyPassword"]').getAttribute("aria-label"), "Şifrəni gizlət");
-    await page.locator('[data-password-toggle="spotifyPassword"]').click();
-    assert.equal(await page.locator("#spotifyPassword").getAttribute("type"), "password");
-    await page.locator('[data-password-toggle="spotifyPasswordConfirm"]').click();
-    assert.equal(await page.locator("#spotifyPasswordConfirm").getAttribute("type"), "text");
-
-    await page.fill("#spotifyEmail", "spotify@example.com");
-    await page.fill("#spotifyPasswordConfirm", "birinci");
-    assert.equal(await page.locator("#spotifyContinueButton").isEnabled(), true);
-    if(viewport.width===390){
-      await page.setViewportSize({width:390,height:500});await page.focus('#spotifyEmail');await page.locator('#spotifyContinueButton').scrollIntoViewIfNeeded();
-      const reachable=await page.locator('#spotifyContinueButton').evaluate(el=>{const r=el.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;});assert.equal(reachable,true,'Actions remain scroll-reachable in keyboard-sized viewport');
-      await page.setViewportSize(viewport);
-    }
-    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth), true, `${viewport.width}px üfüqi daşma`);
-    if (viewport.width === 390) {
-      await page.click("#spotifyContinueButton");
-      await page.locator(".paymentFlow").waitFor({ state: "visible" });
-      assert.match(await page.locator("#paymentFlowTitle").textContent(), /Ödəniş üsulunu seçin/);
-    } else {
-      await page.click("#universalFormCancel");
-    }
-  }
-
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto("http://127.0.0.1:10084/mehsul/capcut-pro", { waitUntil: "networkidle" });
-  await page.click("#pp-order-btn"); await page.check("#orderTermsAgreement"); await page.click("#orderConfirmationConfirm");
-  assert.equal(await page.locator("#spotifyEmail").count(), 0, "Spotify sahələri başqa məhsulda göründü");
-  assert.equal(await page.locator(".spotifyPasswordReset").count(), 0, "Spotify reset linki başqa məhsulda göründü");
-
-  assert.equal(reservationRequests, 0, "Test zamanı real rezerv axınına keçildi");
-  assert.deepEqual(consoleErrors, []);
-  console.log(JSON.stringify({ ok: true, viewports: [320,390,430,768,1440], usernameAutocomplete:true,currentPasswordFields:2,newPasswordFields:0,cancelAndEscapeCleared:true,passwordToggles: 2, resetUrl: spotify.spotifyPasswordResetUrl, reservationRequests, consoleErrors: 0 }, null, 2));
-} finally {
-  await browser.close();
-  await new Promise((resolve) => server.close(resolve));
-}
+ for(const android of [false,true]){const context=await browser.newContext({...(android?{isMobile:true,hasTouch:true,userAgent:'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Mobile Safari/537.36'}:{})});
+ await context.route('**/*',r=>{const q=r.request(),u=new URL(q.url());if(!['GET','HEAD'].includes(q.method())||u.hostname==='wa.me')return r.fulfill({status:204});if(u.pathname==='/api/product-sales')return r.fulfill({json:{initialized:false}});return r.continue();});
+ const page=await context.newPage();page.on('pageerror',e=>consoleErrors.push(e.message));page.on('response',r=>{if(r.status()===404)missing.push(new URL(r.url()).pathname);});
+ for(const width of widths){await page.setViewportSize({width,height:width<500?844:900});await page.goto('http://127.0.0.1:10084/mehsul/spotify-premium',{waitUntil:'domcontentloaded'});await page.waitForFunction(()=>{const e=document.getElementById('newSplashScreen');return !e||e.hidden||getComputedStyle(e).display==='none';});
+ const open=async()=>{await page.click('#pp-order-btn');await page.check('#orderTermsAgreement');await page.click('#orderConfirmationConfirm');await page.waitForSelector('#spotifyPassword');};await open();
+ eq(await page.locator('#modal input[type=password]').count(),1);eq(await page.locator('#spotifyPasswordConfirm,#spotifyPasswordError,#spotifyCredentialsHint').count(),0);eq(await page.locator('[autocomplete=new-password]').count(),0);eq(await page.locator('.spotifyPasswordToggle').count(),1);eq(await page.locator('.spotifyCredentialsForm input').count(),2);
+ for(const [selector,type,autocomplete] of [['#spotifyEmail','email','username'],['#spotifyPassword','password','current-password']]){eq(await page.inputValue(selector),'');eq(await page.getAttribute(selector,'type'),type);eq(await page.getAttribute(selector,'autocomplete'),autocomplete);eq(await page.getAttribute(selector,'autocapitalize'),'none');eq(await page.getAttribute(selector,'spellcheck'),'false');eq(await page.getAttribute(selector,'value'),null);eq(await page.locator(`label[for="${selector.slice(1)}"]`).count(),1);}
+ await page.focus('#spotifyEmail');await page.focus('#spotifyPassword');await page.waitForTimeout(100);eq(await page.inputValue('#spotifyPassword'),'');eq(await page.locator('#spotifyContinueButton').isDisabled(),true);
+ await page.fill('#spotifyEmail','invalid-email');await page.fill('#spotifyPassword','isolated-password');eq(await page.locator('#spotifyContinueButton').isDisabled(),true);await page.fill('#spotifyEmail','isolated@example.com');eq(await page.locator('#spotifyContinueButton').isDisabled(),false);await page.fill('#spotifyPassword','');eq(await page.locator('#spotifyContinueButton').isDisabled(),true);await page.fill('#spotifyPassword','isolated-password');
+ await page.locator('[data-password-toggle]').click();eq(await page.getAttribute('#spotifyPassword','type'),'text');eq(await page.getAttribute('[data-password-toggle]','aria-label'),'Şifrəni gizlət');await page.locator('[data-password-toggle]').click();eq(await page.getAttribute('#spotifyPassword','type'),'password');eq(await page.getAttribute('[data-password-toggle]','aria-label'),'Şifrəni göstər');eq(await page.getAttribute('.spotifyPasswordReset a','href'),spotify.spotifyPasswordResetUrl);
+ await page.evaluate(()=>window.detachedSpotifyInputs=[...document.querySelectorAll('.spotifyCredentialsForm input')]);await page.click('#universalFormCancel');eq(await page.evaluate(()=>detachedSpotifyInputs.every(e=>e.value===''&&e.defaultValue==='')),true);await open();eq(await page.inputValue('#spotifyEmail'),'');eq(await page.inputValue('#spotifyPassword'),'');await page.fill('#spotifyPassword','escape-only');await page.evaluate(()=>window.escapeInput=document.getElementById('spotifyPassword'));await page.keyboard.press('Escape');eq(await page.evaluate(()=>escapeInput.value),'');await open();
+ eq(await page.evaluate(()=>document.documentElement.scrollWidth-innerWidth),0);if(width<768)eq(await page.locator('.spotifyCredentialsForm input').evaluateAll(es=>es.every(e=>parseFloat(getComputedStyle(e).fontSize)>=16)),true);
+ if(process.env.MIRPANEL_VISUAL_DIR){fs.mkdirSync(process.env.MIRPANEL_VISUAL_DIR,{recursive:true});await page.screenshot({path:path.join(process.env.MIRPANEL_VISUAL_DIR,`local-spotify-${android?'android':'windows'}-${width}.png`)});}
+ if(width===390){await page.setViewportSize({width:390,height:500});await page.locator('#spotifyContinueButton').scrollIntoViewIfNeeded();eq(await page.locator('#spotifyContinueButton').evaluate(e=>{const r=e.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),true);await page.setViewportSize({width,height:844});}
+ // Capture the existing payment handoff in memory. No order, reservation or WhatsApp request.
+ await page.evaluate(()=>{window.fixtureHandoff=null;window.MirpanelPaymentFlow.start=async v=>{window.fixtureHandoff=v;return null;};});await page.fill('#spotifyEmail','spotify@example.com');await page.fill('#spotifyPassword','isolated-existing-password');await page.click('#spotifyContinueButton');await page.waitForFunction(()=>Boolean(window.fixtureHandoff));const handoff=await page.evaluate(()=>({id:fixtureHandoff.product.id,extra:fixtureHandoff.whatsappExtraText}));eq(handoff.id,'spotify');eq(handoff.extra.includes('spotify@example.com'),true);eq(handoff.extra.includes('isolated-existing-password'),true);eq((handoff.extra.match(/isolated-existing-password/g)||[]).length,1);eq(handoff.extra.includes('təkrar'),false);
+ }
+ await context.close();}
+ eq(reservationRequests,0);eq(consoleErrors.length,0);eq(missing.length,0);console.log(JSON.stringify({ok:true,checks,widths,chromeModes:['Windows Chrome headless','Android Chrome emulation'],passwordInputs:1,newPasswordInputs:0,confirmationInputs:0,manualPasswordManagerPopup:'NOT VERIFIED',realAndroidDevice:'NOT AVAILABLE',orderReservationMessages:0,overflow:0,consoleErrors:0,missing404:0},null,2));
+}finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

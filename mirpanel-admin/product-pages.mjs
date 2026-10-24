@@ -554,7 +554,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=checkout-no-customer-20261022-1"></script>
-  <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
+  <script src="/order-confirmation.js?v=spotify-single-password-20261024-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>
   <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
   <script src="/site-header.js?v=20260902-controls-removed-1"></script>
@@ -1070,7 +1070,7 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
   next = next
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=20260902-controls-removed-1")
-    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=canonical-forms-20261009-1");
+    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=spotify-single-password-20261024-1");
   next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=20260902-form-scope-1");
   return next;
 }

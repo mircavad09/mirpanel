@@ -103,7 +103,7 @@ try {
         assert.ok((await page.locator("#mForm").textContent()).includes(product.title));
       }
       const actualNames = await page.locator('#universalOrderForm input[name], #universalOrderForm select[name], #universalOrderForm textarea[name]').evaluateAll(els => els.map(el => el.name));
-      for (const field of fields) if (field.key !== "password_confirm") assert.ok(actualNames.includes(field.key), product.id + " missing configured " + field.key);
+      for (const field of fields) if (field.key !== "password_confirm") assert.ok(actualNames.includes(product.id==='spotify'&&field.key==='password'?'spotifyCurrentPassword':field.key), product.id + " missing configured " + field.key);
       const metrics = await layout(product.id + " form");
       for (const input of await page.locator('#universalOrderForm input:not([type="hidden"])').all()) {
         const before = await page.evaluate(() => visualViewport?.scale ?? 1);
@@ -143,23 +143,17 @@ try {
       const p = state.products.find(p => p.id === id);
       assert.equal(await open(p), true);
       if (id === "spotify") {
+        assert.equal(await page.locator('#spotifyPasswordConfirm').count(),0);
+        assert.equal(await page.locator('#modal input[type=password]').count(),1);
         await page.fill("#spotifyEmail", "invalid-email");
         await page.fill("#spotifyPassword", "test-only");
-        await page.fill("#spotifyPasswordConfirm", "test-only");
         assert.equal(await page.locator("#spotifyContinueButton").isDisabled(), true);
         await page.fill("#spotifyEmail", "isolated@example.com");
-        await page.fill("#spotifyPassword", "test-only");
-        await page.fill("#spotifyPasswordConfirm", "different");
-        assert.equal(await page.locator("#spotifyContinueButton").isDisabled(), true);
-        assert.equal(await page.locator("#spotifyPasswordError").isVisible(), true);
-        await page.fill("#spotifyPasswordConfirm", "test-only");
         assert.equal(await page.locator("#spotifyContinueButton").isEnabled(), true);
-        for (const id of ["spotifyPassword", "spotifyPasswordConfirm"]) {
-          await page.locator(`[data-password-toggle="${id}"]`).click();
-          assert.equal(await page.locator("#" + id).getAttribute("type"), "text");
-          await page.locator(`[data-password-toggle="${id}"]`).click();
-          assert.equal(await page.locator("#" + id).getAttribute("type"), "password");
-        }
+        await page.locator('[data-password-toggle="spotifyPassword"]').click();
+        assert.equal(await page.locator('#spotifyPassword').getAttribute('type'),'text');
+        await page.locator('[data-password-toggle="spotifyPassword"]').click();
+        assert.equal(await page.locator('#spotifyPassword').getAttribute('type'),'password');
         assert.equal(await page.locator(".spotifyPasswordReset a").getAttribute("href"), spotifyResetUrl());
       }
       await close();
@@ -168,7 +162,7 @@ try {
   function spotifyResetUrl() { return state.products.find(p => p.id === "spotify").spotifyPasswordResetUrl || "https://accounts.spotify.com/az/password-reset"; }
   if (!live) {
     await open(state.products.find(p=>p.id==='spotify'));
-    await page.fill('#spotifyEmail','isolated@example.com');await page.fill('#spotifyPassword','isolated-test-only');await page.fill('#spotifyPasswordConfirm','isolated-test-only');
+    await page.fill('#spotifyEmail','isolated@example.com');await page.fill('#spotifyPassword','isolated-test-only');
     await page.evaluate(()=>{window.previousSpotifyInputs=[...document.querySelectorAll('.spotifyCredentialsForm input')];});
     await close();
     await open(state.products.find(p=>p.id==='google_ai'));
