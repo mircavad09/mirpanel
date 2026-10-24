@@ -128,6 +128,12 @@
       <div class="product-page-similar-title" title="Surfshark VPN">Surfshark VPN</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
+      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <span class="capcut-similar-discount">-41%</span>
+      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">19.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Gemini ai pro + 5TB yaddaş — 6.99 ₼" title="Gemini ai pro + 5TB yaddaş">
       <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
       <span class="capcut-similar-discount">-99%</span>
@@ -155,12 +161,6 @@
       <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">37.40 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
-      <img src="/uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
-      <span class="capcut-similar-discount">-41%</span>
-      <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
-      <div class="product-page-similar-category">musiqi</div>
-      <div class="product-page-similar-price">5.49 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -235,7 +235,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-2036992ee2c57132"></script>
+  <script src="/app.js?v=catalog-eaa97bc8a162857b"></script>
   <script src="/payment-flow.js?v=checkout-no-customer-20261022-1"></script>
   <script src="/order-confirmation.js?v=canonical-forms-20261009-1"></script>
   <script src="/stock-display-fix.js?v=20260902-form-scope-1"></script>

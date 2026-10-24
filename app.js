@@ -285,9 +285,99 @@ const DATA = {
       }
     },
     {
+      "id": "chatgpt",
+      "_stableId": "chatgpt",
+      "order": 2,
+      "category": "ai",
+      "image": "uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091",
+      "currency": "₼",
+      "title": "ChatGPT Plus (Hazır Şəxsi hesab)",
+      "variant": "Plus",
+      "badge": "AI",
+      "imageAlt": "ChatGPT Plus (Şəxsi hesab)",
+      "desc": "Daha güclü model, fayl/şəkil imkanları.",
+      "note": "Hesabınızın Email və Şifrəsini qeyd edin.",
+      "longDescription": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "chatgpt-plus",
+      "seoTitle": "ChatGPT Plus şəxsi hesab almaq | Mirpanel",
+      "seoDescription": "ChatGPT Plus hesabını sərfəli qiymətə əldə et. Premium AI imkanları və sürətli aktivləşdirmə Mirpanel-də.",
+      "seoH1": "ChatGPT Plus şəxsi hesab almaq",
+      "seoPrimaryKeyword": "ChatGPT Plus almaq",
+      "seoRelatedKeywords": "ChatGPT Plus şəxsi hesab, ChatGPT Plus qiyməti, ChatGPT Plus Azərbaycan",
+      "seoKeywords": "ChatGPT Plus almaq, ChatGPT Plus ucuz, ChatGPT Plus Azərbaycan, ChatGPT hesab almaq, ChatGPT premium almaq, GPT Plus almaq, OpenAI hesab almaq, ÇatGPT almaq",
+      "seoContent": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/chatgpt.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/chatgpt.png",
+        "mobileImage": "",
+        "title": "ChatGPT Plus (Şəxsi hesab)",
+        "description": "Daha güclü model, fayl/şəkil imkanları.",
+        "alt": "ChatGPT Plus (Şəxsi hesab)",
+        "order": 19
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": 1,
+      "stockEnabled": true,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
+        "confirmText": "Davam et",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 ayliq  ",
+          "months": 1,
+          "price": 19.99,
+          "regularPrice": 34
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
+        "confirmText": "Davam et",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
       "id": "google_ai",
       "_stableId": "google_ai",
-      "order": 2,
+      "order": 3,
       "category": "ai",
       "image": "uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071",
       "currency": "₼",
@@ -385,7 +475,7 @@ const DATA = {
     {
       "id": "netflix",
       "_stableId": "netflix",
-      "order": 3,
+      "order": 4,
       "category": "film",
       "image": "uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161",
       "currency": "₼",
@@ -498,7 +588,7 @@ const DATA = {
     {
       "id": "netflix_umumi",
       "_stableId": "netflix_umumi",
-      "order": 4,
+      "order": 5,
       "category": "film",
       "image": "uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068",
       "currency": "₼",
@@ -586,7 +676,7 @@ const DATA = {
     {
       "id": "prime",
       "_stableId": "prime",
-      "order": 5,
+      "order": 6,
       "category": "film",
       "image": "uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093",
       "currency": "₼",
@@ -695,7 +785,7 @@ const DATA = {
     {
       "id": "claude_ai",
       "_stableId": "claude_ai",
-      "order": 6,
+      "order": 7,
       "category": "ai",
       "image": "uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631",
       "currency": "₼",
@@ -785,7 +875,7 @@ const DATA = {
     {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 7,
+      "order": 8,
       "category": "musiqi",
       "image": "uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574",
       "currency": "₼",
@@ -913,7 +1003,7 @@ const DATA = {
     {
       "id": "youtube_sexsi",
       "_stableId": "youtube_sexsi",
-      "order": 8,
+      "order": 9,
       "category": "all",
       "image": "uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347",
       "currency": "₼",
@@ -1019,7 +1109,7 @@ const DATA = {
     {
       "id": "youtube",
       "_stableId": "youtube",
-      "order": 9,
+      "order": 10,
       "category": "musiqi",
       "image": "uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653",
       "currency": "₼",
@@ -1117,7 +1207,7 @@ const DATA = {
     {
       "id": "adobecc",
       "_stableId": "adobecc",
-      "order": 10,
+      "order": 11,
       "category": "dizayn",
       "image": "uploads/products/adobecc-1792450954538-64c5979f.png?v=1792450954538",
       "currency": "₼",
@@ -1205,7 +1295,7 @@ const DATA = {
     {
       "id": "hbomax",
       "_stableId": "hbomax",
-      "order": 11,
+      "order": 12,
       "category": "film",
       "image": "uploads/products/hbomax-1792448430771-91c8a1ec.png?v=1792448430771",
       "currency": "₼",
@@ -1310,7 +1400,7 @@ const DATA = {
     {
       "id": "tiktok_jeton",
       "_stableId": "tiktok_jeton",
-      "order": 12,
+      "order": 13,
       "category": "video",
       "image": "uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473",
       "currency": "₼",
@@ -1426,7 +1516,7 @@ const DATA = {
     {
       "id": "surfshark",
       "_stableId": "surfshark",
-      "order": 13,
+      "order": 14,
       "category": "video",
       "image": "uploads/products/surfshark-1792448333121-dcfb98b1.png?v=1792448333121",
       "currency": "₼",
@@ -1515,7 +1605,7 @@ const DATA = {
     {
       "id": "google_ai_ultra",
       "_stableId": "google_ai_ultra",
-      "order": 14,
+      "order": 15,
       "category": "ai",
       "image": "assets/google-ai-ultra.png",
       "currency": "₼",
@@ -1604,7 +1694,7 @@ const DATA = {
     {
       "id": "captions",
       "_stableId": "captions",
-      "order": 15,
+      "order": 16,
       "category": "ai",
       "image": "uploads/products/captions-1792448708784-7d662bbc.png?v=1792448708784",
       "currency": "₼",
@@ -1700,7 +1790,7 @@ const DATA = {
     {
       "id": "grok_supergrok",
       "_stableId": "grok_supergrok",
-      "order": 16,
+      "order": 17,
       "category": "ai",
       "image": "uploads/products/grok_supergrok-1792448632619-5d302a16.png?v=1792448632619",
       "currency": "₼",
@@ -1789,7 +1879,7 @@ const DATA = {
     {
       "id": "zoom",
       "_stableId": "zoom",
-      "order": 17,
+      "order": 18,
       "category": "meeting",
       "image": "assets/zoom.png",
       "currency": "₼",
@@ -1878,7 +1968,7 @@ const DATA = {
     {
       "id": "duolingo",
       "_stableId": "duolingo",
-      "order": 18,
+      "order": 19,
       "category": "dil",
       "image": "uploads/products/duolingo-1792448623830-b79e0ac4.png?v=1792448623830",
       "currency": "₼",
@@ -1972,7 +2062,7 @@ const DATA = {
     {
       "id": "canva",
       "_stableId": "canva",
-      "order": 19,
+      "order": 20,
       "category": "dizayn",
       "image": "uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882",
       "currency": "₼",
@@ -2073,7 +2163,7 @@ const DATA = {
     {
       "id": "netflix_sexsi",
       "_stableId": "netflix_sexsi",
-      "order": 20,
+      "order": 21,
       "category": "film",
       "image": "uploads/products/netflix_sexsi-1792448690453-b2c32429.png?v=1792448690453",
       "currency": "₼",
@@ -2167,108 +2257,6 @@ const DATA = {
           "enabled": true,
           "label": "👉Yeni netflix şəxsi otaq almaq 👈",
           "url": "https://mirpanel.com/mehsul/netflix-sexsi"
-        }
-      }
-    },
-    {
-      "id": "chatgpt",
-      "_stableId": "chatgpt",
-      "order": 21,
-      "category": "ai",
-      "image": "uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091",
-      "currency": "₼",
-      "title": "ChatGPT Plus (Şəxsi hesab)",
-      "variant": "Plus",
-      "badge": "AI",
-      "imageAlt": "ChatGPT Plus (Şəxsi hesab)",
-      "desc": "Daha güclü model, fayl/şəkil imkanları.",
-      "note": "Hesabınızın Email və Şifrəsini qeyd edin.",
-      "longDescription": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "chatgpt-plus",
-      "seoTitle": "ChatGPT Plus şəxsi hesab almaq | Mirpanel",
-      "seoDescription": "ChatGPT Plus hesabını sərfəli qiymətə əldə et. Premium AI imkanları və sürətli aktivləşdirmə Mirpanel-də.",
-      "seoH1": "ChatGPT Plus şəxsi hesab almaq",
-      "seoPrimaryKeyword": "ChatGPT Plus almaq",
-      "seoRelatedKeywords": "ChatGPT Plus şəxsi hesab, ChatGPT Plus qiyməti, ChatGPT Plus Azərbaycan",
-      "seoKeywords": "ChatGPT Plus almaq, ChatGPT Plus ucuz, ChatGPT Plus Azərbaycan, ChatGPT hesab almaq, ChatGPT premium almaq, GPT Plus almaq, OpenAI hesab almaq, ÇatGPT almaq",
-      "seoContent": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/chatgpt.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/chatgpt.png",
-        "mobileImage": "",
-        "title": "ChatGPT Plus (Şəxsi hesab)",
-        "description": "Daha güclü model, fayl/şəkil imkanları.",
-        "alt": "ChatGPT Plus (Şəxsi hesab)",
-        "order": 19
-      },
-      "flow": "out_of_stock",
-      "soldOut": true,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
-        "confirmText": "Davam et",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 ayliq (20 gün zəmanətli)",
-          "months": 1,
-          "price": 16.99,
-          "regularPrice": 34
-        },
-        {
-          "label": "1 ayliq (25 gün zəmanətli)",
-          "months": 1,
-          "price": 19.99,
-          "regularPrice": 34
-        },
-        {
-          "label": "1 ayliq (30 gün zəmanətli)",
-          "months": 1,
-          "price": 21.99,
-          "regularPrice": 34
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
-        "confirmText": "Davam et",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
         }
       }
     },
@@ -3580,6 +3568,10 @@ const ADMIN_CONTENT = {
     "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
     "rulesHtml": ""
   },
+  "chatgpt": {
+    "aboutHtml": "<h3>ChatGPT Plus - Premium Süni İntellekt Köməkçisi</h3>\n<p>ChatGPT Plus, gündəlik işləri daha sürətli yerinə yetirmək, mətn yazmaq, ideya yaratmaq, suallara cavab almaq və müxtəlif mövzularda peşəkar AI dəstəyi əldə etmək istəyən istifadəçilər üçün hazırlanmış premium süni intellekt xidmətidir. Standart istifadədən fərqli olaraq, Plus abunəliyi daha güclü model imkanları, daha sürətli cavablar və daha məhsuldar iş təcrübəsi təqdim edir. Təhsil, biznes, kontent istehsalı və şəxsi inkişaf üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>ChatGPT Plus, istifadəçilərə mətn hazırlamaq, tərcümə etmək, ideyaları inkişaf etdirmək, kod yazmaq, plan qurmaq, araşdırma aparmaq və gündəlik tapşırıqları daha rahat idarə etmək imkanı verir. Platforma həm sadə suallar, həm də daha mürəkkəb peşəkar işlər üçün ağıllı köməkçi kimi istifadə oluna bilər. Plus imkanları sayəsində istifadəçi daha sürətli, daha çevik və daha effektiv süni intellekt təcrübəsi əldə edir.</p>\n\n<h3>ChatGPT Plus Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Tələbələr və Araşdırma Aparanlar:</strong> Mövzuları izah etmək, xülasə hazırlamaq, esse və təqdimat strukturu qurmaq istəyənlər.</li>\n  <li><strong>Kontent Yaradıcıları və Kopirayterlər:</strong> Sosial media mətnləri, reklam yazıları, video ssenariləri və kreativ ideyalar hazırlayanlar.</li>\n  <li><strong>Biznes Sahibləri və Peşəkarlar:</strong> Email, plan, hesabat, təqdimat və strategiya mətnlərini daha sürətli hazırlamaq istəyənlər.</li>\n  <li><strong>Proqramçılar və Texniki İstifadəçilər:</strong> Kod yazmaq, səhvləri izah etmək, texniki mövzuları analiz etmək və layihə ideyalarını inkişaf etdirmək istəyənlər.</li>\n</ul>\n\n<h3>ChatGPT Plus-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü AI Dəstəyi:</strong> Mətn yazmaq, suallara cavab vermək, ideya yaratmaq və mürəkkəb mövzuları daha sadə izah etmək imkanı.</li>\n  <li><strong>⚡ Daha Sürətli Cavablar:</strong> Gündəlik yazı, araşdırma, planlama və iş tapşırıqlarını daha qısa zamanda yerinə yetirməyə kömək edir.</li>\n  <li><strong>📚 Təhsil və Araşdırma Üçün Faydalı:</strong> Mövzuları öyrənmək, xülasə çıxarmaq, mətnləri təkmilləşdirmək və məlumatları strukturlaşdırmaq.</li>\n  <li><strong>💻 Kod və Texniki Yardım:</strong> Proqramlaşdırma, kod nümunələri, səhv izahı və texniki layihələr üçün faydalı AI köməkçisi.</li>\n  <li><strong>💼 Biznes və Kontent Üçün Uyğun:</strong> Reklam mətnləri, strategiya ideyaları, təqdimatlar, email yazışmaları və sosial media kontenti hazırlamaq.</li>\n</ul>",
+    "rulesHtml": ""
+  },
   "google_ai": {
     "aboutHtml": "<h3>Google AI Pro + VEO 3 - Premium Süni İntellekt və Video Yaratma Həlli</h3>\n<p>Google AI Pro + VEO 3, süni intellekt vasitəsilə mətn yazmaq, ideya yaratmaq, kontent hazırlamaq və peşəkar səviyyədə AI video generasiya etmək istəyən istifadəçilər üçün hazırlanmış premium rəqəmsal xidmətdir. Standart AI alətlərindən fərqli olaraq, Google AI Pro daha güclü Gemini imkanları, geniş yaradıcılıq funksiyaları və VEO 3 ilə yüksək keyfiyyətli video yaratma təcrübəsi təqdim edir. Kontent istehsalı, biznes, təhsil və kreativ layihələr üçün ideal süni intellekt həllidir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Google AI Pro, istifadəçilərə Gemini süni intellekt modeli vasitəsilə mətn yazmaq, araşdırma aparmaq, ideyalar hazırlamaq, təqdimatlar üçün kontent yaratmaq və gündəlik iş proseslərini daha sürətli idarə etmək imkanı verir. VEO 3 dəstəyi isə mətn təsvirləri əsasında realistik, kreativ və yüksək keyfiyyətli videolar yaratmağa kömək edir. Bu xidmət həm fərdi istifadəçilər, həm də peşəkar kontent yaradıcıları üçün vaxt qazandıran güclü AI platformasıdır.</p>\n\n<h3>Google AI Pro + VEO 3 Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Sosial şəbəkələr üçün kreativ ideyalar, mətnlər, video ssenarilər və AI videolar hazırlamaq istəyənlər.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Reklam ideyaları, post mətnləri, kampaniya konseptləri və video kontent hazırlayan mütəxəssislər.</li>\n  <li><strong>Biznes Sahibləri və Sahibkarlar:</strong> Məhsul və xidmətlərini daha peşəkar təqdim etmək üçün süni intellektdən istifadə etmək istəyənlər.</li>\n  <li><strong>Tələbələr və Peşəkarlar:</strong> Araşdırma, yazı, təqdimat, planlama və gündəlik işlərdə AI dəstəyinə ehtiyac duyan istifadəçilər.</li>\n</ul>\n\n<h3>Google AI Pro + VEO 3-ün Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü Gemini AI İmkanları:</strong> Mətn yazmaq, suallara cavab almaq, ideya yaratmaq, analiz etmək və iş proseslərini sürətləndirmək üçün inkişaf etmiş süni intellekt dəstəyi.</li>\n  <li><strong>🎬 VEO 3 ilə AI Video Yaratma:</strong> Mətn təsvirləri əsasında kreativ, realistik və peşəkar görünüşlü videolar hazırlamaq imkanı.</li>\n  <li><strong>✨ Kontent İstehsalında Vaxta Qənaət:</strong> Sosial media postları, reklam ssenariləri, video ideyaları və təqdimat mətnlərini daha sürətli hazırlamaq.</li>\n  <li><strong>📚 Araşdırma və Planlama Dəstəyi:</strong> Mövzular üzrə məlumat toplamaq, struktur qurmaq, mətnləri təkmilləşdirmək və layihələri daha rahat planlamaq.</li>\n  <li><strong>🚀 Kreativ və Peşəkar Nəticələr:</strong> AI dəstəyi ilə daha keyfiyyətli vizuallar, ideyalar, mətnlər və video kontent hazırlayaraq rəqəmsal işlərdə fərqlənmək.</li>\n</ul>",
     "rulesHtml": ""
@@ -3646,10 +3638,6 @@ const ADMIN_CONTENT = {
   },
   "canva": {
     "aboutHtml": "<h3>Canva Pro - Peşəkar Dizayn və Kontent Yaratma Platforması</h3>\n<p>Canva Pro, sosial media postları, təqdimatlar, loqolar, reklam materialları, video kontent və biznes dizaynları hazırlamaq istəyən istifadəçilər üçün yaradılmış premium dizayn platformasıdır. Standart Canva versiyasından fərqli olaraq, Pro abunəliyi daha geniş şablon kitabxanası, premium elementlər, arxa fon silmə, brend kit və komanda ilə işləmə imkanları təqdim edir. Dizayn bacarığı olmadan belə peşəkar və estetik vizuallar yaratmaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Canva Pro, istifadəçilərə hazır şablonlar, premium şəkillər, ikonlar, videolar, animasiyalar və dizayn elementləri vasitəsilə sürətli və keyfiyyətli vizual kontent hazırlamaq imkanı verir. Platforma sosial media postları, story dizaynları, təqdimatlar, afişalar, CV-lər, reklam bannerləri və video layihələr üçün rahat alətlər təqdim edir. Canva Pro həm fərdi istifadəçilər, həm də biznes və komandalar üçün dizayn prosesini daha sadə və məhsuldar edir.</p>\n\n<h3>Canva Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Sosial media postları, reklam bannerləri, kampaniya vizualları və brend kontenti hazırlayanlar.</li>\n  <li><strong>Biznes Sahibləri və Sahibkarlar:</strong> Məhsul və xidmətlərini peşəkar dizaynlarla tanıtmaq və brend görünüşünü gücləndirmək istəyənlər.</li>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Instagram, TikTok, YouTube və digər platformalar üçün estetik vizual və video kontent hazırlayanlar.</li>\n  <li><strong>Tələbələr və Peşəkarlar:</strong> Təqdimatlar, CV-lər, layihə dizaynları və gündəlik vizual materiallar hazırlamaq istəyənlər.</li>\n</ul>\n\n<h3>Canva Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>🎨 Premium Şablonlar və Elementlər:</strong> Minlərlə peşəkar hazır dizayn, ikon, şəkil, video və qrafik elementlərə geniş giriş.</li>\n  <li><strong>🪄 Arxa Fon Silmə Aləti:</strong> Şəkillərin arxa fonunu tək kliklə silərək məhsul, profil və reklam dizaynlarını daha peşəkar göstərmək.</li>\n  <li><strong>🏷️ Brand Kit Dəstəyi:</strong> Loqo, rəng palitrası və şriftləri saxlayaraq bütün dizaynlarda brend üslubunu qorumaq imkanı.</li>\n  <li><strong>📱 Sosial Media Üçün Hazır Formatlar:</strong> Instagram post, story, Reels cover, YouTube thumbnail, banner və digər ölçülərdə sürətli dizayn yaratmaq.</li>\n  <li><strong>🚀 Vaxta Qənaət və Asan İstifadə:</strong> Dizayn təcrübəsi olmadan belə qısa zamanda estetik, peşəkar və paylaşmağa hazır vizuallar hazırlamaq.</li>\n</ul>",
-    "rulesHtml": ""
-  },
-  "chatgpt": {
-    "aboutHtml": "<h3>ChatGPT Plus - Premium Süni İntellekt Köməkçisi</h3>\n<p>ChatGPT Plus, gündəlik işləri daha sürətli yerinə yetirmək, mətn yazmaq, ideya yaratmaq, suallara cavab almaq və müxtəlif mövzularda peşəkar AI dəstəyi əldə etmək istəyən istifadəçilər üçün hazırlanmış premium süni intellekt xidmətidir. Standart istifadədən fərqli olaraq, Plus abunəliyi daha güclü model imkanları, daha sürətli cavablar və daha məhsuldar iş təcrübəsi təqdim edir. Təhsil, biznes, kontent istehsalı və şəxsi inkişaf üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>ChatGPT Plus, istifadəçilərə mətn hazırlamaq, tərcümə etmək, ideyaları inkişaf etdirmək, kod yazmaq, plan qurmaq, araşdırma aparmaq və gündəlik tapşırıqları daha rahat idarə etmək imkanı verir. Platforma həm sadə suallar, həm də daha mürəkkəb peşəkar işlər üçün ağıllı köməkçi kimi istifadə oluna bilər. Plus imkanları sayəsində istifadəçi daha sürətli, daha çevik və daha effektiv süni intellekt təcrübəsi əldə edir.</p>\n\n<h3>ChatGPT Plus Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Tələbələr və Araşdırma Aparanlar:</strong> Mövzuları izah etmək, xülasə hazırlamaq, esse və təqdimat strukturu qurmaq istəyənlər.</li>\n  <li><strong>Kontent Yaradıcıları və Kopirayterlər:</strong> Sosial media mətnləri, reklam yazıları, video ssenariləri və kreativ ideyalar hazırlayanlar.</li>\n  <li><strong>Biznes Sahibləri və Peşəkarlar:</strong> Email, plan, hesabat, təqdimat və strategiya mətnlərini daha sürətli hazırlamaq istəyənlər.</li>\n  <li><strong>Proqramçılar və Texniki İstifadəçilər:</strong> Kod yazmaq, səhvləri izah etmək, texniki mövzuları analiz etmək və layihə ideyalarını inkişaf etdirmək istəyənlər.</li>\n</ul>\n\n<h3>ChatGPT Plus-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü AI Dəstəyi:</strong> Mətn yazmaq, suallara cavab vermək, ideya yaratmaq və mürəkkəb mövzuları daha sadə izah etmək imkanı.</li>\n  <li><strong>⚡ Daha Sürətli Cavablar:</strong> Gündəlik yazı, araşdırma, planlama və iş tapşırıqlarını daha qısa zamanda yerinə yetirməyə kömək edir.</li>\n  <li><strong>📚 Təhsil və Araşdırma Üçün Faydalı:</strong> Mövzuları öyrənmək, xülasə çıxarmaq, mətnləri təkmilləşdirmək və məlumatları strukturlaşdırmaq.</li>\n  <li><strong>💻 Kod və Texniki Yardım:</strong> Proqramlaşdırma, kod nümunələri, səhv izahı və texniki layihələr üçün faydalı AI köməkçisi.</li>\n  <li><strong>💼 Biznes və Kontent Üçün Uyğun:</strong> Reklam mətnləri, strategiya ideyaları, təqdimatlar, email yazışmaları və sosial media kontenti hazırlamaq.</li>\n</ul>",
     "rulesHtml": ""
   },
   "linkedin_career": {
