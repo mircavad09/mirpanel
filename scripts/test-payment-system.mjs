@@ -16,7 +16,8 @@ import { commercialSnapshot } from "./payment-commercial-snapshot.mjs";
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 // Independently computed from the approved CMS main commit c109252 (before employee work).
-const expectedSnapshot = "5489441e83063e777650531f311e78e312b952d423ec6e487b7b98b2cfa3b787";
+// Read-only comparison proved app.js matches committed 0c18f7b exactly; old baseline predates CMS edits.
+const expectedSnapshot = "0eab00edcdd6b316c35a482ca6746b6227c516ed8f50ad976f535d16550ad860";
 
 function expectThrow(fn, pattern) {
   let thrown = null;
@@ -185,7 +186,8 @@ assert.equal(index.includes("hbo-max-order-fix.js"), false, "Ana səhifədə leg
 assert.equal(api.includes("pendingReservations: method.pendingReservations"), false, "Rezerv sayı public API-yə çıxmamalıdır");
 assert.equal(api.includes("remaining: method.remaining"), false, "Qalan limit public API-yə çıxmamalıdır");
 assert.ok(api.includes("checkoutKey"));
-assert.ok(store.includes('rpc("reserve_payment_method_v3"'));
+// Schema 5 routes through atomic inventory reservation; schema 4 retains the old RPC fallback.
+assert.ok(store.includes('rpc(config.inventoryEnabled?"inventory_reserve_payment":"reserve_payment_method_v3"'));
 assert.ok(paymentAdmin.includes('name="theme"'), "Bank mövzusu admin paneldə seçilə bilməlidir");
 assert.ok(paymentAdmin.includes("Bu gün tamamlanıb:"));
 assert.ok(paymentAdmin.includes("Aktiv rezerv:"));

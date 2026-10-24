@@ -918,10 +918,7 @@ bindProductField("productSoldOut", (p, e) => {
   if (p.soldOut) p.flow = "out_of_stock";
   else if (p.flow === "out_of_stock") p.flow = "whatsapp";
 });
-bindProductField("productStock", (p, e) => {
-  p.stock = e.value === "" ? null : Math.max(0, Number(e.value) || 0);
-  applyStockState(p);
-});
+// Numeric stock is saved by admin-stock-save-fix.js to the DB unit ledger only.
 bindProductField("productStockEnabled", (p, e) => {
   p.stockEnabled = e.checked;
   applyStockState(p);

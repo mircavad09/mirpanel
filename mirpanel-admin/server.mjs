@@ -1280,11 +1280,12 @@ const employeeSystem=createEmployeeSystem({client:storiesSupabase,config,json,re
  loadCatalog:async()=>extractAdminState((await getAppFile()).source),guardLogin:request=>paymentSystem.guardLogin(request)});
 // Read-only deployment gate. Missing SQL never exposes a half-working employee API.
 // An explicit false is the emergency off switch; v4 adds null-safe orders and atomic ownership.
-if(storiesSupabase && process.env.EMPLOYEE_PANEL_ENABLED!=='false') {
+if(storiesSupabase) {
  try {
   const probe=await Promise.race([storiesSupabase.rpc('employee_system_ready'),new Promise(resolve=>setTimeout(()=>resolve({error:true}),5000))]);
-  config.employeeEnabled=!probe.error && probe.data>=4;
- } catch {config.employeeEnabled=false;}
+  config.employeeEnabled=process.env.EMPLOYEE_PANEL_ENABLED!=='false' && !probe.error && probe.data>=4;
+  config.inventoryEnabled=!probe.error && probe.data>=5;
+ } catch {config.employeeEnabled=false;config.inventoryEnabled=false;}
 }
 config.employeeEnabled=employeeSystem.enabled();
 const storiesStorageOrigin = (() => {

@@ -23,6 +23,7 @@ import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./pay
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
   const message = String(error?.message || fallback);
   const known = [
+    "INVENTORY_EMPTY", "INVENTORY_SETUP_REQUIRED", "INVENTORY_RESERVATION_REQUIRED", "INVENTORY_VERSION_CONFLICT", "PLAN_INVENTORY_MANAGED_SEPARATELY", "INVALID_INVENTORY",
     "IDEMPOTENCY_CONFLICT", "PAYMENT_METHOD_UNAVAILABLE", "PAYMENT_METHOD_LIMIT_REACHED", "PAYMENT_METHOD_TEMPORARILY_BUSY",
     "RESERVATION_NOT_FOUND", "RESERVATION_EXPIRED", "ORDER_NOT_FOUND", "ORDER_NOT_REVIEWABLE",
     "ORDER_ALREADY_APPROVED", "REJECTION_REASON_REQUIRED", "RECEIPT_TOKEN_INVALID",
@@ -33,6 +34,7 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     "CAPCUT_DELIVERY_NOT_FOUND", "CAPCUT_ORDER_REQUIRED", "CAPCUT_ORDER_NOT_REVIEWABLE"
   ].find((code) => message.includes(code));
   const translated = {
+    INVENTORY_EMPTY:"Stokda yoxdur.",INVENTORY_SETUP_REQUIRED:"Stok bazada təsdiqlənməyib. Admin yoxlaması tələb olunur.",INVENTORY_RESERVATION_REQUIRED:"Bu sifariş üçün stok rezerv edilməyib. Tamamlama bloklandı.",INVENTORY_VERSION_CONFLICT:"Stok dəyişib. Yeniləyib təkrar yoxlayın.",PLAN_INVENTORY_MANAGED_SEPARATELY:"Stok plan səviyyəsində idarə olunur; ümumi məhsul sayı yazıla bilməz.",
     IDEMPOTENCY_CONFLICT: "Təkrar sorğu əvvəlki sifarişlə uyğun deyil.",
     PAYMENT_METHOD_UNAVAILABLE: "Ödəniş üsulu artıq əlçatan deyil.",
     PAYMENT_METHOD_LIMIT_REACHED: "Kart gündəlik limitdədir.",
@@ -327,7 +329,8 @@ export function createPaymentStore(config) {
       await client.from("payment_audit_log").insert({ actor_type: "admin", actor_ref: actor, action: "method.counter_reset", entity_type: "payment_method", entity_id: id });
     },
     async reserve(args) {
-      return rpc("reserve_payment_method_v3", {
+      if(args.requireStock&&!config.inventoryEnabled)throw Object.assign(new Error('Stok sistemi migration gözləyir.'),{status:503});
+      return rpc(config.inventoryEnabled?"inventory_reserve_payment":"reserve_payment_method_v3", {
         p_method_id: args.methodId,
         p_product_id: args.productId,
         p_plan_id: args.planId,
@@ -336,9 +339,12 @@ export function createPaymentStore(config) {
         p_idempotency_key: args.idempotencyKey,
         p_checkout_key: args.checkoutKey,
         p_previous_reservation_id: args.previousReservationId || null,
-        p_minutes: config.reservationMinutes
+        p_minutes: config.reservationMinutes,
+        ...(config.inventoryEnabled?{p_require_stock:args.requireStock===true}:{})
       });
     },
+    inventorySnapshot(){return rpc('inventory_snapshot');},
+    setInventory(productId,available,actor,key,version){return rpc('inventory_set_quantity',{p_product:productId,p_available:available,p_actor:actor,p_key:key,p_expected_version:version});},
     async submitOrder(args) {
       const params = {
         p_reservation_id: args.reservationId,

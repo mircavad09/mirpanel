@@ -178,14 +178,15 @@ export function createPaymentSystem(options) {
     }
   }
 
+  async function inventoryView(){const rows=await store.inventorySnapshot(),c=await loadCatalog();return c.products.filter(p=>p.active!==false&&(p.stockEnabled===true||rows.some(r=>r.productId===p.id))).map(p=>rows.find(r=>r.productId===p.id)||{productId:p.id,scope:'product',available:0,version:0,needsSetup:true,plans:[]});}
+
   async function catalogSelection(productId, planIndex) {
     const data = await loadCatalog();
     const product = data.products.find((item) => item.id === productId && item.active !== false);
     const index = Number(planIndex);
     const plan = product?.plans?.[index];
-    const rawStock = product?.stock ?? product?.stockCount ?? product?.stockQuantity;
-    const unavailableStock = product?.soldOut === true || product?.flow === "out_of_stock" ||
-      (product?.stockEnabled === true && rawStock !== null && rawStock !== "" && rawStock !== undefined && Number(rawStock) <= 0);
+    // Catalog stock is a legacy display value, NEVER an inventory counter.
+    const unavailableStock = product?.flow === "out_of_stock" || (product?.soldOut === true && product?.stockEnabled!==true);
     if (!product || unavailableStock || !plan || !Number.isFinite(Number(plan.price)) || Number(plan.price) <= 0) {
       throw Object.assign(new Error("Məhsul və ya plan artıq sifariş üçün açıq deyil."), { status: 409 });
     }
@@ -193,6 +194,10 @@ export function createPaymentSystem(options) {
   }
 
   async function handlePublic(request, response, url) {
+    if(request.method==='GET'&&url.pathname==='/api/payments/inventory'){
+      if(!config.inventoryEnabled)throw Object.assign(new Error('Stok sistemi schema 5 migration gözləyir.'),{status:503});
+      await publicRate(request,'inventory',60,120);publicJson(request,response,200,{products:await inventoryView()});return true;
+    }
     if (request.method === "OPTIONS") {
       response.writeHead(204, corsHeaders(request));
       response.end();
@@ -229,7 +234,7 @@ export function createPaymentSystem(options) {
       const orderQuantity=1;
       const reserved = await store.reserve({
         methodId, productId: product.id, planId: String(planIndex), amount: Number((Number(plan.price)*orderQuantity).toFixed(2)),
-        idempotencyKey, checkoutKey, previousReservationId
+        idempotencyKey, checkoutKey, previousReservationId,requireStock:product.stockEnabled===true
       });
       const method = await store.rawMethod(methodId);
       publicJson(request, response, 200, {
@@ -454,6 +459,12 @@ export function createPaymentSystem(options) {
     if (request.method === "GET") {
       if (!requireAuth(request, response)) return true;
     } else if (!requireMutationAuth(request, response)) return true;
+
+    if(url.pathname==='/api/admin/payment-inventory'){
+      if(!config.inventoryEnabled)throw Object.assign(new Error('Stok sistemi schema 5 migration gözləyir.'),{status:503});
+      if(request.method==='GET'){json(response,200,{products:await inventoryView()});return true;}
+      if(request.method==='POST'){const b=await readBody(request,10000),key=safeUuid(request.headers['x-idempotency-key']);const c=await loadCatalog();if(!key||b.confirm!==true||!Number.isSafeInteger(b.available)||b.available<0||b.available>10000||!Number.isSafeInteger(b.expectedVersion)||!c.products.some(p=>p.id===b.productId))throw Object.assign(new Error('Məhsul, stok miqdarı və təsdiq tələb olunur.'),{status:400});json(response,200,await store.setInventory(b.productId,b.available,actorName,key,b.expectedVersion));return true;}
+    }
 
     if (request.method === "GET" && url.pathname === "/api/admin/payment-methods") {
       json(response, 200, { methods: await store.adminMethods() }); return true;
