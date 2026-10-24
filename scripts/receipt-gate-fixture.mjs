@@ -43,6 +43,7 @@ export async function receiptFixture({employeeEnabled=false}={}){
   if(await api.handle(req,res))return;res.writeHead(404);res.end();
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;config.allowedOrigins.push(origin);
- api=createPaymentSystem({config,store,mailer:{start(){},async drain(){}},json,readRawBody:raw,readBody:async(req,limit)=>JSON.parse((await raw(req,limit)).toString()||'{}'),requireAuth:()=>false,requireMutationAuth:()=>false,loadCatalog:async()=>({products:[{id:'test',title:'Test məhsul',plans:[{label:'1 aylıq',price:5.99,months:1}]}]}),actorName:'test'});
- return {server,origin,state,orders,files,reservations,security,methodId,config,json};
+ const catalog={products:[{id:'test',title:'Test məhsul',plans:[{label:'1 aylıq',price:5.99,months:1}]}]};
+ api=createPaymentSystem({config,store,mailer:{start(){},async drain(){}},json,readRawBody:raw,readBody:async(req,limit)=>JSON.parse((await raw(req,limit)).toString()||'{}'),requireAuth:()=>false,requireMutationAuth:()=>false,loadCatalog:async()=>catalog,actorName:'test'});
+ return {server,origin,state,orders,files,reservations,security,methodId,config,json,store,catalog};
 }

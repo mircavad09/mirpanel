@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';import crypto from 'node:crypto';import {receiptFixture} from './receipt-gate-fixture.mjs';
+const f=await receiptFixture();let n=1,checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;},key=crypto.randomUUID(),checkoutKey=crypto.randomUUID(),cache=new Map(),original=f.store.reserve;
+f.catalog.products[0].stockEnabled=true;f.store.inventorySnapshot=async()=>[{productId:'test',scope:'product',available:n,plans:[]}];f.store.reserve=async args=>{if(cache.has(args.idempotencyKey))return cache.get(args.idempotencyKey);if(!n)throw Object.assign(Error('Stokda yoxdur'),{status:409});const r=await original(args);n--;cache.set(args.idempotencyKey,r);return r;};
+const reserve=k=>fetch(f.origin+'/api/payments/reservations',{method:'POST',headers:{'Content-Type':'application/json','X-Idempotency-Key':k},body:JSON.stringify({methodId:f.methodId,productId:'test',planIndex:0,checkoutKey})});
+try{
+ const first=await reserve(key);eq(first.status,200);const {reservationId}=await first.json();eq(n,0);const retry=await reserve(key);eq(retry.status,200);eq((await retry.json()).reservationId,reservationId);eq((await reserve(crypto.randomUUID())).status,409);
+ const data={reservationId,checkoutKey,productId:'test',planIndex:0,consentAccepted:true},form=new FormData();for(const [k,v] of Object.entries(data))form.append(k,String(v));form.append('receipt',new Blob([Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64')],{type:'image/png'}),'fixture.png');
+ const uploadKey=crypto.randomUUID(),uploaded=await fetch(f.origin+'/api/payments/receipts',{method:'POST',headers:{'X-Idempotency-Key':uploadKey},body:form});eq(uploaded.status,200);const proof=await uploaded.json();
+ const submit=()=>fetch(f.origin+'/api/payments/orders',{method:'POST',headers:{'Content-Type':'application/json','X-Idempotency-Key':uploadKey},body:JSON.stringify({...data,receiptUploadToken:proof.receiptUploadToken})});eq((await submit()).status,201);eq((await submit()).status,200);eq(f.orders.size,1);eq(f.state.reservationCalls,1);eq(n,0);
+ console.log(JSON.stringify({ok:true,checks,lastUnitOwnCheckoutAllowed:true,otherCheckoutBlocked:true,retrySameReservation:true,duplicateOrders:0,productionWrites:0}));
+}finally{await new Promise(r=>f.server.close(r));}

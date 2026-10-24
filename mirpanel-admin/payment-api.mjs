@@ -189,11 +189,14 @@ export function createPaymentSystem(options) {
     // Catalog stock is a legacy display value, NEVER an inventory counter.
     const rows=config.inventoryEnabled?await store.inventorySnapshot():[];
     const availability=product?inventoryAvailability(product,rows.find(r=>r.productId===product.id)):null;
-    const unavailableStock=!availability?.plans.find(p=>p.planKey===String(index))?.canOrder;
+    const inventoryPlan=availability?.plans.find(p=>p.planKey===String(index));
+    // Zero quantity is enforced by the atomic RPC, not a pre-check that would
+    // reject the legitimate retry of a reservation which took the last unit.
+    const unavailableStock=!inventoryPlan?.active||availability?.salesDisabled;
     if (!product || unavailableStock || !plan || !Number.isFinite(Number(plan.price)) || Number(plan.price) <= 0) {
       throw Object.assign(new Error("Məhsul və ya plan artıq sifariş üçün açıq deyil."), { status: 409 });
     }
-    return { product, plan, planIndex: index };
+    return { product, plan, planIndex: index, requireStock:inventoryPlan.tracked };
   }
 
   async function handlePublic(request, response, url) {
@@ -233,11 +236,11 @@ export function createPaymentSystem(options) {
       if (!idempotencyKey || !checkoutKey || !methodId || (body.previousReservationId && !previousReservationId)) {
         throw Object.assign(new Error("Təhlükəsiz sifariş və checkout açarı tələb olunur."), { status: 400 });
       }
-      const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
+      const { product, plan, planIndex, requireStock } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
       const orderQuantity=1;
       const reserved = await store.reserve({
         methodId, productId: product.id, planId: String(planIndex), amount: Number((Number(plan.price)*orderQuantity).toFixed(2)),
-        idempotencyKey, checkoutKey, previousReservationId,requireStock:product.stockEnabled===true
+        idempotencyKey, checkoutKey, previousReservationId,requireStock:requireStock===true
       });
       const method = await store.rawMethod(methodId);
       publicJson(request, response, 200, {
