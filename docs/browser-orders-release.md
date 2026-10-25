@@ -18,7 +18,7 @@ Məhsulların, Story/bannerlərin data/modelinə toxunulmur. Shared header scrip
 
 `node scripts/test-browser-orders-release.mjs`: database first/repeat, schema-6 synthetic upgrade, forced partial failure, preserved legacy orders, two-connection concurrency, transaction rollback, data-preserving rollback/reapply, real HTTP+Postgres/browser profile isolation and browser restart, signature/expiry/CSRF/proxy, six-width UI and existing checkout/employee/inventory regression. Fixtures only. Screenshots in ignored `payment-test-artifacts/browser-orders` explicitly contain synthetic orders.
 
-## Faktiki production preflight / backup vəziyyəti — HOLD
+## Əvvəlki buraxılış maneəsi (tarixi qeyd — artıq aradan qaldırılıb)
 
 - Production layihə: **mirpanel-payments**, ref `sidgtcgyqkdplgfabmmp`. Render konfiqurasiyasından Supabase URL uyğunluğu yoxlanıb; yalnız GET RPC: `employee_system_ready()` = **6**, `browser_orders_ready()` = **404 / yoxdur**.
 - Render environment-də DB SQL connection dəyişəni yoxdur. Service-role REST açarı SQL bağlantısı / pg_dump girişi deyil. Gizli açar dəyərləri çıxarılmayıb.
@@ -27,7 +27,15 @@ Məhsulların, Story/bannerlərin data/modelinə toxunulmur. Shared header scrip
 
 **Hazırkı yeganə buraxılış maneəsi: production üçün xarici, bərpası yoxlanmış backup sübutu.** Bu olmadan SQL, push və deploy YOX. Login sessiyası var deyə backup şərti atlanmır. Mövcud `mirpanel-test` layihəsinə real məlumat köçürmək və ya yeni pullu layihə yaratmaq avtomatik icra edilmir.
 
-## İstifadəçinin / səlahiyyətli operatorun etməli olduğu konkret addım
+## Əvvəlki credential hazırlığı (tamamlanıb; yenidən icra etmə)
+
+### Əl ilə backup girişinin faktiki yoxlaması
+
+Free plan yalnız scheduled backup-u məhdudlaşdırır. Connect → Direct → Session pooler pulsuz IPv4 bağlantısını göstərir: host `aws-0-eu-central-1.pooler.supabase.com`, port `5432`, database `postgres`, user `postgres.sidgtcgyqkdplgfabmmp`. Şifrə yerində `[YOUR-PASSWORD]` var; Dashboard mövcud şifrəni vermir. Render env adları yoxlanılıb: `SUPABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_RECEIPTS_BUCKET`; PostgreSQL bağlantı dəyişəni yoxdur. Standart lokal pgpass və Supabase CLI token faylları da yoxdur. REST açarı tam schema/functions/RLS daxil olan pg_dump girişi əvəzi deyil.
+
+Yeganə tələb olunan giriş addımı: `scripts/set-browser-orders-backup-credential.ps1` skriptini istifadəçinin öz PowerShell terminalında işə salıb **mövcud PostgreSQL şifrəsini yalnız gizli lokal prompt-a** daxil etmək. Skript heç bir DB əməliyyatı etmir; credential-i Git-dən kənarda `%LOCALAPPDATA%/MirpanelPrivateBackups` daxilində owner-only NTFS ACL və Windows DPAPI ilə saxlayır. Şifrə sıfırlanmır, çata göndərilmir, terminalda açıq görünmür. Script parser yoxlaması credential/backup/restore yoxlaması deyil. Real backup və private restore hələ icra edilməyib; migration/push/deploy HOLD-dur.
+
+Birbaşa bağlantı ekranı: https://supabase.com/dashboard/project/sidgtcgyqkdplgfabmmp/database/backups/scheduled?showConnect=true&connectTab=direct&method=session
 
 `mirpanel-payments` üçün mövcud təhlükəsiz DB bağlantısını yalnız öz lokal secret manager/environment-də istifadə edən operator:
 
@@ -36,6 +44,19 @@ Məhsulların, Story/bannerlərin data/modelinə toxunulmur. Shared header scrip
 3. Yalnız secret-siz sübut: backup ID/tarix/status, restore target adı/izolyasiyası, restore uğuru və consistency yoxlamasının nəticəsi təqdim edilməlidir. Raw dump, müştəri sətirləri və çeklər göndərilməsin.
 
 ## Backup təsdiqindən sonra icra ardıcıllığı
+
+### Faktiki nəticə — 2026-10-25
+
+- İstifadəçinin mövcud DPAPI credential-i dəyişdirilmədən istifadə edildi. DACL-only hazırlıq skripti 7/7 sintetik yoxlamadan keçib; SACL/owner dəyişmir, admin privilege tələb etmir.
+- Production PostgreSQL 17.6 / employee schema 6 read-only bağlantıda təsdiqləndi. TLS verification aktivdir; Dashboard-dan göstərilən rəsmi Supabase CA istifadə edildi.
+- PostgreSQL 17.11 rəsmi EDB binary arxivinin SHA-256 yoxlaması keçdi. `pg_dump` exported repeatable-read snapshot ilə bütün `public` sxeminin məlumat/DDL/ACL arxivini yaratdı. Bu, migration üçün scoped backup-dur: 44 biznes cədvəli və 99 funksiya; **Storage fayllarının və digər Supabase daxili sxemlərinin tam backup-u deyil**. Migration həmin faylları/sxemləri dəyişmir.
+- Arxiv Git-dən kənarda `%LOCALAPPDATA%/MirpanelPrivateBackups/browser-orders-2026-10-25T19-41-15-731Z` daxilindədir. Qovluq yalnız cari Windows istifadəçisinə açıqdır. `public.dump.dpapi` Windows CurrentUser DPAPI ilə şifrələnib; decrypt/SHA-256 roundtrip uyğunluğu yoxlanıb, plaintext dump nüsxələri silinib. Credential dəyişməyib. Restore cluster dayandırılıb; heç bir app/cron/WhatsApp adapterinə qoşulmayıb, yalnız loopback-də işləyib, ayrıca təsadüfi SCRAM şifrəsi istifadə olunub.
+- İlk lokal orchestration cəhdində Windows child-pipe lifecycle xətası düzəldildi. İkinci müqayisədə row counts və bütün DDL uyğun idi, timestamp fingerprint-ləri lokal timezone-a görə fərqlənirdi; UTC kanonikləşdirməsindən sonra bütün 44 cədvəlin fingerprint-ləri eyni oldu. Bu uğursuz cəhdlər production migration başlatmadı.
+- Son bərpa yoxlaması: bütün cədvəl məlumatları, funksiya tərifləri, constraints, indexes, RLS/policies uyğun; `pg_restore --exit-on-error` ACL-lərlə uğurlu; lokal migration ilk/təkrar tətbiqi və non-deleting rollback biznes məlumatlarını qorudu. Lokal owner production owner əvəzinə izolə edilmiş restore owner-dir (`--no-owner`); bu, production rollback planı deyil.
+- Production preflight `BROWSER_ORDERS_PREFLIGHT_OK`. Yalnız `202610250002_browser_orders.sql` bir dəfə tətbiq edildi. Verification: ready=1, manifest_entries=2, rls=true, anon_read=false, anon_rpc=false, service_rpc=true, orphan_links=0, employee_schema=6. Köhnə sifarişlər backfill edilmədi.
+- Release regressiyası yenidən: 14/14 paket, failed=0; yalnız sintetik əməliyyatlar. Production test order/reservation/receipt/WhatsApp=0.
+
+Yuxarıdakı əvvəlki HOLD və manual hazırlıq abzasları audit üçün saxlanılıb, cari vəziyyət kimi oxunmamalıdır. Aşağıdakı ardıcıllıq runbook-dur; production migration artıq tətbiq edilib və təkrarlanmamalıdır.
 
 Platforma: Supabase Dashboard → **mirpanel-payments** → SQL Editor, `https://supabase.com/dashboard/project/sidgtcgyqkdplgfabmmp/sql/new`.
 
