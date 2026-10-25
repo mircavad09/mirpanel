@@ -6,7 +6,6 @@
 /admin.html https://mirpanel.onrender.com/ 302
 /admin/* https://mirpanel.onrender.com/:splat 302
 /mehsul /mehsul.page 200
-/sifarislerim/ /sifarislerim 301
 /mehsul/ /mehsul 301
 /netflix-almaq /mehsul/netflix-sexsi 301
 /netflix-almaq/ /mehsul/netflix-sexsi 301
