@@ -976,13 +976,14 @@ const DATA = {
         {
           "label": "2 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 2,
-          "price": 10.49,
+          "price": 0,
           "regularPrice": 18.74
         },
         {
+          "active": true,
           "label": "3 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 3,
-          "price": 14.99,
+          "price": 0,
           "regularPrice": 27.53
         }
       ],
@@ -1039,11 +1040,11 @@ const DATA = {
         "alt": "Youtube Eyni hesab",
         "order": 6
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "whatsapp",
+      "soldOut": false,
       "active": true,
       "stock": null,
-      "stockEnabled": false,
+      "stockEnabled": true,
       "seller": "",
       "bestSeller": false,
       "orderFlow": "confirm_then_whatsapp",
@@ -1149,7 +1150,7 @@ const DATA = {
       "soldOut": true,
       "active": true,
       "stock": null,
-      "stockEnabled": false,
+      "stockEnabled": true,
       "seller": "",
       "bestSeller": false,
       "orderFlow": "confirm_then_whatsapp",
@@ -1188,6 +1189,13 @@ const DATA = {
           "label": "1 Ayliq (Yenilemek Mövcud deyil)",
           "months": 1,
           "price": 3.99
+        },
+        {
+          "stockVisibility": "show",
+          "label": "3 ayliq",
+          "months": 1,
+          "price": 10.99,
+          "regularPrice": 37
         }
       ],
       "orderConfirmation": {
