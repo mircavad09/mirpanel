@@ -4,18 +4,23 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {createPaymentSystem} from '../mirpanel-admin/payment-api.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
-export async function receiptFixture({employeeEnabled=false}={}){
+export async function receiptFixture({employeeEnabled=false,receiptValidationEnabled=false,analyzeReceipt}={}){
  const config={supabaseUrl:'https://test.invalid',supabaseSecretKey:'test-only',receiptsBucket:'private-test',encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64'),allowedOrigins:[],maxReceiptBytes:5*1024*1024,notificationEmail:'test@example.invalid',adminBaseUrl:'https://admin.invalid',whatsappPhone:'994515243545'};
  const security=createPaymentSecurity(config),methodId=crypto.randomUUID(),reservations=new Map(),orders=new Map(),files=new Map();
  config.employeeEnabled=employeeEnabled;config.inventoryEnabled=true;
+ config.receiptValidationEnabled=receiptValidationEnabled;config.receiptValidationRequested=receiptValidationEnabled;
+ const inspections=new Map(),fingerprints=new Map();
  const state={uploadCalls:0,orderCalls:0,reservationCalls:0,failures:0,failureStatus:503,delay:0,uploadKeys:[],removed:0};
  const method={id:methodId,provider_name:'ABB',display_name:'ABB',holder_name:'TEST ONLY',method_type:'bank_card',encrypted_number:security.encryptNumber('4169000000004655'),color:'#174f91',theme:'abb',last4:'4655'};
  const store={
+  receiptInspectionForHash:async(r,sha)=>[...inspections.values()].find(v=>v.reservation_id===r&&v.sha256===sha),
+  receiptInspection:async id=>inspections.get(id),
+  registerReceiptInspection:async a=>{const previous=[...inspections.values()].find(v=>v.reservation_id===a.reservationId&&v.sha256===a.sha256);if(previous)return previous;for(const k of a.keys)if(a.status!=='rejected'&&fingerprints.has(k.key)&&fingerprints.get(k.key)!==a.reservationId)throw Object.assign(Error('Bu çek əvvəl istifadə olunub.'),{status:409,code:'RECEIPT_DUPLICATE'});const v={id:crypto.randomUUID(),reservation_id:a.reservationId,sha256:a.sha256,status:a.status,report_cipher:a.reportCipher,expires_at:new Date(Date.now()+3600000).toISOString()};inspections.set(v.id,v);if(a.status!=='rejected')for(const k of a.keys)fingerprints.set(k.key,a.reservationId);return v;},
   inventorySnapshot:async()=>[],
   rateLimit:async()=>({allowed:true}),
   publicMethods:async()=>[{id:methodId,providerName:'ABB',type:'card',last4:'4655',available:true,status:'active',resolvedTheme:'abb'}],
   rawMethod:async()=>method,
-  reserve:async args=>{state.reservationCalls++;const id=crypto.randomUUID(),expiresAt=new Date(Date.now()+600000).toISOString();reservations.set(id,{id,checkout_key:args.checkoutKey,product_id:args.productId,plan_id:args.planId,status:'reserved',expires_at:expiresAt,method_id:methodId});return{id,expiresAt};},
+  reserve:async args=>{state.reservationCalls++;const id=crypto.randomUUID(),expiresAt=new Date(Date.now()+600000).toISOString();reservations.set(id,{id,checkout_key:args.checkoutKey,product_id:args.productId,plan_id:args.planId,status:'reserved',expires_at:expiresAt,method_id:methodId,amount:5.99,created_at:new Date().toISOString()});return{id,expiresAt};},
   checkoutReservation:async(id,key)=>{const r=reservations.get(id);if(!r||r.checkout_key!==key)throw Object.assign(new Error('Sessiya uyğun deyil'),{status:404});return r;},
   getOrderByReservation:async id=>orders.get(id)||null,
   uploadReceipt:async(path,receipt)=>{state.uploadCalls++;if(state.delay)await new Promise(r=>setTimeout(r,state.delay));if(state.failures){state.failures--;throw Object.assign(new Error('Test storage temporary'),{status:state.failureStatus,code:'RECEIPT_STORAGE_TEMPORARY'});}files.set(path,{...receipt,size:receipt.buffer.length});},
@@ -44,6 +49,6 @@ export async function receiptFixture({employeeEnabled=false}={}){
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;config.allowedOrigins.push(origin);
  const catalog={products:[{id:'test',title:'Test məhsul',plans:[{label:'1 aylıq',price:5.99,months:1}]}]};
- api=createPaymentSystem({config,store,mailer:{start(){},async drain(){}},json,readRawBody:raw,readBody:async(req,limit)=>JSON.parse((await raw(req,limit)).toString()||'{}'),requireAuth:()=>false,requireMutationAuth:()=>false,loadCatalog:async()=>catalog,actorName:'test'});
+ api=createPaymentSystem({config,store,analyzeReceipt,mailer:{start(){},async drain(){}},json,readRawBody:raw,readBody:async(req,limit)=>JSON.parse((await raw(req,limit)).toString()||'{}'),requireAuth:()=>false,requireMutationAuth:()=>false,loadCatalog:async()=>catalog,actorName:'test'});
  return {server,origin,state,orders,files,reservations,security,methodId,config,json,store,catalog};
 }

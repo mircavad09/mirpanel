@@ -116,23 +116,24 @@ export function receiptFromBuffer(buffer, declaredMimeType, maxBytes = 5 * 1024 
     });
   }
   const detected = detectReceiptType(buffer);
+  if(detected?.extension==='webp')throw Object.assign(new Error('Yalnız JPG, PNG və bankın PDF qəbzi qəbul edilir.'),{status:400,code:'RECEIPT_UNSUPPORTED_TYPE'});
   if (!detected) {
     if (detectAppleReceiptType(buffer)) {
       throw Object.assign(new Error("iPhone şəklini JPG və ya PDF formatına çevirib yenidən yükləyin."), { status: 400, code: "RECEIPT_HEIC_UNSUPPORTED" });
     }
-    throw Object.assign(new Error("Yalnız JPG, PNG, WEBP və ya PDF yükləyin."), { status: 400, code: "RECEIPT_UNSUPPORTED_TYPE" });
+    throw Object.assign(new Error("Yalnız JPG, PNG və ya bank PDF-i yükləyin."), { status: 400, code: "RECEIPT_UNSUPPORTED_TYPE" });
   }
   const declared = String(declaredMimeType || '').toLowerCase().split(';')[0];
   if (declared && declared !== 'application/octet-stream' &&
       (declared === 'image/jpg' ? 'image/jpeg' : declared) !== detected.mimeType) {
-    throw Object.assign(new Error('Faylın formatı uyğun deyil. JPG, PNG, WEBP və ya PDF faylını yenidən seçin.'), {status:400,code:'RECEIPT_UNSUPPORTED_TYPE'});
+    throw Object.assign(new Error('Faylın formatı uyğun deyil. JPG, PNG və ya bank PDF-ini yenidən seçin.'), {status:400,code:'RECEIPT_UNSUPPORTED_TYPE'});
   }
   if (!hasValidReceiptStructure(buffer, detected.extension)) {
     throw Object.assign(new Error("Fayl zədələnib və ya tam yüklənməyib."), { status: 400, code: "RECEIPT_DAMAGED" });
   }
   if (detected.extension === "pdf") {
-    const sample = buffer.subarray(0, Math.min(buffer.length, 1_000_000)).toString("latin1");
-    if (/\/(?:JavaScript|JS|Launch|EmbeddedFile|OpenAction|AA)\b/i.test(sample)) {
+    const sample = buffer.toString("latin1").replace(/#([a-f0-9]{2})/gi,(_,n)=>String.fromCharCode(parseInt(n,16)));
+    if (/\/(?:JavaScript|JS|Launch|EmbeddedFile|OpenAction|AA|RichMedia|XFA|SubmitForm|GoToR)\b/i.test(sample)) {
       throw Object.assign(new Error("Aktiv məzmun daşıyan PDF qəbul edilmir."), { status: 400 });
     }
   }

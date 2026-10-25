@@ -11,7 +11,7 @@ const sharp=createRequire(import.meta.url)(path.join(process.env.MIRPANEL_NODE_M
 const fixture=await receiptFixture(),{state,origin,orders,files,reservations}=fixture;
 const browser=await chromium.launch({headless:true,executablePath:process.env.MIRPANEL_BROWSER_PATH});
 const pic=sharp({create:{width:12,height:12,channels:3,background:'#cccccc'}}),jpg=await pic.clone().jpeg().toBuffer();
-const receipts=[{name:'receipt.jpg',mimeType:'image/jpeg',buffer:jpg},{name:'receipt.png',mimeType:'image/png',buffer:await pic.clone().png().toBuffer()},{name:'receipt.webp',mimeType:'image/webp',buffer:await pic.clone().webp().toBuffer()},{name:'receipt.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.7\n%%EOF')}];
+const receipts=[{name:'receipt.jpg',mimeType:'image/jpeg',buffer:jpg},{name:'receipt.png',mimeType:'image/png',buffer:await pic.clone().png().toBuffer()},{name:'receipt.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.7\n%%EOF')}];
 const visual=process.env.MIRPANEL_VISUAL_DIR;if(visual)fs.mkdirSync(visual,{recursive:true});
 const errors=[],checks=[];
 let popups=0;
@@ -106,5 +106,5 @@ try{
   await page.setInputFiles('#paymentReceiptInput',receipts[0]);await ready(page);assert.equal(attempts,2);if(mode==='timeout')assert.ok(await page.evaluate(()=>window.__receiptTimeouts>0));await page.close();
  }
  assert.deepEqual(errors,[]);assert.equal(popups,0);
- console.log(JSON.stringify({checks,formats:['JPG','PNG','WEBP','PDF'],emptyAndUploadingBlocked:true,serverConfirmationRequired:true,retry:3,manualRetry:true,sameFileReselection:true,replaceRemove:true,tokenTamperingAndCrossCheckoutBlocked:true,storageMissingBlocked:true,linkedReceiptPreserved:true,doubleClickDuplicates:0,newTabs:popups,appErrors:errors,productionOrders:0,productionReservations:0},null,2));
+ console.log(JSON.stringify({checks,formats:['JPG','PNG','PDF'],webpRejected:true,emptyAndUploadingBlocked:true,serverConfirmationRequired:true,retry:3,manualRetry:true,sameFileReselection:true,replaceRemove:true,tokenTamperingAndCrossCheckoutBlocked:true,storageMissingBlocked:true,linkedReceiptPreserved:true,doubleClickDuplicates:0,newTabs:popups,appErrors:errors,productionOrders:0,productionReservations:0},null,2));
 }finally{await browser.close();await new Promise(r=>fixture.server.close(r));}

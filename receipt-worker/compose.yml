@@ -1,0 +1,16 @@
+services:
+  receipt-ocr:
+    build: .
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    pids_limit: 64
+    mem_limit: 768m
+    cpus: 1
+    tmpfs: [/tmp:size=64m,mode=1777]
+    environment:
+      RECEIPT_OCR_TOKEN: ${RECEIPT_OCR_TOKEN:?Set a secret of at least 32 bytes}
+    networks: [receipt-private]
+networks:
+  receipt-private:
+    internal: true

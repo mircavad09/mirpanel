@@ -49,6 +49,9 @@ const config = {
     .split(",").map((item) => item.trim()).filter(Boolean),
   reservationMinutes: Math.max(1, Math.min(30, Number(process.env.PAYMENT_RESERVATION_MINUTES || 10))),
   maxReceiptBytes: Math.max(1, Math.min(5 * 1024 * 1024, Number(process.env.PAYMENT_RECEIPT_MAX_BYTES || 5 * 1024 * 1024))),
+  receiptValidationRequested: process.env.RECEIPT_VALIDATION_ENABLED === 'true',
+  receiptOcrUrl: process.env.RECEIPT_OCR_URL || '',
+  receiptOcrToken: process.env.RECEIPT_OCR_TOKEN || '',
   adminBaseUrl: process.env.RENDER_EXTERNAL_URL || "https://mirpanel.onrender.com",
   siteBaseUrl: process.env.MIRPANEL_SITE_URL || "https://mirpanel.com",
   whatsappPhone: process.env.MIRPANEL_WHATSAPP_PHONE || "994515243545",
@@ -1285,6 +1288,7 @@ if(storiesSupabase) {
   const probe=await Promise.race([storiesSupabase.rpc('employee_system_ready'),new Promise(resolve=>setTimeout(()=>resolve({error:true}),5000))]);
   config.employeeEnabled=process.env.EMPLOYEE_PANEL_ENABLED!=='false' && !probe.error && probe.data>=4;
   config.inventoryEnabled=!probe.error && probe.data>=5;
+  config.receiptValidationEnabled=process.env.RECEIPT_VALIDATION_ENABLED==='true'&&!probe.error&&probe.data>=6;
  } catch {config.employeeEnabled=false;config.inventoryEnabled=false;}
 }
 config.employeeEnabled=employeeSystem.enabled();
@@ -1355,7 +1359,7 @@ const server = http.createServer(async (request, response) => {
       if(!requireAuth(request,response))return;
       return serveFile(response,'workforce-admin.html');
     }
-    if(['/employee.js','/employee.css','/employee-login.js'].includes(pathname))return serveFile(response,pathname.slice(1));
+    if(['/employee.js','/employee.css','/employee-login.js','/receipt-analysis-view.js'].includes(pathname))return serveFile(response,pathname.slice(1));
     if(pathname.startsWith('/admin')&&await employeeSystem.blockAdmin(request,response))return;
 
     if (pathname === "/admin") {

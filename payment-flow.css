@@ -122,3 +122,5 @@
  .paymentSubmitActions button{min-height:48px;font-size:12px;line-height:1.25}
  .paymentFlow input{font-size:16px}
 }
+.paymentReceiptGuidance{margin:0 0 8px;color:#d1d1d5;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
+.paymentReceiptSuccess{overflow-wrap:anywhere}

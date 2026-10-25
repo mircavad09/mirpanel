@@ -54,11 +54,11 @@ assert.equal(receiptFromPayload({ mimeType: "application/pdf", contentBase64: pd
 assert.equal(receiptFromBuffer(jpeg, "image/jpeg").extension, "jpg");
 expectThrow(() => receiptFromPayload({ mimeType: "image/png", contentBase64: jpeg.toString("base64") }), /formatı uyğun deyil/);
 assert.equal(receiptFromBuffer(png, "").mimeType, "image/png");
-assert.equal(receiptFromBuffer(webp, "application/octet-stream").mimeType, "image/webp");
+expectThrow(() => receiptFromBuffer(webp, "application/octet-stream"), /Yalnız JPG, PNG/);
 expectThrow(() => receiptFromBuffer(pdf, "text/plain"), /formatı uyğun deyil/);
 assert.equal(receiptFromBuffer(pdf, "application/pdf").mimeType, "application/pdf");
 expectThrow(() => receiptFromBuffer(heic, "image/heic"), /iPhone şəklini JPG və ya PDF/);
-expectThrow(() => receiptFromBuffer(Buffer.from("not a receipt"), "image/jpeg"), /Yalnız JPG, PNG, WEBP və ya PDF/i);
+expectThrow(() => receiptFromBuffer(Buffer.from("not a receipt"), "image/jpeg"), /Yalnız JPG, PNG və ya bank PDF-i/i);
 expectThrow(() => receiptFromPayload({ mimeType: "application/pdf", contentBase64: Buffer.from("%PDF-1.7\n/OpenAction /JavaScript\n%%EOF", "ascii").toString("base64") }), /Aktiv məzmun/i);
 expectThrow(() => receiptFromPayload({ mimeType: "image/jpeg", contentBase64: Buffer.alloc(5 * 1024 * 1024 + 1, 1).toString("base64") }), /5 MB/i);
 expectThrow(() => receiptFromBuffer(Buffer.from([0xff, 0xd8, 0xff, 0, 1, 2, 3, 4, 5, 6, 7, 8]), "image/jpeg"), /zədələnib/i);
@@ -124,7 +124,7 @@ assert.ok(store.includes("createSignedUrl"));
 assert.ok(store.includes("consume_payment_review_token"));
 assert.ok(store.includes("result.diagnostic"));
 assert.ok(api.includes('request.method === "POST" && url.pathname === "/api/admin/payment-review-token"'));
-assert.ok(flow.includes('accept="image/jpeg,image/png,image/webp,application/pdf,.jpg,.jpeg,.png,.webp,.pdf"'));
+assert.ok(flow.includes('accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf"'));
 assert.equal(flow.includes('class="paymentReceiptSuccess" role="status">Çek uğurla yükləndi'), false, "Server təsdiqindən əvvəl saxta uğur göstərilməməlidir");
 assert.ok(flow.includes("Çek seçildi — göndərildikdə təhlükəsiz yoxlanacaq."));
 assert.ok(flow.includes("new FormData()"), "Çek birbaşa multipart FormData ilə göndərilməlidir");
@@ -280,7 +280,7 @@ console.log(JSON.stringify({
   commercialSnapshot: snapshot.sha256,
   products: snapshot.productCount,
   activeProducts: snapshot.activeProductCount,
-  receiptTypes: ["JPG", "PNG", "WEBP", "PDF"],
+  receiptTypes: ["JPG", "PNG", "PDF"],
   rls: true,
   privateBucket: true
 }, null, 2));

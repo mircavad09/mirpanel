@@ -1,0 +1,21 @@
+import assert from 'node:assert/strict';import crypto from 'node:crypto';import {employeeFixture} from './employee-http-fixture.mjs';import {hashPassword} from '../mirpanel-admin/employee-security.mjs';import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
+const f=await employeeFixture();let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;},id=()=>crypto.randomUUID();f.config.tokenSecret=crypto.randomBytes(32).toString('base64');
+const req=(p,h={},body)=>fetch(f.base+p,{method:body?'POST':'GET',headers:{...h,...(body?{'Content-Type':'application/json'}:{})},body:body?JSON.stringify(body):undefined});
+try{
+ const employee=id(),other=id(),order=id(),inspection=id(),password=crypto.randomBytes(24).toString('base64url');
+ await f.db.exec('alter table payment_orders add column receipt_inspection_id uuid,add column bank_credit_verified_at timestamptz,add column if not exists reservation_id uuid;create table receipt_inspections(id uuid primary key,status text,report_cipher text,"similar" boolean,reservation_id uuid,created_at timestamptz default clock_timestamp());');
+ await f.db.query("insert into employee_accounts(id,login,display_name,password_hash) values($1,'receipt-view-test','Fixture',$2)",[employee,await hashPassword(password)]);await f.db.query("select employee_start_reporting($1,'test-admin')",[employee]);
+ await f.db.query("insert into payment_orders(id,order_code,product_id,product_title,plan_id,plan_name,amount,quantity,created_at,receipt_inspection_id) values($1,'SYNTH-ONLY','capcut','Synthetic','0','1 aylıq',5,1,clock_timestamp(),$2)",[order,inspection]);
+ const cipher=createPaymentSecurity(f.config).encryptSecret(JSON.stringify({status:'technical_pass',fields:{bank:'abb',bankName:'ABB',amountCents:500,recipientLast4:'4655',reference:'SYNTH-ROLE-ONLY'},checks:{amount:true},riskReasons:[],reasons:[]}));
+ await f.db.query('insert into receipt_inspections(id,status,report_cipher,"similar",reservation_id) values($1,$2,$3,true,$4)',[inspection,'manual_review',cipher,order]);
+ await f.db.query('update payment_orders set reservation_id=$1 where id=$1',[order]);f.config.receiptValidationEnabled=true;
+ await f.db.query('insert into receipt_inspections(id,status,report_cipher,"similar",reservation_id) values($1,$2,$3,false,$4)',[id(),'rejected',createPaymentSecurity(f.config).encryptSecret(JSON.stringify({status:'rejected',reasons:['MISSING_AMOUNT'],riskReasons:[],fields:{}})),order]);
+ const route='/api/employee/orders/'+order+'/receipt-analysis';eq((await req(route)).status,401);eq((await req('/api/admin/workforce/orders/'+order+'/receipt-analysis')).status,401);
+ const login=await req('/api/employee/login',{}, {login:'receipt-view-test',password});eq(login.status,200);const h={Cookie:login.headers.get('set-cookie').split(';')[0]};
+ const response=await req(route,h);eq(response.status,200);const data=await response.json();eq(data.analysis.status,'manual_review');eq(data.analysis.fields.recipientLast4,'4655');eq(data.analysis.riskReasons.includes('SIMILAR_RECEIPT'),true);eq(data.analysis.text,undefined);eq(data.analysis.report_cipher,undefined);
+ eq(data.analysis.attempts.length,2);eq(data.analysis.attempts.some(a=>a.status==='rejected'&&a.reasons.includes('MISSING_AMOUNT')),true);
+ eq((await req('/api/admin/workforce/orders/'+order+'/receipt-analysis',h)).status,403);eq((await req('/api/admin/workforce/orders/'+order+'/complete',h,{})).status,403);
+ const admin=await req('/api/admin/workforce/orders/'+order+'/receipt-analysis',{Cookie:'fixture_owner=yes'});eq(admin.status,200);eq((await admin.json()).analysis.status,'manual_review');
+ await f.db.query("insert into employee_accounts(id,login,display_name,password_hash) values($1,'other-view-test','Other','unused')",[other]);await f.db.query("select employee_start_reporting($1,'test-admin')",[other]);await f.db.query("update payment_orders set created_at=clock_timestamp() where id=$1",[order]);await f.db.query("select employee_order_action_v4($1,'accept','employee',$2,$3,$4,1,'{}')",[order,other,other,id()]);
+ eq((await req(route,h)).status,403);console.log(JSON.stringify({ok:true,checks,sessionless401:true,employeeAdmin403:true,crossEmployee403:true,rawOcrNotExposed:true,productionWrites:0},null,2));
+}finally{await f.close();}

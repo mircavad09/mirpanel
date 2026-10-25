@@ -23,6 +23,7 @@ import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./pay
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
   const message = String(error?.message || fallback);
   const known = [
+    'RECEIPT_DUPLICATE','RECEIPT_INSPECTION_REQUIRED','BANK_CREDIT_CONFIRMATION_REQUIRED',
     "INVENTORY_EMPTY", "INVENTORY_SETUP_REQUIRED", "INVENTORY_RESERVATION_REQUIRED", "INVENTORY_VERSION_CONFLICT", "PLAN_INVENTORY_MANAGED_SEPARATELY", "INVALID_INVENTORY",
     "IDEMPOTENCY_CONFLICT", "PAYMENT_METHOD_UNAVAILABLE", "PAYMENT_METHOD_LIMIT_REACHED", "PAYMENT_METHOD_TEMPORARILY_BUSY",
     "RESERVATION_NOT_FOUND", "RESERVATION_EXPIRED", "ORDER_NOT_FOUND", "ORDER_NOT_REVIEWABLE",
@@ -34,6 +35,7 @@ function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
     "CAPCUT_DELIVERY_NOT_FOUND", "CAPCUT_ORDER_REQUIRED", "CAPCUT_ORDER_NOT_REVIEWABLE"
   ].find((code) => message.includes(code));
   const translated = {
+    RECEIPT_DUPLICATE:'Bu çek əvvəl istifadə olunub.',RECEIPT_INSPECTION_REQUIRED:'Qəbz texniki yoxlamadan keçməyib.',BANK_CREDIT_CONFIRMATION_REQUIRED:'Bank hesabında real mədaxili yoxladığınızı təsdiqləyin.',
     INVENTORY_EMPTY:"Stokda yoxdur.",INVENTORY_SETUP_REQUIRED:"Stok bazada təsdiqlənməyib. Admin yoxlaması tələb olunur.",INVENTORY_RESERVATION_REQUIRED:"Bu sifariş üçün stok rezerv edilməyib. Tamamlama bloklandı.",INVENTORY_VERSION_CONFLICT:"Stok dəyişib. Yeniləyib təkrar yoxlayın.",PLAN_INVENTORY_MANAGED_SEPARATELY:"Stok plan səviyyəsində idarə olunur; ümumi məhsul sayı yazıla bilməz.",
     IDEMPOTENCY_CONFLICT: "Təkrar sorğu əvvəlki sifarişlə uyğun deyil.",
     PAYMENT_METHOD_UNAVAILABLE: "Ödəniş üsulu artıq əlçatan deyil.",
@@ -344,6 +346,10 @@ export function createPaymentStore(config) {
       });
     },
     inventorySnapshot(){return rpc('inventory_snapshot');},
+    async receiptInspectionForHash(reservation,hash){const {data,error}=await client.from('receipt_inspections').select('*').eq('reservation_id',reservation).eq('sha256',hash).eq('version',1).maybeSingle();if(error)throw paymentError(error);return data;},
+    async receiptInspection(id){const {data,error}=await client.from('receipt_inspections').select('*').eq('id',id).maybeSingle();if(error)throw paymentError(error);return data;},
+    async receiptInspectionHistory(reservation){const {data,error}=await client.from('receipt_inspections').select('status,report_cipher,similar,created_at').eq('reservation_id',reservation).order('created_at',{ascending:false}).limit(10);if(error)throw paymentError(error);return data||[];},
+    registerReceiptInspection(a){return rpc('receipt_register',{p_reservation:a.reservationId,p_sha:a.sha256,p_status:a.status,p_cipher:a.reportCipher,p_keys:a.keys,p_phash:a.phash,p_combination:a.combination,p_similarity:a.similarity});},
     setInventory(productId,available,actor,key,version){return rpc('inventory_set_quantity',{p_product:productId,p_available:available,p_actor:actor,p_key:key,p_expected_version:version});},
     async submitOrder(args) {
       const params = {
@@ -364,7 +370,7 @@ export function createPaymentStore(config) {
       // canonical plan metadata; keep the legacy transactional receipt/payment RPC.
       const metadata=args.checkoutMetadata;
       const canonicalPlanId=metadata ? await rpc('employee_plan_resolve',{p_product:args.productId,p_key:metadata.sourcePlanKey,p_signature:metadata.signature,p_label:args.planName}) : null;
-      const result=await rpc('submit_payment_order_v2',params);
+      const result=await rpc(config.receiptValidationEnabled?'receipt_submit_order':'submit_payment_order_v2',{...params,...(config.receiptValidationEnabled?{p_inspection:args.receiptInspectionId}:{})});
       if(metadata){
         const snapshot={productId:args.productId,planId:canonicalPlanId,productName:args.productTitle,planName:args.planName,unitPrice:metadata.unitPrice,quantity:1,amount:metadata.unitPrice};
         const {error}=await client.from('payment_orders').update({quantity:1,canonical_plan_id:canonicalPlanId,checkout_snapshot:snapshot})
@@ -374,7 +380,7 @@ export function createPaymentStore(config) {
       return result;
     },
     async checkoutReservation(reservationId, checkoutKey) {
-      const { data, error } = await client.from("payment_reservations").select("id,checkout_key,product_id,plan_id,amount,currency,status,expires_at,method_id")
+      const { data, error } = await client.from("payment_reservations").select("id,checkout_key,product_id,plan_id,amount,currency,status,expires_at,method_id,created_at")
         .eq("id", reservationId).eq("checkout_key", checkoutKey).maybeSingle();
       if (error) throw paymentError(error);
       if (!data) throw Object.assign(new Error("Rezerv bu ödəniş sessiyasına aid deyil."), { status: 404 });
@@ -650,11 +656,12 @@ export function createPaymentStore(config) {
       const { error } = await client.from("capcut_deliveries").update({ notified_at: new Date().toISOString(), updated_at: new Date().toISOString() }).eq("order_id", orderId).is("notified_at", null);
       if (error) throw paymentError(error);
     },
-    approveOrder(id, durationMonths, actor) {
-      return rpc(config.employeeEnabled ? 'employee_approve_direct' : 'approve_payment_order_v7', {
+    approveOrder(id, durationMonths, actor,bankCreditConfirmed=false) {
+      return rpc(config.receiptValidationEnabled?'receipt_approve_direct':config.employeeEnabled ? 'employee_approve_direct' : 'approve_payment_order_v7', {
         p_order_id: id,
         p_duration_months: durationMonths || null,
-        p_actor: actor
+        p_actor: actor,
+        ...(config.receiptValidationEnabled?{p_confirm:bankCreditConfirmed}:{})
       });
     },
     financeSnapshot() { return rpc("payment_finance_snapshot"); },
@@ -812,6 +819,7 @@ export function createPaymentStore(config) {
       return this.getSettings();
     },
     async cleanupExpiredReceipts() {
+      if(config.receiptValidationEnabled)await rpc('receipt_scrub_expired');
       const settings = await this.getSettings();
       const cutoff = new Date(Date.now() - settings.receiptRetentionDays * 86400000).toISOString();
       const { data, error } = await client.from("payment_orders").select("id,receipt_path").in("status", ["approved", "rejected"]).is("receipt_deleted_at", null).lt("updated_at", cutoff).limit(50);

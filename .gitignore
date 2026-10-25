@@ -4,3 +4,4 @@ node_modules/
 mirpanel-admin/node_modules/
 *.log
 payment-test-artifacts/
+receipt-worker/models/

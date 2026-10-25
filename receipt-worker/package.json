@@ -1,0 +1,1 @@
+{"name":"mirpanel-receipt-worker","private":true,"type":"module","scripts":{"start":"node server.mjs","models":"node models.mjs"},"dependencies":{"@napi-rs/canvas":"0.1.100","jsqr":"1.4.0","pdfjs-dist":"6.4.299","sharp":"0.35.5","tesseract.js":"7.0.0"},"engines":{"node":">=24.15"},"devDependencies":{"qrcode":"1.5.4"}}
