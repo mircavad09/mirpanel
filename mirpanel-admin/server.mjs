@@ -49,7 +49,8 @@ const config = {
     .split(",").map((item) => item.trim()).filter(Boolean),
   reservationMinutes: Math.max(1, Math.min(30, Number(process.env.PAYMENT_RESERVATION_MINUTES || 10))),
   maxReceiptBytes: Math.max(1, Math.min(5 * 1024 * 1024, Number(process.env.PAYMENT_RECEIPT_MAX_BYTES || 5 * 1024 * 1024))),
-  receiptValidationRequested: process.env.RECEIPT_VALIDATION_ENABLED === 'true',
+  receiptShapeEnabled: process.env.RECEIPT_SHAPE_ENABLED !== 'false',
+  receiptValidationRequested: false, // Broad schema-6 workflow superseded; not deployed.
   receiptOcrUrl: process.env.RECEIPT_OCR_URL || '',
   receiptOcrToken: process.env.RECEIPT_OCR_TOKEN || '',
   adminBaseUrl: process.env.RENDER_EXTERNAL_URL || "https://mirpanel.onrender.com",
@@ -1288,7 +1289,7 @@ if(storiesSupabase) {
   const probe=await Promise.race([storiesSupabase.rpc('employee_system_ready'),new Promise(resolve=>setTimeout(()=>resolve({error:true}),5000))]);
   config.employeeEnabled=process.env.EMPLOYEE_PANEL_ENABLED!=='false' && !probe.error && probe.data>=4;
   config.inventoryEnabled=!probe.error && probe.data>=5;
-  config.receiptValidationEnabled=process.env.RECEIPT_VALIDATION_ENABLED==='true'&&!probe.error&&probe.data>=6;
+  config.receiptValidationEnabled=false; // Receipt presence does not require a migration.
  } catch {config.employeeEnabled=false;config.inventoryEnabled=false;}
 }
 config.employeeEnabled=employeeSystem.enabled();

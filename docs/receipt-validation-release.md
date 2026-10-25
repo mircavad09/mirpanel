@@ -1,5 +1,7 @@
 # Qəbzin texniki yoxlaması — lokal buraxılış paketi
 
+Bu sənəd əvvəlki geniş əhatənin tarixçəsidir. Son qəbul siyasəti docs/receipt-shape-release.md sənədindədir: yalnız qəbz mövcudluğu, schema 5, migration YOX. Bu sənəddəki receipt schema-6 SQL-i bu buraxılış üçün işlətməyin.
+
 Tətbiq hazırlığının aktual qərarı və HOLD şərtləri: [receipt-validation-readiness.md](receipt-validation-readiness.md). Production uyğunluğu və xarici backup restore-u bu sessiyada təsdiqlənməyib.
 
 ## Səbəb və sərhəd

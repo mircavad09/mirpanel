@@ -2,7 +2,9 @@
   "name": "mirpanel-admin",
   "private": true,
   "type": "module",
+  "engines": {"node": ">=24.15.0 <25"},
   "scripts": {
+    "postinstall": "node ../scripts/install-receipt-runtime.mjs",
     "start": "node server.mjs",
     "test:payments": "node ../scripts/test-payment-system.mjs",
     "test:payment-orders": "node ../scripts/test-payment-orders-admin.mjs",

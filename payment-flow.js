@@ -235,7 +235,7 @@
 
   function receiptMarkup() {
     return `<form id="paymentReceiptForm" class="paymentReceiptBox" action="" method="post" novalidate>
-      <p class="paymentReceiptGuidance">Bank tətbiqində əməliyyatı açın və tam ödəniş qəbzini yükləyin. Qəbzdə məbləğ, tarix-saat, əməliyyat nömrəsi və ödəniş edilən kart görünməlidir. Adi screenshot və kəsilmiş şəkil qəbul edilmir.</p>
+      <p class="paymentReceiptGuidance">Bank və ya ödəniş tətbiqindəki qəbzi seçin. Adi foto və WhatsApp yazışması screenshotu deyil, ödəniş qəbzinin şəklini və ya PDF faylını yükləyin.</p>
       <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>SİFARİŞİ TAMAMLAMAQ ÜÇÜN ÇEKİ BURAYA YÜKLƏYİN</strong><span class="paymentReceiptSelectButton">📎 QALEREYADAN ÇEKİ SEÇ</span><span id="paymentReceiptPickerDescription">Ödəniş çekinin şəklini və ya PDF faylını seçin.</span><small id="paymentReceiptPickerFormats">JPG, PNG və ya bank PDF-i · maksimum 5 MB</small></label>
       <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf" hidden>
       <div id="paymentReceiptPreview" class="paymentReceiptPreview hidden"></div>
@@ -664,7 +664,7 @@
                 storeCheckout(flow);
                 discardReceipt(flow, flow.previousReceiptUploadToken, flow.receiptUploadToken);
                 flow.previousReceiptUploadToken = null;
-                setProgress(100, uploaded.technicalStatus === 'manual_review' ? "✓ Qəbz əlavə edildi — əl ilə yoxlanmalıdır. Ödəniş hələ təsdiqlənməyib." : uploaded.technicalStatus === 'technical_pass' ? "✓ Qəbz texniki baxımdan qəbul edildi. Ödəniş hələ təsdiqlənməyib." : "✓ Çek uğurla əlavə edildi");
+                setProgress(100, uploaded.receiptShapeAccepted ? "Çek uğurla yükləndi. Məlumatlar serverə ötürüldü." : "✓ Çek uğurla əlavə edildi");
                 receiptStatus?.classList.replace("paymentReceiptPending", "paymentReceiptSuccess");
                 document.getElementById("paymentReceiptForm")?.classList.remove("isUploading");
                 document.getElementById("paymentReceiptForm")?.classList.add("uploadSucceeded");
@@ -673,7 +673,8 @@
                 error.hidden = true;
                 setReceiptSubmitReady(true);
                 setStage(flow,'receipt_ready');
-                setMessage('Çek qəbul edildi. İndi sifarişi göndərin.', 'success');
+                setMessage(uploaded.receiptShapeAccepted ? 'Çek uğurla yükləndi. Məlumatlar serverə ötürüldü.' : 'Çek qəbul edildi. İndi sifarişi göndərin.', 'success');
+                if(uploaded.autoSubmit===true&&uploaded.receiptShapeAccepted===true)document.getElementById('paymentReceiptForm')?.requestSubmit();
                 return;
               } catch (submitError) {
                 flow.uploadController = null;

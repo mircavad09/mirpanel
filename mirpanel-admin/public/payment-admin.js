@@ -152,7 +152,7 @@
       <div class="paymentOrderHead"><div>${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}<strong title="${escp(order.orderCode)}">${escp(order.orderCode)}</strong>${copyButton(order)}<span class="statusPill status-${escp(expiring ? order.expiry?.code : order.status)}">${escp(expiring ? order.expiry?.label : statusLabel[order.status] || "Yoxlanılır")}</span></div><time datetime="${escp(displayDate || "")}">${escp(dateTime(displayDate))}</time></div>
       <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
       <div class="paymentOrderActions">
-        ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button><button class="btn" type="button" data-receipt-analysis>Texniki yoxlama</button>' : '<span class="statusPill">Çek saxlanma müddəti bitib</span>'}
+        ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : '<span class="statusPill">Çek saxlanma müddəti bitib</span>'}
         ${pending ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : `${order.workforce&&!order.workforce.ownerRole?'<button class="btn" type="button" data-claim-payment>Üzərinə götür</button>':''}<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>` : ""}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
       </div>${pending || expiring ? orderHistory(order) : ""}
@@ -527,7 +527,6 @@
 
   async function handleOrderAction(card, action) {
     const id = card.dataset.paymentOrderId;
-    if (action === "receipt-analysis") { const result=await paymentApi(`/api/admin/payment-orders/${id}/receipt-analysis`); window.ReceiptAnalysisView.show(result.analysis); return; }
     if (action === "receipt") {
       const receiptWindow = window.open("about:blank", "_blank"); if (receiptWindow) receiptWindow.opener = null;
       try { const result = await paymentApi(`/api/admin/payment-orders/${id}/receipt`); if (receiptWindow) receiptWindow.location.replace(result.url); else window.location.assign(result.url); }
@@ -535,12 +534,12 @@
       return;
     }
     if (paymentState.orderActions.has(id)) return;
-    if (action === "approve" && !await paymentActionDialog({ title: "Ödənişi təsdiqlə", message: "Bank hesabınızdakı real mədaxili ayrıca yoxladığınızı təsdiqləyirsiniz? Qəbz şəkli və OCR mədaxili təsdiqləmir.", confirmText: "Mədaxili yoxladım — təsdiqlə" })) return;
+    if (action === "approve" && !await paymentActionDialog({ title: "Ödənişi təsdiqlə", message: "Bu sifarişin ödənişini təsdiqləmək istəyirsiniz?", confirmText: "Təsdiqlə" })) return;
     if (action === "reject" && !await paymentActionDialog({ title: "Sifarişi rədd et", message: "Bu sifarişi rədd etmək istəyirsiniz?", confirmText: "Rədd et", danger: true })) return;
     if (action === "contacted" && !await paymentActionDialog({ title: "Əlaqə saxlanıldı", message: "Müştəri ilə əlaqə saxladığınızı təsdiqləyirsiniz?", confirmText: "Təsdiqlə" })) return;
     paymentState.orderActions.add(id); card.querySelectorAll("button").forEach((button) => { button.disabled = true; });
     try {
-      const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: JSON.stringify(action === "approve" ? {bankCreditConfirmed:true} : {}) });
+      const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: "{}" });
       toast(result.idempotent ? "Bu əməliyyat artıq tətbiq edilib." : "Sifariş məlumatı yeniləndi.");
       card.remove(); await Promise.all([loadOrders(), loadMethods()]);
     } finally { paymentState.orderActions.delete(id); if (card.isConnected) card.querySelectorAll("button").forEach((button) => { button.disabled = false; }); }
@@ -696,7 +695,6 @@
         if (event.target.closest("#paymentConfirmSelected")) await confirmSelectedExpiringOrders();
         const card = event.target.closest("[data-payment-order-id]");
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
-        if (card && event.target.closest("[data-receipt-analysis]")) await handleOrderAction(card, "receipt-analysis");
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
         if (card && event.target.closest("[data-claim-payment]")) {
           if(paymentState.orderActions.has(card.dataset.paymentOrderId))return;

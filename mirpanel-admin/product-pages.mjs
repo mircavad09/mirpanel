@@ -449,7 +449,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
   <link rel="stylesheet" href="/product-page.css?v=detail-accordion-20261020-1">
-  <link rel="stylesheet" href="/payment-flow.css?v=receipt-technical-20261025-1">
+  <link rel="stylesheet" href="/payment-flow.css?v=receipt-shape-20261025-2">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
@@ -553,7 +553,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 
   <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
-  <script src="/payment-flow.js?v=receipt-technical-20261025-1"></script>
+  <script src="/payment-flow.js?v=receipt-shape-20261025-2"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
   <script src="/product-page.js?v=detail-accordion-20261020-1"></script>

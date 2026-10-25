@@ -1,5 +1,7 @@
 # Qəbz migration-u: tətbiq hazırlığı və HOLD planı
 
+Bu sənəd əvvəlki geniş əhatənin tarixçəsidir. Son qəbul siyasəti docs/receipt-shape-release.md sənədindədir: yalnız qəbz mövcudluğu, schema 5, migration YOX. Bu sənəddəki receipt schema-6 SQL-i bu buraxılış üçün işlətməyin.
+
 ## Qərar və yoxlama sərhədi
 
 Başlanğıc commit `6f70d651497320580c8b6c45eecbdad99a299d77` qorunur. Bu mərhələdə production migration, push/deploy, işçi hesabı və biznes yazısı yoxdur. Başqa işə aid lokal dəyişikliklər saxlanır.

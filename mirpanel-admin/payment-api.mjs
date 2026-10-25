@@ -17,7 +17,9 @@ import {signature} from './employee-security.mjs';
 import {planKey} from './payment-profit.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
-import {createReceiptInspector} from './receipt-inspector.mjs';
+import {createReceiptShapeInspector} from './receipt-shape-inspector.mjs';
+import fs from 'node:fs';
+import {fileURLToPath} from 'node:url';
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -118,7 +120,7 @@ export function createPaymentSystem(options) {
 
   const security = createPaymentSecurity(config);
   const store = options.store || createPaymentStore(config);
-  const receiptInspector=createReceiptInspector({config,store,security,analyze:options.analyzeReceipt});
+  const shapeInspector=createReceiptShapeInspector({analyze:options.analyzeReceiptShape});
   const mailer = options.mailer || createPaymentMailer(config, store);
   const allowedOrigins = new Set(config.allowedOrigins);
 
@@ -219,7 +221,7 @@ export function createPaymentSystem(options) {
     if (request.method === "GET" && url.pathname === "/api/payments/health") {
       await publicRate(request, "health", 60, 30);
       await store.publicMethods();
-      publicJson(request, response, 200, { ok: true, configured: true, database: true, storage: "private", registrationRequired: false });
+      publicJson(request, response, 200, { ok: true, configured: true, database: true, storage: "private", registrationRequired: false,receiptCheck:config.receiptShapeEnabled?'presence-v1':'legacy',receiptRuntimeReady:config.receiptShapeEnabled?['eng','aze'].every(l=>fs.existsSync(fileURLToPath(new URL('../receipt-worker/models/'+l+'.traineddata',import.meta.url)))):false });
       return true;
     }
     if (request.method === "GET" && url.pathname === "/api/payments/methods") {
@@ -348,16 +350,11 @@ export function createPaymentSystem(options) {
       }
       const existing = await store.getOrderByReservation(reservationId);
       if(!existing&&(reservation.status!=='reserved'||Date.parse(reservation.expires_at)<=Date.now()))throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'),{status:409,code:'RECEIPT_RESERVATION_INVALID'});
-      if(config.receiptValidationRequested&&!config.receiptValidationEnabled)throw Object.assign(new Error('Qəbz yoxlama sistemi migration gözləyir. Yenidən cəhd edin.'),{status:503,code:'RECEIPT_VALIDATOR_UNAVAILABLE'});
-      let inspection;
-      if(config.receiptValidationEnabled&&!existing){
-        if(receipt.buffer){const method=await store.rawMethod(reservation.method_id);inspection=await receiptInspector.inspect(receipt,reservation,method);}
-        else{
-          if(!receipt.inspectionId)throw Object.assign(new Error('Qəbz server yoxlamasından keçməyib. Yenidən yükləyin.'),{status:400,code:'RECEIPT_INSPECTION_REQUIRED'});
-          const value=await store.receiptInspection(receipt.inspectionId);
-          if(!value||value.reservation_id!==reservationId||value.sha256!==receipt.sha256||value.status==='rejected'||Date.parse(value.expires_at)<Date.now())throw Object.assign(new Error('Qəbz yoxlaması etibarlı deyil. Yenidən yükləyin.'),{status:409,code:'RECEIPT_INSPECTION_REQUIRED'});
-          inspection={id:value.id,report:{status:value.status}};
-        }
+      let receiptShapeAccepted=false;
+      if(config.receiptShapeEnabled&&!existing){
+        if(receipt.buffer){await shapeInspector.inspect(receipt);receiptShapeAccepted=true;}
+        else if(receipt.shapeVersion===1){receiptShapeAccepted=true;}
+        else throw Object.assign(new Error('Çek yüklənmədi. Zəhmət olmasa, düzgün çek yükləyin.'),{status:422,code:'RECEIPT_NOT_RECOGNIZED'});
       }
       if (uploadOnly) {
         if (existing || !receipt.buffer || reservation.status !== 'reserved' || Date.parse(reservation.expires_at) <= Date.now()) {
@@ -371,9 +368,9 @@ export function createPaymentSystem(options) {
           catch { throw error; }
         }
         const proof = {purpose:'payment-receipt',reservationId,checkoutHash:security.hashToken(checkoutKey),path,
-          sha256:receipt.sha256,extension:receipt.extension,mimeType:receipt.mimeType,size:receipt.buffer.length,expiresAt:Date.now()+3600000,...(inspection?{inspectionId:inspection.id}:{} )};
+          sha256:receipt.sha256,extension:receipt.extension,mimeType:receipt.mimeType,size:receipt.buffer.length,expiresAt:Date.now()+3600000,...(receiptShapeAccepted?{shapeVersion:1}:{} )};
         await store.verifyUploadedReceipt(path, proof.size);
-        publicJson(request,response,200,{receiptUploaded:true,receiptUploadToken:security.encryptSecret(JSON.stringify(proof)),...(inspection?{technicalStatus:inspection.report.status,paymentVerified:false}:{} )});
+        publicJson(request,response,200,{receiptUploaded:true,receiptUploadToken:security.encryptSecret(JSON.stringify(proof)),...(receiptShapeAccepted?{receiptShapeAccepted:true,autoSubmit:true,paymentVerified:false}:{} )});
         return true;
       }
       if (existing) {
@@ -402,7 +399,6 @@ export function createPaymentSystem(options) {
           receiptMime: receipt.mimeType,
           receiptSize: receipt.size || receipt.buffer.length,
           receiptSha256: receipt.sha256,
-          receiptInspectionId:inspection?.id,
           durationMonths: structuredDurationMonths(plan)
           ,checkoutMetadata
         });
@@ -615,12 +611,11 @@ export function createPaymentSystem(options) {
       const body = await readBody(request, 20_000);
       json(response, 200, { settings: await store.updateSettings(body, actorName) }); return true;
     }
-    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt|receipt-analysis))?$/i);
+    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt))?$/i);
     if (orderMatch) {
       const id = safeUuid(orderMatch[1]);
       if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
       const action = orderMatch[2];
-      if(request.method==='GET'&&action==='receipt-analysis'){json(response,200,{analysis:await receiptInspector.read(await store.getOrder(id))});return true;}
       if (request.method === "GET" && action === "receipt") {
         const order = await store.getOrder(id);
         if (order.receipt_deleted_at) throw Object.assign(new Error("Çekin saxlanma müddəti bitib və fayl təhlükəsiz silinib."), { status: 410 });
@@ -637,8 +632,7 @@ export function createPaymentSystem(options) {
             durationMonths = null;
           }
         }
-        const body=await readBody(request,5000);
-        const result = await store.approveOrder(id, durationMonths, actorName,body.bankCreditConfirmed===true);
+        const result = await store.approveOrder(id, durationMonths, actorName);
         json(response, 200, { ...result, status: result.status === "approved" ? "completed" : result.status }); return true;
       }
       if (request.method === "POST" && action === "reject") { json(response, 200, await store.rejectOrder(id, actorName)); return true; }
