@@ -1150,7 +1150,7 @@ const DATA = {
       "soldOut": true,
       "active": true,
       "stock": null,
-      "stockEnabled": false,
+      "stockEnabled": true,
       "seller": "",
       "bestSeller": false,
       "orderFlow": "confirm_then_whatsapp",
@@ -1191,6 +1191,7 @@ const DATA = {
           "price": 3.99
         },
         {
+          "stockVisibility": "show",
           "label": "3 ayliq",
           "months": 1,
           "price": 10.99,
