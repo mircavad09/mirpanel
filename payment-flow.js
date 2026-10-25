@@ -611,9 +611,9 @@
               flow.uploadController = new AbortController();
               storeCheckout(flow);
               submit.disabled = true;
-              submit.textContent = "Çek yüklənir — gözləyin";
+              submit.textContent = "Çek yoxlanılır…";
               document.getElementById('paymentReceiptRetry').hidden = true;
-              setMessage("Çek yüklənir — gözləyin");
+              setMessage("Çek yoxlanılır…");
               const cancelButton = document.getElementById("paymentCancel");
               cancelButton.textContent = "Yükləməni dayandır";
               const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
@@ -624,13 +624,21 @@
               progress.classList.remove("isError");
               progress.classList.add("isIndeterminate");
               const receiptStatus = document.querySelector(".paymentReceiptPending");
+              let slowCheck = false;
               const setProgress = (value, text) => {
+                if (slowCheck && flow.submitting) text = "Yoxlama davam edir, zəhmət olmasa gözləyin";
                 const numeric = Number.isFinite(value);
                 progress.classList.toggle("isIndeterminate", !numeric);
                 progress.querySelector("span").style.width = numeric ? `${Math.max(0, Math.min(100, value))}%` : "0%";
                 progress.querySelector("b").textContent = text;
                 if (receiptStatus) receiptStatus.textContent = text;
               };
+              const slowTimer = window.setTimeout(() => {
+                slowCheck = true;
+                setMessage("Yoxlama davam edir, zəhmət olmasa gözləyin");
+                if (flow.submitting) submit.textContent = "Yoxlama davam edir…";
+                setProgress(null, "Yoxlama davam edir, zəhmət olmasa gözləyin");
+              }, 4000);
               try {
                 const formDataFactory = () => {
                   const formData = new FormData();
@@ -645,10 +653,10 @@
                   return formData;
                 };
                 const uploaded = await submitReceiptWithRetry("/api/payments/receipts", formDataFactory, {
-                  onAttempt: (attempt, total) => setProgress(null, attempt === 1 ? "Yüklənir…" : `Yenidən cəhd edilir (${attempt}/${total})…`),
-                  onStart: () => setProgress(null, "Yüklənir…"),
+                  onAttempt: (attempt, total) => setProgress(null, attempt === 1 ? "Çek yoxlanılır…" : `Yenidən cəhd edilir (${attempt}/${total})…`),
+                  onStart: () => setProgress(null, "Çek yoxlanılır…"),
                   onProgress: (value) => setProgress(value, `${value}%`),
-                  onProcessing: () => setProgress(100, "Server çeki yoxlayır…"),
+                  onProcessing: () => setProgress(100, "Çek yoxlanılır…"),
                   onRetry: (uploadFailure, next, total) => {
                     setProgress(null, `Yenidən cəhd edilir (${next}/${total})…`);
                     error.textContent = uploadFailure.code === "RECEIPT_NETWORK_ERROR" || uploadFailure.code === "RECEIPT_UPLOAD_TIMEOUT"
@@ -692,6 +700,8 @@
                 cancelButton.textContent = "Ləğv et";
                 setReceiptSubmitReady(false);
                 document.getElementById('paymentReceiptRetry').hidden = false;
+              } finally {
+                window.clearTimeout(slowTimer);
               }
             };
             document.getElementById('paymentReceiptRetry').onclick = () => { void uploadSelectedReceipt(); };

@@ -72,7 +72,7 @@ try{
   if(visual)await page.screenshot({path:path.join(visual,`after-empty-${w}-${h}.png`)});
   let resume;const hold=new Promise(r=>resume=r);await page.route('**/api/payments/receipts',async route=>{await hold;await route.continue();},{times:1});
   await page.setInputFiles('#paymentReceiptInput',receipts[0]);
-  await page.waitForFunction(()=>document.getElementById('paymentSubmit').textContent==='Çek yüklənir — gözləyin');assert.equal(await page.isDisabled('#paymentSubmit'),true);
+  await page.waitForFunction(()=>document.getElementById('paymentSubmit').textContent==='Çek yoxlanılır…');assert.equal(await page.isDisabled('#paymentSubmit'),true);
   assert.equal(await page.locator('.paymentReceiptSuccess').count(),0);assert.equal(orders.size,baseOrders);assert.equal(await page.getAttribute('[aria-current="step"]','data-receipt-step'),'2');
   await page.evaluate(()=>document.getElementById('paymentReceiptForm').requestSubmit());assert.equal(orders.size,baseOrders);
   if(visual)await page.screenshot({path:path.join(visual,`uploading-${w}-${h}.png`)});resume();await ready(page);

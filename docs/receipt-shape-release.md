@@ -1,5 +1,7 @@
 # Aktiv əhatə: yalnız qəbzin mövcudluğunun yoxlanması
 
+2026-10-25 sürət yeniləməsi: cari runtime və ölçmələr üçün `receipt-speed-release.md` əsas götürülür. Qəbul siyasəti dəyişməyib; hər faylda yeni proses əvəzinə limitsiz olmayan, secretsiz isti OCR prosesi işləyir.
+
 Son istifadəçi qərarı əvvəlki geniş receipt-validation tələblərini əvəz edir.
 
 - Yalnız qəbz əlaməti olmayan şəkil, random foto və adi yazışma ekranı saxlanır. Uyğun olmayan fayl sifariş yaratmır və sifariş statusunu rejected etmir.

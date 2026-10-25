@@ -17,7 +17,7 @@ import {signature} from './employee-security.mjs';
 import {planKey} from './payment-profit.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
-import {createReceiptShapeInspector} from './receipt-shape-inspector.mjs';
+import {createReceiptShapeInspector,receiptAnalysisState} from './receipt-shape-inspector.mjs';
 import fs from 'node:fs';
 import {fileURLToPath} from 'node:url';
 
@@ -120,7 +120,7 @@ export function createPaymentSystem(options) {
 
   const security = createPaymentSecurity(config);
   const store = options.store || createPaymentStore(config);
-  const shapeInspector=createReceiptShapeInspector({analyze:options.analyzeReceiptShape});
+  const shapeInspector=createReceiptShapeInspector({analyze:options.analyzeReceiptShape,prewarm:config.receiptShapeEnabled===true});
   const mailer = options.mailer || createPaymentMailer(config, store);
   const allowedOrigins = new Set(config.allowedOrigins);
 
@@ -141,7 +141,8 @@ export function createPaymentSystem(options) {
   }
 
   function publicJson(request, response, status, body) {
-    json(response, status, body, { ...corsHeaders(request), "Cache-Control": "no-store" });
+    const timing=request.receiptTimings;
+    json(response, status, body, { ...corsHeaders(request), "Cache-Control": "no-store",...(timing?{"Server-Timing":Object.entries(timing).map(([name,ms])=>`${name};dur=${Math.max(0,ms).toFixed(1)}`).join(', '),"Access-Control-Expose-Headers":"Server-Timing"}:{}) });
   }
 
   async function orderResult(order, idempotent = true, whatsappExtraText = "") {
@@ -221,7 +222,7 @@ export function createPaymentSystem(options) {
     if (request.method === "GET" && url.pathname === "/api/payments/health") {
       await publicRate(request, "health", 60, 30);
       await store.publicMethods();
-      publicJson(request, response, 200, { ok: true, configured: true, database: true, storage: "private", registrationRequired: false,receiptCheck:config.receiptShapeEnabled?'presence-v1':'legacy',receiptRuntimeReady:config.receiptShapeEnabled?['eng','aze'].every(l=>fs.existsSync(fileURLToPath(new URL('../receipt-worker/models/'+l+'.traineddata',import.meta.url)))):false });
+      publicJson(request, response, 200, { ok: true, configured: true, database: true, storage: "private", registrationRequired: false,...receiptAnalysisState(),receiptCheck:config.receiptShapeEnabled?'presence-v1':'legacy',receiptRuntimeReady:config.receiptShapeEnabled?['eng','aze'].every(l=>fs.existsSync(fileURLToPath(new URL('../receipt-worker/models/'+l+'.traineddata',import.meta.url)))):false });
       return true;
     }
     if (request.method === "GET" && url.pathname === "/api/payments/methods") {
@@ -323,6 +324,7 @@ export function createPaymentSystem(options) {
       const contentType = String(request.headers["content-type"] || "");
       let body;
       let receipt;
+      let checkpoint=performance.now();request.receiptTimings={};
       if (contentType.toLowerCase().startsWith("multipart/form-data;")) {
         if (typeof readRawBody !== "function") throw Object.assign(new Error("Fayl yükləmə xidməti hazır deyil."), { status: 503 });
         let rawBody;
@@ -339,6 +341,7 @@ export function createPaymentSystem(options) {
           receipt = uploadedReceipt(body.receiptUploadToken, safeUuid(body.reservationId), safeUuid(body.checkoutKey));
         } else receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
       }
+      request.receiptTimings.receive=performance.now()-checkpoint;checkpoint=performance.now();
       const reservationId = safeUuid(body.reservationId);
       const checkoutKey = safeUuid(body.checkoutKey);
       const idempotencyKey = safeUuid(request.headers["x-idempotency-key"]);
@@ -349,13 +352,15 @@ export function createPaymentSystem(options) {
         throw Object.assign(new Error("Təkrar sorğu əvvəlki sifarişlə uyğun deyil."), { status: 409 });
       }
       const existing = await store.getOrderByReservation(reservationId);
+      request.receiptTimings.binding=performance.now()-checkpoint;checkpoint=performance.now();
       if(!existing&&(reservation.status!=='reserved'||Date.parse(reservation.expires_at)<=Date.now()))throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'),{status:409,code:'RECEIPT_RESERVATION_INVALID'});
       let receiptShapeAccepted=false;
       if(config.receiptShapeEnabled&&!existing){
-        if(receipt.buffer){await shapeInspector.inspect(receipt);receiptShapeAccepted=true;}
+        if(receipt.buffer){try{await shapeInspector.inspect(receipt);receiptShapeAccepted=true;}finally{request.receiptTimings.recognition=performance.now()-checkpoint;}}
         else if(receipt.shapeVersion===1){receiptShapeAccepted=true;}
         else throw Object.assign(new Error('Çek yüklənmədi. Zəhmət olmasa, düzgün çek yükləyin.'),{status:422,code:'RECEIPT_NOT_RECOGNIZED'});
       }
+      request.receiptTimings.recognition=performance.now()-checkpoint;checkpoint=performance.now();
       if (uploadOnly) {
         if (existing || !receipt.buffer || reservation.status !== 'reserved' || Date.parse(reservation.expires_at) <= Date.now()) {
           throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'), {status:409,code:'RECEIPT_RESERVATION_INVALID'});
@@ -370,6 +375,7 @@ export function createPaymentSystem(options) {
         const proof = {purpose:'payment-receipt',reservationId,checkoutHash:security.hashToken(checkoutKey),path,
           sha256:receipt.sha256,extension:receipt.extension,mimeType:receipt.mimeType,size:receipt.buffer.length,expiresAt:Date.now()+3600000,...(receiptShapeAccepted?{shapeVersion:1}:{} )};
         await store.verifyUploadedReceipt(path, proof.size);
+        request.receiptTimings.storage=performance.now()-checkpoint;
         publicJson(request,response,200,{receiptUploaded:true,receiptUploadToken:security.encryptSecret(JSON.stringify(proof)),...(receiptShapeAccepted?{receiptShapeAccepted:true,autoSubmit:true,paymentVerified:false}:{} )});
         return true;
       }

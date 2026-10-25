@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import {spawn} from 'node:child_process';
+import {imageReceipt,randomImage,pdfReceipt} from './receipt-synthetic-fixtures.mjs';
+import {localReceiptAnalysis} from '../mirpanel-admin/receipt-shape-inspector.mjs';
+import {receiptShape} from '../mirpanel-admin/receipt-shape.mjs';
+const label=process.argv[2]||'before',rows=[];
+const legacy=r=>new Promise((resolve,reject)=>{const c=spawn(process.execPath,['--max-old-space-size=192','receipt-worker/job.mjs'],{windowsHide:true,stdio:['pipe','pipe','ignore'],env:{PATH:process.env.PATH,SystemRoot:process.env.SystemRoot}});let out='';c.stdout.on('data',b=>out+=b);c.on('error',reject);c.on('close',()=>{try{const v=JSON.parse(out);if(!v.ok)throw Error('legacy job failed');resolve(v.analysis);}catch(e){reject(e);}});c.stdin.end(JSON.stringify({mime:r.mimeType,base64:r.buffer.toString('base64')}));});
+const fixtures=[['JPEG',await imageReceipt('Birbank',{},'image/jpeg'),'image/jpeg',true],['PNG',await imageReceipt(),'image/png',true],['PDF',pdfReceipt(),'application/pdf',true],['random',await randomImage(),'image/png',false],['WhatsApp',await imageReceipt('',{lines:['WhatsApp','Messages','Hello friend','How are you?','Today 14:00','Typing...']}),'image/png',false]];
+for(let repeat=0;repeat<3;repeat++)for(const[name,buffer,mimeType,expected]of fixtures){const start=performance.now(),a=await(label==='before'?legacy:localReceiptAnalysis)({buffer,mimeType});const ms=performance.now()-start,accepted=receiptShape(a).accepted;if(accepted!==expected)throw Error(name+' classification changed');rows.push({name,repeat,ms,bytes:buffer.length,...a.timings});console.log(JSON.stringify(rows.at(-1)));}
+const percentile=(a,p)=>a.toSorted((a,b)=>a-b)[Math.ceil(a.length*p)-1];const report={label,samples:rows.length,medianMs:percentile(rows.map(r=>r.ms),.5),p95Ms:percentile(rows.map(r=>r.ms),.95),rows,productionWrites:0};fs.mkdirSync('payment-test-artifacts/receipt-speed',{recursive:true});fs.writeFileSync('payment-test-artifacts/receipt-speed/'+label+'.json',JSON.stringify(report,null,2));console.log(JSON.stringify({label,medianMs:report.medianMs,p95Ms:report.p95Ms}));process.exit(0);
