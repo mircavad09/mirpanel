@@ -56,7 +56,7 @@ async function pdfPages(buffer,options={}){
   }return {pages,text:text.slice(0,40000)};
  }finally{await task.destroy();}
 }
-export async function inspectDocument(buffer,mime,{recognize,presenceOnly=false,skipTextOcr=()=>false,modelPath=process.env.RECEIPT_MODEL_PATH||fileURLToPath(new URL('./models/',import.meta.url))}={}){
+export async function inspectDocument(buffer,mime,{recognize,safetyOnly=false,presenceOnly=false,skipTextOcr=()=>false,modelPath=process.env.RECEIPT_MODEL_PATH||fileURLToPath(new URL('./models/',import.meta.url))}={}){
  const started=performance.now();let processedAt,ocrStarted;
  if(buffer.length>5*1024*1024)unsafe('RECEIPT_TOO_LARGE');
  if(buffer.includes(Buffer.from('PK\x03\x04','binary'))||buffer.includes(Buffer.from('<script','ascii')))unsafe('RECEIPT_POLYGLOT');
@@ -66,6 +66,7 @@ export async function inspectDocument(buffer,mime,{recognize,presenceOnly=false,
   if(mime==='image/png'&&(!buffer.subarray(0,8).equals(Buffer.from([137,80,78,71,13,10,26,10]))||!buffer.subarray(-8,-4).equals(Buffer.from('IEND'))))unsafe('RECEIPT_IMAGE_INVALID');
   if(!['image/jpeg','image/png'].includes(mime))unsafe('RECEIPT_TYPE');pages=[await imageFeatures(buffer,{presenceOnly})];
  }
+ if(safetyOnly)return {safetyVersion:1};
  processedAt=performance.now();let worker;const texts=[],words=[];let ocrStatus='ok',confidence=0;
  try{
   const textSufficient=presenceOnly&&pdfText&&skipTextOcr({pdfText,pages,ocrStatus:'ok'});

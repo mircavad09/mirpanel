@@ -6,6 +6,8 @@
   const APPLE_RECEIPT_TYPES = new Set(["image/heic", "image/heif"]);
   const RECEIPT_UPLOAD_TIMEOUT_MS = 120_000;
   const RECEIPT_UPLOAD_RETRIES = 3;
+  const RECEIPT_CHECK_UNAVAILABLE = "Faylı yükləmək mümkün olmadı. Zəhmət olmasa, yenidən cəhd edin.";
+  const receiptCheckFailure = (code, status) => /^(?:RECEIPT_VALIDATOR_|RECEIPT_PROCESSING_FAILED|RECEIPT_NETWORK_ERROR|RECEIPT_UPLOAD_TIMEOUT|RECEIPT_INVALID_RESPONSE)/.test(String(code || "")) || status >= 500 || status === 408;
   let activeFlow = null;
   let preparingFlow = null;
   const SERVICE_ERROR = "Ödəniş xidməti hazırda cavab vermir. Yenidən cəhd edin";
@@ -116,7 +118,7 @@
       RECEIPT_STORAGE_TEMPORARY: "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin."
     };
     const retryable = [408, 429, 502, 503, 504].includes(status) || code === "RECEIPT_STORAGE_TIMEOUT" || code === "RECEIPT_STORAGE_TEMPORARY";
-    const message = messages[code] || (status >= 500
+    const message = receiptCheckFailure(code, status) ? RECEIPT_CHECK_UNAVAILABLE : messages[code] || (status >= 500
       ? "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin."
       : String(payload?.error || "Çek faylı qəbul edilmədi."));
     return uploadError(message, { code: code || "RECEIPT_UPLOAD_REJECTED", status, retryable });
@@ -144,8 +146,8 @@
         }
       };
       xhr.upload.onload = () => events.onProcessing?.();
-      xhr.onerror = () => finish(reject, uploadError("Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir.", { code: "RECEIPT_NETWORK_ERROR", retryable: true }));
-      xhr.ontimeout = () => finish(reject, uploadError("Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir.", { code: "RECEIPT_UPLOAD_TIMEOUT", status: 408, retryable: true }));
+      xhr.onerror = () => finish(reject, uploadError(RECEIPT_CHECK_UNAVAILABLE, { code: "RECEIPT_NETWORK_ERROR", retryable: true }));
+      xhr.ontimeout = () => finish(reject, uploadError(RECEIPT_CHECK_UNAVAILABLE, { code: "RECEIPT_UPLOAD_TIMEOUT", status: 408, retryable: true }));
       xhr.onabort = () => finish(reject, uploadError("Yükləmə dayandırıldı. Seçilmiş çek qorunub.", { code: "RECEIPT_UPLOAD_CANCELLED", retryable: false }));
       xhr.onload = () => {
         let payload;
@@ -177,7 +179,7 @@
       } catch (error) {
         lastError = error;
         if (!error?.retryable || attempt === totalAttempts) {
-          if (error?.retryable) error.userMessage = "Çek hələ göndərilmədi. “Yenidən cəhd et” düyməsinə basın.";
+          if (error?.retryable) error.userMessage = receiptCheckFailure(error.code, error.status) ? RECEIPT_CHECK_UNAVAILABLE : "Çek hələ göndərilmədi. “Yenidən cəhd et” düyməsinə basın.";
           throw error;
         }
         const delay = attempt * 1500;
@@ -235,7 +237,7 @@
 
   function receiptMarkup() {
     return `<form id="paymentReceiptForm" class="paymentReceiptBox" action="" method="post" novalidate>
-      <p class="paymentReceiptGuidance">Bank və ya ödəniş tətbiqindəki qəbzi seçin. Adi foto və WhatsApp yazışması screenshotu deyil, ödəniş qəbzinin şəklini və ya PDF faylını yükləyin.</p>
+      <p class="paymentReceiptGuidance">Şəkil və ya PDF faylını seçib yükləyin.</p>
       <label class="paymentReceiptPicker" for="paymentReceiptInput" tabindex="0" role="button" aria-describedby="paymentReceiptPickerDescription paymentReceiptPickerWarning paymentReceiptPickerFormats"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 16V4m0 0L7 9m5-5 5 5M5 14v5h14v-5"/></svg><strong>SİFARİŞİ TAMAMLAMAQ ÜÇÜN ÇEKİ BURAYA YÜKLƏYİN</strong><span class="paymentReceiptSelectButton">📎 QALEREYADAN ÇEKİ SEÇ</span><span id="paymentReceiptPickerDescription">Ödəniş çekinin şəklini və ya PDF faylını seçin.</span><small id="paymentReceiptPickerFormats">JPG, PNG və ya bank PDF-i · maksimum 5 MB</small></label>
       <input id="paymentReceiptInput" type="file" accept="image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf" hidden>
       <div id="paymentReceiptPreview" class="paymentReceiptPreview hidden"></div>
@@ -611,9 +613,9 @@
               flow.uploadController = new AbortController();
               storeCheckout(flow);
               submit.disabled = true;
-              submit.textContent = "Çek yoxlanılır…";
+              submit.textContent = "Fayl yüklənir…";
               document.getElementById('paymentReceiptRetry').hidden = true;
-              setMessage("Çek yoxlanılır…");
+              setMessage("Fayl yüklənir…");
               const cancelButton = document.getElementById("paymentCancel");
               cancelButton.textContent = "Yükləməni dayandır";
               const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
@@ -626,7 +628,7 @@
               const receiptStatus = document.querySelector(".paymentReceiptPending");
               let slowCheck = false;
               const setProgress = (value, text) => {
-                if (slowCheck && flow.submitting) text = "Yoxlama davam edir, zəhmət olmasa gözləyin";
+                if (slowCheck && flow.submitting) text = "Yükləmə davam edir, zəhmət olmasa gözləyin";
                 const numeric = Number.isFinite(value);
                 progress.classList.toggle("isIndeterminate", !numeric);
                 progress.querySelector("span").style.width = numeric ? `${Math.max(0, Math.min(100, value))}%` : "0%";
@@ -635,9 +637,9 @@
               };
               const slowTimer = window.setTimeout(() => {
                 slowCheck = true;
-                setMessage("Yoxlama davam edir, zəhmət olmasa gözləyin");
-                if (flow.submitting) submit.textContent = "Yoxlama davam edir…";
-                setProgress(null, "Yoxlama davam edir, zəhmət olmasa gözləyin");
+                setMessage("Yükləmə davam edir, zəhmət olmasa gözləyin");
+                if (flow.submitting) submit.textContent = "Yükləmə davam edir…";
+                setProgress(null, "Yükləmə davam edir, zəhmət olmasa gözləyin");
               }, 4000);
               try {
                 const formDataFactory = () => {
@@ -653,13 +655,13 @@
                   return formData;
                 };
                 const uploaded = await submitReceiptWithRetry("/api/payments/receipts", formDataFactory, {
-                  onAttempt: (attempt, total) => setProgress(null, attempt === 1 ? "Çek yoxlanılır…" : `Yenidən cəhd edilir (${attempt}/${total})…`),
-                  onStart: () => setProgress(null, "Çek yoxlanılır…"),
+                  onAttempt: (attempt, total) => setProgress(null, attempt === 1 ? "Fayl yüklənir…" : `Yenidən cəhd edilir (${attempt}/${total})…`),
+                  onStart: () => setProgress(null, "Fayl yüklənir…"),
                   onProgress: (value) => setProgress(value, `${value}%`),
-                  onProcessing: () => setProgress(100, "Çek yoxlanılır…"),
+                  onProcessing: () => setProgress(100, "Fayl yüklənir…"),
                   onRetry: (uploadFailure, next, total) => {
                     setProgress(null, `Yenidən cəhd edilir (${next}/${total})…`);
-                    error.textContent = uploadFailure.code === "RECEIPT_NETWORK_ERROR" || uploadFailure.code === "RECEIPT_UPLOAD_TIMEOUT"
+                    error.textContent = receiptCheckFailure(uploadFailure.code, uploadFailure.status) ? RECEIPT_CHECK_UNAVAILABLE : uploadFailure.code === "RECEIPT_NETWORK_ERROR" || uploadFailure.code === "RECEIPT_UPLOAD_TIMEOUT"
                       ? "Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir."
                       : "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.";
                     error.hidden = false;
@@ -672,7 +674,7 @@
                 storeCheckout(flow);
                 discardReceipt(flow, flow.previousReceiptUploadToken, flow.receiptUploadToken);
                 flow.previousReceiptUploadToken = null;
-                setProgress(100, uploaded.receiptShapeAccepted ? "Çek uğurla yükləndi. Məlumatlar serverə ötürüldü." : "✓ Çek uğurla əlavə edildi");
+                setProgress(100, "Fayl uğurla yükləndi");
                 receiptStatus?.classList.replace("paymentReceiptPending", "paymentReceiptSuccess");
                 document.getElementById("paymentReceiptForm")?.classList.remove("isUploading");
                 document.getElementById("paymentReceiptForm")?.classList.add("uploadSucceeded");
@@ -681,8 +683,8 @@
                 error.hidden = true;
                 setReceiptSubmitReady(true);
                 setStage(flow,'receipt_ready');
-                setMessage(uploaded.receiptShapeAccepted ? 'Çek uğurla yükləndi. Məlumatlar serverə ötürüldü.' : 'Çek qəbul edildi. İndi sifarişi göndərin.', 'success');
-                if(uploaded.autoSubmit===true&&uploaded.receiptShapeAccepted===true)document.getElementById('paymentReceiptForm')?.requestSubmit();
+                setMessage('Fayl uğurla yükləndi', 'success');
+                if(uploaded.autoSubmit===true&&uploaded.receiptUploaded===true)document.getElementById('paymentReceiptForm')?.requestSubmit();
                 return;
               } catch (submitError) {
                 flow.uploadController = null;

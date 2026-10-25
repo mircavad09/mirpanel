@@ -49,7 +49,7 @@ const config = {
     .split(",").map((item) => item.trim()).filter(Boolean),
   reservationMinutes: Math.max(1, Math.min(30, Number(process.env.PAYMENT_RESERVATION_MINUTES || 10))),
   maxReceiptBytes: Math.max(1, Math.min(5 * 1024 * 1024, Number(process.env.PAYMENT_RECEIPT_MAX_BYTES || 5 * 1024 * 1024))),
-  receiptShapeEnabled: process.env.RECEIPT_SHAPE_ENABLED !== 'false',
+  receiptShapeEnabled: false, // Emergency upload-only policy; OCR is not a checkout gate.
   receiptValidationRequested: false, // Broad schema-6 workflow superseded; not deployed.
   receiptOcrUrl: process.env.RECEIPT_OCR_URL || '',
   receiptOcrToken: process.env.RECEIPT_OCR_TOKEN || '',
