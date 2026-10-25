@@ -11,6 +11,7 @@ No SQL or migration. No payment-data comparisons, new manual-review state, chang
 - Identical validated bytes+MIME coalesce concurrent recognition. Up to 32 successful **boolean** results live in memory for 90 seconds (no OCR text, no cross-order duplicate restriction, no payment approval). Reservation binding, immutable private upload and server storage confirmation still run on every request.
 - OCR child has no payment/database secrets, 192MB V8 limit, one OCR thread, 15s startup deadline, 25s queued-job deadline. Timeout/interruption kills the child, fails with 503 and allows a clean restart; no unchecked acceptance. Native/WASM memory is not covered by the V8 limit; this is not a separate container/cgroup isolation claim.
 - UI immediately says `Çek yoxlanılır…`; after four seconds says `Yoxlama davam edir, zəhmət olmasa gözləyin`. It never advances on a timer. Existing 120s per-attempt network timeout, three automatic retries, cancellation and manual retry remain. Timers are cleared on success/error/cancel.
+- Live visual follow-up found the old header message remained pending after a rejected upload. The catch path now sets the header to the same error, with six additional viewport assertions (presence suite: 114 checks). Final asset query: `receipt-speed-20261025-4`.
 - Numeric `Server-Timing` receive/binding/recognition/storage phases contain no customer information. Health adds `runtime:warm-pool-v1` and actual OCR `warm` readiness.
 - Checkout asset query updated in generator, index and 22 product pages only; their layout/content unchanged.
 

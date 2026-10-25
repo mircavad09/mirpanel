@@ -697,6 +697,7 @@
                 if (receiptStatus) receiptStatus.textContent = "Çek seçildi — yenidən göndərilə bilər.";
                 error.textContent = submitError.userMessage || "Sifariş hazırlanmadı. Yenidən cəhd edin.";
                 error.hidden = false;
+                setMessage(error.textContent, 'error');
                 cancelButton.textContent = "Ləğv et";
                 setReceiptSubmitReady(false);
                 document.getElementById('paymentReceiptRetry').hidden = false;
