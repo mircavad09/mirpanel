@@ -1189,6 +1189,12 @@ const DATA = {
           "label": "1 Ayliq (Yenilemek Mövcud deyil)",
           "months": 1,
           "price": 3.99
+        },
+        {
+          "label": "3 ayliq",
+          "months": 1,
+          "price": 10.99,
+          "regularPrice": 37
         }
       ],
       "orderConfirmation": {
