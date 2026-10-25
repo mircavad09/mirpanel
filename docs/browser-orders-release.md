@@ -55,6 +55,7 @@ Birbaşa bağlantı ekranı: https://supabase.com/dashboard/project/sidgtcgyqkdp
 - Son bərpa yoxlaması: bütün cədvəl məlumatları, funksiya tərifləri, constraints, indexes, RLS/policies uyğun; `pg_restore --exit-on-error` ACL-lərlə uğurlu; lokal migration ilk/təkrar tətbiqi və non-deleting rollback biznes məlumatlarını qorudu. Lokal owner production owner əvəzinə izolə edilmiş restore owner-dir (`--no-owner`); bu, production rollback planı deyil.
 - Production preflight `BROWSER_ORDERS_PREFLIGHT_OK`. Yalnız `202610250002_browser_orders.sql` bir dəfə tətbiq edildi. Verification: ready=1, manifest_entries=2, rls=true, anon_read=false, anon_rpc=false, service_rpc=true, orphan_links=0, employee_schema=6. Köhnə sifarişlər backfill edilmədi.
 - Release regressiyası yenidən: 14/14 paket, failed=0; yalnız sintetik əməliyyatlar. Production test order/reservation/receipt/WhatsApp=0.
+- İlk canlı UI yoxlaması `/sifarislerim` üçün Cloudflare clean-URL və `.html` 200 rewrite arasında redirect dövrəsi aşkar etdi. Lazımsız 200 rewrite çıxarıldı; native extensionless asset resolution və trailing-slash 301 saxlanıldı. Ayrıca routing regressiya testi əlavə edildi. DB və backend axınına dəyişiklik yoxdur.
 
 Yuxarıdakı əvvəlki HOLD və manual hazırlıq abzasları audit üçün saxlanılıb, cari vəziyyət kimi oxunmamalıdır. Aşağıdakı ardıcıllıq runbook-dur; production migration artıq tətbiq edilib və təkrarlanmamalıdır.
 
