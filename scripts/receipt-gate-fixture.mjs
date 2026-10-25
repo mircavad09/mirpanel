@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {createPaymentSystem} from '../mirpanel-admin/payment-api.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
-export async function receiptFixture({employeeEnabled=false,receiptValidationEnabled=false,analyzeReceipt}={}){
+export async function receiptFixture({employeeEnabled=false,receiptValidationEnabled=false,analyzeReceipt,createSystem=createPaymentSystem}={}){
  const config={supabaseUrl:'https://test.invalid',supabaseSecretKey:'test-only',receiptsBucket:'private-test',encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64'),allowedOrigins:[],maxReceiptBytes:5*1024*1024,notificationEmail:'test@example.invalid',adminBaseUrl:'https://admin.invalid',whatsappPhone:'994515243545'};
  const security=createPaymentSecurity(config),methodId=crypto.randomUUID(),reservations=new Map(),orders=new Map(),files=new Map();
  config.employeeEnabled=employeeEnabled;config.inventoryEnabled=true;
@@ -49,6 +49,6 @@ export async function receiptFixture({employeeEnabled=false,receiptValidationEna
  });
  await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;config.allowedOrigins.push(origin);
  const catalog={products:[{id:'test',title:'Test məhsul',plans:[{label:'1 aylıq',price:5.99,months:1}]}]};
- api=createPaymentSystem({config,store,analyzeReceipt,mailer:{start(){},async drain(){}},json,readRawBody:raw,readBody:async(req,limit)=>JSON.parse((await raw(req,limit)).toString()||'{}'),requireAuth:()=>false,requireMutationAuth:()=>false,loadCatalog:async()=>catalog,actorName:'test'});
+ api=createSystem({config,store,analyzeReceipt,mailer:{start(){},async drain(){}},json,readRawBody:raw,readBody:async(req,limit)=>JSON.parse((await raw(req,limit)).toString()||'{}'),requireAuth:()=>false,requireMutationAuth:()=>false,loadCatalog:async()=>catalog,actorName:'test'});
  return {server,origin,state,orders,files,reservations,security,methodId,config,json,store,catalog};
 }

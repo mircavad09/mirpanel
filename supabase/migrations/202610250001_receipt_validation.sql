@@ -2,18 +2,37 @@
 begin;
 set local lock_timeout='10s';
 select pg_advisory_xact_lock(714026001);
-do $$begin if employee_system_ready() not in (5,6) then raise exception 'SCHEMA_5_REQUIRED';end if;end$$;
+do $$begin
+ if employee_system_ready() not in (5,6) then raise exception 'SCHEMA_5_REQUIRED';end if;
+ if employee_system_ready()=6 and (to_regclass('receipt_release_20261025.functions') is null or to_regprocedure('public.receipt_validation_ready()') is null) then raise exception 'UNEXPECTED_SCHEMA_6_REVIEW_REQUIRED';end if;
+end$$;
 lock table payment_orders,payment_reservations,payment_settings in share mode;
 create schema if not exists receipt_release_20261025;
 revoke all on schema receipt_release_20261025 from public,anon,authenticated,service_role;
 create table if not exists receipt_release_20261025.manifest(table_name text primary key,row_count bigint not null,captured_at timestamptz not null default clock_timestamp());
+alter table receipt_release_20261025.manifest add column if not exists column_names text[],add column if not exists content_sha256 text;
+-- In-database consistency snapshot ONLY. Not a standalone/restore-tested backup.
+create or replace function receipt_release_20261025.fingerprint(p_schema text,p_table text,p_columns text[]) returns jsonb language plpgsql set search_path=pg_catalog set timezone='UTC' as $$
+declare projection text;v jsonb;begin
+ select string_agg(format('%I',c),',' order by ord) into projection from unnest(p_columns) with ordinality x(c,ord);
+ if projection is null then raise exception 'SNAPSHOT_COLUMNS_MISSING';end if;
+ execute format('select jsonb_build_object(''count'',count(*),''sha256'',encode(sha256(convert_to(coalesce(string_agg(h,'''' order by h collate "C"),''''),''UTF8'')),''hex'')) from (select encode(sha256(convert_to(to_jsonb(s)::text,''UTF8'')),''hex'') h from (select %s from %I.%I) s) hashes',projection,p_schema,p_table) into v;
+ return v;end;$$;
+revoke all on function receipt_release_20261025.fingerprint(text,text,text[]) from public,anon,authenticated,service_role;
 create table if not exists receipt_release_20261025.functions(name text primary key,definition text not null);
 insert into receipt_release_20261025.functions select p.oid::regprocedure::text,pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='employee_system_ready' on conflict do nothing;
-do $$declare t text;r record;n bigint;begin foreach t in array array['payment_orders','payment_reservations','payment_settings'] loop
+do $$declare t text;r record;v jsonb;src jsonb;cols text[];begin foreach t in array array['payment_orders','payment_reservations','payment_settings'] loop
  if to_regclass('receipt_release_20261025.'||t) is null then execute format('create table receipt_release_20261025.%I as table public.%I',t,t);end if;
- execute format('insert into receipt_release_20261025.manifest select %L,count(*),clock_timestamp() from receipt_release_20261025.%I on conflict do nothing',t,t);
+ select array_agg(a.attname::text order by a.attnum) into cols from pg_attribute a where a.attrelid=to_regclass('receipt_release_20261025.'||t) and a.attnum>0 and not a.attisdropped;
+ v:=receipt_release_20261025.fingerprint('receipt_release_20261025',t,cols);
+ if not exists(select 1 from receipt_release_20261025.manifest where table_name=t) then
+  src:=receipt_release_20261025.fingerprint('public',t,cols);if src<>v then raise exception 'SNAPSHOT_SOURCE_MISMATCH';end if;
+  insert into receipt_release_20261025.manifest(table_name,row_count,column_names,content_sha256) values(t,(v->>'count')::bigint,cols,v->>'sha256');
+ end if;
+ -- An old count-only draft must not silently certify its own unchecked content.
+ if exists(select 1 from receipt_release_20261025.manifest where table_name=t and (column_names is null or content_sha256 is null)) then raise exception 'SNAPSHOT_MANIFEST_INCOMPLETE';end if;
 end loop;if(select count(*) from receipt_release_20261025.manifest)<>3 then raise exception 'BACKUP_INCOMPLETE';end if;
-for r in select * from receipt_release_20261025.manifest loop execute format('select count(*) from receipt_release_20261025.%I',r.table_name) into n;if n<>r.row_count then raise exception 'BACKUP_MISMATCH';end if;end loop;end$$;
+for r in select * from receipt_release_20261025.manifest loop v:=receipt_release_20261025.fingerprint('receipt_release_20261025',r.table_name,r.column_names);if (v->>'count')::bigint<>r.row_count or (v->>'sha256') is distinct from r.content_sha256 then raise exception 'BACKUP_CONTENT_MISMATCH';end if;end loop;end$$;
 revoke all on all tables in schema receipt_release_20261025 from public,anon,authenticated,service_role;
 create table if not exists public.receipt_inspections(
  id uuid primary key default gen_random_uuid(),reservation_id uuid not null references payment_reservations(id),order_id uuid references payment_orders(id),
@@ -99,7 +118,13 @@ create or replace function public.receipt_scrub_expired() returns integer langua
  update receipt_inspections s set report_cipher=null,phash=null,combination_key=null,similarity_key=null where report_cipher is not null and (s.order_id is not null and exists(select 1 from payment_orders o where o.id=s.order_id and o.receipt_deleted_at is not null) or s.order_id is null and s.expires_at<clock_timestamp());get diagnostics n=row_count;return n;end;$$;
 create or replace function public.receipt_validation_ready() returns integer language sql stable security definer set search_path=public as $$select 1;$$;
 create or replace function public.employee_system_ready() returns integer language sql stable security definer set search_path=public as $$select 6;$$;
-do $$declare r record;begin for r in select p.oid::regprocedure::text as name from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname like 'receipt_%' loop execute 'revoke all on function '||r.name||' from public,anon,authenticated';execute 'grant execute on function '||r.name||' to service_role';end loop;end$$;
+do $$declare fn text;begin foreach fn in array array[
+ 'receipt_register(uuid,text,text,text,jsonb,text,text,text)',
+ 'receipt_submit_order(uuid,uuid,uuid,text,text,text,text,text,text,text,integer,text,integer)',
+ 'receipt_approval_guard()','receipt_approve_direct(uuid,integer,text,boolean)',
+ 'receipt_employee_order_action(uuid,text,text,text,uuid,uuid,integer,jsonb)',
+ 'receipt_scrub_expired()','receipt_validation_ready()'] loop
+ execute 'revoke all on function public.'||fn||' from public,anon,authenticated';execute 'grant execute on function public.'||fn||' to service_role';end loop;end$$;
 commit;
 select employee_system_ready() as employee_schema_version;
 select * from receipt_release_20261025.manifest order by table_name;

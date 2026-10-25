@@ -1,5 +1,7 @@
 # Qəbzin texniki yoxlaması — lokal buraxılış paketi
 
+Tətbiq hazırlığının aktual qərarı və HOLD şərtləri: [receipt-validation-readiness.md](receipt-validation-readiness.md). Production uyğunluğu və xarici backup restore-u bu sessiyada təsdiqlənməyib.
+
 ## Səbəb və sərhəd
 
 Əvvəlki server yoxlaması faylın tipi/ölçüsü, private storage və upload təsdiqini yoxlayırdı; qəbz məzmununu, sifarişə uyğunluğu və müxtəlif fayllarda eyni əməliyyatın istifadəsini yoxlamırdı. Yeni qat həmin axını saxlayır və həm staged upload, həm birbaşa order upload yoluna tətbiq olunur. OCR heç vaxt sifarişi ödənilmiş/tamamlanmış etmir.
@@ -69,15 +71,15 @@ Mövcud `PAYMENT_ENCRYPTION_KEY_B64` və `PAYMENT_TOKEN_SECRET_B64` dəyişdiril
 
 Production-da özbaşına işlətmək olmaz. Əvvəl schema 5-i read-only təsdiqləyin. Tam SQL: `supabase/migrations/202610250001_receipt_validation.sql`.
 
-Transaction/advisory lock daxilində `payment_orders`, `payment_reservations`, `payment_settings` üçün private backup və **3/3 manifest** yaradılır, əvvəlki readiness funksiyası saxlanır. Heç bir köhnə sifariş yekunlaşdırılmır, stoka/bonusa toxunulmur; yalnız mövcud receipt SHA identifikatorları claim cədvəlinə import olunur. Yeni hesabat/claim cədvəlləri RLS ilə bağlıdır; public/anon/authenticated giriş yoxdur, service-role birbaşa yazmır, yalnız nəzarətli RPC-lərdən istifadə edir.
+Transaction/advisory lock daxilində üç cədvəlin eyni DB-də consistency surəti və 3/3 manifest yaradılır; indi sütun siyahısı və UTC-də SHA-256 məzmun izi də yoxlanır. Bunlar tam, müstəqil, bərpa-sınaqlı backup DEYİL: CTAS constraint/index/sequence/RLS/grant və Storage fayllarını tam backup etmir. Production tətbiqindən əvvəl ayrıca xarici backup və təsdiqlənmiş məxfi restore mühitində bərpa yoxlaması tələb olunur; lokalda bu external restore edilməyib. Köhnə sifarişlərin status/qiymət/tarix/bonusu dəyişmir.
 
 Tətbiqdən sonra tam yoxlama: `supabase/receipt-validation-verify.sql`.
 
-Gözlənilən nəticə: `employee_schema_version=6`, `receipt_validation_version=1`, backup manifest **3/3**, bütün yoxlamalar xətasız. Geri göndəriləcək təsdiq:
+Gözlənilən nəticə: employee_schema_version=6, receipt_validation_version=1, düzgün üç snapshot adı, non-null content SHA və sütun siyahısı, ACL/RLS/unique/trigger yoxlamaları, RECEIPT_VERIFY_OK. İlkin maintenance verification-da current_original_columns_match_snapshot üçü də true olmalıdır. 3/3 nəticəsi xarici backup/restore sübutu deyil.
 
-`Receipt validation migration tətbiq edildi. Schema 6, receipt validation version 1, backup manifest 3/3 keçdi.`
+`Receipt validation migration tətbiq edildi. Schema 6, receipt validation version 1, daxili snapshot manifest 3/3 və verification keçdi.` Bu mətn xarici backup restore-u təsdiqləmir; onun ayrıca sübutu tətbiqdən əvvəl tələb olunur.
 
-Rollback: `supabase/rollback/202610250001_receipt_validation.sql`. Məlumat, sütun, qəbz və backup silinmir. Readiness 5-ə qayıdır, yeni registration/submit RPC-ləri dayandırılır. Artıq yoxlamaya bağlı sifarişlər üçün bank-credit guard qəsdən saxlanır. Belə açıq sifarişlər varsa əvvəl yeni admin axını ilə onları təhlükəsiz həll edin və ya roll-forward edin; köhnə tətbiqi quraşdırıb guard-ı silmək olmaz. Schema uyğun deyilsə yeni upload `503` ilə bağlı qalır.
+Rollback: supabase/rollback/202610250001_receipt_validation.sql. Yeni yoxlamaya bağlı açıq sifariş və ya aktiv staged qəbz varsa ROLLBACK_BLOCKED_OPEN_RECEIPTS ilə dayanır. Əvvəl düzgün drain/expiry və ya roll-forward qərarı tələb olunur. Gate boş olduqda readiness 5 olur; cədvəl/məlumat/approval guard silinmir, register/submit RPC dayandırılır. Təkrar tətbiq məlumat silmir. Flag-ı false edib yoxlamasız checkout açmaq təhlükəsiz rollback deyil. Tam ardıcıllıq readiness sənədindədir.
 
 ## Test və tətbiq ardıcıllığı
 
@@ -88,9 +90,9 @@ Rollback: `supabase/rollback/202610250001_receipt_validation.sql`. Məlumat, sü
 5. 320/390/430/768/1024/1440 px upload/status/continue/hesabat, private storage/token, 3 retry/manual retry/timeout/double-click, 401/403 və real PostgreSQL paralellik yoxlamaları daxil edilib. 390 px screenshot-lar `payment-test-artifacts/receipt-validation/` altındadır.
 6. Yalnız lokal commit. SQL tətbiqi təsdiqi və worker izolyasiyası yoxlanmadan push/deploy yoxdur. Sonra ayrıca icazə ilə backend/worker readiness, frontend cache assetləri və canlı read-only yoxlama aparılmalıdır. Production test sifarişi/qəbzi/rezervi/WhatsApp mesajı yaradılmır.
 
-## Dəyişən faylların tam siyahısı
+## İlkin 6f70 paketinin dəyişən faylları (tarixi siyahı)
 
-Yekun lokal nəticə: **16/16 paket**, **350 yeni əsas assertion**, uğursuz **0**. Sintetik OCR korpusu: **18 düzgün / 17 uyğunsuz**, yanlış rədd **0/18**, yanlış qəbul **0/17**, yeni dizayn üzrə manual review **2**. Real PostgreSQL: **54** yoxlama, iki ayrı bağlantı, dublikat order/bonus **0**, ilk+təkrar migration və məlumat silməyən rollback keçdi, lokal backup **3/3**. 320/390/430/768/1024/1440 px-də lokal overflow/JS/yeni 404/qırıq şəkil **0**. `npm audit` (worker, dev daxil): **0** vulnerability. Production yazısı **0**; Docker runtime host yoxlaması və production migration/deploy hələ icra edilməyib.
+6f70 commitinin əvvəlki qeydi: 16/16 paket, 350 yeni əsas assertion və 54 PostgreSQL yoxlaması idi. Bu rəqəmlər production uyğunluğu və ya xarici restore sübutu deyildi. Cari hazırlıq mərhələsinin faktiki təkrar testləri və bloklanmış yoxlamaları receipt-validation-readiness.md sənədində ayrıca göstərilir.
 
 Layihə kökü: C:/Users/user/Documents/Codex/2026-07-22/mircavad09-mirpanel-layih-sind-yaln-z/work/mirpanel-latest
 
