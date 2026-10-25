@@ -369,7 +369,7 @@ export function createPaymentSystem(options) {
           sha256:receipt.sha256,extension:receipt.extension,mimeType:receipt.mimeType,size:receipt.buffer.length,expiresAt:Date.now()+3600000,safetyVersion:1};
         await store.verifyUploadedReceipt(path, proof.size);
         request.receiptTimings.storage=performance.now()-checkpoint;
-        publicJson(request,response,200,{receiptUploaded:true,receiptUploadToken:security.encryptSecret(JSON.stringify(proof)),autoSubmit:true,contentChecked:false,paymentVerified:false});
+        publicJson(request,response,200,{receiptUploaded:true,receiptUploadToken:security.encryptSecret(JSON.stringify(proof)),autoSubmit:false,contentChecked:false,paymentVerified:false});
         return true;
       }
       if (existing) {

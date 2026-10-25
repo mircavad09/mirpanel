@@ -163,7 +163,7 @@ assert.ok(flow.includes("event.preventDefault()"));
 assert.ok(flow.includes("if (flow.submitting || flow.settled) return;"));
 assert.equal(flow.includes("/api/payments/replacement-receipts"), false, "İşləməyən yeni çek axını qalmamalıdır");
 assert.equal(flow.includes("paymentReceiptToken"), false, "İşləməyən yeni çek tokeni qalmamalıdır");
-assert.ok(flow.includes("ÇEKİ GÖNDƏR VƏ DAVAM ET →"));
+assert.ok(flow.includes("ready ? 'Davam et' : 'Əvvəlcə çeki yükləyin'"));
 assert.ok(flow.includes("if (!flow.receiptUploadToken || !flow.reservation) { promptForReceipt(); return; }"));
 assert.ok(api.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"), 'Receipt acknowledgement is part of the server canonical WhatsApp message');
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));

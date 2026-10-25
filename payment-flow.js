@@ -254,7 +254,7 @@
     const submit = document.getElementById("paymentSubmit");
     const guard = document.getElementById("paymentSubmitGuard");
     const hint = document.getElementById("paymentReceiptRequiredHint");
-    if (submit) { submit.disabled = !ready; submit.textContent = ready ? 'ÇEKİ GÖNDƏR VƏ DAVAM ET →' : 'Əvvəlcə çeki yükləyin'; }
+    if (submit) { submit.disabled = !ready; submit.textContent = ready ? 'Davam et' : 'Əvvəlcə çeki yükləyin'; }
     guard?.classList.toggle("isBlocked", !ready);
     if (hint) hint.hidden = ready;
   }
@@ -567,6 +567,7 @@
             document.getElementById("paymentReceiptInput").onchange = (fileEvent) => {
               const file = fileEvent.target.files?.[0];
               if (!file || flow.submitting) return;
+              setMessage('');
               const error = document.getElementById("paymentReceiptError");
               error.hidden = true;
               const declaredType = String(file?.type || "").toLowerCase();
@@ -577,6 +578,7 @@
                 setReceiptSubmitReady(false);
                 error.textContent = !file ? "Qəbz seçilməyib." : file.size > 5 * 1024 * 1024 ? "Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin." : "iPhone şəklini JPG və ya PDF formatına çevirib yenidən yükləyin.";
                 error.hidden = false;
+                setMessage(error.textContent, 'error');
                 return;
               }
               flow.previousReceiptUploadToken = flow.receiptUploadToken || flow.previousReceiptUploadToken;
@@ -596,6 +598,7 @@
               document.getElementById("removePaymentReceipt").onclick = () => {
                 if (flow.submitting) return;
                 clearReceipt(flow); setStage(flow, "payment_details"); setReceiptSubmitReady(false);
+                setMessage('Əvvəlcə çeki yükləyin');
                 document.getElementById('paymentReceiptRetry').hidden = true;
                 document.getElementById('paymentUploadProgress').classList.add('hidden');
               };
@@ -674,7 +677,7 @@
                 storeCheckout(flow);
                 discardReceipt(flow, flow.previousReceiptUploadToken, flow.receiptUploadToken);
                 flow.previousReceiptUploadToken = null;
-                setProgress(100, "Fayl uğurla yükləndi");
+                setProgress(100, "Çek uğurla yükləndi");
                 receiptStatus?.classList.replace("paymentReceiptPending", "paymentReceiptSuccess");
                 document.getElementById("paymentReceiptForm")?.classList.remove("isUploading");
                 document.getElementById("paymentReceiptForm")?.classList.add("uploadSucceeded");
@@ -683,8 +686,8 @@
                 error.hidden = true;
                 setReceiptSubmitReady(true);
                 setStage(flow,'receipt_ready');
-                setMessage('Fayl uğurla yükləndi', 'success');
-                if(uploaded.autoSubmit===true&&uploaded.receiptUploaded===true)document.getElementById('paymentReceiptForm')?.requestSubmit();
+                setMessage('Çek uğurla yükləndi', 'success');
+                // Stay here: only an explicit Continue button submission creates the order.
                 return;
               } catch (submitError) {
                 flow.uploadController = null;
@@ -710,6 +713,8 @@
             document.getElementById('paymentReceiptRetry').onclick = () => { void uploadSelectedReceipt(); };
             document.getElementById('paymentReceiptForm').addEventListener('submit', async event=>{
               event.preventDefault(); event.stopPropagation();
+              const continueButton = document.getElementById('paymentSubmit');
+              if (event.submitter !== continueButton || continueButton?.disabled) return;
               if (flow.submitting || flow.settled) return;
               if (!flow.receiptUploadToken || !flow.reservation) { promptForReceipt(); return; }
               flow.submitting = true;
