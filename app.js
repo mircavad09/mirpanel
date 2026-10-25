@@ -976,13 +976,14 @@ const DATA = {
         {
           "label": "2 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 2,
-          "price": 10.49,
+          "price": 0,
           "regularPrice": 18.74
         },
         {
+          "active": true,
           "label": "3 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 3,
-          "price": 14.99,
+          "price": 0,
           "regularPrice": 27.53
         }
       ],
