@@ -1,7 +1,8 @@
 (() => {
   "use strict";
 
-  const API_BASE = window.MIRPANEL_PAYMENT_API || "https://mirpanel.onrender.com";
+  // First-party proxy avoids third-party cookie blocking on the public site.
+  const API_BASE = /^(?:www\.)?mirpanel\.com$|(?:^|\.)mirpanel\.pages\.dev$/.test(location.hostname) ? location.origin : window.MIRPANEL_PAYMENT_API || "https://mirpanel.onrender.com";
   const CHECKOUT_STORAGE_KEY = "mirpanel-payment-checkout-v1";
   const APPLE_RECEIPT_TYPES = new Set(["image/heic", "image/heif"]);
   const RECEIPT_UPLOAD_TIMEOUT_MS = 120_000;

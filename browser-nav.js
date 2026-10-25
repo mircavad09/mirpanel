@@ -1,0 +1,10 @@
+(()=>{'use strict';if(document.querySelector('.browser-bottom-nav'))return;
+ const paths={home:'M3 11 12 4l9 7M5 10v10h14V10M9 20v-6h6v6',products:'m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7m-8 4v10',orders:'M5 7h14v14H5V7Zm4 0V5a3 3 0 0 1 6 0v2'};
+ const icon=key=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[key]}"/></svg>`;
+ const active=()=>location.pathname.replace(/\/$/,'')==='/sifarislerim'?'orders':location.pathname==='/'?'home':/^\/mehsul(?:\/|$)/.test(location.pathname)?'products':null;
+ const link=(key,href,label)=>`<a href="${href}" data-browser-nav="${key}"${active()===key?' aria-current="page"':''}>${icon(key)}<span>${label}</span></a>`;
+ const style=document.createElement('link');style.rel='stylesheet';style.href='/browser-orders.css?v=browser-orders-20261025-1';document.head.append(style);
+ const bottom=document.createElement('nav');bottom.className='browser-bottom-nav';bottom.setAttribute('aria-label','Aşağı menyu');bottom.innerHTML=link('home','/','Ana səhifə')+link('products','/mehsul','Məhsullar')+link('orders','/sifarislerim','Sifarişlərim');document.body.append(bottom);document.body.classList.add('has-bottom-nav');
+ function header(){document.querySelectorAll('.site-header-nav,.site-header-drawer-nav').forEach(nav=>{if(nav.querySelector('[data-browser-nav="orders"]'))return;const a=document.createElement('a');a.href='/sifarislerim';a.dataset.browserNav='orders';a.dataset.headerKey='orders';a.innerHTML=icon('orders')+'<span>Sifarişlərim</span>';if(active()==='orders'){nav.querySelectorAll('[aria-current]').forEach(e=>e.removeAttribute('aria-current'));a.setAttribute('aria-current','page');}const contact=nav.querySelector('[data-header-key="contact"],a[href="/elaqe"]');contact?contact.after(a):nav.append(a);});}
+ header();let scheduled=false;new MutationObserver(()=>{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;header();});}).observe(document.getElementById('mainHeader')||document.querySelector('.site-header')||document.body,{childList:true,subtree:true});
+})();

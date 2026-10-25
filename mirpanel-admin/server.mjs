@@ -50,6 +50,7 @@ const config = {
   reservationMinutes: Math.max(1, Math.min(30, Number(process.env.PAYMENT_RESERVATION_MINUTES || 10))),
   maxReceiptBytes: Math.max(1, Math.min(5 * 1024 * 1024, Number(process.env.PAYMENT_RECEIPT_MAX_BYTES || 5 * 1024 * 1024))),
   receiptShapeEnabled: false, // Emergency upload-only policy; OCR is not a checkout gate.
+  browserOrdersEnabled: process.env.BROWSER_ORDERS_ENABLED === 'true',
   receiptValidationRequested: false, // Broad schema-6 workflow superseded; not deployed.
   receiptOcrUrl: process.env.RECEIPT_OCR_URL || '',
   receiptOcrToken: process.env.RECEIPT_OCR_TOKEN || '',

@@ -286,6 +286,8 @@ export async function onRequest(context) {
   const { request } = context;
   const url = new URL(request.url);
   const pathname = url.pathname;
+  if(url.hostname==='www.mirpanel.com'&&['GET','HEAD'].includes(request.method)&&!pathname.startsWith('/api/')){const canonical=new URL(url);canonical.hostname='mirpanel.com';return Response.redirect(canonical.href,308);}
+  if(pathname.startsWith('/api/payments/'))return context.next();
   const route = pathname.replace(/\/+$/, "") || "/";
 
   if (isStaticAsset(pathname)) return context.next();

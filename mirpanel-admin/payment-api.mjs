@@ -18,6 +18,7 @@ import {planKey} from './payment-profit.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
 import {validateReceiptFile} from './receipt-file-safety.mjs';
+import {createBrowserOrders} from './browser-orders.mjs';
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -118,6 +119,7 @@ export function createPaymentSystem(options) {
 
   const security = createPaymentSecurity(config);
   const store = options.store || createPaymentStore(config);
+  const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
   const mailer = options.mailer || createPaymentMailer(config, store);
   const allowedOrigins = new Set(config.allowedOrigins);
 
@@ -139,7 +141,8 @@ export function createPaymentSystem(options) {
 
   function publicJson(request, response, status, body) {
     const timing=request.receiptTimings;
-    json(response, status, body, { ...corsHeaders(request), "Cache-Control": "no-store",...(timing?{"Server-Timing":Object.entries(timing).map(([name,ms])=>`${name};dur=${Math.max(0,ms).toFixed(1)}`).join(', '),"Access-Control-Expose-Headers":"Server-Timing"}:{}) });
+    const personal=String(request.url||'').startsWith('/api/payments/my-orders');
+    json(response, status, body, { ...corsHeaders(request), "Cache-Control": personal?"private, no-store, max-age=0":"no-store",...(personal?{Vary:'Cookie, Origin','Surrogate-Control':'no-store','Referrer-Policy':'no-referrer'}:{}),...(timing?{"Server-Timing":Object.entries(timing).map(([name,ms])=>`${name};dur=${Math.max(0,ms).toFixed(1)}`).join(', '),"Access-Control-Expose-Headers":"Server-Timing"}:{}) });
   }
 
   async function orderResult(order, idempotent = true, whatsappExtraText = "") {
@@ -216,6 +219,18 @@ export function createPaymentSystem(options) {
       publicJson(request, response, 403, { error: "Sorğunun mənbəyi icazəli deyil." });
       return true;
     }
+    if(request.method==='GET'&&url.pathname==='/api/payments/my-orders'){
+      if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
+      await publicRate(request,'browser-orders',60,60);
+      publicJson(request,response,200,await browserOrders.list(request,response,url.searchParams.get('cursor')));return true;
+    }
+    const browserReceipt=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/receipt$/);
+    if(request.method==='GET'&&browserReceipt){
+      if(!safeUuid(browserReceipt[1]))throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});
+      if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
+      await publicRate(request,'browser-receipt',60,30);
+      publicJson(request,response,200,await browserOrders.receipt(request,browserReceipt[1]));return true;
+    }
     if (request.method === "GET" && url.pathname === "/api/payments/health") {
       await publicRate(request, "health", 60, 30);
       await store.publicMethods();
@@ -223,6 +238,7 @@ export function createPaymentSystem(options) {
       return true;
     }
     if (request.method === "GET" && url.pathname === "/api/payments/methods") {
+      if(browserOrders.enabled)browserOrders.ensure(request,response);
       await publicRate(request, "methods", 60, 60);
       const methods = (await store.publicMethods()).map(publicMethod);
       publicJson(request, response, 200, { methods, anyAvailable: methods.some((item) => item.available), reservationMinutes: config.reservationMinutes,customerDetailsRequired:false });
@@ -385,6 +401,8 @@ export function createPaymentSystem(options) {
       if (receipt.buffer) await store.uploadReceipt(receiptPath, receipt);
       else await store.verifyUploadedReceipt(receiptPath, receipt.size);
       let submitted;
+      let browserOwnerHash=null;
+      if(browserOrders.enabled){await browserOrders.ready();browserOwnerHash=browserOrders.read(request);if(!browserOwnerHash)throw Object.assign(Error('Ödəniş sessiyası yenilənməlidir. Kart seçimini yenidən açın.'),{status:409,code:'BROWSER_SESSION_REQUIRED'});}
       try {
         submitted = await store.submitOrder({
           reservationId,
@@ -400,6 +418,7 @@ export function createPaymentSystem(options) {
           receiptSha256: receipt.sha256,
           durationMonths: structuredDurationMonths(plan)
           ,checkoutMetadata
+          ,browserOwnerHash
         });
       } catch (error) {
         // A lost RPC response is not proof of rollback. Never delete a possibly linked receipt.

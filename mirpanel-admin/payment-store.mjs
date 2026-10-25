@@ -364,7 +364,7 @@ export function createPaymentStore(config) {
       // canonical plan metadata; keep the legacy transactional receipt/payment RPC.
       const metadata=args.checkoutMetadata;
       const canonicalPlanId=metadata ? await rpc('employee_plan_resolve',{p_product:args.productId,p_key:metadata.sourcePlanKey,p_signature:metadata.signature,p_label:args.planName}) : null;
-      const result=await rpc('submit_payment_order_v2',params);
+      const result=await rpc(args.browserOwnerHash?'submit_payment_order_browser':'submit_payment_order_v2',{...params,...(args.browserOwnerHash?{p_owner_hash:args.browserOwnerHash}:{})});
       if(metadata){
         const snapshot={productId:args.productId,planId:canonicalPlanId,productName:args.productTitle,planName:args.planName,unitPrice:metadata.unitPrice,quantity:1,amount:metadata.unitPrice};
         const {error}=await client.from('payment_orders').update({quantity:1,canonical_plan_id:canonicalPlanId,checkout_snapshot:snapshot})
@@ -380,6 +380,9 @@ export function createPaymentStore(config) {
       if (!data) throw Object.assign(new Error("Rezerv bu ödəniş sessiyasına aid deyil."), { status: 404 });
       return data;
     },
+    browserOrdersReady(){return rpc('browser_orders_ready');},
+    browserOrderPage(owner,before,beforeId){return rpc('browser_orders_page',{p_owner_hash:owner,p_before:before,p_before_id:beforeId,p_limit:21});},
+    async browserOwnedOrder(owner,id){const{data,error}=await client.from('browser_order_owners').select('payment_orders!inner(id,receipt_path,receipt_deleted_at,receipt_mime)').eq('token_hash',owner).eq('order_id',id).maybeSingle();if(error)throw paymentError(error);return data?.payment_orders||null;},
     async planCosts(catalog) {
       const { data, error } = await client.from("payment_plan_costs")
         .select("product_id,plan_id,cost_amount,updated_at")
