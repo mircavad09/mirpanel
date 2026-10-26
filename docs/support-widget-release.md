@@ -13,3 +13,42 @@ Tests:
 - Commercial snapshot was unchanged by game-only runtime removal. Incoming admin content updates are preserved separately when merging main.
 
 Shared header references use `support-20261026-1`; the home app reference is refreshed. Generated page templates preserve this loader version in later admin content updates. Other page edits are script-version references only. No migration or production business-data write is needed.
+
+Incoming admin commits `5d07d87` and `00fbf31` were preserved by normal merge. Commercial state hash matches `00fbf31` exactly (`de63a4ebed893ae77d387dae05a3897e23ce4a6f50586874404f770485023e49`, 22 active products); only game runtime was removed from app.js. Support checks passed again after merge.
+
+Changed files (relative to the preserved incoming main):
+- `app.js`
+- `docs/support-widget-release.md`
+- `elaqe`
+- `haqqimizda`
+- `index.html`
+- `mehsul.page`
+- `mehsul/adobe-creative-cloud.page`
+- `mehsul/amazon-prime-video.page`
+- `mehsul/canva-premium.page`
+- `mehsul/capcut-pro.page`
+- `mehsul/captions-ai.page`
+- `mehsul/chatgpt-plus-ortaq-hesab.page`
+- `mehsul/chatgpt-plus.page`
+- `mehsul/cloud-ai-pro.page`
+- `mehsul/duolingo-super.page`
+- `mehsul/google-ai-pro-ultra.page`
+- `mehsul/google-ai-pro-v3.page`
+- `mehsul/grok-ai.page`
+- `mehsul/hbo-max.page`
+- `mehsul/netflix-sexsi-yenilemek.page`
+- `mehsul/netflix-sexsi.page`
+- `mehsul/netflix-umumi.page`
+- `mehsul/spotify-premium.page`
+- `mehsul/surfshark-vpn.page`
+- `mehsul/tiktok-jeton.page`
+- `mehsul/youtube-eyni-hesab.page`
+- `mehsul/youtube-premium.page`
+- `mehsul/zoom-pro.page`
+- `mirpanel-admin/product-pages.mjs`
+- `scripts/test-support-widget.mjs`
+- `sertler`
+- `sifarislerim.html`
+- `site-header.js`
+- `support-widget.css`
+- `support-widget.js`
