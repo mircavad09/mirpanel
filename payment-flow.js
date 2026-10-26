@@ -204,8 +204,10 @@
     const modal = document.getElementById("modal");
     modal?.classList.remove("orderConfirmationModal", "premiumOrderFormOpen", "spotifyOrderConfirmationOpen", "hboMaxOrderFormOpen");
     modal?.classList.add("paymentFlowOpen");
+    mountCheckoutViewport(modal);
     form.innerHTML = `<section class="paymentFlow" data-payment-stage="payment_method_selection" aria-labelledby="paymentFlowTitle">
       <div class="paymentFlowHead"><div><span>Ödəniş</span><h2 id="paymentFlowTitle">Ödəniş üsulunu seçin</h2><p>${esc(product.title)} · ${Number(plan.price).toFixed(2)} ₼</p></div><button class="paymentFlowClose" type="button" aria-label="Ödənişi bağla">×</button></div>
+      <div class="paymentFlowScroll">
       <div id="paymentFlowMessage" class="paymentFlowMessage" role="status">Aktiv ödəniş üsulları yüklənir...</div>
       <button id="paymentMethodsRetry" type="button" hidden>Yenidən cəhd et</button>
       <div id="paymentMethodChoices" class="paymentMethodChoices" data-payment-stage-panel="payment_method_selection" aria-label="Ödəniş üsulları"></div>
@@ -213,8 +215,33 @@
       <div id="paymentMethodDetail" data-payment-stage-panel="payment_details"></div>
       <ol class="paymentReceiptSteps" aria-label="Sifariş mərhələləri"><li data-receipt-step="1" class="active" aria-current="step"><b aria-hidden="true">1</b><span>Kartı seç</span></li><li data-receipt-step="2"><b aria-hidden="true">2</b><span>Çeki yüklə</span></li><li data-receipt-step="3"><b aria-hidden="true">3</b><span>Sifarişi göndər</span></li></ol>
       <div id="paymentReceiptArea" data-payment-stage-panel="receipt_upload"></div>
+      </div><div id="paymentFlowFooter" hidden></div>
     </section>`;
     return form;
+  }
+
+  let releaseCheckoutViewport = null;
+  function mountCheckoutViewport(modal) {
+    releaseCheckoutViewport?.();
+    if (!modal) return;
+    const body = document.body, y = window.scrollY, x = window.scrollX;
+    const saved = Object.fromEntries(['position','top','left','width','overflow'].map(k=>[k,body.style[k]]));
+    body.classList.add('paymentCheckoutOpen');
+    Object.assign(body.style,{position:'fixed',top:`-${y}px`,left:`-${x}px`,width:'100%',overflow:'hidden'});
+    const viewport = window.visualViewport;
+    const resize = () => {
+      modal.style.setProperty('--checkout-height',`${viewport?.height || window.innerHeight}px`);
+      modal.style.setProperty('--checkout-top',`${viewport?.offsetTop || 0}px`);
+    };
+    resize();viewport?.addEventListener('resize',resize);viewport?.addEventListener('scroll',resize);window.addEventListener('resize',resize);
+    const observer = new MutationObserver(()=>{if(!modal.classList.contains('paymentFlowOpen')||getComputedStyle(modal).display==='none')releaseCheckoutViewport?.();});
+    observer.observe(modal,{attributes:true,attributeFilter:['class','style']});
+    releaseCheckoutViewport = () => {
+      observer.disconnect();viewport?.removeEventListener('resize',resize);viewport?.removeEventListener('scroll',resize);window.removeEventListener('resize',resize);
+      body.classList.remove('paymentCheckoutOpen');Object.assign(body.style,saved);
+      modal.style.removeProperty('--checkout-height');modal.style.removeProperty('--checkout-top');
+      releaseCheckoutViewport=null;window.scrollTo(x,y);
+    };
   }
 
   function methodIcon(type) {
@@ -251,7 +278,6 @@
       <button id="paymentReceiptRetry" class="paymentReceiptRetry" type="button" hidden>Yenidən cəhd et</button>
       <p id="paymentReceiptPickerWarning" class="paymentReceiptWarning">❗ Çeki WhatsApp-a göndərməyin. WhatsApp-a göndərilən çek sifarişə əlavə olunmur. Sifarişiniz yalnız çek bu bölməyə yükləndikdən sonra yoxlanılacaq.</p>
       <p id="paymentReceiptRequiredHint" class="paymentReceiptRequiredHint">Çekin yüklənməsi tamamlanandan sonra davam edə bilərsiniz.</p>
-      <div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><div id="paymentSubmitGuard" class="paymentSubmitGuard isBlocked"><button id="paymentSubmit" type="submit" disabled>Əvvəlcə çeki yükləyin</button></div></div>
     </form>`;
   }
 
@@ -462,6 +488,8 @@
           document.getElementById('paymentMethodContinue').disabled = !flow.selectedMethodId;
           document.getElementById("paymentMethodDetail").innerHTML = "";
           document.getElementById("paymentReceiptArea").innerHTML = "";
+          document.getElementById('paymentFlowFooter').replaceChildren();
+          document.getElementById('paymentFlowFooter').hidden = true;
         };
         renderChoices();
         if (!result.methods.length) setMessage("Hazırda aktiv ödəniş üsulu yoxdur. Dəstəklə əlaqə saxlayın.", "error");
@@ -482,6 +510,9 @@
             choices.hidden = true;
             document.getElementById("paymentMethodDetail").innerHTML = detailMarkup(reserved);
             document.getElementById("paymentReceiptArea").innerHTML = receiptMarkup();
+            const footer=document.getElementById('paymentFlowFooter');
+            footer.innerHTML='<div class="paymentSubmitActions"><button id="paymentCancel" type="button">Ləğv et</button><div id="paymentSubmitGuard" class="paymentSubmitGuard isBlocked"><button id="paymentSubmit" type="submit" form="paymentReceiptForm" disabled>Əvvəlcə çeki yükləyin</button></div></div>';
+            footer.hidden=false;
             const receiptPicker = document.querySelector(".paymentReceiptPicker");
             receiptPicker.onkeydown = (event) => {
               if (event.key !== "Enter" && event.key !== " ") return;
