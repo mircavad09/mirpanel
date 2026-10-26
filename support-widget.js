@@ -1,6 +1,6 @@
 (()=>{'use strict';
  if(document.getElementById('supportWidget'))return;
- const VERSION='support-faq-20261026-1';
+ const VERSION='support-faq-20261026-2';
  const icon=(name)=>{const paths={headset:'M4 14v-3a8 8 0 0 1 16 0v3M4 12H2v7h5v-7H4Zm16 0h2v7h-5v-7h3Zm0 7c0 3-3 3-6 3',arrow:'m9 5 7 7-7 7',send:'m3 3 19 9-19 9 4-9-4-9Zm4 9h15',close:'m6 6 12 12M18 6 6 18'};return `<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="${paths[name]}"/></svg>`;};
  const waIcon='<svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M20.5 3.5A11.8 11.8 0 0 0 2 17.7L.4 23.6l6-1.6A11.8 11.8 0 0 0 20.5 3.5ZM12 21a9 9 0 0 1-4.6-1.3l-.3-.2-3.5.9.9-3.4-.2-.3A9 9 0 1 1 12 21Zm5-6.7c-.3-.1-1.6-.8-1.8-.9-.3-.1-.5-.1-.7.2l-.8 1c-.1.2-.3.2-.5.1a7.4 7.4 0 0 1-3.6-3.1c-.3-.5.3-.5.8-1.5.1-.2 0-.3 0-.5l-.8-2c-.2-.5-.4-.4-.6-.4h-.5c-.2 0-.5.1-.7.3-.3.3-.8.9-.8 2.2s.9 2.6 1.1 2.8c.1.2 1.8 2.9 4.5 4 1.7.8 2.4.8 3.2.7.5-.1 1.6-.7 1.8-1.3.2-.6.2-1.1.1-1.2 0-.1-.2-.2-.5-.4Z"/></svg>';
  const existing=document.getElementById('waFab');
@@ -31,7 +31,7 @@
  function viewport(){const vv=window.visualViewport;if(!vv)return;const keyboard=Math.max(0,innerHeight-vv.height-vv.offsetTop);panel.style.setProperty('--support-keyboard-bottom',keyboard>100?(keyboard+8)+'px':'');panel.style.setProperty('--support-panel-limit',Math.max(180,vv.height-24)+'px');}
  function finishClose(){panel.hidden=true;backdrop.hidden=true;panel.classList.remove('is-open');document.body.style.overflow=previousOverflow||'';if(previousFocus?.isConnected)previousFocus.focus({preventScroll:true});}
  function setOpen(value){if(value===opened)return;opened=value;clearTimeout(timer);toggle.setAttribute('aria-expanded',String(value));
-  if(value){if(panel.hidden){previousFocus=document.activeElement;previousOverflow=document.body.style.overflow;}panel.hidden=false;backdrop.hidden=false;document.body.style.overflow='hidden';viewport();requestAnimationFrame(()=>{if(opened)panel.classList.add('is-open');});close.focus({preventScroll:true});}
+  if(value){if(panel.hidden){previousFocus=document.activeElement;previousOverflow=document.body.style.overflow;}questions.forEach(q=>q.setAttribute('aria-expanded','false'));answers.forEach(a=>a.hidden=true);panel.hidden=false;backdrop.hidden=false;panel.querySelector('.support-messages').scrollTop=0;document.body.style.overflow='hidden';viewport();requestAnimationFrame(()=>{if(opened)panel.classList.add('is-open');});close.focus({preventScroll:true});}
   else{panel.classList.remove('is-open');if(matchMedia('(prefers-reduced-motion: reduce)').matches)finishClose();else timer=setTimeout(finishClose,220);}}
  toggle.addEventListener('click',()=>setOpen(!opened));close.addEventListener('click',()=>setOpen(false));backdrop.addEventListener('click',()=>setOpen(false));
  panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.preventDefault();setOpen(false);}if(e.key==='Tab'){const items=[...panel.querySelectorAll('button:not(:disabled),a[href],textarea,[tabindex="0"]')],first=items[0],last=items.at(-1);if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus();}else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus();}}});
