@@ -230,7 +230,7 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
     activeProductsWithSlugs(products).map(({ product, slug }) => [product.id, slug])
   );
 
-  lines.push("/mehsul /mehsul.page 200", "/mehsul/ /mehsul 301");
+  lines.push("/mehsul /mehsul.page 200", "/sifarislerim/ /sifarislerim 301", "/mehsul/ /mehsul 301");
 
   for (const [productId, aliases] of Object.entries(defaultSeoAliases)) {
     const primary = primaryById.get(productId);
