@@ -234,7 +234,7 @@ export function createPaymentSystem(options) {
     if (request.method === "GET" && url.pathname === "/api/payments/health") {
       await publicRate(request, "health", 60, 30);
       await store.publicMethods();
-      publicJson(request, response, 200, { ok:true, configured:true, database:true, storage:"private", registrationRequired:false, receiptCheck:"file-safety-only-v1", contentChecked:false, ocrRequired:false });
+      publicJson(request, response, 200, { ok:true, configured:true, database:true, storage:"private", registrationRequired:false, receiptCheck:"file-safety-only-v1", fileSafetyEngine:"isolated-decoder-v2", contentChecked:false, ocrRequired:false });
       return true;
     }
     if (request.method === "GET" && url.pathname === "/api/payments/methods") {
@@ -338,6 +338,7 @@ export function createPaymentSystem(options) {
       let body;
       let receipt;
       let checkpoint=performance.now();request.receiptTimings={};
+      request.receiptStage='receive';
       if (contentType.toLowerCase().startsWith("multipart/form-data;")) {
         if (typeof readRawBody !== "function") throw Object.assign(new Error("Fayl yükləmə xidməti hazır deyil."), { status: 503 });
         let rawBody;
@@ -355,6 +356,7 @@ export function createPaymentSystem(options) {
         } else receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
       }
       request.receiptTimings.receive=performance.now()-checkpoint;checkpoint=performance.now();
+      request.receiptStage='reservation';
       const reservationId = safeUuid(body.reservationId);
       const checkoutKey = safeUuid(body.checkoutKey);
       const idempotencyKey = safeUuid(request.headers["x-idempotency-key"]);
@@ -368,6 +370,7 @@ export function createPaymentSystem(options) {
       request.receiptTimings.binding=performance.now()-checkpoint;checkpoint=performance.now();
       if(!existing&&(reservation.status!=='reserved'||Date.parse(reservation.expires_at)<=Date.now()))throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'),{status:409,code:'RECEIPT_RESERVATION_INVALID'});
       // Emergency upload-only policy: decoding/PDF security is mandatory; OCR is not.
+      request.receiptStage='file_safety';
       if(!existing&&receipt.buffer)await validateReceiptFile(receipt);
       request.receiptTimings.fileSafety=performance.now()-checkpoint;checkpoint=performance.now();
       if (uploadOnly) {
@@ -375,6 +378,7 @@ export function createPaymentSystem(options) {
           throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'), {status:409,code:'RECEIPT_RESERVATION_INVALID'});
         }
         const path = `pending/${reservationId}/${receipt.sha256}.${receipt.extension}`;
+        request.receiptStage='storage';
         try { await store.uploadReceipt(path, receipt); }
         catch (error) {
           // A lost upload response or a duplicate immutable hash object is recoverable.
@@ -402,6 +406,7 @@ export function createPaymentSystem(options) {
       else await store.verifyUploadedReceipt(receiptPath, receipt.size);
       let submitted;
       let browserOwnerHash=null;
+      request.receiptStage='history_session';
       if(browserOrders.enabled){await browserOrders.ready();browserOwnerHash=browserOrders.read(request);if(!browserOwnerHash)throw Object.assign(Error('Ödəniş sessiyası yenilənməlidir. Kart seçimini yenidən açın.'),{status:409,code:'BROWSER_SESSION_REQUIRED'});}
       try {
         submitted = await store.submitOrder({
@@ -424,6 +429,7 @@ export function createPaymentSystem(options) {
         // A lost RPC response is not proof of rollback. Never delete a possibly linked receipt.
         const reconciled = await store.getOrderByReservation(reservationId).catch(() => null);
         if (reconciled) {
+          if(browserOwnerHash&&!await store.browserOwnedOrder(browserOwnerHash,reconciled.id))throw Object.assign(Error('Sifariş tarixçəsi ilə əlaqə təsdiqlənmədi. Yenidən cəhd edin.'),{status:503,code:'BROWSER_OWNERSHIP_UNCONFIRMED'});
           if (reconciled.receipt_path !== receiptPath) await store.removeReceipt(receiptPath).catch(() => {});
           submitted = { id: reconciled.id, idempotent: true };
         } else {
@@ -695,7 +701,8 @@ export function createPaymentSystem(options) {
       } catch (error) {
         const isPublic = url.pathname.startsWith("/api/payments/");
         const status = errorStatus(error);
-        console.error("Payment API", error.code || "PAYMENT_ERROR", error.diagnostic || error.message);
+        if(['/api/payments/receipts','/api/payments/orders'].includes(url.pathname))console.error('Payment upload',JSON.stringify({stage:request.receiptStage||'request',status,code:/^[A-Z_]+$/.test(error.code||'')?error.code:'PAYMENT_ERROR',safety:/^file_safety:RECEIPT_[A-Z_]+$/.test(error.diagnostic||'')?error.diagnostic:undefined}));
+        else console.error("Payment API", error.code || "PAYMENT_ERROR", error.diagnostic || error.message);
         if (isPublic) publicJson(request, response, status, { error: error.message, code: error.code || "PAYMENT_ERROR", ...(Array.isArray(error.reasonCodes)?{reasonCodes:error.reasonCodes}:{} ) });
         else json(response, status, { error: error.message, code: error.code || "PAYMENT_ERROR" });
         return true;

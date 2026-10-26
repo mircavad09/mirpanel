@@ -147,7 +147,7 @@ export function createPaymentStore(config) {
   const client = createClient(config.supabaseUrl, config.supabaseSecretKey, {
     global: { fetch: (input, init = {}) => {
       const url = String(input?.url || input);
-      const checkoutWrite = url.endsWith("/rpc/submit_payment_order_v2") || url.includes("/storage/v1/object/");
+      const checkoutWrite = url.endsWith("/rpc/submit_payment_order_v2") || url.endsWith("/rpc/submit_payment_order_browser") || url.includes("/storage/v1/object/");
       if (!checkoutWrite) return boundedReadFetch(input, init);
       const timeout = AbortSignal.timeout(25000);
       return fetch(input, { ...init, signal: init.signal ? AbortSignal.any([init.signal, timeout]) : timeout });

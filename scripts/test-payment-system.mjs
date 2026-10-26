@@ -53,7 +53,9 @@ assert.equal(detectReceiptType(webp).mimeType, "image/webp");
 assert.equal(detectReceiptType(pdf).mimeType, "application/pdf");
 assert.equal(receiptFromPayload({ mimeType: "application/pdf", contentBase64: pdf.toString("base64") }).extension, "pdf");
 assert.equal(receiptFromBuffer(jpeg, "image/jpeg").extension, "jpg");
-expectThrow(() => receiptFromPayload({ mimeType: "image/png", contentBase64: jpeg.toString("base64") }), /formatı uyğun deyil/);
+// MIME is a browser hint; canonical format comes from bytes, followed by the
+// isolated decoder in the API. Disallowed declared types remain blocked below.
+assert.equal(receiptFromPayload({ mimeType: "image/png", contentBase64: jpeg.toString("base64") }).mimeType, 'image/jpeg');
 assert.equal(receiptFromBuffer(png, "").mimeType, "image/png");
 expectThrow(() => receiptFromBuffer(webp, "application/octet-stream"), /Yalnız JPG, PNG/);
 expectThrow(() => receiptFromBuffer(pdf, "text/plain"), /formatı uyğun deyil/);

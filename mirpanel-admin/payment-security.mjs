@@ -123,9 +123,11 @@ export function receiptFromBuffer(buffer, declaredMimeType, maxBytes = 5 * 1024 
     }
     throw Object.assign(new Error("Yalnız JPG, PNG və ya bank PDF-i yükləyin."), { status: 400, code: "RECEIPT_UNSUPPORTED_TYPE" });
   }
-  const declared = String(declaredMimeType || '').toLowerCase().split(';')[0];
-  if (declared && declared !== 'application/octet-stream' &&
-      (declared === 'image/jpg' ? 'image/jpeg' : declared) !== detected.mimeType) {
+  const declared = String(declaredMimeType || '').toLowerCase().split(';')[0].trim();
+  // Browser MIME/filename are hints. Actual bytes + isolated decoder decide
+  // the canonical stored type; never trust an HTML/ZIP payload's extension.
+  const allowedHints = new Set(['','application/octet-stream','binary/octet-stream','image/jpeg','image/jpg','image/pjpeg','image/png','image/x-png','application/pdf','application/x-pdf']);
+  if (!allowedHints.has(declared)) {
     throw Object.assign(new Error('Faylın formatı uyğun deyil. JPG, PNG və ya bank PDF-ini yenidən seçin.'), {status:400,code:'RECEIPT_UNSUPPORTED_TYPE'});
   }
   if (!hasValidReceiptStructure(buffer, detected.extension)) {

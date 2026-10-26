@@ -116,10 +116,14 @@
       RECEIPT_UNSUPPORTED_TYPE: "Yalnız JPG, PNG və ya bankın yaratdığı PDF yükləyin.",
       RECEIPT_DAMAGED: "Fayl zədələnib və ya dəstəklənən formatda deyil.",
       RECEIPT_STORAGE_TIMEOUT: "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.",
-      RECEIPT_STORAGE_TEMPORARY: "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin."
+      RECEIPT_STORAGE_TEMPORARY: "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.",
+      RECEIPT_SAFETY_UNAVAILABLE: "Faylı təhlükəsiz emal etmək hazırda mümkün deyil. Yenidən cəhd edin.",
+      RECEIPT_SAFETY_BUSY: "Yükləmə xidməti məşğuldur. Bir az sonra yenidən cəhd edin.",
+      BROWSER_SESSION_REQUIRED: "Ödəniş sessiyası yenilənməlidir. Kart seçimini yenidən açın.",
+      BROWSER_OWNERSHIP_UNCONFIRMED: "Sifariş tarixçəsi ilə əlaqə təsdiqlənmədi. Yenidən cəhd edin."
     };
     const retryable = [408, 429, 502, 503, 504].includes(status) || code === "RECEIPT_STORAGE_TIMEOUT" || code === "RECEIPT_STORAGE_TEMPORARY";
-    const message = receiptCheckFailure(code, status) ? RECEIPT_CHECK_UNAVAILABLE : messages[code] || (status >= 500
+    const message = messages[code] || (receiptCheckFailure(code, status) ? RECEIPT_CHECK_UNAVAILABLE : status >= 500
       ? "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin."
       : String(payload?.error || "Çek faylı qəbul edilmədi."));
     return uploadError(message, { code: code || "RECEIPT_UPLOAD_REJECTED", status, retryable });
