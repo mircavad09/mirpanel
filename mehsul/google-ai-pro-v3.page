@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/google-ai-pro-v3#product","url":"https://mirpanel.com/mehsul/google-ai-pro-v3","name":"Gemini ai pro + 5TB yaddaş","description":"Google AI Pro V3 hesabını sərfəli qiymətə əldə et. AI premium imkanları və sürətli aktivləşdirmə.","image":["https://mirpanel.com/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071"],"sku":"google_ai","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/google-ai-pro-v3","price":"6.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/google-ai-pro-v3#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Gemini ai pro + 5TB yaddaş","item":"https://mirpanel.com/mehsul/google-ai-pro-v3"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/google-ai-pro-v3#product","url":"https://mirpanel.com/mehsul/google-ai-pro-v3","name":"Gemini ai pro + 5TB yaddaş","description":"Google AI Pro V3 hesabını sərfəli qiymətə əldə et. AI premium imkanları və sürətli aktivləşdirmə.","image":["https://mirpanel.com/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071"],"sku":"google_ai","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/google-ai-pro-v3","price":"6.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/google-ai-pro-v3#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Gemini ai pro + 5TB yaddaş","item":"https://mirpanel.com/mehsul/google-ai-pro-v3"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="google_ai" data-product-slug="google-ai-pro-v3">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -96,7 +96,7 @@
           <div class="product-page-info">
             <div class="product-detail-heading">
               <h1 id="pp-main-title" class="product-page-title">Google AI Pro + VEO 3</h1>
-              <span class="product-page-status">Mövcuddur</span>
+              <span class="product-page-status is-out">Stokda yoxdur</span>
             </div>
             <p class="product-page-description">Ağıllı mətn, analiz və məhsuldarlıq.</p>
             <div class="product-page-delivery">
@@ -117,12 +117,7 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
-      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">19.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
       <img src="/uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631" class="product-page-similar-image" alt="Claude AI" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
       <div class="product-page-similar-category">ai</div>
@@ -142,6 +137,11 @@
       <div class="product-page-similar-title" title="Grok AI">Grok AI</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">29.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
+      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">19.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
       <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-c586d044feb91daa"></script>
+  <script src="/app.js?v=catalog-dd767b84f8e12188"></script>
   <script src="/payment-flow.js?v=receipt-upload-20261026-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
