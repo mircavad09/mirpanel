@@ -209,6 +209,7 @@
       <div class="paymentFlowHead"><div><span>Ödəniş</span><h2 id="paymentFlowTitle">Ödəniş üsulunu seçin</h2><p>${esc(product.title)} · ${Number(plan.price).toFixed(2)} ₼</p></div><button class="paymentFlowClose" type="button" aria-label="Ödənişi bağla">×</button></div>
       <div class="paymentFlowScroll">
       <div id="paymentFlowMessage" class="paymentFlowMessage" role="status">Aktiv ödəniş üsulları yüklənir...</div>
+      <button id="paymentCancelRetry" type="button" hidden>Rezervi ləğv etməyə yenidən cəhd et</button>
       <button id="paymentMethodsRetry" type="button" hidden>Yenidən cəhd et</button>
       <div id="paymentMethodChoices" class="paymentMethodChoices" data-payment-stage-panel="payment_method_selection" aria-label="Ödəniş üsulları"></div>
       <button id="paymentMethodContinue" class="paymentMethodContinue" type="button" disabled>Bu kartla davam et · ${Number(plan.price).toFixed(2)} ₼ <span aria-hidden="true">→</span></button>
@@ -234,10 +235,13 @@
       modal.style.setProperty('--checkout-top',`${viewport?.offsetTop || 0}px`);
     };
     resize();viewport?.addEventListener('resize',resize);viewport?.addEventListener('scroll',resize);window.addEventListener('resize',resize);
+    const hostCancel=event=>{if(event.type==='click'?event.target===modal:event.key==='Escape'){event.preventDefault();event.stopImmediatePropagation();void activeFlow?.cancelCheckout?.(event);}};
+    modal.addEventListener('click',hostCancel,true);document.addEventListener('keydown',hostCancel,true);
     const observer = new MutationObserver(()=>{if(!modal.classList.contains('paymentFlowOpen')||getComputedStyle(modal).display==='none')releaseCheckoutViewport?.();});
     observer.observe(modal,{attributes:true,attributeFilter:['class','style']});
     releaseCheckoutViewport = () => {
       observer.disconnect();viewport?.removeEventListener('resize',resize);viewport?.removeEventListener('scroll',resize);window.removeEventListener('resize',resize);
+      modal.removeEventListener('click',hostCancel,true);document.removeEventListener('keydown',hostCancel,true);
       body.classList.remove('paymentCheckoutOpen');Object.assign(body.style,saved);
       modal.style.removeProperty('--checkout-height');modal.style.removeProperty('--checkout-top');
       releaseCheckoutViewport=null;window.scrollTo(x,y);
@@ -421,7 +425,14 @@
         // Preserve only the checkout capability, never the card/receipt. A reload
         // can recover a committed order even when its HTTP response was lost.
         if (!value) clearStoredCheckout();
-        if (!preserveModal) document.getElementById("modal")?.classList.remove("paymentFlowOpen");
+        if (!preserveModal) {
+          const modal=document.getElementById('modal');
+          modal?.classList.remove('show','paymentFlowOpen');
+          modal?.setAttribute('aria-hidden','true');
+          releaseCheckoutViewport?.();
+          // The public host may also have acquired its own modal scroll lock.
+          if(typeof window.closeModal==='function')window.closeModal();
+        }
         if (activeFlow === flow) activeFlow = null;
         resolve(value);
         if (redirectHome) {
@@ -431,19 +442,43 @@
         return true;
       };
       flow.finish = finish;
-      document.querySelector(".paymentFlowClose").onclick = async (event) => {
-        event.preventDefault();
-        if (flow.submitting || flow.reserving) return;
-        if ((flow.reservation || flow.previousReservationId) && !window.confirm("Aktiv rezerv ləğv ediləcək. Pəncərəni bağlamaq istəyirsiniz?")) return;
+      const cancelCheckout = async (event) => {
+        event?.preventDefault();event?.stopPropagation();
+        if(flow.settled||flow.cancelling||flow.reserving||(flow.submitting&&!flow.uploadController))return;
+        // Invalidate callbacks before aborting. A late upload response cannot
+        // revive this checkout, enable Continue or create an order.
+        flow.cancelling=true;
+        flow.cancelAttempted=true;
+        flow.uploadGeneration=(flow.uploadGeneration||0)+1;
+        flow.uploadController?.abort();flow.uploadController=null;
+        const controls=[...document.querySelectorAll('.paymentFlow button,.paymentFlow input')].map(control=>({control,disabled:control.disabled}));
+        controls.forEach(({control})=>control.disabled=true);
+        const cancelRetry=document.getElementById('paymentCancelRetry');cancelRetry.hidden=true;
+        setMessage('Rezerv təhlükəsiz ləğv edilir…');
         try {
-          await finish(null, { cancel: true });
+          // Server validates the checkout capability and owns atomic stock release.
+          await cancelReservation(flow);
+          flow.submitting=false;flow.cancelling=false;
+          await finish(null);
         } catch (error) {
-          setMessage(`${error.message} Rezerv ləğv edilmədi, yenidən cəhd edin.`, "error");
+          flow.submitting=false;flow.cancelling=false;
+          controls.forEach(({control,disabled})=>{if(control.isConnected)control.disabled=disabled;});
+          document.querySelector('.paymentFlowClose').disabled=false;
+          const cancel=document.getElementById('paymentCancel');if(cancel){cancel.disabled=false;cancel.textContent='Ləğv et';}
+          document.getElementById('paymentReceiptForm')?.classList.remove('isUploading');
+          document.querySelectorAll('#paymentReceiptInput,#changePaymentReceipt,#removePaymentReceipt,#changePaymentMethod').forEach(control=>control.disabled=false);
+          setReceiptSubmitReady(Boolean(flow.receiptUploadToken));
+          if(flow.receipt&&!flow.receiptUploadToken){const retry=document.getElementById('paymentReceiptRetry');if(retry){retry.hidden=false;retry.disabled=false;}}
+          setMessage(`${error.message} Rezervin ləğvi təsdiqlənmədi. Yenidən cəhd edin.`, 'error');
+          cancelRetry.hidden=false;cancelRetry.disabled=false;
         }
       };
+      document.querySelector('.paymentFlowClose').onclick=cancelCheckout;
+      flow.cancelCheckout=cancelCheckout;
+      document.getElementById('paymentCancelRetry').onclick=cancelCheckout;
       const retry = document.getElementById("paymentMethodsRetry");
       const loadMethods = async () => {
-        if (flow.loadingMethods || flow.settled) return;
+        if (flow.loadingMethods || flow.settled || flow.cancelling) return;
         flow.loadingMethods = true;
         const pendingContinue = document.getElementById('paymentMethodContinue');
         if (pendingContinue) pendingContinue.disabled = true;
@@ -472,7 +507,7 @@
           }
         }
         const result = await request("/api/payments/methods", { signal: flow.readController.signal });
-        if (flow.settled || activeFlow !== flow) return;
+        if (flow.settled || flow.cancelling || activeFlow !== flow) return;
         if (!recovered && (flow.reservation || flow.reserving)) return;
         const choices = document.getElementById("paymentMethodChoices");
         const renderChoices = () => {
@@ -524,11 +559,12 @@
             };
             setMessage("Rezerv yaradıldı. Ödənişdən sonra qəbzi yükləyin.", "success");
             setTimeout(() => {
-              if (flow.reservation?.reservationId === reserved.reservationId && !flow.settled) setMessage("Ödəniş məlumatı hazırdır.", "success compact");
+              if (flow.reservation?.reservationId === reserved.reservationId && !flow.settled && !flow.cancelAttempted) setMessage("Ödəniş məlumatı hazırdır.", "success compact");
             }, 1800);
             document.getElementById("paymentMethodDetail")?.scrollIntoView({ behavior: "smooth", block: "start" });
             flow.stopTimer?.();
             flow.stopTimer = startCountdown(reserved.expiresAt, async () => {
+              if(flow.cancelling||flow.settled)return;
               if (flow.submissionStarted) {
                 // Submission may have committed. Keep its recovery key and never
                 // cancel it from a client timer while the response is uncertain.
@@ -578,28 +614,7 @@
                 flow.changing = false;
               }
             };
-            document.getElementById("paymentCancel").onclick = async (event) => {
-              event.preventDefault();
-              if (flow.cancelling) return;
-              if (flow.submitting) {
-                flow.uploadController?.abort();
-                setMessage("Çek yükləməsi təhlükəsiz dayandırılır. Seçilmiş fayl qorunacaq.");
-                return;
-              }
-              const cancelButton = document.getElementById("paymentCancel");
-              const closeButton = document.querySelector(".paymentFlowClose");
-              cancelButton.disabled = true;
-              if (closeButton) closeButton.disabled = true;
-              setMessage("Rezerv təhlükəsiz ləğv edilir...");
-              try {
-                await finish(null, { cancel: true, redirectHome: true });
-                return;
-              } catch (error) {
-                cancelButton.disabled = false;
-                if (closeButton) closeButton.disabled = false;
-                setMessage(`${error.message} Rezerv ləğv edilmədi, yenidən cəhd edin.`, "error");
-              }
-            };
+            document.getElementById('paymentCancel').onclick=cancelCheckout;
             document.getElementById("paymentReceiptInput").onchange = (fileEvent) => {
               const file = fileEvent.target.files?.[0];
               if (!file || flow.submitting) return;
@@ -641,7 +656,7 @@
               void uploadSelectedReceipt();
             };
             const uploadSelectedReceipt = async () => {
-              if (flow.submitting) return;
+              if (flow.submitting || flow.cancelling || flow.settled) return;
               const submit = document.getElementById("paymentSubmit");
               const error = document.getElementById("paymentReceiptError");
               if (!flow.receipt) { promptForReceipt(); return; }
@@ -650,14 +665,16 @@
               document.getElementById("paymentReceiptForm")?.classList.add("isUploading");
               flow.submissionStarted = true;
               flow.uploadController = new AbortController();
+              const uploadGeneration=flow.uploadGeneration=(flow.uploadGeneration||0)+1;
+              const uploadInactive=()=>flow.settled||flow.cancelling||flow.uploadGeneration!==uploadGeneration;
               storeCheckout(flow);
               submit.disabled = true;
               submit.textContent = "Fayl yüklənir…";
               document.getElementById('paymentReceiptRetry').hidden = true;
               setMessage("Fayl yüklənir…");
               const cancelButton = document.getElementById("paymentCancel");
-              cancelButton.textContent = "Yükləməni dayandır";
-              const lockedControls = document.querySelectorAll(".paymentFlowClose, #changePaymentMethod, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
+              cancelButton.textContent = "Ləğv et";
+              const lockedControls = document.querySelectorAll("#changePaymentMethod, #paymentReceiptInput, #changePaymentReceipt, #removePaymentReceipt");
               lockedControls.forEach((control) => { control.disabled = true; });
               error.hidden = true;
               const progress = document.getElementById("paymentUploadProgress");
@@ -667,6 +684,7 @@
               const receiptStatus = document.querySelector(".paymentReceiptPending");
               let slowCheck = false;
               const setProgress = (value, text) => {
+                if(uploadInactive())return;
                 if (slowCheck && flow.submitting) text = "Yükləmə davam edir, zəhmət olmasa gözləyin";
                 const numeric = Number.isFinite(value);
                 progress.classList.toggle("isIndeterminate", !numeric);
@@ -675,6 +693,7 @@
                 if (receiptStatus) receiptStatus.textContent = text;
               };
               const slowTimer = window.setTimeout(() => {
+                if(uploadInactive())return;
                 slowCheck = true;
                 setMessage("Yükləmə davam edir, zəhmət olmasa gözləyin");
                 if (flow.submitting) submit.textContent = "Yükləmə davam edir…";
@@ -699,6 +718,7 @@
                   onProgress: (value) => setProgress(value, `${value}%`),
                   onProcessing: () => setProgress(100, "Fayl yüklənir…"),
                   onRetry: (uploadFailure, next, total) => {
+                    if(uploadInactive())return;
                     setProgress(null, `Yenidən cəhd edilir (${next}/${total})…`);
                     error.textContent = receiptCheckFailure(uploadFailure.code, uploadFailure.status) ? RECEIPT_CHECK_UNAVAILABLE : uploadFailure.code === "RECEIPT_NETWORK_ERROR" || uploadFailure.code === "RECEIPT_UPLOAD_TIMEOUT"
                       ? "Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir."
@@ -706,6 +726,7 @@
                     error.hidden = false;
                   }
                 }, flow.orderIdempotencyKey, flow.uploadController.signal);
+                if(uploadInactive())return;
                 flow.uploadController = null;
                 flow.receiptUploadToken = uploaded.receiptUploadToken;
                 flow.submitting = false;
@@ -726,6 +747,7 @@
                 // Stay here: only an explicit Continue button submission creates the order.
                 return;
               } catch (submitError) {
+                if(uploadInactive())return;
                 flow.uploadController = null;
                 flow.submitting = false;
                 document.getElementById("paymentReceiptForm")?.classList.remove("isUploading", "uploadSucceeded");
@@ -751,7 +773,7 @@
               event.preventDefault(); event.stopPropagation();
               const continueButton = document.getElementById('paymentSubmit');
               if (event.submitter !== continueButton || continueButton?.disabled) return;
-              if (flow.submitting || flow.settled) return;
+              if (flow.submitting || flow.settled || flow.cancelling) return;
               if (!flow.receiptUploadToken || !flow.reservation) { promptForReceipt(); return; }
               flow.submitting = true;
               const submit = document.getElementById('paymentSubmit');
@@ -786,7 +808,7 @@
         const continueButton = document.getElementById('paymentMethodContinue');
         choices.onclick = (event) => {
           const button = event.target.closest("[data-payment-method]");
-          if (!button || button.disabled || flow.reserving || flow.reservation || flow.settled || flow.loadingMethods) return;
+          if (!button || button.disabled || flow.reserving || flow.reservation || flow.settled || flow.cancelling || flow.loadingMethods) return;
           flow.selectedMethodId = button.dataset.paymentMethod;
           choices.querySelectorAll('[data-payment-method]').forEach(item => {
             const selected = item === button;
@@ -797,7 +819,7 @@
         };
         continueButton.onclick = async () => {
           const button = [...choices.querySelectorAll('[data-payment-method]')].find(item => item.dataset.paymentMethod === flow.selectedMethodId);
-          if (!button || button.disabled || flow.reserving || flow.reservation || flow.settled || flow.loadingMethods || flow.stage !== 'payment_method_selection') return;
+          if (!button || button.disabled || flow.reserving || flow.reservation || flow.settled || flow.cancelling || flow.loadingMethods || flow.stage !== 'payment_method_selection') return;
           flow.reserving = true;
           continueButton.disabled = true;
           choices.querySelectorAll("button").forEach((item) => { item.disabled = true; });
@@ -824,7 +846,7 @@
           }
         };
       } catch (error) {
-        if (!flow.settled && activeFlow === flow) {
+        if (!flow.settled && !flow.cancelling && activeFlow === flow) {
           setMessage(error.message, "error");
           retry.hidden = false;
         }
