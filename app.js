@@ -413,14 +413,14 @@ const DATA = {
         "alt": "Google AI Pro + VEO 3",
         "order": 8
       },
-      "flow": "spotify",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
-      "orderFlow": "form_confirm_whatsapp",
+      "orderFlow": "confirm_then_whatsapp",
       "formFields": [
         {
           "key": "email",
