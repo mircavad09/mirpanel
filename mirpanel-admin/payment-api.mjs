@@ -285,7 +285,13 @@ export function createPaymentSystem(options) {
       const reservationId = safeUuid(body.reservationId);
       const checkoutKey = safeUuid(body.checkoutKey);
       if (!reservationId || !checkoutKey) throw Object.assign(new Error("Rezerv və checkout açarı düzgün deyil."), { status: 400 });
-      const cancellation = await store.cancelCustomerReservation(reservationId, checkoutKey, `customer:${security.ipHash(clientIp(request)).slice(0, 12)}`);
+      let cancellation;
+      try{cancellation=await store.cancelCustomerReservation(reservationId,checkoutKey,`customer:${security.ipHash(clientIp(request)).slice(0,12)}`);}
+      catch(error){
+        if(error.code!=='RESERVATION_NOT_FOUND')throw error;
+        if(typeof store.missingReservationIsClear!=='function'||!await store.missingReservationIsClear(reservationId,checkoutKey))throw error;
+        cancellation={status:'absent',idempotent:true,serverVerifiedAbsent:true};
+      }
       publicJson(request, response, 200, { ok: true, cancellation });
       return true;
     }

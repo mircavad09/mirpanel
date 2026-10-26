@@ -86,7 +86,7 @@
         const payload = await response.json();
         if (!response.ok) {
           throw Object.assign(new Error(response.status < 500 && typeof payload?.error === "string" ? payload.error : SERVICE_ERROR),
-            { retryable: response.status >= 500 || response.status === 408, status: response.status });
+            { retryable: response.status >= 500 || response.status === 408, status: response.status,code:typeof payload.code==='string'?payload.code:undefined });
         }
         if (!validPayload(path, payload)) throw new Error(SERVICE_ERROR);
         return payload;
@@ -98,7 +98,7 @@
       }
       if (options.signal?.aborted) throw new DOMException("Aborted", "AbortError");
       if (!read || attempt === 2 || failure.retryable === false) {
-        throw Object.assign(new Error(failure.status && failure.status < 500 ? failure.message : SERVICE_ERROR), { status: failure.status });
+        throw Object.assign(new Error(failure.status && failure.status < 500 ? failure.message : SERVICE_ERROR), { status: failure.status,code:failure.code });
       }
       await new Promise((resolve) => setTimeout(resolve, (attempt + 1) * 2000));
     }
@@ -210,6 +210,7 @@
       <div class="paymentFlowScroll">
       <div id="paymentFlowMessage" class="paymentFlowMessage" role="status">Aktiv ödəniş üsulları yüklənir...</div>
       <button id="paymentCancelRetry" type="button" hidden>Rezervi ləğv etməyə yenidən cəhd et</button>
+      <div id="paymentDismissBox" hidden><p>Rezervin serverdə ləğvi təsdiqlənməyib. Pəncərəni bağlamaq stoku azad etmir; sonra yenidən cəhd edə bilərsiniz.</p><button id="paymentDismiss" type="button">Pəncərəni bağla</button></div>
       <button id="paymentMethodsRetry" type="button" hidden>Yenidən cəhd et</button>
       <div id="paymentMethodChoices" class="paymentMethodChoices" data-payment-stage-panel="payment_method_selection" aria-label="Ödəniş üsulları"></div>
       <button id="paymentMethodContinue" class="paymentMethodContinue" type="button" disabled>Bu kartla davam et · ${Number(plan.price).toFixed(2)} ₼ <span aria-hidden="true">→</span></button>
@@ -406,7 +407,7 @@
     flow.reservationKeys = new Map();
     flow.promise = new Promise((resolve) => {
       const finish = async (value, options = {}) => {
-        const { cancel = false, redirectHome = false, preserveModal = false } = options;
+        const { cancel = false, redirectHome = false, preserveModal = false, preserveCheckout = false } = options;
         if (flow.settled || flow.cancelling) return false;
         if (cancel) {
           flow.cancelling = true;
@@ -424,7 +425,7 @@
         clearReceipt(flow);
         // Preserve only the checkout capability, never the card/receipt. A reload
         // can recover a committed order even when its HTTP response was lost.
-        if (!value) clearStoredCheckout();
+        if (!value && !preserveCheckout) clearStoredCheckout();
         if (!preserveModal) {
           const modal=document.getElementById('modal');
           modal?.classList.remove('show','paymentFlowOpen');
@@ -453,7 +454,7 @@
         flow.uploadController?.abort();flow.uploadController=null;
         const controls=[...document.querySelectorAll('.paymentFlow button,.paymentFlow input')].map(control=>({control,disabled:control.disabled}));
         controls.forEach(({control})=>control.disabled=true);
-        const cancelRetry=document.getElementById('paymentCancelRetry');cancelRetry.hidden=true;
+        const cancelRetry=document.getElementById('paymentCancelRetry');cancelRetry.hidden=true;document.getElementById('paymentDismissBox').hidden=true;
         setMessage('Rezerv təhlükəsiz ləğv edilir…');
         try {
           // Server validates the checkout capability and owns atomic stock release.
@@ -471,11 +472,13 @@
           if(flow.receipt&&!flow.receiptUploadToken){const retry=document.getElementById('paymentReceiptRetry');if(retry){retry.hidden=false;retry.disabled=false;}}
           setMessage(`${error.message} Rezervin ləğvi təsdiqlənmədi. Yenidən cəhd edin.`, 'error');
           cancelRetry.hidden=false;cancelRetry.disabled=false;
+          document.getElementById('paymentDismissBox').hidden=false;document.getElementById('paymentDismiss').disabled=false;
         }
       };
       document.querySelector('.paymentFlowClose').onclick=cancelCheckout;
       flow.cancelCheckout=cancelCheckout;
       document.getElementById('paymentCancelRetry').onclick=cancelCheckout;
+      document.getElementById('paymentDismiss').onclick=async event=>{event.preventDefault();event.stopPropagation();if(flow.cancelling||flow.submitting||flow.settled)return;flow.uploadGeneration=(flow.uploadGeneration||0)+1;flow.uploadController?.abort();await finish(null,{preserveCheckout:true});};
       const retry = document.getElementById("paymentMethodsRetry");
       const loadMethods = async () => {
         if (flow.loadingMethods || flow.settled || flow.cancelling) return;

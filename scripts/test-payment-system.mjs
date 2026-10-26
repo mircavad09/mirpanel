@@ -19,7 +19,9 @@ const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 // Read-only comparison proved app.js matches committed 0c18f7b exactly; old baseline predates CMS edits.
 // Preserved upstream admin CMS changes from a60a97f; receipt work must not alter them.
 // Verified byte-identical app.js against incoming admin commit 989c5c0.
-const expectedSnapshot = "9b73ea1f3856af8e36fde14712101d0cc2908a460e61a8d078cf945a5dbcaca5";
+// Hotfix baseline 68cd648: app.js verified byte-identical before refreshing
+// this stale CMS snapshot assertion. No catalog/business data was changed.
+const expectedSnapshot = "de63a4ebed893ae77d387dae05a3897e23ce4a6f50586874404f770485023e49";
 
 function expectThrow(fn, pattern) {
   let thrown = null;
@@ -163,7 +165,7 @@ assert.ok(flow.includes('id="paymentReceiptForm"'));
 assert.ok(flow.includes('id="paymentSubmit" type="submit"'));
 assert.match(flow, /getElementById\(['"]paymentReceiptForm['"]\)\.addEventListener\(['"]submit['"],\s*async\s*\(?event\)?\s*=>/);
 assert.ok(flow.includes("event.preventDefault()"));
-assert.ok(flow.includes("if (flow.submitting || flow.settled) return;"));
+assert.ok(flow.includes("if (flow.submitting || flow.settled || flow.cancelling) return;"), "Submit must also be blocked during cancellation");
 assert.equal(flow.includes("/api/payments/replacement-receipts"), false, "İşləməyən yeni çek axını qalmamalıdır");
 assert.equal(flow.includes("paymentReceiptToken"), false, "İşləməyən yeni çek tokeni qalmamalıdır");
 assert.ok(flow.includes("ready ? 'Davam et' : 'Əvvəlcə çeki yükləyin'"));
@@ -205,10 +207,10 @@ assert.ok(flowCss.includes("payment-timer-pulse"));
 assert.ok(flowCss.includes("aspect-ratio:1.586/1"), "Ödəniş kartı standart nisbətdə olmalıdır");
 assert.ok(flowCss.includes("max-width:380px"), "Ödəniş kartı maksimum 380px olmalıdır");
 assert.ok(flowCss.includes('grid-template-areas:"top top" "stripe stripe" "holder amount" "number number" "timer timer"'), "Kartın daxili yığcam layout-u çatışmır");
-assert.ok(flow.includes('window.location.href = "https://mirpanel.com/"'), "Uğurlu ləğvdən sonra eyni tabda ana səhifəyə keçilməlidir");
-assert.ok(flow.includes('await finish(null, { cancel: true, redirectHome: true })'), "Ləğv server təsdiqindən sonra yönləndirməlidir");
-assert.match(flow, /if \(flow\.submitting\) \{\s*flow\.uploadController\?\.abort\(\);/, "Upload zamanı Ləğv et yalnız cari yükləməni dayandırmalıdır");
-assert.ok(flow.includes('window.confirm("Aktiv rezerv ləğv ediləcək.'), "X düyməsi aktiv rezerv barədə xəbərdarlıq etməlidir");
+assert.ok(flow.includes("modal?.classList.remove('show','paymentFlowOpen')"), "Ləğv host pəncərəni bağlamalıdır");
+assert.match(flow, /await cancelReservation\(flow\);\s*flow\.submitting=false;flow\.cancelling=false;\s*await finish\(null\)/, "Ləğv yalnız server təsdiqindən sonra bağlamalıdır");
+assert.match(flow, /flow\.uploadGeneration=\(flow\.uploadGeneration\|\|0\)\+1;\s*flow\.uploadController\?\.abort\(\)/, "Ləğv gecikmiş upload cavabını da etibarsız etməlidir");
+assert.ok(flow.includes("document.querySelector('.paymentFlowClose').onclick=cancelCheckout"), "X eyni təhlükəsiz ləğv axınını işlətməlidir");
 assert.ok(api.includes("{ ok: true, cancellation }"), "Server ləğv nəticəsini brauzerə təsdiqləməlidir");
 assert.ok(paymentAdmin.includes("paymentActionDialog"));
 assert.equal(/\bprompt\s*\(/.test(paymentAdmin), false, "Ödəniş adminində native prompt istifadə edilməməlidir");

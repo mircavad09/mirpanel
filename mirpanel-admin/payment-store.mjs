@@ -700,6 +700,16 @@ export function createPaymentStore(config) {
     cancelCustomerReservation(id, checkoutKey, actor) {
       return rpc("cancel_customer_payment_reservation", { p_reservation_id: id, p_checkout_key: checkoutKey, p_actor: actor });
     },
+    async missingReservationIsClear(id, checkoutKey) {
+      // Called ONLY after the canonical cancel RPC reports RESERVATION_NOT_FOUND.
+      // Never infer absence from a filtered ownership query or generic HTTP 404.
+      const {data:rows,error}=await client.from('payment_reservations').select('id,status')
+        .or(`id.eq.${id},checkout_key.eq.${checkoutKey}`).limit(101);
+      if(error)throw paymentError(error);
+      if(!Array.isArray(rows)||rows.length>=101||rows.some(r=>r.id===id||!['cancelled','expired'].includes(r.status)))return false;
+      if(rows.length){const {data:orders,error:orderError}=await client.from('payment_orders').select('id').in('reservation_id',rows.map(r=>r.id)).limit(1);if(orderError)throw paymentError(orderError);if(!Array.isArray(orders)||orders.length)return false;}
+      return true;
+    },
     async createReviewToken(orderId, tokenHash, expiresAt) {
       const { error } = await client.from("payment_review_tokens").insert({ order_id: orderId, token_hash: tokenHash, expires_at: expiresAt });
       if (error) throw paymentError(error);

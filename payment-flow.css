@@ -136,6 +136,11 @@ body.paymentCheckoutOpen :is(.browser-bottom-nav,.community-bottom-nav,#supportW
 .paymentFlowScroll>*{flex-shrink:0;min-width:0}
 #paymentFlowFooter{flex:none;border-top:1px solid #303030;padding-top:8px;background:#111}
 #paymentFlowFooter[hidden]{display:none}
+#paymentDismissBox{padding:8px;border:1px solid #665b32;border-radius:10px;background:#211e15;font-size:12px;line-height:1.4}
+#paymentDismissBox[hidden]{display:none}
+#paymentDismissBox p{margin:0 0 6px;overflow-wrap:anywhere}
+#paymentDismiss{min-height:44px;padding:8px 12px;border:1px solid #777;border-radius:8px;background:#242424;color:#fff;cursor:pointer}
+#paymentDismiss:focus-visible{outline:2px solid #ffd400;outline-offset:2px}
 #paymentFlowFooter .paymentSubmitActions{position:static;padding:0;grid-template-columns:minmax(0,.85fr) minmax(0,1.4fr)}
 #paymentFlowFooter button{min-height:48px;font-size:14px;line-height:1.2}
 @media(max-width:767px){
