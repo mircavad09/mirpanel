@@ -127,16 +127,6 @@
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
-      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">19.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Gemini ai pro + 5TB yaddaş — 6.99 ₼" title="Gemini ai pro + 5TB yaddaş">
-      <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Gemini ai pro + 5TB yaddaş">Gemini ai pro + 5TB yaddaş</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">6.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
       <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
@@ -167,6 +157,16 @@
       <div class="product-page-similar-title" title="YouTube Yeni hesab">YouTube Yeni hesab</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">3.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/adobe-creative-cloud" aria-label="Adobe Creative Cloud — 22.99 ₼" title="Adobe Creative Cloud">
+      <img src="/uploads/products/adobecc-1792450954538-64c5979f.png?v=1792450954538" class="product-page-similar-image" alt="Adobe Creative Cloud" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Adobe Creative Cloud">Adobe Creative Cloud</div>
+      <div class="product-page-similar-category">dizayn</div>
+      <div class="product-page-similar-price">22.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 5.99 ₼" title="HBO Max">
+      <img src="/uploads/products/hbomax-1792448430771-91c8a1ec.png?v=1792448430771" class="product-page-similar-image" alt="HBO Max" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
+      <div class="product-page-similar-category">film</div>
+      <div class="product-page-similar-price">5.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -223,7 +223,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-7b8f7a59a5aeaa76"></script>
+  <script src="/app.js?v=catalog-dd767b84f8e12188"></script>
   <script src="/payment-flow.js?v=receipt-upload-20261026-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>

@@ -117,17 +117,7 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
-      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">19.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Gemini ai pro + 5TB yaddaş — 6.99 ₼" title="Gemini ai pro + 5TB yaddaş">
-      <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Gemini ai pro + 5TB yaddaş">Gemini ai pro + 5TB yaddaş</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">6.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
       <img src="/uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631" class="product-page-similar-image" alt="Claude AI" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
       <div class="product-page-similar-category">ai</div>
@@ -142,6 +132,16 @@
       <div class="product-page-similar-title" title="Captions AI">Captions AI</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">11.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
+      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">19.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Gemini ai pro + 5TB yaddaş — 6.99 ₼" title="Gemini ai pro + 5TB yaddaş">
+      <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Gemini ai pro + 5TB yaddaş">Gemini ai pro + 5TB yaddaş</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">6.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
       <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-7b8f7a59a5aeaa76"></script>
+  <script src="/app.js?v=catalog-dd767b84f8e12188"></script>
   <script src="/payment-flow.js?v=receipt-upload-20261026-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
