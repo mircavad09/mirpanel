@@ -701,7 +701,7 @@ export function createPaymentSystem(options) {
       } catch (error) {
         const isPublic = url.pathname.startsWith("/api/payments/");
         const status = errorStatus(error);
-        if(['/api/payments/receipts','/api/payments/orders'].includes(url.pathname))console.error('Payment upload',JSON.stringify({stage:request.receiptStage||'request',status,code:/^[A-Z_]+$/.test(error.code||'')?error.code:'PAYMENT_ERROR',safety:/^file_safety:RECEIPT_[A-Z_]+$/.test(error.diagnostic||'')?error.diagnostic:undefined}));
+        if(['/api/payments/receipts','/api/payments/orders'].includes(url.pathname))console.error('Payment upload',JSON.stringify({stage:request.receiptStage||'request',status,code:/^[A-Z_]+$/.test(error.code||'')?error.code:'PAYMENT_ERROR',diagnostic:/^(?:file_safety:RECEIPT_[A-Z_]+|storage_(?:upload|verify):http_\d{1,3})$/.test(error.diagnostic||'')?error.diagnostic:undefined}));
         else console.error("Payment API", error.code || "PAYMENT_ERROR", error.diagnostic || error.message);
         if (isPublic) publicJson(request, response, status, { error: error.message, code: error.code || "PAYMENT_ERROR", ...(Array.isArray(error.reasonCodes)?{reasonCodes:error.reasonCodes}:{} ) });
         else json(response, status, { error: error.message, code: error.code || "PAYMENT_ERROR" });

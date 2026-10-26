@@ -754,13 +754,14 @@ export function createPaymentStore(config) {
       if (Number(error?.statusCode) === 409 && path.endsWith(`/${receipt.sha256}.${receipt.extension}`)) return;
       if (error) throw Object.assign(paymentError(error, "Çek private yaddaşa yüklənmədi."), {
         status: [408, 429, 500, 502, 503, 504].includes(Number(error.statusCode)) ? Number(error.statusCode) : 503,
-        code: "RECEIPT_STORAGE_TEMPORARY"
+        code: "RECEIPT_STORAGE_TEMPORARY",
+        diagnostic: `storage_upload:http_${Number(error.statusCode)||0}`
       });
     },
     async verifyUploadedReceipt(path, size) {
       const slash = path.lastIndexOf('/');
       const {data,error} = await client.storage.from(config.receiptsBucket).list(path.slice(0,slash), {search:path.slice(slash+1),limit:100});
-      if (error) throw Object.assign(paymentError(error, 'Private storage yoxlaması alınmadı.'), {status:503,code:'RECEIPT_STORAGE_TEMPORARY'});
+      if (error) throw Object.assign(paymentError(error, 'Private storage yoxlaması alınmadı.'), {status:503,code:'RECEIPT_STORAGE_TEMPORARY',diagnostic:`storage_verify:http_${Number(error.statusCode)||0}`});
       const file = data?.find(item=>item.name===path.slice(slash+1));
       if (!file || Number(file.metadata?.size)!==Number(size)) throw Object.assign(new Error('Çek private yaddaşda təsdiqlənmədi. Yenidən yükləyin.'), {status:409,code:'RECEIPT_CONFIRMATION_INVALID'});
     },

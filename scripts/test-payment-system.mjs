@@ -18,7 +18,8 @@ const read = (name) => fs.readFileSync(path.join(root, name), "utf8");
 // Independently computed from the approved CMS main commit c109252 (before employee work).
 // Read-only comparison proved app.js matches committed 0c18f7b exactly; old baseline predates CMS edits.
 // Preserved upstream admin CMS changes from a60a97f; receipt work must not alter them.
-const expectedSnapshot = "b516abb5443330ea8a511ea667b0d8cec344670a96ca14fbc41627661166f2e3";
+// Verified byte-identical app.js against incoming admin commit 989c5c0.
+const expectedSnapshot = "9b73ea1f3856af8e36fde14712101d0cc2908a460e61a8d078cf945a5dbcaca5";
 
 function expectThrow(fn, pattern) {
   let thrown = null;
