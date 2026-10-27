@@ -132,6 +132,16 @@
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
+      <img src="/uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
+      <div class="product-page-similar-category">musiqi</div>
+      <div class="product-page-similar-price">5.49 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
+      <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
+      <div class="product-page-similar-category">film</div>
+      <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
       <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
@@ -142,11 +152,6 @@
       <div class="product-page-similar-title" title="Netflix Ümumi">Netflix Ümumi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
-      <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
-      <div class="product-page-similar-category">film</div>
-      <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 3.99 ₼" title="Amazon Prime Video">
       <img src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" class="product-page-similar-image" alt="Amazon Prime Video" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
@@ -157,11 +162,6 @@
       <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">37.40 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
-      <img src="/uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
-      <div class="product-page-similar-category">musiqi</div>
-      <div class="product-page-similar-price">5.49 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Yeni hesab — 3.99 ₼" title="YouTube Yeni hesab">
       <img src="/uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653" class="product-page-similar-image" alt="YouTube Yeni hesab" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="YouTube Yeni hesab">YouTube Yeni hesab</div>
@@ -223,7 +223,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-8282570c6b7b2391"></script>
+  <script src="/app.js?v=catalog-a18b9c2bf683e6cb"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>

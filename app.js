@@ -374,588 +374,9 @@ const DATA = {
       }
     },
     {
-      "id": "chatgpt",
-      "_stableId": "chatgpt",
-      "order": 3,
-      "category": "ai",
-      "image": "uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091",
-      "currency": "₼",
-      "title": "ChatGPT Plus (Hazır Şəxsi hesab)",
-      "variant": "Plus",
-      "badge": "AI",
-      "imageAlt": "ChatGPT Plus (Şəxsi hesab)",
-      "desc": "Daha güclü model, fayl/şəkil imkanları.",
-      "note": "Hesabınızın Email və Şifrəsini qeyd edin.",
-      "longDescription": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "chatgpt-plus",
-      "seoTitle": "ChatGPT Plus şəxsi hesab almaq | Mirpanel",
-      "seoDescription": "ChatGPT Plus hesabını sərfəli qiymətə əldə et. Premium AI imkanları və sürətli aktivləşdirmə Mirpanel-də.",
-      "seoH1": "ChatGPT Plus şəxsi hesab almaq",
-      "seoPrimaryKeyword": "ChatGPT Plus almaq",
-      "seoRelatedKeywords": "ChatGPT Plus şəxsi hesab, ChatGPT Plus qiyməti, ChatGPT Plus Azərbaycan",
-      "seoKeywords": "ChatGPT Plus almaq, ChatGPT Plus ucuz, ChatGPT Plus Azərbaycan, ChatGPT hesab almaq, ChatGPT premium almaq, GPT Plus almaq, OpenAI hesab almaq, ÇatGPT almaq",
-      "seoContent": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/chatgpt.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/chatgpt.png",
-        "mobileImage": "",
-        "title": "ChatGPT Plus (Şəxsi hesab)",
-        "description": "Daha güclü model, fayl/şəkil imkanları.",
-        "alt": "ChatGPT Plus (Şəxsi hesab)",
-        "order": 19
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": 1,
-      "stockEnabled": true,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
-        "confirmText": "Davam et",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 ayliq  ",
-          "months": 1,
-          "price": 19.99,
-          "regularPrice": 34
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
-        "confirmText": "Davam et",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "chatgpt_ortaq",
-      "_stableId": "chatgpt_ortaq",
-      "order": 4,
-      "category": "all",
-      "image": "uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676",
-      "currency": "₼",
-      "title": "ChatGPT Plus (Ortaq hesab)",
-      "variant": "",
-      "badge": "Premium",
-      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
-      "desc": "",
-      "note": "",
-      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "chatgpt-plus-ortaq-hesab",
-      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
-      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
-      "seoH1": "ChatGPT Plus ortaq hesab almaq",
-      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
-      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/chatgpt.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/chatgpt.png",
-        "mobileImage": "",
-        "title": "ChatGPT Plus (Ortaq hesab)",
-        "description": "",
-        "alt": "ChatGPT Plus (Ortaq hesab)",
-        "order": 20
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": true,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": false,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 ayliq ",
-          "months": 1,
-          "price": 4.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "netflix_umumi",
-      "_stableId": "netflix_umumi",
-      "order": 5,
-      "category": "film",
-      "image": "uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068",
-      "currency": "₼",
-      "title": "Netflix Ümumi",
-      "variant": "Premium",
-      "badge": "Film",
-      "imageAlt": "Netflix Ümumi",
-      "desc": "Ümumi hesab (paylaşılan).",
-      "note": "Hazır hesab verilir. Sifarişi təsdiqləyin.",
-      "longDescription": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "netflix-umumi",
-      "seoTitle": "Netflix ümumi hesab almaq | Mirpanel",
-      "seoDescription": "Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.",
-      "seoH1": "Netflix ümumi hesab almaq",
-      "seoPrimaryKeyword": "Netflix ümumi hesab almaq",
-      "seoRelatedKeywords": "Netflix ortaq hesab, Netflix ümumi profil, Netflix hesab qiyməti",
-      "seoKeywords": "Netflix ümumi almaq, Netflix ümumi hesab, Netflix almaq, Netflix ucuz almaq, Netflix Azərbaycan, Netflix Premium qiyməti, Netflix hesab qiyməti, Netflix paket almaq",
-      "seoContent": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/netflix.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/netflix.png",
-        "mobileImage": "",
-        "title": "Netflix Ümumi",
-        "description": "Ümumi hesab (paylaşılan).",
-        "alt": "Netflix Ümumi",
-        "order": 3
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": true,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 3.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "netflix",
-      "_stableId": "netflix",
-      "order": 6,
-      "category": "film",
-      "image": "uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161",
-      "currency": "₼",
-      "title": "Netflix Şəxsi",
-      "variant": "Premium",
-      "badge": "Film",
-      "imageAlt": "Netflix Şəxsi",
-      "desc": "Filmlər, seriallar, yüksək keyfiyyət.",
-      "note": "Netflix Şəxsi otaq: Plan seç → Ad və 4 rəqəmli kod yaz.",
-      "longDescription": "Netflix Şəxsi hesab öz profilindən istifadə etmək istəyənlər üçün rahat seçimdir. Mirpanel Netflix Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş WhatsApp üzərindən tamamlanır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "netflix-sexsi",
-      "seoTitle": "Netflix almaq Azərbaycanda | Şəxsi hesab – Mirpanel",
-      "seoDescription": "Netflix şəxsi hesabını sərfəli qiymətə əldə et. Premium izləmə, rahat sifariş və sürətli aktivləşdirmə Mirpanel-də.",
-      "seoH1": "Netflix şəxsi hesab almaq",
-      "seoPrimaryKeyword": "Netflix almaq",
-      "seoRelatedKeywords": "Netflix Premium almaq, Netflix şəxsi hesab, Netflix qiyməti",
-      "seoKeywords": "Netflix şəxsi almaq, Netflix şəxsi hesab, Netflix almaq, Netflix Premium almaq, Netflix ucuz, Netflix Azərbaycan, Netflix hesab almaq, Netflix profil almaq, Netflix aylıq",
-      "seoContent": "Netflix Şəxsi hesab öz profilindən istifadə etmək istəyənlər üçün rahat seçimdir. Mirpanel Netflix Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş WhatsApp üzərindən tamamlanır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/netflix.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/slider2.png",
-        "mobileImage": "",
-        "title": "Netflix Şəxsi",
-        "description": "Filmlər, seriallar, yüksək keyfiyyət.",
-        "alt": "Netflix banneri",
-        "order": 2
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": true,
-      "seller": "",
-      "bestSeller": true,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [
-        {
-          "key": "name",
-          "type": "text",
-          "label": "Ad",
-          "placeholder": "Adınızı yazın",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "code_4",
-          "type": "text",
-          "label": "Otaq kodu",
-          "placeholder": "Otaq 4 rəqəmli kod (PİN) təyin edin",
-          "required": true,
-          "enabled": true
-        }
-      ],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 5.99
-        },
-        {
-          "months": 3,
-          "price": 16.49
-        },
-        {
-          "months": 6,
-          "price": 29.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "prime",
-      "_stableId": "prime",
-      "order": 7,
-      "category": "film",
-      "image": "uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093",
-      "currency": "₼",
-      "title": "Amazon Prime Video",
-      "variant": "Premium",
-      "badge": "Film",
-      "imageAlt": "Amazon Prime Video",
-      "desc": "Prime Video filmlər və seriallar.",
-      "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
-      "longDescription": "Amazon Prime Video film və serial izləmək üçün premium platformalardan biridir. Mirpanel vasitəsilə Prime Video hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "amazon-prime-video",
-      "seoTitle": "Amazon Prime Video almaq | Ucuz Prime Video Azərbaycan - Mirpanel",
-      "seoDescription": "Amazon Prime Video hesabını sərfəli qiymətə əldə et. Film və serial izləmək üçün premium hesab Mirpanel-də.",
-      "seoH1": "Amazon Prime Video",
-      "seoPrimaryKeyword": "Amazon Prime Video almaq",
-      "seoRelatedKeywords": " Prime Video almaq, Amazon Prime almaq, Amazon Prime ucuz, Prime Video ucuz, Amazon Prime Azərbaycan, Prime Video Azərbaycan, Amazon Prime hesab almaq",
-      "seoKeywords": "Amazon Prime Video almaq, Prime Video almaq, Amazon Prime almaq, Amazon Prime ucuz, Prime Video ucuz, Amazon Prime Azərbaycan, Prime Video Azərbaycan, Amazon Prime hesab almaq",
-      "seoContent": "Amazon Prime Video film və serial izləmək üçün premium platformalardan biridir. Mirpanel vasitəsilə Prime Video hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/prime.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/prime.png",
-        "mobileImage": "",
-        "title": "Amazon Prime Video",
-        "description": "Prime Video filmlər və seriallar.",
-        "alt": "Amazon Prime Video",
-        "order": 5
-      },
-      "flow": "name_code_5",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "form_then_whatsapp",
-      "formFields": [
-        {
-          "key": "name",
-          "type": "text",
-          "label": "Ad",
-          "placeholder": "Adınızı yazın",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "code_5",
-          "type": "text",
-          "label": "5 rəqəmli kod / PIN",
-          "placeholder": "5 rəqəmli kod yazın",
-          "required": true,
-          "enabled": true
-        }
-      ],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 3.99
-        },
-        {
-          "months": 6,
-          "price": 17.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "claude_ai",
-      "_stableId": "claude_ai",
-      "order": 8,
-      "category": "ai",
-      "image": "uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631",
-      "currency": "₼",
-      "title": "Claude AI",
-      "variant": "1 ayliq",
-      "badge": "AI",
-      "imageAlt": "Claude AI",
-      "desc": "Mətn, kod, yazı üçün güclü AI.",
-      "note": "Stokta yoxdur.",
-      "longDescription": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "cloud-ai-pro",
-      "seoTitle": "Claude AI almaq Azərbaycanda | Mirpanel",
-      "seoDescription": "Claude AI üçün mövcud planı, real qiyməti və stok vəziyyətini yoxlayın. Mirpanel sifarişi mövcud WhatsApp axını ilə tamamlanır.",
-      "seoH1": "Claude AI almaq",
-      "seoPrimaryKeyword": "Claude AI almaq",
-      "seoRelatedKeywords": "Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
-      "seoKeywords": "Claude AI almaq, Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
-      "seoContent": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/claude.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/claude.png",
-        "mobileImage": "",
-        "title": "Claude AI",
-        "description": "Mətn, kod, yazı üçün güclü AI.",
-        "alt": "Claude AI",
-        "order": 15
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 Ayliq",
-          "months": 1,
-          "price": 37.4,
-          "regularPrice": 50.55
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 9,
+      "order": 3,
       "category": "musiqi",
       "image": "uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574",
       "currency": "₼",
@@ -1078,6 +499,585 @@ const DATA = {
           "enabled": true,
           "label": "👉Şifrənizi unutmusunuzsa sıfırlayın👈Toxunun",
           "url": "https://accounts.spotify.com/az/password-reset"
+        }
+      }
+    },
+    {
+      "id": "netflix",
+      "_stableId": "netflix",
+      "order": 4,
+      "category": "film",
+      "image": "uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161",
+      "currency": "₼",
+      "title": "Netflix Şəxsi",
+      "variant": "Premium",
+      "badge": "Film",
+      "imageAlt": "Netflix Şəxsi",
+      "desc": "Filmlər, seriallar, yüksək keyfiyyət.",
+      "note": "Netflix Şəxsi otaq: Plan seç → Ad və 4 rəqəmli kod yaz.",
+      "longDescription": "Netflix Şəxsi hesab öz profilindən istifadə etmək istəyənlər üçün rahat seçimdir. Mirpanel Netflix Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş WhatsApp üzərindən tamamlanır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "netflix-sexsi",
+      "seoTitle": "Netflix almaq Azərbaycanda | Şəxsi hesab – Mirpanel",
+      "seoDescription": "Netflix şəxsi hesabını sərfəli qiymətə əldə et. Premium izləmə, rahat sifariş və sürətli aktivləşdirmə Mirpanel-də.",
+      "seoH1": "Netflix şəxsi hesab almaq",
+      "seoPrimaryKeyword": "Netflix almaq",
+      "seoRelatedKeywords": "Netflix Premium almaq, Netflix şəxsi hesab, Netflix qiyməti",
+      "seoKeywords": "Netflix şəxsi almaq, Netflix şəxsi hesab, Netflix almaq, Netflix Premium almaq, Netflix ucuz, Netflix Azərbaycan, Netflix hesab almaq, Netflix profil almaq, Netflix aylıq",
+      "seoContent": "Netflix Şəxsi hesab öz profilindən istifadə etmək istəyənlər üçün rahat seçimdir. Mirpanel Netflix Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş WhatsApp üzərindən tamamlanır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/netflix.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/slider2.png",
+        "mobileImage": "",
+        "title": "Netflix Şəxsi",
+        "description": "Filmlər, seriallar, yüksək keyfiyyət.",
+        "alt": "Netflix banneri",
+        "order": 2
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": true,
+      "seller": "",
+      "bestSeller": true,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [
+        {
+          "key": "name",
+          "type": "text",
+          "label": "Ad",
+          "placeholder": "Adınızı yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "code_4",
+          "type": "text",
+          "label": "Otaq kodu",
+          "placeholder": "Otaq 4 rəqəmli kod (PİN) təyin edin",
+          "required": true,
+          "enabled": true
+        }
+      ],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 5.99
+        },
+        {
+          "months": 3,
+          "price": 16.49
+        },
+        {
+          "months": 6,
+          "price": 29.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "chatgpt",
+      "_stableId": "chatgpt",
+      "order": 5,
+      "category": "ai",
+      "image": "uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091",
+      "currency": "₼",
+      "title": "ChatGPT Plus (Hazır Şəxsi hesab)",
+      "variant": "Plus",
+      "badge": "AI",
+      "imageAlt": "ChatGPT Plus (Şəxsi hesab)",
+      "desc": "Daha güclü model, fayl/şəkil imkanları.",
+      "note": "Hesabınızın Email və Şifrəsini qeyd edin.",
+      "longDescription": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "chatgpt-plus",
+      "seoTitle": "ChatGPT Plus şəxsi hesab almaq | Mirpanel",
+      "seoDescription": "ChatGPT Plus hesabını sərfəli qiymətə əldə et. Premium AI imkanları və sürətli aktivləşdirmə Mirpanel-də.",
+      "seoH1": "ChatGPT Plus şəxsi hesab almaq",
+      "seoPrimaryKeyword": "ChatGPT Plus almaq",
+      "seoRelatedKeywords": "ChatGPT Plus şəxsi hesab, ChatGPT Plus qiyməti, ChatGPT Plus Azərbaycan",
+      "seoKeywords": "ChatGPT Plus almaq, ChatGPT Plus ucuz, ChatGPT Plus Azərbaycan, ChatGPT hesab almaq, ChatGPT premium almaq, GPT Plus almaq, OpenAI hesab almaq, ÇatGPT almaq",
+      "seoContent": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/chatgpt.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/chatgpt.png",
+        "mobileImage": "",
+        "title": "ChatGPT Plus (Şəxsi hesab)",
+        "description": "Daha güclü model, fayl/şəkil imkanları.",
+        "alt": "ChatGPT Plus (Şəxsi hesab)",
+        "order": 19
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": 1,
+      "stockEnabled": true,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
+        "confirmText": "Davam et",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 ayliq  ",
+          "months": 1,
+          "price": 19.99,
+          "regularPrice": 34
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
+        "confirmText": "Davam et",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "chatgpt_ortaq",
+      "_stableId": "chatgpt_ortaq",
+      "order": 6,
+      "category": "all",
+      "image": "uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676",
+      "currency": "₼",
+      "title": "ChatGPT Plus (Ortaq hesab)",
+      "variant": "",
+      "badge": "Premium",
+      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
+      "desc": "",
+      "note": "",
+      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "chatgpt-plus-ortaq-hesab",
+      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
+      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
+      "seoH1": "ChatGPT Plus ortaq hesab almaq",
+      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
+      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/chatgpt.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/chatgpt.png",
+        "mobileImage": "",
+        "title": "ChatGPT Plus (Ortaq hesab)",
+        "description": "",
+        "alt": "ChatGPT Plus (Ortaq hesab)",
+        "order": 20
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": true,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 ayliq ",
+          "months": 1,
+          "price": 4.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "netflix_umumi",
+      "_stableId": "netflix_umumi",
+      "order": 7,
+      "category": "film",
+      "image": "uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068",
+      "currency": "₼",
+      "title": "Netflix Ümumi",
+      "variant": "Premium",
+      "badge": "Film",
+      "imageAlt": "Netflix Ümumi",
+      "desc": "Ümumi hesab (paylaşılan).",
+      "note": "Hazır hesab verilir. Sifarişi təsdiqləyin.",
+      "longDescription": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "netflix-umumi",
+      "seoTitle": "Netflix ümumi hesab almaq | Mirpanel",
+      "seoDescription": "Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.",
+      "seoH1": "Netflix ümumi hesab almaq",
+      "seoPrimaryKeyword": "Netflix ümumi hesab almaq",
+      "seoRelatedKeywords": "Netflix ortaq hesab, Netflix ümumi profil, Netflix hesab qiyməti",
+      "seoKeywords": "Netflix ümumi almaq, Netflix ümumi hesab, Netflix almaq, Netflix ucuz almaq, Netflix Azərbaycan, Netflix Premium qiyməti, Netflix hesab qiyməti, Netflix paket almaq",
+      "seoContent": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/netflix.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/netflix.png",
+        "mobileImage": "",
+        "title": "Netflix Ümumi",
+        "description": "Ümumi hesab (paylaşılan).",
+        "alt": "Netflix Ümumi",
+        "order": 3
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": true,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 3.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "\n\nHesab Şərtləri və Qaydaları:\n\nPaylaşımlı Otaq: Bu otaq paylaşımlı statusdadır, otaq daxilində sizinlə birlikdə digər müştərilər də mövcuddur.\n\nYüksək Keyfiyyət: Filmləri və serialları rahat şəkildə 4K HD keyfiyyətində izləyə bilərsiniz.\n\nGiriş Limiti: Hesaba yalnız 1 cihazla giriş etmək mümkündür. Əlavə cihaz qoşmaq qətiyyən mümkün deyil.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "prime",
+      "_stableId": "prime",
+      "order": 8,
+      "category": "film",
+      "image": "uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093",
+      "currency": "₼",
+      "title": "Amazon Prime Video",
+      "variant": "Premium",
+      "badge": "Film",
+      "imageAlt": "Amazon Prime Video",
+      "desc": "Prime Video filmlər və seriallar.",
+      "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
+      "longDescription": "Amazon Prime Video film və serial izləmək üçün premium platformalardan biridir. Mirpanel vasitəsilə Prime Video hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "amazon-prime-video",
+      "seoTitle": "Amazon Prime Video almaq | Ucuz Prime Video Azərbaycan - Mirpanel",
+      "seoDescription": "Amazon Prime Video hesabını sərfəli qiymətə əldə et. Film və serial izləmək üçün premium hesab Mirpanel-də.",
+      "seoH1": "Amazon Prime Video",
+      "seoPrimaryKeyword": "Amazon Prime Video almaq",
+      "seoRelatedKeywords": " Prime Video almaq, Amazon Prime almaq, Amazon Prime ucuz, Prime Video ucuz, Amazon Prime Azərbaycan, Prime Video Azərbaycan, Amazon Prime hesab almaq",
+      "seoKeywords": "Amazon Prime Video almaq, Prime Video almaq, Amazon Prime almaq, Amazon Prime ucuz, Prime Video ucuz, Amazon Prime Azərbaycan, Prime Video Azərbaycan, Amazon Prime hesab almaq",
+      "seoContent": "Amazon Prime Video film və serial izləmək üçün premium platformalardan biridir. Mirpanel vasitəsilə Prime Video hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/prime.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/prime.png",
+        "mobileImage": "",
+        "title": "Amazon Prime Video",
+        "description": "Prime Video filmlər və seriallar.",
+        "alt": "Amazon Prime Video",
+        "order": 5
+      },
+      "flow": "name_code_5",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "form_then_whatsapp",
+      "formFields": [
+        {
+          "key": "name",
+          "type": "text",
+          "label": "Ad",
+          "placeholder": "Adınızı yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "code_5",
+          "type": "text",
+          "label": "5 rəqəmli kod / PIN",
+          "placeholder": "5 rəqəmli kod yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 3.99
+        },
+        {
+          "months": 6,
+          "price": 17.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "claude_ai",
+      "_stableId": "claude_ai",
+      "order": 9,
+      "category": "ai",
+      "image": "uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631",
+      "currency": "₼",
+      "title": "Claude AI",
+      "variant": "1 ayliq",
+      "badge": "AI",
+      "imageAlt": "Claude AI",
+      "desc": "Mətn, kod, yazı üçün güclü AI.",
+      "note": "Stokta yoxdur.",
+      "longDescription": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "cloud-ai-pro",
+      "seoTitle": "Claude AI almaq Azərbaycanda | Mirpanel",
+      "seoDescription": "Claude AI üçün mövcud planı, real qiyməti və stok vəziyyətini yoxlayın. Mirpanel sifarişi mövcud WhatsApp axını ilə tamamlanır.",
+      "seoH1": "Claude AI almaq",
+      "seoPrimaryKeyword": "Claude AI almaq",
+      "seoRelatedKeywords": "Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
+      "seoKeywords": "Claude AI almaq, Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
+      "seoContent": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/claude.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/claude.png",
+        "mobileImage": "",
+        "title": "Claude AI",
+        "description": "Mətn, kod, yazı üçün güclü AI.",
+        "alt": "Claude AI",
+        "order": 15
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 Ayliq",
+          "months": 1,
+          "price": 37.4,
+          "regularPrice": 50.55
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
         }
       }
     },
@@ -3580,15 +3580,19 @@ const ADMIN_CONTENT = {
     "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
     "rulesHtml": ""
   },
+  "spotify": {
+    "aboutHtml": "<h3>Spotify Premium - Reklamsız Musiqi və Podcast Təcrübəsi</h3>\n<p>Spotify Premium, musiqi və podcast dinləməyi daha rahat, keyfiyyətli və fasiləsiz etmək üçün hazırlanmış premium abunəlik xidmətidir. Standart versiyadan fərqli olaraq, Premium abunəliyi reklamsız dinləmə, offline yükləmə, istənilən mahnını seçərək dinləmə və daha yüksək səs keyfiyyəti təqdim edir. Gündəlik musiqi zövqünü daha sərbəst və komfortlu yaşamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Spotify Premium, istifadəçilərə milyonlarla mahnı, albom, playlist və podcasta limitsiz giriş imkanı verir. İstifadəçilər sevdikləri musiqiləri reklamsız dinləyə, internet bağlantısı olmadan istifadə üçün yükləyə və istədikləri mahnını istənilən vaxt seçə bilərlər. Premium abunəlik həm mobil cihazlarda, həm kompüterdə, həm də smart TV və digər dəstəklənən cihazlarda daha rahat musiqi təcrübəsi yaradır.</p>\n\n<h3>Spotify Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Musiqi Sevərlər:</strong> Sevdiyi mahnıları, albomları və playlistləri reklamsız və limitsiz dinləmək istəyənlər.</li>\n  <li><strong>Podcast Dinləyiciləri:</strong> Maarifləndirici, əyləncəli və motivasiyaedici podcastları fasiləsiz dinləmək istəyən istifadəçilər.</li>\n  <li><strong>Səyahət Edənlər və Mobil İstifadəçilər:</strong> Musiqiləri əvvəlcədən yükləyib internet olmadan dinləmək istəyənlər.</li>\n  <li><strong>İdman və İş Zamanı Musiqi Dinləyənlər:</strong> Məşq, iş, dərs və gündəlik fəaliyyətlər zamanı rahat musiqi axını istəyənlər.</li>\n</ul>\n\n<h3>Spotify Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🚫 Reklamsız Dinləmə:</strong> Mahnılar və podcastlar arasında reklam fasilələri olmadan daha axıcı dinləmə təcrübəsi.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz mahnıları, albomları və playlistləri cihazınıza yükləyərək internet olmadan dinləmək imkanı.</li>\n  <li><strong>🎵 İstənilən Mahnını Seçmə:</strong> Mobil cihazda belə istədiyiniz mahnını seçib dərhal dinləmək və limitsiz keçid etmək imkanı.</li>\n  <li><strong>🔊 Yüksək Səs Keyfiyyəti:</strong> Daha təmiz, aydın və keyfiyyətli musiqi dinləmə təcrübəsi.</li>\n  <li><strong>📱 Bütün Cihazlarda İstifadə:</strong> Telefon, kompüter, planşet, smart TV və digər dəstəklənən cihazlarda rahat istifadə.</li>\n</ul>",
+    "rulesHtml": ""
+  },
+  "netflix": {
+    "aboutHtml": "<h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>\n<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>\n\n<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>\n  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>\n  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>\n  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>\n</ul>\n\n<h3>Netflix Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>\n  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>\n  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>\n  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>\n  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>\n</ul>",
+    "rulesHtml": ""
+  },
   "chatgpt": {
     "aboutHtml": "<h3>ChatGPT Plus - Premium Süni İntellekt Köməkçisi</h3>\n<p>ChatGPT Plus, gündəlik işləri daha sürətli yerinə yetirmək, mətn yazmaq, ideya yaratmaq, suallara cavab almaq və müxtəlif mövzularda peşəkar AI dəstəyi əldə etmək istəyən istifadəçilər üçün hazırlanmış premium süni intellekt xidmətidir. Standart istifadədən fərqli olaraq, Plus abunəliyi daha güclü model imkanları, daha sürətli cavablar və daha məhsuldar iş təcrübəsi təqdim edir. Təhsil, biznes, kontent istehsalı və şəxsi inkişaf üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>ChatGPT Plus, istifadəçilərə mətn hazırlamaq, tərcümə etmək, ideyaları inkişaf etdirmək, kod yazmaq, plan qurmaq, araşdırma aparmaq və gündəlik tapşırıqları daha rahat idarə etmək imkanı verir. Platforma həm sadə suallar, həm də daha mürəkkəb peşəkar işlər üçün ağıllı köməkçi kimi istifadə oluna bilər. Plus imkanları sayəsində istifadəçi daha sürətli, daha çevik və daha effektiv süni intellekt təcrübəsi əldə edir.</p>\n\n<h3>ChatGPT Plus Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Tələbələr və Araşdırma Aparanlar:</strong> Mövzuları izah etmək, xülasə hazırlamaq, esse və təqdimat strukturu qurmaq istəyənlər.</li>\n  <li><strong>Kontent Yaradıcıları və Kopirayterlər:</strong> Sosial media mətnləri, reklam yazıları, video ssenariləri və kreativ ideyalar hazırlayanlar.</li>\n  <li><strong>Biznes Sahibləri və Peşəkarlar:</strong> Email, plan, hesabat, təqdimat və strategiya mətnlərini daha sürətli hazırlamaq istəyənlər.</li>\n  <li><strong>Proqramçılar və Texniki İstifadəçilər:</strong> Kod yazmaq, səhvləri izah etmək, texniki mövzuları analiz etmək və layihə ideyalarını inkişaf etdirmək istəyənlər.</li>\n</ul>\n\n<h3>ChatGPT Plus-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü AI Dəstəyi:</strong> Mətn yazmaq, suallara cavab vermək, ideya yaratmaq və mürəkkəb mövzuları daha sadə izah etmək imkanı.</li>\n  <li><strong>⚡ Daha Sürətli Cavablar:</strong> Gündəlik yazı, araşdırma, planlama və iş tapşırıqlarını daha qısa zamanda yerinə yetirməyə kömək edir.</li>\n  <li><strong>📚 Təhsil və Araşdırma Üçün Faydalı:</strong> Mövzuları öyrənmək, xülasə çıxarmaq, mətnləri təkmilləşdirmək və məlumatları strukturlaşdırmaq.</li>\n  <li><strong>💻 Kod və Texniki Yardım:</strong> Proqramlaşdırma, kod nümunələri, səhv izahı və texniki layihələr üçün faydalı AI köməkçisi.</li>\n  <li><strong>💼 Biznes və Kontent Üçün Uyğun:</strong> Reklam mətnləri, strategiya ideyaları, təqdimatlar, email yazışmaları və sosial media kontenti hazırlamaq.</li>\n</ul>",
     "rulesHtml": ""
   },
   "netflix_umumi": {
-    "aboutHtml": "<h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>\n<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>\n\n<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>\n  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>\n  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>\n  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>\n</ul>\n\n<h3>Netflix Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>\n  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>\n  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>\n  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>\n  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>\n</ul>",
-    "rulesHtml": ""
-  },
-  "netflix": {
     "aboutHtml": "<h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>\n<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>\n\n<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>\n  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>\n  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>\n  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>\n</ul>\n\n<h3>Netflix Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>\n  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>\n  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>\n  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>\n  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>\n</ul>",
     "rulesHtml": ""
   },
@@ -3598,10 +3602,6 @@ const ADMIN_CONTENT = {
   },
   "claude_ai": {
     "aboutHtml": "<h3>Claude AI Pro - Premium Süni İntellekt Köməkçisi</h3>\n<p>Claude AI Pro, mətn yazmaq, ideyalar yaratmaq, sənədləri analiz etmək, kodla işləmək və gündəlik tapşırıqları daha sürətli yerinə yetirmək istəyən istifadəçilər üçün hazırlanmış premium süni intellekt xidmətidir. Standart AI istifadəsindən fərqli olaraq, Pro abunəliyi daha geniş imkanlar, daha məhsuldar iş axını və peşəkar səviyyədə AI dəstəyi təqdim edir. Təhsil, biznes, kontent istehsalı və şəxsi məhsuldarlıq üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Claude AI Pro, istifadəçilərə suallara cavab almaq, mətnlər hazırlamaq, uzun sənədləri xülasələndirmək, ideyaları inkişaf etdirmək, kod yazmaq və müxtəlif mövzular üzrə analiz aparmaq imkanı verir. Platforma həm sadə gündəlik tapşırıqlar, həm də daha mürəkkəb peşəkar işlər üçün rahat AI köməkçisi kimi istifadə oluna bilər. Pro imkanları sayəsində istifadəçilər daha sürətli, daha çevik və daha effektiv süni intellekt təcrübəsi əldə edirlər.</p>\n\n<h3>Claude AI Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Kopirayterlər:</strong> Sosial media mətnləri, məqalələr, reklam yazıları, video ssenariləri və kreativ ideyalar hazırlayanlar.</li>\n  <li><strong>Tələbələr və Araşdırma Aparanlar:</strong> Mövzuları izah etmək, uzun mətnləri xülasələndirmək, esse və təqdimat strukturu qurmaq istəyənlər.</li>\n  <li><strong>Biznes Sahibləri və Peşəkarlar:</strong> Email, plan, hesabat, təqdimat və strategiya mətnlərini daha sürətli hazırlamaq istəyənlər.</li>\n  <li><strong>Proqramçılar və Texniki İstifadəçilər:</strong> Kod yazmaq, səhvləri izah etmək, texniki mətnləri analiz etmək və layihə ideyalarını inkişaf etdirmək istəyənlər.</li>\n</ul>\n\n<h3>Claude AI Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü AI Yazı Köməkçisi:</strong> Mətn hazırlamaq, redaktə etmək, ideya yaratmaq və mürəkkəb mövzuları sadə formada izah etmək imkanı.</li>\n  <li><strong>📄 Sənəd və Mətn Analizi:</strong> Uzun mətnləri oxumaq, xülasə etmək, əsas fikirləri çıxarmaq və məlumatları daha anlaşıqlı hala gətirmək.</li>\n  <li><strong>⚡ Məhsuldarlığın Artırılması:</strong> Gündəlik yazı, planlama, araşdırma və iş tapşırıqlarını daha qısa zamanda yerinə yetirməyə kömək edir.</li>\n  <li><strong>💻 Kod və Texniki Dəstək:</strong> Proqramlaşdırma, səhv izahı, kod nümunələri və texniki layihələr üçün faydalı AI dəstəyi.</li>\n  <li><strong>💼 Biznes və Təhsil Üçün Uyğun:</strong> Hesabatlar, təqdimatlar, dərs materialları, strategiya mətnləri və peşəkar yazışmalar üçün rahat istifadə.</li>\n</ul>",
-    "rulesHtml": ""
-  },
-  "spotify": {
-    "aboutHtml": "<h3>Spotify Premium - Reklamsız Musiqi və Podcast Təcrübəsi</h3>\n<p>Spotify Premium, musiqi və podcast dinləməyi daha rahat, keyfiyyətli və fasiləsiz etmək üçün hazırlanmış premium abunəlik xidmətidir. Standart versiyadan fərqli olaraq, Premium abunəliyi reklamsız dinləmə, offline yükləmə, istənilən mahnını seçərək dinləmə və daha yüksək səs keyfiyyəti təqdim edir. Gündəlik musiqi zövqünü daha sərbəst və komfortlu yaşamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Spotify Premium, istifadəçilərə milyonlarla mahnı, albom, playlist və podcasta limitsiz giriş imkanı verir. İstifadəçilər sevdikləri musiqiləri reklamsız dinləyə, internet bağlantısı olmadan istifadə üçün yükləyə və istədikləri mahnını istənilən vaxt seçə bilərlər. Premium abunəlik həm mobil cihazlarda, həm kompüterdə, həm də smart TV və digər dəstəklənən cihazlarda daha rahat musiqi təcrübəsi yaradır.</p>\n\n<h3>Spotify Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Musiqi Sevərlər:</strong> Sevdiyi mahnıları, albomları və playlistləri reklamsız və limitsiz dinləmək istəyənlər.</li>\n  <li><strong>Podcast Dinləyiciləri:</strong> Maarifləndirici, əyləncəli və motivasiyaedici podcastları fasiləsiz dinləmək istəyən istifadəçilər.</li>\n  <li><strong>Səyahət Edənlər və Mobil İstifadəçilər:</strong> Musiqiləri əvvəlcədən yükləyib internet olmadan dinləmək istəyənlər.</li>\n  <li><strong>İdman və İş Zamanı Musiqi Dinləyənlər:</strong> Məşq, iş, dərs və gündəlik fəaliyyətlər zamanı rahat musiqi axını istəyənlər.</li>\n</ul>\n\n<h3>Spotify Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🚫 Reklamsız Dinləmə:</strong> Mahnılar və podcastlar arasında reklam fasilələri olmadan daha axıcı dinləmə təcrübəsi.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz mahnıları, albomları və playlistləri cihazınıza yükləyərək internet olmadan dinləmək imkanı.</li>\n  <li><strong>🎵 İstənilən Mahnını Seçmə:</strong> Mobil cihazda belə istədiyiniz mahnını seçib dərhal dinləmək və limitsiz keçid etmək imkanı.</li>\n  <li><strong>🔊 Yüksək Səs Keyfiyyəti:</strong> Daha təmiz, aydın və keyfiyyətli musiqi dinləmə təcrübəsi.</li>\n  <li><strong>📱 Bütün Cihazlarda İstifadə:</strong> Telefon, kompüter, planşet, smart TV və digər dəstəklənən cihazlarda rahat istifadə.</li>\n</ul>",
     "rulesHtml": ""
   },
   "youtube": {

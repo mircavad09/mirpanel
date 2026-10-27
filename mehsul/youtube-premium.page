@@ -132,6 +132,11 @@
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
+      <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
+      <div class="product-page-similar-category">film</div>
+      <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
       <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
@@ -147,11 +152,6 @@
       <div class="product-page-similar-title" title="Netflix Ümumi">Netflix Ümumi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
-      <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
-      <div class="product-page-similar-category">film</div>
-      <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 3.99 ₼" title="Amazon Prime Video">
       <img src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" class="product-page-similar-image" alt="Amazon Prime Video" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
@@ -221,7 +221,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-8282570c6b7b2391"></script>
+  <script src="/app.js?v=catalog-a18b9c2bf683e6cb"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
