@@ -511,7 +511,7 @@ export function createPaymentSystem(options) {
     if(url.pathname==='/api/admin/payment-inventory'){
       if(!config.inventoryEnabled)throw Object.assign(new Error('Stok sistemi schema 5 migration gözləyir.'),{status:503});
       if(request.method==='GET'){json(response,200,{products:await inventoryView()});return true;}
-      if(request.method==='POST'){const b=await readBody(request,10000),key=safeUuid(request.headers['x-idempotency-key']);const c=await loadCatalog();if(!key||b.confirm!==true||!Number.isSafeInteger(b.available)||b.available<0||b.available>10000||!Number.isSafeInteger(b.expectedVersion)||!c.products.some(p=>p.id===b.productId))throw Object.assign(new Error('Məhsul, stok miqdarı və təsdiq tələb olunur.'),{status:400});json(response,200,await store.setInventory(b.productId,b.available,actorName,key,b.expectedVersion));return true;}
+      if(request.method==='POST'){const b=await readBody(request,10000),key=safeUuid(request.headers['x-idempotency-key']);const c=await loadCatalog();if(!key||b.confirm!==true||!(b.available===null||(Number.isSafeInteger(b.available)&&b.available>=0&&b.available<=10000))||!Number.isSafeInteger(b.expectedVersion)||!c.products.some(p=>p.id===b.productId&&(b.planKey==null||(typeof b.planKey==='string'&&/^\d+$/.test(b.planKey)&&p.plans?.[Number(b.planKey)]))))throw Object.assign(new Error('Məhsul, stok miqdarı və təsdiq tələb olunur.'),{status:400});json(response,200,await store.setInventory(b.productId,b.available,actorName,key,b.expectedVersion,b.planKey??null));return true;}
     }
 
     if (request.method === "GET" && url.pathname === "/api/admin/payment-methods") {

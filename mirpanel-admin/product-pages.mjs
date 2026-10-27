@@ -555,7 +555,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
-  <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
+  <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>
   <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
   <script src="/site-header.js?v=support-faq-20261026-2"></script>
 </body>
@@ -1071,7 +1071,7 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=support-faq-20261026-2")
     .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=stock-unified-20261024-2");
-  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=stock-unified-20261024-2");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=stock-nullable-20261028-1");
   return next;
 }
 

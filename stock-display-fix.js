@@ -1,5 +1,5 @@
 (async function () {
-  const {inventoryAvailability}=await import('/inventory-availability.mjs?v=20261024-2');
+  const {inventoryAvailability}=await import('/inventory-availability.mjs?v=20261028-nullable-1');
   const inventory = new Map();let inventoryTimer,inventoryReceivedAt=0,painting=false;
   function escapeHtml(value) {
     return String(value ?? "")
@@ -65,7 +65,6 @@
         <div class="homeCardPrices"><strong>${escapeHtml(priceText(product))}</strong>${discounted?`<del>${(oldCents/100).toFixed(2)} ${escapeHtml(product.currency || '₼')}</del>`:''}</div>
         <p class="homeCardSales" data-home-sales-id="${id}" hidden></p>
         <a class="homeCardOrder" href="${escapeHtml(productUrl)}" aria-label="Sifariş et" aria-describedby="home-card-${id}" title="Sifariş et"><span aria-hidden="true">→</span></a>
-        ${stockBadgeHTML(product)}
       </div>
     </article>`;
   }
@@ -305,9 +304,7 @@
         const state=stateFor(product);
         document.querySelectorAll('.homeProductCard[data-product-id]').forEach(card=>{
           if(card.dataset.productId!==product.id)return;
-          let line=card.querySelector('.cardStockLine');const badge=stockBadgeData(product);
-          if(!line&&badge){line=document.createElement('div');line.className='cardStockLine';card.querySelector('.pad').append(line);}
-          if(line){line.hidden=!badge;if(badge){let label=line.querySelector('.mpStockBadge');if(!label){label=document.createElement('span');line.replaceChildren(label);}label.className='mpStockBadge cardStockBadge '+badge.className;label.textContent=badge.text;label.style.cssText='box-sizing:border-box;max-width:100%;white-space:normal;font-size:10px';}}
+          card.querySelectorAll('.cardStockLine').forEach(line=>line.remove());
           const button=card.querySelector('.homeCardOrder');if(button){button.setAttribute('aria-disabled',String(!state.canOrder));button.tabIndex=state.canOrder?0:-1;button.style.opacity=state.canOrder?'':'.45';}
         });
       }
