@@ -1880,7 +1880,7 @@ const DATA = {
       "_stableId": "zoom",
       "order": 18,
       "category": "meeting",
-      "image": "uploads/products/zoom-1793128060251-99878d4e.png?v=1793128060251",
+      "image": "uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656",
       "currency": "₼",
       "title": "Zoom Pro",
       "variant": "Pro",
