@@ -4,8 +4,9 @@ import fs from 'node:fs';import path from 'node:path';import crypto from 'node:c
 import postgres from '../payment-test-artifacts/postgres-driver/package/src/index.js';
 let input='';for await(const c of process.stdin)input+=c;const credential=JSON.parse(input);input='';
 const root=path.join(process.env.LOCALAPPDATA,'MirpanelPrivateBackups');
-const run=path.join(root,'browser-orders-'+new Date().toISOString().replace(/[:.]/g,'-'));fs.mkdirSync(run);
-const bin=path.resolve('payment-test-artifacts/pg17-tools/pgsql/bin');
+const adminSessions=process.argv.includes('--admin-sessions');
+const run=path.join(root,(adminSessions?'admin-sessions-':'browser-orders-')+new Date().toISOString().replace(/[:.]/g,'-'));fs.mkdirSync(run);
+const bin=path.resolve(process.env.MIRPANEL_PG_TOOLS||'payment-test-artifacts/pg17-tools/pgsql/bin');
 const caResponse=await fetch('https://supabase-downloads.s3-ap-southeast-1.amazonaws.com/prod/ssl/prod-ca-2021.crt');if(!caResponse.ok)throw Error('CA_DOWNLOAD_FAILED');
 const ca=await caResponse.text(),caPath=path.join(run,'supabase-ca.crt');fs.writeFileSync(caPath,ca);
 const options={host:'aws-0-eu-central-1.pooler.supabase.com',port:5432,database:'postgres',username:credential.username,password:credential.password,ssl:{rejectUnauthorized:true,ca},prepare:false,max:1,connect_timeout:15,onnotice:()=>{},connection:{application_name:'mirpanel-browser-orders-backup',default_transaction_read_only:'on',statement_timeout:120000}};
@@ -36,13 +37,17 @@ await local.unsafe('create schema extensions;create extension pgcrypto with sche
 await tool('pg_restore',['--host','127.0.0.1','--port','55448','--username','backup_restore_owner','--dbname','postgres','--no-owner','--exit-on-error',archive],{PGPASSWORD:localPassword,PGSSLMODE:'disable'});
 const actual=await inventory(local);if(JSON.stringify(actual)!==JSON.stringify(expected)){fs.writeFileSync(path.join(run,'restore-manifest.json'),JSON.stringify(actual,null,2));throw Error('RESTORE_MANIFEST_MISMATCH');}
 console.log('Restored table data, functions, constraints, indexes, RLS and policies match');
-await local.unsafe(fs.readFileSync('supabase/browser-orders-preflight.sql','utf8')).simple();
-await local.unsafe(fs.readFileSync('supabase/migrations/202610250002_browser_orders.sql','utf8')).simple();
-await local.unsafe(fs.readFileSync('supabase/migrations/202610250002_browser_orders.sql','utf8')).simple();
-const ready=(await local`select browser_orders_ready() as n`)[0].n;if(ready!==1)throw Error('RESTORE_MIGRATION_READINESS_FAILED');
-await local.unsafe(fs.readFileSync('supabase/rollback/202610250002_browser_orders.sql','utf8')).simple();
+if(!adminSessions)await local.unsafe(fs.readFileSync('supabase/browser-orders-preflight.sql','utf8')).simple();
+const migration=adminSessions?'202610270003_admin_sessions':'202610250002_browser_orders';
+const migrationText=fs.readFileSync('supabase/migrations/'+migration+'.sql','utf8');
+fs.writeFileSync(path.join(run,'migration.sql'),migrationText);
+await local.unsafe(fs.readFileSync('supabase/migrations/'+migration+'.sql','utf8')).simple();
+await local.unsafe(fs.readFileSync('supabase/migrations/'+migration+'.sql','utf8')).simple();
+if(adminSessions)await local.unsafe(fs.readFileSync('supabase/admin-sessions-verify.sql','utf8')).simple();
+else {const ready=(await local`select browser_orders_ready() as n`)[0].n;if(ready!==1)throw Error('RESTORE_MIGRATION_READINESS_FAILED');}
+await local.unsafe(fs.readFileSync('supabase/rollback/'+migration+'.sql','utf8')).simple();
 const after=await inventory(local);const originalRows=after.rows.filter(r=>expected.rows.some(x=>x.table===r.table));if(JSON.stringify(originalRows)!==JSON.stringify(expected.rows))throw Error('ROLLBACK_BUSINESS_DATA_MISMATCH');
 await local.end();local=null;await tool('pg_ctl',['stop','-D',cluster,'-m','fast','-w']);controlStarted=false;
-const report={ok:true,scope:'public schema: all business tables, functions, indexes, constraints, RLS/policies/ACL archive; excludes storage file bodies and other schemas',tableCount:expected.tableCount,functionCount:expected.functionCount,restoreDataMatch:true,restoreDefinitionsMatch:true,localMigrationFirstAndRepeat:true,rollbackBusinessDataPreserved:true,productionBusinessWrites:0,archiveSha256:crypto.createHash('sha256').update(fs.readFileSync(archive)).digest('hex'),backupDirectory:run};
+const report={ok:true,migration,migrationSha256:crypto.createHash('sha256').update(migrationText).digest('hex'),scope:'public schema: all business tables, functions, indexes, constraints, RLS/policies/ACL archive; excludes storage file bodies and other schemas',tableCount:expected.tableCount,functionCount:expected.functionCount,restoreDataMatch:true,restoreDefinitionsMatch:true,localMigrationFirstAndRepeat:true,rollbackBusinessDataPreserved:true,productionBusinessWrites:0,archiveSha256:crypto.createHash('sha256').update(fs.readFileSync(archive)).digest('hex'),backupDirectory:run};
 fs.writeFileSync(path.join(run,'verified.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }catch(e){console.log(JSON.stringify({ok:false,error:e.code||e.message,privateDirectory:run}));process.exitCode=1;}finally{await prod.end({timeout:2}).catch(()=>{});if(local)await local.end({timeout:2}).catch(()=>{});if(controlStarted)await tool('pg_ctl',['stop','-D',path.join(run,'restore-cluster'),'-m','fast','-w']).catch(()=>{});}

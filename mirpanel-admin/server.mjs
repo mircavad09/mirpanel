@@ -16,6 +16,7 @@ import { createHomepageBannersRepository } from "./homepage-banners-repository.m
 import { createProductSalesRepository } from './product-sales-repository.mjs';
 import { createEmployeeSystem } from './employee-api.mjs';
 import {createAdminUsersRepository} from './admin-users-repository.mjs';
+import {createAdminSessions,ADMIN_IDLE_MS} from './admin-sessions.mjs';
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -68,7 +69,7 @@ const config = {
 };
 
 const sessions = new Map();
-const sessionTtl = 8 * 60 * 60 * 1000;
+const sessionTtl = ADMIN_IDLE_MS;
 const maxProductImageSize = 5 * 1024 * 1024;
 const productImageTypes = new Map([
   ["image/jpeg", "jpg"],
@@ -119,16 +120,7 @@ function getCookies(request) {
 }
 
 function getSession(request) {
-  const id = getCookies(request).mirpanel_session;
-  const current = id && sessions.get(id);
-
-  if (!current || current.expiresAt < Date.now()) {
-    if (id) sessions.delete(id);
-    return null;
-  }
-
-  current.expiresAt = Date.now() + sessionTtl;
-  return current;
+  return request.adminSession || null;
 }
 
 function sessionCookie(id, maxAge = sessionTtl / 1000) {
@@ -708,11 +700,9 @@ async function handleApi(request, response) {
       });
     }
 
-    const id = crypto.randomBytes(32).toString("hex");
+    const {id,session}=await adminSessions.create();
     sessions.set(id, {
-      role:'admin',
-      expiresAt: Date.now() + sessionTtl,
-      csrfToken: crypto.randomBytes(24).toString("hex"),
+      ...session,
       preview: null,
       draft: null,
       pendingUploads: new Map()
@@ -724,7 +714,10 @@ async function handleApi(request, response) {
   }
 
   if (request.method === "POST" && request.url === "/api/logout") {
+    // Never report logout success until server-side revocation is confirmed.
+    if(!requireMutationAuth(request,response))return;
     const id = getCookies(request).mirpanel_session;
+    await adminSessions.revoke(id);
     if (id) sessions.delete(id);
 
     return json(response, 200, { ok: true }, {
@@ -733,6 +726,10 @@ async function handleApi(request, response) {
   }
 
   if (!requireAuth(request, response)) return;
+  if(request.method==='POST'&&request.url==='/api/session/activity'){
+    if(!requireMutationAuth(request,response))return;
+    return json(response,200,{ok:true,expiresAt:getSession(request).expiresAt,idleSeconds:sessionTtl/1000});
+  }
   if(salesUrl.pathname==='/api/admin/users'||salesUrl.pathname.startsWith('/api/admin/users/')){
     if(getSession(request)?.role!=='admin')return json(response,403,{error:'Bu bölmə yalnız adminə açıqdır.'});
     if(request.method!=='GET')return json(response,405,{error:'Bu bölmə yalnız baxış üçündür.'},{Allow:'GET'});
@@ -879,7 +876,10 @@ async function handleApi(request, response) {
   if (request.method === "GET" && request.url === "/api/session") {
     return json(response, 200, {
       ok: true,
-      csrfToken: getSession(request).csrfToken
+      csrfToken: getSession(request).csrfToken,
+      expiresAt: getSession(request).expiresAt,
+      idleSeconds: sessionTtl/1000,
+      pendingUploads:[...(getSession(request).pendingUploads?.keys()||[])]
     });
   }
 
@@ -1282,6 +1282,7 @@ const storiesSupabase = config.supabaseUrl && config.supabaseSecretKey
   : null;
 const storiesRepository = storiesSupabase ? createStoriesRepository(storiesSupabase, { bucket: config.storiesBucket }) : null;
 const adminUsers=createAdminUsersRepository(storiesSupabase?createClient(config.supabaseUrl,config.supabaseSecretKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init={})=>fetch(input,{...init,signal:AbortSignal.timeout(10000)})}}):null);
+const adminSessions=createAdminSessions({client:storiesSupabase?createClient(config.supabaseUrl,config.supabaseSecretKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init={})=>fetch(input,{...init,signal:AbortSignal.timeout(10000)})}}):null,username:config.username,password:config.password,secret:config.tokenSecret});
 const productSales = storiesSupabase ? createProductSalesRepository(storiesSupabase, {
   loadCatalog:async()=>extractAdminState((await getAppFile()).source)
 }) : null;
@@ -1343,6 +1344,9 @@ function serveFile(response, name) {
     "Content-Security-Policy": `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'${storiesStorageOrigin ? ` ${storiesStorageOrigin}` : ""}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`
   });
 
+  if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){
+    return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=idle-20261027-1"></script></head>'));
+  }
   fs.createReadStream(file).pipe(response);
 }
 
@@ -1350,6 +1354,21 @@ const server = http.createServer(async (request, response) => {
   try {
     const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
     const pathname = requestUrl.pathname;
+    const adminId=getCookies(request).mirpanel_session;
+    if(adminId){
+      const valid=await adminSessions.read(adminId);
+      if(valid){
+        const local=sessions.get(adminId)||{preview:null,draft:null,pendingUploads:new Map()};
+        Object.assign(local,valid);sessions.set(adminId,local);request.adminSession=local;
+        // Background reads never renew idle expiry. Mutations need same-origin CSRF.
+        const userNavigation=request.method==='GET'&&['/admin.html','/admin/users','/admin/workforce','/admin'].includes(pathname)&&request.headers['sec-fetch-user']==='?1'&&request.headers['sec-fetch-mode']==='navigate'&&['same-origin','none'].includes(request.headers['sec-fetch-site']);
+        if(userNavigation||!['GET','HEAD','OPTIONS'].includes(request.method)&&sameOrigin(request)&&safeEqual(request.headers['x-csrf-token'],local.csrfToken)){
+          const renewed=await adminSessions.touch(adminId);
+          if(!renewed){request.adminSession=null;sessions.delete(adminId);}
+          else {Object.assign(local,renewed);response.setHeader('Set-Cookie',sessionCookie(adminId));}
+        }
+      }else sessions.delete(adminId);
+    }
 
     if (pathname.startsWith("/api/")) {
       return await handleApi(request, response);
@@ -1401,7 +1420,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js"].includes(pathname)) {
+    if (["/admin-session.js", "/admin-draft.js", "/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 

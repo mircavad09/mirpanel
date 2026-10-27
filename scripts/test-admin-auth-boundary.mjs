@@ -34,7 +34,7 @@ try {
   const login=await fetch(base+'/api/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
   assert.equal(login.status,200);
   const setCookie=login.headers.get('set-cookie');
-  assert.match(setCookie,/HttpOnly/); assert.match(setCookie,/SameSite=Strict/); assert.match(setCookie,/Path=\//); assert.match(setCookie,/Max-Age=28800/); assert.doesNotMatch(setCookie,/Domain=/);
+  assert.match(setCookie,/HttpOnly/); assert.match(setCookie,/SameSite=Strict/); assert.match(setCookie,/Path=\//); assert.match(setCookie,/Max-Age=3600/); assert.doesNotMatch(setCookie,/Domain=/);
   const headers={Cookie:setCookie.split(';')[0]};
   const session=await fetch(base+'/api/session',{headers}); assert.equal(session.status,200);
   const admin=await fetch(base+'/admin.html',{headers,redirect:'manual'}); assert.equal(admin.status,200);
@@ -48,7 +48,7 @@ try {
   }
   const reload=await fetch(base+'/admin.html',{headers,redirect:'manual'}); assert.equal(reload.status,200);
   const noCookie=await fetch(base+'/admin.html',{redirect:'manual'}); assert.equal(noCookie.status,302);
-  console.log(JSON.stringify({login:login.status,adminPage:admin.status,upstreamGithub:401,adminState:state.status,sessionAfterFailure:stillAuthenticated.status,cookieAttributes:{httpOnly:true,sameSite:'Strict',path:'/',maxAge:28800,hostOnly:true},realDataTouched:false}));
+  console.log(JSON.stringify({login:login.status,adminPage:admin.status,upstreamGithub:401,adminState:state.status,sessionAfterFailure:stillAuthenticated.status,cookieAttributes:{httpOnly:true,sameSite:'Strict',path:'/',maxAge:3600,hostOnly:true},realDataTouched:false}));
 } finally {
   child.kill(); await once(child,'exit');
 }
@@ -78,7 +78,7 @@ const adminSource=fs.readFileSync(new URL('mirpanel-admin/public/admin.js',root)
 const loadStateSource=adminSource.slice(adminSource.indexOf('async function loadState()'),adminSource.indexOf('async function saveState()'));
 for(const [status,code,redirect] of [[401,'ADMIN_SESSION_REQUIRED',true],[401,'GITHUB_ACCESS_FAILED',false],[403,undefined,false],[502,'GITHUB_ACCESS_FAILED',false],[503,undefined,false]]) {
   const location={href:''}; let message='';
-  const context=vm.createContext({location,$:()=>({textContent:''}),setLoading(){},toast(value){message=value;},api:async()=>{throw Object.assign(Error('isolated failure'),{status,code});}});
+  const context=vm.createContext({location,$:()=>({textContent:''}),setLoading(){},toast(value){message=value;},sessionRequired:async()=>{location.href='/login.html?reason=session_required';},api:async()=>{throw Object.assign(Error('isolated failure'),{status,code});}});
   vm.runInContext(loadStateSource,context);await vm.runInContext('loadState()',context);
   assert.equal(Boolean(location.href),redirect);if(!redirect)assert.equal(message,'isolated failure');
 }

@@ -14,6 +14,26 @@ const state = {
   csrfToken: "",
   previewDigest: ""
 };
+let draftTimer;
+const recoveredImages=new Set();
+async function preserveEditor(){
+  if(!state.data||!state.dirty)return;
+  try{await window.MirpanelAdminDraft?.save({data:payloadWithoutTransientPreviews(state.data),baseSha:state.baseSha,selectedId:state.selectedId});}
+  catch{toast('Lokal qaralama saxlanmadı. Redaktələri itirməmək üçün bu səhifəni bağlamayın.','bad');}
+}
+async function sessionRequired(){await preserveEditor();location.href='/login.html?reason=session_required';}
+async function recoverEditor(){
+ try{
+  const draft=await window.MirpanelAdminDraft?.read(),images=await window.MirpanelAdminDraft?.readFiles()||[];
+  if(!draft&&!images.length)return;
+  const box=document.createElement('div');box.setAttribute('role','status');box.className='card';
+  const note=document.createElement('p');note.textContent='Əvvəlki redaktə qaralaması bu brauzerdə saxlanılıb. Canlı sayta yayımlanmayıb.';box.append(note);
+  const restore=document.createElement('button');restore.type='button';restore.className='btn';restore.textContent='Qaralamanı bərpa et';
+  restore.onclick=()=>{if(draft){state.data=draft.data;state.baseSha=draft.baseSha;state.selectedId=draft.selectedId;state.draftConflict=draft.baseSha!==loadedSha;markDirty();renderAll();}if(images.length){box.replaceChildren(note);for(const image of images){recoveredImages.add(image.productId);const retry=document.createElement('button');retry.type='button';retry.className='btn';retry.textContent='Şəkli yenidən yüklə: '+(state.data.products.find(p=>p.id===image.productId)?.title||image.productId);retry.onclick=async()=>{state.selectedId=image.productId;renderAll();await uploadProductImage(image.file);if(!recoveredImages.has(image.productId))retry.remove();};box.append(retry);}}else box.remove();};
+  const discard=document.createElement('button');discard.type='button';discard.className='btn';discard.textContent='Qaralamanı sil';discard.onclick=async()=>{await window.MirpanelAdminDraft.clear();box.remove();};
+  const loadedSha=state.baseSha;box.append(restore,discard);$('commitInfo').after(box);
+ }catch{toast('Lokal qaralamanı oxumaq mümkün olmadı.','bad');}
+}
 
 const productImageUpload = {
   maxSize: 5 * 1024 * 1024,
@@ -414,6 +434,7 @@ async function uploadProductImage(file) {
   setLoading(true, "Şəkil GitHub-a yüklənir...");
 
   try {
+    try{await window.MirpanelAdminDraft?.file(file,product.id);}catch{toast('Şəkil qaralaması lokal saxlanmadı. Yükləmə bitənədək səhifəni bağlamayın.','bad');}
     const contentBase64 = await readFileAsBase64(file);
     const payload = await api("/api/upload-product-image", {
       method: "POST",
@@ -425,7 +446,10 @@ async function uploadProductImage(file) {
       })
     });
 
+    if(payload.ok!==true||payload.staged!==true||typeof payload.path!=='string'||!payload.path)throw Error('Şəklin saxlanması təsdiqlənmədi. Yenidən cəhd edin.');
     product.image = payload.path;
+    try{await window.MirpanelAdminDraft?.file(file,product.id,payload.path);}catch{/* Existing retained file can still be retried after login. */}
+    recoveredImages.delete(product.id);
     $("productImage").value = payload.path;
     $("previewImage").src = payload.previewDataUrl || imageUrl(payload.path);
     markDirty();
@@ -435,7 +459,7 @@ async function uploadProductImage(file) {
   } catch (error) {
     $("previewImage").src = imageUrl(product.image);
     setImageUploadStatus(error.message || "Şəkil yüklənmədi.", "bad");
-    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") location.href = "/login.html?reason=session_required";
+    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") await sessionRequired();
     else toast(error.message || "Şəkil yüklənmədi.", "bad");
   } finally {
     setLoading(false);
@@ -464,6 +488,7 @@ function markDirty() {
   state.publishStatus = "unsaved";
   state.previewDigest = "";
   renderStats();
+  clearTimeout(draftTimer);draftTimer=setTimeout(preserveEditor,200);
 }
 
 function automaticOrderFlow(product) {
@@ -516,8 +541,9 @@ async function loadState() {
     $("commitInfo").textContent = `Yükləndi: ${new Date(payload.loadedAt).toLocaleString("az-AZ")} / ${payload.sha.slice(0, 7)}`;
     renderAll();
     window.dispatchEvent(new Event('mirpanel:product-catalog-loaded'));
+    await recoverEditor();
   } catch (error) {
-    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") location.href = "/login.html?reason=session_required";
+    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") await sessionRequired();
     else {
       $("commitInfo").textContent = error.code === "GITHUB_ACCESS_FAILED"
         ? "Giriş uğurludur · GitHub bağlantısına icazə verilmədi"
@@ -531,6 +557,17 @@ async function loadState() {
 
 async function saveState() {
   if (!state.data) return;
+  if(recoveredImages.size){toast('Qaralamadakı şəkilləri yenidən yükləyin, sonra Saxla basın.','bad');return;}
+  // A deployment may preserve authentication but replace transient staged bytes.
+  // Restage retained files and require a fresh preview; never publish broken paths.
+  try{
+    const current=await api('/api/session'),files=await window.MirpanelAdminDraft?.readFiles()||[],selected=state.selectedId;
+    let restaged=false;
+    for(const image of files){const product=state.data.products.find(p=>p.id===image.productId);if(!image.uploadedPath||product?.image!==image.uploadedPath||(current.pendingUploads||[]).includes(image.uploadedPath.split('?')[0]))continue;
+      recoveredImages.add(image.productId);state.selectedId=image.productId;await uploadProductImage(image.file);if(recoveredImages.has(image.productId)){state.selectedId=selected;return;}restaged=true;}
+    state.selectedId=selected;
+    if(restaged){renderAll();toast('Server yenilənib. Şəkillər bərpa edildi; önizləməni yenidən yoxlayıb Saxla basın.','bad');return;}
+  }catch(error){if(error.status===401&&error.code==='ADMIN_SESSION_REQUIRED')await sessionRequired();else toast(error.message||'Saxlama yoxlanmadı. Yenidən cəhd edin.','bad');return;}
   if (!state.dirty) {
     toast("Saxlanacaq dəyişiklik yoxdur.", "bad");
     return;
@@ -571,6 +608,7 @@ async function saveState() {
         previewDigest: state.previewDigest
       })
     });
+    if(typeof payload.sha!=='string'||typeof payload.commitSha!=='string'||!payload.sha||!payload.commitSha)throw Error('Saxlama server tərəfindən təsdiqlənmədi. Yenidən cəhd edin.');
     state.baseSha = payload.sha;
     state.previewDigest = "";
     state.dirty = false;
@@ -581,6 +619,7 @@ async function saveState() {
     $("commitInfo").textContent = `Commit: ${payload.commitSha.slice(0, 7)} / ${new Date(payload.committedAt).toLocaleString("az-AZ")}`;
     renderStats();
     state.lastPublishResult = payload;
+    clearTimeout(draftTimer);await window.MirpanelAdminDraft?.clear().catch(()=>{});
     toast(payload.cacheCommitSha ? "Saxlandı və cache versiyası yeniləndi." : "Saxlandı.");
   } catch (error) {
     state.publishStatus = "failed";
@@ -588,7 +627,7 @@ async function saveState() {
     state.draftSaved = hadSavedDraft;
     if (error.status === 409) state.draftConflict = true;
     renderStats();
-    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") location.href = "/login.html?reason=session_required";
+    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") await sessionRequired();
     else if (error.status === 409) toast("Conflict: GitHub-da app.js dəyişib. Yenilə düyməsini bas.", "bad");
     else toast(error.message, "bad");
   } finally {
@@ -1395,8 +1434,10 @@ document.querySelectorAll(".navBtn[data-view]").forEach((button) => {
   button.addEventListener("click", () => showView(button.dataset.view));
 });
 $("logoutBtn").addEventListener("click", async () => {
-  await api("/api/logout", { method: "POST" });
-  location.href = "/login.html";
+  try{await api("/api/logout", { method: "POST" });clearTimeout(draftTimer);await window.MirpanelAdminDraft?.clear();location.href = "/login.html";}
+  catch(error){toast(error.message||'Çıxış təsdiqlənmədi. Yenidən cəhd edin.','bad');}
 });
+window.addEventListener('mirpanel:session-expired',()=>{void preserveEditor();toast('Sessiya bitib. Redaktə qaralaması qorunur; saxlamaq üçün yenidən daxil olun.','bad');});
+window.addEventListener('pagehide',()=>{void preserveEditor();});
 
 loadState();

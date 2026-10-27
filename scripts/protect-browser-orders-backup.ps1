@@ -2,7 +2,7 @@ $ErrorActionPreference = 'Stop'
 Add-Type -AssemblyName System.Security
 $root = Join-Path $env:LOCALAPPDATA 'MirpanelPrivateBackups'
 $count = 0
-foreach ($run in (Get-ChildItem -LiteralPath $root -Directory -Filter 'browser-orders-*')) {
+foreach ($run in (Get-ChildItem -LiteralPath $root -Directory | Where-Object { $_.Name -like 'browser-orders-*' -or $_.Name -like 'admin-sessions-*' })) {
     $dump = Join-Path $run.FullName 'public.dump'
     if (-not (Test-Path -LiteralPath $dump)) { continue }
     $bytes = [System.IO.File]::ReadAllBytes($dump)

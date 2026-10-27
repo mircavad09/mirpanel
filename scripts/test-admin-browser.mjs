@@ -4,6 +4,7 @@ import http from "node:http";
 import path from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { extractAdminState } from "../mirpanel-admin/core.mjs";
+import {execFileSync} from 'node:child_process';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = path.join(root, "mirpanel-admin", "public");
@@ -37,7 +38,7 @@ const server = http.createServer(async (request, response) => {
   const file = path.resolve(publicDir, `.${requested}`);
   if (!file.startsWith(publicDir) || !fs.existsSync(file)) { response.writeHead(404); return response.end("Not found"); }
   response.writeHead(200, { "Content-Type": mime[path.extname(file)] || "application/octet-stream" });
-  response.end(fs.readFileSync(file));
+  response.end(process.argv.includes('--baseline')&&requested==='/admin.js'?execFileSync('git',['show','1d18654:mirpanel-admin/public/admin.js']):fs.readFileSync(file));
 });
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const address = server.address();
@@ -80,7 +81,8 @@ try {
   await page.getByText("Sınaq publish xətası", { exact: true }).waitFor();
   await page.locator("#modalCancel").click();
   assert.equal(await kicker.inputValue(), `${originalKicker} sınaq`, "Publish xətasında admin state-i itdi");
-  assert.ok((await page.locator("#changeStatus").innerText()).includes("Yadda saxlanmamış"));
+  assert.equal(await page.locator('#changeStatus').getAttribute('data-status'),'failed');
+  assert.ok((await page.locator("#changeStatus").innerText()).includes("dəyişiklikləriniz qorunub"));
   await page.screenshot({ path: path.join(screenshotDir, "admin-desktop.png"), fullPage: true });
 
   await page.evaluate(() => document.querySelector('.navBtn[data-view="products"]')?.click());
