@@ -282,8 +282,10 @@ function injectMeta(html, route, product) {
   return next.replace(/<\/head>/i, `${extras}\n</head>`);
 }
 
+import {adminUsersBoundary} from './_admin-users-boundary.js';
 export async function onRequest(context) {
   const { request } = context;
+  const usersBoundary=adminUsersBoundary(request);if(usersBoundary)return usersBoundary;
   const url = new URL(request.url);
   const pathname = url.pathname;
   if(url.hostname==='www.mirpanel.com'&&['GET','HEAD'].includes(request.method)&&!pathname.startsWith('/api/')){const canonical=new URL(url);canonical.hostname='mirpanel.com';return Response.redirect(canonical.href,308);}

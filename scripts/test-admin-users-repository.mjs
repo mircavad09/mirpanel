@@ -1,0 +1,16 @@
+import assert from'node:assert/strict';import crypto from'node:crypto';import{createAdminUsersRepository,publicAccount}from'../mirpanel-admin/admin-users-repository.mjs';
+let checks=0,calls=0,t=100000;const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;},id=()=>crypto.randomUUID();
+const user={id:id(),email:'test@example.test',phone:'+994500000000',created_at:'2026-10-01T10:00:00Z',email_confirmed_at:'2026-10-01T10:00:00Z',phone_confirmed_at:null,user_metadata:{first_name:'Sınaq',last_name:'İstifadəçi',phone_verified:true,role:'admin',tier:'VIP'},app_metadata:{providers:['google']},identities:[{provider:'google',identity_data:{private:'not-public'}}],encrypted_password:'not-public',access_token:'not-public',refresh_token:'not-public'};
+const projected=publicAccount(user);eq(projected.name,'Sınaq İstifadəçi');eq(projected.phoneVerified,false);eq(projected.emailVerified,true);eq(projected.signInMethods,['Google']);for(const k of['user_metadata','app_metadata','identities','role','tier','encrypted_password','access_token','refresh_token'])eq(Object.hasOwn(projected,k),false,k+' excluded');
+eq(publicAccount({...user,banned_until:'2099-01-01'}).accountState,'Bloklanıb');eq(publicAccount({...user,email_confirmed_at:null}).accountState,'E-poçt təsdiqi gözləyir');
+let records=Array.from({length:503},(_,i)=>({...user,id:id(),email:'person-'+i+'@example.test',user_metadata:{name:'Synthetic '+i},created_at:new Date(Date.UTC(2026,0,1)+i*1000).toISOString()}));records[0]=user;
+const admin={listUsers:async({page,perPage})=>{calls++;return{data:{users:records.slice((page-1)*perPage,page*perPage),total:records.length},error:null};},getUserById:async key=>({data:{user:records.find(u=>u.id===key)},error:null})},repo=createAdminUsersRepository({auth:{admin}},{now:()=>t});
+const a=await repo.list();eq(a.total,503);eq(a.users.length,20);eq(a.hasMore,true);eq(calls,2);const b=await repo.list({page:'2'});eq(b.users[0].id!==a.users[0].id,true);eq(calls,2,'bounded private snapshot reused');
+for(const q of['Sınaq İstifadəçi',user.email,user.id])eq((await repo.list({q})).users[0].id,user.id);for(const q of['%',"' OR 1=1 --",'_'])eq((await repo.list({q})).total,0);
+for(const args of[{page:'-1'},{limit:'51'},{page:'NaN'},{q:'x'.repeat(101)}]){await assert.rejects(()=>repo.list(args),e=>e.status===400);checks++;}
+eq((await repo.detail(user.id)).user.id,user.id);await assert.rejects(()=>repo.detail('../account'),e=>e.status===400);checks++;await assert.rejects(()=>repo.detail(id()),e=>e.status===404);checks++;
+records=[];t+=6000;eq((await repo.list()).total,0);eq((await repo.list()).users,[]);
+await assert.rejects(()=>createAdminUsersRepository(null).list(),e=>e.status===503);checks++;
+for(const result of[{error:{status:401},data:{users:[]}},{error:null,data:{}},{error:null,data:{users:[{id:'bad-id'}]}}]){await assert.rejects(()=>createAdminUsersRepository({auth:{admin:{listUsers:async()=>result}}}).list(),e=>e.status===503);checks++;}
+const capped=createAdminUsersRepository({auth:{admin:{listUsers:async()=>({data:{users:Array.from({length:500},()=>({...user,id:id()}))}})}}},{maxUsers:500});await assert.rejects(()=>capped.list(),e=>e.code==='USER_DIRECTORY_SCAN_LIMIT');checks++;
+console.log(JSON.stringify({ok:true,checks,failures:0,productionWrites:0,migrationRequired:false}));
