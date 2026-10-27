@@ -127,6 +127,11 @@
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
+      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">19.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
       <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
@@ -162,11 +167,6 @@
       <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/tiktok-jeton" aria-label="TikTok Jeton — 11.00 ₼" title="TikTok Jeton">
-      <img src="/uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473" class="product-page-similar-image" alt="TikTok Jeton" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="TikTok Jeton">TikTok Jeton</div>
-      <div class="product-page-similar-category">video</div>
-      <div class="product-page-similar-price">11.00 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -221,7 +221,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-dd767b84f8e12188"></script>
+  <script src="/app.js?v=catalog-2ed66c33a0c3af3f"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
