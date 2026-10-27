@@ -2616,7 +2616,7 @@ const DATA = {
       "_stableId": "notion_plus",
       "order": 26,
       "category": "meeting",
-      "image": "assets/notion.png",
+      "image": "uploads/products/notion_plus-1793128335750-5e44b2d1.png?v=1793128335750",
       "currency": "₼",
       "title": "Notion Plus",
       "variant": "Məhsuldarlıq",
