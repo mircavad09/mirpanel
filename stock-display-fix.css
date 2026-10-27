@@ -164,6 +164,12 @@
 .home-page #grid .homeCardLabels span{padding:3px 5px;border:1px solid #ddbc4155;border-radius:5px;background:#101014dd;color:#fff0b0;font-size:10px;line-height:1.2;max-width:100%}
 .home-page #grid .homeProductCard .cardStockLine{grid-area:stock;margin:3px 0 0}
 .home-page #grid .homeProductCard .cardStockBadge{font-weight:500;font-size:10px;padding:4px 6px;box-shadow:none}
+.home-page #grid .homeProductCard .cardStockBadge.low,
+.home-page #grid .homeProductCard .cardStockBadge.count{border-color:#c892385c;color:#ffc15b;background:linear-gradient(135deg,#d79b2822,#251b0d);font-variant-numeric:tabular-nums;line-height:1.2;gap:5px}
+.home-page #grid .homeProductCard .cardStockBadge.low{font-weight:600}
+.home-page #grid .homeProductCard .cardStockBadge.low::before,
+.home-page #grid .homeProductCard .cardStockBadge.count::before{width:5px;height:5px;background:#ffc15b;box-shadow:none}
+.home-page #grid .homeProductCard .cardStockBadge{white-space:normal;overflow-wrap:anywhere}
 @media(max-width:767px){
  .home-page #grid .homeProductCard .pad{padding:8px!important;column-gap:5px!important}
  .home-page #grid .homeProductCard .title{font-size:12px!important}

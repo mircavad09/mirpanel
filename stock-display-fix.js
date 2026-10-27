@@ -1,6 +1,6 @@
 (async function () {
   const {inventoryAvailability}=await import('/inventory-availability.mjs?v=20261028-nullable-1');
-  const inventory = new Map();let inventoryTimer,inventoryReceivedAt=0,painting=false;
+  const inventory = new Map();let inventoryTimer,inventoryReceivedAt=0,painting=false,inventoryDisplayValid=false;
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -31,6 +31,33 @@
     const badge = stockBadgeData(product);
     if (!badge) return "";
     return `<div class="cardStockLine"><span class="mpStockBadge cardStockBadge ${badge.className}">${escapeHtml(badge.text)}</span></div>`;
+  }
+
+  // Homepage only: the exact starting-price plan represented by the card.
+  // Never aggregate unrelated plan pools, or display a synthetic fail-closed zero.
+  function homeStockBadgeData(product) {
+    const ledger=inventory.get(product.id);
+    if(!inventoryDisplayValid||!ledger||ledger.needsSetup)return null;
+    let stock;
+    if(ledger.scope==='product'){
+      if(ledger.unlimited===true)return null;
+      stock=ledger.available;
+    }else if(ledger.scope==='plan'){
+      const price=product.id==='tiktok_jeton'?10:minPrice(product);
+      const index=(product.plans||[]).findIndex(plan=>Number(plan.price)===price);
+      const plan=ledger.plans?.find(plan=>plan.planKey===String(index));
+      if(!plan||plan.tracked===false)return null;
+      stock=plan.available;
+    }else return null;
+    if(!Number.isSafeInteger(stock)||stock<0)return null;
+    return stock===0?{text:'Stokda yoxdur',className:'out'}:
+      stock<10?{text:`Son ${stock} ədəd`,className:'low'}:
+      {text:`Stok: ${stock}`,className:'count'};
+  }
+
+  function homeStockBadgeHTML(product){
+    const badge=homeStockBadgeData(product);
+    return badge?`<div class="cardStockLine"><span class="mpStockBadge cardStockBadge ${badge.className}">${escapeHtml(badge.text)}</span></div>`:'';
   }
 
   function minPrice(product) {
@@ -65,6 +92,7 @@
         <div class="homeCardPrices"><strong>${escapeHtml(priceText(product))}</strong>${discounted?`<del>${(oldCents/100).toFixed(2)} ${escapeHtml(product.currency || '₼')}</del>`:''}</div>
         <p class="homeCardSales" data-home-sales-id="${id}" hidden></p>
         <a class="homeCardOrder" href="${escapeHtml(productUrl)}" aria-label="Sifariş et" aria-describedby="home-card-${id}" title="Sifariş et"><span aria-hidden="true">→</span></a>
+        ${homeStockBadgeHTML(product)}
       </div>
     </article>`;
   }
@@ -304,7 +332,13 @@
         const state=stateFor(product);
         document.querySelectorAll('.homeProductCard[data-product-id]').forEach(card=>{
           if(card.dataset.productId!==product.id)return;
-          card.querySelectorAll('.cardStockLine').forEach(line=>line.remove());
+          const badge=homeStockBadgeData(product);let line=card.querySelector('.cardStockLine');
+          if(!badge)line?.remove();
+          else{
+            if(!line){line=document.createElement('div');line.className='cardStockLine';card.querySelector('.pad').append(line);}
+            let label=line.querySelector('.cardStockBadge');if(!label){label=document.createElement('span');line.replaceChildren(label);}
+            label.className='mpStockBadge cardStockBadge '+badge.className;label.textContent=badge.text;
+          }
           const button=card.querySelector('.homeCardOrder');if(button){button.setAttribute('aria-disabled',String(!state.canOrder));button.tabIndex=state.canOrder?0:-1;button.style.opacity=state.canOrder?'':'.45';}
         });
       }
@@ -326,7 +360,7 @@
   let inventoryRequest=null;
   function refreshInventory(){
     if(inventoryRequest)return inventoryRequest;if(document.hidden)return Promise.resolve(false);
-    inventoryRequest=(async()=>{try{const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel.onrender.com';const r=await fetch(base+'/api/payments/inventory',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Inventory unavailable');const d=await r.json();if(!Array.isArray(d.products))throw Error('Invalid inventory');inventory.clear();for(const row of d.products)inventory.set(row.productId,row);inventoryReceivedAt=Date.now();paintInventory();return true;}catch{if(Date.now()-inventoryReceivedAt>10000)for(const row of inventory.values()){if(row.scope==='product')row.available=0;else if(row.scope==='plan')for(const plan of row.plans)if(plan.tracked)plan.available=0;}paintInventory();return false;}finally{inventoryRequest=null;}})();return inventoryRequest;
+    inventoryRequest=(async()=>{try{const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel.onrender.com';const r=await fetch(base+'/api/payments/inventory',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Inventory unavailable');const d=await r.json();if(!Array.isArray(d.products))throw Error('Invalid inventory');inventory.clear();for(const row of d.products)inventory.set(row.productId,row);inventoryReceivedAt=Date.now();inventoryDisplayValid=true;paintInventory();return true;}catch{inventoryDisplayValid=false;if(Date.now()-inventoryReceivedAt>10000)for(const row of inventory.values()){if(row.scope==='product')row.available=0;else if(row.scope==='plan')for(const plan of row.plans)if(plan.tracked)plan.available=0;}paintInventory();return false;}finally{inventoryRequest=null;}})();return inventoryRequest;
   }
   window.MirpanelInventory={productState:stateFor,planState:planFor,refresh:refreshInventory,async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
   document.addEventListener('click',event=>{
