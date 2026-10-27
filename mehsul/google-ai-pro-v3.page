@@ -128,7 +128,7 @@
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">37.40 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-ultra" aria-label="Google AI Ultra + VEO 3 — Stokda yoxdur" title="Google AI Ultra + VEO 3">
-      <img src="/assets/google-ai-ultra.png" class="product-page-similar-image" alt="Google AI Ultra + VEO 3" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/google_ai_ultra-1793128040365-716704a3.png?v=1793128040365" class="product-page-similar-image" alt="Google AI Ultra + VEO 3" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Google AI Ultra + VEO 3">Google AI Ultra + VEO 3</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">Stokda yoxdur</div>
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-c80a772824d3683b"></script>
+  <script src="/app.js?v=catalog-e8c492c1f68b97e0"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
