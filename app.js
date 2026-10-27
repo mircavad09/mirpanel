@@ -2704,7 +2704,7 @@ const DATA = {
       "_stableId": "picsart_premium",
       "order": 27,
       "category": "dizayn",
-      "image": "assets/picsart.png",
+      "image": "uploads/products/picsart_premium-1793128536130-84c3b402.png?v=1793128536130",
       "currency": "₼",
       "title": "Picsart Premium",
       "variant": "Foto Edit",
