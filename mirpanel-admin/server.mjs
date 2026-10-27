@@ -1345,7 +1345,7 @@ function serveFile(response, name) {
   });
 
   if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){
-    return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=idle-20261027-1"></script></head>'));
+    return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=position-20261028-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=idle-20261027-1"></script></head>'));
   }
   fs.createReadStream(file).pipe(response);
 }
@@ -1420,7 +1420,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin-session.js", "/admin-draft.js", "/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js"].includes(pathname)) {
+    if (["/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 

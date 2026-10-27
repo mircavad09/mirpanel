@@ -1,5 +1,6 @@
 // Read-only production account directory. No community tables, test imports,
 // Auth mutations, role grants, tier calculations or customer registration.
+import {adminListWindow} from './admin-list-window.mjs';
 const fail=(status,code,message)=>Object.assign(Error(message),{status,code});
 const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}$/i.test(v);
 const text=(v,max=160)=>typeof v==='string'?v.replace(/[\u0000-\u001f\u007f]/g,' ').trim().slice(0,max):'';
@@ -31,11 +32,12 @@ export function createAdminUsersRepository(client,{cacheMs=5000,maxUsers=10000,n
   })();try{return await pending;}finally{pending=null;}
  }
  return{
-  async list({q='',page='1',limit='20'}={}){
+  async list({q='',page='1',limit='20',anchorId='',anchorIndex=0}={}){
    if(typeof q!=='string'||q.length>100||!/^\d+$/.test(String(page))||!/^\d+$/.test(String(limit)))throw fail(400,'INVALID_USER_QUERY','Axtarış və səhifə parametrləri düzgün deyil.');
    const n=Number(page),size=Number(limit);if(n<1||n>10000||size<1||size>50)throw fail(400,'INVALID_USER_QUERY','Səhifə ölçüsü düzgün deyil.');
    const search=q.trim(),plain=search.toLowerCase(),az=search.toLocaleLowerCase('az-AZ'),rows=(await load()).filter(u=>!search||[u.id,u.email||''].some(v=>v.toLowerCase().includes(plain))||u.name.toLocaleLowerCase('az-AZ').includes(az)),start=(n-1)*size;
-   return{users:rows.slice(start,start+size),total:rows.length,page:n,pageSize:size,hasMore:start+size<rows.length};
+   const view=adminListWindow(rows,{page:n,pageSize:size,anchorId:uuid(anchorId)?anchorId:'',anchorIndex});
+   return{users:view.rows,total:rows.length,page:n,pageSize:size,hasMore:view.start+size<rows.length,liveWindow:{newBeforeAnchor:view.newBeforeAnchor,anchorMissing:view.anchorMissing}};
   },
   async detail(id){
    if(!uuid(id))throw fail(400,'INVALID_USER_ID','İstifadəçi ID-si düzgün deyil.');let r;

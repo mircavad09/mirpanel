@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import {adminListWindow} from './admin-list-window.mjs';
 import { createClient } from "@supabase/supabase-js";
 import { boundedReadFetch } from "./bounded-read-fetch.mjs";
 import {
@@ -468,16 +469,14 @@ export function createPaymentStore(config) {
         facetRows.push(...(result.data || []));
       } while (facetRows.length < facetTotal);
       const durations = durationOptions(facetRows);
-      if (filters.durationMonths && !durations.some((item) => item.value === filters.durationMonths)) {
+      if (filters.durationMonths && !durations.some((item) => item.value === filters.durationMonths) && input.preserveFilters!=='true') {
         filters.durationMonths = "";
         filters.page = 1;
       }
       const matchedRows = filters.durationMonths ? facetRows.filter((row) => orderDuration(row) === filters.durationMonths) : facetRows;
-      const from = (filters.page - 1) * filters.pageSize;
-      const pageIds = matchedRows.slice(from, from + filters.pageSize).map((row) => row.id);
-      const query = filters.durationMonths
-        ? (pageIds.length ? matchingQuery(select).in("id", pageIds) : Promise.resolve({ data: [], error: null }))
-        : matchingQuery(select, { count: "exact" }).range(from, from + filters.pageSize - 1);
+      const view=adminListWindow(matchedRows,{page:filters.page,pageSize:filters.pageSize,anchorId:safeUuid(input.anchorId),anchorIndex:input.anchorIndex});
+      const pageIds = view.rows.map((row) => row.id);
+      const query = pageIds.length ? matchingQuery(select).in("id", pageIds) : Promise.resolve({ data: [], error: null });
 
       const countStatus = async (statusValues, mutate = (value) => value) => {
         let countQuery = client.from("payment_orders").select("id", { count: "exact", head: true }).in("status", statusValues);
@@ -561,6 +560,7 @@ export function createPaymentStore(config) {
             auditHistory: history.get(order.id) || []
           };
         }),
+        liveWindow:{newBeforeAnchor:view.newBeforeAnchor,anchorMissing:view.anchorMissing},
         pagination: {
           page: filters.page,
           pageSize: filters.pageSize,

@@ -320,18 +320,18 @@
     return [...groups].map(([day, orders]) => {
       const stat = statsByDay.get(day) || {};
       const label = fullDateLabel(day);
-      return `<details class="paymentOrderDay" open><summary><strong>${escp(label)}</strong><span>${Number(stat.count || orders.length)} sifariş · Satış ${money(stat.revenue || 0)} · Maya ${money(stat.cost || 0)} · Xalis qazanc ${money(stat.profit || 0)}</span></summary><div class="paymentOrderDayList">${orders.map(orderCard).join("")}</div></details>`;
+      return `<details class="paymentOrderDay" data-live-group="day-${escp(day)}" open><summary><strong>${escp(label)}</strong><span>${Number(stat.count || orders.length)} sifariş · Satış ${money(stat.revenue || 0)} · Maya ${money(stat.cost || 0)} · Xalis qazanc ${money(stat.profit || 0)}</span></summary><div class="paymentOrderDayList">${orders.map(orderCard).join("")}</div></details>`;
     }).join("");
   }
 
-  function renderOrders() {
+  function renderOrders(automatic=false) {
     const list = $p("paymentOrdersList");
-    if (list) list.innerHTML = paymentState.orders.length ? (paymentState.orderQuery.tab === "pending" || paymentState.orderQuery.tab === "expiring" ? paymentState.orders.map(orderCard).join("") : completedOrderGroups()) : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';
+    if(list){const markup=paymentState.orders.length ? (paymentState.orderQuery.tab === "pending" || paymentState.orderQuery.tab === "expiring" ? paymentState.orders.map(orderCard).join("") : completedOrderGroups()) : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';if(window.AdminLive)window.AdminLive.update(list,markup);else list.innerHTML=markup;}
     const pagination = paymentState.orderMeta.pagination;
     if ($p("paymentOrdersPageInfo")) $p("paymentOrdersPageInfo").textContent = `Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
     if ($p("paymentOrdersPrevious")) $p("paymentOrdersPrevious").disabled = pagination.page <= 1;
     if ($p("paymentOrdersNext")) $p("paymentOrdersNext").disabled = pagination.page >= pagination.totalPages;
-    updateOrderCounts(); populateOrderFilters(); renderOrderContext(); renderStatistics(); renderBatchControls();
+    updateOrderCounts(); if(!automatic){populateOrderFilters();renderOrderContext();} renderStatistics(); renderBatchControls();
   }
 
   async function confirmSelectedExpiringOrders() {
@@ -370,7 +370,7 @@
   }
 
   function renderEmails() {
-    if ($p("paymentEmailsList")) $p("paymentEmailsList").innerHTML = paymentState.emails.length ? paymentState.emails.map((item) => `<article class="paymentEmailRow"><div><strong>${escp(item.status === "sent" ? "Göndərilib" : "Bildiriş gözləyir")}</strong><span>${escp(item.recipient)} · ${Number(item.attempts)} cəhd</span>${item.last_error ? `<small class="bad">${escp(item.last_error)}</small>` : ""}</div>${item.status !== "sent" ? `<button class="btn" type="button" data-retry-payment-email="${escp(item.id)}">Yenidən göndər</button>` : ""}</article>`).join("") : '<div class="emptyState">Bildiriş qeydi yoxdur.</div>';
+    const list=$p("paymentEmailsList");if(list){const markup= paymentState.emails.length ? paymentState.emails.map((item) => `<article class="paymentEmailRow" data-live-key="${escp(item.id)}"><div><strong>${escp(item.status === "sent" ? "Göndərilib" : "Bildiriş gözləyir")}</strong><span>${escp(item.recipient)} · ${Number(item.attempts)} cəhd</span>${item.last_error ? `<small class="bad">${escp(item.last_error)}</small>` : ""}</div>${item.status !== "sent" ? `<button class="btn" type="button" data-retry-payment-email="${escp(item.id)}">Yenidən göndər</button>` : ""}</article>`).join("") : '<div class="emptyState">Bildiriş qeydi yoxdur.</div>';if(window.AdminLive)window.AdminLive.update(list,markup);else list.innerHTML=markup;}
   }
 
   function costKey(row) { return `${row.productId}:${row.planId}`; }
@@ -467,20 +467,19 @@
     finally { paymentState.costSaving = false; renderCosts(); }
   }
 
-  async function loadOrders() {
+  async function loadOrders({automatic=false}={}) {
     const status = $p("paymentOrdersStatus"); const list = $p("paymentOrdersList");
     const requestSequence = ++paymentState.orderRequestSequence;
     if (status) status.textContent = "Sifarişlər yüklənir…";
-    if (list) { list.setAttribute("aria-busy", "true"); list.innerHTML = '<div class="emptyState">Yüklənir…</div>'; }
-    paymentState.orderMeta.statistics = {};
-    if ($p("paymentCurrentMonthReport")) $p("paymentCurrentMonthReport").innerHTML = '<div class="emptyState">Hesabat yüklənir…</div>';
-    if ($p("paymentCurrentMonthBreakdown")) $p("paymentCurrentMonthBreakdown").innerHTML = "";
+    if (list) list.setAttribute("aria-busy", "true");
     const query = new URLSearchParams(Object.entries(paymentState.orderQuery).filter(([, value]) => value !== ""));
+    if(automatic)query.set('preserveFilters','true');
+    const anchor=automatic&&list?(window.AdminLive?.anchor(list)||(paymentState.orders[0]?{id:paymentState.orders[0].id}:null)):null;
+    if(anchor){query.set('anchorId',anchor.id);query.set('anchorIndex',String(paymentState.orders.findIndex(o=>o.id===anchor.id)));}
     try {
       const result = await paymentApi(`/api/admin/payment-orders?${query}`);
       if (requestSequence !== paymentState.orderRequestSequence) return;
       const nextPending = Number(result.counts?.pending || 0);
-      if (paymentState.knownPendingCount !== null && nextPending > paymentState.knownPendingCount) toast(`${nextPending - paymentState.knownPendingCount} yeni sifariş var.`);
       paymentState.knownPendingCount = nextPending;
       paymentState.orders = result.orders || [];
       paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
@@ -489,12 +488,12 @@
       paymentState.orderQuery.durationMonths = result.appliedFilters?.durationMonths || "";
       paymentState.orderQuery.page = result.pagination?.page || paymentState.orderQuery.page;
       if (paymentState.orderQuery.page > paymentState.orderMeta.pagination.totalPages && paymentState.orderQuery.page > 1) { paymentState.orderQuery.page = paymentState.orderMeta.pagination.totalPages; return loadOrders(); }
-      renderOrders(); if (status) status.textContent = `${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
+      const apply=()=>{renderOrders(automatic);window.AdminLive?.notice(list,automatic?result.liveWindow?.newBeforeAnchor||0:0,async()=>{paymentState.orderQuery.page=1;await loadOrders();},'Yeni sifarişlər var');};
+      if(window.AdminLive)window.AdminLive.preserve(list,apply);else apply();
+      if (status) status.textContent = result.liveWindow?.anchorMissing?'Baxılan sifariş bu filtrdən çıxıb. Yaxın mövqe qorundu.':`${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
     } catch (error) {
       if (requestSequence !== paymentState.orderRequestSequence) return;
-      if (list) list.innerHTML = `<div class="emptyState bad">${escp(error.message || "Sifarişlər yüklənmədi.")}<br><button class="btn" type="button" data-retry-payment-orders>Yenidən yoxla</button></div>`;
-      if ($p("paymentCurrentMonthReport")) $p("paymentCurrentMonthReport").innerHTML = '<div class="emptyState bad">Maliyyə hesabatı yüklənmədi.</div>';
-      if (status) status.textContent = "Server xətası baş verdi.";
+      if(status)status.textContent=(error.message||'Sifarişlər yüklənmədi.')+' Mövcud siyahı qorunub. Yenilə ilə təkrar cəhd edin.';
       throw error;
     } finally { if (requestSequence === paymentState.orderRequestSequence) list?.removeAttribute("aria-busy"); }
   }
@@ -740,7 +739,7 @@
 
   function bootPayments() {
     bindEvents(); setTimeout(openReviewToken, 400);
-    const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) loadOrders().catch(() => {}); else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
+    const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) loadOrders({automatic:true}).catch(() => {}); else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
     setTimeout(() => refreshOrderCounts().catch(() => {}), 1000);
     window.addEventListener("beforeunload", (event) => { clearInterval(timer); if (paymentState.costDirty.size) { event.preventDefault(); event.returnValue = ""; } });
   }

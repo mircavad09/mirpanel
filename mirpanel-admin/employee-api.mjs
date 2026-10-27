@@ -59,7 +59,29 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
    if(suffix==='/review-summary'&&req.method==='GET'){if(!admin)throw fail('Əməliyyata icazə yoxdur.',403);json(res,200,await rpc('employee_review_summary'));return true;}
    if(req.method!=='GET'){const now=Date.now();for(const [key,v] of mutations)if(v.until<now)mutations.delete(key);const key=actor.role+':'+actor.ref,v=mutations.get(key)||{n:0,until:now+60000};if(++v.n>60)throw fail('Çox əməliyyat edildi. Bir dəqiqə sonra yenidən cəhd edin.',429);mutations.set(key,v);}
    if(suffix==='/products'&&req.method==='GET'){const list=await catalog();json(res,200,{products:admin?list:list.filter(p=>p.active).map(p=>({...p,plans:p.plans.filter(pl=>pl.active)}))});return true;}
-   if(suffix==='/orders'&&req.method==='GET'){const tab=u.searchParams.get('tab')||'NEW';if(!['all','NEW','EMPLOYEE_ACCEPTED','STOCK_RESERVED','DELIVERED_PENDING_ADMIN','RETURNED_TO_EMPLOYEE','today'].includes(tab))throw fail('Filtr düzgün deyil.');json(res,200,{orders:await rpc('employee_order_list',{p_employee:actor.id,p_tab:tab,p_page:Math.max(0,Math.min(10000,Number(u.searchParams.get('page'))||0))})});return true;}
+   if(suffix==='/orders'&&req.method==='GET'){
+    const tab=u.searchParams.get('tab')||'NEW';if(!['all','NEW','EMPLOYEE_ACCEPTED','STOCK_RESERVED','DELIVERED_PENDING_ADMIN','RETURNED_TO_EMPLOYEE','today'].includes(tab))throw fail('Filtr düzgün deyil.');
+    const page=Math.max(0,Math.min(10000,Number(u.searchParams.get('page'))||0)),read=p=>rpc('employee_order_list',{p_employee:actor.id,p_tab:tab,p_page:p});let orders=await read(page),liveWindow={newBeforeAnchor:0,anchorMissing:false};
+    const anchor=u.searchParams.get('anchorId');if(admin&&/^[a-f0-9-]{36}$/i.test(anchor||'')){
+     const first=Math.max(0,page-1),pages=[...new Set([first,page,page+1])],chunks=await Promise.all(pages.map(p=>p===page?orders:read(p))),rows=chunks.flat();
+     const rank=rows.findIndex(o=>o.id===anchor),offset=Math.max(0,Math.min(49,Number(u.searchParams.get('anchorIndex'))||0));
+     if(rank>=0){const start=Math.max(0,rank-offset);if(start+50>rows.length&&chunks.at(-1).length===50)rows.push(...await read(page+2));orders=rows.slice(start,start+50);liveWindow.newBeforeAnchor=Math.max(0,start-(page-first)*50);}
+     else {
+      // Large bursts can move the anchor beyond adjacent pages. Find its real
+      // page using the existing created_at DESC, id ASC order, not a guessed ID.
+      const record=await result(client.from('payment_orders').select('id,created_at,status').eq('id',anchor).maybeSingle());
+      const assignment=record?await result(client.from('employee_order_assignments').select('state,admin_completed_at').eq('order_id',anchor).maybeSingle()):null;
+      const day=v=>v?new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(v)):'';
+      const matches=record&&(tab==='all'||tab==='NEW'&&!assignment&&['reviewing','new_receipt_requested'].includes(record.status)||assignment?.state===tab||tab==='today'&&assignment?.state==='COMPLETED'&&day(assignment.admin_completed_at)===day(new Date()));
+      if(!matches)liveWindow.anchorMissing=true;
+      else{let low=0,high=10000,found=-1,at=-1;while(low<=high){const mid=Math.floor((low+high)/2),chunk=await read(mid);if(!chunk.length){high=mid-1;continue;}const i=chunk.findIndex(o=>o.id===anchor);if(i>=0){found=mid;at=i;break;}const last=chunk.at(-1),before=Date.parse(last.created_at)>Date.parse(record.created_at)||Date.parse(last.created_at)===Date.parse(record.created_at)&&last.id.localeCompare(anchor)<0;if(before)low=mid+1;else high=mid-1;}
+       if(found<0)throw fail('Siyahı yenilənir. Mövqe qorunub; bir qədər sonra yenidən yoxlanılacaq.',503);
+       const start=Math.max(0,found*50+at-offset),startPage=Math.floor(start/50),parts=await Promise.all([read(startPage),read(startPage+1)]);orders=parts.flat().slice(start%50,start%50+50);liveWindow.newBeforeAnchor=Math.max(0,start-page*50);
+      }
+     }
+    }
+    json(res,200,{orders,liveWindow});return true;
+   }
    if(suffix==='/stock'&&req.method==='GET'){json(res,200,{counts:await rpc('employee_inventory_counts')});return true;}
    if(suffix==='/dashboard'&&req.method==='GET'){const id=admin?uuid(u.searchParams.get('employeeId')):actor.id;const s=await rpc('employee_reporting_snapshot',{p_employee_id:id});const stock=await catalog();const ready=await rpc('employee_order_list',{p_employee:id,p_tab:'NEW',p_page:0});json(res,200,{...s,alerts:admin?await rpc('employee_stock_alerts'):[],newOrders:s.employeeStartedAt?Number(await rpc('employee_queue_count',{p_employee:id})):0,exhausted:[...new Set(stock.filter(p=>p.active&&p.plans.some(pl=>pl.active&&pl.tracked&&Number(pl.available)===0)).map(p=>p.id))],low:[...new Set(stock.filter(p=>p.active&&p.plans.some(pl=>pl.active&&pl.tracked&&Number(pl.available)>0&&Number(pl.available)<=pl.lowStock)).map(p=>p.id))]});return true;}
    if(suffix==='/payroll'&&req.method==='GET'){const month=u.searchParams.get('month')||new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit'}).format(new Date());if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(month))throw fail('Ay düzgün deyil.');json(res,200,await rpc('employee_monthly_pay',{p_employee:admin?uuid(u.searchParams.get('employeeId')):actor.id,p_month:month+'-01'}));return true;}

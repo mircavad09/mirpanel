@@ -98,9 +98,10 @@ const migration = read("supabase/migrations/202608090001_order_history_and_expir
 const capacityMigration = read("supabase/migrations/202608090003_payment_method_capacity_and_admin.sql");
 const reportMigration = read("supabase/migrations/202608100001_calendar_reports_and_cost_backfill.sql");
 
-assert.ok(store.includes('matchingQuery(select, { count: "exact" })'));
+assert.ok(store.includes('adminListWindow(matchedRows,'),'server uses ID-anchored page window');
+assert.ok(store.includes('matchingQuery(select).in("id", pageIds)'),'only the anchored page IDs are fetched');
 assert.ok(store.includes('.select(columns, options)'), 'Shared matching query must forward the exact-count option');
-assert.ok(store.includes(".range(from, from + filters.pageSize - 1)"), "Səhifələmə serverdə işləməlidir");
+assert.ok(store.includes('const pageIds = view.rows.map'), "Səhifələmə serverdə sabit ID pəncərəsindən işləməlidir");
 assert.ok(store.includes('query.is("contacted_at", null)'));
 assert.ok(store.includes('rpc("mark_payment_order_contacted"'));
 assert.ok(store.includes("contactExpiringOrders"), "Toplu əməliyyat mövcud fərdi auditli contacted RPC-sini istifadə etməlidir");
