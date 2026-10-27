@@ -115,6 +115,8 @@ textarea {
   color: #fff;
 }
 
+.nav a.navBtn { display: block; text-decoration: none; }
+
 .logout {
   margin-top: auto;
 }

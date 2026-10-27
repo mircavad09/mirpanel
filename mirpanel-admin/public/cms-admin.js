@@ -78,6 +78,7 @@
     nav.innerHTML = viewGroups.map(([group, items], groupIndex) => `<div class="navGroup">
       <span class="navGroupTitle">${esc(group)}</span>
       ${items.map(([id, label], index) => `<button class="navBtn${groupIndex === 0 && index === 0 ? " active" : ""}" type="button" data-view="${id}">${esc(label)}</button>`).join("")}
+      ${groupIndex === 0 ? '<a class="navBtn" href="/admin/users">İstifadəçilər</a>' : ''}
     </div>`).join("");
     nav.addEventListener("click", (event) => {
       const button = event.target.closest("[data-view]");
