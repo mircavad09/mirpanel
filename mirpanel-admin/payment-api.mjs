@@ -17,7 +17,7 @@ import {signature} from './employee-security.mjs';
 import {planKey} from './payment-profit.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
-import {validateReceiptFile} from './receipt-file-safety.mjs';
+import {validateReceiptFile,FILE_SAFETY_ENGINE} from './receipt-file-safety.mjs';
 import {createBrowserOrders} from './browser-orders.mjs';
 
 function planName(plan) {
@@ -119,6 +119,7 @@ export function createPaymentSystem(options) {
 
   const security = createPaymentSecurity(config);
   const store = options.store || createPaymentStore(config);
+  const validateFile = options.validateReceiptFile || validateReceiptFile;
   const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
   const mailer = options.mailer || createPaymentMailer(config, store);
   const allowedOrigins = new Set(config.allowedOrigins);
@@ -234,7 +235,7 @@ export function createPaymentSystem(options) {
     if (request.method === "GET" && url.pathname === "/api/payments/health") {
       await publicRate(request, "health", 60, 30);
       await store.publicMethods();
-      publicJson(request, response, 200, { ok:true, configured:true, database:true, storage:"private", registrationRequired:false, receiptCheck:"file-safety-only-v1", fileSafetyEngine:"isolated-decoder-v2", contentChecked:false, ocrRequired:false });
+      publicJson(request, response, 200, { ok:true, configured:true, database:true, storage:"private", registrationRequired:false, receiptCheck:"file-safety-only-v1", fileSafetyEngine:FILE_SAFETY_ENGINE, fileSafetyRuntime:{node:process.version,platform:process.platform,protocol:2}, contentChecked:false, ocrRequired:false });
       return true;
     }
     if (request.method === "GET" && url.pathname === "/api/payments/methods") {
@@ -377,7 +378,7 @@ export function createPaymentSystem(options) {
       if(!existing&&(reservation.status!=='reserved'||Date.parse(reservation.expires_at)<=Date.now()))throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'),{status:409,code:'RECEIPT_RESERVATION_INVALID'});
       // Emergency upload-only policy: decoding/PDF security is mandatory; OCR is not.
       request.receiptStage='file_safety';
-      if(!existing&&receipt.buffer)await validateReceiptFile(receipt);
+      if(!existing&&receipt.buffer)await validateFile(receipt);
       request.receiptTimings.fileSafety=performance.now()-checkpoint;checkpoint=performance.now();
       if (uploadOnly) {
         if (existing || !receipt.buffer || reservation.status !== 'reserved' || Date.parse(reservation.expires_at) <= Date.now()) {

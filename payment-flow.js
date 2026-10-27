@@ -119,6 +119,11 @@
       RECEIPT_STORAGE_TEMPORARY: "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.",
       RECEIPT_SAFETY_UNAVAILABLE: "Faylı təhlükəsiz emal etmək hazırda mümkün deyil. Yenidən cəhd edin.",
       RECEIPT_SAFETY_BUSY: "Yükləmə xidməti məşğuldur. Bir az sonra yenidən cəhd edin.",
+      RECEIPT_SAFETY_TIMEOUT: "Faylın təhlükəsiz emalı vaxtında tamamlanmadı. Yenidən cəhd edin.",
+      RECEIPT_SAFETY_PROCESS_EXIT: "Fayl emalı xidməti dayandı. Zəhmət olmasa, yenidən cəhd edin.",
+      RECEIPT_SAFETY_SPAWN: "Fayl emalı xidməti hazırda əlçatan deyil. Yenidən cəhd edin.",
+      RECEIPT_SAFETY_PROTOCOL: "Fayl emalı xidməti düzgün cavab vermədi. Yenidən cəhd edin.",
+      RECEIPT_SAFETY_RESOURCE: "Fayl emalı xidməti məşğuldur. Bir az sonra yenidən cəhd edin.",
       BROWSER_SESSION_REQUIRED: "Ödəniş sessiyası yenilənməlidir. Kart seçimini yenidən açın.",
       BROWSER_OWNERSHIP_UNCONFIRMED: "Sifariş tarixçəsi ilə əlaqə təsdiqlənmədi. Yenidən cəhd edin."
     };

@@ -1,0 +1,17 @@
+// Runs during Render's build in its actual Linux native decoder runtime.
+// Memory-only, non-customer pixels/PDF; no API, DB, Storage, OCR or secrets.
+import assert from 'node:assert/strict';import {createRequire}from'node:module';import{fileURLToPath}from'node:url';
+import{validateReceiptFile,createReceiptFileValidator,FILE_SAFETY_ENGINE}from'../mirpanel-admin/receipt-file-safety.mjs';
+import{receiptFromBuffer}from'../mirpanel-admin/payment-security.mjs';
+const sharp=createRequire(new URL('../receipt-worker/package.json',import.meta.url))('sharp');let checks=0;
+const png=await sharp({create:{width:64,height:64,channels:3,background:'#285ba2'}}).png().toBuffer(),jpg=await sharp(png).jpeg({progressive:true}).toBuffer();
+function pdf(){const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Contents 4 0 R >>','<< /Length 0 >>\nstream\n\nendstream'];let out='%PDF-1.4\n',offsets=[0];for(let i=0;i<objects.length;i++){offsets.push(Buffer.byteLength(out));out+=`${i+1} 0 obj\n${objects[i]}\nendobj\n`;}const xref=Buffer.byteLength(out);out+='xref\n0 5\n0000000000 65535 f \n'+offsets.slice(1).map(x=>String(x).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;return Buffer.from(out);}
+const name=Buffer.from('Image_UTC_Data'),data=Buffer.from('1793100000000'),block=Buffer.alloc(8+name.length+data.length);block.writeUInt16LE(0x0a01,2);block.writeUInt32LE(name.length,4);name.copy(block,8);data.copy(block,8+name.length);
+const dir=Buffer.alloc(24);dir.write('SEFH');dir.writeUInt32LE(101,4);dir.writeUInt32LE(1,8);dir.writeUInt16LE(0x0a01,14);dir.writeUInt32LE(block.length,16);dir.writeUInt32LE(block.length,20);const footer=Buffer.alloc(8);footer.writeUInt32LE(dir.length);footer.write('SEFT',4);
+for(const[bytes,mime]of[[png,'image/png'],[jpg,'image/jpeg'],[Buffer.concat([jpg,block,dir,footer]),'image/jpeg'],[Buffer.concat([png,block,dir,footer]),'image/png']]){const r=receiptFromBuffer(bytes,mime);await validateReceiptFile(r);assert.equal(r.buffer.equals(mime==='image/png'?png:jpg),true);checks++;}
+await validateReceiptFile(receiptFromBuffer(pdf(),'application/pdf'));checks++;
+await assert.rejects(async()=>validateReceiptFile(receiptFromBuffer(Buffer.from(pdf().toString().replace('/Type /Catalog','/Type /Catalog /OpenAction 1 0 R')),'application/pdf')),e=>e.status===400||e.status===422);checks++;
+for(const[bytes,mime]of[[Buffer.concat([jpg,Buffer.from('<script>unsafe</script>')]),'image/jpeg'],[Buffer.concat([png,Buffer.from('PK\x03\x04')]),'image/png']]){await assert.rejects(()=>validateReceiptFile(receiptFromBuffer(bytes,mime)),e=>e.status===422);checks++;}
+const missing=createReceiptFileValidator({job:fileURLToPath(new URL('../receipt-worker/not-an-existing-job.mjs',import.meta.url))});await assert.rejects(()=>missing(receiptFromBuffer(png,'image/png')),e=>e.status===503&&e.code==='RECEIPT_SAFETY_PROCESS_EXIT');checks++;
+const slow=createReceiptFileValidator({timeoutMs:1});await assert.rejects(()=>slow(receiptFromBuffer(png,'image/png')),e=>e.status===503&&e.code==='RECEIPT_SAFETY_TIMEOUT');checks++;
+console.log('RECEIPT_RUNTIME_SELFTEST '+JSON.stringify({ok:true,checks,engine:FILE_SAFETY_ENGINE,node:process.version,platform:process.platform,sharp:sharp.versions.sharp,vips:sharp.versions.vips,ocrCalls:0,businessWrites:0}));

@@ -1,0 +1,14 @@
+import assert from'node:assert/strict';import crypto from'node:crypto';import{mobileFormatFixtures,samsungSef}from'./receipt-mobile-format-fixtures.mjs';import{receiptFromBuffer}from'../mirpanel-admin/payment-security.mjs';import{validateReceiptFile,createReceiptFileValidator}from'../mirpanel-admin/receipt-file-safety.mjs';import{pdfReceipt}from'./receipt-synthetic-fixtures.mjs';
+let checks=0;const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;},f=(await mobileFormatFixtures())[0],jpg=f.canonical;
+const valid=samsungSef(jpg,[{name:'Image_UTC_Data',type:0xa01,data:Buffer.from('1793100000000')},{name:'Capture_Info',type:0xbc0,data:Buffer.from('synthetic metadata')}]);
+const r=receiptFromBuffer(valid,'image/jpeg');await validateReceiptFile(r);eq(r.buffer.equals(jpg),true);eq(r.sha256,crypto.createHash('sha256').update(jpg).digest('hex'));
+const cases=[Buffer.concat([jpg,Buffer.from('SEFT')]),Buffer.concat([jpg,Buffer.from('<script>bad</script>'),f.bytes.subarray(jpg.length)]),Buffer.concat([jpg,Buffer.from('PK\x03\x04'),f.bytes.subarray(jpg.length)]),Buffer.concat([f.bytes,Buffer.from('<html>bad</html>')])];
+for(const mutate of[b=>b.writeUInt32LE(0xffffffff,b.length-8),b=>b.writeUInt32LE(99999,b.length-8-24+16),b=>b.writeUInt32LE(0,b.length-8-24+20),b=>b.writeUInt32LE(128,b.length-8-24+8)]){const b=Buffer.from(f.bytes);mutate(b);cases.push(b);}
+for(const b of cases){await assert.rejects(()=>validateReceiptFile(receiptFromBuffer(b,'image/jpeg')),e=>e.status===422&&e.diagnostic==='file_safety:RECEIPT_POLYGLOT');checks++;}
+// Keep the established PDF active-content policy and malformed data fail-closed.
+const activePdf=Buffer.from(pdfReceipt().toString().replace('/Type /Catalog','/Type /Catalog /OpenAction 1 0 R'));await assert.rejects(async()=>validateReceiptFile(receiptFromBuffer(activePdf,'application/pdf')),e=>e.status===422||e.status===400);checks++;
+const parallel=await Promise.all([validateReceiptFile(receiptFromBuffer(f.bytes,f.mime)),validateReceiptFile(receiptFromBuffer(jpg,'image/jpeg'))]);eq(parallel.length,2);
+const a=validateReceiptFile(receiptFromBuffer(jpg,'image/jpeg')),b=validateReceiptFile(receiptFromBuffer(jpg,'image/jpeg'));assert.throws(()=>validateReceiptFile(receiptFromBuffer(jpg,'image/jpeg')),e=>e.status===503&&e.code==='RECEIPT_SAFETY_BUSY');checks++;await Promise.all([a,b]);
+await validateReceiptFile(receiptFromBuffer(jpg,'image/jpeg'));checks++;
+const timeout=createReceiptFileValidator({timeoutMs:1});for(let n=0;n<3;n++){await assert.rejects(()=>timeout(receiptFromBuffer(jpg,'image/jpeg')),e=>e.status===503&&e.code==='RECEIPT_SAFETY_TIMEOUT'&&!e.message.includes('Fayl təhlükəsiz açılmadı'));checks++;}
+console.log(JSON.stringify({ok:true,checks,failures:0,canonicalHash:true,malformedTrailersRejected:cases.length,parallel:2,busyFailClosed:true,timeoutsAreServiceErrors:true,productionWrites:0}));

@@ -553,7 +553,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 
   <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
-  <script src="/payment-flow.js?v=checkout-cancel-proxy-20261026-1"></script>
+  <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
   <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
