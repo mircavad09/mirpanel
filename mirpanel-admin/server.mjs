@@ -130,7 +130,7 @@ function sessionCookie(id, maxAge = sessionTtl / 1000) {
     "SameSite=Strict",
     "Path=/",
     `Max-Age=${maxAge}`,
-    config.secureCookie ? "Secure" : ""
+    config.secureCookie || config.adminBaseUrl.startsWith('https://') ? "Secure" : ""
   ].filter(Boolean).join("; ");
 }
 

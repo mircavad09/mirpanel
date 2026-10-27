@@ -32,7 +32,9 @@ made to possess the customer's private request/cookie log for a particular click
   renew it. Trusted visible input events send a throttled activity POST, not a
   periodic heartbeat. Network failures are bounded and cannot claim renewal.
 - Cookie `Max-Age=3600` is renewed with activity. Host-only, HttpOnly,
-  SameSite=Strict and existing Secure production setting are retained.
+  SameSite=Strict remain. HTTPS admin origins force Secure even if the legacy
+  `COOKIE_SECURE` flag is absent/false; live verification exposed that old flag
+  gap and the follow-up fixes it without changing environment secrets.
 - Logout requires same-origin CSRF and revokes the DB row before success;
   revocation remains effective after restart. Storage failure is 503, not a
   fabricated session-expiry or successful logout response.
@@ -112,3 +114,7 @@ were unchanged**, new session rows were **0** immediately after migration.
 Existing employee schema probe remained **6**, not modified by this migration.
 Production login/logout smoke checks may create/revoke authentication session
 rows only; they must not mutate business objects or perform real uploads.
+The live verification helper reads up to 100 Render environment entries (the
+default first page omitted admin credentials) and avoids printing cookie values
+in assertion errors. Its finally block revokes its own session even when a
+later smoke assertion fails.

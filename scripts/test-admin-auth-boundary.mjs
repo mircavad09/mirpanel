@@ -35,6 +35,7 @@ try {
   assert.equal(login.status,200);
   const setCookie=login.headers.get('set-cookie');
   assert.match(setCookie,/HttpOnly/); assert.match(setCookie,/SameSite=Strict/); assert.match(setCookie,/Path=\//); assert.match(setCookie,/Max-Age=3600/); assert.doesNotMatch(setCookie,/Domain=/);
+  assert.equal(setCookie.includes('Secure'),true,'HTTPS admin origin forces Secure independently of COOKIE_SECURE flag');
   const headers={Cookie:setCookie.split(';')[0]};
   const session=await fetch(base+'/api/session',{headers}); assert.equal(session.status,200);
   const admin=await fetch(base+'/admin.html',{headers,redirect:'manual'}); assert.equal(admin.status,200);
