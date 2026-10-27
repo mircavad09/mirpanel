@@ -187,7 +187,7 @@ const DATA = {
       "soldOut": false,
       "active": true,
       "stock": null,
-      "stockEnabled": false,
+      "stockEnabled": true,
       "seller": "",
       "bestSeller": true,
       "orderFlow": "confirm_then_whatsapp",
