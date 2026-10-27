@@ -2352,7 +2352,7 @@ const DATA = {
       "_stableId": "elevenlabs_creator",
       "order": 23,
       "category": "ai",
-      "image": "assets/elevenlabs.png",
+      "image": "uploads/products/elevenlabs_creator-1793128505997-2ea31cf7.png?v=1793128505997",
       "currency": "₼",
       "title": "Elevenlabs Creator",
       "variant": "Səs AI",
