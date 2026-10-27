@@ -379,7 +379,7 @@ const DATA = {
       "_stableId": "chatgpt_ortaq",
       "order": 3,
       "category": "all",
-      "image": "assets/chatgpt.png",
+      "image": "uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676",
       "currency": "₼",
       "title": "ChatGPT Plus (Ortaq hesab)",
       "variant": "",

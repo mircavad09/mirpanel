@@ -148,7 +148,7 @@
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">19.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus-ortaq-hesab" aria-label="ChatGPT Plus (Ortaq hesab) — 4.99 ₼" title="ChatGPT Plus (Ortaq hesab)">
-      <img src="/assets/chatgpt.png" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
       <div class="product-page-similar-category">all</div>
       <div class="product-page-similar-price">4.99 ₼</div>
@@ -227,7 +227,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-fcb3b84c24ce4531"></script>
+  <script src="/app.js?v=catalog-c80a772824d3683b"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
