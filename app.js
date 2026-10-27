@@ -145,9 +145,98 @@ const DATA = {
   ],
   "products": [
     {
+      "id": "zoom",
+      "_stableId": "zoom",
+      "order": 1,
+      "category": "meeting",
+      "image": "uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656",
+      "currency": "₼",
+      "title": "Zoom Pro",
+      "variant": "Pro",
+      "badge": "Görüş",
+      "imageAlt": "Zoom Pro",
+      "desc": "Peşəkar onlayn görüşlər.",
+      "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
+      "longDescription": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "zoom-pro",
+      "seoTitle": "Zoom Pro almaq | Ucuz Zoom hesab Azərbaycan - Mirpanel",
+      "seoDescription": "Zoom Pro hesabını sərfəli qiymətə əldə et. Online görüşlər və premium Zoom imkanları Mirpanel-də.",
+      "seoH1": "Zoom Pro",
+      "seoPrimaryKeyword": "Zoom Pro almaq",
+      "seoRelatedKeywords": " Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
+      "seoKeywords": "Zoom Pro almaq, Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
+      "seoContent": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/zoom.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/zoom.png",
+        "mobileImage": "",
+        "title": "Zoom Pro",
+        "description": "Peşəkar onlayn görüşlər.",
+        "alt": "Zoom Pro",
+        "order": 16
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": true,
+      "seller": "",
+      "bestSeller": true,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "months": 1,
+          "price": 11.95,
+          "regularPrice": 27.18
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
       "id": "capcut",
       "_stableId": "capcut",
-      "order": 1,
+      "order": 2,
       "category": "video",
       "image": "uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889",
       "currency": "₼",
@@ -287,7 +376,7 @@ const DATA = {
     {
       "id": "chatgpt",
       "_stableId": "chatgpt",
-      "order": 2,
+      "order": 3,
       "category": "ai",
       "image": "uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091",
       "currency": "₼",
@@ -377,7 +466,7 @@ const DATA = {
     {
       "id": "chatgpt_ortaq",
       "_stableId": "chatgpt_ortaq",
-      "order": 3,
+      "order": 4,
       "category": "all",
       "image": "uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676",
       "currency": "₼",
@@ -466,7 +555,7 @@ const DATA = {
     {
       "id": "netflix_umumi",
       "_stableId": "netflix_umumi",
-      "order": 4,
+      "order": 5,
       "category": "film",
       "image": "uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068",
       "currency": "₼",
@@ -554,7 +643,7 @@ const DATA = {
     {
       "id": "netflix",
       "_stableId": "netflix",
-      "order": 5,
+      "order": 6,
       "category": "film",
       "image": "uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161",
       "currency": "₼",
@@ -596,7 +685,7 @@ const DATA = {
       "stock": null,
       "stockEnabled": true,
       "seller": "",
-      "bestSeller": false,
+      "bestSeller": true,
       "orderFlow": "direct_whatsapp",
       "formFields": [
         {
@@ -667,7 +756,7 @@ const DATA = {
     {
       "id": "prime",
       "_stableId": "prime",
-      "order": 6,
+      "order": 7,
       "category": "film",
       "image": "uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093",
       "currency": "₼",
@@ -776,7 +865,7 @@ const DATA = {
     {
       "id": "claude_ai",
       "_stableId": "claude_ai",
-      "order": 7,
+      "order": 8,
       "category": "ai",
       "image": "uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631",
       "currency": "₼",
@@ -866,7 +955,7 @@ const DATA = {
     {
       "id": "spotify",
       "_stableId": "spotify",
-      "order": 8,
+      "order": 9,
       "category": "musiqi",
       "image": "uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574",
       "currency": "₼",
@@ -995,7 +1084,7 @@ const DATA = {
     {
       "id": "youtube_sexsi",
       "_stableId": "youtube_sexsi",
-      "order": 9,
+      "order": 10,
       "category": "all",
       "image": "uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347",
       "currency": "₼",
@@ -1101,7 +1190,7 @@ const DATA = {
     {
       "id": "youtube",
       "_stableId": "youtube",
-      "order": 10,
+      "order": 11,
       "category": "musiqi",
       "image": "uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653",
       "currency": "₼",
@@ -1206,7 +1295,7 @@ const DATA = {
     {
       "id": "adobecc",
       "_stableId": "adobecc",
-      "order": 11,
+      "order": 12,
       "category": "dizayn",
       "image": "uploads/products/adobecc-1792450954538-64c5979f.png?v=1792450954538",
       "currency": "₼",
@@ -1294,7 +1383,7 @@ const DATA = {
     {
       "id": "hbomax",
       "_stableId": "hbomax",
-      "order": 12,
+      "order": 13,
       "category": "film",
       "image": "uploads/products/hbomax-1792448430771-91c8a1ec.png?v=1792448430771",
       "currency": "₼",
@@ -1399,7 +1488,7 @@ const DATA = {
     {
       "id": "tiktok_jeton",
       "_stableId": "tiktok_jeton",
-      "order": 13,
+      "order": 14,
       "category": "video",
       "image": "uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473",
       "currency": "₼",
@@ -1515,7 +1604,7 @@ const DATA = {
     {
       "id": "surfshark",
       "_stableId": "surfshark",
-      "order": 14,
+      "order": 15,
       "category": "video",
       "image": "uploads/products/surfshark-1792448333121-dcfb98b1.png?v=1792448333121",
       "currency": "₼",
@@ -1604,7 +1693,7 @@ const DATA = {
     {
       "id": "google_ai_ultra",
       "_stableId": "google_ai_ultra",
-      "order": 15,
+      "order": 16,
       "category": "ai",
       "image": "uploads/products/google_ai_ultra-1793128040365-716704a3.png?v=1793128040365",
       "currency": "₼",
@@ -1693,7 +1782,7 @@ const DATA = {
     {
       "id": "captions",
       "_stableId": "captions",
-      "order": 16,
+      "order": 17,
       "category": "ai",
       "image": "uploads/products/captions-1792448708784-7d662bbc.png?v=1792448708784",
       "currency": "₼",
@@ -1789,7 +1878,7 @@ const DATA = {
     {
       "id": "grok_supergrok",
       "_stableId": "grok_supergrok",
-      "order": 17,
+      "order": 18,
       "category": "ai",
       "image": "uploads/products/grok_supergrok-1792448632619-5d302a16.png?v=1792448632619",
       "currency": "₼",
@@ -1859,95 +1948,6 @@ const DATA = {
           "months": 1,
           "price": 29.99,
           "regularPrice": 51
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "zoom",
-      "_stableId": "zoom",
-      "order": 18,
-      "category": "meeting",
-      "image": "uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656",
-      "currency": "₼",
-      "title": "Zoom Pro",
-      "variant": "Pro",
-      "badge": "Görüş",
-      "imageAlt": "Zoom Pro",
-      "desc": "Peşəkar onlayn görüşlər.",
-      "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
-      "longDescription": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "zoom-pro",
-      "seoTitle": "Zoom Pro almaq | Ucuz Zoom hesab Azərbaycan - Mirpanel",
-      "seoDescription": "Zoom Pro hesabını sərfəli qiymətə əldə et. Online görüşlər və premium Zoom imkanları Mirpanel-də.",
-      "seoH1": "Zoom Pro",
-      "seoPrimaryKeyword": "Zoom Pro almaq",
-      "seoRelatedKeywords": " Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
-      "seoKeywords": "Zoom Pro almaq, Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
-      "seoContent": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/zoom.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/zoom.png",
-        "mobileImage": "",
-        "title": "Zoom Pro",
-        "description": "Peşəkar onlayn görüşlər.",
-        "alt": "Zoom Pro",
-        "order": 16
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "direct_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": false,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "months": 1,
-          "price": 11.95,
-          "regularPrice": 27.18
         }
       ],
       "orderConfirmation": {
@@ -3572,6 +3572,10 @@ const SITE_SECTIONS = {
 };
 
 const ADMIN_CONTENT = {
+  "zoom": {
+    "aboutHtml": "<h3>Zoom Pro - Peşəkar Onlayn Görüş və Video Konfrans Həlli</h3>\n<p>Zoom Pro, iş görüşləri, dərslər, vebinarlar və komanda toplantıları üçün hazırlanmış premium video konfrans platformasıdır. Standart versiyadan fərqli olaraq, Pro abunəliyi daha uzun görüş müddəti, daha geniş idarəetmə imkanları və peşəkar onlayn ünsiyyət üçün əlavə funksiyalar təqdim edir. Uzaqdan işləyən komandalar, müəllimlər, biznes sahibləri və onlayn xidmət göstərən şəxslər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Zoom Pro, istifadəçilərə yüksək keyfiyyətli video və audio ilə onlayn görüşlər keçirmək, ekran paylaşmaq, görüşləri qeyd etmək və iştirakçıları rahat idarə etmək imkanı verir. Platforma kompüter, telefon və planşet üzərindən istifadə oluna bilir və müxtəlif iş proseslərinə asanlıqla uyğunlaşır. Pro abunəliyi xüsusilə uzunmüddətli görüşlər, peşəkar təqdimatlar və müntəzəm onlayn toplantılar üçün daha rahat təcrübə yaradır.</p>\n\n<h3>Zoom Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Biznes Sahibləri və Komandalar:</strong> İş görüşləri, layihə müzakirələri və komanda toplantılarını onlayn şəkildə idarə edənlər.</li>\n  <li><strong>Müəllimlər və Təlimçilər:</strong> Onlayn dərslər, kurslar, təlimlər və seminarlar keçirən şəxslər.</li>\n  <li><strong>Frilanserlər və Konsultantlar:</strong> Müştərilərlə video zənglər, təqdimatlar və məsləhət görüşləri aparanlar.</li>\n  <li><strong>SMM və Rəqəmsal Xidmət Göstərənlər:</strong> Müştəri görüşləri, kontent planlaması və komanda koordinasiyası üçün stabil platformaya ehtiyac duyanlar.</li>\n</ul>\n\n<h3>Zoom Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>⏱️ Uzunmüddətli Görüşlər:</strong> Standart versiyadakı vaxt məhdudiyyətlərini azaltmaqla daha rahat və fasiləsiz toplantılar keçirmək imkanı.</li>\n  <li><strong>🎥 Yüksək Keyfiyyətli Video və Audio:</strong> Peşəkar görünüşlü görüşlər üçün stabil bağlantı, aydın səs və keyfiyyətli görüntü təcrübəsi.</li>\n  <li><strong>🖥️ Ekran Paylaşımı və Təqdimatlar:</strong> Sənədləri, slaydları, layihələri və tətbiqləri iştirakçılarla canlı şəkildə paylaşmaq imkanı.</li>\n  <li><strong>☁️ Görüş Qeydləri:</strong> Vacib görüşləri qeyd edərək daha sonra izləmək, paylaşmaq və arxivləmək üçün rahat imkanlar.</li>\n  <li><strong>🔐 Təhlükəsiz Görüş İdarəetməsi:</strong> Şifrə, gözləmə otağı, iştirakçı icazələri və idarəetmə alətləri ilə daha təhlükəsiz onlayn görüşlər.</li>\n</ul>",
+    "rulesHtml": ""
+  },
   "capcut": {
     "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
     "rulesHtml": ""
@@ -3630,10 +3634,6 @@ const ADMIN_CONTENT = {
   },
   "grok_supergrok": {
     "aboutHtml": "<h3>SuperGrok AI - Premium Süni İntellekt Köməkçisi</h3>\n<p>SuperGrok AI, süni intellekt vasitəsilə daha sürətli cavablar almaq, ideyalar yaratmaq, mətnlər hazırlamaq və gündəlik işləri daha rahat idarə etmək istəyən istifadəçilər üçün hazırlanmış premium AI xidmətidir. Standart istifadə imkanlarından fərqli olaraq, SuperGrok daha güclü AI modeli, geniş sorğu imkanları və kreativ işlər üçün daha çevik süni intellekt dəstəyi təqdim edir. Kontent yaradıcıları, biznes sahibləri, tələbələr və peşəkarlar üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>SuperGrok AI, istifadəçilərə mətn yazmaq, suallara cavab almaq, araşdırma aparmaq, ideya hazırlamaq, kod yazmaq, plan qurmaq və müxtəlif mövzularda AI dəstəyi əldə etmək imkanı verir. Platforma gündəlik işlərdə, kontent istehsalında, təhsil prosesində və biznes tapşırıqlarında vaxta qənaət etməyə kömək edir. Premium imkanlar sayəsində istifadəçi daha sürətli, daha geniş və daha məhsuldar süni intellekt təcrübəsi əldə edir.</p>\n\n<h3>SuperGrok AI Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Sosial media postları, video ssenariləri, ideyalar və kreativ mətnlər hazırlamaq istəyənlər.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Reklam mətnləri, kampaniya ideyaları, kontent planları və brend kommunikasiyası üçün AI dəstəyi axtaranlar.</li>\n  <li><strong>Tələbələr və Araşdırma Aparanlar:</strong> Mövzuları izah etmək, mətnləri strukturlaşdırmaq, ideyalar toplamaq və öyrənmə prosesini sürətləndirmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri və Peşəkarlar:</strong> Planlama, yazışmalar, analiz, ideya inkişafı və gündəlik iş tapşırıqlarını daha rahat idarə etmək istəyənlər.</li>\n</ul>\n\n<h3>SuperGrok AI-nin Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü Süni İntellekt Dəstəyi:</strong> Mətn yazmaq, suallara cavab vermək, ideyalar yaratmaq və mürəkkəb mövzuları daha sadə izah etmək imkanı.</li>\n  <li><strong>⚡ Daha Sürətli və Məhsuldar İş Axını:</strong> Kontent, planlama, araşdırma və yazı işlərini daha qısa zamanda yerinə yetirməyə kömək edir.</li>\n  <li><strong>🧠 Kreativ İdeya Yaratma:</strong> Sosial media, biznes, reklam, video və layihələr üçün yeni konseptlər və məzmun fikirləri hazırlamaq.</li>\n  <li><strong>📚 Təhsil və Araşdırma Üçün Faydalı:</strong> Mövzuları izah etmək, xülasə hazırlamaq, mətnləri təkmilləşdirmək və öyrənmə prosesini dəstəkləmək.</li>\n  <li><strong>💼 Biznes və Peşəkar İstifadə:</strong> Email mətnləri, təqdimat ideyaları, strategiya planları və gündəlik iş tapşırıqlarında AI köməyi əldə etmək.</li>\n</ul>",
-    "rulesHtml": ""
-  },
-  "zoom": {
-    "aboutHtml": "<h3>Zoom Pro - Peşəkar Onlayn Görüş və Video Konfrans Həlli</h3>\n<p>Zoom Pro, iş görüşləri, dərslər, vebinarlar və komanda toplantıları üçün hazırlanmış premium video konfrans platformasıdır. Standart versiyadan fərqli olaraq, Pro abunəliyi daha uzun görüş müddəti, daha geniş idarəetmə imkanları və peşəkar onlayn ünsiyyət üçün əlavə funksiyalar təqdim edir. Uzaqdan işləyən komandalar, müəllimlər, biznes sahibləri və onlayn xidmət göstərən şəxslər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Zoom Pro, istifadəçilərə yüksək keyfiyyətli video və audio ilə onlayn görüşlər keçirmək, ekran paylaşmaq, görüşləri qeyd etmək və iştirakçıları rahat idarə etmək imkanı verir. Platforma kompüter, telefon və planşet üzərindən istifadə oluna bilir və müxtəlif iş proseslərinə asanlıqla uyğunlaşır. Pro abunəliyi xüsusilə uzunmüddətli görüşlər, peşəkar təqdimatlar və müntəzəm onlayn toplantılar üçün daha rahat təcrübə yaradır.</p>\n\n<h3>Zoom Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Biznes Sahibləri və Komandalar:</strong> İş görüşləri, layihə müzakirələri və komanda toplantılarını onlayn şəkildə idarə edənlər.</li>\n  <li><strong>Müəllimlər və Təlimçilər:</strong> Onlayn dərslər, kurslar, təlimlər və seminarlar keçirən şəxslər.</li>\n  <li><strong>Frilanserlər və Konsultantlar:</strong> Müştərilərlə video zənglər, təqdimatlar və məsləhət görüşləri aparanlar.</li>\n  <li><strong>SMM və Rəqəmsal Xidmət Göstərənlər:</strong> Müştəri görüşləri, kontent planlaması və komanda koordinasiyası üçün stabil platformaya ehtiyac duyanlar.</li>\n</ul>\n\n<h3>Zoom Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>⏱️ Uzunmüddətli Görüşlər:</strong> Standart versiyadakı vaxt məhdudiyyətlərini azaltmaqla daha rahat və fasiləsiz toplantılar keçirmək imkanı.</li>\n  <li><strong>🎥 Yüksək Keyfiyyətli Video və Audio:</strong> Peşəkar görünüşlü görüşlər üçün stabil bağlantı, aydın səs və keyfiyyətli görüntü təcrübəsi.</li>\n  <li><strong>🖥️ Ekran Paylaşımı və Təqdimatlar:</strong> Sənədləri, slaydları, layihələri və tətbiqləri iştirakçılarla canlı şəkildə paylaşmaq imkanı.</li>\n  <li><strong>☁️ Görüş Qeydləri:</strong> Vacib görüşləri qeyd edərək daha sonra izləmək, paylaşmaq və arxivləmək üçün rahat imkanlar.</li>\n  <li><strong>🔐 Təhlükəsiz Görüş İdarəetməsi:</strong> Şifrə, gözləmə otağı, iştirakçı icazələri və idarəetmə alətləri ilə daha təhlükəsiz onlayn görüşlər.</li>\n</ul>",
     "rulesHtml": ""
   },
   "duolingo": {

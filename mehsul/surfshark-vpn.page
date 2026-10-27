@@ -127,6 +127,11 @@
       <div class="product-page-similar-title" title="TikTok Jeton">TikTok Jeton</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">11.00 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/zoom-pro" aria-label="Zoom Pro — 11.95 ₼" title="Zoom Pro">
+      <img src="/uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656" class="product-page-similar-image" alt="Zoom Pro" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Zoom Pro">Zoom Pro</div>
+      <div class="product-page-similar-category">meeting</div>
+      <div class="product-page-similar-price">11.95 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
       <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
@@ -162,11 +167,6 @@
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">5.49 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab" aria-label="YouTube Yenilemek — 5.99 ₼" title="YouTube Yenilemek">
-      <img src="/uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347" class="product-page-similar-image" alt="Youtube Eyni hesab" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="YouTube Yenilemek">YouTube Yenilemek</div>
-      <div class="product-page-similar-category">all</div>
-      <div class="product-page-similar-price">5.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-7511320dc743d54b"></script>
+  <script src="/app.js?v=catalog-35427bee70153af8"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>

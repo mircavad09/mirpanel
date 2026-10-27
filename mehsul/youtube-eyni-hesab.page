@@ -122,6 +122,11 @@
       <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
       <div class="product-page-similar-category">all</div>
       <div class="product-page-similar-price">4.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/zoom-pro" aria-label="Zoom Pro — 11.95 ₼" title="Zoom Pro">
+      <img src="/uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656" class="product-page-similar-image" alt="Zoom Pro" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Zoom Pro">Zoom Pro</div>
+      <div class="product-page-similar-category">meeting</div>
+      <div class="product-page-similar-price">11.95 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
       <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
@@ -162,11 +167,6 @@
       <div class="product-page-similar-title" title="YouTube Yeni hesab">YouTube Yeni hesab</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/adobe-creative-cloud" aria-label="Adobe Creative Cloud — 22.99 ₼" title="Adobe Creative Cloud">
-      <img src="/uploads/products/adobecc-1792450954538-64c5979f.png?v=1792450954538" class="product-page-similar-image" alt="Adobe Creative Cloud" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Adobe Creative Cloud">Adobe Creative Cloud</div>
-      <div class="product-page-similar-category">dizayn</div>
-      <div class="product-page-similar-price">22.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -223,7 +223,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-7511320dc743d54b"></script>
+  <script src="/app.js?v=catalog-35427bee70153af8"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-unified-20261024-2"></script>
