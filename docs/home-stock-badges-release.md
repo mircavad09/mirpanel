@@ -24,3 +24,10 @@ initial load, network error/recovery, mixed plan pools and server/SQL regression
 22 active products; 320/390/430/768/1024/1440 px. No badge overlap with price,
 sales or order control; overflow, application errors and new 404s zero.
 Production stock is never changed for verification. No migration needed.
+
+Live screenshot comparison caught a second writer: the i18n mutation observer
+parsed the new “Son 1 ədəd” as an unknown numeric label, eventually normalizing it
+to “Stok: 1”. The strengthened browser regression explicitly runs locale refresh
+and waits for the observer; it failed before the fix (actual Stok: 1, expected
+Son 1 ədəd). The locale normalizer now leaves only homepage inventory-owned badge
+text alone. All other translation, detail and checkout labels remain unchanged.

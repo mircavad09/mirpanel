@@ -316,6 +316,9 @@
     });
 
     document.querySelectorAll(".mpStockLine, .mpStockBadge, .stockBadge, .productStockBadge").forEach((element) => {
+      // Homepage inventory owns its exact low/count labels; do not infer a
+      // different label from its rendered text during mutation/locale refresh.
+      if (element.matches('.homeProductCard .cardStockBadge')) return;
       setText(element, stockLabelFromText(element.textContent));
     });
 
