@@ -1,6 +1,6 @@
 import {applyPngTier} from '/community-assets/tier-png-component.js';
 import {tierLabel} from '/community-assets/tier-labels.js';
-import {createGroupAdmin} from '/community-assets/group-admin.js';
+import {createGroupAdmin} from '/community-assets/group-admin.js?v=message-row-20261029';
 const app=document.getElementById('communityApp'),avatars=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'];let state=null,stopped=false;
 function el(tag,attrs={},...children){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else if(v!==undefined)e.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)e.append(typeof c==='string'?document.createTextNode(c):c);return e;}
 async function api(url,data,method='POST'){const r=await fetch(url,{method:data===undefined?'GET':method,credentials:'same-origin',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store'});const v=await r.json().catch(()=>({}));if(!r.ok)throw Error(v.error?.message||v.error||v.message||'Xidmət xətası. Yenidən cəhd edin.');return v;}

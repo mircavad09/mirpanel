@@ -1,0 +1,14 @@
+:root{--browser-nav-height:64px;--browser-safe:env(safe-area-inset-bottom,0px)}
+html body nav.browser-bottom-nav{display:none;box-sizing:border-box}
+html body nav.browser-bottom-nav svg{width:24px;height:24px;flex:0 0 24px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+@media(max-width:850px){
+ html body.has-bottom-nav{padding-bottom:calc(82px + var(--browser-safe))!important}
+ html body.has-bottom-nav nav.browser-bottom-nav{display:grid!important;grid-template-columns:repeat(var(--nav-columns,4),minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;z-index:70;min-height:64px;padding:4px 5px calc(4px + var(--browser-safe));border-top:1px solid #5b5129;background:#0c0d0ff7;box-shadow:0 -8px 28px #0006;backdrop-filter:blur(16px);gap:0;margin:0;width:100%}
+ html body.has-bottom-nav nav.browser-bottom-nav a{display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;min-height:56px;gap:4px;border:0;border-radius:10px;padding:2px 0;margin:0;color:#aaa;text-decoration:none;font:600 11px/15px system-ui,sans-serif;letter-spacing:normal;box-sizing:border-box;background:none}
+ html body.has-bottom-nav nav.browser-bottom-nav a span{font:inherit;color:inherit;white-space:nowrap}
+ html body.has-bottom-nav nav.browser-bottom-nav a[aria-current=page]{color:#ffd400;background:#ffd40009}
+ html.community-chat-screen body.community-page.has-bottom-nav{padding:0!important}
+ html.community-chat-screen body.community-page.has-bottom-nav nav.browser-bottom-nav{position:relative;flex:0 0 auto;left:auto;right:auto;bottom:auto}
+ html body.has-bottom-nav.paymentCheckoutOpen nav.browser-bottom-nav{display:none!important}
+}
+html body nav.browser-bottom-nav a:focus-visible{outline:2px solid #ffe15b;outline-offset:-2px}

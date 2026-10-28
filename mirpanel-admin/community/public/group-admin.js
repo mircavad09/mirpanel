@@ -1,4 +1,4 @@
-const css=document.createElement('link');css.rel='stylesheet';css.href='/community-assets/group-admin.css';document.head.append(css);
+const css=document.createElement('link');css.rel='stylesheet';css.href='/community-assets/group-admin.css?v=message-row-20261029';document.head.append(css);
 export function createGroupAdmin({state,api,el,button,onChange}){
  let settings={muted:false,rules:'',slow_seconds:0};const owner=state.profile?.isOwner===true;
  function dialog(title){const box=el('dialog',{class:'group-control-dialog'}),body=el('div',{class:'group-control-body'}),close=button('Bağla',()=>{box.close();box.remove();});box.append(el('header',{},el('h2',{},title),close),body);document.body.append(box);box.addEventListener('close',()=>box.remove());box.showModal();return{box,body};}
