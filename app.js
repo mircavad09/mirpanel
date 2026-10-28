@@ -234,9 +234,138 @@ const DATA = {
       }
     },
     {
+      "id": "spotify",
+      "_stableId": "spotify",
+      "order": 2,
+      "category": "musiqi",
+      "image": "uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574",
+      "currency": "₼",
+      "title": "Spotify Premium (Öz hesabınız)",
+      "variant": "Şəxsi hesab",
+      "badge": "Musiqi",
+      "imageAlt": "Spotify Premium",
+      "desc": "Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.\n",
+      "note": "",
+      "longDescription": "Spotify Premium ilə reklamsız musiqi dinləyə, playlistlərinizi rahat idarə edə və premium imkanlardan istifadə edə bilərsiniz. Mirpanel Spotify Premium almaq istəyənlər üçün sərfəli qiymət və sürətli aktivləşdirmə təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən tamamlanır.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "spotify-premium",
+      "seoTitle": "Spotify Premium almaq Azərbaycanda | Mirpanel",
+      "seoDescription": "Spotify Premium hesabını sərfəli qiymətə al. Reklamsız musiqi, premium imkanlar və sürətli aktivləşdirmə.",
+      "seoH1": "Spotify Premium almaq",
+      "seoPrimaryKeyword": "Spotify Premium almaq",
+      "seoRelatedKeywords": "Spotify almaq, Spotify Premium qiyməti, Spotify Premium Azərbaycan",
+      "seoKeywords": "Spotify almaq, Spotify Premium almaq, Spotify ucuz, Spotify Azərbaycan, Spotify hesab almaq, Spotify aylıq, Spotify reklamsız, Spotify premium hesab, Spotify qiyməti",
+      "seoContent": "Spotify Premium ilə reklamsız musiqi dinləyə, playlistlərinizi rahat idarə edə və premium imkanlardan istifadə edə bilərsiniz. Mirpanel Spotify Premium almaq istəyənlər üçün sərfəli qiymət və sürətli aktivləşdirmə təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən tamamlanır.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/spotify.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/slider1.png",
+        "mobileImage": "",
+        "title": "Spotify Premium",
+        "description": "Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.\n",
+        "alt": "Spotify Premium banneri",
+        "order": 4
+      },
+      "flow": "spotify",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": true,
+      "spotifyPasswordResetUrl": "https://accounts.spotify.com/az/password-reset",
+      "orderFlow": "form_confirm_whatsapp",
+      "formFields": [
+        {
+          "key": "email",
+          "type": "email",
+          "label": "Gmail ünvanınız",
+          "placeholder": "Gmail ünvanınızı yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "password",
+          "type": "password",
+          "label": "Spotify şifrəniz",
+          "placeholder": "Spotify şifrənizi yazın",
+          "required": true,
+          "enabled": true
+        },
+        {
+          "key": "password_confirm",
+          "type": "password",
+          "label": "Spotify şifrənizi təkrar yazın",
+          "placeholder": "Şifrənizi yenidən yazın",
+          "required": true,
+          "enabled": true
+        }
+      ],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "**Spotify Premium – şəxsi hesabınıza aktivləşdirmə**\n\nSpotify Premium abunəliyi təqdim etdiyiniz şəxsi hesabda aktivləşdirilir.\n\n⚠️ **Vacib məlumat**\n\nSpotify öz qaydalarına əsasən abunəliyi istənilən vaxt dayandırmaq və ya ləğv etmək hüququna malikdir. Nadir hallarda rast gəlinən bu vəziyyət xidmət təminatçısının nəzarətindən kənardır. Buna görə platforma tərəfindən həyata keçirilən məhdudiyyət və ya ləğvlərlə bağlı geri ödəniş və zəmanət təqdim edilmir.\n\nSifariş verməklə qeyd olunan şərtləri və mümkün riskləri qəbul etmiş sayılırsınız. **Xahiş edirik, ödəniş etməzdən əvvəl şərtləri diqqətlə nəzərdən keçirin.**\n\n📌 **Diqqət:** Aktivləşdirmənin problemsiz tamamlanması üçün hesab məlumatlarınızı düzgün daxil etdiyinizə əmin olun.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": true,
+          "label": "👉Şifrənizi unutmusunuzsa sıfırlayın👈Toxunun",
+          "url": "https://accounts.spotify.com/az/password-reset"
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 Ayliq        (Öz hesabınızda aktiv edilir)",
+          "months": 1,
+          "price": 5.49,
+          "regularPrice": 9.33
+        },
+        {
+          "label": "2 Ayliq        (Öz hesabınızda aktiv edilir)",
+          "months": 2,
+          "price": 0,
+          "regularPrice": 18.74
+        },
+        {
+          "active": true,
+          "label": "3 Ayliq        (Öz hesabınızda aktiv edilir)",
+          "months": 3,
+          "price": 0,
+          "regularPrice": 27.53
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "**Spotify Premium – şəxsi hesabınıza aktivləşdirmə**\n\nSpotify Premium abunəliyi təqdim etdiyiniz şəxsi hesabda aktivləşdirilir.\n\n⚠️ **Vacib məlumat**\n\nSpotify öz qaydalarına əsasən abunəliyi istənilən vaxt dayandırmaq və ya ləğv etmək hüququna malikdir. Nadir hallarda rast gəlinən bu vəziyyət xidmət təminatçısının nəzarətindən kənardır. Buna görə platforma tərəfindən həyata keçirilən məhdudiyyət və ya ləğvlərlə bağlı geri ödəniş və zəmanət təqdim edilmir.\n\nSifariş verməklə qeyd olunan şərtləri və mümkün riskləri qəbul etmiş sayılırsınız. **Xahiş edirik, ödəniş etməzdən əvvəl şərtləri diqqətlə nəzərdən keçirin.**\n\n📌 **Diqqət:** Aktivləşdirmənin problemsiz tamamlanması üçün hesab məlumatlarınızı düzgün daxil etdiyinizə əmin olun.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": true,
+          "label": "👉Şifrənizi unutmusunuzsa sıfırlayın👈Toxunun",
+          "url": "https://accounts.spotify.com/az/password-reset"
+        }
+      }
+    },
+    {
       "id": "capcut",
       "_stableId": "capcut",
-      "order": 2,
+      "order": 3,
       "category": "video",
       "image": "uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889",
       "currency": "₼",
@@ -374,135 +503,6 @@ const DATA = {
       }
     },
     {
-      "id": "spotify",
-      "_stableId": "spotify",
-      "order": 3,
-      "category": "musiqi",
-      "image": "uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574",
-      "currency": "₼",
-      "title": "Spotify Premium (Öz hesabınız)",
-      "variant": "Şəxsi hesab",
-      "badge": "Musiqi",
-      "imageAlt": "Spotify Premium",
-      "desc": "Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.\n",
-      "note": "",
-      "longDescription": "Spotify Premium ilə reklamsız musiqi dinləyə, playlistlərinizi rahat idarə edə və premium imkanlardan istifadə edə bilərsiniz. Mirpanel Spotify Premium almaq istəyənlər üçün sərfəli qiymət və sürətli aktivləşdirmə təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən tamamlanır.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "spotify-premium",
-      "seoTitle": "Spotify Premium almaq Azərbaycanda | Mirpanel",
-      "seoDescription": "Spotify Premium hesabını sərfəli qiymətə al. Reklamsız musiqi, premium imkanlar və sürətli aktivləşdirmə.",
-      "seoH1": "Spotify Premium almaq",
-      "seoPrimaryKeyword": "Spotify Premium almaq",
-      "seoRelatedKeywords": "Spotify almaq, Spotify Premium qiyməti, Spotify Premium Azərbaycan",
-      "seoKeywords": "Spotify almaq, Spotify Premium almaq, Spotify ucuz, Spotify Azərbaycan, Spotify hesab almaq, Spotify aylıq, Spotify reklamsız, Spotify premium hesab, Spotify qiyməti",
-      "seoContent": "Spotify Premium ilə reklamsız musiqi dinləyə, playlistlərinizi rahat idarə edə və premium imkanlardan istifadə edə bilərsiniz. Mirpanel Spotify Premium almaq istəyənlər üçün sərfəli qiymət və sürətli aktivləşdirmə təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən tamamlanır.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/spotify.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/slider1.png",
-        "mobileImage": "",
-        "title": "Spotify Premium",
-        "description": "Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.\n",
-        "alt": "Spotify Premium banneri",
-        "order": 4
-      },
-      "flow": "spotify",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": false,
-      "seller": "",
-      "bestSeller": true,
-      "spotifyPasswordResetUrl": "https://accounts.spotify.com/az/password-reset",
-      "orderFlow": "form_confirm_whatsapp",
-      "formFields": [
-        {
-          "key": "email",
-          "type": "email",
-          "label": "Gmail ünvanınız",
-          "placeholder": "Gmail ünvanınızı yazın",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "password",
-          "type": "password",
-          "label": "Spotify şifrəniz",
-          "placeholder": "Spotify şifrənizi yazın",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "password_confirm",
-          "type": "password",
-          "label": "Spotify şifrənizi təkrar yazın",
-          "placeholder": "Şifrənizi yenidən yazın",
-          "required": true,
-          "enabled": true
-        }
-      ],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "**Spotify Premium – şəxsi hesabınıza aktivləşdirmə**\n\nSpotify Premium abunəliyi təqdim etdiyiniz şəxsi hesabda aktivləşdirilir.\n\n⚠️ **Vacib məlumat**\n\nSpotify öz qaydalarına əsasən abunəliyi istənilən vaxt dayandırmaq və ya ləğv etmək hüququna malikdir. Nadir hallarda rast gəlinən bu vəziyyət xidmət təminatçısının nəzarətindən kənardır. Buna görə platforma tərəfindən həyata keçirilən məhdudiyyət və ya ləğvlərlə bağlı geri ödəniş və zəmanət təqdim edilmir.\n\nSifariş verməklə qeyd olunan şərtləri və mümkün riskləri qəbul etmiş sayılırsınız. **Xahiş edirik, ödəniş etməzdən əvvəl şərtləri diqqətlə nəzərdən keçirin.**\n\n📌 **Diqqət:** Aktivləşdirmənin problemsiz tamamlanması üçün hesab məlumatlarınızı düzgün daxil etdiyinizə əmin olun.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": true,
-          "label": "👉Şifrənizi unutmusunuzsa sıfırlayın👈Toxunun",
-          "url": "https://accounts.spotify.com/az/password-reset"
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": true,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 Ayliq        (Öz hesabınızda aktiv edilir)",
-          "months": 1,
-          "price": 5.49,
-          "regularPrice": 9.33
-        },
-        {
-          "label": "2 Ayliq        (Öz hesabınızda aktiv edilir)",
-          "months": 2,
-          "price": 0,
-          "regularPrice": 18.74
-        },
-        {
-          "active": true,
-          "label": "3 Ayliq        (Öz hesabınızda aktiv edilir)",
-          "months": 3,
-          "price": 0,
-          "regularPrice": 27.53
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "**Spotify Premium – şəxsi hesabınıza aktivləşdirmə**\n\nSpotify Premium abunəliyi təqdim etdiyiniz şəxsi hesabda aktivləşdirilir.\n\n⚠️ **Vacib məlumat**\n\nSpotify öz qaydalarına əsasən abunəliyi istənilən vaxt dayandırmaq və ya ləğv etmək hüququna malikdir. Nadir hallarda rast gəlinən bu vəziyyət xidmət təminatçısının nəzarətindən kənardır. Buna görə platforma tərəfindən həyata keçirilən məhdudiyyət və ya ləğvlərlə bağlı geri ödəniş və zəmanət təqdim edilmir.\n\nSifariş verməklə qeyd olunan şərtləri və mümkün riskləri qəbul etmiş sayılırsınız. **Xahiş edirik, ödəniş etməzdən əvvəl şərtləri diqqətlə nəzərdən keçirin.**\n\n📌 **Diqqət:** Aktivləşdirmənin problemsiz tamamlanması üçün hesab məlumatlarınızı düzgün daxil etdiyinizə əmin olun.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": true,
-          "label": "👉Şifrənizi unutmusunuzsa sıfırlayın👈Toxunun",
-          "url": "https://accounts.spotify.com/az/password-reset"
-        }
-      }
-    },
-    {
       "id": "netflix",
       "_stableId": "netflix",
       "order": 4,
@@ -616,9 +616,98 @@ const DATA = {
       }
     },
     {
+      "id": "chatgpt_ortaq",
+      "_stableId": "chatgpt_ortaq",
+      "order": 5,
+      "category": "all",
+      "image": "uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676",
+      "currency": "₼",
+      "title": "ChatGPT Plus (Ortaq hesab)",
+      "variant": "",
+      "badge": "Premium",
+      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
+      "desc": "",
+      "note": "",
+      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "chatgpt-plus-ortaq-hesab",
+      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
+      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
+      "seoH1": "ChatGPT Plus ortaq hesab almaq",
+      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
+      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
+      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "assets/chatgpt.png",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "assets/chatgpt.png",
+        "mobileImage": "",
+        "title": "ChatGPT Plus (Ortaq hesab)",
+        "description": "",
+        "alt": "ChatGPT Plus (Ortaq hesab)",
+        "order": 20
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": true,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "confirm_then_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "1 ayliq ",
+          "months": 1,
+          "price": 4.99
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Sifarişi təsdiqləyin",
+        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
+        "confirmText": "Təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
       "id": "chatgpt",
       "_stableId": "chatgpt",
-      "order": 5,
+      "order": 6,
       "category": "ai",
       "image": "uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091",
       "currency": "₼",
@@ -696,95 +785,6 @@ const DATA = {
         "title": "Sifarişi təsdiqləyin",
         "description": "ChatGPT Plus abunəliyi üçün hazır hesab birbaşa bizim tərəfimizdən sizə təqdim olunur.\n\nHesab Şərtləri və Üstünlükləri:\n\nTam Şəxsi Hesab: Hesab tamamilə sizə məxsusdur, daxildə sizdən başqa heç bir kənar şəxs olmur.\n\nÇoxlu Cihaz Dəstəyi: Hesabınıza əlavə cihazlar qoşaraq rahatlıqla istifadə edə bilərsiniz.\n\nİstifadə Müddəti: Hesabın aktivlik müddəti 30 gündür.\n\nZəmanət: 25 gün müddətinə tam əvəzləmə (qarantiya) dəstəyi verilir.",
         "confirmText": "Davam et",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      }
-    },
-    {
-      "id": "chatgpt_ortaq",
-      "_stableId": "chatgpt_ortaq",
-      "order": 6,
-      "category": "all",
-      "image": "uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676",
-      "currency": "₼",
-      "title": "ChatGPT Plus (Ortaq hesab)",
-      "variant": "",
-      "badge": "Premium",
-      "imageAlt": "ChatGPT Plus (Ortaq hesab)",
-      "desc": "",
-      "note": "",
-      "longDescription": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "usageRules": "",
-      "deliveryText": "",
-      "availabilityText": "",
-      "seoSlug": "chatgpt-plus-ortaq-hesab",
-      "seoTitle": "ChatGPT Plus ortaq hesab almaq | Mirpanel",
-      "seoDescription": "ChatGPT Plus ortaq hesab planını Azərbaycanda Mirpanel üzərindən sifariş edin. Real qiymət və mövcud plan bu səhifədə göstərilir, sifariş WhatsApp-da tamamlanır.",
-      "seoH1": "ChatGPT Plus ortaq hesab almaq",
-      "seoPrimaryKeyword": "ChatGPT Plus ortaq hesab almaq",
-      "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
-      "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
-      "seoIndex": true,
-      "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
-      "seoOgImage": "assets/chatgpt.png",
-      "banner": {
-        "enabled": false,
-        "desktopImage": "assets/chatgpt.png",
-        "mobileImage": "",
-        "title": "ChatGPT Plus (Ortaq hesab)",
-        "description": "",
-        "alt": "ChatGPT Plus (Ortaq hesab)",
-        "order": 20
-      },
-      "flow": "whatsapp",
-      "soldOut": false,
-      "active": true,
-      "stock": null,
-      "stockEnabled": true,
-      "seller": "",
-      "bestSeller": false,
-      "orderFlow": "confirm_then_whatsapp",
-      "formFields": [],
-      "formTitle": "",
-      "formDescription": "",
-      "confirmationModal": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
-        "confirmText": "Təsdiqləyirəm",
-        "cancelText": "Ləğv et",
-        "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
-        "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
-        }
-      },
-      "whatsapp": {
-        "extraMessage": "",
-        "includeSeller": false,
-        "includeStock": false
-      },
-      "plans": [
-        {
-          "label": "1 ayliq ",
-          "months": 1,
-          "price": 4.99
-        }
-      ],
-      "orderConfirmation": {
-        "enabled": true,
-        "title": "Sifarişi təsdiqləyin",
-        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
-        "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
@@ -3576,12 +3576,12 @@ const ADMIN_CONTENT = {
     "aboutHtml": "<h3>Zoom Pro - Peşəkar Onlayn Görüş və Video Konfrans Həlli</h3>\n<p>Zoom Pro, iş görüşləri, dərslər, vebinarlar və komanda toplantıları üçün hazırlanmış premium video konfrans platformasıdır. Standart versiyadan fərqli olaraq, Pro abunəliyi daha uzun görüş müddəti, daha geniş idarəetmə imkanları və peşəkar onlayn ünsiyyət üçün əlavə funksiyalar təqdim edir. Uzaqdan işləyən komandalar, müəllimlər, biznes sahibləri və onlayn xidmət göstərən şəxslər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Zoom Pro, istifadəçilərə yüksək keyfiyyətli video və audio ilə onlayn görüşlər keçirmək, ekran paylaşmaq, görüşləri qeyd etmək və iştirakçıları rahat idarə etmək imkanı verir. Platforma kompüter, telefon və planşet üzərindən istifadə oluna bilir və müxtəlif iş proseslərinə asanlıqla uyğunlaşır. Pro abunəliyi xüsusilə uzunmüddətli görüşlər, peşəkar təqdimatlar və müntəzəm onlayn toplantılar üçün daha rahat təcrübə yaradır.</p>\n\n<h3>Zoom Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Biznes Sahibləri və Komandalar:</strong> İş görüşləri, layihə müzakirələri və komanda toplantılarını onlayn şəkildə idarə edənlər.</li>\n  <li><strong>Müəllimlər və Təlimçilər:</strong> Onlayn dərslər, kurslar, təlimlər və seminarlar keçirən şəxslər.</li>\n  <li><strong>Frilanserlər və Konsultantlar:</strong> Müştərilərlə video zənglər, təqdimatlar və məsləhət görüşləri aparanlar.</li>\n  <li><strong>SMM və Rəqəmsal Xidmət Göstərənlər:</strong> Müştəri görüşləri, kontent planlaması və komanda koordinasiyası üçün stabil platformaya ehtiyac duyanlar.</li>\n</ul>\n\n<h3>Zoom Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>⏱️ Uzunmüddətli Görüşlər:</strong> Standart versiyadakı vaxt məhdudiyyətlərini azaltmaqla daha rahat və fasiləsiz toplantılar keçirmək imkanı.</li>\n  <li><strong>🎥 Yüksək Keyfiyyətli Video və Audio:</strong> Peşəkar görünüşlü görüşlər üçün stabil bağlantı, aydın səs və keyfiyyətli görüntü təcrübəsi.</li>\n  <li><strong>🖥️ Ekran Paylaşımı və Təqdimatlar:</strong> Sənədləri, slaydları, layihələri və tətbiqləri iştirakçılarla canlı şəkildə paylaşmaq imkanı.</li>\n  <li><strong>☁️ Görüş Qeydləri:</strong> Vacib görüşləri qeyd edərək daha sonra izləmək, paylaşmaq və arxivləmək üçün rahat imkanlar.</li>\n  <li><strong>🔐 Təhlükəsiz Görüş İdarəetməsi:</strong> Şifrə, gözləmə otağı, iştirakçı icazələri və idarəetmə alətləri ilə daha təhlükəsiz onlayn görüşlər.</li>\n</ul>",
     "rulesHtml": ""
   },
-  "capcut": {
-    "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
-    "rulesHtml": ""
-  },
   "spotify": {
     "aboutHtml": "<h3>Spotify Premium - Reklamsız Musiqi və Podcast Təcrübəsi</h3>\n<p>Spotify Premium, musiqi və podcast dinləməyi daha rahat, keyfiyyətli və fasiləsiz etmək üçün hazırlanmış premium abunəlik xidmətidir. Standart versiyadan fərqli olaraq, Premium abunəliyi reklamsız dinləmə, offline yükləmə, istənilən mahnını seçərək dinləmə və daha yüksək səs keyfiyyəti təqdim edir. Gündəlik musiqi zövqünü daha sərbəst və komfortlu yaşamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Spotify Premium, istifadəçilərə milyonlarla mahnı, albom, playlist və podcasta limitsiz giriş imkanı verir. İstifadəçilər sevdikləri musiqiləri reklamsız dinləyə, internet bağlantısı olmadan istifadə üçün yükləyə və istədikləri mahnını istənilən vaxt seçə bilərlər. Premium abunəlik həm mobil cihazlarda, həm kompüterdə, həm də smart TV və digər dəstəklənən cihazlarda daha rahat musiqi təcrübəsi yaradır.</p>\n\n<h3>Spotify Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Musiqi Sevərlər:</strong> Sevdiyi mahnıları, albomları və playlistləri reklamsız və limitsiz dinləmək istəyənlər.</li>\n  <li><strong>Podcast Dinləyiciləri:</strong> Maarifləndirici, əyləncəli və motivasiyaedici podcastları fasiləsiz dinləmək istəyən istifadəçilər.</li>\n  <li><strong>Səyahət Edənlər və Mobil İstifadəçilər:</strong> Musiqiləri əvvəlcədən yükləyib internet olmadan dinləmək istəyənlər.</li>\n  <li><strong>İdman və İş Zamanı Musiqi Dinləyənlər:</strong> Məşq, iş, dərs və gündəlik fəaliyyətlər zamanı rahat musiqi axını istəyənlər.</li>\n</ul>\n\n<h3>Spotify Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🚫 Reklamsız Dinləmə:</strong> Mahnılar və podcastlar arasında reklam fasilələri olmadan daha axıcı dinləmə təcrübəsi.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz mahnıları, albomları və playlistləri cihazınıza yükləyərək internet olmadan dinləmək imkanı.</li>\n  <li><strong>🎵 İstənilən Mahnını Seçmə:</strong> Mobil cihazda belə istədiyiniz mahnını seçib dərhal dinləmək və limitsiz keçid etmək imkanı.</li>\n  <li><strong>🔊 Yüksək Səs Keyfiyyəti:</strong> Daha təmiz, aydın və keyfiyyətli musiqi dinləmə təcrübəsi.</li>\n  <li><strong>📱 Bütün Cihazlarda İstifadə:</strong> Telefon, kompüter, planşet, smart TV və digər dəstəklənən cihazlarda rahat istifadə.</li>\n</ul>",
+    "rulesHtml": ""
+  },
+  "capcut": {
+    "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
     "rulesHtml": ""
   },
   "netflix": {

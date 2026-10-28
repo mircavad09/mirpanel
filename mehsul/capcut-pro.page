@@ -145,17 +145,17 @@
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus-ortaq-hesab" aria-label="ChatGPT Plus (Ortaq hesab) — 4.99 ₼" title="ChatGPT Plus (Ortaq hesab)">
+      <img src="/uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
+      <div class="product-page-similar-category">all</div>
+      <div class="product-page-similar-price">4.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 19.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
       <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
       <span class="capcut-similar-discount">-41%</span>
       <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">19.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus-ortaq-hesab" aria-label="ChatGPT Plus (Ortaq hesab) — 4.99 ₼" title="ChatGPT Plus (Ortaq hesab)">
-      <img src="/uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
-      <div class="product-page-similar-category">all</div>
-      <div class="product-page-similar-price">4.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/netflix-umumi" aria-label="Netflix Ümumi — 3.99 ₼" title="Netflix Ümumi">
       <img src="/uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068" class="product-page-similar-image" alt="Netflix Ümumi" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Netflix Ümumi">Netflix Ümumi</div>
@@ -235,7 +235,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-a18b9c2bf683e6cb"></script>
+  <script src="/app.js?v=catalog-88f722718618bd6c"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>
