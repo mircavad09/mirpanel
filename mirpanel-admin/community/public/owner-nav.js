@@ -1,0 +1,3 @@
+// Owner pages only; public checkout and browser-owned order history stay unchanged.
+window.refreshCommunityNav=()=>{};
+fetch('/api/community/state',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():null).then(s=>{if(!s?.profile)return;const nav=document.createElement('nav');nav.className='community-bottom-nav';nav.innerHTML='<a href="/">⌂<span>Ana səhifə</span></a><a href="/mehsul">◇<span>Məhsullar</span></a><a href="/qrup">☏<span>Qrup/Söhbət</span></a><a href="/sifarislerim">▣<span>Sifarişlərim</span></a><a href="/profil">♙<span>Profil</span></a>';document.body.append(nav);document.body.classList.add('community-has-nav');});

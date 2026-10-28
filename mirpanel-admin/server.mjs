@@ -17,6 +17,8 @@ import { createProductSalesRepository } from './product-sales-repository.mjs';
 import { createEmployeeSystem } from './employee-api.mjs';
 import {createAdminUsersRepository} from './admin-users-repository.mjs';
 import {createAdminSessions,ADMIN_IDLE_MS} from './admin-sessions.mjs';
+import {createOwnerCommunity} from './community/service.mjs';
+const ownerCommunity=createOwnerCommunity();
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -1354,6 +1356,7 @@ const server = http.createServer(async (request, response) => {
   try {
     const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
     const pathname = requestUrl.pathname;
+    if(await ownerCommunity.handle(request,response))return;
     const adminId=getCookies(request).mirpanel_session;
     if(adminId){
       const valid=await adminSessions.read(adminId);

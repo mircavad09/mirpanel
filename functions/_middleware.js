@@ -288,6 +288,7 @@ export async function onRequest(context) {
   const usersBoundary=adminUsersBoundary(request);if(usersBoundary)return usersBoundary;
   const url = new URL(request.url);
   const pathname = url.pathname;
+  if(['/qrup','/hesab','/profil','/owner-login'].includes(pathname)||/^\/(?:api\/(?:auth|community)\/|community-assets\/)/.test(pathname))return context.next();
   if(url.hostname==='www.mirpanel.com'&&['GET','HEAD'].includes(request.method)&&!pathname.startsWith('/api/')){const canonical=new URL(url);canonical.hostname='mirpanel.com';return Response.redirect(canonical.href,308);}
   if(pathname.startsWith('/api/payments/'))return context.next();
   const route = pathname.replace(/\/+$/, "") || "/";

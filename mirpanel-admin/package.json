@@ -13,6 +13,8 @@
     "test:payment-profit": "node ../scripts/test-payment-profit.mjs"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.57.4"
+    "@supabase/supabase-js": "^2.57.4",
+    "better-auth": "1.7.13",
+    "pg": "8.23.1"
   }
 }

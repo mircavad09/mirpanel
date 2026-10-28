@@ -1,0 +1,41 @@
+/* One compact geometry for all four decorated tiers, shared with the samples. */
+.png-tier.png-tier{--avatar-size:36px;display:flex;align-items:flex-end;gap:8px;width:fit-content;max-width:min(94%,660px);padding:0;background:none;border:0;box-shadow:none;min-height:0}
+.png-tier.png-tier:is(.is-own,.own){flex-direction:row-reverse;align-self:flex-end;margin-left:auto}
+.png-tier.png-tier .pt-avatar{display:block;position:relative;flex:0 0 var(--avatar-size);width:var(--avatar-size);height:var(--avatar-size);min-width:0;aspect-ratio:1;border:0;border-radius:0;background:none;box-shadow:none;margin:0 0 5px;overflow:visible}
+.png-tier.png-tier .pt-photo{position:absolute;display:grid;place-items:center;left:19%;top:25%;width:62%;height:62%;min-width:0;margin:0;border:0;border-radius:50%;overflow:hidden;background:#202328;font-size:18px;line-height:1;box-shadow:none}
+.png-tier.png-tier[data-png-tier=bronze] .pt-photo{left:15%;top:15%;width:70%;height:70%}
+.png-tier.png-tier[data-png-tier=silver] .pt-photo{left:16%;top:12%;width:68%;height:68%}
+.png-tier.png-tier[data-png-tier=vip] .pt-photo{left:23%;top:23%;width:54%;height:54%;font-size:16px}
+.png-tier .pt-photo img{width:100%;height:100%;object-fit:cover}
+.png-tier .pt-art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;pointer-events:none}
+.png-tier.png-tier .pt-content{display:flex;flex-direction:column;align-items:flex-start;min-width:0;max-width:calc(100% - 44px);padding:0}
+.png-tier.png-tier:is(.is-own,.own) .pt-content{align-items:flex-end}
+.png-tier.png-tier .pt-head{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin:0 2px 3px;line-height:1.3;min-height:16px;color:var(--tier-light,#f5d17d)}
+.png-tier.png-tier:is(.is-own,.own) .pt-head{justify-content:flex-end}
+.png-tier.png-tier .pt-head strong{font-size:12px;line-height:1.3;letter-spacing:normal;max-width:100%;white-space:normal;overflow-wrap:anywhere;color:inherit;text-shadow:none}
+.png-tier.png-tier .pt-badge{font:600 9px/12px Arial,sans-serif;padding:1px 5px;border-radius:99px;border:1px solid #ffe5a3;background:linear-gradient(110deg,#aa721d,#ffe39a 45%,#cb9638 72%,#8b5919);color:#251705;box-shadow:inset 0 1px 1px #fff5ce}
+.png-tier.png-tier .pt-bubble{position:relative;width:fit-content;max-width:100%;min-width:0;min-height:0;padding:11px 14px 9px;border:0;border-radius:0;background:transparent;box-shadow:none;isolation:isolate;color:#f2f0ee}
+.png-tier .pt-bubble::before{content:"";position:absolute;inset:6px 5px 7px;background:linear-gradient(135deg,#211c13,#111318);border-radius:8px;z-index:-1}
+.png-tier.png-tier .pt-body{position:relative;z-index:1;margin:0;font:400 14px/1.45 Arial,sans-serif;color:#f2f0ee;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word}
+.png-tier.png-tier .pt-bubble time{position:relative;z-index:1;display:block;width:auto;text-align:right;margin:3px 0 0;font:10px/12px Arial,sans-serif;color:#aaa}
+/* Uniform scale in both axes keeps nine-slice corner ornaments undistorted. */
+.png-tier .png-message-frame{position:absolute;inset:0;pointer-events:none;border:solid transparent;border-width:8.8px 11.6px 10.8px;border-image-source:url('/community-assets/gold-message.png');border-image-slice:220 290 270;border-image-width:8.8px 11.6px 10.8px;border-image-repeat:stretch;z-index:0}
+.png-tier[data-png-tier=vip] .png-message-frame{border-image-source:url('/community-assets/vip-message.png');border-image-slice:260 360 270;border-width:10.4px 14.4px 10.8px;border-image-width:10.4px 14.4px 10.8px}
+.png-tier[data-png-tier=bronze] .png-message-frame{border-image-source:url('/community-assets/secilmis-message.png');border-image-slice:240 310 300;border-width:9.6px 12.4px 12px;border-image-width:9.6px 12.4px 12px}
+.png-tier[data-png-tier=silver] .png-message-frame{border-image-source:url('/community-assets/elit-message.png');border-image-slice:250 310 300;border-width:10px 12.4px 12px;border-image-width:10px 12.4px 12px}
+.png-tier[data-png-tier=vip] .pt-bubble::before{background:linear-gradient(135deg,#20132f,#0e1120)}
+.png-tier[data-png-tier=bronze] .pt-bubble::before{background:linear-gradient(135deg,#302018,#181516)}
+.png-tier[data-png-tier=silver] .pt-bubble::before{background:linear-gradient(135deg,#292e36,#171a20)}
+.png-tier.png-tier[data-png-tier=bronze] .pt-badge{background:linear-gradient(125deg,#ecb28a,#95542d);border-color:#c78b62;color:#26150a}
+.png-tier.png-tier[data-png-tier=silver] .pt-badge{background:linear-gradient(125deg,#edf1f7,#8c96a7);border-color:#d5dae4;color:#1b2027}
+.png-tier.png-tier[data-png-tier=vip] .pt-badge{background:linear-gradient(140deg,#30134e,#663085 50%,#250c3e);border-color:#dc9bff;color:#f3defd;box-shadow:inset 0 1px 2px #f5caff55}
+/* Match Standard's total frame/typography footprint without premium decoration. */
+.community-chat-screen .community-message{gap:8px}
+.community-chat-screen .community-message-content{max-width:calc(100% - 44px)}
+.community-chat-screen .community-message-head{font-size:12px;min-height:16px;line-height:1.3;margin-bottom:3px}
+.community-chat-screen .community-message.tier-standard .community-avatar-frame{width:36px;height:36px;flex-basis:36px}
+.community-chat-screen .community-message.tier-standard .community-message-bubble{padding:10px 13px 8px}
+.png-tier[data-png-tier=admin] .png-message-frame{border-image-source:url('/community-assets/admin-message.png');border-image-slice:240 310 300;border-width:9.6px 12.4px 12px;border-image-width:9.6px 12.4px 12px}
+.png-tier.png-tier[data-png-tier=admin] .pt-photo{left:21%;top:25%;width:58%;height:58%;font-size:17px}
+.png-tier.png-tier[data-png-tier=admin] .pt-badge{background:linear-gradient(125deg,#8b0b14,#371c20);border-color:#d98b87;color:#ffe3da}
+.png-tier[data-png-tier=admin] .pt-head{color:#ffb8ad}.png-tier[data-png-tier=admin] .pt-bubble::before{background:linear-gradient(135deg,#30191a,#17171a)}
