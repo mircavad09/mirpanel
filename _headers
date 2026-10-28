@@ -8,6 +8,15 @@
   Cache-Control: no-cache, no-store, must-revalidate
   Content-Type: text/javascript; charset=utf-8
 
+/site-header.js
+  Cache-Control: no-cache, must-revalidate
+
+/browser-nav.js
+  Cache-Control: no-cache, must-revalidate
+
+/browser-nav.css
+  Cache-Control: no-cache, must-revalidate
+
 /admin-stock-save-fix.js
   Cache-Control: no-cache, no-store, must-revalidate
   Content-Type: text/javascript; charset=utf-8

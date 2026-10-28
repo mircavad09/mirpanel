@@ -350,6 +350,7 @@ export async function onRequest(context) {
   if (!contentType.includes("text/html")) return response;
 
   let html = await response.text();
+  html=html.replace(/(src=["'])\/(site-header|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=shared-nav-20261029$3');
   html = withSeoScripts(html);
 
   const headers = new Headers(response.headers);
