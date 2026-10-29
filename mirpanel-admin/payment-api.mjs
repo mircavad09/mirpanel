@@ -17,6 +17,7 @@ import {signature} from './employee-security.mjs';
 import {planKey} from './payment-profit.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
+import {createInventoryReader,inventoryUnavailable} from './inventory-reader.mjs';
 import {validateReceiptFile,FILE_SAFETY_ENGINE} from './receipt-file-safety.mjs';
 import {createBrowserOrders} from './browser-orders.mjs';
 
@@ -119,6 +120,7 @@ export function createPaymentSystem(options) {
 
   const security = createPaymentSecurity(config);
   const store = options.store || createPaymentStore(config);
+  const readInventory=createInventoryReader({snapshot:()=>store.inventorySnapshot(),ready:store.inventoryReady?()=>store.inventoryReady():null,enabled:()=>config.inventoryEnabled===true,onReady:()=>{config.inventoryEnabled=true;},cacheMs:options.store?0:2000});
   const validateFile = options.validateReceiptFile || validateReceiptFile;
   const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
   const mailer = options.mailer || createPaymentMailer(config, store);
@@ -185,7 +187,7 @@ export function createPaymentSystem(options) {
     }
   }
 
-  async function inventoryView(all=false){const rows=await store.inventorySnapshot(),c=await loadCatalog();return c.products.filter(p=>p.active!==false&&(all||p.stockEnabled===true||rows.some(r=>r.productId===p.id))).map(p=>inventoryAvailability(p,rows.find(r=>r.productId===p.id)));}
+  async function inventoryView(all=false){const rows=await readInventory({fresh:!all}),c=await loadCatalog();return c.products.filter(p=>p.active!==false&&(all||p.stockEnabled===true||rows.some(r=>r.productId===p.id))).map(p=>inventoryAvailability(p,rows.find(r=>r.productId===p.id)));}
 
   async function catalogSelection(productId, planIndex) {
     const data = await loadCatalog();
@@ -193,7 +195,7 @@ export function createPaymentSystem(options) {
     const index = Number(planIndex);
     const plan = product?.plans?.[index];
     // Catalog stock is a legacy display value, NEVER an inventory counter.
-    const rows=config.inventoryEnabled?await store.inventorySnapshot():[];
+    const rows=config.inventoryEnabled||store.inventoryReady?await readInventory({fresh:true}):[];
     const availability=product?inventoryAvailability(product,rows.find(r=>r.productId===product.id)):null;
     const inventoryPlan=availability?.plans.find(p=>p.planKey===String(index));
     // Zero quantity is enforced by the atomic RPC, not a pre-check that would
@@ -207,8 +209,7 @@ export function createPaymentSystem(options) {
 
   async function handlePublic(request, response, url) {
     if(request.method==='GET'&&url.pathname==='/api/payments/inventory'){
-      if(!config.inventoryEnabled)throw Object.assign(new Error('Stok sistemi schema 5 migration gözləyir.'),{status:503});
-      await publicRate(request,'inventory',60,120);publicJson(request,response,200,{products:await inventoryView(true)});return true;
+      try{const products=await inventoryView(true);await publicRate(request,'inventory',60,120);publicJson(request,response,200,{products});return true;}catch(e){if(e.status===429)throw e;throw inventoryUnavailable();}
     }
     if (request.method === "OPTIONS") {
       response.writeHead(204, corsHeaders(request));
@@ -509,7 +510,6 @@ export function createPaymentSystem(options) {
     } else if (!requireMutationAuth(request, response)) return true;
 
     if(url.pathname==='/api/admin/payment-inventory'){
-      if(!config.inventoryEnabled)throw Object.assign(new Error('Stok sistemi schema 5 migration gözləyir.'),{status:503});
       if(request.method==='GET'){json(response,200,{products:await inventoryView()});return true;}
       if(request.method==='POST'){const b=await readBody(request,10000),key=safeUuid(request.headers['x-idempotency-key']);const c=await loadCatalog();if(!key||b.confirm!==true||!(b.available===null||(Number.isSafeInteger(b.available)&&b.available>=0&&b.available<=10000))||!Number.isSafeInteger(b.expectedVersion)||!c.products.some(p=>p.id===b.productId&&(b.planKey==null||(typeof b.planKey==='string'&&/^\d+$/.test(b.planKey)&&p.plans?.[Number(b.planKey)]))))throw Object.assign(new Error('Məhsul, stok miqdarı və təsdiq tələb olunur.'),{status:400});json(response,200,await store.setInventory(b.productId,b.available,actorName,key,b.expectedVersion,b.planKey??null));return true;}
     }

@@ -345,6 +345,7 @@ export function createPaymentStore(config) {
       });
     },
     inventorySnapshot(){return rpc('inventory_snapshot');},
+    inventoryReady(){return rpc('employee_system_ready');},
     setInventory(productId,available,actor,key,version,planKey=null){return rpc('inventory_set_nullable_quantity',{p_product:productId,p_available:available,p_actor:actor,p_key:key,p_expected_version:version,p_plan_key:planKey});},
     async submitOrder(args) {
       const params = {

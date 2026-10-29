@@ -1,6 +1,6 @@
 (async function () {
   const {inventoryAvailability}=await import('/inventory-availability.mjs?v=20261028-nullable-1');
-  const inventory = new Map();let inventoryTimer,inventoryReceivedAt=0,painting=false,inventoryDisplayValid=false;
+  const inventory = new Map();let inventoryTimer,painting=false,inventoryDisplayValid=false,inventoryFailed=false;
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -19,6 +19,7 @@
 
   function stockBadgeData(product) {
     const state=stateFor(product);
+    if(state.unavailable)return null;
     if(!state.canOrder)return {text:'Stokda yoxdur',className:'out'};
     if(state.scope==='plan')return null;
     const stock = stockNumber(product);
@@ -323,11 +324,14 @@
 
   installCardRenderer();
   installDetailDecorator();
-  function stateFor(product){return inventoryAvailability(product,inventory.get(product?.id));}
+  function stateFor(product){const state=inventoryAvailability(product,inventory.get(product?.id));return inventoryDisplayValid&&inventory.has(product?.id)?state:{...state,unavailable:true,available:null,canOrder:false,plans:state.plans.map(p=>({...p,available:null,canOrder:false}))};}
   function planFor(product,index){return stateFor(product).plans.find(p=>p.planKey===String(index));}
   function paintInventory(){
     if(painting)return;painting=true;
     try{
+      let notice=document.getElementById('inventoryServiceStatus');
+      if(inventoryFailed&&!notice){const target=document.querySelector('#grid,main .grid,.product-page-body,#pp-plans-container');if(target){notice=document.createElement('p');notice.id='inventoryServiceStatus';notice.setAttribute('role','status');notice.style.cssText='padding:12px;border:1px solid #66552c;border-radius:12px;background:#211c10;color:#f4d783;font-size:14px;line-height:1.5;overflow-wrap:anywhere';target.before(notice);}}
+      if(notice){notice.hidden=!inventoryFailed;notice.textContent=inventoryFailed?'Stok məlumatı hazırda alınmır. Zəhmət olmasa bir qədər sonra yenidən cəhd edin.':'';}
       for(const product of (typeof DATA!=='undefined'?DATA.products:[])){
         const state=stateFor(product);
         document.querySelectorAll('.homeProductCard[data-product-id]').forEach(card=>{
@@ -339,20 +343,20 @@
             let label=line.querySelector('.cardStockBadge');if(!label){label=document.createElement('span');line.replaceChildren(label);}
             label.className='mpStockBadge cardStockBadge '+badge.className;label.textContent=badge.text;
           }
-          const button=card.querySelector('.homeCardOrder');if(button){button.setAttribute('aria-disabled',String(!state.canOrder));button.tabIndex=state.canOrder?0:-1;button.style.opacity=state.canOrder?'':'.45';}
+          const button=card.querySelector('.homeCardOrder');if(button){const navigate=state.unavailable||state.canOrder;button.setAttribute('aria-disabled',String(!navigate));button.tabIndex=navigate?0:-1;button.style.opacity=navigate?'':'.45';}
         });
       }
       const product=typeof currentProduct!=='undefined'?currentProduct:null;if(!product)return;
       const state=stateFor(product),rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')];
       let index=typeof currentPlanIdx==='number'?currentPlanIdx:0;
-      if(!state.plans[index]?.canOrder){const next=state.plans.findIndex(p=>p.canOrder);if(next>=0&&rows[next]){currentPlanIdx=next;rows[next].click();index=next;}else if(next<0){currentPlanIdx=-1;index=-1;rows.forEach(row=>{row.classList.remove('active');row.setAttribute('aria-checked','false');});}}
+      if(!state.unavailable&&!state.plans[index]?.canOrder){const next=state.plans.findIndex(p=>p.canOrder);if(next>=0&&rows[next]){currentPlanIdx=next;rows[next].click();index=next;}else if(next<0){currentPlanIdx=-1;index=-1;rows.forEach(row=>{row.classList.remove('active');row.setAttribute('aria-checked','false');});}}
       const canOrder=state.plans[index]?.canOrder===true;
-      const button=document.getElementById('pp-order-btn');if(button){button.disabled=!canOrder;button.classList.toggle('disabled',!canOrder);button.textContent=canOrder?'Sifariş et':'Stokda yoxdur';}
-      document.querySelectorAll('.product-page-status').forEach(el=>{el.textContent=state.canOrder?'Mövcuddur':'Stokda yoxdur';el.classList.toggle('is-out',!state.canOrder);});
+      const button=document.getElementById('pp-order-btn');if(button){button.disabled=!canOrder;button.classList.toggle('disabled',!canOrder);button.textContent=state.unavailable?(inventoryFailed?'Müvəqqəti əlçatan deyil':'Stok yoxlanılır…'):canOrder?'Sifariş et':'Stokda yoxdur';}
+      document.querySelectorAll('.product-page-status').forEach(el=>{el.textContent=state.unavailable?'Stok məlumatı alınır':state.canOrder?'Mövcuddur':'Stokda yoxdur';el.classList.toggle('is-out',!state.unavailable&&!state.canOrder);});
       rows.forEach((row,i)=>{
-        const plan=state.plans[i],out=!plan?.canOrder;row.setAttribute('aria-disabled',String(out));row.tabIndex=out?-1:i===index?0:-1;
+        const plan=state.plans[i],out=!state.unavailable&&!plan?.canOrder;row.setAttribute('aria-disabled',String(out));row.tabIndex=out?-1:i===index?0:-1;
         let line=row.querySelector('[data-inventory-plan]');if(!line){line=document.createElement('span');line.dataset.inventoryPlan='';row.append(line);}line.className=out?'mpStockBadge cardStockBadge out inventory-plan-badge':'inventory-plan-count';
-        line.textContent=out?'Stokda yoxdur':plan?.tracked?`${plan.available} ədəd stokda`:'';line.hidden=!out&&(!plan?.tracked||i!==index);
+        line.textContent=state.unavailable?'':out?'Stokda yoxdur':plan?.tracked?`${plan.available} ədəd stokda`:'';line.hidden=state.unavailable||!out&&(!plan?.tracked||i!==index);
         const best=row.querySelector('.product-detail-best');if(best){best.hidden=out;best.style.display=out?'none':'';}
       });
     }finally{painting=false;}
@@ -360,14 +364,14 @@
   let inventoryRequest=null;
   function refreshInventory(){
     if(inventoryRequest)return inventoryRequest;if(document.hidden)return Promise.resolve(false);
-    inventoryRequest=(async()=>{try{const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel.onrender.com';const r=await fetch(base+'/api/payments/inventory',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Inventory unavailable');const d=await r.json();if(!Array.isArray(d.products))throw Error('Invalid inventory');inventory.clear();for(const row of d.products)inventory.set(row.productId,row);inventoryReceivedAt=Date.now();inventoryDisplayValid=true;paintInventory();return true;}catch{inventoryDisplayValid=false;if(Date.now()-inventoryReceivedAt>10000)for(const row of inventory.values()){if(row.scope==='product')row.available=0;else if(row.scope==='plan')for(const plan of row.plans)if(plan.tracked)plan.available=0;}paintInventory();return false;}finally{inventoryRequest=null;}})();return inventoryRequest;
+    inventoryRequest=(async()=>{try{const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel.onrender.com';const r=await fetch(base+'/api/payments/inventory',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Inventory unavailable');const d=await r.json();if(!Array.isArray(d.products))throw Error('Invalid inventory');inventory.clear();for(const row of d.products)inventory.set(row.productId,row);inventoryDisplayValid=true;inventoryFailed=false;paintInventory();return true;}catch{inventoryDisplayValid=false;inventoryFailed=true;paintInventory();return false;}finally{inventoryRequest=null;}})();return inventoryRequest;
   }
   window.MirpanelInventory={productState:stateFor,planState:planFor,refresh:refreshInventory,async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
   document.addEventListener('click',event=>{
     const el=event.target.closest('.homeCardOrder,#pp-order-btn,.pp-plan-label');if(!el)return;
     const product=el.classList.contains('homeCardOrder')?(typeof DATA!=='undefined'?DATA.products.find(p=>p.id===el.closest('[data-product-id]')?.dataset.productId):null):(typeof currentProduct!=='undefined'?currentProduct:null);if(!product)return;
     const rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')];
-    const allowed=el.matches('.pp-plan-label')?planFor(product,rows.indexOf(el))?.canOrder:el.id==='pp-order-btn'?planFor(product,currentPlanIdx)?.canOrder:stateFor(product).canOrder;
+    const unknown=stateFor(product).unavailable;const allowed=el.matches('.pp-plan-label')?(unknown||planFor(product,rows.indexOf(el))?.canOrder):el.id==='pp-order-btn'?planFor(product,currentPlanIdx)?.canOrder:unknown||stateFor(product).canOrder;
     if(!allowed){event.preventDefault();event.stopImmediatePropagation();return;}if(el.matches('.pp-plan-label'))setTimeout(paintInventory,0);
   },true);
   document.addEventListener('keydown',event=>{const row=event.target.closest('.pp-plan-label');if(!row||!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;const product=typeof currentProduct!=='undefined'?currentProduct:null;if(!product)return;event.preventDefault();event.stopImmediatePropagation();const rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')],available=rows.filter((_,i)=>planFor(product,i)?.canOrder);if(!available.length)return;const at=available.indexOf(row),step=['ArrowUp','ArrowLeft'].includes(event.key)?-1:1,next=available[(at+step+available.length)%available.length];next.click();next.focus();},true);
