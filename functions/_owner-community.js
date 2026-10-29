@@ -1,6 +1,6 @@
 const UPSTREAM='https://mirpanel.onrender.com';
 export async function proxyCommunity({request}){
- const u=new URL(request.url);const allowed=['/qrup','/hesab','/profil','/owner-login'].includes(u.pathname)||/^\/api\/(?:auth|community)\/[a-z/-]+$/.test(u.pathname)||/^\/community-assets\/[a-z.-]+$/.test(u.pathname);
+ const u=new URL(request.url);const allowed=['/qrup','/hesab','/profil','/owner-login'].includes(u.pathname)||/^\/api\/(?:auth|community)\/[a-z/-]+$/.test(u.pathname)||/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(u.pathname)||/^\/community-assets\/[a-z.-]+$/.test(u.pathname);
  if(u.hostname!=='mirpanel.com'){if(request.method==='GET')return Response.redirect('https://mirpanel.com'+u.pathname+u.search,302);return new Response('Forbidden',{status:403});}
  if(!allowed)return new Response('Not found',{status:404});if(!['GET','POST','HEAD','OPTIONS'].includes(request.method))return new Response('Method not allowed',{status:405});
  if(request.headers.has('Origin')&&request.headers.get('Origin')!==u.origin)return new Response('Forbidden',{status:403});

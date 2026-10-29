@@ -1,0 +1,21 @@
+-- Additive owner profile release. Does not touch public business data or auth policy.
+begin;
+set local lock_timeout='5s';
+select pg_advisory_xact_lock(926103001);
+set local search_path=mirpanel_community,public;
+lock table community_profiles in share row exclusive mode;
+create table if not exists profile_release_manifest(id boolean primary key default true check(id),profile_count bigint not null,profile_hash text not null,captured_at timestamptz not null default clock_timestamp());
+insert into profile_release_manifest(id,profile_count,profile_hash) select true,count(*),md5(coalesce(string_agg(jsonb_build_array(user_id,display_name,avatar,blocked,muted_until,muted_permanent,ban_until)::text,'' order by user_id),'')) from community_profiles on conflict do nothing;
+alter table community_profiles add column if not exists first_name text;
+alter table community_profiles add column if not exists last_name text;
+alter table community_profiles add column if not exists phone text;
+alter table community_profiles add column if not exists whatsapp text;
+alter table community_profiles add column if not exists social_links jsonb not null default '{}';
+alter table community_profiles add column if not exists avatar_path text;
+alter table community_profiles add column if not exists cover_path text;
+create table if not exists profile_media(id uuid primary key,user_id text not null references "user"(id),kind text not null check(kind in ('avatar','cover')),bytes bytea not null check(octet_length(bytes) between 1 and 2097152),created_at timestamptz not null default clock_timestamp());
+create index if not exists profile_media_owner on profile_media(user_id);
+alter table profile_media enable row level security;
+alter table profile_release_manifest enable row level security;
+revoke all on profile_media,profile_release_manifest from public,anon,authenticated;
+commit;

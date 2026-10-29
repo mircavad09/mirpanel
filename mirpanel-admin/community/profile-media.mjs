@@ -1,0 +1,10 @@
+import {spawn} from 'node:child_process';import {fileURLToPath} from 'node:url';import crypto from 'node:crypto';import {fail} from './repository.mjs';
+let active=0;const pending=new Set();
+export async function uploadProfileMedia(pool,user,kind,bytes){
+ if(!['avatar','cover'].includes(kind))throw fail(400,'Şəkil növü düzgün deyil.');if(!bytes.length||bytes.length>5242880)throw fail(413,'Şəkil maksimum 5 MB ola bilər.');
+ const key=user.id+':'+kind;if(active>=2||pending.has(key))throw fail(429,'Şəkil emal olunur. Bir az sonra yenidən cəhd edin.');pending.add(key);active++;
+ try{const encoded=await new Promise((resolve,reject)=>{const child=spawn(process.execPath,['--max-old-space-size=128',fileURLToPath(new URL('./media-job.mjs',import.meta.url))],{windowsHide:true,stdio:['pipe','pipe','ignore']});let out='',done=false;const end=(err)=>{if(done)return;done=true;clearTimeout(timer);err?reject(err):resolve(out);};const timer=setTimeout(()=>{child.kill();end(fail(503,'Şəkli emal etmək mümkün olmadı. Yenidən cəhd edin.'));},10000);child.on('error',()=>end(fail(503,'Şəkil xidməti əlçatan deyil.')));child.stdin.on('error',()=>{});child.stdout.on('data',c=>{out+=c;if(out.length>6000000){child.kill();end(fail(413,'Şəkil çox böyükdür.'));}});child.on('close',code=>end(code===0?null:code===2?fail(422,'Şəkil təhlükəsiz açılmadı. JPG, PNG və ya WebP seçin.'):fail(503,'Şəkil xidməti əlçatan deyil. Yenidən cəhd edin.')));child.stdin.end(JSON.stringify({kind,base64:bytes.toString('base64')}));});
+ const data=Buffer.from(encoded,'base64');if(data.length>2097152)throw fail(413,'Emal edilmiş şəkil çox böyükdür.');
+ const id=crypto.randomUUID(),c=await pool.connect();try{await c.query('begin');await c.query('insert into profile_media(id,user_id,kind,bytes) values($1,$2,$3,$4)',[id,user.id,kind,data]);const r=await c.query(`update community_profiles set ${kind}_path=$2 where user_id=$1`,[user.id,id+'.webp']);if(r.rowCount!==1)throw fail(409,'Profil tapılmadı.');await c.query('commit');}catch(e){await c.query('rollback');throw e;}finally{c.release();}return id+'.webp';
+ }finally{pending.delete(key);active--;}
+}

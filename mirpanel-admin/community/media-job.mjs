@@ -1,0 +1,4 @@
+// Decode and re-encode in a bounded child process. No OCR, metadata or active content survives.
+import {createRequire} from 'node:module';const sharp=createRequire(import.meta.url)('../../receipt-worker/node_modules/sharp');
+sharp.cache(false);sharp.concurrency(1);
+try{let input='';for await(const c of process.stdin){input+=c;if(input.length>7100000)throw Error('SIZE');}const {base64,kind}=JSON.parse(input),bytes=Buffer.from(base64,'base64');if(bytes.length>5242880)throw Error('SIZE');const image=sharp(bytes,{limitInputPixels:16000000,failOn:'warning',animated:false}),m=await image.metadata();if(!['jpeg','png','webp'].includes(m.format)||m.pages>1||!m.width||!m.height||Math.max(m.width,m.height)>10000)throw Error('FORMAT');const size=kind==='avatar'?[320,320]:[1200,400];const out=await image.rotate().resize(...size,{fit:'cover',position:'attention'}).webp({quality:88}).toBuffer();process.stdout.write(out.toString('base64'));}catch{process.exitCode=2;}
