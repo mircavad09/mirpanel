@@ -1,6 +1,6 @@
 import {tierLabel} from '/community-assets/tier-labels.js';
 export async function renderProfile({app,state,api,el,button,link,alert,avatars,money}){
- document.body.classList.add('profile-screen');document.title='Profil · MirPanel';document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/profile.css?v=profile-compact-20261030'}));
+ document.body.classList.add('profile-screen');document.title='Profil · MirPanel';document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/profile.css?v=profile-stats-20261030'}));
  let p=state.profile,busy=false,uploading=false;const error=alert(),status=alert();
  const image=()=>el('span',{class:'profile-avatar-photo'},p.avatarUrl?el('img',{src:p.avatarUrl,alt:'Avatar'}):avatars[p.avatar]||avatars[0]);
  const avatar=button('',()=>avatarInput.click());avatar.className='profile-avatar';avatar.setAttribute('aria-label','Avatar şəklini dəyiş');avatar.append(image());
@@ -29,8 +29,13 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
  const logout=button('Çıxış',async()=>{logout.disabled=true;try{await api('/api/auth/sign-out',{});location.assign('/qrup');}catch(e){status.textContent=e.message;logout.disabled=false;}});logout.classList.add('profile-logout');
  const icon=path=>vector([['path',{d:path}]]);
  const decorate=(card,path)=>card.prepend(icon(path));
- const balance=el('section',{class:'profile-info-card'},el('h2',{},'Balans'),el('strong',{},'Tezliklə')),savings=el('section',{class:'profile-info-card'},el('h2',{},'Qənaət'),el('strong',{},'Məlumat yoxdur'));
- decorate(balance,'M4 6h16v14H4z M4 6V3h13 M15 11h5v5h-5z');decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');decorate(subscription,'M5 5h14v15H5z M8 2v6 M16 2v6 M5 10h14');decorate(savings,'M5 10l3-4h7l4 4v7h-3v3h-3v-3H9v3H6v-5H3v-5z');
- app.replaceChildren(el('div',{class:'profile-layout'},hero,el('div',{class:'profile-content'},editor,identity,copyStatus,status,el('div',{class:'profile-info-grid'},balance,latest,subscription,savings),logout)),avatarInput,coverInput);paint();
- void api('/api/community/profile-summary').then(r=>{latest.replaceChildren(el('h2',{},'Son sifariş'));decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');if(!r.latestOrder)latest.append(el('strong',{},'Hələ yoxdur'),link('Məhsullara bax','/mehsul','profile-products'));else{const o=r.latestOrder;latest.append(el('strong',{},o.product_title),el('p',{},o.plan_name),el('p',{},'№ '+o.order_code+' · '+Number(o.amount).toFixed(2)+' '+o.currency));}}).catch(()=>latest.replaceChildren(el('h2',{},'Son sifariş'),el('p',{},'Məlumat yüklənmədi.')));
+ const orderCount=el('strong',{},'…'),savedAmount=el('strong',{},'…'),orders=link('','/sifarislerim','profile-stat');
+ orders.append(icon('M6 5h12l2 15H4z M9 6V3h6v3'),orderCount,el('span',{},'Sifariş'));orders.setAttribute('aria-label','Sifarişlərimə bax');
+ const savings=el('div',{class:'profile-stat','aria-disabled':'true'},icon('M5 10l3-4h7l4 4v7h-3v3h-3v-3H9v3H6v-5H3v-5z'),savedAmount,el('span',{},'Qənaət'));
+ const stats=el('div',{class:'profile-summary-stats'},orders,savings),topup=button('Balansı artır',()=>{},true);topup.disabled=true;topup.setAttribute('aria-label','Balansı artır — tezliklə');
+ const balance=el('section',{class:'profile-balance'},el('div',{},el('h2',{},'Balans'),el('strong',{},'Tezliklə')),topup);
+ decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');decorate(subscription,'M5 5h14v15H5z M8 2v6 M16 2v6 M5 10h14');
+ hero.append(stats,balance,editor);
+ app.replaceChildren(el('div',{class:'profile-layout'},hero,el('div',{class:'profile-content'},identity,copyStatus,status,el('div',{class:'profile-info-grid'},latest,subscription),logout)),avatarInput,coverInput);paint();
+ void api('/api/community/profile-summary').then(r=>{orderCount.textContent=Number.isSafeInteger(r.orderCount)?String(r.orderCount):'—';savedAmount.textContent=Number.isSafeInteger(r.savingsCents)?money(r.savingsCents):'Məlumat yoxdur';latest.replaceChildren(el('h2',{},'Son sifariş'));decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');if(!r.latestOrder)latest.append(el('strong',{},'Hələ yoxdur'),link('Məhsullara bax','/mehsul','profile-products'));else{const o=r.latestOrder;latest.append(el('strong',{},o.product_title),el('p',{},o.plan_name),el('p',{},'№ '+o.order_code+' · '+Number(o.amount).toFixed(2)+' '+o.currency));}}).catch(()=>{orderCount.textContent='—';savedAmount.textContent='Məlumat yoxdur';latest.replaceChildren(el('h2',{},'Son sifariş'),el('p',{},'Məlumat yüklənmədi.'));});
 }
