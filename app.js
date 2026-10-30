@@ -449,7 +449,7 @@ const DATA = {
         },
         {
           "bestValue": false,
-          "label": "1 Ayliq (1200 AI kredit)  (Telefon&Kompyuter)",
+          "label": "1 Ayliq (500 AI kredit)  (Telefon&Kompyuter)",
           "months": 1,
           "price": 5.99,
           "regularPrice": 16.99
