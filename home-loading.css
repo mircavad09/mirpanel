@@ -1,0 +1,16 @@
+/* Reserve final media geometry before remote metadata arrives. No page hiding. */
+.home-page .home-discovery:has(#homeQuickLinks[hidden]):before{content:'';display:block;height:60px}
+.home-page #grid:empty{min-height:100vh}
+.home-page #homeHero.media-pending{display:grid!important;grid-template-columns:minmax(0,1fr);gap:8px}
+.home-page #homeHero.media-pending #heroSlider{display:block!important}
+.home-page #homeHero.media-pending #homeSideBanners{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.media-skeleton{display:block;pointer-events:none;background:linear-gradient(120deg,#151719,#202225,#151719);border:1px solid #282b2e;border-radius:14px}
+#heroSlider>.media-skeleton{position:absolute;inset:0}#homeSideBanners>.media-skeleton{aspect-ratio:1600/670}
+.home-page #homeStories.media-pending{display:block!important}.home-page #homeStories{min-height:138px;box-sizing:border-box}.story-skeleton{flex:0 0 88px;height:116px;border:0;background:transparent;display:grid;justify-items:center;gap:6px}.story-skeleton:before{content:'';width:78px;height:78px;border-radius:50%;background:#202225;border:3px solid #303136}.story-skeleton:after{content:'';width:60px;height:12px;background:#202225;border-radius:5px}
+@media(min-width:768px){.home-page #homeHero.media-pending{gap:14px}.home-page #homeHero.media-pending #homeSideBanners{gap:14px}}
+@media(min-width:1024px){.home-page #homeHero.media-pending{grid-template-columns:minmax(0,2fr) minmax(0,1fr)}.home-page #homeHero.media-pending #homeSideBanners{height:100%;grid-template-columns:minmax(0,1fr);grid-template-rows:repeat(2,minmax(0,1fr))}#homeSideBanners>.media-skeleton{aspect-ratio:auto;min-height:0}}
+/* Same reserved account footprint for pending/guest/signed-in state; no PII. */
+.site-header-tools:not(:has(.account-header-controls)):after{content:'';width:109px;height:44px;flex:0 0 109px;order:2;pointer-events:none}
+html body .site-header .account-header-controls{min-width:109px}
+@media(min-width:1000px){.site-header-tools:not(:has(.account-header-controls)):after{width:358px;flex-basis:358px}html body .site-header .account-header-controls{min-width:358px}}
+@media(max-width:900px){.home-page .site-header-inner{grid-template-columns:minmax(0,1fr);gap:8px}.home-page .site-header-brand{grid-column:1;grid-row:1}.home-page .site-header-tools{grid-column:1;grid-row:2;display:flex;gap:6px;width:100%;min-width:0}.home-page .site-header-tools>.site-header-search{display:flex;flex:1 1 0;width:0;min-width:0;max-width:none;order:1}.home-page .site-header-tools>.site-header-menu-button{order:0;flex:none}.home-page .site-header-tools>.site-header-search input{font-size:12px;min-width:0}.home-page .site-header-tools>.site-header-search{padding:0 8px;gap:5px}.home-page .site-header-tools>.site-header-search svg{width:16px;flex:none}}

@@ -244,6 +244,7 @@ function injectScript(html, needle, scriptTag) {
 
 function withSeoScripts(html) {
   let next = html;
+  next=next.replace(/(src=["'])\/?(cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-stable-20261031$3');
   next=next.replace(/(src=["'])\/?(site-header|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=page-navigation-20261031$3');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=page-navigation-20261031$2');
   if (!next.includes("site-sections-render.js?v=20260728-info-pages-1")) {

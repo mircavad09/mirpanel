@@ -4,7 +4,7 @@
   const home = source.homepage || {};
   const common = source.commonTexts || {};
   // Do not revive a deleted static banner while the first CMS read is pending.
-  let liveBanners = [];
+  let liveBanners = [];let initialBannersResolved=false;
   let bannersManaged = false;
   let bannerRevision = '';
   let bannerPollTimer;
@@ -225,12 +225,12 @@
   }
 
   function applyBanners() {
-    const all = liveBanners === null ? activeBanners() : liveBanners;
+    if(!initialBannersResolved)return;const all = liveBanners === null ? activeBanners() : liveBanners;
     const banners = all.filter(banner=>banner.placement!=='side');
     const sides = all.filter(banner=>banner.placement==='side').slice(0,2);
     const slider = document.getElementById("heroSlider");
     if (!slider) return;
-    const activeId=slider.querySelector('.slide.active')?.dataset.bannerId;
+    slider.closest('.home-banner-layout')?.classList.remove('media-pending');slider.querySelector('.media-skeleton')?.remove();const activeId=slider.querySelector('.slide.active')?.dataset.bannerId;
     const activeIndex=Math.max(0,banners.findIndex(b=>b.id===activeId));
     const layout=slider.closest('.home-banner-layout'), sideHost=document.getElementById('homeSideBanners');
     slider.querySelectorAll(".slide, .slider-dots, .slider-arrow").forEach((element) => element.remove());
@@ -307,27 +307,20 @@
     const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),10000);
     try {
       const base=window.MIRPANEL_ADMIN_BASE || 'https://mirpanel.onrender.com';
-      const response=await fetch(`${base}/api/homepage-banners`,{cache:'no-store',signal:controller.signal});
-      if(!response.ok) return;
-      const payload=await response.json();
+      const early=window.mirpanelHomeMedia;const response=early?null:await fetch(`${base}/api/homepage-banners`,{cache:'no-cache',signal:controller.signal});
+      if(response&&!response.ok) return;
+      const payload=early?await early.request('banners'):await response.json();
       if(payload.managed===false && !bannersManaged) {
-        if(bannerRevision!=='legacy') {liveBanners=null;bannerRevision='legacy';applyBanners();}
+        if(bannerRevision!=='legacy') {initialBannersResolved=true;liveBanners=null;bannerRevision='legacy';applyBanners();}
         return;
       }
       if(payload.managed!==true || !Array.isArray(payload.banners)) return;
       const revision=JSON.stringify(payload.banners);
       if(revision===bannerRevision) return;
       const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,productId:b.productId,productTitle:b.productTitle,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus})).sort((a,b)=>a.order-b.order || String(a.id).localeCompare(String(b.id)));
-      if(next.length) {
-        const banner=next.find(b=>b.placement==='main') || next[0];
-        const first=new Image(); first.fetchPriority='high'; first.src=innerWidth<768 && banner.mobileImage?banner.mobileImage:banner.desktopImage;
-        let imageTimeout;
-        try {await Promise.race([first.decode(),new Promise((_,reject)=>{imageTimeout=setTimeout(()=>reject(new Error('Banner image timeout')),8000);})]);}
-        finally {clearTimeout(imageTimeout);}
-      }
-      // Keep a functioning slider intact when an API or image request fails.
-      liveBanners=next; bannersManaged=true; bannerRevision=revision; applyBanners();
-    } catch { /* retain the last functioning banners */ }
+      // Render metadata immediately; an image must not gate the whole panel.
+      initialBannersResolved=true;liveBanners=next; bannersManaged=true; bannerRevision=revision; applyBanners();
+    } catch {if(!initialBannersResolved){initialBannersResolved=true;applyBanners();} /* retain last functioning banners */ }
     finally {
       clearTimeout(timeout); bannerPollBusy=false;
       if(!document.hidden) bannerPollTimer=setTimeout(pollHomepageBanners,3000);
@@ -490,6 +483,8 @@
   applyContact();
   applyHomepage();
   applyNavigation();
+  const cachedBanners=window.mirpanelHomeMedia?.cached('banners');
+  if(cachedBanners?.managed===true&&Array.isArray(cachedBanners.banners)){liveBanners=cachedBanners.banners.filter(b=>b.active===true&&safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,productId:b.productId,productTitle:b.productTitle,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus}));initialBannersResolved=true;bannerRevision=JSON.stringify(cachedBanners.banners);}
   applyBanners();
   void pollHomepageBanners();
   document.addEventListener('visibilitychange',()=>{

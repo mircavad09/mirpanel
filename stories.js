@@ -6,7 +6,7 @@
   const viewer = document.getElementById("storyViewer");
   if (!section || !track || !viewer) return;
 
-  let stories = [];
+  let stories = [];let revision='';
   let storyIndex = 0;
   let itemIndex = 0;
   let timer = 0;
@@ -152,7 +152,7 @@
       button.setAttribute("aria-label", `${story.title} story-sinə bax`);
       const cover = document.createElement("span"); cover.className = "home-story-cover";
       const inner = document.createElement("span"); inner.className = "home-story-cover-inner";
-      const image = new Image(); image.alt = ""; image.loading = "lazy"; image.decoding = "async"; image.src = story.coverUrl;
+      const image = new Image(); image.alt = ""; image.loading = index<4?"eager":"lazy";image.fetchPriority=index<4?"high":"auto";image.width=78;image.height=78; image.decoding = "async"; image.src = story.coverUrl;
       image.addEventListener("error", () => image.classList.add("is-broken"), { once: true });
       const title = document.createElement("span"); title.className = "home-story-title"; title.textContent = story.title;
       inner.append(image); cover.append(inner); button.append(cover, title);
@@ -160,17 +160,17 @@
       return button;
     }));
     stories.forEach(updateViewed);
-    section.hidden = !stories.length;
+    section.classList.remove('media-pending');section.hidden = !stories.length;
   }
 
   async function load() {
     try {
-      const response = await fetch(`${API_BASE}/api/stories`, { mode: "cors", credentials: "omit", cache: "no-store" });
-      if (!response.ok) throw new Error("Stories cavabı uğursuzdur.");
-      const payload = await response.json();
-      stories = (payload.stories || []).filter((story) => story.active !== false && story.coverUrl && Array.isArray(story.items) && story.items.length);
+      const early=window.mirpanelHomeMedia;const response=early?null:await fetch(`${API_BASE}/api/stories`, { mode: "cors", credentials: "omit", cache: "no-cache",signal:AbortSignal.timeout(10000) });
+      if (response&&!response.ok) throw new Error("Stories cavabı uğursuzdur.");
+      const payload = early?await early.request('stories'):await response.json();
+      const nextRevision=JSON.stringify(payload.stories||[]);if(nextRevision===revision)return;revision=nextRevision;stories = (payload.stories || []).filter((story) => story.active !== false && story.coverUrl && Array.isArray(story.items) && story.items.length);
       render();
-    } catch { section.hidden = true; }
+    } catch {if(!stories.length){section.classList.remove('media-pending');section.hidden = true;} }
   }
 
   document.getElementById("storyViewerClose").addEventListener("click", closeViewer);
@@ -190,5 +190,8 @@
   });
   viewer.addEventListener("touchstart", (event) => { touchX = event.touches[0]?.clientX || 0; }, { passive: true });
   viewer.addEventListener("touchend", (event) => { const distance = (event.changedTouches[0]?.clientX || touchX) - touchX; if (Math.abs(distance) > 50) move(distance < 0 ? 1 : -1); }, { passive: true });
-  load();
+  const cached=window.mirpanelHomeMedia?.cached('stories');
+  if(cached){stories=(cached.stories||[]).filter(s=>s.active!==false&&s.coverUrl&&Array.isArray(s.items)&&s.items.length);render();}
+  let refreshTimer;const refreshStories=()=>{clearTimeout(refreshTimer);if(!document.hidden)load().finally(()=>{refreshTimer=setTimeout(refreshStories,15000);});};
+  refreshStories();document.addEventListener('visibilitychange',refreshStories);window.addEventListener('pagehide',()=>{clearTimeout(refreshTimer);stopCurrent();});
 })();
