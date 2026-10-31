@@ -3094,8 +3094,8 @@ const DATA = {
         "alt": "Google AI Pro + VEO 3",
         "order": 8
       },
-      "flow": "out_of_stock",
-      "soldOut": true,
+      "flow": "whatsapp",
+      "soldOut": false,
       "active": true,
       "stock": null,
       "stockEnabled": false,
@@ -3135,7 +3135,7 @@ const DATA = {
       "plans": [
         {
           "months": 18,
-          "price": 6.99,
+          "price": 8.99,
           "regularPrice": 700
         }
       ],
