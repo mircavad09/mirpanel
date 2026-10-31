@@ -48,7 +48,7 @@ mirpanel-admin/community/public/chat-layout.css;
 mirpanel-admin/community/public/owner-nav.js;
 scripts/test-owner-release.mjs; scripts/test-account-header.mjs;
 scripts/test-navigation-lifecycle.mjs; scripts/test-page-navigation.mjs;
-scripts/test-splash.mjs; docs/page-navigation-release.md.
+scripts/test-splash.mjs; scripts/test-navigation-edge.mjs; docs/page-navigation-release.md.
 
 ## Measured results
 
@@ -60,10 +60,10 @@ latency or a production SLA. Do not add synthetic delays to reproduce a result.
 
 | Viewport | Before median/p95 | After median/p95 |
 |---|---|---|
-|390px|2963/3004ms|52/100ms|
-|1440px|2960/2984ms|57/67ms|
+|390px|1512.5/2983ms|47.5/58ms|
+|1440px|1504.5/2990ms|46.5/68ms|
 
-First entry remains about3s: before3030/2990ms, after3016/2998ms (390/1440).
+First entry remains about3s: before3018/2975ms, after2982/2993ms (390/1440).
 20 assertions passed, including same-session tab, reload/history, interrupted
 intro, storage restriction, optional video failure, same-tab/default links.
 
@@ -74,7 +74,7 @@ Exact pending-request leave timing is saved privately in ignored
 payment-test-artifacts/navigation/lifecycle.json. Profile/media, identity,
 permissions, logout and stock regression tests retained.
 Final executed counts: owner suite838 + navigation20 + proxy11 + inventory18 =
-887, zero final failures. Latest pending-request leave measured235ms. Additional
+887, zero final failures. Additional edge-version regression:12 assertions passed. Latest pending-request leave measured235ms. Additional
 short viewports320x480/390x480 and desktop1440x900 keep composer visible, message
 area nonzero and horizontal overflow zero. An initial duplicate-state assertion
 found the read-ack full-state refresh; that redundant request was fixed, not the
