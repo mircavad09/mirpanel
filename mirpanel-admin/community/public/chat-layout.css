@@ -1,5 +1,6 @@
 /* Group screen only. Auth/profile/checkout and their scrolling are unchanged. */
 html.community-chat-screen{height:100%;overflow:hidden;overscroll-behavior:none}
+.community-chat-screen .site-header{flex:0 0 auto;width:100%;position:relative}
 html.community-chat-screen body.community-page{position:fixed;top:var(--chat-visible-top,0px);left:0;right:0;height:var(--chat-visible-height,100dvh);margin:0;padding:0!important;overflow:hidden;display:flex;flex-direction:column;min-height:0}
 .community-chat-screen .community-demo{display:none!important}
 .community-chat-screen .community-header{flex:0 0 auto;width:100%;max-width:1100px;min-height:52px;margin:0 auto;padding:8px 16px;gap:16px;box-sizing:border-box}

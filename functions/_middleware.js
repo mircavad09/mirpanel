@@ -350,7 +350,8 @@ export async function onRequest(context) {
   if (!contentType.includes("text/html")) return response;
 
   let html = await response.text();
-  html=html.replace(/(src=["'])\/(site-header|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=desktop-header-20261031$3');
+  html=html.replace(/(src=["'])\/(site-header|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=page-navigation-20261031$3');
+  html=html.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=page-navigation-20261031$2');
   html=html.replace(/(src=["'])(\/?stock-display-fix\.js)(?:\?[^"']*)?(["'])/g,'$1$2?v=inventory-unavailable-20261029$3');
   html = withSeoScripts(html);
 

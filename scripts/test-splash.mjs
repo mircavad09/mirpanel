@@ -139,8 +139,8 @@ async function functional(page, width) {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, 'no horizontal overflow');
 }
 try {
-  assert.doesNotMatch(fs.readFileSync(path.join(root, 'splash.js'), 'utf8'), /(?:sessionStorage|localStorage|document\.cookie)/,
-    'splash does not persist a once-per-session state');
+  assert.match(fs.readFileSync(path.join(root, 'splash.js'), 'utf8'), /sessionStorage/,
+    'intro is marked once per browser session');
   for (const width of [320,390,768,1440,1920]) {
     const {context,page,errors} = await setup(width, {delay:900, height:width === 1920 ? 1080 : 900});
     await page.goto(origin, {waitUntil:'commit'});
@@ -156,15 +156,15 @@ try {
     await functional(page,width);
     await page.reload({waitUntil:'domcontentloaded'}); await hidden(page);
     const reloadMs = await timing(page);
-    assert.ok(reloadMs >= 2850 && reloadMs <= 3000, `reload gets the full splash: ${reloadMs}`);
-    await page.goto(`${origin}/mehsul/netflix-sexsi`, {waitUntil:'commit'}); await page.waitForFunction(() => window.splashTiming.start !== null); await hidden(page);
+    assert.ok(reloadMs <= 100, `reload skips the splash: ${reloadMs}`);
+    await page.goto(`${origin}/mehsul/netflix-sexsi`, {waitUntil:'domcontentloaded'}); await hidden(page);
     const productDirectMs = await timing(page);
-    assert.ok(productDirectMs >= 2850 && productDirectMs <= 3000, `direct product document load gets splash: ${productDirectMs}`);
+    assert.ok(productDirectMs <= 100, `product navigation skips the splash: ${productDirectMs}`);
     // A payment cancellation that chooses a full-document return uses the same
     // navigation path. This makes no checkout API request and creates no data.
-    await page.goto(`${origin}/?checkout-cancelled=1`, {waitUntil:'commit'}); await page.waitForFunction(() => window.splashTiming.start !== null); await hidden(page);
+    await page.goto(`${origin}/?checkout-cancelled=1`, {waitUntil:'domcontentloaded'}); await hidden(page);
     const checkoutCancelReloadMs = await timing(page);
-    assert.ok(checkoutCancelReloadMs >= 2850 && checkoutCancelReloadMs <= 3000, `checkout cancellation reload gets splash: ${checkoutCancelReloadMs}`);
+    assert.ok(checkoutCancelReloadMs <= 100, `return to home skips the splash: ${checkoutCancelReloadMs}`);
     assert.deepEqual(errors, []);
     results.push({width,firstMs,reloadMs,productDirectMs,checkoutCancelReloadMs,homeMenuSearch:true,consoleErrors:errors.length});
     await context.close();
