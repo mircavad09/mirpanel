@@ -20,6 +20,7 @@ import {inventoryAvailability} from '../inventory-availability.mjs';
 import {createInventoryReader,inventoryUnavailable} from './inventory-reader.mjs';
 import {validateReceiptFile,FILE_SAFETY_ENGINE} from './receipt-file-safety.mjs';
 import {createBrowserOrders} from './browser-orders.mjs';
+import {createAccountOrders} from './account-orders.mjs';
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -123,6 +124,7 @@ export function createPaymentSystem(options) {
   const readInventory=createInventoryReader({snapshot:()=>store.inventorySnapshot(),ready:store.inventoryReady?()=>store.inventoryReady():null,enabled:()=>config.inventoryEnabled===true,onReady:()=>{config.inventoryEnabled=true;},cacheMs:options.store?0:2000});
   const validateFile = options.validateReceiptFile || validateReceiptFile;
   const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
+  const accountOrders=createAccountOrders({security,store,resolve:options.accountHistory});
   const mailer = options.mailer || createPaymentMailer(config, store);
   const allowedOrigins = new Set(config.allowedOrigins);
 
@@ -224,14 +226,14 @@ export function createPaymentSystem(options) {
     if(request.method==='GET'&&url.pathname==='/api/payments/my-orders'){
       if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
       await publicRate(request,'browser-orders',60,60);
-      publicJson(request,response,200,await browserOrders.list(request,response,url.searchParams.get('cursor')));return true;
+      publicJson(request,response,200,await accountOrders.list(request,url.searchParams.get('cursor')));return true;
     }
     const browserReceipt=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/receipt$/);
     if(request.method==='GET'&&browserReceipt){
       if(!safeUuid(browserReceipt[1]))throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});
       if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
       await publicRate(request,'browser-receipt',60,30);
-      publicJson(request,response,200,await browserOrders.receipt(request,browserReceipt[1]));return true;
+      publicJson(request,response,200,await accountOrders.receipt(request,browserReceipt[1]));return true;
     }
     if (request.method === "GET" && url.pathname === "/api/payments/health") {
       await publicRate(request, "health", 60, 30);

@@ -28,7 +28,7 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
  const copyStatus=alert(),copy=button('Kopyala',async()=>{try{if(!p.member_number)throw Error();await navigator.clipboard.writeText(String(p.member_number));copyStatus.textContent='Kopyalandı';}catch{copyStatus.textContent='Kopyalama alınmadı.';}});copy.disabled=!p.member_number;
  const identity=el('div',{class:'profile-welcome'},greeting,el('div',{class:'profile-id-pill'},el('span',{class:'profile-id-hash'},'#'),el('span',{},'ID: '+(p.member_number||'—')),copy));
  const latest=el('section',{class:'profile-info-card'},el('h2',{},'Son sifariş'),el('strong',{},'Yüklənir…')),subscription=el('section',{class:'profile-info-card'},el('h2',{},'Abunəlik'),el('strong',{},'Aktiv abunəlik yoxdur'));
- const logout=button('Çıxış',async()=>{logout.disabled=true;try{await api('/api/auth/sign-out',{});location.assign('/qrup');}catch(e){status.textContent=e.message;logout.disabled=false;}});logout.classList.add('profile-logout');
+ const logout=button('Çıxış',async()=>{logout.disabled=true;try{await api('/api/auth/sign-out',{});try{localStorage.setItem('mirpanel.auth.signedOut',String(Date.now()));}catch{}location.assign('/qrup');}catch(e){status.textContent=e.message;logout.disabled=false;}});logout.classList.add('profile-logout');
  const icon=path=>vector([['path',{d:path}]]);
  const decorate=(card,path)=>card.prepend(icon(path));
  const orderCount=el('strong',{},'…'),savedAmount=el('strong',{},'…'),orders=link('','/sifarislerim','profile-stat');

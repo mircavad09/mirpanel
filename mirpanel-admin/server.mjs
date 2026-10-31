@@ -1262,6 +1262,7 @@ const mime = {
 };
 
 const paymentSystem = createPaymentSystem({
+  accountHistory: request=>ownerCommunity.orderHistory(request),
   config,
   json,
   readBody,

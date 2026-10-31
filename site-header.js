@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   if(!document.querySelector('script[data-support-loader]')){const script=document.createElement('script');script.src='/support-widget.js?v=support-faq-20261026-2';script.dataset.supportLoader='true';document.head.append(script);}
-  if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=page-navigation-20261031';script.dataset.browserNavLoader='true';document.head.append(script);}
+  if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=account-history-20261031';script.dataset.browserNavLoader='true';document.head.append(script);}
 
   function normalize(value) {
     return String(value || "").toLocaleLowerCase("az").trim();

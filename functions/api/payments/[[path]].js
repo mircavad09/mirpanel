@@ -9,6 +9,7 @@ export async function onRequest({request}){
  if(request.headers.get('Sec-Fetch-Site')==='cross-site')return fail(403,'Sorğunun mənbəyi icazəli deyil.');
  const headers=new Headers();for(const name of['Content-Type','Accept','X-Idempotency-Key','Sec-Fetch-Site'])if(request.headers.has(name))headers.set(name,request.headers.get(name));
  headers.set('Origin',u.origin);
- const cookie=(request.headers.get('Cookie')||'').split(';').map(s=>s.trim()).filter(s=>s.startsWith('__Host-mirpanel_orders=')).join('; ');if(cookie)headers.set('Cookie',cookie);
+ const history=path.startsWith('/api/payments/my-orders');
+ const cookie=(request.headers.get('Cookie')||'').split(';').map(s=>s.trim()).filter(s=>s.startsWith('__Host-mirpanel_orders=')||(history&&/^(?:__Secure-)?mirpanel_owner\.session_token=/.test(s))).join('; ');if(cookie)headers.set('Cookie',cookie);
  try{const target=new URL(path+u.search,UPSTREAM),r=await fetch(target,{method:request.method,headers,body:request.method==='POST'?request.body:undefined,redirect:'manual',signal:AbortSignal.timeout(125000)}),out=new Headers(r.headers);out.set('Cache-Control','private, no-store, max-age=0');out.set('Pragma','no-cache');out.set('Referrer-Policy','no-referrer');out.set('Vary','Cookie, Origin');out.delete('Access-Control-Allow-Origin');out.delete('Access-Control-Allow-Credentials');return new Response(r.body,{status:r.status,headers:out});}catch{return fail(503,'Ödəniş xidməti cavab vermədi. Yenidən cəhd edin.');}
 }
