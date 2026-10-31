@@ -246,7 +246,7 @@ function withSeoScripts(html) {
   let next = html;
   next=next.replace(/(src=["'])\/?(cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-stable-20261031$3');
   next=next.replace(/(src=["'])\/?(site-header|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=page-navigation-20261031$3');
-  next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=page-navigation-20261031$2');
+  next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=intro-session-20261031$2');
   if (!next.includes("site-sections-render.js?v=20260728-info-pages-1")) {
     next = next.replace(/<script src="app\.js[^>]*><\/script>/i, '$&\n  <script src="site-sections-render.js?v=20260728-info-pages-1"></script>');
   }
