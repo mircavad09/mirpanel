@@ -1,0 +1,11 @@
+import assert from 'node:assert/strict';
+import {validSender,validState,authorizationUrl} from './reauthorize-gmail.mjs';
+let count=0;const check=(actual,expected)=>{assert.equal(actual,expected);count++;};
+check(validSender({email:'sender@example.test',email_verified:true,sub:'subject'},'sender@example.test'),true);
+check(validSender({email:'other@example.test',email_verified:true,sub:'subject'},'sender@example.test'),false);
+check(validSender({email:'sender@example.test',email_verified:false,sub:'subject'},'sender@example.test'),false);
+check(validSender({email:'sender@example.test',email_verified:true},'sender@example.test'),false);
+check(validState('correct-state','correct-state'),true);check(validState('wrong-state','correct-state'),false);check(validState(null,'correct-state'),false);check(validState('ş','a'),false);
+const u=new URL(authorizationUrl('public-client','http://127.0.0.1:8765/oauth/callback','state','verifier','sender@example.test'));
+check(u.origin,'https://accounts.google.com');check(u.searchParams.get('code_challenge_method'),'S256');check(u.searchParams.get('access_type'),'offline');check(u.searchParams.get('prompt'),'consent');check(u.searchParams.has('client_secret'),false);check(u.searchParams.get('redirect_uri'),'http://127.0.0.1:8765/oauth/callback');
+console.log(JSON.stringify({assertions:count,failures:0,realEmailSent:false}));
