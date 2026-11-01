@@ -1,7 +1,7 @@
 # Public community release preparation — 2026-11-01 (Asia/Baku)
 
-Status: **LOCAL PREPARATION ONLY; EXTERNAL AUTH BLOCKED.**
-Production remains on `89dc79a`, owner-only login / closed public signup and group.
+Status: **PRODUCTION MIGRATION VERIFIED; APPLICATION ROLLOUT IN PROGRESS.**
+Production main `7a85c96` was merged without losing admin content changes.
 This branch starts from current production, not a wholesale development merge.
 No preview gate, synthetic mailbox, seed accounts/messages, preview credentials,
 demo payments/WhatsApp adapters or production test orders are imported.
@@ -38,15 +38,18 @@ schema: user/session/account/owner identity/profile/media/member numbers/order
 ownership tables exist. Presence, bot blocks/tags and public release marker do not.
 Public flag is off. No customer rows were printed or changed.
 
-The configured Gmail refresh attempt returns **HTTP 400 `invalid_grant`**. No
-access token was obtained and no real email was sent. Public verification/reset
-must NOT be called working until the sending account is re-authorized and a real
-verification/reset delivery is tested with an authorized recipient.
+Gmail `invalid_grant` is resolved by new operator consent. Sender identity and
+refresh were verified; only Render GMAIL_REFRESH_TOKEN changed, all other env values
+were compared unchanged. One diagnostic message was accepted by Gmail. The 145-check
+isolated auth/UI suite was additionally run with the real Gmail adapter and sent
+verification and reset mail to the sender's own address (2 Gmail-accepted messages).
+The verification/reset URLs were exercised against the isolated DB. Inbox receipt
+is not independently verified; no production account/order was created by tests.
 
 Production Google JSON was previously matched to the configured client without
 printing its secret: project `mirpanel-community-preview`, callback
-`https://mirpanel.com/api/auth/callback/google`. Audience publishing/test-user
-restriction and an actual Google callback remain **unverified**. The browser tool
+`https://mirpanel.com/api/auth/callback/google`. Audience is 'In production' per
+the owner's confirmation. An actual new public Google callback remains **unverified**. The browser tool
 still reports `Local browser use is disabled in Work settings`, even after kernel
 reset and the user's screenshot showing On. No workaround through an unapproved
 browser profile or security bypass is used.
@@ -86,7 +89,7 @@ The manifest alone is not the backup: actual dump/restore was completed.
 Latest verified exact SQL SHA-256:
 `383f609b471faf009659b294ace0b5c335a6dfb29b4eedd43e1fc6746cba77e5`.
 Encrypted archive SHA-256:
-`15951e636b7bbf3f385ecef397fa31997df520ea80871f9a7e2e11ccd85daf1f`.
+`dcced26362c788fe716bda5d792bdc3dc09ef972394d5d1642aa4d875178ad06`.
 If SQL changes or substantial time passes before release, redo the backup/restore.
 
 ## Executed test results
@@ -145,5 +148,13 @@ of exhaustive moderation, automatic ban, or AI classification.
    POST 401, member admin 403, signup/login/profile/history return and notices.
    Do not manufacture production orders/reservations/receipts/WhatsApp messages.
 
-Current state: **production SQL not applied, env not changed, no main push or
-Render/Cloudflare deployment for this branch.** Local preparation is preserved.
+Latest production SQL operation: only public-release.sql applied after refreshed
+encrypted dump/restore proof. All 9 verification booleans true; public gate still
+off at application staging. No historical orders updated. No test customers/messages
+or preview data imported. Application push/deploy and subsequent public gate are
+tracked separately; these SQL results alone are not evidence of a live app rollout.
+
+Additional operator regression: test-gmail-reauthorize.mjs 21 assertions, 0 failed,
+including actual Windows DPAPI round-trip, invalid input preserving old encrypted
+file and atomic replacement with encrypted backup. Storage initialization is now
+preflighted before consent; no token/code appears in diagnostics.
