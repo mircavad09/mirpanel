@@ -69,7 +69,7 @@ async function main(){
    console.log('GMAIL_SCOPE_OK');stage='ENCRYPTED_STORAGE';
    saveEncryptedCredential({clientId:env.GMAIL_CLIENT_ID,sender:env.GMAIL_SENDER_EMAIL,refreshToken:token.refresh_token,authorizedAt:new Date().toISOString()});
    done=true;console.log('GMAIL_CONSENT_SAVED_ENCRYPTED');reply(200,'<h1>İcazə təhlükəsiz saxlanıldı</h1><p>Bu pəncərəni bağlayın və Codex-də “Təsdiqlədim” yazın. Hələ məktub göndərilməyib və production konfiqurasiyası dəyişməyib.</p>');
-  }catch(e){console.log(['TOKEN_EXCHANGE_FAILED','SENDER_ACCOUNT_MISMATCH','MAIL_PERMISSION_MISSING'].includes(e.message)?e.message:'LOCAL_AUTHORIZATION_FAILED_'+stage);reply(502,'İcazəni təhlükəsiz tamamlamaq mümkün olmadı. Göndərən hesabı yoxlayın və lokal başlanğıc səhifəsindən yenidən cəhd edin.');}finally{busy=false;}
+  }catch(e){console.log(['TOKEN_EXCHANGE_FAILED','SENDER_ACCOUNT_MISMATCH','MAIL_PERMISSION_MISSING'].includes(e.message)||/^CREDENTIAL_STORAGE_[A-Z]+_-?\d+_[A-Za-z]*$/.test(e.message)?e.message:'LOCAL_AUTHORIZATION_FAILED_'+stage);reply(502,'İcazəni təhlükəsiz tamamlamaq mümkün olmadı. Lokal başlanğıc səhifəsindən yenidən cəhd edin.');}finally{busy=false;}
  });
  server.listen(8765,'127.0.0.1',()=>console.log('LOCAL_GMAIL_CONSENT_READY http://127.0.0.1:8765/'));
  setTimeout(()=>server.close(()=>process.exit(0)),30*60*1000).unref();
