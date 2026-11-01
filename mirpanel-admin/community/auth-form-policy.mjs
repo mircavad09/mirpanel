@@ -1,7 +1,9 @@
+import {safeName} from './bot-policy.mjs';
 export const authFormPolicy={minPasswordLength:6,maxPasswordLength:128,termsUrl:'/sertler',privacyUrl:'/sertler#sertler-10',privacyIsSection:true};
 export function registrationDetails(b){
  const name=(v,label,max)=>{if(typeof v!=='string')throw Error(label+' yazın.');const s=v.normalize('NFKC').trim().replace(/\s+/g,' ');if(!s||s.length>max||/[<>\p{C}]/u.test(s))throw Error(label+' düzgün deyil.');return s;};
  const first=name(b.firstName,'Adınızı',40),last=name(b.lastName,'Soyadınızı',50);
+ safeName(first);safeName(last);safeName(first+' '+last);
  if(b.termsAccepted!==true)throw Error('Davam etmək üçün istifadə şərtlərini qəbul edin.');
  if(!['994','90','995','7','1','44','49'].includes(String(b.countryCode)))throw Error('Ölkə kodunu seçin.');
  if(typeof b.phone!=='string'||!/^[0-9 ()\-.]{5,25}$/.test(b.phone))throw Error('Telefon nömrəsini düzgün yazın.');

@@ -1,0 +1,12 @@
+begin read only;
+set local search_path=mirpanel_community,public;
+select coalesce((select ready from public_community_release where version=1),false) as public_schema_ready;
+select count(*)=3 as auth_columns_ready from information_schema.columns where table_schema='mirpanel_community' and table_name='user' and column_name in ('phone_number','phone_verified','registration_terms_accepted_at');
+select count(*)=6 and bool_and(c.relrowsecurity) as new_tables_private from pg_class c join pg_namespace n on n.oid=c.relnamespace where n.nspname='mirpanel_community' and c.relname in ('public_community_backup_manifest','community_presence','community_bot_blocks','community_bot_warnings','community_bot_tags','public_community_release');
+select count(*)=1 as bot_identity_ready from "user" where id='mirpanel-system-bot-v1' and name='MirPanel bot' and email='system-bot@invalid.local' and not "emailVerified";
+select not exists(select 1 from session where "userId"='mirpanel-system-bot-v1') and not exists(select 1 from account where "userId"='mirpanel-system-bot-v1') as bot_login_disabled;
+select not exists(select 1 from community_group_roles r join "user" u on u.id=r.user_id where r.role='owner' and lower(u.email)<>'mircavad09@gmail.com') as owner_preserved;
+select count(*)=2 as manifest_complete from public_community_backup_manifest where release_key='public-v1';
+select to_regprocedure('public.submit_payment_order_account_v1(uuid,uuid,text,text,text,text,text,text,text,integer,text,integer,text,text)') is not null as account_rpc_present;
+select has_function_privilege('service_role','public.submit_payment_order_account_v1(uuid,uuid,text,text,text,text,text,text,text,integer,text,integer,text,text)','execute') and not has_function_privilege('anon','public.submit_payment_order_account_v1(uuid,uuid,text,text,text,text,text,text,text,integer,text,integer,text,text)','execute') as account_rpc_private;
+commit;

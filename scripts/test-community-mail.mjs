@@ -1,0 +1,12 @@
+import assert from 'node:assert/strict';import {createAuthMailer} from '../mirpanel-admin/community/auth-mail.mjs';
+let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};const original=fetch,calls=[];let failure=false;
+try{globalThis.fetch=async(url,o)=>{calls.push({url,o});if(url.endsWith('/token'))return Response.json(failure?{error:'invalid_grant'}:{access_token:'SYNTHETIC_ONLY',expires_in:3600},{status:failure?400:200});return Response.json({id:'SYNTHETIC_MAIL'});};
+ const env={COMMUNITY_ORIGIN:'https://mirpanel.com',GMAIL_CLIENT_ID:'synthetic',GMAIL_CLIENT_SECRET:'synthetic',GMAIL_REFRESH_TOKEN:'synthetic',GMAIL_SENDER_EMAIL:'sender@example.test'},send=createAuthMailer(env);
+ await send('verify',{user:{email:'recipient@example.test'},url:'https://mirpanel.com/api/auth/verify-email?token=SYNTHETIC'});await send('reset',{user:{email:'recipient@example.test'},url:'https://mirpanel.com/api/auth/reset-password/SYNTHETIC'});eq(calls.filter(x=>x.url.endsWith('/token')).length,1);eq(calls.filter(x=>x.url.endsWith('/send')).length,2);
+ const raw=Buffer.from(JSON.parse(calls[1].o.body).raw,'base64url').toString();eq(raw.includes('To: recipient@example.test'),true);eq(raw.includes('Content-Transfer-Encoding: base64'),true);
+ await assert.rejects(()=>send('verify',{user:{email:'recipient@example.test'},url:'https://evil.example/'}),/AUTH_MAIL_URL_DENIED/);checks++;
+ await assert.rejects(()=>send('verify',{user:{email:'a@example.test\r\nBcc: stolen@example.test'},url:'https://mirpanel.com/'}),/AUTH_MAIL_ADDRESS_INVALID/);checks++;
+ failure=true;await assert.rejects(()=>createAuthMailer(env)('verify',{user:{email:'recipient@example.test'},url:'https://mirpanel.com/'}),/AUTH_MAIL_AUTHORIZATION_FAILED/);checks++;
+ eq(calls.filter(x=>x.url.endsWith('/send')).length,2);
+ console.log(JSON.stringify({checks,failures:0,realEmailsSent:0,scope:'HTTP adapter contract and failure tests; not delivery proof'}));
+}finally{globalThis.fetch=original;}

@@ -416,6 +416,7 @@ export function createPaymentSystem(options) {
       else await store.verifyUploadedReceipt(receiptPath, receipt.size);
       let submitted;
       let browserOwnerHash=null;
+      const accountUserId=options.accountForCheckout?await options.accountForCheckout(request):null;
       request.receiptStage='history_session';
       if(browserOrders.enabled){await browserOrders.ready();browserOwnerHash=browserOrders.read(request);if(!browserOwnerHash)throw Object.assign(Error('Ödəniş sessiyası yenilənməlidir. Kart seçimini yenidən açın.'),{status:409,code:'BROWSER_SESSION_REQUIRED'});}
       try {
@@ -434,11 +435,13 @@ export function createPaymentSystem(options) {
           durationMonths: structuredDurationMonths(plan)
           ,checkoutMetadata
           ,browserOwnerHash
+          ,accountUserId
         });
       } catch (error) {
         // A lost RPC response is not proof of rollback. Never delete a possibly linked receipt.
         const reconciled = await store.getOrderByReservation(reservationId).catch(() => null);
         if (reconciled) {
+          if(accountUserId){const account=await options.accountHistory(request);if(account.userId!==accountUserId||!await account.owned(reconciled.id))throw Object.assign(Error('Sifariş hesabı ilə əlaqə təsdiqlənmədi.'),{status:409,code:'ACCOUNT_ORDER_OWNER_MISMATCH'});}
           if(browserOwnerHash&&!await store.browserOwnedOrder(browserOwnerHash,reconciled.id))throw Object.assign(Error('Sifariş tarixçəsi ilə əlaqə təsdiqlənmədi. Yenidən cəhd edin.'),{status:503,code:'BROWSER_OWNERSHIP_UNCONFIRMED'});
           if (reconciled.receipt_path !== receiptPath) await store.removeReceipt(receiptPath).catch(() => {});
           submitted = { id: reconciled.id, idempotent: true };

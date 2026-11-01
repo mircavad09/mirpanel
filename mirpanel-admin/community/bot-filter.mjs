@@ -1,0 +1,13 @@
+import crypto from 'node:crypto';import {BOT_ID,classifyMessage,warnings,safeName} from './bot-policy.mjs';
+export async function checkBot(c,user,body,clientId){
+ let name='İstifadəçi';try{name=safeName((await c.query('select display_name from community_profiles where user_id=$1',[user.id])).rows[0]?.display_name);}catch{/* Legacy unsafe names must not disclose contact details in warnings. */}
+ const warningFor=reason=>'@'+name+', '+warnings[reason];
+ const hash=crypto.createHash('sha256').update(body.trim()).digest('hex');const old=(await c.query('select * from community_bot_blocks where user_id=$1 and client_id=$2',[user.id,clientId])).rows[0];if(old){if(old.payload_hash!==hash)throw Object.assign(Error('Bu göndəriş identifikatoru başqa mətn üçün istifadə edilib.'),{status:409});return{blocked:true,reason:old.reason,warning:warningFor(old.reason),warningId:old.warning_id?.toString()||null,idempotent:true};}
+ const reason=classifyMessage(body);if(!reason)return null;
+ if((await c.query("select count(*)::int n from community_bot_blocks where user_id=$1 and created_at>clock_timestamp()-interval '1 minute'",[user.id])).rows[0].n>=20)throw Object.assign(Error('Çox sürətli göndəriş. Bir qədər sonra yenidən cəhd edin.'),{status:429});
+ // Existing settings row lock serializes sends; cooldown is global per reason
+ // and per sender. Blocked plaintext/contact never enters messages or audit.
+ await c.query('insert into community_bot_warnings(reason) values($1) on conflict do nothing',[reason]);const slot=(await c.query("select *,last_at<clock_timestamp()-interval '30 seconds' as ready from community_bot_warnings where reason=$1 for update",[reason])).rows[0];const recent=(await c.query("select 1 from community_bot_blocks where user_id=$1 and created_at>clock_timestamp()-interval '60 seconds' limit 1",[user.id])).rowCount;let id=null;
+ if(slot.ready&&!recent){id=(await c.query('insert into community_messages(user_id,client_id,body) values($1,$2,$3) returning id::text',[BOT_ID,crypto.randomUUID(),warningFor(reason)])).rows[0].id;await c.query('insert into community_bot_tags(message_id,recipient_id,display_name,reason) values($1,$2,$3,$4)',[id,user.id,name,reason]);await c.query('update community_bot_warnings set last_at=clock_timestamp(),message_id=$2 where reason=$1',[reason,id]);}
+ await c.query('insert into community_bot_blocks(user_id,client_id,payload_hash,reason,warning_id) values($1,$2,$3,$4,$5)',[user.id,clientId,hash,reason,id]);await c.query('insert into community_audit(actor_id,action,target_id,reason,details) values($1,$2,$3,$4,$5)',[BOT_ID,'bot-block',user.id,reason,{warningId:id}]);return{blocked:true,reason,warning:warningFor(reason),warningId:id,idempotent:false};
+}

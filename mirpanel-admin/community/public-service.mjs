@@ -1,0 +1,50 @@
+import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {Readable} from 'node:stream';
+import {toNodeHandler,fromNodeHeaders} from 'better-auth/node';import {authFormPolicy} from './auth-form-policy.mjs';
+import {requireAllowed} from './group-control.mjs';import {saveProfile,uploadProfile} from './public-profile.mjs';
+import {tagCount,notifications,markTag,tagMessage} from './bot-tags.mjs';
+const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
+export function authReturn(origin,value){return value===origin+'/sifarislerim'||value==='/sifarislerim'?origin+'/sifarislerim':origin+'/profil';}
+export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body}){
+ const route=u.pathname,{pool,repo,group,auth}=runtime;
+ if(!(await pool.query('select ready from public_community_release where version=1')).rows[0]?.ready)throw fail(503,'Xidmət hazırlanır.');
+ if(route.startsWith('/api/auth/')){
+  const allowed=['/api/auth/sign-in/social','/api/auth/callback/google','/api/auth/get-session','/api/auth/sign-out','/api/auth/sign-up/email','/api/auth/sign-in/email','/api/auth/send-verification-email','/api/auth/verify-email','/api/auth/request-password-reset','/api/auth/reset-password'];
+  if(!allowed.includes(route)&&!/^\/api\/auth\/reset-password\/[^/]+$/.test(route))throw fail(404,'Tapılmadı.');
+  if(req.method==='POST'){
+   if(!String(req.headers['content-type']).includes('application/json'))throw fail(415,'JSON tələb olunur.');const b=await body(req);
+   if(route==='/api/auth/sign-in/social'&&b.provider!=='google')throw fail(403,'Bu girişə icazə verilmir.');
+   if(['sign-in/social','sign-up/email','send-verification-email'].some(p=>route.endsWith(p))){b.callbackURL=authReturn(origin,b.callbackURL);b.errorCallbackURL=origin+'/hesab?next='+encodeURIComponent(new URL(b.callbackURL).pathname);}
+   if(route==='/api/auth/request-password-reset')b.redirectTo=origin+'/hesab?mode=new-password';
+   const raw=Buffer.from(JSON.stringify(b)),replacement=Readable.from([raw]);replacement.socket=req.socket;replacement.httpVersionMajor=req.httpVersionMajor;replacement.method=req.method;replacement.url=req.url;replacement.headers={...req.headers,'content-length':String(raw.length)};await toNodeHandler(auth)(replacement,res);
+  }else await toNodeHandler(auth)(req,res);return true;
+ }
+ const session=await auth.api.getSession({headers:fromNodeHeaders(req.headers)}),user=session?.user||null;if(user)await requireAllowed(pool,user.id);
+ const need=()=>{if(!user)throw fail(401,'Əvvəlcə daxil olun.');return user;};
+ if(route==='/owner-login'){res.writeHead(302,{Location:'/hesab?next='+encodeURIComponent(u.searchParams.get('next')==='/sifarislerim'?'/sifarislerim':'/profil'),'Cache-Control':'private,no-store'});res.end();return true;}
+ if(['/qrup','/profil','/hesab'].includes(route)){
+  if(route==='/profil'&&!user){res.writeHead(302,{Location:'/hesab','Cache-Control':'private,no-store'});res.end();return true;}
+  html(res,`<!doctype html><html lang="az" class="${route==='/qrup'?'community-chat-screen':''}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/community-assets/chat-layout.css?v=public-community-v1"><link rel="stylesheet" href="/community-assets/auth-forms.css?v=public-community-v1"><link rel="stylesheet" href="/community-assets/tag-notifications.css?v=public-community-v1"><link rel="stylesheet" href="/site-header.css?v=public-community-v1"><body class="community-page">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main id="communityApp" class="community-shell"></main><script type="module" src="/community-assets/community.js?v=public-community-v1"></script><script src="/site-header.js?v=public-community-v1" defer></script></body></html>`);return true;
+ }
+ if(route.startsWith('/api/community/media/')&&req.method==='GET'){
+  const file=route.slice('/api/community/media/'.length);if(!/^[a-f0-9-]{36}\.webp$/.test(file))throw fail(404,'Şəkil tapılmadı.');
+  const row=(await pool.query('select m.bytes from profile_media m join community_profiles p on p.user_id=m.user_id where m.id=$1::uuid and ((m.kind=\'avatar\' and p.avatar_path=$2 and p.blocked=false) or (m.kind=\'cover\' and p.cover_path=$2 and m.user_id=$3))',[file.slice(0,-5),file,user?.id||null])).rows[0];if(!row)throw fail(404,'Şəkil tapılmadı.');res.writeHead(200,{'Content-Type':'image/webp','Cache-Control':'private,no-store','X-Content-Type-Options':'nosniff','Vary':'Cookie'});res.end(row.bytes);return true;
+ }
+ if(route==='/api/community/profile-media'&&req.method==='POST'){need();let size=0,chunks=[];for await(const c of req){size+=c.length;if(size>5242880)throw fail(413,'Şəkil maksimum 5 MB ola bilər.');chunks.push(c);}await repo.ensure(user);await uploadProfile(pool,user,u.searchParams.get('kind'),Buffer.concat(chunks));json(res,200,await repo.profile(user));return true;}
+ const b=req.method==='POST'?await body(req):null;
+ if(route==='/api/community/state'&&req.method==='GET')json(res,200,{publicCommunity:true,profile:user?await repo.profile(user):null,unreadTags:user?await tagCount(pool,user.id):0,unread:0,tiers:(await repo.config()).tiers,googleEnabled:true,authFormPolicy});
+ else if(route==='/api/community/messages'&&req.method==='GET')json(res,200,{...await repo.messages({before:u.searchParams.get('before'),after:u.searchParams.get('after')}),settings:await group.settings(),restrictions:user?{...(await pool.query('select muted_permanent,muted_until from community_profiles where user_id=$1',[user.id])).rows[0],isOwner:(await repo.profile(user)).isOwner}:null});
+ else if(route==='/api/community/messages'&&b){need();if(Object.keys(b).some(k=>!['body','clientId'].includes(k)))throw fail(400,'Yalnız mətn göndərmək olar.');const result=await repo.send(user,b.body,b.clientId);json(res,result.blocked?422:201,result);}
+ else if(route==='/api/community/read'&&b)json(res,200,{ok:true});
+ else if(route==='/api/community/counts'&&req.method==='GET')json(res,200,await counts(pool));
+ else if(route==='/api/community/presence'&&b){need();if(!/^[a-f0-9-]{36}$/i.test(b.tabId||''))throw fail(400,'Səhifə identifikatoru düzgün deyil.');if(b.leave===true)await pool.query('delete from community_presence where user_id=$1 and session_id=$2 and tab_id=$3',[user.id,session.session.id,b.tabId]);else await pool.query('insert into community_presence(user_id,session_id,tab_id) values($1,$2,$3) on conflict(session_id,tab_id) do update set last_seen=clock_timestamp()',[user.id,session.session.id,b.tabId]);json(res,200,await counts(pool));}
+ else if(route==='/api/community/notifications'&&req.method==='GET')json(res,200,await notifications(pool,need().id));
+ else if(route==='/api/community/notifications/read'&&b)json(res,200,await markTag(pool,need().id,b.messageId));
+ else if(route==='/api/community/tag-message'&&req.method==='GET')json(res,200,await tagMessage(repo,need().id,u.searchParams.get('messageId')));
+ else if(route==='/api/community/moderate'&&b)json(res,200,await group.act(need(),b));
+ else if(['/api/community/manage','/api/community/audit'].includes(route)&&req.method==='GET')json(res,200,await group.review(need(),{kind:u.searchParams.get('kind')||'audit',page:u.searchParams.get('page')||1}));
+ else if(route==='/api/community/reports'&&b)json(res,200,await group.report(need(),b));
+ else if(route==='/api/community/profile'&&b){need();await repo.ensure(user);await saveProfile(pool,user,b);json(res,200,await repo.profile(user));}
+ else if(route==='/api/community/profile-summary'&&req.method==='GET'){need();const latest=(await pool.query('select o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status,o.created_at from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 order by o.created_at desc,o.id desc limit 1',[user.id])).rows[0]||null,count=(await pool.query("select count(*)::int n from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 and o.status in ('approved','completed')",[user.id])).rows[0].n;json(res,200,{latestOrder:latest,subscription:null,orderCount:count,savingsCents:null});}
+ else throw fail(404,'Tapılmadı.');return true;
+}
+export async function counts(pool){return (await pool.query(`with members as (select id from "user" where id<>'mirpanel-system-bot-v1' and lower(split_part(email,'@',2)) !~ '(^|\\.)(test|invalid|localhost)$' and lower(split_part(email,'@',2)) not in ('example.com','example.net','example.org')) select (select count(*)::int from members) as members,(select count(distinct p.user_id)::int from community_presence p join members m on m.id=p.user_id join session s on s.id=p.session_id and s."userId"=p.user_id left join community_profiles u on u.user_id=p.user_id where p.last_seen>clock_timestamp()-interval '45 seconds' and s."expiresAt">clock_timestamp() and (u.blocked is distinct from true or u.ban_until<=clock_timestamp())) as online`)).rows[0];}

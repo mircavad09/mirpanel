@@ -1,6 +1,7 @@
 // Shared display-only decorator. Identity and tier are supplied by the server renderer.
 const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/community-assets/tier-png-frames.css';document.head.append(sheet);
 export function applyPngTier(root,tier){
+ if(tier==='moderator'){root.classList.add('system-bot-message');return;}
  if(!['bronze','silver','gold','vip','admin'].includes(tier))return;
  root.classList.add('png-tier');root.dataset.pngTier=tier;
  const parts={'.community-avatar-frame,.avatar-shell':'pt-avatar','.community-avatar,.avatar-photo':'pt-photo','.community-message-content,.message-content':'pt-content','.community-message-head,.name-line':'pt-head','.community-badge,.level-badge':'pt-badge','.community-message-bubble,.message-bubble':'pt-bubble','.community-message-body,[data-body]':'pt-body'};

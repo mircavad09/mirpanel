@@ -1,5 +1,9 @@
 /* Group screen only. Auth/profile/checkout and their scrolling are unchanged. */
+.community-chat-head .group-counts{display:block;margin-top:5px;font:400 12px/1.4 system-ui,sans-serif;color:#aeb3b8;letter-spacing:normal}.community-chat-head .group-counts .group-total{color:#aeb3b8}.community-chat-head .group-counts .group-online{color:#52c98b}.community-chat-head h1{min-width:0}.community-chat-head .group-counts:empty{display:none}
+.community-chat-screen .system-bot-message .community-avatar-frame{border:2px solid #5cd0ba;box-shadow:0 0 0 2px #244841,inset 0 0 0 1px #ddc576;border-radius:50%;position:relative}.community-chat-screen .system-bot-message .community-avatar-frame:after{content:'✓';position:absolute;right:-4px;bottom:-3px;background:#e6cf72;color:#162924;border:1px solid #162924;border-radius:50%;font:bold 9px/13px system-ui;width:13px;height:13px;text-align:center;pointer-events:none}.community-chat-screen .system-bot-message .community-badge{color:#bdf1df;border-color:#6db39d;background:#203e35}.community-chat-screen .system-bot-message .community-message-bubble{border:1px solid #658e7e;background:linear-gradient(135deg,#22352e,#17231f)}.community-chat-screen .system-bot-message .community-message-head strong{color:#c4e9d8}
 html.community-chat-screen{height:100%;overflow:hidden;overscroll-behavior:none}
+/* Chat's always-visible composer replaces floating support controls here only. */
+.community-chat-screen #supportWidget{display:none!important}
 .community-chat-screen .site-header{flex:0 0 auto;width:100%;position:relative}
 html.community-chat-screen body.community-page{position:fixed;top:var(--chat-visible-top,0px);left:0;right:0;height:var(--chat-visible-height,100dvh);margin:0;padding:0!important;overflow:hidden;display:flex;flex-direction:column;min-height:0}
 .community-chat-screen .community-demo{display:none!important}

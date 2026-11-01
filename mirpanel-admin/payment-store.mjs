@@ -366,7 +366,7 @@ export function createPaymentStore(config) {
       // canonical plan metadata; keep the legacy transactional receipt/payment RPC.
       const metadata=args.checkoutMetadata;
       const canonicalPlanId=metadata ? await rpc('employee_plan_resolve',{p_product:args.productId,p_key:metadata.sourcePlanKey,p_signature:metadata.signature,p_label:args.planName}) : null;
-      const result=await rpc(args.browserOwnerHash?'submit_payment_order_browser':'submit_payment_order_v2',{...params,...(args.browserOwnerHash?{p_owner_hash:args.browserOwnerHash}:{})});
+      const result=await rpc(args.accountUserId?'submit_payment_order_account_v1':args.browserOwnerHash?'submit_payment_order_browser':'submit_payment_order_v2',{...params,...(args.browserOwnerHash?{p_owner_hash:args.browserOwnerHash}:{}),...(args.accountUserId?{p_user_id:args.accountUserId}:{})});
       if(metadata){
         const snapshot={productId:args.productId,planId:canonicalPlanId,productName:args.productTitle,planName:args.planName,unitPrice:metadata.unitPrice,quantity:1,amount:metadata.unitPrice};
         const {error}=await client.from('payment_orders').update({quantity:1,canonical_plan_id:canonicalPlanId,checkout_snapshot:snapshot})

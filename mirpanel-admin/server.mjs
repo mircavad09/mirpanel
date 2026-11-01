@@ -1263,6 +1263,7 @@ const mime = {
 
 const paymentSystem = createPaymentSystem({
   accountHistory: request=>ownerCommunity.orderHistory(request),
+  accountForCheckout: request=>ownerCommunity.checkoutAccount(request),
   config,
   json,
   readBody,
