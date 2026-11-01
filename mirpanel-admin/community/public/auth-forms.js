@@ -36,7 +36,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert}){
  }
  if(mode==='login'){form.append(link('Şifrəmi unutdum','/hesab?mode=reset','auth-forgot'));const resend=button('Təsdiq məktubunu yenidən göndər',async()=>{if(busy||!fields.email.reportValidity())return;busy=true;resend.disabled=true;error.textContent='';try{await api('/api/auth/send-verification-email',{email:fields.email.value.trim(),callbackURL:location.origin+destination});success.textContent='Təsdiq tələb olunursa, məktub göndərildi.';}catch(e){error.textContent=readableError(e);}finally{busy=false;resend.disabled=false;}});resend.className='auth-forgot';form.append(resend);}
  const submit=el('button',{type:'submit',class:'auth-submit'},mode==='signup'?'Qeydiyyatdan keç':mode==='login'?'Giriş et':mode==='reset'?'Bərpa keçidini göndər':'Şifrəni yenilə');form.append(error,success,submit);
- 
+
  form.addEventListener('submit',async e=>{e.preventDefault();if(busy||!form.reportValidity())return;busy=true;submit.disabled=true;submit.setAttribute('aria-busy','true');error.textContent='';success.textContent='';try{const values=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.type==='checkbox'?v.checked:v.value.trim()]));if(fields.password)values.password=fields.password.value;
   if(mode==='signup'){await api('/api/auth/sign-up/email',{...values,name:values.firstName+' '+values.lastName,registrationForm:true,callbackURL:location.origin+destination});success.textContent='E-poçtunuza göndərilən təsdiq keçidini açın.';fields.password.value='';}
   else if(mode==='login'){await api('/api/auth/sign-in/email',{email:values.email,password:values.password});fields.password.value='';location.assign(destination);}

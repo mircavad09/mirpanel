@@ -93,7 +93,7 @@ If SQL changes or substantial time passes before release, redo the backup/restor
 
 | Command | Assertions | Failed |
 |---|---:|---:|
-| `test-public-community.mjs` | 135 | 0 |
+| `test-public-community.mjs` | 145 | 0 |
 | `test-public-moderation.mjs` | 31 | 0 |
 | `test-public-order-link.mjs` | 13 | 0 |
 | `test-public-bot-policy.mjs` | 39 | 0 |
@@ -104,7 +104,7 @@ If SQL changes or substantial time passes before release, redo the backup/restor
 | `test-public-checkout-no-customer.mjs` | 39 | 0 |
 | `test-inventory-upstream.mjs` | 18 | 0 |
 | `test-owner-proxy.mjs` | 11 | 0 |
-| **Total** | **1334** | **0** |
+| **Total** | **1344** | **0** |
 
 Fresh synthetic PostgreSQL, actual local HTTP/auth sessions and Chromium at
 320/390/430/768/1024/1440 px. Screenshots ignored under
