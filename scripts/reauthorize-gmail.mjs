@@ -20,7 +20,9 @@ export function saveEncryptedCredential(payload, root=path.join(process.env.LOCA
   '$ErrorActionPreference="Stop"; $phase="INIT"; try{ Add-Type -AssemblyName System.Security;',
   '$dir=$env:MIRPANEL_CREDENTIAL_DIRECTORY; [void][IO.Directory]::CreateDirectory($dir);',
   '$phase="ACL"; $sid=[Security.Principal.WindowsIdentity]::GetCurrent().User.Value;',
-  '& icacls.exe $dir /inheritance:r /grant:r "*${sid}:(OI)(CI)F" | Out-Null; if($LASTEXITCODE -ne 0){throw "ACL_FAILED"};',
+  '$acl=New-Object Security.AccessControl.DirectorySecurity; $acl.SetAccessRuleProtection($true,$false);',
+  '$rule=New-Object Security.AccessControl.FileSystemAccessRule([Security.Principal.SecurityIdentifier]::new($sid),[Security.AccessControl.FileSystemRights]::FullControl,([Security.AccessControl.InheritanceFlags]::ContainerInherit -bor [Security.AccessControl.InheritanceFlags]::ObjectInherit),[Security.AccessControl.PropagationFlags]::None,[Security.AccessControl.AccessControlType]::Allow);',
+  '[void]$acl.AddAccessRule($rule); [IO.Directory]::SetAccessControl($dir,$acl);',
   '$phase="ACLREAD"; $rules=[IO.Directory]::GetAccessControl($dir,[Security.AccessControl.AccessControlSections]::Access).GetAccessRules($true,$true,[Security.Principal.SecurityIdentifier]); $phase="ACLCHECK";',
   'foreach($rule in $rules){if($rule.AccessControlType -eq "Allow" -and $rule.IdentityReference.Value -ne $sid){throw "UNEXPECTED_FILE_ACCESS"}};',
   '$phase="ENCRYPT"; $raw=[Console]::In.ReadToEnd(); $bytes=[Text.Encoding]::UTF8.GetBytes($raw);',
@@ -36,6 +38,11 @@ export function saveEncryptedCredential(payload, root=path.join(process.env.LOCA
 }
 
 async function main(){
+ // Prove storage works before asking the operator to consent again.
+ const probe=path.join(process.env.LOCALAPPDATA,'MirpanelPrivateCredentials','probe-'+crypto.randomUUID());
+ try{saveEncryptedCredential({clientId:'storage-self-test',sender:'synthetic@example.test',refreshToken:'not-a-real-token',authorizedAt:new Date().toISOString()},probe);}
+ finally{if(fs.existsSync(probe))fs.rmSync(probe,{recursive:true,force:true});}
+ console.log('PRIVATE_CREDENTIAL_STORAGE_PREFLIGHT_OK');
  const key=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');
  const r=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars?limit=100',{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw Error('RENDER_CONFIGURATION_UNAVAILABLE');
