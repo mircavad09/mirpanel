@@ -43,7 +43,7 @@ export class GroupControl{
    }
    if(changed)await c.query('insert into community_audit(actor_id,action,target_id,reason,details) values($1,$2,$3,$4,$5)',[actor.id,action,target,reason.trim(),details]);
    const result={ok:true};await c.query('insert into community_moderation_requests(actor_id,request_id,payload_hash,result) values($1,$2,$3,$4)',[actor.id,requestId,hash,result]);return result;
-  });
+  },{kind:'moderation',action,targetId:String(targetId||'')});
  }
  async report(user,{messageId,reason}){
   if(!user)throw fail(401,'Əvvəlcə daxil olun.');await requireAllowed(this.pool,user.id);if(!user.emailVerified)throw fail(403,'E-poçtu təsdiqləyin.');

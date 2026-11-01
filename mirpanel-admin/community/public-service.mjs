@@ -2,6 +2,7 @@ import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} fro
 import {toNodeHandler,fromNodeHeaders} from 'better-auth/node';import {authFormPolicy} from './auth-form-policy.mjs';
 import {requireAllowed} from './group-control.mjs';import {saveProfile,uploadProfile} from './public-profile.mjs';
 import {tagCount,notifications,markTag,tagMessage} from './bot-tags.mjs';
+import {CommunityLive} from './live.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
 export function authReturn(origin,value){return value===origin+'/sifarislerim'||value==='/sifarislerim'?origin+'/sifarislerim':origin+'/profil';}
 export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body}){
@@ -16,10 +17,14 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
    if(['sign-in/social','sign-up/email','send-verification-email'].some(p=>route.endsWith(p))){b.callbackURL=authReturn(origin,b.callbackURL);b.errorCallbackURL=origin+'/hesab?next='+encodeURIComponent(new URL(b.callbackURL).pathname);}
    if(route==='/api/auth/request-password-reset')b.redirectTo=origin+'/hesab?mode=new-password';
    const raw=Buffer.from(JSON.stringify(b)),replacement=Readable.from([raw]);replacement.socket=req.socket;replacement.httpVersionMajor=req.httpVersionMajor;replacement.method=req.method;replacement.url=req.url;replacement.headers={...req.headers,'content-length':String(raw.length)};await toNodeHandler(auth)(replacement,res);
-  }else await toNodeHandler(auth)(req,res);return true;
+  }else await toNodeHandler(auth)(req,res);
+  if(['/api/auth/sign-up/email','/api/auth/callback/google','/api/auth/sign-out'].includes(route))void pool.query("select pg_notify('mirpanel_community_live','{}')").catch(()=>{});return true;
  }
- const session=await auth.api.getSession({headers:fromNodeHeaders(req.headers)}),user=session?.user||null;if(user)await requireAllowed(pool,user.id);
+ // Public shells contain no account data. Authenticate the data API, not the HTML shell.
+ const publicShell=req.method==='GET'&&['/qrup','/hesab'].includes(route);
+ const session=publicShell?null:await auth.api.getSession({headers:fromNodeHeaders(req.headers)}),user=session?.user||null;if(user)await requireAllowed(pool,user.id);
  const need=()=>{if(!user)throw fail(401,'Əvvəlcə daxil olun.');return user;};
+ if(route==='/api/community/events'&&req.method==='GET'){runtime.live??=new CommunityLive(pool,repo,counts);await runtime.live.attach(req,res,session,u);return true;}
  if(route==='/owner-login'){res.writeHead(302,{Location:'/hesab?next='+encodeURIComponent(u.searchParams.get('next')==='/sifarislerim'?'/sifarislerim':'/profil'),'Cache-Control':'private,no-store'});res.end();return true;}
  if(['/qrup','/profil','/hesab'].includes(route)){
   if(route==='/profil'&&!user){res.writeHead(302,{Location:'/hesab','Cache-Control':'private,no-store'});res.end();return true;}
@@ -31,8 +36,8 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  }
  if(route==='/api/community/profile-media'&&req.method==='POST'){need();let size=0,chunks=[];for await(const c of req){size+=c.length;if(size>5242880)throw fail(413,'Şəkil maksimum 5 MB ola bilər.');chunks.push(c);}await repo.ensure(user);await uploadProfile(pool,user,u.searchParams.get('kind'),Buffer.concat(chunks));json(res,200,await repo.profile(user));return true;}
  const b=req.method==='POST'?await body(req):null;
- if(route==='/api/community/state'&&req.method==='GET')json(res,200,{publicCommunity:true,profile:user?await repo.profile(user):null,unreadTags:user?await tagCount(pool,user.id):0,unread:0,tiers:(await repo.config()).tiers,googleEnabled:true,authFormPolicy});
- else if(route==='/api/community/messages'&&req.method==='GET')json(res,200,{...await repo.messages({before:u.searchParams.get('before'),after:u.searchParams.get('after')}),settings:await group.settings(),restrictions:user?{...(await pool.query('select muted_permanent,muted_until from community_profiles where user_id=$1',[user.id])).rows[0],isOwner:(await repo.profile(user)).isOwner}:null});
+ if(route==='/api/community/state'&&req.method==='GET'){const [profile,unreadTags,config,initial]=await Promise.all([user?repo.profile(user):null,user?tagCount(pool,user.id):0,repo.config(),u.searchParams.get('group')==='1'?Promise.all([repo.messages(),group.settings(),counts(pool)]):null]);json(res,200,{publicCommunity:true,profile,unreadTags,unread:0,tiers:config.tiers,googleEnabled:true,authFormPolicy,...(initial?{initialMessages:{...initial[0],settings:initial[1],restrictions:profile},counts:initial[2]}:{})});}
+ else if(route==='/api/community/messages'&&req.method==='GET'){const [messages,settings,profile]=await Promise.all([repo.messages({before:u.searchParams.get('before'),after:u.searchParams.get('after'),known:u.searchParams.get('known')}),group.settings(),user?repo.profile(user):null]);json(res,200,{...messages,settings,restrictions:profile});}
  else if(route==='/api/community/messages'&&b){need();if(Object.keys(b).some(k=>!['body','clientId'].includes(k)))throw fail(400,'Yalnız mətn göndərmək olar.');const result=await repo.send(user,b.body,b.clientId);json(res,result.blocked?422:201,result);}
  else if(route==='/api/community/read'&&b)json(res,200,{ok:true});
  else if(route==='/api/community/counts'&&req.method==='GET')json(res,200,await counts(pool));

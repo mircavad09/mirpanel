@@ -17,6 +17,15 @@
 /browser-nav.css
   Cache-Control: no-cache, must-revalidate
 
+/session-state.js
+  Cache-Control: no-cache, must-revalidate
+
+/account-header.js
+  Cache-Control: no-cache, must-revalidate
+
+/community-notices.js
+  Cache-Control: no-cache, must-revalidate
+
 /admin-stock-save-fix.js
   Cache-Control: no-cache, no-store, must-revalidate
   Content-Type: text/javascript; charset=utf-8
