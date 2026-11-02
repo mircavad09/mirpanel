@@ -1,0 +1,7 @@
+#communityUsersView,#communityGroupView{min-width:0;padding:16px;border:1px solid #2d3035;border-radius:16px;background:#141619;overflow-wrap:anywhere}
+#communityUsersView article,#communityGroupView article{padding:14px;margin:10px 0;min-width:0}
+#communityUsersView input,#communityGroupView textarea{max-width:100%;width:100%;background:#202226;color:#eee;border:1px solid #3b3e43;border-radius:10px;padding:12px;box-sizing:border-box}
+#communityUsersView section{padding:16px;border-top:1px solid #34363b;margin-top:16px}
+#communityUsersView section img{border-radius:50%;object-fit:cover}#communityUsersView .btn,#communityGroupView .btn{margin:5px;min-height:44px}
+.admin-community-messages{max-height:60vh;min-height:180px;overflow:auto;overscroll-behavior:contain}.admin-community-messages article img{border-radius:50%;object-fit:cover;margin-right:8px;vertical-align:middle}.admin-community-messages small{color:#aeb0b5;margin-left:8px}
+#communityGroupView textarea{display:block;min-height:70px}#communityGroupView [role=alert]:empty{display:none}

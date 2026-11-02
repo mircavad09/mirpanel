@@ -15,7 +15,6 @@ import { createStoriesRepository } from "./stories-repository.mjs";
 import { createHomepageBannersRepository } from "./homepage-banners-repository.mjs";
 import { createProductSalesRepository } from './product-sales-repository.mjs';
 import { createEmployeeSystem } from './employee-api.mjs';
-import {createAdminUsersRepository} from './admin-users-repository.mjs';
 import {createAdminSessions,ADMIN_IDLE_MS} from './admin-sessions.mjs';
 import {createOwnerCommunity} from './community/service.mjs';
 const ownerCommunity=createOwnerCommunity();
@@ -728,15 +727,28 @@ async function handleApi(request, response) {
   }
 
   if (!requireAuth(request, response)) return;
+  if(salesUrl.pathname.startsWith('/api/admin/community/')){
+    if(getSession(request)?.role!=='admin')return json(response,403,{error:'Yalnız admin üçün.'});
+    if(request.method!=='GET'&&!requireMutationAuth(request,response))return;
+    if(salesUrl.pathname==='/api/admin/community/events'){
+      const check=setInterval(async()=>{try{const active=await adminSessions.read(getCookies(request).mirpanel_session);if(!active||active.role!=='admin')response.end();}catch{response.end();}},20000);
+      check.unref();response.once('close',()=>clearInterval(check));
+    }
+    try{return await ownerCommunity.adminHandle(request,response,{json,body:readBody});}
+    catch(e){console.error('ADMIN_COMMUNITY_FAILED',/^[0-9A-Z_]{3,40}$/.test(e.code||'')?e.code:'REQUEST_FAILED');return json(response,e.status||503,{error:e.status?e.message:'İcma xidməti əlçatan deyil.'});}
+  }
   if(request.method==='POST'&&request.url==='/api/session/activity'){
     if(!requireMutationAuth(request,response))return;
     return json(response,200,{ok:true,expiresAt:getSession(request).expiresAt,idleSeconds:sessionTtl/1000});
   }
   if(salesUrl.pathname==='/api/admin/users'||salesUrl.pathname.startsWith('/api/admin/users/')){
     if(getSession(request)?.role!=='admin')return json(response,403,{error:'Bu bölmə yalnız adminə açıqdır.'});
-    if(request.method!=='GET')return json(response,405,{error:'Bu bölmə yalnız baxış üçündür.'},{Allow:'GET'});
-    try{const suffix=salesUrl.pathname.slice('/api/admin/users'.length);if(suffix&&!/^\/[^/]+$/.test(suffix))return json(response,404,{error:'Endpoint tapılmadı.'});let id=null;if(suffix){try{id=decodeURIComponent(suffix.slice(1));}catch{return json(response,400,{error:'İstifadəçi ID-si düzgün deyil.'});}}const data=suffix?await adminUsers.detail(id):await adminUsers.list(Object.fromEntries(salesUrl.searchParams));return json(response,200,data,{'Cache-Control':'private, no-store',Vary:'Cookie'});}
-    catch(error){const status=error.status||503;if(status>=500)console.error('ADMIN_USERS_READ_FAILED',/^USER_DIRECTORY_[A-Z_]+$/.test(error.code||'')?error.code:'USER_DIRECTORY_UNAVAILABLE');return json(response,status,{error:error.status?error.message:'İstifadəçilər yüklənmədi. Yenidən cəhd edin.'},{'Cache-Control':'private, no-store',Vary:'Cookie'});}
+    if(request.method!=='GET')return json(response,405,{error:'Yalnız baxış üçün.'});
+    const previousUrl=request.url;
+    request.url=request.url.replace('/api/admin/users','/api/admin/community/users');
+    try{return await ownerCommunity.adminHandle(request,response,{json,body:readBody});}
+    catch(e){return json(response,e.status||503,{error:e.status?e.message:'İstifadəçi xidməti əlçatan deyil.'});}
+    finally{request.url=previousUrl;}
   }
   if (request.url === '/api/admin/product-sales') {
     if (!productSales) return json(response,503,{error:'Satış statistikası xidməti hazır deyil.'});
@@ -1285,7 +1297,6 @@ const storiesSupabase = config.supabaseUrl && config.supabaseSecretKey
   ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false } })
   : null;
 const storiesRepository = storiesSupabase ? createStoriesRepository(storiesSupabase, { bucket: config.storiesBucket }) : null;
-const adminUsers=createAdminUsersRepository(storiesSupabase?createClient(config.supabaseUrl,config.supabaseSecretKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init={})=>fetch(input,{...init,signal:AbortSignal.timeout(10000)})}}):null);
 const adminSessions=createAdminSessions({client:storiesSupabase?createClient(config.supabaseUrl,config.supabaseSecretKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init={})=>fetch(input,{...init,signal:AbortSignal.timeout(10000)})}}):null,username:config.username,password:config.password,secret:config.tokenSecret});
 const productSales = storiesSupabase ? createProductSalesRepository(storiesSupabase, {
   loadCatalog:async()=>extractAdminState((await getAppFile()).source)
@@ -1395,10 +1406,16 @@ const server = http.createServer(async (request, response) => {
     }
     if(['/employee.js','/employee.css','/employee-login.js','/receipt-analysis-view.js'].includes(pathname))return serveFile(response,pathname.slice(1));
     if(pathname.startsWith('/admin')&&await employeeSystem.blockAdmin(request,response))return;
+    if(['/admin-community-panel.js','/admin-community-panel.css'].includes(pathname)){
+      if(!requireAuth(request,response))return;
+      if(getSession(request)?.role!=='admin')return json(response,403,{error:'Yalnız admin üçün.'});
+      return serveFile(response,pathname.slice(1));
+    }
     if(['/admin/users','/admin-users.js','/admin-users.css'].includes(pathname)){
       const session=getSession(request);
       if(!session){if(pathname==='/admin/users'){response.writeHead(302,{Location:'/login.html?reason=session_required','Cache-Control':'no-store'});return response.end();}return json(response,401,{error:'Admin sessiyası tələb olunur.'});}
       if(session.role!=='admin')return json(response,403,{error:'Bu bölmə yalnız adminə açıqdır.'});
+      if(pathname==='/admin/users'){response.writeHead(302,{Location:'/admin.html#communityUsers','Cache-Control':'no-store'});return response.end();}
       return serveFile(response,pathname==='/admin/users'?'admin-users.html':pathname.slice(1));
     }
 
