@@ -2,7 +2,7 @@ import {createGroupAdmin} from '/community-assets/group-admin.js';
 import {applyPngTier} from '/community-assets/tier-png-component.js';
 import {tierLabel} from '/community-assets/tier-labels.js';
 const avatars=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'];
-const time=new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}),day=new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',year:'numeric',month:'long',day:'numeric'});
+const time=new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}),numericDay=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit'}),day={format:d=>numericDay.format(d).replaceAll('/','.')};
 const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k==='class')n.className=v;else n.setAttribute(k,v);}for(const c of children.flat())if(c!=null)n.append(typeof c==='string'?document.createTextNode(c):c);return n;};
 const button=(text,fn)=>{const n=el('button',{type:'button',class:'btn'},text);n.onclick=fn;return n;};
 export async function mountChat({root,state,call,alive}){
