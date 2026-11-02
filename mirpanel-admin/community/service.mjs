@@ -8,11 +8,12 @@ import {requireAllowed} from './group-control.mjs';
 import {adminDirectory} from './admin-directory.mjs';
 import {CommunityLive} from './live.mjs';
 import {counts} from './public-service.mjs';
+import {walletHistory,creditWallet} from './wallet.mjs';
 export function createOwnerCommunity(env=process.env,options={}){
  const publicEnabled=env.COMMUNITY_PUBLIC_ENABLED==='true';
  const enabled=env.COMMUNITY_OWNER_ENABLED==='true',origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';let runtime;
  const json=(res,status,value)=>{res.writeHead(status,{'Content-Type':'application/json; charset=utf-8','Cache-Control':'private, no-store','Vary':'Cookie, Origin','X-Robots-Tag':'noindex,nofollow'});res.end(JSON.stringify(value));};
- const html=(res,text)=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'private, no-store','Vary':'Cookie','X-Robots-Tag':'noindex,nofollow','X-Content-Type-Options':'nosniff'});res.end(text.replace(/(src=")\/community-assets\/(owner-entry|community)\.js(?:\?[^" ]*)?"/g,'$1/community-assets/$2.js?v='+(publicEnabled?'community-realtime-20261101':'account-history-20261031')+'"'));};
+ const html=(res,text)=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'private, no-store','Vary':'Cookie','X-Robots-Tag':'noindex,nofollow','X-Content-Type-Options':'nosniff'});res.end(text.replace(/(src=")\/community-assets\/(owner-entry|community)\.js(?:\?[^" ]*)?"/g,'$1/community-assets/$2.js?v='+(publicEnabled?'community-wallet-20261102':'account-history-20261031')+'"'));};
  const entry=(signup=false,login=false)=>`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MirPanel · Qrup</title><link rel="stylesheet" href="/community-assets/community.css"><body class="community-page"><main class="community-shell"><section class="community-panel"><h1>${signup?'Qeydiyyat tezliklə açılacaq':login?'Sahib girişi':'Qrup tezliklə istifadəyə veriləcək'}</h1><p>İctimai qeydiyyat və qrupa giriş hazırda bağlıdır.</p>${login?`<button id="ownerGoogle" ${enabled?'':'disabled'}>Google ilə davam edin</button><p id="entryError" role="alert">${enabled?'Giriş yalnız icazəli sahib hesabına açıqdır.':'Sahib girişi hazırlanır.'}</p><script type="module" src="/community-assets/owner-entry.js"></script>`:'<a href="/owner-login">Giriş</a>'}<p><a href="/">Ana səhifəyə qayıt</a></p></section></main></body></html>`;
  async function init(){if(runtime)return runtime;if(!enabled)throw Object.assign(Error('Qrup tezliklə açılacaq.'),{status:503});for(const key of ['COMMUNITY_DATABASE_URL','COMMUNITY_AUTH_SECRET','COMMUNITY_GOOGLE_CLIENT_ID','COMMUNITY_GOOGLE_CLIENT_SECRET'])if(!env[key])throw Object.assign(Error('Sahib girişi hazırlanır.'),{status:503});if(env.COMMUNITY_AUTH_SECRET.length<32)throw Error('OWNER_AUTH_SECRET_TOO_SHORT');if(!['https://mirpanel.com','http://127.0.0.1:55464'].includes(origin))throw Error('INVALID_OWNER_ORIGIN');const pool=new pg.Pool({connectionString:env.COMMUNITY_DATABASE_URL,max:5,options:'-c search_path=mirpanel_community,public',ssl:env.COMMUNITY_TEST==='true'?false:{rejectUnauthorized:true,ca:env.COMMUNITY_DATABASE_CA},connectionTimeoutMillis:15000});const repo=publicEnabled?new Repository(pool):new OwnerRepository(pool),group=new GroupControl(repo),authConfig={origin,secret:env.COMMUNITY_AUTH_SECRET,clientId:env.COMMUNITY_GOOGLE_CLIENT_ID,clientSecret:env.COMMUNITY_GOOGLE_CLIENT_SECRET},auth=publicEnabled?makePublicAuth(pool,authConfig,options.sendAuthEmail||createAuthMailer(env)):makeOwnerAuth(pool,authConfig);runtime={pool,repo,group,auth};return runtime;}
  async function body(req){let n=0,parts=[];for await(const b of req){n+=b.length;if(n>16384)throw Object.assign(Error('Sorğu çox böyükdür.'),{status:413});parts.push(b);}try{return JSON.parse(Buffer.concat(parts).toString()||'{}');}catch{throw Object.assign(Error('Sorğu düzgün deyil.'),{status:400});}}
@@ -22,6 +23,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   const owner=(await r.pool.query('select u.* from owner_identity o join "user" u on u.id=o.user_id where o.id=true')).rows[0];
   if(!await isOwner(r.pool,owner))throw Object.assign(Error('Təsdiqlənmiş sahib hesabı tapılmadı.'),{status:403});
   if(req.method==='GET'){
+   if(part==='/wallet')return json(res,200,await walletHistory(r.pool,u.searchParams.get('userId'),Object.fromEntries(u.searchParams)));
    if(part==='/users'||part.startsWith('/users/'))return json(res,200,await adminDirectory(r.pool,r.repo,{...Object.fromEntries(u.searchParams),id:part.startsWith('/users/')?decodeURIComponent(part.slice(7)):null}));
    if(part==='/state')return json(res,200,{profile:await r.repo.profile(owner),settings:await r.group.settings()});
    if(part==='/messages')return json(res,200,await r.repo.messages(Object.fromEntries(u.searchParams)));
@@ -30,6 +32,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   }
   if(req.method==='POST'){
    const b=await body(req);
+   if(part==='/wallet/credit')return json(res,200,await creditWallet(r.pool,owner,b));
    if(part==='/messages')return json(res,201,await r.repo.send(owner,b.body,b.clientId));
    if(part==='/moderate')return json(res,200,await r.group.act(owner,b));
   }

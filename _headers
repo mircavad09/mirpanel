@@ -23,6 +23,9 @@
 /account-header.js
   Cache-Control: no-cache, must-revalidate
 
+/desktop-header.js
+  Cache-Control: no-cache, must-revalidate
+
 /community-notices.js
   Cache-Control: no-cache, must-revalidate
 

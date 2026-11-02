@@ -8,7 +8,11 @@ export async function adminDirectory(pool,repo,{q='',page='1',id}={}){
  const params=[id||null,q.trim()];
  const total=Number((await pool.query(`select count(*)::int n from "user" u left join community_profiles p on p.user_id=u.id left join community_member_numbers n on n.user_id=u.id where ${where}`,params)).rows[0].n);
  const rows=(await pool.query(`select u.id,u.name,u.email,u."emailVerified",u."createdAt" as "createdAt",n.member_number::text as "memberNumber",
- p.first_name as "firstName",p.last_name as "lastName",p.blocked,p.ban_until as "banUntil",p.muted_permanent as "mutedPermanent",p.muted_until as "mutedUntil",
+ p.first_name as "firstName",p.last_name as "lastName",p.avatar,p.avatar_path as "avatarPath",p.blocked,p.ban_until as "banUntil",p.muted_permanent as "mutedPermanent",p.muted_until as "mutedUntil",
+ coalesce((select w.cents::text from wallet_accounts w where w.user_id=u.id),'0') as "balanceCents",
+ (select coalesce(sum(greatest(0,round(o.amount*100)::bigint-coalesce(f.cents,0))),0)::text from community_order_owners l join public.payment_orders o on o.id=l.order_id left join community_refunds f on f.order_id=o.id where l.user_id=u.id and o.status in ('approved','completed') and o.currency='AZN') as "spentCents",
+ (select count(*)::int from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=u.id and o.status in ('approved','completed')) as "orderCount",
+ (select max(v.last_seen) from community_presence v where v.user_id=u.id) as "lastSeen",
  exists(select 1 from community_presence v join session s on s.id=v.session_id and s."userId"=u.id where v.user_id=u.id and v.last_seen>clock_timestamp()-interval '45 seconds' and s."expiresAt">clock_timestamp()) as online
  from "user" u left join community_profiles p on p.user_id=u.id left join community_member_numbers n on n.user_id=u.id
  where ${where} order by u."createdAt" desc,u.id limit 20 offset $3`,[...params,(Number(page)-1)*20])).rows;

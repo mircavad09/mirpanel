@@ -12,6 +12,7 @@ export async function mount(root,view){stop();let alive=true,stream;stop=()=>{al
  const error=e('p');error.setAttribute('role','alert');
  const guarded=fn=>async(...args)=>{try{await fn(...args);}catch(x){error.textContent=x.message;}};
  try{
+ if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=1');const close=await mountUsers({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
  if(view==='communityUsers'){
   let page=1,q='';const input=e('input');input.placeholder='Ad, e-poçt, üzv ID-si';const list=e('div'),detail=e('section'),label=e('span');
   const show=guarded(async id=>{const r=await call('/users/'+encodeURIComponent(id));if(!alive)return;detail.replaceChildren(e('h2',r.user.name));
