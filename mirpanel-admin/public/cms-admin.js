@@ -90,7 +90,7 @@
     window.dispatchEvent(new CustomEvent('admin-community-view',{detail:view}));
     if(['communityUsers','communityGroup'].includes(view)){
       if(!el(`${view}View`))createView(view,'');
-      import('/admin-community-panel.js?v=polish-20261102').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
+      import('/admin-community-panel.js?v=controls-20261102').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
     }
     document.querySelectorAll(".workspace, .singlePanel, .cmsWorkspace").forEach((section) => section.classList.add("hidden"));
     const target = el(`${view}View`);

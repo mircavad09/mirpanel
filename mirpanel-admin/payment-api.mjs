@@ -15,6 +15,7 @@ import { structuredDurationMonths } from "./payment-order-lifecycle.mjs";
 import { paymentMethodLabel } from "./payment-order-query.mjs";
 import {signature} from './employee-security.mjs';
 import {planKey} from './payment-profit.mjs';
+import {userPriceSignature} from './community/user-price-key.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
 import {createInventoryReader,inventoryUnavailable} from './inventory-reader.mjs';
@@ -260,10 +261,11 @@ export function createPaymentSystem(options) {
       }
       const { product, plan, planIndex, requireStock } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
       const orderQuantity=1;
-      const reserved = await store.reserve({
+      const reserveArgs={
         methodId, productId: product.id, planId: String(planIndex), amount: Number((Number(plan.price)*orderQuantity).toFixed(2)),
         idempotencyKey, checkoutKey, previousReservationId,requireStock:requireStock===true
-      });
+      };
+      const reserved=await options.accountReservation?.(request,{...reserveArgs,minutes:config.reservationMinutes,planKey:planKey(plan,planIndex),signature:userPriceSignature(plan)})||await store.reserve(reserveArgs);
       const method = await store.rawMethod(methodId);
       publicJson(request, response, 200, {
         reservationId: reserved.id,
@@ -278,7 +280,7 @@ export function createPaymentSystem(options) {
           color: method.color,
           theme: resolvedPaymentTheme(method)
         },
-        amount: Number((Number(plan.price)*orderQuantity).toFixed(2)),
+        amount: reserved.amount===undefined?Number((Number(plan.price)*orderQuantity).toFixed(2)):Number(reserved.amount),
         currency: "AZN"
       });
       return true;
@@ -306,6 +308,7 @@ export function createPaymentSystem(options) {
       const checkoutKey = safeUuid(body.checkoutKey);
       if (!reservationId || !checkoutKey) throw Object.assign(new Error("Rezerv və checkout açarı düzgün deyil."), { status: 400 });
       const reservation = await store.checkoutReservation(reservationId, checkoutKey);
+      await options.reservedAccountPrice?.(request,reservationId);
       const order = await store.getOrderByReservation(reservationId);
       if (order) {
         publicJson(request, response, 200, { state: "submitted", order: await orderResult(order) });
@@ -373,6 +376,7 @@ export function createPaymentSystem(options) {
       if (!checkoutKey) throw Object.assign(new Error("Ödəniş səhifəsi yenilənib. Səhifəni yeniləyib yenidən cəhd edin; rezerviniz qorunur."), { status: 400 });
       if (!reservationId || !checkoutKey || !idempotencyKey || body.consentAccepted !== true) throw Object.assign(new Error("Rezerv, checkout açarı və məcburi razılıq tələb olunur."), { status: 400 });
       const reservation = await store.checkoutReservation(reservationId, checkoutKey);
+      const accountBoundPrice=await options.reservedAccountPrice?.(request,reservationId);
       if (reservation.product_id !== body.productId || reservation.plan_id !== String(body.planIndex)) {
         throw Object.assign(new Error("Təkrar sorğu əvvəlki sifarişlə uyğun deyil."), { status: 409 });
       }
@@ -408,7 +412,8 @@ export function createPaymentSystem(options) {
         return true;
       }
       const { product, plan, planIndex } = await catalogSelection(safeText(body.productId, 100), body.planIndex);
-      const checkoutMetadata=config.employeeEnabled ? {unitPrice:Number(plan.price),signature:signature(plan),sourcePlanKey:planKey(plan,planIndex)} : null;
+      const boundPrice=accountBoundPrice;
+      const checkoutMetadata=config.employeeEnabled ? {unitPrice:boundPrice??Number(plan.price),signature:signature(plan),sourcePlanKey:planKey(plan,planIndex)} : null;
       // Same reservation + identical validated bytes always target one private
       // object, even if a timeout hides a successful storage response.
       const receiptPath = receipt.path || `${reservationId}/${receipt.sha256}.${receipt.extension}`;

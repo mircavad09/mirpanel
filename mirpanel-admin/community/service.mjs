@@ -9,6 +9,8 @@ import {adminDirectory} from './admin-directory.mjs';
 import {CommunityLive} from './live.mjs';
 import {counts} from './public-service.mjs';
 import {walletHistory,creditWallet} from './wallet.mjs';
+import {userStatistics} from './user-statistics.mjs';
+import {userControls,saveUserControls} from './user-controls.mjs';
 export function createOwnerCommunity(env=process.env,options={}){
  const publicEnabled=env.COMMUNITY_PUBLIC_ENABLED==='true';
  const enabled=env.COMMUNITY_OWNER_ENABLED==='true',origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';let runtime;
@@ -23,6 +25,8 @@ export function createOwnerCommunity(env=process.env,options={}){
   const owner=(await r.pool.query('select u.* from owner_identity o join "user" u on u.id=o.user_id where o.id=true')).rows[0];
   if(!await isOwner(r.pool,owner))throw Object.assign(Error('Təsdiqlənmiş sahib hesabı tapılmadı.'),{status:403});
   if(req.method==='GET'){
+   if(part==='/user-controls')return json(res,200,await userControls(r.pool,r.repo,u.searchParams.get('userId'),await options.loadCatalog()));
+   if(part==='/user-statistics')return json(res,200,await userStatistics(r.pool,u.searchParams.get('userId'),Object.fromEntries(u.searchParams)));
    if(part==='/wallet')return json(res,200,await walletHistory(r.pool,u.searchParams.get('userId'),Object.fromEntries(u.searchParams)));
    if(part==='/users'||part.startsWith('/users/'))return json(res,200,await adminDirectory(r.pool,r.repo,{...Object.fromEntries(u.searchParams),id:part.startsWith('/users/')?decodeURIComponent(part.slice(7)):null}));
    if(part==='/state')return json(res,200,{profile:await r.repo.profile(owner),settings:await r.group.settings()});
@@ -32,11 +36,15 @@ export function createOwnerCommunity(env=process.env,options={}){
   }
   if(req.method==='POST'){
    const b=await body(req);
+   if(part==='/user-controls')return json(res,200,await saveUserControls(r.pool,owner,b,await options.loadCatalog()));
+   if(part==='/reset-user-password'){const user=(await r.pool.query('select id,email,"emailVerified" from "user" where id=$1',[b.userId])).rows[0];if(!user?.emailVerified)throw Object.assign(Error('Təsdiqlənmiş e-poçt tələb olunur.'),{status:400});const password=(await r.pool.query('select 1 from account where "userId"=$1 and "providerId"=\'credential\'',[user.id])).rowCount;if(!password)return json(res,200,{sent:false,message:'Bu hesab Google ilə daxil olur. Şifrə Google hesabında idarə edilir.'});await r.auth.api.requestPasswordReset({body:{email:user.email,redirectTo:origin+'/hesab?mode=new-password'}});return json(res,200,{sent:true});}
    if(part==='/wallet/credit')return json(res,200,await creditWallet(r.pool,owner,{...b,reason:b.reason??'Admin tərəfindən balans əlavə edildi'}));
    if(part==='/messages')return json(res,201,await r.repo.send(owner,b.body,b.clientId));
    if(part==='/moderate')return json(res,200,await r.group.act(owner,b));
   }
   return json(res,404,{error:'Endpoint tapılmadı.'});
+ },async accountReserve(req,a){const id=await this.checkoutAccount(req);if(!id)return null;const {pool}=await init();return(await pool.query('select reserve_user_price_v1($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) value',[id,a.methodId,a.productId,a.planId,a.planKey,a.signature,a.amount,a.idempotencyKey,a.checkoutKey,a.previousReservationId,a.minutes,a.requireStock])).rows[0].value;
+ },async reservedPrice(req,id){const {pool}=await init();const p=(await pool.query('select user_id,effective_cents from user_reservation_prices where reservation_id=$1',[id])).rows[0];if(!p)return null;if(await this.checkoutAccount(req)!==p.user_id)throw Object.assign(Error('Rezerv hesabı uyğun deyil. Hesabınıza daxil olun.'),{status:403});return Number(p.effective_cents)/100;
  },async close(){await runtime?.live?.close();await runtime?.pool.end();},async checkoutAccount(req){
   if(!publicEnabled||!/(?:__Secure-)?mirpanel_owner\.session_token=/.test(req.headers.cookie||''))return null;
   const {pool,auth}=await init(),session=await auth.api.getSession({headers:fromNodeHeaders(req.headers)});if(!session?.user)return null;await requireAllowed(pool,session.user.id);return session.user.id;
