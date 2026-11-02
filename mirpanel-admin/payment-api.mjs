@@ -22,6 +22,8 @@ import {createInventoryReader,inventoryUnavailable} from './inventory-reader.mjs
 import {validateReceiptFile,FILE_SAFETY_ENGINE} from './receipt-file-safety.mjs';
 import {createBrowserOrders} from './browser-orders.mjs';
 import {createAccountOrders} from './account-orders.mjs';
+import {createShop} from './shop.mjs';
+import {handleShop} from './shop-http.mjs';
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -127,6 +129,7 @@ export function createPaymentSystem(options) {
   const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
   const accountOrders=createAccountOrders({security,store,resolve:options.accountHistory});
   const mailer = options.mailer || createPaymentMailer(config, store);
+  const shop=options.shopContext?createShop({context:options.shopContext,catalog:loadCatalog,snapshot:()=>readInventory({fresh:true}),store,config}):null;
   const allowedOrigins = new Set(config.allowedOrigins);
 
   function clientIp(request) {
@@ -147,7 +150,7 @@ export function createPaymentSystem(options) {
 
   function publicJson(request, response, status, body) {
     const timing=request.receiptTimings;
-    const personal=String(request.url||'').startsWith('/api/payments/my-orders');
+    const personal=/^\/api\/payments\/(?:my-orders|shop)/.test(String(request.url||''));
     json(response, status, body, { ...corsHeaders(request), "Cache-Control": personal?"private, no-store, max-age=0":"no-store",...(personal?{Vary:'Cookie, Origin','Surrogate-Control':'no-store','Referrer-Policy':'no-referrer'}:{}),...(timing?{"Server-Timing":Object.entries(timing).map(([name,ms])=>`${name};dur=${Math.max(0,ms).toFixed(1)}`).join(', '),"Access-Control-Expose-Headers":"Server-Timing"}:{}) });
   }
 
@@ -223,6 +226,11 @@ export function createPaymentSystem(options) {
     if (origin && !allowedOrigins.has(origin)) {
       publicJson(request, response, 403, { error: "Sorğunun mənbəyi icazəli deyil." });
       return true;
+    }
+    if(url.pathname.startsWith('/api/payments/shop/')){
+      if(!shop)throw Object.assign(Error('Səbət xidməti əlçatan deyil.'),{status:503});
+      if(request.headers['sec-fetch-site']==='cross-site'||request.method==='POST'&&!allowedOrigins.has(origin))throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
+      return handleShop({req:request,res:response,url,shop,browserOrders,security,readBody,readRawBody,validateFile,store,config,json:publicJson,rate:publicRate});
     }
     if(request.method==='GET'&&url.pathname==='/api/payments/my-orders'){
       if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
@@ -694,6 +702,7 @@ export function createPaymentSystem(options) {
 
   return {
     configured: true,
+    shop,
     store,
     mailer,
     async guardLogin(request) {
@@ -701,7 +710,7 @@ export function createPaymentSystem(options) {
     },
     start() {
       mailer.start();
-      const cleanup = () => store.cleanupExpiredReceipts().catch((error) => console.error("Payment receipt cleanup", error.diagnostic || error.message));
+      const cleanup = () => store.cleanupExpiredReceipts().then(()=>shop?.cleanup()).catch((error) => console.error("Payment receipt cleanup", error.code || 'CLEANUP_FAILED'));
       const stagedCleanup = () => store.cleanupStagedReceipts().catch(error=>console.error('Receipt staging cleanup',error.code || 'STORAGE_ERROR'));
       setTimeout(cleanup, 15_000).unref?.();
       setTimeout(stagedCleanup, 30000).unref?.();

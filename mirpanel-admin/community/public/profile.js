@@ -34,7 +34,7 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
  const orderCount=el('strong',{},'…'),savedAmount=el('strong',{},'…'),orders=link('','/sifarislerim','profile-stat');
  orders.append(icon('M6 5h12l2 15H4z M9 6V3h6v3'),orderCount,el('span',{},'Sifariş'));orders.setAttribute('aria-label','Sifarişlərimə bax');
  const savings=el('div',{class:'profile-stat','aria-disabled':'true'},icon('M5 10l3-4h7l4 4v7h-3v3h-3v-3H9v3H6v-5H3v-5z'),savedAmount,el('span',{},'Qənaət'));
- const stats=el('div',{class:'profile-summary-stats'},orders,savings),topup=button('Balansı artır',()=>{},true);topup.disabled=true;topup.setAttribute('aria-label','Balansı artır — tezliklə');
+ const stats=el('div',{class:'profile-summary-stats'},orders,savings),topup=button('Balansı artır',()=>location.assign('/balans'),true);
  const balance=el('section',{class:'profile-balance'},el('div',{},el('h2',{},'Balans'),el('strong',{},Number.isSafeInteger(p.balanceCents)?money(p.balanceCents):'Məlumat yoxdur')),topup);
  decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');decorate(subscription,'M5 5h14v15H5z M8 2v6 M16 2v6 M5 10h14');
  hero.append(stats,balance,editor);

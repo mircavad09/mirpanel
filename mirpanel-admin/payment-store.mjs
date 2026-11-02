@@ -144,6 +144,7 @@ export function rowMethod(row, stats = {}) {
 
 export function createPaymentStore(config) {
   let receiptCleanupOffset = 0;
+  const shopCleanupOffsets={cart:0,topup:0};
   if (!config.supabaseUrl || !config.supabaseSecretKey) throw new Error("Supabase ödəniş konfiqurasiyası tamamlanmayıb.");
   const client = createClient(config.supabaseUrl, config.supabaseSecretKey, {
     global: { fetch: (input, init = {}) => {
@@ -436,7 +437,7 @@ export function createPaymentStore(config) {
       await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
-      const select = "id,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
+      const select = "id,payment_source,payment_confirmed,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
@@ -556,7 +557,7 @@ export function createPaymentStore(config) {
             expiryNotificationOn: order.expiry_notification_on,
             expiry: expiryStatus(order.service_expires_on),
             contactedAt: order.contacted_at,
-            receiptAvailable: !order.receipt_deleted_at,
+            receiptAvailable: !order.receipt_deleted_at && order.payment_source!=='wallet',paymentSource:order.payment_source||'card',paymentConfirmed:order.payment_confirmed===true,
             paymentMethodLabel: paymentMethodLabel({ ...method, method_name_snapshot: order.method_name_snapshot, method_last4_snapshot: order.method_last4_snapshot }),
             auditHistory: history.get(order.id) || []
           };
@@ -796,7 +797,11 @@ export function createPaymentStore(config) {
       return removed;
     },
     async removeReceipt(path) {
-      await client.storage.from(config.receiptsBucket).remove([path]);
+      const r=await client.storage.from(config.receiptsBucket).remove([path]);if(r.error)throw paymentError(r.error);
+    },
+    async shopReceiptFiles(){
+      const files=[];for(const prefix of ['cart','topup']){const page=await client.storage.from(config.receiptsBucket).list(prefix,{limit:30,offset:shopCleanupOffsets[prefix],sortBy:{column:'name',order:'asc'}});if(page.error)throw paymentError(page.error);shopCleanupOffsets[prefix]=page.data?.length===30?shopCleanupOffsets[prefix]+30:0;for(const folder of page.data||[]){if(!safeUuid(folder.name))continue;const r=await client.storage.from(config.receiptsBucket).list(prefix+'/'+folder.name,{limit:100});if(r.error)throw paymentError(r.error);for(const file of r.data||[])if(/^[a-f0-9]{64}\.(?:jpg|png|pdf)$/.test(file.name)&&Date.parse(file.created_at)<Date.now()-2*3600000)files.push({kind:prefix,id:folder.name,path:prefix+'/'+folder.name+'/'+file.name});}}
+      return files;
     },
     async rateLimit(key, seconds, maxHits) {
       const result = await rpc("consume_payment_rate_limit", { p_rate_key: key, p_window_seconds: seconds, p_max_hits: maxHits });
@@ -832,8 +837,14 @@ export function createPaymentStore(config) {
       const { data, error } = await client.from("payment_orders").select("id,receipt_path").in("status", ["approved", "rejected"]).is("receipt_deleted_at", null).lt("updated_at", cutoff).limit(50);
       if (error) throw paymentError(error);
       if (!data?.length) return 0;
-      await client.storage.from(config.receiptsBucket).remove(data.map((item) => item.receipt_path));
-      const ids = data.map((item) => item.id);
+      // A cart stores one receipt for several orders. Keep it while any linked
+      // order is still inside the existing retention window or under review.
+      const paths=[...new Set(data.map(item=>item.receipt_path).filter(Boolean))],safePaths=[];
+      for(const path of paths){const related=await client.from('payment_orders').select('id,status,updated_at').eq('receipt_path',path).is('receipt_deleted_at',null);if(related.error)throw paymentError(related.error);if((related.data||[]).every(o=>['approved','rejected','completed','cancelled'].includes(o.status)&&Date.parse(o.updated_at)<Date.parse(cutoff)))safePaths.push(path);}
+      if(!safePaths.length)return 0;
+      const removed=await client.storage.from(config.receiptsBucket).remove(safePaths);if(removed.error)throw paymentError(removed.error);
+      const eligible=await client.from('payment_orders').select('id').in('receipt_path',safePaths).is('receipt_deleted_at',null);if(eligible.error)throw paymentError(eligible.error);
+      const ids = (eligible.data||[]).map(item=>item.id);
       const { error: updateError } = await client.from("payment_orders").update({ receipt_deleted_at: new Date().toISOString() }).in("id", ids);
       if (updateError) throw paymentError(updateError);
       return ids.length;

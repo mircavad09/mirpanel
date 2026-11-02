@@ -5,7 +5,7 @@
     ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentCosts", "Məhsulların maya dəyəri və qazanc"], ["paymentOrders", "Sifarişlər"], ["paymentReviews", "Ödəniş yoxlamaları"], ["netflixAccounts", "Netflix hesabları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
-  viewLabels.push(['communityUsers','İstifadəçilər'],['communityGroup','Qrup söhbət']);
+  viewLabels.push(['communityUsers','İstifadəçilər'],['communityGroup','Qrup söhbət'],['communityShop','Balans müraciətləri']);
   const safeIcons = ["home", "products", "search", "info", "contact", "terms", "whatsapp", "sparkles", "game", "ai", "link", "image", "shield"];
   let baselineData = null;
   let baselineSha = "";
@@ -79,7 +79,7 @@
     nav.innerHTML = viewGroups.map(([group, items], groupIndex) => `<div class="navGroup">
       <span class="navGroupTitle">${esc(group)}</span>
       ${items.map(([id, label], index) => `<button class="navBtn${groupIndex === 0 && index === 0 ? " active" : ""}" type="button" data-view="${id}">${esc(label)}</button>`).join("")}
-      ${groupIndex === 0 ? '<button class="navBtn" data-view="communityUsers">İstifadəçilər</button><button class="navBtn" data-view="communityGroup">Qrup söhbət</button>' : ''}
+      ${groupIndex === 0 ? '<button class="navBtn" data-view="communityUsers">İstifadəçilər</button><button class="navBtn" data-view="communityGroup">Qrup söhbət</button><button class="navBtn" data-view="communityShop">Balans müraciətləri</button>' : ''}
     </div>`).join("");
     nav.addEventListener("click", (event) => {
       const button = event.target.closest("[data-view]");
@@ -88,9 +88,9 @@
   }
   function activateView(view) {
     window.dispatchEvent(new CustomEvent('admin-community-view',{detail:view}));
-    if(['communityUsers','communityGroup'].includes(view)){
+    if(['communityUsers','communityGroup','communityShop'].includes(view)){
       if(!el(`${view}View`))createView(view,'');
-      import('/admin-community-panel.js?v=other-20261102').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
+      import('/admin-community-panel.js?v=shop-v1').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
     }
     document.querySelectorAll(".workspace, .singlePanel, .cmsWorkspace").forEach((section) => section.classList.add("hidden"));
     const target = el(`${view}View`);
@@ -1243,7 +1243,7 @@
     installActions();
     installHooks();
     if (state.data) renderCms();
-    activateView(['communityUsers','communityGroup'].includes(location.hash.slice(1))?location.hash.slice(1):"dashboard");
+    activateView(['communityUsers','communityGroup','communityShop'].includes(location.hash.slice(1))?location.hash.slice(1):"dashboard");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();

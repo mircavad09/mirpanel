@@ -4,7 +4,7 @@ import {requireAllowed} from './group-control.mjs';import {saveProfile,uploadPro
 import {tagCount,notifications,markTag,tagMessage} from './bot-tags.mjs';
 import {CommunityLive} from './live.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
-export function authReturn(origin,value){return value===origin+'/sifarislerim'||value==='/sifarislerim'?origin+'/sifarislerim':origin+'/profil';}
+export function authReturn(origin,value){for(const p of ['/sifarislerim','/balans','/odenis'])if(value===origin+p||value===p)return origin+p;return origin+'/profil';}
 export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body}){
  const route=u.pathname,{pool,repo,group,auth}=runtime,started=performance.now();
  if(!(await pool.query('select ready from public_community_release where version=1')).rows[0]?.ready)throw fail(503,'Xidmət hazırlanır.');
@@ -22,11 +22,12 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
   if(['/api/auth/sign-up/email','/api/auth/callback/google','/api/auth/sign-out'].includes(route))void pool.query("select pg_notify('mirpanel_community_live','{}')").catch(()=>{});return true;
  }
  // Public shells contain no account data. Authenticate the data API, not the HTML shell.
- const publicShell=req.method==='GET'&&['/qrup','/hesab'].includes(route);
+ const publicShell=req.method==='GET'&&['/qrup','/hesab','/sebet','/balans','/odenis'].includes(route);
  const session=publicShell?null:await auth.api.getSession({headers:fromNodeHeaders(req.headers)}),user=session?.user||null;if(user)await requireAllowed(pool,user.id);
  const authMs=performance.now()-started-gateMs;
  res.setHeader('Server-Timing',`release;dur=${gateMs.toFixed(1)}, auth;dur=${authMs.toFixed(1)}`);
  const need=()=>{if(!user)throw fail(401,'Əvvəlcə daxil olun.');return user;};
+ if(req.method==='GET'&&['/sebet','/balans','/odenis'].includes(route)){html(res,`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel · Səbət və balans</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/shop.css?v=shop-v1"><body class="community-page">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main id="shopApp" class="shop-page"></main><script type="module" src="/community-assets/shop-ui.js?v=shop-v1"></script><script src="/site-header.js?v=shop-v1" defer></script></body></html>`);return true;}
  if(route==='/api/community/events'&&req.method==='GET'){runtime.live??=new CommunityLive(pool,repo,counts);await runtime.live.attach(req,res,session,u);return true;}
  if(route==='/owner-login'){res.writeHead(302,{Location:'/hesab?next='+encodeURIComponent(u.searchParams.get('next')==='/sifarislerim'?'/sifarislerim':'/profil'),'Cache-Control':'private,no-store'});res.end();return true;}
  if(['/qrup','/profil','/hesab'].includes(route)){
