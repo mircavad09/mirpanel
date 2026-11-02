@@ -1,6 +1,7 @@
 import {createGroupAdmin} from '/community-assets/group-admin.js';
 import {tierLabel} from '/community-assets/tier-labels.js';
-const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/admin-community-panel.css?v=20261102';document.head.append(sheet);
+import {mountChat} from '/admin-chat-view.js?v=20261102';
+const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/admin-community-panel.css?v=bubbles-20261102';document.head.append(sheet);
 const base='/api/admin/community';let stop=()=>{};
 const e=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
 const btn=(text,fn)=>{const n=e('button',text);n.className='btn';n.type='button';n.onclick=fn;return n;};
@@ -23,14 +24,7 @@ export async function mount(root,view){stop();let alive=true,stream;stop=()=>{al
   const load=guarded(async()=>{const r=await call('/users?'+new URLSearchParams({page,q}));if(!alive)return;list.replaceChildren();for(const u of r.users){const n=e('article');n.className='panel';n.append(btn('#'+(u.memberNumber||'—')+' · '+u.name,()=>show(u.id)),e('p',u.email),e('p','Qeydiyyat: '+date(u.createdAt)),e('p','Hesab: '+(u.blocked&&(!u.banUntil||Date.parse(u.banUntil)>Date.now())?'Ban edilib':u.emailVerified?'Aktiv':'Təsdiq gözləyir')+' · '+(u.online?'Onlayn':'Oflayn')),e('p','Susdurma: '+(u.mutedPermanent?'Daimi':date(u.mutedUntil))));list.append(n);}if(!r.users.length)list.append(e('p','İstifadəçi tapılmadı.'));label.textContent=`Səhifə ${page} · ${r.total}`;next.disabled=!r.hasMore;prev.disabled=page===1;});
   const prev=btn('Əvvəlki',()=>{page--;load();}),next=btn('Növbəti',()=>{page++;load();});root.replaceChildren(e('h1','İstifadəçilər'),input,btn('Axtar',()=>{q=input.value.trim();page=1;load();}),error,list,prev,label,next,detail);await load();return;
  }
- const state=await call('/state');if(!alive)return;const list=e('div'),input=e('textarea'),send=btn('Göndər',guarded(async()=>{if(send.disabled)return;send.disabled=true;try{const body=input.value;const result=await call('/messages',{body,clientId:draftId});if(result.blocked)throw Error(result.warning);input.value='';draftId=crypto.randomUUID();await refresh();}finally{send.disabled=false;}}));let draftId=crypto.randomUUID();
- input.placeholder='Mesajınızı yazın…';input.maxLength=2000;input.addEventListener('input',()=>{draftId=crypto.randomUUID();});
- const el=(tag,attrs={},...children)=>{const n=e(tag);for(const[k,v]of Object.entries(attrs))if(k==='class')n.className=v;else n.setAttribute(k,v);for(const c of children.flat())if(c!=null)n.append(typeof c==='string'?document.createTextNode(c):c);return n;};
- const controls=createGroupAdmin({state,api:(url,data)=>call(url.replace('/api/community',''),data),el,button:btn,onChange:async()=>{const s=await call('/state');controls.updateSettings(s.settings);await refresh();}});controls.updateSettings(state.settings);
- let messages=new Map();function paint(){list.replaceChildren();for(const m of [...messages.values()].sort((a,b)=>Number(a.id)-Number(b.id))){const row=e('article');row.className='panel';if(m.author?.avatarUrl){const img=e('img');img.src=m.author.avatarUrl;img.alt='';img.width=32;row.append(img);}row.append(e('strong',m.author?.name||'İştirakçı'),e('small',m.author?.role==='admin'?' Admin':''),e('p',m.body),e('small',date(m.createdAt)));const menu=controls.messageMenu(m);if(menu)row.append(menu);list.append(row);}}
- async function refresh(){const r=await call('/messages');if(!alive)return;messages=new Map(r.items.map(m=>[m.id,m]));paint();}
- list.className='admin-community-messages';input.setAttribute('aria-label','Qrup mesajı');send.classList.add('primary');
- root.replaceChildren(e('h1','Qrup söhbət'),controls.settingsButton,error,list,input,send);await refresh();if(!alive)return;
- stream=new EventSource(base+'/events?after='+Math.max(0,...[...messages.keys()].map(Number))+'&known='+[...messages.keys()].join(','));stream.addEventListener('messages',x=>{if(!alive)return;const r=JSON.parse(x.data);for(const id of r.removed||[])messages.delete(id);for(const m of r.items)messages.set(m.id,m);paint();});stream.onerror=()=>{error.textContent='Bağlantı bərpa olunur.';};stream.onopen=()=>{error.textContent='';};
+ const state=await call('/state');if(!alive)return;
+ const close=await mountChat({root,state,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};
  }catch(x){if(alive)root.replaceChildren(error);error.textContent=x.message;}
 }
