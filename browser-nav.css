@@ -19,6 +19,7 @@ html body nav.browser-bottom-nav a:focus-visible{outline:2px solid #ffe15b;outli
  html body.has-bottom-nav nav.browser-bottom-nav a[data-browser-nav=balance]{justify-content:flex-end;padding-bottom:6px;color:#e4e4e4;gap:0;background:none}
  html body.has-bottom-nav nav.browser-bottom-nav a[data-browser-nav=balance][aria-current=page]{color:#ffd400}
  html body.has-bottom-nav nav.browser-bottom-nav a[data-browser-nav=balance] svg{position:absolute;top:-17px;left:50%;transform:translateX(-50%);box-sizing:border-box;width:48px;height:48px;flex-basis:48px;border-radius:50%;padding:12px;background:#ffd400;color:#14181e;stroke-width:2.2;box-shadow:0 0 0 4px #0c0d0f}
+ html.community-chat-screen body.community-page.has-bottom-nav nav.browser-bottom-nav{margin-top:21px}
  html body.has-bottom-nav nav.browser-bottom-nav .browser-cart-count{position:absolute;top:0;left:calc(50% + 3px);min-width:16px;height:16px;padding:0 4px;border-radius:20px;box-sizing:border-box;background:#ffd400;color:#171717;font:650 10px/16px system-ui;text-align:center;pointer-events:none}
 }
 @media(max-width:360px){html body.has-bottom-nav nav.browser-bottom-nav a{font-size:9.5px;line-height:13px}}
