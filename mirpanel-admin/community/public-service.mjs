@@ -6,8 +6,9 @@ import {CommunityLive} from './live.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
 export function authReturn(origin,value){return value===origin+'/sifarislerim'||value==='/sifarislerim'?origin+'/sifarislerim':origin+'/profil';}
 export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body}){
- const route=u.pathname,{pool,repo,group,auth}=runtime;
+ const route=u.pathname,{pool,repo,group,auth}=runtime,started=performance.now();
  if(!(await pool.query('select ready from public_community_release where version=1')).rows[0]?.ready)throw fail(503,'Xidmət hazırlanır.');
+ const gateMs=performance.now()-started;
  if(route.startsWith('/api/auth/')){
   const allowed=['/api/auth/sign-in/social','/api/auth/callback/google','/api/auth/get-session','/api/auth/sign-out','/api/auth/sign-up/email','/api/auth/sign-in/email','/api/auth/send-verification-email','/api/auth/verify-email','/api/auth/request-password-reset','/api/auth/reset-password'];
   if(!allowed.includes(route)&&!/^\/api\/auth\/reset-password\/[^/]+$/.test(route))throw fail(404,'Tapılmadı.');
@@ -23,6 +24,8 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  // Public shells contain no account data. Authenticate the data API, not the HTML shell.
  const publicShell=req.method==='GET'&&['/qrup','/hesab'].includes(route);
  const session=publicShell?null:await auth.api.getSession({headers:fromNodeHeaders(req.headers)}),user=session?.user||null;if(user)await requireAllowed(pool,user.id);
+ const authMs=performance.now()-started-gateMs;
+ res.setHeader('Server-Timing',`release;dur=${gateMs.toFixed(1)}, auth;dur=${authMs.toFixed(1)}`);
  const need=()=>{if(!user)throw fail(401,'Əvvəlcə daxil olun.');return user;};
  if(route==='/api/community/events'&&req.method==='GET'){runtime.live??=new CommunityLive(pool,repo,counts);await runtime.live.attach(req,res,session,u);return true;}
  if(route==='/owner-login'){res.writeHead(302,{Location:'/hesab?next='+encodeURIComponent(u.searchParams.get('next')==='/sifarislerim'?'/sifarislerim':'/profil'),'Cache-Control':'private,no-store'});res.end();return true;}

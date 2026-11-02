@@ -17,10 +17,10 @@ export class CommunityLive {
  async broadcast(){
   if(!this.clients.size)return;
   // Share hydration across tabs with the same cursor and visible IDs.
-  const batches=new Map(),viewers=[...this.clients];
+  const batches=new Map(),viewers=[...this.clients],countPromise=this.counts(this.pool);
   for(const x of viewers){const key=x.after+'|'+[...x.known].join(',');if(!batches.has(key))batches.set(key,this.repo.messages({after:x.after||null,known:[...x.known].join(',')}));}
   for(const x of viewers){const key=x.after+'|'+[...x.known].join(',');const r=await batches.get(key);if(this.clients.has(x))this.deliver(x,r);}
-  const count=await this.counts(this.pool);for(const x of this.clients)this.write(x,'counts',count);
+  const count=await countPromise;for(const x of this.clients)this.write(x,'counts',count);
  }
  deliver(x,r){for(const id of r.removed||[])x.known.delete(id);for(const m of r.items){x.known.add(m.id);x.after=Math.max(x.after,Number(m.id));}while(x.known.size>500)x.known.delete(x.known.values().next().value);this.write(x,'messages',r);if(r.more)this.schedule();}
  async attach(req,res,session,u){
@@ -32,7 +32,14 @@ export class CommunityLive {
   if(x.user)await this.pool.query('insert into community_presence(user_id,session_id,tab_id) values($1,$2,$3)',[x.user,x.sid,x.tab]);
   res.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'private,no-store,no-transform','X-Accel-Buffering':'no','Vary':'Cookie, Origin','X-Content-Type-Options':'nosniff'});res.flushHeaders?.();res.write(': connected\n\n');this.clients.add(x);
   res.once('close',()=>{this.clients.delete(x);if(x.user)this.pool.query('delete from community_presence where session_id=$1 and tab_id=$2',[x.sid,x.tab]).then(()=>this.pool.query("select pg_notify('mirpanel_community_live','{}')")).catch(()=>{});});
-  try{await this.pool.query("select pg_notify('mirpanel_community_live','{}')");await this.schedule();}catch{res.destroy();}
+  // Guest connects do not change presence. Do not rehydrate every viewer on each join.
+  // Keep delivery on the same serial chain as notifications so snapshots cannot race.
+  this.serial=this.serial.then(async()=>{
+   if(!this.clients.has(x))return;
+   const [snapshot,count]=await Promise.all([this.repo.messages({after:x.after||null,known:[...x.known].join(',')}),this.counts(this.pool)]);
+   if(!this.clients.has(x))return;this.deliver(x,snapshot);this.write(x,'counts',count);
+   if(x.user)await this.pool.query("select pg_notify('mirpanel_community_live','{}')");
+  }).catch(()=>res.destroy());await this.serial;
  }
  async heartbeat(){
   if(!this.clients.size)return;
