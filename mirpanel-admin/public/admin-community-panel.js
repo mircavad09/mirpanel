@@ -1,6 +1,6 @@
 import {createGroupAdmin} from '/community-assets/group-admin.js';
 import {tierLabel} from '/community-assets/tier-labels.js';
-import {mountChat} from '/admin-chat-view.js?v=20261102';
+import {mountChat} from '/admin-chat-view.js?v=polish-20261102';
 const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/admin-community-panel.css?v=bubbles-20261102';document.head.append(sheet);
 const base='/api/admin/community';let stop=()=>{};
 const e=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
@@ -12,7 +12,7 @@ export async function mount(root,view){stop();let alive=true,stream;stop=()=>{al
  const error=e('p');error.setAttribute('role','alert');
  const guarded=fn=>async(...args)=>{try{await fn(...args);}catch(x){error.textContent=x.message;}};
  try{
- if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=1');const close=await mountUsers({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
+ if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=polish-20261102');const close=await mountUsers({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
  if(view==='communityUsers'){
   let page=1,q='';const input=e('input');input.placeholder='Ad, e-poçt, üzv ID-si';const list=e('div'),detail=e('section'),label=e('span');
   const show=guarded(async id=>{const r=await call('/users/'+encodeURIComponent(id));if(!alive)return;detail.replaceChildren(e('h2',r.user.name));

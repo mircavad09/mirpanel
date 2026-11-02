@@ -1,6 +1,6 @@
 import {getCommunityState} from '/session-state.js?v=page-navigation-20261031';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
 import {tierLabel} from '/community-assets/tier-labels.js';
-import {createGroupAdmin} from '/community-assets/group-admin.js?v=message-row-20261029';
+import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
 const app=document.getElementById('communityApp'),avatars=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'];let state=null,stopped=false;
 function el(tag,attrs={},...children){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else if(v!==undefined)e.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)e.append(typeof c==='string'?document.createTextNode(c):c);return e;}
 const cleanups=[];const every=(fn,ms)=>{const id=setInterval(fn,ms);cleanups.push(()=>clearInterval(id));};

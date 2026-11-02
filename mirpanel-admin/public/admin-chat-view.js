@@ -1,4 +1,4 @@
-import {createGroupAdmin} from '/community-assets/group-admin.js';
+import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
 import {applyPngTier} from '/community-assets/tier-png-component.js';
 import {tierLabel} from '/community-assets/tier-labels.js';
 const avatars=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'];

@@ -32,7 +32,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   }
   if(req.method==='POST'){
    const b=await body(req);
-   if(part==='/wallet/credit')return json(res,200,await creditWallet(r.pool,owner,b));
+   if(part==='/wallet/credit')return json(res,200,await creditWallet(r.pool,owner,{...b,reason:b.reason??'Admin tərəfindən balans əlavə edildi'}));
    if(part==='/messages')return json(res,201,await r.repo.send(owner,b.body,b.clientId));
    if(part==='/moderate')return json(res,200,await r.group.act(owner,b));
   }

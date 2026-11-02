@@ -7,6 +7,8 @@ export class GroupControl{
  constructor(repo){this.repo=repo;this.pool=repo.pool;}
  async settings(){const s=(await this.pool.query('select muted,rules,slow_seconds,pinned_message_id::text,version from community_group_settings where id=true')).rows[0];if(s?.pinned_message_id){const m=(await this.pool.query('select id::text,user_id,body,created_at from community_messages where id=$1 and not hidden',[s.pinned_message_id])).rows[0];s.pinned=m?{id:m.id,body:m.body,createdAt:m.created_at}:null;}return s;}
  async act(actor,b){
+  const automatic={ban:'Admin tərəfindən hesab qadağan edildi',unban:'Admin tərəfindən hesabın qadağası açıldı',mute:'Admin tərəfindən istifadəçi susduruldu',unmute:'Admin tərəfindən susdurma açıldı',pin:'Admin tərəfindən mesaj sabitləndi',unpin:'Admin tərəfindən mesajın sabitlənməsi götürüldü'};
+  if(b&&automatic[b.action]&&b.reason===undefined)b={...b,reason:automatic[b.action]};
   await requireOwner(this.pool,actor);
   const {action,targetId,reason,minutes=null,requestId}=b;
   if(!/^[a-f0-9-]{36}$/i.test(requestId||''))throw fail(400,'Əməliyyat identifikatoru tələb olunur.');
