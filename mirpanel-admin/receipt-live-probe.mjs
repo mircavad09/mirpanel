@@ -46,6 +46,13 @@ export function createReceiptLiveProbe({config,env=process.env,json,readBody,rea
     const token=security.encryptSecret(JSON.stringify({purpose:'receipt-probe-session',run:t.run,expires:t.expires}));res.setHeader('Set-Cookie',`${name}=${token}; Path=/; Max-Age=${Math.floor((t.expires-Date.now())/1000)}; Secure; HttpOnly; SameSite=Strict`);json(res,200,{ok:true,synthetic:true});return true;
    }
    const s=session(req);const ctx=context(s.run);
+   if(p==='/api/payments/diagnostics/fault'&&req.method==='POST'){
+    if(!config.allowedOrigins.includes(String(req.headers.origin||'')))throw error(403,'PROBE_ORIGIN');const b=await readBody(req,4096);
+    if(b.mode==='expire_reservation'){await call('expire',[b.reservationId]);}
+    else if(b.mode==='expire_session'){const token=security.encryptSecret(JSON.stringify({...s,expires:Date.now()-1000}));res.setHeader('Set-Cookie',`${name}=${token}; Path=/; Max-Age=600; Secure; HttpOnly; SameSite=Strict`);}
+    else if(['drop_receipt_response','drop_order_response','delay_reply','clear'].includes(b.mode)){ctx.fault=b.mode==='clear'?null:b.mode;}
+    else throw error(400,'PROBE_FAULT');json(res,200,{ok:true});return true;
+   }
    if(p==='/api/payments/diagnostics/view'&&req.method==='GET'){
     res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'private, no-store','Content-Security-Policy':"default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data:; connect-src 'self'",'X-Robots-Tag':'noindex,nofollow'});
     res.end(`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/payment-flow.css"><body style="background:#111;color:white;font:16px system-ui"><h1>Qapalı sintetik çek sınağı</h1><p>Real sifariş, stok, balans və bildiriş yaratmır.</p><script src="/payment-flow.js"></script><script>window.__probeOrder=null;MirpanelPaymentFlow.start({product:{id:'receipt-live-synthetic',title:'Sintetik sınaq'},plan:{label:'Sintetik plan',price:5.99},planIndex:0}).then(o=>{window.__probeOrder=o;});</script></body></html>`);return true;
@@ -56,6 +63,10 @@ export function createReceiptLiveProbe({config,env=process.env,json,readBody,rea
     json(res,200,{synthetic:true,orders:evidence,notifications:0,productionStockUsed:false});return true;
    }
    if(isProbe)throw error(404,'PROBE_ROUTE');
+   if(ctx.fault==='delay_reply')await new Promise(r=>setTimeout(r,2000));
+   if((ctx.fault==='drop_receipt_response'&&p==='/api/payments/receipts'||ctx.fault==='drop_order_response'&&p==='/api/payments/orders')&&req.method==='POST'){
+    const end=res.end.bind(res);res.end=(...args)=>{if(res.statusCode>=200&&res.statusCode<300){ctx.fault=null;res.destroy();return res;}return end(...args);};
+   }
    return await ctx.api.handle(req,res);
   }catch(e){json(res,Number(e.status)||503,{error:'Qapalı çek sınağı əlçatan deyil.',code:/^[A-Z_]+$/.test(e.code||'')?e.code:'PROBE_UNAVAILABLE'});return true;}
  }};
