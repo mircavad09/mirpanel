@@ -60,16 +60,26 @@ try{
  for(const width of [320,360,390,430,1440]){
   await page.setViewportSize({width,height:width===320?620:900});await page.goto(fixture.origin);await page.locator('.paymentBankBackground').first().waitFor();
   eq(await page.locator('.paymentMethodChoice.hasBankBackground').count(),4);
+  eq(await page.locator('.paymentMethodChoice.hasBankBackground>span').evaluateAll(nodes=>nodes.every(n=>getComputedStyle(n).display==='none')),true);
+  eq(await page.locator('.paymentMethodChoice.hasBankBackground').evaluateAll(nodes=>nodes.every(n=>{const r=n.getBoundingClientRect(),type=n.querySelector('small').getBoundingClientRect();return type.top>=r.top+45;})),true);
   eq(await page.locator('.paymentBankBackground').evaluateAll(imgs=>Promise.all(imgs.map(i=>i.decode().then(()=>true)))),[true,true,true,true]);
   eq(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   if([390,1440].includes(width))await page.screenshot({path:out+'/selection-'+width+'.png'});
-  await page.locator('[data-payment-method="'+fixture.methodId+'"]').click();await page.locator('#paymentMethodContinue').click();await page.locator('.paymentSelectedCard.hasBankBackground').waitFor();
+  await page.locator('[data-payment-method="'+fixture.methodId+'"]').click();
+  eq(await page.locator('.paymentMethodChoice.selected').evaluate(n=>getComputedStyle(n).borderTopWidth),'2px');
+  eq(await page.locator('.paymentMethodChoice.selected i').isVisible(),true);
+  if([390,1440].includes(width))await page.screenshot({path:out+'/selection-selected-'+width+'.png'});
+  await page.locator('#paymentMethodContinue').click();await page.locator('.paymentSelectedCard.hasBankBackground').waitFor();
   eq(await page.locator('.paymentSelectedCard .paymentBankBackground').getAttribute('src'),(await backgrounds.list()).abb);
-  eq(await page.locator('.paymentSelectedCard .paymentBankBackground').evaluate(i=>getComputedStyle(i).objectFit),'cover');
+  eq(await page.locator('.paymentSelectedCard .paymentBankBackground').evaluate(i=>getComputedStyle(i).objectFit),'contain');
+  eq(await page.locator('.paymentSelectedTop>div:first-child').isVisible(),false);
+  eq(await page.locator('.paymentSelectedCard').evaluate(n=>{const card=n.getBoundingClientRect(),holder=n.querySelector('.paymentHolder').getBoundingClientRect(),amount=n.querySelector('.paymentAmount').getBoundingClientRect(),number=n.querySelector('.paymentNumber').getBoundingClientRect(),timer=n.querySelector('.paymentReservationFooter').getBoundingClientRect(),change=n.querySelector('#changePaymentMethod').getBoundingClientRect();return holder.top>=card.top+55&&holder.right<=amount.left+1&&number.top>=Math.max(holder.bottom,amount.bottom)&&timer.top>=number.bottom&&timer.bottom<=card.bottom&&change.right<=card.right;}),true);
   eq(await page.locator('.paymentHolder strong').textContent(),'TEST ONLY');eq(await page.locator('#paymentReservationCountdown').isVisible(),true);
   await page.locator('#copyPaymentNumber').click();eq(await page.evaluate(()=>navigator.clipboard.readText()),'4169 0000 0000 4655');
   eq(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   if([390,1440].includes(width))await page.screenshot({path:out+'/details-'+width+'.png'});
+  await page.locator('.paymentHolder strong').evaluate(n=>n.textContent='Sintetik Uzun Ad Soyad Test Nümunəsi');
+  eq(await page.locator('.paymentSelectedCard').evaluate(n=>{const holder=n.querySelector('.paymentHolder').getBoundingClientRect(),number=n.querySelector('.paymentNumber').getBoundingClientRect(),card=n.getBoundingClientRect();return number.top>=holder.bottom&&n.scrollWidth<=n.clientWidth&&n.querySelector('.paymentReservationFooter').getBoundingClientRect().bottom<=card.bottom;}),true);
   await page.evaluate(()=>sessionStorage.clear());
  }
  for(const k of ['kapital','m10','leo']){await page.setViewportSize({width:390,height:900});await page.goto(fixture.origin);await page.locator('[data-payment-method="'+bankIds[k]+'"]').click();await page.locator('#paymentMethodContinue').click();await page.locator('.paymentSelectedCard.hasBankBackground').waitFor();eq(await page.locator('.paymentSelectedCard .paymentBankBackground').getAttribute('src'),(await backgrounds.list())[k]);eq(await page.locator('.paymentSelectedTop strong').textContent(),BANKS[k]);await page.screenshot({path:out+'/details-'+k+'-390.png'});await page.evaluate(()=>sessionStorage.clear());}

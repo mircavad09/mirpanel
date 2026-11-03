@@ -35,7 +35,7 @@ does not overwrite the old object. Same-bank concurrent mutations are rejected.
 
 ## Verification performed (isolated)
 
-- `node scripts/test-bank-backgrounds.mjs`: 126 assertions, zero final failures.
+- `node scripts/test-bank-backgrounds.mjs`: 161 assertions, zero final failures.
   Real isolated child decoder, payment HTTP handlers, Cloudflare handler and
   browser UI; filesystem Storage adapter, not a production Storage write.
   Four supplied images used when available; generated synthetic fallback assets
@@ -61,3 +61,17 @@ installed in production; authorized admin uploads bank designs using the new UI.
 No production reservation/order/receipt/top-up/test message is created.
 
 Visual artifacts (ignored): `payment-test-artifacts/bank-backgrounds/`.
+
+## Uploaded-design layout follow-up
+
+Only cards with a valid uploaded background hide the duplicate visible bank
+heading; accessible labels, method data, orders and WhatsApp text are untouched.
+The image uses `contain` at the top so logos are neither stretched nor cropped.
+The logo area is transparent; a bottom-weighted gradient supports live data.
+Selection metadata sits below the logo and selected state has a yellow border
+and check. The details card reserves a logo row with the change button at right,
+then holder/amount, number/copy, and timer rows. Background cards can grow inside
+the existing scrolling middle region instead of clipping at the legacy 170px
+height. Narrow screens wrap long holder names and number/copy controls safely.
+New browser assertions cover hidden duplicate labels, selected state, logo
+clearance, row bounds, long names and preserved copy/timer behavior.

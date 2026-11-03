@@ -123,6 +123,7 @@
  .paymentFlow input{font-size:16px}
 }
 
+
 /* Bank-wide decorative backgrounds. All payment data remains live HTML. */
 .paymentMethodChoice.hasBankBackground,.paymentSelectedCard.hasBankBackground{position:relative;isolation:isolate;overflow:hidden;color:#fff;--method-text:#fff;--method-muted:#f0f0f0}
 .paymentMethodChoice.hasBankBackground>.paymentBankBackground,.paymentSelectedCard.hasBankBackground>.paymentBankBackground{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2;pointer-events:none;border-radius:inherit}
@@ -175,4 +176,40 @@ body.paymentCheckoutOpen :is(.browser-bottom-nav,.community-bottom-nav,#supportW
  .paymentReceiptBox{gap:6px}
  .paymentReceiptWarning{padding:5px 7px;font-size:10px;line-height:1.3}
  .paymentFlow input{font-size:16px}
+}
+
+/* Uploaded designs own the logo area; keep only live payment data below it. */
+.paymentMethodChoice.hasBankBackground>span,.paymentMethodChoice.hasBankBackground>svg,
+.paymentSelectedCard.hasBankBackground .paymentSelectedTop>div:first-child,
+.paymentSelectedCard.hasBankBackground .paymentSelectedTopActions>span{display:none}
+.paymentMethodChoice.hasBankBackground,.paymentSelectedCard.hasBankBackground{font-family:Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;background:#111315}
+.paymentMethodChoice.hasBankBackground>.paymentBankBackground,.paymentSelectedCard.hasBankBackground>.paymentBankBackground{object-fit:contain;object-position:center top}
+.paymentMethodChoice.hasBankBackground::before,.paymentSelectedCard.hasBankBackground::before{background:linear-gradient(to bottom,transparent 0%,transparent 28%,#0002 44%,#0009 78%,#000b 100%)}
+.paymentFlow .paymentMethodChoice.hasBankBackground{min-height:126px;padding:10px 12px;grid-template-areas:"logo" "type" "digits";grid-template-rows:minmax(40px,1fr) auto auto;gap:4px;align-content:stretch}
+.paymentMethodChoice.hasBankBackground>small:nth-of-type(1){grid-area:type}
+.paymentMethodChoice.hasBankBackground>small:nth-of-type(2){grid-area:digits;font-size:13px;font-weight:600;letter-spacing:.04em}
+.paymentFlow .paymentMethodChoice.hasBankBackground>small{color:#fff;font-weight:500;line-height:1.3}
+.paymentFlow .paymentMethodChoice.hasBankBackground.selected{border:2px solid #ffd400;box-shadow:0 0 0 1px #ffd40066}
+.paymentFlow .paymentMethodChoice.hasBankBackground i{background:#ffd400;color:#161616;border-color:#ffd400;right:6px;top:6px;font-size:10px;font-weight:700}
+#modal.paymentFlowOpen .paymentSelectedCard.hasBankBackground{width:min(100%,380px);max-width:380px;max-height:none;aspect-ratio:auto;padding:12px;gap:9px;grid-template-rows:46px auto auto auto;grid-template-areas:"top top" "holder amount" "number number" "timer timer";align-content:start}
+.paymentSelectedCard.hasBankBackground .paymentMagneticStripe{display:none}
+.paymentSelectedCard.hasBankBackground .paymentSelectedTop{justify-content:flex-end;align-items:flex-start;min-height:46px}
+.paymentSelectedCard.hasBankBackground .paymentSelectedTopActions{margin-left:auto}
+.paymentSelectedCard.hasBankBackground #changePaymentMethod{min-height:32px;font-size:11px;background:#111b;border:1px solid #ffffff88;color:#fff}
+.paymentSelectedCard.hasBankBackground .paymentHolder small,.paymentSelectedCard.hasBankBackground .paymentAmount>span{font-size:10px;line-height:1.3;margin-bottom:3px}
+.paymentSelectedCard.hasBankBackground .paymentHolder strong{font-size:14px;font-weight:600;line-height:1.3;white-space:normal;overflow:visible;overflow-wrap:anywhere}
+.paymentSelectedCard.hasBankBackground .paymentAmount{align-content:start}
+.paymentSelectedCard.hasBankBackground .paymentAmount strong{font-size:19px;line-height:1.3;font-weight:700}
+.paymentSelectedCard.hasBankBackground .paymentNumber{padding:6px 8px;flex-direction:row;align-items:center;gap:8px;background:#07090a88;border:1px solid #ffffff20}
+.paymentSelectedCard.hasBankBackground .paymentNumber code{font-size:clamp(12px,3.7vw,16px);font-weight:600;letter-spacing:.025em;line-height:1.3}
+.paymentSelectedCard.hasBankBackground .paymentNumber button{flex:none;min-height:34px;padding:5px 8px;font-size:11px;background:#151719cc}
+.paymentSelectedCard.hasBankBackground .paymentReservationTime{padding:5px 6px;gap:5px;background:#090b0d99}
+.paymentSelectedCard.hasBankBackground .paymentReservationTime span{font-size:10px;line-height:1.3}
+.paymentSelectedCard.hasBankBackground .paymentReservationTime strong{font-size:21px}
+@media(max-width:340px){
+ #modal.paymentFlowOpen .paymentSelectedCard.hasBankBackground{padding:10px;gap:8px;grid-template-areas:"top top" "holder amount" "number number" "timer timer"}
+ .paymentSelectedCard.hasBankBackground .paymentNumber{flex-wrap:wrap}
+ .paymentSelectedCard.hasBankBackground .paymentNumber code{flex-basis:140px}
+ .paymentSelectedCard.hasBankBackground .paymentAmount strong{font-size:17px}
+ .paymentSelectedCard.hasBankBackground .paymentReservationTime span{font-size:9px}
 }
