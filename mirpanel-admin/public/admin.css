@@ -1236,5 +1236,7 @@ th {
 .paymentBankBackgroundGrid .decorationChecker img{display:block;width:100%;background:transparent;object-fit:contain;border:0;border-radius:0}
 .paymentBankBackgroundGrid article>p{width:100%;min-height:38px;margin:0;color:#bdc4cc;font-size:13px;line-height:1.45}
 #decorationsView .paymentBankBackgrounds{margin:0;background:#171a1e}
-#decorationsView .paymentBankBackgroundGrid{margin-bottom:22px}
+#decorationsView .paymentBankBackgroundGrid{margin-bottom:22px;grid-template-columns:repeat(auto-fill,minmax(min(100%,220px),1fr))}
+#decorationsView .paymentBankEmpty,#decorationsView .decorationChecker{aspect-ratio:1.6;max-height:200px}
+#decorationsView .decorationChecker img{height:100%;aspect-ratio:auto}
 #decorationsView .paymentBankBackgroundGrid article{padding:12px;border:1px solid #343940;border-radius:12px;background:#1d2126}
