@@ -3,6 +3,7 @@
 import assert from 'node:assert/strict';import {createRequire}from'node:module';import{fileURLToPath}from'node:url';
 import{validateReceiptFile,createReceiptFileValidator,FILE_SAFETY_ENGINE}from'../mirpanel-admin/receipt-file-safety.mjs';
 import{receiptFromBuffer}from'../mirpanel-admin/payment-security.mjs';
+import {iphoneJpeg} from './receipt-iphone-fixture.mjs';
 const sharp=createRequire(new URL('../receipt-worker/package.json',import.meta.url))('sharp');let checks=0;
 const png=await sharp({create:{width:64,height:64,channels:3,background:'#285ba2'}}).png().toBuffer(),jpg=await sharp(png).jpeg({progressive:true}).toBuffer();
 function pdf(){const objects=['<< /Type /Catalog /Pages 2 0 R >>','<< /Type /Pages /Kids [3 0 R] /Count 1 >>','<< /Type /Page /Parent 2 0 R /MediaBox [0 0 100 100] /Contents 4 0 R >>','<< /Length 0 >>\nstream\n\nendstream'];let out='%PDF-1.4\n',offsets=[0];for(let i=0;i<objects.length;i++){offsets.push(Buffer.byteLength(out));out+=`${i+1} 0 obj\n${objects[i]}\nendobj\n`;}const xref=Buffer.byteLength(out);out+='xref\n0 5\n0000000000 65535 f \n'+offsets.slice(1).map(x=>String(x).padStart(10,'0')+' 00000 n \n').join('')+`trailer\n<< /Size 5 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;return Buffer.from(out);}
@@ -14,4 +15,7 @@ await assert.rejects(async()=>validateReceiptFile(receiptFromBuffer(Buffer.from(
 for(const[bytes,mime]of[[Buffer.concat([jpg,Buffer.from('<script>unsafe</script>')]),'image/jpeg'],[Buffer.concat([png,Buffer.from('PK\x03\x04')]),'image/png']]){await assert.rejects(()=>validateReceiptFile(receiptFromBuffer(bytes,mime)),e=>e.status===422);checks++;}
 const missing=createReceiptFileValidator({job:fileURLToPath(new URL('../receipt-worker/not-an-existing-job.mjs',import.meta.url))});await assert.rejects(()=>missing(receiptFromBuffer(png,'image/png')),e=>e.status===503&&e.code==='RECEIPT_SAFETY_PROCESS_EXIT');checks++;
 const slow=createReceiptFileValidator({timeoutMs:1});await assert.rejects(()=>slow(receiptFromBuffer(png,'image/png')),e=>e.status===503&&e.code==='RECEIPT_SAFETY_TIMEOUT');checks++;
+const iphone=await iphoneJpeg(),normalized=receiptFromBuffer(iphone.bytes,'image/jpeg');await validateReceiptFile(normalized);assert.ok(normalized.buffer.length<iphone.bytes.length);checks++;
+const im=await sharp(normalized.buffer).metadata();assert.equal(im.orientation,undefined);assert.equal(im.icc,undefined);assert.deepEqual([im.width,im.height],[900,600]);checks+=3;
+await assert.rejects(()=>validateReceiptFile(receiptFromBuffer(Buffer.concat([iphone.bytes,Buffer.from('PK\x03\x04')]),'image/jpeg')),e=>e.status===422);checks++;
 console.log('RECEIPT_RUNTIME_SELFTEST '+JSON.stringify({ok:true,checks,engine:FILE_SAFETY_ENGINE,node:process.version,platform:process.platform,sharp:sharp.versions.sharp,vips:sharp.versions.vips,ocrCalls:0,businessWrites:0}));

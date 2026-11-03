@@ -1,5 +1,5 @@
 import {spawn} from 'node:child_process';import {fileURLToPath} from 'node:url';import crypto from 'node:crypto';
-export const FILE_SAFETY_ENGINE='isolated-decoder-v3-sef';
+export const FILE_SAFETY_ENGINE='isolated-decoder-v4-mpf';
 const failure=(code='RECEIPT_SAFETY_UNAVAILABLE')=>Object.assign(Error('Faylı yoxlamaq mümkün olmadı. Zəhmət olmasa, yenidən cəhd edin.'),{status:503,code,diagnostic:'file_safety:'+code});
 // Isolated tests can exercise a failed/stalled process. No public or environment
 // option changes the production job or disables resource limits.
@@ -11,9 +11,15 @@ export function createReceiptFileValidator({job=fileURLToPath(new URL('../receip
    const finish=(e,v)=>{if(done)return;done=true;clearTimeout(timer);active--;e?reject(e):resolve(v);};
    try{c=spawn(process.execPath,['--max-old-space-size=192',job],{windowsHide:true,stdio:['pipe','pipe','ignore'],env:{PATH:process.env.PATH,SystemRoot:process.env.SystemRoot,OMP_THREAD_LIMIT:'1',UV_THREADPOOL_SIZE:'1',NODE_ENV:'production'}});}catch{return finish(failure('RECEIPT_SAFETY_SPAWN'));}
    timer=setTimeout(()=>{c.kill('SIGKILL');finish(failure('RECEIPT_SAFETY_TIMEOUT'));},timeoutMs);
-   c.on('error',()=>finish(failure('RECEIPT_SAFETY_SPAWN')));c.stdout.on('data',b=>{out+=b;if(out.length>4096){c.kill('SIGKILL');finish(failure('RECEIPT_SAFETY_PROTOCOL'));}});c.stdin.on('error',()=>{});
+   c.on('error',()=>finish(failure('RECEIPT_SAFETY_SPAWN')));c.stdout.on('data',b=>{out+=b;if(out.length>7000000){c.kill('SIGKILL');finish(failure('RECEIPT_SAFETY_PROTOCOL'));}});c.stdin.on('error',()=>{});
    c.on('close',exitCode=>{if(done)return;if(exitCode!==0)return finish(failure('RECEIPT_SAFETY_PROCESS_EXIT'));try{
     const v=JSON.parse(out);
+    if(v.ok&&v.safetyVersion===3&&receipt.mimeType==='image/jpeg'&&typeof v.normalizedBase64==='string'&&v.normalizedBase64.length<=6990510&&/^[A-Za-z0-9+/]+={0,2}$/.test(v.normalizedBase64)){
+     const clean=Buffer.from(v.normalizedBase64,'base64');
+     if(clean.length!==v.canonicalSize||clean.length<12||clean.length>5242880||clean[0]!==255||clean[1]!==216||clean.at(-2)!==255||clean.at(-1)!==217)return finish(failure('RECEIPT_SAFETY_PROTOCOL'));
+     receipt.buffer=clean;receipt.sha256=crypto.createHash('sha256').update(clean).digest('hex');
+     return finish(null,{safetyVersion:3,normalized:true});
+    }
     if(v.ok&&v.safetyVersion===2&&Number.isInteger(v.canonicalSize)&&v.canonicalSize>=12&&v.canonicalSize<=receipt.buffer.length){
      const normalized=v.canonicalSize<receipt.buffer.length;
      if(normalized){receipt.buffer=receipt.buffer.subarray(0,v.canonicalSize);receipt.sha256=crypto.createHash('sha256').update(receipt.buffer).digest('hex');}

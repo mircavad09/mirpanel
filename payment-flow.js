@@ -644,7 +644,8 @@
                 setReceiptSubmitReady(false);
                 error.textContent = !file ? "Qəbz seçilməyib." : file.size > 5 * 1024 * 1024 ? "Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin." : "iPhone şəklini JPG və ya PDF formatına çevirib yenidən yükləyin.";
                 error.hidden = false;
-                setMessage(error.textContent, 'error');
+                // The field's accessible alert is the single source of upload errors.
+                setMessage('', '');
                 return;
               }
               flow.previousReceiptUploadToken = flow.receiptUploadToken || flow.previousReceiptUploadToken;
@@ -775,7 +776,7 @@
                 if (receiptStatus) receiptStatus.textContent = "Çek seçildi — yenidən göndərilə bilər.";
                 error.textContent = submitError.userMessage || "Sifariş hazırlanmadı. Yenidən cəhd edin.";
                 error.hidden = false;
-                setMessage(error.textContent, 'error');
+                setMessage('', '');
                 cancelButton.textContent = "Ləğv et";
                 setReceiptSubmitReady(false);
                 document.getElementById('paymentReceiptRetry').hidden = false;
