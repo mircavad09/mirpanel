@@ -357,10 +357,19 @@ export function createPaymentSystem(options) {
         return true;
       }
       const method = await store.rawMethod(reservation.method_id);
+      // A reload may recover only an authenticated, reservation-bound proof.
+      // Never trust sessionStorage as evidence that Storage actually contains it.
+      let receiptUploadToken;
+      if (body.receiptUploadToken) {
+        const receipt = uploadedReceipt(body.receiptUploadToken, reservationId, checkoutKey);
+        await store.verifyUploadedReceipt(receipt.path, receipt.size);
+        receiptUploadToken = body.receiptUploadToken;
+      }
       publicJson(request, response, 200, {
         state: "reserved", productId: reservation.product_id, planIndex: Number(reservation.plan_id),
         reservation: {
           reservationId, expiresAt: reservation.expires_at,
+          ...(receiptUploadToken ? {receiptUploaded:true,receiptUploadToken} : {}),
           amount: Number(reservation.amount), currency: reservation.currency,
           method: {
             id: method.id, displayName: method.display_name, providerName: method.provider_name,
@@ -454,6 +463,7 @@ export function createPaymentSystem(options) {
         return true;
       }
       if (existing) {
+        request.receiptStage='order_readback';
         if (body.receiptUploadToken) await store.verifyUploadedReceipt(existing.receipt_path, existing.receipt_size);
         publicJson(request, response, 200, await orderResult(existing, true, body.whatsappExtraText));
         return true;
@@ -468,10 +478,12 @@ export function createPaymentSystem(options) {
       else await store.verifyUploadedReceipt(receiptPath, receipt.size);
       let submitted;
       let browserOwnerHash=null;
+      request.receiptStage='account_session';
       const accountUserId=options.accountForCheckout?await options.accountForCheckout(request):null;
       request.receiptStage='history_session';
       if(browserOrders.enabled){await browserOrders.ready();browserOwnerHash=browserOrders.read(request);if(!browserOwnerHash)throw Object.assign(Error('Ödəniş sessiyası yenilənməlidir. Kart seçimini yenidən açın.'),{status:409,code:'BROWSER_SESSION_REQUIRED'});}
       try {
+        request.receiptStage='order_commit';
         submitted = await store.submitOrder({
           reservationId,
           checkoutKey,
@@ -490,6 +502,7 @@ export function createPaymentSystem(options) {
           ,accountUserId
         });
       } catch (error) {
+        request.receiptStage='order_reconcile';
         // A lost RPC response is not proof of rollback. Never delete a possibly linked receipt.
         const reconciled = await store.getOrderByReservation(reservationId).catch(() => null);
         if (reconciled) {
@@ -502,16 +515,19 @@ export function createPaymentSystem(options) {
           throw error;
         }
       }
+      request.receiptStage='order_readback';
       const order = await store.getOrder(submitted.id);
       if (submitted.idempotent && order.receipt_path !== receiptPath) await store.removeReceipt(receiptPath).catch(() => {});
       const method = await store.rawMethod(order.method_id);
       if (submitted.idempotent) {
+        request.receiptStage='response_prepare';
         publicJson(request, response, 200, await orderResult(order, true, body.whatsappExtraText));
         return true;
       }
       const reviewToken = security.randomToken();
       const reviewUrl = `${config.adminBaseUrl}/admin/review?token=${encodeURIComponent(reviewToken)}`;
       try {
+        request.receiptStage='notification_queue';
         await store.createReviewToken(order.id, security.hashToken(reviewToken), new Date(Date.now() + 30 * 60_000).toISOString());
         const settings = await store.getSettings().catch(() => ({ notificationEmail: "" }));
         const recipient = settings.notificationEmail || config.notificationEmail;
@@ -528,7 +544,10 @@ export function createPaymentSystem(options) {
       } catch (error) {
         console.error("Payment notification queue", order.order_code, error.message);
       }
-      publicJson(request, response, 201, await orderResult(order, false, body.whatsappExtraText));
+      request.receiptStage='response_prepare';
+      const result = await orderResult(order, false, body.whatsappExtraText);
+      request.receiptStage='complete';
+      publicJson(request, response, 201, result);
       return true;
     }
     const deliveryMatch = url.pathname.match(/^\/api\/payments\/capcut\/delivery\/([A-Za-z0-9_-]{32,})$/);

@@ -59,7 +59,7 @@ export function createReceiptLiveProbe({config,env=process.env,json,readBody,rea
    }
    if(p==='/api/payments/diagnostics/evidence'&&req.method==='GET'){
     const owners=createBrowserOrders({security,store:ctx.store,enabled:true}),hash=owners.read(req),orders=hash?await ctx.store.browserOrderPage(hash,null,null):[],evidence=[];
-    for(const o of orders){await ctx.store.verifyUploadedReceipt(o.receipt_path,o.receipt_size);const file=await ctx.media.client.storage.from(config.receiptsBucket).download(ctx.checked(o.receipt_path));if(file.error)throw error(503,'PROBE_READBACK_FAILED');const bytes=Buffer.from(await file.data.arrayBuffer());const{createHash}=await import('node:crypto');evidence.push({id:o.id,status:o.status,size:bytes.length,hashMatches:createHash('sha256').update(bytes).digest('hex')===o.receipt_sha256});}
+    for(const row of orders){const o=await ctx.store.browserOwnedOrder(hash,row.id);if(!o)throw error(403,'PROBE_OWNER');await ctx.store.verifyUploadedReceipt(o.receipt_path,o.receipt_size);const file=await ctx.media.client.storage.from(config.receiptsBucket).download(ctx.checked(o.receipt_path));if(file.error)throw error(503,'PROBE_READBACK_FAILED');const bytes=Buffer.from(await file.data.arrayBuffer());const{createHash}=await import('node:crypto');evidence.push({id:o.id,status:o.status,size:bytes.length,hashMatches:createHash('sha256').update(bytes).digest('hex')===o.receipt_sha256});}
     json(res,200,{synthetic:true,orders:evidence,notifications:0,productionStockUsed:false});return true;
    }
    if(isProbe)throw error(404,'PROBE_ROUTE');

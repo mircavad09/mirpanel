@@ -57,7 +57,8 @@
         orderIdempotencyKey: flow.orderIdempotencyKey,
         productId: flow.product.id,
         planIndex: flow.planIndex,
-        submissionStarted: Boolean(flow.submissionStarted)
+        submissionStarted: Boolean(flow.submissionStarted),
+        receiptUploadToken: flow.receiptUploadToken || null
       }));
     } catch {}
   }
@@ -384,6 +385,7 @@
   function clearReceipt(flow, preserveUploaded = false) {
     if (!preserveUploaded) { discardReceipt(flow, flow.receiptUploadToken); discardReceipt(flow, flow.previousReceiptUploadToken); flow.previousReceiptUploadToken = null; }
     flow.receiptUploadToken = null;
+    storeCheckout(flow);
     if (flow.receiptPreviewUrl) URL.revokeObjectURL(flow.receiptPreviewUrl);
     flow.receiptPreviewUrl = null;
     flow.receipt = null;
@@ -507,10 +509,18 @@
       try {
         let recovered;
         if (flow.previousReservationId && !flow.reservation) {
-          recovered = await request("/api/payments/checkout/resume", {
+          const resumeOptions = {
             method: "POST", signal: flow.readController.signal,
-            body: JSON.stringify({ reservationId: flow.previousReservationId, checkoutKey: flow.checkoutKey })
-          });
+            body: JSON.stringify({ reservationId: flow.previousReservationId, checkoutKey: flow.checkoutKey, receiptUploadToken: previous?.receiptUploadToken || undefined })
+          };
+          try { recovered = await request("/api/payments/checkout/resume", resumeOptions); }
+          catch (error) {
+            if (error.code !== 'RECEIPT_CONFIRMATION_INVALID') throw error;
+            // An expired/missing proof must not trap the checkout on every reload.
+            // Resume only the reservation; Continue stays disabled until re-upload.
+            if (previous) previous.receiptUploadToken = null;
+            recovered = await request('/api/payments/checkout/resume', {...resumeOptions,body:JSON.stringify({reservationId:flow.previousReservationId,checkoutKey:flow.checkoutKey})});
+          }
           if (recovered.state === "submitted") {
             await finish(recovered.order, { preserveModal: true });
             return;
@@ -556,6 +566,7 @@
             flow.previousReservationId = reserved.reservationId;
             flow.changing = false;
             flow.submissionStarted = false;
+            flow.receiptUploadToken = reserved.receiptUploaded === true ? reserved.receiptUploadToken : null;
             storeCheckout(flow);
             setStage(flow, "payment_details");
             choices.replaceChildren();
@@ -576,7 +587,7 @@
             };
             setMessage("Rezerv yaradıldı. Ödənişdən sonra qəbzi yükləyin.", "success");
             setTimeout(() => {
-              if (flow.reservation?.reservationId === reserved.reservationId && !flow.settled && !flow.cancelAttempted) setMessage("Ödəniş məlumatı hazırdır.", "success compact");
+              if (flow.reservation?.reservationId === reserved.reservationId && !flow.settled && !flow.cancelAttempted && !flow.receiptUploadToken) setMessage("Ödəniş məlumatı hazırdır.", "success compact");
             }, 1800);
             document.getElementById("paymentMethodDetail")?.scrollIntoView({ behavior: "smooth", block: "start" });
             flow.stopTimer?.();
@@ -798,28 +809,47 @@
               submit.disabled = true; submit.textContent = 'Sifariş göndərilir…';
               try {
                 flow.submissionStarted = true; storeCheckout(flow);
-                const order = await request('/api/payments/orders',{method:'POST',headers:{'X-Idempotency-Key':flow.orderIdempotencyKey},
-                  body:JSON.stringify({reservationId:flow.reservation.reservationId,checkoutKey:flow.checkoutKey,productId:product.id,planIndex,consentAccepted:true,whatsappExtraText:flow.whatsappExtraText,receiptUploadToken:flow.receiptUploadToken})});
+                const orderOptions={method:'POST',headers:{'X-Idempotency-Key':flow.orderIdempotencyKey},
+                  body:JSON.stringify({reservationId:flow.reservation.reservationId,checkoutKey:flow.checkoutKey,productId:product.id,planIndex,consentAccepted:true,whatsappExtraText:flow.whatsappExtraText,receiptUploadToken:flow.receiptUploadToken})};
+                let order;
+                try { order = await request('/api/payments/orders',orderOptions); }
+                catch (error) {
+                  if (error.code !== 'BROWSER_SESSION_REQUIRED') throw error;
+                  // Restore the server-issued history cookie, not a client-created
+                  // identity. Retry the same reservation and idempotency key once.
+                  await request('/api/payments/methods');
+                  order = await request('/api/payments/orders',orderOptions);
+                }
                 if (!validOrder(order)) throw new Error('Server çeki təsdiqləmədi. Yenidən cəhd edin.');
                 await finish(order,{preserveModal:true});
               } catch (error) {
                 flow.submitting = false;
                 finalControls.forEach(control=>{control.disabled=false;});
-                if (error.status===400 || error.status===409) {
+                if (error.code==='RECEIPT_CONFIRMATION_INVALID') {
                   flow.receiptUploadToken=null; setReceiptSubmitReady(false); document.getElementById('paymentReceiptRetry').hidden=false;
+                  storeCheckout(flow);
                   setStage(flow,'receipt_upload');
                   const receiptStatus=document.querySelector('.paymentReceiptSuccess');
                   if(receiptStatus){receiptStatus.classList.replace('paymentReceiptSuccess','paymentReceiptPending');receiptStatus.textContent='Çeki yenidən yükləyib yoxlayın.';}
                   document.getElementById('paymentReceiptForm')?.classList.remove('uploadSucceeded');
                 }
-                else setReceiptSubmitReady(true);
+                else setReceiptSubmitReady(error.code!=='RECEIPT_RESERVATION_INVALID');
                 const box=document.getElementById('paymentReceiptError');box.textContent=error.message;box.hidden=false;
               }
             });
+            if (flow.receiptUploadToken) {
+              const preview=document.getElementById('paymentReceiptPreview');
+              preview.classList.remove('hidden');
+              preview.innerHTML='<div class="paymentReceiptPreviewInfo"><strong>Serverdə saxlanmış çek</strong><span class="paymentReceiptSuccess" role="status">Çek uğurla yükləndi</span><div class="paymentReceiptPreviewActions"><button id="changePaymentReceipt" type="button">Dəyiş</button><button id="removePaymentReceipt" type="button">Sil</button></div></div>';
+              document.getElementById('changePaymentReceipt').onclick=()=>document.getElementById('paymentReceiptInput')?.click();
+              document.getElementById('removePaymentReceipt').onclick=()=>{if(flow.submitting)return;clearReceipt(flow);setReceiptSubmitReady(false);setStage(flow,'payment_details');};
+              document.getElementById('paymentReceiptForm').classList.add('hasReceipt','uploadSucceeded');
+              setReceiptSubmitReady(true);setStage(flow,'receipt_ready');
+            }
         };
         if (recovered?.state === "reserved") {
           showReservation(recovered.reservation);
-          setMessage("Rezerv bərpa edildi. Göndərilməmiş çeki yenidən seçin.", "success");
+          setMessage(flow.receiptUploadToken ? "Çek uğurla yükləndi" : "Rezerv bərpa edildi. Göndərilməmiş çeki yenidən seçin.", "success");
         }
         const continueButton = document.getElementById('paymentMethodContinue');
         choices.onclick = (event) => {
