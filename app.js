@@ -668,14 +668,14 @@ const DATA = {
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
+        "description": "ChatGPT Ortaq Hesab İstifadə Qaydaları və Məlumatlar\n\nHesabın İdarə Edilməsi: Bu hesab ortaq şəkildə istifadə olunur və hesab 5-7 nəfər arasında bölünür. Plus paketi aktivdir. Paket limitləri istifadəçilər arasında paylaşıldığı üçün bəzən müvəqqəti tükənə bilər.\n\nCihaz Limitləri: Hesab yalnız 1 cihaz üçün nəzərdə tutulub. Eyni anda fərqli cihazlardan giriş cəhdi spam xətasına səbəb ola bilər və bu da hesabın bağlanmasına gətirib çıxarır.\n\nAbunəlik və Aktivlik: Hər hansı gözlənilməz dayanma olarsa, bizə dərhal bildirə bilərsiniz, biz təkrar bərpa edəcəyik.\n\nTəhlükəsizlik və Digər İstifadəçilər: Digər istifadəçilərin yazışmalarına, əməliyyatlarına müdaxilə etmək və onları silmək qəti qadağandır.\n\nCodex və Məxvilik: Əgər kod (və ya vacib işlər) üçün istifadə edəcəksinizsə və istəyirsiniz ki, hesabınız tam sizə aid olsun, sizdən başqası mesajlarınızı görməsin — şəxsi hesab almağınızı məsləhət görürük.\n\n💡 Vacib Qeyd: Zəhmət olmasa, istifadə etməzdən əvvəl yuxarıdakı qaydaları diqqətlə oxuyun.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
+          "enabled": true,
+          "label": "🔗 Şəxsi hesab əldə etmək üçün buraya klikləyin 👑",
+          "url": "https://mirpanel.com/mehsul/chatgpt-plus"
         }
       },
       "whatsapp": {
@@ -693,14 +693,14 @@ const DATA = {
       "orderConfirmation": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️ \nChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.\nMirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.\n\n⚠️ ƏSAS RİSK ŞƏRTİ\nChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.\nBu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.\n• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.\n• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.\n\n⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ\nSifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.\nSifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.\n\nHesab məlumatları ilə bağlı vacib qeyd:\n• Təqdim olunan giriş məlumatlarını düzgün istifadə edin\n• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın\n• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır\n\n⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔\nCHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.",
+        "description": "ChatGPT Ortaq Hesab İstifadə Qaydaları və Məlumatlar\n\nHesabın İdarə Edilməsi: Bu hesab ortaq şəkildə istifadə olunur və hesab 5-7 nəfər arasında bölünür. Plus paketi aktivdir. Paket limitləri istifadəçilər arasında paylaşıldığı üçün bəzən müvəqqəti tükənə bilər.\n\nCihaz Limitləri: Hesab yalnız 1 cihaz üçün nəzərdə tutulub. Eyni anda fərqli cihazlardan giriş cəhdi spam xətasına səbəb ola bilər və bu da hesabın bağlanmasına gətirib çıxarır.\n\nAbunəlik və Aktivlik: Hər hansı gözlənilməz dayanma olarsa, bizə dərhal bildirə bilərsiniz, biz təkrar bərpa edəcəyik.\n\nTəhlükəsizlik və Digər İstifadəçilər: Digər istifadəçilərin yazışmalarına, əməliyyatlarına müdaxilə etmək və onları silmək qəti qadağandır.\n\nCodex və Məxvilik: Əgər kod (və ya vacib işlər) üçün istifadə edəcəksinizsə və istəyirsiniz ki, hesabınız tam sizə aid olsun, sizdən başqası mesajlarınızı görməsin — şəxsi hesab almağınızı məsləhət görürük.\n\n💡 Vacib Qeyd: Zəhmət olmasa, istifadə etməzdən əvvəl yuxarıdakı qaydaları diqqətlə oxuyun.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
         "helpLink": {
-          "enabled": false,
-          "label": "",
-          "url": ""
+          "enabled": true,
+          "label": "🔗 Şəxsi hesab əldə etmək üçün buraya klikləyin 👑",
+          "url": "https://mirpanel.com/mehsul/chatgpt-plus"
         }
       }
     },
