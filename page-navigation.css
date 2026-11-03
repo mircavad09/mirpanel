@@ -5,4 +5,13 @@
 .site-route-loading button{border:1px solid #6f6228;background:#ffd400;color:#111;border-radius:12px;padding:12px 18px;font:600 14px system-ui;cursor:pointer}
 .community-chat-screen #sitePageContent>.community-shell{flex:1;min-height:0}
 body #mainHeader{display:block!important}
+/* The guest shell must not lose its search row outside the homepage. */
+@media(max-width:900px){
+ html body .site-header.product-page-header .site-header-inner{grid-template-columns:minmax(0,1fr);grid-template-rows:38px 44px;gap:8px;padding:7px 0 8px}
+ html body .site-header .site-header-brand{grid-column:1;grid-row:1}
+ html body .site-header.product-page-header .site-header-tools{grid-column:1;grid-row:2;display:flex;gap:6px;width:100%;min-width:0}
+ html body .site-header.product-page-header .site-header-tools>.site-header-search{display:flex;flex:1 1 0;width:0;min-width:0;max-width:none;height:42px;order:1}
+ html body .site-header .site-header-tools>.site-header-menu-button{order:0;flex:none}
+ html body .site-header .account-header-controls{order:2}
+}
 @media(prefers-reduced-motion:no-preference){.site-route-placeholder{animation:route-placeholder 1.5s ease-in-out infinite alternate}@keyframes route-placeholder{to{background:#22272e}}}
