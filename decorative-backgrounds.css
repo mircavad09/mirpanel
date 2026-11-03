@@ -1,13 +1,20 @@
 /* Decorative media never contains dynamic balances, cart counts or controls. */
 @media(min-width:1000px){
- html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration{position:relative;isolation:isolate;overflow:visible;box-sizing:border-box;background:transparent;border:0;border-radius:0;box-shadow:none;color:#fff;min-height:48px;height:auto;aspect-ratio:var(--header-art-ratio,3.2);width:168px;min-width:168px;padding:4px 16px 4px 54px;gap:7px;display:inline-flex;align-items:center;justify-content:center;font:500 14px/1.25 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;flex-shrink:0;text-decoration:none}
- html body .site-header .desktop-balance.hasSiteDecoration{width:188px;min-width:188px;cursor:pointer}
+ html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration{position:relative;isolation:isolate;overflow:visible;box-sizing:border-box;background:transparent;border:0;border-radius:0;box-shadow:none;color:#fff;min-height:64px;height:64px;aspect-ratio:auto;width:208px;min-width:208px;padding:4px 22px 4px 72px;gap:8px;display:inline-flex;align-items:center;justify-content:center;font:500 15px/1.25 Inter,system-ui,-apple-system,"Segoe UI",Arial,sans-serif;white-space:nowrap;flex-shrink:0;text-decoration:none}
+ html body .site-header .desktop-balance.hasSiteDecoration{cursor:pointer}
+ html body .site-header #cartHeaderLink{order:-1}
  html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration>.siteDecoration{object-fit:contain;max-width:none;border-radius:0}
  html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration::before{display:none}
  html body .site-header :is(#cartHeaderLink,.desktop-cart).hasSiteDecoration small{display:grid;place-items:center;min-width:25px;height:25px;padding:0 4px;border-radius:999px;background:#ffd400;color:#181818;font:600 11px/1 system-ui,sans-serif;flex:none}
  html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration>:not(.siteDecoration){font-family:inherit;text-shadow:none}
  html body .site-header .desktop-balance.hasSiteDecoration>small:empty{display:none}
+ html body .site-header :is(#cartHeaderLink,.desktop-cart).hasSiteDecoration small:empty{display:none}
+ /* An identical cart image in both slots has no wallet icon of its own.
+    Keep the uploaded frame and replace only its interior icon area. */
+ html body .site-header .desktop-balance.headerWalletFallback::after{content:'';position:absolute;left:0;top:0;bottom:0;width:80px;background:linear-gradient(100deg,#151719,#17191b);mask-image:radial-gradient(ellipse closest-side,#000 78%,transparent 100%);z-index:0;pointer-events:none}
+ html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration.headerWalletFallback>svg{display:block;position:absolute;left:24px;top:18px;width:28px;height:28px;fill:none;stroke:#f2c960;stroke-width:1.7;stroke-linejoin:round;stroke-linecap:round;filter:drop-shadow(0 1px 2px #000);pointer-events:none}
 }
+@media(min-width:1000px) and (max-width:1199px){html body .site-header .site-header-inner{grid-template-columns:auto minmax(100px,1fr) auto}}
 .hasSiteDecoration>.siteDecoration{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-1;pointer-events:none}
 html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration>svg{display:none}
 html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration>:not(.siteDecoration){position:relative;z-index:1}
