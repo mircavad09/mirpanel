@@ -364,6 +364,7 @@
   }
   let inventoryRequest=null;
   function refreshInventory(){
+    if(window.MirpanelNavigation&&!['/','/mehsul'].includes(location.pathname)&&!location.pathname.startsWith('/mehsul/'))return Promise.resolve(false);
     if(inventoryRequest)return inventoryRequest;if(document.hidden)return Promise.resolve(false);
     inventoryRequest=(async()=>{try{const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel.onrender.com';const r=await fetch(base+'/api/payments/inventory',{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Inventory unavailable');const d=await r.json();if(!Array.isArray(d.products))throw Error('Invalid inventory');inventory.clear();for(const row of d.products)inventory.set(row.productId,row);inventoryDisplayValid=true;inventoryFailed=false;paintInventory();return true;}catch{inventoryDisplayValid=false;inventoryFailed=true;paintInventory();return false;}finally{inventoryRequest=null;}})();return inventoryRequest;
   }
@@ -377,7 +378,7 @@
   },true);
   document.addEventListener('keydown',event=>{const row=event.target.closest('.pp-plan-label');if(!row||!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;const product=typeof currentProduct!=='undefined'?currentProduct:null;if(!product)return;event.preventDefault();event.stopImmediatePropagation();const rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')],available=rows.filter((_,i)=>planFor(product,i)?.canOrder);if(!available.length)return;const at=available.indexOf(row),step=['ArrowUp','ArrowLeft'].includes(event.key)?-1:1,next=available[(at+step+available.length)%available.length];next.click();next.focus();},true);
   function startInventoryTimer(){clearInterval(inventoryTimer);paintInventory();refreshInventory();inventoryTimer=setInterval(()=>{paintInventory();refreshInventory();},2000);}
-  startInventoryTimer();window.addEventListener('pagehide',()=>clearInterval(inventoryTimer));window.addEventListener('pageshow',event=>{if(event.persisted)startInventoryTimer();});document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInventory();});
+  startInventoryTimer();window.addEventListener('pagehide',()=>clearInterval(inventoryTimer));window.addEventListener('mirpanel:route-leave',()=>clearInterval(inventoryTimer));window.addEventListener('mirpanel:route-ready',e=>{if(['/','/mehsul'].includes(e.detail.path))startInventoryTimer();});window.addEventListener('pageshow',event=>{if(event.persisted)startInventoryTimer();});document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInventory();});
 })();
 
 (function () {

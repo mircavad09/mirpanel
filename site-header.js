@@ -1,8 +1,8 @@
 (function () {
   "use strict";
   if(!document.querySelector('script[data-decorations-loader]')){const s=document.createElement('script');s.src='/decorative-backgrounds.js?v=plain-header-20261103';s.dataset.decorationsLoader='true';document.head.append(s);}
-  if(!document.querySelector('script[data-support-loader]')){const script=document.createElement('script');script.src='/support-widget.js?v=support-faq-20261026-2';script.dataset.supportLoader='true';document.head.append(script);}
-  if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=mobile-nav-20261103';script.dataset.browserNavLoader='true';document.head.append(script);}
+  if(!document.querySelector('script[data-support-loader]')){const script=document.createElement('script');script.src='/support-widget.js?v=fixed-shell-20261104';script.dataset.supportLoader='true';document.head.append(script);}
+  if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=navigation-20261104';script.dataset.browserNavLoader='true';document.head.append(script);}
 
   function normalize(value) {
     return String(value || "").toLocaleLowerCase("az").trim();
@@ -31,13 +31,14 @@
     }
     if (location.pathname === "/mehsul") {
       applyListingSearch(query);
-      history.replaceState(null, "", `/mehsul?search=${encodeURIComponent(query)}`);
+      if(window.MirpanelNavigation)window.MirpanelNavigation.replaceURL(`/mehsul?search=${encodeURIComponent(query)}`);else history.replaceState(null, "", `/mehsul?search=${encodeURIComponent(query)}`);
       return;
     }
-    location.assign(`/mehsul?search=${encodeURIComponent(query)}`);
+    if(window.MirpanelNavigation)void window.MirpanelNavigation.go(`/mehsul?search=${encodeURIComponent(query)}`);else location.assign(`/mehsul?search=${encodeURIComponent(query)}`);
   }
 
   function initHeader(header) {
+    if(header.dataset.headerMounted)return;header.dataset.headerMounted='true';
     const menuButton = header.querySelector(".site-header-menu-button");
     const closeButton = header.querySelector(".site-header-menu-close");
     const overlay = header.querySelector(".site-header-overlay");
@@ -70,6 +71,7 @@
     menuButton?.addEventListener("click", openMenu);
     closeButton?.addEventListener("click", () => closeMenu());
     overlay?.addEventListener("click", () => closeMenu());
+    window.addEventListener('mirpanel:route-leave',()=>closeMenu(false));
     drawer?.querySelectorAll("a[href]").forEach((link) => link.addEventListener("click", () => closeMenu(false)));
 
     header.querySelectorAll("[data-site-header-search]").forEach((form) => {

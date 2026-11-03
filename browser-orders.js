@@ -1,4 +1,4 @@
-(()=>{'use strict';const root=document.getElementById('browserOrders');if(!root)return;
+(()=>{'use strict';window.mountBrowserOrders=()=>{const root=document.getElementById('browserOrders');if(!root)return;const life=new AbortController(),on=(t,n,f)=>t.addEventListener(n,f,{signal:life.signal});
  const error=document.getElementById('browserOrdersError'),more=document.getElementById('browserOrdersMore'),dialog=document.getElementById('browserReceipt'),content=document.getElementById('browserReceiptContent');
  let cursor=null,loading=false,loaded=false,generation=0,timer;const seen=new Set(),requests=new Set();
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -16,9 +16,10 @@
  root.addEventListener('click',async e=>{if(e.target.closest('[data-retry]'))return void load();const b=e.target.closest('[data-receipt]');if(!b||b.disabled)return;const run=generation;b.disabled=true;try{const d=await api('my-orders/'+encodeURIComponent(b.dataset.receipt)+'/receipt');if(run!==generation)return;const u=new URL(d.url);if(u.protocol!=='https:'||!u.hostname.endsWith('.supabase.co'))throw Error();content.replaceChildren();const view=document.createElement(d.mime==='application/pdf'?'iframe':'img');view.src=u.href;view.referrerPolicy='no-referrer';if(view.tagName==='IMG')view.alt='Sifarişin ödəniş çeki';else{view.title='Ödəniş çeki PDF';view.setAttribute('sandbox','allow-same-origin');}content.append(view);dialog.showModal();}catch(e){if(run!==generation)return;if(e.status===401||e.status===403)return void gate();error.textContent=e.status===410?'Çek artıq mövcud deyil':'Çeki açmaq mümkün olmadı. Yenidən cəhd edin.';error.hidden=false;}finally{b.disabled=false;}});
  document.getElementById('browserReceiptClose').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});dialog.addEventListener('close',()=>content.replaceChildren());
  const start=()=>{clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!cursor&&!dialog.open)load();},30000);};
- window.addEventListener('mirpanel:account',e=>{if(!e.detail)gate();else if(!loaded)load();});
- window.addEventListener('storage',e=>{if(e.key==='mirpanel.auth.signedOut')gate();});
+ on(window,'mirpanel:account',e=>{if(!e.detail)gate();else if(!loaded)load();});
+ on(window,'storage',e=>{if(e.key==='mirpanel.auth.signedOut')gate();});
  // Clear private DOM before bfcache/backgrounding; revalidate on return.
- document.addEventListener('visibilitychange',()=>{if(document.hidden)clear();else load();});
- window.addEventListener('pagehide',()=>{clearInterval(timer);clear();});window.addEventListener('pageshow',()=>{start();load();});start();load();
+ on(document,'visibilitychange',()=>{if(document.hidden)clear();else load();});
+ const dispose=()=>{clearInterval(timer);clear();life.abort();};on(window,'pagehide',dispose);on(window,'pageshow',()=>{start();load();});start();load();window.mirpanelPageDispose=dispose;return dispose;
+ };if(!window.mirpanelNavigationMounting)window.mountBrowserOrders();
 })();

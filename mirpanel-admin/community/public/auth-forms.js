@@ -39,15 +39,16 @@ export async function renderAuthForms({app,state,api,el,button,link,alert}){
 
  form.addEventListener('submit',async e=>{e.preventDefault();if(busy||!form.reportValidity())return;busy=true;submit.disabled=true;submit.setAttribute('aria-busy','true');error.textContent='';success.textContent='';try{const values=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.type==='checkbox'?v.checked:v.value.trim()]));if(fields.password)values.password=fields.password.value;
   if(mode==='signup'){await api('/api/auth/sign-up/email',{...values,name:values.firstName+' '+values.lastName,registrationForm:true,callbackURL:location.origin+destination});success.textContent='E-poçtunuza göndərilən təsdiq keçidini açın.';fields.password.value='';}
-  else if(mode==='login'){await api('/api/auth/sign-in/email',{email:values.email,password:values.password});fields.password.value='';location.assign(destination);}
+  else if(mode==='login'){await api('/api/auth/sign-in/email',{email:values.email,password:values.password});fields.password.value='';await window.refreshCommunityNav?.();if(window.MirpanelNavigation)await window.MirpanelNavigation.go(destination);else location.assign(destination);}
   else if(mode==='reset'){await api('/api/auth/request-password-reset',{email:values.email,redirectTo:location.origin+'/hesab?mode=new-password'});success.textContent='Hesab mövcuddursa, bərpa keçidi göndərildi.';}
-  else{await api('/api/auth/reset-password',{token:params.get('token'),newPassword:values.password});fields.password.value='';location.assign('/hesab');}
+  else{await api('/api/auth/reset-password',{token:params.get('token'),newPassword:values.password});fields.password.value='';if(window.MirpanelNavigation)await window.MirpanelNavigation.go('/hesab');else location.assign('/hesab');}
  }catch(e){error.textContent=readableError(e);}finally{busy=false;submit.disabled=false;submit.removeAttribute('aria-busy');}});
  panel.append(form);if(mode==='login')panel.append(divider('və ya'),google());
  const footer=el('div',{class:'auth-form-footer'},el('span',{},mode==='signup'?'Artıq hesabın var?':mode==='login'?'Hesabınız yoxdur?':'Girişə qayıt'),link(mode==='signup'?'Daxil ol →':mode==='login'?'Qeydiyyatdan keç →':'Giriş →',(mode==='login'?'/hesab?mode=signup&':'/hesab?')+'next='+encodeURIComponent(destination),'auth-switch'));panel.append(footer);
- app.replaceChildren(panel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!busy)location.assign('/qrup');});
+ const life=new AbortController();window.mirpanelAuthDispose=()=>life.abort();
+ app.replaceChildren(panel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!busy){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/qrup');else location.assign('/qrup');}},{signal:life.signal});
  // Only account forms scroll. Keep the focused field and existing navigation
  // above the visual viewport's keyboard without locking the long signup form.
  function visibleField(){const v=window.visualViewport;document.body.style.setProperty('--auth-keyboard-inset',Math.max(0,innerHeight-(v?.height||innerHeight)-(v?.offsetTop||0))+'px');const active=document.activeElement;if(!form.contains(active)||!active.matches('input,select'))return;const nav=document.querySelector('.community-bottom-nav'),reserved=nav&&getComputedStyle(nav).display!=='none'?nav.getBoundingClientRect().height:0,r=active.getBoundingClientRect(),top=(v?.offsetTop||0)+12,bottom=(v?.offsetTop||0)+(v?.height||innerHeight)-reserved-14;if(r.bottom>bottom)window.scrollBy(0,r.bottom-bottom);else if(r.top<top)window.scrollBy(0,r.top-top);}
- const resized=()=>requestAnimationFrame(visibleField);window.visualViewport?.addEventListener('resize',resized);window.addEventListener('resize',resized);form.addEventListener('focusin',resized);visibleField();
+ const resized=()=>requestAnimationFrame(visibleField);window.visualViewport?.addEventListener('resize',resized,{signal:life.signal});window.addEventListener('resize',resized,{signal:life.signal});form.addEventListener('focusin',resized);visibleField();
 }

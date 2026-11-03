@@ -47,6 +47,18 @@
 /session-state.js
   Cache-Control: no-cache, must-revalidate
 
+/page-navigation.js
+  Cache-Control: no-cache, must-revalidate
+
+/page-navigation.css
+  Cache-Control: no-cache, must-revalidate
+
+/support-widget.js
+  Cache-Control: no-cache, must-revalidate
+
+/support-widget.css
+  Cache-Control: no-cache, must-revalidate
+
 /account-header.js
   Cache-Control: no-cache, must-revalidate
 

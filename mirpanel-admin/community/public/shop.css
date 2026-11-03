@@ -28,7 +28,4 @@
 .shop-page.shop-wallet-page .shop-history article{padding:10px 0}
 .shop-page.shop-wallet-page .shop-history strong{font-size:16px;font-weight:600}
 .shop-page.shop-wallet-page .shop-history small{font-size:12px;color:#b0b9c4}
-.wallet-page-active #supportWidget{position:relative;display:flex;justify-content:space-between;gap:12px;max-width:700px;margin:0 auto 20px;padding:0 16px;box-sizing:border-box}
-.wallet-page-active #supportWidget .support-fab{position:static!important;left:auto!important;right:auto!important;bottom:auto!important;transform:none!important;min-width:0!important;flex:1;max-width:180px;box-sizing:border-box}
-.wallet-page-active #supportWidget #aiSupportPanel,.wallet-page-active #supportWidget #supportBackdrop{position:fixed}
 @media(max-width:480px){.shop-page.shop-wallet-page{margin-top:14px;padding-inline:12px;padding-bottom:12px}.shop-page.shop-wallet-page h1{font-size:26px;margin-bottom:14px}.shop-page.shop-wallet-page .shop-card{padding:15px}.shop-page.shop-wallet-page .shop-wallet-hero{padding:18px 16px;min-height:140px}.shop-page.shop-wallet-page .shop-wallet-hero strong{font-size:34px}.shop-page.shop-wallet-page .shop-bank{padding:12px}.shop-page.shop-wallet-page .shop-number{font-size:15px}.wallet-page-active #supportWidget{padding-inline:12px;margin-bottom:20px}}

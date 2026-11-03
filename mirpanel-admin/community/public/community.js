@@ -1,10 +1,14 @@
 import {getCommunityState} from '/session-state.js?v=page-navigation-20261031';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
 import {tierLabel} from '/community-assets/tier-labels.js';
 import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
+export function mountCommunity(){
+const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('communityApp'),avatars=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'];let state=null,stopped=false;
 function el(tag,attrs={},...children){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else if(v!==undefined)e.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)e.append(typeof c==='string'?document.createTextNode(c):c);return e;}
 const cleanups=[];const every=(fn,ms)=>{const id=setInterval(fn,ms);cleanups.push(()=>clearInterval(id));};
-const requests=new Set();let groupTimer,groupTick,groupPause,groupResume;window.addEventListener('pagehide',()=>{stopped=true;groupPause?.();for(const fn of cleanups.splice(0))fn();for(const c of requests)c.abort();});window.addEventListener('pageshow',e=>{if(e.persisted){stopped=false;if(location.pathname==='/qrup')void group();else groupResume?.();}});
+const requests=new Set();let groupTimer,groupTick,groupPause,groupResume;
+const dispose=()=>{stopped=true;groupPause?.();for(const fn of cleanups.splice(0))fn();for(const c of requests)c.abort();life.abort();window.mirpanelProfileDispose?.();window.mirpanelProfileDispose=null;window.mirpanelAuthDispose?.();window.mirpanelAuthDispose=null;document.documentElement.classList.remove('community-chat-screen');document.body.classList.remove('profile-screen','auth-screen');};
+on(window,'pagehide',dispose);
 async function api(url,data,method='POST'){const controller=new AbortController();requests.add(controller);try{const r=await fetch(url,{method:data===undefined?'GET':method,credentials:'same-origin',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store',signal:controller.signal});const v=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(v.warning||v.error?.message||v.error||v.message||'Xidmət xətası. Yenidən cəhd edin.'),{blocked:v.blocked});return v;}finally{requests.delete(controller);}}
 const money=n=>(n/100).toFixed(2)+' ₼',button=(text,fn,primary=false)=>el('button',{type:'button',class:primary?'primary':'',onclick:fn},text),link=(text,href,cls='button')=>el('a',{href,class:cls},text),alert=()=>el('p',{class:'community-alert',role:'status','aria-live':'polite'});
 // Base avatar only; display frames are supplied by the shared PNG decorator.
@@ -68,9 +72,12 @@ async function group(){
  cleanups.push(()=>{stream?.close();clearTimeout(reconnect);});
  msgList.addEventListener('scroll',()=>{if(nearBottom()){newButton.hidden=true;mark();}if(!jumping&&ready&&msgList.scrollTop<=40)void loadOlder();});setPage(el('div',{class:'community-chat-layout'},card));if(state.initialMessages){receive(state.initialMessages,true);void jumpToTag();connect();}else void poll(true).then(()=>{void jumpToTag();if(publicChat)connect();});
 }
-async function account(){const {renderAuthForms}=await import('/community-assets/auth-forms.js?v=shop-v1');await renderAuthForms({app,state,api,el,button,link,alert});}
-async function profile(){if(!state.profile){location.replace('/hesab');return;}const {renderProfile}=await import('/community-assets/profile.js?v=shop-v1');await renderProfile({app,state,api,el,button,link,alert,avatars,money});}
+async function account(){const {renderAuthForms}=await import('/community-assets/auth-forms.js?v=shell-20261104');if(!stopped)await renderAuthForms({app,state,api,el,button,link,alert});}
+async function profile(){if(!state.profile){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/hesab');else location.replace('/hesab');return;}const {renderProfile}=await import('/community-assets/profile.js?v=shell-20261104');if(!stopped)await renderProfile({app,state,api,el,button,link,alert,avatars,money});}
 async function moderation(){if(!state.profile?.isModerator){setPage(el('p',{role:'alert'},'Bu bölməyə icazəniz yoxdur.'));return;}const r=await api('/api/community/audit');setPage(el('section',{class:'community-panel'},el('h1',{},'Moderasiya auditi'),...r.items.map(m=>el('p',{},`${m.action} · ${m.reason} · ${new Date(m.created_at).toLocaleString('az-AZ')}`)),link('Mesajları idarə etmək üçün qrupa keç','/qrup')));}
-try{await refresh();if(location.pathname==='/qrup')await group();else if(location.pathname==='/profil')await profile();else if(location.pathname==='/hesab')await account();else if(location.pathname==='/moderasiya')await moderation();else location.replace('/');}catch(e){setPage(el('section',{class:'community-panel'},el('h1',{},'Yükləmə alınmadı'),el('p',{role:'alert'},e.message),button('Yenidən cəhd et',()=>location.reload())));}
+const boot=async()=>{try{await refresh();if(stopped)return;if(location.pathname==='/qrup')await group();else if(location.pathname==='/profil')await profile();else if(location.pathname==='/hesab')await account();else if(location.pathname==='/moderasiya')await moderation();else location.replace('/');}catch(e){if(!stopped)setPage(el('section',{class:'community-panel'},el('h1',{},'Yükləmə alınmadı'),el('p',{role:'alert'},e.message),button('Yenidən cəhd et',boot)));}};void boot();
 // Keep the composer above the software keyboard without locking the page when closed.
-if(window.visualViewport){const size=()=>{document.documentElement.style.setProperty('--community-viewport',visualViewport.height+'px');};visualViewport.addEventListener('resize',size);size();}
+if(window.visualViewport){const size=()=>{document.documentElement.style.setProperty('--community-viewport',visualViewport.height+'px');};on(visualViewport,'resize',size);size();}
+window.mirpanelPageDispose=dispose;return dispose;
+}
+if(!new URL(import.meta.url).searchParams.get('v')?.startsWith('shell-')&&!window.mirpanelNavigationMounting&&document.getElementById('communityApp'))mountCommunity();

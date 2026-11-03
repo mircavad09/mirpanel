@@ -1,5 +1,7 @@
 .site-header {
   font-family:system-ui,sans-serif;
+  font-size:16px;
+  line-height:1.4;
   position: sticky;
   top: 0;
   z-index: 50;

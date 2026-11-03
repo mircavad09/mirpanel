@@ -1,8 +1,10 @@
 import {tierLabel} from '/community-assets/tier-labels.js';
 export async function renderProfile({app,state,api,el,button,link,alert,avatars,money}){
- document.body.classList.add('profile-screen');document.title='Profil · MirPanel';document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/profile.css?v=profile-stats-20261030'}));
+ document.body.classList.add('profile-screen');document.title='Profil · MirPanel';if(!document.querySelector('link[href*="/community-assets/profile.css"]'))document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/profile.css?v=profile-stats-20261030'}));
  let p=state.profile,busy=false,uploading=false;const error=alert(),status=alert();
  let dirty=false;const protect=e=>{if(dirty||busy||uploading){e.preventDefault();e.returnValue='';}};const guard=()=>window[dirty||busy||uploading?'addEventListener':'removeEventListener']('beforeunload',protect);
+ const leave=e=>{if(busy||uploading){e.preventDefault();status.textContent='Saxlanma tamamlanana qədər gözləyin.';}else if(dirty){e.preventDefault();status.textContent='Saxlanmamış dəyişikliklər var. Yadda saxlayın və ya “Ləğv et” seçin.';editor.open=true;}};
+ window.addEventListener('mirpanel:before-navigate',leave);window.mirpanelProfileDispose=()=>{window.removeEventListener('beforeunload',protect);window.removeEventListener('mirpanel:before-navigate',leave);};
  const image=()=>el('span',{class:'profile-avatar-photo'},p.avatarUrl?el('img',{src:p.avatarUrl,alt:'Avatar'}):avatars[p.avatar]||avatars[0]);
  const avatar=button('',()=>avatarInput.click());avatar.className='profile-avatar';avatar.setAttribute('aria-label','Avatar şəklini dəyiş');avatar.append(image());
  const cover=el('div',{class:'profile-cover'}),name=el('h1',{},p.display_name),badge=p.isOwner?el('span',{class:'profile-tier'},'Admin'):p.tier.id==='standard'?null:el('span',{class:'profile-tier tier-'+p.tier.id},tierLabel(p.tier.id));
@@ -28,13 +30,13 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
  const copyStatus=alert(),copy=button('Kopyala',async()=>{try{if(!p.member_number)throw Error();await navigator.clipboard.writeText(String(p.member_number));copyStatus.textContent='Kopyalandı';}catch{copyStatus.textContent='Kopyalama alınmadı.';}});copy.disabled=!p.member_number;
  const identity=el('div',{class:'profile-welcome'},greeting,el('div',{class:'profile-id-pill'},el('span',{class:'profile-id-hash'},'#'),el('span',{},'ID: '+(p.member_number||'—')),copy));
  const latest=el('section',{class:'profile-info-card'},el('h2',{},'Son sifariş'),el('strong',{},'Yüklənir…')),subscription=el('section',{class:'profile-info-card'},el('h2',{},'Abunəlik'),el('strong',{},'Aktiv abunəlik yoxdur'));
- const logout=button('Çıxış',async()=>{logout.disabled=true;try{await api('/api/auth/sign-out',{});try{localStorage.setItem('mirpanel.auth.signedOut',String(Date.now()));}catch{}location.assign('/qrup');}catch(e){status.textContent=e.message;logout.disabled=false;}});logout.classList.add('profile-logout');
+ const logout=button('Çıxış',async()=>{logout.disabled=true;try{await api('/api/auth/sign-out',{});try{localStorage.setItem('mirpanel.auth.signedOut',String(Date.now()));}catch{}window.mirpanelAccountProfile=null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));await window.refreshCommunityNav?.();if(window.MirpanelNavigation)await window.MirpanelNavigation.go('/qrup');else location.assign('/qrup');}catch(e){status.textContent=e.message;logout.disabled=false;}});logout.classList.add('profile-logout');
  const icon=path=>vector([['path',{d:path}]]);
  const decorate=(card,path)=>card.prepend(icon(path));
  const orderCount=el('strong',{},'…'),savedAmount=el('strong',{},'…'),orders=link('','/sifarislerim','profile-stat');
  orders.append(icon('M6 5h12l2 15H4z M9 6V3h6v3'),orderCount,el('span',{},'Sifariş'));orders.setAttribute('aria-label','Sifarişlərimə bax');
  const savings=el('div',{class:'profile-stat','aria-disabled':'true'},icon('M5 10l3-4h7l4 4v7h-3v3h-3v-3H9v3H6v-5H3v-5z'),savedAmount,el('span',{},'Qənaət'));
- const stats=el('div',{class:'profile-summary-stats'},orders,savings),topup=button('Balansı artır',()=>location.assign('/balans'),true);
+ const stats=el('div',{class:'profile-summary-stats'},orders,savings),topup=button('Balansı artır',()=>window.MirpanelNavigation?window.MirpanelNavigation.go('/balans'):location.assign('/balans'),true);
  const balance=el('section',{class:'profile-balance'},el('div',{},el('h2',{},'Balans'),el('strong',{},Number.isSafeInteger(p.balanceCents)?money(p.balanceCents):'Məlumat yoxdur')),topup);
  decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');decorate(subscription,'M5 5h14v15H5z M8 2v6 M16 2v6 M5 10h14');
  hero.append(stats,balance,editor);

@@ -192,6 +192,7 @@
   viewer.addEventListener("touchend", (event) => { const distance = (event.changedTouches[0]?.clientX || touchX) - touchX; if (Math.abs(distance) > 50) move(distance < 0 ? 1 : -1); }, { passive: true });
   const cached=window.mirpanelHomeMedia?.cached('stories');
   if(cached){stories=(cached.stories||[]).filter(s=>s.active!==false&&s.coverUrl&&Array.isArray(s.items)&&s.items.length);render();}
-  let refreshTimer;const refreshStories=()=>{clearTimeout(refreshTimer);if(!document.hidden)load().finally(()=>{refreshTimer=setTimeout(refreshStories,15000);});};
+  let refreshTimer;const refreshStories=()=>{clearTimeout(refreshTimer);if(!document.hidden&&(!window.MirpanelNavigation||location.pathname==='/'))load().finally(()=>{if(!window.MirpanelNavigation||location.pathname==='/')refreshTimer=setTimeout(refreshStories,15000);});};
+  window.addEventListener('mirpanel:route-leave',()=>{clearTimeout(refreshTimer);stopCurrent();});window.addEventListener('mirpanel:route-ready',e=>{if(e.detail.path==='/')refreshStories();});
   refreshStories();document.addEventListener('visibilitychange',refreshStories);window.addEventListener('pagehide',()=>{clearTimeout(refreshTimer);stopCurrent();});
 })();

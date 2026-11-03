@@ -302,6 +302,7 @@
 
   async function pollHomepageBanners() {
     clearTimeout(bannerPollTimer);
+    if(window.MirpanelNavigation&&location.pathname!=='/')return;
     if(document.hidden || bannerPollBusy || !document.getElementById('heroSlider')) return;
     bannerPollBusy=true;
     const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),10000);
@@ -323,7 +324,7 @@
     } catch {if(!initialBannersResolved){initialBannersResolved=true;applyBanners();} /* retain last functioning banners */ }
     finally {
       clearTimeout(timeout); bannerPollBusy=false;
-      if(!document.hidden) bannerPollTimer=setTimeout(pollHomepageBanners,3000);
+      if(!document.hidden&&(!window.MirpanelNavigation||location.pathname==='/')) bannerPollTimer=setTimeout(pollHomepageBanners,3000);
     }
   }
 
@@ -487,6 +488,8 @@
   if(cachedBanners?.managed===true&&Array.isArray(cachedBanners.banners)){liveBanners=cachedBanners.banners.filter(b=>b.active===true&&safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,productId:b.productId,productTitle:b.productTitle,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus}));initialBannersResolved=true;bannerRevision=JSON.stringify(cachedBanners.banners);}
   applyBanners();
   void pollHomepageBanners();
+  window.addEventListener('mirpanel:route-leave',()=>clearTimeout(bannerPollTimer));
+  window.addEventListener('mirpanel:route-ready',e=>{if(e.detail.path==='/')void pollHomepageBanners();});
   document.addEventListener('visibilitychange',()=>{
     clearTimeout(bannerPollTimer);
     if(!document.hidden) void pollHomepageBanners();

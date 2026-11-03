@@ -1,0 +1,8 @@
+#sitePageContent{display:contents}
+.site-route-pending{min-height:35vh;margin:24px 0;color:#b8bdc5;font:15px/1.5 system-ui,sans-serif}
+.site-route-loading{width:min(1080px,calc(100% - 28px));margin:24px auto;min-height:45vh;color:#e6e8eb;font:15px/1.5 system-ui,sans-serif}
+.site-route-loading h1{font:650 26px/1.3 system-ui,sans-serif;margin:0 0 14px}.site-route-loading p{color:#b8bdc5}.site-route-placeholder{height:70px;border-radius:14px;border:1px solid #30343a;background:#191d22;margin:12px 0}.site-route-placeholder:last-child{width:70%;height:36px}
+.site-route-loading button{border:1px solid #6f6228;background:#ffd400;color:#111;border-radius:12px;padding:12px 18px;font:600 14px system-ui;cursor:pointer}
+.community-chat-screen #sitePageContent>.community-shell{flex:1;min-height:0}
+body #mainHeader{display:block!important}
+@media(prefers-reduced-motion:no-preference){.site-route-placeholder{animation:route-placeholder 1.5s ease-in-out infinite alternate}@keyframes route-placeholder{to{background:#22272e}}}

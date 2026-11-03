@@ -4203,6 +4203,7 @@ function initSlider() {
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
   function startTimer() {
     clearInterval(slideInterval);
+    if(window.MirpanelNavigation&&location.pathname!=='/')return;
     if (slides.length < 2 || reducedMotion || document.hidden || slider.matches(':hover') || slider.contains(document.activeElement)) return;
     slideInterval = setInterval(() => { if (Date.now() >= sliderPauseUntil) nextSlide(); }, 5000);
   }
@@ -4231,6 +4232,8 @@ function initSlider() {
 }
 
 window.initSlider = initSlider;
+window.addEventListener('mirpanel:route-leave',()=>clearInterval(slideInterval));
+window.addEventListener('mirpanel:route-ready',e=>{if(e.detail.path==='/')initSlider();});
 
 const $ = (id) => document.getElementById(id);
 
