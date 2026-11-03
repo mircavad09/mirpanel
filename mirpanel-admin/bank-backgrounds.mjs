@@ -2,6 +2,7 @@ import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
 export const BANKS={kapital:'Birbank / Kapital Bank',m10:'m10',abb:'ABB',leo:'Leobank'};
+export const DECORATIONS={...BANKS,'wallet-card':'Böyük balans kartı','header-cart':'Başlıqdakı Səbət düyməsi','header-balance':'Başlıqdakı balans düyməsi'};
 const failure=(status,message)=>Object.assign(new Error(message),{status});
 export function bankKey(method){
  const theme=method.resolvedTheme||method.theme;
@@ -30,11 +31,11 @@ export async function normalizeBankBackground(bytes,mime){
 export function createBankBackgrounds(client,bucket='mirpanel-stories'){
  let cache=null,until=0,loading=null;const pending=new Set(),objects=new Map();
  const storage=()=>client.storage.from(bucket),path=k=>'payment-bank-backgrounds/'+k+'.webp';
- const check=k=>{if(!Object.hasOwn(BANKS,k))throw failure(400,'Bank düzgün deyil.');};
+ const check=k=>{if(!Object.hasOwn(DECORATIONS,k))throw failure(400,'Fon növü düzgün deyil.');};
  async function list(fresh=false){
   if(!fresh&&cache&&until>Date.now())return cache;if(loading){if(!fresh)return loading;await loading.catch(()=>{});}
   loading=(async()=>{const{data,error}=await storage().list('payment-bank-backgrounds',{limit:20});if(error)throw failure(503,'Bank fonları oxunmadı. Yenidən cəhd edin.');
-   const result={};for(const k of Object.keys(BANKS)){const row=(data||[]).find(r=>r.name===k+'.webp');if(row)result[k]='/api/payments/bank-backgrounds/'+k+'?v='+encodeURIComponent(row.updated_at||row.id);}
+   const result={};for(const k of Object.keys(DECORATIONS)){const row=(data||[]).find(r=>r.name===k+'.webp');if(row)result[k]='/api/payments/'+(Object.hasOwn(BANKS,k)?'bank-backgrounds/':'backgrounds/')+k+'?v='+encodeURIComponent(row.updated_at||row.id);}
    cache=result;until=Date.now()+30000;return result;})();try{return await loading;}finally{loading=null;}
  }
  return {list,async decorate(method){const backgrounds=await list();return {...method,backgroundUrl:backgrounds[bankKey(method)]||''};},

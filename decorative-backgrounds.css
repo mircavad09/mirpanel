@@ -1,0 +1,10 @@
+/* Decorative media never contains dynamic balances, cart counts or controls. */
+html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration{position:relative;isolation:isolate;overflow:hidden;background:#15191d;border-color:#8b7434;color:#fff;min-width:44px;min-height:40px}
+.hasSiteDecoration>.siteDecoration{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-1;pointer-events:none}
+html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration>svg{display:none}
+html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration>:not(.siteDecoration){position:relative;z-index:1}
+html body .site-header :is(#cartHeaderLink,.desktop-cart,.desktop-balance).hasSiteDecoration::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#0008,#0003);z-index:0;pointer-events:none}
+html body .shop-page.shop-wallet-page .shop-wallet-hero.hasSiteDecoration{position:relative;isolation:isolate;background:#101317}
+.shop-wallet-hero.hasSiteDecoration>.siteDecoration{object-position:right center}
+.shop-wallet-hero.hasSiteDecoration::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#0009,transparent 75%);pointer-events:none;z-index:0}
+.shop-wallet-hero.hasSiteDecoration>:not(.siteDecoration){position:relative;z-index:1}

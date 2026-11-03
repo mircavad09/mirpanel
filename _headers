@@ -11,6 +11,12 @@
 /site-header.js
   Cache-Control: no-cache, must-revalidate
 
+/decorative-backgrounds.js
+  Cache-Control: no-cache, must-revalidate
+
+/decorative-backgrounds.css
+  Cache-Control: no-cache, must-revalidate
+
 /browser-nav.js
   Cache-Control: no-cache, must-revalidate
 

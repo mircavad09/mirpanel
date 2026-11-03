@@ -1,5 +1,6 @@
 (function () {
   "use strict";
+  if(!document.querySelector('script[data-decorations-loader]')){const s=document.createElement('script');s.src='/decorative-backgrounds.js?v=decorations-20261103';s.dataset.decorationsLoader='true';document.head.append(s);}
   if(!document.querySelector('script[data-support-loader]')){const script=document.createElement('script');script.src='/support-widget.js?v=support-faq-20261026-2';script.dataset.supportLoader='true';document.head.append(script);}
   if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=mobile-nav-20261103';script.dataset.browserNavLoader='true';document.head.append(script);}
 

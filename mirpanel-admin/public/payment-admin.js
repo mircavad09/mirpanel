@@ -76,25 +76,30 @@
   function renderMethods() {
     const list = $p("paymentMethodsList");
     if (!list) return;
-    if(!$p('paymentBankBackgrounds'))list.insertAdjacentHTML('beforebegin','<section id="paymentBankBackgrounds" class="paymentBankBackgrounds"></section>');
-    renderBankBackgrounds();
+    if(!$p('paymentBackgroundsLink'))list.insertAdjacentHTML('beforebegin','<p id="paymentBackgroundsLink"><button class="btn" type="button" data-open-decorations>Bank fonları — Şəkillər və fonlar</button></p>');
     list.innerHTML = paymentState.methods.length ? paymentState.methods.map(methodCard).join("") : '<div class="emptyState">Ödəniş üsulu tapılmadı.</div>';
     if (paymentState.selectedMethodId) renderMethodEditor(paymentState.methods.find((item) => item.id === paymentState.selectedMethodId));
   }
 
-  let bankBackgroundState={banks:{kapital:'Birbank / Kapital Bank',m10:'m10',abb:'ABB',leo:'Leobank'},backgrounds:{},busy:new Set(),error:''};
+  let bankBackgroundState={banks:{kapital:'Birbank / Kapital Bank',m10:'m10',abb:'ABB',leo:'Leobank','wallet-card':'Böyük balans kartı','header-cart':'Başlıqdakı Səbət düyməsi','header-balance':'Başlıqdakı balans düyməsi'},backgrounds:{},busy:new Set(),error:''};
+  const decorationDescriptions={kapital:'Bütün Birbank/Kapital Bank kartları · hər iki ödəniş mərhələsi',m10:'Bütün m10 kartları · hər iki ödəniş mərhələsi',abb:'Bütün ABB kartları · hər iki ödəniş mərhələsi',leo:'Bütün Leobank kartları · hər iki ödəniş mərhələsi','wallet-card':'Balans səhifəsi · Mövcud balans kartı','header-cart':'Sayt başlığı · Səbət; məhsul sayı canlı qalır','header-balance':'Sayt başlığı · Balans; faktiki məbləğ canlı qalır'};
   function renderBankBackgrounds(){
     const host=$p('paymentBankBackgrounds');if(!host)return;
-    host.innerHTML='<h3>Bank kartlarının fonları</h3><p>Fon həmin bankın bütün mövcud və yeni kartlarına tətbiq olunur. PNG, JPG, WebP · maksimum 5 MB.</p>'+(bankBackgroundState.error?`<p role="alert">${escp(bankBackgroundState.error)}</p>`:'')+'<div class="paymentBankBackgroundGrid">'+Object.entries(bankBackgroundState.banks).map(([key,name])=>{
-      const url=bankBackgroundState.backgrounds[key],busy=bankBackgroundState.busy.has(key);
-      return `<article><strong>${escp(name)}</strong>${url?`<img src="${escp(url)}" alt="${escp(name)} fon önizləməsi">`:'<div class="paymentBankEmpty">Mövcud kart dizaynı</div>'}<label class="btn">${busy?'Saxlanılır…':url?'Fonu dəyiş':'Kart fonu yüklə'}<input type="file" accept="image/png,image/jpeg,image/webp" data-bank-background="${key}" ${busy?'disabled':''}></label><button class="btn" type="button" data-bank-background-remove="${key}" ${!url||busy?'disabled':''}>Fonu sil</button></article>`;
-    }).join('')+'</div>';
+    const groups=[['Bank kartı fonları',['kapital','m10','abb','leo']],['Balans səhifəsi',['wallet-card']],['Başlıq düymələri',['header-cart','header-balance']]];
+    host.innerHTML='<p>PNG, JPG, WebP · maksimum 5 MB. Dəyişiklik saxlanandan sonra avtomatik tətbiq olunur.</p>'+(bankBackgroundState.error?`<p role="alert">${escp(bankBackgroundState.error)}</p>`:'')+groups.map(([title,keys])=>'<h3>'+title+'</h3><div class="paymentBankBackgroundGrid">'+keys.map(key=>{
+      const name=bankBackgroundState.banks[key],url=bankBackgroundState.backgrounds[key],busy=bankBackgroundState.busy.has(key);
+      return `<article data-decoration-card="${key}"><strong>${escp(name)}</strong><p>${escp(decorationDescriptions[key])}</p>${url?`<div class="decorationChecker"><img src="${escp(url)}" alt="${escp(name)} fon önizləməsi"></div>`:'<div class="paymentBankEmpty">Standart görünüş</div>'}<label class="btn">${busy?'Saxlanılır…':url?'Dəyiş':'Yüklə'}<input aria-label="${escp(name)} — şəkil seç" type="file" accept="image/png,image/jpeg,image/webp" data-bank-background="${key}" ${busy?'disabled':''}></label><button class="btn" type="button" data-bank-background-remove="${key}" ${!url||busy?'disabled':''}>Sil</button></article>`;
+    }).join('')+'</div>').join('');
+  }
+  async function loadBackgrounds(){
+    try{const r=await paymentApi('/api/admin/payment-backgrounds');bankBackgroundState.backgrounds=r.backgrounds;bankBackgroundState.error='';}catch(e){bankBackgroundState.error=e.message||'Fonlar yüklənmədi.';}renderBankBackgrounds();
   }
   async function changeBankBackground(key,file,remove=false){
     if(bankBackgroundState.busy.has(key))return;
+    if(remove&&!await paymentActionDialog({title:'Fonu sil',message:bankBackgroundState.banks[key]+' fonu silinsin? Standart görünüş bərpa olunacaq.',confirmText:'Sil',danger:true}))return;
     if(!remove&&(!file||!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5242880)){toast('PNG, JPG və ya WebP seçin. Maksimum 5 MB.');return;}
     bankBackgroundState.busy.add(key);bankBackgroundState.error='';renderBankBackgrounds();
-    try{const r=await paymentApi('/api/admin/payment-bank-backgrounds/'+key+(remove?'/remove':''),{method:'POST',...(remove?{body:'{}'}:{body:file,headers:{'Content-Type':file.type}})});bankBackgroundState.backgrounds=r.backgrounds;toast(remove?'Bank fonu silindi.':'Bank fonu saxlanıldı.');}
+    try{const r=await paymentApi('/api/admin/payment-backgrounds/'+key+(remove?'/remove':''),{method:'POST',...(remove?{body:'{}'}:{body:file,headers:{'Content-Type':file.type}})});bankBackgroundState.backgrounds=r.backgrounds;toast(remove?'Fon silindi.':'Fon saxlanıldı.');try{localStorage.setItem('mirpanel.decorations.updated',String(Date.now()));}catch{}}
     catch(e){bankBackgroundState.error=e.message||'Fon saxlanmadı. Yenidən cəhd edin.';toast(bankBackgroundState.error);}
     finally{bankBackgroundState.busy.delete(key);renderBankBackgrounds();}
   }
@@ -136,7 +141,6 @@
     const [methodResult, settingsResult] = await Promise.all([paymentApi("/api/admin/payment-methods"), paymentApi("/api/admin/payment-settings")]);
     paymentState.methods = methodResult.methods || [];
     renderMethods();
-    try{const r=await paymentApi('/api/admin/payment-bank-backgrounds');bankBackgroundState.backgrounds=r.backgrounds;bankBackgroundState.error='';}catch(e){bankBackgroundState.error=e.message||'Fonlar yüklənmədi.';}renderBankBackgrounds();
     if ($p("paymentNotificationEmail")) $p("paymentNotificationEmail").value = settingsResult.settings?.notificationEmail || "";
     if ($p("paymentReceiptRetentionDays")) $p("paymentReceiptRetentionDays").value = settingsResult.settings?.receiptRetentionDays || 90;
   }
@@ -641,6 +645,8 @@
     document.addEventListener("click", async (event) => {
       try {
         const viewButton = event.target.closest(".navBtn[data-view]");
+        if(event.target.closest('[data-open-decorations]'))document.querySelector('.navBtn[data-view="decorations"]')?.click();
+        if(viewButton?.dataset.view==='decorations')await loadBackgrounds();
         if (viewButton?.dataset.view === "paymentMethods") await loadMethods();
         if (viewButton?.dataset.view === "paymentCosts") await loadCosts();
         if (viewButton?.dataset.view === "paymentOrders") { await Promise.all([loadOrders(), loadMonthlyReports()]); renderOrderContext(); }
@@ -760,6 +766,7 @@
   }
 
   function bootPayments() {
+    if(location.hash==='#decorations')void loadBackgrounds();
     bindEvents(); setTimeout(openReviewToken, 400);
     const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) loadOrders({automatic:true}).catch(() => {}); else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
     setTimeout(() => refreshOrderCounts().catch(() => {}), 1000);

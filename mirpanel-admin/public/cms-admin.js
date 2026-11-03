@@ -1,7 +1,7 @@
 (function () {
   const viewGroups = [
     ["Əsas idarəetmə", [["dashboard", "İdarə paneli"], ["products", "Məhsullar"], ["categories", "Kateqoriyalar"]]],
-    ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
+    ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
     ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentCosts", "Məhsulların maya dəyəri və qazanc"], ["paymentOrders", "Sifarişlər"], ["paymentReviews", "Ödəniş yoxlamaları"], ["netflixAccounts", "Netflix hesabları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
@@ -87,6 +87,7 @@
     });
   }
   function activateView(view) {
+    if(view==='decorations')history.replaceState({},'',location.pathname+'#decorations');
     window.dispatchEvent(new CustomEvent('admin-community-view',{detail:view}));
     if(['communityUsers','communityGroup','communityShop'].includes(view)){
       if(!el(`${view}View`))createView(view,'');
@@ -107,6 +108,7 @@
     try { const q = el("netflixAccountSearch")?.value || ""; const result = await api(`/api/admin/netflix-accounts?q=${encodeURIComponent(q)}`); list.innerHTML = (result.items || []).map((item) => `<div class="cmsListItem compact"><strong>${esc(item.email)}</strong><span>${item.active ? "Aktiv" : "Deaktiv"}</span><div><button class="btn" type="button" data-netflix-toggle="${esc(item.email)}" data-active="${item.active ? "false" : "true"}">${item.active ? "Deaktiv et" : "Aktiv et"}</button><button class="btn danger" type="button" data-netflix-delete="${esc(item.email)}">Sil</button></div></div>`).join("") || "Hesab əlavə edilməyib."; } catch { list.textContent = "Hesablar yüklənmədi."; }
   }
   function createStaticViews() {
+    createView("decorations",panel("Şəkillər və fonlar","Dekorativ şəkillər avtomatik tətbiq olunur. Məbləğlər və kart məlumatları canlı mətn olaraq qalır.",'<section id="paymentBankBackgrounds" class="paymentBankBackgrounds"></section>'));
     createView("dashboard", panel("İdarə paneli", "Sayt məzmununun ümumi vəziyyəti", '<div class="cmsCards" id="cmsDashboardCards"></div>'));
     createView("homepage", panel("Ana səhifə", "Mövcud dizaynı dəyişmədən ana səhifə mətnlərini idarə et", `<div class="sectionHead"><h3>Ümumi sayt məlumatları</h3></div><div class="formGrid">
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}
@@ -1243,7 +1245,7 @@
     installActions();
     installHooks();
     if (state.data) renderCms();
-    activateView(['communityUsers','communityGroup','communityShop'].includes(location.hash.slice(1))?location.hash.slice(1):"dashboard");
+    activateView(['communityUsers','communityGroup','communityShop','decorations'].includes(location.hash.slice(1))?location.hash.slice(1):"dashboard");
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();

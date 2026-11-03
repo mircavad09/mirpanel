@@ -1232,3 +1232,9 @@ th {
 .paymentBankBackgroundGrid label{position:relative;overflow:hidden}
 .paymentBankBackgroundGrid input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
 .paymentBankBackgroundGrid label:focus-within{outline:2px solid #ffd400;outline-offset:2px}
+.paymentBankBackgroundGrid .decorationChecker{width:100%;border-radius:12px;overflow:hidden;background-color:#d4d7da;background-image:conic-gradient(#a9adb2 25%,transparent 0 50%,#a9adb2 0 75%,transparent 0);background-size:20px 20px}
+.paymentBankBackgroundGrid .decorationChecker img{display:block;width:100%;background:transparent;object-fit:contain;border:0;border-radius:0}
+.paymentBankBackgroundGrid article>p{width:100%;min-height:38px;margin:0;color:#bdc4cc;font-size:13px;line-height:1.45}
+#decorationsView .paymentBankBackgrounds{margin:0;background:#171a1e}
+#decorationsView .paymentBankBackgroundGrid{margin-bottom:22px}
+#decorationsView .paymentBankBackgroundGrid article{padding:12px;border:1px solid #343940;border-radius:12px;background:#1d2126}
