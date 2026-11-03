@@ -7,6 +7,7 @@ import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import { createPaymentSystem } from "./payment-api.mjs";
+import {createReceiptLiveProbe} from './receipt-live-probe.mjs';
 import { createNetflixConfirmationEndpoint } from "./netflix-confirmation-endpoint.mjs";
 import { createConfirmationGate } from "./netflix-verification-policy.mjs";
 import { createNetflixAccountRepository } from "./netflix-account-repository.mjs";
@@ -661,6 +662,7 @@ async function handleApi(request, response) {
     return json(response,200,await homepageBanners.list(),headers);
   }
   if (await netflixConfirmationEndpoint(request, response)) return;
+  if (await receiptLiveProbe.handle(request,response)) return;
   if (await paymentSystem.handle(request, response)) return;
 
   if ((request.method === "GET" || request.method === "OPTIONS") && request.url === "/api/stories") {
@@ -1288,6 +1290,8 @@ const paymentSystem = createPaymentSystem({
   actorName: config.username || "admin",
   loadCatalog: async () => extractAdminState((await getAppFile()).source)
 });
+
+const receiptLiveProbe=createReceiptLiveProbe({config,json,readBody,readRawBody,requireMutationAuth,getSession});
 
 // Netflix confirmation is deliberately fail-closed: no reviewed production
 // profiles or account repository are wired yet, so disabled deployments never
