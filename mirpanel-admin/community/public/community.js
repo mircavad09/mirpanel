@@ -1,4 +1,4 @@
-import {getCommunityState} from '/session-state.js?v=page-navigation-20261031';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
+import {getCommunityState} from '/session-state.js?v=avatar-20261104';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
 import {tierLabel} from '/community-assets/tier-labels.js';
 import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
 export function mountCommunity(){

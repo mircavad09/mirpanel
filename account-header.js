@@ -3,17 +3,29 @@
  const paths={bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',arrow:'m8 10 4 4 4-4',profile:'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',wallet:'M4 6h16v14H4z M4 6V3h13 M15 11h5v5h-5z',orders:'M5 7h14v14H5V7Zm4 0V5a3 3 0 0 1 6 0v2',card:'M3 5h18v14H3z M3 10h18',group:'M4 4h16v12H9l-5 4V4Z',support:'M4 14v-3a8 8 0 0 1 16 0v3M4 12H2v7h5v-7H4Zm16 0h2v7h-5v-7h3',logout:'M9 4H4v16h5 M13 8l4 4-4 4 M8 12h13'};
  const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
  const icon=k=>{const e=el('span','account-icon');e.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+paths[k]+'"/></svg>';return e;};
- const avatar=p=>{const a=el('span','account-avatar');if(/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(p.avatarUrl||'')){const img=el('img');img.src=p.avatarUrl;img.alt='';a.append(img);}else a.textContent=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'][p.avatar]||'🌙';return a;};
+ const avatarStates=new WeakMap(),userId=p=>String(p?.user_id||p?.id||'');
+ function avatarUrl(p){try{const u=new URL(p?.avatarUrl||'',location.origin+'/');return u.origin===location.origin&&/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(u.pathname)?u.pathname:null;}catch{return null;}}
+ function updateAvatar(a,p){const uid=userId(p),url=avatarUrl(p),old=avatarStates.get(a);
+  if(!old||old.uid!==uid){a.replaceChildren(icon('profile'));avatarStates.set(a,{uid,url:null});}
+  const current=avatarStates.get(a);
+  if(!url){a.replaceChildren(icon('profile'));avatarStates.set(a,{uid,url:null});return;}
+  if(current.url===url&&(current.pending||current.loaded||current.failedAt&&Date.now()-current.failedAt<15000))return;
+  const state={uid,url,pending:true};avatarStates.set(a,state);
+  const img=new Image();img.alt='';img.decoding='async';
+  img.onload=()=>{if(avatarStates.get(a)!==state||!a.isConnected||userId(profile)!==uid)return;state.pending=false;state.loaded=true;a.replaceChildren(img);};
+  img.onerror=()=>{if(avatarStates.get(a)!==state)return;state.pending=false;state.failedAt=Date.now();if(!a.querySelector('img'))a.replaceChildren(icon('profile'));};
+  img.src=url;
+ }
+ const avatar=p=>{const a=el('span','account-avatar');updateAvatar(a,p);return a;};
  const menu=el('section','account-popover'),notice=el('section','account-popover account-notices');menu.id='accountDropdown';notice.id='accountNotifications';menu.hidden=notice.hidden=true;menu.setAttribute('aria-label','Hesab menyusu');notice.setAttribute('aria-label','Bildirişlər');document.body.append(menu,notice);
  let profile=null,host,bell,toggle,active=null,previous,loggingOut=false;
  function close(focus=false){menu.hidden=notice.hidden=true;bell?.setAttribute('aria-expanded','false');toggle?.setAttribute('aria-expanded','false');active=null;if(focus)previous?.focus();}
  function position(){if(!active)return;const r=(active===menu?toggle:bell).getBoundingClientRect();active.style.top=Math.min(r.bottom+8,innerHeight-180)+'px';active.style.maxHeight=Math.max(130,innerHeight-r.bottom-24)+'px';}
  function open(panel,button){const same=active===panel;close();if(same)return;previous=button;active=panel;panel.hidden=false;button.setAttribute('aria-expanded','true');position();panel.querySelector('a,button:not(:disabled)')?.focus({preventScroll:true});}
  function row(label,key,href){const a=el(href?'a':'button','account-row');a.append(icon(key),el('span','',label));if(href)a.href=href;else{a.type='button';a.disabled=true;a.append(el('small','','Tezliklə'));}return a;}
- function paint(p){if(p===undefined){try{const hint=JSON.parse(sessionStorage.getItem('mirpanel.account.visual')||'null');if(hint){profile=hint;mount();if(toggle)toggle.disabled=true;if(bell)bell.disabled=true;}}catch{}return;}profile=p||null;if(!profile){try{sessionStorage.removeItem('mirpanel.account.visual');sessionStorage.removeItem('mirpanel.account.present');}catch{}close();host?.remove();host=null;document.body.classList.remove('has-account-header');menu.replaceChildren();return;}
-  try{sessionStorage.setItem('mirpanel.account.visual',JSON.stringify({avatar:profile.avatar,avatarUrl:profile.avatarUrl}));}catch{}
-  mount();if(!host)return;toggle.disabled=false;bell.disabled=false;toggle.replaceChildren(avatar(profile),icon('arrow'));
-  const identity=el('div','account-identity'),info=el('div');info.append(el('strong','',profile.display_name),el('small','',profile.email));identity.append(avatar(profile),info);
+ function paint(p){try{sessionStorage.removeItem('mirpanel.account.visual');}catch{}if(p===undefined)return;const changed=userId(profile)!==userId(p);profile=p||null;if(changed)close();if(!profile){try{sessionStorage.removeItem('mirpanel.account.present');}catch{}close();host?.remove();host=null;document.body.classList.remove('has-account-header');menu.replaceChildren();notice.replaceChildren();return;}
+  mount();if(!host)return;toggle.disabled=false;bell.disabled=false;updateAvatar(toggle.querySelector('.account-avatar'),profile);
+  const identity=el('div','account-identity'),info=el('div'),photo=menu.querySelector('.account-identity>.account-avatar')||avatar(profile);updateAvatar(photo,profile);info.append(el('strong','',profile.display_name),el('small','',profile.email));identity.append(photo,info);
   const operator=row('Operatorla əlaqə','support',document.querySelector('#waFab')?.href||document.querySelector('#supportOperator')?.href||'https://wa.me/994515243545');operator.target='_blank';operator.rel='noopener noreferrer';
   const out=row('Çıxış','logout');out.disabled=false;out.replaceChildren(icon('logout'),el('span','','Çıxış'));out.classList.add('account-signout');out.addEventListener('click',async()=>{if(loggingOut)return;loggingOut=true;out.disabled=true;const error=menu.querySelector('.account-error');error.textContent='';try{const r=await fetch('/api/auth/sign-out',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error();try{localStorage.setItem('mirpanel.auth.signedOut',String(Date.now()));}catch{}window.mirpanelAccountProfile=null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));await window.refreshCommunityNav?.();if(window.MirpanelNavigation)await window.MirpanelNavigation.go('/');else location.assign('/');}catch{error.textContent='Çıxış alınmadı. Yenidən cəhd edin.';}finally{loggingOut=false;out.disabled=false;}});
   const balance=row('Balansım','wallet','/balans');balance.append(el('small','',Number.isSafeInteger(p.balanceCents)?(p.balanceCents/100).toFixed(2)+' AZN':'Məlumat yoxdur'));
