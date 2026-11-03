@@ -14,13 +14,13 @@ export function createReceiptLiveProbe({config,env=process.env,json,readBody,rea
  async function call(op,args=[]){const r=await fetch(gateway+'/rpc',{method:'POST',headers:{Authorization:'Bearer '+secret,'Content-Type':'application/json'},body:JSON.stringify({op,args}),signal:AbortSignal.timeout(20000)});if(!r.ok)throw error(503,'PROBE_DATABASE_UNAVAILABLE');return (await r.json()).value;}
  function session(req){const c=String(req.headers.cookie||'').split(';').map(s=>s.trim()).filter(s=>s.startsWith(name+'='));if(c.length!==1)throw error(403,'PROBE_SESSION_REQUIRED');let p;try{p=JSON.parse(security.decryptSecret(c[0].slice(name.length+1)));}catch{throw error(403,'PROBE_SESSION_INVALID');}if(p.purpose!=='receipt-probe-session'||!/^\w{8}-[\w-]{27}$/.test(p.run||'')||p.expires<Date.now())throw error(403,'PROBE_SESSION_INVALID');return p;}
  function context(run){if(contexts.has(run))return contexts.get(run);
-  const pc={...config,employeeEnabled:false,inventoryEnabled:false,browserOrdersEnabled:true,receiptShapeEnabled:false,receiptValidationEnabled:false,notificationEmail:'',whatsappPhone:'994000000000'};
+  const pc={...config,employeeEnabled:false,inventoryEnabled:true,browserOrdersEnabled:true,receiptShapeEnabled:false,receiptValidationEnabled:false,notificationEmail:'',whatsappPhone:'994000000000'};
   // Storage uses the exact deployed production adapter and bucket, but every
   // object path is forced below a disjoint diagnostics/run UUID prefix.
   const media=createPaymentStore(pc),prefix='diagnostics/'+run+'/';
   const checked=p=>{if(!/^pending\/[0-9a-f-]{36}\/[0-9a-f]{64}\.(jpg|png|pdf)$/.test(p))throw error(400,'PROBE_PATH_INVALID');return prefix+p;};
   const store={
-   rateLimit:async()=>({allowed:true}),inventorySnapshot:async()=>[],
+   rateLimit:async()=>({allowed:true}),inventorySnapshot:async()=>[{productId:'receipt-live-synthetic',scope:'none'}],
    publicMethods:()=>call('publicMethods'),rawMethod:async id=>({...await call('rawMethod',[id]),encrypted_number:security.encryptNumber('4169000000000000')}),
    reserve:a=>call('reserve',[a]),checkoutReservation:(id,key)=>call('reservation',[id,key]),getOrderByReservation:id=>call('orderByReservation',[id]),getOrder:id=>call('order',[id]),submitOrder:a=>call('submit',[a]),
    browserOrdersReady:()=>call('ready'),browserOrderPage:(h,t,id)=>call('page',[h,t,id]),browserOwnedOrder:(h,id)=>call('owned',[h,id]),
