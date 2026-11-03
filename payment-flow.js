@@ -270,6 +270,7 @@
     return /^\/api\/payments\/bank-backgrounds\/(?:kapital|m10|abb|leo)\?v=[a-zA-Z0-9%_.:-]+$/.test(url)?`<img class="paymentBankBackground" src="${esc(url)}" alt="" aria-hidden="true" decoding="async">`:'';
   }
   document.addEventListener('error',event=>{if(event.target?.classList?.contains('paymentBankBackground')){event.target.parentElement.classList.remove('hasBankBackground');event.target.remove();}},true);
+  document.addEventListener('load',event=>{const image=event.target;if(image?.classList?.contains('paymentBankBackground')&&image.naturalWidth&&image.naturalHeight)image.parentElement.style.setProperty('--bank-image-ratio',image.naturalWidth+'/'+image.naturalHeight);},true);
 
   function detailMarkup(reservation) {
     const method = reservation.method;
