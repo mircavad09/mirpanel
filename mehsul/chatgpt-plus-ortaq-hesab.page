@@ -181,27 +181,19 @@
         <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about"><h2>ChatGPT Plus (Ortaq hesab) Məhsul haqqında</h2>ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.</article>
         <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden>
           <h2>İstifadə qaydaları</h2>
-          <p>⚠️ MÜTLƏQ OXUYUN - BU MƏHSUL ÜÇÜN ZƏMANƏT MÖVCUD DEYİL!⚠️
-ChatGPT ümumi (ortaqlı) hesabı müştəri tələbinə əsasən təqdim olunur.
-Mirpanel normalda zəmanətsiz və yüksək riskli məhsulların satışını həyata keçirmir. Saytdakı məhsulların böyük əksəriyyəti məhsul şərtlərinə uyğun zəmanətlə təqdim olunur. ChatGPT ümumi (ortaqlı) paketləri isə müştəri tələbinə əsasən satışda saxlanılır və bu məhsul üçün zəmanət, dəyişdirmə və geri ödəniş nəzərdə tutulmur.
+          <p>ChatGPT Ortaq Hesab İstifadə Qaydaları və Məlumatlar
 
-⚠️ ƏSAS RİSK ŞƏRTİ
-ChatGPT platforması öz daxili qaydaları, təhlükəsizlik yoxlamaları və sistem qərarlarına əsasən ümumi hesabları istənilən vaxt məhdudlaşdıra, bloklaya və ya ləğv edə bilər.
-Bu hal baş verdikdə, platforma tərəfindən verilən qərarlar Mirpanel tərəfindən idarə edilmir və həmin prosesə müdaxilə etmək mümkün deyil.
-• ChatGPT platformasının daxili qərarlarına görə Mirpanel məsuliyyət daşımır.
-• Bu hesabda sizdən başqa digər müştərilər də olacaq və hesaba heç bir halda qaranti verilmir.
+Hesabın İdarə Edilməsi: Bu hesab ortaq şəkildə istifadə olunur və hesab 5-7 nəfər arasında bölünür. Plus paketi aktivdir. Paket limitləri istifadəçilər arasında paylaşıldığı üçün bəzən müvəqqəti tükənə bilər.
 
-⚠️ SİFARİŞİ TAMAMLAYARAQ BU ŞƏRTLƏRİ QƏBUL ETMİŞ OLUŞUNUZ
-Sifariş verdiyiniz zaman yuxarıda qeyd olunan bütün riskləri oxuduğunuzu, başa düşdüyünüzü və qəbul etdiyinizi təsdiqləmiş olursunuz.
-Sifarişdən əvvəl bu şərtləri diqqətlə nəzərdən keçirin. Şərtlərlə razı deyilsinizsə, sifarişi tamamlamayın.
+Cihaz Limitləri: Hesab yalnız 1 cihaz üçün nəzərdə tutulub. Eyni anda fərqli cihazlardan giriş cəhdi spam xətasına səbəb ola bilər və bu da hesabın bağlanmasına gətirib çıxarır.
 
-Hesab məlumatları ilə bağlı vacib qeyd:
-• Təqdim olunan giriş məlumatlarını düzgün istifadə edin
-• Hesabın ümumi (ortaqlı) olduğunu və digər şəxslərin də istifadə edəcəyini unutmayın
-• Şərtlərə əməl olunmadığı hallarda yaranan problemlərə görə Mirpanel məsuliyyət daşımır
+Abunəlik və Aktivlik: Hər hansı gözlənilməz dayanma olarsa, bizə dərhal bildirə bilərsiniz, biz təkrar bərpa edəcəyik.
 
-⛔⛔⛔⛔⛔⛔⚠️ XƏBƏRDARLIQ ⛔⛔⛔⛔⛔⛔
-CHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ ÖDƏNİŞ MÖVCUD DEYİL! BU ŞƏRT YALNIZ CHATGPT ÜMUMİ HESAB MƏHSULLARINA AİDDİR. MİRPANEL SAYTINDAKI DİGƏR MƏHSULLAR MƏHSUL ŞƏRTLƏRİNƏ UYĞUN ZƏMANƏTLƏ TƏQDİM OLUNUR.</p>
+Təhlükəsizlik və Digər İstifadəçilər: Digər istifadəçilərin yazışmalarına, əməliyyatlarına müdaxilə etmək və onları silmək qəti qadağandır.
+
+Codex və Məxvilik: Əgər kod (və ya vacib işlər) üçün istifadə edəcəksinizsə və istəyirsiniz ki, hesabınız tam sizə aid olsun, sizdən başqası mesajlarınızı görməsin — şəxsi hesab almağınızı məsləhət görürük.
+
+💡 Vacib Qeyd: Zəhmət olmasa, istifadə etməzdən əvvəl yuxarıdakı qaydaları diqqətlə oxuyun.</p>
         </article>
       </div>
     </section>
@@ -243,7 +235,7 @@ CHATGPT ÜMUMİ (ORTAQLI) MƏHSULU ÜÇÜN ZƏMANƏT, DƏYİŞDİRMƏ VƏ GERİ 
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-25326d390c316553"></script>
+  <script src="/app.js?v=catalog-837ffe8310c447d3"></script>
   <script src="/payment-flow.js?v=receipt-mobile-sef-20261027-1"></script>
   <script src="/order-confirmation.js?v=stock-unified-20261024-2"></script>
   <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>
