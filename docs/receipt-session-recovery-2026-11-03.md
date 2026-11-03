@@ -38,3 +38,24 @@ Initial probe-host markup and evidence-reader fixture defects were corrected;
 those failures are not customer application defects. Local WebKit on plain HTTP
 does not accept Secure cookies; session cases use live HTTPS instead. Emulated
 mobile Chrome/WebKit results are not physical Android/iPhone testing.
+
+## Completed live verification
+
+Deployed fix a7ad933: 32 HTTPS live diagnostic cases passed across Chrome and
+WebKit, plus two offline/reconnect cases and one throttled Chrome case. Five
+formats (ordinary JPEG, Samsung SEF JPEG, iPhone MPF JPEG, PNG, PDF) were stored
+and read back with matching SHA-256 in their synthetic SQL orders. Lost upload
+and order responses recovered; refresh, missing history cookie, duplicate clicks,
+session/reservation expiry, damaged input and oversize rejection were covered.
+The initial evidence-reader fixture failures and an incorrect assertion about
+the native file input (the selected File is retained in application state) were
+corrected and rerun, not counted as successful application tests.
+
+Final isolated audit: 46 synthetic orders, 51 synthetic objects, no duplicate
+reservation/order or receipt object, every order's receipt present, zero queued
+synthetic email. The temporary environment keys, 51 objects, disposable database,
+gateway and tunnel were removed at 14:45 UTC, before the 15:35 UTC deadline.
+The deadline watchdog's later redundant cleanup failed because the gateway was
+already stopped; independent read-only verification checks the final state.
+Production server/proxy probe entry points are removed in the final release so
+later deployments cannot reactivate the temporary connection.

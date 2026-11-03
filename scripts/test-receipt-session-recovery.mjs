@@ -5,7 +5,7 @@ const png=await randomImage(),rows=[];
 // Its session recovery cases run separately through the HTTPS live diagnostic.
 try{for(const[engine,type,executablePath]of [['Chrome',chromium,'C:/Program Files/Google/Chrome/Application/chrome.exe']]){
  const b=await type.launch({headless:true,executablePath});try{
- for(const scenario of ['refresh-upload','history-cookie-lost','cookie-recovery-denied','tampered-proof','missing-object']){
+ for(const scenario of ['refresh-upload','history-cookie-lost','cookie-recovery-denied','history-db-unavailable','tampered-proof','missing-object']){
  const c=await b.newContext(),p=await c.newPage();try{
  await p.goto(f.origin);await p.click('[data-payment-method]');await p.click('#paymentMethodContinue');await p.waitForSelector('#paymentReceiptInput',{state:'attached'});
  const uploads=f.state.uploadCalls,orders=f.orders.size,reservations=f.state.reservationCalls;
@@ -19,6 +19,10 @@ try{for(const[engine,type,executablePath]of [['Chrome',chromium,'C:/Program File
  if(scenario==='refresh-upload'){
  await p.reload();await p.waitForSelector('#paymentSubmit');await p.waitForFunction(()=>!document.querySelector('#paymentSubmit').disabled);await p.click('#paymentSubmit');await p.waitForFunction(()=>window.__paymentOrder?.orderId);assert.equal(f.orders.size,orders+1);
  await p.reload();await p.waitForFunction(()=>window.__paymentOrder?.orderId);assert.equal(f.orders.size,orders+1);
+ }else if(scenario==='history-db-unavailable'){
+ f.store.browserOrdersReady=async()=>0;await p.click('#paymentSubmit');await p.waitForFunction(()=>!document.querySelector('#paymentReceiptError').hidden);
+ assert.equal(f.orders.size,orders);assert.equal(await p.isEnabled('#paymentSubmit'),true);assert.equal(await p.locator('#paymentReceiptRetry').isVisible(),false);
+ f.store.browserOrdersReady=async()=>1;await p.click('#paymentSubmit');await p.waitForFunction(()=>window.__paymentOrder?.orderId);assert.equal(f.orders.size,orders+1);
  }else if(scenario==='history-cookie-lost'||scenario==='cookie-recovery-denied'){
  await c.clearCookies({name:'__Host-mirpanel_orders'});let blocked=false;
  if(scenario==='cookie-recovery-denied')await p.route('**/api/payments/methods',r=>{blocked=true;return r.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Test unavailable'})});});
