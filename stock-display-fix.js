@@ -76,6 +76,7 @@
 
   // Home card presentation only. Keep the catalog, filtering and navigation unchanged.
   function homeCardHTML(product, index, productUrl) {
+    if(window.MirpanelCatalogCard)return window.MirpanelCatalogCard.render(product,index,productUrl,publicProductTitle(product.title),product.id==='tiktok_jeton'?10:minPrice(product),priceText(product),homeStockBadgeHTML(product));
     const price = product.id === 'tiktok_jeton' ? 10 : minPrice(product);
     const plan = (product.plans || []).find(item=>Number(item.price)===price);
     const cents = Math.round(price*100), oldCents = Math.round(Number(plan?.regularPrice)*100);

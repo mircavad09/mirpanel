@@ -1,6 +1,7 @@
 import { planMetrics, deliveryText } from './public/product-plan-utils.mjs';
 import { createHash } from 'node:crypto';
 import displayLabels from '../display-labels.js';
+import catalogCard from '../catalog-card.js';
 const { normalizeDisplayLabel } = displayLabels;
 const SITE_URL = "https://mirpanel.com";
 const DELIVERY_TEXT = "7/24 anında təqdim edilir";
@@ -312,7 +313,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
     const shownPrice = product.id === "tiktok_jeton"
       ? `10.00 ${cleanText(product.currency)}`
       : prices.length ? `${Math.min(...prices).toFixed(2)} ${cleanText(product.currency)}` : "—";
-    return `<a class="card" href="${productCanonicalPath(slug)}" data-product-id="${escapeAttribute(product.id)}" style="animation-delay:${Math.min(index * 0.03, 0.25)}s"><div class="imgWrap"><img class="img" src="${escapeAttribute(rootRelativeUrl(product.image))}" alt="${escapeAttribute(product.imageAlt || product.title)}"><div class="cornerPrice">${escapeHtml(shownPrice)}</div></div><div class="pad"><div class="topline"><h2 class="title">${escapeHtml(publicProductTitle(product.title))}</h2><div class="badge">${escapeHtml(product.badge)}</div></div><div class="meta">${escapeHtml(product.desc)}</div><div class="priceRow"><span class="btn primary">${escapeHtml(cms.commonTexts?.order || "Sifariş et")}</span></div></div></a>`;
+    return catalogCard.render({...product,image:rootRelativeUrl(product.image)},index,productCanonicalPath(slug),publicProductTitle(product.title),product.id==='tiktok_jeton'?10:prices.length?Math.min(...prices):null,shownPrice);
   }).join("");
   const structuredData = safeJson({
     "@context": "https://schema.org",
@@ -343,7 +344,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
   const html = `<!DOCTYPE html>
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document">${renderSplashMarkup()}${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=support-faq-20261026-2"></script></body></html>`;
-  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('</body>', '<script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
+  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=compact-20261103"></head>').replace('</body>', '<script src="/catalog-card.js?v=compact-20261103"></script><script src="/catalog-listing.js?v=compact-20261103"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
@@ -1116,10 +1117,10 @@ function renderPlans(product) {
     const discount = metrics.discount || 0;
     const priceText = price > 0
       ? `${price.toFixed(2)} ${cleanText(product.currency)}`
-      : (cleanText(plan.label) || "Stokda yoxdur");
+      : '';
     const priceMarkup = discount > 0
       ? `<span class="product-page-plan-prices"><span class="product-page-regular-price">${escapeHtml(`${regularPrice.toFixed(2)} ${cleanText(product.currency)}`)}</span><strong>${escapeHtml(priceText)}</strong><span class="product-page-discount">-${discount}%</span></span>`
-      : `<span class="product-page-plan-prices"><strong>${escapeHtml(priceText)}</strong></span>`;
+      : price > 0 ? `<span class="product-page-plan-prices"><strong>${escapeHtml(priceText)}</strong></span>` : '<span class="product-page-plan-prices">Stokda yoxdur</span>';
     const hasNamedMonthlyOffer = plans.some(item => Number(item.months) === 1 && /endirim/i.test(item.label || '') && Number(item.regularPrice) > Number(item.price));
     const emphasis = Number(plan.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(plan.label || '')) ? 'discount-month' : 'standard';
     return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}" data-price-emphasis="${emphasis}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${escapeHtml(label)}</span>${priceMarkup}</div>`;

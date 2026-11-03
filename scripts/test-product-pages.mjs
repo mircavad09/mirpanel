@@ -56,7 +56,7 @@ assert.ok(listingHtml.includes("<title>Premium rəqəmsal məhsullar | Mirpanel<
 assert.ok(listingHtml.includes("<h1>Premium rəqəmsal məhsullar</h1>"));
 assert.ok(listingHtml.includes('"@type":"ItemList"'), "Məhsul siyahısında ItemList yoxdur");
 assert.ok(listingHtml.includes('"@type":"BreadcrumbList"'), "Məhsul siyahısında BreadcrumbList yoxdur");
-assert.equal((listingHtml.match(/class="card"/g) || []).length, active.length, "Aktiv məhsulların hamısı siyahıda olmalıdır");
+assert.equal((listingHtml.match(/class="card homeProductCard"/g) || []).length, active.length, "Aktiv məhsulların hamısı siyahıda olmalıdır");
 assert.deepEqual([...listingHtml.matchAll(/data-product-id="([^"]+)"/g)].map((match) => match[1]), active.map(({ product }) => product.id), "Məhsul sırası dəyişib");
 const simulatedProducts = [...state.products, { ...structuredClone(state.products[0]), id: "future_product_test", title: "Future product test", seoSlug: "future-product-test", order: 999 }];
 assert.ok(generateProductListingPageFiles(simulatedProducts, state.siteSections, state.cms).get("mehsul.page").includes('data-product-id="future_product_test"'), "Yeni aktiv məhsul avtomatik görünmədi");

@@ -44,12 +44,12 @@ async function scrollCards(page){await page.evaluate(()=>window.scrollTo(0,docum
 try{
  for(const width of [320,390,430,768,1440]){
   baseline=true;const before=await open(width);const old=await snapshot(before);
-  const protectedBefore=await before.locator('#homeHero,.stories-section,.site-header,.footer').evaluateAll(els=>els.map(e=>[e.id,e.className,e.innerHTML]));
+  const protectedBefore=await before.locator('#homeHero,.stories-section,.site-header,.footer').evaluateAll(els=>els.map(e=>{const c=e.cloneNode(true);for(const n of c.querySelectorAll('*')){const a=[...n.attributes].map(v=>[v.name,v.value]).sort((a,b)=>a[0].localeCompare(b[0]));for(const v of [...n.attributes])n.removeAttribute(v.name);for(const[k,v]of a)n.setAttribute(k,v);}return[e.id,e.className,c.innerHTML];}));
   await scrollCards(before);if(visual)await before.screenshot({path:path.join(visual,`before-${width}.png`)});
   await before.context().close();baseline=false;const page=await open(width);
   await page.waitForFunction(()=>[...document.querySelectorAll('#grid .homeCardSales')].every(e=>!e.hidden));
   assert.deepEqual(await snapshot(page),old,'IDs/order/images/prices/links changed');
-  const protectedAfter=await page.locator('#homeHero,.stories-section,.site-header,.footer').evaluateAll(els=>els.map(e=>[e.id,e.className,e.innerHTML]));
+  const protectedAfter=await page.locator('#homeHero,.stories-section,.site-header,.footer').evaluateAll(els=>els.map(e=>{const c=e.cloneNode(true);for(const n of c.querySelectorAll('*')){const a=[...n.attributes].map(v=>[v.name,v.value]).sort((a,b)=>a[0].localeCompare(b[0]));for(const v of [...n.attributes])n.removeAttribute(v.name);for(const[k,v]of a)n.setAttribute(k,v);}return[e.id,e.className,c.innerHTML];}));
   assert.deepEqual(protectedAfter,protectedBefore,'Protected homepage DOM changed');
   assert.equal(await page.locator('#grid .cornerPrice,#grid .btn.primary').count(),0);
   for(const p of active){

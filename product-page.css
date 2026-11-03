@@ -1485,3 +1485,14 @@ body.product-page-document #productPageView.product-page-root.detail-v2 #pp-plan
  body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-plan-notes:not([hidden]) { animation:detailNotesIn .16s ease-out; }
 }
 @keyframes detailNotesIn { from {opacity:0;translate:0 -2px} to {opacity:1;translate:0 0} }
+
+/* Shared plan row: a fixed radio, a flexible name, and optional price. */
+html body #productPageView.product-page-root #pp-plans-container .pp-plan-label{display:grid!important;grid-template-columns:minmax(0,1fr) auto!important;align-items:center!important;gap:5px 8px!important;flex-direction:initial;min-width:0}
+html body #productPageView.product-page-root #pp-plans-container .pp-plan-left{display:grid!important;grid-template-columns:16px minmax(0,1fr)!important;width:auto!important;min-width:0;gap:7px!important;align-items:center!important}
+html body #productPageView.product-page-root #pp-plans-container .pp-radio-circle{width:16px!important;height:16px!important;min-width:16px}
+html body #productPageView.product-page-root #pp-plans-container .pp-plan-name{min-width:0;font:500 13px/1.4 system-ui,-apple-system,'Segoe UI',sans-serif!important;overflow-wrap:normal!important;word-break:normal!important;white-space:normal}
+html body #productPageView.product-page-root #pp-plans-container .pp-plan-right{min-width:0!important;width:auto;align-self:center;display:flex;flex-direction:column;align-items:flex-end}
+html body #productPageView.product-page-root #pp-plans-container .pp-new-price[hidden]{display:none!important}
+html body #productPageView.product-page-root #pp-plans-container .pp-plan-right:not(:has(.pp-new-price:not([hidden]))){display:none!important}
+html body #productPageView.product-page-root #pp-plans-container .pp-plan-label:has(.pp-new-price[hidden]){grid-template-columns:minmax(0,1fr)!important}
+html body #productPageView.product-page-root #pp-plans-container :is(.product-detail-plan-notes,[data-inventory-plan]){grid-column:1/-1;min-width:0;margin-left:23px;max-width:calc(100% - 23px);box-sizing:border-box}

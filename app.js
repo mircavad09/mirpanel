@@ -3885,7 +3885,7 @@ function renderProductPlans(p) {
       </div>
       <div class="pp-plan-right">
         ${discount > 0 ? `<div class="pp-plan-price-meta"><div class="pp-old-price">${regularPrice.toFixed(2)} ₼</div><div class="pp-plan-disc-badge">-${discount}%</div></div>` : ''}
-         <div class="pp-new-price">${isStockOut ? pl.label : price.toFixed(2) + ' ₼'}</div>
+         <div class="pp-new-price"${isStockOut ? ' hidden' : ''}>${isStockOut ? '' : price.toFixed(2) + ' ₼'}</div>
       </div>
     `;
 
