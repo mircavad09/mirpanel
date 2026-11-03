@@ -17,6 +17,12 @@
 /decorative-backgrounds.css
   Cache-Control: no-cache, must-revalidate
 
+/cart-store.js
+  Cache-Control: no-cache, must-revalidate
+
+/cart-store.css
+  Cache-Control: no-cache, must-revalidate
+
 /browser-nav.js
   Cache-Control: no-cache, must-revalidate
 

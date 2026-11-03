@@ -82,7 +82,7 @@
   }
 
   let bankBackgroundState={banks:{kapital:'Birbank / Kapital Bank',m10:'m10',abb:'ABB',leo:'Leobank','wallet-card':'Böyük balans kartı','header-cart':'Başlıqdakı Səbət düyməsi','header-balance':'Başlıqdakı balans düyməsi'},backgrounds:{},busy:new Set(),error:''};
-  const decorationDescriptions={kapital:'Bütün Birbank/Kapital Bank kartları · hər iki ödəniş mərhələsi',m10:'Bütün m10 kartları · hər iki ödəniş mərhələsi',abb:'Bütün ABB kartları · hər iki ödəniş mərhələsi',leo:'Bütün Leobank kartları · hər iki ödəniş mərhələsi','wallet-card':'Balans səhifəsi · Mövcud balans kartı','header-cart':'Sayt başlığı · Səbət; məhsul sayı canlı qalır','header-balance':'Sayt başlığı · Balans; faktiki məbləğ canlı qalır'};
+  const decorationDescriptions={kapital:'Bütün Birbank/Kapital Bank kartları · hər iki ödəniş mərhələsi',m10:'Bütün m10 kartları · hər iki ödəniş mərhələsi',abb:'Bütün ABB kartları · hər iki ödəniş mərhələsi',leo:'Bütün Leobank kartları · hər iki ödəniş mərhələsi','wallet-card':'Balans səhifəsi · Mövcud balans kartı','header-cart':'Yalnız kompüter görünüşündə istifadə olunur · Səbət sayı canlı qalır','header-balance':'Yalnız kompüter görünüşündə istifadə olunur · Faktiki balans canlı qalır'};
   function renderBankBackgrounds(){
     const host=$p('paymentBankBackgrounds');if(!host)return;
     const groups=[['Bank kartı fonları',['kapital','m10','abb','leo']],['Balans səhifəsi',['wallet-card']],['Başlıq düymələri',['header-cart','header-balance']]];
