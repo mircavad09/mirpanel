@@ -223,3 +223,6 @@ body.paymentCheckoutOpen :is(.browser-bottom-nav,.community-bottom-nav,#supportW
  .paymentFlow .paymentMethodChoice.hasBankBackground{padding:7px 8px;gap:2px}
 }
 @media(prefers-reduced-motion:reduce){.paymentMethodChoice.hasBankBackground::after{animation:none;--bank-edge-angle:45deg}}
+.paymentReceiptError{overflow-wrap:anywhere;word-break:normal;max-width:100%}
+.paymentReceiptPreviewInfo{min-width:0;max-width:100%}
+.paymentReceiptPreview strong{max-width:100%;white-space:normal;overflow-wrap:anywhere}

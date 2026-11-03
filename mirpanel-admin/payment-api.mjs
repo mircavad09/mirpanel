@@ -1,10 +1,12 @@
 import { createPaymentMailer, paymentEmailContent } from "./payment-mail.mjs";
+import {randomUUID} from 'node:crypto';
 import {
   createPaymentSecurity,
   normalizePaymentNumber,
   publicPaymentNumber,
   receiptFromBuffer,
   receiptFromPayload,
+  detectReceiptType,
   safeMultiline,
   safeText,
   safeUuid,
@@ -81,7 +83,7 @@ function errorStatus(error) {
   return Number(error?.status) || (error?.code === "PAYMENT_METHOD_LIMIT_REACHED" ? 409 : 500);
 }
 
-export async function paymentOrderFromMultipart(rawBody, contentType, maxReceiptBytes = 5 * 1024 * 1024) {
+export async function paymentOrderFromMultipart(rawBody, contentType, maxReceiptBytes = 5 * 1024 * 1024, onFile=()=>{}) {
   let form;
   try {
     form = await new Request("http://localhost/api/payments/orders", {
@@ -94,6 +96,7 @@ export async function paymentOrderFromMultipart(rawBody, contentType, maxReceipt
   }
   const uploaded = form.get("receipt");
   if (!uploaded || typeof uploaded.arrayBuffer !== "function") throw Object.assign(new Error("Ödəniş qəbzi seçilməyib."), { status: 400 });
+  onFile(Number(uploaded.size),detectReceiptType(Buffer.from(await uploaded.slice(0,32).arrayBuffer()))?.extension||'unknown');
   if (Number(uploaded.size) > maxReceiptBytes) throw Object.assign(new Error("Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin."), { status: 413, code: "RECEIPT_TOO_LARGE" });
   return {
     body: {
@@ -137,6 +140,9 @@ export function createPaymentSystem(options) {
   }
   const readInventory=createInventoryReader({snapshot:()=>store.inventorySnapshot(),ready:store.inventoryReady?()=>store.inventoryReady():null,enabled:()=>config.inventoryEnabled===true,onReady:()=>{config.inventoryEnabled=true;},cacheMs:options.store?0:2000});
   const validateFile = options.validateReceiptFile || validateReceiptFile;
+  // Coalesce only authenticated reservation + identical raw bytes. Never cache a
+  // failed attempt; storage itself remains the durable, immutable hash authority.
+  const receiptAttempts=new Map();
   const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
   const accountOrders=createAccountOrders({security,store,resolve:options.accountHistory});
   const mailer = options.mailer || createPaymentMailer(config, store);
@@ -153,16 +159,17 @@ export function createPaymentSystem(options) {
     return {
       "Access-Control-Allow-Origin": origin,
       "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
-      "Access-Control-Allow-Headers": "Content-Type,X-Idempotency-Key",
+      "Access-Control-Allow-Headers": "Content-Type,X-Idempotency-Key,X-Upload-Trace",
       "Access-Control-Max-Age": "600",
       Vary: "Origin"
     };
   }
 
   function publicJson(request, response, status, body) {
+    if(request.receiptTrace){body={...body,traceId:request.receiptTrace};response.setHeader('X-Upload-Trace',request.receiptTrace);response.setHeader('Access-Control-Expose-Headers','Server-Timing, X-Upload-Trace');}
     const timing=request.receiptTimings;
     const personal=/^\/api\/payments\/(?:my-orders|shop)/.test(String(request.url||''));
-    json(response, status, body, { ...corsHeaders(request), "Cache-Control": personal?"private, no-store, max-age=0":"no-store",...(personal?{Vary:'Cookie, Origin','Surrogate-Control':'no-store','Referrer-Policy':'no-referrer'}:{}),...(timing?{"Server-Timing":Object.entries(timing).map(([name,ms])=>`${name};dur=${Math.max(0,ms).toFixed(1)}`).join(', '),"Access-Control-Expose-Headers":"Server-Timing"}:{}) });
+    json(response, status, body, { ...corsHeaders(request), "Cache-Control": personal?"private, no-store, max-age=0":"no-store",...(personal?{Vary:'Cookie, Origin','Surrogate-Control':'no-store','Referrer-Policy':'no-referrer'}:{}),...(timing?{"Server-Timing":Object.entries(timing).map(([name,ms])=>`${name};dur=${Math.max(0,ms).toFixed(1)}`).join(', '),"Access-Control-Expose-Headers":"Server-Timing, X-Upload-Trace"}:{}) });
   }
 
   async function orderResult(order, idempotent = true, whatsappExtraText = "") {
@@ -393,7 +400,7 @@ export function createPaymentSystem(options) {
           if (Number(error?.status) === 413) throw Object.assign(new Error("Fayl 5 MB-dan böyükdür. Şəkli sıxışdırıb yenidən seçin."), { status: 413, code: "RECEIPT_TOO_LARGE" });
           throw error;
         }
-        ({ body, receipt } = await paymentOrderFromMultipart(rawBody, contentType, config.maxReceiptBytes));
+        ({ body, receipt } = await paymentOrderFromMultipart(rawBody, contentType, config.maxReceiptBytes,(size,format)=>{request.receiptSize=size;request.receiptFormat=format;}));
       } else {
         body = await readBody(request, Math.ceil(config.maxReceiptBytes * 1.42) + 100_000);
         if (body.receiptUploadToken) {
@@ -401,40 +408,48 @@ export function createPaymentSystem(options) {
         } else receipt = receiptFromPayload(body.receipt, config.maxReceiptBytes);
       }
       request.receiptTimings.receive=performance.now()-checkpoint;checkpoint=performance.now();
+      request.receiptSize=receipt.buffer?.length||receipt.size||0;request.receiptFormat=receipt.extension||'unknown';
       request.receiptStage='reservation';
       const reservationId = safeUuid(body.reservationId);
       const checkoutKey = safeUuid(body.checkoutKey);
       const idempotencyKey = safeUuid(request.headers["x-idempotency-key"]);
       if (!checkoutKey) throw Object.assign(new Error("Ödəniş səhifəsi yenilənib. Səhifəni yeniləyib yenidən cəhd edin; rezerviniz qorunur."), { status: 400 });
       if (!reservationId || !checkoutKey || !idempotencyKey || body.consentAccepted !== true) throw Object.assign(new Error("Rezerv, checkout açarı və məcburi razılıq tələb olunur."), { status: 400 });
-      const reservation = await store.checkoutReservation(reservationId, checkoutKey);
+      let reservation;
+      try{reservation=await store.checkoutReservation(reservationId, checkoutKey);}catch(error){if([401,403,404].includes(Number(error.status)))throw Object.assign(Error('Ödəniş sessiyası uyğun deyil. Kart seçimini yenidən açın.'),{status:409,code:'RECEIPT_SESSION_INVALID'});throw error;}
       const accountBoundPrice=await options.reservedAccountPrice?.(request,reservationId);
       if (reservation.product_id !== body.productId || reservation.plan_id !== String(body.planIndex)) {
         throw Object.assign(new Error("Təkrar sorğu əvvəlki sifarişlə uyğun deyil."), { status: 409 });
       }
       const existing = await store.getOrderByReservation(reservationId);
       request.receiptTimings.binding=performance.now()-checkpoint;checkpoint=performance.now();
-      if(!existing&&(reservation.status!=='reserved'||Date.parse(reservation.expires_at)<=Date.now()))throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'),{status:409,code:'RECEIPT_RESERVATION_INVALID'});
+      const assertActive=r=>{if(r.status!=='reserved'||Date.parse(r.expires_at)<=Date.now())throw Object.assign(new Error(Date.parse(r.expires_at)<=Date.now()?'Rezervin vaxtı bitib. Kart seçimini yenidən açın.':'Rezerv artıq aktiv deyil. Kart seçimini yenidən açın.'),{status:409,code:'RECEIPT_RESERVATION_INVALID'});};
+      if(!existing)assertActive(reservation);
       // Emergency upload-only policy: decoding/PDF security is mandatory; OCR is not.
       request.receiptStage='file_safety';
-      if(!existing&&receipt.buffer)await validateFile(receipt);
+      if(!uploadOnly&&!existing&&receipt.buffer)await validateFile(receipt);
       request.receiptTimings.fileSafety=performance.now()-checkpoint;checkpoint=performance.now();
       if (uploadOnly) {
         if (existing || !receipt.buffer || reservation.status !== 'reserved' || Date.parse(reservation.expires_at) <= Date.now()) {
           throw Object.assign(new Error('Bu rezerv üçün çek yükləmək mümkün deyil.'), {status:409,code:'RECEIPT_RESERVATION_INVALID'});
         }
-        const path = `pending/${reservationId}/${receipt.sha256}.${receipt.extension}`;
-        request.receiptStage='storage';
-        try { await store.uploadReceipt(path, receipt); }
-        catch (error) {
-          // A lost upload response or a duplicate immutable hash object is recoverable.
-          try { await store.verifyUploadedReceipt(path, receipt.buffer.length); }
-          catch { throw error; }
+        const attemptKey=reservationId+':'+security.hashToken(checkoutKey)+':'+receipt.sha256;
+        let attempt=receiptAttempts.get(attemptKey);
+        if(!attempt){
+          attempt={stage:'file_safety'};receiptAttempts.set(attemptKey,attempt);
+          attempt.promise=(async()=>{
+            await validateFile(receipt);request.receiptTimings.fileSafety=performance.now()-checkpoint;checkpoint=performance.now();
+            attempt.stage='reservation_recheck';assertActive(await store.checkoutReservation(reservationId,checkoutKey));
+            const path=`pending/${reservationId}/${receipt.sha256}.${receipt.extension}`;
+            attempt.stage='storage';
+            try{await store.uploadReceipt(path,receipt);}catch(error){try{await store.verifyUploadedReceipt(path,receipt.buffer.length);}catch{throw error;}}
+            attempt.stage='storage_verify';await store.verifyUploadedReceipt(path,receipt.buffer.length);
+            attempt.stage='reservation_recheck';assertActive(await store.checkoutReservation(reservationId,checkoutKey));
+            return {purpose:'payment-receipt',reservationId,checkoutHash:security.hashToken(checkoutKey),path,sha256:receipt.sha256,extension:receipt.extension,mimeType:receipt.mimeType,size:receipt.buffer.length,expiresAt:Date.now()+3600000,safetyVersion:1};
+          })().catch(error=>{error.receiptStage=attempt.stage;throw error;}).finally(()=>receiptAttempts.delete(attemptKey));
         }
-        const proof = {purpose:'payment-receipt',reservationId,checkoutHash:security.hashToken(checkoutKey),path,
-          sha256:receipt.sha256,extension:receipt.extension,mimeType:receipt.mimeType,size:receipt.buffer.length,expiresAt:Date.now()+3600000,safetyVersion:1};
-        await store.verifyUploadedReceipt(path, proof.size);
-        request.receiptTimings.storage=performance.now()-checkpoint;
+        request.receiptAttempt=attempt;request.receiptStage='upload_wait';const proof=await attempt.promise;
+        request.receiptStage='complete';request.receiptTimings.storage=performance.now()-checkpoint;
         publicJson(request,response,200,{receiptUploaded:true,receiptUploadToken:security.encryptSecret(JSON.stringify(proof)),autoSubmit:false,contentChecked:false,paymentVerified:false});
         return true;
       }
@@ -755,6 +770,11 @@ export function createPaymentSystem(options) {
     },
     async handle(request, response) {
       const url = new URL(request.url, `http://${request.headers.host || "localhost"}`);
+      if(['/api/payments/receipts','/api/payments/orders'].includes(url.pathname)&&request.method==='POST'){
+        request.receiptTrace=safeUuid(request.headers['x-upload-trace'])||randomUUID();request.receiptStage='request';
+        const started=performance.now();let logged=false;const log=closed=>{if(logged)return;logged=true;console.info('Receipt attempt',JSON.stringify({traceId:request.receiptTrace,stage:request.receiptStage==='upload_wait'?request.receiptAttempt?.stage||'upload_wait':request.receiptStage,status:closed?499:response.statusCode,code:request.receiptCode||(closed?'RECEIPT_CLIENT_DISCONNECTED':'RECEIPT_STORED'),size:Number.isSafeInteger(request.receiptSize)?request.receiptSize:null,format:/^(jpg|png|pdf|unknown)$/.test(request.receiptFormat||'')?request.receiptFormat:'unknown',ms:Math.round(performance.now()-started)}));};
+        response.once('finish',()=>log(false));response.once('close',()=>log(!response.writableFinished));
+      }
       try {
         if (url.pathname.startsWith("/api/payments/")) return await handlePublic(request, response, url);
         if (url.pathname.startsWith("/api/admin/payment") || url.pathname.startsWith("/api/admin/capcut")) return await handleAdmin(request, response, url);
@@ -762,6 +782,7 @@ export function createPaymentSystem(options) {
       } catch (error) {
         const isPublic = url.pathname.startsWith("/api/payments/");
         const status = errorStatus(error);
+        if(request.receiptTrace){request.receiptStage=error.receiptStage||request.receiptStage;request.receiptCode=/^[A-Z_]+$/.test(error.code||'')?error.code:'PAYMENT_ERROR';}
         if(['/api/payments/receipts','/api/payments/orders'].includes(url.pathname))console.error('Payment upload',JSON.stringify({stage:request.receiptStage||'request',status,code:/^[A-Z_]+$/.test(error.code||'')?error.code:'PAYMENT_ERROR',diagnostic:/^(?:file_safety:RECEIPT_[A-Z_]+|storage_(?:upload|verify):http_\d{1,3})$/.test(error.diagnostic||'')?error.diagnostic:undefined}));
         else console.error("Payment API", error.code || "PAYMENT_ERROR", error.diagnostic || error.message);
         if (isPublic) publicJson(request, response, status, { error: error.message, code: error.code || "PAYMENT_ERROR", ...(Array.isArray(error.reasonCodes)?{reasonCodes:error.reasonCodes}:{} ) });

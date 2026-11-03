@@ -7,8 +7,6 @@
   const APPLE_RECEIPT_TYPES = new Set(["image/heic", "image/heif"]);
   const RECEIPT_UPLOAD_TIMEOUT_MS = 120_000;
   const RECEIPT_UPLOAD_RETRIES = 3;
-  const RECEIPT_CHECK_UNAVAILABLE = "Faylı yükləmək mümkün olmadı. Zəhmət olmasa, yenidən cəhd edin.";
-  const receiptCheckFailure = (code, status) => /^(?:RECEIPT_VALIDATOR_|RECEIPT_PROCESSING_FAILED|RECEIPT_NETWORK_ERROR|RECEIPT_UPLOAD_TIMEOUT|RECEIPT_INVALID_RESPONSE)/.test(String(code || "")) || status >= 500 || status === 408;
   let activeFlow = null;
   let preparingFlow = null;
   const SERVICE_ERROR = "Ödəniş xidməti hazırda cavab vermir. Yenidən cəhd edin";
@@ -126,12 +124,15 @@
       RECEIPT_SAFETY_RESOURCE: "Fayl emalı xidməti məşğuldur. Bir az sonra yenidən cəhd edin.",
       BROWSER_SESSION_REQUIRED: "Ödəniş sessiyası yenilənməlidir. Kart seçimini yenidən açın.",
       BROWSER_OWNERSHIP_UNCONFIRMED: "Sifariş tarixçəsi ilə əlaqə təsdiqlənmədi. Yenidən cəhd edin."
+      ,RECEIPT_RESERVATION_INVALID:"Rezerv artıq aktiv deyil və ya vaxtı bitib. Kart seçimini yenidən açın."
+      ,RECEIPT_SESSION_INVALID:"Ödəniş sessiyası uyğun deyil. Kart seçimini yenidən açın."
+      ,RECEIPT_PROXY_UNAVAILABLE:"Serverlə əlaqə alınmadı. Seçilmiş fayl qorunub, yenidən cəhd edin."
     };
     const retryable = [408, 429, 502, 503, 504].includes(status) || code === "RECEIPT_STORAGE_TIMEOUT" || code === "RECEIPT_STORAGE_TEMPORARY";
-    const message = messages[code] || (receiptCheckFailure(code, status) ? RECEIPT_CHECK_UNAVAILABLE : status >= 500
+    const message = messages[code] || (status===401||status===403 ? 'Ödəniş sessiyası təsdiqlənmədi. Kart seçimini yenidən açın.' : status===429 ? 'Çox sayda yükləmə cəhdi var. Bir qədər gözləyib yenidən cəhd edin.' : status >= 500
       ? "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin."
       : String(payload?.error || "Çek faylı qəbul edilmədi."));
-    return uploadError(message, { code: code || "RECEIPT_UPLOAD_REJECTED", status, retryable });
+    return uploadError(message, { code: code || "RECEIPT_UPLOAD_REJECTED", status, retryable,traceId:/^[0-9a-f-]{36}$/i.test(payload?.traceId||'')?payload.traceId:undefined });
   }
 
   function submitWithProgress(path, formData, events, idempotencyKey, signal) {
@@ -148,6 +149,7 @@
       xhr.open("POST", `${API_BASE}${path}`);
       xhr.timeout = RECEIPT_UPLOAD_TIMEOUT_MS;
       xhr.setRequestHeader("X-Idempotency-Key", idempotencyKey);
+      const traceId=uuid();xhr.setRequestHeader('X-Upload-Trace',traceId);
       signal?.addEventListener("abort", abort, { once: true });
       xhr.upload.onloadstart = () => events.onStart?.();
       xhr.upload.onprogress = (event) => {
@@ -156,8 +158,8 @@
         }
       };
       xhr.upload.onload = () => events.onProcessing?.();
-      xhr.onerror = () => finish(reject, uploadError(RECEIPT_CHECK_UNAVAILABLE, { code: "RECEIPT_NETWORK_ERROR", retryable: true }));
-      xhr.ontimeout = () => finish(reject, uploadError(RECEIPT_CHECK_UNAVAILABLE, { code: "RECEIPT_UPLOAD_TIMEOUT", status: 408, retryable: true }));
+      xhr.onerror = () => finish(reject, uploadError('Bağlantı kəsildi. Seçilmiş fayl qorunub. Yenidən cəhd edin.', { code: "RECEIPT_NETWORK_ERROR", retryable: true,traceId }));
+      xhr.ontimeout = () => finish(reject, uploadError('Serverin cavabı gecikdi. Seçilmiş fayl qorunub. Yenidən cəhd edin.', { code: "RECEIPT_UPLOAD_TIMEOUT", status: 408, retryable: true,traceId }));
       xhr.onabort = () => finish(reject, uploadError("Yükləmə dayandırıldı. Seçilmiş çek qorunub.", { code: "RECEIPT_UPLOAD_CANCELLED", retryable: false }));
       xhr.onload = () => {
         let payload;
@@ -166,10 +168,10 @@
           payload = JSON.parse(xhr.responseText);
           if (!payload || typeof payload !== "object") throw new Error("invalid response");
         } catch {
-          finish(reject, uploadError("Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.", { code: "RECEIPT_INVALID_RESPONSE", status: xhr.status || 502, retryable: true }));
+          finish(reject, uploadError("Server düzgün yükləmə cavabı vermədi. Seçilmiş fayl qorunub, yenidən cəhd edin.", { code: "RECEIPT_INVALID_RESPONSE", status: xhr.status || 502, retryable: true,traceId }));
           return;
         }
-        if (xhr.status < 200 || xhr.status >= 300) finish(reject, receiptResponseError(payload, xhr.status));
+        if (xhr.status < 200 || xhr.status >= 300) {const error=receiptResponseError(payload,xhr.status);error.traceId||=traceId;finish(reject,error);}
         else if (!(path === '/api/payments/receipts' ? payload.receiptUploaded === true && typeof payload.receiptUploadToken === 'string' && payload.receiptUploadToken.length > 30 : validOrder(payload))) finish(reject, uploadError("Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.", { code: "RECEIPT_INVALID_RESPONSE", status: 502, retryable: true }));
         else finish(resolve, payload);
       };
@@ -189,7 +191,7 @@
       } catch (error) {
         lastError = error;
         if (!error?.retryable || attempt === totalAttempts) {
-          if (error?.retryable) error.userMessage = receiptCheckFailure(error.code, error.status) ? RECEIPT_CHECK_UNAVAILABLE : "Çek hələ göndərilmədi. “Yenidən cəhd et” düyməsinə basın.";
+          if (error?.retryable&&!error.userMessage) error.userMessage = "Çek hələ göndərilmədi. “Yenidən cəhd et” düyməsinə basın.";
           throw error;
         }
         const delay = attempt * 1500;
@@ -736,9 +738,7 @@
                   onRetry: (uploadFailure, next, total) => {
                     if(uploadInactive())return;
                     setProgress(null, `Yenidən cəhd edilir (${next}/${total})…`);
-                    error.textContent = receiptCheckFailure(uploadFailure.code, uploadFailure.status) ? RECEIPT_CHECK_UNAVAILABLE : uploadFailure.code === "RECEIPT_NETWORK_ERROR" || uploadFailure.code === "RECEIPT_UPLOAD_TIMEOUT"
-                      ? "Bağlantı zəifdir. Çek qorunub, yenidən cəhd edilir."
-                      : "Server çek faylını qəbul edə bilmədi. Bir az sonra yenidən cəhd edin.";
+                    error.textContent = uploadFailure.userMessage || "Server cavabı alınmadı. Seçilmiş fayl qorunub, yenidən cəhd edilir.";
                     error.hidden = false;
                   }
                 }, flow.orderIdempotencyKey, flow.uploadController.signal);
@@ -774,7 +774,7 @@
                 progress.querySelector("span").style.width = "0%";
                 progress.querySelector("b").textContent = "Göndərilmədi";
                 if (receiptStatus) receiptStatus.textContent = "Çek seçildi — yenidən göndərilə bilər.";
-                error.textContent = submitError.userMessage || "Sifariş hazırlanmadı. Yenidən cəhd edin.";
+                error.textContent = (submitError.userMessage || "Sifariş hazırlanmadı. Yenidən cəhd edin.")+(submitError.traceId?' İzləmə: '+submitError.traceId:'');
                 error.hidden = false;
                 setMessage('', '');
                 cancelButton.textContent = "Ləğv et";
