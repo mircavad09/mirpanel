@@ -24,6 +24,7 @@ import {createBrowserOrders} from './browser-orders.mjs';
 import {createAccountOrders} from './account-orders.mjs';
 import {createShop} from './shop.mjs';
 import {handleShop} from './shop-http.mjs';
+import {createBankBackgrounds,bankKey,BANKS} from './bank-backgrounds.mjs';
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -52,7 +53,7 @@ function resolvedPaymentTheme(method) {
   const provider = String(method.provider_name || "").toLocaleLowerCase("az-AZ");
   if (provider.includes("leo")) return "leo";
   if (provider.includes("abb")) return "abb";
-  if (provider.includes("kapital")) return "kapital";
+  if (/kapital|birbank/.test(provider)) return "kapital";
   if (provider.includes("m10") || method.method_type === "wallet") return "m10";
   return "neutral";
 }
@@ -68,6 +69,7 @@ function publicMethod(method) {
     color: method.color,
     icon: method.icon,
     theme: method.resolvedTheme,
+    backgroundUrl: method.backgroundUrl || '',
     order: method.order,
     available: method.available,
     status: method.status,
@@ -124,6 +126,15 @@ export function createPaymentSystem(options) {
 
   const security = createPaymentSecurity(config);
   const store = options.store || createPaymentStore(config);
+  const bankBackgrounds=options.bankBackgrounds||(store.client?createBankBackgrounds(store.client,config.storiesBucket):null);
+  async function backgroundList(){
+    if(!bankBackgrounds)return {};
+    let timer;try{return await Promise.race([bankBackgrounds.list(),new Promise(resolve=>{timer=setTimeout(()=>resolve({}),1000);})]);}
+    catch{console.error('Bank background: metadata unavailable');return {};}finally{clearTimeout(timer);}
+  }
+  async function withBackground(method){
+    const backgrounds=await backgroundList();return {...method,backgroundUrl:backgrounds[bankKey(method)]||''};
+  }
   const readInventory=createInventoryReader({snapshot:()=>store.inventorySnapshot(),ready:store.inventoryReady?()=>store.inventoryReady():null,enabled:()=>config.inventoryEnabled===true,onReady:()=>{config.inventoryEnabled=true;},cacheMs:options.store?0:2000});
   const validateFile = options.validateReceiptFile || validateReceiptFile;
   const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
@@ -227,6 +238,13 @@ export function createPaymentSystem(options) {
       publicJson(request, response, 403, { error: "Sorğunun mənbəyi icazəli deyil." });
       return true;
     }
+    const bankImage=url.pathname.match(/^\/api\/payments\/bank-backgrounds\/(kapital|m10|abb|leo)$/);
+    if(request.method==='GET'&&bankImage&&bankBackgrounds){
+      const image=await bankBackgrounds.image(bankImage[1]);
+      const headers={...corsHeaders(request),'Content-Type':'image/webp','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=60, must-revalidate','ETag':image.etag};
+      response.writeHead(request.headers['if-none-match']===image.etag?304:200,headers);
+      response.end(request.headers['if-none-match']===image.etag?undefined:image.bytes);return true;
+    }
     if(url.pathname.startsWith('/api/payments/shop/')){
       if(!shop)throw Object.assign(Error('Səbət xidməti əlçatan deyil.'),{status:503});
       if(request.headers['sec-fetch-site']==='cross-site'||request.method==='POST'&&!allowedOrigins.has(origin))throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
@@ -253,7 +271,8 @@ export function createPaymentSystem(options) {
     if (request.method === "GET" && url.pathname === "/api/payments/methods") {
       if(browserOrders.enabled)browserOrders.ensure(request,response);
       await publicRate(request, "methods", 60, 60);
-      const methods = (await store.publicMethods()).map(publicMethod);
+      const [rows,backgrounds]=await Promise.all([store.publicMethods(),backgroundList()]);
+      const methods=rows.map(method=>publicMethod({...method,backgroundUrl:backgrounds[bankKey(method)]||''}));
       publicJson(request, response, 200, { methods, anyAvailable: methods.some((item) => item.available), reservationMinutes: config.reservationMinutes,customerDetailsRequired:false });
       return true;
     }
@@ -286,7 +305,8 @@ export function createPaymentSystem(options) {
           number: publicPaymentNumber(security.decryptNumber(method.encrypted_number), method.method_type),
           type: method.method_type,
           color: method.color,
-          theme: resolvedPaymentTheme(method)
+          theme: resolvedPaymentTheme(method),
+          backgroundUrl: (await withBackground(method)).backgroundUrl || ''
         },
         amount: reserved.amount===undefined?Number((Number(plan.price)*orderQuantity).toFixed(2)):Number(reserved.amount),
         currency: "AZN"
@@ -336,7 +356,8 @@ export function createPaymentSystem(options) {
             id: method.id, displayName: method.display_name, providerName: method.provider_name,
             holderName: method.holder_name,
             number: publicPaymentNumber(security.decryptNumber(method.encrypted_number), method.method_type),
-            type: method.method_type, color: method.color, theme: resolvedPaymentTheme(method)
+            type: method.method_type, color: method.color, theme: resolvedPaymentTheme(method),
+            backgroundUrl: (await withBackground(method)).backgroundUrl || ''
           }
         }
       });
@@ -526,6 +547,17 @@ export function createPaymentSystem(options) {
     if (request.method === "GET") {
       if (!requireAuth(request, response)) return true;
     } else if (!requireMutationAuth(request, response)) return true;
+
+    if(url.pathname==='/api/admin/payment-bank-backgrounds'&&request.method==='GET'){
+      if(!bankBackgrounds)throw Object.assign(new Error('Bank fonu xidməti əlçatan deyil.'),{status:503});
+      json(response,200,{banks:BANKS,backgrounds:await bankBackgrounds.list(true)});return true;
+    }
+    const bankWrite=url.pathname.match(/^\/api\/admin\/payment-bank-backgrounds\/(kapital|m10|abb|leo)(\/remove)?$/);
+    if(bankWrite&&request.method==='POST'){
+      if(!bankBackgrounds)throw Object.assign(new Error('Bank fonu xidməti əlçatan deyil.'),{status:503});
+      const backgrounds=bankWrite[2]?await bankBackgrounds.remove(bankWrite[1]):await bankBackgrounds.write(bankWrite[1],await readRawBody(request,5242880),request.headers['content-type']);
+      json(response,200,{backgrounds});return true;
+    }
 
     if(url.pathname==='/api/admin/payment-inventory'){
       if(request.method==='GET'){json(response,200,{products:await inventoryView()});return true;}

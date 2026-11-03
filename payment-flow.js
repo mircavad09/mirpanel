@@ -261,13 +261,19 @@
   function methodButtons(methods) {
     return methods.map((method) => {
       const reason = method.available ? "" : method.unavailableReason || (method.status === "limit_reached" ? "Bu gün limit dolub" : "Müvəqqəti rezervdədir");
-      return `<button class="paymentMethodChoice theme-${esc(method.theme || "neutral")}" type="button" data-payment-method="${esc(method.id)}"${method.available ? "" : " disabled tabindex=\"-1\""} aria-disabled="${method.available ? "false" : "true"}" aria-pressed="false" aria-label="${esc(`${method.providerName}, son dörd rəqəm ${method.last4}${reason ? `, ${reason}` : ""}`)}">${methodIcon(method.type)}<span>${esc(method.providerName)}</span><small>${method.type === "wallet" ? "Elektron cüzdan" : "Bank kartı"}</small><small>•••• ${esc(method.last4)}</small>${reason ? `<small>${esc(reason)}</small>` : ""}<i aria-hidden="true">✓ Seçildi</i></button>`;
+      return `<button class="paymentMethodChoice theme-${esc(method.theme || "neutral")}${bankBackground(method)?' hasBankBackground':''}" type="button" data-payment-method="${esc(method.id)}"${method.available ? "" : " disabled tabindex=\"-1\""} aria-disabled="${method.available ? "false" : "true"}" aria-pressed="false" aria-label="${esc(`${method.providerName}, son dörd rəqəm ${method.last4}${reason ? `, ${reason}` : ""}`)}">${bankBackground(method)}${methodIcon(method.type)}<span>${esc(method.providerName)}</span><small>${method.type === "wallet" ? "Elektron cüzdan" : "Bank kartı"}</small><small>•••• ${esc(method.last4)}</small>${reason ? `<small>${esc(reason)}</small>` : ""}<i aria-hidden="true">✓ Seçildi</i></button>`;
     }).join("");
   }
 
+  function bankBackground(method){
+    const url=String(method.backgroundUrl||'');
+    return /^\/api\/payments\/bank-backgrounds\/(?:kapital|m10|abb|leo)\?v=[a-zA-Z0-9%_.:-]+$/.test(url)?`<img class="paymentBankBackground" src="${esc(url)}" alt="" aria-hidden="true" decoding="async">`:'';
+  }
+  document.addEventListener('error',event=>{if(event.target?.classList?.contains('paymentBankBackground')){event.target.parentElement.classList.remove('hasBankBackground');event.target.remove();}},true);
+
   function detailMarkup(reservation) {
     const method = reservation.method;
-    return `<div class="paymentSelectedWrap"><article class="paymentSelectedCard theme-${esc(method.theme || "neutral")}" style="--payment-card-color:${esc(method.color)}">
+    return `<div class="paymentSelectedWrap"><article class="paymentSelectedCard theme-${esc(method.theme || "neutral")}${bankBackground(method)?' hasBankBackground':''}" style="--payment-card-color:${esc(method.color)}">${bankBackground(method)}
       <div class="paymentSelectedTop"><div><small>Ödəniş üsulu</small><strong>${esc(method.providerName)}</strong></div><div class="paymentSelectedTopActions"><span>${method.type === "wallet" ? "Elektron cüzdan" : "Bank kartı"}</span><button id="changePaymentMethod" type="button">Kartı dəyiş</button></div></div>
       <div class="paymentMagneticStripe" aria-hidden="true"></div>
       <div class="paymentHolder"><small>Sahib</small><strong>${esc(method.holderName || "Mirpanel")}</strong></div>

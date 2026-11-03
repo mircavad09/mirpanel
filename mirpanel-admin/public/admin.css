@@ -1222,3 +1222,13 @@ th {
 .homepageBannerControls select,.homepageBannerJob select,.homepageBannerNewPlacement select {max-width:100%;min-height:44px;font-size:16px;}
 .homepageBannerControls details .btn {margin-top:10px;}
 @media(max-width:1023px) {.homepageBannerPreview picture {aspect-ratio:1600/670;}}
+.paymentBankBackgrounds{margin:16px 0 24px;padding:16px;border:1px solid #35383d;border-radius:14px;background:#191c20;font-family:Arial,sans-serif}
+.paymentBankBackgrounds p{font-size:13px;color:#c4c7cc;line-height:1.5}
+.paymentBankBackgroundGrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+.paymentBankBackgroundGrid article{display:flex;flex-wrap:wrap;gap:8px;align-content:start;min-width:0}
+.paymentBankBackgroundGrid strong{width:100%;font-size:14px}
+.paymentBankBackgroundGrid img,.paymentBankEmpty{width:100%;aspect-ratio:1.6;object-fit:contain;border:1px solid #35383d;border-radius:12px;background:#111}
+.paymentBankEmpty{display:grid;place-items:center;color:#adb2ba;font-size:13px}
+.paymentBankBackgroundGrid label{position:relative;overflow:hidden}
+.paymentBankBackgroundGrid input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%}
+.paymentBankBackgroundGrid label:focus-within{outline:2px solid #ffd400;outline-offset:2px}

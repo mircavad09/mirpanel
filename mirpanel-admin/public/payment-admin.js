@@ -53,7 +53,7 @@
     const provider = String(providerName || "").toLocaleLowerCase("az-AZ");
     if (provider.includes("leo")) return "leo";
     if (provider.includes("abb")) return "abb";
-    if (provider.includes("kapital")) return "kapital";
+    if (/kapital|birbank/.test(provider)) return "kapital";
     if (provider.includes("m10") || type === "wallet") return "m10";
     return "neutral";
   }
@@ -76,8 +76,27 @@
   function renderMethods() {
     const list = $p("paymentMethodsList");
     if (!list) return;
+    if(!$p('paymentBankBackgrounds'))list.insertAdjacentHTML('beforebegin','<section id="paymentBankBackgrounds" class="paymentBankBackgrounds"></section>');
+    renderBankBackgrounds();
     list.innerHTML = paymentState.methods.length ? paymentState.methods.map(methodCard).join("") : '<div class="emptyState">Ödəniş üsulu tapılmadı.</div>';
     if (paymentState.selectedMethodId) renderMethodEditor(paymentState.methods.find((item) => item.id === paymentState.selectedMethodId));
+  }
+
+  let bankBackgroundState={banks:{kapital:'Birbank / Kapital Bank',m10:'m10',abb:'ABB',leo:'Leobank'},backgrounds:{},busy:new Set(),error:''};
+  function renderBankBackgrounds(){
+    const host=$p('paymentBankBackgrounds');if(!host)return;
+    host.innerHTML='<h3>Bank kartlarının fonları</h3><p>Fon həmin bankın bütün mövcud və yeni kartlarına tətbiq olunur. PNG, JPG, WebP · maksimum 5 MB.</p>'+(bankBackgroundState.error?`<p role="alert">${escp(bankBackgroundState.error)}</p>`:'')+'<div class="paymentBankBackgroundGrid">'+Object.entries(bankBackgroundState.banks).map(([key,name])=>{
+      const url=bankBackgroundState.backgrounds[key],busy=bankBackgroundState.busy.has(key);
+      return `<article><strong>${escp(name)}</strong>${url?`<img src="${escp(url)}" alt="${escp(name)} fon önizləməsi">`:'<div class="paymentBankEmpty">Mövcud kart dizaynı</div>'}<label class="btn">${busy?'Saxlanılır…':url?'Fonu dəyiş':'Kart fonu yüklə'}<input type="file" accept="image/png,image/jpeg,image/webp" data-bank-background="${key}" ${busy?'disabled':''}></label><button class="btn" type="button" data-bank-background-remove="${key}" ${!url||busy?'disabled':''}>Fonu sil</button></article>`;
+    }).join('')+'</div>';
+  }
+  async function changeBankBackground(key,file,remove=false){
+    if(bankBackgroundState.busy.has(key))return;
+    if(!remove&&(!file||!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>5242880)){toast('PNG, JPG və ya WebP seçin. Maksimum 5 MB.');return;}
+    bankBackgroundState.busy.add(key);bankBackgroundState.error='';renderBankBackgrounds();
+    try{const r=await paymentApi('/api/admin/payment-bank-backgrounds/'+key+(remove?'/remove':''),{method:'POST',...(remove?{body:'{}'}:{body:file,headers:{'Content-Type':file.type}})});bankBackgroundState.backgrounds=r.backgrounds;toast(remove?'Bank fonu silindi.':'Bank fonu saxlanıldı.');}
+    catch(e){bankBackgroundState.error=e.message||'Fon saxlanmadı. Yenidən cəhd edin.';toast(bankBackgroundState.error);}
+    finally{bankBackgroundState.busy.delete(key);renderBankBackgrounds();}
   }
 
   function renderMethodEditor(method = null) {
@@ -117,6 +136,7 @@
     const [methodResult, settingsResult] = await Promise.all([paymentApi("/api/admin/payment-methods"), paymentApi("/api/admin/payment-settings")]);
     paymentState.methods = methodResult.methods || [];
     renderMethods();
+    try{const r=await paymentApi('/api/admin/payment-bank-backgrounds');bankBackgroundState.backgrounds=r.backgrounds;bankBackgroundState.error='';}catch(e){bankBackgroundState.error=e.message||'Fonlar yüklənmədi.';}renderBankBackgrounds();
     if ($p("paymentNotificationEmail")) $p("paymentNotificationEmail").value = settingsResult.settings?.notificationEmail || "";
     if ($p("paymentReceiptRetentionDays")) $p("paymentReceiptRetentionDays").value = settingsResult.settings?.receiptRetentionDays || 90;
   }
@@ -545,6 +565,8 @@
   }
 
   function bindEvents() {
+    document.addEventListener('change',e=>{const key=e.target.dataset.bankBackground;if(key)void changeBankBackground(key,e.target.files?.[0]);});
+    document.addEventListener('click',e=>{const b=e.target.closest('[data-bank-background-remove]');if(b)void changeBankBackground(b.dataset.bankBackgroundRemove,null,true);});
     document.addEventListener("input", (event) => {
       if (event.target.closest?.("#paymentOrderFilters")) clearOrderSelection();
       if (["paymentOrderDateFrom", "paymentOrderDateTo"].includes(event.target.id)) validateCustomDates(true);

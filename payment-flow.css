@@ -122,6 +122,18 @@
  .paymentSubmitActions button{min-height:48px;font-size:12px;line-height:1.25}
  .paymentFlow input{font-size:16px}
 }
+
+/* Bank-wide decorative backgrounds. All payment data remains live HTML. */
+.paymentMethodChoice.hasBankBackground,.paymentSelectedCard.hasBankBackground{position:relative;isolation:isolate;overflow:hidden;color:#fff;--method-text:#fff;--method-muted:#f0f0f0}
+.paymentMethodChoice.hasBankBackground>.paymentBankBackground,.paymentSelectedCard.hasBankBackground>.paymentBankBackground{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center;z-index:-2;pointer-events:none;border-radius:inherit}
+.paymentMethodChoice.hasBankBackground::before,.paymentSelectedCard.hasBankBackground::before{content:'';position:absolute;inset:0;z-index:-1;border-radius:inherit;pointer-events:none;background:linear-gradient(110deg,#000b,#0006)}
+.paymentSelectedCard.hasBankBackground .paymentMagneticStripe{background:#0002}
+.paymentSelectedCard.hasBankBackground .paymentHolder strong,.paymentSelectedCard.hasBankBackground .paymentNumber code,.paymentSelectedCard.hasBankBackground .paymentAmount strong{color:#fff}
+.paymentSelectedCard.hasBankBackground .paymentNumber,.paymentSelectedCard.hasBankBackground .paymentReservationTime{background:#0006}
+.paymentSelectedCard.hasBankBackground .paymentReservationTime span,.paymentSelectedCard.hasBankBackground small,.paymentSelectedCard.hasBankBackground .paymentAmount>span{color:#eee}
+.paymentMethodChoice.hasBankBackground>svg{visibility:hidden}
+.paymentSelectedCard.hasBankBackground{grid-template-rows:auto 0 auto auto auto}
+.paymentSelectedCard.hasBankBackground .paymentMagneticStripe{height:0;border:0;margin:0;box-shadow:none}
 .paymentReceiptGuidance{margin:0 0 8px;color:#d1d1d5;font-size:12px;line-height:1.45;overflow-wrap:anywhere}
 .paymentReceiptSuccess{overflow-wrap:anywhere}
 /* Checkout owns the visible viewport, not the page's fixed bottom navigation. */

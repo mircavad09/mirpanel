@@ -85,7 +85,7 @@ function paymentTheme(value, providerName, methodType) {
   const provider = String(providerName || "").toLocaleLowerCase("az-AZ");
   if (provider.includes("leo")) return "leo";
   if (provider.includes("abb")) return "abb";
-  if (provider.includes("kapital")) return "kapital";
+  if (/kapital|birbank/.test(provider)) return "kapital";
   if (provider.includes("m10") || methodType === "wallet") return "m10";
   return "neutral";
 }
