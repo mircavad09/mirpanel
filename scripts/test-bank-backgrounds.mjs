@@ -101,7 +101,7 @@ try{
  const videoContext=await browser.newContext({viewport:{width:390,height:820},recordVideo:{dir:out+'/video',size:{width:390,height:820}}}),videoPage=await videoContext.newPage();
  await videoPage.goto(fixture.origin);await videoPage.locator('.paymentBankBackground').first().waitFor();await videoPage.locator('[data-payment-method="'+fixture.methodId+'"]').click();await videoPage.waitForTimeout(7600);const video=videoPage.video();await videoContext.close();await video.saveAs(out+'/bank-edge-motion.webm');
  const originalBankUrls=await backgrounds.list();
- for(const key of ['wallet-card','header-cart','header-balance']){
+ for(const key of ['wallet-card']){
   const alpha=await sharp({create:{width:600,height:240,channels:4,background:{r:250,g:195,b:20,alpha:0.35}}}).png().toBuffer();
   const response=await call('/api/admin/payment-backgrounds/'+key,{method:'POST',headers:ah,body:alpha});eq(response.status,200);
   const info=await backgrounds.list();eq(info[key].startsWith('/api/payments/backgrounds/'+key+'?v='),true);eq(info.abb,originalBankUrls.abb);
@@ -110,24 +110,25 @@ try{
   const fetchOriginal=globalThis.fetch;try{globalThis.fetch=async(u,o)=>{const headers=new Headers(o.headers);headers.set('Origin',fixture.origin);return fetchOriginal(fixture.origin+new URL(u).pathname+new URL(u).search,{...o,headers});};const proxyImage=await onRequest({request:new Request('https://mirpanel.com'+info[key])});eq(proxyImage.status,200);eq(proxyImage.headers.get('Cache-Control'),'public, max-age=3600');}finally{globalThis.fetch=fetchOriginal;}
   for(const role of ['','employee','customer'])eq((await call('/api/admin/payment-backgrounds/'+key,{method:'POST',headers:{'x-test-role':role,'Content-Type':'image/png'},body:alpha})).status,role?403:401);
  }
- const all=await(await call('/api/payments/backgrounds')).json();eq(Object.keys(all.backgrounds).length,7);
- const central=await call('/api/admin/payment-backgrounds',{headers:{'x-test-role':'owner'}});eq(central.status,200);eq(Object.keys((await central.json()).elements).length,7);
+ const all=await(await call('/api/payments/backgrounds')).json();eq(Object.keys(all.backgrounds).length,5);
+ const central=await call('/api/admin/payment-backgrounds',{headers:{'x-test-role':'owner'}});eq(central.status,200);eq(Object.keys((await central.json()).elements).length,5);
+ for(const key of ['header-cart','header-balance']){await assert.rejects(()=>backgrounds.write(key,samples.abb,'image/png'));checks++;eq((await onRequest({request:new Request('https://mirpanel.com/api/payments/backgrounds/'+key)})).status,404);}
  // Run the actual admin UI against the same HTTP upload endpoints.
  await page.route('**/admin-test',r=>r.fulfill({contentType:'text/html',body:`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/admin-test.css"><body style="margin:0;padding:12px;background:#121416;color:#fff"><button class="navBtn" data-view="decorations">Şəkillər və fonlar</button><div id="decorationsView"><section id="paymentBankBackgrounds" class="paymentBankBackgrounds"></section></div><div id="paymentMethodsList"></div><div id="paymentMethodEditor"></div><div id="paymentOrdersView" class="hidden"></div><div id="paymentReviewsView" class="hidden"></div><p id="notice"></p><script>window.toast=m=>document.getElementById('notice').textContent=m;window.api=async(p,o={})=>{const r=await fetch(p,{...o,headers:{'x-test-role':'owner','x-csrf-token':'synthetic',...o.headers}}),v=await r.json();if(!r.ok)throw Error(v.error);return v;};</script><script src="/admin-test.js"></script></body></html>`}));
  await page.route('**/admin-test.js',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('mirpanel-admin/public/payment-admin.js','utf8')}));
  await page.route('**/admin-test.css',r=>r.fulfill({contentType:'text/css',body:fs.readFileSync('mirpanel-admin/public/admin.css','utf8')}));
  await page.route('**/api/admin/payment-orders?*',r=>r.fulfill({json:{counts:{}}}));
  for(const width of [320,390,1440]){
-  await page.setViewportSize({width,height:900});await page.goto(fixture.origin+'/admin-test');await page.locator('.navBtn').click();await page.locator('[data-bank-background="abb"]').waitFor();await page.waitForFunction(()=>document.querySelectorAll('#paymentBankBackgrounds img').length===7);
-  eq(await page.locator('[data-bank-background]').count(),7);eq(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.setViewportSize({width,height:900});await page.goto(fixture.origin+'/admin-test');await page.locator('.navBtn').click();await page.locator('[data-bank-background="abb"]').waitFor();await page.waitForFunction(()=>document.querySelectorAll('#paymentBankBackgrounds img').length===5);
+  eq(await page.locator('[data-bank-background]').count(),5);eq(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await page.locator('[data-bank-background="abb"]').setInputFiles({name:'abb.png',mimeType:'image/png',buffer:samples.abb});await page.getByText('Fon saxlanıldı.',{exact:true}).waitFor();
   eq((await backgrounds.list()).abb.length>0,true);await page.screenshot({path:out+'/admin-'+width+'.png',fullPage:true});
   await page.locator('[data-bank-background-remove="abb"]').click();await page.getByRole('button',{name:'Sil',exact:true}).last().click();await page.getByText('Fon silindi.',{exact:true}).waitFor();eq((await backgrounds.decorate({theme:'abb'})).backgroundUrl,'');
   await page.locator('[data-bank-background="abb"]').setInputFiles({name:'abb.webp',mimeType:'image/webp',buffer:await sharp(samples.abb).webp().toBuffer()});await page.getByText('Fon saxlanıldı.',{exact:true}).waitFor();
-  await page.reload();await page.locator('.navBtn').click();await page.waitForFunction(()=>document.querySelectorAll('#paymentBankBackgrounds img').length===7);eq(await page.locator('#paymentBankBackgrounds img').count(),7);
+  await page.reload();await page.locator('.navBtn').click();await page.waitForFunction(()=>document.querySelectorAll('#paymentBankBackgrounds img').length===5);eq(await page.locator('#paymentBankBackgrounds img').count(),5);
  }
- await page.setViewportSize({width:390,height:900});await page.goto(fixture.origin+'/admin-test');await page.locator('.navBtn').click();await page.waitForFunction(()=>document.querySelectorAll('#paymentBankBackgrounds img').length===7);
- for(const key of ['kapital','m10','abb','leo','wallet-card','header-cart','header-balance']){
+ await page.setViewportSize({width:390,height:900});await page.goto(fixture.origin+'/admin-test');await page.locator('.navBtn').click();await page.waitForFunction(()=>document.querySelectorAll('#paymentBankBackgrounds img').length===5);
+ for(const key of ['kapital','m10','abb','leo','wallet-card']){
   const before=(await backgrounds.list())[key];
   await page.locator('[data-bank-background="'+key+'"]').setInputFiles({name:'replace.png',mimeType:'image/png',buffer:samples.m10});await page.waitForFunction(({key,before})=>{const card=document.querySelector('[data-decoration-card="'+key+'"]');return card?.querySelector('img')?.getAttribute('src')!==before&&card?.querySelector('input')?.disabled===false;},{key,before});eq((await backgrounds.list())[key]!==before,true);
   await page.locator('[data-bank-background-remove="'+key+'"]').click();await page.getByRole('button',{name:'Ləğv et',exact:true}).click();eq(Boolean((await backgrounds.list())[key]),true);

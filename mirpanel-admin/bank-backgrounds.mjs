@@ -2,7 +2,7 @@ import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import crypto from 'node:crypto';
 export const BANKS={kapital:'Birbank / Kapital Bank',m10:'m10',abb:'ABB',leo:'Leobank'};
-export const DECORATIONS={...BANKS,'wallet-card':'Böyük balans kartı','header-cart':'Başlıqdakı Səbət düyməsi','header-balance':'Başlıqdakı balans düyməsi'};
+export const DECORATIONS={...BANKS,'wallet-card':'Böyük balans kartı'};
 const failure=(status,message)=>Object.assign(new Error(message),{status});
 export function bankKey(method){
  const theme=method.resolvedTheme||method.theme;

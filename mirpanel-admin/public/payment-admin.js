@@ -81,11 +81,11 @@
     if (paymentState.selectedMethodId) renderMethodEditor(paymentState.methods.find((item) => item.id === paymentState.selectedMethodId));
   }
 
-  let bankBackgroundState={banks:{kapital:'Birbank / Kapital Bank',m10:'m10',abb:'ABB',leo:'Leobank','wallet-card':'Böyük balans kartı','header-cart':'Başlıqdakı Səbət düyməsi','header-balance':'Başlıqdakı balans düyməsi'},backgrounds:{},busy:new Set(),error:''};
-  const decorationDescriptions={kapital:'Bütün Birbank/Kapital Bank kartları · hər iki ödəniş mərhələsi',m10:'Bütün m10 kartları · hər iki ödəniş mərhələsi',abb:'Bütün ABB kartları · hər iki ödəniş mərhələsi',leo:'Bütün Leobank kartları · hər iki ödəniş mərhələsi','wallet-card':'Balans səhifəsi · Mövcud balans kartı','header-cart':'Yalnız kompüter görünüşündə istifadə olunur · Səbət sayı canlı qalır','header-balance':'Yalnız kompüter görünüşündə istifadə olunur · Faktiki balans canlı qalır'};
+  let bankBackgroundState={banks:{kapital:'Birbank / Kapital Bank',m10:'m10',abb:'ABB',leo:'Leobank','wallet-card':'Böyük balans kartı'},backgrounds:{},busy:new Set(),error:''};
+  const decorationDescriptions={kapital:'Bütün Birbank/Kapital Bank kartları · hər iki ödəniş mərhələsi',m10:'Bütün m10 kartları · hər iki ödəniş mərhələsi',abb:'Bütün ABB kartları · hər iki ödəniş mərhələsi',leo:'Bütün Leobank kartları · hər iki ödəniş mərhələsi','wallet-card':'Balans səhifəsi · Mövcud balans kartı'};
   function renderBankBackgrounds(){
     const host=$p('paymentBankBackgrounds');if(!host)return;
-    const groups=[['Bank kartı fonları',['kapital','m10','abb','leo']],['Balans səhifəsi',['wallet-card']],['Başlıq düymələri',['header-cart','header-balance']]];
+    const groups=[['Bank kartı fonları',['kapital','m10','abb','leo']],['Balans səhifəsi',['wallet-card']]];
     host.innerHTML='<p>PNG, JPG, WebP · maksimum 5 MB. Dəyişiklik saxlanandan sonra avtomatik tətbiq olunur.</p>'+(bankBackgroundState.error?`<p role="alert">${escp(bankBackgroundState.error)}</p>`:'')+groups.map(([title,keys])=>'<h3>'+title+'</h3><div class="paymentBankBackgroundGrid">'+keys.map(key=>{
       const name=bankBackgroundState.banks[key],url=bankBackgroundState.backgrounds[key],busy=bankBackgroundState.busy.has(key);
       return `<article data-decoration-card="${key}"><strong>${escp(name)}</strong><p>${escp(decorationDescriptions[key])}</p>${(url||key==='wallet-card')?`<div class="decorationChecker"><img src="${escp(url||'https://mirpanel.com/assets/wallet/balance-gold.png')}" alt="${escp(name)} fon önizləməsi"></div>`:'<div class="paymentBankEmpty">Standart görünüş</div>'}<label class="btn">${busy?'Saxlanılır…':url?'Dəyiş':'Yüklə'}<input aria-label="${escp(name)} — şəkil seç" type="file" accept="image/png,image/jpeg,image/webp" data-bank-background="${key}" ${busy?'disabled':''}></label><button class="btn" type="button" data-bank-background-remove="${key}" ${!url||busy?'disabled':''}>Sil</button></article>`;

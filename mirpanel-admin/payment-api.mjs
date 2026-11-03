@@ -241,7 +241,7 @@ export function createPaymentSystem(options) {
     if(request.method==='GET'&&url.pathname==='/api/payments/backgrounds'&&bankBackgrounds){
       await publicRate(request,'decorations',60,60);publicJson(request,response,200,{backgrounds:await bankBackgrounds.list()});return true;
     }
-    const bankImage=url.pathname.match(/^\/api\/payments\/(?:bank-backgrounds\/(kapital|m10|abb|leo)|backgrounds\/(wallet-card|header-cart|header-balance))$/);
+    const bankImage=url.pathname.match(/^\/api\/payments\/(?:bank-backgrounds\/(kapital|m10|abb|leo)|backgrounds\/(wallet-card))$/);
     if(request.method==='GET'&&bankImage&&bankBackgrounds){
       const image=await bankBackgrounds.image(bankImage[1]||bankImage[2]);
       const headers={...corsHeaders(request),'Content-Type':'image/webp','X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=60, must-revalidate','ETag':image.etag};
@@ -555,7 +555,7 @@ export function createPaymentSystem(options) {
       if(!bankBackgrounds)throw Object.assign(new Error('Bank fonu xidməti əlçatan deyil.'),{status:503});
       json(response,200,{banks:BANKS,elements:DECORATIONS,backgrounds:await bankBackgrounds.list(true)});return true;
     }
-    const bankWrite=url.pathname.match(/^\/api\/admin\/(?:payment-bank-backgrounds|payment-backgrounds)\/(kapital|m10|abb|leo|wallet-card|header-cart|header-balance)(\/remove)?$/);
+    const bankWrite=url.pathname.match(/^\/api\/admin\/(?:payment-bank-backgrounds|payment-backgrounds)\/(kapital|m10|abb|leo|wallet-card)(\/remove)?$/);
     if(bankWrite&&request.method==='POST'){
       if(!bankBackgrounds)throw Object.assign(new Error('Bank fonu xidməti əlçatan deyil.'),{status:503});
       const backgrounds=bankWrite[2]?await bankBackgrounds.remove(bankWrite[1]):await bankBackgrounds.write(bankWrite[1],await readRawBody(request,5242880),request.headers['content-type']);
