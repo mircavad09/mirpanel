@@ -30,7 +30,7 @@ async function start(){app.replaceChildren(el('p','Yüklənir…'));if(route==='
 const dispose=()=>{closed=true;epoch++;clearInterval(timer);for(const r of requests)r.abort();life.abort();document.body.classList.remove('wallet-page-active');};
 on(window,'pagehide',dispose);on(window,'mirpanel:account',e=>{if(profile&&!e.detail&&route==='/balans')login();profile=e.detail;});
 on(window,'mirpanel:before-navigate',e=>{if(working||app.querySelector('input[type=file]')?.files.length){e.preventDefault();status.textContent='Əvvəl aktiv əməliyyatı tamamlayın və ya ləğv edin. Seçilmiş fayl qorunub.';}});
-const boot=()=>start().catch(e=>{if(closed)return;app.replaceChildren(el('h1','Yükləmə alınmadı'),error,button('Yenidən cəhd et',boot));error.textContent=e.message;});void boot();
+const boot=()=>{walletPrefetched=null;return start().catch(e=>{if(closed)return;app.replaceChildren(el('h1','Yükləmə alınmadı'),error,button('Yenidən cəhd et',boot));error.textContent=e.message;});};void boot();
 function historyMore(history,page){const more=button('Daha çox göstər',()=>run(async()=>{more.disabled=true;try{const d=await api('/wallet?page='+(page+1));more.remove();for(const x of d.items){const row=el('article');row.append(el('strong',(Number(x.cents)>0?'+':'')+money(x.cents)),el('p',x.reason,'shop-muted'),el('small',new Date(x.created_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})));history.append(row);}if(d.more)historyMore(history,page+1);}finally{more.disabled=false;}}));history.append(more);}
 window.mirpanelPageDispose=dispose;return dispose;
 }
