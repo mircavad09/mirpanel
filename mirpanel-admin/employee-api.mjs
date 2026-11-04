@@ -1,10 +1,12 @@
 import crypto from 'node:crypto';
 import {hashPassword,verifyPassword,createStockCrypto,signature,customerDetails,text,quantity,validateTemplate,renderDelivery,whatsAppAdapter,fail} from './employee-security.mjs';
 import {planKey} from './payment-profit.mjs';
+import {createManualStock} from './manual-stock.mjs';
 const uuid=v=>{if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(v||''))throw fail('Təhlükəsiz əməliyyat açarı tələb olunur.');return v;};
 const safeAccount=a=>({id:a.id,login:a.login,name:a.display_name,active:a.active,employeeStartedAt:a.employee_started_at});
-export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminMutation,sameOrigin,loadCatalog,guardLogin=async()=>{}}){
+export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminMutation,sameOrigin,loadCatalog,guardLogin=async()=>{},ownerCheck=async()=>false}){
  const sessions=new Map(),attempts=new Map(),mutations=new Map(),ttl=8*3600000;
+ const manual=createManualStock({client,config,readBody,ownerCheck}),tokenHash=v=>crypto.createHash('sha256').update(v).digest('hex'),csrfFor=v=>crypto.createHmac('sha256',config.tokenSecret||config.encryptionKey).update('employee-csrf:'+v).digest('hex');
  let stockKeyReady=false;
  try{createStockCrypto(config.encryptionKey);stockKeyReady=true;}catch{/* Fail closed; never log key material. */}
  const enabled=()=>config.employeeEnabled===true&&stockKeyReady&&Boolean(client);
@@ -13,7 +15,7 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
  async function result(query){const {data,error}=await query;if(error)throw fail('Əməliyyat saxlanılmadı. Yenidən cəhd edin.',409);return data;}
  async function rpc(name,args={}){const {data,error}=await client.rpc(name,args);if(error){const code=String(error.message||'').match(/(?:ORDER_ALREADY_CLAIMED|ORDER_ALREADY_ASSIGNED|STOCK_EMPTY|IDEMPOTENCY_CONFLICT|PLAN_MAPPING_REVIEW_REQUIRED|ORDER_FINALIZED|ORDER_NOT_READY|FORBIDDEN|EMPLOYEE_[A-Z_]+|[A-Z_]+_REQUIRED|INVALID_QUANTITY|STOCK_QUANTITY_INCOMPLETE|OPEN_ORDERS_EXIST)/)?.[0];throw Object.assign(fail(({ORDER_ALREADY_CLAIMED:'Bu sifariş artıq icraya götürülüb.',ORDER_ALREADY_ASSIGNED:'Bu sifariş artıq icraya götürülüb.',STOCK_EMPTY:'Stok bitib. Adminə məlumat verin.',PLAN_MAPPING_REVIEW_REQUIRED:'Plan dəyişib; adminin plan uyğunluğunu yoxlaması tələb olunur.',IDEMPOTENCY_CONFLICT:'Təkrar sorğu əvvəlki məlumatlarla uyğun deyil.'})[code]||'Əməliyyat bu vəziyyətdə mümkün deyil.',code==='FORBIDDEN'?403:409),{code});}return data;}
  async function account(id){return result(client.from('employee_accounts').select('*').eq('id',id).maybeSingle());}
- async function session(req){const id=cookies(req).mirpanel_employee_session,s=sessions.get(id);if(!s||s.expires<Date.now()){sessions.delete(id);return null;}const a=await account(s.id);if(!a?.active||a.session_version!==s.version){sessions.delete(id);return null;}s.expires=Date.now()+ttl;return {...s,account:a};}
+ async function session(req){const id=cookies(req).mirpanel_employee_session;let s=sessions.get(id);if(!s&&/^[a-f0-9]{64}$/.test(id||'')){try{const row=await result(client.from('manual_stock_sessions').select('*').eq('token_hash',tokenHash(id)).maybeSingle());if(row)s={id:row.employee_id,version:row.version,expires:Date.parse(row.expires_at),csrf:csrfFor(id),persistent:true};}catch{/* A missing optional migration must not widen legacy access. */}}if(!s||s.expires<Date.now()){sessions.delete(id);return null;}const a=await account(s.id);if(!a?.active||a.session_version!==s.version){sessions.delete(id);return null;}if(!s.persistent)s.expires=Date.now()+ttl;sessions.set(id,s);return {...s,account:a};}
  async function audit(role,actor,action,order=null,ids=null){await result(client.from('employee_work_audit').insert({actor_role:role,actor_ref:actor,action,order_id:order,stock_ids:ids}));}
  async function blockAdmin(req,res){if(isAdmin(req))return false;if(!enabled()||!client)return false;if(await session(req)){json(res,403,{error:'İşçinin admin funksiyalarına icazəsi yoxdur.'});return true;}return false;}
  async function ownOrder(actor,id){const o=await result(client.from('payment_orders').select('*').eq('id',uuid(id)).maybeSingle());if(!o)throw fail('Sifariş tapılmadı.',404);if(actor.role==='employee'){
@@ -46,16 +48,20 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
     // Dummy hash work prevents a fast unknown-user path.
     const valid=await verifyPassword(String(b.password||''),a?.password_hash||'scrypt:00000000000000000000000000000000:'+ '0'.repeat(128));
     if(!valid||!a?.active)throw fail('Giriş məlumatları yanlışdır və ya hesab deaktivdir.',401);
-    const id=crypto.randomBytes(32).toString('hex'),csrf=crypto.randomBytes(24).toString('hex');sessions.set(id,{id:a.id,version:a.session_version,csrf,expires:now+ttl});
-    await audit('employee',a.id,'login');json(res,200,{ok:true},{'Set-Cookie':cookie(id)});return true;
+    const id=crypto.randomBytes(32).toString('hex'),csrf=a.manual_only?csrfFor(id):crypto.randomBytes(24).toString('hex'),age=a.manual_only&&b.remember===true?2592000:28800;
+    if(a.manual_only)await result(client.from('manual_stock_sessions').insert({token_hash:tokenHash(id),employee_id:a.id,version:a.session_version,expires_at:new Date(now+age*1000).toISOString()}));
+    sessions.set(id,{id:a.id,version:a.session_version,csrf,expires:now+age*1000,persistent:a.manual_only===true});
+    await audit('employee',a.id,'login');json(res,200,{ok:true},{'Set-Cookie':cookie(id,age)});return true;
    }
    let actor;
    if(admin){if(await blockAdmin(req,res))return true;if(!isAdmin(req)){json(res,401,{error:'Admin sessiyası tələb olunur.'});return true;}if(req.method!=='GET'&&!adminMutation(req,res))return true;actor={role:'admin',ref:config.username||'admin',id:null};}
    else {const s=await session(req);if(!s)throw fail('İşçi sessiyası tələb olunur.',401);if(req.method!=='GET'&&(!sameOrigin(req)||req.headers['x-csrf-token']!==s.csrf))throw fail('Təhlükəsizlik yoxlaması keçmədi.',403);actor={role:'employee',id:s.id,ref:s.id,account:s.account};
     if(u.pathname==='/api/employee/session'&&req.method==='GET'){json(res,200,{role:'employee',account:safeAccount(s.account),csrfToken:s.csrf});return true;}
-    if(u.pathname==='/api/employee/logout'&&req.method==='POST'){sessions.delete(cookies(req).mirpanel_employee_session);json(res,200,{ok:true},{'Set-Cookie':cookie('',0)});return true;}
+    if(u.pathname==='/api/employee/logout'&&req.method==='POST'){const token=cookies(req).mirpanel_employee_session;if(s.persistent)await result(client.from('manual_stock_sessions').update({expires_at:new Date(0).toISOString()}).eq('token_hash',tokenHash(token)));sessions.delete(token);json(res,200,{ok:true},{'Set-Cookie':cookie('',0)});return true;}
    }
    const base=admin?'/api/admin/workforce':'/api/employee',suffix=u.pathname.slice(base.length);
+   if(suffix.startsWith('/manual-stock/')){if(req.method!=='GET'){const k='manual:'+actor.ref,now=Date.now(),v=mutations.get(k)||{n:0,until:now+60000};if(v.until<now){v.n=0;v.until=now+60000;}if(++v.n>60)throw fail('Çox əməliyyat edildi. Bir dəqiqə sonra yenidən cəhd edin.',429);mutations.set(k,v);}json(res,200,await manual.handle(req,u,actor));return true;}
+   if(!admin&&actor.account?.manual_only)throw fail('Bu işçi girişi yalnız ayrıca hesab stokuna icazə verir.',403);
    if(suffix==='/review-summary'&&req.method==='GET'){if(!admin)throw fail('Əməliyyata icazə yoxdur.',403);json(res,200,await rpc('employee_review_summary'));return true;}
    if(req.method!=='GET'){const now=Date.now();for(const [key,v] of mutations)if(v.until<now)mutations.delete(key);const key=actor.role+':'+actor.ref,v=mutations.get(key)||{n:0,until:now+60000};if(++v.n>60)throw fail('Çox əməliyyat edildi. Bir dəqiqə sonra yenidən cəhd edin.',429);mutations.set(key,v);}
    if(suffix==='/products'&&req.method==='GET'){const list=await catalog();json(res,200,{products:admin?list:list.filter(p=>p.active).map(p=>({...p,plans:p.plans.filter(pl=>pl.active)}))});return true;}

@@ -1,0 +1,5 @@
+select (select count(*)=9 from pg_tables where schemaname='public' and tablename in ('manual_stock_release','manual_stock_products','manual_stock_plans','manual_stock_permissions','manual_stock_units','manual_stock_allocations','manual_stock_requests','manual_stock_audit','manual_stock_sessions')and rowsecurity) as private_tables;
+select not has_function_privilege('anon','public.manual_stock_action(text,text,uuid,uuid,jsonb)','EXECUTE') and not has_function_privilege('authenticated','public.manual_stock_action(text,text,uuid,uuid,jsonb)','EXECUTE') as rpc_private;
+select exists(select 1 from information_schema.columns where table_schema='public' and table_name='employee_accounts' and column_name='manual_only') as scoped_accounts;
+select not exists(select 1 from public.manual_stock_units u where u.state='AVAILABLE' and (u.allocation_id is not null and exists(select 1 from public.manual_stock_allocations a where a.id=u.allocation_id and a.recalled_at is null))) as allocation_consistency;
+select exists(select 1 from pg_trigger where tgname='manual_stock_audit_immutable' and not tgisinternal) as immutable_audit;

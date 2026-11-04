@@ -79,7 +79,7 @@
     nav.innerHTML = viewGroups.map(([group, items], groupIndex) => `<div class="navGroup">
       <span class="navGroupTitle">${esc(group)}</span>
       ${items.map(([id, label], index) => `<button class="navBtn${groupIndex === 0 && index === 0 ? " active" : ""}" type="button" data-view="${id}">${esc(label)}</button>`).join("")}
-      ${groupIndex === 0 ? '<button class="navBtn" data-view="communityUsers">İstifadəçilər</button><button class="navBtn" data-view="communityGroup">Qrup söhbət</button><button class="navBtn" data-view="communityShop">Balans müraciətləri</button>' : ''}
+      ${groupIndex === 0 ? '<button class="navBtn" data-view="communityUsers">İstifadəçilər</button><button class="navBtn" data-view="communityGroup">Qrup söhbət</button><button class="navBtn" data-view="communityShop">Balans müraciətləri</button><a class="navBtn" href="/admin/employee-stock">İşçi stoku</a>' : ''}
     </div>`).join("");
     nav.addEventListener("click", (event) => {
       const button = event.target.closest("[data-view]");

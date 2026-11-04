@@ -1310,7 +1310,7 @@ const homepageBanners = storiesSupabase ? createHomepageBannersRepository(storie
 }) : null;
 const employeeSystem=createEmployeeSystem({client:storiesSupabase,config,json,readBody,
  isAdmin:request=>getSession(request)?.role==='admin',adminMutation:requireMutationAuth,sameOrigin,
- loadCatalog:async()=>extractAdminState((await getAppFile()).source),guardLogin:request=>paymentSystem.guardLogin(request)});
+ loadCatalog:async()=>extractAdminState((await getAppFile()).source),guardLogin:request=>paymentSystem.guardLogin(request),ownerCheck:()=>ownerCommunity.verifiedOwnerId()});
 // Read-only deployment gate. Missing SQL never exposes a half-working employee API.
 // An explicit false is the emergency off switch; v4 adds null-safe orders and atomic ownership.
 if(storiesSupabase) {
@@ -1397,9 +1397,22 @@ const server = http.createServer(async (request, response) => {
     if (pathname === "/" || pathname === "/login.html") {
       return serveFile(response, "login.html");
     }
+    if(['/employee/stock','/employee/stock/login'].includes(pathname)){
+      if(pathname==='/employee/stock/login')return serveFile(response,'manual-stock-login.html');
+      if(!await employeeSystem.session(request)){response.writeHead(302,{Location:'/employee/stock/login','Cache-Control':'no-store'});return response.end();}
+      return serveFile(response,'manual-stock.html');
+    }
+    if(pathname==='/admin/employee-stock'){
+      if(await employeeSystem.blockAdmin(request,response))return;
+      if(!requireAuth(request,response))return;
+      if(getSession(request)?.role!=='admin'||!await ownerCommunity.verifiedOwnerId())return json(response,403,{error:'Yalnız sahib-admin üçün.'});
+      return serveFile(response,'manual-stock-admin.html');
+    }
+    if(['/manual-stock.js','/manual-stock.css','/manual-stock-login.js'].includes(pathname))return serveFile(response,pathname.slice(1));
     if (['/employee','/employee/','/employee/login'].includes(pathname)) {
       if(pathname==='/employee/login') return serveFile(response,'employee-login.html');
-      if(!await employeeSystem.session(request)){response.writeHead(302,{Location:'/employee/login','Cache-Control':'no-store'});return response.end();}
+      const employeeSession=await employeeSystem.session(request);if(!employeeSession){response.writeHead(302,{Location:'/employee/login','Cache-Control':'no-store'});return response.end();}
+      if(employeeSession.account.manual_only){response.writeHead(302,{Location:'/employee/stock','Cache-Control':'no-store'});return response.end();}
       if(!employeeSystem.enabled()) return json(response,503,{error:'İşçi paneli hələ aktiv deyil.'});
       return serveFile(response,'employee.html');
     }

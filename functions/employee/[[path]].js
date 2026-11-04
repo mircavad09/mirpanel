@@ -1,0 +1,1 @@
+export function onRequest({request}){const u=new URL(request.url);if(!['GET','HEAD'].includes(request.method))return new Response('Method not allowed',{status:405});if(!['/employee/stock','/employee/stock/login'].includes(u.pathname))return new Response('Not found',{status:404});return Response.redirect('https://mirpanel.onrender.com'+u.pathname,302);}
