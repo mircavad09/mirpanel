@@ -29,3 +29,13 @@
 .shop-page.shop-wallet-page .shop-history strong{font-size:16px;font-weight:600}
 .shop-page.shop-wallet-page .shop-history small{font-size:12px;color:#b0b9c4}
 @media(max-width:480px){.shop-page.shop-wallet-page{margin-top:14px;padding-inline:12px;padding-bottom:12px}.shop-page.shop-wallet-page h1{font-size:26px;margin-bottom:14px}.shop-page.shop-wallet-page .shop-card{padding:15px}.shop-page.shop-wallet-page .shop-wallet-hero{padding:18px 16px;min-height:140px}.shop-page.shop-wallet-page .shop-wallet-hero strong{font-size:34px}.shop-page.shop-wallet-page .shop-bank{padding:12px}.shop-page.shop-wallet-page .shop-number{font-size:15px}.wallet-page-active #supportWidget{padding-inline:12px;margin-bottom:20px}}
+.shop-page.shop-wallet-page .shop-presets{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0 16px}
+.shop-page.shop-wallet-page .shop-presets button{min-width:0;min-height:44px;padding:9px 4px;background:#1c2027;border:1px solid #655a39;box-shadow:0 3px 8px #0003;font-size:15px;white-space:nowrap;color:#f1eee5}
+.shop-page.shop-wallet-page .shop-presets button[aria-pressed=true]{background:#ffd400;color:#171500;border-color:#ffe16a;box-shadow:0 3px 10px #e1b80022}
+.shop-page.shop-wallet-page .shop-presets button:focus-visible{outline:2px solid #ffe16a;outline-offset:3px}
+.shop-page.shop-wallet-page #topupAmountHint{margin:6px 0;font-size:13px}
+.shop-page.shop-wallet-page #topupAmountError{font-size:13px;margin:6px 0}
+.shop-page.shop-wallet-page #topupAmountError:empty{display:none}
+.shop-page.shop-wallet-page .shop-topup-preview{max-width:60%;margin:9px 0 0;color:#eceef2;font-size:13px;line-height:1.4}
+.shop-page.shop-wallet-page .shop-topup-preview span{display:inline-block;color:#7aeca8;font-size:15px;font-weight:600;white-space:nowrap}
+@media(max-width:480px){.shop-page.shop-wallet-page .shop-presets{gap:6px}.shop-page.shop-wallet-page .shop-topup-preview span{display:block}}
