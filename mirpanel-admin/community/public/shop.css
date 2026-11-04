@@ -39,3 +39,45 @@
 .shop-page.shop-wallet-page .shop-topup-preview{max-width:60%;margin:9px 0 0;color:#eceef2;font-size:13px;line-height:1.4}
 .shop-page.shop-wallet-page .shop-topup-preview span{display:inline-block;color:#7aeca8;font-size:15px;font-weight:600;white-space:nowrap}
 @media(max-width:480px){.shop-page.shop-wallet-page .shop-presets{gap:6px}.shop-page.shop-wallet-page .shop-topup-preview span{display:block}}
+.wallet-topup h3{font-size:15px;font-weight:600;margin:16px 0 10px}
+.wallet-topup{scroll-margin-top:125px}
+.wallet-topup-active #supportWidget{display:none!important}
+.shop-page .wallet-topup [hidden]{display:none!important}
+.shop-page .wallet-payment-method{width:100%;text-align:left;border-color:#b99a26;background:#24251d;color:#fff0a0}
+.wallet-bank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
+.shop-page.shop-wallet-page .wallet-bank-choice{position:relative;isolation:isolate;overflow:hidden;aspect-ratio:var(--wallet-bank-ratio,1.6);padding:10px;border-radius:14px;min-width:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;background:#171c24;border:1px solid #59616c;color:#f4f6fa;text-align:left;box-shadow:0 3px 10px #0003}
+.shop-page.shop-wallet-page .wallet-bank-choice[aria-pressed=true]{border:2px solid #ffd400;padding:9px;box-shadow:0 0 0 1px #ffd40055}
+.wallet-bank-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:-2;pointer-events:none}
+.wallet-bank-choice:after,.wallet-bank-detail:after{content:'';position:absolute;inset:45% 0 0;background:linear-gradient(transparent,#0006);z-index:-1;pointer-events:none}
+.wallet-bank-name{font-size:15px;line-height:1.3;max-width:75%}
+.has-bank-art .wallet-bank-name{visibility:hidden}
+.wallet-bank-choice-info{display:flex;flex-direction:column;gap:3px;font-size:12px;line-height:1.4;font-weight:500}
+.wallet-bank-choice-info span:last-child{font-weight:650;letter-spacing:.5px}
+.wallet-bank-check{display:none;position:absolute;right:7px;top:7px;width:21px;height:21px;border-radius:50%;background:#ffd400;color:#1b1c15;place-items:center;font-weight:700;pointer-events:none}
+[aria-pressed=true]>.wallet-bank-check{display:grid}
+.shop-page.shop-wallet-page .wallet-bank-detail{position:relative;isolation:isolate;overflow:hidden;border:1px solid #6e6540;border-radius:16px;padding:12px;background:#191e25;color:#f6f7fa;margin:16px 0}
+.wallet-bank-head{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;min-height:55px}
+.shop-page.shop-wallet-page .wallet-bank-head button{min-height:34px;padding:5px 9px;font-size:12px;background:#111a;color:#fff;border-color:#ffffff55}
+.wallet-bank-fields{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:start;gap:10px;margin:7px 0 12px}
+.wallet-bank-fields small,.wallet-bank-fields strong{display:block;overflow-wrap:anywhere}
+.wallet-bank-fields small{font-size:12px;line-height:1.5;color:#dde3eb;margin-bottom:3px}
+.wallet-bank-fields strong{font-size:15px;line-height:1.4;font-weight:600}
+.wallet-bank-fields>div:last-child{text-align:right}
+.shop-page.shop-wallet-page .wallet-bank-number{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;background:#071217dd;border-radius:10px;color:#fff;min-width:0}
+.wallet-bank-number>span{font-size:15px;font-weight:600;line-height:1.5;overflow-wrap:anywhere;min-width:0}
+.shop-page.shop-wallet-page .wallet-bank-number button{flex:none;min-height:36px;padding:6px 9px;font-size:12px;color:#fff;background:#ffffff0a;border-color:#b9c1cc77}
+.shop-page.shop-wallet-page .bank-m10{background:#04c7b5;color:#073b34}
+.bank-m10 .wallet-bank-fields small{color:#11483f}
+.bank-m10:after{background:linear-gradient(transparent,#00b49a22)}
+.wallet-topup-steps{padding:12px;background:#1b2634;border:1px solid #364966;border-radius:12px;margin:12px 0;color:#d5dfed}
+.wallet-topup-steps h3{margin:0 0 7px;font-size:15px;color:#f0d76d}
+.wallet-topup-steps ol{padding-left:21px;margin:0;font-size:13px;line-height:1.65}
+.wallet-topup-steps li+li{margin-top:4px}
+.wallet-receipt{border:1px dashed #8b803e;border-radius:12px;padding:12px;margin:14px 0;background:#181d22}
+.wallet-receipt-preview{display:flex;align-items:center;gap:10px;margin:10px 0;min-width:0}
+.wallet-receipt-preview:empty{display:none}
+.wallet-receipt-preview img{width:52px;height:58px;object-fit:contain;border-radius:6px;background:#fff;flex:none}
+.wallet-receipt-preview span{font-size:13px;overflow-wrap:anywhere;min-width:0}
+.wallet-receipt-actions{display:flex;gap:8px;flex-wrap:wrap}
+.shop-page.shop-wallet-page .wallet-receipt-actions button{min-height:38px;padding:6px 10px;font-size:13px}
+@media(min-width:700px){.wallet-bank-grid{gap:12px}.wallet-bank-choice-info{font-size:14px}.wallet-bank-fields strong{font-size:18px}.wallet-bank-head{min-height:75px}}
