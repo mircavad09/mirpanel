@@ -29,3 +29,5 @@ body:has([data-shop-checkout],.mir-cart-drawer[open]) #supportWidget{display:non
 @media(max-width:850px){
  body .waFab:not(.support-whatsapp){display:none!important;pointer-events:none!important}
 }
+/* Compact support launchers; existing dialogs and safe-area offsets stay unchanged. */
+body #supportWidget #waFab{width:46px!important;min-width:46px!important;padding:0!important;border-radius:14px}body #supportWidget #aiSupportToggle{height:46px;min-width:68px;padding:0 12px;gap:7px;font-weight:600}#supportWidget #aiSupportToggle svg{width:21px;height:21px}body.site-header-menu-open #supportWidget{visibility:hidden;pointer-events:none}

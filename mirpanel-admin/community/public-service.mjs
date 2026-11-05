@@ -2,10 +2,11 @@ import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} fro
 import {toNodeHandler,fromNodeHeaders} from 'better-auth/node';import {authFormPolicy} from './auth-form-policy.mjs';
 import {requireAllowed} from './group-control.mjs';import {saveProfile,uploadProfile} from './public-profile.mjs';
 import {tagCount,notifications,markTag,tagMessage} from './bot-tags.mjs';
+import {accountPanel} from './account-panel.mjs';
 import {CommunityLive} from './live.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
 export function authReturn(origin,value){for(const p of ['/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'])if(value===origin+p||value===p)return origin+p;return origin+'/profil';}
-export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body}){
+export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body,catalog}){
  const route=u.pathname,{pool,repo,group,auth}=runtime,started=performance.now();
  if(!(await pool.query('select ready from public_community_release where version=1')).rows[0]?.ready)throw fail(503,'Xidmət hazırlanır.');
  const gateMs=performance.now()-started;
@@ -31,7 +32,7 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  if(route==='/api/community/events'&&req.method==='GET'){runtime.live??=new CommunityLive(pool,repo,counts);await runtime.live.attach(req,res,session,u);return true;}
  if(route==='/owner-login'){res.writeHead(302,{Location:'/hesab?next='+encodeURIComponent(u.searchParams.get('next')==='/sifarislerim'?'/sifarislerim':'/profil'),'Cache-Control':'private,no-store'});res.end();return true;}
  if(['/qrup','/profil','/hesab'].includes(route)){
-  if(route==='/profil'&&!user){res.writeHead(302,{Location:'/hesab','Cache-Control':'private,no-store'});res.end();return true;}
+  if(route==='/profil'&&!user){res.writeHead(302,{Location:u.searchParams.get('tab')==='orders'?'/hesab?next=%2Fsifarislerim':'/hesab','Cache-Control':'private,no-store'});res.end();return true;}
   html(res,`<!doctype html><html lang="az" class="${route==='/qrup'?'community-chat-screen':''}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/community-assets/chat-layout.css?v=public-community-v1"><link rel="stylesheet" href="/community-assets/auth-forms.css?v=public-community-v1"><link rel="stylesheet" href="/community-assets/tag-notifications.css?v=public-community-v1"><link rel="stylesheet" href="/site-header.css?v=public-community-v1"><body class="community-page">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main id="communityApp" class="community-shell"></main><script type="module" src="/community-assets/community.js?v=public-community-v1"></script><script src="/site-header.js?v=public-community-v1" defer></script></body></html>`);return true;
  }
  if(route.startsWith('/api/community/media/')&&req.method==='GET'){
@@ -53,6 +54,7 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  else if(['/api/community/manage','/api/community/audit'].includes(route)&&req.method==='GET')json(res,200,await group.review(need(),{kind:u.searchParams.get('kind')||'audit',page:u.searchParams.get('page')||1}));
  else if(route==='/api/community/reports'&&b)json(res,200,await group.report(need(),b));
  else if(route==='/api/community/profile'&&b){need();await repo.ensure(user);await saveProfile(pool,user,b);json(res,200,await repo.profile(user));}
+ else if(route==='/api/community/account-panel'){need();if(!['GET','POST'].includes(req.method))throw fail(405,'İcazə verilmir.');json(res,200,await accountPanel(pool,user.id,catalog,b));}
  else if(route==='/api/community/profile-summary'&&req.method==='GET'){need();const latest=(await pool.query('select o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status,o.created_at from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 order by o.created_at desc,o.id desc limit 1',[user.id])).rows[0]||null,count=(await pool.query("select count(*)::int n from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 and o.status in ('approved','completed')",[user.id])).rows[0].n;json(res,200,{latestOrder:latest,subscription:null,orderCount:count,savingsCents:null});}
  else throw fail(404,'Tapılmadı.');return true;
 }
