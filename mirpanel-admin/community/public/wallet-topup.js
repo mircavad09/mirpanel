@@ -13,6 +13,13 @@ export function drawBankChoices({el,button,grid,methods,selected='',onSelect}){
  }
  if(!methods.length)grid.append(el('p','Hazırda aktiv ödəniş kartı yoxdur.','shop-muted'));
 }
+export function orderBankDetail({el,button,method,amount,onChange,onCopy}){
+ const panel=el('article',null,'wallet-bank-detail bank-'+bank(method)),head=el('div',null,'wallet-bank-head'),change=button('Kartı dəyiş',onChange);
+ head.append(fallback(el,method),change);panel.append(head);background(el,panel,method);
+ const fields=el('div',null,'wallet-bank-fields'),holder=el('div'),total=el('div');holder.append(el('small','Sahib'),el('strong',method.holder||'Göstərilməyib'));total.append(el('small','Köçürüləcək məbləğ'),el('strong',amount));fields.append(holder,total);
+ const number=el('div',null,'wallet-bank-number'),copy=button('Kopyala',()=>onCopy(method.number,copy));number.append(el('span',method.number),copy);panel.append(fields,number);
+ return {panel,change};
+}
 export function createWalletTopup({el,button,api,run,money,methods,profile,getCents,onComplete,onBusy,restoreCents,signal,isClosed}){
  document.body.classList.remove('wallet-topup-active');signal.addEventListener('abort',()=>document.body.classList.remove('wallet-topup-active'),{once:true});
  const root=el('section',null,'wallet-topup'),title=el('h3','Ödəniş üsulu'),open=button('Kartdan karta',()=>{selection.hidden=!selection.hidden;open.setAttribute('aria-expanded',String(!selection.hidden));document.body.classList.toggle('wallet-topup-active',!selection.hidden);}),selection=el('div',null,'wallet-bank-selection'),grid=el('div',null,'wallet-bank-grid'),stage=el('div'),notice=el('p','','shop-error');
