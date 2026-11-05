@@ -1814,7 +1814,8 @@
   }
 
   const directReturnKey='mirpanel.direct.return.v1',directPaymentKey='mirpanel.direct.wallet.v1';
-  const directMoney=c=>(Number(c)/100).toFixed(2)+' ₼';
+  const directMoney=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
+  const directIcon=path=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';
   async function directApi(path,body){
     const r=await fetch('/api/payments/shop/'+path,{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
     const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'Ödəniş xidməti hazırda əlçatan deyil.'),{status:r.status});return d;
@@ -1825,39 +1826,65 @@
     function pendingPayment(){try{const p=JSON.parse(sessionStorage.getItem(directPaymentKey)||'null');return p?.identity===identity?p:null;}catch{return null;}}
     function clearPending(){try{sessionStorage.removeItem(directPaymentKey);}catch{}}
     setOrderConfirmationMode(false);setSpotifyConfirmationMode(false);
-    renderModalContent('<section class="direct-pay-options"><h2>Ödəniş üsulunu seçin</h2><p data-direct-summary>Qiymət yoxlanılır…</p><div data-direct-wallet></div><p data-direct-error role="alert"></p><button class="mpBtn" type="button" data-direct-card>Kartdan karta köçürmə</button></section>');
+    const check=directIcon('<path d="m6 12 4 4 8-8"/>');
+    const cardIcon=directIcon('<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18m-14 5h4"/>');
+    const walletIcon=directIcon('<path d="M20 9V6a2 2 0 0 0-2-2H6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h12a2 2 0 0 0 2-2v-2M3 8h15"/><rect x="13" y="9" width="9" height="7" rx="2"/><path d="M16 12.5h.01"/>');
+    const lock=directIcon('<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>');
+    renderModalContent(`<section class="direct-pay-options direct-pay-chooser">
+      <h2 id="directPaymentTitle">Ödəniş</h2><p class="direct-pay-product">${escapeHtml(publicProductTitle(product.title))} · ${escapeHtml(planLabel(plan))}</p>
+      <fieldset><legend>Üsul seçin</legend>
+        <label class="direct-pay-method"><input type="radio" name="directPaymentMethod" value="card" checked>${cardIcon}<span>Kartdan karta</span><span class="direct-pay-check">${check}</span></label>
+        <label class="direct-pay-method"><input type="radio" name="directPaymentMethod" value="wallet">${walletIcon}<span>Balansdan<small data-direct-balance hidden></small></span><span class="direct-pay-check">${check}</span></label>
+      </fieldset>
+      <div class="direct-pay-shortage" hidden><p data-direct-short role="status"></p><button type="button" data-direct-topup>Balansı artır</button></div>
+      <p data-direct-error role="alert"></p>
+      <div class="direct-pay-total"><span>Yekun məbləğ</span><strong data-direct-total aria-live="polite">—</strong></div>
+      <button class="direct-pay-primary" type="button" data-direct-submit><span data-direct-lock hidden>${lock}</span><span data-direct-label>Ödənişi tamamla</span></button>
+      <button class="direct-pay-retry" type="button" hidden>Əvvəlki ödənişi yenidən yoxla</button>
+    </section>`);
     const root=document.querySelector('#mForm .direct-pay-options');if(!root)return;
-    const summary=root.querySelector('[data-direct-summary]'),wallet=root.querySelector('[data-direct-wallet]'),card=root.querySelector('[data-direct-card]'),error=root.querySelector('[data-direct-error]');
-    card.onclick=()=>{if(session===modalSession)cardFlow();};
+    const modal=document.querySelector('#modal .modalCard');modal?.setAttribute('aria-labelledby','directPaymentTitle');
+    const find=s=>root.querySelector(s),form=find('fieldset'),balance=find('[data-direct-balance]'),shortage=find('.direct-pay-shortage'),short=find('[data-direct-short]'),topup=find('[data-direct-topup]'),error=find('[data-direct-error]'),total=find('[data-direct-total]'),pay=find('[data-direct-submit]'),retry=find('.direct-pay-retry'),lockIcon=find('[data-direct-lock]'),label=find('[data-direct-label]');
+    let data=null,mode='card',busy=false,quoteError='';
+    function update(){
+      const wallet=mode==='wallet',signed=Number.isSafeInteger(data?.balanceCents),missing=signed?data.totalCents-data.balanceCents:0;
+      total.textContent=data?directMoney(data.totalCents):'—';
+      balance.hidden=!wallet;
+      balance.textContent=signed?'Cari balans: '+directMoney(data.balanceCents):data?'Balansdan ödəmək üçün daxil olun.':quoteError||'Balans yoxlanılır…';
+      shortage.hidden=!wallet||missing<=0;
+      if(missing>0)short.textContent='Balans kifayət etmir — '+directMoney(missing)+' çatmır.';
+      form.disabled=busy;pay.disabled=busy||wallet&&(!signed||missing>0||!!pendingPayment());
+      lockIcon.hidden=!pay.disabled||busy;
+      label.textContent=busy?'Gözləyin…':'Ödənişi tamamla';
+      retry.hidden=!wallet||!signed||!pendingPayment();retry.disabled=busy;
+      topup.disabled=busy;
+    }
+    form.onchange=e=>{mode=e.target.value;update();};
+    topup.onclick=()=>{
+      const path=location.pathname;try{sessionStorage.setItem(directReturnKey,JSON.stringify({path,productId:product.id,planIndex}));}catch{}
+      const next=/^\/mehsul\/[a-z0-9-]+\/?$/.test(path)?path:path==='/mehsul'?'/mehsul':'/';
+      location.assign('/balans?returnTo='+encodeURIComponent(next));
+    };
     async function quote(){
-      const d=await directApi('quote',{items});if(!root.isConnected||session!==modalSession)return;
-      if(!Number.isSafeInteger(d.totalCents))throw Error('Qiymət təsdiqlənmədi.');
-      summary.textContent=product.title+' · '+planLabel(plan)+' · '+directMoney(d.totalCents);
-      wallet.replaceChildren();const h=document.createElement('strong');h.textContent='Balansla ödə';wallet.append(h);
-      const note=document.createElement('p');wallet.append(note);
-      if(d.balanceCents==null){note.textContent='Balansla ödəniş üçün hesabınıza daxil olun.';return;}
-      note.textContent='Mövcud balans: '+directMoney(d.balanceCents)+' · Sifariş: '+directMoney(d.totalCents);
-      const deficit=d.totalCents-d.balanceCents;
-      const retry=pendingPayment();
-      if(deficit>0){const short=document.createElement('p');short.textContent='Çatışmır: '+directMoney(deficit);wallet.append(short);
-        const top=document.createElement('button');top.type='button';top.className='mpBtn direct-pay-primary';top.textContent='Balansı artır';top.onclick=()=>{
-          const path=location.pathname;try{sessionStorage.setItem(directReturnKey,JSON.stringify({path,productId:product.id,planIndex}));}catch{}
-          const next=/^\/mehsul\/[a-z0-9-]+\/?$/.test(path)?path:path==='/mehsul'?'/mehsul':'/';
-          location.assign('/balans?returnTo='+encodeURIComponent(next));
-        };wallet.append(top);if(!retry)return;
-      }
-      const pay=document.createElement('button');pay.type='button';pay.className='mpBtn direct-pay-primary';pay.textContent=retry?'Əvvəlki ödənişi yenidən yoxla':'Balansla ödənişi təsdiqlə · '+directMoney(d.totalCents);wallet.append(pay);
-      pay.onclick=async()=>{if(pay.disabled||session!==modalSession)return;pay.disabled=card.disabled=true;directPaying=true;error.textContent='';
-        const pending=pendingPayment()||{identity,requestId:crypto.randomUUID(),total:d.totalCents};try{sessionStorage.setItem(directPaymentKey,JSON.stringify(pending));}catch{}
+      try{const d=await directApi('quote',{items});if(!Number.isSafeInteger(d.totalCents))throw Error();data=d;quoteError='';}
+      catch{data=null;quoteError='Balans və qiymət məlumatı yüklənmədi.';}
+      if(root.isConnected&&session===modalSession)update();
+    }
+    async function submitWallet(recover=false){
+        if(busy||session!==modalSession||!root.isConnected||(recover?retry.hidden:pay.disabled))return;
+        const pending=recover?pendingPayment():{identity,requestId:crypto.randomUUID(),total:data.totalCents};if(!pending)return;
+        try{sessionStorage.setItem(directPaymentKey,JSON.stringify(pending));}catch{}
+        busy=directPaying=true;error.textContent='';update();
         try{const order=await directApi('checkout',{items,mode:'wallet',requestId:pending.requestId,consentAccepted:true,expectedTotalCents:pending.total});if(!order.paymentConfirmed)throw Error('Ödəniş təsdiqlənmədi.');
           clearPending();
           window.refreshCommunityNav?.();if(!root.isConnected||session!==modalSession)return;
-          renderModalContent('<section class="direct-pay-options"><h2>Sifariş qəbul edildi</h2><p>Balansdan ödəniş edildi. Məhsulun hazırlanması gözlənilir.</p><a href="/sifarislerim">Sifarişlərim</a></section>');
-        }catch(e){error.textContent=e.status?e.message:'Cavab alınmadı. Eyni ödənişi yenidən yoxlayın.';if([400,401,403,409].includes(e.status)){clearPending();await quote().catch(()=>{});}else pay.textContent='Əvvəlki ödənişi yenidən yoxla';}
-        finally{directPaying=false;pay.disabled=card.disabled=false;}
-      };
+          renderModalContent('<section class="direct-pay-options direct-pay-chooser"><h2 id="directPaymentTitle">Sifariş qəbul edildi</h2><p>Balansdan ödəniş edildi. Məhsulun hazırlanması gözlənilir.</p><a href="/sifarislerim">Sifarişlərim</a></section>');
+        }catch(e){error.textContent=e.status?e.message:'Cavab alınmadı. Eyni ödənişi yenidən yoxlayın.';if([400,401,403,409].includes(e.status)){clearPending();await quote();}}
+        finally{busy=directPaying=false;update();}
     }
-    void quote().catch(e=>{if(root.isConnected){summary.textContent='Balans və qiymət məlumatı yüklənmədi.';error.textContent=e.message;}});
+    pay.onclick=()=>{if(session!==modalSession||busy||pay.disabled)return;if(mode==='card'){modal?.removeAttribute('aria-labelledby');cardFlow();}else void submitWallet();};
+    retry.onclick=()=>void submitWallet(true);
+    update();find('input:checked')?.focus({preventScroll:true});void quote();
   }
   let directPaying=false;
   function restoreDirectSelection(){
@@ -2041,7 +2068,9 @@
   const spotifyModal = document.getElementById('modal');
   if (spotifyModal) new MutationObserver(() => {
     // Legacy Escape/back handlers can hide the modal without replacing its DOM.
-    if (!spotifyModal.classList.contains('show')) clearSpotifyCredentials();
+    const shown=spotifyModal.classList.contains('show');
+    spotifyModal.setAttribute('aria-hidden',String(!shown));
+    if (!shown) clearSpotifyCredentials();
   }).observe(spotifyModal, {attributes:true,attributeFilter:['class']});
 
   wrapProductPage();
