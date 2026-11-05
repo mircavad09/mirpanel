@@ -1,2 +1,2 @@
-// Keep the original test entry point, now covering the catalog-backed intake flow.
-import './test-manual-stock-intake-browser.mjs';
+// Current browser workflow: catalog-backed, literal ready messages.
+import './test-manual-stock-ready-browser.mjs';
