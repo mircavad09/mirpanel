@@ -3094,8 +3094,8 @@ const DATA = {
         "alt": "Google AI Pro + VEO 3",
         "order": 8
       },
-      "flow": "whatsapp",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
