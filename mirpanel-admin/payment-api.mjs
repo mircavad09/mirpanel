@@ -258,7 +258,7 @@ export function createPaymentSystem(options) {
     if(url.pathname.startsWith('/api/payments/shop/')){
       if(!shop)throw Object.assign(Error('Səbət xidməti əlçatan deyil.'),{status:503});
       if(request.headers['sec-fetch-site']==='cross-site'||request.method==='POST'&&!allowedOrigins.has(origin))throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
-      return handleShop({req:request,res:response,url,shop,browserOrders,security,readBody,readRawBody,validateFile,store,config,json:publicJson,rate:publicRate});
+      return handleShop({req:request,res:response,url,shop,browserOrders,security,readBody,readRawBody,validateFile,store,config,json:publicJson,rate:publicRate,withBackground});
     }
     if(request.method==='GET'&&url.pathname==='/api/payments/my-orders'){
       if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});

@@ -1727,10 +1727,16 @@
 
       onDone(values);
     };
-    if(forCart)document.querySelector('#universalOrderForm button[type=submit]').textContent='Sifarişi təsdiqlə';
+    if(forCart){
+      const button=document.querySelector('#universalOrderForm button[type=submit]');
+      button.textContent='Şərtləri oxudum və təsdiqlədim';
+      const terms=document.createElement('section');terms.className='cart-form-terms';
+      terms.innerHTML=`<strong>${escapeHtml(forCart.planName)} · ${directMoney(forCart.unitCents)}</strong><h3>Sifariş şərtləri</h3>${formatConfirmationText(forCart.terms)||'<p>Bu məhsul üçün ümumi sifariş şərtləri tətbiq olunur.</p>'}${formatConfirmationText(forCart.note)}<a href="/sertler" target="_blank" rel="noopener">Ümumi sifariş şərtləri</a>`;
+      button.parentElement.before(terms);
+    }
   }
 
-  function showConfirmation(product, plan, formData, onConfirm) {
+  function showConfirmation(product, plan, formData, onConfirm, cartQuote) {
     const session = modalSession;
     resetOrderConsent();
     setPremiumFormMode(false);
@@ -1744,10 +1750,10 @@
       : storedHelpLabel;
     const showHelp = !isSpotify && settings.helpLink?.enabled === true && helpUrl.startsWith("https://") && helpLabel;
     const title = confirmationTitle(settings.title);
-    const confirmText = confirmationButtonText(settings.confirmText);
+    const confirmText = cartQuote?'Şərtləri oxudum və təsdiqlədim':confirmationButtonText(settings.confirmText);
     const cancelText = cleanConfirmationLabel(settings.cancelText) || DEFAULT_CONFIRMATION.cancelText;
-    const descriptionHtml = formatConfirmationText(settings.description);
-    const noteHtml = formatConfirmationText(product.note);
+    const descriptionHtml = formatConfirmationText(cartQuote?cartQuote.terms:settings.description);
+    const noteHtml = formatConfirmationText(cartQuote?cartQuote.note:product.note);
 
     setSpotifyConfirmationMode(isSpotify);
     setOrderConfirmationMode(true);
@@ -1765,6 +1771,7 @@
           <div>
             <h2 class="orderConfirmationTitle" id="orderConfirmationTitle">${escapeHtml(title)}</h2>
             <div class="orderConfirmationProduct">${escapeHtml(publicProductTitle(product.title) || product.id || "")}</div>
+            ${cartQuote?`<div>${escapeHtml(cartQuote.planName)} · ${directMoney(cartQuote.unitCents)}</div>`:''}
           </div>
         </div>
         <div class="orderConfirmationTerms" tabindex="0" aria-label="${escapeHtml(publicProductTitle(product.title))} sifariş şərtləri">
@@ -1873,10 +1880,10 @@
     }
     async function submitWallet(recover=false){
         if(busy||session!==modalSession||!root.isConnected||(recover?retry.hidden:pay.disabled))return;
-        const pending=recover?pendingPayment():{identity,requestId:crypto.randomUUID(),total:data.totalCents};if(!pending)return;
+          const pending=recover?pendingPayment():{identity,requestId:crypto.randomUUID(),total:data.totalCents};if(!pending)return;
         try{sessionStorage.setItem(directPaymentKey,JSON.stringify(pending));}catch{}
         busy=directPaying=true;error.textContent='';update();
-        try{const order=await directApi('checkout',{items,mode:'wallet',requestId:pending.requestId,consentAccepted:true,expectedTotalCents:pending.total});if(!order.paymentConfirmed)throw Error('Ödəniş təsdiqlənmədi.');
+        try{const order=await directApi('checkout',{items:items.map((x,i)=>({...x,termsVersion:data.items?.[i]?.termsVersion})),mode:'wallet',requestId:pending.requestId,consentAccepted:true,expectedTotalCents:pending.total});if(!order.paymentConfirmed)throw Error('Ödəniş təsdiqlənmədi.');
           clearPending();
           window.refreshCommunityNav?.();if(!root.isConnected||session!==modalSession)return;
           renderModalContent('<section class="direct-pay-options direct-pay-chooser"><h2 id="directPaymentTitle">Sifariş qəbul edildi</h2><p>Balansdan ödəniş edildi. Məhsulun hazırlanması gözlənilir.</p><a href="/sifarislerim">Sifarişlərim</a></section>');
@@ -1914,15 +1921,22 @@
     }
 
     if(!isSpotifyProduct(product)&&!activeFields(product).some(f=>f.type==='password')){
-      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=cart-fast-20261106').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
-      const add=values=>{
-        try{window.MirpanelCart.add(product.id,product.plans.indexOf(plan),values);}
+      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=cart-terms-20261106').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
+      const index=product.plans.indexOf(plan);
+      openBaseModal(product,plan);const session=modalSession;
+      renderModalContent('<p role="status">Sifariş şərtləri yoxlanılır…</p>');
+      const add=(values,quote)=>{
+        try{window.MirpanelCart.add(product.id,index,values,quote.termsVersion);}
         catch(e){toastMessage(e.message);return;}
         closeOrderModal();
         window.MirpanelCart.open();
       };
-      if(activeFields(product).length){openBaseModal(product,plan);showForm(product,plan,add,true);}
-      else add({});
+      void directApi('quote',{items:[{productId:product.id,planIndex:index,quantity:1}]}).then(d=>{
+        if(session!==modalSession)return;const quote=d.items?.[0];
+        if(!quote?.termsVersion)throw Error('Sifariş şərtləri yüklənmədi.');
+        if(activeFields(product).length)showForm(product,plan,values=>add(values,quote),quote);
+        else showConfirmation(product,plan,{},values=>add(values,quote),quote);
+      }).catch(()=>{if(session===modalSession)renderModalContent('<p role="alert">Sifariş şərtləri yüklənmədi. Pəncərəni bağlayıb yenidən cəhd edin.</p>');});
       return;
     }
 
@@ -1978,7 +1992,7 @@
 
     if (button) {
       button.disabled = !available;
-      button.textContent = available ? "İndi al" : "Stokda yoxdur";
+      button.textContent = available ? "Sifariş et" : "Stokda yoxdur";
       button.classList.toggle("disabled", !available);
     }
 

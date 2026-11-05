@@ -56,3 +56,4 @@
 @media(max-width:640px){.mir-cart-drawer{inset:0;margin:auto;width:calc(100% - 24px);height:min(86dvh,640px);border-radius:18px}.mir-cart-drawer[open]{animation-name:mir-cart-pop}.mir-cart-item{grid-template-columns:45px minmax(0,1fr) auto}.mir-cart-item img{width:45px;height:40px}}
 @keyframes mir-cart-pop{from{transform:scale(.98);opacity:.65}to{transform:scale(1);opacity:1}}
 @media(prefers-reduced-motion:reduce){.mir-cart-drawer[open]{animation:none}}
+.cart-form-terms{margin-block:12px;padding:12px;border:1px solid #51452b;border-radius:10px;background:#201e17;color:#eee}.cart-form-terms h3{font-size:15px}.cart-form-terms a{color:#ffd400}
