@@ -82,3 +82,13 @@
 .shop-page.shop-wallet-page .wallet-receipt-actions button{min-height:38px;padding:6px 10px;font-size:13px}
 @media(min-width:700px){.wallet-bank-grid{gap:12px}.wallet-bank-choice-info{font-size:14px}.wallet-bank-fields strong{font-size:18px}.wallet-bank-head{min-height:75px}}
 .shop-page .shop-return{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:8px 14px;border-radius:10px;position:relative}.shop-page .shop-return.shop-primary{background:#ffd400;color:#171407;text-decoration:none}
+.shop-page .checkout-choices{background:#171714;border-color:#3c392e;max-width:620px;margin-inline:auto}
+.checkout-amount{display:grid;gap:2px;color:#cbc8be}.checkout-amount strong{font-size:27px;color:#ffd400}
+.checkout-methods{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;margin:16px 0;padding:0;border:0;min-width:0}.checkout-methods legend{font-weight:650;padding:0}
+.shop-page .checkout-tile{display:grid;position:relative;justify-items:center;align-content:center;gap:4px;text-align:center;min-height:105px;margin:0;padding:12px 8px;border:1px solid #3e3b31;background:#20201d;border-radius:12px;color:#fff;cursor:pointer;overflow-wrap:anywhere}
+.shop-page .checkout-tile input{position:absolute;inset:0;width:100%;height:100%;opacity:0;margin:0;cursor:pointer}.checkout-tile:has(input:checked),.shop-page .checkout-tile[aria-pressed=true]{border-color:#ffd400;background:#2e2815}.checkout-tile:has(input:focus-visible){outline:2px solid #ffd400;outline-offset:2px}
+.checkout-icon{display:inline-flex;align-items:center;justify-content:center;color:inherit}.checkout-icon svg{width:21px;height:21px}.checkout-tile .checkout-icon{color:#ffd400}.checkout-tile small{color:#d4d0c3}.checkout-check{display:none;position:absolute;right:7px;top:5px;color:#ffd400}.checkout-tile:has(input:checked) .checkout-check{display:block}
+.checkout-warning{padding:12px;margin-bottom:12px;border:1px solid #715519;background:#2c2412;color:#ffe18b;border-radius:12px}.checkout-warning[hidden]{display:none}.shop-page .checkout-choices .shop-consent{padding:12px;background:#22221e;border-radius:10px}
+.checkout-product-terms p{white-space:pre-line}.checkout-product-terms summary{cursor:pointer}
+.shop-page .checkout-choices>button{width:100%;margin-top:10px}.shop-page .checkout-choices>button.shop-primary{display:flex;align-items:center;justify-content:center;gap:8px}.shop-page .checkout-choices>button.shop-primary:disabled{opacity:1;background:#333127;color:#ccc5ad;border-color:#524b33}
+.shop-page .checkout-choices .shop-consent{display:grid;grid-template-columns:20px minmax(0,1fr);align-items:start;gap:9px}

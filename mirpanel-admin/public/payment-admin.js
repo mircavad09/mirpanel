@@ -176,6 +176,7 @@
       <div class="paymentOrderHead"><div>${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}<strong title="${escp(order.orderCode)}">${escp(order.orderCode)}</strong>${copyButton(order)}<span class="statusPill status-${escp(expiring ? order.expiry?.code : order.status)}">${escp(expiring ? order.expiry?.label : statusLabel[order.status] || "Yoxlanılır")}</span></div><time datetime="${escp(displayDate || "")}">${escp(dateTime(displayDate))}</time></div>
       <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
       <div class="paymentOrderActions">
+        <button class="btn" type="button" data-order-details>Sifariş məlumatları</button>
         ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : (order.paymentSource==='wallet'?'<span class="statusPill">Balansla ödənilib · təqdimetmə gözlənilir</span>':'<span class="statusPill">Çek saxlanma müddəti bitib</span>')}
         ${pending ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : `${order.workforce&&!order.workforce.ownerRole?'<button class="btn" type="button" data-claim-payment>Üzərinə götür</button>':''}<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>` : ""}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
@@ -573,6 +574,11 @@
 
   async function handleOrderAction(card, action) {
     const id = card.dataset.paymentOrderId;
+    if(action==='details'){
+      const {details}=await paymentApi(`/api/admin/payment-orders/${id}/details`);
+      const dlg=document.createElement('dialog'),form=document.createElement('form'),title=document.createElement('h3'),body=document.createElement('pre'),close=document.createElement('button');
+      form.method='dialog';title.textContent='Sifariş məlumatları';body.style.whiteSpace='pre-wrap';body.textContent=details?Object.entries(details).map(([k,v])=>k+': '+v).join('\n'):'Əlavə məlumat yoxdur.';close.textContent='Bağla';form.append(title,body,close);dlg.append(form);document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove(),{once:true});dlg.showModal();return;
+    }
     if (action === "receipt") {
       const receiptWindow = window.open("about:blank", "_blank"); if (receiptWindow) receiptWindow.opener = null;
       try { const result = await paymentApi(`/api/admin/payment-orders/${id}/receipt`); if (receiptWindow) receiptWindow.location.replace(result.url); else window.location.assign(result.url); }
@@ -746,6 +752,7 @@
         const card = event.target.closest("[data-payment-order-id]");
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
+        if (card && event.target.closest("[data-order-details]")) await handleOrderAction(card, "details");
         if (card && event.target.closest("[data-claim-payment]")) {
           if(paymentState.orderActions.has(card.dataset.paymentOrderId))return;
           paymentState.orderActions.add(card.dataset.paymentOrderId);

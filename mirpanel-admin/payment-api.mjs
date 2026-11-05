@@ -729,11 +729,15 @@ export function createPaymentSystem(options) {
       const body = await readBody(request, 20_000);
       json(response, 200, { settings: await store.updateSettings(body, actorName) }); return true;
     }
-    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt))?$/i);
+    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt|details))?$/i);
     if (orderMatch) {
       const id = safeUuid(orderMatch[1]);
       if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
       const action = orderMatch[2];
+      if (request.method === "GET" && action === "details") {
+        const order=await store.getOrder(id),cipher=order.checkout_snapshot?.detailsCipher;
+        json(response,200,{details:cipher?JSON.parse(security.decryptSecret(cipher)):null});return true;
+      }
       if (request.method === "GET" && action === "receipt") {
         const order = await store.getOrder(id);
         if (order.receipt_deleted_at) throw Object.assign(new Error("Çekin saxlanma müddəti bitib və fayl təhlükəsiz silinib."), { status: 410 });

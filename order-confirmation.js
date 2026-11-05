@@ -1309,7 +1309,7 @@
   }
 
   function closeOrderModal() {
-    if (directPaying || window.MirpanelPaymentFlow?.isSubmitting()) return;
+    if (directPaying || window.MirpanelPaymentFlow?.isSubmitting?.()) return;
     modalSession += 1;
     renderModalContent("");
     document.querySelector("#modal .modalCard")?.removeAttribute("aria-labelledby");
@@ -1489,7 +1489,7 @@
     return;
   }
 
-  function showForm(product, plan, onDone) {
+  function showForm(product, plan, onDone, forCart=false) {
     const session = modalSession;
     const fields = activeFields(product);
     const isSpotify = isSpotifyProduct(product);
@@ -1727,6 +1727,7 @@
 
       onDone(values);
     };
+    if(forCart)document.querySelector('#universalOrderForm button[type=submit]').textContent='Sifarişi təsdiqlə';
   }
 
   function showConfirmation(product, plan, formData, onConfirm) {
@@ -1912,6 +1913,19 @@
       return;
     }
 
+    if(!isSpotifyProduct(product)&&!activeFields(product).some(f=>f.type==='password')){
+      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=cart-flow-20261106').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
+      const add=values=>{
+        try{window.MirpanelCart.add(product.id,product.plans.indexOf(plan),values);}
+        catch(e){toastMessage(e.message);return;}
+        closeOrderModal();
+        window.MirpanelCart.open();
+      };
+      if(activeFields(product).length){openBaseModal(product,plan);showForm(product,plan,add,true);}
+      else add({});
+      return;
+    }
+
     openBaseModal(product, plan);
     const session = modalSession;
     const flow = flowFor(product);
@@ -1964,7 +1978,7 @@
 
     if (button) {
       button.disabled = !available;
-      button.textContent = available ? "Sifariş et" : "Stokda yoxdur";
+      button.textContent = available ? "İndi al" : "Stokda yoxdur";
       button.classList.toggle("disabled", !available);
     }
 
@@ -2035,7 +2049,7 @@
   document.addEventListener(
     "click",
     (event) => {
-      const button = event.target.closest("#pp-order-btn");
+      const button = event.target.closest("#pp-order-btn, #cartAddProduct");
       if (!button || !currentProduct) return;
       event.preventDefault();
       event.stopImmediatePropagation();
