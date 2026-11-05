@@ -25,10 +25,10 @@ try{
  await save.click();await p.getByText('3 hazır mesaj stoka əlavə edildi.',{exact:true}).waitFor();assert.equal(await stock(),3);
  assert.equal(keys[0],keys[1]);assert.equal(new Set(keys).size,1);
  const product=(await pool.query('select id from manual_stock_products where source_product_id=$1',['capcut'])).rows[0];
- const {account}=await post('/accounts',{login:'ready-worker',name:'Sintetik işçi',password});await post('/account-control',{id:account.id,action:'enable'});await post('/permission',{employeeId:account.id,productId:product.id,allowed:true});
+ const {account}=await post('/accounts',{login:'ready-worker',name:'Sintetik işçi',password});await post('/account-control',{id:account.id,action:'enable'});
  const wc=await browser.newContext({viewport:{width:390,height:900},permissions:['clipboard-read','clipboard-write']}),w=await wc.newPage();
  await w.goto(origin+'/employee/stock/login');await w.getByLabel('Giriş adı').fill('ready-worker');await w.getByLabel('Şifrə').fill(password);await w.getByRole('button',{name:'Daxil ol'}).click();
- await w.locator('.products button').click();await w.getByText('Stokda: 3 hesab',{exact:true}).waitFor();await w.getByRole('button',{name:/Stokdan al/}).click();
+ await w.getByText('İcazəli məhsul tapılmadı.',{exact:true}).waitFor();await post('/permission',{employeeId:account.id,productId:product.id,allowed:true});await w.locator('.products button').click();await w.getByText('Stokda: 3 hesab',{exact:true}).waitFor();await w.getByRole('button',{name:/Stokdan al/}).click();
  await w.getByText('Qalan stok: 2 hesab',{exact:true}).waitFor();assert.equal(await stock(),2);
  assert.equal(await w.locator('.message').textContent(),raw);
  for(let i=0;i<2;i++){await w.getByRole('button',{name:/Mesajı kopyala/}).click();assert.equal((await w.evaluate(()=>navigator.clipboard.readText())).replaceAll('\r\n','\n'),raw);assert.equal(await stock(),2);}
@@ -44,5 +44,11 @@ try{
  await p.getByRole('button',{name:'İşçi girişləri',exact:true}).click();await p.getByText('Giriş tarixçəsi',{exact:true}).click();await p.getByText(/^İşçi özü çıxdı · /).waitFor();assert.equal(await p.getByText(/^Uğurlu giriş · /).count(),2);assert.equal(await p.getByText(/^Sessiyanın müddəti bitdi · /).count(),1);await p.screenshot({path:out+'/access.png',fullPage:true});
  await p.getByRole('button',{name:'Götürmələr',exact:true}).click();await p.getByText('Sintetik işçi · CapCut Pro · 1 aylıq',{exact:true}).waitFor();assert.match(await p.locator('#stockApp .items p').first().textContent(),/^\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$/);
  await p.getByLabel('İşçiyə görə süz').selectOption(account.id);await p.getByLabel('Məhsula görə süz').selectOption(product.id);await p.getByText('Sintetik işçi · CapCut Pro · 1 aylıq',{exact:true}).waitFor();await p.screenshot({path:out+'/claims.png',fullPage:true});
- console.log(JSON.stringify({batch:3,afterClaim:2,exactClipboard:true,lostResponseDeduplicated:true,accessEvents:true,claimSeconds:true,productionWrites:0}));
+ const old=await wc.request.post(origin+'/api/employee/login',{data:{login:'ready-worker',password}});assert.equal(old.status(),200);await w.goto(origin+'/employee/stock');await w.getByText('Sintetik işçi',{exact:true}).waitFor();
+ await p.getByRole('button',{name:'İşçi girişləri',exact:true}).click();p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'İşçini sil',exact:true}).click();await p.getByText('İşçi siyahıdan çıxarıldı.',{exact:true}).waitFor();
+ assert.equal((await wc.request.get(origin+'/api/employee/session')).status(),401);
+ assert.equal(Number((await pool.query('select count(*) n from manual_stock_permissions where employee_id=$1',[account.id])).rows[0].n),0);
+ assert.equal(Number((await pool.query('select count(*) n from manual_stock_allocations where employee_id=$1',[account.id])).rows[0].n),1);assert.equal(await stock(),2);
+ await p.getByText('Arxivlənmiş işçilərin tarixçəsi',{exact:true}).click();await p.getByText('Giriş tarixçəsi',{exact:true}).click();await p.getByText(/^İşçi özü çıxdı · /).waitFor();
+ console.log(JSON.stringify({batch:3,afterClaim:2,exactClipboard:true,livePermissionGrant:true,archivedSessionRejected:true,historyPreserved:true,productionWrites:0}));
 }finally{await browser.close();await f.close();}
