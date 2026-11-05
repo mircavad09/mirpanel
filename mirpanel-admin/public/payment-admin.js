@@ -491,9 +491,32 @@
     finally { paymentState.costSaving = false; renderCosts(); }
   }
 
+  let topupListRequest=0, topupListLastStarted=0;
+  async function loadOrderTopups(list) {
+    if (!list) return;
+    const sequence=++topupListRequest;
+    topupListLastStarted=Date.now();
+    try {
+      const {topups=[]} = await paymentApi('/api/admin/community/shop?only=topups');
+      if (sequence !== topupListRequest) return;
+      let section=$p('paymentOrderTopups');
+      if (!section) { section=document.createElement('section');section.id='paymentOrderTopups';section.className='panel';list.before(section); }
+      const title=document.createElement('h3');title.textContent='Balans artırma müraciətləri';
+      section.replaceChildren(title);section.hidden=!topups.length;
+      for (const t of topups.slice(0,10)) {
+        const row=document.createElement('p'), a=document.createElement('a');
+        a.href='/admin.html#communityShop';a.target='_blank';a.rel='noopener';
+        const state={reviewing:'Yoxlanılır',approved:'Təsdiqləndi',rejected:'Rədd edildi'}[t.status];
+        a.textContent='Balans artırma · '+(Number(t.approved_cents??t.requested_cents)/100).toFixed(2)+' ₼ · '+state;
+        row.append(a,document.createTextNode(' · '+t.name));section.append(row);
+      }
+    } catch { if(sequence===topupListRequest)$p('paymentOrderTopups')?.replaceChildren(); }
+  }
+
   async function loadOrders({automatic=false}={}) {
     const status = $p("paymentOrdersStatus"); const list = $p("paymentOrdersList");
     const requestSequence = ++paymentState.orderRequestSequence;
+    if (!automatic || Date.now()-topupListLastStarted>=30000) void loadOrderTopups(list);
     if (status) status.textContent = "Sifarişlər yüklənir…";
     if (list) list.setAttribute("aria-busy", "true");
     const query = new URLSearchParams(Object.entries(paymentState.orderQuery).filter(([, value]) => value !== ""));

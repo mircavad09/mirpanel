@@ -81,3 +81,4 @@
 .wallet-receipt-actions{display:flex;gap:8px;flex-wrap:wrap}
 .shop-page.shop-wallet-page .wallet-receipt-actions button{min-height:38px;padding:6px 10px;font-size:13px}
 @media(min-width:700px){.wallet-bank-grid{gap:12px}.wallet-bank-choice-info{font-size:14px}.wallet-bank-fields strong{font-size:18px}.wallet-bank-head{min-height:75px}}
+.shop-page .shop-return{display:inline-flex;align-items:center;justify-content:center;min-height:42px;padding:8px 14px;border-radius:10px;position:relative}.shop-page .shop-return.shop-primary{background:#ffd400;color:#171407;text-decoration:none}

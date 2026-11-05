@@ -1309,7 +1309,7 @@
   }
 
   function closeOrderModal() {
-    if (window.MirpanelPaymentFlow?.isSubmitting()) return;
+    if (directPaying || window.MirpanelPaymentFlow?.isSubmitting()) return;
     modalSession += 1;
     renderModalContent("");
     document.querySelector("#modal .modalCard")?.removeAttribute("aria-labelledby");
@@ -1813,6 +1813,63 @@
     });
   }
 
+  const directReturnKey='mirpanel.direct.return.v1',directPaymentKey='mirpanel.direct.wallet.v1';
+  const directMoney=c=>(Number(c)/100).toFixed(2)+' ₼';
+  async function directApi(path,body){
+    const r=await fetch('/api/payments/shop/'+path,{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal:AbortSignal.timeout(20000)});
+    const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'Ödəniş xidməti hazırda əlçatan deyil.'),{status:r.status});return d;
+  }
+  function directChoices(product,plan,cardFlow,session){
+    const planIndex=product.plans.indexOf(plan),items=[{productId:product.id,planIndex,quantity:1}];
+    const identity=JSON.stringify(items);
+    function pendingPayment(){try{const p=JSON.parse(sessionStorage.getItem(directPaymentKey)||'null');return p?.identity===identity?p:null;}catch{return null;}}
+    function clearPending(){try{sessionStorage.removeItem(directPaymentKey);}catch{}}
+    setOrderConfirmationMode(false);setSpotifyConfirmationMode(false);
+    renderModalContent('<section class="direct-pay-options"><h2>Ödəniş üsulunu seçin</h2><p data-direct-summary>Qiymət yoxlanılır…</p><div data-direct-wallet></div><p data-direct-error role="alert"></p><button class="mpBtn" type="button" data-direct-card>Kartdan karta köçürmə</button></section>');
+    const root=document.querySelector('#mForm .direct-pay-options');if(!root)return;
+    const summary=root.querySelector('[data-direct-summary]'),wallet=root.querySelector('[data-direct-wallet]'),card=root.querySelector('[data-direct-card]'),error=root.querySelector('[data-direct-error]');
+    card.onclick=()=>{if(session===modalSession)cardFlow();};
+    async function quote(){
+      const d=await directApi('quote',{items});if(!root.isConnected||session!==modalSession)return;
+      if(!Number.isSafeInteger(d.totalCents))throw Error('Qiymət təsdiqlənmədi.');
+      summary.textContent=product.title+' · '+planLabel(plan)+' · '+directMoney(d.totalCents);
+      wallet.replaceChildren();const h=document.createElement('strong');h.textContent='Balansla ödə';wallet.append(h);
+      const note=document.createElement('p');wallet.append(note);
+      if(d.balanceCents==null){note.textContent='Balansla ödəniş üçün hesabınıza daxil olun.';return;}
+      note.textContent='Mövcud balans: '+directMoney(d.balanceCents)+' · Sifariş: '+directMoney(d.totalCents);
+      const deficit=d.totalCents-d.balanceCents;
+      const retry=pendingPayment();
+      if(deficit>0){const short=document.createElement('p');short.textContent='Çatışmır: '+directMoney(deficit);wallet.append(short);
+        const top=document.createElement('button');top.type='button';top.className='mpBtn direct-pay-primary';top.textContent='Balansı artır';top.onclick=()=>{
+          const path=location.pathname;try{sessionStorage.setItem(directReturnKey,JSON.stringify({path,productId:product.id,planIndex}));}catch{}
+          const next=/^\/mehsul\/[a-z0-9-]+\/?$/.test(path)?path:path==='/mehsul'?'/mehsul':'/';
+          location.assign('/balans?returnTo='+encodeURIComponent(next));
+        };wallet.append(top);if(!retry)return;
+      }
+      const pay=document.createElement('button');pay.type='button';pay.className='mpBtn direct-pay-primary';pay.textContent=retry?'Əvvəlki ödənişi yenidən yoxla':'Balansla ödənişi təsdiqlə · '+directMoney(d.totalCents);wallet.append(pay);
+      pay.onclick=async()=>{if(pay.disabled||session!==modalSession)return;pay.disabled=card.disabled=true;directPaying=true;error.textContent='';
+        const pending=pendingPayment()||{identity,requestId:crypto.randomUUID(),total:d.totalCents};try{sessionStorage.setItem(directPaymentKey,JSON.stringify(pending));}catch{}
+        try{const order=await directApi('checkout',{items,mode:'wallet',requestId:pending.requestId,consentAccepted:true,expectedTotalCents:pending.total});if(!order.paymentConfirmed)throw Error('Ödəniş təsdiqlənmədi.');
+          clearPending();
+          window.refreshCommunityNav?.();if(!root.isConnected||session!==modalSession)return;
+          renderModalContent('<section class="direct-pay-options"><h2>Sifariş qəbul edildi</h2><p>Balansdan ödəniş edildi. Məhsulun hazırlanması gözlənilir.</p><a href="/sifarislerim">Sifarişlərim</a></section>');
+        }catch(e){error.textContent=e.status?e.message:'Cavab alınmadı. Eyni ödənişi yenidən yoxlayın.';if([400,401,403,409].includes(e.status)){clearPending();await quote().catch(()=>{});}else pay.textContent='Əvvəlki ödənişi yenidən yoxla';}
+        finally{directPaying=false;pay.disabled=card.disabled=false;}
+      };
+    }
+    void quote().catch(e=>{if(root.isConnected){summary.textContent='Balans və qiymət məlumatı yüklənmədi.';error.textContent=e.message;}});
+  }
+  let directPaying=false;
+  function restoreDirectSelection(){
+    try{const draft=JSON.parse(sessionStorage.getItem(directReturnKey)||'null');if(!draft||draft.path!==location.pathname)return;
+      const p=DATA.products.find(x=>x.id===draft.productId);if(!p?.plans?.[draft.planIndex])return;
+      if(!currentProduct||currentProduct.id!==p.id)window.openProductPage?.(p.id);
+      const row=document.querySelectorAll('#pp-plans-container .pp-plan-label')[draft.planIndex];if(!row)return;row.click();sessionStorage.removeItem(directReturnKey);
+    }catch{}
+  }
+  window.addEventListener('pageshow',()=>setTimeout(restoreDirectSelection,100));
+  window.addEventListener('mirpanel:route-ready',restoreDirectSelection);
+
   function runOrderFlow(product, plan) {
     const catalogProduct = DATA.products.find((item) => item.id === product?.id);
     if (catalogProduct) {
@@ -1846,7 +1903,7 @@
     };
 
     if (needsConfirmation) {
-      showConfirmation(product, plan, {}, continueToFormOrWhatsApp);
+      showConfirmation(product, plan, {}, () => directChoices(product,plan,continueToFormOrWhatsApp,session));
       return;
     }
 
