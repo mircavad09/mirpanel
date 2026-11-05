@@ -10,7 +10,7 @@ function products(){currentAllocation=null;if(!state.products.some(p=>p.id===pro
 function draw(){grid.replaceChildren();for(const p of state.products.filter(p=>p.name.toLocaleLowerCase('az').includes(filter.toLocaleLowerCase('az')))){const n=p.plans.reduce((sum,x)=>sum+Number(x.available),0),b=btn('',async()=>{productId=p.id;planId=p.plans.find(x=>Number(x.available)>0)?.id||p.plans[0]?.id||'';draw();drawPlans();});b.className='product';b.setAttribute('aria-pressed',String(productId===p.id));if(p.image){const img=el('img');img.src=p.image;img.alt='';b.append(img);}else b.append(el('span','◇','product-icon'));const d=el('div');d.append(el('strong',p.name),el('span',n+' hesab','count'+(n?'':' zero')));b.append(d);grid.append(b);}if(!grid.children.length)grid.append(el('p','İcazəli məhsul tapılmadı.','muted'));}
 function drawPlans(){plans.replaceChildren();const p=state.products.find(x=>x.id===productId);if(!p)return;plans.append(el('h2','◇ Paket seçin'));for(const pl of p.plans){const b=btn(pl.name,async()=>{planId=pl.id;drawPlans();});b.className='plan';b.setAttribute('aria-pressed',String(pl.id===planId));b.append(el('small',pl.available+' hesab'));plans.append(b);}const pl=p.plans.find(x=>x.id===planId);if(!pl)return;plans.append(el('p',Number(pl.available)>0?'Stokda: '+pl.available+' hesab':'Stokda yoxdur','stock-count'));const take=btn('⬡ Stokdan al',async()=>{const old=readPending(),key=old?.planId===pl.id?old.key:crypto.randomUUID();if(old?.allocationId){showMessage(await api('/allocation?id='+old.allocationId));return;}savePending({planId:pl.id,key});const a=await api('/claim',{planId:pl.id},key);savePending({planId:pl.id,key,allocationId:a.id});state=await api('/state');showMessage(a);},'gold wide');take.disabled=Number(pl.available)===0;plans.append(take);}
 search.oninput=()=>{filter=search.value;draw();};left.append(search,grid,plans);right.append(history(),btn('Siyahını yenilə',async()=>{state=await api('/state');products();},'wide'));draw();drawPlans();layout.append(left,right);app.replaceChildren(layout);}
-function showMessage(a){workerTab='accounts';workerNav();currentAllocation=a;const layout=el('div',null,'stock-layout'),box=panel('▤ Hazır mesaj');box.append(el('p',a.product+' · '+a.plan,'muted'),el('p',a.recalled?'Bu götürmə admin tərəfindən geri çağırılıb. Məlumatları müştəriyə göndərməyin.':'✓ Hesab sizə ayrıldı','success'),el('p','Qalan stok: '+a.remaining+' hesab','count'));const message=el('div',a.recalled?'Məlumatları göstərmək üçün adminlə əlaqə saxlayın.':a.message,'message');box.append(message);const copy=btn('▣ Mesajı kopyala',async()=>{if(a.recalled)return;try{await navigator.clipboard.writeText(a.message);status.textContent='Hazır mesaj kopyalandı.';}catch{status.textContent='Kopyalama alınmadı. Mətni seçib kopyalayın.';}},'gold wide');copy.disabled=a.recalled;box.append(copy);if(!a.recalled)box.append(...internalBlocks(a));box.append(btn('← Məhsullara qayıt',async()=>{if(!admin)await api('/acknowledge',{id:a.id});clearPending();a.message='';message.textContent='';state=await api('/state');products();},'wide'),el('p','Mesajı müştəriyə özünüz göndərin. Kopyalama yeni hesab ayırmır.','secret-note'));layout.append(box,history());app.replaceChildren(layout);}
+function showMessage(a){workerTab='accounts';workerNav();currentAllocation=a;const layout=el('div',null,'stock-layout'),box=panel('▤ Hazır mesaj');box.append(el('p',a.product+' · '+a.plan,'muted'),el('p',a.recalled?'Bu götürmə admin tərəfindən geri çağırılıb. Məlumatları müştəriyə göndərməyin.':'✓ Hesab sizə ayrıldı','success'),el('p','Qalan stok: '+a.remaining+' hesab','count'));const message=readableText(a.recalled?'Məlumatları göstərmək üçün adminlə əlaqə saxlayın.':a.message);box.append(message);const copy=btn('▣ Mesajı kopyala',async()=>{if(a.recalled)return;try{await navigator.clipboard.writeText(a.message);status.textContent='Hazır mesaj kopyalandı.';}catch{status.textContent='Kopyalama alınmadı. Mətni seçib kopyalayın.';}},'gold wide');copy.disabled=a.recalled;box.append(copy);if(!a.recalled)box.append(...internalBlocks(a));box.append(btn('← Məhsullara qayıt',async()=>{if(!admin)await api('/acknowledge',{id:a.id});clearPending();a.message='';message.replaceChildren();state=await api('/state');products();},'wide'),el('p','Mesajı müştəriyə özünüz göndərin. Kopyalama yeni hesab ayırmır.','secret-note'));layout.append(box,history());app.replaceChildren(layout);}
 function instructionUrl(id){return base+'/instruction-image?'+new URLSearchParams({id,v:Date.now()});}
 function instructionPreview(src){
  const box=el('div'),trigger=btn('',async()=>{const image=el('img'),tools=el('div',null,'row instruction-tools');image.src=src;image.alt='İşçi təlimatı';const zoom=btn('2× böyüt',async()=>{const on=image.classList.toggle('zoomed');zoom.textContent=on?'Kiçilt':'2× böyüt';});tools.append(zoom,btn('Bağla',async()=>dialog.close()));dialog.replaceChildren(tools,image);dialog.showModal();},'instruction-preview');
@@ -24,7 +24,40 @@ function imageInput(container,onChange){
   const reader=new FileReader();input.instructionFile=new Promise((resolve,reject)=>{reader.onload=()=>{const src=String(reader.result);if(token===seq&&input.isConnected){preview.replaceChildren(instructionPreview(src));remove.hidden=false;}resolve({data:src.split(',')[1],mime:file.type});};reader.onerror=()=>reject(Error('Şəkil oxunmadı.'));reader.readAsDataURL(file);});input.instructionFile.catch(()=>{if(token===seq)status.textContent='Şəkil oxunmadı.';});onChange();
  };return input;
 }
-function internalBlocks(a){return [['2FA məlumatı',a.twoFactor,false],['İşçi təlimatı',a.instruction,a.hasInstructionImage]].filter(([,v,img])=>v||img).map(([label,value,img])=>{const n=el('section',null,'stock-account internal-data');n.append(el('strong',label),el('p','Yalnız işçi üçün','notice'));if(value)n.append(el('div',value,'message'));if(img)n.append(instructionPreview(instructionUrl(admin?a.unitId:a.id)));return n;});}
+const mobileText=matchMedia('(max-width: 720px)'),textViews=new Map();
+const textResize=new ResizeObserver(entries=>{for(const {target} of entries)textViews.get(target)?.();});
+new MutationObserver(()=>{for(const n of textViews.keys())if(!n.isConnected){textResize.unobserve(n);textViews.delete(n);}}).observe(app,{childList:true,subtree:true});
+mobileText.addEventListener('change',()=>{for(const measure of textViews.values())measure();});
+function linkText(node,value){
+ let offset=0;
+ for(const match of value.matchAll(/(?<![\p{L}\p{N}@:/])(?:https?:\/\/|www\.)[^\s<>"`]+/giu)){
+  let shown=match[0].replace(/[.,!?;:]+$/u,'');
+  const formatting=value.slice(0,match.index).match(/[*_~]+$/u)?.[0]||'';
+  if(formatting&&shown.endsWith([...formatting].reverse().join('')))shown=shown.slice(0,-formatting.length);
+  for(const [open,close] of [['(',')'],['[',']'],['{','}']])while(shown.endsWith(close)&&shown.split(close).length>shown.split(open).length)shown=shown.slice(0,-1);
+  try{
+   const url=new URL(/^www\./i.test(shown)?'https://'+shown:shown);
+   if(!['http:','https:'].includes(url.protocol)||!url.hostname||url.username||url.password)continue;
+   const a=el('a',shown);a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';a.referrerPolicy='no-referrer';
+   node.append(document.createTextNode(value.slice(offset,match.index)),a);offset=match.index+shown.length;
+  }catch{/* Unparseable addresses remain plain text. */}
+ }
+ node.append(document.createTextNode(value.slice(offset)));
+}
+function readableText(value,kind='message'){
+ const box=el('div',null,'readable-text'),body=el('div',null,kind+' readable-content');body.id='worker-text-'+crypto.randomUUID();linkText(body,value);
+ let expanded=false;const toggle=el('button','Davamını göstər','readable-toggle');toggle.type='button';toggle.hidden=true;toggle.setAttribute('aria-controls',body.id);toggle.setAttribute('aria-expanded','false');
+ function measure(){
+  const height=parseFloat(getComputedStyle(body).lineHeight)*5;const long=mobileText.matches&&height>0&&body.scrollHeight>height+1;
+  toggle.hidden=!long;body.classList.toggle('text-folded',long&&!expanded);
+  toggle.textContent=expanded?'Yığ':'Davamını göstər';toggle.setAttribute('aria-expanded',String(expanded));box.dataset.expanded=String(expanded);
+  const bottom=body.getBoundingClientRect().top+height;
+  for(const a of body.querySelectorAll('a')){const clipped=long&&!expanded&&[...a.getClientRects()].every(r=>r.top>=bottom-1);a.tabIndex=clipped?-1:0;}
+ }
+ toggle.onclick=()=>{expanded=!expanded;measure();};box.expandText=()=>{expanded=true;measure();};
+ box.append(body,toggle);textViews.set(body,measure);textResize.observe(body);return box;
+}
+function internalBlocks(a){return [['2FA məlumatı',a.twoFactor,false],['İşçi təlimatı',a.instruction,a.hasInstructionImage]].filter(([,v,img])=>v||img).map(([label,value,img])=>{const n=el('section',null,'stock-account internal-data');n.append(el('h3',label),el('p','Yalnız işçi üçün','notice'));if(value)n.append(readableText(value));if(img)n.append(instructionPreview(instructionUrl(admin?a.unitId:a.id)));return n;});}
 function editInstructionImage(a,reopen){
  const box=el('section',null,'stock-account'),input=imageInput(box,()=>{});box.append(btn('Şəkli yadda saxla',async()=>{if(!input.instructionFile)throw Error('Əvvəl şəkil seçin.');await api('/instruction-image',{id:a.unitId,file:await input.instructionFile});await reopen();status.textContent='Təlimat şəkli saxlanıldı.';}));
  if(a.hasInstructionImage)box.append(btn('Şəkli sil',async()=>{if(!confirm('Təlimat şəkli silinsin?'))return;await api('/instruction-image',{id:a.unitId,remove:true});await reopen();status.textContent='Təlimat şəkli silindi.';},'danger'));
@@ -118,7 +151,8 @@ function problemPanel(owner){
  }
  const load=paged(box,async page=>{if(!problemProduct)return{rows:[],more:false};const r=await api('/problems?'+new URLSearchParams({product:problemProduct,page}));return{rows:r.entries,more:r.more};},x=>{
   const row=el('article',null,'stock-account'),img=el('img',null,'problem-image');img.loading='lazy';img.alt=x.title;img.src=base+'/problem-image?'+new URLSearchParams({product:problemProduct,id:x.id,v:Date.now()});
-  row.append(el('h3',x.title),img,el('strong','İşçiyə izah'),el('p',x.explanation,'problem-text'),el('strong','Müştəriyə cavab'),el('p',x.answer,'problem-text'));
+  const title=el('h3');linkText(title,x.title);
+  row.append(title,img,el('strong','İşçiyə izah'),readableText(x.explanation,'problem-text'),el('strong','Müştəriyə cavab'),readableText(x.answer,'problem-text'));
   if(owner)row.append(btn('Redaktə et',async()=>form.edit(x)),btn('Problemi sil',async()=>{if(!confirm('Problem qeydi silinsin?'))return;await api('/problem-delete',{id:x.id,product:problemProduct,confirmed:true});form.resetEditor();await load();},'danger'));
   else row.append(btn('Cavabı kopyala',async()=>{await navigator.clipboard.writeText(x.answer);status.textContent='Müştəriyə cavab kopyalandı.';}));
   return row;
@@ -145,7 +179,19 @@ function showExpired(){events?.close();events=null;currentAllocation=null;worker
 async function refreshWorker(){if(admin||document.hidden||life.signal.aborted)return;if(busy||refreshing){refreshNeeded=true;return;}refreshing=true;refreshNeeded=false;try{const next=await api('/state'),changed=JSON.stringify(next)!==JSON.stringify(state);state=next;if(changed&&workerTab==='problems'){app.replaceChildren(problemPanel(false));}else if(changed&&!currentAllocation){const focus=app.querySelector('input[type=search]')===document.activeElement,pos=document.activeElement?.selectionStart;products();if(focus){const search=app.querySelector('input[type=search]');search?.focus();search?.setSelectionRange(pos,pos);}}}catch(e){status.textContent=e.message;}finally{refreshing=false;if(refreshNeeded&&!busy)void refreshWorker();}}
 function connect(){if(admin||events||document.hidden||life.signal.aborted)return;const stream=events=new EventSource(base+'/events');stream.addEventListener('changed',()=>void refreshWorker());stream.addEventListener('expired',showExpired);stream.addEventListener('error',()=>{if(stream.readyState===EventSource.CLOSED&&events===stream){events=null;void refreshWorker();}});}
 async function start(){try{const s=await api(admin?'/api/session':'/api/employee/session');csrf=s.csrfToken;account=s.account||{id:'owner'};if(!admin){document.getElementById('workerName').textContent=account.name;document.getElementById('logout').onclick=()=>void act(document.getElementById('logout'),async()=>{await api('/api/employee/logout',{});events?.close();events=null;clearPending();currentAllocation=null;app.replaceChildren();location.assign('/employee/stock/login');});}if(admin){[state,source]=await Promise.all([api('/state'),api('/source-catalog')]);adminView();}else{state=await api('/state');workerNav();const pending=readPending();if(pending?.allocationId)showMessage(await api('/allocation?id='+pending.allocationId));else if(pending?.key){const a=await api('/claim',{planId:pending.planId},pending.key);savePending({...pending,allocationId:a.id});showMessage(a);}else products();connect();}}catch(e){status.textContent=e.message;app.replaceChildren(btn('Yenidən cəhd et',start));}}
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&currentAllocation){currentAllocation.message='';currentAllocation.twoFactor='';currentAllocation.instruction='';for(const n of app.querySelectorAll('.internal-data'))n.remove();const n=app.querySelector('.message');if(n)n.textContent='Məxfi mesaj gizlədildi. Yenidən açmaq üçün aşağıdakı düyməyə basın.';const c=app.querySelector('.gold');if(c){c.textContent='Hazır mesajı yenidən aç';c.onclick=()=>void act(c,async()=>showMessage(await api('/allocation?id='+currentAllocation.id)));}}});
+let resumeLink=null;
+app.addEventListener('click',e=>{if(!admin&&currentAllocation&&e.target.closest('.readable-content a')){const record={id:currentAllocation.id,y:scrollY,expanded:[...app.querySelectorAll('.readable-text')].map(n=>n.dataset.expanded==='true'),left:false};resumeLink=record;setTimeout(()=>{if(resumeLink===record&&!record.left)resumeLink=null;},10000);}});
+document.addEventListener('visibilitychange',()=>{
+ if(document.hidden&&currentAllocation){
+  if(resumeLink?.id===currentAllocation.id)resumeLink.left=true;
+  currentAllocation.message='';currentAllocation.twoFactor='';currentAllocation.instruction='';for(const n of app.querySelectorAll('.internal-data'))n.remove();
+  const n=app.querySelector('.readable-text');if(n)n.replaceChildren(el('p','Məxfi mesaj gizlədildi. Yenidən açmaq üçün aşağıdakı düyməyə basın.'));
+  const c=app.querySelector('.gold');if(c){c.textContent='Hazır mesajı yenidən aç';c.onclick=()=>void act(c,async()=>showMessage(await api('/allocation?id='+currentAllocation.id)));}
+ }else if(!document.hidden&&resumeLink?.left){
+  const saved=resumeLink;resumeLink=null;const c=app.querySelector('.gold');
+  if(c&&currentAllocation?.id===saved.id)void act(c,async()=>{const a=await api('/allocation?id='+saved.id);if(document.hidden||currentAllocation?.id!==saved.id)return;showMessage(a);[...app.querySelectorAll('.readable-text')].forEach((n,i)=>{if(saved.expanded[i])n.expandText();});requestAnimationFrame(()=>scrollTo(0,saved.y));});
+ }
+});
 document.addEventListener('visibilitychange',()=>{if(document.hidden){events?.close();events=null;if(admin)clearPrivateRecords(app);}else if(!admin){connect();void refreshWorker();}});
 window.addEventListener('pagehide',()=>{life.abort();events?.close();events=null;currentAllocation=null;for(const n of document.querySelectorAll('textarea,input[type=password]'))n.value='';app.replaceChildren();});void start();
 })();

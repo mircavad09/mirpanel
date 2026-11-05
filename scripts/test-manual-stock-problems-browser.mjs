@@ -12,7 +12,9 @@ const base='/api/admin/workforce/manual-stock',worker='/api/employee/manual-stoc
 const out='payment-test-artifacts/manual-stock-problems';fs.mkdirSync(out,{recursive:true});
 catalog.products=['chatgpt','netflix'].map((id,i)=>({id,title:i?'Netflix':'ChatGPT',plans:[{id:'month',label:'1 aylıq',months:1}]}));
 const creds={login:'worker-problems-test',password:crypto.randomBytes(20).toString('base64url')};
-const ready='Salam! 👋\n*ChatGPT* hesabınız hazırdır.',internal='SİNTETİK 2FA: 135790',instruction='Kod soruşulanda operatora yazın.';
+const ready='Salam! 👋\n*ChatGPT Plus* hesabınız hazırdır.\n1. Tətbiqi açın.\n2. Giriş bölməsini seçin.\n3. Giriş məlumatlarını daxil edin.\n4. Ekrandakı təlimatı izləyin.\n*https://example.invalid/chatgpt_plus?code=demo~test*\nhttp://example.invalid/help\nwww.example.invalid/'+ 'a'.repeat(140)+'\njavascript:alert(1)\n _Uğurlar!_';
+const internal='SİNTETİK 2FA: 135790\nwww.example.invalid/2fa',instruction='Kod soruşulanda operatora yazın.\nhttps://example.invalid/instruction';
+const customerAnswer='Salam, zəhmət olmasa tətbiqi yenidən açın.\n1. Tətbiqi bağlayın.\n2. Tətbiqi açın.\n3. Giriş edin.\n4. Yenidən yoxlayın.\nwww.example.invalid/support';
 async function post(path,body){const r=await fetch(origin+base+path,{method:'POST',headers:{Cookie:'test_admin=owner','X-CSRF-Token':'synthetic-csrf','X-Idempotency-Key':crypto.randomUUID(),'Content-Type':'application/json'},body:JSON.stringify(body)});assert.equal(r.status,200);return r.json();}
 const png=background=>sharp({create:{width:480,height:220,channels:3,background}}).png().toBuffer();
 try{
@@ -33,7 +35,7 @@ try{
  p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Şəkli sil',exact:true}).click();await p.getByText('Təlimat şəkli silindi.',{exact:true}).waitFor();assert.equal((await pool.query('select image_base64 from manual_stock_instruction_images')).rows[0].image_base64,null);
  await p.locator('input[name=instructionImage]').setInputFiles(guideFile);await p.getByRole('button',{name:'Şəkli yadda saxla'}).click();await p.getByText('Təlimat şəkli saxlanıldı.',{exact:true}).waitFor();assert.equal(await imageHash(),original);
  await p.getByRole('button',{name:'Problemlər',exact:true}).click();await p.getByRole('button',{name:'Netflix',exact:true}).click();
- await p.getByLabel('Problem başlığı').fill('Netflix giriş ekranı');await p.getByLabel(/^Şəkil/).setInputFiles({name:'synthetic.png',mimeType:'image/png',buffer:await png('#9b193e')});await p.getByLabel('İşçiyə izah').fill('Əvvəlcə tətbiqi yenidən açmağı yoxlayın.');await p.getByLabel('Müştəriyə cavab',{exact:true}).fill('Salam, zəhmət olmasa tətbiqi yenidən açın.');
+ await p.getByLabel('Problem başlığı').fill('Netflix giriş ekranı');await p.getByLabel(/^Şəkil/).setInputFiles({name:'synthetic.png',mimeType:'image/png',buffer:await png('#9b193e')});await p.getByLabel('İşçiyə izah').fill('Əvvəlcə tətbiqi yenidən açmağı yoxlayın.');await p.getByLabel('Müştəriyə cavab',{exact:true}).fill(customerAnswer);
  await p.getByRole('button',{name:'Problemi saxla',exact:true}).click();await p.getByRole('heading',{name:'Netflix giriş ekranı'}).waitFor();
  await p.getByRole('button',{name:'Redaktə et',exact:true}).click();await p.getByLabel(/^Şəkil/).setInputFiles({name:'synthetic-new.png',mimeType:'image/png',buffer:await png('#183b60')});await p.getByRole('button',{name:'Dəyişiklikləri saxla',exact:true}).click();await p.getByText('Problem saxlanıldı.',{exact:true}).waitFor();
  await p.locator('.problem-image').scrollIntoViewIfNeeded();await p.waitForFunction(()=>document.querySelector('.problem-image')?.naturalWidth>0);await p.screenshot({path:out+'/admin-problem.png',fullPage:true});
@@ -42,7 +44,13 @@ try{
  await w.locator('.products').getByRole('button',{name:/ChatGPT/}).click();await w.getByText('Stokda: 1 hesab',{exact:true}).waitFor();assert.equal(await w.getByText(internal,{exact:true}).count(),0);
  await w.getByRole('button',{name:/Stokdan al/}).click();await w.getByText('Qalan stok: 0 hesab',{exact:true}).waitFor();await w.getByText(internal,{exact:true}).waitFor();await w.getByText(instruction,{exact:true}).waitFor();
  assert.equal(await w.getByText('Yalnız işçi üçün',{exact:true}).count(),2);assert.equal(await w.locator('.internal-data').getByRole('button',{name:/kopyala/i}).count(),0);
+ const display=w.locator('.readable-text').first(),fold=display.getByRole('button',{name:'Davamını göstər',exact:true});await fold.waitFor();
  await w.getByRole('button',{name:/Mesajı kopyala/}).click();assert.equal((await w.evaluate(()=>navigator.clipboard.readText())).replaceAll('\r\n','\n'),ready);
+ await w.screenshot({path:out+'/worker-long-message-folded.png',fullPage:true});
+ await fold.click();await display.getByRole('button',{name:'Yığ',exact:true}).waitFor();
+ assert.equal(await display.locator('a').count(),3);const link=display.getByRole('link',{name:/chatgpt_plus/});assert.equal(await link.getAttribute('href'),'https://example.invalid/chatgpt_plus?code=demo~test');assert.equal(await link.getAttribute('target'),'_blank');assert.equal(await display.locator('a[href^="javascript:"]').count(),0);assert.equal(await w.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+ await wc.route('https://example.invalid/**',route=>route.fulfill({body:'Sintetik link',contentType:'text/plain'}));const popupPromise=w.waitForEvent('popup');await link.click();const popup=await popupPromise;await popup.waitForLoadState();assert.equal(new URL(popup.url()).pathname,'/chatgpt_plus');await popup.close();await w.bringToFront();
+ await display.getByRole('button',{name:'Yığ',exact:true}).waitFor();await w.screenshot({path:out+'/worker-long-message-expanded.png',fullPage:true});await display.getByRole('button',{name:'Yığ',exact:true}).click();await fold.waitFor();
  assert.equal(Number((await pool.query("select count(*) n from manual_stock_units where state='TAKEN'")).rows[0].n),1);
  await w.waitForFunction(()=>document.querySelector('.instruction-preview img')?.naturalWidth>0);const imagePath=await w.locator('.instruction-preview img').getAttribute('src');
  await w.getByRole('button',{name:'Təlimat şəklini böyüt'}).click();await w.getByRole('button',{name:'2× böyüt'}).click();await w.locator('dialog[open] img.zoomed').waitFor();await w.screenshot({path:out+'/worker-instruction-zoom.png'});await w.getByRole('button',{name:'Bağla',exact:true}).click();await w.screenshot({path:out+'/worker-instruction-image.png',fullPage:true});
@@ -50,7 +58,7 @@ try{
  await post('/permission',{employeeId:account.id,productId:ids.chatgpt,allowed:false});assert.equal((await wc.request.get(origin+imagePath)).status(),403);
  await w.getByRole('button',{name:'Problemlər',exact:true}).click();await w.getByRole('button',{name:'Netflix',exact:true}).click();
  await w.getByText('Əvvəlcə tətbiqi yenidən açmağı yoxlayın.',{exact:true}).waitFor();await w.locator('.problem-image').scrollIntoViewIfNeeded();await w.waitForFunction(()=>document.querySelector('.problem-image')?.naturalWidth>0);
- await w.getByRole('button',{name:'Cavabı kopyala',exact:true}).click();assert.equal(await w.evaluate(()=>navigator.clipboard.readText()),'Salam, zəhmət olmasa tətbiqi yenidən açın.');await w.screenshot({path:out+'/worker-problem.png',fullPage:true});
+ await w.getByRole('button',{name:'Davamını göstər',exact:true}).waitFor();await w.getByRole('button',{name:'Cavabı kopyala',exact:true}).click();assert.equal((await w.evaluate(()=>navigator.clipboard.readText())).replaceAll('\r\n','\n'),customerAnswer);await w.screenshot({path:out+'/worker-problem.png',fullPage:true});
  const img=await w.locator('.problem-image').getAttribute('src');assert.equal((await fetch(origin+img)).status,401);
  await post('/permission',{employeeId:account.id,productId:ids.netflix,allowed:false});assert.equal((await wc.request.get(origin+worker+'/problems?product='+ids.netflix)).status(),403);assert.equal((await wc.request.get(origin+img)).status(),403);
  await w.getByRole('button',{name:'Netflix',exact:true}).waitFor({state:'detached',timeout:20000});
