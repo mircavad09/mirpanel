@@ -18,12 +18,20 @@ const png=background=>sharp({create:{width:480,height:220,channels:3,background}
 try{
  const ac=await browser.newContext({viewport:{width:390,height:950}});await ac.addCookies([{name:'test_admin',value:'owner',url:origin}]);const p=await ac.newPage();
  await p.goto(origin+'/admin/employee-stock');await p.getByLabel('Məhsul',{exact:true}).selectOption('chatgpt');await p.getByLabel('Paket',{exact:true}).selectOption({label:'1 aylıq'});
- await p.getByLabel('Hazır mesaj',{exact:true}).fill(ready);await p.getByLabel(/^2FA məlumatı/).fill(internal);await p.getByLabel(/^İşçi təlimatı/).fill(instruction);await p.screenshot({path:out+'/admin-stock.png',fullPage:true});
+ await p.getByLabel('Hazır mesaj',{exact:true}).fill(ready);await p.getByLabel(/^2FA məlumatı/).fill(internal);await p.getByLabel(/^İşçi təlimatı/).fill(instruction);
+ const guide=await sharp(Buffer.from('<svg width="480" height="220"><rect width="480" height="220" fill="#23496d"/><text x="25" y="70" fill="white" font-size="28">SINTETIK TELIMAT</text><text x="25" y="125" fill="white" font-size="18">1. Giris ekranini acin</text><text x="25" y="160" fill="white" font-size="18">2. Operatora yazin</text></svg>')).png().toBuffer();
+ const guideFile={name:'guide.png',mimeType:'image/png',buffer:guide};
+ await p.locator('input[name=instructionImage]').setInputFiles(guideFile);await p.waitForFunction(()=>document.querySelector('.instruction-preview img')?.naturalWidth>0);await p.screenshot({path:out+'/admin-instruction-image.png',fullPage:true});
  await p.getByRole('button',{name:'Yadda saxla',exact:true}).click();await p.getByText('1 hazır mesaj stoka əlavə edildi.',{exact:true}).waitFor();
  await post('/ready-message',{productId:'netflix',planKey:'id:month',message:'Sintetik Netflix stok mesajı.'});
  const {account}=await post('/accounts',{...creds,name:'Sintetik işçi'});await post('/account-control',{id:account.id,action:'enable'});
  const ids=Object.fromEntries((await pool.query('select source_product_id,id from manual_stock_products')).rows.map(x=>[x.source_product_id,x.id]));
  for(const productId of Object.values(ids))await post('/permission',{employeeId:account.id,productId,allowed:true});
+ await p.getByRole('button',{name:'Hesablar',exact:true}).click();await p.getByText('ChatGPT',{exact:true}).click();await p.locator('details[open]').getByText(/^1 aylıq · Mövcud stok: 1$/).click();await p.getByRole('button',{name:'Mesajı aç',exact:true}).click();
+ const imageHash=async()=>crypto.createHash('sha256').update((await pool.query('select image_base64 from manual_stock_instruction_images')).rows[0].image_base64).digest('hex');
+ const original=await imageHash();await p.locator('input[name=instructionImage]').setInputFiles({name:'other.png',mimeType:'image/png',buffer:await png('#65234a')});await p.getByRole('button',{name:'Şəkli yadda saxla'}).click();await p.getByText('Təlimat şəkli saxlanıldı.',{exact:true}).waitFor();assert.notEqual(await imageHash(),original);
+ p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Şəkli sil',exact:true}).click();await p.getByText('Təlimat şəkli silindi.',{exact:true}).waitFor();assert.equal((await pool.query('select image_base64 from manual_stock_instruction_images')).rows[0].image_base64,null);
+ await p.locator('input[name=instructionImage]').setInputFiles(guideFile);await p.getByRole('button',{name:'Şəkli yadda saxla'}).click();await p.getByText('Təlimat şəkli saxlanıldı.',{exact:true}).waitFor();assert.equal(await imageHash(),original);
  await p.getByRole('button',{name:'Problemlər',exact:true}).click();await p.getByRole('button',{name:'Netflix',exact:true}).click();
  await p.getByLabel('Problem başlığı').fill('Netflix giriş ekranı');await p.getByLabel(/^Şəkil/).setInputFiles({name:'synthetic.png',mimeType:'image/png',buffer:await png('#9b193e')});await p.getByLabel('İşçiyə izah').fill('Əvvəlcə tətbiqi yenidən açmağı yoxlayın.');await p.getByLabel('Müştəriyə cavab',{exact:true}).fill('Salam, zəhmət olmasa tətbiqi yenidən açın.');
  await p.getByRole('button',{name:'Problemi saxla',exact:true}).click();await p.getByRole('heading',{name:'Netflix giriş ekranı'}).waitFor();
@@ -33,9 +41,13 @@ try{
  await w.goto(origin+'/employee/stock/login');await w.getByLabel('Giriş adı').fill(creds.login);await w.getByLabel('Şifrə').fill(creds.password);await w.getByRole('button',{name:'Daxil ol'}).click();
  await w.locator('.products').getByRole('button',{name:/ChatGPT/}).click();await w.getByText('Stokda: 1 hesab',{exact:true}).waitFor();assert.equal(await w.getByText(internal,{exact:true}).count(),0);
  await w.getByRole('button',{name:/Stokdan al/}).click();await w.getByText('Qalan stok: 0 hesab',{exact:true}).waitFor();await w.getByText(internal,{exact:true}).waitFor();await w.getByText(instruction,{exact:true}).waitFor();
- assert.equal(await w.getByText('Yalnız işçi üçün',{exact:true}).count(),2);assert.equal(await w.locator('.internal-data button').count(),0);
+ assert.equal(await w.getByText('Yalnız işçi üçün',{exact:true}).count(),2);assert.equal(await w.locator('.internal-data').getByRole('button',{name:/kopyala/i}).count(),0);
  await w.getByRole('button',{name:/Mesajı kopyala/}).click();assert.equal((await w.evaluate(()=>navigator.clipboard.readText())).replaceAll('\r\n','\n'),ready);
- assert.equal(Number((await pool.query("select count(*) n from manual_stock_units where state='TAKEN'")).rows[0].n),1);await w.screenshot({path:out+'/worker-stock.png',fullPage:true});
+ assert.equal(Number((await pool.query("select count(*) n from manual_stock_units where state='TAKEN'")).rows[0].n),1);
+ await w.waitForFunction(()=>document.querySelector('.instruction-preview img')?.naturalWidth>0);const imagePath=await w.locator('.instruction-preview img').getAttribute('src');
+ await w.getByRole('button',{name:'Təlimat şəklini böyüt'}).click();await w.getByRole('button',{name:'2× böyüt'}).click();await w.locator('dialog[open] img.zoomed').waitFor();await w.screenshot({path:out+'/worker-instruction-zoom.png'});await w.getByRole('button',{name:'Bağla',exact:true}).click();await w.screenshot({path:out+'/worker-instruction-image.png',fullPage:true});
+ const other={login:'other-worker-test',password:crypto.randomBytes(20).toString('base64url')},second=await post('/accounts',{...other,name:'Başqa işçi'});await post('/account-control',{id:second.account.id,action:'enable'});await post('/permission',{employeeId:second.account.id,productId:ids.chatgpt,allowed:true});const oc=await browser.newContext();assert.equal((await oc.request.post(origin+'/api/employee/login',{data:other})).status(),200);assert.equal((await oc.request.get(origin+imagePath)).status(),403);
+ await post('/permission',{employeeId:account.id,productId:ids.chatgpt,allowed:false});assert.equal((await wc.request.get(origin+imagePath)).status(),403);
  await w.getByRole('button',{name:'Problemlər',exact:true}).click();await w.getByRole('button',{name:'Netflix',exact:true}).click();
  await w.getByText('Əvvəlcə tətbiqi yenidən açmağı yoxlayın.',{exact:true}).waitFor();await w.locator('.problem-image').scrollIntoViewIfNeeded();await w.waitForFunction(()=>document.querySelector('.problem-image')?.naturalWidth>0);
  await w.getByRole('button',{name:'Cavabı kopyala',exact:true}).click();assert.equal(await w.evaluate(()=>navigator.clipboard.readText()),'Salam, zəhmət olmasa tətbiqi yenidən açın.');await w.screenshot({path:out+'/worker-problem.png',fullPage:true});
@@ -45,5 +57,5 @@ try{
  p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Problemi sil',exact:true}).click();await p.getByText('Bu məhsul üçün problem qeydi yoxdur.',{exact:true}).waitFor();
  assert.equal(Number((await pool.query('select count(*) n from manual_stock_problems')).rows[0].n),0);
  assert.equal(JSON.stringify((await pool.query('select * from manual_stock_units')).rows).includes(internal),false);
- console.log(JSON.stringify({chatgptClaim:'1→0',clipboardOnlyCustomerMessage:true,netflixImageVisible:true,problemImageReplacementAndDelete:true,revokedImageAndListDenied:true,productionWrites:0}));
+ console.log(JSON.stringify({chatgptClaim:'1→0',clipboardOnlyCustomerMessage:true,instructionPreviewReplaceDeleteAndZoom:true,otherWorkerAndRevokedInstructionDenied:true,netflixImageVisible:true,problemImageReplacementAndDelete:true,revokedImageAndListDenied:true,productionWrites:0}));
 }finally{await browser.close();await f.close();}
