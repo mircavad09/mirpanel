@@ -4,7 +4,7 @@ import {requireAllowed} from './group-control.mjs';import {saveProfile,uploadPro
 import {tagCount,notifications,markTag,tagMessage} from './bot-tags.mjs';
 import {CommunityLive} from './live.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
-export function authReturn(origin,value){for(const p of ['/sifarislerim','/balans','/odenis'])if(value===origin+p||value===p)return origin+p;return origin+'/profil';}
+export function authReturn(origin,value){for(const p of ['/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'])if(value===origin+p||value===p)return origin+p;return origin+'/profil';}
 export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body}){
  const route=u.pathname,{pool,repo,group,auth}=runtime,started=performance.now();
  if(!(await pool.query('select ready from public_community_release where version=1')).rows[0]?.ready)throw fail(503,'Xidmət hazırlanır.');
@@ -15,7 +15,7 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
   if(req.method==='POST'){
    if(!String(req.headers['content-type']).includes('application/json'))throw fail(415,'JSON tələb olunur.');const b=await body(req);
    if(route==='/api/auth/sign-in/social'&&b.provider!=='google')throw fail(403,'Bu girişə icazə verilmir.');
-   if(['sign-in/social','sign-up/email','send-verification-email'].some(p=>route.endsWith(p))){b.callbackURL=authReturn(origin,b.callbackURL);b.errorCallbackURL=origin+'/hesab?next='+encodeURIComponent(new URL(b.callbackURL).pathname);}
+   if(['sign-in/social','sign-up/email','send-verification-email'].some(p=>route.endsWith(p))){b.callbackURL=authReturn(origin,b.callbackURL);b.errorCallbackURL=origin+'/hesab?next='+encodeURIComponent(b.callbackURL.slice(origin.length));}
    if(route==='/api/auth/request-password-reset')b.redirectTo=origin+'/hesab?mode=new-password';
    const raw=Buffer.from(JSON.stringify(b)),replacement=Readable.from([raw]);replacement.socket=req.socket;replacement.httpVersionMajor=req.httpVersionMajor;replacement.method=req.method;replacement.url=req.url;replacement.headers={...req.headers,'content-length':String(raw.length)};await toNodeHandler(auth)(replacement,res);
   }else await toNodeHandler(auth)(req,res);

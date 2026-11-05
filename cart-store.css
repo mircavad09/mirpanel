@@ -57,3 +57,4 @@
 @keyframes mir-cart-pop{from{transform:scale(.98);opacity:.65}to{transform:scale(1);opacity:1}}
 @media(prefers-reduced-motion:reduce){.mir-cart-drawer[open]{animation:none}}
 .cart-form-terms{margin-block:12px;padding:12px;border:1px solid #51452b;border-radius:10px;background:#201e17;color:#eee}.cart-form-terms h3{font-size:15px}.cart-form-terms a{color:#ffd400}
+.cart-form-terms label{display:flex;align-items:flex-start;gap:8px}.cart-form-terms input[type=checkbox]{width:18px;height:18px;min-height:0;margin:2px 0 0;flex:none;accent-color:#ffd400}

@@ -1632,7 +1632,7 @@
       const continueButton = document.getElementById("netflixContinueButton");
       const syncPin = () => {
         sourceInput.value = digits.map((input) => input.value.replace(/\D/g, "").slice(0, 1)).join("");
-        const ready = Boolean(nameInput.value.trim()) && /^\d{4}$/.test(sourceInput.value);
+        const ready = Boolean(nameInput.value.trim()) && /^\d{4}$/.test(sourceInput.value) && (!forCart||form.querySelector('[data-cart-consent]')?.checked===true);
         continueButton.disabled = !ready;
         continueButton.setAttribute("aria-disabled", String(!ready));
       };
@@ -1697,6 +1697,7 @@
     document.getElementById("universalOrderForm").onsubmit = (event) => {
       event.preventDefault();
       if (session !== modalSession) return;
+      if(forCart&&!event.currentTarget.querySelector('[data-cart-consent]')?.checked)return;
       if (isSpotify) {
         const email = document.getElementById("spotifyEmail");
         const password = document.getElementById("spotifyPassword");
@@ -1708,7 +1709,7 @@
         return;
       }
       const values = {};
-      const controls = event.currentTarget.querySelectorAll("input:not([data-pin-digit]), textarea, select");
+      const controls = event.currentTarget.querySelectorAll("input:not([data-pin-digit]):not([data-cart-consent]), textarea, select");
 
       for (const control of controls) {
         const value = control.value.trim();
@@ -1731,8 +1732,9 @@
       const button=document.querySelector('#universalOrderForm button[type=submit]');
       button.textContent='Şərtləri oxudum və təsdiqlədim';
       const terms=document.createElement('section');terms.className='cart-form-terms';
-      terms.innerHTML=`<strong>${escapeHtml(forCart.planName)} · ${directMoney(forCart.unitCents)}</strong><h3>Sifariş şərtləri</h3>${formatConfirmationText(forCart.terms)||'<p>Bu məhsul üçün ümumi sifariş şərtləri tətbiq olunur.</p>'}${formatConfirmationText(forCart.note)}<a href="/sertler" target="_blank" rel="noopener">Ümumi sifariş şərtləri</a>`;
+      terms.innerHTML=`<h3>Diqqət!</h3>${formatConfirmationText(forCart.terms)||'<p>Bu məhsul üçün ümumi sifariş şərtləri tətbiq olunur.</p>'}${formatConfirmationText(forCart.note)}<label><input type="checkbox" data-cart-consent> ${agreementMarkup(DEFAULT_AGREEMENT_TEXT)}</label>`;
       button.parentElement.before(terms);
+      button.disabled=true;terms.querySelector('input').onchange=e=>{if(isNetflixPersonal)document.getElementById('netflixProfileName').dispatchEvent(new Event('input'));else button.disabled=!e.target.checked;};
     }
   }
 
@@ -1749,7 +1751,7 @@
       ? defaultSpotifyHelpLabel
       : storedHelpLabel;
     const showHelp = !isSpotify && settings.helpLink?.enabled === true && helpUrl.startsWith("https://") && helpLabel;
-    const title = confirmationTitle(settings.title);
+    const title = cartQuote?'Diqqət!':confirmationTitle(settings.title);
     const confirmText = cartQuote?'Şərtləri oxudum və təsdiqlədim':confirmationButtonText(settings.confirmText);
     const cancelText = cleanConfirmationLabel(settings.cancelText) || DEFAULT_CONFIRMATION.cancelText;
     const descriptionHtml = formatConfirmationText(cartQuote?cartQuote.terms:settings.description);
@@ -1770,8 +1772,7 @@
           </span>
           <div>
             <h2 class="orderConfirmationTitle" id="orderConfirmationTitle">${escapeHtml(title)}</h2>
-            <div class="orderConfirmationProduct">${escapeHtml(publicProductTitle(product.title) || product.id || "")}</div>
-            ${cartQuote?`<div>${escapeHtml(cartQuote.planName)} · ${directMoney(cartQuote.unitCents)}</div>`:''}
+            ${cartQuote?'':`<div class="orderConfirmationProduct">${escapeHtml(publicProductTitle(product.title) || product.id || "")}</div>`}
           </div>
         </div>
         <div class="orderConfirmationTerms" tabindex="0" aria-label="${escapeHtml(publicProductTitle(product.title))} sifariş şərtləri">
@@ -1782,7 +1783,7 @@
         <form id="orderConfirmationConsentForm" class="orderConfirmationConsentForm" novalidate>
           <label class="orderConfirmationConsent" for="orderTermsAgreement">
             <input id="orderTermsAgreement" name="orderTermsAgreement" type="checkbox" required aria-describedby="orderConfirmationConsentError">
-            <span>${agreementMarkup(agreementText())}</span>
+            <span>${agreementMarkup(cartQuote?DEFAULT_AGREEMENT_TEXT:agreementText())}</span>
           </label>
           <p id="orderConfirmationConsentError" class="orderConfirmationConsentError" role="alert" hidden>${escapeHtml(AGREEMENT_ERROR)}</p>
           <div class="orderConfirmationActions">
@@ -1921,22 +1922,31 @@
     }
 
     if(!isSpotifyProduct(product)&&!activeFields(product).some(f=>f.type==='password')){
-      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=cart-terms-20261106').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
+      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=guest-order-20261106').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
       const index=product.plans.indexOf(plan);
       openBaseModal(product,plan);const session=modalSession;
-      renderModalContent('<p role="status">Sifariş şərtləri yoxlanılır…</p>');
       const add=(values,quote)=>{
         try{window.MirpanelCart.add(product.id,index,values,quote.termsVersion);}
         catch(e){toastMessage(e.message);return;}
         closeOrderModal();
         window.MirpanelCart.open();
       };
-      void directApi('quote',{items:[{productId:product.id,planIndex:index,quantity:1}]}).then(d=>{
-        if(session!==modalSession)return;const quote=d.items?.[0];
-        if(!quote?.termsVersion)throw Error('Sifariş şərtləri yüklənmədi.');
-        if(activeFields(product).length)showForm(product,plan,values=>add(values,quote),quote);
-        else showConfirmation(product,plan,{},values=>add(values,quote),quote);
-      }).catch(()=>{if(session===modalSession)renderModalContent('<p role="alert">Sifariş şərtləri yüklənmədi. Pəncərəni bağlayıb yenidən cəhd edin.</p>');});
+      const hasFields=activeFields(product).length>0;
+      const request=()=>directApi('quote',{items:[{productId:product.id,planIndex:index,quantity:1}]}).then(d=>d.items?.[0]).catch(()=>null);
+      let pending=request(),submitting=false;
+      const show=display=>{
+        const confirm=async values=>{
+          if(submitting)return;submitting=true;
+          const button=document.querySelector('#mForm button[type=submit]');if(button)button.disabled=true;
+          const quote=await pending;submitting=false;if(session!==modalSession)return;
+          if(!quote?.termsVersion){toastMessage('Şərtlər təsdiqlənmədi. Yenidən cəhd edin.');pending=request();if(button)button.disabled=false;return;}
+          if(quote.terms!==display.terms||quote.note!==display.note){toastMessage('Şərtlər yenilənib. Yenidən oxuyub təsdiqləyin.');show(quote);return;}
+          if(button)button.disabled=false;add(values,quote);
+        };
+        if(hasFields)showForm(product,plan,confirm,display);
+        else showConfirmation(product,plan,{},confirm,display);
+      };
+      show({terms:String(plan.terms||confirmationFor(product).description||''),note:String(product.note||'')});
       return;
     }
 
