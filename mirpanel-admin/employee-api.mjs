@@ -6,7 +6,7 @@ const uuid=v=>{if(!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12
 const safeAccount=a=>({id:a.id,login:a.login,name:a.display_name,active:a.active,employeeStartedAt:a.employee_started_at});
 export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminMutation,sameOrigin,loadCatalog,guardLogin=async()=>{},ownerCheck=async()=>false}){
  const sessions=new Map(),attempts=new Map(),mutations=new Map(),ttl=8*3600000;
- const manual=createManualStock({client,config,readBody,ownerCheck}),tokenHash=v=>crypto.createHash('sha256').update(v).digest('hex'),csrfFor=v=>crypto.createHmac('sha256',config.tokenSecret||config.encryptionKey).update('employee-csrf:'+v).digest('hex');
+ const manual=createManualStock({client,config,readBody,loadCatalog,ownerCheck}),tokenHash=v=>crypto.createHash('sha256').update(v).digest('hex'),csrfFor=v=>crypto.createHmac('sha256',config.tokenSecret||config.encryptionKey).update('employee-csrf:'+v).digest('hex');
  let stockKeyReady=false;
  try{createStockCrypto(config.encryptionKey);stockKeyReady=true;}catch{/* Fail closed; never log key material. */}
  const enabled=()=>config.employeeEnabled===true&&stockKeyReady&&Boolean(client);
@@ -60,6 +60,7 @@ export function createEmployeeSystem({client,config,json,readBody,isAdmin,adminM
     if(u.pathname==='/api/employee/logout'&&req.method==='POST'){const token=cookies(req).mirpanel_employee_session;if(s.persistent)await result(client.from('manual_stock_sessions').update({expires_at:new Date(0).toISOString()}).eq('token_hash',tokenHash(token)));sessions.delete(token);json(res,200,{ok:true},{'Set-Cookie':cookie('',0)});return true;}
    }
    const base=admin?'/api/admin/workforce':'/api/employee',suffix=u.pathname.slice(base.length);
+   if(!admin&&suffix==='/manual-stock/events'&&req.method==='GET'){manual.openStream(req,res,actor,async()=>Boolean(await session(req)));return true;}
    if(suffix.startsWith('/manual-stock/')){if(req.method!=='GET'){const k='manual:'+actor.ref,now=Date.now(),v=mutations.get(k)||{n:0,until:now+60000};if(v.until<now){v.n=0;v.until=now+60000;}if(++v.n>60)throw fail('Çox əməliyyat edildi. Bir dəqiqə sonra yenidən cəhd edin.',429);mutations.set(k,v);}json(res,200,await manual.handle(req,u,actor));return true;}
    if(!admin&&actor.account?.manual_only)throw fail('Bu işçi girişi yalnız ayrıca hesab stokuna icazə verir.',403);
    if(suffix==='/review-summary'&&req.method==='GET'){if(!admin)throw fail('Əməliyyata icazə yoxdur.',403);json(res,200,await rpc('employee_review_summary'));return true;}
