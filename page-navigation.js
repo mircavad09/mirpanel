@@ -1,7 +1,7 @@
 /* Progressive customer router. HTML shells contain no private account data. */
 (()=>{'use strict';if(window.mirpanelPageNavigation)return;window.mirpanelPageNavigation=true;
- const routes=new Set(['/','/mehsul','/balans','/sebet','/odenis','/sifarislerim','/profil','/qrup','/hesab','/owner-login']);
- const shared=/\/(?:site-header|desktop-header|account-header|browser-nav|support-widget|cart-store|decorative-backgrounds|community-notices)\.(?:js|css)$/;
+ const routes=new Set(['/','/mehsul','/haqqimizda','/sertler','/elaqe','/balans','/sebet','/odenis','/sifarislerim','/profil','/qrup','/hesab','/owner-login']);
+ const shared=/\/(?:site-header|site-header-menu|desktop-header|account-header|browser-nav|support-widget|cart-store|decorative-backgrounds|community-notices)\.(?:js|css)$/;
  const allowedScripts=new Set(['home-loading.js','display-labels.js','catalog-card.js','catalog-listing.js','app.js','cms-site.js','stories.js','payment-flow.js','order-confirmation.js','stock-display-fix.js','search-suggestions-fix.js','frontend-routing-detail-fix.js','seo-router.js','i18n.js','webmcp.js','site-sections-render.js','browser-orders.js']);
  const cache=new Map(),templates=new Map(),styles=new Map(),loaded=new Map(),scrolls=new Map(),routeClasses=new Set(document.body.classList);let current=location.pathname+location.search+location.hash,generation=0,controller,dispose,loading=false,view,mounted=true;
  const templateKey=p=>['/balans','/sebet','/odenis'].includes(p)?'shop':['/qrup','/profil','/hesab'].includes(p)?'community':null;
