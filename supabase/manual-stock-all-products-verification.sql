@@ -1,0 +1,3 @@
+select not has_table_privilege('anon','public.manual_stock_effective_permissions','select') and not has_table_privilege('authenticated','public.manual_stock_effective_permissions','select') as private_permissions;
+select not has_function_privilege('anon','public.manual_stock_all_products(uuid,text,boolean)','execute') and not has_function_privilege('authenticated','public.manual_stock_all_products(uuid,text,boolean)','execute') as private_toggle;
+select exists(select 1 from pg_trigger where tgrelid='public.manual_stock_problems'::regclass and tgname='manual_stock_changed' and tgenabled='O') as live_problems;

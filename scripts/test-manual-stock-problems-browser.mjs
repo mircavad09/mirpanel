@@ -64,6 +64,17 @@ try{
  await w.getByRole('button',{name:'Netflix',exact:true}).waitFor({state:'detached',timeout:20000});
  p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Problemi sil',exact:true}).click();await p.getByText('Bu məhsul üçün problem qeydi yoxdur.',{exact:true}).waitFor();
  assert.equal(Number((await pool.query('select count(*) n from manual_stock_problems')).rows[0].n),0);
+ await p.getByRole('button',{name:'İşçi girişləri',exact:true}).click();const ownerRow=p.getByRole('heading',{name:/Sintetik işçi/}).locator('..');const global=ownerRow.getByLabel('Bütün məhsullara giriş',{exact:true});await global.check();
+ await w.getByRole('button',{name:'Netflix',exact:true}).waitFor({timeout:20000});await w.getByRole('button',{name:'Netflix',exact:true}).click();await w.getByText('Bu məhsul üçün problem qeydi yoxdur.',{exact:true}).waitFor();
+ await post('/problem-save',{product:'netflix',title:'Canlı yenilənən problem',explanation:'Sintetik izah',answer:'Sintetik cavab',image:(await png('#123456')).toString('base64'),mime:'image/png'});await w.getByRole('heading',{name:'Canlı yenilənən problem',exact:true}).waitFor();
+ catalog.products.push({id:'future',title:'Gələcək məhsul',plans:[{id:'month',label:'1 aylıq',months:1}]});
+ await post('/ready-message',{productId:'future',planKey:'id:month',message:'Yalnız ayrıldıqdan sonra görünən sintetik mətn'});
+ await w.getByRole('button',{name:'Gələcək məhsul',exact:true}).waitFor();await w.getByRole('button',{name:'Hesablar',exact:true}).click();await w.getByRole('button',{name:'Məhsullara qayıt',exact:false}).click();
+ await w.locator('.products').getByRole('button',{name:/Gələcək məhsul/}).click();await w.getByText('Stokda: 1 hesab',{exact:true}).waitFor();
+ assert.equal(await w.getByText('Yalnız ayrıldıqdan sonra görünən sintetik mətn',{exact:true}).count(),0);
+ const otherState=await (await oc.request.get(origin+worker+'/state')).json();assert.equal(otherState.products.some(x=>x.name==='Gələcək məhsul'),false);
+ await w.getByRole('button',{name:/Stokdan al/}).click();await w.getByText('Yalnız ayrıldıqdan sonra görünən sintetik mətn',{exact:true}).waitFor();await w.getByText('Qalan stok: 0 hesab',{exact:true}).waitFor();await w.getByRole('button',{name:/Məhsullara qayıt/}).click();
+ await global.uncheck();await w.locator('.products').getByRole('button',{name:/Gələcək məhsul/}).waitFor({state:'detached',timeout:20000});
  assert.equal(JSON.stringify((await pool.query('select * from manual_stock_units')).rows).includes(internal),false);
- console.log(JSON.stringify({chatgptClaim:'1→0',clipboardOnlyCustomerMessage:true,instructionPreviewReplaceDeleteAndZoom:true,otherWorkerAndRevokedInstructionDenied:true,netflixImageVisible:true,problemImageReplacementAndDelete:true,revokedImageAndListDenied:true,productionWrites:0}));
+ console.log(JSON.stringify({chatgptClaim:'1→0',clipboardOnlyCustomerMessage:true,instructionPreviewReplaceDeleteAndZoom:true,otherWorkerAndRevokedInstructionDenied:true,netflixImageVisible:true,problemImageReplacementAndDelete:true,revokedImageAndListDenied:true,allProductsFutureLive:true,problemLiveWithoutReload:true,explicitWorkerUnchanged:true,productionWrites:0}));
 }finally{await browser.close();await f.close();}
