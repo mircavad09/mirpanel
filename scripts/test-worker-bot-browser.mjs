@@ -1,0 +1,42 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import fs from 'node:fs';
+import {createRequire} from 'node:module';
+import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+import {manualStockFixture} from './manual-stock-fixture.mjs';
+
+let offline=false;const requests=[];
+const f=await manualStockFixture({workerBotModel:async p=>{requests.push(p);if(offline)throw Error('synthetic outage');return '1. Giriş ekranını açın.\n2. Kod istənəndə operatora yönləndirin.';}}),{pool,origin,catalog}=f;
+catalog.products=['netflix','chatgpt'].map((id,i)=>({id,title:i?'ChatGPT':'Netflix Şəxsi',plans:[{id:'month',label:'1 aylıq'}]}));
+const admin='/api/admin/workforce/manual-stock',worker='/api/employee/manual-stock',creds={login:'bot-worker-test',password:crypto.randomBytes(24).toString('base64url')};
+const ready='Salam! 👋\n*Giriş* ekranını yenidən açın.',out='payment-test-artifacts/manual-worker-bot';fs.mkdirSync(out,{recursive:true});
+const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+const post=async(path,body)=>{const r=await fetch(origin+admin+path,{method:'POST',headers:{Cookie:'test_admin=owner','X-CSRF-Token':'synthetic-csrf','Content-Type':'application/json','X-Idempotency-Key':crypto.randomUUID()},body:JSON.stringify(body)});assert.equal(r.status,200);return r.json();};
+try{
+ const sharp=createRequire(import.meta.url)('../receipt-worker/node_modules/sharp'),img=(await sharp({create:{width:160,height:90,channels:3,background:'#38282b'}}).png().toBuffer()).toString('base64');
+ await post('/ready-message',{productId:'netflix',planKey:'id:month',units:[{message:'STOCK_PRIVATE_FIXTURE',twoFactor:'OTP_PRIVATE_FIXTURE'}]});
+ const {account}=await post('/accounts',{...creds,name:'Sintetik işçi'});await post('/account-control',{id:account.id,action:'enable'});const product=(await pool.query("select id from manual_stock_products where source_product_id='netflix'")).rows[0].id;await post('/permission',{employeeId:account.id,productId:product,allowed:true});
+ await post('/problem-save',{product:'netflix',title:'Girişdə təsdiq kodu',explanation:'Kod istənəndə operatora yazın və giriş ekranını açın.',answer:ready,image:img,mime:'image/png'});
+ await post('/bot-save',{product:'netflix',question:'Girişdə kod qaydası',explanation:'Kod tələb olunarsa operatora yönləndirin.'});
+ await post('/bot-save',{product:'chatgpt',question:'ChatGPT giriş kodu',explanation:'UNAUTHORIZED_FIXTURE'});
+ const wc=await browser.newContext({viewport:{width:390,height:950},permissions:['clipboard-read','clipboard-write']}),w=await wc.newPage();
+ await w.goto(origin+'/employee/stock/login');await w.getByLabel('Giriş adı').fill(creds.login);await w.getByLabel('Şifrə').fill(creds.password);await w.getByRole('button',{name:'Daxil ol'}).click();await w.getByRole('button',{name:'MirPanel Bot',exact:true}).click();
+ const ask=async(q,n)=>{await w.getByLabel('Sualınız').fill(q);await w.getByRole('button',{name:'Göndər',exact:true}).click();await w.waitForFunction(n=>document.querySelectorAll('.bot-log article').length===n,n);};
+ await ask('Netflx-də giris kodu istəyir. user@example.invalid 0501234567',1);
+ await ask('Bəs kodu haradan alım?',2);await ask('Netflix-ə daxil olanda doğrulama istəyir',3);assert.equal(requests.length,3);assert.ok(requests.every(x=>x.product==='Netflix Şəxsi'&&x.records.length===2));
+ assert.ok(!/user@example|0501234567|STOCK_PRIVATE|OTP_PRIVATE|UNAUTHORIZED_FIXTURE|Salam!/u.test(JSON.stringify(requests)));
+ await w.getByRole('button',{name:'Cavabı kopyala',exact:true}).first().click();assert.equal((await w.evaluate(()=>navigator.clipboard.readText())).replaceAll('\r\n','\n'),ready);
+ await w.getByRole('button',{name:/Problem qeydini aç/}).last().click();await w.locator('.problem-image').waitFor();await w.waitForFunction(()=>document.querySelector('.problem-image')?.naturalWidth>0);await w.screenshot({path:out+'/worker-mobile.png',fullPage:true});
+ await w.getByLabel('Sualınız').fill('ChatGPT giriş kodu nədir?');await w.getByRole('button',{name:'Göndər',exact:true}).click();await w.getByText('Bu məhsul üzrə məlumatı açmağa icazəniz yoxdur.',{exact:true}).waitFor();assert.equal(requests.length,3);
+ await w.getByRole('button',{name:'Yeni söhbət',exact:true}).click();await ask('Salam, baxa bilərsən?',1);await w.getByText('Sual hansı məhsulla bağlıdır və ekranda nə baş verir?',{exact:true}).waitFor();await ask('Netflix giriş kodu',2);assert.equal(requests.at(-1).product,'Netflix Şəxsi');
+ await w.getByRole('button',{name:'Yeni söhbət',exact:true}).click();await ask('Netflx-də region xətası',1);
+ if(await w.getByText(/uyğun qayda tapmadım/).count()===0)await ask('Region',2);
+ const queued=(await pool.query('select question from manual_bot_unanswered')).rows;assert.equal(queued.length,1);assert.match(queued[0].question,/region/u);
+ const ac=await browser.newContext({viewport:{width:390,height:950}});await ac.addCookies([{name:'test_admin',value:'owner',url:origin}]);const p=await ac.newPage();await p.goto(origin+'/admin/employee-stock');await p.getByRole('button',{name:'Botun məlumatları',exact:true}).click();
+ await p.getByRole('button',{name:'Qayda kimi cavablandır',exact:true}).click();await p.getByLabel('İşçiyə izah',{exact:true}).fill('Region xətasında operatora yönləndirin.');await p.getByRole('button',{name:'Qaydanı saxla',exact:true}).click();await p.getByText('Qayda saxlanıldı.',{exact:true}).waitFor();await p.getByText('Cavabsız sual yoxdur.',{exact:true}).waitFor();await p.screenshot({path:out+'/admin-mobile.png',fullPage:true});
+ await w.getByRole('button',{name:'Yeni söhbət',exact:true}).click();await ask('Netflix region xətası',1);assert.match(JSON.stringify(requests.at(-1)),/Region xətasında/u);
+ offline=true;await ask('Netflix giriş kodu',2);await w.getByText(/Model xidməti hazırda əlçatan deyil/).waitFor();assert.equal(await w.getByRole('button',{name:/Problem qeydini aç/}).count(),1);
+ assert.equal(Number((await pool.query('select count(*) n from manual_stock_allocations')).rows[0].n),0);
+ assert.equal((await fetch(origin+worker+'/bot-ask',{method:'POST'})).status,401);
+ console.log(JSON.stringify({model:'synthetic adapter',typoAndFollowup:true,copyAndImage:true,unansweredResolved:true,permissionDenied:true,offlineFallback:true,productionWrites:0}));
+}finally{await browser.close();await f.close();}

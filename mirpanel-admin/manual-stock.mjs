@@ -1,10 +1,12 @@
 import crypto from 'node:crypto';
 import {normalizeBankBackground} from './bank-backgrounds.mjs';
+import {createWorkerBot} from './manual-stock-bot.mjs';
 import {createStockCrypto,hashPassword,text,validateTemplate,renderDelivery,fail} from './employee-security.mjs';
 const uuid=v=>{if(!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(v||''))throw fail('Əməliyyat identifikatoru düzgün deyil.');return v;};
 const pageNumber=url=>{const n=Number(url.searchParams.get('page')||0);if(!Number.isSafeInteger(n)||n<0||n>10000)throw fail('Səhifə düzgün deyil.');return n;};
 export function createManualStock({client,config,readBody,loadCatalog,ownerCheck=async()=>false}){
  const crypt=()=>createStockCrypto(config.encryptionKey),safe=a=>({id:a.id,login:a.login,name:a.display_name,active:a.active,manualOnly:a.manual_only===true,archivedAt:a.archived_at||null,allProducts:a.manual_all_products===true});
+ const bot=createWorkerBot({client,loadCatalog,model:config.workerBotModel,makeId:v=>crypt().id(v,0)});
  const subscribers=new Set();let timer=null,checking=false,lastRevision=null;
  async function revision(){return(await query(client.from('manual_stock_updates').select('revision').eq('id',true).single())).revision;}
  function publish(){for(const s of subscribers)if(!s.res.destroyed)s.res.write('event: changed\ndata: {}\n\n');}
@@ -24,6 +26,8 @@ export function createManualStock({client,config,readBody,loadCatalog,ownerCheck
  async function problem(action,actor,p_data){const {data,error}=await client.rpc('manual_stock_problem',{p_action:action,p_employee:actor.role==='employee'?actor.id:null,p_data});if(error){const m=String(error.message||'');throw fail(m.includes('FORBIDDEN')?'Bu məhsula icazəniz yoxdur.':m.includes('NOT_FOUND')?'Problem tapılmadı.':'Problem sorğusu tamamlanmadı.',m.includes('FORBIDDEN')?403:m.includes('NOT_FOUND')?404:503);}return data;}
  return{openStream(req,res,actor,valid){if([...subscribers].filter(s=>s.id===actor.id).length>=4)throw fail('Çox açıq işçi pəncərəsi var.',429);res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'private,no-store,no-transform','X-Accel-Buffering':'no','Connection':'keep-alive'});res.write('retry: 3000\nevent: changed\ndata: {}\n\n');const s={res,id:actor.id,valid};subscribers.add(s);if(!timer){timer=setInterval(tick,10000);timer.unref?.();}res.on('close',()=>{subscribers.delete(s);if(!subscribers.size){clearInterval(timer);timer=null;}});},async handle(req,url,actor){const admin=actor.role==='admin',prefix=admin?'/api/admin/workforce/manual-stock':'/api/employee/manual-stock',part=url.pathname.slice(prefix.length);if(admin){const owner=await ownerCheck();if(!owner)throw fail('Sahib-admin təsdiqi tələb olunur.',403);actor={...actor,ref:'owner:'+owner};}
   if(req.method==='GET'){
+   if(admin&&part==='/bot-data')return bot.handle(part,{},actor);
+   if(!admin&&part==='/bot-reference')return bot.handle(part,{product:text(url.searchParams.get('product'),120),id:uuid(url.searchParams.get('id'))},actor);
    if(admin&&part==='/source-catalog'){const [products,links]=await Promise.all([sourceCatalog(),query(client.from('manual_stock_products').select('id,source_product_id'))]);return{products,links};}
    if(part==='/state'){const [products,history]=await Promise.all([action('catalog',actor),action('history',actor)]);const v={products,history};if(admin){const links=await query(client.from('manual_stock_plans').select('id,source_plan_key'));for(const p of products)for(const pl of p.plans)pl.sourceKey=links.find(l=>l.id===pl.id)?.source_plan_key;v.accounts=(await query(client.from('employee_accounts').select('id,login,display_name,active,manual_only,archived_at,manual_all_products').order('created_at'))).map(safe);v.permissions=await action('permissions',actor);}return v;}
    if(part==='/allocation')return allocated(actor,url.searchParams.get('id'));
@@ -59,6 +63,7 @@ export function createManualStock({client,config,readBody,loadCatalog,ownerCheck
   }
   if(req.method!=='POST')throw fail('Endpoint tapılmadı.',404);
   const b=await readBody(req,admin&&part==='/problem-save'?7100000:admin&&part==='/ready-message'?10600000:admin&&part==='/instruction-image'?2900000:part==='/intake'?700000:30000),key=uuid(req.headers['x-idempotency-key']);
+  if(admin&&['/bot-save','/bot-delete'].includes(part)||!admin&&part==='/bot-ask')return bot.handle(part,b,actor,key);
   if(!admin){if(part==='/acknowledge')return action('acknowledge',actor,{id:uuid(b.id)},key);if(part!=='/claim')throw fail('İcazə yoxdur.',403);const r=await action('claim',actor,{planId:uuid(b.planId)},key);return allocated(actor,r.id);}
   if(part==='/preview'){const t=b.intake?template(b.template):validateTemplate(b.template);return{message:renderDelivery(t,{product_title:text(b.productName,300),plan_name:text(b.planName,500),quantity:1},[{email:'numune@example.invalid',username:'numune',login:'numune@example.invalid',password:'NÜMUNƏ — real hesab deyil',extra:'Əlavə nümunə məlumat',instructions:'Əlavə nümunə məlumat',duration:text(b.duration,120)}])};}
   if(part==='/instruction-image'){if(b.remove!==true&&!b.file)throw fail('Şəkil seçin.');return{ok:await instructionImage('save',actor,b.id,b.remove===true?null:await normalizeInstruction(b.file))};}

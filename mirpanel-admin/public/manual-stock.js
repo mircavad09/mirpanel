@@ -44,8 +44,8 @@ function linkText(node,value){
  }
  node.append(document.createTextNode(value.slice(offset)));
 }
-function readableText(value,kind='message'){
- const box=el('div',null,'readable-text'),body=el('div',null,kind+' readable-content');body.id='worker-text-'+crypto.randomUUID();linkText(body,value);
+function readableText(value,kind='message',links=true){
+ const box=el('div',null,'readable-text'),body=el('div',null,kind+' readable-content');body.id='worker-text-'+crypto.randomUUID();if(links)linkText(body,value);else body.textContent=value;
  let expanded=false;const toggle=el('button','Davamını göstər','readable-toggle');toggle.type='button';toggle.hidden=true;toggle.setAttribute('aria-controls',body.id);toggle.setAttribute('aria-expanded','false');
  function measure(){
   const height=parseFloat(getComputedStyle(body).lineHeight)*5;const long=mobileText.matches&&height>0&&body.scrollHeight>height+1;
@@ -129,10 +129,47 @@ function workerNav(){
  if(admin)return;
  if(!workerTabs){workerTabs=el('nav');workerTabs.setAttribute('aria-label','İşçi paneli');app.before(workerTabs);}
  workerTabs.replaceChildren();
- for(const [id,label] of [['accounts','Hesablar'],['problems','Problemlər']]){
-  const b=btn(label,async()=>{if(id===workerTab)return;workerTab=id;currentAllocation=null;workerNav();if(id==='problems')app.replaceChildren(problemPanel(false));else{const pending=readPending();if(pending?.allocationId)showMessage(await api('/allocation?id='+pending.allocationId));else products();}});
+ for(const [id,label] of [['accounts','Hesablar'],['problems','Problemlər'],['bot','MirPanel Bot']]){
+  const b=btn(label,async()=>{if(id===workerTab)return;workerTab=id;currentAllocation=null;workerNav();if(id==='bot')app.replaceChildren(workerBotPanel());else if(id==='problems')app.replaceChildren(problemPanel(false));else{const pending=readPending();if(pending?.allocationId)showMessage(await api('/allocation?id='+pending.allocationId));else products();}});
   b.setAttribute('aria-pressed',String(id===workerTab));workerTabs.append(b);
  }
+}
+let botContext=null,botTurns=[];
+function workerBotPanel(){
+ const box=panel('MirPanel Bot'),log=el('div',null,'bot-log'),f=el('form'),q=field(f,'Sualınız','question','','textarea'),send=el('button','Göndər','gold');
+ log.setAttribute('role','log');log.setAttribute('aria-live','polite');q.maxLength=700;q.required=true;q.rows=2;q.placeholder='Məsələn: Netflx-də giriş kodu istəyir, nə edim?';send.type='submit';f.append(send);
+ box.append(el('p','Məhsulu və problemi yazın. Şifrə, 2FA kodu və müştərinin şəxsi məlumatını yazmayın.','muted'),log,f,btn('Yeni söhbət',async()=>{botTurns=[];botContext=null;log.replaceChildren();q.value='';}));
+ function draw(t){
+  const row=el('article',null,'stock-account');row.append(el('strong','Siz'),el('p',t.question,'problem-text'),el('strong','MirPanel Bot'),readableText(t.reply.text,'problem-text',false));
+  for(const note of t.reply.notes||[]){row.append(el('h3',note.title),readableText(note.text,'problem-text'));}
+  for(const ref of t.reply.sources||[]){if(!ref.problemId)continue;
+   const detail=el('div');const link=btn('Problem qeydini aç · '+ref.title,async()=>{const {entry}=await api('/bot-reference?'+new URLSearchParams({product:ref.product,id:ref.problemId}));const img=el('img',null,'problem-image');img.alt=entry.title;img.src=base+'/problem-image?'+new URLSearchParams({source:ref.product,id:entry.id});detail.replaceChildren(el('h3',entry.title),img,el('strong','İşçiyə izah'),readableText(entry.explanation,'problem-text'));if(entry.answer)detail.append(el('strong','Müştəriyə hazır cavab'),readableText(entry.answer,'problem-text'),btn('Cavabı kopyala',async()=>navigator.clipboard.writeText(entry.answer)));});
+   row.append(link,detail);
+  }
+  if(t.reply.ready)row.append(el('h3','Müştəriyə hazır cavab'),readableText(t.reply.ready,'problem-text'),btn('Cavabı kopyala',async()=>{await navigator.clipboard.writeText(t.reply.ready);status.textContent='Cavab kopyalandı.';}));
+  log.append(row);
+ }
+ botTurns.forEach(draw);let retry;
+ f.onsubmit=e=>{e.preventDefault();void act(send,async()=>{const question=q.value.trim();if(!question)return;if(retry?.question!==question)retry={question,key:crypto.randomUUID()};q.disabled=true;try{const reply=await api('/bot-ask',{question,context:botContext},retry.key);botContext=reply.context;const t={question,reply};botTurns.push(t);if(botTurns.length>30){botTurns.shift();log.firstElementChild?.remove();}draw(t);q.value='';retry=null;}finally{q.disabled=false;}});};
+ return box;
+}
+function adminBotPanel(){
+ const box=panel('Botun məlumatları'),form=el('form',null,'stock-account'),scope=select(form,'Məhsul','product',[['','Ümumi qayda'],...source.products.map(p=>[p.id,p.name])]),question=field(form,'Sual və ya mövzu','question'),explanation=field(form,'İşçiyə izah','explanation','','textarea'),answer=field(form,'Müştəriyə hazır cavab (istəyə bağlı)','answer','','textarea');
+ const save=el('button','Qaydanı saxla','gold'),list=el('div'),queue=el('div');let selected=null,unanswered=null,request;
+ save.type='submit';question.required=explanation.required=true;question.maxLength=360;explanation.maxLength=4000;answer.maxLength=6000;
+ function edit(x={},isUnanswered=false){form.reset();selected=isUnanswered?null:x.id||null;unanswered=isUnanswered?x.id:null;scope.value=x.product||'';question.value=x.question||'';explanation.value=x.explanation||'';answer.value=x.answer||'';request=null;}
+ form.oninput=()=>request=null;
+ form.append(save,btn('Yeni qayda',async()=>edit()));box.append(el('p','Qaydalara müştəri adı, telefon, giriş məlumatı və kod yazmayın. Mövcud problem qeydləri avtomatik istifadə olunur.','muted'),form,list,queue);
+ form.onsubmit=e=>{e.preventDefault();void act(save,async()=>{request||=crypto.randomUUID();await api('/bot-save',{id:selected,unansweredId:unanswered,product:scope.value,question:question.value,explanation:explanation.value,answer:answer.value},request);edit();status.textContent='Qayda saxlanıldı.';await load();});};
+ async function load(){
+  try{const data=await api('/bot-data');if(!box.isConnected)return;list.replaceChildren(el('h3','Qaydalar'));queue.replaceChildren(el('h3','Cavabsız suallar'));
+   if(!data.rules.length)list.append(el('p','Hələ qayda yoxdur.','muted'));
+   if(!data.unanswered.length)queue.append(el('p','Cavabsız sual yoxdur.','muted'));
+   for(const x of data.rules){const row=el('div',null,'stock-account');row.append(el('strong',x.question),el('p',source.products.find(p=>p.id===x.product)?.name||'Ümumi qayda','muted'),btn('Redaktə et',async()=>{edit(x);question.focus();}),btn('Qaydanı sil',async()=>{if(!confirm('Qayda silinsin?'))return;await api('/bot-delete',{id:x.id});await load();},'danger'));list.append(row);}
+   for(const x of data.unanswered){const row=el('div',null,'stock-account');row.append(el('p',x.question),el('small',exactTime(x.created_at)),btn('Qayda kimi cavablandır',async()=>{edit(x,true);explanation.focus();}));queue.append(row);}
+  }catch(e){if(box.isConnected)list.replaceChildren(el('p',e.message),btn('Yenidən cəhd et',load));}
+ }
+ queueMicrotask(()=>void load());return box;
 }
 function problemPanel(owner){
  const box=panel('Məhsul problemləri');let catalog=owner?source.products:[];
@@ -165,7 +202,7 @@ function problemPanel(owner){
   queueMicrotask(()=>void init());
  }return box;
 }
-function adminView(){app.replaceChildren();const tabs=document.getElementById('tabs');tabs.replaceChildren();for(const [id,label]of [['catalog','Stok və mesaj əlavə et'],['units','Hesablar'],['accounts','İşçi girişləri'],['history','Götürmələr'],['problems','Problemlər'],['audit','Audit']]){const b=btn(label,async()=>{if(id==='units'||id==='accounts'||id==='history')state=await api('/state');tab=id;await adminView();});b.setAttribute('aria-pressed',String(tab===id));tabs.append(b);}
+function adminView(){app.replaceChildren();const tabs=document.getElementById('tabs');tabs.replaceChildren();for(const [id,label]of [['catalog','Stok və mesaj əlavə et'],['units','Hesablar'],['accounts','İşçi girişləri'],['history','Götürmələr'],['problems','Problemlər'],['bot','Botun məlumatları'],['audit','Audit']]){const b=btn(label,async()=>{if(id==='units'||id==='accounts'||id==='history')state=await api('/state');tab=id;await adminView();});b.setAttribute('aria-pressed',String(tab===id));tabs.append(b);}
  if(tab==='catalog'){
   app.append(intakeForm());
  }else if(tab==='units'){
@@ -175,13 +212,15 @@ function adminView(){app.replaceChildren();const tabs=document.getElementById('t
   const list=panel('Girişlər və məhsul icazələri');for(const a of state.accounts.filter(a=>!a.archivedAt)){const row=panel(a.name+' · '+a.login);row.append(el('p',a.active?'Giriş aktivdir':'Giriş bağlıdır','muted'),btn(a.active?'Girişi bağla':'Girişi aç',async()=>{await api('/account-control',{id:a.id,action:a.active?'disable':'enable'});state=await api('/state');adminView();}),btn('Bütün sessiyaları bağla',async()=>{await api('/account-control',{id:a.id,action:'revoke'});status.textContent='Sessiyalar bağlandı.';}));const all=check(row,'Bütün məhsullara giriş','allProducts',a.allProducts);all.onchange=()=>void act(all,async()=>{try{await api('/permission-all',{employeeId:a.id,allowed:all.checked});state=await api('/state');adminView();}catch(error){all.checked=!all.checked;throw error;}});if(a.allProducts)row.append(el('p','Mövcud və gələcək işçi stoku məhsulları avtomatik açıqdır.','muted'));for(const p of a.allProducts?[]:state.products){const label=el('label',null,'check'),c=el('input');c.type='checkbox';c.checked=state.permissions.some(x=>x.employee_id===a.id&&x.product_id===p.id);c.onchange=()=>void act(c,async()=>{try{await api('/permission',{employeeId:a.id,productId:p.id,allowed:c.checked});}catch(e){c.checked=!c.checked;throw e;}});label.append(c,document.createTextNode(p.name));row.append(label);}row.append(btn('İşçini sil',async()=>{if(!confirm(a.name+' ('+a.login+') siyahıdan çıxarılsın? Giriş bağlanacaq, tarixçə qalacaq.'))return;await api('/account-archive',{id:a.id,confirmed:true});state=await api('/state');adminView();status.textContent='İşçi siyahıdan çıxarıldı.';},'danger'),accessRecords(a));list.append(row);}app.append(list);const archived=state.accounts.filter(a=>a.archivedAt);if(archived.length){const archive=el('details',null,'stock-account');archive.append(el('summary','Arxivlənmiş işçilərin tarixçəsi'));for(const a of archived){const row=panel(a.name+' · '+a.login);row.append(accessRecords(a));archive.append(row);}app.append(archive);}
  }else if(tab==='problems'){
   app.append(problemPanel(true));
+ }else if(tab==='bot'){
+  app.append(adminBotPanel());
  }else if(tab==='history'){
   app.append(claimRecords());
  }else{const box=panel('Moderasiya deyil — işçi stokunun audit tarixçəsi');app.append(box);void api('/audit').then(r=>{for(const a of r.events)box.append(el('p',date(a.created_at)+' · '+a.actor+' · '+a.action));}).catch(e=>status.textContent=e.message);}
 }
 function editSubmit(f,path,initial){return e=>{e.preventDefault();const b=f.querySelector('button[type=submit]');void act(b,async()=>{const data={...initial,...Object.fromEntries(new FormData(f))};for(const c of f.querySelectorAll('[type=checkbox]'))data[c.name]=c.checked;const key=f.dataset.request||(f.dataset.request=crypto.randomUUID());await api(path,data,key);f.reset();state=await api('/state');adminView();status.textContent='Yadda saxlanıldı.';});};}
-function showExpired(){events?.close();events=null;currentAllocation=null;workerTabs?.replaceChildren();app.replaceChildren(el('p','Sessiya bitib. Yenidən daxil olun.'));const a=el('a','Yenidən daxil ol');a.href='/employee/stock/login';app.append(a);}
-async function refreshWorker(){if(admin||document.hidden||life.signal.aborted)return;if(busy||refreshing){refreshNeeded=true;return;}refreshing=true;refreshNeeded=false;try{const next=await api('/state'),changed=JSON.stringify(next)!==JSON.stringify(state);state=next;if(workerTab==='problems'){app.replaceChildren(problemPanel(false));}else if(changed&&!currentAllocation){const focus=app.querySelector('input[type=search]')===document.activeElement,pos=document.activeElement?.selectionStart;products();if(focus){const search=app.querySelector('input[type=search]');search?.focus();search?.setSelectionRange(pos,pos);}}}catch(e){status.textContent=e.message;}finally{refreshing=false;if(refreshNeeded&&!busy)void refreshWorker();}}
+function showExpired(){events?.close();events=null;currentAllocation=null;botTurns=[];botContext=null;workerTabs?.replaceChildren();app.replaceChildren(el('p','Sessiya bitib. Yenidən daxil olun.'));const a=el('a','Yenidən daxil ol');a.href='/employee/stock/login';app.append(a);}
+async function refreshWorker(){if(admin||document.hidden||life.signal.aborted)return;if(busy||refreshing){refreshNeeded=true;return;}refreshing=true;refreshNeeded=false;try{const next=await api('/state'),changed=JSON.stringify(next)!==JSON.stringify(state);state=next;if(workerTab==='problems'){app.replaceChildren(problemPanel(false));}else if(changed&&workerTab==='accounts'&&!currentAllocation){const focus=app.querySelector('input[type=search]')===document.activeElement,pos=document.activeElement?.selectionStart;products();if(focus){const search=app.querySelector('input[type=search]');search?.focus();search?.setSelectionRange(pos,pos);}}}catch(e){status.textContent=e.message;}finally{refreshing=false;if(refreshNeeded&&!busy)void refreshWorker();}}
 function connect(){if(admin||events||document.hidden||life.signal.aborted)return;const stream=events=new EventSource(base+'/events');stream.addEventListener('changed',()=>void refreshWorker());stream.addEventListener('expired',showExpired);stream.addEventListener('error',()=>{if(stream.readyState===EventSource.CLOSED&&events===stream){events=null;void refreshWorker();}});}
 async function start(){try{const s=await api(admin?'/api/session':'/api/employee/session');csrf=s.csrfToken;account=s.account||{id:'owner'};if(!admin){document.getElementById('workerName').textContent=account.name;document.getElementById('logout').onclick=()=>void act(document.getElementById('logout'),async()=>{await api('/api/employee/logout',{});events?.close();events=null;clearPending();currentAllocation=null;app.replaceChildren();location.assign('/employee/stock/login');});}if(admin){[state,source]=await Promise.all([api('/state'),api('/source-catalog')]);adminView();}else{state=await api('/state');workerNav();const pending=readPending();if(pending?.allocationId)showMessage(await api('/allocation?id='+pending.allocationId));else if(pending?.key){const a=await api('/claim',{planId:pending.planId},pending.key);savePending({...pending,allocationId:a.id});showMessage(a);}else products();connect();}}catch(e){status.textContent=e.message;app.replaceChildren(btn('Yenidən cəhd et',start));}}
 let resumeLink=null;
