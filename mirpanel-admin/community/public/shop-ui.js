@@ -1,9 +1,10 @@
 import '/cart-store.js?v=guest-order-20261106';
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
-import {createWalletTopup} from '/community-assets/wallet-topup.js?v=bank-flow-20261104';
+import {createWalletTopup,drawBankChoices} from '/community-assets/wallet-topup.js?v=shared-bank-20261106';
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
+if(route==='/odenis')app.dataset.shopCheckout='';
 if(route==='/balans'){app.classList.add('shop-wallet-page');document.body.classList.add('wallet-page-active');}
 const el=(t,text,cls)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;},link=(text,href)=>{const a=el('a',text,'shop-link');a.href=href;return a;},button=(text,fn,primary=false)=>{const b=el('button',text,primary?'shop-primary':'');b.type='button';b.onclick=fn;return b;};
 let closed=false,working=false,profile=null,group=null,mode='card',methodId='',methods=[],timer,epoch=0,walletPrefetched;const requests=new Set();
@@ -49,8 +50,8 @@ async function payment(){
  go.disabled=!stockOk||!detailsOk||!termsOk||(wallet?(q.balanceCents==null||short>0):!methods.length);go.replaceChildren();if(go.disabled)go.append(checkoutIcon('<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>'));go.append(document.createTextNode('Sifarişi tamamla'));
  }
  async function submit(selected,id){try{const key=await requestKey(items,selected,id);group=await api('/checkout',{items,mode:selected,methodId:id,requestId:key.requestId,consentAccepted:true,expectedTotalCents:q.totalCents});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id}));await paymentGroup();}catch(e){if(e.status===409)await payment();throw e;}}
- async function bankSelection(){if(!termsOk||!methods.length)return;const panel=card('Bank kartını seçin'),grid=el('div',null,'checkout-methods');panel.classList.add('checkout-choices');let picked='';const next=button('Bu kartla davam et',()=>run(async()=>{if(!picked)return;next.disabled=true;try{await submit('card',picked);}finally{next.disabled=!picked;}}),true);next.disabled=true;
- for(const m of methods){const tile=button('',()=>{picked=m.id;for(const n of grid.children)n.setAttribute('aria-pressed',String(n===tile));next.disabled=false;});tile.className='checkout-tile';tile.setAttribute('aria-pressed','false');tile.append(cardIcon(),el('strong',m.displayName),el('small',m.maskedNumber));bankArt(tile,m);grid.append(tile);}
+ async function bankSelection(){if(!termsOk||!methods.length)return;const panel=card('Bank kartını seçin'),grid=el('div',null,'wallet-bank-grid');panel.classList.add('checkout-choices');let picked='';const next=button('Bu kartla davam et · '+checkoutMoney(q.totalCents),()=>run(async()=>{if(!picked)return;next.disabled=true;try{await submit('card',picked);}finally{next.disabled=!picked;}}),true);next.disabled=true;
+ drawBankChoices({el,button,grid,methods,onSelect:id=>{picked=id;next.disabled=false;}});
  panel.append(grid,next,button('← Ödəniş üsuluna qayıt',()=>app.replaceChildren(choices,error)));app.replaceChildren(panel,error);}
  updateChoice();app.replaceChildren(choices,error);
 }

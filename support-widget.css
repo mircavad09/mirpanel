@@ -25,3 +25,7 @@ body:has(.modal.show) #supportWidget,body.paymentCheckoutOpen #supportWidget,bod
 @media(max-width:850px){body.has-bottom-nav:not(.paymentCheckoutOpen){padding-bottom:calc(var(--browser-nav-height,64px) + env(safe-area-inset-bottom,0px) + 82px)!important}html.community-chat-screen body.has-bottom-nav{padding-bottom:0!important}}
 @media(max-width:850px){body.has-bottom-nav #supportWidget{--support-base:calc(var(--browser-nav-height,64px) + env(safe-area-inset-bottom,0px) + 12px)}body #supportWidget .support-fab{height:46px;padding:0 12px;font-size:13px!important;border-radius:14px}body #supportWidget #waFab{left:10px!important}#supportWidget .support-ai{right:10px}#aiSupportPanel{right:10px;width:calc(100vw - 20px);max-width:390px;max-height:min(var(--support-panel-limit,100dvh),calc(100dvh - var(--support-base) - 76px))}}
 @media(prefers-reduced-motion:reduce){#supportWidget *,#supportWidget *::before,#supportWidget *::after{transition:none!important;animation:none!important}}
+body:has([data-shop-checkout],.mir-cart-drawer[open]) #supportWidget{display:none!important;pointer-events:none!important}
+@media(max-width:850px){
+ body .waFab:not(.support-whatsapp){display:none!important;pointer-events:none!important}
+}

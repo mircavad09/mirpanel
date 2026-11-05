@@ -45,9 +45,9 @@
 .shop-page .wallet-topup [hidden]{display:none!important}
 .shop-page .wallet-payment-method{width:100%;text-align:left;border-color:#b99a26;background:#24251d;color:#fff0a0}
 .wallet-bank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:14px 0}
-.shop-page.shop-wallet-page .wallet-bank-choice{position:relative;isolation:isolate;overflow:hidden;aspect-ratio:var(--wallet-bank-ratio,1.6);padding:10px;border-radius:14px;min-width:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;background:#171c24;border:1px solid #59616c;color:#f4f6fa;text-align:left;box-shadow:0 3px 10px #0003}
-.shop-page.shop-wallet-page .wallet-bank-choice[aria-pressed=true]{border:2px solid #ffd400;padding:9px;box-shadow:0 0 0 1px #ffd40055}
-.wallet-bank-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:center top;z-index:-2;pointer-events:none}
+.shop-page .wallet-bank-choice{position:relative;isolation:isolate;overflow:hidden;aspect-ratio:1.6;padding:10px;border-radius:14px;min-width:0;display:flex;flex-direction:column;justify-content:space-between;align-items:flex-start;background:#171c24;border:1px solid #59616c;color:#f4f6fa;text-align:left;box-shadow:0 3px 10px #0003}
+.shop-page .wallet-bank-choice[aria-pressed=true]{border-color:#ffd400;box-shadow:0 0 0 1px #ffd40055}
+.wallet-bank-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:left top;z-index:-2;pointer-events:none}
 .wallet-bank-choice:after,.wallet-bank-detail:after{content:'';position:absolute;inset:45% 0 0;background:linear-gradient(transparent,#0006);z-index:-1;pointer-events:none}
 .wallet-bank-name{font-size:15px;line-height:1.3;max-width:75%}
 .has-bank-art .wallet-bank-name{visibility:hidden}
@@ -66,7 +66,7 @@
 .shop-page.shop-wallet-page .wallet-bank-number{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;background:#071217dd;border-radius:10px;color:#fff;min-width:0}
 .wallet-bank-number>span{font-size:15px;font-weight:600;line-height:1.5;overflow-wrap:anywhere;min-width:0}
 .shop-page.shop-wallet-page .wallet-bank-number button{flex:none;min-height:36px;padding:6px 9px;font-size:12px;color:#fff;background:#ffffff0a;border-color:#b9c1cc77}
-.shop-page.shop-wallet-page .bank-m10{background:#04c7b5;color:#073b34}
+.shop-page .bank-m10{background:#04c7b5;color:#073b34}
 .bank-m10 .wallet-bank-fields small{color:#11483f}
 .bank-m10:after{background:linear-gradient(transparent,#00b49a22)}
 .wallet-topup-steps{padding:12px;background:#1b2634;border:1px solid #364966;border-radius:12px;margin:12px 0;color:#d5dfed}
@@ -95,4 +95,4 @@
 .shop-page .shop-has-bank-art{position:relative;isolation:isolate;overflow:hidden;background:#181817;color:#fff}
 .shop-bank-art{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;z-index:-2;pointer-events:none}
 .shop-has-bank-art::before{content:"";position:absolute;inset:0;background:linear-gradient(transparent,#000d);z-index:-1;pointer-events:none}
-.shop-page .checkout-tile.shop-has-bank-art{min-height:130px;align-content:end}.shop-page .shop-has-bank-art :is(small,p){color:#fff}
+.shop-page .shop-has-bank-art :is(small,p){color:#fff}
