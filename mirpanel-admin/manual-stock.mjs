@@ -30,7 +30,17 @@ export function createManualStock({client,config,readBody,loadCatalog,ownerCheck
    if(admin&&part==='/units'){const page=pageNumber(url);const rows=await query(client.from('manual_stock_units').select('id,state,created_at,taken_at').eq('plan_id',uuid(url.searchParams.get('planId'))).order('created_at',{ascending:false}).order('id').range(page*50,page*50+50));return{units:rows.slice(0,50),more:rows.length>50};}
    if(admin&&part==='/record'){const u=await action('unit',actor,{id:uuid(url.searchParams.get('id'))}),s=crypt().decrypt(u.cipher,`manual:${u.id}:${u.plan_id}`);return{...internal(s),unitId:u.id,hasInstructionImage:await instructionImage('exists',actor,u.id),message:typeof s.readyMessage==='string'?s.readyMessage:null};}
    if(part==='/instruction-image')return Buffer.from(await instructionImage('read',actor,url.searchParams.get('id')),'base64');
-   if(part==='/problems'||part==='/problem-image'){const product=text(url.searchParams.get('product'),120);if(!product)throw fail('Məhsulu seçin.');if(part==='/problem-image'){const data=await problem('image',actor,{product,id:uuid(url.searchParams.get('id'))});return Buffer.from(data,'base64');}const rows=await problem('list',actor,{product,page:pageNumber(url)});return{entries:rows.slice(0,25),more:rows.length>25};}
+   if(!admin&&part==='/problem-products'){
+    const [ids,catalog]=await Promise.all([problem('products',actor,{}),loadCatalog()]);const allowed=new Set(ids);
+    return{products:(catalog.products||[]).filter(p=>p.active!==false&&allowed.has(String(p.id))).map(p=>({id:String(p.id),name:p.title||p.name}))};
+   }
+   if(part==='/problems'||part==='/problem-image'){
+    const source=!admin&&url.searchParams.has('source'),product=text(url.searchParams.get(source?'source':'product'),120);if(!product)throw fail('Məhsulu seçin.');
+    if(source&&!(await loadCatalog()).products?.some(p=>String(p.id)===product&&p.active!==false))throw fail('Bu məhsula icazəniz yoxdur.',403);
+    const scope=source?{source:product}:{product};
+    if(part==='/problem-image'){const data=await problem('image',actor,{...scope,id:uuid(url.searchParams.get('id'))});return Buffer.from(data,'base64');}
+    const rows=await problem('list',actor,{...scope,page:pageNumber(url)});return{entries:rows.slice(0,25),more:rows.length>25};
+   }
    if(admin&&part==='/access-history'){
     const id=uuid(url.searchParams.get('id')),page=pageNumber(url),end=page*50+50;
     const [a,logs,sessions]=await Promise.all([query(client.from('employee_accounts').select('session_version,archived_at').eq('id',id).single()),query(client.from('employee_work_audit').select('id,action,created_at').eq('actor_role','employee').eq('actor_ref',id).in('action',['login','logout','expired']).order('created_at',{ascending:false}).order('id',{ascending:false}).range(0,end)),query(client.from('manual_stock_sessions').select('version,expires_at').eq('employee_id',id).gt('expires_at','1970-01-02T00:00:00Z').lte('expires_at',new Date().toISOString()).order('expires_at',{ascending:false}).range(0,end))]);

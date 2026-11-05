@@ -135,10 +135,10 @@ function workerNav(){
  }
 }
 function problemPanel(owner){
- const box=panel('Məhsul problemləri'),catalog=owner?source.products:state.products;
+ const box=panel('Məhsul problemləri');let catalog=owner?source.products:[];
  let form,editing=null,attempt;
  const picker=el('div',null,'row problem-products');box.append(picker);
- if(!catalog.some(p=>p.id===problemProduct))problemProduct=catalog[0]?.id||'';
+ if(owner&&!catalog.some(p=>p.id===problemProduct))problemProduct=catalog[0]?.id||'';
  if(owner){
   form=el('form',null,'stock-account');form.hidden=!problemProduct;
   const title=field(form,'Problem başlığı','title'),image=field(form,'Şəkil (PNG, JPG, WebP — 5 MB)','image','','file'),explanation=field(form,'İşçiyə izah','explanation','','textarea'),answer=field(form,'Müştəriyə cavab','answer','','textarea');
@@ -149,16 +149,21 @@ function problemPanel(owner){
   form.oninput=()=>attempt=null;
   form.onsubmit=e=>{e.preventDefault();void act(submit,async()=>{const file=image.files[0];if(!file&&!editing)throw Error('Problem üçün şəkil seçin.');if(file?.size>5242880)throw Error('Şəkil maksimum 5 MB ola bilər.');const controls=[title,image,explanation,answer];controls.forEach(n=>n.disabled=true);try{let data;if(file){const url=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(Error('Şəkil oxunmadı.'));reader.readAsDataURL(file);});data=url.split(',')[1];}attempt||=crypto.randomUUID();await api('/problem-save',{id:editing,product:problemProduct,title:title.value,explanation:explanation.value,answer:answer.value,image:data,mime:file?.type},attempt);reset();status.textContent='Problem saxlanıldı.';await load();}finally{controls.forEach(n=>n.disabled=false);}});};
  }
- const load=paged(box,async page=>{if(!problemProduct)return{rows:[],more:false};const r=await api('/problems?'+new URLSearchParams({product:problemProduct,page}));return{rows:r.entries,more:r.more};},x=>{
-  const row=el('article',null,'stock-account'),img=el('img',null,'problem-image');img.loading='lazy';img.alt=x.title;img.src=base+'/problem-image?'+new URLSearchParams({product:problemProduct,id:x.id,v:Date.now()});
+ const productParam=owner?'product':'source';
+ const load=paged(box,async page=>{if(!problemProduct)return{rows:[],more:false};const r=await api('/problems?'+new URLSearchParams({[productParam]:problemProduct,page}));return{rows:r.entries,more:r.more};},x=>{
+  const row=el('article',null,'stock-account'),img=el('img',null,'problem-image');img.loading='lazy';img.alt=x.title;img.src=base+'/problem-image?'+new URLSearchParams({[productParam]:problemProduct,id:x.id,v:Date.now()});
   const title=el('h3');linkText(title,x.title);
   row.append(title,img,el('strong','İşçiyə izah'),readableText(x.explanation,'problem-text'),el('strong','Müştəriyə cavab'),readableText(x.answer,'problem-text'));
   if(owner)row.append(btn('Redaktə et',async()=>form.edit(x)),btn('Problemi sil',async()=>{if(!confirm('Problem qeydi silinsin?'))return;await api('/problem-delete',{id:x.id,product:problemProduct,confirmed:true});form.resetEditor();await load();},'danger'));
   else row.append(btn('Cavabı kopyala',async()=>{await navigator.clipboard.writeText(x.answer);status.textContent='Müştəriyə cavab kopyalandı.';}));
   return row;
- },catalog.length?'Bu məhsul üçün problem qeydi yoxdur.':'İcazəli məhsul tapılmadı.');
+ },owner?'Bu məhsul üçün problem qeydi yoxdur.':'İcazəli problem qeydi tapılmadı.');
  function draw(){picker.replaceChildren(...catalog.map(p=>{const b=btn(p.name,async()=>{problemProduct=p.id;form?.resetEditor();draw();await load();});b.setAttribute('aria-pressed',String(p.id===problemProduct));return b;}));}
- draw();queueMicrotask(()=>void load());return box;
+ if(owner){draw();queueMicrotask(()=>void load());}else{
+  picker.textContent='Məhsullar yüklənir…';
+  async function init(){try{const r=await api('/problem-products');if(!box.isConnected)return;catalog=r.products;if(!catalog.some(p=>p.id===problemProduct))problemProduct=catalog[0]?.id||'';draw();await load();}catch(e){if(box.isConnected)picker.replaceChildren(el('p',e.message),btn('Yenidən cəhd et',init));}}
+  queueMicrotask(()=>void init());
+ }return box;
 }
 function adminView(){app.replaceChildren();const tabs=document.getElementById('tabs');tabs.replaceChildren();for(const [id,label]of [['catalog','Stok və mesaj əlavə et'],['units','Hesablar'],['accounts','İşçi girişləri'],['history','Götürmələr'],['problems','Problemlər'],['audit','Audit']]){const b=btn(label,async()=>{if(id==='units'||id==='accounts'||id==='history')state=await api('/state');tab=id;await adminView();});b.setAttribute('aria-pressed',String(tab===id));tabs.append(b);}
  if(tab==='catalog'){
