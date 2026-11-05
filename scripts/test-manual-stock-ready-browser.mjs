@@ -19,12 +19,11 @@ try{
  await p.getByLabel('Paket',{exact:true}).selectOption({label:'1 aylıq'});
  const msg=p.getByLabel('Hazır mesaj',{exact:true}),save=p.getByRole('button',{name:'Yadda saxla',exact:true});
  assert.equal(await p.locator('#stockApp input[type=password]').count(),0);
- await msg.fill(raw);await p.screenshot({path:out+'/admin.png',fullPage:true});
+ await msg.first().fill(raw);const add=p.getByRole('button',{name:'+ Yeni stok əlavə et',exact:true});await add.click();await add.click();await add.click();await p.getByRole('button',{name:'Sahəni sil',exact:true}).last().click();assert.equal(await msg.count(),3);await msg.nth(1).fill(raw);await msg.nth(2).fill(raw);await p.screenshot({path:out+'/admin.png',fullPage:true});
  let lost=true,keys=[];await p.route('**/manual-stock/ready-message',async route=>{keys.push(route.request().headers()['x-idempotency-key']);if(lost){lost=false;await route.fetch();await route.abort();}else await route.continue();});
- await save.click();await p.waitForFunction(()=>!!document.querySelector('#status').textContent);assert.equal(await msg.inputValue(),raw);assert.equal(await stock(),1);
- await save.click();await p.getByText('1 hazır mesaj stoka əlavə edildi.',{exact:true}).waitFor();assert.equal(await stock(),1);
- for(let n=2;n<=3;n++){await msg.fill(raw);await save.click();await p.getByText('1 hazır mesaj stoka əlavə edildi.',{exact:true}).waitFor();assert.equal(await stock(),n);}
- assert.equal(keys[0],keys[1]);assert.equal(new Set(keys).size,3);
+ await save.click();await p.waitForFunction(()=>!!document.querySelector('#status').textContent);assert.deepEqual(await msg.evaluateAll(ns=>ns.map(n=>n.value)),[raw,raw,raw]);assert.equal(await stock(),3);
+ await save.click();await p.getByText('3 hazır mesaj stoka əlavə edildi.',{exact:true}).waitFor();assert.equal(await stock(),3);
+ assert.equal(keys[0],keys[1]);assert.equal(new Set(keys).size,1);
  const product=(await pool.query('select id from manual_stock_products where source_product_id=$1',['capcut'])).rows[0];
  const {account}=await post('/accounts',{login:'ready-worker',name:'Sintetik işçi',password});await post('/account-control',{id:account.id,action:'enable'});await post('/permission',{employeeId:account.id,productId:product.id,allowed:true});
  const wc=await browser.newContext({viewport:{width:390,height:900},permissions:['clipboard-read','clipboard-write']}),w=await wc.newPage();
@@ -36,5 +35,14 @@ try{
  await w.reload();await w.getByText('Qalan stok: 2 hesab',{exact:true}).waitFor();assert.equal(await stock(),2);await w.screenshot({path:out+'/worker.png',fullPage:true});
  assert.equal(Number((await pool.query('select count(*) n from manual_stock_allocations')).rows[0].n),1);
  for(const table of ['manual_stock_units','manual_stock_audit','manual_stock_requests'])assert.equal(JSON.stringify((await pool.query('select * from '+table)).rows).includes('Giriş hazırdır'),false);
- console.log(JSON.stringify({threeIdenticalSaves:3,afterClaim:2,exactClipboard:true,lostResponseDeduplicated:true,productionWrites:0}));
+ await w.getByRole('button',{name:'Çıxış',exact:true}).click();await w.waitForURL('**/employee/stock/login');
+ const expiry=await fetch(origin+'/api/employee/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({login:'ready-worker',password})});assert.equal(expiry.status,200);
+ await pool.query("update manual_stock_sessions set expires_at=now()-interval '1 second' where employee_id=$1 and expires_at>now()",[account.id]);
+ await p.getByRole('button',{name:'Hesablar',exact:true}).click();await p.getByText('CapCut Pro',{exact:true}).click();await p.getByText(/^1 aylıq · Mövcud stok: 2$/).click();await p.getByText('Götürülüb',{exact:true}).waitFor();
+ assert.equal(await p.getByText('Mövcuddur',{exact:true}).count(),2);assert.equal(await p.locator('.private-record').filter({hasText:'CapCut Pro'}).count(),0);
+ await p.getByRole('button',{name:'Mesajı aç',exact:true}).first().click();assert.equal(await p.locator('.private-record:visible').textContent(),raw);await p.getByRole('button',{name:'Mesajı gizlət',exact:true}).click();await p.screenshot({path:out+'/accounts.png',fullPage:true});
+ await p.getByRole('button',{name:'İşçi girişləri',exact:true}).click();await p.getByText('Giriş tarixçəsi',{exact:true}).click();await p.getByText(/^İşçi özü çıxdı · /).waitFor();assert.equal(await p.getByText(/^Uğurlu giriş · /).count(),2);assert.equal(await p.getByText(/^Sessiyanın müddəti bitdi · /).count(),1);await p.screenshot({path:out+'/access.png',fullPage:true});
+ await p.getByRole('button',{name:'Götürmələr',exact:true}).click();await p.getByText('Sintetik işçi · CapCut Pro · 1 aylıq',{exact:true}).waitFor();assert.match(await p.locator('#stockApp .items p').first().textContent(),/^\d{2}\.\d{2}\.\d{4}, \d{2}:\d{2}:\d{2}$/);
+ await p.getByLabel('İşçiyə görə süz').selectOption(account.id);await p.getByLabel('Məhsula görə süz').selectOption(product.id);await p.getByText('Sintetik işçi · CapCut Pro · 1 aylıq',{exact:true}).waitFor();await p.screenshot({path:out+'/claims.png',fullPage:true});
+ console.log(JSON.stringify({batch:3,afterClaim:2,exactClipboard:true,lostResponseDeduplicated:true,accessEvents:true,claimSeconds:true,productionWrites:0}));
 }finally{await browser.close();await f.close();}

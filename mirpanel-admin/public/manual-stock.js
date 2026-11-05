@@ -18,36 +18,70 @@ function formBox(title,endpoint,build,initial={}){const box=panel(title),f=el('f
 function intakeForm(){
  const box=panel('Hazır mesaj əlavə et'),f=el('form'),search=field(f,'Məhsul axtar','sourceSearch','','search');
  const ps=select(f,'Məhsul','sourceProduct',[]),pls=select(f,'Paket','sourcePlan',[]),editor=el('div');
- const message=field(editor,'Hazır mesaj','message','','textarea'),save=el('button','Yadda saxla','gold wide');
- message.rows=10;message.maxLength=12000;message.required=true;message.placeholder='Müştəriyə göndərəcəyiniz tam mətni bura yapışdırın…';
- search.placeholder='CapCut, Netflix və ya başqa məhsul';save.type='submit';editor.append(save);f.append(editor);
+ const rows=el('div'),save=el('button','Yadda saxla','gold wide'),add=btn('+ Yeni stok əlavə et',async()=>appendMessage());
+ search.placeholder='CapCut, Netflix və ya başqa məhsul';save.type='submit';editor.append(rows,add,save);f.append(editor);
  let attempt;
  const option=(label,value)=>{const n=el('option',label);n.value=value;return n;};
- function update(){editor.hidden=!pls.value;save.disabled=!message.value.trim();}
+ const messages=()=>[...rows.querySelectorAll('textarea')].map(n=>n.value).filter(v=>v.trim());
+ function update(){editor.hidden=!pls.value;save.disabled=!messages().length;add.disabled=rows.children.length>=15;}
+ function appendMessage(){if(rows.children.length>=15)return;const row=el('div',null,'stock-account');const input=field(row,'Hazır mesaj','message','','textarea');input.rows=5;input.maxLength=12000;input.placeholder='Müştəriyə göndərəcəyiniz tam mətni bura yapışdırın…';input.oninput=update;if(rows.children.length)row.append(btn('Sahəni sil',async()=>{row.remove();queueMicrotask(update);}));rows.append(row);update();}
  function drawPlans(){const p=source.products.find(p=>p.id===ps.value);pls.replaceChildren(option('Paket seçin',''),...(p?.plans||[]).map(pl=>option(pl.name,pl.key)));pls.disabled=!p;update();}
  function drawProducts(){const chosen=ps.value,results=source.products.filter(p=>p.name.toLocaleLowerCase('az').includes(search.value.trim().toLocaleLowerCase('az')));ps.replaceChildren(option(results.length?'Məhsul seçin':'Məhsul tapılmadı',''),...results.map(p=>option(p.name,p.id)));if(results.some(p=>p.id===chosen))ps.value=chosen;else drawPlans();}
- search.oninput=drawProducts;ps.onchange=drawPlans;pls.onchange=update;message.oninput=update;drawProducts();
+ search.oninput=drawProducts;ps.onchange=drawPlans;pls.onchange=update;drawProducts();appendMessage();
  f.onsubmit=e=>{e.preventDefault();void act(save,async()=>{
-  if(!ps.value||!pls.value||!message.value.trim())throw Error('Məhsul, paket və hazır mesaj tələb olunur.');
-  const body={productId:ps.value,planKey:pls.value,message:message.value},payload=JSON.stringify(body);
-  if(attempt?.payload!==payload)attempt={payload,key:crypto.randomUUID()};
-  const controls=[search,ps,pls,message];controls.forEach(n=>n.disabled=true);
-  try{await api('/ready-message',body,attempt.key);message.value='';attempt=null;status.textContent='1 hazır mesaj stoka əlavə edildi.';try{state=await api('/state');}catch{/* The write has already been confirmed. */}}
-  finally{controls.forEach(n=>n.disabled=false);}
+  const body={productId:ps.value,planKey:pls.value,messages:messages()};if(!body.productId||!body.planKey||!body.messages.length)return;
+  const payload=JSON.stringify(body);if(attempt?.payload!==payload)attempt={payload,key:crypto.randomUUID()};
+  const controls=[...f.querySelectorAll('input,select,textarea,button')].filter(n=>!n.disabled);controls.forEach(n=>n.disabled=true);
+  try{const r=await api('/ready-message',body,attempt.key);rows.replaceChildren();appendMessage();attempt=null;status.textContent=r.saved+' hazır mesaj stoka əlavə edildi.';try{state=await api('/state');}catch{/* Write confirmed. */}}
+  finally{controls.forEach(n=>n.disabled=false);setTimeout(update,0);}
  });};
  box.append(el('p','Hər saxlama seçilmiş paketə bir stok vahidi əlavə edir.','muted'),f);return box;
 }
-function adminView(){app.replaceChildren();const tabs=document.getElementById('tabs');tabs.replaceChildren();for(const [id,label]of [['catalog','Stok və mesaj əlavə et'],['units','Hesablar'],['accounts','İşçi girişləri'],['history','Götürmələr'],['audit','Audit']]){const b=btn(label,async()=>{tab=id;await adminView();});b.setAttribute('aria-pressed',String(tab===id));tabs.append(b);}
- const productRows=state.products.map(p=>[p.id,p.name]),allPlans=state.products.flatMap(p=>p.plans.map(pl=>[pl.id,p.name+' · '+pl.name]));
+const baku=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+function exactTime(value){return value?baku.format(new Date(value)).replaceAll('/','.'):'Məlumat yoxdur';}
+function paged(box,fetchPage,render,empty){
+ let page=0,seq=0;const list=el('div',null,'items');box.append(list);
+ async function load(n=0){const token=++seq;list.replaceChildren(el('p','Yüklənir…','muted'));try{const r=await fetchPage(n);if(token!==seq||!list.isConnected)return;page=n;list.replaceChildren(...r.rows.map(render));if(!r.rows.length)list.append(el('p',empty,'muted'));if(page||r.more){const nav=el('div',null,'row');if(page)nav.append(btn('Əvvəlki',()=>load(page-1)));if(r.more)nav.append(btn('Növbəti',()=>load(page+1)));list.append(nav);}}catch(e){if(token===seq)list.replaceChildren(el('p',e.message),btn('Yenidən cəhd et',()=>load(n)));}}
+ return load;
+}
+function stockRecords(){
+ const box=panel('Stok qeydləri');
+ if(!state.products.length)box.append(el('p','Hələ stok qeydi yoxdur.','muted'));
+ for(const p of state.products){const product=el('details',null,'stock-account');product.append(el('summary',p.name));box.append(product);
+  for(const pl of p.plans){const plan=el('details',null,'stock-account'),title=el('summary',pl.name+' · Mövcud stok: '+pl.available);plan.append(title);product.append(plan);
+   const load=paged(plan,async page=>{const r=await api('/units?planId='+pl.id+'&page='+page);return{rows:r.units,more:r.more};},u=>{
+    const row=el('div',null,'stock-account'),label=({AVAILABLE:'Mövcuddur',TAKEN:'Götürülüb',QUARANTINED:'Karantində',DISABLED:'Bağlı'})[u.state]||u.state;
+    row.append(el('strong',label),el('p','#'+u.id.slice(0,8)+' · '+exactTime(u.taken_at||u.created_at),'muted'));
+    const secret=el('div',null,'message');secret.hidden=true;
+    const open=btn('Mesajı aç',async()=>{if(!secret.hidden){secret.hidden=true;secret.textContent='';open.textContent='Mesajı aç';return;}const r=await api('/record?id='+u.id);if(!plan.open||!product.open||document.hidden)return;secret.textContent=r.message??'Hazır mesaj mətni qeydə alınmayıb.';secret.hidden=false;open.textContent='Mesajı gizlət';});
+    secret.classList.add('private-record');row.append(open,secret);
+    if(u.state==='AVAILABLE')row.append(btn('Stoku bağla',async()=>{if(!confirm('Bu stok vahidi bağlansın?'))return;await api('/unit-disable',{id:u.id});state=await api('/state');title.textContent=pl.name+' · Mövcud stok: '+(state.products.find(x=>x.id===p.id)?.plans.find(x=>x.id===pl.id)?.available??0);await load();}));
+    return row;
+   },'Bu paketdə stok qeydi yoxdur.');
+   plan.ontoggle=()=>{if(plan.open)void load();else clearPrivateRecords(plan);};
+  }
+  product.ontoggle=()=>{if(!product.open)clearPrivateRecords(product);};
+ }
+ return box;
+}
+function clearPrivateRecords(root){for(const n of root.querySelectorAll('.private-record')){n.hidden=true;n.textContent='';if(n.previousElementSibling)n.previousElementSibling.textContent='Mesajı aç';}}
+function accessRecords(a){const d=el('details',null,'stock-account');d.append(el('summary','Giriş tarixçəsi'));const load=paged(d,async page=>{const r=await api('/access-history?id='+a.id+'&page='+page);return{rows:r.events,more:r.more};},x=>el('p',({login:'Uğurlu giriş',logout:'İşçi özü çıxdı',expired:'Sessiyanın müddəti bitdi'})[x.action]+' · '+exactTime(x.created_at)),'Məlumat yoxdur');d.append(el('p','Yalnız qeydə alınmış hadisələr göstərilir. Qeydə alınmayan hadisələr: Məlumat yoxdur.','muted'));d.ontoggle=()=>{if(d.open)void load();};return d;}
+function claimRecords(){
+ const box=panel('Götürmə tarixçəsi'),filters=el('div',null,'form-grid');
+ const emp=select(filters,'İşçiyə görə süz','employee',[['','Bütün işçilər'],...state.accounts.map(a=>[a.id,a.name])]),prod=select(filters,'Məhsula görə süz','product',[['','Bütün məhsullar'],...state.products.map(p=>[p.id,p.name])]);box.append(filters);
+ const load=paged(box,async page=>{const r=await api('/claims?'+new URLSearchParams({page,employee:emp.value,product:prod.value}));return{rows:r.entries,more:r.more};},a=>{const row=el('div',null,'stock-account');row.append(el('strong',(state.accounts.find(x=>x.id===a.employee_id)?.name||'Məlumat yoxdur')+' · '+a.product_name+' · '+a.plan_name),el('p',exactTime(a.created_at),'muted'));if(!a.recalled_at)row.append(btn('Geri çağır',async()=>{if(!confirm('Hesab artıq müştəriyə verilmiş ola bilər. Karantinə keçirilsin?'))return;await api('/recall',{id:a.id,confirmed:true});await load();},'danger'));else row.append(el('p','Geri çağırılıb','muted'));return row;},'Hələ götürmə yoxdur');
+ emp.onchange=prod.onchange=()=>void load();queueMicrotask(()=>void load());return box;
+}
+function adminView(){app.replaceChildren();const tabs=document.getElementById('tabs');tabs.replaceChildren();for(const [id,label]of [['catalog','Stok və mesaj əlavə et'],['units','Hesablar'],['accounts','İşçi girişləri'],['history','Götürmələr'],['audit','Audit']]){const b=btn(label,async()=>{if(id==='units'||id==='accounts'||id==='history')state=await api('/state');tab=id;await adminView();});b.setAttribute('aria-pressed',String(tab===id));tabs.append(b);}
  if(tab==='catalog'){
   app.append(intakeForm());
  }else if(tab==='units'){
-  const f=formBox('Ayrıca stok hesabı','/unit',f=>{select(f,'Paket','planId',allPlans,planId);field(f,'E-poçt','email');field(f,'İstifadəçi adı','username');field(f,'Şifrə','password','','password');field(f,'Əlavə məlumat','extra','','textarea');check(f,'Karantindən çıxar: giriş məlumatlarını yeniləmişəm, müştəriyə verilmiş hesabı təkrar bölüşmürəm','confirmed');check(f,'Yenilənmiş hesabı açıq şəkildə stoka qaytar','release');});app.append(f.box);const list=panel('Stok vahidləri'),sel=select(list,'Paket seçin','planId',allPlans,planId);sel.onchange=()=>loadUnits();app.append(list);const rows=el('div',null,'items');list.append(rows);
-  async function loadUnits(){planId=sel.value;f.form.elements.planId.value=planId;if(!planId){rows.textContent='Əvvəl məhsul və paket əlavə edin.';return;}const r=await api('/units?planId='+planId);rows.replaceChildren();for(const u of r.units){const row=el('div',null,'item');row.append(el('span',u.id.slice(0,8)+' · '+({AVAILABLE:'Mövcud',TAKEN:'Götürülüb',QUARANTINED:'Karantində',DISABLED:'Bağlı'}[u.state])+(u.taken_at?' · '+date(u.taken_at):'')));if(u.state!=='TAKEN')row.append(btn('Redaktə',async()=>{const d=await api('/unit?id='+u.id);for(const k of ['email','username','password','extra'])f.form.elements[k].value=d[k]||'';f.form.elements.planId.value=d.planId;f.form.onsubmit=editSubmit(f.form,'/unit',{id:u.id});f.box.scrollIntoView({block:'center'});}));if(u.state==='AVAILABLE')row.append(btn('Bağla',async()=>{await api('/unit-disable',{id:u.id});await loadUnits();}));rows.append(row);}if(!r.units.length)rows.append(el('p','Stok vahidi yoxdur.'));}void loadUnits().catch(e=>status.textContent=e.message);
+  app.append(stockRecords());
  }else if(tab==='accounts'){
   app.append(formBox('İşçi girişi yarat','/accounts',f=>{field(f,'Ad','name').required=true;field(f,'Giriş adı','login').required=true;const p=field(f,'Şifrə (12–200 simvol)','password','','password');p.minLength=12;p.maxLength=200;p.required=true;}).box);
-  const list=panel('Girişlər və məhsul icazələri');for(const a of state.accounts){const row=panel(a.name+' · '+a.login);row.append(el('p',a.active?'Giriş aktivdir':'Giriş bağlıdır','muted'),btn(a.active?'Girişi bağla':'Girişi aç',async()=>{await api('/account-control',{id:a.id,action:a.active?'disable':'enable'});state=await api('/state');adminView();}),btn('Bütün sessiyaları bağla',async()=>{await api('/account-control',{id:a.id,action:'revoke'});status.textContent='Sessiyalar bağlandı.';}));for(const p of state.products){const label=el('label',null,'check'),c=el('input');c.type='checkbox';c.checked=state.permissions.some(x=>x.employee_id===a.id&&x.product_id===p.id);c.onchange=()=>void act(c,async()=>{try{await api('/permission',{employeeId:a.id,productId:p.id,allowed:c.checked});}catch(e){c.checked=!c.checked;throw e;}});label.append(c,document.createTextNode(p.name));row.append(label);}list.append(row);}app.append(list);
- }else if(tab==='history'){const h=history();for(const a of state.history)if(!a.recalled_at)h.append(btn('Geri çağır · '+a.product_name+' · '+date(a.created_at),async()=>{if(!confirm('Hesab artıq müştəriyə verilmiş ola bilər. Karantinə keçirilsin? Avtomatik stoka qaytarılmayacaq.'))return;await api('/recall',{id:a.id,confirmed:true});state=await api('/state');adminView();},'danger'));app.append(h);
+  const list=panel('Girişlər və məhsul icazələri');for(const a of state.accounts){const row=panel(a.name+' · '+a.login);row.append(el('p',a.active?'Giriş aktivdir':'Giriş bağlıdır','muted'),btn(a.active?'Girişi bağla':'Girişi aç',async()=>{await api('/account-control',{id:a.id,action:a.active?'disable':'enable'});state=await api('/state');adminView();}),btn('Bütün sessiyaları bağla',async()=>{await api('/account-control',{id:a.id,action:'revoke'});status.textContent='Sessiyalar bağlandı.';}));for(const p of state.products){const label=el('label',null,'check'),c=el('input');c.type='checkbox';c.checked=state.permissions.some(x=>x.employee_id===a.id&&x.product_id===p.id);c.onchange=()=>void act(c,async()=>{try{await api('/permission',{employeeId:a.id,productId:p.id,allowed:c.checked});}catch(e){c.checked=!c.checked;throw e;}});label.append(c,document.createTextNode(p.name));row.append(label);}row.append(accessRecords(a));list.append(row);}app.append(list);
+ }else if(tab==='history'){
+  app.append(claimRecords());
  }else{const box=panel('Moderasiya deyil — işçi stokunun audit tarixçəsi');app.append(box);void api('/audit').then(r=>{for(const a of r.events)box.append(el('p',date(a.created_at)+' · '+a.actor+' · '+a.action));}).catch(e=>status.textContent=e.message);}
 }
 function editSubmit(f,path,initial){return e=>{e.preventDefault();const b=f.querySelector('button[type=submit]');void act(b,async()=>{const data={...initial,...Object.fromEntries(new FormData(f))};for(const c of f.querySelectorAll('[type=checkbox]'))data[c.name]=c.checked;const key=f.dataset.request||(f.dataset.request=crypto.randomUUID());await api(path,data,key);f.reset();state=await api('/state');adminView();status.textContent='Yadda saxlanıldı.';});};}
@@ -56,6 +90,6 @@ async function refreshWorker(){if(admin||document.hidden||life.signal.aborted)re
 function connect(){if(admin||events||document.hidden||life.signal.aborted)return;const stream=events=new EventSource(base+'/events');stream.addEventListener('changed',()=>void refreshWorker());stream.addEventListener('expired',showExpired);stream.addEventListener('error',()=>{if(stream.readyState===EventSource.CLOSED&&events===stream){events=null;void refreshWorker();}});}
 async function start(){try{const s=await api(admin?'/api/session':'/api/employee/session');csrf=s.csrfToken;account=s.account||{id:'owner'};if(!admin){document.getElementById('workerName').textContent=account.name;document.getElementById('logout').onclick=()=>void act(document.getElementById('logout'),async()=>{await api('/api/employee/logout',{});events?.close();events=null;clearPending();currentAllocation=null;app.replaceChildren();location.assign('/employee/stock/login');});}if(admin){[state,source]=await Promise.all([api('/state'),api('/source-catalog')]);adminView();}else{state=await api('/state');const pending=readPending();if(pending?.allocationId)showMessage(await api('/allocation?id='+pending.allocationId));else if(pending?.key){const a=await api('/claim',{planId:pending.planId},pending.key);savePending({...pending,allocationId:a.id});showMessage(a);}else products();connect();}}catch(e){status.textContent=e.message;app.replaceChildren(btn('Yenidən cəhd et',start));}}
 document.addEventListener('visibilitychange',()=>{if(document.hidden&&currentAllocation){currentAllocation.message='';const n=app.querySelector('.message');if(n)n.textContent='Məxfi mesaj gizlədildi. Yenidən açmaq üçün aşağıdakı düyməyə basın.';const c=app.querySelector('.gold');if(c){c.textContent='Hazır mesajı yenidən aç';c.onclick=()=>void act(c,async()=>showMessage(await api('/allocation?id='+currentAllocation.id)));}}});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){events?.close();events=null;}else if(!admin){connect();void refreshWorker();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){events?.close();events=null;if(admin)clearPrivateRecords(app);}else if(!admin){connect();void refreshWorker();}});
 window.addEventListener('pagehide',()=>{life.abort();events?.close();events=null;currentAllocation=null;for(const n of document.querySelectorAll('textarea,input[type=password]'))n.value='';app.replaceChildren();});void start();
 })();

@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import {createStockCrypto,hashPassword,text,validateTemplate,renderDelivery,fail} from './employee-security.mjs';
 const uuid=v=>{if(!/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(v||''))throw fail('Əməliyyat identifikatoru düzgün deyil.');return v;};
+const pageNumber=url=>{const n=Number(url.searchParams.get('page')||0);if(!Number.isSafeInteger(n)||n<0||n>10000)throw fail('Səhifə düzgün deyil.');return n;};
 export function createManualStock({client,config,readBody,loadCatalog,ownerCheck=async()=>false}){
  const crypt=()=>createStockCrypto(config.encryptionKey),safe=a=>({id:a.id,login:a.login,name:a.display_name,active:a.active,manualOnly:a.manual_only===true});
  const subscribers=new Set();let timer=null,checking=false,lastRevision=null;
@@ -21,21 +22,37 @@ export function createManualStock({client,config,readBody,loadCatalog,ownerCheck
    if(admin&&part==='/source-catalog'){const [products,links]=await Promise.all([sourceCatalog(),query(client.from('manual_stock_products').select('id,source_product_id'))]);return{products,links};}
    if(part==='/state'){const [products,history]=await Promise.all([action('catalog',actor),action('history',actor)]);const v={products,history};if(admin){const links=await query(client.from('manual_stock_plans').select('id,source_plan_key'));for(const p of products)for(const pl of p.plans)pl.sourceKey=links.find(l=>l.id===pl.id)?.source_plan_key;v.accounts=(await query(client.from('employee_accounts').select('id,login,display_name,active,manual_only').order('created_at'))).map(safe);v.permissions=await action('permissions',actor);}return v;}
    if(part==='/allocation')return allocated(actor,url.searchParams.get('id'));
-   if(admin&&part==='/units')return{units:await action('units',actor,{planId:uuid(url.searchParams.get('planId'))})};
+   if(admin&&part==='/units'){const page=pageNumber(url);const rows=await query(client.from('manual_stock_units').select('id,state,created_at,taken_at').eq('plan_id',uuid(url.searchParams.get('planId'))).order('created_at',{ascending:false}).order('id').range(page*50,page*50+50));return{units:rows.slice(0,50),more:rows.length>50};}
+   if(admin&&part==='/record'){const u=await action('unit',actor,{id:uuid(url.searchParams.get('id'))}),s=crypt().decrypt(u.cipher,`manual:${u.id}:${u.plan_id}`);return{message:typeof s.readyMessage==='string'?s.readyMessage:null};}
+   if(admin&&part==='/access-history'){
+    const id=uuid(url.searchParams.get('id')),page=pageNumber(url),end=page*50+50;
+    const [a,logs,sessions]=await Promise.all([query(client.from('employee_accounts').select('session_version').eq('id',id).single()),query(client.from('employee_work_audit').select('id,action,created_at').eq('actor_role','employee').eq('actor_ref',id).in('action',['login','logout','expired']).order('created_at',{ascending:false}).order('id',{ascending:false}).range(0,end)),query(client.from('manual_stock_sessions').select('version,expires_at').eq('employee_id',id).gt('expires_at','1970-01-02T00:00:00Z').lte('expires_at',new Date().toISOString()).order('expires_at',{ascending:false}).range(0,end))]);
+    const entries=[...logs,...sessions.filter(s=>s.version===a.session_version).map(s=>({action:'expired',created_at:s.expires_at}))].sort((a,b)=>Date.parse(b.created_at)-Date.parse(a.created_at));return{events:entries.slice(page*50,end),more:entries.length>end};
+   }
+   if(admin&&part==='/claims'){
+    const page=pageNumber(url),employee=url.searchParams.get('employee'),product=url.searchParams.get('product');
+    let q=client.from('manual_stock_allocations').select('id,employee_id,created_at,recalled_at,snapshot');
+    if(employee)q=q.eq('employee_id',uuid(employee));
+    if(product){const plans=await query(client.from('manual_stock_plans').select('id').eq('product_id',uuid(product)));if(!plans.length)return{entries:[],more:false};q=q.in('plan_id',plans.map(p=>p.id));}
+    const rows=await query(q.order('created_at',{ascending:false}).order('id',{ascending:false}).range(page*50,page*50+50));
+    return{entries:rows.slice(0,50).map(({snapshot,...a})=>({...a,product_name:snapshot.productName,plan_name:snapshot.planName})),more:rows.length>50};
+   }
    if(admin&&part==='/unit'){const u=await action('unit',actor,{id:uuid(url.searchParams.get('id'))}),s=crypt().decrypt(u.cipher,`manual:${u.id}:${u.plan_id}`);if(typeof s.readyMessage==='string')throw fail('Bu vahid hazır mesajdır. Dəyişmək üçün yeni mesaj əlavə edib köhnə vahidi bağlayın.',409);return{id:u.id,planId:u.plan_id,state:u.state,...s};}
    if(admin&&part==='/audit')return{events:await action('audit',actor)};
   }
   if(req.method!=='POST')throw fail('Endpoint tapılmadı.',404);
-  const b=await readBody(req,part==='/intake'?700000:30000),key=uuid(req.headers['x-idempotency-key']);
+  const b=await readBody(req,['/intake','/ready-message'].includes(part)?700000:30000),key=uuid(req.headers['x-idempotency-key']);
   if(!admin){if(part==='/acknowledge')return action('acknowledge',actor,{id:uuid(b.id)},key);if(part!=='/claim')throw fail('İcazə yoxdur.',403);const r=await action('claim',actor,{planId:uuid(b.planId)},key);return allocated(actor,r.id);}
   if(part==='/preview'){const t=b.intake?template(b.template):validateTemplate(b.template);return{message:renderDelivery(t,{product_title:text(b.productName,300),plan_name:text(b.planName,500),quantity:1},[{email:'numune@example.invalid',username:'numune',login:'numune@example.invalid',password:'NÜMUNƏ — real hesab deyil',extra:'Əlavə nümunə məlumat',instructions:'Əlavə nümunə məlumat',duration:text(b.duration,120)}])};}
   if(part==='/ready-message'){
-   const message=b.message;if(typeof message!=='string'||!message.trim()||message.length>12000||message.includes('\0'))throw fail('Hazır mesaj boş olmamalı və 12 000 simvolu keçməməlidir.');
+   const messages=b.messages??[b.message];if(!Array.isArray(messages)||!messages.length||messages.length>15||messages.some(message=>typeof message!=='string'||!message.trim()||message.length>12000||message.includes('\0')))throw fail('1–15 hazır mesaj daxil edin. Hər mesaj maksimum 12 000 simvol ola bilər.');
    const p=(await sourceCatalog()).find(p=>p.id===b.productId),pl=p?.plans.find(pl=>pl.key===b.planKey);if(!p||!pl)throw fail('Məhsul və ya paket artıq kataloqda yoxdur. Yenidən seçin.',409);
    const c=crypt(),existing=await query(client.from('manual_stock_products').select('id').eq('source_product_id',p.id).maybeSingle()),productId=existing?.id||c.id('source-product:'+p.id,0),oldPlan=existing&&await query(client.from('manual_stock_plans').select('id,template').eq('product_id',productId).eq('source_plan_key',pl.key).maybeSingle()),planId=oldPlan?.id||c.id('source-plan:'+p.id+':'+pl.key,0),id=c.id(key,0);
    // Store the literal message inside the existing encrypted stock envelope.
    // The operation key, not the message text, distinguishes deliberate additions.
-   const {data,error}=await client.rpc('manual_stock_intake',{p_actor:actor.ref,p_key:key,p_data:{productId,planId,sourceProductId:p.id,sourcePlanKey:pl.key,productName:p.name,planName:pl.name,duration:pl.duration?pl.duration+' ay':'',image:p.image,template:oldPlan?.template||'{{extra}}',items:[{id,cipher:c.encrypt({readyMessage:message},`manual:${id}:${planId}`),fingerprint:c.fingerprint({readyOperation:key}),fields:['email','username','login','password','extra']}],requestFingerprint:c.fingerprint({operation:'ready-message',product:p.id,plan:pl.key,message})}});
+   const items=messages.map((message,i)=>{const unit=i===0?id:c.id(key,i);return{id:unit,cipher:c.encrypt({readyMessage:message},`manual:${unit}:${planId}`),fingerprint:c.fingerprint(i===0?{readyOperation:key}:{readyOperation:key,index:i}),fields:['email','username','login','password','extra']};});
+   const payload=messages.length===1?{message:messages[0]}:{messages};
+   const {data,error}=await client.rpc('manual_stock_intake',{p_actor:actor.ref,p_key:key,p_data:{productId,planId,sourceProductId:p.id,sourcePlanKey:pl.key,productName:p.name,planName:pl.name,duration:pl.duration?pl.duration+' ay':'',image:p.image,template:oldPlan?.template||'{{extra}}',items,requestFingerprint:c.fingerprint({operation:'ready-message',product:p.id,plan:pl.key,...payload})}});
    if(error)throw fail(String(error.message).includes('IDEMPOTENCY_CONFLICT')?'Bu saxlama açarı başqa mətn üçün istifadə olunub.':'Mesaj saxlanmadı. Eyni əməliyyatı yenidən sınayın.',409);
    publish();return data;
   }
