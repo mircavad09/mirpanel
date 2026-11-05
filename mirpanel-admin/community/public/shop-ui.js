@@ -1,4 +1,4 @@
-import '/cart-store.js?v=cart-flow-20261106';
+import '/cart-store.js?v=cart-fast-20261106';
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
 import {createWalletTopup} from '/community-assets/wallet-topup.js?v=bank-flow-20261104';
 export function mountShop(){

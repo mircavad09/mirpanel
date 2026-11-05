@@ -1914,7 +1914,7 @@
     }
 
     if(!isSpotifyProduct(product)&&!activeFields(product).some(f=>f.type==='password')){
-      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=cart-flow-20261106').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
+      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=cart-fast-20261106').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
       const add=values=>{
         try{window.MirpanelCart.add(product.id,product.plans.indexOf(plan),values);}
         catch(e){toastMessage(e.message);return;}
