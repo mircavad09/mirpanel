@@ -300,10 +300,10 @@
                 <label class="full">
                   Avtomatik sifariş ardıcıllığı
                   <select id="productOrderFlow" aria-describedby="orderFlowHelp">
-                    <option value="confirm_then_whatsapp">Sifariş təsdiqi → WhatsApp</option>
-                    <option value="form_confirm_whatsapp">Sifariş təsdiqi → Müştəri forması → WhatsApp</option>
+                    <option value="confirm_then_whatsapp">Şərtlər → Səbət → Ödəniş</option>
+                    <option value="form_confirm_whatsapp">Şərtlər → Müştəri məlumatları → Səbət → Ödəniş</option>
                   </select>
-                  <small id="orderFlowHelp">Müştəri forması sahəsi yoxdursa birbaşa WhatsApp-a, aktiv sahə varsa əvvəl formaya keçir.</small>
+                  <small id="orderFlowHelp">Aktiv sahələr şərtlərdən sonra alınır. Məlumat tələb olunmayan paket birbaşa səbətə əlavə edilir.</small>
                 </label>
               </div>
             </div>
@@ -311,7 +311,7 @@
             <div class="sectionHead">
               <div>
                 <h3>Müştəri forması sahələri</h3>
-                <p>Aktiv etdiyin sahələr WhatsApp mesajına əlavə olunur</p>
+                <p>Sifariş məlumatları qorunan qaralamada saxlanır; şifrə və kod WhatsApp-a göndərilmir.</p>
               </div>
 
               <button
@@ -678,7 +678,7 @@
 
   <div class="toasts" id="toasts"></div>
 
-  <script src="admin.js?v=admin-idle-20261027-1"></script>
+  <script src="admin.js?v=cart-v2"></script>
   <script src="product-sales-admin.js?v=detail-20261010-1"></script>
   <script src="admin-stock-save-fix.js?v=nullable-20261028-1"></script>
   <script src="homepage-banners-admin.js?v=product-link-20261020"></script>

@@ -1106,18 +1106,34 @@ function renderPlans(product) {
   });
 }
 
+let formScope='product',formProductId=null;
+function formTarget(product){const idx=Number(formScope);return formScope!=='product'&&product.plans[idx]?product.plans[idx]:product;}
 function renderFormFields(product) {
-  if (!product.formFields.length) {
-    $("formFields").innerHTML = `<div class="emptyMini">Forma sahəsi yoxdur. Müştəri təsdiqdən sonra birbaşa WhatsApp-a keçəcək.</div><aside class="customerFormPreview"><strong>Canlı önizləmə</strong><span>Müştəriyə göstəriləcək sahə yoxdur; boş forma açılmayacaq.</span></aside>`;
+  if(formProductId!==product.id){formProductId=product.id;formScope='product';}
+  let scope=document.getElementById('formFieldScope');
+  if(!scope){scope=document.createElement('select');scope.id='formFieldScope';scope.setAttribute('aria-label','Sahələrin məhsul və paket seçimi');$('formFields').before(scope);}
+  scope.innerHTML='<option value="product">Bütün paketlər üçün ümumi sahələr</option>'+product.plans.map((p,i)=>'<option value="'+i+'">'+escapeHtml(p.label||p.name||('Paket '+(i+1)))+'</option>').join('');
+  scope.value=formScope;scope.onchange=()=>{formScope=scope.value;renderFormFields(product);};
+  document.getElementById('inheritFormFields')?.remove();
+  const target=formTarget(product),inherited=target!==product&&!Array.isArray(target.formFields);
+  if(inherited){$('formFields').innerHTML='<p>Bu paket ümumi məhsul sahələrindən istifadə edir.</p><button type="button" id="overrideFormFields" class="btn">Bu paket üçün ayrıca sahələr</button>';$('overrideFormFields').onclick=()=>{target.formFields=structuredClone(product.formFields||[]);markDirty();renderFormFields(product);};return;}
+  target.formFields=target.formFields||[];
+  let inherit=document.getElementById('inheritFormFields');if(inherit)inherit.remove();
+  if(target!==product){inherit=document.createElement('button');inherit.id='inheritFormFields';inherit.type='button';inherit.className='btn';inherit.textContent='Ümumi məhsul sahələrinə qayıt';inherit.onclick=()=>{delete target.formFields;markDirty();renderFormFields(product);};scope.after(inherit);}
+
+  if (!target.formFields.length) {
+    $("formFields").innerHTML = `<div class="emptyMini">Forma sahəsi yoxdur. Şərtlər təsdiqindən sonra məhsul səbətə əlavə ediləcək.</div><aside class="customerFormPreview"><strong>Canlı önizləmə</strong><span>Müştəriyə göstəriləcək sahə yoxdur; boş forma açılmayacaq.</span></aside>`;
     return;
   }
 
-  const editorHtml = product.formFields.map((field, index) => `
+  const editorHtml = target.formFields.map((field, index) => `
     <div class="formFieldRow">
       <label class="switchLine"><input data-form-index="${index}" data-form-field="enabled" type="checkbox" ${field.enabled !== false ? "checked" : ""}><span>Aktiv</span></label>
       <label>Sahənin adı<input data-form-index="${index}" data-form-field="key" value="${escapeHtml(field.key || "")}"></label>
       <label>Tip<select data-form-index="${index}" data-form-field="type">${renderOptions(formFieldTypes, field.type || "text")}</select></label>
       <label>Müştəriyə görünən label<input data-form-index="${index}" data-form-field="label" value="${escapeHtml(field.label || "")}"></label>
+      <label>İzah<input data-form-index="${index}" data-form-field="description" value="${escapeHtml(field.description || "")}"></label>
+      <label>Kodun rəqəm sayı (istəyə bağlı)<input type="number" min="1" max="10" data-form-index="${index}" data-form-field="digits" value="${escapeHtml(field.digits || "")}"></label>
       <label>Placeholder<input data-form-index="${index}" data-form-field="placeholder" value="${escapeHtml(field.placeholder || "")}"></label>
       <label>Minimum uzunluq<input type="number" min="0" data-form-index="${index}" data-form-field="minLength" value="${escapeHtml(field.minLength || "")}"></label>
       <label>Maksimum uzunluq<input type="number" min="0" data-form-index="${index}" data-form-field="maxLength" value="${escapeHtml(field.maxLength || "")}"></label>
@@ -1127,7 +1143,7 @@ function renderFormFields(product) {
       <button class="btn danger removeFormField" data-form-index="${index}" type="button">Sil</button>
     </div>
   `).join("");
-  const previewFields = activeFormFields(product)
+  const previewFields = activeFormFields(target)
     .slice()
     .sort((left, right) => Number(left.order || 0) - Number(right.order || 0))
     .map((field) => `<label>${escapeHtml(field.label || field.key)}${field.required ? " *" : ""}<input disabled placeholder="${escapeHtml(field.placeholder || "")}"></label>`)
@@ -1136,11 +1152,11 @@ function renderFormFields(product) {
 
   document.querySelectorAll("[data-form-field]").forEach((input) => {
     const update = () => {
-      const field = product.formFields[Number(input.dataset.formIndex)];
+      const field = target.formFields[Number(input.dataset.formIndex)];
       if (!field) return;
       const key = input.dataset.formField;
       if (input.type === "checkbox") field[key] = input.checked;
-      else if (key === "minLength" || key === "maxLength" || key === "order") field[key] = input.value === "" ? undefined : Math.max(0, Math.trunc(Number(input.value) || 0));
+      else if (key === "minLength" || key === "maxLength" || key === "order" || key === "digits") field[key] = input.value === "" ? undefined : Math.max(0, Math.trunc(Number(input.value) || 0));
       else if (key === "options") field.options = input.value.split(/\r?\n/).map((option) => option.trim()).filter(Boolean);
       else if (key === "key") field.key = slug(input.value || `custom_${input.dataset.formIndex}`);
       else field[key] = input.value;
@@ -1155,7 +1171,7 @@ function renderFormFields(product) {
 
   document.querySelectorAll(".removeFormField").forEach((button) => {
     button.addEventListener("click", () => {
-      product.formFields.splice(Number(button.dataset.formIndex), 1);
+      target.formFields.splice(Number(button.dataset.formIndex), 1);
       syncOrderFlow(product);
       markDirty();
       renderFormFields(product);
@@ -1385,7 +1401,7 @@ $("addPlanBtn").addEventListener("click", () => {
 $("addFormFieldBtn").addEventListener("click", () => {
   const product = selectedProduct();
   if (!product) return;
-  product.formFields.push(defaultFormField(product.formFields.length));
+  const target=formTarget(product);target.formFields=target.formFields||structuredClone(product.formFields||[]);target.formFields.push(defaultFormField(target.formFields.length));
   syncOrderFlow(product);
   refreshOrderFlowDisplay(product);
   markDirty();

@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';import crypto from 'node:crypto';import {shopFixture} from './shop-test-fixture.mjs';
+process.env.MIRPANEL_CART_V2_TEST='1';const f=await shopFixture(),{pool,shop,catalog,rpc,method,id}=f,owner='a'.repeat(64),guest={};let checks=0;
+const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;},reject=async(fn,re)=>{await assert.rejects(fn,re);checks++;};
+try{
+ catalog.products.push({id:'spotify',title:'Spotify',active:true,plans:[{price:5,months:1}],formFields:[{key:'email',label:'E-poçt',type:'email',required:true},{key:'password',label:'Şifrə',type:'password',required:true}]},{id:'netflix',title:'Netflix',active:true,plans:[{price:6,months:1,formFields:[{key:'pin',label:'4 rəqəmli kod',digits:4,required:true}]}]});
+ const save=async(productId,values)=>{const q=await shop.quote(guest,[{productId,planIndex:0,quantity:1}],owner),d=await shop.saveDraft(guest,owner,{id:id(),productId,planIndex:0,termsVersion:q.items[0].termsVersion,values});return{productId,planIndex:0,quantity:1,draftId:d.draftId,lineId:d.lineId,termsVersion:d.termsVersion};};
+ const spotify=await save('spotify',{email:'synthetic@example.invalid',password:'Synthetic-only-secret'}),netflix=await save('netflix',{pin:'0012'}),ordinary=await save('ordinary',{});
+ eq((await shop.getDraft(guest,owner,netflix.draftId)).values.pin,'0012');eq((await pool.query('select count(*)::int n from shop_drafts where details_cipher like $1',['%Synthetic-only-secret%'])).rows[0].n,0);
+ await reject(shop.getDraft(guest,'b'.repeat(64),spotify.draftId),e=>e.status===404);await reject(save('netflix',{pin:'123'}),e=>e.status===400);
+ const q=await shop.quote(guest,[spotify,netflix,ordinary],owner);eq(q.items.every(x=>!x.detailsMissing&&!x.termsMissing),true);eq(JSON.stringify(q).includes('Synthetic-only-secret'),false);eq(q.items.find(x=>x.productId==='netflix').maskedDetails[0].value,'••••••');
+ await pool.query("update payment_methods set daily_limit=5,limit_mode='limited' where id=$1",[method]);const args={items:[netflix,ordinary],mode:'card',methodId:method,requestId:id(),consentAccepted:true};
+ const [a,b]=await Promise.all([shop.checkout(guest,owner,args),shop.checkout(guest,owner,args)]);eq(a.id,b.id);eq((await pool.query('select count(*)::int n from payment_reservations where status=\'reserved\' and not capacity_shadow')).rows[0].n,1);eq((await pool.query('select count(*)::int n from payment_reservations where capacity_shadow')).rows[0].n,2);
+ const receipt={path:'cart/'+a.id+'/synthetic.png',mimeType:'image/png',size:3,sha256:crypto.createHash('sha256').update('abc').digest('hex')};f.files.set(receipt.path,Buffer.from('abc'));await shop.savedReceipt(guest,owner,'cart',a.id,receipt);
+ const [s,t]=await Promise.all([shop.submit(guest,owner,a.id),shop.submit(guest,owner,a.id)]);eq(s.orderId,t.orderId);eq(s.orderCode,t.orderCode);eq((await pool.query('select count(*)::int n from payment_orders')).rows[0].n,1);eq(s.items.length,2);eq(new Set(s.items.map(x=>x.order_id)).size,1);eq(new Set(s.items.map(x=>x.order_code)).size,1);eq(s.receiptUploaded,true);eq((await pool.query('select amount::text from payment_orders where id=$1',[s.orderId])).rows[0].amount,'11.00');
+ const text=new URL(s.whatsappUrl).searchParams.get('text');eq(text.match(/Sifariş №/g).length,1);eq(text.includes('Netflix')&&text.includes('Synthetic ordinary'),true);
+ await rpc('approve_payment_order_v7',[s.orderId,null,'synthetic-admin']);await rpc('approve_payment_order_v7',[s.orderId,null,'synthetic-admin']);eq((await pool.query('select confirmed_count from payment_method_daily_counters where method_id=$1',[method])).rows[0].confirmed_count,1);
+ const fin=await shop.quote(guest,[{productId:'finite',planIndex:0,quantity:1}],owner),ca=await shop.checkout(guest,owner,{...args,requestId:id(),items:[{productId:'finite',planIndex:0,quantity:1,termsVersion:fin.items[0].termsVersion},ordinary]});eq((await rpc('inventory_snapshot')).find(x=>x.productId==='finite').available,0);await shop.cancel(guest,owner,ca.id);await shop.cancel(guest,owner,ca.id);eq((await rpc('inventory_snapshot')).find(x=>x.productId==='finite').available,1);
+ const expired=await shop.checkout(guest,owner,{...args,requestId:id(),items:[ordinary]});await pool.query("update payment_reservations set expires_at=clock_timestamp()-interval '1 second' where checkout_key=(select main_checkout_key from shop_checkouts where id=$1) or cart_parent_reservation_id=(select main_reservation_id from shop_checkouts where id=$1)",[expired.id]);await rpc('expire_payment_reservations');eq((await pool.query("select count(*)::int n from payment_reservations where id in(select reservation_id from shop_lines where checkout_id=$1) and status='reserved'",[expired.id])).rows[0].n,0);
+ await pool.query("insert into wallet_accounts(user_id,cents) values('a',2000) on conflict(user_id) do update set cents=2000");const wallet=await shop.checkout({user:'a'},owner,{items:[ordinary],mode:'wallet',requestId:id(),consentAccepted:true});eq(wallet.paymentConfirmed,true);eq((await pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'1500');await pool.query("update payment_orders set status='rejected' where id=$1",[wallet.orderId]);await pool.query("update payment_orders set status='rejected' where id=$1",[wallet.orderId]);eq((await pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'2000');
+ // Distinct customer inputs never collapse into one line; stored retries return
+ // the same group even if the caller lost the first successful response.
+ const otherNetflix=await save('netflix',{pin:'0099'}),two=await shop.checkout(guest,owner,{...args,items:[netflix,otherNetflix],requestId:id()});
+ eq(two.items.length,2);eq((await shop.get(guest,owner,two.id)).id,two.id);
+ await shop.cancel(guest,owner,two.id);
+ await shop.getDraft({user:'a'},owner,spotify.draftId);
+ await reject(shop.getDraft({user:'b'},owner,spotify.draftId),e=>e.status===404);
+ await reject(shop.getDraft(guest,owner,spotify.draftId),e=>e.status===404);
+ const before=await pool.query('select count(*)::int n from payment_reservations');
+ await reject(shop.checkout(guest,owner,{...args,requestId:id(),items:[{...(await save('zero',{}))}]}),/INVENTORY_EMPTY/);
+ eq((await pool.query('select count(*)::int n from payment_reservations')).rows[0].n,before.rows[0].n);
+ const unlimited=await shop.checkout(guest,owner,{...args,requestId:id(),items:[{...(await save('unlimited',{})),quantity:3}]});eq(unlimited.items.length,3);await shop.cancel(guest,owner,unlimited.id);
+ const guestOrdinary=await save('ordinary',{}),tracked=await save('finite',{}),trackedGroup=await shop.checkout(guest,owner,{...args,requestId:id(),items:[tracked,guestOrdinary]});
+ const trackedReceipt={...receipt,path:'cart/'+trackedGroup.id+'/synthetic.png'};f.files.set(trackedReceipt.path,Buffer.from('abc'));await shop.savedReceipt(guest,owner,'cart',trackedGroup.id,trackedReceipt);
+ const trackedOrder=await shop.submit(guest,owner,trackedGroup.id);await rpc('approve_payment_order_v7',[trackedOrder.orderId,null,'synthetic-admin']);eq((await pool.query("select count(*)::int n from employee_stock_units where delivered_order_id=$1 and state='DELIVERED'",[trackedOrder.orderId])).rows[0].n,1);
+ const sales=await rpc('product_sales_snapshot');eq(sales.real.some(x=>x.product_id==='ordinary'),true);eq(sales.real.some(x=>x.product_id==='__cart__'),false);
+ // Four multi-line carts plus one confirmed slot fill the configured limit of five.
+ await pool.query("update payment_methods set daily_limit=5 where id=$1",[method]);
+ const holds=[];for(let i=0;i<3;i++)holds.push(await shop.checkout(guest,owner,{...args,requestId:id(),items:[guestOrdinary,netflix]}));
+ await reject(shop.checkout(guest,owner,{...args,requestId:id(),items:[guestOrdinary,netflix]}),/PAYMENT_METHOD/);
+ for(const h of holds)await shop.cancel(guest,owner,h.id);
+ const retired=await save('ordinary',{});await shop.removeDrafts(guest,owner,[retired.draftId]);eq((await shop.listDrafts(guest,owner)).items.some(x=>x.draftId===retired.draftId),false);await reject(shop.getDraft(guest,owner,retired.draftId),e=>e.status===404);
+ console.log(JSON.stringify({checks,singleOrder:true,oneBankSlot:true,encryptedDrafts:true,guest:true,productionWrites:0}));
+}finally{await f.close();}

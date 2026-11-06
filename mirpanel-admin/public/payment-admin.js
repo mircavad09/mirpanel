@@ -162,6 +162,7 @@
     const fields = [
       ["Məhsul", order.productTitle], ["Plan", order.planName], ["Məbləğ", money(order.amount, order.currency)], ["Ödəniş üsulu", order.paymentMethodLabel]
     ];
+    for(const x of order.items||[])fields.push([x.title,x.planName+' · '+x.quantity+' ədəd · '+money(x.unitCents*x.quantity/100)]);
     if (pending) fields.push(["Rezerv", reservationLabel[order.reservationStatus] || "Yoxlanılır"]);
     if(order.workforce){const flow=order.workforce;fields.push(["İcra",flow.state==='DELIVERED_PENDING_ADMIN'?'İşçi tamamlayıb — Admin təsdiqi gözlənilir':flow.ownerRole==='admin'?'Admin icra edir':flow.ownerRole==='employee'?'İşçi icra edir':'Yeni sifariş'],["İşçi",flow.employeeName||'—'],["Götürülüb",dateTime(flow.acceptedAt)],["Təqdim edilib",dateTime(flow.deliveredAt)]);}
     if (!pending) {
@@ -575,9 +576,9 @@
   async function handleOrderAction(card, action) {
     const id = card.dataset.paymentOrderId;
     if(action==='details'){
-      const {details}=await paymentApi(`/api/admin/payment-orders/${id}/details`);
+      const {details,items}=await paymentApi(`/api/admin/payment-orders/${id}/details`);
       const dlg=document.createElement('dialog'),form=document.createElement('form'),title=document.createElement('h3'),body=document.createElement('pre'),close=document.createElement('button');
-      form.method='dialog';title.textContent='Sifariş məlumatları';body.style.whiteSpace='pre-wrap';body.textContent=details?Object.entries(details).map(([k,v])=>k+': '+v).join('\n'):'Əlavə məlumat yoxdur.';close.textContent='Bağla';form.append(title,body,close);dlg.append(form);document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove(),{once:true});dlg.showModal();return;
+      form.method='dialog';title.textContent='Sifariş məlumatları';body.style.whiteSpace='pre-wrap';body.textContent=items?.length?items.map(x=>x.title+' · '+x.plan+' · '+x.quantity+' ədəd\n'+Object.entries(x.details||{}).map(([k,v])=>k+': '+v).join('\n')).join('\n\n'):details?Object.entries(details).map(([k,v])=>k+': '+v).join('\n'):'Əlavə məlumat yoxdur.';close.textContent='Bağla';form.append(title,body,close);dlg.append(form);document.body.append(dlg);dlg.addEventListener('close',()=>dlg.remove(),{once:true});dlg.showModal();return;
     }
     if (action === "receipt") {
       const receiptWindow = window.open("about:blank", "_blank"); if (receiptWindow) receiptWindow.opener = null;

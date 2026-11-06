@@ -588,6 +588,7 @@ function normalizeDeliveryType(value) {
 }
 function normalizePlan(plan = {}) {
   return {
+    ...(Array.isArray(plan.formFields)?{formFields:plan.formFields.slice(0,10).map(normalizeFormField)}:{}),
     ...normalizePlanMetadata(plan),
     ...(plan.label ? { label: String(plan.label) } : {}),
     months: Number(plan.months) || 1,
@@ -701,6 +702,8 @@ function normalizeFormField(field = {}, index = 0) {
     type: FIELD_TYPES.has(field.type) ? field.type : "text",
     label: String(field.label || field.key || `Sahə ${index + 1}`),
     placeholder: String(field.placeholder || ""),
+    description: cleanText(field.description || "", "", 500),
+    ...(Number(field.digits)>0?{digits:Math.min(10,Math.trunc(Number(field.digits)))}:{}),
     required: Boolean(field.required),
     enabled: field.enabled !== false
   };

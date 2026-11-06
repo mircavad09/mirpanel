@@ -736,7 +736,8 @@ export function createPaymentSystem(options) {
       const action = orderMatch[2];
       if (request.method === "GET" && action === "details") {
         const order=await store.getOrder(id),cipher=order.checkout_snapshot?.detailsCipher;
-        json(response,200,{details:cipher?JSON.parse(security.decryptSecret(cipher)):null});return true;
+        const items=(order.checkout_snapshot?.items||[]).map(x=>({title:x.title,plan:x.planName,quantity:x.quantity,details:x.detailsCipher?JSON.parse(security.decryptSecret(x.detailsCipher)):null}));
+        json(response,200,{details:cipher?JSON.parse(security.decryptSecret(cipher)):null,items});return true;
       }
       if (request.method === "GET" && action === "receipt") {
         const order = await store.getOrder(id);

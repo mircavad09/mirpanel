@@ -4457,6 +4457,7 @@ function renderGrid() {
   grid.innerHTML = list.map((p, idx) => cardHTML(p, idx)).join("");
 }
 
+window.mirpanelRestoreCatalog=()=>{if(location.pathname!=='/')return;const grid=document.getElementById('grid');if(!grid)return;if(!grid.dataset.catalogMounted){if(!document.querySelector('#tabs [data-home-filter]'))buildTabs();renderHomeDiscovery();grid.dataset.catalogMounted='1';}renderGrid();};
 function cardHTML(p, idx) {
   const min = getMinPrice(p);
   const showPrice = p.id === "tiktok_jeton" ? `10.00 ${p.currency}` : (min != null && min !== Infinity && min !== 0 ? `${formatPrice(min)} ${p.currency}` : "—");

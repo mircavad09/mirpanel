@@ -1,3 +1,4 @@
+import {orderLines} from './order-lines.mjs';
 import crypto from "node:crypto";
 import {adminListWindow} from './admin-list-window.mjs';
 import { createClient } from "@supabase/supabase-js";
@@ -437,7 +438,7 @@ export function createPaymentStore(config) {
       await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
-      const select = "id,payment_source,payment_confirmed,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
+      const select = "id,checkout_snapshot,payment_source,payment_confirmed,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
@@ -538,6 +539,7 @@ export function createPaymentStore(config) {
             orderCode: order.order_code,
             productId: order.product_id,
             productTitle: order.product_title,
+            items:orderLines(order.checkout_snapshot),
             planId: order.plan_id,
             planName: order.plan_name,
             amount: Number(order.amount),

@@ -24,10 +24,11 @@
  function resource(src,run){const u=new URL(src,location.href),key=u.pathname;if(u.origin!==location.origin||!allowedScripts.has(key.split('/').at(-1)))return Promise.resolve();if(loaded.has(key))return loaded.get(key);
  const promise=fetch(u.href,{signal:controller?.signal,cache:'default'}).then(async r=>{if(!r.ok)throw Error('Ümumi resurs yüklənmədi.');const code=await r.text();if(run!==generation)throw new DOMException('Stale route','AbortError');const s=document.createElement('script');s.dataset.routeResource=key;s.textContent=code;document.head.append(s);}).catch(e=>{loaded.delete(key);throw e;});loaded.set(key,promise);return promise;}
  async function mount(v,run){if(run!==generation)return;window.mirpanelNavigationMounting=true;try{
- if(document.getElementById('shopApp')){const m=await moduleWithin('/community-assets/shop-ui.js?v=order-transfer-20261106');if(run!==generation)return;dispose=m.mountShop();}
+ if(document.getElementById('shopApp')){const m=await moduleWithin('/community-assets/shop-ui.js?v=cart-v2');if(run!==generation)return;dispose=m.mountShop();}
  else if(document.getElementById('communityApp')){const m=await moduleWithin('/community-assets/community.js?v=shell-account-trim-20261106');if(run!==generation)return;dispose=m.mountCommunity();}
- else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=account-trim-20261106',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
+ else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=cart-v2',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
  else if(!v.started){for(const src of v.scripts||[]){if(run!==generation)return;await resource(src,run);}v.started=true;}
+ if(location.pathname==='/')window.mirpanelRestoreCatalog?.();
  }finally{window.mirpanelNavigationMounting=false;}}
  async function go(href,{pop=false,retry=false}={}){const u=new URL(href,location.href);if(u.origin!==location.origin||!routes.has(u.pathname)){location.assign(u.href);return false;}const key=u.pathname+u.search+u.hash;if(!retry&&key===current&&!loading)return true;if(!retry&&!guard()){if(pop)history.pushState({mirpanel:true},'',current);return false;}
  if(mounted&&location.pathname==='/profil'&&new URL(current,location.origin).pathname==='/profil'&&u.pathname==='/profil'&&window.mirpanelAccountNavigate){if(!pop)history.pushState({mirpanel:true},'',key);current=key;active();await window.mirpanelAccountNavigate(u.href);return true;}

@@ -43,7 +43,7 @@ try{
   await d.getByRole('button',{name:'Azalt: CapCut Pro'}).click();await d.getByRole('button',{name:'Video montaj seç'}).click();
   assert.equal(await p.locator('body').getAttribute('data-selected'),'extra');
   assert.equal(await p.evaluate(()=>MirpanelCart.read().length),1);
-  await p.evaluate(()=>{MirpanelCart.add('extra',0);MirpanelCart.open();});
+  await p.evaluate(()=>{MirpanelCart.commitDraft({draftId:'11111111-1111-4111-8111-111111111111',lineId:'11111111-1111-4111-8111-111111111111'},{productId:'extra',planIndex:0,quantity:1});MirpanelCart.open();});
   await d.locator('[data-cart-product="extra"]').waitFor();await d.getByText('8,24 ₼',{exact:true}).waitFor();
   await d.getByRole('button',{name:'Sil: Video montaj'}).click();assert.equal(await d.locator('[data-cart-product="extra"]').count(),0);
   await d.getByText('Sifarişiniz hazırdır — ödənişi tamamlayın').waitFor();
@@ -53,7 +53,7 @@ try{
   assert.equal(await d.locator('[data-cart-product="capcut"]').count(),1);assert.equal(await next.isDisabled(),true);
   fail=false;await d.getByRole('button',{name:'Yenidən yoxla'}).click();await d.getByText('Sifarişiniz hazırdır — ödənişi tamamlayın').waitFor();
   await d.getByRole('button',{name:'Səbəti bağla'}).click();
-  await p.evaluate(()=>{MirpanelCart.clear();MirpanelCart.add('netflix',0);MirpanelCart.open();});
+  await p.evaluate(()=>{MirpanelCart.clear();MirpanelCart.commitDraft({draftId:'22222222-2222-4222-8222-222222222222',lineId:'22222222-2222-4222-8222-222222222222'},{productId:'netflix',planIndex:0,quantity:1});MirpanelCart.open();});
   const netflix=await suggestionNames();assert.deepEqual(netflix.slice(0,2).sort(),['HBO Max','Prime Video']);assert.ok(!netflix.includes('Netflix'));
   console.log(JSON.stringify({width,firstFrameMs:first,reopenFrameMs:repeat,quoteDelayMs:700,productionWrites:0}));
   await p.close();
