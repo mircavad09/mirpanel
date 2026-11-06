@@ -33,8 +33,10 @@ try{await pool.query("select wallet_credit('owner','a',2000,'Synthetic browser c
   await add('spotify',{'E-poçt':'synthetic@example.invalid','Şifrə':'Only-synthetic-password'});
   await add('netflix',{'4 rəqəmli kod':'0012'});
   await add('ordinary',{});
+  await add('ordinary',{});
+  eq(await p.evaluate(()=>MirpanelCart.read().find(x=>x.productId==='ordinary').quantity),2);
   eq(await p.evaluate(()=>MirpanelCart.read().length),3);
-  eq((await pool.query('select count(*)::int n from shop_drafts where removed_at is null')).rows[0].n,3);
+  eq((await pool.query('select count(*)::int n from shop_drafts where removed_at is null')).rows[0].n,4);
   eq(await p.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}).includes('Only-synthetic-password')),false);
   eq(await p.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}).includes('0012')),false);
   // Reload restores only opaque metadata, then reads protected draft for editing.
@@ -54,7 +56,8 @@ try{await pool.query("select wallet_credit('owner','a',2000,'Synthetic browser c
   const group=await p.evaluate(()=>JSON.parse(localStorage.getItem('mirpanel.cart.checkout.v1')).id);
   if(width===390){await p.getByRole('button',{name:'Davam et',exact:true}).click();await p.locator('.shop-error').filter({hasText:/fetch/i}).waitFor();}
   const submitted=p.waitForResponse(r=>r.url().endsWith('/api/payments/shop/submit')&&r.status()===200);
-  await p.getByRole('button',{name:'Davam et',exact:true}).click();await submitted;
+  const external=p.waitForRequest(r=>r.url().startsWith('https://wa.me/'));
+  await p.getByRole('button',{name:'Davam et',exact:true}).click();await submitted;const summary=new URL((await external).url()).searchParams.get('text');eq(summary.includes('4 rəqəmli kod: 0012'),true);eq(summary.includes('E-poçt: synthetic@example.invalid'),true);eq(summary.includes('Şifrə: Only-synthetic-password'),true);eq(summary.includes('Say: 2 ədəd'),true);
   await p.waitForTimeout(300); // Let the intercepted external navigation settle.
   await p.goto(origin+'/odenis?completed='+group);await p.getByRole('link',{name:'WhatsApp-da aç'}).waitFor();
   const o=(await pool.query('select order_id from shop_checkouts where id=$1',[group])).rows[0];

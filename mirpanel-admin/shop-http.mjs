@@ -13,6 +13,7 @@ export async function handleShop({req,res,url,shop,browserOrders,security,readBo
  else if(path==='/draft/remove'&&post)value=await shop.removeDrafts(req,owner,(await readBody(req,4000)).ids);
  else if(path==='/checkout'&&post)value=await shop.checkout(req,owner,await readBody(req,40000));
  else if(path==='/checkout'&&req.method==='GET')value=await shop.get(req,owner,url.searchParams.get('id'));
+ else if(path==='/whatsapp'&&req.method==='GET'){const target=await shop.whatsapp(req,owner,url.searchParams.get('id'));res.writeHead(302,{'Location':target,'Cache-Control':'private,no-store','Referrer-Policy':'no-referrer'});res.end();return true;}
  else if(path==='/cancel'&&post)value=await shop.cancel(req,owner,(await readBody(req,2000)).id);
  else if(path==='/submit'&&post)value=await shop.submit(req,owner,(await readBody(req,2000)).id);
  else if(path==='/wallet'&&req.method==='GET')value=await shop.wallet(req,Object.fromEntries(url.searchParams));

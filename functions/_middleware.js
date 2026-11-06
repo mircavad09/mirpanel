@@ -244,7 +244,7 @@ function injectScript(html, needle, scriptTag) {
 
 function withSeoScripts(html) {
   let next = html;
-  next=next.replace(/(src=["'])\/?(browser-orders|order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=checkout-recovery-20261106$3');
+  next=next.replace(/(src=["'])\/?(browser-orders|order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-summary-20261106$3');
   next=next.replace(/(src=["'])\/?(cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-stable-20261031$3');
   next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=account-trim-20261106$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=intro-session-20261031$2');
