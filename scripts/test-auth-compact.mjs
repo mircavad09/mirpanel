@@ -21,7 +21,7 @@ const server=http.createServer(async(req,res)=>{
   if(u.pathname==='/api/auth/request-password-reset'){mailCalls++;return json(res,200,{ok:true});}
  }
  if(['/hesab','/qrup'].includes(u.pathname)){
-  res.setHeader('Content-Type','text/html');return res.end('<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/community.css"><body class="community-page">'+header+'<main id="communityApp" class="community-shell"></main><div id="supportWidget"><button id="waFab">WhatsApp</button><button id="aiSupportToggle">AI</button></div><script src="/site-header.js"></script><script type="module" src="/community-assets/community.js"></script></body></html>');
+  res.setHeader('Content-Type','text/html');return res.end('<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/community-assets/auth-forms.css?v=auth-compact-20261107"><body class="community-page">'+header+'<main id="communityApp" class="community-shell"></main><div id="supportWidget"><button id="waFab">WhatsApp</button><button id="aiSupportToggle">AI</button></div><script src="/site-header.js"></script><script type="module" src="/community-assets/community.js"></script></body></html>');
  }
  const file=u.pathname.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+u.pathname.slice(18):u.pathname.slice(1);
  if(file.includes('..')||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);return res.end();}
@@ -30,6 +30,44 @@ const server=http.createServer(async(req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
 try{
+ if(process.argv.includes('--recovery')){
+  for(const failure of ['state-html','shell-html','css-html','module-html']){
+   const ctx=await browser.newContext({viewport:{width:390,height:800}}),p=await ctx.newPage();let blocked=true,attempts=0;
+   const html=route=>{attempts++;return blocked?route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><html><body><h1>Synthetic security check</h1></body></html>'}):route.continue();};
+   if(failure==='state-html')await p.route('**/api/community/state',html);
+   if(failure==='css-html')await p.route('**/community-assets/auth-forms.css*',html);
+   if(failure==='module-html')await p.route('**/community-assets/auth-forms.js*',html);
+   await p.goto(origin+'/hesab?next=%2Fodenis');
+   if(failure==='shell-html'){await p.locator('.auth-submit').waitFor();await p.route(/\/hesab\?mode=signup/,html);await p.locator('.auth-switch').click();}
+   try{await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).waitFor({timeout:16000});}catch(e){console.log(JSON.stringify({failure,attempts,diagnostic:await p.evaluate(()=>({main:document.querySelector('main')?.textContent,css:[...document.querySelectorAll('link[href*="auth-forms.css"]')].map(n=>({disabled:n.disabled,sheet:!!n.sheet,rules:n.sheet?.cssRules?.length}))}))}));throw e;}eq(await p.getByRole('heading',{name:'Synthetic security check',exact:true}).count(),0);
+   eq(await p.getByText(/Unexpected token|is not valid JSON/).count(),0);blocked=false;await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).click();await p.locator('.auth-submit').waitFor();
+   eq(await p.locator('h1').textContent(),failure==='shell-html'?'Qeydiyyat':'Giriş');eq(attempts>=2,true);
+   if(failure==='state-html'){
+    await p.route('**/api/auth/sign-in/email',route=>route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>Synthetic check</title>'}));
+    await p.locator('#account-email').fill('synthetic@example.invalid');await p.locator('#account-password').fill('Synthetic-password');await p.locator('.auth-submit').click();await p.getByText('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.').waitFor();
+    eq(await p.locator('#account-password').inputValue(),'Synthetic-password');eq(new URL(p.url()).pathname,'/hesab');
+   }
+   console.log(JSON.stringify({failure,attempts,recovered:true,securityPageEmbedded:false}));await ctx.close();
+  }
+  console.log(JSON.stringify({checks,recovery:true,realEmailSent:false}));
+ }else if(process.argv.includes('--module-baseline')){
+  const p=await browser.newPage();let requests=0;
+  await p.route('**/community-assets/auth-forms.js*',route=>{requests++;return requests===1?route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><title>Synthetic security check</title>'}):route.continue();});
+  await p.goto(origin+'/hesab');await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).waitFor();await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).click();await p.waitForTimeout(600);
+  console.log(JSON.stringify({scenario:'module HTML response then retry',requests,form:await p.locator('.auth-form-panel').count(),retry:await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).count()}));await p.close();
+ }else if(process.argv.includes('--upstream-baseline')){
+  const p=await browser.newPage();await p.goto(origin+'/hesab');await p.locator('.auth-submit').waitFor();
+  await p.route(/\/hesab\?mode=signup/,route=>route.fulfill({status:200,contentType:'text/html',body:'<!doctype html><html><body><h1>Synthetic security check</h1></body></html>'}));
+  await p.locator('.auth-switch').click();await p.waitForTimeout(500);
+  console.log(JSON.stringify({scenario:'upstream HTML check instead of account shell',embedded:await p.getByRole('heading',{name:'Synthetic security check',exact:true}).count(),retry:await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).count()}));await p.close();
+ }else if(process.argv.includes('--css-failure-baseline')){
+  const p=await browser.newPage();let requests=0;
+  await p.route('**/community-assets/auth-forms.css*',route=>{requests++;return route.fulfill({status:503,contentType:'text/html',body:'<!doctype html><title>Synthetic upstream check</title>'});});
+  await p.route('**/community-assets/auth-forms.js*',async route=>{await new Promise(r=>setTimeout(r,700));await route.continue();});
+  await p.goto(origin+'/hesab?next=%2Fprofil');await p.waitForTimeout(1800);
+  console.log(JSON.stringify({scenario:'initial stylesheet failed before form handler',requests,form:await p.locator('.auth-form-panel').count(),retry:await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).count()}));
+  await p.close();
+ }else{
  for(const width of [320,360,390,430,1440]){
   const ctx=await browser.newContext({viewport:{width,height:800}}),p=await ctx.newPage();const errors=[];p.on('pageerror',e=>errors.push(e.message));
   await p.goto(origin+'/hesab?next=%2Fodenis');await p.locator('.auth-submit').waitFor();
@@ -61,4 +99,5 @@ try{
   console.log(JSON.stringify({width,compact:true,keyboard:'reduced viewport simulation',realEmailSent:false}));await ctx.close();
  }
  console.log(JSON.stringify({checks,syntheticMailCalls:mailCalls,realEmailSent:false,externalOAuthTested:false}));
+ }
 }finally{await browser.close();await new Promise(r=>server.close(r));}
