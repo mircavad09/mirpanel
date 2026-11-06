@@ -1915,7 +1915,7 @@
       }
       product = catalogProduct;
     }
-    if(plan&&Number(plan.price)>0){void import('/community-assets/cart-entry.js?v=cart-summary-20261106').then(m=>m.startCartEntry(product,plan)).catch(()=>toastMessage('Sifariş pəncərəsi açılmadı. Yenidən cəhd edin.'));return;}
+    if(plan&&Number(plan.price)>0){void import('/community-assets/cart-entry.js?v=login-gate-20261107').then(m=>m.startCartEntry(product,plan)).catch(()=>toastMessage('Sifariş pəncərəsi açılmadı. Yenidən cəhd edin.'));return;}
     if (!stockIsAvailable(product, plan) || !plan || Number(plan.price) <= 0) {
       decorateProductPage(product);
       alert("Stokda yoxdur.");
@@ -1923,7 +1923,7 @@
     }
 
     if(!isSpotifyProduct(product)&&!activeFields(product).some(f=>f.type==='password')){
-      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=cart-summary-20261106').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
+      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=login-gate-20261107').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
       const index=product.plans.indexOf(plan);
       openBaseModal(product,plan);const session=modalSession;
       const add=(values,quote)=>{

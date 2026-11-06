@@ -23,7 +23,7 @@ try{await pool.query("select wallet_credit('owner','a',2000,'Synthetic browser c
  await oldPage.getByText('cart.commitDraft is not a function',{exact:true}).waitFor();
  eq(await oldPage.locator('.mir-cart-drawer[open]').count(),0);await repro.close();
  for(const width of [320,360,390,430,1440]){
-  const ctx=await browser.newContext({viewport:{width,height:844}}),p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
+  const ctx=await browser.newContext({viewport:{width,height:844}}),p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));await ctx.addCookies([{name:'synthetic_account',value:'a',url:origin}]);
   await p.goto(origin+'/mehsul/synthetic?p=chatgpt&boot=legacy');await p.evaluate(()=>{window.savedCart=MirpanelCart;});
   await p.locator('#pp-order-btn').click();const d=p.locator('dialog.cart-entry');
   await d.getByRole('heading',{name:'Diqqət!'}).waitFor();

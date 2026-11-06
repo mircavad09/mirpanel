@@ -287,6 +287,7 @@ export function createPaymentSystem(options) {
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/payments/reservations") {
+      if(options.accountForCheckout&&!await options.accountForCheckout(request))throw Object.assign(Error('Sifarişi tamamlamaq üçün hesabınıza daxil olun.'),{status:401,code:'CHECKOUT_LOGIN_REQUIRED'});
       await publicRate(request, "reserve", 600, 12);
       const body = await readBody(request, 50_000);
       const idempotencyKey = safeUuid(request.headers["x-idempotency-key"] || body.idempotencyKey);
@@ -394,6 +395,7 @@ export function createPaymentSystem(options) {
     }
     if (request.method === "POST" && ['/api/payments/orders','/api/payments/receipts'].includes(url.pathname)) {
       const uploadOnly = url.pathname === '/api/payments/receipts';
+      if(!uploadOnly&&options.accountForCheckout&&!await options.accountForCheckout(request))throw Object.assign(Error('Sifarişi tamamlamaq üçün hesabınıza daxil olun.'),{status:401,code:'CHECKOUT_LOGIN_REQUIRED'});
       await publicRate(request, uploadOnly ? 'receipt-upload' : 'submit', 3600, uploadOnly ? 30 : 10);
       const contentType = String(request.headers["content-type"] || "");
       let body;

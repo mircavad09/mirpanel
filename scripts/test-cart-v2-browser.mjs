@@ -40,7 +40,7 @@ try{await pool.query("select wallet_credit('owner','a',2000,'Synthetic browser c
   eq(await p.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}).includes('Only-synthetic-password')),false);
   eq(await p.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}).includes('0012')),false);
   // Reload restores only opaque metadata, then reads protected draft for editing.
-  await p.goto(origin+'/sebet');await p.locator('.shop-card').filter({hasText:'Netflix'}).getByRole('button',{name:'Məlumatları redaktə et'}).click();
+  await ctx.addCookies([{name:'synthetic_account',value:'a',url:origin}]);await p.goto(origin+'/sebet');await p.locator('.shop-card').filter({hasText:'Netflix'}).getByRole('button',{name:'Məlumatları redaktə et'}).click();
   await p.getByLabel('4 rəqəmli kod',{exact:true}).waitFor();eq(await p.getByLabel('4 rəqəmli kod',{exact:true}).inputValue(),'0012');
   await p.getByRole('button',{name:'Davam et',exact:true}).click();
   await p.locator('.mir-cart-drawer[open]').waitFor();

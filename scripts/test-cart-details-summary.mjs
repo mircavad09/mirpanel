@@ -6,7 +6,7 @@ import {execFileSync} from 'node:child_process';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 process.env.MIRPANEL_CART_V2_TEST='1';
-const baseline=process.argv.includes('--baseline'),f=await shopFixture(),{pool,shop,id,method,catalog}=f,owner='d'.repeat(64),guest={};let checks=0,browser,server;
+const baseline=process.argv.includes('--baseline'),f=await shopFixture(),{pool,shop,id,method,catalog}=f,owner='d'.repeat(64),guest={user:'a'};let checks=0,browser,server;
 const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
 catalog.products.push({id:'capcut',title:'CapCut Pro',active:true,plans:[{label:'1 aylıq (0–500 AI kredit, Telefon)',price:4.99,formFields:[]}]},{id:'netflix',title:'Netflix Şəxsi',active:true,plans:[{label:'1 aylıq',price:5.99,formFields:[{key:'room',label:'Otaq adı',required:true},{key:'pin',label:'Otaq kodu',digits:4,required:true}]}]},{id:'spotify',title:'Spotify',active:true,formFields:[{key:'email',label:'E-poçt',type:'email',required:true},{key:'password',label:'Şifrə',type:'password',required:true}],plans:[{label:'1 aylıq',price:5}]});
 const save=async(productId,values={},draftId=id())=>{const q=await shop.quote(guest,[{productId,planIndex:0,quantity:1}],owner),d=await shop.saveDraft(guest,owner,{id:draftId,productId,planIndex:0,values,termsVersion:q.items[0].termsVersion});return{d,meta:{productId,planIndex:0,quantity:1}};};
