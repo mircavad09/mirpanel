@@ -23,9 +23,9 @@ try{await pool.query("select wallet_credit('owner','a',2000,'Synthetic browser c
    await p.locator('#pp-order-btn').click();
    const d=p.locator('dialog.cart-entry');
    await d.getByRole('heading',{name:'Diqqət!'}).waitFor();
-   eq(await d.getByRole('button',{name:'Şərtləri oxudum və təsdiqlədim'}).isDisabled(),true);
+   eq(await d.getByRole('button',{name:'Təsdiqləyirəm'}).isDisabled(),true);
    await d.getByRole('checkbox').check();
-   await d.getByRole('button',{name:'Şərtləri oxudum və təsdiqlədim'}).click();
+   await d.getByRole('button',{name:'Təsdiqləyirəm'}).click();
    if(Object.keys(values).length){for(const [k,v] of Object.entries(values))await d.getByLabel(k,{exact:true}).fill(v);await p.screenshot({path:'payment-test-artifacts/shop-browser/cart-fields-'+product+'-'+width+'.png'});await d.getByRole('button',{name:'Davam et',exact:true}).click();if(width===390&&product==='spotify'){await d.locator('.cart-entry-error').filter({hasText:/fetch/i}).waitFor();eq(await d.getByLabel('Şifrə',{exact:true}).inputValue(),values['Şifrə']);await d.getByRole('button',{name:'Davam et',exact:true}).click();}}
    await p.locator('.mir-cart-drawer[open]').waitFor();
    await p.locator('.mir-cart-drawer').getByRole('button',{name:'Səbəti bağla'}).click();

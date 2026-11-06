@@ -1,4 +1,4 @@
-(()=>{'use strict';if(window.MirpanelCart)return;const key='mirpanel.cart.v1';
+(()=>{'use strict';const previous=window.MirpanelCart;if(previous&&typeof previous.commitDraft==='function'&&typeof previous.checkout==='function'){previous.apiVersion=3;return;}const key='mirpanel.cart.v1';
  const clean=x=>({productId:x.productId,planIndex:x.planIndex,quantity:x.quantity,...(x.draftId?{draftId:x.draftId,lineId:x.lineId||x.draftId}:{}),...(x.termsVersion?{termsVersion:x.termsVersion}:{})});
  const read=()=>{try{const a=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(a)?a.filter(x=>typeof x.productId==='string'&&Number.isInteger(x.planIndex)&&x.planIndex>=0&&Number.isInteger(x.quantity)&&x.quantity>0&&x.quantity<=20).slice(0,20).map(clean):[];}catch{return[];}};
  function save(items){localStorage.setItem(key,JSON.stringify(items.map(clean)));window.dispatchEvent(new Event('mirpanel:cart'));}
@@ -8,11 +8,14 @@
  const removedKey='mirpanel.cart.removed.v2';
  const removed=()=>{try{return JSON.parse(localStorage.getItem(removedKey)||'[]');}catch{return[];}};
  function retire(ids){localStorage.setItem(removedKey,JSON.stringify([...new Set([...removed(),...ids])].slice(-200)));if(ids.length)void draftPost('draft/remove',{ids}).catch(()=>{});}
- const cart={read,checkout:read,
+ const cart=Object.assign(previous||{},{apiVersion:3,read,checkout:read,
  commitDraft(d,meta){const a=read(),x=clean({...meta,...d}),at=a.findIndex(n=>n.lineId===x.lineId);if(at<0)a.push(x);else a[at]=x;if(a.length>20||a.reduce((s,x)=>s+x.quantity,0)>40)throw Error('Səbət limiti: 20 sətir, 40 ədəd.');save(a);},
  set(productId,planIndex,quantity,values,termsVersion,lineId){if(values&&Object.keys(values).length)throw Error('Məlumatları qorunan sifariş formasında daxil edin.');if(!Number.isInteger(quantity)||quantity<0||quantity>20)throw Error('Say 1–20 aralığında olmalıdır.');const a=read(),at=a.findIndex(x=>lineId?x.lineId===lineId:x.productId===productId&&x.planIndex===planIndex);if(at<0)throw Error('Məhsulu əvvəlcə sifariş formasında təsdiqləyin.');if(quantity)a[at].quantity=quantity;else{retire([a[at].draftId].filter(Boolean));a.splice(at,1);}if(a.reduce((s,x)=>s+x.quantity,0)>40)throw Error('Bir sifarişdə ən çox 40 ədəd.');save(a);},
  add(){throw Error('Məhsulu əvvəlcə sifariş formasında təsdiqləyin.');},
- clear(){retire(read().map(x=>x.draftId).filter(Boolean));save([]);}};window.MirpanelCart=cart;
+ clear(){retire(read().map(x=>x.draftId).filter(Boolean));save([]);}});window.MirpanelCart=cart;
+ // A legacy tab already owns the drawer, badge listeners and observer. Upgrade
+ // its public API in place, retaining references and installing no second UI.
+ if(previous){window.dispatchEvent(new Event('mirpanel:cart'));return;}
  async function restore(){try{const r=await fetch('/api/payments/shop/drafts',{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;const d=await r.json(),a=read(),gone=new Set(removed());for(const x of d.items||[])if(!gone.has(x.draftId)&&!a.some(n=>n.lineId===x.lineId)&&a.length<20)a.push(clean(x));save(a);}catch{}}
  const azMoney=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
  function node(tag,value,cls){const n=document.createElement(tag);if(value!=null)n.textContent=value;if(cls)n.className=cls;return n;}
@@ -68,7 +71,7 @@
     const img=node('img');img.src=p.image||'/favicon.ico';img.alt='';
     const info=node('div',null,'mir-cart-info');info.append(node('strong',name),node('small',p.planName||'Seçilmiş paket'),node('b',p.unitCents==null?'—':azMoney(p.unitCents*x.quantity)));
     for(const field of p.maskedDetails||[])info.append(node('small',field.label+': '+field.value));
-    if(x.draftId)info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{d.close();void import('/community-assets/cart-entry.js?v=cart-v2').then(m=>m.editCartLine(x)).catch(e=>alert(e.message));}));
+    if(x.draftId)info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{d.close();void import('/community-assets/cart-entry.js?v=checkout-warning-20261106').then(m=>m.editCartLine(x)).catch(e=>alert(e.message));}));
     const controls=node('div',null,'mir-cart-controls'),qty=node('div',null,'mir-cart-qty'),change=n=>{try{cart.set(x.productId,x.planIndex,n,undefined,undefined,x.lineId);}catch(e){notice.textContent=e.message;}};
     const minus=action('−',()=>change(x.quantity-1)),plus=action('+',()=>change(x.quantity+1)),del=action('Sil',()=>change(0),'mir-cart-remove');del.insertAdjacentHTML('afterbegin',trash);
     for(const [b,label] of [[minus,'Azalt'],[plus,'Artır'],[del,'Sil']]){b.setAttribute('aria-label',label+': '+name);b.dataset.cartFocus=itemKey(x)+label;}

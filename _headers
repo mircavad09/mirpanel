@@ -35,6 +35,9 @@
 /cart-store.js
   Cache-Control: no-cache, must-revalidate
 
+/cart-ready.js
+  Cache-Control: no-cache, must-revalidate
+
 /cart-store.css
   Cache-Control: no-cache, must-revalidate
 
