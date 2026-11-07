@@ -41,5 +41,10 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
  decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');decorate(subscription,'M5 5h14v15H5z M8 2v6 M16 2v6 M5 10h14');
  hero.append(stats,balance,editor);
  app.replaceChildren(el('div',{class:'profile-layout'},hero,el('div',{class:'profile-content'},identity,copyStatus,status,el('div',{class:'profile-info-grid'},latest,subscription),logout)),avatarInput,coverInput);paint();
- void api('/api/community/profile-summary').then(r=>{orderCount.textContent=Number.isSafeInteger(r.orderCount)?String(r.orderCount):'—';savedAmount.textContent=Number.isSafeInteger(r.savingsCents)?money(r.savingsCents):'Məlumat yoxdur';latest.replaceChildren(el('h2',{},'Son sifariş'));decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');if(!r.latestOrder)latest.append(el('strong',{},'Hələ yoxdur'),link('Məhsullara bax','/mehsul','profile-products'));else{const o=r.latestOrder;latest.append(el('strong',{},o.product_title),el('p',{},o.plan_name),el('p',{},'№ '+o.order_code+' · '+Number(o.amount).toFixed(2)+' '+o.currency));}}).catch(()=>{orderCount.textContent='—';savedAmount.textContent='Məlumat yoxdur';latest.replaceChildren(el('h2',{},'Son sifariş'),el('p',{},'Məlumat yüklənmədi.'));});
+ async function summaryData(){
+  latest.replaceChildren(el('h2',{},'Son sifariş'),el('div',{class:'account-card-pending','aria-busy':'true','aria-label':'Son sifariş məlumatı'}));
+  try{const r=await api('/api/community/profile-summary');orderCount.textContent=Number.isSafeInteger(r.orderCount)?String(r.orderCount):'—';savedAmount.textContent=Number.isSafeInteger(r.savingsCents)?money(r.savingsCents):'Məlumat yoxdur';latest.replaceChildren(el('h2',{},'Son sifariş'));decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');if(!r.latestOrder)latest.append(el('strong',{},'Hələ yoxdur'),link('Məhsullara bax','/mehsul','profile-products'));else{const o=r.latestOrder;latest.append(el('strong',{},o.product_title),el('p',{},o.plan_name),el('p',{},'№ '+o.order_code+' · '+Number(o.amount).toFixed(2)+' '+o.currency));}}
+  catch{if(latest.isConnected){orderCount.textContent='—';savedAmount.textContent='Məlumat yoxdur';latest.replaceChildren(el('h2',{},'Son sifariş'),button('Yenidən cəhd et',summaryData));}}
+ }
+ void summaryData();
 }

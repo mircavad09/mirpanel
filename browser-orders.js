@@ -1,6 +1,6 @@
 (()=>{'use strict';window.mountBrowserOrders=(options={})=>{const root=document.getElementById('browserOrders');if(!root)return;const life=new AbortController(),on=(t,n,f)=>t.addEventListener(n,f,{signal:life.signal});
  const error=document.getElementById('browserOrdersError'),more=document.getElementById('browserOrdersMore'),dialog=document.getElementById('browserReceipt'),content=document.getElementById('browserReceiptContent');
- let cursor=null,loading=false,loaded=false,generation=0,timer,focused=false,pageFingerprint=null,hasAppended=false;const seen=new Set(),requests=new Set(),prior=new Map();
+ let cursor=null,loading=false,loaded=false,generation=0,timer,focused=false,pageFingerprint=null,hasAppended=false,initialRequest=options.initialRequest;const seen=new Set(),requests=new Set(),prior=new Map();
  const target=new URLSearchParams(location.search).get('order');
  const sounds=import('/checkout-sounds.js?v=1').catch(()=>null);
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -33,10 +33,10 @@
   loaded=true;root.classList.add('browser-orders-list');if(!seen.size&&!root.querySelector('[data-topup-id]'))root.innerHTML='<div class="browser-orders-message"><h2>Hələ sifarişiniz yoxdur</h2><p>Hesabınıza bağlı sifarişlər burada görünəcək.</p><a class="orders-action" href="/mehsul">Məhsullara bax</a></div>';cursor=d.nextCursor;more.hidden=!cursor;window.dispatchEvent(new CustomEvent('mirpanel:orders-loaded',{detail:{empty:!seen.size&&!root.querySelector('[data-topup-id]')}}));if(!append)options.onData?.(d);
  }
  async function load(append=false,live=false){if(loading)return;const run=generation;loading=true;root.setAttribute('aria-busy','true');more.disabled=true;error.hidden=true;
-  try{const d=await api('my-orders'+(append&&cursor?'?cursor='+encodeURIComponent(cursor):target?'?order='+encodeURIComponent(target):''));if(run!==generation)return;
+  try{const started=!append?initialRequest:null;if(started)initialRequest=null;const d=await(started||api('my-orders'+(append&&cursor?'?cursor='+encodeURIComponent(cursor):target?'?order='+encodeURIComponent(target):'')));if(run!==generation)return;options.validate?.(d);
    if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=orders');else location.replace('/profil?tab=orders');return;}
    if(!live||JSON.stringify([d.orders,d.topups])!==pageFingerprint)paint(d,append,{live});
-  }catch(e){if(run!==generation)return;if(e.status===401||e.status===403){gate();return;}error.textContent='Sifarişləri yükləmək mümkün olmadı. Yenidən cəhd edin.';error.hidden=false;if(!loaded)root.innerHTML='<div class="browser-orders-message"><p>Serverə qoşulmaq mümkün olmadı.</p><button type="button" data-retry>Yenidən cəhd et</button></div>';
+  }catch(e){if(run!==generation)return;if(e.status===401||e.status===403){gate();return;}error.replaceChildren(document.createTextNode('Sifarişləri yükləmək mümkün olmadı. '));error.hidden=false;if(!loaded)root.innerHTML='<div class="browser-orders-message"><button type="button" data-retry>Yenidən cəhd et</button></div>';else{const retry=document.createElement('button');retry.type='button';retry.textContent='Yenidən cəhd et';on(retry,'click',()=>load(append));error.append(retry);}
   }finally{if(run===generation){loading=false;more.disabled=false;root.setAttribute('aria-busy','false');}}
  }
  on(more,'click',()=>load(!!cursor));

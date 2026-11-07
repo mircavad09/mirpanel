@@ -17,8 +17,13 @@
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=signup-manual-code-20261108';
+ const profileModule='/community-assets/profile-entry.js?v=profile-start-20261108';
+ let profileReady;
+ const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
+ window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
+ if(window.mirpanelAccountProfile)void prepareProfile().catch(()=>{});
  void import(authModule).catch(()=>{});
- function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty');if(app){const p=document.createElement('p');p.setAttribute('role','status');p.className='site-route-pending';p.textContent='Məlumatlar yüklənir…';app.append(p);}}emptyStatus();
+ function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('p');p.setAttribute('role','status');p.className='site-route-pending';p.textContent='Məlumatlar yüklənir…';app.append(p);}}emptyStatus();
  async function moduleWithin(url){let timer;try{return await Promise.race([import(url),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}finally{clearTimeout(timer);}}
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&u.pathname===location.pathname)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
@@ -34,10 +39,30 @@
  else if(!v.started){for(const src of v.scripts||[]){if(run!==generation)return;await resource(src,run);}v.started=true;}
  if(location.pathname==='/')window.mirpanelRestoreCatalog?.();
  }finally{window.mirpanelNavigationMounting=false;}}
+ async function mountProfileRoute(u,run){
+  const app=document.createElement('main');app.id='communityApp';app.className='community-shell';root.replaceChildren(app);mounted=true;
+  routeClasses.add('community-page');document.body.classList.add('community-page','profile-screen');
+  const labels={orders:'Sifarişlərim',codes:'Kodlarım',payments:'Ödənişlərim',expenses:'Xərclərim',subscriptions:'Abunəliklərim'};
+  const tab=new URLSearchParams(u.search).get('tab'),heading=document.createElement('h1');heading.textContent=Object.hasOwn(labels,tab)?labels[tab]:'Profil';
+  const card=document.createElement('div');card.className='site-route-placeholder';card.setAttribute('aria-busy','true');
+  const section=document.createElement('section');section.className='site-route-loading';section.append(heading,card);app.append(section);
+  for(const n of styles.values())if(!n.hasAttribute('data-shell-persistent')&&!n.hasAttribute('data-cart-entry-css')){if(n.tagName==='LINK'){if(new URL(n.href).origin===location.origin)n.disabled=true;}else n.media='not all';}
+  window.scrollTo(0,0);
+  const mod=prepareProfile();void import('/session-state.js?v=auth-recovery-20261107').then(m=>run===generation?m.getCommunityState():null).catch(()=>{});
+  try{
+   const m=await mod;if(run!==generation)return false;
+   dispose=m.mountProfile(app);loading=false;active();
+   window.dispatchEvent(new CustomEvent('mirpanel:route-ready',{detail:{path:u.pathname}}));return true;
+  }catch{
+   if(run!==generation)return false;loading=false;
+   card.remove();const retry=document.createElement('button');retry.textContent='Yenidən cəhd et';retry.onclick=()=>go(u.href,{retry:true});section.append(retry);return false;
+  }
+ }
  async function go(href,{pop=false,retry=false}={}){const u=new URL(href,location.href);if(u.origin!==location.origin||!routes.has(u.pathname)){location.assign(u.href);return false;}const key=u.pathname+u.search+u.hash;if(!retry&&key===current&&!loading)return true;if(!retry&&!guard()){if(pop)history.pushState({mirpanel:true},'',current);return false;}
  if(mounted&&location.pathname==='/profil'&&new URL(current,location.origin).pathname==='/profil'&&u.pathname==='/profil'&&window.mirpanelAccountNavigate){if(!pop)history.pushState({mirpanel:true},'',key);current=key;active();await window.mirpanelAccountNavigate(u.href);return true;}
  const run=++generation;controller?.abort();controller=new AbortController();const requestController=controller,timeout=setTimeout(()=>requestController.abort(),20000);scrolls.set(current,{x:scrollX,y:scrollY});if(mounted)leave();loading=true;if(!pop&&!retry)history.pushState({mirpanel:true},'',key);current=key;active();
  document.querySelector('.site-header')?.classList.remove('is-menu-open');document.body.classList.remove('site-header-menu-open','home-page','profile-screen','wallet-page-active','auth-screen');document.body.style.overflow='';document.documentElement.classList.remove('community-chat-screen');
+ if(u.pathname==='/profil'){try{return await mountProfileRoute(u,run);}finally{clearTimeout(timeout);}}
  if(u.pathname==='/hesab'){
   const app=document.createElement('main');app.className='community-shell';root.replaceChildren(app);document.body.classList.add('community-page','auth-screen');mounted=true;window.scrollTo(0,0);
   try{const m=await moduleWithin(authModule);if(run!==generation)return false;const cleanup=await m.mountAuth(app);if(run!==generation){cleanup();return false;}dispose=cleanup;loading=false;active();return true;}catch{if(run===generation){loading=false;const b=document.createElement('button');b.textContent='Giriş formasını yenidən aç';b.onclick=()=>location.reload();app.replaceChildren(b);}return false;}finally{clearTimeout(timeout);}

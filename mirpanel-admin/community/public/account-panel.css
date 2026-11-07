@@ -8,6 +8,8 @@
 .account-payments .account-payment-summary>div{display:grid;gap:6px;padding:14px;background:#181c24;border:1px solid #303746;border-radius:12px}
 .account-payments .account-payment-summary span,.account-payment-info time,.account-payment-info small{color:#b9c2d0;font-size:13px}
 .account-payments .account-payment-filters{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.account-identity-pending{min-height:82px;background:linear-gradient(100deg,#191c20,#24272b,#191c20)}
+.account-card-pending{height:12px;width:min(130px,80%);margin:10px 0;border-radius:6px;background:#30343a}
 .account-payments .account-payment-filters button[aria-pressed=true]{border-color:#ffd400;color:#ffd400}
 .account-payments .account-payment-list{display:grid;gap:8px}
 .account-payments .account-payment-row{display:grid;grid-template-columns:70px minmax(0,1fr) auto;align-items:center;gap:10px;padding:10px;border:1px solid #303746;border-radius:12px;background:#151922}

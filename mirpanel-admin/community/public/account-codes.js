@@ -1,9 +1,10 @@
-export function mountCodes({content,el,button}){
+export function mountCodes({content,el,button,initial,initialRequest,validate,onData}){
  const life=new AbortController(),status=el('p',{role:'status'}),list=el('div',{class:'browser-orders-list'}),heading=el('h1',{},'Kodlarım');
  content.replaceChildren(heading,status,list);
+ if(!initial)list.append(el('div',{class:'account-skeleton','aria-busy':'true','aria-label':'Kod məlumatı'}));
  async function read(id=''){
   const r=await fetch('/api/payments/my-orders/codes'+(id?'/'+encodeURIComponent(id):''),{cache:'no-store',signal:life.signal});
-  if(!r.ok)throw Error('Məlumatı açmaq mümkün olmadı.');
+  if(!r.ok)throw Object.assign(Error('Məlumatı açmaq mümkün olmadı.'),{status:r.status});
   return r.json();
  }
  function make(row){
@@ -39,17 +40,24 @@ export function mountCodes({content,el,button}){
   item.append(head,el('div',{class:'browser-order-actions'},toggle,copy,feedback),text);
   return {item,hide};
  }
- let cards=[];
+ let cards=[],fingerprint=null;
  const hide=()=>{for(const c of cards)c.hide();};
- async function load(){
+ function paint(data){
+  validate?.(data);
+  const {codes}=data,next=JSON.stringify(codes);status.replaceChildren(document.createTextNode(codes.length?codes.length+' təhvil qeydi':'Hələ kodunuz yoxdur.'));
+  if(next!==fingerprint){fingerprint=next;hide();cards=codes.map(make);list.replaceChildren(...cards.map(c=>c.item));}
+  onData?.(data);
+ }
+ async function load(started=null){
   try{
-   const {codes}=await read();if(life.signal.aborted)return;
-   status.textContent=codes.length?codes.length+' təhvil qeydi':'Hələ kodunuz yoxdur.';
-   cards=codes.map(make);list.replaceChildren(...cards.map(c=>c.item));
-  }catch{if(!life.signal.aborted){status.textContent='Kodları yükləmək mümkün olmadı.';list.replaceChildren(button('Yenidən cəhd et',load));}}
+   const data=await(started||read());if(life.signal.aborted)return;paint(data);
+  }catch(e){if(!life.signal.aborted){
+   if(fingerprint===null||e.status===401||e.status===403){hide();cards=[];fingerprint=null;list.replaceChildren();onData?.(null);}
+   status.replaceChildren(document.createTextNode('Kodları yükləmək mümkün olmadı. '),button('Yenidən cəhd et',()=>load()));
+  }}
  }
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hide();},{signal:life.signal});
  window.addEventListener('pagehide',hide,{signal:life.signal});
- void load();
+ if(initial)paint(initial);void load(initialRequest);
  return()=>{life.abort();hide();};
 }
