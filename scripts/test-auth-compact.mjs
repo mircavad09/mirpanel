@@ -16,11 +16,13 @@ const server=http.createServer(async(req,res)=>{
  if(req.method==='POST'){
   let raw='';for await(const c of req)raw+=c;const b=JSON.parse(raw||'{}');
   if(u.pathname==='/api/auth/sign-in/email'){loginCalls++;return json(res,401,{message:b.email==='unverified@example.invalid'?'Email not verified':'Invalid email or password'});}
-  if(u.pathname==='/api/auth/confirm-email/status'){const email=pendingEmail;pendingEmail='';return json(res,200,{email});}
+  if(u.pathname==='/api/auth/confirm-email/status'){const email=pendingEmail;return json(res,200,{email});}
   if(u.pathname==='/api/auth/confirm-email/start'){pendingEmail=b.email;return json(res,200,{email:b.email});}
-  if(u.pathname==='/api/auth/sign-up/email'){signupCalls++;return json(res,200,{user:{id:'synthetic-new',email:b.email}});}
+  if(u.pathname==='/api/auth/confirm-email/send')return json(res,200,{email:pendingEmail,codeSent:true,retryAfter:60});
+  if(u.pathname==='/api/auth/sign-up/email'){signupCalls++;return json(res,200,{registrationCreated:true,user:{id:'synthetic-new',email:b.email}});}
   if(u.pathname==='/api/auth/request-password-reset'){mailCalls++;return json(res,200,{ok:true});}
  }
+ if(u.pathname==='/'){res.setHeader('Content-Type','text/html');return res.end('<!doctype html><h1>Ana səhifə</h1><script defer src="/site-header.js"></script>');}
  if(['/hesab','/qrup'].includes(u.pathname)){
   res.setHeader('Content-Type','text/html');return res.end('<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/community-assets/auth-forms.css?v=account-update-20261107"><body class="community-page">'+header+'<main id="communityApp" class="community-shell"></main><div id="supportWidget"><button id="waFab">WhatsApp</button><button id="aiSupportToggle">AI</button></div><script src="/site-header.js"></script><script type="module" src="/community-assets/community.js"></script></body></html>');
  }
@@ -80,7 +82,7 @@ try{
   await p.locator('#account-email').fill('bad');await p.locator('#account-password').fill('Synthetic-password');await p.locator('.auth-submit').click();eq(loginCalls,count);
   await p.locator('#account-email').fill('invalid@example.invalid');await p.locator('.auth-submit').click();await p.getByText('E-poçt və ya şifrə düzgün deyil.').waitFor();eq(await p.locator('.auth-code-sheet').isHidden(),true);
   await p.getByRole('button',{name:'Şifrəni göstər',exact:true}).click();eq(await p.locator('#account-password').getAttribute('type'),'text');await p.getByRole('button',{name:'Şifrəni gizlət',exact:true}).click();eq(await p.locator('#account-password').getAttribute('type'),'password');
-  await p.locator('#account-email').fill('unverified@example.invalid');await p.locator('.auth-submit').click();await p.locator('.auth-code-sheet').waitFor({state:'visible'});await p.getByRole('button',{name:'E-poçta kod göndər',exact:true}).waitFor();await p.locator('.auth-code-close').click();
+  await p.locator('#account-email').fill('unverified@example.invalid');await p.locator('.auth-submit').click();await p.locator('.auth-code-sheet').waitFor({state:'visible'});await p.getByRole('button',{name:'E-poçta kod göndər',exact:true}).waitFor();await p.locator('.auth-code-close').click();pendingEmail='';
   await p.locator('#account-email').fill('different@example.invalid');eq(await p.locator('.auth-code-sheet').isHidden(),true);
   // Force Chrome's real autofill pseudo-state, then inspect the rendered colors.
   const cdp=await ctx.newCDPSession(p);await cdp.send('DOM.enable');await cdp.send('CSS.enable');const doc=await cdp.send('DOM.getDocument');const {nodeId}=await cdp.send('DOM.querySelector',{nodeId:doc.root.nodeId,selector:'#account-email'});await cdp.send('CSS.forcePseudoState',{nodeId,forcedPseudoClasses:['autofill']});eq(await p.locator('#account-email').evaluate(n=>getComputedStyle(n).webkitTextFillColor),'rgb(238, 238, 238)');
@@ -90,10 +92,11 @@ try{
   eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);eq(await p.locator('#supportWidget').isHidden(),true);
   const signupBefore=signupCalls;await p.locator('.auth-submit').click();eq(signupCalls,signupBefore);
   await p.locator('#account-firstName').fill('Sintetik');await p.locator('#account-lastName').fill('İstifadəçi');await p.locator('#account-email').fill('synthetic@example.invalid');await p.locator('#account-phone').fill('501234567');await p.locator('#account-password').fill('short');await p.locator('#account-terms').check();await p.locator('.auth-submit').click();eq(signupCalls,signupBefore);
-  await p.locator('#account-password').fill('Synthetic-password');await p.locator('.auth-submit').click();await p.getByRole('heading',{name:'E-poçtunu təsdiqlə'}).waitFor();eq(signupCalls,signupBefore+1);await p.locator('.auth-code-close').click();
+  await p.locator('#account-password').fill('Synthetic-password');pendingEmail='';
   await p.setViewportSize({width,height:380});await p.locator('#account-password').focus();await p.locator('.auth-submit').scrollIntoViewIfNeeded();eq(await p.locator('.auth-submit').evaluate(n=>{const r=n.getBoundingClientRect();return r.top>=0&&r.bottom<=innerHeight;}),true);eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   await p.setViewportSize({width,height:800});await p.evaluate(()=>window.scrollTo(0,0));if(width===390)await p.screenshot({path:out+'/signup-390.png'});
-  await p.locator('.auth-switch').click();await p.locator('#account-password').waitFor();eq(await p.locator('.auth-code-sheet').isHidden(),true);eq(await p.locator('link[data-shell-persistent="auth-forms"]').count(),1);
+  await p.locator('.auth-submit').click();await p.getByRole('heading',{name:'Sifarişini tamamlamaq üçün e-poçtunu təsdiqlə'}).waitFor();await p.getByText('Kod göndərildi.',{exact:false}).waitFor();eq(signupCalls,signupBefore+1);await p.locator('.auth-code-close').click();pendingEmail='';
+  await p.goto(origin+'/hesab?next=%2Fodenis');await p.locator('#account-password').waitFor();eq(await p.locator('.auth-code-sheet').isHidden(),true);eq(await p.locator('link[data-shell-persistent="auth-forms"]').count(),1);
   await p.getByRole('link',{name:'Şifrəmi unutdum',exact:true}).click();await p.getByRole('button',{name:'Bərpa keçidini göndər',exact:true}).waitFor();await p.locator('#account-email').fill('synthetic@example.invalid');await p.locator('.auth-submit').click();await p.getByText('Hesab mövcuddursa, bərpa keçidi göndərildi.').waitFor();
   await p.locator('.auth-switch').click();await p.locator('.auth-submit').waitFor();await p.locator('.auth-close').click();await p.waitForURL('**/qrup');eq(await p.evaluate(()=>document.body.classList.contains('auth-screen')),false);
   await p.goto(origin+'/hesab?next=%2Fodenis');await p.locator('.auth-submit').waitFor();eq(await p.locator('.auth-code-sheet').isHidden(),true);eq(errors,[]);

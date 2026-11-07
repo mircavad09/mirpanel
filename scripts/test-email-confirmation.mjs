@@ -26,16 +26,19 @@ const server=http.createServer(async(req,res)=>{
    return await handlePublicCommunity({req,res,u,origin,runtime:{pool,auth},json,body:async q=>JSON.parse(await body(q))});
   }
   if(u.pathname==='/hesab'){res.setHeader('content-type','text/html');return res.end('<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><main id="authApp"></main><script type="module" src="/community-assets/auth-forms.js"></script>');}
-  if(['/odenis','/sebet','/profil'].includes(u.pathname)){res.setHeader('content-type','text/html');return res.end('<h1>Sintetik qayıdış</h1>');}
+  if(['/','/odenis','/sebet','/profil','/mehsul/sintetik'].includes(u.pathname)){res.setHeader('content-type','text/html');return res.end('<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><h1>Sintetik qayıdış</h1><script defer src="/site-header.js"></script>');}
+  if(u.pathname==='/site-header.js'){res.setHeader('content-type','text/javascript');return res.end(fs.readFileSync('site-header.js'));}
   if(/^\/community-assets\/auth-forms\.(css|js)$/.test(u.pathname)){res.setHeader('content-type',u.pathname.endsWith('.css')?'text/css':'text/javascript');return res.end(fs.readFileSync('mirpanel-admin/community/public/'+u.pathname.split('/').pop()));}
   res.writeHead(404);res.end();
  }catch(e){if(!res.headersSent)json(res,e.status||500,{message:e.status?e.message:'Synthetic server error'});else res.end();}
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port,clientId='synthetic-google-client';
-const send=async(kind,value)=>{mail.push({kind,...value});return {id:'synthetic-accepted'};};
+let failCodeFor;
+const send=async(kind,value)=>{if(kind==='code'&&value.user.email===failCodeFor){failCodeFor=null;throw Error('Synthetic provider failure');}mail.push({kind,...value});return {id:'synthetic-accepted'};};
 const welcomeDelivery=createWelcomeDelivery(pool,send);
-const auth=makePublicAuth(pool,{origin,clientId,secret:'synthetic-isolated-secret-32-characters',clientSecret:'synthetic-only'},send,welcomeDelivery);
+const createAuth=()=>makePublicAuth(pool,{origin,clientId,secret:'synthetic-isolated-secret-32-characters',clientSecret:'synthetic-only'},send,welcomeDelivery);
+let auth=createAuth(),testClient=1;
 const password='Synthetic-Test-Only',record=(kind,address)=>mail.filter(m=>m.kind===kind&&m.user.email===address);
 const cookieJar=()=>new Map();
 const request=async(jar,path,data)=>{
@@ -53,7 +56,7 @@ let googleVerified=true,nonce='';
 globalThis.fetch=(url,opts)=>{
  const dest=typeof url==='string'?url:url.url||url.href;
  if(dest?.startsWith('https://mirpanel.onrender.com/')){
-  const headers=new Headers(opts.headers);headers.set('x-test-upstream','1');headers.set('origin',origin);
+  const headers=new Headers(opts.headers);headers.set('x-test-upstream','1');headers.set('origin',origin);headers.set('x-forwarded-for','192.0.2.'+testClient);
   return nativeFetch(origin+new URL(dest).pathname+new URL(dest).search,{...opts,headers,duplex:'half'});
  }
  if(dest==='https://www.googleapis.com/oauth2/v3/certs')return Promise.resolve(Response.json({keys:[jwk]}));
@@ -87,12 +90,19 @@ try{
   assert.equal((await pool.query('select count(*)::int as n from "user" where email=$1',[address])).rows[0].n,1);
   assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
   assert.equal(await page.locator('#account-email').inputValue(),address);
+  await page.getByText('Qeydiyyat uğurla tamamlandı',{exact:true}).waitFor();
+  failCodeFor=address;
   await page.getByRole('button',{name:'Təsdiqə davam et',exact:true}).click();
-  await page.getByRole('heading',{name:'E-poçtunu təsdiqlə',exact:true}).waitFor();
+  await page.waitForURL('**/sebet');
+  await page.getByRole('heading',{name:'Sifarişini tamamlamaq üçün e-poçtunu təsdiqlə'}).waitFor();
   assert.equal(signupCalls,1);
   assert.equal(await page.locator('.auth-code-address strong').innerText(),address);
-  await page.getByRole('button',{name:'E-poçta kod göndər',exact:true}).click();
-  await page.getByRole('heading',{name:'Kodu daxil et',exact:true}).waitFor();
+  await page.getByText('Kodun göndərilməsi təsdiqlənmədi.',{exact:false}).waitFor();
+  assert.equal(record('code',address).length,0);
+  assert.equal(await page.locator('.auth-code-grid').count(),0);
+  await expire(address,{sent:0});await page.reload();
+  await page.getByRole('button',{name:/kodu yenidən göndər|e-poçta kod göndər/i}).click();
+  await page.getByText('Kod göndərildi.',{exact:false}).waitFor();
   await page.locator('.auth-code-grid input').first().fill(record('code',address)[0].code);
   await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.waitForURL('**/sebet');
   await welcomeDelivery.wake();assert.equal(record('welcome',address).length,1);
@@ -101,10 +111,13 @@ try{
  }
  if(!process.argv.includes('--registration-recovery')){
  for(const [width,domain] of [[320,'gmail.com'],[1440,'icloud.com']]){
+  // Separate browser/IP scenarios must not consume each other's rate limit.
+  testClient++;
   const old='isolated-first-'+width+'@'+domain,address='isolated-new-'+width+'@outlook.com';
   browser??=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
   const context=await browser.newContext({viewport:{width,height:790}}),page=await context.newPage();
-  await page.goto(origin+'/hesab?mode=signup&next=%2Fodenis');
+  const destination=width===320?'/':'/mehsul/sintetik';
+  await page.goto(origin+'/hesab?mode=signup&next='+encodeURIComponent(destination));
   assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
   for(const [key,value] of Object.entries({firstName:'Sintetik',lastName:'Hesab',email:old,phone:'501234567',password}))await page.locator('#account-'+key).fill(value);
   await page.locator('#account-terms').check();
@@ -114,24 +127,25 @@ try{
    await page.locator('#account-phone').fill('501234567');
   }
   await page.locator('.auth-submit').click();
-  await page.getByRole('heading',{name:'E-poçtunu təsdiqlə'}).waitFor({timeout:12000}).catch(async e=>{console.log({width,formError:await page.locator('.auth-feedback').textContent()});throw e;});
+  await page.waitForURL(origin+destination,{timeout:12000}).catch(async e=>{console.log({width,formError:await page.locator('.auth-feedback').textContent({timeout:1000}).catch(()=>null)});throw e;});
+  await page.getByText('Kod göndərildi.',{exact:false}).waitFor();
   assert.equal(await page.locator('.auth-code-address strong').innerText(),old);
-  assert.equal(record('verify',old).length,0);assert.equal(record('code',old).length,0);
-  await page.getByRole('button',{name:'E-poçta kod göndər',exact:true}).click();
-  await page.getByRole('heading',{name:'Kodu daxil et'}).waitFor();
+  assert.equal(record('verify',old).length,0);assert.equal(record('code',old).length,1);
+  const duplicate=await request(cookieJar(),'/api/auth/sign-up/email',{name:'Sintetik Hesab',email:old,password});
+  assert.equal(duplicate.status,409);assert.equal((await duplicate.json()).code,'REGISTRATION_EMAIL_EXISTS');
   assert.equal(await page.locator('.auth-code-resend').isEnabled(),false);
   const j=cookieJar(),external=await call(j,'send');assert.equal(external.status,401);
   const post=(action,data)=>context.request.post(origin+'/api/auth/confirm-email/'+action,{headers:{origin},data});
   const send=await post('send',{});assert.equal(send.status(),429);
-  await page.reload();await page.getByRole('heading',{name:'Kodu daxil et'}).waitFor();
+  await page.reload();await page.getByText('Kod göndərildi.',{exact:false}).waitFor();
   const oldCode=record('code',old)[0].code,wrong=oldCode==='000000'?'000001':'000000';
   await page.locator('.auth-code-grid input').first().fill(wrong);await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.getByText('Kod düzgün deyil.',{exact:true}).waitFor();
   await expire(old,{expires:0});const expired=await post('verify',{code:oldCode});assert.equal(expired.status(),400);assert.match((await expired.json()).message,/vaxtı bitib/);
   await page.getByRole('button',{name:'Dəyiş',exact:true}).click();await page.getByLabel('Yeni e-poçt ünvanı').fill(address);await page.getByRole('button',{name:'Yadda saxla'}).click();await page.getByText(address,{exact:true}).waitFor();
   const stale=await post('verify',{code:oldCode});assert.equal(stale.status(),400);
-  await expire(old,{sent:0});await page.reload();await page.getByRole('button',{name:'E-poçta kod göndər',exact:true}).click();await page.getByRole('heading',{name:'Kodu daxil et'}).waitFor();
+  await expire(old,{sent:0});await page.reload();await page.getByRole('button',{name:'Kodu yenidən göndər',exact:true}).click();await page.getByText('Kod göndərildi.',{exact:false}).waitFor();
   const code=record('code',address)[0].code;await page.locator('.auth-code-grid input').first().evaluate((input,code)=>{const clipboardData=new DataTransfer();clipboardData.setData('text/plain',code);input.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData}));},code);
-  await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.waitForURL('**/odenis');
+  await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.locator('.auth-code-sheet[open]').waitFor({state:'hidden'});
   assert.equal((await (await context.request.get(origin+'/api/auth/get-session')).json()).user.email,address);
   await welcomeDelivery.wake();assert.equal(record('welcome',address).length,1);await page.reload();assert.equal(record('welcome',address).length,1);
   assert.equal((await post('verify',{code})).status(),401);
@@ -142,12 +156,15 @@ try{
   nonce=url.searchParams.get('nonce');
   return request(jar,'/api/auth/callback/google?code=synthetic&state='+encodeURIComponent(url.searchParams.get('state')));
  }
+ testClient++;
  googleVerified=false;
  assert.match((await google()).headers.get('location')||'',/error=/);
  assert.equal(record('welcome','synthetic-google@example.test').length,0);
  googleVerified=true;
  for(let i=0;i<2;i++){assert.equal((await google()).headers.get('location'),origin+'/odenis');await welcomeDelivery.wake();assert.equal(record('welcome','synthetic-google@example.test').length,1);}
  assert.equal(record('code','synthetic-google@example.test').length,0);
+ const googleDuplicate=await request(cookieJar(),'/api/auth/sign-up/email',{name:'Sintetik Hesab',email:'synthetic-google@example.test',password});
+ assert.equal(googleDuplicate.status,409);assert.equal((await googleDuplicate.json()).code,'REGISTRATION_GOOGLE_ONLY');
  console.log('PASS: 320px and desktop signup, refresh, wrong code, cooldown, change, verification and return; synthetic Google new/repeat/unverified. No external mail.');
  }
 }finally{await welcomeDelivery.stop();globalThis.fetch=nativeFetch;await browser?.close();await new Promise(r=>server.close(r));await fixture.close();}

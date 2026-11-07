@@ -1,5 +1,24 @@
 (function () {
   "use strict";
+  // Only a successful email registration/recovery leaves this tab-local marker.
+  try {
+    const pending = JSON.parse(sessionStorage.getItem('mirpanel:signup-confirmation'));
+    if (pending?.path === location.pathname) {
+      import('/community-assets/auth-forms.js?v=signup-confirmation-20261107')
+        .then(module => module.resumeSignupConfirmation())
+        .catch(() => {
+          const notice = document.createElement('p');
+          notice.setAttribute('role', 'alert');
+          notice.textContent = 'Hesabınız yaradılıb, amma təsdiq pəncərəsi yüklənmədi. ';
+          const retry = document.createElement('button');
+          retry.type = 'button';
+          retry.textContent = 'Yenidən cəhd et';
+          retry.onclick = () => location.reload();
+          notice.append(retry);
+          document.body.prepend(notice);
+        });
+    }
+  } catch {}
   if(!document.querySelector('link[data-mobile-menu-style]')){const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/site-header-menu.css?v=dropdown-20261106';sheet.dataset.mobileMenuStyle='true';document.head.append(sheet);}
   if(!document.querySelector('script[data-decorations-loader]')){const s=document.createElement('script');s.src='/decorative-backgrounds.js?v=plain-header-20261103';s.dataset.decorationsLoader='true';document.head.append(s);}
   if(!document.querySelector('script[data-support-loader]')){const script=document.createElement('script');script.src='/support-widget.js?v=account-trim-20261106';script.dataset.supportLoader='true';document.head.append(script);}
