@@ -126,6 +126,7 @@ textarea {
 .dashboardCard[data-state="verified"] strong { color: #62e69b; }
 .dashboardCard[data-state="failed"] strong { color: #ff8e98; }
 .changeStatus[data-status="failed"] { color: #ff8e98; }
+.navBtn[data-view="communityShop"][data-pending-count]::after { content:attr(data-pending-count); float:right; margin-inline-start:6px; padding:1px 6px; border-radius:999px; background:#ffd400; color:#111; font-size:12px; font-weight:700; }
 .main .panelHead h2 { font-size: clamp(20px, 2vw, 24px); }
 .main table :is(td,th) { font-size: 14px; }
 

@@ -1,9 +1,9 @@
 (function () {
   const viewGroups = [
-    ["Tez istifadə olunanlar", [["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"], ["employeeStock", "İşçi stoku", "/admin/employee-stock"], ["paymentOrders", "Sifarişlər"], ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]]],
+    ["Tez istifadə olunanlar", [["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"], ["employeeStock", "İşçi stoku", "/admin/employee-stock"], ["paymentOrders", "Sifarişlər"], ["communityShop", "Balans müraciətləri"], ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]]],
     ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
     ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sitemap"]]],
-    ["Maliyyə nəzarəti", [["communityShop", "Balans müraciətləri"], ["paymentReviews", "Ödəniş yoxlamaları"]]],
+    ["Maliyyə nəzarəti", [["paymentReviews", "Ödəniş yoxlamaları"]]],
     ["Sistem", [["history", "Sayt yayımı tarixçəsi"], ["workforce", "İşçi, stok və maaş idarəsi", "/admin/workforce"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
@@ -16,6 +16,28 @@
   let deployTimer;
   let deployAttempts = 0;
   const counts = { banners: null, orders: null, topups: null };
+  let topupRead = 0;
+  async function refreshPendingTopups() {
+    const sequence = ++topupRead;
+    try {
+      const {pending} = await api("/api/admin/community/shop?only=topup-count");
+      if (sequence !== topupRead) return;
+      if (!Number.isSafeInteger(pending) || pending < 0) throw Error("Invalid count");
+      counts.topups = pending;
+      const button = document.querySelector('.navBtn[data-view="communityShop"]');
+      if (pending > 0) {
+        button.dataset.pendingCount = String(pending);
+        button.setAttribute("aria-label", `Balans müraciətləri · ${pending} gözləyir`);
+      } else {
+        delete button.dataset.pendingCount;
+        button.removeAttribute("aria-label");
+      }
+    } catch {
+      if (sequence !== topupRead) return;
+      if (counts.topups === null) counts.topups = false;
+    }
+    renderDashboard();
+  }
   const safeIcons = ["home", "products", "search", "info", "contact", "terms", "whatsapp", "sparkles", "game", "ai", "link", "image", "shield"];
   let baselineData = null;
   let baselineSha = "";
@@ -100,7 +122,7 @@
     window.dispatchEvent(new CustomEvent('admin-community-view',{detail:view}));
     if(['communityUsers','communityGroup','communityShop'].includes(view)){
       if(!el(`${view}View`))createView(view,'');
-      import('/admin-community-panel.js?v=shop-v1').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
+      import('/admin-community-panel.js?v=topups-menu-20261107').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
     }
     document.querySelectorAll(".workspace, .singlePanel, .cmsWorkspace").forEach((section) => section.classList.add("hidden"));
     const target = el(`${view}View`);
@@ -944,7 +966,7 @@
     await Promise.all([
       loadCount("banners", "/api/admin/homepage-banners", result => result.managed === false ? undefined : result.banners.filter(b => b.active === true).length),
       loadCount("orders", "/api/admin/payment-orders?tab=pending&page=1", result => result.counts?.pending),
-      loadCount("topups", "/api/admin/community/shop?only=topup-count", result => result.pending),
+      refreshPendingTopups(),
       verifyPublication()
     ]);
   }
@@ -1335,9 +1357,14 @@
     installHooks();
     if (state.data) renderCms();
     const requested = location.hash.slice(1);
+    const pollTopups = () => { if (document.visibilityState === "visible") void refreshPendingTopups(); };
+    const topupTimer = setInterval(pollTopups, 30000);
+    document.addEventListener("visibilitychange", pollTopups);
+    window.addEventListener("admin-topup-changed", refreshPendingTopups);
+    window.addEventListener("pagehide", event => { if (!event.persisted) clearInterval(topupTimer); });
     setTimeout(() => {
       const button = [...document.querySelectorAll(".navBtn[data-view]")].find(item => item.dataset.view === requested);
-      if (button) button.click();
+      if (button) { button.click(); if (requested !== "dashboard") void refreshPendingTopups(); }
       else activateView("dashboard");
     }, 0);
   }

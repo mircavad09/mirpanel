@@ -29,7 +29,7 @@ export function normalizeDurationFilter(value, legacyPlanName = "") {
 
 // A duration can span many full plan labels. Use the existing immutable finance
 // snapshots and decimal aggregation, never current prices or new financial writes.
-export function durationStatistics(rows = []) {
+export function durationStatistics(rows = [], { includeMethods = false } = {}) {
   const completed = rows.filter((row) => ["approved", "completed"].includes(row.status) && row.completed_at);
   const metric = (items) => {
     const known = items.filter((row) => row.cost_price_snapshot !== null && row.cost_price_snapshot !== undefined);
@@ -55,6 +55,11 @@ export function durationStatistics(rows = []) {
   plans.sort((a, b) => b.count - a.count || String(a.productTitle).localeCompare(String(b.productTitle), "az") || String(a.planName).localeCompare(String(b.planName), "az"));
   const days = group((row) => bakuDate(new Date(row.completed_at)), (row) => ({ date: bakuDate(new Date(row.completed_at)) }));
   days.sort((a, b) => b.date.localeCompare(a.date));
+  const paymentMethods = includeMethods ? group(
+    row => JSON.stringify([row.method_id, row.method_name_snapshot, row.method_last4_snapshot]),
+    row => ({ methodId: row.method_id, label: (row.method_name_snapshot || "Ödəniş üsulu") +
+      (row.method_last4_snapshot ? ` •••• ${row.method_last4_snapshot}` : "") })
+  ).sort((a,b) => Number(b.revenue)-Number(a.revenue) || a.label.localeCompare(b.label,"az")) : [];
   const knownProducts = new Map();
   for (const row of completed) {
     if (row.cost_price_snapshot === null || row.cost_price_snapshot === undefined) continue;
@@ -66,6 +71,6 @@ export function durationStatistics(rows = []) {
   }
   const topProfit = [...knownProducts.values()].filter((item) => item.sale > 0n)
     .sort((a, b) => a.profit === b.profit ? String(a.title).localeCompare(String(b.title), "az") : a.profit > b.profit ? -1 : 1);
-  return normalizeFinancialStatistics({ ...metric(completed), products, plans, days,
+  return normalizeFinancialStatistics({ ...metric(completed), products, plans, days, paymentMethods,
     topProduct: products[0]?.title || "—", topProfitProduct: topProfit[0]?.title || "—" });
 }

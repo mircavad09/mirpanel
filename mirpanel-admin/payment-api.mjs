@@ -700,9 +700,9 @@ export function createPaymentSystem(options) {
       }
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-orders") {
-      const orders = await store.listOrders(Object.fromEntries(url.searchParams));
-      if(config.employeeEnabled){const workflow=await store.workforceOrders((orders.orders||[]).map(o=>o.id));for(const order of orders.orders||[])order.workforce=workflow.get(order.id)||null;}
       const catalog = await loadCatalog();
+      const orders = await store.listOrders(Object.fromEntries(url.searchParams), catalog.products);
+      if(config.employeeEnabled){const workflow=await store.workforceOrders((orders.orders||[]).map(o=>o.id));for(const order of orders.orders||[])order.workforce=workflow.get(order.id)||null;}
       orders.filters ||= {};
       orders.filters.products = (catalog.products || [])
         .filter((product) => product && product.active !== false && product.id)

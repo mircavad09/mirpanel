@@ -88,7 +88,7 @@ try {
     await nav.filter({hasText:"Stories"}).waitFor();
     const views=await nav.evaluateAll(nodes=>nodes.map(x=>[x.dataset.view||"",x.getAttribute("href")]));
     assert.equal(views.length,25);
-    assert.deepEqual(views.slice(1,8).map(([v,h])=>v||h),["products","communityUsers","communityGroup","/admin/employee-stock","paymentOrders","paymentCosts","paymentMethods"]);
+    assert.deepEqual(views.slice(1,9).map(([v,h])=>v||h),["products","communityUsers","communityGroup","/admin/employee-stock","paymentOrders","communityShop","paymentCosts","paymentMethods"]);
     const banner=check.locator('.dashboardCard[data-dashboard-view="banners"] strong');
     bannerCount=7; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("7",{exact:true}).waitFor();
     bannerCount=-1; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("Məlumat alınmadı",{exact:true}).waitFor();

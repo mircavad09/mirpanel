@@ -20,6 +20,7 @@ import {
 import { bakuDate, bakuDayBounds, expiryStatus } from "./payment-order-lifecycle.mjs";
 import { normalizeFinancialStatistics } from "./payment-order-report.mjs";
 import { durationOptions, durationStatistics, orderDuration } from "./payment-order-duration.mjs";
+import { orderProductMatcher } from "./payment-order-product.mjs";
 import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./payment-profit.mjs";
 
 function paymentError(error, fallback = "Ödəniş məlumatı işlənmədi.") {
@@ -434,7 +435,7 @@ export function createPaymentStore(config) {
       const rows=await rpc('employee_order_workflow',{p_ids:ids});
       return new Map(rows.map(({id,...workflow})=>[id,workflow]));
     },
-    async listOrders(input = {}) {
+    async listOrders(input = {}, catalog = []) {
       await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
@@ -443,7 +444,6 @@ export function createPaymentStore(config) {
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
         if (filters.search) next = next.ilike("order_code", `%${filters.search}%`);
-        if (filters.productId) next = next.eq("product_id", filters.productId);
         if (filters.methodId) next = next.eq("method_id", filters.methodId);
         if (filters.dateFrom) next = next.gte(dateColumn, `${filters.dateFrom}T00:00:00+04:00`);
         if (filters.dateTo) next = next.lt(dateColumn, bakuDayBounds(filters.dateTo).endExclusive);
@@ -461,16 +461,24 @@ export function createPaymentStore(config) {
       // Facets exclude only the duration filter, not product/bank/date/ID/tab.
       // Read every matching row in bounded pages: neither a UI page nor a 5000-row
       // cap can determine the available durations or the filtered batch selection.
-      const facetColumns = "id,product_id,product_title,plan_id,plan_name,duration_months,status,completed_at,amount,sale_price_snapshot,cost_price_snapshot,profit_snapshot";
+      const matchProduct = filters.productId ? orderProductMatcher(filters.productId, catalog) : null;
+      const facetColumns = "id,product_id,product_title,plan_id,plan_name,duration_months,status,completed_at,amount,sale_price_snapshot,cost_price_snapshot,profit_snapshot" +
+        (matchProduct ? ",method_id,method_name_snapshot,method_last4_snapshot,cart_items:checkout_snapshot->items,snapshot_product:checkout_snapshot->>productId" : "");
       const facetRows = [];
-      let facetTotal;
+      const seenOrders = new Set();
+      let facetTotal, offset = 0;
       do {
-        const result = await matchingQuery(facetColumns, { count: "exact" }).range(facetRows.length, facetRows.length + 999);
+        const result = await matchingQuery(facetColumns, { count: "exact" }).range(offset, offset + 999);
         if (result.error) throw paymentError(result.error);
         facetTotal = Number(result.count || 0);
-        if (!result.data?.length && facetRows.length < facetTotal) throw paymentError(null, "Müddət seçimləri tam yüklənmədi. Yenidən cəhd edin.");
-        facetRows.push(...(result.data || []));
-      } while (facetRows.length < facetTotal);
+        if (!result.data?.length && offset < facetTotal) throw paymentError(null, "Sifariş filtri tam yüklənmədi. Yenidən cəhd edin.");
+        offset += result.data?.length || 0;
+        for (const row of result.data || []) if (!seenOrders.has(row.id) && (!matchProduct || matchProduct(row))) {
+          seenOrders.add(row.id);
+          const {cart_items, snapshot_product, ...summary} = row;
+          facetRows.push(summary);
+        }
+      } while (offset < facetTotal);
       const durations = durationOptions(facetRows);
       if (filters.durationMonths && !durations.some((item) => item.value === filters.durationMonths) && input.preserveFilters!=='true') {
         filters.durationMonths = "";
@@ -496,7 +504,7 @@ export function createPaymentStore(config) {
         countStatus(["approved", "completed"]),
         countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
-        filters.durationMonths ? Promise.resolve(durationStatistics(matchedRows)) : rpc("payment_order_profit_statistics_v2", {
+        filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows, { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
           p_search: filters.search || null,
           p_product_id: filters.productId || null,
