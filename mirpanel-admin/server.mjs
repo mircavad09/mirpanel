@@ -1474,6 +1474,7 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(config.port, () => {
+  void ownerCommunity.startWelcomeDelivery().catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
   console.log(`Mirpanel admin: http://localhost:${config.port}`);
   // Trusted, banner-only rollout: preserve the existing main image and import
   // existing Mirpanel campaign assets once. No public request can trigger writes.

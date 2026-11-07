@@ -8,19 +8,6 @@ import {OWNER_EMAIL} from './owner-auth.mjs';
 const validity=10*60_000,cooldown=60_000;
 const email=z.string().trim().toLowerCase().email().max(254);
 const problem=(status,message)=>new APIError(status,{message});
-export function welcomeOnce(pool,send){
- return async user=>{
-  if(user?.emailVerified!==true)return;
-  const id='mirpanel-welcome:'+user.id;
-  try{
-   // Claim before contacting the mail provider. An ambiguous response must not
-   // cause a second delivery on a repeated login or verification.
-   const claim=await pool.query(`insert into verification(id,identifier,value,"expiresAt") values($1,$1,'claimed','9999-12-31') on conflict(id) do nothing`,[id]);
-   if(claim.rowCount){await send('welcome',{user});await pool.query("update verification set value='accepted' where id=$1",[id]);}
-  }catch{console.warn('COMMUNITY_WELCOME_DELIVERY_UNCONFIRMED');}
- };
-}
-
 export function emailConfirmation(pool,config,send,welcome){
  const cookieOptions={path:'/api/auth/confirm-email',httpOnly:true,sameSite:'lax',secure:config.origin.startsWith('https:'),maxAge:1800};
  const cookie='mirpanel_email_pending';

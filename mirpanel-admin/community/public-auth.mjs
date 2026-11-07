@@ -2,9 +2,10 @@ import {betterAuth} from 'better-auth';import {APIError} from 'better-auth/api';
 import {authFormPolicy,registrationDetails} from './auth-form-policy.mjs';
 import {safeName,BOT_ID} from './bot-policy.mjs';import {requireAllowed} from './group-control.mjs';
 import {bindOwner,isOwner,OWNER_EMAIL,verifiedOwnerProfile} from './owner-auth.mjs';
-import {emailConfirmation,welcomeOnce} from './email-confirmation.mjs';
-export function makePublicAuth(pool,c,send){const fail=m=>new APIError('BAD_REQUEST',{message:m});
- const welcome=welcomeOnce(pool,send);
+import {emailConfirmation} from './email-confirmation.mjs';
+import {createWelcomeDelivery} from './welcome-delivery.mjs';
+export function makePublicAuth(pool,c,send,delivery=createWelcomeDelivery(pool,send)){const fail=m=>new APIError('BAD_REQUEST',{message:m});
+ const welcome=delivery.enqueue;
  return betterAuth({appName:'MirPanel',database:pool,baseURL:c.origin,secret:c.secret,trustedOrigins:[c.origin],logger:{disabled:true},
   emailAndPassword:{enabled:true,requireEmailVerification:true,minPasswordLength:authFormPolicy.minPasswordLength,maxPasswordLength:authFormPolicy.maxPasswordLength,revokeSessionsOnPasswordReset:true,sendResetPassword:v=>send('reset',v)},
   plugins:[emailConfirmation(pool,c,send,welcome)],

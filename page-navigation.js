@@ -14,7 +14,7 @@
  const isStatic=p=>p==='/'||p==='/mehsul';view={fragment:null,styles:initialStyles,title:document.title,body:document.body.className,html:document.documentElement.className,started:true};
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
- const authModule='/community-assets/auth-forms.js?v=cart-signup-20261107';
+ const authModule='/community-assets/auth-forms.js?v=guest-welcome-20261107';
  void import(authModule).catch(()=>{});
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty');if(app){const p=document.createElement('p');p.setAttribute('role','status');p.className='site-route-pending';p.textContent='Məlumatlar yüklənir…';app.append(p);}}emptyStatus();
  async function moduleWithin(url){let timer;try{return await Promise.race([import(url),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}finally{clearTimeout(timer);}}

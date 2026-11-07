@@ -1,7 +1,7 @@
 // Only /hesab. Existing group/profile/checkout controllers are not restyled.
 export async function renderAuthForms({app,state,api,el,button,link,alert,signal}){
  const policy=state.authFormPolicy||{minPasswordLength:6,maxPasswordLength:128,termsUrl:'/sertler',privacyUrl:'/sertler#sertler-10'};
- document.body.classList.add('auth-screen');const cssUrl='/community-assets/auth-forms.css?v=cart-signup-20261107';let css=document.querySelector('link[href="'+cssUrl+'"]');
+ document.body.classList.add('auth-screen');const cssUrl='/community-assets/auth-forms.css?v=guest-welcome-20261107';let css=document.querySelector('link[href="'+cssUrl+'"]');
  // A failed preload can expose an empty sheet, or fire before this module starts.
  // Require the form rules and bind load/error before inserting a fresh retry.
  const usable=sheet=>{try{return Array.from(sheet?.sheet?.cssRules||[]).some(r=>r.selectorText?.includes('.auth-form-panel'));}catch{return false;}};
@@ -9,11 +9,12 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  if(signal?.aborted||!app.isConnected)return;
  const params=new URLSearchParams(location.search),next=params.get('next')||'',destination=['/','/profil','/qrup','/mehsul','/sebet','/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'].includes(next)||/^\/mehsul\/[a-z0-9-]+$/i.test(next)?next:'/profil',requested=params.get('mode')||'login',mode=['login','signup','reset','new-password'].includes(requested)?requested:'login';
  const fromCart=params.get('from')==='cart'&&destination==='/sebet';
+ const cartLogin=fromCart&&mode==='login';
  const titles={signup:'Qeydiyyat',login:fromCart?'Daxil ol':'Giriş',reset:'Şifrə bərpası','new-password':'Yeni şifrə'},title=titles[mode];document.title=title+' · MirPanel';
  const error=alert();error.classList.add('auth-feedback');error.setAttribute('role','alert');const success=el('p',{class:'auth-success',role:'status','aria-live':'polite'}),form=el('form',{class:'auth-fields'}),fields={};let busy=false;
  if(params.has('error'))error.textContent=params.get('error')==='account_not_linked'?'Bu e-poçt hesabını əvvəlcə təsdiqləyin. Google ilə yalnız təsdiqlənmiş eyni e-poçt əlaqələndirilə bilər.':params.get('error')==='test_identity_not_allowed'?'Bu Google hesabı test girişinə əlavə edilməyib.':'Google girişi tamamlanmadı. Yenidən cəhd edin.';
  const closeTo=fromCart?'/sebet':destination.startsWith('/balans')?destination:'/qrup',close=link('×',closeTo,'auth-close');close.setAttribute('aria-label',fromCart?'Bağla və səbətə qayıt':closeTo==='/qrup'?'Bağla və qrupa qayıt':'Bağla və balans səhifəsinə qayıt');
- const panel=el('section',{class:'auth-form-panel','aria-labelledby':'authTitle'},close,el('header',{class:'auth-form-heading'},el('h1',{id:'authTitle'},title)));
+ const panel=el('section',{class:'auth-form-panel'+(cartLogin?' auth-cart-login':''),'aria-labelledby':cartLogin?'authCartWelcome':'authTitle'},close,el('header',{class:'auth-form-heading'},el(cartLogin?'h2':'h1',{id:'authTitle'},title)));
  const target=m=>'/hesab?mode='+m+'&next='+encodeURIComponent(destination)+(fromCart?'&from=cart':'');
  const tabs=el('nav',{class:'auth-mode-tabs','aria-label':'Hesab formaları'});for(const [id,label] of [['login','Giriş'],['signup','Qeydiyyat']]){const a=link(label,target(id));if(mode===id)a.setAttribute('aria-current','page');tabs.append(a);}panel.prepend(tabs);
  function field(key,label,type,attrs={}){const id='account-'+key,i=el('input',{id,name:key,type,required:true,...attrs}),box=el('div',{class:'auth-field'},el('label',{for:id},label),i);fields[key]=i;return{box,input:i};}
@@ -123,19 +124,26 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  app.replaceChildren(panel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!busy&&!verification?.open){if(window.MirpanelNavigation)void window.MirpanelNavigation.go(closeTo);else location.assign(closeTo);}},{signal:life.signal});
  if(['login','signup'].includes(mode))void verificationApi('status').then(p=>{if(!busy&&!verification?.open)showVerification(p);}).catch(()=>{});
  if(fromCart&&['login','signup'].includes(mode)){
-  const summary=el('section',{class:'auth-order-summary','aria-label':'Səbət xülasəsi'}),count=el('strong',{},'Səbət'),rows=el('div',{class:'auth-order-rows'}),hint=el('p',{},'Sifarişi tamamlamaq üçün daxil olun. Səbətiniz itmir — girişdən sonra hesabınıza köçürülür.');
-  summary.append(count,rows,hint);tabs.before(summary);
+  const summary=el('section',{class:'auth-order-summary','aria-label':'Səbət xülasəsi'}),count=el('strong',cartLogin?{'aria-live':'polite'}:{},'Səbət'),rows=el('div',{class:'auth-order-rows'}),hint=el('p',{},'Sifarişi tamamlamaq üçün daxil olun. Səbətiniz itmir — girişdən sonra hesabınıza köçürülür.');
+  if(cartLogin){
+   const welcome=el('header',{class:'auth-cart-welcome'},el('h1',{id:'authCartWelcome'},'Xoş gəldin 👋'),el('p',{},'Daxil ol — aldığın hesablar və kodlar profilində qalır, balansla bir toxunuşla ödəyə bilərsən.'));
+   const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');
+   const path=document.createElementNS(icon.namespaceURI,'path');path.setAttribute('d','M2 3h2l2.5 12h12l2-8H5m4 13h.01m8 0h.01');icon.append(path);
+   summary.append(el('div',{class:'auth-order-heading'},icon,count),rows);hint.className='auth-cart-hint';
+   tabs.before(welcome,summary,hint);
+  }else{summary.append(count,rows,hint);tabs.before(summary);}
   const money=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
   async function loadSummary(){
    rows.replaceChildren();try{
     const {ensureCart}=await import('/cart-ready.js?v=account-update-20261107'),cart=await ensureCart(),items=cart.read();
-    const quantity=items.reduce((n,x)=>n+x.quantity,0);count.textContent=quantity+' məhsul';
+    const quantity=items.reduce((n,x)=>n+x.quantity,0);count.textContent=cartLogin?'Səbətinizdə '+quantity+' məhsul':quantity+' məhsul';
     if(!quantity||life.signal.aborted)return;
     const r=await fetch('/api/payments/shop/quote',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal:life.signal});
     if(!r.ok||!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error();
     const q=await r.json();
     if(!Number.isSafeInteger(q.totalCents)||!Array.isArray(q.items)||q.items.length!==items.length)throw Error();
-    count.textContent=quantity+' məhsul · Cəmi '+money(q.totalCents);
+    if(cartLogin)count.replaceChildren('Səbətinizdə '+quantity+' məhsul · ',el('span',{class:'auth-order-total'},money(q.totalCents)));
+    else count.textContent=quantity+' məhsul · Cəmi '+money(q.totalCents);
     for(const x of q.items){const img=el('img',{src:x.image||'/favicon.ico',alt:'',width:40,height:40}),detail=el('div',{},el('strong',{},x.title),el('small',{},x.planName)),price=el('b',{},money(x.unitCents)+(x.quantity>1?' × '+x.quantity:''));rows.append(el('article',{},img,detail,price));}
    }catch{if(!life.signal.aborted)rows.replaceChildren(button('Səbəti yenidən yoxla',loadSummary));}
   }

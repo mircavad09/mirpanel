@@ -4,6 +4,7 @@ import fs from 'node:fs';
 import {generateKeyPairSync,sign} from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {makePublicAuth} from '../mirpanel-admin/community/public-auth.mjs';
+import {createWelcomeDelivery} from '../mirpanel-admin/community/welcome-delivery.mjs';
 import {handlePublicCommunity} from '../mirpanel-admin/community/public-service.mjs';
 import {proxyCommunity} from '../functions/_owner-community.js';
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
@@ -32,7 +33,9 @@ const server=http.createServer(async(req,res)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port,clientId='synthetic-google-client';
-const auth=makePublicAuth(pool,{origin,clientId,secret:'synthetic-isolated-secret-32-characters',clientSecret:'synthetic-only'},async(kind,value)=>mail.push({kind,...value}));
+const send=async(kind,value)=>{mail.push({kind,...value});return {id:'synthetic-accepted'};};
+const welcomeDelivery=createWelcomeDelivery(pool,send);
+const auth=makePublicAuth(pool,{origin,clientId,secret:'synthetic-isolated-secret-32-characters',clientSecret:'synthetic-only'},send,welcomeDelivery);
 const password='Synthetic-Test-Only',record=(kind,address)=>mail.filter(m=>m.kind===kind&&m.user.email===address);
 const cookieJar=()=>new Map();
 const request=async(jar,path,data)=>{
@@ -96,7 +99,7 @@ try{
   const code=record('code',address)[0].code;await page.locator('.auth-code-grid input').first().evaluate((input,code)=>{const clipboardData=new DataTransfer();clipboardData.setData('text/plain',code);input.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData}));},code);
   await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.waitForURL('**/odenis');
   assert.equal((await (await context.request.get(origin+'/api/auth/get-session')).json()).user.email,address);
-  assert.equal(record('welcome',address).length,1);await page.reload();assert.equal(record('welcome',address).length,1);
+  await welcomeDelivery.wake();assert.equal(record('welcome',address).length,1);await page.reload();assert.equal(record('welcome',address).length,1);
   assert.equal((await post('verify',{code})).status(),401);
   await context.close();
  }
@@ -109,7 +112,7 @@ try{
  assert.match((await google()).headers.get('location')||'',/error=/);
  assert.equal(record('welcome','synthetic-google@example.test').length,0);
  googleVerified=true;
- for(let i=0;i<2;i++){assert.equal((await google()).headers.get('location'),origin+'/odenis');assert.equal(record('welcome','synthetic-google@example.test').length,1);}
+ for(let i=0;i<2;i++){assert.equal((await google()).headers.get('location'),origin+'/odenis');await welcomeDelivery.wake();assert.equal(record('welcome','synthetic-google@example.test').length,1);}
  assert.equal(record('code','synthetic-google@example.test').length,0);
  console.log('PASS: 320px and desktop signup, refresh, wrong code, cooldown, change, verification and return; synthetic Google new/repeat/unverified. No external mail.');
-}finally{globalThis.fetch=nativeFetch;await browser?.close();await new Promise(r=>server.close(r));await fixture.close();}
+}finally{await welcomeDelivery.stop();globalThis.fetch=nativeFetch;await browser?.close();await new Promise(r=>server.close(r));await fixture.close();}
