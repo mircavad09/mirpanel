@@ -5,7 +5,7 @@ import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primar
 import {authFormPolicy} from '../mirpanel-admin/community/auth-form-policy.mjs';
 // Real form, router and header assets; only account/mail responses are synthetic.
 const out='payment-test-artifacts/auth-compact';fs.mkdirSync(out,{recursive:true});
-let checks=0,mailCalls=0,loginCalls=0,signupCalls=0;
+let checks=0,mailCalls=0,loginCalls=0,signupCalls=0,pendingEmail='';
 const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
 const json=(res,status,d)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(d));};
 const header=fs.readFileSync('customer-header.html','utf8');
@@ -16,9 +16,9 @@ const server=http.createServer(async(req,res)=>{
  if(req.method==='POST'){
   let raw='';for await(const c of req)raw+=c;const b=JSON.parse(raw||'{}');
   if(u.pathname==='/api/auth/sign-in/email'){loginCalls++;return json(res,401,{message:b.email==='unverified@example.invalid'?'Email not verified':'Invalid email or password'});}
-  if(u.pathname==='/api/auth/confirm-email/status')return json(res,200,{});
-  if(u.pathname==='/api/auth/confirm-email/start')return json(res,200,{email:b.email});
-  if(u.pathname==='/api/auth/sign-up/email'){signupCalls++;return json(res,200,{ok:true});}
+  if(u.pathname==='/api/auth/confirm-email/status'){const email=pendingEmail;pendingEmail='';return json(res,200,{email});}
+  if(u.pathname==='/api/auth/confirm-email/start'){pendingEmail=b.email;return json(res,200,{email:b.email});}
+  if(u.pathname==='/api/auth/sign-up/email'){signupCalls++;return json(res,200,{user:{id:'synthetic-new',email:b.email}});}
   if(u.pathname==='/api/auth/request-password-reset'){mailCalls++;return json(res,200,{ok:true});}
  }
  if(['/hesab','/qrup'].includes(u.pathname)){

@@ -5,6 +5,7 @@ import {generateKeyPairSync,sign} from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {makePublicAuth} from '../mirpanel-admin/community/public-auth.mjs';
 import {handlePublicCommunity} from '../mirpanel-admin/community/public-service.mjs';
+import {proxyCommunity} from '../functions/_owner-community.js';
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 
 const fixture=await shopFixture(),pool=fixture.pool,mail=[],nativeFetch=globalThis.fetch;
@@ -12,7 +13,17 @@ const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,origin);
  const json=(r,s,b)=>{r.writeHead(s,{'content-type':'application/json'});r.end(JSON.stringify(b));};
  try{
-  if(u.pathname.startsWith('/api/auth/'))return await handlePublicCommunity({req,res,u,origin,runtime:{pool,auth},json,body:async q=>{const chunks=[];for await(const c of q)chunks.push(c);return JSON.parse(Buffer.concat(chunks));}});
+  if(u.pathname.startsWith('/api/auth/')){
+   const body=async q=>{const chunks=[];for await(const c of q)chunks.push(c);return Buffer.concat(chunks);};
+   if(!req.headers['x-test-upstream']){
+    const headers=new Headers(req.headers);if(headers.has('origin'))headers.set('origin','https://mirpanel.com');
+    const result=await proxyCommunity({request:new Request('https://mirpanel.com'+req.url,{method:req.method,headers,body:req.method==='POST'?await body(req):undefined})});
+    const out=Object.fromEntries(result.headers);if(result.headers.has('set-cookie'))out['set-cookie']=result.headers.getSetCookie();
+    if(out.location?.startsWith('https://mirpanel.com'))out.location=origin+out.location.slice('https://mirpanel.com'.length);
+    res.writeHead(result.status,out);return res.end(Buffer.from(await result.arrayBuffer()));
+   }
+   return await handlePublicCommunity({req,res,u,origin,runtime:{pool,auth},json,body:async q=>JSON.parse(await body(q))});
+  }
   if(u.pathname==='/hesab'){res.setHeader('content-type','text/html');return res.end('<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><main id="authApp"></main><script type="module" src="/community-assets/auth-forms.js"></script>');}
   if(u.pathname==='/odenis'){res.setHeader('content-type','text/html');return res.end('<h1>Sintetik ödəniş</h1>');}
   if(/^\/community-assets\/auth-forms\.(css|js)$/.test(u.pathname)){res.setHeader('content-type',u.pathname.endsWith('.css')?'text/css':'text/javascript');return res.end(fs.readFileSync('mirpanel-admin/community/public/'+u.pathname.split('/').pop()));}
@@ -38,6 +49,10 @@ const jwk={...publicKey.export({format:'jwk'}),alg:'RS256',use:'sig',kid:'synthe
 let googleVerified=true,nonce='';
 globalThis.fetch=(url,opts)=>{
  const dest=typeof url==='string'?url:url.url||url.href;
+ if(dest?.startsWith('https://mirpanel.onrender.com/')){
+  const headers=new Headers(opts.headers);headers.set('x-test-upstream','1');headers.set('origin',origin);
+  return nativeFetch(origin+new URL(dest).pathname+new URL(dest).search,{...opts,headers,duplex:'half'});
+ }
  if(dest==='https://www.googleapis.com/oauth2/v3/certs')return Promise.resolve(Response.json({keys:[jwk]}));
  if(dest==='https://oauth2.googleapis.com/token'){
   const b64=o=>Buffer.from(JSON.stringify(o)).toString('base64url'),now=Math.floor(Date.now()/1000),data=b64({alg:'RS256',kid:jwk.kid})+'.'+b64({iss:'https://accounts.google.com',aud:clientId,sub:'891234567890123',email:'synthetic-google@example.test',email_verified:googleVerified,name:'Sintetik Google',nonce,iat:now,exp:now+300});
@@ -53,10 +68,17 @@ try{
   browser??=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
   const context=await browser.newContext({viewport:{width,height:790}}),page=await context.newPage();
   await page.goto(origin+'/hesab?mode=signup&next=%2Fodenis');
+  assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
   for(const [key,value] of Object.entries({firstName:'Sintetik',lastName:'Hesab',email:old,phone:'501234567',password}))await page.locator('#account-'+key).fill(value);
   await page.locator('#account-terms').check();
+  if(width===320){
+   await page.locator('#account-phone').fill('50123');await page.locator('.auth-submit').click();
+   await page.locator('.auth-feedback').filter({hasText:'9 rəqəm'}).waitFor();assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
+   await page.locator('#account-phone').fill('501234567');
+  }
   await page.locator('.auth-submit').click();
-  await page.getByRole('heading',{name:'E-poçtunu təsdiqlə'}).waitFor();
+  await page.getByRole('heading',{name:'E-poçtunu təsdiqlə'}).waitFor({timeout:12000}).catch(async e=>{console.log({width,formError:await page.locator('.auth-feedback').textContent()});throw e;});
+  assert.equal(await page.locator('.auth-code-address strong').innerText(),old);
   assert.equal(record('verify',old).length,0);assert.equal(record('code',old).length,0);
   await page.getByRole('button',{name:'E-poçta kod göndər',exact:true}).click();
   await page.getByRole('heading',{name:'Kodu daxil et'}).waitFor();

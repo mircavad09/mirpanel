@@ -46,11 +46,12 @@ export function emailConfirmation(pool,config,send,welcome){
  const endpoint=(path,body,run)=>createAuthEndpoint('/confirm-email/'+path,{method:'POST',body},run);
  const pending=(u)=>{if(u.emailVerified)throw problem('CONFLICT','E-poçt artıq təsdiqlənib. Hesabınıza daxil olun.');};
  return {id:'mirpanel-email-confirmation',endpoints:{
-  beginMirpanelEmail: endpoint('start',z.object({email,password:z.string().min(1).max(128)}),async ctx=>{
+  beginMirpanelEmail: endpoint('start',z.object({email,password:z.string().min(1).max(128),createdUserId:z.string().min(1).max(128).optional()}),async ctx=>{
    const user=await ctx.context.internalAdapter.findUserByEmail(ctx.body.email,{includeAccounts:true});
    const password=user?.accounts?.find(a=>a.providerId==='credential')?.password;
    if(!password)await ctx.context.password.hash(ctx.body.password);
    if(!password||!await ctx.context.password.verify({hash:password,password:ctx.body.password}))throw problem('UNAUTHORIZED','E-poçt və ya şifrə düzgün deyil.');
+   if(ctx.body.createdUserId&&ctx.body.createdUserId!==user.user.id)throw problem('CONFLICT','Qeydiyyat tamamlanmadı. Hesabınız varsa, daxil olun.');
    await requireAllowed(pool,user.user.id).catch(()=>{throw problem('FORBIDDEN','Hesabınıza giriş bağlıdır.');});
    const client=await pool.connect();let r;
    try{
