@@ -34,11 +34,20 @@
 .account-panel details.browser-order .browser-order-price{font-size:15px}
 .account-panel .browser-order-arrow{width:16px;height:16px;color:#b9bec6}
 .account-panel details.browser-order .browser-order-line{display:block;padding:12px 0}
-.browser-order-line-main{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+.browser-order-line-main{display:flex;align-items:center;justify-content:space-between;gap:8px 12px;flex-wrap:wrap}
 .browser-order-line-main .browser-order-item-info{flex:1 1 200px;overflow-wrap:anywhere}
+.browser-order-line-meta{display:flex;align-items:baseline;flex-wrap:wrap;gap:0 8px;color:#bbc0c8;font-size:12px}
+.browser-order-line-meta .browser-order-warranty{margin:0}
+.browser-order-line-meta .browser-order-unit{color:#ffdb53;font-size:12px;font-weight:600}
 .browser-order-line-buttons,.browser-order-delivery>div,.browser-order-repeat>div{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .browser-order-line-buttons button,.browser-order-repeat button{min-height:40px;padding:6px 11px;color:#f3f4f6;border:1px solid #46494d;border-radius:9px;background:#26282a;font:600 13px system-ui;cursor:pointer}
 .browser-order-line-buttons [data-order-info],.browser-order-repeat [data-repeat-add]{background:#ffd400;color:#171507;border-color:#ffd400}
+.browser-order-line-buttons button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:33px;font-family:system-ui,"Segoe UI",Arial,sans-serif}
+.browser-order-line-buttons [data-buy-again]{background:#323437}
+.browser-order-line-buttons svg,.browser-order-expiry svg{flex:none}
+.browser-order-expiry{display:flex;align-items:center;flex-wrap:wrap;gap:3px 6px;margin-top:7px;padding:4px 9px;color:#ffe08a;border:1px solid #775719;border-radius:9px;background:#352810;font-size:12px;overflow-wrap:anywhere}
+.browser-order-expiry time{margin-inline-start:auto;color:#e2c47b;white-space:nowrap}
+.browser-order-expiry[data-expired]{color:#f0d69b;background:#272117}
 .browser-order-line-buttons button:focus-visible,.browser-order-delivery button:focus-visible,.browser-order-repeat button:focus-visible{outline:2px solid #ffdf45;outline-offset:2px}
 .browser-order-instructions{margin:10px 0 2px;padding:12px;border:1px solid #325344;border-radius:10px;background:#161e1b}
 .browser-order-instructions :is(h3,p){margin:0;font-size:14px}
@@ -54,3 +63,4 @@
 .browser-order-repeat>div{justify-content:flex-end}
 .browser-order-repeat button:disabled{opacity:.5;cursor:not-allowed}
 @media(max-width:600px){.account-panel details.browser-order>summary{padding:10px;gap:7px}.account-panel details.browser-order>summary .browser-order-image{width:36px;height:36px}.account-panel details.browser-order .browser-order-price{font-size:14px}.browser-order-line-buttons button,.browser-order-repeat button{min-height:44px}}
+@media(max-width:480px){.browser-order-line-main .browser-order-item-info{flex-basis:100%}.browser-order-expiry time{margin-inline-start:21px}}

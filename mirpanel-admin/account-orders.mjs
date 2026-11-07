@@ -2,6 +2,7 @@ import {orderLines} from './order-lines.mjs';
 import {warrantyText} from './public/product-plan-utils.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {customerStatus,deliveryLines,orderCodeValid} from './community/order-delivery.mjs';
+import {safeCalendarDate} from './payment-order-lifecycle.mjs';
 const denied=()=>Object.assign(Error('Sifarişlərinizi görmək üçün hesabınıza daxil olun.'),{status:401});
 const planLabel=p=>p.label||p.name||(p.months?p.months+' aylıq':'Plan');
 const normalized=v=>String(v??'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('az');
@@ -30,10 +31,12 @@ export function createAccountOrders({security,store,resolve}){
    return {accountId:s.userId,...(!cursor&&s.topups?{topups:await s.topups()}:{}),orders:page.map(o=>{
     const records=(deliveries||[]).filter(d=>d.order_id===o.id);
     const status=deliveries?customerStatus(o,records):o.status;
-    const snap=o.checkout_snapshot,product=products.get(o.product_id||snap?.productId);
-    return {id:o.id,orderCode:o.order_code,product:o.product_title,items:orderLines(snap).map((x,i)=>{
+    const snap=o.checkout_snapshot,product=products.get(o.product_id||snap?.productId),lines=orderLines(snap);
+    // An order-wide expiry cannot identify a package in a multi-line purchase.
+    const expiresOn=status==='completed'&&lines.length<=1&&records.some(d=>d.line_index===0)?safeCalendarDate(o.service_expires_on)||null:null;
+    return {id:o.id,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),items:lines.map((x,i)=>{
      const item=snap.items[i],current=products.get(x.productId);
-     return {...x,image:item.image||current?.image||'',warranty:warrantyText({...item,label:x.planName}),durationMonths:item.durationMonths??null,repeat:repeatPlan(current,item.sourcePlanKey??item.planId,x.planName)};
+     return {...x,image:item.image||current?.image||'',warranty:warrantyText({...item,label:x.planName}),durationMonths:item.durationMonths??null,expiresOn,repeat:repeatPlan(current,item.sourcePlanKey??item.planId,x.planName)};
     }),image:snap?.image||product?.image||'',quantity:o.quantity||snap?.quantity||1,warranty:warrantyText({...snap,label:o.plan_name}),durationMonths:o.duration_months??snap?.durationMonths??null,repeat:repeatPlan(product,snap?.planId??o.plan_id,o.plan_name),plan:o.plan_name,amount:o.amount===null?null:Number(o.amount),currency:o.currency,createdAt:o.created_at,status,statusMessage:status==='preparing'?'Ödəniş təsdiqləndi. Sifariş hazırlanır.':customerOrderStatus(status,flows.get(o.id)?.state),deliveries:status==='completed'?records.map(d=>({id:d.id,line:d.line_index,quantity:d.quantity})):[],receiptAvailable:!o.receipt_deleted_at&&!!o.receipt_path};
    }),nextCursor:rows.length>20?security.encryptSecret(JSON.stringify({purpose:'account-orders-page',userId:s.userId,createdAt:last.created_at,id:last.id})):null};
   },

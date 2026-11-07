@@ -22,7 +22,22 @@ const list=async(req,code)=>account.list(req,null,code);
 const account=createAccountOrders({security,store:f.store,resolve:req=>req.user?{
  userId:req.user,catalog:async()=>f.catalog,page:async()=>[],byCode:async code=>(await pool.query('select o.* from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 and o.order_code::text=$2',[req.user,code])).rows[0],deliveries:ids=>deliveryRecords(pool,ids),codes:code=>ownerCodes(pool,req.user,code)
 }:null});
+const expiry='2026-12-09';
+const expiryOrder={id:'synthetic-expiry',order_code:'9180',product_title:'Synthetic product',plan_name:'1 ay',status:'approved',quantity:1,service_expires_on:expiry};
+const expiryDelivery={order_id:expiryOrder.id,line_index:0,quantity:1};
+async function expiryProjection(row,records){
+ const service=createAccountOrders({security,store:f.store,resolve:async()=>({userId:buyer.user,page:async()=>[row],deliveries:async()=>records})});
+ return (await service.list(buyer)).orders[0];
+}
 try{
+ eq((await expiryProjection(expiryOrder,[expiryDelivery])).expiresOn,expiry);
+ eq((await expiryProjection(expiryOrder,[])).expiresOn,null);
+ eq((await expiryProjection({...expiryOrder,status:'rejected'},[expiryDelivery])).expiresOn,null);
+ eq((await expiryProjection({...expiryOrder,service_expires_on:'2026-02-30'},[expiryDelivery])).expiresOn,null);
+ const singleCart={...expiryOrder,checkout_snapshot:{cartVersion:2,items:[{quantity:1}]}};
+ eq((await expiryProjection(singleCart,[expiryDelivery])).items[0].expiresOn,expiry);
+ const multiCart={...expiryOrder,checkout_snapshot:{cartVersion:2,items:[{quantity:1},{quantity:1}]}};
+ eq((await expiryProjection(multiCart,[expiryDelivery,{...expiryDelivery,line_index:1}])).items.map(x=>x.expiresOn),[null,null]);
  const migration=db.read('mirpanel-admin/community/order-delivery-migration.sql');
  await q(migration);await q(migration);
  eq(Object.values((await q(db.read('mirpanel-admin/community/order-delivery-verification.sql'))).rows[0]).every(Boolean),true);
