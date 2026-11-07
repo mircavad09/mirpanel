@@ -119,7 +119,6 @@ async function paymentGroup(clearCart=true){
   const actions=el('div',null,'shop-actions');
   actions.append(link('Sifarişlərimə bax',group.orderCode?'/profil?tab=orders&order='+encodeURIComponent(group.orderCode):'/profil?tab=orders'),link('Məhsullara bax','/mehsul'),link('Ana səhifə','/'));
   summary.append(el('p',group.paymentConfirmed?'Ödəniş təsdiqləndi. Təhvil vəziyyətini sifarişinizdə izləyin.':rejected?'Ödəniş təsdiqlənmədi. Faktiki statusu sifarişinizdə yoxlayın.':'Ödəniş yoxlanılır. Bu, çatdırılma təsdiqi deyil.',group.paymentConfirmed?'shop-success':'shop-muted'),actions);
-  if(group.whatsappUrl&&!group.paymentConfirmed&&!rejected){const send=link('WhatsApp-da aç',group.whatsappUrl);send.classList.add('shop-primary','shop-return');summary.append(send);}
   app.replaceChildren(el('h1','Sifarişiniz'),summary,...group.items.map(x=>product(x,x.quantity||1)),error);refreshAccount();
   if(group.mode==='card'&&!group.paymentConfirmed&&!rejected){
    const initial=group;
@@ -157,7 +156,7 @@ async function paymentGroup(clearCart=true){
  const {panel,change}=orderBankDetail({el,button,method,amount:checkoutMoney(reserved.totalCents),onChange:()=>void release(true),onCopy:async(number,copy)=>{try{await navigator.clipboard.writeText(number);copy.textContent='Kopyalandı';}catch{error.textContent='Kopyalama mümkün olmadı. Kart nömrəsini seçib kopyalayın.';}}});
  const steps=el('section',null,'wallet-topup-steps order-transfer-steps'),list=el('ol');steps.append(el('h3','Addımlar'),list);
  for(const step of ['Yuxarıdakı kart nömrəsini kopyalayın.','Göstərilən məbləği həmin karta köçürün.','“Qalereyadan çek seç” düyməsinə basın.','Ödəniş çekini seçib yükləyin.','“Davam et” düyməsinə basın. Sayt sizi WhatsApp-a yönləndirəcək. Ödəniş yoxlandıqdan sonra sifarişiniz təhvil veriləcək.'])list.append(el('li',step));
- const next=button('Davam et',()=>run(async()=>{if(!receiptReady)return;next.disabled=cancel.disabled=change.disabled=true;try{group=await api('/submit',{id:reserved.id});await paymentGroup();if(group.whatsappUrl)location.assign(group.whatsappUrl);}catch(e){if(e.status===409){await payment();error.textContent=e.message;}else throw e;}finally{next.disabled=!receiptReady;cancel.disabled=change.disabled=false;}}),true);
+ const next=button('Davam et',()=>run(async()=>{if(!receiptReady)return;next.disabled=cancel.disabled=change.disabled=true;try{group=await api('/submit',{id:reserved.id});await paymentGroup();}catch(e){if(e.status===409){await payment();error.textContent=e.message;}else throw e;}finally{next.disabled=!receiptReady;cancel.disabled=change.disabled=false;}}),true);
  next.disabled=!receiptReady;
  const cancel=button('Ləğv et',()=>void release(false));actions.append(cancel,next);
  const heading=el('h1','Ödənişi tamamlayın'),expiry=el('p','Rezerv: '+new Date(reserved.expiresAt).toLocaleTimeString('az-AZ',{hour:'2-digit',minute:'2-digit'})+'-dək aktivdir.','shop-muted order-transfer-expiry');

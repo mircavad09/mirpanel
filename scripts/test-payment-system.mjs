@@ -173,12 +173,12 @@ assert.ok(flow.includes("if (!flow.receiptUploadToken || !flow.reservation) { pr
 assert.ok(api.includes("Ödəniş çeki Mirpanel sisteminə yüklənib"), 'Receipt acknowledgement is part of the server canonical WhatsApp message');
 assert.ok(confirmation.includes("İstifadə qaydaları və şərtlər qəbul edildi: Bəli"));
 assert.equal(flow.includes('window.open("about:blank"'), false, "Checkout boş WhatsApp tabı açmamalıdır");
-assert.ok(confirmation.includes("window.location.assign(url)") && confirmation.includes("navigate(verified.href)"), "Verified WhatsApp URL must use the same-tab navigation adapter");
+assert.ok(!confirmation.includes("navigate(verified.href)"), "Submitted orders must stay on MirPanel");
 assert.ok(api.includes("buildCanonicalWhatsApp"), "Canonical WhatsApp URL serverdə hazırlanmalıdır");
 assert.ok(confirmation.includes("https://wa.me/${phone}?text=${encodeURIComponent(message)}"));
 assert.ok(confirmation.includes('verified.hostname !== "wa.me"'));
-assert.ok(confirmation.includes('id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}">WhatsApp-a keç</a>'));
-assert.ok(confirmation.includes('id="paymentWhatsAppCopy"'));
+assert.ok(confirmation.includes('/profil?tab=orders&amp;order='));
+assert.ok(confirmation.includes('Sifariş qəbul edildi'));
 assert.equal(confirmation.includes("closeOrderModal();\n    window.location"), false, "WhatsApp keçidindən əvvəl modal bağlanmamalıdır");
 assert.equal(confirmation.includes('window.open(url, "_blank"'), false, "Async WhatsApp popup istifadə edilməməlidir");
 assert.ok(server.includes("await paymentSystem.guardLogin(request)"));

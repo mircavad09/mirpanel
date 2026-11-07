@@ -26,4 +26,31 @@
 .account-panel .account-code .browser-order-actions{justify-content:flex-start;border-top:0}
 .account-panel .account-code .browser-order-header{border:0}
 .account-panel :is(.browser-order-delivery pre,.account-code-text)[hidden]{display:none}
-@media(max-width:600px){.account-panel details.browser-order>summary{grid-template-columns:auto minmax(0,1fr) auto auto}.account-panel details.browser-order>summary>.browser-order-status{grid-column:2;grid-row:2;justify-self:start}.account-panel details.browser-order>summary>.browser-order-price{grid-column:3;grid-row:1}.account-panel details.browser-order>summary>.browser-order-arrow{grid-column:4;grid-row:1}.account-panel .browser-order-header .browser-order-image{width:38px;height:38px}}
+.account-panel details.browser-order>summary{grid-template-columns:auto minmax(0,1fr) auto auto;padding:12px 16px;gap:12px}
+.account-panel .browser-order-heading>strong{margin-top:3px;line-height:1.35}
+.account-panel .browser-order-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
+.account-panel .browser-order-meta :is(time,.browser-order-code){margin:0;color:#b9bec6;font-size:12px;font-weight:400}
+.account-panel .browser-order-meta .browser-order-status{padding:2px 8px}
+.account-panel details.browser-order .browser-order-price{font-size:15px}
+.account-panel .browser-order-arrow{width:16px;height:16px;color:#b9bec6}
+.account-panel details.browser-order .browser-order-line{display:block;padding:12px 0}
+.browser-order-line-main{display:flex;align-items:center;justify-content:space-between;gap:8px 16px;flex-wrap:wrap}
+.browser-order-line-main .browser-order-item-info{flex:1 1 200px;overflow-wrap:anywhere}
+.browser-order-line-buttons,.browser-order-delivery>div,.browser-order-repeat>div{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.browser-order-line-buttons button,.browser-order-repeat button{min-height:40px;padding:6px 11px;color:#f3f4f6;border:1px solid #46494d;border-radius:9px;background:#26282a;font:600 13px system-ui;cursor:pointer}
+.browser-order-line-buttons [data-order-info],.browser-order-repeat [data-repeat-add]{background:#ffd400;color:#171507;border-color:#ffd400}
+.browser-order-line-buttons button:focus-visible,.browser-order-delivery button:focus-visible,.browser-order-repeat button:focus-visible{outline:2px solid #ffdf45;outline-offset:2px}
+.browser-order-instructions{margin:10px 0 2px;padding:12px;border:1px solid #325344;border-radius:10px;background:#161e1b}
+.browser-order-instructions :is(h3,p){margin:0;font-size:14px}
+.browser-order-instructions [data-line-feedback]:not(:empty){display:block;margin-top:6px;color:#c8e5d5}
+.account-panel .browser-order-footer{justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.browser-order-footer>div{display:flex;align-items:center;gap:8px}
+.browser-order-repeat{position:fixed;inset:0;width:min(calc(100% - 28px),420px);max-height:calc(100% - 28px);box-sizing:border-box;padding:20px;color:#f4f4f5;background:#191b1e;border:1px solid #44474d;border-radius:16px;font:400 15px/1.5 system-ui;overflow:auto}
+.browser-order-repeat::backdrop{background:#000a}
+.browser-order-repeat h2{font-size:20px;margin:0}
+.browser-order-repeat p{margin:9px 0 14px}
+.browser-order-repeat [data-repeat-status]:empty{display:none}
+.browser-order-repeat [data-repeat-status]{color:#ffe08a}
+.browser-order-repeat>div{justify-content:flex-end}
+.browser-order-repeat button:disabled{opacity:.5;cursor:not-allowed}
+@media(max-width:600px){.account-panel details.browser-order>summary{padding:10px;gap:7px}.account-panel details.browser-order>summary .browser-order-image{width:36px;height:36px}.account-panel details.browser-order .browser-order-price{font-size:14px}.browser-order-line-buttons button,.browser-order-repeat button{min-height:44px}}

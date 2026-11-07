@@ -6,7 +6,7 @@ import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex
 const ids=['90000000-0000-4000-8000-000000000001','90000000-0000-4000-8000-000000000002','90000000-0000-4000-8000-000000000003'];
 const item={productId:'synthetic',planIndex:0,quantity:1,lineId:ids[0],draftId:ids[0],termsVersion:'test',title:'Synthetic',planName:'Test',unitCents:500,available:20,terms:'Synthetic terms',fields:[]};
 let failDraft,failRemove,replay,posts,state,paid,mode;
-const checkout=()=>({id:ids[2],state,mode,methodId:ids[1],totalCents:500,items:[item],expiresAt:new Date(Date.now()+600000).toISOString(),receiptUploaded:true,paymentConfirmed:paid,...(state==='submitted'?{orderCode:mode==='wallet'?'992':'991'}:{})});
+const checkout=()=>({id:ids[2],state,mode,methodId:ids[1],totalCents:500,items:[item],expiresAt:new Date(Date.now()+600000).toISOString(),receiptUploaded:true,paymentConfirmed:paid,...(state==='submitted'?{orderCode:mode==='wallet'?'992':'991',whatsappUrl:'/unexpected-whatsapp'}:{})});
 const server=http.createServer(async(req,res)=>{
  const p=new URL(req.url,'http://localhost').pathname;
  const out=(status,body)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(body));};
@@ -76,6 +76,10 @@ try{
    await p.getByLabel('Çek faylı',{exact:true}).setInputFiles({name:'synthetic.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 synthetic')});
    await p.getByText('Çek uğurla yükləndi',{exact:true}).waitFor();await waitSound(['add','remove','remove']);await submit.dblclick();
    await p.getByText('Sifariş № 991').waitFor();await waitSound(['add','remove','remove']);assert.equal(posts,2);
+   assert.equal(new URL(p.url()).pathname,'/odenis');
+   assert.equal(await p.getByRole('link',{name:'Sifarişlərimə bax'}).getAttribute('href'),'/profil?tab=orders&order=991');
+   await p.getByText(/Ödəniş yoxlanılır/).waitFor();
+   assert.equal(await p.getByRole('link',{name:/WhatsApp/}).count(),0);
    paid=true;await p.getByRole('heading',{name:'Ödəniş təsdiqləndi',exact:true}).waitFor();await waitSound(['add','remove','remove','order']);
    await p.getByRole('link',{name:'Sifarişlərimə bax'}).waitFor();
    await p.reload();await waitSound(['add','remove','remove','order']);
@@ -84,6 +88,8 @@ try{
    await p.goto(origin+'/odenis?mode=wallet');await p.locator('.checkout-consent input').check();
    await p.getByRole('button',{name:/Sifarişi tamamla/}).dblclick();
    await p.getByText('Sifariş № 992').waitFor();await waitSound(['add','remove','remove','order','order']);
+   assert.equal(await p.getByRole('link',{name:'Sifarişlərimə bax'}).getAttribute('href'),'/profil?tab=orders&order=992');
+   for(const label of ['Məhsullara bax','Ana səhifə'])await p.getByRole('link',{name:label,exact:true}).waitFor();
    await p.reload();await waitSound(['add','remove','remove','order','order']);
    const mediaError=await p.evaluate(()=>sessionStorage.getItem('sound-media-error'));
    if(mediaError)assert.equal(mediaError,'NotSupportedError');

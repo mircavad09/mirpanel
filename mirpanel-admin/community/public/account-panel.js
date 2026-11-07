@@ -32,7 +32,7 @@ export function renderAccountPanel(ctx){
  const listPath=id==='orders'?'/api/payments/my-orders'+suffix:id==='codes'?'/api/payments/my-orders/codes':null;
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?readList():null;void pending?.catch(()=>{});
- const tabModule=id==='profile'?import('./profile.js?v=profile-start-20261108'):id==='orders'?import('/browser-orders.js?v=profile-start-20261108'):id==='codes'?import('./account-codes.js?v=profile-start-20261108'):null;
+ const tabModule=id==='profile'?import('./profile.js?v=profile-start-20261108'):id==='orders'?import('/browser-orders.js?v=order-cards-20261108'):id==='codes'?import('./account-codes.js?v=profile-start-20261108'):null;
  void tabModule?.catch(()=>{});
  try{
  if(!verified){

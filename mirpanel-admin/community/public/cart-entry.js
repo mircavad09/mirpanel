@@ -18,7 +18,7 @@ function preparedQuote(productId,index,{fresh=false,edit=false}={}){
   const r=await fetch('/api/payments/shop/quote',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[{productId,planIndex:index,quantity:1}]}),signal:AbortSignal.timeout(12000)});
   if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Sifariş xidməti düzgün cavab vermədi.');
   const d=await r.json(),q=d.items?.[0];
-  if(!r.ok)throw Error(d.error||'Sifariş şərtləri tapılmadı.');
+  if(!r.ok)throw Object.assign(Error(d.error||'Sifariş şərtləri tapılmadı.'),{status:r.status});
   if(q?.productId!==productId||q.planIndex!==index||typeof q.terms!=='string'||!q.termsVersion||!Array.isArray(q.fields))throw Error('Sifariş şərtləri tapılmadı.');
   entry.readyAt=Date.now();
   return d;
@@ -40,10 +40,10 @@ function loading(body){
  const status=el('div',null,'cart-entry-skeleton');status.setAttribute('role','status');status.setAttribute('aria-label','Qaydalar hazırlanır');status.setAttribute('aria-busy','true');
  body.replaceChildren(status);
 }
-export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=false,loadingDialog=null,onReady}={}){
+export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=false,loadingDialog=null,onReady,repeatPlanName=null,repeatPlanKey=null}={}){
  if(current?.open){current.focus();return;}
  const index=product.plans.indexOf(plan);if(index<0)return;
- const initial=preparedQuote(product.id,index,{edit:!!editLine});void initial.request.catch(()=>{});
+ const initial=preparedQuote(product.id,index,{edit:!!editLine,fresh:repeatPlanName!==null});void initial.request.catch(()=>{});
  await Promise.all([ensureCart(),ensureEntryStyles()]);if(current?.open){current.focus();return;}
  if(loadingDialog&&!loadingDialog.open)return;
  const life=new AbortController(),dialog=loadingDialog||el('dialog',null,'cart-entry'),head=el('header'),title=el('h2','Diqqət!'),close=el('button','×'),body=el('div'),error=el('p','','cart-entry-error');current=dialog;close.type='button';close.setAttribute('aria-label','Bağla');head.append(title,close);error.setAttribute('role','alert');dialog.replaceChildren(head,body,error);
@@ -100,10 +100,14 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
   const quote=prepared||preparedQuote(product.id,index,{fresh:true,edit:!!editLine});
   if(!quote.readyAt||reaccept||editLine)loading(body);
   try{const d=await quote.request,q=d.items[0];if(life.signal.aborted)return;
+   if(repeatPlanName!==null&&(q.planName!==repeatPlanName||(repeatPlanKey!==null&&q.sourcePlanKey!==repeatPlanKey)||q.available===0)){
+    error.textContent=q.available===0?'Bu paket hazırda stokda yoxdur.':'Paket dəyişib. Sifarişlərim səhifəsini yenidən açın və təkrar yoxlayın.';
+    body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));return;
+   }
    if(editLine?.draftId&&!reaccept){const saved=await api('/draft?id='+encodeURIComponent(editLine.draftId));if(life.signal.aborted)return;values=saved.values;activeQuote=q;if(saved.termsVersion===q.termsVersion&&q.fields.length){fields();return;}}
    guest=d.balanceCents===null;terms(q);
    if(reaccept)error.textContent='Paketin şərtləri dəyişib. Yeni şərtləri oxuyub yenidən təsdiqləyin.';
-  }catch{if(!life.signal.aborted){error.textContent='Sifariş şərtlərini almaq mümkün olmadı.';body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));}}
+  }catch(e){if(!life.signal.aborted){error.textContent=repeatPlanName!==null&&e.status===409?e.message:'Sifariş şərtlərini almaq mümkün olmadı.';body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));}}
  }
  await loadTerms(initial);
 }

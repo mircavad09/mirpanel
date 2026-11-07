@@ -49,7 +49,7 @@ try{
  const same=await Promise.all([adminDelivery(pool,security,'synthetic-admin',order.orderId,inputDelivery),adminDelivery(pool,security,'synthetic-admin',order.orderId,inputDelivery)]);
  eq(same.filter(x=>x.replayed).length,1);eq(same[0].status,'preparing');
  await reject(adminDelivery(pool,security,'synthetic-admin',order.orderId,{...inputDelivery,requestId:id()}),409);
- eq((await list(buyer,code)).orders[0].deliveries.map(x=>x.line),[0]);
+ eq((await list(buyer,code)).orders[0].deliveries,[]);
  const meta=await account.codes(buyer);eq(meta.codes.length,1);eq(JSON.stringify(meta).includes(inputDelivery.message),false);
  eq((await account.codes(buyer,inputDelivery.requestId)).text,inputDelivery.message);
  eq((await account.codes(other)).codes.length,0);await reject(account.codes(other,inputDelivery.requestId),404);await reject(account.codes({},inputDelivery.requestId),401);
@@ -57,7 +57,8 @@ try{
  await worker.wake();eq(messages.length,2);eq(messages[1].subject,'№'+code+' sifarişiniz üzrə məhsul hazırdır');
  eq(messages[1].textBody.includes('Synthetic ordinary')&&!messages[1].textBody.includes('Synthetic unlimited')&&!messages[1].textBody.includes('Sintetik təhvil'),true);
  eq((await adminDelivery(pool,security,'synthetic-admin',order.orderId,{...inputDelivery,requestId:id(),line:1})).status,'completed');
- eq((await list(buyer,code)).orders[0].status,'completed');await worker.wake();eq(messages.length,3);
+ const complete=(await list(buyer,code)).orders[0];
+ eq(complete.status,'completed');eq(complete.deliveries.map(x=>x.line),[0,1]);eq(complete.items.map(x=>x.repeat?.productId),['ordinary','unlimited']);await worker.wake();eq(messages.length,3);
  eq(messages[2].textBody.includes('Synthetic unlimited')&&!messages[2].textBody.includes('Synthetic ordinary'),true);
  await q("insert into wallet_accounts(user_id,cents) values('a',2000) on conflict(user_id) do update set cents=2000");
  const body={items,mode:'wallet',requestId:id(),consentAccepted:true};

@@ -1441,17 +1441,16 @@
     return verified.href;
   }
 
-  function showWhatsAppFallback(whatsappUrl, orderCode, message, statusMessage) {
+  function showSubmittedOrder(orderCode, statusMessage) {
     setFooter("");
     renderModalContent(`
       <section class="paymentWhatsAppFallback" aria-labelledby="paymentWhatsAppFallbackTitle" aria-live="polite">
-        <h2 id="paymentWhatsAppFallbackTitle">Sifarişiniz hazırdır</h2>
+        <h2 id="paymentWhatsAppFallbackTitle">Sifariş qəbul edildi</h2>
         <p>Sifariş nömrəsi: <strong>${escapeHtml(orderCode || "")}</strong></p>
         <p id="paymentCustomerOrderStatus">${escapeHtml(statusMessage||'Sifarişiniz yoxlanılır.')}</p>
-        <p>Sifarişiniz hazırdır. WhatsApp avtomatik açılmadı.</p>
-        <a id="paymentWhatsAppFallbackLink" href="${escapeHtml(whatsappUrl)}">WhatsApp-a keç</a>
-        <button id="paymentWhatsAppCopy" type="button">Mesajı kopyala</button>
-        <button id="paymentStartNewOrder" type="button">Yeni sifariş</button>
+        <a data-native-navigation href="/profil?tab=orders&amp;order=${encodeURIComponent(orderCode || '')}">Sifarişlərimə bax</a>
+        <a data-native-navigation href="/mehsul">Məhsullara bax</a>
+        <a data-native-navigation href="/">Ana səhifə</a>
       </section>
     `);
     // Read only the existing checkout capability. Never submit or send a message.
@@ -1459,40 +1458,6 @@
     let statusTimer;
     const updateStatus=async()=>{if(!statusNode.isConnected)return;try{if(!document.hidden){const order=await window.MirpanelPaymentFlow?.recoverSubmitted();if(order?.orderCode===orderCode&&order.statusMessage)statusNode.textContent=order.statusMessage;}}catch{/* Keep last confirmed status on network failure. */}if(statusNode.isConnected)statusTimer=setTimeout(updateStatus,15000);};
     statusTimer=setTimeout(updateStatus,15000);window.addEventListener('pagehide',()=>clearTimeout(statusTimer),{once:true});
-    document.getElementById("paymentStartNewOrder")?.addEventListener("click", () => {
-      window.MirpanelPaymentFlow?.forgetCompleted();
-      closeOrderModal();
-    });
-    document.getElementById("paymentWhatsAppCopy")?.addEventListener("click", async (event) => {
-      const button = event.currentTarget;
-      try {
-        const text = message || "";
-        let copied = false;
-        if (navigator.clipboard?.writeText) {
-          try {
-            await Promise.race([
-              navigator.clipboard.writeText(text),
-              new Promise((_, reject) => setTimeout(() => reject(new Error("CLIPBOARD_TIMEOUT")), 1500))
-            ]);
-            copied = true;
-          } catch {}
-        }
-        if (!copied) {
-          const textarea = document.createElement("textarea");
-          textarea.value = text;
-          textarea.setAttribute("readonly", "");
-          textarea.style.cssText = "position:fixed;opacity:0;pointer-events:none";
-          document.body.appendChild(textarea);
-          textarea.select();
-          copied = document.execCommand("copy");
-          textarea.remove();
-        }
-        if (!copied) throw new Error("COPY_FAILED");
-        button.textContent = "Mesaj kopyalandı";
-      } catch {
-        button.textContent = "Kopyalama alınmadı";
-      }
-    });
   }
 
   window.mirpanelBuildWhatsAppUrl = buildWhatsAppUrl;
@@ -1523,13 +1488,7 @@
       if (!paymentOrder) return;
     }
 
-    const whatsappUrl = String(paymentOrder.whatsappUrl || "");
-    const whatsappMessage = String(paymentOrder.whatsappMessage || "");
-    const verified = new URL(whatsappUrl);
-    if (verified.protocol !== "https:" || verified.hostname !== "wa.me" || !/^\/\d{8,15}$/.test(verified.pathname) || !whatsappMessage) {
-      throw new Error("WhatsApp keçidi server tərəfindən hazırlanmadı.");
-    }
-    showWhatsAppFallback(verified.href, paymentOrder.orderCode, whatsappMessage, paymentOrder.statusMessage);
+    showSubmittedOrder(paymentOrder.orderCode, paymentOrder.statusMessage);
     if (!paymentOrder.idempotent) {
       // Optional stock/Sheets synchronization must not hold a paid checkout open.
       const order = buildWhatsAppMessage(product, plan, formData, paymentOrder.orderCode);
@@ -1538,14 +1497,6 @@
           stockBefore: stockResult?.stockBefore, stockAfter: stockResult?.stockAfter });
       });
     }
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    try {
-      const navigate = typeof window.mirpanelWhatsAppNavigate === "function"
-        ? window.mirpanelWhatsAppNavigate
-        : (url) => { window.location.assign(url); return true; };
-      navigate(verified.href);
-    } catch {}
-    return;
   }
 
   function showForm(product, plan, onDone, forCart=false) {
@@ -2193,11 +2144,8 @@
   void Promise.resolve(window.MirpanelPaymentFlow?.recoverSubmitted?.()).then((order) => {
     const modal = document.getElementById("modal");
     if (!order || !modal || modal.classList.contains("show")) return;
-    const message = String(order.whatsappMessage || "");
-    const url = new URL(String(order.whatsappUrl || ""));
-    if (!message || url.protocol !== "https:" || url.hostname !== "wa.me" || !/^\/\d{8,15}$/.test(url.pathname)) return;
     modal.classList.add("show", "paymentFlowOpen");
     document.body.classList.add("noScroll");
-    showWhatsAppFallback(url.href, order.orderCode, message, order.statusMessage);
+    showSubmittedOrder(order.orderCode, order.statusMessage);
   }).catch(() => {});
 })();

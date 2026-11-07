@@ -3,18 +3,28 @@
  let cursor=null,loading=false,loaded=false,generation=0,timer,focused=false,pageFingerprint=null,hasAppended=false,initialRequest=options.initialRequest;const seen=new Set(),requests=new Set(),prior=new Map();
  const target=new URLSearchParams(location.search).get('order');
  const sounds=import('/checkout-sounds.js?v=1').catch(()=>null);
+ const repeatDialog=document.createElement('dialog');repeatDialog.className='browser-order-repeat';
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- function clear(){generation++;for(const c of requests)c.abort();requests.clear();cursor=null;loading=false;loaded=false;hasAppended=false;pageFingerprint=null;seen.clear();prior.clear();root.replaceChildren();content.replaceChildren();if(dialog.open)dialog.close();more.hidden=true;error.hidden=true;root.setAttribute('aria-busy','false');}
+ function clear(){generation++;for(const c of requests)c.abort();requests.clear();cursor=null;loading=false;loaded=false;hasAppended=false;pageFingerprint=null;seen.clear();prior.clear();root.replaceChildren();content.replaceChildren();if(dialog.open)dialog.close();if(repeatDialog.open)repeatDialog.close();repeatDialog.remove();more.hidden=true;error.hidden=true;root.setAttribute('aria-busy','false');}
  function gate(){clear();options.onData?.(null);root.classList.remove('browser-orders-list');root.innerHTML='<div class="browser-orders-message"><h2>Sifarişlərinizi görmək üçün hesabınıza daxil olun.</h2><p>Hesabınız yoxdur? Qeydiyyatdan keçin.</p><div class="orders-login-actions"><a class="orders-action" href="/owner-login?next=%2Fsifarislerim">Daxil ol</a> <a class="orders-action" href="/hesab?mode=signup&amp;next=%2Fsifarislerim">Qeydiyyatdan keç</a></div></div>';}
  async function api(path){const c=new AbortController(),t=setTimeout(()=>c.abort(),20000);requests.add(c);try{const r=await fetch('/api/payments/'+path,{cache:'no-store',credentials:'same-origin',signal:c.signal,headers:{Accept:'application/json'}});const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Server cavab vermədi.'),{status:r.status});return d;}finally{clearTimeout(t);requests.delete(c);}}
  const money=v=>Number.isFinite(Number(v))?Number(v).toFixed(2).replace('.',',')+' ₼':'—';
- const date=value=>{const d=new Date(value);return Number.isFinite(d.getTime())?new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Baku'}).format(d).replaceAll('/','.').replace(',',''):'Tarix məlum deyil';};
+ const date=value=>{const d=new Date(value);return value&&Number.isFinite(d.getTime())?new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Baku'}).format(d).replaceAll('/','.').replace(',',''):'Tarix məlum deyil';};
  const statuses={reviewing:'Yoxlanılır',pending:'Yoxlanılır',submitted:'Yoxlanılır',new_receipt_requested:'Yeni çek tələb olunur',preparing:'Hazırlanır',approved:'Hazırlanır',completed:'Tamamlandı',cancelled:'Ləğv edildi',rejected:'Rədd edildi',expired:'Müddəti bitdi'};
  const photo=url=>{let src='';try{const u=new URL(url||'',location.origin);if(url&&['http:','https:'].includes(u.protocol))src=u.href;}catch{}return '<span class="browser-order-image"><svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5"><path d="m12 3 9 5v9l-9 5-9-5V8z M3 8l9 5 9-5 M12 13v9"/></svg>'+(src?'<img src="'+esc(src)+'" alt="" loading="lazy">':'')+'</span>';};
- function card(o){
-  const items=o.items?.length?o.items:[{title:o.product,planName:o.plan,quantity:o.quantity||1,unitCents:o.amount==null?null:Math.round(Number(o.amount)*100)/(o.quantity||1),image:o.image,warranty:o.warranty}];
-  const rows=items.map((x,i)=>{const qty=Number(x.quantity),unit=x.unitCents==null?null:Number(x.unitCents)/100;const delivered=(o.deliveries||[]).filter(d=>d.line===i).map(d=>'<div class="browser-order-delivery"><button type="button" data-delivery="'+esc(d.id)+'" aria-expanded="false">Təhvil məlumatını göstər · '+esc(d.quantity)+' ədəd</button><pre hidden></pre></div>').join('');return '<div class="browser-order-line">'+photo(x.image)+'<div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2><p>'+esc(x.planName)+'</p>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<span class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</span>'+delivered+'</div><strong class="browser-order-line-total">'+(unit==null?'—':esc(money(qty*unit)))+'</strong></div>';}).join('');
-  return '<details class="browser-order" data-order-id="'+esc(o.id)+'" data-order-code="'+esc(o.orderCode)+'"><summary class="browser-order-header">'+photo(items[0]?.image)+'<div><strong>'+esc(o.product)+'</strong><span class="browser-order-code">Sifariş № '+esc(o.orderCode)+'</span><time>'+esc(date(o.createdAt))+'</time></div><span class="browser-order-status" data-status="'+esc(o.status)+'">'+esc(statuses[o.status]||'Status məlum deyil')+'</span><strong class="browser-order-price">'+(o.amount==null?'—':esc(money(o.amount)))+'</strong><span class="browser-order-arrow" aria-hidden="true">⌄</span></summary><div class="browser-order-items">'+rows+'</div><footer class="browser-order-actions">'+(o.receiptAvailable?'<button type="button" data-receipt="'+esc(o.id)+'">Çekə bax</button>':'')+'</footer></details>';
+ const icons={completed:'✅',preparing:'⏳',approved:'⏳',rejected:'❌'};
+ const repeats=new WeakMap();
+ function orderItems(o){return o.items?.length?o.items:[{title:o.product,planName:o.plan,quantity:o.quantity||1,unitCents:o.amount==null?null:Math.round(Number(o.amount)*100)/(o.quantity||1),image:o.image,warranty:o.warranty,durationMonths:o.durationMonths,repeat:o.repeat}];}
+ function card(o,items){
+  const rows=items.map((x,i)=>{
+   const qty=Number(x.quantity),unit=x.unitCents==null?null:Number(x.unitCents)/100;
+   const duration=Number(x.durationMonths);
+   const extraDuration=Number.isInteger(duration)&&duration>0&&!new RegExp('(?:^|\\D)'+duration+'\\s*ay','iu').test(x.planName||'')?' · '+duration+' ay':'';
+   const delivered=(o.status==='completed'?o.deliveries||[]:[]).filter(d=>d.line===i).map(d=>'<div class="browser-order-delivery"><div><span>'+esc(d.quantity)+' ədəd</span><button type="button" data-delivery="'+esc(d.id)+'" aria-expanded="false">Göstər</button><button type="button" data-copy-delivery="'+esc(d.id)+'">Kopyala</button></div><pre hidden></pre></div>').join('');
+   return '<section class="browser-order-line"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2><p>'+esc(x.planName)+esc(extraDuration)+'</p>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<span class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</span></div><div class="browser-order-line-buttons"><button type="button" data-order-info aria-expanded="false">Məlumat və təlimat</button><button type="button" data-buy-again="'+i+'">Yenidən al</button></div></div><div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(o.status==='completed'?'Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Müştəri üçün təhvil məlumatı sifariş tamamlandıqdan sonra görünəcək.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
+  }).join('');
+  const total=o.amount==null?'—':esc(money(o.amount));
+  return '<details class="browser-order" data-order-id="'+esc(o.id)+'" data-order-code="'+esc(o.orderCode)+'"><summary class="browser-order-header">'+photo(items[0]?.image)+'<div class="browser-order-heading"><div class="browser-order-meta"><span class="browser-order-status" data-status="'+esc(o.status)+'">'+(icons[o.status]?'<span aria-hidden="true">'+icons[o.status]+'</span> ':'')+esc(statuses[o.status]||'Status məlum deyil')+'</span><span class="browser-order-code">№ '+esc(o.orderCode)+'</span><time>'+esc(date(o.createdAt))+'</time></div><strong>'+esc(o.product)+'</strong></div><strong class="browser-order-price">'+total+'</strong><svg class="browser-order-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><div class="browser-order-items">'+rows+'</div><footer class="browser-order-actions browser-order-footer"><div><span>Cəmi</span> <strong class="browser-order-price">'+total+'</strong></div>'+(o.receiptAvailable?'<button type="button" data-receipt="'+esc(o.id)+'">Qəbzə bax</button>':'')+'</footer></details>';
  }
  function topup(t){const status={reviewing:'Yoxlanılır',approved:'Təsdiqləndi',rejected:'Rədd edildi'}[t.status];if(!status)return '';return '<article class="browser-order browser-order-topup" data-topup-id="'+esc(t.id)+'"><header class="browser-order-header"><div><span class="browser-order-code">Balans artırma</span><time>'+esc(date(t.created_at))+'</time></div><span class="browser-order-status" data-status="'+esc(t.status)+'">'+status+'</span><strong class="browser-order-price">'+esc(money(Number(t.approved_cents??t.requested_cents)/100))+'</strong></header></article>';}
  root.addEventListener('error',e=>{if(e.target.matches?.('.browser-order-image img'))e.target.hidden=true;},{capture:true,signal:life.signal});
@@ -23,8 +33,9 @@
   const expanded=new Set([...root.querySelectorAll('[data-order-id][open]')].map(x=>x.dataset.orderId));
   if(!append){root.replaceChildren();seen.clear();for(const t of d.topups||[])root.insertAdjacentHTML('beforeend',topup(t));}
   for(const o of d.orders){
-   if(seen.has(o.id))continue;seen.add(o.id);root.insertAdjacentHTML('beforeend',card(o));
+   if(seen.has(o.id))continue;seen.add(o.id);const items=orderItems(o);root.insertAdjacentHTML('beforeend',card(o,items));
    const node=root.lastElementChild;
+   repeats.set(node,items.map(x=>x.repeat));
    if(expanded.has(o.id)||(!focused&&target===String(o.orderCode)))node.open=true;
    if(!focused&&target===String(o.orderCode)){focused=true;node.scrollIntoView({block:'nearest'});}
    if(live&&['reviewing','submitted','pending','new_receipt_requested'].includes(prior.get(o.id))&&['preparing','completed'].includes(o.status))void sounds.then(m=>m?.playCheckoutSound('order',o.orderCode));
@@ -40,11 +51,46 @@
   }finally{if(run===generation){loading=false;more.disabled=false;root.setAttribute('aria-busy','false');}}
  }
  on(more,'click',()=>load(!!cursor));
- on(root,'click',async e=>{const b=e.target.closest('[data-delivery]');if(!b||b.disabled)return;const p=b.nextElementSibling;
-  if(!p.hidden){p.hidden=true;p.textContent='';b.setAttribute('aria-expanded','false');b.textContent=b.dataset.label;return;}
-  b.dataset.label=b.textContent;b.disabled=true;const run=generation;
-  try{const d=await api('my-orders/codes/'+b.dataset.delivery);if(run!==generation||!b.isConnected)return;p.textContent=d.text;p.hidden=false;b.textContent='Gizlət';b.setAttribute('aria-expanded','true');}
-  catch{if(run===generation){error.textContent='Təhvil məlumatını açmaq mümkün olmadı.';error.hidden=false;}}finally{b.disabled=false;}
+ function hideInfo(panel){panel.hidden=true;panel.querySelectorAll('pre').forEach(p=>{p.textContent='';p.hidden=true;});panel.querySelectorAll('[data-delivery]').forEach(b=>{b.textContent='Göstər';b.setAttribute('aria-expanded','false');});panel.querySelector('[data-line-feedback]').textContent='';panel.previousElementSibling.querySelector('[data-order-info]').setAttribute('aria-expanded','false');}
+ root.addEventListener('toggle',e=>{if(e.target.matches?.('[data-order-id]')&&!e.target.open)e.target.querySelectorAll('.browser-order-instructions').forEach(hideInfo);},{capture:true,signal:life.signal});
+ async function delivery(b,copy=false){
+  if(!b||b.disabled)return;const section=b.closest('.browser-order-instructions'),box=b.closest('.browser-order-delivery'),p=box.querySelector('pre'),status=section.querySelector('[data-line-feedback]'),order=b.closest('details');
+  if(!copy&&!p.hidden){p.hidden=true;p.textContent='';b.textContent='Göstər';b.setAttribute('aria-expanded','false');return;}
+  const run=generation,valid=()=>run===generation&&b.isConnected&&order.open&&!section.hidden&&!document.hidden;
+  const read=async()=>{const d=await api('my-orders/codes/'+encodeURIComponent(b.dataset.delivery||b.dataset.copyDelivery));if(!valid()||typeof d.text!=='string')throw Error();return d.text;};
+  b.disabled=true;status.textContent='';
+  try{
+   if(copy){
+    if(navigator.clipboard?.write&&typeof ClipboardItem==='function'){
+     const blob=read().then(text=>new Blob([text],{type:'text/plain'}));void blob.catch(()=>{});
+     await navigator.clipboard.write([new ClipboardItem({'text/plain':blob})]);
+    }else if(navigator.clipboard?.writeText)await navigator.clipboard.writeText(await read());else throw Error();
+    if(valid())status.textContent='Məlumat kopyalandı';
+   }else{const text=await read();if(valid()){p.textContent=text;p.hidden=false;b.textContent='Gizlət';b.setAttribute('aria-expanded','true');}}
+  }catch{if(valid())status.textContent=copy?'Məlumatı kopyalamaq mümkün olmadı.':'Təhvil məlumatını açmaq mümkün olmadı.';}finally{b.disabled=false;}
+ }
+ function buyAgain(selection){
+  if(repeatDialog.open)return;
+  repeatDialog.innerHTML='<h2 id="browserOrderRepeatTitle">Yenidən almaq</h2><p>Bu, yeni sifariş olacaq. Məhsul ödənişdən sonra ayrıca təqdim olunur. Əvvəlki sifarişiniz dəyişmir.</p><p role="status" data-repeat-status></p><div><button type="button" data-repeat-cancel autofocus>Ləğv et</button><button type="button" data-repeat-add>Səbətə əlavə et</button></div>';
+  repeatDialog.setAttribute('aria-labelledby','browserOrderRepeatTitle');root.after(repeatDialog);
+  const cancel=repeatDialog.querySelector('[data-repeat-cancel]'),add=repeatDialog.querySelector('[data-repeat-add]'),status=repeatDialog.querySelector('[data-repeat-status]');
+  cancel.onclick=()=>repeatDialog.close();
+  if(!selection){add.disabled=true;status.textContent='Bu məhsul və ya əvvəlki paket hazırda satışda deyil və ya müəyyən edilə bilmədi.';}
+  add.onclick=async()=>{if(add.disabled)return;add.disabled=true;
+   try{const {startCartEntry}=await import('/community-assets/cart-entry.js?v=order-cards-20261108');if(!repeatDialog.open||!add.isConnected)return;
+    const plan={label:selection.planName},plans=[];plans[selection.planIndex]=plan;
+    repeatDialog.close();
+    await startCartEntry({id:selection.productId,title:selection.title,plans},plan,{repeatPlanName:selection.planName,repeatPlanKey:selection.planKey??null});
+   }catch{const msg='Sifariş pəncərəsini açmaq mümkün olmadı. Yenidən cəhd edin.';if(repeatDialog.open&&add.isConnected)status.textContent=msg;else if(root.isConnected){error.textContent=msg;error.hidden=false;}}
+   finally{add.disabled=!selection;}
+  };
+  repeatDialog.showModal();
+ }
+ on(root,'click',e=>{
+  const info=e.target.closest('[data-order-info]'),again=e.target.closest('[data-buy-again]');
+  if(info){const panel=info.closest('.browser-order-line').querySelector('.browser-order-instructions');if(!panel.hidden)return hideInfo(panel);panel.hidden=false;info.setAttribute('aria-expanded','true');const first=panel.querySelector('[data-delivery]');if(first)void delivery(first);return;}
+  if(again)return buyAgain(repeats.get(again.closest('[data-order-id]'))?.[Number(again.dataset.buyAgain)]);
+  const b=e.target.closest('[data-delivery],[data-copy-delivery]');if(b)void delivery(b,b.hasAttribute('data-copy-delivery'));
  });
  root.addEventListener('click',async e=>{if(e.target.closest('[data-retry]'))return void load();const b=e.target.closest('[data-receipt]');if(!b||b.disabled)return;const run=generation;b.disabled=true;try{const d=await api('my-orders/'+encodeURIComponent(b.dataset.receipt)+'/receipt');if(run!==generation)return;const u=new URL(d.url);if(u.protocol!=='https:'||!u.hostname.endsWith('.supabase.co'))throw Error();content.replaceChildren();const view=document.createElement(d.mime==='application/pdf'?'iframe':'img');view.src=u.href;view.referrerPolicy='no-referrer';if(view.tagName==='IMG')view.alt='Sifarişin ödəniş çeki';else{view.title='Ödəniş çeki PDF';view.setAttribute('sandbox','allow-same-origin');}content.append(view);dialog.showModal();}catch(e){if(run!==generation)return;if(e.status===401||e.status===403)return void gate();error.textContent=e.status===410?'Çek artıq mövcud deyil':'Çeki açmaq mümkün olmadı. Yenidən cəhd edin.';error.hidden=false;}finally{b.disabled=false;}});
  document.getElementById('browserReceiptClose').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});dialog.addEventListener('close',()=>content.replaceChildren());
