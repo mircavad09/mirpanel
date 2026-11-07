@@ -4,7 +4,7 @@ export async function renderAccountPanel(ctx){
  document.body.classList.add('profile-screen');
  const {app,state,api,el,button,link,money}=ctx,userId=state.profile.user_id;
  async function style(href){let n=[...document.querySelectorAll('link[rel=stylesheet]')].find(n=>new URL(n.href).pathname===new URL(href,location.origin).pathname);if(n){n.dataset.shellPersistent='';n.disabled=false;n.media='all';if(n.getAttribute('href')===href&&n.sheet)return;}else{n=el('link',{rel:'stylesheet'});n.dataset.shellPersistent='';document.head.append(n);}await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('Görünüş yüklənmədi. Yenidən cəhd edin.')),15000);n.onload=()=>{clearTimeout(t);resolve();};n.onerror=()=>{clearTimeout(t);reject(Error('Görünüş yüklənmədi. Yenidən cəhd edin.'));};n.href=href;});}
- await Promise.all([style('/community-assets/account-panel.css?v=account-layout-20261106'),style('/community-assets/profile.css?v=profile-stats-20261030'),style('/browser-orders.css?v=account-layout-20261106')]);
+ await Promise.all([style('/community-assets/account-panel.css?v=account-update-20261107'),style('/community-assets/profile.css?v=profile-stats-20261030'),style('/browser-orders.css?v=account-layout-20261106')]);
  if(!app.isConnected||location.pathname!=='/profil')return;
  const life=new AbortController();let stopped=false,disposeChild=null,load=0;
  const oldDispose=window.mirpanelProfileDispose;
@@ -31,14 +31,7 @@ export async function renderAccountPanel(ctx){
   window.mirpanelAccountMounting=true;try{await import('/browser-orders.js?v=account-layout-20261106');}finally{window.mirpanelAccountMounting=false;}if(stopped||run!==load)return;const communityDispose=window.mirpanelPageDispose;disposeChild=window.mountBrowserOrders({initial:orderCache,onData:d=>{orderCache=d;}});window.mirpanelPageDispose=communityDispose;
   const onLoaded=e=>{if(!e.detail.empty)content.querySelector('.account-recommendations')?.remove();if(e.detail.empty&&!content.querySelector('.account-recommendations'))void recommendations(content,run).catch(()=>{});};window.addEventListener('mirpanel:orders-loaded',onLoaded,{signal:life.signal});if(orderCache&&!orderCache.orders.length&&!(orderCache.topups||[]).length)void recommendations(content,run).catch(()=>{});const child=disposeChild;disposeChild=()=>{window.removeEventListener('mirpanel:orders-loaded',onLoaded);child?.();};return;
  }
- if(id==='payments'){
-  let page=1;const box=el('section',{class:'account-ledger'});content.replaceChildren(box);
-  function paint(summary,wallet){box.replaceChildren(el('h1',{},'Ödənişlərim'));const sales=el('section',{class:'account-sales'},el('h2',{},'Alış ödənişləri'),el('p',{},'Təsdiqlənmiş alışlar (qaytarmalar çıxılmaqla): '+money(summary.expensesCents)));for(const x of summary.payments||[])sales.append(el('article',{class:'account-ledger-row'},el('strong',{},Number(x.amount).toFixed(2)+' '+x.currency),el('p',{},'Sifariş № '+x.order_code),el('time',{},new Date(x.created_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'}))));if(!summary.payments?.length)sales.append(el('p',{},'Hələ təsdiqlənmiş alış ödənişi yoxdur.'));box.append(sales,el('h2',{},'Balans əməliyyatları'));append(wallet);}
-  const more=button('Daha çox göstər',async()=>{more.disabled=true;try{const d=await api('/api/payments/shop/wallet?page='+(page+1));if(stopped||run!==load)return;page++;append(d);}catch(e){more.textContent='Yenidən cəhd et';}finally{more.disabled=false;}});
-  function append(d){more.remove();if(page===1&&!d.items.length)box.append(empty('Hələ əməliyyat yoxdur'));for(const x of d.items)box.append(el('article',{class:'account-ledger-row'},el('strong',{},(Number(x.cents)>0?'+':'')+money(Number(x.cents))),el('p',{},x.reason),el('time',{},new Date(x.created_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'}))));if(d.more)box.append(more);}
-  if(summaryCache&&walletCache)paint(summaryCache,walletCache);else box.append(el('h1',{},'Ödənişlərim'),el('div',{class:'account-skeleton','aria-label':'Ödəniş məlumatları yoxlanır'}));
-  const [summary,wallet]=await Promise.all([accountData(),api('/api/payments/shop/wallet')]);if(!stopped&&run===load){walletCache=wallet;paint(summary,wallet);}return;
- }
+ if(id==='payments'){const {mountPayments}=await import('./account-payments.js?v=account-update-20261107');if(!stopped&&run===load)disposeChild=mountPayments({content,api,el,button});return;}
  if(id==='codes'||id==='subscriptions'){content.replaceChildren(empty(id==='codes'?'Hələ kodunuz yoxdur':'Aktiv abunəliyiniz yoxdur',id==='codes'?'Hesabınıza bağlı kod qeydi yoxdur.':'Hesabınıza bağlı aktiv abunəlik qeydi yoxdur.'));return;}
  content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},summaryCache?money(summaryCache.expensesCents):'—')));
  const d=await accountData();if(stopped||run!==load)return;

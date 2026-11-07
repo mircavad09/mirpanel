@@ -1,6 +1,6 @@
 import {validateDetails} from './checkout-fields.js';
-import {ensureCart} from '/cart-ready.js?v=login-gate-20261107b';
-import {ensureEntryStyles} from './entry-styles.js?v=checkout-recovery-20261106';
+import {ensureCart} from '/cart-ready.js?v=account-update-20261107';
+import {ensureEntryStyles} from './entry-styles.js?v=account-update-20261107';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
 export async function startCartEntry(product,plan,{editLine=null}={}){
@@ -10,8 +10,7 @@ export async function startCartEntry(product,plan,{editLine=null}={}){
  const life=new AbortController(),dialog=el('dialog',null,'cart-entry'),head=el('header'),title=el('h2','Diqqət!'),close=el('button','×'),body=el('div'),error=el('p','','cart-entry-error');current=dialog;close.type='button';close.setAttribute('aria-label','Bağla');head.append(title,close);error.setAttribute('role','alert');dialog.append(head,body,error);document.body.append(dialog);dialog.showModal();document.body.classList.add('orderConfirmationActive');
  const before=e=>{if(dialog.open){e.preventDefault();error.textContent='Məlumatları tamamlayın və ya pəncərəni bağlayın.';}};window.addEventListener('mirpanel:before-navigate',before,{signal:life.signal});
  let working=false,activeQuote=null,values={},draftId=editLine?.draftId||crypto.randomUUID();
- const api=async(path,data)=>{const r=await fetch('/api/payments/shop'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined,signal:life.signal});const d=await r.json();if(!r.ok)throw Error(d.error||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.');return d;};
- let pending=api('/quote',{items:[{productId:product.id,planIndex:index,quantity:1}]}).then(d=>d.items[0]);pending.catch(()=>{});
+ const api=async(path,data)=>{const request=new AbortController(),abort=()=>request.abort();life.signal.addEventListener('abort',abort,{once:true});const timer=setTimeout(abort,12000);try{const r=await fetch('/api/payments/shop'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined,signal:request.signal});if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Sifariş xidməti düzgün cavab vermədi.');const d=await r.json();if(!r.ok)throw Error(d.error||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.');return d;}finally{clearTimeout(timer);life.signal.removeEventListener('abort',abort);}};
  close.onclick=()=>{if(!working)dialog.close();};dialog.addEventListener('cancel',e=>{if(working)e.preventDefault();});dialog.addEventListener('close',()=>{life.abort();document.body.classList.remove('orderConfirmationActive');body.replaceChildren();values={};dialog.remove();if(current===dialog)current=null;},{once:true});
  const button=(text,fn,primary=false)=>{const b=el('button',text,primary?'cart-entry-primary':'');b.type='button';b.onclick=fn;return b;};
  async function commit(v){if(working)return;working=true;error.textContent='';body.querySelectorAll('button').forEach(b=>b.disabled=true);try{const ready=await ensureCart();const saved=await api('/draft',{id:draftId,productId:product.id,planIndex:index,values:v,termsVersion:activeQuote.termsVersion});ready.commitDraft(saved,{productId:product.id,planIndex:index,quantity:editLine?.quantity||1,edit:!!editLine});working=false;dialog.close();ready.open();}catch(e){if(!life.signal.aborted){error.textContent=e.message;body.querySelectorAll('button').forEach(b=>b.disabled=false);}}finally{working=false;}}
@@ -31,16 +30,20 @@ export async function startCartEntry(product,plan,{editLine=null}={}){
   label.append(check,el('span','Xəbərdarlığı oxudum və qəbul edirəm'));
   const cancel=button('Ləğv et',()=>{if(!working)dialog.close();}),next=button('Təsdiqləyirəm',async()=>{
    if(!check.checked||working)return;working=true;next.disabled=cancel.disabled=true;error.textContent='';
-   try{const q=await pending;if(life.signal.aborted)return;
-    if(q.terms!==display.terms||q.note!==display.note){terms(q);error.textContent='Xəbərdarlıq yeniləndi. Yenidən təsdiqləyin.';return;}
-    activeQuote=q;working=false;await fields();
-   }catch(e){if(!life.signal.aborted){error.textContent=e.message;pending=api('/quote',{items:[{productId:product.id,planIndex:index,quantity:1}]}).then(d=>d.items[0]);pending.catch(()=>{});}}
+   try{activeQuote=display;working=false;await fields();}
    finally{working=false;next.disabled=!check.checked;cancel.disabled=false;}
   },true);
   next.disabled=true;check.onchange=()=>next.disabled=!check.checked||working;
   const actions=el('div',null,'cart-warning-actions');actions.append(cancel,next);footer.append(label,actions);body.replaceChildren(text,footer);
  }
- if(editLine?.draftId){try{const [saved,q]=await Promise.all([api('/draft?id='+encodeURIComponent(editLine.draftId)),pending]);if(life.signal.aborted)return;values=saved.values;activeQuote=q;if(saved.termsVersion===q.termsVersion){fields();return;}}catch(e){error.textContent=e.message;}}
- terms({terms:String(plan.terms||(product.confirmationModal||product.orderConfirmation)?.description||''),note:String(product.note||'')});
+ async function loadTerms(){
+  error.textContent='';body.className='cart-entry-loading';const status=el('p','Sifariş şərtləri yoxlanılır…');status.setAttribute('role','status');body.replaceChildren(status);
+  try{const d=await api('/quote',{items:[{productId:product.id,planIndex:index,quantity:1}]}),q=d.items?.[0];if(life.signal.aborted)return;
+   if(!q||typeof q.terms!=='string'||!q.termsVersion||!Array.isArray(q.fields))throw Error('Sifariş şərtləri tapılmadı.');
+   if(editLine?.draftId){const saved=await api('/draft?id='+encodeURIComponent(editLine.draftId));if(life.signal.aborted)return;values=saved.values;activeQuote=q;if(saved.termsVersion===q.termsVersion&&q.fields.length){fields();return;}}
+   terms(q);
+  }catch{if(!life.signal.aborted){error.textContent='Sifariş şərtlərini almaq mümkün olmadı.';body.replaceChildren(button('Yenidən cəhd et',loadTerms));}}
+ }
+ await loadTerms();
 }
 export async function editCartLine(line){const saved=await fetch('/api/payments/shop/draft?id='+encodeURIComponent(line.draftId),{credentials:'same-origin',cache:'no-store'}).then(async r=>{const d=await r.json();if(!r.ok)throw Error(d.error||'Qaralama tapılmadı.');return d;});const q=await fetch('/api/payments/shop/quote',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[line]})}).then(r=>r.json());const x=q.items?.[0];if(!x)throw Error('Məhsul məlumatı yüklənmədi.');const plans=Array.from({length:saved.planIndex+1},()=>({}));plans[saved.planIndex]={terms:x.terms};return startCartEntry({id:line.productId,title:x.title,note:x.note,plans},plans[saved.planIndex],{editLine:line});}

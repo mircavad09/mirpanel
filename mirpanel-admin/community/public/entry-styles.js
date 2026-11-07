@@ -1,5 +1,5 @@
 let pending;
-const href='/community-assets/cart-entry.css?v=checkout-recovery-20261106';
+const href='/community-assets/cart-entry.css?v=account-update-20261107';
 export function ensureEntryStyles(){
  let css=document.querySelector('link[data-cart-entry-css]');
  if(css?.getAttribute('href')===href&&css.sheet){css.disabled=false;css.media='all';return Promise.resolve();}

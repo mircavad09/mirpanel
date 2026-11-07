@@ -1,17 +1,20 @@
 // Only /hesab. Existing group/profile/checkout controllers are not restyled.
-export async function renderAuthForms({app,state,api,el,button,link,alert}){
- const policy=state.authFormPolicy;if(!policy)throw Error('Giriş forması ayarları yüklənmədi. Səhifəni yeniləyin.');
- document.body.classList.add('auth-screen');const cssUrl='/community-assets/auth-forms.css?v=auth-compact-20261107';let css=document.querySelector('link[href="'+cssUrl+'"]');
+export async function renderAuthForms({app,state,api,el,button,link,alert,signal}){
+ const policy=state.authFormPolicy||{minPasswordLength:6,maxPasswordLength:128,termsUrl:'/sertler',privacyUrl:'/sertler#sertler-10'};
+ document.body.classList.add('auth-screen');const cssUrl='/community-assets/auth-forms.css?v=account-update-20261107';let css=document.querySelector('link[href="'+cssUrl+'"]');
  // A failed preload can expose an empty sheet, or fire before this module starts.
  // Require the form rules and bind load/error before inserting a fresh retry.
  const usable=sheet=>{try{return Array.from(sheet?.sheet?.cssRules||[]).some(r=>r.selectorText?.includes('.auth-form-panel'));}catch{return false;}};
  if(usable(css)){css.dataset.shellPersistent='auth-forms';css.disabled=false;}else{css?.remove();css=document.createElement('link');css.rel='stylesheet';css.href=cssUrl;css.dataset.shellPersistent='auth-forms';let timer;try{await new Promise((resolve,reject)=>{const fail=()=>reject(Error('Giriş formasının görünüşü yüklənmədi. Yenidən cəhd edin.'));css.addEventListener('load',()=>usable(css)?resolve():fail(),{once:true});css.addEventListener('error',fail,{once:true});timer=setTimeout(fail,12000);document.head.append(css);});}catch(e){css.remove();throw e;}finally{clearTimeout(timer);}}
+ if(signal?.aborted||!app.isConnected)return;
  const params=new URLSearchParams(location.search),destination=['/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'].includes(params.get('next'))?params.get('next'):'/profil',requested=params.get('mode')||'login',mode=['login','signup','reset','new-password'].includes(requested)?requested:'login';
  const titles={signup:'Qeydiyyat',login:'Giriş',reset:'Şifrə bərpası','new-password':'Yeni şifrə'},title=titles[mode];document.title=title+' · MirPanel';
  const error=alert();error.classList.add('auth-feedback');error.setAttribute('role','alert');const success=el('p',{class:'auth-success',role:'status','aria-live':'polite'}),form=el('form',{class:'auth-fields'}),fields={};let busy=false;
  if(params.has('error'))error.textContent=params.get('error')==='account_not_linked'?'Bu e-poçt hesabını əvvəlcə təsdiqləyin. Google ilə yalnız təsdiqlənmiş eyni e-poçt əlaqələndirilə bilər.':params.get('error')==='test_identity_not_allowed'?'Bu Google hesabı test girişinə əlavə edilməyib.':'Google girişi tamamlanmadı. Yenidən cəhd edin.';
  const closeTo=destination.startsWith('/balans')?destination:'/qrup',close=link('×',closeTo,'auth-close');close.setAttribute('aria-label',closeTo==='/qrup'?'Bağla və qrupa qayıt':'Bağla və balans səhifəsinə qayıt');
  const panel=el('section',{class:'auth-form-panel','aria-labelledby':'authTitle'},close,el('header',{class:'auth-form-heading'},el('h1',{id:'authTitle'},title)));
+ const target=m=>'/hesab?mode='+m+'&next='+encodeURIComponent(destination);
+ const tabs=el('nav',{class:'auth-mode-tabs','aria-label':'Hesab formaları'});for(const [id,label] of [['login','Giriş'],['signup','Qeydiyyat']]){const a=link(label,target(id));if(mode===id)a.setAttribute('aria-current','page');tabs.append(a);}panel.prepend(tabs);
  function field(key,label,type,attrs={}){const id='account-'+key,i=el('input',{id,name:key,type,required:true,...attrs}),box=el('div',{class:'auth-field'},el('label',{for:id},label),i);fields[key]=i;return{box,input:i};}
  function password(label){const{box,input}=field('password',label,'password',{minlength:mode==='login'?undefined:policy.minPasswordLength,maxlength:policy.maxPasswordLength,autocomplete:mode==='login'?'current-password':'new-password',placeholder:mode==='login'?'Şifrənizi daxil edin':`Ən azı ${policy.minPasswordLength} simvol`});
   const toggle=button('',()=>{const shown=input.type==='password';input.type=shown?'text':'password';toggle.setAttribute('aria-label',shown?'Şifrəni gizlət':'Şifrəni göstər');toggle.setAttribute('aria-pressed',String(shown));input.focus({preventScroll:true});});toggle.className='auth-password-toggle';toggle.setAttribute('aria-label','Şifrəni göstər');toggle.setAttribute('aria-pressed','false');
@@ -41,7 +44,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert}){
  }
  let verification;
  if(mode==='login'){form.append(link('Şifrəmi unutdum','/hesab?mode=reset','auth-forgot'));const resend=button('Təsdiq məktubunu yenidən göndər',async()=>{if(busy||!fields.email.reportValidity())return;busy=true;resend.disabled=true;error.textContent='';try{await api('/api/auth/send-verification-email',{email:fields.email.value.trim(),callbackURL:location.origin+destination});success.textContent='Təsdiq tələb olunursa, məktub göndərildi.';}catch(e){error.textContent=readableError(e);}finally{busy=false;resend.disabled=false;}});resend.className='auth-resend';verification=el('div',{class:'auth-verification',hidden:true},el('p',{},'Hesabınıza daxil olmaq üçün e-poçtunuzu təsdiqləyin.'),resend);fields.email.addEventListener('input',()=>{verification.hidden=true;});form.append(verification);}
- const submit=el('button',{type:'submit',class:'auth-submit'},mode==='signup'?'Qeydiyyatdan keç':mode==='login'?'Giriş et':mode==='reset'?'Bərpa keçidini göndər':'Şifrəni yenilə');form.append(error,success,submit);
+ const submit=el('button',{type:'submit',class:'auth-submit '+(mode==='signup'?'auth-submit-signup':'')},mode==='signup'?'Qeydiyyatdan keç':mode==='login'?'Daxil ol':mode==='reset'?'Bərpa keçidini göndər':'Şifrəni yenilə');if(['login','signup'].includes(mode)){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d','M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0M3 21v-2a8 8 0 0 1 16 0v2'+(mode==='signup'?'M21 8v6m-3-3h6':''));svg.append(path);submit.prepend(svg);}form.append(error,success,submit);
 
  form.addEventListener('submit',async e=>{e.preventDefault();if(busy||!form.reportValidity())return;busy=true;submit.disabled=true;submit.setAttribute('aria-busy','true');error.textContent='';success.textContent='';try{const values=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.type==='checkbox'?v.checked:v.value.trim()]));if(fields.password)values.password=fields.password.value;
   if(mode==='signup'){await api('/api/auth/sign-up/email',{...values,name:values.firstName+' '+values.lastName,registrationForm:true,callbackURL:location.origin+destination});success.textContent='E-poçtunuza göndərilən təsdiq keçidini açın.';fields.password.value='';}
@@ -52,9 +55,22 @@ export async function renderAuthForms({app,state,api,el,button,link,alert}){
  panel.append(form);if(mode==='login')panel.append(divider('və ya'),google());
  const footer=el('div',{class:'auth-form-footer'},el('span',{},mode==='signup'?'Artıq hesabın var?':mode==='login'?'Hesabınız yoxdur?':'Girişə qayıt'),link(mode==='signup'?'Daxil ol →':mode==='login'?'Qeydiyyatdan keç →':'Giriş →',(mode==='login'?'/hesab?mode=signup&':'/hesab?')+'next='+encodeURIComponent(destination),'auth-switch'));panel.append(footer);
  const life=new AbortController();window.mirpanelAuthDispose=()=>life.abort();
+ signal?.addEventListener('abort',()=>life.abort(),{once:true});
  app.replaceChildren(panel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!busy){if(window.MirpanelNavigation)void window.MirpanelNavigation.go(closeTo);else location.assign(closeTo);}},{signal:life.signal});
  // Only account forms scroll. Keep the focused field and existing navigation
  // above the visual viewport's keyboard without locking the long signup form.
  function visibleField(){const v=window.visualViewport;document.body.style.setProperty('--auth-keyboard-inset',Math.max(0,innerHeight-(v?.height||innerHeight)-(v?.offsetTop||0))+'px');const active=document.activeElement;if(!form.contains(active)||!active.matches('input,select'))return;const nav=document.querySelector('.community-bottom-nav'),reserved=nav&&getComputedStyle(nav).display!=='none'?nav.getBoundingClientRect().height:0,r=active.getBoundingClientRect(),top=(v?.offsetTop||0)+12,bottom=(v?.offsetTop||0)+(v?.height||innerHeight)-reserved-14;if(r.bottom>bottom)window.scrollBy(0,r.bottom-bottom);else if(r.top<top)window.scrollBy(0,r.top-top);}
  const resized=()=>requestAnimationFrame(visibleField);window.visualViewport?.addEventListener('resize',resized,{signal:life.signal});window.addEventListener('resize',resized,{signal:life.signal});form.addEventListener('focusin',resized,{signal:life.signal});visibleField();
 }
+
+export function mountAuth(app){
+ const life=new AbortController();
+ const el=(tag,attrs={},...children)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs))if(v!==undefined)e.setAttribute(k,String(v));e.append(...children);return e;};
+ const button=(label,click)=>{const b=el('button',{type:'button'},label);b.onclick=click;return b;};
+ const link=(label,href,cls)=>el('a',{href,class:cls},label);
+ const api=async(url,data)=>{const r=await fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal:life.signal,redirect:'error'});if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');const d=await r.json();if(!r.ok)throw Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.');return d;};
+ const dispose=()=>{life.abort();document.body.classList.remove('auth-screen');};
+ void renderAuthForms({app,state:{googleEnabled:true},api,el,button,link,alert:()=>el('p'),signal:life.signal}).catch(e=>{if(!life.signal.aborted&&app.isConnected)app.replaceChildren(el('p',{role:'alert'},e.message),button('Yenidən cəhd et',()=>location.reload()));});
+ return dispose;
+}
+const initial=document.getElementById('authApp');if(initial&&!window.mirpanelNavigationMounting)window.mirpanelPageDispose=mountAuth(initial);

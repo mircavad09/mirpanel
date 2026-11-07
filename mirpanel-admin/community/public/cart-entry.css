@@ -7,7 +7,8 @@
 .cart-warning-heading{flex:1;min-width:0}.cart-entry-warning h2{font-size:21px;line-height:1.2;margin:0 0 3px}
 .cart-warning-product{margin:0;color:#50dfaa;font-size:13px;line-height:1.4;overflow-wrap:anywhere}
 .cart-entry-warning header>button{border:0;background:transparent;align-self:flex-start;color:#aaa;font-size:23px;font-weight:400;padding:0;width:36px;min-height:36px;flex:none}
-.cart-warning-body{display:flex;flex-direction:column;min-height:0;flex:1;overflow:hidden}
+.cart-warning-body{display:flex;flex-direction:column;min-height:0;flex:0 1 auto;overflow:visible}
+.cart-entry.cart-entry-warning[open]{max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);overflow-y:auto}
 .cart-entry-warning .cart-entry-terms{overflow-y:auto;overscroll-behavior:contain;max-height:min(49dvh,390px);min-height:0;margin:0 20px 14px;padding:12px 16px;background:#232323;border-radius:15px;border-left:2px solid #c6a400;color:#d6d6d6;font-size:14px;line-height:1.65}
 .cart-entry-warning .cart-entry-terms p{margin:4px 0 10px}.cart-entry-warning .cart-entry-terms p:last-child{margin-bottom:3px}.cart-entry-warning .cart-entry-terms ul{margin:7px 0 12px;padding-left:20px}.cart-entry-warning .cart-entry-terms li{margin:6px 0}
 .cart-warning-footer{flex:none;border-top:1px solid #30302b;padding:12px 20px 18px}

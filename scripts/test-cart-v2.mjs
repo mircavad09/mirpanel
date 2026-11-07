@@ -25,6 +25,12 @@ try{
  await shop.getDraft({user:'a'},owner,spotify.draftId);
  await reject(shop.getDraft({user:'b'},owner,spotify.draftId),e=>e.status===404);
  await reject(shop.getDraft(guest,owner,spotify.draftId),e=>e.status===404);
+ const topup=id();await pool.query("insert into wallet_topups(id,user_id,request_id,requested_cents,method_id,status,receipt) values($1,'a',$2,100,$3,'approved',$4)",[topup,id(),method,{path:'topup/'+topup+'/synthetic.png',mimeType:'image/png'}]);
+ eq(await shop.topupReceipt(buyer,topup),{url:'/synthetic-private-view',mime:'image/png'});
+ await reject(shop.topupReceipt(guest,topup),e=>e.status===401);
+ await reject(shop.topupReceipt({user:'b'},topup),e=>e.status===404);
+ await pool.query('update wallet_topups set receipt_deleted_at=now() where id=$1',[topup]);
+ await reject(shop.topupReceipt(buyer,topup),e=>e.status===410);
  const before=await pool.query('select count(*)::int n from payment_reservations');
  await reject(shop.checkout(buyer,owner,{...args,requestId:id(),items:[{...(await save('zero',{}))}]}),/INVENTORY_EMPTY/);
  eq((await pool.query('select count(*)::int n from payment_reservations')).rows[0].n,before.rows[0].n);

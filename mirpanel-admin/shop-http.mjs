@@ -19,6 +19,7 @@ export async function handleShop({req,res,url,shop,browserOrders,security,readBo
  else if(path==='/wallet'&&req.method==='GET')value=await shop.wallet(req,Object.fromEntries(url.searchParams));
  else if(path==='/topup'&&post)value=await shop.topup(req,await readBody(req,2000));
  else if(path==='/topup'&&req.method==='GET')value=await shop.topupState(req,url.searchParams.get('id'));
+ else if(path==='/topup/receipt'&&req.method==='GET')value=await shop.topupReceipt(req,url.searchParams.get('id'));
  else if(path==='/topup/receipt/remove'&&post)value=await shop.removeTopupReceipt(req,(await readBody(req,2000)).id);
  else if(path==='/topup/submit'&&post)value=await shop.submitTopup(req,(await readBody(req,2000)).id);
  else throw Object.assign(Error('Tapılmadı.'),{status:404});
