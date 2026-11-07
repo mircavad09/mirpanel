@@ -9,21 +9,22 @@ export function createAuthMailer(env){let token=null,expires=0,pending;
    if(!r.ok||!v?.access_token){const temporary=r.ok||r.status===429||r.status>=500;throw delivery('AUTH_MAIL_AUTHORIZATION_FAILED',temporary?'retry':'failed',temporary?'TOKEN_TEMPORARY':'TOKEN_REJECTED',retryAfter(r));}
    token=v.access_token;expires=Date.now()+Math.max(0,(Number(v.expires_in)||300)-60)*1000;return token;})();try{return await pending;}finally{pending=null;}
  }
- return async(kind,{user,url,code})=>{const origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';
-  if(!['verify','reset','welcome','code'].includes(kind))throw Error('AUTH_MAIL_KIND_DENIED');
+ return async(kind,{user,url,code,subject,textBody,htmlBody})=>{const origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';
+  if(!['verify','reset','welcome','code','order'].includes(kind))throw Error('AUTH_MAIL_KIND_DENIED');
   const u=['verify','reset'].includes(kind)?new URL(url):null;if(u&&u.origin!==origin)throw Error('AUTH_MAIL_URL_DENIED');
   if(kind==='code'&&!/^\d{6}$/.test(code||''))throw Error('AUTH_MAIL_CODE_INVALID');
   const email=v=>{if(!/^[^\s<>\r\n@]+@[^\s<>\r\n@]+\.[^\s<>\r\n@]+$/.test(v||''))throw delivery('AUTH_MAIL_ADDRESS_INVALID','failed','AUTH_CONFIGURATION');return v;};
-  const title={verify:'MirPanel — e-poçtunuzu təsdiqləyin',reset:'MirPanel — şifrə bərpası',code:'MirPanel — e-poçt təsdiq kodu',welcome:'MirPanel-ə xoş gəlmisiniz!'}[kind];
-  const text=kind==='welcome'?'Salam!\n\nQeydiyyatınız uğurla tamamlandı. MirPanel-ə xoş gəlmisiniz! 🎉\n\nİlk sifarişinizi vermək üçün hesabınıza daxil olun, balansınızı artırın və bəyəndiyiniz məhsulu seçin.\n\nBalansımı artır: https://mirpanel.com/balans\nMəhsullara bax: https://mirpanel.com/\n\nSualınız olsa, saytdakı canlı dəstəkdən bizə yaza bilərsiniz.\n\nMirPanel komandası':(kind==='code'?'E-poçt təsdiq kodunuz: '+code+'\n\nKod 10 dəqiqə qüvvədədir.':(kind==='verify'?'E-poçtunuzu təsdiqləmək üçün bu keçidi açın:':'Şifrənizi yeniləmək üçün bu keçidi açın:')+'\n\n'+u.href)+'\n\nBu sorğunu siz etməmisinizsə, məktuba məhəl qoymayın.';
+  const durable=kind==='welcome'||kind==='order';
+  const title=kind==='order'?subject:{verify:'MirPanel — e-poçtunuzu təsdiqləyin',reset:'MirPanel — şifrə bərpası',code:'MirPanel — e-poçt təsdiq kodu',welcome:'MirPanel-ə xoş gəlmisiniz!'}[kind];
+  const text=kind==='order'?textBody:kind==='welcome'?'Salam!\n\nQeydiyyatınız uğurla tamamlandı. MirPanel-ə xoş gəlmisiniz! 🎉\n\nİlk sifarişinizi vermək üçün hesabınıza daxil olun, balansınızı artırın və bəyəndiyiniz məhsulu seçin.\n\nBalansımı artır: https://mirpanel.com/balans\nMəhsullara bax: https://mirpanel.com/\n\nSualınız olsa, saytdakı canlı dəstəkdən bizə yaza bilərsiniz.\n\nMirPanel komandası':(kind==='code'?'E-poçt təsdiq kodunuz: '+code+'\n\nKod 10 dəqiqə qüvvədədir.':(kind==='verify'?'E-poçtunuzu təsdiqləmək üçün bu keçidi açın:':'Şifrənizi yeniləmək üçün bu keçidi açın:')+'\n\n'+u.href)+'\n\nBu sorğunu siz etməmisinizsə, məktuba məhəl qoymayın.';
   const part=(type,body)=>['Content-Type: text/'+type+'; charset=UTF-8','Content-Transfer-Encoding: base64','',Buffer.from(body).toString('base64').match(/.{1,76}/g).join('\r\n')];
-  const boundary='mirpanel-welcome-alternative',html=kind==='welcome'?text.replace('Balansımı artır: https://mirpanel.com/balans\nMəhsullara bax: https://mirpanel.com/','<a href="https://mirpanel.com/balans">Balansımı artır</a> · <a href="https://mirpanel.com/">Məhsullara bax</a>').split('\n\n').map(p=>'<p>'+p+'</p>').join(''):null;
+  const boundary='mirpanel-welcome-alternative',html=kind==='order'?htmlBody:kind==='welcome'?text.replace('Balansımı artır: https://mirpanel.com/balans\nMəhsullara bax: https://mirpanel.com/','<a href="https://mirpanel.com/balans">Balansımı artır</a> · <a href="https://mirpanel.com/">Məhsullara bax</a>').split('\n\n').map(p=>'<p>'+p+'</p>').join(''):null;
   const senderName=kind==='code'?'"MirPanel"':'MirPanel';
   const raw=['From: '+senderName+' <'+email(env.GMAIL_SENDER_EMAIL)+'>','To: '+email(user.email),'Subject: =?UTF-8?B?'+Buffer.from(title).toString('base64')+'?=','MIME-Version: 1.0',...(html?['Content-Type: multipart/alternative; boundary="'+boundary+'"','','--'+boundary,...part('plain',text),'--'+boundary,...part('html',html),'--'+boundary+'--']:part('plain',text))].join('\r\n');
   const accessToken=await access();let r;
-  try{r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({raw:Buffer.from(raw).toString('base64url')}),signal:AbortSignal.timeout(15000),...(kind==='welcome'?{redirect:'error'}:{})});}
+  try{r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({raw:Buffer.from(raw).toString('base64url')}),signal:AbortSignal.timeout(15000),...(durable?{redirect:'error'}:{})});}
   catch{throw delivery('AUTH_MAIL_DELIVERY_FAILED','uncertain','SEND_RESULT_UNKNOWN');}
-  if(kind!=='welcome'){if(!r.ok)throw Error('AUTH_MAIL_DELIVERY_FAILED');return;}
+  if(!durable){if(!r.ok)throw Error('AUTH_MAIL_DELIVERY_FAILED');return;}
   const result=await r.json().catch(()=>null);
   if(r.ok&&typeof result?.id==='string'&&result.id)return {id:result.id};
   // Retry only explicit provider rejections, not transport failures or 5xx.

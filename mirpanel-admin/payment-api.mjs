@@ -287,8 +287,10 @@ export function createPaymentSystem(options) {
     if(request.method==='GET'&&url.pathname==='/api/payments/my-orders'){
       if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
       await publicRate(request,'browser-orders',60,60);
-      publicJson(request,response,200,await accountOrders.list(request,url.searchParams.get('cursor')));return true;
+      publicJson(request,response,200,await accountOrders.list(request,url.searchParams.get('cursor'),url.searchParams.get('order')));return true;
     }
+    const codes=url.pathname.match(/^\/api\/payments\/my-orders\/codes(?:\/([0-9a-f-]{36}))?$/);
+    if(request.method==='GET'&&codes){publicJson(request,response,200,await accountOrders.codes(request,codes[1]));return true;}
     const browserReceipt=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/receipt$/);
     if(request.method==='GET'&&browserReceipt){
       if(!safeUuid(browserReceipt[1]))throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});
@@ -755,11 +757,16 @@ export function createPaymentSystem(options) {
       const body = await readBody(request, 20_000);
       json(response, 200, { settings: await store.updateSettings(body, actorName) }); return true;
     }
-    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt|details))?$/i);
+    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt|details|delivery))?$/i);
     if (orderMatch) {
       const id = safeUuid(orderMatch[1]);
       if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
       const action = orderMatch[2];
+      if(action==='delivery'&&options.customerDelivery&&['GET','POST'].includes(request.method)){
+        response.setHeader('Cache-Control','private, no-store');
+        const input=request.method==='POST'?await readBody(request,50_000):null;
+        json(response,200,await options.customerDelivery(security,actorName,id,input));return true;
+      }
       if (request.method === "GET" && action === "details") {
         const order=await store.getOrder(id),cipher=order.checkout_snapshot?.detailsCipher;
         const items=(order.checkout_snapshot?.items||[]).map(x=>({title:x.title,plan:x.planName,quantity:x.quantity,details:x.detailsCipher?JSON.parse(security.decryptSecret(x.detailsCipher)):null}));

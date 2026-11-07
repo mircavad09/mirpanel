@@ -1337,6 +1337,7 @@ const mime = {
 const paymentSystem = createPaymentSystem({
   shopContext: request=>ownerCommunity.shopContext(request),
   accountHistory: request=>ownerCommunity.orderHistory(request),
+  customerDelivery: (...args)=>ownerCommunity.adminDelivery(...args),
   accountForCheckout: request=>ownerCommunity.checkoutAccount(request),
   accountReservation: (request,args)=>ownerCommunity.accountReserve(request,args),
   reservedAccountPrice: (request,id)=>ownerCommunity.reservedPrice(request,id),

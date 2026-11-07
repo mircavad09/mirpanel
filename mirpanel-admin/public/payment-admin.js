@@ -178,6 +178,7 @@
       <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
       <div class="paymentOrderActions">
         <button class="btn" type="button" data-order-details>Sifariş məlumatları</button>
+        ${order.paymentSource==='wallet'||['approved','completed'].includes(order.status)?'<button class="btn" type="button" data-order-delivery>Təhvil məlumatı əlavə et</button>':''}
         ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : (order.paymentSource==='wallet'?'<span class="statusPill">Balansla ödənilib · təqdimetmə gözlənilir</span>':'<span class="statusPill">Çek saxlanma müddəti bitib</span>')}
         ${pending ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : `${order.workforce&&!order.workforce.ownerRole?'<button class="btn" type="button" data-claim-payment>Üzərinə götür</button>':''}<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>` : ""}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
@@ -552,6 +553,28 @@
 
   async function handleOrderAction(card, action) {
     const id = card.dataset.paymentOrderId;
+    if(action==='delivery'){
+      const url='/api/admin/payment-orders/'+id+'/delivery',state=await paymentApi(url),lines=state.lines.filter(x=>x.remaining>0);
+      if(!lines.length){toast('Bütün məhsullar hesaba təhvil verilib.');return;}
+      const dlg=document.createElement('dialog'),form=document.createElement('form');
+      dlg.className='paymentActionDialog';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Buraya yalnız müştəriyə göstəriləcək mətni yazın. İşçi qeydlərini və daxili təlimatları daxil etməyin.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>Təhvil mətni <textarea name="message" rows="7" required maxlength="8000"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Hesaba əlavə et</button>';
+      const {line,quantity,message}=form.elements,submit=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]'),error=form.querySelector('[role=alert]');
+      for(const x of lines)line.add(new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)',x.index));
+      line.onchange=()=>{quantity.max=String(lines.find(x=>x.index===Number(line.value)).remaining);quantity.value='1';};line.onchange();
+      let pending=null;close.onclick=()=>dlg.close();
+      dlg.addEventListener('close',()=>dlg.remove(),{once:true});
+      dlg.addEventListener('cancel',e=>{if(pending)e.preventDefault();});
+      form.onsubmit=async e=>{
+        e.preventDefault();if(submit.disabled)return;
+        const data={line:Number(line.value),quantity:Number(quantity.value),message:message.value};
+        pending??={...data,requestId:crypto.randomUUID()};
+        for(const field of [line,quantity,message,submit,close])field.disabled=true;
+        error.textContent='';
+        try{await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast('Təhvil məlumatı müştəri hesabına əlavə edildi.');}
+        catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;line.disabled=quantity.disabled=message.disabled=false;}submit.disabled=close.disabled=false;}
+      };
+      dlg.append(form);document.body.append(dlg);dlg.showModal();return;
+    }
     if(action==='details'){
       const {details,items}=await paymentApi(`/api/admin/payment-orders/${id}/details`);
       const dlg=document.createElement('dialog'),form=document.createElement('form'),title=document.createElement('h3'),body=document.createElement('pre'),close=document.createElement('button');
@@ -731,6 +754,7 @@
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
         if (card && event.target.closest("[data-order-details]")) await handleOrderAction(card, "details");
+        if (card && event.target.closest("[data-order-delivery]")) await handleOrderAction(card, "delivery");
         if (card && event.target.closest("[data-claim-payment]")) {
           if(paymentState.orderActions.has(card.dataset.paymentOrderId))return;
           paymentState.orderActions.add(card.dataset.paymentOrderId);

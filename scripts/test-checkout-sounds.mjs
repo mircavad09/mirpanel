@@ -5,8 +5,8 @@ import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex
 
 const ids=['90000000-0000-4000-8000-000000000001','90000000-0000-4000-8000-000000000002','90000000-0000-4000-8000-000000000003'];
 const item={productId:'synthetic',planIndex:0,quantity:1,lineId:ids[0],draftId:ids[0],termsVersion:'test',title:'Synthetic',planName:'Test',unitCents:500,available:20,terms:'Synthetic terms',fields:[]};
-let failDraft,failRemove,replay,posts,state;
-const checkout=()=>({id:ids[2],state,methodId:ids[1],totalCents:500,items:[item],expiresAt:new Date(Date.now()+600000).toISOString(),receiptUploaded:true,...(state==='submitted'?{orderCode:'991'}:{})});
+let failDraft,failRemove,replay,posts,state,paid,mode;
+const checkout=()=>({id:ids[2],state,mode,methodId:ids[1],totalCents:500,items:[item],expiresAt:new Date(Date.now()+600000).toISOString(),receiptUploaded:true,paymentConfirmed:paid,...(state==='submitted'?{orderCode:mode==='wallet'?'992':'991'}:{})});
 const server=http.createServer(async(req,res)=>{
  const p=new URL(req.url,'http://localhost').pathname;
  const out=(status,body)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(body));};
@@ -19,7 +19,7 @@ const server=http.createServer(async(req,res)=>{
   if(route==='drafts')return out(200,{items:[]});
   if(route==='draft')return failDraft?out(503,{error:'Synthetic failure'}):out(200,{...item,draftId:JSON.parse(body).id,lineId:JSON.parse(body).id});
   if(route==='draft/remove')return failRemove?out(503,{error:'Synthetic failure'}):out(200,{removed:true});
-  if(route==='checkout')return out(200,checkout());
+  if(route==='checkout'){if(body&&JSON.parse(body).mode==='wallet'){mode='wallet';state='submitted';paid=true;return out(200,{...checkout(),orderCreated:true});}return out(200,checkout());}
   if(route==='method')return out(200,{id:ids[1],displayName:'Synthetic card',number:'4000000000001234',holderName:'Test'});
   if(route==='receipt')return out(200,{receiptUploaded:true});
   if(route==='cancel'){const applied=state==='reserved';state='cancelled';return out(200,{cancelled:true,cancellationApplied:applied});}
@@ -41,6 +41,7 @@ try{
   try{
    const c=await b.newContext({viewport:{width,height:844},hasTouch:width===390,isMobile:width===390});
    await c.addInitScript(({blocked})=>{
+    const defer=window.setTimeout;window.setTimeout=(f,ms,...args)=>defer(f,ms===12000?120:ms,...args);
     const mark=kind=>{const k='sound-test',a=JSON.parse(sessionStorage.getItem(k)||'[]');sessionStorage.setItem(k,JSON.stringify([...a,kind]));};
     const A=window.AudioContext||window.webkitAudioContext;
     if(!A){const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=async function(){const match=this.src.match(/\/sounds\/(06|07|08)-/);if(match)mark({'06':'add','07':'remove','08':'order'}[match[1]]);try{return await play.call(this);}catch(e){if(match)sessionStorage.setItem('sound-media-error',e.name);throw e;}};return;}
@@ -52,8 +53,8 @@ try{
    p.on('response',r=>{const path=new URL(r.url()).pathname;if(/sounds|draft\/remove|shop\/cancel/.test(path))responses.push([path,r.status()]);});
    const sounds=()=>p.evaluate(()=>JSON.parse(sessionStorage.getItem('sound-test')||'[]'));
    const waitSound=async expected=>{if(!blocked)await p.waitForFunction(n=>JSON.parse(sessionStorage.getItem('sound-test')||'[]').length>=n,expected.length).catch(async e=>{console.log({name,expected,actual:await sounds(),responses,debug:await p.evaluate(()=>({claimed:sessionStorage.getItem('mirpanel.checkout-sounds'),mediaError:sessionStorage.getItem('sound-media-error'),error:document.querySelector('.shop-error')?.textContent}))});throw e;});assert.deepEqual(await sounds(),blocked?[]:expected);};
-   failDraft=true;failRemove=false;replay=false;posts=0;state='reserved';
-   await p.goto(origin);const order=p.locator('#pp-order-btn');await order.click();
+   failDraft=true;failRemove=false;replay=false;posts=0;state='reserved';paid=false;mode='card';
+   await p.goto(origin);await p.waitForFunction(()=>typeof document.querySelector('#pp-order-btn')?.onclick==='function');const order=p.locator('#pp-order-btn');await order.click();
    const entry=p.locator('dialog.cart-entry');
    await entry.getByRole('button',{name:'Ləğv et'}).click();assert.deepEqual(await sounds(),[]);
    await order.click();await entry.getByRole('checkbox').check();
@@ -74,8 +75,16 @@ try{
    await p.reload();const submit=p.getByRole('button',{name:'Davam et',exact:true});
    await p.getByLabel('Çek faylı',{exact:true}).setInputFiles({name:'synthetic.pdf',mimeType:'application/pdf',buffer:Buffer.from('%PDF-1.4 synthetic')});
    await p.getByText('Çek uğurla yükləndi',{exact:true}).waitFor();await waitSound(['add','remove','remove']);await submit.dblclick();
-   await p.getByText('Sifariş № 991').waitFor();await waitSound(['add','remove','remove','order']);assert.equal(posts,2);
+   await p.getByText('Sifariş № 991').waitFor();await waitSound(['add','remove','remove']);assert.equal(posts,2);
+   paid=true;await p.getByRole('heading',{name:'Ödəniş təsdiqləndi',exact:true}).waitFor();await waitSound(['add','remove','remove','order']);
+   await p.getByRole('link',{name:'Sifarişlərimə bax'}).waitFor();
    await p.reload();await waitSound(['add','remove','remove','order']);
+   await p.goto(origin);await p.waitForFunction(()=>window.MirpanelCart);
+   await p.evaluate(x=>localStorage.setItem('mirpanel.cart.v1',JSON.stringify([x])),item);
+   await p.goto(origin+'/odenis?mode=wallet');await p.locator('.checkout-consent input').check();
+   await p.getByRole('button',{name:/Sifarişi tamamla/}).dblclick();
+   await p.getByText('Sifariş № 992').waitFor();await waitSound(['add','remove','remove','order','order']);
+   await p.reload();await waitSound(['add','remove','remove','order','order']);
    const mediaError=await p.evaluate(()=>sessionStorage.getItem('sound-media-error'));
    if(mediaError)assert.equal(mediaError,'NotSupportedError');
    console.log('PASS '+name+(mediaError?' (correct playback attempts; Windows WebKit media unavailable)':''));

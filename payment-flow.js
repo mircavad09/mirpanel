@@ -825,7 +825,6 @@
                   order = await request('/api/payments/orders',orderOptions);
                 }
                 if (!validOrder(order)) throw new Error('Server çeki təsdiqləmədi. Yenidən cəhd edin.');
-                if(order.idempotent===false&&order.orderCode)await Promise.race([checkoutSounds.then(m=>m?.playCheckoutSound('order',order.orderCode)),new Promise(resolve=>setTimeout(resolve,800))]);
                 await finish(order,{preserveModal:true});
               } catch (error) {
                 flow.submitting = false;

@@ -9,7 +9,7 @@ const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=loca
 if(route==='/odenis')app.dataset.shopCheckout='';
 if(route==='/balans'){app.classList.add('shop-wallet-page');document.body.classList.add('wallet-page-active');}
 const el=(t,text,cls)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;},link=(text,href)=>{const a=el('a',text,'shop-link');a.href=href;return a;},button=(text,fn,primary=false)=>{const b=el('button',text,primary?'shop-primary':'');b.type='button';b.onclick=fn;return b;};
-let closed=false,working=false,profile=null,group=null,mode=new URLSearchParams(location.search).get('mode')==='wallet'?'wallet':'card',methodId='',methods=[],allMethods=[],methodLoadError='',timer,epoch=0,walletPrefetched;
+let closed=false,working=false,profile=null,group=null,mode=new URLSearchParams(location.search).get('mode')==='wallet'?'wallet':'card',methodId='',methods=[],allMethods=[],methodLoadError='',timer,confirmationTimer,epoch=0,walletPrefetched;
 let checkoutView=route==='/odenis'||route==='/sebet'&&new URLSearchParams(location.search).get('checkout')==='1',consentAccepted=false,consentQuote='',paymentReady=false,offerRequest;
 const requests=new Set();
 const error=el('p','','shop-error');error.setAttribute('role','alert');const status=el('p');status.setAttribute('role','status');
@@ -103,13 +103,42 @@ async function payment(selectCard=false){
  else if(wallet&&q.balanceCents==null)walletStatus.append(el('p','Balansla ödəniş üçün hesabınıza daxil olun.'),topupLink('/odenis?mode=wallet'));
  go.disabled=!paymentReady||!consentAccepted||!stockOk||!detailsOk||!termsOk||(wallet?(q.balanceCents==null||short>0):!methods.length);go.replaceChildren();if(go.disabled)go.append(checkoutIcon('<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>'));go.append(document.createTextNode('Sifarişi tamamla · '+checkoutMoney(q.totalCents)));
  }
- async function submit(selected,id){if(!consentAccepted||!paymentReady||JSON.stringify(cart.checkout())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,selected,id);group=await api('/checkout',{items,mode:selected,methodId:id,requestId:key.requestId,consentAccepted,expectedTotalCents:q.totalCents});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id}));if(group.orderCreated===true&&group.state==='submitted'&&group.orderCode)void playCheckoutSound('order',group.orderCode);await paymentGroup();}catch(e){if(e.status===409)await payment(true);throw e;}}
+ async function submit(selected,id){if(!consentAccepted||!paymentReady||JSON.stringify(cart.checkout())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,selected,id);group=await api('/checkout',{items,mode:selected,methodId:id,requestId:key.requestId,consentAccepted,expectedTotalCents:q.totalCents});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id}));await paymentGroup();if(group.orderCreated===true&&group.paymentConfirmed===true&&group.orderCode)void playCheckoutSound('order',group.orderCode);}catch(e){if(e.status===409)await payment(true);throw e;}}
  async function bankSelection(){if(!termsOk||!methods.length)return;const panel=card('Bank kartını seçin'),grid=el('div',null,'wallet-bank-grid');panel.classList.add('checkout-choices');let picked='';const next=button('Bu kartla davam et · '+checkoutMoney(q.totalCents),()=>run(async()=>{if(!picked)return;next.disabled=true;try{await submit('card',picked);}finally{next.disabled=!picked;}}),true);next.disabled=true;
  drawBankChoices({el,button,grid,methods,onSelect:id=>{picked=id;next.disabled=false;}});
  panel.append(grid,next,button('← Ödəniş üsuluna qayıt',()=>checkoutLayout(q,choices)));checkoutLayout(q,panel);}
  updateChoice();checkoutLayout(q,choices);if(selectCard&&consentAccepted&&stockOk&&detailsOk&&termsOk)await bankSelection();
 }
-async function paymentGroup(clearCart=true){const summary=card(group.state==='submitted'?'Sifariş qəbul edildi':'Ödənişi tamamlayın');summary.append(el('p','Cəmi: '+money(group.totalCents)));if(group.orderCode)summary.append(el('strong','Sifariş № '+group.orderCode));if(group.state==='submitted'){if(clearCart){cart.clear();localStorage.removeItem(pendingKey);if(group.whatsappUrl)history.replaceState(history.state,'','/odenis?completed='+encodeURIComponent(group.id));}summary.append(el('p',group.paymentConfirmed?'Balansdan ödəniş edildi. Məhsulların hazırlanması gözlənilir.':'Ödəniş yoxlanılır. Bu, çatdırılma təsdiqi deyil.','shop-success'),link('Sifarişlərim','/sifarislerim'));if(group.whatsappUrl){const send=link('WhatsApp-da aç',group.whatsappUrl);send.classList.add('shop-primary','shop-return');summary.append(send);}app.replaceChildren(el('h1','Sifarişiniz'),summary,...group.items.map(x=>product(x,x.quantity||1)),error);refreshAccount();return;}
+async function paymentGroup(clearCart=true){
+ clearTimeout(confirmationTimer);
+ const rejected=group.items.some(x=>['rejected','expired','cancelled'].includes(x.status));
+ const summary=card(group.state==='submitted'?(group.paymentConfirmed?'Ödəniş təsdiqləndi':'Sifariş qəbul edildi'):'Ödənişi tamamlayın');
+ summary.append(el('p','Cəmi: '+money(group.totalCents)));if(group.orderCode)summary.append(el('strong','Sifariş № '+group.orderCode));
+ if(group.state==='submitted'){
+  if(clearCart){cart.clear();localStorage.removeItem(pendingKey);history.replaceState(history.state,'','/odenis?completed='+encodeURIComponent(group.id));}
+  const actions=el('div',null,'shop-actions');
+  actions.append(link('Sifarişlərimə bax',group.orderCode?'/profil?tab=orders&order='+encodeURIComponent(group.orderCode):'/profil?tab=orders'),link('Məhsullara bax','/mehsul'),link('Ana səhifə','/'));
+  summary.append(el('p',group.paymentConfirmed?'Ödəniş təsdiqləndi. Təhvil vəziyyətini sifarişinizdə izləyin.':rejected?'Ödəniş təsdiqlənmədi. Faktiki statusu sifarişinizdə yoxlayın.':'Ödəniş yoxlanılır. Bu, çatdırılma təsdiqi deyil.',group.paymentConfirmed?'shop-success':'shop-muted'),actions);
+  if(group.whatsappUrl&&!group.paymentConfirmed&&!rejected){const send=link('WhatsApp-da aç',group.whatsappUrl);send.classList.add('shop-primary','shop-return');summary.append(send);}
+  app.replaceChildren(el('h1','Sifarişiniz'),summary,...group.items.map(x=>product(x,x.quantity||1)),error);refreshAccount();
+  if(group.mode==='card'&&!group.paymentConfirmed&&!rejected){
+   const initial=group;
+   const poll=async()=>{
+    if(closed||group!==initial)return;
+    if(!document.hidden)try{
+     const updated=await api('/checkout?id='+encodeURIComponent(initial.id),undefined,{timeout:8000});
+     if(closed||group!==initial)return;
+     if(updated.paymentConfirmed||updated.items.some(x=>['rejected','expired','cancelled'].includes(x.status))){
+      group=updated;await paymentGroup(false);
+      if(updated.paymentConfirmed&&updated.orderCode)void playCheckoutSound('order',updated.orderCode);return;
+     }
+    }catch(e){if(e.status===401||e.status===403)return;}
+    if(!closed&&group===initial)confirmationTimer=setTimeout(poll,12000);
+   };
+   confirmationTimer=setTimeout(poll,12000);
+  }
+  return;
+ }
  const reserved=group;let method;
  try{method=await api('/method?id='+encodeURIComponent(reserved.methodId)+'&checkout='+encodeURIComponent(reserved.id));}
  catch(e){if(closed)return;
@@ -128,7 +157,7 @@ async function paymentGroup(clearCart=true){const summary=card(group.state==='su
  const {panel,change}=orderBankDetail({el,button,method,amount:checkoutMoney(reserved.totalCents),onChange:()=>void release(true),onCopy:async(number,copy)=>{try{await navigator.clipboard.writeText(number);copy.textContent='Kopyalandı';}catch{error.textContent='Kopyalama mümkün olmadı. Kart nömrəsini seçib kopyalayın.';}}});
  const steps=el('section',null,'wallet-topup-steps order-transfer-steps'),list=el('ol');steps.append(el('h3','Addımlar'),list);
  for(const step of ['Yuxarıdakı kart nömrəsini kopyalayın.','Göstərilən məbləği həmin karta köçürün.','“Qalereyadan çek seç” düyməsinə basın.','Ödəniş çekini seçib yükləyin.','“Davam et” düyməsinə basın. Sayt sizi WhatsApp-a yönləndirəcək. Ödəniş yoxlandıqdan sonra sifarişiniz təhvil veriləcək.'])list.append(el('li',step));
- const next=button('Davam et',()=>run(async()=>{if(!receiptReady)return;next.disabled=cancel.disabled=change.disabled=true;try{group=await api('/submit',{id:reserved.id});const sound=group.orderCreated===true&&group.state==='submitted'&&group.orderCode?playCheckoutSound('order',group.orderCode):null;await paymentGroup();if(group.whatsappUrl){if(sound)await sound;location.assign(group.whatsappUrl);}}catch(e){if(e.status===409){await payment();error.textContent=e.message;}else throw e;}finally{next.disabled=!receiptReady;cancel.disabled=change.disabled=false;}}),true);
+ const next=button('Davam et',()=>run(async()=>{if(!receiptReady)return;next.disabled=cancel.disabled=change.disabled=true;try{group=await api('/submit',{id:reserved.id});await paymentGroup();if(group.whatsappUrl)location.assign(group.whatsappUrl);}catch(e){if(e.status===409){await payment();error.textContent=e.message;}else throw e;}finally{next.disabled=!receiptReady;cancel.disabled=change.disabled=false;}}),true);
  next.disabled=!receiptReady;
  const cancel=button('Ləğv et',()=>void release(false));actions.append(cancel,next);
  const heading=el('h1','Ödənişi tamamlayın'),expiry=el('p','Rezerv: '+new Date(reserved.expiresAt).toLocaleTimeString('az-AZ',{hour:'2-digit',minute:'2-digit'})+'-dək aktivdir.','shop-muted order-transfer-expiry');
@@ -149,7 +178,7 @@ async function wallet(){let data;try{data=await api('/wallet');}catch(e){if(e.st
  flow=createWalletTopup({el,button,api,run,money,methods,profile,getCents:effective,signal:life.signal,isClosed:()=>closed,onBusy:b=>{amount.disabled=b;for(const p of presets.children)p.disabled=b;},restoreCents:c=>{selectedCents=[500,1000,2000,5000].includes(c)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.textContent.split(' ')[0])*100===selectedCents));update();},onComplete:async()=>{status.textContent='Müraciətiniz göndərildi, operator təsdiqi gözlənilir';await wallet();}});form.append(flow.element);update();
  const history=card('Əməliyyat tarixçəsi');history.classList.add('shop-history');history.id='emeliyyatlar';for(const x of data.items){const row=el('article');row.append(el('strong',(Number(x.cents)>0?'+':'')+money(x.cents)),el('p',x.reason,'shop-muted'),el('small',new Date(x.created_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})));history.append(row);}if(data.more)historyMore(history,1);if(!data.items.length)history.append(el('p','Hələ əməliyyat yoxdur.','shop-muted'));const requests=card('Balans müraciətləri');for(const x of data.topups.filter(x=>x.status!=='draft'))requests.append(el('p',money(x.requested_cents)+' · '+({reviewing:'Yoxlanılır',approved:'Təsdiqləndi',rejected:'Rədd edildi'}[x.status]||x.status)));if(!data.topups.some(x=>x.status!=='draft'))requests.append(el('p','Hələ müraciət yoxdur.','shop-muted'));const back=backFromWallet();if(back){const a=link('← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}requests.append(link('Sifarişlərimdə bax','/sifarislerim'));app.replaceChildren(el('h1','Balansım'),hero,form,status,requests,history,error);void flow.resume();}
 async function start(){app.replaceChildren(el('p','Yüklənir…'));if(route==='/sebet'&&!checkoutView){await basket();return;}if(route==='/balans'){walletPrefetched=api('/wallet');void walletPrefetched.catch(()=>{});}const {getCommunityState,invalidateCommunityState}=await import('/session-state.js?v=avatar-20261104');if(checkoutView)invalidateCommunityState();const [s]=await Promise.all([getCommunityState(),route==='/balans'?getMethods():Promise.resolve()]);if(closed)return;if(s.ok){profile=s.data.profile;if(checkoutView){window.mirpanelAccountProfile=profile||null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:profile||null}));}}await(checkoutView?payment():wallet());if(location.hash==='#emeliyyatlar')document.getElementById('emeliyyatlar')?.scrollIntoView();}
-const dispose=()=>{closed=true;epoch++;clearInterval(timer);for(const r of requests)r.abort();life.abort();document.body.classList.remove('wallet-page-active');};
+const dispose=()=>{closed=true;epoch++;clearInterval(timer);clearTimeout(confirmationTimer);for(const r of requests)r.abort();life.abort();document.body.classList.remove('wallet-page-active');};
 on(window,'pagehide',dispose);on(window,'mirpanel:account',e=>{if(profile&&!e.detail&&route==='/balans'){document.body.classList.remove('wallet-topup-active');login();}const signedOut=!!profile&&!e.detail;profile=e.detail;if(signedOut&&checkoutView&&group?.state!=='submitted')void checkoutLogin();});
 on(window,'mirpanel:before-navigate',e=>{if(working||app.querySelector('input[type=file]')?.files.length){e.preventDefault();status.textContent='Əvvəl aktiv əməliyyatı tamamlayın və ya ləğv edin. Seçilmiş fayl qorunub.';}});
 const boot=()=>{walletPrefetched=null;return start().catch(e=>{if(closed)return;app.replaceChildren(el('h1','Yükləmə alınmadı'),error,button('Yenidən cəhd et',boot));error.textContent=e.message;});};void boot();
