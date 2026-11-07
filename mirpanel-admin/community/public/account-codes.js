@@ -21,7 +21,19 @@ export function mountCodes({content,el,button}){
   const hide=()=>{text.textContent='';text.hidden=true;toggle.textContent='Göstər';toggle.setAttribute('aria-expanded','false');};
   const copy=button('Kopyala',async()=>{
    copy.disabled=true;feedback.textContent='';
-   try{const result=await read(row.id);if(!item.isConnected||document.hidden||life.signal.aborted)return;await navigator.clipboard.writeText(result.text);feedback.textContent='Məlumat kopyalandı';}
+   try{
+    const clipboard=navigator.clipboard;
+    const getText=async()=>{const result=await read(row.id);if(!item.isConnected||document.hidden||life.signal.aborted||typeof result.text!=='string')throw Error();return result.text;};
+    if(clipboard?.write&&typeof ClipboardItem==='function'){
+     // Start the write inside the actual click (required by WebKit). The
+     // protected response supplies the text later, without a client cache.
+     const blob=getText().then(text=>new Blob([text],{type:'text/plain'}));
+     void blob.catch(()=>{});
+     await clipboard.write([new ClipboardItem({'text/plain':blob})]);
+    }else if(clipboard?.writeText)await clipboard.writeText(await getText());
+    else throw Error();
+    feedback.textContent='Məlumat kopyalandı';
+   }
    catch{if(!life.signal.aborted)feedback.textContent='Kopyalama alınmadı.';}finally{copy.disabled=false;}
   });
   item.append(head,el('div',{class:'browser-order-actions'},toggle,copy,feedback),text);

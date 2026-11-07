@@ -34,7 +34,15 @@ try{
   const browser=await engine.launch({headless:true,...(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
   try{
    const page=await browser.newPage({viewport:{width,height:820},isMobile:width<600,hasTouch:width<600});
-   await page.addInitScript(()=>{Object.defineProperty(navigator,'clipboard',{configurable:true,value:{writeText:async text=>{window.__copied=text;}}});const timer=window.setInterval;window.setInterval=(fn,ms,...args)=>timer(fn,ms===12000?100:ms,...args);});
+   await page.addInitScript((mobile)=>{
+    if(mobile)window.ClipboardItem=class{constructor(types){this.types=types;}};
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:mobile?{
+     write:async items=>{if(window.__copyResponseReady)throw Error('The write must begin before the request resolves');window.__copied=await (await items[0].types['text/plain']).text();}
+    }:{writeText:async text=>{window.__copied=text;}}});
+    document.addEventListener('click',e=>{if(e.target.closest('button')?.textContent==='Kopyala')window.__copyResponseReady=false;},{capture:true});
+    const fetchOriginal=window.fetch;window.fetch=async(...args)=>{const result=await fetchOriginal(...args);if(String(args[0]).includes('/my-orders/codes/'))window.__copyResponseReady=true;return result;};
+    const timer=window.setInterval;window.setInterval=(fn,ms,...args)=>timer(fn,ms===12000?100:ms,...args);
+   },width<600);
    await page.goto(origin+'/profil?tab=orders&order=9180');
    const card=page.locator('details.browser-order');
    await card.getByText('Yoxlanılır').waitFor();assert.equal(await card.getAttribute('open'),'');
