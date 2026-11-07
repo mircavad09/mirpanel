@@ -3,7 +3,7 @@ const confirmationKey='mirpanel:signup-confirmation';
 const el=(tag,attrs={},...children)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs))if(v!==undefined)e.setAttribute(k,String(v));e.append(...children);return e;};
 const button=(label,click)=>{const b=el('button',{type:'button'},label);b.onclick=click;return b;};
 async function loadAuthStyle(){
- const cssUrl='/community-assets/auth-forms.css?v=signup-confirmation-20261107';let css=document.querySelector('link[href="'+cssUrl+'"]');
+ const cssUrl='/community-assets/auth-forms.css?v=signup-manual-code-20261108';let css=document.querySelector('link[href="'+cssUrl+'"]');
  // A failed preload can expose an empty sheet, or fire before this module starts.
  // Require the form rules and bind load/error before inserting a fresh retry.
  const usable=sheet=>{try{return Array.from(sheet?.sheet?.cssRules||[]).some(r=>r.selectorText?.includes('.auth-form-panel'));}catch{return false;}};
@@ -14,8 +14,8 @@ async function accountApi(url,data,signal){
  if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');
  const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.'),{code:d.code||d.error?.code});return d;
 }
-function openVerification({pending,host,life,verificationApi,finish,readableError,automatic=false,afterSignup=false,created=false,onClose}){
- const dialog=el('dialog',{class:'auth-code-sheet','aria-labelledby':'authCodeTitle'});let working=false,clock,attempted=afterSignup;
+function openVerification({pending,host,life,verificationApi,finish,readableError,afterSignup=false,created=false,onClose}){
+ const dialog=el('dialog',{class:'auth-code-sheet','aria-labelledby':'authCodeTitle'});let working=false,clock,attempted=false;
   const stop=()=>{clearInterval(clock);dialog.remove();};
   dialog.addEventListener('close',()=>{stop();onClose?.();},{once:true});
   life.signal.addEventListener('abort',stop,{once:true});
@@ -24,7 +24,7 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
   dialog.append(close,el('div',{class:'auth-code-icon','aria-hidden':'true'},'✉'),title,contents,feedback);host.append(dialog);
   function draw(s,editing=false){
    clearInterval(clock);contents.replaceChildren();feedback.textContent='';
-   const withCode=s.codeSent&&!editing;title.textContent=afterSignup?'Sifarişini tamamlamaq üçün e-poçtunu təsdiqlə':withCode?'Kodu daxil et':'E-poçtunu təsdiqlə';
+   const withCode=s.codeSent&&!editing;title.textContent=withCode?'Kodu daxil edin':afterSignup?'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin':'E-poçtunu təsdiqlə';
    const change=button('Dəyiş',()=>{if(!working)draw(s,true);});change.className='auth-code-secondary';
    const address=el('div',{class:'auth-code-address'},el('div',{},el('small',{},withCode?'Kod göndərilən e-poçt':'Qeyd etdiyin e-poçt'),el('strong',{},s.email)),change);
    async function run(action,data,control,onSuccess){
@@ -44,7 +44,7 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
     const edit=el('form',{class:'auth-code-edit'}),input=el('input',{type:'email',value:s.email,required:true,maxlength:254,'aria-label':'Yeni e-poçt ünvanı',autocomplete:'email'}),save=el('button',{type:'submit',class:'auth-code-primary'},'Yadda saxla');
     edit.append(input,save);edit.onsubmit=e=>{e.preventDefault();if(edit.reportValidity())void run('change',{email:input.value},save,draw);};contents.append(edit);if(dialog.open)input.focus();return;
    }
-   if(afterSignup)contents.append(el('p',{class:'auth-code-copy',role:'status'},created?'Qeydiyyat uğurla tamamlandı':'Hesabınız yaradılıb.'));
+   if(afterSignup&&created)contents.append(el('p',{class:'auth-code-copy',role:'status'},'Hesabınız yaradılıb'));
    contents.append(el('p',{class:'auth-code-copy'},withCode&&afterSignup?'Kod göndərildi. E-poçtuna gələn 6 rəqəmli kodu daxil et.':withCode?'E-poçtuna 6 rəqəmli kod göndərdik.':'Sifariş vermək üçün e-poçtunu təsdiqləməlisən. Cəmi 1 dəqiqə çəkir.'));
    if(!withCode)contents.append(el('span',{class:'auth-code-badge'},'Sifariş üçün vacibdir'));
    contents.append(address);
@@ -65,17 +65,12 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
    }
    const send=button('',()=>{attempted=true;void run('send',{},send,draw);});
    send.className=withCode?'auth-code-resend':'auth-code-primary';
-   const end=Date.now()+Math.max(0,s.retryAfter||0)*1000,tick=()=>{const n=Math.max(0,Math.ceil((end-Date.now())/1000));if(!working)send.disabled=n>0;send.textContent=(withCode?'Təkrar kod göndər':attempted?'Kodu yenidən göndər':'E-poçta kod göndər')+(n?' · '+n+' san.':'');};
+   const end=Date.now()+Math.max(0,s.retryAfter||0)*1000,tick=()=>{const n=Math.max(0,Math.ceil((end-Date.now())/1000));if(!working)send.disabled=n>0;send.textContent=(withCode?'Təkrar kod göndər':attempted||s.retryAfter?'Kodu yenidən göndər':'Kod göndər')+(n?' · '+n+' san.':'');};
    send.disabled=end>Date.now();tick();if(end>Date.now())clock=setInterval(tick,250);
    contents.append(send);
    if(withCode){confirm=button('Təsdiqlə',()=>void run('verify',{code:cells.map(c=>c.value).join('')},confirm,async()=>{dialog.close();await finish();}));confirm.className='auth-code-primary';confirm.disabled=true;contents.append(confirm);if(dialog.open)cells[0].focus();}
-   return send;
   }
-  const send=draw(pending);dialog.addEventListener('cancel',e=>{if(working)e.preventDefault();});dialog.showModal();dialog.querySelector('.auth-code-grid input')?.focus();
-  if(automatic&&!pending.codeSent&&!pending.retryAfter&&send){
-   send.textContent='Kod göndərilir…';
-   void send.onclick();
-  }
+  draw(pending);dialog.addEventListener('cancel',e=>{if(working)e.preventDefault();});dialog.showModal();dialog.querySelector('.auth-code-grid input')?.focus();
   return dialog;
  }
 
@@ -93,13 +88,12 @@ export async function resumeSignupConfirmation(){
  try{await loadAuthStyle();pending=await verificationApi('status');}catch{}
  if(pending?.verified){clear();return;}
  if(!pending?.email){
-  const dialog=el('dialog',{class:'auth-code-sheet','aria-labelledby':'authCodeTitle'},el('h2',{id:'authCodeTitle'},'E-poçt təsdiqi'),el('p',{role:'status'},marker.created?'Qeydiyyat uğurla tamamlandı':'Hesabınız yaradılıb.'),el('p',{role:'alert'},'Təsdiq sessiyası açıla bilmədi. Hesabınıza daxil olaraq davam edə bilərsiniz.'));
+  const dialog=el('dialog',{class:'auth-code-sheet','aria-labelledby':'authCodeTitle'},el('h2',{id:'authCodeTitle'},'E-poçt təsdiqi'),...(marker.created?[el('p',{role:'status'},'Hesabınız yaradılıb')]:[]),el('p',{role:'alert'},'Təsdiq sessiyası açıla bilmədi. Hesabınıza daxil olaraq davam edə bilərsiniz.'));
   dialog.append(button('Yenidən yoxla',()=>{dialog.remove();void resumeSignupConfirmation();}),el('a',{href:recovery},'Daxil ol və təsdiqə davam et'),button('Bağla',()=>dialog.close()));
   dialog.addEventListener('close',()=>{clear();dialog.remove();},{once:true});
   document.body.append(dialog);dialog.showModal();return;
  }
- sessionStorage.setItem(confirmationKey,JSON.stringify({...marker,automatic:false}));
- openVerification({pending,host:document.body,life,verificationApi,finish,readableError,automatic:marker.automatic,afterSignup:true,created:marker.created,onClose:clear});
+ openVerification({pending,host:document.body,life,verificationApi,finish,readableError,afterSignup:true,created:marker.created,onClose:clear});
 }
 export async function renderAuthForms({app,state,api,el,button,link,alert,signal}){
  const policy=state.authFormPolicy||{minPasswordLength:6,maxPasswordLength:128,termsUrl:'/sertler',privacyUrl:'/sertler#sertler-10'};
@@ -204,7 +198,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
     }
     created=pendingSignup={id:result.user.id,email:result.user.email};
    }
-   if(created)success.textContent='Qeydiyyat uğurla tamamlandı';
+   if(created)success.textContent='Hesabınız yaradılıb';
    // A known creation retries only verification. After an unknown/duplicate
    // response, explicit recovery checks the existing account's password.
    await startVerification({email:created?.email||values.email,password:values.password,...(!resume&&created?{createdUserId:created.id}:{})},{returnAfterSignup:true,created:!!created});
@@ -233,12 +227,14 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  async function startVerification(data,{returnAfterSignup=false,created=false}={}){
   const pending=await verificationApi('start',data);
   if(!pending.email)throw Error('Təsdiq sessiyası açıla bilmədi. Yenidən cəhd edin və ya hesabınıza daxil olun.');
-  if(returnAfterSignup){
-   try{sessionStorage.setItem(confirmationKey,JSON.stringify({path:signupDestination,automatic:true,created}));}
-   catch{fields.password.value='';showVerification(pending);return;}
-   fields.password.value='';location.assign(signupDestination);return;
-  }
-  fields.password.value='';showVerification(pending);
+  fields.password.value='';
+  if(returnAfterSignup)returnToConfirmation(pending,created);
+  else showVerification(pending);
+ }
+ function returnToConfirmation(pending,created=false){
+  try{sessionStorage.setItem(confirmationKey,JSON.stringify({path:signupDestination,created}));}
+  catch{showVerification(pending);return;}
+  location.assign(signupDestination);
  }
  const finish=async()=>{await window.refreshCommunityNav?.();if(window.MirpanelNavigation)await window.MirpanelNavigation.go(destination);else location.assign(destination);};
  let verification;
@@ -248,7 +244,13 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
   verification=openVerification({pending,host:app,life,verificationApi,finish,readableError});
  }
  app.replaceChildren(panel);document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!busy&&!verification?.open){if(window.MirpanelNavigation)void window.MirpanelNavigation.go(closeTo);else location.assign(closeTo);}},{signal:life.signal});
- if(['login','signup'].includes(mode))void verificationApi('status').then(p=>{if(!busy&&!verification?.open)showVerification(p);}).catch(()=>{});
+ if(mode==='login')void verificationApi('status').then(p=>{if(!busy&&!verification?.open)showVerification(p);}).catch(()=>{});
+ if(signup)void verificationApi('status').then(p=>{
+  if(p?.email&&!life.signal.aborted){
+   const resume=button('Təsdiqə davam et',()=>{if(!busy)returnToConfirmation(p);});
+   resume.className='auth-resend';form.append(resume);
+  }
+ }).catch(()=>{});
  if(fromCart&&['login','signup'].includes(mode)){
   const summary=el('section',{class:'auth-order-summary','aria-label':'Səbət xülasəsi'}),count=el('strong',cartLogin?{'aria-live':'polite'}:{},'Səbət'),rows=el('div',{class:'auth-order-rows'}),hint=el('p',{},'Sifarişi tamamlamaq üçün daxil olun. Səbətiniz itmir — girişdən sonra hesabınıza köçürülür.');
   if(cartLogin){
