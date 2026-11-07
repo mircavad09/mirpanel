@@ -13,11 +13,12 @@ if (!playwrightPath) throw new Error("MIRPANEL_PLAYWRIGHT_PATH təyin edilməyib
 const { chromium } = await import(pathToFileURL(playwrightPath));
 const originalState = extractAdminState(fs.readFileSync(path.join(root, "app.js"), "utf8"));
 const mime = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
-let bannerCount=7, renderLive=false, saveCalls=0, saveMode=500, savedData=originalState;
+let bannerCount=7, renderLive=false, saveCalls=0, saveMode=500, savedData=originalState, saveReceipt;
 const publication={commitSha:"a".repeat(40),sha:"b".repeat(40),version:"admin-123"};
 
 const server = http.createServer(async (request, response) => {
   const json=(value,status=200)=>{response.writeHead(status,{"Content-Type":"application/json; charset=utf-8"});return response.end(JSON.stringify(value));};
+  if(request.url.startsWith("/api/admin/save-status?"))return json(saveReceipt?{publication:saveReceipt}:{pending:false});
   if(request.url==="/api/admin/history?latest")return json({publication});
   if(request.url==="/api/admin/history")return json({items:[{sha:publication.commitSha,date:"2026-11-07T00:00:00Z",message:"Sınaq yayımı"}]});
   if(request.url.startsWith("/api/admin/deploy-status?")){
@@ -42,7 +43,10 @@ const server = http.createServer(async (request, response) => {
   if (request.url === "/api/admin/save" && request.method === "POST") {
     saveCalls++;
     const chunks=[];for await (const chunk of request) chunks.push(chunk);
-    if(saveMode===200){savedData=JSON.parse(Buffer.concat(chunks)).data;return json({...publication,committedAt:new Date().toISOString()});}
+    if(saveMode===200||saveMode===202){
+      savedData=JSON.parse(Buffer.concat(chunks)).data;saveReceipt={...publication,committedAt:new Date().toISOString()};
+      return json(saveReceipt);
+    }
     if(saveMode===0){response.destroy();return;}
     return json({error:saveMode===401?"Sınaq sessiyası bitib":saveMode===409?"Sınaq paralel redaktə":"Sınaq publish xətası"},saveMode);
   }
@@ -157,13 +161,19 @@ try {
   await announcement.fill("Sınaq ana səhifə");
   await page.locator('.navBtn[data-view="products"]').click();
   await page.locator("#productTitle").fill("Sınaq məhsul adı");
-  for (const [status,message] of [[0,"Admin xidməti hazırda cavab vermir"],[401,"Sınaq sessiyası bitib"],[409,"Sınaq paralel redaktə"],[200,"Commit GitHub-a göndərildi"]]) {
+  await page.route("**/api/admin/save",async route=>{
+    if(saveMode!==0&&saveMode!==202)return route.continue();
+    if(saveMode===202)assert.equal((await route.fetch()).status(),200);
+    await route.abort("failed");
+  });
+  for (const [status,message] of [[0,"Admin xidməti hazırda cavab vermir"],[401,"Sınaq sessiyası bitib"],[409,"Sınaq paralel redaktə"],[202,"Commit GitHub-a göndərildi"]]) {
     saveMode=status;
     await page.locator("#saveBtn").click();await page.locator("#modalConfirm").click();
     await page.getByText(message,{exact:false}).first().waitFor();
     await page.locator("#modalCancel").click();
     assert.equal(await page.locator("#productTitle").inputValue(),"Sınaq məhsul adı");
   }
+  assert.equal(saveCalls,4,"the committed operation must not repeat after losing its response");
   await page.locator('.navBtn[data-view="homepage"]').click();
   await announcement.fill("İkinci yayım");
   await page.locator("#saveBtn").click();await page.locator("#modalConfirm").waitFor({state:"visible"});

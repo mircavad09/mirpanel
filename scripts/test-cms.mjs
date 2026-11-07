@@ -69,12 +69,16 @@ assert.equal({}.polluted, undefined, "Prototype əvvəlcədən çirklənib");
 mergeAdminPayload(state, JSON.parse('{"__proto__":{"polluted":true}}'));
 assert.equal({}.polluted, undefined, "Deep merge prototype pollution-a açıqdır");
 
-assert.equal(state.products.length, 30, "Məhsul sayı dəyişib");
-assert.equal(state.products.filter((product) => product.active).length, 21, "Aktiv məhsul sayı dəyişib");
-assert.equal(digest(orderSnapshot), "06637bdd0c20ac392eeb351c40138e8699934f7734667529c9da96872e3e7b7c", "Məhsul sırası dəyişib");
-assert.equal(digest(commercialSnapshot), "5c46037dc76c72bd131112e13ac46235922b19745110065aace16cb7b0941ff7", "Qiymət, plan və ya aktivlik dəyişib");
+// af3f8c4 added netflix_sexsi after the original 30-product snapshot.
+const expectedIds = "zoom spotify capcut netflix chatgpt_ortaq chatgpt netflix_umumi prime claude_ai youtube_sexsi youtube adobecc hbomax tiktok_jeton surfshark google_ai_ultra captions grok_supergrok duolingo canva netflix_sexsi linkedin_career elevenlabs_creator semrush_premium adobe_express notion_plus picsart_premium blink_starter lightroom_photo gemini_ai_pro google_ai".split(" ");
+const actualIds = state.products.map(product => product.id);
+assert.equal(new Set(actualIds).size, actualIds.length, "Kataloqda təkrar məhsul ID-si var");
+assert.deepEqual([...actualIds].sort(), [...expectedIds].sort(), "Kataloqda məhsul itib və ya gözlənilməyən məhsul əlavə olunub");
+assert.equal(state.products.filter((product) => product.active).length, 22, "Aktiv məhsul sayı dəyişib");
+assert.equal(digest(orderSnapshot), "def89c5c494793686b53482c4948ec9b4c97f82e22193a2bfa8572c31cf01c4a", "Məhsul sırası dəyişib");
+assert.equal(digest(commercialSnapshot), "7f01278f20cf8454ae7bbb7b5fc273043f78891ae77ed07259674c0f2fe8988a", "Qiymət, plan və ya aktivlik dəyişib");
 assert.ok(state.products.every((product) => !product.seoSlug.endsWith("-almaq") && !product.seoSlug.includes("hesab0")), "Məhsul slug miqrasiyası tamamlanmayıb");
-assert.equal(digest(bannerSnapshot), "bcfffa5d2a18f1331ac2d2da91a5c10b8f14306ce4edf9dbaa007a200a6757e4", "Banner məlumatı və ya aktivliyi dəyişib");
+assert.equal(digest(bannerSnapshot), "dd032d4e5a7bf7a50246d62399a86474a6806a9052bc495804a055c35d9a32f6", "Banner məlumatı və ya aktivliyi dəyişib");
 assert.deepEqual(Object.keys(state.cms), [
   "schemaVersion", "site", "homepage", "navigation", "banners", "supportCard",
   "footer", "commonTexts", "seo", "orderSettings", "media"
@@ -83,7 +87,7 @@ assert.ok(Object.values(state.cms.commonTexts).every(Boolean), "Ümumi mətn fal
 assert.equal(state.cms.banners.length, 0, "Məhsuldan ayrı banner bazası qalıb");
 const activeProducts = state.products.filter((product) => product.active);
 assert.equal(activeProducts.filter((product) => product.banner?.enabled === true).length, 1, "Cari aktiv banner sayı dəyişib");
-assert.equal(activeProducts.filter((product) => product.banner).length, 21, "Banner məlumatı silinib");
+assert.ok(activeProducts.every(product => product.banner), "Banner məlumatı silinib");
 assert.equal(new Set(state.products.map((product) => product.banner.order)).size, state.products.length, "Banner sıraları unikal deyil");
 assert.deepEqual(
   Object.fromEntries(["spotify", "netflix", "canva", "youtube", "capcut", "tiktok_jeton"].map((id) => {
@@ -186,7 +190,7 @@ assert.equal(
 
 const pages = generateProductPageFiles(state.products, state.siteSections, state.cms, state.content);
 const infoPages = generateInfoPageFiles(state.siteSections, state.ui, state.cms);
-assert.equal(pages.size, 21);
+assert.equal(pages.size, activeProducts.length);
 assert.equal(infoPages.size, 3);
 assert.ok(
   infoPages.get(state.siteSections.elaqe.slug).includes(state.cms.site.phoneDisplay),
@@ -249,15 +253,15 @@ assert.ok(cmsSite.includes("DATA.products"), "Bannerlər vahid məhsul məlumat�
 assert.ok(cmsSite.includes("productSlug"), "Banner keçidi məhsul slug-ından yaranmır");
 assert.ok(cmsSite.includes('"lazy"'), "Bannerlərdə lazy loading yoxdur");
 assert.ok(cmsSite.includes("fetchPriority"), "İlk banner üçün yüksək yükləmə prioriteti yoxdur");
-assert.ok(cmsSite.includes("banners.length < 2"), "0/1 banner üçün slayder idarələri gizlədilmir");
+assert.ok(cmsSite.includes(".slide, .slider-dots, .slider-arrow"), "Köhnə slayder idarələri təmizlənmir");
 assert.equal(cmsSite.includes('content.className = "slide-content"'), false, "Banner overlay elementi hələ yaradılır");
 assert.equal(homepageCss.includes(".slide-content"), false, "Banner overlay stili hələ mövcuddur");
 assert.equal(homepage.includes("homeSeoIntro"), false, "Deaktiv SEO təqdimatı ilkin HTML-də qalıb");
 assert.equal(state.cms.homepage.seoIntro.enabled, false, "SEO təqdimatı admin parametrində deaktiv deyil");
 assert.ok(state.products.every((product) => product.banner?.title !== undefined && product.banner?.description !== undefined), "Banner başlıq və açıqlama məlumatı silinib");
-assert.ok(appSource.includes("ArrowRight") && appSource.includes("ArrowLeft"), "Banner klaviatura idarəsi yoxdur");
-assert.ok(appSource.includes("if (slides.length < 2) return;"), "Tək banner üçün avtomatik keçid dayandırılmır");
-assert.ok(homepageCss.includes("object-fit: contain"), "Banner şəkilləri contain istifadə etmir");
+// The current homepage uses automatic transitions without manual controls.
+assert.ok(appSource.includes("if (slides.length < 2 || reducedMotion"), "Tək banner üçün avtomatik keçid dayandırılmır");
+assert.ok(/object-fit:\s*cover/.test(homepageCss), "Banner şəkilləri sahəni doldurmur");
 assert.ok(homepageCss.includes(".hero-slider-box[hidden]") && homepageCss.includes(".no-product-banners"), "Boş banner sahəsi tam gizlədilmir");
 assert.ok(cmsAdmin.includes("data-banner-upload"), "Banner üçün kompüterdən yükləmə yoxdur");
 assert.ok(cmsAdmin.includes("data-choose-banner-media"), "Banner üçün Şəkil kitabxanası seçimi yoxdur");

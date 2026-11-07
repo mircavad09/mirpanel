@@ -1131,7 +1131,12 @@
     const sections = changedSections();
     publishBusy = true;
     let result;
-    try { result = await preview(); } finally { publishBusy = false; }
+    try {
+      const reconciled = await reconcilePublication();
+      if (reconciled === "confirmed") { trackPublication(state.lastPublishResult); return; }
+      if (reconciled === "pending") return toast("Əvvəlki saxlama hələ təsdiqlənməyib. Bir az sonra yenidən yoxlayın; dəyişiklikləriniz qalır.", "bad");
+      result = await preview();
+    } finally { publishBusy = false; }
     if (!result) return;
     openModal("Dəyişiklikləri yoxlayın", `<div class="publishReview"><p>Avtomatik önizləmə və təhlükəsizlik yoxlamaları uğurla tamamlandı.</p><strong>Dəyişən bölmələr</strong><ul>${sections.map((section) => `<li>${esc(section)}</li>`).join("")}</ul><p>${result.productCount} məhsul · ${result.activeProductCount} aktiv məhsul · ${result.pageCount} statik səhifə</p>${result.warnings.map((warning) => `<p class="warningBox">${esc(warning)}</p>`).join("")}</div>`, "Təsdiqlə və yayımla", async () => {
       const confirmButton = el("modalConfirm");
@@ -1153,6 +1158,9 @@
     await saveState();
     const published = state.lastPublishResult;
     if (!published) return;
+    trackPublication(published);
+  }
+  function trackPublication(published) {
     latestPublication = published;
     latestStatus = null;
     deployAttempts = 3;

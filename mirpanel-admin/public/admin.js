@@ -611,7 +611,43 @@ async function saveState() {
         previewDigest: state.previewDigest
       })
     });
+    await acceptPublication(payload);
+  } catch (error) {
+    if (!error.status || error.status >= 500) {
+      state.uncertainPublish = state.previewDigest;
+      if (await reconcilePublication() === "confirmed") return;
+    }
+    state.publishStatus = "failed";
+    state.dirty = true;
+    state.draftSaved = hadSavedDraft;
+    if (error.status === 409) state.draftConflict = true;
+    renderStats();
+    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") await sessionRequired();
+    else if (error.status === 409) toast(error.message + " Dəyişiklikləriniz qalır. Yeni məlumatı ayrıca pəncərədə açıb müqayisə edin.", "bad");
+    else toast(error.message, "bad");
+  } finally {
+    setLoading(false);
+  }
+}
+
+async function reconcilePublication() {
+  const digest = state.uncertainPublish;
+  if (!digest || digest !== state.previewDigest) return "none";
+  try {
+    const result = await api(`/api/admin/save-status?digest=${encodeURIComponent(digest)}`);
+    if (digest !== state.previewDigest) return "none";
+    if (result.publication) {
+      await acceptPublication(result.publication);
+      return "confirmed";
+    }
+    if (!result.pending) { state.uncertainPublish = ""; return "none"; }
+  } catch { /* Unverified: never automatically submit the write again. */ }
+  return "pending";
+}
+
+async function acceptPublication(payload) {
     if(typeof payload.sha!=='string'||typeof payload.commitSha!=='string'||!payload.sha||!payload.commitSha)throw Error('Saxlama server tərəfindən təsdiqlənmədi. Yenidən cəhd edin.');
+    state.uncertainPublish = "";
     state.baseSha = payload.sha;
     state.currentSha = payload.sha;
     state.draftRevision = 0;
@@ -625,19 +661,7 @@ async function saveState() {
     renderStats();
     state.lastPublishResult = payload;
     clearTimeout(draftTimer);await window.MirpanelAdminDraft?.clear().catch(()=>{});
-    toast(payload.cacheCommitSha ? "Saxlandı və cache versiyası yeniləndi." : "Saxlandı.");
-  } catch (error) {
-    state.publishStatus = "failed";
-    state.dirty = true;
-    state.draftSaved = hadSavedDraft;
-    if (error.status === 409) state.draftConflict = true;
-    renderStats();
-    if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") await sessionRequired();
-    else if (error.status === 409) toast(error.message + " Dəyişiklikləriniz qalır. Yeni məlumatı ayrıca pəncərədə açıb müqayisə edin.", "bad");
-    else toast(error.message, "bad");
-  } finally {
-    setLoading(false);
-  }
+    toast("Saxlandı · canlı yayım ayrıca yoxlanılır.");
 }
 
 function renderStats() {

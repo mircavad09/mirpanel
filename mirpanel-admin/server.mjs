@@ -1208,6 +1208,14 @@ async function handleApi(request, response) {
     });
   }
 
+  if (request.method === "GET" && request.url.startsWith("/api/admin/save-status?")) {
+    const session = getSession(request);
+    const digest = new URL(request.url, "http://localhost").searchParams.get("digest");
+    const receipt = session.lastPublication;
+    if (receipt?.digest === digest) return json(response, 200, { publication: receipt.result });
+    return json(response, 200, { pending: editorWrites.has(session) });
+  }
+
   if (request.method === "POST" && request.url === "/api/admin/save") {
     const session = requireMutationAuth(request, response);
     if (!session) return;
@@ -1215,6 +1223,8 @@ async function handleApi(request, response) {
     editorWrites.add(session);
     try {
     const body = await readBody(request);
+    const fingerprint = crypto.createHash("sha256").update(JSON.stringify(body)).digest("hex");
+    if (session.lastPublication?.fingerprint === fingerprint) return json(response, 200, session.lastPublication.result);
     if ((session.draft?.savedAt || 0) !== (body.draftRevision || 0)) return json(response, 409, { error: "Qaralama başqa pəncərədə dəyişib." });
 
     if (!body.baseSha || !body.data) {
@@ -1297,7 +1307,7 @@ async function handleApi(request, response) {
     session.draft = null;
     session.pendingUploads?.clear();
 
-    return json(response, 200, {
+    const publication = {
       sha: appSha,
       version,
       commitSha: result.commitSha,
@@ -1308,7 +1318,9 @@ async function handleApi(request, response) {
       productPageCount: productPages.size,
       infoPageCount: infoPages.size,
       committedAt: new Date().toISOString()
-    });
+    };
+    session.lastPublication = { digest, fingerprint, result: publication };
+    return json(response, 200, publication);
     } finally { editorWrites.delete(session); }
   }
 
