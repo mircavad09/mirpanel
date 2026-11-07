@@ -14,6 +14,53 @@
   const DEFAULT_SPOTIFY_RESET_URL = "https://accounts.spotify.com/az/password-reset";
   let orderTermsAccepted = false;
   let modalSession = 0;
+  let hboOpening, hboModuleRetry = 0;
+
+  function openHboCartEntry(product, plan) {
+    if (hboOpening?.open || document.querySelector("dialog.cart-entry[open]")) return;
+    const life = new AbortController(), dialog = document.createElement("dialog"), title = document.createElement("h2"),
+      close = document.createElement("button"), status = document.createElement("p"), retry = document.createElement("button");
+    dialog.className = "cart-entry";
+    dialog.setAttribute("aria-label", "Diqqət!");
+    dialog.style.cssText = "box-sizing:border-box;width:min(520px,calc(100% - 28px));padding:18px;background:#181b1e;color:#fff;border:1px solid #66552c;border-radius:16px";
+    title.textContent = "Diqqət!";
+    close.type = retry.type = "button";
+    close.textContent = "Bağla"; retry.textContent = "Yenidən cəhd et";
+    close.onclick = () => dialog.close();
+    status.setAttribute("role", "status"); retry.hidden = true;
+    dialog.append(title, status, retry, close);
+    let handedOff = false;
+    hboOpening = dialog;
+    window.addEventListener("mirpanel:before-navigate", e => {if (dialog.open) e.preventDefault();}, {signal:life.signal});
+    dialog.addEventListener("close", () => {
+      life.abort();
+      if (handedOff) return;
+      dialog.remove();
+      if (hboOpening === dialog) {hboOpening = null; document.body.classList.remove("orderConfirmationActive");}
+    }, {once:true});
+    document.body.append(dialog); dialog.showModal(); document.body.classList.add("orderConfirmationActive");
+    async function load() {
+      retry.hidden = true; status.textContent = "Sifariş şərtləri yoxlanılır…";
+      let timer, loaded = false;
+      try {
+        const m = await Promise.race([
+          import("/community-assets/cart-entry.js?v=hbo-first-click-20261107" + (hboModuleRetry ? "&retry=" + hboModuleRetry : "")),
+          new Promise((_, reject) => {timer = setTimeout(() => reject(Error("Order module timeout")), 12000);})
+        ]);
+        loaded = true;
+        if (!dialog.open || hboOpening !== dialog) return;
+        await m.startCartEntry(product, plan, {loginOnGuest:true, loadingDialog:dialog, onReady:() => {handedOff = true; hboOpening = null; life.abort();}});
+      } catch {
+        if (!loaded) hboModuleRetry++;
+        if (dialog.open && hboOpening === dialog) {
+          status.textContent = "Sifariş pəncərəsini açmaq mümkün olmadı.";
+          retry.hidden = false;
+        }
+      } finally {clearTimeout(timer);}
+    }
+    retry.onclick = load;
+    void load();
+  }
 
   function publicProductTitle(value) {
     return String(value || "").replace(/\s+almaq\s*$/i, "").trim();
@@ -1915,7 +1962,10 @@
       }
       product = catalogProduct;
     }
-    if(plan&&Number(plan.price)>0){void import('/community-assets/cart-entry.js?v=cart-signup-20261107').then(m=>m.startCartEntry(product,plan,{loginOnGuest:true})).catch(()=>toastMessage('Sifariş pəncərəsi açılmadı. Yenidən cəhd edin.'));return;}
+    if(plan&&Number(plan.price)>0){
+      if(isHboProduct(product)){openHboCartEntry(product,plan);return;}
+      void import('/community-assets/cart-entry.js?v=cart-signup-20261107').then(m=>m.startCartEntry(product,plan,{loginOnGuest:true})).catch(()=>toastMessage('Sifariş pəncərəsi açılmadı. Yenidən cəhd edin.'));return;
+    }
     if (!stockIsAvailable(product, plan) || !plan || Number(plan.price) <= 0) {
       decorateProductPage(product);
       alert("Stokda yoxdur.");
@@ -2001,7 +2051,9 @@
       badge.classList.toggle("out", !available);
     }
 
-    if (button) {
+    // The HBO button must not become clickable between local plan rendering
+    // and the stock controller's authoritative readiness check.
+    if (button && !isHboProduct(product)) {
       button.disabled = !available;
       button.textContent = available ? "Sifariş et" : "Stokda yoxdur";
       button.classList.toggle("disabled", !available);

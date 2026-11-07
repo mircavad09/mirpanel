@@ -111,7 +111,7 @@
 
         <div class="product-page-actions">
           <a class="product-page-action is-about" href="/mehsul/hbo-max#product-about">Məhsul haqqında</a>
-          <button class="product-page-action is-order" id="pp-order-btn" type="button">Sifariş et</button>
+          <button class="product-page-action is-order" id="pp-order-btn" type="button" disabled>Stok yoxlanılır…</button>
         </div>
       </article>
 

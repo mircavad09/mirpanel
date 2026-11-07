@@ -3,11 +3,15 @@ import {ensureCart} from '/cart-ready.js?v=account-update-20261107';
 import {ensureEntryStyles} from './entry-styles.js?v=account-update-20261107';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
-export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=false}={}){
+export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=false,loadingDialog=null,onReady}={}){
  if(current?.open){current.focus();return;}
- const [cart]=await Promise.all([ensureCart(),ensureEntryStyles()]);if(current?.open){current.focus();return;}
+ await Promise.all([ensureCart(),ensureEntryStyles()]);if(current?.open){current.focus();return;}
+ if(loadingDialog&&!loadingDialog.open)return;
  const index=product.plans.indexOf(plan);if(index<0)return;
- const life=new AbortController(),dialog=el('dialog',null,'cart-entry'),head=el('header'),title=el('h2','Diqqət!'),close=el('button','×'),body=el('div'),error=el('p','','cart-entry-error');current=dialog;close.type='button';close.setAttribute('aria-label','Bağla');head.append(title,close);error.setAttribute('role','alert');dialog.append(head,body,error);document.body.append(dialog);dialog.showModal();document.body.classList.add('orderConfirmationActive');
+ const life=new AbortController(),dialog=loadingDialog||el('dialog',null,'cart-entry'),head=el('header'),title=el('h2','Diqqət!'),close=el('button','×'),body=el('div'),error=el('p','','cart-entry-error');current=dialog;close.type='button';close.setAttribute('aria-label','Bağla');head.append(title,close);error.setAttribute('role','alert');dialog.replaceChildren(head,body,error);
+ if(loadingDialog){dialog.removeAttribute('style');onReady?.();}
+ else{document.body.append(dialog);dialog.showModal();}
+ document.body.classList.add('orderConfirmationActive');
  const before=e=>{if(dialog.open){e.preventDefault();error.textContent='Məlumatları tamamlayın və ya pəncərəni bağlayın.';}};window.addEventListener('mirpanel:before-navigate',before,{signal:life.signal});
  let working=false,activeQuote=null,guest=false,values={},draftId=editLine?.draftId||crypto.randomUUID();
  const api=async(path,data)=>{const request=new AbortController(),abort=()=>request.abort();life.signal.addEventListener('abort',abort,{once:true});const timer=setTimeout(abort,12000);try{const r=await fetch('/api/payments/shop'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined,signal:request.signal});if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Sifariş xidməti düzgün cavab vermədi.');const d=await r.json();if(!r.ok)throw Error(d.error||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.');return d;}finally{clearTimeout(timer);life.signal.removeEventListener('abort',abort);}};

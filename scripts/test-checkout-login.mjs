@@ -8,6 +8,8 @@ const signed=req=>/synthetic_account=([ab])/.exec(req.headers.cookie||'')?.[1]||
 const shop=createShop({context:async req=>({pool,user:signed(req)}),catalog:async()=>catalog,snapshot:()=>f.rpc('inventory_snapshot'),store:f.store,config});
 catalog.products[0].image='/assets/capcut.png';
 catalog.products.push({id:'netflix',title:'Netflix Şəxsi — Mobil və masaüstü cihazlar üçün uzun məhsul adı',image:'/assets/netflix.png',active:true,plans:[{label:'1 aylıq',price:5.99,formFields:[{key:'name',label:'Otaq adı',required:true},{key:'pin',label:'Otaq kodu',digits:4,required:true}]}]});
+catalog.products.push({id:'hbomax',title:'HBO Max',active:true,plans:[{label:'1 aylıq',price:5.99,terms:'HBO Max — sintetik xəbərdarlıq',formFields:[{key:'name',label:'HBO Max profil adı',required:true},{key:'code_4',label:'Profil kodu / PIN',digits:4,required:true}]}]});
+const hboButton=fs.readFileSync('mehsul/hbo-max.page','utf8').match(/<button[^>]*id="pp-order-btn"[^>]*>[^<]*<\/button>/)[0];
 const header=fs.readFileSync('customer-header.html','utf8'),json=(res,status,d)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'private,no-store'});res.end(JSON.stringify(d));},body=async req=>{let s='';for await(const x of req)s+=x;return JSON.parse(s||'{}');};
 try{
  const owner='f'.repeat(64),req={headers:{}},q=await shop.quote(req,[{productId:'ordinary',planIndex:0,quantity:1}],owner),saved=await shop.saveDraft(req,owner,{id:id(),productId:'ordinary',planIndex:0,values:{},termsVersion:q.items[0].termsVersion}),args={items:[{productId:'ordinary',planIndex:0,quantity:1,...saved}],mode:'card',methodId:method,requestId:id(),consentAccepted:true};
@@ -33,12 +35,39 @@ try{
    const isAuth=u.pathname==='/hesab',isShop=['/odenis','/balans','/sebet'].includes(u.pathname);let main='<main><h1>Sintetik səhifə</h1></main>';
    if(isAuth)main='<main id="communityApp" class="community-shell"></main><script type="module" src="/community-assets/community.js"></script>';
    if(isShop)main='<main id="shopApp" class="shop-page"></main><link rel="stylesheet" href="/community-assets/shop.css"><script type="module" src="/community-assets/shop-ui.js"></script>';
-   if(u.pathname==='/mehsul/synthetic')main=`<main><h1>Netflix Şəxsi</h1><button id="pp-order-btn">Sifariş et</button></main><script>const DATA=${JSON.stringify(catalog)};let currentProduct=DATA.products.find(p=>p.id===${JSON.stringify(u.searchParams.get('product')||'netflix')}),currentPlanIdx=0;</script><script src="/order-confirmation.js"></script>`;
+   if(u.pathname==='/mehsul')main='<main><a href="/mehsul/synthetic?product=hbomax">HBO Max</a></main>';
+   if(u.pathname==='/mehsul/synthetic'){const hbo=u.searchParams.get('product')==='hbomax';main=`<main><h1>${hbo?'HBO Max':'Netflix Şəxsi'}</h1>${hbo?hboButton:'<button id="pp-order-btn">Sifariş et</button>'}</main><script>const DATA=${JSON.stringify(catalog)};let currentProduct=DATA.products.find(p=>p.id===${JSON.stringify(u.searchParams.get('product')||'netflix')}),currentPlanIdx=0;</script><script src="/order-confirmation.js"></script>${hbo?'<script>const order=document.getElementById("pp-order-btn");order.disabled=false;order.textContent="Sifariş et";</script>':''}`;}
    res.setHeader('Content-Type','text/html');return res.end('<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/community.css"><body class="community-page">'+header+main+'<script src="/site-header.js"></script></body></html>');
   }
   const file=u.pathname.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+u.pathname.slice(18):u.pathname.slice(1);if(file.includes('..')||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);return res.end();}res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(fs.readFileSync(file));
  }catch(e){json(res,e.status||500,{error:e.status?e.message:'Synthetic error'});}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});fs.mkdirSync('payment-test-artifacts/checkout-login',{recursive:true});
+ for(const [width,fromList] of [[390,false],[1440,true]]){
+  const ctx=await browser.newContext({viewport:{width,height:850}}),p=await ctx.newPage();
+  let unblockBootstrap,unblockModule,unblockQuote,draftCalls=0,quoteCalls=0;
+  const bootstrap=new Promise(r=>{unblockBootstrap=r;}),moduleGate=new Promise(r=>{unblockModule=r;}),quoteGate=new Promise(r=>{unblockQuote=r;});
+  await p.route('**/order-confirmation.js',async r=>{await bootstrap;await r.continue();});
+  await p.route('**/community-assets/cart-entry.js?v=hbo-first-click-20261107*',async r=>{await moduleGate;await r.continue();});
+  await p.route('**/api/payments/shop/quote',async r=>{if(++quoteCalls===1){await quoteGate;return r.fulfill({status:503,contentType:'application/json',body:'{}'});}await r.continue();});
+  await p.route('**/api/payments/shop/draft',async r=>{draftCalls++;await r.continue();});
+  if(fromList){await p.goto(origin+'/mehsul');await p.getByRole('link',{name:'HBO Max'}).click({noWaitAfter:true});}
+  else await p.goto(origin+'/mehsul/synthetic?product=hbomax',{waitUntil:'commit'});
+  const order=p.locator('#pp-order-btn');await order.waitFor({state:'visible'});eq(await order.isDisabled(),true);
+  unblockBootstrap();await p.locator('#pp-order-btn:not([disabled])').waitFor({state:'visible'});
+  await order.evaluate(b=>{b.click();b.click();});const dialog=p.locator('dialog.cart-entry[open]');
+  await dialog.getByRole('heading',{name:'Diqqət!'}).waitFor();eq(await dialog.count(),1);
+  eq(await dialog.getByRole('status').innerText(),'Sifariş şərtləri yoxlanılır…');
+  unblockModule();await p.waitForFunction(()=>!!document.querySelector('.cart-entry-loading'));eq(await dialog.count(),1);
+  unblockQuote();await dialog.getByText('Sifariş şərtlərini almaq mümkün olmadı.').waitFor();
+  await dialog.getByRole('button',{name:'Yenidən cəhd et'}).click();await dialog.getByRole('checkbox').check();
+  await dialog.getByRole('button',{name:'Təsdiqləyirəm',exact:true}).evaluate(b=>{b.click();b.click();});
+  await dialog.getByLabel('HBO Max profil adı').fill('Sintetik otaq');await dialog.getByLabel('Profil kodu / PIN').fill('0012');
+  await dialog.getByRole('button',{name:'Davam et',exact:true}).evaluate(b=>{b.click();b.click();});
+  await p.waitForURL('**/hesab?next=%2Fsebet&from=cart');await p.getByText('Səbətinizdə 1 məhsul · 5,99 ₼',{exact:true}).waitFor();
+  eq(draftCalls,1);eq(await p.evaluate(()=>MirpanelCart.read().map(x=>[x.productId,x.quantity])),[['hbomax',1]]);
+  console.log(JSON.stringify({width,fromList,firstClick:true,slowScript:true,slowQuote:true,retry:true,oneDraft:true,guestLogin:true}));
+  await ctx.close();
+ }
  for(const width of (process.argv.includes('--smoke')?[390]:[320,360,390,430,1440])){
   const ctx=await browser.newContext({viewport:{width,height:900}}),p=await ctx.newPage();
   for(const route of ['/','/mehsul','/odenis','/balans','/sebet','/sifarislerim','/profil']){await p.goto(origin+route);const toggle=p.getByRole('button',{name:'Daxil ol',exact:true});await toggle.waitFor();await p.evaluate(()=>document.body.style.minHeight='1800px');eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);if(await p.locator('#accountGuest').isHidden())await toggle.click();await p.locator('#accountGuest').waitFor({state:'visible'});eq(await p.locator('#accountGuest').evaluate(n=>{const r=n.getBoundingClientRect();return r.left>=0&&r.right<=document.documentElement.clientWidth;}),true);eq(await p.locator('#accountGuest').getByRole('link',{name:'Qeydiyyat',exact:true}).count(),1);await toggle.click();eq(await p.locator('#accountGuest').isHidden(),true);await toggle.click();await p.mouse.click(4,300);eq(await p.locator('#accountGuest').isHidden(),true);await toggle.click();await p.keyboard.press('Escape');eq(await p.locator('#accountGuest').isHidden(),true);}
