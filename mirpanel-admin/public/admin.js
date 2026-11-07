@@ -526,6 +526,8 @@ async function loadState() {
     }
     state.data = payload.data;
     state.baseSha = payload.sha;
+    state.currentSha = payload.currentSha || payload.sha;
+    state.draftRevision = payload.draftRevision || 0;
     state.draftSaved = payload.draftSaved === true;
     state.draftConflict = payload.draftConflict === true;
     state.publishStatus = state.draftSaved ? "ready" : "saved";
@@ -536,7 +538,7 @@ async function loadState() {
     state.data.categories = Array.isArray(state.data.categories) ? state.data.categories : [];
     state.data.content = state.data.content || {};
     state.data.ui = { ...defaultUi, ...(state.data.ui || {}) };
-    state.selectedId = state.data.products[0]?.id || "";
+    if (!state.data.products.some(product => product.id === state.selectedId)) state.selectedId = state.data.products[0]?.id || "";
     state.dirty = state.draftSaved;
     $("commitInfo").textContent = `Yükləndi: ${new Date(payload.loadedAt).toLocaleString("az-AZ")} / ${payload.sha.slice(0, 7)}`;
     renderAll();
@@ -604,12 +606,15 @@ async function saveState() {
       method: "POST",
       body: JSON.stringify({
         baseSha: state.baseSha,
+        draftRevision: state.draftRevision || 0,
         data: payloadWithoutTransientPreviews(state.data),
         previewDigest: state.previewDigest
       })
     });
     if(typeof payload.sha!=='string'||typeof payload.commitSha!=='string'||!payload.sha||!payload.commitSha)throw Error('Saxlama server tərəfindən təsdiqlənmədi. Yenidən cəhd edin.');
     state.baseSha = payload.sha;
+    state.currentSha = payload.sha;
+    state.draftRevision = 0;
     state.previewDigest = "";
     state.dirty = false;
     state.draftSaved = false;
@@ -628,7 +633,7 @@ async function saveState() {
     if (error.status === 409) state.draftConflict = true;
     renderStats();
     if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") await sessionRequired();
-    else if (error.status === 409) toast("Conflict: GitHub-da app.js dəyişib. Yenilə düyməsini bas.", "bad");
+    else if (error.status === 409) toast(error.message + " Dəyişiklikləriniz qalır. Yeni məlumatı ayrıca pəncərədə açıb müqayisə edin.", "bad");
     else toast(error.message, "bad");
   } finally {
     setLoading(false);
@@ -644,16 +649,16 @@ function renderStats() {
   const changeStatus = $("changeStatus");
   if (changeStatus) {
     const labels = {
-      saved: "Bütün dəyişikliklər yadda saxlanılıb",
-      unsaved: "Yadda saxlanmamış dəyişiklik var",
+      saved: "Saxlanmamış dəyişiklik yoxdur",
+      unsaved: "Saxlanmamış dəyişiklik",
       uploading: "Şəkil yüklənir",
       "save-ready": "Yadda saxlanmağa hazırdır",
       "upload-failed": "Şəkil yüklənmədi — köhnə banner qorunub",
-      ready: state.draftConflict ? "Yayımlama dayandırılıb — GitHub məlumatı dəyişib" : "Yayımlanmağa hazırdır",
+      ready: state.draftConflict ? "Yayımlama dayandırılıb — GitHub məlumatı dəyişib" : "Qaralama saxlandı",
       github: "GitHub-a göndərilir",
-      cloudflare: "Cloudflare yayımlayır",
-      live: "Sayt canlıdır",
-      failed: "Yayımlama uğursuz oldu — dəyişiklikləriniz qorunub"
+      cloudflare: "Yayım gedir · canlı təsdiq gözlənilir",
+      live: "Canlıda təsdiqləndi",
+      failed: "Xəta baş verdi — dəyişiklikləriniz qorunub"
     };
     changeStatus.textContent = labels[state.publishStatus] || labels.saved;
     changeStatus.classList.toggle("dirty", ["unsaved", "uploading", "save-ready", "upload-failed", "failed"].includes(state.publishStatus));
@@ -697,7 +702,9 @@ function renderProducts() {
     return;
   }
 
-  $("productList").innerHTML = products.map((product) => `
+  const list = $("productList");
+  const scrollTop = list.scrollTop;
+  list.innerHTML = products.map((product) => `
     <button class="productItem ${product.id === state.selectedId ? "active" : ""}" data-id="${escapeHtml(product.id)}">
       <img src="${escapeHtml(imageUrl(product.image))}" alt="">
       <div>
@@ -707,6 +714,7 @@ function renderProducts() {
       <b class="price">${minimumPrice(product)} ${escapeHtml(product.currency)}</b>
     </button>
   `).join("");
+  list.scrollTop = scrollTop;
 
   document.querySelectorAll(".productItem").forEach((button) => {
     button.addEventListener("click", () => {
@@ -1280,6 +1288,9 @@ function openModal(title, body, confirmText, action) {
   $("modalTitle").textContent = title;
   $("modalBody").innerHTML = body;
   $("modalConfirm").textContent = confirmText;
+  $("modalConfirm").classList.remove("hidden");
+  $("modalConfirm").disabled = false;
+  $("modalCancel").textContent = "Ləğv et";
   state.modalAction = action;
   $("modal").classList.remove("hidden");
 }

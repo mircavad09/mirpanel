@@ -5,7 +5,9 @@ import fs from 'node:fs';
 export async function localEmployeeDatabase(){
  const port=Number(process.env.MIRPANEL_LOCAL_PG_PORT||55439);
  if(!Number.isInteger(port)||port<1024||port>65535)throw Error('LOCAL_TEST_PORT_REQUIRED');
- const options={host:'127.0.0.1',port,username:'employee_test_owner',max:16,prepare:false,onnotice:()=>{},connect_timeout:5,connection:{application_name:'mirpanel-employee-isolated-test',statement_timeout:15000}};
+ const username=process.env.MIRPANEL_LOCAL_PG_USER||'employee_test_owner';
+ if(!/^[a-z_][a-z0-9_]*$/.test(username))throw Error('LOCAL_TEST_USER_REQUIRED');
+ const options={host:'127.0.0.1',port,username,max:16,prepare:false,onnotice:()=>{},connect_timeout:5,connection:{application_name:'mirpanel-employee-isolated-test',statement_timeout:15000}};
  const admin=postgres({...options,database:'postgres'}),name='mirpanel_employee_test_'+crypto.randomBytes(8).toString('hex');
  await admin.unsafe(`create database ${name}`);
  const sql=postgres({...options,database:name});

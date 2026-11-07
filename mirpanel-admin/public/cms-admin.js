@@ -1,11 +1,21 @@
 (function () {
   const viewGroups = [
-    ["Əsas idarəetmə", [["dashboard", "İdarə paneli"], ["products", "Məhsullar"], ["categories", "Kateqoriyalar"]]],
-    ["Saytın görünüşü", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"]]],
-    ["Parametrlər", [["orders", "Sifariş parametrləri"], ["paymentMethods", "Ödəniş üsulları"], ["paymentCosts", "Məhsulların maya dəyəri və qazanc"], ["paymentOrders", "Sifarişlər"], ["paymentReviews", "Ödəniş yoxlamaları"], ["netflixAccounts", "Netflix hesabları"], ["seo", "SEO və sitemap"], ["media", "Şəkil kitabxanası"], ["history", "Dəyişiklik tarixçəsi"]]]
+    ["Tez istifadə olunanlar", [["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"], ["employeeStock", "İşçi stoku", "/admin/employee-stock"], ["paymentOrders", "Sifarişlər"], ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]]],
+    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
+    ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sitemap"]]],
+    ["Maliyyə nəzarəti", [["communityShop", "Balans müraciətləri"], ["paymentReviews", "Ödəniş yoxlamaları"]]],
+    ["Sistem", [["history", "Sayt yayımı tarixçəsi"], ["workforce", "İşçi, stok və maaş idarəsi", "/admin/workforce"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
-  viewLabels.push(['communityUsers','İstifadəçilər'],['communityGroup','Qrup söhbət'],['communityShop','Balans müraciətləri']);
+  viewLabels.push(["dashboard", "İdarə paneli"], ["stories", "Stories"]);
+  let dashboardRead = 0;
+  let deployRead = false;
+  let publishBusy = false;
+  let latestPublication = null;
+  let latestStatus = null;
+  let deployTimer;
+  let deployAttempts = 0;
+  const counts = { banners: null, orders: null, topups: null };
   const safeIcons = ["home", "products", "search", "info", "contact", "terms", "whatsapp", "sparkles", "game", "ai", "link", "image", "shield"];
   let baselineData = null;
   let baselineSha = "";
@@ -76,10 +86,9 @@
   }
   function installNavigation() {
     const nav = document.querySelector(".nav");
-    nav.innerHTML = viewGroups.map(([group, items], groupIndex) => `<div class="navGroup">
+    nav.innerHTML = '<button class="navBtn active" type="button" data-view="dashboard">İdarə paneli</button>' + viewGroups.map(([group, items]) => `<div class="navGroup">
       <span class="navGroupTitle">${esc(group)}</span>
-      ${items.map(([id, label], index) => `<button class="navBtn${groupIndex === 0 && index === 0 ? " active" : ""}" type="button" data-view="${id}">${esc(label)}</button>`).join("")}
-      ${groupIndex === 0 ? '<button class="navBtn" data-view="communityUsers">İstifadəçilər</button><button class="navBtn" data-view="communityGroup">Qrup söhbət</button><button class="navBtn" data-view="communityShop">Balans müraciətləri</button><a class="navBtn" href="/admin/employee-stock">İşçi stoku</a>' : ''}
+      ${items.map(([id, label, href]) => href ? `<a class="navBtn" href="${href}">${esc(label)}</a>` : `<button class="navBtn" type="button" data-view="${id}">${esc(label)}</button>`).join("")}
     </div>`).join("");
     nav.addEventListener("click", (event) => {
       const button = event.target.closest("[data-view]");
@@ -87,7 +96,7 @@
     });
   }
   function activateView(view) {
-    if(view==='decorations')history.replaceState({},'',location.pathname+'#decorations');
+    if (location.hash !== '#' + view) history.replaceState(history.state, '', location.pathname + location.search + '#' + view);
     window.dispatchEvent(new CustomEvent('admin-community-view',{detail:view}));
     if(['communityUsers','communityGroup','communityShop'].includes(view)){
       if(!el(`${view}View`))createView(view,'');
@@ -97,9 +106,10 @@
     const target = el(`${view}View`);
     if (target) target.classList.remove("hidden");
     document.querySelectorAll(".navBtn[data-view]").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
+    document.querySelector(".stats").hidden = view !== "dashboard";
     el("crumb").textContent = viewLabels.find(([id]) => id === view)?.[1] || "İdarə paneli";
-    if (view === "history") loadHistory();
-    if (view === "dashboard") renderDashboard();
+    if (view === "history") { void loadHistory(); void verifyPublication(); }
+    if (view === "dashboard") { renderDashboard(); void loadDashboard(); }
     if (view === "netflixAccounts") loadNetflixAccounts();
   }
   async function loadNetflixAccounts() {
@@ -108,7 +118,7 @@
     try { const q = el("netflixAccountSearch")?.value || ""; const result = await api(`/api/admin/netflix-accounts?q=${encodeURIComponent(q)}`); list.innerHTML = (result.items || []).map((item) => `<div class="cmsListItem compact"><strong>${esc(item.email)}</strong><span>${item.active ? "Aktiv" : "Deaktiv"}</span><div><button class="btn" type="button" data-netflix-toggle="${esc(item.email)}" data-active="${item.active ? "false" : "true"}">${item.active ? "Deaktiv et" : "Aktiv et"}</button><button class="btn danger" type="button" data-netflix-delete="${esc(item.email)}">Sil</button></div></div>`).join("") || "Hesab əlavə edilməyib."; } catch { list.textContent = "Hesablar yüklənmədi."; }
   }
   function createStaticViews() {
-    createView("decorations",panel("Şəkillər və fonlar","Dekorativ şəkillər avtomatik tətbiq olunur. Məbləğlər və kart məlumatları canlı mətn olaraq qalır.",'<section id="paymentBankBackgrounds" class="paymentBankBackgrounds"></section>'));
+    createView("decorations",panel("Şəkillər və fonlar","Bank kartı və balans kartı kimi konkret sahələrə təyin olunan fonları idarə edin.",'<section id="paymentBankBackgrounds" class="paymentBankBackgrounds"></section>'));
     createView("dashboard", panel("İdarə paneli", "Sayt məzmununun ümumi vəziyyəti", '<div class="cmsCards" id="cmsDashboardCards"></div>'));
     createView("homepage", panel("Ana səhifə", "Mövcud dizaynı dəyişmədən ana səhifə mətnlərini idarə et", `<div class="sectionHead"><h3>Ümumi sayt məlumatları</h3></div><div class="formGrid">
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}
@@ -222,7 +232,7 @@
       ${field("Razılıq checkbox mətni", "orderSettings.agreementText", { full: true })}
       ${field("Standart təsdiq tələb olunsun", "orderSettings.requireConfirmation", { type: "checkbox" })}
     </div>`));
-    createView("history", panel("Dəyişiklik tarixçəsi", "Məxfi məlumatlar göstərilmir", '<button class="btn" id="refreshHistory" type="button">Tarixçəni yenilə</button><div id="historyList" class="cmsList"></div>'));
+    createView("history", panel("Sayt yayımı tarixçəsi", "Yalnız GitHub-da app.js faylını dəyişən son 20 qeyd göstərilir; bu, bütün admin əməliyyatlarının auditi deyil.", '<div class="actions"><button class="btn" id="refreshHistory" type="button">Tarixçəni yenilə</button><button class="btn" id="recheckPublish" type="button">Yayımı yenidən yoxla</button></div><div id="releaseServices" role="status"></div><p>Əməliyyat qeydləri öz bölmələrində qalır: <a href="/admin/employee-stock">İşçi stoku</a> · <button type="button" class="btn" data-dashboard-view="communityShop">Balans müraciətləri</button> · <button type="button" class="btn" data-dashboard-view="paymentOrders">Sifarişlər</button> · <button type="button" class="btn" data-dashboard-view="communityGroup">Qrup söhbəti və moderasiya</button></p><div id="historyList" class="cmsList"></div>'));
     const previewResult = document.createElement("div");
     previewResult.id = "cmsPreviewResult";
     previewResult.className = "previewResult hidden";
@@ -446,7 +456,13 @@
   function withoutPreviewData(value) {
     return JSON.parse(JSON.stringify(value, (key, current) => key.startsWith("_") ? undefined : current));
   }
+  let bannerDraftBusy = false;
   async function saveBannerDraft() {
+    if (bannerDraftBusy) return;
+    bannerDraftBusy = true;
+    try { await writeBannerDraft(); } finally { bannerDraftBusy = false; }
+  }
+  async function writeBannerDraft() {
     const product = state.data.products.find((item) => item.id === selectedBannerProductId);
     if (!product) return toast("Banner məhsulu tapılmadı.", "bad");
     const uploadPrefix = `productBanner.${product.id}.`;
@@ -469,6 +485,7 @@
         method: "POST",
         body: JSON.stringify({
           baseSha: state.baseSha,
+          draftRevision: state.draftRevision || 0,
           productId: product.id,
           banner: bannerPayload,
           media: withoutPreviewData(cms().media)
@@ -483,6 +500,7 @@
         throw new Error("Server banner şəklinin yeni yolunu təsdiqləmədi. Dəyişikliklər brauzerdə qorunub.");
       }
       state.draftSaved = true;
+      state.draftRevision = result.draftRevision || 0;
       state.draftConflict = result.draftConflict === true;
       dirtyBannerProductIds.delete(product.id);
       state.publishStatus = "ready";
@@ -491,8 +509,8 @@
         ? "Banner yadda saxlanıldı, amma GitHub məlumatı dəyişib. Yayımlamadan əvvəl konflikti həll edin."
         : "Banner yadda saxlanıldı və yayımlanmağa hazırdır.", state.draftConflict ? "bad" : "good");
     } catch (error) {
-      state.draftSaved = false;
-      state.publishStatus = "unsaved";
+      state.publishStatus = "failed";
+      if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") await sessionRequired();
       renderStats();
       toast(error.message || "Banner yadda saxlanılmadı.", "bad");
     } finally {
@@ -892,18 +910,43 @@
     finally { setLoading(false); }
   }
   function renderDashboard() {
-    if (!state.data || !cms()) {
-      el("cmsDashboardCards").innerHTML = '<div class="emptyMini">Məlumatlar yüklənir...</div>';
+    const host = el("cmsDashboardCards");
+    if (!host) return;
+    const cards = [
+      ["Aktiv ana səhifə bannerləri", counts.banners, "banners"],
+      ["Gözləyən sifarişlər", counts.orders, "paymentOrders"],
+      ["Gözləyən balans müraciətləri", counts.topups, "communityShop"],
+      ["Son sayt məzmunu yayımı", latestStatus?.verified ? "Canlıda təsdiqləndi" : latestPublication ? "Canlı təsdiq gözlənilir" : latestStatus?.error ? "Məlumat alınmadı" : null, "history"]
+    ];
+    const present = (count) => count === false ? "Məlumat alınmadı" : count ?? "Yoxlanılır…";
+    const tone = (count) => count === false || count === "Məlumat alınmadı" ? "failed" : count === "Canlıda təsdiqləndi" ? "verified" : "";
+    if (host.querySelector(".dashboardCard")) {
+      for (const [, count, view] of cards) {
+        const button = host.querySelector(`[data-dashboard-view="${view}"]`);
+        button.dataset.state = tone(count);
+        button.querySelector("strong").textContent = present(count);
+      }
       return;
     }
-    el("cmsDashboardCards").innerHTML = [
-      ["Məhsullar", state.data.products.length],
-      ["Aktiv məhsullar", state.data.products.filter((item) => item.active !== false).length],
-      ["Kateqoriyalar", state.data.categories.length],
-      ["Bannerlər", state.data.products.filter((item) => item.active !== false && ensureProductBanner(item).enabled !== false).length],
-      ["Media", cms().media.length],
-      ["Yayımlanmamış dəyişiklik", state.dirty ? "Var" : "Yoxdur"]
-    ].map(([label, count]) => `<div class="stat"><strong>${esc(count)}</strong><span>${esc(label)}</span></div>`).join("");
+    host.innerHTML = cards.map(([label, count, view]) => `<button type="button" class="stat dashboardCard" data-dashboard-view="${view}" data-state="${tone(count)}"><strong>${esc(present(count))}</strong><span>${esc(label)}</span></button>`).join("")
+      + '<div class="wide"><button class="btn" type="button" data-dashboard-refresh>Göstəriciləri yenidən yoxla</button></div>';
+  }
+  async function loadDashboard() {
+    const read = ++dashboardRead;
+    const loadCount = async (key, path, select) => {
+      try {
+        const count = select(await api(path));
+        if (!Number.isSafeInteger(count) || count < 0) throw Error();
+        if (read === dashboardRead) counts[key] = count;
+      } catch { if (read === dashboardRead) counts[key] = false; }
+      if (read === dashboardRead) renderDashboard();
+    };
+    await Promise.all([
+      loadCount("banners", "/api/admin/homepage-banners", result => result.managed === false ? undefined : result.banners.filter(b => b.active === true).length),
+      loadCount("orders", "/api/admin/payment-orders?tab=pending&page=1", result => result.counts?.pending),
+      loadCount("topups", "/api/admin/community/shop?only=topup-count", result => result.pending),
+      verifyPublication()
+    ]);
   }
   function renderCms() {
     if (!cms()) return;
@@ -1083,19 +1126,23 @@
     return checks.filter(([, path]) => JSON.stringify(get(baselineData, path)) !== JSON.stringify(get(state.data, path))).map(([label]) => label);
   }
   async function showPublishDialog() {
+    if (publishBusy) return;
     if (!state.dirty) return toast("Yayımlanacaq dəyişiklik yoxdur.", "bad");
     const sections = changedSections();
-    const result = await preview();
+    publishBusy = true;
+    let result;
+    try { result = await preview(); } finally { publishBusy = false; }
     if (!result) return;
     openModal("Dəyişiklikləri yoxlayın", `<div class="publishReview"><p>Avtomatik önizləmə və təhlükəsizlik yoxlamaları uğurla tamamlandı.</p><strong>Dəyişən bölmələr</strong><ul>${sections.map((section) => `<li>${esc(section)}</li>`).join("")}</ul><p>${result.productCount} məhsul · ${result.activeProductCount} aktiv məhsul · ${result.pageCount} statik səhifə</p>${result.warnings.map((warning) => `<p class="warningBox">${esc(warning)}</p>`).join("")}</div>`, "Təsdiqlə və yayımla", async () => {
       const confirmButton = el("modalConfirm");
+      if (publishBusy) return;
+      publishBusy = true;
       confirmButton.disabled = true;
-      await publishAndMonitor();
-      confirmButton.disabled = false;
+      try { await publishAndMonitor(); } finally { confirmButton.disabled = false; publishBusy = false; }
       if (state.lastPublishResult && !state.dirty) {
         baselineData = structuredClone(state.data);
         baselineSha = state.baseSha;
-        el("modalBody").innerHTML = `<div class="previewResult"><strong>Yayım uğurla başladıldı.</strong><p>Commit: ${esc(state.lastPublishResult.commitSha)}</p></div>`;
+        el("modalBody").innerHTML = `<div class="previewResult"><strong>Commit GitHub-a göndərildi; canlı yayım ayrıca yoxlanılır.</strong><p>Commit: ${esc(state.lastPublishResult.commitSha)}</p><button class="btn" type="button" data-dashboard-view="history">Yayım vəziyyətinə bax</button></div>`;
         el("modalConfirm").classList.add("hidden");
         el("modalCancel").textContent = "Bağla";
       }
@@ -1106,32 +1153,56 @@
     await saveState();
     const published = state.lastPublishResult;
     if (!published) return;
-    state.publishStatus = "cloudflare";
-    renderStats();
-    const selectedProduct = state.data.products.find((item) => item.id === selectedBannerProductId);
-    const liveImagePath = selectedProduct
-      ? (ensureProductBanner(selectedProduct).desktopImage || selectedProduct.image || "")
-      : "";
-    el("cmsPreviewResult").textContent = `Commit ${published.commitSha.slice(0, 12)} yaradıldı. Cloudflare və Render yoxlanılır...`;
-    for (let attempt = 0; attempt < 18; attempt += 1) {
-      try {
-        const status = await api(`/api/admin/deploy-status?appSha=${encodeURIComponent(published.sha)}&imagePath=${encodeURIComponent(liveImagePath)}`);
-        const image = status.cloudflare.bannerImage || {};
-        el("cmsPreviewResult").innerHTML = `<strong>Commit: ${esc(published.commitSha)}</strong><p>Cloudflare: HTTP ${status.cloudflare.status} — ${status.cloudflare.live ? "yeni məzmun canlıdır" : "deploy gözlənilir"}</p>${liveImagePath ? `<p>Banner şəkli: HTTP ${Number(image.status || 0)} · ${esc(image.contentType || "yoxlanılır")}</p>` : ""}<p>Render: ${esc(status.render.url)} — HTTP ${status.render.status}</p>`;
-        if (status.cloudflare.live && status.render.live) {
-          state.publishStatus = "live";
-          renderStats();
-          toast("Cloudflare və Render canlı yoxlaması uğurludur.");
-          return;
-        }
-      } catch (error) {
-        el("cmsPreviewResult").textContent = error.message;
-      }
-      await new Promise((resolve) => setTimeout(resolve, 5000));
+    latestPublication = published;
+    latestStatus = null;
+    deployAttempts = 3;
+    clearTimeout(deployTimer);
+    void verifyPublication();
+  }
+  function renderPublication() {
+    const html = latestPublication
+      ? `<div class="previewResult"><strong>Commit: ${esc(latestPublication.commitSha)}</strong><p>Cloudflare: ${latestStatus?.cloudflare?.live ? "Məzmun canlıda təsdiqləndi" : "Məzmunun canlı təsdiqi gözlənilir"}</p><p>Render: ${latestStatus?.render?.live ? "Gözlənilən versiya təsdiqləndi" : "Gözlənilən versiya təsdiqlənməyib"}${latestStatus?.render?.commit ? " · " + esc(latestStatus.render.commit.slice(0, 12)) : ""}</p>${latestStatus?.error ? '<p>Xəta baş verdi. Yayımı yenidən yoxlayın.</p>' : ""}</div>`
+      : latestStatus?.error ? "<p>Yayım məlumatı alınmadı. Yenidən yoxlayın.</p>" : "<p>Yayım qeydi tapılmadı.</p>";
+    el("releaseServices").innerHTML = html;
+    for (const row of el("historyList").querySelectorAll("[data-history-commit]")) {
+      row.textContent = latestStatus?.verified && row.dataset.historyCommit === latestPublication?.commitSha
+        ? "Canlıda təsdiqləndi" : "GitHub-a göndərilib · canlı yayım təsdiqlənməyib";
     }
-    state.publishStatus = "cloudflare";
-    renderStats();
-    toast("Commit yaradıldı, deploy hələ tamamlanmayıb. Statusu yenidən yoxlayın.", "bad");
+    renderDashboard();
+  }
+  async function verifyPublication() {
+    if (deployRead) return;
+    deployRead = true;
+    el("recheckPublish").disabled = true;
+    let target = latestPublication;
+    try {
+      if (!state.lastPublishResult) {
+        const result = await api("/api/admin/history?latest");
+        if (state.lastPublishResult) return;
+        latestPublication = target = result.publication || null;
+      }
+      if (!target) { latestStatus = { error: true }; return; }
+      const query = new URLSearchParams({ appSha: target.sha, commit: target.commitSha, version: target.version || "" });
+      const status = await api(`/api/admin/deploy-status?${query}`);
+      if (target !== latestPublication) return;
+      latestStatus = { ...status, verified: status.cloudflare?.live === true && status.render?.live === true };
+      if (!state.dirty && state.lastPublishResult === target) {
+        state.publishStatus = latestStatus.verified ? "live" : "cloudflare";
+        renderStats();
+      }
+    } catch {
+      if (target === latestPublication) latestStatus = { error: true };
+    } finally {
+      deployRead = false;
+      el("recheckPublish").disabled = false;
+      renderPublication();
+      if (target && target !== latestPublication) void verifyPublication();
+      else if (state.lastPublishResult && !latestStatus?.verified && deployAttempts > 0) {
+        deployAttempts -= 1;
+        clearTimeout(deployTimer);
+        deployTimer = setTimeout(verifyPublication, 10000);
+      }
+    }
   }
   async function uploadMedia() {
     const file = el("cmsMediaFile").files?.[0];
@@ -1155,7 +1226,8 @@
   async function loadHistory() {
     try {
       const result = await api("/api/admin/history");
-      el("historyList").innerHTML = result.items.map((item) => `<article class="cmsListItem"><strong>${esc(item.message)}</strong><span>${new Date(item.date).toLocaleString("az-AZ")}</span><code>${esc(item.sha.slice(0, 12))}</code><small>${esc(item.deployStatus)}</small><button class="btn" type="button" data-restore-sha="${esc(item.sha)}">Bu məzmunu önizlə</button></article>`).join("");
+      el("historyList").innerHTML = result.items.map((item) => `<article class="cmsListItem"><strong>${esc(item.message)}</strong><span>${new Date(item.date).toLocaleString("az-AZ", { timeZone: "Asia/Baku" })}</span><code>${esc(item.sha.slice(0, 12))}</code><small data-history-commit="${esc(item.sha)}">${esc(item.deployStatus)}</small><button class="btn" type="button" data-restore-sha="${esc(item.sha)}">Bu məzmunu önizlə</button></article>`).join("");
+      renderPublication();
       el("historyList").querySelectorAll("[data-restore-sha]").forEach((button) => {
         button.addEventListener("click", async () => {
           if (!confirm("Yalnız seçilmiş commitdəki sayt məzmunu önizləməyə gətirilsin? Yayımlanana qədər canlı sayt dəyişməyəcək.")) return;
@@ -1183,6 +1255,15 @@
       el("cmsMediaFileName").textContent = el("cmsMediaFile").files?.[0]?.name || "Şəkil seçilməyib";
     });
     el("refreshHistory").addEventListener("click", loadHistory);
+    el("recheckPublish").addEventListener("click", verifyPublication);
+    document.addEventListener("click", (event) => {
+      const view = event.target.closest("[data-dashboard-view]")?.dataset.dashboardView;
+      if (view) {
+        if (event.target.closest("#modal")) el("modalCancel").click();
+        document.querySelector(`.navBtn[data-view="${view}"]`)?.click();
+      }
+      if (event.target.closest("[data-dashboard-refresh]")) void loadDashboard();
+    });
     el("netflixAccountAdd")?.addEventListener("click", async () => { const input = el("netflixAccountEmail"); try { await api("/api/admin/netflix-accounts", { method: "POST", body: JSON.stringify({ email: input.value }) }); input.value = ""; await loadNetflixAccounts(); toast("Netflix hesabı əlavə edildi."); } catch (error) { toast(error.message, "bad"); } });
     el("netflixAccountSearch")?.addEventListener("input", () => loadNetflixAccounts());
     el("netflixAccountsList")?.addEventListener("click", async (event) => { const toggle = event.target.closest("[data-netflix-toggle]"); const remove = event.target.closest("[data-netflix-delete]"); try { if (toggle) { await api(`/api/admin/netflix-accounts/${encodeURIComponent(toggle.dataset.netflixToggle)}`, { method: "PATCH", body: JSON.stringify({ active: toggle.dataset.active === "true" }) }); await loadNetflixAccounts(); } else if (remove && confirm("Bu Netflix hesabı siyahıdan deaktiv ediləcək. Davam edilsin?")) { await api(`/api/admin/netflix-accounts/${encodeURIComponent(remove.dataset.netflixDelete)}`, { method: "DELETE" }); await loadNetflixAccounts(); } } catch (error) { toast(error.message, "bad"); } });
@@ -1245,7 +1326,12 @@
     installActions();
     installHooks();
     if (state.data) renderCms();
-    activateView(['communityUsers','communityGroup','communityShop','decorations'].includes(location.hash.slice(1))?location.hash.slice(1):"dashboard");
+    const requested = location.hash.slice(1);
+    setTimeout(() => {
+      const button = [...document.querySelectorAll(".navBtn[data-view]")].find(item => item.dataset.view === requested);
+      if (button) button.click();
+      else activateView("dashboard");
+    }, 0);
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
   else boot();

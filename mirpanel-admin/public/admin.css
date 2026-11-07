@@ -96,7 +96,7 @@ textarea {
 }
 
 .navGroup { display: grid; gap: 4px; margin-bottom: 10px; }
-.navGroupTitle { padding: 8px 12px 3px; color: #6f767d; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+.navGroupTitle { padding: 8px 12px 3px; color: #aeb3b9; font-size: 12px; font-weight: 600; }
 
 .navBtn {
   border: 0;
@@ -106,7 +106,8 @@ textarea {
   padding: 11px 12px;
   text-align: left;
   cursor: pointer;
-  font-weight: 750;
+  font-size: 14px;
+  font-weight: 550;
 }
 
 .navBtn:hover,
@@ -116,6 +117,17 @@ textarea {
 }
 
 .nav a.navBtn { display: block; text-decoration: none; }
+.navBtn.active { color: #ffdf54; box-shadow: inset 2px 0 #ffd400; }
+.navBtn:focus-visible,.dashboardCard:focus-visible { outline: 2px solid #ffd400; outline-offset: -2px; }
+.stats[hidden] { display: none; }
+.dashboardCard { text-align: left; font: inherit; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
+.dashboardCard:hover { border-color: #ffd400; }
+.dashboardCard strong { font-size: clamp(16px, 2vw, 22px); }
+.dashboardCard[data-state="verified"] strong { color: #62e69b; }
+.dashboardCard[data-state="failed"] strong { color: #ff8e98; }
+.changeStatus[data-status="failed"] { color: #ff8e98; }
+.main .panelHead h2 { font-size: clamp(20px, 2vw, 24px); }
+.main table :is(td,th) { font-size: 14px; }
 
 .logout {
   margin-top: auto;
@@ -1140,8 +1152,9 @@ th {
   .sidebar { overflow: hidden; }
   .nav { display: grid; grid-template-columns: 1fr; overflow: visible; max-height: none; width: 100%; }
   .navGroup { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: 100%; margin: 0; }
-  .navGroupTitle { display: none; }
+  .navGroupTitle { grid-column: 1 / -1; }
   .navBtn { min-width: 0; white-space: normal; }
+  #productsView .btn, #paymentOrdersView .btn, #paymentMethodsView .btn { min-height: 44px; }
 }
 
 @media (max-width: 420px) {

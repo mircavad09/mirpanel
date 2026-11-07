@@ -35,25 +35,27 @@ function fakeSupabase() {
     update(values) { this.mode = "update"; this.values = values; return this; }
     delete() { this.mode = "delete"; return this; }
     single() { this.wantSingle = true; return this; }
+    maybeSingle() { this.wantSingle = true; this.maybe = true; return this; }
     then(resolve) {
       let rows = tables[this.table];
       const matches = (row) => this.filters.every((filter) => filter(row));
       if (this.mode === "insert") {
+        if (this.values.id && rows.some(row=>row.id===this.values.id)) return resolve({ data:null,error:{code:"23505"} });
         const now = new Date().toISOString();
         const row = { id: `00000000-0000-4000-8000-${String(++id).padStart(12,"0")}`, created_at: now, updated_at: now, ...clone(this.values) };
         rows.push(row); return resolve({ data: this.wantSingle ? clone(row) : [clone(row)], error: null });
       }
       if (this.mode === "update") {
         const changed = rows.filter(matches).map((row) => Object.assign(row, clone(this.values), { updated_at: new Date().toISOString() }));
-        return resolve({ data: this.wantSingle ? clone(changed[0]) : clone(changed), error: changed.length ? null : { message: "not found" } });
+        return resolve({ data: this.wantSingle ? clone(changed[0]) : clone(changed), error: changed.length || this.maybe ? null : { message: "not found" } });
       }
       if (this.mode === "delete") {
         const removed = rows.filter(matches); tables[this.table] = rows.filter((row) => !matches(row));
         if (this.table === "story_categories") tables.story_items = tables.story_items.filter((item) => !removed.some((story) => story.id === item.story_id));
-        return resolve({ data: clone(removed), error: null });
+        return resolve({ data: this.wantSingle ? clone(removed[0]) : clone(removed), error: null });
       }
       const found = rows.filter(matches);
-      return resolve({ data: this.wantSingle ? clone(found[0]) : clone(found), error: this.wantSingle && !found[0] ? { message: "not found" } : null });
+      return resolve({ data: this.wantSingle ? clone(found[0]) : clone(found), error: this.wantSingle && !this.maybe && !found[0] ? { message: "not found" } : null });
     }
   }
   return {
@@ -71,7 +73,13 @@ function fakeSupabase() {
 
 const client = fakeSupabase();
 const repo = createStoriesRepository(client);
-const story = await repo.createStory({ title: "Bloggerlər", sortOrder: 2, active: true, cover: { contentBase64: jpg.toString("base64") } });
+const creation = { operationId:"10000000-0000-4000-8000-000000000001", title: "Bloggerlər", sortOrder: 2, active: true, cover: { contentBase64: jpg.toString("base64") } };
+const [story, replay] = await Promise.all([repo.createStory(creation), repo.createStory(creation)]);
+assert.equal(story.id,replay.id);
+assert.equal(client.tables.story_categories.length,1);
+assert.equal(client.objects.size,1);
+await assert.rejects(repo.updateStory(story.id,{title:"Köhnə forma",version:"2000-01-01"}),{status:409});
+await assert.rejects(repo.deleteStory(story.id,"2000-01-01"),{status:409});
 const imageItem = await repo.createItem(story.id, { mediaType: "image", caption: "Şəkil", sortOrder: 1, active: true, media: { contentBase64: png.toString("base64") } });
 const videoItem = await repo.createItem(story.id, { mediaType: "video", caption: "Video", sortOrder: 2, active: true, media: { contentBase64: mp4.toString("base64") } });
 let publicStories = await repo.listPublic();

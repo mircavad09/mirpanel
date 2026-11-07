@@ -5,6 +5,10 @@
   const VIDEO_EXTENSIONS = new Set(["mp4", "mov", "webm"]);
   const VIDEO_MIME_TYPES = new Set(["video/mp4", "video/quicktime", "video/webm"]);
   let snapshot = { stories: [], activeStories: 0, activeItems: 0, limits: { imageMb: 5, videoMb: 1024 } };
+  let storyWrite = false;
+  let storyRead = false;
+  const storyStatus = (text) => { document.getElementById("storiesStatus").textContent = text; };
+  const storySaved = () => storyStatus("Saxlandı · aktiv Stories növbəti oxunuşda yenilənir; ayrıca yayım lazım deyil.");
 
   function finalSaveButton(scope) {
     return scope?.querySelector("[data-story-final-save],[data-item-save]");
@@ -157,7 +161,7 @@
 
   function handleStoriesChange(event) {
     if (event.target.matches('input[name="media"],[data-item-file]')) return void handleMediaSelection(event);
-    const scope = event.target.closest("[data-item-create],[data-item-card]");
+    const scope = event.target.closest("[data-item-create],[data-item-card],[data-story-head]");
     if (scope) setUnsaved(scope, true);
   }
 
@@ -204,6 +208,7 @@
     view.innerHTML = `<div class="panel editorPanel cmsPanel">
       <div class="panelHead"><div><h2>Stories</h2><p>Ana səhifədə görünən story dairələrini və media ardıcıllığını idarə edin.</p></div><button class="btn" id="storiesRefresh" type="button">Yenilə</button></div>
       <div class="storyAdminStats" id="storyAdminStats"></div>
+      <p id="storiesStatus" role="status"></p>
       <form class="storyAdminCreate" id="storyCreateForm">
         <h3>Yeni story kateqoriyası</h3>
         <label>Başlıq<input name="title" maxlength="80" required></label>
@@ -215,10 +220,13 @@
       <div class="storiesAdminList" id="storiesAdminList"></div>
     </div>`;
     document.querySelector(".main").appendChild(view);
-    document.getElementById("storiesRefresh").addEventListener("click", loadStories);
+    document.getElementById("storiesRefresh").addEventListener("click", () => loadStories(true));
     document.getElementById("storyCreateForm").addEventListener("submit", createStory);
     document.getElementById("storiesAdminList").addEventListener("click", handleAction);
     document.getElementById("storiesAdminList").addEventListener("change", handleStoriesChange);
+    document.getElementById("storiesAdminList").addEventListener("input", (event) => {
+      if (!event.target.matches('input[type="file"]')) handleStoriesChange(event);
+    });
     window.addEventListener("beforeunload", (event) => {
       if (!document.querySelector('[data-unsaved="true"]')) return;
       event.preventDefault(); event.returnValue = "";
@@ -234,7 +242,7 @@
   function render() {
     document.getElementById("storyAdminStats").innerHTML = `<span><b>${snapshot.activeStories}</b> aktiv story</span><span><b>${snapshot.activeItems}</b> aktiv media</span>`;
     document.getElementById("storiesAdminList").innerHTML = snapshot.stories.map((story) => `<article class="storyAdminCard" data-story-card="${story.id}">
-      <div class="storyAdminHead">
+      <div class="storyAdminHead" data-story-head data-version="${escs(story.updated_at)}">
         <img src="${escs(story.coverUrl)}" alt="">
         <label>Başlıq<input data-story-title value="${escs(story.title)}" maxlength="80"></label>
         <label>Sıra<input data-story-order type="number" min="1" value="${story.sort_order}"></label>
@@ -243,7 +251,7 @@
         <button class="btn" type="button" data-story-save="${story.id}">Yadda saxla</button>
         <button class="btn danger" type="button" data-story-delete="${story.id}">Story-ni sil</button>
       </div>
-      <div class="storyAdminItems">${story.items.map((item) => `<div class="storyAdminItem" data-item-card="${item.id}">
+      <div class="storyAdminItems">${story.items.map((item) => `<div class="storyAdminItem" data-item-card="${item.id}" data-version="${escs(item.updated_at)}">
         <div class="storyAdminPreview">${mediaPreview(item)}</div>
         <label>Qısa izah<input data-item-caption maxlength="240" value="${escs(item.caption)}"></label>
         <label>Sıra<input data-item-order type="number" min="1" value="${item.sort_order}"></label>
@@ -267,38 +275,57 @@
     document.querySelectorAll("[data-item-create]").forEach((form) => form.addEventListener("submit", createItem));
   }
 
-  async function loadStories() {
+  async function loadStories(explicit = false) {
     const list = document.getElementById("storiesAdminList"); if (!list) return;
-    list.innerHTML = '<p class="emptyState">Stories yüklənir…</p>';
-    try { snapshot = await api("/api/admin/stories"); render(); }
-    catch (error) { list.innerHTML = `<p class="emptyState bad">${escs(error.message)}</p>`; }
+    if (storyRead) return;
+    const hasEdits = () => list.querySelector('[data-unsaved="true"]');
+    if (hasEdits() && (!explicit || !confirm("Saxlanmamış Story dəyişiklikləri var. Siyahını yeniləyib onları silmək istəyirsiniz?"))) return;
+    storyRead = true;
+    list.setAttribute("aria-busy", "true");
+    if (!list.children.length) list.innerHTML = '<p class="emptyState">Stories yüklənir…</p>';
+    const previousEdits = [...list.querySelectorAll('[data-unsaved="true"]')];
+    const onEdit = () => { changed = true; };
+    let changed = false;
+    list.addEventListener("input", onEdit);
+    list.addEventListener("change", onEdit);
+    try { const next = await api("/api/admin/stories"); if (!changed && (explicit || !hasEdits()) && (!explicit || [...list.querySelectorAll('[data-unsaved="true"]')].every(node=>previousEdits.includes(node)))) { snapshot = next; render(); } }
+    catch (error) { storyStatus("Xəta baş verdi · " + error.message + " Yenilə ilə təkrar yoxlayın."); }
+    finally { storyRead = false; list.removeAttribute("aria-busy"); list.removeEventListener("input", onEdit); list.removeEventListener("change", onEdit); }
   }
 
   async function createStory(event) {
-    event.preventDefault(); const form = event.currentTarget; const button = form.querySelector("button[type=submit]"); button.disabled = true;
+    event.preventDefault(); if (storyWrite || storyRead) return; storyWrite = true;
+    const form = event.currentTarget; const button = form.querySelector("button[type=submit]"); button.disabled = true;
     try {
-      await api("/api/admin/stories", { method: "POST", body: JSON.stringify({ title: form.title.value, sortOrder: form.sortOrder.value, active: form.active.checked, cover: await uploadPayload(form.cover.files[0], "image") }) });
+      form.dataset.operationId ||= crypto.randomUUID();
+      await api("/api/admin/stories", { method: "POST", body: JSON.stringify({ operationId: form.dataset.operationId, title: form.title.value, sortOrder: form.sortOrder.value, active: form.active.checked, cover: await uploadPayload(form.cover.files[0], "image") }) });
+      delete form.dataset.operationId; storySaved();
       form.reset(); form.sortOrder.value = "1"; form.active.checked = true; toast("Story yaradıldı. Ana səhifədə görünməsi üçün aktiv element əlavə edin."); await loadStories();
-    } catch (error) { toast(error.message, "bad"); } finally { button.disabled = false; }
+    } catch (error) { storyStatus("Xəta baş verdi · "+error.message); toast(error.message, "bad"); } finally { button.disabled = false; storyWrite = false; }
   }
 
   async function createItem(event) {
-    event.preventDefault(); const form = event.currentTarget; const button = form.querySelector("button[type=submit]"); button.disabled = true;
+    event.preventDefault(); if (storyWrite || storyRead) return; storyWrite = true;
+    const form = event.currentTarget; const button = form.querySelector("button[type=submit]"); button.disabled = true;
     try {
       const kind = form.mediaType.value; const storyId = form.dataset.itemCreate; const file = form.media.files[0];
       if (form.dataset.uploading) throw new Error("Video yüklənir. Yükləmə tamamlanandan sonra yadda saxlayın.");
       const directUploadId = kind === "video" ? form.dataset.directUploadId : null;
       if (kind === "video" && !directUploadId) throw new Error("Video hələ yüklənməyib. Yükləmə tamamlanandan sonra yadda saxlayın.");
-      await api(`/api/admin/stories/${storyId}/items`, { method: "POST", body: JSON.stringify({ mediaType: kind, media: kind === "image" ? await uploadPayload(file, kind) : null, directUploadId, caption: form.caption.value, sortOrder: form.sortOrder.value, active: form.active.checked }) });
-      setUnsaved(form, false); delete form.dataset.directUploadId;
+      form.dataset.operationId ||= crypto.randomUUID();
+      await api(`/api/admin/stories/${storyId}/items`, { method: "POST", body: JSON.stringify({ operationId: form.dataset.operationId, mediaType: kind, media: kind === "image" ? await uploadPayload(file, kind) : null, directUploadId, caption: form.caption.value, sortOrder: form.sortOrder.value, active: form.active.checked }) });
+      setUnsaved(form, false); delete form.dataset.directUploadId; delete form.dataset.operationId; form.reset(); storySaved();
       toast("Story uğurla yadda saxlanıldı."); await loadStories();
-    } catch (error) { toast(error.message, "bad"); } finally { button.disabled = false; }
+    } catch (error) { storyStatus("Xəta baş verdi · "+error.message); toast(error.message, "bad"); } finally { button.disabled = false; storyWrite = false; }
   }
 
   async function handleAction(event) {
     const storySave = event.target.closest("[data-story-save]"); const storyDelete = event.target.closest("[data-story-delete]");
     const itemSave = event.target.closest("[data-item-save]"); const itemDelete = event.target.closest("[data-item-delete]");
     const uploadRetry = event.target.closest("[data-upload-retry]");
+    if (!storySave && !storyDelete && !itemSave && !itemDelete && !uploadRetry) return;
+    if (storyWrite || storyRead) return;
+    storyWrite = true;
     try {
       if (uploadRetry) {
         const scope = uploadRetry.closest("[data-item-create],[data-item-card]");
@@ -308,12 +335,16 @@
       }
       if (storyDelete) {
         if (!confirm("Bu story və bütün elementləri silinsin? Bu əməliyyat geri qaytarılmır.")) return;
-        await api(`/api/admin/stories/${storyDelete.dataset.storyDelete}`, { method: "DELETE" }); toast("Story silindi."); return loadStories();
+        const head = storyDelete.closest("[data-story-head]");
+        await api(`/api/admin/stories/${storyDelete.dataset.storyDelete}`, { method: "DELETE", body: JSON.stringify({version:head.dataset.version}) });
+        head.closest("[data-story-card]").remove(); storySaved(); return await loadStories();
       }
       if (storySave) {
-        const card = storySave.closest("[data-story-card]"); storySave.disabled = true;
-        await api(`/api/admin/stories/${storySave.dataset.storySave}`, { method: "PATCH", body: JSON.stringify({ title: card.querySelector("[data-story-title]").value, sortOrder: card.querySelector("[data-story-order]").value, active: card.querySelector("[data-story-active]").checked, cover: await uploadPayload(card.querySelector("[data-story-cover]").files[0], "image") }) });
-        toast("Story yeniləndi."); return loadStories();
+        const card = storySave.closest("[data-story-head]"); storySave.disabled = true;
+        const {story} = await api(`/api/admin/stories/${storySave.dataset.storySave}`, { method: "PATCH", body: JSON.stringify({ version:card.dataset.version,title: card.querySelector("[data-story-title]").value, sortOrder: card.querySelector("[data-story-order]").value, active: card.querySelector("[data-story-active]").checked, cover: await uploadPayload(card.querySelector("[data-story-cover]").files[0], "image") }) });
+        card.dataset.version = story?.updated_at || card.dataset.version; setUnsaved(card,false);
+        card.querySelector("[data-story-cover]").value = "";
+        storySaved(); return await loadStories();
       }
       if (itemDelete) {
         if (!confirm("Bu story elementi silinsin?")) return;
@@ -324,18 +355,23 @@
       if (itemSave) {
         const card = itemSave.closest("[data-item-card]"); itemSave.disabled = true;
         if (card.dataset.pendingDelete === "true") {
-          await api(`/api/admin/story-items/${itemSave.dataset.itemSave}`, { method: "DELETE" });
-          setUnsaved(card, false); toast("Story uğurla yadda saxlanıldı."); return loadStories();
+          await api(`/api/admin/story-items/${itemSave.dataset.itemSave}`, { method: "DELETE", body: JSON.stringify({version:card.dataset.version}) });
+          card.remove(); storySaved(); return await loadStories();
         }
         if (card.dataset.uploading) throw new Error("Video yüklənir. Yükləmə tamamlanandan sonra yadda saxlayın.");
         const kind = card.querySelector("[data-item-type]").value; const file = card.querySelector("[data-item-file]").files[0];
         const directUploadId = kind === "video" && file ? card.dataset.directUploadId : null;
         if (kind === "video" && file && !directUploadId) throw new Error("Video hələ yüklənməyib. Yükləmə tamamlanandan sonra yadda saxlayın.");
-        await api(`/api/admin/story-items/${itemSave.dataset.itemSave}`, { method: "PATCH", body: JSON.stringify({ mediaType: kind, media: kind === "image" ? await uploadPayload(file, kind) : null, directUploadId, caption: card.querySelector("[data-item-caption]").value, sortOrder: card.querySelector("[data-item-order]").value, active: card.querySelector("[data-item-active]").checked }) });
+        const {item} = await api(`/api/admin/story-items/${itemSave.dataset.itemSave}`, { method: "PATCH", body: JSON.stringify({ version:card.dataset.version,mediaType: kind, media: kind === "image" ? await uploadPayload(file, kind) : null, directUploadId, caption: card.querySelector("[data-item-caption]").value, sortOrder: card.querySelector("[data-item-order]").value, active: card.querySelector("[data-item-active]").checked }) });
+        card.dataset.version = item?.updated_at || card.dataset.version;
+        card.querySelector("[data-item-file]").value = "";
         setUnsaved(card, false); delete card.dataset.directUploadId;
-        toast("Story uğurla yadda saxlanıldı."); return loadStories();
+        storySaved(); return await loadStories();
       }
-    } catch (error) { toast(error.message, "bad"); storySave && (storySave.disabled = false); itemSave && (itemSave.disabled = false); }
+    } catch (error) {
+      storyStatus("Xəta baş verdi · "+error.message+" Yazdıqlarınız qorunub."); toast(error.message, "bad");
+      if (itemSave) itemSave.disabled = false;
+    } finally { if (storySave) storySave.disabled = false; storyWrite = false; }
   }
 
   function boot() { installView(); }

@@ -62,11 +62,11 @@
         options.placement=node.querySelector('[data-job-placement]').value;
         await api(`/api/admin/homepage-banners/uploads/${job.id}/complete`,{method:'POST',body:JSON.stringify({options})});
       }
-      status.textContent='Banner uğurla yükləndi və yayımlandı.';
+      status.textContent='Saxlandı · aktiv banner növbəti oxunuşda tətbiq olunur.';
       job.done=true; jobs.delete(job.id); URL.revokeObjectURL(job.preview);
       mounted.querySelector('[data-banner-message]').textContent=status.textContent;
       node.remove();
-      await refresh().catch(()=>{mounted.querySelector('[data-banner-message]').textContent='Banner yayımlandı. Siyahını yeniləmək üçün səhifəni yeniləyin.';});
+      await refresh().catch(()=>{mounted.querySelector('[data-banner-message]').textContent='Banner saxlandı. Siyahını Yenilə düyməsi ilə yoxlayın.';});
     } catch(error) {
       status.textContent=error.message || 'Şəkil yüklənmədi.'; retry.hidden=false;
     } finally {job.busy=false;}
@@ -95,13 +95,30 @@
   async function saveCard(b,row,extra={}) {
     if(loading) return; loading=true; row.querySelectorAll('input,button,select').forEach(el=>el.disabled=true);
     row.querySelector('[data-banner-status]').textContent='Yadda saxlanır…';
-    try {await api(`/api/admin/homepage-banners/${b.id}`,{method:'PATCH',body:JSON.stringify({order:b.order,active:row.querySelector('[data-banner-active]').checked,...targetValues(row),placement:row.querySelector('[data-banner-placement]').value,focus:row.querySelector('[data-banner-focus]').value,newTab:row.querySelector('[data-banner-new-tab]').checked,version:b.version,...extra})});await refresh();}
-    catch(error) {toast(error.message,'bad');render();} finally {loading=false;}
+    const status=row.querySelector('[data-banner-status]');
+    try {
+      await api(`/api/admin/homepage-banners/${b.id}`,{method:'PATCH',body:JSON.stringify({order:b.order,active:row.querySelector('[data-banner-active]').checked,...targetValues(row),placement:row.querySelector('[data-banner-placement]').value,focus:row.querySelector('[data-banner-focus]').value,newTab:row.querySelector('[data-banner-new-tab]').checked,version:b.version,...extra})});
+      mounted.querySelector('[data-banner-message]').textContent='Saxlandı · ana səhifə bannerləri növbəti oxunuşda yenilənir; ayrıca yayım lazım deyil.';
+      try {await refresh();} catch(error) { status.textContent='Saxlandı, amma siyahı yenilənmədi. Yenilə düyməsi ilə yoxlayın.'; }
+    } catch(error) {
+      status.textContent='Xəta baş verdi · '+error.message+(error.status===409?' Yazdıqlarınızı qeyd edib siyahını yeniləyin.':' Yazdıqlarınız qorunub.');
+      toast(status.textContent,'bad');
+    } finally {
+      row.querySelectorAll('input,button,select').forEach(el=>el.disabled=false);
+      loading=false;
+    }
   }
   function mount(host) {
     if(mounted===host) return; mounted=host;
-    host.innerHTML='<button class="btn primary homepageBannerAdd" data-banner-add>+ Şəkil əlavə et</button><label class="homepageBannerNewPlacement">Yeni şəklin yerləşməsi<select data-banner-new-placement><option value="main">Əsas böyük banner</option><option value="side">Sağ kiçik banner</option></select></label><input data-banner-file type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden><p>JPG, PNG və WebP · maksimum 20 MiB · 4K (3840×2160) dəstəklənir.</p><p>Sağda sıralamaya görə ilk 2 aktiv kiçik banner göstərilir. Şəkillər fokus mövqeyinə uyğun paneli tam doldurur.</p><p data-banner-message role="status"></p><div data-banner-jobs></div><div data-banner-list></div>';
+    host.innerHTML='<button class="btn primary homepageBannerAdd" data-banner-add>+ Şəkil əlavə et</button> <button class="btn" type="button" data-banner-refresh>Yenilə</button><label class="homepageBannerNewPlacement">Yeni şəklin yerləşməsi<select data-banner-new-placement><option value="main">Əsas böyük banner</option><option value="side">Sağ kiçik banner</option></select></label><input data-banner-file type="file" accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp" hidden><p>JPG, PNG və WebP · maksimum 20 MiB · 4K (3840×2160) dəstəklənir.</p><p>Sağda sıralamaya görə ilk 2 aktiv kiçik banner göstərilir. Şəkillər fokus mövqeyinə uyğun paneli tam doldurur.</p><p data-banner-message role="status"></p><div data-banner-jobs></div><div data-banner-list></div>';
     host.addEventListener('click',async event=>{
+      if(event.target.closest('[data-banner-refresh]')) {
+        if(loading)return;loading=true;
+        try { await refresh();host.querySelector('[data-banner-message]').textContent='Siyahı yeniləndi.'; }
+        catch(error) { host.querySelector('[data-banner-message]').textContent='Məlumat alınmadı · '+error.message; }
+        finally {loading=false;}
+        return;
+      }
       const productPick=event.target.closest('[data-banner-product-pick]');
       if(productPick) {
         const target=productPick.closest('[data-banner-target]'),container=target.parentElement;

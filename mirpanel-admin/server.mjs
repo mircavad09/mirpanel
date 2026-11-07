@@ -70,6 +70,7 @@ const config = {
 };
 
 const sessions = new Map();
+const editorWrites = new WeakSet();
 const sessionTtl = ADMIN_IDLE_MS;
 const maxProductImageSize = 5 * 1024 * 1024;
 const productImageTypes = new Map([
@@ -244,7 +245,7 @@ async function github(pathname, options = {}) {
 
   const response = await fetch(`https://api.github.com${pathname}`, {
     ...options,
-    ...(!options.method || options.method === "GET" ? { signal: AbortSignal.timeout(15000) } : {}),
+    signal: AbortSignal.timeout(!options.method || options.method === "GET" ? 15000 : 25000),
     headers: {
       Accept: "application/vnd.github+json",
       Authorization: `Bearer ${config.token}`,
@@ -599,13 +600,21 @@ async function commitRepoFiles({ parent, files, removedPaths, message }) {
       parents: [parent.commitSha]
     })
   });
-  await github(
-    `/repos/${config.repo}/git/refs/heads/${encodeURIComponent(config.branch)}`,
-    {
-      method: "PATCH",
-      body: JSON.stringify({ sha: commit.sha, force: false })
+  try {
+    await github(
+      `/repos/${config.repo}/git/refs/heads/${encodeURIComponent(config.branch)}`,
+      { method: "PATCH", body: JSON.stringify({ sha: commit.sha, force: false }) }
+    );
+  } catch (error) {
+    // The branch update may have succeeded even if its response was lost.
+    const current = await getBranchHead().catch(() => null);
+    if (current?.commitSha !== commit.sha) {
+      if (current && current.commitSha !== parent.commitSha) {
+        throw Object.assign(new Error("Yayım zamanı GitHub məlumatı dəyişdi."), { status: 409 });
+      }
+      throw error;
     }
-  );
+  }
 
   return {
     commitSha: commit.sha,
@@ -818,7 +827,7 @@ async function handleApi(request, response) {
     if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
     if (!requireMutationAuth(request, response)) return;
     if (request.method === "DELETE") {
-      await storiesRepository.deleteStory(storyMatch[1]);
+      await storiesRepository.deleteStory(storyMatch[1], (await readBody(request, 20000)).version);
       return json(response, 200, { ok: true });
     }
     return json(response, 200, { story: await storiesRepository.updateStory(storyMatch[1], await readBody(request, 8_000_000)) });
@@ -858,7 +867,7 @@ async function handleApi(request, response) {
     if (!storiesRepository) return json(response, 503, { error: "Stories xidməti hazır deyil." });
     if (!requireMutationAuth(request, response)) return;
     if (request.method === "DELETE") {
-      await storiesRepository.deleteItem(storyItemMatch[1]);
+      await storiesRepository.deleteItem(storyItemMatch[1], (await readBody(request, 20000)).version);
       return json(response, 200, { ok: true });
     }
     return json(response, 200, { item: await storiesRepository.updateItem(storyItemMatch[1], await readBody(request, 36_000_000)) });
@@ -908,6 +917,7 @@ async function handleApi(request, response) {
       currentSha: file.sha,
       data: hasDraft ? draft.data : extractAdminState(file.source),
       draftSaved: hasDraft,
+      draftRevision: draft?.savedAt || 0,
       draftConflict: hasDraft && draft.baseSha !== file.sha,
       pendingUploads: [...(session.pendingUploads?.keys() || [])],
       csrfToken: session.csrfToken,
@@ -915,10 +925,18 @@ async function handleApi(request, response) {
     });
   }
 
-  if (request.method === "GET" && request.url === "/api/admin/history") {
+  if (request.method === "GET" && ["/api/admin/history", "/api/admin/history?latest"].includes(request.url)) {
+    const latestOnly = request.url.endsWith("?latest");
     const commits = await github(
-      `/repos/${config.repo}/commits?sha=${encodeURIComponent(config.branch)}&path=app.js&per_page=20`
+      `/repos/${config.repo}/commits?sha=${encodeURIComponent(config.branch)}&path=app.js&per_page=${latestOnly ? 1 : 20}`
     );
+    if (latestOnly) {
+      const commitSha = commits[0]?.sha;
+      if (!commitSha) return json(response, 200, { publication: null });
+      const [app, home] = await Promise.all([getRepoFile("app.js", commitSha), getRepoFile("index.html", commitSha)]);
+      const version = home.source.match(/app\.js\?v=(admin-\d+)"/)?.[1] || "";
+      return json(response, 200, { publication: { commitSha, sha: app.sha, version } });
+    }
     return json(response, 200, {
       items: commits.map((commit) => ({
         sha: commit.sha,
@@ -926,7 +944,7 @@ async function handleApi(request, response) {
         message: commit.commit?.message || "",
         section: "Sayt məzmunu",
         type: "Yayım",
-        deployStatus: "GitHub-a göndərilib"
+        deployStatus: "GitHub-a göndərilib · canlı yayım təsdiqlənməyib"
       }))
     });
   }
@@ -934,34 +952,51 @@ async function handleApi(request, response) {
   if (request.method === "GET" && request.url.startsWith("/api/admin/deploy-status")) {
     const requestUrl = new URL(request.url, "http://localhost");
     const expectedSha = String(requestUrl.searchParams.get("appSha") || "");
+    const expectedCommit = String(requestUrl.searchParams.get("commit") || "");
+    const expectedVersion = String(requestUrl.searchParams.get("version") || "");
+    const renderCommit = /^[a-f0-9]{40}$/i.test(process.env.RENDER_GIT_COMMIT || "") ? process.env.RENDER_GIT_COMMIT : "";
+    const verifyRender = async () => {
+      if (!renderCommit || !/^[a-f0-9]{40}$/i.test(expectedCommit)) return false;
+      if (renderCommit === expectedCommit) return true;
+      // An unrelated newer deploy can retain the exact content. Require both
+      // the deployed bytes and Git ancestry; availability alone proves neither.
+      const deployedApp = await fs.promises.readFile(path.join(root, "..", "app.js"));
+      if (gitBlobSha(deployedApp) !== expectedSha) return false;
+      const result = await github(`/repos/${config.repo}/compare/${expectedCommit}...${renderCommit}?per_page=1`);
+      return result.status === "ahead" && result.merge_base_commit?.sha === expectedCommit;
+    };
     const requestedImage = String(requestUrl.searchParams.get("imagePath") || "").trim();
     let imageUrl = "";
     try {
       const parsedImage = new URL(requestedImage || "/", "https://mirpanel.com/");
       if (parsedImage.origin === "https://mirpanel.com" && requestedImage) imageUrl = parsedImage.href;
     } catch { /* invalid image URL is reported below */ }
-    const [siteResult, adminResult, imageResult] = await Promise.allSettled([
-      fetch(`https://mirpanel.com/app.js?deploy-check=${Date.now()}`, { redirect: "follow" }),
-      fetch("https://mirpanel.onrender.com/", { redirect: "follow" }),
-      imageUrl ? fetch(imageUrl, { redirect: "follow", headers: { Accept: "image/avif,image/webp,image/png,image/jpeg" } }) : Promise.resolve(null)
+    const probe = async (url, kind) => {
+      const res = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(9000) });
+      const type = res.headers.get("content-type") || "";
+      const value = !res.ok ? "" :
+        kind === "script" && /javascript/i.test(type) ? gitBlobSha(Buffer.from(await res.arrayBuffer())) :
+        kind === "html" && /text\/html/i.test(type) ? await res.text() : "";
+      if (!value) await res.body?.cancel();
+      return { status: res.status, type, value };
+    };
+    const nonce = Date.now();
+    const [siteResult, homeResult, imageResult, renderResult] = await Promise.allSettled([
+      probe(`https://mirpanel.com/app.js?deploy-check=${nonce}`, "script"),
+      expectedVersion ? probe(`https://mirpanel.com/?deploy-check=${nonce}`, "html") : Promise.resolve(null),
+      imageUrl ? probe(imageUrl, "image") : Promise.resolve(null),
+      verifyRender()
     ]);
-    let liveAppSha = "";
-    let siteStatus = 0;
-    if (siteResult.status === "fulfilled") {
-      siteStatus = siteResult.value.status;
-      if (siteResult.value.ok) {
-        liveAppSha = gitBlobSha(Buffer.from(await siteResult.value.arrayBuffer()));
-      }
-    }
-    const adminStatus = adminResult.status === "fulfilled" ? adminResult.value.status : 0;
-    const imageResponse = imageResult.status === "fulfilled" ? imageResult.value : null;
-    const imageStatus = imageResponse?.status || 0;
-    const imageType = imageResponse?.headers?.get("content-type") || "";
+    const liveAppSha = siteResult.value?.value || "";
+    const siteStatus = siteResult.value?.status || 0;
+    const homeMatches = !expectedVersion || (/^admin-\d+$/.test(expectedVersion) && Boolean(homeResult.value?.value?.includes(`app.js?v=${expectedVersion}"`)));
+    const imageStatus = imageResult.value?.status || 0;
+    const imageType = (imageResult.value?.type || "").split(";")[0];
     const imageLive = !imageUrl || (imageStatus === 200 && /^image\/(?:jpeg|png|webp)$/i.test(imageType));
     return json(response, 200, {
       cloudflare: {
         status: siteStatus,
-        live: Boolean(expectedSha && liveAppSha === expectedSha && imageLive),
+        live: Boolean(/^[a-f0-9]{40}$/i.test(expectedSha) && liveAppSha === expectedSha && homeMatches && imageLive),
         liveAppSha,
         bannerImage: {
           url: imageUrl,
@@ -972,8 +1007,8 @@ async function handleApi(request, response) {
       },
       render: {
         url: "https://mirpanel.onrender.com/",
-        status: adminStatus,
-        live: adminStatus === 200
+        commit: renderCommit,
+        live: renderResult.value === true
       }
     });
   }
@@ -1050,6 +1085,9 @@ async function handleApi(request, response) {
   if (request.method === "POST" && request.url === "/api/admin/banner-draft") {
     const session = requireMutationAuth(request, response);
     if (!session) return;
+    if (editorWrites.has(session)) return json(response,409,{error:"Başqa saxlama gedir. Tamamlandıqdan sonra yenidən yoxlayın."});
+    editorWrites.add(session);
+    try {
     const body = await readBody(request);
     const productId = String(body.productId || "").trim();
     if (!body.baseSha || !productId || !body.banner) {
@@ -1058,6 +1096,8 @@ async function handleApi(request, response) {
     const parent = await getBranchHead();
     const current = await getRepoFile("app.js", parent.commitSha);
     const publishedData = extractAdminState(current.source);
+    if (current.sha !== body.baseSha) return json(response, 409, { error: "Canlı məzmun başqa pəncərədə dəyişib. Qaralamanız saxlanılmadı; məlumatı müqayisə edin." });
+    if ((session.draft?.savedAt || 0) !== (body.draftRevision || 0)) return json(response, 409, { error: "Qaralama başqa pəncərədə dəyişib. Yazdıqlarınızı qoruyub yeni qaralamanı ayrıca pəncərədə açın." });
     const draftBase = session.draft?.baseSha === body.baseSha
       ? session.draft.data
       : publishedData;
@@ -1071,7 +1111,7 @@ async function handleApi(request, response) {
     session.draft = {
       baseSha: body.baseSha,
       data: normalized,
-      savedAt: Date.now()
+      savedAt: Math.max(Date.now(), (session.draft?.savedAt || 0) + 1)
     };
     session.preview = null;
     const savedProduct = normalized.products.find((item) => item.id === productId);
@@ -1082,8 +1122,10 @@ async function handleApi(request, response) {
       banner: savedProduct?.banner || null,
       draftConflict: current.sha !== body.baseSha,
       currentSha: current.sha,
-      savedAt: new Date(session.draft.savedAt).toISOString()
+      savedAt: new Date(session.draft.savedAt).toISOString(),
+      draftRevision: session.draft.savedAt
     });
+    } finally { editorWrites.delete(session); }
   }
 
   if (request.method === "POST" && request.url === "/api/admin/preview") {
@@ -1169,7 +1211,11 @@ async function handleApi(request, response) {
   if (request.method === "POST" && request.url === "/api/admin/save") {
     const session = requireMutationAuth(request, response);
     if (!session) return;
+    if (editorWrites.has(session)) return json(response,409,{error:"Başqa saxlama gedir. Tamamlandıqdan sonra yenidən yoxlayın."});
+    editorWrites.add(session);
+    try {
     const body = await readBody(request);
+    if ((session.draft?.savedAt || 0) !== (body.draftRevision || 0)) return json(response, 409, { error: "Qaralama başqa pəncərədə dəyişib." });
 
     if (!body.baseSha || !body.data) {
       return json(response, 400, {
@@ -1236,6 +1282,7 @@ async function handleApi(request, response) {
       files.set(filePath, buffer);
     }
     validateGeneratedOutput(patched, files);
+    if ((session.draft?.savedAt || 0) !== (body.draftRevision || 0)) return json(response, 409, { error: "Qaralama başqa pəncərədə dəyişib." });
     const result = await commitRepoFiles({
       parent,
       files,
@@ -1252,6 +1299,7 @@ async function handleApi(request, response) {
 
     return json(response, 200, {
       sha: appSha,
+      version,
       commitSha: result.commitSha,
       cacheCommitSha: result.commitSha,
       sitemapCommitSha: result.commitSha,
@@ -1261,6 +1309,7 @@ async function handleApi(request, response) {
       infoPageCount: infoPages.size,
       committedAt: new Date().toISOString()
     });
+    } finally { editorWrites.delete(session); }
   }
 
   return json(response, 404, { error: "Endpoint tapılmadı." });

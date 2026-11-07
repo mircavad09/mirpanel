@@ -13,6 +13,8 @@ const adminJs = fs.readFileSync(path.join(root, "mirpanel-admin/public/stories-a
 const adminCss = fs.readFileSync(path.join(root, "mirpanel-admin/public/admin.css"), "utf8");
 let received = Buffer.alloc(0);
 const server = http.createServer((request, response) => {
+  if (request.url === "/fixture") { response.writeHead(200, { "Content-Type":"text/html; charset=utf-8" }).end(html); return; }
+  if (request.url === "/favicon.ico") { response.writeHead(204).end(); return; }
   if (request.method === "PUT" && request.url.startsWith("/signed")) {
     const chunks = [];
     request.on("data", (chunk) => chunks.push(chunk));
@@ -41,7 +43,7 @@ window.api=async(url,options={})=>{ window.__calls.push({url,options});
 const browser = await chromium.launch({ executablePath: browserPath, headless:true });
 const page = await browser.newPage({ viewport:{ width:390, height:844 } });
 const errors=[]; page.on("console",(message)=>message.type()==="error"&&errors.push(message.text())); page.on("pageerror",(error)=>errors.push(error.message));
-await page.setContent(html, { waitUntil:"domcontentloaded" });
+await page.goto(`http://127.0.0.1:${port}/fixture`, { waitUntil:"domcontentloaded" });
 await page.locator('.navBtn[data-view="stories"]').click();
 await page.locator('#storiesView').evaluate((view) => view.classList.remove('hidden'));
 const form = page.locator(`[data-item-create="${storyId}"]`);

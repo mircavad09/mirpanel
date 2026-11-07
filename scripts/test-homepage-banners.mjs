@@ -80,7 +80,7 @@ const server=http.createServer(async(req,res)=>{try{
   }
   let file=route==='/'?'index.html':route.slice(1);file=path.join(root,file);
   if(!fs.existsSync(file)||!fs.statSync(file).isFile())return json(res,404,{});
-  const type=file.endsWith('.js')?'application/javascript':file.endsWith('.css')?'text/css':file.endsWith('.html')?'text/html':file.endsWith('.png')?'image/png':'image/jpeg';
+  const type=/\.m?js$/.test(file)?'application/javascript':file.endsWith('.css')?'text/css':file.endsWith('.html')?'text/html':file.endsWith('.png')?'image/png':'image/jpeg';
   res.writeHead(200,{'Content-Type':type});res.end(fs.readFileSync(file));
 }catch(error){json(res,error.status||500,{error:error.message,code:error.code});}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));origin=`http://127.0.0.1:${server.address().port}`;
@@ -93,10 +93,16 @@ try {
   await admin.goto(`${origin}/banner-admin-test`);await admin.waitForFunction(()=>document.querySelectorAll('[data-banner-id]').length===1);
   const first=db[0]; first.legacy_image=`${origin}/assets/capcut.png`;
   const home=await browser.newPage({viewport:{width:390,height:844}});home.on('pageerror',e=>errors.push(e.message));
-  await home.route('https://mirpanel.com/**',async route=>{const file=path.join(root,new URL(route.request().url()).pathname);if(fs.existsSync(file)&&fs.statSync(file).isFile())return route.fulfill({body:fs.readFileSync(file),contentType:file.endsWith('.png')?'image/png':'image/jpeg'});return route.continue();});
+  await home.route('**/*',async route=>{
+    const url=new URL(route.request().url());
+    if(url.origin===origin)return route.continue();
+    const file=path.join(root,url.pathname);
+    if(url.hostname==='mirpanel.com'&&fs.existsSync(file)&&fs.statSync(file).isFile())return route.fulfill({path:file});
+    return route.fulfill({status:204,body:''});
+  });
   await home.addInitScript(base=>{window.MIRPANEL_ADMIN_BASE=base;},origin);
   await home.addInitScript(()=>{const start=window.setInterval.bind(window),stop=window.clearInterval.bind(window);window.heroTestTimers=new Set();window.setInterval=(fn,ms,...args)=>{const id=start(fn,ms,...args);if(ms===5000)heroTestTimers.add(id);return id;};window.clearInterval=id=>{heroTestTimers.delete(id);stop(id);};});
-  await home.goto(origin,{waitUntil:'networkidle'});await home.waitForTimeout(3200);
+  await home.goto(origin,{waitUntil:'domcontentloaded'});await home.waitForFunction(()=>document.querySelector('#heroSlider .slide'));await home.waitForTimeout(3200);
   const unchanged=await home.evaluate(()=>({products:document.getElementById('grid').innerHTML,stories:document.getElementById('homeStories').innerHTML}));
   const png=Buffer.from(await admin.evaluate(()=>{const c=document.createElement('canvas');c.width=3840;c.height=2160;const x=c.getContext('2d');x.fillStyle='#132933';x.fillRect(0,0,c.width,c.height);x.fillStyle='#ffd400';x.font='120px sans-serif';x.fillText('4K banner test • 3840 × 2160',150,220);for(const [a,b] of [[0,0],[3720,0],[0,2040],[3720,2040]]){x.fillStyle='#ff3535';x.fillRect(a,b,120,120);}return c.toDataURL('image/png').split(',')[1];}),'base64');
   const image={name:'4k-banner.png',mimeType:'image/png',buffer:png};
@@ -106,7 +112,7 @@ try {
   await admin.locator('[data-banner-file]').setInputFiles(image);
   await admin.locator('.homepageBannerJob [data-banner-product-pick="capcut"]').click();
   await admin.waitForFunction(()=>document.querySelectorAll('[data-banner-id]').length===2);
-  assert.equal(db.length,2);assert.equal(objects.size,1);assert.equal(await admin.locator('[data-banner-message]').textContent().then(t=>t.includes('yayımlandı')),true);
+  assert.equal(db.length,2);assert.equal(objects.size,1);assert.match(await admin.locator('[data-banner-message]').textContent(),/Saxlandı/);
   assert.equal(await admin.locator('.homepageBannerJob').count(),0);
   const uploaded=db.find(row=>row.media_path);
   await home.waitForFunction(()=>document.querySelectorAll('#heroSlider .slide').length===2);
@@ -150,7 +156,7 @@ try {
   await admin.locator('.homepageBannerJob [data-job-retry]').waitFor({state:'visible'});
   assert.equal(record.media_path,oldPath);
   const oldSigns=signs;await admin.locator('.homepageBannerJob [data-job-retry]').click();
-  await admin.waitForFunction(()=>!document.querySelector('.homepageBannerJob') && document.querySelector('[data-banner-message]').textContent.includes('yayımlandı'));
+  await admin.waitForFunction(()=>!document.querySelector('.homepageBannerJob') && document.querySelector('[data-banner-message]').textContent.includes('Saxlandı'));
   assert.ok(signs>oldSigns);assert.equal(db.length,2);assert.equal(objects.size,1);
   // A response lost AFTER commit cannot create a second banner on retry.
   loseComplete=true;

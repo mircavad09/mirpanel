@@ -42,8 +42,13 @@ assert.ok(migration.includes("if v_order.status = 'approved'"));
 assert.ok(migration.includes("for update"));
 assert.equal(/update public\.payment_orders[\s\S]*cost_price_snapshot[\s\S]*where cost_price_snapshot is null/i.test(migration), false, "Köhnə sifarişlər avtomatik backfill edilməməlidir");
 assert.ok(migration.includes("revoke all on table public.payment_plan_costs from public, anon, authenticated"));
-// v6 adds card rotation; it must delegate to v5's locked financial snapshot operation.
-assert.ok(store.includes('rpc("approve_payment_order_v6"'));
+// The current approval keeps the financial snapshot and isolates old card limits.
+assert.ok(store.includes("rpc(config.employeeEnabled ? 'employee_approve_direct' : 'approve_payment_order_v7'"));
+const currentApproval = read("supabase/migrations/202609090001_old_order_approval_limit_isolation.sql");
+assert.ok(currentApproval.includes("where id=p_order_id for update;"));
+assert.ok(currentApproval.includes("sale_price_snapshot=amount,cost_price_snapshot=v_cost,profit_snapshot=v_profit"));
+assert.ok(currentApproval.indexOf("'idempotent',true") < currentApproval.indexOf("confirmed_count=confirmed_count+1"));
+// Retain coverage of the older migration for historical installations.
 const activationMigration = read("supabase/migrations/202609010001_payment_method_activation_policy.sql");
 const approvalWrapper = activationMigration.match(/create or replace function public\.approve_payment_order_v6\([\s\S]*?\n\$\$;/)?.[0];
 assert.ok(approvalWrapper?.includes("v_result := public.approve_payment_order_v5(p_order_id, p_duration_months, p_actor);"));

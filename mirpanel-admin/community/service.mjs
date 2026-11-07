@@ -30,7 +30,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   if(req.method==='GET'){
    if(part==='/user-controls')return json(res,200,await userControls(r.pool,r.repo,u.searchParams.get('userId'),await options.loadCatalog()));
    if(part==='/user-statistics')return json(res,200,await userStatistics(r.pool,u.searchParams.get('userId'),Object.fromEntries(u.searchParams)));
-   if(part==='/shop')return json(res,200,await options.shopAdmin(r.pool,owner,{action:u.searchParams.get('only')==='topups'?'topups':'list'}));
+   if(part==='/shop'){const only=u.searchParams.get('only');return json(res,200,await options.shopAdmin(r.pool,owner,{action:only==='topup-count'?'topup-count':only==='topups'?'topups':'list'}));}
    if(part==='/wallet')return json(res,200,await walletHistory(r.pool,u.searchParams.get('userId'),Object.fromEntries(u.searchParams)));
    if(part==='/users'||part.startsWith('/users/'))return json(res,200,await adminDirectory(r.pool,r.repo,{...Object.fromEntries(u.searchParams),id:part.startsWith('/users/')?decodeURIComponent(part.slice(7)):null}));
    if(part==='/state')return json(res,200,{profile:await r.repo.profile(owner),settings:await r.group.settings()});

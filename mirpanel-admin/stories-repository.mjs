@@ -221,15 +221,39 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
   async function createStory(payload) {
     const title = cleanText(payload.title, 80);
     if (!title) throw Object.assign(new Error("Story başlığı tələb olunur."), { status: 400 });
+    const id = await operationId(categories(), payload.operationId);
+    if (id.previous) return id.previous;
     const cover = await uploadFile(payload.cover, "image", "covers");
-    const { data, error } = await categories().insert({ title, cover_path: cover.path, sort_order: Math.max(1, Number(payload.sortOrder) || 1), active: payload.active !== false }).select().single();
+    const { data, error } = await categories().insert({ ...(id.key ? { id: id.key } : {}), title, cover_path: cover.path, sort_order: Math.max(1, Number(payload.sortOrder) || 1), active: payload.active !== false }).select().single();
+    if (error?.code === "23505" && id.key) {
+      await client.storage.from(bucket).remove([cover.path]);
+      const retry = await operationId(categories(), id.key);
+      if (retry.previous) return retry.previous;
+      dbError(error, "Story yaradılmadı.");
+    }
     if (error) { await client.storage.from(bucket).remove([cover.path]); dbError(error, "Story yaradılmadı."); }
     return data;
+  }
+
+  async function operationId(table, key, storyId) {
+    if (!key) return {};
+    if (!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(key)) {
+      throw Object.assign(new Error("Story əməliyyat açarı düzgün deyil."), { status: 400 });
+    }
+    const { data, error } = await table.select("*").eq("id", key).maybeSingle();
+    dbError(error, "Story əməliyyatı yoxlanmadı.");
+    if (data && storyId && data.story_id !== storyId) throw staleStory();
+    return { key, previous: data };
+  }
+
+  function staleStory() {
+    return Object.assign(new Error("Story başqa pəncərədə dəyişib. Yazdıqlarınızı qeyd edib siyahını yeniləyin."), { status: 409 });
   }
 
   async function updateStory(id, payload) {
     const { data: current, error: currentError } = await categories().select("*").eq("id", id).single();
     dbError(currentError, "Story tapılmadı.");
+    if (payload.version && current.updated_at !== payload.version) throw staleStory();
     let uploaded = null;
     if (payload.cover?.contentBase64) uploaded = await uploadFile(payload.cover, "image", "covers");
     const changes = {
@@ -238,28 +262,40 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
       active: payload.active ?? current.active,
       ...(uploaded ? { cover_path: uploaded.path } : {})
     };
-    const { data, error } = await categories().update(changes).eq("id", id).select().single();
+    const { data, error } = await categories().update(changes).eq("id", id).eq("updated_at", current.updated_at).select().maybeSingle();
     if (error) { if (uploaded) await client.storage.from(bucket).remove([uploaded.path]); dbError(error, "Story yenilənmədi."); }
-    if (uploaded) await removePathsIfUnused([current.cover_path]);
+    if (!data) { if (uploaded) await removePathsIfUnused([uploaded.path]); throw staleStory(); }
+    if (uploaded) await removePathsIfUnused([current.cover_path]).catch(() => {});
     return data;
   }
 
-  async function deleteStory(id) {
-    const { data: story, error: storyError } = await categories().select("cover_path").eq("id", id).single();
+  async function deleteStory(id, version) {
+    const { data: story, error: storyError } = await categories().select("cover_path,updated_at").eq("id", id).maybeSingle();
     dbError(storyError, "Story tapılmadı.");
+    if (!story) return;
+    if (version && story.updated_at !== version) throw staleStory();
     const { data: storyItems, error: itemError } = await items().select("media_path").eq("story_id", id);
     dbError(itemError, "Story elementləri oxunmadı.");
-    const { error } = await categories().delete().eq("id", id);
+    const { data, error } = await categories().delete().eq("id", id).eq("updated_at", story.updated_at).select("id").maybeSingle();
     dbError(error, "Story silinmədi.");
-    await removePathsIfUnused([story.cover_path, ...(storyItems || []).map((item) => item.media_path)]);
+    if (!data) throw staleStory();
+    await removePathsIfUnused([story.cover_path, ...(storyItems || []).map((item) => item.media_path)]).catch(() => {});
   }
 
   async function createItem(storyId, payload) {
+    const id = await operationId(items(), payload.operationId, storyId);
+    if (id.previous) return id.previous;
     const requestedKind = payload.mediaType === "video" ? "video" : "image";
     const upload = requestedKind === "video" && payload.directUploadId
       ? await consumeVideoUpload(payload.directUploadId, storyId)
       : await uploadFile(payload.media, requestedKind, `items/${storyId}`);
-    const { data, error } = await items().insert({ story_id: storyId, media_type: upload.kind, media_path: upload.path, caption: cleanText(payload.caption, 240), sort_order: Math.max(1, Number(payload.sortOrder) || 1), active: payload.active !== false }).select().single();
+    const { data, error } = await items().insert({ ...(id.key ? { id: id.key } : {}), story_id: storyId, media_type: upload.kind, media_path: upload.path, caption: cleanText(payload.caption, 240), sort_order: Math.max(1, Number(payload.sortOrder) || 1), active: payload.active !== false }).select().single();
+    if (error?.code === "23505" && id.key) {
+      await removePathsIfUnused([upload.path]);
+      const retry = await operationId(items(), id.key, storyId);
+      if (retry.previous) return retry.previous;
+      dbError(error, "Story elementi yaradılmadı.");
+    }
     if (error) { await client.storage.from(bucket).remove([upload.path]); dbError(error, "Story elementi yaradılmadı."); }
     return data;
   }
@@ -267,6 +303,7 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
   async function updateItem(id, payload) {
     const { data: current, error: currentError } = await items().select("*").eq("id", id).single();
     dbError(currentError, "Story elementi tapılmadı.");
+    if (payload.version && current.updated_at !== payload.version) throw staleStory();
     let uploaded = null;
     if (payload.directUploadId) uploaded = await consumeVideoUpload(payload.directUploadId, current.story_id);
     else if (payload.media?.contentBase64) uploaded = await uploadFile(payload.media, payload.mediaType === "video" ? "video" : "image", `items/${current.story_id}`);
@@ -275,18 +312,22 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
       sort_order: Math.max(1, Number(payload.sortOrder ?? current.sort_order) || 1),
       active: payload.active ?? current.active,
       ...(uploaded ? { media_type: uploaded.kind, media_path: uploaded.path } : {})
-    }).eq("id", id).select().single();
+    }).eq("id", id).eq("updated_at", current.updated_at).select().maybeSingle();
     if (error) { if (uploaded) await client.storage.from(bucket).remove([uploaded.path]); dbError(error, "Story elementi yenilənmədi."); }
-    if (uploaded) await removePathsIfUnused([current.media_path]);
+    if (!data) { if (uploaded) await removePathsIfUnused([uploaded.path]); throw staleStory(); }
+    if (uploaded) await removePathsIfUnused([current.media_path]).catch(() => {});
     return data;
   }
 
-  async function deleteItem(id) {
-    const { data: current, error: currentError } = await items().select("media_path").eq("id", id).single();
+  async function deleteItem(id, version) {
+    const { data: current, error: currentError } = await items().select("media_path,updated_at").eq("id", id).maybeSingle();
     dbError(currentError, "Story elementi tapılmadı.");
-    const { error } = await items().delete().eq("id", id);
+    if (!current) return;
+    if (version && current.updated_at !== version) throw staleStory();
+    const { data, error } = await items().delete().eq("id", id).eq("updated_at", current.updated_at).select("id").maybeSingle();
     dbError(error, "Story elementi silinmədi.");
-    await removePathsIfUnused([current.media_path]);
+    if (!data) throw staleStory();
+    await removePathsIfUnused([current.media_path]).catch(() => {});
   }
 
   return { listPublic: () => list(false), listAdmin: () => list(true), createStory, updateStory, deleteStory, createItem, updateItem, deleteItem, beginVideoUpload, verifyVideoUpload, cancelVideoUpload };

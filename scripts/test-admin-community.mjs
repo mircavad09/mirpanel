@@ -3,6 +3,7 @@ import pg from '../mirpanel-admin/node_modules/pg/lib/index.js';import {bindOwne
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 import {chatVisualChecks} from './admin-chat-visual-checks.mjs';
 const local=JSON.parse(fs.readFileSync(process.env.LOCALAPPDATA+'/MirpanelCommunityPreview/config.json'));assert.equal(local.db.host,'127.0.0.1');
+if(process.env.MIRPANEL_SHOP_TEST_PORT)local.db={host:'127.0.0.1',port:Number(process.env.MIRPANEL_SHOP_TEST_PORT),user:'shop_test'};
 const db='mirpanel_admin_integration_'+Date.now(),control=new pg.Pool({...local.db,database:'postgres'});let pool,upstream,child,browser;let checks=0;const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;};
 const password=crypto.randomBytes(24).toString('base64url'),username='synthetic-admin',worker={id:crypto.randomUUID(),login:'synthetic-worker',display_name:'Synthetic',password_hash:await hashPassword(password),active:true,session_version:1,employee_started_at:null};
 const json=(r,s,v)=>{r.writeHead(s,{'Content-Type':'application/json'});r.end(JSON.stringify(v));};
