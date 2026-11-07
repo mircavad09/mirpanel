@@ -5,7 +5,8 @@ import {receiptFixture} from './receipt-gate-fixture.mjs';import {createPaymentS
 process.env.MIRPANEL_CART_V2_TEST='1';const f=await shopFixture(),{pool,catalog,method,id}=f;let browser,server,checks=0,signupCallback='',pendingEmail='';const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
 const config={encryptionKey:Buffer.alloc(32,7).toString('base64'),tokenSecret:Buffer.alloc(32,9).toString('base64'),receiptsBucket:'synthetic-private'},security=createPaymentSecurity(config),browserOrders=createBrowserOrders({security,store:f.store,enabled:true});
 const signed=req=>/synthetic_account=([ab])/.exec(req.headers.cookie||'')?.[1]||null,profile=uid=>uid?{user_id:uid,id:uid,display_name:'Sintetik İstifadəçi',email:uid+'@example.invalid',avatar:0,balanceCents:0}:null;
-const shop=createShop({context:async req=>({pool,user:signed(req)}),catalog:async()=>catalog,snapshot:()=>f.rpc('inventory_snapshot'),store:f.store,config});
+const shopStore={...f.store,rawMethod:async id=>({...await f.store.rawMethod(id),encrypted_number:security.encryptNumber('4000000000001234')})};
+const shop=createShop({context:async req=>({pool,user:signed(req)}),catalog:async()=>catalog,snapshot:()=>f.rpc('inventory_snapshot'),store:shopStore,config});
 catalog.products[0].image='/assets/capcut.png';
 catalog.products.push({id:'netflix',title:'Netflix Şəxsi — Mobil və masaüstü cihazlar üçün uzun məhsul adı',image:'/assets/netflix.png',active:true,plans:[{label:'1 aylıq',price:5.99,formFields:[{key:'name',label:'Otaq adı',required:true},{key:'pin',label:'Otaq kodu',digits:4,required:true}]}]});
 catalog.products.push({id:'hbomax',title:'HBO Max',active:true,plans:[{label:'1 aylıq',price:5.99,terms:'HBO Max — sintetik xəbərdarlıq',formFields:[{key:'name',label:'HBO Max profil adı',required:true},{key:'code_4',label:'Profil kodu / PIN',digits:4,required:true}]}]});
@@ -22,6 +23,7 @@ try{
   if(u.pathname==='/api/community/state')return json(res,200,{profile:profile(uid),authFormPolicy,googleEnabled:true,publicCommunity:true});
   if(u.pathname==='/api/community/notifications')return json(res,200,{items:[],unread:0});
   if(u.pathname==='/api/payments/methods')return json(res,200,{methods:[{id:method,available:true,displayName:'Synthetic ABB',providerName:'ABB',last4:'1234'}]});
+  if(u.pathname==='/api/payments/storefront')return json(res,200,{completedOrders:283,banks:['abb','m10','kapital'],products:[{id:'offer',title:'Sintetik təklif',path:'/mehsul/synthetic',category:'film',priceCents:499}]});
   if(u.pathname==='/api/auth/sign-in/email'){const b=await body(req);assert.equal(b.email,'a@example.invalid');res.setHeader('Set-Cookie','synthetic_account=a; Path=/; HttpOnly; SameSite=Lax');return json(res,200,{ok:true});}
   if(u.pathname==='/api/auth/sign-up/email'){const b=await body(req);registrationDetails(b);signupCallback=authReturn(origin,b.callbackURL);return json(res,200,{user:{id:'synthetic-new',email:b.email}});}
   if(u.pathname==='/api/auth/confirm-email/status'){const email=pendingEmail;pendingEmail='';return json(res,200,{email});}
@@ -68,10 +70,18 @@ try{
   console.log(JSON.stringify({width,fromList,firstClick:true,slowScript:true,slowQuote:true,retry:true,oneDraft:true,guestLogin:true}));
   await ctx.close();
  }
- for(const width of (process.argv.includes('--smoke')?[390]:[320,360,390,430,1440])){
+ for(const width of (process.argv.includes('--combined')?[390,430,1440]:process.argv.includes('--smoke')?[390]:[320,360,390,430,1440])){
   const ctx=await browser.newContext({viewport:{width,height:900}}),p=await ctx.newPage();
   for(const route of ['/','/mehsul','/odenis','/balans','/sebet','/sifarislerim','/profil']){await p.goto(origin+route);const toggle=p.getByRole('button',{name:'Daxil ol',exact:true});await toggle.waitFor();await p.evaluate(()=>document.body.style.minHeight='1800px');eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);if(await p.locator('#accountGuest').isHidden())await toggle.click();await p.locator('#accountGuest').waitFor({state:'visible'});eq(await p.locator('#accountGuest').evaluate(n=>{const r=n.getBoundingClientRect();return r.left>=0&&r.right<=document.documentElement.clientWidth;}),true);eq(await p.locator('#accountGuest').getByRole('link',{name:'Qeydiyyat',exact:true}).count(),1);await toggle.click();eq(await p.locator('#accountGuest').isHidden(),true);await toggle.click();await p.mouse.click(4,300);eq(await p.locator('#accountGuest').isHidden(),true);await toggle.click();await p.keyboard.press('Escape');eq(await p.locator('#accountGuest').isHidden(),true);}
-  await p.goto(origin+'/mehsul/synthetic?product=ordinary');await p.getByRole('button',{name:'Sifariş et',exact:true}).click();await p.locator('dialog.cart-entry').getByRole('checkbox').check();await p.getByRole('button',{name:'Təsdiqləyirəm',exact:true}).click();await p.waitForURL('**/hesab?next=%2Fsebet&from=cart');
+  await p.goto(origin+'/mehsul/synthetic?product=ordinary');
+  if(width===390){
+   await p.getByRole('button',{name:'Səbətə əlavə et',exact:true}).click();
+   await p.locator('dialog.cart-entry').getByRole('checkbox').check();await p.getByRole('button',{name:'Təsdiqləyirəm',exact:true}).click();
+   const drawer=p.locator('.mir-cart-drawer[open]');await drawer.waitFor();eq(new URL(p.url()).pathname,'/mehsul/synthetic');
+   await drawer.getByRole('button',{name:'Sil: Synthetic ordinary'}).click();await drawer.getByText('Səbətiniz boşdur.').waitFor();
+   await drawer.getByRole('button',{name:'Səbəti bağla'}).click();
+  }
+  await p.getByRole('button',{name:'Sifariş et',exact:true}).click();await p.locator('dialog.cart-entry').getByRole('checkbox').check();await p.getByRole('button',{name:'Təsdiqləyirəm',exact:true}).click();await p.waitForURL('**/hesab?next=%2Fsebet&from=cart');
   await p.getByRole('heading',{name:'Xoş gəldin 👋',exact:true}).waitFor();
   await p.getByText('Səbətinizdə 1 məhsul · 5,00 ₼',{exact:true}).waitFor();
   eq(await p.locator('.auth-order-rows article').count(),1);
@@ -90,11 +100,32 @@ try{
   else{await p.locator('#account-email').fill('a@example.invalid');await p.locator('#account-password').fill('Synthetic-password');await p.locator('.auth-submit').click();}
   await p.waitForURL('**/sebet');await p.getByRole('heading',{name:'Səbətim',exact:true}).waitFor();eq(await p.evaluate(()=>MirpanelCart.read()),before);await p.getByRole('button',{name:'Hesab menyusunu aç',exact:true}).waitFor();eq(await p.getByRole('button',{name:'Daxil ol',exact:true}).count(),0);
   eq(await p.getByRole('radio',{name:'Kartdan karta köçürmə',exact:false}).count(),0);
-  await p.getByRole('button',{name:'Ödənişə keç',exact:true}).click();await p.waitForURL('**/odenis');await p.getByRole('radio',{name:'Kartdan karta köçürmə',exact:false}).waitFor();
+  await p.getByRole('button',{name:'Ödənişə keç',exact:true}).click();await p.waitForURL('**/sebet?checkout=1');await p.getByRole('radio',{name:'Kartdan karta köçürmə',exact:false}).waitFor();
+  eq(await p.locator('.shop-checkout-cart .shop-product').count(),2);
+  eq(await p.locator('.shop-checkout-grid').evaluate(n=>{const [a,b]=n.children;return b.getBoundingClientRect().top>a.getBoundingClientRect().top;}),width<761);
+  await p.getByRole('link',{name:'Sintetik təklif seç'}).waitFor();
+  const footer=p.locator('#customerFooter');await footer.getByText('283 tamamlanmış sifariş',{exact:true}).waitFor();
+  eq(await footer.getByRole('link',{name:'Canlı dəstək',exact:true}).getAttribute('href'),'https://wa.me/994515243545');
   const values=await p.evaluate(id=>fetch('/api/payments/shop/draft?id='+id,{credentials:'same-origin'}).then(r=>r.json()),before.find(x=>x.productId==='netflix').draftId);eq(values.values.pin,'0012');eq(values.values.name,'Sintetik otaq');eq(await p.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}).includes('0012')),false);
   await p.reload();await p.getByRole('radio',{name:'Kartdan karta köçürmə',exact:false}).waitFor();eq(await p.evaluate(()=>MirpanelCart.read()),before);
-  eq(await p.getByRole('button',{name:'Sifarişi tamamla',exact:true}).isEnabled(),true);
+  const complete=p.getByRole('button',{name:'Sifarişi tamamla · 10,99 ₼',exact:true});
+  eq(await complete.isDisabled(),true);await p.locator('.checkout-consent input').check();eq(await complete.isEnabled(),true);
+  await p.getByRole('radio',{name:/^Balans/}).check();await p.getByText('0,00 ₼ var, 10,99 ₼ çatmır.').waitFor();eq(await complete.isDisabled(),true);
+  if(width===390||width===1440){
+   await p.locator('.shop-checkout-grid').screenshot({path:'payment-test-artifacts/checkout-login/combined-'+width+'.png'});
+   await p.getByRole('button',{name:'Artır: Synthetic ordinary'}).click();
+   const updated=p.getByRole('button',{name:'Sifarişi tamamla · 15,99 ₼',exact:true});
+   await updated.waitFor({timeout:12000}).catch(async e=>{console.log(await p.locator('#shopApp').innerText());throw e;});eq(await updated.isDisabled(),true);
+   await p.getByRole('button',{name:'Azalt: Synthetic ordinary'}).click();await complete.waitFor();
+   await p.locator('.checkout-consent input').check();
+   await p.getByRole('radio',{name:'Kartdan karta köçürmə',exact:false}).check();await complete.click();
+   await p.getByRole('heading',{name:'Bank kartını seçin'}).waitFor();
+   await p.locator('.wallet-bank-grid').getByRole('button',{name:/ABB/}).click();
+   await p.getByRole('button',{name:/Bu kartla davam et/}).click();await p.getByRole('button',{name:'Qalereyadan çek seç'}).waitFor();
+   await p.getByRole('button',{name:'Ləğv et',exact:true}).click();await p.locator('.checkout-methods').waitFor();
+  }
   if(width===390){await p.goto(origin+'/mehsul/synthetic?product=ordinary');await p.getByRole('button',{name:'Sifariş et',exact:true}).click();await p.locator('dialog.cart-entry').getByRole('checkbox').check();await p.getByRole('button',{name:'Təsdiqləyirəm',exact:true}).click();await p.locator('.mir-cart-next:not(:disabled)').waitFor();await p.getByRole('button',{name:'Səbəti bağla'}).click();eq(new URL(p.url()).pathname,'/mehsul/synthetic');}
+  if(process.argv.includes('--combined')){await ctx.close();console.log(JSON.stringify({width,combined:true,guestCartRestored:true,signup:width===430,receiptStage:width!==430,productionWrites:0}));continue;}
   for(const route of ['/','/mehsul','/odenis','/balans','/sebet','/sifarislerim','/profil']){await p.goto(origin+route);await p.getByRole('button',{name:'Hesab menyusunu aç',exact:true}).waitFor();eq(await p.getByRole('button',{name:'Daxil ol',exact:true}).count(),0);eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);}
   await p.evaluate(()=>window.MirpanelRequireLogin('/odenis'));eq(await p.locator('#accountGuest').isVisible(),true);await p.evaluate(()=>window.refreshCommunityNav());await p.getByRole('button',{name:'Hesab menyusunu aç',exact:true}).waitFor();
   await p.getByRole('button',{name:'Hesab menyusunu aç',exact:true}).click();await p.locator('#accountDropdown').getByRole('button',{name:'Çıxış',exact:true}).click();await p.getByRole('button',{name:'Daxil ol',exact:true}).waitFor();eq(await p.locator('.account-avatar').count(),0);

@@ -16,7 +16,7 @@
   let modalSession = 0;
   let hboOpening, hboModuleRetry = 0;
 
-  function openHboCartEntry(product, plan) {
+  function openHboCartEntry(product, plan, loginOnGuest) {
     if (hboOpening?.open || document.querySelector("dialog.cart-entry[open]")) return;
     const life = new AbortController(), dialog = document.createElement("dialog"), title = document.createElement("h2"),
       close = document.createElement("button"), status = document.createElement("p"), retry = document.createElement("button");
@@ -49,7 +49,7 @@
         ]);
         loaded = true;
         if (!dialog.open || hboOpening !== dialog) return;
-        await m.startCartEntry(product, plan, {loginOnGuest:true, loadingDialog:dialog, onReady:() => {handedOff = true; hboOpening = null; life.abort();}});
+        await m.startCartEntry(product, plan, {loginOnGuest, loadingDialog:dialog, onReady:() => {handedOff = true; hboOpening = null; life.abort();}});
       } catch {
         if (!loaded) hboModuleRetry++;
         if (dialog.open && hboOpening === dialog) {
@@ -1953,7 +1953,7 @@
   window.addEventListener('pageshow',()=>setTimeout(restoreDirectSelection,100));
   window.addEventListener('mirpanel:route-ready',restoreDirectSelection);
 
-  function runOrderFlow(product, plan) {
+  function runOrderFlow(product, plan, loginOnGuest=true) {
     const catalogProduct = DATA.products.find((item) => item.id === product?.id);
     if (catalogProduct) {
       if (!(catalogProduct.plans || []).includes(plan)) {
@@ -1963,8 +1963,8 @@
       product = catalogProduct;
     }
     if(plan&&Number(plan.price)>0){
-      if(isHboProduct(product)){openHboCartEntry(product,plan);return;}
-      void import('/community-assets/cart-entry.js?v=checkout-sounds-20261108').then(m=>m.startCartEntry(product,plan,{loginOnGuest:true})).catch(()=>toastMessage('Sifariş pəncərəsi açılmadı. Yenidən cəhd edin.'));return;
+      if(isHboProduct(product)){openHboCartEntry(product,plan,loginOnGuest);return;}
+      void import('/community-assets/cart-entry.js?v=checkout-sounds-20261108').then(m=>m.startCartEntry(product,plan,{loginOnGuest})).catch(()=>toastMessage('Sifariş pəncərəsi açılmadı. Yenidən cəhd edin.'));return;
     }
     if (!stockIsAvailable(product, plan) || !plan || Number(plan.price) <= 0) {
       decorateProductPage(product);
@@ -2130,7 +2130,7 @@
       if (!button || !currentProduct) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      runOrderFlow(currentProduct, selectedPlan(currentProduct));
+      runOrderFlow(currentProduct, selectedPlan(currentProduct),button.id!=='cartAddProduct');
     },
     true
   );

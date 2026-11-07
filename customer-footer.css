@@ -1,0 +1,24 @@
+body:has(#customerFooter) footer.footer,body:has(#customerFooter) footer.product-page-footer{display:none}
+#customerFooter{color:#e7e5df;background:#151515;border-top:1px solid #353025;font:15px/1.6 system-ui,sans-serif;margin-top:32px;padding:36px 20px 24px;text-align:left}
+#customerFooter *,#customerFooter *::before{box-sizing:border-box}
+.customer-footer-inner{max-width:1440px;margin:auto}
+#customerFooter h2{font-size:16px;margin:0 0 10px;color:#fff}
+#customerFooter p{margin:0 0 10px;color:#bbb9b3}
+#customerFooter small{display:block;color:#bbb9b3;font-size:13px}
+#customerFooter a{color:inherit;text-decoration:underline;text-underline-offset:3px;overflow-wrap:anywhere}
+#customerFooter a:hover{color:#ffd600}
+#customerFooter a:focus-visible{outline:2px solid #ffd600;outline-offset:3px}
+.customer-footer-support{display:flex;flex-wrap:wrap;align-items:center;gap:16px;padding:20px;background:linear-gradient(105deg,#2b2514,#191919 68%);border:1px solid #51451f;border-radius:16px}
+.customer-footer-support div{flex:1 1 400px}
+#customerFooter .customer-footer-support h2{font-size:20px;margin-bottom:2px}
+#customerFooter .customer-footer-support p{margin:0}
+#customerFooter .customer-footer-cta{background:#ffd200;color:#171207;border-radius:12px;padding:10px 18px;text-decoration:none;font-weight:700}
+#customerFooter ul{list-style:none;margin:0;padding:0}
+#customerFooter .customer-footer-facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:24px 0}
+.customer-footer-facts li{padding:12px 14px;border:1px solid #39342a;background:#1b1b1b;border-radius:12px}
+.customer-footer-columns{display:grid;grid-template-columns:1.2fr 1fr 1fr 1fr;gap:26px}
+.customer-footer-columns li+li{margin-top:6px}
+#customerFooter .customer-footer-methods{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:8px}
+#customerFooter .customer-footer-methods li{margin:0;border:1px solid #3f3a2b;border-radius:8px;padding:3px 8px;font-weight:650}
+.customer-footer-end{display:flex;flex-wrap:wrap;gap:14px;border-top:1px solid #333;margin-top:28px;padding-top:14px;color:#c6c1b8;font-size:13px}
+@media(max-width:760px){#customerFooter{padding:24px 16px calc(138px + env(safe-area-inset-bottom));margin-top:20px}.customer-footer-columns{grid-template-columns:1fr;gap:18px}.customer-footer-support{gap:12px}.customer-footer-facts li{min-width:0}}

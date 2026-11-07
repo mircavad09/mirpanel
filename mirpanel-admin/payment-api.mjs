@@ -27,6 +27,7 @@ import {createAccountOrders} from './account-orders.mjs';
 import {createShop} from './shop.mjs';
 import {handleShop} from './shop-http.mjs';
 import {createBankBackgrounds,bankKey,BANKS,DECORATIONS} from './bank-backgrounds.mjs';
+import {productSeoSlug} from './product-pages.mjs';
 
 function planName(plan) {
   return safeText(plan?.label || plan?.name || (plan?.months ? `${plan.months} aylıq` : "Seçilmiş plan"), 160);
@@ -231,6 +232,7 @@ export function createPaymentSystem(options) {
     return { product, plan, planIndex: index, requireStock:inventoryPlan.tracked };
   }
 
+  let storefront;
   async function handlePublic(request, response, url) {
     if(request.method==='GET'&&url.pathname==='/api/payments/inventory'){
       try{const products=await inventoryView(true);await publicRate(request,'inventory',60,120);publicJson(request,response,200,{products});return true;}catch(e){if(e.status===429)throw e;throw inventoryUnavailable();}
@@ -244,6 +246,28 @@ export function createPaymentSystem(options) {
     if (origin && !allowedOrigins.has(origin)) {
       publicJson(request, response, 403, { error: "Sorğunun mənbəyi icazəli deyil." });
       return true;
+    }
+    if(request.method==='GET'&&url.pathname==='/api/payments/storefront'){
+      if(!storefront||storefront.until<Date.now()){
+        const value=(async()=>{
+          const [orders,catalog,stock,methods]=await Promise.allSettled([
+            store.client.from('payment_orders').select('id',{count:'exact',head:true}).in('status',['approved','completed']),
+            loadCatalog(),inventoryView(true),store.publicMethods()
+          ]);
+          const available=new Map((stock.status==='fulfilled'?stock.value:[]).map(x=>[x.productId,x]));
+          const products=(catalog.status==='fulfilled'?catalog.value.products:[]).filter(p=>p.active!==false).flatMap(p=>{
+            const slug=productSeoSlug(p),sale=available.get(p.id);
+            const prices=(p.plans||[]).map((x,i)=>sale?.plans[i]?.canOrder?Math.round(Number(x.price)*100):0).filter(x=>Number.isSafeInteger(x)&&x>0);
+            return slug&&prices.length?[{id:p.id,title:p.title,category:p.category,image:p.image||'',path:'/mehsul/'+slug,priceCents:Math.min(...prices),from:(p.plans||[]).length>1}]:[];
+          });
+          return {
+            completedOrders:orders.status==='fulfilled'&&!orders.value.error&&Number.isSafeInteger(orders.value.count)?orders.value.count:null,
+            products,banks:methods.status==='fulfilled'?[...new Set(methods.value.map(bankKey))]:[]
+          };
+        })();
+        storefront={value,until:Date.now()+60000};
+      }
+      publicJson(request,response,200,await storefront.value);return true;
     }
     if(request.method==='GET'&&url.pathname==='/api/payments/backgrounds'&&bankBackgrounds){
       await publicRate(request,'decorations',60,60);publicJson(request,response,200,{backgrounds:await bankBackgrounds.list()});return true;
