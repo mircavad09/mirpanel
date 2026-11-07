@@ -14,10 +14,21 @@
   const DEFAULT_SPOTIFY_RESET_URL = "https://accounts.spotify.com/az/password-reset";
   let orderTermsAccepted = false;
   let modalSession = 0;
-  let hboOpening, hboModuleRetry = 0;
+  let cartOpening, cartModule, cartModuleRetry = 0;
+  function entryModule() {
+    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=terms-preload-20261108" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
+      .catch(error => {cartModule = null; cartModuleRetry++; throw error;});
+    return cartModule;
+  }
 
-  function openHboCartEntry(product, plan, loginOnGuest) {
-    if (hboOpening?.open || document.querySelector("dialog.cart-entry[open]")) return;
+  function prefetchSelectedTerms() {
+    if (typeof currentProduct === "undefined" || !currentProduct || !document.getElementById("pp-order-btn")) return;
+    const product = currentProduct, plan = selectedPlan(product);
+    if (Number(plan?.price) > 0) void entryModule().then(m => m.prepareCartEntry(product, plan)).catch(() => {});
+  }
+
+  function openPreparedCartEntry(product, plan, loginOnGuest) {
+    if (cartOpening?.open || document.querySelector("dialog.cart-entry[open]")) return;
     const life = new AbortController(), dialog = document.createElement("dialog"), title = document.createElement("h2"),
       close = document.createElement("button"), status = document.createElement("p"), retry = document.createElement("button");
     dialog.className = "cart-entry";
@@ -27,32 +38,33 @@
     close.type = retry.type = "button";
     close.textContent = "Bağla"; retry.textContent = "Yenidən cəhd et";
     close.onclick = () => dialog.close();
-    status.setAttribute("role", "status"); retry.hidden = true;
+    status.setAttribute("role", "status"); status.setAttribute("aria-label", "Qaydalar hazırlanır"); retry.hidden = true;
     dialog.append(title, status, retry, close);
     let handedOff = false;
-    hboOpening = dialog;
+    cartOpening = dialog;
     window.addEventListener("mirpanel:before-navigate", e => {if (dialog.open) e.preventDefault();}, {signal:life.signal});
     dialog.addEventListener("close", () => {
       life.abort();
       if (handedOff) return;
       dialog.remove();
-      if (hboOpening === dialog) {hboOpening = null; document.body.classList.remove("orderConfirmationActive");}
+      if (cartOpening === dialog) {cartOpening = null; document.body.classList.remove("orderConfirmationActive");}
     }, {once:true});
     document.body.append(dialog); dialog.showModal(); document.body.classList.add("orderConfirmationActive");
     async function load() {
-      retry.hidden = true; status.textContent = "Sifariş şərtləri yoxlanılır…";
-      let timer, loaded = false;
+      retry.hidden = true; status.textContent = "";
+      status.setAttribute("aria-busy", "true");
+      status.style.cssText = "display:block;min-height:54px;background:linear-gradient(#303337,#303337) 0 4px/95% 9px no-repeat,linear-gradient(#303337,#303337) 0 23px/81% 9px no-repeat,linear-gradient(#303337,#303337) 0 42px/57% 9px no-repeat";
+      let timer;
       try {
         const m = await Promise.race([
-          import("/community-assets/cart-entry.js?v=checkout-sounds-20261108" + (hboModuleRetry ? "&retry=" + hboModuleRetry : "")),
-          new Promise((_, reject) => {timer = setTimeout(() => reject(Error("Order module timeout")), 12000);})
+          entryModule(),
+          new Promise((_, reject) => {timer = setTimeout(() => {cartModule = null; cartModuleRetry++; reject(Error("Order module timeout"));}, 12000);})
         ]);
-        loaded = true;
-        if (!dialog.open || hboOpening !== dialog) return;
-        await m.startCartEntry(product, plan, {loginOnGuest, loadingDialog:dialog, onReady:() => {handedOff = true; hboOpening = null; life.abort();}});
+        if (!dialog.open || cartOpening !== dialog) return;
+        await m.startCartEntry(product, plan, {loginOnGuest, loadingDialog:dialog, onReady:() => {handedOff = true; cartOpening = null; life.abort();}});
       } catch {
-        if (!loaded) hboModuleRetry++;
-        if (dialog.open && hboOpening === dialog) {
+        if (dialog.open && cartOpening === dialog) {
+          status.removeAttribute("style"); status.setAttribute("aria-busy", "false"); status.removeAttribute("aria-label");
           status.textContent = "Sifariş pəncərəsini açmaq mümkün olmadı.";
           retry.hidden = false;
         }
@@ -1965,8 +1977,7 @@
       product = catalogProduct;
     }
     if(plan&&Number(plan.price)>0){
-      if(isHboProduct(product)){openHboCartEntry(product,plan,loginOnGuest);return;}
-      void import('/community-assets/cart-entry.js?v=checkout-sounds-20261108').then(m=>m.startCartEntry(product,plan,{loginOnGuest})).catch(()=>toastMessage('Sifariş pəncərəsi açılmadı. Yenidən cəhd edin.'));return;
+      openPreparedCartEntry(product,plan,loginOnGuest);return;
     }
     if (!stockIsAvailable(product, plan) || !plan || Number(plan.price) <= 0) {
       decorateProductPage(product);
@@ -2092,6 +2103,7 @@
 
     openProductPage = function patchedOpenProductPage(id) {
       original(id);
+      prefetchSelectedTerms();
       setTimeout(() => {
         const product = DATA.products.find((item) => item.id === id);
         decorateProductPage(product);
@@ -2167,6 +2179,12 @@
   }).observe(spotifyModal, {attributes:true,attributeFilter:['class']});
 
   wrapProductPage();
+  prefetchSelectedTerms();
+  window.addEventListener("pageshow", prefetchSelectedTerms);
+  window.addEventListener("mirpanel:route-ready", prefetchSelectedTerms);
+  document.addEventListener("click", event => {
+    if (event.target.closest("#pp-plans-container .pp-plan-label")) setTimeout(prefetchSelectedTerms, 0);
+  }, true);
   patchLegacyNameCodeForm();
   patchLegacySendWhatsApp();
   window.mirpanelRequireOrderConsent = requireOrderConsent;

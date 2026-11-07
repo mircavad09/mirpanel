@@ -245,7 +245,7 @@ function injectScript(html, needle, scriptTag) {
 function withSeoScripts(html) {
   let next = html;
   next=next.replace(/(src=["'])\/?(browser-orders|order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
-  next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=order-delivery-20261108$2');
+  next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=terms-preload-20261108$2');
   next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?(cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-stable-20261031$3');

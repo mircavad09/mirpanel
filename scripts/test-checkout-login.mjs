@@ -49,7 +49,7 @@ try{
   let unblockBootstrap,unblockModule,unblockQuote,draftCalls=0,quoteCalls=0;
   const bootstrap=new Promise(r=>{unblockBootstrap=r;}),moduleGate=new Promise(r=>{unblockModule=r;}),quoteGate=new Promise(r=>{unblockQuote=r;});
   await p.route('**/order-confirmation.js',async r=>{await bootstrap;await r.continue();});
-  await p.route('**/community-assets/cart-entry.js?v=checkout-sounds-20261108*',async r=>{await moduleGate;await r.continue();});
+  await p.route('**/community-assets/cart-entry.js?v=terms-preload-20261108*',async r=>{await moduleGate;await r.continue();});
   await p.route('**/api/payments/shop/quote',async r=>{if(++quoteCalls===1){await quoteGate;return r.fulfill({status:503,contentType:'application/json',body:'{}'});}await r.continue();});
   await p.route('**/api/payments/shop/draft',async r=>{draftCalls++;await r.continue();});
   if(fromList){await p.goto(origin+'/mehsul');await p.getByRole('link',{name:'HBO Max'}).click({noWaitAfter:true});}
@@ -58,7 +58,7 @@ try{
   unblockBootstrap();await p.locator('#pp-order-btn:not([disabled])').waitFor({state:'visible'});
   await order.evaluate(b=>{b.click();b.click();});const dialog=p.locator('dialog.cart-entry[open]');
   await dialog.getByRole('heading',{name:'Diqqət!'}).waitFor();eq(await dialog.count(),1);
-  eq(await dialog.getByRole('status').innerText(),'Sifariş şərtləri yoxlanılır…');
+  eq(await dialog.getByRole('status').getAttribute('aria-busy'),'true');
   unblockModule();await p.waitForFunction(()=>!!document.querySelector('.cart-entry-loading'));eq(await dialog.count(),1);
   unblockQuote();await dialog.getByText('Sifariş şərtlərini almaq mümkün olmadı.').waitFor();
   await dialog.getByRole('button',{name:'Yenidən cəhd et'}).click();await dialog.getByRole('checkbox').check();
