@@ -2,9 +2,13 @@ import fs from 'node:fs';import http from 'node:http';import crypto from 'node:c
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 const f=await shopFixture(),password=crypto.randomBytes(24).toString('base64url'),username='synthetic-shop-admin',worker={id:crypto.randomUUID(),login:'synthetic-worker',display_name:'Worker',password_hash:await hashPassword(password),active:true,session_version:1,employee_started_at:null};let checks=0,child,upstream,browser;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;},sessions=new Map(),json=(res,s,v)=>{res.writeHead(s,{'Content-Type':'application/json'});res.end(JSON.stringify(v));};
 try{
- const add=async()=>{const t=await f.shop.topup({user:'a'},{amount:'5',methodId:f.method,requestId:f.id()}),r={path:'topup/'+t.id+'/test.png',size:3,mimeType:'image/png',sha256:'a'.repeat(64)};f.files.set(r.path,Buffer.from('abc'));await f.shop.savedReceipt({user:'a'},'a'.repeat(64),'topup',t.id,r);await f.shop.submitTopup({user:'a'},t.id);return t;};
+ const add=async(user='a')=>{const t=await f.shop.topup({user},{amount:'5',methodId:f.method,requestId:f.id()}),r={path:'topup/'+t.id+'/test.png',size:3,mimeType:'image/png',sha256:'a'.repeat(64)};f.files.set(r.path,Buffer.from('abc'));await f.shop.savedReceipt({user},'a'.repeat(64),'topup',t.id,r);await f.shop.submitTopup({user},t.id);return t;};
+ const picture=f.id(), png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+nmGQAAAAASUVORK5CYII=','base64');
+ await f.pool.query("update community_member_numbers set member_number=1022 where user_id='a'");
+ await f.pool.query("insert into profile_media(id,user_id,kind,bytes) values($1,'a','avatar',$2)",[picture,png]);
+ await f.pool.query("insert into community_profiles(user_id,display_name,avatar_path) values('a','Reader A',$1) on conflict(user_id) do update set avatar_path=excluded.avatar_path",[picture+'.webp']);
  await assert.rejects(f.shop.admin(f.pool,{id:'a'},{action:'topup-count'}),/sahib-admin/);checks++;
- upstream=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://local');if(u.pathname==='/rest/v1/rpc/admin_session_action'){let raw='';for await(const b of req)raw+=b;const p=JSON.parse(raw),key=p.p_hash+':'+p.p_binding;let row=sessions.get(key);if(p.p_action==='revoke'){sessions.delete(key);return json(res,200,null);}if(p.p_action==='create'||p.p_action==='touch'&&row){row={expiresAt:new Date(Date.now()+3600000).toISOString()};sessions.set(key,row);}return json(res,200,row||null);}if(u.pathname==='/rest/v1/rpc/employee_system_ready')return json(res,200,5);if(u.pathname==='/rest/v1/rpc/consume_payment_rate_limit')return json(res,200,{allowed:true});if(u.pathname==='/rest/v1/employee_accounts')return json(res,200,[worker]);if(u.pathname==='/rest/v1/employee_work_audit'){res.writeHead(204);return res.end();}return json(res,200,[]);});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));const up='http://127.0.0.1:'+upstream.address().port,base='http://127.0.0.1:10588',url=new URL('postgres://localhost');Object.assign(url,{hostname:f.connection.host,port:String(f.connection.port),username:f.connection.user,password:f.connection.password,pathname:'/'+f.database});
+ upstream=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://local');if(u.pathname.startsWith('/storage/v1/object/sign/')&&req.method==='POST')return json(res,200,{signedURL:'/object/sign/fixture-preview?token=synthetic'});if(u.pathname==='/storage/v1/object/sign/fixture-preview'&&u.searchParams.get('token')==='synthetic'){res.writeHead(200,{'content-type':'image/png'});return res.end(png);}if(u.pathname==='/rest/v1/rpc/admin_session_action'){let raw='';for await(const b of req)raw+=b;const p=JSON.parse(raw),key=p.p_hash+':'+p.p_binding;let row=sessions.get(key);if(p.p_action==='revoke'){sessions.delete(key);return json(res,200,null);}if(p.p_action==='create'||p.p_action==='touch'&&row){row={expiresAt:new Date(Date.now()+3600000).toISOString()};sessions.set(key,row);}return json(res,200,row||null);}if(u.pathname==='/rest/v1/rpc/employee_system_ready')return json(res,200,5);if(u.pathname==='/rest/v1/rpc/consume_payment_rate_limit')return json(res,200,{allowed:true});if(u.pathname==='/rest/v1/employee_accounts')return json(res,200,[worker]);if(u.pathname==='/rest/v1/employee_work_audit'){res.writeHead(204);return res.end();}return json(res,200,[]);});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));const up='http://127.0.0.1:'+upstream.address().port,base='http://127.0.0.1:10588',url=new URL('postgres://localhost');Object.assign(url,{hostname:f.connection.host,port:String(f.connection.port),username:f.connection.user,password:f.connection.password,pathname:'/'+f.database});
  const code=`import fs from 'node:fs';const native=globalThis.fetch;globalThis.fetch=(u,o)=>String(u?.url||u).startsWith(${JSON.stringify(up)})?native(u,o):String(u?.url||u).includes('/contents/app.js')?Promise.resolve(Response.json({sha:'synthetic',content:fs.readFileSync('app.js').toString('base64')})):Promise.resolve(Response.json({message:'isolated'},{status:401}));await import(${JSON.stringify(new URL('../mirpanel-admin/server.mjs',import.meta.url).href)});`;
  child=spawn(process.execPath,['--input-type=module','-e',code],{windowsHide:true,env:{...process.env,PORT:'10588',ADMIN_USERNAME:username,ADMIN_PASSWORD:password,MIRPANEL_GITHUB_TOKEN:'synthetic',SUPABASE_URL:up,SUPABASE_SECRET_KEY:'synthetic',PAYMENT_ENCRYPTION_KEY_B64:crypto.randomBytes(32).toString('base64'),PAYMENT_TOKEN_SECRET_B64:crypto.randomBytes(32).toString('base64'),EMPLOYEE_PANEL_ENABLED:'true',COOKIE_SECURE:'false',RENDER_EXTERNAL_URL:base,COMMUNITY_OWNER_ENABLED:'true',COMMUNITY_PUBLIC_ENABLED:'true',COMMUNITY_TEST:'true',COMMUNITY_ORIGIN:'http://127.0.0.1:55464',COMMUNITY_DATABASE_URL:url.href,COMMUNITY_AUTH_SECRET:crypto.randomBytes(48).toString('base64url'),COMMUNITY_GOOGLE_CLIENT_ID:'synthetic',COMMUNITY_GOOGLE_CLIENT_SECRET:'synthetic'},stdio:['ignore','pipe','pipe']});child.stderr.on('data',()=>{});await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('STARTUP_TIMEOUT')),20000);child.stdout.on('data',b=>{if(String(b).includes('Mirpanel admin:')){clearTimeout(timer);resolve();}});});
  for(const p of ['/api/admin/community/shop','/admin-shop.js'])eq((await fetch(base+p)).status,401);
@@ -15,19 +19,50 @@ try{
  await p.waitForFunction(()=>document.querySelector('.dashboardCard[data-dashboard-view=communityShop] strong')?.textContent==='0');
  await badge(0);
  const t=await add();await p.clock.fastForward(30000);await badge(1);
- const second=await add();await p.clock.fastForward(30000);await badge(2);
+ eq((await ctx.request.post(base+'/api/admin/community/shop',{data:{action:'receipt',id:t.id}})).status(),403);
+ await f.pool.query("update mirpanel_community.wallet_topups set submitted_at='2026-11-01T10:15:00Z' where id=$1",[t.id]);
+ const second=await add('b');await p.clock.fastForward(30000);await badge(2);
  await p.route('**/api/admin/community/shop?only=topup-count',route=>route.fulfill({status:503,json:{error:'isolated failure'}}));
  const failure=p.waitForResponse(r=>r.url().includes('only=topup-count')&&r.status()===503);
  await p.clock.fastForward(30000);await failure;await badge(2);
  await p.unroute('**/api/admin/community/shop?only=topup-count');
- for(const width of [390,1440]){await p.setViewportSize({width,height:900});await nav.click();await p.getByRole('heading',{name:'Balans müraciətləri',exact:true}).waitFor();await p.getByRole('button',{name:'Təsdiqlə',exact:true}).first().waitFor();await p.evaluate(token=>{state.csrfToken=token;},s.csrfToken);eq(await p.getByRole('button',{name:'Rədd et',exact:true}).count(),2);}
- p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Təsdiqlə',exact:true}).last().click();
- await p.getByText('5.00 AZN · Təsdiqləndi',{exact:true}).waitFor();await badge(1);
- eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'500');
- const repeat=await ctx.request.post(base+'/api/admin/community/shop',{headers:{'X-CSRF-Token':s.csrfToken,Origin:base},data:{action:'approve',id:t.id,amount:'5'}});eq(repeat.status(),200);
- eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'500');
+ const card=p.locator('.topupCard').filter({hasText:'Reader A'});
+ await nav.click();
+ for(const width of [390,1440]){
+  await p.setViewportSize({width,height:900});
+  await p.getByRole('heading',{name:'Balans müraciətləri',exact:true}).waitFor();
+  await card.getByRole('button',{name:'Təsdiqlə',exact:true}).waitFor();
+  await p.evaluate(token=>{state.csrfToken=token;},s.csrfToken);
+  eq(await p.getByRole('button',{name:'Rədd et',exact:true}).count(),2);
+  eq(await card.locator('input').inputValue(),'5.00');
+  eq(await card.getByText('#1022',{exact:true}).count(),1);
+  eq(await card.locator('.topupAvatar img').getAttribute('src'),'/api/community/media/'+picture+'.webp');
+  await card.locator('.topupAvatar img').evaluate(img=>img.decode());
+  eq((await card.locator('time').innerText()).includes('14:15'),true);
+  eq(await p.locator('.topupCard').filter({hasText:'Reader B'}).locator('.topupAvatar').innerText(),'RB');
+  eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  if(width===1440)eq((await card.locator('input').boundingBox()).width<200,true);
+  const profilePopup=p.waitForEvent('popup');await card.getByRole('link',{name:/Reader A/}).click();const profile=await profilePopup;
+  await profile.locator('.wu-detail-head').getByRole('heading',{name:'Reader A',exact:true}).waitFor();await profile.close();
+  const receiptPopup=p.waitForEvent('popup');await card.getByRole('button',{name:'Çekə bax',exact:true}).click();const receipt=await receiptPopup;
+  await receipt.waitForURL('**/storage/v1/object/sign/fixture-preview?token=synthetic');await receipt.close();
+ }
+ await card.locator('input').fill('4,00');
+ p.once('dialog',d=>d.accept());await card.getByRole('button',{name:'Təsdiqlə',exact:true}).dblclick();
+ await card.getByText('Təsdiqləndi',{exact:true}).waitFor();await badge(1);
+ eq(await card.getByText('İstənilən 5,00 ₼',{exact:true}).count(),1);
+ eq(await card.getByText('Təsdiqlənən 4,00 ₼',{exact:true}).count(),1);
+ eq(await card.locator('time').count(),2);
+ eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'400');
+ const repeat=await ctx.request.post(base+'/api/admin/community/shop',{headers:{'X-CSRF-Token':s.csrfToken,Origin:base},data:{action:'approve',id:t.id,amount:'4'}});eq(repeat.status(),200);
+ eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'400');
  p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Rədd et',exact:true}).click();await badge(0);
+ await p.locator('.topupCard').filter({hasText:'Reader B'}).getByText('Rədd edildi',{exact:true}).waitFor();
  eq((await f.pool.query("select status from mirpanel_community.wallet_topups where id=$1",[second.id])).rows[0].status,'rejected');
  eq((await f.pool.query("select count(*)::int n from community_audit where action='topup.approved'")).rows[0].n,1);
+ await f.pool.query("update mirpanel_community.wallet_topups set decided_at=null where id=$1",[t.id]);
+ await p.getByRole('button',{name:'Yenilə',exact:true}).last().click();
+ await card.getByText('Təsdiqlənib: vaxt qeyd edilməyib',{exact:true}).waitFor();
+ eq(await card.locator('time').count(),1);
  eq(errors,[]);console.log(JSON.stringify({checks,realAdminServer:true,realPostgreSQL:true,badge:[0,1,2,1,0],failurePreserved:2,duplicateCredit:false,employeeDenied:true,csrfRequired:true,productionWrites:0}));
 }catch(e){if(browser)for(const c of browser.contexts())for(const p of c.pages()){console.log('SYNTHETIC_ADMIN_DIAGNOSTIC',await p.locator('#communityShopView').evaluate(n=>({html:n.outerHTML.slice(0,900),ancestors:[n,...[...function*(x){while(x.parentElement){x=x.parentElement;yield x;}}(n)]].map(x=>({tag:x.tagName,cls:x.className,display:getComputedStyle(x).display,aria:x.getAttribute('aria-hidden')})),heading:[...n.querySelectorAll('h1')].map(h=>({text:h.textContent,rect:h.getBoundingClientRect().toJSON(),display:getComputedStyle(h).display}))})));}throw e;}finally{await browser?.close();if(child&&child.exitCode===null){child.kill();await once(child,'exit');}if(upstream)await new Promise(r=>upstream.close(r));await f.close();}
