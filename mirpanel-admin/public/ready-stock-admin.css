@@ -1,0 +1,16 @@
+.readyStockLayout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start;font:14px/1.5 system-ui,"Segoe UI",sans-serif}
+.readyStockCard{min-width:0;background:#16191b;border:1px solid #34393d;border-radius:14px;padding:16px}
+.readyStockCard h3{font-size:17px;margin:0 0 5px}.readyStockCard p{color:#bcc1c7;margin:0 0 12px}
+.readyStockCard form,.readyStockCard [data-messages],.readyStockCard [data-plan-list]{display:grid;gap:10px}
+.readyStockCard label:not(.readyStockCheck){display:grid;gap:4px;min-width:0}
+.readyStockCard :is(select,textarea,input[type=number]){width:100%;min-width:0;box-sizing:border-box;font:inherit}
+.readyStockCard .readyStockCheck{display:flex;align-items:center;gap:7px}.readyStockCard input[type=checkbox]{width:18px;height:18px;accent-color:#ffd400}
+.readyStockCounts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.readyStockCounts span{display:grid;padding:8px 10px;border:1px solid #41423b;border-radius:9px;background:#212224}
+.readyStockCounts strong{color:#ffda36;font-size:18px}
+.readyStockSale,.readyStockActions{display:flex;flex-wrap:wrap;align-items:end;gap:8px}.readyStockSale label:first-child{flex:1 1 90px}
+.readyStockMessage{display:grid;gap:6px}.readyStockMessage .btn{justify-self:start}
+.readyStockPlan{display:grid;gap:3px;text-align:left;padding:10px;border:1px solid #42464a;border-radius:9px;background:#202326;color:#eee;cursor:pointer;font:inherit;overflow-wrap:anywhere}
+.readyStockPlan[aria-pressed=true]{border-color:#d7a925;background:#312813}.readyStockPlan small{color:#c0c4ca}
+.readyStockCard [role=status]{margin:10px 0 0;color:#97e8b1}.readyStockCard [data-error=true]{color:#ffb0b0}
+@media(max-width:760px){.readyStockLayout{grid-template-columns:1fr}.readyStockCard{padding:12px}}

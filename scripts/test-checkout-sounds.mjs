@@ -6,7 +6,7 @@ import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex
 const ids=['90000000-0000-4000-8000-000000000001','90000000-0000-4000-8000-000000000002','90000000-0000-4000-8000-000000000003'];
 const item={productId:'synthetic',planIndex:0,quantity:1,lineId:ids[0],draftId:ids[0],termsVersion:'test',title:'Synthetic',planName:'Test',unitCents:500,available:20,terms:'Synthetic terms',fields:[]};
 let failDraft,failRemove,replay,posts,state,paid,mode;
-const checkout=()=>({id:ids[2],state,mode,methodId:ids[1],totalCents:500,items:[item],expiresAt:new Date(Date.now()+600000).toISOString(),receiptUploaded:true,paymentConfirmed:paid,...(state==='submitted'?{orderCode:mode==='wallet'?'992':'991',whatsappUrl:'/unexpected-whatsapp'}:{})});
+const checkout=()=>({id:ids[2],state,mode,methodId:ids[1],totalCents:500,items:[item],expiresAt:new Date(Date.now()+600000).toISOString(),receiptUploaded:true,paymentConfirmed:paid,...(state==='submitted'?{orderCode:mode==='wallet'?'992':'991',whatsappUrl:'/unexpected-whatsapp',...(mode==='wallet'?{deliveryStatus:'completed'}:{})}:{})});
 const server=http.createServer(async(req,res)=>{
  const p=new URL(req.url,'http://localhost').pathname;
  const out=(status,body)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(body));};
@@ -88,7 +88,8 @@ try{
    await p.goto(origin+'/odenis?mode=wallet');await p.locator('.checkout-consent input').check();
    await p.getByRole('button',{name:/Sifarişi tamamla/}).dblclick();
    await p.getByText('Sifariş № 992').waitFor();await waitSound(['add','remove','remove','order','order']);
-   assert.equal(await p.getByRole('link',{name:'Sifarişlərimə bax'}).getAttribute('href'),'/profil?tab=orders&order=992');
+   assert.equal(await p.getByRole('link',{name:'Sifarişlərimə keç'}).getAttribute('href'),'/profil?tab=orders&order=992');
+   await p.getByText('Tamamlandı — bütün məhsullar hesabınıza təhvil verildi.').waitFor();
    for(const label of ['Məhsullara bax','Ana səhifə'])await p.getByRole('link',{name:label,exact:true}).waitFor();
    await p.reload();await waitSound(['add','remove','remove','order','order']);
    const mediaError=await p.evaluate(()=>sessionStorage.getItem('sound-media-error'));

@@ -1,6 +1,6 @@
 (function () {
   const viewGroups = [
-    ["Tez istifadə olunanlar", [["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"], ["employeeStock", "İşçi stoku", "/admin/employee-stock"], ["paymentOrders", "Sifarişlər"], ["communityShop", "Balans müraciətləri"], ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]]],
+    ["Tez istifadə olunanlar", [["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"], ["employeeStock", "İşçi stoku", "/admin/employee-stock"], ["paymentOrders", "Sifarişlər"], ["readyStock", "Hazır hesab stoku"], ["communityShop", "Balans müraciətləri"], ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]]],
     ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
     ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sitemap"]]],
     ["Maliyyə nəzarəti", [["paymentReviews", "Ödəniş yoxlamaları"]]],
@@ -133,6 +133,7 @@
     if (view === "history") { void loadHistory(); void verifyPublication(); }
     if (view === "dashboard") { renderDashboard(); void loadDashboard(); }
     if (view === "netflixAccounts") loadNetflixAccounts();
+    if (view === "readyStock") import('/ready-stock-admin.js?v=1').then(m=>m.mountReadyStock(el('readyStockHost'),api)).catch(()=>{el('readyStockHost').textContent='Bölmə açılmadı. Yenidən cəhd edin.';});
   }
   async function loadNetflixAccounts() {
     const list = el("netflixAccountsList"); if (!list) return;
@@ -192,7 +193,8 @@
     <div id="paymentCostsStatus" class="paymentOrdersStatus" role="status" aria-live="polite"></div>
     <div id="paymentCostsList" class="paymentCostsList" aria-live="polite"></div>
     <details class="paymentBackfillPanel"><summary>Köhnə sifarişlərin maya snapshot-u</summary><p>Maya snapshot-u olmayan tamamlanmış sifarişlər yalnız məhsul ID-si və plan ID-si tam uyğun gəldikdə hesablanır. Sıfır və ya təxmini maya yazılmır.</p><div class="paymentOrderActions"><button class="btn" type="button" id="paymentCostBackfillPreview">Preview yarat</button><button class="btn primary" type="button" id="paymentCostBackfillApply" disabled>Təsdiqlə və tətbiq et</button></div><div id="paymentCostBackfillResult" class="paymentOrdersStatus" aria-live="polite"></div></details>`));
-    createView("paymentOrders", panel("Sifarişlər", "Gözləyən sifarişləri yoxlayın, tamamlanmış satış tarixçəsini və müddəti bitən məhsulları izləyin.", `<div class="paymentOrderToolbar">
+    createView("readyStock", panel("Hazır hesab stoku", "Müştəri sifarişləri üçün hazır təhvil mətnlərini və satış stokunu idarə edin.", '<div id="readyStockHost"></div>'));
+    createView("paymentOrders", panel("Sifarişlər", "Gözləyən sifarişləri yoxlayın, tamamlanmış satış tarixçəsini və müddəti bitən məhsulları izləyin.", `<div class="actions"><button type="button" class="btn primary" data-dashboard-view="readyStock">+ Hazır hesab əlavə et</button></div><div class="paymentOrderToolbar">
       <div class="paymentOrderTabs" role="tablist" aria-label="Sifariş statusları">
         <button class="paymentOrderTab active" type="button" role="tab" aria-selected="true" data-payment-order-tab="pending">Gözləyən sifarişlər (<span id="paymentPendingCount">0</span>)</button>
         <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="today">Bu gün tamamlananlar (<span id="paymentTodayCount">0</span>)</button>

@@ -7,6 +7,19 @@ async function api(suffix,method='GET',body){const r=await fetch('https://api.re
 const env=Object.fromEntries((await api('/env-vars?limit=100')).map(x=>[x.envVar.key,x.envVar.value]));
 const pool=new pg.Pool({connectionString:env.COMMUNITY_DATABASE_URL,ssl:{rejectUnauthorized:true,ca:env.COMMUNITY_DATABASE_CA},max:1,connectionTimeoutMillis:15000,options:'-c statement_timeout=120000 -c lock_timeout=5000'});
 try{
+ if(mode==='ready-stock-migrate'){
+  const root=path.join(process.env.LOCALAPPDATA,'MirpanelPrivateBackups'),sql=fs.readFileSync('mirpanel-admin/community/ready-stock-migration.sql','utf8');
+  const dir=fs.readdirSync(root).filter(n=>n.startsWith('ready-stock-')).sort().reverse().map(n=>path.join(root,n)).find(d=>fs.existsSync(path.join(d,'verified.json')));
+  if(!dir)throw Error('VERIFIED_BACKUP_REQUIRED');
+  const proofPath=path.join(dir,'verified.json'),proof=JSON.parse(fs.readFileSync(proofPath));
+  const sha=v=>crypto.createHash('sha256').update(v).digest('hex');
+  if(!proof.ok||!proof.restored||!proof.migrationFirstAndRepeat||!proof.verification||!proof.rollbackPreservedExistingData||!proof.encryptedArchive||proof.migrationSha256!==sha(sql)||Date.now()-fs.statSync(proofPath).mtimeMs>6*3600000||sha(fs.readFileSync(path.join(dir,'database.dump.dpapi')))!==proof.archiveSha256)throw Error('VERIFIED_BACKUP_REQUIRED');
+  if(new URL(env.COMMUNITY_DATABASE_URL).username.split('.').at(-1)!=='sidgtcgyqkdplgfabmmp')throw Error('WRONG_PROJECT');
+  await pool.query(sql);
+  const result=(await pool.query(fs.readFileSync('mirpanel-admin/community/ready-stock-verification.sql','utf8'))).rows[0];
+  if(!result||Object.values(result).some(v=>v!==true))throw Error('READY_STOCK_VERIFY_FAILED');
+  console.log(JSON.stringify({migrationApplied:true,backupRestoreVerified:true,verification:result,productionBusinessRowsChanged:0}));
+ }else{
  if(mode==='migrate'){
   if(env.COMMUNITY_PUBLIC_ENABLED==='true')throw Error('DISABLE_PUBLIC_BEFORE_MIGRATION');
   const sql=fs.readFileSync('mirpanel-admin/community/public-release.sql','utf8'),sha=crypto.createHash('sha256').update(sql).digest('hex');
@@ -33,5 +46,6 @@ try{
  if(mode==='redeploy'){
   const {execFileSync}=await import('node:child_process');const commit=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim();
   const d=await api('/deploys','POST',{commitId:commit,clearCache:'do_not_clear'});console.log(JSON.stringify({deployRequested:true,id:d?.id||null,commit}));
+ }
  }
 }finally{await pool.end();}

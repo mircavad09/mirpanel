@@ -178,7 +178,7 @@
       <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
       <div class="paymentOrderActions">
         <button class="btn" type="button" data-order-details>Sifariş məlumatları</button>
-        ${order.paymentSource==='wallet'||['approved','completed'].includes(order.status)?'<button class="btn" type="button" data-order-delivery>Təhvil məlumatı əlavə et</button>':''}
+        ${order.deliveryPending??(order.paymentSource==='wallet'||['approved','completed'].includes(order.status))?'<button class="btn" type="button" data-order-delivery>Sifarişi təhvil ver</button>':''}
         ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : (order.paymentSource==='wallet'?'<span class="statusPill">Balansla ödənilib · təqdimetmə gözlənilir</span>':'<span class="statusPill">Çek saxlanma müddəti bitib</span>')}
         ${pending ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : `${order.workforce&&!order.workforce.ownerRole?'<button class="btn" type="button" data-claim-payment>Üzərinə götür</button>':''}<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>` : ""}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
@@ -570,7 +570,7 @@
         pending??={...data,requestId:crypto.randomUUID()};
         for(const field of [line,quantity,message,submit,close])field.disabled=true;
         error.textContent='';
-        try{await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast('Təhvil məlumatı müştəri hesabına əlavə edildi.');}
+        try{await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast('Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders({automatic:true});}
         catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;line.disabled=quantity.disabled=message.disabled=false;}submit.disabled=close.disabled=false;}
       };
       dlg.append(form);document.body.append(dlg);dlg.showModal();return;

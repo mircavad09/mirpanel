@@ -18,7 +18,7 @@ export function customerStatus(o,records){
 const totals=rows=>Object.fromEntries([...new Set(rows.map(r=>r.line_index))].map(i=>[i,rows.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)]));
 export async function deliveryRecords(pool,ids){
  if(!ids.length)return [];
- return (await pool.query(`select id,order_id,line_index,quantity,delivered_at from ${D} where order_id=any($1::uuid[]) order by delivered_at,id`,[ids])).rows;
+ return (await pool.query(`select id,order_id,line_index,quantity,delivered_at,(actor='wallet:auto') as automatic from ${D} where order_id=any($1::uuid[]) order by delivered_at,id`,[ids])).rows;
 }
 export async function ownerCodes(pool,user,id){
  const where=id?'and d.id=$2::uuid':'';
@@ -26,6 +26,18 @@ export async function ownerCodes(pool,user,id){
   from ${D} d join ${O} l on l.order_id=d.order_id join public.payment_orders o on o.id=d.order_id
   where l.user_id=$1 and o.status not in ('rejected','cancelled','expired') and (o.payment_confirmed is true or o.status in ('approved','completed')) ${where}
   order by d.delivered_at desc,d.id desc`,id?[user,id]:[user])).rows;
+}
+export async function recordDelivery(c,security,actor,orderId,id,line,quantity,message){
+ const cipher=security.encryptSecret(JSON.stringify({id,order:orderId,line,message}));
+ const record=(await c.query(`insert into ${D}(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,$3,$4,$5,$6) returning id,line_index,quantity`,[id,orderId,line,quantity,cipher,actor])).rows[0];
+ await c.query(`insert into ${M}(event_key,order_id,delivery_id) values($1,$2,$3)`,['delivery:'+id,orderId,id]);
+ return record;
+}
+export async function adminPendingDeliveries(pool,ids){
+ if(!ids.length||!(await pool.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name)return [];
+ const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity from public.payment_orders o join ${O} u on u.order_id=o.id where o.id=any($1::uuid[])`,[ids])).rows.filter(paid);
+ const records=await deliveryRecords(pool,orders.map(o=>o.id));
+ return orders.filter(o=>customerStatus(o,records.filter(r=>r.order_id===o.id))==='preparing').map(o=>o.id);
 }
 export async function adminDelivery(pool,security,actor,id,input){
  const c=await pool.connect();
@@ -39,15 +51,13 @@ export async function adminDelivery(pool,security,actor,id,input){
   if(!input){await c.query('commit');return view();}
   const {requestId,line,quantity,message}=input;
   if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||typeof message!=='string'||!message.trim()||message.length>8000)throw fail(400,'Təhvil məlumatları düzgün deyil.');
-  const cipher=security.encryptSecret(JSON.stringify({id:requestId,order:id,line,message}));
   const previous=(await c.query(`select order_id,line_index,quantity,message_cipher from ${D} where id=$1`,[requestId])).rows[0];
   if(previous){
    if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||JSON.parse(security.decryptSecret(previous.message_cipher)).message!==message)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
    await c.query('commit');return {...view(),replayed:true};
   }
   if(quantity>lines[line].quantity-(done[line]||0))throw fail(409,'Bu sayda təhvil verilməmiş məhsul qalmayıb.');
-  const record=(await c.query(`insert into ${D}(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,$3,$4,$5,$6) returning id,line_index,quantity`,[requestId,id,line,quantity,cipher,actor])).rows[0];
-  await c.query(`insert into ${M}(event_key,order_id,delivery_id) values($1,$2,$3)`,['delivery:'+requestId,id,requestId]);
+  const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message);
   records.push(record);done[line]=(done[line]||0)+quantity;
   await c.query('commit');return view();
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}

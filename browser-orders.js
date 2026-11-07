@@ -51,7 +51,14 @@
    const node=root.lastElementChild;
    repeats.set(node,items.map(x=>x.repeat));
    if(expanded.has(o.id)||(!focused&&target===String(o.orderCode)))node.open=true;
-   if(!focused&&target===String(o.orderCode)){focused=true;node.scrollIntoView({block:'nearest'});}
+   if(!focused&&target===String(o.orderCode)){
+    focused=true;node.scrollIntoView({block:'nearest'});
+    if(o.status==='completed'&&o.autoDelivered)for(const panel of node.querySelectorAll('.browser-order-instructions')){
+     const units=panel.querySelectorAll('[data-delivery]');if(!units.length)continue;
+     panel.hidden=false;panel.closest('.browser-order-line').querySelector('[data-order-info]').setAttribute('aria-expanded','true');
+     for(const unit of units)void delivery(unit);
+    }
+   }
    if(live&&['reviewing','submitted','pending','new_receipt_requested'].includes(prior.get(o.id))&&['preparing','completed'].includes(o.status))void sounds.then(m=>m?.playCheckoutSound('order',o.orderCode));
    prior.set(o.id,o.status);
   }
@@ -60,12 +67,12 @@
  async function load(append=false,live=false){if(loading)return;const run=generation;loading=true;root.setAttribute('aria-busy','true');more.disabled=true;error.hidden=true;
   try{const started=!append?initialRequest:null;if(started)initialRequest=null;const d=await(started||api('my-orders'+(append&&cursor?'?cursor='+encodeURIComponent(cursor):target?'?order='+encodeURIComponent(target):'')));if(run!==generation)return;options.validate?.(d);
    if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=orders');else location.replace('/profil?tab=orders');return;}
-   if(!live||JSON.stringify([d.orders,d.topups])!==pageFingerprint)paint(d,append,{live});
+   if(append||!loaded||JSON.stringify([d.orders,d.topups])!==pageFingerprint)paint(d,append,{live});
   }catch(e){if(run!==generation)return;if(e.status===401||e.status===403){gate();return;}error.replaceChildren(document.createTextNode('Sifarişləri yükləmək mümkün olmadı. '));error.hidden=false;if(!loaded)root.innerHTML='<div class="browser-orders-message"><button type="button" data-retry>Yenidən cəhd et</button></div>';else{const retry=document.createElement('button');retry.type='button';retry.textContent='Yenidən cəhd et';on(retry,'click',()=>load(append));error.append(retry);}
   }finally{if(run===generation){loading=false;more.disabled=false;root.setAttribute('aria-busy','false');}}
  }
  on(more,'click',()=>load(!!cursor));
- function hideInfo(panel){panel.hidden=true;panel.querySelectorAll('pre').forEach(p=>{p.textContent='';p.hidden=true;});panel.querySelectorAll('[data-delivery]').forEach(b=>{b.textContent='Göstər';b.setAttribute('aria-expanded','false');});panel.querySelector('[data-line-feedback]').textContent='';panel.previousElementSibling.querySelector('[data-order-info]').setAttribute('aria-expanded','false');}
+ function hideInfo(panel){panel.hidden=true;panel.querySelectorAll('pre').forEach(p=>{p.textContent='';p.hidden=true;});panel.querySelectorAll('[data-delivery]').forEach(b=>{b.textContent='Göstər';b.setAttribute('aria-expanded','false');});panel.querySelector('[data-line-feedback]').textContent='';panel.closest('.browser-order-line').querySelector('[data-order-info]').setAttribute('aria-expanded','false');}
  root.addEventListener('toggle',e=>{if(e.target.matches?.('[data-order-id]')&&!e.target.open)e.target.querySelectorAll('.browser-order-instructions').forEach(hideInfo);},{capture:true,signal:life.signal});
  async function delivery(b,copy=false){
   if(!b||b.disabled)return;const section=b.closest('.browser-order-instructions'),box=b.closest('.browser-order-delivery'),p=box.querySelector('pre'),status=section.querySelector('[data-line-feedback]'),order=b.closest('details');

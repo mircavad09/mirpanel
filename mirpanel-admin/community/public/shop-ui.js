@@ -117,8 +117,8 @@ async function paymentGroup(clearCart=true){
  if(group.state==='submitted'){
   if(clearCart){cart.clear();localStorage.removeItem(pendingKey);history.replaceState(history.state,'','/odenis?completed='+encodeURIComponent(group.id));}
   const actions=el('div',null,'shop-actions');
-  actions.append(link('Sifarişlərimə bax',group.orderCode?'/profil?tab=orders&order='+encodeURIComponent(group.orderCode):'/profil?tab=orders'),link('Məhsullara bax','/mehsul'),link('Ana səhifə','/'));
-  summary.append(el('p',group.paymentConfirmed?'Ödəniş təsdiqləndi. Təhvil vəziyyətini sifarişinizdə izləyin.':rejected?'Ödəniş təsdiqlənmədi. Faktiki statusu sifarişinizdə yoxlayın.':'Ödəniş yoxlanılır. Bu, çatdırılma təsdiqi deyil.',group.paymentConfirmed?'shop-success':'shop-muted'),actions);
+  actions.append(link(group.mode==='wallet'?'Sifarişlərimə keç':'Sifarişlərimə bax',group.orderCode?'/profil?tab=orders&order='+encodeURIComponent(group.orderCode):'/profil?tab=orders'),link('Məhsullara bax','/mehsul'),link('Ana səhifə','/'));
+  summary.append(el('p',group.paymentConfirmed?(group.deliveryStatus==='completed'?'Tamamlandı — bütün məhsullar hesabınıza təhvil verildi.':group.mode==='wallet'?'Hazırlanır — qalan məhsulların təhvilini sifarişinizdə izləyin.':'Ödəniş təsdiqləndi. Təhvil vəziyyətini sifarişinizdə izləyin.'):rejected?'Ödəniş təsdiqlənmədi. Faktiki statusu sifarişinizdə yoxlayın.':'Ödəniş yoxlanılır. Bu, çatdırılma təsdiqi deyil.',group.paymentConfirmed?'shop-success':'shop-muted'),actions);
   app.replaceChildren(el('h1','Sifarişiniz'),summary,...group.items.map(x=>product(x,x.quantity||1)),error);refreshAccount();
   if(group.mode==='card'&&!group.paymentConfirmed&&!rejected){
    const initial=group;

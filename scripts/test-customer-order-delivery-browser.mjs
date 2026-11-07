@@ -8,7 +8,7 @@ const sample='Sintetik e-poçt: buyer@example.test\n\nİkinci sətir ✨';
 const order='12345678-1234-4234-8234-000000000001',delivery='12345678-1234-4234-8234-000000000002';
 const repeat={productId:'synthetic',title:'Synthetic first',planIndex:0,planName:'1 ay'};
 const price=725,field={key:'room',label:'Otaq adı',type:'text',required:true,minLength:1,maxLength:40};
-let status='reviewing',reveals=0,available=1,drafts=0,payments=0,receiptReads=0,expiresOn,preview=false;
+let status='reviewing',reveals=0,available=1,drafts=0,payments=0,receiptReads=0,expiresOn,preview=false,autoDelivered=false;
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost');
  const json=body=>{res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');return res.end(JSON.stringify(body));};
@@ -16,7 +16,7 @@ const server=http.createServer(async(req,res)=>{
   assert.equal(u.searchParams.get('order'),'9180');
   const items=[{title:'CapCut Pro',quantity:1,planName:'1 aylıq (Telefon)',unitCents:500,repeat,expiresOn,image:'/assets/capcut.png'}];
   if(!preview)items.push({title:'Əlavə sınaq paketi',quantity:1,planName:'1 aylıq uzun paket adı — uzun sətir üçün sınaq',unitCents:600,warranty:'7 gün zəmanət'});
-  return json({orders:[{id:order,orderCode:'9180',product:'CapCut Pro · Sınaq sifarişi',amount:preview?5:11,status,createdAt:'2026-11-08T09:03:00Z',receiptAvailable:true,items,deliveries:[{id:delivery,line:0,quantity:1}]}],nextCursor:null});
+  return json({orders:[{id:order,orderCode:'9180',product:'CapCut Pro · Sınaq sifarişi',amount:preview?5:11,status,autoDelivered,createdAt:'2026-11-08T09:03:00Z',receiptAvailable:true,items,deliveries:[{id:delivery,line:0,quantity:1}]}],nextCursor:null});
  }
  if(u.pathname==='/api/payments/my-orders/codes')return json({codes:[{id:delivery,title:'Synthetic first',plan:'1 ay',quantity:1,deliveredAt:'2026-11-08T09:05:00Z'}]});
  if(u.pathname==='/api/payments/my-orders/codes/'+delivery){reveals++;return json({text:sample});}
@@ -41,7 +41,7 @@ const server=http.createServer(async(req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 try{
  for(const [engine,name,width]of [[chromium,'Chrome desktop',1440],[chromium,'Chrome mobil ölçü',320],[webkit,'WebKit mobil ölçü',390]]){
-  status='reviewing';reveals=drafts=payments=receiptReads=0;available=1;expiresOn='2026-12-09';
+  status='reviewing';reveals=drafts=payments=receiptReads=0;available=1;expiresOn='2026-12-09';autoDelivered=false;
   const browser=await engine.launch({headless:true,...(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
   try{
    const page=await browser.newPage({viewport:{width,height:820},isMobile:width<600,hasTouch:width<600});
@@ -113,6 +113,10 @@ try{
     await page.locator('main').screenshot({path:path.join(output,width===1440?'mirpanel-order-desktop.png':'mirpanel-order-mobile.png')});
     preview=false;
    }
+   autoDelivered=true;status='completed';
+   await page.goto(origin+'/profil?tab=orders&order=9180');
+   await card.getByRole('heading',{name:'Alınmış hesablar'}).waitFor();
+   await card.getByText('İkinci sətir',{exact:false}).waitFor();
    console.log('PASS '+name+' — status, deep link, protected receipt, private reveal and exact copy, repurchase/current price/fields');
   }finally{await browser.close();}
  }

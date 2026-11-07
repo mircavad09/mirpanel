@@ -17,7 +17,7 @@
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=signup-manual-code-20261108';
- const profileModule='/community-assets/profile-entry.js?v=order-expiry-20261108';
+ const profileModule='/community-assets/profile-entry.js?v=ready-stock-20261108';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
@@ -33,9 +33,9 @@
  function resource(src,run){const u=new URL(src,location.href),key=u.pathname;if(u.origin!==location.origin||!allowedScripts.has(key.split('/').at(-1)))return Promise.resolve();if(loaded.has(key))return loaded.get(key);
  const promise=fetch(u.href,{signal:controller?.signal,cache:'default'}).then(async r=>{if(!r.ok)throw Error('Ümumi resurs yüklənmədi.');const code=await r.text();if(run!==generation)throw new DOMException('Stale route','AbortError');const s=document.createElement('script');s.dataset.routeResource=key;s.textContent=code;document.head.append(s);}).catch(e=>{loaded.delete(key);throw e;});loaded.set(key,promise);return promise;}
  async function mount(v,run){if(run!==generation)return;window.mirpanelNavigationMounting=true;try{
- if(document.getElementById('shopApp')){const m=await moduleWithin('/community-assets/shop-ui.js?v=order-cards-20261108');if(run!==generation)return;dispose=m.mountShop();}
+ if(document.getElementById('shopApp')){const m=await moduleWithin('/community-assets/shop-ui.js?v=ready-stock-20261108');if(run!==generation)return;dispose=m.mountShop();}
  else if(document.getElementById('communityApp')){const m=await moduleWithin('/community-assets/community.js?v=order-delivery-20261108');if(run!==generation)return;dispose=m.mountCommunity();}
- else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=order-expiry-20261108',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
+ else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=ready-stock-20261108',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
  else if(!v.started){for(const src of v.scripts||[]){if(run!==generation)return;await resource(src,run);}v.started=true;}
  if(location.pathname==='/')window.mirpanelRestoreCatalog?.();
  }finally{window.mirpanelNavigationMounting=false;}}

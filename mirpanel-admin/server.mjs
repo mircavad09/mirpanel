@@ -1338,6 +1338,10 @@ const paymentSystem = createPaymentSystem({
   shopContext: request=>ownerCommunity.shopContext(request),
   accountHistory: request=>ownerCommunity.orderHistory(request),
   customerDelivery: (...args)=>ownerCommunity.adminDelivery(...args),
+  readyStockAllowed: request=>getSession(request)?.role==='admin',
+  readyStock: (...args)=>ownerCommunity.readyStock(...args),
+  saveReadyStock: (...args)=>ownerCommunity.saveReadyStock(...args),
+  pendingDeliveries: ids=>ownerCommunity.pendingDeliveries(ids),
   accountForCheckout: request=>ownerCommunity.checkoutAccount(request),
   accountReservation: (request,args)=>ownerCommunity.accountReserve(request,args),
   reservedAccountPrice: (request,id)=>ownerCommunity.reservedPrice(request,id),
@@ -1521,7 +1525,7 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response, "admin.html");
     }
 
-    if (["/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js"].includes(pathname)) {
+    if (["/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-admin.css"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 

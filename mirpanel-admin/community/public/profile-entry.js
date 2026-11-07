@@ -47,7 +47,7 @@ export function mountProfile(app,verifiedState){
  }
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
  const boot=async()=>{try{
-  const {renderAccountPanel}=await import('./account-panel.js?v=order-expiry-20261108');
+  const {renderAccountPanel}=await import('./account-panel.js?v=ready-stock-20261108');
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin});
  }catch{
