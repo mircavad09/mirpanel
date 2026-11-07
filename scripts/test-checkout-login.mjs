@@ -47,7 +47,7 @@ try{
   let unblockBootstrap,unblockModule,unblockQuote,draftCalls=0,quoteCalls=0;
   const bootstrap=new Promise(r=>{unblockBootstrap=r;}),moduleGate=new Promise(r=>{unblockModule=r;}),quoteGate=new Promise(r=>{unblockQuote=r;});
   await p.route('**/order-confirmation.js',async r=>{await bootstrap;await r.continue();});
-  await p.route('**/community-assets/cart-entry.js?v=hbo-first-click-20261107*',async r=>{await moduleGate;await r.continue();});
+  await p.route('**/community-assets/cart-entry.js?v=checkout-sounds-20261108*',async r=>{await moduleGate;await r.continue();});
   await p.route('**/api/payments/shop/quote',async r=>{if(++quoteCalls===1){await quoteGate;return r.fulfill({status:503,contentType:'application/json',body:'{}'});}await r.continue();});
   await p.route('**/api/payments/shop/draft',async r=>{draftCalls++;await r.continue();});
   if(fromList){await p.goto(origin+'/mehsul');await p.getByRole('link',{name:'HBO Max'}).click({noWaitAfter:true});}
@@ -85,10 +85,10 @@ try{
   const before=await p.evaluate(()=>MirpanelCart.read());eq(before.length,2);eq(before.find(x=>x.productId==='netflix').quantity,1);eq(await p.locator('.mir-cart-drawer[open]').count(),0);
   await p.waitForFunction(()=>[...document.querySelectorAll('.auth-order-rows img')].every(i=>i.complete&&i.naturalWidth>0));
   if(width===390||width===1440)await p.screenshot({path:'payment-test-artifacts/checkout-login/guest-two-'+width+'.png'});
-  if(width===430){await p.locator('.auth-switch').click();await p.locator('#account-firstName').fill('Sintetik');await p.locator('#account-lastName').fill('İstifadəçi');await p.locator('#account-email').fill('b@example.invalid');await p.locator('#account-phone').fill('501234567');await p.locator('#account-password').fill('Synthetic-password');await p.locator('#account-terms').check();await p.getByRole('button',{name:'Qeydiyyatdan keç',exact:true}).click();await p.getByRole('button',{name:'E-poçta kod göndər',exact:true}).click();await p.locator('.auth-code-grid input').first().fill('001234');await p.getByRole('button',{name:'Təsdiqlə',exact:true}).click();eq(signupCallback,origin+'/sebet');}
+  if(width===430){await p.locator('.auth-switch').click();await p.locator('#account-firstName').fill('Sintetik');await p.locator('#account-lastName').fill('İstifadəçi');await p.locator('#account-email').fill('b@example.invalid');await p.locator('#account-phone').fill('501234567');await p.locator('#account-password').fill('Synthetic-password');await p.locator('#account-terms').check();await p.getByRole('button',{name:'Qeydiyyatdan keç',exact:true}).click();await p.getByRole('button',{name:'Kod göndər',exact:true}).click();await p.locator('.auth-code-grid input').first().fill('001234');await p.getByRole('button',{name:'Təsdiqlə',exact:true}).click();eq(signupCallback,origin+'/sebet');}
   else if(width===1440){await p.getByRole('button',{name:'Google ilə davam edin',exact:true}).click();}
   else{await p.locator('#account-email').fill('a@example.invalid');await p.locator('#account-password').fill('Synthetic-password');await p.locator('.auth-submit').click();}
-  await p.waitForURL('**/sebet');await p.getByRole('heading',{name:'Səbətim',exact:true}).waitFor();eq(await p.evaluate(()=>MirpanelCart.read()),before);eq(await p.getByRole('button',{name:'Daxil ol',exact:true}).count(),0);await p.getByRole('button',{name:'Hesab menyusunu aç',exact:true}).waitFor();
+  await p.waitForURL('**/sebet');await p.getByRole('heading',{name:'Səbətim',exact:true}).waitFor();eq(await p.evaluate(()=>MirpanelCart.read()),before);await p.getByRole('button',{name:'Hesab menyusunu aç',exact:true}).waitFor();eq(await p.getByRole('button',{name:'Daxil ol',exact:true}).count(),0);
   eq(await p.getByRole('radio',{name:'Kartdan karta köçürmə',exact:false}).count(),0);
   await p.getByRole('button',{name:'Ödənişə keç',exact:true}).click();await p.waitForURL('**/odenis');await p.getByRole('radio',{name:'Kartdan karta köçürmə',exact:false}).waitFor();
   const values=await p.evaluate(id=>fetch('/api/payments/shop/draft?id='+id,{credentials:'same-origin'}).then(r=>r.json()),before.find(x=>x.productId==='netflix').draftId);eq(values.values.pin,'0012');eq(values.values.name,'Sintetik otaq');eq(await p.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}).includes('0012')),false);

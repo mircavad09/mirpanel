@@ -1,5 +1,6 @@
 (() => {
   "use strict";
+  const checkoutSounds=import('/checkout-sounds.js?v=1').catch(()=>null);
 
   // First-party proxy avoids third-party cookie blocking on the public site.
   const API_BASE = /^(?:www\.)?mirpanel\.com$|(?:^|\.)mirpanel\.pages\.dev$/.test(location.hostname) ? location.origin : window.MIRPANEL_PAYMENT_API || "https://mirpanel.onrender.com";
@@ -462,6 +463,8 @@
       const cancelCheckout = async (event) => {
         event?.preventDefault();event?.stopPropagation();
         if(flow.settled||flow.cancelling||flow.reserving||(flow.submitting&&!flow.uploadController))return;
+        const requestedCancel=['paymentCancel','paymentCancelRetry'].includes(event?.currentTarget?.id);
+        const reservationId=flow.reservation?.reservationId||flow.previousReservationId;
         // Invalidate callbacks before aborting. A late upload response cannot
         // revive this checkout, enable Continue or create an order.
         flow.cancelling=true;
@@ -474,7 +477,8 @@
         setMessage('Rezerv təhlükəsiz ləğv edilir…');
         try {
           // Server validates the checkout capability and owns atomic stock release.
-          await cancelReservation(flow);
+          const result=await cancelReservation(flow);
+          if(requestedCancel&&result.cancellation?.status==='cancelled'&&result.cancellation?.idempotent!==true)void checkoutSounds.then(m=>m?.playCheckoutSound('remove','cancel:'+reservationId));
           flow.submitting=false;flow.cancelling=false;
           await finish(null);
         } catch (error) {
@@ -821,6 +825,7 @@
                   order = await request('/api/payments/orders',orderOptions);
                 }
                 if (!validOrder(order)) throw new Error('Server çeki təsdiqləmədi. Yenidən cəhd edin.');
+                if(order.idempotent===false&&order.orderCode)await Promise.race([checkoutSounds.then(m=>m?.playCheckoutSound('order',order.orderCode)),new Promise(resolve=>setTimeout(resolve,800))]);
                 await finish(order,{preserveModal:true});
               } catch (error) {
                 flow.submitting = false;

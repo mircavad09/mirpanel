@@ -12,6 +12,7 @@ try{
  const [a,b]=await Promise.all([shop.checkout(buyer,owner,args),shop.checkout(buyer,owner,args)]);eq(a.id,b.id);eq((await pool.query('select count(*)::int n from payment_reservations where status=\'reserved\' and not capacity_shadow')).rows[0].n,1);eq((await pool.query('select count(*)::int n from payment_reservations where capacity_shadow')).rows[0].n,2);
  const receipt={path:'cart/'+a.id+'/synthetic.png',mimeType:'image/png',size:3,sha256:crypto.createHash('sha256').update('abc').digest('hex')};f.files.set(receipt.path,Buffer.from('abc'));await shop.savedReceipt(buyer,owner,'cart',a.id,receipt);
  const [s,t]=await Promise.all([shop.submit(buyer,owner,a.id),shop.submit(buyer,owner,a.id)]);eq(s.orderId,t.orderId);eq(s.orderCode,t.orderCode);eq((await pool.query('select count(*)::int n from payment_orders')).rows[0].n,1);eq(s.items.length,2);eq(new Set(s.items.map(x=>x.order_id)).size,1);eq(new Set(s.items.map(x=>x.order_code)).size,1);eq(s.receiptUploaded,true);eq((await pool.query('select amount::text from payment_orders where id=$1',[s.orderId])).rows[0].amount,'11.00');
+ eq([s.orderCreated,t.orderCreated].sort(),[false,true]);eq((await shop.get(buyer,owner,a.id)).orderCreated,undefined);
  const text=new URL(s.whatsappUrl).searchParams.get('text');eq(text.match(/Sifariş nömrəsi:/g).length,1);eq(text.includes('Netflix')&&text.includes('Synthetic ordinary'),true);
  await rpc('approve_payment_order_v7',[s.orderId,null,'synthetic-admin']);await rpc('approve_payment_order_v7',[s.orderId,null,'synthetic-admin']);eq((await pool.query('select confirmed_count from payment_method_daily_counters where method_id=$1',[method])).rows[0].confirmed_count,1);
  const fin=await shop.quote(guest,[{productId:'finite',planIndex:0,quantity:1}],owner),ca=await shop.checkout(buyer,owner,{...args,requestId:id(),items:[{productId:'finite',planIndex:0,quantity:1,termsVersion:fin.items[0].termsVersion},ordinary]});eq((await rpc('inventory_snapshot')).find(x=>x.productId==='finite').available,0);await shop.cancel(buyer,owner,ca.id);await shop.cancel(buyer,owner,ca.id);eq((await rpc('inventory_snapshot')).find(x=>x.productId==='finite').available,1);
@@ -21,7 +22,8 @@ try{
  // the same group even if the caller lost the first successful response.
  const otherNetflix=await save('netflix',{pin:'0099'}),two=await shop.checkout(buyer,owner,{...args,items:[netflix,otherNetflix],requestId:id()});
  eq(two.items.length,2);eq((await shop.get(buyer,owner,two.id)).id,two.id);
- await shop.cancel(buyer,owner,two.id);
+ eq((await shop.cancel(buyer,owner,two.id)).cancellationApplied,true);
+ eq((await shop.cancel(buyer,owner,two.id)).cancellationApplied,false);
  await shop.getDraft({user:'a'},owner,spotify.draftId);
  await reject(shop.getDraft({user:'b'},owner,spotify.draftId),e=>e.status===404);
  await reject(shop.getDraft(guest,owner,spotify.draftId),e=>e.status===404);
