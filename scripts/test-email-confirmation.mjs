@@ -26,7 +26,7 @@ const server=http.createServer(async(req,res)=>{
    return await handlePublicCommunity({req,res,u,origin,runtime:{pool,auth},json,body:async q=>JSON.parse(await body(q))});
   }
   if(u.pathname==='/hesab'){res.setHeader('content-type','text/html');return res.end('<!doctype html><meta name="viewport" content="width=device-width, initial-scale=1"><main id="authApp"></main><script type="module" src="/community-assets/auth-forms.js"></script>');}
-  if(u.pathname==='/odenis'){res.setHeader('content-type','text/html');return res.end('<h1>Sintetik ödəniş</h1>');}
+  if(['/odenis','/sebet','/profil'].includes(u.pathname)){res.setHeader('content-type','text/html');return res.end('<h1>Sintetik qayıdış</h1>');}
   if(/^\/community-assets\/auth-forms\.(css|js)$/.test(u.pathname)){res.setHeader('content-type',u.pathname.endsWith('.css')?'text/css':'text/javascript');return res.end(fs.readFileSync('mirpanel-admin/community/public/'+u.pathname.split('/').pop()));}
   res.writeHead(404);res.end();
  }catch(e){if(!res.headersSent)json(res,e.status||500,{message:e.status?e.message:'Synthetic server error'});else res.end();}
@@ -66,6 +66,40 @@ globalThis.fetch=(url,opts)=>{
 };
 let browser;
 try{
+ if(process.argv.includes('--registration-recovery')){
+  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+  const context=await browser.newContext({viewport:{width:390,height:800}}),page=await context.newPage(),address='registration-recovery@example.test';
+  await page.goto(origin+'/hesab?next=%2Fsebet&from=cart');
+  await page.locator('.auth-mode-tabs').getByRole('link',{name:'Qeydiyyat'}).click();
+  await page.locator('#account-firstName').fill('Sintetik');await page.locator('.auth-submit').click();
+  await page.getByText('Soyadınızı yazın.',{exact:true}).waitFor();
+  assert.equal(await page.locator('#account-lastName').evaluate(x=>document.activeElement===x),true);
+  for(const [key,value] of Object.entries({lastName:'Hesab',email:address,phone:'501234567',password}))await page.locator('#account-'+key).fill(value);
+  await page.locator('#account-terms').check();
+  await page.locator('#account-firstName').fill('Mirpanel');await page.locator('.auth-submit').click();
+  await page.locator('#account-firstName-error').filter({hasText:'xidməti ad'}).waitFor();
+  assert.equal(await page.locator('#account-firstName').evaluate(x=>document.activeElement===x),true);
+  assert.equal(await page.locator('#account-email').inputValue(),address);
+  await page.locator('#account-firstName').fill('Sintetik');
+  await page.route('**/api/auth/confirm-email/start',r=>r.fulfill({status:503,contentType:'application/json',body:'{"message":"Synthetic lost verification start"}'}),{times:1});
+  let signupCalls=0;page.on('request',r=>{if(r.url().endsWith('/api/auth/sign-up/email'))signupCalls++;});
+  await page.locator('.auth-submit').click();await page.getByRole('button',{name:'Təsdiqə davam et',exact:true}).waitFor();
+  assert.equal((await pool.query('select count(*)::int as n from "user" where email=$1',[address])).rows[0].n,1);
+  assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
+  assert.equal(await page.locator('#account-email').inputValue(),address);
+  await page.getByRole('button',{name:'Təsdiqə davam et',exact:true}).click();
+  await page.getByRole('heading',{name:'E-poçtunu təsdiqlə',exact:true}).waitFor();
+  assert.equal(signupCalls,1);
+  assert.equal(await page.locator('.auth-code-address strong').innerText(),address);
+  await page.getByRole('button',{name:'E-poçta kod göndər',exact:true}).click();
+  await page.getByRole('heading',{name:'Kodu daxil et',exact:true}).waitFor();
+  await page.locator('.auth-code-grid input').first().fill(record('code',address)[0].code);
+  await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.waitForURL('**/sebet');
+  await welcomeDelivery.wake();assert.equal(record('welcome',address).length,1);
+  console.log('PASS: failed verification start resumed without repeating signup; successful code returned to cart.');
+  await context.close();
+ }
+ if(!process.argv.includes('--registration-recovery')){
  for(const [width,domain] of [[320,'gmail.com'],[1440,'icloud.com']]){
   const old='isolated-first-'+width+'@'+domain,address='isolated-new-'+width+'@outlook.com';
   browser??=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
@@ -76,7 +110,7 @@ try{
   await page.locator('#account-terms').check();
   if(width===320){
    await page.locator('#account-phone').fill('50123');await page.locator('.auth-submit').click();
-   await page.locator('.auth-feedback').filter({hasText:'9 rəqəm'}).waitFor();assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
+   await page.locator('#account-phone-error').filter({hasText:'9 rəqəm'}).waitFor();assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
    await page.locator('#account-phone').fill('501234567');
   }
   await page.locator('.auth-submit').click();
@@ -115,4 +149,5 @@ try{
  for(let i=0;i<2;i++){assert.equal((await google()).headers.get('location'),origin+'/odenis');await welcomeDelivery.wake();assert.equal(record('welcome','synthetic-google@example.test').length,1);}
  assert.equal(record('code','synthetic-google@example.test').length,0);
  console.log('PASS: 320px and desktop signup, refresh, wrong code, cooldown, change, verification and return; synthetic Google new/repeat/unverified. No external mail.');
+ }
 }finally{await welcomeDelivery.stop();globalThis.fetch=nativeFetch;await browser?.close();await new Promise(r=>server.close(r));await fixture.close();}

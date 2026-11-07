@@ -49,6 +49,9 @@ html body.auth-screen,html body.auth-screen.has-bottom-nav{padding-bottom:env(sa
 .auth-screen .auth-switch:hover,.auth-screen .auth-switch:active{background:#ffcd00;color:#111;border-color:#ffcd00}
 .auth-screen .auth-feedback,.auth-screen .auth-success{font-size:13px;line-height:1.45;margin:0;min-height:0;overflow-wrap:anywhere}
 .auth-screen .auth-feedback:empty,.auth-screen .auth-success:empty{display:none}
+.auth-screen .auth-field-error{margin:5px 0 0;color:#ffb7ad;font-size:12px;line-height:1.35;overflow-wrap:anywhere}
+.auth-screen .auth-fields :is(input,select)[aria-invalid=true]{border-color:#ff988a}
+.auth-screen .auth-fields .auth-resend[hidden],.auth-screen .auth-field-error[hidden]{display:none}
 .auth-screen .auth-success{color:#87e6b1}
 .auth-screen .auth-mailbox-link{font-size:13px;color:#ffcc00;text-align:center;text-decoration:underline}
 html:has(body.auth-screen){scroll-padding-bottom:20px}

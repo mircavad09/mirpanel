@@ -1,7 +1,7 @@
 // Only /hesab. Existing group/profile/checkout controllers are not restyled.
 export async function renderAuthForms({app,state,api,el,button,link,alert,signal}){
  const policy=state.authFormPolicy||{minPasswordLength:6,maxPasswordLength:128,termsUrl:'/sertler',privacyUrl:'/sertler#sertler-10'};
- document.body.classList.add('auth-screen');const cssUrl='/community-assets/auth-forms.css?v=guest-welcome-20261107';let css=document.querySelector('link[href="'+cssUrl+'"]');
+ document.body.classList.add('auth-screen');const cssUrl='/community-assets/auth-forms.css?v=signup-recovery-20261107';let css=document.querySelector('link[href="'+cssUrl+'"]');
  // A failed preload can expose an empty sheet, or fire before this module starts.
  // Require the form rules and bind load/error before inserting a fresh retry.
  const usable=sheet=>{try{return Array.from(sheet?.sheet?.cssRules||[]).some(r=>r.selectorText?.includes('.auth-form-panel'));}catch{return false;}};
@@ -12,6 +12,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  const cartLogin=fromCart&&mode==='login';
  const titles={signup:'Qeydiyyat',login:fromCart?'Daxil ol':'Giriş',reset:'Şifrə bərpası','new-password':'Yeni şifrə'},title=titles[mode];document.title=title+' · MirPanel';
  const error=alert();error.classList.add('auth-feedback');error.setAttribute('role','alert');const success=el('p',{class:'auth-success',role:'status','aria-live':'polite'}),form=el('form',{class:'auth-fields'}),fields={};let busy=false;
+ const fieldFeedback={},signup=mode==='signup';let pendingSignup=null,recover;
  if(params.has('error'))error.textContent=params.get('error')==='account_not_linked'?'Bu e-poçt hesabını əvvəlcə təsdiqləyin. Google ilə yalnız təsdiqlənmiş eyni e-poçt əlaqələndirilə bilər.':params.get('error')==='test_identity_not_allowed'?'Bu Google hesabı test girişinə əlavə edilməyib.':'Google girişi tamamlanmadı. Yenidən cəhd edin.';
  const closeTo=fromCart?'/sebet':destination.startsWith('/balans')?destination:'/qrup',close=link('×',closeTo,'auth-close');close.setAttribute('aria-label',fromCart?'Bağla və səbətə qayıt':closeTo==='/qrup'?'Bağla və qrupa qayıt':'Bağla və balans səhifəsinə qayıt');
  const panel=el('section',{class:'auth-form-panel'+(cartLogin?' auth-cart-login':''),'aria-labelledby':cartLogin?'authCartWelcome':'authTitle'},close,el('header',{class:'auth-form-heading'},el(cartLogin?'h2':'h1',{id:'authTitle'},title)));
@@ -24,6 +25,28 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
   const control=el('div',{class:'auth-password-control'},input,toggle);box.append(control);return box;
  }
  const divider=text=>el('div',{class:'auth-divider'},el('span',{},text));
+ const signupFields=['firstName','lastName','email','phone','password','termsAccepted'];
+ const requiredMessage={firstName:'Adınızı yazın.',lastName:'Soyadınızı yazın.',email:'E-poçt ünvanınızı yazın.',phone:'Telefon nömrənizi yazın.',password:'Şifrənizi yazın.',termsAccepted:'Davam etmək üçün istifadə şərtlərini qəbul edin.'};
+ function setFieldError(key,message=''){
+  const input=fields[key],feedback=fieldFeedback[key];if(!input||!feedback)return;
+  feedback.textContent=message;feedback.hidden=!message;
+  if(message)input.setAttribute('aria-invalid','true');else input.removeAttribute('aria-invalid');
+ }
+ function validateSignup(keys){
+  let first;
+  for(const key of keys){
+   const input=fields[key],v=input.validity;
+   const msg=v.valueMissing||input.type!=='checkbox'&&key!=='password'&&!input.value.trim()?requiredMessage[key]:
+    key==='email'&&v.typeMismatch?'Düzgün e-poçt ünvanı yazın.':
+    key==='phone'&&v.patternMismatch?'Telefon nömrəsində yalnız rəqəm, boşluq və ()-. işarələri istifadə edin.':
+    key==='password'&&input.value.length<policy.minPasswordLength?`Şifrə ən azı ${policy.minPasswordLength} simvol olmalıdır.`:
+    key==='password'&&input.value.length>policy.maxPasswordLength?`Şifrə ən çox ${policy.maxPasswordLength} simvol ola bilər.`:'';
+   setFieldError(key,msg);if(msg&&!first)first=input;
+  }
+  if(first){first.focus();return false;}return true;
+ }
+ const errorFields={REGISTRATION_FIELD_FIRST_NAME:'firstName',REGISTRATION_FIELD_LAST_NAME:'lastName',REGISTRATION_FIELD_EMAIL:'email',REGISTRATION_FIELD_PHONE:'phone',REGISTRATION_FIELD_COUNTRY:'countryCode',REGISTRATION_FIELD_TERMS:'termsAccepted',INVALID_EMAIL:'email',PASSWORD_TOO_SHORT:'password',PASSWORD_TOO_LONG:'password',INVALID_PASSWORD:'password'};
+ const signupErrorText={INVALID_EMAIL:'Düzgün e-poçt ünvanı yazın.',PASSWORD_TOO_LONG:`Şifrə ən çox ${policy.maxPasswordLength} simvol ola bilər.`,INVALID_PASSWORD:'Düzgün şifrə yazın.'};
  const readableError=e=>{const m=String(e.message||'');if(/invalid email or password|invalid credentials|incorrect password/i.test(m))return'E-poçt və ya şifrə düzgün deyil.';if(/email.*not verified|verify your email/i.test(m))return'Əvvəlcə e-poçtunuzu təsdiqləyin.';if(/password.*short/i.test(m))return`Şifrə ən azı ${policy.minPasswordLength} simvol olmalıdır.`;if(/too many|rate limit/i.test(m))return'Çox cəhd edildi. Bir az gözləyib yenidən cəhd edin.';if(/fetch|network|unexpected|failed to create user/i.test(m))return'Serverə qoşulmaq mümkün olmadı. Yenidən cəhd edin.';return m||'Əməliyyat alınmadı. Yenidən cəhd edin.';};
  // Unmodified official asset: https://developers.google.com/static/identity/images/g-logo.png
  function google(){const g=button('',async()=>{if(busy||g.disabled)return;busy=true;g.disabled=true;try{const r=await api('/api/auth/sign-in/social',{provider:'google',callbackURL:location.origin+destination});if(r.url)location.assign(r.url);}catch(e){error.textContent=readableError(e);}finally{busy=false;g.disabled=!state.googleEnabled;}});g.className='auth-google';g.append(el('img',{class:'auth-google-g',src:'/community-assets/google-g.png',width:20,height:20,alt:''}),el('span',{},'Google ilə davam edin'));g.disabled=!state.googleEnabled;
@@ -46,10 +69,51 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  }
  if(mode==='login')form.append(link('Şifrəmi unutdum',fromCart?target('reset'):'/hesab?mode=reset','auth-forgot'));
  const submit=el('button',{type:'submit',class:'auth-submit '+(mode==='signup'?'auth-submit-signup':'')},mode==='signup'?'Qeydiyyatdan keç':mode==='login'?'Daxil ol':mode==='reset'?'Bərpa keçidini göndər':'Şifrəni yenilə');if(['login','signup'].includes(mode)){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');const path=document.createElementNS(svg.namespaceURI,'path');path.setAttribute('d','M15 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0M3 21v-2a8 8 0 0 1 16 0v2'+(mode==='signup'?'M21 8v6m-3-3h6':''));svg.append(path);submit.prepend(svg);}form.append(error,success,submit);
+ const submitLabel=submit.lastChild;
+ const matchingSignup=()=>pendingSignup&&pendingSignup.email===fields.email.value.trim().toLowerCase();
+ function updateSignupAction(){submitLabel.textContent=matchingSignup()?'Təsdiqə davam et':'Qeydiyyatdan keç';}
+ if(signup){
+  form.noValidate=true;
+  for(const key of [...signupFields,'countryCode']){
+   const input=fields[key],id=input.id+'-error',feedback=el('p',{id,class:'auth-field-error',role:'alert'});
+   feedback.hidden=true;fieldFeedback[key]=feedback;input.setAttribute('aria-describedby',id);
+   const group=input.closest('.auth-field')||input.closest('.auth-consent');
+   if(key==='termsAccepted')group.after(feedback);else group.append(feedback);
+   input.addEventListener('input',()=>{setFieldError(key);if(key==='email')updateSignupAction();});
+  }
+  recover=button('Mövcud hesabın təsdiqinə davam et',()=>void submitSignup(true));recover.className='auth-resend';recover.hidden=true;form.append(recover);
+ }
+ async function submitSignup(resume=false){
+  if(busy)return;
+  error.textContent='';success.textContent='';
+  const known=matchingSignup(),continuing=resume||!!known;
+  if(!validateSignup(continuing?['email','password']:signupFields))return;
+  busy=true;submit.disabled=recover.disabled=true;submit.setAttribute('aria-busy','true');
+  const values=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.type==='checkbox'?v.checked:v.value.trim()]));
+  values.password=fields.password.value;
+  try{
+   let created=known;
+   if(!continuing){
+    const result=await api('/api/auth/sign-up/email',{...values,name:values.firstName+' '+values.lastName,registrationForm:true,callbackURL:location.origin+destination});
+    if(!result?.user?.id||!result.user.email)throw Error('Qeydiyyat cavabı təsdiqlənmədi.');
+    created=pendingSignup={id:result.user.id,email:result.user.email};
+   }
+   // A known creation retries only verification. After an unknown/duplicate
+   // response, explicit recovery checks the existing account's password.
+   await startVerification({email:created?.email||values.email,password:values.password,...(!resume&&created?{createdUserId:created.id}:{})});
+   recover.hidden=true;
+  }catch(e){
+   const key=errorFields[e.code];
+   if(key&&!continuing){setFieldError(key,signupErrorText[e.code]||readableError(e));fields[key].focus();}
+   else{
+    error.textContent=continuing?'Təsdiq açıla bilmədi. '+readableError(e):matchingSignup()?'Təsdiq açıla bilmədi. Yenidən qeydiyyatdan keçmədən təsdiqə davam edə bilərsiniz.':readableError(e);
+    recover.hidden=false;
+   }
+  }finally{busy=false;submit.disabled=recover.disabled=false;submit.removeAttribute('aria-busy');updateSignupAction();}
+ }
 
- form.addEventListener('submit',async e=>{e.preventDefault();if(busy||!form.reportValidity())return;busy=true;submit.disabled=true;submit.setAttribute('aria-busy','true');error.textContent='';success.textContent='';try{const values=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.type==='checkbox'?v.checked:v.value.trim()]));if(fields.password)values.password=fields.password.value;
-  if(mode==='signup'){const created=await api('/api/auth/sign-up/email',{...values,name:values.firstName+' '+values.lastName,registrationForm:true,callbackURL:location.origin+destination});if(!created?.user?.id||!created.user.email)throw Error('Qeydiyyat təsdiqlənmədi. Yenidən cəhd edin.');await startVerification({email:created.user.email,password:values.password,createdUserId:created.user.id});}
-  else if(mode==='login'){try{await api('/api/auth/sign-in/email',{email:values.email,password:values.password});}catch(e){if(!/email.*not verified|verify your email/i.test(String(e.message)))throw e;await startVerification({email:values.email,password:values.password});return;}fields.password.value='';await finish();}
+ form.addEventListener('submit',async e=>{e.preventDefault();if(signup)return submitSignup();if(busy||!form.reportValidity())return;busy=true;submit.disabled=true;submit.setAttribute('aria-busy','true');error.textContent='';success.textContent='';try{const values=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.type==='checkbox'?v.checked:v.value.trim()]));if(fields.password)values.password=fields.password.value;
+  if(mode==='login'){try{await api('/api/auth/sign-in/email',{email:values.email,password:values.password});}catch(e){if(!/email.*not verified|verify your email/i.test(String(e.message)))throw e;await startVerification({email:values.email,password:values.password});return;}fields.password.value='';await finish();}
   else if(mode==='reset'){await api('/api/auth/request-password-reset',{email:values.email,redirectTo:location.origin+'/hesab?mode=new-password'});success.textContent='Hesab mövcuddursa, bərpa keçidi göndərildi.';}
   else{await api('/api/auth/reset-password',{token:params.get('token'),newPassword:values.password});fields.password.value='';if(window.MirpanelNavigation)await window.MirpanelNavigation.go('/hesab');else location.assign('/hesab');}
  }catch(e){error.textContent=readableError(e);}finally{busy=false;submit.disabled=false;submit.removeAttribute('aria-busy');}});
@@ -160,7 +224,7 @@ export function mountAuth(app){
  const el=(tag,attrs={},...children)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs))if(v!==undefined)e.setAttribute(k,String(v));e.append(...children);return e;};
  const button=(label,click)=>{const b=el('button',{type:'button'},label);b.onclick=click;return b;};
  const link=(label,href,cls)=>el('a',{href,class:cls},label);
- const api=async(url,data)=>{const r=await fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal:life.signal,redirect:'error'});if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');const d=await r.json();if(!r.ok)throw Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.');return d;};
+ const api=async(url,data)=>{const r=await fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal:life.signal,redirect:'error'});if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.'),{code:d.code||d.error?.code});return d;};
  const dispose=()=>{life.abort();document.body.classList.remove('auth-screen');};
  void renderAuthForms({app,state:{googleEnabled:true},api,el,button,link,alert:()=>el('p'),signal:life.signal}).catch(e=>{if(!life.signal.aborted&&app.isConnected)app.replaceChildren(el('p',{role:'alert'},e.message),button('Yenidən cəhd et',()=>location.reload()));});
  return dispose;
