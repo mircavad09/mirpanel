@@ -8,5 +8,13 @@ try{globalThis.fetch=async(url,o)=>{calls.push({url,o});if(url.endsWith('/token'
  await assert.rejects(()=>send('verify',{user:{email:'a@example.test\r\nBcc: stolen@example.test'},url:'https://mirpanel.com/'}),/AUTH_MAIL_ADDRESS_INVALID/);checks++;
  failure=true;await assert.rejects(()=>createAuthMailer(env)('verify',{user:{email:'recipient@example.test'},url:'https://mirpanel.com/'}),/AUTH_MAIL_AUTHORIZATION_FAILED/);checks++;
  eq(calls.filter(x=>x.url.endsWith('/send')).length,2);
+ await send('code',{user:{email:'recipient@example.test'},code:'001234'});
+ await send('welcome',{user:{email:'recipient@example.test'}});
+ const content=call=>{const msg=Buffer.from(JSON.parse(call.o.body).raw,'base64url').toString(),[header,body]=msg.split('\r\n\r\n');return{header,body:Buffer.from(body,'base64').toString()};};
+ eq(content(calls.at(-2)).body.includes('001234'),true);
+ eq(content(calls.at(-1)).header.includes(Buffer.from('MirPanel-ə xoş gəlmisiniz!').toString('base64')),true);
+ const welcomeParts=Buffer.from(JSON.parse(calls.at(-1).o.body).raw,'base64url').toString().split('--mirpanel-welcome-alternative');
+ eq(Buffer.from(welcomeParts[1].split('\r\n\r\n')[1],'base64').toString().includes('https://mirpanel.com/balans'),true);
+ eq(Buffer.from(welcomeParts[2].split('\r\n\r\n')[1],'base64').toString().includes('<a href="https://mirpanel.com/">Məhsullara bax</a>'),true);
  console.log(JSON.stringify({checks,failures:0,realEmailsSent:0,scope:'HTTP adapter contract and failure tests; not delivery proof'}));
 }finally{globalThis.fetch=original;}

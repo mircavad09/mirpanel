@@ -5,14 +5,16 @@ import {tagCount,notifications,markTag,tagMessage} from './bot-tags.mjs';
 import {accountPanel,paymentHistory} from './account-panel.mjs';
 import {CommunityLive} from './live.mjs';
 const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
-export function authReturn(origin,value){for(const p of ['/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'])if(value===origin+p||value===p)return origin+p;return origin+'/profil';}
+export function authReturn(origin,value){const path=typeof value==='string'&&value.startsWith(origin)?value.slice(origin.length):value;if(['/','/profil','/qrup','/mehsul','/sebet','/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'].includes(path)||/^\/mehsul\/[a-z0-9-]+$/i.test(path||''))return origin+path;return origin+'/profil';}
 export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body,catalog}){
  const route=u.pathname,{pool,repo,group,auth}=runtime,started=performance.now();
  if(!(await pool.query('select ready from public_community_release where version=1')).rows[0]?.ready)throw fail(503,'Xidmət hazırlanır.');
  const gateMs=performance.now()-started;
  if(route.startsWith('/api/auth/')){
   const allowed=['/api/auth/sign-in/social','/api/auth/callback/google','/api/auth/get-session','/api/auth/sign-out','/api/auth/sign-up/email','/api/auth/sign-in/email','/api/auth/send-verification-email','/api/auth/verify-email','/api/auth/request-password-reset','/api/auth/reset-password'];
-  if(!allowed.includes(route)&&!/^\/api\/auth\/reset-password\/[^/]+$/.test(route))throw fail(404,'Tapılmadı.');
+  const codeRoute=/^\/api\/auth\/confirm-email\/(start|status|change|send|verify)$/.test(route);
+  if(!allowed.includes(route)&&!codeRoute&&!/^\/api\/auth\/reset-password\/[^/]+$/.test(route))throw fail(404,'Tapılmadı.');
+  if(codeRoute){if(req.method!=='POST')throw fail(405,'Yalnız POST sorğusuna icazə verilir.');if(req.headers.origin&&req.headers.origin!==origin)throw fail(403,'Sorğu mənbəyinə icazə verilmir.');res.setHeader('Cache-Control','private, no-store');}
   if(req.method==='POST'){
    if(!String(req.headers['content-type']).includes('application/json'))throw fail(415,'JSON tələb olunur.');const b=await body(req);
    if(route==='/api/auth/sign-in/social'&&b.provider!=='google')throw fail(403,'Bu girişə icazə verilmir.');
@@ -33,7 +35,7 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  if(route==='/owner-login'){res.writeHead(302,{Location:'/hesab?next='+encodeURIComponent(u.searchParams.get('next')==='/sifarislerim'?'/sifarislerim':'/profil'),'Cache-Control':'private,no-store'});res.end();return true;}
  if(['/qrup','/profil','/hesab'].includes(route)){
   if(route==='/profil'&&!user){res.writeHead(302,{Location:u.searchParams.get('tab')==='orders'?'/hesab?next=%2Fsifarislerim':'/hesab','Cache-Control':'private,no-store'});res.end();return true;}
-  html(res,`<!doctype html><html lang="az" class="${route==='/qrup'?'community-chat-screen':''}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/community-assets/chat-layout.css?v=public-community-v1"><link rel="stylesheet" href="/community-assets/auth-forms.css?v=account-update-20261107"><link rel="stylesheet" href="/community-assets/tag-notifications.css?v=public-community-v1"><link rel="stylesheet" href="/site-header.css?v=public-community-v1"><body class="community-page">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main id="communityApp" class="community-shell"></main><script type="module" src="/community-assets/community.js?v=public-community-v1"></script><script src="/site-header.js?v=public-community-v1" defer></script></body></html>`);return true;
+  html(res,`<!doctype html><html lang="az" class="${route==='/qrup'?'community-chat-screen':''}"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/community-assets/chat-layout.css?v=public-community-v1"><link rel="stylesheet" href="/community-assets/auth-forms.css?v=email-confirmation-20261107"><link rel="stylesheet" href="/community-assets/tag-notifications.css?v=public-community-v1"><link rel="stylesheet" href="/site-header.css?v=public-community-v1"><body class="community-page">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main id="communityApp" class="community-shell"></main><script type="module" src="/community-assets/community.js?v=public-community-v1"></script><script src="/site-header.js?v=public-community-v1" defer></script></body></html>`);return true;
  }
  if(route.startsWith('/api/community/media/')&&req.method==='GET'){
   const file=route.slice('/api/community/media/'.length);if(!/^[a-f0-9-]{36}\.webp$/.test(file))throw fail(404,'Şəkil tapılmadı.');
