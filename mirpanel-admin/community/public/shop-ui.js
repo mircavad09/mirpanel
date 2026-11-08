@@ -11,17 +11,34 @@ if(route==='/balans'){app.classList.add('shop-wallet-page');document.body.classL
 const el=(t,text,cls)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;},link=(text,href)=>{const a=el('a',text,'shop-link');a.href=href;return a;},button=(text,fn,primary=false)=>{const b=el('button',text,primary?'shop-primary':'');b.type='button';b.onclick=fn;return b;};
 let closed=false,working=false,profile=null,group=null,mode=new URLSearchParams(location.search).get('mode')==='wallet'?'wallet':'card',methodId='',methods=[],allMethods=[],methodLoadError='',timer,confirmationTimer,epoch=0,walletPrefetched;
 let checkoutView=route==='/odenis'||route==='/sebet'&&new URLSearchParams(location.search).get('checkout')==='1',consentAccepted=false,consentQuote='',paymentReady=false,offerRequest;
+const mobileCheckout=()=>matchMedia('(max-width:760px)').matches;
+function revealPayment(panel){
+ if(!mobileCheckout()||!panel?.isConnected)return;
+ const header=document.querySelector('.site-header'),gap=(header?.getBoundingClientRect().height||0)+8;
+ window.scrollTo({top:Math.max(0,scrollY+panel.getBoundingClientRect().top-gap),behavior:'instant'});
+}
+function basketURL(path){if(window.MirpanelNavigation)window.MirpanelNavigation.replaceURL(path);else history.replaceState(history.state,'',path);}
 const requests=new Set();
 const error=el('p','','shop-error');error.setAttribute('role','alert');const status=el('p');status.setAttribute('role','status');
 async function api(path,body,{file,timeout=30000}={}){if(path==='/wallet'&&body===undefined&&walletPrefetched){const pending=walletPrefetched;walletPrefetched=null;return pending;}const c=new AbortController();requests.add(c);const t=setTimeout(()=>c.abort(),timeout);try{const r=await fetch(base+path,{method:body!==undefined||file?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:file?{'Content-Type':file.type||'application/octet-stream'}:body!==undefined?{'Content-Type':'application/json'}:{},body:file|| (body===undefined?undefined:JSON.stringify(body)),signal:c.signal});const d=await r.json().catch(()=>({}));if(!r.ok)throw Object.assign(Error(d.error||'Əməliyyat tamamlanmadı. Yenidən cəhd edin.'),{status:r.status,code:d.code});return d;}catch(e){if(e.name==='AbortError')throw Object.assign(Error('Cavab gecikdi. Eyni əməliyyatı yenidən sınayın.'),{status:504});throw e;}finally{clearTimeout(t);requests.delete(c);}}
 async function run(fn){if(working)return;working=true;error.textContent='';app.setAttribute('aria-busy','true');try{await fn();}catch(e){if(!closed){if(e.code==='CHECKOUT_EMAIL_UNVERIFIED'&&route!=='/balans'){try{await checkoutVerification();}catch(err){error.textContent=err.message;}}else error.textContent=e.message;}}finally{working=false;app.removeAttribute('aria-busy');}}
 function card(title){const n=el('section',null,'shop-card');if(title)n.append(el('h2',title));return n;}
+function paymentPreview(){
+ if(!mobileCheckout())return null;
+ const panel=card('Ödəniş');panel.classList.add('checkout-choices','checkout-priority');
+ const note=el('p','Ödəniş üsulları hazırlanır…','shop-muted');note.setAttribute('role','status');panel.append(note);
+ const previous=app.querySelector('.shop-checkout-grid>.checkout-choices');
+ if(previous)previous.replaceWith(panel);else app.replaceChildren(el('h1','Səbətim'),panel,error);
+ revealPayment(panel);return {panel,previous};
+}
+function restorePaymentPreview(preview){if(preview?.previous&&preview.panel.isConnected)preview.panel.replaceWith(preview.previous);}
 function login(){const n=card('Balansı artırmaq üçün daxil olun və ya qeydiyyatdan keçin'),back=backFromWallet(),destination=back==='/odenis?mode=wallet'?'/balans?returnTo=%2Fodenis%3Fmode%3Dwallet':'/balans',next=encodeURIComponent(destination),actions=el('div',null,'shop-actions');actions.append(link('Daxil ol','/hesab?next='+next),link('Qeydiyyatdan keç','/hesab?mode=signup&next='+next));n.append(actions);if(back)n.append(link('← Alışa qayıt',back));app.replaceChildren(el('h1','Balansım'),n,error);}
 function refreshAccount(){window.refreshCommunityNav?.();}
 async function checkoutLogin(){const box=card('Hesabına daxil ol');box.append(el('p','Sifariş vermək üçün hesab lazımdır. Qeydiyyat pulsuzdur.'),link('Giriş et','/hesab?next=%2Fodenis'),link('Qeydiyyat','/hesab?mode=signup&next=%2Fodenis'));app.replaceChildren(box,error);await import('/account-header.js?v=account-update-20261107');if(!closed)window.MirpanelRequireLogin?.('/odenis');}
 async function checkoutVerification(){
  checkoutView=false;group=null;consentAccepted=false;paymentReady=false;
- if(location.pathname!=='/sebet'||location.search)history.replaceState(history.state,'','/sebet');
+ if(location.pathname!=='/sebet')history.replaceState(history.state,'','/sebet');
+ else if(location.search)basketURL('/sebet');
  await basket();if(closed)return;
  const {requestEmailConfirmation}=await import('/community-assets/auth-forms.js?v=verify-session-20261108');
  if(!closed)await requestEmailConfirmation({checkout:true,signal:life.signal,onVerified:()=>location.replace('/sebet')});
@@ -55,6 +72,7 @@ function checkoutLayout(q,panel){
    a.setAttribute('aria-label',p.title+' seç');a.append(img,details,el('span','+','shop-offer-plus'));more.append(a);
   }
  });
+ if(checkoutView)panel.classList.add('checkout-priority');
  layout.append(left,panel);app.classList.add('shop-combined');app.replaceChildren(el('h1','Səbətim'),layout,error);
 }
 async function basket(){
@@ -66,11 +84,14 @@ async function basket(){
  const sum=card(),row=el('div',null,'shop-row');row.append(el('span','Cəmi'),el('strong',checkoutMoney(q.totalCents),'shop-total'));
  const next=button('Ödənişə keç',()=>void run(async()=>{
   if(q.balanceCents===null){await checkoutLogin();return;}
-  const {getCommunityState,invalidateCommunityState}=await import('/session-state.js?v=avatar-20261104');invalidateCommunityState();
-  const s=await getCommunityState();profile=s.ok?s.data.profile:null;if(!profile){await checkoutLogin();return;}
-  if(profile.emailVerified===false){await checkoutVerification();return;}
-  checkoutView=true;if(route==='/sebet')history.replaceState(history.state,'','/sebet?checkout=1');
-  await payment();if(matchMedia('(max-width:760px)').matches)app.querySelector('.checkout-choices')?.scrollIntoView({block:'start'});
+  const preview=paymentPreview();
+  try{
+   const {getCommunityState,invalidateCommunityState}=await import('/session-state.js?v=avatar-20261104');invalidateCommunityState();
+   const s=await getCommunityState();profile=s.ok?s.data.profile:null;if(!profile){await checkoutLogin();return;}
+   if(profile.emailVerified===false){await checkoutVerification();return;}
+   checkoutView=true;if(route==='/sebet')basketURL('/sebet?checkout=1');
+   await payment(false,true,preview);
+  }catch(e){restorePaymentPreview(preview);throw e;}
  }),true);
  sum.append(row,next);sum.classList.add('checkout-choices');checkoutLayout(q,sum);
 }
@@ -84,13 +105,14 @@ async function requestKey(items,mode,methodId){const bytes=new TextEncoder().enc
 const checkoutMoney=c=>money(c).replace('.',',');
 function checkoutIcon(path){const span=el('span',null,'checkout-icon');span.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';return span;}
 const cardIcon=()=>checkoutIcon('<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18m-14 5h4"/>'),walletIcon=()=>checkoutIcon('<path d="M20 8V6a2 2 0 0 0-2-2H6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h12a2 2 0 0 0 2-2v-2M3 8h15"/><rect x="13" y="9" width="9" height="7" rx="2"/>');
-async function payment(selectCard=false){
+async function payment(selectCard=false,reveal=false,preview=null){
  if(profile?.emailVerified===false){await checkoutVerification();return;}
  const completed=new URLSearchParams(location.search).get('completed');if(/^[0-9a-f-]{36}$/i.test(completed||'')){try{group=await api('/checkout?id='+encodeURIComponent(completed));if(group.state==='submitted'){await paymentGroup(false);return;}}catch(e){if(e.status!==404)throw e;}}
  const pending=savedCheckout();if(pending?.id){try{group=await api('/checkout?id='+pending.id);if(group.state==='reserved'||group.state==='submitted'){if(group.state==='reserved'&&!profile){await checkoutLogin();return;}await paymentGroup();return;}error.textContent='Əvvəlki rezervin vaxtı bitib. Səbətiniz qorunub; kartı yenidən seçin.';group=null;}catch(e){if(e.status!==404)throw e;}localStorage.removeItem(pendingKey);}
  if(!profile){await checkoutLogin();return;}
  const items=cart.checkout();if(!items.length){await basket();return;}
  viewCartKey=JSON.stringify(items);
+ if(reveal&&!preview)paymentPreview();
  const [q]=await Promise.all([api('/quote',{items}),getMethods().catch(e=>{methods=[];methodLoadError=e.message;})]);if(closed)return;
  const quoteKey=JSON.stringify([items,q.totalCents]);if(consentQuote!==quoteKey){consentAccepted=false;consentQuote=quoteKey;}paymentReady=true;
  const choices=card('Ödəniş');choices.classList.add('checkout-choices');const amount=el('p',null,'checkout-amount');amount.append(el('span','Cəmi'),el('strong',checkoutMoney(q.totalCents)));choices.append(amount);
@@ -116,7 +138,7 @@ async function payment(selectCard=false){
  async function bankSelection(){if(!termsOk||!methods.length)return;const panel=card('Bank kartını seçin'),grid=el('div',null,'wallet-bank-grid');panel.classList.add('checkout-choices');let picked='';const next=button('Bu kartla davam et · '+checkoutMoney(q.totalCents),()=>run(async()=>{if(!picked)return;next.disabled=true;try{await submit('card',picked);}finally{next.disabled=!picked;}}),true);next.disabled=true;
  drawBankChoices({el,button,grid,methods,onSelect:id=>{picked=id;next.disabled=false;}});
  panel.append(grid,next,button('← Ödəniş üsuluna qayıt',()=>checkoutLayout(q,choices)));checkoutLayout(q,panel);}
- updateChoice();checkoutLayout(q,choices);if(selectCard&&consentAccepted&&stockOk&&detailsOk&&termsOk)await bankSelection();
+ updateChoice();checkoutLayout(q,choices);if(reveal)revealPayment(choices);if(selectCard&&consentAccepted&&stockOk&&detailsOk&&termsOk)await bankSelection();
 }
 async function paymentGroup(clearCart=true){
  clearTimeout(confirmationTimer);
@@ -200,7 +222,7 @@ async function start(){
  }else{
   const s=await session;if(closed)return;
   if(s.ok){profile=s.data.profile;window.mirpanelAccountProfile=profile||null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:profile||null}));}
-  await payment();
+  await payment(false,true);
  }
  if(location.hash==='#emeliyyatlar')document.getElementById('emeliyyatlar')?.scrollIntoView();
 }

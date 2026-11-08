@@ -127,4 +127,4 @@
 .shop-checkout-offers small{display:block;color:#ffd600}
 .shop-checkout-offers img{width:42px;height:42px;object-fit:cover;border-radius:9px}
 .shop-offer-plus{width:30px;height:30px;display:grid;place-items:center;border:1px solid #866c29;border-radius:50%;color:#ffd600;flex:none}
-@media(max-width:760px){.shop-checkout-grid{grid-template-columns:minmax(0,1fr);gap:16px}.shop-checkout-offers{grid-template-columns:minmax(0,1fr)}.shop-checkout-grid>.checkout-choices{scroll-margin-top:110px}}
+@media(max-width:760px){.shop-checkout-grid{grid-template-columns:minmax(0,1fr);gap:16px}.shop-checkout-offers{grid-template-columns:minmax(0,1fr)}.shop-checkout-grid>.checkout-choices{scroll-margin-top:110px}.shop-checkout-grid>.checkout-priority{order:-1}}
