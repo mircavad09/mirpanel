@@ -43,15 +43,31 @@
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));(dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
  if(view&&isStatic(new URL(current,location.origin).pathname)){const fragment=document.createDocumentFragment();while(root.firstChild)fragment.append(root.firstChild);view.fragment=fragment;cache.set(new URL(current,location.origin).pathname,view);}else root.replaceChildren();mounted=false;view=null;}
  function skeleton(u){const titles={'/':'Ana səhifə','/mehsul':'Məhsullar','/balans':u.hash==='#emeliyyatlar'?'Ödənişlər':'Balans','/sebet':'Səbət','/odenis':'Ödəniş','/sifarislerim':'Sifarişlərim','/profil':'Profil','/qrup':'Ümumi söhbət','/hesab':'Giriş'};const main=document.createElement('main');main.className='site-route-loading';main.setAttribute('aria-busy','true');const h=document.createElement('h1');h.textContent=titles[u.pathname]||'Giriş';main.append(h);for(let i=0;i<3;i++){const bar=document.createElement('div');bar.className='site-route-placeholder';main.append(bar);}root.replaceChildren(main);}
- async function resource(src,run){const u=new URL(src,location.href),key=u.pathname;if(u.origin!==location.origin||!allowedScripts.has(key.split('/').at(-1))||loaded.has(key))return;
+ function downloadResource(src){const u=new URL(src,location.href),key=u.pathname;if(u.origin!==location.origin||!allowedScripts.has(key.split('/').at(-1))||loaded.has(key))return null;
  let download=scriptDownloads.get(u.href);if(!download){download=fetch(u.href,{signal:AbortSignal.timeout(10000),cache:'default'}).then(r=>{if(!r.ok)throw Error('Ümumi resurs yüklənmədi.');return r.text();}).finally(()=>scriptDownloads.delete(u.href));scriptDownloads.set(u.href,download);}
+ return {key,download};}
+ async function resource(src,run,prepared=downloadResource(src)){if(!prepared)return;const {key,download}=prepared;
  const code=await download;if(run!==generation||loaded.has(key))return;
  const s=document.createElement('script');s.dataset.routeResource=key;s.textContent=code;loaded.add(key);document.head.append(s);}
  async function mount(v,run,preparedModule){if(run!==generation)return;window.mirpanelNavigationMounting=true;try{
  if(document.getElementById('shopApp')){const m=await(preparedModule||moduleWithin(shopModule));if(run!==generation)return;dispose=m.mountShop();}
  else if(document.getElementById('communityApp')){const m=await(preparedModule||moduleWithin(groupModule));if(run!==generation)return;dispose=m.mountCommunity();}
  else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=order-receipt-20261108',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
- else if(!v.started){for(const src of v.scripts||[]){if(run!==generation)return;await resource(src,run);}v.started=true;}
+ else if(!v.started){
+  // Fetch together but execute in document order. A superseded route may
+  // finish downloading; its scripts must never execute over the new view.
+  const scripts=v.scripts||[],downloads=scripts.map(src=>downloadResource(src));
+  for(const ready of downloads)void ready?.download.catch(()=>{});
+  for(let i=0;i<scripts.length;i++){
+   if(run!==generation)return;
+   try{await resource(scripts[i],run,downloads[i]);}catch(e){
+    if(run!==generation)return;
+    if(!root.querySelector('#grid .card,.catalog-grid .card'))throw e;
+   }
+   if(run!==generation)return;
+   if(location.pathname==='/'&&window.MirpanelCatalogCard&&!root.querySelector('#grid .card'))window.mirpanelRestoreCatalog?.();
+  }v.started=true;
+ }
  if(location.pathname==='/'&&!root.querySelector('#grid .card'))window.mirpanelRestoreCatalog?.();
  }finally{window.mirpanelNavigationMounting=false;}}
  async function mountProfileRoute(u,run){
