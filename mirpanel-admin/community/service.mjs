@@ -14,6 +14,7 @@ import {userControls,saveUserControls} from './user-controls.mjs';
 import {createWelcomeDelivery} from './welcome-delivery.mjs';
 import {adminDelivery,adminPendingDeliveries,createCustomerOrderMailer,deliveryRecords,ownerCodes} from './order-delivery.mjs';
 import {createOrderMailTransport} from './order-mail-transport.mjs';
+import {readOrderMailWebhook} from './order-mail-webhook.mjs';
 import {readyStockView,saveReadyStock} from './ready-stock.mjs';
 export function createOwnerCommunity(env=process.env,options={}){
  const publicEnabled=env.COMMUNITY_PUBLIC_ENABLED==='true';
@@ -23,7 +24,7 @@ export function createOwnerCommunity(env=process.env,options={}){
  const entry=(signup=false,login=false)=>`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MirPanel · Qrup</title><link rel="stylesheet" href="/community-assets/community.css"><body class="community-page"><main class="community-shell"><section class="community-panel"><h1>${signup?'Qeydiyyat tezliklə açılacaq':login?'Sahib girişi':'Qrup tezliklə istifadəyə veriləcək'}</h1><p>İctimai qeydiyyat və qrupa giriş hazırda bağlıdır.</p>${login?`<button id="ownerGoogle" ${enabled?'':'disabled'}>Google ilə davam edin</button><p id="entryError" role="alert">${enabled?'Giriş yalnız icazəli sahib hesabına açıqdır.':'Sahib girişi hazırlanır.'}</p><script type="module" src="/community-assets/owner-entry.js"></script>`:'<a href="/owner-login">Giriş</a>'}<p><a href="/">Ana səhifəyə qayıt</a></p></section></main></body></html>`;
  async function init(){if(runtime)return runtime;if(!enabled)throw Object.assign(Error('Qrup tezliklə açılacaq.'),{status:503});for(const key of ['COMMUNITY_DATABASE_URL','COMMUNITY_AUTH_SECRET','COMMUNITY_GOOGLE_CLIENT_ID','COMMUNITY_GOOGLE_CLIENT_SECRET'])if(!env[key])throw Object.assign(Error('Sahib girişi hazırlanır.'),{status:503});if(env.COMMUNITY_AUTH_SECRET.length<32)throw Error('OWNER_AUTH_SECRET_TOO_SHORT');if(!['https://mirpanel.com','http://127.0.0.1:55464'].includes(origin))throw Error('INVALID_OWNER_ORIGIN');const pool=new pg.Pool({connectionString:env.COMMUNITY_DATABASE_URL,max:5,options:'-c search_path=mirpanel_community,public',ssl:env.COMMUNITY_TEST==='true'?false:{rejectUnauthorized:true,ca:env.COMMUNITY_DATABASE_CA},connectionTimeoutMillis:15000});const repo=publicEnabled?new Repository(pool):new OwnerRepository(pool),group=new GroupControl(repo),authConfig={origin,secret:env.COMMUNITY_AUTH_SECRET,clientId:env.COMMUNITY_GOOGLE_CLIENT_ID,clientSecret:env.COMMUNITY_GOOGLE_CLIENT_SECRET};
   const send=publicEnabled&&(options.sendAuthEmail||createAuthMailer(env)),welcome=publicEnabled&&createWelcomeDelivery(pool,send);
-  const orderMailer=publicEnabled&&createCustomerOrderMailer(pool,options.sendAuthEmail||createOrderMailTransport(env,send),origin,{loadCatalog:options.loadCatalog});
+  const orderMailer=publicEnabled&&createCustomerOrderMailer(pool,options.sendAuthEmail||createOrderMailTransport(env,send),origin,{loadCatalog:options.loadCatalog,requireDeliveryNotice:env.ORDER_MAIL_PROVIDER==='resend'});
   const auth=publicEnabled?makePublicAuth(pool,authConfig,send,welcome):makeOwnerAuth(pool,authConfig);runtime={pool,repo,group,auth,welcome,orderMailer};return runtime;}
  async function body(req){let n=0,parts=[];for await(const b of req){n+=b.length;if(n>16384)throw Object.assign(Error('Sorğu çox böyükdür.'),{status:413});parts.push(b);}try{return JSON.parse(Buffer.concat(parts).toString()||'{}');}catch{throw Object.assign(Error('Sorğu düzgün deyil.'),{status:400});}}
  return {async readyStock(catalog,inventory){return readyStockView((await init()).pool,catalog,inventory);},async saveReadyStock(security,secret,catalog,actor,input){return saveReadyStock((await init()).pool,security,secret,catalog,actor,input);},async pendingDeliveries(ids){return adminPendingDeliveries((await init()).pool,ids);},async startWelcomeDelivery(){if(enabled&&publicEnabled){const r=await init();r.welcome.start();if((await r.pool.query("select to_regclass('mirpanel_community.customer_order_mail') as available")).rows[0]?.available)r.orderMailer.start();}},async adminDelivery(security,actor,id,input){const r=await init();const result=await adminDelivery(r.pool,security,actor,id,input);if(input)void r.orderMailer?.wake();return result;},async verifiedOwnerId(){const r=await init(),owner=(await r.pool.query('select u.* from owner_identity o join "user" u on u.id=o.user_id where o.id=true')).rows[0];return await isOwner(r.pool,owner)?owner.id:null;},async adminHandle(req,res,{json,body}){
@@ -71,6 +72,15 @@ export function createOwnerCommunity(env=process.env,options={}){
  if(route.startsWith('/community-assets/')){const n=route.slice(18);if(!/^[a-z.-]+$/.test(n))return json(res,404,{error:'Tapılmadı.'}),true;const f=path.join(dir,'public',n);if(!fs.existsSync(f))return json(res,404,{error:'Tapılmadı.'}),true;res.writeHead(200,{'Content-Type':n.endsWith('.css')?'text/css':n.endsWith('.js')?'text/javascript':n.endsWith('.png')?'image/png':n.endsWith('.svg')?'image/svg+xml':'application/octet-stream','Cache-Control':'public,max-age=300','X-Content-Type-Options':'nosniff'});res.end(fs.readFileSync(f));return true;}
  if(!publicEnabled){if(route==='/hesab'){html(res,entry(true));return true;}if(route==='/owner-login'){html(res,entry(false,true));return true;}}
  if(!enabled){if(route==='/qrup'||route==='/profil')html(res,entry());else json(res,503,{error:'Qrup tezliklə açılacaq.'});return true;}
+ if(route==='/api/community/order-mail-webhook'){
+  if(!publicEnabled||env.ORDER_MAIL_PROVIDER!=='resend')return json(res,404,{ok:false}),true;
+  if(req.method!=='POST')return json(res,405,{ok:false}),true;
+  let event;
+  try{event=await readOrderMailWebhook(req,env.ORDER_MAIL_RESEND_WEBHOOK_SECRET);}
+  catch(error){return json(res,error.status||400,{ok:false}),true;}
+  try{const handled=!event||await (await init()).orderMailer.notice(event);return json(res,handled?200:503,{ok:handled}),true;}
+  catch{console.warn('ORDER_MAIL_WEBHOOK_STORAGE_ERROR');return json(res,503,{ok:false}),true;}
+ }
  if(!['GET','HEAD','OPTIONS'].includes(req.method)&&req.headers.origin!==origin){json(res,403,{error:'Mənşə yoxlaması keçmədi.'});return true;}
  const {pool,repo,group,auth}=await init();
  if(publicEnabled)return await handlePublicCommunity({req,res,u,origin,runtime,json,html,body,catalog:options.loadCatalog});

@@ -91,7 +91,7 @@ export function orderMail(o,origin,{records=[],catalog}={}){
   ${total?'<p><strong>'+esc(total)+'</strong></p>':''}<p>${esc(footer)}</p>
   <p><a href="${esc(url)}" style="display:inline-block;background:#ffcf33;color:#222;padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:bold">${label}</a></p><p style="color:#50545b">MirPanel komandası</p></div>`};
 }
-export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCatalog}={}){
+export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCatalog,requireDeliveryNotice=false}={}){
  let timer,running;
  const report=(id,state,reason)=>console.warn('CUSTOMER_ORDER_MAIL',id,state,reason);
  async function drain(){
@@ -101,9 +101,9 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    // A delivery can be committed with its payment in one transaction. Queue
    // ordering alone (including SKIP LOCKED) cannot express this dependency.
    const {rows:[job]}=await pool.query(`with next as (select j.event_key from ${M} j where j.state='queued' and j.next_at<=now()
-    and (j.delivery_id is null or exists(select 1 from ${M} p where p.event_key='payment:'||j.order_id and p.order_id=j.order_id and p.delivery_id is null and p.state='accepted' and p.provider_id is not null))
+    and (j.delivery_id is null or exists(select 1 from ${M} p where p.event_key='payment:'||j.order_id and p.order_id=j.order_id and p.delivery_id is null and p.state='accepted' and p.provider_id is not null and (not $1::boolean or p.reason='RESEND_DELIVERED')))
     order by j.next_at,j.event_key for update of j skip locked limit 1)
-   update ${M} m set state='sending',attempts=attempts+1,updated_at=now() from next where next.event_key=m.event_key returning m.*`);
+   update ${M} m set state='sending',attempts=attempts+1,updated_at=now() from next where next.event_key=m.event_key returning m.*`,[requireDeliveryNotice]);
    if(!job)return;
    let state='failed',reason='ACCOUNT_NOT_VERIFIED',provider=null,delay=0;
    const o=(await pool.query(`select o.*,d.id as delivery_id,d.line_index,d.quantity as delivered_quantity,coalesce(ct.name,u.name) as name,u.email,u."emailVerified",ct.email as contact_email,ct.phone
@@ -115,7 +115,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
      const catalog=loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
      const result=await send('order',orderMail(o,origin,{records,catalog}));
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
-     state='accepted';reason=null;provider=result.id;
+     state='accepted';reason=requireDeliveryNotice&&!job.delivery_id?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
      const retry=e.deliveryDisposition==='retry'&&job.attempts<3;
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';
@@ -128,5 +128,23 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
   }
  }
  const wake=()=>running??=(drain().catch(()=>console.warn('CUSTOMER_ORDER_MAIL_DATABASE_ERROR')).finally(()=>{running=null;}));
- return {wake,start(){timer??=setInterval(wake,pollMs);timer.unref?.();void wake();},stop(){clearInterval(timer);timer=null;return running;}};
+ async function notice({providerId,code,reason}){
+  const {rows}=await pool.query(`update ${M} m set reason=$3,updated_at=now() from public.payment_orders o
+    where m.order_id=o.id and o.order_code::text=$2 and m.event_key='payment:'||o.id
+    and m.delivery_id is null and m.state='accepted' and m.provider_id=$1
+    and m.reason is distinct from $3 and m.reason is distinct from 'RESEND_DELIVERED'
+    and ($3<>'RESEND_DELIVERY_DELAYED' or coalesce(m.reason,'') in ('','RESEND_AWAITING_DELIVERY')) returning m.event_key`,[providerId,code,reason]);
+  if(rows.length){
+   if(reason==='RESEND_DELIVERED')void Promise.resolve(running).then(wake);else report(rows[0].event_key,'accepted',reason);
+   return true;
+  }
+  // The signed webhook can arrive before the send response's provider ID is committed.
+  // Ask Resend to retry rather than discarding a notice for this in-flight payment.
+  const pending=await pool.query(`select 1 from ${M} m join public.payment_orders o on o.id=m.order_id
+    where o.order_code::text=$2 and m.event_key='payment:'||o.id and m.delivery_id is null
+    and (m.state='sending' or (m.state='accepted' and m.provider_id=$1 and m.reason is distinct from $3
+    and m.reason is distinct from 'RESEND_DELIVERED' and ($3<>'RESEND_DELIVERY_DELAYED' or coalesce(m.reason,'') in ('','RESEND_AWAITING_DELIVERY'))))`,[providerId,code,reason]);
+  return !pending.rowCount;
+ }
+ return {wake,notice,start(){timer??=setInterval(wake,pollMs);timer.unref?.();void wake();},stop(){clearInterval(timer);timer=null;return running;}};
 }

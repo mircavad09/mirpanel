@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import {Readable} from 'node:stream';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {createShop} from '../mirpanel-admin/shop.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
@@ -8,6 +9,7 @@ import {inventoryAvailability} from '../inventory-availability.mjs';
 import {saveReadyStock,readyStockView} from '../mirpanel-admin/community/ready-stock.mjs';
 import {adminDelivery,adminPendingDeliveries,ownerCodes,createCustomerOrderMailer} from '../mirpanel-admin/community/order-delivery.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
+import {readOrderMailWebhook,verifyOrderMailWebhook} from '../mirpanel-admin/community/order-mail-webhook.mjs';
 
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{pool,db,catalog,method,rpc,id}=f;
@@ -49,18 +51,35 @@ try{
  await sql("insert into wallet_accounts(user_id,cents) values('a',20000),('b',20000)");
  const auto=await wallet(items);
  eq(auto.deliveryStatus,'completed');
- const queue=async()=>(await sql("select delivery_id,state,attempts,next_at,provider_id from customer_order_mail where order_id=$1 order by next_at,event_key",[auto.orderId])).rows;
+ const queue=async()=>(await sql("select delivery_id,state,attempts,next_at,provider_id,reason from customer_order_mail where order_id=$1 order by next_at,event_key",[auto.orderId])).rows;
  const initial=await queue();
  eq(initial.length,2);eq(initial[0].next_at.getTime(),initial[1].next_at.getTime());
  eq(!!initial[0].delivery_id,true); // The previous claim query selected delivery first on this tie.
  const trace=[];
+ const providerId=id(),signingKey=crypto.randomBytes(32),secret='whsec_'+signingKey.toString('base64');
+ function webhook(type,{mailId=providerId,code=auto.orderCode,time=Math.floor(Date.now()/1000)}={}){
+  const raw=Buffer.from(JSON.stringify({type,data:{email_id:mailId,subject:'Sifarişiniz təsdiqləndi — Sifariş №'+code}}));
+  const signature=crypto.createHmac('sha256',signingKey).update(`msg_Synthetic.${time}.`).update(raw).digest('base64');
+  return {raw,headers:{'svix-id':'msg_Synthetic','svix-timestamp':String(time),'svix-signature':'v1,'+signature}};
+ }
+ const event=(type,options)=>{const {raw,headers}=webhook(type,options);return verifyOrderMailWebhook(raw,headers,secret);};
+ const valid=webhook('email.delivered');
+ const req=(chunks,headers)=>Object.assign(Readable.from(chunks),{headers});
+ eq(await readOrderMailWebhook(req([valid.raw.subarray(0,10),valid.raw.subarray(10)],valid.headers),secret),{providerId,code:String(auto.orderCode),reason:'RESEND_DELIVERED'});
+ await assert.rejects(readOrderMailWebhook(req([Buffer.alloc(65537)],valid.headers),secret),{status:413});checks++;
+ await assert.rejects(readOrderMailWebhook(req([valid.raw],valid.headers),''),{status:503});checks++;
+ assert.throws(()=>verifyOrderMailWebhook(Buffer.concat([valid.raw,Buffer.from(' ')]),valid.headers,secret),{status:401});checks++;
+ const old=webhook('email.delivered',{time:Math.floor(Date.now()/1000)-600});
+ assert.throws(()=>verifyOrderMailWebhook(old.raw,old.headers,secret),{status:401});checks++;
+ eq(event('email.sent'),null);
  let startSend,releaseSend;const started=new Promise(r=>startSend=r),hold=new Promise(r=>releaseSend=r);
  const blocked=createCustomerOrderMailer(pool,async(_kind,msg)=>{trace.push(msg.subject);startSend();await hold;throw Object.assign(Error(),{deliveryDisposition:'retry',deliveryCode:'TOKEN_TEMPORARY'});},'https://mirpanel.com');
  const send=async(_kind,msg)=>{
-  if(msg.subject.startsWith('Hesabınız hazırdır'))eq((await queue()).find(x=>!x.delivery_id).provider_id,'synthetic-accept-1');
-  trace.push(msg.subject);return {id:'synthetic-accept-'+(trace.length-1)};
+  if(msg.subject.startsWith('Hesabınız hazırdır'))eq((await queue()).find(x=>!x.delivery_id).reason,'RESEND_DELIVERED');
+  else eq(await secondWorker.notice(event('email.delivered')),false); // Provider ID is not saved yet; Resend must retry.
+  trace.push(msg.subject);return {id:msg.subject.startsWith('Hesabınız hazırdır')?id():providerId};
  };
- const secondWorker=createCustomerOrderMailer(pool,send,'https://mirpanel.com');
+ const secondWorker=createCustomerOrderMailer(pool,send,'https://mirpanel.com',{requireDeliveryNotice:true});
  const attempt=blocked.wake();await Promise.race([started,attempt]);
  try{await secondWorker.wake();eq(trace,['Sifarişiniz təsdiqləndi — Sifariş №'+auto.orderCode]);}finally{releaseSend();await attempt;}
  await secondWorker.wake();
@@ -68,6 +87,18 @@ try{
  eq((await shop.get(buyer,hash,auto.id)).deliveryStatus,'completed');
  await sql('update customer_order_mail set next_at=now() where order_id=$1 and delivery_id is null',[auto.orderId]);
  await Promise.all([secondWorker.wake(),blocked.stop()]);await secondWorker.wake();
+ eq(trace.length,2);
+ eq((await queue()).find(x=>!x.delivery_id).reason,'RESEND_AWAITING_DELIVERY');
+ eq(await secondWorker.notice(event('email.delivered',{mailId:id()})),true);
+ eq(await secondWorker.notice(event('email.delivery_delayed')),true);
+ eq((await queue()).find(x=>!x.delivery_id).reason,'RESEND_DELIVERY_DELAYED');
+ eq(await secondWorker.notice(event('email.bounced')),true);
+ await secondWorker.wake();eq(trace.length,2);
+ eq((await queue()).find(x=>!x.delivery_id).reason,'RESEND_BOUNCED');
+ await Promise.all([secondWorker.notice(event('email.delivered')),secondWorker.notice(event('email.delivered'))]);
+ await secondWorker.wake();
+ eq(await secondWorker.notice(event('email.delivery_delayed')),true);
+ eq((await queue()).find(x=>!x.delivery_id).reason,'RESEND_DELIVERED');
  eq(trace,['Sifarişiniz təsdiqləndi — Sifariş №'+auto.orderCode,'Sifarişiniz təsdiqləndi — Sifariş №'+auto.orderCode,'Hesabınız hazırdır — Sifariş №'+auto.orderCode]);
  eq((await queue()).every(x=>x.state==='accepted'),true);
  for(let i=0;i<3;i++)eq((await wallet(items)).deliveryStatus,'completed');
