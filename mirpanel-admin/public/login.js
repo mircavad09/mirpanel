@@ -60,7 +60,14 @@ form.addEventListener("submit", async (event) => {
     if (!sessionResponse.ok || session?.ok !== true) throw new Error("unavailable");
 
     const next = new URLSearchParams(location.search).get("next");
-    location.href = next && next.startsWith("/admin.html") ? next : "/admin.html";
+    const destination = new URL("/admin.html", location.origin);
+    if (next && /^\/admin\.html(?:[?#]|$)/.test(next)) {
+      const requested = new URL(next, location.origin);
+      destination.search = requested.search;
+      destination.hash = requested.hash;
+    }
+    if (!destination.hash) destination.hash = location.hash;
+    location.href = destination.href;
   } catch (error) {
     errorBox.textContent = error.sessionFailure || ["İstifadəçi adı və ya şifrə yanlışdır.", "Çox sayda giriş cəhdi olub. Bir qədər sonra yenidən cəhd edin."].includes(error.message)
       ? error.message : "Admin xidməti hazırda cavab vermir. Bir qədər sonra yenidən cəhd edin. Daxil etdiyiniz məlumatlar saxlanılıb.";

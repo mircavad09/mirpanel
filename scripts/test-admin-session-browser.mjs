@@ -5,20 +5,33 @@ let checks=0;const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;};const db=awai
 const source=fs.readFileSync('app.js','utf8'),png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+nmGQAAAAASUVORK5CYII=','base64');let reads=0,touches=0;
 const json=(r,s,v)=>{r.writeHead(s,{'Content-Type':'application/json'});r.end(JSON.stringify(v));};
 async function start(){const code=`import fs from'node:fs';const native=globalThis.fetch;globalThis.fetch=async(u,o)=>{const s=String(u?.url||u);if(s.startsWith(${JSON.stringify('LOCALBASE')}))return native(u,o);if(s.includes('/contents/app.js'))return Response.json({sha:'a'.repeat(40),encoding:'base64',content:fs.readFileSync('app.js').toString('base64')});return Response.json({message:'Synthetic upstream failure'},{status:503});};await import(${JSON.stringify(new URL('../mirpanel-admin/server.mjs',import.meta.url).href)});`.replace('LOCALBASE','http://127.0.0.1:'+upstream.address().port);
- child=spawn(process.execPath,['--input-type=module','-e',code],{windowsHide:true,env:{...process.env,PORT:String(port),ADMIN_USERNAME:username,ADMIN_PASSWORD:password,MIRPANEL_GITHUB_TOKEN:'synthetic',SUPABASE_URL:'http://127.0.0.1:'+upstream.address().port,SUPABASE_SECRET_KEY:'synthetic',PAYMENT_TOKEN_SECRET_B64:secret,PAYMENT_ENCRYPTION_KEY_B64:secret,COOKIE_SECURE:'false',EMPLOYEE_PANEL_ENABLED:'false',RENDER_EXTERNAL_URL:base},stdio:['ignore','pipe','pipe']});
+child=spawn(process.execPath,['--input-type=module','-e',code],{windowsHide:true,env:{...process.env,PORT:String(port),ADMIN_USERNAME:username,ADMIN_PASSWORD:password,MIRPANEL_GITHUB_TOKEN:'synthetic',SUPABASE_URL:'http://127.0.0.1:'+upstream.address().port,SUPABASE_SECRET_KEY:'synthetic',PAYMENT_TOKEN_SECRET_B64:secret,PAYMENT_ENCRYPTION_KEY_B64:secret,COOKIE_SECURE:'false',EMPLOYEE_PANEL_ENABLED:'true',RENDER_EXTERNAL_URL:base},stdio:['ignore','pipe','pipe']});
  await new Promise((resolve,reject)=>{let done=false;const timer=setTimeout(()=>reject(Error('SERVER_START_TIMEOUT')),15000);child.stdout.on('data',b=>{if(!done&&String(b).includes('Mirpanel admin:')){done=true;clearTimeout(timer);resolve();}});child.once('exit',()=>{if(!done){clearTimeout(timer);reject(Error('SERVER_START_FAILED'));}});});
 }
 const stop=async()=>{if(child?.exitCode===null){child.kill();await once(child,'exit');}};
 try{
  await db.exec(fs.readFileSync('supabase/migrations/202610270003_admin_sessions.sql','utf8'));
  upstream=http.createServer(async(req,res)=>{let body='';for await(const b of req)body+=b;const u=new URL(req.url,'http://local');if(u.pathname==='/rest/v1/rpc/admin_session_action'){const p=JSON.parse(body);if(p.p_action==='read')reads++;if(p.p_action==='touch')touches++;try{const r=await db.sql`select public.admin_session_action(${p.p_action},${p.p_hash},${p.p_binding}) as v`;return json(res,200,r[0].v);}catch{return json(res,500,{message:'Synthetic session failure'});}}
+ if(u.pathname==='/rest/v1/manual_stock_sessions')return json(res,200,[{employee_id:'fixture-worker',version:1,expires_at:new Date(Date.now()+3600000).toISOString()}]);
+ if(u.pathname==='/rest/v1/employee_accounts')return json(res,200,[{id:'fixture-worker',active:true,session_version:1}]);
  if(u.pathname==='/rest/v1/rpc/employee_system_ready')return json(res,200,5);if(u.pathname==='/rest/v1/rpc/consume_payment_rate_limit')return json(res,200,{allowed:true});if(u.pathname.startsWith('/rest/'))return json(res,200,[]);return json(res,404,{});});await new Promise(r=>upstream.listen(0,'127.0.0.1',r));await start();
  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});const ctx=await browser.newContext(),p=await ctx.newPage();
  await p.route('https://**/*',r=>r.fulfill({status:200,contentType:'image/png',body:png}));
  p.on('pageerror',e=>console.log('SYNTHETIC_BROWSER_JS_ERROR',e.message));
  p.on('response',async r=>{if(new URL(r.url()).pathname==='/api/admin/state'){const v=await r.json().catch(()=>({}));console.log(JSON.stringify({syntheticStateStatus:r.status(),error:v.error,productCount:v.data?.products?.length}));}});
  const login=async()=>{await p.goto(base+'/login.html');await p.locator('#username').fill(username);await p.locator('#password').fill(password);await p.locator('#loginBtn').click();await p.waitForURL('**/admin.html');await p.locator('#productTitle').waitFor({state:'attached'});try{await p.waitForFunction(()=>document.querySelector('#productTitle').value.length>0,{timeout:5000});}catch(e){console.log('SYNTHETIC_EDITOR_STATUS',await p.locator('#commitInfo').innerText(),await p.locator('#toasts').innerText());throw e;}};
- await login();const cookies=await ctx.cookies(),cookie=cookies.find(c=>c.name==='mirpanel_session');eq(cookie.httpOnly,true);eq(cookie.sameSite,'Strict');eq(Math.round(cookie.expires-Date.now()/1000)<=3600,true);eq(Math.round(cookie.expires-Date.now()/1000)>3590,true);
+ const workerCookie={name:'mirpanel_employee_session',value:'a'.repeat(64),url:base,httpOnly:true,sameSite:'Strict'};
+ const workerHeaders={Cookie:workerCookie.name+'='+workerCookie.value};
+ eq((await fetch(base+'/api/admin/state',{headers:workerHeaders})).status,403,'worker cannot read admin data');
+ eq((await fetch(base+'/api/session',{headers:workerHeaders})).status,401,'worker cookie cannot act as an admin session');
+ await ctx.addCookies([workerCookie]);await p.goto(base+'/admin.html#communityUsers');
+ await p.waitForURL('**/login.html?reason=session_required#communityUsers');
+ await p.locator('#username').fill(username);await p.locator('#password').fill(password);await p.locator('#loginBtn').click();
+ await p.waitForURL('**/admin.html#communityUsers');await p.reload();
+ eq(new URL(p.url()).hash,'#communityUsers','both cookies allow the authenticated admin to return to the selected section');
+ await ctx.clearCookies({name:'mirpanel_employee_session'});
+ await p.goto(base+'/admin.html');await p.waitForFunction(()=>document.querySelector('#productTitle')?.value.length>0);
+ const cookies=await ctx.cookies(),cookie=cookies.find(c=>c.name==='mirpanel_session');eq(cookie.httpOnly,true);eq(cookie.sameSite,'Strict');eq(Math.round(cookie.expires-Date.now()/1000)<=3600,true);eq(Math.round(cookie.expires-Date.now()/1000)>3590,true);
  const h={Cookie:'mirpanel_session='+cookie.value};const session=await(await fetch(base+'/api/session',{headers:h})).json();
  const before=(await db.sql`select expires_at from admin_sessions`)[0].expires_at.toISOString();await fetch(base+'/api/admin/state',{headers:h});await fetch(base+'/api/session',{headers:h});eq((await db.sql`select expires_at from admin_sessions`)[0].expires_at.toISOString(),before,'polls do not renew');
  const csrf={...h,Origin:base,'X-CSRF-Token':session.csrfToken,'Content-Type':'application/json'};eq((await fetch(base+'/api/session/activity',{method:'POST',headers:h})).status,403,'activity needs origin csrf');

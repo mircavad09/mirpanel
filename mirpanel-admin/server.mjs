@@ -649,7 +649,7 @@ function requireMutationAuth(request, response) {
 async function handleApi(request, response) {
   if (await employeeSystem.handle(request,response)) return;
   const employeePath=new URL(request.url,'http://localhost').pathname;
-  if (!['/api/login','/api/product-sales','/api/stories','/api/homepage-banners'].includes(employeePath) && !employeePath.startsWith('/api/payments/') && await employeeSystem.blockAdmin(request,response)) return;
+  if (!['/api/login','/api/session','/api/session/activity','/api/product-sales','/api/stories','/api/homepage-banners'].includes(employeePath) && !employeePath.startsWith('/api/payments/') && await employeeSystem.blockAdmin(request,response)) return;
   const salesUrl = new URL(request.url, 'http://localhost');
   if (salesUrl.pathname === '/api/product-sales' && ['GET','OPTIONS'].includes(request.method)) {
     const origin = String(request.headers.origin || '');
@@ -1463,6 +1463,18 @@ const server = http.createServer(async (request, response) => {
     if (pathname === "/" || pathname === "/login.html") {
       return serveFile(response, "login.html");
     }
+    if (pathname === "/admin" || pathname === "/admin.html") {
+      if (!getSession(request)) {
+        const next = requestUrl.search ? `&next=${encodeURIComponent(`/admin.html${requestUrl.search}`)}` : "";
+        response.writeHead(302, { Location: `/login.html?reason=session_required${next}`, "Cache-Control": "no-store" });
+        return response.end();
+      }
+      if (pathname === "/admin") {
+        response.writeHead(302, { Location: `/admin.html${requestUrl.search}`, "Cache-Control": "no-store" });
+        return response.end();
+      }
+      return serveFile(response, "admin.html");
+    }
     if(['/employee/stock','/employee/stock/login'].includes(pathname)){
       if(pathname==='/employee/stock/login')return serveFile(response,'manual-stock-login.html');
       if(!await employeeSystem.session(request)){response.writeHead(302,{Location:'/employee/stock/login','Cache-Control':'no-store'});return response.end();}
@@ -1502,11 +1514,6 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response,pathname==='/admin/users'?'admin-users.html':pathname.slice(1));
     }
 
-    if (pathname === "/admin") {
-      response.writeHead(302, { Location: "/admin.html" });
-      return response.end();
-    }
-
     if (pathname === "/admin/review") {
       const token = String(requestUrl.searchParams.get("token") || "");
       const destination = getSession(request)
@@ -1514,15 +1521,6 @@ const server = http.createServer(async (request, response) => {
         : `/login.html?next=${encodeURIComponent(`/admin.html?reviewToken=${token}`)}`;
       response.writeHead(302, { Location: destination, "Cache-Control": "no-store" });
       return response.end();
-    }
-
-    if (pathname === "/admin.html") {
-      if (!getSession(request)) {
-        response.writeHead(302, { Location: "/login.html?reason=session_required", "Cache-Control": "no-store" });
-        return response.end();
-      }
-
-      return serveFile(response, "admin.html");
     }
 
     if (["/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-admin.css"].includes(pathname)) {
