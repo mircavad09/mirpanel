@@ -54,7 +54,7 @@ export function renderAccountPanel(ctx){
  }
  if(id==='payments'){const {mountPayments}=await import('./account-payments.js?v=account-update-20261107');if(!stopped&&run===load)disposeChild=mountPayments({content,api,el,button});return;}
  if(id==='codes'){const {mountCodes}=await tabModule;if(!stopped&&run===load)disposeChild=mountCodes({content,el,button,initial:sessionLists.entries.get(listPath),initialRequest:pending,validate:ownData,onData:cache});return;}
- if(id==='subscriptions'){content.replaceChildren(empty('Aktiv abunəliyiniz yoxdur','Hesabınıza bağlı aktiv abunəlik qeydi yoxdur.'));return;}
+ if(id==='subscriptions'){const {mountSubscriptions}=await import('./account-subscriptions.js?v=1');if(!stopped&&run===load)disposeChild=mountSubscriptions({content,el,button,link,api,validate:ownData});return;}
  content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},summaryCache?money(summaryCache.expensesCents):'—')));
  const d=await accountData();if(stopped||run!==load)return;
  if(id==='expenses')content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},money(d.expensesCents)),el('p',{},d.completedOrders+' təsdiqlənmiş alış · AZN'),el('p',{},'Balans əlavələri xərc sayılmır. Qaytarılmış məbləğlər çıxılıb.')));

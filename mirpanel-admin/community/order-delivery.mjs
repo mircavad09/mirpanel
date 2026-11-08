@@ -47,10 +47,12 @@ export async function adminDelivery(pool,security,actor,id,input){
   if(!o)throw fail(404,'Hesaba bağlı sifariş tapılmadı.');
   if(!paid(o))throw fail(409,'Əvvəl ödəniş təsdiqlənməlidir.');
   const lines=deliveryLines(o),records=await deliveryRecords(c,[id]),done=totals(records);
-  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:x.quantity-(done[i]||0)})),status:customerStatus(o,records)});
+  const renewalCode=i=>o.checkout_snapshot?.items?.[i]?.renewalOrderCode;
+  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:x.quantity-(done[i]||0),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
   if(!input){await c.query('commit');return view();}
   const {requestId,line,quantity,message}=input;
   if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||typeof message!=='string'||!message.trim()||message.length>8000)throw fail(400,'Təhvil məlumatları düzgün deyil.');
+  if(renewalCode(line)&&input.renewalApplied!==true)throw fail(400,'Əvvəl mövcud abunəliyin həqiqətən uzadıldığını təsdiqləyin.');
   const previous=(await c.query(`select order_id,line_index,quantity,message_cipher from ${D} where id=$1`,[requestId])).rows[0];
   if(previous){
    if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||JSON.parse(security.decryptSecret(previous.message_cipher)).message!==message)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');

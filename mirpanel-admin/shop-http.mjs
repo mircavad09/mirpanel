@@ -8,6 +8,7 @@ export async function handleShop({req,res,url,shop,browserOrders,security,readBo
  }else if(path==='/method'&&req.method==='GET'){const raw=await shop.method(url.searchParams.get('id'),{req,owner,checkoutId:url.searchParams.get('checkout')}),m=withBackground?await withBackground(raw):raw;value={id:m.id,name:m.display_name,provider:m.provider_name,holder:m.holder_name,number:publicPaymentNumber(security.decryptNumber(m.encrypted_number),m.method_type),last4:m.last4,backgroundUrl:m.backgroundUrl||''};
  }else if(path==='/quote'&&post)value=await shop.quote(req,(await readBody(req,40000)).items,owner);
  else if(path==='/draft'&&post)value=await shop.saveDraft(req,owner,await readBody(req,8000));
+ else if(path==='/subscriptions'&&req.method==='GET')value=await shop.subscriptions(req);
  else if(path==='/draft'&&req.method==='GET')value=await shop.getDraft(req,owner,url.searchParams.get('id'));
  else if(path==='/drafts'&&req.method==='GET')value=await shop.listDrafts(req,owner);
  else if(path==='/draft/remove'&&post)value=await shop.removeDrafts(req,owner,(await readBody(req,4000)).ids);

@@ -559,14 +559,16 @@
       const dlg=document.createElement('dialog'),form=document.createElement('form');
       dlg.className='paymentActionDialog';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Buraya yalnız müştəriyə göstəriləcək mətni yazın. İşçi qeydlərini və daxili təlimatları daxil etməyin.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>Təhvil mətni <textarea name="message" rows="7" required maxlength="8000"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Hesaba əlavə et</button>';
       const {line,quantity,message}=form.elements,submit=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]'),error=form.querySelector('[role=alert]');
-      for(const x of lines)line.add(new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)',x.index));
-      line.onchange=()=>{quantity.max=String(lines.find(x=>x.index===Number(line.value)).remaining);quantity.value='1';};line.onchange();
+      const renewalNote=document.createElement('label'),renewalCheck=document.createElement('input'),renewalText=document.createElement('span');
+      renewalCheck.type='checkbox';renewalNote.append(renewalCheck,renewalText);error.before(renewalNote);
+      for(const x of lines)line.add(new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)'+(x.renewalOrderCode?' · Yeniləmə №'+x.renewalOrderCode:''),x.index));
+      line.onchange=()=>{const x=lines.find(x=>x.index===Number(line.value));quantity.max=String(x.remaining);quantity.value='1';renewalCheck.checked=false;renewalNote.hidden=!x.renewalOrderCode;renewalNote.classList.toggle('hidden',!x.renewalOrderCode);renewalCheck.required=!!x.renewalOrderCode;renewalText.textContent=x.renewalOrderCode?' №'+x.renewalOrderCode+' sifarişinin '+x.renewalSourceLine+'-ci sətrindəki '+x.renewalSourceUnit+'-ci abunəliyi həqiqətən uzatdım.':'';};line.onchange();
       let pending=null;close.onclick=()=>dlg.close();
       dlg.addEventListener('close',()=>dlg.remove(),{once:true});
       dlg.addEventListener('cancel',e=>{if(pending)e.preventDefault();});
       form.onsubmit=async e=>{
         e.preventDefault();if(submit.disabled)return;
-        const data={line:Number(line.value),quantity:Number(quantity.value),message:message.value};
+        const data={line:Number(line.value),quantity:Number(quantity.value),message:message.value,...(renewalCheck.required?{renewalApplied:renewalCheck.checked}:{})};
         pending??={...data,requestId:crypto.randomUUID()};
         for(const field of [line,quantity,message,submit,close])field.disabled=true;
         error.textContent='';

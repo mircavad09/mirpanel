@@ -64,6 +64,7 @@ export async function allocateReadyStock(c,securityFactory,orderId,items){
  if(!await enabled(c))return;
  let security;
  for(const [line,item] of items.entries()){
+  if(item.renewal)continue; // A new account from stock does not extend an existing subscription.
   const args=[item.productId,item.sourcePlanKey,item.signature];
   const setting=(await c.query('select auto_wallet from '+S+'plans where product_id=$1 and plan_key=$2 and plan_signature=$3 for share',args)).rows[0];
   if(!setting?.auto_wallet)continue;

@@ -1,0 +1,66 @@
+body.profile-screen:has(#communityApp .account-subscriptions){background:#0c0c0c}
+.account-subscriptions{color:#f2f2f2;min-width:0;background:#0c0c0c;font:400 14px/1.45 system-ui,sans-serif}
+.account-subscriptions .subs-body{display:grid;gap:14px;margin-top:14px}
+.account-subscriptions :is(.subs-panel,.subs-card,.subs-warning){margin:0;min-width:0;padding:15px;border:1px solid #2b2b2b;border-radius:16px;background:#131313}
+.account-subscriptions .subs-panel p,.account-subscriptions .subs-product p{margin:5px 0 0;color:#b3b3b3;font-size:13px;overflow-wrap:anywhere}
+.account-subscriptions .subs-heading{display:flex;align-items:center;gap:11px}
+.account-subscriptions .subs-heading h1{margin:0;font-size:20px;line-height:1.3}
+.account-subscriptions svg{width:17px;height:17px;flex:none;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.account-subscriptions .subs-icon{display:grid;place-items:center;flex:none;width:40px;height:40px;border-radius:13px;background:#292929}
+.account-subscriptions .subs-icon svg{width:21px;height:21px}
+.account-subscriptions .subs-count{margin-inline-start:auto;border-radius:30px;background:#292929;padding:4px 10px;white-space:nowrap;font-size:12px;font-weight:650}
+.account-subscriptions .subs-summary{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:10px}
+.account-subscriptions .subs-summary strong{font-size:17px}
+.account-subscriptions .subs-summary small{color:#b3b3b3}
+.account-subscriptions .subs-balance{justify-self:end;display:inline-flex;align-items:center;min-height:36px;padding:6px 11px;border-radius:12px;background:#e7e7e7;color:#171717;font-weight:650;text-decoration:none;font-size:12px}
+.account-subscriptions .subs-warning{display:flex;gap:8px;align-items:flex-start;border-color:#67430c;background:#251b0c;color:#ffe0a0}
+.account-subscriptions .subs-warning svg{margin-top:2px}
+.account-subscriptions .subs-card{background:#181818}
+.account-subscriptions .subs-card-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:10px}
+.account-subscriptions .subs-product h2{font-size:15px;margin:0;overflow-wrap:anywhere}
+.account-subscriptions .subs-image{position:relative;width:72px;height:46px;display:grid;place-items:center;border-radius:9px;background:#101010;color:#aaa;overflow:hidden}
+.account-subscriptions .subs-image img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.account-subscriptions [data-tone=green]{--subs-tone:#49dcac}
+.account-subscriptions [data-tone=orange]{--subs-tone:#ffbb6b}
+.account-subscriptions [data-tone=amber]{--subs-tone:#f99238}
+.account-subscriptions [data-tone=red]{--subs-tone:#ff8585}
+.account-subscriptions .subs-days{color:var(--subs-tone,#c4c4c4);font-size:13px;text-align:end}
+.account-subscriptions .subs-actions{display:flex;align-items:center;gap:12px;margin-top:10px}
+.account-subscriptions .subs-progress{flex:1;min-width:0;height:6px;border:0;border-radius:20px;background:#333;overflow:hidden;appearance:none}
+.account-subscriptions .subs-progress::-webkit-progress-bar{background:#333}
+.account-subscriptions .subs-progress::-webkit-progress-value{background:var(--subs-tone);border-radius:20px}
+.account-subscriptions .subs-progress::-moz-progress-bar{background:var(--subs-tone);border-radius:20px}
+.account-subscriptions .subs-progress-unknown{background:var(--subs-tone);opacity:.45}
+.account-subscriptions .subs-resume{color:#ffe491}
+.account-subscriptions .subs-renew-status{font-size:12px;color:#ffd592;margin:8px 0 0}
+.account-subscriptions button{min-height:36px;border:1px solid #565656;border-radius:9px;background:#303030;color:#fff;padding:6px 11px;font:650 13px system-ui;cursor:pointer}
+.account-subscriptions button:disabled{opacity:.55;cursor:default}
+.account-subscriptions .subs-renew{display:inline-flex;align-items:center;gap:6px;flex:none}
+.account-subscriptions .subs-renew[data-urgent=true]{border:2px solid #e4af4d;background:#3b2c19}
+.account-subscriptions .subs-empty{text-align:center;color:#bcbcbc}
+.account-subscriptions .subs-notice:empty{display:none}
+.account-subscriptions .subs-footnote{color:#aaa;font-size:12px;margin:0 2px}
+.account-subscriptions .subs-picker{box-sizing:border-box;width:min(450px,calc(100vw - 24px));max-height:calc(100dvh - 24px);padding:0;border:1px solid #3b3b3b;border-radius:18px;background:#181818;color:#fff;overflow:auto}
+.account-subscriptions .subs-picker::backdrop{background:#000b;backdrop-filter:blur(3px)}
+.account-subscriptions .subs-picker header{display:flex;align-items:center;gap:11px;padding:16px}
+.account-subscriptions .subs-picker header>div{min-width:0;overflow-wrap:anywhere}
+.account-subscriptions .subs-picker h2{margin:0;font-size:19px}
+.account-subscriptions .subs-picker p{margin:0;color:#bcbcbc}
+.account-subscriptions .subs-picker>p{margin:0 16px 10px}
+.account-subscriptions .subs-picker>p:empty{display:none}
+.account-subscriptions .subs-picker .subs-close{margin-inline-start:auto;font-size:19px;background:none;border-color:transparent}
+.account-subscriptions .subs-options{display:grid;gap:8px;padding:0 16px 16px}
+.account-subscriptions .subs-options button{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:start;text-align:start;overflow-wrap:anywhere;padding:13px;background:#1a1a1a}
+.account-subscriptions .subs-options button[aria-pressed=true]{border-color:#ffdc45;box-shadow:inset 0 0 0 1px #ffdc45;background:#2a2516}
+.account-subscriptions .subs-options small{display:block;color:#bdbdbd;margin-top:3px}
+.account-subscriptions .subs-picker footer{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:12px 16px;border-top:1px solid #323232}
+.account-subscriptions .subs-picker .subs-next{background:#e7e7e7;color:#171717}
+@media(max-width:600px){
+ .account-subscriptions :is(.subs-panel,.subs-card,.subs-warning){padding:12px}
+ .account-subscriptions .subs-image{width:49px;height:40px}
+ .account-subscriptions .subs-card-head{grid-template-columns:auto minmax(0,1fr)}
+ .account-subscriptions .subs-days{grid-column:2;text-align:start}
+ .account-subscriptions button,.account-subscriptions .subs-balance{min-height:44px}
+ .account-subscriptions .subs-summary{grid-template-columns:auto minmax(0,1fr)}
+ .account-subscriptions .subs-balance{grid-column:2;justify-self:start}
+}
