@@ -29,7 +29,7 @@
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=verify-session-20261108';
- const profileModule='/community-assets/profile-entry.js?v=mobile-profile-1';
+ const profileModule='/community-assets/profile-entry.js?v=order-guide-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
@@ -52,7 +52,7 @@
  async function mount(v,run,preparedModule){if(run!==generation)return;window.mirpanelNavigationMounting=true;try{
  if(document.getElementById('shopApp')){const m=await(preparedModule||moduleWithin(shopModule));if(run!==generation)return;dispose=m.mountShop();}
  else if(document.getElementById('communityApp')){const m=await(preparedModule||moduleWithin(groupModule));if(run!==generation)return;dispose=m.mountCommunity();}
- else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=order-receipt-20261108',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
+ else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=order-guide-1',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
  else if(!v.started){
   // Fetch together but execute in document order. A superseded route may
   // finish downloading; its scripts must never execute over the new view.

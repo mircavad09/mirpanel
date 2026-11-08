@@ -1,5 +1,6 @@
 import vm from "node:vm";
 import { normalizePlanMetadata } from './public/product-plan-utils.mjs';
+import { normalizeOrderGuide } from './order-guide.mjs';
 
 const DATA_MARKER = "const DATA";
 const CONTENT_MARKER = "const ADMIN_CONTENT";
@@ -587,7 +588,9 @@ function normalizeDeliveryType(value) {
   return value;
 }
 function normalizePlan(plan = {}) {
+  const orderGuide=normalizeOrderGuide(plan.orderGuide);
   return {
+    ...(orderGuide?{orderGuide}:{}),
     ...(Array.isArray(plan.formFields)?{formFields:plan.formFields.slice(0,10).map(normalizeFormField)}:{}),
     ...normalizePlanMetadata(plan),
     ...(plan.label ? { label: String(plan.label) } : {}),
@@ -883,6 +886,7 @@ function normalizeProduct(product = {}, index = 0) {
     formFields,
     formTitle: cleanText(product.formTitle || "", "", 200),
     formDescription: cleanText(product.formDescription || "", "", 500),
+    ...(product.orderGuide?{orderGuide:normalizeOrderGuide(product.orderGuide,{product:true})}:{}),
     confirmationModal,
     whatsapp: normalizeWhatsApp(product.whatsapp),
     plans: Array.isArray(product.plans) ? product.plans.map(normalizePlan) : [],

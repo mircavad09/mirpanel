@@ -32,7 +32,7 @@ export function renderAccountPanel(ctx){
  const listPath=id==='orders'?'/api/payments/my-orders'+suffix:id==='codes'?'/api/payments/my-orders/codes':id==='payments'?'/api/community/payment-history?status=all&page=1':id==='subscriptions'?'/api/payments/shop/subscriptions':null;
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?readList():null;void pending?.catch(()=>{});
- const tabModule=id==='profile'?import('./profile.js?v=mobile-profile-1'):id==='orders'?import('/browser-orders.js?v=order-receipt-20261108'):id==='codes'?import('./account-codes.js?v=codes-view-1'):id==='payments'?import('./account-payments.js?v=fast-entry-1'):id==='subscriptions'?import('./account-subscriptions.js?v=fast-entry-1'):null;
+ const tabModule=id==='profile'?import('./profile.js?v=mobile-profile-1'):id==='orders'?import('/browser-orders.js?v=order-guide-1'):id==='codes'?import('./account-codes.js?v=codes-view-1'):id==='payments'?import('./account-payments.js?v=fast-entry-1'):id==='subscriptions'?import('./account-subscriptions.js?v=fast-entry-1'):null;
  void tabModule?.catch(()=>{});
  try{
  if(!verified){

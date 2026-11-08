@@ -3,18 +3,19 @@ import {warrantyText} from './public/product-plan-utils.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {customerStatus,deliveryLines,orderCodeValid} from './community/order-delivery.mjs';
 import {safeCalendarDate} from './payment-order-lifecycle.mjs';
+import {orderGuideFor} from './order-guide.mjs';
 const denied=()=>Object.assign(Error('Sifarişlərinizi görmək üçün hesabınıza daxil olun.'),{status:401});
 const planLabel=p=>p.label||p.name||(p.months?p.months+' aylıq':'Plan');
 const normalized=v=>String(v??'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('az');
-function repeatPlan(product,savedId,savedName){
+function repeatPlan(product,savedId,savedName,{historical=false}={}){
  const plans=product?.plans;
- if(!product||product.active===false||!Array.isArray(plans))return null;
+ if(!product||(!historical&&product.active===false)||!Array.isArray(plans))return null;
  // Historical numeric IDs may be array positions. Never silently substitute
  // the plan that happens to occupy an old position.
  const indexes=plans.map((_,i)=>i);
  const ids=savedId!=null?indexes.filter(i=>plans[i]?.id!=null&&String(plans[i].id)===String(savedId)&&(!/^\d+$/.test(String(savedId))||normalized(planLabel(plans[i]))===normalized(savedName))):[];
  const matches=ids.length?ids:indexes.filter(i=>plans[i]&&normalized(planLabel(plans[i]))===normalized(savedName));
- if(matches.length!==1||plans[matches[0]].active===false)return null;
+ if(matches.length!==1||(!historical&&plans[matches[0]].active===false))return null;
  const index=matches[0];
  return {productId:product.id,title:product.title,planIndex:index,planName:planLabel(plans[index]),planKey:plans[index].id==null?null:String(plans[index].id)};
 }
@@ -51,6 +52,16 @@ export function createAccountOrders({security,store,resolve}){
     const category=categories.get(p?.category);
     return{id:r.id,title:x.title,plan:x.planName,image:x.image||p?.image||'',quantity:r.quantity,deliveredAt:r.delivered_at,purchasedAt:r.created_at,category:category?{key:p.category,label:category}:null};
    })};
+  },
+  async guide(request,id,line){
+   const s=await scope(request),o=await s.owned(id),i=Number(line);
+   const item=o&&Number.isSafeInteger(i)&&i>=0?deliveryLines(o)[i]:null;
+   if(!item)throw Object.assign(Error('Sifariş məhsulu tapılmadı.'),{status:404});
+   const catalog=await s.catalog?.(),snapshot=o.checkout_snapshot;
+   const saved=snapshot?.cartVersion===2?snapshot.items?.[i]:null;
+   const product=catalog?.products?.find(p=>p.id===String(item.productId||snapshot?.productId||''));
+   const match=repeatPlan(product,saved?.sourcePlanKey??saved?.planId??snapshot?.planId??o.plan_id,item.planName,{historical:true});
+   return orderGuideFor(product,match?product.plans[match.planIndex]:null,item.planName);
   },
   async receipt(request,id){const s=await scope(request),o=await s.owned(id);if(!o)throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});if(!o.receipt_path||o.receipt_deleted_at)throw Object.assign(Error('Çek artıq mövcud deyil'),{status:410});
    try{return {url:await store.signedReceipt(o.receipt_path,60,'account-owner',o.id),mime:o.receipt_mime,expiresIn:60};}catch(e){if(e.status===404||Number(e.cause?.statusCode)===404)throw Object.assign(Error('Çek artıq mövcud deyil'),{status:410});throw Object.assign(Error('Çeki açmaq mümkün olmadı. Yenidən cəhd edin.'),{status:503});}

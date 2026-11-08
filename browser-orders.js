@@ -4,8 +4,11 @@
  const target=new URLSearchParams(location.search).get('order');
  const sounds=import('/checkout-sounds.js?v=1').catch(()=>null);
  const repeatDialog=document.createElement('dialog');repeatDialog.className='browser-order-repeat';
+ const guideDialog=document.createElement('dialog'),guideItems=new WeakMap();
+ guideDialog.className='browser-order-guide';guideDialog.setAttribute('aria-labelledby','browserOrderGuideTitle');
+ let guideTurn=0;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
- function clear(){generation++;for(const c of requests)c.abort();requests.clear();cursor=null;loading=false;loaded=false;hasAppended=false;pageFingerprint=null;seen.clear();prior.clear();root.replaceChildren();content.replaceChildren();if(dialog.open)dialog.close();if(repeatDialog.open)repeatDialog.close();repeatDialog.remove();more.hidden=true;error.hidden=true;root.setAttribute('aria-busy','false');}
+ function clear(){generation++;guideTurn++;for(const c of requests)c.abort();requests.clear();cursor=null;loading=false;loaded=false;hasAppended=false;pageFingerprint=null;seen.clear();prior.clear();if(guideDialog.open)guideDialog.close();guideDialog.remove();root.replaceChildren();content.replaceChildren();if(dialog.open)dialog.close();if(repeatDialog.open)repeatDialog.close();repeatDialog.remove();more.hidden=true;error.hidden=true;root.setAttribute('aria-busy','false');}
  function gate(){clear();options.onData?.(null);root.classList.remove('browser-orders-list');root.innerHTML='<div class="browser-orders-message"><h2>Sifarişlərinizi görmək üçün hesabınıza daxil olun.</h2><p>Hesabınız yoxdur? Qeydiyyatdan keçin.</p><div class="orders-login-actions"><a class="orders-action" href="/owner-login?next=%2Fsifarislerim">Daxil ol</a> <a class="orders-action" href="/hesab?mode=signup&amp;next=%2Fsifarislerim">Qeydiyyatdan keç</a></div></div>';}
  async function api(path){const c=new AbortController(),t=setTimeout(()=>c.abort(),20000);requests.add(c);try{const r=await fetch('/api/payments/'+path,{cache:'no-store',credentials:'same-origin',signal:c.signal,headers:{Accept:'application/json'}});const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Server cavab vermədi.'),{status:r.status});return d;}finally{clearTimeout(t);requests.delete(c);}}
  const money=v=>Number.isFinite(Number(v))?Number(v).toFixed(2).replace('.',',')+' ₼':'—';
@@ -35,10 +38,10 @@
    const duration=Number(x.durationMonths);
    const extraDuration=Number.isInteger(duration)&&duration>0&&!new RegExp('(?:^|\\D)'+duration+'\\s*ay','iu').test(x.planName||'')?' · '+duration+' ay':'';
    const delivered=(o.status==='completed'?o.deliveries||[]:[]).filter(d=>d.line===i).map(d=>'<div class="browser-order-delivery"><div><span>'+esc(d.quantity)+' ədəd</span><button type="button" data-delivery="'+esc(d.id)+'" aria-expanded="false">Göstər</button><button type="button" data-copy-delivery="'+esc(d.id)+'">Kopyala</button></div><pre hidden></pre></div>').join('');
-   return '<section class="browser-order-line"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2><div class="browser-order-line-meta"><span>'+esc(x.planName)+esc(extraDuration)+'</span>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<strong class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</strong></div></div><div class="browser-order-line-buttons"><button type="button" data-order-info aria-expanded="false">'+docIcon+'Məlumat və təlimat</button><button type="button" data-buy-again="'+i+'">'+repeatIcon+'Yenidən al</button></div></div>'+(delivered?expiryBar(x.expiresOn):'')+'<div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(o.status==='completed'?'Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Müştəri üçün təhvil məlumatı sifariş tamamlandıqdan sonra görünəcək.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
+   return '<section class="browser-order-line"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2><div class="browser-order-line-meta"><span>'+esc(x.planName)+esc(extraDuration)+'</span>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<strong class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</strong></div></div><div class="browser-order-line-buttons"><button type="button" data-order-info="'+i+'" aria-haspopup="dialog" aria-expanded="false">'+docIcon+'Məlumat və təlimat</button><button type="button" data-buy-again="'+i+'">'+repeatIcon+'Yenidən al</button></div></div>'+(delivered?expiryBar(x.expiresOn):'')+'<div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(o.status==='completed'?'Status: Tamamlandı. Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Status: '+esc(statuses[o.status]||'Status məlum deyil')+'. Təhvil məlumatı hazır deyil.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
   }).join('');
   const total=o.amount==null?'—':esc(money(o.amount));
-  return '<details class="browser-order" data-order-id="'+esc(o.id)+'" data-order-code="'+esc(o.orderCode)+'"><summary class="browser-order-header">'+photo(items[0]?.image)+'<div class="browser-order-heading"><div class="browser-order-meta"><span class="browser-order-status" data-status="'+esc(o.status)+'">'+(icons[o.status]?'<span aria-hidden="true">'+icons[o.status]+'</span> ':'')+esc(statuses[o.status]||'Status məlum deyil')+'</span><span class="browser-order-code">№ '+esc(o.orderCode)+'</span><time>'+esc(date(o.createdAt))+'</time></div><strong>'+esc(o.product)+'</strong></div><strong class="browser-order-price">'+total+'</strong><svg class="browser-order-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><div class="browser-order-items">'+rows+'</div><div class="browser-order-actions browser-order-footer"><div><span>Cəmi ·</span> <strong class="browser-order-price">'+total+'</strong></div>'+(o.receiptAvailable?'<button type="button" data-receipt="'+esc(o.id)+'">Qəbzə bax</button>':'')+'</div></details>';
+  return '<details class="browser-order" data-order-id="'+esc(o.id)+'" data-order-code="'+esc(o.orderCode)+'"><summary class="browser-order-header">'+photo(items[0]?.image)+'<div class="browser-order-heading"><div class="browser-order-meta"><span class="browser-order-status" data-status="'+esc(o.status)+'">'+(icons[o.status]?'<span aria-hidden="true">'+icons[o.status]+'</span> ':'')+esc(statuses[o.status]||'Status məlum deyil')+'</span><span class="browser-order-code">№ '+esc(o.orderCode)+'</span><time>'+esc(date(o.createdAt))+'</time></div><strong>'+esc(o.product)+'</strong></div><strong class="browser-order-price">'+total+'</strong><svg class="browser-order-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><div class="browser-order-items">'+rows+'</div><div class="browser-order-actions browser-order-footer"><div class="browser-order-total"><span>Cəmi</span><strong class="browser-order-price">'+total+'</strong></div>'+(o.receiptAvailable?'<button type="button" data-receipt="'+esc(o.id)+'">Qəbzə bax</button>':'')+'</div></details>';
  }
  function topup(t){const status={reviewing:'Yoxlanılır',approved:'Təsdiqləndi',rejected:'Rədd edildi'}[t.status];if(!status)return '';return '<article class="browser-order browser-order-topup" data-topup-id="'+esc(t.id)+'"><header class="browser-order-header"><div><span class="browser-order-code">Balans artırma</span><time>'+esc(date(t.created_at))+'</time></div><span class="browser-order-status" data-status="'+esc(t.status)+'">'+status+'</span><strong class="browser-order-price">'+esc(money(Number(t.approved_cents??t.requested_cents)/100))+'</strong></header></article>';}
  root.addEventListener('error',e=>{if(e.target.matches?.('.browser-order-image img'))e.target.hidden=true;},{capture:true,signal:life.signal});
@@ -49,7 +52,7 @@
   for(const o of d.orders){
    if(seen.has(o.id))continue;seen.add(o.id);const items=orderItems(o);root.insertAdjacentHTML('beforeend',card(o,items));
    const node=root.lastElementChild;
-   repeats.set(node,items.map(x=>x.repeat));
+   repeats.set(node,items.map(x=>x.repeat));guideItems.set(node,items);
    if(expanded.has(o.id)||(!focused&&target===String(o.orderCode)))node.open=true;
    if(!focused&&target===String(o.orderCode)){
     focused=true;node.scrollIntoView({block:'nearest'});
@@ -66,6 +69,7 @@
  }
  async function load(append=false,live=false){if(loading)return;const run=generation;loading=true;root.setAttribute('aria-busy','true');more.disabled=true;error.hidden=true;
   try{const started=!append?initialRequest:null;if(started)initialRequest=null;const d=await(started||api('my-orders'+(append&&cursor?'?cursor='+encodeURIComponent(cursor):target?'?order='+encodeURIComponent(target):'')));if(run!==generation)return;options.validate?.(d);
+   if(live&&guideDialog.open)return;
    if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=orders');else location.replace('/profil?tab=orders');return;}
    if(append||!loaded||JSON.stringify([d.orders,d.topups])!==pageFingerprint)paint(d,append,{live});
   }catch(e){if(run!==generation)return;if(e.status===401||e.status===403){gate();return;}error.replaceChildren(document.createTextNode('Sifarişləri yükləmək mümkün olmadı. '));error.hidden=false;if(!loaded)root.innerHTML='<div class="browser-orders-message"><button type="button" data-retry>Yenidən cəhd et</button></div>';else{const retry=document.createElement('button');retry.type='button';retry.textContent='Yenidən cəhd et';on(retry,'click',()=>load(append));error.append(retry);}
@@ -90,6 +94,55 @@
    }else{const text=await read();if(valid()){p.textContent=text;p.hidden=false;b.textContent='Gizlət';b.setAttribute('aria-expanded','true');}}
   }catch{if(valid())status.textContent=copy?'Məlumatı kopyalamaq mümkün olmadı.':'Təhvil məlumatını açmaq mümkün olmadı.';}finally{b.disabled=false;}
  }
+ function openGuide(trigger,accounts){
+  const order=trigger.closest('[data-order-id]'),index=Number(trigger.dataset.orderInfo),item=guideItems.get(order)?.[index];
+  if(!item||guideDialog.open)return;
+  const create=(tag,text,cls)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(cls)n.className=cls;return n;};
+  const button=(label,action)=>{const b=create('button',label);b.type='button';b.onclick=action;return b;};
+  const wrap=create('div',null,'browser-guide-frame'),header=create('header',null,'browser-guide-header'),title=create('h2',item.title);title.id='browserOrderGuideTitle';
+  const identity=create('div');identity.append(title,create('p',item.planName));
+  const close=button('×',()=>guideDialog.close());close.setAttribute('aria-label','Təlimatı bağla');
+  const head=create('div',null,'browser-guide-identity');head.append(identity,close);
+  const tabs=create('div',null,'browser-guide-tabs'),body=create('div',null,'browser-guide-body'),footer=create('footer');
+  tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
+  footer.append(button('Bağla',()=>guideDialog.close()));
+  let data=null,failed=false,active='info',track='',step=0;
+  const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(info,how);
+  function select(mode){active=mode;body.scrollTop=0;draw();}
+  function draw(){
+   info.setAttribute('aria-pressed',String(active==='info'));how.setAttribute('aria-pressed',String(active==='steps'));
+   body.replaceChildren();
+   if(failed){body.append(create('p','Təlimat alınmadı.'),button('Yenidən cəhd et',loadGuide));return;}
+   if(!data){const loading=create('p','Məlumat hazırlanır…');loading.setAttribute('role','status');body.append(loading);return;}
+   if(active==='info'){
+    if(data.information)body.append(create('div','İstifadə etməzdən əvvəl oxuyun','browser-guide-note'));
+    body.append(create('p',data.information||'Bu məhsul üçün məlumat əlavə edilməyib.','browser-guide-text'));return;
+   }
+   const tracks=Object.entries({general:'Ümumi addımlar',phone:'Telefonda giriş',desktopQr:'Kompüterdə QR ilə giriş'}).filter(([key])=>data.tracks?.[key]?.length);
+   if(!tracks.length){body.append(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}
+   if(!tracks.some(([key])=>key===track))track=tracks[0][0];
+   const choices=create('div',null,'browser-guide-choices');
+   for(const [key,label] of tracks){const b=button(label,()=>{track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
+   const steps=data.tracks[track],current=steps[step],layout=create('div',null,'browser-guide-step');
+   const visual=create('div',null,'browser-guide-visual');
+   try{const u=new URL(current.image,location.origin);if(u.protocol==='https:'&&!u.username&&!u.password){const img=create('img');img.src=u.href;img.alt='Addım '+(step+1);img.referrerPolicy='no-referrer';img.addEventListener('error',()=>visual.replaceChildren(create('span','Şəkil açıla bilmədi.')),{once:true});visual.append(img);}}catch{}
+   const details=create('div'),counter=create('strong','Addım '+(step+1)+' / '+steps.length,'browser-guide-note');
+   const description=create('p',current.description,'browser-guide-text');description.setAttribute('aria-live','polite');
+   const nav=create('div',null,'browser-guide-controls'),back=button('‹ Əvvəlki',()=>{step--;draw();body.querySelector('.browser-guide-controls button:not(:disabled)')?.focus();}),next=button('Növbəti ›',()=>{step++;draw();body.querySelector('.browser-guide-controls button:last-child:not(:disabled),.browser-guide-controls button:not(:disabled)')?.focus();});
+   back.disabled=step===0;next.disabled=step===steps.length-1;
+   nav.append(back,next);details.append(counter,description,nav);layout.append(visual,details);body.append(choices,layout);
+  }
+  async function loadGuide(){
+   const turn=++guideTurn;failed=false;draw();
+   try{const result=await api('my-orders/'+encodeURIComponent(order.dataset.orderId)+'/guide/'+index);if(turn===guideTurn&&guideDialog.open){data=result;draw();}}
+   catch(e){if(turn!==guideTurn||!guideDialog.open)return;if(e.status===401||e.status===403){gate();return;}failed=true;draw();}
+  }
+  header.append(head,tabs);
+  if(!accounts.querySelector('[data-delivery]'))header.append(create('p',accounts.querySelector('p')?.textContent,'browser-guide-delivery-status'));
+  wrap.append(header,body,footer);guideDialog.replaceChildren(wrap);root.after(guideDialog);
+  guideDialog.addEventListener('close',()=>{guideTurn++;guideDialog.remove();if(trigger.isConnected){trigger.focus({preventScroll:true});if(!accounts.hidden)accounts.scrollIntoView({block:'nearest'});}},{once:true});
+  guideDialog.showModal();void loadGuide();
+ }
  function buyAgain(selection){
   if(repeatDialog.open)return;
   repeatDialog.innerHTML='<h2 id="browserOrderRepeatTitle">Yenidən almaq</h2><p>Bu, yeni sifariş olacaq. Məhsul ödənişdən sonra ayrıca təqdim olunur. Əvvəlki sifarişiniz dəyişmir.</p><p role="status" data-repeat-status></p><div><button type="button" data-repeat-cancel autofocus>Ləğv et</button><button type="button" data-repeat-add>Səbətə əlavə et</button></div>';
@@ -109,13 +162,13 @@
  }
  on(root,'click',e=>{
   const info=e.target.closest('[data-order-info]'),again=e.target.closest('[data-buy-again]');
-  if(info){const panel=info.closest('.browser-order-line').querySelector('.browser-order-instructions');if(!panel.hidden)return hideInfo(panel);panel.hidden=false;info.setAttribute('aria-expanded','true');const first=panel.querySelector('[data-delivery]');if(first)void delivery(first);return;}
+  if(info){const panel=info.closest('.browser-order-line').querySelector('.browser-order-instructions');if(panel.hidden){panel.hidden=false;info.setAttribute('aria-expanded','true');const first=panel.querySelector('[data-delivery]');if(first)void delivery(first);}return openGuide(info,panel);}
   if(again)return buyAgain(repeats.get(again.closest('[data-order-id]'))?.[Number(again.dataset.buyAgain)]);
   const b=e.target.closest('[data-delivery],[data-copy-delivery]');if(b)void delivery(b,b.hasAttribute('data-copy-delivery'));
  });
  root.addEventListener('click',async e=>{if(e.target.closest('[data-retry]'))return void load();const b=e.target.closest('[data-receipt]');if(!b||b.disabled)return;const run=generation;b.disabled=true;try{const d=await api('my-orders/'+encodeURIComponent(b.dataset.receipt)+'/receipt');if(run!==generation)return;const u=new URL(d.url);if(u.protocol!=='https:'||!u.hostname.endsWith('.supabase.co'))throw Error();content.replaceChildren();const view=document.createElement(d.mime==='application/pdf'?'iframe':'img');view.src=u.href;view.referrerPolicy='no-referrer';if(view.tagName==='IMG')view.alt='Sifarişin ödəniş çeki';else{view.title='Ödəniş çeki PDF';view.setAttribute('sandbox','allow-same-origin');}content.append(view);dialog.showModal();}catch(e){if(run!==generation)return;if(e.status===401||e.status===403)return void gate();error.textContent=e.status===410?'Çek artıq mövcud deyil':'Çeki açmaq mümkün olmadı. Yenidən cəhd edin.';error.hidden=false;}finally{b.disabled=false;}});
  document.getElementById('browserReceiptClose').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});dialog.addEventListener('close',()=>content.replaceChildren());
- const start=()=>{clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!hasAppended&&!dialog.open&&root.querySelector('[data-status="reviewing"],[data-status="preparing"],[data-status="pending"],[data-status="submitted"],[data-status="new_receipt_requested"]'))load(false,true);},12000);};
+ const start=()=>{clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!hasAppended&&!dialog.open&&!guideDialog.open&&root.querySelector('[data-status="reviewing"],[data-status="preparing"],[data-status="pending"],[data-status="submitted"],[data-status="new_receipt_requested"]'))load(false,true);},12000);};
  on(window,'mirpanel:account',e=>{if(!e.detail)gate();else if(!loaded)load();});
  on(window,'storage',e=>{if(e.key==='mirpanel.auth.signedOut')gate();});
  // Clear private DOM before bfcache/backgrounding; revalidate on return.

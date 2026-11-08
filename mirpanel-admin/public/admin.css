@@ -1286,3 +1286,10 @@ th {
 #decorationsView .paymentBankEmpty,#decorationsView .decorationChecker{aspect-ratio:1.6;max-height:200px}
 #decorationsView .decorationChecker img{height:100%;aspect-ratio:auto}
 #decorationsView .paymentBankBackgroundGrid article{padding:12px;border:1px solid #343940;border-radius:12px;background:#1d2126}
+#orderGuideEditor{margin:16px 0;padding:12px;border:1px solid #45423a;border-radius:12px}
+#orderGuideEditor summary{font-weight:650;cursor:pointer}
+#orderGuideEditor label,#orderGuideEditor :is(select,textarea,input){display:block;width:100%;box-sizing:border-box;margin:5px 0}
+#orderGuideEditor label.switchLine{display:flex;align-items:center;gap:8px}#orderGuideEditor input[type=checkbox]{width:auto}
+#orderGuideEditor fieldset,.guide-editor-step{margin:10px 0;padding:10px;border:1px solid #45423a;border-radius:8px;min-width:0}
+.guide-editor-step .btn{margin-inline-end:6px}
+.guide-editor-step img{display:block;max-width:min(100%,240px);max-height:180px;margin:8px 0;object-fit:contain}

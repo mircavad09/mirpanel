@@ -8,6 +8,7 @@ const sample='E-poçt: buyer@example.test\nŞifrə: synthetic-only\n\nİkinci s�
 const order='12345678-1234-4234-8234-000000000001',delivery='12345678-1234-4234-8234-000000000002';
 const repeat={productId:'synthetic',title:'Synthetic first',planIndex:0,planName:'1 ay'};
 const price=725,field={key:'room',label:'Otaq adı',type:'text',required:true,minLength:1,maxLength:40};
+const guides=[{information:'Sintetik telefon qaydası.\n\n'+('Yalnız sınaq üçün yazılmış əlavə izah.\n'.repeat(40)),tracks:{phone:[{image:'https://guide.example.test/1.png',description:'Tətbiqi açın.'},{image:'https://guide.example.test/2.png',description:'Sınaq profilini seçin.'}]}},{information:'İkinci məhsula aid qayda.',tracks:{desktopQr:[{image:'https://guide.example.test/3.png',description:'Sınaq ekranını açın.'}]}}];
 let status='reviewing',reveals=0,available=1,drafts=0,payments=0,receiptReads=0,expiresOn,preview=false,autoDelivered=false;
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost');
@@ -23,6 +24,7 @@ const server=http.createServer(async(req,res)=>{
   {id:'12345678-1234-4234-8234-000000000003',title:'Netflix Şəxsi',plan:'7 gün',quantity:1,purchasedAt:'2026-11-08T09:05:00Z',category:{key:'film',label:'Film'}}
  ]});
  if(u.pathname==='/api/payments/my-orders/codes/'+delivery){reveals++;return json({text:sample});}
+ if(u.pathname.startsWith('/api/payments/my-orders/'+order+'/guide/'))return json(guides[Number(u.pathname.split('/').at(-1))]);
  if(u.pathname==='/api/payments/my-orders/'+order+'/receipt'){receiptReads++;return json({mime:'image/png',url:'https://synthetic.supabase.co/private.png'});}
  if(u.pathname==='/api/payments/shop/quote')return json({items:[{...repeat,terms:'Yeni şərtlər',termsVersion:'current',unitCents:price,available,fields:[field]}],totalCents:price,balanceCents:10000});
  if(u.pathname==='/api/payments/shop/drafts')return json({items:[]});
@@ -60,13 +62,13 @@ try{
    },width<600);
    await page.goto(origin+'/profil?tab=orders&order=9180');
    const card=page.locator('details.browser-order');
-   await card.getByText('Yoxlanılır').waitFor();assert.equal(await card.getAttribute('open'),'');
+   await card.getByText('Yoxlanılır',{exact:true}).waitFor();assert.equal(await card.getAttribute('open'),'');
    const expiry=card.locator('.browser-order-expiry');
    assert.equal(await expiry.count(),0);
    assert.equal(await card.getByText('Alınmış hesablar',{exact:true}).count(),0);
    await card.locator('summary').click();assert.equal(await card.getAttribute('open'),null);
    assert.equal(await page.evaluate(()=>Number(sessionStorage.getItem('played'))),0);
-   status='preparing';await card.getByText('Hazırlanır').waitFor();
+   status='preparing';await card.locator('[data-status="preparing"]').waitFor();
    assert.equal(await expiry.count(),0);
    await page.waitForFunction(()=>Number(sessionStorage.getItem('played'))===1);
    status='completed';await card.locator('[data-status="completed"]').waitFor();
@@ -79,9 +81,25 @@ try{
    assert.equal(await expiry.count(),1);
    assert.equal(await card.locator('.browser-order-line').first().locator('.browser-order-warranty').count(),0);
    await page.route('https://synthetic.supabase.co/private.png',r=>r.fulfill({status:200,body:''}));
+   const amountBox=await card.locator('.browser-order-total strong').boundingBox(),receiptBox=await card.locator('[data-receipt]').boundingBox();
+   assert(receiptBox.y>=amountBox.y+amountBox.height&&Math.abs(receiptBox.x+receiptBox.width-amountBox.x-amountBox.width)<2);
+   await page.route('https://guide.example.test/*.png',r=>r.fulfill({contentType:'image/png',body:fs.readFileSync(r.request().url().endsWith('/2.png')?'assets/logo.png':'assets/capcut.png')}));
    await card.getByRole('button',{name:'Qəbzə bax'}).click();await page.locator('#browserReceipt[open] img').waitFor({state:'attached'});await page.locator('#browserReceiptClose').click();assert.equal(receiptReads,1);
-   const show=card.getByRole('button',{name:'Məlumat və təlimat'}).first();
-   await show.click();await card.getByText('İkinci sətir',{exact:false}).waitFor();
+   const actions=card.getByRole('button',{name:'Məlumat və təlimat'}),show=actions.first(),guide=page.locator('.browser-order-guide[open]');
+   await actions.nth(1).click();await guide.getByText('İkinci məhsula aid qayda.').waitFor();
+   assert.equal(reveals,0);await guide.getByRole('button',{name:'Təlimat',exact:true}).click();await guide.getByRole('button',{name:'Kompüterdə QR ilə giriş'}).waitFor();
+   await guide.getByRole('button',{name:'Təlimatı bağla'}).click();await guide.waitFor({state:'hidden'});
+   await show.click();await guide.getByText('Sintetik telefon qaydası.',{exact:false}).waitFor();await card.getByText('İkinci sətir',{exact:false}).waitFor();
+   assert(await guide.locator('.browser-guide-body').evaluate(n=>{n.scrollTop=n.scrollHeight;return n.scrollTop>0;}));
+   const footer=await guide.getByRole('button',{name:'Bağla',exact:true}).boundingBox();assert(footer.y+footer.height<=820);
+   await guide.getByRole('button',{name:'Təlimat',exact:true}).click();
+   await guide.getByRole('button',{name:'Telefonda giriş'}).waitFor();assert.equal(await guide.getByRole('button',{name:'Kompüterdə QR ilə giriş'}).count(),0);
+   await guide.getByText('Tətbiqi açın.').waitFor();await guide.getByRole('button',{name:/Növbəti/}).click();await guide.getByText('Sınaq profilini seçin.').waitFor();
+   assert.match(await guide.locator('img').getAttribute('src'),/2\.png$/);
+   await guide.getByRole('button',{name:/Əvvəlki/}).click();await guide.getByText('Tətbiqi açın.').waitFor();
+   const out=path.resolve('../../outputs/order-guide');fs.mkdirSync(out,{recursive:true});
+   if(width!==320)await page.screenshot({path:path.join(out,width<600?'telimat-mobil.png':'telimat-desktop.png')});
+   await guide.getByRole('button',{name:'Bağla',exact:true}).click();await guide.waitFor({state:'hidden'});
    await card.getByRole('heading',{name:'Alınmış hesablar'}).waitFor();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    await card.getByRole('button',{name:'Gizlət',exact:true}).click();assert.equal(await card.locator('pre').textContent(),'');
@@ -99,7 +117,7 @@ try{
     if(label)await expiry.getByText(label,{exact:true}).waitFor();else assert.equal(await expiry.count(),0);
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    }
-   expiresOn='2026-12-09';status='rejected';await page.reload();await card.getByText('Rədd edildi').waitFor();assert.equal(await card.getByText('Alınmış hesablar',{exact:true}).count(),0);assert.equal(await expiry.count(),0);
+   expiresOn='2026-12-09';status='rejected';await page.reload();await card.locator('[data-status="rejected"]').waitFor();assert.equal(await card.getByText('Alınmış hesablar',{exact:true}).count(),0);assert.equal(await expiry.count(),0);
    await page.goto(origin+'/profil?tab=codes');await page.getByRole('heading',{name:'CapCut Pro'}).waitFor();assert.equal(reveals,2);
    const cap=page.locator('.codes-card').filter({hasText:'CapCut Pro'}),netflix=page.locator('.codes-card').filter({hasText:'Netflix Şəxsi'}),search=page.getByRole('searchbox');
    assert.equal(await page.locator('.codes-count').textContent(),'2 ədəd');
@@ -123,6 +141,7 @@ try{
     await page.goto(origin+'/profil?tab=orders&order=9180');await show.click();
     await card.getByRole('heading',{name:'Alınmış hesablar'}).waitFor();
     await card.getByText('İkinci sətir',{exact:false}).waitFor();
+    await page.locator('.browser-order-guide').getByRole('button',{name:'Bağla',exact:true}).click();
     await card.locator('summary img').evaluate(async img=>img.decode());
     const output=process.env.MIRPANEL_ORDER_SCREENSHOTS;fs.mkdirSync(output,{recursive:true});
     await page.locator('main').screenshot({path:path.join(output,width===1440?'mirpanel-order-desktop.png':'mirpanel-order-mobile.png')});

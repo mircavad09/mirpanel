@@ -291,6 +291,8 @@ export function createPaymentSystem(options) {
     }
     const codes=url.pathname.match(/^\/api\/payments\/my-orders\/codes(?:\/([0-9a-f-]{36}))?$/);
     if(request.method==='GET'&&codes){publicJson(request,response,200,await accountOrders.codes(request,codes[1]));return true;}
+    const orderGuide=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/guide\/(\d{1,3})$/);
+    if(request.method==='GET'&&orderGuide){publicJson(request,response,200,await accountOrders.guide(request,orderGuide[1],orderGuide[2]));return true;}
     const browserReceipt=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/receipt$/);
     if(request.method==='GET'&&browserReceipt){
       if(!safeUuid(browserReceipt[1]))throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});

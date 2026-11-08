@@ -52,9 +52,35 @@
 .browser-order-instructions{margin:10px 0 2px;padding:12px;border:1px solid #325344;border-radius:10px;background:#161e1b}
 .browser-order-instructions :is(h3,p){margin:0;font-size:14px}
 .browser-order-instructions [data-line-feedback]:not(:empty){display:block;margin-top:6px;color:#c8e5d5}
-.account-panel .browser-order-footer{justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
-.browser-order-footer>div{display:flex;align-items:center;gap:8px}
+.account-panel .browser-order-footer{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
+.browser-order-footer>.browser-order-total{display:flex;justify-content:space-between;align-items:center;gap:8px}
 details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-start:auto;min-height:44px;white-space:nowrap}
+.browser-order-guide{box-sizing:border-box;width:min(720px,calc(100% - 24px));max-height:calc(100dvh - 24px);padding:0;overflow:hidden;color:#f1f1f0;background:#181818;border:1px solid #373733;border-radius:18px;font:14px/1.5 system-ui,sans-serif}
+.browser-order-guide::backdrop{background:#000b;backdrop-filter:blur(4px)}
+.browser-guide-frame{display:grid;grid-template-rows:auto minmax(0,1fr) auto;max-height:calc(100dvh - 26px)}
+.browser-guide-header,.browser-order-guide footer{padding:15px 18px;background:#1b1b1a}
+.browser-guide-header{border-bottom:1px solid #30302c}
+.browser-guide-identity{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;overflow-wrap:anywhere}
+.browser-guide-identity h2{margin:0;font-size:20px;line-height:1.2;color:#faf9f5}
+.browser-guide-identity p,.browser-guide-delivery-status{margin:4px 0 0;color:#bfc0bb}
+.browser-guide-tabs,.browser-guide-choices,.browser-guide-controls{display:flex;gap:7px;flex-wrap:wrap}
+.browser-guide-tabs{margin-top:12px;padding:4px;border-radius:13px;background:#292927}
+.browser-order-guide button{min-height:42px;padding:6px 12px;border:1px solid #50504a;border-radius:10px;background:#262625;color:#eee;cursor:pointer;font:600 13px/1.2 system-ui,sans-serif}
+.browser-order-guide button:focus-visible{outline:2px solid #ffcf38;outline-offset:2px}
+.browser-guide-identity button{flex:none;font-size:21px}
+.browser-guide-tabs button{flex:1;background:transparent;border-color:transparent}
+.browser-guide-tabs button[aria-pressed=true]{background:#121211;color:#ffe06b}
+.browser-guide-choices button[aria-pressed=true],.browser-guide-controls button:last-child:not(:disabled){border-color:#ffd439;color:#181508;background:#ffd439}
+.browser-order-guide button:disabled{opacity:.46;cursor:default}
+.browser-guide-body{min-height:0;overflow:auto;overscroll-behavior:contain;padding:16px 18px}
+.browser-guide-note{display:block;padding:6px 9px;border-radius:8px;background:#372c11;color:#ffdc61}
+.browser-guide-text{white-space:pre-wrap;overflow-wrap:anywhere;margin:12px 0}
+.browser-guide-step{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:14px;margin-top:12px}
+.browser-guide-visual{background:#111;border:1px solid #393932;border-radius:13px;overflow:hidden;display:grid;place-items:center;min-height:76px}
+.browser-guide-visual img{display:block;width:100%;max-height:340px;object-fit:contain}
+.browser-order-guide footer{border-top:1px solid #30302c}
+.browser-order-guide footer button{width:100%}
+@media(max-width:600px){.browser-guide-step{grid-template-columns:minmax(0,1fr)}.browser-guide-visual img{max-height:230px}.browser-guide-header,.browser-guide-body,.browser-order-guide footer{padding:10px 12px}.browser-order-guide button{min-height:44px}}
 .browser-order-repeat{position:fixed;inset:0;width:min(calc(100% - 28px),420px);max-height:calc(100% - 28px);box-sizing:border-box;padding:20px;color:#f4f4f5;background:#191b1e;border:1px solid #44474d;border-radius:16px;font:400 15px/1.5 system-ui;overflow:auto}
 .browser-order-repeat::backdrop{background:#000a}
 .browser-order-repeat h2{font-size:20px;margin:0}

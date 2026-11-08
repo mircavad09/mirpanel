@@ -559,6 +559,8 @@ async function loadState() {
 
 async function saveState() {
   if (!state.data) return;
+  const guideError=window.adminOrderGuideError?.(state.data.products||[]);
+  if(guideError){toast(guideError,'bad');return;}
   if(recoveredImages.size){toast('Qaralamadakı şəkilləri yenidən yükləyin, sonra Saxla basın.','bad');return;}
   // A deployment may preserve authentication but replace transient staged bytes.
   // Restage retained files and require a fresh preview; never publish broken paths.
@@ -1057,6 +1059,7 @@ function updateHelpFields() {
 }
 
 function renderPlans(product) {
+  window.mountAdminOrderGuide?.($("plans"),product,markDirty);
   $("plans").innerHTML = (product.plans || []).map((plan, index) => `
     <div class="planRow">
       <input data-plan="${index}" data-field="label" placeholder="Label" value="${escapeHtml(plan.label || "")}">
