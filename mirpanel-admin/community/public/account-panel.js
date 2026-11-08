@@ -26,13 +26,13 @@ export function renderAccountPanel(ctx){
  let dragging=false,startX=0,startScroll=0;nav.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;dragging=true;startX=e.clientX;startScroll=nav.scrollLeft;nav.dataset.dragging='false';},{signal:life.signal});nav.addEventListener('pointermove',e=>{if(!dragging)return;if(Math.abs(e.clientX-startX)>5){nav.dataset.dragging='true';nav.setPointerCapture(e.pointerId);nav.scrollLeft=startScroll+startX-e.clientX;}},{signal:life.signal});const endDrag=()=>{dragging=false;setTimeout(()=>nav.dataset.dragging='false',0);};nav.addEventListener('pointerup',endDrag,{signal:life.signal});nav.addEventListener('pointercancel',endDrag,{signal:life.signal});nav.addEventListener('wheel',e=>{if(nav.scrollWidth<=nav.clientWidth)return;const before=nav.scrollLeft;nav.scrollLeft+=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(nav.scrollLeft!==before)e.preventDefault();},{passive:false,signal:life.signal});
  async function recommendations(target,run){const d=await accountData();if(stopped||run!==load||!target.isConnected||target.querySelector('.account-recommendations'))return;const box=el('section',{class:'account-recommendations'},el('h2',{},'Məhsul təklifləri')),grid=el('div',{class:'account-products'});for(const p of d.products.slice(0,4))grid.append(productCard(p,d.wishlist.includes(p.id),()=>show('orders')));box.append(grid);target.append(box);}
  async function show(id){selected=id;const run=++load;disposeChild?.();disposeChild=null;
- const label=tabs.find(t=>t[0]===id)[1];content.replaceChildren(...(!verified||['profile','orders','codes'].includes(id)?[el('h1',{},label),el('div',{class:'account-skeleton','aria-busy':'true','aria-label':label+' məlumatı'})]:[]));
+ const label=tabs.find(t=>t[0]===id)[1];content.replaceChildren(...(!verified||['profile','orders','codes','payments','subscriptions'].includes(id)?[el('h1',{},label),el('div',{class:'account-skeleton','aria-busy':'true','aria-label':label+' məlumatı'})]:[]));
  for(const a of nav.children){if(a.dataset.accountTab===id)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}document.title=label+' · MirPanel';nav.querySelector('[aria-current]')?.scrollIntoView({block:'nearest',inline:'nearest'});
  const code=new URLSearchParams(location.search).get('order'),suffix=/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'?order='+encodeURIComponent(code):'';
- const listPath=id==='orders'?'/api/payments/my-orders'+suffix:id==='codes'?'/api/payments/my-orders/codes':null;
+ const listPath=id==='orders'?'/api/payments/my-orders'+suffix:id==='codes'?'/api/payments/my-orders/codes':id==='payments'?'/api/community/payment-history?status=all&page=1':id==='subscriptions'?'/api/payments/shop/subscriptions':null;
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?readList():null;void pending?.catch(()=>{});
- const tabModule=id==='profile'?import('./profile.js?v=verify-session-20261108'):id==='orders'?import('/browser-orders.js?v=order-receipt-20261108'):id==='codes'?import('./account-codes.js?v=codes-view-1'):null;
+ const tabModule=id==='profile'?import('./profile.js?v=verify-session-20261108'):id==='orders'?import('/browser-orders.js?v=order-receipt-20261108'):id==='codes'?import('./account-codes.js?v=codes-view-1'):id==='payments'?import('./account-payments.js?v=fast-entry-1'):id==='subscriptions'?import('./account-subscriptions.js?v=fast-entry-1'):null;
  void tabModule?.catch(()=>{});
  try{
  if(!verified){
@@ -52,9 +52,9 @@ export function renderAccountPanel(ctx){
   disposeChild=window.mountBrowserOrders({initial,initialRequest:pending,validate:ownData,onData:cache});window.mirpanelPageDispose=communityDispose;
   const child=disposeChild;disposeChild=()=>{window.removeEventListener('mirpanel:orders-loaded',onLoaded);child?.();};return;
  }
- if(id==='payments'){const {mountPayments}=await import('./account-payments.js?v=payments-history-1');if(!stopped&&run===load)disposeChild=mountPayments({content,api,el,button,link,validate:ownData});return;}
+ if(id==='payments'){const {mountPayments}=await tabModule;if(!stopped&&run===load)disposeChild=mountPayments({content,api,el,button,link,validate:ownData,initial:sessionLists.entries.get(listPath),initialRequest:pending,onData:cache});return;}
  if(id==='codes'){const {mountCodes}=await tabModule;if(!stopped&&run===load)disposeChild=mountCodes({content,el,button,initial:sessionLists.entries.get(listPath),initialRequest:pending,validate:ownData,onData:cache});return;}
- if(id==='subscriptions'){const {mountSubscriptions}=await import('./account-subscriptions.js?v=1');if(!stopped&&run===load)disposeChild=mountSubscriptions({content,el,button,link,api,validate:ownData});return;}
+ if(id==='subscriptions'){const {mountSubscriptions}=await tabModule;if(!stopped&&run===load)disposeChild=mountSubscriptions({content,el,button,link,api,validate:ownData,initial:sessionLists.entries.get(listPath),initialRequest:pending,onData:cache});return;}
  content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},summaryCache?money(summaryCache.expensesCents):'—')));
  const d=await accountData();if(stopped||run!==load)return;
  if(id==='expenses')content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},money(d.expensesCents)),el('p',{},d.completedOrders+' təsdiqlənmiş alış · AZN'),el('p',{},'Balans əlavələri xərc sayılmır. Qaytarılmış məbləğlər çıxılıb.')));

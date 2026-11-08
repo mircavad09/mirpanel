@@ -158,9 +158,11 @@
     initializeContentTabs();
     if (product) {
       try {
-        const metrics = await import('/mirpanel-admin/public/product-plan-utils.mjs?v=detail-20261010-1');
-        const compact = product.id === 'capcut' ? await import('/capcut-detail.mjs?v=20261020-1') : null;
-        const display = await import('/product-detail-display.mjs?v=20261020-1');
+        const [metrics,compact,display] = await Promise.all([
+          import('/mirpanel-admin/public/product-plan-utils.mjs?v=detail-20261010-1'),
+          product.id === 'capcut' ? import('/capcut-detail.mjs?v=20261020-1') : null,
+          import('/product-detail-display.mjs?v=20261020-1')
+        ]);
         initializeDetailMetadata(product, {...metrics,...display}, compact);
       } catch { /* Keep the existing functioning page if enhancement cannot load. */ }
     }

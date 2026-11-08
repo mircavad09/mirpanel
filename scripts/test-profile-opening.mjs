@@ -9,7 +9,8 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const files={orders:'12345678-1234-4234-8234-000000000001',delivery:'12345678-1234-4234-8234-000000000002'};
 const content='Sintetik təhvil\nİkinci sətir ✨';
 const baseline=process.argv.includes('--baseline');
-const oldFiles=new Map(baseline?['page-navigation.js','browser-orders.js','mirpanel-admin/community/public/account-panel.js','mirpanel-admin/community/public/account-codes.js','mirpanel-admin/community/public/profile.js','mirpanel-admin/community/public/account-panel.css'].map(f=>[f,execFileSync('git',['show','ac153ff:'+f])]):[]);
+const previous=process.argv.includes('--previous');
+const oldFiles=new Map(baseline?['page-navigation.js','browser-orders.js','mirpanel-admin/community/public/account-panel.js','mirpanel-admin/community/public/account-codes.js','mirpanel-admin/community/public/profile.js','mirpanel-admin/community/public/account-panel.css'].map(f=>[f,execFileSync('git',['show','ac153ff:'+f])]):previous?['page-navigation.js','mirpanel-admin/community/public/account-panel.js','mirpanel-admin/community/public/account-payments.js','mirpanel-admin/community/public/account-subscriptions.js','mirpanel-admin/community/public/profile-entry.js','session-state.js'].map(f=>[f,execFileSync('git',['show','96f3280:'+f])]):[]);
 let seen=[],owner='a',failOrders=false,delayLists=650;
 const sample={id:files.orders,orderCode:'9180',product:'Synthetic order',plan:'1 ay',amount:10,status:'completed',createdAt:'2026-11-08T09:03:00Z',deliveries:[{id:files.delivery,line:0,quantity:1}]};
 const profile=uid=>({user_id:uid,display_name:uid==='a'?'Synthetic A':'Synthetic B',email:'qa@example.invalid',member_number:1000,avatar:0,balanceCents:0,tier:{id:'standard',progress:0}});
@@ -24,6 +25,8 @@ const server=http.createServer(async(req,res)=>{
  if(p==='/api/payments/my-orders'){await sleep(delayLists);return failOrders?json(503,{error:'test'}):json(200,{accountId:uid,orders:uid==='a'?[sample]:[],topups:[],nextCursor:null});}
  if(p==='/api/payments/my-orders/codes'){await sleep(delayLists);return json(200,{accountId:uid,codes:uid==='a'?[{id:files.delivery,title:sample.product,plan:sample.plan,quantity:1}]:[]});}
  if(p==='/api/payments/my-orders/codes/'+files.delivery)return json(uid==='a'?200:404,{text:uid==='a'?content:null});
+ if(p==='/api/community/payment-history'){await sleep(delayLists);return json(200,{accountId:uid,balance:uid==='a'?12550:0,total:0,month:0,all:0,approved:0,pending:0,rejected:0,rejectedCents:0,items:[],more:false});}
+ if(p==='/api/payments/shop/subscriptions'){await sleep(delayLists);return json(200,{accountId:uid,subscriptions:[]});}
  if(p==='/')return html('<main><h1>Ana səhifə</h1></main>');
  if(p==='/profil')return html(baseline?'<main id="communityApp" class="community-shell"></main><script type="module" src="/community-assets/community.js"></script>':'<main id="communityApp" data-profile-entry class="community-shell">'+profileShell(u.search)+'</main><script type="module" src="/community-assets/profile-entry.js?v=profile-start-20261108"></script>');
  const file=p.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+p.slice(18):p.slice(1);
@@ -39,7 +42,7 @@ try{
  for(const [engine,width] of [[chromium,1440],[chromium,390],[webkit,390]]){
   owner='a';failOrders=false;delayLists=650;seen=[];
   const b=await engine.launch({headless:true,...(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
-  const record=!baseline&&engine===chromium&&width===390;
+  const record=!baseline&&!previous&&engine===chromium&&width===390;
   const c=await b.newContext({viewport:{width,height:820},...(record?{recordVideo:{dir:out,size:{width:390,height:820}}}:{})});
   try{
    const p=await c.newPage();p.setDefaultTimeout(8500);
@@ -79,10 +82,21 @@ try{
    await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).waitFor();assert.equal(await p.locator('[data-order-id]').count(),1);
    failOrders=false;delayLists=650;
    await p.getByRole('button',{name:'Yenidən cəhd et',exact:true}).click();
+   const tabTimes={};
+   for(const [tab,ready] of [['payments','[data-metric=balance] strong'],['subscriptions','.subs-empty']]){
+    const measure=async()=>{const t=performance.now();await p.locator('[data-account-tab='+tab+']').click();await p.locator(ready).waitFor();return Math.round(performance.now()-t);};
+    tabTimes[tab]={firstMs:await measure()};
+    await p.locator('[data-account-tab=codes]').click();
+    tabTimes[tab].repeatMs=await measure();
+    if(!previous)assert(tabTimes[tab].repeatMs<500,'cached '+tab+' renders without waiting for the 650 ms API');
+    await p.locator('[data-account-tab=orders]').click();
+   }
    owner='b';await p.evaluate(()=>window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:{user_id:'b'}})));
    assert.equal(await p.locator('[data-order-id]').count(),0);await p.getByText('Hələ sifarişiniz yoxdur').waitFor();
    assert.equal(await p.evaluate(()=>JSON.stringify([...Object.entries(localStorage),...Object.entries(sessionStorage)]).includes('Sintetik təhvil')),false);
-   console.log(JSON.stringify({engine:engine.name(),width,shellMs,profileMs,directShellMs,orderMs,cachedMs,deepLink:true,ownTabOnly:true,refresh:true,backForward:true,accountSwitch:true,isolated:true}));
+   await p.locator('[data-account-tab=payments]').click();await p.locator('[data-metric=balance] strong').waitFor();
+   assert(!((await p.locator('[data-metric=balance] strong').textContent()).includes('125')));
+   console.log(JSON.stringify({engine:engine.name(),width,previous,shellMs,profileMs,directShellMs,orderMs,cachedMs,tabTimes,deepLink:true,ownTabOnly:true,refresh:true,backForward:true,accountSwitch:true,isolated:true}));
    const video=p.video();if(video){await p.close();await video.saveAs(path.join(out,'profil-sintetik-mobil.webm'));await video.delete().catch(()=>{});}
   }finally{await c.close();await b.close();}
  }

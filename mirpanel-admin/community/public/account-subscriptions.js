@@ -14,7 +14,7 @@ export function summarize(rows){
  const soon=active.filter(x=>x.days<=30),known=soon.filter(x=>Number.isSafeInteger(x.renewalCents)&&x.renewalCents>0);
  return {active:active.length,soon:soon.length,week:active.filter(x=>x.days<=7).length,unpriced:soon.length-known.length,total:known.length||!soon.length?known.reduce((n,x)=>n+x.renewalCents,0):null};
 }
-export function mountSubscriptions({content,el,button,link,api,validate}){
+export function mountSubscriptions({content,el,button,link,api,validate,initial,initialRequest,onData}){
  const life=new AbortController(),root=el('div',{class:'account-subscriptions'}),count=el('span',{class:'subs-count',hidden:''}),body=el('div',{class:'subs-body'}),notice=el('p',{class:'subs-notice',role:'status'});
  const css='/community-assets/account-subscriptions.css?v=1';
  if(!document.head.querySelector('link[data-subscriptions]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-subscriptions':'','data-shell-persistent':''}));
@@ -84,13 +84,14 @@ export function mountSubscriptions({content,el,button,link,api,validate}){
   body.replaceChildren(summary,...(warning?[warning]:[]),...(rows.length?rows.map(card):[el('p',{class:'subs-panel subs-empty'},'Aktiv abunəliyiniz yoxdur.')]),
    ...(rows.some(row=>row.estimated)?[el('p',{class:'subs-footnote'},'Ayrıca bitmə tarixi saxlanmayıbsa, tarix faktiki təhvil günü və məlum paket müddətindən hesablanır.')]:[]));
  }
- async function load(background=false){
+ async function load(background=false,started=null){
   if(running||!alive())return;running=true;
-  try{const result=await api('/api/payments/shop/subscriptions');if(!alive())return;validate(result);if(!dialog?.open){render(result.subscriptions);notice.textContent='';}}
-  catch{if(alive()&&!background){count.hidden=true;body.replaceChildren(el('div',{class:'subs-panel'},el('p',{},'Abunəliklər alınmadı.'),button('Yenidən cəhd et',()=>load())));}}
+  try{const result=await(started||api('/api/payments/shop/subscriptions'));if(!alive())return;validate(result);onData?.(result);if(!dialog?.open){render(result.subscriptions);notice.textContent='';}}
+  catch(e){if(alive()&&(!background||[401,403].includes(e.status))){onData?.(null);if(dialog?.open)dialog.close();count.hidden=true;body.replaceChildren(el('div',{class:'subs-panel'},el('p',{},'Abunəliklər alınmadı.'),button('Yenidən cəhd et',()=>load())));}}
   finally{running=false;}
  }
  const timer=setInterval(()=>{if(!document.hidden&&!dialog?.open)void load(true);},30000);
- void load();
+ if(initial){validate(initial);render(initial.subscriptions);}
+ void load(!!initial,initialRequest);
  return()=>{life.abort();clearInterval(timer);if(dialog?.open)dialog.close();root.remove();};
 }

@@ -3,6 +3,8 @@
   const splash = document.getElementById('newSplashScreen');
   const status = document.getElementById('splashLoadStatus');
   if (!splash || !status) return;
+  // Direct product links should expose the already rendered detail immediately.
+  if(document.body.classList.contains('product-page-document'))return;
   const key='mirpanel.intro.seen.v1';
   let seen=false;
   try { seen=sessionStorage.getItem(key)==='1'; } catch {}
@@ -11,10 +13,10 @@
   // Mark before playback: reload/back during the animation must not replay it.
   try { sessionStorage.setItem(key,'1'); } catch {}
   document.cookie='mirpanel_intro_seen=1; Path=/; SameSite=Lax'+(location.protocol==='https:'?'; Secure':'');
-  let deadline;
+  let deadline,finish;
   const hide = () => { splash.hidden = true; splash.style.display = 'none'; };
   const cleanup = () => {
-    clearTimeout(deadline);
+    clearTimeout(deadline);clearTimeout(finish);
   };
   try {
     window.addEventListener('pagehide',()=>{hide();status.hidden=true;cleanup();},{once:true});
@@ -24,7 +26,8 @@
     // The first visit alone gets the sequence, with an unconditional fail-open.
     // Background catalogue/media failures must not truncate the intro. Nothing
     // below waits for those requests; the independent deadline always reveals it.
-    deadline = setTimeout(() => { hide(); status.hidden = true; cleanup(); }, reduced ? 150 : 3000);
+    deadline = setTimeout(() => { hide(); status.hidden = true; cleanup(); }, reduced ? 150 : 750);
+    if(!reduced)finish=setTimeout(()=>splash.classList.add('is-finishing'),450);
     splash.addEventListener('animationend', event => {
       if (event.target === splash) { hide(); status.hidden = true; cleanup(); }
     });

@@ -185,7 +185,25 @@ async function wallet(){let data;try{data=await api('/wallet');}catch(e){if(e.st
  const amountLabel=el('label','Və ya öz məbləğinizi daxil edin');amountLabel.append(amount);form.append(presets,amountLabel,hint,invalid);
  flow=createWalletTopup({el,button,api,run,money,methods,profile,getCents:effective,signal:life.signal,isClosed:()=>closed,onBusy:b=>{amount.disabled=b;for(const p of presets.children)p.disabled=b;},restoreCents:c=>{selectedCents=[500,1000,2000,5000].includes(c)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.textContent.split(' ')[0])*100===selectedCents));update();},onComplete:async()=>{status.textContent='Müraciətiniz göndərildi, operator təsdiqi gözlənilir';await wallet();}});form.append(flow.element);update();
  const history=card('Əməliyyat tarixçəsi');history.classList.add('shop-history');history.id='emeliyyatlar';for(const x of data.items){const row=el('article');row.append(el('strong',(Number(x.cents)>0?'+':'')+money(x.cents)),el('p',x.reason,'shop-muted'),el('small',new Date(x.created_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})));history.append(row);}if(data.more)historyMore(history,1);if(!data.items.length)history.append(el('p','Hələ əməliyyat yoxdur.','shop-muted'));const requests=card('Balans müraciətləri');for(const x of data.topups.filter(x=>x.status!=='draft'))requests.append(el('p',money(x.requested_cents)+' · '+({reviewing:'Yoxlanılır',approved:'Təsdiqləndi',rejected:'Rədd edildi'}[x.status]||x.status)));if(!data.topups.some(x=>x.status!=='draft'))requests.append(el('p','Hələ müraciət yoxdur.','shop-muted'));const back=backFromWallet();if(back){const a=link('← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}requests.append(link('Sifarişlərimdə bax','/sifarislerim'));app.replaceChildren(el('h1','Balansım'),hero,form,status,requests,history,error);void flow.resume();}
-async function start(){app.replaceChildren(el('p','Yüklənir…'));if(route==='/sebet'&&!checkoutView){await basket();return;}if(route==='/balans'){walletPrefetched=api('/wallet');void walletPrefetched.catch(()=>{});}const {getCommunityState,invalidateCommunityState}=await import('/session-state.js?v=avatar-20261104');if(checkoutView)invalidateCommunityState();const [s]=await Promise.all([getCommunityState(),route==='/balans'?getMethods():Promise.resolve()]);if(closed)return;if(s.ok){profile=s.data.profile;if(checkoutView){window.mirpanelAccountProfile=profile||null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:profile||null}));}}await(checkoutView?payment():wallet());if(location.hash==='#emeliyyatlar')document.getElementById('emeliyyatlar')?.scrollIntoView();}
+async function start(){
+ app.replaceChildren(el('h1',route==='/balans'?'Balansım':'Səbətim'),el('div',null,'site-route-placeholder'));
+ if(route==='/sebet'&&!checkoutView){await basket();return;}
+ const session=import('/session-state.js?v=avatar-20261104').then(m=>{if(checkoutView)m.invalidateCommunityState();return m.getCommunityState();});
+ void session.catch(()=>{});
+ if(route==='/balans'){
+  walletPrefetched=api('/wallet');
+  const methodsReady=getMethods();void methodsReady.catch(()=>{});
+  try{await walletPrefetched;}catch(e){if(closed)return;if(e.status===401){walletPrefetched=null;login();return;}throw e;}
+  const [s]=await Promise.all([session,methodsReady]);
+  if(closed)return;if(s.ok)profile=s.data.profile;
+  await wallet();
+ }else{
+  const s=await session;if(closed)return;
+  if(s.ok){profile=s.data.profile;window.mirpanelAccountProfile=profile||null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:profile||null}));}
+  await payment();
+ }
+ if(location.hash==='#emeliyyatlar')document.getElementById('emeliyyatlar')?.scrollIntoView();
+}
 const dispose=()=>{closed=true;epoch++;clearInterval(timer);clearTimeout(confirmationTimer);for(const r of requests)r.abort();life.abort();document.body.classList.remove('wallet-page-active');};
 on(window,'pagehide',dispose);on(window,'mirpanel:account',e=>{if(profile&&!e.detail&&route==='/balans'){document.body.classList.remove('wallet-topup-active');login();}const signedOut=!!profile&&!e.detail;profile=e.detail;if(signedOut&&checkoutView&&group?.state!=='submitted')void checkoutLogin();});
 on(window,'mirpanel:before-navigate',e=>{if(working||app.querySelector('input[type=file]')?.files.length){e.preventDefault();status.textContent='Əvvəl aktiv əməliyyatı tamamlayın və ya ləğv edin. Seçilmiş fayl qorunub.';}});

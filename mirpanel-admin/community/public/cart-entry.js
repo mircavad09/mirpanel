@@ -44,7 +44,9 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
  if(current?.open){current.focus();return;}
  const index=product.plans.indexOf(plan);if(index<0)return;
  const initial=preparedQuote(product.id,index,{edit:!!editLine,fresh:repeatPlanName!==null});void initial.request.catch(()=>{});
- await Promise.all([ensureCart(),ensureEntryStyles()]);if(current?.open){current.focus();return;}
+ // The warning is read-only. Cart initialization must not gate its display.
+ // The existing commit path still awaits and capability-checks the cart.
+ void ensureCart().catch(()=>{});await ensureEntryStyles();if(current?.open){current.focus();return;}
  if(loadingDialog&&!loadingDialog.open)return;
  const life=new AbortController(),dialog=loadingDialog||el('dialog',null,'cart-entry'),head=el('header'),title=el('h2','Diqqət!'),close=el('button','×'),body=el('div'),error=el('p','','cart-entry-error');current=dialog;close.type='button';close.setAttribute('aria-label','Bağla');head.append(title,close);error.setAttribute('role','alert');dialog.replaceChildren(head,body,error);
  if(loadingDialog){dialog.removeAttribute('style');onReady?.();}

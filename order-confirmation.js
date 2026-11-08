@@ -16,7 +16,7 @@
   let modalSession = 0;
   let cartOpening, cartModule, cartModuleRetry = 0;
   function entryModule() {
-    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=terms-preload-20261108" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
+    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=fast-entry-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
       .catch(error => {cartModule = null; cartModuleRetry++; throw error;});
     return cartModule;
   }
