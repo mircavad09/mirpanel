@@ -120,9 +120,11 @@ textarea {
 .navBtn.active { color: #ffdf54; box-shadow: inset 2px 0 #ffd400; }
 .navBtn:focus-visible,.dashboardCard:focus-visible { outline: 2px solid #ffd400; outline-offset: -2px; }
 .stats[hidden] { display: none; }
-.dashboardCard { text-align: left; font: inherit; cursor: pointer; min-width: 0; overflow-wrap: anywhere; }
-.dashboardCard:hover { border-color: #ffd400; }
-.dashboardCard strong { font-size: clamp(16px, 2vw, 22px); }
+.dashboardCard { text-align: left; font: inherit; min-width: 0; overflow-wrap: anywhere; }
+button.dashboardCard { cursor: pointer; }
+button.dashboardCard:hover { border-color: #ffd400; }
+.dashboardCard strong { color: #f4f5f6; font-size: clamp(16px, 2vw, 22px); }
+.dashboardCard[data-dashboard-card="online"] strong { color: #62e69b; }
 .dashboardCard[data-state="verified"] strong { color: #62e69b; }
 .dashboardCard[data-state="failed"] strong { color: #ff8e98; }
 .changeStatus[data-status="failed"] { color: #ff8e98; }

@@ -20,5 +20,16 @@
  window.addEventListener('mirpanel:profile-updated',e=>{const p=e.detail,current=window.mirpanelAccountProfile;if(!p?.user_id||current?.user_id&&current.user_id!==p.user_id)return;accountGeneration++;void import('/session-state.js?v=auth-recovery-20261107').then(m=>m.invalidateCommunityState());window.mirpanelAccountProfile=p;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:p}));if(!signed){signed=true;draw();}});
  window.addEventListener('mirpanel:account',e=>{if(e.detail!==null)return;accountGeneration++;window.mirpanelAccountProfile=null;try{sessionStorage.removeItem('mirpanel.account.present');}catch{}void import('/session-state.js?v=auth-recovery-20261107').then(m=>m.invalidateCommunityState());if(signed){signed=false;draw();}});
  window.addEventListener('storage',e=>{if(e.key==='mirpanel.auth.signedOut'&&e.newValue)window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));});
+ let lastPresenceAt=0,lastPresenceUser=null;
+ function reportPresence(){
+  const user=window.mirpanelAccountProfile?.user_id;
+  if(!user||document.hidden||(user===lastPresenceUser&&Date.now()-lastPresenceAt<90000))return;
+  lastPresenceAt=Date.now();lastPresenceUser=user;
+  void fetch('/api/community/presence',{method:'POST',credentials:'same-origin',cache:'no-store',
+   headers:{'Content-Type':'application/json'},body:JSON.stringify({site:true})}).catch(()=>{});
+ }
+ window.addEventListener('mirpanel:account',reportPresence);
+ document.addEventListener('visibilitychange',reportPresence);
+ setInterval(reportPresence,90000);
  window.refreshCommunityNav=()=>refresh(true);draw();refresh();window.addEventListener('pageshow',()=>refresh());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});let scheduled=false;new MutationObserver(()=>{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;header();});}).observe(document.getElementById('mainHeader')||document.querySelector('.site-header')||document.body,{childList:true,subtree:true});
 })();

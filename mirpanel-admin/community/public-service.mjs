@@ -6,6 +6,7 @@ import {accountPanel,paymentHistory} from './account-panel.mjs';
 import {CommunityLive} from './live.mjs';
 import {profileCSS,profileShell} from './public/profile-shell.js';
 const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
+export const SITE_PRESENCE_ID = '00000000-0000-0000-0000-000000000001';
 export function authReturn(origin,value){const path=typeof value==='string'&&value.startsWith(origin)?value.slice(origin.length):value;if(['/','/profil','/qrup','/mehsul','/sebet','/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'].includes(path)||/^\/mehsul\/[a-z0-9-]+$/i.test(path||'')||/^\/profil\?tab=orders&order=[A-Za-z0-9-]{1,40}$/.test(path||''))return origin+path;return origin+'/profil';}
 export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,body,catalog}){
  const route=u.pathname,{pool,repo,group,auth}=runtime,started=performance.now();
@@ -53,6 +54,14 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  else if(route==='/api/community/messages'&&b){need();if(Object.keys(b).some(k=>!['body','clientId'].includes(k)))throw fail(400,'Yalnız mətn göndərmək olar.');const result=await repo.send(user,b.body,b.clientId);json(res,result.blocked?422:201,result);}
  else if(route==='/api/community/read'&&b)json(res,200,{ok:true});
  else if(route==='/api/community/counts'&&req.method==='GET')json(res,200,await counts(pool));
+ else if(route==='/api/community/presence'&&b?.site===true){
+  need();
+  if(req.headers.origin&&req.headers.origin!==origin)throw fail(403,'Sorğu mənbəyinə icazə verilmir.');
+  await pool.query(`insert into community_presence(user_id,session_id,tab_id) values($1,$2,$3)
+    on conflict(session_id,tab_id) do update set last_seen=clock_timestamp()
+    where community_presence.last_seen<clock_timestamp()-interval '1 minute'`,[user.id,session.session.id,SITE_PRESENCE_ID]);
+  json(res,200,{ok:true});
+ }
  else if(route==='/api/community/presence'&&b){need();if(!/^[a-f0-9-]{36}$/i.test(b.tabId||''))throw fail(400,'Səhifə identifikatoru düzgün deyil.');if(b.leave===true)await pool.query('delete from community_presence where user_id=$1 and session_id=$2 and tab_id=$3',[user.id,session.session.id,b.tabId]);else await pool.query('insert into community_presence(user_id,session_id,tab_id) values($1,$2,$3) on conflict(session_id,tab_id) do update set last_seen=clock_timestamp()',[user.id,session.session.id,b.tabId]);json(res,200,await counts(pool));}
  else if(route==='/api/community/notifications'&&req.method==='GET')json(res,200,await notifications(pool,need().id));
  else if(route==='/api/community/notifications/read'&&b)json(res,200,await markTag(pool,need().id,b.messageId));
@@ -66,4 +75,4 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  else if(route==='/api/community/profile-summary'&&req.method==='GET'){need();const latest=(await pool.query('select o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status,o.created_at from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 order by o.created_at desc,o.id desc limit 1',[user.id])).rows[0]||null,count=(await pool.query("select count(*)::int n from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 and o.status in ('approved','completed')",[user.id])).rows[0].n;json(res,200,{latestOrder:latest,subscription:null,orderCount:count,savingsCents:null});}
  else throw fail(404,'Tapılmadı.');return true;
 }
-export async function counts(pool){return (await pool.query(`with members as (select id from "user" where id<>'mirpanel-system-bot-v1' and lower(split_part(email,'@',2)) !~ '(^|\\.)(test|invalid|localhost)$' and lower(split_part(email,'@',2)) not in ('example.com','example.net','example.org')) select (select count(*)::int from members) as members,(select count(distinct p.user_id)::int from community_presence p join members m on m.id=p.user_id join session s on s.id=p.session_id and s."userId"=p.user_id left join community_profiles u on u.user_id=p.user_id where p.last_seen>clock_timestamp()-interval '45 seconds' and s."expiresAt">clock_timestamp() and (u.blocked is distinct from true or u.ban_until<=clock_timestamp())) as online`)).rows[0];}
+export async function counts(pool,{website=false}={}){return (await pool.query(`with members as (select id from "user" where id<>'mirpanel-system-bot-v1' and lower(split_part(email,'@',2)) !~ '(^|\\.)(test|invalid|localhost)$' and lower(split_part(email,'@',2)) not in ('example.com','example.net','example.org')) select (select count(*)::int from members) as members,(select count(distinct p.user_id)::int from community_presence p join members m on m.id=p.user_id join session s on s.id=p.session_id and s."userId"=p.user_id left join community_profiles u on u.user_id=p.user_id where ($1::boolean or p.tab_id<>$2::uuid) and p.last_seen>clock_timestamp()-case when $1 then interval '5 minutes' else interval '45 seconds' end and s."expiresAt">clock_timestamp() and (u.blocked is distinct from true or u.ban_until<=clock_timestamp())) as online`,[website,SITE_PRESENCE_ID])).rows[0];}

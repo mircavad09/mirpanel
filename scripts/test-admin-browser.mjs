@@ -14,6 +14,7 @@ const { chromium } = await import(pathToFileURL(playwrightPath));
 const originalState = extractAdminState(fs.readFileSync(path.join(root, "app.js"), "utf8"));
 const mime = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 let bannerCount=7, renderLive=false, saveCalls=0, saveMode=500, savedData=originalState, saveReceipt;
+let dashboardSummary={users:24,online:2,orders:60,pendingOrders:3,walletCents:"10505"};
 const publication={commitSha:"a".repeat(40),sha:"b".repeat(40),version:"admin-123"};
 
 const server = http.createServer(async (request, response) => {
@@ -28,6 +29,7 @@ const server = http.createServer(async (request, response) => {
   }
   if(request.url==="/api/admin/homepage-banners")return bannerCount<0?json({error:"Sınaq sorğusu alınmadı"},503):json({managed:true,banners:Array.from({length:bannerCount},(_,i)=>({active:true,id:String(i),order:i})),maxBytes:20*1024*1024});
   if(request.url.startsWith("/api/admin/payment-orders?"))return json({orders:[],counts:{pending:3},pagination:{total:0,totalPages:1}});
+  if(request.url==="/api/admin/community/dashboard")return dashboardSummary ? json(dashboardSummary) : json({error:"Məlumat alınmadı"},503);
   if(request.url==="/api/admin/community/shop?only=topup-count")return json({pending:4});
   if(request.url==="/api/admin/stories")return json({stories:[],activeStories:0,activeItems:0});
   if (request.url === "/favicon.ico") { response.writeHead(204); return response.end(); }
@@ -87,10 +89,24 @@ try {
     const nav=check.locator(".nav .navBtn");
     await nav.filter({hasText:"Stories"}).waitFor();
     const views=await nav.evaluateAll(nodes=>nodes.map(x=>[x.dataset.view||"",x.getAttribute("href")]));
-    assert.equal(views.length,25);
-    assert.deepEqual(views.slice(1,9).map(([v,h])=>v||h),["products","communityUsers","communityGroup","/admin/employee-stock","paymentOrders","communityShop","paymentCosts","paymentMethods"]);
+    assert.equal(views.length,26);
+    assert.deepEqual(views.slice(1,10).map(([v,h])=>v||h),["products","communityUsers","communityGroup","/admin/employee-stock","paymentOrders","readyStock","communityShop","paymentCosts","paymentMethods"]);
     const banner=check.locator('.dashboardCard[data-dashboard-view="banners"] strong');
     bannerCount=7; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("7",{exact:true}).waitFor();
+    const metric = name => check.locator(`[data-dashboard-card="${name}"] strong`);
+    for (const [name, value] of Object.entries({users:"24",online:"2",totalOrders:"60",orders:"3",wallet:"105,05 ₼"})) {
+      await metric(name).getByText(value,{exact:true}).waitFor();
+    }
+    assert.equal(await banner.evaluate(node => getComputedStyle(node).color),"rgb(244, 245, 246)");
+    const originalSummary=dashboardSummary;
+    dashboardSummary=null;
+    await check.locator("[data-dashboard-refresh]").click();
+    await metric("wallet").getByText("Məlumat alınmadı",{exact:true}).waitFor();
+    dashboardSummary={...originalSummary,online:0,walletCents:"0"};
+    await check.locator("[data-dashboard-refresh]").click();
+    await metric("wallet").getByText("0,00 ₼",{exact:true}).waitFor();
+    await metric("online").getByText("0",{exact:true}).waitFor();
+    dashboardSummary=originalSummary;
     bannerCount=-1; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("Məlumat alınmadı",{exact:true}).waitFor();
     bannerCount=0; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("0",{exact:true}).waitFor();
     bannerCount=7;

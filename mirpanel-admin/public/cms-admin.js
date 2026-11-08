@@ -9,13 +9,14 @@
   const viewLabels = viewGroups.flatMap(([, items]) => items);
   viewLabels.push(["dashboard", "İdarə paneli"], ["stories", "Stories"]);
   let dashboardRead = 0;
+  let dashboardSummaryRead = 0;
   let deployRead = false;
   let publishBusy = false;
   let latestPublication = null;
   let latestStatus = null;
   let deployTimer;
   let deployAttempts = 0;
-  const counts = { banners: null, orders: null, topups: null };
+  const counts = { banners: null, orders: null, topups: null, users: null, online: null, totalOrders: null, wallet: null };
   let topupRead = 0;
   async function refreshPendingTopups() {
     const sequence = ++topupRead;
@@ -142,7 +143,7 @@
   }
   function createStaticViews() {
     createView("decorations",panel("Şəkillər və fonlar","Bank kartı və balans kartı kimi konkret sahələrə təyin olunan fonları idarə edin.",'<section id="paymentBankBackgrounds" class="paymentBankBackgrounds"></section>'));
-    createView("dashboard", panel("İdarə paneli", "Sayt məzmununun ümumi vəziyyəti", '<div class="cmsCards" id="cmsDashboardCards"></div>'));
+    createView("dashboard", panel("İdarə paneli", "Saytın ümumi göstəriciləri", '<div class="cmsCards" id="cmsDashboardCards"></div>'));
     createView("homepage", panel("Ana səhifə", "Mövcud dizaynı dəyişmədən ana səhifə mətnlərini idarə et", `<div class="sectionHead"><h3>Ümumi sayt məlumatları</h3></div><div class="formGrid">
       ${field("Brend adı", "site.brandName")}${field("Loqo yolu", "site.logo")}
       ${field("Brend alt yazısı", "site.brandSubtitle", { full: true })}
@@ -937,23 +938,51 @@
     const host = el("cmsDashboardCards");
     if (!host) return;
     const cards = [
-      ["Aktiv ana səhifə bannerləri", counts.banners, "banners"],
-      ["Gözləyən sifarişlər", counts.orders, "paymentOrders"],
-      ["Gözləyən balans müraciətləri", counts.topups, "communityShop"],
-      ["Son sayt məzmunu yayımı", latestStatus?.verified ? "Canlıda təsdiqləndi" : latestPublication ? "Canlı təsdiq gözlənilir" : latestStatus?.error ? "Məlumat alınmadı" : null, "history"]
+      ["users", "Ümumi istifadəçilər", counts.users, "communityUsers"],
+      ["online", "Onlayn · son 5 dəqiqə", counts.online],
+      ["totalOrders", "Cəmi sifarişlər", counts.totalOrders],
+      ["wallet", "İstifadə olunmamış müştəri balansı", counts.wallet],
+      ["banners", "Aktiv ana səhifə bannerləri", counts.banners, "banners"],
+      ["orders", "Gözləyən sifarişlər", counts.orders, "paymentOrders"],
+      ["topups", "Gözləyən balans müraciətləri", counts.topups, "communityShop"],
+      ["publication", "Son sayt məzmunu yayımı", latestStatus?.verified ? "Canlıda təsdiqləndi" : latestPublication ? "Canlı təsdiq gözlənilir" : latestStatus?.error ? "Məlumat alınmadı" : null, "history"]
     ];
     const present = (count) => count === false ? "Məlumat alınmadı" : count ?? "Yoxlanılır…";
     const tone = (count) => count === false || count === "Məlumat alınmadı" ? "failed" : count === "Canlıda təsdiqləndi" ? "verified" : "";
     if (host.querySelector(".dashboardCard")) {
-      for (const [, count, view] of cards) {
-        const button = host.querySelector(`[data-dashboard-view="${view}"]`);
-        button.dataset.state = tone(count);
-        button.querySelector("strong").textContent = present(count);
+      for (const [key, , count] of cards) {
+        const card = host.querySelector(`[data-dashboard-card="${key}"]`);
+        card.dataset.state = tone(count);
+        card.querySelector("strong").textContent = present(count);
       }
       return;
     }
-    host.innerHTML = cards.map(([label, count, view]) => `<button type="button" class="stat dashboardCard" data-dashboard-view="${view}" data-state="${tone(count)}"><strong>${esc(present(count))}</strong><span>${esc(label)}</span></button>`).join("")
+    host.innerHTML = cards.map(([key, label, count, view]) => {
+      const tag = view ? "button" : "article";
+      const action = view ? ` type="button" data-dashboard-view="${view}"` : "";
+      return `<${tag}${action} class="stat dashboardCard" data-dashboard-card="${key}" data-state="${tone(count)}"><strong>${esc(present(count))}</strong><span>${esc(label)}</span></${tag}>`;
+    }).join("")
       + '<div class="wide"><button class="btn" type="button" data-dashboard-refresh>Göstəriciləri yenidən yoxla</button></div>';
+  }
+  async function loadDashboardSummary() {
+    const read = ++dashboardSummaryRead;
+    const count = value => Number.isSafeInteger(value) && value >= 0 ? value : false;
+    try {
+      const result = await api("/api/admin/community/dashboard");
+      if (read !== dashboardSummaryRead) return;
+      const cents = /^\d+$/.test(result.walletCents) ? BigInt(result.walletCents) : null;
+      Object.assign(counts, {
+        users: count(result.users),
+        online: count(result.online),
+        totalOrders: count(result.orders),
+        orders: count(result.pendingOrders),
+        wallet: cents === null ? false : `${(cents / 100n).toLocaleString("az-AZ")},${String(cents % 100n).padStart(2, "0")} ₼`
+      });
+    } catch {
+      if (read !== dashboardSummaryRead) return;
+      Object.assign(counts, { users: false, online: false, totalOrders: false, orders: false, wallet: false });
+    }
+    renderDashboard();
   }
   async function loadDashboard() {
     const read = ++dashboardRead;
@@ -967,7 +996,7 @@
     };
     await Promise.all([
       loadCount("banners", "/api/admin/homepage-banners", result => result.managed === false ? undefined : result.banners.filter(b => b.active === true).length),
-      loadCount("orders", "/api/admin/payment-orders?tab=pending&page=1", result => result.counts?.pending),
+      loadDashboardSummary(),
       refreshPendingTopups(),
       verifyPublication()
     ]);
@@ -1359,7 +1388,11 @@
     installHooks();
     if (state.data) renderCms();
     const requested = location.hash.slice(1);
-    const pollTopups = () => { if (document.visibilityState === "visible") void refreshPendingTopups(); };
+    const pollTopups = () => {
+      if (document.visibilityState !== "visible") return;
+      void refreshPendingTopups();
+      if (location.hash === "#dashboard") void loadDashboardSummary();
+    };
     const topupTimer = setInterval(pollTopups, 30000);
     document.addEventListener("visibilitychange", pollTopups);
     window.addEventListener("admin-topup-changed", refreshPendingTopups);
