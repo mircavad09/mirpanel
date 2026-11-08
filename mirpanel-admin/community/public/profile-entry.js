@@ -1,4 +1,4 @@
-import {profileReturn,profileCSS,profileShell} from './profile-shell.js?v=profile-resume-1';
+import {profileReturn,profileCSS,profileShell} from './profile-shell.js?v=profile-footer-space-1';
 import {getCommunityState,invalidateCommunityState,communityJson} from '/session-state.js?v=auth-recovery-20261107';
 
 export function mountProfile(app,verifiedState){

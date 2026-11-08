@@ -9,3 +9,9 @@
 
 .account-identity-pending{min-height:82px;background:linear-gradient(100deg,#191c20,#24272b,#191c20)}
 .account-card-pending{height:12px;width:min(130px,80%);margin:10px 0;border-radius:6px;background:#30343a}
+
+/* Keep short and loading profile tabs from pulling the storefront footer into view. */
+body.profile-screen #communityApp {
+  min-block-size: calc(100vh - 6rem);
+  min-block-size: calc(100dvh - 6rem);
+}

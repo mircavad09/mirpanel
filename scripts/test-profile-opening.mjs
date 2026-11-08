@@ -4,7 +4,7 @@ import path from 'node:path';
 import http from 'node:http';
 import {execFileSync} from 'node:child_process';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
-import {profileShell} from '../mirpanel-admin/community/public/profile-shell.js';
+import {profileCSS,profileShell} from '../mirpanel-admin/community/public/profile-shell.js';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const files={orders:'12345678-1234-4234-8234-000000000001',delivery:'12345678-1234-4234-8234-000000000002'};
 const content='Sintetik təhvil\nİkinci sətir ✨';
@@ -18,7 +18,8 @@ const profile=uid=>({user_id:uid,display_name:uid==='a'?'Synthetic A':'Synthetic
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost'),p=u.pathname,uid=owner;
  const json=(code,d)=>{res.writeHead(code,{'Content-Type':'application/json'});res.end(JSON.stringify(d));};
- const html=body=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end('<!doctype html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/community-assets/community.css"><body class="community-page"><header class="site-header"><a href="/profil">Profilim</a></header>'+body+'<script src="/page-navigation.js"></script>');};
+ const html=body=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end('<!doctype html><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/site-header.css">'+(p==='/profil'&&!baseline?'<link rel="stylesheet" href="'+profileCSS+'" data-shell-persistent>':'')+'<body class="community-page">'+fs.readFileSync('customer-header.html','utf8')+(p==='/'?'<a href="/profil">Profilim</a>':'')+body+'<script src="/customer-footer.js" defer></script><script src="/page-navigation.js"></script>');};
+ if(p==='/api/payments/storefront')return json(200,{});
  if(p.startsWith('/api/'))seen.push(p+u.search);
  if(p==='/api/community/state'){await sleep(700);return uid?json(200,{profile:profile(uid)}):json(401,{error:'expired'});}
  if(p==='/api/community/profile-summary'){await sleep(200);return json(200,{orderCount:uid==='a'?1:0,latestOrder:null});}
@@ -174,6 +175,20 @@ try{
     if(!previous)assert(tabTimes[tab].repeatMs<500,'cached '+tab+' renders without waiting for the 650 ms API');
     await p.locator('[data-account-tab=orders]').click();
    }
+   const footerTop=()=>p.locator('#customerFooter').evaluate(footer=>footer.getBoundingClientRect().top);
+   const viewportHeight=await p.evaluate(()=>innerHeight);
+   await p.goto(origin+'/profil?tab=payments',{waitUntil:'domcontentloaded'});
+   await p.locator('.account-tab-spinner').waitFor();
+   const loadingFooterTop=await footerTop();
+   assert(loadingFooterTop>=viewportHeight,'The footer must stay below the viewport while payments load');
+   await p.locator('[data-metric=balance] strong').waitFor();
+   await p.locator('[data-account-tab=expenses]').click();
+   await p.locator('.account-expenses').waitFor();
+   assert(Math.abs(await footerTop()-loadingFooterTop)<2,'Short profile tabs should share the same footer position');
+   await p.locator('#customerFooter .customer-footer-support').scrollIntoViewIfNeeded();
+   assert(await p.getByRole('link',{name:'Operatora yaz',exact:true}).isVisible());
+   await p.locator('[data-account-tab=orders]').click();
+   await p.locator('[data-order-id]').waitFor();
    owner='b';await p.evaluate(()=>window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:{user_id:'b'}})));
    assert.equal(await p.locator('[data-order-id]').count(),0);await p.getByText('Hələ sifarişiniz yoxdur').waitFor();
    assert.equal(await p.evaluate(()=>JSON.stringify([...Object.entries(localStorage),...Object.entries(sessionStorage)]).includes('Sintetik təhvil')),false);

@@ -14,4 +14,4 @@ export function profileShell(search){
  const links=Object.entries(accountLabels).map(([tab,label])=>'<a class="account-tab" data-account-tab="'+tab+'" href="'+accountTabPath(tab)+'"'+(active===tab?' aria-current="page"':'')+'>'+label+'</a>').join('');
  return '<div class="account-panel"><aside class="account-sidebar"><div class="account-sidebar-card account-identity-pending" aria-hidden="true"></div><nav class="account-tabs" aria-label="Hesab bölmələri">'+links+'</nav></aside><section class="account-tab-content"><h1>'+accountLabels[active]+'</h1>'+profileLoader+'</section></div>';
 }
-export const profileCSS='/community-assets/account-panel.css?v=profile-resume-1';
+export const profileCSS='/community-assets/account-panel.css?v=profile-footer-space-1';
