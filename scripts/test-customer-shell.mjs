@@ -22,7 +22,7 @@ const server=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://
  if(groupOnly&&p==='/api/community/messages'&&req.method==='POST'){if(!signed)return json(res,{},401);let input='';for await(const chunk of req)input+=chunk;const {body}=JSON.parse(input);for(const peer of peers)peer.write('event: messages\ndata: '+JSON.stringify({items:[message(2,body)]})+'\n\n');return json(res,{ok:true});}
  if(p==='/api/community/messages')return json(res,{items:[],more:false,settings:{}});
  if(p==='/api/payments/methods')return json(res,{methods:[{id:'synthetic',providerName:'ABB',displayName:'ABB',type:'bank_card',available:true,last4:'0000',maskedNumber:'****0000'}],anyAvailable:true});
- if(footerOnly&&p==='/api/payments/storefront')return json(res,{completedOrders:Number(u.searchParams.get('count'))||3521,banks:['abb']});
+ if(footerOnly&&p==='/api/payments/storefront'){const count=u.searchParams.get('count');return json(res,{completedOrders:count==='unknown'?null:Number(count??3521),banks:['abb']});}
  if(p==='/api/payments/shop/wallet'){walletReads++;if(failWallet)return json(res,{error:'Synthetic unavailable'},503);return signed?json(res,{cents:12550,items:[{cents:500,reason:'Sintetik əməliyyat',created_at:'2026-11-04T08:00:00Z'}],topups:[]}):json(res,{error:'Giriş tələb olunur'},401);}
  if(p==='/api/payments/my-orders')return signed?json(res,{orders:[],nextCursor:null}):json(res,{error:'Giriş tələb olunur'},401);
  if(p==='/api/payments/shop/quote')return json(res,{totalCents:500,items:[{productId:'test',planIndex:0,title:'Sintetik məhsul',planName:'1 ay',unitCents:500,quantity:1,image:'/assets/logo.png'}]});
@@ -40,11 +40,13 @@ try{for(const width of (process.env.SHELL_WIDTHS||'390,1440').split(',').map(Num
  await c.route('**/*',async r=>{const u=new URL(r.request().url());if(u.origin===origin)return r.continue();if(u.pathname.startsWith('/api/'))return r.fulfill({contentType:'application/json',body:JSON.stringify(u.pathname.endsWith('/inventory')?{products:[]}:u.pathname.endsWith('/stories')?{stories:[]}:{managed:true,banners:[]})});return r.abort();});
  const p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));await p.addInitScript(()=>{sessionStorage.setItem('mirpanel.intro.seen','1');window.__documentId=crypto.randomUUID();});
  if(footerOnly){
-  for(const [count,label] of [[3521,'3.521'],[13521,'13.521+']]){
+  for(const [count,label] of [[3521,'13.521+'],[3522,'13.522+'],[0,'10.000+'],['unknown',null]]){
    await p.route('**/api/payments/storefront',r=>r.continue({url:origin+'/api/payments/storefront?count='+count}),{times:1});
    await p.goto(origin+'/');
    const footer=p.locator('#customerFooter'),cta=footer.getByRole('link',{name:'Operatora yaz',exact:true});
-   await footer.getByText(label+' tamamlanmış sifariş',{exact:true}).waitFor();
+   await footer.locator('[data-network]:visible').first().waitFor();
+   if(label)await footer.getByText(label+' tamamlanmış satış',{exact:true}).waitFor();
+   else eq(await footer.locator('#footerCompleted').isHidden(),true);
    eq(await cta.getAttribute('href'),'https://wa.me/994515243545');eq(await cta.getAttribute('target'),'_blank');
   }
   rows.push({width,whatsapp:true,verifiedCount:true});await c.close();continue;

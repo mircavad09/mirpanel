@@ -150,7 +150,7 @@ try{
   eq(await p.locator('.shop-checkout-cart .shop-product').count(),2);
   eq(await p.locator('.shop-checkout-grid').evaluate(n=>{const [a,b]=n.children;return b.getBoundingClientRect().top>a.getBoundingClientRect().top;}),width<761);
   await p.getByRole('link',{name:'Sintetik təklif seç'}).waitFor();
-  const footer=p.locator('#customerFooter');await footer.getByText('283 tamamlanmış sifariş',{exact:true}).waitFor();
+  const footer=p.locator('#customerFooter');await footer.getByText('10.283+ tamamlanmış satış',{exact:true}).waitFor();
   eq(await footer.getByRole('link',{name:'Operatora yaz',exact:true}).getAttribute('href'),'https://wa.me/994515243545');
   const values=await p.evaluate(id=>fetch('/api/payments/shop/draft?id='+id,{credentials:'same-origin'}).then(r=>r.json()),before.find(x=>x.productId==='netflix').draftId);eq(values.values.pin,'0012');eq(values.values.name,'Sintetik otaq');eq(await p.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}).includes('0012')),false);
   await p.reload();await p.getByRole('radio',{name:'Kartdan karta köçürmə',exact:false}).waitFor();eq(await p.evaluate(()=>MirpanelCart.read()),before);

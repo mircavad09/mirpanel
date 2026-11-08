@@ -3,6 +3,8 @@
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/customer-footer.css?v=chat-space-20261108';sheet.dataset.shellPersistent='';document.head.append(sheet);
  const footer=document.createElement('footer');footer.id='customerFooter';footer.dataset.shellPersistent='';
  const wa='https://wa.me/994515243545';
+ // Sales completed before MirPanel opened; not part of the site's order records.
+ const preLaunchSales=10000;
  footer.innerHTML=`
  <div class="customer-footer-inner">
   <section class="customer-footer-support" aria-labelledby="footerSupportTitle">
@@ -37,10 +39,11 @@
  document.body.append(footer);document.body.classList.add('has-customer-footer');
  fetch('/api/payments/storefront',{credentials:'omit',signal:AbortSignal.timeout(10000)}).then(r=>r.ok?r.json():null).then(data=>{
   if(!data)return;
-  const total=data.completedOrders;
-  if(Number.isSafeInteger(total)&&total>=0){
+  const onlineOrders=data.completedOrders;
+  if(Number.isSafeInteger(onlineOrders)&&onlineOrders>=0&&onlineOrders<=Number.MAX_SAFE_INTEGER-preLaunchSales){
+   const total=preLaunchSales+onlineOrders;
    const item=footer.querySelector('#footerCompleted'),label=document.createElement('strong');
-   label.textContent=String(total).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(total>=10000?'+':'')+' tamamlanmış sifariş';
+   label.textContent=String(total).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+'+ tamamlanmış satış';
    item.append(label);item.hidden=false;
   }
   if(Array.isArray(data.banks)){
