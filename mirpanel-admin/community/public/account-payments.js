@@ -1,14 +1,37 @@
-// Read-only account payment history. Receipt URLs are requested only for
-// visible thumbnails or an explicit preview, and are never persisted.
-export function mountPayments({content,api,el,button}){
- const statuses={approved:'Təsdiqləndi',reviewing:'Yoxlanılır',rejected:'Rədd edildi',cancelled:'Ləğv edildi',expired:'Müddəti bitdi'};
- const money=n=>n==null?'—':(Number(n)/100).toFixed(2).replace('.',',')+' ₼';
- const date=new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'medium',timeStyle:'short'});
- let live=true,version=0,status='all',page=1,preview=0;
- const section=el('section',{class:'account-payments'}),summary=el('div',{class:'account-payment-summary'}),filters=el('div',{class:'account-payment-filters','aria-label':'Ödəniş filtrləri'}),list=el('div',{class:'account-payment-list'}),message=el('p',{role:'status'}),pager=el('div');
+// Receipt URLs are fetched only for visible thumbnails or an explicit preview.
+const statuses={all:'Hamısı',approved:'Təsdiqləndi',reviewing:'Yoxlanılır',rejected:'Rədd edildi',cancelled:'Ləğv edildi',canceled:'Ləğv edildi',expired:'Müddəti bitdi'};
+const scope=['all','approved','reviewing','rejected'];
+const azInteger=new Intl.NumberFormat('az-AZ');
+const money=n=>{
+ if(n==null||!(/^-?\d+$/.test(String(n))))return '—';
+ const cents=BigInt(n),absolute=cents<0n?-cents:cents;
+ return (cents<0n?'−':'')+azInteger.format(absolute/100n)+','+String(absolute%100n).padStart(2,'0')+' ₼';
+};
+const baku=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
+function timestamp(value){
+ if(!value||!Number.isFinite(Date.parse(value)))return '';
+ const {day,month,year,hour,minute,second}=Object.fromEntries(baku.formatToParts(new Date(value)).map(p=>[p.type,p.value]));
+ return day+'.'+month+'.'+year+' '+hour+':'+minute+':'+second;
+}
+const numberLabel=row=>row.number?(row.kind==='topup'?'Balans yükləmə №':'Sifariş №')+row.number:'';
+const normalize=value=>String(value??'').normalize('NFC').toLocaleLowerCase('az').replace(/ı/g,'i').trim();
+export function mountPayments({content,api,el,button,link,validate}){
+ const css='/community-assets/account-payments.css?v=1';
+ if(!document.head.querySelector('link[data-payment-history]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-payment-history':'','data-shell-persistent':''}));
+ let live=true,version=0,status='all',page=1,preview=0,data=null;
+ const section=el('section',{class:'account-payments'}),summary=el('div',{class:'account-payment-summary'}),filters=el('div',{class:'account-payment-filters',role:'group','aria-label':'Ödəniş filtrləri'}),list=el('div',{class:'account-payment-list'}),message=el('p',{class:'pay-history-message',role:'status'}),pager=el('nav',{class:'pay-history-pager','aria-label':'Ödəniş səhifələri'});
+ const search=el('input',{type:'search',placeholder:'Hazırkı səhifədə axtar…','aria-label':'Hazırkı səhifədə axtar',autocomplete:'off'});
  const media=el('div',{class:'account-receipt-media'}),dialog=el('dialog',{class:'account-payment-preview','aria-label':'Qəbz önizləməsi'},button('Bağla',()=>dialog.close()),media);
  dialog.addEventListener('close',()=>{preview++;media.replaceChildren();});
- section.append(el('h1',{},'Ödənişlərim'),summary,filters,list,message,pager,dialog);content.replaceChildren(section);
+ const tools=el('div',{class:'pay-history-tools'},filters,search);
+ const chips=new Map(scope.map(key=>{
+  const count=el('span',{class:'pay-status-count'},'—');
+  const b=button('',()=>{if(status===key&&page===1)return;status=key;page=1;void load();});
+  b.dataset.status=key;b.append(statuses[key],count);filters.append(b);return [key,{b,count}];
+ }));
+ section.append(el('header',{class:'pay-history-heading'},el('h1',{},'Ödənişlərim'),link('Balans yüklə','/balans','pay-topup')),
+  summary,tools,el('p',{class:'pay-history-note'},'Saylar bütün dövr üzrədir. Aşağıdakı siyahı cari səhifədəki ödənişləri göstərir.'),message,list,pager,dialog);
+ content.replaceChildren(section);
  const isImage=m=>/^image\/(png|jpeg|webp)$/i.test(m||'');
  async function receipt(row){
   const d=await api(row.kind==='topup'?'/api/payments/shop/topup/receipt?id='+encodeURIComponent(row.id):'/api/payments/my-orders/'+encodeURIComponent(row.id)+'/receipt');
@@ -28,20 +51,48 @@ export function mountPayments({content,api,el,button}){
   for(const entry of entries){if(!entry.isIntersecting)continue;const b=entry.target,row=thumbnails.get(b);observer.unobserve(b);thumbnails.delete(b);if(row)void receipt(row).then(d=>{if(live&&b.isConnected&&isImage(d.mime))b.replaceChildren(image(d.url));}).catch(()=>{});}
  }):null;
  function renderRow(row){
+  const number=numberLabel(row);
   const thumb=row.mime?button(row.mime==='application/pdf'?'PDF':'Qəbz',()=>open(row)):el('span',{},'Qəbz yoxdur');thumb.className='account-payment-thumb';
-  if(row.mime){thumb.setAttribute('aria-label','Qəbzi böyüt: '+row.number);if(isImage(row.mime)&&observer){thumbnails.set(thumb,row);observer.observe(thumb);}}
-  const credit=row.kind==='topup'&&row.status==='approved',amount=el('strong',{class:credit?'account-payment-credit':''},(credit?'+':'')+money(row.cents));
-  const time=new Date(row.created_at);return el('article',{class:'account-payment-row'},thumb,el('div',{class:'account-payment-info'},el('strong',{},row.title||'Alış ödənişi'),el('time',{},Number.isFinite(+time)?date.format(time):'—'),el('small',{},'№ '+row.number),el('span',{class:'account-payment-status','data-status':row.status},statuses[row.status]||'Status məlum deyil')),amount);
+  if(row.mime){thumb.setAttribute('aria-label','Qəbzi böyüt'+(number?': '+number:''));if(isImage(row.mime)&&observer){thumbnails.set(thumb,row);observer.observe(thumb);}}
+  const credit=row.kind==='topup'&&row.status==='approved'&&row.cents!=null;
+  const amount=el('strong',{class:credit?'account-payment-credit':''},(credit?'+':'')+money(row.cents));
+  const title=row.by_receipt?'Qəbzlə ödəniş':row.kind==='topup'?'Balans yükləmə':row.title||'Alış ödənişi';
+  const info=el('div',{class:'account-payment-info'},
+   el('div',{class:'pay-row-title'},el('strong',{},title),el('span',{class:'account-payment-status','data-status':row.status},statuses[row.status]||'Status məlum deyil')));
+  if(row.by_receipt&&row.kind==='order'&&row.title)info.append(el('small',{},row.title));
+  for(const [label,value] of [['Göndərilib',row.submitted_at],['Son əməliyyat',row.operation_at]]){
+   const text=timestamp(value);
+   info.append(el('small',{},label+': ',text?el('time',{datetime:new Date(value).toISOString()},text):'Vaxt qeydə alınmayıb'));
+  }
+  return el('article',{class:'account-payment-row'},thumb,info,el('div',{class:'pay-row-value'},amount,number?el('small',{},number):null));
  }
+ function clearRows(){observer?.disconnect();thumbnails.clear();list.replaceChildren();}
+ function renderRows(){
+  if(!data)return;
+  clearRows();
+  const q=normalize(search.value);
+  const rows=data.items.filter(row=>!q||normalize([
+   row.title,row.by_receipt?'Qəbzlə ödəniş':'',numberLabel(row),statuses[row.status],money(row.cents),timestamp(row.submitted_at),timestamp(row.operation_at)
+  ].join(' ')).includes(q));
+  list.append(...rows.map(renderRow));
+  message.textContent=rows.length?'':q?'Bu səhifədə axtarışa uyğun ödəniş yoxdur.':'Bu filtrə uyğun ödəniş yoxdur.';
+ }
+ search.addEventListener('input',renderRows);
  async function load(){
-  const turn=++version;message.replaceChildren('Ödənişlər yoxlanılır…');pager.replaceChildren();
-  try{const d=await api('/api/community/payment-history?status='+status+'&page='+page);if(!live||turn!==version)return;
-   summary.replaceChildren(...[['Cari balans',money(d.balance)],['Toplam ödəniş',money(d.total)],['Bu ay',money(d.month)],['Rədd edildi',String(d.rejected)]].map(([label,value])=>el('div',{},el('span',{},label),el('strong',{},value))));
-   summary.title='Toplam və aylıq məbləğlərə təsdiqlənmiş kart ödənişləri və balans artırmaları daxildir; balansdan edilən alış təkrar sayılmır.';
-   filters.replaceChildren(...[['all','Hamısı'],['approved','Təsdiqləndi'],['reviewing','Yoxlanılır'],['rejected','Rədd edildi']].map(([key,label])=>{const b=button(label+' · '+d[key],()=>{status=key;page=1;void load();});b.setAttribute('aria-pressed',String(status===key));return b;}));
-   observer?.disconnect();thumbnails.clear();list.replaceChildren(...d.items.map(renderRow));message.textContent=d.items.length?'':'Bu filtrə uyğun ödəniş yoxdur.';
-   if(page>1)pager.append(button('Əvvəlki',()=>{page--;void load();}));if(d.more)pager.append(button('Növbəti',()=>{page++;void load();}));
+  const turn=++version;data=null;clearRows();message.replaceChildren('Ödənişlər yoxlanılır…');pager.replaceChildren();
+  for(const [key,{b}] of chips)b.setAttribute('aria-pressed',String(status===key));
+  try{
+   const d=await api('/api/community/payment-history?status='+status+'&page='+page);if(!live||turn!==version)return;
+   validate?.(d);data=d;
+   summary.replaceChildren(...[
+    ['balance','Cari balans',money(d.balance)],['total','Toplam ödəniş',money(d.total)],['month','Bu ay',money(d.month)],['rejected','Rədd edildi',money(d.rejectedCents),d.rejected+' əməliyyat']
+   ].map(([key,label,value,n])=>el('div',{'data-metric':key},el('span',{},label),el('strong',{},value),n?el('small',{},n):null)));
+   for(const [key,{count}] of chips)count.textContent=String(d[key]);
+   renderRows();
+   if(page>1)pager.append(button('Əvvəlki',()=>{page--;void load();}));
+   if(page>1||d.more)pager.append(el('span',{},'Səhifə '+page));
+   if(d.more)pager.append(button('Növbəti',()=>{page++;void load();}));
   }catch{if(live&&turn===version)message.replaceChildren('Ödənişlər yüklənmədi. ',button('Yenidən cəhd et',load));}
  }
- void load();return()=>{live=false;version++;preview++;observer?.disconnect();thumbnails.clear();if(dialog.open)dialog.close();};
+ void load();return()=>{live=false;version++;preview++;observer?.disconnect();thumbnails.clear();if(dialog.open)dialog.close();section.remove();};
 }

@@ -1,0 +1,66 @@
+import assert from 'node:assert/strict';
+import {shopFixture} from './shop-test-fixture.mjs';
+import {paymentHistory} from '../mirpanel-admin/community/account-panel.mjs';
+import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
+import {bakuDate} from '../mirpanel-admin/payment-order-lifecycle.mjs';
+
+process.env.MIRPANEL_CART_V2_TEST='1';
+const f=await shopFixture(),{pool,db,shop,id,method}=f;
+const a={user:'a'},b={user:'b'},hash='a'.repeat(64),buyer=Object.assign({headers:{}},a);
+const history=(filter='',user='a')=>paymentHistory(pool,user,new URLSearchParams(filter));
+const migration=db.read('mirpanel-admin/community/payment-history-number-migration.sql');
+const month=bakuDate().slice(0,7)+'-01';
+const create=(user,amount='5.00')=>shop.topup(user,{amount,methodId:method,requestId:id()});
+async function submit(user,request){
+ const receipt={path:'topup/'+request.id+'/synthetic.png',mimeType:'image/png',size:3,sha256:'a'.repeat(64)};
+ f.files.set(receipt.path,Buffer.from('abc'));await shop.savedReceipt(user,hash,'topup',request.id,receipt);
+ await shop.submitTopup(user,request.id);
+}
+try{
+ const legacy=await create(a,'2.00');await submit(a,legacy);
+ const legacyDecision=await shop.admin(pool,{id:'owner'},{action:'reject',id:legacy.id});assert.equal(legacyDecision.ok,true);
+ await pool.query('update wallet_topups set decided_at=null where id=$1',[legacy.id]);
+ await db.exec(migration);await db.exec(migration);
+ const initial=(await history()).items[0];
+ assert.equal(initial.number,'1');assert.equal(initial.operation_at,null);
+ const credit=await create(a,'6.00');await submit(a,credit);
+ await shop.admin(pool,{id:'owner'},{action:'approve',id:credit.id,amount:'5.00'});
+ assert.deepEqual([(await history()).balance,(await history()).total,(await history()).month],['500','0','0']);
+ const input={productId:'ordinary',planIndex:0,quantity:1},quote=(await shop.quote(a,[input],hash)).items[0];
+ const items=[{...input,termsVersion:quote.termsVersion}];
+ const order=await shop.checkout(a,hash,{items,mode:'wallet',requestId:id(),consentAccepted:true});
+ await pool.query("update payment_orders set created_at=(($2::date + time '00:00:01') at time zone 'Asia/Baku') where id=$1",[order.orderId,month]);
+ const after=await history();assert.deepEqual([after.balance,after.total,after.month,after.rejectedCents,after.rejected],['0','500','500','200',1]);
+ assert.equal(after.items.find(r=>r.id===order.orderId).number,String(order.orderCode));
+ const approved=after.items.find(r=>r.id===credit.id);
+ assert.equal(approved.number,'2');assert.equal(approved.cents,500);assert.ok(approved.operation_at);
+ assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'2');
+ await assert.rejects(shop.topupReceipt(b,credit.id),{status:404});
+ assert.equal((await shop.topupReceipt(a,credit.id)).mime,'image/png');
+ const cards=createAccountOrders({store:f.store,resolve:async req=>({userId:req.user,owned:async rid=>(await pool.query("select o.* from payment_orders o join community_order_owners l on o.id=l.order_id where l.user_id=$1 and o.id=$2",[req.user,rid])).rows[0]})});
+ const reserve=await shop.checkout(buyer,hash,{items,mode:'card',methodId:method,requestId:id(),consentAccepted:true});
+ const receipt={path:'cart/'+reserve.id+'/synthetic.png',mimeType:'image/png',size:3,sha256:'b'.repeat(64)};
+ f.files.set(receipt.path,Buffer.from('abc'));await shop.savedReceipt(a,hash,'cart',reserve.id,receipt);
+ const card=await shop.submit(a,hash,reserve.id);
+ await f.rpc('approve_payment_order_v7',[card.orderId,null,'synthetic-admin']);
+ await pool.query("update payment_orders set created_at=(($2::date - 1 + time '23:59:59') at time zone 'Asia/Baku'),approved_at=(($2::date + time '00:00:02') at time zone 'Asia/Baku') where id=$1",[card.orderId,month]);
+ const purchased=await history('status=approved');
+ assert.equal(purchased.month,'1000');assert.equal(purchased.total,'1000');
+ const cardRow=purchased.items.find(r=>r.id===card.orderId);assert.equal(cardRow.by_receipt,true);
+ assert.notEqual(cardRow.submitted_at,cardRow.operation_at);
+ await pool.query('update payment_orders set approved_at=null where id=$1',[card.orderId]);
+ const withoutTime=await history('status=approved');
+ assert.equal(withoutTime.total,'1000');assert.equal(withoutTime.month,'500');
+ assert.equal(withoutTime.items.find(r=>r.id===card.orderId).operation_at,null);
+ assert.equal((await cards.receipt(a,card.orderId)).mime,'image/png');await assert.rejects(cards.receipt(b,card.orderId),{status:404});
+ const pending=await Promise.all(Array.from({length:31},()=>create(a,'1.00')));
+ await Promise.all(pending.map(r=>submit(a,r)));
+ const firstPage=await history('status=reviewing'),next=await history('status=reviewing&page=2');
+ assert.deepEqual([firstPage.items.length,next.items.length,firstPage.more,next.more],[30,1,true,false]);
+ assert.equal(next.reviewing,31);assert.equal(next.approved,3);assert.equal(next.rejected,1);
+ assert.deepEqual([...firstPage.items,...next.items].map(x=>Number(x.number)).sort((x,y)=>x-y),Array.from({length:31},(_,i)=>i+3));
+ const other=await create(b);await submit(b,other);
+ const isolated=await history('','b');assert.equal(isolated.items.length,1);assert.equal(isolated.items[0].number,'1');
+ await db.exec(migration);assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'2');
+ console.log('PASS payment history: real wallet debit without double counting, Baku month boundary, stable concurrent numbering, full-period counts, private receipts');
+}finally{await f.close();}

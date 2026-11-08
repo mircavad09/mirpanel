@@ -52,7 +52,7 @@ export function renderAccountPanel(ctx){
   disposeChild=window.mountBrowserOrders({initial,initialRequest:pending,validate:ownData,onData:cache});window.mirpanelPageDispose=communityDispose;
   const child=disposeChild;disposeChild=()=>{window.removeEventListener('mirpanel:orders-loaded',onLoaded);child?.();};return;
  }
- if(id==='payments'){const {mountPayments}=await import('./account-payments.js?v=account-update-20261107');if(!stopped&&run===load)disposeChild=mountPayments({content,api,el,button});return;}
+ if(id==='payments'){const {mountPayments}=await import('./account-payments.js?v=payments-history-1');if(!stopped&&run===load)disposeChild=mountPayments({content,api,el,button,link,validate:ownData});return;}
  if(id==='codes'){const {mountCodes}=await tabModule;if(!stopped&&run===load)disposeChild=mountCodes({content,el,button,initial:sessionLists.entries.get(listPath),initialRequest:pending,validate:ownData,onData:cache});return;}
  if(id==='subscriptions'){const {mountSubscriptions}=await import('./account-subscriptions.js?v=1');if(!stopped&&run===load)disposeChild=mountSubscriptions({content,el,button,link,api,validate:ownData});return;}
  content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},summaryCache?money(summaryCache.expensesCents):'—')));
