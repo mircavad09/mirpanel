@@ -8,6 +8,7 @@ import {signature} from '../mirpanel-admin/employee-security.mjs';
 import {bakuDate,shiftCalendarDays,addCalendarMonthsMinusDay} from '../mirpanel-admin/payment-order-lifecycle.mjs';
 import {subscriptionPeriod} from '../mirpanel-admin/community/subscriptions.mjs';
 import {summarize,urgency} from '../mirpanel-admin/community/public/account-subscriptions.js';
+import {onRequest as proxy} from '../functions/api/payments/[[path]].js';
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{db,pool,shop,method,id}=f;
 const a={user:'a'},b={user:'b'},hash='a'.repeat(64);
@@ -87,5 +88,18 @@ try{
  assert.equal((await rows()).find(x=>x.id===second.id).expiresOn,addCalendarMonthsMinusDay(day(11),1));
  assert.equal((await q('select count(*)::int n from subscription_renewals where expires_on is not null')).rows[0].n,2);
  assert.equal((await q("select count(*)::int n from wallet_ledger where kind='purchase_debit'")).rows[0].n,3);
+ const originalFetch=globalThis.fetch;
+ const subscriptionUrl='https://mirpanel.com/api/payments/shop/subscriptions';
+ try{
+  globalThis.fetch=async(url,options)=>{
+   assert.equal(url.pathname,'/api/payments/shop/subscriptions');
+   assert.equal(options.headers.get('cookie'),'__Secure-mirpanel_owner.session_token=synthetic');
+   return Response.json({accountId:'a',subscriptions:[]});
+  };
+  const r=await proxy({request:new Request(subscriptionUrl,{headers:{cookie:'__Secure-mirpanel_owner.session_token=synthetic; mirpanel_session=admin'}})});
+  assert.equal(r.status,200);assert.match(r.headers.get('cache-control'),/private, no-store/);
+  assert.equal((await proxy({request:new Request(subscriptionUrl,{method:'POST'})})).status,404);
+  assert.equal((await proxy({request:new Request(subscriptionUrl,{headers:{Origin:'https://other.example'}})})).status,403);
+ }finally{globalThis.fetch=originalFetch;}
  console.log('PASS subscription ownership, two live prices, boundaries, unchanged expiry until manual fulfillment, early extension, failed payment, retry and duplicate prevention');
 }finally{await f.close();}
