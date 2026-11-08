@@ -35,7 +35,9 @@
       }
     } catch {
       if (sequence !== topupRead) return;
-      if (counts.topups === null) counts.topups = false;
+      // A stale sidebar badge is useful; the dashboard card must report that
+      // its latest query failed rather than presenting a stale number as fact.
+      counts.topups = false;
     }
     renderDashboard();
   }

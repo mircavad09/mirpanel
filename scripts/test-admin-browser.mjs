@@ -14,7 +14,7 @@ const { chromium } = await import(pathToFileURL(playwrightPath));
 const originalState = extractAdminState(fs.readFileSync(path.join(root, "app.js"), "utf8"));
 const mime = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 let bannerCount=7, renderLive=false, saveCalls=0, saveMode=500, savedData=originalState, saveReceipt;
-let dashboardSummary={users:24,online:2,orders:60,pendingOrders:3,walletCents:"10505"};
+let dashboardSummary={users:24,online:2,orders:60,pendingOrders:3,walletCents:"10505"}, pendingTopups=4;
 const publication={commitSha:"a".repeat(40),sha:"b".repeat(40),version:"admin-123"};
 
 const server = http.createServer(async (request, response) => {
@@ -30,7 +30,7 @@ const server = http.createServer(async (request, response) => {
   if(request.url==="/api/admin/homepage-banners")return bannerCount<0?json({error:"Sınaq sorğusu alınmadı"},503):json({managed:true,banners:Array.from({length:bannerCount},(_,i)=>({active:true,id:String(i),order:i})),maxBytes:20*1024*1024});
   if(request.url.startsWith("/api/admin/payment-orders?"))return json({orders:[],counts:{pending:3},pagination:{total:0,totalPages:1}});
   if(request.url==="/api/admin/community/dashboard")return dashboardSummary ? json(dashboardSummary) : json({error:"Məlumat alınmadı"},503);
-  if(request.url==="/api/admin/community/shop?only=topup-count")return json({pending:4});
+  if(request.url==="/api/admin/community/shop?only=topup-count")return pendingTopups===null ? json({error:"Məlumat alınmadı"},503) : json({pending:pendingTopups});
   if(request.url==="/api/admin/stories")return json({stories:[],activeStories:0,activeItems:0});
   if (request.url === "/favicon.ico") { response.writeHead(204); return response.end(); }
   if (request.url === "/api/admin/state") {
@@ -84,6 +84,7 @@ try {
   const audit = [];
   for (const width of [1440,390]) {
     const check = await browser.newPage({ viewport: {width,height:900} });
+    await check.clock.install();
     await check.route("https://mirpanel.com/**", route=>route.fulfill({status:204,body:""}));
     await check.goto(`http://127.0.0.1:${address.port}/admin.html`);
     const nav=check.locator(".nav .navBtn");
@@ -98,6 +99,13 @@ try {
       await metric(name).getByText(value,{exact:true}).waitFor();
     }
     assert.equal(await banner.evaluate(node => getComputedStyle(node).color),"rgb(244, 245, 246)");
+    for (const card of ["orders","topups"]) assert.equal(await metric(card).evaluate(node => getComputedStyle(node).color),"rgb(244, 245, 246)");
+    pendingTopups=0; await check.locator("[data-dashboard-refresh]").click(); await metric("topups").getByText("0",{exact:true}).waitFor();
+    pendingTopups=null; await check.locator("[data-dashboard-refresh]").click(); await metric("topups").getByText("Məlumat alınmadı",{exact:true}).waitFor({timeout:3500});
+    pendingTopups=4; await check.locator("[data-dashboard-refresh]").click(); await metric("topups").getByText("4",{exact:true}).waitFor();
+    pendingTopups=null; await check.locator("[data-dashboard-refresh]").click(); await metric("topups").getByText("Məlumat alınmadı",{exact:true}).waitFor();
+    assert.equal(await check.locator('.nav .navBtn[data-view="communityShop"]').getAttribute('data-pending-count'),"4");
+    pendingTopups=4;
     const originalSummary=dashboardSummary;
     dashboardSummary=null;
     await check.locator("[data-dashboard-refresh]").click();
@@ -107,9 +115,20 @@ try {
     await metric("wallet").getByText("0,00 ₼",{exact:true}).waitFor();
     await metric("online").getByText("0",{exact:true}).waitFor();
     dashboardSummary=originalSummary;
+    dashboardSummary={...originalSummary,online:5};
+    await check.clock.fastForward(31000);
+    await metric("online").getByText("5",{exact:true}).waitFor();
+    dashboardSummary=originalSummary;
     bannerCount=-1; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("Məlumat alınmadı",{exact:true}).waitFor();
     bannerCount=0; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("0",{exact:true}).waitFor();
     bannerCount=7;
+    for (const [card, view] of Object.entries({banners:"banners",orders:"paymentOrders",topups:"communityShop",users:"communityUsers"})) {
+      await check.locator(`[data-dashboard-card="${card}"]`).click();
+      await check.locator(`#${view}View`).waitFor();
+      assert.equal(await check.locator('#cmsDashboardCards').isVisible(),false);
+      assert.equal(await check.locator(`#${view}View [data-dashboard-card]`).count(),0);
+      await check.locator('.nav .navBtn[data-view="dashboard"]').click();
+    }
     for(const [view,href] of views){
       if(href){const result=await check.request.get(`http://127.0.0.1:${address.port}${href}`);assert.equal(result.status(),200);continue;}
       await nav.locator(`xpath=self::*[@data-view="${view}"]`).click();
@@ -122,7 +141,7 @@ try {
     await check.locator("#recheckPublish").click();
     await check.locator("[data-history-commit]").getByText("Canlıda təsdiqləndi",{exact:true}).waitFor();
     renderLive=false;
-    audit.push({width,sections:views.length,bannerFailure:true,realZero:true,splitDeploy:true});
+    audit.push({width,sections:views.length,bannerFailure:true,topupFailure:true,realZero:true,pollRefresh:true,cardLinks:true,splitDeploy:true});
     await check.close();
   }
   console.log(JSON.stringify({adminNavigation:audit}));
