@@ -4,8 +4,8 @@
 const key=Symbol.for('mirpanel.community.session-state');
 const state=window[key]??=( {entries:new Map(),generation:0,listening:false} );
 export async function communityJson(response){const type=(response.headers.get('Content-Type')||'').split(';')[0].trim();if(!/^application\/(?:[\w.-]+\+)?json$/i.test(type)||response.redirected&&new URL(response.url).origin!==location.origin)throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');try{return await response.json();}catch{throw Error('Hesab məlumatı alınmadı. Yenidən cəhd edin.');}}
-export function getCommunityState(){
- const suffix=location.pathname==='/qrup'?'?group=1':'';
+export function getCommunityState({group=false}={}){
+ const suffix=group?'?group=messages':'';
  let entry=state.entries.get(suffix);
  if(entry?.last&&performance.now()-entry.at<750)return Promise.resolve(entry.last);
  if(entry?.pending)return entry.pending;

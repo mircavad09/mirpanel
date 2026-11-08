@@ -252,9 +252,9 @@ function withSeoScripts(html) {
   next=next.replace(/(src=["'])\/?(home-loading|catalog-listing|product-page)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=fast-entry-1$3');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?(cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-stable-20261031$3');
-  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=dashboard-presence-1$2');
+  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=latency-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=fast-entry-1$2');
-  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=fast-entry-3" data-page-navigation-loader></script></head>');
+  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=latency-1" data-page-navigation-loader></script></head>');
   next=next.replace(/(href=["'])\/?desktop-header\.css(?:\?[^"']*)?(["'])/g,'$1/desktop-header.css?v=mobile-anthracite-20261031$2');
   if(!next.includes('/desktop-header.css?v=mobile-anthracite-20261031'))next=next.replace(/<\/head>/i,'<link rel="stylesheet" href="/desktop-header.css?v=mobile-anthracite-20261031"></head>');
   if (!next.includes("site-sections-render.js?v=20260728-info-pages-1")) {
@@ -340,6 +340,8 @@ export async function onRequest(context) {
     const response = await context.next(new Request(assetUrl, request));
     if (!response.ok) return response;
     let html = withSeoScripts(await response.text());
+    html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(10000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
+    html = html.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=latency-1$2');
     // The static order button must not accept an early click before the
     // current product and the real order handler have both initialized.
     html = html.replace(/<button\b[^>]*\bid="pp-order-btn"[^>]*>/i, tag =>

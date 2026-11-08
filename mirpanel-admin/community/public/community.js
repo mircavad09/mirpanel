@@ -1,4 +1,4 @@
-import {getCommunityState,communityJson} from '/session-state.js?v=auth-recovery-20261107';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
+import {getCommunityState,communityJson} from '/session-state.js?v=latency-1';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
 import {tierLabel} from '/community-assets/tier-labels.js';
 import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
 export function mountCommunity(){
@@ -16,7 +16,7 @@ function messageAvatar(author,tier){
  const frame=el('span',{class:'community-avatar-frame','aria-hidden':true},el('span',{class:'community-avatar'},author.avatarUrl?el('img',{src:author.avatarUrl,alt:'',loading:'lazy',decoding:'async',style:'width:100%;height:100%;object-fit:cover;border-radius:50%'}):avatars[author.avatar]||avatars[0]));
  return frame; // Standard has no ornament; the other tiers use the shared PNG component.
 }
-async function refresh(){const r=await getCommunityState();if(!r.ok)throw Error(r.data.error||'Giriş tələb olunur.');state=r.data;return state;}
+async function refresh(){const r=await getCommunityState({group:location.pathname==='/qrup'});if(!r.ok)throw Error(r.data.error||'Giriş tələb olunur.');state=r.data;return state;}
 function setPage(...nodes){app.replaceChildren(...nodes);}
 function sidebar(){const p=el('aside',{class:'community-sidebar'},el('section',{class:'community-panel'},el('h2',{},'MirPanel icması'),el('p',{class:'muted'},'Mətn söhbəti · hörmətli və təhlükəsiz ünsiyyət. Şəxsi sifariş, e-poçt və ödəniş məlumatlarını qrupda paylaşmayın.'),link(state.profile?'Profilim':'Daxil ol / Qeydiyyat',state.profile?'/profil':'/hesab?mode=signup'),el('p',{class:'community-notice'},'Səviyyə hədləri DEMO-dur və yekun təsdiqlənməyib. Standart üzvlər də yaza bilər.')));if(state.profile?.isModerator)p.append(link('Moderasiya auditi','/moderasiya'));return p;}
 async function group(){

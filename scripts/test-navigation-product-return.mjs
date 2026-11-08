@@ -34,12 +34,15 @@ try{
   const p=await browser.newPage({viewport:{width,height:850}});
   p.setDefaultTimeout(8500);
   try{
+   const network=[];
+   p.on('request',req=>{const pathname=new URL(req.url()).pathname;if(['/api/payments/inventory','/stock-display-fix.js'].includes(pathname))network.push(pathname);});
    await p.route(/^https?:\/\/(?!127\.0\.0\.1:)/,r=>r.abort());
    await p.route('**/api/payments/inventory',r=>r.fulfill({json:{products:[{productId:'capcut',scope:'product',available:20}]}}));
    delayOrder=true;await p.goto(origin+'/mehsul/capcut-pro',{waitUntil:'commit'});
    const button=p.locator('#pp-order-btn');await button.waitFor();
    assert(await button.isDisabled(),'order stays disabled while its handler downloads');
    await p.locator('#pp-order-btn:not([disabled])').waitFor();
+   assert.equal(network[0],'/api/payments/inventory','inventory starts during HTML parsing');
    await button.evaluate(b=>b.click());await p.locator('dialog.cart-entry[open] h2').waitFor();
    await p.evaluate(()=>document.querySelector('dialog.cart-entry[open]').close());
    await p.waitForFunction(()=>!document.body.classList.contains('orderConfirmationActive')&&!!window.MirpanelNavigation);

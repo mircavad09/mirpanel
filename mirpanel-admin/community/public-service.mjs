@@ -49,7 +49,18 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  }
  if(route==='/api/community/profile-media'&&req.method==='POST'){need();let size=0,chunks=[];for await(const c of req){size+=c.length;if(size>5242880)throw fail(413,'Şəkil maksimum 5 MB ola bilər.');chunks.push(c);}await repo.ensure(user);await uploadProfile(pool,user,u.searchParams.get('kind'),Buffer.concat(chunks));json(res,200,await repo.profile(user));return true;}
  const b=req.method==='POST'?await body(req):null;
- if(route==='/api/community/state'&&req.method==='GET'){const [profile,unreadTags,config,initial]=await Promise.all([user?repo.profile(user):null,user?tagCount(pool,user.id):0,repo.config(),u.searchParams.get('group')==='1'?Promise.all([repo.messages(),group.settings(),counts(pool)]):null]);json(res,200,{publicCommunity:true,profile,unreadTags,unread:0,tiers:config.tiers,googleEnabled:true,authFormPolicy,...(initial?{initialMessages:{...initial[0],settings:initial[1],restrictions:profile},counts:initial[2]}:{})});}
+ if(route==='/api/community/state'&&req.method==='GET'){
+  const mode=u.searchParams.get('group'),groupRead=mode==='1'||mode==='messages';
+  const lean=mode==='messages';
+  const [profile,unreadTags,config,initial,count]=await Promise.all([
+   user?repo.profile(user):null,user?tagCount(pool,user.id):0,lean?null:repo.config(),
+   groupRead?Promise.all([repo.messages(lean?{includeTiers:true}:undefined),group.settings()]):null,
+   mode==='1'?counts(pool):null
+  ]);
+  res.setHeader('Server-Timing',`release;dur=${gateMs.toFixed(1)}, auth;dur=${authMs.toFixed(1)}, state;dur=${(performance.now()-started-gateMs-authMs).toFixed(1)}`);
+  const {tiers,...messages}=initial?.[0]||{};
+  json(res,200,{publicCommunity:true,profile,unreadTags,unread:0,tiers:lean?tiers:config.tiers,googleEnabled:true,authFormPolicy,...(initial?{initialMessages:{...messages,settings:initial[1],restrictions:profile}}:{}),...(count?{counts:count}:{})});
+ }
  else if(route==='/api/community/messages'&&req.method==='GET'){const [messages,settings,profile]=await Promise.all([repo.messages({before:u.searchParams.get('before'),after:u.searchParams.get('after'),known:u.searchParams.get('known')}),group.settings(),user?repo.profile(user):null]);json(res,200,{...messages,settings,restrictions:profile});}
  else if(route==='/api/community/messages'&&b){need();if(Object.keys(b).some(k=>!['body','clientId'].includes(k)))throw fail(400,'Yalnız mətn göndərmək olar.');const result=await repo.send(user,b.body,b.clientId);json(res,result.blocked?422:201,result);}
  else if(route==='/api/community/read'&&b)json(res,200,{ok:true});

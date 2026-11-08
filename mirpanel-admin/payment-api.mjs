@@ -212,7 +212,7 @@ export function createPaymentSystem(options) {
     }
   }
 
-  async function inventoryView(all=false){const rows=await readInventory({fresh:!all}),c=await loadCatalog();return c.products.filter(p=>p.active!==false&&(all||p.stockEnabled===true||rows.some(r=>r.productId===p.id))).map(p=>inventoryAvailability(p,rows.find(r=>r.productId===p.id)));}
+  async function inventoryView(all=false){const [rows,c]=await Promise.all([readInventory({fresh:!all}),loadCatalog()]);return c.products.filter(p=>p.active!==false&&(all||p.stockEnabled===true||rows.some(r=>r.productId===p.id))).map(p=>inventoryAvailability(p,rows.find(r=>r.productId===p.id)));}
 
   async function catalogSelection(productId, planIndex) {
     const data = await loadCatalog();
@@ -235,7 +235,7 @@ export function createPaymentSystem(options) {
   let storefront;
   async function handlePublic(request, response, url) {
     if(request.method==='GET'&&url.pathname==='/api/payments/inventory'){
-      try{const products=await inventoryView(true);await publicRate(request,'inventory',60,120);publicJson(request,response,200,{products});return true;}catch(e){if(e.status===429)throw e;throw inventoryUnavailable();}
+      try{const [products]=await Promise.all([inventoryView(true),publicRate(request,'inventory',60,120)]);publicJson(request,response,200,{products});return true;}catch(e){if(e.status===429)throw e;throw inventoryUnavailable();}
     }
     if (request.method === "OPTIONS") {
       response.writeHead(204, corsHeaders(request));

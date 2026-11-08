@@ -37,7 +37,7 @@
  void import(authModule).catch(()=>{});
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
  async function moduleWithin(url){let timer;try{return await Promise.race([import(url),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}finally{clearTimeout(timer);}}
- const shopModule='/community-assets/shop-ui.js?v=shell-fast-entry-2',groupModule='/community-assets/community.js?v=shell-fast-entry-2';
+ const shopModule='/community-assets/shop-ui.js?v=shell-fast-entry-2',groupModule='/community-assets/community.js?v=shell-latency-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&u.pathname===location.pathname)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));(dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
@@ -101,7 +101,7 @@
  skeleton(u);window.scrollTo(0,0);
  const sectionType=templateKey(u.pathname),preparedModule=sectionType?moduleWithin(sectionType==='shop'?shopModule:groupModule):null;
  void preparedModule?.catch(()=>{});
- if(sectionType)void import('/session-state.js?v=auth-recovery-20261107').then(m=>run===generation?m.getCommunityState():null).catch(()=>{});
+ if(u.pathname==='/qrup')void import('/session-state.js?v=latency-1').then(m=>run===generation?m.getCommunityState({group:true}):null).catch(()=>{});
  try{let next=isStatic(u.pathname)?cache.get(u.pathname):null;const savedTemplate=templates.get(templateKey(u.pathname));if(!next&&savedTemplate)next={...savedTemplate,fragment:savedTemplate.fragment.cloneNode(true),html:u.pathname==='/qrup'?'community-chat-screen':''};
  if(!next){const prepared=u.pathname==='/mehsul'&&listingRequest&&Date.now()-listingAt<30000?await listingRequest:null;if(run!==generation)return false;
  const r=prepared?null:await fetch(u.href,{signal:controller.signal,credentials:'same-origin',cache:isStatic(u.pathname)?'default':'no-store',headers:{Accept:'text/html','X-Mirpanel-Navigation':'content'}});
