@@ -6,19 +6,23 @@ const before=process.argv.includes('--before'),old=f=>execFileSync('git',['show'
 const header=fs.readFileSync('customer-header.html','utf8'),png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aB1sAAAAASUVORK5CYII=','base64');
 const profile={user_id:'synthetic-a',display_name:'Sınaq İstifadəçi',first_name:'Sınaq',last_name:'İstifadəçi',email:'synthetic@example.invalid',avatar:0,member_number:1001,balanceCents:12550,tier:{id:'standard',next:{id:'bronze'},remainingCents:3000,progress:0},social_links:{},isOwner:false,isModerator:false};
 let delay=0,failWallet=false,documents=0,mutations=0,streams=0,maxStreams=0,walletReads=0;
+const groupOnly=process.argv.includes('--group-only'),footerOnly=process.argv.includes('--footer-only'),peers=new Set();
+const message=(id,body)=>({id,body,createdAt:new Date().toISOString(),author:{id:profile.user_id,name:profile.display_name,tier:'standard'}});
 const json=(res,v,status=200)=>{res.writeHead(status,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify(v));};
 const shell=(id,script,css='')=>'<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel</title><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/community.css">'+css+'<body class="community-page">'+header+'<main id="'+id+'" class="'+(id==='shopApp'?'shop-page':'community-shell')+'"></main><script type="module" src="/community-assets/'+script+'"></script><script src="/site-header.js"></script></body></html>';
 const server=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://local'),p=u.pathname,signed=!String(req.headers.cookie).includes('guest=1');if(req.headers['sec-fetch-dest']==='document')documents++;
  if(delay&&['/balans','/sebet','/api/payments/shop/wallet'].includes(p))await new Promise(r=>setTimeout(r,delay));
- if(p==='/api/community/state')return json(res,{profile:signed?profile:null,publicCommunity:true,counts:{members:1,online:1},initialMessages:{items:[],more:false,settings:{}},authFormPolicy:{minPasswordLength:6,maxPasswordLength:128},unreadTags:0});
+ if(p==='/api/community/state')return json(res,{profile:signed?profile:null,publicCommunity:true,counts:{members:1,online:1},initialMessages:{items:groupOnly?[message(1,'Sintetik qrup mesajı')]:[],more:false,settings:{}},authFormPolicy:{minPasswordLength:6,maxPasswordLength:128},unreadTags:0});
  if(p==='/api/auth/sign-in/email'){res.setHeader('Set-Cookie','guest=; Max-Age=0; Path=/');return json(res,{ok:true});}if(p==='/api/auth/sign-out'){res.setHeader('Set-Cookie','guest=1; Path=/');return json(res,{ok:true});}
  if(p==='/api/community/profile-summary')return json(res,{orderCount:0,savingsCents:0,latestOrder:null});
  if(p==='/api/community/profile-media'&&req.method==='POST'){for await(const chunk of req){}profile.avatarUrl='/api/community/media/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.webp';return json(res,profile);}
  if(p==='/api/community/media/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa.webp'){res.setHeader('Content-Type','image/png');res.end(png);return;}
  if(p==='/api/community/notifications')return json(res,{items:[],unread:0});
- if(p==='/api/community/events'){streams++;maxStreams=Math.max(maxStreams,streams);res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-store'});res.write('event: counts\ndata: {"members":1,"online":1}\n\n');req.on('close',()=>streams--);return;}
+ if(p==='/api/community/events'){streams++;peers.add(res);maxStreams=Math.max(maxStreams,streams);res.writeHead(200,{'Content-Type':'text/event-stream','Cache-Control':'no-store'});res.write('event: counts\ndata: {"members":1,"online":1}\n\n');req.on('close',()=>{streams--;peers.delete(res);});return;}
+ if(groupOnly&&p==='/api/community/messages'&&req.method==='POST'){if(!signed)return json(res,{},401);let input='';for await(const chunk of req)input+=chunk;const {body}=JSON.parse(input);for(const peer of peers)peer.write('event: messages\ndata: '+JSON.stringify({items:[message(2,body)]})+'\n\n');return json(res,{ok:true});}
  if(p==='/api/community/messages')return json(res,{items:[],more:false,settings:{}});
  if(p==='/api/payments/methods')return json(res,{methods:[{id:'synthetic',providerName:'ABB',displayName:'ABB',type:'bank_card',available:true,last4:'0000',maskedNumber:'****0000'}],anyAvailable:true});
+ if(footerOnly&&p==='/api/payments/storefront')return json(res,{completedOrders:Number(u.searchParams.get('count'))||3521,banks:['abb']});
  if(p==='/api/payments/shop/wallet'){walletReads++;if(failWallet)return json(res,{error:'Synthetic unavailable'},503);return signed?json(res,{cents:12550,items:[{cents:500,reason:'Sintetik əməliyyat',created_at:'2026-11-04T08:00:00Z'}],topups:[]}):json(res,{error:'Giriş tələb olunur'},401);}
  if(p==='/api/payments/my-orders')return signed?json(res,{orders:[],nextCursor:null}):json(res,{error:'Giriş tələb olunur'},401);
  if(p==='/api/payments/shop/quote')return json(res,{totalCents:500,items:[{productId:'test',planIndex:0,title:'Sintetik məhsul',planName:'1 ay',unitCents:500,quantity:1,image:'/assets/logo.png'}]});
@@ -26,7 +30,7 @@ const server=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://
  if(p==='/api/homepage-banners')return json(res,{managed:true,banners:[]});if(p==='/api/stories')return json(res,{stories:[]});if(p==='/api/payments/inventory')return json(res,{products:[]});if(p.startsWith('/api/'))return json(res,{});
  let html;if(p==='/')html=read('index.html');else if(p==='/mehsul')html=read('mehsul.page');else if(p==='/sifarislerim')html=read('sifarislerim.html');else if(['/balans','/sebet','/odenis'].includes(p))html=shell('shopApp','shop-ui.js','<link rel="stylesheet" href="/community-assets/shop.css">');else if(['/profil','/qrup','/hesab'].includes(p))html=shell('communityApp','community.js','<link rel="stylesheet" href="/community-assets/chat-layout.css">');
  if(p==='/owner-login'||p==='/profil'&&!signed){res.writeHead(302,{Location:'/hesab?next=%2Fsifarislerim'});res.end();return;}
- if(html){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(html);return;}
+ if(html){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(p==='/qrup'?html.replace('<html lang="az">','<html lang="az" class="community-chat-screen">'):html);return;}
  let f=p.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+p.slice(18):p.slice(1);if(f.includes('..'))return json(res,{},404);
  if(fs.existsSync(f)&&fs.statSync(f).isFile()){res.setHeader('Content-Type',/\.m?js$/.test(f)?'text/javascript':f.endsWith('.css')?'text/css':f.endsWith('.png')?'image/png':'application/octet-stream');res.end(/\.(js|css)$/.test(f)?read(f):fs.readFileSync(f));return;}
  if(/\.(png|jpg|jpeg|webp|svg)$/.test(p)){res.setHeader('Content-Type','image/png');res.end(png);return;}res.writeHead(404);res.end();});
@@ -35,6 +39,31 @@ const ready={'/':'#grid .card','/mehsul':'.catalog-grid .card','/balans':'.shop-
 try{for(const width of (process.env.SHELL_WIDTHS||'390,1440').split(',').map(Number)){const c=await b.newContext({viewport:{width,height:844},recordVideo:width===390&&!before?{dir:out,size:{width:390,height:844}}:undefined});
  await c.route('**/*',async r=>{const u=new URL(r.request().url());if(u.origin===origin)return r.continue();if(u.pathname.startsWith('/api/'))return r.fulfill({contentType:'application/json',body:JSON.stringify(u.pathname.endsWith('/inventory')?{products:[]}:u.pathname.endsWith('/stories')?{stories:[]}:{managed:true,banners:[]})});return r.abort();});
  const p=await c.newPage();p.on('pageerror',e=>errors.push(e.message));await p.addInitScript(()=>{sessionStorage.setItem('mirpanel.intro.seen','1');window.__documentId=crypto.randomUUID();});
+ if(footerOnly){
+  for(const [count,label] of [[3521,'3.521'],[13521,'13.521+']]){
+   await p.route('**/api/payments/storefront',r=>r.continue({url:origin+'/api/payments/storefront?count='+count}),{times:1});
+   await p.goto(origin+'/');
+   const footer=p.locator('#customerFooter'),cta=footer.getByRole('link',{name:'Operatora yaz',exact:true});
+   await footer.getByText(label+' tamamlanmış sifariş',{exact:true}).waitFor();
+   eq(await cta.getAttribute('href'),'https://wa.me/994515243545');eq(await cta.getAttribute('target'),'_blank');
+  }
+  rows.push({width,whatsapp:true,verifiedCount:true});await c.close();continue;
+ }
+ if(groupOnly){
+  const checkGroup=async()=>{await p.waitForURL(origin+'/qrup');const list=p.locator('.community-messages');await list.getByText('Sintetik qrup mesajı',{exact:true}).waitFor();eq(await list.evaluate(n=>n.clientHeight>100),true);eq(await p.locator('#customerFooter').isHidden(),true);};
+  await p.goto(origin+'/qrup');await checkGroup();await p.waitForFunction(()=>window.MirpanelNavigation);
+  const documentId=await p.evaluate(()=>window.__documentId);
+  const home=()=>p.evaluate(()=>{void MirpanelNavigation.go('/');});
+  await home();await p.locator('#customerFooter a[href="/qrup"]').click();await checkGroup();
+  await home();
+  if(width<901){await p.locator('.site-header-menu-button').click();await p.locator('.site-header-drawer-nav a[href="/qrup"]').click();}
+  else await p.locator('.site-header-nav a[href="/qrup"]').click();
+  await checkGroup();eq(await p.evaluate(()=>window.__documentId),documentId);
+  await p.getByLabel('Mesaj',{exact:true}).fill('Yalnız izolyasiya edilmiş sınaq');
+  await p.getByRole('button',{name:'Göndər',exact:true}).click();
+  await p.locator('.community-messages').getByText('Yalnız izolyasiya edilmiş sınaq',{exact:true}).waitFor();
+  rows.push({width,firstClick:true,visibleMessages:true,sentAndReceived:true});await c.close();continue;
+ }
  const at=Date.now();await p.goto(origin+'/balans');await p.locator('.shop-wallet-hero').waitFor();await p.locator('.browser-bottom-nav').waitFor({state:'attached'});await p.waitForTimeout(300);const first=Date.now()-at,doc=await p.evaluate(()=>window.__documentId),samples=[],geometry=[];
  const go=async route=>{const t=Date.now();console.log('navigate',width,route);if(width>850&&route.startsWith('/balans')){await p.getByRole('button',{name:'Hesab menyusunu aç',exact:true}).click();await p.locator('#accountDropdown a[href="'+route+'"]:visible').click();}else{const nav=width<851?'.browser-bottom-nav':'.site-header';await p.locator(nav+' a[href="'+route+'"]:visible').first().click();}await p.waitForURL(origin+route);try{await p.locator(ready[route]).first().waitFor({timeout:10000});}catch(e){console.log(JSON.stringify({debug:await p.evaluate(()=>({body:document.body.className,home:document.getElementById('homePageView')?.style.cssText,grid:document.getElementById('grid')?.childElementCount,root:document.getElementById('sitePageContent')?.textContent.slice(0,200)})),errors}));throw e;}samples.push({route,ms:Date.now()-t});};
  for(let i=0;i<2;i++)for(const route of ['/sebet','/sifarislerim','/profil','/','/mehsul','/balans#emeliyyatlar','/balans']){await go(route);geometry.push(await p.locator('.site-header').evaluate(e=>Math.round(e.getBoundingClientRect().height)));}

@@ -1,4 +1,6 @@
 body:has(#customerFooter) footer.footer,body:has(#customerFooter) footer.product-page-footer{display:none}
+/* The group uses a fixed viewport; the shared footer must not consume chat space. */
+html.community-chat-screen #customerFooter{display:none}
 #customerFooter{color:#e7e5df;background:#151515;border-top:1px solid #353025;font:15px/1.6 system-ui,sans-serif;margin-top:32px;padding:36px 20px 24px;text-align:left}
 #customerFooter *,#customerFooter *::before{box-sizing:border-box}
 .customer-footer-inner{max-width:1440px;margin:auto}

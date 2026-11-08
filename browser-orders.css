@@ -54,6 +54,7 @@
 .browser-order-instructions [data-line-feedback]:not(:empty){display:block;margin-top:6px;color:#c8e5d5}
 .account-panel .browser-order-footer{justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
 .browser-order-footer>div{display:flex;align-items:center;gap:8px}
+details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-start:auto;min-height:44px;white-space:nowrap}
 .browser-order-repeat{position:fixed;inset:0;width:min(calc(100% - 28px),420px);max-height:calc(100% - 28px);box-sizing:border-box;padding:20px;color:#f4f4f5;background:#191b1e;border:1px solid #44474d;border-radius:16px;font:400 15px/1.5 system-ui;overflow:auto}
 .browser-order-repeat::backdrop{background:#000a}
 .browser-order-repeat h2{font-size:20px;margin:0}

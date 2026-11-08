@@ -43,7 +43,26 @@ try{
  const before=await pool.query('select count(*)::int n from public.payment_orders');eq(before.rows[0].n,24);
  // Proxy forwards only the auth cookie for history; checkout stays anonymous.
  const original=globalThis.fetch;let forwarded;try{globalThis.fetch=async(u,o)=>{forwarded=o.headers;return new Response('{}',{headers:{'Content-Type':'application/json'}});};const cookies='__Secure-mirpanel_owner.session_token=synthetic; mirpanel_session=admin; __Host-mirpanel_orders=browser';await proxy({request:new Request('https://mirpanel.com/api/payments/my-orders',{headers:{Cookie:cookies}})});eq(forwarded.get('cookie').includes('__Secure-mirpanel_owner.session_token='),true);eq(forwarded.get('cookie').includes('mirpanel_session='),false);await proxy({request:new Request('https://mirpanel.com/api/payments/methods',{headers:{Cookie:cookies}})});eq(forwarded.get('cookie'),'__Secure-mirpanel_owner.session_token=synthetic; __Host-mirpanel_orders=browser');}finally{globalThis.fetch=original;}
- if(!process.argv.includes('--api-only')){
+ if(process.argv.includes('--receipt-layout')){
+  await pool.query("update public.payment_orders set status='completed',amount=4.99 where id=any($1::uuid[])",[ids.slice(0,2)]);
+  const {chromium}=await import(pathToFileURL('C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs'));
+  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+  for(const width of [390,1440]){
+   const ctx=await browser.newContext({viewport:{width,height:850}}),p=await ctx.newPage();
+   await ctx.addCookies([{name:'mirpanel_owner.session_token',value:cookie(token).split('=').slice(1).join('='),url:origin,httpOnly:true,sameSite:'Lax'}]);
+   await ctx.route('https://synthetic.supabase.co/**',r=>r.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aB1sAAAAASUVORK5CYII=','base64')}));
+   await p.goto(origin+'/sifarislerim');const card=p.locator('[data-order-id="'+ids[0]+'"]');
+   await card.locator('summary').click();const row=card.locator('.browser-order-footer'),button=row.getByRole('button',{name:'Qəbzə bax',exact:true});
+   eq((await row.locator('div').innerText()).replace(/\s+/g,' '),'Cəmi · 4,99 ₼');
+   const geometry=await row.evaluate(n=>{const [a,b]=n.children,r=n.getBoundingClientRect(),button=b.getBoundingClientRect();return {space:button.left-a.getBoundingClientRect().right,offset:r.right-button.right-parseFloat(getComputedStyle(n).paddingRight),height:button.height,display:getComputedStyle(n).display};});
+   assert.ok(geometry.space>0&&Math.abs(geometry.offset)<2&&geometry.height>=44,JSON.stringify({width,...geometry}));checks++;
+   await button.click();await p.locator('#browserReceipt[open] img').waitFor();eq(await p.locator('#browserReceipt img').evaluate(img=>img.decode().then(()=>img.naturalWidth>0)),true);
+   await p.locator('#browserReceiptClose').click();
+   const noReceipt=p.locator('[data-order-id="'+ids[1]+'"]');await noReceipt.locator('summary').click();eq(await noReceipt.getByRole('button',{name:'Qəbzə bax',exact:true}).count(),0);
+   eq((await ctx.request.get(origin+'/api/payments/my-orders/'+ids[22]+'/receipt')).status(),404);
+   console.log(JSON.stringify({width,rightAligned:true,touchable:true,ownerPreview:true,crossAccountDenied:true,missingReceiptHidden:true}));await ctx.close();
+  }
+ }else if(!process.argv.includes('--api-only')){
  const {chromium}=await import(pathToFileURL('C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs'));browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});fs.mkdirSync('payment-test-artifacts/account-orders',{recursive:true});
  for(const width of [320,390,430,768,1440]){
   const guest=await browser.newContext({viewport:{width,height:900}}),p=await guest.newPage();await p.goto(origin+'/sifarislerim');await p.getByRole('heading',{name:'Sifarişlərinizi görmək üçün hesabınıza daxil olun.'}).waitFor();eq(await p.locator('.browser-order').count(),0);eq(await p.getByRole('link',{name:'Daxil ol',exact:true}).getAttribute('href'),'/owner-login?next=%2Fsifarislerim');eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);

@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   if(!document.querySelector('script[data-customer-footer-loader]')){
-    const footer=document.createElement('script');footer.src='/customer-footer.js?v=1';footer.dataset.customerFooterLoader='true';document.head.append(footer);
+    const footer=document.createElement('script');footer.src='/customer-footer.js?v=chat-space-20261108';footer.dataset.customerFooterLoader='true';document.head.append(footer);
   }
   // Only a successful email registration/recovery leaves this tab-local marker.
   try {
@@ -25,7 +25,7 @@
   if(!document.querySelector('link[data-mobile-menu-style]')){const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/site-header-menu.css?v=dropdown-20261106';sheet.dataset.mobileMenuStyle='true';document.head.append(sheet);}
   if(!document.querySelector('script[data-decorations-loader]')){const s=document.createElement('script');s.src='/decorative-backgrounds.js?v=plain-header-20261103';s.dataset.decorationsLoader='true';document.head.append(s);}
   if(!document.querySelector('script[data-support-loader]')){const script=document.createElement('script');script.src='/support-widget.js?v=account-trim-20261106';script.dataset.supportLoader='true';document.head.append(script);}
-  if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=verify-session-20261108';script.dataset.browserNavLoader='true';document.head.append(script);}
+  if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=order-receipt-20261108';script.dataset.browserNavLoader='true';document.head.append(script);}
 
   function normalize(value) {
     return String(value || "").toLocaleLowerCase("az").trim();

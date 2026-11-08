@@ -1,13 +1,13 @@
 (()=>{
  if(!document.querySelector('.site-header')||document.querySelector('#customerFooter'))return;
- const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/customer-footer.css?v=1';sheet.dataset.shellPersistent='';document.head.append(sheet);
+ const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/customer-footer.css?v=chat-space-20261108';sheet.dataset.shellPersistent='';document.head.append(sheet);
  const footer=document.createElement('footer');footer.id='customerFooter';footer.dataset.shellPersistent='';
  const wa='https://wa.me/994515243545';
  footer.innerHTML=`
  <div class="customer-footer-inner">
   <section class="customer-footer-support" aria-labelledby="footerSupportTitle">
    <div><h2 id="footerSupportTitle">Sualınız var? Operatora yazın.</h2><p>Hər gün 11:00–01:00 arası aktivik. Bizə yazın, dərhal cavab alacaqsınız.</p></div>
-   <a class="customer-footer-cta" href="${wa}" target="_blank" rel="noopener noreferrer">Canlı dəstək</a>
+   <a class="customer-footer-cta" href="${wa}" target="_blank" rel="noopener noreferrer">Operatora yaz</a>
    <a href="/elaqe">Əlaqə səhifəsi</a>
   </section>
   <ul class="customer-footer-facts">
@@ -40,7 +40,7 @@
   const total=data.completedOrders;
   if(Number.isSafeInteger(total)&&total>=0){
    const item=footer.querySelector('#footerCompleted'),label=document.createElement('strong');
-   label.textContent=(total>=10000?'10 000+':String(total).replace(/\B(?=(\d{3})+(?!\d))/g,' '))+' tamamlanmış sifariş';
+   label.textContent=String(total).replace(/\B(?=(\d{3})+(?!\d))/g,'.')+(total>=10000?'+':'')+' tamamlanmış sifariş';
    item.append(label);item.hidden=false;
   }
   if(Array.isArray(data.banks)){
