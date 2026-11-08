@@ -4,7 +4,7 @@
  const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
  const icon=k=>{const e=el('span','account-icon');e.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+paths[k]+'"/></svg>';return e;};
  const avatarStates=new WeakMap(),userId=p=>String(p?.user_id||p?.id||'');
- function avatarUrl(p){try{const u=new URL(p?.avatarUrl||'',location.origin+'/');return u.origin===location.origin&&/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(u.pathname)?u.pathname:null;}catch{return null;}}
+ function avatarUrl(p){try{const u=new URL(p?.avatarUrl||'',location.origin+'/');return u.origin===location.origin&&/^\/(?:api\/community\/media\/[a-f0-9-]{36}|community-assets\/avatar-(?:robot|pisik|bayqus|ayi|pinqvin))\.webp$/.test(u.pathname)?u.pathname:null;}catch{return null;}}
  function updateAvatar(a,p){const uid=userId(p),url=avatarUrl(p),old=avatarStates.get(a);
   if(!old||old.uid!==uid){a.replaceChildren(icon('profile'));avatarStates.set(a,{uid,url:null});}
   const current=avatarStates.get(a);

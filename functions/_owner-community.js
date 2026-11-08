@@ -18,7 +18,7 @@ export async function proxyCommunity({request}){
   if(redirect&&out.has('Location')){const target=new URL(out.get('Location'),UPSTREAM);if(target.origin===UPSTREAM){if(!allowedPath(target.pathname))return unavailable();out.set('Location',u.origin+target.pathname+target.search+target.hash);}}
   if(!redirect&&r.status!==204&&request.method!=='HEAD'){
    const type=(r.headers.get('Content-Type')||'').split(';')[0].trim().toLowerCase(),asset=u.pathname.startsWith('/community-assets/'),media=u.pathname.startsWith('/api/community/media/');
-   const expected=stream?'text/event-stream':media?'image/webp':asset?(u.pathname.endsWith('.css')?'text/css':u.pathname.endsWith('.js')?'javascript':u.pathname.endsWith('.png')?'image/png':u.pathname.endsWith('.svg')?'image/svg+xml':null):u.pathname.startsWith('/api/')?'json':'text/html';
+   const expected=stream?'text/event-stream':media?'image/webp':asset?(u.pathname.endsWith('.css')?'text/css':u.pathname.endsWith('.js')?'javascript':u.pathname.endsWith('.png')?'image/png':u.pathname.endsWith('.svg')?'image/svg+xml':/^\/community-assets\/avatar-(?:robot|pisik|bayqus|ayi|pinqvin)\.webp$/.test(u.pathname)?'image/webp':null):u.pathname.startsWith('/api/')?'json':'text/html';
    const matches=expected==='javascript'?/^(?:text|application)\/(?:java|ecma)script$/.test(type):expected==='json'?/^application\/(?:[\w.-]+\+)?json$/.test(type):type===expected;
    if(!matches)return unavailable();
    if(r.ok&&pagePaths.includes(u.pathname)&&!/<main\b[^>]*\bid=["'](?:communityApp|shopApp)["']/i.test(await r.clone().text()))return unavailable();

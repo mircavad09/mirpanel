@@ -248,13 +248,13 @@ function withSeoScripts(html) {
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=order-guide-1$2');
   next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=fast-entry-1$2');
-  next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=fast-entry-1$2');
+  next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=profile-stickers-1$2');
   next=next.replace(/(src=["'])\/?(home-loading|catalog-listing|product-page)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=fast-entry-1$3');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?(cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-stable-20261031$3');
-  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=order-guide-1$2');
+  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=profile-stickers-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=fast-entry-1$2');
-  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=profile-resume-1" data-page-navigation-loader></script></head>');
+  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=profile-stickers-1" data-page-navigation-loader></script></head>');
   next=next.replace(/(href=["'])\/?desktop-header\.css(?:\?[^"']*)?(["'])/g,'$1/desktop-header.css?v=mobile-anthracite-20261031$2');
   if(!next.includes('/desktop-header.css?v=mobile-anthracite-20261031'))next=next.replace(/<\/head>/i,'<link rel="stylesheet" href="/desktop-header.css?v=mobile-anthracite-20261031"></head>');
   if (!next.includes("site-sections-render.js?v=20260728-info-pages-1")) {

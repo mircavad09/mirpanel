@@ -1,5 +1,6 @@
 // Explicit projections only: never expose credentials, sessions or OAuth tokens.
 import {tierFor} from './repository.mjs';
+import {avatarSource} from './public/avatar-stickers.js';
 import {SITE_PRESENCE_ID} from './public-service.mjs';
 export async function adminDirectory(pool,repo,{q='',page='1',id,filter='all'}={}){
  if(!['all','online','banned'].includes(filter))throw Object.assign(Error('Filtr düzgün deyil.'),{status:400});
@@ -19,10 +20,12 @@ export async function adminDirectory(pool,repo,{q='',page='1',id,filter='all'}={
  exists(select 1 from community_presence v join session s on s.id=v.session_id and s."userId"=u.id where v.user_id=u.id and v.tab_id<>'${SITE_PRESENCE_ID}' and v.last_seen>clock_timestamp()-interval '45 seconds' and s."expiresAt">clock_timestamp()) as online
  from "user" u left join community_profiles p on p.user_id=u.id left join community_member_numbers n on n.user_id=u.id
  where ${where} order by u."createdAt" desc,u.id limit 20 offset $4`,[...params,(Number(page)-1)*20])).rows;
+ for(const row of rows)row.avatarUrl=avatarSource({avatar:row.avatar,avatar_path:row.avatarPath});
  if(!id)return{users:rows,total,page:Number(page),hasMore:Number(page)*20<total};
  if(!rows[0])throw Object.assign(Error('İstifadəçi tapılmadı.'),{status:404});
  const profile=(await pool.query(`select display_name,avatar,avatar_path,first_name,last_name,phone,whatsapp,social_links from community_profiles where user_id=$1`,[id])).rows[0]||null;
  const orders=(await pool.query(`select o.id,o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status,o.created_at from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 order by o.created_at desc limit 50`,[id])).rows;
  const totalCents=await repo.total(id),cfg=await repo.config();
+ if(profile)profile.avatarUrl=avatarSource(profile);
  return{user:rows[0],profile,orders,totalCents,tier:tierFor(totalCents,cfg.tiers),ordersLimited:orders.length===50};
 }

@@ -17,7 +17,7 @@ export async function mount(root,view){stop();let alive=true,stream;stop=()=>{al
  if(view==='communityUsers'){
   let page=1,q='';const input=e('input');input.placeholder='Ad, e-poçt, üzv ID-si';const list=e('div'),detail=e('section'),label=e('span');
   const show=guarded(async id=>{const r=await call('/users/'+encodeURIComponent(id));if(!alive)return;detail.replaceChildren(e('h2',r.user.name));
-   const p=r.profile||{};if(p.avatar_path){const img=e('img');img.src='/api/community/media/'+p.avatar_path;img.width=64;img.alt='Avatar';detail.append(img);}else detail.append(e('span',['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'][p.avatar]||'🌙'));
+   const p=r.profile||{};if(p.avatarUrl){const img=e('img');img.src=p.avatarUrl;img.width=64;img.alt='Avatar';detail.append(img);}else detail.append(e('span',['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'][p.avatar]||'🌙'));
    const labels={id:'Daxili ID',memberNumber:'Üzv ID-si',name:'Ad və soyad',email:'E-poçt',emailVerified:'E-poçt təsdiqi',createdAt:'Qeydiyyat',firstName:'Ad',lastName:'Soyad',blocked:'Ban işarəsi',banUntil:'Ban müddəti',mutedPermanent:'Daimi susdurma',mutedUntil:'Susdurma müddəti',online:'Onlayn',display_name:'Görünən ad',first_name:'Ad',last_name:'Soyad',phone:'Telefon (təsdiqlənməyib)',whatsapp:'WhatsApp (təsdiqlənməyib)',social_links:'Sosial hesablar'};
    for(const [k,v]of Object.entries({...r.user,...p}))if(labels[k])detail.append(e('p',labels[k]+': '+(v==null?'Məlumat yoxdur':typeof v==='boolean'?v?'Bəli':'Xeyr':typeof v==='object'?JSON.stringify(v):v)));
    detail.append(e('p','Səviyyə: '+tierLabel(r.tier.id)));

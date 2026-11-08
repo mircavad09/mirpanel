@@ -1,12 +1,14 @@
 import {tierLabel} from '/community-assets/tier-labels.js';
+import {avatarStickers,stickerUrl} from './avatar-stickers.js';
 export async function renderProfile({app,state,api,el,button,link,alert,avatars,money}){
  document.body.classList.add('profile-screen');document.title='Profil · MirPanel';if(!document.querySelector('link[href*="/community-assets/profile.css"]'))document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/profile.css?v=profile-stats-20261030'}));
+ if(!document.querySelector('link[data-profile-avatar-css]'))document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/profile-avatar.css','data-profile-avatar-css':'','data-shell-persistent':''}));
  let p=state.profile,busy=false,uploading=false;const error=alert(),status=alert();
  let dirty=false;const protect=e=>{if(dirty||busy||uploading){e.preventDefault();e.returnValue='';}};const guard=()=>window[dirty||busy||uploading?'addEventListener':'removeEventListener']('beforeunload',protect);
  const leave=e=>{if(busy||uploading){e.preventDefault();status.textContent='Saxlanma tamamlanana qədər gözləyin.';}else if(dirty){e.preventDefault();status.textContent='Saxlanmamış dəyişikliklər var. Yadda saxlayın və ya “Ləğv et” seçin.';editor.open=true;}};
  window.addEventListener('mirpanel:before-navigate',leave);window.mirpanelProfileDispose=()=>{window.dispatchEvent(new CustomEvent('mirpanel:profile-support-slot',{detail:null}));window.removeEventListener('beforeunload',protect);window.removeEventListener('mirpanel:before-navigate',leave);};
  const image=()=>el('span',{class:'profile-avatar-photo'},p.avatarUrl?el('img',{src:p.avatarUrl,alt:'Avatar'}):avatars[p.avatar]||avatars[0]);
- const avatar=button('',()=>avatarInput.click());avatar.className='profile-avatar';avatar.setAttribute('aria-label','Avatar şəklini dəyiş');avatar.append(image());
+ const avatar=button('',()=>openAvatarPicker());avatar.className='profile-avatar';avatar.setAttribute('aria-label','Avatar şəklini dəyiş');avatar.setAttribute('aria-haspopup','dialog');avatar.append(image());
  const cover=el('div',{class:'profile-cover'}),name=el('h1',{},p.display_name),badge=p.isOwner?el('span',{class:'profile-tier'},'Admin'):p.tier.id==='standard'?null:el('span',{class:'profile-tier tier-'+p.tier.id},tierLabel(p.tier.id));
  const vector=items=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');for(const [k,v]of Object.entries({viewBox:'0 0 24 24',fill:'none',stroke:'currentColor','stroke-width':1.8,'aria-hidden':'true'}))svg.setAttribute(k,v);for(const [tag,attrs]of items){const child=document.createElementNS(svg.namespaceURI,tag);for(const[k,v]of Object.entries(attrs))child.setAttribute(k,v);svg.append(child);}return svg;};
  const camera=el('span',{class:'profile-camera','aria-hidden':'true'},vector([['path',{d:'M8 5l2-2h4l2 2h4v15H4V5z'}],['circle',{cx:12,cy:12,r:4}]]));
@@ -23,7 +25,56 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
  const open=()=>{if(!editor.open){if(!dirty){reset();savedValues=values();}editor.open=true;}editor.scrollIntoView({block:'nearest'});};
  form.onsubmit=async e=>{e.preventDefault();if(busy||!form.reportValidity())return;busy=true;guard();save.disabled=true;cancel.disabled=true;error.textContent='';try{p=await api('/api/community/profile',{firstName:first.value,lastName:last.value,phone:phone.value,whatsapp:whatsapp.value,socialLinks:Object.fromEntries(Object.entries(social).map(([k,v])=>[k,v.value]))});state.profile=p;paint();dirty=false;savedValues=values();editor.open=false;status.textContent='Yadda saxlanıldı.';window.dispatchEvent(new CustomEvent('mirpanel:profile-updated',{detail:p}));}catch(e){error.textContent=e.message;}finally{busy=false;guard();save.disabled=false;cancel.disabled=false;}};
  const avatarInput=el('input',{type:'file',accept:'image/jpeg,image/png,image/webp',hidden:true,'aria-label':'Avatar faylı'}),coverInput=el('input',{type:'file',accept:'image/jpeg,image/png,image/webp',hidden:true,'aria-label':'Cover faylı'});
- async function upload(input,kind){const f=input.files[0];if(!f||uploading)return;if(f.size>5242880){status.textContent='Şəkil maksimum 5 MB ola bilər.';input.value='';return;}uploading=true;guard();status.textContent='Şəkil yüklənir…';try{const r=await fetch('/api/community/profile-media?kind='+kind,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/octet-stream'},body:f});const v=await r.json();if(!r.ok)throw Error(v.error||'Şəkil saxlanmadı. Yenidən cəhd edin.');p=v;state.profile=p;paint();status.textContent='Şəkil saxlanıldı.';window.dispatchEvent(new CustomEvent('mirpanel:profile-updated',{detail:p}));}catch(e){status.textContent=e.message;}finally{uploading=false;guard();input.value='';}}
+ const avatarDialog=el('dialog',{class:'profile-avatar-picker','aria-labelledby':'profile-avatar-title'});
+ const avatarFeedback=el('p',{class:'profile-avatar-feedback',role:'status'});
+ const stickerGrid=el('fieldset',{class:'profile-avatar-options'},el('legend',{},'MirPanel stikerləri'));
+ const gallery=button('Qalereyadan seç',()=>{avatarFeedback.textContent='';avatarInput.click();});
+ const openStickers=button('MirPanel stikerləri',()=>{
+  if(!stickerGrid.querySelector('input'))for(const [id,label] of Object.entries(avatarStickers)){
+   const radio=el('input',{type:'radio',name:'profile-avatar-sticker',value:id});
+   radio.checked=p.avatarUrl===stickerUrl(id);
+   stickerGrid.append(el('label',{},radio,el('img',{src:stickerUrl(id),alt:'',width:64,height:64}),el('span',{},label)));
+  }
+  stickerPanel.hidden=false;openStickers.setAttribute('aria-expanded','true');
+  stickerSave.disabled=!stickerGrid.querySelector(':checked');
+  (stickerGrid.querySelector(':checked')||stickerGrid.querySelector('input'))?.focus();
+ });
+ openStickers.setAttribute('aria-expanded','false');openStickers.setAttribute('aria-controls','profile-avatar-stickers');
+ const closeAvatar=button('Bağla',()=>avatarDialog.close());
+ const stickerSave=button('Yadda saxla',async()=>{
+  const choice=stickerGrid.querySelector(':checked')?.value;if(!choice||uploading||busy)return;
+  setAvatarBusy(true);avatarFeedback.textContent='Saxlanılır…';
+  try{const next=await api('/api/community/profile-avatar',{sticker:choice});if(avatar.isConnected){applyImage(next);avatarDialog.close();}}
+  catch(e){if(avatarDialog.isConnected)avatarFeedback.textContent=e.message||'Stiker saxlanmadı.';}
+  finally{setAvatarBusy(false);}
+ },true);
+ const stickerPanel=el('div',{id:'profile-avatar-stickers',hidden:''},stickerGrid,stickerSave);
+ stickerGrid.addEventListener('change',()=>{stickerSave.disabled=!stickerGrid.querySelector(':checked');});
+ avatarDialog.addEventListener('cancel',e=>{if(uploading)e.preventDefault();});
+ avatarDialog.append(el('h2',{id:'profile-avatar-title'},'Profil şəkli'),el('div',{class:'profile-avatar-actions'},gallery,openStickers),stickerPanel,avatarFeedback,closeAvatar);
+ function openAvatarPicker(){
+  if(uploading||busy||avatarDialog.open)return;
+  stickerGrid.querySelectorAll('label').forEach(node=>node.remove());stickerPanel.hidden=true;openStickers.setAttribute('aria-expanded','false');avatarFeedback.textContent='';avatarDialog.showModal();
+ }
+ function applyImage(next){p=next;state.profile=p;paint();status.textContent='Şəkil saxlanıldı.';window.dispatchEvent(new CustomEvent('mirpanel:profile-updated',{detail:p}));}
+ function setAvatarBusy(value){
+  uploading=value;if(avatar.isConnected)guard();
+  for(const control of [gallery,openStickers,closeAvatar,...stickerGrid.querySelectorAll('input')])control.disabled=value;
+  stickerSave.disabled=value||!stickerGrid.querySelector(':checked');
+ }
+ async function upload(input,kind){
+  const f=input.files[0];if(!f||uploading||busy)return;
+  const message=kind==='avatar'&&avatarDialog.open?avatarFeedback:status;
+  if(f.size>5242880){message.textContent='Şəkil maksimum 5 MB ola bilər.';input.value='';return;}
+  setAvatarBusy(true);message.textContent='Şəkil yüklənir…';
+  const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),20000);
+  try{
+   const r=await fetch('/api/community/profile-media?kind='+kind,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/octet-stream'},body:f,signal:controller.signal});
+   const v=await r.json();if(!r.ok)throw Error(v.error||'Şəkil saxlanmadı. Yenidən cəhd edin.');
+   if(avatar.isConnected){applyImage(v);if(kind==='avatar'&&avatarDialog.open)avatarDialog.close();}
+  }catch(e){if(avatar.isConnected)message.textContent=controller.signal.aborted?'Şəkil yükləmə gecikdi. Yenidən cəhd edin.':e.message;}
+  finally{clearTimeout(timer);setAvatarBusy(false);input.value='';}
+ }
  avatarInput.onchange=()=>upload(avatarInput,'avatar');coverInput.onchange=()=>upload(coverInput,'cover');
  const edit=button('',open),changeCover=button('',()=>coverInput.click()),actions=el('div',{class:'profile-hero-actions'},edit,changeCover);
  edit.append(el('span',{class:'profile-action-desktop'},'♧ Redaktə et'),el('span',{class:'profile-action-mobile',hidden:''},vector([['path',{d:'m4 16 11-11 4 4L8 20H4z M13 7l4 4'}]]),'Profili redaktə et'));
@@ -47,7 +98,7 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
   editor.before(el('section',{class:'profile-balance'},el('div',{},el('strong',{},'E-poçt təsdiqlənməyib')),verify));
  }
  const support=el('div',{class:'profile-support-slot',hidden:''});
- app.replaceChildren(el('div',{class:'profile-layout'},hero,support,el('div',{class:'profile-content'},identity,copyStatus,status,el('div',{class:'profile-info-grid'},latest,subscription),logout)),avatarInput,coverInput);paint();
+ app.replaceChildren(el('div',{class:'profile-layout'},hero,support,el('div',{class:'profile-content'},identity,copyStatus,status,el('div',{class:'profile-info-grid'},latest,subscription),logout)),avatarInput,coverInput,avatarDialog);paint();
  window.dispatchEvent(new CustomEvent('mirpanel:profile-support-slot',{detail:support}));
  async function summaryData(){
   latest.replaceChildren(el('h2',{},'Son sifariş'),el('div',{class:'account-card-pending','aria-busy':'true','aria-label':'Son sifariş məlumatı'}));

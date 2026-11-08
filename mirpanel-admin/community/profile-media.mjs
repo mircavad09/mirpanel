@@ -1,4 +1,10 @@
 import {spawn} from 'node:child_process';import {fileURLToPath} from 'node:url';import crypto from 'node:crypto';import {fail} from './repository.mjs';
+import {stickerUrl} from './public/avatar-stickers.js';
+export async function saveProfileSticker(pool,user,body){
+ if(!body||Object.keys(body).length!==1||!stickerUrl(body.sticker))throw fail(400,'MirPanel stikerlərindən birini seçin.');
+ const r=await pool.query('update community_profiles set avatar_path=$2 where user_id=$1',[user.id,'sticker:'+body.sticker]);
+ if(r.rowCount!==1)throw fail(409,'Profil tapılmadı.');
+}
 let active=0;const pending=new Set();
 export async function uploadProfileMedia(pool,user,kind,bytes){
  if(!['avatar','cover'].includes(kind))throw fail(400,'Şəkil növü düzgün deyil.');if(!bytes.length||bytes.length>5242880)throw fail(413,'Şəkil maksimum 5 MB ola bilər.');
