@@ -94,12 +94,26 @@ try{
     await order(slug,id);assert(await assertSame());
     await p.goBack();await p.locator(selector).first().waitFor();assert(await assertSame());
    }
+   await p.evaluate(()=>{
+    window.qaUnfilteredCatalog=false;
+    window.qaCatalogObserver=new MutationObserver(()=>{
+     if(location.pathname==='/mehsul'&&new URLSearchParams(location.search).get('search')==='CapCut'&&document.querySelectorAll('.catalog-grid .card:not([hidden])').length>1)window.qaUnfilteredCatalog=true;
+    });
+    window.qaCatalogObserver.observe(document.body,{subtree:true,childList:true});
+   });
    await p.evaluate(()=>window.MirpanelNavigation.go('/mehsul?search=CapCut'));
    assert.equal(await p.locator('.catalog-grid .card:visible').count(),1);
+   assert.equal(await p.evaluate(()=>{
+    const sheets=[...document.querySelectorAll('link[href*="catalog-card.css"]')].map(n=>[n,n.disabled]);
+    for(const [n] of sheets)n.disabled=true;
+    try{return [...document.querySelectorAll('.catalog-grid .card')].filter(n=>n.getClientRects().length).length;}
+    finally{for(const [n,disabled] of sheets)n.disabled=disabled;}
+   }),1,'filtered cards remain hidden while the route stylesheet is inactive');
    await p.locator('.catalog-grid a[href="/mehsul/capcut-pro"]').click();
    await p.locator('#pp-order-btn:not([disabled])').waitFor();
    await p.goBack();assert.equal(new URL(p.url()).searchParams.get('search'),'CapCut');
    await p.waitForFunction(()=>document.querySelectorAll('.catalog-grid .card:not([hidden])').length===1);
+   assert(await p.evaluate(()=>{window.qaCatalogObserver.disconnect();return !window.qaUnfilteredCatalog;}),'filtered catalog is never attached with unfiltered cards');
    await p.evaluate(()=>window.MirpanelNavigation.go('/mehsul'));
    const y=await p.evaluate(()=>{window.scrollTo(0,560);return scrollY;});assert(y>=500);
    await p.locator('.catalog-grid a[href="/mehsul/capcut-pro"]').first().evaluate(a=>a.click());

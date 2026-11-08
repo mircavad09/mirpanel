@@ -14,6 +14,8 @@
  const initialStyles=rememberStyles(document,location.href);for(const s of document.scripts)if(s.src)loaded.add(new URL(s.src).pathname);
  for(const n of [...document.head.querySelectorAll('link[rel=stylesheet]')])if(shared.test(new URL(n.href).pathname))document.head.append(n);
  const root=document.createElement('div');root.id='sitePageContent';root.style.display='contents';document.body.insertBefore(root,document.querySelector('.site-header')?.nextSibling||document.body.firstChild);
+ // Route styles can be temporarily inactive when WebKit restores the catalog.
+ const catalogVisibility=document.createElement('style');catalogVisibility.dataset.shellPersistent='';catalogVisibility.textContent='#sitePageContent .catalog-grid .card[hidden]{display:none!important}';document.head.append(catalogVisibility);
  for(const n of [...document.body.children])if(n!==root&&n.tagName!=='SCRIPT'&&n.tagName!=='LINK'&&!persistent(n))root.append(n);
  const isStatic=p=>p==='/'||p==='/mehsul';view={fragment:null,styles:initialStyles,title:document.title,body:document.body.className,html:document.documentElement.className,started:true};
  let listingRequest=null,listingAt=0;
@@ -128,10 +130,13 @@
   productTemplates.set(u.pathname,{...next,fragment:next.fragment.cloneNode(true)});
   if(productTemplates.size>8)productTemplates.delete(productTemplates.keys().next().value);
  }}
- if(run!==generation)return false;for(const[k,n]of styles){if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css'))continue;if(n.tagName==='LINK'&&new URL(n.href).origin!==location.origin)continue;const enabled=next.styles.includes(k);if(n.tagName==='LINK')n.disabled=!enabled;else n.media=enabled?'all':'not all';}root.replaceChildren(next.fragment);next.fragment=null;view=next;mounted=true;emptyStatus();
+ if(run!==generation)return false;
+ // Apply the search to the detached catalog before any unfiltered cards can be displayed.
+ if(u.pathname==='/mehsul'){const search=u.searchParams.get('search')?.toLocaleLowerCase('az');for(const card of next.fragment.querySelectorAll('.grid .card'))card.hidden=!!search&&!card.textContent.toLocaleLowerCase('az').includes(search);}
+ for(const[k,n]of styles){if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css'))continue;if(n.tagName==='LINK'&&new URL(n.href).origin!==location.origin)continue;const enabled=next.styles.includes(k);if(n.tagName==='LINK')n.disabled=!enabled;else n.media=enabled?'all':'not all';}root.replaceChildren(next.fragment);next.fragment=null;view=next;mounted=true;emptyStatus();
  for(const c of next.body.split(/\s+/).filter(Boolean))routeClasses.add(c);const classes=[...document.body.classList].filter(c=>!routeClasses.has(c)||['has-bottom-nav','has-account-header'].includes(c));document.body.className=[...new Set([...classes,...next.body.split(/\s+/).filter(Boolean)])].join(' ');document.documentElement.classList.toggle('community-chat-screen',next.html.includes('community-chat-screen'));document.title=next.title;
  if(next.productId){document.body.dataset.productId=next.productId;document.body.dataset.productSlug=next.productSlug||u.pathname.split('/').at(-1);}
- await mount(next,run,preparedModule);if(run!==generation)return false;loading=false;active();const search=new URLSearchParams(u.search).get('search');if(u.pathname==='/mehsul')for(const card of root.querySelectorAll('.grid .card'))card.hidden=!!search&&!card.textContent.toLocaleLowerCase('az').includes(search.toLocaleLowerCase('az'));
+ await mount(next,run,preparedModule);if(run!==generation)return false;loading=false;active();
  await frame();if(run!==generation)return false;const saved=scrolls.get(current);if(saved)window.scrollTo(saved.x,saved.y);else if(u.hash)document.getElementById(decodeURIComponent(u.hash.slice(1)))?.scrollIntoView();else window.scrollTo(0,0);window.dispatchEvent(new CustomEvent('mirpanel:route-ready',{detail:{path:u.pathname}}));return true;
  }catch(e){if(run!==generation)return false;loading=false;mounted=false;view=null;const main=document.createElement('main');main.className='site-route-loading';const h=document.createElement('h1');h.textContent='Yükləmə alınmadı';const p=document.createElement('p');p.textContent=e.name==='AbortError'?'Serverin cavabı gecikdi. Yenidən cəhd edin.':e.message;const b=document.createElement('button');b.textContent='Yenidən cəhd et';b.onclick=()=>go(current,{retry:true});main.append(h,p,b);root.replaceChildren(main);return false;}finally{clearTimeout(timeout);}}
  window.MirpanelNavigation={go,replaceURL(href){const u=new URL(href,location.href);if(u.origin!==location.origin||u.pathname!==location.pathname)return;current=u.pathname+u.search+u.hash;history.replaceState({mirpanel:true},'',current);active();},get pending(){return loading;}};
