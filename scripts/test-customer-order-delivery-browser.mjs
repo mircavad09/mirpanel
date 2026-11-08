@@ -4,7 +4,7 @@ import http from 'node:http';
 import path from 'node:path';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 
-const sample='Sintetik e-poçt: buyer@example.test\n\nİkinci sətir ✨';
+const sample='E-poçt: buyer@example.test\nŞifrə: synthetic-only\n\nİkinci sətir ✨\n  Son sətir';
 const order='12345678-1234-4234-8234-000000000001',delivery='12345678-1234-4234-8234-000000000002';
 const repeat={productId:'synthetic',title:'Synthetic first',planIndex:0,planName:'1 ay'};
 const price=725,field={key:'room',label:'Otaq adı',type:'text',required:true,minLength:1,maxLength:40};
@@ -18,7 +18,10 @@ const server=http.createServer(async(req,res)=>{
   if(!preview)items.push({title:'Əlavə sınaq paketi',quantity:1,planName:'1 aylıq uzun paket adı — uzun sətir üçün sınaq',unitCents:600,warranty:'7 gün zəmanət'});
   return json({orders:[{id:order,orderCode:'9180',product:'CapCut Pro · Sınaq sifarişi',amount:preview?5:11,status,autoDelivered,createdAt:'2026-11-08T09:03:00Z',receiptAvailable:true,items,deliveries:[{id:delivery,line:0,quantity:1}]}],nextCursor:null});
  }
- if(u.pathname==='/api/payments/my-orders/codes')return json({codes:[{id:delivery,title:'Synthetic first',plan:'1 ay',quantity:1,deliveredAt:'2026-11-08T09:05:00Z'}]});
+ if(u.pathname==='/api/payments/my-orders/codes')return json({codes:[
+  {id:delivery,title:'CapCut Pro',plan:'1 ay',image:'/assets/capcut.png',quantity:1,purchasedAt:'2026-11-08T20:05:00Z',category:{key:'video',label:'Video montajı'}},
+  {id:'12345678-1234-4234-8234-000000000003',title:'Netflix Şəxsi',plan:'7 gün',quantity:1,purchasedAt:'2026-11-08T09:05:00Z',category:{key:'film',label:'Film'}}
+ ]});
  if(u.pathname==='/api/payments/my-orders/codes/'+delivery){reveals++;return json({text:sample});}
  if(u.pathname==='/api/payments/my-orders/'+order+'/receipt'){receiptReads++;return json({mime:'image/png',url:'https://synthetic.supabase.co/private.png'});}
  if(u.pathname==='/api/payments/shop/quote')return json({items:[{...repeat,terms:'Yeni şərtlər',termsVersion:'current',unitCents:price,available,fields:[field]}],totalCents:price,balanceCents:10000});
@@ -97,10 +100,22 @@ try{
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    }
    expiresOn='2026-12-09';status='rejected';await page.reload();await card.getByText('Rədd edildi').waitFor();assert.equal(await card.getByText('Alınmış hesablar',{exact:true}).count(),0);assert.equal(await expiry.count(),0);
-   await page.goto(origin+'/profil?tab=codes');await page.getByText('Synthetic first').waitFor();assert.equal(reveals,2);
-   await page.getByRole('button',{name:'Göstər',exact:true}).click();await page.getByText('İkinci sətir',{exact:false}).waitFor();
-   await page.getByRole('button',{name:'Gizlət',exact:true}).click();assert.equal(await page.locator('pre').textContent(),'');
-   await page.getByRole('button',{name:'Kopyala',exact:true}).click();await page.getByText('Məlumat kopyalandı').waitFor();
+   await page.goto(origin+'/profil?tab=codes');await page.getByRole('heading',{name:'CapCut Pro'}).waitFor();assert.equal(reveals,2);
+   const cap=page.locator('.codes-card').filter({hasText:'CapCut Pro'}),netflix=page.locator('.codes-card').filter({hasText:'Netflix Şəxsi'}),search=page.getByRole('searchbox');
+   assert.equal(await page.locator('.codes-count').textContent(),'2 ədəd');
+   await page.getByRole('button',{name:'Hamısı 2',exact:true}).waitFor();
+   await page.getByRole('button',{name:'Video montajı 1',exact:true}).click();
+   assert.equal(await netflix.isVisible(),false);
+   await search.fill('NETFLIX');await page.getByText('Axtarışa uyğun məhsul tapılmadı.').waitFor();
+   await page.getByRole('button',{name:'Film 1',exact:true}).click();assert.equal(await netflix.isVisible(),true);assert.equal(await cap.isVisible(),false);
+   await search.clear();await page.getByRole('button',{name:'Hamısı 2',exact:true}).click();
+   assert.equal(await cap.locator('time').getAttribute('datetime'),'2026-11-08T20:05:00.000Z');assert.match(await cap.locator('time').textContent(),/09.*00:05/);
+   assert.equal(await cap.locator('.codes-details').isVisible(),false);
+   await cap.getByRole('button',{name:'Göstər',exact:true}).click();await cap.getByText('İkinci sətir',{exact:false}).waitFor();
+   assert.deepEqual(await cap.locator('.codes-credential strong').allTextContents(),['buyer@example.test','synthetic-only']);
+   assert.equal(await cap.locator('pre').textContent(),sample);
+   await cap.getByRole('button',{name:'Gizlət',exact:true}).click();assert.equal(await cap.locator('pre').textContent(),'');assert.equal(await cap.locator('.codes-credential').count(),0);
+   await cap.getByRole('button',{name:'Kopyala',exact:true}).click();await cap.getByText('Məlumat kopyalandı').waitFor();
    assert.equal(await page.evaluate(()=>window.__copied),sample);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    if(process.env.MIRPANEL_ORDER_SCREENSHOTS&&width!==320){

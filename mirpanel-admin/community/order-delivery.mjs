@@ -22,7 +22,7 @@ export async function deliveryRecords(pool,ids){
 }
 export async function ownerCodes(pool,user,id){
  const where=id?'and d.id=$2::uuid':'';
- return (await pool.query(`select d.id,d.order_id,d.line_index,d.quantity,d.delivered_at,${id?'d.message_cipher,':''}o.order_code,o.product_id,o.product_title,o.plan_name,o.checkout_snapshot,o.amount,o.quantity as order_quantity
+ return (await pool.query(`select d.id,d.order_id,d.line_index,d.quantity,d.delivered_at,${id?'d.message_cipher,':''}o.order_code,o.product_id,o.product_title,o.plan_name,o.checkout_snapshot,o.amount,o.quantity as order_quantity,o.created_at
   from ${D} d join ${O} l on l.order_id=d.order_id join public.payment_orders o on o.id=d.order_id
   where l.user_id=$1 and o.status not in ('rejected','cancelled','expired') and (o.payment_confirmed is true or o.status in ('approved','completed')) ${where}
   order by d.delivered_at desc,d.id desc`,id?[user,id]:[user])).rows;

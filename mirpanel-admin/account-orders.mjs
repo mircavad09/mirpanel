@@ -43,8 +43,14 @@ export function createAccountOrders({security,store,resolve}){
   async codes(request,id){
    const s=await scope(request),rows=await s.codes?.(id)||[];
    if(id){const r=rows[0];if(!r)throw Object.assign(Error('Təhvil məlumatı tapılmadı.'),{status:404});const value=JSON.parse(security.decryptSecret(r.message_cipher));if(value.id!==r.id||value.order!==r.order_id||value.line!==r.line_index)throw Error('DELIVERY_REFERENCE_MISMATCH');return {text:value.message};}
-   let products=[];try{products=(await s.catalog?.())?.products||[];}catch{}
-   return {accountId:s.userId,codes:rows.map(r=>{const x=deliveryLines({...r,quantity:r.order_quantity})[r.line_index];return{id:r.id,title:x.title,plan:x.planName,image:x.image||products.find(p=>p.id===x.productId)?.image||'',quantity:r.quantity,deliveredAt:r.delivered_at};})};
+   const catalog=rows.length?await Promise.resolve().then(()=>s.catalog?.()).catch(()=>null):null;
+   const products=new Map((catalog?.products||[]).map(p=>[String(p.id),p]));
+   const categories=new Map((catalog?.categories||[]).map(c=>[c.key,c.name]));
+   return {accountId:s.userId,codes:rows.map(r=>{
+    const x=deliveryLines({...r,quantity:r.order_quantity})[r.line_index],p=products.get(String(x.productId));
+    const category=categories.get(p?.category);
+    return{id:r.id,title:x.title,plan:x.planName,image:x.image||p?.image||'',quantity:r.quantity,deliveredAt:r.delivered_at,purchasedAt:r.created_at,category:category?{key:p.category,label:category}:null};
+   })};
   },
   async receipt(request,id){const s=await scope(request),o=await s.owned(id);if(!o)throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});if(!o.receipt_path||o.receipt_deleted_at)throw Object.assign(Error('Çek artıq mövcud deyil'),{status:410});
    try{return {url:await store.signedReceipt(o.receipt_path,60,'account-owner',o.id),mime:o.receipt_mime,expiresIn:60};}catch(e){if(e.status===404||Number(e.cause?.statusCode)===404)throw Object.assign(Error('Çek artıq mövcud deyil'),{status:410});throw Object.assign(Error('Çeki açmaq mümkün olmadı. Yenidən cəhd edin.'),{status:503});}

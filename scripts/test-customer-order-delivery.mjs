@@ -9,6 +9,9 @@ import {onRequest as proxy} from '../functions/api/payments/[[path]].js';
 
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{pool,db,shop,id,method,rpc}=f;
+f.catalog.categories=[{key:'video',name:'Video montajı'},{key:'film',name:'Film'},{key:'unused',name:'Unused'}];
+f.catalog.products.find(p=>p.id==='ordinary').category='video';
+f.catalog.products.find(p=>p.id==='unlimited').category='film';
 const buyer={user:'a'},other={user:'b'},hash='a'.repeat(64);
 const security=createPaymentSecurity({encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')});
 let checks=0;
@@ -68,6 +71,8 @@ try{
  await reject(adminDelivery(pool,security,'synthetic-admin',order.orderId,{...inputDelivery,requestId:id()}),409);
  eq((await list(buyer,code)).orders[0].deliveries,[]);
  const meta=await account.codes(buyer);eq(meta.codes.length,1);eq(JSON.stringify(meta).includes(inputDelivery.message),false);
+ eq(meta.codes[0].category,{key:'video',label:'Video montajı'});
+ eq(meta.codes[0].purchasedAt,(await list(buyer,code)).orders[0].createdAt);
  eq((await account.codes(buyer,inputDelivery.requestId)).text,inputDelivery.message);
  eq((await account.codes(other)).codes.length,0);await reject(account.codes(other,inputDelivery.requestId),404);await reject(account.codes({},inputDelivery.requestId),401);
  eq((await q('select message_cipher from customer_order_deliveries')).rows[0].message_cipher.includes('Sintetik təhvil'),false);
@@ -98,6 +103,7 @@ try{
   eq(cookie,'__Secure-mirpanel_owner.session_token=synthetic');
  }finally{globalThis.fetch=originalFetch;}
  await q(db.read('mirpanel-admin/community/order-delivery-rollback.sql'));
- eq((await account.codes(buyer)).codes.length,2);eq(await outbox(),[{state:'accepted',n:3},{state:'uncertain',n:1}]);
+ const finalCodes=(await account.codes(buyer)).codes;
+ eq(finalCodes.length,2);eq(finalCodes.map(x=>x.category.key).sort(),['film','video']);eq(await outbox(),[{state:'accepted',n:3},{state:'uncertain',n:1}]);
  console.log(JSON.stringify({checks,syntheticOnly:true,provider:'mock',productionWrites:0}));
 }finally{await worker.stop();await parallel.stop();await f.close();}
