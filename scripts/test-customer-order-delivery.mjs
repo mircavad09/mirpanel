@@ -58,7 +58,9 @@ try{
  eq((await list(other,code)).orders.length,0);
  eq(await outbox(),[{state:'queued',n:1}]);
  await Promise.all([worker.wake(),parallel.wake()]);
- eq(messages.length,1);eq(messages[0].subject,'Sifarişiniz təsdiqləndi');eq(messages[0].textBody.includes('11.00 AZN')&&messages[0].textBody.includes('+994500000000'),true);
+ eq(messages.length,1);eq(messages[0].subject,'Sifarişiniz təsdiqləndi — Sifariş №'+code);
+ eq(['Ümumi məbləğ: 11,00 ₼','5,00 ₼ / vahid · Cəm 5,00 ₼','+994500000000','Sifarişiniz hazırlanır.'].every(x=>messages[0].textBody.includes(x)),true);
+ eq((messages[0].htmlBody.match(/width="48"/g)||[]).length,2);
  eq(messages[0].textBody.includes('/profil?tab=orders&order='+code),true);
  eq(await outbox(),[{state:'accepted',n:1}]);
  const same=await Promise.all([adminDelivery(pool,security,'synthetic-admin',order.orderId,inputDelivery),adminDelivery(pool,security,'synthetic-admin',order.orderId,inputDelivery)]);
@@ -69,7 +71,8 @@ try{
  eq((await account.codes(buyer,inputDelivery.requestId)).text,inputDelivery.message);
  eq((await account.codes(other)).codes.length,0);await reject(account.codes(other,inputDelivery.requestId),404);await reject(account.codes({},inputDelivery.requestId),401);
  eq((await q('select message_cipher from customer_order_deliveries')).rows[0].message_cipher.includes('Sintetik təhvil'),false);
- await worker.wake();eq(messages.length,2);eq(messages[1].subject,'№'+code+' sifarişiniz üzrə məhsul hazırdır');
+ await worker.wake();eq(messages.length,2);eq(messages[1].subject,'Hesabınız hazırdır — Sifariş №'+code);
+ eq(messages[1].textBody.includes('/profil?tab=orders&order='+code),true);
  eq(messages[1].textBody.includes('Synthetic ordinary')&&!messages[1].textBody.includes('Synthetic unlimited')&&!messages[1].textBody.includes('Sintetik təhvil'),true);
  eq((await adminDelivery(pool,security,'synthetic-admin',order.orderId,{...inputDelivery,requestId:id(),line:1})).status,'completed');
  const complete=(await list(buyer,code)).orders[0];
