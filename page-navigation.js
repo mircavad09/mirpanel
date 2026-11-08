@@ -37,6 +37,7 @@
  void import(authModule).catch(()=>{});
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
  async function moduleWithin(url){let timer;try{return await Promise.race([import(url),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}finally{clearTimeout(timer);}}
+ const shopModule='/community-assets/shop-ui.js?v=shell-fast-entry-2',groupModule='/community-assets/community.js?v=shell-fast-entry-2';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&u.pathname===location.pathname)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));(dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
@@ -46,9 +47,9 @@
  let download=scriptDownloads.get(u.href);if(!download){download=fetch(u.href,{signal:AbortSignal.timeout(10000),cache:'default'}).then(r=>{if(!r.ok)throw Error('Ümumi resurs yüklənmədi.');return r.text();}).finally(()=>scriptDownloads.delete(u.href));scriptDownloads.set(u.href,download);}
  const code=await download;if(run!==generation||loaded.has(key))return;
  const s=document.createElement('script');s.dataset.routeResource=key;s.textContent=code;loaded.add(key);document.head.append(s);}
- async function mount(v,run){if(run!==generation)return;window.mirpanelNavigationMounting=true;try{
- if(document.getElementById('shopApp')){const m=await moduleWithin('/community-assets/shop-ui.js?v=shell-fast-entry-1');if(run!==generation)return;dispose=m.mountShop();}
- else if(document.getElementById('communityApp')){const m=await moduleWithin('/community-assets/community.js?v=shell-fast-entry-1');if(run!==generation)return;dispose=m.mountCommunity();}
+ async function mount(v,run,preparedModule){if(run!==generation)return;window.mirpanelNavigationMounting=true;try{
+ if(document.getElementById('shopApp')){const m=await(preparedModule||moduleWithin(shopModule));if(run!==generation)return;dispose=m.mountShop();}
+ else if(document.getElementById('communityApp')){const m=await(preparedModule||moduleWithin(groupModule));if(run!==generation)return;dispose=m.mountCommunity();}
  else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=order-receipt-20261108',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
  else if(!v.started){for(const src of v.scripts||[]){if(run!==generation)return;await resource(src,run);}v.started=true;}
  if(location.pathname==='/'&&!root.querySelector('#grid .card'))window.mirpanelRestoreCatalog?.();
@@ -82,7 +83,9 @@
   try{const m=await moduleWithin(authModule);if(run!==generation)return false;const cleanup=await m.mountAuth(app);if(run!==generation){cleanup();return false;}dispose=cleanup;loading=false;active();return true;}catch{if(run===generation){loading=false;const b=document.createElement('button');b.textContent='Giriş formasını yenidən aç';b.onclick=()=>location.reload();app.replaceChildren(b);}return false;}finally{clearTimeout(timeout);}
  }
  skeleton(u);window.scrollTo(0,0);
- if(templateKey(u.pathname))void import('/session-state.js?v=auth-recovery-20261107').then(m=>run===generation?m.getCommunityState():null).catch(()=>{});
+ const sectionType=templateKey(u.pathname),preparedModule=sectionType?moduleWithin(sectionType==='shop'?shopModule:groupModule):null;
+ void preparedModule?.catch(()=>{});
+ if(sectionType)void import('/session-state.js?v=auth-recovery-20261107').then(m=>run===generation?m.getCommunityState():null).catch(()=>{});
  try{let next=isStatic(u.pathname)?cache.get(u.pathname):null;const savedTemplate=templates.get(templateKey(u.pathname));if(!next&&savedTemplate)next={...savedTemplate,fragment:savedTemplate.fragment.cloneNode(true),html:u.pathname==='/qrup'?'community-chat-screen':''};
  if(!next){const prepared=u.pathname==='/mehsul'&&listingRequest&&Date.now()-listingAt<30000?await listingRequest:null;if(run!==generation)return false;
  const r=prepared?null:await fetch(u.href,{signal:controller.signal,credentials:'same-origin',cache:isStatic(u.pathname)?'default':'no-store',headers:{Accept:'text/html','X-Mirpanel-Navigation':'content'}});
@@ -92,7 +95,7 @@
  const tk=templateKey(u.pathname);if(tk&&next.fragment.querySelector('#shopApp:empty,#communityApp:empty'))templates.set(tk,{...next,fragment:next.fragment.cloneNode(true)});}
  if(run!==generation)return false;for(const[k,n]of styles){if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css'))continue;if(n.tagName==='LINK'&&new URL(n.href).origin!==location.origin)continue;const enabled=next.styles.includes(k);if(n.tagName==='LINK')n.disabled=!enabled;else n.media=enabled?'all':'not all';}root.replaceChildren(next.fragment);next.fragment=null;view=next;mounted=true;emptyStatus();
  for(const c of next.body.split(/\s+/).filter(Boolean))routeClasses.add(c);const classes=[...document.body.classList].filter(c=>!routeClasses.has(c)||['has-bottom-nav','has-account-header'].includes(c));document.body.className=[...new Set([...classes,...next.body.split(/\s+/).filter(Boolean)])].join(' ');document.documentElement.classList.toggle('community-chat-screen',next.html.includes('community-chat-screen'));document.title=next.title;
- await mount(next,run);if(run!==generation)return false;loading=false;active();const search=new URLSearchParams(u.search).get('search');if(u.pathname==='/mehsul')for(const card of root.querySelectorAll('.grid .card'))card.hidden=!!search&&!card.textContent.toLocaleLowerCase('az').includes(search.toLocaleLowerCase('az'));
+ await mount(next,run,preparedModule);if(run!==generation)return false;loading=false;active();const search=new URLSearchParams(u.search).get('search');if(u.pathname==='/mehsul')for(const card of root.querySelectorAll('.grid .card'))card.hidden=!!search&&!card.textContent.toLocaleLowerCase('az').includes(search.toLocaleLowerCase('az'));
  await frame();if(run!==generation)return false;const saved=scrolls.get(current);if(saved)window.scrollTo(saved.x,saved.y);else if(u.hash)document.getElementById(decodeURIComponent(u.hash.slice(1)))?.scrollIntoView();else window.scrollTo(0,0);window.dispatchEvent(new CustomEvent('mirpanel:route-ready',{detail:{path:u.pathname}}));return true;
  }catch(e){if(run!==generation)return false;loading=false;mounted=false;view=null;const main=document.createElement('main');main.className='site-route-loading';const h=document.createElement('h1');h.textContent='Yükləmə alınmadı';const p=document.createElement('p');p.textContent=e.name==='AbortError'?'Serverin cavabı gecikdi. Yenidən cəhd edin.':e.message;const b=document.createElement('button');b.textContent='Yenidən cəhd et';b.onclick=()=>go(current,{retry:true});main.append(h,p,b);root.replaceChildren(main);return false;}finally{clearTimeout(timeout);}}
  window.MirpanelNavigation={go,replaceURL(href){const u=new URL(href,location.href);if(u.origin!==location.origin||u.pathname!==location.pathname)return;current=u.pathname+u.search+u.hash;history.replaceState({mirpanel:true},'',current);active();},get pending(){return loading;}};

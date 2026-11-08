@@ -11,6 +11,7 @@ const selectors={
  home:['#grid .card','#grid a.card[href*="/mehsul/"],#grid .card a[href*="/mehsul/"]'],
  login:['#account-email','.auth-submit:not([disabled])'],
  cart:['#shopApp h1','#shopApp .shop-empty,#shopApp .shop-checkout-grid'],
+ drawer:['dialog.mir-cart-drawer[open]','dialog.mir-cart-drawer[open] button'],
  balance:['#shopApp h1','#shopApp .shop-card'],
  group:['#communityApp h1','#communityApp .community-messages'],
  profile:['.account-panel,.auth-panel','#account-email,.profile-hero']
@@ -75,8 +76,8 @@ try{
   if(process.env.MIRPANEL_MEASURE_ORDER==='1'){
    for(const slug of ['netflix-sexsi','hbo-max']){
     await p.goto(origin+'/mehsul/'+slug,{waitUntil:'domcontentloaded'});
-    await p.locator('#pp-order-btn:not([disabled])').waitFor({timeout:15000});
-    capcut[slug]=await warning(p);
+    const enabled=await p.locator('#pp-order-btn:not([disabled])').waitFor({timeout:15000}).then(()=>true,()=>false);
+    capcut[slug]=enabled?await warning(p):await p.evaluate(()=>({heading:null,terms:null,button:document.querySelector('#pp-order-btn')?.textContent,inventory:document.querySelector('#inventoryServiceStatus')?.textContent}));
    }
   }
   console.log(JSON.stringify({partial:true,width,weak,run:run+1,capcut}));
@@ -91,8 +92,15 @@ try{
   const again=await sample(q,'home',()=>menu(q,'/'));
   const repeat=await sample(q,'products',()=>menu(q,'/mehsul'));
   const other={};
+  if(process.env.MIRPANEL_MEASURE_EXTRA==='1'){
+   const cartLink=await q.evaluate(()=>[...document.querySelectorAll('#cartHeaderLink,[data-browser-nav=cart]')].some(a=>a.getClientRects().length));
+   if(cartLink){
+    other.drawer=await sample(q,'drawer',()=>q.evaluate(()=>[...document.querySelectorAll('#cartHeaderLink,[data-browser-nav=cart]')].find(a=>a.getClientRects().length)?.click()),{limit:4000});
+    await q.evaluate(()=>document.querySelector('dialog.mir-cart-drawer[open]')?.close());
+   }
+  }
   if(process.env.MIRPANEL_MEASURE_EXTRA==='1')for(const [key,path] of [['login','/hesab'],['profile','/profil'],['cart','/sebet'],['balance','/balans'],['group','/qrup']]){
-   other[key]=await sample(q,key,()=>menu(q,path),{limit:9000}).catch(e=>({error:e.message.split('\n')[0]}));
+   other[key]=await sample(q,key,()=>key==='cart'?q.evaluate(()=>{void window.MirpanelNavigation.go('/sebet');}):menu(q,path),{limit:9000}).catch(e=>({error:e.message.split('\n')[0]}));
   }
   const result={width,weak,run:run+1,capcut,home,products,back,forward,again,repeat,other};rounds.push(result);
   console.log(JSON.stringify(result));
