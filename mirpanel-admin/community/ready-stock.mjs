@@ -21,10 +21,13 @@ export async function readyStockView(pool,catalog,inventory){
   const availability=new Map(inventory.map(x=>[x.productId,x]));
   const result={products:catalog.products.filter(p=>p.active!==false&&p.plans?.length).map(p=>{
    const stock=availability.get(p.id);
-   return {id:p.id,title:p.title,scope:stock?.scope||'none',version:stock?.version??0,plans:p.plans.map((plan,i)=>{
-    const sig=signature(plan),config=records.get(key(p.id,planKey(plan,i),sig)),inv=stock?.plans.find(x=>x.planKey===String(i));
+   const counted=new Set();let readyTotal=0;
+   const plans=p.plans.map((plan,i)=>{
+    const sig=signature(plan),sku=key(p.id,planKey(plan,i),sig),config=records.get(sku),inv=stock?.plans.find(x=>x.planKey===String(i));
+    if(!counted.has(sku)){counted.add(sku);readyTotal+=config?.ready??0;}
     return {index:i,title:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Paket '+(i+1)),signature:sig,sales:inv?.available??null,tracked:inv?.tracked??false,active:inv?.active??false,ready:config?.ready??0,autoWallet:config?.auto_wallet??false};
-   })};
+   });
+   return {id:p.id,title:p.title,image:typeof p.image==='string'?p.image:'',readyTotal,scope:stock?.scope||'none',version:stock?.version??0,plans};
   })};
   await c.query('commit');return result;
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}

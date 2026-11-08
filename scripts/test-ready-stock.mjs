@@ -17,7 +17,9 @@ const buyer={user:'a'},other={user:'b'},hash='a'.repeat(64),otherHash='b'.repeat
 let checks=0;const eq=(x,y)=>{assert.deepEqual(x,y);checks++;};
 const planSignature=signature(catalog.products[0].plans[0]);
 const add=input=>saveReadyStock(pool,security,config.tokenSecret,catalog,'synthetic-admin',{productId:'ordinary',index:0,planSignature,...input});
-const view=async()=>{const s=await rpc('inventory_snapshot');return (await readyStockView(pool,catalog,catalog.products.map(p=>inventoryAvailability(p,s.find(x=>x.productId===p.id))))).products.find(x=>x.id==='ordinary').plans[0];};
+const stockView=async()=>{const s=await rpc('inventory_snapshot');return (await readyStockView(pool,catalog,catalog.products.map(p=>inventoryAvailability(p,s.find(x=>x.productId===p.id))))).products;};
+const productStock=async()=>(await stockView()).find(x=>x.id==='ordinary');
+const view=async()=>(await productStock()).plans[0];
 const sql=(q,p)=>pool.query(q,p);
 const wallet=(items,requestId=id(),who=buyer,owner=hash)=>shop.checkout(who,owner,{mode:'wallet',items,requestId,consentAccepted:true});
 const codes=createAccountOrders({security,store:f.store,resolve:req=>({userId:req.user,codes:code=>ownerCodes(pool,req.user,code)})});
@@ -27,9 +29,14 @@ try{
  await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));
  await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));
  eq(Object.values((await sql(db.read('mirpanel-admin/community/ready-stock-verification.sql'))).rows[0]).every(Boolean),true);
- await rpc('inventory_set_nullable_quantity',['ordinary',50,'synthetic-admin',id(),0,null]);
+ eq((await stockView()).find(x=>x.id==='zero').plans[0].sales,0);
+ await rpc('inventory_set_nullable_quantity',['ordinary',null,'synthetic-admin',id(),0,null]);
+ eq((await view()).sales,null);
+ await rpc('inventory_set_nullable_quantity',['ordinary',50,'synthetic-admin',id(),(await productStock()).version,null]);
+ eq((await view()).sales,50);
+ eq((await productStock()).image,catalog.products[0].image);
  const orderItem=await item('ordinary'),items=[orderItem];
- const messages=Array.from({length:5},(_,i)=>'Synthetic test message '+(i+1)),batch={requestId:id(),autoWallet:true,messages};
+ const messages=Array.from({length:5},(_,i)=>'Synthetic test message '+(i+1)+'\n\nİstifadə qaydası\nİkinci sətir'),batch={requestId:id(),autoWallet:true,messages};
  const saves=await Promise.all([add(batch),add(batch)]);eq(saves.filter(s=>s.replayed).length,1);
  await assert.rejects(add({...batch,messages:['Different']}),{status:409});checks++;
  eq([(await view()).sales,(await view()).ready,(await view()).autoWallet],[50,5,true]);
@@ -78,8 +85,12 @@ try{
  eq((await sql("select (select count(*) from shop_checkouts)::int as orders,(select cents::int from wallet_accounts where user_id='a') as balance")).rows[0],beforeFailure);
  eq((await view()).ready,1);
  await sql('update ready_stock_units set message_cipher=$2 where id=$1',[unused.id,unused.message_cipher]);
+ const second={label:'3 aylıq',months:3,price:12};catalog.products[0].plans.push(second);
+ await add({index:1,planSignature:signature(second),requestId:id(),messages:['Bir','İki']});
+ eq((await productStock()).plans.map(x=>x.ready),[1,2]);
+ eq((await productStock()).readyTotal,3);
  await db.exec(db.read('mirpanel-admin/community/ready-stock-rollback.sql'));
  eq((await wallet(items)).deliveryStatus,'preparing');
- eq(Number((await sql('select count(*) n from ready_stock_units where delivery_id is null')).rows[0].n),1);
+ eq(Number((await sql('select count(*) n from ready_stock_units where delivery_id is null')).rows[0].n),3);
  console.log(JSON.stringify({checks,salesLimit:50,readyUnits:5,atomic:true,syntheticOnly:true}));
 }finally{await f.close();}

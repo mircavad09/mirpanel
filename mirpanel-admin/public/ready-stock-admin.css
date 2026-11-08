@@ -1,16 +1,26 @@
 .readyStockLayout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:16px;align-items:start;font:14px/1.5 system-ui,"Segoe UI",sans-serif}
 .readyStockCard{min-width:0;background:#16191b;border:1px solid #34393d;border-radius:14px;padding:16px}
 .readyStockCard h3{font-size:17px;margin:0 0 5px}.readyStockCard p{color:#bcc1c7;margin:0 0 12px}
-.readyStockCard form,.readyStockCard [data-messages],.readyStockCard [data-plan-list]{display:grid;gap:10px}
+.readyStockCard form,.readyStockCard [data-messages]{display:grid;gap:10px}
 .readyStockCard label:not(.readyStockCheck){display:grid;gap:4px;min-width:0}
 .readyStockCard :is(select,textarea,input[type=number]){width:100%;min-width:0;box-sizing:border-box;font:inherit}
 .readyStockCard .readyStockCheck{display:flex;align-items:center;gap:7px}.readyStockCard input[type=checkbox]{width:18px;height:18px;accent-color:#ffd400}
 .readyStockCounts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.readyStockCounts span{display:grid;padding:8px 10px;border:1px solid #41423b;border-radius:9px;background:#212224}
+.readyStockCounts :is(span,button){display:grid;padding:8px 10px;border:1px solid #41423b;border-radius:9px;background:#212224;text-align:left;font:inherit;color:inherit;overflow-wrap:anywhere}
+.readyStockCounts button{cursor:pointer}
+.readyStockCounts button:hover,.readyStockCounts button[aria-expanded=true]{border-color:#d7a925}
 .readyStockCounts strong{color:#ffda36;font-size:18px}
 .readyStockSale,.readyStockActions{display:flex;flex-wrap:wrap;align-items:end;gap:8px}.readyStockSale label:first-child{flex:1 1 90px}
+#readyStockSaleEditor p{font-size:12px;margin:6px 0 0}
 .readyStockMessage{display:grid;gap:6px}.readyStockMessage .btn{justify-self:start}
-.readyStockPlan{display:grid;gap:3px;text-align:left;padding:10px;border:1px solid #42464a;border-radius:9px;background:#202326;color:#eee;cursor:pointer;font:inherit;overflow-wrap:anywhere}
-.readyStockPlan[aria-pressed=true]{border-color:#d7a925;background:#312813}.readyStockPlan small{color:#c0c4ca}
+.readyStockCard [data-product-list]{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,130px),1fr));gap:9px}
+.readyStockProduct{display:grid;grid-template-rows:auto 1fr auto;gap:5px;min-width:0;text-align:left;padding:7px;border:1px solid #42464a;border-radius:10px;background:#202326;color:#eee;cursor:pointer;font:inherit;overflow-wrap:anywhere}
+.readyStockProduct[aria-pressed=true]{border-color:#d7a925;background:#312813}
+.readyStockProduct>span:last-child{font-size:12px;color:#ffda36}
+.readyStockImage{display:grid;position:relative;place-items:center;aspect-ratio:16/9;overflow:hidden;border-radius:6px;background:#101214;color:#aaa}
+.readyStockImage img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}
+.readyStockProduct:focus-visible,.readyStockCounts button:focus-visible{outline:2px solid #ffd400;outline-offset:2px}
+.readyStockCard [data-auto]{margin-inline-start:auto;padding:2px 9px;border-radius:20px;background:#303438;color:#d6dade;font-size:12px}
+.readyStockCard [data-auto][data-active=true]{color:#a1efb8;background:#1d3b2a}
 .readyStockCard [role=status]{margin:10px 0 0;color:#97e8b1}.readyStockCard [data-error=true]{color:#ffb0b0}
 @media(max-width:760px){.readyStockLayout{grid-template-columns:1fr}.readyStockCard{padding:12px}}

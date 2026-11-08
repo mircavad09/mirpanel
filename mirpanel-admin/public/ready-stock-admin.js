@@ -8,20 +8,25 @@ export function mountReadyStock(host,api){
    <form autocomplete="off">
     <label>Məhsul<select name="product" aria-label="Məhsul" required></select></label>
     <label>Paket<select name="plan" aria-label="Paket" required></select></label>
-    <div class="readyStockCounts"><span>Satış stoku <strong data-sales>—</strong></span><span>Hazır hesab <strong data-ready>—</strong></span></div>
-    <div class="readyStockSale"><label>Satış miqdarı<input name="sales" type="number" min="0" max="10000" step="1"></label><label class="readyStockCheck"><input name="unlimited" type="checkbox"> Limitsiz</label><button class="btn" type="button" data-save-sales>Satış stokunu saxla</button></div>
+    <div class="readyStockCounts"><button type="button" data-edit-sales aria-expanded="false" aria-controls="readyStockSaleEditor">Satış stoku <strong data-sales>—</strong></button><span>Hazır hesab <strong data-ready>—</strong></span></div>
+    <div id="readyStockSaleEditor" hidden>
+     <div class="readyStockSale"><label>Satış miqdarı<input name="sales" type="number" min="0" max="10000" step="1" inputmode="numeric" aria-describedby="readyStockSaleHelp"></label><button class="btn" type="button" data-save-sales>Satış stokunu saxla</button></div>
+     <p id="readyStockSaleHelp">Bu xanada 0 = Limitsiz. 1–10000 = satış limiti. Əvvəldən sıfır olan stok “Stokda yoxdur” kimi qalır.</p>
+    </div>
     <p data-scope></p>
-    <label class="readyStockCheck"><input name="auto" type="checkbox"> Balansla avtomatik təhvil</label>
+    <label class="readyStockCheck"><input name="auto" type="checkbox" role="switch"> Balansla avtomatik təhvil <strong data-auto aria-hidden="true">Bağlı</strong></label>
     <div data-messages></div>
     <div class="readyStockActions"><button class="btn" type="button" data-add-unit>+ Yeni hesab əlavə et</button><button class="btn primary" type="submit">Yadda saxla</button></div>
    </form>
    <p role="status" aria-live="polite"></p>
   </section>
-  <section class="readyStockCard"><h3>Paketlər üzrə stok</h3><p>Satış limiti və təhvil üçün hazır hesablar ayrı göstərilir.</p><div data-plan-list></div></section>
+  <section class="readyStockCard"><h3>Məhsullar üzrə hazır stok</h3><p>Bütün paketlər üzrə sifarişə ayrılmamış hazır hesablar.</p><div data-product-list></div></section>
  </div>`;
- const form=host.querySelector('form'),{product,plan,sales,unlimited,auto}=form.elements;
- const q=s=>host.querySelector(s),messageList=q('[data-messages]'),report=q('[role=status]'),list=q('[data-plan-list]');
- const submit=form.querySelector('[type=submit]'),saveSales=q('[data-save-sales]'),add=q('[data-add-unit]');
+ const form=host.querySelector('form'),{product,plan,sales,auto}=form.elements;
+ const q=s=>host.querySelector(s),messageList=q('[data-messages]'),report=q('[role=status]'),list=q('[data-product-list]');
+ const submit=form.querySelector('[type=submit]'),saveSales=q('[data-save-sales]'),editSales=q('[data-edit-sales]'),editor=q('#readyStockSaleEditor'),add=q('[data-add-unit]');
+ const drafts=new Map(),lastPlan=new Map();
+ let activeDraft=null;
  let products=[],pending=null,busy=false,loaded=false,read=null;
  const selected=()=>{const p=products.find(x=>x.id===product.value);return {p,item:p?.plans.find(x=>String(x.index)===plan.value)};};
  const messages=()=>[...messageList.querySelectorAll('textarea')];
@@ -29,17 +34,17 @@ export function mountReadyStock(host,api){
  function controls(){
   const locked=busy||!!pending,absent=!selected().item;
   product.disabled=locked||!loaded;plan.disabled=locked||!loaded;auto.disabled=locked||absent;
-  sales.disabled=locked||absent||unlimited.checked;unlimited.disabled=locked||absent;
+  sales.disabled=locked||absent;editSales.disabled=locked||absent;
   for(const node of messageList.querySelectorAll('textarea,button'))node.disabled=locked||absent;
   add.disabled=locked||absent||messages().length>=20;
   submit.disabled=busy||absent||pending?.type==='sales';
   saveSales.disabled=busy||absent||pending?.type==='accounts';
   for(const b of list.querySelectorAll('button'))b.disabled=locked;
  }
- function addMessage(){
+ function addMessage(value=''){
   const row=document.createElement('div');row.className='readyStockMessage';
   const label=document.createElement('label'),title=document.createElement('span'),box=document.createElement('textarea');
-  title.textContent='Müştəriyə təqdim ediləcək mətn';box.rows=4;box.maxLength=8000;box.spellcheck=false;
+  title.textContent='Müştəriyə təqdim ediləcək hazır mesaj';box.rows=4;box.maxLength=8000;box.spellcheck=false;box.value=value;
   label.append(title,box);row.append(label);
   if(messages().length){const remove=document.createElement('button');remove.type='button';remove.className='btn';remove.textContent='Sahəni sil';remove.onclick=()=>{row.remove();controls();};row.append(remove);}
   messageList.append(row);controls();
@@ -48,25 +53,46 @@ export function mountReadyStock(host,api){
   plan.replaceChildren();for(const x of products.find(x=>x.id===product.value)?.plans||[])plan.add(new Option(x.title,String(x.index)));
   if([...plan.options].some(x=>x.value===wanted))plan.value=wanted;
  }
+ function rememberDraft(){
+  if(activeDraft)drafts.set(activeDraft.key,{messages:messages().map(x=>x.value),auto:activeDraft.originalAuto===auto.checked?undefined:auto.checked});
+ }
+ function setEditor(open){editor.hidden=!open;editSales.setAttribute('aria-expanded',String(open));}
+ function renderSwitch(){const badge=q('[data-auto]');badge.textContent=auto.checked?'Aktiv':'Bağlı';badge.dataset.active=String(auto.checked);}
  function renderPlan(){
   const {p,item}=selected();
-  q('[data-sales]').textContent=item?(item.sales??'Limitsiz'):'—';q('[data-ready]').textContent=item?.ready??'—';
+  q('[data-sales]').textContent=!item?'—':item.sales===null?'Limitsiz':item.sales===0?'Stokda yoxdur':item.sales+' satış vahidi';q('[data-ready]').textContent=item?.ready??'—';
   q('[data-scope]').textContent=p?.scope==='plan'?'Satış stoku bu paketə aiddir.':'Satış stoku məhsul üzrə ortaqdır.';
-  sales.value=item?.sales??'';unlimited.checked=!!item&&item.sales===null;auto.checked=!!item?.autoWallet;
-  list.replaceChildren();
-  for(const x of p?.plans||[]){
-   const b=document.createElement('button');b.type='button';b.className='readyStockPlan';b.setAttribute('aria-pressed',String(x===item));
-   const title=document.createElement('strong'),numbers=document.createElement('span'),mode=document.createElement('small');
-   title.textContent=x.title;numbers.textContent='Satış: '+(x.sales??'Limitsiz')+' · Hazır: '+x.ready;
-   mode.textContent=x.autoWallet?'Avtomatik təhvil açıqdır':'Avtomatik təhvil bağlıdır';
-   b.append(title,numbers,mode);b.onclick=()=>{plan.value=String(x.index);renderPlan();};list.append(b);
-  }
+  sales.value=item?.sales>0?item.sales:'';setEditor(false);
+  const draftKey=item?JSON.stringify([p.id,item.index,item.signature]):null;
+  activeDraft=draftKey?{key:draftKey,originalAuto:item.autoWallet}:null;
+  if(p&&item)lastPlan.set(p.id,plan.value);
+  const draft=drafts.get(draftKey);
+  auto.checked=draft?.auto??!!item?.autoWallet;renderSwitch();
+  messageList.replaceChildren();
+  for(const value of draft?.messages||[''])addMessage(value);
+  for(const b of list.querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.product===p?.id));
   controls();
+ }
+ function renderProducts(){
+  list.replaceChildren();
+  for(const x of products){
+   const b=document.createElement('button');b.type='button';b.className='readyStockProduct';b.dataset.product=x.id;
+   const image=document.createElement('span');image.className='readyStockImage';image.textContent='◇';image.setAttribute('aria-hidden','true');
+   try{
+    const url=new URL(x.image,'https://mirpanel.com/');
+    if(x.image&&url.protocol==='https:'){
+     const img=document.createElement('img');img.src=url.href;img.alt='';img.loading='lazy';img.addEventListener('error',()=>img.remove(),{once:true});image.append(img);
+    }
+   }catch{}
+   const title=document.createElement('strong'),numbers=document.createElement('span');
+   title.textContent=x.title;numbers.textContent=x.readyTotal+' hazır hesab';
+   b.append(image,title,numbers);b.onclick=()=>{if(product.value!==x.id){rememberDraft();product.value=x.id;fillPlans(lastPlan.get(x.id));renderPlan();}};list.append(b);
+  }
  }
  async function refresh(){
   if(read||pending)return;
-  const p=product.value,i=plan.value;read=api(endpoint);
-  try{products=(await read).products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderPlan();}
+  read=api(endpoint);
+  try{const next=await read,p=product.value,i=plan.value;rememberDraft();products=next.products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderProducts();renderPlan();}
   catch(e){say(e.message,true);}
   finally{read=null;controls();}
  }
@@ -76,8 +102,8 @@ export function mountReadyStock(host,api){
   if(!pending){
    const data={productId:p.id,index:item.index,planSignature:item.signature,requestId:crypto.randomUUID()};
    if(type==='sales'){
-    if(!unlimited.checked&&(!sales.value||!sales.reportValidity()))return say('0–10000 arası satış miqdarı yazın və ya Limitsiz seçin.',true);
-    Object.assign(data,{expectedVersion:p.version,available:unlimited.checked?null:Number(sales.value)});
+    if(!sales.value||!sales.reportValidity())return say('0–10000 arası satış miqdarı yazın. Limitsiz üçün 0 daxil edin.',true);
+    Object.assign(data,{expectedVersion:p.version,available:Number(sales.value)===0?null:Number(sales.value)});
    }else{
     Object.assign(data,{messages:messages().map(x=>x.value).filter(x=>x.trim())});
     if(auto.checked!==item.autoWallet)data.autoWallet=auto.checked;
@@ -88,7 +114,7 @@ export function mountReadyStock(host,api){
   busy=true;controls();say('Saxlanılır…');
   try{
    const result=await api(endpoint+(type==='sales'?'/sales':''),{method:'POST',body:JSON.stringify(pending.data)});
-   pending=null;if(type==='accounts'){messageList.replaceChildren();addMessage();}
+   pending=null;if(type==='accounts'){drafts.delete(activeDraft?.key);activeDraft=null;messageList.replaceChildren();addMessage();}
    say(type==='sales'?'Satış stoku saxlanıldı.':result.added?result.added+' hazır hesab saxlanıldı.':'Təhvil ayarı saxlanıldı.');
    await refresh();
   }catch(e){
@@ -96,8 +122,9 @@ export function mountReadyStock(host,api){
    else say((e.message||'Nəticə təsdiqlənmədi.')+' Eyni düymə ilə yenidən cəhd edin. Mətnlər qorunub.',true);
   }finally{busy=false;controls();}
  }
- product.onchange=()=>{fillPlans();renderPlan();};
- plan.onchange=renderPlan;unlimited.onchange=controls;add.onclick=addMessage;
+ product.onchange=()=>{rememberDraft();fillPlans(lastPlan.get(product.value));renderPlan();};
+ plan.onchange=()=>{rememberDraft();renderPlan();};auto.onchange=renderSwitch;add.onclick=()=>addMessage();
+ editSales.onclick=()=>{setEditor(editor.hidden);if(!editor.hidden)sales.focus();};
  saveSales.onclick=()=>void send('sales');form.onsubmit=e=>{e.preventDefault();void send('accounts');};
  addMessage();mounts.set(host,refresh);void refresh();
 }
