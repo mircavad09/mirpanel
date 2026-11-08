@@ -15,12 +15,13 @@ function timestamp(value){
 }
 const numberLabel=row=>row.number?(row.kind==='topup'?'Balans yükləmə №':'Sifariş №')+row.number:'';
 const normalize=value=>String(value??'').normalize('NFC').toLocaleLowerCase('az').replace(/ı/g,'i').trim();
-export function mountPayments({content,api,el,button,link,validate,initial,initialRequest,onData}){
+export function mountPayments({content,api,el,button,link,validate,initial,initialRequest,onData,onUnauthorized,spinner,getCached,ui={}}){
  const css='/community-assets/account-payments.css?v=1';
  if(!document.head.querySelector('link[data-payment-history]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-payment-history':'','data-shell-persistent':''}));
- let live=true,version=0,status='all',page=1,preview=0,data=null;
+ let live=true,version=0,status=ui.status||'all',page=ui.page||1,preview=0,data=null;
  const section=el('section',{class:'account-payments'}),summary=el('div',{class:'account-payment-summary'}),filters=el('div',{class:'account-payment-filters',role:'group','aria-label':'Ödəniş filtrləri'}),list=el('div',{class:'account-payment-list'}),message=el('p',{class:'pay-history-message',role:'status'}),pager=el('nav',{class:'pay-history-pager','aria-label':'Ödəniş səhifələri'});
  const search=el('input',{type:'search',placeholder:'Hazırkı səhifədə axtar…','aria-label':'Hazırkı səhifədə axtar',autocomplete:'off'});
+ search.value=ui.search||'';
  const media=el('div',{class:'account-receipt-media'}),dialog=el('dialog',{class:'account-payment-preview','aria-label':'Qəbz önizləməsi'},button('Bağla',()=>dialog.close()),media);
  dialog.addEventListener('close',()=>{preview++;media.replaceChildren();});
  const tools=el('div',{class:'pay-history-tools'},filters,search);
@@ -34,7 +35,7 @@ export function mountPayments({content,api,el,button,link,validate,initial,initi
  content.replaceChildren(section);
  const isImage=m=>/^image\/(png|jpeg|webp)$/i.test(m||'');
  async function receipt(row){
-  const d=await api(row.kind==='topup'?'/api/payments/shop/topup/receipt?id='+encodeURIComponent(row.id):'/api/payments/my-orders/'+encodeURIComponent(row.id)+'/receipt');
+  let d;try{d=await api(row.kind==='topup'?'/api/payments/shop/topup/receipt?id='+encodeURIComponent(row.id):'/api/payments/my-orders/'+encodeURIComponent(row.id)+'/receipt');}catch(e){if(e.status===401&&live)onUnauthorized?.();throw e;}
   const url=new URL(d.url);if(url.protocol!=='https:'||!url.hostname.endsWith('.supabase.co')||url.username||url.password)throw Error('Qəbz ünvanı düzgün deyil.');
   return {url:url.href,mime:d.mime};
  }
@@ -77,7 +78,7 @@ export function mountPayments({content,api,el,button,link,validate,initial,initi
   list.append(...rows.map(renderRow));
   message.textContent=rows.length?'':q?'Bu səhifədə axtarışa uyğun ödəniş yoxdur.':'Bu filtrə uyğun ödəniş yoxdur.';
  }
- search.addEventListener('input',renderRows);
+ search.addEventListener('input',()=>{ui.search=search.value;renderRows();});
  function showPage(d){
    validate?.(d);if(!Array.isArray(d.items))throw Error('Ödəniş məlumatı düzgün deyil.');data=d;
    pager.replaceChildren();
@@ -86,21 +87,30 @@ export function mountPayments({content,api,el,button,link,validate,initial,initi
    ].map(([key,label,value,n])=>el('div',{'data-metric':key},el('span',{},label),el('strong',{},value),n?el('small',{},n):null)));
    for(const [key,{count}] of chips)count.textContent=String(d[key]);
    renderRows();
-   if(status==='all'&&page===1)onData?.(d);
+   onData?.(d,status,page);
    if(page>1)pager.append(button('Əvvəlki',()=>{page--;void load();}));
    if(page>1||d.more)pager.append(el('span',{},'Səhifə '+page));
    if(d.more)pager.append(button('Növbəti',()=>{page++;void load();}));
  }
  async function load(background=false,started=null){
-  const turn=++version;if(!background){data=null;clearRows();message.replaceChildren('Ödənişlər yoxlanılır…');pager.replaceChildren();}
+  ui.status=status;ui.page=page;
+  const turn=++version;if(!background){
+   const cached=getCached?.(status,page);
+   if(cached){showPage(cached);background=true;}
+   else{data=null;clearRows();message.replaceChildren();list.append(spinner?.()||el('span',{},'Ödənişlər yoxlanılır…'));pager.replaceChildren();}
+  }
   for(const [key,{b}] of chips)b.setAttribute('aria-pressed',String(status===key));
   try{
    const d=await(started||api('/api/community/payment-history?status='+status+'&page='+page));if(!live||turn!==version)return;showPage(d);
   }catch(e){if(live&&turn===version){
-   if([401,403].includes(e.status)){onData?.(null);data=null;clearRows();summary.replaceChildren();pager.replaceChildren();for(const {count} of chips.values())count.textContent='—';if(dialog.open)dialog.close();}
+   if(e.status===401&&onUnauthorized){onUnauthorized();return;}
+   if([401,403].includes(e.status)){onData?.(null,status,page);data=null;summary.replaceChildren();pager.replaceChildren();for(const {count} of chips.values())count.textContent='—';if(dialog.open)dialog.close();}
+   if(!data)clearRows();
    message.replaceChildren('Ödənişlər yüklənmədi. ',button('Yenidən cəhd et',()=>load(!!data)));
   }}
  }
+ const hidePreview=()=>{if(document.hidden&&dialog.open){preview++;media.replaceChildren();dialog.close();}};
+ document.addEventListener('visibilitychange',hidePreview);
  if(initial)showPage(initial);
- void load(!!initial,initialRequest);return()=>{live=false;version++;preview++;observer?.disconnect();thumbnails.clear();if(dialog.open)dialog.close();section.remove();};
+ void load(!!initial,initialRequest);return()=>{live=false;version++;preview++;document.removeEventListener('visibilitychange',hidePreview);observer?.disconnect();thumbnails.clear();if(dialog.open)dialog.close();section.remove();};
 }

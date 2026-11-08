@@ -119,7 +119,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  const policy=state.authFormPolicy||{minPasswordLength:6,maxPasswordLength:128,termsUrl:'/sertler',privacyUrl:'/sertler#sertler-10'};
  document.body.classList.add('auth-screen');await loadAuthStyle();
  if(signal?.aborted||!app.isConnected)return;
- const params=new URLSearchParams(location.search),next=params.get('next')||'',destination=['/','/profil','/qrup','/mehsul','/sebet','/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'].includes(next)||/^\/mehsul\/[a-z0-9-]+$/i.test(next)||/^\/profil\?tab=orders&order=[A-Za-z0-9-]{1,40}$/.test(next)?next:'/profil',requested=params.get('mode')||'login',mode=['login','signup','reset','new-password'].includes(requested)?requested:'login';
+ const params=new URLSearchParams(location.search),next=params.get('next')||'',destination=['/','/profil','/qrup','/mehsul','/sebet','/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet'].includes(next)||/^\/mehsul\/[a-z0-9-]+$/i.test(next)||/^\/profil\?tab=(?:orders(?:&order=[A-Za-z0-9-]{1,40})?|codes|payments|subscriptions|expenses)$/.test(next)?next:'/profil',requested=params.get('mode')||'login',mode=['login','signup','reset','new-password'].includes(requested)?requested:'login';
  const fromCart=params.get('from')==='cart'&&destination==='/sebet';
  const referrer=(()=>{try{const u=new URL(document.referrer);return u.origin===location.origin?u.pathname:'';}catch{return '';}})();
  const signupDestination=destination==='/sebet'?'/sebet':/^\/mehsul\/[a-z0-9-]+$/i.test(destination)?destination:/^\/mehsul\/[a-z0-9-]+$/i.test(referrer)?referrer:'/';

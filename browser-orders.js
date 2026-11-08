@@ -10,7 +10,7 @@
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function clear(){generation++;guideTurn++;for(const c of requests)c.abort();requests.clear();cursor=null;loading=false;loaded=false;hasAppended=false;pageFingerprint=null;seen.clear();prior.clear();if(guideDialog.open)guideDialog.close();guideDialog.remove();root.replaceChildren();content.replaceChildren();if(dialog.open)dialog.close();if(repeatDialog.open)repeatDialog.close();repeatDialog.remove();more.hidden=true;error.hidden=true;root.setAttribute('aria-busy','false');}
  function gate(){clear();options.onData?.(null);root.classList.remove('browser-orders-list');root.innerHTML='<div class="browser-orders-message"><h2>Sifarişlərinizi görmək üçün hesabınıza daxil olun.</h2><p>Hesabınız yoxdur? Qeydiyyatdan keçin.</p><div class="orders-login-actions"><a class="orders-action" href="/owner-login?next=%2Fsifarislerim">Daxil ol</a> <a class="orders-action" href="/hesab?mode=signup&amp;next=%2Fsifarislerim">Qeydiyyatdan keç</a></div></div>';}
- async function api(path){const c=new AbortController(),t=setTimeout(()=>c.abort(),20000);requests.add(c);try{const r=await fetch('/api/payments/'+path,{cache:'no-store',credentials:'same-origin',signal:c.signal,headers:{Accept:'application/json'}});const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Server cavab vermədi.'),{status:r.status});return d;}finally{clearTimeout(t);requests.delete(c);}}
+ async function api(path){const c=new AbortController(),t=setTimeout(()=>c.abort(),options.profile?12000:20000);requests.add(c);try{const r=await fetch('/api/payments/'+path,{cache:'no-store',credentials:'same-origin',signal:c.signal,headers:{Accept:'application/json'}});if(r.status===401&&!life.signal.aborted)options.onUnauthorized?.();const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Server cavab vermədi.'),{status:r.status});return d;}finally{clearTimeout(t);requests.delete(c);}}
  const money=v=>Number.isFinite(Number(v))?Number(v).toFixed(2).replace('.',',')+' ₼':'—';
  const date=value=>{const d=new Date(value);return value&&Number.isFinite(d.getTime())?new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Baku'}).format(d).replaceAll('/','.').replace(',',''):'Tarix məlum deyil';};
  const statuses={reviewing:'Yoxlanılır',pending:'Yoxlanılır',submitted:'Yoxlanılır',new_receipt_requested:'Yeni çek tələb olunur',preparing:'Hazırlanır',approved:'Hazırlanır',completed:'Tamamlandı',cancelled:'Ləğv edildi',rejected:'Rədd edildi',expired:'Müddəti bitdi'};
@@ -72,7 +72,7 @@
    if(live&&guideDialog.open)return;
    if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=orders');else location.replace('/profil?tab=orders');return;}
    if(append||!loaded||JSON.stringify([d.orders,d.topups])!==pageFingerprint)paint(d,append,{live});
-  }catch(e){if(run!==generation)return;if(e.status===401||e.status===403){gate();return;}error.replaceChildren(document.createTextNode('Sifarişləri yükləmək mümkün olmadı. '));error.hidden=false;if(!loaded)root.innerHTML='<div class="browser-orders-message"><button type="button" data-retry>Yenidən cəhd et</button></div>';else{const retry=document.createElement('button');retry.type='button';retry.textContent='Yenidən cəhd et';on(retry,'click',()=>load(append));error.append(retry);}
+  }catch(e){if(run!==generation)return;if(e.status===401||e.status===403){if(e.status===401&&options.onUnauthorized)options.onUnauthorized();else gate();return;}error.replaceChildren(document.createTextNode('Sifarişləri yükləmək mümkün olmadı. '));error.hidden=false;if(!loaded)root.innerHTML='<div class="browser-orders-message"><button type="button" data-retry>Yenidən cəhd et</button></div>';else{const retry=document.createElement('button');retry.type='button';retry.textContent='Yenidən cəhd et';on(retry,'click',()=>load(append));error.append(retry);}
   }finally{if(run===generation){loading=false;more.disabled=false;root.setAttribute('aria-busy','false');}}
  }
  on(more,'click',()=>load(!!cursor));
@@ -171,8 +171,14 @@
  const start=()=>{clearInterval(timer);timer=setInterval(()=>{if(!document.hidden&&!hasAppended&&!dialog.open&&!guideDialog.open&&root.querySelector('[data-status="reviewing"],[data-status="preparing"],[data-status="pending"],[data-status="submitted"],[data-status="new_receipt_requested"]'))load(false,true);},12000);};
  on(window,'mirpanel:account',e=>{if(!e.detail)gate();else if(!loaded)load();});
  on(window,'storage',e=>{if(e.key==='mirpanel.auth.signedOut')gate();});
- // Clear private DOM before bfcache/backgrounding; revalidate on return.
- on(document,'visibilitychange',()=>{if(document.hidden)clear();else load();});
+ // Keep the verified profile list in place, not the revealed credentials or receipt.
+ on(document,'visibilitychange',()=>{
+  if(!options.profile){if(document.hidden)clear();else load();return;}
+  if(!document.hidden){if(!hasAppended&&!guideDialog.open&&!repeatDialog.open)void load(false,true);return;}
+  generation++;for(const c of requests)c.abort();requests.clear();loading=false;more.disabled=false;root.setAttribute('aria-busy','false');
+  root.querySelectorAll('.browser-order-instructions').forEach(hideInfo);
+  content.replaceChildren();if(dialog.open)dialog.close();
+ });
  const dispose=()=>{clearInterval(timer);clear();life.abort();};on(window,'pagehide',dispose);on(window,'pageshow',()=>{start();load();});start();if(options.initial)paint(options.initial);load();window.mirpanelPageDispose=dispose;return dispose;
  };if(!window.mirpanelNavigationMounting&&!window.mirpanelAccountMounting)window.mountBrowserOrders();
 })();

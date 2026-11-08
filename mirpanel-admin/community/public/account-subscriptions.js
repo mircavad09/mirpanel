@@ -14,13 +14,13 @@ export function summarize(rows){
  const soon=active.filter(x=>x.days<=30),known=soon.filter(x=>Number.isSafeInteger(x.renewalCents)&&x.renewalCents>0);
  return {active:active.length,soon:soon.length,week:active.filter(x=>x.days<=7).length,unpriced:soon.length-known.length,total:known.length||!soon.length?known.reduce((n,x)=>n+x.renewalCents,0):null};
 }
-export function mountSubscriptions({content,el,button,link,api,validate,initial,initialRequest,onData}){
+export function mountSubscriptions({content,el,button,link,api,validate,initial,initialRequest,onData,onUnauthorized,spinner}){
  const life=new AbortController(),root=el('div',{class:'account-subscriptions'}),count=el('span',{class:'subs-count',hidden:''}),body=el('div',{class:'subs-body'}),notice=el('p',{class:'subs-notice',role:'status'});
  const css='/community-assets/account-subscriptions.css?v=1';
  if(!document.head.querySelector('link[data-subscriptions]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-subscriptions':'','data-shell-persistent':''}));
  const heading=el('header',{class:'subs-panel'},el('div',{class:'subs-heading'},el('span',{class:'subs-icon'},icon('calendar')),el('h1',{},'Abunəliklərim'),count),el('p',{},'Abunəliklərinizin nə vaxt bitdiyini bir baxışda görün'));
  root.append(heading,notice,body);content.replaceChildren(root);
- body.append(el('div',{class:'account-skeleton','aria-label':'Abunəliklər yoxlanılır','aria-busy':'true'}));
+ const loading=()=>spinner?.()||el('div',{class:'account-skeleton','aria-label':'Abunəliklər yoxlanılır','aria-busy':'true'});
  let running=false,dialog=null,loadingOptions=false;
  const alive=()=>!life.signal.aborted&&root.isConnected;
  function picker(row){
@@ -86,8 +86,13 @@ export function mountSubscriptions({content,el,button,link,api,validate,initial,
  }
  async function load(background=false,started=null){
   if(running||!alive())return;running=true;
+  if(!background){notice.textContent='';body.replaceChildren(loading());}
   try{const result=await(started||api('/api/payments/shop/subscriptions'));if(!alive())return;validate(result);onData?.(result);if(!dialog?.open){render(result.subscriptions);notice.textContent='';}}
-  catch(e){if(alive()&&(!background||[401,403].includes(e.status))){onData?.(null);if(dialog?.open)dialog.close();count.hidden=true;body.replaceChildren(el('div',{class:'subs-panel'},el('p',{},'Abunəliklər alınmadı.'),button('Yenidən cəhd et',()=>load())));}}
+  catch(e){if(!alive())return;if(e.status===401&&onUnauthorized){onUnauthorized();return;}
+   const retry=button('Yenidən cəhd et',()=>load(background));
+   if(!background||[401,403].includes(e.status)){onData?.(null);if(dialog?.open)dialog.close();count.hidden=true;body.replaceChildren(el('div',{class:'subs-panel'},el('p',{},'Abunəliklər alınmadı.'),retry));}
+   else notice.replaceChildren('Abunəliklər yenilənmədi. ',retry);
+  }
   finally{running=false;}
  }
  const timer=setInterval(()=>{if(!document.hidden&&!dialog?.open)void load(true);},30000);

@@ -28,8 +28,8 @@
   requestIdleCallback(()=>{if(location.pathname==='/'&&!document.hidden)void prepareListing();},{timeout:1200});
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
- const authModule='/community-assets/auth-forms.js?v=verify-session-20261108';
- const profileModule='/community-assets/profile-entry.js?v=order-guide-1';
+ const authModule='/community-assets/auth-forms.js?v=profile-resume-1';
+ const profileModule='/community-assets/profile-entry.js?v=profile-resume-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
@@ -40,7 +40,7 @@
  const shopModule='/community-assets/shop-ui.js?v=shell-fast-entry-2',groupModule='/community-assets/community.js?v=shell-latency-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&u.pathname===location.pathname)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
- function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));(dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
+ function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));const profile=new URL(current,location.origin).pathname==='/profil';((profile&&window.mirpanelPageDispose)||dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
  if(view&&isStatic(new URL(current,location.origin).pathname)){const fragment=document.createDocumentFragment();while(root.firstChild)fragment.append(root.firstChild);view.fragment=fragment;cache.set(new URL(current,location.origin).pathname,view);}else root.replaceChildren();mounted=false;view=null;}
  function skeleton(u){const titles={'/':'Ana səhifə','/mehsul':'Məhsullar','/balans':u.hash==='#emeliyyatlar'?'Ödənişlər':'Balans','/sebet':'Səbət','/odenis':'Ödəniş','/sifarislerim':'Sifarişlərim','/profil':'Profil','/qrup':'Ümumi söhbət','/hesab':'Giriş'};const main=document.createElement('main');main.className='site-route-loading';main.setAttribute('aria-busy','true');const h=document.createElement('h1');h.textContent=titles[u.pathname]||'Giriş';main.append(h);for(let i=0;i<3;i++){const bar=document.createElement('div');bar.className='site-route-placeholder';main.append(bar);}root.replaceChildren(main);}
  function downloadResource(src){const u=new URL(src,location.href),key=u.pathname;if(u.origin!==location.origin||!allowedScripts.has(key.split('/').at(-1))||loaded.has(key))return null;
@@ -71,11 +71,13 @@
  if(location.pathname==='/'&&!root.querySelector('#grid .card'))window.mirpanelRestoreCatalog?.();
  }finally{window.mirpanelNavigationMounting=false;}}
  async function mountProfileRoute(u,run){
+  const css='/community-assets/account-panel.css?v=profile-resume-1';
+  if(!document.querySelector('link[href="'+css+'"]')){const style=document.createElement('link');style.rel='stylesheet';style.setAttribute('href',css);style.dataset.shellPersistent='';document.head.append(style);}
   const app=document.createElement('main');app.id='communityApp';app.className='community-shell';root.replaceChildren(app);mounted=true;
   routeClasses.add('community-page');document.body.classList.add('community-page','profile-screen');
   const labels={orders:'Sifarişlərim',codes:'Kodlarım',payments:'Ödənişlərim',expenses:'Xərclərim',subscriptions:'Abunəliklərim'};
   const tab=new URLSearchParams(u.search).get('tab'),heading=document.createElement('h1');heading.textContent=Object.hasOwn(labels,tab)?labels[tab]:'Profil';
-  const card=document.createElement('div');card.className='site-route-placeholder';card.setAttribute('aria-busy','true');
+  const card=document.createElement('div');card.className='account-tab-spinner';card.setAttribute('role','status');card.setAttribute('aria-label','Məlumat hazırlanır');
   const section=document.createElement('section');section.className='site-route-loading';section.append(heading,card);app.append(section);
   for(const n of styles.values())if(!n.hasAttribute('data-shell-persistent')&&!n.hasAttribute('data-cart-entry-css')){if(n.tagName==='LINK'){if(new URL(n.href).origin===location.origin)n.disabled=true;}else n.media='not all';}
   window.scrollTo(0,0);
@@ -118,6 +120,8 @@
  document.addEventListener('click',e=>{if(e.defaultPrevented||e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;const a=e.target.closest('a[href]');if(!a||(window.MirpanelCart?.open&&a.matches('#cartHeaderLink,[data-browser-nav=cart]'))||a.hasAttribute('download')||a.target&&a.target!=='_self'||a.dataset.nativeNavigation!==undefined)return;let u;try{u=new URL(a.href);}catch{return;}if(u.origin!==location.origin||!routes.has(u.pathname)||!/^https?:$/.test(u.protocol))return;if(a.closest('.account-tabs')?.dataset.dragging==='true'){e.preventDefault();return;}e.preventDefault();e.stopPropagation();void go(u.href);},true);
  history.replaceState({...history.state,mirpanel:true},'',location.href);history.scrollRestoration='manual';window.addEventListener('popstate',()=>void go(location.href,{pop:true}));active();
  window.addEventListener('pageshow',e=>{if(e.persisted){
+  // The profile entry owns BFCache recovery and revalidates before rendering private data.
+  if(location.pathname==='/profil'&&document.getElementById('communityApp')){active();return;}
   // A browser-restored product or catalog document already has working markup.
   // Reassigning its own URL here destroys the back/forward cache benefit.
   if(isStatic(location.pathname)||/^\/mehsul\/[^/]+$/.test(location.pathname)){

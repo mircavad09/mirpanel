@@ -1,4 +1,4 @@
-import {accountTab,profileCSS,profileShell} from './profile-shell.js?v=profile-start-20261108';
+import {profileReturn,profileCSS,profileShell} from './profile-shell.js?v=profile-resume-1';
 import {getCommunityState,invalidateCommunityState,communityJson} from '/session-state.js?v=auth-recovery-20261107';
 
 export function mountProfile(app,verifiedState){
@@ -26,14 +26,14 @@ export function mountProfile(app,verifiedState){
   const timer=setTimeout(abort,12000);
   try{
    const r=await fetch(url,{method:data===undefined?'GET':method,credentials:'same-origin',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store',signal:controller.signal});
+   if(r.status===401)throw Object.assign(Error('Sessiya bitib.'),{status:401});
    const value=await communityJson(r);
    if(!r.ok)throw Object.assign(Error(value.error||'Məlumat alınmadı.'),{status:r.status});
    return value;
   }finally{clearTimeout(timer);signal.removeEventListener('abort',abort);}
  }
  function goLogin(){
-  const q=new URLSearchParams(location.search),code=q.get('order'),tab=accountTab(location.search);
-  const next=tab==='orders'?(/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'/profil?tab=orders&order='+code:'/sifarislerim'):'/profil';
+  const next=profileReturn(location.search);
   const href='/hesab'+(next?'?next='+encodeURIComponent(next):'');
   if(window.MirpanelNavigation)void window.MirpanelNavigation.go(href);else location.replace(href);
  }
@@ -41,20 +41,23 @@ export function mountProfile(app,verifiedState){
   if(fresh)invalidateCommunityState();
   const r=await getCommunityState();
   if(stopped)return null;
-  if(r.status===401||r.ok&&!r.data.profile){goLogin();return null;}
+  if(r.status===401||r.status===403||r.ok&&!r.data.profile){window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));if(location.pathname==='/profil')goLogin();return null;}
   if(!r.ok)throw Error(r.data.error||'Hesab məlumatı alınmadı.');
   Object.assign(state,r.data);return state.profile;
  }
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
- const boot=async()=>{try{
-  const {renderAccountPanel}=await import('./account-panel.js?v=order-guide-1');
+ const boot=async(retry=0)=>{let timer;try{
+  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=profile-resume-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin});
  }catch{
-  if(!stopped)app.querySelector('.account-tab-content')?.append(el('p',{role:'alert'},'Profil görünüşü açıla bilmədi.'),button('Yenidən cəhd et',()=>location.reload()));
- }};
+  if(!stopped){const body=app.querySelector('.account-tab-content');body?.querySelector('.account-tab-spinner')?.remove();body?.append(el('div',{'data-profile-retry':''},el('p',{role:'alert'},'Profil görünüşü açıla bilmədi.'),button('Yenidən cəhd et',()=>{body.querySelector('[data-profile-retry]')?.remove();body.append(el('div',{class:'account-tab-spinner',role:'status','aria-label':'Məlumat hazırlanır'}));void boot(retry+1);})));}
+ }finally{clearTimeout(timer);}};
  const dispose=()=>{if(stopped)return;stopped=true;life.abort();cleanup?.();document.body.classList.remove('profile-screen');};
- window.addEventListener('pagehide',dispose,{signal});
+ window.addEventListener('pagehide',event=>{
+  if(event.persisted)window.addEventListener('pageshow',e=>{if(e.persisted&&app.isConnected&&location.pathname==='/profil')mountProfile(app);},{once:true});
+  dispose();
+ },{signal});
  window.mirpanelPageDispose=dispose;void boot();return dispose;
 }
 if(document.getElementById('communityApp')?.hasAttribute('data-profile-entry')&&!window.mirpanelNavigationMounting)mountProfile(document.getElementById('communityApp'));

@@ -22,7 +22,7 @@ function credentialRows(text){
  }
  return [...rows];
 }
-export function mountCodes({content,el,button,initial,initialRequest,validate,onData}){
+export function mountCodes({content,el,button,initial,initialRequest,validate,onData,onUnauthorized,api,spinner,ui={}}){
  const css='/community-assets/account-codes.css?v=1';
  if(!document.head.querySelector('link[data-account-codes]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-account-codes':''}));
  const life=new AbortController(),root=el('div',{class:'account-codes'}),status=el('p',{class:'codes-status',role:'status'}),list=el('div',{class:'codes-list'}),count=el('span',{class:'codes-count',hidden:''});
@@ -31,8 +31,10 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
  const tools=el('div',{class:'codes-tools',hidden:''},el('label',{class:'codes-search'},icon('search'),search),filters);
  root.append(el('header',{class:'codes-intro'},el('div',{class:'codes-heading'},el('span',{class:'codes-key'},icon('key')),el('h1',{},'Kodlarım'),count),el('p',{},'Aldığınız bütün kodlar və hesab məlumatları bir yerdə')),tools,status,list);
  content.replaceChildren(root);
- if(!initial)list.append(el('div',{class:'account-skeleton','aria-busy':'true','aria-label':'Kod məlumatı'}));
+ const loading=()=>spinner?.()||el('div',{class:'account-skeleton','aria-busy':'true','aria-label':'Kod məlumatı'});
+ if(!initial)list.append(loading());
  async function read(id=''){
+  if(api)return api('/api/payments/my-orders/codes'+(id?'/'+encodeURIComponent(id):''));
   const r=await fetch('/api/payments/my-orders/codes'+(id?'/'+encodeURIComponent(id):''),{cache:'no-store',signal:life.signal});
   if(!r.ok)throw Object.assign(Error('Məlumatı açmaq mümkün olmadı.'),{status:r.status});
   return r.json();
@@ -49,7 +51,7 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   const active=()=>item.isConnected&&!item.hidden&&!document.hidden&&!life.signal.aborted;
   const toggleLabel=show=>{toggle.replaceChildren(icon(show?'hide':'eye'),show?'Gizlət':'Göstər');toggle.setAttribute('aria-expanded',String(show));};
   const hide=()=>{revision++;text.textContent='';credentials.replaceChildren();details.hidden=true;feedback.textContent='';toggleLabel(false);};
-  const getText=async()=>{const result=await read(row.id);if(!active()||typeof result.text!=='string')throw Error();return result.text;};
+  const getText=async()=>{let result;try{result=await read(row.id);}catch(e){if(e.status===401)onUnauthorized?.();throw e;}if(!active()||typeof result.text!=='string')throw Error();return result.text;};
   const toggle=button('Göstər',async()=>{
    feedback.textContent='';
    if(!details.hidden){hide();return;}
@@ -80,10 +82,12 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   item.append(el('div',{class:'codes-product'},photo,el('div',{},el('h2',{},row.title),meta)),el('div',{class:'codes-actions'},toggle,copy,feedback),details);
   return {item,row,hide};
  }
- let cards=[],fingerprint=null,category=null;
+ let cards=[],fingerprint=null,category=ui.category??null,running=false;
+ search.value=ui.search||'';
  const hide=()=>{for(const c of cards)c.hide();};
  const empty=el('p',{class:'codes-empty',hidden:''});root.append(empty);
  function filter(){
+  ui.search=search.value;ui.category=category;
   const query=normalize(search.value);
   let matches=0;
   for(const c of cards){
@@ -113,11 +117,14 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
  }
  search.addEventListener('input',filter,{signal:life.signal});
  async function load(started=null){
+  if(running||life.signal.aborted)return;running=true;
+  if(fingerprint===null){status.replaceChildren();list.replaceChildren(loading());}
   try{const data=await(started||read());if(!life.signal.aborted)paint(data);}
   catch(e){if(!life.signal.aborted){
+   if(e.status===401&&onUnauthorized){onUnauthorized();return;}
    if(fingerprint===null||e.status===401||e.status===403){hide();cards=[];fingerprint=null;list.replaceChildren();count.hidden=tools.hidden=empty.hidden=true;onData?.(null);}
    status.replaceChildren(document.createTextNode('Kodları yükləmək mümkün olmadı. '),button('Yenidən cəhd et',()=>load()));
-  }}
+  }}finally{running=false;}
  }
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hide();},{signal:life.signal});
  window.addEventListener('pagehide',hide,{signal:life.signal});
