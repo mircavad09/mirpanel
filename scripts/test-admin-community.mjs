@@ -5,7 +5,7 @@ import {chatVisualChecks} from './admin-chat-visual-checks.mjs';
 const local=JSON.parse(fs.readFileSync(process.env.LOCALAPPDATA+'/MirpanelCommunityPreview/config.json'));assert.equal(local.db.host,'127.0.0.1');
 if(process.env.MIRPANEL_SHOP_TEST_PORT)local.db={host:'127.0.0.1',port:Number(process.env.MIRPANEL_SHOP_TEST_PORT),user:'shop_test'};
 const db='mirpanel_admin_integration_'+Date.now(),control=new pg.Pool({...local.db,database:'postgres'});let pool,upstream,child,browser;let checks=0;const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;};
-const password=crypto.randomBytes(24).toString('base64url'),username='synthetic-admin',worker={id:crypto.randomUUID(),login:'synthetic-worker',display_name:'Synthetic',password_hash:await hashPassword(password),active:true,session_version:1,employee_started_at:null};
+const password=crypto.randomBytes(24).toString('base64url'),authSecret=crypto.randomBytes(48).toString('base64url'),username='synthetic-admin',worker={id:crypto.randomUUID(),login:'synthetic-worker',display_name:'Synthetic',password_hash:await hashPassword(password),active:true,session_version:1,employee_started_at:null};
 const json=(r,s,v)=>{r.writeHead(s,{'Content-Type':'application/json'});r.end(JSON.stringify(v));};
 try{
  await control.query('create database '+db);pool=new pg.Pool({...local.db,database:db,options:'-c search_path=mirpanel_community,public'});
@@ -17,14 +17,19 @@ try{
  await pool.query('alter table public.payment_reservations add column amount numeric');
  await pool.query(fs.readFileSync('mirpanel-admin/community/user-controls-migration.sql','utf8'));
  for(let i=0;i<24;i++){const id='synthetic-'+i;await pool.query('insert into "user"(id,name,email,"emailVerified") values($1,$2,$3,true)',[id,'Reader '+i,id+'@example.test']);await pool.query('insert into community_profiles(user_id,display_name) values($1,$2)',[id,'Reader '+i]);}
+ await pool.query(`insert into session(id,token,"userId","expiresAt","updatedAt") values('activity-legacy','activity-legacy','synthetic-2',clock_timestamp()-interval '1 hour',clock_timestamp()-interval '25 hours'),('activity-product','activity-product','synthetic-23',clock_timestamp()+interval '1 hour',clock_timestamp());
+ insert into community_presence(user_id,session_id,tab_id,last_seen) values('synthetic-2','activity-legacy','00000000-0000-0000-0000-000000000001',clock_timestamp()-interval '24 hours');`);
+ const activityMigration=fs.readFileSync('mirpanel-admin/community/customer-activity-migration.sql','utf8');
+ await pool.query(activityMigration);await pool.query(activityMigration);
+ await pool.query("delete from session where id='activity-legacy'");
  const oid=crypto.randomUUID();await pool.query("insert into public.payment_orders values($1,6,'AZN','approved','SYNTHETIC','Product','Plan',clock_timestamp())",[oid]);await pool.query('insert into community_order_owners(order_id,user_id) values($1,$2)',[oid,'synthetic-0']);
  const sessions=new Map();upstream=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://local');
   if(u.pathname==='/rest/v1/rpc/admin_session_action'){let raw='';for await(const b of req)raw+=b;const p=JSON.parse(raw),key=p.p_hash+':'+p.p_binding;let row=sessions.get(key);if(p.p_action==='revoke'){sessions.delete(key);return json(res,200,null);}if(p.p_action==='create'||p.p_action==='touch'&&row){row={expiresAt:new Date(Date.now()+3600000).toISOString()};sessions.set(key,row);}return json(res,200,row||null);}
   if(u.pathname==='/rest/v1/rpc/employee_system_ready')return json(res,200,5);if(u.pathname==='/rest/v1/rpc/consume_payment_rate_limit')return json(res,200,{allowed:true});if(u.pathname==='/rest/v1/employee_accounts')return json(res,200,[worker]);if(u.pathname==='/rest/v1/employee_work_audit'){res.writeHead(204);return res.end();}return json(res,200,[]);
- });await new Promise(r=>upstream.listen(0,'127.0.0.1',r));const authBase='http://127.0.0.1:'+upstream.address().port,base='http://127.0.0.1:10587';
+ });await new Promise(r=>upstream.listen(0,'127.0.0.1',r));const authBase='http://127.0.0.1:'+upstream.address().port,base='http://127.0.0.1:55464';
  const url=new URL('postgres://localhost');Object.assign(url,{hostname:local.db.host,port:String(local.db.port),username:local.db.user,password:local.db.password,pathname:'/'+db});
  const code=`import fs from 'node:fs';const native=globalThis.fetch;globalThis.fetch=(u,o)=>String(u?.url||u).startsWith(${JSON.stringify(authBase)})?native(u,o):String(u?.url||u).includes('/contents/app.js')?Promise.resolve(Response.json({sha:'synthetic',content:fs.readFileSync('app.js').toString('base64')})):Promise.resolve(Response.json({message:'isolated'},{status:401}));await import(${JSON.stringify(new URL('../mirpanel-admin/server.mjs',import.meta.url).href)});`;
- child=spawn(process.execPath,['--input-type=module','-e',code],{windowsHide:true,env:{...process.env,PORT:'10587',ADMIN_USERNAME:username,ADMIN_PASSWORD:password,MIRPANEL_GITHUB_TOKEN:'synthetic',SUPABASE_URL:authBase,SUPABASE_SECRET_KEY:'synthetic',PAYMENT_ENCRYPTION_KEY_B64:crypto.randomBytes(32).toString('base64'),PAYMENT_TOKEN_SECRET_B64:crypto.randomBytes(32).toString('base64'),EMPLOYEE_PANEL_ENABLED:'true',COOKIE_SECURE:'false',RENDER_EXTERNAL_URL:base,COMMUNITY_OWNER_ENABLED:'true',COMMUNITY_PUBLIC_ENABLED:'true',COMMUNITY_TEST:'true',COMMUNITY_ORIGIN:'http://127.0.0.1:55464',COMMUNITY_DATABASE_URL:url.href,COMMUNITY_AUTH_SECRET:crypto.randomBytes(48).toString('base64url'),COMMUNITY_GOOGLE_CLIENT_ID:'synthetic',COMMUNITY_GOOGLE_CLIENT_SECRET:'synthetic'},stdio:['ignore','pipe','pipe']});
+ child=spawn(process.execPath,['--input-type=module','-e',code],{windowsHide:true,env:{...process.env,PORT:'55464',ADMIN_USERNAME:username,ADMIN_PASSWORD:password,MIRPANEL_GITHUB_TOKEN:'synthetic',SUPABASE_URL:authBase,SUPABASE_SECRET_KEY:'synthetic',PAYMENT_ENCRYPTION_KEY_B64:crypto.randomBytes(32).toString('base64'),PAYMENT_TOKEN_SECRET_B64:crypto.randomBytes(32).toString('base64'),EMPLOYEE_PANEL_ENABLED:'true',COOKIE_SECURE:'false',RENDER_EXTERNAL_URL:base,COMMUNITY_OWNER_ENABLED:'true',COMMUNITY_PUBLIC_ENABLED:'true',COMMUNITY_TEST:'true',COMMUNITY_ORIGIN:'http://127.0.0.1:55464',COMMUNITY_DATABASE_URL:url.href,COMMUNITY_AUTH_SECRET:authSecret,COMMUNITY_GOOGLE_CLIENT_ID:'synthetic',COMMUNITY_GOOGLE_CLIENT_SECRET:'synthetic'},stdio:['ignore','pipe','pipe']});
  child.stderr.on('data',b=>{const m=String(b).match(/ADMIN_COMMUNITY_FAILED [A-Z0-9_]+/);if(m)console.log(m[0]);});
  await new Promise((resolve,reject)=>{const t=setTimeout(()=>reject(Error('STARTUP_TIMEOUT')),15000);child.stdout.on('data',b=>{if(String(b).includes('Mirpanel admin:')){clearTimeout(t);resolve();}});child.on('exit',()=>reject(Error('SERVER_EXIT')));});
  const req=(path,{data,headers={}}={})=>fetch(base+path,{method:data?'POST':'GET',headers:{...headers,...(data?{'Content-Type':'application/json',Origin:base}:{})},...(data?{body:JSON.stringify(data)}:{}),redirect:'manual'});
@@ -57,9 +62,32 @@ try{
  eq((await req('/api/admin/community/users',{headers:{Cookie:'mirpanel_owner.session_token=synthetic; role=admin'}})).status,401);
  for(let i=0;i<40;i++)await pool.query('insert into community_messages(user_id,client_id,body,created_at) values($1,$2,$3,$4)',['synthetic-0',crypto.randomUUID(),'Synthetic long message '+i+' '+('https://example.test/long/'.repeat(9)),i<20?'2026-11-01T17:20:00Z':'2026-11-02T17:20:00Z']);
  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});const ctx=await browser.newContext();await ctx.request.post(base+'/api/login',{data:{username,password}});const p=await ctx.newPage(),errors=[];p.on('pageerror',x=>errors.push(x.message));
+ const getSeen=async id=>(await(await req('/api/admin/community/users/'+id,{headers})).json()).user.lastSeen;
+ eq(await getSeen('synthetic-23'),null);
+ const product=await browser.newContext(),productPage=await product.newPage(),signed=encodeURIComponent('activity-product.'+crypto.createHmac('sha256',authSecret).update('activity-product').digest('base64'));
+ await product.addCookies([{name:'mirpanel_owner.session_token',value:signed,url:base}]);
+ await productPage.route(base+'/mehsul/synthetic',r=>r.fulfill({contentType:'text/html',body:'<main>Synthetic product</main><script src="/browser-nav.js"></script>'}));
+ for(const asset of ['browser-nav.js','session-state.js'])await productPage.route(new RegExp('/'+asset.replace('.','\\.')+'(?:\\?|$)'),r=>r.fulfill({contentType:'application/javascript',body:fs.readFileSync(asset,'utf8')}));
+ await productPage.addInitScript(()=>{window.testHidden=true;Object.defineProperty(document,'hidden',{get:()=>window.testHidden});});
+ await productPage.goto(base+'/mehsul/synthetic');
+ await productPage.waitForFunction(()=>window.mirpanelAccountProfile?.user_id==='synthetic-23');
+ eq(await getSeen('synthetic-23'),null,'background product tab did not record activity');
+ const heartbeat=productPage.waitForResponse(r=>r.url().endsWith('/api/community/presence')&&r.request().method()==='POST');
+ await productPage.evaluate(()=>{window.testHidden=false;document.dispatchEvent(new Event('visibilitychange'));});
+ eq((await heartbeat).status(),200);
+ const lastSeen=await getSeen('synthetic-23');
+ eq(typeof lastSeen,'string');
+ eq((await product.request.post(base+'/api/auth/sign-out',{data:{},headers:{Origin:'http://127.0.0.1:55464'}})).status(),200);
+ eq((await pool.query("select count(*)::int n from community_presence where session_id='activity-product'")).rows[0].n,0);
+ eq(await getSeen('synthetic-23'),lastSeen,'sign-out preserved product page activity');
+ eq(await getSeen('synthetic-22'),null,'no registration date fallback');
+ eq(Date.now()-Date.parse(await getSeen('synthetic-2'))>=86400000,true,'legacy activity survived expired-session removal');
+ await product.close();
  for(const width of [390,1440]){
+  await pool.query("update community_customer_activity set last_seen=clock_timestamp()-$1::interval where user_id='synthetic-23'",[width===390?'3 minutes':'1 hour 1 minute']);
+  const fullSeen=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'}).format(new Date(await getSeen('synthetic-23')));
   await p.setViewportSize({width,height:900});await p.goto(base+'/admin.html');await p.locator('.navGroup').first().waitFor();const cs=await(await ctx.request.get(base+'/api/session')).json();await p.evaluate(x=>{state.csrfToken=x;},cs.csrfToken);
-  await p.locator('[data-view=communityUsers]').click();await p.locator('.wu-identity').first().waitFor();eq(new URL(p.url()).pathname,'/admin.html');await p.locator('.wu-identity').first().click();await p.locator('#communityUsersView section h2').waitFor();
+  await p.locator('[data-view=communityUsers]').click();await p.locator('.wu-identity').first().waitFor();eq(new URL(p.url()).pathname,'/admin.html');await p.getByText('Son aktivlik · '+(width===390?'3 dəqiqə':'1 saat')+' əvvəl',{exact:true}).waitFor();await p.getByText('Aktivlik qeydə alınmayıb',{exact:true}).first().waitFor();await p.locator('.wu-identity').filter({hasText:'Reader 23'}).click();await p.getByText('Son aktivlik · '+fullSeen+' (Bakı vaxtı)',{exact:true}).waitFor();
   fs.mkdirSync('payment-test-artifacts/admin-community',{recursive:true});await p.locator('#communityUsersView').screenshot({path:`payment-test-artifacts/admin-community/polish-detail-${width}.png`});
   await p.getByRole('button',{name:'Xüsusi qiymətlər',exact:true}).click();await p.getByLabel('Məhsul və plan',{exact:true}).waitFor();await p.getByLabel('Xüsusi AZN qiyməti',{exact:true}).fill('3.50');await p.getByRole('button',{name:'Yadda saxla',exact:true}).click();await p.getByText('Standart:',{exact:false}).filter({hasText:'3.50 AZN'}).waitFor();eq(await p.getByLabel('Xüsusi AZN qiyməti',{exact:true}).inputValue(),'3.50');await p.locator('#communityUsersView').screenshot({path:`payment-test-artifacts/admin-community/controls-prices-${width}.png`});
   await p.getByRole('button',{name:'Referallar',exact:true}).click();await p.getByLabel('Yönləndirmə faizi',{exact:true}).fill('12.5');await p.getByRole('button',{name:'Faizi idarə et',exact:true}).click();await p.getByText('12.5% — standart qaydanı əvəz edən xüsusi ayar.',{exact:true}).waitFor();eq(await p.getByLabel('Yönləndirmə faizi',{exact:true}).inputValue(),'12.5');await p.locator('#communityUsersView').screenshot({path:`payment-test-artifacts/admin-community/controls-referrals-${width}.png`});

@@ -15,7 +15,7 @@ export async function adminDirectory(pool,repo,{q='',page='1',id,filter='all'}={
  coalesce((select w.cents::text from wallet_accounts w where w.user_id=u.id),'0') as "balanceCents",
  (select coalesce(sum(greatest(0,round(o.amount*100)::bigint-coalesce(f.cents,0))),0)::text from community_order_owners l join public.payment_orders o on o.id=l.order_id left join community_refunds f on f.order_id=o.id where l.user_id=u.id and o.status in ('approved','completed') and o.currency='AZN') as "spentCents",
  (select count(*)::int from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=u.id and o.status in ('approved','completed')) as "orderCount",
- (select max(v.last_seen) from community_presence v where v.user_id=u.id and v.tab_id<>'${SITE_PRESENCE_ID}') as "lastSeen",
+ (select a.last_seen from community_customer_activity a where a.user_id=u.id) as "lastSeen",
  exists(select 1 from community_presence v join session s on s.id=v.session_id and s."userId"=u.id where v.user_id=u.id and v.tab_id<>'${SITE_PRESENCE_ID}' and v.last_seen>clock_timestamp()-interval '45 seconds' and s."expiresAt">clock_timestamp()) as online
  from "user" u left join community_profiles p on p.user_id=u.id left join community_member_numbers n on n.user_id=u.id
  where ${where} order by u."createdAt" desc,u.id limit 20 offset $4`,[...params,(Number(page)-1)*20])).rows;
