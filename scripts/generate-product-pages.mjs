@@ -9,6 +9,7 @@ import {
   generateProductPageFiles,
   generateRedirects,
   generateSitemap,
+  patchHomeCatalog,
   patchHomeHeader
 } from "../mirpanel-admin/product-pages.mjs";
 
@@ -16,6 +17,11 @@ const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const state = extractAdminState(appSource);
 const productsOnly = process.argv.includes("--products-only");
+if(process.argv.includes('--home-catalog')){
+ const file=path.join(projectRoot,'index.html');
+ fs.writeFileSync(file,patchHomeCatalog(fs.readFileSync(file,'utf8'),state.products),'utf8');
+ process.exit(0);
+}
 const pages = new Map([
   ...generateProductPageFiles(state.products, state.siteSections, state.cms, state.content),
   ...(productsOnly ? [] : generateProductListingPageFiles(state.products, state.siteSections, state.cms)),
@@ -31,7 +37,7 @@ for (const [filePath, content] of pages) {
 
 if (!productsOnly) {
 const homePath = path.join(projectRoot, "index.html");
-fs.writeFileSync(homePath, patchHomeHeader(fs.readFileSync(homePath, "utf8"), state.siteSections, state.cms), "utf8");
+fs.writeFileSync(homePath, patchHomeCatalog(patchHomeHeader(fs.readFileSync(homePath, "utf8"), state.siteSections, state.cms),state.products), "utf8");
 
 fs.writeFileSync(
   path.join(projectRoot, "sitemap.xml"),

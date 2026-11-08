@@ -152,7 +152,7 @@
       button.setAttribute("aria-label", `${story.title} story-sinə bax`);
       const cover = document.createElement("span"); cover.className = "home-story-cover";
       const inner = document.createElement("span"); inner.className = "home-story-cover-inner";
-      const image = new Image(); image.alt = ""; image.loading = index<4?"eager":"lazy";image.fetchPriority=index<4?"high":"auto";image.width=78;image.height=78; image.decoding = "async"; image.src = story.coverUrl;
+      const image = new Image(); image.alt = ""; image.loading = "lazy";image.fetchPriority="low";image.width=78;image.height=78; image.decoding = "async"; image.src = story.coverUrl;
       image.addEventListener("error", () => image.classList.add("is-broken"), { once: true });
       const title = document.createElement("span"); title.className = "home-story-title"; title.textContent = story.title;
       inner.append(image); cover.append(inner); button.append(cover, title);

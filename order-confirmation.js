@@ -2056,6 +2056,7 @@
       original(id);
       prefetchSelectedTerms();
       setTimeout(() => {
+        if(typeof currentProduct==='undefined'||currentProduct?.id!==id)return;
         const product = DATA.products.find((item) => item.id === id);
         decorateProductPage(product);
       }, 0);

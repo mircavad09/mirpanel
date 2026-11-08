@@ -41,14 +41,21 @@ try{
   if(u.pathname==='/api/auth/sign-out'){res.setHeader('Set-Cookie','synthetic_account=; Path=/; Max-Age=0');return json(res,200,{ok:true});}
   if(u.pathname==='/api/auth/sign-in/social'){const b=await body(req);eq(authReturn(origin,b.callbackURL),origin+'/sebet');return json(res,200,{url:origin+'/synthetic-google'});}
   if(u.pathname==='/synthetic-google'){res.writeHead(302,{'Set-Cookie':'synthetic_account=a; Path=/; HttpOnly; SameSite=Lax',Location:'/sebet'});return res.end();}
+  if(u.pathname==='/product-page.js'&&u.searchParams.has('fixture')){
+   res.setHeader('Content-Type','text/javascript');return res.end(`const DATA=${JSON.stringify(catalog)};let currentProduct=null,currentPlanIdx=0;window.openProductPage=id=>{currentProduct=DATA.products.find(p=>p.id===id);};window.mirpanelMountProduct=()=>{window.openProductPage(document.body.dataset.productId);const b=document.getElementById('pp-order-btn');b.disabled=false;b.textContent='Sifariş et';};window.mirpanelDisposeProduct=()=>{currentProduct=null;};`);
+  }
   if(['/','/mehsul','/odenis','/balans','/sebet','/sifarislerim','/profil','/qrup','/hesab','/mehsul/synthetic'].includes(u.pathname)){
-   const isAuth=u.pathname==='/hesab',isShop=['/odenis','/balans','/sebet'].includes(u.pathname);let main='<main><h1>Sintetik səhifə</h1></main>';
+   const isAuth=u.pathname==='/hesab',isShop=['/odenis','/balans','/sebet'].includes(u.pathname);let main='<main><h1>Sintetik səhifə</h1></main>',bodyAttrs='';
    if(isAuth)main='<main id="communityApp" class="community-shell"></main><script type="module" src="/community-assets/community.js"></script>';
    if(u.pathname==='/profil')main='<main id="communityApp" class="community-shell" data-profile-entry></main><script type="module" src="/community-assets/profile-entry.js"></script>';
    if(isShop)main='<main id="shopApp" class="shop-page"></main><link rel="stylesheet" href="/community-assets/shop.css"><script type="module" src="/community-assets/shop-ui.js"></script>';
    if(u.pathname==='/mehsul')main='<main><a href="/mehsul/synthetic?product=hbomax">HBO Max</a></main>';
-   if(u.pathname==='/mehsul/synthetic'){const hbo=u.searchParams.get('product')==='hbomax';main=`<main><h1>${hbo?'HBO Max':'Netflix Şəxsi'}</h1>${hbo?hboButton:'<button id="pp-order-btn">Sifariş et</button>'}</main><script>const DATA=${JSON.stringify(catalog)};let currentProduct=DATA.products.find(p=>p.id===${JSON.stringify(u.searchParams.get('product')||'netflix')}),currentPlanIdx=0;</script><script src="/order-confirmation.js"></script>${hbo?'<script>const order=document.getElementById("pp-order-btn");order.disabled=false;order.textContent="Sifariş et";</script>':''}`;}
-   res.setHeader('Content-Type','text/html');return res.end('<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/community.css"><body class="community-page">'+header+main+'<script src="/site-header.js"></script></body></html>');
+   if(u.pathname==='/mehsul/synthetic'){
+    const id=['netflix','hbomax','ordinary'].find(id=>id===u.searchParams.get('product'))||'netflix',hbo=id==='hbomax';
+    bodyAttrs=' data-product-id="'+id+'" data-product-slug="synthetic"';
+    main=`<main id="productPageView" class="product-page-root"><h1>${hbo?'HBO Max':'Netflix Şəxsi'}</h1>${hbo?hboButton:'<button id="pp-order-btn" disabled>Sifariş et</button>'}</main><script src="/product-page.js?fixture=1"></script><script src="/order-confirmation.js"></script><script>window.mirpanelMountProduct();</script>`;
+   }
+   res.setHeader('Content-Type','text/html');return res.end('<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/community.css"><body class="community-page"'+bodyAttrs+'>'+header+main+'<script src="/site-header.js"></script></body></html>');
   }
   const file=u.pathname.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+u.pathname.slice(18):u.pathname.slice(1);if(file.includes('..')||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);return res.end();}res.setHeader('Content-Type',file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'text/html');res.end(fs.readFileSync(file));
  }catch(e){json(res,e.status||500,{error:e.status?e.message:'Synthetic error'});}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;

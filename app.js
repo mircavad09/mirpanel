@@ -3805,6 +3805,7 @@ const INFO_TEXTS = {
    ========================= */
 let currentProduct = null;
 let currentPlanIdx = 0;
+window.mirpanelResetProductSelection=()=>{currentProduct=null;currentPlanIdx=0;};
 
 function publicProductTitle(value) {
   return String(value || "").replace(/\s+almaq\s*$/i, "").trim();
@@ -4326,9 +4327,7 @@ function setupUI() {
   const searchInp = document.getElementById("q");
   if(searchInp) searchInp.placeholder = UI.search;
 
-  renderHomeDiscovery();
-  buildTabs();
-  renderGrid();
+  window.mirpanelRestoreCatalog?.();
 }
 
 let homeFilter = "all";
@@ -4457,7 +4456,17 @@ function renderGrid() {
   grid.innerHTML = list.map((p, idx) => cardHTML(p, idx)).join("");
 }
 
-window.mirpanelRestoreCatalog=()=>{if(location.pathname!=='/')return;const grid=document.getElementById('grid');if(!grid)return;if(!grid.dataset.catalogMounted){if(!document.querySelector('#tabs [data-home-filter]'))buildTabs();renderHomeDiscovery();grid.dataset.catalogMounted='1';}renderGrid();};
+window.mirpanelRestoreCatalog=()=>{
+ if(location.pathname!=='/')return;
+ const grid=document.getElementById('grid');if(!grid)return;
+ if(!grid.dataset.catalogMounted){
+  if(!document.querySelector('#tabs [data-home-filter]'))buildTabs();
+  renderHomeDiscovery();
+  document.getElementById('q')?.addEventListener('input',renderGrid);
+  grid.dataset.catalogMounted='1';
+ }
+ if(!grid.querySelector('.card'))renderGrid();
+};
 function cardHTML(p, idx) {
   const min = getMinPrice(p);
   const showPrice = p.id === "tiktok_jeton" ? `10.00 ${p.currency}` : (min != null && min !== Infinity && min !== 0 ? `${formatPrice(min)} ${p.currency}` : "—");
@@ -4573,7 +4582,6 @@ function boot() {
   setupUI();
   initSlider();
   initSidebar();
-  document.getElementById("q")?.addEventListener("input", renderGrid);
   document.getElementById("closeModal")?.addEventListener("click", closeModal);
   document.getElementById("modal")?.addEventListener("click", (e) => { if (e.target.id === "modal") closeModal(); });
 }

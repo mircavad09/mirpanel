@@ -44,6 +44,7 @@
     const originalOpenProductPage = window.openProductPage;
 
     window.openProductPage = function routedOpenProductPage(productId) {
+      if(document.body.dataset.productId===productId&&document.querySelector('main.product-page-root'))return originalOpenProductPage(productId);
       const product = DATA.products.find((item) => item.id === productId);
       if (!product) {
         clearProductHash();
@@ -63,6 +64,7 @@
     };
 
     window.addEventListener("hashchange", () => {
+      if(location.pathname!=='/')return;
       const productId = productIdFromHash();
       if (productId) {
         window.openProductPage(productId);
@@ -72,7 +74,7 @@
     });
 
     const initialProductId = productIdFromHash();
-    if (initialProductId) {
+    if (initialProductId&&location.pathname==='/') {
       setTimeout(() => window.openProductPage(initialProductId), 0);
     }
   }

@@ -317,6 +317,7 @@
     openProductPage = window.openProductPage = function stockAwareOpenProductPage(id) {
       originalOpenProductPage(id);
       setTimeout(() => {
+        if(typeof currentProduct==='undefined'||currentProduct?.id!==id)return;
         const product = DATA?.products?.find((item) => item.id === id);
         decorateDetail(product);
       }, 0);
@@ -378,7 +379,7 @@
   },true);
   document.addEventListener('keydown',event=>{const row=event.target.closest('.pp-plan-label');if(!row||!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;const product=typeof currentProduct!=='undefined'?currentProduct:null;if(!product)return;event.preventDefault();event.stopImmediatePropagation();const rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')],available=rows.filter((_,i)=>planFor(product,i)?.canOrder);if(!available.length)return;const at=available.indexOf(row),step=['ArrowUp','ArrowLeft'].includes(event.key)?-1:1,next=available[(at+step+available.length)%available.length];next.click();next.focus();},true);
   function startInventoryTimer(){clearInterval(inventoryTimer);paintInventory();refreshInventory();inventoryTimer=setInterval(()=>{paintInventory();refreshInventory();},2000);}
-  startInventoryTimer();window.addEventListener('pagehide',()=>clearInterval(inventoryTimer));window.addEventListener('mirpanel:route-leave',()=>clearInterval(inventoryTimer));window.addEventListener('mirpanel:route-ready',e=>{if(['/','/mehsul'].includes(e.detail.path))startInventoryTimer();});window.addEventListener('pageshow',event=>{if(event.persisted)startInventoryTimer();});document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInventory();});
+  startInventoryTimer();window.addEventListener('pagehide',()=>clearInterval(inventoryTimer));window.addEventListener('mirpanel:route-leave',()=>clearInterval(inventoryTimer));window.addEventListener('mirpanel:route-ready',e=>{if(['/','/mehsul'].includes(e.detail.path)||e.detail.path.startsWith('/mehsul/'))startInventoryTimer();});window.addEventListener('pageshow',event=>{if(event.persisted)startInventoryTimer();});document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInventory();});
 })();
 
 (function () {

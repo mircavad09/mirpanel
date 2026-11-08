@@ -22,6 +22,7 @@
 
   function installCardNavigation() {
     document.addEventListener("click", (event) => {
+      if(event.defaultPrevented||event.button!==0||event.ctrlKey||event.metaKey||event.shiftKey||event.altKey||event.target.closest('a,button,input,select,textarea'))return;
       const card = event.target.closest?.(".card");
       if (!card) return;
       const product = products().find((item) => item.id === productIdFromCard(card));
@@ -29,7 +30,8 @@
       if (!path) return;
       event.preventDefault();
       event.stopImmediatePropagation();
-      window.location.assign(path);
+      if(window.MirpanelNavigation)void window.MirpanelNavigation.go(path);
+      else window.location.assign(path);
     }, true);
   }
 
@@ -39,10 +41,12 @@
     const originalOpenProductPage = window.openProductPage;
 
     window.openProductPage = function openStandaloneProductPage(productId) {
+      if(document.body.dataset.productId===productId&&document.querySelector('main.product-page-root'))return originalOpenProductPage(productId);
       const product = products().find((item) => item.id === productId);
       const path = productPath(product);
       if (!path) return originalOpenProductPage(productId);
-      window.location.assign(path);
+      if(window.MirpanelNavigation)void window.MirpanelNavigation.go(path);
+      else window.location.assign(path);
     };
   }
 

@@ -243,22 +243,26 @@ function injectScript(html, needle, scriptTag) {
   return html.replace(/<script src="frontend-routing-detail-fix\.js[^>]*><\/script>/i, `${scriptTag}\n  $&`);
 }
 
-function withSeoScripts(html) {
+function withSeoScripts(html,earlyProductLinks=false) {
   let next = html;
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=order-guide-1$2');
-  next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=fast-entry-1$2');
-  next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=profile-stickers-1$2');
-  next=next.replace(/(src=["'])\/?(home-loading|catalog-listing|product-page)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=fast-entry-1$3');
+  next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=product-transition-1$2');
+  next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=product-transition-1$2');
+  next=next.replace(/(src=["'])\/?(home-loading|product-page|seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
+  next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=product-transition-1$3');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
-  next=next.replace(/(src=["'])\/?(cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-stable-20261031$3');
-  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=profile-stickers-1$2');
-  next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=fast-entry-1$2');
-  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=profile-stickers-1" data-page-navigation-loader></script></head>');
+  next=next.replace(/(src=["'])\/?cms-site\.js(?:\?[^"']*)?(["'])/g,'$1/cms-site.js?v=home-stable-20261031$2');
+  next=next.replace(/(src=["'])\/?stories\.js(?:\?[^"']*)?(["'])/g,'$1/stories.js?v=home-first-paint-1$2');
+  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=product-transition-1$2');
+  next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=home-first-paint-1$2');
+  next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=product-transition-1$2');
+  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=product-transition-1" data-page-navigation-loader></script></head>');
+  if(earlyProductLinks)next=next.replace(/(<head\b[^>]*>)/i,`$1<script>(()=>{let pending,timer;function click(e){if(window.MirpanelNavigation||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.altKey||e.shiftKey)return;const a=e.target.closest?.('a[href]');if(!a||a.target&&a.target!=='_self'||a.hasAttribute('download')||a.hasAttribute('data-native-navigation'))return;const u=new URL(a.href);if(u.origin!==location.origin||!/^\\/mehsul\\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.pathname))return;e.preventDefault();pending=u.href;clearTimeout(timer);timer=setTimeout(()=>{if(pending)location.assign(pending);},2500);}document.addEventListener('click',click,true);window.addEventListener('mirpanel:navigation-ready',()=>{document.removeEventListener('click',click,true);clearTimeout(timer);if(pending)void window.MirpanelNavigation.go(pending);},{once:true});})();</script>`);
   next=next.replace(/(href=["'])\/?desktop-header\.css(?:\?[^"']*)?(["'])/g,'$1/desktop-header.css?v=mobile-anthracite-20261031$2');
   if(!next.includes('/desktop-header.css?v=mobile-anthracite-20261031'))next=next.replace(/<\/head>/i,'<link rel="stylesheet" href="/desktop-header.css?v=mobile-anthracite-20261031"></head>');
   if (!next.includes("site-sections-render.js?v=20260728-info-pages-1")) {
-    next = next.replace(/<script src="app\.js[^>]*><\/script>/i, '$&\n  <script src="site-sections-render.js?v=20260728-info-pages-1"></script>');
+    next = next.replace(/<script (defer )?src="\/?app\.js[^>]*><\/script>/i, (tag,defer)=>tag+'\n  <script '+(defer||'')+'src="/site-sections-render.js?v=20260728-info-pages-1"></script>');
   }
   return next;
 }
@@ -323,7 +327,7 @@ export async function onRequest(context) {
     const headers = new Headers(response.headers);
     headers.set("Content-Type", "text/html; charset=utf-8");
     headers.append("Vary", "Accept");
-    return new Response(withSeoScripts(await response.text()), { status: response.status, headers });
+    return new Response(withSeoScripts(await response.text(),sectionRoute[1]==='mehsul'), { status: response.status, headers });
   }
 
   const productRoute = pathname.match(/^\/mehsul\/([a-z0-9]+(?:-[a-z0-9]+)*)\/?$/);
@@ -341,7 +345,7 @@ export async function onRequest(context) {
     if (!response.ok) return response;
     let html = withSeoScripts(await response.text());
     html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(10000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
-    html = html.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=latency-1$2');
+    html = html.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=product-transition-1$2');
     // The static order button must not accept an early click before the
     // current product and the real order handler have both initialized.
     html = html.replace(/<button\b[^>]*\bid="pp-order-btn"[^>]*>/i, tag =>
@@ -372,8 +376,8 @@ export async function onRequest(context) {
   if (!contentType.includes("text/html")) return response;
 
   let html = await response.text();
-  html=html.replace(/(src=["'])(\/?stock-display-fix\.js)(?:\?[^"']*)?(["'])/g,'$1$2?v=inventory-unavailable-20261029$3');
-  html = withSeoScripts(html);
+  html=html.replace(/(src=["'])(\/?stock-display-fix\.js)(?:\?[^"']*)?(["'])/g,'$1$2?v=product-transition-1$3');
+  html = withSeoScripts(html,route==='/');
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=utf-8");

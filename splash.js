@@ -4,7 +4,7 @@
   const status = document.getElementById('splashLoadStatus');
   if (!splash || !status) return;
   // Direct product links should expose the already rendered detail immediately.
-  if(document.body.classList.contains('product-page-document'))return;
+  if(document.body.classList.contains('product-page-document')||document.querySelector('#grid[data-home-static] .card'))return;
   const key='mirpanel.intro.seen.v1';
   let seen=false;
   try { seen=sessionStorage.getItem(key)==='1'; } catch {}

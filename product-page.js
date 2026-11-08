@@ -1,4 +1,9 @@
 (function () {
+  let activeRoot=null,scope=null;
+  function disposeProductPage(){
+    scope?.abort();scope=null;activeRoot=null;
+    window.mirpanelResetProductSelection?.();
+  }
   function productIdFromElement(element) {
     const explicit = element?.dataset?.productId;
     if (explicit) return explicit;
@@ -131,7 +136,9 @@
 
   async function initializeProductPage() {
     const productId = document.body?.dataset?.productId;
-    if (!productId || typeof window.openProductPage !== "function") return;
+    const root=document.querySelector('main#productPageView.product-page-root');
+    if (!root||activeRoot===root||!productId||typeof window.openProductPage!=="function") return;
+    if(scope)disposeProductPage();activeRoot=root;scope=new AbortController();const {signal}=scope;
     const staticSimilarMarkup = document.getElementById("pp-similar-list")?.innerHTML || "";
     window.openProductPage(productId);
     const similarList = document.getElementById("pp-similar-list");
@@ -163,13 +170,12 @@
           product.id === 'capcut' ? import('/capcut-detail.mjs?v=20261020-1') : null,
           import('/product-detail-display.mjs?v=20261020-1')
         ]);
-        initializeDetailMetadata(product, {...metrics,...display}, compact);
+        if(!signal.aborted&&activeRoot===root&&root.isConnected)initializeDetailMetadata(root,product, {...metrics,...display}, compact,signal);
       } catch { /* Keep the existing functioning page if enhancement cannot load. */ }
     }
   }
 
-  function initializeDetailMetadata(product, utils, compact = null) {
-    const root = document.getElementById('productPageView');
+  function initializeDetailMetadata(root,product, utils, compact,signal) {
     if (!root || root.dataset.detailEnhanced) return;
     root.dataset.detailEnhanced = 'true';
     root.classList.add('detail-v2');
@@ -271,13 +277,13 @@
     const number = new Intl.NumberFormat('az-AZ');
     let loading = false;
     async function refreshSales() {
-      if (loading || document.hidden) return;
+      if (loading || document.hidden || signal.aborted) return;
       loading = true;
       try {
-        const response = await fetch(`https://mirpanel.onrender.com/api/product-sales?productId=${encodeURIComponent(product.id)}`, {cache:'no-store'});
+        const response = await fetch(`https://mirpanel.onrender.com/api/product-sales?productId=${encodeURIComponent(product.id)}`, {cache:'no-store',priority:'low',signal});
         if (!response.ok) return;
         const value = await response.json();
-        if (value.productId !== product.id || !value.initialized || !Number.isSafeInteger(value.productTotal) || !Number.isSafeInteger(value.siteTotal)) return;
+        if (signal.aborted||value.productId !== product.id || !value.initialized || !Number.isSafeInteger(value.productTotal) || !Number.isSafeInteger(value.siteTotal)) return;
         sales.replaceChildren(text('span','product-detail-sales-icon','↗'),document.createTextNode(' Bu məhsul '),text('strong','',`≈ ${new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')}+`),document.createTextNode(' dəfə satılıb'));
         sales.title='Satış göstəricisi təxmini tarixi bölgü və tamamlanmış sayt sifarişlərinin cəmidir.';sales.hidden = false;
         total.textContent = compact && value.siteTotal >= 10000 ? '10 000+ tamamlanmış sifariş' : `${number.format(value.siteTotal)}+ tamamlanmış ümumi sifariş`; total.hidden = false;
@@ -286,11 +292,14 @@
     }
     void refreshSales();
     const timer = setInterval(refreshSales,30000);
-    window.addEventListener('focus',refreshSales);
-    document.addEventListener('visibilitychange',refreshSales);
-    window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
+    window.addEventListener('focus',refreshSales,{signal});
+    document.addEventListener('visibilitychange',refreshSales,{signal});
+    signal.addEventListener('abort',()=>clearInterval(timer),{once:true});
   }
 
+  window.mirpanelMountProduct=initializeProductPage;
+  window.mirpanelDisposeProduct=disposeProductPage;
+  if(window.mirpanelNavigationMounting)return;
   if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", initializeProductPage, { once: true });
   } else {

@@ -25,6 +25,7 @@ import {
   generateRedirects as buildRedirects,
   generateSitemap as buildSitemap,
   patchHomeHeader,
+  patchHomeCatalog,
   removedInfoPagePaths,
   removedProductPagePaths
 } from "./product-pages.mjs";
@@ -1272,7 +1273,7 @@ async function handleApi(request, response) {
     const indexFile = await getRepoFile("index.html", parent.commitSha);
     const version = `admin-${Date.now()}`;
     const patchedIndex = patchHomeStructuredData(
-      patchHomeHeader(bumpAssetVersions(indexFile.source, version), adminData.siteSections, adminData.cms),
+      patchHomeCatalog(patchHomeHeader(bumpAssetVersions(indexFile.source, version), adminData.siteSections, adminData.cms),adminData.products),
       adminData.cms,
       adminData.products
     );

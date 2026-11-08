@@ -303,10 +303,8 @@ export function generateInfoPageFiles(siteSections = {}, ui = {}, cms = {}) {
   return files;
 }
 
-export function generateProductListingPageFiles(products = [], siteSections = {}, cms = {}) {
-  const active = activeProductsWithSlugs(products);
-  const canonical = `${SITE_URL}/mehsul`;
-  const cards = active.map(({ product, slug }, index) => {
+function renderCatalogCards(active) {
+  return active.map(({ product, slug }, index) => {
     const prices = (Array.isArray(product.plans) ? product.plans : [])
       .map((plan) => Number(plan.price))
       .filter((price) => Number.isFinite(price) && price > 0);
@@ -315,6 +313,28 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
       : prices.length ? `${Math.min(...prices).toFixed(2)} ${cleanText(product.currency)}` : "—";
     return catalogCard.render({...product,image:rootRelativeUrl(product.image)},index,productCanonicalPath(slug),publicProductTitle(product.title),product.id==='tiktok_jeton'?10:prices.length?Math.min(...prices):null,shownPrice);
   }).join("");
+}
+
+export function patchHomeCatalog(source,products) {
+  const active=activeProductsWithSlugs(products);
+  const best=active.filter(({product})=>product.bestSeller===true);
+  const priority=['youtube','netflix','capcut','spotify'];
+  const quick=[...priority.map(id=>active.find(({product})=>product.id===id)).filter(Boolean),...active.filter(({product})=>!priority.includes(product.id))].slice(0,6);
+  const shortcuts=duplicate=>quick.map(({product,slug})=>{
+    const id=product.id,brand={youtube:['YouTube','youtube'],netflix:['Netflix','netflix'],capcut:['CapCut Pro','capcut'],spotify:['Spotify','spotify']}[id];
+    const title=escapeHtml(brand?.[0]||publicProductTitle(product.title)),image=escapeHtml(brand?'/assets/'+brand[1]+'.png':rootRelativeUrl(product.image));
+    return `<a class="home-quick-link" data-quick-brand="${brand?.[1]||'other'}" href="${productCanonicalPath(slug)}" aria-label="${title} səhifəsinə keç"${duplicate?' tabindex="-1"':''}><span class="home-quick-logo" aria-hidden="true"><img src="${image}" loading="lazy" decoding="async" alt=""></span><span class="home-quick-label">${title}</span></a>`;
+  }).join('');
+  return source
+    .replace(/(<nav class="home-quick-links" id="homeQuickLinks" aria-label="Tez keçidlər")(?: hidden)?>([\s\S]*?)<\/nav>/,(_,tag)=>tag+(quick.length?'':' hidden')+'>'
+      + (quick.length?'<div class="home-quick-track"><div class="home-quick-group">'+shortcuts(false)+'</div><div class="home-quick-group" aria-hidden="true">'+shortcuts(true)+'</div></div>':'')+'</nav>')
+    .replace(/(<div class="grid" id="grid" aria-live="polite")(?: data-home-static="1")?>[\s\S]*?(?=<\/div>\s*<\/main>)/,(_,tag)=>tag+' data-home-static="1">'+renderCatalogCards(best.length?best:active));
+}
+
+export function generateProductListingPageFiles(products = [], siteSections = {}, cms = {}) {
+  const active = activeProductsWithSlugs(products);
+  const canonical = `${SITE_URL}/mehsul`;
+  const cards = renderCatalogCards(active);
   const structuredData = safeJson({
     "@context": "https://schema.org",
     "@graph": [
