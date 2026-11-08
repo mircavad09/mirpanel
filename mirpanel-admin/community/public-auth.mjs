@@ -4,6 +4,7 @@ import {safeName,BOT_ID} from './bot-policy.mjs';import {requireAllowed} from '.
 import {bindOwner,isOwner,OWNER_EMAIL,verifiedOwnerProfile} from './owner-auth.mjs';
 import {emailConfirmation} from './email-confirmation.mjs';
 import {createWelcomeDelivery} from './welcome-delivery.mjs';
+import {setSessionCookie} from 'better-auth/cookies';
 export function makePublicAuth(pool,c,send,delivery=createWelcomeDelivery(pool,send)){const fail=(message,code)=>new APIError('BAD_REQUEST',{message,...(code?{code}:{})});
  const welcome=delivery.enqueue;
  return betterAuth({appName:'MirPanel',database:pool,baseURL:c.origin,secret:c.secret,trustedOrigins:[c.origin],logger:{disabled:true},
@@ -18,12 +19,17 @@ export function makePublicAuth(pool,c,send,delivery=createWelcomeDelivery(pool,s
    const existing=await ctx.context.internalAdapter.findUserByEmail(user.email,{includeAccounts:true});
    const providers=existing?.accounts||[];
    const credential=providers.some(a=>a.providerId==='credential');
-   if(existing?.user.id===user.id&&credential)return ctx.json({...result,registrationCreated:true});
+   if(existing?.user.id===user.id&&credential){
+    const session=await ctx.context.internalAdapter.createSession(user.id);
+    if(!session)throw new APIError('INTERNAL_SERVER_ERROR',{code:'REGISTRATION_SESSION_FAILED',message:'Hesabınız yaradılıb. Daxil olaraq davam edin.'});
+    await setSessionCookie(ctx,{session,user:existing.user},false);
+    return ctx.json({...result,registrationCreated:true});
+   }
    if(!existing)throw new APIError('CONFLICT',{code:'REGISTRATION_UNCONFIRMED',message:'Hesabın yaradılması təsdiqlənmədi. Yenidən cəhd edin.'});
    if(!credential&&providers.some(a=>a.providerId==='google'))throw new APIError('CONFLICT',{code:'REGISTRATION_GOOGLE_ONLY',message:'Bu e-poçt Google hesabına bağlıdır. Google ilə davam edin.'});
    throw new APIError('CONFLICT',{code:'REGISTRATION_EMAIL_EXISTS',message:'Bu e-poçt artıq qeydiyyatlıdır. Hesabınıza daxil olun və ya təsdiqə davam edin.'});
   })},
-  emailVerification:{sendOnSignUp:false,autoSignInAfterVerification:true,sendVerificationEmail:v=>send('verify',v),afterEmailVerification:welcome},
+  emailVerification:{sendOnSignUp:false,sendOnSignIn:false},
   user:{validateUserInfo:({user,source})=>source.method==='oauth'&&(source.oauth?.providerId!=='google'||user.emailVerified!==true)?{error:'unverified_identity',errorDescription:'Təsdiqlənmiş Google hesabı tələb olunur.'}:undefined,additionalFields:{phoneNumber:{type:'string',required:false,input:false,fieldName:'phone_number'},phoneVerified:{type:'boolean',required:false,input:false,defaultValue:false,fieldName:'phone_verified'},registrationTermsAcceptedAt:{type:'date',required:false,input:false,fieldName:'registration_terms_accepted_at'}}},
   account:{encryptOAuthTokens:true,accountLinking:{enabled:true,requireLocalEmailVerified:true,allowDifferentEmails:false,trustedProviders:[]}},
   session:{expiresIn:30*86400,updateAge:86400,cookieCache:{enabled:false}},advanced:{cookiePrefix:'mirpanel_owner',useSecureCookies:c.origin.startsWith('https:')},rateLimit:{enabled:true,window:60,max:20},

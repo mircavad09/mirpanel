@@ -14,7 +14,7 @@ async function accountApi(url,data,signal){
  if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');
  const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.'),{code:d.code||d.error?.code});return d;
 }
-function openVerification({pending,host,life,verificationApi,finish,readableError,afterSignup=false,created=false,onClose}){
+function openVerification({pending,host,life,verificationApi,finish,readableError,afterSignup=false,checkout=false,created=false,onClose}){
  const dialog=el('dialog',{class:'auth-code-sheet','aria-labelledby':'authCodeTitle'});let working=false,clock,attempted=false;
   const stop=()=>{clearInterval(clock);dialog.remove();};
   dialog.addEventListener('close',()=>{stop();onClose?.();},{once:true});
@@ -24,7 +24,7 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
   dialog.append(close,el('div',{class:'auth-code-icon','aria-hidden':'true'},'✉'),title,contents,feedback);host.append(dialog);
   function draw(s,editing=false){
    clearInterval(clock);contents.replaceChildren();feedback.textContent='';
-   const withCode=s.codeSent&&!editing;title.textContent=withCode?'Kodu daxil edin':afterSignup?'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin':'E-poçtunu təsdiqlə';
+   const withCode=s.codeSent&&!editing;title.textContent=checkout?'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin':withCode?'Kodu daxil edin':afterSignup?'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin':'E-poçtunu təsdiqlə';
    const change=button('Dəyiş',()=>{if(!working)draw(s,true);});change.className='auth-code-secondary';
    const address=el('div',{class:'auth-code-address'},el('div',{},el('small',{},withCode?'Kod göndərilən e-poçt':'Qeyd etdiyin e-poçt'),el('strong',{},s.email)),change);
    async function run(action,data,control,onSuccess){
@@ -73,6 +73,26 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
   draw(pending);dialog.addEventListener('cancel',e=>{if(working)e.preventDefault();});dialog.showModal();dialog.querySelector('.auth-code-grid input')?.focus();
   return dialog;
  }
+
+let confirmationOpening;
+export function requestEmailConfirmation({checkout=false,signal,onVerified=()=>location.reload()}={}){
+ if(signal?.aborted||document.querySelector('.auth-code-sheet[open]'))return Promise.resolve();
+ if(confirmationOpening)return confirmationOpening;
+ const life=new AbortController();
+ signal?.addEventListener('abort',()=>life.abort(),{once:true,signal:life.signal});
+ window.addEventListener('mirpanel:route-leave',()=>life.abort(),{once:true,signal:life.signal});
+ window.addEventListener('pagehide',()=>life.abort(),{once:true,signal:life.signal});
+ const verificationApi=(action,data={})=>accountApi('/api/auth/confirm-email/'+action,data,life.signal);
+ confirmationOpening=(async()=>{
+  await loadAuthStyle();
+  const pending=await verificationApi('status');
+  if(life.signal.aborted)return;
+  if(pending.verified){await onVerified();return;}
+  if(!pending.email)throw Error('Hesabınıza daxil olun və e-poçtunuzu təsdiqləyin.');
+  if(!document.querySelector('.auth-code-sheet[open]'))openVerification({pending,host:document.body,life,verificationApi,finish:onVerified,readableError:e=>e.message,checkout,onClose:()=>life.abort()});
+ })().finally(()=>{confirmationOpening=null;if(!document.querySelector('.auth-code-sheet[open]'))life.abort();});
+ return confirmationOpening;
+}
 
 export async function resumeSignupConfirmation(){
  let marker;
@@ -229,7 +249,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
   if(!pending.email)throw Error('Təsdiq sessiyası açıla bilmədi. Yenidən cəhd edin və ya hesabınıza daxil olun.');
   fields.password.value='';
   if(returnAfterSignup)returnToConfirmation(pending,created);
-  else showVerification(pending);
+  else await finish();
  }
  function returnToConfirmation(pending,created=false){
   try{sessionStorage.setItem(confirmationKey,JSON.stringify({path:signupDestination,created}));}

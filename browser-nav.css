@@ -14,7 +14,6 @@ html body nav.browser-bottom-nav svg{width:24px;height:24px;flex:0 0 24px;fill:n
 html body nav.browser-bottom-nav a:focus-visible{outline:2px solid #ffe15b;outline-offset:-2px}
 @media(max-width:850px){
  html body.has-bottom-nav nav.browser-bottom-nav{padding-inline:3px}
- html body.has-bottom-nav nav.browser-bottom-nav[data-signed=false]{grid-template-columns:repeat(3,minmax(0,1fr)) minmax(0,1fr) repeat(2,minmax(0,1.5fr))}
  html body.has-bottom-nav nav.browser-bottom-nav a svg{width:22px;height:22px;flex-basis:22px}
  html body.has-bottom-nav nav.browser-bottom-nav a[data-browser-nav=balance]{justify-content:flex-end;padding-bottom:6px;color:#e4e4e4;gap:0;background:none}
  html body.has-bottom-nav nav.browser-bottom-nav a[data-browser-nav=balance][aria-current=page]{color:#ffd400}

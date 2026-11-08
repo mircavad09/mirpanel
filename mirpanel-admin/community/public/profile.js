@@ -40,6 +40,10 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
  const balance=el('section',{class:'profile-balance'},el('div',{},el('h2',{},'Balans'),el('strong',{},Number.isSafeInteger(p.balanceCents)?money(p.balanceCents):'Məlumat yoxdur')),topup);
  decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');decorate(subscription,'M5 5h14v15H5z M8 2v6 M16 2v6 M5 10h14');
  hero.append(stats,balance,editor);
+ if(p.emailVerified===false){
+  const verify=button('E-poçtu təsdiqlə',async()=>{verify.disabled=true;status.textContent='';try{const {requestEmailConfirmation}=await import('/community-assets/auth-forms.js?v=verify-session-20261108');if(verify.isConnected)await requestEmailConfirmation();}catch(e){status.textContent=e.message;}finally{verify.disabled=false;}});
+  editor.before(el('section',{class:'profile-balance'},el('div',{},el('strong',{},'E-poçt təsdiqlənməyib')),verify));
+ }
  app.replaceChildren(el('div',{class:'profile-layout'},hero,el('div',{class:'profile-content'},identity,copyStatus,status,el('div',{class:'profile-info-grid'},latest,subscription),logout)),avatarInput,coverInput);paint();
  async function summaryData(){
   latest.replaceChildren(el('h2',{},'Son sifariş'),el('div',{class:'account-card-pending','aria-busy':'true','aria-label':'Son sifariş məlumatı'}));

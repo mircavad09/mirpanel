@@ -33,7 +33,7 @@ export function mountProfile(app,verifiedState){
  }
  function goLogin(){
   const q=new URLSearchParams(location.search),code=q.get('order'),tab=accountTab(location.search);
-  const next=tab==='orders'?(/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'/profil?tab=orders&order='+code:'/sifarislerim'):null;
+  const next=tab==='orders'?(/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'/profil?tab=orders&order='+code:'/sifarislerim'):'/profil';
   const href='/hesab'+(next?'?next='+encodeURIComponent(next):'');
   if(window.MirpanelNavigation)void window.MirpanelNavigation.go(href);else location.replace(href);
  }
@@ -47,7 +47,7 @@ export function mountProfile(app,verifiedState){
  }
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
  const boot=async()=>{try{
-  const {renderAccountPanel}=await import('./account-panel.js?v=ready-stock-20261108');
+  const {renderAccountPanel}=await import('./account-panel.js?v=verify-session-20261108');
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin});
  }catch{

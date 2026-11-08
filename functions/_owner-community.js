@@ -8,8 +8,7 @@ export async function proxyCommunity({request}){
  if(!allowed)return new Response('Not found',{status:404});if(!['GET','POST','HEAD','OPTIONS'].includes(request.method))return new Response('Method not allowed',{status:405});
  if(request.headers.has('Origin')&&request.headers.get('Origin')!==u.origin)return new Response('Forbidden',{status:403});
  const headers=new Headers();for(const key of ['Content-Type','Accept','User-Agent'])if(request.headers.has(key))headers.set(key,request.headers.get(key));headers.set('Origin','https://mirpanel.com');headers.set('X-Forwarded-Host','mirpanel.com');headers.set('X-Forwarded-Proto','https');
- const confirmation=/^\/api\/auth\/confirm-email\/(?:status|change|send|verify)$/.test(u.pathname);
- const cookie=(request.headers.get('Cookie')||'').split(';').map(s=>s.trim()).filter(s=>/^(?:__Secure-|__Host-)?mirpanel_owner[._]/.test(s)||confirmation&&s.startsWith('mirpanel_email_pending=')).join('; ');if(cookie)headers.set('Cookie',cookie);
+ const cookie=(request.headers.get('Cookie')||'').split(';').map(s=>s.trim()).filter(s=>/^(?:__Secure-|__Host-)?mirpanel_owner[._]/.test(s)).join('; ');if(cookie)headers.set('Cookie',cookie);
  const stream=u.pathname==='/api/community/events'&&request.method==='GET',controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),30000);let streaming=false;request.signal?.addEventListener('abort',()=>controller.abort(),{once:true});
  try{const r=await fetch(UPSTREAM+u.pathname+u.search,{method:request.method,headers,body:request.method==='POST'?request.body:undefined,redirect:'manual',signal:controller.signal});const out=new Headers(r.headers),redirect=r.status>=300&&r.status<400;
   if(redirect&&out.has('Location')){const target=new URL(out.get('Location'),UPSTREAM);if(target.origin===UPSTREAM){if(!allowedPath(target.pathname))return unavailable();out.set('Location',u.origin+target.pathname+target.search+target.hash);}}

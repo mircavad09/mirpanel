@@ -104,7 +104,7 @@ try{
   assert.equal(await page.locator('.auth-code-grid').count(),0);
   await expire(address,{sent:0});await page.reload();
   await page.getByRole('button',{name:'Kod göndər',exact:true}).click();
-  await page.getByText('Kod göndərildi.',{exact:false}).waitFor();
+  await page.locator('.auth-code-grid').waitFor();
   await page.locator('.auth-code-grid input').first().fill(record('code',address)[0].code);
   await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.waitForURL('**/sebet');
   await welcomeDelivery.wake();assert.equal(record('welcome',address).length,1);
@@ -131,6 +131,8 @@ try{
   await page.locator('.auth-submit').click();
   await page.waitForURL(origin+destination,{timeout:12000}).catch(async e=>{console.log({width,formError:await page.locator('.auth-feedback').textContent({timeout:1000}).catch(()=>null)});throw e;});
   const sendButton=page.getByRole('button',{name:'Kod göndər',exact:true});
+  const reopenVerification=()=>page.evaluate(async()=>{const {requestEmailConfirmation}=await import('/community-assets/auth-forms.js');await requestEmailConfirmation();});
+  const reloadVerification=async()=>{await page.reload();if(width===320)await reopenVerification();};
   await sendButton.waitFor();
   assert.equal(record('code',old).length,0);
   assert.equal(await page.getByText('Hesabınız yaradılıb',{exact:true}).count(),1);
@@ -141,12 +143,29 @@ try{
   assert.equal(await tab.locator('.auth-code-sheet[open]').count(),0);
   assert.equal(await tab.getByText('Hesabınız yaradılıb',{exact:true}).count(),0);
   await tab.close();
-  await page.reload();await sendButton.waitFor();
+  if(width===320){
+   await page.locator('.auth-code-close').click();
+   await page.reload();
+   assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
+   const original=(await context.storageState()).cookies.find(c=>c.name.endsWith('.session_token'));
+   assert.ok(original?.httpOnly&&original.expires>Date.now()/1000+172800,'signup created a persistent session cookie');
+   await pool.query(`update session set "createdAt"="createdAt"-interval '2 days',"updatedAt"="updatedAt"-interval '2 days',"expiresAt"="expiresAt"-interval '2 days' where "userId"=(select id from "user" where email=$1)`,[old]);
+   const reopened=await browser.newContext({storageState:{origins:[],cookies:[{...original,expires:original.expires-172800}]}});
+   const restored=await reopened.newPage();await restored.goto(origin+'/profil');await restored.reload();
+   const restoredSession=await (await reopened.request.get(origin+'/api/auth/get-session')).json();
+   assert.equal(restoredSession.user.email,old);assert.equal(restoredSession.user.emailVerified,false);
+   assert.equal(await restored.locator('.auth-code-sheet[open]').count(),0);
+   assert.equal(record('code',old).length,0);
+   await reopened.close();
+   await reopenVerification();
+  }else{
+   await page.reload();await sendButton.waitFor();
+  }
   assert.equal(record('code',old).length,0);
   assert.equal(await sendButton.isEnabled(),true);
   await sendButton.click();
   await page.getByRole('heading',{name:'Kodu daxil edin',exact:true}).waitFor();
-  await page.getByText('Kod göndərildi.',{exact:false}).waitFor();
+  await page.locator('.auth-code-grid').waitFor();
   assert.equal(await page.locator('.auth-code-address strong').innerText(),old);
   assert.equal(record('verify',old).length,0);assert.equal(record('code',old).length,1);
   const duplicate=await request(cookieJar(),'/api/auth/sign-up/email',{name:'Sintetik Hesab',email:old,password});
@@ -155,19 +174,21 @@ try{
   const j=cookieJar(),external=await call(j,'send');assert.equal(external.status,401);
   const post=(action,data)=>context.request.post(origin+'/api/auth/confirm-email/'+action,{headers:{origin},data});
   const send=await post('send',{});assert.equal(send.status(),429);
-  await page.reload();await page.getByText('Kod göndərildi.',{exact:false}).waitFor();
+  await reloadVerification();await page.locator('.auth-code-grid').waitFor();
   assert.equal(record('code',old).length,1);
   const oldCode=record('code',old)[0].code,wrong=oldCode==='000000'?'000001':'000000';
   await page.locator('.auth-code-grid input').first().fill(wrong);await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.getByText('Kod düzgün deyil.',{exact:true}).waitFor();
   await expire(old,{expires:0});const expired=await post('verify',{code:oldCode});assert.equal(expired.status(),400);assert.match((await expired.json()).message,/vaxtı bitib/);
   await page.getByRole('button',{name:'Dəyiş',exact:true}).click();await page.getByLabel('Yeni e-poçt ünvanı').fill(address);await page.getByRole('button',{name:'Yadda saxla'}).click();await page.getByText(address,{exact:true}).waitFor();
   const stale=await post('verify',{code:oldCode});assert.equal(stale.status(),400);
-  await expire(old,{sent:0});await page.reload();await page.getByRole('button',{name:'Kod göndər',exact:true}).click();await page.getByText('Kod göndərildi.',{exact:false}).waitFor();
+  await expire(old,{sent:0});await reloadVerification();await page.getByRole('button',{name:'Kod göndər',exact:true}).click();await page.locator('.auth-code-grid').waitFor();
   const code=record('code',address)[0].code;await page.locator('.auth-code-grid input').first().evaluate((input,code)=>{const clipboardData=new DataTransfer();clipboardData.setData('text/plain',code);input.dispatchEvent(new ClipboardEvent('paste',{bubbles:true,cancelable:true,clipboardData}));},code);
   await page.getByRole('button',{name:'Təsdiqlə',exact:true}).click();await page.locator('.auth-code-sheet[open]').waitFor({state:'hidden'});
   assert.equal((await (await context.request.get(origin+'/api/auth/get-session')).json()).user.email,address);
   await welcomeDelivery.wake();assert.equal(record('welcome',address).length,1);await page.reload();assert.equal(record('welcome',address).length,1);
   assert.equal((await post('verify',{code})).status(),401);
+  assert.equal((await context.request.post(origin+'/api/auth/sign-out',{headers:{origin},data:{}})).ok(),true);
+  assert.equal((await (await context.request.get(origin+'/api/auth/get-session')).json())?.user,undefined);
   await context.close();
  }
  async function google(){
