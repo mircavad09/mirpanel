@@ -4,7 +4,7 @@ import {onRequest} from '../functions/_middleware.js';
 let checks=0;
 for(const p of ['/','/mehsul','/mehsul/capcut-pro']){
  const r=await onRequest({request:new Request('https://mirpanel.com'+p),next:async()=>new Response('<!doctype html><html><head></head><body><script src="/site-header.js?v=old"></script><script src="browser-nav.js?v=old"></script><script src="splash.js?v=old"></script></body></html>',{headers:{'Content-Type':'text/html'}})});
- const t=await r.text();assert.match(t,/<script defer src="\/page-navigation\.js\?v=latency-1" data-page-navigation-loader>/);
+ const t=await r.text();assert.match(t,/<script defer src="\/page-navigation\.js\?v=mobile-profile-1" data-page-navigation-loader>/);
  assert.match(t,/\/splash\.js\?v=fast-entry-1/);assert.equal(r.status,200);checks+=3;
 }
 const file='/uploads/products/capcut-1792446915889-2c0554fd.png',source=fs.statSync('.'+file).size;

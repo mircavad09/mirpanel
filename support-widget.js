@@ -28,6 +28,14 @@
  const operatorQuestion=document.createElement('a');operatorQuestion.id='supportFaqOperator';operatorQuestion.className='support-faq-question support-faq-operator';operatorQuestion.href=href;operatorQuestion.target='_blank';operatorQuestion.rel='noopener noreferrer';operatorQuestion.textContent='Problemim var — operatorla danış';list.append(operatorQuestion);
  const toggle=document.getElementById('aiSupportToggle'),panel=document.getElementById('aiSupportPanel'),close=document.getElementById('aiSupportClose'),backdrop=document.getElementById('supportBackdrop');
  let opened=false,timer,previousFocus,previousOverflow;
+ const mobileProfile=matchMedia('(max-width: 767px)');
+ function dockProfile(slot=document.querySelector('.profile-support-slot')){
+  const target=mobileProfile.matches&&slot?.isConnected?slot:document.body;
+  if(host.parentElement!==target)target.append(host);
+ }
+ dockProfile();
+ mobileProfile.addEventListener('change',()=>dockProfile());
+ window.addEventListener('mirpanel:profile-support-slot',e=>dockProfile(e.detail));
  function viewport(){const vv=window.visualViewport;if(!vv)return;const keyboard=Math.max(0,innerHeight-vv.height-vv.offsetTop);panel.style.setProperty('--support-keyboard-bottom',keyboard>100?(keyboard+8)+'px':'');panel.style.setProperty('--support-panel-limit',Math.max(180,vv.height-24)+'px');}
  function finishClose(){panel.hidden=true;backdrop.hidden=true;panel.classList.remove('is-open');document.body.style.overflow=previousOverflow||'';if(previousFocus?.isConnected)previousFocus.focus({preventScroll:true});}
  function setOpen(value){if(value===opened)return;opened=value;clearTimeout(timer);toggle.setAttribute('aria-expanded',String(value));
