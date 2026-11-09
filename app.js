@@ -487,7 +487,7 @@ const DATA = {
           "bestValue": false,
           "label": "1 ay (1600 AI kredit)",
           "months": 1,
-          "price": 5.99
+          "price": 0
         },
         {
           "durationDays": 7,
