@@ -490,10 +490,11 @@ const DATA = {
           "price": 5.99
         },
         {
-          "duration_months": 1,
+          "duration_months": 7,
+          "warrantyUnit": "day",
           "bestValue": true,
           "label": " 7 gün",
-          "months": 1,
+          "months": 7,
           "price": 1.12
         }
       ],

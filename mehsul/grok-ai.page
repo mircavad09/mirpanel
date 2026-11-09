@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-e1d6193fa276f538"></script>
+  <script src="/app.js?v=catalog-e1a756a36b6d52d5"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
   <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>
