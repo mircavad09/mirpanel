@@ -46,5 +46,9 @@
   .story-stage>p{bottom:10px}
 }
 @media(min-width:768px){.home-stories{margin-top:12px}.home-stories-track{gap:18px}}
+@media(min-width:1024px){
+  .home-page #homeStories{width:calc(100% - 64px);max-width:1440px;box-sizing:border-box;padding-inline:0}
+  .home-page #homeStoriesTrack{padding-inline:4px;justify-content:flex-start}
+}
 @media(min-width:1024px){.home-page .home-banner-layout{width:min(calc(100% - 32px),1000px);height:auto;grid-template-columns:minmax(0,1fr);gap:0}.home-page .home-banner-layout .hero-slider-box{height:auto;max-height:340px;aspect-ratio:1600/670}.home-page #products-section>.wrap:first-child{padding-top:8px}}
 @media(prefers-reduced-motion:reduce){.story-progress span.active::after{animation:none;transform:scaleX(1)}}

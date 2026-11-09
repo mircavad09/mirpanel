@@ -4188,77 +4188,92 @@ function esc(s) {
 /* =========================
    UI YÜKLƏNMƏ (SLAYDER, GRID VƏ YENİ SIRALAMA MƏNTİQİ)
    ========================= */
-let currentSlide = 0;
-let slideInterval;
-let sliderPauseUntil = 0;
-let sliderVisibilityHandler;
-let sliderFocusInHandler, sliderFocusOutHandler, sliderFocusTimer;
+let disposeSlider;
 
 function initSlider() {
+  disposeSlider?.();
   const slider = document.getElementById('heroSlider');
-  const slides = slider?.querySelectorAll('.slide') || [];
-
-  clearInterval(slideInterval);
-  clearTimeout(sliderFocusTimer);
-  if(sliderFocusInHandler) slider?.removeEventListener('focusin',sliderFocusInHandler);
-  if(sliderFocusOutHandler) slider?.removeEventListener('focusout',sliderFocusOutHandler);
-  if(sliderVisibilityHandler) document.removeEventListener('visibilitychange',sliderVisibilityHandler);
-  sliderVisibilityHandler=null;
+  if (!slider) return;
+  const slides = [...slider.querySelectorAll('.slide')];
+  slider.querySelector('.hero-controls')?.remove();
   if (!slides.length) return;
 
-  function showSlide(n) {
-    const index=(n+slides.length)%slides.length;
-    const image=slides[index].querySelector('img');
-    slides[index].querySelectorAll('source[data-srcset]').forEach(source=>{source.srcset=source.dataset.srcset;delete source.dataset.srcset;});
-    if(image?.dataset.src) {image.src=image.dataset.src; delete image.dataset.src;}
-    if(image && !image.complete) {
-      image.decode().then(()=>{if(slider?.contains(slides[index])) showSlide(index);}).catch(()=>{});
-      return;
+  const lifecycle = new AbortController();
+  const {signal} = lifecycle;
+  let current = Math.max(0, slides.findIndex(slide => slide.classList.contains('active')));
+  let requested = current;
+  let animation, timer, generation = 0;
+  slider.setAttribute('role', 'region');
+  slider.setAttribute('aria-label', 'Məhsul bannerləri');
+  slider.setAttribute('aria-roledescription', 'carousel');
+  slider.ondragstart = event => event.preventDefault();
+
+  const controls = document.createElement('div');
+  controls.className = 'hero-controls';
+  controls.innerHTML = '<button type="button" class="hero-arrow hero-prev" aria-label="Əvvəlki banner">‹</button><button type="button" class="hero-arrow hero-next" aria-label="Növbəti banner">›</button><span class="hero-count"></span><span class="hero-progress" aria-hidden="true"></span>';
+  slider.append(controls);
+  const [prev, next, counter, progress] = controls.children;
+  prev.hidden = next.hidden = progress.hidden = slides.length < 2;
+
+  function prepare(index) {
+    const slide = slides[index];
+    for (const source of slide.querySelectorAll('source[data-srcset]')) {
+      source.srcset = source.dataset.srcset;
+      delete source.dataset.srcset;
     }
-    if(image && !image.naturalWidth) return;
-    slides.forEach(s => s.classList.remove('active'));
-    
-    currentSlide = (n + slides.length) % slides.length;
-    slides[currentSlide].classList.add('active');
-    slides.forEach((slide,index)=>{slide.setAttribute('aria-hidden',String(index!==currentSlide));slide.tabIndex=index===currentSlide?0:-1;});
+    const image = slide.querySelector('img');
+    if (image?.dataset.src) {
+      image.loading = 'eager';
+      image.src = image.dataset.src;
+      delete image.dataset.src;
+    }
+    return image;
   }
-
-  function nextSlide() { showSlide(currentSlide + 1); }
-  slides.forEach(slide => {slide.onclick=null;slide.draggable=false;slide.tabIndex=slide.classList.contains('active')?0:-1;slide.setAttribute('aria-hidden',String(!slide.classList.contains('active')));});
-
-  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-  function startTimer() {
-    clearInterval(slideInterval);
-    if(window.MirpanelNavigation&&location.pathname!=='/')return;
-    if (slides.length < 2 || reducedMotion || document.hidden || slider.matches(':hover') || slider.contains(document.activeElement)) return;
-    slideInterval = setInterval(() => { if (Date.now() >= sliderPauseUntil) nextSlide(); }, 5000);
+  const wrap = index => (index + slides.length) % slides.length;
+  function paint() {
+    slides.forEach((slide, index) => {
+      const active = index === current;
+      slide.classList.toggle('active', active);
+      slide.setAttribute('aria-hidden', String(!active));
+      if (slide.matches('a')) slide.tabIndex = active ? 0 : -1;
+    });
+    counter.textContent = (current + 1) + '/' + slides.length;
+    if (slides.length > 1) {
+      prepare(wrap(current + 1));
+      prepare(wrap(current - 1));
+    }
   }
-
-  if (slider) {
-    slider.tabIndex = 0;
-    slider.setAttribute('role', 'region');
-    slider.setAttribute('aria-label', 'Məhsul bannerləri');
-    slider.setAttribute('aria-roledescription', 'carousel');
-    slider.onmouseenter=()=>clearInterval(slideInterval);
-    slider.onmouseleave=startTimer;
-    sliderFocusInHandler=()=>clearInterval(slideInterval);
-    sliderFocusOutHandler=()=>{clearTimeout(sliderFocusTimer);sliderFocusTimer=setTimeout(startTimer,0);};
-    slider.addEventListener('focusin',sliderFocusInHandler);
-    slider.addEventListener('focusout',sliderFocusOutHandler);
-    slider.ontouchstart=null;
-    slider.ontouchend=null;
-    slider.onkeydown=null;
-    slider.ondragstart=event=>event.preventDefault();
+  function stop() {
+    clearTimeout(timer);
+    animation?.cancel();
   }
-
-  sliderVisibilityHandler=()=>{if(document.hidden) clearInterval(slideInterval); else startTimer();};
-  document.addEventListener('visibilitychange',sliderVisibilityHandler);
-  currentSlide=Math.max(0,[...slides].findIndex(slide=>slide.classList.contains('active')));
-  startTimer();
+  function start() {
+    stop();
+    if (signal.aborted || document.hidden || slides.length < 2) return;
+    animation = progress.animate([{transform:'scaleX(0)'}, {transform:'scaleX(1)'}], {duration:5000,fill:'forwards'});
+    timer = setTimeout(() => move(1), 5000);
+  }
+  async function move(direction) {
+    const id = ++generation;
+    const index = requested = wrap(requested + direction);
+    clearTimeout(timer);
+    const image = prepare(index);
+    if (image && !image.complete) await image.decode().catch(() => {});
+    if (signal.aborted || generation !== id) return;
+    current = index;
+    paint();
+    start();
+  }
+  prev.addEventListener('click', () => move(-1), {signal});
+  next.addEventListener('click', () => move(1), {signal});
+  document.addEventListener('visibilitychange', () => document.hidden ? stop() : start(), {signal});
+  disposeSlider = () => { lifecycle.abort(); stop(); };
+  paint();
+  start();
 }
 
 window.initSlider = initSlider;
-window.addEventListener('mirpanel:route-leave',()=>clearInterval(slideInterval));
+window.addEventListener('mirpanel:route-leave', () => disposeSlider?.());
 window.addEventListener('mirpanel:route-ready',e=>{if(e.detail.path==='/')initSlider();});
 
 const $ = (id) => document.getElementById(id);
