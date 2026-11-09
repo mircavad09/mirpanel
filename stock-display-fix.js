@@ -220,15 +220,25 @@
       const product=typeof currentProduct!=='undefined'?currentProduct:null;if(!product)return;
       const state=stateFor(product),rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')];
       let index=typeof currentPlanIdx==='number'?currentPlanIdx:0;
-      if(!state.unavailable&&!state.plans[index]?.canOrder){const next=state.plans.findIndex(p=>p.canOrder);if(next>=0&&rows[next]){currentPlanIdx=next;rows[next].click();index=next;}else if(next<0){currentPlanIdx=-1;index=-1;rows.forEach(row=>{row.classList.remove('active');row.setAttribute('aria-checked','false');});}}
+      if(!state.unavailable&&!state.plans[index]?.canOrder){const next=state.plans.findIndex(p=>p.canOrder);if(next>=0&&rows[next]){currentPlanIdx=next;rows[next].click();index=next;}else if(next<0&&index!==-1){currentPlanIdx=-1;index=-1;rows.forEach(row=>{row.classList.remove('active');row.setAttribute('aria-checked','false');});document.getElementById('pp-plans-container')?.dispatchEvent(new Event('mirpanel:plan-selection-cleared'));}}
       const canOrder=state.plans[index]?.canOrder===true;
       const button=document.getElementById('pp-order-btn');if(button){button.disabled=!canOrder;button.classList.toggle('disabled',!canOrder);button.textContent=state.unavailable?(inventoryFailed?'Müvəqqəti əlçatan deyil':'Stok yoxlanılır…'):canOrder?'Sifariş et':'Stokda yoxdur';}
       document.querySelectorAll('.product-page-status').forEach(el=>{el.textContent=state.unavailable?'Stok məlumatı alınır':state.canOrder?'Mövcuddur':'Stokda yoxdur';el.classList.toggle('is-out',!state.unavailable&&!state.canOrder);});
       rows.forEach((row,i)=>{
         const plan=state.plans[i],out=!state.unavailable&&!plan?.canOrder;row.setAttribute('aria-disabled',String(out));row.tabIndex=out?-1:i===index?0:-1;
-        let line=row.querySelector('[data-inventory-plan]');if(!line){line=document.createElement('span');line.dataset.inventoryPlan='';row.append(line);}line.className=out?'mpStockBadge cardStockBadge out inventory-plan-badge':'inventory-plan-count';
-        line.textContent=state.unavailable?'':out?'Stokda yoxdur':plan?.tracked?`${plan.available} ədəd stokda`:'';line.hidden=state.unavailable||!out&&(!plan?.tracked||i!==index);
-        const best=row.querySelector('.product-detail-best');if(best){best.hidden=out;best.style.display=out?'none':'';}
+        const stock=row.querySelector('[data-plan-stock]');
+        const showCount=!state.unavailable && plan?.tracked && Number.isSafeInteger(plan.available)
+          && product.plans[i]?.stockVisibility!=='hide' && i===index;
+        if(stock){
+          stock.hidden=!showCount;
+          const label=showCount?`${plan.available} stokda`:'';
+          if(stock.textContent!==label)stock.textContent=label;
+        }
+        let line=row.querySelector('[data-inventory-plan]');
+        if(!line){line=document.createElement('span');line.dataset.inventoryPlan='';row.append(line);}
+        line.className=out?'mpStockBadge cardStockBadge out inventory-plan-badge':'inventory-plan-count';
+        line.textContent=out?'Stokda yoxdur':!stock&&showCount?`${plan.available} stokda`:'';
+        line.hidden=!out&&(!!stock||!showCount);
       });
     }finally{painting=false;}
   }
@@ -238,7 +248,7 @@
     if(inventoryRequest)return inventoryRequest;if(document.hidden)return Promise.resolve(false);
     inventoryRequest=(async()=>{try{const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel.onrender.com';const url=base+'/api/payments/inventory',early=window.mirpanelInitialInventory;delete window.mirpanelInitialInventory;const initial=early?.url===url?await early.request.catch(()=>null):null;const r=initial&&performance.now()-initial.at<=1000?initial.response:await fetch(url,{cache:'no-store',signal:AbortSignal.timeout(10000)});if(!r.ok)throw Error('Inventory unavailable');const d=await r.json();if(!Array.isArray(d.products))throw Error('Invalid inventory');inventory.clear();for(const row of d.products)inventory.set(row.productId,row);inventoryDisplayValid=true;inventoryFailed=false;paintInventory();return true;}catch{inventoryDisplayValid=false;inventoryFailed=true;paintInventory();return false;}finally{inventoryRequest=null;}})();return inventoryRequest;
   }
-  window.MirpanelInventory={productState:stateFor,planState:planFor,refresh:refreshInventory,async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
+  window.MirpanelInventory={productState:stateFor,planState:planFor,refresh:refreshInventory,paint:paintInventory,async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
   document.addEventListener('click',event=>{
     const el=event.target.closest('.homeCardOrder,#pp-order-btn,.pp-plan-label');if(!el)return;
     const product=el.classList.contains('homeCardOrder')?(typeof DATA!=='undefined'?DATA.products.find(p=>p.id===el.closest('[data-product-id]')?.dataset.productId):null):(typeof currentProduct!=='undefined'?currentProduct:null);if(!product)return;

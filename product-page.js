@@ -168,7 +168,7 @@
         const [metrics,compact,display] = await Promise.all([
           import('/mirpanel-admin/public/product-plan-utils.mjs?v=detail-20261010-1'),
           product.id === 'capcut' ? import('/capcut-detail.mjs?v=20261020-1') : null,
-          import('/product-detail-display.mjs?v=compact-plan-rows-1')
+          import('/product-detail-display.mjs?v=package-details-1')
         ]);
         if(!signal.aborted&&activeRoot===root&&root.isConnected)initializeDetailMetadata(root,product, {...metrics,...display}, compact,signal);
       } catch { /* Keep the existing functioning page if enhancement cannot load. */ }
@@ -206,9 +206,7 @@
     const priceText = value => utils.formatPrice(value).replace('.', ',') + ' ₼';
     const rows = [...container.querySelectorAll('.pp-plan-label')];
     const plans = product.plans || [];
-    const unavailable = product.soldOut === true || product.flow === 'out_of_stock' ||
-      (product.stockEnabled === true && product.stock != null && Number(product.stock) <= 0);
-    const best = utils.detailBestValueIndex(plans, unavailable);
+    const delivery = product.deliveryText?.trim() || (product.deliveryType === 'automatic' ? 'Anında' : '');
     rows.forEach((row, index) => {
       const plan = plans[index], m = utils.detailPlanMetrics(plan);
       row.hidden = plan.active === false;
@@ -219,18 +217,23 @@
       row.setAttribute('aria-label', planName);
       const name = row.querySelector('.pp-plan-name');
       name.textContent = planName;
+      if (plan.bestValue === true) {
+        name.append(' ', text('span','product-detail-best','Ən sərfəli'));
+      }
       const notes = text('span','product-detail-plan-notes','');
       notes.id = `plan-details-${product.id}-${index}`;
       notes.setAttribute('role','region'); notes.setAttribute('aria-label','Paketin əlavə məlumatları');
       row.setAttribute('aria-controls',notes.id);
+      if (delivery) notes.append(text('span','plan-fact plan-fact-delivery',delivery));
+      const stock = text('span','plan-fact plan-fact-stock','');
+      stock.dataset.planStock = '';
+      stock.hidden = true;
+      notes.append(stock);
+      if (m.warranty) notes.append(text('span','plan-fact plan-fact-warranty',m.warranty));
       if (m.rate !== null) {
         const rate = text('span','product-detail-rate',m.days !== null ? 'Gündə ' : 'Ayda cəmi ');
         rate.append(text('strong','',priceText(m.rate)));notes.append(rate);
       }
-      if (m.warranty) notes.append(text('span','',m.warranty));
-      // There is currently no plan-level inventory source: do not invent per-plan stock
-      // from the global product stock. visibleStock deliberately requires an inventory read.
-      if (index === best) notes.append(text('span','product-detail-best','Ən sərfəli'));
       row.append(notes);
       const price = row.querySelector('.pp-new-price');
       if (m.price !== null && m.price > 0) price.textContent = priceText(m.price);
@@ -255,8 +258,7 @@
       rows.forEach((row,i)=>{
         row.setAttribute('aria-checked',String(i===index));row.tabIndex=i===index?0:-1;
         const notes=row.querySelector('.product-detail-plan-notes');
-        const expanded=i===index && notes.childElementCount>0;
-        notes.hidden=!expanded;row.setAttribute('aria-expanded',String(expanded));
+        notes.hidden=i!==index;
       });
       if (index < 0) {
         summary.append(text('p','','Aktiv paket yoxdur.'));
@@ -276,8 +278,10 @@
       }
     };
     container.addEventListener('click', update);
+    container.addEventListener('mirpanel:plan-selection-cleared', update);
     if (!rows.some(row=>row.classList.contains('active') && !row.hidden)) rows.find(row=>!row.hidden)?.click();
     update();
+    window.MirpanelInventory?.paint?.();
     const number = new Intl.NumberFormat('az-AZ');
     let loading = false;
     async function refreshSales() {

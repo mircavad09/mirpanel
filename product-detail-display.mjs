@@ -8,7 +8,7 @@ export function detailPlanMetrics(plan = {}) {
   const duration = days ?? months;
   return {...base, days, months,
     rate: duration !== null && base.price > 0 ? base.price / duration : null,
-    warranty:['guaranteed','none'].includes(plan.warrantyMode) ? warrantyText(plan) : ''};
+    warranty:warrantyText(plan)};
 }
 export function detailBestValueIndex(plans = [], unavailable = false) {
   if(unavailable) return -1;
