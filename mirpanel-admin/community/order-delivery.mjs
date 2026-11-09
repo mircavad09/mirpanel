@@ -214,27 +214,51 @@ export function orderMail(o,origin,{records=[],catalog}={}){
   <p><a href="${esc(url)}" style="display:inline-block;background:#ffcf33;color:#222;padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:bold">${label}</a></p><p style="color:#50545b">MirPanel komandası</p></div>`};
 }
 export function subscriptionReminderMail(job,{entry,account},origin){
- const {title,days,expiresOn}=entry;
- const [year,month,day]=expiresOn.split('-');
- const date=day+'.'+month+'.'+year;
- const subject='MirPanel | '+title+(days===1?' abunəliyiniz sabah bitir':' abunəliyinizin bitməsinə '+days+' gün qalıb');
- const greeting=account.name?'Salam, '+account.name+'!':'Salam!';
- const intro=days===1?title+' abunəliyiniz sabah, '+date+' tarixində bitir.':
-  title+' abunəliyinizin bitməsinə '+days+' gün qalıb. Bitmə tarixi '+date+'.';
- const guidance=days===1?
-  'Bu gün “Abunəliklərim” bölməsindən abunəliyinizi yeniləyə bilərsiniz. Vaxtında yeniləməsəniz, müddət bitəndə bu abunəlik üzrə girişiniz dayana bilər və xidmətdən yenidən istifadə etmək üçün yeni sifariş verməli ola bilərsiniz.':
-  'İstifadəniz kəsilməsin deyə aşağıdakı düymə ilə “Abunəliklərim” bölməsini açın və həmin abunəliyin yanındakı “Yenilə” düyməsinə basın.';
- const url=new URL('/profil?tab=subscriptions',origin).href;
- const label='Abunəliklərimə bax';
- return {
-  user:{email:account.email},subject,idempotencyKey:job.event_key,
-  textBody:[greeting,intro,guidance,label+': '+url].join('\n\n'),
-  htmlBody:`<div lang="az" style="max-width:560px;margin:0 auto;padding:16px 10px;color:#202124;font:15px/1.5 Arial,sans-serif;overflow-wrap:anywhere">
-   <p style="margin:0;color:#665014;font-size:13px;font-weight:bold">MIRPANEL</p>
-   <p>${esc(greeting)}</p><p>${esc(intro)}</p><p>${esc(guidance)}</p>
-   <p><a href="${esc(url)}" style="display:inline-block;background:#ffcf33;color:#222;padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:bold">${label}</a></p>
-  </div>`
+ const {title,plan,days,expiresOn}=entry;
+ const [year,month,day]=expiresOn.split('-'),date=day+'.'+month+'.'+year;
+ const variants={
+  5:{subject:title+' — abunəliyinizin bitməsinə 5 gün qalıb',heading:'Abunəliyiniz 5 gün sonra bitir',color:'#9A6700',background:'#FFF7DB',
+   intro:title+' abunəliyinizin bitməsinə <strong>5 gün qalıb</strong>.',
+   guidance:'İstifadənizin davam etməsi üçün yeniləməni indidən planlaşdırın. Son günə saxlamayın.',
+   action:'<strong>Abunəliklərim</strong> bölməsini açın və məhsulun yanındakı <strong>“Yenilə”</strong> düyməsinə basaraq uyğun paketi seçin.'},
+  2:{subject:'Vaxtında yeniləyin — '+title+' abunəliyiniz 2 gün sonra bitir',heading:'Cəmi 2 gün qalıb',color:'#B54708',background:'#FFF1E6',
+   intro:title+' abunəliyiniz <strong>2 gün sonra bitir</strong>.',
+   guidance:'<strong>Yeniləməni gecikdirməyin.</strong> Müddət bitdikdən sonra xidmətə girişiniz dayana bilər. İstifadəyə fasilə verməmək üçün abunəliyinizi vaxtında yeniləyin.',
+   action:'Aşağıdakı düymə ilə <strong>Abunəliklərim</strong> bölməsinə keçin və <strong>“Yenilə”</strong> seçin.'},
+  1:{subject:'Son xatırlatma — '+title+' abunəliyiniz sabah bitir',heading:'Abunəliyiniz sabah bitir — bu gün yeniləyin',color:'#B42318',background:'#FFF0EE',
+   intro:title+' abunəliyinizin bitməsinə <strong>1 gün qalıb</strong>.',
+   guidance:'<strong>Xidmətin davam etməsi üçün yeniləməni bu gün tamamlayın.</strong>',
+   action:'<strong>Abunəliklərim</strong> bölməsinə keçin, məhsulun yanındakı <strong>“Yenilə”</strong> düyməsinə basın və ödənişi tamamlayın.'}
  };
+ const v=variants[days];if(!v)throw Error('INVALID_REMINDER_DAYS');
+ const greeting=account.name?'Salam, '+account.name+'!':'Salam!';
+ const url=new URL('/profil?tab=subscriptions',origin).href,label='Abunəliklərimə bax';
+ const warning='Müddət bitdikdən sonra xidmətə girişiniz dayana bilər. Yeniləməni son ana saxlamayın.';
+ // Escape catalog text before adding the fixed emphasis markup.
+ const intro=v.intro.replace(title,()=>esc(title));
+ const plain=text=>text.replace(/<\/?strong>/g,'');
+ const facts=[['Məhsul',title],['Paket',plan],['Bitmə tarixi',date]].filter(([,value])=>value);
+ return {user:{email:account.email},subject:v.subject,idempotencyKey:job.event_key,
+  textBody:[v.heading,greeting,plain(v.intro),plain(v.guidance),days===1?warning:'',facts.map(([k,value])=>k+' — '+value).join('\n'),plain(v.action),label+': '+url].filter(Boolean).join('\n\n'),
+  htmlBody:`<!doctype html><html lang="az"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
+  <body style="margin:0;padding:0;background:#F3F4F6;color:#202124;font-family:Arial,Helvetica,sans-serif">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" style="padding:20px 8px">
+  <table role="presentation" width="560" cellspacing="0" cellpadding="0" border="0" style="width:100%;max-width:560px;background:#FFFFFF;border:1px solid #D9DEE5;border-radius:16px;table-layout:fixed">
+  <tr><td style="padding:24px 20px;font-size:16px;line-height:1.6;overflow-wrap:anywhere;word-break:break-word">
+  <p style="margin:0 0 14px;font-size:13px;letter-spacing:2px;font-weight:700;color:#50545B">MIRPANEL</p>
+  <h1 style="margin:0 0 20px;font-size:27px;line-height:1.25;font-weight:800;color:#15171A">${esc(v.heading)}</h1>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:${v.background};border:1px solid ${v.color};border-radius:10px">
+  <tr><td align="center" style="padding:16px;color:${v.color}"><div style="font-size:44px;line-height:1.1;font-weight:800">${days}</div><div style="font-size:16px;font-weight:700">gün qalıb</div></td></tr></table>
+  <p style="margin:22px 0 12px">${esc(greeting)}</p><p style="margin:0 0 14px">${intro}</p>
+  <p style="margin:0 0 18px">${v.guidance}</p>
+  ${days===1?'<p style="margin:0 0 18px;padding:14px;border:2px solid #B42318;border-radius:8px;background:#FFF0EE;color:#8F1D14;font-weight:700">'+warning+'</p>':''}
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="border:1px solid #D9DEE5;border-radius:10px;background:#F8F9FB;table-layout:fixed">
+  ${facts.map(([k,value])=>'<tr><td style="padding:10px 14px;border-bottom:1px solid #E5E7EB"><div style="color:#50545B;font-size:13px">'+esc(k)+'</div><div style="font-size:16px;font-weight:700;overflow-wrap:anywhere;word-break:break-word">'+esc(value)+'</div></td></tr>').join('')}</table>
+  <p style="margin:20px 0">${v.action}</p>
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0"><tr><td align="center" bgcolor="#FF9800" style="border-radius:8px">
+  <a href="${esc(url)}" style="display:block;padding:15px 10px;background:#FF9800;border:1px solid #E98900;border-radius:8px;color:#0A0805;font-size:16px;line-height:1.4;font-weight:800;text-decoration:none"><span aria-hidden="true">📅</span> ${label}</a>
+  </td></tr></table><p style="margin:20px 0 0;color:#50545B;font-size:13px">MirPanel komandası</p>
+  </td></tr></table></td></tr></table></body></html>`};
 }
 export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCatalog,requireDeliveryNotice=false,subscriptionReminders=false,now=()=>new Date()}={}){
  let timer,running,nextReminderScan=0;
@@ -243,7 +267,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
   const current=now();
   if(subscriptionReminders&&current.getTime()>=nextReminderScan){
    nextReminderScan=current.getTime()+15*60*1000;
-   try{await queueSubscriptionReminders(pool,bakuDate(current));}
+   try{await queueSubscriptionReminders(pool,bakuDate(current));console.info('SUBSCRIPTION_REMINDER_SCAN_OK','design-20261110');}
    catch{console.warn('SUBSCRIPTION_REMINDER_SCAN_ERROR');}
   }
   const stale=await pool.query(`update ${M} set state='uncertain',reason='STALE_SENDING',updated_at=now() where state='sending' and updated_at<now()-interval '2 minutes' returning event_key`);

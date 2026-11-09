@@ -63,15 +63,15 @@ try{
   assert.equal(sent.length,expected);
  }
  assert.deepEqual(sent.map(mail=>mail.subject),[
-  'MirPanel | Synthetic ordinary abunəliyinizin bitməsinə 5 gün qalıb',
-  'MirPanel | Synthetic ordinary abunəliyinizin bitməsinə 2 gün qalıb',
-  'MirPanel | Synthetic ordinary abunəliyiniz sabah bitir'
+  'Synthetic ordinary — abunəliyinizin bitməsinə 5 gün qalıb',
+  'Vaxtında yeniləyin — Synthetic ordinary abunəliyiniz 2 gün sonra bitir',
+  'Son xatırlatma — Synthetic ordinary abunəliyiniz sabah bitir'
  ]);
  assert.equal(new Set(sent.map(mail=>mail.idempotencyKey)).size,3);
  for(const mail of sent){
   assert.equal(mail.user.email,'a@example.test');
   assert.match(mail.textBody,/Salam, Reader A!/);
-  assert.match(mail.htmlBody,/href="https:\/\/mirpanel\.com\/profil\?tab=subscriptions"[^>]*>Abunəliklərimə bax<\/a>/);
+  assert.match(mail.htmlBody,/href="https:\/\/mirpanel\.com\/profil\?tab=subscriptions"[^>]*>[\s\S]*Abunəliklərimə bax<\/a>/);
   assert.doesNotMatch(mail.textBody+mail.htmlBody,/PRIVATE-9876|0123/);
  }
  assert.ok((await reminders()).every(row=>row.state==='accepted'));
