@@ -4,7 +4,7 @@ export function mountReadyStock(host,api){
  if(mounts.has(host)){void mounts.get(host)();return;}
  host.innerHTML=`<div class="readyStockLayout">
   <section class="readyStockCard">
-   <h3>Hazır hesab əlavə et</h3><p>Bu mətn ödənişdən sonra yalnız sifariş sahibinə göstərilir.</p>
+   <h3>Hazır hesab stoku</h3><p>Hazır mesaj məhsulun bütün paketləri üçün istifadə olunur.</p>
    <form autocomplete="off">
     <label>Məhsul<select name="product" aria-label="Məhsul" required></select></label>
     <label>Paket<select name="plan" aria-label="Paket" required></select></label>
@@ -15,38 +15,48 @@ export function mountReadyStock(host,api){
     </div>
     <p data-scope></p>
     <label class="readyStockCheck"><input name="auto" type="checkbox" role="switch"> Ödəniş təsdiqlənəndə avtomatik təhvil <strong data-auto aria-hidden="true">Bağlı</strong></label>
+    <label>Müştəriyə təqdim ediləcək hazır mesaj<textarea name="template" rows="4" maxlength="8000" spellcheck="false"></textarea></label>
+    <div class="readyStockActions"><button class="btn" type="button" data-save-message>Hazır mesajı saxla</button></div>
     <div data-messages></div>
-    <div class="readyStockActions"><button class="btn" type="button" data-add-unit>+ Yeni hesab əlavə et</button><button class="btn primary" type="submit">Yadda saxla</button></div>
+    <div class="readyStockActions"><button class="btn" type="button" data-add-unit>+ Yeni hesab əlavə et</button><button class="btn primary" type="submit">Hesabları və təhvil ayarını saxla</button></div>
    </form>
    <p role="status" aria-live="polite"></p>
   </section>
   <section class="readyStockCard"><h3>Məhsullar üzrə hazır stok</h3><p>Bütün paketlər üzrə sifarişə ayrılmamış hazır hesablar.</p><div data-product-list></div></section>
  </div>`;
- const form=host.querySelector('form'),{product,plan,sales,auto}=form.elements;
+ const form=host.querySelector('form'),{product,plan,sales,auto,template}=form.elements;
  const q=s=>host.querySelector(s),messageList=q('[data-messages]'),report=q('[role=status]'),list=q('[data-product-list]');
  const submit=form.querySelector('[type=submit]'),saveSales=q('[data-save-sales]'),editSales=q('[data-edit-sales]'),editor=q('#readyStockSaleEditor'),add=q('[data-add-unit]');
- const drafts=new Map(),lastPlan=new Map();
- let activeDraft=null;
+ const saveMessage=q('[data-save-message]');
+ const drafts=new Map(),lastPlan=new Map(),messageDrafts=new Map();
+ let activeDraft=null,activeProduct;
  let products=[],pending=null,busy=false,loaded=false,read=null;
  const selected=()=>{const p=products.find(x=>x.id===product.value);return {p,item:p?.plans.find(x=>String(x.index)===plan.value)};};
- const messages=()=>[...messageList.querySelectorAll('textarea')];
+ const accounts=()=>[...messageList.children].map(row=>({email:row.querySelector('[type=email]').value.trim(),password:row.querySelector('[type=password]').value}));
  const say=(text,error=false)=>{report.textContent=text;report.dataset.error=String(error);};
  function controls(){
   const locked=busy||!!pending,absent=!selected().item;
   product.disabled=locked||!loaded;plan.disabled=locked||!loaded;auto.disabled=locked||absent;
   sales.disabled=locked||absent;editSales.disabled=locked||absent;
-  for(const node of messageList.querySelectorAll('textarea,button'))node.disabled=locked||absent;
-  add.disabled=locked||absent||messages().length>=20;
-  submit.disabled=busy||absent||pending?.type==='sales';
-  saveSales.disabled=busy||absent||pending?.type==='accounts';
+  for(const node of messageList.querySelectorAll('input,button'))node.disabled=locked||absent;
+  template.disabled=locked||!selected().p;
+  saveMessage.disabled=busy||!selected().p||(pending&&pending.type!=='message')||(!pending&&template.value===selected().p?.message);
+  add.disabled=locked||absent||accounts().length>=20;
+  submit.disabled=busy||absent||(pending&&pending.type!=='accounts');
+  saveSales.disabled=busy||absent||(pending&&pending.type!=='sales');
   for(const b of list.querySelectorAll('button'))b.disabled=locked;
  }
- function addMessage(value=''){
+ function addAccount(value={}){
   const row=document.createElement('div');row.className='readyStockMessage';
-  const label=document.createElement('label'),title=document.createElement('span'),box=document.createElement('textarea');
-  title.textContent='Müştəriyə təqdim ediləcək hazır mesaj';box.rows=4;box.maxLength=8000;box.spellcheck=false;box.value=value;
-  label.append(title,box);row.append(label);
-  if(messages().length){const remove=document.createElement('button');remove.type='button';remove.className='btn';remove.textContent='Sahəni sil';remove.onclick=()=>{row.remove();controls();};row.append(remove);}
+  for(const [name,type,max] of [['Hesabın e-poçtu','email',254],['Hesabın şifrəsi','password',512]]){
+   const label=document.createElement('label'),box=document.createElement('input');
+   label.textContent=name;box.type=type;box.maxLength=max;box.autocomplete=type==='password'?'new-password':'off';box.value=value[type]||'';
+   label.append(box);row.append(label);
+  }
+  if(accounts().length){
+   const remove=document.createElement('button');remove.type='button';remove.className='btn';remove.textContent='Hesabı sil';
+   remove.onclick=()=>{row.remove();controls();};row.append(remove);
+  }
   messageList.append(row);controls();
  }
  function fillPlans(wanted){
@@ -54,12 +64,18 @@ export function mountReadyStock(host,api){
   if([...plan.options].some(x=>x.value===wanted))plan.value=wanted;
  }
  function rememberDraft(){
-  if(activeDraft)drafts.set(activeDraft.key,{messages:messages().map(x=>x.value),auto:activeDraft.originalAuto===auto.checked?undefined:auto.checked});
+  if(activeProduct){
+   const saved=products.find(p=>p.id===activeProduct)?.message??'';
+   if(template.value!==saved)messageDrafts.set(activeProduct,template.value);
+   else messageDrafts.delete(activeProduct);
+  }
+  if(activeDraft)drafts.set(activeDraft.key,{accounts:accounts(),auto:activeDraft.originalAuto===auto.checked?undefined:auto.checked});
  }
  function setEditor(open){editor.hidden=!open;editSales.setAttribute('aria-expanded',String(open));}
  function renderSwitch(){const badge=q('[data-auto]');badge.textContent=auto.checked?'Aktiv':'Bağlı';badge.dataset.active=String(auto.checked);}
  function renderPlan(){
   const {p,item}=selected();
+  activeProduct=p?.id;template.value=messageDrafts.get(activeProduct)??p?.message??'';
   q('[data-sales]').textContent=!item?'—':item.sales===null?'Limitsiz':item.sales===0?'Stokda yoxdur':item.sales+' satış vahidi';q('[data-ready]').textContent=item?.ready??'—';
   q('[data-scope]').textContent=p?.scope==='plan'?'Satış stoku bu paketə aiddir.':'Satış stoku məhsul üzrə ortaqdır.';
   sales.value=item?.sales>0?item.sales:'';setEditor(false);
@@ -69,7 +85,7 @@ export function mountReadyStock(host,api){
   const draft=drafts.get(draftKey);
   auto.checked=draft?.auto??!!item?.autoWallet;renderSwitch();
   messageList.replaceChildren();
-  for(const value of draft?.messages||[''])addMessage(value);
+  for(const value of draft?.accounts||[{}])addAccount(value);
   for(const b of list.querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.product===p?.id));
   controls();
  }
@@ -101,21 +117,27 @@ export function mountReadyStock(host,api){
   const {p,item}=selected();if(!item)return;
   if(!pending){
    const data={productId:p.id,index:item.index,planSignature:item.signature,requestId:crypto.randomUUID()};
-   if(type==='sales'){
+   if(type==='message'){
+    if(!template.value.trim())return say('Hazır mesajı yazın.',true);
+    pending={type,data:{productId:p.id,message:template.value}};
+   }else if(type==='sales'){
     if(!sales.value||!sales.reportValidity())return say('0–10000 arası satış miqdarı yazın. Limitsiz üçün 0 daxil edin.',true);
     Object.assign(data,{expectedVersion:p.version,available:Number(sales.value)===0?null:Number(sales.value)});
    }else{
-    Object.assign(data,{messages:messages().map(x=>x.value).filter(x=>x.trim())});
+    const values=accounts().filter(x=>x.email||x.password);
+    if(values.some(x=>!x.email||!x.password.trim()))return say('Hər hesab üçün e-poçt və şifrə yazın.',true);
+    Object.assign(data,{accounts:values});
     if(auto.checked!==item.autoWallet)data.autoWallet=auto.checked;
-    if(!data.messages.length&&data.autoWallet===undefined)return say('Hazır mətn yazın və ya təhvil ayarını dəyişin.',true);
+    if(!data.accounts.length&&data.autoWallet===undefined)return say('Hesab əlavə edin və ya təhvil ayarını dəyişin.',true);
    }
-   pending={type,data};
+   pending??={type,data};
   }
   busy=true;controls();say('Saxlanılır…');
   try{
-   const result=await api(endpoint+(type==='sales'?'/sales':''),{method:'POST',body:JSON.stringify(pending.data)});
-   pending=null;if(type==='accounts'){drafts.delete(activeDraft?.key);activeDraft=null;messageList.replaceChildren();addMessage();}
-   say(type==='sales'?'Satış stoku saxlanıldı.':result.added?result.added+' hazır hesab saxlanıldı.':'Təhvil ayarı saxlanıldı.');
+   const result=await api(endpoint+(type==='accounts'?'':'/'+type),{method:'POST',body:JSON.stringify(pending.data)});
+   pending=null;if(type==='accounts'){drafts.delete(activeDraft?.key);activeDraft=null;messageList.replaceChildren();addAccount();}
+   if(type==='message'){p.message=result.message;messageDrafts.delete(p.id);template.value=result.message;}
+   say(type==='message'?'Hazır mesaj saxlanıldı.':type==='sales'?'Satış stoku saxlanıldı.':result.added?result.added+' hazır hesab saxlanıldı.':'Təhvil ayarı saxlanıldı.');
    await refresh();
   }catch(e){
    if([400,409,422].includes(e.status)){pending=null;say(e.message,true);await refresh();}
@@ -123,8 +145,9 @@ export function mountReadyStock(host,api){
   }finally{busy=false;controls();}
  }
  product.onchange=()=>{rememberDraft();fillPlans(lastPlan.get(product.value));renderPlan();};
- plan.onchange=()=>{rememberDraft();renderPlan();};auto.onchange=renderSwitch;add.onclick=()=>addMessage();
+ plan.onchange=()=>{rememberDraft();renderPlan();};auto.onchange=renderSwitch;add.onclick=()=>{addAccount();messageList.lastElementChild.querySelector('input').focus();};
+ template.oninput=controls;saveMessage.onclick=()=>void send('message');
  editSales.onclick=()=>{setEditor(editor.hidden);if(!editor.hidden)sales.focus();};
  saveSales.onclick=()=>void send('sales');form.onsubmit=e=>{e.preventDefault();void send('accounts');};
- addMessage();mounts.set(host,refresh);void refresh();
+ addAccount();mounts.set(host,refresh);void refresh();
 }

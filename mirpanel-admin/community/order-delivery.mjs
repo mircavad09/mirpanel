@@ -1,3 +1,4 @@
+import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {orderLines} from '../order-lines.mjs';
 
 const D='mirpanel_community.customer_order_deliveries', M='mirpanel_community.customer_order_mail';
@@ -62,7 +63,7 @@ export async function adminOrderCustomers(pool,ids){
    left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id
    where o.id=any($1::uuid[])`,[ids])).rows;
 }
-export async function adminDelivery(pool,security,actor,id,input){
+export async function adminDelivery(pool,security,actor,id,input,{productMessage=false}={}){
  const c=await pool.connect();
  try{
   await c.query('begin');
@@ -71,10 +72,12 @@ export async function adminDelivery(pool,security,actor,id,input){
   if(!paid(o))throw fail(409,'Əvvəl ödəniş təsdiqlənməlidir.');
   const lines=deliveryLines(o),records=await deliveryRecords(c,[id]),done=totals(records);
   const renewalCode=i=>o.checkout_snapshot?.items?.[i]?.renewalOrderCode;
-  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:x.quantity-(done[i]||0),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
+  const templates=productMessage&&!input?await readProductMessages(c,security,[...new Set(lines.map(x=>x.productId).filter(Boolean))]):new Map();
+  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:x.quantity-(done[i]||0),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
   if(!input){await c.query('commit');return view();}
-  const {requestId,line,quantity,message}=input;
-  if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||typeof message!=='string'||!message.trim()||message.length>8000)throw fail(400,'Təhvil məlumatları düzgün deyil.');
+  const {requestId,line,quantity}=input;
+  let {message}=input;
+  if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||(!productMessage&&(typeof message!=='string'||!message.trim()||message.length>8000)))throw fail(400,'Təhvil məlumatları düzgün deyil.');
   const {email='',password=''}=input;
   if(typeof email!=='string'||email.length>254||(email&&!/^\S+@\S+\.\S+$/.test(email))||typeof password!=='string'||password.length>512||/[\r\n\0]/.test(password))throw fail(400,'E-poçt və ya şifrə düzgün deyil.');
   if((email||password)&&quantity!==1)throw fail(400,'E-poçt və şifrəni hər vahid üçün ayrıca göndərin.');
@@ -82,7 +85,7 @@ export async function adminDelivery(pool,security,actor,id,input){
   const previous=(await c.query(`select order_id,line_index,quantity,message_cipher from ${D} where id=$1`,[requestId])).rows[0];
   if(previous){
    const saved=JSON.parse(security.decryptSecret(previous.message_cipher));
-   if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||saved.message!==message||(saved.email||'')!==email||(saved.password||'')!==password)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
+   if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||(!productMessage&&saved.message!==message)||(saved.email||'')!==email||(saved.password||'')!==password)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
    await c.query('commit');return {...view(),replayed:true};
   }
   if(actor!=='supplier:auto' && (await c.query("select to_regclass('mirpanel_community.api_dispatches') as name")).rows[0]?.name){
@@ -90,6 +93,11 @@ export async function adminDelivery(pool,security,actor,id,input){
    if(busy.rowCount)throw fail(409,'Təchizatçı bu məhsulun sifarişini yoxlayır.');
   }
   if(quantity>lines[line].quantity-(done[line]||0))throw fail(409,'Bu sayda təhvil verilməmiş məhsul qalmayıb.');
+  if(productMessage){
+   message=(await readProductMessages(c,security,[lines[line].productId])).get(lines[line].productId);
+   if(!message)throw fail(409,'Əvvəl Hazır hesab stoku bölməsində məhsul mesajını saxlayın.');
+   if(input.message!==message)throw fail(409,'Hazır mesaj dəyişib. Təhvil pəncərəsini yenidən açın.');
+  }
   const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message,{email,password});
   records.push(record);done[line]=(done[line]||0)+quantity;
   await c.query('commit');return view();

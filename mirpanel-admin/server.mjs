@@ -1359,6 +1359,7 @@ const paymentSystem = createPaymentSystem({
   approveCardWithReadyStock: (...args)=>ownerCommunity.approveCardWithReadyStock(...args),
   readyStockAllowed: request=>getSession(request)?.role==='admin',
   readyStock: (...args)=>ownerCommunity.readyStock(...args),
+  saveProductMessage: (...args)=>ownerCommunity.saveProductMessage(...args),
   saveReadyStock: (...args)=>ownerCommunity.saveReadyStock(...args),
   pendingDeliveries: ids=>ownerCommunity.pendingDeliveries(ids),
   pendingDeliveryProgress: ids=>ownerCommunity.pendingDeliveries(ids,{progress:true}),

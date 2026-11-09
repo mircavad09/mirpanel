@@ -3,7 +3,7 @@
 .readyStockCard h3{font-size:17px;margin:0 0 5px}.readyStockCard p{color:#bcc1c7;margin:0 0 12px}
 .readyStockCard form,.readyStockCard [data-messages]{display:grid;gap:10px}
 .readyStockCard label:not(.readyStockCheck){display:grid;gap:4px;min-width:0}
-.readyStockCard :is(select,textarea,input[type=number]){width:100%;min-width:0;box-sizing:border-box;font:inherit}
+.readyStockCard :is(select,textarea,input[type=number],input[type=email],input[type=password]){width:100%;min-width:0;box-sizing:border-box;font:inherit}
 .readyStockCard .readyStockCheck{display:flex;align-items:center;gap:7px}.readyStockCard input[type=checkbox]{width:18px;height:18px;accent-color:#ffd400}
 .readyStockCounts{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .readyStockCounts :is(span,button){display:grid;padding:8px 10px;border:1px solid #41423b;border-radius:9px;background:#212224;text-align:left;font:inherit;color:inherit;overflow-wrap:anywhere}

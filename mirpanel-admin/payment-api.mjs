@@ -631,10 +631,14 @@ export function createPaymentSystem(options) {
       if(request.method==='GET'){json(response,200,{products:await inventoryView()});return true;}
       if(request.method==='POST'){const b=await readBody(request,10000),key=safeUuid(request.headers['x-idempotency-key']);const c=await loadCatalog();if(!key||b.confirm!==true||!(b.available===null||(Number.isSafeInteger(b.available)&&b.available>=0&&b.available<=10000))||!Number.isSafeInteger(b.expectedVersion)||!c.products.some(p=>p.id===b.productId&&(b.planKey==null||(typeof b.planKey==='string'&&/^\d+$/.test(b.planKey)&&p.plans?.[Number(b.planKey)]))))throw Object.assign(new Error('Məhsul, stok miqdarı və təsdiq tələb olunur.'),{status:400});json(response,200,await store.setInventory(b.productId,b.available,actorName,key,b.expectedVersion,b.planKey??null));return true;}
     }
-    if(['/api/admin/payment-ready-stock','/api/admin/payment-ready-stock/sales'].includes(url.pathname)&&options.readyStockAllowed){
+    if(['/api/admin/payment-ready-stock','/api/admin/payment-ready-stock/sales','/api/admin/payment-ready-stock/message'].includes(url.pathname)&&options.readyStockAllowed){
       if(!options.readyStockAllowed(request))throw Object.assign(new Error('Bu bölmə yalnız adminə açıqdır.'),{status:403});
       response.setHeader('Cache-Control','private, no-store');
       const catalog=await loadCatalog();
+      if(url.pathname.endsWith('/message')){
+        if(request.method!=='POST')return false;
+        json(response,200,await options.saveProductMessage(security,catalog,await readBody(request,50_000)));return true;
+      }
       if(url.pathname.endsWith('/sales')&&request.method==='POST'){
         const b=await readBody(request,10000),id=safeUuid(b.requestId),p=catalog.products.find(x=>x.id===b.productId&&x.active!==false),plan=p?.plans?.[b.index];
         if(!id||!Number.isSafeInteger(b.index)||!Number.isSafeInteger(b.expectedVersion)||!plan||signature(plan)!==b.planSignature||!(b.available===null||(Number.isSafeInteger(b.available)&&b.available>=0&&b.available<=10000)))throw Object.assign(new Error('Məhsul, paket və stok miqdarı düzgün deyil.'),{status:400});
@@ -644,7 +648,7 @@ export function createPaymentSystem(options) {
       if(url.pathname.endsWith('/sales'))return false;
       if(request.method==='GET'){
         const inventory=await readInventory({fresh:true});
-        json(response,200,await options.readyStock(catalog,catalog.products.map(p=>inventoryAvailability(p,inventory.find(i=>i.productId===p.id)))));return true;
+        json(response,200,await options.readyStock(catalog,catalog.products.map(p=>inventoryAvailability(p,inventory.find(i=>i.productId===p.id))),security));return true;
       }
       if(request.method==='POST'){
         json(response,200,await options.saveReadyStock(security,config.tokenSecret,catalog,actorName,await readBody(request,700000)));return true;

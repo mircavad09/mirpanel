@@ -16,7 +16,7 @@ try{
     const s=window.__fixtureState, original=window.api;
     const wallet={...s.all[0],customerName:'Sintetik müştəri',customerNumber:1022,paymentSource:'wallet',deliveryPending:true,items:[{title:'CapCut Pro',planName:'1 aylıq',quantity:1,unitCents:499},{title:'Netflix Şəxsi',planName:'1 aylıq',quantity:1,unitCents:499}]};
     const auto={...s.all[1],paymentSource:'wallet',deliveryPending:false};
-    const lines=wallet.items.map((x,index)=>({index,title:x.title,plan:x.planName,remaining:1}));
+    const lines=wallet.items.map((x,index)=>({index,title:x.title,plan:x.planName,remaining:1,message:index===0?'Sintetik CapCut':'Sintetik mesaj\nİkinci sətir'}));
     let loseResponse=true;
     s.deliveryPosts=[];s.deliveryReads=0;
     window.api=async(path,options={})=>{
@@ -57,7 +57,8 @@ try{
    await modal.getByLabel('Məhsul və paket').selectOption('1');
    await modal.getByLabel('Hesabın e-poçtu (istəyə bağlı)').fill('delivery@example.test');
    await modal.getByLabel('Hesabın şifrəsi (istəyə bağlı)').fill('synthetic-only');
-   await modal.getByLabel('Müştəriyə hazır mesaj').fill('Sintetik mesaj\nİkinci sətir');
+   assert.equal(await modal.getByLabel('Müştəriyə hazır mesaj').inputValue(),'Sintetik mesaj\nİkinci sətir');
+   assert(await modal.getByLabel('Müştəriyə hazır mesaj').evaluate(node=>node.readOnly));
    const send=modal.getByRole('button',{name:'Göndər və təhvil ver'});
    await send.evaluate(b=>{b.click();b.click();});
    await modal.getByRole('alert').getByText(/Sintetik cavab itdi/).waitFor();
@@ -69,7 +70,7 @@ try{
    await wallet.getByRole('button',{name:'Təhvil ver'}).click();await modal.waitFor();
    assert.equal(await modal.locator('option').count(),1);
    assert.equal(await modal.getByLabel('Məhsul və paket').inputValue(),'0');
-   await modal.getByLabel('Müştəriyə hazır mesaj').fill('Sintetik CapCut');
+   assert.equal(await modal.getByLabel('Müştəriyə hazır mesaj').inputValue(),'Sintetik CapCut');
    await send.click();await modal.waitFor({state:'hidden'});await wallet.waitFor({state:'hidden'});
    await p.locator('[data-payment-order-tab=today]').click();
    await cards.filter({hasText:'Tamamlandı'}).first().waitFor();assert.equal(await cards.count(),2);

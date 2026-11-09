@@ -3,6 +3,8 @@ import {signature} from '../employee-security.mjs';
 import {planKey} from '../payment-profit.mjs';
 import {adminPendingDeliveries,recordDelivery} from './order-delivery.mjs';
 
+import {readProductMessages} from './ready-stock-product-messages.mjs';
+
 const S='mirpanel_community.ready_stock_';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const key=(p,k,s)=>JSON.stringify([p,k,s]);
@@ -11,7 +13,7 @@ async function enabled(c){
  if(!(await c.query("select to_regclass('mirpanel_community.ready_stock_release') as name")).rows[0]?.name)return false;
  return (await c.query('select enabled from '+S+'release where id for share')).rows[0]?.enabled===true;
 }
-export async function readyStockView(pool,catalog,inventory){
+export async function readyStockView(pool,catalog,inventory,security){
  const c=await pool.connect();
  try{
   await c.query('begin');
@@ -19,6 +21,7 @@ export async function readyStockView(pool,catalog,inventory){
   const settings=(await c.query('select p.product_id,p.plan_key,p.plan_signature,p.auto_wallet,count(u.id)::int as ready from '+S+'plans p left join '+S+'units u on (p.product_id,p.plan_key,p.plan_signature)=(u.product_id,u.plan_key,u.plan_signature) and u.delivery_id is null group by p.product_id,p.plan_key,p.plan_signature,p.auto_wallet')).rows;
   const records=new Map(settings.map(x=>[key(x.product_id,x.plan_key,x.plan_signature),x]));
   const availability=new Map(inventory.map(x=>[x.productId,x]));
+  const messages=security?await readProductMessages(c,security,catalog.products.map(p=>p.id)):new Map();
   const result={products:catalog.products.filter(p=>p.active!==false&&p.plans?.length).map(p=>{
    const stock=availability.get(p.id);
    const counted=new Set();let readyTotal=0;
@@ -27,15 +30,21 @@ export async function readyStockView(pool,catalog,inventory){
     if(!counted.has(sku)){counted.add(sku);readyTotal+=config?.ready??0;}
     return {index:i,title:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Paket '+(i+1)),signature:sig,sales:inv?.available??null,tracked:inv?.tracked??false,active:inv?.active??false,ready:config?.ready??0,autoWallet:config?.auto_wallet??false};
    });
-   return {id:p.id,title:p.title,image:typeof p.image==='string'?p.image:'',readyTotal,scope:stock?.scope||'none',version:stock?.version??0,plans};
+   return {id:p.id,title:p.title,message:messages.get(p.id)??'',image:typeof p.image==='string'?p.image:'',readyTotal,scope:stock?.scope||'none',version:stock?.version??0,plans};
   })};
   await c.query('commit');return result;
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
- const {productId,index,planSignature,requestId,messages,autoWallet}=input||{};
- if(!validId(requestId)||!Number.isSafeInteger(index)||index<0||typeof productId!=='string'||typeof planSignature!=='string'||(autoWallet!==undefined&&typeof autoWallet!=='boolean')||!Array.isArray(messages)||messages.length>20||(!messages.length&&autoWallet===undefined)||messages.some(m=>typeof m!=='string'||!m.trim()||m.length>8000))throw fail(400,'Paket, hazır mətnlər və ya təhvil seçimi düzgün deyil.');
- const digest=crypto.createHmac('sha256',secret).update(JSON.stringify([productId,index,planSignature,autoWallet,messages])).digest('hex');
+ const {productId,index,planSignature,requestId,messages=[],accounts,autoWallet}=input||{};
+ const structured=accounts!==undefined;
+ if(structured&&(!Array.isArray(accounts)||accounts.length>20||messages.length||accounts.some(a=>
+  !a||typeof a.email!=='string'||a.email.length>254||!/^\S+@\S+\.\S+$/.test(a.email)||
+  typeof a.password!=='string'||!a.password.trim()||a.password.length>512||/[\r\n\0]/.test(a.password)
+ )))throw fail(400,'Hər hesab üçün etibarlı e-poçt və şifrə yazın.');
+ const units=structured?accounts:messages;
+ if(!validId(requestId)||!Number.isSafeInteger(index)||index<0||typeof productId!=='string'||typeof planSignature!=='string'||(autoWallet!==undefined&&typeof autoWallet!=='boolean')||!Array.isArray(messages)||messages.length>20||(!units.length&&autoWallet===undefined)||messages.some(m=>typeof m!=='string'||!m.trim()||m.length>8000))throw fail(400,'Paket, hazır mətnlər və ya təhvil seçimi düzgün deyil.');
+ const digest=crypto.createHmac('sha256',secret).update(JSON.stringify([productId,index,planSignature,autoWallet,structured?accounts:messages])).digest('hex');
  const c=await pool.connect();
  try{
   await c.query('begin');
@@ -48,15 +57,16 @@ export async function saveReadyStock(pool,security,secret,catalog,actor,input){
   }
   const p=catalog.products.find(p=>p.id===productId&&p.active!==false),plan=p?.plans?.[index];
   if(!plan||signature(plan)!==planSignature)throw fail(409,'Kataloq dəyişib. Paketi yenidən seçin.');
+  if(structured&&accounts.length&&!(await readProductMessages(c,security,[productId])).has(productId))throw fail(409,'Əvvəl məhsulun hazır mesajını saxlayın.');
   const args=[productId,planKey(plan,index),planSignature];
   await c.query('insert into '+S+'plans(product_id,plan_key,plan_signature) values($1,$2,$3) on conflict do nothing',args);
   if(autoWallet!==undefined)await c.query('update '+S+'plans set auto_wallet=$4 where product_id=$1 and plan_key=$2 and plan_signature=$3',[...args,autoWallet]);
-  await c.query('insert into '+S+'batches(id,fingerprint,actor,units) values($1,$2,$3,$4)',[requestId,digest,actor,messages.length]);
-  for(const message of messages){
+  await c.query('insert into '+S+'batches(id,fingerprint,actor,units) values($1,$2,$3,$4)',[requestId,digest,actor,units.length]);
+  for(const unit of units){
    const id=crypto.randomUUID();
-   await c.query('insert into '+S+'units(id,product_id,plan_key,plan_signature,batch_id,message_cipher) values($1,$2,$3,$4,$5,$6)',[id,...args,requestId,security.encryptSecret(JSON.stringify({id,scope:args,message}))]);
+   await c.query('insert into '+S+'units(id,product_id,plan_key,plan_signature,batch_id,message_cipher) values($1,$2,$3,$4,$5,$6)',[id,...args,requestId,security.encryptSecret(JSON.stringify({id,scope:args,...(structured?{account:{email:unit.email,password:unit.password}}:{message:unit})}))]);
   }
-  await c.query('commit');return {added:messages.length};
+  await c.query('commit');return {added:units.length};
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 // Runs on the caller's transaction after confirmed payment.
@@ -69,12 +79,15 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
   const setting=(await c.query('select auto_wallet from '+S+'plans where product_id=$1 and plan_key=$2 and plan_signature=$3 for share',args)).rows[0];
   if(!setting?.auto_wallet)continue;
   const units=(await c.query('select id,message_cipher from '+S+'units where product_id=$1 and plan_key=$2 and plan_signature=$3 and delivery_id is null order by created_at,id limit $4 for update',[...args,item.quantity])).rows;
+  let productMessage;
   for(const unit of units){
    security??=securityFactory();
    const value=JSON.parse(security.decryptSecret(unit.message_cipher));
-   if(value.id!==unit.id||JSON.stringify(value.scope)!==JSON.stringify(args)||typeof value.message!=='string')throw Error('READY_STOCK_REFERENCE_MISMATCH');
+   if(value.id!==unit.id||JSON.stringify(value.scope)!==JSON.stringify(args)||(typeof value.message!=='string'&&(!value.account?.email||!value.account?.password)))throw Error('READY_STOCK_REFERENCE_MISMATCH');
+   if(value.account&&productMessage===undefined)productMessage=(await readProductMessages(c,security,[item.productId])).get(item.productId)??null;
+   if(value.account&&productMessage===null)break;
    const id=crypto.randomUUID();
-   await recordDelivery(c,security,actor,orderId,id,line,1,value.message);
+   await recordDelivery(c,security,actor,orderId,id,line,1,value.account?productMessage:value.message,value.account);
    await c.query('update '+S+'units set delivery_id=$2 where id=$1',[unit.id,id]);
   }
  }

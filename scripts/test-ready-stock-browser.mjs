@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const live=process.argv.includes('--live');
 const paths={'/admin.css':'mirpanel-admin/public/admin.css','/ready-stock-admin.css':'mirpanel-admin/public/ready-stock-admin.css','/ready-stock-admin.js':'mirpanel-admin/public/ready-stock-admin.js'};
 const server=http.createServer((req,res)=>{
  const p=new URL(req.url,'http://localhost').pathname;
@@ -15,10 +16,18 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port;
 const cms=fs.readFileSync('mirpanel-admin/public/cms-admin.js','utf8');
 assert.match(cms,/\["paymentOrders", "Sifarişlər"\], \["readyStock", "Hazır hesab stoku"\]/);
-assert.match(cms,/data-dashboard-view="readyStock">\+ Hazır hesab əlavə et/);
 try{
  const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
  try{
+  if(live){
+   const ctx=await browser.newContext();
+   for(const name of Object.keys(paths)){
+    const r=await ctx.request.get('https://mirpanel.onrender.com'+name+'?v=product-message-1');
+    assert(r.ok());
+    assert.equal((await r.text()).replaceAll('\r\n','\n'),fs.readFileSync(paths[name],'utf8').replaceAll('\r\n','\n'));
+   }
+   await ctx.close();
+  }
   for(const width of [1360,390]){
    const page=await browser.newPage({viewport:{width,height:920},isMobile:width<600,hasTouch:width<600});
    page.setDefaultTimeout(7000);page.on('pageerror',error=>console.error(error.message));
@@ -26,6 +35,10 @@ try{
    const catalog={products:[{id:'capcut',title:'CapCut Pro',image:'/assets/capcut.png',readyTotal:8,scope:'product',version:4,plans:[item(0,'1 aylıq (Telefon)',40),{...item(1,'3 aylıq',40),ready:8}]},{id:'netflix',title:'Netflix',image:'/assets/netflix.png',readyTotal:0,scope:'plan',version:9,plans:[item(0,'Şəxsi paket',0)]},{id:'spotify',title:'Spotify',image:'/assets/spotify.png',readyTotal:0,scope:'none',version:0,plans:[item(0,'1 aylıq',null)]}]};
    const saves=[],salesWrites=[],p=catalog.products[0];let first=true;
    const note='Sintetik mesaj 1\n\nİstifadə qaydası: sınaq',note2='Sintetik mesaj 2\nİkinci sətir';
+   if(live)for(const name of Object.keys(paths))await page.route(origin+name,async route=>{
+    const r=await route.fetch({url:'https://mirpanel.onrender.com'+name+'?v=product-message-1'});
+    return route.fulfill({response:r});
+   });
    await page.route('https://mirpanel.com/assets/*',route=>route.fulfill({contentType:'image/png',body:fs.readFileSync('.'+new URL(route.request().url()).pathname)}));
    await page.route('**/api/admin/payment-ready-stock**',async route=>{
     if(route.request().method()==='GET')return route.fulfill({json:catalog});
@@ -35,8 +48,12 @@ try{
      for(const x of p.plans)x.sales=input.available;
      return route.fulfill({json:{ok:true}});
     }
+    if(route.request().url().endsWith('/message')){
+     const product=catalog.products.find(x=>x.id===input.productId);
+     product.message=input.message;return route.fulfill({json:{message:input.message}});
+    }
     saves.push(input);assert.equal(input.productId,'capcut');assert.equal(input.index,0);
-    assert.deepEqual(input.messages,[note,note2]);assert.equal(input.autoWallet,true);
+    assert.deepEqual(input.accounts,[{email:'first@example.test',password:'synthetic-one'},{email:'second@example.test',password:'synthetic-two'}]);assert.equal(input.autoWallet,true);
     if(first){first=false;p.plans[0].ready=2;p.readyTotal=10;p.plans[0].autoWallet=true;return route.abort('connectionreset');}
     assert.deepEqual(input,saves[0]);return route.fulfill({json:{added:2,replayed:true}});
    });
@@ -44,7 +61,7 @@ try{
    const product=page.getByLabel('Məhsul',{exact:true}),plan=page.getByLabel('Paket',{exact:true});
    const capcut=page.getByRole('button',{name:/CapCut Pro/}),netflix=page.getByRole('button',{name:/Netflix/}),price=page.getByLabel('Satış miqdarı');
    const stock=page.locator('[data-edit-sales]'),saveSales=page.getByRole('button',{name:'Satış stokunu saxla'});
-   const messages=page.getByRole('textbox',{name:'Müştəriyə təqdim ediləcək hazır mesaj'}),automatic=page.getByRole('switch',{name:'Balansla avtomatik təhvil'});
+   const messages=page.getByRole('textbox',{name:'Müştəriyə təqdim ediləcək hazır mesaj'}),automatic=page.getByRole('switch',{name:/Ödəniş təsdiqlənəndə avtomatik təhvil/});
    await netflix.click();assert.equal(await plan.locator('option').count(),1);assert.match(await stock.innerText(),/Stokda yoxdur/);
    await capcut.click();assert.equal(await plan.locator('option').count(),2);
    await stock.click();await price.fill('0');await saveSales.click();
@@ -52,27 +69,35 @@ try{
    await stock.click();await price.fill('50');await saveSales.click();
    await page.waitForFunction(()=>document.querySelector('[data-sales]').textContent==='50 satış vahidi');
    assert.deepEqual(salesWrites,[null,50]);assert.match(await capcut.innerText(),/8 hazır hesab/);
-   await automatic.check();await messages.first().fill(note);
-   await page.getByRole('button',{name:'+ Yeni hesab əlavə et'}).click();await messages.nth(1).fill(note2);
-   await plan.selectOption('1');assert.equal(await messages.first().inputValue(),'');assert.equal(await automatic.isChecked(),false);
-   await messages.first().fill('Digər paket üçün ayrıca qaralama');
-   await netflix.click();assert.equal(await product.inputValue(),'netflix');assert.match(await stock.innerText(),/Stokda yoxdur/);
-   await capcut.click();assert.equal(await capcut.getAttribute('aria-pressed'),'true');assert.equal(await plan.inputValue(),'1');assert.equal(await messages.first().inputValue(),'Digər paket üçün ayrıca qaralama');
-   await plan.selectOption('0');assert.equal(await messages.nth(1).inputValue(),note2);assert.equal(await automatic.isChecked(),true);
-   assert.equal(new URL(page.url()).pathname,'/admin.html');
-   const submit=page.getByRole('button',{name:'Yadda saxla'});
+   const saveMessage=page.getByRole('button',{name:'Hazır mesajı saxla'});
+   await messages.fill(note);await saveMessage.click();await page.getByText('Hazır mesaj saxlanıldı.').waitFor();
+   assert.equal(await page.locator('[data-ready]').innerText(),'0');
+   await netflix.click();assert.equal(await messages.inputValue(),'');
+   await messages.fill(note2);await saveMessage.click();await page.getByText('Hazır mesaj saxlanıldı.').waitFor();
+   await page.reload();await capcut.click();assert.equal(await messages.inputValue(),note);
+   await automatic.check();
+   const email=page.getByLabel('Hesabın e-poçtu'),password=page.getByLabel('Hesabın şifrəsi');
+   assert.equal(await email.first().inputValue(),'');assert.equal(await password.first().inputValue(),'');
+   await email.first().fill('first@example.test');await password.first().fill('synthetic-one');
+   await page.getByRole('button',{name:'+ Yeni hesab əlavə et'}).click();
+   assert.equal(await email.nth(1).inputValue(),'');assert.equal(await password.nth(1).inputValue(),'');
+   await email.nth(1).fill('second@example.test');await password.nth(1).fill('synthetic-two');
+   await plan.selectOption('1');assert.equal(await messages.inputValue(),note);assert.equal(await email.first().inputValue(),'');
+   await plan.selectOption('0');assert.equal(await email.nth(1).inputValue(),'second@example.test');
+   const submit=page.getByRole('button',{name:'Hesabları və təhvil ayarını saxla'});
    await submit.click();await page.getByText(/Eyni düymə ilə yenidən cəhd/).waitFor();
-   assert.equal(await messages.nth(1).inputValue(),note2);
+   assert.equal(await email.nth(1).inputValue(),'second@example.test');
    await submit.click();await page.getByText('2 hazır hesab saxlanıldı.').waitFor();
    await page.waitForFunction(()=>document.querySelector('[data-ready]').textContent==='2');
-   assert.match(await capcut.innerText(),/10 hazır hesab/);assert.equal(await automatic.isChecked(),true);
-   await capcut.locator('img').evaluate(img=>img.decode());
-   assert.equal(await page.locator('textarea').count(),1);assert.equal(await page.locator('textarea').inputValue(),'');
+   assert.equal(await email.count(),1);assert.equal(await email.first().inputValue(),'');assert.equal(await password.first().inputValue(),'');
+   assert.equal(await messages.inputValue(),note);
+   await netflix.click();assert.equal(await messages.inputValue(),note2);
+   await capcut.click();await capcut.locator('img').evaluate(img=>img.decode());
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    const folder=process.env.MIRPANEL_READY_STOCK_SCREENSHOTS;
    if(folder){fs.mkdirSync(folder,{recursive:true});await page.screenshot({path:path.join(folder,width===1360?'hazir-hesab-stoku.png':'hazir-hesab-stoku-mobil.png'),fullPage:true});}
    await page.close();
-   console.log('PASS '+width+'px — catalog photos, 0/50, previous out-of-stock, isolated drafts, two messages, retry and aggregate counts');
+   console.log('PASS '+width+'px — catalog photos, 0/50, previous out-of-stock, product messages, two account pairs, persistence, retry and aggregate counts');
   }
  }finally{await browser.close();}
 }finally{await new Promise(r=>server.close(r));}
