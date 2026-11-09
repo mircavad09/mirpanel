@@ -47,6 +47,7 @@ try {
       if(p==='/api/payments/methods')return route.fulfill({json:{methods:[{id:'test',displayName:'Sınaq',available:true}]}});
       if(p.startsWith('/api/'))return route.fulfill({json:{}});
       if(slow&&p==='/community-assets/shop-ui.js')await delays(650);
+      if(slow&&['/support-widget.css','/browser-nav.css'].includes(p))await delays(450);
       if(live)return route.continue();
       if(['/balans','/sebet'].includes(p))return route.fulfill({body:await shell(p),contentType:mime.html});
       if(!/^\/[a-z0-9_./-]+$/i.test(p)||p.includes('..'))return route.fulfill({status:404});
