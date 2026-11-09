@@ -735,12 +735,20 @@
       const dlg=document.createElement('dialog'),form=document.createElement('form');
       dlg.className='paymentActionDialog paymentDeliveryDialog';dlg.dataset.paymentDeliveryDialog='';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Hazır mesajı dəyişmək üçün Hazır hesab stoku bölməsini açın.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>Hesabın e-poçtu (istəyə bağlı)<input name="email" type="email" maxlength="254" autocomplete="off"></label><label>Hesabın şifrəsi (istəyə bağlı)<input name="password" type="text" maxlength="512" autocomplete="new-password" spellcheck="false" autocapitalize="off"></label><label>Müştəriyə hazır mesaj <textarea name="message" rows="7" readonly spellcheck="false"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Göndər və təhvil ver</button>';
       const {line,quantity,email,password,message}=form.elements,submit=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]'),error=form.querySelector('[role=alert]');
-      const controls=[line,quantity,email,password,message,close];
+      const room=document.createElement('fieldset');
+      room.hidden=true;
+      room.innerHTML='<legend>Netflix Şəxsi</legend><label>Otaq adı<input name="roomName" maxlength="400" autocomplete="off"></label><label>Otaq kodu<input name="roomCode" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off"></label>';
+      message.closest('label').before(room);
+      const {roomName,roomCode}=form.elements;
+      const controls=[line,quantity,email,password,roomName,roomCode,message,close];
       const status=document.createElement('p'),retry=document.createElement('button');
       status.setAttribute('role','status');retry.type='button';retry.className='btn';retry.hidden=true;retry.textContent='Yenidən cəhd et';error.before(status,retry);
       const renewalNote=document.createElement('label'),renewalCheck=document.createElement('input'),renewalText=document.createElement('span');
       renewalCheck.type='checkbox';renewalNote.append(renewalCheck,renewalText);error.before(renewalNote);
-      line.onchange=()=>{const x=lines.find(x=>x.index===Number(line.value));if(!x)return;quantity.max=String(x.remaining);quantity.value='1';message.value=x.message||'';submit.disabled=!message.value;renewalCheck.checked=false;renewalNote.hidden=!x.renewalOrderCode;renewalNote.classList.toggle('hidden',!x.renewalOrderCode);renewalCheck.required=!!x.renewalOrderCode;renewalText.textContent=x.renewalOrderCode?' №'+x.renewalOrderCode+' sifarişinin '+x.renewalSourceLine+'-ci sətrindəki '+x.renewalSourceUnit+'-ci abunəliyi həqiqətən uzatdım.':'';};
+      line.onchange=()=>{const x=lines.find(x=>x.index===Number(line.value));if(!x)return;quantity.max=String(x.netflixRoom?1:x.remaining);quantity.value='1';message.value=x.message||'';
+        room.hidden=!x.netflixRoom;
+        roomName.required=roomCode.required=!!x.netflixRoom;
+        roomName.value=x.netflixRoom?.name||'';roomCode.value=x.netflixRoom?.code||'';submit.disabled=!message.value;renewalCheck.checked=false;renewalNote.hidden=!x.renewalOrderCode;renewalNote.classList.toggle('hidden',!x.renewalOrderCode);renewalCheck.required=!!x.renewalOrderCode;renewalText.textContent=x.renewalOrderCode?' №'+x.renewalOrderCode+' sifarişinin '+x.renewalSourceLine+'-ci sətrindəki '+x.renewalSourceUnit+'-ci abunəliyi həqiqətən uzatdım.':'';};
       let loading=false;
       const load=async()=>{
         if(loading)return;
@@ -771,7 +779,7 @@
       form.onsubmit=async e=>{
         e.preventDefault();if(submit.disabled||!message.value)return;
         if(!pending&&(email.value||password.value)&&quantity.value!=='1'){error.textContent='E-poçt və şifrəni hər vahid üçün ayrıca göndərin. Sayı 1 seçin.';return;}
-        const data={line:Number(line.value),quantity:Number(quantity.value),message:message.value,...(email.value?{email:email.value}:{}),...(password.value?{password:password.value}:{}),...(renewalCheck.required?{renewalApplied:renewalCheck.checked}:{})};
+        const data={line:Number(line.value),quantity:Number(quantity.value),message:message.value,...(email.value?{email:email.value}:{}),...(password.value?{password:password.value}:{}),...(!room.hidden?{roomName:roomName.value.trim(),roomCode:roomCode.value}:{}),...(renewalCheck.required?{renewalApplied:renewalCheck.checked}:{})};
         pending??={...data,requestId:crypto.randomUUID()};
         for(const field of [...controls,submit])field.disabled=true;
         error.textContent='';

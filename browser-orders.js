@@ -117,6 +117,14 @@
    if(typeof d.text!=='string')throw Error();
    const rows=[['email','E-poçt'],['password','Şifrə']].filter(([key])=>typeof d[key]==='string'&&d[key]);
    box.querySelector('.browser-delivery-credentials').innerHTML=rows.map(([key,label])=>'<div><span>'+label+'</span><strong>'+esc(d[key])+'</strong><button type="button" data-copy-delivery-field="'+key+'" aria-label="'+label+' kopyala">'+copyIcon+'</button></div>').join('');
+   if(d.netflixRoom){
+    const room=document.createElement('div');room.className='browser-netflix-room';
+    for(const [label,value] of [['Otaq adı',d.netflixRoom.name],['Otaq kodu',d.netflixRoom.code]]){
+     const cell=document.createElement('div'),title=document.createElement('span'),text=document.createElement('strong');
+     title.textContent=label;text.textContent=value;cell.append(title,text);room.append(cell);
+    }
+    box.querySelector('.browser-delivery-credentials').append(room);
+   }
    const pre=box.querySelector('pre');pre.textContent=d.text;pre.hidden=false;
    deliveryData.set(box,{d,rows});box.querySelector('[data-copy-delivery]').disabled=false;status.textContent='';
   }catch(e){

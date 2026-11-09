@@ -45,7 +45,10 @@ export function createAccountOrders({security,store,resolve}){
   },
   async codes(request,id){
    const s=await scope(request),rows=await s.codes?.(id)||[];
-   if(id){const r=rows[0];if(!r)throw Object.assign(Error('Təhvil məlumatı tapılmadı.'),{status:404});const value=JSON.parse(security.decryptSecret(r.message_cipher));if(value.id!==r.id||value.order!==r.order_id||value.line!==r.line_index)throw Error('DELIVERY_REFERENCE_MISMATCH');return {text:value.message,...(value.email?{email:value.email}:{}),...(value.password?{password:value.password}:{})};}
+   if(id){const r=rows[0];if(!r)throw Object.assign(Error('Təhvil məlumatı tapılmadı.'),{status:404});const value=JSON.parse(security.decryptSecret(r.message_cipher));if(value.id!==r.id||value.order!==r.order_id||value.line!==r.line_index)throw Error('DELIVERY_REFERENCE_MISMATCH');const line=deliveryLines({...r,quantity:r.order_quantity})[r.line_index];
+    const room=line?.productId==='netflix'&&typeof value.roomName==='string'&&/^\d{4}$/.test(value.roomCode||'')
+     ? {netflixRoom:{name:value.roomName,code:value.roomCode}}:{};
+    return {text:value.message,...(value.email?{email:value.email}:{}),...(value.password?{password:value.password}:{}),...room};}
    const catalog=rows.length?await Promise.resolve().then(()=>s.catalog?.()).catch(()=>null):null;
    const products=new Map((catalog?.products||[]).map(p=>[String(p.id),p]));
    const categories=new Map((catalog?.categories||[]).map(c=>[c.key,c.name]));

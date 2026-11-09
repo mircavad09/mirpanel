@@ -31,8 +31,8 @@ export async function ownerCodes(pool,user,id){
   order by d.delivered_at desc,d.id desc`,id?[user,id]:[user])).rows;
 }
 export async function recordDelivery(c,security,actor,orderId,id,line,quantity,message,credentials={}){
- const {email,password}=credentials;
- const cipher=security.encryptSecret(JSON.stringify({id,order:orderId,line,message,...(email?{email}:{}),...(password?{password}:{})}));
+ const {email,password,roomName,roomCode}=credentials;
+ const cipher=security.encryptSecret(JSON.stringify({id,order:orderId,line,message,...(email?{email}:{}),...(password?{password}:{}),...(roomName&&roomCode?{roomName,roomCode}:{})}));
  const record=(await c.query(`insert into ${D}(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,$3,$4,$5,$6) returning id,line_index,quantity`,[id,orderId,line,quantity,cipher,actor])).rows[0];
  await c.query(`insert into ${M}(event_key,order_id,delivery_id) values($1,$2,$3)`,['delivery:'+id,orderId,id]);
  return record;
@@ -96,19 +96,31 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
   const lines=deliveryLines(o),records=await deliveryRecords(c,[id]),done=totals(records);
   const renewalCode=i=>o.checkout_snapshot?.items?.[i]?.renewalOrderCode;
   const templates=productMessage&&!input?await readProductMessages(c,security,[...new Set(lines.map(x=>x.productId).filter(Boolean))]):new Map();
-  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
+  const netflixRoom=i=>{
+   if(input||lines[i].productId!=='netflix')return {};
+   const snapshot=o.checkout_snapshot||{};
+   const item=snapshot.cartVersion===2?snapshot.items?.[i]:snapshot;
+   const values=item?.detailsCipher?JSON.parse(security.decryptSecret(item.detailsCipher)):{};
+   return {netflixRoom:{name:typeof values.name==='string'?values.name:'',
+    code:typeof values.code_4==='string'?values.code_4:''}};
+  };
+  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...netflixRoom(i),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
   if(!input){await c.query('commit');return view();}
   const {requestId,line,quantity}=input;
   let {message}=input;
   if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||(!productMessage&&(typeof message!=='string'||!message.trim()||message.length>8000)))throw fail(400,'Təhvil məlumatları düzgün deyil.');
   const {email='',password=''}=input;
   if(typeof email!=='string'||email.length>254||(email&&!/^\S+@\S+\.\S+$/.test(email))||typeof password!=='string'||password.length>512||/[\r\n\0]/.test(password))throw fail(400,'E-poçt və ya şifrə düzgün deyil.');
-  if((email||password)&&quantity!==1)throw fail(400,'E-poçt və şifrəni hər vahid üçün ayrıca göndərin.');
+  const {roomName='',roomCode=''}=input;
+  if(typeof roomName!=='string'||typeof roomCode!=='string'||roomName.length>400||/[\x00-\x1f\x7f]/.test(roomName)||
+     ((roomName||roomCode)&&(lines[line].productId!=='netflix'||!roomName.trim()||!/^\d{4}$/.test(roomCode))))
+   throw fail(400,'Otaq adını və 4 rəqəmli otaq kodunu düzgün daxil edin.');
+  if((email||password||roomName)&&quantity!==1)throw fail(400,'E-poçt və şifrəni hər vahid üçün ayrıca göndərin.');
   if(renewalCode(line)&&input.renewalApplied!==true)throw fail(400,'Əvvəl mövcud abunəliyin həqiqətən uzadıldığını təsdiqləyin.');
   const previous=(await c.query(`select order_id,line_index,quantity,message_cipher from ${D} where id=$1`,[requestId])).rows[0];
   if(previous){
    const saved=JSON.parse(security.decryptSecret(previous.message_cipher));
-   if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||(!productMessage&&saved.message!==message)||(saved.email||'')!==email||(saved.password||'')!==password)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
+   if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||(!productMessage&&saved.message!==message)||(saved.email||'')!==email||(saved.password||'')!==password||(saved.roomName||'')!==roomName||(saved.roomCode||'')!==roomCode)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
    await c.query('commit');return {...view(),replayed:true};
   }
   if(o.fulfillment_cancellation)throw fail(409,'Qalan məhsullar ləğv edilib.');
@@ -122,7 +134,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
    if(!message)throw fail(409,'Əvvəl Hazır hesab stoku bölməsində məhsul mesajını saxlayın.');
    if(input.message!==message)throw fail(409,'Hazır mesaj dəyişib. Təhvil pəncərəsini yenidən açın.');
   }
-  const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message,{email,password});
+  const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message,{email,password,roomName,roomCode});
   records.push(record);done[line]=(done[line]||0)+quantity;
   await c.query('commit');return view();
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}

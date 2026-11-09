@@ -16,7 +16,7 @@ try{
     const s=window.__fixtureState, original=window.api;
     const wallet={...s.all[0],customerName:'Sintetik müştəri',customerNumber:1022,paymentSource:'wallet',deliveryPending:true,items:[{title:'CapCut Pro',planName:'1 aylıq',quantity:1,unitCents:499},{title:'Netflix Şəxsi',planName:'1 aylıq',quantity:1,unitCents:499}]};
     const auto={...s.all[1],paymentSource:'wallet',deliveryPending:false};
-    const lines=wallet.items.map((x,index)=>({index,title:x.title,plan:x.planName,remaining:1,message:index===0?'Sintetik CapCut':'Sintetik mesaj\nİkinci sətir'}));
+    const lines=wallet.items.map((x,index)=>({index,title:x.title,plan:x.planName,remaining:1,...(index===1?{netflixRoom:{name:'Sınaq otağı',code:'0408'}}:{}),message:index===0?'Sintetik CapCut':'Sintetik mesaj\nİkinci sətir'}));
     let loseResponse=true;
     s.deliveryPosts=[];s.deliveryReads=0;
     window.api=async(path,options={})=>{
@@ -55,6 +55,9 @@ try{
    await modal.waitFor();
    assert.equal(await p.evaluate(()=>__fixtureState.deliveryReads),1);
    await modal.getByLabel('Məhsul və paket').selectOption('1');
+   assert.equal(await modal.getByLabel('Otaq adı').inputValue(),'Sınaq otağı');
+   assert.equal(await modal.getByLabel('Otaq kodu').inputValue(),'0408');
+   await modal.getByLabel('Otaq adı').fill('Təsdiqlənmiş otaq');
    await modal.getByLabel('Hesabın e-poçtu (istəyə bağlı)').fill('delivery@example.test');
    await modal.getByLabel('Hesabın şifrəsi (istəyə bağlı)').fill('synthetic-only');
    assert.equal(await modal.getByLabel('Müştəriyə hazır mesaj').inputValue(),'Sintetik mesaj\nİkinci sətir');
@@ -67,7 +70,9 @@ try{
    const posts=await p.evaluate(()=>__fixtureState.deliveryPosts);
    assert.deepEqual(posts[0],posts[1]);assert.equal(posts[0].line,1);
    assert.equal(posts[0].email,'delivery@example.test');assert.equal(posts[0].password,'synthetic-only');
+   assert.equal(posts[0].roomName,'Təsdiqlənmiş otaq');assert.equal(posts[0].roomCode,'0408');
    await wallet.getByRole('button',{name:'Təhvil ver'}).click();await modal.waitFor();
+   await modal.locator('option[value="0"]').waitFor({state:'attached'});
    assert.equal(await modal.locator('option').count(),1);
    assert.equal(await modal.getByLabel('Məhsul və paket').inputValue(),'0');
    assert.equal(await modal.getByLabel('Müştəriyə hazır mesaj').inputValue(),'Sintetik CapCut');

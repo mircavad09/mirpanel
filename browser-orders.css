@@ -308,3 +308,8 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
     width: min(100%, 140px, calc(100cqh * .46));
   }
 }
+
+.browser-delivery-credentials>.browser-netflix-room{grid-template-columns:minmax(0,1fr) minmax(5.25rem,max-content);align-items:start;padding:8px 9px}
+.browser-netflix-room>div{display:grid;min-width:0;gap:2px;overflow-wrap:anywhere}
+.browser-netflix-room>div>span{color:#b6c2ba}
+.browser-netflix-room>div:last-child{white-space:nowrap}

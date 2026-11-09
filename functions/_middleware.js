@@ -246,7 +246,7 @@ function injectScript(html, needle, scriptTag) {
 function withSeoScripts(html,earlyProductLinks=false) {
   let next = html;
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
-  next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=fulfillment-cancellation-1$2');
+  next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=netflix-room-1$2');
   next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=product-transition-1$2');
   next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=header-session-1$2');
   next=next.replace(/(src=["'])\/?(home-loading|seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
