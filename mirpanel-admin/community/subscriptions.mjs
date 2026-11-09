@@ -22,9 +22,20 @@ function expiration(start,period){
  if(!start||!period)return null;
  return (period.unit==='days'?shiftCalendarDays(start,period.count-1):addCalendarMonthsMinusDay(start,period.count))||null;
 }
+function savedUnitCents(line,total=null,quantity=1){
+ const cents=line?.unitCents;
+ if(cents!=null&&/^\d+$/.test(String(cents))&&Number.isSafeInteger(Number(cents)))return Number(cents);
+ try{
+  const unit=parseMoneyCents(line?.unitPrice);
+  if(unit!==null)return unit;
+  const sum=parseMoneyCents(total);
+  const count=whole(quantity,Number.MAX_SAFE_INTEGER);
+  return sum!==null&&count&&sum%count===0?sum/count:null;
+ }catch{return null;}
+}
 async function bases(pool,user,source=null){
  const rows=(await pool.query(`
-  select o.order_code,o.product_id,o.product_title,o.plan_name,o.checkout_snapshot,
+  select o.order_code,o.product_id,o.product_title,o.plan_name,o.checkout_snapshot,o.amount::text,o.currency,o.quantity,
    o.service_expires_on::text, o.duration_months,o.completed_at,d.line_index,d.delivered_at,
    case when d.quantity>1 then md5(d.id::text||':'||unit.n)::uuid else coalesce(d.id,o.id) end as id,
    unit.n+coalesce((select sum(prior.quantity)::int from mirpanel_community.customer_order_deliveries prior
@@ -48,8 +59,9 @@ async function bases(pool,user,source=null){
   const period=subscriptionPeriod({durationMonths:line?.durationMonths??r.duration_months,label});
   const startsOn=(r.delivered_at||r.completed_at)?bakuDate(r.delivered_at||r.completed_at):null;
   const stored=(!items||items.length===1)&&Number(line?.quantity??1)===1?safeCalendarDate(r.service_expires_on):'';
+  const lastPurchaseCents=r.currency==='AZN'?savedUnitCents(line??r.checkout_snapshot,line&&items.length!==1?null:r.amount,line?.quantity??r.quantity??1):null;
   return [{id:r.id,orderCode:String(r.order_code),sourceLine:(r.line_index??0)+1,sourceUnit:r.unit,productId,title:line?.title??r.product_title,plan:label,
-   image:line?.image??r.checkout_snapshot?.image??'',planKey:line?.sourcePlanKey??null,
+   image:line?.image??r.checkout_snapshot?.image??'',planKey:line?.sourcePlanKey??r.checkout_snapshot?.sourcePlanKey??null,lastPurchaseCents,
    expiresOn:stored||expiration(startsOn,period),estimated:!stored&&!!period&&!!startsOn,startsOn}];
  });
  if(!entries.length)return entries;
@@ -66,7 +78,10 @@ async function bases(pool,user,source=null){
  return entries.map(entry=>{
   const attempts=events.filter(e=>e.source_id===entry.id);
   const applied=attempts.filter(e=>e.expires_on&&!['cancelled','rejected','expired'].includes(e.status)).sort((a,b)=>b.expires_on.localeCompare(a.expires_on))[0];
-  if(applied){entry.expiresOn=applied.expires_on;entry.estimated=false;entry.plan=applied.plan?.planName??entry.plan;entry.planKey=applied.plan?.sourcePlanKey??entry.planKey;}
+  if(applied){
+   entry.expiresOn=applied.expires_on;entry.estimated=false;
+   if(applied.plan){entry.plan=applied.plan.planName??entry.plan;entry.planKey=applied.plan.sourcePlanKey??null;entry.lastPurchaseCents=savedUnitCents(applied.plan);}
+  }
   const current=attempts.filter(e=>e.base_expires_on===entry.expiresOn&&!e.expires_on);
   const pending=current.find(e=>e.state==='reserved'&&Date.parse(e.expires_at)>Date.now()||e.state==='submitted'&&!['cancelled','rejected','expired'].includes(e.status));
   const failed=current.find(e=>['cancelled','rejected','expired'].includes(e.status)||e.state==='cancelled'||e.state==='expired'||e.state==='reserved'&&Date.parse(e.expires_at)<=Date.now());
@@ -100,17 +115,19 @@ export async function customerSubscriptions(pool,user,catalog,snapshot){
   const p=products.get(x.productId);
   if(!options.has(x.productId)){
    const availability=p&&stock&&inventoryAvailability(p,inventory.get(p.id));
-   options.set(x.productId,availability?p.plans.flatMap((plan,index)=>{
+   options.set(x.productId,availability?(p.plans||[]).flatMap((plan,index)=>{
     if(!availability.plans[index]?.canOrder)return [];
     let price;try{price=parseMoneyCents(plan.price,{allowEmpty:false});}catch{return [];}
     const key=planKey(plan,index),cents=prices.get(JSON.stringify([p.id,key,userPriceSignature(plan)]))??price;
+    if(cents<=0)return [];
     const period=subscriptionPeriod(plan);
     return [{index,key,label:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Plan'),cents,canRenew:!!period}];
    }):[]);
   }
   x.options=options.get(x.productId);x.image||=p?.image||'';
   const exact=x.options.filter(a=>a.canRenew&&same(a.label,x.plan));
-  const matched=exact.find(a=>x.planKey!==null&&a.key===x.planKey)||(exact.length===1?exact[0]:null);
+  const stable=x.planKey!=null&&!/^\d+$/.test(String(x.planKey));
+  const matched=stable?x.options.find(a=>a.canRenew&&a.key===String(x.planKey)):exact.find(a=>a.key===String(x.planKey))||(exact.length===1?exact[0]:null);
   x.renewalCents=matched?.cents??null;
  }
  return {accountId:user,subscriptions:visible.sort((a,b)=>(a.days??Infinity)-(b.days??Infinity)||a.title.localeCompare(b.title,'az'))};

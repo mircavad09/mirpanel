@@ -48,8 +48,8 @@ try{
  const rows=async()=>(await shop.subscriptions(a)).subscriptions;
  const [first,second]=await rows();
  assert.deepEqual([first.days,second.days],[6,10]);
- assert.deepEqual(summarize(await rows()),{active:2,soon:2,week:1,unpriced:0,total:1100});
- assert.deepEqual(summarize([{days:10,renewalCents:null}]),{active:1,soon:1,week:0,unpriced:1,total:null});
+ assert.deepEqual(summarize(await rows()),{active:2,soon:2,week:1,unpriced:0,estimated:0,total:1100});
+ assert.deepEqual(summarize([{days:10,renewalCents:null}]),{active:1,soon:1,week:0,unpriced:1,estimated:0,total:null});
  assert.deepEqual(await shop.subscriptions(b),{accountId:'b',subscriptions:[]});await denied(shop.subscriptions({}),401);
  await denied(draft(first,0,b),404);
  const [one,same]=await Promise.all([draft(first,1),draft(first,1)]);
@@ -88,6 +88,34 @@ try{
  assert.equal((await rows()).find(x=>x.id===second.id).expiresOn,addCalendarMonthsMinusDay(day(11),1));
  assert.equal((await q('select count(*)::int n from subscription_renewals where expires_on is not null')).rows[0].n,2);
  assert.equal((await q("select count(*)::int n from wallet_ledger where kind='purchase_debit'")).rows[0].n,3);
+ // Two separately purchased units keep the old price even after that package is removed.
+ const capcut={id:'capcut',title:'CapCut Pro',active:true,plans:[{id:'old-capcut',label:'Köhnə 1 aylıq paket',months:1,price:4.99}]};
+ f.catalog.products.push(capcut);
+ const originalOrders=[];
+ for(const days of [28,30]){
+  const order=await checkout([await quote(capcut.id)]);originalOrders.push(order.orderId);
+  await pool.query('update payment_orders set service_expires_on=$2 where id=$1',[order.orderId,day(days)]);
+  await fulfill(order.orderId);
+ }
+ capcut.plans=[{id:'new-capcut',label:'Yeni 1 aylıq paket',months:1,price:6.79}];
+ const capRows=async()=>(await rows()).filter(r=>r.productId==='capcut');
+ const old=await capRows();
+ assert.deepEqual(old.map(r=>[r.plan,r.lastPurchaseCents,r.renewalCents,r.options[0].cents]),Array(2).fill(['Köhnə 1 aylıq paket',499,null,679]));
+ assert.deepEqual(summarize(old),{active:2,soon:2,week:0,unpriced:0,estimated:2,total:998});
+ const balance=async()=>(await q("select cents from wallet_accounts where user_id='a'")).rows[0].cents;
+ const before=await balance();
+ const renewalDraft=await draft(old[0]);
+ assert.equal((await shop.quote(a,[renewalDraft],hash)).totalCents,679);
+ assert.equal(await balance(),before);
+ const updated=await checkout([renewalDraft]);
+ assert.equal(updated.totalCents,679);
+ assert.equal((await capRows()).find(r=>r.id===old[0].id).plan,old[0].plan);
+ await fulfill(updated.orderId,{renewalApplied:true});
+ assert.deepEqual((await capRows()).find(r=>r.id===old[0].id).options.map(p=>p.cents),[679]);
+ const applied=(await capRows()).find(r=>r.id===old[0].id);
+ assert.deepEqual([applied.plan,applied.lastPurchaseCents,applied.renewalCents],['Yeni 1 aylıq paket',679,679]);
+ const historic=(await pool.query("select checkout_snapshot->'items'->0->>'planName' plan,amount::text from payment_orders where id=any($1::uuid[])",[originalOrders])).rows;
+ assert.deepEqual(historic,Array(2).fill({plan:'Köhnə 1 aylıq paket',amount:'4.99'}));
  const originalFetch=globalThis.fetch;
  const subscriptionUrl='https://mirpanel.com/api/payments/shop/subscriptions';
  try{

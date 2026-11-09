@@ -44,7 +44,7 @@ try{
    rows=[row('capcut','CapCut Pro',6,549),row('netflix','Netflix Şəxsi',10,299)];
    await p.reload();await p.getByText('2 aktiv').waitFor();
    assert.match(await p.locator('.subs-summary').textContent(),/8[.,]48/);
-   assert.equal(await p.getByRole('link',{name:'Balansı hazırla'}).getAttribute('href'),'/balans');
+   assert.equal(await p.getByRole('button',{name:'Yeniləmə seçimləri'}).getAttribute('aria-pressed'),'false');
    await p.getByText('1 abunəliyin müddəti bu həftə bitir.',{exact:false}).waitFor();
    const cap=p.locator('.subs-card').filter({hasText:'CapCut Pro'}),net=p.locator('.subs-card').filter({hasText:'Netflix Şəxsi'});
    assert.equal(await cap.locator('progress').getAttribute('data-tone'),'amber');
@@ -65,12 +65,33 @@ try{
    assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    rows=[row('capcut','CapCut Pro',3,null,'preparing'),row('netflix','Netflix Şəxsi',7,299,'failed')];
    await p.reload();await p.getByText('Hazırlanır',{exact:true}).waitFor();await p.getByText('Son yeniləmə tamamlanmadı',{exact:true}).waitFor();
-   await p.getByText('1 paketin cari yeniləmə qiyməti məlum deyil.').waitFor();
+   await p.getByText('1 abunəliyin qiyməti məlum deyil; cəmə daxil edilməyib.').waitFor();
    assert.equal(await cap.locator('progress').getAttribute('data-tone'),'red');
    assert.equal(await net.locator('progress').getAttribute('data-tone'),'amber');
    assert.equal(await net.getByRole('button',{name:'Yenilə'}).getAttribute('data-urgent'),null);
    await cap.getByRole('button',{name:'Yenilə'}).click();await modal.getByText('Bu abunəlik üçün yeniləmə artıq davam edir.').waitFor();
    assert.equal(await modal.getByRole('button',{name:/1 ay/}).isDisabled(),true);
+   const old={...row('capcut','CapCut Pro',28,null),plan:'Silinmiş CapCut paketi',lastPurchaseCents:499};
+   rows=[old,{...old,days:30},{...row('netflix','Netflix Şəxsi',31,null),options:[]}];
+   saved=null;await p.reload();
+   await p.getByText('9,98 ₼',{exact:true}).waitFor();
+   await p.getByText('Təxmini cəm · 2 abunəlik üçün son alış qiyməti götürülüb.').waitFor();
+   assert.equal(await p.getByText('4,99 ₼',{exact:true}).count(),2);
+   await p.getByRole('button',{name:'Yeniləmə seçimləri'}).click();
+   assert.equal(await p.locator('.subs-card').count(),2);
+   assert.equal(await p.getByText('Netflix Şəxsi',{exact:true}).count(),0);
+   await p.getByRole('button',{name:'Hamısını göstər'}).click();
+   await net.getByRole('button',{name:'Yenilə'}).click();
+   await modal.getByText('Hazırda satışda olan paket tapılmadı.').waitFor();
+   await modal.getByRole('button',{name:'Ləğv et'}).click();
+   await cap.first().getByRole('button',{name:'Yenilə'}).click();
+   await modal.getByText('5,49 ₼',{exact:true}).waitFor();
+   assert.equal(saved,null,'Opening the picker must not write a draft');
+   await modal.getByRole('button',{name:/1 ay/}).click();await next.click();
+   await terms.getByText('Sınaq şərtləri').waitFor();await terms.getByRole('checkbox').check();
+   await terms.getByRole('button',{name:'Təsdiqləyirəm'}).click();
+   await p.waitForFunction(()=>window.committed&&window.cartOpen);
+   assert.equal(saved.productId,'capcut');
    console.log('PASS '+engine.name()+' '+width+'px: summary, date, 10/7/6/3, picker → existing terms → cart, preparing and failed');
   }finally{await b.close();}
  }
