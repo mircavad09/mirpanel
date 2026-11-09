@@ -3,12 +3,15 @@
  paths.balance='M12 4v16 M4 12h16';
  paths.payments='M3 5h18v14H3z M3 10h18 M7 15h3';paths.cart='M3 3h2l3 13h11l3-9H6 M10 21h.01 M18 21h.01';
  const items=[['home','/','Ana səhifə'],['products','/mehsul','Məhsullar'],['payments','/profil?tab=payments','Ödənişlər'],['balance','/balans','Balans'],['orders','/profil?tab=orders','Sifarişlər'],['cart','/sebet','Səbət']],profile=['profile','/profil','Profil'];
- const headerItems=[['group','/qrup','Qrup/Söhbət'],['orders','/profil?tab=orders','Sifarişlərim']];let signed=false,busy=false,accountGeneration=0;try{signed=sessionStorage.getItem('mirpanel.account.present')==='1';}catch{}
+ const headerItems=[['group','/qrup','Qrup/Söhbət'],['orders','/profil?tab=orders','Sifarişlərim']];
+ const accountId=p=>p?.user_id??p?.id;
+ let signed=!!window.mirpanelAccountProfile,accountGeneration=0,refreshing,sessionModule,retryTimer;
+ const sessionImport=import('/session-state.js?v=header-session-1').then(m=>sessionModule=m);
  const icon=k=>`<svg viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[k]}"/></svg>`;
  const current=()=>location.pathname.replace(/\/$/,'')||'/';const active=href=>current()===href||href==='/mehsul'&&current().startsWith('/mehsul/');
  const css=document.createElement('link');css.rel='stylesheet';css.href='/browser-nav.css?v=verify-session-20261108';document.head.append(css);const cartScript=document.createElement('script');cartScript.src='/cart-store.js?v=checkout-sounds-20261108';cartScript.addEventListener('load',cartBadge);document.head.append(cartScript);
  function notices(){if(document.querySelector('script[data-community-notices]'))return;const script=document.createElement('script');script.src='/community-notices.js?v=public-community-v1';script.dataset.communityNotices='true';document.head.append(script);const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/community-notices.css?v=public-community-v1';document.head.append(sheet);}
- if(!document.querySelector('script[data-page-navigation-loader]')){const navigationScript=document.createElement('script');navigationScript.src='/page-navigation.js?v=compact-profile-editor-1';navigationScript.dataset.pageNavigationLoader='';document.head.append(navigationScript);}const desktopScript=document.createElement('script');desktopScript.src='/desktop-header.js?v=profile-orders-link-1';document.head.append(desktopScript);const accountScript=document.createElement('script');accountScript.src='/account-header.js?v=avatar-menu-1';document.head.append(accountScript);
+ if(!document.querySelector('script[data-page-navigation-loader]')){const navigationScript=document.createElement('script');navigationScript.src='/page-navigation.js?v=compact-profile-editor-1';navigationScript.dataset.pageNavigationLoader='';document.head.append(navigationScript);}const desktopScript=document.createElement('script');desktopScript.src='/desktop-header.js?v=profile-orders-link-1';document.head.append(desktopScript);const accountScript=document.createElement('script');accountScript.src='/account-header.js?v=header-session-1';document.head.append(accountScript);
  const nav=document.querySelector('.browser-bottom-nav')||document.createElement('nav');nav.className='browser-bottom-nav';nav.setAttribute('aria-label','Aşağı menyu');if(!nav.isConnected)document.body.append(nav);document.body.classList.add('has-bottom-nav');
  function header(){for(const target of document.querySelectorAll('.site-header-nav,.site-header-drawer-nav')){for(const [key,href,label] of [...headerItems,...(signed?[profile]:[])]){if(target.querySelector(`[data-browser-nav="${key}"]`))continue;const a=document.createElement('a');a.href=href;a.dataset.browserNav=key;a.innerHTML=icon(key)+'<span>'+label+'</span>';if(active(href))a.setAttribute('aria-current','page');target.append(a);}if(!signed)target.querySelector('[data-browser-nav="profile"]')?.remove();for(const a of target.querySelectorAll('a[href]')){const u=new URL(a.href,location.href);if(u.origin===location.origin&&(a.dataset.browserNav==='orders'?navActive('orders',u.pathname):active(u.pathname)))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}}
  function cartBadge(){const a=nav.querySelector('[data-browser-nav=cart]');if(!a)return;const count=(window.MirpanelCart?.read()||[]).reduce((n,x)=>n+x.quantity,0);let badge=a.querySelector('[data-cart-count]');if(!count){badge?.remove();a.setAttribute('aria-label','Səbət');return;}if(!badge){badge=document.createElement('b');badge.dataset.cartCount='';badge.className='browser-cart-count';a.append(badge);}const text=String(count);if(badge.textContent!==text)badge.textContent=text;a.setAttribute('aria-label','Səbət, '+text+' məhsul');}
@@ -16,9 +19,48 @@
  function draw(){nav.innerHTML=[...items,profile].map(([k,h,t])=>`<a href="${h}" data-browser-nav="${k}"${navActive(k,h)?' aria-current="page"':''}>${icon(k)}<span>${t}</span></a>`).join('');nav.style.setProperty('--nav-columns',7);nav.dataset.signed=String(signed);cartBadge();header();}
  function updateActive(){for(const a of nav.querySelectorAll('[data-browser-nav]')){if(navActive(a.dataset.browserNav,a.getAttribute('href')))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}cartBadge();header();}
  window.addEventListener('mirpanel:cart',cartBadge);window.addEventListener('storage',e=>{if(e.key==='mirpanel.cart.v1'||e.key===null)cartBadge();});window.addEventListener('hashchange',updateActive);window.addEventListener('mirpanel:route-change',updateActive);
- async function refresh(force=false){if(busy)return;busy=true;const run=accountGeneration;try{const {getCommunityState,invalidateCommunityState}=await import('/session-state.js?v=latency-1');if(force)invalidateCommunityState();const r=await getCommunityState();if(run!==accountGeneration)return;if(r.ok){const s=r.data;if(Object.hasOwn(s,'unreadTags'))notices();window.mirpanelAccountProfile=s.profile||null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:window.mirpanelAccountProfile}));const next=!!s.profile;try{if(next)sessionStorage.setItem('mirpanel.account.present','1');else sessionStorage.removeItem('mirpanel.account.present');}catch{}if(next!==signed){signed=next;draw();}}else if(r.status===401||r.status===403){try{sessionStorage.removeItem('mirpanel.account.present');}catch{}window.mirpanelAccountProfile=null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));if(signed){signed=false;draw();}}}catch{/* A temporary network failure must not masquerade as sign-out. */}finally{busy=false;}}
- window.addEventListener('mirpanel:profile-updated',e=>{const p=e.detail,current=window.mirpanelAccountProfile;if(!p?.user_id||current?.user_id&&current.user_id!==p.user_id)return;accountGeneration++;void import('/session-state.js?v=auth-recovery-20261107').then(m=>m.invalidateCommunityState());window.mirpanelAccountProfile=p;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:p}));if(!signed){signed=true;draw();}});
- window.addEventListener('mirpanel:account',e=>{if(e.detail!==null)return;accountGeneration++;window.mirpanelAccountProfile=null;try{sessionStorage.removeItem('mirpanel.account.present');}catch{}void import('/session-state.js?v=auth-recovery-20261107').then(m=>m.invalidateCommunityState());if(signed){signed=false;draw();}});
+ let publishedEvent,lastProfile=window.mirpanelAccountProfile;
+ function remember(p){
+  lastProfile=window.mirpanelAccountProfile=p;
+  const next=!!p;
+  try{if(next)sessionStorage.setItem('mirpanel.account.present','1');else sessionStorage.removeItem('mirpanel.account.present');}catch{}
+  if(next!==signed){signed=next;draw();}
+ }
+ function publish(p){
+  clearTimeout(retryTimer);
+  remember(p);
+  const event=new CustomEvent('mirpanel:account',{detail:p});
+  publishedEvent=event;window.dispatchEvent(event);publishedEvent=null;
+ }
+ function invalidate(){
+  accountGeneration++;refreshing=null;clearTimeout(retryTimer);
+  if(sessionModule)sessionModule.invalidateCommunityState();
+  else void sessionImport.then(m=>m.invalidateCommunityState()).catch(()=>{});
+ }
+ function refresh(force=false,initial=false){
+  if(refreshing&&(!force||refreshing.force))return refreshing.promise;
+  if(force)invalidate();
+  const flight={force},run=accountGeneration;
+  refreshing=flight;
+  return flight.promise=(async()=>{
+   try{
+    const {getCommunityState}=await sessionImport;
+    if(run!==accountGeneration)return;
+    const r=await getCommunityState({maxAge:force?0:initial?10000:750});
+    if(run!==accountGeneration)return;
+    if(r.ok&&(r.data?.profile===null||accountId(r.data?.profile))){
+     publish(r.data.profile);
+     if(Object.hasOwn(r.data,'unreadTags'))notices();
+    }else if(r.status===401)publish(null);
+    else throw Error('Session unavailable');
+   }catch{
+    // Keep the verified account (or the neutral initial state) on transient failures.
+    if(initial&&run===accountGeneration&&lastProfile===undefined)retryTimer=setTimeout(()=>void refresh(),1500);
+   }finally{if(refreshing===flight)refreshing=null;}
+  })();
+ }
+ window.addEventListener('mirpanel:profile-updated',e=>{const p=e.detail;if(!accountId(p)||accountId(lastProfile)&&accountId(lastProfile)!==accountId(p))return;invalidate();publish(p);});
+ window.addEventListener('mirpanel:account',e=>{if(e===publishedEvent||e.detail!==null&&!accountId(e.detail))return;if(e.detail===null||accountId(lastProfile)!==accountId(e.detail))invalidate();remember(e.detail);});
  window.addEventListener('storage',e=>{if(e.key==='mirpanel.auth.signedOut'&&e.newValue)window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));});
  let lastPresenceAt=0,lastPresenceUser=null;
  function reportPresence(){
@@ -31,5 +73,5 @@
  window.addEventListener('mirpanel:account',reportPresence);
  document.addEventListener('visibilitychange',reportPresence);
  setInterval(reportPresence,90000);
- window.refreshCommunityNav=()=>refresh(true);draw();refresh();window.addEventListener('pageshow',()=>refresh());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});let scheduled=false;new MutationObserver(()=>{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;header();});}).observe(document.getElementById('mainHeader')||document.querySelector('.site-header')||document.body,{childList:true,subtree:true});
+ window.refreshCommunityNav=()=>refresh(true);draw();void refresh(false,true);window.addEventListener('pageshow',e=>{if(e.persisted)refresh();});window.addEventListener('online',()=>refresh());document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});let scheduled=false;new MutationObserver(()=>{if(scheduled)return;scheduled=true;queueMicrotask(()=>{scheduled=false;header();});}).observe(document.getElementById('mainHeader')||document.querySelector('.site-header')||document.body,{childList:true,subtree:true});
 })();

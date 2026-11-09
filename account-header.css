@@ -26,3 +26,22 @@ html body #accountDropdown .account-menu-amount {
   white-space: nowrap;
 }
 html body #accountDropdown .account-menu-payments .account-icon { color: #ffd400; }
+
+.account-session-placeholder {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: none;
+  width: 124px;
+  height: 44px;
+  border: 1px solid #3a3c41;
+  border-radius: 999px;
+  background: #232529;
+}
+.account-session-placeholder i { width: 42px; height: 7px; border-radius: 9px; background: #54575d; }
+.account-session-placeholder i:first-child { width: 20px; height: 20px; border-radius: 50%; }
+@media (max-width: 900px) {
+  .account-session-placeholder { width: 98px; height: 40px; }
+}

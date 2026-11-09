@@ -2,6 +2,10 @@
 <html lang="az">
 <head>
   <meta charset="UTF-8" />
+  <script type="module" async>
+    import {getCommunityState} from '/session-state.js?v=header-session-1';
+    void getCommunityState().catch(()=>{});
+  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>Premium rəqəmsal məhsullar Azərbaycanda | Mirpanel</title>
   <meta name="description" content="Netflix, Spotify Premium, ChatGPT Plus, CapCut Pro və digər rəqəmsal məhsulların mövcud planlarını Mirpanel-də nəzərdən keçirin." />
@@ -24,6 +28,7 @@
   <link rel="stylesheet" href="style.css?v=admin-1794224780143" />
   <link rel="stylesheet" href="splash.css?v=20260903-1" />
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
+  <link rel="stylesheet" href="/account-header.css?v=header-session-1" data-shell-persistent media="print" onload="this.media='all'">
   <link rel="stylesheet" href="premium-compact-glow.css?v=20260804-mobile-layout-1" />
   <link rel="stylesheet" href="stock-display-fix.css?v=home-stock-20261028-1" />
   <link rel="stylesheet" href="catalog-card.css?v=mobile-home-cards-1" />
@@ -215,6 +220,7 @@
         <button class="site-header-menu-button" type="button" aria-label="Menyunu aç" aria-expanded="false">
           <svg aria-hidden="true" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
         </button>
+        <div class="account-header-controls account-guest-controls" data-account-session-bootstrap><span class="account-session-placeholder" role="status" aria-label="Hesab yoxlanılır"><i></i><i></i></span></div>
       </div>
     </div>
     <div class="site-header-overlay" aria-hidden="true"></div>
