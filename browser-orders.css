@@ -192,18 +192,36 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .capcut-demo-field>span:first-child,.capcut-demo-muted{color:#535c6e;font-size:11px}
 .capcut-demo-next{text-align:center;background:#087887;color:#fff;border-color:transparent}
 .capcut-demo-typing>span{visibility:hidden;animation:capcut-type 0s var(--type-delay) forwards}
-.capcut-demo-avatar{display:grid;place-items:center;width:31px;height:31px;flex:none;border-radius:50%;background:#dce4f7}
-.capcut-demo-pro{padding:3px 5px;border-radius:5px;background:#ece5ff;color:#542b98}
+.capcut-demo[data-animation="pro"]{background:#fff;gap:8px}
+.capcut-demo[data-animation="pro"]>.capcut-demo-icon{align-self:flex-start}
+.capcut-demo-profile{justify-content:flex-start;margin:8px 0 6px}
+.capcut-demo-avatar{display:grid;place-items:center;width:39px;height:39px;flex:none;border-radius:50%;background:#ef885e;color:#652e24}
+.capcut-demo-avatar svg{width:25px;height:25px;fill:currentColor}
+.capcut-demo-profile-name{display:flex;align-items:center;gap:4px;font-size:12px;white-space:nowrap}
+.capcut-demo-profile-name .capcut-demo-pro{padding:2px 4px;border-radius:5px;background:#f3edff;color:#6245a7;font-size:10px}
+.capcut-demo-stats{justify-content:flex-start;gap:12px}
+.capcut-demo-stats>div{display:grid;gap:2px}
+.capcut-demo-stats>div>span,.capcut-demo-profile .capcut-demo-muted{color:#636570;font-size:10px}
+.capcut-demo-bio{display:flex;align-items:center;gap:4px;font-size:10px}
+.capcut-demo-profile-actions,.capcut-demo-profile-tabs{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px}
+.capcut-demo-profile-actions .capcut-demo-option{min-height:26px;padding:4px;font-size:11px}
+.capcut-demo-profile-tabs{grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin-inline:-8px;border-bottom:1px solid #dedee3;font-size:10px;text-align:center;color:#626370}
+.capcut-demo-profile-tabs>span{display:flex;align-items:center;justify-content:center;gap:2px;padding:4px 0}
+.capcut-demo-profile-tabs>span:first-child{border-bottom:2px solid #171922;color:#171922}
+.capcut-demo-profile-tabs svg{width:10px;height:10px}
+.capcut-demo-empty{flex:1;display:grid;justify-items:center;align-content:center;gap:4px;color:#666874;font-size:10px}
+.capcut-demo-empty svg{width:24px;height:24px}
 .capcut-demo [data-capcut-target]{outline:2px solid #b87200;outline-offset:-1px}
 .capcut-demo [data-capcut-target="ben"]{outline:0}
 .capcut-demo [data-capcut-target="ben"] .capcut-demo-icon{outline:2px solid #b87200;outline-offset:4px;border-radius:50%;animation:browser-guide-tap .75s ease-out 2}
 .capcut-demo [data-capcut-target="password"]{animation:capcut-unmark 0s .95s forwards}
 .capcut-demo [data-capcut-target="continue"]{outline-color:transparent;animation:capcut-mark 0s .95s forwards}
+.capcut-demo [data-capcut-target="pro"]{animation:capcut-pro-glow .85s ease-out 2}
+@keyframes capcut-pro-glow{from{box-shadow:0 0 0 2px #d7940070}to{box-shadow:0 0 0 5px #d7940000}}
 @keyframes capcut-screen-in{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:none}}
 @keyframes capcut-type{to{visibility:visible}}
 @keyframes capcut-unmark{to{outline-color:transparent}}
 @keyframes capcut-mark{to{outline-color:#b87200}}
-@media (max-width:600px){.browser-guide-handset{width:min(100%,178px)}}
 @media (prefers-reduced-motion: reduce) {
   .browser-guide-phone *, .browser-guide-phone *::before { animation: none !important; }
   .capcut-demo,.capcut-demo *,.capcut-demo-description{animation:none!important}
@@ -242,16 +260,49 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
   min-height: 32px; padding: 4px 8px; border-color: transparent; background: transparent; color: #c6c5c1;
 }
 .browser-guide-compact .browser-guide-play span { font-size: 10px; }
+.browser-guide-compact:has(.browser-guide-handset) .browser-guide-text{font-size:16px;line-height:1.35}
+.browser-guide-compact:has(.browser-guide-handset) .browser-guide-controls>button{height:44px;font-size:16px}
+.browser-guide-compact .browser-guide-controls>button svg{display:block;width:16px;height:16px}
+.browser-guide-handset-status{display:none}
 @media (max-width: 600px) {
   .browser-guide-step.browser-guide-compact { gap: 6px; margin-top: 6px; }
+  .browser-order-guide:has(.browser-guide-handset){margin-block:12px auto}
+  .browser-guide-frame:has(.browser-guide-handset){
+    display:block;overflow:auto;overscroll-behavior:contain;overflow-anchor:none;
+  }
+  .browser-guide-body:has(.browser-guide-handset){overflow:visible;padding-block:8px}
+  .browser-guide-header:has(+ .browser-guide-body .browser-guide-handset){padding-block:8px}
+  .browser-guide-header:has(+ .browser-guide-body .browser-guide-handset) .browser-guide-tabs{margin-top:6px}
+  .browser-guide-header:has(+ .browser-guide-body .browser-guide-handset) .browser-guide-delivery-status{display:none}
+  .browser-guide-handset-status{display:block}
+  .browser-guide-body:has(.browser-guide-handset) .browser-guide-choices button{min-height:36px}
+  .browser-guide-handset{width:min(100%,clamp(151px,calc((100dvh - 302px) * .56),178px))}
+}
+@media (max-width:600px) and (max-height:600px){
+  .browser-order-guide:has(.browser-guide-handset){margin-block:6px auto;max-height:calc(100dvh - 12px)}
+  .browser-guide-frame:has(.browser-guide-handset){max-height:calc(100dvh - 14px)}
+  .browser-guide-header:has(+ .browser-guide-body .browser-guide-handset){padding-block:5px}
+  .browser-guide-header:has(+ .browser-guide-body .browser-guide-handset) .browser-guide-tabs{margin-top:4px;padding-block:2px}
+  .browser-guide-header:has(+ .browser-guide-body .browser-guide-handset) .browser-guide-tabs button{min-height:36px}
+  .browser-guide-body:has(.browser-guide-handset){padding-block:4px}
+  .browser-guide-body:has(.browser-guide-handset) .browser-guide-choices button{min-height:32px}
+  .browser-guide-step:has(.browser-guide-handset){gap:4px;margin-top:4px}
+  .capcut-demo-sign-in{gap:6px;padding-block:9px}
+  .capcut-demo-sign-in .capcut-demo-options{gap:4px}
+  .capcut-demo-sign-in .capcut-demo-option{min-height:28px;padding:4px 2px;gap:3px;font-size:11px}
+  .capcut-demo-sign-in .capcut-demo-option svg{width:12px;height:12px}
+  .capcut-demo[data-animation="pro"]{gap:4px;padding-block:8px}
+  .capcut-demo-profile{margin-block:6px 3px}
+  .capcut-demo-stats{gap:7px}
+  .capcut-demo-stats>div>span,.capcut-demo-profile-tabs{font-size:9px}
+  .capcut-demo-empty svg{width:20px;height:20px}
 }
 @media (max-width: 600px) and (max-height: 740px) {
-  .browser-guide-frame:has(.browser-guide-compact) { height: calc(100dvh - 26px); }
-  .browser-guide-body:has(.browser-guide-compact) {
+  .browser-guide-frame:has(.browser-guide-compact):not(:has(.browser-guide-handset)) { height: calc(100dvh - 26px); }
+  .browser-guide-body:has(.browser-guide-compact):not(:has(.browser-guide-handset)) {
     display: grid; grid-template-rows: auto minmax(0, 1fr);
   }
-  .browser-guide-step.browser-guide-compact { grid-template-rows: minmax(0, 1fr) auto; }
-  .browser-guide-compact .browser-guide-visual-handset { min-height: 0; overflow: auto; align-items: start; }
+  .browser-guide-step.browser-guide-compact:not(:has(.browser-guide-handset)) { grid-template-rows: minmax(0, 1fr) auto; }
   .browser-guide-compact .browser-guide-visual:not(.browser-guide-visual-handset) { container-type: size; min-height: 0; }
   .browser-guide-compact .browser-guide-phone[data-animation] {
     width: min(100%, 140px, calc(100cqh * .46));

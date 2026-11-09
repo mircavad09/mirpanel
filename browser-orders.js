@@ -169,7 +169,11 @@
    photo:'M3 4h18v16H3z M4 17l5-6 4 4 3-3 5 5',
    mail:'M3 5h18v14H3z M3 6l9 7 9-7',
    back:'m14 5-7 7 7 7',
-   search:'M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Zm-2 5 6 6'
+   search:'M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Zm-2 5 6 6',
+   edit:'m4 16 11-11 4 4L8 20H4v-4Zm9-9 4 4',
+   share:'M13 4l8 7-8 7v-4c-5 0-8 2-10 5 0-7 3-11 10-11V4Z',
+   lock:'M7 10V7a5 5 0 0 1 10 0v3M5 10h14v11H5z',
+   box:'M3 8l4-5h10l4 5v13H3V8Zm0 0h18m-12 5h6'
   };
   const icon=name=>{const n=create('span',null,'capcut-demo-icon');n.innerHTML=lineIcon(icons[name]);return n;};
   const label=(text,cls)=>create('span',text,cls);
@@ -206,11 +210,21 @@
    if(mode==='password')mark(next,'continue');
    fields.append(email,pass,next);screen.append(fields);
   }else{
-   screen.append(row('Profil','back','capcut-demo-heading'));
+   screen.append(icon('back'));
    const profile=create('div',null,'capcut-demo-profile');
-   profile.append(label('N','capcut-demo-avatar'),create('strong','Nümunə profil'),mark(label('Pro','capcut-demo-pro'),'pro'));
-   const stats=create('div',null,'capcut-demo-stats');stats.append(label('0 Takip'),label('0 Takipçi'));
-   screen.append(profile,stats,create('div','Profili düzenle','capcut-demo-option'),create('p','Favoriler','capcut-demo-muted'));
+   const avatar=label(null,'capcut-demo-avatar');avatar.append(icon('user'));
+   const identity=create('div'),name=create('div',null,'capcut-demo-profile-name');
+   name.append(create('strong','numune042'),mark(label('Pro','capcut-demo-pro'),'pro'));
+   identity.append(name,label('ID: 10420001','capcut-demo-muted'));profile.append(avatar,identity);
+   const stats=create('div',null,'capcut-demo-stats');
+   for(const text of ['Takip edilenler','Takipçiler']){
+    const stat=create('div');stat.append(create('strong','0'),label(text));stats.append(stat);
+   }
+   const actions=create('div',null,'capcut-demo-profile-actions'),share=create('span',null,'capcut-demo-option');
+   share.append(icon('share'));actions.append(create('div','Profili düzenle','capcut-demo-option'),share);
+   const profileTabs=create('div',null,'capcut-demo-profile-tabs'),favorites=label('Favoriler');
+   favorites.append(icon('lock'));profileTabs.append(favorites,label('Beğenilen içerik'));
+   screen.append(profile,stats,row('Biyografi ekle','edit','capcut-demo-bio'),actions,profileTabs,row('Henüz favori yok.','box','capcut-demo-empty'));
   }
   return screen;
  }
@@ -224,13 +238,14 @@
   const close=button('×',()=>guideDialog.close());close.setAttribute('aria-label','Təlimatı bağla');
   const head=create('div',null,'browser-guide-identity');head.append(identity,close);
   const tabs=create('div',null,'browser-guide-tabs'),body=create('div',null,'browser-guide-body'),footer=create('footer');
+  const deliveryStatus=accounts.querySelector('[data-delivery]')?null:accounts.querySelector('p')?.textContent;
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
   footer.append(button('Bağla',()=>guideDialog.close()));
   let data=null,failed=false,active='info',track='',step=0,autoplay=false,advanceTimer;
   const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
   phoneShell.append(phoneScreen);
   const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(info,how);
-  function select(mode){autoplay=false;active=mode;body.scrollTop=0;draw();}
+  function select(mode){autoplay=false;active=mode;wrap.scrollTop=body.scrollTop=0;draw();}
   function draw(){
    clearTimeout(advanceTimer);
    info.setAttribute('aria-pressed',String(active==='info'));how.setAttribute('aria-pressed',String(active==='steps'));
@@ -293,7 +308,8 @@
    const back=button('‹ Əvvəlki',()=>go(step-1,':first-child')),next=button('Növbəti ›',()=>go(step+1,':last-child'));
    if(compact){
     for(const [arrow,icon,label] of [[back,'‹','Əvvəlki'],[next,'›','Növbəti']]){
-     const glyph=create('span',icon);
+     const glyph=create('span',handset?null:icon);
+     if(handset)glyph.innerHTML=lineIcon(arrow===back?'m15 5-7 7 7 7':'m9 5 7 7-7 7');
      glyph.setAttribute('aria-hidden','true');
      arrow.replaceChildren(glyph);arrow.setAttribute('aria-label',label);
     }
@@ -329,14 +345,9 @@
     },{passive:true});
    }
    if(steadyLayout)steadyLayout.lastElementChild.replaceWith(details);
-   else{layout.append(visual,details);body.replaceChildren(choices,layout);}
-   if(handset){
-    const viewport=phoneShell.parentElement;
-    const target=phoneScreen.querySelector('[data-capcut-target]');
-    if(target&&viewport.scrollHeight>viewport.clientHeight){
-     const bounds=target.getBoundingClientRect(),area=viewport.getBoundingClientRect();
-     viewport.scrollTop+=bounds.top-area.top-(area.height-bounds.height)/2;
-    }
+   else{
+    layout.append(visual,details);body.replaceChildren(choices,layout);
+    if(handset&&deliveryStatus)body.append(create('p',deliveryStatus,'browser-guide-delivery-status browser-guide-handset-status'));
    }
    if(autoplay&&step<steps.length-1)advanceTimer=setTimeout(()=>{
     if(!guideDialog.open||!guideDialog.isConnected)return;
@@ -349,7 +360,7 @@
    catch(e){if(turn!==guideTurn||!guideDialog.open)return;if(e.status===401||e.status===403){gate();return;}failed=true;draw();}
   }
   header.append(head,tabs);
-  if(!accounts.querySelector('[data-delivery]'))header.append(create('p',accounts.querySelector('p')?.textContent,'browser-guide-delivery-status'));
+  if(deliveryStatus)header.append(create('p',deliveryStatus,'browser-guide-delivery-status'));
   wrap.append(header,body,footer);guideDialog.replaceChildren(wrap);root.after(guideDialog);
   guideDialog.addEventListener('close',()=>{clearTimeout(advanceTimer);guideTurn++;guideDialog.remove();if(trigger.isConnected)trigger.focus({preventScroll:true});},{once:true});
   guideDialog.showModal();void loadGuide();
