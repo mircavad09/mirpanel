@@ -3,7 +3,7 @@ import crypto from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
-import {adminDelivery,createCustomerOrderMailer,deliveryRecords,ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
+import {adminDelivery,adminOrderCustomers,adminPendingDeliveries,createCustomerOrderMailer,deliveryRecords,ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
 import {authReturn} from '../mirpanel-admin/community/public-service.mjs';
 import {onRequest as proxy} from '../functions/api/payments/[[path]].js';
 
@@ -52,11 +52,15 @@ try{
  f.files.set(receipt.path,Buffer.from('abc'));
  await shop.savedReceipt(buyer,hash,'cart',card.id,receipt);
  const order=await shop.submit(buyer,hash,card.id),code=String(order.orderCode);
+ eq(await adminPendingDeliveries(pool,[order.orderId]),[]);
+ const [customer]=await adminOrderCustomers(pool,[order.orderId]);
+ eq(customer.id,order.orderId);eq(Number(customer.memberNumber)>0,true);eq(Boolean(customer.name),true);
  eq(order.paymentConfirmed,false);eq((await list(buyer,code)).orders[0].status,'reviewing');eq(await outbox(),[]);
  const inputDelivery={requestId:id(),line:0,quantity:1,message:'Sintetik təhvil\nİkinci sətir'};
  await reject(adminDelivery(pool,security,'synthetic-admin',order.orderId,inputDelivery),409);
  await rpc('approve_payment_order_v7',[order.orderId,null,'synthetic-admin']);await rpc('approve_payment_order_v7',[order.orderId,null,'synthetic-admin']);
  eq((await shop.get(buyer,hash,card.id)).paymentConfirmed,true);
+ eq(await adminPendingDeliveries(pool,[order.orderId]),[order.orderId]);
  eq((await list(buyer,code)).orders[0].status,'preparing');
  eq((await list(other,code)).orders.length,0);
  eq(await outbox(),[{state:'queued',n:1}]);
@@ -69,7 +73,9 @@ try{
  const same=await Promise.all([adminDelivery(pool,security,'synthetic-admin',order.orderId,inputDelivery),adminDelivery(pool,security,'synthetic-admin',order.orderId,inputDelivery)]);
  eq(same.filter(x=>x.replayed).length,1);eq(same[0].status,'preparing');
  await reject(adminDelivery(pool,security,'synthetic-admin',order.orderId,{...inputDelivery,requestId:id()}),409);
- eq((await list(buyer,code)).orders[0].deliveries,[]);
+ const partial=(await list(buyer,code)).orders[0];
+ eq(partial.status,'preparing');eq(partial.deliveries,[{id:inputDelivery.requestId,line:0,quantity:1}]);eq(JSON.stringify(partial).includes(inputDelivery.message),false);
+ eq(await adminPendingDeliveries(pool,[order.orderId]),[order.orderId]);
  const meta=await account.codes(buyer);eq(meta.codes.length,1);eq(JSON.stringify(meta).includes(inputDelivery.message),false);
  eq(meta.codes[0].category,{key:'video',label:'Video montajı'});
  eq(meta.codes[0].purchasedAt,(await list(buyer,code)).orders[0].createdAt);
@@ -82,6 +88,7 @@ try{
  eq((await adminDelivery(pool,security,'synthetic-admin',order.orderId,{...inputDelivery,requestId:id(),line:1})).status,'completed');
  const complete=(await list(buyer,code)).orders[0];
  eq(complete.status,'completed');eq(complete.deliveries.map(x=>x.line),[0,1]);eq(complete.items.map(x=>x.repeat?.productId),['ordinary','unlimited']);await worker.wake();eq(messages.length,3);
+ eq(await adminPendingDeliveries(pool,[order.orderId]),[]);
  eq(messages[2].textBody.includes('Synthetic unlimited')&&!messages[2].textBody.includes('Synthetic ordinary'),true);
  await q("insert into wallet_accounts(user_id,cents) values('a',2000) on conflict(user_id) do update set cents=2000");
  const body={items,mode:'wallet',requestId:id(),consentAccepted:true};

@@ -34,10 +34,22 @@ export async function recordDelivery(c,security,actor,orderId,id,line,quantity,m
  return record;
 }
 export async function adminPendingDeliveries(pool,ids){
- if(!ids.length||!(await pool.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name)return [];
+ if(!ids.length)return [];
+ if(!(await pool.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name)throw fail(503,'Təhvil məlumatı hazırda əlçatan deyil.');
  const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity from public.payment_orders o join ${O} u on u.order_id=o.id where o.id=any($1::uuid[])`,[ids])).rows.filter(paid);
  const records=await deliveryRecords(pool,orders.map(o=>o.id));
- return orders.filter(o=>customerStatus(o,records.filter(r=>r.order_id===o.id))==='preparing').map(o=>o.id);
+ const byOrder=new Map();
+ for(const record of records){if(!byOrder.has(record.order_id))byOrder.set(record.order_id,[]);byOrder.get(record.order_id).push(record);}
+ return orders.filter(o=>customerStatus(o,byOrder.get(o.id)||[])==='preparing').map(o=>o.id);
+}
+export async function adminOrderCustomers(pool,ids){
+ if(!ids.length)return [];
+ return (await pool.query(`select o.id,coalesce(nullif(trim(ct.name),''),nullif(trim(o.customer_name),''),u.name) as name,n.member_number as "memberNumber"
+   from public.payment_orders o left join ${O} l on l.order_id=o.id
+   left join mirpanel_community."user" u on u.id=l.user_id
+   left join mirpanel_community.community_member_numbers n on n.user_id=l.user_id
+   left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id
+   where o.id=any($1::uuid[])`,[ids])).rows;
 }
 export async function adminDelivery(pool,security,actor,id,input){
  const c=await pool.connect();

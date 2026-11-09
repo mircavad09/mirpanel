@@ -31,6 +31,9 @@ const fixture=http.createServer((req,res)=>{
     assert.equal(q.has("product_id"),false,"cart orders cannot be found using parent ID equality");
     data=records.filter(r=>{
       if(q.get("status")&&!q.get("status").slice(4,-1).split(",").includes(r.status))return false;
+      if(q.get("payment_source")==="eq.card"&&r.payment_source==="wallet")return false;
+      if(q.get("payment_confirmed")==="not.is.true"&&r.payment_confirmed===true)return false;
+      if(q.has("or")&&!["approved","completed"].includes(r.status)&&r.payment_confirmed!==true)return false;
       if(q.get("id")&&!q.get("id").slice(4,-1).split(",").includes(r.id))return false;
       if(q.get("order_code")&&!r.order_code.includes(q.get("order_code").slice(7,-1)))return false;
       if(q.has("completed_at")&&!r.completed_at)return false;
@@ -64,5 +67,16 @@ try {
   assert.equal((await list("zoom")).pagination.total,0);
   assert.equal((await list("")).pagination.total,1057);
   assert.ok(maxOffset>=1000);
+  records.push(...Array.from({length:24},(_,i)=>({...cart(3000+i,"approved"),payment_source:i%2?"wallet":"card",payment_confirmed:true})));
+  const pendingDeliveries=async ids=>ids.filter(id=>Number(id.slice(-12))>=3002);
+  const delivery=page=>store.listOrders({tab:"pending",pendingStage:"delivery",productId:"netflix",page},catalog,{pendingDeliveries});
+  const d1=await delivery(1),d2=await delivery(2);
+  assert.equal(d1.pagination.total,22);
+  assert.equal(d1.orders.length,20);assert.equal(d2.orders.length,2);
+  assert.ok([...d1.orders,...d2.orders].every(o=>o.deliveryPending&&Number(o.orderCode)>=3002));
+  const today=await store.listOrders({tab:"today",productId:"netflix"},catalog,{pendingDeliveries});
+  assert.deepEqual(today.orders.map(o=>o.orderCode),["3001","3000","6"]);
+  assert.deepEqual((await list("spotify","pending",{pendingStage:"payment"})).orders.map(o=>o.orderCode),["5"]);
+  await assert.rejects(list("netflix","pending",{pendingStage:"delivery"}),{status:403});
   console.log("PASS: real order store, 1000+ rows, stable ID/legacy alias/title, cart once, search, pending/today/all, empty and all products");
 } finally {await new Promise(resolve=>fixture.close(resolve));}

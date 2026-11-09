@@ -1293,3 +1293,16 @@ th {
 #orderGuideEditor fieldset,.guide-editor-step{margin:10px 0;padding:10px;border:1px solid #45423a;border-radius:8px;min-width:0}
 .guide-editor-step .btn{margin-inline-end:6px}
 .guide-editor-step img{display:block;max-width:min(100%,240px);max-height:180px;margin:8px 0;object-fit:contain}
+
+.paymentPendingStages{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 12px}
+.paymentPendingStages[hidden]{display:none}
+.paymentPendingStages .btn[aria-pressed="true"]{border-color:#ffd400;color:#ffe167;background:#32290e}
+.paymentDeliveryInfo{min-width:0;display:grid;gap:5px;overflow-wrap:anywhere}
+.paymentDeliveryMeta{color:#b9b9b9;font-size:12px}
+.statusPill.status-preparing{background:#43370b;color:#ffe167}
+.paymentDeliveryCard>.btn{justify-self:end}
+.paymentDeliveryDialog{max-height:calc(100dvh - 24px);overflow:auto}
+.paymentDeliveryDialog form{padding:16px}
+.paymentDeliveryDialog label{display:grid;gap:4px;margin-block:10px}
+.paymentDeliveryDialog textarea,.paymentDeliveryDialog select{max-width:100%;width:100%}
+@media(max-width:600px){.paymentDeliveryCard{grid-template-columns:minmax(0,1fr) auto}.paymentDeliveryCard>.btn{align-self:center}.paymentDeliveryInfo{font-size:13px}}

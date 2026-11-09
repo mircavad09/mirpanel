@@ -1343,6 +1343,7 @@ const paymentSystem = createPaymentSystem({
   readyStock: (...args)=>ownerCommunity.readyStock(...args),
   saveReadyStock: (...args)=>ownerCommunity.saveReadyStock(...args),
   pendingDeliveries: ids=>ownerCommunity.pendingDeliveries(ids),
+  orderCustomers: ids=>ownerCommunity.orderCustomers(ids),
   accountForCheckout: request=>ownerCommunity.checkoutAccount(request),
   accountReservation: (request,args)=>ownerCommunity.accountReserve(request,args),
   reservedAccountPrice: (request,id)=>ownerCommunity.reservedPrice(request,id),

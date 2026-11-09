@@ -7,6 +7,7 @@
     search: "", productId: "", durationMonths: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1
   });
   const paymentState = {
+    pendingStage: "payment", deliveryOpening: false,
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
     selectedOrderIds: new Set(), batchBusy: false,
@@ -17,7 +18,7 @@
   };
   const $p = (id) => document.getElementById(id);
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  const statusLabel = { reviewing: "Yoxlanılır", completed: "Tamamlandı", rejected: "Rədd edilib", expired: "Vaxtı bitib" };
+  const statusLabel = { reviewing: "Yoxlanılır", preparing: "Təhvil gözlənilir", completed: "Tamamlandı", rejected: "Rədd edilib", expired: "Vaxtı bitib" };
   const reservationLabel = { reserved: "Rezerv edilib", reviewing: "Yoxlanılır", completed: "Tamamlandı", rejected: "Rədd edilib", cancelled: "Ləğv edilib", expired: "Vaxtı bitib" };
   const methodStatusLabel = { active: "Aktiv", inactive: "Deaktiv", pending: "Gözləmədə", temporarily_busy: "Müvəqqəti rezervdədir", limit_reached: "Limit dolub", deleted: "Silinib" };
   const auditLabel = {
@@ -157,13 +158,23 @@
   function orderCard(order) {
     const tab = paymentState.orderQuery.tab;
     const pending = tab === "pending";
+    if(pending&&paymentState.pendingStage==="delivery"){
+      const products=order.items?.length?order.items.map(x=>x.title+' · '+x.planName+' · '+x.quantity+' ədəd').join(' / '):[order.productTitle,order.planName].filter(Boolean).join(' · ');
+      return `<article class="paymentOrderAdminCard paymentDeliveryCard" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
+        <div class="paymentDeliveryInfo"><div><strong>${escp(order.customerName||"Müştəri adı yoxdur")}</strong> <span class="paymentDeliveryMeta">${order.customerNumber?'#'+escp(order.customerNumber):'Müştəri ID-si yoxdur'} · Sifariş №${escp(order.orderCode)}</span></div>
+        <span>${escp(products)}</span><div><span class="statusPill status-reviewing">Təhvil gözlənilir</span> <small class="paymentDeliveryMeta">${order.paymentSource==='wallet'?'Balansla ödənilib':'Ödəniş təsdiqlənib'}</small></div></div>
+        <button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>
+      </article>`;
+    }
     const expiring = tab === "expiring";
+    const displayStatus=order.deliveryPending?"preparing":order.status;
     const displayDate = pending ? order.createdAt : order.completedAt;
     const fields = [
       ["Məhsul", order.productTitle], ["Plan", order.planName], ["Məbləğ", money(order.amount, order.currency)], ["Ödəniş üsulu", order.paymentMethodLabel]
     ];
     for(const x of order.items||[])fields.push([x.title,x.planName+' · '+x.quantity+' ədəd · '+money(x.unitCents*x.quantity/100)]);
     if (pending) fields.push(["Rezerv", reservationLabel[order.reservationStatus] || "Yoxlanılır"]);
+    if (pending&&order.customerName) fields.push(["Müştəri",order.customerName+(order.customerNumber?' · #'+order.customerNumber:'')]);
     if(order.workforce){const flow=order.workforce;fields.push(["İcra",flow.state==='DELIVERED_PENDING_ADMIN'?'İşçi tamamlayıb — Admin təsdiqi gözlənilir':flow.ownerRole==='admin'?'Admin icra edir':flow.ownerRole==='employee'?'İşçi icra edir':'Yeni sifariş'],["İşçi",flow.employeeName||'—'],["Götürülüb",dateTime(flow.acceptedAt)],["Təqdim edilib",dateTime(flow.deliveredAt)]);}
     if (!pending) {
       fields.push(["Təsdiqlənmə", dateTime(order.completedAt)], ["Bitmə tarixi", calendarDate(order.expiresOn)]);
@@ -174,12 +185,12 @@
     if (expiring) fields.push(["Vəziyyət", order.expiry?.label || "Müddət müəyyən edilməyib"]);
     const selected = expiring && paymentState.selectedOrderIds.has(order.id);
     return `<article class="paymentOrderAdminCard status-${escp(order.status)}${selected ? " isSelected" : ""}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
-      <div class="paymentOrderHead"><div>${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}<strong title="${escp(order.orderCode)}">${escp(order.orderCode)}</strong>${copyButton(order)}<span class="statusPill status-${escp(expiring ? order.expiry?.code : order.status)}">${escp(expiring ? order.expiry?.label : statusLabel[order.status] || "Yoxlanılır")}</span></div><time datetime="${escp(displayDate || "")}">${escp(dateTime(displayDate))}</time></div>
+      <div class="paymentOrderHead"><div>${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}<strong title="${escp(order.orderCode)}">${escp(order.orderCode)}</strong>${copyButton(order)}<span class="statusPill status-${escp(expiring ? order.expiry?.code : displayStatus)}">${escp(expiring ? order.expiry?.label : statusLabel[displayStatus] || "Yoxlanılır")}</span></div><time datetime="${escp(displayDate || "")}">${escp(dateTime(displayDate))}</time></div>
       <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
       <div class="paymentOrderActions">
         <button class="btn" type="button" data-order-details>Sifariş məlumatları</button>
         ${order.deliveryPending??(order.paymentSource==='wallet'||['approved','completed'].includes(order.status))?'<button class="btn" type="button" data-order-delivery>Sifarişi təhvil ver</button>':''}
-        ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : (order.paymentSource==='wallet'?'<span class="statusPill">Balansla ödənilib · təqdimetmə gözlənilir</span>':'<span class="statusPill">Çek saxlanma müddəti bitib</span>')}
+        ${order.receiptAvailable ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : (order.paymentSource==='wallet'?'<span class="statusPill">Balansla ödənilib</span>':'<span class="statusPill">Çek saxlanma müddəti bitib</span>')}
         ${pending ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : `${order.workforce&&!order.workforce.ownerRole?'<button class="btn" type="button" data-claim-payment>Üzərinə götür</button>':''}<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>` : ""}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
       </div>${pending || expiring ? orderHistory(order) : ""}
@@ -273,6 +284,8 @@
 
   function renderOrderContext() {
     const tab = paymentState.orderQuery.tab;
+    $p("paymentPendingStages")?.toggleAttribute("hidden",tab!=="pending");
+    document.querySelectorAll("[data-payment-pending-stage]").forEach(button=>button.setAttribute("aria-pressed",String(button.dataset.paymentPendingStage===paymentState.pendingStage)));
     $p("paymentMonthlyReports")?.toggleAttribute("hidden", !["today", "all"].includes(tab));
     $p("paymentMonthlyArchivePanel")?.toggleAttribute("hidden", tab !== "all");
     document.querySelectorAll("[data-payment-order-tab]").forEach((button) => {
@@ -500,6 +513,7 @@
     if (status) status.textContent = "Sifarişlər yüklənir…";
     if (list) list.setAttribute("aria-busy", "true");
     const query = new URLSearchParams(Object.entries(paymentState.orderQuery).filter(([, value]) => value !== ""));
+    if(paymentState.orderQuery.tab==="pending")query.set("pendingStage",paymentState.pendingStage);
     if(automatic)query.set('preserveFilters','true');
     const anchor=automatic&&list?(window.AdminLive?.anchor(list)||(paymentState.orders[0]?{id:paymentState.orders[0].id}:null)):null;
     if(anchor){query.set('anchorId',anchor.id);query.set('anchorIndex',String(paymentState.orders.findIndex(o=>o.id===anchor.id)));}
@@ -554,10 +568,14 @@
   async function handleOrderAction(card, action) {
     const id = card.dataset.paymentOrderId;
     if(action==='delivery'){
-      const url='/api/admin/payment-orders/'+id+'/delivery',state=await paymentApi(url),lines=state.lines.filter(x=>x.remaining>0);
+      if(paymentState.deliveryOpening||document.querySelector('[data-payment-delivery-dialog]'))return;
+      const url='/api/admin/payment-orders/'+id+'/delivery';let state;
+      paymentState.deliveryOpening=true;
+      try{state=await paymentApi(url);}finally{paymentState.deliveryOpening=false;}
+      const lines=state.lines.filter(x=>x.remaining>0);
       if(!lines.length){toast('Bütün məhsullar hesaba təhvil verilib.');return;}
       const dlg=document.createElement('dialog'),form=document.createElement('form');
-      dlg.className='paymentActionDialog';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Buraya yalnız müştəriyə göstəriləcək mətni yazın. İşçi qeydlərini və daxili təlimatları daxil etməyin.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>Təhvil mətni <textarea name="message" rows="7" required maxlength="8000"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Hesaba əlavə et</button>';
+      dlg.className='paymentActionDialog paymentDeliveryDialog';dlg.dataset.paymentDeliveryDialog='';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Buraya yalnız müştəriyə göstəriləcək mətni yazın. İşçi qeydlərini və daxili təlimatları daxil etməyin.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>Müştəriyə təqdim ediləcək hazır mesaj <textarea name="message" rows="7" required maxlength="8000" spellcheck="false"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Göndər və təhvil ver</button>';
       const {line,quantity,message}=form.elements,submit=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]'),error=form.querySelector('[role=alert]');
       const renewalNote=document.createElement('label'),renewalCheck=document.createElement('input'),renewalText=document.createElement('span');
       renewalCheck.type='checkbox';renewalNote.append(renewalCheck,renewalText);error.before(renewalNote);
@@ -572,8 +590,8 @@
         pending??={...data,requestId:crypto.randomUUID()};
         for(const field of [line,quantity,message,submit,close])field.disabled=true;
         error.textContent='';
-        try{await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast('Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders({automatic:true});}
-        catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;line.disabled=quantity.disabled=message.disabled=false;}submit.disabled=close.disabled=false;}
+        try{await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast('Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders({automatic:true}).catch(()=>{});}
+        catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;line.disabled=quantity.disabled=message.disabled=close.disabled=false;}submit.disabled=false;}
       };
       dlg.append(form);document.body.append(dlg);dlg.showModal();return;
     }
@@ -745,6 +763,14 @@
         if (costRow && event.target.closest("[data-save-payment-cost]")) await saveCosts([costRow.dataset.paymentCostKey]);
         const orderTab = event.target.closest("[data-payment-order-tab]");
         if (orderTab) await setOrderTab(orderTab.dataset.paymentOrderTab);
+        const stage = event.target.closest("[data-payment-pending-stage]");
+        if(stage&&stage.dataset.paymentPendingStage!==paymentState.pendingStage){
+          paymentState.pendingStage=stage.dataset.paymentPendingStage;
+          paymentState.orderQuery.page=1;
+          $p("paymentOrdersList")?.replaceChildren();
+          renderOrderContext();
+          await loadOrders();
+        }
         if (event.target.closest("#paymentOrdersPrevious") && paymentState.orderMeta.pagination.page > 1) { paymentState.orderQuery.page -= 1; await loadOrders(); }
         if (event.target.closest("#paymentOrdersNext") && paymentState.orderMeta.pagination.page < paymentState.orderMeta.pagination.totalPages) { paymentState.orderQuery.page += 1; await loadOrders(); }
         if (event.target.closest("#paymentOrderFiltersClear")) { $p("paymentOrderFilters")?.reset(); if ($p("paymentOrderDateError")) $p("paymentOrderDateError").textContent = ""; await setOrderTab(paymentState.orderQuery.tab); }
@@ -791,6 +817,7 @@
       if (result.order.status === "rejected") { toast("Bu sifariş rədd edilib və əsas siyahılarda göstərilmir."); return; }
       paymentState.orderQuery.search = result.order.order_code || "";
       paymentState.orderQuery.tab = ["approved", "completed"].includes(result.order.status) ? "all" : "pending";
+      paymentState.pendingStage="payment";
       paymentState.orderQuery.page = 1;
       renderOrderContext();
       await loadOrders();

@@ -15,7 +15,7 @@ const server=http.createServer(async(req,res)=>{
  const json=body=>{res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');return res.end(JSON.stringify(body));};
  if(u.pathname==='/api/payments/my-orders'){
   assert.equal(u.searchParams.get('order'),'9180');
-  const items=[{title:'CapCut Pro',quantity:1,planName:'1 aylıq (Telefon)',unitCents:500,repeat,expiresOn,image:'/assets/capcut.png'}];
+  const items=[{title:'CapCut Pro',quantity:1,planName:'1 aylıq (Telefon)',unitCents:500,repeat,expiresOn:status==='completed'?expiresOn:undefined,image:'/assets/capcut.png'}];
   if(!preview)items.push({title:'Əlavə sınaq paketi',quantity:1,planName:'1 aylıq uzun paket adı — uzun sətir üçün sınaq',unitCents:600,warranty:'7 gün zəmanət'});
   return json({orders:[{id:order,orderCode:'9180',product:'CapCut Pro · Sınaq sifarişi',amount:preview?5:11,status,autoDelivered,createdAt:'2026-11-08T09:03:00Z',receiptAvailable:true,items,deliveries:[{id:delivery,line:0,quantity:1}]}],nextCursor:null});
  }
@@ -70,6 +70,8 @@ try{
    assert.equal(await page.evaluate(()=>Number(sessionStorage.getItem('played'))),0);
    status='preparing';await card.locator('[data-status="preparing"]').waitFor();
    assert.equal(await expiry.count(),0);
+   assert.equal(await card.locator('.browser-order-line').nth(0).locator('[data-delivery]').count(),1);
+   assert.equal(await card.locator('.browser-order-line').nth(1).locator('[data-delivery]').count(),0);
    await page.waitForFunction(()=>Number(sessionStorage.getItem('played'))===1);
    status='completed';await card.locator('[data-status="completed"]').waitFor();
    assert.equal(await page.evaluate(()=>Number(sessionStorage.getItem('played'))),1);

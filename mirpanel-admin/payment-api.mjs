@@ -748,8 +748,15 @@ export function createPaymentSystem(options) {
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-orders") {
       const catalog = await loadCatalog();
-      const orders = await store.listOrders(Object.fromEntries(url.searchParams), catalog.products);
-      if(options.pendingDeliveries&&options.readyStockAllowed?.(request)){
+      const query=Object.fromEntries(url.searchParams), canDeliver=options.readyStockAllowed?.(request);
+      const deliveryQueue=query.tab==='pending'&&query.pendingStage==='delivery';
+      if(deliveryQueue&&!canDeliver)throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
+      const orders = await store.listOrders(query, catalog.products, {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined});
+      if(canDeliver&&query.tab==='pending'&&query.pendingStage&&options.orderCustomers){
+        const customers=new Map((await options.orderCustomers(orders.orders.map(o=>o.id))).map(o=>[o.id,o]));
+        for(const order of orders.orders){const customer=customers.get(order.id);order.customerName=customer?.name||null;order.customerNumber=customer?.memberNumber||null;}
+      }
+      if(!deliveryQueue&&options.pendingDeliveries&&canDeliver){
         const candidates=(orders.orders||[]).filter(o=>o.paymentSource==='wallet'||['approved','completed'].includes(o.status));
         if(candidates.length){
           try{const pending=new Set(await options.pendingDeliveries(candidates.map(o=>o.id)));for(const order of candidates)order.deliveryPending=pending.has(order.id);}

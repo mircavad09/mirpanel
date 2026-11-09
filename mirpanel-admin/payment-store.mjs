@@ -435,7 +435,7 @@ export function createPaymentStore(config) {
       const rows=await rpc('employee_order_workflow',{p_ids:ids});
       return new Map(rows.map(({id,...workflow})=>[id,workflow]));
     },
-    async listOrders(input = {}, catalog = []) {
+    async listOrders(input = {}, catalog = [], { pendingDeliveries } = {}) {
       await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
@@ -450,10 +450,16 @@ export function createPaymentStore(config) {
         return next;
       };
 
-      const statuses = orderDatabaseStatuses(filters);
+      const deliveryQueue = filters.tab === "pending" && input.pendingStage === "delivery";
+      const reviewQueue = filters.tab === "pending" && input.pendingStage === "payment";
+      const deliveredToday = filters.tab === "today" && Boolean(pendingDeliveries);
+      if (deliveryQueue && !pendingDeliveries) throw Object.assign(new Error("Təhvil siyahısı yalnız adminə açıqdır."), { status: 403 });
+      const statuses = deliveryQueue ? ["approved", "completed", "reviewing", "new_receipt_requested"] : orderDatabaseStatuses(filters);
       const dateColumn = filters.tab === "pending" ? "created_at" : "completed_at";
       const matchingQuery = (columns, options) => {
         let query = applyCommonFilters(client.from("payment_orders").select(columns, options), dateColumn).in("status", statuses);
+        if (reviewQueue) query = query.eq("payment_source", "card").not("payment_confirmed", "is", true);
+        if (deliveryQueue) query = query.or("status.in.(approved,completed),payment_confirmed.is.true");
         if (filters.tab === "today") query = query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive);
         if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
         return query.order(dateColumn, { ascending: filters.sort === "oldest" }).order("id", { ascending: filters.sort === "oldest" });
@@ -473,7 +479,9 @@ export function createPaymentStore(config) {
         facetTotal = Number(result.count || 0);
         if (!result.data?.length && offset < facetTotal) throw paymentError(null, "Sifariş filtri tam yüklənmədi. Yenidən cəhd edin.");
         offset += result.data?.length || 0;
-        for (const row of result.data || []) if (!seenOrders.has(row.id) && (!matchProduct || matchProduct(row))) {
+        const candidates = (result.data || []).filter(row => !seenOrders.has(row.id) && (!matchProduct || matchProduct(row)));
+        const pending = (deliveryQueue || deliveredToday) && candidates.length ? new Set(await pendingDeliveries(candidates.map(row => row.id))) : null;
+        for (const row of candidates) if (!pending || pending.has(row.id) === deliveryQueue) {
           seenOrders.add(row.id);
           const {cart_items, snapshot_product, ...summary} = row;
           facetRows.push(summary);
@@ -504,7 +512,7 @@ export function createPaymentStore(config) {
         countStatus(["approved", "completed"]),
         countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
-        filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows, { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
+        deliveryQueue || reviewQueue || deliveredToday || filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows, { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
           p_search: filters.search || null,
           p_product_id: filters.productId || null,
@@ -569,6 +577,7 @@ export function createPaymentStore(config) {
             contactedAt: order.contacted_at,
             receiptAvailable: !order.receipt_deleted_at && order.payment_source!=='wallet',paymentSource:order.payment_source||'card',paymentConfirmed:order.payment_confirmed===true,
             paymentMethodLabel: paymentMethodLabel({ ...method, method_name_snapshot: order.method_name_snapshot, method_last4_snapshot: order.method_last4_snapshot }),
+            ...(deliveryQueue ? { deliveryPending: true } : {}),
             auditHistory: history.get(order.id) || []
           };
         }),
