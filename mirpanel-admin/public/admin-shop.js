@@ -48,7 +48,10 @@ function identity(t) {
 }
 
 export async function mountShop({root, call, alive}) {
-  let stopped = false, busy = false, rejectionDialog;
+  let stopped = false, busy = false, rejectionDialog, receiptDialog, opened = false;
+  const params = new URLSearchParams(location.search);
+  const target = params.get("topup");
+  const intent = params.get("topupAction");
   const error = el("p", null, "topupError");
   error.setAttribute("role", "alert");
   const list = el("div", null, "topupList");
@@ -79,6 +82,38 @@ export async function mountShop({root, call, alive}) {
       if (tab) tab.location.replace(url);
       else window.location.assign(url);
     } catch (e) { tab?.close(); throw e; }
+  }
+
+  async function showReceipt(t) {
+    if (receiptDialog?.open) return;
+    const {url,mime} = await call("/shop", {action:"receipt", id:t.id});
+    if (stopped || !alive()) return;
+    const dialog = el("dialog", null, "paymentActionDialog");
+    const box = el("div", null, "paymentActionDialogCard");
+    const close = el("button", "Bağla", "btn");
+    close.type = "button";
+    close.onclick = () => dialog.close();
+    const original = el("a", "Qəbzi tam ölçüdə aç", "btn");
+    original.href = url;
+    original.target = "_blank";
+    original.rel = "noopener noreferrer";
+    const title = el("h3", "Qəbz");
+    title.id = "topupReceiptTitle";
+    dialog.setAttribute("aria-labelledby", title.id);
+    const preview = el(mime === "application/pdf" ? "iframe" : "img");
+    preview.style.cssText = "display:block;width:100%;max-height:65dvh;object-fit:contain;margin:8px 0";
+    if (preview.tagName === "IFRAME") {
+      preview.title = "Qəbz";
+      preview.style.height = "65dvh";
+    } else preview.alt = "Ödəniş qəbzi";
+    preview.referrerPolicy = "no-referrer";
+    preview.src = url;
+    box.append(title, preview, original, close);
+    dialog.append(box);
+    document.body.append(dialog);
+    receiptDialog = dialog;
+    dialog.addEventListener("close", () => dialog.remove(), {once:true});
+    dialog.showModal();
   }
 
   async function decide(t, action, value) {
@@ -160,6 +195,7 @@ export async function mountShop({root, call, alive}) {
       amount.inputMode = "decimal";
       amount.value = (Number(t.requested_cents) / 100).toFixed(2);
       label.append(amount);
+      amount.dataset.topupAmount = "";
       actions.append(label, button("Təsdiqlə", () => decide(t, "approve", amount.value), "primary"),
         button("Rədd et", () => reject(t), "danger"));
       card.append(actions);
@@ -168,14 +204,29 @@ export async function mountShop({root, call, alive}) {
   }
 
   async function load() {
-    const data = await call("/shop?only=topups");
+    const data = await call("/shop?only=topups" + (target ? "&id=" + encodeURIComponent(target) : ""));
     if (stopped || !alive()) return;
     const heading = el("h2", "Balans artırma müraciətləri", "topupListTitle");
-    list.replaceChildren(heading, ...(data.topups.length ? data.topups.map(renderCard) : [el("p", "Hələ müraciət yoxdur.")]));
+    list.replaceChildren(heading, ...(data.topups.length ? data.topups.map(renderCard) : [el("p", target ? "Müraciət tapılmadı." : "Hələ müraciət yoxdur.")]));
+    if (target) {
+      const all = el("a", "Bütün balans müraciətləri", "btn");
+      all.href = "/admin.html#communityShop";
+      list.prepend(all);
+    }
+    const topup = target && data.topups.find(t => t.id === target);
+    if (!topup || opened) return;
+    opened = true;
+    if (intent === "receipt") {
+      if (topup.receipt_available) await showReceipt(topup);
+      else error.textContent = "Qəbz artıq mövcud deyil.";
+    } else if (topup.status === "reviewing") {
+      if (intent === "reject") reject(topup);
+      if (intent === "approve") list.querySelector("[data-topup-amount]")?.focus();
+    }
   }
   busy = true;
   try { await load(); }
   catch (e) { error.textContent = e.message; }
   finally { busy = false; }
-  return () => { stopped = true; rejectionDialog?.close(); };
+  return () => { stopped = true; rejectionDialog?.close(); receiptDialog?.close(); };
 }

@@ -1,5 +1,5 @@
-const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const money=value=>{
+export const escape=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+export const money=value=>{
  const cents=BigInt(value);
  return (cents/100n).toString()+','+(cents%100n).toString().padStart(2,'0')+' ₼';
 };

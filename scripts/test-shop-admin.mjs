@@ -90,6 +90,29 @@ try{
   const receiptPopup=p.waitForEvent('popup');await card.getByRole('button',{name:'Çekə bax',exact:true}).click();const receipt=await receiptPopup;
   await receipt.waitForURL('**/storage/v1/object/sign/fixture-preview?token=synthetic');await receipt.close();
  }
+ const links=await ctx.newPage();
+ const link=(id,intent)=>base+'/admin.html?topup='+id+'&topupAction='+intent;
+ const loggedOut=await fetch(link(t.id,'approve'),{redirect:'manual'});
+ eq(loggedOut.status,302);
+ eq(new URL(loggedOut.headers.get('location'),base).searchParams.get('next'),'/admin.html'+new URL(link(t.id,'approve')).search);
+ for(const width of [390,1440]){
+  await links.setViewportSize({width,height:900});
+  await links.goto(link(t.id,'approve'));
+  const amount=links.locator('[data-topup-amount]');
+  await amount.waitFor();
+  eq(await amount.evaluate(node=>node===document.activeElement),true);
+  eq(await links.locator('.topupCard').count(),1);
+  await links.goto(link(t.id,'receipt'));
+  const preview=links.getByRole('dialog',{name:'Qəbz'});
+  await preview.getByRole('img').evaluate(img=>img.decode());
+  eq(await preview.getByRole('link',{name:'Qəbzi tam ölçüdə aç'}).count(),1);
+  await links.goto(link(second.id,'reject'));
+  const form=links.getByRole('dialog',{name:'Bu balans müraciəti rədd edilsin?'});
+  await form.getByLabel('Ləğv səbəbi').waitFor();
+  eq(await form.getByRole('button',{name:'Rəddi təsdiqlə'}).isDisabled(),true);
+ }
+ eq((await f.pool.query('select count(*)::int n from wallet_topups where id=any($1::uuid[]) and status=\'reviewing\' ',[[t.id,second.id]])).rows[0].n,2);
+ await links.close();
  await card.locator('input').fill('7,00');
  p.once('dialog',d=>d.accept());await card.getByRole('button',{name:'Təsdiqlə',exact:true}).dblclick();
  await card.getByText('Təsdiqləndi',{exact:true}).waitFor();await badge(1);

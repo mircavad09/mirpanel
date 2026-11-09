@@ -842,6 +842,12 @@ export function createPaymentStore(config) {
       if (error) throw paymentError(error);
       return data || [];
     },
+    async receiptThumbnail(path, mime) {
+      const {data,error}=await client.storage.from(config.receiptsBucket).download(path);
+      if(error)throw paymentError(error);
+      const {receiptThumbnail}=await import('../receipt-worker/receipt-thumbnail.mjs');
+      return receiptThumbnail(await data.arrayBuffer(),mime);
+    },
     async signedReceipt(path, expiresIn = 300, actor = "admin", orderId = "") {
       const { data, error } = await client.storage.from(config.receiptsBucket).createSignedUrl(path, expiresIn);
       if (error) throw paymentError(error, "Çek üçün təhlükəsiz keçid yaradılmadı.");

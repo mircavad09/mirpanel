@@ -14,7 +14,7 @@ export function createOrderMailTransport(env,defaultSend,{fetcher=fetch}={}){
       response=await fetcher('https://api.resend.com/emails',{
         method:'POST',redirect:'error',signal:AbortSignal.timeout(15000),
         headers:{Authorization:'Bearer '+key,'Content-Type':'application/json',...(message.idempotencyKey?{'Idempotency-Key':message.idempotencyKey}:{})},
-        body:JSON.stringify({from:`MirPanel <${from}>`,to:[message.user.email],subject:message.subject,text:message.textBody,html:message.htmlBody}),
+        body:JSON.stringify({from:`MirPanel <${from}>`,to:[message.user.email],subject:message.subject,text:message.textBody,html:message.htmlBody,attachments:message.attachments}),
       });
     }catch{throw fail('uncertain','SEND_RESULT_UNKNOWN');}
     const result=await response.json().catch(()=>null);

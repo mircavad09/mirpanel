@@ -1,5 +1,6 @@
 import {bakuDate} from '../payment-order-lifecycle.mjs';
 import {isSubscriptionReminder,queueSubscriptionReminders,resolveSubscriptionReminder} from './subscription-reminders.mjs';
+import {adminTopupMail} from './admin-topup-mail.mjs';
 import {topupMail} from './topup-mail.mjs';
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {orderLines} from '../order-lines.mjs';
@@ -260,7 +261,7 @@ export function subscriptionReminderMail(job,{entry,account},origin){
   </td></tr></table><p style="margin:20px 0 0;color:#50545B;font-size:13px">MirPanel komandası</p>
   </td></tr></table></td></tr></table></body></html>`};
 }
-export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCatalog,requireDeliveryNotice=false,subscriptionReminders=false,now=()=>new Date()}={}){
+export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCatalog,adminOrigin=origin,topupPreview,requireDeliveryNotice=false,subscriptionReminders=false,now=()=>new Date()}={}){
  let timer,running,nextReminderScan=0;
  const report=(id,state,reason)=>console.warn('CUSTOMER_ORDER_MAIL',id,state,reason);
  async function drain(){
@@ -276,7 +277,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    // A delivery can be committed with its payment in one transaction. Queue
    // ordering alone (including SKIP LOCKED) cannot express this dependency.
    const {rows:[job]}=await pool.query(`with next as (select j.event_key from ${M} j where j.state='queued' and j.next_at<=now()
-    and (j.topup_id is null or j.event_key like 'topup-received:%' or j.event_key like 'topup-rejected:%' or exists(
+    and (j.topup_id is null or j.event_key like 'topup-admin:%' or j.event_key like 'topup-received:%' or j.event_key like 'topup-rejected:%' or exists(
       select 1 from ${M} prior where prior.event_key='topup-received:'||j.topup_id
        and prior.state='accepted' and prior.provider_id is not null
        and (not $1::boolean or prior.reason='RESEND_DELIVERED')))
@@ -285,6 +286,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    update ${M} m set state='sending',attempts=attempts+1,updated_at=now() from next where next.event_key=m.event_key returning m.*`,[requireDeliveryNotice]);
    if(!job)return;
    let state='failed',reason='ACCOUNT_NOT_VERIFIED',provider=null,delay=0;
+   const adminTopup=job.event_key.startsWith('topup-admin:');
    const reminder=isSubscriptionReminder(job);
    let active=null;
    if(reminder){
@@ -298,24 +300,37 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
      continue;
     }
    }
-   const o=reminder?null:job.topup_id?(await pool.query(`select u.name,u.email,u."emailVerified"
+   const o=reminder||adminTopup?null:job.topup_id?(await pool.query(`select u.name,u.email,u."emailVerified"
     from mirpanel_community.wallet_topups t join mirpanel_community."user" u on u.id=t.user_id where t.id=$1`,[job.topup_id])).rows[0]:(await pool.query(`select o.*,d.id as delivery_id,d.line_index,d.quantity as delivered_quantity,coalesce(ct.name,u.name) as name,u.name as account_name,u.email,u."emailVerified",ct.email as contact_email,ct.phone
    from public.payment_orders o join ${O} l on l.order_id=o.id join mirpanel_community."user" u on u.id=l.user_id left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id left join ${D} d on d.id=$2
    where o.id=$1`,[job.order_id,job.delivery_id])).rows[0];
    const receipt=job.event_key.startsWith('receipt:');
    const cancellation=job.event_key.startsWith('cancellation:');
    if(reminder&&!active)reason='SUBSCRIPTION_REMINDER_STALE';
-   if(active||o?.emailVerified&&(cancellation?!!o.fulfillment_cancellation?.reason:job.topup_id||receipt||paid(o))){
+   if(adminTopup||active||o?.emailVerified&&(cancellation?!!o.fulfillment_cancellation?.reason:job.topup_id||receipt||paid(o))){
     try{
      const records=reminder||job.topup_id||receipt||cancellation||job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
      const catalog=!reminder&&!job.topup_id&&!receipt&&!cancellation&&loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
-     const result=await send('order',active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog}));
+     let adminMessage;
+     if(adminTopup){
+      const {rows:[topup]}=await pool.query('select receipt,receipt_deleted_at from mirpanel_community.wallet_topups where id=$1',[job.topup_id]);
+      let preview;
+      if(topup?.receipt?.path&&!topup.receipt_deleted_at&&topupPreview){
+       try{preview=await topupPreview(topup.receipt.path,topup.receipt.mimeType);}
+       catch{
+        if(job.attempts<3)throw Object.assign(Error('Preview unavailable'),{deliveryDisposition:'retry',deliveryCode:'TOPUP_PREVIEW_UNAVAILABLE'});
+        console.warn('TOPUP_MAIL_PREVIEW_UNAVAILABLE');
+       }
+      }
+      adminMessage=adminTopupMail(job,adminOrigin,preview,{test:job.topup_snapshot.test===true});
+     }
+     const result=await send('order',adminMessage??(active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog})));
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
      state='accepted';reason=requireDeliveryNotice&&!reminder&&(job.topup_id||!receipt&&!cancellation&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
      const retry=e.deliveryDisposition==='retry'&&job.attempts<3;
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';
-     reason=['TOKEN_TEMPORARY','TOKEN_REJECTED','AUTH_CONFIGURATION','SEND_RATE_LIMITED','SEND_REJECTED'].includes(e.deliveryCode)?e.deliveryCode:'SEND_RESULT_UNKNOWN';
+     reason=['TOKEN_TEMPORARY','TOKEN_REJECTED','AUTH_CONFIGURATION','SEND_RATE_LIMITED','SEND_REJECTED','TOPUP_PREVIEW_UNAVAILABLE'].includes(e.deliveryCode)?e.deliveryCode:'SEND_RESULT_UNKNOWN';
      delay=Math.max(Number(e.retryAfterMs)||0,job.attempts*30000);
     }
    }else if(o?.emailVerified){reason='PAYMENT_NOT_CONFIRMED';}

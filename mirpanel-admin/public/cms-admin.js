@@ -116,7 +116,7 @@
     window.dispatchEvent(new CustomEvent('admin-community-view',{detail:view}));
     if(['communityUsers','communityGroup','communityShop'].includes(view)){
       if(!el(`${view}View`))createView(view,'');
-      import('/admin-community-panel.js?v=customer-view-1').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view,userFilter);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
+      import('/admin-community-panel.js?v=topup-mail-1').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view,userFilter);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
     }
     document.querySelectorAll(".workspace, .singlePanel, .cmsWorkspace").forEach((section) => section.classList.add("hidden"));
     const target = el(`${view}View`);
@@ -1432,7 +1432,7 @@
     installActions();
     installHooks();
     if (state.data) renderCms();
-    const requested = location.hash.slice(1);
+    const requested = location.hash.slice(1) || (new URLSearchParams(location.search).has('topup') ? 'communityShop' : '');
     window.addEventListener("admin-topup-count", showPendingTopups);
     window.addEventListener("admin-topup-poll", () => {
       if (location.hash === "#dashboard") void loadDashboardSummary();

@@ -20,7 +20,7 @@ import { createEmployeeSystem } from './employee-api.mjs';
 import {createAdminSessions,ADMIN_IDLE_MS} from './admin-sessions.mjs';
 import {createOwnerCommunity} from './community/service.mjs';
 import {createCustomerView} from './customer-view.mjs';
-const ownerCommunity=createOwnerCommunity(process.env,{loadCatalog:async()=>extractAdminState((await getAppFile()).source),shopAdmin:(pool,owner,b)=>paymentSystem.shop.admin(pool,owner,b)});
+const ownerCommunity=createOwnerCommunity(process.env,{loadCatalog:async()=>extractAdminState((await getAppFile()).source),adminOrigin:process.env.RENDER_EXTERNAL_URL||'https://mirpanel.onrender.com',topupPreview:(path,mime)=>paymentSystem.store.receiptThumbnail(path,mime),shopAdmin:(pool,owner,b)=>paymentSystem.shop.admin(pool,owner,b)});
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -1359,6 +1359,7 @@ const mime = {
 };
 
 const paymentSystem = createPaymentSystem({
+  adminTopupNotifications: process.env.COMMUNITY_PUBLIC_ENABLED==='true',
   shopContext: request=>ownerCommunity.shopContext(request),
   accountHistory: request=>ownerCommunity.orderHistory(request),
   customerDelivery: (...args)=>ownerCommunity.adminDelivery(...args),
@@ -1472,7 +1473,7 @@ function serveFile(response, name) {
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
-    "Content-Security-Policy": `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self'${storiesStorageOrigin ? ` ${storiesStorageOrigin}` : ""}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`
+    "Content-Security-Policy": `default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:${name==='admin.html'&&storiesStorageOrigin ? ` ${storiesStorageOrigin}` : ''}; media-src 'self' blob: https:; connect-src 'self'${storiesStorageOrigin ? ` ${storiesStorageOrigin}` : ""}; frame-src 'self'${name==='admin.html'&&storiesStorageOrigin ? ` ${storiesStorageOrigin}` : ''}; frame-ancestors 'none'; base-uri 'none'; form-action 'self'`
   });
 
   if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){

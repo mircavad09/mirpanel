@@ -148,7 +148,7 @@ export function createPaymentSystem(options) {
   const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
   const accountOrders=createAccountOrders({security,store,resolve:options.accountHistory});
   const mailer = options.mailer || createPaymentMailer(config, store);
-  const shop=options.shopContext?createShop({context:options.shopContext,catalog:loadCatalog,snapshot:()=>readInventory({fresh:true}),store,config}):null;
+  const shop=options.shopContext?createShop({context:options.shopContext,catalog:loadCatalog,snapshot:()=>readInventory({fresh:true}),store,config,adminTopupNotifications:options.adminTopupNotifications}):null;
   const allowedOrigins = new Set(config.allowedOrigins);
 
   function clientIp(request) {
