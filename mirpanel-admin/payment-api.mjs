@@ -226,7 +226,8 @@ export function createPaymentSystem(options) {
     const inventoryPlan=availability?.plans.find(p=>p.planKey===String(index));
     // Zero quantity is enforced by the atomic RPC, not a pre-check that would
     // reject the legitimate retry of a reservation which took the last unit.
-    const unavailableStock=!inventoryPlan?.active||availability?.salesDisabled;
+    if(availability?.salesDisabled)throw Object.assign(Error('Məhsul stokda yoxdur.'),{status:409,code:'PRODUCT_SALE_PAUSED'});
+    const unavailableStock=!inventoryPlan?.active;
     if (!product || unavailableStock || !plan || !Number.isFinite(Number(plan.price)) || Number(plan.price) <= 0) {
       throw Object.assign(new Error("Məhsul və ya plan artıq sifariş üçün açıq deyil."), { status: 409 });
     }
@@ -631,6 +632,26 @@ export function createPaymentSystem(options) {
       json(response,200,{backgrounds});return true;
     }
 
+    if(url.pathname==='/api/admin/payment-sale-state'){
+      if(!options.readyStockAllowed?.(request))throw Object.assign(Error('Bu əməliyyat yalnız adminə açıqdır.'),{status:403});
+      response.setHeader('Cache-Control','private, no-store');
+      if(request.method==='GET'){
+        const [catalog,rows]=await Promise.all([loadCatalog(),readInventory({fresh:true})]);
+        const product=catalog.products.find(p=>p.id===url.searchParams.get('productId'));
+        if(!product)throw Object.assign(Error('Məhsul canlı kataloqda tapılmadı.'),{status:404});
+        const availability=inventoryAvailability(product,rows.find(row=>row.productId===product.id));
+        json(response,200,{paused:availability.salePaused??availability.salesDisabled});return true;
+      }
+      if(request.method==='POST'){
+        const body=await readBody(request,10000),catalog=await loadCatalog();
+        if(typeof body.paused!=='boolean'||!catalog.products.some(p=>p.id===body.productId))
+          throw Object.assign(Error('Məhsul canlı kataloqda tapılmadı və ya stok seçimi düzgün deyil.'),{status:400});
+        await store.setSalePaused(body.productId,body.paused);
+        readInventory.invalidate();
+        storefront=undefined;
+        json(response,200,{paused:body.paused});return true;
+      }
+    }
     if(url.pathname==='/api/admin/payment-inventory'){
       if(request.method==='GET'){json(response,200,{products:await inventoryView()});return true;}
       if(request.method==='POST'){const b=await readBody(request,10000),key=safeUuid(request.headers['x-idempotency-key']);const c=await loadCatalog();if(!key||b.confirm!==true||!(b.available===null||(Number.isSafeInteger(b.available)&&b.available>=0&&b.available<=10000))||!Number.isSafeInteger(b.expectedVersion)||!c.products.some(p=>p.id===b.productId&&(b.planKey==null||(typeof b.planKey==='string'&&/^\d+$/.test(b.planKey)&&p.plans?.[Number(b.planKey)]))))throw Object.assign(new Error('Məhsul, stok miqdarı və təsdiq tələb olunur.'),{status:400});json(response,200,await store.setInventory(b.productId,b.available,actorName,key,b.expectedVersion,b.planKey??null));return true;}
@@ -919,6 +940,7 @@ export function createPaymentSystem(options) {
         if (url.pathname.startsWith("/api/admin/payment") || url.pathname.startsWith("/api/admin/capcut")) return await handleAdmin(request, response, url);
         return false;
       } catch (error) {
+        if(error.message==='PRODUCT_SALE_PAUSED')error=Object.assign(Error('Məhsul stokda yoxdur.'),{status:409,code:'PRODUCT_SALE_PAUSED'});
         const isPublic = url.pathname.startsWith("/api/payments/");
         const status = errorStatus(error);
         if(request.receiptTrace){request.receiptStage=error.receiptStage||request.receiptStage;request.receiptCode=/^[A-Z_]+$/.test(error.code||'')?error.code:'PAYMENT_ERROR';}

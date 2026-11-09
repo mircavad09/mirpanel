@@ -752,6 +752,29 @@ function renderProducts() {
   });
 }
 
+const saleState = new Map();
+const saleWrites = new Map();
+let saleRead;
+function renderSaleSwitch(product) {
+  const select = $("productSoldOut");
+  const cached = saleState.get(product.id);
+  select.value = String(saleWrites.get(product.id) ?? cached ?? Boolean(product.soldOut));
+  select.disabled = saleWrites.has(product.id) || cached === undefined;
+  if (cached !== undefined || saleRead?.id === product.id) return;
+
+  const read = { id: product.id };
+  saleRead = read;
+  api('/api/admin/payment-sale-state?productId=' + encodeURIComponent(product.id)).then(({paused}) => {
+    if (saleRead !== read) return;
+    saleState.set(product.id, paused);
+    if (state.selectedId === product.id) renderSaleSwitch(product);
+  }).catch(error => {
+    if (saleRead === read && state.selectedId === product.id) toast(error.message, "bad");
+  }).finally(() => {
+    if (saleRead === read) saleRead = null;
+  });
+}
+
 function renderProductForm() {
   const product = selectedProduct();
   $("productEmpty").classList.toggle("hidden", Boolean(product));
@@ -777,7 +800,7 @@ function renderProductForm() {
   setImageUploadStatus("JPG, PNG, WEBP və SVG. Maksimum 5 MB.");
   setValue("productBadge", product.badge);
   setValue("productCurrency", product.currency);
-  setValue("productSoldOut", String(Boolean(product.soldOut)));
+  renderSaleSwitch(product);
   setValue("productStock", product.stock ?? "");
   setValue("productStockEnabled", product.stockEnabled, "checked");
   setValue("productSeller", product.seller);
@@ -987,10 +1010,24 @@ bindProductField("productOrderFlow", (p, e) => p.orderFlow = e.value);
 bindProductField("productImage", (p, e) => { p.image = e.value; $("previewImage").src = imageUrl(p.image); });
 bindProductField("productBadge", (p, e) => p.badge = e.value);
 bindProductField("productCurrency", (p, e) => p.currency = e.value);
-bindProductField("productSoldOut", (p, e) => {
-  p.soldOut = e.value === "true";
-  if (p.soldOut) p.flow = "out_of_stock";
-  else if (p.flow === "out_of_stock") p.flow = "whatsapp";
+$("productSoldOut").addEventListener("change", async event => {
+  const product = selectedProduct();
+  if (!product || !saleState.has(product.id) || saleWrites.has(product.id)) return;
+  const paused = event.target.value === "true";
+  saleWrites.set(product.id, paused);
+  renderSaleSwitch(product);
+  try {
+    const saved = await api('/api/admin/payment-sale-state', {
+      method: 'POST', body: JSON.stringify({productId: product.id, paused})
+    });
+    saleState.set(product.id, saved.paused);
+    toast("Stok vəziyyəti yeniləndi");
+  } catch (error) {
+    toast("Stok vəziyyəti saxlanmadı. " + error.message, "bad");
+  } finally {
+    saleWrites.delete(product.id);
+    if (state.selectedId === product.id) renderSaleSwitch(product);
+  }
 });
 // Numeric stock is saved by admin-stock-save-fix.js to the DB unit ledger only.
 bindProductField("productStockEnabled", (p, e) => {

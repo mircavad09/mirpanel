@@ -10,11 +10,12 @@ let checks=0,rows=[],writes=0,reserveArgs;
 const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
 const products=[{id:'chatgpt',title:'Fixture',stockEnabled:true,stock:999,plans:[{price:5,label:'1 aylıq'}]},{id:'ordinary',plans:[{price:5,label:'1 aylıq'}]},{id:'planstock',plans:[{price:5,label:'1 aylıq'}]}];
 const security=createPaymentSecurity(config);
-const reservationCache=new Map();const store={rateLimit:async()=>({allowed:true}),inventorySnapshot:async()=>rows,setInventory:async(...args)=>{writes++;return {ok:true,args};},reserve:async args=>{if(reservationCache.has(args.idempotencyKey))return reservationCache.get(args.idempotencyKey);const product=products.find(p=>p.id===args.productId),raw=rows.find(p=>p.productId===args.productId),plan=inventoryAvailability(product,raw).plans.find(p=>p.planKey===args.planId);if(plan.tracked&&plan.available===0)throw Object.assign(Error('Stokda yoxdur'),{status:409});reserveArgs=args;const result={id:crypto.randomUUID(),expiresAt:new Date(Date.now()+600000).toISOString()};if(plan.tracked){if(raw.scope==='product')raw.available--;else raw.plans.find(p=>p.planKey===args.planId).available--;}reservationCache.set(args.idempotencyKey,result);return result;},rawMethod:async()=>({id:crypto.randomUUID(),provider_name:'ABB',method_type:'bank_card',last4:'4655',encrypted_number:security.encryptNumber('4169000000004655')})};
+const reservationCache=new Map();const store={
+ setSalePaused:async(id,paused)=>{if(id==='ordinary')throw Object.assign(Error('Synthetic save failure'),{status:503});rows.find(row=>row.productId===id).salePaused=paused;},rateLimit:async()=>({allowed:true}),inventorySnapshot:async()=>rows,setInventory:async(...args)=>{writes++;return {ok:true,args};},reserve:async args=>{if(reservationCache.has(args.idempotencyKey))return reservationCache.get(args.idempotencyKey);const product=products.find(p=>p.id===args.productId),raw=rows.find(p=>p.productId===args.productId),plan=inventoryAvailability(product,raw).plans.find(p=>p.planKey===args.planId);if(plan.tracked&&plan.available===0)throw Object.assign(Error('Stokda yoxdur'),{status:409});reserveArgs=args;const result={id:crypto.randomUUID(),expiresAt:new Date(Date.now()+600000).toISOString()};if(plan.tracked){if(raw.scope==='product')raw.available--;else raw.plans.find(p=>p.planKey===args.planId).available--;}reservationCache.set(args.idempotencyKey,result);return result;},rawMethod:async()=>({id:crypto.randomUUID(),provider_name:'ABB',method_type:'bank_card',last4:'4655',encrypted_number:security.encryptNumber('4169000000004655')})};
 const json=(res,status,data)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
 const auth=(req,res)=>{if(req.headers['x-fixture-role']==='admin')return true;json(res,req.headers['x-fixture-role']?403:401,{error:'Denied'});return false;};
 const readBody=async req=>{let s='';for await(const c of req)s+=c;return JSON.parse(s||'{}');};
-const api=createPaymentSystem({config,store,json,readBody,requireAuth:auth,requireMutationAuth:auth,loadCatalog:async()=>({products}),actorName:'isolated-admin',mailer:{start(){}}});
+const api=createPaymentSystem({config,store,json,readBody,requireAuth:auth,requireMutationAuth:auth,loadCatalog:async()=>({products}),actorName:'isolated-admin',readyStockAllowed:req=>req.headers['x-fixture-role']==='admin',mailer:{start(){}}});
 const server=http.createServer(async(req,res)=>{if(!await api.handle(req,res)){res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;config.allowedOrigins.push(base);
 const request=(path,role,body,key=crypto.randomUUID())=>fetch(base+path,{method:body?'POST':'GET',headers:{...(role?{'x-fixture-role':role}:{}),'Content-Type':'application/json','X-Idempotency-Key':key,Origin:'https://fixture.invalid'},...(body?{body:JSON.stringify(body)}:{})});
 try{
@@ -37,6 +38,18 @@ try{
  rows[0]={productId:'chatgpt',scope:'product',unlimited:true,available:null,version:4,plans:[]};eq((await reserveProduct('chatgpt')).status,200);eq(reserveArgs.requireStock,false);
  rows[1].plans=[{planKey:'0',tracked:false,available:null},{planKey:'1',tracked:true,available:0}];eq((await reserveProduct('planstock',0)).status,200);eq((await reserveProduct('planstock',1)).status,409);
  const oldFetch=globalThis.fetch;try{globalThis.fetch=async(url,init)=>{eq(new URL(url).pathname,'/rest/v1/rpc/inventory_set_nullable_quantity');eq(JSON.parse(init.body).p_available,null);eq(JSON.parse(init.body).p_plan_key,'0');return Response.json({ok:true});};await createPaymentStore(config).setInventory('planstock',null,'admin',crypto.randomUUID(),4,'0');}finally{globalThis.fetch=oldFetch;}
+ const switchPath='/api/admin/payment-sale-state',switchBody={productId:'chatgpt',paused:true};
+ eq((await request(switchPath,undefined,switchBody)).status,401);
+ eq((await request(switchPath,'employee',switchBody)).status,403);
+ eq((await request(switchPath,'admin',{...switchBody,paused:'true'})).status,400);
+ eq((await request(switchPath,'admin',switchBody)).status,200);
+ eq(await (await request(switchPath+'?productId=chatgpt','admin')).json(),{paused:true});
+ const paused=(await (await request('/api/payments/inventory')).json()).products[0];
+ eq([paused.unlimited,paused.salesDisabled,paused.canOrder],[true,true,false]);
+ eq((await reserveProduct('chatgpt')).status,409);
+ eq((await request(switchPath,'admin',{productId:'ordinary',paused:true})).status,503);
+ eq((await request(switchPath,'admin',{...switchBody,paused:false})).status,200);
+ eq((await reserveProduct('chatgpt')).status,200);
  config.inventoryEnabled=false;eq((await request('/api/payments/inventory')).status,503);eq((await request('/api/admin/payment-inventory','admin')).status,503);await assert.rejects(()=>createPaymentStore(config).reserve({...reserveArgs,requireStock:true}),e=>e.status===503);checks++;
  console.log(JSON.stringify({ok:true,checks,unauthenticated:401,employee:403,noCmsCounterFallback:true,productionWrites:0}));
 }finally{await new Promise(r=>server.close(r));}

@@ -365,7 +365,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
   const html = `<!DOCTYPE html>
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document">${renderSplashMarkup()}${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=support-faq-20261026-2"></script></body></html>`;
-  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=mobile-price-row-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=card-buy-hover-1"></script><script src="/catalog-listing.js?v=card-buy-hover-1"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
+  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=mobile-price-row-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=card-buy-hover-1"></script><script src="/catalog-listing.js?v=live-sale-switch-1"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
@@ -577,7 +577,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
-  <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>
+  <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>
   <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
   <script src="/site-header.js?v=support-faq-20261026-2"></script>
 </body>
@@ -1093,7 +1093,7 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=support-faq-20261026-2")
     .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=terms-preload-20261108");
-  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=stock-nullable-20261028-1");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=live-sale-switch-1");
   return next;
 }
 
