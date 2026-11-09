@@ -1,3 +1,5 @@
+import {bakuDate} from '../payment-order-lifecycle.mjs';
+import {isSubscriptionReminder,queueSubscriptionReminders,resolveSubscriptionReminder} from './subscription-reminders.mjs';
 import {topupMail} from './topup-mail.mjs';
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {orderLines} from '../order-lines.mjs';
@@ -211,10 +213,39 @@ export function orderMail(o,origin,{records=[],catalog}={}){
   ${total?'<p><strong>'+esc(total)+'</strong></p>':''}<p>${esc(footer)}</p>
   <p><a href="${esc(url)}" style="display:inline-block;background:#ffcf33;color:#222;padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:bold">${label}</a></p><p style="color:#50545b">MirPanel komandası</p></div>`};
 }
-export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCatalog,requireDeliveryNotice=false}={}){
- let timer,running;
+export function subscriptionReminderMail(job,{entry,account},origin){
+ const {title,days,expiresOn}=entry;
+ const [year,month,day]=expiresOn.split('-');
+ const date=day+'.'+month+'.'+year;
+ const subject='MirPanel | '+title+(days===1?' abunəliyiniz sabah bitir':' abunəliyinizin bitməsinə '+days+' gün qalıb');
+ const greeting=account.name?'Salam, '+account.name+'!':'Salam!';
+ const intro=days===1?title+' abunəliyiniz sabah, '+date+' tarixində bitir.':
+  title+' abunəliyinizin bitməsinə '+days+' gün qalıb. Bitmə tarixi '+date+'.';
+ const guidance=days===1?
+  'Bu gün “Abunəliklərim” bölməsindən abunəliyinizi yeniləyə bilərsiniz. Vaxtında yeniləməsəniz, müddət bitəndə bu abunəlik üzrə girişiniz dayana bilər və xidmətdən yenidən istifadə etmək üçün yeni sifariş verməli ola bilərsiniz.':
+  'İstifadəniz kəsilməsin deyə aşağıdakı düymə ilə “Abunəliklərim” bölməsini açın və həmin abunəliyin yanındakı “Yenilə” düyməsinə basın.';
+ const url=new URL('/profil?tab=subscriptions',origin).href;
+ const label='Abunəliklərimə bax';
+ return {
+  user:{email:account.email},subject,idempotencyKey:job.event_key,
+  textBody:[greeting,intro,guidance,label+': '+url].join('\n\n'),
+  htmlBody:`<div lang="az" style="max-width:560px;margin:0 auto;padding:16px 10px;color:#202124;font:15px/1.5 Arial,sans-serif;overflow-wrap:anywhere">
+   <p style="margin:0;color:#665014;font-size:13px;font-weight:bold">MIRPANEL</p>
+   <p>${esc(greeting)}</p><p>${esc(intro)}</p><p>${esc(guidance)}</p>
+   <p><a href="${esc(url)}" style="display:inline-block;background:#ffcf33;color:#222;padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:bold">${label}</a></p>
+  </div>`
+ };
+}
+export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCatalog,requireDeliveryNotice=false,subscriptionReminders=false,now=()=>new Date()}={}){
+ let timer,running,nextReminderScan=0;
  const report=(id,state,reason)=>console.warn('CUSTOMER_ORDER_MAIL',id,state,reason);
  async function drain(){
+  const current=now();
+  if(subscriptionReminders&&current.getTime()>=nextReminderScan){
+   nextReminderScan=current.getTime()+15*60*1000;
+   try{await queueSubscriptionReminders(pool,bakuDate(current));}
+   catch{console.warn('SUBSCRIPTION_REMINDER_SCAN_ERROR');}
+  }
   const stale=await pool.query(`update ${M} set state='uncertain',reason='STALE_SENDING',updated_at=now() where state='sending' and updated_at<now()-interval '2 minutes' returning event_key`);
   for(const row of stale.rows)report(row.event_key,'uncertain','STALE_SENDING');
   for(let i=0;i<4;i++){
@@ -230,19 +261,33 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    update ${M} m set state='sending',attempts=attempts+1,updated_at=now() from next where next.event_key=m.event_key returning m.*`,[requireDeliveryNotice]);
    if(!job)return;
    let state='failed',reason='ACCOUNT_NOT_VERIFIED',provider=null,delay=0;
-   const o=job.topup_id?(await pool.query(`select u.name,u.email,u."emailVerified"
+   const reminder=isSubscriptionReminder(job);
+   let active=null;
+   if(reminder){
+    try{active=await resolveSubscriptionReminder(pool,job,bakuDate(now()));}
+    catch{
+     // Validation failed before transport was called, so retrying is safe.
+     const state=job.attempts<3?'queued':'failed';
+     await pool.query(`update ${M} set state=$2,reason='SUBSCRIPTION_REMINDER_READ_FAILED',
+      next_at=now()+interval '30 seconds',updated_at=now() where event_key=$1 and state='sending'`,[job.event_key,state]);
+     if(state==='failed')report(job.event_key,state,'SUBSCRIPTION_REMINDER_READ_FAILED');
+     continue;
+    }
+   }
+   const o=reminder?null:job.topup_id?(await pool.query(`select u.name,u.email,u."emailVerified"
     from mirpanel_community.wallet_topups t join mirpanel_community."user" u on u.id=t.user_id where t.id=$1`,[job.topup_id])).rows[0]:(await pool.query(`select o.*,d.id as delivery_id,d.line_index,d.quantity as delivered_quantity,coalesce(ct.name,u.name) as name,u.name as account_name,u.email,u."emailVerified",ct.email as contact_email,ct.phone
    from public.payment_orders o join ${O} l on l.order_id=o.id join mirpanel_community."user" u on u.id=l.user_id left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id left join ${D} d on d.id=$2
    where o.id=$1`,[job.order_id,job.delivery_id])).rows[0];
    const receipt=job.event_key.startsWith('receipt:');
    const cancellation=job.event_key.startsWith('cancellation:');
-   if(o?.emailVerified&&(cancellation?!!o.fulfillment_cancellation?.reason:job.topup_id||receipt||paid(o))){
+   if(reminder&&!active)reason='SUBSCRIPTION_REMINDER_STALE';
+   if(active||o?.emailVerified&&(cancellation?!!o.fulfillment_cancellation?.reason:job.topup_id||receipt||paid(o))){
     try{
-     const records=job.topup_id||receipt||cancellation||job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
-     const catalog=!job.topup_id&&!receipt&&!cancellation&&loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
-     const result=await send('order',job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog}));
+     const records=reminder||job.topup_id||receipt||cancellation||job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
+     const catalog=!reminder&&!job.topup_id&&!receipt&&!cancellation&&loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
+     const result=await send('order',active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog}));
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
-     state='accepted';reason=requireDeliveryNotice&&(job.topup_id||!receipt&&!cancellation&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
+     state='accepted';reason=requireDeliveryNotice&&!reminder&&(job.topup_id||!receipt&&!cancellation&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
      const retry=e.deliveryDisposition==='retry'&&job.attempts<3;
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';
@@ -251,7 +296,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
     }
    }else if(o?.emailVerified){reason='PAYMENT_NOT_CONFIRMED';}
    await pool.query(`update ${M} set state=$2,reason=$3,provider_id=$4,next_at=now()+$5*interval '1 millisecond',updated_at=now() where event_key=$1 and state='sending'`,[job.event_key,state,reason,provider,delay]);
-   if(['uncertain','failed'].includes(state))report(job.event_key,state,reason);
+   if(['uncertain','failed'].includes(state)&&reason!=='SUBSCRIPTION_REMINDER_STALE')report(job.event_key,state,reason);
   }
  }
  const wake=()=>running??=(drain().catch(()=>console.warn('CUSTOMER_ORDER_MAIL_DATABASE_ERROR')).finally(()=>{running=null;}));

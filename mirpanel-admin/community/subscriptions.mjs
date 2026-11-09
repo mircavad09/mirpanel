@@ -33,9 +33,9 @@ function savedUnitCents(line,total=null,quantity=1){
   return sum!==null&&count&&sum%count===0?sum/count:null;
  }catch{return null;}
 }
-async function bases(pool,user,source=null){
+async function readBases(pool,users,source=null,today=bakuDate()){
  const rows=(await pool.query(`
-  select o.order_code,o.product_id,o.product_title,o.plan_name,o.checkout_snapshot,o.amount::text,o.currency,o.quantity,
+  select l.user_id,o.id as order_id,o.order_code,o.product_id,o.product_title,o.plan_name,o.checkout_snapshot,o.amount::text,o.currency,o.quantity,
    o.service_expires_on::text, o.duration_months,o.completed_at,d.line_index,d.delivered_at,
    case when d.quantity>1 then md5(d.id::text||':'||unit.n)::uuid else coalesce(d.id,o.id) end as id,
    unit.n+coalesce((select sum(prior.quantity)::int from mirpanel_community.customer_order_deliveries prior
@@ -43,12 +43,12 @@ async function bases(pool,user,source=null){
   from mirpanel_community.community_order_owners l join public.payment_orders o on o.id=l.order_id
   left join mirpanel_community.customer_order_deliveries d on d.order_id=o.id
   cross join lateral generate_series(1,coalesce(d.quantity,1)) as unit(n)
-  where l.user_id=$1 and (o.payment_confirmed or o.status in ('approved','completed'))
+  where l.user_id=any($1::text[]) and (o.payment_confirmed or o.status in ('approved','completed'))
    and o.status not in ('rejected','cancelled','expired')
    and (d.id is not null or (o.status='completed' and o.service_expires_on is not null and coalesce(o.quantity,1)=1))
    and ($2::uuid is null or case when d.quantity>1 then md5(d.id::text||':'||unit.n)::uuid else coalesce(d.id,o.id) end=$2)
    and not exists(select 1 from ${R} r where r.order_id=o.id and r.line_index=coalesce(d.line_index,0))
- `,[user,source])).rows;
+ `,[users,source])).rows;
  const entries=rows.flatMap(r=>{
   const items=r.checkout_snapshot?.items;
   const line=Array.isArray(items)?items[r.line_index??0]:null;
@@ -63,23 +63,28 @@ async function bases(pool,user,source=null){
   const startsOn=(r.delivered_at||r.completed_at)?bakuDate(r.delivered_at||r.completed_at):null;
   const stored=(!items||items.length===1)&&Number(line?.quantity??1)===1?safeCalendarDate(r.service_expires_on):'';
   const lastPurchaseCents=r.currency==='AZN'?savedUnitCents(line??r.checkout_snapshot,line&&items.length!==1?null:r.amount,line?.quantity??r.quantity??1):null;
-  return [{id:r.id,orderCode:String(r.order_code),sourceLine:(r.line_index??0)+1,sourceUnit:r.unit,productId,title:line?.title??r.product_title,plan:label,
+  return [{id:r.id,userId:r.user_id,orderId:r.order_id,orderCode:String(r.order_code),sourceLine:(r.line_index??0)+1,sourceUnit:r.unit,productId,title:line?.title??r.product_title,plan:label,
    image:line?.image??r.checkout_snapshot?.image??'',planKey:line?.sourcePlanKey??r.checkout_snapshot?.sourcePlanKey??null,lastPurchaseCents,
    expiresOn:stored||expiration(startsOn,period),estimated:!stored&&!!period&&!!startsOn,startsOn}];
  });
  if(!entries.length)return entries;
  const events=(await pool.query(`
-  select r.source_id,r.base_expires_on::text,r.expires_on::text,
+  select r.user_id,r.source_id,r.base_expires_on::text,r.expires_on::text,
    (o.checkout_snapshot->'items'->r.line_index) as plan, g.state,g.expires_at,o.status,o.payment_confirmed,
    g.created_at
   from ${R} r join mirpanel_community.shop_checkouts g on g.id=r.checkout_id
   left join public.payment_orders o on o.id=r.order_id
-  where r.user_id=$1 and r.source_id=any($2::uuid[])
+  where r.user_id=any($1::text[]) and r.source_id=any($2::uuid[])
   order by g.created_at desc
- `,[user,entries.map(x=>x.id)])).rows;
- const today=bakuDate();
+ `,[users,entries.map(x=>x.id)])).rows;
+ const bySource=new Map();
+ for(const event of events){
+  const key=event.user_id+':'+event.source_id;
+  if(!bySource.has(key))bySource.set(key,[]);
+  bySource.get(key).push(event);
+ }
  return entries.map(entry=>{
-  const attempts=events.filter(e=>e.source_id===entry.id);
+  const attempts=bySource.get(entry.userId+':'+entry.id)||[];
   const applied=attempts.filter(e=>e.expires_on&&!['cancelled','rejected','expired'].includes(e.status)).sort((a,b)=>b.expires_on.localeCompare(a.expires_on))[0];
   if(applied){
    entry.expiresOn=applied.expires_on;entry.estimated=false;
@@ -94,6 +99,13 @@ async function bases(pool,user,source=null){
   return entry;
  });
 }
+async function bases(pool,user,source=null){
+ return (await readBases(pool,[user],source)).map(({userId,orderId,...entry})=>entry);
+}
+
+// The reminder worker uses the same saved dates, duration fallback and
+// fulfilled renewals as the profile, without loading prices or inventory.
+export const subscriptionReminderEntries=readBases;
 export async function verifyRenewal(pool,user,id,productId,expected){
  if(!user||!draftUuid(id))throw fail(404,'Abunəlik tapılmadı.');
  const x=(await bases(pool,user,id))[0];
