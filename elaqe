@@ -75,12 +75,11 @@
       <div class="info-page-copy">
 
         <p>Dəstək WhatsApp üzərindən göstərilir.</p>
-        <p class="info-page-contact" id="elaqe-destek"><strong>WhatsApp:</strong> <a href="https://wa.me/994515243545">+994 51 524 35 45</a></p>
-        <p>Hər gün 11:00–01:00 arası aktivik. Bizə yazın, dərhal cavab alacaqsınız.</p>
+        <p class="info-page-contact"><strong>WhatsApp:</strong> <a href="https://wa.me/994515243545">051 524 35 45</a></p>
       </div>
       <div class="info-page-actions">
         <a href="/">Ana səhifə</a>
-        <a class="is-primary" href="https://wa.me/994515243545" target="_blank" rel="noopener noreferrer">Canlı dəstək</a>
+        <a class="is-primary" href="https://wa.me/994515243545">WhatsApp ilə yaz</a>
       </div>
     </article>
   </main>

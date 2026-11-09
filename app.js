@@ -287,6 +287,7 @@ const DATA = {
           "type": "email",
           "label": "Gmail ünvanınız",
           "placeholder": "Gmail ünvanınızı yazın",
+          "description": "",
           "required": true,
           "enabled": true
         },
@@ -295,6 +296,7 @@ const DATA = {
           "type": "password",
           "label": "Spotify şifrəniz",
           "placeholder": "Spotify şifrənizi yazın",
+          "description": "",
           "required": true,
           "enabled": true
         },
@@ -303,6 +305,7 @@ const DATA = {
           "type": "password",
           "label": "Spotify şifrənizi təkrar yazın",
           "placeholder": "Şifrənizi yenidən yazın",
+          "description": "",
           "required": true,
           "enabled": true
         }
@@ -364,38 +367,6 @@ const DATA = {
     },
     {
       "id": "capcut",
-      "orderGuide": {
-        "information": "",
-        "tracks": {
-          "phone": [
-            {
-              "image": "/uploads/guides/capcut-mobile/1.png",
-              "description": "CapCut-u aç və sağ altdakı “Ben” bölməsinə toxun.",
-              "animation": "ben"
-            },
-            {
-              "image": "/uploads/guides/capcut-mobile/2.png",
-              "description": "Yuxarıdan üçüncü düyməni, “E-postayla giriş yapın” seç.",
-              "animation": "sign-in"
-            },
-            {
-              "image": "/uploads/guides/capcut-mobile/3.png",
-              "description": "MirPanel-də sənə təqdim edilən e-poçtu yaz. Ekrandakı ünvan nümunədir.",
-              "animation": "email"
-            },
-            {
-              "image": "/uploads/guides/capcut-mobile/4.png",
-              "description": "MirPanel-də verilən şifrəni yaz və “Devam” düyməsinə toxun.",
-              "animation": "password"
-            },
-            {
-              "image": "/uploads/guides/capcut-mobile/5.png",
-              "description": "Profil adının sağındakı “Pro” nişanını yoxla. Bu nişan CapCut Pro-nun aktiv olduğunu göstərir.",
-              "animation": "pro"
-            }
-          ]
-        }
-      },
       "_stableId": "capcut",
       "order": 3,
       "category": "video",
@@ -447,12 +418,45 @@ const DATA = {
           "type": "email",
           "label": "Email",
           "placeholder": "Gmail hesabınızı yazın",
+          "description": "",
           "required": true,
           "enabled": false
         }
       ],
       "formTitle": "",
       "formDescription": "",
+      "orderGuide": {
+        "information": "İstifadə etməzdən əvvəl oxuyun\n\n\nMƏLUMAT VƏ TƏLİMAT - CAPCUT PRO\n\nƏsas qaydalar\n\n• Hesab yalnız sizə məxsusdur - başqa şəxslərlə paylaşmaq tövsiyə edilmir\n\n• Hesab və email sizdə olur, dəyişə bilərsiniz\n\n• Eyni anda birdən çox cihazda istifadə etməyin - deaktiv riski yaradır\n\n• Problem yaşansa, bizimlə əlaqə saxlayın - bərpa üçün kömək edilir\n\nCapCut hesabına giriş\n\n• CapCut tətbiqini açın və \"Sign in with mail\" seçin\n\n• Sizə təqdim olunan email və şifrəni daxil edin\n\n• Əlavə təsdiq kodu və ya ayar tələb olunmur\n\nPRO paketin aktiv olduğunu yoxlayın\n\n• Tətbiqə daxil olduqdan sonra \"Me\" (Profil) bölməsində PRO statusun aktiv olduğunu görəcəksiniz\n\n• PRO görünmürsə, çıxış edib yenidən daxil olun və ya tətbiqi yeniləyin\n\n• Yenə görünmürsə, Canlı Dəstək komandamızla əlaqə saxlayın\n\nKompüterdə istifadə\n\n• CapCut desktop tətbiqini yükləyin və eyni email və şifrə ilə daxil olun\n\n• CapCut web versiyasına QR kod ilə də giriş mümkündür\n\n• Qeyd: web versiyada bəzi funksiyalar məhdud işləyə bilər - tam təcrübə üçün desktop tətbiqi tövsiyə olunur",
+        "tracks": {
+          "phone": [
+            {
+              "animation": "ben",
+              "image": "/uploads/guides/capcut-mobile/1.png",
+              "description": "CapCut-u aç və sağ altdakı “Ben” bölməsinə toxun."
+            },
+            {
+              "animation": "sign-in",
+              "image": "/uploads/guides/capcut-mobile/2.png",
+              "description": "Yuxarıdan üçüncü düyməni, “E-postayla giriş yapın” seç."
+            },
+            {
+              "animation": "email",
+              "image": "/uploads/guides/capcut-mobile/3.png",
+              "description": "MirPanel-də sənə təqdim edilən e-poçtu yaz. Ekrandakı ünvan nümunədir."
+            },
+            {
+              "animation": "password",
+              "image": "/uploads/guides/capcut-mobile/4.png",
+              "description": "MirPanel-də verilən şifrəni yaz və “Devam” düyməsinə toxun."
+            },
+            {
+              "animation": "pro",
+              "image": "/uploads/guides/capcut-mobile/5.png",
+              "description": "Profil adının sağındakı “Pro” nişanını yoxla. Bu nişan CapCut Pro-nun aktiv olduğunu göstərir."
+            }
+          ]
+        }
+      },
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
@@ -587,6 +591,7 @@ const DATA = {
           "type": "text",
           "label": "Ad",
           "placeholder": "Adınızı yazın",
+          "description": "",
           "required": true,
           "enabled": true
         },
@@ -595,6 +600,7 @@ const DATA = {
           "type": "text",
           "label": "Otaq kodu",
           "placeholder": "Otaq 4 rəqəmli kod (PİN) təyin edin",
+          "description": "",
           "required": true,
           "enabled": true
         }
@@ -967,6 +973,7 @@ const DATA = {
           "type": "text",
           "label": "Ad",
           "placeholder": "Adınızı yazın",
+          "description": "",
           "required": true,
           "enabled": true
         },
@@ -975,6 +982,7 @@ const DATA = {
           "type": "text",
           "label": "5 rəqəmli kod / PIN",
           "placeholder": "5 rəqəmli kod yazın",
+          "description": "",
           "required": true,
           "enabled": true
         }
@@ -1166,6 +1174,7 @@ const DATA = {
           "type": "email",
           "label": "Email / Gmail",
           "placeholder": "Gmail ünvanınızı yazın",
+          "description": "",
           "required": true,
           "enabled": true
         },
@@ -1174,6 +1183,7 @@ const DATA = {
           "type": "password",
           "label": "Gmail şifrəsi",
           "placeholder": "Gmail şifrənizi yazın",
+          "description": "",
           "required": true,
           "enabled": true
         }
@@ -1272,6 +1282,7 @@ const DATA = {
           "type": "email",
           "label": "Email / Gmail",
           "placeholder": "Gmail ünvanınızı yazın",
+          "description": "",
           "required": true,
           "enabled": true
         }
@@ -1465,6 +1476,7 @@ const DATA = {
           "type": "text",
           "label": "HBO Max profil adı",
           "placeholder": "HBO Max profil adınızı yazın",
+          "description": "",
           "required": true,
           "enabled": true
         },
@@ -1473,6 +1485,7 @@ const DATA = {
           "type": "text",
           "label": "Profil kodu / PIN",
           "placeholder": "4 rəqəmli profil kodunu yazın",
+          "description": "",
           "required": true,
           "enabled": true
         }
@@ -1570,6 +1583,7 @@ const DATA = {
           "type": "text",
           "label": "TikTok istifadəçi identifikatoru",
           "placeholder": "@istifadeci_adi",
+          "description": "",
           "required": true,
           "enabled": true
         },
@@ -1578,6 +1592,7 @@ const DATA = {
           "type": "number",
           "label": "Jeton miqdarı",
           "placeholder": "500",
+          "description": "",
           "required": true,
           "enabled": true,
           "min": 500,
@@ -2143,6 +2158,7 @@ const DATA = {
           "type": "email",
           "label": "Email / Gmail",
           "placeholder": "Gmail ünvanınızı yazın",
+          "description": "",
           "required": true,
           "enabled": true
         }
@@ -3140,6 +3156,7 @@ const DATA = {
           "type": "email",
           "label": "Email / Gmail",
           "placeholder": "Gmailinizi qeyd edin",
+          "description": "",
           "required": true,
           "enabled": true
         }
