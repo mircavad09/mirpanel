@@ -2,7 +2,8 @@ import fs from 'node:fs';import http from 'node:http';import crypto from 'node:c
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 const f=await shopFixture(),password=crypto.randomBytes(24).toString('base64url'),username='synthetic-shop-admin',worker={id:crypto.randomUUID(),login:'synthetic-worker',display_name:'Worker',password_hash:await hashPassword(password),active:true,session_version:1,employee_started_at:null};let checks=0,child,upstream,browser;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;},sessions=new Map(),json=(res,s,v)=>{res.writeHead(s,{'Content-Type':'application/json'});res.end(JSON.stringify(v));};
 try{
- const add=async(user='a')=>{const t=await f.shop.topup({user},{amount:'5',methodId:f.method,requestId:f.id()}),r={path:'topup/'+t.id+'/test.png',size:3,mimeType:'image/png',sha256:'a'.repeat(64)};f.files.set(r.path,Buffer.from('abc'));await f.shop.savedReceipt({user},'a'.repeat(64),'topup',t.id,r);await f.shop.submitTopup({user},t.id);return t;};
+ await f.db.exec(f.db.read('mirpanel-admin/community/customer-activity-migration.sql'));
+ const add=async(user='a')=>{const t=await f.shop.topup({user},{amount:'6',methodId:f.method,requestId:f.id()}),r={path:'topup/'+t.id+'/test.png',size:3,mimeType:'image/png',sha256:'a'.repeat(64)};f.files.set(r.path,Buffer.from('abc'));await f.shop.savedReceipt({user},'a'.repeat(64),'topup',t.id,r);await f.shop.submitTopup({user},t.id);return t;};
  const picture=f.id(), png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+nmGQAAAAASUVORK5CYII=','base64');
  await f.pool.query("update community_member_numbers set member_number=1022 where user_id='a'");
  await f.pool.query("insert into profile_media(id,user_id,kind,bytes) values($1,'a','avatar',$2)",[picture,png]);
@@ -34,28 +35,31 @@ try{
   await card.getByRole('button',{name:'Təsdiqlə',exact:true}).waitFor();
   await p.evaluate(token=>{state.csrfToken=token;},s.csrfToken);
   eq(await p.getByRole('button',{name:'Rədd et',exact:true}).count(),2);
-  eq(await card.locator('input').inputValue(),'5.00');
+  eq(await card.locator('input').inputValue(),'6.00');
+  eq(await card.getByText('ABB •••• 1234',{exact:true}).count(),1);
   eq(await card.getByText('#1022',{exact:true}).count(),1);
   eq(await card.locator('.topupAvatar img').getAttribute('src'),'/api/community/media/'+picture+'.webp');
   await card.locator('.topupAvatar img').evaluate(img=>img.decode());
   eq((await card.locator('time').innerText()).includes('14:15'),true);
   eq(await p.locator('.topupCard').filter({hasText:'Reader B'}).locator('.topupAvatar').innerText(),'RB');
   eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  fs.mkdirSync('outputs/topup-card-slots',{recursive:true});
+  await card.screenshot({path:'outputs/topup-card-slots/admin-'+width+'.png'});
   if(width===1440)eq((await card.locator('input').boundingBox()).width<200,true);
   const profilePopup=p.waitForEvent('popup');await card.getByRole('link',{name:/Reader A/}).click();const profile=await profilePopup;
   await profile.locator('.wu-detail-head').getByRole('heading',{name:'Reader A',exact:true}).waitFor();await profile.close();
   const receiptPopup=p.waitForEvent('popup');await card.getByRole('button',{name:'Çekə bax',exact:true}).click();const receipt=await receiptPopup;
   await receipt.waitForURL('**/storage/v1/object/sign/fixture-preview?token=synthetic');await receipt.close();
  }
- await card.locator('input').fill('4,00');
+ await card.locator('input').fill('7,00');
  p.once('dialog',d=>d.accept());await card.getByRole('button',{name:'Təsdiqlə',exact:true}).dblclick();
  await card.getByText('Təsdiqləndi',{exact:true}).waitFor();await badge(1);
- eq(await card.getByText('İstənilən 5,00 ₼',{exact:true}).count(),1);
- eq(await card.getByText('Təsdiqlənən 4,00 ₼',{exact:true}).count(),1);
+ eq(await card.getByText('Müştərinin daxil etdiyi məbləğ: 6,00 ₼',{exact:true}).count(),1);
+ eq(await card.getByText('Təsdiqlənən məbləğ: 7,00 ₼',{exact:true}).count(),1);
  eq(await card.locator('time').count(),2);
- eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'400');
- const repeat=await ctx.request.post(base+'/api/admin/community/shop',{headers:{'X-CSRF-Token':s.csrfToken,Origin:base},data:{action:'approve',id:t.id,amount:'4'}});eq(repeat.status(),200);
- eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'400');
+ eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'700');
+ const repeat=await ctx.request.post(base+'/api/admin/community/shop',{headers:{'X-CSRF-Token':s.csrfToken,Origin:base},data:{action:'approve',id:t.id,amount:'7'}});eq(repeat.status(),200);
+ eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'700');
  p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Rədd et',exact:true}).click();await badge(0);
  await p.locator('.topupCard').filter({hasText:'Reader B'}).getByText('Rədd edildi',{exact:true}).waitFor();
  eq((await f.pool.query("select status from mirpanel_community.wallet_topups where id=$1",[second.id])).rows[0].status,'rejected');
@@ -65,4 +69,4 @@ try{
  await card.getByText('Təsdiqlənib: vaxt qeyd edilməyib',{exact:true}).waitFor();
  eq(await card.locator('time').count(),1);
  eq(errors,[]);console.log(JSON.stringify({checks,realAdminServer:true,realPostgreSQL:true,badge:[0,1,2,1,0],failurePreserved:2,duplicateCredit:false,employeeDenied:true,csrfRequired:true,productionWrites:0}));
-}catch(e){if(browser)for(const c of browser.contexts())for(const p of c.pages()){console.log('SYNTHETIC_ADMIN_DIAGNOSTIC',await p.locator('#communityShopView').evaluate(n=>({html:n.outerHTML.slice(0,900),ancestors:[n,...[...function*(x){while(x.parentElement){x=x.parentElement;yield x;}}(n)]].map(x=>({tag:x.tagName,cls:x.className,display:getComputedStyle(x).display,aria:x.getAttribute('aria-hidden')})),heading:[...n.querySelectorAll('h1')].map(h=>({text:h.textContent,rect:h.getBoundingClientRect().toJSON(),display:getComputedStyle(h).display}))})));}throw e;}finally{await browser?.close();if(child&&child.exitCode===null){child.kill();await once(child,'exit');}if(upstream)await new Promise(r=>upstream.close(r));await f.close();}
+}finally{await browser?.close();if(child&&child.exitCode===null){child.kill();await once(child,'exit');}if(upstream)await new Promise(r=>upstream.close(r));await f.close();}

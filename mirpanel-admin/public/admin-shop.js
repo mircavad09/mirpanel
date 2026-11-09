@@ -98,13 +98,15 @@ export async function mountShop({root, call, alive}) {
     const summary = el("div", null, "topupSummary");
     const status = el("span", labels[t.status] || "Naməlum status", "topupStatus");
     status.dataset.status = t.status;
-    summary.append(el("strong", `İstənilən ${money(t.requested_cents)}`), status);
+    summary.append(el("strong", `Müştərinin daxil etdiyi məbləğ: ${money(t.requested_cents)}`), status);
     top.append(identity(t), summary);
 
     const details = el("div", null, "topupDetails");
+    const bank=typeof t.card_bank==="string"?t.card_bank.trim():"";
+    details.append(el("span", bank&&/^\d{4}$/.test(t.card_last4)?`${bank} •••• ${t.card_last4}`:"Kart məlumatı qeydə alınmayıb"));
     details.append(time("Göndərilib", t.submitted_at));
     if (t.status === "approved") {
-      if (t.approved_cents != null) details.append(el("strong", `Təsdiqlənən ${money(t.approved_cents)}`, "topupApproved"));
+      if (t.approved_cents != null) details.append(el("strong", `Təsdiqlənən məbləğ: ${money(t.approved_cents)}`, "topupApproved"));
       details.append(time("Təsdiqlənib", t.decided_at));
     }
     if (t.receipt_available) details.append(button("Çekə bax", () => receipt(t)));
