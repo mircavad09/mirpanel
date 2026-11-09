@@ -25,7 +25,7 @@ import {createInventoryReader,inventoryUnavailable} from './inventory-reader.mjs
 import {validateReceiptFile,FILE_SAFETY_ENGINE} from './receipt-file-safety.mjs';
 import {createBrowserOrders} from './browser-orders.mjs';
 import {createAccountOrders} from './account-orders.mjs';
-import {createShop} from './shop.mjs';
+import {createShop,productCardPaymentUnavailable} from './shop.mjs';
 import {handleShop} from './shop-http.mjs';
 import {createBankBackgrounds,bankKey,BANKS,DECORATIONS} from './bank-backgrounds.mjs';
 import {productSeoSlug} from './product-pages.mjs';
@@ -316,6 +316,7 @@ export function createPaymentSystem(options) {
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/payments/reservations") {
+      if(config.productCardPaymentsPaused)throw productCardPaymentUnavailable();
       if(options.accountForCheckout&&!await options.accountForCheckout(request))throw Object.assign(Error('Sifarişi tamamlamaq üçün hesabınıza daxil olun.'),{status:401,code:'CHECKOUT_LOGIN_REQUIRED'});
       await publicRate(request, "reserve", 600, 12);
       const body = await readBody(request, 50_000);
@@ -386,6 +387,7 @@ export function createPaymentSystem(options) {
         publicJson(request, response, 200, { state: "expired" });
         return true;
       }
+      if(config.productCardPaymentsPaused)throw productCardPaymentUnavailable();
       const method = await store.rawMethod(reservation.method_id);
       // A reload may recover only an authenticated, reservation-bound proof.
       // Never trust sessionStorage as evidence that Storage actually contains it.
@@ -424,6 +426,7 @@ export function createPaymentSystem(options) {
     }
     if (request.method === "POST" && ['/api/payments/orders','/api/payments/receipts'].includes(url.pathname)) {
       const uploadOnly = url.pathname === '/api/payments/receipts';
+      if(config.productCardPaymentsPaused&&uploadOnly)throw productCardPaymentUnavailable();
       if(!uploadOnly&&options.accountForCheckout&&!await options.accountForCheckout(request))throw Object.assign(Error('Sifarişi tamamlamaq üçün hesabınıza daxil olun.'),{status:401,code:'CHECKOUT_LOGIN_REQUIRED'});
       await publicRate(request, uploadOnly ? 'receipt-upload' : 'submit', 3600, uploadOnly ? 30 : 10);
       const contentType = String(request.headers["content-type"] || "");
@@ -464,6 +467,7 @@ export function createPaymentSystem(options) {
       const existing = await store.getOrderByReservation(reservationId);
       request.receiptTimings.binding=performance.now()-checkpoint;checkpoint=performance.now();
       const assertActive=r=>{if(r.status!=='reserved'||Date.parse(r.expires_at)<=Date.now())throw Object.assign(new Error(Date.parse(r.expires_at)<=Date.now()?'Rezervin vaxtı bitib. Kart seçimini yenidən açın.':'Rezerv artıq aktiv deyil. Kart seçimini yenidən açın.'),{status:409,code:'RECEIPT_RESERVATION_INVALID'});};
+      if(config.productCardPaymentsPaused&&!existing)throw productCardPaymentUnavailable();
       if(!existing)assertActive(reservation);
       // Emergency upload-only policy: decoding/PDF security is mandatory; OCR is not.
       request.receiptStage='file_safety';

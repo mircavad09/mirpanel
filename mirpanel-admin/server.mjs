@@ -53,6 +53,7 @@ const config = {
   tokenSecret: process.env.PAYMENT_TOKEN_SECRET_B64 || "",
   allowedOrigins: String(process.env.PAYMENT_ALLOWED_ORIGINS || "https://mirpanel.com,https://www.mirpanel.com")
     .split(",").map((item) => item.trim()).filter(Boolean),
+  productCardPaymentsPaused: true,
   reservationMinutes: Math.max(1, Math.min(30, Number(process.env.PAYMENT_RESERVATION_MINUTES || 10))),
   maxReceiptBytes: Math.max(1, Math.min(5 * 1024 * 1024, Number(process.env.PAYMENT_RECEIPT_MAX_BYTES || 5 * 1024 * 1024))),
   receiptShapeEnabled: false, // Emergency upload-only policy; OCR is not a checkout gate.

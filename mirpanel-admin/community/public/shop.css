@@ -159,3 +159,6 @@
 
 .shop-page.shop-wallet-page .wallet-topup-result h1{max-width:340px;margin:0 auto;font-size:clamp(25px,5.5vw,32px);line-height:1.2;white-space:normal}
 .wallet-topup-result h1:focus{outline:none}
+
+.shop-page .checkout-tile-disabled,.shop-page .checkout-tile-disabled input{cursor:not-allowed}
+.shop-page .checkout-tile-disabled,.checkout-tile-disabled .checkout-icon{color:#b4b1a8}
