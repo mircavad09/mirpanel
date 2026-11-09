@@ -10,11 +10,13 @@
   <meta name="robots" content="noindex, nofollow">
   <link rel="stylesheet" href="admin.css?v=compact-order-card-1">
   <link rel="stylesheet" href="/ready-stock-admin.css?v=2">
+  <link rel="stylesheet" href="admin-mobile-menu.css?v=1">
 </head>
 
 <body>
   <div class="app">
-    <aside class="sidebar">
+    <aside class="sidebar" id="adminSidebar">
+      <button class="btn mobileMenuClose" type="button" aria-label="Menyunu bağla">×</button>
       <div class="sidebarBrand">
         <div class="brandMark small">M</div>
         <div>
@@ -45,9 +47,10 @@
       </button>
     </aside>
 
-    <header class="topbar">
+    <header class="topbar adminMenuHeader">
+      <button class="btn mobileMenuToggle" type="button" aria-controls="adminSidebar" aria-expanded="false"><span aria-hidden="true">☰</span> Menyu</button>
       <div>
-        <div class="mobileTitle">Mirpanel Admin</div>
+        <div class="mobileTitle"><span class="desktopAdminName">Mirpanel Admin</span><span class="mobileAdminName">MirPanel Admin</span></div>
         <div class="crumb" id="crumb">Məhsullar</div>
       </div>
 
@@ -688,5 +691,6 @@
   <script src="payment-admin.js?v=compact-order-card-1"></script>
   <script src="employee-review-admin.js?v=position-20261028-1"></script>
   <script src="stories-admin.js?v=admin-release-status-20261107"></script>
+  <script src="admin-mobile-menu.js?v=1"></script>
 </body>
 </html>

@@ -1525,7 +1525,7 @@ const server = http.createServer(async (request, response) => {
       return response.end();
     }
 
-    if (["/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-admin.css"].includes(pathname)) {
+    if (["/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-admin.css"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 
