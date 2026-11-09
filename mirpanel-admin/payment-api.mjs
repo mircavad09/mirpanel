@@ -781,11 +781,13 @@ export function createPaymentSystem(options) {
       const query=Object.fromEntries(url.searchParams), canDeliver=options.readyStockAllowed?.(request);
       const deliveryQueue=query.tab==='pending'&&query.pendingStage==='delivery';
       if(deliveryQueue&&!canDeliver)throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
-      const catalog = query.countsOnly==='true' ? null : await loadCatalog();
+      const catalogRequest = query.countsOnly==='true' ? Promise.resolve(null) : loadCatalog();
+      void catalogRequest.catch(()=>{});
+      const matchingProducts=query.productId?(await catalogRequest)?.products:[];
       const listingStarted = performance.now();
-      const orders = await store.listOrders(query, catalog?.products || [], {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined});
+      const orders = await store.listOrders(query, matchingProducts || [], {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined});
       const listingMs = performance.now()-listingStarted;
-      if(!catalog){json(response,200,orders);return true;}
+      if(query.countsOnly==='true'){json(response,200,orders);return true;}
       const pendingCustomerView=query.tab==='pending'&&Boolean(query.pendingStage);
       const customersTask=(async()=>{
       if(canDeliver&&options.orderCustomers&&orders.orders.length&&(pendingCustomerView||query.includeCustomer==='true')){
@@ -808,9 +810,10 @@ export function createPaymentSystem(options) {
         for(const order of orders.orders)order.workforce=workflow.get(order.id)||null;
       })();
       await Promise.all([customersTask,pendingTask,workforceTask]);
+      const catalog=await catalogRequest;
       orders.permissions={fields:!!canDeliver,manage:!!canDeliver};
       orders.filters ||= {};
-      orders.filters.products = (catalog.products || [])
+      orders.filters.products = (catalog?.products || [])
         .filter((product) => product && product.active !== false && product.id)
         .map((product) => ({ id: safeText(product.id, 100), title: safeText(product.title || product.name || "Məhsul", 160) }))
         .sort((a, b) => a.title.localeCompare(b.title, "az"));
@@ -854,7 +857,9 @@ export function createPaymentSystem(options) {
         if(options.readyStockAllowed&&!options.readyStockAllowed(request))throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
         response.setHeader('Cache-Control','private, no-store');
         const input=request.method==='POST'?await readBody(request,50_000):null;
-        json(response,200,await options.customerDelivery(security,actorName,id,input));return true;
+        const started=performance.now();
+        const result=await options.customerDelivery(security,actorName,id,input);
+        json(response,200,result,input?undefined:{"Server-Timing":`delivery;dur=${(performance.now()-started).toFixed(1)}`});return true;
       }
       if (action === "details" && ["GET","POST"].includes(request.method)) {
         if(!options.readyStockAllowed?.(request))throw Object.assign(new Error('Sifariş sahələri yalnız adminə açıqdır.'),{status:403});

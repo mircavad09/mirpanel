@@ -7,7 +7,7 @@
     search: "", productId: "", durationMonths: "", methodId: "", dateFrom: "", dateTo: "", sort: "newest", page: 1
   });
   const paymentState = {
-    pendingStage: "payment", deliveryOpening: false,
+    pendingStage: "payment",
     openOrders: new Map(), permissions: {},
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
@@ -24,6 +24,9 @@
   const mobileOrderFilters = () => matchMedia("(max-width:650px)").matches;
   const orderPages = new Map();
   const orderRequests = new Map();
+  const deliveryPreviewRequests = new Map();
+  const orderCardVersions = new Map();
+  let lastOrderMarkup = null, cardVersion = 0;
   let visibleOrderPage = "";
   let orderRevision = 0;
   let orderCountRequest;
@@ -183,7 +186,14 @@
     const product = order.items?.length ? [...new Set(order.items.map(x=>x.title).filter(Boolean))].join(' + ') : order.productTitle;
     const detailId = `paymentOrderDetails-${escp(order.id)}`;
     const timeId = `paymentOrderCreatedAt-${escp(order.id)}`;
-    return `<article class="paymentOrderAdminCard${selected ? " isSelected" : ""}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
+    const signature=JSON.stringify([order,tab,deliveryQueue,expanded,fields,manage,selected]);
+    let version=orderCardVersions.get(order.id);
+    if(version?.signature!==signature){
+      orderCardVersions.delete(order.id);
+      orderCardVersions.set(order.id,version={signature,id:++cardVersion});
+      if(orderCardVersions.size>400)orderCardVersions.delete(orderCardVersions.keys().next().value);
+    }
+    return `<article class="paymentOrderAdminCard${selected ? " isSelected" : ""}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}" data-order-render-version="${version.id}">
       <div class="paymentOrderCardHeader">${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}
         <strong class="paymentOrderCardNumber">№ ${escp(order.orderCode)}</strong>
         <button class="btn compact" type="button" data-copy-order-id aria-label="${escp(order.orderCode)} sifariş nömrəsini kopyala">Kopyala</button>
@@ -421,10 +431,18 @@
 
   function renderOrders(automatic=false) {
     const list = $p("paymentOrdersList");
-    for(const card of list?.querySelectorAll('[data-payment-order-id]')||[])clearCardFields(card);
-    if(list){const markup=paymentState.orders.length ? (paymentState.orderQuery.tab === "pending" || paymentState.orderQuery.tab === "expiring" ? paymentState.orders.map(orderCard).join("") : completedOrderGroups()) : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';if(window.AdminLive)window.AdminLive.update(list,markup);else list.innerHTML=markup;}
-    fieldsObserver.disconnect();
-    if(paymentState.permissions.fields)for(const card of list?.querySelectorAll('[data-payment-order-id]')||[])if(!card.querySelector('.paymentOrderCardDetails')?.hidden)fieldsObserver.observe(card);
+    const markup=paymentState.orders.length ? (paymentState.orderQuery.tab === "pending" || paymentState.orderQuery.tab === "expiring" ? paymentState.orders.map(orderCard).join("") : completedOrderGroups()) : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';
+    if(list&&(markup!==lastOrderMarkup||list.querySelector('[data-retry-payment-orders]'))){
+      const previous=new Map([...list.querySelectorAll('[data-payment-order-id]')].map(card=>[card,card.dataset.orderRenderVersion]));
+      if(window.AdminLive)window.AdminLive.update(list,markup,(old,fresh)=>old.hasChildNodes()&&old.dataset?.orderRenderVersion&&old.dataset.orderRenderVersion===fresh.dataset?.orderRenderVersion);
+      else list.innerHTML=markup;
+      for(const [card,version] of previous){
+        if(!card.isConnected)fieldsObserver.unobserve(card);
+        else if(card.dataset.orderRenderVersion!==version)clearCardFields(card);
+      }
+      lastOrderMarkup=markup;
+      if(paymentState.permissions.fields)for(const card of list.querySelectorAll('[data-payment-order-id]'))if(!loadedFields.has(card)&&!fieldRequests.has(card)&&!card.querySelector('.paymentOrderCardDetails')?.hidden)fieldsObserver.observe(card);
+    }
     const pagination = paymentState.orderMeta.pagination;
     if ($p("paymentOrdersPageInfo")) $p("paymentOrdersPageInfo").textContent = `Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
     if ($p("paymentOrdersPrevious")) $p("paymentOrdersPrevious").disabled = pagination.page <= 1;
@@ -573,6 +591,17 @@
     orderCountRequest = undefined;
   }
 
+  function requestOrderPage(query,key=query.toString()){
+    let pending=orderRequests.get(key);
+    if(!pending){
+      pending=paymentApi(`/api/admin/payment-orders?${query}`).finally(()=>{
+        if(orderRequests.get(key)===pending)orderRequests.delete(key);
+      });
+      orderRequests.set(key,pending);
+    }
+    return pending;
+  }
+
   async function loadOrders({automatic=false}={}) {
     const status = $p("paymentOrdersStatus"); const list = $p("paymentOrdersList");
     const requestSequence = ++paymentState.orderRequestSequence;
@@ -595,6 +624,8 @@
     if (pageChanged) {
       if (cached) apply(cached, false, true);
       else {
+        for(const card of list?.querySelectorAll('[data-payment-order-id]')||[])fieldsObserver.unobserve(card);
+        lastOrderMarkup=null;
         const loading = document.createElement("div");
         loading.className = "emptyState";
         loading.dataset.orderListLoading = "";
@@ -611,14 +642,7 @@
     const anchor=automatic&&list&&!pageChanged?(window.AdminLive?.anchor(list)||(paymentState.orders[0]?{id:paymentState.orders[0].id}:null)):null;
     if(anchor){query.set('anchorId',anchor.id);query.set('anchorIndex',String(paymentState.orders.findIndex(o=>o.id===anchor.id)));}
     try {
-      let pending = orderRequests.get(key);
-      if (!pending) {
-        pending = paymentApi(`/api/admin/payment-orders?${query}`).finally(()=>{
-          if(orderRequests.get(key)===pending)orderRequests.delete(key);
-        });
-        orderRequests.set(key,pending);
-      }
-      const result = await pending;
+      const result = await requestOrderPage(query,key);
       if (revision !== orderRevision) return;
       orderPages.set(key,result);
       if (orderPages.size > 16) orderPages.delete(orderPages.keys().next().value);
@@ -631,6 +655,14 @@
       paymentState.orderQuery.page = result.pagination?.page || paymentState.orderQuery.page;
       if (paymentState.orderQuery.page > result.pagination?.totalPages && paymentState.orderQuery.page > 1) { paymentState.orderQuery.page = result.pagination.totalPages; return loadOrders(); }
       apply(result,automatic);
+      if(!automatic&&result.permissions?.manage&&result.counts?.delivery>0&&query.get("pendingStage")==="payment"){
+        const warm=new URLSearchParams(Object.entries(emptyQuery()).filter(([,value])=>value!==""));
+        warm.set("pendingStage","delivery");
+        const warmKey=warm.toString();
+        if(!orderPages.has(warmKey)&&!orderRequests.has(warmKey)){
+          void requestOrderPage(warm).then(value=>{if(revision===orderRevision&&!orderPages.has(warmKey))orderPages.set(warmKey,value);}).catch(()=>{});
+        }
+      }
       window.AdminLive?.notice(list,automatic?result.liveWindow?.newBeforeAnchor||0:0,async()=>{paymentState.orderQuery.page=1;await loadOrders();},'Yeni sifarişlər var');
       if (status) status.textContent = result.liveWindow?.anchorMissing?'Baxılan sifariş bu filtrdən çıxıb. Yaxın mövqe qorundu.':`${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
     } catch (error) {
@@ -697,20 +729,42 @@
       return;
     }
     if(action==='delivery'){
-      if(paymentState.deliveryOpening||document.querySelector('[data-payment-delivery-dialog]'))return;
-      const url='/api/admin/payment-orders/'+id+'/delivery';let state;
-      paymentState.deliveryOpening=true;
-      try{state=await paymentApi(url);}finally{paymentState.deliveryOpening=false;}
-      const lines=state.lines.filter(x=>x.remaining>0);
-      if(!lines.length){toast('Bütün məhsullar hesaba təhvil verilib.');return;}
+      if(document.querySelector('[data-payment-delivery-dialog][open]'))return;
+      const url='/api/admin/payment-orders/'+id+'/delivery';
+      let lines=[];
       const dlg=document.createElement('dialog'),form=document.createElement('form');
       dlg.className='paymentActionDialog paymentDeliveryDialog';dlg.dataset.paymentDeliveryDialog='';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Hazır mesajı dəyişmək üçün Hazır hesab stoku bölməsini açın.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>Hesabın e-poçtu (istəyə bağlı)<input name="email" type="email" maxlength="254" autocomplete="off"></label><label>Hesabın şifrəsi (istəyə bağlı)<input name="password" type="text" maxlength="512" autocomplete="new-password" spellcheck="false" autocapitalize="off"></label><label>Müştəriyə hazır mesaj <textarea name="message" rows="7" readonly spellcheck="false"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Göndər və təhvil ver</button>';
       const {line,quantity,email,password,message}=form.elements,submit=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]'),error=form.querySelector('[role=alert]');
       const controls=[line,quantity,email,password,message,close];
+      const status=document.createElement('p'),retry=document.createElement('button');
+      status.setAttribute('role','status');retry.type='button';retry.className='btn';retry.hidden=true;retry.textContent='Yenidən cəhd et';error.before(status,retry);
       const renewalNote=document.createElement('label'),renewalCheck=document.createElement('input'),renewalText=document.createElement('span');
       renewalCheck.type='checkbox';renewalNote.append(renewalCheck,renewalText);error.before(renewalNote);
-      for(const x of lines)line.add(new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)'+(x.renewalOrderCode?' · Yeniləmə №'+x.renewalOrderCode:''),x.index));
-      line.onchange=()=>{const x=lines.find(x=>x.index===Number(line.value));quantity.max=String(x.remaining);quantity.value='1';message.value=x.message||'';submit.disabled=!message.value;renewalCheck.checked=false;renewalNote.hidden=!x.renewalOrderCode;renewalNote.classList.toggle('hidden',!x.renewalOrderCode);renewalCheck.required=!!x.renewalOrderCode;renewalText.textContent=x.renewalOrderCode?' №'+x.renewalOrderCode+' sifarişinin '+x.renewalSourceLine+'-ci sətrindəki '+x.renewalSourceUnit+'-ci abunəliyi həqiqətən uzatdım.':'';};line.onchange();
+      line.onchange=()=>{const x=lines.find(x=>x.index===Number(line.value));if(!x)return;quantity.max=String(x.remaining);quantity.value='1';message.value=x.message||'';submit.disabled=!message.value;renewalCheck.checked=false;renewalNote.hidden=!x.renewalOrderCode;renewalNote.classList.toggle('hidden',!x.renewalOrderCode);renewalCheck.required=!!x.renewalOrderCode;renewalText.textContent=x.renewalOrderCode?' №'+x.renewalOrderCode+' sifarişinin '+x.renewalSourceLine+'-ci sətrindəki '+x.renewalSourceUnit+'-ci abunəliyi həqiqətən uzatdım.':'';};
+      let loading=false;
+      const load=async()=>{
+        if(loading)return;
+        loading=true;retry.hidden=true;error.textContent='';status.textContent='Təhvil məlumatı yüklənir…';
+        for(const field of [line,quantity,email,password,message,submit,renewalCheck])field.disabled=true;
+        renewalNote.hidden=true;renewalNote.classList.add('hidden');
+        try{
+          let request=deliveryPreviewRequests.get(id);
+          if(!request){
+            request=paymentApi(url).finally(()=>{if(deliveryPreviewRequests.get(id)===request)deliveryPreviewRequests.delete(id);});
+            deliveryPreviewRequests.set(id,request);
+          }
+          const state=await request;
+          if(!dlg.open)return;
+          lines=state.lines.filter(x=>x.remaining>0);
+          status.textContent=lines.length?'':'Təhvil üçün məhsul qalmayıb.';
+          if(!lines.length)return;
+          for(const x of lines)line.add(new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)'+(x.renewalOrderCode?' · Yeniləmə №'+x.renewalOrderCode:''),x.index));
+          for(const field of [line,quantity,email,password,message,renewalCheck])field.disabled=false;
+          line.onchange();
+        }catch(err){if(dlg.open){status.textContent='';error.textContent=err.message||'Təhvil məlumatı alınmadı.';retry.hidden=false;}}
+        finally{loading=false;}
+      };
+      retry.onclick=()=>void load();
       let pending=null;close.onclick=()=>dlg.close();
       dlg.addEventListener('close',()=>dlg.remove(),{once:true});
       dlg.addEventListener('cancel',e=>{if(pending)e.preventDefault();});
@@ -724,7 +778,7 @@
         try{const result=await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});invalidateOrders();dlg.close();toast(result.status==='completed'?'Sifariş tamamlandı.':'Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders();}
         catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;for(const field of controls)field.disabled=false;}submit.disabled=err.status===409;}
       };
-      dlg.append(form);document.body.append(dlg);dlg.showModal();return;
+      dlg.append(form);document.body.append(dlg);dlg.showModal();close.focus();void load();return;
     }
     if(action==='details'){
       const {details,items}=await paymentApi(`/api/admin/payment-orders/${id}/details`);
@@ -761,6 +815,8 @@
     window.addEventListener('pagehide',clearFields);
     window.addEventListener('mirpanel:session-expired',()=>{
       invalidateOrders();
+      deliveryPreviewRequests.clear();
+      document.querySelector('[data-payment-delivery-dialog][open]')?.close();
       paymentState.permissions.fields=false;
       clearFields();
     });

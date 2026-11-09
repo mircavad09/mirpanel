@@ -11,10 +11,11 @@
    if(next){for(const[p]of scrolls){if(p.contains(next)){p.scrollTop+=next.getBoundingClientRect().top-a.top;break;}}const delta=next.getBoundingClientRect().top-a.top;if(Math.abs(delta)>0.5)scrollBy(0,delta);}else scrollTo(x,y);
   };const result=work();if(result?.then)return result.finally(restore);restore();return result;
  }
- function update(root,markup){if(!root)return;return preserve(root,()=>{
+ function update(root,markup,skip){if(!root)return;return preserve(root,()=>{
   const template=document.createElement('template');if(typeof markup==='string')template.innerHTML=markup;else for(const n of markup)template.content.append(n);
   const pool=new Map([...root.querySelectorAll('*')].map(e=>[key(e),e]).filter(([k])=>k));
   function patch(old,fresh){if(old.nodeType!==1){if(old.nodeValue!==fresh.nodeValue)old.nodeValue=fresh.nodeValue;return;}
+   if(skip?.(old,fresh))return;
    const edited=dirty.has(old)||old===document.activeElement,control=/^(INPUT|TEXTAREA|SELECT)$/.test(old.tagName),open=old.tagName==='DETAILS'?old.open:null;
    for(const a of[...old.attributes])if(!fresh.hasAttribute(a.name)&&!(edited&&['value','checked','selected'].includes(a.name))&&a.name!=='open')old.removeAttribute(a.name);
    for(const a of fresh.attributes)if(!(edited&&['value','checked','selected'].includes(a.name))&&a.name!=='open'&&old.getAttribute(a.name)!==a.value)old.setAttribute(a.name,a.value);

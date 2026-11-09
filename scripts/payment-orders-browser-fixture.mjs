@@ -1,11 +1,14 @@
 import http from "node:http";
 import {adminListWindow} from '../mirpanel-admin/admin-list-window.mjs';
 import fs from "node:fs";
+import {execFileSync} from "node:child_process";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const port = Number(process.env.PORT || 10081);
+const latency=process.env.MIRPANEL_ORDER_LATENCY==='1';
+const source=file=>process.env.MIRPANEL_ORDER_BASELINE?execFileSync('git',['show',process.env.MIRPANEL_ORDER_BASELINE+':'+file],{cwd:root}):fs.readFileSync(path.join(root,file));
 const completedAt = new Date("2026-08-09T12:00:00+04:00").toISOString();
 const pendingStages=fs.readFileSync(path.join(root,"mirpanel-admin/public/cms-admin.js"),"utf8").match(/<div id="paymentPendingStages"[\s\S]*?<\/div>/)[0];
 
@@ -31,6 +34,7 @@ window.api=async(path,options={})=>{
  const state=window.__fixtureState; state.calls.push({path,method:options.method||"GET"}); const parsed=new URL(path,location.origin);
  if(parsed.pathname==="/api/admin/payment-orders/batch-contacted"){const body=JSON.parse(options.body||"{}");const completed=[],skipped=[];for(const id of [...new Set(body.ids||[])]){const index=state.expiring.findIndex(item=>item.id===id);if(index<0){skipped.push({id,reason:"Sifarişin vəziyyəti dəyişib."});continue;}const item=state.expiring.splice(index,1)[0];item.contactedAt=new Date().toISOString();completed.push({id,orderCode:item.orderCode});}return {requested:(body.ids||[]).length,completed,skipped};}
  const orderParts=parsed.pathname.split("/"); const isOrderAction=orderParts[1]==="api"&&orderParts[2]==="admin"&&orderParts[3]==="payment-orders"&&["approve","reject","contacted"].includes(orderParts[5]);
+ if(orderParts[5]==="details"&&${latency}){await new Promise(r=>setTimeout(r,65));return {lines:[{index:0,fields:[{label:"Sınaq",value:"Sintetik sahə"}]}]};}
  if(orderParts[5]==="cancel-fulfillment"){
   const item=state.delivery.find(row=>row.id===orderParts[4]);
   const full=!item.fixturePartial;
@@ -44,17 +48,19 @@ window.api=async(path,options={})=>{
  }
  if(orderParts[5]==="delivery"){
   if(options.method==="POST"){state.lastDelivery=JSON.parse(options.body);state.delivery=state.delivery.filter(row=>row.id!==orderParts[4]);return {status:"completed"};}
+  if(${latency})await new Promise(r=>setTimeout(r,550));
   return {lines:[{index:0,title:"Sintetik",plan:"1 ay",remaining:1,message:"Sintetik təhvil"}]};
  }
  if(isOrderAction){const id=orderParts[4],type=orderParts[5]; const pending=state.pending.findIndex(item=>item.id===id); if(type==="approve"){if(pending<0)return {idempotent:true,status:"completed"};const item=state.pending.splice(pending,1)[0];item.status="completed";item.completedAt=new Date().toISOString();state.all.unshift(item);return {idempotent:false,status:"completed"};}if(type==="reject"){if(pending<0)return {idempotent:true,status:"rejected"};state.pending.splice(pending,1);return {idempotent:false,status:"rejected"};}const expiring=state.expiring.findIndex(item=>item.id===id);if(expiring<0)return {idempotent:true};const item=state.expiring.splice(expiring,1)[0];item.contactedAt=new Date().toISOString();return {idempotent:false,contactedAt:item.contactedAt};}
  if(parsed.pathname==="/api/admin/payment-orders"){
   const tab=parsed.searchParams.get("tab")||"pending",page=Number(parsed.searchParams.get("page")||1),pageSize=20;
+  if(${latency}&&parsed.searchParams.get("pendingStage")==="delivery")await new Promise(r=>setTimeout(r,450));
   let rows=tab==="pending"?(parsed.searchParams.get("pendingStage")==="delivery"?state.delivery||[]:state.pending):tab==="today"?state.all.slice(0,3):tab==="expiring"?state.expiring:state.all;
   const productId=parsed.searchParams.get("productId")||"";if(productId)rows=rows.filter(item=>item.productId===productId);
   const search=(parsed.searchParams.get("search")||"").toUpperCase();if(search==="111")await new Promise(resolve=>setTimeout(resolve,180));if(search==="222")await new Promise(resolve=>setTimeout(resolve,10));if(search&&!['111','222'].includes(search))rows=rows.filter(item=>item.orderCode.includes(search));
   const view=adminListWindow(rows,{page,pageSize,anchorId:parsed.searchParams.get("anchorId"),anchorIndex:parsed.searchParams.get("anchorIndex")});const total=rows.length,start=view.start,statsRows=tab==="pending"?[]:rows;
   const revenue=search==='111'?111:search==='222'?222:Number(statsRows.reduce((sum,item)=>sum+item.amount,0).toFixed(2));
-  return {permissions:{manage:true},orders:view.rows,liveWindow:{newBeforeAnchor:view.newBeforeAnchor,anchorMissing:view.anchorMissing},counts:{pending:state.pending.length,delivery:state.delivery?.length||0,pendingTotal:state.pending.length+(state.delivery?.length||0),today:3,all:state.all.length,expiring:state.expiring.length},statistics:{count:statsRows.length,revenue,cost:65,profit:revenue-65,profitMargin:43.48,missingCostCount:2,topProduct:statsRows.length?"CapCut Pro":"—",topProfitProduct:"CapCut Pro",products:[{title:"CapCut Pro",count:Math.ceil(statsRows.length/2),revenue:80,cost:40,profit:40,margin:50,missingCostCount:1}],plans:[{productTitle:"CapCut Pro",planName:"1 aylıq",count:10,revenue:59.9,cost:32.5,profit:27.4,missingCostCount:0}],paymentMethods:[{label:"LeoBank •••• 4419",count:statsRows.length,revenue,cost:65}],days:[{date:"2026-08-09",count:statsRows.length,revenue,cost:65,profit:revenue-65,missingCostCount:2}]},pagination:{page,pageSize,total,totalPages:Math.max(1,Math.ceil(total/pageSize))},appliedFilters:{dateFrom:'2026-08-01',dateTo:'2026-08-31'},filters:{products:state.catalogProducts,plans:["1 aylıq","3 aylıq"],methods:[{id:"00000000-0000-4000-8000-000000004419",label:"LeoBank •••• 4419"}]},selection:tab==="expiring"?{ids:rows.map(item=>item.id),total:rows.length}:{ids:[],total:0}};
+  return {permissions:{manage:true,fields:${latency}},orders:view.rows,liveWindow:{newBeforeAnchor:view.newBeforeAnchor,anchorMissing:view.anchorMissing},counts:{pending:state.pending.length,delivery:state.delivery?.length||0,pendingTotal:state.pending.length+(state.delivery?.length||0),today:3,all:state.all.length,expiring:state.expiring.length},statistics:{count:statsRows.length,revenue,cost:65,profit:revenue-65,profitMargin:43.48,missingCostCount:2,topProduct:statsRows.length?"CapCut Pro":"—",topProfitProduct:"CapCut Pro",products:[{title:"CapCut Pro",count:Math.ceil(statsRows.length/2),revenue:80,cost:40,profit:40,margin:50,missingCostCount:1}],plans:[{productTitle:"CapCut Pro",planName:"1 aylıq",count:10,revenue:59.9,cost:32.5,profit:27.4,missingCostCount:0}],paymentMethods:[{label:"LeoBank •••• 4419",count:statsRows.length,revenue,cost:65}],days:[{date:"2026-08-09",count:statsRows.length,revenue,cost:65,profit:revenue-65,missingCostCount:2}]},pagination:{page,pageSize,total,totalPages:Math.max(1,Math.ceil(total/pageSize))},appliedFilters:{dateFrom:'2026-08-01',dateTo:'2026-08-31'},filters:{products:state.catalogProducts,plans:["1 aylıq","3 aylıq"],methods:[{id:"00000000-0000-4000-8000-000000004419",label:"LeoBank •••• 4419"}]},selection:tab==="expiring"?{ids:rows.map(item=>item.id),total:rows.length}:{ids:[],total:0}};
  }
  if(parsed.pathname==="/api/admin/payment-monthly-reports")return {current:{monthStart:"2026-09-01",completedCount:4,revenue:31.96,cost:13,profit:18.96,missingCostCount:0,topProduct:"Netflix Şəxsi",products:[{title:"Netflix Şəxsi",count:3,revenue:23.97}],paymentMethods:[{label:"LeoBank •••• 4419",count:4,revenue:31.96}]},archives:[{monthStart:"2026-08-01",completedCount:26,revenue:180,cost:70,profit:110,missingCostCount:2,topProduct:"CapCut Pro",products:[{title:"CapCut Pro",count:14,revenue:85}],paymentMethods:[{label:"ABB •••• 4655",count:26,revenue:180}]}]};
  if(parsed.pathname==="/api/admin/payment-costs"){if((options.method||"GET")==="POST"){const body=JSON.parse(options.body);for(const change of body.items){const row=state.costs.find(item=>item.productId===change.productId&&item.planId===change.planId);if(row){row.costAmount=change.cost;row.updatedAt=new Date().toISOString();}}return {changed:body.items.length,idempotent:false,rows:state.costs};}return {rows:state.costs,productCount:2,planCount:2,categories:["film","video"]};}
@@ -82,8 +88,8 @@ ${pendingStages.replace('id="paymentPendingCount"','id="fixtureReviewCount"')}
 
 const server = http.createServer((request, response) => {
   const pathname = new URL(request.url, "http://localhost").pathname;
-  if(pathname==="/admin-live-list.js"){response.writeHead(200,{"Content-Type":"application/javascript; charset=utf-8"});return response.end(fs.readFileSync(path.join(root,"mirpanel-admin/public/admin-live-list.js")));}
-  if (pathname === "/payment-admin.js") { response.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8" }); return response.end(fs.readFileSync(path.join(root, "mirpanel-admin/public/payment-admin.js"))); }
+  if(pathname==="/admin-live-list.js"){response.writeHead(200,{"Content-Type":"application/javascript; charset=utf-8"});return response.end(source("mirpanel-admin/public/admin-live-list.js"));}
+  if (pathname === "/payment-admin.js") { response.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8" }); return response.end(source("mirpanel-admin/public/payment-admin.js")); }
   if (pathname === "/admin.css") { response.writeHead(200, { "Content-Type": "text/css; charset=utf-8" }); return response.end(fs.readFileSync(path.join(root, "mirpanel-admin/public/admin.css"))); }
   if (pathname === "/fixture-state.js") { response.writeHead(200, { "Content-Type": "application/javascript; charset=utf-8" }); return response.end(fixtureScript); }
   response.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }); response.end(html);

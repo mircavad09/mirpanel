@@ -10,6 +10,7 @@ const baseline=process.argv.includes('--before'),audit=process.argv.includes('--
 const usersOnly=process.argv.includes('--users');
 const filtersOnly=process.argv.includes('--order-filters');
 const walletOnly=process.argv.includes('--wallet-history');
+const navigationOnly=process.argv.includes('--navigation-only');
 const phase=baseline?'before':live?'live':'after';
 const output=path.resolve('../../outputs/admin-mobile-layout');
 fs.mkdirSync(output,{recursive:true});
@@ -113,6 +114,12 @@ try{
     await page.locator('#'+v+'View').waitFor();
    };
    const mobile=width<600;
+   if(navigationOnly){
+    for(const view of ['paymentOrders','products','communityUsers','communityShop','paymentOrders'])await open(view);
+    await page.locator('.paymentOrderAdminCard').first().waitFor();
+    console.log(JSON.stringify({engine:engine.name(),width,navigation:true,overflow:await page.evaluate(()=>Math.max(0,document.documentElement.scrollWidth-innerWidth))}));
+    continue;
+   }
    if(walletOnly){
     await open('communityUsers');
     const view=page.locator('#communityUsersView');

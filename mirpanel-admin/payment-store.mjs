@@ -491,6 +491,8 @@ export function createPaymentStore(config) {
       }
       // Start counters alongside the list, and propagate errors when joining below.
       void countsRequest.catch(() => {});
+      const methodsRequest=Promise.resolve(client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }));
+      void methodsRequest.catch(()=>{});
 
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
@@ -529,7 +531,11 @@ export function createPaymentStore(config) {
       // Read every matching row in bounded pages: neither a UI page nor a 5000-row
       // cap can determine the available durations or the filtered batch selection.
       const matchProduct = filters.productId ? orderProductMatcher(filters.productId, catalog) : null;
-      const facetColumns = "id,product_id,product_title,plan_id,plan_name,duration_months,status,completed_at,created_at,payment_confirmed,amount,sale_price_snapshot,cost_price_snapshot,profit_snapshot" +
+      // A delivery queue that fits one page does not need a second round trip
+      // to load the same rows. Large/filtered queues still use bounded facets.
+      const loadQueueInOnePass=deliveryQueue&&deliveryProgress&&deliveryProgress.size<=filters.pageSize&&!matchProduct&&!filters.durationMonths;
+      const detailedRows=new Map();
+      const facetColumns = loadQueueInOnePass ? select : "id,product_id,product_title,plan_id,plan_name,duration_months,status,completed_at,created_at,payment_confirmed,amount,sale_price_snapshot,cost_price_snapshot,profit_snapshot" +
         (matchProduct ? ",method_id,method_name_snapshot,method_last4_snapshot,cart_items:checkout_snapshot->items,snapshot_product:checkout_snapshot->>productId" : "");
       const facetRows = [];
       const seenOrders = new Set();
@@ -562,6 +568,7 @@ export function createPaymentStore(config) {
             const rangeEnd = completedView ? todayBounds.endExclusive : filters.dateTo && bakuDayBounds(filters.dateTo).endExclusive;
             if (paidView && rangeEnd && Date.parse(completedAt)>=Date.parse(rangeEnd)) continue;
             seenOrders.add(row.id);
+            if(loadQueueInOnePass)detailedRows.set(row.id,row);
             const {cart_items, snapshot_product, ...summary} = row;
             facetRows.push(completedView||completions.has(row.id)?{...summary,status:'completed',completed_at:completedAt}:summary);
           }
@@ -580,12 +587,13 @@ export function createPaymentStore(config) {
       const matchedRows = filters.durationMonths ? facetRows.filter((row) => orderDuration(row) === filters.durationMonths) : facetRows;
       const view=adminListWindow(matchedRows,{page:filters.page,pageSize:filters.pageSize,anchorId:safeUuid(input.anchorId),anchorIndex:input.anchorIndex});
       const pageIds = view.rows.map((row) => row.id);
-      const query = pageIds.length ? matchingQuery(select, {}, pageIds).in("id", pageIds) : Promise.resolve({ data: [], error: null });
+      const query = loadQueueInOnePass ? Promise.resolve({data:pageIds.map(id=>detailedRows.get(id)),error:null})
+        : pageIds.length ? matchingQuery(select, {}, pageIds).in("id", pageIds) : Promise.resolve({ data: [], error: null });
 
       const [{ data, error }, [pendingCount, todayCount, completedCount, expiringCount], methodRows, statistics] = await Promise.all([
         query,
         countsRequest,
-        client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
+        methodsRequest,
         deliveryQueue || reviewQueue || paidView || filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows.filter(o=>o.status!=="cancelled"), { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
           p_search: filters.search || null,

@@ -89,8 +89,8 @@ export async function adminOrderCustomers(pool,ids){
 export async function adminDelivery(pool,security,actor,id,input,{productMessage=false}={}){
  const c=await pool.connect();
  try{
-  await c.query('begin');
-  const o=(await c.query(`select o.* from public.payment_orders o where o.id=$1 and exists(select 1 from ${O} where order_id=o.id) for update`,[id])).rows[0];
+  await c.query(input?'begin':'begin isolation level repeatable read read only');
+  const o=(await c.query(`select o.* from public.payment_orders o where o.id=$1 and exists(select 1 from ${O} where order_id=o.id)${input?' for update':''}`,[id])).rows[0];
   if(!o)throw fail(404,'Hesaba bağlı sifariş tapılmadı.');
   if(!paid(o))throw fail(409,'Əvvəl ödəniş təsdiqlənməlidir.');
   const lines=deliveryLines(o),records=await deliveryRecords(c,[id]),done=totals(records);
