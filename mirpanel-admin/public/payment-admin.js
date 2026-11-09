@@ -200,7 +200,7 @@
         <button class="paymentOrderCardToggle" type="button" data-order-toggle aria-label="Sifariş № ${escp(order.orderCode)}" aria-expanded="${expanded}" aria-controls="${detailId}" aria-describedby="${timeId}"><span class="paymentOrderCardMeta"><span class="statusPill status-${escp(expiring ? order.expiry?.code : displayStatus)}">${escp(expiring ? order.expiry?.label : statusLabel[displayStatus] || "Yoxlanılır")}</span>${orderTimeMarkup(order.createdAt,timeId)}</span><span class="paymentOrderCardPreview">${escp(product)}</span><b class="paymentOrderCardPreview">${escp(money(order.amount,order.currency))}</b><span class="paymentOrderCardArrow" aria-hidden="true">⌄</span></button>
       </div>
       <div class="paymentOrderCardDetails" id="${detailId}"${expanded?'':' hidden'}>
-      <dl><div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div></dl>
+      <dl><div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div>${order.cancellation?.reason?'<div><dt>Ləğv səbəbi</dt><dd style="white-space:pre-wrap">'+escp(order.cancellation.reason)+'</dd></div>':''}</dl>
       <div class="paymentOrderActions">
         ${manage && displayStatus==='preparing'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
         ${manage && deliveryQueue?'<button class="btn danger" type="button" data-cancel-fulfillment>Ləğv et</button>':''}
@@ -699,16 +699,24 @@
     paymentState.selectedMethodId = ""; $p("paymentMethodEditor").innerHTML = ""; toast("Ödəniş üsulu təhlükəsiz saxlanıldı."); await loadMethods();
   }
 
-  function paymentActionDialog({ title, message, confirmText = "Təsdiqlə", danger = false }) {
+  function paymentActionDialog({ title, message, confirmText = "Təsdiqlə", danger = false, cancellationReason = false }) {
     return new Promise((resolve) => {
       const dialog = document.createElement("dialog"); dialog.className = "paymentActionDialog";
-      dialog.innerHTML = `<form method="dialog" class="paymentActionDialogCard"><div class="sectionHead"><div><h3>${escp(title)}</h3><p>${escp(message)}</p></div><button class="btn" type="button" data-payment-dialog-close aria-label="Bağla">×</button></div><div class="paymentOrderActions"><button class="btn" type="button" data-payment-dialog-close>Ləğv et</button><button class="btn ${danger ? "danger" : "primary"}" type="submit">${escp(confirmText)}</button></div></form>`;
+      dialog.innerHTML = `<form method="dialog" class="paymentActionDialogCard"><div class="sectionHead"><div><h3>${escp(title)}</h3><p>${escp(message)}</p></div><button class="btn" type="button" data-payment-dialog-close aria-label="Bağla">×</button></div>${cancellationReason?'<label>Ləğv səbəbi<textarea name="reason" required maxlength="1000"></textarea></label>':''}<div class="paymentOrderActions"><button class="btn" type="button" data-payment-dialog-close>${cancellationReason?'Geri':'Ləğv et'}</button><button class="btn ${danger ? "danger" : "primary"}" type="submit">${escp(confirmText)}</button></div></form>`;
       document.body.appendChild(dialog);
       const finish = (result) => { dialog.close(); dialog.remove(); resolve(result); };
       dialog.querySelectorAll("[data-payment-dialog-close]").forEach((button) => button.addEventListener("click", () => finish(false)));
       dialog.addEventListener("cancel", (event) => { event.preventDefault(); finish(false); }, { once: true });
-      dialog.querySelector("form").addEventListener("submit", (event) => { event.preventDefault(); finish(true); });
-      dialog.showModal(); dialog.querySelector('button[type="submit"]')?.focus();
+      const reason=dialog.querySelector('textarea[name="reason"]');
+      reason?.addEventListener("input",()=>reason.setCustomValidity(""));
+      dialog.querySelector("form").addEventListener("submit", (event) => {
+        event.preventDefault();
+        if(!reason){finish(true);return;}
+        const value=reason.value.trim();
+        if(!value){reason.setCustomValidity("Ləğv səbəbini yazın.");reason.reportValidity();return;}
+        finish(value);
+      });
+      dialog.showModal(); (reason||dialog.querySelector('button[type="submit"]'))?.focus();
     });
   }
 
@@ -722,8 +730,9 @@
         const preview=await paymentApi(url);
         const amount=money(preview.refundCents/100,'AZN');
         const refund=preview.refundStatus==='wallet_refunded'?`Balansa qaytarılacaq: ${amount}.`:`Əl ilə karta qaytarılacaq: ${amount}. Köçürmə avtomatik icra edilmir.`;
-        if(!await paymentActionDialog({title:`Sifariş №${preview.orderCode} ləğv edilsin?`,message:`Ödəniş üsulu: ${preview.method}. ${preview.full?'Bütün sifariş':'Yalnız təhvil verilməmiş vahidlər'} ləğv ediləcək. ${refund}`,confirmText:'Ləğvi təsdiqlə',danger:true}))return;
-        await paymentApi(url,{method:'POST',body:JSON.stringify({previewToken:preview.previewToken})});
+        const reason=await paymentActionDialog({title:`Sifariş №${preview.orderCode} ləğv edilsin?`,message:`Ödəniş üsulu: ${preview.method}. ${preview.full?'Bütün sifariş':'Yalnız təhvil verilməmiş vahidlər'} ləğv ediləcək. ${refund}`,confirmText:'Ləğvi təsdiqlə',danger:true,cancellationReason:true});
+        if(!reason)return;
+        await paymentApi(url,{method:'POST',body:JSON.stringify({previewToken:preview.previewToken,reason})});
         invalidateOrders();toast('Ləğv qeydə alındı.');await loadOrders();
       }finally{paymentState.orderActions.delete(id);}
       return;

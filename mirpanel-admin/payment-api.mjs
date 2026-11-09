@@ -848,7 +848,7 @@ export function createPaymentSystem(options) {
       if(action==='cancel-fulfillment'&&options.cancelFulfillment&&['GET','POST'].includes(request.method)){
         if(!options.readyStockAllowed?.(request))throw Object.assign(Error('Ləğv yalnız adminə açıqdır.'),{status:403});
         response.setHeader('Cache-Control','private, no-store');
-        const input=request.method==='POST'?await readBody(request,1000):null;
+        const input=request.method==='POST'?await readBody(request,10000):null;
         if(request.method==='POST'&&!/^[a-f0-9]{64}$/.test(input?.previewToken||''))throw Object.assign(Error('Ləğv təsdiqi tələb olunur.'),{status:400});
         json(response,200,await options.cancelFulfillment(actorName,id,input));return true;
       }

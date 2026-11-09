@@ -41,7 +41,7 @@ window.api=async(path,options={})=>{
   if(options.method==="POST"){
    state.lastCancellation=JSON.parse(options.body);
    state.delivery=state.delivery.filter(row=>row.id!==orderParts[4]);
-   Object.assign(state.all.find(row=>row.id===orderParts[4]),{status:full?"cancelled":"partial_cancelled",cancellation:{refundCents:500,refundStatus:"wallet_refunded"}});
+   Object.assign(state.all.find(row=>row.id===orderParts[4]),{status:full?"cancelled":"partial_cancelled",cancellation:{refundCents:500,refundStatus:"wallet_refunded",reason:state.lastCancellation.reason}});
    return {ok:true};
   }
   return {orderCode:item.orderCode,method:"MirPanel balansı",refundCents:500,full,refundStatus:"wallet_refunded",previewToken:"a".repeat(64)};

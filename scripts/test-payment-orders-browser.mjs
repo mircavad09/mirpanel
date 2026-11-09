@@ -73,12 +73,19 @@ try {
       await confirmation.getByRole("button",{name:"Bağla",exact:true}).click();
       assert.equal(await page.evaluate(()=>window.__fixtureState.lastCancellation),undefined);
       await cancel.click();
-      await confirmation.getByRole("button",{name:"Ləğvi təsdiqlə",exact:true}).click();
+      const reasonField=confirmation.getByRole("textbox",{name:"Ləğv səbəbi"});
+      const confirm=confirmation.getByRole("button",{name:"Ləğvi təsdiqlə",exact:true});
+      await reasonField.fill("   ");
+      await confirm.click();
+      assert.equal(await page.evaluate(()=>window.__fixtureState.lastCancellation),undefined);
+      await reasonField.fill("Sintetik ləğv səbəbi");
+      await confirm.click();
       await page.waitForFunction(()=>document.getElementById("paymentDeliveryCount")?.textContent==="0");
-      assert.equal(await page.evaluate(()=>window.__fixtureState.lastCancellation?.previewToken),"a".repeat(64));
+      assert.deepEqual(await page.evaluate(()=>window.__fixtureState.lastCancellation),{previewToken:"a".repeat(64),reason:"Sintetik ləğv səbəbi"});
       assert.equal(await page.evaluate(()=>window.__fixtureState.calls.filter(c=>c.method==="POST"&&c.path.endsWith("/cancel-fulfillment")).length),1);
       await page.locator('[data-payment-order-tab="all"]').click();
       await page.getByText(partial?"Qismən ləğv edildi":"Ləğv edildi",{exact:true}).waitFor();
+      assert.equal(await page.getByText("Sintetik ləğv səbəbi",{exact:true}).count(),1);
     }
     if(width===390){
       await page.evaluate(()=>{

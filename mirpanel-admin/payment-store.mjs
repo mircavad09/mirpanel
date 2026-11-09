@@ -640,7 +640,7 @@ export function createPaymentStore(config) {
             currency: order.currency,
             status: order.status==='cancelled' ? 'cancelled' : order.fulfillment_cancellation ? 'partial_cancelled'
               : completedView||displayedCompletions.has(order.id) ? 'completed' : adminOrderStatus(order.status, reservation.status),
-            ...(order.fulfillment_cancellation ? {cancellation:{lines:order.fulfillment_cancellation.lines,refundStatus:order.fulfillment_cancellation.refundStatus,refundCents:order.fulfillment_cancellation.refundCents}} : {}),
+            ...(order.fulfillment_cancellation ? {cancellation:{lines:order.fulfillment_cancellation.lines,refundStatus:order.fulfillment_cancellation.refundStatus,refundCents:order.fulfillment_cancellation.refundCents,reason:order.fulfillment_cancellation.reason}} : {}),
             reservationStatus: reservation.status || "",
             createdAt: order.created_at,
             completedAt: order.fulfillment_cancellation?.at || displayedCompletions.get(order.id) || order.completed_at || order.approved_at || (completedView&&order.payment_confirmed ? order.created_at : adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),

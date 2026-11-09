@@ -146,6 +146,39 @@ const mailTable='role="presentation" width="100%" cellspacing="0" cellpadding="0
 export function queueReceiptReview(c,orderId){
  return c.query(`insert into ${M}(event_key,order_id) values('receipt:'||$1::uuid,$1) on conflict do nothing`,[orderId]);
 }
+export function queueFulfillmentCancellation(c,orderId){
+ return c.query(`insert into ${M}(event_key,order_id) values('cancellation:'||$1::uuid,$1) on conflict do nothing`,[orderId]);
+}
+const orderDate=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit'});
+function cancellationMail(job,o,origin){
+ const code=String(o.order_code);if(!orderCodeValid(code))throw Error('INVALID_ORDER_CODE');
+ const cancellation=o.fulfillment_cancellation;
+ const url=new URL('/profil?tab=orders&order='+encodeURIComponent(code),origin).href;
+ const title=cancellation.full?'Sifarişiniz ləğv olundu':'Sifarişiniz qismən ləğv olundu';
+ const date=orderDate.format(new Date(o.created_at)).replaceAll('/','.');
+ const greeting='Salam'+(o.account_name?', '+o.account_name:'')+'!';
+ const intro=date+' tarixində verdiyiniz № '+code+(cancellation.full?' sifariş ləğv olundu.':' sifarişin bir hissəsi ləğv olundu.');
+ const reason='Səbəb — '+cancellation.reason;
+ const orderItems=deliveryLines(o);
+ const cancelled=cancellation.full?[]:cancellation.lines.map(({index,quantity})=>{
+  const item=orderItems[index];
+  return [item.title,item.planName,quantity+' ədəd'].filter(Boolean).join(' · ');
+ });
+ const sum=amount(cancellation.refundCents/100,o.currency);
+ const refund=cancellation.refundCents===0?'Bu ləğv üzrə geri qaytarılacaq məbləğ yoxdur.':
+  cancellation.refundStatus==='wallet_refunded'?sum+' MirPanel balansınıza qaytarıldı.':
+   'Kart üzrə '+sum+' geri ödəniş gözlənilir. Köçürmə əl ilə icra olunur.';
+ const details='Təfərrüatlara “Sifarişlərim” bölməsindən baxa bilərsiniz.';
+ const label='Sifarişlərimə bax';
+ return {user:{email:o.email},subject:'MirPanel — '+title,idempotencyKey:job.event_key,
+  textBody:[greeting,intro,reason,cancelled.length?'Ləğv olunan məhsullar\n'+cancelled.join('\n'):'',refund,details,label+': '+url].filter(Boolean).join('\n\n'),
+  htmlBody:`<div lang="az" style="max-width:560px;margin:auto;padding:16px;color:#202124;font:15px/1.5 Arial,sans-serif;overflow-wrap:anywhere">
+  <h1 style="font-size:23px">${esc(title)}</h1><p>${esc(greeting)}</p><p>${esc(intro)}</p>
+  <p>${esc(reason).replace(/\r\n|\r|\n/g,'<br>')}</p>
+  ${cancelled.length?'<h2 style="font-size:17px">Ləğv olunan məhsullar</h2><ul>'+cancelled.map(item=>'<li>'+esc(item)+'</li>').join('')+'</ul>':''}
+  <p>${esc(refund)}</p><p>${esc(details)}</p>
+  <p><a href="${esc(url)}" style="display:inline-block;background:#ffcf33;color:#222;padding:11px 18px;border-radius:8px;text-decoration:none;font-weight:bold">${label}</a></p></div>`};
+}
 function receiptReviewMail(o,origin){
  const code=String(o.order_code);if(!orderCodeValid(code))throw Error('INVALID_ORDER_CODE');
  const url=new URL('/profil?tab=orders&order='+encodeURIComponent(code),origin).href;
@@ -198,17 +231,18 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    if(!job)return;
    let state='failed',reason='ACCOUNT_NOT_VERIFIED',provider=null,delay=0;
    const o=job.topup_id?(await pool.query(`select u.name,u.email,u."emailVerified"
-    from mirpanel_community.wallet_topups t join mirpanel_community."user" u on u.id=t.user_id where t.id=$1`,[job.topup_id])).rows[0]:(await pool.query(`select o.*,d.id as delivery_id,d.line_index,d.quantity as delivered_quantity,coalesce(ct.name,u.name) as name,u.email,u."emailVerified",ct.email as contact_email,ct.phone
+    from mirpanel_community.wallet_topups t join mirpanel_community."user" u on u.id=t.user_id where t.id=$1`,[job.topup_id])).rows[0]:(await pool.query(`select o.*,d.id as delivery_id,d.line_index,d.quantity as delivered_quantity,coalesce(ct.name,u.name) as name,u.name as account_name,u.email,u."emailVerified",ct.email as contact_email,ct.phone
    from public.payment_orders o join ${O} l on l.order_id=o.id join mirpanel_community."user" u on u.id=l.user_id left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id left join ${D} d on d.id=$2
    where o.id=$1`,[job.order_id,job.delivery_id])).rows[0];
    const receipt=job.event_key.startsWith('receipt:');
-   if(o?.emailVerified&&(job.topup_id||receipt||paid(o))){
+   const cancellation=job.event_key.startsWith('cancellation:');
+   if(o?.emailVerified&&(cancellation?!!o.fulfillment_cancellation?.reason:job.topup_id||receipt||paid(o))){
     try{
-     const records=job.topup_id||receipt||job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
-     const catalog=!job.topup_id&&!receipt&&loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
-     const result=await send('order',job.topup_id?topupMail(job,o,origin):receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog}));
+     const records=job.topup_id||receipt||cancellation||job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
+     const catalog=!job.topup_id&&!receipt&&!cancellation&&loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
+     const result=await send('order',job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog}));
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
-     state='accepted';reason=requireDeliveryNotice&&(job.topup_id||!receipt&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
+     state='accepted';reason=requireDeliveryNotice&&(job.topup_id||!receipt&&!cancellation&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
      const retry=e.deliveryDisposition==='retry'&&job.attempts<3;
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';

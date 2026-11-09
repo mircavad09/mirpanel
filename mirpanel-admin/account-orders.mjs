@@ -33,11 +33,11 @@ export function createAccountOrders({security,store,resolve}){
     const records=(deliveries||[]).filter(d=>d.order_id===o.id);
     const status=deliveries?customerStatus(o,records):o.status;
     const cancellation=o.fulfillment_cancellation;
-    const refundNote=cancellation?.refundStatus==='wallet_refunded'?'Məbləğ MirPanel balansına qaytarılıb.':cancellation?.refundStatus==='card_pending'?'Kart üzrə geri ödəniş gözlənilir.':'';
+    const refundNote=cancellation?.refundCents===0?'Bu ləğv üzrə geri qaytarılacaq məbləğ yoxdur.':cancellation?.refundStatus==='wallet_refunded'?'Məbləğ MirPanel balansına qaytarılıb.':cancellation?.refundStatus==='card_pending'?'Kart üzrə geri ödəniş gözlənilir.':'';
     const snap=o.checkout_snapshot,product=products.get(o.product_id||snap?.productId),lines=orderLines(snap);
     // An order-wide expiry cannot identify a package in a multi-line purchase.
     const expiresOn=status==='completed'&&lines.length<=1&&records.some(d=>d.line_index===0)?safeCalendarDate(o.service_expires_on)||null:null;
-    return {id:o.id,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus}}:{}),items:lines.map((x,i)=>{
+    return {id:o.id,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus,reason:cancellation.reason}}:{}),items:lines.map((x,i)=>{
      const item=snap.items[i],current=products.get(x.productId);
      return {...x,image:item.image||current?.image||'',warranty:warrantyText({...item,label:x.planName}),durationMonths:item.durationMonths??null,expiresOn,repeat:repeatPlan(current,item.sourcePlanKey??item.planId,x.planName)};
     }),image:snap?.image||product?.image||'',quantity:o.quantity||snap?.quantity||1,warranty:warrantyText({...snap,label:o.plan_name}),durationMonths:o.duration_months??snap?.durationMonths??null,repeat:repeatPlan(product,snap?.planId??o.plan_id,o.plan_name),plan:o.plan_name,amount:o.amount===null?null:Number(o.amount),currency:o.currency,createdAt:o.created_at,status,statusMessage:cancellation?((cancellation.full?'Sifarişiniz ləğv edildi.':'Təhvil verilməyən məhsullar ləğv edildi.')+' '+refundNote).trim():status==='preparing'?'Ödəniş təsdiqləndi. Sifariş hazırlanır.':customerOrderStatus(status,flows.get(o.id)?.state),autoDelivered:status==='completed'&&records.some(d=>d.automatic),deliveries:['preparing','completed'].includes(status)?records.map(d=>({id:d.id,line:d.line_index,quantity:d.quantity})):[],receiptAvailable:!o.receipt_deleted_at&&!!o.receipt_path};

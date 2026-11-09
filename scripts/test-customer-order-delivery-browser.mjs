@@ -11,15 +11,19 @@ const ready='Giriş qaydası\n\nİkinci sətir ✨\n  Son sətir';
 const repeat={productId:'synthetic',title:'Synthetic first',planIndex:0,planName:'1 ay'};
 const price=725,field={key:'room',label:'Otaq adı',type:'text',required:true,minLength:1,maxLength:40};
 const guides=[{information:'# Əsas qaydalar\n\n- Sintetik telefon qaydası.\n\n'+('Yalnız sınaq üçün yazılmış əlavə izah.\n'.repeat(40)),tracks:{phone:[{image:'https://guide.example.test/1.png',description:'Tətbiqi açın.'},{image:'https://guide.example.test/2.png',description:'Sınaq profilini seçin.'}]}},{information:'İkinci məhsula aid qayda.',tracks:{desktopQr:[{image:'https://guide.example.test/3.png',description:'Sınaq ekranını açın.'}]}}];
-let status='reviewing',reveals=0,available=1,drafts=0,payments=0,receiptReads=0,expiresOn,preview=false,autoDelivered=false,newerStatus=null,realProfile=false;
+let cancellation=null,status='reviewing',reveals=0,available=1,drafts=0,payments=0,receiptReads=0,expiresOn,preview=false,autoDelivered=false,newerStatus=null,realProfile=false;
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost');
  const json=body=>{res.setHeader('Content-Type','application/json');res.setHeader('Cache-Control','no-store');return res.end(JSON.stringify(body));};
+ if(u.pathname==='/fixture-cancellation-email'){
+  res.setHeader('Content-Type','text/html; charset=utf-8');
+  return res.end('<a href="/profil?tab=orders&amp;order=9180">Sifarişlərimə bax</a>');
+ }
  if(u.pathname==='/api/payments/my-orders'){
   assert([null,'9180'].includes(u.searchParams.get('order')));
   const items=[{title:'CapCut Pro',quantity:1,planName:'1 aylıq (Telefon)',unitCents:500,repeat,expiresOn:status==='completed'?expiresOn:undefined,image:'/assets/capcut.png'}];
   if(!preview)items.push({title:'Əlavə sınaq paketi',quantity:1,planName:'1 aylıq uzun paket adı — uzun sətir üçün sınaq',unitCents:600,warranty:'7 gün zəmanət'});
-  const original={id:order,orderCode:'9180',product:'CapCut Pro · Sınaq sifarişi',amount:preview?5:11,status,autoDelivered,createdAt:'2026-11-08T09:03:00Z',receiptAvailable:true,items,deliveries:[{id:delivery,line:0,quantity:1},...(!preview&&status==='completed'?[{id:legacy,line:1,quantity:1}]:[])]};
+  const original={id:order,orderCode:'9180',product:'CapCut Pro · Sınaq sifarişi',amount:preview?5:11,status,autoDelivered,createdAt:'2026-11-08T09:03:00Z',receiptAvailable:true,items,...(cancellation?{cancellation,statusMessage:'Sifarişiniz ləğv edildi.'}:{}),deliveries:[{id:delivery,line:0,quantity:1},...(!preview&&status==='completed'?[{id:legacy,line:1,quantity:1}]:[])]};
   const newer={...original,id:'newer-order',orderCode:'9181',status:newerStatus,createdAt:'2026-11-09T09:03:00Z',deliveries:[]};
   return json({accountId:'synthetic-orders',orders:newerStatus?[newer,original]:[original],nextCursor:null});
  }
@@ -278,6 +282,13 @@ try{
    await page.evaluate(()=>window.MirpanelNavigation?.go('/profil')??location.assign('/profil'));
    await gold('.profile-balance > button.primary');
    await page.getByRole('button',{name:'Balansı artır',exact:true}).waitFor();
+   status='cancelled';newerStatus='completed';
+   cancellation={reason:'Sintetik səbəb <sınaq>',lines:[{index:0,quantity:1},{index:1,quantity:1}]};
+   await page.goto(origin+'/fixture-cancellation-email');
+   await page.getByRole('link',{name:'Sifarişlərimə bax'}).click();
+   await page.locator('[data-order-code="9180"][open]').getByText('Səbəb — Sintetik səbəb <sınaq>',{exact:true}).waitFor();
+   assert.equal(await page.locator('[data-order-code="9181"]').getAttribute('open'),null);
+   status='completed';newerStatus=null;cancellation=null;
    realProfile=false;
    page.off('framenavigated',capture);
    console.log('PASS '+name+' — status, deep link, protected receipt, private reveal and exact copy, repurchase/current price/fields');

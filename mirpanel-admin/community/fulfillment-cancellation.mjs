@@ -1,5 +1,5 @@
 import {createHash} from 'node:crypto';
-import {adminPendingDeliveries,deliveryLines,deliveryRecords} from './order-delivery.mjs';
+import {adminPendingDeliveries,deliveryLines,deliveryRecords,queueFulfillmentCancellation} from './order-delivery.mjs';
 import {postLedger} from '../shop.mjs';
 
 const conflict=message=>Object.assign(Error(message),{status:409});
@@ -18,6 +18,9 @@ export async function cancelFulfillment(pool,actor,id,input){
    if(input?.previewToken===previous.previewToken){await c.query('commit');return {ok:true,idempotent:true};}
    throw unavailable();
   }
+  const reason=typeof input?.reason==='string'?input.reason.trim():'';
+  if(input&&(!reason||reason.length>1000))
+   throw Object.assign(Error('Ləğv səbəbini yazın (ən çox 1000 simvol).'),{status:400});
   const pending=(await adminPendingDeliveries(c,[id],{progress:true}))[0];
   if(!pending)throw unavailable();
   const lines=deliveryLines(order);
@@ -67,10 +70,11 @@ export async function cancelFulfillment(pool,actor,id,input){
    await postLedger(c,{actor:order.user_id,user:order.user_id,key:id,cents:refundCents,kind:'purchase_refund',reason:'Təhvil verilməyən sifarişin balans qaytarılması'});
    await c.query('insert into mirpanel_community.community_refunds(order_id,cents) values($1,$2) on conflict(order_id) do update set cents=excluded.cents',[id,refundCents]);
   }
-  const result={...preview,previewToken,at:new Date().toISOString()};
+  const result={...preview,reason,previewToken,at:new Date().toISOString()};
   if(full)await c.query("update public.payment_orders set fulfillment_cancellation=$2,status='cancelled',updated_at=now() where id=$1",[id,result]);
   else await c.query('update public.payment_orders set fulfillment_cancellation=$2,updated_at=now() where id=$1',[id,result]);
-  await c.query("insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('admin',$1,'order.fulfillment_cancelled','order',$2,$3)",[actor,id,{...preview}]);
+  await c.query("insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('admin',$1,'order.fulfillment_cancelled','order',$2,$3)",[actor,id,{...preview,reason}]);
+  await queueFulfillmentCancellation(c,id);
   await c.query('commit');
   return {ok:true,refundStatus:preview.refundStatus};
  }catch(e){
