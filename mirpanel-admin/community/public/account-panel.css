@@ -15,3 +15,24 @@ body.profile-screen #communityApp {
   min-block-size: calc(100vh - 6rem);
   min-block-size: calc(100dvh - 6rem);
 }
+
+/* Group labels also separate the horizontally scrolling mobile menu. */
+.account-menu-heading{flex:none;align-self:center;padding:0 6px;font-size:10px;font-weight:700;letter-spacing:.04em;color:#92979e;white-space:nowrap}
+.account-menu-divider{flex:none;align-self:stretch;width:1px;border:0;background:#303238;margin:4px 6px}
+.account-tabs .account-menu-logout{color:#ff7777;cursor:pointer}
+.account-menu-status:empty{display:none}
+.account-menu-status{font-size:12px;color:#ffaaaa}
+.account-tabs .account-tab[aria-current=page]{box-shadow:inset 3px 0 #bd9200;font-weight:600}
+.account-tabs .account-tab:active,.account-tabs .account-tab[data-pressed]{background:#e5e5e1;color:#17191b;border-color:#e5e5e1}
+.account-tabs .account-menu-logout:active,.account-tabs .account-menu-logout[data-pressed]{color:#b42323}
+@media(hover:hover) and (pointer:fine){
+ .account-tabs .account-tab:hover{background:#e5e5e1;color:#17191b;border-color:#e5e5e1}
+ .account-tabs .account-menu-logout:hover{color:#b42323}
+}
+.account-tabs .account-tab:focus-visible{outline:3px solid #ffd400;outline-offset:2px}
+.account-tabs .account-menu-logout:disabled{opacity:.6;cursor:wait}
+@media(min-width:1024px){
+ .account-menu-heading{align-self:stretch;padding:16px 12px 3px;font-size:10px}
+ .account-menu-divider{width:auto;height:1px;margin:14px 0}
+ .account-tabs .account-menu-logout{width:100%;text-align:left}
+}

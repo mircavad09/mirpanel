@@ -33,7 +33,7 @@
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=profile-resume-1';
- const profileModule='/community-assets/profile-entry.js?v=compact-profile-editor-1';
+ const profileModule='/community-assets/profile-entry.js?v=profile-menu-2';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
@@ -84,7 +84,7 @@
  if(location.pathname==='/')window.mirpanelRestoreCatalog?.();
  }finally{window.mirpanelNavigationMounting=false;}}
  async function mountProfileRoute(u,run){
-  const css='/community-assets/account-panel.css?v=profile-sidebar-1';
+  const css='/community-assets/account-panel.css?v=profile-menu-2';
   if(!document.querySelector('link[href="'+css+'"]')){const style=document.createElement('link');style.rel='stylesheet';style.setAttribute('href',css);style.dataset.shellPersistent='';document.head.append(style);}
   const app=document.createElement('main');app.id='communityApp';app.className='community-shell';root.replaceChildren(app);mounted=true;
   routeClasses.add('community-page');document.body.classList.add('community-page','profile-screen');

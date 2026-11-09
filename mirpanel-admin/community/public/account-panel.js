@@ -1,4 +1,4 @@
-import {accountLabels,accountTab,accountTabIcon,accountTabPath} from './profile-shell.js?v=profile-sidebar-1';
+import {accountLabels,accountTab,accountMenu} from './profile-shell.js?v=profile-menu-2';
 const sessionKey=Symbol.for('mirpanel.profile.session-lists');
 const sessionLists=window[sessionKey]??={uid:null,entries:new Map(),views:new Map(),listening:false};
 const setOwner=uid=>{if(uid!==sessionLists.uid){sessionLists.entries.clear();sessionLists.views.clear();sessionLists.uid=uid;}};
@@ -23,7 +23,30 @@ export function renderAccountPanel(ctx){
  window.addEventListener('pagehide',()=>rememberScroll(true),{capture:true,signal:life.signal});
  const dispose=()=>{if(stopped)return;rememberScroll();stopped=true;load++;life.abort();if(window.mirpanelAccountNavigate===navigate)window.mirpanelAccountNavigate=null;disposeChild?.();app.replaceChildren();};
  const nav=el('nav',{class:'account-tabs','aria-label':'Hesab bölmələri'}),identity=el('section',{class:'account-sidebar-card','aria-label':'Hesab məlumatları'}),sidebar=el('aside',{class:'account-sidebar'},identity,nav),content=el('section',{class:'account-tab-content','aria-live':'polite'}),shell=el('div',{class:'account-panel'},sidebar,content);app.replaceChildren(shell);
- for(const [id,label] of Object.entries(accountLabels)){const a=link('',accountTabPath(id),'account-tab');a.dataset.accountTab=id;a.insertAdjacentHTML('afterbegin',accountTabIcon(id));a.append(el('span',{},label));nav.append(a);}
+ nav.innerHTML=accountMenu(accountTab(location.search));
+ let pressed=null;
+ const releasePress=()=>{pressed?.removeAttribute('data-pressed');pressed=null;};
+ nav.addEventListener('pointerdown',e=>{
+  if(e.pointerType!=='touch')return;
+  releasePress();pressed=e.target.closest('.account-tab');pressed?.setAttribute('data-pressed','');
+ },{signal:life.signal});
+ nav.addEventListener('pointermove',releasePress,{signal:life.signal});
+ nav.addEventListener('scroll',releasePress,{signal:life.signal});
+ window.addEventListener('pointerup',releasePress,{signal:life.signal});
+ window.addEventListener('pointercancel',releasePress,{signal:life.signal});
+ window.addEventListener('blur',releasePress,{signal:life.signal});
+ const logout=nav.querySelector('.account-menu-logout'),logoutStatus=nav.querySelector('.account-menu-status');
+ logout.addEventListener('click',async()=>{
+  logout.disabled=true;logoutStatus.textContent='';
+  try{
+   await api('/api/auth/sign-out',{});
+   try{localStorage.setItem('mirpanel.auth.signedOut',String(Date.now()));}catch{}
+   window.mirpanelAccountProfile=null;
+   window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));
+   await window.refreshCommunityNav?.();
+   if(window.MirpanelNavigation)await window.MirpanelNavigation.go('/qrup');else location.assign('/qrup');
+  }catch(e){logoutStatus.textContent=e.message;logout.disabled=false;}
+ },{signal:life.signal});
  const empty=(title,text='Bu hesab üçün hələ qeyd yoxdur.')=>el('section',{class:'account-empty'},el('h2',{},title),el('p',{},text));
  const safeImage=url=>{try{const u=new URL(url,location.origin);return ['http:','https:'].includes(u.protocol)?u.href:'';}catch{return '';}};
  function identityCard(p){const photo=el('span',{class:'account-sidebar-avatar'});if(p.avatarUrl&&safeImage(p.avatarUrl))photo.append(el('img',{src:safeImage(p.avatarUrl),alt:''}));else photo.textContent=ctx.avatars[p.avatar]||ctx.avatars[0];const copied=el('span',{class:'account-copy-status',role:'status'}),copy=button('Kopyala',async()=>{try{await navigator.clipboard.writeText(String(p.member_number));copied.textContent='Kopyalandı';}catch{copied.textContent='Kopyalama alınmadı';}});copy.disabled=!p.member_number;const wallet=link('Balansı artır','/balans','account-sidebar-topup');identity.replaceChildren(el('div',{class:'account-sidebar-person'},photo,el('div',{},el('strong',{},p.display_name),el('span',{},p.email||'—'))),el('div',{class:'account-sidebar-id'},el('span',{},'# ID: '+(p.member_number||'—')),copy),copied,el('div',{class:'account-sidebar-balance'},el('strong',{},Number.isSafeInteger(p.balanceCents)?money(p.balanceCents):'—'),wallet));}
