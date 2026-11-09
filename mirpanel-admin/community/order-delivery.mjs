@@ -1,3 +1,4 @@
+import {topupMail} from './topup-mail.mjs';
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {orderLines} from '../order-lines.mjs';
 
@@ -169,22 +170,27 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    // A delivery can be committed with its payment in one transaction. Queue
    // ordering alone (including SKIP LOCKED) cannot express this dependency.
    const {rows:[job]}=await pool.query(`with next as (select j.event_key from ${M} j where j.state='queued' and j.next_at<=now()
+    and (j.topup_id is null or j.event_key like 'topup-received:%' or exists(
+      select 1 from ${M} prior where prior.event_key='topup-received:'||j.topup_id
+       and prior.state='accepted' and prior.provider_id is not null
+       and (not $1::boolean or prior.reason='RESEND_DELIVERED')))
     and (j.delivery_id is null or exists(select 1 from ${M} p where p.event_key='payment:'||j.order_id and p.order_id=j.order_id and p.delivery_id is null and p.state='accepted' and p.provider_id is not null and (not $1::boolean or p.reason='RESEND_DELIVERED')))
     order by j.next_at,j.event_key for update of j skip locked limit 1)
    update ${M} m set state='sending',attempts=attempts+1,updated_at=now() from next where next.event_key=m.event_key returning m.*`,[requireDeliveryNotice]);
    if(!job)return;
    let state='failed',reason='ACCOUNT_NOT_VERIFIED',provider=null,delay=0;
-   const o=(await pool.query(`select o.*,d.id as delivery_id,d.line_index,d.quantity as delivered_quantity,coalesce(ct.name,u.name) as name,u.email,u."emailVerified",ct.email as contact_email,ct.phone
+   const o=job.topup_id?(await pool.query(`select u.name,u.email,u."emailVerified"
+    from mirpanel_community.wallet_topups t join mirpanel_community."user" u on u.id=t.user_id where t.id=$1`,[job.topup_id])).rows[0]:(await pool.query(`select o.*,d.id as delivery_id,d.line_index,d.quantity as delivered_quantity,coalesce(ct.name,u.name) as name,u.email,u."emailVerified",ct.email as contact_email,ct.phone
    from public.payment_orders o join ${O} l on l.order_id=o.id join mirpanel_community."user" u on u.id=l.user_id left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id left join ${D} d on d.id=$2
    where o.id=$1`,[job.order_id,job.delivery_id])).rows[0];
    const receipt=job.event_key.startsWith('receipt:');
-   if(o?.emailVerified&&(receipt||paid(o))){
+   if(o?.emailVerified&&(job.topup_id||receipt||paid(o))){
     try{
-     const records=receipt||job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
-     const catalog=!receipt&&loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
-     const result=await send('order',receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog}));
+     const records=job.topup_id||receipt||job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
+     const catalog=!job.topup_id&&!receipt&&loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
+     const result=await send('order',job.topup_id?topupMail(job,o,origin):receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog}));
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
-     state='accepted';reason=requireDeliveryNotice&&!receipt&&!job.delivery_id?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
+     state='accepted';reason=requireDeliveryNotice&&(job.topup_id||!receipt&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
      const retry=e.deliveryDisposition==='retry'&&job.attempts<3;
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';
@@ -197,7 +203,15 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
   }
  }
  const wake=()=>running??=(drain().catch(()=>console.warn('CUSTOMER_ORDER_MAIL_DATABASE_ERROR')).finally(()=>{running=null;}));
- async function notice({providerId,code,reason}){
+ async function notice({providerId,code,reason,topup=false}){
+  if(topup){
+   const {rowCount}=await pool.query(`update ${M} set reason=$2,updated_at=now()
+    where topup_id is not null and state='accepted' and provider_id=$1
+      and reason is distinct from 'RESEND_DELIVERED'`,[providerId,reason]);
+   if(rowCount){if(reason==='RESEND_DELIVERED')void Promise.resolve(running).then(wake);return true;}
+   const pending=await pool.query(`select 1 from ${M} where topup_id is not null and state='sending'`);
+   return !pending.rowCount;
+  }
   const {rows}=await pool.query(`update ${M} m set reason=$3,updated_at=now() from public.payment_orders o
     where m.order_id=o.id and o.order_code::text=$2 and m.event_key='payment:'||o.id
     and m.delivery_id is null and m.state='accepted' and m.provider_id=$1

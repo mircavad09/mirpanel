@@ -16,6 +16,8 @@ export function accountTab(search){
 }
 export const accountTabPath=tab=>'/profil'+(tab==='profile'?'':'?tab='+tab);
 export function profileReturn(search){
+ const topup=new URLSearchParams(search).get('topup');
+ if(accountTab(search)==='payments'&&/^[a-f0-9-]{36}$/i.test(topup||''))return '/profil?tab=payments&topup='+topup;
  const tab=accountTab(search),code=new URLSearchParams(search).get('order');
  return tab==='orders'&&/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'/profil?tab=orders&order='+code:accountTabPath(tab);
 }

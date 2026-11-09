@@ -28,6 +28,8 @@ export function verifyOrderMailWebhook(raw,headers,secret,now=Date.now()){
   if(!reason)return null;
   const data=body?.data;
   if(!providerId.test(data?.email_id||''))throw bad(400);
+  if(['MirPanel — Ödəniş qəbziniz qəbul edildi','MirPanel — Ödənişiniz təsdiqləndi'].includes(data.subject))
+    return {providerId:data.email_id,reason,topup:true};
   const code=/^Sifarişiniz təsdiqləndi — Sifariş №([A-Za-z0-9-]{1,40})$/u.exec(data.subject||'')?.[1];
   return code?{providerId:data.email_id,reason,code}:null;
 }

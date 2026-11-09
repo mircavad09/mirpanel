@@ -53,8 +53,8 @@
   requestIdleCallback(()=>{if(location.pathname==='/'&&!document.hidden)void prepareListing();},{timeout:1200});
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
- const authModule='/community-assets/auth-forms.js?v=profile-resume-1';
- const profileModule='/community-assets/profile-entry.js?v=profile-menu-2';
+ const authModule='/community-assets/auth-forms.js?v=topup-mail-1';
+ const profileModule='/community-assets/profile-entry.js?v=topup-mail-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
@@ -62,7 +62,7 @@
  void import(authModule).catch(()=>{});
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
  async function moduleWithin(url){let timer;try{return await Promise.race([import(url),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}finally{clearTimeout(timer);}}
- const shopModule='/community-assets/shop-ui.js?v=shell-balance-loading-1',groupModule='/community-assets/community.js?v=shell-latency-1';
+ const shopModule='/community-assets/shop-ui.js?v=shell-balance-loading-1',groupModule='/community-assets/community.js?v=shell-topup-mail-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&((u.pathname===location.pathname&&(a.dataset.browserNav!=='orders'||u.searchParams.get('tab')===new URLSearchParams(location.search).get('tab')))||u.pathname==='/mehsul'&&isProduct(location.pathname)))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));const profile=new URL(current,location.origin).pathname==='/profil';((profile&&window.mirpanelPageDispose)||dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
