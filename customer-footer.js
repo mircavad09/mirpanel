@@ -38,7 +38,10 @@
   </div>
   <div class="customer-footer-end"><span>© ${new Date().getFullYear()} MirPanel · Bütün hüquqlar qorunur</span><a href="/sertler">Şərtlər</a><a href="/sertler#sertler-10">Məxfilik</a></div>
  </div>`;
- document.body.append(footer);document.body.classList.add('has-customer-footer');
+ const balance=document.querySelector('#shopApp.shop-wallet-page');
+ if(balance)(balance.closest('#sitePageContent')||balance).after(footer);
+ else document.body.append(footer);
+ document.body.classList.add('has-customer-footer');
  fetch('/api/payments/storefront',{credentials:'omit',signal:AbortSignal.timeout(10000)}).then(r=>r.ok?r.json():null).then(data=>{
   if(!data)return;
   const onlineOrders=data.completedOrders;
