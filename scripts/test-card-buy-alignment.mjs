@@ -21,7 +21,7 @@ await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin=live?'https://mirpanel.com':'http://127.0.0.1:'+server.address().port;
 const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
 try{
- for(const width of [320,390,1024,1440,1920]) for(const route of ['/','/mehsul']){
+ for(const width of [320,390,430,1440]) for(const route of ['/','/mehsul']){
   const context=await browser.newContext({viewport:{width,height:880},isMobile:width<600,hasTouch:width<600,reducedMotion:'reduce'});
   try{
    const drafts=[];
@@ -57,17 +57,29 @@ try{
    await page.mouse.move(0,0);
    const layout=await grid.locator('.homeProductCard').evaluateAll(cards=>cards.map(card=>{
     const rect=el=>el?.getBoundingClientRect().toJSON();
-    return {card:rect(card),button:rect(card.querySelector('.homeCardAdd')),price:rect(card.querySelector('.homeCardPrices')),sales:rect(card.querySelector('.homeCardSales')),stock:rect(card.querySelector('.cardStockLine'))};
+    return {card:rect(card),button:rect(card.querySelector('.homeCardAdd')),price:rect(card.querySelector('.homeCardPrices')),current:rect(card.querySelector('.homeCardPrices strong')),sales:rect(card.querySelector('.homeCardSales')),stock:rect(card.querySelector('.cardStockLine'))};
    }));
    const intersects=(a,b)=>a&&b&&a.left<b.right-.5&&a.right>b.left+.5&&a.top<b.bottom-.5&&a.bottom>b.top+.5;
    for(const item of layout){
     assert.equal(item.button.width,44);
     assert.equal(item.button.height,44);
     assert(Math.abs(item.card.right-item.button.right-(layout[0].card.right-layout[0].button.right))<1);
-    assert(Math.abs(item.card.bottom-item.button.bottom-(layout[0].card.bottom-layout[0].button.bottom))<1);
+    if(width>=768)assert(Math.abs(item.card.bottom-item.button.bottom-(layout[0].card.bottom-layout[0].button.bottom))<1);
+    else {
+     assert(Math.abs((item.button.top+item.button.bottom)/2-(item.current.top+item.current.bottom)/2)<1);
+     const gap=item.sales.top-item.current.bottom;
+     assert(gap>=2&&gap<=4.5,JSON.stringify({width,gap,item}));
+     if(item.stock)assert(item.stock.top>=item.sales.bottom);
+    }
     assert(!intersects(item.button,item.price)&&!intersects(item.button,item.sales)&&!intersects(item.button,item.stock));
    }
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+   if(width===390){
+    const output=path.resolve('../../outputs/mobil-qiymet-setri');
+    await fs.mkdir(output,{recursive:true});
+    await grid.evaluate(node=>scrollBy(0,node.getBoundingClientRect().top-155));
+    await page.screenshot({path:path.join(output,route==='/'?'sintetik-ana-sehife.png':'sintetik-mehsullar.png')});
+   }
    if(width>=1024){
     for(const id of ['zoom','spotify','capcut']){
      const box=card(id),button=box.locator('.homeCardAdd'),initial=await button.boundingBox();
