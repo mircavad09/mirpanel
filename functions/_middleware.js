@@ -256,7 +256,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?stories\.js(?:\?[^"']*)?(["'])/g,'$1/stories.js?v=home-first-paint-1$2');
   next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=header-session-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=home-first-paint-1$2');
-  next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=product-transition-1$2');
+  next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=desktop-cards-1$2');
   if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=compact-profile-editor-1" data-page-navigation-loader></script></head>');
   if(earlyProductLinks)next=next.replace(/(<head\b[^>]*>)/i,`$1<script>(()=>{let pending,timer;function click(e){if(window.MirpanelNavigation||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.altKey||e.shiftKey)return;const a=e.target.closest?.('a[href]');if(!a||a.target&&a.target!=='_self'||a.hasAttribute('download')||a.hasAttribute('data-native-navigation'))return;const u=new URL(a.href);if(u.origin!==location.origin||!/^\\/mehsul\\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.pathname))return;e.preventDefault();pending=u.href;clearTimeout(timer);timer=setTimeout(()=>{if(pending)location.assign(pending);},2500);}document.addEventListener('click',click,true);window.addEventListener('mirpanel:navigation-ready',()=>{document.removeEventListener('click',click,true);clearTimeout(timer);if(pending)void window.MirpanelNavigation.go(pending);},{once:true});})();</script>`);
   next=next.replace(/(href=["'])\/?desktop-header\.css(?:\?[^"']*)?(["'])/g,'$1/desktop-header.css?v=mobile-anthracite-20261031$2');
@@ -380,7 +380,7 @@ export async function onRequest(context) {
   let html = await response.text();
   html=html.replace(/(src=["'])(\/?stock-display-fix\.js)(?:\?[^"']*)?(["'])/g,'$1$2?v=product-transition-1$3');
   html = withSeoScripts(html,route==='/');
-  if(route==='/')html=html.replace(/(\/(?:order-confirmation\.js|stock-display-fix\.js|catalog-card\.css)\?v=)product-transition-1/g,'$1mobile-home-cards-1');
+  if(route==='/')html=html.replace(/(\/(?:order-confirmation\.js|stock-display-fix\.js|catalog-card\.css)\?v=)product-transition-1/g,'$1desktop-cards-1');
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=utf-8");

@@ -2131,7 +2131,7 @@
     "click",
     (event) => {
       const add=event.target.closest('.home-page #grid .homeCardAdd');
-      if(add&&matchMedia('(max-width: 767px)').matches){
+      if(add){
         event.preventDefault();event.stopImmediatePropagation();
         if(!add.disabled)void openHomeCart(add);
         return;

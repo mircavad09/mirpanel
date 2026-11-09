@@ -1,12 +1,34 @@
 /* Read-only sales figures are fetched near the viewport, not ahead of the next route. */
 (()=>{'use strict';if(window.mirpanelCatalogSales)return;window.mirpanelCatalogSales=true;
  let scope=null;
+ async function paintStock(state){
+  const response=await fetch('/api/payments/inventory',{signal:state.controller.signal,cache:'no-store'});
+  if(!response.ok)return;
+  const {products:inventory}=await response.json();
+  const source=document.getElementById('catalogCartProducts');
+  if(state!==scope||!source)return;
+  for(const product of JSON.parse(source.textContent)){
+   const ledger=inventory?.find(row=>row.productId===product.id);
+   if(!ledger||ledger.needsSetup)continue;
+   const price=product.id==='tiktok_jeton'?10:Math.min(...product.plans.filter(p=>Number(p.price)>0).map(p=>Number(p.price)));
+   const index=product.plans.findIndex(p=>Number(p.price)===price);
+   const plan=ledger.plans?.find(p=>p.planKey===String(index));
+   const count=ledger.scope==='product'&&!ledger.unlimited?ledger.available:ledger.scope==='plan'&&plan?.tracked!==false?plan?.available:null;
+   const card=document.querySelector('.catalog-grid [data-product-id="'+CSS.escape(product.id)+'"]');
+   card?.querySelector('.cardStockLine')?.remove();
+   if(!card||!Number.isSafeInteger(count)||count<0)continue;
+   const line=document.createElement('div'),badge=document.createElement('span');
+   line.className='cardStockLine';badge.className='mpStockBadge cardStockBadge '+(count===0?'out':count<10?'low':'count');
+   badge.textContent=count===0?'Stokda yoxdur':count<10?'Son '+count+' ədəd':'Stok: '+count;line.append(badge);card.querySelector('.pad').append(line);
+  }
+ }
  function stop(){scope?.controller.abort();scope?.observer?.disconnect();scope=null;}
  function start(){
   if(location.pathname!=='/mehsul'||scope)return;
   const nodes=[...document.querySelectorAll('.catalog-grid [data-home-sales-id]:not([data-sales-ready])')];
   if(!nodes.length)return;
   const state={controller:new AbortController(),observer:null,queue:[],busy:0};scope=state;
+  void paintStock(state).catch(()=>{});
   const drain=()=>{while(state.busy<3&&state.queue.length&&!state.controller.signal.aborted){
    const line=state.queue.shift(),id=line.dataset.homeSalesId;state.busy++;
    fetch('https://mirpanel.onrender.com/api/product-sales?productId='+encodeURIComponent(id),{
@@ -31,3 +53,46 @@
  window.addEventListener('pageshow',start);
  start();
 })();
+
+/* Listing cards enter the same verified cart form as product pages. */
+document.addEventListener('click', async event => {
+ const add=event.target.closest('.catalog-grid .homeCardAdd');
+ if(!add||add.disabled)return;
+ event.preventDefault();
+ if(document.querySelector('dialog.cart-entry[open],dialog.homeCardPlanPicker[open]'))return;
+ const source=document.getElementById('catalogCartProducts');
+ const product=JSON.parse(source.textContent).find(p=>p.id===add.closest('[data-product-id]').dataset.productId);
+ if(!product)return;
+ add.disabled=true;
+ let status=document.getElementById('catalogCartStatus');
+ if(!status){status=document.createElement('p');status.id='catalogCartStatus';status.setAttribute('role','status');document.querySelector('.catalog-grid').before(status);}
+ status.textContent='';
+ try{
+  const [inventory, entry, model]=await Promise.all([
+   fetch('/api/payments/inventory',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Stok məlumatı alınmadı.');return r.json();}),
+   import('/community-assets/cart-entry.js?v=fast-entry-1'),
+   import('/inventory-availability.mjs')
+  ]);
+  if(!add.isConnected)return;
+  const state=model.inventoryAvailability(product,inventory.products.find(p=>p.productId===product.id));
+  const choices=product.plans.map((plan,index)=>({plan,available:state.plans[index].canOrder})).filter(x=>x.plan.active!==false&&Number(x.plan.price)>0);
+  if(!choices.some(x=>x.available))throw Error('Stokda yoxdur.');
+  if(choices.length===1){await entry.startCartEntry(product,choices[0].plan);return;}
+  const dialog=document.createElement('dialog'),heading=document.createElement('h2');
+  dialog.className='homeCardPlanPicker';heading.textContent='Paket seçin';heading.id='catalogPlanTitle';dialog.setAttribute('aria-labelledby',heading.id);dialog.append(heading);
+  for(const {plan,available} of choices){
+   const button=document.createElement('button'),label=document.createElement('span'),price=document.createElement('strong');
+   button.type='button';button.disabled=!available;label.textContent=plan.label||plan.months+' ay';
+   price.textContent=available?Number(plan.price).toFixed(2)+' '+(product.currency||'₼'):'Stokda yoxdur';
+   button.append(label,price);
+   button.onclick=()=>{dialog.close();void entry.startCartEntry(product,plan);};
+   dialog.append(button);
+  }
+  const close=document.createElement('button');close.textContent='Bağla';close.type='button';close.onclick=()=>dialog.close();dialog.append(close);
+  const life=new AbortController();
+  window.addEventListener('mirpanel:route-leave',()=>dialog.close(),{signal:life.signal});
+  dialog.addEventListener('close',()=>{life.abort();dialog.remove();},{once:true});
+  document.body.append(dialog);dialog.showModal();
+ }catch(error){status.textContent=error.message||'Sifariş açıla bilmədi.';}
+ finally{add.disabled=false;}
+});
