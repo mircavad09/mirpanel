@@ -8,6 +8,7 @@ import {extractAdminState} from '../mirpanel-admin/core.mjs';
 
 const baseline=process.argv.includes('--before'),audit=process.argv.includes('--audit'),live=process.argv.includes('--live'),ordersOnly=process.argv.includes('--orders-only');
 const usersOnly=process.argv.includes('--users');
+const filtersOnly=process.argv.includes('--order-filters');
 const phase=baseline?'before':live?'live':'after';
 const output=path.resolve('../../outputs/admin-mobile-layout');
 fs.mkdirSync(output,{recursive:true});
@@ -64,7 +65,7 @@ try{
   const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{
    const context=await browser.newContext({viewport:{width,height:860},hasTouch:width<600,isMobile:width<600,serviceWorkers:'block'});
-   if(live&&usersOnly){
+   if(live&&(usersOnly||filtersOnly)){
     const session=process.env.MIRPANEL_ADMIN_TEST_SESSION,index=session?.indexOf('=')??-1;
     if(index<1)throw Error('A temporary admin session is required for the protected Users assets.');
     await context.addCookies([{name:session.slice(0,index),value:session.slice(index+1),url:origin,httpOnly:true,secure:true,sameSite:'Strict'}]);
@@ -75,7 +76,7 @@ try{
     if(live&&u.pathname.startsWith('/api/'))return r.fulfill({json:api(u)});
     // Use the checked-in shell for the synthetic admin session; all view scripts
     // and styles still come from the deployed Render service.
-    if(live&&!usersOnly&&u.pathname==='/admin.html')return r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(admin,'admin.html'))});
+    if(live&&!usersOnly&&!filtersOnly&&u.pathname==='/admin.html')return r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(admin,'admin.html'))});
     return r.continue();
    });
    const page=await context.newPage();page.setDefaultTimeout(10000);
@@ -96,6 +97,62 @@ try{
    };
    const mobile=width<600;
    let usersLayout;
+   if(filtersOnly){
+    const queries=[];
+    let release, fail=false;
+    const filterOptions={products:[{id:'capcut',title:'CapCut Pro — çox uzun məhsul seçimi, telefon və kompüter üçün'}],durations:[{value:'1',label:'Bir aylıq çox uzun paket müddəti'}],methods:[{id:'abb',label:'ABB — çox uzun bank seçimi'}]};
+    await page.route('**/api/admin/payment-orders?*',async r=>{
+     const u=new URL(r.request().url());
+     const q=u.searchParams;
+     queries.push(Object.fromEntries(q));
+     if(q.has('search'))await new Promise(resolve=>{release=resolve;});
+     if(fail)return r.fulfill({status:503,json:{error:'Sintetik şəbəkə xətası.'}});
+     const result=api(u);result.filters=filterOptions;result.appliedFilters.durationMonths=q.get('durationMonths')||'';
+     if(q.has('search'))result.orders=[{...order,id:wallet.id,orderCode:'MP-654321'}];
+     await r.fulfill({json:result});
+    });
+    await open('paymentOrders');
+    const form=page.locator('#paymentOrderFilters'), status=page.locator('#paymentOrdersStatus'), list=page.locator('#paymentOrdersList');
+    const initialOrder=list.locator('[data-order-code="MP-123456"]');
+    await initialOrder.waitFor();
+    const grid=await form.evaluate(n=>{
+     const controls=[...n.querySelectorAll('label:not(.paymentCustomDate) input,label:not(.paymentCustomDate) select')];
+     const formBox=n.getBoundingClientRect();
+     return {ids:controls.map(e=>e.id),rows:controls.map(e=>Math.round(e.getBoundingClientRect().top)),columns:getComputedStyle(n).gridTemplateColumns.split(' ').length,
+      fits:controls.every(e=>{const b=e.getBoundingClientRect();return b.left>=formBox.left&&b.right<=formBox.right&&b.right<=innerWidth;}),
+      actions:[...n.querySelectorAll('button')].map(e=>{const b=e.getBoundingClientRect();return [b.top,b.height];})};
+    });
+    if(!mobile){assert.equal(grid.columns,8);await verifyAssets();console.log(JSON.stringify({phase,width,desktopColumns:grid.columns}));continue;}
+    assert.deepEqual(grid.ids,['paymentOrderSearch','paymentOrderProduct','paymentOrderPlan','paymentOrderMethod','paymentOrderPeriod','paymentOrderSort']);
+    assert.equal(grid.columns,3);assert(grid.fits);assert.equal(new Set(grid.rows.slice(0,3)).size,1);assert.equal(new Set(grid.rows.slice(3)).size,1);assert(grid.rows[3]>grid.rows[0]);
+    assert(grid.actions.every(([top,height])=>top===grid.actions[0][0]&&height>=44&&top>grid.rows[3]));
+    const count=queries.length;
+    await form.locator('#paymentOrderSearch').fill('MP-654321');
+    for(const [field,value] of [['Product','capcut'],['Plan','1'],['Method','abb'],['Period','this_month'],['Sort','oldest']]) await form.locator('#paymentOrder'+field).selectOption(value);
+    assert.equal(queries.length,count);
+    assert(await form.locator('select').evaluateAll(ns=>ns.every(n=>n.getBoundingClientRect().right<=innerWidth)));
+    const originalDocument=await page.evaluate(()=>performance.timeOrigin);
+    const request=page.waitForRequest(r=>r.url().includes('/payment-orders?')&&new URL(r.url()).searchParams.has('search'));
+    await form.locator('#paymentOrderFiltersApply').click();
+    await request;await page.locator('#paymentOrdersStatus[data-filter-loading]').waitFor();
+    await form.evaluate(n=>{n.requestSubmit();n.requestSubmit();});
+    assert.equal(queries.length,count+1);
+    assert.deepEqual(queries.at(-1),{tab:'pending',period:'this_month',search:'MP-654321',productId:'capcut',durationMonths:'1',methodId:'abb',sort:'oldest',page:'1',pendingStage:'payment'});
+    assert(await initialOrder.isVisible());
+    assert.equal(await status.evaluate(n=>getComputedStyle(n,'::before').width),'11px');
+    release();await list.locator('[data-order-code="MP-654321"]').waitFor();
+    await form.locator('#paymentOrderFiltersClear').click();
+    await initialOrder.waitFor();
+    assert.deepEqual(queries.at(-1),{tab:'pending',period:'all',sort:'newest',page:'1',pendingStage:'payment'});
+    assert.equal(queries.length,count+2);assert.equal(await page.evaluate(()=>performance.timeOrigin),originalDocument);
+    assert.equal(await form.locator('#paymentOrderSearch').inputValue(),'');
+    if(engine===chromium&&width===390){await form.evaluate(n=>n.scrollIntoView({block:'center'}));await page.screenshot({path:path.join(output,'order-filters-'+phase+'-390.png')});}
+    fail=true;await form.locator('#paymentOrderFiltersApply').click();
+    await page.waitForFunction(()=>document.querySelector('#paymentOrdersStatus').textContent.includes('Mövcud siyahı qorunub'));
+    assert(await form.locator('#paymentOrderFiltersApply').isEnabled());assert.equal(await status.getAttribute('data-filter-loading'),null);
+    assert(await initialOrder.isVisible());
+    await verifyAssets();console.log(JSON.stringify({phase,engine:engine.name(),width,grid,apply:true,clear:true,slow:true,duplicate:false,error:true}));continue;
+   }
    if(!ordersOnly){
    await open('communityUsers');
    const userView=page.locator('#communityUsersView');

@@ -1309,6 +1309,16 @@ th {
 
 .paymentMobileOrderToggle,.paymentMobileOrderField{display:none}
 @media(max-width:650px){
+ #paymentOrderFilters{grid-template-columns:repeat(3,minmax(0,1fr));gap:5px 6px;padding:7px;margin-bottom:8px}
+ #paymentOrderFilters label{gap:3px}
+ #paymentOrderFilters label:has(#paymentOrderSort){grid-column:3;grid-row:2}
+ #paymentOrderFilters input,#paymentOrderFilters select{box-sizing:border-box;width:100%;max-width:100%;min-width:0;height:44px;padding-inline:6px;font-size:16px;text-overflow:ellipsis}
+ #paymentOrderFilters select{padding-inline-end:16px}
+ #paymentOrderFilters .paymentCustomDate.isActive{grid-column:1/-1}
+ #paymentOrderFilters .paymentOrderDateError:empty{display:none}
+ #paymentOrderFilters .paymentOrderFilterActions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+ #paymentOrderFilters .paymentOrderFilterActions .btn{min-height:44px;margin:0;padding:5px}
+ #paymentOrdersStatus[data-filter-loading]::before{content:'';display:inline-block;width:11px;height:11px;margin-inline-end:6px;vertical-align:-1px;border:2px solid #6c5c2f;border-top-color:#ffd400;border-radius:50%;animation:payment-filter-spin .7s linear infinite}
  #paymentOrdersView .paymentOrderAdminCard{grid-template-columns:minmax(0,1fr);gap:8px;padding:9px 10px}
  #paymentOrdersView .paymentOrderAdminCard:not(.isMobileExpanded)>:not(.paymentMobileOrderToggle){display:none}
  #paymentOrdersView .paymentOrderAdminCard.isMobileExpanded>.paymentMobileOrderField,
@@ -1328,3 +1338,5 @@ th {
  #paymentOrdersView .paymentOrderAdminCard>.paymentOrderActions{grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
  #paymentOrdersView .paymentOrderAdminCard .btn{min-height:44px;white-space:normal;overflow-wrap:anywhere;padding:6px 8px}
 }
+@keyframes payment-filter-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){#paymentOrdersStatus[data-filter-loading]::before{animation:none}}

@@ -18,6 +18,8 @@
     orderRequestSequence: 0
   };
   const $p = (id) => document.getElementById(id);
+  const mobileOrderFilters = () => matchMedia("(max-width:650px)").matches;
+  let filterBusy = false;
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const statusLabel = { reviewing: "Yoxlanılır", preparing: "Təhvil gözlənilir", completed: "Tamamlandı", rejected: "Rədd edilib", expired: "Vaxtı bitib" };
   const reservationLabel = { reserved: "Rezerv edilib", reviewing: "Yoxlanılır", completed: "Tamamlandı", rejected: "Rədd edilib", cancelled: "Ləğv edilib", expired: "Vaxtı bitib" };
@@ -285,7 +287,7 @@
     if (custom && (!from || !to)) message = "Başlanğıc və son tarixini seçin.";
     else if (custom && from > to) message = "Başlanğıc tarixi son tarixdən böyük ola bilməz.";
     const error = $p("paymentOrderDateError"); if (error) error.textContent = showMessage ? message : "";
-    const apply = $p("paymentOrderFiltersApply"); if (apply) apply.disabled = Boolean(message);
+    const apply = $p("paymentOrderFiltersApply"); if (apply) apply.disabled = filterBusy || Boolean(message);
     return !message;
   }
 
@@ -345,6 +347,31 @@
     clearOrderSelection();
     renderOrderContext();
     await loadOrders();
+  }
+
+  async function submitMobileOrderFilters(clear = false) {
+    if (filterBusy || (!clear && !validateCustomDates(true))) return;
+    filterBusy = true;
+    const clearButton = $p("paymentOrderFiltersClear");
+    const status = $p("paymentOrdersStatus");
+    if (clearButton) clearButton.disabled = true;
+    status?.setAttribute("data-filter-loading", "");
+    try {
+      if (clear) {
+        $p("paymentOrderFilters")?.reset();
+        paymentState.orderQuery = emptyQuery(paymentState.orderQuery.tab);
+        renderOrderContext();
+      } else readOrderFilterControls();
+      clearOrderSelection();
+      validateCustomDates(false);
+      await loadOrders();
+    } catch (error) { toast(error.message || "Sifarişlər yüklənmədi."); }
+    finally {
+      filterBusy = false;
+      status?.removeAttribute("data-filter-loading");
+      if (clearButton) clearButton.disabled = false;
+      validateCustomDates(false);
+    }
   }
 
   function renderStatistics() {
@@ -678,12 +705,14 @@
         if (period !== "custom") {
           if ($p("paymentOrderDateFrom")) $p("paymentOrderDateFrom").value = "";
           if ($p("paymentOrderDateTo")) $p("paymentOrderDateTo").value = "";
+          if (mobileOrderFilters()) { validateCustomDates(false); return; }
           readOrderFilterControls(); validateCustomDates(false);
           try { await loadOrders(); } catch (error) { toast(error.message || "Sifarişlər yüklənmədi."); }
         } else validateCustomDates(true);
         return;
       }
       if (event.target.closest?.("#paymentOrderFilters")) {
+        if (mobileOrderFilters()) { validateCustomDates(true); return; }
         if (!validateCustomDates(true)) return;
         readOrderFilterControls();
         try { await loadOrders(); } catch (error) { toast(error.message || "Sifarişlər yüklənmədi."); }
@@ -790,7 +819,7 @@
         }
         if (event.target.closest("#paymentOrdersPrevious") && paymentState.orderMeta.pagination.page > 1) { paymentState.orderQuery.page -= 1; await loadOrders(); }
         if (event.target.closest("#paymentOrdersNext") && paymentState.orderMeta.pagination.page < paymentState.orderMeta.pagination.totalPages) { paymentState.orderQuery.page += 1; await loadOrders(); }
-        if (event.target.closest("#paymentOrderFiltersClear")) { $p("paymentOrderFilters")?.reset(); if ($p("paymentOrderDateError")) $p("paymentOrderDateError").textContent = ""; await setOrderTab(paymentState.orderQuery.tab); }
+        if (event.target.closest("#paymentOrderFiltersClear")) { if (mobileOrderFilters()) { await submitMobileOrderFilters(true); return; } $p("paymentOrderFilters")?.reset(); if ($p("paymentOrderDateError")) $p("paymentOrderDateError").textContent = ""; await setOrderTab(paymentState.orderQuery.tab); }
         if (event.target.closest("#paymentSelectPage")) { paymentState.orders.forEach((order) => paymentState.selectedOrderIds.add(order.id)); renderBatchControls(); }
         if (event.target.closest("#paymentSelectAllFiltered")) { paymentState.selectedOrderIds = new Set(paymentState.orderMeta.selection?.ids || []); renderBatchControls(); }
         if (event.target.closest("#paymentClearSelection")) clearOrderSelection();
@@ -822,6 +851,7 @@
       if (event.target.id === "paymentSettingsForm") { event.preventDefault(); try { await paymentApi("/api/admin/payment-settings", { method: "POST", body: JSON.stringify({ notificationEmail: $p("paymentNotificationEmail").value, receiptRetentionDays: Number($p("paymentReceiptRetentionDays").value) }) }); toast("Ödəniş parametrləri saxlanıldı."); } catch (error) { toast(error.message || "Parametrlər saxlanmadı."); } return; }
       if (event.target.id === "paymentOrderFilters") {
         event.preventDefault();
+        if (mobileOrderFilters()) { await submitMobileOrderFilters(); return; }
         if (!validateCustomDates(true)) return;
         clearOrderSelection();
         readOrderFilterControls();
@@ -852,7 +882,7 @@
   function bootPayments() {
     if(location.hash==='#decorations')void loadBackgrounds();
     bindEvents(); setTimeout(openReviewToken, 400);
-    const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) loadOrders({automatic:true}).catch(() => {}); else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
+    const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) { if (!filterBusy) loadOrders({automatic:true}).catch(() => {}); } else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
     setTimeout(() => refreshOrderCounts().catch(() => {}), 1000);
     window.addEventListener("beforeunload", (event) => { clearInterval(timer); if (paymentState.costDirty.size) { event.preventDefault(); event.returnValue = ""; } });
   }
