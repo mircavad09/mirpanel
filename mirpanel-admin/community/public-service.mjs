@@ -32,7 +32,16 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html,
  const authMs=performance.now()-started-gateMs;
  res.setHeader('Server-Timing',`release;dur=${gateMs.toFixed(1)}, auth;dur=${authMs.toFixed(1)}`);
  const need=()=>{if(!user)throw fail(401,'Əvvəlcə daxil olun.');return user;};
- if(req.method==='GET'&&['/sebet','/balans','/odenis'].includes(route)){html(res,`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel · Səbət və balans</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/shop.css?v=wallet-visual-20261103"><body class="community-page">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main id="shopApp" class="shop-page"></main><script type="module" src="/community-assets/shop-ui.js?v=login-gate-20261107b"></script><script src="/site-header.js?v=avatar-menu-1" defer></script></body></html>`);return true;}
+ if(req.method==='GET'&&['/sebet','/balans','/odenis'].includes(route)){
+  const balance=route==='/balans';
+  const loading=balance?`<h1>Balansım</h1>
+   <div class="shop-wallet-loading" role="status">
+    <section class="shop-card shop-wallet-hero"><h2>Mövcud balans</h2><p>Balans məlumatı yüklənir…</p></section>
+    <section class="shop-card shop-wallet-loading-form"><h2>Balansı artır</h2><div class="shop-wallet-loading-bar" aria-hidden="true"></div><div class="shop-wallet-loading-bar" aria-hidden="true"></div></section>
+   </div>`:'';
+  html(res,`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel · Səbət və balans</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/shop.css?v=wallet-visual-20261103">${balance?'<link rel="stylesheet" href="/customer-footer.css?v=chat-space-20261108" data-shell-persistent data-customer-footer-style>':''}<body class="community-page${balance?' wallet-page-active':''}">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main id="shopApp" class="shop-page${balance?' shop-wallet-page':''}">${loading}</main><script type="module" src="/community-assets/shop-ui.js?v=login-gate-20261107b"></script><script src="/site-header.js?v=avatar-menu-1" defer></script></body></html>`);
+  return true;
+ }
  if(route==='/api/community/events'&&req.method==='GET'){runtime.live??=new CommunityLive(pool,repo,counts);await runtime.live.attach(req,res,session,u);return true;}
  if(route==='/owner-login'){res.writeHead(302,{Location:'/hesab?next='+encodeURIComponent(u.searchParams.get('next')==='/sifarislerim'?'/sifarislerim':'/profil'),'Cache-Control':'private,no-store'});res.end();return true;}
  if(['/qrup','/profil','/hesab'].includes(route)){

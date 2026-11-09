@@ -1,6 +1,8 @@
 (()=>{
  if(!document.querySelector('.site-header')||document.querySelector('#customerFooter'))return;
- const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/customer-footer.css?v=chat-space-20261108';sheet.dataset.shellPersistent='';document.head.append(sheet);
+ if(!document.querySelector('[data-customer-footer-style]')){
+  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/customer-footer.css?v=chat-space-20261108';sheet.dataset.shellPersistent='';sheet.dataset.customerFooterStyle='';document.head.append(sheet);
+ }
  const footer=document.createElement('footer');footer.id='customerFooter';footer.dataset.shellPersistent='';
  const wa='https://wa.me/994515243545';
  // Sales completed before MirPanel opened; not part of the site's order records.

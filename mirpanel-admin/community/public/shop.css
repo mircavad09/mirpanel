@@ -145,3 +145,14 @@
 .shop-page .shop-result-actions .shop-result-action--home{background:transparent}
 .shop-page .shop-result-actions a:focus-visible{outline:2px solid #ffd557;outline-offset:3px}
 @media(hover:hover){.shop-page .shop-result-actions a:hover{filter:brightness(1.12);text-decoration:underline}}
+
+/* Reserve the default wallet view through the initial data request. Longer histories grow in flow. */
+.shop-wallet-loading-form{min-height:285px}
+.shop-wallet-loading-bar{height:44px;margin:14px 0;border-radius:11px;background:#252b33}
+@media(min-width:761px){
+ .shop-page.shop-wallet-page:has(.shop-wallet-loading,.shop-wallet-hero){min-height:916px}
+}
+/* Match the desktop header rows and border before its script upgrades the header. */
+@media(min-width:1000px){
+ body.wallet-page-active .site-header{height:121px}
+}
