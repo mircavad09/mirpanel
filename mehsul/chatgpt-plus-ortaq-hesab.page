@@ -235,7 +235,7 @@ Codex və Məxvilik: Əgər kod (və ya vacib işlər) üçün istifadə edəcə
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-5e37d70f8db60941"></script>
+  <script src="/app.js?v=catalog-056bfff39866fec5"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
   <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>

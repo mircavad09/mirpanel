@@ -477,6 +477,8 @@ const DATA = {
       },
       "plans": [
         {
+          "warrantyUnit": "day",
+          "warrantyDuration": 28,
           "bestValue": false,
           "label": "1 Ay (endirim)",
           "months": 1,
@@ -484,6 +486,9 @@ const DATA = {
           "regularPrice": 16.99
         },
         {
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 28,
           "bestValue": false,
           "label": "1 ay (1600 AI kredit)",
           "months": 1,
@@ -492,7 +497,9 @@ const DATA = {
         {
           "durationDays": 7,
           "duration_months": 7,
+          "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
+          "warrantyDuration": 6,
           "bestValue": true,
           "label": " 7 gün",
           "months": 7,
