@@ -12,6 +12,7 @@ const menuIconPaths = {
   categories: "M3 3h7v7H3z M14 3h7v7h-7z M3 14h7v7H3z M14 14h7v7h-7z",
   orderGuide: "M12 6c-3-2-6-3-10-2v14c4-1 7 0 10 2 3-2 6-3 10-2V4c-4-1-7 0-10 2z M12 6v14",
   apiIntegrations: "M9 3v5 M15 3v5 M7 8h10v3a5 5 0 0 1-10 0z M12 16v5 M12 21h6",
+  gameProducts: "M7 7h10a4 4 0 0 1 4 3l1 7a2 2 0 0 1-3 2l-4-3H9l-4 3a2 2 0 0 1-3-2l1-7a4 4 0 0 1 4-3z M7 10v4 M5 12h4 M16 11h.1 M18 13h.1",
   orders: "M5 6h14 M5 12h14 M5 18h14 M9 4v4 M15 10v4 M10 16v4",
   netflixAccounts: "M3 5h18v14H3z M10 9l5 3-5 3z",
   homepage: "M3 11l9-8 9 8 M5 9v12h14V9 M10 21v-7h4v7",
@@ -62,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const quickLinks = ["dashboard", "products", "communityUsers", "paymentOrders", "communityGroup", "apiIntegrations"];
   const groups = [
     ["Balans və mühasibatlıq", ["communityShop", "paymentCosts", "paymentMethods", "paymentReviews"]],
-    ["Məhsul idarəetməsi", ["readyStock", "categories", "orderGuide", "orders", "netflixAccounts"]],
+    ["Məhsul idarəetməsi", ["readyStock", "categories", "gameProducts", "orderGuide", "orders", "netflixAccounts"]],
     ["Sayt məzmunu", ["homepage", "navigation", "banners", "stories", "decorations", "media", "about", "contact", "terms", "seo"]],
     ["Sistem", ["history", "/admin/workforce"]]
   ];

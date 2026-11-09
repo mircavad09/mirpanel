@@ -1,4 +1,10 @@
 (() => {
+  // Catalog presentation only: no supplier traffic, import, or price writes in stage one.
+  const catalogFilters = document.getElementById('gameCatalogFilters');
+  catalogFilters?.addEventListener('submit',event=>event.preventDefault());
+  document.getElementById('gameCatalogIntegration')?.addEventListener('click',()=>{
+    document.querySelector('.navBtn[data-view="apiIntegrations"]')?.click();
+  });
   const url = '/api/admin/api-integrations';
   const $ = id => document.getElementById(id);
   const mapping = $('mappingForm');

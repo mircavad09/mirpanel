@@ -1480,3 +1480,52 @@ th {
   .productFormGroups .productGroupBody textarea { font-size: 16px; }
 }
 .productFormGroups #legacyConfirmationHint[hidden] { display: none; }
+
+/* Epinby stage-one catalog. Kept inside its admin workspace. */
+#gameProductsView { min-width: 0; }
+#gameProductsView h2, #gameProductsView h3, #gameProductsView p { margin: 0; }
+#gameProductsView .gameCatalogHeading,
+#gameProductsView .gameCatalogSupplier { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+#gameProductsView .gameCatalogHeading { margin-bottom: 18px; }
+#gameProductsView h2 { font-size: 22px; }
+#gameProductsView .gameCatalogHeading p,
+#gameProductsView .gameCatalogSupplier p { color: var(--muted); font-size: 13px; margin-top: 5px; }
+#gameProductsView .gameCatalogStage { color: #b6bbc1; font-size: 12px; }
+#gameProductsView .gameCatalogSupplier { padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #181a1c; }
+#gameProductsView .gameCatalogSupplierName { display: flex; align-items: center; gap: 10px; min-width: 0; }
+#gameProductsView .gameCatalogMark { display: grid; place-items: center; flex: none; width: 44px; height: 44px; background: #302a12; color: var(--accent); border: 1px solid #66581c; border-radius: 11px; font-size: 22px; font-weight: 750; }
+#gameProductsView .gameCatalogSupplier h3 { font-size: 18px; }
+#gameProductsView .gameCatalogStatus { display: inline-flex; align-items: center; gap: 7px; max-width: 100%; padding: 7px 10px; border: 1px solid #5d5124; border-radius: 999px; color: #f0d674; background: #2a2515; font-size: 12px; line-height: 1.4; }
+#gameProductsView .gameCatalogStatus > span { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
+#gameProductsView .gameCatalogFilters { display: grid; grid-template-columns: minmax(180px,2fr) repeat(2,minmax(130px,1fr)) auto; gap: 10px; align-items: end; margin-top: 16px; }
+#gameProductsView label { display: grid; gap: 6px; min-width: 0; color: #c0c5cb; font-size: 13px; }
+#gameProductsView input, #gameProductsView select { width: 100%; min-width: 0; min-height: 44px; margin: 0; }
+#gameProductsView select:disabled { opacity: .65; cursor: not-allowed; }
+#gameProductsView .gameCatalogFilters .btn { min-height: 44px; }
+#gameProductsView .gameCatalogHint { color: var(--muted); font-size: 12px; line-height: 1.6; margin-top: 9px; }
+#gameProductsView .gameCatalogEmpty { display: grid; justify-items: center; gap: 12px; padding: 40px 18px; margin-top: 20px; border: 1px dashed #373a3e; border-radius: 13px; text-align: center; background: #101214; }
+#gameProductsView .gameCatalogEmpty > svg { width: 42px; height: 42px; fill: none; stroke: var(--accent); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+#gameProductsView .gameCatalogEmpty h3 { font-size: 17px; line-height: 1.5; max-width: 440px; }
+#gameProductsView .gameCatalogEmpty p { color: #a0a7af; font-size: 13px; line-height: 1.6; max-width: 440px; }
+#gameProductsView .gameCatalogEmpty[hidden] { display: none; }
+#gameProductsView .gameCatalogGrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,270px),1fr)); gap: 12px; }
+#gameProductsView .gameCatalogGrid:empty { display: none; }
+#gameProductsView .gameCatalogProduct { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #191b1e; }
+#gameProductsView .gameCatalogProductHead { display: flex; align-items: center; gap: 12px; min-width: 0; margin-bottom: 14px; }
+#gameProductsView .gameCatalogProductHead > div { min-width: 0; overflow-wrap: anywhere; }
+#gameProductsView .gameCatalogProductHead img { width: 64px; height: 64px; flex: none; border-radius: 10px; object-fit: contain; background: #101214; }
+#gameProductsView .gameCatalogProductHead h3 { font-size: 15px; line-height: 1.4; margin: 3px 0; }
+#gameProductsView .gameCatalogProductHead small, #gameProductsView .gameCatalogProductHead p { font-size: 12px; line-height: 1.5; color: #a0a7af; }
+#gameProductsView .gameCatalogPrices { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; align-items: end; }
+#gameProductsView .gameCatalogPrices > div > span { display: block; font-size: 12px; color: #a0a7af; }
+#gameProductsView .gameCatalogPrices strong { display: block; margin-top: 8px; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+@media (max-width: 1050px) {
+  #gameProductsView .gameCatalogFilters { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #gameProductsView .gameCatalogSearch { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  #gameProductsView .gameCatalogSupplier { padding: 12px; gap: 12px; }
+  #gameProductsView .gameCatalogFilters { gap: 10px 8px; }
+  #gameProductsView .gameCatalogEmpty { padding: 28px 14px; }
+  #gameProductsView input, #gameProductsView select { font-size: 16px; }
+}
