@@ -40,8 +40,6 @@
  :is(.home-page #grid,.catalog-grid) .homeCardPrices del{font-size:9px}
  :is(.home-page #grid,.catalog-grid) .homeCardSales{color:#59d8a0;font-size:11px}
  :is(.home-page #grid,.catalog-grid) .homeProductCard:not([data-cart-available]) .homeCardInstant{display:none}
- :is(.home-page #grid,.catalog-grid) .homeCardAdd{grid-area:action;align-self:center;justify-self:end;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#ffd43c;cursor:pointer}
- :is(.home-page #grid,.catalog-grid) .homeCardAdd span{display:grid;place-items:center;width:36px;height:36px;border:1px solid #bd932b;border-radius:50%;font:500 25px/1 system-ui,sans-serif}
  :is(.home-page #grid,.catalog-grid) .homeCardAdd:disabled{opacity:.45;cursor:default}
  :is(.home-page #grid,.catalog-grid) .homeCardAdd:focus-visible{outline:2px solid #ffdc56;border-radius:50%}
  .homeCardPlanPicker{width:min(420px,calc(100% - 24px));max-height:85dvh;padding:16px;border:1px solid #514324;border-radius:14px;background:#17181b;color:#f4f4f5}
@@ -62,8 +60,6 @@
  :is(.home-page #grid,.catalog-grid) .homeCardPrices del{font-size:9px}
  :is(.home-page #grid,.catalog-grid) .homeCardSales{color:#59d8a0;font-size:10px}
  :is(.home-page #grid,.catalog-grid) .homeProductCard:not([data-cart-available]) .homeCardInstant{display:none}
- :is(.home-page #grid,.catalog-grid) .homeCardAdd{grid-area:action;align-self:center;justify-self:end;display:grid;place-items:center;width:44px;height:44px;padding:0;border:0;background:transparent;color:#ffd43c;cursor:pointer}
- :is(.home-page #grid,.catalog-grid) .homeCardAdd span{display:grid;place-items:center;width:36px;height:36px;border:1px solid #bd932b;border-radius:50%;font:500 25px/1 system-ui,sans-serif}
  :is(.home-page #grid,.catalog-grid) .homeCardAdd:disabled{opacity:.45;cursor:default}
  :is(.home-page #grid,.catalog-grid) .homeCardAdd:focus-visible{outline:2px solid #ffdc56;border-radius:50%}
  .homeCardPlanPicker{width:min(420px,calc(100% - 24px));max-height:85dvh;padding:16px;border:1px solid #514324;border-radius:14px;background:#17181b;color:#f4f4f5}
@@ -81,46 +77,87 @@
 .home-catalog-status{grid-column:1/-1;padding:12px 0;color:var(--muted,#ccc);text-align:center}
 .home-catalog-status button{margin-inline-start:8px}
 
-/* The action grows within its grid area without reflowing the card. */
-:is(.home-page #grid,.catalog-grid) .homeCardAdd { position: relative; z-index: 2; }
-:is(.home-page #grid,.catalog-grid) .homeCardAdd::after {
-  content: "İndi al";
-  position: absolute;
-  right: 11px;
-  font: 600 12px/1.2 system-ui,sans-serif;
-  white-space: nowrap;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 140ms ease;
+/* Reserve a bottom row so the desktop action can expand beside any card content. */
+:is(.home-page #grid,.catalog-grid) .homeProductCard {
+  transform: none!important;
 }
-:is(.home-page #grid,.catalog-grid) .homeCardAdd span {
+:is(.home-page #grid,.catalog-grid) .homeProductCard .pad {
+  grid-template-rows: 35px minmax(24px, auto) minmax(15px, auto) minmax(23px, auto) 44px;
+  grid-template-areas: "title title" "price price" "sales sales" "stock stock" ". action";
+  align-content: end;
+  row-gap: 3px!important;
+}
+:is(.home-page #grid,.catalog-grid) .homeProductCard .cardStockLine {
+  align-self: start;
+  margin: 0;
+}
+:is(.home-page #grid,.catalog-grid) .homeCardAdd {
   box-sizing: border-box;
-  position: absolute;
-  right: 4px;
+  grid-area: action;
+  justify-self: end;
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  color: #ffd43c;
+  cursor: pointer;
+  overflow: hidden;
+  border: 1px solid #bd932b;
+  border-radius: 22px;
   background: #111214;
   transition: width 160ms ease, background-color 140ms ease, color 140ms ease;
 }
-:is(.home-page #grid,.catalog-grid) .homeCardAdd:focus-visible:not(:disabled) {
-  width: 98px;
+:is(.home-page #grid,.catalog-grid) .homeCardAdd span {
+  display: block;
+  flex: 0 0 auto;
+  width: auto;
+  height: auto;
+  border: 0;
+  font: 600 24px/1 system-ui, sans-serif;
 }
-:is(.home-page #grid,.catalog-grid) .homeCardAdd:focus-visible:not(:disabled) span {
-  width: 90px; justify-content: flex-start; padding-left: 10px; border-radius: 20px;
-}
-:is(.home-page #grid,.catalog-grid) .homeCardAdd:focus-visible:not(:disabled)::after { opacity: 1; }
-@media (hover: hover) and (pointer: fine) {
-  :is(.home-page #grid,.catalog-grid) .homeProductCard:hover .homeCardAdd:not(:disabled) { width: 98px; }
-  :is(.home-page #grid,.catalog-grid) .homeProductCard:hover .homeCardAdd:not(:disabled) span {
-    width: 90px; justify-content: flex-start; padding-left: 10px; border-radius: 20px;
+@media (min-width: 768px) {
+  :is(.home-page #grid,.catalog-grid) .homeCardAdd::after {
+    content: "İndi al";
+    display: none;
+    font: 600 13px/1 system-ui, sans-serif;
+    white-space: nowrap;
   }
-  :is(.home-page #grid,.catalog-grid) .homeProductCard:hover .homeCardAdd:not(:disabled)::after { opacity: 1; }
-  :is(.home-page #grid,.catalog-grid) .homeCardAdd:not(:disabled):hover { color: #080808; }
-  :is(.home-page #grid,.catalog-grid) .homeCardAdd:not(:disabled):hover span { background: #ffd400; border-color: #ffd400; }
+  :is(.home-page #grid,.catalog-grid) .homeCardAdd:focus-visible:not(:disabled) {
+    width: 116px;
+    border-radius: 22px;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeCardAdd:focus-visible:not(:disabled)::after {
+    display: block;
+  }
+}
+@media (min-width: 768px) and (hover: hover) and (pointer: fine) {
+  :is(.home-page #grid,.catalog-grid) .homeProductCard:hover {
+    border-color: #bd932b;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeProductCard:hover .homeCardAdd:not(:disabled) {
+    width: 116px;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeProductCard:hover .homeCardAdd:not(:disabled)::after {
+    display: block;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeCardAdd:not(:disabled):hover {
+    background: #ffd400;
+    border-color: #ffd400;
+    color: #080808;
+  }
+}
+@media (max-width: 767px) {
+  :is(.home-page #grid,.catalog-grid) .homeProductCard .pad {
+    grid-template-rows: 30px minmax(28px, auto) minmax(14px, auto) minmax(22px, auto);
+    grid-template-areas: "title title" "price ." "sales action" "stock action";
+  }
+  :is(.home-page #grid,.catalog-grid) .homeCardAdd {
+    align-self: end;
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  :is(.home-page #grid,.catalog-grid) .homeCardAdd span,
-  :is(.home-page #grid,.catalog-grid) .homeCardAdd::after { transition: none; }
+  :is(.home-page #grid,.catalog-grid) .homeCardAdd { transition: none; }
 }
-:is(.home-page #grid,.catalog-grid) .homeProductCard { transform: none!important; }
