@@ -12,15 +12,15 @@ const dayDiff=(start,end)=>Math.round((Date.parse(end)-Date.parse(start))/864000
 export function subscriptionPeriod(plan){
  const days=whole(plan?.durationDays??plan?.days,3650);
  if(days)return {unit:'days',count:days};
- const months=structuredDurationMonths(plan);
- if(months)return {unit:'months',count:months};
- // Older catalogs can have a day-based package label but no structured duration.
+ // Older order snapshots sometimes stored a day count in durationMonths.
  const match=String(plan?.label??plan?.name??'').trim().match(/^(\d{1,3})\s*(?:günlük|gün)(?=$|\s*[(·–—-])/iu);
- return match&&whole(match[1],3650)?{unit:'days',count:Number(match[1])}:null;
+ if(match&&whole(match[1],3650))return {unit:'days',count:Number(match[1])};
+ const months=structuredDurationMonths(plan);
+ return months?{unit:'months',count:months}:null;
 }
 function expiration(start,period){
  if(!start||!period)return null;
- return (period.unit==='days'?shiftCalendarDays(start,period.count-1):addCalendarMonthsMinusDay(start,period.count))||null;
+ return (period.unit==='days'?shiftCalendarDays(start,period.count):addCalendarMonthsMinusDay(start,period.count))||null;
 }
 function savedUnitCents(line,total=null,quantity=1){
  const cents=line?.unitCents;
@@ -56,7 +56,10 @@ async function bases(pool,user,source=null){
   const productId=line?.productId??r.product_id;
   if(!productId||productId==='__cart__')return [];
   const label=line?.planName??r.plan_name;
-  const period=subscriptionPeriod({durationMonths:line?.durationMonths??r.duration_months,label});
+  const saved=line??r.checkout_snapshot;
+  const period=subscriptionPeriod({
+   durationDays:saved?.durationDays,durationMonths:saved?.durationMonths??r.duration_months,label
+  });
   const startsOn=(r.delivered_at||r.completed_at)?bakuDate(r.delivered_at||r.completed_at):null;
   const stored=(!items||items.length===1)&&Number(line?.quantity??1)===1?safeCalendarDate(r.service_expires_on):'';
   const lastPurchaseCents=r.currency==='AZN'?savedUnitCents(line??r.checkout_snapshot,line&&items.length!==1?null:r.amount,line?.quantity??r.quantity??1):null;

@@ -116,6 +116,29 @@ try{
  assert.deepEqual([applied.plan,applied.lastPurchaseCents,applied.renewalCents],['Yeni 1 aylıq paket',679,679]);
  const historic=(await pool.query("select checkout_snapshot->'items'->0->>'planName' plan,amount::text from payment_orders where id=any($1::uuid[])",[originalOrders])).rows;
  assert.deepEqual(historic,Array(2).fill({plan:'Köhnə 1 aylıq paket',amount:'4.99'}));
+ // New snapshots preserve the day unit even if the catalog also has a legacy months field.
+ capcut.plans.push({id:'week-capcut',label:'7 gün',durationDays:7,months:7,price:1.12});
+ const week=await checkout([await quote(capcut.id,1)]);
+ const weekSnapshot=(await pool.query('select checkout_snapshot from payment_orders where id=$1',[week.orderId])).rows[0].checkout_snapshot;
+ assert.equal(weekSnapshot.items[0].durationDays,7);
+ assert.equal(weekSnapshot.items[0].durationMonths,null);
+ const weeklyDelivery=await fulfill(week.orderId);
+ assert.equal(weeklyDelivery.status,'completed');
+ const weekly=async()=>(await capRows()).find(row=>row.orderCode===week.orderCode);
+ assert.equal((await weekly()).expiresOn,day(7));
+ assert.equal((await weekly()).days,7);
+ assert.equal((await weekly()).progress,100);
+ assert.equal(summarize([await weekly()]).week,1);
+ assert.equal(summarize([await weekly()]).soon,1);
+ // Reproduce the historic CapCut snapshot without rewriting production records.
+ const legacy={...weekSnapshot,items:weekSnapshot.items.map(({durationDays,...line})=>({...line,durationMonths:7}))};
+ await pool.query('update payment_orders set checkout_snapshot=$2 where id=$1',[week.orderId,legacy]);
+ assert.equal((await weekly()).expiresOn,day(7));
+ await pool.query('update payment_orders set service_expires_on=$2 where id=$1',[week.orderId,day(12)]);
+ assert.equal((await weekly()).expiresOn,day(12));
+ const monthly=await checkout([await quote(capcut.id)]);
+ await fulfill(monthly.orderId);
+ assert.equal((await capRows()).find(row=>row.orderCode===monthly.orderCode).expiresOn,addCalendarMonthsMinusDay(today,1));
  const originalFetch=globalThis.fetch;
  const subscriptionUrl='https://mirpanel.com/api/payments/shop/subscriptions';
  try{
