@@ -6,6 +6,8 @@ import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex
 
 const sample='E-poçt: buyer@example.test\nŞifrə: synthetic-only\n\nİkinci sətir ✨\n  Son sətir';
 const order='12345678-1234-4234-8234-000000000001',delivery='12345678-1234-4234-8234-000000000002';
+const legacy='12345678-1234-4234-8234-000000000003',email='buyer@example.test',password='synthetic-only';
+const ready='Giriş qaydası\n\nİkinci sətir ✨\n  Son sətir';
 const repeat={productId:'synthetic',title:'Synthetic first',planIndex:0,planName:'1 ay'};
 const price=725,field={key:'room',label:'Otaq adı',type:'text',required:true,minLength:1,maxLength:40};
 const guides=[{information:'# Əsas qaydalar\n\n- Sintetik telefon qaydası.\n\n'+('Yalnız sınaq üçün yazılmış əlavə izah.\n'.repeat(40)),tracks:{phone:[{image:'https://guide.example.test/1.png',description:'Tətbiqi açın.'},{image:'https://guide.example.test/2.png',description:'Sınaq profilini seçin.'}]}},{information:'İkinci məhsula aid qayda.',tracks:{desktopQr:[{image:'https://guide.example.test/3.png',description:'Sınaq ekranını açın.'}]}}];
@@ -17,7 +19,7 @@ const server=http.createServer(async(req,res)=>{
   assert([null,'9180'].includes(u.searchParams.get('order')));
   const items=[{title:'CapCut Pro',quantity:1,planName:'1 aylıq (Telefon)',unitCents:500,repeat,expiresOn:status==='completed'?expiresOn:undefined,image:'/assets/capcut.png'}];
   if(!preview)items.push({title:'Əlavə sınaq paketi',quantity:1,planName:'1 aylıq uzun paket adı — uzun sətir üçün sınaq',unitCents:600,warranty:'7 gün zəmanət'});
-  const original={id:order,orderCode:'9180',product:'CapCut Pro · Sınaq sifarişi',amount:preview?5:11,status,autoDelivered,createdAt:'2026-11-08T09:03:00Z',receiptAvailable:true,items,deliveries:[{id:delivery,line:0,quantity:1}]};
+  const original={id:order,orderCode:'9180',product:'CapCut Pro · Sınaq sifarişi',amount:preview?5:11,status,autoDelivered,createdAt:'2026-11-08T09:03:00Z',receiptAvailable:true,items,deliveries:[{id:delivery,line:0,quantity:1},...(!preview&&status==='completed'?[{id:legacy,line:1,quantity:1}]:[])]};
   const newer={...original,id:'newer-order',orderCode:'9181',status:newerStatus,createdAt:'2026-11-09T09:03:00Z',deliveries:[]};
   return json({accountId:'synthetic-orders',orders:newerStatus?[newer,original]:[original],nextCursor:null});
  }
@@ -25,7 +27,8 @@ const server=http.createServer(async(req,res)=>{
   {id:delivery,title:'CapCut Pro',plan:'1 ay',image:'/assets/capcut.png',quantity:1,purchasedAt:'2026-11-08T20:05:00Z',category:{key:'video',label:'Video montajı'}},
   {id:'12345678-1234-4234-8234-000000000003',title:'Netflix Şəxsi',plan:'7 gün',quantity:1,purchasedAt:'2026-11-08T09:05:00Z',category:{key:'film',label:'Film'}}
  ]});
- if(u.pathname==='/api/payments/my-orders/codes/'+delivery){reveals++;return json({text:sample});}
+ if(u.pathname==='/api/payments/my-orders/codes/'+delivery){reveals++;return json({text:sample,email,password});}
+ if(u.pathname==='/api/payments/my-orders/codes/'+legacy)return json({text:ready});
  if(u.pathname.startsWith('/api/payments/my-orders/'+order+'/guide/'))return json(guides[Number(u.pathname.split('/').at(-1))]);
  if(u.pathname==='/api/payments/my-orders/'+order+'/receipt'){receiptReads++;return json({mime:'image/png',url:'https://synthetic.supabase.co/private.png'});}
  if(u.pathname==='/api/payments/shop/quote')return json({items:[{...repeat,terms:'Yeni şərtlər',termsVersion:'current',unitCents:price,available,fields:[field]}],totalCents:price,balanceCents:10000});
@@ -57,12 +60,24 @@ const server=http.createServer(async(req,res)=>{
  res.writeHead(404);res.end();
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
+const live=process.argv.includes('--live'),site=live?'https://mirpanel.com':origin;
 try{
  for(const [engine,name,width]of [[chromium,'Chrome desktop',1440],[chromium,'Chrome mobil ölçü',320],[webkit,'WebKit mobil ölçü',390]]){
   status='reviewing';reveals=drafts=payments=receiptReads=0;available=1;expiresOn='2026-12-09';autoDelivered=false,newerStatus=null,realProfile=false;
   const browser=await engine.launch({headless:true,...(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
   try{
    const page=await browser.newPage({viewport:{width,height:820},isMobile:width<600,hasTouch:width<600});
+   if(live){
+    await page.route('**/*',async r=>{
+     const u=new URL(r.request().url());
+     if(u.origin!==site||r.request().method()!=='GET')return r.abort();
+     if(u.pathname==='/profil'||u.pathname.startsWith('/api/')||u.pathname==='/checkout-sounds.js'){
+      const result=await fetch(origin+u.pathname+u.search);
+      return r.fulfill({status:result.status,contentType:result.headers.get('content-type'),body:await result.text()});
+     }
+     return r.continue();
+    });
+   }
    await page.clock.setFixedTime(new Date('2026-11-08T20:30:00Z')); // 09 November in Baku.
    await page.addInitScript((mobile)=>{
     if(mobile)window.ClipboardItem=class{constructor(types){this.types=types;}};
@@ -73,6 +88,24 @@ try{
     const fetchOriginal=window.fetch;window.fetch=async(...args)=>{const result=await fetchOriginal(...args);if(String(args[0]).includes('/my-orders/codes/'))window.__copyResponseReady=true;return result;};
     const timer=window.setInterval;window.setInterval=(fn,ms,...args)=>timer(fn,ms===12000?100:ms,...args);
    },width<600);
+   if(live){
+    status='completed';
+    const assets=Promise.all(['js','css'].map(async ext=>{
+     const response=await page.waitForResponse(r=>new URL(r.url()).pathname==='/browser-orders.'+ext&&r.ok());
+     assert.equal((await response.text()).replaceAll('\r\n','\n'),fs.readFileSync('browser-orders.'+ext,'utf8').replaceAll('\r\n','\n'));
+    }));
+    await page.goto(site+'/profil?tab=orders');await assets;
+    const fresh=page.locator('[data-delivery="'+delivery+'"]'),legacyCard=page.locator('[data-delivery="'+legacy+'"]');
+    const copy=async(box,name,expected)=>{await page.evaluate(()=>{window.__copyResponseReady=false;window.__copied='';});await box.getByRole('button',{name,exact:true}).click();await page.waitForFunction(value=>window.__copied===value,expected);await box.getByText('Kopyalandı',{exact:true}).waitFor();};
+    await fresh.locator('pre').waitFor();await legacyCard.locator('pre').waitFor();
+    assert.equal(await legacyCard.locator('[data-copy-delivery-field]').count(),0);
+    await copy(fresh,'E-poçt kopyala',email);await copy(fresh,'Şifrə kopyala',password);
+    await copy(fresh,'Kopyala','E-poçt: '+email+'\nŞifrə: '+password+'\n\n'+sample);await copy(legacyCard,'Kopyala',ready);
+    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    const output=process.env.MIRPANEL_ORDER_SCREENSHOTS;
+    if(output&&width!==320){fs.mkdirSync(output,{recursive:true});await page.locator('main').screenshot({path:path.join(output,width===1440?'mirpanel-order-live-desktop.png':'mirpanel-order-live-mobile.png')});}
+    console.log('PASS live '+name+' — deployed files and exact clipboard values with synthetic data');continue;
+   }
    await page.goto(origin+'/profil?tab=orders&order=9180');
    const card=page.locator('details.browser-order');
    await card.getByText('Yoxlanılır',{exact:true}).waitFor();assert.equal(await card.getAttribute('open'),'');
@@ -100,13 +133,13 @@ try{
    assert(receiptBox.y>=amountBox.y+amountBox.height&&Math.abs(receiptBox.x+receiptBox.width-amountBox.x-amountBox.width)<2);
    await page.route('https://guide.example.test/*.png',r=>r.fulfill({contentType:'image/png',body:fs.readFileSync(r.request().url().endsWith('/2.png')?'assets/logo.png':'assets/capcut.png')}));
    await card.getByRole('button',{name:'Qəbzə bax'}).click();await page.locator('#browserReceipt[open] img').waitFor({state:'attached'});await page.locator('#browserReceiptClose').click();assert.equal(receiptReads,1);
-   await card.locator('pre:visible').waitFor();
-   assert.equal(await card.locator('pre:visible').count(),1);
+   await card.locator('pre:visible').first().waitFor();
+   await card.locator('pre:visible').nth(1).waitFor();
    const actions=card.getByRole('button',{name:'Məlumat və təlimat'}),show=actions.first(),guide=page.locator('.browser-order-guide[open]');
    await actions.nth(1).click();await guide.getByText('İkinci məhsula aid qayda.').waitFor();
-   assert.equal(reveals,1);await guide.getByRole('button',{name:'Təlimat',exact:true}).click();await guide.getByRole('button',{name:'Kompüterdə QR ilə giriş'}).waitFor();
+   await guide.getByRole('button',{name:'Təlimat',exact:true}).click();await guide.getByRole('button',{name:'Kompüterdə QR ilə giriş'}).waitFor();
    await guide.getByRole('button',{name:'Təlimatı bağla'}).click();await guide.waitFor({state:'hidden'});
-   await show.click();await guide.getByText('Sintetik telefon qaydası.',{exact:false}).waitFor();await card.getByText('İkinci sətir',{exact:false}).waitFor();
+   await show.click();await guide.getByText('Sintetik telefon qaydası.',{exact:false}).waitFor();await card.locator('pre').first().waitFor();
    await guide.getByRole('heading',{name:'Əsas qaydalar'}).waitFor();
    await guide.locator('ul li').getByText('Sintetik telefon qaydası.').waitFor();
    assert(await guide.locator('.browser-guide-body').evaluate(n=>{n.scrollTop=n.scrollHeight;return n.scrollTop>0;}));
@@ -119,14 +152,15 @@ try{
    const out=path.resolve('../../outputs/order-guide');fs.mkdirSync(out,{recursive:true});
    if(width!==320)await page.screenshot({path:path.join(out,width<600?'telimat-mobil.png':'telimat-desktop.png')});
    await guide.getByRole('button',{name:'Bağla',exact:true}).click();await guide.waitFor({state:'hidden'});
-   await card.getByRole('heading',{name:'Alınmış hesablar'}).waitFor();
+   await card.getByRole('heading',{name:'Alınmış hesablar'}).first().waitFor();
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-   await card.getByRole('button',{name:'Gizlət',exact:true}).click();assert.equal(await card.locator('pre').textContent(),'');
-   await show.click();await guide.getByText('Sintetik telefon qaydası.',{exact:false}).waitFor();
-   await guide.getByRole('button',{name:'Bağla',exact:true}).click();
-   assert.equal(await card.locator('pre:visible').count(),0);
-   assert.equal(reveals,1);
-   await card.getByRole('button',{name:'Kopyala',exact:true}).click();await card.getByText('Məlumat kopyalandı').waitFor();assert.equal(await page.evaluate(()=>window.__copied),sample);
+   const fresh=card.locator('[data-delivery="'+delivery+'"]'),legacyCard=card.locator('[data-delivery="'+legacy+'"]');
+   assert.equal(await card.getByRole('button',{name:'Gizlət',exact:true}).count(),0);
+   const copy=async(box,name,expected)=>{await page.evaluate(()=>{window.__copyResponseReady=false;window.__copied='';});await box.getByRole('button',{name,exact:true}).click();await page.waitForFunction(value=>window.__copied===value,expected);await box.getByText('Kopyalandı',{exact:true}).waitFor();};
+   await copy(fresh,'E-poçt kopyala',email);await copy(fresh,'Şifrə kopyala',password);
+   await copy(fresh,'Kopyala','E-poçt: '+email+'\nŞifrə: '+password+'\n\n'+sample);
+   assert.equal(await legacyCard.locator('[data-copy-delivery-field]').count(),0);assert.equal(await legacyCard.locator('pre').textContent(),ready);
+   await copy(legacyCard,'Kopyala',ready);
    const again=card.getByRole('button',{name:'Yenidən al'}),repeatDialog=page.getByRole('dialog',{name:'Yenidən almaq'}),entry=page.locator('dialog.cart-entry');
    await again.nth(1).click();assert.equal(await repeatDialog.getByRole('button',{name:'Səbətə əlavə et'}).isDisabled(),true);await repeatDialog.getByRole('button',{name:'Ləğv et'}).click();
    available=0;await again.first().click();await repeatDialog.getByRole('button',{name:'Səbətə əlavə et'}).click();await entry.getByText('Bu paket hazırda stokda yoxdur.').waitFor();assert.equal(drafts,0);
@@ -140,7 +174,7 @@ try{
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    }
    expiresOn='2026-12-09';status='rejected';await page.reload();await card.locator('[data-status="rejected"]').waitFor();assert.equal(await card.getByText('Alınmış hesablar',{exact:true}).count(),0);assert.equal(await expiry.count(),0);
-   await page.goto(origin+'/profil?tab=codes');await page.getByRole('heading',{name:'CapCut Pro'}).waitFor();assert(reveals>=2);
+   await page.goto(origin+'/profil?tab=codes');await page.getByRole('heading',{name:'CapCut Pro'}).waitFor();
    const cap=page.locator('.codes-card').filter({hasText:'CapCut Pro'}),netflix=page.locator('.codes-card').filter({hasText:'Netflix Şəxsi'}),search=page.getByRole('searchbox');
    assert.equal(await page.locator('.codes-count').textContent(),'2 ədəd');
    await page.getByRole('button',{name:'Hamısı 2',exact:true}).waitFor();
@@ -161,8 +195,8 @@ try{
    if(process.env.MIRPANEL_ORDER_SCREENSHOTS&&width!==320){
     preview=true;status='completed';
     await page.goto(origin+'/profil?tab=orders');
-    await card.getByRole('heading',{name:'Alınmış hesablar'}).waitFor();
-    await card.getByText('İkinci sətir',{exact:false}).waitFor();
+    await card.getByRole('heading',{name:'Alınmış hesablar'}).first().waitFor();
+    await card.locator('pre').first().waitFor();
     await card.locator('summary img').evaluate(async img=>img.decode());
     const output=process.env.MIRPANEL_ORDER_SCREENSHOTS;fs.mkdirSync(output,{recursive:true});
     await page.locator('main').screenshot({path:path.join(output,width===1440?'mirpanel-order-desktop.png':'mirpanel-order-mobile.png')});
@@ -170,18 +204,18 @@ try{
    }
    autoDelivered=true;status='completed';
    await page.goto(origin+'/profil?tab=orders&order=9180');
-   await card.getByRole('heading',{name:'Alınmış hesablar'}).waitFor();
-   await card.getByText('İkinci sətir',{exact:false}).waitFor();
+   await card.getByRole('heading',{name:'Alınmış hesablar'}).first().waitFor();
+   await card.locator('pre').first().waitFor();
    status='preparing';
    await page.goto(origin+'/profil?tab=orders&order=9180');
-   await card.locator('pre:visible').waitFor();
+   await card.locator('pre:visible').first().waitFor();
    assert.equal(await card.locator('.browser-order-line').first().getByRole('heading',{name:'Alınmış hesablar'}).isVisible(),true);
    assert.equal(await card.locator('.browser-order-line').nth(1).locator('pre').count(),0);
    status='completed';
    newerStatus='preparing';
    await page.goto(origin+'/profil?tab=orders');
    const old=page.locator('[data-order-code="9180"]'),newer=page.locator('[data-order-code="9181"]');
-   await old.locator('pre:visible').waitFor();
+   await old.locator('pre:visible').first().waitFor();
    assert.equal(await old.getAttribute('open'),'');
    assert.equal(await newer.getAttribute('open'),null);
    await newer.locator('summary').click();
@@ -191,7 +225,7 @@ try{
    await page.locator('[data-order-code="9181"][open] [data-status="completed"]').waitFor();
    assert.equal(await old.getAttribute('open'),null);
    await page.goto(origin+'/profil?tab=orders&order=9180');
-   await old.locator('pre:visible').waitFor();
+   await old.locator('pre:visible').first().waitFor();
    assert.equal(await newer.getAttribute('open'),null);
    newerStatus=null;
    await page.addInitScript(()=>sessionStorage.setItem('mirpanel.account.present','1'));
@@ -217,17 +251,17 @@ try{
     assert.equal(await page.locator('#browserOrders').innerText(),'');
     assert.deepEqual([...new Set(frames)],['/profil?tab=orders']);
    }finally{release();}
-   await page.locator('[data-order-code="9180"][open] pre:visible').waitFor();
+   await page.locator('[data-order-code="9180"][open] pre:visible').first().waitFor();
    await page.unroute('**/api/payments/my-orders',delayOrders);
    await page.goBack();
    await page.getByRole('heading',{name:'Başlanğıc'}).waitFor();
    assert.equal(new URL(page.url()).pathname,'/');
    await page.goForward();
-   await page.locator('[data-order-code="9180"][open] pre:visible').waitFor();
+   await page.locator('[data-order-code="9180"][open] pre:visible').first().waitFor();
    assert.equal(new URL(page.url()).pathname,'/profil');
    newerStatus='completed';
    await page.goto(origin+'/profil?tab=orders&order=9180');
-   await page.locator('[data-order-code="9180"][open] pre:visible').waitFor();
+   await page.locator('[data-order-code="9180"][open] pre:visible').first().waitFor();
    assert.equal(new URL(page.url()).search,'?tab=orders&order=9180');
    assert.equal(await page.locator('[data-order-code="9181"]').getAttribute('open'),null);
    newerStatus=null;

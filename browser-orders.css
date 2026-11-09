@@ -20,6 +20,16 @@
 .account-panel details[open]>summary .browser-order-arrow{transform:rotate(180deg)}
 .account-panel .browser-order-status[data-status=preparing],.account-panel .browser-order-status[data-status=approved]:not(.browser-order-topup *){background:#61470970;color:#ffe08a}
 .account-panel .browser-order-delivery{margin-top:8px}
+.account-panel .browser-order-delivery{padding:10px;border:1px solid #285447;border-radius:12px;background:#151e1a;min-width:0}
+.account-panel .browser-order-delivery>header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;color:#bdc6c0;overflow-wrap:anywhere}
+.account-panel .browser-order-delivery>header button{display:inline-flex;align-items:center;gap:5px;flex:none}
+.account-panel .browser-order-delivery>.browser-delivery-credentials{display:grid;gap:5px}
+.browser-delivery-credentials>div{display:grid;grid-template-columns:clamp(53px,12%,100px) minmax(0,1fr) auto;align-items:center;gap:7px;padding:3px 6px 3px 9px;border:1px solid #214438;border-radius:8px;background:#0d1412;overflow-wrap:anywhere}
+.browser-delivery-credentials>div>span{color:#b6c2ba}
+.account-panel .browser-delivery-credentials button{color:#6ff4cd;border-color:transparent;background:none;display:grid;place-items:center;min-width:40px}
+.account-panel .browser-order-delivery>pre:not([hidden]){background:#0d1412;border-color:transparent}
+.browser-order-delivery [data-delivery-status]:not(:empty){display:block;margin-top:5px;color:#bde9cf}
+@media(max-width:600px){.account-panel .browser-order-delivery button{min-height:44px}}
 .account-panel .browser-order-delivery button{color:#f3f4f6;background:#242a28;border:1px solid #426b5b;border-radius:8px;padding:6px 9px;min-height:36px}
 .account-panel :is(.browser-order-delivery pre,.account-code-text){margin:8px 0 0;padding:12px;background:#14201c;color:#e4f5ec;border:1px solid #2c5645;border-radius:10px;font:inherit;white-space:pre-wrap;overflow-wrap:anywhere}
 .account-panel .account-code-text{margin:0 14px 14px}

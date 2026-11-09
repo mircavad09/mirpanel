@@ -55,6 +55,8 @@ try{
    await modal.waitFor();
    assert.equal(await p.evaluate(()=>__fixtureState.deliveryReads),1);
    await modal.getByLabel('Məhsul və paket').selectOption('1');
+   await modal.getByLabel('E-poçt (istəyə bağlı)').fill('delivery@example.test');
+   await modal.getByLabel('Şifrə (istəyə bağlı)').fill('synthetic-only');
    await modal.getByLabel('Müştəriyə təqdim ediləcək hazır mesaj').fill('Sintetik mesaj\nİkinci sətir');
    const send=modal.getByRole('button',{name:'Göndər və təhvil ver'});
    await send.evaluate(b=>{b.click();b.click();});
@@ -63,6 +65,7 @@ try{
    await send.click();await modal.waitFor({state:'hidden'});
    const posts=await p.evaluate(()=>__fixtureState.deliveryPosts);
    assert.deepEqual(posts[0],posts[1]);assert.equal(posts[0].line,1);
+   assert.equal(posts[0].email,'delivery@example.test');assert.equal(posts[0].password,'synthetic-only');
    await wallet.getByRole('button',{name:'Təhvil ver'}).click();await modal.waitFor();
    assert.equal(await modal.locator('option').count(),1);
    assert.equal(await modal.getByLabel('Məhsul və paket').inputValue(),'0');

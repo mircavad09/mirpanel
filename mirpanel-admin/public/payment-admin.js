@@ -631,8 +631,9 @@
       const lines=state.lines.filter(x=>x.remaining>0);
       if(!lines.length){toast('Bütün məhsullar hesaba təhvil verilib.');return;}
       const dlg=document.createElement('dialog'),form=document.createElement('form');
-      dlg.className='paymentActionDialog paymentDeliveryDialog';dlg.dataset.paymentDeliveryDialog='';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Buraya yalnız müştəriyə göstəriləcək mətni yazın. İşçi qeydlərini və daxili təlimatları daxil etməyin.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>Müştəriyə təqdim ediləcək hazır mesaj <textarea name="message" rows="7" required maxlength="8000" spellcheck="false"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Göndər və təhvil ver</button>';
-      const {line,quantity,message}=form.elements,submit=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]'),error=form.querySelector('[role=alert]');
+      dlg.className='paymentActionDialog paymentDeliveryDialog';dlg.dataset.paymentDeliveryDialog='';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Buraya yalnız müştəriyə göstəriləcək mətni yazın. İşçi qeydlərini və daxili təlimatları daxil etməyin.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>E-poçt (istəyə bağlı)<input name="email" type="email" maxlength="254" autocomplete="off"></label><label>Şifrə (istəyə bağlı)<input name="password" type="password" maxlength="512" autocomplete="new-password"></label><label>Müştəriyə təqdim ediləcək hazır mesaj <textarea name="message" rows="7" required maxlength="8000" spellcheck="false"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Göndər və təhvil ver</button>';
+      const {line,quantity,email,password,message}=form.elements,submit=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]'),error=form.querySelector('[role=alert]');
+      const controls=[line,quantity,email,password,message,close];
       const renewalNote=document.createElement('label'),renewalCheck=document.createElement('input'),renewalText=document.createElement('span');
       renewalCheck.type='checkbox';renewalNote.append(renewalCheck,renewalText);error.before(renewalNote);
       for(const x of lines)line.add(new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)'+(x.renewalOrderCode?' · Yeniləmə №'+x.renewalOrderCode:''),x.index));
@@ -642,12 +643,13 @@
       dlg.addEventListener('cancel',e=>{if(pending)e.preventDefault();});
       form.onsubmit=async e=>{
         e.preventDefault();if(submit.disabled)return;
-        const data={line:Number(line.value),quantity:Number(quantity.value),message:message.value,...(renewalCheck.required?{renewalApplied:renewalCheck.checked}:{})};
+        if(!pending&&(email.value||password.value)&&quantity.value!=='1'){error.textContent='E-poçt və şifrəni hər vahid üçün ayrıca göndərin. Sayı 1 seçin.';return;}
+        const data={line:Number(line.value),quantity:Number(quantity.value),message:message.value,...(email.value?{email:email.value}:{}),...(password.value?{password:password.value}:{}),...(renewalCheck.required?{renewalApplied:renewalCheck.checked}:{})};
         pending??={...data,requestId:crypto.randomUUID()};
-        for(const field of [line,quantity,message,submit,close])field.disabled=true;
+        for(const field of [...controls,submit])field.disabled=true;
         error.textContent='';
         try{await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast('Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders({automatic:true}).catch(()=>{});}
-        catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;line.disabled=quantity.disabled=message.disabled=close.disabled=false;}submit.disabled=false;}
+        catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;for(const field of controls)field.disabled=false;}submit.disabled=false;}
       };
       dlg.append(form);document.body.append(dlg);dlg.showModal();return;
     }

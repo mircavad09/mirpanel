@@ -27,8 +27,9 @@ export async function ownerCodes(pool,user,id){
   where l.user_id=$1 and o.status not in ('rejected','cancelled','expired') and (o.payment_confirmed is true or o.status in ('approved','completed')) ${where}
   order by d.delivered_at desc,d.id desc`,id?[user,id]:[user])).rows;
 }
-export async function recordDelivery(c,security,actor,orderId,id,line,quantity,message){
- const cipher=security.encryptSecret(JSON.stringify({id,order:orderId,line,message}));
+export async function recordDelivery(c,security,actor,orderId,id,line,quantity,message,credentials={}){
+ const {email,password}=credentials;
+ const cipher=security.encryptSecret(JSON.stringify({id,order:orderId,line,message,...(email?{email}:{}),...(password?{password}:{})}));
  const record=(await c.query(`insert into ${D}(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,$3,$4,$5,$6) returning id,line_index,quantity`,[id,orderId,line,quantity,cipher,actor])).rows[0];
  await c.query(`insert into ${M}(event_key,order_id,delivery_id) values($1,$2,$3)`,['delivery:'+id,orderId,id]);
  return record;
@@ -74,14 +75,18 @@ export async function adminDelivery(pool,security,actor,id,input){
   if(!input){await c.query('commit');return view();}
   const {requestId,line,quantity,message}=input;
   if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||typeof message!=='string'||!message.trim()||message.length>8000)throw fail(400,'Təhvil məlumatları düzgün deyil.');
+  const {email='',password=''}=input;
+  if(typeof email!=='string'||email.length>254||(email&&!/^\S+@\S+\.\S+$/.test(email))||typeof password!=='string'||password.length>512||/[\r\n\0]/.test(password))throw fail(400,'E-poçt və ya şifrə düzgün deyil.');
+  if((email||password)&&quantity!==1)throw fail(400,'E-poçt və şifrəni hər vahid üçün ayrıca göndərin.');
   if(renewalCode(line)&&input.renewalApplied!==true)throw fail(400,'Əvvəl mövcud abunəliyin həqiqətən uzadıldığını təsdiqləyin.');
   const previous=(await c.query(`select order_id,line_index,quantity,message_cipher from ${D} where id=$1`,[requestId])).rows[0];
   if(previous){
-   if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||JSON.parse(security.decryptSecret(previous.message_cipher)).message!==message)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
+   const saved=JSON.parse(security.decryptSecret(previous.message_cipher));
+   if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||saved.message!==message||(saved.email||'')!==email||(saved.password||'')!==password)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
    await c.query('commit');return {...view(),replayed:true};
   }
   if(quantity>lines[line].quantity-(done[line]||0))throw fail(409,'Bu sayda təhvil verilməmiş məhsul qalmayıb.');
-  const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message);
+  const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message,{email,password});
   records.push(record);done[line]=(done[line]||0)+quantity;
   await c.query('commit');return view();
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}

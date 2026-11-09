@@ -113,9 +113,14 @@ try{
  const protectedId=(await sql('select id from customer_order_deliveries where order_id=$1',[done.orderId])).rows[0].id;
  eq(messages.includes((await codes.codes(owner,protectedId)).text),true);
  await assert.rejects(codes.codes(outsider,protectedId),{status:404});checks++;
- const manual={requestId:id(),line:0,quantity:1,message:'Manual synthetic delivery'};
+ const manual={requestId:id(),line:0,quantity:1,email:'delivery@example.test',password:'synthetic-only',message:'Manual synthetic delivery\n\nExact second line'};
  const completed=await adminDelivery(pool,security,'synthetic-admin',waiting.orderId,manual);eq(completed.status,'completed');
  eq((await adminDelivery(pool,security,'synthetic-admin',waiting.orderId,manual)).replayed,true);
+ eq(await codes.codes(outsider,manual.requestId),{text:manual.message,email:manual.email,password:manual.password});
+ await assert.rejects(codes.codes(owner,manual.requestId),{status:404});checks++;
+ await assert.rejects(adminDelivery(pool,security,'synthetic-admin',waiting.orderId,{...manual,password:'changed'}),{status:409});checks++;
+ const stored=(await sql('select message_cipher from customer_order_deliveries where id=$1',[manual.requestId])).rows[0];
+ eq(stored.message_cipher.includes(manual.password)||stored.message_cipher.includes(manual.email),false);
  await assert.rejects(adminDelivery(pool,security,'synthetic-admin',waiting.orderId,{...manual,requestId:id()}),{status:409});checks++;
  eq(await adminPendingDeliveries(pool,[waiting.orderId]),[]);
  await add({requestId:id(),messages:['Only one for three']});
