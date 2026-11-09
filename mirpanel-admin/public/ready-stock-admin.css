@@ -12,7 +12,11 @@
 .readyStockCounts strong{color:#ffda36;font-size:18px}
 .readyStockSale,.readyStockActions{display:flex;flex-wrap:wrap;align-items:end;gap:8px}.readyStockSale label:first-child{flex:1 1 90px}
 #readyStockSaleEditor p{font-size:12px;margin:6px 0 0}
-.readyStockMessage{display:grid;gap:6px}.readyStockMessage .btn{justify-self:start}
+.readyStockAccount{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px 10px;min-width:0;padding:9px 10px;border:1px solid #41464b;border-radius:10px;background:#191c1e}
+.readyStockAccount header{grid-column:1/-1;display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:6px;border-bottom:1px solid #34393d}
+.readyStockAccount h4{margin:0;font-size:14px}
+.readyStockAccount header .btn{min-height:32px;padding:4px 9px;font-size:12px}
+@media(max-width:760px){.readyStockAccount{grid-template-columns:minmax(0,1fr)}.readyStockAccount header .btn{min-height:44px}}
 .readyStockCard [data-product-list]{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,130px),1fr));gap:9px}
 .readyStockProduct{display:grid;grid-template-rows:auto 1fr auto;gap:5px;min-width:0;text-align:left;padding:7px;border:1px solid #42464a;border-radius:10px;background:#202326;color:#eee;cursor:pointer;font:inherit;overflow-wrap:anywhere}
 .readyStockProduct[aria-pressed=true]{border-color:#d7a925;background:#312813}

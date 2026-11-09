@@ -22,7 +22,7 @@ try{
   if(live){
    const ctx=await browser.newContext();
    for(const name of Object.keys(paths)){
-    const r=await ctx.request.get('https://mirpanel.onrender.com'+name+'?v=product-message-1');
+    const r=await ctx.request.get('https://mirpanel.onrender.com'+name+'?v=ready-account-cards-1');
     assert(r.ok());
     assert.equal((await r.text()).replaceAll('\r\n','\n'),fs.readFileSync(paths[name],'utf8').replaceAll('\r\n','\n'));
    }
@@ -36,7 +36,7 @@ try{
    const saves=[],salesWrites=[],p=catalog.products[0];let first=true;
    const note='Sintetik mesaj 1\n\nİstifadə qaydası: sınaq',note2='Sintetik mesaj 2\nİkinci sətir';
    if(live)for(const name of Object.keys(paths))await page.route(origin+name,async route=>{
-    const r=await route.fetch({url:'https://mirpanel.onrender.com'+name+'?v=product-message-1'});
+    const r=await route.fetch({url:'https://mirpanel.onrender.com'+name+'?v=ready-account-cards-1'});
     return route.fulfill({response:r});
    });
    await page.route('https://mirpanel.com/assets/*',route=>route.fulfill({contentType:'image/png',body:fs.readFileSync('.'+new URL(route.request().url()).pathname)}));
@@ -81,7 +81,29 @@ try{
    await email.first().fill('first@example.test');await password.first().fill('synthetic-one');
    await page.getByRole('button',{name:'+ Yeni hesab əlavə et'}).click();
    assert.equal(await email.nth(1).inputValue(),'');assert.equal(await password.nth(1).inputValue(),'');
-   await email.nth(1).fill('second@example.test');await password.nth(1).fill('synthetic-two');
+   await email.nth(1).fill('removed@example.test');await password.nth(1).fill('synthetic-remove');
+   await page.getByRole('button',{name:'+ Yeni hesab əlavə et'}).click();
+   const cards=page.locator('.readyStockAccount');
+   assert.deepEqual(await cards.locator('h4').allTextContents(),['Hesab 1','Hesab 2','Hesab 3']);
+   assert.equal(await email.nth(2).inputValue(),'');assert.equal(await password.nth(2).inputValue(),'');
+   await email.nth(2).fill('second@example.test');await password.nth(2).fill('synthetic-two');
+   const layout=await cards.first().evaluate(card=>{
+    const [email,password]=card.querySelectorAll('input');
+    const a=email.getBoundingClientRect(),b=password.getBoundingClientRect();
+    return {sameRow:Math.abs(a.top-b.top)<1,stacked:b.top>=a.bottom&&Math.abs(a.left-b.left)<1};
+   });
+   assert.equal(width===390?layout.stacked:layout.sameRow,true);
+   const folder=process.env.MIRPANEL_READY_STOCK_SCREENSHOTS;
+   if(folder){
+    fs.mkdirSync(folder,{recursive:true});
+    await page.locator('#stock').screenshot({path:path.join(folder,width===1360?'hesab-kartlari-komputer.png':'hesab-kartlari-mobil.png')});
+   }
+   await page.getByRole('group',{name:'Hesab 2',exact:true}).getByRole('button',{name:'Hesabı sil'}).click();
+   assert.deepEqual(await cards.locator('h4').allTextContents(),['Hesab 1','Hesab 2']);
+   assert.equal(await email.first().inputValue(),'first@example.test');
+   assert.equal(await password.first().inputValue(),'synthetic-one');
+   assert.equal(await email.nth(1).inputValue(),'second@example.test');
+   assert.equal(await password.nth(1).inputValue(),'synthetic-two');
    await plan.selectOption('1');assert.equal(await messages.inputValue(),note);assert.equal(await email.first().inputValue(),'');
    await plan.selectOption('0');assert.equal(await email.nth(1).inputValue(),'second@example.test');
    const submit=page.getByRole('button',{name:'Hesabları və təhvil ayarını saxla'});
@@ -94,10 +116,8 @@ try{
    await netflix.click();assert.equal(await messages.inputValue(),note2);
    await capcut.click();await capcut.locator('img').evaluate(img=>img.decode());
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-   const folder=process.env.MIRPANEL_READY_STOCK_SCREENSHOTS;
-   if(folder){fs.mkdirSync(folder,{recursive:true});await page.screenshot({path:path.join(folder,width===1360?'hazir-hesab-stoku.png':'hazir-hesab-stoku-mobil.png'),fullPage:true});}
    await page.close();
-   console.log('PASS '+width+'px — catalog photos, 0/50, previous out-of-stock, product messages, two account pairs, persistence, retry and aggregate counts');
+   console.log('PASS '+width+'px — catalog photos, 0/50, previous out-of-stock, product messages, three cards, middle removal, persistence, retry and aggregate counts');
   }
  }finally{await browser.close();}
 }finally{await new Promise(r=>server.close(r));}

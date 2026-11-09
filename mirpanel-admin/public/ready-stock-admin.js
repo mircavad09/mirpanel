@@ -46,18 +46,29 @@ export function mountReadyStock(host,api){
   saveSales.disabled=busy||absent||(pending&&pending.type!=='sales');
   for(const b of list.querySelectorAll('button'))b.disabled=locked;
  }
+ function numberAccounts(){
+  [...messageList.children].forEach((row,index)=>{
+   const title='Hesab '+(index+1);
+   row.querySelector('h4').textContent=title;
+   row.setAttribute('aria-label',title);
+  });
+ }
  function addAccount(value={}){
-  const row=document.createElement('div');row.className='readyStockMessage';
+  const row=document.createElement('section'),header=document.createElement('header'),heading=document.createElement('h4');
+  row.className='readyStockAccount';row.setAttribute('role','group');
+  const remove=document.createElement('button');remove.type='button';remove.className='btn';remove.textContent='Hesabı sil';
+  remove.onclick=()=>{
+   const nearby=row.nextElementSibling||row.previousElementSibling;
+   row.remove();numberAccounts();controls();
+   (nearby?.querySelector('button')||add).focus();
+  };
+  header.append(heading,remove);row.append(header);
   for(const [name,type,max] of [['Hesabın e-poçtu','email',254],['Hesabın şifrəsi','password',512]]){
    const label=document.createElement('label'),box=document.createElement('input');
    label.textContent=name;box.type=type;box.maxLength=max;box.autocomplete=type==='password'?'new-password':'off';box.value=value[type]||'';
    label.append(box);row.append(label);
   }
-  if(accounts().length){
-   const remove=document.createElement('button');remove.type='button';remove.className='btn';remove.textContent='Hesabı sil';
-   remove.onclick=()=>{row.remove();controls();};row.append(remove);
-  }
-  messageList.append(row);controls();
+  messageList.append(row);numberAccounts();controls();
  }
  function fillPlans(wanted){
   plan.replaceChildren();for(const x of products.find(x=>x.id===product.value)?.plans||[])plan.add(new Option(x.title,String(x.index)));
