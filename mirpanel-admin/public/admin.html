@@ -8,7 +8,7 @@
   >
   <title>Mirpanel Admin</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="admin.css?v=package-editor-1">
+  <link rel="stylesheet" href="admin.css?v=compact-product-2">
   <link rel="stylesheet" href="/ready-stock-admin.css?v=guide-section-1">
   <link rel="stylesheet" href="admin-mobile-menu.css?v=1">
 </head>
@@ -159,7 +159,7 @@
               </label>
 
               <label>
-                Ad
+                Məhsulun adı
                 <input id="productTitle">
               </label>
 
@@ -208,7 +208,7 @@
               </div>
 
               <label>
-                Badge
+                Məhsul nişanı
                 <input id="productBadge">
               </label>
 
@@ -218,7 +218,7 @@
               </label>
 
               <label>
-                Stok
+                Satış vəziyyəti
                 <select id="productSoldOut">
                   <option value="false">Satışda</option>
                   <option value="true">Stokda yoxdur</option>
@@ -239,7 +239,6 @@
                 <input id="productStockEnabled" type="checkbox">
                 <span>Stok nəzarəti (köhnə kataloq göstəricisi)</span>
               </label>
-              <small class="fieldHelp">Əməliyyat stokunu “Stoku bazada saxla” ilə təsdiqləyin: boş = limitsiz, 0 = bitib. Ana səhifə kartlarında stok göstəricisi göstərilmir.</small>
 
               <label>
                 Satıcı adı
@@ -294,10 +293,7 @@
             </section>
 
             <div class="sectionHead">
-              <div>
-                <h3>Sifariş addımları</h3>
-                <p>Aktiv müştəri sahələrinə görə avtomatik seçilir</p>
-              </div>
+              <h3>Sifariş addımları</h3>
             </div>
 
             <div class="confirmationSettings">
@@ -319,6 +315,10 @@
                 <p>Sifariş məlumatları qorunan qaralamada saxlanır; şifrə və kod WhatsApp-a göndərilmir.</p>
               </div>
 
+            </div>
+
+            <div class="productFieldActions" id="productFieldActions">
+              <label>Sahələrin tətbiqi<select id="formFieldScope"></select></label>
               <button
                 class="btn"
                 id="addFormFieldBtn"
@@ -343,7 +343,7 @@
             <div class="sectionHead">
               <div>
                 <h3>Sifariş təsdiqi</h3>
-                <p>WhatsApp-dan əvvəl göstərilən məhsula xüsusi modal</p>
+                <p>Müştəri şərtləri təsdiqləyir, lazım olduqda məlumatları doldurur və səbətə keçir.</p>
               </div>
 
               <button
@@ -361,7 +361,7 @@
                   id="orderConfirmationEnabled"
                   type="checkbox"
                 >
-                <span>Sifarişdən əvvəl təsdiqləmə modalı göstərilsin</span>
+                <span>Təsdiq pəncərəsini göstər</span>
               </label>
 
               <div class="formGrid">
@@ -388,6 +388,7 @@
                 <label class="full">
                   Alt məlumat mətni
                   <textarea id="orderConfirmationFooterText"></textarea>
+                  <small id="legacyConfirmationHint" hidden>Köhnə WhatsApp izahıdır. Cari axın təsdiqdən sonra səbətə keçir.</small>
                 </label>
               </div>
 
@@ -463,7 +464,7 @@
                 </label>
 
                 <label>
-                  SEO title
+                  SEO başlığı
                   <input
                     id="productSeoTitle"
                     placeholder="Netflix almaq | Ucuz Netflix Premium Azərbaycan - Mirpanel"
@@ -471,7 +472,7 @@
                 </label>
 
                 <label class="full">
-                  SEO description
+                  SEO açıqlaması
                   <textarea
                     id="productSeoDescription"
                     placeholder="Məhsulu Azərbaycanda sərfəli qiymətə əldə et. Sürətli aktivləşdirmə və WhatsApp ilə rahat sifariş."
@@ -494,7 +495,7 @@
                 </label>
 
                 <label class="full">
-                  SEO keywords
+                  SEO açar sözləri
                   <textarea
                     id="productSeoKeywords"
                     placeholder="vergüllə ayır: Netflix almaq, Netflix ucuz, Netflix Azərbaycan"
@@ -502,7 +503,7 @@
                 </label>
 
                 <label class="full">
-                  SEO content
+                  Əlavə SEO mətni
                   <textarea
                     id="productSeoContent"
                     placeholder="Məhsul detail səhifəsində agentlər və axtarış motorları üçün görünən əlavə SEO mətni"
@@ -726,11 +727,11 @@
   <div class="toasts" id="toasts"></div>
 
   <script src="admin-order-guide.js?v=capcut-mobile-guide-1"></script>
-  <script src="admin.js?v=package-editor-1"></script>
+  <script src="admin.js?v=compact-product-2"></script>
   <script src="product-sales-admin.js?v=detail-20261010-1"></script>
-  <script src="admin-stock-save-fix.js?v=nullable-20261028-1"></script>
+  <script src="admin-stock-save-fix.js?v=compact-product-2"></script>
   <script src="homepage-banners-admin.js?v=admin-release-status-20261107"></script>
-  <script src="cms-admin.js?v=api-integrations-inline-1"></script>
+  <script src="cms-admin.js?v=compact-product-2"></script>
   <script src="payment-admin.js?v=delivery-labels-1"></script>
   <script src="employee-review-admin.js?v=position-20261028-1"></script>
   <script src="stories-admin.js?v=admin-release-status-20261107"></script>

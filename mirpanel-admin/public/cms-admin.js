@@ -1075,47 +1075,87 @@
       groups.appendChild(details);
       return details.querySelector(".productGroupBody");
     };
-    const basic = makeGroup("Əsas məlumatlar", "Ad, kateqoriya, şəkil və qısa təsvir", true);
-    const pricing = makeGroup("Qiymət və planlar", "Planlar, qiymətlər və stok vəziyyəti", true);
-    const orders = makeGroup("Sifariş və müştəri forması", "Sifariş addımları, forma sahələri və təsdiq", false);
-    const advanced = makeGroup("Geniş parametrlər", "SEO, schema, texniki ID və nadir parametrlər", false);
-    const grids = [basic, pricing, advanced].map((body) => {
+    const basic = makeGroup("Əsas məlumatlar", "Ad, kateqoriya, şəkil və açıqlama", true);
+    const pricing = makeGroup("Qiymət və planlar", "Satış vəziyyəti, stok və paketlər", true);
+    const orders = makeGroup("Sifariş və müştəri forması", "Sifariş ardıcıllığı və forma sahələri");
+    const confirmation = makeGroup("Sifariş təsdiqi", "Təsdiq pəncərəsi və onun mətnləri");
+    const advanced = makeGroup("Geniş parametrlər", "Texniki məlumatlar, SEO və schema");
+    const makeGrid = (body, heading) => {
+      if (heading) {
+        const title = document.createElement("h3");
+        title.textContent = heading;
+        body.appendChild(title);
+      }
       const grid = document.createElement("div");
       grid.className = "formGrid";
       body.appendChild(grid);
       return grid;
-    });
+    };
     const moveControl = (id, target) => {
-      const control = el(id);
-      const owner = control?.closest("label") || control?.closest(".imageUploadBox");
-      if (owner) target.appendChild(owner);
+      const owner = el(id).closest("label");
+      target.appendChild(owner);
       return owner;
     };
-    ["productOrder", "productTitle", "productVariant", "productCategory", "productImage", "productBadge", "productDesc", "productNote"].forEach((id) => moveControl(id, grids[0]));
-    const imageUpload = el("productImagePickBtn")?.closest(".imageUploadBox");
-    if (imageUpload) grids[0].appendChild(imageUpload);
-    ["productCurrency", "productSoldOut", "productStock", "productStockEnabled", "productBestSeller"].forEach((id) => {
-      moveControl(id, grids[1]);
-    });
-    form.querySelectorAll(".fieldHelp").forEach((help) => grids[1].appendChild(help));
-    ["productId", "productFlow", "productSeller"].forEach((id) => moveControl(id, grids[2]));
-    const moveSection = (controlId, target) => {
-      const control = el(controlId);
-      const block = control?.closest(".confirmationSettings") || control;
-      const heading = block?.previousElementSibling?.classList.contains("sectionHead") ? block.previousElementSibling : null;
-      if (heading) target.appendChild(heading);
-      if (block) target.appendChild(block);
+    const pairControl = (id, target, className) => {
+      const row = document.createElement("div");
+      row.className = className;
+      target.appendChild(row);
+      moveControl(id, row);
+      return row;
     };
-    const plans = el("plans");
-    if (plans) { if (plans.previousElementSibling?.classList.contains("sectionHead")) pricing.appendChild(plans.previousElementSibling); pricing.appendChild(plans); }
+    const moveSection = (id, target) => {
+      const control = el(id);
+      const block = control.closest(".confirmationSettings") || control;
+      const heading = block.previousElementSibling;
+      if (heading?.classList.contains("sectionHead")) target.appendChild(heading);
+      target.appendChild(block);
+      return heading;
+    };
+    const basicGrid = makeGrid(basic);
+    ["productTitle", "productOrder", "productVariant", "productCategory", "productBadge"].forEach(id => moveControl(id, basicGrid));
+    const image = pairControl("productImage", basicGrid, "productImagePair");
+    image.append(el("productImagePickBtn").closest(".imageUploadBox"));
+    ["productDesc", "productNote"].forEach(id => moveControl(id, basicGrid).classList.remove("full"));
+
+    const pricingGrid = makeGrid(pricing);
+    pricingGrid.classList.add("productStockGrid");
+    ["productCurrency", "productSoldOut"].forEach(id => moveControl(id, pricingGrid));
+    const stock = pairControl("productStock", pricingGrid, "productStockPair");
+    [el("inventorySave"), el("inventoryStatus")].filter(Boolean).forEach(control => stock.append(control));
+    ["productStockEnabled", "productBestSeller"].forEach(id => moveControl(id, pricingGrid));
+    pricingGrid.append(form.querySelector(".fieldHelp"));
+    moveSection("plans", pricing);
+    pricing.append(form.querySelector(".productDetailSettings"), el("productSalesSettings"));
+
     moveSection("productOrderFlow", orders);
-    const formFields = el("formFields");
-    if (formFields) { if (formFields.previousElementSibling?.classList.contains("sectionHead")) orders.appendChild(formFields.previousElementSibling); orders.appendChild(formFields); }
-    moveSection("orderConfirmationEnabled", orders);
+    const fields = el("productFieldActions");
+    moveSection(fields.id, orders);
+    orders.append(el("formFields"), el("spotifyPasswordResetSettings"));
     moveSection("whatsappExtraMessage", orders);
-    moveSection("productSeoSlug", advanced);
-    ["aboutHtml", "rulesHtml"].forEach((id) => moveControl(id, advanced));
-    if (section.parentNode === form) advanced.appendChild(section);
+
+    const confirmationHeading = moveSection("orderConfirmationEnabled", confirmation);
+    confirmationHeading.classList.add("productConfirmationHead");
+    const intro = confirmationHeading.firstElementChild;
+    const note = intro.querySelector("p");
+    intro.remove();
+    confirmationHeading.prepend(el("orderConfirmationEnabled").closest("label"));
+    note.className = "formHint";
+    confirmationHeading.after(note);
+    el("orderConfirmationTitle").closest(".formGrid").classList.add("productConfirmationGrid");
+
+    const technical = makeGrid(advanced, "Texniki məlumatlar");
+    ["productId", "productFlow", "productSeller"].forEach(id => moveControl(id, technical));
+    const seo = el("productSeoSlug").closest(".confirmationSettings");
+    seo.previousElementSibling.remove();
+    const seoBasics = makeGrid(advanced, "SEO əsasları");
+    ["productSeoSlug", "productSeoTitle", "productSeoH1", "productSeoPrimaryKeyword", "productSeoDescription"].forEach(id => moveControl(id, seoBasics));
+    const extraSeo = makeGrid(advanced, "Əlavə SEO və schema");
+    const contentHeading = el("aboutHtml").closest("label").previousElementSibling;
+    if (contentHeading?.classList.contains("sectionHead")) contentHeading.remove();
+    ["productSeoRelatedKeywords", "productSeoKeywords", "productSeoContent", "aboutHtml", "rulesHtml"].forEach(id => moveControl(id, extraSeo).classList.add("full"));
+    seo.remove();
+    section.querySelector(".sectionHead").remove();
+    advanced.appendChild(section);
     const danger = el("deleteProductBtn")?.closest(".dangerZone");
     if (danger) advanced.appendChild(danger);
     form.querySelectorAll(":scope > .formGrid").forEach((grid) => { if (!grid.children.length) grid.remove(); });

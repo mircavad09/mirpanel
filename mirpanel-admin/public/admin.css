@@ -1406,3 +1406,56 @@ th {
   #orderGuideHost.guideHasSelection .guideCatalog { display: none; }
   .guideBack { display: inline-flex; min-height: 44px; margin-bottom: 10px; }
 }
+
+/* Product editor layout */
+.productFormGroups .productGroup { margin-top: 10px; }
+.productFormGroups .productGroup > summary { padding: 10px 12px; }
+.productFormGroups .productGroupBody { display: grid; gap: 10px; min-width: 0; padding: 0 12px 12px; }
+.productFormGroups .productGroupBody > * { min-width: 0; }
+.productFormGroups .formGrid, .productFormGroups .formFields { gap: 8px 10px; }
+.productFormGroups .formGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.productFormGroups .sectionHead, .productFormGroups .productDetailSettings { margin: 0; }
+.productFormGroups .confirmationSettings { padding: 0; background: transparent; border: 0; gap: 8px; }
+.productFormGroups label { color: #e8e7e6; min-width: 0; }
+.productFormGroups small, .productFormGroups .formHint { margin-top: 4px; overflow-wrap: anywhere; }
+.productFormGroups input:not([type="checkbox"]):not([type="file"]), .productFormGroups select, .productFormGroups textarea {
+  min-width: 0;
+  max-width: 100%;
+  background: #2b2d30;
+}
+.productFormGroups textarea { min-height: 52px; height: 52px; resize: vertical; }
+.productFormGroups textarea.codeArea, .productFormGroups textarea#productSeoContent { height: 76px; }
+.productFormGroups .productImagePair, .productFormGroups .productStockPair, .productFieldActions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 6px 8px;
+  min-width: 0;
+}
+.productFormGroups .imageUploadBox { display: contents; }
+.productFormGroups .imageUploadActions { margin: 0; }
+#productImageUploadStatus, #inventoryStatus, .productFieldActions #inheritFormFields { grid-column: 1 / -1; margin: 0; }
+#inventoryStatus { color: var(--muted); font-size: 11px; overflow-wrap: anywhere; }
+.productFormGroups .productStockGrid { grid-template-columns: minmax(0, .55fr) minmax(0, 1fr) minmax(0, 1.6fr); align-items: start; }
+.productFormGroups .productStockGrid > .fieldHelp { grid-column: 1 / -1; margin: 0; }
+.productFormGroups .productConfirmationGrid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.productFormGroups .productConfirmationHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.productFormGroups .productConfirmationHead .switchLine { min-height: 0; }
+.productFormGroups .helpToggle { padding-top: 8px; }
+.productFormGroups .emptyMini, .productFormGroups .customerFormPreview { padding: 8px; }
+.productFormGroups .formFieldRow { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.productFormGroups .productSalesSettings { margin: 0; padding: 8px; }
+.productFormGroups .productGroupBody > h3 { margin: 4px 0 0; }
+@media (max-width: 850px) {
+  .productFormGroups .productStockGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .productFormGroups .productStockPair { grid-column: 1 / -1; }
+}
+@media (max-width: 600px) {
+  .productFormGroups .formGrid, .productFormGroups .productStockGrid,
+  .productFormGroups .productConfirmationGrid, .productFormGroups .formFieldRow { grid-template-columns: minmax(0, 1fr); }
+  .productFieldActions { grid-template-columns: minmax(0, 1fr); }
+  .productFieldActions .btn { justify-self: start; }
+  .productFormGroups .productGroupBody input:not([type="checkbox"]), .productFormGroups .productGroupBody select,
+  .productFormGroups .productGroupBody textarea { font-size: 16px; }
+}
+.productFormGroups #legacyConfirmationHint[hidden] { display: none; }
