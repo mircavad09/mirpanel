@@ -168,3 +168,49 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 @media (prefers-reduced-motion: reduce) {
   .browser-guide-phone *, .browser-guide-phone *::before { animation: none !important; }
 }
+
+.browser-guide-compact .browser-guide-text {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start;
+  gap: 8px; margin: 0 0 4px; padding: 7px 9px;
+  border-radius: 10px; background: #222221;
+}
+.browser-guide-step-number {
+  display: grid; place-items: center; width: 20px; height: 20px;
+  border-radius: 50%; background: #ffca32; color: #181508;
+  font-size: 12px; line-height: 1;
+}
+.browser-guide-compact .browser-guide-controls {
+  display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; align-items: center;
+}
+.browser-guide-compact .browser-guide-controls > button {
+  display: grid; place-items: center; width: 44px; min-height: 44px; padding: 0;
+  border-radius: 50%; font-size: 24px; font-weight: 500;
+}
+.browser-guide-compact .browser-guide-dots {
+  justify-content: center; flex-wrap: nowrap; gap: 0; margin: 0;
+}
+.browser-guide-compact .browser-guide-dots button {
+  min-width: 20px; min-height: 44px; padding: 0; border: 0;
+  border-radius: 5px; background: transparent;
+}
+.browser-guide-compact .browser-guide-dots button::before { width: 6px; height: 6px; }
+.browser-guide-compact .browser-guide-dots button[aria-current="step"]::before { width: 16px; border-radius: 8px; }
+.browser-guide-compact .browser-guide-play {
+  display: flex; align-items: center; justify-content: center; gap: 6px; margin: 0 auto;
+  min-height: 32px; padding: 4px 8px; border-color: transparent; background: transparent; color: #c6c5c1;
+}
+.browser-guide-compact .browser-guide-play span { font-size: 10px; }
+@media (max-width: 600px) {
+  .browser-guide-step.browser-guide-compact { gap: 6px; margin-top: 6px; }
+}
+@media (max-width: 600px) and (max-height: 740px) {
+  .browser-guide-frame:has(.browser-guide-compact) { height: calc(100dvh - 26px); }
+  .browser-guide-body:has(.browser-guide-compact) {
+    display: grid; grid-template-rows: auto minmax(0, 1fr);
+  }
+  .browser-guide-step.browser-guide-compact { grid-template-rows: minmax(0, 1fr) auto; }
+  .browser-guide-compact .browser-guide-visual { container-type: size; min-height: 0; }
+  .browser-guide-compact .browser-guide-phone[data-animation] {
+    width: min(100%, 140px, calc(100cqh * .46));
+  }
+}

@@ -190,6 +190,8 @@
    const choices=create('div',null,'browser-guide-choices');
    for(const [key,label] of tracks){const b=button(key==='phone'&&data.tracks[key].some(s=>s.animation)?'CapCut-a daxil ol':label,()=>{autoplay=false;track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
    const steps=data.tracks[track],current=steps[step],layout=create('div',null,'browser-guide-step');
+   const compact=track==='phone'&&steps.some(item=>item.animation);
+   if(compact)layout.classList.add('browser-guide-compact');
    const visual=create('div',null,'browser-guide-visual');
    try{
     const u=new URL(current.image,location.origin);
@@ -211,8 +213,13 @@
      visual.append(frame);
     }
    }catch{}
-   const details=create('div'),counter=create('strong','Addım '+(step+1)+' / '+steps.length,'browser-guide-note');
+   const details=create('div');
    const description=create('p',current.description,'browser-guide-text');description.setAttribute('aria-live','polite');
+   if(compact){
+    const number=create('strong',String(step+1),'browser-guide-step-number');
+    number.setAttribute('aria-label','Addım '+(step+1)+' / '+steps.length);
+    description.prepend(number);
+   }else details.append(create('strong','Addım '+(step+1)+' / '+steps.length,'browser-guide-note'));
    const nav=create('div',null,'browser-guide-controls');
    const go=(index,focus)=>{
     if(index<0||index>=steps.length)return;
@@ -220,8 +227,15 @@
     if(focus)body.querySelector('.browser-guide-controls button'+focus+':not(:disabled),.browser-guide-controls button:not(:disabled)')?.focus({preventScroll:true});
    };
    const back=button('‹ Əvvəlki',()=>go(step-1,':first-child')),next=button('Növbəti ›',()=>go(step+1,':last-child'));
+   if(compact){
+    for(const [arrow,icon,label] of [[back,'‹','Əvvəlki'],[next,'›','Növbəti']]){
+     const glyph=create('span',icon);
+     glyph.setAttribute('aria-hidden','true');
+     arrow.replaceChildren(glyph);arrow.setAttribute('aria-label',label);
+    }
+   }
    back.disabled=step===0;next.disabled=step===steps.length-1;
-   nav.append(back,next);details.append(counter,description,nav);
+   nav.append(back,next);details.append(description,nav);
    if(steps.length>1){
     const dots=create('div',null,'browser-guide-dots');dots.setAttribute('role','group');dots.setAttribute('aria-label','Təlimat addımları');
     steps.forEach((_,index)=>{
@@ -236,7 +250,10 @@
      draw();body.querySelector('.browser-guide-play')?.focus({preventScroll:true});
     });
     play.className='browser-guide-play';
-    details.append(dots,play);
+    if(compact){
+     const icon=create('span',autoplay?'Ⅱ':'▶');icon.setAttribute('aria-hidden','true');play.prepend(icon);
+     next.before(dots);details.append(play);
+    }else details.append(dots,play);
     let touch;
     layout.addEventListener('touchstart',e=>{touch=e.touches.length===1?e.touches[0]:null;},{passive:true});
     layout.addEventListener('touchcancel',()=>{touch=null;});
