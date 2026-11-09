@@ -78,9 +78,11 @@ try{
    await p.getByText('Sifariş № 991').waitFor();await waitSound(['add','remove','remove']);assert.equal(posts,2);
    assert.equal(new URL(p.url()).pathname,'/odenis');
    assert.equal(await p.getByRole('link',{name:'Sifarişlərimə bax'}).getAttribute('href'),'/profil?tab=orders&order=991');
-   await p.getByText(/Ödəniş yoxlanılır/).waitFor();
+   await p.getByRole('heading',{name:'Ödəniş yoxlanılır',exact:true}).waitFor();
+   await p.getByText(/Çekiniz qəbul edildi/).waitFor();
    assert.equal(await p.getByRole('link',{name:/WhatsApp/}).count(),0);
-   paid=true;await p.getByRole('heading',{name:'Ödəniş təsdiqləndi',exact:true}).waitFor();await waitSound(['add','remove','remove','order']);
+   paid=true;await p.getByRole('heading',{name:'Ödənişiniz uğurla tamamlandı!',exact:true}).waitFor();await waitSound(['add','remove','remove','order']);
+   await p.getByText(/Sifarişiniz hazırlanır/).waitFor();
    await p.getByRole('link',{name:'Sifarişlərimə bax'}).waitFor();
    await p.reload();await waitSound(['add','remove','remove','order']);
    await p.goto(origin);await p.waitForFunction(()=>window.MirpanelCart);
@@ -88,8 +90,9 @@ try{
    await p.goto(origin+'/odenis?mode=wallet');await p.locator('.checkout-consent input').check();
    await p.getByRole('button',{name:/Sifarişi tamamla/}).dblclick();
    await p.getByText('Sifariş № 992').waitFor();await waitSound(['add','remove','remove','order','order']);
-   assert.equal(await p.getByRole('link',{name:'Sifarişlərimə keç'}).getAttribute('href'),'/profil?tab=orders&order=992');
-   await p.getByText('Tamamlandı — bütün məhsullar hesabınıza təhvil verildi.').waitFor();
+   assert.equal(await p.getByRole('link',{name:'Sifarişlərimə bax'}).getAttribute('href'),'/profil?tab=orders&order=992');
+   await p.getByText('Hesab məlumatlarınız Sifarişlərim bölməsində hazırdır.').waitFor();
+   assert.deepEqual(await p.locator('.shop-result-actions a').allTextContents(),['Sifarişlərimə bax','Məhsullara bax','Ana səhifə']);
    for(const label of ['Məhsullara bax','Ana səhifə'])await p.getByRole('link',{name:label,exact:true}).waitFor();
    await p.reload();await waitSound(['add','remove','remove','order','order']);
    const mediaError=await p.evaluate(()=>sessionStorage.getItem('sound-media-error'));

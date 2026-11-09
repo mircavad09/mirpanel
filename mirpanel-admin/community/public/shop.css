@@ -128,3 +128,17 @@
 .shop-checkout-offers img{width:42px;height:42px;object-fit:cover;border-radius:9px}
 .shop-offer-plus{width:30px;height:30px;display:grid;place-items:center;border:1px solid #866c29;border-radius:50%;color:#ffd600;flex:none}
 @media(max-width:760px){.shop-checkout-grid{grid-template-columns:minmax(0,1fr);gap:16px}.shop-checkout-offers{grid-template-columns:minmax(0,1fr)}.shop-checkout-grid>.checkout-choices{scroll-margin-top:110px}.shop-checkout-grid>.checkout-priority{order:-1}}
+.shop-page .shop-result{box-sizing:border-box;width:min(100%,510px);margin:clamp(12px,5vh,52px) auto;padding:clamp(20px,5vw,46px);border:1px solid #373737;border-radius:22px;background:#171717;color:#fafafa;text-align:center}
+.shop-page .shop-result-badge{display:grid;place-items:center;width:78px;height:78px;margin:0 auto 22px;border-radius:50%;background:#382c11;color:#ffd160}
+.shop-page .shop-result-badge svg{width:44px;height:44px}
+.shop-page .shop-result[data-result=paid] .shop-result-badge{background:#102c22;color:#31df8f}
+.shop-page .shop-result[data-result=rejected] .shop-result-badge{background:#392021;color:#ff9b9b}
+.shop-page .shop-result h1{margin:0;font-size:clamp(25px,5.5vw,36px);line-height:1.16;letter-spacing:-.025em;overflow-wrap:anywhere}
+.shop-page .shop-result-message p{margin:12px 0 0;color:#c2c1bd;line-height:1.5}
+.shop-page .shop-result-message .shop-result-reference{font-size:13px;color:#aaa9a5}
+.shop-page .shop-result-actions{display:grid;gap:10px;margin-top:25px}
+.shop-page .shop-result-actions a{display:grid;place-items:center;min-height:48px;margin:0;padding:8px 10px;box-sizing:border-box;border:1px solid transparent;border-radius:11px;color:#f5f5f5;text-decoration:none;font-weight:650}
+.shop-page .shop-result-actions a:first-child{background:#ffca26;color:#1a1403}
+.shop-page .shop-result-actions a:nth-child(2){background:#272727;border-color:#565656}
+.shop-page .shop-result-actions a:focus-visible{outline:2px solid #ffd557;outline-offset:3px}
+@media(hover:hover){.shop-page .shop-result-actions a:hover{filter:brightness(1.12);text-decoration:underline}}

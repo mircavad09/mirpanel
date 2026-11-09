@@ -99,6 +99,16 @@ export async function adminDelivery(pool,security,actor,id,input){
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const amount=(v,currency='AZN')=>Number(v).toFixed(2).replace('.',',')+' '+(currency==='AZN'?'₼':currency);
 const mailTable='role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="table-layout:fixed;border-collapse:collapse"';
+export function queueReceiptReview(c,orderId){
+ return c.query(`insert into ${M}(event_key,order_id) values('receipt:'||$1::uuid,$1) on conflict do nothing`,[orderId]);
+}
+function receiptReviewMail(o,origin){
+ const code=String(o.order_code);if(!orderCodeValid(code))throw Error('INVALID_ORDER_CODE');
+ const url=new URL('/profil?tab=orders&order='+encodeURIComponent(code),origin).href;
+ const title='Çekiniz qəbul edildi',detail='№'+code+' sifarişinizin çeki yoxlama üçün qəbul edildi. Bu bildiriş ödəniş təsdiqi deyil. Sifarişin cari statusuna hesabınızda baxa bilərsiniz.';
+ return {user:{email:o.email},subject:title+' — Sifariş №'+code,textBody:title+'\n\n'+detail+'\n\nSifarişə bax: '+url,
+  htmlBody:`<div lang="az" style="font:15px/1.5 Arial,sans-serif"><h1>${title}</h1><p>${esc(detail)}</p><p><a href="${esc(url)}">Sifarişə bax</a></p><p>MirPanel komandası</p></div>`};
+}
 export function orderMail(o,origin,{records=[],catalog}={}){
  const code=String(o.order_code);if(!orderCodeValid(code))throw Error('INVALID_ORDER_CODE');
  const url=new URL('/profil?tab=orders&order='+encodeURIComponent(code),origin).href;
@@ -142,13 +152,14 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    const o=(await pool.query(`select o.*,d.id as delivery_id,d.line_index,d.quantity as delivered_quantity,coalesce(ct.name,u.name) as name,u.email,u."emailVerified",ct.email as contact_email,ct.phone
    from public.payment_orders o join ${O} l on l.order_id=o.id join mirpanel_community."user" u on u.id=l.user_id left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id left join ${D} d on d.id=$2
    where o.id=$1`,[job.order_id,job.delivery_id])).rows[0];
-   if(o?.emailVerified&&paid(o)){
+   const receipt=job.event_key.startsWith('receipt:');
+   if(o?.emailVerified&&(receipt||paid(o))){
     try{
-     const records=job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
-     const catalog=loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
-     const result=await send('order',orderMail(o,origin,{records,catalog}));
+     const records=receipt||job.delivery_id?[]:await deliveryRecords(pool,[job.order_id]);
+     const catalog=!receipt&&loadCatalog&&deliveryLines(o).some(x=>!x.image)?await Promise.resolve().then(loadCatalog).catch(()=>null):null;
+     const result=await send('order',receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog}));
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
-     state='accepted';reason=requireDeliveryNotice&&!job.delivery_id?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
+     state='accepted';reason=requireDeliveryNotice&&!receipt&&!job.delivery_id?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
      const retry=e.deliveryDisposition==='retry'&&job.attempts<3;
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';

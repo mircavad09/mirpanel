@@ -142,15 +142,24 @@ async function payment(selectCard=false,reveal=false,preview=null){
 }
 async function paymentGroup(clearCart=true){
  clearTimeout(confirmationTimer);
+ if(closed)return;
  const rejected=group.items.some(x=>['rejected','expired','cancelled'].includes(x.status));
- const summary=card(group.state==='submitted'?(group.paymentConfirmed?'Ödəniş təsdiqləndi':'Sifariş qəbul edildi'):'Ödənişi tamamlayın');
- summary.append(el('p','Cəmi: '+money(group.totalCents)));if(group.orderCode)summary.append(el('strong','Sifariş № '+group.orderCode));
  if(group.state==='submitted'){
-  if(clearCart){cart.clear();localStorage.removeItem(pendingKey);history.replaceState(history.state,'','/odenis?completed='+encodeURIComponent(group.id));}
-  const actions=el('div',null,'shop-actions');
-  actions.append(link(group.mode==='wallet'?'Sifarişlərimə keç':'Sifarişlərimə bax',group.orderCode?'/profil?tab=orders&order='+encodeURIComponent(group.orderCode):'/profil?tab=orders'),link('Məhsullara bax','/mehsul'),link('Ana səhifə','/'));
-  summary.append(el('p',group.paymentConfirmed?(group.deliveryStatus==='completed'?'Tamamlandı — bütün məhsullar hesabınıza təhvil verildi.':group.mode==='wallet'?'Hazırlanır — qalan məhsulların təhvilini sifarişinizdə izləyin.':'Ödəniş təsdiqləndi. Təhvil vəziyyətini sifarişinizdə izləyin.'):rejected?'Ödəniş təsdiqlənmədi. Faktiki statusu sifarişinizdə yoxlayın.':'Ödəniş yoxlanılır. Bu, çatdırılma təsdiqi deyil.',group.paymentConfirmed?'shop-success':'shop-muted'),actions);
-  app.replaceChildren(el('h1','Sifarişiniz'),summary,...group.items.map(x=>product(x,x.quantity||1)),error);refreshAccount();
+  if(clearCart){cart.clear();localStorage.removeItem(pendingKey);basketURL('/odenis?completed='+encodeURIComponent(group.id));}
+  const paid=group.paymentConfirmed===true, delivered=group.deliveryStatus==='completed';
+  const heading=paid?'Ödənişiniz uğurla tamamlandı!':rejected?'Ödəniş təsdiqlənmədi':'Ödəniş yoxlanılır';
+  const detail=paid?(delivered?'Hesab məlumatlarınız Sifarişlərim bölməsində hazırdır.':'Sifarişiniz hazırlanır. Təhvil vəziyyətini Sifarişlərim bölməsindən izləyə bilərsiniz.'):rejected?'Sifarişinizin cari statusuna Sifarişlərim bölməsində baxa bilərsiniz.':'Çekiniz qəbul edildi. Ödəniş təsdiqlənəndə sifarişinizin statusu yenilənəcək.';
+  const summary=el('section',null,'shop-result'),message=el('div',null,'shop-result-message'),actions=el('nav',null,'shop-result-actions');
+  summary.dataset.result=paid?'paid':rejected?'rejected':'reviewing';
+  const badge=checkoutIcon(paid?'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>':rejected?'<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/>':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>');badge.classList.add('shop-result-badge');
+  message.setAttribute('aria-live','polite');message.append(el('h1',heading),el('p',detail));
+  if(group.orderCode)message.append(el('p','Sifariş № '+group.orderCode+' · '+checkoutMoney(group.totalCents),'shop-result-reference'));
+  actions.setAttribute('aria-label','Sifarişdən sonra keçidlər');
+  actions.append(link('Sifarişlərimə bax',group.orderCode?'/profil?tab=orders&order='+encodeURIComponent(group.orderCode):'/profil?tab=orders'),link('Məhsullara bax','/mehsul'),link('Ana səhifə','/'));
+  const existing=app.querySelector('.shop-result');
+  if(existing){existing.dataset.result=summary.dataset.result;existing.querySelector('.shop-result-badge').replaceWith(badge);existing.querySelector('.shop-result-message').replaceChildren(...message.childNodes);}
+  else{summary.append(badge,message,actions);app.replaceChildren(summary,error);if(clearCart)window.scrollTo({top:0,behavior:'instant'});}
+  refreshAccount();
   if(group.mode==='card'&&!group.paymentConfirmed&&!rejected){
    const initial=group;
    const poll=async()=>{
@@ -186,7 +195,7 @@ async function paymentGroup(clearCart=true){
  async function release(changeCard){if(receiptReady&&!confirm('Kartı dəyişmək və ya sifarişi ləğv etmək cari rezervi bitirəcək. Yeni kart üçün çek yenidən yüklənməlidir. Davam edək?'))return;await run(async()=>{const result=await api('/cancel',{id:reserved.id});if(!changeCard&&result.cancellationApplied===true)void playCheckoutSound('remove','cancel:'+reserved.id);localStorage.removeItem(pendingKey);group=null;await payment(changeCard);});}
  const {panel,change}=orderBankDetail({el,button,method,amount:checkoutMoney(reserved.totalCents),onChange:()=>void release(true),onCopy:async(number,copy)=>{try{await navigator.clipboard.writeText(number);copy.textContent='Kopyalandı';}catch{error.textContent='Kopyalama mümkün olmadı. Kart nömrəsini seçib kopyalayın.';}}});
  const steps=el('section',null,'wallet-topup-steps order-transfer-steps'),list=el('ol');steps.append(el('h3','Addımlar'),list);
- for(const step of ['Yuxarıdakı kart nömrəsini kopyalayın.','Göstərilən məbləği həmin karta köçürün.','“Qalereyadan çek seç” düyməsinə basın.','Ödəniş çekini seçib yükləyin.','“Davam et” düyməsinə basın. Sayt sizi WhatsApp-a yönləndirəcək. Ödəniş yoxlandıqdan sonra sifarişiniz təhvil veriləcək.'])list.append(el('li',step));
+ for(const step of ['Yuxarıdakı kart nömrəsini kopyalayın.','Göstərilən məbləği həmin karta köçürün.','“Qalereyadan çek seç” düyməsinə basın.','Ödəniş çekini seçib yükləyin.','“Davam et” düyməsinə basın. Ödənişin vəziyyətini sifarişinizdə izləyə bilərsiniz.'])list.append(el('li',step));
  const next=button('Davam et',()=>run(async()=>{if(!receiptReady)return;next.disabled=cancel.disabled=change.disabled=true;try{group=await api('/submit',{id:reserved.id});await paymentGroup();}catch(e){if(e.status===409){await payment();error.textContent=e.message;}else throw e;}finally{next.disabled=!receiptReady;cancel.disabled=change.disabled=false;}}),true);
  next.disabled=!receiptReady;
  const cancel=button('Ləğv et',()=>void release(false));actions.append(cancel,next);

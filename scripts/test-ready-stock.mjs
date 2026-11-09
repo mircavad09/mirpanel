@@ -75,9 +75,9 @@ try{
  let startSend,releaseSend;const started=new Promise(r=>startSend=r),hold=new Promise(r=>releaseSend=r);
  const blocked=createCustomerOrderMailer(pool,async(_kind,msg)=>{trace.push(msg.subject);startSend();await hold;throw Object.assign(Error(),{deliveryDisposition:'retry',deliveryCode:'TOKEN_TEMPORARY'});},'https://mirpanel.com');
  const send=async(_kind,msg)=>{
-  if(msg.subject.startsWith('Hesabınız hazırdır'))eq((await queue()).find(x=>!x.delivery_id).reason,'RESEND_DELIVERED');
+  if(msg.subject.startsWith('Sifarişiniz hazırdır'))eq((await queue()).find(x=>!x.delivery_id).reason,'RESEND_DELIVERED');
   else eq(await secondWorker.notice(event('email.delivered')),false); // Provider ID is not saved yet; Resend must retry.
-  trace.push(msg.subject);return {id:msg.subject.startsWith('Hesabınız hazırdır')?id():providerId};
+  trace.push(msg.subject);return {id:msg.subject.startsWith('Sifarişiniz hazırdır')?id():providerId};
  };
  const secondWorker=createCustomerOrderMailer(pool,send,'https://mirpanel.com',{requireDeliveryNotice:true});
  const attempt=blocked.wake();await Promise.race([started,attempt]);
@@ -99,7 +99,7 @@ try{
  await secondWorker.wake();
  eq(await secondWorker.notice(event('email.delivery_delayed')),true);
  eq((await queue()).find(x=>!x.delivery_id).reason,'RESEND_DELIVERED');
- eq(trace,['Sifarişiniz təsdiqləndi — Sifariş №'+auto.orderCode,'Sifarişiniz təsdiqləndi — Sifariş №'+auto.orderCode,'Hesabınız hazırdır — Sifariş №'+auto.orderCode]);
+ eq(trace,['Sifarişiniz təsdiqləndi — Sifariş №'+auto.orderCode,'Sifarişiniz təsdiqləndi — Sifariş №'+auto.orderCode,'Sifarişiniz hazırdır — Sifariş №'+auto.orderCode]);
  eq((await queue()).every(x=>x.state==='accepted'),true);
  for(let i=0;i<3;i++)eq((await wallet(items)).deliveryStatus,'completed');
  const last=id(),races=await Promise.all([wallet(items,last),wallet(items,id(),other,otherHash),wallet(items,last)]);
@@ -164,14 +164,14 @@ try{
  await sql("update ready_stock_units set message_cipher='invalid-synthetic-cipher' where id=$1",[unused.id]);
  await assert.rejects(approve(cardAuto));checks++;
  eq((await sql('select status from public.payment_orders where id=$1',[cardAuto])).rows[0].status,'reviewing');
- eq(Number((await sql('select count(*) n from customer_order_mail where order_id=$1',[cardAuto])).rows[0].n),0);
+ eq((await sql('select event_key from customer_order_mail where order_id=$1',[cardAuto])).rows.map(x=>x.event_key),['receipt:'+cardAuto]);
  await sql('update ready_stock_units set message_cipher=$2 where id=$1',[unused.id,unused.message_cipher]);
  const cardResults=await Promise.all([approve(cardAuto),approve(cardAuto)]);
  eq(cardResults.map(r=>r.idempotent).sort(),[false,true]);
  eq(cardResults.every(r=>!r.deliveryPending),true);
  eq((await view()).ready,0);
  eq(Number((await sql('select count(*) n from customer_order_deliveries where order_id=$1',[cardAuto])).rows[0].n),1);
- eq(Number((await sql('select count(*) n from customer_order_mail where order_id=$1',[cardAuto])).rows[0].n),2);
+ eq(Number((await sql('select count(*) n from customer_order_mail where order_id=$1',[cardAuto])).rows[0].n),3);
  eq(await adminPendingDeliveries(pool,[cardAuto]),[]);
  await add({requestId:id(),messages:['One partial card unit']});
  const cardPartial=await cardSubmit([await item('ordinary',2),await item('unlimited')]);

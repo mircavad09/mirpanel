@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';import crypto from 'node:crypto';import {shopFixture} from './shop-test-fixture.mjs';
+import {createCustomerOrderMailer} from '../mirpanel-admin/community/order-delivery.mjs';
 process.env.MIRPANEL_CART_V2_TEST='1';const f=await shopFixture(),{pool,shop,catalog,rpc,method,id}=f,owner='a'.repeat(64),guest={},buyer={user:'a'};let checks=0;
 const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;},reject=async(fn,re)=>{await assert.rejects(fn,re);checks++;};
 try{
@@ -13,8 +14,18 @@ try{
  const receipt={path:'cart/'+a.id+'/synthetic.png',mimeType:'image/png',size:3,sha256:crypto.createHash('sha256').update('abc').digest('hex')};f.files.set(receipt.path,Buffer.from('abc'));await shop.savedReceipt(buyer,owner,'cart',a.id,receipt);
  const [s,t]=await Promise.all([shop.submit(buyer,owner,a.id),shop.submit(buyer,owner,a.id)]);eq(s.orderId,t.orderId);eq(s.orderCode,t.orderCode);eq((await pool.query('select count(*)::int n from payment_orders')).rows[0].n,1);eq(s.items.length,2);eq(new Set(s.items.map(x=>x.order_id)).size,1);eq(new Set(s.items.map(x=>x.order_code)).size,1);eq(s.receiptUploaded,true);eq((await pool.query('select amount::text from payment_orders where id=$1',[s.orderId])).rows[0].amount,'11.00');
  eq([s.orderCreated,t.orderCreated].sort(),[false,true]);eq((await shop.get(buyer,owner,a.id)).orderCreated,undefined);
+ const messages=[],mailer=createCustomerOrderMailer(pool,async(_kind,mail)=>{messages.push(mail);return {id:'synthetic-'+messages.length};},'https://mirpanel.com');
+ const subjects=()=>messages.map(x=>x.subject);
+ await mailer.wake();await mailer.wake();
+ eq(subjects(),['Çekiniz qəbul edildi — Sifariş №'+s.orderCode]);
+ eq(messages[0].textBody.includes('/profil?tab=orders&order='+s.orderCode),true);
+ eq(messages[0].textBody.includes('Bu bildiriş ödəniş təsdiqi deyil.'),true);
  const text=new URL(s.whatsappUrl).searchParams.get('text');eq(text.match(/Sifariş nömrəsi:/g).length,1);eq(text.includes('Netflix')&&text.includes('Synthetic ordinary'),true);
  await rpc('approve_payment_order_v7',[s.orderId,null,'synthetic-admin']);await rpc('approve_payment_order_v7',[s.orderId,null,'synthetic-admin']);eq((await pool.query('select confirmed_count from payment_method_daily_counters where method_id=$1',[method])).rows[0].confirmed_count,1);
+ eq((await shop.get(buyer,owner,a.id)).paymentConfirmed,true);
+ await shop.submit(buyer,owner,a.id);await mailer.wake();await mailer.wake();
+ eq(subjects(),['Çekiniz qəbul edildi — Sifariş №'+s.orderCode,'Sifarişiniz təsdiqləndi — Sifariş №'+s.orderCode]);
+ eq(messages[1].textBody.includes('/profil?tab=orders&order='+s.orderCode),true);
  const fin=await shop.quote(guest,[{productId:'finite',planIndex:0,quantity:1}],owner),ca=await shop.checkout(buyer,owner,{...args,requestId:id(),items:[{productId:'finite',planIndex:0,quantity:1,termsVersion:fin.items[0].termsVersion},ordinary]});eq((await rpc('inventory_snapshot')).find(x=>x.productId==='finite').available,0);await shop.cancel(buyer,owner,ca.id);await shop.cancel(buyer,owner,ca.id);eq((await rpc('inventory_snapshot')).find(x=>x.productId==='finite').available,1);
  const expired=await shop.checkout(buyer,owner,{...args,requestId:id(),items:[ordinary]});await pool.query("update payment_reservations set expires_at=clock_timestamp()-interval '1 second' where checkout_key=(select main_checkout_key from shop_checkouts where id=$1) or cart_parent_reservation_id=(select main_reservation_id from shop_checkouts where id=$1)",[expired.id]);await rpc('expire_payment_reservations');eq((await pool.query("select count(*)::int n from payment_reservations where id in(select reservation_id from shop_lines where checkout_id=$1) and status='reserved'",[expired.id])).rows[0].n,0);
  await pool.query("insert into wallet_accounts(user_id,cents) values('a',2000) on conflict(user_id) do update set cents=2000");const wallet=await shop.checkout({user:'a'},owner,{items:[ordinary],mode:'wallet',requestId:id(),consentAccepted:true});eq(wallet.paymentConfirmed,true);eq((await pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'1500');await pool.query("update payment_orders set status='rejected' where id=$1",[wallet.orderId]);await pool.query("update payment_orders set status='rejected' where id=$1",[wallet.orderId]);eq((await pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'2000');
