@@ -2221,8 +2221,8 @@ const DATA = {
         "alt": "Netflix şəxsi (Yeniləmək)",
         "order": 31
       },
-      "flow": "whatsapp",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": false,
