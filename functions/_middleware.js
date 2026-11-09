@@ -246,18 +246,18 @@ function injectScript(html, needle, scriptTag) {
 function withSeoScripts(html,earlyProductLinks=false) {
   let next = html;
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
-  next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=delivery-card-1$2');
+  next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=capcut-mobile-guide-1$2');
   next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=product-transition-1$2');
-  next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=delivery-card-1$2');
+  next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=capcut-mobile-guide-1$2');
   next=next.replace(/(src=["'])\/?(home-loading|product-page|seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
   next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=product-transition-1$3');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?cms-site\.js(?:\?[^"']*)?(["'])/g,'$1/cms-site.js?v=home-stable-20261031$2');
   next=next.replace(/(src=["'])\/?stories\.js(?:\?[^"']*)?(["'])/g,'$1/stories.js?v=home-first-paint-1$2');
-  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=profile-orders-link-1$2');
+  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=capcut-mobile-guide-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=home-first-paint-1$2');
   next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=product-transition-1$2');
-  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=delivery-card-1" data-page-navigation-loader></script></head>');
+  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=capcut-mobile-guide-1" data-page-navigation-loader></script></head>');
   if(earlyProductLinks)next=next.replace(/(<head\b[^>]*>)/i,`$1<script>(()=>{let pending,timer;function click(e){if(window.MirpanelNavigation||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.altKey||e.shiftKey)return;const a=e.target.closest?.('a[href]');if(!a||a.target&&a.target!=='_self'||a.hasAttribute('download')||a.hasAttribute('data-native-navigation'))return;const u=new URL(a.href);if(u.origin!==location.origin||!/^\\/mehsul\\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.pathname))return;e.preventDefault();pending=u.href;clearTimeout(timer);timer=setTimeout(()=>{if(pending)location.assign(pending);},2500);}document.addEventListener('click',click,true);window.addEventListener('mirpanel:navigation-ready',()=>{document.removeEventListener('click',click,true);clearTimeout(timer);if(pending)void window.MirpanelNavigation.go(pending);},{once:true});})();</script>`);
   next=next.replace(/(href=["'])\/?desktop-header\.css(?:\?[^"']*)?(["'])/g,'$1/desktop-header.css?v=mobile-anthracite-20261031$2');
   if(!next.includes('/desktop-header.css?v=mobile-anthracite-20261031'))next=next.replace(/<\/head>/i,'<link rel="stylesheet" href="/desktop-header.css?v=mobile-anthracite-20261031"></head>');

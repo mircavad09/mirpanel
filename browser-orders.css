@@ -106,3 +106,65 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .browser-guide-information :is(ul, ol) { margin: 8px 0 14px; padding-inline-start: 1.5em; }
 .browser-guide-information li + li { margin-top: 5px; }
 .browser-guide-information { overflow-wrap: anywhere; }
+
+.browser-guide-step { touch-action: pan-y; }
+.browser-guide-phone { position: relative; width: 100%; display: grid; place-items: center; }
+.browser-guide-phone[data-animation] {
+  width: min(100%, 188px);
+  aspect-ratio: 590 / 1280;
+  overflow: hidden;
+  container-type: inline-size;
+}
+.browser-guide-phone[data-animation] img { width: 100%; max-height: none; }
+.browser-guide-highlight, .browser-guide-continue {
+  position: absolute;
+  inset: var(--target);
+  border: 2px solid #eaa900;
+  border-radius: 9px;
+  box-shadow: 0 0 0 2px #fff7, 0 0 10px #dd950055;
+  pointer-events: none;
+}
+[data-animation="ben"] { --target: 69.8% 3.8% 24.7% 83.7%; }
+[data-animation="sign-in"] { --target: 55.2% 10% 39.5% 10%; }
+[data-animation="email"] { --target: 25.5% 3.5% 68.7% 3.5%; }
+[data-animation="password"] { --target: 32.5% 3.5% 61.7% 3.5%; }
+[data-animation="pro"] { --target: 17.7% 23.9% 79.3% 67.5%; }
+[data-animation="ben"] .browser-guide-highlight {
+  border-radius: 50%;
+  animation: browser-guide-tap .75s ease-out 2;
+}
+.browser-guide-typing {
+  position: absolute; left: 8%; top: 27%;
+  color: #19191f; font: 4.1cqw/1.4 ui-monospace, monospace;
+  white-space: nowrap; pointer-events: none;
+  animation: browser-guide-type 1.9s steps(18, end) both;
+}
+[data-animation="password"] .browser-guide-typing {
+  top: 34%; animation: browser-guide-type 1.4s steps(8, end) both;
+}
+[data-animation="password"] .browser-guide-highlight {
+  animation: browser-guide-focus-away 0s 1.65s both;
+}
+.browser-guide-continue {
+  --target: 39.6% 3.5% 54.6% 3.5%;
+  animation: browser-guide-focus-in 0s 1.65s both;
+}
+.browser-guide-dots { display: flex; flex-wrap: wrap; gap: 3px; margin: 8px 0; }
+.browser-guide-dots button {
+  min-width: 28px; min-height: 34px; padding: 0; border: 0; background: transparent;
+  display: grid; place-items: center;
+}
+.browser-guide-dots button::before {
+  content: ""; width: 8px; height: 8px; border-radius: 50%; background: #777;
+}
+.browser-guide-dots button[aria-current="step"]::before { background: #ffd439; }
+@keyframes browser-guide-tap { from { transform: scale(.86); } to { transform: scale(1.12); } }
+@keyframes browser-guide-type { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0); } }
+@keyframes browser-guide-focus-away { to { opacity: 0; } }
+@keyframes browser-guide-focus-in { from { opacity: 0; } to { opacity: 1; } }
+@media (max-width: 600px) {
+  .browser-guide-phone[data-animation] { width: min(100%, 140px); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .browser-guide-phone *, .browser-guide-phone *::before { animation: none !important; }
+}

@@ -13,7 +13,7 @@ export function mountProfile(app,verifiedState){
  style('/community-assets/community.css');
  style(profileCSS);
  style('/community-assets/profile.css?v=profile-gold-orders-1');
- style('/browser-orders.css?v=delivery-card-1');
+ style('/browser-orders.css?v=capcut-mobile-guide-1');
  if(!app.querySelector('.account-panel'))app.innerHTML=profileShell(location.search);
  const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v!==undefined)n.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)n.append(c);return n;};
  const button=(text,fn,primary=false)=>el('button',{type:'button',class:primary?'primary':'',onclick:fn},text);
@@ -47,7 +47,7 @@ export function mountProfile(app,verifiedState){
  }
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
  const boot=async(retry=0)=>{let timer;try{
-  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=delivery-card-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
+  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=capcut-mobile-guide-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin});
  }catch{

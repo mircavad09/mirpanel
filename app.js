@@ -364,6 +364,38 @@ const DATA = {
     },
     {
       "id": "capcut",
+      "orderGuide": {
+        "information": "",
+        "tracks": {
+          "phone": [
+            {
+              "image": "/uploads/guides/capcut-mobile/1.png",
+              "description": "CapCut-u aç və sağ altdakı “Ben” bölməsinə toxun.",
+              "animation": "ben"
+            },
+            {
+              "image": "/uploads/guides/capcut-mobile/2.png",
+              "description": "Yuxarıdan üçüncü düyməni, “E-postayla giriş yapın” seç.",
+              "animation": "sign-in"
+            },
+            {
+              "image": "/uploads/guides/capcut-mobile/3.png",
+              "description": "MirPanel-də sənə təqdim edilən e-poçtu yaz. Ekrandakı ünvan nümunədir.",
+              "animation": "email"
+            },
+            {
+              "image": "/uploads/guides/capcut-mobile/4.png",
+              "description": "MirPanel-də verilən şifrəni yaz və “Devam” düyməsinə toxun.",
+              "animation": "password"
+            },
+            {
+              "image": "/uploads/guides/capcut-mobile/5.png",
+              "description": "Profil adının sağındakı “Pro” nişanını yoxla. Bu nişan CapCut Pro-nun aktiv olduğunu göstərir.",
+              "animation": "pro"
+            }
+          ]
+        }
+      },
       "_stableId": "capcut",
       "order": 3,
       "category": "video",

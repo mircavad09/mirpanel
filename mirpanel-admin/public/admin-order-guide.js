@@ -48,7 +48,7 @@
    only.onchange=()=>{data.phoneOnly=only.checked;changed();draw();};
    const line=field('Yalnız telefon paketi',only);line.className='switchLine';tutorial.append(line);
   }
-  for(const name of selected==='product'?['general']:Object.keys(labels).filter(key=>key!=='desktopQr'||!(inferred||data.phoneOnly))){
+  for(const name of selected==='product'?['general','phone']:Object.keys(labels).filter(key=>key!=='desktopQr'||!(inferred||data.phoneOnly))){
    const box=node('fieldset'),steps=data.tracks[name]||[];
    box.append(node('legend',labels[name]));
    steps.forEach((step,i)=>{
@@ -56,14 +56,20 @@
     const url=node('input');url.type='text';url.maxLength=1500;url.value=step.image||'';url.placeholder='/uploads/… və ya https://…';
     const desc=node('textarea');desc.maxLength=1500;desc.rows=2;desc.value=step.description||'';
     url.oninput=()=>{step.image=url.value;changed();};desc.oninput=()=>{step.description=desc.value;changed();};
+    const animation=node('select');
+    for(const [key,label] of [['','Animasiya yoxdur'],['ben','Ben · toxunma'],['sign-in','E-poçtla giriş düyməsi'],['email','Nümunə e-poçt yazılır'],['password','Şifrə və Devam'],['pro','Pro nişanı']]){
+     const option=node('option',label);option.value=key;animation.append(option);
+    }
+    animation.value=step.animation||'';
+    animation.onchange=()=>{if(animation.value)step.animation=animation.value;else delete step.animation;changed();};
     const actions=node('div');
     for(const [text,offset] of [['Yuxarı',-1],['Aşağı',1]]){
      const b=btn(text,()=>{const j=i+offset;[steps[i],steps[j]]=[steps[j],steps[i]];changed();draw();});b.disabled=i+offset<0||i+offset>=steps.length;actions.append(b);
     }
     const preview=node('div');
-    actions.append(btn('Şəklə bax',()=>{const value=url.value.trim();if(!validImage(value)){preview.textContent='Etibarlı şəkil ünvanı yazın.';return;}const img=node('img');img.alt='Addım '+(i+1);img.referrerPolicy='no-referrer';img.onerror=()=>{preview.textContent='Şəkil açıla bilmədi.';};img.src=value;preview.replaceChildren(img);}),
+    actions.append(btn('Şəklə bax',()=>{const value=url.value.trim();if(!validImage(value)){preview.textContent='Etibarlı şəkil ünvanı yazın.';return;}const img=node('img');img.alt='Addım '+(i+1);img.referrerPolicy='no-referrer';img.onerror=()=>{preview.textContent='Şəkil açıla bilmədi.';};img.src=new URL(value,"https://mirpanel.com/").href;preview.replaceChildren(img);}),
      btn('Sil',()=>{steps.splice(i,1);changed();draw();}));
-    row.append(node('strong','Addım '+(i+1)),field('Şəklin ünvanı',url),field('Addımın izahı',desc),actions,preview);box.append(row);
+    row.append(node('strong','Addım '+(i+1)),field('Şəklin ünvanı',url),field('Addımın izahı',desc),field('Animasiya',animation),actions,preview);box.append(row);
    });
    const add=btn('+ Addım əlavə et',()=>{steps.push({image:'',description:''});data.tracks[name]=steps;changed();draw();});
    add.disabled=steps.length>=12;box.append(add);tutorial.append(box);

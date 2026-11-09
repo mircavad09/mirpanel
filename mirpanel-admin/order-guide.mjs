@@ -1,3 +1,4 @@
+const guideAnimations=new Set(['ben','sign-in','email','password','pro']);
 export const guideTracks=['general','phone','desktopQr'];
 export function phoneOnlyGuide(plan){
  const name=String(plan?.label||plan?.name||'');
@@ -16,9 +17,10 @@ export function normalizeOrderGuide(input,{product=false}={}){
  if(!input||typeof input!=='object')return undefined;
  const information=typeof input.information==='string'?input.information.trim().slice(0,12000):'';
  const tracks={};
- for(const name of product?['general']:guideTracks){
+ for(const name of product?['general','phone']:guideTracks){
   if(!Array.isArray(input.tracks?.[name]))continue;
   const steps=input.tracks[name].slice(0,12).map(s=>({
+   ...(guideAnimations.has(s?.animation)?{animation:s.animation}:{}),
    image:imageUrl(s?.image),description:typeof s?.description==='string'?s.description.trim().slice(0,1500):''
   })).filter(s=>s.image&&s.description);
   if(steps.length)tracks[name]=steps;

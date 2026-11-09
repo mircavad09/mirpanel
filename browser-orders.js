@@ -171,10 +171,11 @@
   const tabs=create('div',null,'browser-guide-tabs'),body=create('div',null,'browser-guide-body'),footer=create('footer');
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
   footer.append(button('Bağla',()=>guideDialog.close()));
-  let data=null,failed=false,active='info',track='',step=0;
+  let data=null,failed=false,active='info',track='',step=0,autoplay=false,advanceTimer;
   const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(info,how);
-  function select(mode){active=mode;body.scrollTop=0;draw();}
+  function select(mode){autoplay=false;active=mode;body.scrollTop=0;draw();}
   function draw(){
+   clearTimeout(advanceTimer);
    info.setAttribute('aria-pressed',String(active==='info'));how.setAttribute('aria-pressed',String(active==='steps'));
    body.replaceChildren();
    if(failed){body.append(create('p','Təlimat alınmadı.'),button('Yenidən cəhd et',loadGuide));return;}
@@ -187,15 +188,70 @@
    if(!tracks.length){body.append(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}
    if(!tracks.some(([key])=>key===track))track=tracks[0][0];
    const choices=create('div',null,'browser-guide-choices');
-   for(const [key,label] of tracks){const b=button(label,()=>{track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
+   for(const [key,label] of tracks){const b=button(key==='phone'&&data.tracks[key].some(s=>s.animation)?'CapCut-a daxil ol':label,()=>{autoplay=false;track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
    const steps=data.tracks[track],current=steps[step],layout=create('div',null,'browser-guide-step');
    const visual=create('div',null,'browser-guide-visual');
-   try{const u=new URL(current.image,location.origin);if(u.protocol==='https:'&&!u.username&&!u.password){const img=create('img');img.src=u.href;img.alt='Addım '+(step+1);img.referrerPolicy='no-referrer';img.addEventListener('error',()=>visual.replaceChildren(create('span','Şəkil açıla bilmədi.')),{once:true});visual.append(img);}}catch{}
+   try{
+    const u=new URL(current.image,location.origin);
+    if((u.protocol==='https:'||u.origin===location.origin)&&!u.username&&!u.password){
+     const img=create('img');img.src=u.href;img.alt='Addım '+(step+1);img.referrerPolicy='no-referrer';
+     const frame=create('div',null,'browser-guide-phone');
+     frame.append(img);
+     if(['ben','sign-in','email','password','pro'].includes(current.animation)){
+      frame.dataset.animation=current.animation;
+      const highlight=create('span',null,'browser-guide-highlight');
+      highlight.setAttribute('aria-hidden','true');frame.append(highlight);
+      if(current.animation==='email'||current.animation==='password'){
+       const typing=create('span',current.animation==='email'?'numune@example.com':'********','browser-guide-typing');
+       typing.setAttribute('aria-hidden','true');frame.append(typing);
+      }
+      if(current.animation==='password')frame.append(create('span',null,'browser-guide-continue'));
+     }
+     img.addEventListener('error',()=>visual.replaceChildren(create('span','Şəkil açıla bilmədi.')),{once:true});
+     visual.append(frame);
+    }
+   }catch{}
    const details=create('div'),counter=create('strong','Addım '+(step+1)+' / '+steps.length,'browser-guide-note');
    const description=create('p',current.description,'browser-guide-text');description.setAttribute('aria-live','polite');
-   const nav=create('div',null,'browser-guide-controls'),back=button('‹ Əvvəlki',()=>{step--;draw();body.querySelector('.browser-guide-controls button:not(:disabled)')?.focus();}),next=button('Növbəti ›',()=>{step++;draw();body.querySelector('.browser-guide-controls button:last-child:not(:disabled),.browser-guide-controls button:not(:disabled)')?.focus();});
+   const nav=create('div',null,'browser-guide-controls');
+   const go=(index,focus)=>{
+    if(index<0||index>=steps.length)return;
+    autoplay=false;step=index;draw();
+    if(focus)body.querySelector('.browser-guide-controls button'+focus+':not(:disabled),.browser-guide-controls button:not(:disabled)')?.focus({preventScroll:true});
+   };
+   const back=button('‹ Əvvəlki',()=>go(step-1,':first-child')),next=button('Növbəti ›',()=>go(step+1,':last-child'));
    back.disabled=step===0;next.disabled=step===steps.length-1;
-   nav.append(back,next);details.append(counter,description,nav);layout.append(visual,details);body.append(choices,layout);
+   nav.append(back,next);details.append(counter,description,nav);
+   if(steps.length>1){
+    const dots=create('div',null,'browser-guide-dots');dots.setAttribute('role','group');dots.setAttribute('aria-label','Təlimat addımları');
+    steps.forEach((_,index)=>{
+     const dot=button('',()=>{go(index);body.querySelector('.browser-guide-dots [aria-current="step"]')?.focus({preventScroll:true});});
+     dot.setAttribute('aria-label','Addım '+(index+1));
+     if(index===step)dot.setAttribute('aria-current','step');
+     dots.append(dot);
+    });
+    const play=button(autoplay?'Dayandır':'Avtomatik göstər',()=>{
+     autoplay=!autoplay;
+     if(autoplay&&step===steps.length-1)step=0;
+     draw();body.querySelector('.browser-guide-play')?.focus({preventScroll:true});
+    });
+    play.className='browser-guide-play';
+    details.append(dots,play);
+    let touch;
+    layout.addEventListener('touchstart',e=>{touch=e.touches.length===1?e.touches[0]:null;},{passive:true});
+    layout.addEventListener('touchcancel',()=>{touch=null;});
+    layout.addEventListener('touchend',e=>{
+     if(!touch||!e.changedTouches.length)return;
+     const {clientX,clientY}=e.changedTouches[0],dx=clientX-touch.clientX,dy=clientY-touch.clientY;
+     touch=null;
+     if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)*1.3)go(step+(dx<0?1:-1));
+    },{passive:true});
+   }
+   layout.append(visual,details);body.append(choices,layout);
+   if(autoplay&&step<steps.length-1)advanceTimer=setTimeout(()=>{
+    if(!guideDialog.open||!guideDialog.isConnected)return;
+    step++;autoplay=step<steps.length-1;draw();
+   },4200);
   }
   async function loadGuide(){
    const turn=++guideTurn;failed=false;draw();
@@ -205,7 +261,7 @@
   header.append(head,tabs);
   if(!accounts.querySelector('[data-delivery]'))header.append(create('p',accounts.querySelector('p')?.textContent,'browser-guide-delivery-status'));
   wrap.append(header,body,footer);guideDialog.replaceChildren(wrap);root.after(guideDialog);
-  guideDialog.addEventListener('close',()=>{guideTurn++;guideDialog.remove();if(trigger.isConnected)trigger.focus({preventScroll:true});},{once:true});
+  guideDialog.addEventListener('close',()=>{clearTimeout(advanceTimer);guideTurn++;guideDialog.remove();if(trigger.isConnected)trigger.focus({preventScroll:true});},{once:true});
   guideDialog.showModal();void loadGuide();
  }
  function buyAgain(selection){
