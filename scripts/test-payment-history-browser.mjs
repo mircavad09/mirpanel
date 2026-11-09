@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import http from 'node:http';
-import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const {chromium,webkit}=await import(process.env.MIRPANEL_PLAYWRIGHT||'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs');
 const requested=[],card={id:'order',kind:'order',number:'12664',title:'CapCut Pro',cents:499,submitted_at:'2026-11-07T22:13:09Z',operation_at:'2026-11-08T08:01:47Z',status:'approved',by_receipt:true,mime:'image/png'};
 const credit={...card,id:'credit',kind:'topup',number:'1',title:'Balans yükləmə',cents:500,mime:'application/pdf'};
 const rejected={...card,id:'rejected',kind:'topup',number:'2',title:'Balans yükləmə',cents:200,status:'rejected',mime:null,operation_at:null};
@@ -11,7 +11,7 @@ const server=http.createServer((req,res)=>{
  if(u.pathname==='/api/community/payment-history'){
   const status=u.searchParams.get('status'),page=u.searchParams.get('page');requested.push([status,page]);
   const items=status==='approved'?[card,credit]:status==='rejected'?[rejected]:status==='reviewing'?[]:page==='2'?[rejected]:[card,credit];
-  return json({accountId:'a',balance:'125',total:'499',month:'499',rejectedCents:'200',all:31,approved:30,reviewing:0,rejected:1,items,more:status==='all'&&page==='1'});
+  return json({accountId:'a',balance:'125',total:'499',month:'499',rejectedCents:'200',all:31,approved:30,reviewing:0,rejected:1,items:u.searchParams.get('topup')?[credit]:items,more:!u.searchParams.get('topup')&&status==='all'&&page==='1'});
  }
  if(u.pathname==='/api/payments/my-orders/order/receipt'||u.pathname==='/api/payments/shop/topup/receipt'){
   const topup=u.pathname.includes('/topup/');return json({url:'https://synthetic.supabase.co/'+(topup?'test.pdf':'test.png'),mime:topup?'application/pdf':'image/png'});
@@ -31,8 +31,8 @@ const server=http.createServer((req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const url='http://127.0.0.1:'+server.address().port+'/profil?tab=payments';
 try{
- for(const [engine,width] of [[chromium,1440],[chromium,320],[webkit,390]]){
-  const b=await engine.launch({headless:true,...(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
+ for(const [engine,width] of (process.env.MIRPANEL_BROWSER_CHROMIUM_ONLY?[[chromium,1440],[chromium,320],[chromium,390]]:[[chromium,1440],[chromium,320],[webkit,390]])){
+  const b=await engine.launch({headless:true,...(engine===chromium?{executablePath:process.env.MIRPANEL_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
   try{
    const p=await b.newPage({viewport:{width,height:820},isMobile:width<600,hasTouch:width<600});
    await p.route('https://synthetic.supabase.co/**',r=>r.fulfill({status:200,contentType:r.request().url().endsWith('.pdf')?'application/pdf':'image/png',body:''}));
@@ -58,6 +58,9 @@ try{
    await p.locator('.account-payment-filters [data-status=reviewing]').click();await p.getByText('Bu filtrə uyğun ödəniş yoxdur.').waitFor();
    await p.locator('.account-payment-filters [data-status=rejected]').click();await p.getByText('Balans yükləmə №2',{exact:true}).waitFor();
    assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+   await p.goto(url+'&topup=credit');await p.getByRole('article',{name:'Seçilmiş müraciət'}).waitFor();
+   assert.equal(await p.locator('.account-payment-row').count(),1);assert.equal(await p.locator('.account-payment-selected').textContent().then(t=>t.includes('Balans yükləmə №1')),true);
+   await p.locator('.account-payment-filters [data-status=all]').click();assert.equal(await p.locator('.account-payment-selected').count(),0);await p.getByText('Sifariş №12664',{exact:true}).waitFor();
    console.log('PASS '+engine.name()+' '+width+'px: metrics, current-page search, stable numbers, Baku seconds, PNG and PDF preview');
   }finally{await b.close();}
  }

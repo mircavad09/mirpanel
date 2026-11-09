@@ -51,3 +51,5 @@
  .account-payments .account-payment-thumb{width:44px;height:45px}
  .account-payments .account-payment-thumb img{height:35px}
 }
+
+.account-payment-row.account-payment-selected{outline:2px solid #e7bb42;outline-offset:3px;scroll-margin-top:160px}

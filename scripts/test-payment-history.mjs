@@ -62,5 +62,8 @@ try{
  const other=await create(b);await submit(b,other);
  const isolated=await history('','b');assert.equal(isolated.items.length,1);assert.equal(isolated.items[0].number,'1');
  await db.exec(migration);assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'2');
+ const focused=await history('topup='+legacy.id);assert.equal(focused.items.length,1);assert.equal(focused.items[0].id,legacy.id);assert.equal(focused.more,false);assert.equal(focused.all,(await history()).all);
+ assert.equal((await history('topup='+legacy.id,'b')).items.length,0);await assert.rejects(history('topup=invalid'),{status:400});
+ const confirmed=await shop.topupState(a,legacy.id);assert.equal(confirmed.number,'1');assert.equal(confirmed.cents,200);assert.equal(confirmed.receiptUploaded,true);
  console.log('PASS payment history: real wallet debit without double counting, Baku month boundary, stable concurrent numbering, full-period counts, private receipts');
 }finally{await f.close();}

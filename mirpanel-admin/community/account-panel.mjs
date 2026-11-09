@@ -1,6 +1,7 @@
 const fail=(status,message)=>Object.assign(Error(message),{status});
 export async function paymentHistory(pool,userId,query){
- const filter=query.get('status')||'all',page=Number(query.get('page')||1);
+ const filter=query.get('status')||'all',page=Number(query.get('page')||1),topup=query.get('topup')||'';
+ if(topup&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(topup))throw fail(400,'Müraciət düzgün deyil.');
  if(!['all','approved','reviewing','rejected'].includes(filter)||!Number.isSafeInteger(page)||page<1||page>10000)throw fail(400,'Ödəniş filtri düzgün deyil.');
  const {rows:[result]}=await pool.query(`
  WITH payments AS (
@@ -22,7 +23,7 @@ export async function paymentHistory(pool,userId,query){
      CASE WHEN t.receipt_deleted_at IS NULL AND t.receipt IS NOT NULL THEN coalesce(t.receipt->>'mimeType','unknown') END
    FROM wallet_topups t WHERE t.user_id=$1 AND t.status<>'draft'
  ), selected AS (
-   SELECT * FROM payments WHERE $2='all' OR status=$2 ORDER BY sort_at DESC,kind,id DESC LIMIT 31 OFFSET $3
+   SELECT * FROM payments WHERE ($2='all' OR status=$2) AND ($4='' OR (kind='topup' AND id=$4)) ORDER BY sort_at DESC,kind,id DESC LIMIT 31 OFFSET $3
  )
  SELECT coalesce((SELECT cents FROM wallet_accounts WHERE user_id=$1),0)::text AS balance,
    count(*)::int AS all, count(*) FILTER (WHERE status='approved')::int AS approved,
@@ -31,7 +32,7 @@ export async function paymentHistory(pool,userId,query){
    coalesce(sum(cents) FILTER (WHERE status='approved' AND kind='order'),0)::text AS total,
    coalesce(sum(cents) FILTER (WHERE status='approved' AND kind='order' AND date_trunc('month',operation_at AT TIME ZONE 'Asia/Baku')=date_trunc('month',now() AT TIME ZONE 'Asia/Baku')),0)::text AS month,
    coalesce((SELECT json_agg(selected ORDER BY sort_at DESC,kind,id DESC) FROM selected),'[]'::json) AS items
- FROM payments`,[userId,filter,(page-1)*30]);
+ FROM payments`,[userId,filter,(page-1)*30,topup]);
  return {accountId:userId,...result,items:result.items.slice(0,30),more:result.items.length>30};
 }
 export async function accountPanel(pool,userId,catalog,body){
