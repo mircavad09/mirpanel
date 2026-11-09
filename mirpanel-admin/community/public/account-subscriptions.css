@@ -42,6 +42,7 @@ body.profile-screen:has(#communityApp .account-subscriptions){background:#0c0c0c
 .account-subscriptions .subs-renew-status{font-size:12px;color:#ffd592;margin:8px 0 0}
 .account-subscriptions button{min-height:36px;border:1px solid #565656;border-radius:9px;background:#303030;color:#fff;padding:6px 11px;font:650 13px system-ui;cursor:pointer}
 .account-subscriptions button:disabled{opacity:.55;cursor:default}
+.account-subscriptions button.subs-balance{background:#087a55;border-color:#087a55;color:#fff;font-weight:600}
 .account-subscriptions .subs-renew{display:inline-flex;align-items:center;gap:6px;flex:none}
 .account-subscriptions .subs-renew[data-urgent=true]{border:2px solid #e4af4d;background:#3b2c19}
 .account-subscriptions .subs-empty{text-align:center;color:#bcbcbc}

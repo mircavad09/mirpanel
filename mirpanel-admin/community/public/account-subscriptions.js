@@ -23,7 +23,7 @@ export function summarize(rows){
 }
 export function mountSubscriptions({content,el,button,link,api,validate,initial,initialRequest,onData,onUnauthorized,spinner}){
  const life=new AbortController(),root=el('div',{class:'account-subscriptions'}),count=el('span',{class:'subs-count',hidden:''}),body=el('div',{class:'subs-body'}),notice=el('p',{class:'subs-notice',role:'status'});
- const css='/community-assets/account-subscriptions.css?v=renewal-summary-1';
+ const css='/community-assets/account-subscriptions.css?v=renewal-balance-button-1';
  if(!document.head.querySelector('link[data-subscriptions]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-subscriptions':'','data-shell-persistent':''}));
  const heading=el('header',{class:'subs-panel'},el('div',{class:'subs-heading'},el('span',{class:'subs-icon'},icon('calendar')),el('h1',{},'Abunəliklərim'),count),el('p',{},'Abunəliklərinizin nə vaxt bitdiyini bir baxışda görün'));
  root.append(heading,notice,body);content.replaceChildren(root);
@@ -89,10 +89,10 @@ export function mountSubscriptions({content,el,button,link,api,validate,initial,
   const x=summarize(rows);
   count.hidden=false;count.textContent=x.active+' aktiv';
   const list=el('div',{class:'subs-list'}),filterStatus=el('p',{class:'subs-filter-status',role:'status'});
-  const toggle=button('Yeniləmə seçimləri',()=>{soonOnly=!soonOnly;showRows();});toggle.className='subs-balance';
+  const toggle=button('Balansı hazırla',()=>{soonOnly=!soonOnly;showRows();});toggle.className='subs-balance';
   function showRows(){
    toggle.setAttribute('aria-pressed',String(soonOnly));
-   toggle.textContent=soonOnly?'Hamısını göstər':'Yeniləmə seçimləri';
+   toggle.textContent=soonOnly?'Hamısını göstər':'Balansı hazırla';
    filterStatus.textContent=soonOnly?'30 gün ərzində bitəcək abunəliklər göstərilir.':'';
    const shown=soonOnly?rows.filter(row=>Number.isInteger(row.days)&&row.days>=0&&row.days<=30):rows;
    list.replaceChildren(...(shown.length?shown.map(card):[el('p',{class:'subs-panel subs-empty'},soonOnly?'30 gün ərzində bitəcək abunəlik yoxdur.':'Aktiv abunəliyiniz yoxdur.')]));

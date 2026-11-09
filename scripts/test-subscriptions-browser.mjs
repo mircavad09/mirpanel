@@ -44,7 +44,7 @@ try{
    rows=[row('capcut','CapCut Pro',6,549),row('netflix','Netflix Şəxsi',10,299)];
    await p.reload();await p.getByText('2 aktiv').waitFor();
    assert.match(await p.locator('.subs-summary').textContent(),/8[.,]48/);
-   assert.equal(await p.getByRole('button',{name:'Yeniləmə seçimləri'}).getAttribute('aria-pressed'),'false');
+   assert.equal(await p.getByRole('button',{name:'Balansı hazırla'}).getAttribute('aria-pressed'),'false');
    await p.getByText('1 abunəliyin müddəti bu həftə bitir.',{exact:false}).waitFor();
    const cap=p.locator('.subs-card').filter({hasText:'CapCut Pro'}),net=p.locator('.subs-card').filter({hasText:'Netflix Şəxsi'});
    assert.equal(await cap.locator('progress').getAttribute('data-tone'),'amber');
@@ -81,7 +81,10 @@ try{
    assert.equal(await p.getByText('4,99 ₼',{exact:true}).count(),2);
    assert.equal(await p.getByText('Silinmiş CapCut paketi',{exact:false}).count(),2);
    assert.deepEqual(await cap.locator('time').allTextContents(),['14.11.2026','09.12.2026']);
-   await p.getByRole('button',{name:'Yeniləmə seçimləri'}).click();
+   const summaryButton=p.getByRole('button',{name:'Balansı hazırla'});
+   await p.waitForFunction(()=>[...document.styleSheets].some(s=>s.href?.includes('account-subscriptions.css')));
+   assert.deepEqual(await summaryButton.evaluate(n=>{const s=getComputedStyle(n);return [s.backgroundColor,s.color,s.fontWeight];}),['rgb(8, 122, 85)','rgb(255, 255, 255)','600']);
+   await summaryButton.click();
    assert.equal(await p.locator('.subs-card').count(),2);
    assert.equal(await p.getByText('Netflix Şəxsi',{exact:true}).count(),0);
    await p.getByRole('button',{name:'Hamısını göstər'}).click();
