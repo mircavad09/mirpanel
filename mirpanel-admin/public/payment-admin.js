@@ -30,6 +30,19 @@
   async function paymentApi(path, options) { return api(path, options); }
   const money = (value, currency = "AZN") => `${Number(value || 0).toFixed(2)} ${currency === "AZN" ? "₼" : currency}`;
   const dateTime = (value) => value ? new Date(value).toLocaleString("az-AZ", { timeZone: "Asia/Baku" }) : "—";
+  const orderTimeFormat = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Baku", day: "2-digit", month: "2-digit", year: "numeric",
+    hour: "2-digit", minute: "2-digit", hourCycle: "h23"
+  });
+  function orderTimeMarkup(value, id) {
+    const clock = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/></svg>';
+    const date = value ? new Date(value) : null;
+    if (!date || !Number.isFinite(date.getTime())) {
+      return `<span id="${id}" class="paymentOrderCreatedAt">${clock}Sifariş vaxtı məlum deyil</span>`;
+    }
+    const {day,month,year,hour,minute} = Object.fromEntries(orderTimeFormat.formatToParts(date).map(({type,value})=>[type,value]));
+    return `<time id="${id}" class="paymentOrderCreatedAt" datetime="${date.toISOString()}">${clock}${day}.${month}.${year}, ${hour}:${minute}</time>`;
+  }
   const azMonths = ["yanvar", "fevral", "mart", "aprel", "may", "iyun", "iyul", "avqust", "sentyabr", "oktyabr", "noyabr", "dekabr"];
   const monthLabel = (value) => {
     const match = /^(\d{4})-(\d{2})-01$/.exec(String(value || ""));
@@ -165,11 +178,12 @@
     const selected = expiring && paymentState.selectedOrderIds.has(order.id);
     const product = order.items?.length ? [...new Set(order.items.map(x=>x.title).filter(Boolean))].join(' + ') : order.productTitle;
     const detailId = `paymentOrderDetails-${escp(order.id)}`;
+    const timeId = `paymentOrderCreatedAt-${escp(order.id)}`;
     return `<article class="paymentOrderAdminCard${selected ? " isSelected" : ""}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
       <div class="paymentOrderCardHeader">${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}
         <strong class="paymentOrderCardNumber">№ ${escp(order.orderCode)}</strong>
         <button class="btn compact" type="button" data-copy-order-id aria-label="${escp(order.orderCode)} sifariş nömrəsini kopyala">Kopyala</button>
-        <button class="paymentOrderCardToggle" type="button" data-order-toggle aria-label="Sifariş № ${escp(order.orderCode)}" aria-expanded="${expanded}" aria-controls="${detailId}"><span class="statusPill status-${escp(expiring ? order.expiry?.code : displayStatus)}">${escp(expiring ? order.expiry?.label : statusLabel[displayStatus] || "Yoxlanılır")}</span><span class="paymentOrderCardPreview">${escp(product)}</span><b class="paymentOrderCardPreview">${escp(money(order.amount,order.currency))}</b><span class="paymentOrderCardArrow" aria-hidden="true">⌄</span></button>
+        <button class="paymentOrderCardToggle" type="button" data-order-toggle aria-label="Sifariş № ${escp(order.orderCode)}" aria-expanded="${expanded}" aria-controls="${detailId}" aria-describedby="${timeId}"><span class="paymentOrderCardMeta"><span class="statusPill status-${escp(expiring ? order.expiry?.code : displayStatus)}">${escp(expiring ? order.expiry?.label : statusLabel[displayStatus] || "Yoxlanılır")}</span>${orderTimeMarkup(order.createdAt,timeId)}</span><span class="paymentOrderCardPreview">${escp(product)}</span><b class="paymentOrderCardPreview">${escp(money(order.amount,order.currency))}</b><span class="paymentOrderCardArrow" aria-hidden="true">⌄</span></button>
       </div>
       <div class="paymentOrderCardDetails" id="${detailId}"${expanded?'':' hidden'}>
       <dl><div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div></dl>

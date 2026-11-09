@@ -1361,6 +1361,9 @@ th {
 .paymentOrderCardToggle{display:flex;align-items:center;gap:8px;flex:1;width:100%;min-width:0;min-height:44px;padding:8px 2px;background:none;color:#f4f5f6;border:0;text-align:left;font:inherit;cursor:pointer}
 .paymentOrderCardToggle strong,.paymentOrderCardPreview{overflow-wrap:anywhere;min-width:0}
 .paymentOrderCardToggle .statusPill{flex-shrink:0}
+.paymentOrderCardMeta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;min-width:0;max-width:100%}
+.paymentOrderCreatedAt{display:inline-flex;align-items:center;gap:5px;color:#b8c0ca;font-size:12px;line-height:1.4;font-variant-numeric:tabular-nums;white-space:nowrap}
+.paymentOrderCreatedAt svg{flex:none}
 .paymentOrderCardToggle .status-preparing{background:#43370b;color:#ffe167}
 .paymentOrderCardToggle:focus-visible{outline:2px solid #ffd400;outline-offset:-2px;border-radius:8px}
 .paymentOrderCardPreview{display:none}
