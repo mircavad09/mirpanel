@@ -11,7 +11,7 @@ if(!sessionLists.listening){
 export function renderAccountPanel(ctx){
  document.body.classList.add('profile-screen');
  const {app,state,api,el,button,link,money}=ctx;
- if(!app.isConnected||location.pathname!=='/profil')return;
+ if(!app.isConnected||location.pathname!=='/profil'&&!ctx.readOnly)return;
  const life=new AbortController(),moduleRetries=new Map();let stopped=false,disposeChild=null,load=0,verified=null,observedOwner,first=ctx.firstSession||Promise.resolve(state.profile),selected='profile',view=null;
  const spinner=()=>el('div',{class:'account-tab-spinner',role:'status','aria-label':'Məlumat hazırlanır'});
  const initialScroll=history.state?.profileScroll;
@@ -72,7 +72,7 @@ export function renderAccountPanel(ctx){
  const listPath=id==='orders'?'/api/payments/my-orders'+suffix:id==='codes'?'/api/payments/my-orders/codes':id==='payments'?paymentPath(prior?.status,prior?.page):id==='subscriptions'?'/api/payments/shop/subscriptions':null;
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?readList():null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=profile-stickers-1',orders:'/browser-orders.js?v=cancellation-mail-1',codes:'./account-codes.js?v=profile-resume-1',payments:'./account-payments.js?v=topup-rejection-1',subscriptions:'./account-subscriptions.js?v=renewal-balance-button-1'}[id];
+ const url={profile:'./profile.js?v=customer-view-1',orders:'/browser-orders.js?v=customer-view-1',codes:'./account-codes.js?v=profile-resume-1',payments:'./account-payments.js?v=topup-rejection-1',subscriptions:'./account-subscriptions.js?v=customer-view-1'}[id];
  const retry=moduleRetries.get(id)||0,module=url?import(url+(retry?'&retry='+retry:'')):null;
  let timeout;
  const tabModule=module&&Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).finally(()=>clearTimeout(timeout));
@@ -98,10 +98,10 @@ export function renderAccountPanel(ctx){
   const communityDispose=window.mirpanelPageDispose,initial=sessionLists.entries.get(listPath);
   const onLoaded=e=>{if(!e.detail.empty)content.querySelector('.account-recommendations')?.remove();if(e.detail.empty&&!content.querySelector('.account-recommendations'))void recommendations(content,run).catch(()=>{});};
   window.addEventListener('mirpanel:orders-loaded',onLoaded,{signal:life.signal});
-  disposeChild=window.mountBrowserOrders({initial,initialRequest:pending,validate:ownData,onData:cache,onUnauthorized:unauthorized,profile:true});window.mirpanelPageDispose=communityDispose;
+  disposeChild=window.mountBrowserOrders({initial,initialRequest:pending,validate:ownData,onData:cache,onUnauthorized:unauthorized,profile:true,...(ctx.readOnly?{api:path=>api('/api/payments/'+path)}:{})});window.mirpanelPageDispose=communityDispose;
   const child=disposeChild;disposeChild=()=>{window.removeEventListener('mirpanel:orders-loaded',onLoaded);child?.();};return;
  }
- const options={content,api,el,button,link,validate:ownData,initial:sessionLists.entries.get(listPath),initialRequest:pending,onData:cache,onUnauthorized:unauthorized,spinner,ui};
+ const options={content,api,el,button,link,validate:ownData,initial:sessionLists.entries.get(listPath),initialRequest:pending,onData:cache,onUnauthorized:unauthorized,spinner,ui,readOnly:!!ctx.readOnly};
  if(id==='payments'){const {mountPayments}=await tabModule;if(!stopped&&run===load)disposeChild=mountPayments({...options,initial:sessionLists.entries.get(paymentPath(ui.status,ui.page)),initialRequest:listPath===paymentPath(ui.status,ui.page)?pending:null,getCached:(s,p)=>sessionLists.entries.get(paymentPath(s,p)),onData:(d,s,p)=>cache(d,paymentPath(s,p))});return;}
  if(id==='codes'){const {mountCodes}=await tabModule;if(!stopped&&run===load)disposeChild=mountCodes(options);return;}
  if(id==='subscriptions'){const {mountSubscriptions}=await tabModule;if(!stopped&&run===load)disposeChild=mountSubscriptions(options);return;}

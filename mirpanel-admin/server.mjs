@@ -19,6 +19,7 @@ import { createProductSalesRepository } from './product-sales-repository.mjs';
 import { createEmployeeSystem } from './employee-api.mjs';
 import {createAdminSessions,ADMIN_IDLE_MS} from './admin-sessions.mjs';
 import {createOwnerCommunity} from './community/service.mjs';
+import {createCustomerView} from './customer-view.mjs';
 const ownerCommunity=createOwnerCommunity(process.env,{loadCatalog:async()=>extractAdminState((await getAppFile()).source),shopAdmin:(pool,owner,b)=>paymentSystem.shop.admin(pool,owner,b)});
 import {
   generateInfoPageFiles,
@@ -1447,6 +1448,15 @@ const apiIntegrations = config.encryptionKey && config.tokenSecret && process.en
 apiIntegrations?.start();
 paymentSystem.start();
 
+const customerView=createCustomerView({
+ authorize:async request=>getSession(request)?.role==='admin'?ownerCommunity.verifiedOwnerId():null,
+ mutation:requireMutationAuth,
+ sessionBinding:request=>getCookies(request).mirpanel_session,
+ open:(owner,target)=>ownerCommunity.customerViewOpen(owner,target),
+ read:(target,path)=>ownerCommunity.customerViewRead(target,path,{security:createPaymentSecurity(config),store:paymentSystem.store}),
+ json
+});
+
 function serveFile(response, name) {
   const file = path.join(publicDir, name);
 
@@ -1496,6 +1506,14 @@ const server = http.createServer(async (request, response) => {
       }else sessions.delete(adminId);
     }
 
+    if(await customerView(request,response))return;
+    // The isolated customer preview runs on the admin origin too. Serve the
+    // same checked-in presentation assets, without starting the customer shell.
+    if(['/browser-orders.js','/browser-orders.css','/checkout-sounds.js'].includes(pathname)){
+      const file=path.join(root,'..',pathname.slice(1));
+      response.writeHead(200,{'Content-Type':pathname.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});
+      response.end(fs.readFileSync(file));return;
+    }
     if (pathname.startsWith("/api/")) {
       return await handleApi(request, response);
     }

@@ -19,6 +19,7 @@ import {readOrderMailWebhook} from './order-mail-webhook.mjs';
 import {approveCardWithReadyStock,readyStockView,saveReadyStock} from './ready-stock.mjs';
 import {saveProductMessage} from './ready-stock-product-messages.mjs';
 import {cancelFulfillment} from './fulfillment-cancellation.mjs';
+import {readCustomerView} from './customer-view-data.mjs';
 export function createOwnerCommunity(env=process.env,options={}){
  const publicEnabled=env.COMMUNITY_PUBLIC_ENABLED==='true';
  const enabled=env.COMMUNITY_OWNER_ENABLED==='true',origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';let runtime;
@@ -68,6 +69,14 @@ export function createOwnerCommunity(env=process.env,options={}){
  },async close(){await runtime?.live?.close();if(runtime?.orderMailer)await runtime.orderMailer.stop();await runtime?.pool.end();},async checkoutAccount(req,{verified=true}={}){
   if(!publicEnabled||!/(?:__Secure-)?mirpanel_owner\.session_token=/.test(req.headers.cookie||''))return null;
   const {pool,auth}=await init(),session=await auth.api.getSession({headers:fromNodeHeaders(req.headers)});if(!session?.user)return null;await requireAllowed(pool,session.user.id);if(verified&&session.user.emailVerified!==true)throw Object.assign(Error('Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin'),{status:403,code:'CHECKOUT_EMAIL_UNVERIFIED'});return session.user.id;
+ },async customerViewOpen(owner,target){
+  const {pool}=await init();
+  const user=(await pool.query('select u.id,coalesce(p.display_name,u.name) as name,n.member_number::text from "user" u left join community_member_numbers n on n.user_id=u.id left join community_profiles p on p.user_id=u.id where u.id=$1',[target])).rows[0];
+  if(!user)throw Object.assign(Error('Müştəri tapılmadı.'),{status:404});
+  await pool.query('insert into community_audit(actor_id,action,target_id,reason,details) values($1,$2,$3,$4,$5)',[owner,'customer-view',target,'İstifadəçi gözündən baxış açıldı',{readOnly:true,ttlSeconds:600}]);
+  return {name:user.name,memberNumber:user.member_number};
+ },async customerViewRead(userId,path,dependencies){
+  return readCustomerView((await init()).pool,userId,path,{catalog:options.loadCatalog,...dependencies});
  },async orderHistory(req){
   if(!enabled)throw Object.assign(Error('Hesabınıza daxil olun.'),{status:401});
   const {pool,auth}=await init(),session=await auth.api.getSession({headers:fromNodeHeaders(req.headers)}),user=session?.user;

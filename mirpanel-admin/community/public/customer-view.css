@@ -1,0 +1,6 @@
+.customer-view{padding-top:100px!important}
+.customer-view-banner{position:fixed;inset:0 0 auto;z-index:10000;min-height:72px;box-sizing:border-box;padding:12px 24px;background:#242014;border-bottom:1px solid #bfa536;color:#fff;display:flex;align-items:center;gap:12px;flex-wrap:wrap;font:14px/1.5 Inter,system-ui,sans-serif}
+.customer-view-banner strong{flex:1;min-width:180px}.customer-view-banner span{color:#e4d994}.customer-view-banner a{padding:9px 14px;border:1px solid #ae913b;border-radius:9px;color:#ffe47b;text-decoration:none}
+.customer-view .account-menu-logout,.customer-view .profile-logout{display:none!important}
+.customer-view [data-view-disabled]{opacity:.55;cursor:not-allowed}
+@media(max-width:600px){.customer-view{padding-top:154px!important}.customer-view-banner{padding:10px 12px;gap:6px}.customer-view-banner strong{flex-basis:100%}.customer-view-banner a{margin-left:auto}.customer-view .community-shell{margin-top:0}}

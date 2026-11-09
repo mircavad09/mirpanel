@@ -21,7 +21,7 @@ export function summarize(rows){
  }
  return {active:active.length,soon:soon.length,week:active.filter(x=>x.days<=7).length,unpriced,estimated,total:soon.length&&unpriced===soon.length?null:total};
 }
-export function mountSubscriptions({content,el,button,link,api,validate,initial,initialRequest,onData,onUnauthorized,spinner}){
+export function mountSubscriptions({content,el,button,link,api,validate,initial,initialRequest,onData,onUnauthorized,spinner,readOnly=false}){
  const life=new AbortController(),root=el('div',{class:'account-subscriptions'}),count=el('span',{class:'subs-count',hidden:''}),body=el('div',{class:'subs-body'}),notice=el('p',{class:'subs-notice',role:'status'});
  const css='/community-assets/account-subscriptions.css?v=renewal-balance-button-1';
  if(!document.head.querySelector('link[data-subscriptions]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-subscriptions':'','data-shell-persistent':''}));
@@ -78,7 +78,7 @@ export function mountSubscriptions({content,el,button,link,api,validate,initial,
   item.append(el('dl',{class:'subs-prices'},price('Son alış qiyməti',row.lastPurchaseCents),knownPrice(row.renewalCents)?price('Cari yeniləmə qiyməti',row.renewalCents):null));
   if(rowStatus)item.append(el('p',{class:'subs-renew-status'},rowStatus));
   if(known){
-   const renew=button('Yenilə',()=>picker(row));renew.prepend(icon('refresh'));renew.className='subs-renew';
+   const renew=button('Yenilə',()=>{if(!readOnly)picker(row);});renew.disabled=readOnly;renew.prepend(icon('refresh'));renew.className='subs-renew';
    if(row.days<=6)renew.dataset.urgent='true';
    const bar=row.progress==null?el('div',{class:'subs-progress subs-progress-unknown','data-tone':urgency(row.days),'aria-hidden':'true'}):el('progress',{class:'subs-progress','aria-label':'Qalan müddət','data-tone':urgency(row.days),max:100,value:row.progress});
    item.append(el('div',{class:'subs-actions'},bar,renew));

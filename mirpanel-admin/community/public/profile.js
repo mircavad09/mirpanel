@@ -1,6 +1,6 @@
 import {tierLabel} from '/community-assets/tier-labels.js';
 import {avatarStickers,stickerUrl} from './avatar-stickers.js';
-export async function renderProfile({app,state,api,el,button,link,alert,avatars,money}){
+export async function renderProfile({app,state,api,el,button,link,alert,avatars,money,readOnly=false}){
  document.body.classList.add('profile-screen');document.title='Profil · MirPanel';if(!document.querySelector('link[href*="/community-assets/profile.css"]'))document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/profile.css?v=profile-stats-20261030'}));
  if(!document.querySelector('link[data-profile-avatar-css]'))document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/profile-avatar.css','data-profile-avatar-css':'','data-shell-persistent':''}));
  let p=state.profile,busy=false,uploading=false;const error=alert(),status=alert();
@@ -98,6 +98,7 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
   editor.before(el('section',{class:'profile-balance'},el('div',{},el('strong',{},'E-poçt təsdiqlənməyib')),verify));
  }
  const support=el('div',{class:'profile-support-slot',hidden:''});
+ if(readOnly){for(const control of [avatar,edit,changeCover,topup,logout,...form.querySelectorAll('input,button')])control.disabled=true;}
  app.replaceChildren(el('div',{class:'profile-layout'},hero,support,el('div',{class:'profile-content'},identity,copyStatus,status,el('div',{class:'profile-info-grid'},latest,subscription),logout)),avatarInput,coverInput,avatarDialog);paint();
  window.dispatchEvent(new CustomEvent('mirpanel:profile-support-slot',{detail:support}));
  async function summaryData(){

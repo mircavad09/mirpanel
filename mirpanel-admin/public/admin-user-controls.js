@@ -20,7 +20,13 @@ export async function renderControlsTab({content,tab,selected,call,valid}){
   const grid=el('div');grid.className='uc-grid';for(const label of ['Dəvət olunanlar','Aylıq qazanc','Ümumi qazanc']){const card=el('article');card.className='panel';card.append(el('h4',label),el('strong','—'));grid.append(card);}content.append(grid,el('p','Referal mexanizmi hələ aktiv deyil. Faiz ayarı saxlanılır, komissiya və balans ödənişi hesablanmır.'),el('h3','Referallar'),el('p','Referal məlumatı yoxdur.'),error);return;
  }
  const identity=data.identity,profile=selected.profile||{};
- const view=button('İstifadəçi görünüşünə bax',()=>{const d=el('dialog');d.className='wu-dialog';d.setAttribute('aria-label','Yalnız baxış rejimi');d.append(el('h2','Yalnız baxış — istifadəçi sessiyası deyil'),el('p',selected.user.name),el('p','#'+selected.user.memberNumber),el('p','Balans: '+money(selected.user.balanceCents)),el('p','Sifariş sayı: '+selected.user.orderCount),el('p','Bu rejimdə alış, mesaj və balans əməliyyatı mümkün deyil.'),button('Bağla',()=>d.close()));document.body.append(d);d.addEventListener('close',()=>d.remove());d.showModal();});
+ const view=button('İstifadəçi gözündən bax',safe(async()=>{
+  if(view.disabled)return;const tab=window.open('about:blank','_blank');
+  if(!tab)throw Error('Yeni tab açıla bilmədi. Brauzerdə yeni pəncərələrə icazə verin.');
+  tab.opener=null;view.disabled=true;
+  try{const r=await call('/customer-view',{userId:identity.id});tab.location.replace(r.url);}
+  catch(e){tab.close();throw e;}finally{view.disabled=false;}
+ }));
  const support=button('İstifadəçi ilə söhbət — Tezliklə',()=>{});support.disabled=true;
  const banned=selected.user.blocked&&(!selected.user.banUntil||Date.parse(selected.user.banUntil)>Date.now()),ban=button(banned?'Banı aç':'Ban et',safe(async()=>{if(!banned&&!confirm(selected.user.name+' hesabının sayta girişini bağlamaq istəyirsiniz?'))return;await call('/moderate',{action:banned?'unban':'ban',targetId:identity.id,minutes:null,confirmed:!banned,requestId:crypto.randomUUID()});Object.assign(selected,await call('/users/'+encodeURIComponent(identity.id)));await renderControlsTab({content,tab,selected,call,valid});}));
  const other=el('div');other.className='uc-other';
