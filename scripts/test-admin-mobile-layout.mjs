@@ -9,6 +9,7 @@ import {extractAdminState} from '../mirpanel-admin/core.mjs';
 const baseline=process.argv.includes('--before'),audit=process.argv.includes('--audit'),live=process.argv.includes('--live'),ordersOnly=process.argv.includes('--orders-only');
 const usersOnly=process.argv.includes('--users');
 const filtersOnly=process.argv.includes('--order-filters');
+const walletOnly=process.argv.includes('--wallet-history');
 const phase=baseline?'before':live?'live':'after';
 const output=path.resolve('../../outputs/admin-mobile-layout');
 fs.mkdirSync(output,{recursive:true});
@@ -16,6 +17,11 @@ const admin=path.resolve('mirpanel-admin/public'),community=path.resolve('mirpan
 const state=extractAdminState(fs.readFileSync('app.js','utf8'));
 const avatarUrl='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="20" fill="#b28337"/><path fill="white" d="M20 9a6 6 0 1 0 0 12 6 6 0 1 0 0-12m0 15c-8 0-12 4-12 8h24c0-4-4-8-12-8"/></svg>');
 const user={id:'qa-user',memberNumber:1022,name:'Məhəmməd Əli Abdullazadə Məmmədov',email:'qa@example.invalid',lastSeen:new Date(Date.now()-180000).toISOString(),balanceCents:1234567,spentCents:98765432,avatarUrl,orderCount:2,online:true,emailVerified:true};
+const ledger=[
+ {kind:'admin_credit',cents:'5000',before_cents:'2',after_cents:'5002',actor_name:'Sınaq admini',reason:'Sintetik düzəliş qeydi',created_at:'2026-11-09T12:09:00Z'},
+ {kind:'purchase_debit',cents:'-499',before_cents:'501',after_cents:'2',actor_name:user.name,reason:'Səbət sifarişinin balansla ödənişi',created_at:'2026-11-09T00:30:00Z'},
+ {kind:'admin_credit',cents:'2',before_cents:'0',after_cents:'2',actor_id:'synthetic-actor',reason:'Admin tərəfindən balans əlavə edildi',created_at:'2026-11-08T23:59:00Z'}
+];
 const item={title:'CapCut Pro — çox uzun sintetik məhsul adı (telefon və kompüter üçün)',planName:'Uzun paket adı · 1 aylıq istifadə',quantity:2,unitCents:499};
 const netflix={title:'Netflix Şəxsi',planName:'1 aylıq',quantity:1,unitCents:594};
 const spotify={...item,title:'Spotify Premium'};
@@ -26,7 +32,7 @@ const api=u=>{
  if(p==='/api/admin/state')return {data:state,sha:'synthetic',loadedAt:user.lastSeen,csrfToken:'test'};
  if(p.endsWith('/community/users'))return {users:q.get('filter')==='banned'||(q.get('q')&&!user.name.toLocaleLowerCase('az').includes(q.get('q').toLocaleLowerCase('az')))?[]:[user],hasMore:false,total:1};
  if(p.endsWith('/users/'+user.id))return {user,profile:{},orders:[{order_code:order.orderCode,product_title:item.title,plan_name:item.planName,amount:9.98,currency:'AZN',status:'reviewing'}],totalCents:user.spentCents};
- if(p.endsWith('/community/wallet'))return {cents:user.balanceCents,items:[],more:false};
+ if(p.endsWith('/community/wallet'))return {cents:walletOnly?5002:user.balanceCents,items:walletOnly?ledger.filter(x=>(q.get('view')!=='payments'||x.kind==='purchase_debit')&&x.reason.includes(q.get('q')||'')):[],more:false};
  if(p.endsWith('/payment-orders'))return {permissions:{manage:true,fields:true},orders:[q.get('pendingStage')==='delivery'?wallet:ordersOnly?{...order,items:[],quantity:2}:order],counts:{pending:1,today:0,all:1,expiring:0},pagination:{page:1,pageSize:20,total:1,totalPages:1},filters:{products:[{id:'capcut',title:'CapCut Pro'}],durations:[],methods:[]},statistics:{},appliedFilters:{}};
  if(p.endsWith('/details'))return {lines:[{index:0,fields:[{field:0,label:'Otaq adı',value:'Sintetik otaq'},{field:1,label:'Otaq kodu',sensitive:true}]},{index:1,fields:[{field:0,label:'Dəvət e-poçtu',value:'invite@example.test'},{field:1,label:'Şifrə',sensitive:true}]}]};
  if(p.endsWith('/receipt'))return {url:'about:blank#synthetic-receipt'};
@@ -69,7 +75,7 @@ try{
   const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{
    const context=await browser.newContext({viewport:{width,height:860},hasTouch:width<600,isMobile:width<600,serviceWorkers:'block'});
-   if(live&&(usersOnly||filtersOnly||ordersOnly)){
+   if(live&&(usersOnly||walletOnly||filtersOnly||ordersOnly)){
     const session=process.env.MIRPANEL_ADMIN_TEST_SESSION,index=session?.indexOf('=')??-1;
     if(index<1)throw Error('A temporary admin session is required for the protected Users assets.');
     await context.addCookies([{name:session.slice(0,index),value:session.slice(index+1),url:origin,httpOnly:true,secure:true,sameSite:'Strict'}]);
@@ -84,12 +90,12 @@ try{
     if(live&&u.pathname.startsWith('/api/'))return r.fulfill({json:api(u)});
     // Use the checked-in shell for the synthetic admin session; all view scripts
     // and styles still come from the deployed Render service.
-    if(live&&!usersOnly&&!filtersOnly&&!ordersOnly&&u.pathname==='/admin.html')return r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(admin,'admin.html'))});
+    if(live&&!usersOnly&&!walletOnly&&!filtersOnly&&!ordersOnly&&u.pathname==='/admin.html')return r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(admin,'admin.html'))});
     return r.continue();
    });
    const page=await context.newPage();page.setDefaultTimeout(10000);
    const assets=new Map();
-   const expectedAssets=usersOnly?['/admin-wallet-users.js','/admin-wallet-users.css']:['/payment-admin.js','/admin.css'];
+   const expectedAssets=usersOnly||walletOnly?['/admin-wallet-users.js','/admin-wallet-users.css']:['/payment-admin.js','/admin.css'];
    if(live)page.on('response',r=>{const u=new URL(r.url());if(r.ok()&&u.origin===origin&&expectedAssets.includes(u.pathname))assets.set(u.pathname,r.text());});
    const verifyAssets=async()=>{if(live)for(const file of expectedAssets){
     assert(assets.has(file),'Deployed asset missing: '+file);
@@ -107,6 +113,35 @@ try{
     await page.locator('#'+v+'View').waitFor();
    };
    const mobile=width<600;
+   if(walletOnly){
+    await open('communityUsers');
+    const view=page.locator('#communityUsersView');
+    await view.getByRole('button',{name:new RegExp(user.name+' Son aktivlik')}).click();
+    const cards=view.locator('.wu-ledger-card'),manual=cards.nth(0),purchase=cards.nth(1),unknown=cards.nth(2);
+    await manual.waitFor();
+    await page.waitForFunction(()=>[...document.styleSheets].some(s=>s.href?.includes('/admin-wallet-users.css')));
+    assert.equal(await cards.count(),3);
+    for(const text of ['İnzibati əlavə','+50,00 ₼','Admin tərəfindən balans əlavə edildi','Sintetik düzəliş qeydi','Admin · Sınaq admini','Üzv #1022','09.11.2026 · 16:09','Əvvəlki balans','0,02 ₼','Yeni balans','50,02 ₼'])assert(await manual.getByText(text,{exact:true}).isVisible(),text+' missing in '+await manual.innerText());
+    for(const text of ['Alış','-4,99 ₼','Səbət sifarişinin balansla ödənişi','09.11.2026 · 04:30'])assert(await purchase.getByText(text,{exact:true}).isVisible(),text);
+    assert.doesNotMatch(await purchase.innerText(),/Admin ·|Məhəmməd/);
+    assert.doesNotMatch(await unknown.innerText(),/Admin ·|synthetic-actor/);
+    assert.equal(await unknown.getByText('Admin tərəfindən balans əlavə edildi',{exact:true}).count(),1);
+    assert.deepEqual(await manual.locator('.wu-ledger-amount, .wu-ledger-change>span:last-child strong').evaluateAll(nodes=>nodes.map(n=>getComputedStyle(n).color)),['rgb(124, 230, 164)','rgb(124, 230, 164)']);
+    assert(await cards.evaluateAll(nodes=>nodes.every(n=>n.scrollWidth<=n.clientWidth+1&&n.getBoundingClientRect().right<=innerWidth+1)));
+    if(engine===chromium&&[390,1440].includes(width))await view.locator('.wu-ledger').screenshot({path:path.join(output,'wallet-history-'+phase+'-'+width+'.png')});
+    await view.getByRole('button',{name:'Ödənişlər',exact:true}).click();
+    await cards.first().getByText('Alış',{exact:true}).waitFor();
+    assert.equal(await cards.count(),1);
+    await view.getByRole('button',{name:'Tarix',exact:true}).click();
+    await manual.getByText('İnzibati əlavə',{exact:true}).waitFor();
+    await view.getByPlaceholder('Əməliyyat və ya səbəb axtar').fill('Sintetik');
+    await view.getByRole('button',{name:'Axtar',exact:true}).click();
+    await page.waitForFunction(()=>document.querySelectorAll('.wu-ledger-card').length===1);
+    assert(await manual.getByText('Sintetik düzəliş qeydi',{exact:true}).isVisible());
+    await verifyAssets();
+    console.log(JSON.stringify({phase,engine:engine.name(),width,walletHistory:'pass',businessWrites:0}));
+    continue;
+   }
    let usersLayout;
    if(filtersOnly){
     const queries=[];

@@ -23,3 +23,24 @@
  .wallet-users .wu-toolbar form{min-width:0}
  .wallet-users .wu-toolbar form>.btn{flex-shrink:0;min-height:44px}
 }
+
+.wallet-users .wu-ledger{display:grid;gap:9px;margin:12px 0}
+.wallet-users .wu-ledger-card{display:grid;gap:6px;min-width:0;margin:0;padding:12px 15px;border:1px solid #3b3e44;border-radius:12px;background:#202226;line-height:1.35;overflow-wrap:anywhere}
+.wallet-users .wu-ledger-top,.wallet-users .wu-ledger-meta,.wallet-users .wu-ledger-change{display:flex;flex-wrap:wrap;align-items:center;gap:5px 10px;min-width:0}
+.wallet-users .wu-ledger-top{justify-content:space-between;color:#fafafa;font-size:16px}
+.wallet-users .wu-ledger-amount{font-size:21px;font-variant-numeric:tabular-nums;white-space:nowrap}
+.wallet-users .wu-ledger-amount[data-sign=positive],.wallet-users .wu-ledger-change>span:last-child strong{color:#7ce6a4}
+.wallet-users .wu-ledger-amount[data-sign=negative]{color:#ffaaaa}
+.wallet-users .wu-ledger-card p{margin:0;color:#e0e2e7;font-size:14px}
+.wallet-users .wu-ledger-card .wu-ledger-note{color:#bfc3cc}
+.wallet-users .wu-ledger-meta,.wallet-users .wu-ledger-change{color:#bfc3cc;font-size:13px}
+.wallet-users .wu-ledger-meta time{margin-inline-start:auto;white-space:nowrap;font-variant-numeric:tabular-nums}
+.wallet-users .wu-ledger-member{border:1px solid #655827;border-radius:999px;background:#352d17;color:#ffe58a;padding:2px 8px;white-space:nowrap}
+.wallet-users .wu-ledger-change{border-top:1px solid #393d43;padding-top:7px}
+.wallet-users .wu-ledger-change>span:not(.wu-ledger-arrow){display:inline-flex;flex-wrap:wrap;gap:3px 5px}
+.wallet-users .wu-ledger-change strong{font-variant-numeric:tabular-nums;white-space:nowrap}
+@media(max-width:650px){
+ .wallet-users .wu-ledger-card{padding:10px 11px}
+ .wallet-users .wu-ledger-meta time{flex-basis:100%;margin-inline-start:0}
+ .wallet-users .wu-ledger-change{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:5px}
+}
