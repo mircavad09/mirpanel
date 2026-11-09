@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/netflix-umumi#product","url":"https://mirpanel.com/mehsul/netflix-umumi","name":"Netflix Ümumi","description":"Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.","image":["https://mirpanel.com/uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068"],"sku":"netflix_umumi","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-umumi","price":"3.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/netflix-umumi#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Netflix Ümumi","item":"https://mirpanel.com/mehsul/netflix-umumi"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/netflix-umumi#product","url":"https://mirpanel.com/mehsul/netflix-umumi","name":"Netflix Ümumi","description":"Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.","image":["https://mirpanel.com/uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068"],"sku":"netflix_umumi","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/netflix-umumi","price":"3.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/netflix-umumi#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Netflix Ümumi","item":"https://mirpanel.com/mehsul/netflix-umumi"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="netflix_umumi" data-product-slug="netflix-umumi">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -96,7 +96,7 @@
           <div class="product-page-info">
             <div class="product-detail-heading">
               <h1 id="pp-main-title" class="product-page-title">Netflix ümumi hesab</h1>
-              <span class="product-page-status">Mövcuddur</span>
+              <span class="product-page-status is-out">Stokda yoxdur</span>
             </div>
             <p class="product-page-description">Ümumi hesab (paylaşılan).</p>
             <div class="product-page-delivery">
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-e1a756a36b6d52d5"></script>
+  <script src="/app.js?v=catalog-0faf81e086721086"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
   <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>

@@ -490,8 +490,8 @@ const DATA = {
           "price": 5.99
         },
         {
-          "duration_months": 7,
           "durationDays": 7,
+          "duration_months": 7,
           "warrantyUnit": "day",
           "bestValue": true,
           "label": " 7 gün",
@@ -846,8 +846,8 @@ const DATA = {
         "alt": "Netflix Ümumi",
         "order": 3
       },
-      "flow": "whatsapp",
-      "soldOut": false,
+      "flow": "out_of_stock",
+      "soldOut": true,
       "active": true,
       "stock": null,
       "stockEnabled": true,
