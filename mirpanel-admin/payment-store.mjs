@@ -436,94 +436,12 @@ export function createPaymentStore(config) {
       return new Map(rows.map(({id,...workflow})=>[id,workflow]));
     },
     async listOrders(input = {}, catalog = [], { pendingDeliveries, pendingDeliveryProgress, deliveryCompletions } = {}) {
-      await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
       const select = "id,checkout_snapshot,payment_source,payment_confirmed,order_code,product_id,product_title,plan_id,plan_name,quantity,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_path,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
       const rangeStart = filters.tab === "today" ? todayBounds.start : filters.tab === "all" && filters.dateFrom ? filters.dateFrom+"T00:00:00+04:00" : null;
       const recent = new Map((deliveryCompletions && rangeStart ? await deliveryCompletions({since:rangeStart}) : []).map(o=>[o.id,o.completedAt]));
-
-      const applyCommonFilters = (query, dateColumn = "completed_at") => {
-        let next = query;
-        if (filters.search) next = next.ilike("order_code", `%${filters.search}%`);
-        if (filters.methodId) next = next.eq("method_id", filters.methodId);
-        const from=filters.dateFrom&&`${filters.dateFrom}T00:00:00+04:00`,to=filters.dateTo&&bakuDayBounds(filters.dateTo).endExclusive;
-        if (from && !paidView) next = next.gte(dateColumn,from);
-        if (to && !paidView) next = next.lt(dateColumn,to);
-        return next;
-      };
-
-      const deliveryQueue = filters.tab === "pending" && input.pendingStage === "delivery";
-      const reviewQueue = filters.tab === "pending" && input.pendingStage === "payment";
-      const completedView = filters.tab === "today" && Boolean(pendingDeliveries);
-      if (deliveryQueue && !pendingDeliveries) throw Object.assign(new Error("Təhvil siyahısı yalnız adminə açıqdır."), { status: 403 });
-      const paidView = completedView || (filters.tab === "all" && Boolean(deliveryCompletions));
-      const statuses = deliveryQueue ? ["approved", "reviewing", "new_receipt_requested"]
-        : paidView ? ["approved", "completed", "reviewing", "new_receipt_requested"] : orderDatabaseStatuses(filters);
-      const deliveryProgress = pendingDeliveryProgress
-        ? new Map((await pendingDeliveryProgress()).map(({id,remaining})=>[id,remaining]))
-        : null;
-      const dateColumn = filters.tab === "pending" ? "created_at" : "completed_at";
-      const matchingQuery = (columns, options, completionIds = []) => {
-        let query = applyCommonFilters(client.from("payment_orders").select(columns, options), dateColumn).in("status", statuses);
-        if (reviewQueue) query = query.eq("payment_source", "card").not("payment_confirmed", "is", true);
-        if (deliveryQueue || paidView) query = query.or("status.in.(approved,completed),payment_confirmed.is.true");
-        if (paidView && rangeStart) {
-          const lower = `completed_at.gte.${rangeStart},and(completed_at.is.null,created_at.gte.${rangeStart})`;
-          query = completionIds.length ? query.in("id", completionIds) : query.or(lower);
-        }
-        if (filters.tab === "today" && !completedView) query = query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive);
-        if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
-        return query.order(dateColumn, { ascending: filters.sort === "oldest" }).order("id", { ascending: filters.sort === "oldest" });
-      };
-      // Facets exclude only the duration filter, not product/bank/date/ID/tab.
-      // Read every matching row in bounded pages: neither a UI page nor a 5000-row
-      // cap can determine the available durations or the filtered batch selection.
-      const matchProduct = filters.productId ? orderProductMatcher(filters.productId, catalog) : null;
-      const facetColumns = "id,product_id,product_title,plan_id,plan_name,duration_months,status,completed_at,created_at,payment_confirmed,amount,sale_price_snapshot,cost_price_snapshot,profit_snapshot" +
-        (matchProduct ? ",method_id,method_name_snapshot,method_last4_snapshot,cart_items:checkout_snapshot->items,snapshot_product:checkout_snapshot->>productId" : "");
-      const facetRows = [];
-      const seenOrders = new Set();
-      const candidateBatches = [[]];
-      if (paidView && rangeStart) {
-        const ids = [...recent.keys()];
-        for (let i=0;i<ids.length;i+=100) candidateBatches.push(ids.slice(i,i+100));
-      }
-      for (const ids of candidateBatches) {
-        let facetTotal, offset = 0;
-        do {
-          const result = await matchingQuery(facetColumns, { count: "exact" }, ids).range(offset, offset + 999);
-          if (result.error) throw paymentError(result.error);
-          facetTotal = Number(result.count || 0);
-          if (!result.data?.length && offset < facetTotal) throw paymentError(null, "Sifariş filtri tam yüklənmədi. Yenidən cəhd edin.");
-          offset += result.data?.length || 0;
-          const candidates = (result.data || []).filter(row => !seenOrders.has(row.id) && (!matchProduct || matchProduct(row)));
-          const pending = (deliveryQueue || completedView) && candidates.length
-            ? deliveryProgress || new Set(await pendingDeliveries(candidates.map(row => row.id))) : null;
-          const completions = paidView && rangeStart && deliveryCompletions && candidates.length
-            ? new Map((await deliveryCompletions({ids:candidates.map(row=>row.id)})).map(o=>[o.id,o.completedAt])) : recent;
-          for (const row of candidates) if (!pending || pending.has(row.id) === deliveryQueue) {
-            const completedAt = completions.get(row.id) || row.completed_at || row.created_at;
-            if (paidView && rangeStart && Date.parse(completedAt)<Date.parse(rangeStart)) continue;
-            const rangeEnd = completedView ? todayBounds.endExclusive : filters.dateTo && bakuDayBounds(filters.dateTo).endExclusive;
-            if (paidView && rangeEnd && Date.parse(completedAt)>=Date.parse(rangeEnd)) continue;
-            seenOrders.add(row.id);
-            const {cart_items, snapshot_product, ...summary} = row;
-            facetRows.push(completedView||completions.has(row.id)?{...summary,status:'completed',completed_at:completedAt}:summary);
-          }
-        } while (offset < facetTotal);
-      }
-      if(paidView){const direction=filters.sort==='oldest'?1:-1;facetRows.sort((a,b)=>direction*((Date.parse(a.completed_at)||0)-(Date.parse(b.completed_at)||0)||a.id.localeCompare(b.id)));}
-      const durations = durationOptions(facetRows);
-      if (filters.durationMonths && !durations.some((item) => item.value === filters.durationMonths) && input.preserveFilters!=='true') {
-        filters.durationMonths = "";
-        filters.page = 1;
-      }
-      const matchedRows = filters.durationMonths ? facetRows.filter((row) => orderDuration(row) === filters.durationMonths) : facetRows;
-      const view=adminListWindow(matchedRows,{page:filters.page,pageSize:filters.pageSize,anchorId:safeUuid(input.anchorId),anchorIndex:input.anchorIndex});
-      const pageIds = view.rows.map((row) => row.id);
-      const query = pageIds.length ? matchingQuery(select, {}, pageIds).in("id", pageIds) : Promise.resolve({ data: [], error: null });
 
       const countStatus = async (statusValues, mutate = (value) => value) => {
         let countQuery = client.from("payment_orders").select("id", { count: "exact", head: true }).in("status", statusValues);
@@ -554,12 +472,116 @@ export function createPaymentStore(config) {
         }
       };
 
-      const [{ data, error }, pendingCount, todayCount, completedCount, expiringCount, methodRows, statistics] = await Promise.all([
-        query,
-        countStatus(["reviewing", "new_receipt_requested"],value=>value.eq("payment_source","card").not("payment_confirmed","is",true)),
+      const deliveryProgressRequest = pendingDeliveryProgress
+        ? pendingDeliveryProgress().then(rows=>new Map(rows.map(({id,remaining})=>[id,remaining])))
+        : Promise.resolve(null);
+      void deliveryProgressRequest.catch(() => {});
+      const countsRequest = Promise.all([
+        countStatus(["reviewing", "new_receipt_requested"], query=>query.eq("payment_source","card").not("payment_confirmed","is",true)),
         countToday(),
         deliveryCompletions ? countStatus(["approved", "completed", "reviewing", "new_receipt_requested"], query => query.or("status.in.(approved,completed),payment_confirmed.is.true")) : countStatus(["approved", "completed"]),
-        countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
+        countStatus(["approved", "completed"], query=>query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today))
+      ]);
+      if (input.countsOnly === "true") {
+        const [[pending,today,all,expiring],progress] = await Promise.all([countsRequest,deliveryProgressRequest]);
+        const delivery=progress?.size ?? 0;
+        return { counts:{pending,delivery,pendingTotal:pending+delivery,today,all,expiring} };
+      }
+      // Start counters alongside the list, and propagate errors when joining below.
+      void countsRequest.catch(() => {});
+
+      const applyCommonFilters = (query, dateColumn = "completed_at") => {
+        let next = query;
+        if (filters.search) next = next.ilike("order_code", `%${filters.search}%`);
+        if (filters.methodId) next = next.eq("method_id", filters.methodId);
+        const from=filters.dateFrom&&`${filters.dateFrom}T00:00:00+04:00`,to=filters.dateTo&&bakuDayBounds(filters.dateTo).endExclusive;
+        if (from && !paidView) next = next.gte(dateColumn,from);
+        if (to && !paidView) next = next.lt(dateColumn,to);
+        return next;
+      };
+
+      const deliveryQueue = filters.tab === "pending" && input.pendingStage === "delivery";
+      const reviewQueue = filters.tab === "pending" && input.pendingStage === "payment";
+      const completedView = filters.tab === "today" && Boolean(pendingDeliveries);
+      if (deliveryQueue && !pendingDeliveries) throw Object.assign(new Error("Təhvil siyahısı yalnız adminə açıqdır."), { status: 403 });
+      const paidView = completedView || (filters.tab === "all" && Boolean(deliveryCompletions));
+      const statuses = deliveryQueue ? ["approved", "reviewing", "new_receipt_requested"]
+        : paidView ? ["approved", "completed", "reviewing", "new_receipt_requested"] : orderDatabaseStatuses(filters);
+      const deliveryProgress = await deliveryProgressRequest;
+      const dateColumn = filters.tab === "pending" ? "created_at" : "completed_at";
+      const matchingQuery = (columns, options, completionIds = []) => {
+        let query = applyCommonFilters(client.from("payment_orders").select(columns, options), dateColumn).in("status", statuses);
+        if (reviewQueue) query = query.eq("payment_source", "card").not("payment_confirmed", "is", true);
+        if (deliveryQueue && completionIds.length) query = query.in("id", completionIds);
+        if (deliveryQueue || paidView) query = query.or("status.in.(approved,completed),payment_confirmed.is.true");
+        if (paidView && rangeStart) {
+          const lower = `completed_at.gte.${rangeStart},and(completed_at.is.null,created_at.gte.${rangeStart})`;
+          query = completionIds.length ? query.in("id", completionIds) : query.or(lower);
+        }
+        if (filters.tab === "today" && !completedView) query = query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive);
+        if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
+        return query.order(dateColumn, { ascending: filters.sort === "oldest" }).order("id", { ascending: filters.sort === "oldest" });
+      };
+      // Facets exclude only the duration filter, not product/bank/date/ID/tab.
+      // Read every matching row in bounded pages: neither a UI page nor a 5000-row
+      // cap can determine the available durations or the filtered batch selection.
+      const matchProduct = filters.productId ? orderProductMatcher(filters.productId, catalog) : null;
+      const facetColumns = "id,product_id,product_title,plan_id,plan_name,duration_months,status,completed_at,created_at,payment_confirmed,amount,sale_price_snapshot,cost_price_snapshot,profit_snapshot" +
+        (matchProduct ? ",method_id,method_name_snapshot,method_last4_snapshot,cart_items:checkout_snapshot->items,snapshot_product:checkout_snapshot->>productId" : "");
+      const facetRows = [];
+      const seenOrders = new Set();
+      const candidateBatches = [[]];
+      if (deliveryQueue && deliveryProgress) {
+        candidateBatches.length=0;
+        const ids=[...deliveryProgress.keys()];
+        for(let i=0;i<ids.length;i+=100) candidateBatches.push(ids.slice(i,i+100));
+      }
+      if (paidView && rangeStart) {
+        const ids = [...recent.keys()];
+        for (let i=0;i<ids.length;i+=100) candidateBatches.push(ids.slice(i,i+100));
+      }
+      for (const ids of candidateBatches) {
+        let facetTotal, offset = 0;
+        do {
+          const result = await matchingQuery(facetColumns, { count: "exact" }, ids).range(offset, offset + 999);
+          if (result.error) throw paymentError(result.error);
+          facetTotal = Number(result.count || 0);
+          if (!result.data?.length && offset < facetTotal) throw paymentError(null, "Sifariş filtri tam yüklənmədi. Yenidən cəhd edin.");
+          offset += result.data?.length || 0;
+          const candidates = (result.data || []).filter(row => !seenOrders.has(row.id) && (!matchProduct || matchProduct(row)));
+          const pending = (deliveryQueue || completedView) && candidates.length
+            ? deliveryProgress || new Set(await pendingDeliveries(candidates.map(row => row.id))) : null;
+          const completions = paidView && rangeStart && deliveryCompletions && candidates.length
+            ? new Map((await deliveryCompletions({ids:candidates.map(row=>row.id)})).map(o=>[o.id,o.completedAt])) : recent;
+          for (const row of candidates) if (!pending || pending.has(row.id) === deliveryQueue) {
+            const completedAt = completions.get(row.id) || row.completed_at || row.created_at;
+            if (paidView && rangeStart && Date.parse(completedAt)<Date.parse(rangeStart)) continue;
+            const rangeEnd = completedView ? todayBounds.endExclusive : filters.dateTo && bakuDayBounds(filters.dateTo).endExclusive;
+            if (paidView && rangeEnd && Date.parse(completedAt)>=Date.parse(rangeEnd)) continue;
+            seenOrders.add(row.id);
+            const {cart_items, snapshot_product, ...summary} = row;
+            facetRows.push(completedView||completions.has(row.id)?{...summary,status:'completed',completed_at:completedAt}:summary);
+          }
+        } while (offset < facetTotal);
+      }
+      if(deliveryQueue && candidateBatches.length>1){
+        const direction=filters.sort==="oldest"?1:-1;
+        facetRows.sort((a,b)=>direction*((Date.parse(a.created_at)||0)-(Date.parse(b.created_at)||0)||a.id.localeCompare(b.id)));
+      }
+      if(paidView){const direction=filters.sort==='oldest'?1:-1;facetRows.sort((a,b)=>direction*((Date.parse(a.completed_at)||0)-(Date.parse(b.completed_at)||0)||a.id.localeCompare(b.id)));}
+      const durations = durationOptions(facetRows);
+      if (filters.durationMonths && !durations.some((item) => item.value === filters.durationMonths) && input.preserveFilters!=='true') {
+        filters.durationMonths = "";
+        filters.page = 1;
+      }
+      const matchedRows = filters.durationMonths ? facetRows.filter((row) => orderDuration(row) === filters.durationMonths) : facetRows;
+      const view=adminListWindow(matchedRows,{page:filters.page,pageSize:filters.pageSize,anchorId:safeUuid(input.anchorId),anchorIndex:input.anchorIndex});
+      const pageIds = view.rows.map((row) => row.id);
+      const query = pageIds.length ? matchingQuery(select, {}, pageIds).in("id", pageIds) : Promise.resolve({ data: [], error: null });
+
+      const [{ data, error }, [pendingCount, todayCount, completedCount, expiringCount], methodRows, statistics] = await Promise.all([
+        query,
+        countsRequest,
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
         deliveryQueue || reviewQueue || paidView || filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows, { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
@@ -577,21 +599,7 @@ export function createPaymentStore(config) {
 
       const orders = data || [];
       if(completedView){const positions=new Map(pageIds.map((id,index)=>[id,index]));orders.sort((a,b)=>positions.get(a.id)-positions.get(b.id));}
-      const history = new Map();
-      if (orders.length) {
-        const { data: auditRows, error: auditError } = await client.from("payment_audit_log")
-          .select("entity_id,actor_type,action,created_at")
-          .eq("entity_type", "order")
-          .in("entity_id", orders.map((item) => item.id))
-          .order("created_at", { ascending: false });
-        if (auditError) throw paymentError(auditError);
-        for (const row of auditRows || []) {
-          if (!history.has(row.entity_id)) history.set(row.entity_id, []);
-          history.get(row.entity_id).push(row);
-        }
-      }
-
-      const displayedCompletions = new Map((deliveryCompletions ? await deliveryCompletions({ids:orders.map(o=>o.id)}) : []).map(o=>[o.id,o.completedAt]));
+      const displayedCompletions = new Map((deliveryCompletions && !deliveryQueue ? await deliveryCompletions({ids:orders.map(o=>o.id)}) : []).map(o=>[o.id,o.completedAt]));
       const products = new Map();
       for (const row of facetRows) {
         if (row.product_id && !products.has(row.product_id)) products.set(row.product_id, row.product_title);
@@ -630,8 +638,7 @@ export function createPaymentStore(config) {
             contactedAt: order.contacted_at,
             receiptAvailable: Boolean(order.receipt_path && !order.receipt_deleted_at && order.payment_source!=='wallet'),paymentSource:order.payment_source||'card',paymentConfirmed:order.payment_confirmed===true,
             paymentMethodLabel: paymentMethodLabel({ ...method, method_name_snapshot: order.method_name_snapshot, method_last4_snapshot: order.method_last4_snapshot }),
-            ...(deliveryQueue ? { deliveryPending: true } : {}),
-            auditHistory: history.get(order.id) || []
+            ...(deliveryQueue ? { deliveryPending: true } : {})
           };
         }),
         liveWindow:{newBeforeAnchor:view.newBeforeAnchor,anchorMissing:view.anchorMissing},

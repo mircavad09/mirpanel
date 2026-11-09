@@ -35,7 +35,7 @@ const makeRow = (id, plan_name, status = "completed", extra = {}) => ({
   id: `00000000-0000-4000-9000-${String(id).padStart(12, "0")}`, order_code: String(10000 + id),
   product_id: "capcut", product_title: "CapCut Pro", plan_id: String(id), plan_name, duration_months: null,
   amount: "5.99", sale_price_snapshot: "5.99", cost_price_snapshot: "2.00", profit_snapshot: "3.99", profit_margin_snapshot: "66.61",
-  currency: "AZN", status, created_at: stamp, updated_at: stamp, approved_at: stamp,
+  currency: "AZN", status, payment_source: "card", created_at: stamp, updated_at: stamp, approved_at: stamp,
   completed_at: status === "reviewing" ? null : stamp,
   expiry_notification_on: today, service_expires_on: today, contacted_at: null,
   receipt_deleted_at: null, method_id: methodId, method_name_snapshot: "Test bank", method_last4_snapshot: "1234",
@@ -124,6 +124,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/admin/payment-orders") {
       apiCalls.push(url.search);
       const result = await store.listOrders(Object.fromEntries(url.searchParams));
+      if (url.searchParams.get("countsOnly") === "true") return json(res, result);
       // Same catalogue override as the production admin API.
       result.filters.products = [{ id: "capcut", title: "CapCut Pro" }, { id: "spotify", title: "Spotify" }];
       if (url.searchParams.get("productId") === "spotify" && !url.searchParams.get("durationMonths")) await new Promise((resolve) => setTimeout(resolve, 160));
@@ -132,7 +133,7 @@ const server = http.createServer(async (req, res) => {
     if (url.pathname === "/api/admin/payment-monthly-reports") return json(res, { current: null, archives: [] });
     if (url.pathname.startsWith("/api/")) throw new Error(`Unexpected API request ${req.method} ${url.pathname}`);
     if (url.pathname === "/fixture-state.js") { res.writeHead(200, { "Content-Type": "application/javascript" }); return res.end(harness); }
-    if (["/payment-admin.js", "/admin.css"].includes(url.pathname)) { res.writeHead(200, { "Content-Type": url.pathname.endsWith(".css") ? "text/css" : "application/javascript" }); return res.end(fs.readFileSync(path.join(root, "mirpanel-admin/public", url.pathname.slice(1)))); }
+    if (["/payment-admin.js", "/admin-live-list.js", "/admin.css"].includes(url.pathname)) { res.writeHead(200, { "Content-Type": url.pathname.endsWith(".css") ? "text/css" : "application/javascript" }); return res.end(fs.readFileSync(path.join(root, "mirpanel-admin/public", url.pathname.slice(1)))); }
     if (url.pathname === "/favicon.ico") { res.writeHead(204); return res.end(); }
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8" }); res.end(fixtureHtml);
   } catch (error) { console.error(error); json(res, { error: error.message }, 500); }
@@ -219,8 +220,8 @@ try {
       for (const tab of ["pending", "today", "all", "expiring"]) {
         await page.click(`[data-payment-order-tab="${tab}"]`); await ready();
         const shown = await page.locator("#paymentOrderPlan option").allTextContents();
-        assert.deepEqual(shown, ["Bütün müddətlər", ...options.map((item) => item.label)]);
-        await page.selectOption("#paymentOrderPlan", "1"); await ready();
+        assert.deepEqual(shown, ["Bütün müddətlər", ...options.map((item) => item.label)], JSON.stringify({width,tab,errors,status:await page.locator("#paymentOrdersStatus").textContent(),apiCalls:apiCalls.slice(-4)}));
+        await page.selectOption("#paymentOrderPlan", "1"); if(width<=650)await page.click("#paymentOrderFiltersApply"); await ready();
         assert.equal(await page.locator(".paymentOrderAdminCard").count(), 20);
         assert.match(await page.locator("#paymentOrdersStatus").textContent(), /25 nəticə/);
         await page.click("#paymentOrdersNext"); await ready();
@@ -229,7 +230,7 @@ try {
           await page.click("#paymentSelectAllFiltered");
           assert.equal(await page.locator("#paymentConfirmSelected").textContent(), "25 sifarişi təsdiqlə");
         }
-        await page.selectOption("#paymentOrderProduct", "spotify"); await ready();
+        await page.selectOption("#paymentOrderProduct", "spotify"); if(width<=650)await page.click("#paymentOrderFiltersApply"); await ready();
         assert.deepEqual(await page.locator("#paymentOrderPlan option").allTextContents(), ["Bütün müddətlər", "3 aylıq"]);
         assert.equal(await page.locator("#paymentOrderPlan").inputValue(), "");
         assert.equal(await page.locator(".paymentOrderAdminCard").count(), 1);
@@ -240,8 +241,14 @@ try {
       // Two genuinely concurrent filter responses: an older delayed Spotify
       // response must not replace the newer CapCut response.
       await page.evaluate(() => {
-        const field = document.getElementById("paymentOrderProduct"); field.value = "spotify"; field.dispatchEvent(new Event("change", { bubbles: true }));
-        setTimeout(() => { field.value = "capcut"; field.dispatchEvent(new Event("change", { bubbles: true })); }, 20);
+        const field = document.getElementById("paymentOrderProduct");
+        const select = value => {
+          field.value = value;
+          field.dispatchEvent(new Event("change", { bubbles: true }));
+          if (matchMedia("(max-width:650px)").matches) field.form.requestSubmit();
+        };
+        select("spotify");
+        setTimeout(() => select("capcut"), 20);
       });
       await page.waitForFunction(() => document.querySelector("#paymentOrderProduct")?.value === "capcut" && document.querySelector("#paymentOrdersStatus")?.textContent.includes("50 nəticə"));
       await new Promise((resolve) => setTimeout(resolve, 250));

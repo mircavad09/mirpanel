@@ -756,33 +756,44 @@ export function createPaymentSystem(options) {
       }
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-orders") {
-      const catalog = await loadCatalog();
+      const started = performance.now();
       const query=Object.fromEntries(url.searchParams), canDeliver=options.readyStockAllowed?.(request);
       const deliveryQueue=query.tab==='pending'&&query.pendingStage==='delivery';
       if(deliveryQueue&&!canDeliver)throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
-      const orders = await store.listOrders(query, catalog.products, {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined});
+      const catalog = query.countsOnly==='true' ? null : await loadCatalog();
+      const listingStarted = performance.now();
+      const orders = await store.listOrders(query, catalog?.products || [], {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined});
+      const listingMs = performance.now()-listingStarted;
+      if(!catalog){json(response,200,orders);return true;}
       const pendingCustomerView=query.tab==='pending'&&Boolean(query.pendingStage);
+      const customersTask=(async()=>{
       if(canDeliver&&options.orderCustomers&&orders.orders.length&&(pendingCustomerView||query.includeCustomer==='true')){
         try{
           const customers=new Map((await options.orderCustomers(orders.orders.map(o=>o.id))).map(o=>[o.id,o]));
           for(const order of orders.orders){const customer=customers.get(order.id);order.customerName=customer?.name||null;order.customerNumber=customer?.memberNumber||null;}
         }catch(error){if(pendingCustomerView)throw error; /* Optional display metadata must not block the history list. */}
-      }
+      }})();
+      const pendingTask=(async()=>{
       if(!deliveryQueue&&options.pendingDeliveries&&canDeliver){
         const candidates=(orders.orders||[]).filter(o=>o.paymentConfirmed||['approved','completed'].includes(o.status));
         if(candidates.length){
           try{const pending=new Set(await options.pendingDeliveries(candidates.map(o=>o.id)));for(const order of candidates)order.deliveryPending=pending.has(order.id);}
           catch{ /* Keep the protected delivery dialog as a fallback during an outage. */ }
         }
-      }
-      if(config.employeeEnabled){const workflow=await store.workforceOrders((orders.orders||[]).map(o=>o.id));for(const order of orders.orders||[])order.workforce=workflow.get(order.id)||null;}
+      }})();
+      const workforceTask=(async()=>{
+        if(!config.employeeEnabled||!orders.orders.length)return;
+        const workflow=await store.workforceOrders(orders.orders.map(o=>o.id));
+        for(const order of orders.orders)order.workforce=workflow.get(order.id)||null;
+      })();
+      await Promise.all([customersTask,pendingTask,workforceTask]);
       orders.permissions={fields:!!canDeliver,manage:!!canDeliver};
       orders.filters ||= {};
       orders.filters.products = (catalog.products || [])
         .filter((product) => product && product.active !== false && product.id)
         .map((product) => ({ id: safeText(product.id, 100), title: safeText(product.title || product.name || "Məhsul", 160) }))
         .sort((a, b) => a.title.localeCompare(b.title, "az"));
-      json(response, 200, orders); return true;
+      json(response, 200, orders, {"Server-Timing":`orders;dur=${listingMs.toFixed(1)}, total;dur=${(performance.now()-started).toFixed(1)}`}); return true;
     }
     if (request.method === "POST" && url.pathname === "/api/admin/payment-orders/batch-contacted") {
       const body = await readBody(request, 100_000);

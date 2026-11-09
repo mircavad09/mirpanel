@@ -42,7 +42,10 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
  // Legacy card approval filled completed_at without tracking customer delivery.
  // A payment email alone cannot put those historical orders back in the queue.
  // Explicit payment confirmation or delivery records opt the order into tracking.
- const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity
+ const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity,
+   (select jsonb_object_agg(units.line_index,units.delivered) from (
+     select line_index,sum(quantity) as delivered from ${D} where order_id=o.id group by line_index
+   ) units) as delivered_units
    from public.payment_orders o join ${O} u on u.order_id=o.id
    where o.status in ('approved','reviewing','new_receipt_requested')
    and (o.payment_confirmed is true or o.status='approved')
@@ -50,11 +53,8 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
    and (o.payment_confirmed is true
      or (o.completed_at is null and exists(select 1 from ${M} m where m.event_key='payment:'||o.id::text))
      or exists(select 1 from ${D} d where d.order_id=o.id))`,ids?[ids]:[])).rows;
- const records=await deliveryRecords(pool,orders.map(o=>o.id));
- const byOrder=new Map();
- for(const record of records){if(!byOrder.has(record.order_id))byOrder.set(record.order_id,[]);byOrder.get(record.order_id).push(record);}
  const remaining=orders.map(o=>{
-  const done=totals(byOrder.get(o.id)||[]);
+  const done=o.delivered_units||{};
   return {id:o.id,remaining:deliveryLines(o).map((line,i)=>Math.max(0,line.quantity-(done[i]||0)))};
  }).filter(o=>o.remaining.some(n=>n>0));
  return progress?remaining:remaining.map(o=>o.id);

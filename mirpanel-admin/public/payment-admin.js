@@ -22,7 +22,11 @@
   const fieldRequests = new WeakMap();
   const fieldsObserver = new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries)if(isIntersecting){fieldsObserver.unobserve(target);void loadCardFields(target);}});
   const mobileOrderFilters = () => matchMedia("(max-width:650px)").matches;
-  let filterBusy = false;
+  const orderPages = new Map();
+  const orderRequests = new Map();
+  let visibleOrderPage = "";
+  let orderRevision = 0;
+  let orderCountRequest;
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   const statusLabel = { reviewing: "Yoxlanılır", preparing: "Təhvil gözlənilir", completed: "Tamamlandı", rejected: "Rədd edilib", expired: "Vaxtı bitib" };
   const methodStatusLabel = { active: "Aktiv", inactive: "Deaktiv", pending: "Gözləmədə", temporarily_busy: "Müvəqqəti rezervdədir", limit_reached: "Limit dolub", deleted: "Silinib" };
@@ -305,7 +309,7 @@
     if (custom && (!from || !to)) message = "Başlanğıc və son tarixini seçin.";
     else if (custom && from > to) message = "Başlanğıc tarixi son tarixdən böyük ola bilməz.";
     const error = $p("paymentOrderDateError"); if (error) error.textContent = showMessage ? message : "";
-    const apply = $p("paymentOrderFiltersApply"); if (apply) apply.disabled = filterBusy || Boolean(message);
+    const apply = $p("paymentOrderFiltersApply"); if (apply) apply.disabled = Boolean(message);
     return !message;
   }
 
@@ -364,32 +368,20 @@
     paymentState.orderQuery = emptyQuery(safeTab);
     clearOrderSelection();
     renderOrderContext();
+    if (["today", "all"].includes(safeTab)) void loadMonthlyReports().catch(() => {});
     await loadOrders();
   }
 
   async function submitMobileOrderFilters(clear = false) {
-    if (filterBusy || (!clear && !validateCustomDates(true))) return;
-    filterBusy = true;
-    const clearButton = $p("paymentOrderFiltersClear");
-    const status = $p("paymentOrdersStatus");
-    if (clearButton) clearButton.disabled = true;
-    status?.setAttribute("data-filter-loading", "");
-    try {
-      if (clear) {
-        $p("paymentOrderFilters")?.reset();
-        paymentState.orderQuery = emptyQuery(paymentState.orderQuery.tab);
-        renderOrderContext();
-      } else readOrderFilterControls();
-      clearOrderSelection();
-      validateCustomDates(false);
-      await loadOrders();
-    } catch (error) { toast(error.message || "Sifarişlər yüklənmədi."); }
-    finally {
-      filterBusy = false;
-      status?.removeAttribute("data-filter-loading");
-      if (clearButton) clearButton.disabled = false;
-      validateCustomDates(false);
-    }
+    if (!clear && !validateCustomDates(true)) return;
+    if (clear) {
+      $p("paymentOrderFilters")?.reset();
+      paymentState.orderQuery = emptyQuery(paymentState.orderQuery.tab);
+      renderOrderContext();
+    } else readOrderFilterControls();
+    clearOrderSelection();
+    validateCustomDates(false);
+    await loadOrders();
   }
 
   function renderStatistics() {
@@ -461,6 +453,7 @@
         if (status) status.textContent = `${completed.length + skipped.length}/${ids.length} yoxlanılır…`;
         const result = await paymentApi("/api/admin/payment-orders/batch-contacted", { method: "POST", body: JSON.stringify({ ids: chunk }) });
         completed.push(...(result.completed || [])); skipped.push(...(result.skipped || []));
+        if (result.completed?.length) invalidateOrders();
         if (status) status.textContent = `${Math.min(ids.length, offset + chunk.length)}/${ids.length} yoxlanıldı…`;
       }
       clearOrderSelection();
@@ -571,45 +564,95 @@
     finally { paymentState.costSaving = false; renderCosts(); }
   }
 
+  function invalidateOrders() {
+    orderRevision += 1;
+    orderPages.clear();
+    orderRequests.clear();
+    orderCountRequest = undefined;
+  }
+
   async function loadOrders({automatic=false}={}) {
     const status = $p("paymentOrdersStatus"); const list = $p("paymentOrdersList");
     const requestSequence = ++paymentState.orderRequestSequence;
-    if (status) status.textContent = "Sifarişlər yüklənir…";
-    if (list) list.setAttribute("aria-busy", "true");
     const query = new URLSearchParams(Object.entries(paymentState.orderQuery).filter(([, value]) => value !== ""));
     if(paymentState.orderQuery.tab==="pending")query.set("pendingStage",paymentState.pendingStage);
     else query.set("includeCustomer","true");
+    const key = query.toString();
+    const revision = orderRevision;
+    const cached = orderPages.get(key);
+    const pageChanged = visibleOrderPage !== key;
+    const apply = (result, background, fromCache = false) => {
+      paymentState.orders = result.orders || [];
+      paymentState.permissions = result.permissions || {};
+      paymentState.orderMeta = { counts: fromCache ? paymentState.orderMeta.counts : result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
+      renderOrders(background);
+      visibleOrderPage = key;
+      list?.setAttribute("data-order-page", key);
+      if (status) status.textContent = `${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
+    };
+    if (pageChanged) {
+      if (cached) apply(cached, false, true);
+      else {
+        const loading = document.createElement("div");
+        loading.className = "emptyState";
+        loading.dataset.orderListLoading = "";
+        loading.setAttribute("role", "status");
+        loading.textContent = "Sifarişlər yüklənir…";
+        list?.replaceChildren(loading);
+        list?.removeAttribute("data-order-page");
+        visibleOrderPage = "";
+        if (status) status.textContent = "";
+      }
+    }
+    if (list) list.setAttribute("aria-busy", "true");
     if(automatic)query.set('preserveFilters','true');
-    const anchor=automatic&&list?(window.AdminLive?.anchor(list)||(paymentState.orders[0]?{id:paymentState.orders[0].id}:null)):null;
+    const anchor=automatic&&list&&!pageChanged?(window.AdminLive?.anchor(list)||(paymentState.orders[0]?{id:paymentState.orders[0].id}:null)):null;
     if(anchor){query.set('anchorId',anchor.id);query.set('anchorIndex',String(paymentState.orders.findIndex(o=>o.id===anchor.id)));}
     try {
-      const result = await paymentApi(`/api/admin/payment-orders?${query}`);
+      let pending = orderRequests.get(key);
+      if (!pending) {
+        pending = paymentApi(`/api/admin/payment-orders?${query}`).finally(()=>{
+          if(orderRequests.get(key)===pending)orderRequests.delete(key);
+        });
+        orderRequests.set(key,pending);
+      }
+      const result = await pending;
+      if (revision !== orderRevision) return;
+      orderPages.set(key,result);
+      if (orderPages.size > 16) orderPages.delete(orderPages.keys().next().value);
       if (requestSequence !== paymentState.orderRequestSequence) return;
       const nextPending = Number(result.counts?.pending || 0);
       paymentState.knownPendingCount = nextPending;
-      paymentState.orders = result.orders || [];
-      paymentState.permissions=result.permissions||{};
-      paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
       // The chosen duration may disappear after another filter changes. The
       // server already re-ran the page without it; keep the controls in sync.
       paymentState.orderQuery.durationMonths = result.appliedFilters?.durationMonths || "";
       paymentState.orderQuery.page = result.pagination?.page || paymentState.orderQuery.page;
-      if (paymentState.orderQuery.page > paymentState.orderMeta.pagination.totalPages && paymentState.orderQuery.page > 1) { paymentState.orderQuery.page = paymentState.orderMeta.pagination.totalPages; return loadOrders(); }
-      const apply=()=>{renderOrders(automatic);window.AdminLive?.notice(list,automatic?result.liveWindow?.newBeforeAnchor||0:0,async()=>{paymentState.orderQuery.page=1;await loadOrders();},'Yeni sifarişlər var');};
-      if(window.AdminLive)window.AdminLive.preserve(list,apply);else apply();
+      if (paymentState.orderQuery.page > result.pagination?.totalPages && paymentState.orderQuery.page > 1) { paymentState.orderQuery.page = result.pagination.totalPages; return loadOrders(); }
+      apply(result,automatic);
+      window.AdminLive?.notice(list,automatic?result.liveWindow?.newBeforeAnchor||0:0,async()=>{paymentState.orderQuery.page=1;await loadOrders();},'Yeni sifarişlər var');
       if (status) status.textContent = result.liveWindow?.anchorMissing?'Baxılan sifariş bu filtrdən çıxıb. Yaxın mövqe qorundu.':`${paymentState.orderMeta.pagination.total || 0} nəticə göstərilir.`;
     } catch (error) {
-      if (requestSequence !== paymentState.orderRequestSequence) return;
-      if(status)status.textContent=(error.message||'Sifarişlər yüklənmədi.')+' Mövcud siyahı qorunub. Yenilə ilə təkrar cəhd edin.';
-      throw error;
+      if (requestSequence !== paymentState.orderRequestSequence || revision !== orderRevision) return;
+      if (status) status.textContent=error.message||'Sifarişlər yüklənmədi.';
+      const retry=document.createElement("button");
+      retry.className="btn";
+      retry.type="button";
+      retry.dataset.retryPaymentOrders="";
+      retry.textContent="Yenidən cəhd et";
+      list?.querySelector('[data-order-list-loading]')?.remove();
+      list?.querySelector('[data-retry-payment-orders]')?.remove();
+      list?.prepend(retry);
     } finally { if (requestSequence === paymentState.orderRequestSequence) list?.removeAttribute("aria-busy"); }
   }
 
   async function loadEmails() { const result = await paymentApi("/api/admin/payment-emails"); paymentState.emails = result.emails || []; renderEmails(); }
   async function refreshOrderCounts() {
-    const sequence=paymentState.orderRequestSequence;
-    const result=await paymentApi("/api/admin/payment-orders?tab=pending&pendingStage=payment&page=1");
-    if(sequence===paymentState.orderRequestSequence)updateOrderCounts(result.counts||{});
+    if (orderCountRequest || orderRequests.size || !$p("paymentOrdersView")?.classList.contains("hidden")) return orderCountRequest;
+    const revision = orderRevision, sequence = paymentState.orderRequestSequence;
+    const pending = paymentApi("/api/admin/payment-orders?tab=pending&countsOnly=true").then(result=>{
+      if (revision===orderRevision && sequence===paymentState.orderRequestSequence) updateOrderCounts(result.counts || {});
+    }).finally(()=>{if(orderCountRequest===pending)orderCountRequest=undefined;});
+    return orderCountRequest=pending;
   }
 
   async function saveMethod(form) {
@@ -662,7 +705,7 @@
         pending??={...data,requestId:crypto.randomUUID()};
         for(const field of [...controls,submit])field.disabled=true;
         error.textContent='';
-        try{const result=await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast(result.status==='completed'?'Sifariş tamamlandı.':'Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders().catch(error=>toast(error.message));}
+        try{const result=await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});invalidateOrders();dlg.close();toast(result.status==='completed'?'Sifariş tamamlandı.':'Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders();}
         catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;for(const field of controls)field.disabled=false;}submit.disabled=err.status===409;}
       };
       dlg.append(form);document.body.append(dlg);dlg.showModal();return;
@@ -686,6 +729,7 @@
     paymentState.orderActions.add(id); card.querySelectorAll("button").forEach((button) => { button.disabled = true; });
     try {
       const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: "{}" });
+      invalidateOrders();
       toast(result.idempotent ? "Bu əməliyyat artıq tətbiq edilib." : "Sifariş məlumatı yeniləndi.");
       await Promise.all([loadOrders(), loadMethods()]);
     } finally { paymentState.orderActions.delete(id); if (card.isConnected) card.querySelectorAll("button").forEach((button) => { button.disabled = false; }); }
@@ -700,6 +744,7 @@
     });
     window.addEventListener('pagehide',clearFields);
     window.addEventListener('mirpanel:session-expired',()=>{
+      invalidateOrders();
       paymentState.permissions.fields=false;
       clearFields();
     });
@@ -789,7 +834,11 @@
         if(viewButton?.dataset.view==='decorations')await loadBackgrounds();
         if (viewButton?.dataset.view === "paymentMethods") await loadMethods();
         if (viewButton?.dataset.view === "paymentCosts") await loadCosts();
-        if (viewButton?.dataset.view === "paymentOrders") { await Promise.all([loadOrders(), loadMonthlyReports()]); renderOrderContext(); }
+        if (viewButton?.dataset.view === "paymentOrders") {
+          renderOrderContext();
+          if (["today", "all"].includes(paymentState.orderQuery.tab)) void loadMonthlyReports().catch(() => {});
+          await loadOrders();
+        }
         if (viewButton?.dataset.view === "paymentReviews") await loadEmails();
         if (event.target.closest("#paymentMethodAdd")) { paymentState.selectedMethodId = ""; renderMethodEditor(); }
         const edit = event.target.closest("[data-edit-payment-method]");
@@ -857,7 +906,6 @@
         if(stage&&stage.dataset.paymentPendingStage!==paymentState.pendingStage){
           paymentState.pendingStage=stage.dataset.paymentPendingStage;
           paymentState.orderQuery.page=1;
-          $p("paymentOrdersList")?.replaceChildren();
           renderOrderContext();
           await loadOrders();
         }
@@ -937,7 +985,7 @@
   function bootPayments() {
     if(location.hash==='#decorations')void loadBackgrounds();
     bindEvents(); setTimeout(openReviewToken, 400);
-    const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) { if (!filterBusy) loadOrders({automatic:true}).catch(() => {}); } else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
+    const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) { if (!orderRequests.size) loadOrders({automatic:true}).catch(() => {}); } else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
     setTimeout(() => refreshOrderCounts().catch(() => {}), 1000);
     window.addEventListener("beforeunload", (event) => { clearInterval(timer); if (paymentState.costDirty.size) { event.preventDefault(); event.returnValue = ""; } });
   }
