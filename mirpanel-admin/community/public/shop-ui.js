@@ -34,7 +34,7 @@ function paymentPreview(){
 function restorePaymentPreview(preview){if(preview?.previous&&preview.panel.isConnected)preview.panel.replaceWith(preview.previous);}
 function login(){const n=card('Balansı artırmaq üçün daxil olun və ya qeydiyyatdan keçin'),back=backFromWallet(),destination=back==='/odenis?mode=wallet'?'/balans?returnTo=%2Fodenis%3Fmode%3Dwallet':'/balans',next=encodeURIComponent(destination),actions=el('div',null,'shop-actions');actions.append(link('Daxil ol','/hesab?next='+next),link('Qeydiyyatdan keç','/hesab?mode=signup&next='+next));n.append(actions);if(back)n.append(link('← Alışa qayıt',back));app.replaceChildren(el('h1','Balansım'),n,error);}
 function refreshAccount(){window.refreshCommunityNav?.();}
-async function checkoutLogin(){const box=card('Hesabına daxil ol');box.append(el('p','Sifariş vermək üçün hesab lazımdır. Qeydiyyat pulsuzdur.'),link('Giriş et','/hesab?next=%2Fodenis'),link('Qeydiyyat','/hesab?mode=signup&next=%2Fodenis'));app.replaceChildren(box,error);await import('/account-header.js?v=account-update-20261107');if(!closed)window.MirpanelRequireLogin?.('/odenis');}
+async function checkoutLogin(){const box=card('Hesabına daxil ol');box.append(el('p','Sifariş vermək üçün hesab lazımdır. Qeydiyyat pulsuzdur.'),link('Giriş et','/hesab?next=%2Fodenis'),link('Qeydiyyat','/hesab?mode=signup&next=%2Fodenis'));app.replaceChildren(box,error);await import('/account-header.js?v=avatar-menu-1');if(!closed)window.MirpanelRequireLogin?.('/odenis');}
 async function checkoutVerification(){
  checkoutView=false;group=null;consentAccepted=false;paymentReady=false;
  if(location.pathname!=='/sebet')history.replaceState(history.state,'','/sebet');

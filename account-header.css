@@ -5,3 +5,24 @@ html body .account-header-controls .account-guest-toggle>.account-icon:first-chi
 html body .account-guest-actions a{gap:6px}
 html body .account-guest .account-guest-actions a.account-guest-primary{background:#087945;border-color:#1b9762;color:white}
 html body .account-guest-actions a.account-guest-signup{background:#ffab54;border-color:#ffab54;color:#271403}
+
+html body #accountDropdown .account-row:not(.account-signout) {
+  color: #fff;
+  font-weight: 600;
+}
+html body #accountDropdown .account-menu-balance {
+  min-height: 40px;
+  padding-block: 6px;
+  gap: 8px;
+  background: #24272c;
+}
+html body #accountDropdown .account-menu-balance:hover { background: #2c3035; }
+html body #accountDropdown .account-menu-balance .account-icon { color: #34d399; }
+html body #accountDropdown .account-menu-amount {
+  margin-inline-start: auto;
+  color: #fff;
+  font-size: 16px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+html body #accountDropdown .account-menu-payments .account-icon { color: #ffd400; }

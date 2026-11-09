@@ -1,5 +1,5 @@
 (()=>{'use strict';if(window.mirpanelAccountHeader)return;window.mirpanelAccountHeader=true;
- const css=document.createElement('link');css.rel='stylesheet';css.href='/account-header.css?v=account-update-20261107';css.dataset.shellPersistent='';document.head.append(css);
+ const css=document.createElement('link');css.rel='stylesheet';css.href='/account-header.css?v=avatar-menu-1';css.dataset.shellPersistent='';document.head.append(css);
  const paths={bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',arrow:'m8 10 4 4 4-4',profile:'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',wallet:'M4 6h16v14H4z M4 6V3h13 M15 11h5v5h-5z',orders:'M5 7h14v14H5V7Zm4 0V5a3 3 0 0 1 6 0v2',card:'M3 5h18v14H3z M3 10h18',group:'M4 4h16v12H9l-5 4V4Z',support:'M4 14v-3a8 8 0 0 1 16 0v3M4 12H2v7h5v-7H4Zm16 0h2v7h-5v-7h3',logout:'M9 4H4v16h5 M13 8l4 4-4 4 M8 12h13'};
  const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
  const icon=k=>{const e=el('span','account-icon');e.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+paths[k]+'"/></svg>';return e;};
@@ -25,7 +25,26 @@
  function mountGuest(){if(host?.isConnected)return;const target=document.querySelector('.site-header-tools');if(!target)return;host=el('div','account-header-controls account-guest-controls');toggle=el('button','account-guest-toggle');toggle.type='button';toggle.setAttribute('aria-label','Daxil ol');toggle.setAttribute('aria-controls',guest.id);toggle.setAttribute('aria-expanded','false');toggle.append(icon('profile'),el('span','','Daxil ol'),icon('arrow'));toggle.onclick=()=>{guestLinks(location.pathname);open(guest,toggle);};host.append(toggle);target.append(host);document.body.classList.add('has-guest-header');}
  window.MirpanelRequireLogin=(next='/odenis')=>{if(profile){window.mirpanelAccountProfile=null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));}mountGuest();guestLinks(next);if(toggle&&active!==guest)open(guest,toggle);return true;};
  function close(focus=false){menu.hidden=notice.hidden=guest.hidden=true;bell?.setAttribute('aria-expanded','false');toggle?.setAttribute('aria-expanded','false');active=null;if(focus)previous?.focus();}
- function position(){if(!active)return;const r=(active===notice?bell:toggle).getBoundingClientRect();active.style.top=Math.min(r.bottom+8,innerHeight-180)+'px';active.style.maxHeight=Math.max(130,innerHeight-r.bottom-24)+'px';if(active===guest){const width=document.documentElement.clientWidth;active.style.maxWidth=Math.max(0,width-24)+'px';active.style.right=Math.min(Math.max(12,width-r.right),Math.max(12,width-active.getBoundingClientRect().width-12))+'px';}}
+ function position(){
+  if(!active)return;
+  const anchor=(active===notice?bell:toggle).getBoundingClientRect();
+  if(active===menu){
+   const width=document.documentElement.clientWidth;
+   const right=Math.max(0,width-anchor.right);
+   menu.style.right=right+'px';
+   menu.style.maxWidth=Math.max(0,width-right-8)+'px';
+   menu.style.top=(anchor.bottom+8)+'px';
+   menu.style.maxHeight=Math.max(0,innerHeight-anchor.bottom-16)+'px';
+   return;
+  }
+  active.style.top=Math.min(anchor.bottom+8,innerHeight-180)+'px';
+  active.style.maxHeight=Math.max(130,innerHeight-anchor.bottom-24)+'px';
+  if(active===guest){
+   const width=document.documentElement.clientWidth;
+   active.style.maxWidth=Math.max(0,width-24)+'px';
+   active.style.right=Math.min(Math.max(12,width-anchor.right),Math.max(12,width-active.getBoundingClientRect().width-12))+'px';
+  }
+ }
  function open(panel,button){const same=active===panel;close();if(same)return;previous=button;active=panel;panel.hidden=false;button.setAttribute('aria-expanded','true');position();panel.querySelector('a,button:not(:disabled)')?.focus({preventScroll:true});}
  function row(label,key,href){const a=el(href?'a':'button','account-row');a.append(icon(key),el('span','',label));if(href)a.href=href;else{a.type='button';a.disabled=true;a.append(el('small','','Tezliklə'));}return a;}
  function paint(p){try{sessionStorage.removeItem('mirpanel.account.visual');}catch{}if(p===undefined)return;const changed=userId(profile)!==userId(p);profile=p||null;if(changed)close();if(!profile){try{sessionStorage.removeItem('mirpanel.account.present');}catch{}if(host&&!host.classList.contains('account-guest-controls')){host.remove();host=null;}document.body.classList.remove('has-account-header');menu.replaceChildren();notice.replaceChildren();mountGuest();return;}
@@ -33,8 +52,9 @@
   const identity=el('div','account-identity'),info=el('div'),photo=menu.querySelector('.account-identity>.account-avatar')||avatar(profile);updateAvatar(photo,profile);info.append(el('strong','',profile.display_name),el('small','',profile.email));identity.append(photo,info);
   const operator=row('Operatorla əlaqə','support',document.querySelector('#waFab')?.href||document.querySelector('#supportOperator')?.href||'https://wa.me/994515243545');operator.target='_blank';operator.rel='noopener noreferrer';
   const out=row('Çıxış','logout');out.disabled=false;out.replaceChildren(icon('logout'),el('span','','Çıxış'));out.classList.add('account-signout');out.addEventListener('click',async()=>{if(loggingOut)return;loggingOut=true;out.disabled=true;const error=menu.querySelector('.account-error');error.textContent='';try{const r=await fetch('/api/auth/sign-out',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}',signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error();try{localStorage.setItem('mirpanel.auth.signedOut',String(Date.now()));}catch{}window.mirpanelAccountProfile=null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));await window.refreshCommunityNav?.();if(window.MirpanelNavigation)await window.MirpanelNavigation.go('/');else location.assign('/');}catch{error.textContent='Çıxış alınmadı. Yenidən cəhd edin.';}finally{loggingOut=false;out.disabled=false;}});
-  const balance=row('Balansım','wallet','/balans');balance.append(el('small','',Number.isSafeInteger(p.balanceCents)?(p.balanceCents/100).toFixed(2)+' AZN':'Məlumat yoxdur'));
-  const error=el('p','account-error');error.setAttribute('role','alert');menu.replaceChildren(identity,balance,row('Profilim','profile','/profil'),row('Sifarişlərim','orders','/profil?tab=orders'),row('Ödənişlərim','card','/balans#emeliyyatlar'),row('Qrup söhbət','group','/qrup'),operator,el('hr'),out,error);
+  const balance=row('Balansım','wallet','/balans');balance.classList.add('account-menu-balance');balance.append(el('strong','account-menu-amount',Number.isSafeInteger(p.balanceCents)?(p.balanceCents/100).toFixed(2)+' ₼':'Məlumat yoxdur'));
+  const payments=row('Ödənişlərim','card','/balans#emeliyyatlar');payments.classList.add('account-menu-payments');
+  const error=el('p','account-error');error.setAttribute('role','alert');menu.replaceChildren(identity,balance,row('Profilim','profile','/profil'),row('Sifarişlərim','orders','/profil?tab=orders'),payments,row('Qrup söhbəti','group','/qrup'),operator,el('hr'),out,error);
   notice.replaceChildren(el('h2','','Bildirişlər'),el('p','','Hələ bildiriş yoxdur'));
  }
  function mount(){if(!profile){mountGuest();return;}if(host?.isConnected)return;const target=document.querySelector('.site-header-tools')||document.querySelector('.community-header')||document.querySelector('.site-header-nav');if(!target)return;host=el('div','account-header-controls');bell=el('button','account-bell');bell.type='button';bell.setAttribute('aria-label','Bildirişlər');bell.setAttribute('aria-controls',notice.id);bell.setAttribute('aria-expanded','false');bell.append(icon('bell'));toggle=el('button','account-toggle');toggle.type='button';toggle.setAttribute('aria-label','Hesab menyusunu aç');toggle.setAttribute('aria-controls',menu.id);toggle.setAttribute('aria-expanded','false');bell.addEventListener('click',()=>open(notice,bell));toggle.addEventListener('click',()=>open(menu,toggle));host.append(bell,toggle);target.append(host);document.body.classList.add('has-account-header');toggle.replaceChildren(avatar(profile),icon('arrow'));}
