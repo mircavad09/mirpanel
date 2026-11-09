@@ -32,7 +32,7 @@ export function mountReadyStock(host,api){
  let activeDraft=null,activeProduct;
  let products=[],pending=null,busy=false,loaded=false,read=null;
  const selected=()=>{const p=products.find(x=>x.id===product.value);return {p,item:p?.plans.find(x=>String(x.index)===plan.value)};};
- const accounts=()=>[...messageList.children].map(row=>({email:row.querySelector('[type=email]').value.trim(),password:row.querySelector('[type=password]').value}));
+ const accounts=()=>[...messageList.children].map(row=>({email:row.querySelector('[type=email]').value.trim(),password:row.querySelector('[name=password]').value}));
  const say=(text,error=false)=>{report.textContent=text;report.dataset.error=String(error);};
  function controls(){
   const locked=busy||!!pending,absent=!selected().item;
@@ -63,9 +63,10 @@ export function mountReadyStock(host,api){
    (nearby?.querySelector('button')||add).focus();
   };
   header.append(heading,remove);row.append(header);
-  for(const [name,type,max] of [['Hesabın e-poçtu','email',254],['Hesabın şifrəsi','password',512]]){
+  for(const [name,field,type,max] of [['Hesabın e-poçtu','email','email',254],['Hesabın şifrəsi','password','text',512]]){
    const label=document.createElement('label'),box=document.createElement('input');
-   label.textContent=name;box.type=type;box.maxLength=max;box.autocomplete=type==='password'?'new-password':'off';box.value=value[type]||'';
+   label.textContent=name;box.name=field;box.type=type;box.maxLength=max;box.autocomplete=field==='password'?'new-password':'off';box.value=value[field]||'';
+   if(field==='password'){box.spellcheck=false;box.autocapitalize='off';}
    label.append(box);row.append(label);
   }
   messageList.append(row);numberAccounts();controls();

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import http from 'node:http';
-import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const {chromium}=await import(process.env.MIRPANEL_PLAYWRIGHT||'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs');
 const live=process.argv.includes('--live');
 const paths={'/admin.css':'mirpanel-admin/public/admin.css','/ready-stock-admin.css':'mirpanel-admin/public/ready-stock-admin.css','/ready-stock-admin.js':'mirpanel-admin/public/ready-stock-admin.js'};
 const server=http.createServer((req,res)=>{
@@ -17,12 +17,12 @@ const origin='http://127.0.0.1:'+server.address().port;
 const cms=fs.readFileSync('mirpanel-admin/public/cms-admin.js','utf8');
 assert.match(cms,/\["paymentOrders", "Sifarişlər"\], \["readyStock", "Hazır hesab stoku"\]/);
 try{
- const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+ const browser=await chromium.launch({headless:true,executablePath:process.env.MIRPANEL_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe'});
  try{
   if(live){
    const ctx=await browser.newContext();
    for(const name of Object.keys(paths)){
-    const r=await ctx.request.get('https://mirpanel.onrender.com'+name+'?v=ready-account-cards-1');
+    const r=await ctx.request.get('https://mirpanel.onrender.com'+name+'?v=ready-account-password-1');
     assert(r.ok());
     assert.equal((await r.text()).replaceAll('\r\n','\n'),fs.readFileSync(paths[name],'utf8').replaceAll('\r\n','\n'));
    }
@@ -30,13 +30,14 @@ try{
   }
   for(const width of [1360,390]){
    const page=await browser.newPage({viewport:{width,height:920},isMobile:width<600,hasTouch:width<600});
+   await page.context().grantPermissions(['clipboard-read','clipboard-write']);
    page.setDefaultTimeout(7000);page.on('pageerror',error=>console.error(error.message));
    const item=(index,title,sales)=>({index,title,signature:'test-'+index,sales,ready:0,autoWallet:false});
    const catalog={products:[{id:'capcut',title:'CapCut Pro',image:'/assets/capcut.png',readyTotal:8,scope:'product',version:4,plans:[item(0,'1 aylıq (Telefon)',40),{...item(1,'3 aylıq',40),ready:8}]},{id:'netflix',title:'Netflix',image:'/assets/netflix.png',readyTotal:0,scope:'plan',version:9,plans:[item(0,'Şəxsi paket',0)]},{id:'spotify',title:'Spotify',image:'/assets/spotify.png',readyTotal:0,scope:'none',version:0,plans:[item(0,'1 aylıq',null)]}]};
    const saves=[],salesWrites=[],p=catalog.products[0];let first=true;
    const note='Sintetik mesaj 1\n\nİstifadə qaydası: sınaq',note2='Sintetik mesaj 2\nİkinci sətir';
    if(live)for(const name of Object.keys(paths))await page.route(origin+name,async route=>{
-    const r=await route.fetch({url:'https://mirpanel.onrender.com'+name+'?v=ready-account-cards-1'});
+    const r=await route.fetch({url:'https://mirpanel.onrender.com'+name+'?v=ready-account-password-1'});
     return route.fulfill({response:r});
    });
    await page.route('https://mirpanel.com/assets/*',route=>route.fulfill({contentType:'image/png',body:fs.readFileSync('.'+new URL(route.request().url()).pathname)}));
@@ -78,7 +79,8 @@ try{
    await automatic.check();
    const email=page.getByLabel('Hesabın e-poçtu'),password=page.getByLabel('Hesabın şifrəsi');
    assert.equal(await email.first().inputValue(),'');assert.equal(await password.first().inputValue(),'');
-   await email.first().fill('first@example.test');await password.first().fill('synthetic-one');
+   assert.equal(await password.first().getAttribute('type'),'text');
+   await email.first().fill('first@example.test');await password.first().pressSequentially('synthetic-one');
    await page.getByRole('button',{name:'+ Yeni hesab əlavə et'}).click();
    assert.equal(await email.nth(1).inputValue(),'');assert.equal(await password.nth(1).inputValue(),'');
    await email.nth(1).fill('removed@example.test');await password.nth(1).fill('synthetic-remove');
@@ -86,7 +88,11 @@ try{
    const cards=page.locator('.readyStockAccount');
    assert.deepEqual(await cards.locator('h4').allTextContents(),['Hesab 1','Hesab 2','Hesab 3']);
    assert.equal(await email.nth(2).inputValue(),'');assert.equal(await password.nth(2).inputValue(),'');
-   await email.nth(2).fill('second@example.test');await password.nth(2).fill('synthetic-two');
+   assert.deepEqual(await password.evaluateAll(inputs=>inputs.map(input=>input.type)),['text','text','text']);
+   await email.nth(2).fill('second@example.test');
+   await page.evaluate(()=>navigator.clipboard.writeText('synthetic-two'));
+   await password.nth(2).press('Control+V');
+   assert.equal(await password.nth(2).inputValue(),'synthetic-two');
    const layout=await cards.first().evaluate(card=>{
     const [email,password]=card.querySelectorAll('input');
     const a=email.getBoundingClientRect(),b=password.getBoundingClientRect();
