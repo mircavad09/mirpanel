@@ -225,6 +225,7 @@
       event.preventDefault();
       input.value = "";
       syncInputs("", input);
+      input.dispatchEvent(new Event("input", { bubbles: true }));
       toggleClear(input);
       closePanel();
       if (typeof window.renderGrid === "function") window.renderGrid();

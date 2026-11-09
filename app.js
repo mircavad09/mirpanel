@@ -4355,7 +4355,18 @@ function setupUI() {
   window.mirpanelRestoreCatalog?.();
 }
 
-let homeFilter = "all";
+const homeCatalogState = { filter: "all", sort: "default", query: "" };
+try { Object.assign(homeCatalogState, JSON.parse(sessionStorage.getItem("mirpanel.home.catalog"))); } catch {}
+
+function saveHomeCatalogState() {
+  try { sessionStorage.setItem("mirpanel.home.catalog", JSON.stringify(homeCatalogState)); } catch {}
+}
+
+function matchesHomeFilter(product) {
+  if (homeCatalogState.filter === "best") return product.bestSeller === true;
+  if (homeCatalogState.filter === "premium") return product.badge === "Premium";
+  return true;
+}
 
 function productSlugForHome(product) {
   return String(product?.seoSlug || product?.id || "").replace(/-almaq$/, "").replace(/(^|-)hesab0(?=-|$)/g, "$1hesab").replace(/^\/+|\/+$/g, "");
@@ -4417,10 +4428,10 @@ function buildTabs() {
   const activeProducts = DATA.products.filter((product) => product.active !== false);
   const hasPremium = activeProducts.some((product) => product.badge === "Premium");
   const hasBestSeller = activeProducts.some((product) => product.bestSeller === true);
-  homeFilter = hasBestSeller ? "best" : "all";
   tabs.innerHTML = `
     <div class="home-filter-tabs" role="tablist" aria-label="Məhsul filtrləri">
-      ${hasBestSeller ? '<button type="button" class="home-filter-tab active" data-home-filter="best" role="tab" aria-selected="true">Ən çox satılanlar</button>' : ''}
+      <button type="button" class="home-filter-tab" data-home-filter="all" role="tab">Hamısı</button>
+      ${hasBestSeller ? '<button type="button" class="home-filter-tab" data-home-filter="best" role="tab">Ən çox satılanlar</button>' : ''}
       ${hasPremium ? '<button type="button" class="home-filter-tab" data-home-filter="premium" role="tab" aria-selected="false">Premium</button>' : ''}
     </div>
     <div class="glass-sort-container">
@@ -4433,64 +4444,142 @@ function buildTabs() {
       </select>
     </div>
   `;
-  document.getElementById("sortSelect").addEventListener("change", renderGrid);
-  tabs.querySelectorAll("[data-home-filter]").forEach((button) => button.addEventListener("click", () => { homeFilter = button.dataset.homeFilter || "all"; tabs.querySelectorAll("[data-home-filter]").forEach((tab) => { const selected = tab === button; tab.classList.toggle("active", selected); tab.setAttribute("aria-selected", String(selected)); }); renderGrid(); }));
+  const sort = document.getElementById("sortSelect");
+  sort.value = homeCatalogState.sort;
+  if (!sort.value) sort.value = "default";
+  sort.addEventListener("change", () => {
+    homeCatalogState.sort = sort.value;
+    saveHomeCatalogState();
+    renderGrid();
+  });
+  const filters = [...tabs.querySelectorAll("[data-home-filter]")];
+  if (!filters.some(button => button.dataset.homeFilter === homeCatalogState.filter)) homeCatalogState.filter = "all";
+  function paintFilters() {
+    for (const button of filters) {
+      const selected = button.dataset.homeFilter === homeCatalogState.filter;
+      button.classList.toggle("active", selected);
+      button.setAttribute("aria-selected", String(selected));
+    }
+  }
+  paintFilters();
+  for (const button of filters) button.addEventListener("click", () => {
+    homeCatalogState.filter = button.dataset.homeFilter;
+    saveHomeCatalogState();
+    paintFilters();
+    renderGrid();
+  });
+}
+
+function normalizeSearch(value) {
+  return String(value ?? "")
+    .trim()
+    .toLocaleLowerCase("az")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replaceAll("ə", "e")
+    .replaceAll("ı", "i")
+    .replaceAll("ö", "o")
+    .replaceAll("ü", "u")
+    .replaceAll("ş", "s")
+    .replaceAll("ç", "c")
+    .replaceAll("ğ", "g");
+}
+
+function searchInputs() {
+  const selectors = [
+    "#q",
+    "#sideMenuInput",
+    ".side-search",
+    ".headActions input[type='text']",
+    "header input[type='text']",
+    "input[placeholder*='Məhsul']",
+    "input[placeholder*='məhsul']"
+  ];
+
+  return [...new Set(selectors.flatMap((selector) => [...document.querySelectorAll(selector)]))]
+    .filter((input) => input && input.tagName === "INPUT");
+}
+
+function syncSearchInputs(value, source) {
+  searchInputs().forEach((input) => {
+    if (input !== source && input.value !== value) input.value = value;
+  });
+}
+
+function productMatches(product, query) {
+  if (!query) return true;
+  const blob = [
+    product.title,
+    product.variant,
+    product.badge,
+    product.category,
+    product.desc,
+    product.id,
+    product.note
+  ].join(" ");
+  return normalizeSearch(blob).includes(query);
+}
+
+function sortedProducts(products) {
+  const sortVal = document.getElementById("sortSelect")?.value || "default";
+  const getPrice = (product) => {
+    if (product.id === "tiktok_jeton") return 10;
+    const price = getMinPrice(product);
+    return price === Infinity || price === 0 ? 999999 : price;
+  };
+
+  return [...products].sort((a, b) => {
+    const priceA = getPrice(a);
+    const priceB = getPrice(b);
+
+    if (sortVal === "price-asc") return priceA - priceB;
+    if (sortVal === "price-desc") {
+      if (priceA === 999999) return 1;
+      if (priceB === 999999) return -1;
+      return priceB - priceA;
+    }
+    if (sortVal === "az") return String(a.title || "").localeCompare(String(b.title || ""), "az");
+    if (sortVal === "za") return String(b.title || "").localeCompare(String(a.title || ""), "az");
+    return (Number(a.order ?? 9999) - Number(b.order ?? 9999));
+  });
 }
 
 function renderGrid() {
   const grid = document.getElementById("grid");
   if (!grid) return;
-  const searchInp = document.getElementById("q");
-  const q = (searchInp?.value || "").trim().toLowerCase();
-  
-  const sortSelect = document.getElementById("sortSelect");
-  const sortVal = sortSelect ? sortSelect.value : "default";
-
-  let list = DATA.products.filter((p) => p.active !== false).filter((p) => {
-    if (!q) return true;
-    const blob = [p.title, p.desc, p.category, p.variant].join(" ").toLowerCase();
-    return blob.includes(q);
-  });
-  if (!q && homeFilter === "best") list = list.filter((product) => product.bestSeller === true);
-  if (!q && homeFilter === "premium") list = list.filter((product) => product.badge === "Premium");
-  
-  list.sort((a, b) => {
-     const getPrice = (prod) => {
-        if (prod.id === "tiktok_jeton") return 10.00;
-        const m = getMinPrice(prod);
-        return (m === Infinity || m === 0) ? 999999 : m;
-     };
-     
-     const priceA = getPrice(a);
-     const priceB = getPrice(b);
-
-     if (sortVal === "price-asc") {
-        return priceA - priceB;
-     } else if (sortVal === "price-desc") {
-        if (priceA === 999999) return 1;
-        if (priceB === 999999) return -1;
-        return priceB - priceA;
-     } else if (sortVal === "az") {
-        return a.title.localeCompare(b.title);
-     } else if (sortVal === "za") {
-        return b.title.localeCompare(a.title);
-     }
-     return 0; 
-  });
-
-  grid.innerHTML = list.map((p, idx) => cardHTML(p, idx)).join("");
+  const query = normalizeSearch(homeCatalogState.query);
+  const list = sortedProducts(DATA.products.filter(product =>
+    product.active !== false && matchesHomeFilter(product) && productMatches(product, query)
+  ));
+  grid.innerHTML = list.length ? list.map((p, idx) => cardHTML(p, idx)).join("") :
+    '<div class="home-catalog-status">Nəticə tapılmadı</div>';
+  grid.removeAttribute("aria-busy");
+  window.dispatchEvent(new Event("mirpanel:home-catalog-rendered"));
 }
+
+function updateHomeCatalogSearch(event) {
+  const input = event.target;
+  if (location.pathname !== "/" || !searchInputs().includes(input)) return;
+  homeCatalogState.query = input.value;
+  syncSearchInputs(input.value, input);
+  saveHomeCatalogState();
+  renderGrid();
+}
+document.addEventListener("input", updateHomeCatalogSearch);
+document.addEventListener("search", updateHomeCatalogSearch, true);
 
 window.mirpanelRestoreCatalog=()=>{
  if(location.pathname!=='/')return;
- const grid=document.getElementById('grid');if(!grid)return;
+ const grid=document.getElementById('grid');
+ if(!grid)return;
  if(!grid.dataset.catalogMounted){
-  if(!document.querySelector('#tabs [data-home-filter]'))buildTabs();
+  homeCatalogState.query=new URLSearchParams(location.search).get('search')??homeCatalogState.query;
+  syncSearchInputs(homeCatalogState.query);
+  buildTabs();
   renderHomeDiscovery();
-  document.getElementById('q')?.addEventListener('input',renderGrid);
   grid.dataset.catalogMounted='1';
  }
- if(!grid.querySelector('.card'))renderGrid();
+ renderGrid();
 };
 function cardHTML(p, idx) {
   const min = getMinPrice(p);
@@ -4499,6 +4588,9 @@ function cardHTML(p, idx) {
     .replace(/-almaq$/, "")
     .replace(/(^|-)hesab0(?=-|$)/g, "$1hesab")
     .replace(/^\/+|\/+$/g, "");
+  if (window.MirpanelCatalogCard && document.body.classList.contains("home-page")) {
+    return window.MirpanelCatalogCard.render(p, idx, "/mehsul/" + productSlug, publicProductTitle(p.title), p.id === "tiktok_jeton" ? 10 : min, showPrice, "", true);
+  }
   return `
     <a class="card" href="/mehsul/${productSlug}" data-product-id="${p.id}" style="animation-delay:${Math.min(idx * 0.03, 0.25)}s">
       <div class="imgWrap"><img class="img" src="${p.image}" alt=""><div class="cornerPrice">${showPrice}</div></div>
@@ -4612,3 +4704,4 @@ function boot() {
 }
 
 boot();
+window.dispatchEvent(new Event("mirpanel:catalog-runtime-ready"));

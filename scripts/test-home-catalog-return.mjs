@@ -1,6 +1,6 @@
 import fs from 'node:fs';import http from 'node:http';import assert from 'node:assert/strict';
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
-const source=fs.readFileSync('app.js','utf8'),functions=source.slice(source.indexOf('function buildTabs()'),source.indexOf('function cardHTML(p, idx)'));
+const source=fs.readFileSync('app.js','utf8'),functions=source.slice(source.indexOf('const homeCatalogState ='),source.indexOf('function cardHTML(p, idx)'));
 assert(functions.includes('window.mirpanelRestoreCatalog'));
 const script="const DATA={products:[{id:'demo',title:'CapCut Pro',active:true,price:5}]};let homeFilter='all';function renderHomeDiscovery(){};function cardHTML(p){return '<article class=card>'+p.title+'</article>'};function getMinPrice(p){return p.price};"+functions;
 let homeCalls=0,fail=false;const server=http.createServer((req,res)=>{const p=new URL(req.url,'http://local').pathname;

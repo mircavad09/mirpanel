@@ -328,7 +328,8 @@ export function patchHomeCatalog(source,products) {
   return source
     .replace(/(<nav class="home-quick-links" id="homeQuickLinks" aria-label="Tez keçidlər")(?: hidden)?>([\s\S]*?)<\/nav>/,(_,tag)=>tag+(quick.length?'':' hidden')+'>'
       + (quick.length?'<div class="home-quick-track"><div class="home-quick-group">'+shortcuts(false)+'</div><div class="home-quick-group" aria-hidden="true">'+shortcuts(true)+'</div></div>':'')+'</nav>')
-    .replace(/(<div class="grid" id="grid" aria-live="polite")(?: data-home-static="1")?>[\s\S]*?(?=<\/div>\s*<\/main>)/,(_,tag)=>tag+' data-home-static="1">'+renderCatalogCards(best.length?best:active));
+    .replace(/(<div class="grid" id="grid" aria-live="polite")[^>]*>[\s\S]*?(?=<\/div>\s*<\/main>)/,(_,tag)=>tag+' aria-busy="true" data-home-static="1">'+renderCatalogCards(best.length?best:active)
+      + '<div class="home-catalog-status" data-home-catalog-status><span role="status">Məhsullar yüklənir…</span><button type="button" hidden>Yenidən cəhd et</button></div>');
 }
 
 export function generateProductListingPageFiles(products = [], siteSections = {}, cms = {}) {

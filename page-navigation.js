@@ -38,7 +38,7 @@
  .site-route-loading[data-route="/balans"]{min-height:916px}
 `;document.head.append(catalogVisibility);
  for(const n of [...document.body.children])if(n!==root&&n.tagName!=='SCRIPT'&&n.tagName!=='LINK'&&!persistent(n))root.append(n);
- const isStatic=p=>p==='/'||p==='/mehsul';view={fragment:null,styles:initialStyles,title:document.title,body:document.body.className,html:document.documentElement.className,started:true};
+ const isStatic=p=>p==='/'||p==='/mehsul';view={fragment:null,styles:initialStyles,title:document.title,body:document.body.className,html:document.documentElement.className,started:true,scripts:[...document.scripts].map(script=>script.src).filter(Boolean)};
  let listingRequest=null,listingAt=0;
  function prepareListing(){
   if(listingRequest&&Date.now()-listingAt<30000)return listingRequest;
@@ -75,6 +75,43 @@
  async function resource(src,run,prepared=downloadResource(src)){if(!prepared)return;const {key,download}=prepared;
  const code=await download;if(run!==generation||loaded.has(key))return;
  const s=document.createElement('script');s.dataset.routeResource=key;s.textContent=code;loaded.add(key);document.head.append(s);}
+ function showHomeCatalogRetry(){
+  if(location.pathname!=='/')return;
+  const status=root.querySelector('[data-home-catalog-status]');
+  if(!status)return;
+  const label=status.querySelector('[role="status"]'),retry=status.querySelector('button');
+  label.textContent='Məhsul siyahısı yüklənmədi.';
+  retry.hidden=false;
+  status.closest('#grid').removeAttribute('aria-busy');
+  retry.onclick=async()=>{
+   retry.disabled=true;
+   label.textContent='Məhsullar yüklənir…';
+   const run=generation;
+   const src=view?.scripts.find(url=>new URL(url).pathname==='/app.js');
+   try{
+    if(!window.mirpanelRestoreCatalog&&src){
+     loaded.delete('/app.js');
+     const download=fetch(src,{cache:'reload',signal:AbortSignal.timeout(10000)}).then(r=>{
+      if(!r.ok)throw Error('Məhsul siyahısı yüklənmədi.');
+      return r.text();
+     });
+     await resource(src,run,{key:'/app.js',download});
+    }
+    if(run===generation)window.mirpanelRestoreCatalog?.();
+   }catch{}finally{
+    retry.disabled=false;
+    if(run===generation&&status.isConnected)showHomeCatalogRetry();
+   }
+  };
+ }
+ function finishHomeCatalog(){
+  if(location.pathname!=='/')return;
+  window.mirpanelRestoreCatalog?.();
+  showHomeCatalogRetry();
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',finishHomeCatalog,{once:true});
+ else if(document.readyState==='interactive')document.addEventListener('DOMContentLoaded',finishHomeCatalog,{once:true});
+ else finishHomeCatalog();
  async function mount(v,run,preparedModule){if(run!==generation)return;window.mirpanelNavigationMounting=true;try{
  if(document.getElementById('shopApp')){const m=await(preparedModule||moduleWithin(shopModule));if(run!==generation)return;dispose=m.mountShop();}
  else if(document.getElementById('communityApp')){const m=await(preparedModule||moduleWithin(groupModule));if(run!==generation)return;dispose=m.mountCommunity();}
@@ -102,7 +139,7 @@
   if(!window.openProductPage||!window.mirpanelRequireOrderConsent||!window.mirpanelMountProduct)throw Error('Məhsul seçimləri hazırlanmadı.');
   window.mirpanelMountProduct();
  }
- if(location.pathname==='/')window.mirpanelRestoreCatalog?.();
+ finishHomeCatalog();
  }finally{window.mirpanelNavigationMounting=false;}}
  async function mountProfileRoute(u,run){
   const css='/community-assets/account-panel.css?v=profile-menu-2';
@@ -171,7 +208,7 @@
   // A browser-restored product or catalog document already has working markup.
   // Reassigning its own URL here destroys the back/forward cache benefit.
   if(isStatic(location.pathname)||/^\/mehsul\/[^/]+$/.test(location.pathname)){
-   if(location.pathname==='/'&&!root.querySelector('#grid .card'))window.mirpanelRestoreCatalog?.();
+   finishHomeCatalog();
    active();return;
   }
   void go(location.href,{retry:true});

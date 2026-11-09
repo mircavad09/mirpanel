@@ -250,14 +250,15 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=product-transition-1$2');
   next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=header-session-1$2');
   next=next.replace(/(src=["'])\/?(home-loading|seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
-  next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=product-transition-1$3');
+  next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=home-catalog-1$3');
+  next=next.replace(/(src=["'])\/?(catalog-card|stock-display-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-catalog-1$3');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?cms-site\.js(?:\?[^"']*)?(["'])/g,'$1/cms-site.js?v=home-stable-20261031$2');
   next=next.replace(/(src=["'])\/?stories\.js(?:\?[^"']*)?(["'])/g,'$1/stories.js?v=home-first-paint-1$2');
   next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=header-session-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=home-first-paint-1$2');
-  next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=desktop-cards-1$2');
-  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=compact-profile-editor-1" data-page-navigation-loader></script></head>');
+  next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=home-catalog-1$2');
+  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=home-catalog-1" data-page-navigation-loader></script></head>');
   if(earlyProductLinks)next=next.replace(/(<head\b[^>]*>)/i,`$1<script>(()=>{let pending,timer;function click(e){if(window.MirpanelNavigation||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.altKey||e.shiftKey)return;const a=e.target.closest?.('a[href]');if(!a||a.target&&a.target!=='_self'||a.hasAttribute('download')||a.hasAttribute('data-native-navigation'))return;const u=new URL(a.href);if(u.origin!==location.origin||!/^\\/mehsul\\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.pathname))return;e.preventDefault();pending=u.href;clearTimeout(timer);timer=setTimeout(()=>{if(pending)location.assign(pending);},2500);}document.addEventListener('click',click,true);window.addEventListener('mirpanel:navigation-ready',()=>{document.removeEventListener('click',click,true);clearTimeout(timer);if(pending)void window.MirpanelNavigation.go(pending);},{once:true});})();</script>`);
   next=next.replace(/(href=["'])\/?desktop-header\.css(?:\?[^"']*)?(["'])/g,'$1/desktop-header.css?v=mobile-anthracite-20261031$2');
   if(!next.includes('/desktop-header.css?v=mobile-anthracite-20261031'))next=next.replace(/<\/head>/i,'<link rel="stylesheet" href="/desktop-header.css?v=mobile-anthracite-20261031"></head>');
@@ -310,7 +311,14 @@ export async function onRequest(context) {
   if(pathname.startsWith('/api/payments/'))return context.next();
   const route = pathname.replace(/\/+$/, "") || "/";
 
-  if (isStaticAsset(pathname)) return await fastProductImage(context,url)||context.next();
+  if (isStaticAsset(pathname)) {
+    const response = await fastProductImage(context,url) || await context.next();
+    if (!/^\/(?:app\.js|page-navigation\.js|stock-display-fix\.js|catalog-card\.(?:css|js))$/.test(pathname)) return response;
+    const headers = new Headers(response.headers);
+    headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
+    headers.set("Cloudflare-CDN-Cache-Control", "no-store");
+    return new Response(response.body, { status: response.status, headers });
+  }
 
   const sectionRoute = pathname.match(/^\/(mehsul|haqqimizda|sertler|elaqe)\/?$/);
   if (sectionRoute) {
@@ -347,7 +355,6 @@ export async function onRequest(context) {
     html = html.replace(/(src=["'])\/?product-page\.js(?:\?[^"']*)?(["'])/g,'$1/product-page.js?v=compact-plan-rows-1$2');
     html = html.replace(/(href=["'])\/?product-page\.css(?:\?[^"']*)?(["'])/g,'$1/product-page.css?v=compact-plan-rows-1$2');
     html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(10000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
-    html = html.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=product-transition-1$2');
     // The static order button must not accept an early click before the
     // current product and the real order handler have both initialized.
     html = html.replace(/<button\b[^>]*\bid="pp-order-btn"[^>]*>/i, tag =>
@@ -378,9 +385,8 @@ export async function onRequest(context) {
   if (!contentType.includes("text/html")) return response;
 
   let html = await response.text();
-  html=html.replace(/(src=["'])(\/?stock-display-fix\.js)(?:\?[^"']*)?(["'])/g,'$1$2?v=product-transition-1$3');
   html = withSeoScripts(html,route==='/');
-  if(route==='/')html=html.replace(/(\/(?:order-confirmation\.js|stock-display-fix\.js|catalog-card\.css)\?v=)product-transition-1/g,'$1desktop-cards-1');
+  if(route==='/')html=html.replace(/(\/order-confirmation\.js\?v=)product-transition-1/g,'$1desktop-cards-1');
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=utf-8");
