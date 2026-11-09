@@ -14,7 +14,7 @@ export function mountReadyStock(host,api){
      <p id="readyStockSaleHelp">Bu xanada 0 = Limitsiz. 1–10000 = satış limiti. Əvvəldən sıfır olan stok “Stokda yoxdur” kimi qalır.</p>
     </div>
     <p data-scope></p>
-    <label class="readyStockCheck"><input name="auto" type="checkbox" role="switch"> Balansla avtomatik təhvil <strong data-auto aria-hidden="true">Bağlı</strong></label>
+    <label class="readyStockCheck"><input name="auto" type="checkbox" role="switch"> Ödəniş təsdiqlənəndə avtomatik təhvil <strong data-auto aria-hidden="true">Bağlı</strong></label>
     <div data-messages></div>
     <div class="readyStockActions"><button class="btn" type="button" data-add-unit>+ Yeni hesab əlavə et</button><button class="btn primary" type="submit">Yadda saxla</button></div>
    </form>

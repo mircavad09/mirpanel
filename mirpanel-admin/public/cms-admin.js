@@ -136,7 +136,7 @@
     if (view === "history") { void loadHistory(); void verifyPublication(); }
     if (view === "dashboard") { renderDashboard(); void loadDashboard(); }
     if (view === "netflixAccounts") loadNetflixAccounts();
-    if (view === "readyStock") import('/ready-stock-admin.js?v=2').then(m=>m.mountReadyStock(el('readyStockHost'),api)).catch(()=>{el('readyStockHost').textContent='Bölmə açılmadı. Yenidən cəhd edin.';});
+    if (view === "readyStock") import('/ready-stock-admin.js?v=3').then(m=>m.mountReadyStock(el('readyStockHost'),api)).catch(()=>{el('readyStockHost').textContent='Bölmə açılmadı. Yenidən cəhd edin.';});
   }
   async function loadNetflixAccounts() {
     const list = el("netflixAccountsList"); if (!list) return;
@@ -197,7 +197,7 @@
     <div id="paymentCostsList" class="paymentCostsList" aria-live="polite"></div>
     <details class="paymentBackfillPanel"><summary>Köhnə sifarişlərin maya snapshot-u</summary><p>Maya snapshot-u olmayan tamamlanmış sifarişlər yalnız məhsul ID-si və plan ID-si tam uyğun gəldikdə hesablanır. Sıfır və ya təxmini maya yazılmır.</p><div class="paymentOrderActions"><button class="btn" type="button" id="paymentCostBackfillPreview">Preview yarat</button><button class="btn primary" type="button" id="paymentCostBackfillApply" disabled>Təsdiqlə və tətbiq et</button></div><div id="paymentCostBackfillResult" class="paymentOrdersStatus" aria-live="polite"></div></details>`));
     createView("readyStock", panel("Hazır hesab stoku", "Müştəri sifarişləri üçün hazır təhvil mətnlərini və satış stokunu idarə edin.", '<div id="readyStockHost"></div>'));
-    createView("paymentOrders", panel("Sifarişlər", "Gözləyən sifarişləri yoxlayın, tamamlanmış satış tarixçəsini və müddəti bitən məhsulları izləyin.", `<div class="actions"><button type="button" class="btn primary" data-dashboard-view="readyStock">+ Hazır hesab əlavə et</button></div><div class="paymentOrderToolbar">
+    createView("paymentOrders", panel("Sifarişlər", "Gözləyən sifarişləri yoxlayın, tamamlanmış satış tarixçəsini və müddəti bitən məhsulları izləyin.", `<div class="paymentOrderToolbar">
       <div class="paymentOrderTabs" role="tablist" aria-label="Sifariş statusları">
         <button class="paymentOrderTab active" type="button" role="tab" aria-selected="true" data-payment-order-tab="pending">Gözləyən sifarişlər</button>
         <button class="paymentOrderTab" type="button" role="tab" aria-selected="false" data-payment-order-tab="today">Bu gün tamamlananlar (<span id="paymentTodayCount">0</span>)</button>

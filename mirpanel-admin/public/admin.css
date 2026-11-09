@@ -1309,6 +1309,8 @@ th {
 
 #paymentOrdersList .paymentOrderAdminCard{display:block;padding:0}
 .paymentOrderCardHeader{display:flex;align-items:center;gap:8px;padding-inline:10px}
+.paymentOrderCardNumber{white-space:nowrap;font-size:13px;cursor:pointer}
+.paymentOrderCardHeader [data-copy-order-id]{margin:0}
 .paymentOrderCardToggle{display:flex;align-items:center;gap:8px;flex:1;width:100%;min-width:0;min-height:44px;padding:8px 2px;background:none;color:#f4f5f6;border:0;text-align:left;font:inherit;cursor:pointer}
 .paymentOrderCardToggle strong,.paymentOrderCardPreview{overflow-wrap:anywhere;min-width:0}
 .paymentOrderCardToggle .statusPill{flex-shrink:0}
@@ -1318,6 +1320,11 @@ th {
 .paymentOrderCardArrow{margin-inline-start:auto;flex:none}
 .paymentOrderCardToggle[aria-expanded="true"] .paymentOrderCardArrow{transform:rotate(180deg)}
 .paymentOrderCardDetails{padding:8px 12px 10px;border-top:1px solid #333}
+.paymentOrderCardDetails:not([hidden]){display:grid;grid-template-columns:minmax(0,1fr) max-content;gap:12px;align-items:start}
+.paymentOrderCardDetails .paymentOrderActions{flex-direction:column;align-items:stretch}
+.paymentOrderLineFields:not(:empty){display:grid;gap:3px;margin:4px 0 7px;padding-inline-start:8px;border-inline-start:1px solid #54472b;color:#ded6c1}
+.paymentOrderLineFields .btn{min-height:30px;padding:3px 7px;margin-inline-start:4px}
+.paymentOrderLineFields span{white-space:pre-wrap;overflow-wrap:anywhere}
 .paymentOrderCardDetails dl{display:grid;gap:6px;margin:0;font-size:13px;line-height:1.4}
 .paymentOrderCardDetails dl>div{display:grid;grid-template-columns:100px minmax(0,1fr);gap:4px 8px}
 .paymentOrderCardDetails dt{color:#b6b6b6}
@@ -1336,12 +1343,16 @@ th {
  #paymentOrderFilters .paymentOrderFilterActions{grid-column:1/-1;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
  #paymentOrderFilters .paymentOrderFilterActions .btn{min-height:44px;margin:0;padding:5px}
  #paymentOrdersStatus[data-filter-loading]::before{content:'';display:inline-block;width:11px;height:11px;margin-inline-end:6px;vertical-align:-1px;border:2px solid #6c5c2f;border-top-color:#ffd400;border-radius:50%;animation:payment-filter-spin .7s linear infinite}
- .paymentOrderCardToggle{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px 7px}
- .paymentOrderCardArrow{grid-column:3;grid-row:1}
+ .paymentOrderCardHeader{flex-wrap:wrap;gap:3px 6px;padding-block:3px}
+ .paymentOrderCardHeader [data-copy-order-id]{min-height:36px}
+ .paymentOrderCardToggle{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 7px;flex-basis:100%;justify-items:start}
+ .paymentOrderCardArrow{grid-column:2;grid-row:1}
  .paymentOrderCardToggle[aria-expanded="false"] .paymentOrderCardPreview{display:block;font-size:13px}
- .paymentOrderCardPreview:not(b){grid-column:1/3}
+ .paymentOrderCardPreview:not(b){grid-column:1}
  .paymentOrderCardToggle b{color:#ffe167;white-space:nowrap}
  .paymentOrderCardDetails dl>div{grid-template-columns:82px minmax(0,1fr)}
+ .paymentOrderCardDetails:not([hidden]){grid-template-columns:minmax(0,1fr);gap:4px}
+ .paymentOrderCardDetails .paymentOrderActions{flex-direction:row;align-items:center}
  .paymentOrderCardDetails .btn{min-height:44px;white-space:normal}
 }
 @keyframes payment-filter-spin{to{transform:rotate(360deg)}}

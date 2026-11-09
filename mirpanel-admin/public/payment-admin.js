@@ -8,7 +8,7 @@
   });
   const paymentState = {
     pendingStage: "payment", deliveryOpening: false,
-    openOrders: new Set(),
+    openOrders: new Map(), permissions: {},
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
     selectedOrderIds: new Set(), batchBusy: false,
@@ -18,6 +18,9 @@
     orderRequestSequence: 0
   };
   const $p = (id) => document.getElementById(id);
+  const orderFields = new Map();
+  const fieldRequests = new Map();
+  const fieldsObserver = new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries)if(isIntersecting){fieldsObserver.unobserve(target);void loadCardFields(target);}});
   const mobileOrderFilters = () => matchMedia("(max-width:650px)").matches;
   let filterBusy = false;
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
@@ -152,7 +155,8 @@
     const pending = tab === "pending";
     const expiring = tab === "expiring";
     const deliveryQueue = pending && paymentState.pendingStage === "delivery";
-    const expanded = paymentState.openOrders.has(order.id);
+    const expanded = paymentState.openOrders.get(order.id) ?? !matchMedia("(max-width:650px)").matches;
+    const {fields,manage}=paymentState.permissions;
     const displayStatus = deliveryQueue || order.deliveryPending ? "preparing" : order.status;
     const reviewing = pending && displayStatus === "reviewing" && !order.paymentConfirmed;
     const lines = order.items?.length ? order.items.map(line=>orderLineText(line,line.unitCents*line.quantity/100,order.currency)) : [orderLineText({title:order.productTitle,planName:order.planName,quantity:order.quantity||1},order.amount,order.currency)];
@@ -163,17 +167,58 @@
     const detailId = `paymentOrderDetails-${escp(order.id)}`;
     return `<article class="paymentOrderAdminCard${selected ? " isSelected" : ""}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
       <div class="paymentOrderCardHeader">${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}
-        <button class="paymentOrderCardToggle" type="button" data-order-toggle aria-expanded="${expanded}" aria-controls="${detailId}"><strong>№ ${escp(order.orderCode)}</strong><span class="statusPill status-${escp(expiring ? order.expiry?.code : displayStatus)}">${escp(expiring ? order.expiry?.label : statusLabel[displayStatus] || "Yoxlanılır")}</span><span class="paymentOrderCardPreview">${escp(product)}</span><b class="paymentOrderCardPreview">${escp(money(order.amount,order.currency))}</b><span class="paymentOrderCardArrow" aria-hidden="true">⌄</span></button>
+        <strong class="paymentOrderCardNumber">№ ${escp(order.orderCode)}</strong>
+        <button class="btn compact" type="button" data-copy-order-id aria-label="${escp(order.orderCode)} sifariş nömrəsini kopyala">Kopyala</button>
+        <button class="paymentOrderCardToggle" type="button" data-order-toggle aria-label="Sifariş № ${escp(order.orderCode)}" aria-expanded="${expanded}" aria-controls="${detailId}"><span class="statusPill status-${escp(expiring ? order.expiry?.code : displayStatus)}">${escp(expiring ? order.expiry?.label : statusLabel[displayStatus] || "Yoxlanılır")}</span><span class="paymentOrderCardPreview">${escp(product)}</span><b class="paymentOrderCardPreview">${escp(money(order.amount,order.currency))}</b><span class="paymentOrderCardArrow" aria-hidden="true">⌄</span></button>
       </div>
       <div class="paymentOrderCardDetails" id="${detailId}"${expanded?'':' hidden'}>
-      <dl><div><dt>Məhsul</dt><dd><ul>${lines.map(line=>`<li>${escp(line)}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div></dl>
+      <dl><div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div></dl>
       <div class="paymentOrderActions">
-        ${displayStatus==='preparing'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
-        ${order.receiptAvailable && !deliveryQueue ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : ''}
-        ${reviewing ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ''}
+        ${manage && displayStatus==='preparing'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
+        ${manage && order.receiptAvailable && !deliveryQueue ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : ''}
+        ${manage && reviewing ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ''}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
       </div></div>
     </article>`;
+  }
+
+  function paintCardFields(card, lines = []) {
+    for(const host of card.querySelectorAll('[data-order-line-fields]')){
+      const fields=lines.find(x=>x.index===Number(host.dataset.orderLineFields))?.fields||[];
+      host.innerHTML=fields.map(f=>`<div><strong>${escp(f.label)}:</strong> <span data-order-field-value>${f.sensitive?'••••••':escp(f.value)}</span>${f.sensitive?` <button class="btn compact" type="button" data-reveal-order-field="${Number(f.field)}">Göstər</button>`:''}</div>`).join('');
+    }
+  }
+
+  async function loadCardFields(card) {
+    if(!paymentState.permissions.fields||!card.isConnected||card.querySelector('.paymentOrderCardDetails')?.hidden)return;
+    const id=card.dataset.paymentOrderId;
+    if(orderFields.has(id)){paintCardFields(card,orderFields.get(id));return;}
+    if(fieldRequests.has(id))return;
+    const host=card.querySelector('[data-order-line-fields]');
+    if(!host)return;
+    host.textContent='Sifariş sahələri yüklənir…';
+    const request=paymentApi('/api/admin/payment-orders/'+id+'/details');fieldRequests.set(id,request);
+    try{
+      const {lines}=await request;
+      if(!paymentState.permissions.fields)return;
+      orderFields.set(id,lines||[]);
+      if(card.isConnected&&!card.querySelector('.paymentOrderCardDetails')?.hidden)paintCardFields(card,lines);
+    }catch(error){
+      if(host.isConnected)host.innerHTML='<button class="btn compact" type="button" data-retry-order-fields>Sifariş sahələri alınmadı · Yenidən cəhd et</button>';
+    }finally{fieldRequests.delete(id);}
+  }
+
+  async function revealOrderField(card, button) {
+    const value=button.parentElement.querySelector('[data-order-field-value]');
+    if(button.disabled)return;
+    if(button.textContent==='Gizlət'){value.textContent='••••••';button.textContent='Göstər';return;}
+    button.disabled=true;
+    try{
+      const {value:secret}=await paymentApi('/api/admin/payment-orders/'+card.dataset.paymentOrderId+'/details',{method:'POST',body:JSON.stringify({line:Number(button.closest('[data-order-line-fields]').dataset.orderLineFields),field:Number(button.dataset.revealOrderField)})});
+      if(button.isConnected&&!card.querySelector('.paymentOrderCardDetails').hidden&&document.visibilityState==='visible'){
+        value.textContent=secret;button.textContent='Gizlət';
+      }
+    }finally{button.disabled=false;}
   }
 
   function updateOrderCounts(counts = paymentState.orderMeta.counts) {
@@ -371,6 +416,8 @@
   function renderOrders(automatic=false) {
     const list = $p("paymentOrdersList");
     if(list){const markup=paymentState.orders.length ? (paymentState.orderQuery.tab === "pending" || paymentState.orderQuery.tab === "expiring" ? paymentState.orders.map(orderCard).join("") : completedOrderGroups()) : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';if(window.AdminLive)window.AdminLive.update(list,markup);else list.innerHTML=markup;}
+    fieldsObserver.disconnect();
+    if(paymentState.permissions.fields)for(const card of list?.querySelectorAll('[data-payment-order-id]')||[])if(!card.querySelector('.paymentOrderCardDetails')?.hidden)fieldsObserver.observe(card);
     const pagination = paymentState.orderMeta.pagination;
     if ($p("paymentOrdersPageInfo")) $p("paymentOrdersPageInfo").textContent = `Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
     if ($p("paymentOrdersPrevious")) $p("paymentOrdersPrevious").disabled = pagination.page <= 1;
@@ -528,6 +575,10 @@
       const nextPending = Number(result.counts?.pending || 0);
       paymentState.knownPendingCount = nextPending;
       paymentState.orders = result.orders || [];
+      paymentState.permissions=result.permissions||{};
+      if(!paymentState.permissions.fields)orderFields.clear();
+      const currentIds=new Set(paymentState.orders.map(order=>order.id));
+      for(const id of orderFields.keys())if(!currentIds.has(id))orderFields.delete(id);
       paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
       // The chosen duration may disappear after another filter changes. The
       // server already re-ran the page without it; keep the controls in sync.
@@ -615,6 +666,7 @@
     if (action === "approve" && !await paymentActionDialog({ title: "Ödənişi təsdiqlə", message: "Bu sifarişin ödənişini təsdiqləmək istəyirsiniz?", confirmText: "Təsdiqlə" })) return;
     if (action === "reject" && !await paymentActionDialog({ title: "Sifarişi rədd et", message: "Bu sifarişi rədd etmək istəyirsiniz?", confirmText: "Rədd et", danger: true })) return;
     if (action === "contacted" && !await paymentActionDialog({ title: "Əlaqə saxlanıldı", message: "Müştəri ilə əlaqə saxladığınızı təsdiqləyirsiniz?", confirmText: "Təsdiqlə" })) return;
+    if (paymentState.orderActions.has(id) || !card.isConnected) return;
     paymentState.orderActions.add(id); card.querySelectorAll("button").forEach((button) => { button.disabled = true; });
     try {
       const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: "{}" });
@@ -624,6 +676,12 @@
   }
 
   function bindEvents() {
+    const maskRevealed=()=>{
+      const cards=new Set([...document.querySelectorAll('[data-reveal-order-field]')].filter(button=>button.textContent==='Gizlət'||button.disabled).map(button=>button.closest('[data-payment-order-id]')));
+      for(const card of cards)paintCardFields(card,orderFields.get(card.dataset.paymentOrderId));
+    };
+    document.addEventListener('visibilitychange',()=>{if(document.hidden)maskRevealed();});
+    document.addEventListener('click',event=>{if(event.target.closest('.navBtn,[data-dashboard-view]'))maskRevealed();},true);
     document.addEventListener('change',e=>{const key=e.target.dataset.bankBackground;if(key)void changeBankBackground(key,e.target.files?.[0]);});
     document.addEventListener('click',e=>{const b=e.target.closest('[data-bank-background-remove]');if(b)void changeBankBackground(b.dataset.bankBackgroundRemove,null,true);});
     document.addEventListener("input", (event) => {
@@ -786,13 +844,17 @@
         if (event.target.closest("#paymentClearSelection")) clearOrderSelection();
         if (event.target.closest("#paymentConfirmSelected")) await confirmSelectedExpiringOrders();
         const card = event.target.closest("[data-payment-order-id]");
-        const orderToggle=event.target.closest("[data-order-toggle]");
+        const orderToggle=event.target.closest("[data-order-toggle]")||(event.target.closest(".paymentOrderCardNumber")&&card?.querySelector("[data-order-toggle]"));
         if(card&&orderToggle){
           const open=orderToggle.getAttribute("aria-expanded")!=="true",id=card.dataset.paymentOrderId;
-          if(open)paymentState.openOrders.add(id);else paymentState.openOrders.delete(id);
-          orderToggle.setAttribute("aria-expanded",String(open));card.querySelector('.paymentOrderCardDetails').hidden=!open;return;
+          paymentState.openOrders.set(id,open);
+          orderToggle.setAttribute("aria-expanded",String(open));card.querySelector('.paymentOrderCardDetails').hidden=!open;
+          if(open)void loadCardFields(card);else paintCardFields(card);return;
         }
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
+        if (card && event.target.closest("[data-retry-order-fields]")) { await loadCardFields(card);return; }
+        const reveal=event.target.closest("[data-reveal-order-field]");
+        if(card&&reveal){await revealOrderField(card,reveal);return;}
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
         if (card && event.target.closest("[data-order-details]")) await handleOrderAction(card, "details");
         if (card && event.target.closest("[data-order-delivery]")) await handleOrderAction(card, "delivery");

@@ -6,7 +6,7 @@ import {createShop} from '../mirpanel-admin/shop.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {signature} from '../mirpanel-admin/employee-security.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
-import {saveReadyStock,readyStockView} from '../mirpanel-admin/community/ready-stock.mjs';
+import {approveCardWithReadyStock,saveReadyStock,readyStockView} from '../mirpanel-admin/community/ready-stock.mjs';
 import {adminDelivery,adminPendingDeliveries,ownerCodes,createCustomerOrderMailer} from '../mirpanel-admin/community/order-delivery.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
 import {readOrderMailWebhook,verifyOrderMailWebhook} from '../mirpanel-admin/community/order-mail-webhook.mjs';
@@ -143,8 +143,42 @@ try{
  await add({index:1,planSignature:signature(second),requestId:id(),messages:['Bir','İki']});
  eq((await productStock()).plans.map(x=>x.ready),[1,2]);
  eq((await productStock()).readyTotal,3);
+ // Simulate a historical approval from before delivery tracking, with no
+ // modern payment event or unit-delivery records.
+ await sql('delete from customer_order_mail where order_id=$1',[cardOrder.orderId]);
+ eq(await adminPendingDeliveries(pool,[cardOrder.orderId]),[]);
+ const cardSubmit=async lines=>{
+  const g=await shop.checkout(buyer,hash,{mode:'card',methodId:method,items:lines,requestId:id(),consentAccepted:true});
+  const r={...receipt,path:'cart/'+g.id+'/test.png'};f.files.set(r.path,Buffer.from('abc'));
+  await shop.savedReceipt(buyer,hash,'cart',g.id,r);return (await shop.submit(buyer,hash,g.id)).orderId;
+ };
+ const approve=o=>approveCardWithReadyStock(pool,security,o,null,'synthetic-admin',false);
+ const cardAuto=await cardSubmit(items);
+ eq(await adminPendingDeliveries(pool,[cardAuto]),[]);
+ eq((await view()).ready,1);
+ await sql("update ready_stock_units set message_cipher='invalid-synthetic-cipher' where id=$1",[unused.id]);
+ await assert.rejects(approve(cardAuto));checks++;
+ eq((await sql('select status from public.payment_orders where id=$1',[cardAuto])).rows[0].status,'reviewing');
+ eq(Number((await sql('select count(*) n from customer_order_mail where order_id=$1',[cardAuto])).rows[0].n),0);
+ await sql('update ready_stock_units set message_cipher=$2 where id=$1',[unused.id,unused.message_cipher]);
+ const cardResults=await Promise.all([approve(cardAuto),approve(cardAuto)]);
+ eq(cardResults.map(r=>r.idempotent).sort(),[false,true]);
+ eq(cardResults.every(r=>!r.deliveryPending),true);
+ eq((await view()).ready,0);
+ eq(Number((await sql('select count(*) n from customer_order_deliveries where order_id=$1',[cardAuto])).rows[0].n),1);
+ eq(Number((await sql('select count(*) n from customer_order_mail where order_id=$1',[cardAuto])).rows[0].n),2);
+ eq(await adminPendingDeliveries(pool,[cardAuto]),[]);
+ await add({requestId:id(),messages:['One partial card unit']});
+ const cardPartial=await cardSubmit([await item('ordinary',2),await item('unlimited')]);
+ eq((await approve(cardPartial)).deliveryPending,true);
+ eq(await adminPendingDeliveries(pool,[cardPartial]),[cardPartial]);
+ eq(await adminPendingDeliveries(pool,[cardPartial],{progress:true}),[{id:cardPartial,remaining:[1,1]}]);
+ eq((await adminDelivery(pool,security,'synthetic-admin',cardPartial,null)).lines.map(x=>x.remaining),[1,1]);
+ const cardWaiting=await cardSubmit(items);
+ eq((await approve(cardWaiting)).deliveryPending,true);
+ eq(await adminPendingDeliveries(pool,[cardWaiting]),[cardWaiting]);
  await db.exec(db.read('mirpanel-admin/community/ready-stock-rollback.sql'));
  eq((await wallet(items)).deliveryStatus,'preparing');
- eq(Number((await sql('select count(*) n from ready_stock_units where delivery_id is null')).rows[0].n),3);
+ eq(Number((await sql('select count(*) n from ready_stock_units where delivery_id is null')).rows[0].n),2);
  console.log(JSON.stringify({checks,salesLimit:50,readyUnits:5,atomic:true,syntheticOnly:true}));
 }finally{await f.close();}

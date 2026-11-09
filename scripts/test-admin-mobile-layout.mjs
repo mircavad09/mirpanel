@@ -18,15 +18,17 @@ const avatarUrl='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www
 const user={id:'qa-user',memberNumber:1022,name:'Məhəmməd Əli Abdullazadə Məmmədov',email:'qa@example.invalid',lastSeen:new Date(Date.now()-180000).toISOString(),balanceCents:1234567,spentCents:98765432,avatarUrl,orderCount:2,online:true,emailVerified:true};
 const item={title:'CapCut Pro — çox uzun sintetik məhsul adı (telefon və kompüter üçün)',planName:'Uzun paket adı · 1 aylıq istifadə',quantity:2,unitCents:499};
 const netflix={title:'Netflix Şəxsi',planName:'1 aylıq',quantity:1,unitCents:594};
+const spotify={...item,title:'Spotify Premium'};
 const order={id:'12345678-1234-4234-8234-000000000001',orderCode:'MP-123456',customerName:user.name,customerNumber:user.memberNumber,productTitle:item.title,planName:item.planName,items:[item],amount:9.98,currency:'AZN',status:'reviewing',reservationStatus:'reviewing',paymentMethodLabel:'ABB •••• 1234',receiptAvailable:true,createdAt:user.lastSeen,auditHistory:[]};
-const wallet={...order,id:'12345678-1234-4234-8234-000000000002',orderCode:'MP-123457',items:[netflix,item],amount:15.92,paymentSource:'wallet',paymentConfirmed:true,deliveryPending:true,receiptAvailable:false};
+const wallet={...order,id:'12345678-1234-4234-8234-000000000002',orderCode:'MP-123457',items:[netflix,spotify],amount:15.92,paymentSource:'wallet',paymentConfirmed:true,deliveryPending:true,receiptAvailable:false};
 const api=u=>{
  const p=u.pathname,q=u.searchParams;
  if(p==='/api/admin/state')return {data:state,sha:'synthetic',loadedAt:user.lastSeen,csrfToken:'test'};
  if(p.endsWith('/community/users'))return {users:q.get('filter')==='banned'||(q.get('q')&&!user.name.toLocaleLowerCase('az').includes(q.get('q').toLocaleLowerCase('az')))?[]:[user],hasMore:false,total:1};
  if(p.endsWith('/users/'+user.id))return {user,profile:{},orders:[{order_code:order.orderCode,product_title:item.title,plan_name:item.planName,amount:9.98,currency:'AZN',status:'reviewing'}],totalCents:user.spentCents};
  if(p.endsWith('/community/wallet'))return {cents:user.balanceCents,items:[],more:false};
- if(p.endsWith('/payment-orders'))return {orders:[q.get('pendingStage')==='delivery'?wallet:ordersOnly?{...order,items:[],quantity:2}:order],counts:{pending:1,today:0,all:1,expiring:0},pagination:{page:1,pageSize:20,total:1,totalPages:1},filters:{products:[{id:'capcut',title:'CapCut Pro'}],durations:[],methods:[]},statistics:{},appliedFilters:{}};
+ if(p.endsWith('/payment-orders'))return {permissions:{manage:true,fields:true},orders:[q.get('pendingStage')==='delivery'?wallet:ordersOnly?{...order,items:[],quantity:2}:order],counts:{pending:1,today:0,all:1,expiring:0},pagination:{page:1,pageSize:20,total:1,totalPages:1},filters:{products:[{id:'capcut',title:'CapCut Pro'}],durations:[],methods:[]},statistics:{},appliedFilters:{}};
+ if(p.endsWith('/details'))return {lines:[{index:0,fields:[{field:0,label:'Otaq adı',value:'Sintetik otaq'},{field:1,label:'Otaq kodu',sensitive:true}]},{index:1,fields:[{field:0,label:'Dəvət e-poçtu',value:'invite@example.test'},{field:1,label:'Şifrə',sensitive:true}]}]};
  if(p.endsWith('/receipt'))return {url:'about:blank#synthetic-receipt'};
  if(p.endsWith('/delivery'))return {lines:[{index:0,title:netflix.title,plan:netflix.planName,remaining:1},{index:1,title:item.title,plan:item.planName,remaining:2}]};
  if(p.endsWith('/payment-methods'))return {methods:[{id:'qa-bank',displayName:'Sintetik bank',providerName:'ABB',active:true,hasNumber:true,available:true,last4:'1234',limitMode:'unlimited'}]};
@@ -74,6 +76,10 @@ try{
    }
    await context.route('**/*',r=>{
     const u=new URL(r.request().url());
+    if(ordersOnly&&u.origin===origin&&u.pathname.endsWith('/details')&&r.request().method()==='POST'){
+     const {line,field}=r.request().postDataJSON();assert.equal(field,1);
+     return r.fulfill({json:{value:line===0?'0012':'synthetic-secret'}});
+    }
     if(u.origin!==origin||r.request().method()!=='GET')return r.abort();
     if(live&&u.pathname.startsWith('/api/'))return r.fulfill({json:api(u)});
     // Use the checked-in shell for the synthetic admin session; all view scripts
@@ -90,11 +96,13 @@ try{
     const normalize=v=>v.replace(/\r\n/g,'\n').trimEnd();
     assert.equal(normalize(await assets.get(file)),normalize(fs.readFileSync(path.join(admin,file),'utf8')));
    }};
-   if(ordersOnly)await page.addInitScript(()=>{window.open=()=>({location:{replace:url=>{window.syntheticReceipt=url;}},close(){}});});
+   if(ordersOnly)await page.addInitScript(()=>{window.open=()=>({location:{replace:url=>{window.syntheticReceipt=url;}},close(){}});Object.defineProperty(navigator,'clipboard',{value:{writeText:async text=>{window.syntheticClipboard=text;}}});});
    await page.goto(origin+'/admin.html');
    await page.locator(viewSelector('communityUsers')).waitFor({state:'attached'});
    const open=async v=>{
     const link=page.locator(viewSelector(v));
+    const menu=page.locator('.mobileMenuToggle');
+    if(await menu.isVisible()&&await menu.getAttribute('aria-expanded')==='false')await menu.click();
     if(await link.isVisible())await link.click();else await link.evaluate(n=>n.click());
     await page.locator('#'+v+'View').waitFor();
    };
@@ -205,11 +213,18 @@ try{
     const toggle=card.locator('[data-order-toggle]');
     const details=card.locator('.paymentOrderCardDetails');
     const checkFields=async()=>assert.deepEqual(await details.locator('dt').allTextContents(),['Məhsul','Ödəniş üsulu','Müştəri']);
-    for(const value of ['MP-123456','Yoxlanılır',...(mobile?['CapCut Pro','9.98 ₼']:[])])assert((await toggle.innerText()).includes(value));
-     assert.equal(await card.getByRole('button',{name:'Çeki aç'}).isVisible(),false);
-     await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true');
+    assert((await card.innerText()).includes('MP-123456'));
+    for(const value of ['Yoxlanılır',...(mobile?['CapCut Pro','9.98 ₼']:[])])assert((await toggle.innerText()).includes(value));
+     assert.equal(await card.getByRole('button',{name:'Çeki aç'}).isVisible(),!mobile);
+     if(ordersOnly){
+      await card.locator('[data-copy-order-id]').click();
+      assert.equal(await page.evaluate(()=>window.syntheticClipboard),'MP-123456');
+      assert.equal(await toggle.getAttribute('aria-expanded'),String(!mobile));
+     }
+     if(mobile)await toggle.click();
+     assert.equal(await toggle.getAttribute('aria-expanded'),'true');
      await checkFields();
-     assert.deepEqual(await details.locator('li').allTextContents(),[item.title+' · '+item.planName+' · 2 ədəd · 9,98 ₼']);
+     assert.deepEqual(await details.locator('li').evaluateAll(ns=>ns.map(n=>n.firstChild.textContent)),[item.title+' · '+item.planName+' · 2 ədəd · 9,98 ₼']);
      await card.getByRole('button',{name:'Çeki aç'}).waitFor();
      await card.getByRole('button',{name:'Ödənişi təsdiqlə'}).waitFor();
      await card.getByText(user.name+' · #1022',{exact:true}).waitFor();
@@ -228,10 +243,23 @@ try{
      const filterRequest=page.waitForResponse(r=>new URL(r.url()).searchParams.get('productId')==='capcut'&&r.url().includes('/payment-orders?')&&r.ok());
      await orderView.locator('#paymentOrderFiltersApply').click();await filterRequest;
      await orderView.locator('[data-payment-pending-stage=delivery]').click();
-     await toggle.getByText(/MP-123457/).waitFor();
-     await toggle.click();await checkFields();
+     await card.locator('.paymentOrderCardNumber').getByText(/MP-123457/).waitFor();
+     if(mobile)await toggle.click();await checkFields();
      await details.getByText('MirPanel balansı',{exact:true}).waitFor();
-     assert.deepEqual(await details.locator('li').allTextContents(),['Netflix Şəxsi · 1 aylıq · 1 ədəd · 5,94 ₼',item.title+' · '+item.planName+' · 2 ədəd · 9,98 ₼']);
+     assert.deepEqual(await details.locator('li').evaluateAll(ns=>ns.map(n=>n.firstChild.textContent)),['Netflix Şəxsi · 1 aylıq · 1 ədəd · 5,94 ₼',spotify.title+' · '+spotify.planName+' · 2 ədəd · 9,98 ₼']);
+     if(ordersOnly){
+      const netflixFields=details.locator('[data-order-line-fields="0"]'),spotifyFields=details.locator('[data-order-line-fields="1"]');
+      await spotifyFields.getByText('invite@example.test',{exact:true}).waitFor();
+      assert.equal(await netflixFields.locator('[data-order-field-value]').last().textContent(),'••••••');
+      await netflixFields.getByRole('button',{name:'Göstər'}).click();
+      await netflixFields.getByText('0012',{exact:true}).waitFor();
+      assert.equal(await spotifyFields.locator('[data-order-field-value]').last().textContent(),'••••••');
+      await spotifyFields.getByRole('button',{name:'Göstər'}).click();
+      await spotifyFields.getByText('synthetic-secret',{exact:true}).waitFor();
+      await toggle.click();await toggle.click();
+      assert.equal(await netflixFields.locator('[data-order-field-value]').last().textContent(),'••••••');
+      assert.equal(await spotifyFields.locator('[data-order-field-value]').last().textContent(),'••••••');
+     }
      assert.equal(await card.getByRole('button',{name:'Çeki aç'}).count(),0);
      assert.equal(await card.getByRole('button',{name:'Ödənişi təsdiqlə'}).count(),0);
      assert.deepEqual((await layout(page)).issues,[]);

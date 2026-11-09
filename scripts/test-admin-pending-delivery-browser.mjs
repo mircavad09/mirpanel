@@ -41,12 +41,12 @@ try{
    await p.locator('.navBtn[data-view=paymentOrders]').click();
    const cards=p.locator('[data-payment-order-id]');
    await cards.first().waitFor();
-   await cards.first().locator('[data-order-toggle]').click();
+   if(width<=650)await cards.first().locator('[data-order-toggle]').click();
    assert.equal(await cards.first().getByRole('button',{name:'Çeki aç'}).count(),1);
    assert.equal(await cards.first().getByRole('button',{name:'Ödənişi təsdiqlə'}).count(),1);
    await p.locator('[data-payment-pending-stage=delivery]').click();
    const wallet=cards.filter({hasText:'#1022'});
-   await wallet.locator('[data-order-toggle]').click();
+   if(width<=650)await wallet.locator('[data-order-toggle]').click();
    await wallet.getByText('MirPanel balansı').waitFor();
    assert.equal(await cards.count(),1);assert.equal(await wallet.getByRole('button',{name:'Çeki aç'}).count(),0);
    assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);

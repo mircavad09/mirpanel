@@ -1,7 +1,7 @@
 import crypto from 'node:crypto';
 import {signature} from '../employee-security.mjs';
 import {planKey} from '../payment-profit.mjs';
-import {recordDelivery} from './order-delivery.mjs';
+import {adminPendingDeliveries,recordDelivery} from './order-delivery.mjs';
 
 const S='mirpanel_community.ready_stock_';
 const fail=(status,message)=>Object.assign(Error(message),{status});
@@ -59,12 +59,12 @@ export async function saveReadyStock(pool,security,secret,catalog,actor,input){
   await c.query('commit');return {added:messages.length};
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
-// Runs on the caller's checkout transaction after the successful wallet debit.
-export async function allocateReadyStock(c,securityFactory,orderId,items){
+// Runs on the caller's transaction after confirmed payment.
+export async function allocateReadyStock(c,securityFactory,orderId,items,actor='wallet:auto'){
  if(!await enabled(c))return;
  let security;
  for(const [line,item] of items.entries()){
-  if(item.renewal)continue; // A new account from stock does not extend an existing subscription.
+  if(item.renewal||!item.sourcePlanKey||!item.signature)continue;
   const args=[item.productId,item.sourcePlanKey,item.signature];
   const setting=(await c.query('select auto_wallet from '+S+'plans where product_id=$1 and plan_key=$2 and plan_signature=$3 for share',args)).rows[0];
   if(!setting?.auto_wallet)continue;
@@ -74,8 +74,36 @@ export async function allocateReadyStock(c,securityFactory,orderId,items){
    const value=JSON.parse(security.decryptSecret(unit.message_cipher));
    if(value.id!==unit.id||JSON.stringify(value.scope)!==JSON.stringify(args)||typeof value.message!=='string')throw Error('READY_STOCK_REFERENCE_MISMATCH');
    const id=crypto.randomUUID();
-   await recordDelivery(c,security,'wallet:auto',orderId,id,line,1,value.message);
+   await recordDelivery(c,security,actor,orderId,id,line,1,value.message);
    await c.query('update '+S+'units set delivery_id=$2 where id=$1',[unit.id,id]);
   }
  }
+}
+
+export async function approveCardWithReadyStock(pool,security,orderId,duration,actor,employeeEnabled){
+ const c=await pool.connect();
+ try{
+  await c.query('begin');
+  // Call the same approval RPC as before. It owns the existing card/stock locks
+  // and rechecks receipt/approval constraints before anything is allocated.
+  const rpc=employeeEnabled?'employee_approve_direct':'approve_payment_order_v7';
+  const result=(await c.query('select public.'+rpc+'($1,$2,$3) value',[orderId,duration,actor])).rows[0].value;
+  if(!result.idempotent&&result.status==='approved'){
+   const order=(await c.query(`select o.checkout_snapshot,o.quantity from public.payment_orders o
+     where o.id=$1 and o.payment_source='card'
+       and exists(select 1 from mirpanel_community.community_order_owners u where u.order_id=o.id)`,[orderId])).rows[0];
+   if(order&&await enabled(c)){
+    const snap=order.checkout_snapshot||{};
+    const saved=(await c.query('select product_id,snapshot from mirpanel_community.shop_lines where order_id=$1 order by position',[orderId])).rows;
+    const items=snap.cartVersion===2&&Array.isArray(snap.items)?snap.items.map(line=>{
+     const source=saved.find(x=>x.product_id===line.productId&&(x.snapshot.lineId||x.product_id+':'+x.snapshot.planIndex)===(line.lineId||line.productId+':'+line.planIndex))?.snapshot;
+     return {...line,signature:source?.signature,renewal:!!line.renewalOrderCode};
+    }):saved.length===1?[{...saved[0].snapshot,productId:saved[0].product_id,quantity:order.quantity,renewal:!!saved[0].snapshot.renewal}]:[];
+    await allocateReadyStock(c,()=>security,orderId,items,'card:auto');
+   }
+  }
+  const deliveryPending=result.status==='approved'&&(await adminPendingDeliveries(c,[orderId])).length>0;
+  await c.query('commit');
+  return {...result,deliveryPending};
+ }catch(error){await c.query('rollback');throw error;}finally{c.release();}
 }

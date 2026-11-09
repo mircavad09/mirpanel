@@ -33,14 +33,24 @@ export async function recordDelivery(c,security,actor,orderId,id,line,quantity,m
  await c.query(`insert into ${M}(event_key,order_id,delivery_id) values($1,$2,$3)`,['delivery:'+id,orderId,id]);
  return record;
 }
-export async function adminPendingDeliveries(pool,ids){
+export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
  if(!ids.length)return [];
  if(!(await pool.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name)throw fail(503,'Təhvil məlumatı hazırda əlçatan deyil.');
- const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity from public.payment_orders o join ${O} u on u.order_id=o.id where o.id=any($1::uuid[])`,[ids])).rows.filter(paid);
+ // Older paid orders may have been fulfilled outside this delivery system. A
+ // missing delivery record alone does not put those historical orders in queue.
+ const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity
+   from public.payment_orders o join ${O} u on u.order_id=o.id where o.id=any($1::uuid[])
+   and (o.status in ('reviewing','new_receipt_requested')
+     or exists(select 1 from ${M} m where m.event_key='payment:'||o.id::text)
+     or exists(select 1 from ${D} d where d.order_id=o.id))`,[ids])).rows.filter(paid);
  const records=await deliveryRecords(pool,orders.map(o=>o.id));
  const byOrder=new Map();
  for(const record of records){if(!byOrder.has(record.order_id))byOrder.set(record.order_id,[]);byOrder.get(record.order_id).push(record);}
- return orders.filter(o=>customerStatus(o,byOrder.get(o.id)||[])==='preparing').map(o=>o.id);
+ const remaining=orders.map(o=>{
+  const done=totals(byOrder.get(o.id)||[]);
+  return {id:o.id,remaining:deliveryLines(o).map((line,i)=>Math.max(0,line.quantity-(done[i]||0)))};
+ }).filter(o=>o.remaining.some(n=>n>0));
+ return progress?remaining:remaining.map(o=>o.id);
 }
 export async function adminOrderCustomers(pool,ids){
  if(!ids.length)return [];

@@ -12,7 +12,8 @@ import {
   safeUuid,
   validatePaymentNumber
 } from "./payment-security.mjs";
-import { createPaymentStore } from "./payment-store.mjs";
+import { createPaymentStore, paymentError } from "./payment-store.mjs";
+import {adminOrderFields} from './admin-order-fields.mjs';
 import { structuredDurationMonths } from "./payment-order-lifecycle.mjs";
 import { paymentMethodLabel } from "./payment-order-query.mjs";
 import {signature} from './employee-security.mjs';
@@ -752,6 +753,11 @@ export function createPaymentSystem(options) {
       const deliveryQueue=query.tab==='pending'&&query.pendingStage==='delivery';
       if(deliveryQueue&&!canDeliver)throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
       const orders = await store.listOrders(query, catalog.products, {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined});
+      if(deliveryQueue&&options.pendingDeliveryProgress){
+        const progress=new Map((await options.pendingDeliveryProgress(orders.orders.map(o=>o.id))).map(o=>[o.id,o.remaining]));
+        orders.orders=orders.orders.filter(o=>progress.has(o.id));
+        for(const order of orders.orders)order.remainingDelivery=progress.get(order.id);
+      }
       const pendingCustomerView=query.tab==='pending'&&Boolean(query.pendingStage);
       if(canDeliver&&options.orderCustomers&&orders.orders.length&&(pendingCustomerView||query.includeCustomer==='true')){
         try{
@@ -767,6 +773,7 @@ export function createPaymentSystem(options) {
         }
       }
       if(config.employeeEnabled){const workflow=await store.workforceOrders((orders.orders||[]).map(o=>o.id));for(const order of orders.orders||[])order.workforce=workflow.get(order.id)||null;}
+      orders.permissions={fields:!!canDeliver,manage:!!canDeliver};
       orders.filters ||= {};
       orders.filters.products = (catalog.products || [])
         .filter((product) => product && product.active !== false && product.id)
@@ -800,16 +807,27 @@ export function createPaymentSystem(options) {
       const id = safeUuid(orderMatch[1]);
       if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
       const action = orderMatch[2];
+      if(['receipt','approve','reject'].includes(action)&&options.readyStockAllowed&&!options.readyStockAllowed(request))throw Object.assign(new Error('Sifariş əməliyyatı yalnız adminə açıqdır.'),{status:403});
       if(action==='delivery'&&options.customerDelivery&&['GET','POST'].includes(request.method)){
         if(options.readyStockAllowed&&!options.readyStockAllowed(request))throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
         response.setHeader('Cache-Control','private, no-store');
         const input=request.method==='POST'?await readBody(request,50_000):null;
         json(response,200,await options.customerDelivery(security,actorName,id,input));return true;
       }
-      if (request.method === "GET" && action === "details") {
-        const order=await store.getOrder(id),cipher=order.checkout_snapshot?.detailsCipher;
-        const items=(order.checkout_snapshot?.items||[]).map(x=>({title:x.title,plan:x.planName,quantity:x.quantity,details:x.detailsCipher?JSON.parse(security.decryptSecret(x.detailsCipher)):null}));
-        json(response,200,{details:cipher?JSON.parse(security.decryptSecret(cipher)):null,items});return true;
+      if (action === "details" && ["GET","POST"].includes(request.method)) {
+        if(!options.readyStockAllowed?.(request))throw Object.assign(new Error('Sifariş sahələri yalnız adminə açıqdır.'),{status:403});
+        response.setHeader('Cache-Control','private, no-store');
+        const reveal=request.method==='POST'?await readBody(request,1000):null;
+        if(request.method==='POST'&&(!Number.isSafeInteger(reveal?.line)||reveal.line<0||!Number.isSafeInteger(reveal.field)||reveal.field<0))throw Object.assign(new Error('Sifariş sahəsi düzgün deyil.'),{status:400});
+        const order=await store.getOrder(id),catalog=await loadCatalog();
+        let lines;
+        try{lines=adminOrderFields(order,catalog,security,reveal);}catch{throw Object.assign(new Error('Sifariş sahələri açıla bilmədi.'),{status:503});}
+        if(reveal){
+          const field=lines[reveal.line]?.fields[reveal.field];
+          if(!field?.sensitive||field.value===null)throw Object.assign(new Error('Sifariş sahəsi tapılmadı.'),{status:404});
+          json(response,200,{value:field.value});return true;
+        }
+        json(response,200,{lines});return true;
       }
       if (request.method === "GET" && action === "receipt") {
         const order = await store.getOrder(id);
@@ -827,8 +845,12 @@ export function createPaymentSystem(options) {
             durationMonths = null;
           }
         }
-        const result = await store.approveOrder(id, durationMonths, actorName);
-        json(response, 200, { ...result, status: result.status === "approved" ? "completed" : result.status }); return true;
+        let result;
+        if(options.approveCardWithReadyStock && options.readyStockAllowed?.(request) && (order.payment_source || 'card')==='card'){
+          try{result=await options.approveCardWithReadyStock(security,id,durationMonths,actorName,config.employeeEnabled);}
+          catch(error){throw paymentError({message:/^[A-Z_]+$/.test(error.message||'')?error.message:undefined});}
+        }else result=await store.approveOrder(id, durationMonths, actorName);
+        json(response, 200, { ...result, status: result.status === "approved" ? (result.deliveryPending?'preparing':'completed') : result.status }); return true;
       }
       if (request.method === "POST" && action === "reject") { json(response, 200, await store.rejectOrder(id, actorName)); return true; }
       if (request.method === "POST" && action === "contacted") { json(response, 200, await store.contactOrder(id, actorName)); return true; }
