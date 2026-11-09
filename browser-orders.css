@@ -124,7 +124,7 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
   box-shadow: 0 0 0 2px #fff7, 0 0 10px #dd950055;
   pointer-events: none;
 }
-[data-animation="ben"] { --target: 69.8% 3.8% 24.7% 83.7%; }
+[data-animation="ben"] { --target: 89.8% 4.8% 5.2% 84.6%; }
 [data-animation="sign-in"] { --target: 55.2% 10% 39.5% 10%; }
 [data-animation="email"] { --target: 25.5% 3.5% 68.7% 3.5%; }
 [data-animation="password"] { --target: 32.5% 3.5% 61.7% 3.5%; }
@@ -165,8 +165,50 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 @media (max-width: 600px) {
   .browser-guide-phone[data-animation] { width: min(100%, 140px); }
 }
+.browser-guide-visual.browser-guide-visual-handset{background:none;border:0;overflow:visible;padding:3px 5px}
+.browser-guide-handset{box-sizing:border-box;width:min(100%,202px);padding:6px;position:relative;border:2px solid #655e69;border-radius:27px;background:#08080b;box-shadow:inset 0 0 0 1px #28242d,0 5px 14px #0008}
+.browser-guide-handset::before,.browser-guide-handset::after{content:"";position:absolute;width:3px;border-radius:2px;background:#655e69}
+.browser-guide-handset::before{left:-4px;top:21%;height:11%}
+.browser-guide-handset::after{right:-4px;top:29%;height:9%}
+.browser-guide-handset-screen{aspect-ratio:1 / 1.78;overflow:hidden;border-radius:19px;background:#f7f8fa}
+.capcut-demo{height:100%;box-sizing:border-box;display:flex;flex-direction:column;gap:9px;padding:12px 8px;background:#f7f8fa;color:#171922;font:600 12px/1.25 system-ui,sans-serif;animation:capcut-screen-in .22s ease-out}
+.capcut-demo-description{animation:capcut-screen-in .22s ease-out}
+.capcut-demo-icon{display:inline-flex;flex:none;align-items:center;color:inherit}
+.capcut-demo-icon svg{width:15px;height:15px}
+.capcut-demo-top,.capcut-demo-profile,.capcut-demo-stats{display:flex;align-items:center;justify-content:space-between;gap:6px}
+.capcut-demo-brand,.capcut-demo-heading{display:flex;align-items:center;justify-content:center;gap:6px;font-size:15px}
+.capcut-demo-heading{justify-content:flex-start;font-size:12px}
+.capcut-demo-brand .capcut-demo-icon svg{width:19px;height:19px}
+.capcut-demo-hero{display:grid;align-content:end;gap:4px;min-height:75px;padding:9px;border-radius:10px;background:linear-gradient(135deg,#184cb8,#087781);color:white}
+.capcut-demo-hero strong{font-size:17px}
+.capcut-demo-tools,.capcut-demo-nav{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}
+.capcut-demo-tools>div,.capcut-demo-nav>div{display:grid;justify-items:center;align-content:center;gap:5px;text-align:center;min-height:47px;padding:3px;background:#e8edf5;border-radius:8px}
+.capcut-demo-nav{grid-template-columns:repeat(3,minmax(0,1fr));margin-top:auto}
+.capcut-demo-nav>div{min-height:37px;background:none;font-size:10px}
+.capcut-demo-options,.capcut-demo-fields{display:grid;gap:7px;padding:0;margin:4px 0 0;list-style:none}
+.capcut-demo-option,.capcut-demo-field,.capcut-demo-next{box-sizing:border-box;border:1px solid #cbd0da;border-radius:8px;background:white;padding:7px 4px;min-height:30px}
+.capcut-demo-option{display:flex;justify-content:center;align-items:center;gap:4px;text-align:center}
+.capcut-demo-field{display:grid;gap:4px;padding-inline:7px;overflow-wrap:anywhere}
+.capcut-demo-field>span:first-child,.capcut-demo-muted{color:#535c6e;font-size:11px}
+.capcut-demo-next{text-align:center;background:#087887;color:#fff;border-color:transparent}
+.capcut-demo-typing>span{visibility:hidden;animation:capcut-type 0s var(--type-delay) forwards}
+.capcut-demo-avatar{display:grid;place-items:center;width:31px;height:31px;flex:none;border-radius:50%;background:#dce4f7}
+.capcut-demo-pro{padding:3px 5px;border-radius:5px;background:#ece5ff;color:#542b98}
+.capcut-demo [data-capcut-target]{outline:2px solid #b87200;outline-offset:-1px}
+.capcut-demo [data-capcut-target="ben"]{outline:0}
+.capcut-demo [data-capcut-target="ben"] .capcut-demo-icon{outline:2px solid #b87200;outline-offset:4px;border-radius:50%;animation:browser-guide-tap .75s ease-out 2}
+.capcut-demo [data-capcut-target="password"]{animation:capcut-unmark 0s .95s forwards}
+.capcut-demo [data-capcut-target="continue"]{outline-color:transparent;animation:capcut-mark 0s .95s forwards}
+@keyframes capcut-screen-in{from{opacity:.4;transform:translateY(3px)}to{opacity:1;transform:none}}
+@keyframes capcut-type{to{visibility:visible}}
+@keyframes capcut-unmark{to{outline-color:transparent}}
+@keyframes capcut-mark{to{outline-color:#b87200}}
+@media (max-width:600px){.browser-guide-handset{width:min(100%,178px)}}
 @media (prefers-reduced-motion: reduce) {
   .browser-guide-phone *, .browser-guide-phone *::before { animation: none !important; }
+  .capcut-demo,.capcut-demo *,.capcut-demo-description{animation:none!important}
+  .capcut-demo-typing>span{visibility:visible}
+  .capcut-demo [data-capcut-target="continue"]{outline-color:#b87200}
 }
 
 .browser-guide-compact .browser-guide-text {
@@ -205,11 +247,11 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 }
 @media (max-width: 600px) and (max-height: 740px) {
   .browser-guide-frame:has(.browser-guide-compact) { height: calc(100dvh - 26px); }
-  .browser-guide-body:has(.browser-guide-compact) {
+  .browser-guide-body:has(.browser-guide-compact):not(:has(.browser-guide-handset)) {
     display: grid; grid-template-rows: auto minmax(0, 1fr);
   }
-  .browser-guide-step.browser-guide-compact { grid-template-rows: minmax(0, 1fr) auto; }
-  .browser-guide-compact .browser-guide-visual { container-type: size; min-height: 0; }
+  .browser-guide-step.browser-guide-compact:not(:has(.browser-guide-handset)) { grid-template-rows: minmax(0, 1fr) auto; }
+  .browser-guide-compact .browser-guide-visual:not(.browser-guide-visual-handset) { container-type: size; min-height: 0; }
   .browser-guide-compact .browser-guide-phone[data-animation] {
     width: min(100%, 140px, calc(100cqh * .46));
   }

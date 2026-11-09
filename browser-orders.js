@@ -159,6 +159,61 @@
   }
   return content;
  }
+ function capcutScreen(mode,create){
+  const screen=create('div',null,'capcut-demo capcut-demo-'+mode);
+  screen.dataset.animation=mode;
+  const icons={
+   logo:'M4 5h16L4 19h16L4 5m0 4 16 6M20 9 4 15',
+   user:'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',
+   video:'M3 6h18v12H3z M10 9l5 3-5 3z',
+   photo:'M3 4h18v16H3z M4 17l5-6 4 4 3-3 5 5',
+   mail:'M3 5h18v14H3z M3 6l9 7 9-7',
+   back:'m14 5-7 7 7 7',
+   search:'M17 10a7 7 0 1 1-14 0 7 7 0 0 1 14 0Zm-2 5 6 6'
+  };
+  const icon=name=>{const n=create('span',null,'capcut-demo-icon');n.innerHTML=lineIcon(icons[name]);return n;};
+  const label=(text,cls)=>create('span',text,cls);
+  const row=(text,name,cls)=>{const n=create('div',null,cls);if(name)n.append(icon(name));n.append(label(text));return n;};
+  const mark=(node,target)=>{node.dataset.capcutTarget=target;return node;};
+  const type=(text,stars=false)=>{
+   const out=create('span',null,'capcut-demo-typing');out.setAttribute('aria-label',stars?'Nümunə şifrə':text);
+   [...text].forEach((char,i)=>{const n=label(char);n.setAttribute('aria-hidden','true');n.style.setProperty('--type-delay',(i*55+160)+'ms');out.append(n);});return out;
+  };
+  const brand=()=>row('CapCut','logo','capcut-demo-brand');
+  if(mode==='ben'){
+   const header=create('div',null,'capcut-demo-top');header.append(brand(),icon('search'));
+   const hero=create('div',null,'capcut-demo-hero');hero.append(label('Video düzenleme'),create('strong','Başlayın'));
+   const tools=create('div',null,'capcut-demo-tools');tools.append(row('Yeni video','video'),row('Fotoğraf düzenle','photo'));
+   const nav=create('div',null,'capcut-demo-nav');nav.append(row('Düzenle','video'),row('Şablonlar','photo'),mark(row('Ben','user'),'ben'));
+   screen.append(header,hero,tools,nav);
+  }else if(mode==='sign-in'){
+   screen.append(row('Oturum aç','back','capcut-demo-heading'),brand());
+   const options=create('ol',null,'capcut-demo-options');
+   for(const [i,name] of ["TikTok ile giriş yap","Google ile oturum aç","E-postayla giriş yapın","Facebook ile giriş yap","Apple ile oturum açın"].entries()){
+    const li=create('li',null,'capcut-demo-option');
+    if(i===2){li.append(icon('mail'));mark(li,'email-option');}
+    li.append(label(name));options.append(li);
+   }
+   screen.append(options);
+  }else if(mode==='email'||mode==='password'){
+   screen.append(row('Oturum aç','back','capcut-demo-heading'),brand());
+   const fields=create('div',null,'capcut-demo-fields');
+   const email=create('div',null,'capcut-demo-field'),pass=create('div',null,'capcut-demo-field');
+   email.append(label('E-posta'),mode==='email'?type('numune@example.com'):label('numune@example.com'));
+   pass.append(label('Şifre'),mode==='password'?type('********',true):label('Şifreyi girin','capcut-demo-muted'));
+   mark(mode==='email'?email:pass,mode);
+   const next=create('div','Devam','capcut-demo-next');
+   if(mode==='password')mark(next,'continue');
+   fields.append(email,pass,next);screen.append(fields);
+  }else{
+   screen.append(row('Profil','back','capcut-demo-heading'));
+   const profile=create('div',null,'capcut-demo-profile');
+   profile.append(label('N','capcut-demo-avatar'),create('strong','Nümunə profil'),mark(label('Pro','capcut-demo-pro'),'pro'));
+   const stats=create('div',null,'capcut-demo-stats');stats.append(label('0 Takip'),label('0 Takipçi'));
+   screen.append(profile,stats,create('div','Profili düzenle','capcut-demo-option'),create('p','Favoriler','capcut-demo-muted'));
+  }
+  return screen;
+ }
  function openGuide(trigger,accounts){
   const order=trigger.closest('[data-order-id]'),index=Number(trigger.dataset.orderInfo),item=guideItems.get(order)?.[index];
   if(!item||guideDialog.open)return;
@@ -172,20 +227,22 @@
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
   footer.append(button('Bağla',()=>guideDialog.close()));
   let data=null,failed=false,active='info',track='',step=0,autoplay=false,advanceTimer;
+  const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
+  phoneShell.append(phoneScreen);
   const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(info,how);
   function select(mode){autoplay=false;active=mode;body.scrollTop=0;draw();}
   function draw(){
    clearTimeout(advanceTimer);
    info.setAttribute('aria-pressed',String(active==='info'));how.setAttribute('aria-pressed',String(active==='steps'));
-   body.replaceChildren();
-   if(failed){body.append(create('p','Təlimat alınmadı.'),button('Yenidən cəhd et',loadGuide));return;}
-   if(!data){const loading=create('p','Məlumat hazırlanır…');loading.setAttribute('role','status');body.append(loading);return;}
+   if(failed){body.replaceChildren(create('p','Təlimat alınmadı.'),button('Yenidən cəhd et',loadGuide));return;}
+   if(!data){const loading=create('p','Məlumat hazırlanır…');loading.setAttribute('role','status');body.replaceChildren(loading);return;}
    if(active==='info'){
+    body.replaceChildren();
     if(data.information)body.append(create('div','İstifadə etməzdən əvvəl oxuyun','browser-guide-note'));
     body.append(data.information?renderInformation(data.information):create('p','Bu məhsul üçün məlumat əlavə edilməyib.','browser-guide-text'));return;
    }
    const tracks=Object.entries({general:'Ümumi addımlar',phone:'Telefonda giriş',desktopQr:'Kompüterdə QR ilə giriş'}).filter(([key])=>data.tracks?.[key]?.length);
-   if(!tracks.length){body.append(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}
+   if(!tracks.length){body.replaceChildren(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}
    if(!tracks.some(([key])=>key===track))track=tracks[0][0];
    const choices=create('div',null,'browser-guide-choices');
    for(const [key,label] of tracks){const b=button(key==='phone'&&data.tracks[key].some(s=>s.animation)?'CapCut-a daxil ol':label,()=>{autoplay=false;track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
@@ -193,6 +250,13 @@
    const compact=track==='phone'&&steps.some(item=>item.animation);
    if(compact)layout.classList.add('browser-guide-compact');
    const visual=create('div',null,'browser-guide-visual');
+   const handset=track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image);
+   const steadyLayout=handset&&body.contains(phoneShell)?phoneShell.closest('.browser-guide-step'):null;
+   if(handset){
+    visual.classList.add('browser-guide-visual-handset');
+    phoneScreen.replaceChildren(capcutScreen(current.animation,create));
+    if(!steadyLayout)visual.append(phoneShell);
+   }else
    try{
     const u=new URL(current.image,location.origin);
     if((u.protocol==='https:'||u.origin===location.origin)&&!u.username&&!u.password){
@@ -214,7 +278,7 @@
     }
    }catch{}
    const details=create('div');
-   const description=create('p',current.description,'browser-guide-text');description.setAttribute('aria-live','polite');
+   const description=create('p',current.description,'browser-guide-text'+(handset?' capcut-demo-description':''));description.setAttribute('aria-live','polite');
    if(compact){
     const number=create('strong',String(step+1),'browser-guide-step-number');
     number.setAttribute('aria-label','Addım '+(step+1)+' / '+steps.length);
@@ -264,7 +328,8 @@
      if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)*1.3)go(step+(dx<0?1:-1));
     },{passive:true});
    }
-   layout.append(visual,details);body.append(choices,layout);
+   if(steadyLayout)steadyLayout.lastElementChild.replaceWith(details);
+   else{layout.append(visual,details);body.replaceChildren(choices,layout);}
    if(autoplay&&step<steps.length-1)advanceTimer=setTimeout(()=>{
     if(!guideDialog.open||!guideDialog.isConnected)return;
     step++;autoplay=step<steps.length-1;draw();
