@@ -155,7 +155,14 @@ async function paymentGroup(clearCart=true){
   message.setAttribute('aria-live','polite');message.append(el('h1',heading),el('p',detail));
   if(group.orderCode)message.append(el('p','Sifariş № '+group.orderCode+' · '+checkoutMoney(group.totalCents),'shop-result-reference'));
   actions.setAttribute('aria-label','Sifarişdən sonra keçidlər');
-  actions.append(link('Sifarişlərimə bax',group.orderCode?'/profil?tab=orders&order='+encodeURIComponent(group.orderCode):'/profil?tab=orders'),link('Məhsullara bax','/mehsul'),link('Ana səhifə','/'));
+  for(const [variant,label,url,icon] of [
+   ['orders','Sifarişlərimə bax',group.orderCode?'/profil?tab=orders&order='+encodeURIComponent(group.orderCode):'/profil?tab=orders','<path d="m12 3 9 5v8l-9 5-9-5V8l9-5Z M3 8l9 5 9-5m-9 5v8M7.5 5.5l9 5"/>'],
+   ['products','Məhsullara bax','/mehsul','<path d="m3 8 3-4h12l3 4v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8Zm0 0h18m-6 4a3 3 0 0 1-6 0"/>'],
+   ['home','Ana səhifə','/','<path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V10Zm6 11v-8h6v8"/>']
+  ]){
+   const a=link('',url);a.classList.add('shop-result-action--'+variant);
+   a.append(checkoutIcon(icon),el('span',label));actions.append(a);
+  }
   const existing=app.querySelector('.shop-result');
   if(existing){existing.dataset.result=summary.dataset.result;existing.querySelector('.shop-result-badge').replaceWith(badge);existing.querySelector('.shop-result-message').replaceChildren(...message.childNodes);}
   else{summary.append(badge,message,actions);app.replaceChildren(summary,error);if(clearCart)window.scrollTo({top:0,behavior:'instant'});}

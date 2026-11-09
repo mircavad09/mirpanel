@@ -137,8 +137,11 @@
 .shop-page .shop-result-message p{margin:12px 0 0;color:#c2c1bd;line-height:1.5}
 .shop-page .shop-result-message .shop-result-reference{font-size:13px;color:#aaa9a5}
 .shop-page .shop-result-actions{display:grid;gap:10px;margin-top:25px}
-.shop-page .shop-result-actions a{display:grid;place-items:center;min-height:48px;margin:0;padding:8px 10px;box-sizing:border-box;border:1px solid transparent;border-radius:11px;color:#f5f5f5;text-decoration:none;font-weight:650}
-.shop-page .shop-result-actions a:first-child{background:#ffca26;color:#1a1403}
-.shop-page .shop-result-actions a:nth-child(2){background:#272727;border-color:#565656}
+.shop-page .shop-result-actions a{display:flex;align-items:center;justify-content:center;gap:10px;min-height:48px;margin:0;padding:8px 10px;box-sizing:border-box;border:1px solid transparent;border-radius:11px;color:#fff;text-decoration:none;font-weight:500}
+.shop-result-actions .checkout-icon{flex:none}
+.shop-result-actions .checkout-icon svg{display:block;width:20px;height:20px}
+.shop-page .shop-result-actions .shop-result-action--orders{background:#ffb600;color:#111;font-weight:750}
+.shop-page .shop-result-actions .shop-result-action--products{background:#2e2e2e;border-color:#747474}
+.shop-page .shop-result-actions .shop-result-action--home{background:transparent}
 .shop-page .shop-result-actions a:focus-visible{outline:2px solid #ffd557;outline-offset:3px}
 @media(hover:hover){.shop-page .shop-result-actions a:hover{filter:brightness(1.12);text-decoration:underline}}

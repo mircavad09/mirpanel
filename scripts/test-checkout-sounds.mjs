@@ -27,8 +27,9 @@ const server=http.createServer(async(req,res)=>{
  }
  if(['/','/sebet','/odenis'].includes(p)){
   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});
-  return res.end('<!doctype html><meta name="viewport" content="width=device-width"><body>'+(p==='/'?'<button id="pp-order-btn">Sifariş et</button><a id="cartHeaderLink">Səbət</a><script src="/cart-store.js"></script><script type="module">import {startCartEntry} from "/community-assets/cart-entry.js";const plans=[{}];document.querySelector("#pp-order-btn").onclick=()=>startCartEntry({id:"synthetic",title:"Synthetic",plans},plans[0]);</script>':'<main id="shopApp"></main><script type="module" src="/community-assets/shop-ui.js"></script>'));
+  return res.end('<!doctype html><meta name="viewport" content="width=device-width"><body>'+(p==='/'?'<button id="pp-order-btn">Sifariş et</button><a id="cartHeaderLink">Səbət</a><script src="/cart-store.js"></script><script type="module">import {startCartEntry} from "/community-assets/cart-entry.js";const plans=[{}];document.querySelector("#pp-order-btn").onclick=()=>startCartEntry({id:"synthetic",title:"Synthetic",plans},plans[0]);</script>':'<link rel="stylesheet" href="/community-assets/shop.css"><main id="shopApp" class="shop-page"></main><script type="module" src="/community-assets/shop-ui.js"></script>'));
  }
+ if(['/profil','/mehsul'].includes(p)){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end('<!doctype html><h1>Synthetic destination</h1>');}
  const file=p.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+p.slice(18):p.slice(1);
  if(!file.includes('..')&&fs.existsSync(file)&&fs.statSync(file).isFile()){res.writeHead(200,{'Content-Type':file.endsWith('.js')?'text/javascript':file.endsWith('.css')?'text/css':'audio/wav'});return res.end(fs.readFileSync(file));}
  res.writeHead(404);res.end();
@@ -50,6 +51,17 @@ try{
     A.prototype.createBufferSource=function(){const n=create.call(this),start=n.start;n.start=function(...args){if(blocked)throw Error('Synthetic autoplay block');const result=start.apply(n,args);mark(labels.get(n.buffer));return result;};return n;};
    },{blocked});
    const p=await c.newPage(),responses=[];p.setDefaultTimeout(7000);p.on('dialog',d=>void d.accept());
+   const actions=p.locator('.shop-result-actions a');
+   async function checkActions(code){
+    assert.deepEqual(await actions.evaluateAll(nodes=>nodes.map(a=>{
+     const svg=a.querySelector('svg'),label=a.lastElementChild,box=a.getBoundingClientRect(),i=svg.getBoundingClientRect(),t=label.getBoundingClientRect(),s=getComputedStyle(a);
+     return {label:label.textContent,href:a.getAttribute('href'),icon:svg.getAttribute('aria-hidden'),centered:Math.abs((i.left+t.right)/2-(box.left+box.right)/2)<1&&Math.abs((i.top+i.bottom)/2-(t.top+t.bottom)/2)<1&&i.right<t.left,background:s.backgroundColor,color:s.color};
+    })),[
+     {label:'Sifarişlərimə bax',href:'/profil?tab=orders&order='+code,icon:'true',centered:true,background:'rgb(255, 182, 0)',color:'rgb(17, 17, 17)'},
+     {label:'Məhsullara bax',href:'/mehsul',icon:'true',centered:true,background:'rgb(46, 46, 46)',color:'rgb(255, 255, 255)'},
+     {label:'Ana səhifə',href:'/',icon:'true',centered:true,background:'rgba(0, 0, 0, 0)',color:'rgb(255, 255, 255)'}
+    ]);
+   }
    p.on('response',r=>{const path=new URL(r.url()).pathname;if(/sounds|draft\/remove|shop\/cancel/.test(path))responses.push([path,r.status()]);});
    const sounds=()=>p.evaluate(()=>JSON.parse(sessionStorage.getItem('sound-test')||'[]'));
    const waitSound=async expected=>{if(!blocked)await p.waitForFunction(n=>JSON.parse(sessionStorage.getItem('sound-test')||'[]').length>=n,expected.length).catch(async e=>{console.log({name,expected,actual:await sounds(),responses,debug:await p.evaluate(()=>({claimed:sessionStorage.getItem('mirpanel.checkout-sounds'),mediaError:sessionStorage.getItem('sound-media-error'),error:document.querySelector('.shop-error')?.textContent}))});throw e;});assert.deepEqual(await sounds(),blocked?[]:expected);};
@@ -80,9 +92,11 @@ try{
    assert.equal(await p.getByRole('link',{name:'Sifarişlərimə bax'}).getAttribute('href'),'/profil?tab=orders&order=991');
    await p.getByRole('heading',{name:'Ödəniş yoxlanılır',exact:true}).waitFor();
    await p.getByText(/Çekiniz qəbul edildi/).waitFor();
+   await checkActions('991');
    assert.equal(await p.getByRole('link',{name:/WhatsApp/}).count(),0);
    paid=true;await p.getByRole('heading',{name:'Ödənişiniz uğurla tamamlandı!',exact:true}).waitFor();await waitSound(['add','remove','remove','order']);
    await p.getByText(/Sifarişiniz hazırlanır/).waitFor();
+   await checkActions('991');
    await p.getByRole('link',{name:'Sifarişlərimə bax'}).waitFor();
    await p.reload();await waitSound(['add','remove','remove','order']);
    await p.goto(origin);await p.waitForFunction(()=>window.MirpanelCart);
@@ -93,10 +107,16 @@ try{
    assert.equal(await p.getByRole('link',{name:'Sifarişlərimə bax'}).getAttribute('href'),'/profil?tab=orders&order=992');
    await p.getByText('Hesab məlumatlarınız Sifarişlərim bölməsində hazırdır.').waitFor();
    assert.deepEqual(await p.locator('.shop-result-actions a').allTextContents(),['Sifarişlərimə bax','Məhsullara bax','Ana səhifə']);
+   await checkActions('992');
    for(const label of ['Məhsullara bax','Ana səhifə'])await p.getByRole('link',{name:label,exact:true}).waitFor();
    await p.reload();await waitSound(['add','remove','remove','order','order']);
    const mediaError=await p.evaluate(()=>sessionStorage.getItem('sound-media-error'));
    if(mediaError)assert.equal(mediaError,'NotSupportedError');
+   const resultURL=p.url();
+   for(const [index,url] of ['/profil?tab=orders&order=992','/mehsul','/'].entries()){
+    await actions.nth(index).click();await p.waitForURL(origin+url);
+    await p.goto(resultURL);await actions.first().waitFor();
+   }
    console.log('PASS '+name+(mediaError?' (correct playback attempts; Windows WebKit media unavailable)':''));
   }finally{await b.close();}
  }
