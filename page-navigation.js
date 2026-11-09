@@ -11,11 +11,32 @@
  // Moving an open modal out of the body would remove it from the top layer.
  const persistent=n=>n.matches?.('.site-header,.browser-bottom-nav,#supportWidget,#accountDropdown,#accountNotifications,#accountGuest,#newSplashScreen,#splashLoadStatus,dialog.auth-code-sheet[open],[data-shell-persistent]');
  function rememberStyles(doc,base){const keys=[];for(const n of doc.head.querySelectorAll('link[rel=stylesheet],style')){const url=n.tagName==='LINK'?new URL(n.getAttribute('href'),base):null;if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css')||url&&shared.test(url.pathname))continue;const key=url?url.pathname:'inline:'+n.textContent;keys.push(key);if(!styles.has(key)){const copy=n.ownerDocument===document?n:n.cloneNode(true);if(url&&copy!==n)copy.href=url.href;if(!copy.isConnected)document.head.insertBefore(copy,document.head.querySelector('link[href*="site-header.css"]'));styles.set(key,copy);}}return keys;}
+ async function prepareStyles(keys,signal){
+  await Promise.all(keys.map(key=>{
+   const node=styles.get(key);
+   if(!node||node.tagName!=='LINK')return;
+   node.disabled=false;
+   if(node.sheet)return;
+   return new Promise((resolve,reject)=>{
+    const cleanup=()=>{node.removeEventListener('load',ready);node.removeEventListener('error',failed);signal.removeEventListener('abort',failed);};
+    const ready=()=>{cleanup();resolve();};
+    const failed=()=>{cleanup();reject(Error('Bölmənin üslubları yüklənmədi. Yenidən cəhd edin.'));};
+    node.addEventListener('load',ready,{once:true});node.addEventListener('error',failed,{once:true});signal.addEventListener('abort',failed,{once:true});
+    if(signal.aborted)failed();else if(node.sheet)ready();
+   });
+  }));
+ }
  const initialStyles=rememberStyles(document,location.href);for(const s of document.scripts)if(s.src)loaded.add(new URL(s.src).pathname);
  for(const n of [...document.head.querySelectorAll('link[rel=stylesheet]')])if(shared.test(new URL(n.href).pathname))document.head.append(n);
  const root=document.createElement('div');root.id='sitePageContent';root.style.display='contents';document.body.insertBefore(root,document.querySelector('.site-header')?.nextSibling||document.body.firstChild);
  // Route styles can be temporarily inactive when WebKit restores the catalog.
- const catalogVisibility=document.createElement('style');catalogVisibility.dataset.shellPersistent='';catalogVisibility.textContent='#sitePageContent .catalog-grid .card[hidden]{display:none!important}';document.head.append(catalogVisibility);
+ const catalogVisibility=document.createElement('style');catalogVisibility.dataset.shellPersistent='';catalogVisibility.textContent=`#sitePageContent .catalog-grid .card[hidden]{display:none!important}
+ body:has(.site-route-loading){background:#080a0c;color:#edf1f6;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+ .site-route-loading{box-sizing:border-box;max-width:700px;min-height:60vh;margin:20px auto;padding:0 16px;color:#edf1f6;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+ .site-route-loading h1{font-size:28px;margin:0 0 16px}
+ .site-route-loading .site-route-placeholder{height:44px;max-width:180px;border:1px solid #30343a;border-radius:12px;background:#191d22;margin:12px 0}
+ .site-route-loading[data-route="/balans"]{min-height:916px}
+`;document.head.append(catalogVisibility);
  for(const n of [...document.body.children])if(n!==root&&n.tagName!=='SCRIPT'&&n.tagName!=='LINK'&&!persistent(n))root.append(n);
  const isStatic=p=>p==='/'||p==='/mehsul';view={fragment:null,styles:initialStyles,title:document.title,body:document.body.className,html:document.documentElement.className,started:true};
  let listingRequest=null,listingAt=0;
@@ -47,7 +68,7 @@
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));const profile=new URL(current,location.origin).pathname==='/profil';((profile&&window.mirpanelPageDispose)||dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
  if(isProduct(new URL(current,location.origin).pathname)){window.mirpanelDisposeProduct?.();delete document.body.dataset.productId;delete document.body.dataset.productSlug;}
  if(view&&isStatic(new URL(current,location.origin).pathname)){const fragment=document.createDocumentFragment();while(root.firstChild)fragment.append(root.firstChild);view.fragment=fragment;cache.set(new URL(current,location.origin).pathname,view);}else root.replaceChildren();mounted=false;view=null;}
- function skeleton(u){const titles={'/':'Ana səhifə','/mehsul':'Məhsullar','/balans':u.hash==='#emeliyyatlar'?'Ödənişlər':'Balans','/sebet':'Səbət','/odenis':'Ödəniş','/sifarislerim':'Sifarişlərim','/profil':'Profil','/qrup':'Ümumi söhbət','/hesab':'Giriş'};const main=document.createElement('main');main.className='site-route-loading';main.setAttribute('aria-busy','true');const h=document.createElement('h1');h.textContent=titles[u.pathname]||(isProduct(u.pathname)?'Məhsul':'Giriş');main.append(h);for(let i=0;i<3;i++){const bar=document.createElement('div');bar.className='site-route-placeholder';main.append(bar);}root.replaceChildren(main);}
+ function skeleton(u){const titles={'/':'Ana səhifə','/mehsul':'Məhsullar','/balans':u.hash==='#emeliyyatlar'?'Ödənişlər':'Balans','/sebet':'Səbət','/odenis':'Ödəniş','/sifarislerim':'Sifarişlərim','/profil':'Profil','/qrup':'Ümumi söhbət','/hesab':'Giriş'};const main=document.createElement('main');main.className='site-route-loading';main.dataset.route=u.pathname;main.setAttribute('aria-busy','true');const h=document.createElement('h1');h.textContent=titles[u.pathname]||(isProduct(u.pathname)?'Məhsul':'Giriş');main.append(h);for(let i=0;i<(u.pathname==='/balans'?1:3);i++){const bar=document.createElement('div');bar.className='site-route-placeholder';main.append(bar);}if(u.pathname==='/balans'){const status=document.createElement('p');status.setAttribute('role','status');status.textContent='Balans məlumatı yüklənir…';main.append(status);}root.replaceChildren(main);}
  function downloadResource(src){const u=new URL(src,location.href),key=u.pathname;if(u.origin!==location.origin||!allowedScripts.has(key.split('/').at(-1))||loaded.has(key))return null;
  let download=scriptDownloads.get(u.href);if(!download){download=fetch(u.href,{signal:AbortSignal.timeout(10000),cache:'default'}).then(r=>{if(!r.ok)throw Error('Ümumi resurs yüklənmədi.');return r.text();}).finally(()=>scriptDownloads.delete(u.href));scriptDownloads.set(u.href,download);}
  return {key,download};}
@@ -130,6 +151,7 @@
   productTemplates.set(u.pathname,{...next,fragment:next.fragment.cloneNode(true)});
   if(productTemplates.size>8)productTemplates.delete(productTemplates.keys().next().value);
  }}
+ await prepareStyles(next.styles,requestController.signal);
  if(run!==generation)return false;
  // Apply the search to the detached catalog before any unfiltered cards can be displayed.
  if(u.pathname==='/mehsul'){const search=u.searchParams.get('search')?.toLocaleLowerCase('az');for(const card of next.fragment.querySelectorAll('.grid .card'))card.hidden=!!search&&!card.textContent.toLocaleLowerCase('az').includes(search);}
