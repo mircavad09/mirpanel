@@ -48,7 +48,7 @@ function identity(t) {
 }
 
 export async function mountShop({root, call, alive}) {
-  let stopped = false, busy = false;
+  let stopped = false, busy = false, rejectionDialog;
   const error = el("p", null, "topupError");
   error.setAttribute("role", "alert");
   const list = el("div", null, "topupList");
@@ -86,10 +86,43 @@ export async function mountShop({root, call, alive}) {
       value = value.trim().replace(",", ".");
       if (!/^\d+(?:\.\d{1,2})?$/.test(value) || Number(value) <= 0) throw Error("Düzgün müsbət AZN məbləği yazın.");
       if (!confirm(`${t.name} hesabına ${displayAmount(value)} ₼ əlavə edilsin?`)) return;
-    } else if (!confirm("Bu balans müraciəti rədd edilsin?")) return;
-    await call("/shop", {action, id:t.id, ...(action === "approve" ? {amount:value} : {})});
+    }
+    await call("/shop", {action, id:t.id, ...(action === "approve" ? {amount:value} : {reason:value})});
     window.dispatchEvent(new Event("admin-topup-changed"));
-    await load();
+    try { await load(); }
+    catch { error.textContent = "Qərar saxlanıldı, amma siyahı yenilənmədi. Yenilə düyməsinə basın."; }
+  }
+
+  function reject(t) {
+    if(rejectionDialog?.open)return;
+    const dialog=el("dialog",null,"paymentActionDialog"),form=el("form",null,"paymentActionDialogCard");
+    const title=el("h3","Bu balans müraciəti rədd edilsin?");
+    title.id="topupRejectTitle";
+    dialog.setAttribute("aria-labelledby",title.id);
+    const summary=el("p",(t.history_number?"Müraciət № "+t.history_number+" · ":"")+money(t.requested_cents));
+    const label=el("label","Ləğv səbəbi");
+    const reason=el("textarea");reason.rows=4;reason.required=true;reason.maxLength=1000;reason.style.width="100%";label.append(reason);
+    const hint=el("p","Səbəb müştəriyə e-poçtla göndəriləcək.");
+    const feedback=el("p",null,"topupError");feedback.setAttribute("role","alert");
+    const cancel=el("button","Geri","btn");cancel.type="button";
+    const submit=el("button","Rəddi təsdiqlə","btn danger");submit.type="submit";submit.disabled=true;
+    const actions=el("div",null,"paymentOrderActions");actions.append(cancel,submit);
+    form.append(title,summary,label,hint,feedback,actions);dialog.append(form);document.body.append(dialog);
+    rejectionDialog=dialog;
+    let pending=false;
+    cancel.onclick=()=>dialog.close();
+    reason.oninput=()=>{submit.disabled=!reason.value.trim();feedback.textContent="";};
+    dialog.addEventListener("cancel",e=>{if(pending)e.preventDefault();});
+    dialog.addEventListener("close",()=>{dialog.remove();if(rejectionDialog===dialog)rejectionDialog=null;},{once:true});
+    form.onsubmit=async event=>{
+      event.preventDefault();
+      if(busy||pending||!reason.value.trim())return;
+      busy=pending=true;cancel.disabled=reason.disabled=submit.disabled=true;
+      try { await decide(t,"reject",reason.value.trim());dialog.close(); }
+      catch(e) { feedback.textContent=e.message||"Müraciət rədd edilmədi. Yenidən cəhd edin."; }
+      finally { busy=pending=false;cancel.disabled=reason.disabled=false;submit.disabled=!reason.value.trim(); }
+    };
+    dialog.showModal();reason.focus();
   }
 
   function renderCard(t) {
@@ -111,6 +144,14 @@ export async function mountShop({root, call, alive}) {
     }
     if (t.receipt_available) details.append(button("Çekə bax", () => receipt(t)));
     card.append(top, details);
+    if(t.status==="rejected"){
+      details.append(time("Rədd edilib",t.decided_at));
+      if(t.rejection_reason){
+        const note=el("p","Səbəb — "+t.rejection_reason);
+        note.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0";
+        card.append(note);
+      }
+    }
 
     if (t.status === "reviewing") {
       const actions = el("div", null, "topupActions");
@@ -120,7 +161,7 @@ export async function mountShop({root, call, alive}) {
       amount.value = (Number(t.requested_cents) / 100).toFixed(2);
       label.append(amount);
       actions.append(label, button("Təsdiqlə", () => decide(t, "approve", amount.value), "primary"),
-        button("Rədd et", () => decide(t, "reject"), "danger"));
+        button("Rədd et", () => reject(t), "danger"));
       card.append(actions);
     }
     return card;
@@ -136,5 +177,5 @@ export async function mountShop({root, call, alive}) {
   try { await load(); }
   catch (e) { error.textContent = e.message; }
   finally { busy = false; }
-  return () => { stopped = true; };
+  return () => { stopped = true; rejectionDialog?.close(); };
 }

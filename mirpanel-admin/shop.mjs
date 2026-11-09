@@ -162,9 +162,26 @@ export function createShop({context,catalog,snapshot,store,config}){
  async admin(pool,actor,b){if(!await isOwner(pool,(await pool.query('select * from mirpanel_community."user" where id=$1',[actor.id])).rows[0]))throw fail(403,'Yalnız sahib-admin üçün.');await ready(pool);if(b.action==='topup-count'){
   const {rows}=await pool.query("select id from mirpanel_community.wallet_topups where status='reviewing' order by submitted_at,id");
   return {pending:rows.length,ids:rows.map(row=>row.id)};
- }if(['list','topups'].includes(b.action)){const topups=(await pool.query("select t.id,t.card_bank,t.card_last4,t.requested_cents::text,t.approved_cents::text,t.status,t.created_at,t.submitted_at,t.decided_at,t.user_id,p.avatar_path,(t.receipt is not null and t.receipt_deleted_at is null) as receipt_available,u.name,n.member_number::text from mirpanel_community.wallet_topups t join mirpanel_community.\"user\" u on u.id=t.user_id left join mirpanel_community.community_profiles p on p.user_id=t.user_id left join mirpanel_community.community_member_numbers n on n.user_id=t.user_id where status<>'draft' order by t.created_at desc limit 100")).rows;if(b.action==='topups')return{topups};const groups=(await pool.query("select * from mirpanel_community.shop_checkouts where state='submitted' order by created_at desc limit 50")).rows;return{topups,checkouts:await Promise.all(groups.map(g=>group(pool,g)))};}
+ }if(['list','topups'].includes(b.action)){const topups=(await pool.query("select t.id,t.card_bank,t.card_last4,t.requested_cents::text,t.approved_cents::text,t.status,t.created_at,t.submitted_at,t.decided_at,to_jsonb(t)->>'history_number' as history_number,to_jsonb(t)->>'rejection_reason' as rejection_reason,t.user_id,p.avatar_path,(t.receipt is not null and t.receipt_deleted_at is null) as receipt_available,u.name,n.member_number::text from mirpanel_community.wallet_topups t join mirpanel_community.\"user\" u on u.id=t.user_id left join mirpanel_community.community_profiles p on p.user_id=t.user_id left join mirpanel_community.community_member_numbers n on n.user_id=t.user_id where status<>'draft' order by t.created_at desc limit 100")).rows;if(b.action==='topups')return{topups};const groups=(await pool.query("select * from mirpanel_community.shop_checkouts where state='submitted' order by created_at desc limit 50")).rows;return{topups,checkouts:await Promise.all(groups.map(g=>group(pool,g)))};}
  if(b.action==='receipt'){const t=(await pool.query('select receipt,receipt_deleted_at from mirpanel_community.wallet_topups where id=$1',[b.id])).rows[0];if(!t?.receipt||t.receipt_deleted_at)throw fail(410,'Çek artıq mövcud deyil.');return{url:await store.signedReceipt(t.receipt.path,60,'admin-topup',b.id)};}
  if(!['approve','reject'].includes(b.action)||!uuid(b.id))throw fail(400,'Əməliyyat düzgün deyil.');const cents=b.action==='approve'?amountCents(b.amount):null;
- return tx(pool,async c=>{const t=(await c.query('select * from mirpanel_community.wallet_topups where id=$1 for update',[b.id])).rows[0];if(!t)throw fail(404,'Müraciət tapılmadı.');const status=b.action==='approve'?'approved':'rejected';if(t.status===status){if(status==='approved'&&Number(t.approved_cents)!==cents)throw fail(409,'Təsdiqlənmiş məbləğ fərqlidir.');return{ok:true,idempotent:true};}if(t.status!=='reviewing')throw fail(409,'Müraciət artıq qərarlaşdırılıb.');if(status==='approved')await postLedger(c,{actor:actor.id,user:t.user_id,key:t.id,cents,kind:'topup_credit',reason:'Admin tərəfindən balans artırma müraciəti təsdiqləndi'});await c.query('update mirpanel_community.wallet_topups set status=$2,approved_cents=$3,decided_by=$4,decided_at=clock_timestamp() where id=$1',[t.id,status,cents,actor.id]);await c.query('insert into mirpanel_community.community_audit(actor_id,action,target_id,reason,details) values($1,$2,$3,$4,$5)',[actor.id,'topup.'+status,t.user_id,'Admin tərəfindən balans müraciəti yoxlanıldı',{topup:t.id,requestedCents:Number(t.requested_cents),approvedCents:cents}]);return{ok:true};});},
+ const reason=b.action==='reject'&&typeof b.reason==='string'?b.reason.trim():null;
+ if(b.action==='reject'&&(!reason||reason.length>1000||reason.includes('\0')))throw fail(400,'Ləğv səbəbini yazın (maksimum 1000 simvol).');
+ return tx(pool,async c=>{
+  const t=(await c.query('select * from mirpanel_community.wallet_topups where id=$1 for update',[b.id])).rows[0];
+  if(!t)throw fail(404,'Müraciət tapılmadı.');
+  const status=b.action==='approve'?'approved':'rejected';
+  if(t.status===status){
+   if(status==='approved'&&Number(t.approved_cents)!==cents)throw fail(409,'Təsdiqlənmiş məbləğ fərqlidir.');
+   if(status==='rejected'&&t.rejection_reason!==reason)throw fail(409,'Müraciət artıq başqa səbəblə rədd edilib.');
+   return{ok:true,idempotent:true};
+  }
+  if(t.status!=='reviewing')throw fail(409,'Müraciət artıq qərarlaşdırılıb.');
+  if(status==='approved')await postLedger(c,{actor:actor.id,user:t.user_id,key:t.id,cents,kind:'topup_credit',reason:'Admin tərəfindən balans artırma müraciəti təsdiqləndi'});
+  const args=[t.id,status,cents,actor.id];
+  await c.query('update mirpanel_community.wallet_topups set status=$2,approved_cents=$3,decided_by=$4,decided_at=clock_timestamp()'+(reason?',rejection_reason=$5':'')+' where id=$1',reason?[...args,reason]:args);
+  await c.query('insert into mirpanel_community.community_audit(actor_id,action,target_id,reason,details) values($1,$2,$3,$4,$5)',[actor.id,'topup.'+status,t.user_id,reason||'Admin tərəfindən balans müraciəti yoxlanıldı',{topup:t.id,requestedCents:Number(t.requested_cents),approvedCents:cents}]);
+  return{ok:true};
+ });},
  };
 }

@@ -4,6 +4,8 @@ const f=await shopFixture(),password=crypto.randomBytes(24).toString('base64url'
 try{
  await f.db.exec(f.db.read('mirpanel-admin/community/customer-activity-migration.sql'));
  await f.db.exec(f.db.read('mirpanel-admin/community/payment-history-number-migration.sql'));
+ await f.db.exec(f.db.read('supabase/migrations/202611090904_topup_emails.sql'));
+ await f.db.exec(f.db.read('supabase/migrations/202611100001_topup_rejection_email.sql'));
  const add=async(user='a')=>{const t=await f.shop.topup({user},{amount:'6',methodId:f.method,requestId:f.id()}),r={path:'topup/'+t.id+'/test.png',size:3,mimeType:'image/png',sha256:'a'.repeat(64)};f.files.set(r.path,Buffer.from('abc'));await f.shop.savedReceipt({user},'a'.repeat(64),'topup',t.id,r);await f.shop.submitTopup({user},t.id);return t;};
  const picture=f.id(), png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+nmGQAAAAASUVORK5CYII=','base64');
  await f.pool.query("update community_member_numbers set member_number=1022 where user_id='a'");
@@ -54,7 +56,7 @@ try{
  await p.evaluate(()=>window.refreshAdminTopups());await secondTab.evaluate(()=>window.refreshAdminTopups());
  await p.waitForTimeout(250);eq(sounds,1);
  await secondTab.close();
- await f.shop.admin(f.pool,{id:'owner'},{action:'reject',id:old.id});
+ await f.shop.admin(f.pool,{id:'owner'},{action:'reject',id:old.id,reason:'Sintetik köhnə müraciət'});
  await p.evaluate(()=>window.refreshAdminTopups());await badge(1);
  const t=draft;
  eq((await ctx.request.post(base+'/api/admin/community/shop',{data:{action:'receipt',id:t.id}})).status(),403);
@@ -97,9 +99,15 @@ try{
  eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'700');
  const repeat=await ctx.request.post(base+'/api/admin/community/shop',{headers:{'X-CSRF-Token':s.csrfToken,Origin:base},data:{action:'approve',id:t.id,amount:'7'}});eq(repeat.status(),200);
  eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'700');
- p.once('dialog',d=>d.accept());await p.getByRole('button',{name:'Rədd et',exact:true}).click();await badge(0);
+ await p.getByRole('button',{name:'Rədd et',exact:true}).click();
+ const rejection=p.getByRole('dialog',{name:'Bu balans müraciəti rədd edilsin?'});
+ const confirmReject=rejection.getByRole('button',{name:'Rəddi təsdiqlə'});
+ eq(await confirmReject.isDisabled(),true);
+ const reason='Sintetik səbəb: qəbzdə məbləğ görünmür.';
+ await rejection.getByLabel('Ləğv səbəbi').fill(reason);await confirmReject.click();await badge(0);
  await p.locator('.topupCard').filter({hasText:'Reader B'}).getByText('Rədd edildi',{exact:true}).waitFor();
- eq((await f.pool.query("select status from mirpanel_community.wallet_topups where id=$1",[second.id])).rows[0].status,'rejected');
+ eq((await f.pool.query("select rejection_reason from mirpanel_community.wallet_topups where id=$1 and status='rejected'",[second.id])).rows[0].rejection_reason,reason);
+ await p.getByText('Səbəb — '+reason,{exact:true}).waitFor();
  eq((await f.pool.query("select count(*)::int n from community_audit where action='topup.approved'")).rows[0].n,1);
  await f.pool.query("update mirpanel_community.wallet_topups set decided_at=null where id=$1",[t.id]);
  await p.getByRole('button',{name:'Yenilə',exact:true}).last().click();

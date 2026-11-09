@@ -12,7 +12,7 @@ export async function mount(root,view,userFilter){stop();let alive=true,stream;s
  const error=e('p');error.setAttribute('role','alert');
  const guarded=fn=>async(...args)=>{try{await fn(...args);}catch(x){error.textContent=x.message;}};
  try{
- if(view==='communityShop'){const {mountShop}=await import('/admin-shop.js?v=topup-card-slots-1');const close=await mountShop({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
+ if(view==='communityShop'){const {mountShop}=await import('/admin-shop.js?v=topup-rejection-1');const close=await mountShop({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
  if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=active30-1');const close=await mountUsers({root,call,alive:()=>alive,userFilter});if(!alive)close();else stop=()=>{alive=false;close();};return;}
  if(view==='communityUsers'){
   let page=1,q='';const input=e('input');input.placeholder='Ad, e-poçt, üzv ID-si';const list=e('div'),detail=e('section'),label=e('span');

@@ -18,8 +18,7 @@ async function submit(user,request){
 }
 try{
  const legacy=await create(a,'2.00');await submit(a,legacy);
- const legacyDecision=await shop.admin(pool,{id:'owner'},{action:'reject',id:legacy.id});assert.equal(legacyDecision.ok,true);
- await pool.query('update wallet_topups set decided_at=null where id=$1',[legacy.id]);
+ await pool.query("update wallet_topups set status='rejected',decided_at=null where id=$1",[legacy.id]);
  await db.exec(migration);await db.exec(migration);
  const initial=(await history()).items[0];
  assert.equal(initial.number,'1');assert.equal(initial.operation_at,null);

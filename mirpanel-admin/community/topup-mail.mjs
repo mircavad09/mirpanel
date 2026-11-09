@@ -5,15 +5,22 @@ const money=value=>{
 };
 export function topupMail(job,user,origin){
  const approved=job.event_key.startsWith('topup-approved:');
+ const rejected=job.event_key.startsWith('topup-rejected:');
  const snapshot=job.topup_snapshot;
  const url=new URL('/profil?tab=payments&topup='+encodeURIComponent(job.topup_id),origin).href;
- const subject=approved?'MirPanel — Ödənişiniz təsdiqləndi':'MirPanel — Ödəniş qəbziniz qəbul edildi';
+ const subject=rejected?'MirPanel — Ödənişiniz ləğv olundu':approved?'MirPanel — Ödənişiniz təsdiqləndi':'MirPanel — Ödəniş qəbziniz qəbul edildi';
  const paragraphs=approved?[
   'Salam, '+user.name+'!',
   'Ödənişiniz təsdiqləndi və balansınıza '+money(snapshot.cents)+' əlavə edildi.',
   'Əməliyyatdan sonrakı balansınız '+money(snapshot.balance)+'.',
   'Alış-veriş etmək üçün MirPanel hesabınıza daxil olun.',
   'Bizi seçdiyiniz üçün təşəkkür edirik!'
+ ]:rejected?[
+  'Salam, '+user.name+'!',
+  (snapshot.submittedDate?snapshot.submittedDate+' tarixində göndərdiyiniz ':'Göndərdiyiniz ')+money(snapshot.cents)+' məbləğində ödəniş qəbzi təsdiqlənmədi. Müraciətiniz ləğv olundu.',
+  'Səbəb — '+snapshot.reason,
+  'Müraciət № '+snapshot.number,
+  'Müraciətin təfərrüatlarına “Ödənişlərim” bölməsindən baxa bilərsiniz.'
  ]:[
   'Salam, '+user.name+'!',
   money(snapshot.cents)+' məbləğində ödəniş qəbziniz uğurla əlavə edildi. Ödənişiniz yoxlanılır. Təsdiq edilməsini gözləyin.',

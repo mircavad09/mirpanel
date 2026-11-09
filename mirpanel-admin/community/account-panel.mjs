@@ -14,13 +14,14 @@ export async function paymentHistory(pool,userId,query){
             THEN CASE WHEN o.payment_source='wallet' AND o.payment_confirmed THEN o.created_at ELSE o.approved_at END
           WHEN o.status IN ('pending','submitted','reviewing') THEN o.created_at END AS operation_at,
      o.receipt_path IS NOT NULL AS by_receipt,
-     CASE WHEN o.receipt_deleted_at IS NULL AND o.receipt_path IS NOT NULL THEN coalesce(o.receipt_mime,'unknown') END AS mime
+     CASE WHEN o.receipt_deleted_at IS NULL AND o.receipt_path IS NOT NULL THEN coalesce(o.receipt_mime,'unknown') END AS mime,null::text AS rejection_reason
    FROM public.payment_orders o WHERE o.currency='AZN' AND EXISTS (SELECT 1 FROM community_order_owners l WHERE l.user_id=$1 AND l.order_id=o.id)
    UNION ALL
    SELECT 'topup',t.id::text,t.history_number::text,'Balans yükləmə',
      CASE WHEN t.status='approved' THEN t.approved_cents ELSE t.requested_cents END,
      t.submitted_at,coalesce(t.submitted_at,t.created_at),t.status,CASE WHEN t.status='reviewing' THEN t.submitted_at ELSE t.decided_at END,true,
-     CASE WHEN t.receipt_deleted_at IS NULL AND t.receipt IS NOT NULL THEN coalesce(t.receipt->>'mimeType','unknown') END
+     CASE WHEN t.receipt_deleted_at IS NULL AND t.receipt IS NOT NULL THEN coalesce(t.receipt->>'mimeType','unknown') END,
+     CASE WHEN t.status='rejected' THEN to_jsonb(t)->>'rejection_reason' END
    FROM wallet_topups t WHERE t.user_id=$1 AND t.status<>'draft'
  ), selected AS (
    SELECT * FROM payments WHERE ($2='all' OR status=$2) AND ($4='' OR (kind='topup' AND id=$4)) ORDER BY sort_at DESC,kind,id DESC LIMIT 31 OFFSET $3

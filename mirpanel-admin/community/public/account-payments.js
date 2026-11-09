@@ -66,6 +66,7 @@ export function mountPayments({content,api,el,button,link,validate,initial,initi
    const text=timestamp(value);
    info.append(el('small',{},label+': ',text?el('time',{datetime:new Date(value).toISOString()},text):'Vaxt qeydə alınmayıb'));
   }
+  if(row.kind==='topup'&&row.status==='rejected'&&row.rejection_reason)info.append(el('small',{style:'white-space:pre-wrap;overflow-wrap:anywhere'},'Səbəb — '+row.rejection_reason));
   const selected=target===row.id&&row.kind==='topup';
   return el('article',{class:'account-payment-row'+(selected?' account-payment-selected':''),...(selected?{tabindex:'-1','aria-label':'Seçilmiş müraciət'}:{})},thumb,info,el('div',{class:'pay-row-value'},amount,number?el('small',{},number):null));
  }

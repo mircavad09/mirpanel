@@ -221,7 +221,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    // A delivery can be committed with its payment in one transaction. Queue
    // ordering alone (including SKIP LOCKED) cannot express this dependency.
    const {rows:[job]}=await pool.query(`with next as (select j.event_key from ${M} j where j.state='queued' and j.next_at<=now()
-    and (j.topup_id is null or j.event_key like 'topup-received:%' or exists(
+    and (j.topup_id is null or j.event_key like 'topup-received:%' or j.event_key like 'topup-rejected:%' or exists(
       select 1 from ${M} prior where prior.event_key='topup-received:'||j.topup_id
        and prior.state='accepted' and prior.provider_id is not null
        and (not $1::boolean or prior.reason='RESEND_DELIVERED')))

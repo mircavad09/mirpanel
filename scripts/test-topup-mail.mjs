@@ -24,8 +24,34 @@ async function delivered(providerId){
 try{
  await db.exec(db.read('mirpanel-admin/community/payment-history-number-migration.sql'));
  await db.exec(db.read('supabase/migrations/202611090904_topup_emails.sql'));
+ const rejectMigration=db.read('supabase/migrations/202611100001_topup_rejection_email.sql');
+ await db.exec(rejectMigration);await db.exec(rejectMigration);
  await pool.query('update topup_mail_release set enabled=true');
  const request={user:'a'};
+ if(process.env.MIRPANEL_TOPUP_REAL_REJECTION==='1'){
+  const recipient=process.env.MIRPANEL_TOPUP_TEST_RECIPIENT;
+  assert.equal(recipient,'mircavad09@gmail.com');
+  const topup=(await shop.topup(request,{amount:'6.50',methodId:method,requestId:id()})).id;
+  const receipt={path:'topup/'+topup+'/test.png',size:4,mimeType:'image/png'};files.set(receipt.path,Buffer.alloc(4));
+  await shop.savedReceipt(request,null,'topup',topup,receipt);await shop.submitTopup(request,topup);
+  // Do not send a separate receipt acknowledgement in this one-mail test.
+  await pool.query("update customer_order_mail set state='failed' where topup_id=$1",[topup]);
+  const reason='Sintetik sınaq: qəbzdə məbləğ görünmür.';
+  await Promise.all([1,2].map(()=>shop.admin(pool,{id:'owner'},{action:'reject',id:topup,reason})));
+  const transport=createOrderMailTransport(process.env);
+  const send=async(kind,message)=>{
+   assert.ok(message.textBody.includes(reason));assert.equal(messages.length,0);
+   messages.push(message);
+   return transport(kind,{...message,user:{email:recipient}});
+  };
+  const worker=createCustomerOrderMailer(pool,send,'https://mirpanel.com',{requireDeliveryNotice:true});
+  const parallel=createCustomerOrderMailer(pool,send,'https://mirpanel.com',{requireDeliveryNotice:true});
+  await Promise.all([worker.wake(),parallel.wake()]);await worker.wake();
+  const result=(await pool.query("select state,reason,provider_id from customer_order_mail where event_key=$1",['topup-rejected:'+topup])).rows[0];
+  assert.equal(result.state,'accepted',result.reason);assert.equal(messages.length,1);
+  console.log(JSON.stringify({accepted:true,topup,recipient,providerId:result.provider_id,attempts:messages.length}));
+  try{await delivered(result.provider_id);}catch(error){console.log('DELIVERY_UNCONFIRMED '+error.message);}
+ }else{
  const topup=(await shop.topup(request,{amount:'5',methodId:method,requestId:id()})).id;
  const receipt={path:'topup/'+topup+'/test.png',size:4,mimeType:'image/png'};
  files.set(receipt.path,Buffer.alloc(4));
@@ -73,6 +99,35 @@ try{
  assert.equal((await paymentHistory(pool,'a',new URLSearchParams('topup='+topup))).items[0].id,topup);
  assert.equal((await paymentHistory(pool,'b',new URLSearchParams('topup='+topup))).items.length,0);
  if(!real){
+  const rejected=(await shop.topup(request,{amount:'6.50',methodId:method,requestId:id()})).id;
+  const upload={...receipt,path:'topup/'+rejected+'/test.png'};files.set(upload.path,Buffer.alloc(4));
+  await shop.savedReceipt(request,null,'topup',rejected,upload);
+  await shop.submitTopup(request,rejected);
+  const reason='Qəbzdə məbləğ oxunmur. <Yeni şəkil> göndərin.';
+  await pool.query("update wallet_topups set submitted_at='2026-11-09T21:30:00Z' where id=$1",[rejected]);
+  await assert.rejects(shop.admin(pool,{id:'owner'},{action:'reject',id:rejected,reason:'   '}),{status:400});
+  assert.equal((await pool.query('select status from wallet_topups where id=$1',[rejected])).rows[0].status,'reviewing');
+  // A failed receipt-acknowledgement must not hide the final decision.
+  await pool.query("update customer_order_mail set state='failed' where event_key=$1",['topup-received:'+rejected]);
+  const results=await Promise.all(Array.from({length:6},()=>shop.admin(pool,{id:'owner'},{action:'reject',id:rejected,reason})));
+  assert.equal(results.filter(x=>!x.idempotent).length,1);
+  await assert.rejects(shop.admin(pool,{id:'owner'},{action:'reject',id:rejected,reason:'Başqa səbəb'}),{status:409});
+  assert.equal((await pool.query("select count(*)::int n from community_audit where action='topup.rejected' and reason=$1",[reason])).rows[0].n,1);
+  assert.equal((await pool.query('select count(*)::int n from wallet_ledger where request_id=$1',[rejected])).rows[0].n,0);
+  const d=(await paymentHistory(pool,'a',new URLSearchParams('topup='+rejected))).items[0];
+  assert.equal(d.rejection_reason,reason);
+  assert.equal((await paymentHistory(pool,'b',new URLSearchParams('topup='+rejected))).items.length,0);
+  await Promise.all([worker.wake(),parallel.wake()]);await worker.wake();
+  const sent=messages.filter(x=>x.idempotencyKey==='topup-rejected:'+rejected);
+  assert.equal(sent.length,1);
+  assert.equal(sent[0].subject,'MirPanel — Ödənişiniz ləğv olundu');
+  assert.match(sent[0].textBody,/10\.11\.2026 tarixində göndərdiyiniz 6,50 ₼/);
+  assert.ok(sent[0].textBody.includes('Səbəb — '+reason));
+  assert.ok(sent[0].textBody.includes('Müraciət № '+d.number));
+  assert.ok(sent[0].htmlBody.includes('&lt;Yeni şəkil&gt;'));
+  assert.ok(sent[0].htmlBody.includes('https://mirpanel.com/profil?tab=payments&amp;topup='+rejected));
+ }
+ if(!real){
   const retryTopup=(await shop.topup(request,{amount:'3',methodId:method,requestId:id()})).id;
   const retryReceipt={...receipt,path:'topup/'+retryTopup+'/test.png'};
   files.set(retryReceipt.path,Buffer.alloc(4));
@@ -108,4 +163,5 @@ try{
   assert.match(sent[1].subject,/Sifarişiniz təsdiqləndi/);
  }
  console.log('PASS topup submission, concurrent approval, once-only ordered mail, amount snapshots, owner-scoped link and login return.');
+ }
 }finally{await f.close();}

@@ -13,7 +13,7 @@ try{
    if(u.pathname==='/api/auth/sign-in/email'){loggedIn=true;return route.fulfill({json:{user:{id:'test'}}});}
    if(u.pathname==='/api/community/payment-history'){
     assert.equal(loggedIn,true);assert.equal(u.searchParams.get('topup'),topup);focused=true;
-    return route.fulfill({json:{items:[{kind:'topup',id:topup,number:'7',cents:'450',status:'approved',submitted_at:'2026-11-09T12:00:00Z'}],balance:'450',all:1,approved:1,reviewing:0,rejected:0,total:'0',month:'0',rejectedCents:'0'}});
+    return route.fulfill({json:{items:[{kind:'topup',id:topup,number:'7',cents:'450',status:'rejected',submitted_at:'2026-11-09T12:00:00Z',rejection_reason:'Sınaq: qəbz oxunmur.'}],balance:'0',all:1,approved:0,reviewing:0,rejected:1,total:'0',month:'0',rejectedCents:'450'}});
    }
    if(u.pathname==='/hesab')return route.fulfill({contentType:'text/html',body:'<html><body><main id="authApp"></main><script type="module" src="/community-assets/auth-forms.js"></script></body></html>'});
    if(u.pathname==='/profil')return route.fulfill({contentType:'text/html',body:`<html><body><main id="content"></main><script type="module">
@@ -34,6 +34,7 @@ try{
   await page.getByRole('button',{name:'Daxil ol',exact:true}).click();
   await page.waitForURL(origin+target);
   await page.getByText('Balans yükləmə №7',{exact:true}).waitFor();
+  await page.getByText('Səbəb — Sınaq: qəbz oxunmur.',{exact:true}).waitFor();
   assert.ok(focused);
   assert.equal(await page.locator('.account-payment-row').count(),1);
   console.log('PASS '+width+'px login returns to the selected payment request');
