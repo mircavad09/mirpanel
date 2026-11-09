@@ -23,3 +23,32 @@
 .account-panel .account-sidebar-topup:active {
   filter: brightness(0.96);
 }
+
+.profile-hero .profile-editor[open] .profile-edit-form {
+  display: grid;
+  gap: 8px;
+}
+.profile-hero .profile-editor[open] summary { margin-bottom: 2px; }
+.profile-editor[open] .profile-edit-form label { margin: 0; }
+.profile-editor[open] .profile-edit-form input {
+  min-height: 44px;
+  margin-top: 4px;
+  padding: 8px 11px;
+}
+.profile-editor[open] .profile-edit-form > p { margin: 0; }
+.profile-editor[open] .profile-edit-form > .community-alert:empty { display: none; }
+.profile-editor[open] .profile-form-actions {
+  gap: 8px;
+  padding: 4px 0 0;
+}
+.profile-editor[open] .profile-form-actions button {
+  min-height: 44px;
+  padding: 8px 10px;
+  font-size: 14px;
+}
+@media (min-width: 1024px) {
+  .account-panel .profile-hero .profile-editor[open] { max-width: 568px; }
+  .profile-hero .profile-editor[open] summary { min-height: 42px; }
+  .profile-editor[open] .profile-edit-form input,
+  .profile-editor[open] .profile-form-actions button { min-height: 42px; }
+}
