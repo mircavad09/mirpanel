@@ -491,6 +491,7 @@ const DATA = {
         },
         {
           "duration_months": 7,
+          "durationDays": 7,
           "warrantyUnit": "day",
           "bestValue": true,
           "label": " 7 gün",

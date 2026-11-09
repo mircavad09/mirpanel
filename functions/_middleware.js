@@ -249,7 +249,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=capcut-handset-3$2');
   next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=product-transition-1$2');
   next=next.replace(/(src=["'])\/browser-nav\.js\?v=cart-signup-20261107(["'])/g,'$1/browser-nav.js?v=capcut-handset-3$2');
-  next=next.replace(/(src=["'])\/?(home-loading|product-page|seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
+  next=next.replace(/(src=["'])\/?(home-loading|seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
   next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=product-transition-1$3');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?cms-site\.js(?:\?[^"']*)?(["'])/g,'$1/cms-site.js?v=home-stable-20261031$2');
@@ -344,6 +344,8 @@ export async function onRequest(context) {
     const response = await context.next(new Request(assetUrl, request));
     if (!response.ok) return response;
     let html = withSeoScripts(await response.text());
+    html = html.replace(/(src=["'])\/?product-page\.js(?:\?[^"']*)?(["'])/g,'$1/product-page.js?v=compact-plan-rows-1$2');
+    html = html.replace(/(href=["'])\/?product-page\.css(?:\?[^"']*)?(["'])/g,'$1/product-page.css?v=compact-plan-rows-1$2');
     html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(10000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
     html = html.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=product-transition-1$2');
     // The static order button must not accept an early click before the

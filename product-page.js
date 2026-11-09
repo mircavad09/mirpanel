@@ -168,7 +168,7 @@
         const [metrics,compact,display] = await Promise.all([
           import('/mirpanel-admin/public/product-plan-utils.mjs?v=detail-20261010-1'),
           product.id === 'capcut' ? import('/capcut-detail.mjs?v=20261020-1') : null,
-          import('/product-detail-display.mjs?v=20261020-1')
+          import('/product-detail-display.mjs?v=compact-plan-rows-1')
         ]);
         if(!signal.aborted&&activeRoot===root&&root.isConnected)initializeDetailMetadata(root,product, {...metrics,...display}, compact,signal);
       } catch { /* Keep the existing functioning page if enhancement cannot load. */ }
@@ -203,6 +203,7 @@
     summary.setAttribute('aria-live','polite');
     const container = document.getElementById('pp-plans-container');
     root.querySelector('.product-page-section-title').before(summary);
+    const priceText = value => utils.formatPrice(value).replace('.', ',') + ' ₼';
     const rows = [...container.querySelectorAll('.pp-plan-label')];
     const plans = product.plans || [];
     const unavailable = product.soldOut === true || product.flow === 'out_of_stock' ||
@@ -212,8 +213,8 @@
       const plan = plans[index], m = utils.detailPlanMetrics(plan);
       row.hidden = plan.active === false;
       row.setAttribute('role','radio'); row.tabIndex = row.hidden ? -1 : 0;
-      const duration = plan.durationDays ? `${plan.durationDays} gün` : plan.durationMonths ? `${plan.durationMonths} ay` : '';
-      const label = plan.label || duration || `${m.months || ''} aylıq`;
+      const duration = m.days !== null ? `${m.days} gün` : plan.durationMonths && m.months !== null ? `${m.months} ay` : '';
+      const label = plan.label?.trim() || duration || (m.months === null ? 'Paket' : `${m.months} aylıq`);
       const planName = duration && label !== duration ? `${label} · ${duration}` : label;
       row.setAttribute('aria-label', planName);
       const name = row.querySelector('.pp-plan-name');
@@ -222,9 +223,9 @@
       notes.id = `plan-details-${product.id}-${index}`;
       notes.setAttribute('role','region'); notes.setAttribute('aria-label','Paketin əlavə məlumatları');
       row.setAttribute('aria-controls',notes.id);
-      if (m.monthly !== null && m.months > 1) {
-        const monthly = text('span','product-detail-monthly','Ayda cəmi ');
-        monthly.append(text('strong','',`${utils.formatPrice(m.monthly)} ₼`));notes.append(monthly);
+      if (m.rate !== null) {
+        const rate = text('span','product-detail-rate',m.days !== null ? 'Gündə ' : 'Ayda cəmi ');
+        rate.append(text('strong','',priceText(m.rate)));notes.append(rate);
       }
       if (m.warranty) notes.append(text('span','',m.warranty));
       // There is currently no plan-level inventory source: do not invent per-plan stock
@@ -232,11 +233,11 @@
       if (index === best) notes.append(text('span','product-detail-best','Ən sərfəli'));
       row.append(notes);
       const price = row.querySelector('.pp-new-price');
-      if (m.price !== null && m.price > 0) price.textContent = `${utils.formatPrice(m.price)} ₼`;
+      if (m.price !== null && m.price > 0) price.textContent = priceText(m.price);
       row.querySelector('.pp-plan-price-meta')?.remove();
       if (m.oldPrice !== null) {
         const old = text('div','pp-plan-price-meta','');
-        old.append(text('div','pp-old-price',`${utils.formatPrice(m.oldPrice)} ₼`),text('div','pp-plan-disc-badge',`-${m.discount}%`));
+        old.append(text('div','pp-old-price',priceText(m.oldPrice)),text('div','pp-plan-disc-badge',`-${m.discount}%`));
         row.querySelector('.pp-plan-right').prepend(old);
       }
       row.addEventListener('keydown', event => {
@@ -265,13 +266,13 @@
       const plan = plans[index], m = utils.planMetrics(plan);
       summary.append(text('p','product-detail-summary-label',`Seçilmiş paket: ${rows[index].getAttribute('aria-label')}`));
       const prices = text('div','product-detail-summary-prices','');
-      if (m.price !== null) prices.append(text('strong','',`${utils.formatPrice(m.price)} ₼`));
-      if (m.oldPrice !== null) prices.append(text('del','',`${utils.formatPrice(m.oldPrice)} ₼`));
+      if (m.price !== null) prices.append(text('strong','',priceText(m.price)));
+      if (m.oldPrice !== null) prices.append(text('del','',priceText(m.oldPrice)));
       if (m.discount !== null) prices.append(text('span','product-detail-best',`-${m.discount}%`));
       summary.append(prices);
       if (m.savings !== null) {
         const saving = text('p','product-detail-savings','✓ Bu paketlə ');
-        saving.append(text('strong','',`${utils.formatPrice(m.savings)} ₼`),document.createTextNode(' qənaət edirsiniz'));summary.append(saving);
+        saving.append(text('strong','',priceText(m.savings)),document.createTextNode(' qənaət edirsiniz'));summary.append(saving);
       }
     };
     container.addEventListener('click', update);

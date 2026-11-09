@@ -72,8 +72,8 @@ try{
    for(let index=0;index<product.plans.length;index++){
     const row=page.locator('#pp-plans-container .pp-plan-label').nth(index);await row.click();
     const summary=await page.locator('.product-detail-summary').textContent(),m=planMetrics(product.plans[index]);
-    assert.ok(summary.includes(m.price.toFixed(2)),`${id} selected price`);
-    if(m.savings!==null)assert.ok(summary.includes(m.savings.toFixed(2)),`${id} savings`);
+    assert.ok(summary.includes(m.price.toFixed(2).replace('.',',')),`${id} selected price`);
+    if(m.savings!==null)assert.ok(summary.includes(m.savings.toFixed(2).replace('.',',')),`${id} savings`);
     else assert.ok(!summary.includes('Qənaət:'));
     assert.equal(await row.getAttribute('aria-checked'),'true');
     assert.ok(await row.evaluate(e=>e.getBoundingClientRect().height>=44));
