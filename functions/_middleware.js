@@ -380,6 +380,7 @@ export async function onRequest(context) {
   let html = await response.text();
   html=html.replace(/(src=["'])(\/?stock-display-fix\.js)(?:\?[^"']*)?(["'])/g,'$1$2?v=product-transition-1$3');
   html = withSeoScripts(html,route==='/');
+  if(route==='/')html=html.replace(/(\/(?:order-confirmation\.js|stock-display-fix\.js|catalog-card\.css)\?v=)product-transition-1/g,'$1mobile-home-cards-1');
 
   const headers = new Headers(response.headers);
   headers.set("Content-Type", "text/html; charset=utf-8");

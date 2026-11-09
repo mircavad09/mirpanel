@@ -76,7 +76,7 @@
 
   // Home card presentation only. Keep the catalog, filtering and navigation unchanged.
   function homeCardHTML(product, index, productUrl) {
-    if(window.MirpanelCatalogCard)return window.MirpanelCatalogCard.render(product,index,productUrl,publicProductTitle(product.title),product.id==='tiktok_jeton'?10:minPrice(product),priceText(product),homeStockBadgeHTML(product));
+    if(window.MirpanelCatalogCard)return window.MirpanelCatalogCard.render(product,index,productUrl,publicProductTitle(product.title),product.id==='tiktok_jeton'?10:minPrice(product),priceText(product),homeStockBadgeHTML(product),true);
     const price = product.id === 'tiktok_jeton' ? 10 : minPrice(product);
     const plan = (product.plans || []).find(item=>Number(item.price)===price);
     const cents = Math.round(price*100), oldCents = Math.round(Number(plan?.regularPrice)*100);
@@ -345,6 +345,8 @@
             let label=line.querySelector('.cardStockBadge');if(!label){label=document.createElement('span');line.replaceChildren(label);}
             label.className='mpStockBadge cardStockBadge '+badge.className;label.textContent=badge.text;
           }
+          const add=card.querySelector('.homeCardAdd');
+          if(add){add.disabled=!state.unavailable&&!state.canOrder;card.toggleAttribute('data-cart-available',!state.unavailable&&state.canOrder);}
           const button=card.querySelector('.homeCardOrder');if(button){const navigate=state.unavailable||state.canOrder;button.setAttribute('aria-disabled',String(!navigate));button.tabIndex=navigate?0:-1;button.style.opacity=navigate?'':'.45';}
         });
       }

@@ -2089,9 +2089,53 @@
     window.sendWA.__mirpanelConsentPatched = true;
   }
 
+  let homeCartOpening=false;
+  async function openHomeCart(button) {
+    if(homeCartOpening||cartOpening?.open||document.querySelector('dialog.homeCardPlanPicker[open],dialog.cart-entry[open]'))return;
+    const product=DATA.products.find(item=>item.id===button.closest('[data-product-id]')?.dataset.productId);
+    if(!product)return;
+    homeCartOpening=true;
+    try{
+      const inventory=window.MirpanelInventory;
+      if(!inventory||!await inventory.refresh())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');
+      if(!button.isConnected||!button.closest('.home-page #grid'))return;
+      const state=inventory.productState(product);
+      const choices=(product.plans||[]).map((plan,index)=>({plan,available:state.plans[index]?.canOrder}))
+        .filter(({plan})=>plan.active!==false&&Number(plan.price)>0);
+      if(!choices.some(item=>item.available))throw Error('Stokda yoxdur.');
+      if(choices.length===1){runOrderFlow(product,choices[0].plan,false);return;}
+      const dialog=document.createElement('dialog'),heading=document.createElement('h2'),close=document.createElement('button');
+      dialog.className='homeCardPlanPicker';dialog.setAttribute('aria-labelledby','homeCardPlanPickerTitle');
+      heading.id='homeCardPlanPickerTitle';heading.textContent='Paket seçin';
+      close.type='button';close.textContent='Bağla';close.onclick=()=>dialog.close();
+      dialog.append(heading);
+      for(const {plan,available} of choices){
+        const choice=document.createElement('button'),name=document.createElement('span'),price=document.createElement('strong');
+        choice.type='button';choice.disabled=!available;
+        name.textContent=plan.label?.trim()||plan.name||(plan.durationDays?plan.durationDays+' gün':plan.months?plan.months+' ay':'Paket');
+        price.textContent=available?Number(plan.price).toFixed(2)+' '+(product.currency||'₼'):'Stokda yoxdur';
+        choice.append(name,price);
+        choice.onclick=()=>{dialog.close();runOrderFlow(product,plan,false);};
+        dialog.append(choice);
+      }
+      dialog.append(close);
+      const life=new AbortController();
+      window.addEventListener('mirpanel:route-leave',()=>dialog.close(),{signal:life.signal});
+      dialog.addEventListener('close',()=>{life.abort();dialog.remove();},{once:true});
+      document.body.append(dialog);dialog.showModal();
+    }catch(error){toastMessage(error.message);}
+    finally{homeCartOpening=false;}
+  }
+
   document.addEventListener(
     "click",
     (event) => {
+      const add=event.target.closest('.home-page #grid .homeCardAdd');
+      if(add&&matchMedia('(max-width: 767px)').matches){
+        event.preventDefault();event.stopImmediatePropagation();
+        if(!add.disabled)void openHomeCart(add);
+        return;
+      }
       const button = event.target.closest("#pp-order-btn, #cartAddProduct");
       if (!button || !currentProduct) return;
       event.preventDefault();
