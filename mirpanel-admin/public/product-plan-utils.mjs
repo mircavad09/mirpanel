@@ -16,7 +16,7 @@ export function planMetrics(plan = {}) {
   const discounted = cents !== null && old !== null && old > cents && cents > 0;
   return { price: cents === null ? null : cents / 100, oldPrice: discounted ? old / 100 : null,
     savings: discounted ? (old - cents) / 100 : null, discount: discounted ? Math.round((old - cents) / old * 100) : null,
-    months, monthly: months && cents !== null && cents > 0 ? cents / 100 / months : null,
+    months, monthly: months && cents !== null && cents > 0 ? cents / 100 / (plan.durationDays ? plan.durationDays / 30 : months) : null,
     warranty: warrantyText(plan) };
 }
 export function warrantyText(plan = {}) {
@@ -54,6 +54,16 @@ export function normalizePlanMetadata(plan = {}) {
     throw new Error('Qiymət mənfi və ya etibarsız ola bilməz.');
   const metadata = {};
   if (plan.id != null) metadata.id = String(plan.id);
+  if (plan.durationDays != null) {
+    const days = Number(plan.durationDays);
+    if (!Number.isSafeInteger(days) || days < 1 || days > 3650) throw new Error('Paket müddəti 1–3650 gün olmalıdır.');
+    metadata.durationDays = days;
+  }
+  if (plan.durationMonths != null) {
+    const months = Number(plan.durationMonths);
+    if (!Number.isSafeInteger(months) || months < 1) throw new Error('Müddət tam müsbət ay sayı olmalıdır.');
+    metadata.durationMonths = months;
+  }
   if (plan.duration_months != null) {
     const n = Number(plan.duration_months);
     if (!Number.isSafeInteger(n) || n <= 0) throw new Error('Müddət tam müsbət ay sayı olmalıdır.');

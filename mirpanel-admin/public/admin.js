@@ -1061,21 +1061,28 @@ function updateHelpFields() {
 function renderPlans(product) {
   $("plans").innerHTML = (product.plans || []).map((plan, index) => `
     <div class="planRow">
-      <input data-plan="${index}" data-field="label" placeholder="Label" value="${escapeHtml(plan.label || "")}">
-      <input data-plan="${index}" data-field="months" type="number" min="1" step="1" aria-label="Müddət, ayla" placeholder="Ay" value="${escapeHtml(plan.months ?? "")}">
-      <input data-plan="${index}" data-field="price" type="number" min="0" step="0.01" aria-label="Cari qiymət" placeholder="Qiymət" value="${escapeHtml(plan.price ?? "")}">
-      <input data-plan="${index}" data-field="regularPrice" type="number" min="0" step="0.01" aria-label="Əvvəlki qiymət" placeholder="Əvvəlki qiymət" value="${escapeHtml(plan.regularPrice ?? "")}">
-      <button class="iconBtn movePlan" data-plan="${index}" data-direction="-1" type="button" aria-label="Yuxarı">↑</button>
-      <button class="iconBtn movePlan" data-plan="${index}" data-direction="1" type="button" aria-label="Aşağı">↓</button>
-      <button class="iconBtn removePlan" data-plan="${index}" type="button">X</button>
-      <div class="planMetadata">
-        <label>Zəmanət<select data-plan="${index}" data-planmeta="warrantyMode"><option value="inherit" ${!plan.warrantyMode || plan.warrantyMode==='inherit'?'selected':''}>Köhnə plan məlumatı</option><option value="guaranteed" ${plan.warrantyMode==='guaranteed'?'selected':''}>Zəmanət var</option><option value="none" ${plan.warrantyMode==='none'?'selected':''}>Zəmanətsiz</option></select></label>
+      <label>Paketin adı<input data-plan="${index}" data-field="label" value="${escapeHtml(plan.label || "")}"></label>
+      <div class="planDuration">
+        <label>Paketin müddəti<input data-plan="${index}" data-duration type="number" min="1" step="1" required value="${escapeHtml(plan.durationDays ?? plan.durationMonths ?? plan.duration_months ?? plan.months ?? 1)}"></label>
+        <label>Vahid<select data-duration-unit><option value="day" ${plan.durationDays ? "selected" : ""}>Gün</option><option value="month" ${plan.durationDays ? "" : "selected"}>Ay</option></select></label>
+      </div>
+      <label>Satış qiyməti<span class="planPrice"><input data-plan="${index}" data-field="price" type="number" min="0" step="0.01" value="${escapeHtml(plan.price ?? "")}"><span aria-hidden="true">₼</span></span></label>
+      <label>Əvvəlki qiymət<span class="planPrice"><input data-plan="${index}" data-field="regularPrice" type="number" min="0" step="0.01" value="${escapeHtml(plan.regularPrice ?? "")}"><span aria-hidden="true">₼</span></span></label>
+      <fieldset class="planMetadata"><legend>Zəmanət</legend>
+        <label>Zəmanət<select data-plan="${index}" data-planmeta="warrantyMode"><option value="inherit" ${!plan.warrantyMode || plan.warrantyMode==='inherit'?'selected':''}>Paketin adından götür</option><option value="guaranteed" ${plan.warrantyMode==='guaranteed'?'selected':''}>Zəmanət var</option><option value="none" ${plan.warrantyMode==='none'?'selected':''}>Zəmanətsiz</option></select></label>
         <label>Zəmanət müddəti<input type="number" min="1" step="1" data-plan="${index}" data-planmeta="warrantyDuration" value="${escapeHtml(plan.warrantyDuration ?? '')}"></label>
-        <label>Vahid<select data-plan="${index}" data-planmeta="warrantyUnit"><option value="month">Ay</option><option value="day" ${plan.warrantyUnit==='day'?'selected':''}>Gün</option></select></label>
+        <label>Zəmanət vahidi<select data-plan="${index}" data-planmeta="warrantyUnit"><option value="month">Ay</option><option value="day" ${plan.warrantyUnit==='day'?'selected':''}>Gün</option></select></label>
         <label>Zəmanət mətni<input type="text" maxlength="300" data-plan="${index}" data-planmeta="warrantyText" value="${escapeHtml(plan.warrantyText || '')}"></label>
-        <label>Stok görünüşü<select data-plan="${index}" data-planmeta="stockVisibility"><option value="hide">Stok mətnini gizlət</option><option value="show" ${plan.stockVisibility==='show'?'selected':''}>Real stoku göstər</option></select></label>
+      </fieldset>
+      <div class="planControls">
+        <label>Stok mətninin görünüşü<select data-plan="${index}" data-planmeta="stockVisibility"><option value="hide">Stok mətnini gizlət</option><option value="show" ${plan.stockVisibility==='show'?'selected':''}>Real stoku göstər</option></select></label>
         <label class="switchLine"><input type="checkbox" data-plan="${index}" data-planmeta="active" ${plan.active!==false?'checked':''}>Aktiv plan</label>
-        <label class="switchLine"><input type="checkbox" data-plan="${index}" data-planmeta="bestValue" ${plan.bestValue===true?'checked':''}>Ən sərfəli — override</label>
+        <label class="switchLine"><input type="checkbox" data-plan="${index}" data-planmeta="bestValue" ${plan.bestValue===true?'checked':''}>Ən sərfəli</label>
+        <div class="planActions">
+          <button class="iconBtn movePlan" data-plan="${index}" data-direction="-1" type="button" aria-label="Yuxarı">↑</button>
+          <button class="iconBtn movePlan" data-plan="${index}" data-direction="1" type="button" aria-label="Aşağı">↓</button>
+          <button class="iconBtn removePlan" data-plan="${index}" type="button" aria-label="Paketi sil">×</button>
+        </div>
         <p class="planMetadataHint">Plan üzrə real stok mənbəyi yoxdursa stok gizlənir. Məhsulun ümumi stoku planlara köçürülmür.${Number(plan.regularPrice)>0 && Number(plan.regularPrice)<=Number(plan.price)?' Əvvəlki qiymət cari qiymətdən yüksək deyil; endirim göstərilməyəcək.':''}</p>
       </div>
     </div>
@@ -1097,22 +1104,39 @@ function renderPlans(product) {
     if (field==='bestValue') renderPlans(product);
   }));
 
-  document.querySelectorAll("[data-field]").forEach((input) => {
+  $("plans").querySelectorAll(".planDuration").forEach(group => {
+    const amount = group.querySelector("[data-duration]");
+    const unit = group.querySelector("[data-duration-unit]");
+    const updateDuration = () => {
+      amount.max = unit.value === "day" ? "3650" : "";
+      if (!amount.reportValidity()) return;
+      const plan = product.plans[Number(amount.dataset.plan)];
+      const value = Number(amount.value);
+      if (unit.value === "day") {
+        plan.durationDays = value;
+      } else {
+        delete plan.durationDays;
+        plan.months = value;
+        plan.duration_months = value;
+        plan.durationMonths = value;
+      }
+      markDirty();
+    };
+    amount.addEventListener("change", updateDuration);
+    unit.addEventListener("change", updateDuration);
+  });
+
+  $("plans").querySelectorAll("[data-field]").forEach((input) => {
     input.addEventListener("input", () => {
       const plan = product.plans[Number(input.dataset.plan)];
       if (!plan) return;
       if (input.dataset.field === "label") plan[input.dataset.field] = input.value;
+      else if (!input.validity.valid) return;
       else if (input.value === "") {
         delete plan[input.dataset.field];
-        if(input.dataset.field==='months') delete plan.duration_months;
       }
-      else if (input.dataset.field === "regularPrice") {
-        const regularPrice = Math.max(0, Number(input.value) || 0);
-        input.value = String(regularPrice);
-        plan.regularPrice = regularPrice;
-      } else {
+      else {
         plan[input.dataset.field] = Number(input.value);
-        if (input.dataset.field==='months') plan.duration_months=Number(input.value);
       }
       markDirty();
       renderProducts();

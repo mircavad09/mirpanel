@@ -1130,7 +1130,8 @@ function renderPlans(product) {
   if (!plans.length) return `<p>Mövcud plan yoxdur.</p>`;
   return plans.map((plan, index) => {
     if (plan.active === false) return '';
-    const label = normalizeDisplayLabel(cleanText(plan.label)) || `${Number(plan.months) || 1} aylıq`;
+    const duration = plan.durationDays ? `${plan.durationDays} gün` : `${plan.durationMonths ?? plan.months ?? 1} ay`;
+    const label = normalizeDisplayLabel(cleanText(plan.label)) || (plan.durationDays ? duration : `${Number(plan.months) || 1} aylıq`);
     const metrics = planMetrics(plan);
     const price = metrics.price;
     const regularPrice = metrics.oldPrice;
@@ -1141,9 +1142,9 @@ function renderPlans(product) {
     const priceMarkup = discount > 0
       ? `<span class="product-page-plan-prices"><span class="product-page-regular-price">${escapeHtml(`${regularPrice.toFixed(2)} ${cleanText(product.currency)}`)}</span><strong>${escapeHtml(priceText)}</strong><span class="product-page-discount">-${discount}%</span></span>`
       : price > 0 ? `<span class="product-page-plan-prices"><strong>${escapeHtml(priceText)}</strong></span>` : '<span class="product-page-plan-prices">Stokda yoxdur</span>';
-    const hasNamedMonthlyOffer = plans.some(item => Number(item.months) === 1 && /endirim/i.test(item.label || '') && Number(item.regularPrice) > Number(item.price));
-    const emphasis = Number(plan.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(plan.label || '')) ? 'discount-month' : 'standard';
-    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}" data-price-emphasis="${emphasis}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${escapeHtml(label)}</span>${priceMarkup}</div>`;
+    const hasNamedMonthlyOffer = plans.some(item => !item.durationDays && Number(item.months) === 1 && /endirim/i.test(item.label || '') && Number(item.regularPrice) > Number(item.price));
+    const emphasis = !plan.durationDays && Number(plan.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(plan.label || '')) ? 'discount-month' : 'standard';
+    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}" data-price-emphasis="${emphasis}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${escapeHtml(label)}${(plan.durationDays || plan.durationMonths) && label !== duration ? ` · ${escapeHtml(duration)}` : ""}</span>${priceMarkup}</div>`;
   }).join("");
 }
 

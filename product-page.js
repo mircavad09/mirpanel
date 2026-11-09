@@ -212,9 +212,12 @@
       const plan = plans[index], m = utils.detailPlanMetrics(plan);
       row.hidden = plan.active === false;
       row.setAttribute('role','radio'); row.tabIndex = row.hidden ? -1 : 0;
-      row.setAttribute('aria-label',plan.label || `${m.months || ''} aylıq`);
+      const duration = plan.durationDays ? `${plan.durationDays} gün` : plan.durationMonths ? `${plan.durationMonths} ay` : '';
+      const label = plan.label || duration || `${m.months || ''} aylıq`;
+      const planName = duration && label !== duration ? `${label} · ${duration}` : label;
+      row.setAttribute('aria-label', planName);
       const name = row.querySelector('.pp-plan-name');
-      name.textContent = plan.label || `${m.months || ''} aylıq`;
+      name.textContent = planName;
       const notes = text('span','product-detail-plan-notes','');
       notes.id = `plan-details-${product.id}-${index}`;
       notes.setAttribute('role','region'); notes.setAttribute('aria-label','Paketin əlavə məlumatları');
@@ -260,7 +263,7 @@
         return;
       }
       const plan = plans[index], m = utils.planMetrics(plan);
-      summary.append(text('p','product-detail-summary-label',`Seçilmiş paket: ${plan.label || (m.months ? `${m.months} ay` : 'Paket')}`));
+      summary.append(text('p','product-detail-summary-label',`Seçilmiş paket: ${rows[index].getAttribute('aria-label')}`));
       const prices = text('div','product-detail-summary-prices','');
       if (m.price !== null) prices.append(text('strong','',`${utils.formatPrice(m.price)} ₼`));
       if (m.oldPrice !== null) prices.append(text('del','',`${utils.formatPrice(m.oldPrice)} ₼`));

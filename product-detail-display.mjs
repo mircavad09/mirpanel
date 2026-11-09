@@ -3,7 +3,7 @@ import {planMetrics, warrantyText} from './mirpanel-admin/public/product-plan-ut
 export function detailPlanMetrics(plan = {}) {
   const base = planMetrics(plan);
   const raw = plan.duration_months ?? plan.durationMonths ?? plan.months;
-  const months = raw !== '' && raw != null && Number.isSafeInteger(Number(raw)) && Number(raw)>0 ? Number(raw) : null;
+  const months = plan.durationDays ? plan.durationDays / 30 : raw !== '' && raw != null && Number.isSafeInteger(Number(raw)) && Number(raw)>0 ? Number(raw) : null;
   return {...base, months, monthly: months>1 && base.price>0 ? base.price/months : null,
     warranty:['guaranteed','none'].includes(plan.warrantyMode) ? warrantyText(plan) : ''};
 }

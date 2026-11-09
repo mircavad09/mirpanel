@@ -3896,16 +3896,17 @@ function renderProductPlans(p) {
     const isStockOut = price <= 0;
     if(isStockOut) discount = 0;
 
-    const labelName = pl.label ? pl.label : `${pl.months} ${UI.month}`;
+    const duration = pl.durationDays ? `${pl.durationDays} gün` : `${pl.durationMonths ?? pl.months} ${UI.month}`;
+    const labelName = pl.label || duration;
 
     const div = document.createElement("div");
     div.className = `pp-plan-label ${idx === currentPlanIdx ? 'active' : ''}`;
-    const hasNamedMonthlyOffer = plans.some(plan => Number(plan.months) === 1 && /endirim/i.test(plan.label || '') && Number(plan.regularPrice) > Number(plan.price));
-    div.dataset.priceEmphasis = Number(pl.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(pl.label || '')) ? 'discount-month' : 'standard';
+    const hasNamedMonthlyOffer = plans.some(plan => !plan.durationDays && Number(plan.months) === 1 && /endirim/i.test(plan.label || '') && Number(plan.regularPrice) > Number(plan.price));
+    div.dataset.priceEmphasis = !pl.durationDays && Number(pl.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(pl.label || '')) ? 'discount-month' : 'standard';
     div.innerHTML = `
       <div class="pp-plan-left">
          <div class="pp-radio-circle"></div>
-         <div class="pp-plan-name">${labelName}</div>
+         <div class="pp-plan-name">${labelName}${(pl.durationDays || pl.durationMonths) && labelName !== duration ? ` · ${duration}` : ""}</div>
       </div>
       <div class="pp-plan-right">
         ${discount > 0 ? `<div class="pp-plan-price-meta"><div class="pp-old-price">${regularPrice.toFixed(2)} ₼</div><div class="pp-plan-disc-badge">-${discount}%</div></div>` : ''}
