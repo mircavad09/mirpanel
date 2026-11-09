@@ -8,6 +8,7 @@
   });
   const paymentState = {
     pendingStage: "payment", deliveryOpening: false,
+    mobileOpenOrders: new Set(),
     methods: [], orders: [], emails: [], selectedMethodId: "", knownPendingCount: null,
     orderActions: new Set(), methodActions: new Set(), orderQuery: emptyQuery(),
     selectedOrderIds: new Set(), batchBusy: false,
@@ -155,19 +156,31 @@
     return `<button class="btn compact" type="button" data-copy-order-id aria-label="${escp(order.orderCode)} sifariş ID-sini kopyala">ID-ni kopyala</button>`;
   }
 
+  function mobileOrderToggle(order,status){
+    const expanded=paymentState.mobileOpenOrders.has(order.id);
+    const product=order.items?.length?[...new Set(order.items.map(x=>x.title).filter(Boolean))].join(' + '):order.productTitle;
+    return `<button class="paymentMobileOrderToggle" type="button" data-mobile-order-toggle aria-expanded="${expanded}">
+      <span class="paymentMobileOrderTop"><strong>№ ${escp(order.orderCode)}</strong><b>${escp(money(order.amount,order.currency))}</b><span class="paymentMobileOrderArrow" aria-hidden="true">⌄</span></span>
+      <span class="paymentMobileOrderProduct">${escp(product||order.productTitle)}</span><span class="statusPill status-${escp(status)}">${escp(statusLabel[status]||statusLabel.reviewing)}</span>
+    </button>`;
+  }
+  const mobileCustomer=order=>[order.customerName,order.customerNumber?'#'+order.customerNumber:''].filter(Boolean).join(' · ')||'Məlumat yoxdur';
   function orderCard(order) {
     const tab = paymentState.orderQuery.tab;
     const pending = tab === "pending";
+    const expanded=paymentState.mobileOpenOrders.has(order.id);
+    const displayStatus=order.deliveryPending?"preparing":order.status;
     if(pending&&paymentState.pendingStage==="delivery"){
       const products=order.items?.length?order.items.map(x=>x.title+' · '+x.planName+' · '+x.quantity+' ədəd').join(' / '):[order.productTitle,order.planName].filter(Boolean).join(' · ');
-      return `<article class="paymentOrderAdminCard paymentDeliveryCard" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
+      return `<article class="paymentOrderAdminCard paymentDeliveryCard${expanded?' isMobileExpanded':''}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
+        ${mobileOrderToggle(order,displayStatus)}
         <div class="paymentDeliveryInfo"><div><strong>${escp(order.customerName||"Müştəri adı yoxdur")}</strong> <span class="paymentDeliveryMeta">${order.customerNumber?'#'+escp(order.customerNumber):'Müştəri ID-si yoxdur'} · Sifariş №${escp(order.orderCode)}</span></div>
-        <span>${escp(products)}</span><div><span class="statusPill status-reviewing">Təhvil gözlənilir</span> <small class="paymentDeliveryMeta">${order.paymentSource==='wallet'?'Balansla ödənilib':'Ödəniş təsdiqlənib'}</small></div></div>
+        <span>${escp(products)}</span><div><span class="statusPill status-reviewing">Təhvil gözlənilir</span> <small class="paymentDeliveryMeta">${order.paymentSource==='wallet'?'Balansla ödənilib':'Ödəniş təsdiqlənib'}</small></div>
+        ${order.paymentSource!=='wallet'?'<small class="paymentMobileOrderField">'+escp(order.paymentMethodLabel)+'</small>':''}</div>
         <button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>
       </article>`;
     }
     const expiring = tab === "expiring";
-    const displayStatus=order.deliveryPending?"preparing":order.status;
     const displayDate = pending ? order.createdAt : order.completedAt;
     const fields = [
       ["Məhsul", order.productTitle], ["Plan", order.planName], ["Məbləğ", money(order.amount, order.currency)], ["Ödəniş üsulu", order.paymentMethodLabel]
@@ -184,9 +197,12 @@
     if (tab === "all") fields.push(["Əlaqə", order.contactedAt ? `Əlaqə saxlanıldı · ${dateTime(order.contactedAt)}` : "Əlaqə saxlanılmayıb"]);
     if (expiring) fields.push(["Vəziyyət", order.expiry?.label || "Müddət müəyyən edilməyib"]);
     const selected = expiring && paymentState.selectedOrderIds.has(order.id);
-    return `<article class="paymentOrderAdminCard status-${escp(order.status)}${selected ? " isSelected" : ""}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
+    return `<article class="paymentOrderAdminCard status-${escp(order.status)}${selected ? " isSelected" : ""}${expanded?' isMobileExpanded':''}" data-payment-order-id="${escp(order.id)}" data-order-code="${escp(order.orderCode)}">
+      ${mobileOrderToggle(order,displayStatus)}
       <div class="paymentOrderHead"><div>${expiring ? `<label class="paymentOrderSelect"><input type="checkbox" data-expiring-order-select aria-label="${escp(order.orderCode)} sifarişini seç"${selected ? " checked" : ""}></label>` : ""}<strong title="${escp(order.orderCode)}">${escp(order.orderCode)}</strong>${copyButton(order)}<span class="statusPill status-${escp(expiring ? order.expiry?.code : displayStatus)}">${escp(expiring ? order.expiry?.label : statusLabel[displayStatus] || "Yoxlanılır")}</span></div><time datetime="${escp(displayDate || "")}">${escp(dateTime(displayDate))}</time></div>
-      <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}</div>
+      <div class="paymentOrderCompactGrid">${fields.map(([label, value]) => `<span><b>${escp(label)}</b><em title="${escp(value)}">${escp(value)}</em></span>`).join("")}
+      ${pending&&order.customerName?'':`<span class="paymentMobileOrderField"><b>Müştəri</b><em>${escp(mobileCustomer(order))}</em></span>`}
+      <span class="paymentMobileOrderField"><b>Təhvil</b><em>${escp(order.deliveryPending?'Gözlənilir':displayStatus==='completed'?'Tamamlandı':displayStatus==='reviewing'?'Ödəniş yoxlanılır':'Təhvil yoxdur')}</em></span></div>
       <div class="paymentOrderActions">
         <button class="btn" type="button" data-order-details>Sifariş məlumatları</button>
         ${order.deliveryPending??(order.paymentSource==='wallet'||['approved','completed'].includes(order.status))?'<button class="btn" type="button" data-order-delivery>Sifarişi təhvil ver</button>':''}
@@ -514,6 +530,7 @@
     if (list) list.setAttribute("aria-busy", "true");
     const query = new URLSearchParams(Object.entries(paymentState.orderQuery).filter(([, value]) => value !== ""));
     if(paymentState.orderQuery.tab==="pending")query.set("pendingStage",paymentState.pendingStage);
+    else if(matchMedia("(max-width:650px)").matches)query.set("includeCustomer","true");
     if(automatic)query.set('preserveFilters','true');
     const anchor=automatic&&list?(window.AdminLive?.anchor(list)||(paymentState.orders[0]?{id:paymentState.orders[0].id}:null)):null;
     if(anchor){query.set('anchorId',anchor.id);query.set('anchorIndex',String(paymentState.orders.findIndex(o=>o.id===anchor.id)));}
@@ -779,6 +796,12 @@
         if (event.target.closest("#paymentClearSelection")) clearOrderSelection();
         if (event.target.closest("#paymentConfirmSelected")) await confirmSelectedExpiringOrders();
         const card = event.target.closest("[data-payment-order-id]");
+        const mobileToggle=event.target.closest("[data-mobile-order-toggle]");
+        if(card&&mobileToggle){
+          const open=mobileToggle.getAttribute("aria-expanded")!=="true",id=card.dataset.paymentOrderId;
+          if(open)paymentState.mobileOpenOrders.add(id);else paymentState.mobileOpenOrders.delete(id);
+          mobileToggle.setAttribute("aria-expanded",String(open));card.classList.toggle("isMobileExpanded",open);return;
+        }
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
         if (card && event.target.closest("[data-order-details]")) await handleOrderAction(card, "details");

@@ -752,9 +752,12 @@ export function createPaymentSystem(options) {
       const deliveryQueue=query.tab==='pending'&&query.pendingStage==='delivery';
       if(deliveryQueue&&!canDeliver)throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
       const orders = await store.listOrders(query, catalog.products, {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined});
-      if(canDeliver&&query.tab==='pending'&&query.pendingStage&&options.orderCustomers){
-        const customers=new Map((await options.orderCustomers(orders.orders.map(o=>o.id))).map(o=>[o.id,o]));
-        for(const order of orders.orders){const customer=customers.get(order.id);order.customerName=customer?.name||null;order.customerNumber=customer?.memberNumber||null;}
+      const pendingCustomerView=query.tab==='pending'&&Boolean(query.pendingStage);
+      if(canDeliver&&options.orderCustomers&&orders.orders.length&&(pendingCustomerView||query.includeCustomer==='true')){
+        try{
+          const customers=new Map((await options.orderCustomers(orders.orders.map(o=>o.id))).map(o=>[o.id,o]));
+          for(const order of orders.orders){const customer=customers.get(order.id);order.customerName=customer?.name||null;order.customerNumber=customer?.memberNumber||null;}
+        }catch(error){if(pendingCustomerView)throw error; /* Optional display metadata must not block the history list. */}
       }
       if(!deliveryQueue&&options.pendingDeliveries&&canDeliver){
         const candidates=(orders.orders||[]).filter(o=>o.paymentSource==='wallet'||['approved','completed'].includes(o.status));
