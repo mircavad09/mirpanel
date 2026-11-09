@@ -15,14 +15,13 @@ body.profile-screen:has(#communityApp .account-subscriptions){background:#0c0c0c
 .account-subscriptions .subs-list{display:grid;gap:14px}
 .account-subscriptions .subs-filter-status{margin:0;color:#d2d2d2}
 .account-subscriptions .subs-filter-status:empty{display:none}
-.account-subscriptions .subs-summary .subs-estimate{color:#ffdc89}
 .account-subscriptions .subs-prices{display:flex;flex-wrap:wrap;gap:5px 20px;margin:9px 0 0;font-size:13px}
 .account-subscriptions .subs-prices>div{display:flex;flex-wrap:wrap;gap:3px 6px}
 .account-subscriptions .subs-prices dt{color:#bcbcbc}
 .account-subscriptions .subs-prices dd{margin:0;color:#f5f5f5;font-weight:650;white-space:nowrap}
 .account-subscriptions .subs-balance{justify-self:end;display:inline-flex;align-items:center;min-height:36px;padding:6px 11px;border-radius:12px;background:#e7e7e7;color:#171717;font-weight:650;text-decoration:none;font-size:12px}
-.account-subscriptions .subs-warning{display:flex;gap:8px;align-items:flex-start;border-color:#67430c;background:#251b0c;color:#ffe0a0}
-.account-subscriptions .subs-warning svg{margin-top:2px}
+.account-subscriptions .subs-warning{display:flex;gap:8px;align-items:flex-start;border-color:#9a701c;background:#251b0c;color:#ffe0a0}
+.account-subscriptions .subs-warning svg{margin-top:2px;color:#ffcb47}
 .account-subscriptions .subs-card{background:#181818}
 .account-subscriptions .subs-card-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:10px}
 .account-subscriptions .subs-product h2{font-size:15px;margin:0;overflow-wrap:anywhere}

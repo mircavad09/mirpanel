@@ -23,7 +23,7 @@ export function summarize(rows){
 }
 export function mountSubscriptions({content,el,button,link,api,validate,initial,initialRequest,onData,onUnauthorized,spinner}){
  const life=new AbortController(),root=el('div',{class:'account-subscriptions'}),count=el('span',{class:'subs-count',hidden:''}),body=el('div',{class:'subs-body'}),notice=el('p',{class:'subs-notice',role:'status'});
- const css='/community-assets/account-subscriptions.css?v=renewal-prices-1';
+ const css='/community-assets/account-subscriptions.css?v=renewal-summary-1';
  if(!document.head.querySelector('link[data-subscriptions]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-subscriptions':'','data-shell-persistent':''}));
  const heading=el('header',{class:'subs-panel'},el('div',{class:'subs-heading'},el('span',{class:'subs-icon'},icon('calendar')),el('h1',{},'Abunəliklərim'),count),el('p',{},'Abunəliklərinizin nə vaxt bitdiyini bir baxışda görün'));
  root.append(heading,notice,body);content.replaceChildren(root);
@@ -99,10 +99,9 @@ export function mountSubscriptions({content,el,button,link,api,validate,initial,
   }
   showRows();
   const summary=el('div',{class:'subs-panel subs-summary'},el('span',{class:'subs-icon'},icon('wallet')),el('div',{},
-   el('p',{},'30 gün ərzində bitəcək abunəliklər'),el('strong',{},x.total===null?'Qiymət məlum deyil':azMoney(x.total)),el('small',{},' · '+x.soon+' abunəlik'),
-   x.estimated?el('p',{class:'subs-estimate'},'Təxmini cəm · '+x.estimated+' abunəlik üçün son alış qiyməti götürülüb.'):null,
+   el('p',{},'30 gündə yenilənəcək'),el('div',{},el('strong',{},x.total===null?'Qiymət məlum deyil':azMoney(x.total)),el('small',{},' · '+x.soon+' abunəlik')),
    x.unpriced?el('p',{},x.unpriced+' abunəliyin qiyməti məlum deyil; cəmə daxil edilməyib.'):null),toggle);
-  const warning=x.week?el('p',{class:'subs-warning'},icon('warning'),x.week+' abunəliyin müddəti bu həftə bitir. Xidmət kəsilməsin deyə indidən yeniləyə bilərsiniz.'):null;
+  const warning=x.week?el('p',{class:'subs-warning'},icon('warning'),x.week+' abunəliyin müddəti bu həftə bitir. Kəsilməməsi üçün indidən yeniləyə bilərsiniz.'):null;
   body.replaceChildren(summary,...(warning?[warning]:[]),filterStatus,list,
    ...(rows.some(row=>row.estimated)?[el('p',{class:'subs-footnote'},'Ayrıca bitmə tarixi saxlanmayıbsa, tarix faktiki təhvil günü və məlum paket müddətindən hesablanır.')]:[]));
  }

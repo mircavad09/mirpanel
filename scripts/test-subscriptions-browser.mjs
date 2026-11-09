@@ -72,11 +72,15 @@ try{
    await cap.getByRole('button',{name:'Yenilə'}).click();await modal.getByText('Bu abunəlik üçün yeniləmə artıq davam edir.').waitFor();
    assert.equal(await modal.getByRole('button',{name:/1 ay/}).isDisabled(),true);
    const old={...row('capcut','CapCut Pro',28,null),plan:'Silinmiş CapCut paketi',lastPurchaseCents:499};
-   rows=[old,{...old,days:30},{...row('netflix','Netflix Şəxsi',31,null),options:[]}];
+   rows=[{...old,days:5,expiresOn:'2026-11-14'}, {...old,days:30,expiresOn:'2026-12-09'},{...row('netflix','Netflix Şəxsi',31,null),options:[]}];
    saved=null;await p.reload();
-   await p.getByText('9,98 ₼',{exact:true}).waitFor();
-   await p.getByText('Təxmini cəm · 2 abunəlik üçün son alış qiyməti götürülüb.').waitFor();
+   await p.getByText('30 gündə yenilənəcək',{exact:true}).waitFor();
+   await p.getByText('9,98 ₼ · 2 abunəlik',{exact:true}).waitFor();
+   assert.equal(await p.getByText(/Təxmini cəm/).count(),0);
+   await p.locator('.subs-warning').getByText('1 abunəliyin müddəti bu həftə bitir. Kəsilməməsi üçün indidən yeniləyə bilərsiniz.',{exact:true}).waitFor();
    assert.equal(await p.getByText('4,99 ₼',{exact:true}).count(),2);
+   assert.equal(await p.getByText('Silinmiş CapCut paketi',{exact:false}).count(),2);
+   assert.deepEqual(await cap.locator('time').allTextContents(),['14.11.2026','09.12.2026']);
    await p.getByRole('button',{name:'Yeniləmə seçimləri'}).click();
    assert.equal(await p.locator('.subs-card').count(),2);
    assert.equal(await p.getByText('Netflix Şəxsi',{exact:true}).count(),0);
@@ -92,6 +96,12 @@ try{
    await terms.getByRole('button',{name:'Təsdiqləyirəm'}).click();
    await p.waitForFunction(()=>window.committed&&window.cartOpen);
    assert.equal(saved.productId,'capcut');
+   rows=[old,{...old,days:7}];await p.reload();
+   await p.getByText('1 abunəliyin müddəti bu həftə bitir. Kəsilməməsi üçün indidən yeniləyə bilərsiniz.',{exact:true}).waitFor();
+   rows=[{...old,days:5},{...old,days:7}];await p.reload();
+   await p.getByText('2 abunəliyin müddəti bu həftə bitir. Kəsilməməsi üçün indidən yeniləyə bilərsiniz.',{exact:true}).waitFor();
+   rows=[old];await p.reload();await p.getByText('4,99 ₼ · 1 abunəlik',{exact:true}).waitFor();
+   assert.equal(await p.locator('.subs-warning').count(),0);
    console.log('PASS '+engine.name()+' '+width+'px: summary, date, 10/7/6/3, picker → existing terms → cart, preparing and failed');
   }finally{await b.close();}
  }
