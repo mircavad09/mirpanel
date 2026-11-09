@@ -24,7 +24,7 @@ try{
   const hash=(user==='a'?'a':'b').repeat(64),item={productId:'ordinary',planIndex:0,quantity:1},q=await f.shop.quote({user},[item],hash);
   const purchase=await f.shop.checkout({user},hash,{mode:'wallet',items:[{...item,termsVersion:q.items[0].termsVersion}],requestId:f.id(),consentAccepted:true});
   const id=purchase.orderId,delivery=f.id();ids[user]=id;deliveries[user]=delivery;
-  const snap={productId:'ordinary',planId:'month',planName:'1 aylıq',unitPrice:5,quantity:1,amount:5,durationMonths:1};
+  const snap={productId:'ordinary',planId:'month',planName:'1 aylıq',unitPrice:5,quantity:1,amount:5,durationMonths:1,image:'/synthetic.png'};
   await f.pool.query(`update public.payment_orders set product_id='ordinary',plan_name='1 aylıq',product_title=$2,status='approved',checkout_snapshot=$3,completed_at=clock_timestamp(),service_expires_on=current_date+20 where id=$1`,[id,'Sintetik məhsul '+user,snap]);
   await f.pool.query('insert into customer_order_deliveries(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,0,1,$3,\'synthetic\')',[delivery,id,security.encryptSecret(JSON.stringify({id:delivery,order:id,line:0,message:'Yalnız '+user+' üçün\nİstifadə qaydası',email:user+'@example.test',password:'test-'+user}))]);
  }
@@ -65,6 +65,7 @@ try{
  for(const [engine,name]of [[chromium,'chrome'],[webkit,'webkit']]){
   browser=await engine.launch({headless:true,...(name==='chrome'?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
   const ctx=await browser.newContext();eq((await ctx.request.post(base+'/api/login',{data:{username:'synthetic-owner',password}})).status(),200);const s=await(await ctx.request.get(base+'/api/session')).json();
+  await ctx.route('https://mirpanel.com/**',r=>r.fulfill({contentType:'image/png',body:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+nmGQAAAAASUVORK5CYII=','base64')}));
   for(const width of [320,390,430,1440]){
    for(const user of ['a','b']){
     const r=await ctx.request.post(base+'/api/admin/community/customer-view',{data:{userId:user},headers:{'x-csrf-token':s.csrfToken}});eq(r.status(),200);const grant=await r.json();
@@ -76,7 +77,7 @@ try{
      await page.locator('[data-account-tab="'+tab+'"]').click();
      const target={orders:'.browser-order',codes:'.codes-card',subscriptions:'.subs-card',payments:'.account-payment-list article'}[tab];
      try{await page.locator(target).first().waitFor({timeout:18000});}catch(e){await page.screenshot({path:out+'/failure.png',fullPage:true});console.log(JSON.stringify({tab,text:await page.locator('main').textContent(),pageErrors,serverErrors:errors}));throw e;}
-     if(tab==='subscriptions')eq(await page.locator('.subs-renew').first().isDisabled(),true);
+     if(tab==='subscriptions'){eq(await page.locator('.subs-renew').first().isDisabled(),true);eq(await page.locator('.subs-image img').first().getAttribute('src'),'https://mirpanel.com/synthetic.png');}
      if(tab==='codes'){await page.getByRole('button',{name:'Göstər',exact:true}).first().click();await page.getByText('Yalnız '+user+' üçün',{exact:false}).waitFor();eq((await page.locator('main').textContent()).includes('test-'+(user==='a'?'b':'a')),false);}
     }
     if(user==='a'){await page.locator('[data-account-tab="subscriptions"]').click();await page.locator('.subs-card').waitFor();await page.screenshot({path:out+'/'+name+'-'+width+'.png',fullPage:true});}
@@ -98,5 +99,7 @@ try{
   await ctx.clearCookies();eq((await ctx.request.post(base+'/api/admin/community/customer-view',{data:{userId:'a'}})).status(),403);
   await ctx.close();await browser.close();browser=null;
  }
+ eq((await f.pool.query("select to_jsonb(p) profile,(select count(*)::int from community_presence) presence from community_profiles p where user_id='a'")).rows,before.rows);
+ eq((await f.pool.query('select count(*)::int n from session')).rows[0].n,0);
  console.log(JSON.stringify({checks,result:'PASS',engines:['Chrome','WebKit'],widths:[320,390,430,1440],database:'isolated',mailSent:0}));
 }finally{await browser?.close();child?.kill();if(upstream)await new Promise(r=>upstream.close(r));if(gateServer)await new Promise(r=>gateServer.close(r));await f.close();}

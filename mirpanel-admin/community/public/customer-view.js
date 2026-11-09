@@ -3,6 +3,16 @@ const app=document.getElementById('communityApp'),base=location.pathname,apiBase
 const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v!==undefined)n.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)n.append(c);return n;};
 const button=(text,fn,primary=false)=>el('button',{type:'button',class:primary?'primary':'',onclick:fn},text);
 const link=(text,href,cls='button')=>el('a',{href,class:cls},text);
+// Admin and storefront have different origins and URL depths. Catalog and
+// guide artwork belongs to the storefront, never the protected view path.
+function publicImages(value){
+ if(Array.isArray(value))return value.map(publicImages);
+ if(value&&typeof value==='object')for(const key of Object.keys(value)){
+  if(key==='image'&&typeof value[key]==='string'&&value[key]){try{value[key]=new URL(value[key],'https://mirpanel.com/').href;}catch{value[key]='';}}
+  else value[key]=publicImages(value[key]);
+ }
+ return value;
+}
 let stopped=false,dispose;const requests=new Set();
 function clear(message){stopped=true;dispose?.();for(const c of requests)c.abort();requests.clear();state.profile=null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));app.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Baxış bağlandı'),el('p',{},message)));}
 async function api(path,data){
@@ -13,7 +23,7 @@ async function api(path,data){
   const r=await fetch(apiBase+'?'+new URLSearchParams({path}),{credentials:'same-origin',cache:'no-store',signal:controller.signal,headers:{Accept:'application/json'}});
   const value=await r.json();
   if(!r.ok){if(r.status===401||r.status===403)clear(value.error);throw Object.assign(Error(value.error||'Məlumat alınmadı.'),{status:r.status});}
-  return value;
+  return publicImages(value);
  }finally{clearTimeout(timer);requests.delete(controller);}
 }
 function media(p){for(const key of ['avatarUrl','coverUrl'])if(p[key]?.startsWith('/api/community/media/'))p[key]=apiBase+'?'+new URLSearchParams({path:p[key]});return p;}
