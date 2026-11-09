@@ -69,10 +69,16 @@ try {
   assert.ok(maxOffset>=1000);
   records.push(...Array.from({length:24},(_,i)=>({...cart(3000+i,"approved"),payment_source:i%2?"wallet":"card",payment_confirmed:true})));
   const pendingDeliveries=async ids=>ids.filter(id=>Number(id.slice(-12))>=3002);
-  const delivery=page=>store.listOrders({tab:"pending",pendingStage:"delivery",productId:"netflix",page},catalog,{pendingDeliveries});
+  const pendingDeliveryProgress=async()=>records.filter(o=>Number(o.order_code)>=3002).map(o=>({id:o.id,remaining:[1,0,0]}));
+  const delivery=(page,productId="netflix")=>store.listOrders({tab:"pending",pendingStage:"delivery",productId,page},catalog,{pendingDeliveries,pendingDeliveryProgress});
   const d1=await delivery(1),d2=await delivery(2);
   assert.equal(d1.pagination.total,22);
   assert.equal(d1.orders.length,20);assert.equal(d2.orders.length,2);
+  assert.equal(d1.counts.delivery,22);assert.equal(d2.counts.delivery,22);
+  assert.equal(d1.counts.pendingTotal,d1.counts.pending+22);
+  const emptyDelivery=await delivery(1,"zoom");
+  assert.equal(emptyDelivery.pagination.total,0);assert.equal(emptyDelivery.counts.delivery,22);
+  assert.ok([...d1.orders,...d2.orders].every(o=>o.remainingDelivery?.join()==="1,0,0"));
   assert.ok([...d1.orders,...d2.orders].every(o=>o.deliveryPending&&Number(o.orderCode)>=3002));
   const today=await store.listOrders({tab:"today",productId:"netflix"},catalog,{pendingDeliveries});
   assert.deepEqual(today.orders.map(o=>o.orderCode),["3001","3000","6"]);

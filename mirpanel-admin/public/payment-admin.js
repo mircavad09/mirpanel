@@ -234,14 +234,15 @@
 
   function updateOrderCounts(counts = paymentState.orderMeta.counts) {
     paymentState.orderMeta.counts = counts;
-    for (const [key, id] of Object.entries({ pending: "paymentPendingCount", today: "paymentTodayCount", all: "paymentAllCount", expiring: "paymentExpiringCount" })) {
+    for (const [key, id] of Object.entries({ pending: "paymentPendingCount", delivery: "paymentDeliveryCount", today: "paymentTodayCount", all: "paymentAllCount", expiring: "paymentExpiringCount" })) {
       if ($p(id)) $p(id).textContent = String(counts[key] || 0);
     }
     const nav = document.querySelector('.navBtn[data-view="paymentOrders"]');
     if (nav) {
-      const attention = Number(counts.expiring || 0);
-      nav.dataset.attentionCount = String(attention);
-      nav.setAttribute("aria-label", attention ? `Sifarişlər, ${attention} əlaqə saxlanılmamış bitən məhsul` : "Sifarişlər");
+      const pending = Number(counts.pendingTotal ?? counts.pending ?? 0);
+      nav.dataset.pendingCount = String(pending);
+      delete nav.dataset.attentionCount;
+      nav.setAttribute("aria-label", pending ? `Sifarişlər, ${pending} gözləyən sifariş` : "Sifarişlər");
     }
   }
 
@@ -605,7 +606,11 @@
   }
 
   async function loadEmails() { const result = await paymentApi("/api/admin/payment-emails"); paymentState.emails = result.emails || []; renderEmails(); }
-  async function refreshOrderCounts() { const result = await paymentApi("/api/admin/payment-orders?tab=pending&page=1"); updateOrderCounts(result.counts || {}); }
+  async function refreshOrderCounts() {
+    const sequence=paymentState.orderRequestSequence;
+    const result=await paymentApi("/api/admin/payment-orders?tab=pending&pendingStage=payment&page=1");
+    if(sequence===paymentState.orderRequestSequence)updateOrderCounts(result.counts||{});
+  }
 
   async function saveMethod(form) {
     const data = Object.fromEntries(new FormData(form));
@@ -682,7 +687,7 @@
     try {
       const result = await paymentApi(`/api/admin/payment-orders/${id}/${action}`, { method: "POST", body: "{}" });
       toast(result.idempotent ? "Bu əməliyyat artıq tətbiq edilib." : "Sifariş məlumatı yeniləndi.");
-      card.remove(); await Promise.all([loadOrders(), loadMethods()]);
+      await Promise.all([loadOrders(), loadMethods()]);
     } finally { paymentState.orderActions.delete(id); if (card.isConnected) card.querySelectorAll("button").forEach((button) => { button.disabled = false; }); }
   }
 

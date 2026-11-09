@@ -37,16 +37,19 @@ export async function recordDelivery(c,security,actor,orderId,id,line,quantity,m
  return record;
 }
 export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
- if(!ids.length)return [];
+ if(ids && !ids.length)return [];
  if(!(await pool.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name)throw fail(503,'Təhvil məlumatı hazırda əlçatan deyil.');
- // Older paid orders may have been fulfilled outside this delivery system. A
- // missing delivery record alone does not put those historical orders in queue.
+ // Legacy card approval filled completed_at without tracking customer delivery.
+ // A payment email alone cannot put those historical orders back in the queue.
+ // Explicit payment confirmation or delivery records opt the order into tracking.
  const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity
-   from public.payment_orders o join ${O} u on u.order_id=o.id where o.id=any($1::uuid[])
-   and (o.status in ('reviewing','new_receipt_requested')
-     or o.payment_source='wallet'
-     or exists(select 1 from ${M} m where m.event_key='payment:'||o.id::text)
-     or exists(select 1 from ${D} d where d.order_id=o.id))`,[ids])).rows.filter(paid);
+   from public.payment_orders o join ${O} u on u.order_id=o.id
+   where o.status in ('approved','reviewing','new_receipt_requested')
+   and (o.payment_confirmed is true or o.status='approved')
+   ${ids?'and o.id=any($1::uuid[])':''}
+   and (o.payment_confirmed is true
+     or (o.completed_at is null and exists(select 1 from ${M} m where m.event_key='payment:'||o.id::text))
+     or exists(select 1 from ${D} d where d.order_id=o.id))`,ids?[ids]:[])).rows;
  const records=await deliveryRecords(pool,orders.map(o=>o.id));
  const byOrder=new Map();
  for(const record of records){if(!byOrder.has(record.order_id))byOrder.set(record.order_id,[]);byOrder.get(record.order_id).push(record);}

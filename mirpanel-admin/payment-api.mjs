@@ -760,12 +760,7 @@ export function createPaymentSystem(options) {
       const query=Object.fromEntries(url.searchParams), canDeliver=options.readyStockAllowed?.(request);
       const deliveryQueue=query.tab==='pending'&&query.pendingStage==='delivery';
       if(deliveryQueue&&!canDeliver)throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
-      const orders = await store.listOrders(query, catalog.products, {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined});
-      if(deliveryQueue&&options.pendingDeliveryProgress){
-        const progress=new Map((await options.pendingDeliveryProgress(orders.orders.map(o=>o.id))).map(o=>[o.id,o.remaining]));
-        orders.orders=orders.orders.filter(o=>progress.has(o.id));
-        for(const order of orders.orders)order.remainingDelivery=progress.get(order.id);
-      }
+      const orders = await store.listOrders(query, catalog.products, {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined});
       const pendingCustomerView=query.tab==='pending'&&Boolean(query.pendingStage);
       if(canDeliver&&options.orderCustomers&&orders.orders.length&&(pendingCustomerView||query.includeCustomer==='true')){
         try{

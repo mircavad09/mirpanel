@@ -29,6 +29,7 @@ const codes=createAccountOrders({security,store:f.store,resolve:req=>({userId:re
 const item=async(productId,quantity=1)=>{const x={productId,quantity,planIndex:0},q=await shop.quote(buyer,[x],hash);return {...x,termsVersion:q.items[0].termsVersion};};
 try{
  await db.exec(db.read('mirpanel-admin/community/order-delivery-migration.sql'));
+ await db.exec(db.read('supabase/migrations/202611090904_topup_emails.sql'));
  await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));
  await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));
  eq(Object.values((await sql(db.read('mirpanel-admin/community/ready-stock-verification.sql'))).rows[0]).every(Boolean),true);

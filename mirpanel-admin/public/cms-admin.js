@@ -213,7 +213,7 @@
     </div>
     <div id="paymentPendingStages" class="paymentPendingStages" role="group" aria-label="Gözləyən sifarişin mərhələsi">
       <button type="button" class="btn" data-payment-pending-stage="payment" aria-pressed="true">Ödəniş yoxlanılır (<span id="paymentPendingCount">0</span>)</button>
-      <button type="button" class="btn" data-payment-pending-stage="delivery" aria-pressed="false">Təhvil gözlənilir</button>
+      <button type="button" class="btn" data-payment-pending-stage="delivery" aria-pressed="false">Təhvil gözlənilir (<span id="paymentDeliveryCount">0</span>)</button>
     </div>
     <section id="paymentMonthlyReports" class="paymentMonthlyReports" aria-label="Aylıq maliyyə hesabatı" hidden>
       <div class="sectionHead"><div><h3 id="paymentReportTitle">Filtr üzrə maliyyə hesabatı</h3><p id="paymentCurrentMonthLabel">Bakı vaxtı ilə tamamlanmış sifarişlər</p></div><button class="btn compact" type="button" id="paymentMonthlyReportsRefresh">Yenilə</button></div>

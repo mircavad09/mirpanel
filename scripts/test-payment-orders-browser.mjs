@@ -157,6 +157,21 @@ try {
   await page.waitForFunction(() => document.getElementById("paymentCostBackfillResult")?.textContent.includes("Dəqiq uyğunlaşdı"));
   assert.match(await page.textContent("#paymentCostBackfillResult"), /Uyğunlaşmadı: 1/);
   assert.equal(await page.locator("#paymentCostBackfillApply").isDisabled(), false);
+  await page.evaluate(()=>{
+    const state=window.__fixtureState;
+    state.delivery=state.all.slice(0,2).map(row=>({...row,status:"preparing",deliveryPending:true}));
+  });
+  await page.click('.navBtn[data-view="paymentOrders"]');
+  await page.click('[data-payment-order-tab="pending"]');
+  await page.locator('[data-payment-pending-stage="delivery"]').click();
+  await page.waitForFunction(()=>document.getElementById("paymentDeliveryCount")?.textContent==="2" && document.querySelectorAll("[data-order-delivery]").length===2);
+  const pendingPayment=await page.evaluate(()=>window.__fixtureState.pending.length);
+  const sidebar=page.locator('.navBtn[data-view="paymentOrders"]');
+  assert.equal(await sidebar.getAttribute("data-pending-count"),String(pendingPayment+2));
+  await page.locator("[data-order-delivery]").first().click();
+  await page.locator('[data-payment-delivery-dialog] button[type="submit"]').click();
+  await page.waitForFunction(()=>document.getElementById("paymentDeliveryCount")?.textContent==="1" && document.querySelectorAll("[data-order-delivery]").length===1);
+  assert.equal(await sidebar.getAttribute("data-pending-count"),String(pendingPayment+1));
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
   await page.close();
   console.log(JSON.stringify({ ok: true, viewports: [320, 390, 768, 1440], tabs: ["pending", "today", "all", "expiring"], fullCatalogInEveryTab: true, spotifyInEveryTab: true, filteredFinanceTodayAndAll: true, customDateValidation: true, azDateHeading: true, azArchiveMonthLabel: "Avqust 2026", pagination: "20 + 7 after isolated approval", dayGrouping: true, approveAndRejectMoveRows: true, expiringBatchFilteredAndIdempotent: true, selectionClearsOnFilterChange: true, visibleCardInput: true, profitEditor: true, backfillPreview: true, consoleErrors: 0 }, null, 2));

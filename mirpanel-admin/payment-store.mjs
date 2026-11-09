@@ -435,7 +435,7 @@ export function createPaymentStore(config) {
       const rows=await rpc('employee_order_workflow',{p_ids:ids});
       return new Map(rows.map(({id,...workflow})=>[id,workflow]));
     },
-    async listOrders(input = {}, catalog = [], { pendingDeliveries, deliveryCompletions } = {}) {
+    async listOrders(input = {}, catalog = [], { pendingDeliveries, pendingDeliveryProgress, deliveryCompletions } = {}) {
       await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
@@ -459,7 +459,11 @@ export function createPaymentStore(config) {
       const completedView = filters.tab === "today" && Boolean(pendingDeliveries);
       if (deliveryQueue && !pendingDeliveries) throw Object.assign(new Error("Təhvil siyahısı yalnız adminə açıqdır."), { status: 403 });
       const paidView = completedView || (filters.tab === "all" && Boolean(deliveryCompletions));
-      const statuses = deliveryQueue || paidView ? ["approved", "completed", "reviewing", "new_receipt_requested"] : orderDatabaseStatuses(filters);
+      const statuses = deliveryQueue ? ["approved", "reviewing", "new_receipt_requested"]
+        : paidView ? ["approved", "completed", "reviewing", "new_receipt_requested"] : orderDatabaseStatuses(filters);
+      const deliveryProgress = pendingDeliveryProgress
+        ? new Map((await pendingDeliveryProgress()).map(({id,remaining})=>[id,remaining]))
+        : null;
       const dateColumn = filters.tab === "pending" ? "created_at" : "completed_at";
       const matchingQuery = (columns, options, completionIds = []) => {
         let query = applyCommonFilters(client.from("payment_orders").select(columns, options), dateColumn).in("status", statuses);
@@ -495,7 +499,8 @@ export function createPaymentStore(config) {
           if (!result.data?.length && offset < facetTotal) throw paymentError(null, "Sifariş filtri tam yüklənmədi. Yenidən cəhd edin.");
           offset += result.data?.length || 0;
           const candidates = (result.data || []).filter(row => !seenOrders.has(row.id) && (!matchProduct || matchProduct(row)));
-          const pending = (deliveryQueue || completedView) && candidates.length ? new Set(await pendingDeliveries(candidates.map(row => row.id))) : null;
+          const pending = (deliveryQueue || completedView) && candidates.length
+            ? deliveryProgress || new Set(await pendingDeliveries(candidates.map(row => row.id))) : null;
           const completions = paidView && rangeStart && deliveryCompletions && candidates.length
             ? new Map((await deliveryCompletions({ids:candidates.map(row=>row.id)})).map(o=>[o.id,o.completedAt])) : recent;
           for (const row of candidates) if (!pending || pending.has(row.id) === deliveryQueue) {
@@ -602,6 +607,7 @@ export function createPaymentStore(config) {
             productId: order.product_id,
             productTitle: order.product_title,
             items:orderLines(order.checkout_snapshot),
+            ...(deliveryQueue && deliveryProgress ? {remainingDelivery:deliveryProgress.get(order.id)} : {}),
             planId: order.plan_id,
             planName: order.plan_name,
             quantity: order.quantity,
@@ -637,6 +643,8 @@ export function createPaymentStore(config) {
         },
         counts: {
           pending: pendingCount,
+          delivery: deliveryProgress?.size ?? (deliveryQueue ? facetRows.length : 0),
+          pendingTotal: pendingCount + (deliveryProgress?.size ?? (deliveryQueue ? facetRows.length : 0)),
           today: todayCount,
           all: filters.tab === "all" ? total : completedCount,
           expiring: filters.tab === "expiring" ? total : expiringCount

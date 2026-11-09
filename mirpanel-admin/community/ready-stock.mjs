@@ -105,6 +105,9 @@ export async function approveCardWithReadyStock(pool,security,orderId,duration,a
    const order=(await c.query(`select o.checkout_snapshot,o.quantity from public.payment_orders o
      where o.id=$1 and o.payment_source='card'
        and exists(select 1 from mirpanel_community.community_order_owners u where u.order_id=o.id)`,[orderId])).rows[0];
+   // Approval timestamps are also used by historical card orders. Mark new
+   // account-bound payments explicitly so manual delivery remains in the queue.
+   if(order)await c.query('update public.payment_orders set payment_confirmed=true where id=$1 and payment_confirmed is not true',[orderId]);
    if(order&&await enabled(c)){
     const snap=order.checkout_snapshot||{};
     const saved=(await c.query('select product_id,snapshot from mirpanel_community.shop_lines where order_id=$1 order by position',[orderId])).rows;
