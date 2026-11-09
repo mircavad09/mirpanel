@@ -1,8 +1,9 @@
 import fs from 'node:fs';import http from 'node:http';import crypto from 'node:crypto';import assert from 'node:assert/strict';import {spawn} from 'node:child_process';import {once} from 'node:events';import {shopFixture} from './shop-test-fixture.mjs';import {hashPassword} from '../mirpanel-admin/employee-security.mjs';
-import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const {chromium}=await import(process.env.MIRPANEL_PLAYWRIGHT||'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs');
 const f=await shopFixture(),password=crypto.randomBytes(24).toString('base64url'),username='synthetic-shop-admin',worker={id:crypto.randomUUID(),login:'synthetic-worker',display_name:'Worker',password_hash:await hashPassword(password),active:true,session_version:1,employee_started_at:null};let checks=0,child,upstream,browser;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;},sessions=new Map(),json=(res,s,v)=>{res.writeHead(s,{'Content-Type':'application/json'});res.end(JSON.stringify(v));};
 try{
  await f.db.exec(f.db.read('mirpanel-admin/community/customer-activity-migration.sql'));
+ await f.db.exec(f.db.read('mirpanel-admin/community/payment-history-number-migration.sql'));
  const add=async(user='a')=>{const t=await f.shop.topup({user},{amount:'6',methodId:f.method,requestId:f.id()}),r={path:'topup/'+t.id+'/test.png',size:3,mimeType:'image/png',sha256:'a'.repeat(64)};f.files.set(r.path,Buffer.from('abc'));await f.shop.savedReceipt({user},'a'.repeat(64),'topup',t.id,r);await f.shop.submitTopup({user},t.id);return t;};
  const picture=f.id(), png=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+nmGQAAAAASUVORK5CYII=','base64');
  await f.pool.query("update community_member_numbers set member_number=1022 where user_id='a'");
@@ -13,13 +14,49 @@ try{
  const code=`import fs from 'node:fs';const native=globalThis.fetch;globalThis.fetch=(u,o)=>String(u?.url||u).startsWith(${JSON.stringify(up)})?native(u,o):String(u?.url||u).includes('/contents/app.js')?Promise.resolve(Response.json({sha:'synthetic',content:fs.readFileSync('app.js').toString('base64')})):Promise.resolve(Response.json({message:'isolated'},{status:401}));await import(${JSON.stringify(new URL('../mirpanel-admin/server.mjs',import.meta.url).href)});`;
  child=spawn(process.execPath,['--input-type=module','-e',code],{windowsHide:true,env:{...process.env,PORT:'10588',ADMIN_USERNAME:username,ADMIN_PASSWORD:password,MIRPANEL_GITHUB_TOKEN:'synthetic',SUPABASE_URL:up,SUPABASE_SECRET_KEY:'synthetic',PAYMENT_ENCRYPTION_KEY_B64:crypto.randomBytes(32).toString('base64'),PAYMENT_TOKEN_SECRET_B64:crypto.randomBytes(32).toString('base64'),EMPLOYEE_PANEL_ENABLED:'true',COOKIE_SECURE:'false',RENDER_EXTERNAL_URL:base,COMMUNITY_OWNER_ENABLED:'true',COMMUNITY_PUBLIC_ENABLED:'true',COMMUNITY_TEST:'true',COMMUNITY_ORIGIN:'http://127.0.0.1:55464',COMMUNITY_DATABASE_URL:url.href,COMMUNITY_AUTH_SECRET:crypto.randomBytes(48).toString('base64url'),COMMUNITY_GOOGLE_CLIENT_ID:'synthetic',COMMUNITY_GOOGLE_CLIENT_SECRET:'synthetic'},stdio:['ignore','pipe','pipe']});child.stderr.on('data',()=>{});await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(Error('STARTUP_TIMEOUT')),20000);child.stdout.on('data',b=>{if(String(b).includes('Mirpanel admin:')){clearTimeout(timer);resolve();}});});
  for(const p of ['/api/admin/community/shop','/admin-shop.js'])eq((await fetch(base+p)).status,401);
- browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});const ctx=await browser.newContext();const employee=await ctx.request.post(base+'/api/employee/login',{data:{login:worker.login,password}});eq(employee.status(),200);eq((await ctx.request.get(base+'/api/admin/community/shop')).status(),403);await ctx.clearCookies();eq((await ctx.request.post(base+'/api/login',{data:{username,password}})).status(),200);const s=await(await ctx.request.get(base+'/api/session')).json();const denied=await ctx.request.post(base+'/api/admin/community/shop',{data:{action:'approve',id:f.id(),amount:'5'}});eq(denied.status(),403);
+ browser=await chromium.launch({headless:true,executablePath:process.env.MIRPANEL_CHROME||'C:/Program Files/Google/Chrome/Application/chrome.exe'});const ctx=await browser.newContext();const employee=await ctx.request.post(base+'/api/employee/login',{data:{login:worker.login,password}});eq(employee.status(),200);eq((await ctx.request.get(base+'/api/admin/community/shop')).status(),403);await ctx.clearCookies();eq((await ctx.request.post(base+'/api/login',{data:{username,password}})).status(),200);const s=await(await ctx.request.get(base+'/api/session')).json();const denied=await ctx.request.post(base+'/api/admin/community/shop',{data:{action:'approve',id:f.id(),amount:'5'}});eq(denied.status(),403);
+ // Keep two pages eligible at once to exercise the real shared playback claim.
+ let sounds=0;
+ await ctx.exposeBinding('topupSoundStarted',()=>{sounds++;});
+ await ctx.addInitScript(()=>{
+  Object.defineProperty(document,'hidden',{get:()=>false});
+  const start=AudioBufferSourceNode.prototype.start;
+  AudioBufferSourceNode.prototype.start=function(...args){
+   const result=start.apply(this,args);
+   if(this.buffer?.duration>0.1)void window.topupSoundStarted();
+   return result;
+  };
+ });
+ const old=await add('owner');
  const p=await ctx.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));
  await p.clock.install();await p.goto(base+'/admin.html');
  const nav=p.locator('[data-view=communityShop]'), badge=async n=>p.waitForFunction(n=>document.querySelector('[data-view=communityShop]')?.getAttribute('data-pending-count')===(n?String(n):null),n);
- await p.waitForFunction(()=>document.querySelector('.dashboardCard[data-dashboard-view=communityShop] strong')?.textContent==='0');
- await badge(0);
- const t=await add();await p.clock.fastForward(30000);await badge(1);
+ await p.waitForFunction(()=>document.querySelector('.dashboardCard[data-dashboard-view=communityShop] strong')?.textContent==='1');
+ await badge(1);
+ const secondTab=await ctx.newPage();
+ await secondTab.goto(base+'/admin.html#products');
+ await secondTab.waitForFunction(()=>document.querySelector('[data-view=communityShop]')?.dataset.pendingCount==='1');
+ const buyer={user:'a'},draft=await f.shop.topup(buyer,{amount:'6',methodId:f.method,requestId:f.id()});
+ await assert.rejects(f.shop.submitTopup(buyer,draft.id),/çek/i);
+ await p.evaluate(()=>window.refreshAdminTopups());await secondTab.evaluate(()=>window.refreshAdminTopups());
+ eq(sounds,0);
+ const receipt={path:'topup/'+draft.id+'/test.png',size:3,mimeType:'image/png',sha256:'a'.repeat(64)};
+ f.files.set(receipt.path,Buffer.from('abc'));
+ await f.shop.savedReceipt(buyer,'a'.repeat(64),'topup',draft.id,receipt);
+ await p.evaluate(()=>window.refreshAdminTopups());await badge(1);eq(sounds,0);
+ await f.shop.submitTopup(buyer,draft.id);
+ await Promise.all([p.clock.fastForward(30000),secondTab.evaluate(()=>window.refreshAdminTopups())]);await badge(2);
+ eq(sounds,0);
+ await Promise.all([p.locator('[data-view=products]').click(),secondTab.locator('[data-view=products]').click()]);
+ for(let i=0;i<50&&!sounds;i++)await p.waitForTimeout(100);
+ await p.waitForTimeout(350);eq(sounds,1);
+ await p.reload();await badge(2);await p.locator('[data-view=products]').click();
+ await p.evaluate(()=>window.refreshAdminTopups());await secondTab.evaluate(()=>window.refreshAdminTopups());
+ await p.waitForTimeout(250);eq(sounds,1);
+ await secondTab.close();
+ await f.shop.admin(f.pool,{id:'owner'},{action:'reject',id:old.id});
+ await p.evaluate(()=>window.refreshAdminTopups());await badge(1);
+ const t=draft;
  eq((await ctx.request.post(base+'/api/admin/community/shop',{data:{action:'receipt',id:t.id}})).status(),403);
  await f.pool.query("update mirpanel_community.wallet_topups set submitted_at='2026-11-01T10:15:00Z' where id=$1",[t.id]);
  const second=await add('b');await p.clock.fastForward(30000);await badge(2);
@@ -43,8 +80,8 @@ try{
   eq((await card.locator('time').innerText()).includes('14:15'),true);
   eq(await p.locator('.topupCard').filter({hasText:'Reader B'}).locator('.topupAvatar').innerText(),'RB');
   eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-  fs.mkdirSync('outputs/topup-card-slots',{recursive:true});
-  await card.screenshot({path:'outputs/topup-card-slots/admin-'+width+'.png'});
+  fs.mkdirSync('payment-test-artifacts/topup-card-slots',{recursive:true});
+  await card.screenshot({path:'payment-test-artifacts/topup-card-slots/admin-'+width+'.png'});
   if(width===1440)eq((await card.locator('input').boundingBox()).width<200,true);
   const profilePopup=p.waitForEvent('popup');await card.getByRole('link',{name:/Reader A/}).click();const profile=await profilePopup;
   await profile.locator('.wu-detail-head').getByRole('heading',{name:'Reader A',exact:true}).waitFor();await profile.close();

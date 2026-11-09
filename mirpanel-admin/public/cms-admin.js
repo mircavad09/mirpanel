@@ -17,15 +17,11 @@
   let deployTimer;
   let deployAttempts = 0;
   const counts = { banners: null, orders: null, topups: null, users: null, online: null, totalOrders: null, wallet: null };
-  let topupRead = 0;
-  async function refreshPendingTopups() {
-    const sequence = ++topupRead;
-    try {
-      const {pending} = await api("/api/admin/community/shop?only=topup-count");
-      if (sequence !== topupRead) return;
-      if (!Number.isSafeInteger(pending) || pending < 0) throw Error("Invalid count");
-      counts.topups = pending;
-      const button = document.querySelector('.navBtn[data-view="communityShop"]');
+  function showPendingTopups(event) {
+    const pending = event.detail;
+    counts.topups = pending;
+    const button = document.querySelector('.navBtn[data-view="communityShop"]');
+    if (button && pending !== false) {
       if (pending > 0) {
         button.dataset.pendingCount = String(pending);
         button.setAttribute("aria-label", `Balans müraciətləri · ${pending} gözləyir`);
@@ -33,11 +29,6 @@
         delete button.dataset.pendingCount;
         button.removeAttribute("aria-label");
       }
-    } catch {
-      if (sequence !== topupRead) return;
-      // A stale sidebar badge is useful; the dashboard card must report that
-      // its latest query failed rather than presenting a stale number as fact.
-      counts.topups = false;
     }
     renderDashboard();
   }
@@ -1008,7 +999,7 @@
     await Promise.all([
       loadCount("banners", "/api/admin/homepage-banners", result => result.managed === false ? undefined : result.banners.filter(b => b.active === true).length),
       loadDashboardSummary(),
-      refreshPendingTopups(),
+      window.refreshAdminTopups(),
       verifyPublication()
     ]);
   }
@@ -1440,18 +1431,13 @@
     installHooks();
     if (state.data) renderCms();
     const requested = location.hash.slice(1);
-    const pollTopups = () => {
-      if (document.visibilityState !== "visible") return;
-      void refreshPendingTopups();
+    window.addEventListener("admin-topup-count", showPendingTopups);
+    window.addEventListener("admin-topup-poll", () => {
       if (location.hash === "#dashboard") void loadDashboardSummary();
-    };
-    const topupTimer = setInterval(pollTopups, 30000);
-    document.addEventListener("visibilitychange", pollTopups);
-    window.addEventListener("admin-topup-changed", refreshPendingTopups);
-    window.addEventListener("pagehide", event => { if (!event.persisted) clearInterval(topupTimer); });
+    });
     setTimeout(() => {
       const button = [...document.querySelectorAll(".navBtn[data-view]")].find(item => item.dataset.view === requested);
-      if (button) { button.click(); if (requested !== "dashboard") void refreshPendingTopups(); }
+      if (button) { button.click(); if (requested !== "dashboard") void window.refreshAdminTopups(); }
       else activateView("dashboard");
     }, 0);
   }

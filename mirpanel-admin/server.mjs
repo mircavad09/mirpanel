@@ -1353,7 +1353,8 @@ const mime = {
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
-  ".mjs": "text/javascript; charset=utf-8"
+  ".mjs": "text/javascript; charset=utf-8",
+  ".wav": "audio/wav"
 };
 
 const paymentSystem = createPaymentSystem({
@@ -1465,7 +1466,11 @@ function serveFile(response, name) {
   });
 
   if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){
-    return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=position-20261028-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=idle-20261027-1"></script></head>'));
+    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=1" data-auto-start></script>';
+    return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=position-20261028-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=idle-20261027-1"></script>'+notification+'</head>'));
+  }
+  if (name === "manual-stock-admin.html") {
+    return response.end(fs.readFileSync(file, "utf8").replace("</body>", '<script src="/admin-topup-notification.js?v=1" data-auto-start></script></body>'));
   }
   fs.createReadStream(file).pipe(response);
 }
@@ -1567,7 +1572,7 @@ const server = http.createServer(async (request, response) => {
       return response.end();
     }
 
-    if (["/api-integrations.js", "/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-admin.css"].includes(pathname)) {
+    if (["/api-integrations.js", "/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-admin.css", "/admin-topup-notification.js", "/10-mirpanel-imzasi.wav"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 
