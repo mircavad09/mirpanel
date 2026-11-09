@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {randomUUID} from 'node:crypto';
+import postgres from '../payment-test-artifacts/postgres-driver/package/src/index.js';
+import {localEmployeeDatabase} from './employee-local-postgres.mjs';
+import {bindOwner,OWNER_EMAIL} from '../mirpanel-admin/community/owner-auth.mjs';
+import {creditWallet,debitWallet,walletHistory} from '../mirpanel-admin/community/wallet.mjs';
+
+const db=await localEmployeeDatabase();
+const sql=postgres({...db.options,database:db.name,connection:{...db.options.connection,search_path:'mirpanel_community,public'}});
+const query=connection=>async(text,args=[])=>{const rows=await connection.unsafe(text,args);return{rows,rowCount:rows.count};};
+const pool={query:query(sql),connect:async()=>{const c=await sql.reserve();return{query:query(c),release:()=>c.release()};}};
+try{
+ await db.exec('create table public.payment_orders(id uuid primary key);create table public.payment_reservations(id uuid primary key)');
+ for(const f of ['migration.sql','profile-migration.sql','profile-number-migration.sql','wallet-migration.sql'])await db.exec(db.read('mirpanel-admin/community/'+f));
+ await pool.query(`insert into "user"(id,name,email,"emailVerified") values('owner','Owner',$1,true),('target','Target','target@example.test',true)`,[OWNER_EMAIL]);
+ await pool.query(`insert into account(id,"accountId","providerId","userId","updatedAt") values('google','1234567890123','google','owner',clock_timestamp())`);
+ await bindOwner(pool,{providerId:'google',accountId:'1234567890123',userId:'owner'});
+ const capability=async()=>(await pool.query("select coalesce(has_function_privilege(to_regprocedure('mirpanel_community.wallet_debit(text,text,bigint,text,uuid,bigint)'),'EXECUTE'),false) available")).rows[0].available;
+ assert.equal(await capability(),false);
+ const owner={id:'owner'},base={userId:'target',confirmed:true},credit={...base,amount:'48.90',reason:'Synthetic credit',requestId:randomUUID()};
+ await creditWallet(pool,owner,credit);
+ const migration=db.read('supabase/migrations/202611090905_admin_wallet_debit.sql');
+ await db.exec(migration);await db.exec(migration);
+ assert.equal(await capability(),true);
+ assert.equal((await pool.query("select has_function_privilege('anon','mirpanel_community.wallet_debit(text,text,bigint,text,uuid,bigint)','EXECUTE') available")).rows[0].available,false);
+ const payload={...base,amount:'10,50',expectedCents:4890,requestId:randomUUID()};
+ const run=(over={},actor=owner)=>debitWallet(pool,actor,{...payload,...over});
+ const parallel=await Promise.all(Array.from({length:8},()=>run()));
+ assert.equal(parallel.filter(x=>!x.idempotent).length,1);
+ assert.equal(new Set(parallel.map(x=>x.id)).size,1);
+ assert.equal((await run()).idempotent,true);
+ await assert.rejects(run({amount:'1.00'}),{status:409,message:/açarı/});
+ await assert.rejects(run({requestId:randomUUID()},{id:'target'}),{status:403});
+ await assert.rejects(run({requestId:randomUUID(),amount:'38.41',expectedCents:3840}),{status:409,message:/kifayət/});
+ const distinct=await Promise.allSettled([run({requestId:randomUUID(),amount:'0.50',expectedCents:3840}),run({requestId:randomUUID(),amount:'0.50',expectedCents:3840})]);
+ assert.equal(distinct.filter(x=>x.status==='fulfilled').length,1);
+ assert.match(distinct.find(x=>x.status==='rejected').reason.message,/Balans dəyişib/);
+ const history=await walletHistory(pool,'target',{kind:'admin_debit'});
+ assert.equal(history.cents,3790);
+ assert.deepEqual(history.items.map(({cents,before_cents,after_cents})=>[cents,before_cents,after_cents]),[['-50','3840','3790'],['-1050','4890','3840']]);
+ assert.equal((await creditWallet(pool,owner,credit)).idempotent,true);
+ console.log('Isolated PostgreSQL: credit, comma and dot amounts, replay, concurrency, insufficient funds, role, capability and ledger passed.');
+}finally{await sql.end({timeout:3});await db.close();}

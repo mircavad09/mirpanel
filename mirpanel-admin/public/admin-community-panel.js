@@ -13,7 +13,7 @@ export async function mount(root,view){stop();let alive=true,stream;stop=()=>{al
  const guarded=fn=>async(...args)=>{try{await fn(...args);}catch(x){error.textContent=x.message;}};
  try{
  if(view==='communityShop'){const {mountShop}=await import('/admin-shop.js?v=topup-cards-20261107');const close=await mountShop({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
- if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=mobile-cards-1');const close=await mountUsers({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
+ if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=wallet-debit-search-1');const close=await mountUsers({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
  if(view==='communityUsers'){
   let page=1,q='';const input=e('input');input.placeholder='Ad, e-poçt, üzv ID-si';const list=e('div'),detail=e('section'),label=e('span');
   const show=guarded(async id=>{const r=await call('/users/'+encodeURIComponent(id));if(!alive)return;detail.replaceChildren(e('h2',r.user.name));

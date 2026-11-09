@@ -44,3 +44,8 @@
  .wallet-users .wu-ledger-meta time{flex-basis:100%;margin-inline-start:0}
  .wallet-users .wu-ledger-change{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:5px}
 }
+.wu-dialog .wu-operation-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.wu-dialog .wu-operation-actions .btn{margin:0!important;min-height:44px}
+.wu-dialog .wu-danger{background:#a92532;color:#fff;border:1px solid #d34550;border-radius:10px;min-height:44px}
+.wu-dialog .wu-danger:hover:not(:disabled){background:#bf3040}
+.wu-dialog .wu-danger:disabled{opacity:.55;cursor:not-allowed}

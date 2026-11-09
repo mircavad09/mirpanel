@@ -1,5 +1,23 @@
 const fail=(status,message)=>Object.assign(Error(message),{status});
+export async function debitWallet(pool,actor,b){
+ if(!b||Object.keys(b).some(k=>!['userId','amount','requestId','confirmed','expectedCents'].includes(k))
+    ||typeof b.userId!=='string'||!b.userId||b.userId.length>128
+    ||!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(b.requestId||'')
+    ||b.confirmed!==true||!Number.isSafeInteger(b.expectedCents)||b.expectedCents<0)
+   throw fail(400,'İstifadəçi, məbləğ və təsdiq tələb olunur.');
+ const cents=amountCents(typeof b.amount==='string'?b.amount.trim().replace(',','.'):b.amount);
+ try{
+  return (await pool.query('select mirpanel_community.wallet_debit($1,$2,$3,$4,$5,$6) entry',
+    [actor.id,b.userId,cents,'Admin tərəfindən balansdan çıxıldı',b.requestId,b.expectedCents])).rows[0].entry;
+ }catch(e){
+  if(e.message?.includes('WALLET_OWNER_REQUIRED'))throw fail(403,'Yalnız təsdiqlənmiş sahib-admin üçün.');
+  if(e.message?.includes('WALLET_INSUFFICIENT'))throw fail(409,'Balans kifayət etmir. Cari balansı yeniləyin.');
+  if(e.message?.includes('WALLET_BALANCE_CHANGED'))throw fail(409,'Balans dəyişib. Cari balansı yeniləyib yenidən təsdiqləyin.');
+  if(e.message?.includes('WALLET_KEY_CONFLICT'))throw fail(409,'Bu əməliyyat açarı artıq istifadə edilib.');
+  throw fail(503,'Çıxılmanın nəticəsi təsdiqlənmədi. Eyni sorğu ilə yenidən cəhd edin.');
+ }
+}
 export function amountCents(value){if(typeof value!=='string'||!/^\d{1,7}(?:\.\d{1,2})?$/.test(value))throw fail(400,'Məbləği AZN ilə, ən çox iki qəpik rəqəmi ilə yazın.');const [a,b='']=value.split('.'),c=Number(a)*100+Number(b.padEnd(2,'0'));if(!Number.isSafeInteger(c)||c<=0||c>100000000)throw fail(400,'Məbləğ 0-dan böyük və ən çox 1 000 000 AZN olmalıdır.');return c;}
 export async function walletBalance(pool,id){const r=(await pool.query('select coalesce((select cents from wallet_accounts where user_id=$1),0)::text cents where exists(select 1 from wallet_release where id and enabled)',[id])).rows[0];if(!r)throw fail(503,'Balans xidməti hazırda bağlıdır.');return Number(r.cents);}
-export async function walletHistory(pool,id,{page='1',q='',view='history',kind='all'}={}){if(!/^\d{1,5}$/.test(String(page))||Number(page)<1||typeof q!=='string'||q.length>100||!['history','payments'].includes(view)||!['all','admin_credit','topup_credit','purchase_debit','purchase_refund'].includes(kind))throw fail(400,'Filtr düzgün deyil.');const cents=await walletBalance(pool,id);const rows=(await pool.query(`select l.id::text,l.actor_id,l.user_id,l.cents::text,l.before_cents::text,l.after_cents::text,l.reason,l.kind,l.created_at,p.display_name as actor_name from wallet_ledger l left join community_profiles p on p.user_id=l.actor_id where l.user_id=$1 and ($2='history' or l.kind='purchase_debit') and ($5='all' or l.kind=$5) and ($3='' or position(lower($3) in lower(l.reason||' '||l.id::text))>0) order by l.id desc limit 21 offset $4`,[id,view,q.trim(),(Number(page)-1)*20,kind])).rows;return{cents,items:rows.slice(0,20),more:rows.length>20,page:Number(page)};}
+export async function walletHistory(pool,id,{page='1',q='',view='history',kind='all'}={}){if(!/^\d{1,5}$/.test(String(page))||Number(page)<1||typeof q!=='string'||q.length>100||!['history','payments'].includes(view)||!['all','admin_credit','admin_debit','topup_credit','purchase_debit','purchase_refund'].includes(kind))throw fail(400,'Filtr düzgün deyil.');const cents=await walletBalance(pool,id);const rows=(await pool.query(`select l.id::text,l.actor_id,l.user_id,l.cents::text,l.before_cents::text,l.after_cents::text,l.reason,l.kind,l.created_at,p.display_name as actor_name from wallet_ledger l left join community_profiles p on p.user_id=l.actor_id where l.user_id=$1 and ($2='history' or l.kind='purchase_debit') and ($5='all' or l.kind=$5) and ($3='' or position(lower($3) in lower(l.reason||' '||l.id::text))>0) order by l.id desc limit 21 offset $4`,[id,view,q.trim(),(Number(page)-1)*20,kind])).rows;return{cents,items:rows.slice(0,20),more:rows.length>20,page:Number(page)};}
 export async function creditWallet(pool,actor,b){if(!b||Object.keys(b).some(k=>!['userId','amount','reason','requestId','confirmed'].includes(k))||typeof b.userId!=='string'||b.userId.length>128||!/^[-a-f0-9]{36}$/i.test(b.requestId||'')||b.confirmed!==true||typeof b.reason!=='string'||b.reason.trim().length<3||b.reason.length>300)throw fail(400,'İstifadəçi, məbləğ, səbəb və təsdiq tələb olunur.');const cents=amountCents(b.amount);try{return(await pool.query('select wallet_credit($1,$2,$3,$4,$5) entry',[actor.id,b.userId,cents,b.reason,b.requestId])).rows[0].entry;}catch(e){if(e.message?.includes('WALLET_KEY_CONFLICT'))throw fail(409,'Bu əməliyyat açarı başqa əlavə üçün istifadə edilib.');if(e.message?.includes('WALLET_OWNER_REQUIRED'))throw fail(403,'Yalnız təsdiqlənmiş sahib-admin üçün.');throw fail(503,'Balansın saxlanması təsdiqlənmədi. Eyni sorğu ilə yenidən cəhd edin.');}}
