@@ -56,6 +56,8 @@ let origin;
 
 function matches(row, field, expression) {
   const value = row[field];
+  if (expression === "is.true") return value === true;
+  if (expression === "not.is.true") return value !== true;
   if (expression === "is.null") return value === null || value === undefined;
   if (expression === "not.is.null") return value !== null && value !== undefined;
   const [operator, ...rest] = expression.split("."); const wanted = rest.join(".");
@@ -70,8 +72,15 @@ function matches(row, field, expression) {
   if (operator === "lt") return left < right;
   throw new Error(`Unexpected fixture filter: ${field} ${expression}`);
 }
+function orMatches(row, expression) {
+  const tests = expression.slice(1,-1).match(/(?:[^(),]+|\([^()]*\))+/g) || [];
+  return tests.some(test=>{
+    if(test.startsWith("and("))return test.slice(4,-1).split(",").every(part=>{const at=part.indexOf(".");return matches(row,part.slice(0,at),part.slice(at+1));});
+    const at=test.indexOf(".");return matches(row,test.slice(0,at),test.slice(at+1));
+  });
+}
 function queryRows(params, source = dataRows) {
-  let found = source.filter((row) => [...params].every(([key, value]) => ["select", "order", "offset", "limit"].includes(key) || matches(row, key, value)));
+  let found = source.filter((row) => [...params].every(([key, value]) => ["select", "order", "offset", "limit"].includes(key) || (key==="or" ? orMatches(row,value) : matches(row, key, value))));
   const sorting = (params.get("order") || "").split(",").filter(Boolean);
   found.sort((a, b) => {
     for (const sort of sorting) { const [field, direction] = sort.split("."); const diff = String(a[field] || "").localeCompare(String(b[field] || "")); if (diff) return direction === "desc" ? -diff : diff; }
@@ -164,6 +173,28 @@ try {
   // PostgREST's row cap is simulated. A duration occurring after row 1000 must
   // still be offered, paginated and included in select-all.
   dataRows = Array.from({ length: 1005 }, (_, i) => makeRow(2000 + i, i === 1004 ? "18 aylıq" : "1 aylıq"));
+  const priorRows = dataRows;
+  const yesterday = new Date(Date.now()-86400000).toISOString();
+  const now = new Date().toISOString();
+  const [manual, automatic, partial, unpaid] = rows.slice(0,4).map(row=>({...row,created_at:yesterday,payment_source:"card"}));
+  Object.assign(manual,{status:"approved",completed_at:yesterday,payment_confirmed:true});
+  Object.assign(automatic,{status:"reviewing",completed_at:null,payment_confirmed:true,payment_source:"wallet"});
+  Object.assign(partial,{status:"approved",completed_at:now,payment_confirmed:true});
+  Object.assign(unpaid,{status:"reviewing",completed_at:null,payment_confirmed:false});
+  dataRows=[manual,automatic,partial,unpaid];
+  const completed=[manual,automatic].map(row=>({id:row.id,completedAt:now}));
+  const deliveryOptions={
+    pendingDeliveries:async ids=>ids.filter(id=>id===partial.id),
+    deliveryCompletions:async ({ids})=>completed.filter(row=>!ids||ids.includes(row.id))
+  };
+  const todayResult=await store.listOrders({tab:"today",period:"today"},[],deliveryOptions);
+  assert.deepEqual(todayResult.orders.map(row=>row.id).sort(),completed.map(row=>row.id).sort());
+  assert.ok(todayResult.orders.every(row=>row.status==="completed"&&row.completedAt===now));
+  const allResult=await store.listOrders({tab:"all",period:"this_month"},[],deliveryOptions);
+  assert.ok(allResult.orders.some(row=>row.id===automatic.id&&row.status==="completed"));
+  assert.equal(allResult.counts.today,2);
+  assert.equal(allResult.counts.pending,1);
+  dataRows=priorRows;
   const large = await store.listOrders({ tab: "expiring", period: "all", sort: "oldest" });
   assert.deepEqual(large.filters.durations.map((item) => item.value), ["1", "18"]);
   assert.equal(large.pagination.total, 1005); assert.equal(large.selection.total, 1005);

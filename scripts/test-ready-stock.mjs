@@ -8,7 +8,7 @@ import {signature} from '../mirpanel-admin/employee-security.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
 import {approveCardWithReadyStock,saveReadyStock,readyStockView} from '../mirpanel-admin/community/ready-stock.mjs';
 import {saveProductMessage} from '../mirpanel-admin/community/ready-stock-product-messages.mjs';
-import {adminDelivery,adminPendingDeliveries,ownerCodes,createCustomerOrderMailer} from '../mirpanel-admin/community/order-delivery.mjs';
+import {adminDelivery,adminDeliveryCompletions,adminPendingDeliveries,ownerCodes,createCustomerOrderMailer} from '../mirpanel-admin/community/order-delivery.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
 import {readOrderMailWebhook,verifyOrderMailWebhook} from '../mirpanel-admin/community/order-mail-webhook.mjs';
 
@@ -183,6 +183,11 @@ try{
  const cardWaiting=await cardSubmit(items);
  eq((await approve(cardWaiting)).deliveryPending,true);
  eq(await adminPendingDeliveries(pool,[cardWaiting]),[cardWaiting]);
+ const completedOrders=await adminDeliveryCompletions(pool,{ids:[waiting.orderId,cardAuto,cardPartial,cardWaiting]});
+ eq(completedOrders.map(o=>o.id).sort(),[waiting.orderId,cardAuto].sort());
+ const latest=(await sql('select max(delivered_at) as at from customer_order_deliveries where order_id=$1',[waiting.orderId])).rows[0].at;
+ eq(completedOrders.find(o=>o.id===waiting.orderId).completedAt,latest.toISOString());
+ eq((await adminDeliveryCompletions(pool,{since:latest.toISOString()})).some(o=>o.id===waiting.orderId),true);
  {
  await db.exec(db.read('mirpanel-admin/community/ready-stock-product-messages-migration.sql'));
  await db.exec(db.read('mirpanel-admin/community/ready-stock-product-messages-migration.sql'));

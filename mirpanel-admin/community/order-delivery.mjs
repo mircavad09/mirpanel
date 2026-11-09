@@ -43,6 +43,7 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
  const orders=(await pool.query(`select o.id,o.status,o.payment_confirmed,o.product_title,o.plan_name,o.product_id,o.checkout_snapshot,o.amount,o.quantity
    from public.payment_orders o join ${O} u on u.order_id=o.id where o.id=any($1::uuid[])
    and (o.status in ('reviewing','new_receipt_requested')
+     or o.payment_source='wallet'
      or exists(select 1 from ${M} m where m.event_key='payment:'||o.id::text)
      or exists(select 1 from ${D} d where d.order_id=o.id))`,[ids])).rows.filter(paid);
  const records=await deliveryRecords(pool,orders.map(o=>o.id));
@@ -53,6 +54,22 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
   return {id:o.id,remaining:deliveryLines(o).map((line,i)=>Math.max(0,line.quantity-(done[i]||0)))};
  }).filter(o=>o.remaining.some(n=>n>0));
  return progress?remaining:remaining.map(o=>o.id);
+}
+// A paid order is completed when its final unit is delivered.
+export async function adminDeliveryCompletions(pool,{since,ids}){
+ const condition=ids?'d.order_id=any($1::uuid[])':'d.delivered_at >= $1';
+ if(ids&&!ids.length)return [];
+ const {rows}=await pool.query(`select o.id,o.status,o.payment_confirmed,o.checkout_snapshot,o.quantity,o.product_id,o.product_title,o.plan_name,o.amount,recent.last_delivery from public.payment_orders o
+  join (select d.order_id,max(d.delivered_at) as last_delivery from ${D} d
+    where ${condition} group by d.order_id) recent on recent.order_id=o.id`,[ids||since]);
+ const records=await deliveryRecords(pool,rows.map(o=>o.id));
+ const grouped=new Map();
+ for(const record of records){
+  if(!grouped.has(record.order_id))grouped.set(record.order_id,[]);
+  grouped.get(record.order_id).push(record);
+ }
+ return rows.filter(o=>customerStatus(o,grouped.get(o.id)||[])==='completed')
+  .map(o=>({id:o.id,completedAt:new Date(o.last_delivery).toISOString()}));
 }
 export async function adminOrderCustomers(pool,ids){
  if(!ids.length)return [];

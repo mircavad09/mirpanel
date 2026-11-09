@@ -186,7 +186,7 @@
     for(const host of card.querySelectorAll('[data-order-line-fields]')){
       const fields=lines.find(x=>x.index===Number(host.dataset.orderLineFields))?.fields||[];
       const filled=fields.filter(f=>typeof f.value==='string'&&f.value.trim());
-      host.innerHTML=filled.length?`<button class="btn compact paymentOrderFieldsCopy" type="button" data-copy-order-fields aria-label="Müştəri məlumatlarını kopyala" title="Müştəri məlumatlarını kopyala"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button>`+filled.map(f=>`<div><strong data-order-field-label>${escp(f.label)}</strong>: <span data-order-field-value>${escp(f.value)}</span></div>`).join(''):'';
+      host.innerHTML=filled.length?`<button class="btn compact paymentOrderFieldsCopy" type="button" data-copy-order-fields aria-label="Müştəri məlumatlarını kopyala" title="Müştəri məlumatlarını kopyala"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button><div class="paymentOrderFieldValues">`+filled.map(f=>`<div><strong data-order-field-label>${escp(f.label)}</strong>: <span data-order-field-value>${escp(f.value)}</span></div>`).join('')+'</div>':'';
     }
   }
 
@@ -643,7 +643,7 @@
         pending??={...data,requestId:crypto.randomUUID()};
         for(const field of [...controls,submit])field.disabled=true;
         error.textContent='';
-        try{await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast('Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders({automatic:true}).catch(()=>{});}
+        try{const result=await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});dlg.close();toast(result.status==='completed'?'Sifariş tamamlandı.':'Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders().catch(error=>toast(error.message));}
         catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;for(const field of controls)field.disabled=false;}submit.disabled=err.status===409;}
       };
       dlg.append(form);document.body.append(dlg);dlg.showModal();return;

@@ -65,8 +65,8 @@ try {
         await button.waitFor();
         assert.equal(await block.getByRole('button').count(),1);
         assert.deepEqual(await block.locator('[data-order-field-value]').allTextContents(),fields.map(f=>f.value));
-        const icon=await button.boundingBox(),bounds=await block.boundingBox();
-        assert.ok(icon.x>bounds.x+bounds.width/2 && Math.abs(icon.y-bounds.y)<2);
+        const icon=await button.boundingBox(),bounds=await block.locator('.paymentOrderFieldValues').boundingBox();
+        assert.ok(icon.x>=bounds.x+bounds.width && icon.x-(bounds.x+bounds.width)<=14 && icon.y<bounds.y+bounds.height);
         await button.click();
         writes.push(fields.map(f=>f.label+': '+f.value).join('\n'));
         assert.deepEqual(await page.evaluate(()=>window.clipboardWrites),writes);

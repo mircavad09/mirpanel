@@ -435,19 +435,22 @@ export function createPaymentStore(config) {
       const rows=await rpc('employee_order_workflow',{p_ids:ids});
       return new Map(rows.map(({id,...workflow})=>[id,workflow]));
     },
-    async listOrders(input = {}, catalog = [], { pendingDeliveries } = {}) {
+    async listOrders(input = {}, catalog = [], { pendingDeliveries, deliveryCompletions } = {}) {
       await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
       const select = "id,checkout_snapshot,payment_source,payment_confirmed,order_code,product_id,product_title,plan_id,plan_name,quantity,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_path,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
+
+      const rangeStart = filters.tab === "today" ? todayBounds.start : filters.tab === "all" && filters.dateFrom ? filters.dateFrom+"T00:00:00+04:00" : null;
+      const recent = new Map((deliveryCompletions && rangeStart ? await deliveryCompletions({since:rangeStart}) : []).map(o=>[o.id,o.completedAt]));
 
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
         if (filters.search) next = next.ilike("order_code", `%${filters.search}%`);
         if (filters.methodId) next = next.eq("method_id", filters.methodId);
         const from=filters.dateFrom&&`${filters.dateFrom}T00:00:00+04:00`,to=filters.dateTo&&bakuDayBounds(filters.dateTo).endExclusive;
-        if (from) next = completedView ? next.or(`completed_at.gte.${from},and(completed_at.is.null,created_at.gte.${from})`) : next.gte(dateColumn,from);
-        if (to) next = completedView ? next.or(`completed_at.lt.${to},and(completed_at.is.null,created_at.lt.${to})`) : next.lt(dateColumn,to);
+        if (from && !paidView) next = next.gte(dateColumn,from);
+        if (to && !paidView) next = next.lt(dateColumn,to);
         return next;
       };
 
@@ -455,15 +458,17 @@ export function createPaymentStore(config) {
       const reviewQueue = filters.tab === "pending" && input.pendingStage === "payment";
       const completedView = filters.tab === "today" && Boolean(pendingDeliveries);
       if (deliveryQueue && !pendingDeliveries) throw Object.assign(new Error("Təhvil siyahısı yalnız adminə açıqdır."), { status: 403 });
-      const statuses = deliveryQueue || completedView ? ["approved", "completed", "reviewing", "new_receipt_requested"] : orderDatabaseStatuses(filters);
+      const paidView = completedView || (filters.tab === "all" && Boolean(deliveryCompletions));
+      const statuses = deliveryQueue || paidView ? ["approved", "completed", "reviewing", "new_receipt_requested"] : orderDatabaseStatuses(filters);
       const dateColumn = filters.tab === "pending" ? "created_at" : "completed_at";
-      const matchingQuery = (columns, options) => {
+      const matchingQuery = (columns, options, completionIds = []) => {
         let query = applyCommonFilters(client.from("payment_orders").select(columns, options), dateColumn).in("status", statuses);
         if (reviewQueue) query = query.eq("payment_source", "card").not("payment_confirmed", "is", true);
-        if (deliveryQueue || completedView) query = query.or("status.in.(approved,completed),payment_confirmed.is.true");
-        if (completedView && filters.period !== "today") query = query
-          .or(`completed_at.gte.${todayBounds.start},and(completed_at.is.null,created_at.gte.${todayBounds.start})`)
-          .or(`completed_at.lt.${todayBounds.endExclusive},and(completed_at.is.null,created_at.lt.${todayBounds.endExclusive})`);
+        if (deliveryQueue || paidView) query = query.or("status.in.(approved,completed),payment_confirmed.is.true");
+        if (paidView && rangeStart) {
+          const lower = `completed_at.gte.${rangeStart},and(completed_at.is.null,created_at.gte.${rangeStart})`;
+          query = completionIds.length ? query.in("id", completionIds) : query.or(lower);
+        }
         if (filters.tab === "today" && !completedView) query = query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive);
         if (filters.tab === "expiring") query = query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today);
         return query.order(dateColumn, { ascending: filters.sort === "oldest" }).order("id", { ascending: filters.sort === "oldest" });
@@ -476,22 +481,35 @@ export function createPaymentStore(config) {
         (matchProduct ? ",method_id,method_name_snapshot,method_last4_snapshot,cart_items:checkout_snapshot->items,snapshot_product:checkout_snapshot->>productId" : "");
       const facetRows = [];
       const seenOrders = new Set();
-      let facetTotal, offset = 0;
-      do {
-        const result = await matchingQuery(facetColumns, { count: "exact" }).range(offset, offset + 999);
-        if (result.error) throw paymentError(result.error);
-        facetTotal = Number(result.count || 0);
-        if (!result.data?.length && offset < facetTotal) throw paymentError(null, "Sifariş filtri tam yüklənmədi. Yenidən cəhd edin.");
-        offset += result.data?.length || 0;
-        const candidates = (result.data || []).filter(row => !seenOrders.has(row.id) && (!matchProduct || matchProduct(row)));
-        const pending = (deliveryQueue || completedView) && candidates.length ? new Set(await pendingDeliveries(candidates.map(row => row.id))) : null;
-        for (const row of candidates) if (!pending || pending.has(row.id) === deliveryQueue) {
-          seenOrders.add(row.id);
-          const {cart_items, snapshot_product, ...summary} = row;
-          facetRows.push(completedView&&row.payment_confirmed&&!row.completed_at?{...summary,status:'completed',completed_at:row.created_at}:summary);
-        }
-      } while (offset < facetTotal);
-      if(completedView){const direction=filters.sort==='oldest'?1:-1;facetRows.sort((a,b)=>direction*((Date.parse(a.completed_at)||0)-(Date.parse(b.completed_at)||0)||a.id.localeCompare(b.id)));}
+      const candidateBatches = [[]];
+      if (paidView && rangeStart) {
+        const ids = [...recent.keys()];
+        for (let i=0;i<ids.length;i+=100) candidateBatches.push(ids.slice(i,i+100));
+      }
+      for (const ids of candidateBatches) {
+        let facetTotal, offset = 0;
+        do {
+          const result = await matchingQuery(facetColumns, { count: "exact" }, ids).range(offset, offset + 999);
+          if (result.error) throw paymentError(result.error);
+          facetTotal = Number(result.count || 0);
+          if (!result.data?.length && offset < facetTotal) throw paymentError(null, "Sifariş filtri tam yüklənmədi. Yenidən cəhd edin.");
+          offset += result.data?.length || 0;
+          const candidates = (result.data || []).filter(row => !seenOrders.has(row.id) && (!matchProduct || matchProduct(row)));
+          const pending = (deliveryQueue || completedView) && candidates.length ? new Set(await pendingDeliveries(candidates.map(row => row.id))) : null;
+          const completions = paidView && rangeStart && deliveryCompletions && candidates.length
+            ? new Map((await deliveryCompletions({ids:candidates.map(row=>row.id)})).map(o=>[o.id,o.completedAt])) : recent;
+          for (const row of candidates) if (!pending || pending.has(row.id) === deliveryQueue) {
+            const completedAt = completions.get(row.id) || row.completed_at || row.created_at;
+            if (paidView && rangeStart && Date.parse(completedAt)<Date.parse(rangeStart)) continue;
+            const rangeEnd = completedView ? todayBounds.endExclusive : filters.dateTo && bakuDayBounds(filters.dateTo).endExclusive;
+            if (paidView && rangeEnd && Date.parse(completedAt)>=Date.parse(rangeEnd)) continue;
+            seenOrders.add(row.id);
+            const {cart_items, snapshot_product, ...summary} = row;
+            facetRows.push(completedView||completions.has(row.id)?{...summary,status:'completed',completed_at:completedAt}:summary);
+          }
+        } while (offset < facetTotal);
+      }
+      if(paidView){const direction=filters.sort==='oldest'?1:-1;facetRows.sort((a,b)=>direction*((Date.parse(a.completed_at)||0)-(Date.parse(b.completed_at)||0)||a.id.localeCompare(b.id)));}
       const durations = durationOptions(facetRows);
       if (filters.durationMonths && !durations.some((item) => item.value === filters.durationMonths) && input.preserveFilters!=='true') {
         filters.durationMonths = "";
@@ -500,7 +518,7 @@ export function createPaymentStore(config) {
       const matchedRows = filters.durationMonths ? facetRows.filter((row) => orderDuration(row) === filters.durationMonths) : facetRows;
       const view=adminListWindow(matchedRows,{page:filters.page,pageSize:filters.pageSize,anchorId:safeUuid(input.anchorId),anchorIndex:input.anchorIndex});
       const pageIds = view.rows.map((row) => row.id);
-      const query = pageIds.length ? matchingQuery(select).in("id", pageIds) : Promise.resolve({ data: [], error: null });
+      const query = pageIds.length ? matchingQuery(select, {}, pageIds).in("id", pageIds) : Promise.resolve({ data: [], error: null });
 
       const countStatus = async (statusValues, mutate = (value) => value) => {
         let countQuery = client.from("payment_orders").select("id", { count: "exact", head: true }).in("status", statusValues);
@@ -510,14 +528,35 @@ export function createPaymentStore(config) {
         return Number(count || 0);
       };
 
+      const countToday = async () => {
+        if (!deliveryCompletions || !pendingDeliveries) return countStatus(["approved", "completed"], query => query.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive));
+        const recentToday = rangeStart && rangeStart <= todayBounds.start
+          ? [...recent].map(([id,completedAt])=>({id,completedAt}))
+          : await deliveryCompletions({since:todayBounds.start});
+        const inToday = time => Date.parse(time)>=Date.parse(todayBounds.start) && Date.parse(time)<Date.parse(todayBounds.endExclusive);
+        const completed = new Set(recentToday.filter(row=>inToday(row.completedAt)).map(row=>row.id));
+        for(let offset=0;;offset+=500){
+          const {data,error}=await client.from("payment_orders").select("id").in("status",["approved","completed"])
+            .gte("completed_at",todayBounds.start).lt("completed_at",todayBounds.endExclusive).order("id").range(offset,offset+499);
+          if(error)throw paymentError(error);
+          const ids=data.map(row=>row.id).filter(id=>!completed.has(id));
+          if(ids.length){
+            const [pending, delivered]=await Promise.all([pendingDeliveries(ids),deliveryCompletions({ids})]);
+            const excluded=new Set([...pending,...delivered.filter(row=>!inToday(row.completedAt)).map(row=>row.id)]);
+            for(const id of ids)if(!excluded.has(id))completed.add(id);
+          }
+          if(data.length<500)return completed.size;
+        }
+      };
+
       const [{ data, error }, pendingCount, todayCount, completedCount, expiringCount, methodRows, statistics] = await Promise.all([
         query,
         countStatus(["reviewing", "new_receipt_requested"],value=>value.eq("payment_source","card").not("payment_confirmed","is",true)),
-        countStatus(["approved", "completed"], (value) => value.gte("completed_at", todayBounds.start).lt("completed_at", todayBounds.endExclusive)),
-        countStatus(["approved", "completed"]),
+        countToday(),
+        deliveryCompletions ? countStatus(["approved", "completed", "reviewing", "new_receipt_requested"], query => query.or("status.in.(approved,completed),payment_confirmed.is.true")) : countStatus(["approved", "completed"]),
         countStatus(["approved", "completed"], (value) => value.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today)),
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
-        deliveryQueue || reviewQueue || completedView || filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows, { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
+        deliveryQueue || reviewQueue || paidView || filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows, { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
           p_search: filters.search || null,
           p_product_id: filters.productId || null,
@@ -547,6 +586,7 @@ export function createPaymentStore(config) {
         }
       }
 
+      const displayedCompletions = new Map((deliveryCompletions ? await deliveryCompletions({ids:orders.map(o=>o.id)}) : []).map(o=>[o.id,o.completedAt]));
       const products = new Map();
       for (const row of facetRows) {
         if (row.product_id && !products.has(row.product_id)) products.set(row.product_id, row.product_title);
@@ -573,10 +613,10 @@ export function createPaymentStore(config) {
             costSource: order.cost_source || null,
             costBackfilledAt: order.cost_backfilled_at || null,
             currency: order.currency,
-            status: completedView&&order.payment_confirmed ? 'completed' : adminOrderStatus(order.status, reservation.status),
+            status: completedView||displayedCompletions.has(order.id) ? 'completed' : adminOrderStatus(order.status, reservation.status),
             reservationStatus: reservation.status || "",
             createdAt: order.created_at,
-            completedAt: order.completed_at || order.approved_at || (completedView&&order.payment_confirmed ? order.created_at : adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
+            completedAt: displayedCompletions.get(order.id) || order.completed_at || order.approved_at || (completedView&&order.payment_confirmed ? order.created_at : adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
             durationMonths: order.duration_months,
             expiresOn: order.service_expires_on,
             expiryNotificationOn: order.expiry_notification_on,
@@ -597,7 +637,7 @@ export function createPaymentStore(config) {
         },
         counts: {
           pending: pendingCount,
-          today: filters.tab === "today" ? total : todayCount,
+          today: todayCount,
           all: filters.tab === "all" ? total : completedCount,
           expiring: filters.tab === "expiring" ? total : expiringCount
         },

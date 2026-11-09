@@ -756,7 +756,7 @@ export function createPaymentSystem(options) {
       const query=Object.fromEntries(url.searchParams), canDeliver=options.readyStockAllowed?.(request);
       const deliveryQueue=query.tab==='pending'&&query.pendingStage==='delivery';
       if(deliveryQueue&&!canDeliver)throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});
-      const orders = await store.listOrders(query, catalog.products, {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined});
+      const orders = await store.listOrders(query, catalog.products, {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined});
       if(deliveryQueue&&options.pendingDeliveryProgress){
         const progress=new Map((await options.pendingDeliveryProgress(orders.orders.map(o=>o.id))).map(o=>[o.id,o.remaining]));
         orders.orders=orders.orders.filter(o=>progress.has(o.id));
@@ -770,7 +770,7 @@ export function createPaymentSystem(options) {
         }catch(error){if(pendingCustomerView)throw error; /* Optional display metadata must not block the history list. */}
       }
       if(!deliveryQueue&&options.pendingDeliveries&&canDeliver){
-        const candidates=(orders.orders||[]).filter(o=>o.paymentSource==='wallet'||['approved','completed'].includes(o.status));
+        const candidates=(orders.orders||[]).filter(o=>o.paymentConfirmed||['approved','completed'].includes(o.status));
         if(candidates.length){
           try{const pending=new Set(await options.pendingDeliveries(candidates.map(o=>o.id)));for(const order of candidates)order.deliveryPending=pending.has(order.id);}
           catch{ /* Keep the protected delivery dialog as a fallback during an outage. */ }
