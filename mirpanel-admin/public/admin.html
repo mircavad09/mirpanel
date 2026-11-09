@@ -8,7 +8,7 @@
   >
   <title>Mirpanel Admin</title>
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="admin.css?v=delivery-completion-1">
+  <link rel="stylesheet" href="admin.css?v=epinby-catalog-2">
   <link rel="stylesheet" href="/ready-stock-admin.css?v=ready-account-cards-1">
   <link rel="stylesheet" href="admin-mobile-menu.css?v=1">
 </head>
@@ -641,11 +641,11 @@
       <section class="panel singlePanel hidden" id="gameProductsView" aria-labelledby="gameProductsTitle">
         <div class="gameCatalogHeading">
           <div><h2 id="gameProductsTitle">Oyun məhsulları</h2><p>Oyun və rəqəmsal məhsul kataloqu</p></div>
-          <span class="gameCatalogStage">Birinci mərhələ</span>
+          <span class="gameCatalogStage">Mağazada alış bağlıdır</span>
         </div>
         <div class="gameCatalogSupplier">
           <div class="gameCatalogSupplierName"><span class="gameCatalogMark" aria-hidden="true">E</span><div><h3>Epinby</h3><p>Təchizatçı kataloqu</p></div></div>
-          <span class="gameCatalogStatus" role="status"><span aria-hidden="true"></span>API bağlantısı qurulmayıb</span>
+          <span class="gameCatalogStatus" role="status"><span aria-hidden="true"></span><b id="gameCatalogStatus">Bağlantı yoxlanılır…</b></span>
         </div>
         <form id="gameCatalogFilters" class="gameCatalogFilters" role="search" aria-label="Oyun məhsullarında axtarış">
           <label class="gameCatalogSearch">Oyun və ya məhsul adı
@@ -654,22 +654,24 @@
           <label>Oyun<select name="game" aria-label="Oyun" disabled aria-describedby="gameCatalogHint"><option value="">Bütün oyunlar</option></select></label>
           <label>Kateqoriya<select name="category" aria-label="Kateqoriya" disabled aria-describedby="gameCatalogHint"><option value="">Bütün kateqoriyalar</option></select></label>
           <button class="btn" type="reset">Təmizlə</button>
+          <button class="btn" type="button" id="gameCatalogRefresh">Kataloqu yenilə</button>
         </form>
-        <p id="gameCatalogHint" class="gameCatalogHint">Oyunlar, kateqoriyalar və qiymətlər API bağlantısından sonra görünəcək.</p>
+        <p id="gameCatalogHint" class="gameCatalogHint" role="status"></p>
         <div class="gameCatalogGrid" id="gameCatalogProducts"></div>
         <div class="gameCatalogEmpty">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10a4 4 0 0 1 4 3l1 7a2 2 0 0 1-3 2l-4-3H9l-4 3a2 2 0 0 1-3-2l1-7a4 4 0 0 1 4-3z M7 10v4 M5 12h4 M16 11h.1 M18 13h.1"/></svg>
-          <h3>Məhsulları görmək üçün Epinby API bağlantısını qurun</h3>
-          <p>Hələ məhsul gətirilməyib. Kataloq idxalı bu mərhələdə aktiv deyil.</p>
+          <h3 id="gameCatalogEmptyTitle">Kataloq yüklənir…</h3>
           <button class="btn primary" type="button" id="gameCatalogIntegration">API inteqrasiyalarını aç</button>
         </div>
         <template id="gameCatalogProductTemplate">
           <article class="gameCatalogProduct">
-            <div class="gameCatalogProductHead"><img data-game-image alt="" loading="lazy" width="64" height="64"><div><small data-game-name></small><h3 data-product-name></h3><p data-product-package></p></div></div>
+            <div class="gameCatalogProductHead"><img data-game-image alt="" loading="lazy" width="64" height="64" referrerpolicy="no-referrer" hidden><div><small data-game-name></small><h3 data-product-name></h3><p data-product-package></p><p data-stock></p></div></div>
             <div class="gameCatalogPrices">
               <div><span>Təchizatçı qiyməti</span><strong><span data-supplier-price></span> <span data-supplier-currency></span></strong></div>
-              <label>Satış qiyməti — ₼<input type="number" min="0" step="0.01" inputmode="decimal" data-sale-price></label>
+              <label>Satış qiyməti — ₼<input type="number" min="0.01" max="999999.99" step="0.01" inputmode="decimal" data-sale-price required></label>
             </div>
+            <label class="gameCatalogImagePicker">Məhsul şəkli <input type="file" accept="image/jpeg,image/png,image/webp" data-product-file></label>
+            <button type="button" class="btn primary" data-game-add>Sayta əlavə et</button>
           </article>
         </template>
       </section>
@@ -787,6 +789,6 @@
   <script src="employee-review-admin.js?v=position-20261028-1"></script>
   <script src="stories-admin.js?v=admin-release-status-20261107"></script>
   <script src="admin-mobile-menu.js?v=epinby-catalog-shell-1"></script>
-  <script src="api-integrations.js?v=epinby-1"></script>
+  <script src="api-integrations.js?v=epinby-catalog-2"></script>
 </body>
 </html>

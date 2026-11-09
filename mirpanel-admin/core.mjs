@@ -794,7 +794,7 @@ function normalizeProduct(product = {}, index = 0) {
   const stock = normalizeStock(product.stock);
   const formFields = normalizeFormFields(product);
   const soldOut =
-    Boolean(product.soldOut) ||
+    /^epinby_\d+$/.test(id) || Boolean(product.soldOut) ||
     product.flow === "out_of_stock" ||
     (Boolean(product.stockEnabled) && stock !== null && stock <= 0);
   const productTitle = String(product.title || id);

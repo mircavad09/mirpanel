@@ -20,7 +20,7 @@ export function approvedUrl(base, path, allowlist) {
   return new URL(path,url);
 }
 
-export async function supplierRequest({base, path, key, allowlist, body, reference, authHeader='Authorization', jsonResponse=false}) {
+export async function supplierRequest({base, path, key, allowlist, body, reference, authHeader='Authorization', jsonResponse=false, query, maxResponseBytes=65536}) {
   const url = approvedUrl(base,path,allowlist);
   const signal = AbortSignal.timeout(8000);
   const records = await lookup(url.hostname,{family:4,all:true});
@@ -28,6 +28,7 @@ export async function supplierRequest({base, path, key, allowlist, body, referen
   if (!records.length || records.some(({address}) => blocked.check(address))) throw Error('ADDRESS_BLOCKED');
   const [{address}] = records;
   if (reference && !body) url.searchParams.set('reference',reference);
+  if (query && !body) for(const [name,value] of Object.entries(query)) url.searchParams.set(name,String(value));
   const payload = body ? JSON.stringify(body) : null;
   return new Promise((resolve,reject) => {
     const req = request(url,{
@@ -50,7 +51,7 @@ export async function supplierRequest({base, path, key, allowlist, body, referen
       }
       res.on('data',chunk => {
         length += chunk.length;
-        if (length > 65536) res.destroy(Error('SUPPLIER_RESPONSE_LIMIT'));
+        if (length > Math.min(524288,maxResponseBytes)) res.destroy(Error('SUPPLIER_RESPONSE_LIMIT'));
         else chunks.push(chunk);
       });
       res.on('end',() => {

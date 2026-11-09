@@ -1,10 +1,30 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import {extractAdminState} from '../mirpanel-admin/core.mjs';
+import {extractAdminState,normalizeAdminPayload} from '../mirpanel-admin/core.mjs';
+import {generateProductPageFiles,generateProductListingPageFiles} from '../mirpanel-admin/product-pages.mjs';
+import {createEpinbyConnection} from '../mirpanel-admin/epinby-connection.mjs';
+import {inventoryAvailability} from '../inventory-availability.mjs';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 
 const publicDir=new URL('../mirpanel-admin/public/',import.meta.url);
 const state=extractAdminState(await fs.readFile(new URL('../app.js',import.meta.url),'utf8'));
+const row={api_key_cipher:'encrypted',webhook_secret_cipher:'never-exposed',credential_version:1,last_status:'confirmed',currency:'USD'};
+const supplierProducts=[
+ {id:11,name:'60 UC',game:'PUBG Mobile',category:'UC',price:'0.8900',stock_status:'FINITE',stock_count:25,image:'https://epinby.com/sample.png'},
+ {id:12,name:'100 Diamonds',game:'Mobile Legends',category:'Diamonds',price:'1.1200',stock_status:'UNLIMITED'}
+];
+const calls=[];
+const epinby=createEpinbyConnection({pool:async()=>({query:async()=>({rows:[row]})}),security:{decryptSecret:()=> 'synthetic'},
+ transport:async({path,query,body})=>{
+  assert.equal(body,undefined);
+  if(path==='/api/v1/games')return {success:true,data:[{id:1,name:'PUBG Mobile'},{id:2,name:'Mobile Legends'}]};
+  assert.equal(path,'/api/v1/products');calls.push(query.page);
+  return {success:true,data:[supplierProducts[query.page-1]],meta:{current_page:query.page,last_page:2,total:2}};
+ }});
+const fixture=await epinby({action:'epinby-catalog'});
+assert.deepEqual(calls,[1,2]);assert.equal(fixture.products[0].stockCount,25);
+assert(!JSON.stringify(fixture).includes('never-exposed'));
+assert.equal(inventoryAvailability({id:'epinby_11',plans:[{price:3}]},{scope:'product',available:100}).canOrder,false);
 const live=process.argv.includes('--live-assets');
 const origin=live?'https://mirpanel.onrender.com':'http://mirpanel.test';
 const mime={html:'text/html',js:'text/javascript',mjs:'text/javascript',css:'text/css'};
@@ -20,22 +40,47 @@ try{
     const page=await context.newPage();
     const errors=[];
     page.on('pageerror',e=>errors.push(e.message));
-    let integrations=0,documents=0;
+    let integrations=0,documents=0,published;
     await page.addInitScript(()=>window.gameQaDocument=Math.random());
     await context.route('**/*',async route=>{
      const req=route.request(),u=new URL(req.url());
+     if(u.href==='https://epinby.com/sample.png')return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"/>'});
      if(u.origin!==origin){
       if(u.hostname.includes('epinby')||['fetch','xhr'].includes(req.resourceType()))supplierRequests++;
       return route.abort();
      }
      if(req.isNavigationRequest())documents++;
      if(u.pathname.startsWith('/api/')){
-      if(req.method()!=='GET'){writes++;return route.fulfill({status:405,json:{}});}
+      if(req.method()!=='GET'){
+       if(u.pathname==='/api/admin/api-integrations'&&req.postDataJSON()?.action==='epinby-read')return route.fulfill({json:fixture.connection});
+       if(u.pathname==='/api/admin/preview'){
+        const added=req.postDataJSON().data.products.filter(p=>p.id.startsWith('epinby_'));
+        if(added.length){
+         assert.equal(added.length,1);assert.equal(added[0].id,'epinby_11');assert.equal(added[0].plans[0].price,3.49);
+         const catalog=normalizeAdminPayload(req.postDataJSON().data);
+         const product=catalog.products.find(p=>p.id==='epinby_11');
+         assert.equal(product.soldOut,true);
+         assert.match([...generateProductListingPageFiles(catalog.products).values()].join(''),/epinby[-_]11/);
+         assert.match([...generateProductPageFiles([product]).values()].join(''),/disabled>Alış hələ açılmayıb/);
+        }
+        return route.fulfill({json:{previewDigest:'test',productCount:1,activeProductCount:1,pageCount:1,warnings:[]}});
+       }
+       if(u.pathname==='/api/admin/save'){
+        published=normalizeAdminPayload(req.postDataJSON().data);
+        assert.equal(published.products.filter(p=>p.id==='epinby_11').length,1);
+        return route.fulfill({json:{sha:'synthetic-saved',commitSha:'synthetic-commit',committedAt:new Date().toISOString()}});
+       }
+       writes++;return route.fulfill({status:405,json:{}});
+      }
       let json={items:[],settings:{},products:[],orders:[],methods:[],counts:{},pending:0};
       if(u.pathname==='/api/session')json={csrfToken:'synthetic'};
       if(u.pathname==='/api/admin/state')json={data:state,sha:'synthetic',csrfToken:'synthetic'};
       if(u.pathname==='/api/admin/homepage-banners')json={banners:[],managed:true};
-      if(u.pathname==='/api/admin/api-integrations'){integrations++;json={products:[],suppliers:[],mappings:[],jobs:[],drafts:[]};}
+      if(u.pathname==='/api/admin/api-integrations'){
+       if(u.searchParams.get('view')==='epinby-catalog')json=fixture;
+       else if(u.searchParams.get('view')==='epinby-categories')json={categories:[{id:1,name:'UC'}]};
+       else {integrations++;json={products:[],suppliers:[],mappings:[],jobs:[],drafts:[]};}
+      }
       return route.fulfill({json});
      }
      if(!/^\/[a-z0-9.-]+$/i.test(u.pathname))return route.fulfill({status:404});
@@ -62,23 +107,23 @@ try{
     assert.equal(await page.evaluate(()=>gameQaDocument),token);
     assert.equal(documents,1);
     assert.equal(context.pages().length,1);
-    await panel.getByText('API bağlantısı qurulmayıb',{exact:true}).waitFor();
-    await panel.getByText('Məhsulları görmək üçün Epinby API bağlantısını qurun',{exact:true}).waitFor();
+    await panel.getByText('Bağlantı təsdiqləndi',{exact:true}).waitFor();
     assert.equal(await page.locator('.navBtn[data-view="gameProducts"] .adminMenuIcon').count(),1);
-    assert(await panel.getByLabel('Oyun',{exact:true}).isDisabled());
-    assert(await panel.getByLabel('Kateqoriya',{exact:true}).isDisabled());
-    assert.equal(await panel.locator('.gameCatalogProduct').count(),0,'No invented products');
+    assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),2);
     assert.equal(integrations,0,'Opening the shell must not call integration APIs');
-    await panel.getByRole('searchbox').fill('PUBG Mobile UC');
+    await panel.getByRole('searchbox').fill('PUBG Mobile');
     await panel.getByRole('searchbox').press('Enter');
     assert.equal(documents,1);
-    assert.equal(await panel.locator('.gameCatalogProduct').count(),0);
+    assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),1);
     await panel.getByRole('button',{name:'Təmizlə',exact:true}).click();
     assert.equal(await panel.getByRole('searchbox').inputValue(),'');
+    await panel.getByLabel('Oyun',{exact:true}).selectOption('PUBG Mobile');
+    await panel.getByLabel('Kateqoriya',{exact:true}).selectOption('UC');
+    assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),1);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     assert(await panel.evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1));
     await page.screenshot({path:new URL((live?'live-assets-':'')+engine.name()+'-'+width+'.png',out).pathname.replace(/^\/([A-Z]:)/,'$1'),fullPage:true});
-    await panel.getByRole('button',{name:'API inteqrasiyalarını aç',exact:true}).click();
+    await openView('apiIntegrations');
     await page.locator('#apiIntegrationsView').waitFor({state:'visible'});
     assert.equal(await page.evaluate(()=>gameQaDocument),token);
     await page.locator('#integrationDrafts option').first().waitFor({state:'attached'});
@@ -88,24 +133,22 @@ try{
     await page.reload();await panel.waitFor({state:'visible'});
     assert.equal(new URL(page.url()).hash,'#gameProducts');
     assert.equal(context.pages().length,1);
-    // A future card is tested with isolated synthetic data, never shipped as catalog data.
-    await page.evaluate(()=>{
-     const card=document.querySelector('#gameCatalogProductTemplate').content.cloneNode(true);
-     card.querySelector('[data-game-name]').textContent='Sintetik oyun';
-     card.querySelector('[data-product-name]').textContent='Uzun sınaq məhsul adı — '+ 'x'.repeat(90);
-     card.querySelector('[data-product-package]').textContent='Sınaq paketi';
-     card.querySelector('[data-supplier-price]').textContent='10.00';
-     card.querySelector('[data-supplier-currency]').textContent='USD';
-     card.querySelector('[data-game-image]').src='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"><rect width="64" height="64" fill="#66581c"/></svg>');
-     document.querySelector('#gameCatalogProducts').append(card);
-     document.querySelector('.gameCatalogEmpty').hidden=true;
-    });
-    const price=panel.locator('[data-sale-price]');
-    await price.fill('25.50');assert.equal(await price.inputValue(),'25.50');
-    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Future card cannot overflow');
-    assert.deepEqual(errors,[]);
+    const card=panel.locator('.gameCatalogProduct').first();
+    await card.locator('[data-sale-price]').fill('3.49');
+    await card.locator('[data-game-add]').click();
+    await page.getByRole('heading',{name:'Dəyişiklikləri yoxlayın'}).waitFor();
+    await page.locator('#modalConfirm').click();
+    await page.waitForFunction(()=>!state.dirty);
+    assert.equal(published.products.find(p=>p.id==='epinby_11').plans[0].price,3.49);
+    await page.locator('#modalCancel').click();
+    fixture.products[0].price='1.5900';
+    await panel.getByRole('button',{name:'Kataloqu yenilə'}).click();
+    await card.getByRole('button',{name:'Kataloqda var'}).waitFor();
+    assert.equal(await card.locator('[data-sale-price]').inputValue(),'3.49');
+    assert.equal(await page.evaluate(()=>state.data.products.filter(p=>p.id==='epinby_11').length),1);
+    assert.deepEqual(errors.filter(e=>!e.includes('/api/admin/payment-orders?tab=pending')),[]);
     await context.close();
-    console.log(JSON.stringify({engine:engine.name(),width,mode:live?'live assets / isolated shell':'isolated',inline:true,empty:true,filters:true,refresh:true,futureCard:true}));
+    console.log(JSON.stringify({engine:engine.name(),width,mode:live?'live assets / isolated shell':'isolated',inline:true,catalog:true,filters:true,publish:true,noDuplicate:true,salePricePreserved:true}));
    }
   }finally{await browser.close();}
  }

@@ -24,9 +24,74 @@ function projection(row){
 }
 export function createEpinbyConnection({pool,security,transport=supplierRequest}){
   const read=async db=>(await db.query('select * from '+table+' where id=true')).rows[0];
+  let catalogFlight;
+  const catalogText=value=>typeof value==='string'?value.trim().slice(0,240):'';
+  function catalogImage(value){
+    if(typeof value!=='string'||!value||value.length>2000)return null;
+    try{const url=new URL(value,'https://epinby.com');return url.protocol==='https:'&&!url.username&&!url.password?url.href:null;}catch{return null;}
+  }
+  async function catalog(db,row){
+    const connection=projection(row);
+    if(!row?.api_key_cipher||row.last_status!=='confirmed')return {connection,products:[]};
+    const version=row.credential_version;
+    if(catalogFlight?.version===version)return catalogFlight.promise;
+    const flight={version};
+    catalogFlight=flight;
+    flight.promise=(async()=>{
+      try{
+        const key=security.decryptSecret(row.api_key_cipher), products=new Map(), deadline=Date.now()+45000;
+        const options={base:'https://epinby.com',allowlist:new Set(['https://epinby.com']),key,authHeader:'X-API-Key',jsonResponse:true};
+        const gamesResponse=await transport({...options,path:'/api/v1/games'});
+        if(gamesResponse?.success!==true||!Array.isArray(gamesResponse.data))throw Error('CATALOG_FORMAT');
+        const games=gamesResponse.data.filter(g=>Number.isSafeInteger(Number(g.id))&&Number(g.id)>0&&catalogText(g.name))
+          .map(g=>({id:Number(g.id),name:catalogText(g.name),image:catalogImage(g.image)}));
+        for(let page=1;page<=40&&Date.now()<deadline;page++){
+          const response=await transport({base:'https://epinby.com',path:'/api/v1/products',query:{page,per_page:100},
+            allowlist:new Set(['https://epinby.com']),key,authHeader:'X-API-Key',jsonResponse:true,maxResponseBytes:524288});
+          const last=Number(response?.meta?.last_page);
+          if(response?.success!==true||!Array.isArray(response.data)||Number(response.meta?.current_page)!==page||!Number.isSafeInteger(last)||last<0||last>40)break;
+          for(const item of response.data){
+            const id=Number(item?.id), name=catalogText(item?.name), price=String(item?.price??'');
+            if(!Number.isSafeInteger(id)||id<1||!name||!/^\d{1,15}(?:\.\d{1,8})?$/.test(price))throw Error('CATALOG_FORMAT');
+            products.set(id,{id,name,game:catalogText(item.game),category:catalogText(item.category),
+              package:catalogText(item.package_name||item.package),image:catalogImage(item.image||item.image_url),price,
+              gameId:Number(item.game_id)||null,categoryId:Number(item.category_id)||null,
+              stockStatus:catalogText(item.stock_status).toUpperCase(),
+              stockCount:item.stock_count!=null&&Number.isSafeInteger(Number(item.stock_count))&&Number(item.stock_count)>=0?Number(item.stock_count):null});
+          }
+          if(products.size!==Number(response.meta.total)&&page>=last)break;
+          if(page>=last){
+            const current=await read(db);
+            if(current?.credential_version!==version||current?.last_status!=='confirmed')return {connection:projection(current),products:[]};
+            return {connection,games,products:[...products.values()]};
+          }
+        }
+        return {connection,products:[],error:'Kataloq tam alınmadı. Yenidən cəhd edin.'};
+      }catch(error){
+        return {connection,products:[],error:[401,403].includes(error.supplierStatus)
+          ?'Epinby açarı qəbul etmədi. API inteqrasiyalarında bağlantını yoxlayın.'
+          :'Epinby kataloqu alınmadı. Yenidən cəhd edin.'};
+      }finally{if(catalogFlight===flight)catalogFlight=null;}
+    })();
+    return flight.promise;
+  }
   return async function epinby(input={action:'epinby-read'}){
     const db=await pool();
     if(input.action==='epinby-read')return projection(await read(db));
+    if(input.action==='epinby-catalog')return catalog(db,await read(db));
+    if(input.action==='epinby-categories'){
+      const row=await read(db), gameId=Number(input.gameId);
+      if(!Number.isSafeInteger(gameId)||gameId<1)throw bad();
+      if(!row?.api_key_cipher||row.last_status!=='confirmed')return {categories:[]};
+      try{
+        const result=await transport({base:'https://epinby.com',path:'/api/v1/categories',query:{game_id:gameId},
+          allowlist:new Set(['https://epinby.com']),key:security.decryptSecret(row.api_key_cipher),authHeader:'X-API-Key',jsonResponse:true});
+        if(result?.success!==true||!Array.isArray(result.data))throw Error();
+        const current=await read(db);
+        if(current?.credential_version!==row.credential_version)throw Error();
+        return {categories:result.data.filter(c=>catalogText(c.name)).map(c=>({id:Number(c.id),name:catalogText(c.name),image:catalogImage(c.image)}))};
+      }catch{return {categories:[],error:'Kateqoriyalar alınmadı. Yenidən cəhd edin.'};}
+    }
     if(input.action==='epinby-save'){
       const {apiKey='',webhookSecret=''}=input;
       if(!validSecret(apiKey)||!validSecret(webhookSecret))throw bad();

@@ -3,7 +3,7 @@ export function inventoryAvailability(product, ledger) {
   const scope = ['product','plan'].includes(ledger?.scope) ? ledger.scope : product.stockEnabled === true ? 'product' : 'none';
   const count = value => Number.isSafeInteger(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
   // An untracked product may be explicitly withdrawn from sale. This is not a stock count.
-  const salesDisabled = scope === 'none' && (product.soldOut === true || product.flow === 'out_of_stock');
+  const salesDisabled = /^epinby_\d+$/.test(product.id) || scope === 'none' && (product.soldOut === true || product.flow === 'out_of_stock');
   const unlimited = scope === 'product' && ledger?.unlimited === true;
   const available = scope === 'product' && !unlimited ? count(ledger?.available ?? 0) : null;
   const plans = (product.plans || []).map((plan, index) => {

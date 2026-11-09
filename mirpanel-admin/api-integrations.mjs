@@ -59,7 +59,7 @@ export function createApiIntegrations({pool,security,loadCatalog,origins,transpo
     try { approvedUrl(base,path,allowlist); } catch { throw invalid(); }
   };
   async function admin(input) {
-    if(['epinby-read','epinby-save','epinby-test'].includes(input?.action))return epinby(input);
+    if(['epinby-read','epinby-save','epinby-test','epinby-catalog','epinby-categories'].includes(input?.action))return epinby(input);
     const db = await pool();
     if (!input) {
       const [catalog, providers, links, jobs, savedDrafts] = await Promise.all([

@@ -661,7 +661,10 @@ async function handleApi(request, response) {
     response.setHeader('Cache-Control','private, no-store');
     if (!apiIntegrations) return json(response,503,{error:'İnteqrasiya xidməti hazır deyil.'});
     try {
-      const input = request.method==='POST' ? await readBody(request,25000) : undefined;
+      const params=new URL(request.url,'http://localhost').searchParams;
+      const view=params.get('view');
+      const input = request.method==='POST' ? await readBody(request,25000) : ['epinby-catalog','epinby-categories'].includes(view) ? {action:view,gameId:params.get('gameId')} : undefined;
+      if(request.method==='POST' && ['epinby-catalog','epinby-categories'].includes(input?.action)) return json(response,405,{error:'Kataloq yalnız oxumaq üçündür.'});
       if (request.method==='POST' && (!input || typeof input!=='object')) return json(response,400,{error:'Sorğu düzgün deyil.'});
       return json(response,200,await apiIntegrations.admin(input));
     } catch (error) {
