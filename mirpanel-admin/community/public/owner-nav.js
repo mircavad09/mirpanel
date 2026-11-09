@@ -1,2 +1,2 @@
 // The exact same menu component is used on public and authenticated pages.
-if(!document.querySelector('script[data-browser-nav-loader]')){const s=document.createElement('script');s.src='/browser-nav.js?v=capcut-handset-1';s.dataset.browserNavLoader='true';document.head.append(s);}
+if(!document.querySelector('script[data-browser-nav-loader]')){const s=document.createElement('script');s.src='/browser-nav.js?v=capcut-handset-2';s.dataset.browserNavLoader='true';document.head.append(s);}

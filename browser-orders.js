@@ -330,6 +330,14 @@
    }
    if(steadyLayout)steadyLayout.lastElementChild.replaceWith(details);
    else{layout.append(visual,details);body.replaceChildren(choices,layout);}
+   if(handset){
+    const viewport=phoneShell.parentElement;
+    const target=phoneScreen.querySelector('[data-capcut-target]');
+    if(target&&viewport.scrollHeight>viewport.clientHeight){
+     const bounds=target.getBoundingClientRect(),area=viewport.getBoundingClientRect();
+     viewport.scrollTop+=bounds.top-area.top-(area.height-bounds.height)/2;
+    }
+   }
    if(autoplay&&step<steps.length-1)advanceTimer=setTimeout(()=>{
     if(!guideDialog.open||!guideDialog.isConnected)return;
     step++;autoplay=step<steps.length-1;draw();
