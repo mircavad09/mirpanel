@@ -99,7 +99,7 @@ export function orderMail(o,origin,{records=[],catalog}={}){
  const code=String(o.order_code);if(!orderCodeValid(code))throw Error('INVALID_ORDER_CODE');
  const url=new URL('/profil?tab=orders&order='+encodeURIComponent(code),origin).href;
  const ready=!!o.delivery_id, lines=deliveryLines(o), chosen=ready?[{...lines[o.line_index],quantity:o.delivered_quantity}]:lines;
- const title=ready?'Hesabınız hazırdır':'Sifarişiniz təsdiqləndi',subject=title+' — Sifariş №'+code;
+ const title=ready?'Sifarişiniz hazırdır':'Sifarişiniz təsdiqləndi',subject=title+' — Sifariş №'+code;
  const name=o.customer_name||o.name||'',phone=o.customer_phone||o.phone;
  const intro=ready?'№'+code+' sifarişiniz üzrə aşağıdakı məhsullar istifadəyə hazırdır və hesabınıza əlavə edilib.':'№'+code+' sifarişinizin ödənişi təsdiqləndi.';
  const meta=[['Sifariş nömrəsi','№'+code],...(ready?[['İstifadəyə hazır məhsulların sayı',o.delivered_quantity]]:[['Sifarişçi',name],['Telefon',phone],['E-poçt',o.contact_email||o.email]])].filter(([,v])=>v);

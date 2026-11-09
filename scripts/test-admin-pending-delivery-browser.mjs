@@ -55,9 +55,9 @@ try{
    await modal.waitFor();
    assert.equal(await p.evaluate(()=>__fixtureState.deliveryReads),1);
    await modal.getByLabel('Məhsul və paket').selectOption('1');
-   await modal.getByLabel('E-poçt (istəyə bağlı)').fill('delivery@example.test');
-   await modal.getByLabel('Şifrə (istəyə bağlı)').fill('synthetic-only');
-   await modal.getByLabel('Müştəriyə təqdim ediləcək hazır mesaj').fill('Sintetik mesaj\nİkinci sətir');
+   await modal.getByLabel('Hesabın e-poçtu (istəyə bağlı)').fill('delivery@example.test');
+   await modal.getByLabel('Hesabın şifrəsi (istəyə bağlı)').fill('synthetic-only');
+   await modal.getByLabel('Müştəriyə hazır mesaj').fill('Sintetik mesaj\nİkinci sətir');
    const send=modal.getByRole('button',{name:'Göndər və təhvil ver'});
    await send.evaluate(b=>{b.click();b.click();});
    await modal.getByRole('alert').getByText(/Sintetik cavab itdi/).waitFor();
@@ -69,7 +69,7 @@ try{
    await wallet.getByRole('button',{name:'Təhvil ver'}).click();await modal.waitFor();
    assert.equal(await modal.locator('option').count(),1);
    assert.equal(await modal.getByLabel('Məhsul və paket').inputValue(),'0');
-   await modal.getByLabel('Müştəriyə təqdim ediləcək hazır mesaj').fill('Sintetik CapCut');
+   await modal.getByLabel('Müştəriyə hazır mesaj').fill('Sintetik CapCut');
    await send.click();await modal.waitFor({state:'hidden'});await wallet.waitFor({state:'hidden'});
    await p.locator('[data-payment-order-tab=today]').click();
    await cards.filter({hasText:'Tamamlandı'}).first().waitFor();assert.equal(await cards.count(),2);

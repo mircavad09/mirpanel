@@ -56,7 +56,7 @@ try{
  const [customer]=await adminOrderCustomers(pool,[order.orderId]);
  eq(customer.id,order.orderId);eq(Number(customer.memberNumber)>0,true);eq(Boolean(customer.name),true);
  eq(order.paymentConfirmed,false);eq((await list(buyer,code)).orders[0].status,'reviewing');eq(await outbox(),[]);
- const inputDelivery={requestId:id(),line:0,quantity:1,message:'Sintetik təhvil\nİkinci sətir'};
+ const inputDelivery={requestId:id(),line:0,quantity:1,email:'delivery@example.test',password:'synthetic-only',message:'Sintetik təhvil\nİkinci sətir'};
  await reject(adminDelivery(pool,security,'synthetic-admin',order.orderId,inputDelivery),409);
  await rpc('approve_payment_order_v7',[order.orderId,null,'synthetic-admin']);await rpc('approve_payment_order_v7',[order.orderId,null,'synthetic-admin']);
  eq((await shop.get(buyer,hash,card.id)).paymentConfirmed,true);
@@ -79,13 +79,14 @@ try{
  const meta=await account.codes(buyer);eq(meta.codes.length,1);eq(JSON.stringify(meta).includes(inputDelivery.message),false);
  eq(meta.codes[0].category,{key:'video',label:'Video montajı'});
  eq(meta.codes[0].purchasedAt,(await list(buyer,code)).orders[0].createdAt);
- eq((await account.codes(buyer,inputDelivery.requestId)).text,inputDelivery.message);
+ eq(await account.codes(buyer,inputDelivery.requestId),{text:inputDelivery.message,email:inputDelivery.email,password:inputDelivery.password});
  eq((await account.codes(other)).codes.length,0);await reject(account.codes(other,inputDelivery.requestId),404);await reject(account.codes({},inputDelivery.requestId),401);
  eq((await q('select message_cipher from customer_order_deliveries')).rows[0].message_cipher.includes('Sintetik təhvil'),false);
- await worker.wake();eq(messages.length,2);eq(messages[1].subject,'Hesabınız hazırdır — Sifariş №'+code);
+ await worker.wake();eq(messages.length,2);eq(messages[1].subject,'Sifarişiniz hazırdır — Sifariş №'+code);
  eq(messages[1].textBody.includes('/profil?tab=orders&order='+code),true);
+ for(const value of [inputDelivery.email,inputDelivery.password,inputDelivery.message])eq((messages[1].textBody+messages[1].htmlBody).includes(value),false);
  eq(messages[1].textBody.includes('Synthetic ordinary')&&!messages[1].textBody.includes('Synthetic unlimited')&&!messages[1].textBody.includes('Sintetik təhvil'),true);
- eq((await adminDelivery(pool,security,'synthetic-admin',order.orderId,{...inputDelivery,requestId:id(),line:1})).status,'completed');
+ eq((await adminDelivery(pool,security,'synthetic-admin',order.orderId,{requestId:id(),line:1,quantity:1,message:'Yalnız hazır mesaj'})).status,'completed');
  const complete=(await list(buyer,code)).orders[0];
  eq(complete.status,'completed');eq(complete.deliveries.map(x=>x.line),[0,1]);eq(complete.items.map(x=>x.repeat?.productId),['ordinary','unlimited']);await worker.wake();eq(messages.length,3);
  eq(await adminPendingDeliveries(pool,[order.orderId]),[]);
