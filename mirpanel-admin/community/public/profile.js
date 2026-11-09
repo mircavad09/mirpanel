@@ -98,7 +98,11 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
   editor.before(el('section',{class:'profile-balance'},el('div',{},el('strong',{},'E-poçt təsdiqlənməyib')),verify));
  }
  const support=el('div',{class:'profile-support-slot',hidden:''});
- if(readOnly){for(const control of [avatar,edit,changeCover,topup,logout,...form.querySelectorAll('input,button')])control.disabled=true;}
+ if(readOnly){
+  summary.textContent='Hesab məlumatlarına bax';summary.setAttribute('aria-label',summary.textContent);
+  for(const control of [avatar,edit,changeCover,topup,logout,save])control.setAttribute('data-view-disabled','');
+  for(const input of form.querySelectorAll('input'))input.readOnly=true;
+ }
  app.replaceChildren(el('div',{class:'profile-layout'},hero,support,el('div',{class:'profile-content'},identity,copyStatus,status,el('div',{class:'profile-info-grid'},latest,subscription),logout)),avatarInput,coverInput,avatarDialog);paint();
  window.dispatchEvent(new CustomEvent('mirpanel:profile-support-slot',{detail:support}));
  async function summaryData(){

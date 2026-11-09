@@ -4,3 +4,15 @@
 .customer-view .account-menu-logout,.customer-view .profile-logout{display:none!important}
 .customer-view [data-view-disabled]{opacity:.55;cursor:not-allowed}
 @media(max-width:600px){.customer-view{padding-top:154px!important}.customer-view-banner{padding:10px 12px;gap:6px}.customer-view-banner strong{flex-basis:100%}.customer-view-banner a{margin-left:auto}.customer-view .community-shell{margin-top:0}}
+.customer-view-notice{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:20000;max-width:calc(100% - 32px);box-sizing:border-box;padding:12px 18px;border:1px solid #bfa536;border-radius:10px;background:#242014;color:#fff;font:15px/1.5 system-ui;text-align:center}
+.customer-view-filters,.customer-view-purchase{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}
+.customer-view-filters input,.customer-view-filters select{min-width:0;max-width:100%;flex:1;padding:12px}
+.customer-view-products{grid-template-columns:repeat(auto-fit,minmax(min(180px,100%),1fr));gap:16px}
+.customer-view-product{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:24px;margin-top:20px}
+.customer-view-product-photo{width:100%;border-radius:14px}
+.customer-view-price{display:block;margin:18px 0;font-size:26px;color:#ffd400}
+.customer-view-plans{padding:12px;border:1px solid #555;border-radius:12px}
+.customer-view-plans label{display:flex;align-items:center;gap:10px;padding:12px 4px;border-bottom:1px solid #444}
+.customer-view-plans label span{flex:1;overflow-wrap:anywhere}.customer-view-plans label strong{white-space:nowrap}
+.customer-view nav[aria-label="Məhsul səhifələri"]{display:flex;gap:16px;align-items:center;margin-top:20px}
+@media(max-width:600px){.customer-view-product{grid-template-columns:1fr}.customer-view-product-photo{max-height:220px;object-fit:contain}}

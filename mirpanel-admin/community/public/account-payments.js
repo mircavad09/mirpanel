@@ -15,7 +15,7 @@ function timestamp(value){
 }
 const numberLabel=row=>row.number?(row.kind==='topup'?'Balans yükləmə №':'Sifariş №')+row.number:'';
 const normalize=value=>String(value??'').normalize('NFC').toLocaleLowerCase('az').replace(/ı/g,'i').trim();
-export function mountPayments({content,api,el,button,link,validate,initial,initialRequest,onData,onUnauthorized,spinner,getCached,ui={}}){
+export function mountPayments({readOnly=false,content,api,el,button,link,validate,initial,initialRequest,onData,onUnauthorized,spinner,getCached,ui={}}){
  const css='/community-assets/account-payments.css?v=topup-result-1';
  if(!document.head.querySelector('link[data-payment-history]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-payment-history':'','data-shell-persistent':''}));
  let target=new URLSearchParams(location.search).get('topup')||'';
@@ -33,6 +33,22 @@ export function mountPayments({content,api,el,button,link,validate,initial,initi
  }));
  section.append(el('header',{class:'pay-history-heading'},el('h1',{},'Ödənişlərim'),link('Balans yüklə','/balans','pay-topup')),
   summary,tools,el('p',{class:'pay-history-note'},'Saylar bütün dövr üzrədir. Aşağıdakı siyahı cari səhifədəki ödənişləri göstərir.'),message,list,pager,dialog);
+ if(readOnly){
+  const history=el('section',{},el('h2',{},'Balans tarixçəsi'));
+  const rows=el('div');
+  async function loadHistory(page){
+   rows.replaceChildren(el('p',{},'Məlumat hazırlanır…'));
+   try{
+    const data=await api('/api/payments/shop/wallet?page='+page);
+    if(!live)return;
+    rows.replaceChildren(...data.items.map(row=>el('article',{},el('strong',{},money(row.cents)),el('p',{},row.reason),el('small',{},timestamp(row.created_at)))));
+    if(!data.items.length)rows.append(el('p',{},'Balans əməliyyatı yoxdur.'));
+    if(page>1)rows.append(button('Əvvəlki əməliyyatlar',()=>void loadHistory(page-1)));
+    if(data.more)rows.append(button('Sonrakı əməliyyatlar',()=>void loadHistory(page+1)));
+   }catch{if(live)rows.replaceChildren(button('Yenidən cəhd et',()=>void loadHistory(page)));}
+  }
+  history.append(button('Balans tarixçəsinə bax',()=>void loadHistory(1)),rows);section.append(history);
+ }
  content.replaceChildren(section);
  const isImage=m=>/^image\/(png|jpeg|webp)$/i.test(m||'');
  async function receipt(row){

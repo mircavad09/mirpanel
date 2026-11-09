@@ -1,3 +1,6 @@
+import {inventoryAvailability} from '../../inventory-availability.mjs';
+import {productSeoSlug} from '../product-pages.mjs';
+import {walletHistory} from './wallet.mjs';
 import {Repository} from './repository.mjs';
 import {accountPanel,paymentHistory} from './account-panel.mjs';
 import {customerSubscriptions} from './subscriptions.mjs';
@@ -31,15 +34,32 @@ export async function readCustomerView(pool,userId,path,{catalog,security,store}
    const count=(await c.query("select count(distinct o.id)::int n from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 and o.status in ('approved','completed')",[userId])).rows[0].n;
    result={latestOrder:latest,subscription:null,orderCount:count,savingsCents:null};
   }else if(p==='/api/community/account-panel')result=await accountPanel(c,userId,catalog);
+  else if(p==='/api/payments/shop/wallet'){
+   const history=await walletHistory(c,userId,{page:u.searchParams.get('page')||'1'});
+   result={...history,items:history.items.map(({cents,reason,created_at})=>({cents,reason,created_at}))};
+  }
   else if(p==='/api/community/payment-history')result=await paymentHistory(c,userId,u.searchParams);
   else if(p==='/api/payments/shop/subscriptions')result=await customerSubscriptions(c,userId,catalog,()=>store.inventorySnapshot());
+  else if(p==='/api/payments/storefront'){
+   const [data,stock]=await Promise.all([catalog(),store.inventorySnapshot()]);
+   const inventory=new Map(stock.map(row=>[row.productId,row]));
+   result={products:data.products.filter(p=>p.active!==false).map(p=>{
+    const availability=inventoryAvailability(p,inventory.get(p.id));
+    return {id:p.id,title:p.title,image:p.image,description:p.desc,slug:productSeoSlug(p),category:p.category,currency:p.currency||'₼',
+     plans:(p.plans||[]).flatMap((plan,index)=>plan.active===false?[]:[{index,label:plan.label||plan.name||'Paket',price:plan.price,
+      regularPrice:plan.regularPrice,...availability.plans[index]}])};
+   })};
+  }
   else if(p==='/api/payments/my-orders')result=await orders.list(null,u.searchParams.get('cursor'),u.searchParams.get('order'));
   else if(p==='/api/payments/my-orders/codes')result=await orders.codes(null);
   else if(/^\/api\/payments\/my-orders\/codes\/[a-f0-9-]{36}$/.test(p))result=await orders.codes(null,p.split('/').at(-1));
-  else if(/^\/api\/payments\/my-orders\/[a-f0-9-]{36}\/guide$/.test(p))result=await orders.guide(null,p.split('/').at(-2),u.searchParams.get('line'));
+  else if(/^\/api\/payments\/my-orders\/[a-f0-9-]{36}\/guide(?:\/\d+)?$/.test(p)){
+   const parts=p.split('/'),guide=parts.indexOf('guide');
+   result=await orders.guide(null,parts[guide-1],parts[guide+1]??u.searchParams.get('line'));
+  }
   else if(/^\/api\/payments\/my-orders\/[a-f0-9-]{36}\/receipt$/.test(p))result=await orders.receipt(null,p.split('/').at(-2));
   else if(p==='/api/payments/shop/topup/receipt'){
-   const row=(await c.query('select receipt,receipt_deleted_at from wallet_topups where id=$1::uuid and user_id=$2',[u.searchParams.get('id'),userId])).rows[0];
+   const row=(await c.query('select receipt,receipt_deleted_at from wallet_topups where id=$1::uuid and user_id=$2 and status<>\'draft\'',[u.searchParams.get('id'),userId])).rows[0];
    if(!row?.receipt?.path||row.receipt_deleted_at)throw fail(404,'Qəbz tapılmadı.');
    result={url:await store.signedReceipt(row.receipt.path,60,'owner-view',u.searchParams.get('id')),mime:row.receipt.mimeType};
   }else if(/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(p)){

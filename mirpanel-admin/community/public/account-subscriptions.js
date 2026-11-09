@@ -78,7 +78,7 @@ export function mountSubscriptions({content,el,button,link,api,validate,initial,
   item.append(el('dl',{class:'subs-prices'},price('Son alış qiyməti',row.lastPurchaseCents),knownPrice(row.renewalCents)?price('Cari yeniləmə qiyməti',row.renewalCents):null));
   if(rowStatus)item.append(el('p',{class:'subs-renew-status'},rowStatus));
   if(known){
-   const renew=button('Yenilə',()=>{if(!readOnly)picker(row);});renew.disabled=readOnly;renew.prepend(icon('refresh'));renew.className='subs-renew';
+   const renew=button('Yenilə',()=>{if(!readOnly)picker(row);});if(readOnly)renew.setAttribute('data-view-disabled','');renew.prepend(icon('refresh'));renew.className='subs-renew';
    if(row.days<=6)renew.dataset.urgent='true';
    const bar=row.progress==null?el('div',{class:'subs-progress subs-progress-unknown','data-tone':urgency(row.days),'aria-hidden':'true'}):el('progress',{class:'subs-progress','aria-label':'Qalan müddət','data-tone':urgency(row.days),max:100,value:row.progress});
    item.append(el('div',{class:'subs-actions'},bar,renew));

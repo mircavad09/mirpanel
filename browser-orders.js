@@ -319,7 +319,7 @@ function netflixScreen(animation,create){
    if(current.animation?.startsWith('netflix-'))layout.classList.add('netflix-guide');
    const visual=create('div',null,'browser-guide-visual');
    const netflix=track==='phone'&&current.animation?.startsWith('netflix-');
-   const handset=netflix||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image);
+   const handset=netflix||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image?.replace(/^https:\/\/mirpanel\.com(?=\/)/,'')||'');
    const steadyLayout=handset&&body.contains(phoneShell)?phoneShell.closest('.browser-guide-step'):null;
    if(handset){
     visual.classList.add('browser-guide-visual-handset');
