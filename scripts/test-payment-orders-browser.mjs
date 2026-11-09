@@ -62,9 +62,11 @@ try {
   }
   await page.click('[data-payment-order-tab="pending"]');
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 2);
+  await page.locator("[data-order-toggle]").first().click();
   await page.locator("[data-approve-payment]").first().click();
   await page.locator('.paymentActionDialog button[type="submit"]').click();
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 1);
+  await page.locator("[data-order-toggle]").first().click();
   await page.locator("[data-reject-payment]").first().click();
   await page.locator('.paymentActionDialog button[type="submit"]').click();
   await page.waitForFunction(() => document.querySelectorAll(".paymentOrderAdminCard").length === 0);

@@ -17,16 +17,18 @@ const state=extractAdminState(fs.readFileSync('app.js','utf8'));
 const avatarUrl='data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><circle cx="20" cy="20" r="20" fill="#b28337"/><path fill="white" d="M20 9a6 6 0 1 0 0 12 6 6 0 1 0 0-12m0 15c-8 0-12 4-12 8h24c0-4-4-8-12-8"/></svg>');
 const user={id:'qa-user',memberNumber:1022,name:'Məhəmməd Əli Abdullazadə Məmmədov',email:'qa@example.invalid',lastSeen:new Date(Date.now()-180000).toISOString(),balanceCents:1234567,spentCents:98765432,avatarUrl,orderCount:2,online:true,emailVerified:true};
 const item={title:'CapCut Pro — çox uzun sintetik məhsul adı (telefon və kompüter üçün)',planName:'Uzun paket adı · 1 aylıq istifadə',quantity:2,unitCents:499};
+const netflix={title:'Netflix Şəxsi',planName:'1 aylıq',quantity:1,unitCents:594};
 const order={id:'12345678-1234-4234-8234-000000000001',orderCode:'MP-123456',customerName:user.name,customerNumber:user.memberNumber,productTitle:item.title,planName:item.planName,items:[item],amount:9.98,currency:'AZN',status:'reviewing',reservationStatus:'reviewing',paymentMethodLabel:'ABB •••• 1234',receiptAvailable:true,createdAt:user.lastSeen,auditHistory:[]};
-const wallet={...order,id:'12345678-1234-4234-8234-000000000002',orderCode:'MP-123457',paymentSource:'wallet',paymentConfirmed:true,deliveryPending:true,receiptAvailable:false};
+const wallet={...order,id:'12345678-1234-4234-8234-000000000002',orderCode:'MP-123457',items:[netflix,item],amount:15.92,paymentSource:'wallet',paymentConfirmed:true,deliveryPending:true,receiptAvailable:false};
 const api=u=>{
  const p=u.pathname,q=u.searchParams;
- if(p==='/api/admin/state')return {data:state,sha:'synthetic',csrfToken:'test'};
+ if(p==='/api/admin/state')return {data:state,sha:'synthetic',loadedAt:user.lastSeen,csrfToken:'test'};
  if(p.endsWith('/community/users'))return {users:q.get('filter')==='banned'||(q.get('q')&&!user.name.toLocaleLowerCase('az').includes(q.get('q').toLocaleLowerCase('az')))?[]:[user],hasMore:false,total:1};
  if(p.endsWith('/users/'+user.id))return {user,profile:{},orders:[{order_code:order.orderCode,product_title:item.title,plan_name:item.planName,amount:9.98,currency:'AZN',status:'reviewing'}],totalCents:user.spentCents};
  if(p.endsWith('/community/wallet'))return {cents:user.balanceCents,items:[],more:false};
- if(p.endsWith('/payment-orders'))return {orders:[q.get('pendingStage')==='delivery'?wallet:order],counts:{pending:1,today:0,all:1,expiring:0},pagination:{page:1,pageSize:20,total:1,totalPages:1},filters:{products:[{id:'capcut',title:'CapCut Pro'}],durations:[],methods:[]},statistics:{},appliedFilters:{}};
- if(p.endsWith('/delivery'))return {lines:[{index:0,title:item.title,plan:item.planName,remaining:1}]};
+ if(p.endsWith('/payment-orders'))return {orders:[q.get('pendingStage')==='delivery'?wallet:ordersOnly?{...order,items:[],quantity:2}:order],counts:{pending:1,today:0,all:1,expiring:0},pagination:{page:1,pageSize:20,total:1,totalPages:1},filters:{products:[{id:'capcut',title:'CapCut Pro'}],durations:[],methods:[]},statistics:{},appliedFilters:{}};
+ if(p.endsWith('/receipt'))return {url:'about:blank#synthetic-receipt'};
+ if(p.endsWith('/delivery'))return {lines:[{index:0,title:netflix.title,plan:netflix.planName,remaining:1},{index:1,title:item.title,plan:item.planName,remaining:2}]};
  if(p.endsWith('/payment-methods'))return {methods:[{id:'qa-bank',displayName:'Sintetik bank',providerName:'ABB',active:true,hasNumber:true,available:true,last4:'1234',limitMode:'unlimited'}]};
  if(p.endsWith('/payment-settings'))return {settings:{}};
  if(p.endsWith('/payment-monthly-reports'))return {current:null,archives:[]};
@@ -65,7 +67,7 @@ try{
   const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{
    const context=await browser.newContext({viewport:{width,height:860},hasTouch:width<600,isMobile:width<600,serviceWorkers:'block'});
-   if(live&&(usersOnly||filtersOnly)){
+   if(live&&(usersOnly||filtersOnly||ordersOnly)){
     const session=process.env.MIRPANEL_ADMIN_TEST_SESSION,index=session?.indexOf('=')??-1;
     if(index<1)throw Error('A temporary admin session is required for the protected Users assets.');
     await context.addCookies([{name:session.slice(0,index),value:session.slice(index+1),url:origin,httpOnly:true,secure:true,sameSite:'Strict'}]);
@@ -76,7 +78,7 @@ try{
     if(live&&u.pathname.startsWith('/api/'))return r.fulfill({json:api(u)});
     // Use the checked-in shell for the synthetic admin session; all view scripts
     // and styles still come from the deployed Render service.
-    if(live&&!usersOnly&&!filtersOnly&&u.pathname==='/admin.html')return r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(admin,'admin.html'))});
+    if(live&&!usersOnly&&!filtersOnly&&!ordersOnly&&u.pathname==='/admin.html')return r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(admin,'admin.html'))});
     return r.continue();
    });
    const page=await context.newPage();page.setDefaultTimeout(10000);
@@ -88,6 +90,7 @@ try{
     const normalize=v=>v.replace(/\r\n/g,'\n').trimEnd();
     assert.equal(normalize(await assets.get(file)),normalize(fs.readFileSync(path.join(admin,file),'utf8')));
    }};
+   if(ordersOnly)await page.addInitScript(()=>{window.open=()=>({location:{replace:url=>{window.syntheticReceipt=url;}},close(){}});});
    await page.goto(origin+'/admin.html');
    await page.locator(viewSelector('communityUsers')).waitFor({state:'attached'});
    const open=async v=>{
@@ -104,7 +107,7 @@ try{
     await page.route('**/api/admin/payment-orders?*',async r=>{
      const u=new URL(r.request().url());
      const q=u.searchParams;
-     queries.push(Object.fromEntries(q));
+     if(q.has('pendingStage'))queries.push(Object.fromEntries(q));
      if(q.has('search'))await new Promise(resolve=>{release=resolve;});
      if(fail)return r.fulfill({status:503,json:{error:'Sintetik şəbəkə xətası.'}});
      const result=api(u);result.filters=filterOptions;result.appliedFilters.durationMonths=q.get('durationMonths')||'';
@@ -195,39 +198,52 @@ try{
    await open('paymentOrders');
    const orderView=page.locator('#paymentOrdersView'),card=orderView.locator('[data-payment-order-id]').first();
    await card.waitFor();
-   if(engine===chromium&&[390,1440].includes(width)){await card.evaluate(n=>n.scrollIntoView({block:'center'}));await page.screenshot({path:path.join(output,'orders-'+phase+'-'+width+'.png')});}
+   if(baseline&&engine===chromium&&[390,1440].includes(width)){await card.evaluate(n=>n.scrollIntoView({block:'center'}));await page.screenshot({path:path.join(output,'orders-'+phase+'-'+width+'.png')});}
    const ordersLayout=await layout(page);
    if(!baseline){
     assert.deepEqual(ordersLayout.issues,[]);
-    const toggle=card.locator('[data-mobile-order-toggle]');
-    assert.equal(await toggle.isVisible(),mobile);
-    if(mobile){
-     for(const text of ['MP-123456','CapCut Pro','9.98 ₼','Yoxlanılır'])assert((await toggle.innerText()).includes(text));
+    const toggle=card.locator('[data-order-toggle]');
+    const details=card.locator('.paymentOrderCardDetails');
+    const checkFields=async()=>assert.deepEqual(await details.locator('dt').allTextContents(),['Məhsul','Ödəniş üsulu','Müştəri']);
+    for(const value of ['MP-123456','Yoxlanılır',...(mobile?['CapCut Pro','9.98 ₼']:[])])assert((await toggle.innerText()).includes(value));
      assert.equal(await card.getByRole('button',{name:'Çeki aç'}).isVisible(),false);
      await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'true');
+     await checkFields();
+     assert.deepEqual(await details.locator('li').allTextContents(),[item.title+' · '+item.planName+' · 2 ədəd · 9,98 ₼']);
      await card.getByRole('button',{name:'Çeki aç'}).waitFor();
      await card.getByRole('button',{name:'Ödənişi təsdiqlə'}).waitFor();
-     await card.getByText(user.name,{exact:false}).waitFor();
+     await card.getByText(user.name+' · #1022',{exact:true}).waitFor();
+     await details.getByText('ABB •••• 1234',{exact:true}).waitFor();
+     for(const label of ['Sifariş məlumatları','Üzərinə götür'])assert.equal(await card.getByRole('button',{name:label}).count(),0);
+     if(ordersOnly){
+      await card.getByRole('button',{name:'Çeki aç'}).click();
+      await page.waitForFunction(()=>window.syntheticReceipt==='about:blank#synthetic-receipt');
+      await card.getByRole('button',{name:'Ödənişi təsdiqlə'}).click();
+      const approval=page.locator('dialog.paymentActionDialog');
+      await approval.getByRole('button',{name:'Təsdiqlə',exact:true}).waitFor();
+      await approval.getByRole('button',{name:'Ləğv et',exact:true}).click();
+     }
      await toggle.click();assert.equal(await toggle.getAttribute('aria-expanded'),'false');
      await orderView.locator('#paymentOrderProduct').selectOption('capcut');
      const filterRequest=page.waitForResponse(r=>new URL(r.url()).searchParams.get('productId')==='capcut'&&r.url().includes('/payment-orders?')&&r.ok());
      await orderView.locator('#paymentOrderFiltersApply').click();await filterRequest;
      await orderView.locator('[data-payment-pending-stage=delivery]').click();
-     await card.locator('[data-mobile-order-toggle]').getByText(/MP-123457/).waitFor();
-     await card.locator('[data-mobile-order-toggle]').click();
-     await card.getByText('Balansla ödənilib',{exact:true}).waitFor();
+     await toggle.getByText(/MP-123457/).waitFor();
+     await toggle.click();await checkFields();
+     await details.getByText('MirPanel balansı',{exact:true}).waitFor();
+     assert.deepEqual(await details.locator('li').allTextContents(),['Netflix Şəxsi · 1 aylıq · 1 ədəd · 5,94 ₼',item.title+' · '+item.planName+' · 2 ədəd · 9,98 ₼']);
+     assert.equal(await card.getByRole('button',{name:'Çeki aç'}).count(),0);
+     assert.equal(await card.getByRole('button',{name:'Ödənişi təsdiqlə'}).count(),0);
+     assert.deepEqual((await layout(page)).issues,[]);
+     if(engine===chromium&&[390,1440].includes(width)){await card.evaluate(n=>n.scrollIntoView({block:'center'}));await page.screenshot({path:path.join(output,'compact-order-'+phase+'-'+width+'.png')});}
      await card.getByRole('button',{name:'Təhvil ver'}).click();
      const dialog=page.locator('dialog[data-payment-delivery-dialog]');
      await dialog.waitFor();await dialog.getByLabel('Müştəriyə təqdim ediləcək hazır mesaj').fill('Sintetik mətn');
-     await page.setViewportSize({width,height:420});
+     if(mobile)await page.setViewportSize({width,height:420});
      const send=dialog.getByRole('button',{name:'Göndər və təhvil ver'});await send.scrollIntoViewIfNeeded();
-     assert((await send.boundingBox()).y<420);
+     assert((await send.boundingBox()).y<(mobile?420:860));
      await dialog.getByRole('button',{name:'Bağla'}).click();
      await page.setViewportSize({width,height:860});
-    }else{
-     assert.equal(await card.locator('.paymentOrderCompactGrid').isVisible(),true);
-     assert.equal(await card.getByRole('button',{name:'Çeki aç'}).isVisible(),true);
-    }
    }
    await verifyAssets();
    const auditViews=[];

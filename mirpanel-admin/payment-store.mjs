@@ -439,7 +439,7 @@ export function createPaymentStore(config) {
       await rpc("archive_due_payment_monthly_reports");
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
-      const select = "id,checkout_snapshot,payment_source,payment_confirmed,order_code,product_id,product_title,plan_id,plan_name,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
+      const select = "id,checkout_snapshot,payment_source,payment_confirmed,order_code,product_id,product_title,plan_id,plan_name,quantity,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_path,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
       const applyCommonFilters = (query, dateColumn = "completed_at") => {
         let next = query;
@@ -558,6 +558,7 @@ export function createPaymentStore(config) {
             items:orderLines(order.checkout_snapshot),
             planId: order.plan_id,
             planName: order.plan_name,
+            quantity: order.quantity,
             amount: Number(order.amount),
             salePriceSnapshot: order.sale_price_snapshot === null ? Number(order.amount) : Number(order.sale_price_snapshot),
             costPriceSnapshot: order.cost_price_snapshot === null ? null : Number(order.cost_price_snapshot),
@@ -575,7 +576,7 @@ export function createPaymentStore(config) {
             expiryNotificationOn: order.expiry_notification_on,
             expiry: expiryStatus(order.service_expires_on),
             contactedAt: order.contacted_at,
-            receiptAvailable: !order.receipt_deleted_at && order.payment_source!=='wallet',paymentSource:order.payment_source||'card',paymentConfirmed:order.payment_confirmed===true,
+            receiptAvailable: Boolean(order.receipt_path && !order.receipt_deleted_at && order.payment_source!=='wallet'),paymentSource:order.payment_source||'card',paymentConfirmed:order.payment_confirmed===true,
             paymentMethodLabel: paymentMethodLabel({ ...method, method_name_snapshot: order.method_name_snapshot, method_last4_snapshot: order.method_last4_snapshot }),
             ...(deliveryQueue ? { deliveryPending: true } : {}),
             auditHistory: history.get(order.id) || []
