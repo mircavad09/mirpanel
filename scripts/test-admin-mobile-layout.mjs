@@ -128,6 +128,7 @@ try{
     assert.equal(await unknown.getByText('Admin tərəfindən balans əlavə edildi',{exact:true}).count(),1);
     assert.deepEqual(await manual.locator('.wu-ledger-amount, .wu-ledger-change>span:last-child strong').evaluateAll(nodes=>nodes.map(n=>getComputedStyle(n).color)),['rgb(124, 230, 164)','rgb(124, 230, 164)']);
     assert(await cards.evaluateAll(nodes=>nodes.every(n=>n.scrollWidth<=n.clientWidth+1&&n.getBoundingClientRect().right<=innerWidth+1)));
+    assert(await cards.evaluateAll(nodes=>nodes.slice(1).every((n,i)=>Math.abs(n.getBoundingClientRect().top-nodes[i].getBoundingClientRect().bottom-9)<1)));
     if(engine===chromium&&[390,1440].includes(width))await view.locator('.wu-ledger').screenshot({path:path.join(output,'wallet-history-'+phase+'-'+width+'.png')});
     await view.getByRole('button',{name:'Ödənişlər',exact:true}).click();
     await cards.first().getByText('Alış',{exact:true}).waitFor();
