@@ -147,11 +147,11 @@
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">5.49 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 1.12 ₼" title="CapCut Pro">
+    </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
       <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
-      <div class="product-page-similar-price">1.12 ₼</div>
+      <div class="product-page-similar-price">4.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus-ortaq-hesab" aria-label="ChatGPT Plus (Ortaq hesab) — 5.99 ₼" title="ChatGPT Plus (Ortaq hesab)">
       <img src="/uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-0faf81e086721086"></script>
+  <script src="/app.js?v=catalog-0e00bbc5d1e1d4e3"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
   <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>
