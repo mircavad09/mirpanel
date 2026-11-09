@@ -8,12 +8,12 @@ const btn=(text,fn)=>{const n=e('button',text);n.className='btn';n.type='button'
 const call=(path,data)=>api(base+path,data===undefined?{}:{method:'POST',body:JSON.stringify(data)});
 const date=v=>v?new Date(v).toLocaleString('az-AZ'):'Məlumat yoxdur';
 window.addEventListener('admin-community-view',()=>stop());window.addEventListener('pagehide',()=>stop());
-export async function mount(root,view){stop();let alive=true,stream;stop=()=>{alive=false;stream?.close();};root.replaceChildren(e('p','Yüklənir…'));
+export async function mount(root,view,userFilter){stop();let alive=true,stream;stop=()=>{alive=false;stream?.close();};root.replaceChildren(e('p','Yüklənir…'));
  const error=e('p');error.setAttribute('role','alert');
  const guarded=fn=>async(...args)=>{try{await fn(...args);}catch(x){error.textContent=x.message;}};
  try{
  if(view==='communityShop'){const {mountShop}=await import('/admin-shop.js?v=topup-card-slots-1');const close=await mountShop({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
- if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=wallet-debit-search-1');const close=await mountUsers({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();};return;}
+ if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=active30-1');const close=await mountUsers({root,call,alive:()=>alive,userFilter});if(!alive)close();else stop=()=>{alive=false;close();};return;}
  if(view==='communityUsers'){
   let page=1,q='';const input=e('input');input.placeholder='Ad, e-poçt, üzv ID-si';const list=e('div'),detail=e('section'),label=e('span');
   const show=guarded(async id=>{const r=await call('/users/'+encodeURIComponent(id));if(!alive)return;detail.replaceChildren(e('h2',r.user.name));

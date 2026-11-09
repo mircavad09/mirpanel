@@ -31,17 +31,17 @@ function walletCard(entry,memberNumber){
  return card;
 }
 const activityDate=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',second:'2-digit',hourCycle:'h23'});
-function activity(u,full=false){const seen=Date.parse(u.lastSeen);if(!Number.isFinite(seen))return'Aktivlik qeydə alınmayıb';const m=Math.max(1,Math.floor((Date.now()-seen)/60000));return 'Son aktivlik · '+(full?activityDate.format(seen)+' (Bakı vaxtı)':(m<60?m+' dəqiqə':Math.floor(m/60)+' saat')+' əvvəl');}
+function activity(u,full=false,now=Date.now()){const seen=Date.parse(u.lastSeen);if(!Number.isFinite(seen))return'Aktivlik qeydə alınmayıb';const m=Math.max(1,Math.floor((now-seen)/60000));return 'Son aktivlik · '+(full?activityDate.format(seen)+' (Bakı vaxtı)':(m<60?m+' dəqiqə':Math.floor(m/60)+' saat')+' əvvəl');}
 function avatar(u){const n=el('span');n.className='wu-avatar';if(u.avatarUrl){const img=el('img');img.src=u.avatarUrl;img.alt='';n.append(img);}else n.textContent=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'][u.avatar]||'🌙';return n;}
 function icon(kind){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',kind==='cart'?'M3 3h2l3 12h11l2-8H6 M9 20h.01 M18 20h.01':'M10 3h4l1 3 3 1 3 3v4l-3 1-1 3-3 3h-4l-1-3-3-1-3-3v-4l3-1 1-3 3-3Z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0');svg.append(p);return svg;}
-export async function mountUsers({root,call,alive}){
+export async function mountUsers({root,call,alive,userFilter='all'}){
  const css=document.createElement('link');css.rel='stylesheet';css.href='/admin-wallet-users.css?v=wallet-debit-search-1';document.head.append(css);
- let closed=false,page=1,q='',userFilter='all',selected,historyPage=1,historyQ='',historyView='history';const valid=()=>!closed&&alive(),errors=el('p'),wrap=el('div'),detail=el('section'),list=el('div'),query=el('input'),pager=el('span');detail.hidden=true;query.placeholder='Ad, e-poçt və üzv ID-si';const safe=fn=>async(...a)=>{try{await fn(...a);}catch(e){errors.textContent=e.message;}};
+ let closed=false,page=1,q='',selected,historyPage=1,historyQ='',historyView='history';const valid=()=>!closed&&alive(),errors=el('p'),wrap=el('div'),detail=el('section'),list=el('div'),query=el('input'),pager=el('span');detail.hidden=true;query.placeholder='Ad, e-poçt və üzv ID-si';const safe=fn=>async(...a)=>{try{await fn(...a);}catch(e){errors.textContent=e.message;}};
  const prev=button('Əvvəlki',()=>{page--;load();}),next=button('Növbəti',()=>{page++;load();});
- function userRow(u){
+ function userRow(u,now){
   const tr=el('tr'),identity=el('td'),open=button('',safe(()=>show(u.id)));
   identity.className='wu-identity-cell';open.classList.add('wu-identity');
-  open.append(avatar(u),el('strong',u.name),el('small',activity(u)));identity.append(open);
+  open.append(avatar(u),el('strong',u.name),el('small',activity(u,false,now)));identity.append(open);
   const moneyCell=(label,value)=>{const td=el('td'),caption=el('small',label),amount=el('span',money(value));td.className='wu-money-cell';caption.className='wu-mobile-label';amount.className='wu-money';td.append(caption,amount);return td;};
   const discount=el('td','—'),referrals=el('td','—');discount.className=referrals.className='wu-desktop-cell';
   tr.append(identity,discount,referrals,moneyCell('Xərclənib',u.spentCents),moneyCell('Balans',u.balanceCents));
@@ -63,9 +63,13 @@ export async function mountUsers({root,call,alive}){
   try{
    const r=await call('/users?'+new URLSearchParams({q,page:requestedPage,filter:userFilter}));
    if(!valid()||request!==listRequest)return;
+   if(requestedPage>1&&!r.users.length){
+    page=Math.max(1,Math.ceil(r.total/20));return load();
+   }
+   const now=Date.parse(r.asOf)||Date.now();
    const table=el('table'),head=el('tr');table.className='wu-user-list';
    for(const label of ['İstifadəçi','Endirim və qiymətlər','Referallar','Xərclənib','Balans',''])head.append(el('th',label));
-   table.append(head);for(const u of r.users)table.append(userRow(u));list.replaceChildren(table);
+   table.append(head);for(const u of r.users)table.append(userRow(u,now));list.replaceChildren(table);
    if(!r.users.length)list.append(el('p','İstifadəçi tapılmadı.'));
    pager.textContent=`Səhifə ${requestedPage} · ${r.total}`;prev.disabled=requestedPage===1;next.disabled=!r.hasMore;
   }catch(e){if(valid()&&request===listRequest)errors.replaceChildren(el('span',e.message+' '),button('Yenidən cəhd et',load));}
@@ -138,15 +142,17 @@ export async function mountUsers({root,call,alive}){
   dialog.addEventListener('close',()=>dialog.remove());document.body.append(dialog);dialog.showModal();
  }
  const toolbar=el('div'),filters=el('nav'),search=el('form');toolbar.className='wu-toolbar';filters.className='wu-filters';
- for(const [key,label]of [['all','Hamısı'],['online','Onlayn'],['banned','Qadağan olunmuş']]){
+ for(const [key,label]of [['all','Hamısı'],['active30','Son 30 dəqiqədə aktiv'],['online','Onlayn'],['banned','Qadağan olunmuş']]){
   const b=button(label,()=>{userFilter=key;for(const n of filters.children)n.setAttribute('aria-pressed',String(n===b));searchUsers();});
-  b.setAttribute('aria-pressed',String(key==='all'));filters.append(b);
+  b.setAttribute('aria-pressed',String(key===userFilter));filters.append(b);
  }
  query.type='search';query.maxLength=100;query.setAttribute('aria-label',query.placeholder);
  query.addEventListener('input',()=>searchUsers(250));search.append(query);
  search.onsubmit=event=>{event.preventDefault();searchUsers();};
  toolbar.append(filters,search);wrap.append(el('h1','İstifadəçilər'),toolbar,list,prev,pager,next);
  root.classList.add('wallet-users');root.replaceChildren(errors,wrap,detail);await load();
- const target=new URL(location.href).searchParams.get('topupUser');if(target&&target.length<=160)await safe(()=>show(target))();
- return()=>{closed=true;clearTimeout(searchTimer);root.classList.remove('wallet-users');for(const d of document.querySelectorAll('.wu-dialog'))d.remove();};
+ const refreshActive=()=>{if(valid()&&userFilter==='active30'&&!list.hasAttribute('aria-busy'))void load();};
+ if(valid())window.addEventListener('admin-topup-poll',refreshActive);
+ const target=new URL(location.href).searchParams.get('topupUser');if(userFilter==='all'&&target&&target.length<=160)await safe(()=>show(target))();
+ return()=>{closed=true;window.removeEventListener('admin-topup-poll',refreshActive);clearTimeout(searchTimer);root.classList.remove('wallet-users');for(const d of document.querySelectorAll('.wu-dialog'))d.remove();};
 }

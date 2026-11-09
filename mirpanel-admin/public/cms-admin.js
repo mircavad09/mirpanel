@@ -16,7 +16,7 @@
   let latestStatus = null;
   let deployTimer;
   let deployAttempts = 0;
-  const counts = { banners: null, orders: null, topups: null, users: null, online: null, totalOrders: null, wallet: null };
+  const counts = { banners: null, orders: null, topups: null, users: null, active30: null, totalOrders: null, wallet: null };
   function showPendingTopups(event) {
     const pending = event.detail;
     counts.topups = pending;
@@ -111,12 +111,12 @@
       if (button) activateView(button.dataset.view);
     });
   }
-  function activateView(view) {
+  function activateView(view, userFilter) {
     if (location.hash !== '#' + view) history.replaceState(history.state, '', location.pathname + location.search + '#' + view);
     window.dispatchEvent(new CustomEvent('admin-community-view',{detail:view}));
     if(['communityUsers','communityGroup','communityShop'].includes(view)){
       if(!el(`${view}View`))createView(view,'');
-      import('/admin-community-panel.js?v=topup-card-slots-1').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
+      import('/admin-community-panel.js?v=active30-1').then(m=>{const target=el(`${view}View`);if(target&&!target.classList.contains('hidden'))m.mount(target,view,userFilter);}).catch(()=>{el(`${view}View`).textContent='Bölmə yüklənmədi. Yenidən açın.';});
     }
     document.querySelectorAll(".workspace, .singlePanel, .cmsWorkspace").forEach((section) => section.classList.add("hidden"));
     const target = el(`${view}View`);
@@ -941,7 +941,7 @@
     if (!host) return;
     const cards = [
       ["users", "Ümumi istifadəçilər", counts.users, "communityUsers"],
-      ["online", "Onlayn · son 5 dəqiqə", counts.online],
+      ["active30", "Son 30 dəqiqədə aktiv", counts.active30, "communityUsers"],
       ["totalOrders", "Cəmi sifarişlər", counts.totalOrders],
       ["wallet", "İstifadə olunmamış müştəri balansı", counts.wallet],
       ["banners", "Aktiv ana səhifə bannerləri", counts.banners, "banners"],
@@ -975,14 +975,14 @@
       const cents = /^\d+$/.test(result.walletCents) ? BigInt(result.walletCents) : null;
       Object.assign(counts, {
         users: count(result.users),
-        online: count(result.online),
+        active30: count(result.active30),
         totalOrders: count(result.orders),
         orders: count(result.pendingOrders),
         wallet: cents === null ? false : `${(cents / 100n).toLocaleString("az-AZ")},${String(cents % 100n).padStart(2, "0")} ₼`
       });
     } catch {
       if (read !== dashboardSummaryRead) return;
-      Object.assign(counts, { users: false, online: false, totalOrders: false, orders: false, wallet: false });
+      Object.assign(counts, { users: false, active30: false, totalOrders: false, orders: false, wallet: false });
     }
     renderDashboard();
   }
@@ -1361,10 +1361,12 @@
     el("refreshHistory").addEventListener("click", loadHistory);
     el("recheckPublish").addEventListener("click", verifyPublication);
     document.addEventListener("click", (event) => {
-      const view = event.target.closest("[data-dashboard-view]")?.dataset.dashboardView;
+      const card = event.target.closest("[data-dashboard-view]");
+      const view = card?.dataset.dashboardView;
       if (view) {
         if (event.target.closest("#modal")) el("modalCancel").click();
-        document.querySelector(`.navBtn[data-view="${view}"]`)?.click();
+        if (card.dataset.dashboardCard === "active30") activateView(view, "active30");
+        else document.querySelector(`.navBtn[data-view="${view}"]`)?.click();
       }
       if (event.target.closest("[data-dashboard-refresh]")) void loadDashboard();
     });

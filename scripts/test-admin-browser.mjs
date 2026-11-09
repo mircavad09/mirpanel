@@ -14,7 +14,7 @@ const { chromium } = await import(pathToFileURL(playwrightPath));
 const originalState = extractAdminState(fs.readFileSync(path.join(root, "app.js"), "utf8"));
 const mime = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 let bannerCount=7, renderLive=false, saveCalls=0, saveMode=500, savedData=originalState, saveReceipt;
-let dashboardSummary={users:24,online:2,orders:60,pendingOrders:3,walletCents:"10505"}, pendingTopups=4;
+let dashboardSummary={users:24,active30:2,orders:60,pendingOrders:3,walletCents:"10505"}, pendingTopups=4;
 const publication={commitSha:"a".repeat(40),sha:"b".repeat(40),version:"admin-123"};
 
 const server = http.createServer(async (request, response) => {
@@ -95,7 +95,7 @@ try {
     const banner=check.locator('.dashboardCard[data-dashboard-view="banners"] strong');
     bannerCount=7; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("7",{exact:true}).waitFor();
     const metric = name => check.locator(`[data-dashboard-card="${name}"] strong`);
-    for (const [name, value] of Object.entries({users:"24",online:"2",totalOrders:"60",orders:"3",wallet:"105,05 ₼"})) {
+    for (const [name, value] of Object.entries({users:"24",active30:"2",totalOrders:"60",orders:"3",wallet:"105,05 ₼"})) {
       await metric(name).getByText(value,{exact:true}).waitFor();
     }
     assert.equal(await banner.evaluate(node => getComputedStyle(node).color),"rgb(244, 245, 246)");
@@ -110,14 +110,14 @@ try {
     dashboardSummary=null;
     await check.locator("[data-dashboard-refresh]").click();
     await metric("wallet").getByText("Məlumat alınmadı",{exact:true}).waitFor();
-    dashboardSummary={...originalSummary,online:0,walletCents:"0"};
+    dashboardSummary={...originalSummary,active30:0,walletCents:"0"};
     await check.locator("[data-dashboard-refresh]").click();
     await metric("wallet").getByText("0,00 ₼",{exact:true}).waitFor();
-    await metric("online").getByText("0",{exact:true}).waitFor();
+    await metric("active30").getByText("0",{exact:true}).waitFor();
     dashboardSummary=originalSummary;
-    dashboardSummary={...originalSummary,online:5};
+    dashboardSummary={...originalSummary,active30:5};
     await check.clock.fastForward(31000);
-    await metric("online").getByText("5",{exact:true}).waitFor();
+    await metric("active30").getByText("5",{exact:true}).waitFor();
     dashboardSummary=originalSummary;
     bannerCount=-1; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("Məlumat alınmadı",{exact:true}).waitFor();
     bannerCount=0; await check.locator("[data-dashboard-refresh]").click(); await banner.getByText("0",{exact:true}).waitFor();

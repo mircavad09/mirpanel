@@ -40,7 +40,7 @@ const api=u=>{
  if(p.endsWith('/payment-methods'))return {methods:[{id:'qa-bank',displayName:'Sintetik bank',providerName:'ABB',active:true,hasNumber:true,available:true,last4:'1234',limitMode:'unlimited'}]};
  if(p.endsWith('/payment-settings'))return {settings:{}};
  if(p.endsWith('/payment-monthly-reports'))return {current:null,archives:[]};
- if(p.endsWith('/dashboard'))return {users:1,online:1,orders:2,pendingOrders:1,walletCents:'1234567'};
+ if(p.endsWith('/dashboard'))return {users:1,active30:1,orders:2,pendingOrders:1,walletCents:'1234567'};
  if(p.endsWith('/homepage-banners'))return {managed:true,banners:[],maxBytes:100000};
  if(p.endsWith('/stories'))return {stories:[]};
  if(p.endsWith('/ready-stock'))return {products:[]};
