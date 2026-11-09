@@ -660,7 +660,7 @@
         <div class="gameCatalogEmpty">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10a4 4 0 0 1 4 3l1 7a2 2 0 0 1-3 2l-4-3H9l-4 3a2 2 0 0 1-3-2l1-7a4 4 0 0 1 4-3z M7 10v4 M5 12h4 M16 11h.1 M18 13h.1"/></svg>
           <h3>Məhsulları görmək üçün Epinby API bağlantısını qurun</h3>
-          <p>Hələ məhsul gətirilməyib. API bağlantısı və idxal bu mərhələdə aktiv deyil.</p>
+          <p>Hələ məhsul gətirilməyib. Kataloq idxalı bu mərhələdə aktiv deyil.</p>
           <button class="btn primary" type="button" id="gameCatalogIntegration">API inteqrasiyalarını aç</button>
         </div>
         <template id="gameCatalogProductTemplate">
@@ -674,6 +674,22 @@
         </template>
       </section>
       <section class="panel singlePanel hidden" id="apiIntegrationsView">
+        <section class="settingsForm" aria-labelledby="epinbyTitle">
+          <h2 id="epinbyTitle">Epinby bağlantısı</h2>
+          <p>API ünvanı · https://epinby.com/api/v1</p>
+          <form id="epinbyForm" autocomplete="off">
+            <label>X-API-Key<input name="apiKey" type="password" autocomplete="new-password" maxlength="2048" spellcheck="false"></label>
+            <label>Webhook Secret<input name="webhookSecret" type="password" autocomplete="new-password" maxlength="2048" spellcheck="false"></label>
+            <p>Boş saxlanan xanalar mövcud açarları qoruyur.</p>
+            <div class="actions">
+              <button class="btn primary" type="submit">Yadda saxla</button>
+              <button class="btn" id="epinbyTest" type="button">Bağlantını yoxla</button>
+            </div>
+          </form>
+          <p id="epinbyFeedback" role="status" aria-live="polite"></p>
+          <dl id="epinbyStatus"></dl>
+        </section>
+
         <div class="panelHead"><h2>API inteqrasiyaları</h2></div>
     <p id="notice" role="status"></p>
     <div class="settingsForm">
@@ -771,6 +787,6 @@
   <script src="employee-review-admin.js?v=position-20261028-1"></script>
   <script src="stories-admin.js?v=admin-release-status-20261107"></script>
   <script src="admin-mobile-menu.js?v=epinby-catalog-shell-1"></script>
-  <script src="api-integrations.js?v=epinby-catalog-shell-1"></script>
+  <script src="api-integrations.js?v=epinby-1"></script>
 </body>
 </html>

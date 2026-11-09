@@ -172,15 +172,66 @@
     const {path,method}=operations[Number(event.target.value)];
     field(mapping,method==='post' ? 'orderPath' : 'statusPath').value=path;
   });
+  const epinbyForm=$('epinbyForm');
+  const epinbyFeedback=$('epinbyFeedback');
+  const epinbyLabels={
+    confirmed:'Bağlantı təsdiqləndi',invalid_key:'Açar qəbul edilmədi',
+    network_error:'Şəbəkə xətası',timeout:'Cavab gecikdi',
+    invalid_response:'Cavab formatı düzgün deyil',unavailable:'Xidmət əlçatan deyil'
+  };
+  const at=value=>value?new Date(value).toLocaleString('az-AZ',{timeZone:'Asia/Baku'}):'Yoxlanılmayıb';
+  function renderEpinby(connection){
+    const badge=document.querySelector('.gameCatalogStatus');
+    if(badge)badge.textContent=connection.lastStatus==='confirmed'?'Epinby · Bağlantı təsdiqləndi'
+      :connection.lastStatus==='invalid_key'?'Epinby · Açar qəbul edilmədi'
+      :connection.apiKeySaved?'Epinby · Bağlantı yoxlanılmayıb':'API bağlantısı qurulmayıb';
+    for(const [name,saved] of [['apiKey',connection.apiKeySaved],['webhookSecret',connection.webhookSecretSaved]]){
+      field(epinbyForm,name).placeholder=saved?'•••••••• (saxlanılıb)':'Daxil edin';
+    }
+    const rows=[
+      ['Son yoxlama cəhdi',at(connection.lastAttemptAt)],
+      ['Son cəhdin nəticəsi',epinbyLabels[connection.lastAttemptStatus]||'Yoxlanılmayıb'],
+      ['Son təsdiqlənmiş yoxlama',at(connection.lastCheckedAt)],
+      ['Son məlum status',epinbyLabels[connection.lastStatus]||'Yoxlanılmayıb']
+    ];
+    if(connection.balance!==null)rows.push(['Son məlum təchizatçı balansı',connection.balance+' '+connection.currency]);
+    $('epinbyStatus').replaceChildren(...rows.flatMap(([label,value])=>{
+      const dt=document.createElement('dt'),dd=document.createElement('dd');
+      dt.textContent=label;dd.textContent=value;return [dt,dd];
+    }));
+  }
+  async function epinbyAction(action){
+    if(!csrf)return;
+    const controls=[...epinbyForm.querySelectorAll('input,button')];
+    const credentials=action==='epinby-save'
+      ? Object.fromEntries(new FormData(epinbyForm)) : {};
+    if(action==='epinby-test'&&[...epinbyForm.querySelectorAll('input')].some(input=>input.value)){
+      epinbyFeedback.textContent='Yeni açarları əvvəl yadda saxlayın.';
+      return;
+    }
+    controls.forEach(control=>{control.disabled=true;});
+    epinbyFeedback.textContent=action==='epinby-test'?'Bağlantı yoxlanılır…':'';
+    try{
+      const connection=await request(url,{action,...credentials});
+      renderEpinby(connection);
+      epinbyFeedback.textContent=connection.message||(action==='epinby-save'?'Məlumatlar saxlanıldı.':'');
+    }catch(error){epinbyFeedback.textContent=error.message;}
+    finally{
+      if(action==='epinby-save')epinbyForm.reset();
+      controls.forEach(control=>{control.disabled=false;});
+    }
+  }
+  epinbyForm.addEventListener('submit',event=>{event.preventDefault();void epinbyAction('epinby-save');});
+  $('epinbyTest').addEventListener('click',()=>void epinbyAction('epinby-test'));
   function open() {
     if (data || loading) return;
     loading=request('/api/session').then(session=>{
       csrf=session.csrfToken;
-      return refresh();
+      return Promise.all([refresh(),epinbyAction('epinby-read')]);
     }).catch(error=>notice(error.message)).finally(()=>{loading=null;});
   }
   window.addEventListener('admin-community-view',event=>{
-    if(event.detail==='apiIntegrations') open();
+    if(['apiIntegrations','gameProducts'].includes(event.detail)) open();
   });
-  if(location.hash==='#apiIntegrations') open();
+  if(['#apiIntegrations','#gameProducts'].includes(location.hash)) open();
 })();

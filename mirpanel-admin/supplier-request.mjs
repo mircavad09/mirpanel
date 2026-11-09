@@ -20,7 +20,7 @@ export function approvedUrl(base, path, allowlist) {
   return new URL(path,url);
 }
 
-export async function supplierRequest({base, path, key, allowlist, body, reference}) {
+export async function supplierRequest({base, path, key, allowlist, body, reference, authHeader='Authorization', jsonResponse=false}) {
   const url = approvedUrl(base,path,allowlist);
   const signal = AbortSignal.timeout(8000);
   const records = await lookup(url.hostname,{family:4,all:true});
@@ -35,7 +35,7 @@ export async function supplierRequest({base, path, key, allowlist, body, referen
       lookup: (_hostname,options,callback) => options.all
         ? callback(null,[{address,family:4}]) : callback(null,address,4),
       headers:{
-        Authorization:'Bearer '+key, Accept:'application/json',
+        [authHeader]:authHeader==='X-API-Key'?key:'Bearer '+key, Accept:'application/json',
         ...(payload ? {'Content-Type':'application/json','Content-Length':Buffer.byteLength(payload),
           'Idempotency-Key':reference} : {})
       }
@@ -54,7 +54,7 @@ export async function supplierRequest({base, path, key, allowlist, body, referen
         else chunks.push(chunk);
       });
       res.on('end',() => {
-        if (!reference && !payload) return resolve(null);
+        if (!reference && !payload && !jsonResponse) return resolve(null);
         try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
         catch { reject(Error('SUPPLIER_JSON')); }
       });

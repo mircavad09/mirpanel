@@ -1,3 +1,4 @@
+import {createEpinbyConnection} from './epinby-connection.mjs';
 import {randomUUID} from 'node:crypto';
 import {approvedUrl,supplierRequest} from './supplier-request.mjs';
 import {adminDelivery,deliveryLines,paid} from './community/order-delivery.mjs';
@@ -51,12 +52,14 @@ export async function dispatchResult(job,order,security,send,first) {
 }
 
 export function createApiIntegrations({pool,security,loadCatalog,origins,transport=supplierRequest}) {
+  const epinby=createEpinbyConnection({pool,security,transport});
   const allowlist = new Set(String(origins || '').split(',').map(x=>x.trim()).filter(Boolean));
   const send = input => transport({...input,allowlist});
   const endpoint = (base,path) => {
     try { approvedUrl(base,path,allowlist); } catch { throw invalid(); }
   };
   async function admin(input) {
+    if(['epinby-read','epinby-save','epinby-test'].includes(input?.action))return epinby(input);
     const db = await pool();
     if (!input) {
       const [catalog, providers, links, jobs, savedDrafts] = await Promise.all([
