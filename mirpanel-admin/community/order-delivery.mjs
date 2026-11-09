@@ -15,6 +15,7 @@ export function deliveryLines(o){
 }
 export function customerStatus(o,records){
  if(!paid(o))return o.status;
+ if(o.fulfillment_cancellation)return o.fulfillment_cancellation.full?'cancelled':'completed';
  return deliveryLines(o).every((x,i)=>records.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)>=x.quantity)?'completed':'preparing';
 }
 const totals=rows=>Object.fromEntries([...new Set(rows.map(r=>r.line_index))].map(i=>[i,rows.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)]));
@@ -48,6 +49,7 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
    ) units) as delivered_units
    from public.payment_orders o join ${O} u on u.order_id=o.id
    where o.status in ('approved','reviewing','new_receipt_requested')
+   and to_jsonb(o)->>'fulfillment_cancellation' is null
    and (o.payment_confirmed is true or o.status='approved')
    ${ids?'and o.id=any($1::uuid[])':''}
    and (o.payment_confirmed is true
@@ -63,7 +65,7 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
 export async function adminDeliveryCompletions(pool,{since,ids}){
  const condition=ids?'d.order_id=any($1::uuid[])':'d.delivered_at >= $1';
  if(ids&&!ids.length)return [];
- const {rows}=await pool.query(`select o.id,o.status,o.payment_confirmed,o.checkout_snapshot,o.quantity,o.product_id,o.product_title,o.plan_name,o.amount,recent.last_delivery from public.payment_orders o
+ const {rows}=await pool.query(`select o.id,o.status,o.payment_confirmed,o.checkout_snapshot,o.quantity,o.product_id,o.product_title,o.plan_name,o.amount,to_jsonb(o)->'fulfillment_cancellation' as fulfillment_cancellation,recent.last_delivery from public.payment_orders o
   join (select d.order_id,max(d.delivered_at) as last_delivery from ${D} d
     where ${condition} group by d.order_id) recent on recent.order_id=o.id`,[ids||since]);
  const records=await deliveryRecords(pool,rows.map(o=>o.id));
@@ -94,7 +96,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
   const lines=deliveryLines(o),records=await deliveryRecords(c,[id]),done=totals(records);
   const renewalCode=i=>o.checkout_snapshot?.items?.[i]?.renewalOrderCode;
   const templates=productMessage&&!input?await readProductMessages(c,security,[...new Set(lines.map(x=>x.productId).filter(Boolean))]):new Map();
-  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:x.quantity-(done[i]||0),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
+  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
   if(!input){await c.query('commit');return view();}
   const {requestId,line,quantity}=input;
   let {message}=input;
@@ -109,6 +111,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
    if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||(!productMessage&&saved.message!==message)||(saved.email||'')!==email||(saved.password||'')!==password)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
    await c.query('commit');return {...view(),replayed:true};
   }
+  if(o.fulfillment_cancellation)throw fail(409,'Qalan məhsullar ləğv edilib.');
   if(actor!=='supplier:auto' && (await c.query("select to_regclass('mirpanel_community.api_dispatches') as name")).rows[0]?.name){
    const busy=await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and state in ('checking','succeeded')",[id,line]);
    if(busy.rowCount)throw fail(409,'Təchizatçı bu məhsulun sifarişini yoxlayır.');

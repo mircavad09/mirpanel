@@ -55,6 +55,31 @@ try {
     assert.equal(audit.pendingCards, 2);
     assert.equal(audit.noteFields, 0);
     assert.equal(audit.monthlyHidden, true);
+    if(width===320||width===1440){
+      const partial=width===320;
+      await page.evaluate(partial=>{
+        const state=window.__fixtureState;
+        state.delivery=[{...state.all[0],status:"preparing",deliveryPending:true,paymentSource:"wallet",fixturePartial:partial}];
+      },partial);
+      await page.locator('[data-payment-pending-stage="delivery"]').click();
+      const card=page.locator(".paymentOrderAdminCard").first();
+      if(width===320)await card.locator("[data-order-toggle]").click();
+      const cancel=card.locator("[data-cancel-fulfillment]");
+      await cancel.click();
+      const confirmation=page.locator(".paymentActionDialog");
+      assert.ok((await confirmation.innerText()).includes(await card.getAttribute("data-order-code")));
+      assert.match(await confirmation.innerText(),/MirPanel balansı.*5[.,]00/);
+      assert.ok((await confirmation.innerText()).includes(partial?"Yalnız təhvil verilməmiş vahidlər":"Bütün sifariş"));
+      await confirmation.getByRole("button",{name:"Bağla",exact:true}).click();
+      assert.equal(await page.evaluate(()=>window.__fixtureState.lastCancellation),undefined);
+      await cancel.click();
+      await confirmation.getByRole("button",{name:"Ləğvi təsdiqlə",exact:true}).click();
+      await page.waitForFunction(()=>document.getElementById("paymentDeliveryCount")?.textContent==="0");
+      assert.equal(await page.evaluate(()=>window.__fixtureState.lastCancellation?.previewToken),"a".repeat(64));
+      assert.equal(await page.evaluate(()=>window.__fixtureState.calls.filter(c=>c.method==="POST"&&c.path.endsWith("/cancel-fulfillment")).length),1);
+      await page.locator('[data-payment-order-tab="all"]').click();
+      await page.getByText(partial?"Qismən ləğv edildi":"Ləğv edildi",{exact:true}).waitFor();
+    }
     if(width===390){
       await page.evaluate(()=>{
         const state=window.__fixtureState;

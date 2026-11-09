@@ -816,11 +816,18 @@ export function createPaymentSystem(options) {
       const body = await readBody(request, 20_000);
       json(response, 200, { settings: await store.updateSettings(body, actorName) }); return true;
     }
-    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt|details|delivery))?$/i);
+    const orderMatch = url.pathname.match(/^\/api\/admin\/payment-orders\/([0-9a-f-]+)(?:\/(approve|reject|contacted|receipt|details|delivery|cancel-fulfillment))?$/i);
     if (orderMatch) {
       const id = safeUuid(orderMatch[1]);
       if (!id) throw Object.assign(new Error("Sifariş ID-si düzgün deyil."), { status: 400 });
       const action = orderMatch[2];
+      if(action==='cancel-fulfillment'&&options.cancelFulfillment&&['GET','POST'].includes(request.method)){
+        if(!options.readyStockAllowed?.(request))throw Object.assign(Error('Ləğv yalnız adminə açıqdır.'),{status:403});
+        response.setHeader('Cache-Control','private, no-store');
+        const input=request.method==='POST'?await readBody(request,1000):null;
+        if(request.method==='POST'&&!/^[a-f0-9]{64}$/.test(input?.previewToken||''))throw Object.assign(Error('Ləğv təsdiqi tələb olunur.'),{status:400});
+        json(response,200,await options.cancelFulfillment(actorName,id,input));return true;
+      }
       if(['receipt','approve','reject'].includes(action)&&options.readyStockAllowed&&!options.readyStockAllowed(request))throw Object.assign(new Error('Sifariş əməliyyatı yalnız adminə açıqdır.'),{status:403});
       if(action==='delivery'&&options.customerDelivery&&['GET','POST'].includes(request.method)){
         if(options.readyStockAllowed&&!options.readyStockAllowed(request))throw Object.assign(new Error('Təhvil yalnız adminə açıqdır.'),{status:403});

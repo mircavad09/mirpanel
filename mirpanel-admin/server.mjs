@@ -1360,6 +1360,7 @@ const paymentSystem = createPaymentSystem({
   shopContext: request=>ownerCommunity.shopContext(request),
   accountHistory: request=>ownerCommunity.orderHistory(request),
   customerDelivery: (...args)=>ownerCommunity.adminDelivery(...args),
+  cancelFulfillment: (...args)=>ownerCommunity.cancelFulfillment(...args),
   approveCardWithReadyStock: (...args)=>ownerCommunity.approveCardWithReadyStock(...args),
   readyStockAllowed: request=>getSession(request)?.role==='admin',
   readyStock: (...args)=>ownerCommunity.readyStock(...args),

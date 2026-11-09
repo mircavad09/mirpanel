@@ -438,7 +438,7 @@ export function createPaymentStore(config) {
     async listOrders(input = {}, catalog = [], { pendingDeliveries, pendingDeliveryProgress, deliveryCompletions } = {}) {
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
-      const select = "id,checkout_snapshot,payment_source,payment_confirmed,order_code,product_id,product_title,plan_id,plan_name,quantity,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_path,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
+      const select = "id,checkout_snapshot,payment_source,payment_confirmed,fulfillment_cancellation,order_code,product_id,product_title,plan_id,plan_name,quantity,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_path,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
       const rangeStart = filters.tab === "today" ? todayBounds.start : filters.tab === "all" && filters.dateFrom ? filters.dateFrom+"T00:00:00+04:00" : null;
       const recent = new Map((deliveryCompletions && rangeStart ? await deliveryCompletions({since:rangeStart}) : []).map(o=>[o.id,o.completedAt]));
@@ -479,7 +479,7 @@ export function createPaymentStore(config) {
       const countsRequest = Promise.all([
         countStatus(["reviewing", "new_receipt_requested"], query=>query.eq("payment_source","card").not("payment_confirmed","is",true)),
         countToday(),
-        deliveryCompletions ? countStatus(["approved", "completed", "reviewing", "new_receipt_requested"], query => query.or("status.in.(approved,completed),payment_confirmed.is.true")) : countStatus(["approved", "completed"]),
+        deliveryCompletions ? countStatus(["approved", "completed", "reviewing", "new_receipt_requested", "cancelled"], query => query.or("status.in.(approved,completed,cancelled),payment_confirmed.is.true")) : countStatus(["approved", "completed"]),
         countStatus(["approved", "completed"], query=>query.is("contacted_at", null).not("expiry_notification_on", "is", null).lte("expiry_notification_on", filters.today))
       ]);
       if (input.countsOnly === "true") {
@@ -505,15 +505,16 @@ export function createPaymentStore(config) {
       const completedView = filters.tab === "today" && Boolean(pendingDeliveries);
       if (deliveryQueue && !pendingDeliveries) throw Object.assign(new Error("Təhvil siyahısı yalnız adminə açıqdır."), { status: 403 });
       const paidView = completedView || (filters.tab === "all" && Boolean(deliveryCompletions));
+      const includeCancelled=filters.tab==="all"&&paidView;
       const statuses = deliveryQueue ? ["approved", "reviewing", "new_receipt_requested"]
-        : paidView ? ["approved", "completed", "reviewing", "new_receipt_requested"] : orderDatabaseStatuses(filters);
+        : paidView ? ["approved", "completed", "reviewing", "new_receipt_requested", ...(includeCancelled?["cancelled"]:[])] : orderDatabaseStatuses(filters);
       const deliveryProgress = await deliveryProgressRequest;
       const dateColumn = filters.tab === "pending" ? "created_at" : "completed_at";
       const matchingQuery = (columns, options, completionIds = []) => {
         let query = applyCommonFilters(client.from("payment_orders").select(columns, options), dateColumn).in("status", statuses);
         if (reviewQueue) query = query.eq("payment_source", "card").not("payment_confirmed", "is", true);
         if (deliveryQueue && completionIds.length) query = query.in("id", completionIds);
-        if (deliveryQueue || paidView) query = query.or("status.in.(approved,completed),payment_confirmed.is.true");
+        if (deliveryQueue || paidView) query = query.or(includeCancelled?"status.in.(approved,completed,cancelled),payment_confirmed.is.true":"status.in.(approved,completed),payment_confirmed.is.true");
         if (paidView && rangeStart) {
           const lower = `completed_at.gte.${rangeStart},and(completed_at.is.null,created_at.gte.${rangeStart})`;
           query = completionIds.length ? query.in("id", completionIds) : query.or(lower);
@@ -583,7 +584,7 @@ export function createPaymentStore(config) {
         query,
         countsRequest,
         client.from("payment_methods").select("id,display_name,provider_name,last4,archived").order("sort_order", { ascending: true }),
-        deliveryQueue || reviewQueue || paidView || filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows, { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
+        deliveryQueue || reviewQueue || paidView || filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows.filter(o=>o.status!=="cancelled"), { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
           p_search: filters.search || null,
           p_product_id: filters.productId || null,
@@ -627,10 +628,12 @@ export function createPaymentStore(config) {
             costSource: order.cost_source || null,
             costBackfilledAt: order.cost_backfilled_at || null,
             currency: order.currency,
-            status: completedView||displayedCompletions.has(order.id) ? 'completed' : adminOrderStatus(order.status, reservation.status),
+            status: order.status==='cancelled' ? 'cancelled' : order.fulfillment_cancellation ? 'partial_cancelled'
+              : completedView||displayedCompletions.has(order.id) ? 'completed' : adminOrderStatus(order.status, reservation.status),
+            ...(order.fulfillment_cancellation ? {cancellation:{lines:order.fulfillment_cancellation.lines,refundStatus:order.fulfillment_cancellation.refundStatus,refundCents:order.fulfillment_cancellation.refundCents}} : {}),
             reservationStatus: reservation.status || "",
             createdAt: order.created_at,
-            completedAt: displayedCompletions.get(order.id) || order.completed_at || order.approved_at || (completedView&&order.payment_confirmed ? order.created_at : adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
+            completedAt: order.fulfillment_cancellation?.at || displayedCompletions.get(order.id) || order.completed_at || order.approved_at || (completedView&&order.payment_confirmed ? order.created_at : adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
             durationMonths: order.duration_months,
             expiresOn: order.service_expires_on,
             expiryNotificationOn: order.expiry_notification_on,

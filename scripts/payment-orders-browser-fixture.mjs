@@ -31,6 +31,17 @@ window.api=async(path,options={})=>{
  const state=window.__fixtureState; state.calls.push({path,method:options.method||"GET"}); const parsed=new URL(path,location.origin);
  if(parsed.pathname==="/api/admin/payment-orders/batch-contacted"){const body=JSON.parse(options.body||"{}");const completed=[],skipped=[];for(const id of [...new Set(body.ids||[])]){const index=state.expiring.findIndex(item=>item.id===id);if(index<0){skipped.push({id,reason:"Sifarişin vəziyyəti dəyişib."});continue;}const item=state.expiring.splice(index,1)[0];item.contactedAt=new Date().toISOString();completed.push({id,orderCode:item.orderCode});}return {requested:(body.ids||[]).length,completed,skipped};}
  const orderParts=parsed.pathname.split("/"); const isOrderAction=orderParts[1]==="api"&&orderParts[2]==="admin"&&orderParts[3]==="payment-orders"&&["approve","reject","contacted"].includes(orderParts[5]);
+ if(orderParts[5]==="cancel-fulfillment"){
+  const item=state.delivery.find(row=>row.id===orderParts[4]);
+  const full=!item.fixturePartial;
+  if(options.method==="POST"){
+   state.lastCancellation=JSON.parse(options.body);
+   state.delivery=state.delivery.filter(row=>row.id!==orderParts[4]);
+   Object.assign(state.all.find(row=>row.id===orderParts[4]),{status:full?"cancelled":"partial_cancelled",cancellation:{refundCents:500,refundStatus:"wallet_refunded"}});
+   return {ok:true};
+  }
+  return {orderCode:item.orderCode,method:"MirPanel balansı",refundCents:500,full,refundStatus:"wallet_refunded",previewToken:"a".repeat(64)};
+ }
  if(orderParts[5]==="delivery"){
   if(options.method==="POST"){state.lastDelivery=JSON.parse(options.body);state.delivery=state.delivery.filter(row=>row.id!==orderParts[4]);return {status:"completed"};}
   return {lines:[{index:0,title:"Sintetik",plan:"1 ay",remaining:1,message:"Sintetik təhvil"}]};

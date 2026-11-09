@@ -28,7 +28,7 @@
   let orderRevision = 0;
   let orderCountRequest;
   const escp = (value) => String(value ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-  const statusLabel = { reviewing: "Yoxlanılır", preparing: "Təhvil gözlənilir", completed: "Tamamlandı", rejected: "Rədd edilib", expired: "Vaxtı bitib" };
+  const statusLabel = { reviewing: "Yoxlanılır", preparing: "Təhvil gözlənilir", completed: "Tamamlandı", rejected: "Rədd edilib", expired: "Vaxtı bitib", cancelled:"Ləğv edildi", partial_cancelled:"Qismən ləğv edildi" };
   const methodStatusLabel = { active: "Aktiv", inactive: "Deaktiv", pending: "Gözləmədə", temporarily_busy: "Müvəqqəti rezervdədir", limit_reached: "Limit dolub", deleted: "Silinib" };
 
   async function paymentApi(path, options) { return api(path, options); }
@@ -193,6 +193,8 @@
       <dl><div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div></dl>
       <div class="paymentOrderActions">
         ${manage && displayStatus==='preparing'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
+        ${manage && deliveryQueue?'<button class="btn danger" type="button" data-cancel-fulfillment>Ləğv et</button>':''}
+        ${order.cancellation?`<small>${escp(order.cancellation.refundStatus==='wallet_refunded'?'Balansa qaytarılıb: ':'Kart üzrə əl ilə qaytarılmalıdır: ')}${escp(money(order.cancellation.refundCents/100,order.currency))}</small>`:''}
         ${manage && order.receiptAvailable && !deliveryQueue ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : ''}
         ${manage && reviewing ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ''}
         ${expiring ? '<button class="btn primary" type="button" data-contacted-payment>Əlaqə saxlanıldı</button>' : ""}
@@ -680,6 +682,20 @@
 
   async function handleOrderAction(card, action) {
     const id = card.dataset.paymentOrderId;
+    if(action==='cancel-fulfillment'){
+      if(paymentState.orderActions.has(id))return;
+      paymentState.orderActions.add(id);
+      const url='/api/admin/payment-orders/'+id+'/cancel-fulfillment';
+      try{
+        const preview=await paymentApi(url);
+        const amount=money(preview.refundCents/100,'AZN');
+        const refund=preview.refundStatus==='wallet_refunded'?`Balansa qaytarılacaq: ${amount}.`:`Əl ilə karta qaytarılacaq: ${amount}. Köçürmə avtomatik icra edilmir.`;
+        if(!await paymentActionDialog({title:`Sifariş №${preview.orderCode} ləğv edilsin?`,message:`Ödəniş üsulu: ${preview.method}. ${preview.full?'Bütün sifariş':'Yalnız təhvil verilməmiş vahidlər'} ləğv ediləcək. ${refund}`,confirmText:'Ləğvi təsdiqlə',danger:true}))return;
+        await paymentApi(url,{method:'POST',body:JSON.stringify({previewToken:preview.previewToken})});
+        invalidateOrders();toast('Ləğv qeydə alındı.');await loadOrders();
+      }finally{paymentState.orderActions.delete(id);}
+      return;
+    }
     if(action==='delivery'){
       if(paymentState.deliveryOpening||document.querySelector('[data-payment-delivery-dialog]'))return;
       const url='/api/admin/payment-orders/'+id+'/delivery';let state;
@@ -938,6 +954,7 @@
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
         if (card && event.target.closest("[data-order-details]")) await handleOrderAction(card, "details");
         if (card && event.target.closest("[data-order-delivery]")) await handleOrderAction(card, "delivery");
+        if (card && event.target.closest("[data-cancel-fulfillment]")) await handleOrderAction(card, "cancel-fulfillment");
         if (card && event.target.closest("[data-claim-payment]")) {
           if(paymentState.orderActions.has(card.dataset.paymentOrderId))return;
           paymentState.orderActions.add(card.dataset.paymentOrderId);
