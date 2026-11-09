@@ -6,6 +6,8 @@ import path from "node:path";
 import vm from "node:vm";
 import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
+import {createApiIntegrations} from './api-integrations.mjs';
+import {createPaymentSecurity} from './payment-security.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
 import { createNetflixConfirmationEndpoint } from "./netflix-confirmation-endpoint.mjs";
 import { createConfirmationGate } from "./netflix-verification-policy.mjs";
@@ -651,6 +653,21 @@ async function handleApi(request, response) {
   if (await employeeSystem.handle(request,response)) return;
   const employeePath=new URL(request.url,'http://localhost').pathname;
   if (!['/api/login','/api/session','/api/session/activity','/api/product-sales','/api/stories','/api/homepage-banners'].includes(employeePath) && !employeePath.startsWith('/api/payments/') && await employeeSystem.blockAdmin(request,response)) return;
+  if (employeePath === '/api/admin/api-integrations') {
+    if (!requireAuth(request,response)) return;
+    if (getSession(request)?.role !== 'admin') return json(response,403,{error:'Admin icazəsi tələb olunur.'});
+    if (!['GET','POST'].includes(request.method)) return json(response,405,{error:'Metod dəstəklənmir.'});
+    if (request.method==='POST' && !requireMutationAuth(request,response)) return;
+    response.setHeader('Cache-Control','private, no-store');
+    if (!apiIntegrations) return json(response,503,{error:'İnteqrasiya xidməti hazır deyil.'});
+    try {
+      const input = request.method==='POST' ? await readBody(request,25000) : undefined;
+      if (request.method==='POST' && (!input || typeof input!=='object')) return json(response,400,{error:'Sorğu düzgün deyil.'});
+      return json(response,200,await apiIntegrations.admin(input));
+    } catch (error) {
+      return json(response,error.status===400 ? 400 : 503,{error:error.status===400 ? 'Sazlama düzgün deyil.' : 'İnteqrasiya xidməti hazır deyil.'});
+    }
+  }
   const salesUrl = new URL(request.url, 'http://localhost');
   if (salesUrl.pathname === '/api/product-sales' && ['GET','OPTIONS'].includes(request.method)) {
     const origin = String(request.headers.origin || '');
@@ -1413,6 +1430,13 @@ const netflixConfirmationEndpoint = createNetflixConfirmationEndpoint({
   allowedOrigins: config.allowedOrigins
 });
 
+const apiIntegrations = config.encryptionKey && config.tokenSecret && process.env.COMMUNITY_OWNER_ENABLED==='true'
+  ? createApiIntegrations({
+    pool:()=>ownerCommunity.integrationPool(),security:createPaymentSecurity(config),
+    origins:process.env.SUPPLIER_API_ORIGINS,
+    loadCatalog:async()=>extractAdminState((await getAppFile()).source)
+  }) : null;
+apiIntegrations?.start();
 paymentSystem.start();
 
 function serveFile(response, name) {
@@ -1451,7 +1475,7 @@ const server = http.createServer(async (request, response) => {
         const local=sessions.get(adminId)||{preview:null,draft:null,pendingUploads:new Map()};
         Object.assign(local,valid);sessions.set(adminId,local);request.adminSession=local;
         // Background reads never renew idle expiry. Mutations need same-origin CSRF.
-        const userNavigation=request.method==='GET'&&['/admin.html','/admin/users','/admin/workforce','/admin'].includes(pathname)&&request.headers['sec-fetch-user']==='?1'&&request.headers['sec-fetch-mode']==='navigate'&&['same-origin','none'].includes(request.headers['sec-fetch-site']);
+        const userNavigation=request.method==='GET'&&['/admin.html','/admin/users','/admin/workforce','/admin/api-integrations','/admin'].includes(pathname)&&request.headers['sec-fetch-user']==='?1'&&request.headers['sec-fetch-mode']==='navigate'&&['same-origin','none'].includes(request.headers['sec-fetch-site']);
         if(userNavigation||!['GET','HEAD','OPTIONS'].includes(request.method)&&sameOrigin(request)&&safeEqual(request.headers['x-csrf-token'],local.csrfToken)){
           const renewed=await adminSessions.touch(adminId);
           if(!renewed){request.adminSession=null;sessions.delete(adminId);}
@@ -1466,6 +1490,14 @@ const server = http.createServer(async (request, response) => {
 
     if (pathname === "/" || pathname === "/login.html") {
       return serveFile(response, "login.html");
+    }
+    if (pathname === '/admin/api-integrations') {
+      if (!getSession(request)) {
+        response.writeHead(302,{Location:'/login.html','Cache-Control':'no-store'});
+        return response.end();
+      }
+      if (getSession(request)?.role!=='admin') return json(response,403,{error:'Admin icazəsi tələb olunur.'});
+      return serveFile(response,'api-integrations.html');
     }
     if (pathname === "/admin" || pathname === "/admin.html") {
       if (!getSession(request)) {
@@ -1527,7 +1559,7 @@ const server = http.createServer(async (request, response) => {
       return response.end();
     }
 
-    if (["/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-admin.css"].includes(pathname)) {
+    if (["/api-integrations.js", "/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-admin.css"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 

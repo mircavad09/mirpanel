@@ -85,6 +85,10 @@ export async function adminDelivery(pool,security,actor,id,input){
    if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||saved.message!==message||(saved.email||'')!==email||(saved.password||'')!==password)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
    await c.query('commit');return {...view(),replayed:true};
   }
+  if(actor!=='supplier:auto' && (await c.query("select to_regclass('mirpanel_community.api_dispatches') as name")).rows[0]?.name){
+   const busy=await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and state in ('checking','succeeded')",[id,line]);
+   if(busy.rowCount)throw fail(409,'Təchizatçı bu məhsulun sifarişini yoxlayır.');
+  }
   if(quantity>lines[line].quantity-(done[line]||0))throw fail(409,'Bu sayda təhvil verilməmiş məhsul qalmayıb.');
   const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message,{email,password});
   records.push(record);done[line]=(done[line]||0)+quantity;
