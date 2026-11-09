@@ -14,7 +14,7 @@ export function adminOrderFields(order, catalog, security, reveal) {
       const def = fields.find(f => f.key === key || f.label === key);
       const label = def?.label || key;
       const sensitive = !!(def?.sensitive || def?.digits || def?.type === 'password' || /pin|password|passcode|şifrə|sifre|(?:^|[^a-z])code|kod/iu.test(key+' '+label));
-      return {field,label,sensitive,value:sensitive && !(reveal?.line === index && reveal.field === field) ? null : value};
+      return {field,label,sensitive,value:!reveal || (reveal.line === index && reveal.field === field) ? value : null};
     });
     return {index,fields:data};
   });

@@ -18,8 +18,8 @@
     orderRequestSequence: 0
   };
   const $p = (id) => document.getElementById(id);
-  const orderFields = new Map();
-  const fieldRequests = new Map();
+  const loadedFields = new WeakSet();
+  const fieldRequests = new WeakMap();
   const fieldsObserver = new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries)if(isIntersecting){fieldsObserver.unobserve(target);void loadCardFields(target);}});
   const mobileOrderFilters = () => matchMedia("(max-width:650px)").matches;
   let filterBusy = false;
@@ -185,40 +185,37 @@
   function paintCardFields(card, lines = []) {
     for(const host of card.querySelectorAll('[data-order-line-fields]')){
       const fields=lines.find(x=>x.index===Number(host.dataset.orderLineFields))?.fields||[];
-      host.innerHTML=fields.map(f=>`<div><strong>${escp(f.label)}:</strong> <span data-order-field-value>${f.sensitive?'••••••':escp(f.value)}</span>${f.sensitive?` <button class="btn compact" type="button" data-reveal-order-field="${Number(f.field)}">Göstər</button>`:''}</div>`).join('');
+      const filled=fields.filter(f=>typeof f.value==='string'&&f.value.trim());
+      host.innerHTML=filled.length?`<button class="btn compact paymentOrderFieldsCopy" type="button" data-copy-order-fields aria-label="Müştəri məlumatlarını kopyala" title="Müştəri məlumatlarını kopyala"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/></svg></button>`+filled.map(f=>`<div><strong data-order-field-label>${escp(f.label)}</strong>: <span data-order-field-value>${escp(f.value)}</span></div>`).join(''):'';
     }
   }
 
+  function clearCardFields(card) {
+    fieldRequests.delete(card);
+    loadedFields.delete(card);
+    paintCardFields(card);
+  }
+
   async function loadCardFields(card) {
-    if(!paymentState.permissions.fields||!card.isConnected||card.querySelector('.paymentOrderCardDetails')?.hidden)return;
-    const id=card.dataset.paymentOrderId;
-    if(orderFields.has(id)){paintCardFields(card,orderFields.get(id));return;}
-    if(fieldRequests.has(id))return;
+    const visible=()=>paymentState.permissions.fields&&!document.hidden&&card.isConnected&&
+      !card.querySelector('.paymentOrderCardDetails')?.hidden&&!card.closest('.workspace.hidden,.singlePanel.hidden');
+    if(!visible()||loadedFields.has(card)||fieldRequests.has(card))return;
     const host=card.querySelector('[data-order-line-fields]');
     if(!host)return;
     host.textContent='Sifariş sahələri yüklənir…';
-    const request=paymentApi('/api/admin/payment-orders/'+id+'/details');fieldRequests.set(id,request);
+    const request=paymentApi('/api/admin/payment-orders/'+card.dataset.paymentOrderId+'/details');
+    fieldRequests.set(card,request);
     try{
       const {lines}=await request;
-      if(!paymentState.permissions.fields)return;
-      orderFields.set(id,lines||[]);
-      if(card.isConnected&&!card.querySelector('.paymentOrderCardDetails')?.hidden)paintCardFields(card,lines);
-    }catch(error){
-      if(host.isConnected)host.innerHTML='<button class="btn compact" type="button" data-retry-order-fields>Sifariş sahələri alınmadı · Yenidən cəhd et</button>';
-    }finally{fieldRequests.delete(id);}
-  }
-
-  async function revealOrderField(card, button) {
-    const value=button.parentElement.querySelector('[data-order-field-value]');
-    if(button.disabled)return;
-    if(button.textContent==='Gizlət'){value.textContent='••••••';button.textContent='Göstər';return;}
-    button.disabled=true;
-    try{
-      const {value:secret}=await paymentApi('/api/admin/payment-orders/'+card.dataset.paymentOrderId+'/details',{method:'POST',body:JSON.stringify({line:Number(button.closest('[data-order-line-fields]').dataset.orderLineFields),field:Number(button.dataset.revealOrderField)})});
-      if(button.isConnected&&!card.querySelector('.paymentOrderCardDetails').hidden&&document.visibilityState==='visible'){
-        value.textContent=secret;button.textContent='Gizlət';
+      if(fieldRequests.get(card)===request&&visible()){
+        paintCardFields(card,lines);
+        loadedFields.add(card);
       }
-    }finally{button.disabled=false;}
+    }catch{
+      if(fieldRequests.get(card)===request&&visible())host.innerHTML='<button class="btn compact" type="button" data-retry-order-fields>Sifariş sahələri alınmadı · Yenidən cəhd et</button>';
+    }finally{
+      if(fieldRequests.get(card)===request)fieldRequests.delete(card);
+    }
   }
 
   function updateOrderCounts(counts = paymentState.orderMeta.counts) {
@@ -415,6 +412,7 @@
 
   function renderOrders(automatic=false) {
     const list = $p("paymentOrdersList");
+    for(const card of list?.querySelectorAll('[data-payment-order-id]')||[])clearCardFields(card);
     if(list){const markup=paymentState.orders.length ? (paymentState.orderQuery.tab === "pending" || paymentState.orderQuery.tab === "expiring" ? paymentState.orders.map(orderCard).join("") : completedOrderGroups()) : '<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>';if(window.AdminLive)window.AdminLive.update(list,markup);else list.innerHTML=markup;}
     fieldsObserver.disconnect();
     if(paymentState.permissions.fields)for(const card of list?.querySelectorAll('[data-payment-order-id]')||[])if(!card.querySelector('.paymentOrderCardDetails')?.hidden)fieldsObserver.observe(card);
@@ -576,9 +574,6 @@
       paymentState.knownPendingCount = nextPending;
       paymentState.orders = result.orders || [];
       paymentState.permissions=result.permissions||{};
-      if(!paymentState.permissions.fields)orderFields.clear();
-      const currentIds=new Set(paymentState.orders.map(order=>order.id));
-      for(const id of orderFields.keys())if(!currentIds.has(id))orderFields.delete(id);
       paymentState.orderMeta = { counts: result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
       // The chosen duration may disappear after another filter changes. The
       // server already re-ran the page without it; keep the controls in sync.
@@ -678,12 +673,21 @@
   }
 
   function bindEvents() {
-    const maskRevealed=()=>{
-      const cards=new Set([...document.querySelectorAll('[data-reveal-order-field]')].filter(button=>button.textContent==='Gizlət'||button.disabled).map(button=>button.closest('[data-payment-order-id]')));
-      for(const card of cards)paintCardFields(card,orderFields.get(card.dataset.paymentOrderId));
-    };
-    document.addEventListener('visibilitychange',()=>{if(document.hidden)maskRevealed();});
-    document.addEventListener('click',event=>{if(event.target.closest('.navBtn,[data-dashboard-view]'))maskRevealed();},true);
+    const cards=()=>document.querySelectorAll('#paymentOrdersList [data-payment-order-id]');
+    const clearFields=()=>{for(const card of cards())clearCardFields(card);};
+    document.addEventListener('visibilitychange',()=>{
+      if(document.hidden)clearFields();
+      else for(const card of cards())fieldsObserver.observe(card);
+    });
+    window.addEventListener('pagehide',clearFields);
+    window.addEventListener('mirpanel:session-expired',()=>{
+      paymentState.permissions.fields=false;
+      clearFields();
+    });
+    window.addEventListener('admin-community-view',event=>{
+      if(event.detail!=='paymentOrders')clearFields();
+      else for(const card of cards())fieldsObserver.observe(card);
+    });
     document.addEventListener('change',e=>{const key=e.target.dataset.bankBackground;if(key)void changeBankBackground(key,e.target.files?.[0]);});
     document.addEventListener('click',e=>{const b=e.target.closest('[data-bank-background-remove]');if(b)void changeBankBackground(b.dataset.bankBackgroundRemove,null,true);});
     document.addEventListener("input", (event) => {
@@ -851,12 +855,19 @@
           const open=orderToggle.getAttribute("aria-expanded")!=="true",id=card.dataset.paymentOrderId;
           paymentState.openOrders.set(id,open);
           orderToggle.setAttribute("aria-expanded",String(open));card.querySelector('.paymentOrderCardDetails').hidden=!open;
-          if(open)void loadCardFields(card);else paintCardFields(card);return;
+          if(open)void loadCardFields(card);else clearCardFields(card);return;
         }
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
         if (card && event.target.closest("[data-retry-order-fields]")) { await loadCardFields(card);return; }
-        const reveal=event.target.closest("[data-reveal-order-field]");
-        if(card&&reveal){await revealOrderField(card,reveal);return;}
+        const copyFields=event.target.closest('[data-copy-order-fields]');
+        if(card&&copyFields&&paymentState.permissions.fields){
+          const block=copyFields.closest('[data-order-line-fields]');
+          const rows=[...block.querySelectorAll('[data-order-field-label]')].map(label=>
+            label.textContent+': '+label.parentElement.querySelector('[data-order-field-value]').textContent);
+          await navigator.clipboard.writeText(rows.join('\n'));
+          toast('Müştəri məlumatları kopyalandı.');
+          return;
+        }
         if (card && event.target.closest("[data-open-receipt]")) await handleOrderAction(card, "receipt");
         if (card && event.target.closest("[data-order-details]")) await handleOrderAction(card, "details");
         if (card && event.target.closest("[data-order-delivery]")) await handleOrderAction(card, "delivery");

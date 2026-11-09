@@ -34,7 +34,7 @@ const api=u=>{
  if(p.endsWith('/users/'+user.id))return {user,profile:{},orders:[{order_code:order.orderCode,product_title:item.title,plan_name:item.planName,amount:9.98,currency:'AZN',status:'reviewing'}],totalCents:user.spentCents};
  if(p.endsWith('/community/wallet'))return {cents:walletOnly?5002:user.balanceCents,items:walletOnly?ledger.filter(x=>(q.get('view')!=='payments'||x.kind==='purchase_debit')&&x.reason.includes(q.get('q')||'')):[],more:false};
  if(p.endsWith('/payment-orders'))return {permissions:{manage:true,fields:true},orders:[q.get('pendingStage')==='delivery'?wallet:ordersOnly?{...order,items:[],quantity:2}:order],counts:{pending:1,today:0,all:1,expiring:0},pagination:{page:1,pageSize:20,total:1,totalPages:1},filters:{products:[{id:'capcut',title:'CapCut Pro'}],durations:[],methods:[]},statistics:{},appliedFilters:{}};
- if(p.endsWith('/details'))return {lines:[{index:0,fields:[{field:0,label:'Otaq adı',value:'Sintetik otaq'},{field:1,label:'Otaq kodu',sensitive:true}]},{index:1,fields:[{field:0,label:'Dəvət e-poçtu',value:'invite@example.test'},{field:1,label:'Şifrə',sensitive:true}]}]};
+ if(p.endsWith('/details'))return {lines:[{index:0,fields:[{field:0,label:'Otaq adı',value:'Sintetik otaq'},{field:1,label:'Otaq kodu',sensitive:true,value:'0012'}]},{index:1,fields:[{field:0,label:'Dəvət e-poçtu',value:'invite@example.test'},{field:1,label:'Şifrə',sensitive:true,value:'synthetic-secret'}]}]};
  if(p.endsWith('/receipt'))return {url:'about:blank#synthetic-receipt'};
  if(p.endsWith('/delivery'))return {lines:[{index:0,title:netflix.title,plan:netflix.planName,remaining:1},{index:1,title:item.title,plan:item.planName,remaining:2}]};
  if(p.endsWith('/payment-methods'))return {methods:[{id:'qa-bank',displayName:'Sintetik bank',providerName:'ABB',active:true,hasNumber:true,available:true,last4:'1234',limitMode:'unlimited'}]};
@@ -286,15 +286,15 @@ try{
      if(ordersOnly){
       const netflixFields=details.locator('[data-order-line-fields="0"]'),spotifyFields=details.locator('[data-order-line-fields="1"]');
       await spotifyFields.getByText('invite@example.test',{exact:true}).waitFor();
-      assert.equal(await netflixFields.locator('[data-order-field-value]').last().textContent(),'••••••');
-      await netflixFields.getByRole('button',{name:'Göstər'}).click();
       await netflixFields.getByText('0012',{exact:true}).waitFor();
-      assert.equal(await spotifyFields.locator('[data-order-field-value]').last().textContent(),'••••••');
-      await spotifyFields.getByRole('button',{name:'Göstər'}).click();
       await spotifyFields.getByText('synthetic-secret',{exact:true}).waitFor();
-      await toggle.click();await toggle.click();
-      assert.equal(await netflixFields.locator('[data-order-field-value]').last().textContent(),'••••••');
-      assert.equal(await spotifyFields.locator('[data-order-field-value]').last().textContent(),'••••••');
+      assert.equal(await netflixFields.locator('[data-copy-order-fields]').count(),1);
+      assert.equal(await spotifyFields.locator('[data-copy-order-fields]').count(),1);
+      await toggle.click();
+      assert.equal(await details.locator('[data-order-field-value]').count(),0);
+      await toggle.click();
+      await netflixFields.getByText('0012',{exact:true}).waitFor();
+      await spotifyFields.getByText('synthetic-secret',{exact:true}).waitFor();
      }
      assert.equal(await card.getByRole('button',{name:'Çeki aç'}).count(),0);
      assert.equal(await card.getByRole('button',{name:'Ödənişi təsdiqlə'}).count(),0);

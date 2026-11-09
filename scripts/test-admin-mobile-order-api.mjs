@@ -4,7 +4,7 @@ import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 
 const id='12345678-1234-4234-8234-000000000001';
 const calls=[];
-let lookupFails=false;
+let lookupFails=false, orderReads=0;
 const admin=req=>req.headers.role==='admin';
 const json=(res,status,body)=>Object.assign(res,{status,body});
 const authorize=(req,res)=>{if(req.headers.role)return true;json(res,401,{});return false;};
@@ -21,7 +21,7 @@ const system=createPaymentSystem({
  actorName:'synthetic-admin',mailer:{},readBody:async req=>req.body,
  store:{
   listOrders:async()=>({orders:[{id,status:'completed',paymentSource:'wallet'}]}),
-  getOrder:async()=>({id,duration_months:1,checkout_snapshot:snapshot}),
+  getOrder:async()=>{orderReads++;return {id,duration_months:1,checkout_snapshot:snapshot};},
   approveOrder:async(...args)=>{calls.push(['approve',...args]);return {status:'approved'};}
  },
  pendingDeliveries:async()=>[id],
@@ -53,14 +53,18 @@ assert.equal((await request(base+'/'+id+'/delivery','operator','POST',body)).sta
 assert.equal((await request(base+'/'+id+'/delivery','admin','POST',body)).body.status,'completed');
 assert.deepEqual(calls.slice(-2),[['approve',id,1,'synthetic-admin'],['delivery','synthetic-admin',id,body]]);
 const details=base+'/'+id+'/details';
-const masked=await request(details,'admin');
-assert.equal(masked.headers['Cache-Control'],'private, no-store');
-assert.deepEqual(masked.body.lines.map(l=>l.fields.map(f=>[f.label,f.value])),[
- [['Otaq adı','Sintetik otaq'],['Otaq kodu',null]],[['Dəvət e-poçtu','invite@example.test'],['Şifrə',null]]
+const visible=await request(details,'admin');
+assert.equal(visible.headers['Cache-Control'],'private, no-store');
+assert.deepEqual(visible.body.lines.map(l=>l.fields.map(f=>[f.label,f.value])),[
+ [['Otaq adı','Sintetik otaq'],['Otaq kodu','0012']],[['Dəvət e-poçtu','invite@example.test'],['Şifrə','synthetic-secret']]
 ]);
 assert.equal((await request(details,'admin','POST',{line:0,field:1})).body.value,'0012');
 assert.equal((await request(details,'admin','POST',{line:1,field:1})).body.value,'synthetic-secret');
-assert.equal((await request(details,'operator')).status,403);
+const authorizedReads=orderReads;
+const denied=await request(details,'operator');
+assert.equal(denied.status,403);
+assert.equal(denied.body.lines,undefined);
 assert.equal((await request(details,'operator','POST',{line:0,field:1})).status,403);
 assert.equal((await request(details)).status,401);
+assert.equal(orderReads,authorizedReads);
 console.log('PASS: admin-only mobile display metadata; desktop, approval and delivery contracts unchanged.');

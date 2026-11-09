@@ -1371,6 +1371,8 @@ th {
 .paymentOrderCardDetails .paymentOrderActions{flex-direction:column;align-items:stretch}
 .paymentOrderLineFields:not(:empty){display:grid;gap:3px;margin:4px 0 7px;padding-inline-start:8px;border-inline-start:1px solid #54472b;color:#ded6c1}
 .paymentOrderLineFields .btn{min-height:30px;padding:3px 7px;margin-inline-start:4px}
+.paymentOrderLineFields:has(.paymentOrderFieldsCopy){position:relative;padding-inline-end:48px}
+.paymentOrderFieldsCopy.btn{position:absolute;inset-block-start:0;inset-inline-end:0;display:grid;place-items:center;width:40px;min-height:40px}
 .paymentOrderLineFields span{white-space:pre-wrap;overflow-wrap:anywhere}
 .paymentOrderCardDetails dl{display:grid;gap:6px;margin:0;font-size:13px;line-height:1.4}
 .paymentOrderCardDetails dl>div{display:grid;grid-template-columns:100px minmax(0,1fr);gap:4px 8px}
