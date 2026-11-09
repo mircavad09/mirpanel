@@ -116,7 +116,26 @@ textarea {
   color: #fff;
 }
 
+#adminSidebar .navBtn:has(.adminMenuIcon) {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
 .nav a.navBtn { display: block; text-decoration: none; }
+.adminMenuIcon {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: #bfc5cb;
+  stroke-width: 1.65;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.navBtn.active .adminMenuIcon { stroke: currentColor; }
+.adminMenuLabel { min-width: 0; overflow-wrap: anywhere; }
+#adminSidebar .navBtn:has(.adminMenuIcon)::after { flex-shrink: 0; margin-inline-start: auto; }
 .navBtn.active { color: #ffdf54; box-shadow: inset 2px 0 #ffd400; }
 .navBtn:focus-visible,.dashboardCard:focus-visible { outline: 2px solid #ffd400; outline-offset: -2px; }
 .stats[hidden] { display: none; }
