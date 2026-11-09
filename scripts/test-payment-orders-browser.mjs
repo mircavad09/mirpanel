@@ -17,6 +17,25 @@ await new Promise((resolve, reject) => {
 
 const browser = await chromium.launch({ headless: true, executablePath: browserPath });
 const errors = [];
+async function checkDeliveryPassword(page) {
+  await page.context().grantPermissions(["clipboard-read","clipboard-write"]);
+  await page.locator("[data-order-delivery]").first().click();
+  const dialog=page.locator("[data-payment-delivery-dialog]");
+  const password=dialog.getByLabel("Hesabın şifrəsi (istəyə bağlı)");
+  assert.equal(await password.getAttribute("type"),"text");
+  assert.equal(await password.getAttribute("required"),null);
+  const synthetic="Test-0012!";
+  await password.pressSequentially(synthetic);
+  assert.equal(await password.inputValue(),synthetic);
+  await page.evaluate(text=>navigator.clipboard.writeText(text),"Paste-0042!");
+  await password.press("Control+a");
+  await password.press("Control+v");
+  assert.equal(await password.inputValue(),"Paste-0042!");
+  await password.clear();
+  await dialog.locator('button[type="submit"]').click();
+  await page.waitForFunction(()=>window.__fixtureState.lastDelivery);
+  assert.equal(await page.evaluate(()=>Object.hasOwn(window.__fixtureState.lastDelivery,"password")),false);
+}
 try {
   for (const width of [320, 390, 768, 1440]) {
     const page = await browser.newPage({ viewport: { width, height: width < 500 ? 844 : 900 } });
@@ -36,6 +55,16 @@ try {
     assert.equal(audit.pendingCards, 2);
     assert.equal(audit.noteFields, 0);
     assert.equal(audit.monthlyHidden, true);
+    if(width===390){
+      await page.evaluate(()=>{
+        const state=window.__fixtureState;
+        state.delivery=[{...state.all[0],status:"preparing",deliveryPending:true}];
+      });
+      await page.locator('[data-payment-pending-stage="delivery"]').click();
+      await page.locator("[data-order-toggle]").first().click();
+      await checkDeliveryPassword(page);
+      await page.waitForFunction(()=>document.getElementById("paymentDeliveryCount")?.textContent==="0");
+    }
     await page.click('[data-payment-order-tab="expiring"]');
     await page.waitForFunction(() => !document.getElementById("paymentExpiringBatch")?.hidden);
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth - innerWidth) <= 0, `${width}px toplu təsdiq görünüşündə üfüqi daşma var`);
@@ -168,8 +197,7 @@ try {
   const pendingPayment=await page.evaluate(()=>window.__fixtureState.pending.length);
   const sidebar=page.locator('.navBtn[data-view="paymentOrders"]');
   assert.equal(await sidebar.getAttribute("data-pending-count"),String(pendingPayment+2));
-  await page.locator("[data-order-delivery]").first().click();
-  await page.locator('[data-payment-delivery-dialog] button[type="submit"]').click();
+  await checkDeliveryPassword(page);
   await page.waitForFunction(()=>document.getElementById("paymentDeliveryCount")?.textContent==="1" && document.querySelectorAll("[data-order-delivery]").length===1);
   assert.equal(await sidebar.getAttribute("data-pending-count"),String(pendingPayment+1));
   assert.equal(errors.length, 0, `Konsol xətaları: ${errors.join(" | ")}`);
