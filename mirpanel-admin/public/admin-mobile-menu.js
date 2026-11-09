@@ -8,7 +8,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const sidebarPosition = document.createComment("Desktop sidebar position");
   sidebar.before(sidebarPosition);
 
-  const quickLinks = ["dashboard", "products", "communityUsers", "paymentOrders", "communityGroup"];
+  const quickLinks = ["dashboard", "products", "communityUsers", "paymentOrders", "communityGroup", "apiIntegrations"];
   const groups = [
     ["Balans və mühasibatlıq", ["communityShop", "paymentCosts", "paymentMethods", "paymentReviews"]],
     ["Məhsul idarəetməsi", ["readyStock", "categories", "orderGuide", "orders", "netflixAccounts"]],

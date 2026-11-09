@@ -63,6 +63,7 @@ try {
     create table mirpanel_community.customer_order_mail(event_key text primary key,order_id uuid,delivery_id uuid);
   `);
   await sql.unsafe(await readFile(new URL('../supabase/migrations/202611090901_api_integrations.sql',import.meta.url),'utf8'));
+  await sql.unsafe(await readFile(new URL('../supabase/migrations/202611090902_api_integration_drafts.sql',import.meta.url),'utf8'));
   fixture.listen(0,'127.0.0.1');
   await once(fixture,'listening');
   const base='https://supplier.example';
@@ -82,7 +83,7 @@ try {
         headers:{Authorization:'Bearer '+key},method:body?'POST':'GET',
         ...(body?{body:JSON.stringify(body)}:{})
       });
-      if (!res.ok) throw Error();
+      if (!res.ok) throw Object.assign(Error('SUPPLIER_HTTP'),{supplierStatus:res.status});
       return reference ? res.json() : null;
     }
   });
@@ -98,7 +99,23 @@ try {
     active:true,settings:{serviceId:'60',orderPath:'/orders',statusPath:'/status',
       idField:'id',statusField:'status',success:['completed'],failure:['failed'],
       fields:{service:'serviceId',reference:'reference',quantity:'quantity',player:'customer.Oyunçu ID-si'}}};
-  await api.admin(mapping);
+  const newSupplier={...mapping,action:'activate',supplierId:'',name:'Sınaq 2',base,testPath:'/health'};
+  const blocked=await api.admin({...newSupplier,base:'https://outside.example',key:'test-key'});
+  assert.equal(blocked.reason,'API ünvanı icazə siyahısında deyil.');
+  const failed=await api.admin({...newSupplier,key:'wrong-key'});
+  assert.equal(failed.reason,'Təchizatçı giriş açarını qəbul etmədi.');
+  const drafts=(await api.admin()).drafts;
+  assert.equal(drafts.length,2);
+  assert.equal(drafts[0].details.key,undefined);
+  assert.ok(!JSON.stringify(drafts).includes('wrong-key'));
+  assert.equal((await api.admin()).mappings.length,0);
+  assert.equal(creates,0);
+  const activated=await api.admin({...newSupplier,draftId:blocked.draftId});
+  assert.equal(activated.ok,true);
+  assert.equal((await api.admin()).mappings[0].active,true);
+  assert.equal((await api.admin()).drafts.length,1);
+  assert.equal(creates,0);
+  mapping.supplierId=activated.supplierId;
   async function order(player,paid) {
     const id=randomUUID();
     const snapshot={cartVersion:2,items:[{productId:'pubg',sourcePlanKey:mapping.plan,planName:'60 UC',

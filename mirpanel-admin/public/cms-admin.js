@@ -1,7 +1,7 @@
 (function () {
   const viewGroups = [
     ["Tez istifadə olunanlar", [["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"], ["employeeStock", "İşçi stoku", "/admin/employee-stock"], ["paymentOrders", "Sifarişlər"], ["readyStock", "Hazır hesab stoku"], ["communityShop", "Balans müraciətləri"], ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]]],
-    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["orderGuide", "Məlumat və təlimat"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
+    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["orderGuide", "Məlumat və təlimat"], ["apiIntegrations", "API inteqrasiyaları"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
     ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sitemap"]]],
     ["Maliyyə nəzarəti", [["paymentReviews", "Ödəniş yoxlamaları"]]],
     ["Sistem", [["history", "Sayt yayımı tarixçəsi"], ["workforce", "İşçi, stok və maaş idarəsi", "/admin/workforce"]]]

@@ -45,7 +45,7 @@ export async function supplierRequest({base, path, key, allowlist, body, referen
       res.on('error',reject);
       if (res.statusCode < 200 || res.statusCode >= 300) {
         res.destroy();
-        reject(Error('SUPPLIER_HTTP'));
+        reject(Object.assign(Error('SUPPLIER_HTTP'),{supplierStatus:res.statusCode}));
         return;
       }
       res.on('data',chunk => {

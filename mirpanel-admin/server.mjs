@@ -1497,7 +1497,8 @@ const server = http.createServer(async (request, response) => {
         return response.end();
       }
       if (getSession(request)?.role!=='admin') return json(response,403,{error:'Admin icazəsi tələb olunur.'});
-      return serveFile(response,'api-integrations.html');
+      response.writeHead(302,{Location:'/admin.html#apiIntegrations','Cache-Control':'no-store'});
+      return response.end();
     }
     if (pathname === "/admin" || pathname === "/admin.html") {
       if (!getSession(request)) {

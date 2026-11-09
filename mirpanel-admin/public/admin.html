@@ -26,7 +26,7 @@
       </div>
 
       <nav class="nav">
-        <a class="navBtn" href="/admin/api-integrations">API inteqrasiyaları</a>
+        <button class="navBtn" type="button" data-view="apiIntegrations">API inteqrasiyaları</button>
         <a class="navBtn" href="/admin/users">İstifadəçilər</a>
         <a class="navBtn" href="/admin/workforce">İşçi, stok və maaş idarəsi</a>
         <a class="navBtn" href="/admin/employee-stock">İşçi stoku</a>
@@ -637,6 +637,48 @@
           </label>
         </div>
       </section>
+      <section class="panel singlePanel hidden" id="apiIntegrationsView">
+        <div class="panelHead"><h2>API inteqrasiyaları</h2></div>
+    <p id="notice" role="status"></p>
+    <div class="settingsForm">
+      <form id="mappingForm" class="formGrid">
+        <label class="wide">Qaralamalar <select id="integrationDrafts"></select></label>
+        <label class="wide">Təchizatçı <select name="supplierId"></select></label>
+        <div id="integrationNewSupplier" class="wide">
+          <p><label>Ad <input name="name" maxlength="100"></label></p>
+          <p><label>Əsas HTTPS ünvanı <input name="base" placeholder="https://api.example.com"></label></p>
+          <p><label>Giriş açarı <input type="password" name="key" autocomplete="new-password" maxlength="2048"></label></p>
+          <p><label>Sifariş yaratmayan yoxlama yolu (GET) <input name="testPath" placeholder="/health"></label></p>
+        </div>
+        <div class="wide">
+        <p><label>Məhsul <select name="productId"></select></label></p>
+        <p><label>Paket <select name="plan"></select></label></p>
+        <p><label>OpenAPI sənədi (JSON) <input type="file" id="openapi" accept=".json,application/json"></label></p>
+        <p><label>Sənəddəki əməliyyat <select id="operations"><option value="">Əməliyyatı seçin</option></select></label></p>
+        <p><label>Xidmət ID-si <input name="serviceId"></label></p>
+        <p><label>Sifariş yolu (POST) <input name="orderPath" placeholder="/orders"></label></p>
+        <p><label>Status yolu (GET) <input name="statusPath" placeholder="/order-status"></label></p>
+        <p>Status sorğusu MirPanel-in sifariş istinadını <code>reference</code> parametrində göndərir.</p>
+        <p><label>Göndərilən sahələr (JSON)<br><textarea name="fields" rows="5" cols="35">{"service":"serviceId","reference":"reference","quantity":"quantity"}</textarea></label></p>
+        <p id="checkoutFields"></p>
+        <p>Müştəri sahəsi üçün <code>customer.</code> prefiksindən istifadə edin, məsələn <code>customer.Oyunçu ID-si</code>. <code>plan</code> seçilən paketin adını göndərir.</p>
+        <p><label>Cavabda xarici sifariş ID-si <input name="idField" value="id"></label></p>
+        <p><label>Cavabda status sahəsi <input name="statusField" value="status"></label></p>
+        <p><label>Uğurlu statuslar (vergüllə ayırın) <input name="success" value="completed"></label></p>
+        <p><label>Uğursuz statuslar (vergüllə ayırın) <input name="failure" value="failed"></label></p>
+        <button class="btn" id="integrationTest" type="button" hidden>Bağlantını yoxla</button>
+        <p id="integrationState" role="status"></p>
+        <button class="btn primary" type="submit">Yadda saxla və aktivləşdir</button>
+        <button class="btn" id="integrationDisable" type="button" hidden>Deaktiv et</button>
+        </div>
+      </form>
+    </div>
+    <section class="settingsForm">
+      <h2>Təchizatçı sifarişləri</h2>
+      <button id="refresh" type="button">Yenilə</button>
+      <ul id="jobs"></ul>
+    </section>
+      </section>
     </main>
   </div>
 
@@ -688,10 +730,11 @@
   <script src="product-sales-admin.js?v=detail-20261010-1"></script>
   <script src="admin-stock-save-fix.js?v=nullable-20261028-1"></script>
   <script src="homepage-banners-admin.js?v=admin-release-status-20261107"></script>
-  <script src="cms-admin.js?v=guide-section-1"></script>
+  <script src="cms-admin.js?v=api-integrations-inline-1"></script>
   <script src="payment-admin.js?v=delivery-labels-1"></script>
   <script src="employee-review-admin.js?v=position-20261028-1"></script>
   <script src="stories-admin.js?v=admin-release-status-20261107"></script>
-  <script src="admin-mobile-menu.js?v=guide-section-1"></script>
+  <script src="admin-mobile-menu.js?v=api-integrations-inline-1"></script>
+  <script src="api-integrations.js?v=inline-1"></script>
 </body>
 </html>
