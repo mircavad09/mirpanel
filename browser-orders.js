@@ -118,6 +118,31 @@
    }else{const text=await read();if(valid()){concealed.delete(b.dataset.delivery);p.textContent=text;p.hidden=false;b.textContent='Gizlət';b.setAttribute('aria-expanded','true');}}
   }catch{if(valid())status.textContent=copy?'Məlumatı kopyalamaq mümkün olmadı.':'Təhvil məlumatını açmaq mümkün olmadı.';}finally{b.disabled=false;}
  }
+ function renderInformation(text){
+  const content=document.createElement('div');
+  content.className='browser-guide-information';
+  let block=null;
+  for(const raw of text.split(/\r?\n/)){
+   const line=raw.trim();
+   if(!line){block=null;continue;}
+   const heading=line.match(/^#{1,6}\s+(.+)$/);
+   if(heading){
+    const title=document.createElement('h3');title.textContent=heading[1];content.append(title);block=null;continue;
+   }
+   const bullet=line.match(/^([-*•]|\d+[.)])\s+(.+)$/);
+   const tag=bullet?(/^\d/.test(bullet[1])?'ol':'ul'):'p';
+   if(block?.localName!==tag){
+    block=document.createElement(tag);
+    if(tag==='p')block.className='browser-guide-text';
+    if(tag==='ol')block.start=parseInt(bullet[1],10);
+    content.append(block);
+   }
+   if(bullet){
+    const item=document.createElement('li');item.textContent=bullet[2];block.append(item);
+   }else block.append((block.textContent?'\n':'')+line);
+  }
+  return content;
+ }
  function openGuide(trigger,accounts){
   const order=trigger.closest('[data-order-id]'),index=Number(trigger.dataset.orderInfo),item=guideItems.get(order)?.[index];
   if(!item||guideDialog.open)return;
@@ -140,7 +165,7 @@
    if(!data){const loading=create('p','Məlumat hazırlanır…');loading.setAttribute('role','status');body.append(loading);return;}
    if(active==='info'){
     if(data.information)body.append(create('div','İstifadə etməzdən əvvəl oxuyun','browser-guide-note'));
-    body.append(create('p',data.information||'Bu məhsul üçün məlumat əlavə edilməyib.','browser-guide-text'));return;
+    body.append(data.information?renderInformation(data.information):create('p','Bu məhsul üçün məlumat əlavə edilməyib.','browser-guide-text'));return;
    }
    const tracks=Object.entries({general:'Ümumi addımlar',phone:'Telefonda giriş',desktopQr:'Kompüterdə QR ilə giriş'}).filter(([key])=>data.tracks?.[key]?.length);
    if(!tracks.length){body.append(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}

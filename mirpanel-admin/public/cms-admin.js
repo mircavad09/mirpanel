@@ -1,7 +1,7 @@
 (function () {
   const viewGroups = [
     ["Tez istifadə olunanlar", [["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"], ["employeeStock", "İşçi stoku", "/admin/employee-stock"], ["paymentOrders", "Sifarişlər"], ["readyStock", "Hazır hesab stoku"], ["communityShop", "Balans müraciətləri"], ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]]],
-    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
+    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["orderGuide", "Məlumat və təlimat"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
     ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sitemap"]]],
     ["Maliyyə nəzarəti", [["paymentReviews", "Ödəniş yoxlamaları"]]],
     ["Sistem", [["history", "Sayt yayımı tarixçəsi"], ["workforce", "İşçi, stok və maaş idarəsi", "/admin/workforce"]]]
@@ -133,6 +133,7 @@
     document.querySelectorAll(".navBtn[data-view]").forEach((button) => button.classList.toggle("active", button.dataset.view === view));
     document.querySelector(".stats").hidden = view !== "dashboard";
     el("crumb").textContent = viewLabels.find(([id]) => id === view)?.[1] || "İdarə paneli";
+    if (view === "orderGuide") renderOrderGuide();
     if (view === "history") { void loadHistory(); void verifyPublication(); }
     if (view === "dashboard") { renderDashboard(); void loadDashboard(); }
     if (view === "netflixAccounts") loadNetflixAccounts();
@@ -143,7 +144,11 @@
     list.textContent = "Yüklənir...";
     try { const q = el("netflixAccountSearch")?.value || ""; const result = await api(`/api/admin/netflix-accounts?q=${encodeURIComponent(q)}`); list.innerHTML = (result.items || []).map((item) => `<div class="cmsListItem compact"><strong>${esc(item.email)}</strong><span>${item.active ? "Aktiv" : "Deaktiv"}</span><div><button class="btn" type="button" data-netflix-toggle="${esc(item.email)}" data-active="${item.active ? "false" : "true"}">${item.active ? "Deaktiv et" : "Aktiv et"}</button><button class="btn danger" type="button" data-netflix-delete="${esc(item.email)}">Sil</button></div></div>`).join("") || "Hesab əlavə edilməyib."; } catch { list.textContent = "Hesablar yüklənmədi."; }
   }
+  function renderOrderGuide() {
+    window.mountAdminOrderGuide(el("orderGuideHost"), state.data?.products || [], markDirty, showPublishDialog);
+  }
   function createStaticViews() {
+    createView("orderGuide", panel("Məlumat və təlimat", "Müştərinin sifariş pəncərəsində görünən məhsul və paket məzmununu idarə edin.", '<div id="orderGuideHost"></div>'));
     createView("decorations",panel("Şəkillər və fonlar","Bank kartı və balans kartı kimi konkret sahələrə təyin olunan fonları idarə edin.",'<section id="paymentBankBackgrounds" class="paymentBankBackgrounds"></section>'));
     createView("dashboard", panel("İdarə paneli", "Saytın ümumi göstəriciləri", '<div class="cmsCards" id="cmsDashboardCards"></div>'));
     createView("homepage", panel("Ana səhifə", "Mövcud dizaynı dəyişmədən ana səhifə mətnlərini idarə et", `<div class="sectionHead"><h3>Ümumi sayt məlumatları</h3></div><div class="formGrid">
@@ -1008,6 +1013,7 @@
     ]);
   }
   function renderCms() {
+    if (el("orderGuideView") && !el("orderGuideView").classList.contains("hidden")) renderOrderGuide();
     if (!cms()) return;
     syncFooterProjection();
     if (!state.dirty && (baselineSha !== state.baseSha || !baselineData)) {

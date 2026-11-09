@@ -11,7 +11,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const quickLinks = ["dashboard", "products", "communityUsers", "paymentOrders", "communityGroup"];
   const groups = [
     ["Balans və mühasibatlıq", ["communityShop", "paymentCosts", "paymentMethods", "paymentReviews"]],
-    ["Məhsul idarəetməsi", ["readyStock", "categories", "orders", "netflixAccounts"]],
+    ["Məhsul idarəetməsi", ["readyStock", "categories", "orderGuide", "orders", "netflixAccounts"]],
     ["Sayt məzmunu", ["homepage", "navigation", "banners", "stories", "decorations", "media", "about", "contact", "terms", "seo"]],
     ["Sistem", ["history", "/admin/workforce"]]
   ];

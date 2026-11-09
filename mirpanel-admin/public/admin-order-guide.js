@@ -1,6 +1,6 @@
 (() => {
  const labels={general:'Ümumi addımlar',phone:'Telefonda giriş',desktopQr:'Kompüterdə QR ilə giriş'};
- let lastProduct,activePlan;
+ let selectedProduct,activePlan,activeTab="information";
  function node(tag,text){const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;}
  function btn(text,click){const b=node('button',text);b.type='button';b.className='btn';b.onclick=click;return b;}
  function field(text,input){const label=node('label',text);label.append(input);return label;}
@@ -14,30 +14,39 @@
   }
   return '';
  };
- window.mountAdminOrderGuide=(host,product,dirty)=>{
-  let shell=document.getElementById('orderGuideEditor');
-  if(!shell){shell=node('details');shell.id='orderGuideEditor';host.after(shell);}
-  if(lastProduct!==product.id){lastProduct=product.id;activePlan=null;shell.open=false;}
+ function renderEditor(shell,product,dirty){
   const plans=product.plans||[],index=plans.indexOf(activePlan),selected=index<0?'product':String(index);
   const select=node('select');
   for(const [key,name] of [['product','Məhsul üzrə ümumi təlimat'],...plans.map((p,i)=>[String(i),p.label||p.name||('Paket '+(i+1))])]){
    const option=node('option',name);option.value=key;select.append(option);
   }
   select.value=selected;
-  const draw=()=>window.mountAdminOrderGuide(host,product,dirty);
+  const draw=()=>renderEditor(shell,product,dirty);
   select.onchange=()=>{activePlan=plans[Number(select.value)]||null;draw();};
   const target=index<0?product:activePlan,data=target.orderGuide||{information:'',tracks:{}};
   const changed=()=>{target.orderGuide=data;dirty();};
   const info=node('textarea');info.maxLength=12000;info.rows=6;info.value=data.information||'';info.oninput=()=>{data.information=info.value;changed();};
-  shell.replaceChildren(node('summary','Sifarişdən sonra: Məlumat və təlimat'),
-   node('p','Müştəriyə göstərilən ümumi qaydaları yazın. Hesab məlumatı, şifrə və təsdiq kodunu burada saxlamayın. Şəkil üçün kitabxanadakı və ya HTTPS şəkil ünvanını istifadə edin.'),
-   field('Məhsul və ya paket',select),field('Məlumat mətni',info));
+  const information=node('div'),tutorial=node('div'),tabs=node('div');
+  tabs.className='guideEditorTabs';
+  for(const [id,label] of [['information','Məlumat'],['tutorial','Təlimat']]){
+   const tab=btn(label,()=>{activeTab=id;switchTab();});
+   tab.dataset.guideTab=id;tabs.append(tab);
+  }
+  function switchTab(){
+   information.hidden=activeTab!=='information';
+   tutorial.hidden=activeTab!=='tutorial';
+   for(const tab of tabs.children)tab.setAttribute('aria-pressed',String(tab.dataset.guideTab===activeTab));
+  }
+  information.append(node('p','Başlıq üçün #, siyahı üçün - və ya 1. istifadə edin. Abzasları boş sətirlə ayırın.'),field('Məlumat mətni',info));
+  tutorial.append(node('p','Təlimat addımları yalnız əlavə edildikdə müştəriyə görünür.'));
+  shell.replaceChildren(field('Məhsul və ya paket',select),tabs,information,tutorial);
+  switchTab();
   const title=target.label||target.name||'';
   const inferred=/(?:^|[^\p{L}])telefon(?:da|la)?(?:$|[^\p{L}])/iu.test(title)&&!/kompüter|desktop|(?:^|\W)pc(?:$|\W)/iu.test(title);
   if(selected!=='product'){
    const only=node('input');only.type='checkbox';only.checked=inferred||data.phoneOnly===true;only.disabled=inferred;
    only.onchange=()=>{data.phoneOnly=only.checked;changed();draw();};
-   const line=field('Yalnız telefon paketi',only);line.className='switchLine';shell.append(line);
+   const line=field('Yalnız telefon paketi',only);line.className='switchLine';tutorial.append(line);
   }
   for(const name of selected==='product'?['general']:Object.keys(labels).filter(key=>key!=='desktopQr'||!(inferred||data.phoneOnly))){
    const box=node('fieldset'),steps=data.tracks[name]||[];
@@ -57,7 +66,52 @@
     row.append(node('strong','Addım '+(i+1)),field('Şəklin ünvanı',url),field('Addımın izahı',desc),actions,preview);box.append(row);
    });
    const add=btn('+ Addım əlavə et',()=>{steps.push({image:'',description:''});data.tracks[name]=steps;changed();draw();});
-   add.disabled=steps.length>=12;box.append(add);shell.append(box);
+   add.disabled=steps.length>=12;box.append(add);tutorial.append(box);
   }
+ };
+ window.mountAdminOrderGuide=(host,products,dirty,publish)=>{
+  const editor=node('section'),catalog=node('section'),panel=node('div');
+  editor.className='panel guideEditor';
+  catalog.className='panel guideCatalog';
+  const grid=node('div');grid.className='guideProductGrid';
+  catalog.append(node('h3','Məhsullar'),grid);
+  const back=btn('← Məhsullara qayıt',()=>{
+   host.classList.remove('guideHasSelection');
+   const selected=grid.querySelector('[aria-pressed="true"]');
+   selected?.focus();
+  });
+  back.classList.add('guideBack');
+  const save=btn('Yoxla və yayımla',publish);
+  save.classList.add('primary');
+  const cards=new Map();
+  function select(product,focus=false){
+   if(selectedProduct!==product.id){activePlan=null;activeTab='information';}
+   selectedProduct=product.id;
+   for(const [id,card] of cards)card.setAttribute('aria-pressed',String(id===selectedProduct));
+   host.classList.add('guideHasSelection');
+   const heading=node('h3',product.title);heading.tabIndex=-1;
+   editor.replaceChildren(back,heading,panel,save);
+   renderEditor(panel,product,dirty);
+   if(focus){heading.focus({preventScroll:true});editor.scrollIntoView({block:'nearest'});}
+  }
+  for(const product of products){
+   const card=btn('',()=>select(product,true));
+   card.setAttribute('aria-pressed','false');
+   if(product.image){
+    try{
+     const url=new URL(product.image,'https://mirpanel.com/');
+     if(url.protocol==='https:'&&!url.username&&!url.password){
+      const img=node('img');img.src=url.href;img.alt='';img.loading='lazy';img.onerror=()=>img.remove();card.append(img);
+     }
+    }catch{}
+   }
+   card.append(node('strong',product.title));
+   cards.set(product.id,card);grid.append(card);
+  }
+  editor.append(node('p','Redaktə etmək üçün məhsul seçin.'));
+  host.replaceChildren(editor,catalog);
+  const product=products.find(item=>item.id===selectedProduct);
+  if(product)select(product);
+  else host.classList.remove('guideHasSelection');
  };
 })();

@@ -8,7 +8,7 @@ const sample='E-poçt: buyer@example.test\nŞifrə: synthetic-only\n\nİkinci s�
 const order='12345678-1234-4234-8234-000000000001',delivery='12345678-1234-4234-8234-000000000002';
 const repeat={productId:'synthetic',title:'Synthetic first',planIndex:0,planName:'1 ay'};
 const price=725,field={key:'room',label:'Otaq adı',type:'text',required:true,minLength:1,maxLength:40};
-const guides=[{information:'Sintetik telefon qaydası.\n\n'+('Yalnız sınaq üçün yazılmış əlavə izah.\n'.repeat(40)),tracks:{phone:[{image:'https://guide.example.test/1.png',description:'Tətbiqi açın.'},{image:'https://guide.example.test/2.png',description:'Sınaq profilini seçin.'}]}},{information:'İkinci məhsula aid qayda.',tracks:{desktopQr:[{image:'https://guide.example.test/3.png',description:'Sınaq ekranını açın.'}]}}];
+const guides=[{information:'# Əsas qaydalar\n\n- Sintetik telefon qaydası.\n\n'+('Yalnız sınaq üçün yazılmış əlavə izah.\n'.repeat(40)),tracks:{phone:[{image:'https://guide.example.test/1.png',description:'Tətbiqi açın.'},{image:'https://guide.example.test/2.png',description:'Sınaq profilini seçin.'}]}},{information:'İkinci məhsula aid qayda.',tracks:{desktopQr:[{image:'https://guide.example.test/3.png',description:'Sınaq ekranını açın.'}]}}];
 let status='reviewing',reveals=0,available=1,drafts=0,payments=0,receiptReads=0,expiresOn,preview=false,autoDelivered=false,newerStatus=null,realProfile=false;
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost');
@@ -107,6 +107,8 @@ try{
    assert.equal(reveals,1);await guide.getByRole('button',{name:'Təlimat',exact:true}).click();await guide.getByRole('button',{name:'Kompüterdə QR ilə giriş'}).waitFor();
    await guide.getByRole('button',{name:'Təlimatı bağla'}).click();await guide.waitFor({state:'hidden'});
    await show.click();await guide.getByText('Sintetik telefon qaydası.',{exact:false}).waitFor();await card.getByText('İkinci sətir',{exact:false}).waitFor();
+   await guide.getByRole('heading',{name:'Əsas qaydalar'}).waitFor();
+   await guide.locator('ul li').getByText('Sintetik telefon qaydası.').waitFor();
    assert(await guide.locator('.browser-guide-body').evaluate(n=>{n.scrollTop=n.scrollHeight;return n.scrollTop>0;}));
    const footer=await guide.getByRole('button',{name:'Bağla',exact:true}).boundingBox();assert(footer.y+footer.height<=820);
    await guide.getByRole('button',{name:'Təlimat',exact:true}).click();

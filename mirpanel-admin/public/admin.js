@@ -1059,7 +1059,6 @@ function updateHelpFields() {
 }
 
 function renderPlans(product) {
-  window.mountAdminOrderGuide?.($("plans"),product,markDirty);
   $("plans").innerHTML = (product.plans || []).map((plan, index) => `
     <div class="planRow">
       <input data-plan="${index}" data-field="label" placeholder="Label" value="${escapeHtml(plan.label || "")}">

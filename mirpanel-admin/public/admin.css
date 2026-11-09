@@ -1286,11 +1286,6 @@ th {
 #decorationsView .paymentBankEmpty,#decorationsView .decorationChecker{aspect-ratio:1.6;max-height:200px}
 #decorationsView .decorationChecker img{height:100%;aspect-ratio:auto}
 #decorationsView .paymentBankBackgroundGrid article{padding:12px;border:1px solid #343940;border-radius:12px;background:#1d2126}
-#orderGuideEditor{margin:16px 0;padding:12px;border:1px solid #45423a;border-radius:12px}
-#orderGuideEditor summary{font-weight:650;cursor:pointer}
-#orderGuideEditor label,#orderGuideEditor :is(select,textarea,input){display:block;width:100%;box-sizing:border-box;margin:5px 0}
-#orderGuideEditor label.switchLine{display:flex;align-items:center;gap:8px}#orderGuideEditor input[type=checkbox]{width:auto}
-#orderGuideEditor fieldset,.guide-editor-step{margin:10px 0;padding:10px;border:1px solid #45423a;border-radius:8px;min-width:0}
 .guide-editor-step .btn{margin-inline-end:6px}
 .guide-editor-step img{display:block;max-width:min(100%,240px);max-height:180px;margin:8px 0;object-fit:contain}
 
@@ -1357,3 +1352,24 @@ th {
 }
 @keyframes payment-filter-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){#paymentOrdersStatus[data-filter-loading]::before{animation:none}}
+
+#orderGuideHost { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px; }
+#orderGuideHost .panel { padding: 14px; min-width: 0; }
+.guideEditor h3, .guideCatalog h3 { margin: 0 0 12px; }
+.guideEditor p { margin: 10px 0; color: var(--muted); }
+.guideEditor label { display: grid; gap: 5px; margin: 8px 0; }
+.guideEditor :is(select, textarea, input:not([type=checkbox])) { width: 100%; }
+.guideEditor fieldset, .guide-editor-step { margin: 10px 0; padding: 10px; border: 1px solid #45423a; border-radius: 8px; min-width: 0; }
+.guideEditorTabs, .guideProductGrid { display: grid; gap: 8px; }
+.guideEditorTabs { grid-template-columns: 1fr 1fr; }
+.guideEditorTabs [aria-pressed=true], .guideProductGrid [aria-pressed=true] { border-color: var(--accent); color: var(--accent); }
+.guideProductGrid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 110px), 1fr)); }
+.guideProductGrid .btn { display: grid; align-content: start; gap: 6px; min-width: 0; padding: 7px; text-align: left; overflow-wrap: anywhere; }
+.guideProductGrid img { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 6px; }
+.guideBack { display: none; }
+@media (max-width: 760px) {
+  #orderGuideHost { grid-template-columns: minmax(0, 1fr); }
+  #orderGuideHost:not(.guideHasSelection) .guideEditor,
+  #orderGuideHost.guideHasSelection .guideCatalog { display: none; }
+  .guideBack { display: inline-flex; min-height: 44px; margin-bottom: 10px; }
+}
