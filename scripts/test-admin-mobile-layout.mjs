@@ -7,6 +7,7 @@ import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex
 import {extractAdminState} from '../mirpanel-admin/core.mjs';
 
 const baseline=process.argv.includes('--before'),audit=process.argv.includes('--audit'),live=process.argv.includes('--live'),ordersOnly=process.argv.includes('--orders-only');
+const usersOnly=process.argv.includes('--users');
 const phase=baseline?'before':live?'live':'after';
 const output=path.resolve('../../outputs/admin-mobile-layout');
 fs.mkdirSync(output,{recursive:true});
@@ -63,18 +64,29 @@ try{
   const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{
    const context=await browser.newContext({viewport:{width,height:860},hasTouch:width<600,isMobile:width<600,serviceWorkers:'block'});
+   if(live&&usersOnly){
+    const session=process.env.MIRPANEL_ADMIN_TEST_SESSION,index=session?.indexOf('=')??-1;
+    if(index<1)throw Error('A temporary admin session is required for the protected Users assets.');
+    await context.addCookies([{name:session.slice(0,index),value:session.slice(index+1),url:origin,httpOnly:true,secure:true,sameSite:'Strict'}]);
+   }
    await context.route('**/*',r=>{
     const u=new URL(r.request().url());
     if(u.origin!==origin||r.request().method()!=='GET')return r.abort();
     if(live&&u.pathname.startsWith('/api/'))return r.fulfill({json:api(u)});
     // Use the checked-in shell for the synthetic admin session; all view scripts
     // and styles still come from the deployed Render service.
-    if(live&&u.pathname==='/admin.html')return r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(admin,'admin.html'))});
+    if(live&&!usersOnly&&u.pathname==='/admin.html')return r.fulfill({contentType:'text/html',body:fs.readFileSync(path.join(admin,'admin.html'))});
     return r.continue();
    });
    const page=await context.newPage();page.setDefaultTimeout(10000);
    const assets=new Map();
-   if(live)page.on('response',r=>{const u=new URL(r.url());if(r.ok()&&u.origin===origin&&['/payment-admin.js','/admin.css'].includes(u.pathname))assets.set(u.pathname,r.text());});
+   const expectedAssets=usersOnly?['/admin-wallet-users.js','/admin-wallet-users.css']:['/payment-admin.js','/admin.css'];
+   if(live)page.on('response',r=>{const u=new URL(r.url());if(r.ok()&&u.origin===origin&&expectedAssets.includes(u.pathname))assets.set(u.pathname,r.text());});
+   const verifyAssets=async()=>{if(live)for(const file of expectedAssets){
+    assert(assets.has(file),'Deployed asset missing: '+file);
+    const normalize=v=>v.replace(/\r\n/g,'\n').trimEnd();
+    assert.equal(normalize(await assets.get(file)),normalize(fs.readFileSync(path.join(admin,file),'utf8')));
+   }};
    await page.goto(origin+'/admin.html');
    await page.locator(viewSelector('communityUsers')).waitFor({state:'attached'});
    const open=async v=>{
@@ -88,10 +100,20 @@ try{
    await open('communityUsers');
    const userView=page.locator('#communityUsersView');
    await userView.getByText(user.name,{exact:true}).first().waitFor();
+   await page.waitForFunction(()=>[...document.styleSheets].some(s=>s.href?.includes('/admin-wallet-users.css')));
    if(engine===chromium&&[390,1440].includes(width)){await userView.evaluate(n=>n.scrollIntoView({block:'start'}));await page.screenshot({path:path.join(output,'users-'+phase+'-'+width+'.png')});}
    usersLayout=await layout(page);
    if(!baseline){assert.deepEqual(usersLayout.issues,[]);assert.equal(await userView.locator('.wu-mobile-details').first().isVisible(),mobile);}
    if(!baseline&&mobile){
+    const geometry=await userView.locator('.wu-identity strong').evaluate(name=>{
+     const rects=(node,start=0,end=node.length)=>{const r=document.createRange();r.setStart(node,start);r.setEnd(node,end);return [...r.getClientRects()];};
+     const n=name.firstChild;
+     const split=[...n.textContent.matchAll(/\S+/g)].some(w=>rects(n,w.index,w.index+w[0].length).length!==1);
+     const amounts=[...name.closest('tr').querySelectorAll('.wu-money')].map(a=>rects(a.firstChild));
+     const fits=amounts.every(rs=>rs.length===1&&rs[0].left>=0&&rs[0].right<=innerWidth);
+     return {split,fits,sameRow:amounts.length===2&&Math.abs(amounts[0][0].top-amounts[1][0].top)<1};
+    });
+    assert.deepEqual(geometry,{split:false,fits:true,sameRow:true});
     const row=userView.locator('.wu-mobile-details').first();
     await row.locator('summary').click();assert.equal(await row.getAttribute('open'),'');
     await row.getByRole('button',{name:'Profilə bax',exact:true}).click();
@@ -107,9 +129,12 @@ try{
     await userView.getByRole('button',{name:'Qadağan olunmuş'}).click();await userView.getByText('İstifadəçi tapılmadı.').waitFor();
     await userView.getByRole('button',{name:'Onlayn'}).click();await userView.getByText(user.name,{exact:true}).first().waitFor();
     assert.equal(await userView.locator('.wu-money').first().evaluate(n=>getComputedStyle(n).whiteSpace),'nowrap');
+   }else if(!baseline){
+    assert.equal(await userView.locator('.wu-user-list').evaluate(n=>getComputedStyle(n).display),'table');
+    assert.equal(await userView.locator('.wu-icon:visible').count(),2);
    }
    }
-   if(process.argv.includes('--users')){console.log(JSON.stringify({phase,engine:engine.name(),width,usersLayout}));continue;}
+   if(usersOnly){await verifyAssets();console.log(JSON.stringify({phase,engine:engine.name(),width,usersLayout}));continue;}
    await open('paymentOrders');
    const orderView=page.locator('#paymentOrdersView'),card=orderView.locator('[data-payment-order-id]').first();
    await card.waitFor();
@@ -147,11 +172,7 @@ try{
      assert.equal(await card.getByRole('button',{name:'Çeki aç'}).isVisible(),true);
     }
    }
-   if(live)for(const file of ['/payment-admin.js','/admin.css']){
-    assert(assets.has(file),'Deployed asset missing: '+file);
-    const normalize=v=>v.replace(/\r\n/g,'\n').trimEnd();
-    assert.equal(normalize(await assets.get(file)),normalize(fs.readFileSync(path.join(admin,file),'utf8')));
-   }
+   await verifyAssets();
    const auditViews=[];
    if(audit&&width<600){
     const views=await page.locator('.nav .navBtn').evaluateAll(ns=>ns.map(n=>[n.dataset.view,n.getAttribute('href')]));
