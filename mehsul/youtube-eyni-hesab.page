@@ -223,10 +223,10 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-056bfff39866fec5"></script>
+  <script src="/app.js?v=catalog-3ce6ef0258b1bb5c"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
-  <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>
+  <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>
   <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
   <script src="/site-header.js?v=support-faq-20261026-2"></script>
 </body>
