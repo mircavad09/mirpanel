@@ -1,3 +1,10 @@
+export const netflixPhoneSteps=[
+ ['netflix-open',"Netflix-i açın və sağ üstdəki ‘Sign In’ düyməsinə toxunun."],
+ ['netflix-email',"Sizə təqdim olunan e-poçtu yazın və ‘Continue’ düyməsinə toxunun."],
+ ['netflix-code',"Dördrəqəmli giriş kodu tələb olunarsa, ‘Get Help’ seçin."],
+ ['netflix-help',"Açılan seçimlərdən ‘Use password instead’ seçin."],
+ ['netflix-password',"Sizə təqdim olunan şifrəni yazın və qırmızı ‘Sign In’ düyməsinə toxunun."]
+].map(([animation,description])=>({animation,description,image:''}));
 const guideAnimations=new Set(['ben','sign-in','email','password','pro']);
 export const guideTracks=['general','phone','desktopQr'];
 export function phoneOnlyGuide(plan){
@@ -31,6 +38,7 @@ export function normalizeOrderGuide(input,{product=false}={}){
 export function orderGuideFor(product,plan,savedName){
  const base=normalizeOrderGuide(product?.orderGuide,{product:true}),own=normalizeOrderGuide(plan?.orderGuide);
  const tracks={...base?.tracks,...own?.tracks};
+ if(product?.id==='netflix')tracks.phone=netflixPhoneSteps.map(step=>({...step}));
  if(phoneOnlyGuide(plan)||phoneOnlyGuide({label:savedName}))delete tracks.desktopQr;
  return {information:own?.information||base?.information||'',tracks};
 }

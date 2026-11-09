@@ -1,3 +1,46 @@
+function netflixScreen(animation,create){
+ const screen=create('div',null,'netflix-demo');screen.dataset.scene=animation;
+ const icon=path=>{const n=create('span',null,'netflix-icon');n.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+path+'"/></svg>';return n;};
+ const brand=create('strong','NETFLIX','netflix-brand'),head=create('div',null,'netflix-top');
+ if(animation!=='netflix-open')head.append(icon('m14 5-7 7 7 7'));
+ head.append(brand);screen.append(head);
+ const box=(text,cls='')=>create('div',text,'netflix-box '+cls);
+ const target=(node,delayed=false)=>{node.classList.add('netflix-target');if(delayed)node.classList.add('netflix-target-later');return node;};
+ const typing=(text)=>{const n=create('span',null,'netflix-typing');[...text].forEach((letter,i)=>{const char=create('span',letter);char.style.setProperty('--delay',(0.12+i*0.09)+'s');n.append(char);});return n;};
+ const help=()=>{const h=create('div','Get Help','netflix-help');h.append(icon(animation==='netflix-help'?'m6 15 6-6 6 6':'m6 9 6 6 6-6'));return h;};
+ if(animation==='netflix-open'){
+  const sign=target(box('Sign In','netflix-top-sign'));head.append(sign);
+  const posters=create('div',null,'netflix-posters');
+  for(const [title,style] of [['THRILLER','red'],['STORIES','blue'],['DRAMA','gold'],['ADVENTURE','green'],['MYSTERY','purple'],['CINEMA','red']]){
+   const poster=create('div',null,'netflix-poster '+style);
+   poster.append(icon('M4 21V8l8-5 8 5v13M8 21v-6h8v6M9 8h6'),create('strong',title));posters.append(poster);
+  }
+  const hero=create('div',null,'netflix-hero');hero.append(posters,create('h3','Films, series and more. Just a few taps away.'));
+  screen.append(hero,create('div','●  ○','netflix-carousel'),box('Create your Netflix account and discover more.','netflix-promo'));return screen;
+ }
+ const main=create('div',null,'netflix-main');
+ const heading=animation==='netflix-email'?'Enter your info to sign in':animation==='netflix-password'?'Enter your password':'Enter the code we sent to your email';
+ main.append(create('h3',heading));
+ if(animation==='netflix-email'){
+  const email=box(null,'netflix-entry netflix-entry-typing');email.classList.add('netflix-writing');email.append(create('small','Email or mobile number'),typing('hesab@example.com'));
+  main.append(email,target(box('Continue','netflix-red'),true),help(),create('small',"This page is protected by Google reCAPTCHA to ensure you’re not a bot.",'netflix-muted'));
+ }else{
+  const email=box(null,'netflix-account');email.append(create('span','hesab@example.com'),create('span','Change'));main.append(email);
+  if(animation==='netflix-password'){
+   const password=box(null,'netflix-entry netflix-entry-typing');password.classList.add('netflix-writing');password.append(create('small','Password'),typing('********'),icon('M7 10h10v10H7zM9 10V7a3 3 0 0 1 6 0v3'));
+   main.append(password,target(box('Sign In','netflix-red'),true),create('div','or','netflix-or'),box('Use Sign-in Code','netflix-code-button'),help(),create('small',"This page is protected by Google reCAPTCHA to ensure you’re not a bot.",'netflix-muted'));
+  }else{
+   const codes=create('div',null,'netflix-codes');for(let i=0;i<4;i++)codes.append(box(''));
+   main.append(codes,create('p','This code will expire in 15 minutes.','netflix-muted'),create('p',"Didn’t get a code? Resend code.",'netflix-muted'));
+   const h=help();main.append(animation==='netflix-code'?target(h):h);
+   if(animation==='netflix-help'){
+    const menu=create('div',null,'netflix-help-menu');
+    menu.append(create('div',"I can’t access this email right now"),target(create('div','Use password instead')),create('div','Learn more about sign-in'));main.append(menu);
+   }
+  }
+ }
+ screen.append(main);return screen;
+}
 (()=>{'use strict';window.mountBrowserOrders=(options={})=>{const root=document.getElementById('browserOrders');if(!root)return;const life=new AbortController(),on=(t,n,f)=>t.addEventListener(n,f,{signal:life.signal});
  const error=document.getElementById('browserOrdersError'),more=document.getElementById('browserOrdersMore'),dialog=document.getElementById('browserReceipt'),content=document.getElementById('browserReceiptContent');
  let cursor=null,loading=false,loaded=false,generation=0,timer,focused=false,pageFingerprint=null,hasAppended=false,initialRequest=options.initialRequest,autoOrder=null;const seen=new Set(),requests=new Set(),prior=new Map();
@@ -250,7 +293,7 @@
   const deliveryStatus=accounts.querySelector('[data-delivery]')?null:accounts.querySelector('p')?.textContent;
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
   footer.append(button('Bağla',()=>guideDialog.close()));
-  let data=null,failed=false,active='info',track='',step=0,autoplay=false,advanceTimer;
+  let data=null,failed=false,active='info',track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
   const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
   phoneShell.append(phoneScreen);
   const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(info,how);
@@ -261,7 +304,7 @@
    if(failed){body.replaceChildren(create('p','Təlimat alınmadı.'),button('Yenidən cəhd et',loadGuide));return;}
    if(!data){const loading=create('p','Məlumat hazırlanır…');loading.setAttribute('role','status');body.replaceChildren(loading);return;}
    if(active==='info'){
-    body.replaceChildren();
+    phoneScreen.replaceChildren();body.replaceChildren();
     if(data.information)body.append(create('div','İstifadə etməzdən əvvəl oxuyun','browser-guide-note'));
     body.append(data.information?renderInformation(data.information):create('p','Bu məhsul üçün məlumat əlavə edilməyib.','browser-guide-text'));return;
    }
@@ -269,16 +312,19 @@
    if(!tracks.length){body.replaceChildren(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}
    if(!tracks.some(([key])=>key===track))track=tracks[0][0];
    const choices=create('div',null,'browser-guide-choices');
-   for(const [key,label] of tracks){const b=button(key==='phone'&&data.tracks[key].some(s=>s.animation)?'CapCut-a daxil ol':label,()=>{autoplay=false;track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
+   for(const [key,label] of tracks){const b=button(key==='phone'&&data.tracks[key].some(s=>s.animation)&&!data.tracks[key].some(s=>s.animation?.startsWith('netflix-'))?'CapCut-a daxil ol':label,()=>{autoplay=false;track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
    const steps=data.tracks[track],current=steps[step],layout=create('div',null,'browser-guide-step');
    const compact=track==='phone'&&steps.some(item=>item.animation);
    if(compact)layout.classList.add('browser-guide-compact');
+   if(current.animation?.startsWith('netflix-'))layout.classList.add('netflix-guide');
    const visual=create('div',null,'browser-guide-visual');
-   const handset=track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image);
+   const netflix=track==='phone'&&current.animation?.startsWith('netflix-');
+   const handset=netflix||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image);
    const steadyLayout=handset&&body.contains(phoneShell)?phoneShell.closest('.browser-guide-step'):null;
    if(handset){
     visual.classList.add('browser-guide-visual-handset');
-    phoneScreen.replaceChildren(capcutScreen(current.animation,create));
+    phoneScreen.replaceChildren(netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
+    phoneShell.classList.toggle('netflix-handset',netflix);
     if(!steadyLayout)visual.append(phoneShell);
    }else
    try{
@@ -339,21 +385,37 @@
      draw();body.querySelector('.browser-guide-play')?.focus({preventScroll:true});
     });
     play.className='browser-guide-play';
+    if(netflix)details.append(create('small','Düymələrin dili və görünüşü cihazınıza görə fərqlənə bilər.','netflix-guide-note'));
     if(compact){
      const icon=create('span',autoplay?'Ⅱ':'▶');icon.setAttribute('aria-hidden','true');play.prepend(icon);
      next.before(dots);details.append(play);
     }else details.append(dots,play);
     let touch;
-    layout.addEventListener('touchstart',e=>{touch=e.touches.length===1?e.touches[0]:null;},{passive:true});
-    layout.addEventListener('touchcancel',()=>{touch=null;});
-    layout.addEventListener('touchend',e=>{
+    const swipeStart=e=>{touch=e.touches.length===1?{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY}:null;};
+    if(netflix){
+     if(phoneTouchStart)phoneShell.removeEventListener('touchstart',phoneTouchStart);
+     phoneTouchStart=swipeStart;phoneShell.addEventListener('touchstart',phoneTouchStart,{passive:true});
+    }
+    else layout.addEventListener('touchstart',swipeStart,{passive:true});
+    if(netflix){
+     if(phoneTouchCancel)phoneShell.removeEventListener('touchcancel',phoneTouchCancel);
+     phoneTouchCancel=()=>{touch=null;};phoneShell.addEventListener('touchcancel',phoneTouchCancel);
+    }else layout.addEventListener('touchcancel',()=>{touch=null;});
+    const swipeEnd=e=>{
      if(!touch||!e.changedTouches.length)return;
      const {clientX,clientY}=e.changedTouches[0],dx=clientX-touch.clientX,dy=clientY-touch.clientY;
      touch=null;
      if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)*1.3)go(step+(dx<0?1:-1));
-    },{passive:true});
+    };
+    if(netflix){
+     if(phoneTouchEnd)phoneShell.removeEventListener('touchend',phoneTouchEnd);
+     phoneTouchEnd=swipeEnd;phoneShell.addEventListener('touchend',phoneTouchEnd,{passive:true});
+    }
+    else layout.addEventListener('touchend',swipeEnd,{passive:true});
    }
-   if(steadyLayout)steadyLayout.lastElementChild.replaceWith(details);
+   if(steadyLayout){steadyLayout.lastElementChild.replaceWith(details);
+    steadyLayout.dispatchEvent(new CustomEvent('guide-step-changed'));
+   }
    else{
     layout.append(visual,details);body.replaceChildren(choices,layout);
     if(handset&&deliveryStatus)body.append(create('p',deliveryStatus,'browser-guide-delivery-status browser-guide-handset-status'));
@@ -361,7 +423,7 @@
    if(autoplay&&step<steps.length-1)advanceTimer=setTimeout(()=>{
     if(!guideDialog.open||!guideDialog.isConnected)return;
     step++;autoplay=step<steps.length-1;draw();
-   },4200);
+   },netflix?5000:4200);
   }
   async function loadGuide(){
    const turn=++guideTurn;failed=false;draw();
@@ -371,7 +433,7 @@
   header.append(head,tabs);
   if(deliveryStatus)header.append(create('p',deliveryStatus,'browser-guide-delivery-status'));
   wrap.append(header,body,footer);guideDialog.replaceChildren(wrap);root.after(guideDialog);
-  guideDialog.addEventListener('close',()=>{clearTimeout(advanceTimer);guideTurn++;guideDialog.remove();if(trigger.isConnected)trigger.focus({preventScroll:true});},{once:true});
+  guideDialog.addEventListener('close',()=>{autoplay=false;phoneScreen.replaceChildren();clearTimeout(advanceTimer);guideTurn++;guideDialog.remove();if(trigger.isConnected)trigger.focus({preventScroll:true});},{once:true});
   guideDialog.showModal();void loadGuide();
  }
  function buyAgain(selection){

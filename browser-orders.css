@@ -313,3 +313,84 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .browser-netflix-room>div{display:grid;min-width:0;gap:2px;overflow-wrap:anywhere}
 .browser-netflix-room>div>span{color:#b6c2ba}
 .browser-netflix-room>div:last-child{white-space:nowrap}
+/* Netflix personal phone walkthrough, rendered as a local explanatory mockup. */
+.netflix-handset{width:230px;max-width:100%;container-type:inline-size}
+.netflix-handset .browser-guide-handset-screen{aspect-ratio:1/1.9;background:#080303}
+.netflix-demo{box-sizing:border-box;height:100%;padding:6% 5%;color:#fff;background:radial-gradient(ellipse at 45% 0,#4a191a 0,transparent 70%),#080303;font:400 4.2cqw/1.4 Arial,sans-serif;overflow:hidden}
+.netflix-top{display:flex;align-items:center;gap:5%;height:11%;position:relative}
+.netflix-brand{font:900 10cqw/.9 Arial,sans-serif;letter-spacing:-.07em;color:#e50914}
+.netflix-icon{display:inline-flex;align-items:center;flex:none}
+.netflix-icon svg{width:5cqw;height:5cqw;display:block}
+.netflix-top>.netflix-icon{border:1px solid #77393f;border-radius:50%;padding:3%}
+.netflix-top-sign{margin-left:auto;background:#454143;border-radius:4px;padding:3% 6%;font-weight:700}
+.netflix-main{padding-top:10%}
+.netflix-demo h3{font-size:7cqw;line-height:1.22;margin:0 0 8%;font-weight:700}
+.netflix-demo .netflix-box{box-sizing:border-box;border-radius:3px}
+.netflix-entry{position:relative;padding:4% 5%;border:1px solid #858080;background:#151010;min-height:15cqw;display:grid;align-content:center;gap:1cqw}
+.netflix-entry small{font-size:3.9cqw;color:#aaa}
+.netflix-entry-typing{margin-bottom:4%}
+.netflix-typing{font-size:4.5cqw;white-space:nowrap;line-height:1.5}
+.netflix-typing>span{visibility:hidden;animation:netflix-type 0s var(--delay) forwards}
+.netflix-red{padding:4% 2%;background:#e50914;text-align:center;font-weight:700;font-size:5cqw;margin-bottom:14%}
+.netflix-account{display:flex;justify-content:space-between;gap:4px;background:#4c4142;padding:5% 4%;font-size:4cqw;margin-bottom:9%;white-space:nowrap}
+.netflix-account>span:last-child{text-decoration:underline;color:#e0d9d9}
+.netflix-codes{display:flex;justify-content:center;gap:3%;margin:5% 0 6%}
+.netflix-codes .netflix-box{width:16%;height:18cqw;border:1px solid #777;background:#100c0c}
+.netflix-codes .netflix-box:first-child{border-color:#ddd}
+.netflix-demo .netflix-muted{font-size:3.8cqw;line-height:1.5;color:#aaa;margin:0 0 3%}
+.netflix-help{display:flex;align-items:center;gap:2%;width:max-content;max-width:100%;font-size:4.5cqw;padding:3% 0;margin-top:11%;position:relative}
+.netflix-help-menu{display:grid;gap:4cqw;margin-top:3cqw;font-size:4cqw}
+.netflix-help-menu>div{text-decoration:underline;width:max-content;max-width:100%;position:relative}
+.netflix-entry>.netflix-icon{position:absolute;right:5%;bottom:22%;color:#aaa}
+.netflix-or{text-align:center;display:flex;align-items:center;gap:4%;margin:-5% 0 6%;font-size:4cqw}
+.netflix-or::before,.netflix-or::after{content:"";flex:1;height:1px;background:#493b3c}
+.netflix-code-button{background:#393032;font-weight:700;font-size:4.6cqw;text-align:center;padding:4%}
+.netflix-demo[data-scene=netflix-password] .netflix-main{padding-top:9%}
+.netflix-demo[data-scene=netflix-password] .netflix-help{margin-top:9%;margin-bottom:7%}
+.netflix-demo[data-scene=netflix-password] .netflix-red{margin-bottom:12%}
+.netflix-demo[data-scene=netflix-help] .netflix-main{padding-top:6%}
+.netflix-demo[data-scene=netflix-help] h3{font-size:6.4cqw;margin-bottom:5%}
+.netflix-demo[data-scene=netflix-help] .netflix-account{margin-bottom:5%}
+.netflix-demo[data-scene=netflix-help] .netflix-help{margin-top:6%}
+.netflix-target{position:relative;outline:2px solid #e5bf52;outline-offset:3px}
+.netflix-target::after{content:"";position:absolute;right:8%;top:35%;width:4cqw;height:4cqw;border:2px solid #f8d56e;border-radius:50%;box-shadow:0 0 0 3px #eac65030;animation:netflix-tap 1.4s ease-out infinite;pointer-events:none}
+.netflix-target-later{outline-color:transparent;animation:netflix-mark 0s 2.1s forwards}
+.netflix-target-later::after{opacity:0;animation:netflix-tap 1.4s 2.1s ease-out infinite}
+.netflix-posters{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;height:100%;position:absolute;inset:0}
+.netflix-poster{display:grid;justify-items:center;align-content:center;gap:9%;overflow:hidden;background:linear-gradient(30deg,#100a0a,#8a2428);font-size:2.8cqw}
+.netflix-poster .netflix-icon svg{width:13cqw;height:13cqw}
+.netflix-poster.blue{background:linear-gradient(30deg,#0c1019,#254662)}
+.netflix-poster.green{background:linear-gradient(30deg,#0a1510,#47652b)}
+.netflix-poster.gold{background:linear-gradient(30deg,#171006,#9b6826)}
+.netflix-poster.purple{background:linear-gradient(30deg,#13091b,#5c256b)}
+.netflix-hero{height:67%;position:relative;border:1px solid #564044;border-radius:8px;overflow:hidden;margin-top:6%}
+.netflix-hero h3{position:absolute;inset:0;margin:0;padding:8%;display:flex;align-items:flex-end;text-align:center;font-size:8cqw;background:linear-gradient(transparent 20%,#080303de 72%)}
+.netflix-carousel{text-align:center;color:#ddd;margin:4% 0;font-size:4.5cqw}
+.netflix-promo{text-align:center;padding:5%;border:1px solid #b93749;background:#3b0b14;color:#ddd;font-size:3.8cqw}
+.netflix-guide .browser-guide-text{min-height:4.1em;font-size:16px}
+.netflix-guide-note{display:block;font-size:12px;color:#c7c2b6;line-height:1.4;margin-top:9px}
+.netflix-guide .browser-guide-controls{align-items:center;justify-content:space-between}
+.netflix-guide .browser-guide-controls>button{min-width:44px;min-height:44px}
+.netflix-guide .browser-guide-dots{flex:1;justify-content:center}
+.netflix-guide .browser-guide-dots button{min-width:28px;min-height:44px}
+@keyframes netflix-type{to{visibility:visible}}
+@keyframes netflix-mark{to{outline-color:#e5bf52}}
+@keyframes netflix-tap{0%{opacity:0;transform:scale(.7)}30%{opacity:1}100%{opacity:0;transform:scale(1.8)}}
+@media(max-width:600px){
+ .browser-order-guide:has(.netflix-handset){width:calc(100% - 16px);margin:8px auto;max-height:calc(100dvh - 16px)}
+ .browser-guide-frame:has(.netflix-handset){max-height:calc(100dvh - 18px);overflow:auto}
+ .browser-guide-body:has(.netflix-handset){overflow:visible}
+ .netflix-handset{width:clamp(176px,calc((100dvh - 330px)*.48),220px)}
+ .netflix-guide .browser-guide-text{min-height:5.4em;margin-block:6px}
+ .netflix-guide-note{margin-top:6px}
+}
+@media(prefers-reduced-motion:reduce){
+ .netflix-demo *,.netflix-demo *::after{animation:none!important}
+ .netflix-typing>span{visibility:visible}
+ .netflix-target-later{outline-color:#e5bf52}
+ .netflix-target::after{opacity:1;transform:none}
+}
+.netflix-help{white-space:nowrap;min-width:max-content}
+.netflix-writing{outline:2px solid #e5bf52;outline-offset:2px;animation:netflix-writing-end 0s 2.1s forwards}
+@keyframes netflix-writing-end{to{outline-color:transparent}}
+@media(prefers-reduced-motion:reduce){.netflix-writing{outline:none}}
