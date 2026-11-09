@@ -51,7 +51,7 @@ export function renderAccountPanel(ctx){
  const listPath=id==='orders'?'/api/payments/my-orders'+suffix:id==='codes'?'/api/payments/my-orders/codes':id==='payments'?paymentPath(prior?.status,prior?.page):id==='subscriptions'?'/api/payments/shop/subscriptions':null;
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?readList():null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=profile-stickers-1',orders:'/browser-orders.js?v=profile-resume-1',codes:'./account-codes.js?v=profile-resume-1',payments:'./account-payments.js?v=profile-resume-1',subscriptions:'./account-subscriptions.js?v=profile-resume-1'}[id];
+ const url={profile:'./profile.js?v=profile-stickers-1',orders:'/browser-orders.js?v=partial-delivery-1',codes:'./account-codes.js?v=profile-resume-1',payments:'./account-payments.js?v=profile-resume-1',subscriptions:'./account-subscriptions.js?v=profile-resume-1'}[id];
  const retry=moduleRetries.get(id)||0,module=url?import(url+(retry?'&retry='+retry:'')):null;
  let timeout;
  const tabModule=module&&Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).finally(()=>clearTimeout(timeout));

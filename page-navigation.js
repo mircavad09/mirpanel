@@ -57,7 +57,7 @@
  async function mount(v,run,preparedModule){if(run!==generation)return;window.mirpanelNavigationMounting=true;try{
  if(document.getElementById('shopApp')){const m=await(preparedModule||moduleWithin(shopModule));if(run!==generation)return;dispose=m.mountShop();}
  else if(document.getElementById('communityApp')){const m=await(preparedModule||moduleWithin(groupModule));if(run!==generation)return;dispose=m.mountCommunity();}
- else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=order-guide-1',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
+ else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=partial-delivery-1',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
  else if(!v.started){
   // Fetch together but execute in document order. A superseded route may
   // finish downloading; its scripts must never execute over the new view.

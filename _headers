@@ -47,6 +47,9 @@
 /browser-nav.css
   Cache-Control: no-cache, must-revalidate
 
+/browser-orders.js
+  Cache-Control: no-cache, must-revalidate
+
 /session-state.js
   Cache-Control: no-cache, must-revalidate
 
