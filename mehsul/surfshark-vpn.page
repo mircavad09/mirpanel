@@ -117,11 +117,11 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 1.12 ₼" title="CapCut Pro">
       <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
-      <div class="product-page-similar-price">4.99 ₼</div>
+      <div class="product-page-similar-price">1.12 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/tiktok-jeton" aria-label="TikTok Jeton — 11.00 ₼" title="TikTok Jeton">
       <img src="/uploads/products/tiktok_jeton-1792448326473-7df012e5.png?v=1792448326473" class="product-page-similar-image" alt="TikTok Jeton" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="TikTok Jeton">TikTok Jeton</div>
@@ -241,7 +241,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-99ecbade1218d13a"></script>
+  <script src="/app.js?v=catalog-e1d6193fa276f538"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
   <script src="/stock-display-fix.js?v=stock-nullable-20261028-1"></script>
