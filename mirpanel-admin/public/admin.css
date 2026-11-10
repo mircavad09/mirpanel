@@ -1556,3 +1556,11 @@ th {
 
 .admin-notification-settings [hidden]{display:none!important}
 @media(max-width:760px){.adminMenuHeader .admin-notification-settings{grid-column:1 / -1;justify-self:end}}
+
+.productFormGroups .formFieldActions{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.productFormGroups .formFieldActions .switchLine{min-height:34px}
+.productFormGroups .formFieldActions .removeFormField{margin-inline-start:auto}
+.productFormGroups .formFieldAdvanced{grid-column:1/-1;border-top:1px solid var(--border);padding-top:6px}
+.productFormGroups .formFieldAdvanced summary{cursor:pointer;color:var(--muted);font-size:13px}
+.productFormGroups .formFieldAdvanced>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:8px;margin-top:8px}
+.productFormGroups [data-field-preview]{display:grid;gap:8px;margin-top:6px}

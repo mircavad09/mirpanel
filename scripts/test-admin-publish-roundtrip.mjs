@@ -172,6 +172,31 @@ try {
     const result=await save({...chosen,previewDigest:(await reviewed.json()).previewDigest});
     assert.equal(netflix(result.data).confirmationModal.description,choice==="mine"?"Mənim qaralamam":"GitHub mətni");
   }
+  for(const operation of ['add','deactivate','reactivate','delete-one','delete-last']){
+    const start=await load(),modified=structuredClone(start.data);
+    for(const id of ['prime','capcut']){
+      const item=modified.products.find(p=>p.id===id);
+      if(operation==='add')item.formFields=[{key:'qa_pin',label:'Otaq kodu',placeholder:'0408',type:'pin',digits:4,required:true,enabled:true},{key:'qa_note',label:'Ad',type:'text',enabled:true}];
+      if(operation==='deactivate')item.formFields[0].enabled=false;
+      if(operation==='reactivate')item.formFields[0].enabled=true;
+      if(operation==='delete-one')item.formFields.splice(1,1);
+      if(operation==='delete-last'){item.formFields.splice(0,1);item.plans[0].formFields=[];}
+    }
+    const result=await save(await prepare(start,modified));
+    live=head;
+    assert.equal(await verify(result),true);
+    const reopened=await load(),delivered=extractAdminState(await publicText('app.js'));
+    for(const id of ['prime','capcut']){
+      const expected=modified.products.find(p=>p.id===id);
+      const draft=reopened.data.products.find(p=>p.id===id),site=delivered.products.find(p=>p.id===id);
+      for(const actual of [draft,site]){
+        assert.deepEqual(Array.from(actual.formFields,f=>[f.key,f.enabled]),expected.formFields.map(f=>[f.key,f.enabled]));
+        assert.deepEqual(Array.from(termsInfo(actual,actual.plans[0],0).fields,f=>f.key),expected.formFields.filter(f=>f.enabled).map(f=>f.key));
+        if(operation==='delete-last')assert.deepEqual(Array.from(actual.plans[0].formFields),[]);
+      }
+    }
+  }
+  console.log('PASS published Prime Video and CapCut fields: add, deactivate, reactivate, delete one and delete last, reload and checkout agreement');
   console.log(JSON.stringify({product:"saved, reopened and generated customer page verified",homepage:"saved, reopened and delivered customer content verified",slow:true,lostGitAck:true,expiredSession:true,networkFailure:true,delayedDelivery:true,fieldRebase:true,branchRace:true,conflictChoices:true,warningOnly:true,gitWrites:writes,productionWrites:0}));
 } finally {
   if(child.exitCode===null){const stopped=once(child,"exit");child.kill();await stopped;}

@@ -614,6 +614,7 @@ const FIELD_TYPES = new Set([
   "tel",
   "email",
   "password",
+  "pin",
   "textarea",
   "number",
   "select"
@@ -672,7 +673,7 @@ function defaultFieldsForFlow(flow) {
 function orderFlowFromProduct(product = {}) {
   const source = String(product.orderFlow || "").trim();
 
-  const fields = Array.isArray(product.formFields) && product.formFields.length
+  const fields = Array.isArray(product.formFields)
     ? product.formFields.filter((field) => field?.enabled !== false)
     : defaultFieldsForFlow(product.flow);
 
@@ -696,19 +697,16 @@ function orderFlowFromProduct(product = {}) {
 }
 
 function normalizeFormField(field = {}, index = 0) {
-  const key = String(field.key || `custom_${index + 1}`)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9_]+/g, "_")
-    .replace(/^_|_$/g, "");
+  const key = typeof field.key === "string" && field.key.trim() ? field.key : `custom_${index + 1}`;
 
   const normalized = {
-    key: key || `custom_${index + 1}`,
+    key,
     type: FIELD_TYPES.has(field.type) ? field.type : "text",
     label: String(field.label || field.key || `Sahə ${index + 1}`),
     placeholder: String(field.placeholder || ""),
     description: cleanText(field.description || "", "", 500),
-    ...(Number(field.digits)>0?{digits:Math.min(10,Math.trunc(Number(field.digits)))}:{}),
+    ...(field.digits != null && Number.isFinite(Number(field.digits)) ? { digits: Math.max(0, Math.min(10, Math.trunc(Number(field.digits)))) } : {}),
+    ...(field.privateConfirmation === true ? { privateConfirmation: true } : {}),
     required: Boolean(field.required),
     enabled: field.enabled !== false
   };
@@ -727,7 +725,7 @@ function normalizeFormField(field = {}, index = 0) {
 }
 
 function normalizeFormFields(product = {}) {
-  const source = Array.isArray(product.formFields) && product.formFields.length
+  const source = Array.isArray(product.formFields)
     ? product.formFields
     : defaultFieldsForFlow(product.flow);
 

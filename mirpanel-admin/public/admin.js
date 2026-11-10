@@ -92,7 +92,8 @@ function validHttpsUrl(value) {
 const formFieldTypes = [
   ["text", "Mətn"],
   ["tel", "Telefon"],
-  ["email", "Email"],
+  ["email", "E-poçt"],
+  ["pin", "PIN / kod"],
   ["password", "Şifrə"],
   ["textarea", "Uzun qeyd"],
   ["number", "Rəqəm"],
@@ -125,9 +126,9 @@ function defaultWhatsApp() {
   return { extraMessage: "", includeSeller: false, includeStock: false };
 }
 
-function defaultFormField(index = 0) {
+function defaultFormField() {
   return {
-    key: `custom_${index + 1}`,
+    key: "custom_" + crypto.randomUUID().replaceAll("-", ""),
     type: "text",
     label: "Yeni sahə",
     placeholder: "",
@@ -244,7 +245,7 @@ function syncLegacyFlow(product, overwriteFields = false) {
     return;
   }
 
-  if (legacyFields.length && (overwriteFields || !activeFormFields(product).length)) {
+  if (legacyFields.length && (overwriteFields || !Array.isArray(product.formFields))) {
     product.formFields = legacyFields;
   }
 
@@ -318,7 +319,7 @@ function ensureProduct(product) {
   if (product.id === "spotify") {
     product.spotifyPasswordResetUrl = product.spotifyPasswordResetUrl || DEFAULT_SPOTIFY_RESET_URL;
   }
-  product.formFields = Array.isArray(product.formFields) ? product.formFields : [];
+  product.formFields = Array.isArray(product.formFields) ? product.formFields : cloneLegacyFields(product.flow);
   product.formTitle = product.formTitle || "";
   product.whatsapp = { ...defaultWhatsApp(), ...(product.whatsapp || {}) };
   product.plans = Array.isArray(product.plans) ? product.plans : [];
@@ -1223,88 +1224,141 @@ function renderPlans(product) {
   });
 }
 
-let formScope='product',formProductId=null;
-function formTarget(product){const idx=Number(formScope);return formScope!=='product'&&product.plans[idx]?product.plans[idx]:product;}
+let formScope='product',formProductId=null,customerFieldContract;
+function formTarget(product){
+  return formScope==='product'?product:product.plans[Number(formScope)]||product;
+}
 function renderFormFields(product) {
   if(formProductId!==product.id){formProductId=product.id;formScope='product';}
-  const scope = $('formFieldScope');
-  if (formScope !== 'product' && !product.plans[Number(formScope)]) formScope = 'product';
-  scope.innerHTML='<option value="product">Bütün paketlər üçün ümumi sahələr</option>'+product.plans.map((p,i)=>'<option value="'+i+'">'+escapeHtml(p.label||p.name||('Paket '+(i+1)))+'</option>').join('');
-  scope.value=formScope;scope.onchange=()=>{formScope=scope.value;renderFormFields(product);};
+  const scope=$('formFieldScope'),container=$('formFields');
+  if(formScope!=='product'&&!product.plans[Number(formScope)])formScope='product';
+  scope.innerHTML='<option value="product">Bütün paketlər üçün ümumi sahələr</option>'+product.plans.map((p,i)=>{
+    const title=p.label||p.name||('Paket '+(i+1));
+    const mode=Array.isArray(p.formFields)?'ayrıca ayar':'ümumi sahələr';
+    return '<option value="'+i+'">'+escapeHtml(title+' · '+mode)+'</option>';
+  }).join('');
+  scope.value=formScope;
+  scope.onchange=()=>{formScope=scope.value;renderFormFields(product);};
   refreshOrderFlowDisplay(product);
   document.getElementById('inheritFormFields')?.remove();
   const target=formTarget(product),inherited=target!==product&&!Array.isArray(target.formFields);
-  if(inherited){$('formFields').innerHTML='<div class="productInheritedFields"><span>Bu paket ümumi sahələrdən istifadə edir.</span> <button type="button" id="overrideFormFields" class="btn">Bu paket üçün ayrıca sahələr</button></div>' + renderCustomerFormPreview(product);$('overrideFormFields').onclick=()=>{target.formFields=structuredClone(product.formFields||[]);markDirty();renderFormFields(product);};return;}
-  target.formFields=target.formFields||[];
-  if(target!==product){const inherit=document.createElement('button');inherit.id='inheritFormFields';inherit.type='button';inherit.className='btn';inherit.textContent='Ümumi məhsul sahələrinə qayıt';inherit.onclick=()=>{delete target.formFields;markDirty();renderFormFields(product);};$('productFieldActions').append(inherit);}
-
-  if (!target.formFields.length) {
-    $("formFields").innerHTML = `<div class="emptyMini">Sahə əlavə olunmayıb. Müştəriyə boş forma açılmayacaq.</div>`;
+  const preview='<aside class="customerFormPreview"><strong>Canlı önizləmə</strong><div data-field-preview role="status">Hazırlanır…</div></aside>';
+  if(inherited){
+    container.innerHTML='<div class="productInheritedFields">Bu paket ümumi sahələrdən istifadə edir. <button type="button" id="overrideFormFields" class="btn">Bu paket üçün ayrıca sahələr</button></div>'+preview;
+    $('overrideFormFields').onclick=()=>{
+      target.formFields=structuredClone(product.formFields||[]);
+      markDirty();renderFormFields(product);
+    };
+    refreshCustomerFormPreview(product,target,container);
     return;
   }
+  target.formFields??=[];
+  if(target!==product){
+    const inherit=document.createElement('button');
+    inherit.id='inheritFormFields';inherit.type='button';inherit.className='btn';
+    inherit.textContent='Ümumi məhsul sahələrinə qayıt';
+    inherit.onclick=()=>{delete target.formFields;markDirty();renderFormFields(product);};
+    $('productFieldActions').append(inherit);
+  }
+  const scopeNote=target===product
+    ? 'Bu sahələr ayrıca ayarı olmayan paketlərə tətbiq edilir.'
+    : 'Bu paketin ayrıca siyahısı ümumi sahələri əvəz edir. Boş siyahı müştəri forması açmır.';
+  const orderedFields=target.formFields.map((field,index)=>({field,index}))
+    .sort((a,b)=>(Number(a.field.order)||a.index+1)-(Number(b.field.order)||b.index+1))
+    .map(({field})=>field);
+  target.formFields=orderedFields;
+  const editor=orderedFields.map((field,index)=>{
+    const type=formFieldType(field),pin=type==='pin';
+    const input=(key,label,attributes='',fallback='')=>`<label>${label}<input data-form-index="${index}" data-form-field="${key}" value="${escapeHtml(field[key]??fallback)}" ${attributes}></label>`;
+    const toggle=(key,label,checked)=>`<label class="switchLine"><input data-form-index="${index}" data-form-field="${key}" type="checkbox" ${checked?'checked':''}><span>${label}</span></label>`;
+    return `<section class="formFieldRow" aria-label="Sahə ${index+1}">
+      ${input('label','Müştərinin gördüyü ad','maxlength="120"')}
+      ${input('placeholder','Xanada görünən nümunə','maxlength="250"')}
+      <label>Cavab növü<select data-form-index="${index}" data-form-field="type">${renderOptions(formFieldTypes,type)}</select></label>
+      ${pin?input('digits','Kodun rəqəm sayı','type="number" min="1" max="10"',legacyFormDigits(field)||4):''}
+      <div class="formFieldActions">
+       ${toggle('enabled','Aktiv',field.enabled!==false)}${toggle('required','Məcburidir',field.required)}
+       <button class="btn compact" type="button" data-field-move="-1" data-form-index="${index}" aria-label="Sahə ${index+1} yuxarı" ${index===0?'disabled':''}>↑</button>
+       <button class="btn compact" type="button" data-field-move="1" data-form-index="${index}" aria-label="Sahə ${index+1} aşağı" ${index===orderedFields.length-1?'disabled':''}>↓</button>
+       <button class="btn danger removeFormField" data-form-index="${index}" type="button" aria-label="Sahə ${index+1} sil">Sil</button>
+      </div>
+      <details class="formFieldAdvanced"><summary>Əlavə ayarlar</summary><div>
+       ${input('description','İzah','maxlength="500"')}
+       ${input('minLength','Minimum uzunluq','type="number" min="0" max="400"')}
+       ${input('maxLength','Maksimum uzunluq','type="number" min="1" max="400"')}
+       ${type==='select'?`<label class="full">Seçimlər (hər sətirdə bir seçim)<textarea data-form-index="${index}" data-form-field="options">${escapeHtml(Array.isArray(field.options)?field.options.join("\n"):'')}</textarea></label>`:''}
+      </div></details>
+    </section>`;
+  }).join('');
+  container.innerHTML='<p class="fieldHelp">'+scopeNote+'</p>'+ (editor||'<div class="emptyMini">Sahə əlavə olunmayıb.</div>')+preview;
+  refreshCustomerFormPreview(product,target,container);
 
-  const editorHtml = target.formFields.map((field, index) => `
-    <div class="formFieldRow">
-      <label class="switchLine"><input data-form-index="${index}" data-form-field="enabled" type="checkbox" ${field.enabled !== false ? "checked" : ""}><span>Aktiv</span></label>
-      <label>Sahənin adı<input data-form-index="${index}" data-form-field="key" value="${escapeHtml(field.key || "")}"></label>
-      <label>Tip<select data-form-index="${index}" data-form-field="type">${renderOptions(formFieldTypes, field.type || "text")}</select></label>
-      <label>Müştəriyə görünən etiket<input data-form-index="${index}" data-form-field="label" value="${escapeHtml(field.label || "")}"></label>
-      <label>İzah<input data-form-index="${index}" data-form-field="description" value="${escapeHtml(field.description || "")}"></label>
-      <label>Kodun rəqəm sayı (istəyə bağlı)<input type="number" min="1" max="10" data-form-index="${index}" data-form-field="digits" value="${escapeHtml(field.digits || "")}"></label>
-      <label>Nümunə mətn<input data-form-index="${index}" data-form-field="placeholder" value="${escapeHtml(field.placeholder || "")}"></label>
-      <label>Minimum uzunluq<input type="number" min="0" data-form-index="${index}" data-form-field="minLength" value="${escapeHtml(field.minLength || "")}"></label>
-      <label>Maksimum uzunluq<input type="number" min="0" data-form-index="${index}" data-form-field="maxLength" value="${escapeHtml(field.maxLength || "")}"></label>
-      <label>Sıra<input type="number" min="1" data-form-index="${index}" data-form-field="order" value="${escapeHtml(field.order || index + 1)}"></label>
-      <label class="switchLine"><input data-form-index="${index}" data-form-field="required" type="checkbox" ${field.required ? "checked" : ""}><span>Məcburidir</span></label>
-      ${field.type === "select" ? `<label class="full">Seçimlər (hər sətirdə bir seçim)<textarea data-form-index="${index}" data-form-field="options">${escapeHtml(Array.isArray(field.options) ? field.options.join("\n") : field.options || "")}</textarea></label>` : ""}
-      <button class="btn danger removeFormField" data-form-index="${index}" type="button">Sil</button>
-    </div>
-  `).join("");
-  $("formFields").innerHTML = editorHtml + renderCustomerFormPreview(target);
-
-  $("formFields").querySelectorAll("[data-form-field]").forEach((input) => {
-    const update = () => {
-      const field = target.formFields[Number(input.dataset.formIndex)];
-      if (!field) return;
-      const key = input.dataset.formField;
-      if (input.type === "checkbox") field[key] = input.checked;
-      else if (key === "minLength" || key === "maxLength" || key === "order" || key === "digits") field[key] = input.value === "" ? undefined : Math.max(0, Math.trunc(Number(input.value) || 0));
-      else if (key === "options") field.options = input.value.split(/\r?\n/).map((option) => option.trim()).filter(Boolean);
-      else if (key === "key") field.key = slug(input.value || `custom_${input.dataset.formIndex}`);
-      else field[key] = input.value;
-      syncOrderFlow(product);
-      markDirty();
-      refreshOrderFlowDisplay(product);
-      if (key === "type") renderFormFields(product);
-      else $("formFields").querySelector(".customerFormPreview").outerHTML = renderCustomerFormPreview(target);
-    };
-    input.addEventListener("input", update);
-    input.addEventListener("change", update);
-  });
-
-  document.querySelectorAll(".removeFormField").forEach((button) => {
-    button.addEventListener("click", () => {
-      target.formFields.splice(Number(button.dataset.formIndex), 1);
-      syncOrderFlow(product);
-      markDirty();
-      renderFormFields(product);
-      refreshOrderFlowDisplay(product);
+  const changed=()=>{
+    syncOrderFlow(product);markDirty();refreshOrderFlowDisplay(product);
+  };
+  container.querySelectorAll('[data-form-field]').forEach(input=>{
+    const key=input.dataset.formField;
+    input.addEventListener(input.matches('select,[type=checkbox]')?'change':'input',()=>{
+      const field=target.formFields[Number(input.dataset.formIndex)];
+      if(!field)return;
+      if(key==='type'){
+        field.type=input.value;
+        field.digits=input.value==='pin'?(legacyFormDigits(field)||4):0;
+      }else if(input.type==='checkbox')field[key]=input.checked;
+      else if(input.type==='number'){
+        if(!input.validity.valid)return;
+        field[key]=input.value===''?(key==='digits'?4:undefined):Number(input.value);
+      }else if(key==='options')field.options=input.value.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+      else field[key]=input.value;
+      changed();
+      if(key==='type')renderFormFields(product);
+      else refreshCustomerFormPreview(product,target,container);
     });
+  });
+  function reorder(){
+    target.formFields.forEach((field,index)=>{field.order=index+1;});
+    changed();renderFormFields(product);
+  }
+  container.querySelectorAll('.removeFormField').forEach(button=>{
+    button.onclick=()=>{target.formFields.splice(Number(button.dataset.formIndex),1);reorder();};
+  });
+  container.querySelectorAll('[data-field-move]').forEach(button=>{
+    button.onclick=()=>{
+      const from=Number(button.dataset.formIndex),to=from+Number(button.dataset.fieldMove);
+      if(to<0||to>=target.formFields.length)return;
+      [target.formFields[from],target.formFields[to]]=[target.formFields[to],target.formFields[from]];
+      reorder();
+      container.querySelector(`[data-form-index="${to}"][data-form-field="label"]`)?.focus();
+    };
   });
 }
 
-function renderCustomerFormPreview(target) {
-  const fields = activeFormFields(target).slice()
-    .sort((left, right) => Number(left.order || 0) - Number(right.order || 0))
-    .map(field => {
-      const label = escapeHtml(field.label || field.key) + (field.required ? " *" : "");
-      const options = Array.isArray(field.options) ? field.options : [];
-      const control = field.type === "select"
-        ? `<select disabled><option>${escapeHtml(field.placeholder || "Seçin")}</option>${options.map(option => `<option>${escapeHtml(option)}</option>`).join("")}</select>`
-        : `<input disabled type="${escapeHtml(field.type || "text")}" placeholder="${escapeHtml(field.placeholder || "")}">`;
-      return `<label>${label}${control}</label>`;
-    }).join("");
-  return `<aside class="customerFormPreview"><strong>Canlı önizləmə</strong>${fields || "<span>Göstəriləcək aktiv sahə yoxdur.</span>"}</aside>`;
+function legacyFormDigits(field){
+  return Number(field.digits??(String(field.key).match(/^code_([45])$/)?.[1]||String(field.label).match(/([45]) rəqəm/i)?.[1]))||0;
+}
+function formFieldType(field){
+  return field.type==='pin'||legacyFormDigits(field)?'pin':field.type||'text';
+}
+function refreshCustomerFormPreview(product,target,container){
+  const preview=container.querySelector('[data-field-preview]');
+  customerFieldContract??=import('/community-assets/checkout-fields.js?v=customer-form-1').catch(error=>{
+    customerFieldContract=null;throw error;
+  });
+  void customerFieldContract.then(({checkoutFields})=>{
+    if(!preview.isConnected)return;
+    const fields=checkoutFields(product,target===product?undefined:target);
+    const flow=$('productOrderFlow');
+    if(flow)flow.value=fields.length?'form_confirm_whatsapp':'confirm_then_whatsapp';
+    preview.innerHTML=fields.map(field=>{
+      const label=escapeHtml(field.label)+(field.required?' *':'');
+      const placeholder=escapeHtml(field.placeholder||field.label);
+      const control=field.type==='select'
+        ? `<select disabled><option>${placeholder}</option>${field.options.map(option=>`<option>${escapeHtml(option)}</option>`).join('')}</select>`
+        : field.type==='textarea'? `<textarea disabled placeholder="${placeholder}"></textarea>`
+        : `<input disabled type="${field.type}" ${field.digits?'inputmode="numeric"':''} placeholder="${placeholder}">`;
+      return `<label>${label}${control}${field.description?`<small>${escapeHtml(field.description)}</small>`:''}</label>`;
+    }).join('')||'Göstəriləcək aktiv sahə yoxdur.';
+  }).catch(()=>{if(preview.isConnected)preview.textContent='Önizləmə yüklənmədi.';});
 }
 
 function renderCategories() {
@@ -1532,7 +1586,10 @@ $("addPlanBtn").addEventListener("click", () => {
 $("addFormFieldBtn").addEventListener("click", () => {
   const product = selectedProduct();
   if (!product) return;
-  const target=formTarget(product);target.formFields=target.formFields||structuredClone(product.formFields||[]);target.formFields.push(defaultFormField(target.formFields.length));
+  const target=formTarget(product);
+  target.formFields??=structuredClone(product.formFields||[]);
+  target.formFields.forEach((field,index)=>{field.order=index+1;});
+  target.formFields.push({...defaultFormField(),order:target.formFields.length+1});
   syncOrderFlow(product);
   refreshOrderFlowDisplay(product);
   markDirty();
