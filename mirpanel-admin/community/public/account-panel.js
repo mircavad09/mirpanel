@@ -1,4 +1,4 @@
-import {accountLabels,accountTab,accountMenu,ordersLoader} from './profile-shell.js?v=delivery-stable-2';
+import {accountLabels,accountTab,accountMenu,ordersLoader} from './profile-shell.js?v=completed-badge-1';
 const sessionKey=Symbol.for('mirpanel.profile.session-lists');
 const sessionLists=window[sessionKey]??={uid:null,entries:new Map(),views:new Map(),listening:false};
 const setOwner=uid=>{if(uid!==sessionLists.uid){sessionLists.entries.clear();sessionLists.views.clear();sessionLists.uid=uid;}};
@@ -74,7 +74,7 @@ export function renderAccountPanel(ctx){
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
  if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=read-navigation-2',orders:'/browser-orders.js?v=delivery-stable-2',codes:'./account-codes.js?v=purchased-code-details-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
+ const url={profile:'./profile.js?v=read-navigation-2',orders:'/browser-orders.js?v=completed-badge-1',codes:'./account-codes.js?v=purchased-code-details-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
  const retry=moduleRetries.get(id)||0,module=url?import(url+(retry?'&retry='+retry:'')):null;
  let timeout;
  const tabModule=module&&Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).finally(()=>clearTimeout(timeout));

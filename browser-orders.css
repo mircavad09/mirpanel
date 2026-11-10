@@ -43,6 +43,26 @@
 .account-panel .browser-order-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px}
 .account-panel .browser-order-meta :is(time,.browser-order-code){margin:0;color:#b9bec6;font-size:12px;font-weight:400}
 .account-panel .browser-order-meta .browser-order-status{padding:2px 8px}
+.browser-order .browser-order-status[data-status=completed]{
+ display:inline-flex;align-items:center;gap:5px;white-space:nowrap;
+ background:rgba(6,84,59,.55);color:#8CECB5;font-family:inherit;font-weight:600;
+}
+.order-completed-icon{display:block;flex:0 0 16px;width:16px;height:16px;overflow:hidden;border-radius:4px}
+.order-completed-glow{opacity:.08}
+.order-completed-tick{stroke-dasharray:1;stroke-dashoffset:0}
+.order-completed-shine{opacity:0}
+.order-completed-icon.is-animating .order-completed-glow{animation:order-completed-glow 5s ease-in-out infinite}
+.order-completed-icon.is-animating .order-completed-tick{animation:order-completed-draw 5s ease-out infinite}
+.order-completed-icon.is-animating .order-completed-shine{animation:order-completed-shine 5s ease-in-out infinite}
+@keyframes order-completed-draw{0%{stroke-dashoffset:1}17%,100%{stroke-dashoffset:0}}
+@keyframes order-completed-glow{0%,100%{opacity:.05}35%,60%{opacity:.23}}
+@keyframes order-completed-shine{0%,42%{opacity:0;transform:translateX(0)}47%{opacity:.65}64%{opacity:0;transform:translateX(40px)}100%{opacity:0;transform:translateX(40px)}}
+@media(prefers-reduced-motion:reduce){
+ .order-completed-icon *{animation:none!important}
+ .order-completed-tick{stroke-dashoffset:0}
+ .order-completed-glow{opacity:.08}
+ .order-completed-shine{opacity:0}
+}
 .account-panel details.browser-order .browser-order-price{font-size:15px}
 .account-panel .browser-order-arrow{width:16px;height:16px;color:#b9bec6}
 .account-panel details.browser-order .browser-order-line{display:block;padding:12px 0}
