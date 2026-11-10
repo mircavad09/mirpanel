@@ -118,17 +118,7 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Yeni hesab — 3.99 ₼" title="YouTube Yeni hesab">
-      <img src="/uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653" class="product-page-similar-image" alt="YouTube Yeni hesab" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="YouTube Yeni hesab">YouTube Yeni hesab</div>
-      <div class="product-page-similar-category">musiqi</div>
-      <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/zoom-pro" aria-label="Zoom Pro — 11.95 ₼" title="Zoom Pro">
-      <img src="/uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656" class="product-page-similar-image" alt="Zoom Pro" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Zoom Pro">Zoom Pro</div>
-      <div class="product-page-similar-category">meeting</div>
-      <div class="product-page-similar-price">11.95 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/capcut-pro" aria-label="CapCut Pro — 4.99 ₼" title="CapCut Pro">
       <img src="/uploads/products/capcut-1792446915889-2c0554fd.png?v=1792446915889" class="product-page-similar-image" alt="CapCut Pro almaq Azərbaycanda | Mirpanel" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="CapCut Pro">CapCut Pro</div>
       <div class="product-page-similar-category">video</div>
@@ -138,36 +128,11 @@
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus-ortaq-hesab" aria-label="ChatGPT Plus (Ortaq hesab) — 5.99 ₼" title="ChatGPT Plus (Ortaq hesab)">
-      <img src="/uploads/products/chatgpt_ortaq-1793127941676-a7cb0a6a.png?v=1793127941676" class="product-page-similar-image" alt="ChatGPT Plus (Ortaq hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="ChatGPT Plus (Ortaq hesab)">ChatGPT Plus (Ortaq hesab)</div>
-      <div class="product-page-similar-category">all</div>
-      <div class="product-page-similar-price">5.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 18.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
-      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
+    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Gemini ai pro + 5TB yaddaş — 8.99 ₼" title="Gemini ai pro + 5TB yaddaş">
+      <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Gemini ai pro + 5TB yaddaş">Gemini ai pro + 5TB yaddaş</div>
       <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">18.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/netflix-umumi" aria-label="Netflix Ümumi — 3.99 ₼" title="Netflix Ümumi">
-      <img src="/uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068" class="product-page-similar-image" alt="Netflix Ümumi" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Netflix Ümumi">Netflix Ümumi</div>
-      <div class="product-page-similar-category">film</div>
-      <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 3.99 ₼" title="Amazon Prime Video">
-      <img src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" class="product-page-similar-image" alt="Amazon Prime Video" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
-      <div class="product-page-similar-category">film</div>
-      <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/cloud-ai-pro" aria-label="Claude AI — 37.40 ₼" title="Claude AI">
-      <img src="/uploads/products/claude_ai-1792448422631-a0521937.png?v=1792448422631" class="product-page-similar-image" alt="Claude AI" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="Claude AI">Claude AI</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">37.40 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/youtube-eyni-hesab" aria-label="YouTube Yenilemek — 5.99 ₼" title="YouTube Yenilemek">
-      <img src="/uploads/products/youtube_sexsi-1792448126347-307ca913.png?v=1792448126347" class="product-page-similar-image" alt="Youtube Eyni hesab" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="YouTube Yenilemek">YouTube Yenilemek</div>
-      <div class="product-page-similar-category">all</div>
-      <div class="product-page-similar-price">5.99 ₼</div>
+      <div class="product-page-similar-price">8.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -243,7 +208,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-3ce6ef0258b1bb5c"></script>
+  <script src="/app.js?v=catalog-37da78e2eea38d51"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>
