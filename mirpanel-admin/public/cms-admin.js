@@ -191,7 +191,7 @@
     </div>
     <div id="paymentCostsStatus" class="paymentOrdersStatus" role="status" aria-live="polite"></div>
     <div id="paymentCostsList" class="paymentCostsList" aria-live="polite"></div>
-    <details class="paymentBackfillPanel"><summary>Köhnə sifarişlərin maya snapshot-u</summary><p>Maya snapshot-u olmayan tamamlanmış sifarişlər yalnız məhsul ID-si və plan ID-si tam uyğun gəldikdə hesablanır. Sıfır və ya təxmini maya yazılmır.</p><div class="paymentOrderActions"><button class="btn" type="button" id="paymentCostBackfillPreview">Preview yarat</button><button class="btn primary" type="button" id="paymentCostBackfillApply" disabled>Təsdiqlə və tətbiq et</button></div><div id="paymentCostBackfillResult" class="paymentOrdersStatus" aria-live="polite"></div></details>`));
+    <details class="paymentBackfillPanel"><summary>Köhnə sifarişlərin maya snapshot-u</summary><p>Maya məhsul və plan üzrə bərpa edilir. Tarixi maya yoxdursa, cari dəyərlə hesablanan sifariş təxmini kimi işarələnir.</p><div class="paymentOrderActions"><button class="btn" type="button" id="paymentCostBackfillPreview">Preview yarat</button><button class="btn primary" type="button" id="paymentCostBackfillApply" disabled>Təsdiqlə və tətbiq et</button></div><div id="paymentCostBackfillResult" class="paymentOrdersStatus" aria-live="polite"></div></details>`));
     createView("readyStock", panel("Hazır hesab stoku", "Müştəri sifarişləri üçün hazır təhvil mətnlərini və satış stokunu idarə edin.", '<div id="readyStockHost"></div>'));
     createView("paymentOrders", panel("Sifarişlər", "Gözləyən sifarişləri yoxlayın, tamamlanmış satış tarixçəsini və müddəti bitən məhsulları izləyin.", `<div class="paymentOrderToolbar">
       <div class="paymentOrderTabs" role="tablist" aria-label="Sifariş statusları">
@@ -217,7 +217,7 @@
       <label>Məhsul<select id="paymentOrderProduct"><option value="">Bütün məhsullar</option></select></label>
       <label>Plan<select id="paymentOrderPlan"><option value="">Bütün müddətlər</option></select></label>
       <label>Bank<select id="paymentOrderMethod"><option value="">Bütün banklar</option></select></label>
-      <label>Müddət<select id="paymentOrderPeriod"><option value="today">Bu gün</option><option value="this_month">Cari ay</option><option value="last_month">Keçən ay</option><option value="12m">Son 12 ay</option><option value="custom">Xüsusi tarix</option><option value="all">Bütün tarixlər</option></select></label>
+      <label>Müddət<select id="paymentOrderPeriod"><option value="today">Bu gün</option><option value="yesterday">Dünən</option><option value="this_month">Cari ay</option><option value="last_month">Keçən ay</option><option value="12m">Son 12 ay</option><option value="custom">Xüsusi tarix</option><option value="all">Bütün tarixlər</option></select></label>
       <label class="paymentCustomDate paymentCalendarField">Başlanğıc tarixi<input id="paymentOrderDateFrom" type="date" inputmode="numeric" aria-describedby="paymentOrderDateError"></label>
       <label class="paymentCustomDate paymentCalendarField">Son tarix<input id="paymentOrderDateTo" type="date" inputmode="numeric" aria-describedby="paymentOrderDateError"></label>
       <label>Sıralama<select id="paymentOrderSort"><option value="newest">Ən yeni</option><option value="oldest">Ən köhnə</option></select></label>

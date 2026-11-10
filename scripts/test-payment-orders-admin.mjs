@@ -99,7 +99,7 @@ const capacityMigration = read("supabase/migrations/202608090003_payment_method_
 const reportMigration = read("supabase/migrations/202608100001_calendar_reports_and_cost_backfill.sql");
 
 assert.ok(store.includes('adminListWindow(matchedRows,'),'server uses ID-anchored page window');
-assert.ok(store.includes('matchingQuery(select).in("id", pageIds)'),'only the anchored page IDs are fetched');
+assert.ok(store.includes('matchingQuery(select, {}, pageIds).in("id", pageIds)'),'only the anchored page IDs are fetched');
 assert.ok(store.includes('.select(columns, options)'), 'Shared matching query must forward the exact-count option');
 assert.ok(store.includes('const pageIds = view.rows.map'), "Səhifələmə serverdə sabit ID pəncərəsindən işləməlidir");
 assert.ok(store.includes('query.is("contacted_at", null)'));

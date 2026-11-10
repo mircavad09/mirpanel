@@ -18,13 +18,14 @@ export function centsToMoney(cents) {
 function normalizedMetric(row = {}) {
   const revenueCents = decimalToCents(row.revenue ?? 0);
   const costCents = decimalToCents(row.cost ?? 0);
+  const incomplete = Number(row.missingCostCount || 0) > 0;
   const profitCents = revenueCents - costCents;
   return {
     ...row,
     revenue: centsToMoney(revenueCents),
     cost: centsToMoney(costCents),
-    profit: centsToMoney(profitCents),
-    margin: revenueCents === 0n ? null : Number((Number(profitCents * 10000n / revenueCents) / 100).toFixed(2))
+    profit: incomplete && row.profit === null ? null : centsToMoney(profitCents),
+    margin: incomplete || revenueCents === 0n ? null : Number((Number(profitCents * 10000n / revenueCents) / 100).toFixed(2))
   };
 }
 
@@ -34,6 +35,7 @@ export function normalizeFinancialStatistics(statistics = {}) {
     ...normalized,
     count: Number(statistics.count || 0),
     missingCostCount: Number(statistics.missingCostCount || 0),
+    estimatedCostCount: Number(statistics.estimatedCostCount || 0),
     topProduct: statistics.topProduct || "—",
     topProfitProduct: statistics.topProfitProduct || "—",
     products: (statistics.products || []).map(normalizedMetric),
@@ -58,5 +60,42 @@ export function aggregateSnapshotRows(rows = []) {
     revenue: centsToMoney(revenueCents),
     cost: centsToMoney(costCents),
     profit: centsToMoney(revenueCents - costCents)
+  };
+}
+
+export function reportOrderFinance(order, refundCents = 0) {
+  const sale = decimalToCents(order.sale_price_snapshot ?? order.amount);
+  const refunded = BigInt(refundCents);
+  const revenue = sale > refunded ? sale - refunded : 0n;
+  const cancelled = new Map((order.fulfillment_cancellation?.lines || []).map(line => [line.index, line.quantity]));
+  let cost = order.cost_price_snapshot == null ? null : decimalToCents(order.cost_price_snapshot);
+  let knownCost = cost ?? 0n;
+  let estimated = order.cost_source === "backfilled_current_cost";
+  if (Array.isArray(order.cost_lines_snapshot)) {
+    knownCost = 0n;
+    estimated = false;
+    let missing = false;
+    for (const [index,line] of order.cost_lines_snapshot.entries()) {
+      const retained = line.quantity - (cancelled.get(index) || 0);
+      if (retained <= 0) continue;
+      if (line.unitCost == null) missing = true;
+      else {
+        knownCost += decimalToCents(line.unitCost) * BigInt(retained);
+        estimated ||= line.source === "estimate";
+      }
+    }
+    cost = missing ? null : knownCost;
+  } else if (cost !== null && cancelled.has(0) && order.product_id !== "__cart__") {
+    const quantity = BigInt(order.quantity || 1);
+    cost = (cost * (quantity - BigInt(cancelled.get(0))) + quantity / 2n) / quantity;
+    knownCost = cost;
+  }
+  return {
+    ...order,
+    sale_price_snapshot: centsToMoney(revenue),
+    cost_price_snapshot: cost === null ? null : centsToMoney(cost),
+    known_cost_snapshot: centsToMoney(knownCost),
+    profit_snapshot: cost === null ? null : centsToMoney(revenue - cost),
+    estimated_cost: estimated
   };
 }

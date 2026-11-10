@@ -62,7 +62,7 @@ assert.ok(approval.indexOf("'idempotent', true") < approval.indexOf("confirmed_c
 assert.ok(store.includes('rpc("payment_order_profit_statistics_v2"'));
 assert.ok(api.includes('url.pathname === "/api/admin/payment-costs"'));
 assert.ok(cms.includes("Məhsulların maya dəyəri və qazanc"));
-assert.ok(admin.includes("Tarixi maya dəyəri mövcud deyil"));
+assert.ok(admin.includes("Maya məlum deyil"));
 assert.equal(read("index.html").includes("payment_plan_costs"), false);
 assert.equal(read("app.js").includes("cost_price_snapshot"), false);
 
