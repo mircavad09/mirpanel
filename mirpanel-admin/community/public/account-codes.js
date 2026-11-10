@@ -12,15 +12,21 @@ function icon(name){
  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(svg.namespaceURI,'path');
  svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');p.setAttribute('d',paths[name]);svg.append(p);return svg;
 }
-// These are just shortcuts to explicitly labeled lines in the delivered text.
+// Prefer the structured delivery fields. Keep labeled lines readable on older records.
 // The copy action never uses the extracted values.
-function credentialRows(text){
+function credentialRows(delivery){
  const rows=new Map();
- for(const line of text.split(/\r?\n/)){
+ for(const line of delivery.text.split(/\r?\n/)){
   const m=line.match(/^\s*(e[ -]?poçt|e[ -]?mail|mail|şifrə|parol|password)\s*:\s*(\S+.*?)\s*$/iu);
   if(m){const key=/^(e|m)/i.test(m[1])?'E-poçt':'Şifrə';if(!rows.has(key))rows.set(key,m[2]);}
  }
- return [...rows];
+ const fields=[
+  ['E-poçt',delivery.email||rows.get('E-poçt')],
+  ['Şifrə',delivery.password||rows.get('Şifrə')],
+  ['Otaq adı',delivery.netflixRoom?.name],
+  ['Otaq kodu',delivery.netflixRoom?.code]
+ ];
+ return fields.filter(([,value])=>typeof value==='string'&&value.trim());
 }
 export function mountCodes({content,el,button,initial,initialRequest,validate,onData,onUnauthorized,api,spinner,ui={}}){
  const css='/community-assets/account-codes.css?v=1';
@@ -51,15 +57,15 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   const active=()=>item.isConnected&&!item.hidden&&!document.hidden&&!life.signal.aborted;
   const toggleLabel=show=>{toggle.replaceChildren(icon(show?'hide':'eye'),show?'Gizlət':'Göstər');toggle.setAttribute('aria-expanded',String(show));};
   const hide=()=>{revision++;text.textContent='';credentials.replaceChildren();details.hidden=true;feedback.textContent='';toggleLabel(false);};
-  const getText=async()=>{let result;try{result=await read(row.id);}catch(e){if(e.status===401)onUnauthorized?.();throw e;}if(!active()||typeof result.text!=='string')throw Error();return result.text;};
+  const getDelivery=async()=>{let result;try{result=await read(row.id);}catch(e){if(e.status===401)onUnauthorized?.();throw e;}if(!active()||typeof result.text!=='string')throw Error();return result;};
   const toggle=button('Göstər',async()=>{
    feedback.textContent='';
    if(!details.hidden){hide();return;}
    const run=++revision;toggle.disabled=true;
    try{
-    const message=await getText();if(run!==revision)return;
-    text.textContent=message;
-    credentials.replaceChildren(...credentialRows(message).map(([label,value])=>el('div',{class:'codes-credential'},el('span',{},label),el('strong',{},value))));
+    const delivery=await getDelivery();if(run!==revision)return;
+    text.textContent=delivery.text;
+    credentials.replaceChildren(...credentialRows(delivery).map(([label,value])=>el('div',{class:'codes-credential'},el('span',{},label),el('strong',{},value))));
     details.hidden=false;toggleLabel(true);
     if(matchMedia('(max-width: 600px)').matches)details.scrollIntoView({block:'nearest'});
    }catch{if(active()&&run===revision)feedback.textContent='Təhvil məlumatını açmaq mümkün olmadı.';}finally{toggle.disabled=false;}
@@ -71,10 +77,10 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
     const clipboard=navigator.clipboard;
     if(clipboard?.write&&typeof ClipboardItem==='function'){
      // Begin inside the click so WebKit preserves clipboard activation.
-     const blob=getText().then(message=>new Blob([message],{type:'text/plain'}));
+     const blob=getDelivery().then(({text})=>new Blob([text],{type:'text/plain'}));
      void blob.catch(()=>{});
      await clipboard.write([new ClipboardItem({'text/plain':blob})]);
-    }else if(clipboard?.writeText)await clipboard.writeText(await getText());
+    }else if(clipboard?.writeText)await clipboard.writeText((await getDelivery()).text);
     else throw Error();
     if(active())feedback.textContent='Məlumat kopyalandı';
    }catch{if(active())feedback.textContent='Kopyalama alınmadı.';}finally{copy.disabled=false;}
