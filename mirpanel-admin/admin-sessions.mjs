@@ -19,5 +19,5 @@ export function createAdminSessions({client,username,password,secret,now=Date.no
   else if(kind==='touch')row.expiresAt=now()+ADMIN_IDLE_MS;
   memory.set(key,row);return {...row,role:'admin',csrfToken:csrf(id)};
  }
- return {create:async()=>{const id=crypto.randomBytes(32).toString('hex');return{id,session:await action('create',id)};},read:id=>action('read',id),touch:id=>action('touch',id),revoke:id=>action('revoke',id)};
+ return {scope:id=>({hash:hash(id),binding}),create:async()=>{const id=crypto.randomBytes(32).toString('hex');return{id,session:await action('create',id)};},read:id=>action('read',id),touch:id=>action('touch',id),revoke:id=>action('revoke',id)};
 }

@@ -17,6 +17,7 @@ import { createStoriesRepository } from "./stories-repository.mjs";
 import { createHomepageBannersRepository } from "./homepage-banners-repository.mjs";
 import { createProductSalesRepository } from './product-sales-repository.mjs';
 import { createEmployeeSystem } from './employee-api.mjs';
+import {createAdminPush} from './admin-push.mjs';
 import {createAdminSessions,ADMIN_IDLE_MS} from './admin-sessions.mjs';
 import {createOwnerCommunity} from './community/service.mjs';
 import {createCustomerView} from './customer-view.mjs';
@@ -750,6 +751,7 @@ async function handleApi(request, response) {
     // Never report logout success until server-side revocation is confirmed.
     if(!requireMutationAuth(request,response))return;
     const id = getCookies(request).mirpanel_session;
+    await adminPush.removeSession(id);
     await adminSessions.revoke(id);
     if (id) sessions.delete(id);
 
@@ -759,6 +761,14 @@ async function handleApi(request, response) {
   }
 
   if (!requireAuth(request, response)) return;
+  if(salesUrl.pathname==='/api/admin/push'){
+    if(getSession(request)?.role!=='admin')return json(response,403,{error:'Yalnız sahib-admin üçün.'});
+    if(!['GET','POST'].includes(request.method))return json(response,405,{error:'Əməliyyat dəstəklənmir.'});
+    if(request.method==='POST'&&!requireMutationAuth(request,response))return;
+    const owner=await ownerCommunity.verifiedOwnerId();
+    if(!owner)return json(response,403,{error:'Yalnız sahib-admin üçün.'});
+    return adminPush.handle({request,response,scope:adminSessions.scope(getCookies(request).mirpanel_session),owner,json,body:readBody});
+  }
   if(salesUrl.pathname.startsWith('/api/admin/community/')){
     if(getSession(request)?.role!=='admin')return json(response,403,{error:'Yalnız admin üçün.'});
     if(request.method!=='GET'&&!requireMutationAuth(request,response))return;
@@ -1351,6 +1361,7 @@ async function handleApi(request, response) {
 }
 
 const mime = {
+  ".webmanifest": "application/manifest+json",
   ".html": "text/html; charset=utf-8",
   ".css": "text/css; charset=utf-8",
   ".js": "text/javascript; charset=utf-8",
@@ -1419,6 +1430,10 @@ if(storiesSupabase) {
  } catch {config.employeeEnabled=false;config.inventoryEnabled=false;}
 }
 config.employeeEnabled=employeeSystem.enabled();
+const adminPush=createAdminPush({
+ pool:()=>ownerCommunity.integrationPool(),security:createPaymentSecurity(config),
+ binding:adminSessions.scope('').binding
+});
 const storiesStorageOrigin = (() => {
   try {
     return config.supabaseUrl ? new URL(config.supabaseUrl).origin : "";
@@ -1477,11 +1492,11 @@ function serveFile(response, name) {
   });
 
   if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){
-    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=1" data-auto-start></script>';
+    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=push-2" data-auto-start></script>';
     return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=order-delivery-latency-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=idle-20261027-1"></script>'+notification+'</head>'));
   }
   if (name === "manual-stock-admin.html") {
-    return response.end(fs.readFileSync(file, "utf8").replace("</body>", '<script src="/admin-topup-notification.js?v=1" data-auto-start></script></body>'));
+    return response.end(fs.readFileSync(file, "utf8").replace("</body>", '<script src="/admin-topup-notification.js?v=push-2" data-auto-start></script></body>'));
   }
   fs.createReadStream(file).pipe(response);
 }
@@ -1514,6 +1529,12 @@ const server = http.createServer(async (request, response) => {
       const file=path.join(root,'..',pathname.slice(1));
       response.writeHead(200,{'Content-Type':pathname.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});
       response.end(fs.readFileSync(file));return;
+    }
+    if(pathname==='/admin.webmanifest')return serveFile(response,'admin.webmanifest');
+    if(pathname==='/admin-push-worker.js')return serveFile(response,'admin-push-worker.js');
+    if(pathname==='/push-icon.png'){
+      response.writeHead(200,{'Content-Type':'image/png','Cache-Control':'public,max-age=86400'});
+      return response.end(fs.readFileSync(path.join(root,'../assets/logo.png')));
     }
     if (pathname.startsWith("/api/")) {
       return await handleApi(request, response);
@@ -1606,6 +1627,7 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(config.port, () => {
+  if(process.env.COMMUNITY_PUBLIC_ENABLED==='true')adminPush.start();
   void ownerCommunity.startWelcomeDelivery().catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
   console.log(`Mirpanel admin: http://localhost:${config.port}`);
   // Trusted, banner-only rollout: preserve the existing main image and import

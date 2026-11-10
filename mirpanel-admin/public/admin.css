@@ -1547,3 +1547,12 @@ th {
   #gameProductsView .gameCatalogEmpty { padding: 28px 14px; }
   #gameProductsView input, #gameProductsView select { font-size: 16px; }
 }
+
+.admin-notification-settings{position:relative;font-size:13px;color:#e9ecef;max-width:100%}
+.admin-notification-settings summary{cursor:pointer;padding:10px;border:1px solid #4b4735;border-radius:10px}
+.admin-notification-settings>div{position:absolute;z-index:120;right:0;top:100%;width:min(390px,calc(100vw - 28px));padding:14px;background:#1c1f22;border:1px solid #4b4735;border-radius:12px;box-shadow:0 12px 30px #0008}
+.admin-notification-settings .btn{min-height:44px;margin:3px 0;width:100%;white-space:normal}
+.admin-notification-settings p{line-height:1.5;margin:9px 0;font-size:12px;overflow-wrap:anywhere}
+
+.admin-notification-settings [hidden]{display:none!important}
+@media(max-width:760px){.adminMenuHeader .admin-notification-settings{grid-column:1 / -1;justify-self:end}}
