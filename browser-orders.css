@@ -443,6 +443,37 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 @keyframes netflix-desktop-ring{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}20%,55%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
 @media(prefers-reduced-motion:reduce){.netflix-desktop-target::before,.netflix-desktop-target::after,.netflix-desktop-typed>span{animation:none;visibility:visible}.netflix-desktop-target::after{opacity:1;transform:translate(-50%,-50%)}}
 .spotify-handset .browser-guide-handset-screen{aspect-ratio:738/1600;background:#121212}
+.prime-handset .browser-guide-handset-screen{aspect-ratio:738/1500;background:#03070f}
+.prime-demo{height:100%;background:#03070f;color:#f8f8fa;font:400 4cqw/1.28 Arial,sans-serif;overflow:hidden}
+.prime-demo-brand{display:grid;place-content:center;justify-items:center;min-height:21cqw;background:#000;font-size:5cqw;font-weight:700}
+.prime-demo-brand::after{content:'';width:9cqw;height:2.1cqw;margin-top:-.4cqw;border-bottom:1px solid currentColor;border-radius:50%}
+.prime-demo-content{padding:4cqw}
+.prime-demo h3{font-size:5.9cqw;line-height:1.15;margin:0 0 3cqw;color:inherit}
+.prime-demo-choice{display:flex;gap:5cqw;align-items:center;min-height:14cqw;padding:2cqw 4cqw;background:#33363c;border-radius:2cqw 2cqw 0 0}
+.prime-demo-choice i{box-sizing:border-box;flex:none;width:6cqw;aspect-ratio:1;background:white;border:1px solid #969ba4;border-radius:50%}
+.prime-demo-choice-active{background:none;text-decoration:underline}
+.prime-demo-choice-active i{border:1.8cqw solid #2371ab}
+.prime-demo-label{display:block;margin:2cqw 0 1.4cqw}
+.prime-demo-field{min-height:13cqw;display:flex;align-items:center;padding:1.7cqw 3cqw;background:#33363c;border-radius:2cqw;animation:prime-guide-field 1.95s both}
+.prime-demo-typing{white-space:nowrap;font-size:4.4cqw}
+.prime-demo-typing>span{visibility:hidden;animation:netflix-type 0s var(--delay) forwards}
+.prime-demo-button{position:relative;display:grid;place-items:center;min-height:11.6cqw;padding:1.5cqw 2cqw;margin:4cqw 0;border-radius:2cqw;background:#fff;color:#06070a;font-weight:600;text-align:center}
+.prime-demo-secondary{background:transparent;color:#fff;border:1px solid #747982}
+.prime-demo-target{outline:2px solid #e5bf52;outline-offset:2px}
+.prime-demo-later{outline-color:transparent;animation:netflix-mark 0s 1.95s forwards}
+.prime-demo-target::after{content:'';position:absolute;right:9%;top:32%;width:4cqw;height:4cqw;border:2px solid #f8d56e;border-radius:50%;pointer-events:none;animation:netflix-tap 1.4s ease-out infinite}
+.prime-demo-later::after{opacity:0;animation-delay:1.95s}
+.prime-demo-link{color:#64b8ff}
+.prime-demo-identity,.prime-demo-options{display:flex;gap:2cqw;justify-content:space-between;flex-wrap:wrap}
+.prime-demo-options{margin-top:4cqw}
+.prime-demo p{color:#aeb9c6;margin:3cqw 0}
+@keyframes prime-guide-field{0%,95%{outline:2px solid #58a6ff;outline-offset:2px}100%{outline:2px solid transparent;outline-offset:2px}}
+@media(prefers-reduced-motion:reduce){
+ .prime-demo-field,.prime-demo-typing>span,.prime-demo-target,.prime-demo-target::after{animation:none}
+ .prime-demo-typing>span{visibility:visible}
+ .prime-demo-later{outline-color:#e5bf52}
+ .prime-demo-later::after{opacity:1}
+}
 .spotify-demo{position:relative;height:100%;background:#121212;color:#fff;font:400 4.2cqw/1.35 Arial,sans-serif;overflow:hidden}
 .spotify-status{position:absolute;z-index:1;top:2.3%;left:10%;right:9%;display:flex;justify-content:space-between;font-weight:700}
 .spotify-hero{position:absolute;top:37%;inset-inline:8%;text-align:center;display:grid;justify-items:center;gap:6cqw}

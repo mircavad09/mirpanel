@@ -12,6 +12,11 @@ const spotifyPhoneSteps=[
  ['spotify-password','Spotify şifrənizi yazın və «Oturum aç» düyməsinə toxunun.'],
  ['spotify-premium','Profil menyusunu açın. «Premium üyeliğin» sətrində yaşıl «Bireysel» nişanını yoxlayın.']
 ].map(([animation,description])=>({animation,description,image:''}));
+const primePhoneSteps=[
+ ['prime-email','«Giriş yapın» seçili qalsın. Sizə təqdim olunan e-poçtu yazın və «Devam Et» düyməsinə toxunun.'],
+ ['prime-password','Sizə təqdim olunan şifrəni «Amazon şifresi» xanasına yazın və «Giriş yap» düyməsinə toxunun.'],
+ ['prime-passkey','Bu ekran yalnız keçid açarı təklifi çıxarsa lazımdır. «Hayır, parola kullanmaya devam et» düyməsinə toxunun.']
+].map(([animation,description])=>({animation,description,image:''}));
 const capcutDesktopSteps=[
  ['capcut-desktop-open','CapCut-u kompüterdə açın. «Join Pro» yazısının üstündəki «Sign Up» və ya «Sign in» düyməsinə basın.'],
  ['capcut-desktop-choose','Giriş pəncərəsində «Use QR code» seçin. QR kodu solda, telefonla oxutma qaydası sağda görünür.'],
@@ -74,6 +79,7 @@ export function orderGuideFor(product,plan,savedName){
   delete tracks.desktopQr;
  }
  if(product?.id==='spotify')tracks.phone=spotifyPhoneSteps.map(step=>({...step}));
+ if(product?.id==='prime')tracks.phone=primePhoneSteps.map(step=>({...step}));
  if(phoneOnlyGuide(plan)||phoneOnlyGuide({label:savedName}))delete tracks.desktopQr;
  return {information:own?.information||base?.information||'',tracks};
 }

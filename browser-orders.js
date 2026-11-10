@@ -65,6 +65,37 @@ function renderDeliveryMessage(pre,text){
  link.setAttribute('aria-haspopup','dialog');
  pre.replaceChildren(text.slice(0,index),link,text.slice(index+caption.length));
 }
+function primeScreen(animation,create){
+ const screen=create('div',null,'prime-demo');screen.dataset.scene=animation;screen.lang='tr';
+ const make=(text,cls)=>create('div',text,cls), sample='numune@example.com';
+ const head=make('prime video','prime-demo-brand'),main=make(null,'prime-demo-content');
+ const action=(text,target=false,later=false)=>make(text,'prime-demo-button'+(target?' prime-demo-target':'')+(later?' prime-demo-later':''));
+ function field(label,value){
+  const box=make(null,'prime-demo-field'),typed=create('span',null,'prime-demo-typing');
+  [...value].forEach((char,i)=>{const glyph=create('span',char);glyph.style.setProperty('--delay',(0.25+i*.075)+'s');typed.append(glyph);});
+  box.append(typed);main.append(create('strong',label,'prime-demo-label'),box);
+ }
+ if(animation==='prime-email'){
+  const choice=(name,hint,on)=>{const row=make(null,'prime-demo-choice'+(on?' prime-demo-choice-active':'')),caption=create('span');caption.append(create('strong',name),document.createTextNode(' '+hint));row.append(create('i'),caption);return row;};
+  main.append(create('h3','Hoş Geldiniz'),choice('Hesap oluşturun','Amazon hesabınız yok mu?',false),choice('Giriş yapın','Zaten müşteri misiniz?',true));
+  field('Cep telefonu numarası veya e-posta girin',sample);
+  main.append(action('Devam Et',true,true),make('Yardıma mı ihtiyacınız var?','prime-demo-link'));
+ }else if(animation==='prime-password'){
+  const identity=make(null,'prime-demo-identity');identity.append(create('span',sample),create('span','Değiştir','prime-demo-link'));
+  const options=make(null,'prime-demo-options');options.append(create('span','□ Şifreyi göster'),create('span','Şifremi unuttum.','prime-demo-link'));
+  main.append(create('h3','Giriş yap'),identity);
+  field('Amazon şifresi','••••••••');
+  main.append(options,action('Giriş yap',true,true));
+ }else{
+  main.append(create('h3','Bir dahaki sefere parolayı atlayın'),
+   create('p','Parola kullanmaktan daha güvenli bir giriş yolu için bir geçiş anahtarı oluşturun. Telefonunuzun kilidini açmak için kullandığınız Face ID’yi, parmak izinizi veya PIN kodunu kullanın.'),
+   create('p','Yüzünüzü, parmak izinizi veya PIN kodu verilerinizi saklamayız.'),
+   action('Bir geçiş anahtarı ayarlayın'),action('Hayır, parola kullanmaya devam et',true));
+  main.lastElementChild.classList.add('prime-demo-secondary');
+ }
+ screen.append(head,main);return screen;
+}
+
 function spotifyScreen(animation,create){
  const screen=create('div',null,'spotify-demo');screen.dataset.scene=animation;screen.lang='tr';
  const box=(text,cls)=>create('div',text,cls);
@@ -537,9 +568,10 @@ function netflixScreen(animation,create){
   const head=create('div',null,'browser-guide-identity');head.append(identity,close);
   const tabs=create('div',null,'browser-guide-tabs'),body=create('div',null,'browser-guide-body'),footer=create('footer');
   const deliveryStatus=accounts.querySelector('[data-delivery]')?null:accounts.querySelector('p')?.textContent;
+  const primeDelivered=item.productId==='prime'&&Boolean(accounts.querySelector('[data-delivery]'));
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
   footer.append(button('Bağla',()=>guideDialog.close()));
-  let data=null,failed=false,active=initialTab,track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
+  let data=null,failed=false,active=primeDelivered?'steps':initialTab,track=primeDelivered?'phone':'',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
   const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
   phoneShell.append(phoneScreen);
   const capcutStage=create('div',null,'capcut-pc-stage'),scanSlot=create('div',null,'capcut-pc-scan-slot');
@@ -568,7 +600,7 @@ function netflixScreen(animation,create){
    for(const [key,label] of tracks){
     const animation=data.tracks[key].find(step=>step.animation)?.animation;
     const title=key!=='phone'||!animation||animation.startsWith('netflix-')?label:
-     animation.startsWith('spotify-')?'Telefonla giriş':'CapCut-a daxil ol';
+     /^(spotify|prime)-/.test(animation)?'Telefonla giriş':'CapCut-a daxil ol';
     const b=button(title,()=>{autoplay=false;track=key;step=0;draw();});
     b.setAttribute('aria-pressed',String(track===key));choices.append(b);
    }
@@ -580,7 +612,8 @@ function netflixScreen(animation,create){
    if(compact)layout.classList.add('browser-guide-compact');
    const netflix=track==='phone'&&current.animation?.startsWith('netflix-');
    const spotify=track==='phone'&&current.animation?.startsWith('spotify-');
-   const simulated=netflix||spotify;
+   const prime=track==='phone'&&current.animation?.startsWith('prime-');
+   const simulated=netflix||spotify||prime;
    if(simulated||desktop||television)layout.classList.add('netflix-guide');
    const visual=create('div',null,'browser-guide-visual');
    const handset=simulated||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image?.replace(/^https:\/\/mirpanel\.com(?=\/)/,'')||'');
@@ -603,9 +636,10 @@ function netflixScreen(animation,create){
     }
    }else if(handset){
     visual.classList.add('browser-guide-visual-handset');
-    phoneScreen.replaceChildren(spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
+    phoneScreen.replaceChildren(prime?primeScreen(current.animation,create):spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
     phoneShell.classList.toggle('netflix-handset',simulated);
     phoneShell.classList.toggle('spotify-handset',spotify);
+    phoneShell.classList.toggle('prime-handset',prime);
     if(!steadyLayout)visual.append(phoneShell);
    }else
    try{
@@ -666,7 +700,7 @@ function netflixScreen(animation,create){
      draw();body.querySelector('.browser-guide-play')?.focus({preventScroll:true});
     });
     play.className='browser-guide-play';
-    if(simulated)details.append(create('small','Düymələrin dili və görünüşü cihazınıza görə fərqlənə bilər.','netflix-guide-note'));
+    if(simulated)details.append(create('small',prime?'Nümunə ekran · Məlumatı yalnız rəsmi Prime Video tətbiqində daxil edin.':'Düymələrin dili və görünüşü cihazınıza görə fərqlənə bilər.','netflix-guide-note'));
     if(compact){
      const icon=create('span',autoplay?'Ⅱ':'▶');icon.setAttribute('aria-hidden','true');play.prepend(icon);
      next.before(dots);details.append(play);
