@@ -19,15 +19,20 @@ const account={client_email:'test@example.iam.gserviceaccount.com',private_key:p
 const header=[...sheetHeaders];
 const row1=['','1 · 45-55',email,'test-secret','date','status'];
 const row2=['','2 · 0408',email,'test-secret','date','status'];
+const numberFormatted=new Map([[row1,{userEnteredValue:{numberValue:123456},formattedValue:'1 4555'}],[row2,{userEnteredValue:{numberValue:654321},formattedValue:'2 0408'}]]);
 let rows=[header,row1,row2],reads=0,writes=0,sortDuringRead=false,offline=false;
 const client=roomSheetClient('synthetic-spreadsheet-id',account,'owner@example.test',async(url,options)=>{
  if(url.endsWith('/token'))return Response.json({access_token:'synthetic',expires_in:3600});
  if(url.includes('/permissions'))return Response.json({permissions:[{type:'user',role:'owner',emailAddress:'owner@example.test'},{type:'user',role:'writer',emailAddress:account.client_email}]});
  if(url.includes('?fields=properties'))return Response.json({properties:{title:sheetTitle},sheets:[{properties:{sheetId:7,title:'Stock'}}]});
- if(decodeURIComponent(url).includes('!A1:C?valueRenderOption=FORMULA')){
+ if(new URL(url).searchParams.get('ranges')==="'Stock'!A1:C"){
   reads++;
   if(sortDuringRead&&reads===2)rows=[header,row2,row1];
-  return Response.json({values:rows.map(r=>r.slice(0,3))});
+  return Response.json({sheets:[{properties:{sheetId:7},data:[{rowData:rows.map(r=>({values:r.slice(0,3).map((value,col)=>
+   col===1&&numberFormatted.has(r)?numberFormatted.get(r):
+   value.startsWith('=')?{userEnteredValue:{formulaValue:value},formattedValue:''}:
+   value?{userEnteredValue:{stringValue:value},formattedValue:value}:{}
+  )}))}]}]});
  }
  if(url.endsWith(':batchUpdate')){
   const {requests}=JSON.parse(options.body);
@@ -123,6 +128,10 @@ try{
  row2[0]='';rows=[header,row2,row1,[...row2]];
  await save({netflixSheetIdRetry:{deliveryId:secondCode.id}});await run();
  assert.match((await blocked()).message,/birdən çox/);assert.equal(writes,1);
+ row2[0]='=IF(TRUE,"","")';rows=[header,row2,row1];
+ await save({netflixSheetIdRetry:{deliveryId:secondCode.id}});await run();
+ assert.match((await blocked()).message,/başqa dəyər/);assert.equal(writes,1);
+ row2[0]='';
  rows=[header,row1];
  await save({netflixSheetIdRetry:{deliveryId:secondCode.id}});await run();
  assert.match((await blocked()).message,/tapılmadı/);assert.equal(writes,1);
@@ -133,5 +142,5 @@ try{
  assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries')).rows[0].n,2);
  assert.equal((await pool.query("select cents::int from wallet_accounts where user_id='a'")).rows[0].cents,4000);
  assert.deepEqual(locateCustomerIdCell([header,['=T(1)','2 · 0408',email]],{email,roomName:'2',roomCode:'0408'},member),{reason:'conflict'});
- console.log('PASS: atomic two-card save/reload, replay, delete/restock count, protected reserved/delivered rooms, wallet delivery without customer PIN, moved rows, leading zero and hyphen PIN, A-only write, lost reply, retry, conflicting/duplicate/missing row and exactly two debits');
+ console.log('PASS: atomic two-card save/reload, replay, delete/restock count, protected reserved/delivered rooms, wallet delivery without customer PIN, moved rows, formatted numeric room/PIN with leading zero, A-only write, lost reply, retry, conflicting/duplicate/missing row and exactly two debits');
 }finally{await fixture.close();}
