@@ -58,6 +58,17 @@ export async function roomCredentialData(pool,deliveryId,userId){
  const suppress=(await pool.query('select suppress_message from mirpanel_community.netflix_room_delivery_credentials where delivery_id=$1',[deliveryId])).rows[0]?.suppress_message;
  return {room_current_cipher:room.account_cipher,room_group_id:room.group_id,room_suppress_message:!!suppress};
 }
+// A labeled password in a saved message can outlive more than one allocation.
+ // Preserve the saved message in history; only hide it when it conflicts.
+function conflictingPassword(message,current){
+ if(typeof message!=='string')return false;
+ return message.split(/\r?\n/).some(line=>{
+  const labeled=line.match(/^\s*[^\p{L}\p{N}]*?(?:(?:hesab(?:ın)?|netflix)\s+)?(?:şifrə(?:si)?|parol[ae]?|password)\s*[*_~`]*\s*[:：=–—-]\s*(.*)$/iu);
+  if(!labeled)return false;
+  const entry=labeled[1].trim();
+  return entry!==current&&entry.replace(/^[*_~`]+|[*_~`]+$/g,'')!==current;
+ });
+}
 export function projectRoomCredentials(security,row,value){
  if(row.room_access_ended){
   const {email,password,...historical}=value;
@@ -66,7 +77,7 @@ export function projectRoomCredentials(security,row,value){
  if(!row.room_current_cipher)return value;
  const account=JSON.parse(security.decryptSecret(row.room_current_cipher));
  if(account.id!==row.room_group_id)throw Error('ROOM_ACCOUNT_REFERENCE_MISMATCH');
- return {...value,email:account.email,password:account.password,...(row.room_suppress_message?{message:'Hazır mesajdakı köhnə giriş məlumatı gizlədildi. Cari e-poçt və şifrə yuxarıda göstərilir.'}:{})};
+ return {...value,email:account.email,password:account.password,...(row.room_suppress_message||conflictingPassword(value.message,account.password)?{message:'Hazır mesajdakı köhnə giriş məlumatı gizlədildi. Cari e-poçt və şifrə yuxarıda göstərilir.'}:{})};
 }
 export function roomPasswordMail(job,o,origin){
  const url=origin+'/profil?tab=orders&order='+encodeURIComponent(o.order_code);

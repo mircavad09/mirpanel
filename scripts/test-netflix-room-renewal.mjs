@@ -63,7 +63,9 @@ try{
  const expired=before[0];await restockNetflixRoom(pool,{id:expired.id,deliveryId:expired.delivery_id,endsOn:day(90),confirmedEmpty:true,actor:'owner'});
  const old=await credentials.codes({user:'a'},expired.delivery_id);assert.equal(old.password,undefined);
  const replacement=await buy('b'),newRoom=(await roomStates(pool,{roomId:expired.id}))[0];assert.notEqual(newRoom.delivery_id,expired.delivery_id);
- assert.equal((await credentials.codes({user:'b'},newRoom.delivery_id)).password,'Example-new');
+ const replacementCredentials=await credentials.codes({user:'b'},newRoom.delivery_id);
+ assert.equal(replacementCredentials.password,'Example-new');
+ assert.doesNotMatch(replacementCredentials.text,/Example-old/);
  assert.equal((await credentials.codes({user:'a'},expired.delivery_id)).password,undefined);
  await assert.rejects(credentials.codes({user:'a'},newRoom.delivery_id),{status:404});
  failSheets=true;await sync();failSheets=false;await pool.query("update netflix_room_sheet_sync set retry_at='-infinity'");await sync();await sync();
