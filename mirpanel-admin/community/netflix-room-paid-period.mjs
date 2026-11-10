@@ -11,8 +11,10 @@ export function shortRoomDate(date){
 // Coverage is reconstructed from immutable purchase snapshots. The account's
 // stock expiry is deliberately absent from this calculation.
 export function roomPaidPeriod(room){
- if(!room.delivery_id)return null;
+ if(!room.delivery_id||room.purchase_paid===false||room.user_id===null)return null;
  const plan=room.checkout_snapshot?.items?.[room.line_index]??room.checkout_snapshot;
+ const productId=plan?.productId??room.product_id;
+ if(productId&&productId!=='netflix')return null;
  const period=subscriptionPeriod({
   durationDays:plan?.durationDays,durationMonths:plan?.durationMonths??room.duration_months,
   label:plan?.planName??room.plan_name
@@ -40,7 +42,7 @@ export function roomPaidPeriod(room){
 
 export function roomPaymentStatus(room){
  const period=roomPaidPeriod(room);
- if(!period)return room.delivery_id?'Yenilənmə gözlənilir':'Satılmayıb';
+ if(!period)return room.delivery_id||room.availability==='review'?'Yoxlama tələb olunur':'Satılmayıb';
  const status=room.today>period.expiresOn?'Yenilənməyib':
   period.months>1||period.renewed?'✓ Ödəniş edib':'Yenilənmə gözlənilir';
  return status+'\nÖdənilmiş müddət: '+shortRoomDate(period.startsOn)+' → '+shortRoomDate(period.endsBefore);

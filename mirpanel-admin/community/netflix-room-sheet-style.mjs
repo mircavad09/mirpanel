@@ -1,6 +1,6 @@
 import {safeCalendarDate} from '../payment-order-lifecycle.mjs';
 
-export const roomSheetStyleVersion='2';
+export const roomSheetStyleVersion='3';
 export const roomSheetStyleKey='mirpanel.netflix-room-style';
 const months='yanvar fevral mart aprel may iyun iyul avqust sentyabr oktyabr noyabr dekabr'.split(' ');
 const epoch=Date.UTC(1899,11,30);
@@ -12,6 +12,7 @@ function color(hex){
 }
 
 export const roomStatusStyles=[
+ {name:'Yoxlama tələb olunur',caption:'⚠ Yoxlama tələb olunur',background:'#493B17',foreground:'#FFE08A'},
  {name:'Satılmayıb',caption:'✕ Satılmayıb',background:'#30343B',foreground:'#E1E5EB'},
  {name:'Satılıb',caption:'✓ Satılıb',background:'#17392A',foreground:'#8AE5AC'},
  {name:'Yenilənmə gözlənilir',caption:'◷ Yenilənmə gözlənilir',background:'#493B17',foreground:'#FFE08A'},
@@ -74,7 +75,7 @@ export function roomSheetStyleRequests(sheetId){
    cell:{userEnteredFormat:roomCellFormat(0)},fields:'userEnteredFormat'}},
   {repeatCell:{range:{...body,startColumnIndex:1,endColumnIndex:2},
    cell:{userEnteredFormat:roomCellFormat(1)},fields:'userEnteredFormat'}},
-  {updateBorders:{range:{sheetId,startColumnIndex:0,endColumnIndex:7},
+  {updateBorders:{range:{sheetId,startColumnIndex:0,endColumnIndex:8},
    top:border,bottom:border,left:border,right:border,innerHorizontal:border,innerVertical:border}},
   {repeatCell:{range:{sheetId,startRowIndex:0,endRowIndex:1},cell:{userEnteredFormat:{
    ...roomCellFormat(-1),backgroundColor:color('#111418'),
@@ -82,9 +83,9 @@ export function roomSheetStyleRequests(sheetId){
   }},fields:'userEnteredFormat'}},
   {updateSheetProperties:{properties:{sheetId,gridProperties:{frozenRowCount:1,hideGridlines:true}},
    fields:'gridProperties.frozenRowCount,gridProperties.hideGridlines'}},
-  {updateDimensionProperties:{range:{sheetId,dimension:'COLUMNS',startIndex:6,endIndex:7},
+  {updateDimensionProperties:{range:{sheetId,dimension:'COLUMNS',startIndex:6,endIndex:8},
    properties:{hiddenByUser:true},fields:'hiddenByUser'}},
-  {setBasicFilter:{filter:{range:{sheetId,startRowIndex:0,startColumnIndex:0,endColumnIndex:7}}}},
+  {setBasicFilter:{filter:{range:{sheetId,startRowIndex:0,startColumnIndex:0,endColumnIndex:8}}}},
   {updateDimensionProperties:{range:{sheetId,dimension:'ROWS',startIndex:0,endIndex:1},
    properties:{pixelSize:44},fields:'pixelSize'}}
  ];

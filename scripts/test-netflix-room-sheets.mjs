@@ -59,7 +59,7 @@ async function checkGooglePayload(){
 }
 try{
  await checkGooglePayload();
- for(const migration of ['netflix-room-stock.sql','netflix-room-sheets.sql','netflix-room-restock.sql','ready-stock-migration.sql','ready-stock-product-messages-migration.sql','subscriptions-migration.sql'])
+ for(const migration of ['netflix-room-stock.sql','netflix-room-sheets.sql','netflix-room-restock.sql','ready-stock-migration.sql','ready-stock-product-messages-migration.sql','subscriptions-migration.sql','netflix-room-renewal.sql'])
   await f.db.exec(f.db.read('mirpanel-admin/community/'+migration));
  const batch={requestId:id(),email:credentials.email,password:credentials.password,startsOn:day(-1),endsOn:day(60),
   rooms:[{name:'1',pin:'0408'},{name:'2',pin:'0002'}]};
@@ -96,7 +96,10 @@ try{
  await sync();
  assert.ok(row()[5].startsWith(paidStatus+'\nÖdənilmiş müddət:'));
  const assignment=(await pool.query('select delivery_id from mirpanel_community.netflix_room_units where id=$1',[roomId])).rows[0].delivery_id;
- await restockNetflixRoom(pool,{id:roomId,deliveryId:assignment,endsOn:day(45)});
+ await assert.rejects(restockNetflixRoom(pool,{id:roomId,deliveryId:assignment,endsOn:day(45),confirmedEmpty:true}),{status:409});
+ await pool.query("update customer_order_deliveries set delivered_at=clock_timestamp()-interval '200 days' where id=$1",[assignment]);
+ await pool.query("update public.payment_orders set completed_at=clock_timestamp()-interval '100 days' where id=$1",[renewal.orderId]);
+ await restockNetflixRoom(pool,{id:roomId,deliveryId:assignment,endsOn:day(45),confirmedEmpty:true});
  await sync();
  assert.deepEqual(safeColumns(row()),['','1 · 0408',day(45),'Sat\u0131lmay\u0131b']);
  assert.equal(sheet.length,2);

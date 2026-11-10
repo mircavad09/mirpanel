@@ -1,3 +1,4 @@
+import {updateRoomPassword} from './netflix-room-password.mjs';
 import crypto from 'node:crypto';
 import {signature} from '../employee-security.mjs';
 import {planKey} from '../payment-profit.mjs';
@@ -34,16 +35,17 @@ export async function readyStockView(pool,catalog,inventory,security){
    return {id:p.id,title:p.title,message:messages.get(p.id)??'',image:typeof p.image==='string'?p.image:'',readyTotal,scope:stock?.scope||'none',version:stock?.version??0,plans};
   })};
   const roomStockInstalled=(await c.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present;
-  result.netflixRooms=roomStockInstalled?(await netflixRooms(c)).rooms:null;
+  result.netflixRooms=roomStockInstalled?(await netflixRooms(c,security)).rooms:null;
   await c.query('commit');return result;
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
- if(input?.restockNetflixRoom)return restockNetflixRoom(pool,input.restockNetflixRoom);
+ if(input?.netflixAccountPassword)return updateRoomPassword(pool,security,actor,input.netflixAccountPassword);
+ if(input?.restockNetflixRoom)return restockNetflixRoom(pool,{...input.restockNetflixRoom,actor});
  if(input?.netflixRooms||input?.netflixRoomEdit){
   if(!(await pool.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present)throw fail(503,'Netflix otaq stoku üçün baza yeniləməsi lazımdır.');
   if(input.netflixRoomEdit?.action==='password')return netflixRoomPassword(pool,security,input.netflixRoomEdit.id);
-  return input.netflixRoomEdit?editNetflixRoom(pool,security,input.netflixRoomEdit):saveNetflixRooms(pool,security,secret,actor,input.netflixRooms);
+  return input.netflixRoomEdit?editNetflixRoom(pool,security,input.netflixRoomEdit,actor):saveNetflixRooms(pool,security,secret,actor,input.netflixRooms);
  }
  const {productId,index,planSignature,requestId,messages=[],accounts,autoWallet}=input||{};
  const structured=accounts!==undefined;
@@ -88,7 +90,7 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
    if(![1,3,6].includes(item.durationMonths??item.duration)||item.durationDays)continue;
    const rooms=(await c.query(`select r.id,r.room_name,r.pin_cipher,g.id group_id,g.account_cipher
     from mirpanel_community.netflix_room_units r join mirpanel_community.netflix_room_groups g on g.id=r.group_id
-    where r.delivery_id is null and coalesce(r.stock_ends_on,g.ends_on)>public.payment_baku_date()
+    where r.delivery_id is null and coalesce(to_jsonb(r)->>'availability','available')='available' and coalesce(r.stock_ends_on,g.ends_on)>public.payment_baku_date()
      and g.created_by not like 'synthetic:%'
     order by g.created_at,r.room_key,r.id limit $1 for update of r skip locked`,[item.quantity])).rows;
    security??=securityFactory();
@@ -126,6 +128,7 @@ export async function approveCardWithReadyStock(pool,security,orderId,duration,a
  const c=await pool.connect();
  try{
   await c.query('begin');
+  await c.query('select pg_advisory_xact_lock(714025001)');
   // Call the same approval RPC as before. It owns the existing card/stock locks
   // and rechecks receipt/approval constraints before anything is allocated.
   const rpc=employeeEnabled?'employee_approve_direct':'approve_payment_order_v7';

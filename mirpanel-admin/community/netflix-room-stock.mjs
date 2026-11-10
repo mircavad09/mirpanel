@@ -1,3 +1,4 @@
+import {roomStates,roomStateLabels} from './netflix-room-state.mjs';
 import crypto from 'node:crypto';
 import {bakuDate} from '../payment-order-lifecycle.mjs';
 const G='mirpanel_community.netflix_room_groups', U='mirpanel_community.netflix_room_units';
@@ -18,14 +19,20 @@ export async function netflixRoomPassword(pool,security,id){
  if(value.id!==group.id||typeof value.password!=='string')throw fail(409,'Netflix şifrəsi oxunmadı.');
  return {password:value.password};
 }
-export async function editNetflixRoom(pool,security,input){
+export async function editNetflixRoom(pool,security,input,actor='admin'){
  const {id,action}=input;
  if(!roomId(id)||!['open','save','expiry'].includes(action))throw fail(400,'Otaq sorğusu düzgün deyil.');
  if(action==='expiry'){
   if(!isoDate(input.endsOn)||input.endsOn<=bakuDate())throw fail(400,'Hesabın gələcək bitmə tarixini seçin.');
-  const result=await pool.query(`update ${U} set stock_ends_on=$2 where account_key=(select account_key from ${U} where id=$1)`,[id,input.endsOn]);
-  if(!result.rowCount)throw fail(404,'Otaq tapılmadı.');
-  return {endsOn:input.endsOn};
+  const c=await pool.connect();
+  try{
+   await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
+   const result=await c.query(`update ${U} set stock_ends_on=$2 where group_id=(select group_id from ${U} where id=$1) returning group_id`,[id,input.endsOn]);
+   if(!result.rowCount)throw fail(404,'Otaq tapılmadı.');
+   await c.query(`insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata)
+    values('admin',$1,'netflix.account_expiry_updated','netflix_account',$2,$3)`,[actor,result.rows[0].group_id,{endsOn:input.endsOn}]);
+   await c.query('commit');return {endsOn:input.endsOn};
+  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
  }
  if(action==='open'){
   const {rows:[room]}=await pool.query(`select id,room_name,pin_cipher,delivery_id from ${U} where id=$1`,[id]);
@@ -55,24 +62,44 @@ export function parseRoomBatch(b){
   seen.add(key);return {name,key,pin};
  })};
 }
-export async function netflixRooms(pool){
- const {rows}=await pool.query(`select r.id,r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",
+export async function netflixRooms(pool,security){
+ if((await pool.query("select to_regclass('mirpanel_community.netflix_room_password_events') installed")).rows[0].installed){
+  const rows=await roomStates(pool);
+  return {rooms:rows.map(r=>({id:r.id,groupId:r.group_id,...(security?{accountEmail:JSON.parse(security.decryptSecret(r.account_cipher)).email}:{}),name:r.room_name,endsOn:r.stock_end??r.group_end,
+   startsOn:r.period?.startsOn??null,deliveryId:r.delivery_id,status:r.state,statusLabel:roomStateLabels[r.state],
+   paidUntil:r.period?.endsBefore??null,active:r.active}))};
+ }
+ const {rows}=await pool.query(`select r.id,r.group_id as "groupId",r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",
   coalesce(to_jsonb(r)->>'stock_ends_on',g.ends_on::text) as "endsOn",
   case when coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() then 'expired'
    when r.delivery_id is not null then 'sold' else 'free' end status
   from ${U} r join ${G} g on g.id=r.group_id order by g.created_at desc,r.room_name,r.id limit 250`);
  return {rooms:rows};
 }
-
 export async function restockNetflixRoom(pool,input){
- const {id,deliveryId,endsOn}=input||{};
- const uuid=value=>typeof value==='string'&&/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(value);
- if(!uuid(id)||!uuid(deliveryId)||!isoDate(endsOn)||endsOn<=bakuDate())throw fail(400,'Otağı və gələcək bitmə tarixini seçin.');
- const result=await pool.query(`update ${U} set delivery_id=null,stock_ends_on=$3 where id=$1 and delivery_id=$2`,
-  [id,deliveryId,endsOn]);
- if(!result.rowCount)throw fail(409,'Otağın vəziyyəti dəyişib. Siyahını yeniləyin.');
- return {restocked:true};
+ const {id,deliveryId=null,endsOn,actor='admin',confirmedEmpty}=input||{};
+ if(!roomId(id)||deliveryId!==null&&!roomId(deliveryId)||!isoDate(endsOn)||endsOn<=bakuDate())throw fail(400,'Otağı və gələcək bitmə tarixini seçin.');
+ const c=await pool.connect();
+ try{
+  await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
+  const installed=(await c.query("select to_regclass('mirpanel_community.netflix_room_password_events') installed")).rows[0].installed;
+  if(!installed)throw fail(503,'Otaq təhlükəsizliyi üçün baza yeniləməsi lazımdır.');
+  const [room]=await roomStates(c,{roomId:id,lock:true});
+  if(!room)throw fail(404,'Otaq tapılmadı.');
+  if(room.active)throw fail(409,'Ödənilmiş müddəti davam edən otağı satışa qaytarmaq olmaz.');
+  if(room.delivery_id&&room.state==='review')throw fail(409,'Otağın sifariş əlaqəsi yoxlanmalıdır. Satışa qaytarılmadı.');
+  if(room.delivery_id!==deliveryId)throw fail(409,'Otağın vəziyyəti dəyişib. Siyahını yeniləyin.');
+  if(confirmedEmpty!==true)throw fail(400,'Otağı Netflix-də boşaltdığınızı təsdiqləyin.');
+  if(!room.delivery_id&&room.availability==='available'){await c.query('commit');return {restocked:true,replayed:true};}
+  await c.query(`insert into mirpanel_community.netflix_room_assignment_history(id,room_id,delivery_id,actor,ends_on) values($1,$2,$3,$4,$5)`,
+   [crypto.randomUUID(),id,room.delivery_id,actor,room.period?.expiresOn??null]);
+  await c.query(`update ${U} set delivery_id=null,stock_ends_on=$2,availability='available' where id=$1`,[id,endsOn]);
+  await c.query(`insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata)
+   values('admin',$1,'netflix.room_restocked','netflix_room',$2,$3)`,[actor,id,{previousDeliveryId:room.delivery_id,accountId:room.group_id}]);
+  await c.query('commit');return {restocked:true};
+ }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
+
 export async function saveNetflixRooms(pool,security,secret,actor,input){
  const b=parseRoomBatch(input),accountKey=digest(secret,['netflix-room-account',b.email.toLowerCase()]);
  const fingerprint=digest(secret,['netflix-room-batch',b]);
@@ -109,7 +136,7 @@ export async function bindNetflixRoom(c,security,secret,deliveryId,{email,passwo
  const installed=await c.query("select to_regclass('mirpanel_community.netflix_room_units') as present");
  if(!installed.rows[0].present)return;
  const accountKey=digest(secret,['netflix-room-account',email.trim().toLowerCase()]);
- const {rows:[room]}=await c.query(`select r.id,r.pin_cipher,r.delivery_id,g.id group_id,g.account_cipher,
+ const {rows:[room]}=await c.query(`select r.id,r.pin_cipher,r.delivery_id,coalesce(to_jsonb(r)->>'availability','available') availability,g.id group_id,g.account_cipher,
    coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() as expired
    from ${U} r join ${G} g on g.id=r.group_id
    where r.account_key=$1 and r.room_key=$2 for update of r`,
@@ -119,6 +146,7 @@ export async function bindNetflixRoom(c,security,secret,deliveryId,{email,passwo
  const account=JSON.parse(security.decryptSecret(room.account_cipher));
  if(pin.id!==room.id||account.id!==room.group_id||pin.pin!==roomCode||(password&&password!==account.password))
   throw fail(409,'Təhvil məlumatları stokdakı otağa uyğun gəlmir.');
+ if(room.availability==='review')throw fail(409,'Otağın stok vəziyyəti yoxlanmalıdır.');
  if(room.delivery_id)throw fail(409,'Bu stok otağı artıq təhvil verilib.');
  if(room.expired)throw fail(409,'Bu stok otağının müddəti bitib.');
  await c.query(`update ${U} set delivery_id=$2 where id=$1`,[room.id,deliveryId]);

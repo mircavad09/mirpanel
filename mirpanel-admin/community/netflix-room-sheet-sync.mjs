@@ -14,6 +14,7 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
   const locked=(await c.query('select pg_try_advisory_xact_lock(926110213) locked')).rows[0].locked;
   if(!locked){await c.query('rollback');return cursor;}
   const {rows}=await c.query(`select r.*,r.stock_ends_on::text stock_end,g.account_cipher,g.ends_on::text group_end,
+    l.user_id,(o.status not in ('cancelled','rejected','expired') and (o.payment_confirmed or o.status in ('approved','completed'))) purchase_paid,
     n.member_number::text,d.line_index,d.delivered_at,o.checkout_snapshot,o.duration_months,o.plan_name,
     o.quantity order_quantity,o.service_expires_on::text,public.payment_baku_date()::text today,
     case when s.target=$1 then s.sent end sent,
@@ -45,7 +46,7 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
    if(room.deferred)continue;
    const state=roomSheetState(room);
    const revision=createHash('sha256').update(JSON.stringify([room.room_name,room.account_cipher,room.pin_cipher])).digest('hex');
-   const checkpoint=[...state,revision];
+   const checkpoint=[...state,revision,room.group_id];
    if(JSON.stringify(room.sent)===JSON.stringify(checkpoint))continue;
    try{
     sheet??=await client.open();
@@ -53,7 +54,7 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
     const pin=JSON.parse(security.decryptSecret(room.pin_cipher));
     if(pin.id!==room.id||account.id!==room.group_id||!/^\d{4}$/.test(pin.pin))throw Error('ROOM_SHEET_DATA');
     const [member,end,status]=state;
-    await sheet.upsert([member,room.room_name+' · '+pin.pin,account.email,account.password,end,status,room.id]);
+    await sheet.upsert([member,room.room_name+' · '+pin.pin,account.email,account.password,end,status,room.id,room.group_id]);
     await c.query(`insert into ${sync}(room_id,target,sent) values($1,$2,$3)
      on conflict(room_id) do update set target=excluded.target,sent=excluded.sent,retry_at='-infinity',failures=0`,
     [room.id,target,JSON.stringify(checkpoint)]);
@@ -69,6 +70,7 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
     return position(room);
    }
   }
+  if(sheet?.group)await sheet.group();
   await c.query('commit');
   return rows.length===25?position(rows.at(-1)):null;
  }catch(error){await c.query('rollback');throw error;}

@@ -32,8 +32,8 @@ assert.equal(cells[6].userEnteredValue.stringValue,'test-room-id');
 assert.deepEqual(roomSheetCells([...values.slice(0,5),cells[5].userEnteredValue.stringValue,values[6]]),cells);
 
 const requests=roomSheetStyleRequests(7);
-assert.equal(requests.filter(r=>r.addConditionalFormatRule).length,5);
-assert.equal(requests.find(r=>r.setBasicFilter).setBasicFilter.filter.range.endColumnIndex,7);
+assert.equal(requests.filter(r=>r.addConditionalFormatRule).length,6);
+assert.equal(requests.find(r=>r.setBasicFilter).setBasicFilter.filter.range.endColumnIndex,8);
 assert.equal(requests.find(r=>r.updateSheetProperties).updateSheetProperties.properties.gridProperties.frozenRowCount,1);
 assert.ok(requests.some(r=>r.updateDimensionProperties?.properties.hiddenByUser===true));
 const updates=roomPresentationUpdates(7,[values]);

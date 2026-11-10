@@ -119,29 +119,56 @@ export function mountReadyStock(host,api){
   }catch(e){roomStatus.textContent=e.message||'Otaq açıla bilmədi.';}
   finally{button.disabled=false;}
  }
- const roomSummary=row=>row.name+' · '+row.startsOn+' → '+row.endsOn+' · '+({free:'Satılmayıb',sold:'Satılıb',expired:'Müddəti bitib'}[row.status]||'—');
+ const roomSummary=row=>'Otaq '+row.name+' · Hesabın bitməsi: '+row.endsOn+' · '+(row.statusLabel||({free:'Satılmayıb',sold:'Satılıb',expired:'Müddəti bitib',review:'Yoxlama tələb olunur'}[row.status]||'—'))+(row.paidUntil?' · Ödənilmiş müddətin sonu: '+row.paidUntil:'');
  function showRooms(rows){
   roomForm.hidden=!Array.isArray(rows);
   if(!Array.isArray(rows)){roomStatus.textContent='Otaq stoku bazada hələ aktiv deyil.';return;}
-  roomList.replaceChildren(...rows.map(row=>{
+  const groups=new Map();
+  for(const row of rows){const key=row.groupId||row.id;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
+  roomList.replaceChildren(...[...groups].map(([groupId,groupRows])=>{
+   const group=document.createElement('li'),heading=document.createElement('h4'),rotate=document.createElement('button'),items=document.createElement('ul');
+   group.className='netflixAccountGroup';heading.textContent=(groupRows[0].accountEmail||'Netflix hesabı')+' · '+groupId.slice(0,8);
+   rotate.type='button';rotate.className='btn';rotate.textContent='Şifrəni yenilə';group.append(heading,rotate,items);
+   rotate.onclick=async()=>{
+    rotate.disabled=true;roomStatus.textContent='';
+    try{
+     const preview=await api(endpoint,{method:'POST',body:JSON.stringify({netflixAccountPassword:{action:'preview',groupId}})});
+     const form=document.createElement('form');form.className='netflixPasswordForm';form.autocomplete='off';
+     const info=document.createElement('p');info.textContent=preview.email+' · Təsirlənəcək aktiv otaqlar: '+preview.activeRooms+' · Müştərilər: '+preview.activeCustomers;
+     const label=document.createElement('label'),password=document.createElement('input'),save=document.createElement('button'),close=document.createElement('button');
+     label.textContent='Yeni Netflix şifrəsi';password.type='text';password.name='newPassword';password.maxLength=512;password.required=true;password.autocomplete='off';password.spellcheck=false;label.append(password);
+     save.type='submit';save.className='btn primary';save.textContent='Şifrəni saxla';close.type='button';close.className='btn';close.textContent='Bağla';
+     const note=document.createElement('p');note.textContent='Yalnız MirPanel-də saxlanan şifrə yenilənir. Netflix-in özündə şifrəni əvvəlcə özünüz dəyişin. Abunəlik müddəti dəyişmir.';
+     form.append(info,label,note,save,close);group.insertBefore(form,items);rotate.hidden=true;
+     close.onclick=()=>{password.value='';form.remove();rotate.hidden=false;rotate.disabled=false;};
+     form.onsubmit=async event=>{
+      event.preventDefault();save.disabled=close.disabled=true;
+      try{
+       const result=await api(endpoint,{method:'POST',body:JSON.stringify({netflixAccountPassword:{action:'rotate',groupId,password:password.value,expectedRevision:preview.revision}})});
+       password.value='';await refresh();roomStatus.textContent=result.changed?'Şifrə yeniləndi. Bildirişlər və Sheets yeniləməsi növbəyə əlavə edildi.':'Şifrə eynidir. Əlavə bildiriş yaradılmadı.';
+      }catch(e){roomStatus.textContent=e.message||'Şifrə saxlanılmadı.';}finally{save.disabled=close.disabled=false;}
+     };
+    }catch(e){roomStatus.textContent=e.message||'Hesab açıla bilmədi.';rotate.disabled=false;}
+   };
+   items.replaceChildren(...groupRows.map(row=>{
    const node=document.createElement('li');
    const summary=document.createElement('span'),edit=document.createElement('button');
    summary.dataset.roomSummary='';summary.textContent=roomSummary(row);
    edit.type='button';edit.className='btn';edit.textContent='Redaktə et';edit.onclick=()=>void openRoom(node,row,edit);
    node.append(summary,' ',edit);
-   if(row.deliveryId){
+   if(row.deliveryId||row.status==='review'){
     const button=document.createElement('button');
-    button.type='button';button.className='btn';button.textContent='Yenidən satışa çıxar';
+    button.type='button';button.className='btn';button.textContent='Boşalt və satışa qaytar';button.disabled=!!row.active;button.title=row.active?'Ödənilmiş müddət davam edir.':'';
     button.onclick=async()=>{
      const [year,month,day]=row.endsOn.split('-');
      const input=prompt('Otağın yeni bitmə tarixi (məs. 10 dekabr)',Number(day)+' '+months[Number(month)-1]+' '+year);
      if(input===null)return;
      const date=roomEndDate(input);
      if(!date||date.days<1){roomStatus.textContent='Gələcək bitmə tarixini yazın.';return;}
-     if(!confirm('Bu otağı yenidən satışa çıxarmaq istəyirsiniz?'))return;
+     if(!confirm('Bu otağı Netflix-də boşaltdığınızı və girişini bağladığınızı təsdiqləyirsiniz?'))return;
      button.disabled=true;
      try{
-      await api(endpoint,{method:'POST',body:JSON.stringify({restockNetflixRoom:{id:row.id,deliveryId:row.deliveryId,endsOn:date.iso}})});
+      await api(endpoint,{method:'POST',body:JSON.stringify({restockNetflixRoom:{id:row.id,deliveryId:row.deliveryId||null,endsOn:date.iso,confirmedEmpty:true}})});
       showRooms((await api(endpoint)).netflixRooms);
       roomStatus.textContent='Otaq yenidən satışa çıxarıldı.';
      }catch(error){roomStatus.textContent=error.message;button.disabled=false;}
@@ -150,6 +177,7 @@ export function mountReadyStock(host,api){
    }
 
    return node;
+  }));return group;
   }));
  }
  const datePreview=roomHost.querySelector('#netflixRoomDatePreview');

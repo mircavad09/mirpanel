@@ -1,3 +1,4 @@
+import {roomCredentialData,roomPasswordMail} from './netflix-room-password.mjs';
 import {bakuDate} from '../payment-order-lifecycle.mjs';
 import {isSubscriptionReminder,queueSubscriptionReminders,resolveSubscriptionReminder} from './subscription-reminders.mjs';
 import {adminTopupMail} from './admin-topup-mail.mjs';
@@ -29,10 +30,12 @@ export async function deliveryRecords(pool,ids){
 }
 export async function ownerCodes(pool,user,id){
  const where=id?'and d.id=$2::uuid':'';
- return (await pool.query(`select d.id,d.order_id,d.line_index,d.quantity,d.delivered_at,${id?'d.message_cipher,':''}o.order_code,o.product_id,o.product_title,o.plan_name,o.checkout_snapshot,o.amount,o.quantity as order_quantity,o.created_at
+ const rows=(await pool.query(`select d.id,d.order_id,d.line_index,d.quantity,d.delivered_at,${id?'d.message_cipher,':''}o.order_code,o.product_id,o.product_title,o.plan_name,o.checkout_snapshot,o.amount,o.quantity as order_quantity,o.created_at
   from ${D} d join ${O} l on l.order_id=d.order_id join public.payment_orders o on o.id=d.order_id
   where l.user_id=$1 and o.status not in ('rejected','cancelled','expired') and (o.payment_confirmed is true or o.status in ('approved','completed')) ${where}
   order by d.delivered_at desc,d.id desc`,id?[user,id]:[user])).rows;
+ if(id&&rows[0])Object.assign(rows[0],await roomCredentialData(pool,id,user));
+ return rows;
 }
 export async function recordDelivery(c,security,actor,orderId,id,line,quantity,message,credentials={}){
  const {email,password,roomName,roomCode}=credentials;
@@ -94,6 +97,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
  const c=await pool.connect();
  try{
   await c.query(input?'begin':'begin isolation level repeatable read read only');
+  if(input)await c.query('select pg_advisory_xact_lock(714025001)');
   const o=(await c.query(`select o.* from public.payment_orders o where o.id=$1 and exists(select 1 from ${O} where order_id=o.id)${input?' for update':''}`,[id])).rows[0];
   if(!o)throw fail(404,'Hesaba bağlı sifariş tapılmadı.');
   if(!paid(o))throw fail(409,'Əvvəl ödəniş təsdiqlənməlidir.');
@@ -309,6 +313,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
    where o.id=$1`,[job.order_id,job.delivery_id])).rows[0];
    const receipt=job.event_key.startsWith('receipt:');
    const cancellation=job.event_key.startsWith('cancellation:');
+   const passwordNotice=job.event_key.startsWith('netflix-password:');
    if(reminder&&!active)reason='SUBSCRIPTION_REMINDER_STALE';
    if(adminTopup||active||o?.emailVerified&&(cancellation?!!o.fulfillment_cancellation?.reason:job.topup_id||receipt||paid(o))){
     try{
@@ -327,9 +332,9 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
       }
       adminMessage=adminTopupMail(job,adminOrigin,preview,{test:job.topup_snapshot.test===true});
      }
-     const result=await send('order',adminMessage??(active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):orderMail(o,origin,{records,catalog})));
+     const result=await send('order',adminMessage??(active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):passwordNotice?roomPasswordMail(job,o,origin):orderMail(o,origin,{records,catalog})));
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
-     state='accepted';reason=requireDeliveryNotice&&!reminder&&(job.topup_id||!receipt&&!cancellation&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
+     state='accepted';reason=requireDeliveryNotice&&!reminder&&(job.topup_id||!receipt&&!cancellation&&!passwordNotice&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
      const retry=e.deliveryDisposition==='retry'&&job.attempts<3;
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';
