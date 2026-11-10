@@ -48,7 +48,7 @@ function identity(t) {
 }
 
 export async function mountShop({root, call, alive}) {
-  let stopped = false, busy = false, rejectionDialog, receiptDialog, opened = false;
+  let stopped = false, busy = false, rejectionDialog, receiptDialog, opened = false, loading = null, lastSnapshot = '';
   const params = new URLSearchParams(location.search);
   const target = params.get("topup");
   const intent = params.get("topupAction");
@@ -162,6 +162,7 @@ export async function mountShop({root, call, alive}) {
 
   function renderCard(t) {
     const card = el("article", null, "topupCard");
+    card.dataset.topupId = t.id;
     const top = el("div", null, "topupCardTop");
     const summary = el("div", null, "topupSummary");
     const status = el("span", labels[t.status] || "Naməlum status", "topupStatus");
@@ -208,11 +209,19 @@ export async function mountShop({root, call, alive}) {
     return card;
   }
 
-  async function load() {
+  async function fetchList() {
     const data = await call("/shop?only=topups" + (target ? "&id=" + encodeURIComponent(target) : ""));
     if (stopped || !alive()) return;
+    const snapshot = JSON.stringify(data.topups);
+    if (snapshot === lastSnapshot) return;
+    const edits = new Map([...list.querySelectorAll('[data-topup-id]')].map(card => [card.dataset.topupId,card.querySelector('[data-topup-amount]')?.value]));
     const heading = el("h2", "Balans artırma müraciətləri", "topupListTitle");
     list.replaceChildren(heading, ...(data.topups.length ? data.topups.map(renderCard) : [el("p", target ? "Müraciət tapılmadı." : "Hələ müraciət yoxdur.")]));
+    lastSnapshot = snapshot;
+    for (const card of list.querySelectorAll('[data-topup-id]')) {
+      const input = card.querySelector('[data-topup-amount]');
+      if (input && edits.has(card.dataset.topupId) && edits.get(card.dataset.topupId) != null) input.value = edits.get(card.dataset.topupId);
+    }
     if (target) {
       const all = el("a", "Bütün balans müraciətləri", "btn");
       all.href = "/admin.html#communityShop";
@@ -229,9 +238,14 @@ export async function mountShop({root, call, alive}) {
       if (intent === "approve") list.querySelector("[data-topup-amount]")?.focus();
     }
   }
+  function load() {
+    return loading ??= fetchList().finally(() => { loading = null; });
+  }
+  const poll = () => { if (!busy && !rejectionDialog?.open && !receiptDialog?.open && !list.contains(document.activeElement)) void load().then(() => { if (!busy) error.textContent = ""; }).catch(e => { if (!stopped) error.textContent = e.message; }); };
+  window.addEventListener('admin-topup-poll', poll);
   busy = true;
   try { await load(); }
   catch (e) { error.textContent = e.message; }
   finally { busy = false; }
-  return () => { stopped = true; rejectionDialog?.close(); receiptDialog?.close(); };
+  return () => { stopped = true; window.removeEventListener('admin-topup-poll', poll); rejectionDialog?.close(); receiptDialog?.close(); };
 }

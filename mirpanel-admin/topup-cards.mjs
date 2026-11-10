@@ -2,22 +2,16 @@
 // and card administration. Availability displayed before selection is advisory.
 export const topupCardLock='select pg_advisory_xact_lock(714025001)';
 export async function availableTopupCards(db){
+ // The same locked rotation and usage calculation serves admin and checkout.
+ await db.query('select public.refresh_payment_method_automation()');
  const {rows}=await db.query(`
    with day as (select public.payment_baku_date() as d)
    select m.id,m.provider_name,m.display_name,m.holder_name,m.last4,m.method_type,m.encrypted_number
    from public.payment_methods m cross join day
+   cross join lateral public.payment_card_usage(m.id,day.d) usage
    where m.active and not m.manual_disabled and not m.archived and m.deleted_at is null
      and nullif(m.encrypted_number,'') is not null and m.last4 ~ '^[0-9]{4}$'
-     and (m.limit_mode='unlimited' or
-       coalesce((select c.confirmed_count from public.payment_method_daily_counters c
-         where c.method_id=m.id and c.counter_date=day.d),0)
-       + (select count(*) from public.payment_reservations r where r.method_id=m.id and r.usage_day=day.d
-         and (r.status='reviewing' or (r.status='reserved' and r.expires_at>clock_timestamp())))
-       + (select count(*) from mirpanel_community.wallet_topups t where t.method_id=m.id
-         and t.created_at >= day.d::timestamp at time zone 'Asia/Baku'
-         and t.created_at < (day.d+1)::timestamp at time zone 'Asia/Baku'
-         and (t.status in ('reviewing','approved') or
-           (t.status='draft' and t.reserved_until>clock_timestamp()))) < m.daily_limit)
+     and (m.limit_mode='unlimited' or usage.occupied < m.daily_limit)
    order by m.sort_order,m.created_at,m.id`);
  return rows;
 }

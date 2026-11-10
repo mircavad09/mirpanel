@@ -80,7 +80,8 @@
   }
 
   function methodCard(method) {
-    const limit = method.limitMode === "unlimited" ? "Limitsiz" : `Bu gün tamamlanıb: ${method.confirmedToday}/${method.dailyLimit}`;
+    const full = method.limitMode !== "unlimited" && method.occupiedToday >= method.dailyLimit;
+    const limit = method.limitMode === "unlimited" ? "Limitsiz" : `${full ? "Gündəlik limit dolub" : "Gündəlik istifadə"} · ${method.occupiedToday}/${method.dailyLimit} · Təsdiqlənib: ${method.confirmedToday}`;
     const remaining = method.limitMode === "unlimited" ? "Qalan limit: limitsiz" : `Qalan limit: ${method.remaining}`;
     const reset = method.lastResetAt ? dateTime(method.lastResetAt) : "Bu gün sayğac yaradılmayıb";
     const nextReset = method.nextResetAt ? dateTime(method.nextResetAt) : "—";
@@ -160,7 +161,8 @@
 
   async function loadMethods() {
     const [methodResult, settingsResult] = await Promise.all([paymentApi("/api/admin/payment-methods"), paymentApi("/api/admin/payment-settings")]);
-    paymentState.methods = methodResult.methods || [];
+    if (!Array.isArray(methodResult.methods)) throw Error("Kart istifadəsi məlumatı alınmadı. Yenidən yoxlayın.");
+    paymentState.methods = methodResult.methods;
     renderMethods();
     if ($p("paymentNotificationEmail")) $p("paymentNotificationEmail").value = settingsResult.settings?.notificationEmail || "";
     if ($p("paymentReceiptRetentionDays")) $p("paymentReceiptRetentionDays").value = settingsResult.settings?.receiptRetentionDays || 90;
