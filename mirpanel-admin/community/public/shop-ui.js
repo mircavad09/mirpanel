@@ -34,7 +34,7 @@ function paymentPreview(){
  revealPayment(panel);return {panel,previous};
 }
 function restorePaymentPreview(preview){if(preview?.previous&&preview.panel.isConnected)preview.panel.replaceWith(preview.previous);}
-function login(){const n=card('Balansı artırmaq üçün daxil olun və ya qeydiyyatdan keçin'),back=backFromWallet(),destination=back==='/odenis?mode=wallet'?'/balans?returnTo=%2Fodenis%3Fmode%3Dwallet':'/balans',next=encodeURIComponent(destination),actions=el('div',null,'shop-actions');actions.append(link('Daxil ol','/hesab?next='+next),link('Qeydiyyatdan keç','/hesab?mode=signup&next='+next));n.append(actions);if(back)n.append(link('← Alışa qayıt',back));app.replaceChildren(el('h1','Balansım'),n,error);}
+function login(){const n=card('Balansı artırmaq üçün daxil olun və ya qeydiyyatdan keçin'),back=backFromWallet(),destination=back==='/odenis?mode=wallet'?'/balans?returnTo=%2Fodenis%3Fmode%3Dwallet':'/balans',next=encodeURIComponent(destination+(location.hash==='#balansi-artir'?location.hash:'')),actions=el('div',null,'shop-actions');actions.append(link('Daxil ol','/hesab?next='+next),link('Qeydiyyatdan keç','/hesab?mode=signup&next='+next));n.append(actions);if(back)n.append(link('← Alışa qayıt',back));app.replaceChildren(el('h1','Balansım'),n,error);}
 function refreshAccount(){window.refreshCommunityNav?.();}
 async function checkoutLogin(){const box=card('Hesabına daxil ol');box.append(el('p','Sifariş vermək üçün hesab lazımdır. Qeydiyyat pulsuzdur.'),link('Giriş et','/hesab?next=%2Fodenis'),link('Qeydiyyat','/hesab?mode=signup&next=%2Fodenis'));app.replaceChildren(box,error);await import('/account-header.js?v=header-session-1');if(!closed)window.MirpanelRequireLogin?.('/odenis');}
 async function checkoutVerification(){
@@ -97,7 +97,12 @@ async function basket(){
  }),true);
  sum.append(row,next);sum.classList.add('checkout-choices');checkoutLayout(q,sum);
 }
-function topupLink(returnTo){const a=link('Balansını artır','/balans?returnTo='+encodeURIComponent(returnTo));a.classList.add('shop-primary','shop-return');return a;}
+function topupLink(returnTo){
+ const a=link('','/balans?returnTo='+encodeURIComponent(returnTo)+'#balansi-artir');
+ a.classList.add('shop-primary','shop-return','checkout-topup-link');
+ a.append(checkoutIcon('<path d="M20 8V6a2 2 0 0 0-2-2H6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h12a2 2 0 0 0 2-2v-2M3 8h15"/><rect x="13" y="9" width="9" height="7" rx="2"/><path d="M7 11v6m-3-3h6"/>'),el('span','Balansını artır'));
+ return a;
+}
 function backFromWallet(){const value=new URLSearchParams(location.search).get('returnTo')||'';return /^\/(?:mehsul(?:\/[a-z0-9-]+\/?)?|odenis\?mode=wallet|sebet)?$/.test(value)?value:'';}
 async function getMethods(){
  const c=new AbortController();requests.add(c);const timeout=setTimeout(()=>c.abort(),20000);
@@ -148,7 +153,15 @@ async function payment(reveal=false,preview=null){const turn=++basketEpoch;
  const go=button('Sifarişi tamamla',()=>{if(go.disabled||!consentAccepted||!paymentReady)return;void run(submit);},true);choices.append(go);
  const short=q.balanceCents==null?0:Math.max(0,q.totalCents-q.balanceCents);
  function updateChoice(){walletStatus.replaceChildren();walletStatus.hidden=!short&&q.balanceCents!=null;
- if(short)walletStatus.append(el('strong','Balans kifayət etmir'),el('p',checkoutMoney(q.balanceCents)+' var, '+checkoutMoney(short)+' çatmır.'),topupLink('/odenis?mode=wallet'));
+ if(short){
+  const amounts=el('div',null,'checkout-shortfall-amounts');
+  const available=el('p','Mövcud balansınız: ');
+  available.append(el('strong',checkoutMoney(q.balanceCents)));
+  const missing=el('p','Çatışmayan məbləğ: ','checkout-shortfall-missing');
+  missing.append(el('strong',checkoutMoney(short)));
+  amounts.append(available,missing);
+  walletStatus.append(el('strong','Balans kifayət etmir'),amounts,topupLink('/odenis?mode=wallet'));
+ }
  else if(q.balanceCents==null)walletStatus.append(el('p','Balansla ödəniş üçün hesabınıza daxil olun.'),topupLink('/odenis?mode=wallet'));
  go.disabled=!paymentReady||!consentAccepted||!stockOk||!detailsOk||!termsOk||q.balanceCents==null||short>0;go.replaceChildren();if(go.disabled)go.append(checkoutIcon('<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>'));go.append(document.createTextNode('Sifarişi tamamla · '+checkoutMoney(q.totalCents)));
  }
@@ -228,6 +241,7 @@ async function wallet(){let data;try{data=await api('/wallet');}catch(e){if(e.st
  const hero=card('Mövcud balans');hero.classList.add('shop-wallet-hero');hero.append(el('strong',money(data.cents)));
  const preview=el('p',null,'shop-topup-preview'),result=el('span','—');preview.append(document.createTextNode('Əlavə etdikdən sonra: '),result);preview.setAttribute('aria-live','polite');hero.append(preview);
  const form=card('Balansı artır'),amount=el('input'),presets=el('div',null,'shop-presets'),hint=el('p','Minimum 1 ₼ · Maksimum 500 ₼','shop-muted'),invalid=el('p','','shop-error');let selectedCents=500,flow;
+ form.id='balansi-artir';
  amount.inputMode='decimal';amount.placeholder='Öz məbləğiniz';amount.maxLength=32;amount.setAttribute('aria-label','AZN məbləği');hint.id='topupAmountHint';invalid.id='topupAmountError';amount.setAttribute('aria-describedby',hint.id+' '+invalid.id);invalid.setAttribute('aria-live','polite');
  const effective=()=>selectedCents??parseTopupCents(amount.value);
  function update(){let cents;try{cents=effective();invalid.textContent='';amount.setAttribute('aria-invalid','false');}catch(e){invalid.textContent=amount.value?e.message:'';amount.setAttribute('aria-invalid',String(!!amount.value));}result.textContent=cents!==undefined&&Number.isSafeInteger(data.cents)&&Number.isSafeInteger(data.cents+cents)?money(data.cents+cents):'—';flow?.updateAmount();}
@@ -256,6 +270,7 @@ async function start(){
   await payment(true);
  }
  if(location.hash==='#emeliyyatlar')document.getElementById('emeliyyatlar')?.scrollIntoView();
+ if(route==='/balans'&&location.hash==='#balansi-artir')document.getElementById('balansi-artir')?.scrollIntoView({block:'start',behavior:'instant'});
 }
 const dispose=()=>{closed=true;clearTimeout(confirmationTimer);for(const r of requests)r.abort();life.abort();document.body.classList.remove('wallet-page-active');};
 on(window,'pagehide',dispose);on(window,'mirpanel:account',e=>{
