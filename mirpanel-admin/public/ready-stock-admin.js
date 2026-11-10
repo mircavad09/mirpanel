@@ -1,6 +1,24 @@
 const mounts=new WeakMap();
 const endpoint='/api/admin/payment-ready-stock';
 const guideText='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';
+const months='yanvar fevral mart aprel may iyun iyul avqust sentyabr oktyabr noyabr dekabr'.split(' ');
+const dateParts=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit'});
+export function roomEndDate(value,now=new Date()){
+ const match=String(value).trim().toLocaleLowerCase('az').match(/^(\d{1,2})\s+(\p{L}+)(?:\s+(\d{4}))?$/u);
+ if(!match)return null;
+ const [,day,month,explicitYear]=match,m=months.indexOf(month);
+ if(m<0||Number(day)<1||Number(day)>31)return null;
+ const p=Object.fromEntries(dateParts.formatToParts(now).map(x=>[x.type,x.value]));
+ const today=Date.parse(p.year+'-'+p.month+'-'+p.day);
+ const first=Number(explicitYear||p.year);
+ for(let year=first;year<=first+(explicitYear?0:8);year++){
+  const iso=String(year).padStart(4,'0')+'-'+String(m+1).padStart(2,'0')+'-'+day.padStart(2,'0');
+  const end=Date.parse(iso);
+  if(Number.isFinite(end)&&end>=today&&new Date(end).toISOString().slice(0,10)===iso)
+   return {iso,label:Number(day)+' '+month+' '+year,days:(end-today)/86400000};
+ }
+ return null;
+}
 export function mountReadyStock(host,api){
  if(mounts.has(host)){void mounts.get(host)();return;}
  host.innerHTML=`<div class="readyStockLayout">
@@ -24,7 +42,7 @@ export function mountReadyStock(host,api){
    <p role="status" aria-live="polite"></p>
   </section>
   <section class="readyStockCard"><h3>Məhsullar üzrə hazır stok</h3><p>Bütün paketlər üzrə sifarişə ayrılmamış hazır hesablar.</p><div data-product-list></div></section>
- </div><section class="readyStockCard" data-netflix-room-stock></section>`;
+ </div><div class="readyStockLayout netflixRoomLayout"><section class="readyStockCard" data-netflix-room-stock></section></div>`;
  const form=host.querySelector('form'),{product,plan,sales,auto,template}=form.elements;
  const q=s=>host.querySelector(s),messageList=q('[data-messages]'),report=q('[role=status]'),list=q('[data-product-list]');
  const submit=form.querySelector('[type=submit]'),saveSales=q('[data-save-sales]'),editSales=q('[data-edit-sales]'),editor=q('#readyStockSaleEditor'),add=q('[data-add-unit]');
@@ -36,10 +54,12 @@ export function mountReadyStock(host,api){
  roomHost.innerHTML=`<h3>Netflix Şəxsi — hazır otaq stoku</h3>
   <p>Sheets bağlantısı olmadan otaq əlavə edə bilərsiniz. Bu bölmədəki otaqlar hələ avtomatik satışa ayrılmır.</p>
   <form autocomplete="off" hidden>
-   <label>Netflix hesabının e-poçtu<input name="email" type="email" maxlength="254" required></label>
-   <label>Netflix hesabının şifrəsi<input name="password" type="password" maxlength="512" autocomplete="new-password" required></label>
-   <label>Dövrün başlanğıcı<input name="startsOn" type="date" required></label>
-   <label>Dövrün bitməsi<input name="endsOn" type="date" required></label>
+   <div class="netflixRoomCredentials">
+    <label>Netflix e-poçtu<input name="email" type="email" maxlength="254" required></label>
+    <label>Netflix şifrəsi<input name="password" type="password" maxlength="512" autocomplete="new-password" required></label>
+   </div>
+   <label>Bitmə tarixi<input name="endsOn" type="text" placeholder="məs. 10 dekabr" maxlength="24" required aria-describedby="netflixRoomDatePreview"></label>
+   <p id="netflixRoomDatePreview" aria-live="polite"></p>
    <div data-rooms></div>
    <div class="readyStockActions"><button type="button" class="btn" data-room-add>+ Otaq əlavə et</button><button class="btn primary">Otaqları saxla</button></div>
   </form><p data-room-status role="status"></p><ul data-room-list></ul>`;
@@ -47,9 +67,9 @@ export function mountReadyStock(host,api){
  let roomRequest=null,roomBusy=false;
  function addRoom(){
   if(roomRows.children.length>=20)return;
-  const row=document.createElement('div');row.className='readyStockAccount';
-  row.innerHTML='<label>Otaq adı<input name="room" maxlength="50" required></label><label>Dördrəqəmli PIN<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label><button type="button" class="btn">Otağı sil</button>';
-  row.querySelector('button').onclick=()=>{if(roomRows.children.length>1)row.remove();};
+  const row=document.createElement('div');row.className='readyStockAccount netflixRoomRow';
+  row.innerHTML='<label>Otaq adı<input name="room" maxlength="50" required></label><label>PIN<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required></label><button type="button" class="btn" aria-label="Otağı sil">×</button>';
+  row.querySelector('button').onclick=()=>{if(roomRows.children.length>1){row.remove();roomRequest=null;}};
   roomRows.append(row);
  }
  function showRooms(rows){
@@ -61,19 +81,26 @@ export function mountReadyStock(host,api){
    return node;
   }));
  }
- roomHost.querySelector('[data-room-add]').onclick=addRoom;
- roomForm.oninput=()=>{roomRequest=null;};
+ const datePreview=roomHost.querySelector('#netflixRoomDatePreview');
+ function previewDate(){
+  const value=roomForm.elements.endsOn.value,date=roomEndDate(value);
+  datePreview.textContent=date?date.label+' · '+date.days+' gün qalıb':value?'Tarixi “10 dekabr” və ya “10 dekabr 2026” kimi yazın.':'';
+  return date;
+ }
+ roomHost.querySelector('[data-room-add]').onclick=()=>{addRoom();roomRequest=null;};
+ roomForm.oninput=()=>{roomRequest=null;previewDate();};
  roomForm.onsubmit=async event=>{
   event.preventDefault();if(roomBusy)return;
-  const {email,password,startsOn,endsOn}=roomForm.elements;
+  const {email,password}=roomForm.elements,date=previewDate();
+  if(!date||date.days===0){roomStatus.textContent='Bitmə tarixi Bakı vaxtı ilə bu gündən sonra olmalıdır.';return;}
   roomRequest??=crypto.randomUUID();
-  const payload={requestId:roomRequest,email:email.value,password:password.value,startsOn:startsOn.value,endsOn:endsOn.value,
+  const payload={requestId:roomRequest,email:email.value,password:password.value,endsOn:date.iso,
    rooms:[...roomRows.children].map(row=>({name:row.querySelector('[name=room]').value,pin:row.querySelector('[name=pin]').value}))};
   const fields=[...roomForm.querySelectorAll('input,button')];roomBusy=true;fields.forEach(x=>x.disabled=true);
   roomStatus.textContent='Otaqlar saxlanılır…';
   try{
    const result=await api(endpoint,{method:'POST',body:JSON.stringify({netflixRooms:payload})});
-   roomRequest=null;roomForm.reset();roomRows.replaceChildren();addRoom();
+   roomRequest=null;roomForm.reset();previewDate();roomRows.replaceChildren();addRoom();
    roomStatus.textContent=result.added+' otaq saxlanıldı.';
    showRooms((await api(endpoint)).netflixRooms);
   }catch(e){roomStatus.textContent=e.message||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.';}

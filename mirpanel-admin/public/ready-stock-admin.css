@@ -28,3 +28,13 @@
 .readyStockCard [data-auto][data-active=true]{color:#a1efb8;background:#1d3b2a}
 .readyStockCard [role=status]{margin:10px 0 0;color:#97e8b1}.readyStockCard [data-error=true]{color:#ffb0b0}
 @media(max-width:760px){.readyStockLayout{grid-template-columns:1fr}.readyStockCard{padding:12px}}
+.netflixRoomLayout{margin-top:16px}
+[data-netflix-room-stock] form[hidden]{display:none}
+.netflixRoomCredentials{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+[data-netflix-room-stock] input{min-width:0;width:100%;box-sizing:border-box}
+[data-netflix-room-stock] [data-rooms]{display:grid;gap:6px}
+[data-netflix-room-stock] .netflixRoomRow{grid-template-columns:minmax(0,1fr) 5rem auto;gap:6px;align-items:end}
+[data-netflix-room-stock] .netflixRoomRow .btn{min-width:36px;padding-inline:8px}
+#netflixRoomDatePreview{margin:0;color:#ffe287}
+#netflixRoomDatePreview:empty{display:none}
+@media(max-width:760px){.netflixRoomCredentials{grid-template-columns:minmax(0,1fr)}}

@@ -152,5 +152,15 @@ try{
   assert.equal((await proxy({request:new Request(subscriptionUrl,{method:'POST'})})).status,404);
   assert.equal((await proxy({request:new Request(subscriptionUrl,{headers:{Origin:'https://other.example'}})})).status,403);
  }finally{globalThis.fetch=originalFetch;}
- console.log('PASS subscription ownership, two live prices, boundaries, unchanged expiry until manual fulfillment, early extension, failed payment, retry and duplicate prevention');
+ const netflix={id:'netflix',title:'Netflix Şəxsi',active:true,plans:[1,3,6].map(months=>({label:months+' ay',months,price:1}))};
+ f.catalog.products.push(netflix);
+ await q("update wallet_accounts set cents=10000 where user_id='a'");
+ for(const [index,months] of [1,3,6].entries()){
+  const order=await checkout([{...await quote(netflix.id,index),details:{name:'Sintetik',code_4:'0408'}}]);
+  await fulfill(order.orderId);
+  const sub=(await rows()).find(r=>r.orderCode===String(order.orderCode));
+  assert.equal(sub?.plan,months+' ay');
+  assert.equal(sub.expiresOn,addCalendarMonthsMinusDay(today,months));
+ }
+ console.log('PASS subscription ownership, two live prices, boundaries, unchanged expiry until manual fulfillment, early extension, failed payment, retry, duplicate prevention and Netflix 1/3/6-month order snapshots');
 }finally{await f.close();}

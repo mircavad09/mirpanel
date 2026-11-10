@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import {bakuDate} from '../payment-order-lifecycle.mjs';
 const G='mirpanel_community.netflix_room_groups', U='mirpanel_community.netflix_room_units';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const digest=(secret,value)=>crypto.createHmac('sha256',secret).update(JSON.stringify(value)).digest('hex');
@@ -7,7 +8,7 @@ export function parseRoomBatch(b){
  const {requestId,email,password,startsOn,endsOn,rooms}=b||{};
  if(typeof requestId!=='string'||!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(requestId))throw fail(400,'Saxlama sorğusu düzgün deyil.');
  if(typeof email!=='string'||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())||typeof password!=='string'||!password.trim()||password.length>512||/[\r\n\0]/.test(password))throw fail(400,'Etibarlı hesab e-poçtu və şifrəsi yazın.');
- if(!isoDate(startsOn)||!isoDate(endsOn)||startsOn>=endsOn)throw fail(400,'Dövrün son tarixi başlanğıcdan sonra olmalıdır.');
+ if(!isoDate(endsOn)||startsOn!==undefined&&(!isoDate(startsOn)||startsOn>=endsOn))throw fail(400,'Bitmə tarixi düzgün deyil.');
  if(!Array.isArray(rooms)||rooms.length<1||rooms.length>20)throw fail(400,'1–20 otaq əlavə edin.');
  const seen=new Set();
  return {requestId,email:email.trim(),password,startsOn,endsOn,rooms:rooms.map(room=>{
@@ -31,9 +32,17 @@ export async function saveNetflixRooms(pool,security,secret,actor,input){
  try{
   await c.query('begin');
   await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['netflix-room:'+accountKey]);
+  await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',['netflix-room-request:'+b.requestId.toLowerCase()]);
+  const {rows:[existing]}=await c.query(`select fingerprint from ${G} where id=$1`,[b.requestId]);
+  if(existing){
+   if(existing.fingerprint!==fingerprint)throw fail(409,'Bu sorğu fərqli məlumatla artıq istifadə olunub.');
+   await c.query('commit');return {added:b.rooms.length,replayed:true};
+  }
+  const startsOn=b.startsOn??bakuDate();
+  if(startsOn>=b.endsOn)throw fail(400,'Bitmə tarixi Bakı vaxtı ilə bu gündən sonra olmalıdır.');
   const inserted=await c.query(`insert into ${G}(id,fingerprint,account_key,account_cipher,starts_on,ends_on,created_by)
    values($1,$2,$3,$4,$5,$6,$7) on conflict(id) do nothing returning id`,[b.requestId,fingerprint,accountKey,
-   security.encryptSecret(JSON.stringify({id:b.requestId,email:b.email,password:b.password})),b.startsOn,b.endsOn,actor]);
+   security.encryptSecret(JSON.stringify({id:b.requestId,email:b.email,password:b.password})),startsOn,b.endsOn,actor]);
   if(!inserted.rowCount){
    const {rows:[old]}=await c.query(`select fingerprint from ${G} where id=$1`,[b.requestId]);
    if(old?.fingerprint!==fingerprint)throw fail(409,'Bu sorğu fərqli məlumatla artıq istifadə olunub.');
