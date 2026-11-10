@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
-import {netflixRooms,saveNetflixRooms,editNetflixRoom} from '../mirpanel-admin/community/netflix-room-stock.mjs';
+import {netflixRooms,saveNetflixRooms,editNetflixRoom,netflixRoomPassword} from '../mirpanel-admin/community/netflix-room-stock.mjs';
 import {roomEndDate} from '../mirpanel-admin/public/ready-stock-admin.js';
 import {bakuDate} from '../mirpanel-admin/payment-order-lifecycle.mjs';
 assert.deepEqual(roomEndDate('10 dekabr',new Date('2026-11-10T12:00:00Z')),{iso:'2026-12-10',label:'10 dekabr 2026',days:30});
@@ -33,6 +33,8 @@ try{
  assert.equal(JSON.parse(security.decryptSecret(row.pin_cipher)).pin,'0408');
  assert.doesNotMatch(row.pin_cipher,/^0408$/);
  const id=result.rooms.find(r=>r.name==='1').id;
+ assert.deepEqual(await netflixRoomPassword(f.pool,security,id),{password:b.password});
+ await assert.rejects(netflixRoomPassword(f.pool,security,f.id()),{status:404});
  const edit=input=>editNetflixRoom(f.pool,security,{id,...input});
  assert.deepEqual(await edit({action:'open'}),{id,name:'1',pin:'0408',editable:true});
  await assert.rejects(edit({action:'save',name:'2',pin:'0408'}),{status:409});

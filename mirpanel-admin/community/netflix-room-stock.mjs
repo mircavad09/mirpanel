@@ -10,6 +10,14 @@ function parseRoom(room){
  if(!name||name.length>50||/[\x00-\x1f\x7f]/.test(name)||typeof pin!=='string'||!/^\d{4}$/.test(pin))throw fail(400,'Otaq adı və dörd rəqəmli PIN yazın.');
  return {name,key:name.toLowerCase(),pin};
 }
+export async function netflixRoomPassword(pool,security,id){
+ if(!roomId(id))throw fail(400,'Otaq sorğusu düzgün deyil.');
+ const {rows:[group]}=await pool.query(`select g.id,g.account_cipher from ${U} r join ${G} g on g.id=r.group_id where r.id=$1`,[id]);
+ if(!group)throw fail(404,'Otaq tapılmadı.');
+ const value=JSON.parse(security.decryptSecret(group.account_cipher));
+ if(value.id!==group.id||typeof value.password!=='string')throw fail(409,'Netflix şifrəsi oxunmadı.');
+ return {password:value.password};
+}
 export async function editNetflixRoom(pool,security,input){
  const {id,action}=input;
  if(!roomId(id)||!['open','save'].includes(action))throw fail(400,'Otaq sorğusu düzgün deyil.');

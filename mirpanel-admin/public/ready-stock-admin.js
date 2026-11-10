@@ -56,7 +56,7 @@ export function mountReadyStock(host,api){
   <form autocomplete="off" hidden>
    <div class="netflixRoomCredentials">
     <label>Netflix e-poçtu<input name="email" type="email" maxlength="254" required></label>
-    <label>Netflix şifrəsi<input name="password" type="password" maxlength="512" autocomplete="new-password" required></label>
+    <label>Netflix şifrəsi<input name="password" type="text" maxlength="512" autocomplete="off" spellcheck="false" autocapitalize="off" required></label>
    </div>
    <label>Bitmə tarixi<input name="endsOn" type="text" placeholder="məs. 10 dekabr" maxlength="24" required aria-describedby="netflixRoomDatePreview"></label>
    <p id="netflixRoomDatePreview" aria-live="polite"></p>
@@ -85,7 +85,7 @@ export function mountReadyStock(host,api){
    const {room,pin}=form.elements,save=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]');
    room.value=result.name;pin.value=result.pin;
    if(!result.editable){room.readOnly=pin.readOnly=true;save.remove();}
-   const dismiss=()=>{pin.value='';form.remove();button.hidden=false;button.focus();};
+   const dismiss=()=>{pin.value='';if(form.elements.password)form.elements.password.value='';form.remove();button.hidden=false;button.focus();};
    close.onclick=dismiss;
    form.onsubmit=async event=>{
     event.preventDefault();if(!result.editable||save.disabled)return;
@@ -98,6 +98,12 @@ export function mountReadyStock(host,api){
     finally{save.disabled=close.disabled=room.disabled=pin.disabled=false;}
    };
    button.hidden=true;node.append(form);pin.focus();
+   void editRoom({action:'password',id:row.id}).then(({password})=>{
+    if(!form.isConnected||typeof password!=='string')return;
+    const label=document.createElement('label'),field=document.createElement('input');
+    label.textContent='Netflix şifrəsi';field.name='password';field.type='text';field.readOnly=true;field.value=password;
+    field.autocomplete='off';field.spellcheck=false;label.append(field);form.prepend(label);
+   }).catch(e=>{if(form.isConnected&&e.status!==403)roomStatus.textContent='Netflix şifrəsi açıla bilmədi.';});
   }catch(e){roomStatus.textContent=e.message||'Otaq açıla bilmədi.';}
   finally{button.disabled=false;}
  }

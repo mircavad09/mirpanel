@@ -1378,6 +1378,7 @@ const paymentSystem = createPaymentSystem({
   cancelFulfillment: (...args)=>ownerCommunity.cancelFulfillment(...args),
   approveCardWithReadyStock: (...args)=>ownerCommunity.approveCardWithReadyStock(...args),
   readyStockAllowed: request=>getSession(request)?.role==='admin',
+  readyStockOwnerAllowed: async request=>getSession(request)?.role==='admin'&&!!await ownerCommunity.verifiedOwnerId(),
   readyStock: (...args)=>ownerCommunity.readyStock(...args),
   saveProductMessage: (...args)=>ownerCommunity.saveProductMessage(...args),
   saveReadyStock: (...args)=>ownerCommunity.saveReadyStock(...args),

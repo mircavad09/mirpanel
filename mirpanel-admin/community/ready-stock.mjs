@@ -4,7 +4,7 @@ import {planKey} from '../payment-profit.mjs';
 import {adminPendingDeliveries,recordDelivery} from './order-delivery.mjs';
 
 import {readProductMessages} from './ready-stock-product-messages.mjs';
-import {netflixRooms,saveNetflixRooms,editNetflixRoom} from './netflix-room-stock.mjs';
+import {netflixRooms,saveNetflixRooms,editNetflixRoom,netflixRoomPassword} from './netflix-room-stock.mjs';
 
 const S='mirpanel_community.ready_stock_';
 const fail=(status,message)=>Object.assign(Error(message),{status});
@@ -41,6 +41,7 @@ export async function readyStockView(pool,catalog,inventory,security){
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
  if(input?.netflixRooms||input?.netflixRoomEdit){
   if(!(await pool.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present)throw fail(503,'Netflix otaq stoku üçün baza yeniləməsi lazımdır.');
+  if(input.netflixRoomEdit?.action==='password')return netflixRoomPassword(pool,security,input.netflixRoomEdit.id);
   return input.netflixRoomEdit?editNetflixRoom(pool,security,input.netflixRoomEdit):saveNetflixRooms(pool,security,secret,actor,input.netflixRooms);
  }
  const {productId,index,planSignature,requestId,messages=[],accounts,autoWallet}=input||{};

@@ -676,7 +676,10 @@ export function createPaymentSystem(options) {
         json(response,200,await options.readyStock(catalog,catalog.products.map(p=>inventoryAvailability(p,inventory.find(i=>i.productId===p.id))),security));return true;
       }
       if(request.method==='POST'){
-        json(response,200,await options.saveReadyStock(security,config.tokenSecret,catalog,actorName,await readBody(request,700000)));return true;
+        const body=await readBody(request,700000);
+        if(body?.netflixRoomEdit?.action==='password'&&!await options.readyStockOwnerAllowed?.(request))
+          throw Object.assign(Error('Saxlanmış Netflix şifrəsi yalnız sahib-adminə açıqdır.'),{status:403});
+        json(response,200,await options.saveReadyStock(security,config.tokenSecret,catalog,actorName,body));return true;
       }
     }
 
