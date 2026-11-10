@@ -230,11 +230,9 @@ function showTopupResult(saved){
  message.append(heading,el('p','Ödənişiniz yoxlanılır. Nəticəni Ödənişlərim bölməsində izləyə bilərsiniz.'),el('p','Müraciət № '+saved.number+' · '+checkoutMoney(saved.cents),'shop-result-reference'));
  const actions=el('nav',null,'shop-result-actions');actions.setAttribute('aria-label','Ödənişdən sonra');
  for(const [text,url,variant,path] of [
-  ['Ödənişlərimə bax','/profil?tab=payments&topup='+encodeURIComponent(saved.id),'orders','<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18m-13 5h3"/>'],
-  ['Məhsullara bax','/mehsullar','products','<path d="M5 7h14l1 14H4L5 7Zm3 0V5a4 4 0 0 1 8 0v2"/>'],
+  ['Ödənişlərimə bax','/profil?tab=payments&topup='+encodeURIComponent(saved.id),'orders','<path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3Zm3 5h6m-6 4h6"/>'],
+  ['Məhsullara bax','/mehsul','products','<path d="m4 7 8-4 8 4-8 4-8-4Zm0 0v10l8 4 8-4V7m-8 4v10"/>'],
   ['Ana səhifə','/','home','<path d="m3 10 9-7 9 7v11H3V10Zm6 11v-8h6v8"/>']]){const a=link('',url);a.classList.add('shop-result-action--'+variant);a.append(checkoutIcon(path),el('span',text));actions.append(a);}
- const back=backFromWallet();
- if(back==='/odenis?mode=wallet')actions.append(link('Alışa qayıt',back));
  result.append(badge,message,actions);app.replaceChildren(result);window.scrollTo({top:0,behavior:'instant'});heading.focus({preventScroll:true});
 }
 async function wallet(){let data;try{data=await api('/wallet');}catch(e){if(e.status===401){login();return;}throw e;}
