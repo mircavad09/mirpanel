@@ -957,6 +957,10 @@ const DATA = {
       "formFields": [],
       "formTitle": "",
       "formDescription": "",
+      "orderGuide": {
+        "information": "• Hesaba giriş üçün təqdim olunan bütün məlumatları diqqətlə saxlayın və təhlükəsizliyini təmin edin\n• Yalnız sizə təqdim edilmiş profil üzərindən istifadə edin, giriş məlumatlarını üçüncü şəxslərlə paylaşmayın\n• Hesab və profil parametrlərində hər hansı dəyişiklik etməyin\n• İstifadə qaydalarına əməl edilmədiyi təqdirdə xidmət xəbərdarlıq edilmədən dayandırıla bilər",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
@@ -981,20 +985,20 @@ const DATA = {
           "warrantyUnit": "day",
           "warrantyDuration": 27,
           "bestValue": false,
+          "pricingId": "6814465e-5ab7-43da-9e2b-56199661f001",
           "label": "1 ay",
           "months": 1,
-          "price": 2.99,
-          "pricingId": "6814465e-5ab7-43da-9e2b-56199661f001"
+          "price": 2.99
         },
         {
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 160,
           "bestValue": true,
+          "pricingId": "9a89cb3d-75f9-4c20-b626-7f879bc6e2df",
           "label": "6 ay",
           "months": 6,
-          "price": 9.99,
-          "pricingId": "9a89cb3d-75f9-4c20-b626-7f879bc6e2df"
+          "price": 9.99
         }
       ],
       "orderConfirmation": {
