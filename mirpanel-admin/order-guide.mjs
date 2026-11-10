@@ -12,6 +12,11 @@ const spotifyPhoneSteps=[
  ['spotify-password','Spotify şifrənizi yazın və «Oturum aç» düyməsinə toxunun.'],
  ['spotify-premium','Profil menyusunu açın. «Premium üyeliğin» sətrində yaşıl «Bireysel» nişanını yoxlayın.']
 ].map(([animation,description])=>({animation,description,image:''}));
+const capcutDesktopSteps=[
+ ['capcut-desktop-open','CapCut-u kompüterdə açın. «Join Pro» yazısının üstündəki «Sign Up» və ya «Sign in» düyməsinə basın.'],
+ ['capcut-desktop-choose','Giriş pəncərəsində «Use QR code» seçin. QR kodu solda, telefonla oxutma qaydası sağda görünür.'],
+ ['capcut-desktop-scan','CapCut tətbiqində «Ben» bölməsini açın, «Scan» seçin və kompüterinizdə göstərilən QR kodu oxudun.']
+].map(([animation,description])=>({animation,description,image:''}));
 const guideAnimations=new Set(['ben','sign-in','email','password','pro']);
 const netflixDesktopSteps=[
  ['home','Netflix ana səhifəsində sağ üstdəki “Sign In” düyməsinə klikləyin.'],
@@ -63,6 +68,10 @@ export function orderGuideFor(product,plan,savedName){
   tracks.phone=netflixPhoneSteps.map(step=>({...step}));
   tracks.desktop=netflixDesktopSteps.map(step=>({...step}));
   tracks.tv=netflixTvSteps.map(step=>({...step}));
+ }
+ if(product?.id==='capcut'){
+  tracks.desktop=capcutDesktopSteps.map(step=>({...step}));
+  delete tracks.desktopQr;
  }
  if(product?.id==='spotify')tracks.phone=spotifyPhoneSteps.map(step=>({...step}));
  if(phoneOnlyGuide(plan)||phoneOnlyGuide({label:savedName}))delete tracks.desktopQr;

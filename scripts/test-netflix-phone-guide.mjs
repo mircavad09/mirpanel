@@ -17,7 +17,9 @@ for(const productId of ['capcut','netflix_umumi','netflix_sexsi']){
  const before=JSON.stringify(product);
  const result=orderGuideFor(product,{},'');
  assert.equal(JSON.stringify(product),before);
- assert.deepEqual(result.tracks,orderGuideFor({...product,id:'control'}, {},'').tracks);
+ const {desktop,...existing}=result.tracks;
+ assert.deepEqual(existing,orderGuideFor({...product,id:'control'}, {},'').tracks);
+ assert.equal(desktop?.length,productId==='capcut'?3:undefined);
 }
 const guide=orderGuideFor({id:'netflix',orderGuide:{information:'Mövcud məlumat mətni',tracks:{general:[{image:'/uploads/demo.png',description:'Ümumi təlimat'}]}}},{},'1 aylıq');
 assert.equal(guide.tracks.phone.length,5);assert.equal(guide.information,'Mövcud məlumat mətni');assert.equal(guide.tracks.general.length,1);

@@ -1,3 +1,59 @@
+function capcutSamplePattern(create){
+ const pattern=create('div',null,'capcut-pc-mosaic');pattern.setAttribute('aria-hidden','true');
+ for(let i=0;i<144;i++)pattern.append(create('i'));
+ return pattern;
+}
+
+function capcutDesktopScreen(scene,create){
+ const screen=create('div',null,'capcut-pc');screen.dataset.scene=scene;
+ const box=(text,cls)=>create('div',text,cls);
+ const target=(text,cls)=>{const el=box(text,cls+' capcut-pc-target');el.append(create('span','➤','capcut-pc-cursor'));return el;};
+ const sidebar=box(null,'capcut-pc-sidebar');
+ sidebar.append(create('strong','CapCut'));
+ if(scene!=='open')sidebar.append(box('Sign in','capcut-pc-sign'),box('Join Pro','capcut-pc-pro'));
+ sidebar.append(box('Home'),box('Templates'),box('Video Studio'),box('Design Studio'),box('Library'));
+ const workspace=box(null,'capcut-pc-workspace'),tiles=box(null,'capcut-pc-tiles');
+ for(const label of ['EditPilot','AI image','Extend video','AI edit'])tiles.append(box(label));
+ workspace.append(box('＋ Create project','capcut-pc-project'),tiles,box('AI-powered creative suite','capcut-pc-heading'),box(null,'capcut-pc-artwork'),box('Projects','capcut-pc-heading'));
+ screen.append(sidebar,workspace);
+ if(scene==='open'){
+  const account=box(null,'capcut-pc-account');
+  account.append(target('Sign Up','capcut-pc-sign'),box('Join Pro','capcut-pc-pro'));
+  screen.append(account,box('Sxematik görünüş','capcut-pc-schematic'));return screen;
+ }
+ const windowFor=cls=>{
+  const panel=box(null,'capcut-pc-window '+cls);
+  panel.append(box('×','capcut-pc-titlebar'),create('strong','CapCut','capcut-pc-brand'));
+  return panel;
+ };
+ const qr=windowFor('capcut-pc-qr-window');
+ const content=box(null,'capcut-pc-qr-content'),sample=box(null,'capcut-pc-sample');
+ sample.append(capcutSamplePattern(create),create('strong','Nümunə'));
+ const steps=box(null,'capcut-pc-qr-steps');
+ steps.append(box('Open the CapCut app on your phone'),box('Tap ♙ → ▣ Scan'));
+ const illustration=box(null,'capcut-pc-qr-illustration');
+ illustration.append(box('Ben'),box('▣ Scan'));steps.append(illustration);
+ content.append(sample,steps);qr.append(content,box('Go back to sign in','capcut-pc-back'));
+ screen.append(qr);
+ if(scene==='choose'){
+  const signin=windowFor('capcut-pc-login');
+  signin.append(box('Sign in with TikTok','capcut-pc-method'),box('or','capcut-pc-or'),target('▣  Use QR code','capcut-pc-method'),box('Sign in with Facebook','capcut-pc-method'),box('Sign in with Google','capcut-pc-method'));
+  screen.append(signin);
+ }
+ return screen;
+}
+
+function capcutScanPhone(create){
+ const phone=create('div',null,'capcut-pc-phone');
+ const profile=create('div',null,'capcut-pc-phone-profile');
+ profile.append(create('strong','CapCut'),create('span','Ben','capcut-pc-ben'),create('span','▣ Scan','capcut-pc-scan'));
+ const scanner=create('div',null,'capcut-pc-scanner');
+ const frame=create('div',null,'capcut-pc-scan-frame');frame.append(capcutSamplePattern(create));
+ scanner.append(create('strong','Scan'),frame);
+ phone.append(profile,scanner);
+ return phone;
+}
+
 function spotifyScreen(animation,create){
  const screen=create('div',null,'spotify-demo');screen.dataset.scene=animation;screen.lang='tr';
  const box=(text,cls)=>create('div',text,cls);
@@ -475,6 +531,7 @@ function netflixScreen(animation,create){
   let data=null,failed=false,active='info',track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
   const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
   phoneShell.append(phoneScreen);
+  const capcutStage=create('div',null,'capcut-pc-stage'),scanSlot=create('div',null,'capcut-pc-scan-slot');
   const laptop=create('div',null,'netflix-laptop'),laptopScreen=create('div',null,'netflix-laptop-screen'),deck=create('div',null,'netflix-laptop-deck'),keys=create('div',null,'netflix-laptop-keyboard');
   for(let i=0;i<48;i++)keys.append(create('i'));
   deck.setAttribute('aria-hidden','true');deck.append(keys,create('div',null,'netflix-laptop-touchpad'));laptop.append(laptopScreen,deck);
@@ -505,7 +562,8 @@ function netflixScreen(animation,create){
     b.setAttribute('aria-pressed',String(track===key));choices.append(b);
    }
    const steps=data.tracks[track],current=steps[step],layout=create('div',null,'browser-guide-step');
-   const desktop=track==='desktop'&&current.animation?.startsWith('netflix-desktop-');
+   const capcutDesktop=track==='desktop'&&current.animation?.startsWith('capcut-desktop-');
+   const desktop=capcutDesktop||track==='desktop'&&current.animation?.startsWith('netflix-desktop-');
    const television=track==='tv'&&current.animation?.startsWith('netflix-tv-');
    const compact=television||desktop||track==='phone'&&steps.some(item=>item.animation);
    if(compact)layout.classList.add('browser-guide-compact');
@@ -522,8 +580,16 @@ function netflixScreen(animation,create){
     if(!steadyLayout)visual.append(tv);
    }else if(desktop){
     layout.classList.add('netflix-desktop-guide');
-    laptopScreen.replaceChildren(netflixDesktopScreen(current.animation.slice('netflix-desktop-'.length),create));
-    if(!steadyLayout)visual.append(laptop);
+    if(capcutDesktop){
+     const scene=current.animation.slice('capcut-desktop-'.length);
+     capcutStage.dataset.scene=scene;
+     laptopScreen.replaceChildren(capcutDesktopScreen(scene,create));
+     scanSlot.replaceChildren(...(scene==='scan'?[capcutScanPhone(create)]:[]));
+     if(!steadyLayout){capcutStage.append(laptop,scanSlot);visual.append(capcutStage);}
+    }else{
+     laptopScreen.replaceChildren(netflixDesktopScreen(current.animation.slice('netflix-desktop-'.length),create));
+     if(!steadyLayout)visual.append(laptop);
+    }
    }else if(handset){
     visual.classList.add('browser-guide-visual-handset');
     phoneScreen.replaceChildren(spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));

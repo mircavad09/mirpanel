@@ -561,3 +561,58 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .netflix-tv-mail{margin:0 auto 3.25cqw;color:#ff869b;width:7cqw}
 .netflix-tv-mail svg{display:block;width:100%;height:auto}
 @media(prefers-reduced-motion:reduce){.netflix-tv-focus,.netflix-tv-typed>span{animation:none;visibility:visible}.netflix-tv-focus{box-shadow:0 0 1.7cqw #9ee6ff}}
+
+
+.capcut-pc-stage{display:grid;grid-template-columns:minmax(0,1fr) 23%;gap:4%;align-items:center;width:min(100%,690px);margin:auto}
+.capcut-pc-stage .netflix-laptop{width:100%;min-width:0}
+.capcut-pc-scan-slot{min-width:0;container-type:inline-size}
+.capcut-pc{height:100%;position:relative;display:grid;grid-template-columns:19% 1fr;gap:2%;overflow:hidden;background:linear-gradient(#051d20,#0b0b0c 64%);color:#eee;font:500 2.7cqw/1.25 Arial,sans-serif}
+.capcut-pc-sidebar,.capcut-pc-workspace{padding:2cqw 1.5cqw;display:grid;align-content:start;gap:2cqw;min-width:0}
+.capcut-pc-sidebar{font-size:2.3cqw;background:#0c1517}.capcut-pc-sidebar strong{font-size:3.1cqw}
+.capcut-pc-sidebar>div{padding:.6cqw;background:#122326}
+.capcut-pc-project{padding:4cqw;background:linear-gradient(125deg,#72d9e5,#00acc7);border-radius:1cqw;color:#092124;text-align:center;font-weight:800;font-size:3.7cqw}
+.capcut-pc-tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:1.4cqw;font-size:2.4cqw}
+.capcut-pc-tiles>div{background:#143337;border-radius:.8cqw;padding:2cqw 1cqw}
+.capcut-pc-heading{font-weight:700;font-size:2.6cqw}
+.capcut-pc-artwork{height:8cqw;border-radius:1cqw;background:linear-gradient(100deg,#059eca 28%,#0c2023 28% 32%,#7ed0eb 32% 62%,#0c2023 62% 66%,#5e76cf 66%)}
+.capcut-pc-account{position:absolute;right:2.8%;top:5%;display:grid;gap:1cqw;padding:1.5cqw;background:#132327;border-radius:1cqw;text-align:center;font-size:3cqw;min-width:16cqw}
+.capcut-pc-sign,.capcut-pc-pro{padding:.8cqw 1.3cqw;border-radius:.6cqw;background:#273537;font-weight:700}
+.capcut-pc-sidebar .capcut-pc-pro,.capcut-pc-pro{background:linear-gradient(90deg,#fae0ff,#83ecf3);color:#142023}
+.capcut-pc-schematic{position:absolute;right:3%;bottom:4%;background:#242a2c;padding:1cqw;border-radius:.6cqw;color:#d6d9dc}
+.capcut-pc-window{position:absolute;inset:3% 12%;box-sizing:border-box;background:#1b1b1c;border:1px solid #494949;box-shadow:0 0 0 100cqw #0006;text-align:center}
+.capcut-pc-titlebar{background:#333;text-align:right;padding:.3cqw 1.2cqw;font-size:2.7cqw}
+.capcut-pc-brand{display:block;font-size:3.8cqw;margin:1cqw 0}
+.capcut-pc-login{inset:3% 27%;padding-bottom:1cqw}
+.capcut-pc-method{margin:1cqw 2cqw;padding:1cqw;border:1px solid #555;border-radius:.7cqw;font-size:2.55cqw}
+.capcut-pc-method:first-of-type{background:#373737}.capcut-pc-or{font-size:2.2cqw;color:#aaa}
+.capcut-pc-qr-content{display:grid;grid-template-columns:1fr 1fr;align-items:center;gap:2cqw;margin:1cqw 2cqw;padding:1.8cqw;border:1px solid #565656;border-radius:1cqw}
+.capcut-pc-sample{display:grid;justify-items:center;gap:.5cqw;background:#fff;border-radius:.8cqw;padding:1.1cqw;color:#1b1b1c;justify-self:center;font-size:2.6cqw}
+.capcut-pc-mosaic{width:17cqw;aspect-ratio:1;display:grid;grid-template-columns:repeat(12,1fr);background:#fff}
+.capcut-pc-mosaic i:nth-child(5n+2),.capcut-pc-mosaic i:nth-child(7n),.capcut-pc-mosaic i:nth-child(11n+1){background:#14181a}
+.capcut-pc-qr-steps{font-size:2.65cqw;display:grid;gap:.6cqw}
+.capcut-pc-qr-illustration{width:19cqw;margin:.8cqw auto 0;border:2px solid #41494d;border-radius:2cqw;background:#eef3f4;color:#172327;text-align:left;padding:1.2cqw;font-weight:700}
+.capcut-pc-back{font-size:2.4cqw;color:#60dce5;margin-top:1.6cqw}
+.capcut-pc[data-scene=choose] .capcut-pc-login{animation:capcut-pc-hide .2s 2.55s both}
+.capcut-pc[data-scene=choose] .capcut-pc-qr-window{animation:capcut-pc-show .2s 2.55s both}
+.capcut-pc-target{position:relative;outline:2px solid #f6cb57;outline-offset:1px}
+.capcut-pc-cursor{position:absolute;z-index:1;right:-.6cqw;bottom:-1cqw;color:#fff;font-size:4cqw;text-shadow:0 0 2px #000;rotate:-35deg;animation:capcut-pc-click 1.5s ease-out both}
+.capcut-pc-phone{position:relative;aspect-ratio:1/1.85;border:clamp(2px,4cqw,6px) solid #34383e;border-radius:12cqw;background:#edf4f5;color:#15282b;overflow:hidden;box-shadow:0 0 0 1px #69787d;font:700 10cqw/1.2 Arial,sans-serif}
+.capcut-pc-phone-profile,.capcut-pc-scanner{position:absolute;inset:0;display:grid;align-content:start;gap:10cqw;padding:14cqw 8cqw}
+.capcut-pc-ben,.capcut-pc-scan{border-radius:5cqw;padding:5cqw;background:#c6e0e4}
+.capcut-pc-ben{animation:capcut-pc-point 1s .3s both}.capcut-pc-scan{animation:capcut-pc-point 1s 1.4s both}
+.capcut-pc-scanner{background:#102b30;color:#fff;animation:capcut-pc-show .3s 2.6s both}
+.capcut-pc-scan-frame{width:60cqw;aspect-ratio:1;box-sizing:border-box;border:2px dashed #71f0ee;border-radius:8cqw;display:grid;place-items:center;animation:capcut-pc-aim .65s 3s both}
+.capcut-pc[data-scene=scan] .capcut-pc-sample{animation:capcut-pc-point 1.3s 3s both}
+@keyframes capcut-pc-click{from{transform:translate(-5cqw,6cqw);opacity:.5}70%{transform:translate(0,0) scale(1.1)}to{transform:scale(.9);filter:drop-shadow(0 0 3px #eac64b)}}
+@keyframes capcut-pc-show{from{opacity:0;visibility:hidden}to{opacity:1;visibility:visible}}
+@keyframes capcut-pc-hide{from{opacity:1;visibility:visible}to{opacity:0;visibility:hidden}}
+@keyframes capcut-pc-point{50%,100%{box-shadow:0 0 0 2px #f6cb57}}
+.capcut-pc-scan-frame .capcut-pc-mosaic{width:38cqw;opacity:.9}
+@keyframes capcut-pc-aim{from{transform:translateX(12cqw);opacity:0}to{transform:translateX(-4cqw);opacity:1}}
+@media(max-width:600px){.capcut-pc-stage{grid-template-columns:minmax(0,1fr) 21%;gap:3%}}
+@media(prefers-reduced-motion:reduce){
+ .capcut-pc *,.capcut-pc-phone *{animation:none!important}
+ .capcut-pc[data-scene=choose] .capcut-pc-login{animation:capcut-pc-hide 0s 2.55s both!important}
+ .capcut-pc[data-scene=choose] .capcut-pc-qr-window{animation:capcut-pc-show 0s 2.55s both!important}
+ .capcut-pc-scanner{animation:capcut-pc-show 0s 2.6s both!important}
+}
