@@ -597,7 +597,7 @@ const DATA = {
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "Yalnız sizə ayrılmış Netflix profilindən istifadə edin. Eyni anda bir cihazda izləyin. Hesabın şifrəsini dəyişməyin və giriş məlumatlarını paylaşmayın.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -629,7 +629,7 @@ const DATA = {
       "orderConfirmation": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "Yalnız sizə ayrılmış Netflix profilindən istifadə edin. Eyni anda bir cihazda izləyin. Hesabın şifrəsini dəyişməyin və giriş məlumatlarını paylaşmayın.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",

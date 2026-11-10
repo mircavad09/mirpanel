@@ -160,7 +160,7 @@
   <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>
   <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>
 </ul></article>
-        <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden><h2>İstifadə qaydaları</h2>Netflix Şəxsi otaq: Plan seç → Ad və 4 rəqəmli kod yaz.</article>
+        <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden><h2>İstifadə qaydaları</h2>Ödəniş təsdiqləndikdən sonra otaq və PIN Sifarişlərim bölməsində göstərilir.</article>
       </div>
     </section>
 
@@ -201,9 +201,9 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-156ba8ee3e0b74bf"></script>
+  <script src="/app.js?v=catalog-bfee5acf4fc10283"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
-  <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
+  <script src="/order-confirmation.js?v=netflix-ready-rooms-1"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>
   <script src="/product-page.js?v=seller-pricing-1"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
