@@ -95,7 +95,7 @@ export function roomSheetStyleRequests(sheetId){
  for(const [index,status] of roomStatusStyles.entries()){
   requests.push({addConditionalFormatRule:{index,rule:{
    ranges:[{sheetId,startRowIndex:1,startColumnIndex:5,endColumnIndex:6}],
-   booleanRule:{condition:{type:'CUSTOM_FORMULA',values:[{userEnteredValue:'=LEFT($F2,FIND(CHAR(10),$F2&CHAR(10))-1)="'+status.caption+'"'}]},
+   booleanRule:{condition:{type:'TEXT_STARTS_WITH',values:[{userEnteredValue:status.caption}]},
     format:{backgroundColor:color(status.background),textFormat:{
      foregroundColor:color(status.foreground),bold:status.name==='Ödəniş edib'
     }}}

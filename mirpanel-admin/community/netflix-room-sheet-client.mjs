@@ -74,7 +74,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    const rules=stockSheet.conditionalFormats||[];
    const cleanup=rules.flatMap((rule,index)=>{
     const owned=rule.ranges?.length===1&&rule.ranges[0].startColumnIndex===5&&rule.ranges[0].endColumnIndex===6&&
-     (rule.booleanRule?.condition?.type==='TEXT_EQ'&&captions.has(rule.booleanRule.condition.values?.[0]?.userEnteredValue)||
+     (['TEXT_EQ','TEXT_STARTS_WITH'].includes(rule.booleanRule?.condition?.type)&&captions.has(rule.booleanRule.condition.values?.[0]?.userEnteredValue)||
       rule.booleanRule?.condition?.type==='CUSTOM_FORMULA'&&[...captions].some(caption=>
        rule.booleanRule.condition.values?.[0]?.userEnteredValue==='=LEFT($F2,FIND(CHAR(10),$F2&CHAR(10))-1)="'+caption+'"'));
     return owned?[{deleteConditionalFormatRule:{sheetId,index}}]:[];

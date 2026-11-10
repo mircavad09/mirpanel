@@ -25,5 +25,5 @@ assert.ok(examples[2].values[5].includes('1 dekabr → 1 mart'));
 assert.ok(examples[3].values[5].includes('1 dekabr → 1 iyun'));
 assert.ok(examples[4].values[5].includes('1 dekabr → 1 aprel'));
 assert.ok(examples[5].values[5].startsWith('Yenilənməyib'));
-assert.ok(roomSheetStyleRequests(7).filter(r=>r.addConditionalFormatRule).every(r=>r.addConditionalFormatRule.rule.booleanRule.condition.type==='CUSTOM_FORMULA'));
+assert.ok(roomSheetStyleRequests(7).filter(r=>r.addConditionalFormatRule).every(r=>r.addConditionalFormatRule.rule.booleanRule.condition.type==='TEXT_STARTS_WITH'));
 console.log('PASS: 1/3/6 months, early/late renewals, pending/rejected exclusion, duplicate renewal, account date isolation and six synthetic examples');
