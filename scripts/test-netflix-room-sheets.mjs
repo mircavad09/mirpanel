@@ -32,16 +32,20 @@ async function checkGooglePayload(){
  const {privateKey}=crypto.generateKeyPairSync('rsa',{modulusLength:2048});
  const account={client_email:'synthetic@test.iam.gserviceaccount.com',private_key:privateKey.export({type:'pkcs8',format:'pem'})};
  let publicLink=true,write,header;
+ const batches=[];
  const api=roomSheetClient('synthetic-spreadsheet-id',account,'owner@example.test',async(url,options)=>{
   if(url.includes('/token'))return Response.json({access_token:'synthetic',expires_in:3600});
   if(url.includes('/permissions'))return Response.json({permissions:[{type:'user',role:'owner',emailAddress:'owner@example.test'},
    {type:'user',role:'writer',emailAddress:account.client_email},...(publicLink?[{type:'anyone',role:'reader'}]:[])]});
   if(url.includes('fields=properties'))return Response.json({properties:{title:sheetTitle},sheets:[{properties:{title:examplesTitle,sheetId:8}},{properties:{title:'Otaqlar',sheetId:7}}]});
+  if(decodeURIComponent(url).endsWith('A1:F1'))return Response.json({values:[sheetHeaders]});
+  if(decodeURIComponent(url).includes('!E2:E?'))return Response.json({values:[[47821],['9 dekabr']]});
   if(decodeURIComponent(url).endsWith('A1:H1'))return Response.json({values:header?[header]:[]});
   if(decodeURIComponent(url).endsWith('A2:H')||url.includes('valueRenderOption=UNFORMATTED_VALUE'))return Response.json({});
   if(decodeURIComponent(url).endsWith('G2:G'))return Response.json({values:[['other-room'],['test-room']]});
   if(url.endsWith(':batchUpdate')){
    const operations=JSON.parse(options.body).requests;
+   batches.push(...operations);
    if(operations[0].updateSpreadsheetProperties){header=operations[1].updateCells.rows[0].values.map(v=>v.userEnteredValue.stringValue);}
    if(operations[0].updateCells)write=operations[0];
    return Response.json({});
@@ -56,6 +60,18 @@ async function checkGooglePayload(){
  assert.equal(write.updateCells.rows[0].values[3].userEnteredValue.stringValue,'=1+1');
  assert.equal(write.updateCells.rows[0].values[5].userEnteredValue.stringValue,paidStatus);
  assert.equal(write.updateCells.rows[0].values[4].userEnteredFormat.numberFormat.pattern,'d \"yanvar\"');
+ batches.length=0;
+ await api.applyLightStyle();
+ assert.ok(batches.every(operation=>!operation.setBasicFilter&&!operation.updateBorders&&!operation.clearBasicFilter));
+ const stripe=batches.find(operation=>operation.addConditionalFormatRule).addConditionalFormatRule.rule;
+ assert.deepEqual(stripe.ranges,[{sheetId:7,startRowIndex:1,endColumnIndex:6}]);
+ assert.equal(stripe.booleanRule.condition.values[0].userEnteredValue,'=ISEVEN(ROW())');
+ const formats=batches.filter(operation=>operation.updateCells).map(operation=>operation.updateCells);
+ assert.equal(formats.length,1);
+ assert.equal(formats[0].start.columnIndex,4);
+ assert.equal(formats[0].fields,'userEnteredFormat.numberFormat');
+ assert.equal(formats[0].rows[0].values[0].userEnteredValue,undefined);
+
 }
 try{
  await checkGooglePayload();

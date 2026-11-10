@@ -1,5 +1,5 @@
 import {createSign} from 'node:crypto';
-import {roomSheetCells,roomSheetStyleKey,roomSheetStyleVersion,roomSheetStyleRequests,roomPresentationUpdates,roomStatusStyles} from './netflix-room-sheet-style.mjs';
+import {roomSheetCells,roomSheetStyleKey,roomSheetStyleVersion,roomSheetStyleRequests,roomPresentationUpdates,roomStatusStyles,roomStripeFormula} from './netflix-room-sheet-style.mjs';
 
 export const sheetTitle='Netflix Şəxsi — Otaq stoku';
 export const sheetHeaders=['Müştəri ID-si','Otaq adı və PIN','Gmail','Şifrə','Bitmə tarixi','Status'];
@@ -45,7 +45,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
      !entries.some(p=>p.type==='user'&&p.role==='owner'&&!p.deleted&&p.emailAddress?.toLowerCase()===ownerEmail.toLowerCase())||
      !entries.some(p=>p.type==='user'&&p.role==='writer'&&!p.deleted&&p.emailAddress===account.client_email))
    throw Error('ROOM_SHEET_ACCESS');
-  const metadata=await request(endpoint+'?fields=properties(title),sheets(properties(sheetId,title,gridProperties(columnCount,rowCount)),developerMetadata,conditionalFormats)');
+  const metadata=await request(endpoint+'?fields=properties(title),sheets(properties(sheetId,title,gridProperties(columnCount,rowCount)),developerMetadata,conditionalFormats,basicFilter,filterViews,bandedRanges)');
   const stockSheets=metadata.sheets?.filter(sheet=>sheet.properties.title!==examplesTitle)??[];
   if(stockSheets.length!==1||metadata.sheets.length>2)throw Error('ROOM_SHEET_DESTINATION');
   const stockSheet=stockSheets[0];
@@ -53,7 +53,40 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   const range=name=>endpoint+'/values/'+encodeURIComponent("'"+title.replaceAll("'","''")+"'!"+name);
   return {metadata,stockSheet,sheetId,range};
  }
+ async function applyStyle(stockSheet,sheetId,range){
+  if(stockSheet.developerMetadata?.some(item=>
+   item.metadataKey===roomSheetStyleKey&&item.metadataValue===roomSheetStyleVersion))return;
+  const dates=(await request(range('E2:E')+'?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER')).values||[];
+  const updates=roomPresentationUpdates(sheetId,dates);
+  const captions=new Set(roomStatusStyles.map(status=>status.caption));
+  const rules=stockSheet.conditionalFormats||[];
+  const cleanup=rules.flatMap((rule,index)=>{
+   const owned=rule.ranges?.length===1&&rule.ranges[0].startColumnIndex===5&&rule.ranges[0].endColumnIndex===6&&
+    (['TEXT_EQ','TEXT_STARTS_WITH'].includes(rule.booleanRule?.condition?.type)&&captions.has(rule.booleanRule.condition.values?.[0]?.userEnteredValue)||
+     rule.booleanRule?.condition?.type==='CUSTOM_FORMULA'&&[...captions].some(caption=>
+      rule.booleanRule.condition.values?.[0]?.userEnteredValue==='=LEFT($F2,FIND(CHAR(10),$F2&CHAR(10))-1)="'+caption+'"'));
+   const stripe=rule.ranges?.length===1&&rule.ranges[0].startRowIndex===1&&
+    !rule.ranges[0].startColumnIndex&&rule.ranges[0].endColumnIndex===6&&
+    rule.booleanRule?.condition?.type==='CUSTOM_FORMULA'&&
+    rule.booleanRule.condition.values?.[0]?.userEnteredValue===roomStripeFormula;
+   return (owned||stripe)?[{deleteConditionalFormatRule:{sheetId,index}}]:[];
+  }).reverse();
+  await request(endpoint+':batchUpdate',{requests:[...cleanup,...roomSheetStyleRequests(sheetId)]});
+  for(let offset=0;offset<updates.length;offset+=200){
+   await request(endpoint+':batchUpdate',{requests:updates.slice(offset,offset+200)});
+  }
+  await request(endpoint+':batchUpdate',{requests:[{createDeveloperMetadata:{developerMetadata:{
+   metadataKey:roomSheetStyleKey,metadataValue:roomSheetStyleVersion,visibility:'DOCUMENT',location:{sheetId}
+  }}}]});
+ }
  return {
+ async applyLightStyle(){
+  const {metadata,stockSheet,sheetId,range}=await stockDestination();
+  const headers=(await request(range('A1:F1'))).values?.[0];
+  if(metadata.properties?.title!==sheetTitle||JSON.stringify(headers)!==JSON.stringify(sheetHeaders))
+   throw Error('ROOM_SHEET_HEADERS');
+  await applyStyle(stockSheet,sheetId,range);
+ },
  async writeCustomerId(delivery,memberNumber){
   const {sheetId,range}=await stockDestination();
   const read=async()=>locateCustomerIdCell((await request(range('A1:C')+'?valueRenderOption=FORMULA')).values||[],delivery,memberNumber);
@@ -91,31 +124,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    if(columns<8)requests.unshift({appendDimension:{sheetId,dimension:'COLUMNS',length:8-columns}});
    await request(endpoint+':batchUpdate',{requests});
   }else if(JSON.stringify(existing)!==JSON.stringify(header))throw Error('ROOM_SHEET_HEADERS');
-  const styled=stockSheet.developerMetadata?.some(item=>
-   item.metadataKey===roomSheetStyleKey&&item.metadataValue===roomSheetStyleVersion);
-  if(!styled){
-   const rows=(await request(range('A2:G')+'?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER')).values||[];
-   const updates=roomPresentationUpdates(sheetId,rows);
-   const captions=new Set(roomStatusStyles.map(status=>status.caption));
-   const rules=stockSheet.conditionalFormats||[];
-   const cleanup=rules.flatMap((rule,index)=>{
-    const owned=rule.ranges?.length===1&&rule.ranges[0].startColumnIndex===5&&rule.ranges[0].endColumnIndex===6&&
-     (['TEXT_EQ','TEXT_STARTS_WITH'].includes(rule.booleanRule?.condition?.type)&&captions.has(rule.booleanRule.condition.values?.[0]?.userEnteredValue)||
-      rule.booleanRule?.condition?.type==='CUSTOM_FORMULA'&&[...captions].some(caption=>
-       rule.booleanRule.condition.values?.[0]?.userEnteredValue==='=LEFT($F2,FIND(CHAR(10),$F2&CHAR(10))-1)="'+caption+'"'));
-    return owned?[{deleteConditionalFormatRule:{sheetId,index}}]:[];
-   }).reverse();
-   await request(endpoint+':batchUpdate',{requests:[...cleanup,...roomSheetStyleRequests(sheetId)]});
-   for(let offset=0;offset<updates.length;offset+=200){
-    await request(endpoint+':batchUpdate',{requests:updates.slice(offset,offset+200)});
-   }
-   if(rows.length)await request(endpoint+':batchUpdate',{requests:[{
-    autoResizeDimensions:{dimensions:{sheetId,dimension:'ROWS',startIndex:1,endIndex:rows.length+1}}
-   }]});
-   await request(endpoint+':batchUpdate',{requests:[{createDeveloperMetadata:{developerMetadata:{
-    metadataKey:roomSheetStyleKey,metadataValue:roomSheetStyleVersion,visibility:'DOCUMENT',location:{sheetId}
-   }}}]});
-  }
+  await applyStyle(stockSheet,sheetId,range);
   return {async group(){
    const rows=(await request(range('A2:H')+'?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER')).values||[];
    const grouped=groupRoomRows(rows);if(!grouped)return;
