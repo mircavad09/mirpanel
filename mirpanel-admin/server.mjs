@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
+import {startRoomSheetSync} from './community/netflix-room-sheet-sync.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
 import { createNetflixConfirmationEndpoint } from "./netflix-confirmation-endpoint.mjs";
 import { createConfirmationGate } from "./netflix-verification-policy.mjs";
@@ -1629,6 +1630,11 @@ const server = http.createServer(async (request, response) => {
 server.listen(config.port, () => {
   if(process.env.COMMUNITY_PUBLIC_ENABLED==='true')adminPush.start();
   void ownerCommunity.startWelcomeDelivery().catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
+  if(process.env.NETFLIX_ROOM_SHEET_ID){
+    void ownerCommunity.integrationPool()
+      .then(pool=>startRoomSheetSync(pool,createPaymentSecurity(config),process.env))
+      .catch(()=>console.warn('NETFLIX_ROOM_SHEET_START_FAILED'));
+  }
   console.log(`Mirpanel admin: http://localhost:${config.port}`);
   // Trusted, banner-only rollout: preserve the existing main image and import
   // existing Mirpanel campaign assets once. No public request can trigger writes.

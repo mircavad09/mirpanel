@@ -54,3 +54,24 @@ export async function saveNetflixRooms(pool,security,secret,actor,input){
   await c.query('commit');return {added:b.rooms.length,replayed:!inserted.rowCount};
  }catch(e){await c.query('rollback');if(e.code==='23505')throw fail(409,'Bu hesabda eyni adlı otaq artıq stokdadır.');throw e;}finally{c.release();}
 }
+
+// Only the exact account, room and PIN from an ordinary delivery can claim stock.
+export async function bindNetflixRoom(c,security,secret,deliveryId,{email,password,roomName,roomCode}){
+ if(!secret||!email||!roomName||!roomCode)return;
+ const installed=await c.query("select to_regclass('mirpanel_community.netflix_room_units') as present");
+ if(!installed.rows[0].present)return;
+ const accountKey=digest(secret,['netflix-room-account',email.trim().toLowerCase()]);
+ const {rows:[room]}=await c.query(`select r.id,r.pin_cipher,r.delivery_id,g.id group_id,g.account_cipher,
+   g.ends_on<=public.payment_baku_date() as expired
+   from ${U} r join ${G} g on g.id=r.group_id
+   where r.account_key=$1 and r.room_key=$2 for update of r`,
+  [accountKey,roomName.trim().normalize('NFC').toLowerCase()]);
+ if(!room)return;
+ const pin=JSON.parse(security.decryptSecret(room.pin_cipher));
+ const account=JSON.parse(security.decryptSecret(room.account_cipher));
+ if(pin.id!==room.id||account.id!==room.group_id||pin.pin!==roomCode||(password&&password!==account.password))
+  throw fail(409,'Təhvil məlumatları stokdakı otağa uyğun gəlmir.');
+ if(room.delivery_id)throw fail(409,'Bu stok otağı artıq təhvil verilib.');
+ if(room.expired)throw fail(409,'Bu stok otağının müddəti bitib.');
+ await c.query(`update ${U} set delivery_id=$2 where id=$1`,[room.id,deliveryId]);
+}

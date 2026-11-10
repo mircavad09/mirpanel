@@ -4,6 +4,7 @@ import {adminTopupMail} from './admin-topup-mail.mjs';
 import {topupMail} from './topup-mail.mjs';
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {orderLines} from '../order-lines.mjs';
+import {bindNetflixRoom} from './netflix-room-stock.mjs';
 
 const D='mirpanel_community.customer_order_deliveries', M='mirpanel_community.customer_order_mail';
 const O='mirpanel_community.community_order_owners';
@@ -89,7 +90,7 @@ export async function adminOrderCustomers(pool,ids){
    left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id
    where o.id=any($1::uuid[])`,[ids])).rows;
 }
-export async function adminDelivery(pool,security,actor,id,input,{productMessage=false}={}){
+export async function adminDelivery(pool,security,actor,id,input,{productMessage=false,roomStockSecret}={}){
  const c=await pool.connect();
  try{
   await c.query(input?'begin':'begin isolation level repeatable read read only');
@@ -138,6 +139,8 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
    if(input.message!==message)throw fail(409,'Hazır mesaj dəyişib. Təhvil pəncərəsini yenidən açın.');
   }
   const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message,{email,password,roomName,roomCode});
+  if(lines[line].productId==='netflix'&&!renewalCode(line))
+   await bindNetflixRoom(c,security,roomStockSecret,record.id,{email,password,roomName,roomCode});
   records.push(record);done[line]=(done[line]||0)+quantity;
   await c.query('commit');return view();
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
