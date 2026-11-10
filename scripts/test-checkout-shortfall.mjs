@@ -51,7 +51,7 @@ for(const [engine,width] of [[chromium,320],[chromium,1440],[webkit,390]]){
     assert.equal(await topup.evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(255, 212, 0)');
     assert.equal(await topup.locator('svg').count(),1);
     await topup.click();
-    await page.locator('#balansi-artir').getByRole('heading',{name:'Balansı artır'}).waitFor();
+    await page.locator('#balansi-artir').getByRole('heading',{name:'Məbləği seçin'}).waitFor();
     assert.equal(new URL(page.url()).hash,'#balansi-artir');
     await page.getByRole('link',{name:'← Alışa qayıt'}).click();
     await submit.waitFor();

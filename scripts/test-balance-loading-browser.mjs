@@ -95,7 +95,7 @@ for(const [engine,width] of [[chromium,390],[chromium,1440],[webkit,390]]){
     await page.getByRole('button',{name:'Yenidən cəhd et'}).click();
     await page.getByText('Balans məlumatı yüklənir…',{exact:true}).first().waitFor();
    }
-   await page.getByRole('heading',{name:'Balansı artır',exact:true}).waitFor();
+   await page.getByRole('heading',{name:'Məbləği seçin',exact:true}).waitFor();
    await page.getByRole('button',{name:'Kartdan karta',exact:true}).waitFor();
    if(from!=='failure')assert.deepEqual(await page.evaluate(()=>errorFlashes),[]);
    const readyTop=await footerTop();
