@@ -32,7 +32,7 @@ try{
   const form=page.locator('.netflixPasswordForm');await form.getByText('synthetic@example.test · Təsirlənəcək aktiv otaqlar: 2 · Müştərilər: 2').waitFor();
   assert.equal(await form.locator('input').getAttribute('type'),'text');await form.locator('input').fill('Example-new');
   await form.getByRole('button',{name:'Şifrəni saxla',exact:true}).click();
-  await page.getByText('Şifrə yeniləndi. Bildirişlər və Sheets yeniləməsi növbəyə əlavə edildi.').waitFor();
+  await page.getByText('Şifrə yeniləndi. Bildirişlər növbəyə əlavə edildi.').waitFor();
   assert.equal(writes,1);assert.deepEqual(errors,[]);
   assert.ok(await page.locator('.netflixAccountGroup').evaluate(el=>el.getBoundingClientRect().right<=innerWidth));
   console.log('PASS '+width+'px — account group, five states, protected active rooms, visible password, impact preview and rotation');await page.close();

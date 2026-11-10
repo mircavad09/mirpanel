@@ -8,7 +8,7 @@ import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
-import {startRoomSheetSync} from './community/netflix-room-sheet-sync.mjs';
+import {startSheetCustomerIdSync} from './community/netflix-sheet-customer-id.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
 import { createNetflixConfirmationEndpoint } from "./netflix-confirmation-endpoint.mjs";
 import { createConfirmationGate } from "./netflix-verification-policy.mjs";
@@ -1640,7 +1640,7 @@ server.listen(config.port, () => {
   void ownerCommunity.startWelcomeDelivery().catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
   if(process.env.NETFLIX_ROOM_SHEET_ID){
     void ownerCommunity.integrationPool()
-      .then(pool=>startRoomSheetSync(pool,createPaymentSecurity(config),process.env))
+      .then(pool=>startSheetCustomerIdSync(pool,createPaymentSecurity(config),process.env))
       .catch(()=>console.warn('NETFLIX_ROOM_SHEET_START_FAILED'));
   }
   console.log(`Mirpanel admin: http://localhost:${config.port}`);

@@ -1,3 +1,4 @@
+import {sheetCustomerIdStates,retrySheetCustomerId} from './netflix-sheet-customer-id.mjs';
 import {updateRoomPassword} from './netflix-room-password.mjs';
 import crypto from 'node:crypto';
 import {signature} from '../employee-security.mjs';
@@ -38,6 +39,13 @@ export async function readyStockView(pool,catalog,inventory,security){
   })};
   const roomStockInstalled=(await c.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present;
   result.netflixRooms=roomStockInstalled?(await netflixRooms(c,security)).rooms:null;
+  if(result.netflixRooms?.length){
+   const states=await sheetCustomerIdStates(c);
+   for(const room of result.netflixRooms){
+    const state=states.get(room.id);
+    if(state&&state.deliveryId===room.deliveryId)room.sheetCustomerId=state;
+   }
+  }
   const netflix=result.products.find(p=>p.id==='netflix');
   if(netflix&&await roomSalesInstalled(c)){
    const ready=(await c.query('select count(*)::int ready from mirpanel_community.netflix_room_sellable')).rows[0].ready;
@@ -48,6 +56,7 @@ export async function readyStockView(pool,catalog,inventory,security){
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
+ if(input?.netflixSheetIdRetry)return retrySheetCustomerId(pool,input.netflixSheetIdRetry.deliveryId);
  if(input?.netflixRoomsReady)return releaseNetflixReview(pool,actor,input.netflixRoomsReady);
  if(input?.netflixRoomAssign)return assignLegacyRoom(pool,security,catalog,input.netflixRoomAssign);
  if(input?.netflixAccountPassword)return updateRoomPassword(pool,security,actor,input.netflixAccountPassword);

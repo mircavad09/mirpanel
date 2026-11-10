@@ -52,7 +52,7 @@ export function mountReadyStock(host,api){
  let products=[],pending=null,busy=false,loaded=false,read=null;
  const roomHost=q('[data-netflix-room-stock]');
  roomHost.innerHTML=`<h3>Netflix Şəxsi — hazır otaq stoku</h3>
-  <p>Otaqlar saxlananda Google Sheets-ə göndərilir. Təsdiqlənmiş 1, 3 və 6 aylıq alışlarda boş otaq avtomatik ayrılır. Hesabın bitmə tarixi müştərinin ödənilmiş müddətini dəyişmir.</p>
+  <p>Hər otağı ayrıca saxlayın. Google Sheets-də otağın sətrini özünüz əlavə edin və A xanasını boş qoyun. Balansla alışdan sonra otaq avtomatik təhvil verilir və uyğun sətrin A xanasına müştəri ID-si yazılır.</p>
   <form autocomplete="off" hidden>
    <div class="netflixRoomCredentials">
     <label>Netflix e-poçtu<input name="email" type="email" maxlength="254" required></label>
@@ -62,20 +62,15 @@ export function mountReadyStock(host,api){
    <label>Otaqların vəziyyəti<select name="saleMode"><option value="ready">Satışa hazır</option><option value="bind">Müştəriyə bağlanacaq</option></select></label>
    <p id="netflixRoomDatePreview" aria-live="polite"></p>
    <div data-rooms></div>
-   <div class="readyStockActions"><button type="button" class="btn" data-room-add>+ Otaq əlavə et</button><button class="btn primary">Otaqları saxla</button></div>
+   <div class="readyStockActions"><button class="btn primary">Otağı saxla</button></div>
   </form><p data-room-status role="status"></p><ul data-room-list></ul>`;
  const roomForm=roomHost.querySelector('form'),roomRows=roomHost.querySelector('[data-rooms]'),roomStatus=roomHost.querySelector('[data-room-status]'),roomList=roomHost.querySelector('[data-room-list]');
  let roomRequest=null,roomBusy=false;
  const roomFields='<label>Otaq adı<input name="room" maxlength="50" required></label><label>PIN<input name="pin" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required></label>';
  function addRoom(){
-  if(roomRows.children.length>=5)return;
   const row=document.createElement('div');row.className='readyStockAccount netflixRoomRow';
-  row.innerHTML=roomFields+'<button type="button" class="btn" aria-label="Otağı sil">×</button>';
-  const taken=new Set([...roomRows.querySelectorAll('[name=room]')].map(input=>input.value.trim()));
-  row.querySelector('[name=room]').value=['1','2','3','4','5'].find(name=>!taken.has(name))||'';
-
-  row.querySelector('button').onclick=()=>{if(roomRows.children.length>1){row.remove();roomRequest=null;}};
-  roomRows.append(row);
+  row.innerHTML=roomFields;
+  roomRows.replaceChildren(row);
  }
  const editRoom=data=>api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomEdit:data})});
  const assignRoom=data=>api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomAssign:data})});
@@ -228,7 +223,7 @@ export function mountReadyStock(host,api){
       event.preventDefault();save.disabled=close.disabled=true;
       try{
        const result=await api(endpoint,{method:'POST',body:JSON.stringify({netflixAccountPassword:{action:'rotate',groupId,password:password.value,expectedRevision:preview.revision}})});
-       password.value='';await refresh();roomStatus.textContent=result.changed?'Şifrə yeniləndi. Bildirişlər və Sheets yeniləməsi növbəyə əlavə edildi.':'Şifrə eynidir. Əlavə bildiriş yaradılmadı.';
+       password.value='';await refresh();roomStatus.textContent=result.changed?'Şifrə yeniləndi. Bildirişlər növbəyə əlavə edildi.':'Şifrə eynidir. Əlavə bildiriş yaradılmadı.';
       }catch(e){roomStatus.textContent=e.message||'Şifrə saxlanılmadı.';}finally{save.disabled=close.disabled=false;}
      };
     }catch(e){roomStatus.textContent=e.message||'Hesab açıla bilmədi.';rotate.disabled=false;}
@@ -239,6 +234,22 @@ export function mountReadyStock(host,api){
    summary.dataset.roomSummary='';summary.textContent=roomSummary(row);
    edit.type='button';edit.className='btn';edit.textContent='Redaktə et';edit.onclick=()=>void openRoom(node,row,edit);
    node.append(summary,' ',edit);
+   if(row.sheetCustomerId){
+    const sync=row.sheetCustomerId,info=document.createElement('p');
+    info.textContent='Sheets A sütunu · '+(sync.message||(sync.state==='done'?'Müştəri ID-si yazılıb.':'Yazı növbədədir.'));
+    node.append(info);
+    if(sync.state!=='done'){
+     const retry=document.createElement('button');retry.type='button';retry.className='btn';retry.textContent='ID yazısını təkrarla';
+     retry.onclick=async()=>{
+      retry.disabled=true;
+      try{
+       await api(endpoint,{method:'POST',body:JSON.stringify({netflixSheetIdRetry:{deliveryId:sync.deliveryId}})});
+       await refresh();roomStatus.textContent='Yalnız müştəri ID-si yazısı yenidən növbəyə alındı.';
+      }catch(e){roomStatus.textContent=e.message;retry.disabled=false;}
+     };
+     node.append(retry);
+    }
+   }
    if(row.legacyAssignmentId)node.append(' · Müştəriyə bağlanıb');
    else{
     const bind=document.createElement('button');
@@ -275,7 +286,6 @@ export function mountReadyStock(host,api){
   datePreview.textContent=date?date.label+' · '+date.days+' gün qalıb':value?'Tarixi “10 dekabr” və ya “10 dekabr 2026” kimi yazın.':'';
   return date;
  }
- roomHost.querySelector('[data-room-add]').onclick=()=>{addRoom();roomRequest=null;};
  roomForm.oninput=()=>{roomRequest=null;previewDate();};
  roomForm.onsubmit=async event=>{
   event.preventDefault();if(roomBusy)return;
@@ -285,7 +295,7 @@ export function mountReadyStock(host,api){
   const payload={requestId:roomRequest,email:email.value,password:password.value,endsOn:date.iso,saleMode:roomForm.elements.saleMode.value,
    rooms:[...roomRows.children].map(row=>({name:row.querySelector('[name=room]').value,pin:row.querySelector('[name=pin]').value}))};
   const fields=[...roomForm.querySelectorAll('input,select,button')];roomBusy=true;fields.forEach(x=>x.disabled=true);
-  roomStatus.textContent='Otaqlar saxlanılır…';
+  roomStatus.textContent='Otaq saxlanılır…';
   try{
    const result=await api(endpoint,{method:'POST',body:JSON.stringify({netflixRooms:payload})});
    roomRequest=null;roomForm.reset();previewDate();roomRows.replaceChildren();addRoom();

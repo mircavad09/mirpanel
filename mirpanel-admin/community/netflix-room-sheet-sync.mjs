@@ -1,5 +1,4 @@
 import {createHash} from 'node:crypto';
-import {roomSheetClient} from './netflix-room-sheet-client.mjs';
 import {roomPaymentStatus,shortRoomDate} from './netflix-room-paid-period.mjs';
 import {legacyInstalled} from './netflix-room-legacy.mjs';
 import {roomSalesInstalled} from './netflix-room-sale.mjs';
@@ -87,17 +86,4 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
   return rows.length===25?position(rows.at(-1)):null;
  }catch(error){await c.query('rollback');throw error;}
  finally{c.release();}
-}
-
-export function startRoomSheetSync(pool,security,env){
- const target=env.NETFLIX_ROOM_SHEET_ID;
- if(!target)return;
- const client=roomSheetClient(target,JSON.parse(env.NETFLIX_ROOM_SHEET_SERVICE_ACCOUNT||'{}'),env.NETFLIX_ROOM_SHEET_OWNER_EMAIL);
- let cursor=null;
- async function tick(){
-  try{cursor=await syncRoomSheetBatch(pool,security,target,client,cursor);}
-  catch{console.warn('NETFLIX_ROOM_SHEET_SYNC_UNAVAILABLE');}
-  finally{setTimeout(tick,15000).unref();}
- }
- void tick();
 }

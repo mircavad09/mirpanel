@@ -35,7 +35,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   if(!response.ok)throw Error('ROOM_SHEET_REQUEST');
   return response.json();
  }
- return {async open(){
+ async function stockDestination(){
   // Verify the destination before sending any account data. Reject shared drives,
   // groups, domains, public links and additional editors.
   const drive='https://www.googleapis.com/drive/v3/files/'+id;
@@ -51,6 +51,26 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   const stockSheet=stockSheets[0];
   const {sheetId,title}=stockSheet.properties;
   const range=name=>endpoint+'/values/'+encodeURIComponent("'"+title.replaceAll("'","''")+"'!"+name);
+  return {metadata,stockSheet,sheetId,range};
+ }
+ return {
+ async writeCustomerId(delivery,memberNumber){
+  const {sheetId,range}=await stockDestination();
+  const read=async()=>locateCustomerIdCell((await request(range('A1:C')+'?valueRenderOption=FORMULA')).values||[],delivery,memberNumber);
+  // Resolve again immediately before writing to catch a sort, edit or conflict
+  // that happened during the first read.
+  const first=await read();
+  if(first.reason||first.done)return first;
+  const current=await read();
+  if(current.reason||current.done)return current;
+  await request(endpoint+':batchUpdate',{requests:[{updateCells:{
+   start:{sheetId,rowIndex:current.rowIndex,columnIndex:0},
+   rows:[{values:[{userEnteredValue:{stringValue:memberNumber}}]}],fields:'userEnteredValue'
+  }}]});
+  return {done:true};
+ },
+ async open(){
+  const {metadata,stockSheet,sheetId,range}=await stockDestination();
   const legacyHeader=[...sheetHeaders,'Stok otağının ID-si'];
   const header=[...legacyHeader,'Netflix hesabının ID-si'];
   const columns=stockSheet.properties.gridProperties?.columnCount??26;
@@ -156,4 +176,25 @@ export function groupRoomRows(rows){
   if(records[n+1]?.[7]!==row[7]){ends.push(result.length-1);result.push([...Array(7).fill(''),'separator:'+row[7]]);}
  }
  return {rows:result,ends};
+}
+
+
+function matchText(value){return String(value??'').normalize('NFC').trim().toLowerCase();}
+export function locateCustomerIdCell(rows,delivery,memberNumber){
+ if(JSON.stringify(rows[0]?.slice(0,3))!==JSON.stringify(sheetHeaders.slice(0,3)))return {reason:'headers'};
+ const email=matchText(delivery.email),name=matchText(delivery.roomName);
+ if(!email||!name||!/^\d{4}$/.test(delivery.roomCode??'')||!/^\d+$/.test(memberNumber))return {reason:'delivery'};
+ const matches=[];
+ for(let i=1;i<rows.length;i++){
+  const [id,room,gmail]=rows[i];
+  if(matchText(gmail)!==email||typeof room!=='string'||room.startsWith('='))continue;
+  const parts=room.match(/^(.+?)\s*(?:[·•|:]|\s+[-–—]\s+|\s+)\s*(\d(?:[\s-]*\d){3})\s*$/u);
+  if(parts&&matchText(parts[1])===name&&parts[2].replace(/[\s-]/g,'')===delivery.roomCode)matches.push({id,rowIndex:i});
+ }
+ if(!matches.length)return {reason:'missing'};
+ if(matches.length!==1)return {reason:'duplicate'};
+ const {id,rowIndex}=matches[0];
+ if(String(id??'')===memberNumber)return {done:true};
+ if(id!==''&&id!==undefined&&id!==null)return {reason:'conflict'};
+ return {rowIndex};
 }
