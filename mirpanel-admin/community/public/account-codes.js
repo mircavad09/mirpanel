@@ -29,7 +29,7 @@ function credentialRows(delivery){
  return fields.filter(([,value])=>typeof value==='string'&&value.trim());
 }
 export function mountCodes({content,el,button,initial,initialRequest,validate,onData,onUnauthorized,api,spinner,ui={}}){
- const css='/community-assets/account-codes.css?v=1';
+ const css='/community-assets/account-codes.css?v=2';
  if(!document.head.querySelector('link[data-account-codes]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-account-codes':''}));
  const life=new AbortController(),root=el('div',{class:'account-codes'}),status=el('p',{class:'codes-status',role:'status'}),list=el('div',{class:'codes-list'}),count=el('span',{class:'codes-count',hidden:''});
  const search=el('input',{type:'search',placeholder:'Məhsul adına görə axtar…','aria-label':'Məhsul adına görə axtar',autocomplete:'off'});
@@ -45,6 +45,25 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   if(!r.ok)throw Object.assign(Error('Məlumatı açmaq mümkün olmadı.'),{status:r.status});
   return r.json();
  }
+ const deliveries=new Map(),pending=new Map();
+ let deliveryGeneration=0;
+ const clearDeliveries=()=>{deliveryGeneration++;deliveries.clear();pending.clear();};
+ function readDelivery(id){
+  if(deliveries.has(id))return Promise.resolve(deliveries.get(id));
+  if(pending.has(id))return pending.get(id);
+  const generation=deliveryGeneration;
+  const request=read(id).then(result=>{
+   if(life.signal.aborted||generation!==deliveryGeneration||typeof result?.text!=='string')throw Error();
+   deliveries.set(id,result);return result;
+  }).catch(e=>{
+   if(!life.signal.aborted&&generation===deliveryGeneration&&(e.status===401||e.status===403)){
+    clearDeliveries();hide();
+    if(e.status===401)onUnauthorized?.();
+   }
+   throw e;
+  }).finally(()=>{if(pending.get(id)===request)pending.delete(id);});
+  pending.set(id,request);return request;
+ }
  function make(row,i){
   const item=el('article',{class:'account-code codes-card'}),text=el('pre',{class:'codes-text'}),credentials=el('div',{class:'codes-credentials'}),photo=el('span',{class:'codes-image'},icon('box')),feedback=el('span',{class:'codes-feedback',role:'status'});
   const details=el('div',{class:'codes-details',id:'codes-details-'+i,hidden:''},credentials,text);
@@ -56,19 +75,27 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   let revision=0;
   const active=()=>item.isConnected&&!item.hidden&&!document.hidden&&!life.signal.aborted;
   const toggleLabel=show=>{toggle.replaceChildren(icon(show?'hide':'eye'),show?'Gizlət':'Göstər');toggle.setAttribute('aria-expanded',String(show));};
-  const hide=()=>{revision++;text.textContent='';credentials.replaceChildren();details.hidden=true;feedback.textContent='';toggleLabel(false);};
-  const getDelivery=async()=>{let result;try{result=await read(row.id);}catch(e){if(e.status===401)onUnauthorized?.();throw e;}if(!active()||typeof result.text!=='string')throw Error();return result;};
+  const hide=()=>{revision++;text.textContent='';credentials.replaceChildren();details.hidden=true;feedback.textContent='';toggle.removeAttribute('aria-busy');toggle.disabled=false;toggleLabel(false);};
+  const getDelivery=async()=>{const result=await readDelivery(row.id);if(!active()||deliveries.get(row.id)!==result)throw Error();return result;};
+  const reveal=delivery=>{
+   text.textContent=delivery.text;
+   credentials.replaceChildren(...credentialRows(delivery).map(([label,value])=>el('div',{class:'codes-credential'},el('span',{},label),el('strong',{},value))));
+   details.hidden=false;toggleLabel(true);
+   if(matchMedia('(max-width: 600px)').matches)details.scrollIntoView({block:'nearest'});
+  };
   const toggle=button('Göstər',async()=>{
    feedback.textContent='';
    if(!details.hidden){hide();return;}
-   const run=++revision;toggle.disabled=true;
+   if(!active())return;
+   const ready=deliveries.get(row.id);
+   if(ready){reveal(ready);return;}
+   const run=++revision;toggle.disabled=true;toggle.setAttribute('aria-busy','true');
+   feedback.append(el('span',{class:'codes-loading','aria-hidden':'true'}),' Hesab məlumatı hazırlanır…');
    try{
     const delivery=await getDelivery();if(run!==revision)return;
-    text.textContent=delivery.text;
-    credentials.replaceChildren(...credentialRows(delivery).map(([label,value])=>el('div',{class:'codes-credential'},el('span',{},label),el('strong',{},value))));
-    details.hidden=false;toggleLabel(true);
-    if(matchMedia('(max-width: 600px)').matches)details.scrollIntoView({block:'nearest'});
-   }catch{if(active()&&run===revision)feedback.textContent='Təhvil məlumatını açmaq mümkün olmadı.';}finally{toggle.disabled=false;}
+    feedback.textContent='';reveal(delivery);
+   }catch{if(active()&&run===revision)feedback.textContent='Təhvil məlumatını açmaq mümkün olmadı. Yenidən cəhd edin.';}
+   finally{if(run===revision){toggle.disabled=false;toggle.removeAttribute('aria-busy');}}
   });
   toggle.setAttribute('aria-controls',details.id);toggleLabel(false);
   const copy=button('Kopyala',async()=>{
@@ -85,10 +112,10 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
     if(active())feedback.textContent='Məlumat kopyalandı';
    }catch{if(active())feedback.textContent='Kopyalama alınmadı.';}finally{copy.disabled=false;}
   });copy.classList.add('codes-copy');copy.prepend(icon('copy'));
-  item.append(el('div',{class:'codes-product'},photo,el('div',{},el('h2',{},row.title),meta)),el('div',{class:'codes-actions'},toggle,copy,feedback),details);
+  item.append(el('div',{class:'codes-product'},photo,el('div',{},el('h2',{},row.title),meta)),el('div',{class:'codes-actions'},toggle,copy),feedback,details);
   return {item,row,hide};
  }
- let cards=[],fingerprint=null,category=ui.category??null,running=false;
+ let cards=[],fingerprint=null,category=ui.category??null,running=false,warmed=false;
  search.value=ui.search||'';
  const hide=()=>{for(const c of cards)c.hide();};
  const empty=el('p',{class:'codes-empty',hidden:''});root.append(empty);
@@ -105,11 +132,12 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   empty.textContent=cards.length?'Axtarışa uyğun məhsul tapılmadı.':'Hələ kodunuz yoxdur.';
   empty.hidden=matches>0;
  }
- function paint(data){
+ function paint(data,fresh=false){
   validate?.(data);
   const {codes}=data,next=JSON.stringify(codes);status.textContent='';
   count.textContent=codes.length+' ədəd';count.hidden=false;tools.hidden=false;
   if(next!==fingerprint){
+   if(fingerprint!==null)clearDeliveries();
    fingerprint=next;hide();cards=codes.map(make);list.replaceChildren(...cards.map(c=>c.item));
    const groups=new Map();
    for(const {category:c} of codes)if(c?.key&&c.label){
@@ -120,20 +148,24 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
    filters.replaceChildren(chip(null,'Hamısı',codes.length),...[...groups].sort((a,b)=>a[1].label.localeCompare(b[1].label,'az')).map(([key,g])=>chip(key,g.label,g.count)));
   }
   filter();onData?.(data);
+  // Prepare only the first visible card, after a fresh owner-validated list.
+  // Do not block the list or download every account's credentials in advance.
+  const first=cards.find(c=>!c.item.hidden);
+  if(fresh&&!warmed&&first&&!document.hidden){warmed=true;void readDelivery(first.row.id).catch(()=>{});}
  }
  search.addEventListener('input',filter,{signal:life.signal});
  async function load(started=null){
   if(running||life.signal.aborted)return;running=true;
   if(fingerprint===null){status.replaceChildren();list.replaceChildren(loading());}
-  try{const data=await(started||read());if(!life.signal.aborted)paint(data);}
+  try{const data=await(started||read());if(!life.signal.aborted)paint(data,true);}
   catch(e){if(!life.signal.aborted){
    if(e.status===401&&onUnauthorized){onUnauthorized();return;}
-   if(fingerprint===null||e.status===401||e.status===403){hide();cards=[];fingerprint=null;list.replaceChildren();count.hidden=tools.hidden=empty.hidden=true;onData?.(null);}
+   if(fingerprint===null||e.status===401||e.status===403){clearDeliveries();hide();cards=[];fingerprint=null;list.replaceChildren();count.hidden=tools.hidden=empty.hidden=true;onData?.(null);}
    status.replaceChildren(document.createTextNode('Kodları yükləmək mümkün olmadı. '),button('Yenidən cəhd et',()=>load()));
   }}finally{running=false;}
  }
  document.addEventListener('visibilitychange',()=>{if(document.hidden)hide();},{signal:life.signal});
- window.addEventListener('pagehide',hide,{signal:life.signal});
+ window.addEventListener('pagehide',()=>{clearDeliveries();hide();},{signal:life.signal});
  if(initial)paint(initial);void load(initialRequest);
- return()=>{life.abort();hide();root.remove();};
+ return()=>{life.abort();clearDeliveries();hide();root.remove();};
 }
