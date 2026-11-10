@@ -128,12 +128,6 @@
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/google-ai-pro-v3" aria-label="Gemini ai pro + 5TB yaddaş — 8.99 ₼" title="Gemini ai pro + 5TB yaddaş">
-      <img src="/uploads/products/google_ai-1792447643071-a8ab5d26.png?v=1792447643071" class="product-page-similar-image" alt="Google AI Pro + VEO 3" width="320" height="320" loading="lazy" decoding="async">
-      <span class="capcut-similar-discount">-99%</span>
-      <div class="product-page-similar-title" title="Gemini ai pro + 5TB yaddaş">Gemini ai pro + 5TB yaddaş</div>
-      <div class="product-page-similar-category">ai</div>
-      <div class="product-page-similar-price">8.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -208,7 +202,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-37da78e2eea38d51"></script>
+  <script src="/app.js?v=catalog-c8892e851e8cc12e"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>

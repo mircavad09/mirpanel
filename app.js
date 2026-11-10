@@ -3130,7 +3130,7 @@ const DATA = {
       },
       "flow": "out_of_stock",
       "soldOut": true,
-      "active": true,
+      "active": false,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
