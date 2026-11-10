@@ -25,7 +25,7 @@ try{
   const edit=page.locator('.netflixRoomEdit');await edit.locator('input[type=date]').fill('2027-02-15');
   await edit.getByRole('button',{name:'Bitmə tarixini saxla',exact:true}).click();
   await page.getByText('Hesabın bitmə tarixi yeniləndi. Müştərinin ödənilmiş müddəti qorundu.').waitFor();
-  assert.equal(writes,1);assert.deepEqual(errors,[]);assert.ok(await page.locator('[data-room-summary]').innerText().then(t=>t.includes('2027-02-15')));
+  assert.equal(writes,1);assert.deepEqual(errors,[]);assert.ok(await page.locator('.netflixRoomDates').innerText().then(t=>t.includes('2027-02-15')));
   console.log('PASS '+width+'px — sold-room account expiry editor, separate payment explanation and refresh');await page.close();
  }
 }finally{await browser.close();server.close();}

@@ -9,7 +9,7 @@ const body=`<!doctype html><meta charset="utf-8"><meta name="viewport" content="
 import {mountReadyStock} from '/stock.js';
 const room={id:'synthetic-room',name:'1',status:'free',endsOn:'2027-01-20'};
 mountReadyStock(document.querySelector('main'),async (url,req)=>{
- if(!req)return {products:[],netflixRooms:[room]};
+ if(!req)return {products:[{id:'netflix',title:'Netflix',message:'',plans:[{index:0,title:'1 ay',signature:'test',sales:10,ready:0}]}],netflixRooms:[room]};
  const data=JSON.parse(req.body).netflixRoomAssign;
  if(data.action==='open')return {email:'netflix@example.test',room:'1',pin:'0408'};
  if(data.action==='search')return {users:[{id:'synthetic-customer',name:'Sınaq Müştəri',email:'customer@example.test',memberNumber:1024}]};
@@ -39,6 +39,7 @@ for(const [engine,options] of [[chromium,{executablePath:process.env.MIRPANEL_CH
    assert.ok(box.x>=0&&box.x+box.width<=width);
    await d.getByRole('button',{name:'Müştəriyə bağla',exact:true}).click();
    await p.getByText('Otaq müştəriyə bağlandı.').waitFor();
+   await p.locator('.netflixRoomBound').getByText('Müştəriyə bağlı',{exact:true}).waitFor();
    assert.deepEqual(await p.evaluate(()=>window.saved),{action:'confirm',id:'synthetic-room',userId:'synthetic-customer',paidUntil:'2027-01-01'});
    await p.close();
   }

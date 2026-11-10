@@ -11,7 +11,7 @@ await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
 try{
  for(const width of [390,1360]){
-  const page=await browser.newPage({viewport:{width,height:900}});let date='2027-01-15',writes=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const page=await browser.newPage({viewport:{width,height:900}});let date='2027-01-15',writes=0,editedName='4',removedFive=false;const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const groupId='00000000-0000-4000-8000-000000000001';
   const saved=[];
   await page.route('**/api/admin/payment-ready-stock',async route=>{
@@ -25,7 +25,18 @@ try{
     }
     return route.fulfill({json:{added:2}});
    }
+   if(input?.netflixRoomEdit){
+    const edit=input.netflixRoomEdit;
+    assert.equal(edit.id,groupId.slice(0,-1)+'4');
+    if(edit.action==='open')return route.fulfill({json:{name:editedName,pin:'0408',editable:true}});
+    if(edit.action==='password')return route.fulfill({json:{password:'Synthetic-original'}});
+    assert.equal(edit.action,'save');assert.equal(edit.name,'6');assert.equal(edit.pin,'0123');
+    editedName=edit.name;return route.fulfill({json:{name:editedName}});
+   }
    if(input?.netflixRoomDelete){
+    if(input.netflixRoomDelete.id===groupId.slice(0,-1)+'5'){
+     removedFive=true;return route.fulfill({json:{deleted:true}});
+    }
     const index=saved.findIndex(r=>r.id===input.netflixRoomDelete.id);assert.equal(index,0);
     saved.splice(index,1);return route.fulfill({json:{deleted:true}});
    }
@@ -33,11 +44,30 @@ try{
     if(x.action==='preview')return route.fulfill({json:{email:'synthetic@example.test',activeRooms:2,activeCustomers:2,revision:'synthetic-revision'}});
     assert.equal(x.action,'rotate');assert.equal(x.password,'Example-new');assert.equal(x.expectedRevision,'synthetic-revision');writes++;return route.fulfill({json:{changed:true}});
    }
-   return route.fulfill({json:{products:[{id:'netflix',title:'Netflix Şəxsi',message:'',plans:[{index:0,title:'1 ay',signature:'test',sales:10,ready:0}]}],netflixRooms:[...saved,...[1,2,3,4,5].map(n=>({id:groupId.slice(0,-1)+n,groupId,accountEmail:'synthetic@example.test',name:String(n),endsOn:date,deliveryId:'example-'+n,status:[2,3].includes(n)?'paid':'expired',active:[2,3].includes(n),statusLabel:[2,3].includes(n)?'Ödəniş edib, ödənilmiş müddəti davam edir':'Müddəti bitib, yenilənməyib'}))]}});
+   return route.fulfill({json:{products:[{id:'netflix',title:'Netflix Şəxsi',message:'',plans:[{index:0,title:'1 ay',signature:'test',sales:10,ready:0}]}],netflixRooms:[...saved,...[5,2,10,1,4,3].filter(n=>n!==5||!removedFive).map(n=>({id:groupId.slice(0,-1)+n,groupId,accountEmail:'synthetic@example.test',name:n===4?editedName:String(n),endsOn:date,canDelete:n===5,deliveryId:n===5?null:'example-'+n,status:[2,3,10].includes(n)?'paid':'expired',active:[2,3].includes(n),statusLabel:[2,3].includes(n)?'Ödəniş edib, ödənilmiş müddəti davam edir':'Müddəti bitib, yenilənməyib'}))]}});
   });
   await page.goto('http://127.0.0.1:'+server.address().port);
   const release=page.getByRole('button',{name:'Boşalt və satışa qaytar',exact:true});await release.first().waitFor();
-  assert.equal(await release.count(),3);assert.equal(await release.first().isEnabled(),true);
+  assert.equal(await release.count(),2);assert.equal(await release.first().isEnabled(),true);
+  const account=page.locator('.netflixAccountGroup').filter({hasText:'synthetic@example.test'});
+  const roomNames=()=>account.locator('[data-room-name]').evaluateAll(nodes=>nodes.map(node=>node.dataset.roomName));
+  assert.deepEqual(await roomNames(),['1','2','3','4','5','10']);
+  const room=account.locator('[data-room-name="4"]');
+  await room.getByRole('button',{name:'Redaktə et',exact:true}).click();
+  const editor=room.locator('.netflixRoomEdit');
+  await editor.getByLabel('Otaq adı').fill('6');
+  await editor.getByLabel('Otaq kodu (PIN)').fill('0123');
+  await editor.getByRole('button',{name:'Dəyişikliyi saxla',exact:true}).click();
+  await page.getByText('Otaq yeniləndi.',{exact:true}).waitFor();
+  assert.deepEqual(await roomNames(),['1','2','3','5','6','10']);
+  page.once('dialog',async dialog=>{assert.match(dialog.message(),/Otaq 5/);await dialog.accept();});
+  await account.locator('[data-room-name="5"]').getByRole('button',{name:/^Sil/}).click();
+  await page.getByText('Otaq satış stokundan silindi.').waitFor();
+  assert.deepEqual(await roomNames(),['1','2','3','6','10']);
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  const minHeight=width<760?44:32;
+  for(const button of await account.locator('.netflixAccountHeader .btn,.netflixRoomActions .btn').all())assert.ok((await button.boundingBox()).height>=minHeight);
+
   assert.equal(await page.locator('.netflixAccountGroup').getByLabel('Hesabın e-poçtu').count(),0);
   assert.equal(await page.getByRole('button',{name:'+ Yeni hesab əlavə et',exact:true}).isVisible(),true);
   assert.equal(await page.getByLabel('Müştəriyə təqdim ediləcək hazır mesaj').isVisible(),true);
@@ -68,6 +98,6 @@ try{
   await page.getByText('Şifrə yeniləndi. Bildirişlər növbəyə əlavə edildi.').waitFor();
   assert.equal(writes,1);assert.deepEqual(errors,[]);
   assert.ok(await page.locator('.netflixAccountGroup').last().evaluate(el=>el.getBoundingClientRect().right<=innerWidth));
-  console.log('PASS '+width+'px — two four-field cards, save/reload/delete, protected active rooms and rotation');await page.close();
+  console.log('PASS '+width+'px — numeric sorting, edit and delete target, mobile hit area, add and rotate');await page.close();
  }
 }finally{await browser.close();server.close();}

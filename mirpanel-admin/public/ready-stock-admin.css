@@ -32,7 +32,7 @@
 [data-netflix-room-stock] input{min-width:0;width:100%;box-sizing:border-box}
 [data-netflix-room-stock] .netflixRoomRow{grid-template-columns:repeat(2,minmax(0,5rem)) auto;justify-content:start;gap:6px;align-items:end}
 [data-netflix-room-stock] [data-room-list]{padding:0}
-[data-netflix-room-stock] [data-room-list] li+li{margin-top:6px}
+[data-netflix-room-stock] [data-room-list] li+li{margin-top:4px}
 [data-netflix-room-stock] .netflixRoomEdit{margin-top:6px}
 [data-netflix-room-stock] .netflixRoomRow .btn{min-width:36px;padding-inline:8px}
 .netflixRoomBind{width:min(420px,calc(100% - 24px));max-height:85dvh;overflow:auto;margin:auto;color:#f5f5f5;background:#191b1e}
@@ -43,4 +43,24 @@
 .netflixRoomBind [data-results] .btn{text-align:left;white-space:normal;overflow-wrap:anywhere}
 .netflixRoomBind [data-date]{color:#ffe287}
 
-.netflixAccountGroup{list-style:none;border:1px solid #41454b;border-radius:12px;padding:12px;margin:16px 0}.netflixAccountGroup h4{margin:0 0 10px}.netflixAccountGroup>ul{padding:0;list-style:none}.netflixAccountGroup>ul>li{padding:10px 0;border-top:1px solid #34383c}.netflixPasswordForm{display:grid;gap:10px;margin:12px 0;max-width:650px}.netflixPasswordForm input{width:100%;box-sizing:border-box}.netflixAccountGroup button{min-height:44px;margin:4px 4px 4px 0}
+.netflixAccountGroup{list-style:none;border:1px solid #41454b;border-radius:10px;padding:8px;margin:6px 0}
+.netflixAccountHeader,.netflixRoomBar{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:4px 8px}
+.netflixAccountHeader{padding-bottom:6px}
+.netflixAccountHeader h4{margin:0;font-size:14px;min-width:0;overflow-wrap:anywhere}
+.netflixAccountHeader code{color:#bfc6ce;font-size:12px;white-space:nowrap}
+.netflixAccountGroup>ul{padding:0;margin:0;list-style:none}
+.netflixAccountGroup>ul>li{padding:5px 0 0;border-top:1px solid #34383c}
+.netflixRoomMeta,.netflixRoomActions{display:flex;align-items:center;flex-wrap:wrap;gap:4px}
+.netflixRoomMeta{min-width:0;overflow-wrap:anywhere}
+.netflixRoomActions{margin-inline-start:auto}
+.netflixAccountGroup :is(.netflixAccountHeader,.netflixRoomActions) .btn{min-height:32px;padding:4px 8px;font-size:12px}
+.netflixRoomActions .netflixRoomEditAction{background:#ffd54a;color:#201900;border-color:#ffd54a}
+.netflixRoomActions .netflixRoomDeleteAction{background:#9a2736;color:#fff;border-color:#d75764}
+.netflixRoomActions .netflixRoomBindAction{background:#235ca4;color:#fff;border-color:#689cdb}
+.netflixRoomBound{background:#204832;color:#b2f5ca;border-radius:999px;padding:2px 7px;font-size:11px}
+.netflixRoomDates{display:block;color:#bfc6ce;font-size:12px;overflow-wrap:anywhere}
+.netflixPasswordForm{display:grid;gap:8px;margin:6px 0;max-width:650px}
+.netflixPasswordForm input{width:100%;box-sizing:border-box}
+@media(max-width:760px){
+ .netflixAccountGroup :is(.netflixAccountHeader,.netflixRoomActions) .btn{min-height:44px}
+}
