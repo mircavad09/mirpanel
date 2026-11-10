@@ -23,7 +23,7 @@ export function summarize(rows){
 }
 export function mountSubscriptions({content,el,button,link,api,validate,initial,initialRequest,onData,onUnauthorized,spinner,readOnly=false}){
  const life=new AbortController(),root=el('div',{class:'account-subscriptions'}),count=el('span',{class:'subs-count',hidden:''}),body=el('div',{class:'subs-body'}),notice=el('p',{class:'subs-notice',role:'status'});
- const css='/community-assets/account-subscriptions.css?v=compact-subscription-cards-1';
+ const css='/community-assets/account-subscriptions.css?v=subscription-card-parity-1';
  if(!document.head.querySelector('link[data-subscriptions]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-subscriptions':'','data-shell-persistent':''}));
  const heading=el('header',{class:'subs-panel'},el('div',{class:'subs-heading'},el('span',{class:'subs-icon'},icon('calendar')),el('h1',{},'Abunəliklərim'),count),el('p',{},'Abunəliklərinizin nə vaxt bitdiyini bir baxışda görün'));
  root.append(heading,notice,body);content.replaceChildren(root);
@@ -70,17 +70,14 @@ export function mountSubscriptions({content,el,button,link,api,validate,initial,
  function card(row){
   const photo=el('span',{class:'subs-image'},icon('box'));
   try{const url=new URL(row.image,location.origin);if(row.image&&['https:','http:'].includes(url.protocol)){const img=el('img',{src:url.href,alt:'',loading:'lazy'});img.onerror=()=>img.remove();photo.append(img);}}catch{}
-  const known=Number.isInteger(row.days),endingSoon=known&&row.days>=1&&row.days<=6;
+  const known=Number.isInteger(row.days),endingSoon=known&&row.days>=1&&row.days<=7;
   const remaining=el('strong',{class:'subs-days','data-tone':known?urgency(row.days):'unknown'},known?dayLabel(row.days):'Müddət məlum deyil');
   const time=row.expiresOn?el('time',{datetime:row.expiresOn,title:'Bakı vaxtı'},row.expiresOn.split('-').reverse().join('.')):null;
   const rowStatus={reserved:'Ödəniş gözlənilir',pending:'Ödəniş yoxlanılır',preparing:'Hazırlanır',failed:'Son yeniləmə tamamlanmadı'}[row.renewalStatus];
   const expiry=time?el('span',{class:'subs-expiry'},'Bitir: ',time):null;
   const item=el('article',{class:'subs-card','data-ending-soon':endingSoon?'true':undefined},
-   el('div',{class:'subs-card-head'},photo,el('div',{class:'subs-product'},el('h2',{},row.title),el('p',{},row.plan,expiry)),remaining));
-  const price=(label,cents)=>el('div',{},el('dt',{},label),el('dd',{},knownPrice(cents)?azMoney(cents):'Məlum deyil'));
-  const lastPrice=price('Son alış qiyməti',row.lastPurchaseCents);
-  lastPrice.className='subs-last-price';
-  item.append(el('dl',{class:'subs-prices'},lastPrice,knownPrice(row.renewalCents)?price('Cari yeniləmə qiyməti',row.renewalCents):null));
+   el('div',{class:'subs-card-head'},photo,el('div',{class:'subs-product'},el('h2',{},row.title),el('p',{},el('span',{class:'subs-plan'},row.plan),expiry)),remaining));
+  if(knownPrice(row.renewalCents))item.append(el('dl',{class:'subs-prices'},el('div',{},el('dt',{},'Cari yeniləmə qiyməti'),el('dd',{},azMoney(row.renewalCents)))));
   if(rowStatus)item.append(el('p',{class:'subs-renew-status'},rowStatus));
   if(known){
    const renew=button('Yenilə',()=>{if(!readOnly)picker(row);});if(readOnly)renew.setAttribute('data-view-disabled','');renew.prepend(icon('refresh'));renew.className='subs-renew';

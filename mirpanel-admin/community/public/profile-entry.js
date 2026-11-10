@@ -47,7 +47,7 @@ export function mountProfile(app,verifiedState){
  }
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
  const boot=async(retry=0)=>{let timer;try{
-  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=delivery-guide-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
+  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=subscription-card-parity-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin});
  }catch{
