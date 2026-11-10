@@ -1,4 +1,4 @@
-import {renderAccountPanel} from './account-panel.js?v=instruction-image-1';
+import {renderAccountPanel} from './account-panel.js?v=instruction-button-2';
 import {renderViewCatalog} from './customer-view-catalog.js?v=read-navigation-2';
 const app=document.getElementById('communityApp'),base=location.pathname,apiBase=base.replace('/admin/','/api/admin/'),state={};
 const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v!==undefined)n.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)n.append(c);return n;};

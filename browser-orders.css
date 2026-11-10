@@ -73,23 +73,32 @@
 .browser-order-line-meta .browser-order-unit{color:#ffdb53;font-size:12px;font-weight:600}
 .browser-order-line-buttons,.browser-order-delivery>div,.browser-order-repeat>div{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
 .browser-order-line-buttons button,.browser-order-repeat button{min-height:40px;padding:6px 11px;color:#f3f4f6;border:1px solid #46494d;border-radius:9px;background:#26282a;font:600 13px system-ui;cursor:pointer}
-.browser-order-line-buttons [data-order-info],.browser-order-repeat [data-repeat-add]{background:#ffd400;color:#171507;border-color:#ffd400}
+.browser-order-repeat [data-repeat-add]{background:#ffd400;color:#171507;border-color:#ffd400}
 .browser-order-line-buttons button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:33px;font-family:system-ui,"Segoe UI",Arial,sans-serif}
 .browser-order-line-buttons [data-buy-again]{background:#323437}
-.browser-order-line-buttons .order-guide-image-button{
- position:relative;isolation:isolate;width:156px;height:52px;flex:none;
- padding:0;min-height:44px;border:0;border-radius:14px;background:transparent;color:#111;
+.browser-order-line-buttons{flex-wrap:nowrap;max-width:100%}
+.browser-order-line-buttons button{white-space:nowrap;padding-inline:9px}
+.browser-order-line-buttons .order-guide-button{
+ position:relative;isolation:isolate;overflow:hidden;color:#211001;
+ border-color:#ffb344;background:linear-gradient(115deg,#ffbf42,#ff8715 65%,#ff7412);
+ box-shadow:inset 0 1px 0 #ffdb91,0 1px 5px #ff850d38;
 }
-.order-guide-image-button img{display:block;width:100%;height:100%;object-fit:contain;pointer-events:none}
-.order-guide-image-button::after{
- content:"";position:absolute;inset:17% 7%;border-radius:11px;pointer-events:none;
- background:linear-gradient(110deg,transparent 30%,rgba(255,255,255,.48) 49%,transparent 67%);
- background-size:300% 100%;background-position:150% 0;
- opacity:0;
+.order-guide-button::before{
+ content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
+ background:linear-gradient(110deg,transparent 30%,#ffffffb3 49%,transparent 66%);
+ transform:translateX(-38%);opacity:.5;
 }
-.order-guide-image-button.is-animating::after{animation:order-guide-sheen 5s ease-in-out infinite}
-@keyframes order-guide-sheen{0%,60%{background-position:150% 0;opacity:0}65%{opacity:.75}90%{background-position:-50% 0;opacity:.75}100%{background-position:-50% 0;opacity:0}}
-@media(prefers-reduced-motion:reduce){.order-guide-image-button.is-animating::after{animation:none;opacity:0}}
+.order-guide-button.is-animating::before{animation:order-guide-sheen 4s ease-in-out infinite}
+@keyframes order-guide-sheen{
+ 0%,36%{transform:translateX(-100%);opacity:0}
+ 43%{opacity:1}
+ 80%{transform:translateX(100%);opacity:1}
+ 81%,100%{transform:translateX(100%);opacity:0}
+}
+.browser-order-line-buttons .order-guide-button:is(:hover,:focus-visible){border-color:#ffdf92;box-shadow:inset 0 1px 0 #ffe5ae,0 0 8px #ff9e4370}
+.browser-order-line-buttons .order-guide-button:active{background:linear-gradient(115deg,#ffa629,#f9750c);box-shadow:inset 0 2px 4px #8b39064d}
+@media(prefers-reduced-motion:reduce){.order-guide-button.is-animating::before{animation:none}}
+@media(max-width:480px){.browser-order-line-buttons{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));width:100%}}
 .browser-order-line-buttons svg,.browser-order-expiry svg{flex:none}
 .browser-order-expiry{display:flex;align-items:center;flex-wrap:wrap;gap:3px 6px;margin-top:7px;padding:4px 9px;color:#ffe08a;border:1px solid #775719;border-radius:9px;background:#352810;font-size:12px;overflow-wrap:anywhere}
 .browser-order-expiry time{margin-inline-start:auto;color:#e2c47b;white-space:nowrap}
