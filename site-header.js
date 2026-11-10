@@ -1,7 +1,7 @@
 (function () {
   "use strict";
   if(!document.querySelector('link[data-mobile-profile-style]')){
-    const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/mobile-profile.css?v=1';sheet.media='(max-width: 767px)';sheet.dataset.mobileProfileStyle='';sheet.dataset.shellPersistent='';document.head.append(sheet);
+    const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/mobile-profile.css?v=2';sheet.media='(max-width: 767px)';sheet.dataset.mobileProfileStyle='';sheet.dataset.shellPersistent='';document.head.append(sheet);
   }
   if(!document.querySelector('script[data-customer-footer-loader]')){
     const footer=document.createElement('script');footer.src='/customer-footer.js?v=total-sales-20261108';footer.dataset.customerFooterLoader='true';document.head.append(footer);

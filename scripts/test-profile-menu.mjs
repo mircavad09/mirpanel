@@ -27,9 +27,13 @@ const server=http.createServer(async(req,res)=>{
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port;
 const output=process.env.MIRPANEL_MENU_OUTPUT;
-const colors=locator=>locator.evaluate(n=>{const s=getComputedStyle(n);return {background:s.backgroundColor,color:s.color};});
+const colors=locator=>locator.evaluate(n=>{
+ const style=getComputedStyle(n);
+ return {background:style.backgroundColor,color:style.color,stroke:getComputedStyle(n.querySelector('path')).stroke};
+});
+const highlighted={background:'rgb(229, 229, 225)',color:'rgb(16, 17, 18)',stroke:'rgb(16, 17, 18)'};
 try{
- for(const [engine,width] of [[chromium,1440],[chromium,390],[webkit,390]]){
+ for(const [engine,width] of [[chromium,1440],[chromium,320],[chromium,390],[chromium,430],[webkit,390]]){
   const mobile=width<600;
   const browser=await engine.launch({headless:true,...(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
   try{
@@ -39,20 +43,23 @@ try{
    const nav=page.locator('.account-tabs'),links=nav.locator('a');
    assert.deepEqual(await links.allTextContents(),['Profilim','Sifarişlərim','Kodlarım','Abunəliklərim','Ödənişlərim','Xərclərim']);
    assert.deepEqual(await nav.locator('.account-menu-heading').allTextContents(),['ALIŞ-VERİŞ','BALANS']);
+   assert.equal(await nav.getByText('ALIŞ-VERİŞ',{exact:true}).isVisible(),!mobile);
    assert.equal(await nav.locator('[aria-current=page]').getAttribute('data-account-tab'),'expenses');
+   assert.deepEqual(await colors(nav.locator('[aria-current=page]')),highlighted);
    const target=nav.locator('[data-account-tab=codes]'),logout=nav.getByRole('button',{name:'Çıxış'});
    const original=await colors(target);
    if(!mobile){
     assert.equal(Math.round((await page.locator('.account-sidebar').boundingBox()).width),288);
-    await target.hover();assert.deepEqual(await colors(target),{background:'rgb(229, 229, 225)',color:'rgb(23, 25, 27)'});
+    await target.hover();assert.deepEqual(await colors(target),highlighted);
     await page.mouse.move(1000,900);assert.deepEqual(await colors(target),original);
-    await logout.hover();assert.equal((await colors(logout)).color,'rgb(180, 35, 35)');
+    await logout.hover();assert.deepEqual(await colors(logout),highlighted);
     await page.mouse.move(1000,900);
     await page.keyboard.press('Tab');
     assert.equal(await page.locator(':focus-visible').count(),1);
     await page.locator('[data-account-tab=profile]').focus();
     await page.keyboard.press('Tab');
     assert.equal(await page.locator(':focus-visible').getAttribute('data-account-tab'),'orders');
+    assert.deepEqual(await colors(page.locator(':focus-visible')),highlighted);
     assert.equal(await page.locator(':focus-visible').evaluate(n=>getComputedStyle(n).outlineWidth),'3px');
     if(output){await fs.mkdir(output,{recursive:true});await nav.screenshot({path:output+'/profil-menyu.png'});}
    }else{
@@ -62,8 +69,17 @@ try{
      const session=await page.context().newCDPSession(page);
      await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x:box.x+box.width/2,y:box.y+box.height/2}]});
      await page.waitForTimeout(100);
-     assert.equal((await colors(target)).background,'rgb(229, 229, 225)');
+     assert.deepEqual(await colors(target),highlighted);
      await session.send('Input.dispatchTouchEvent',{type:'touchCancel',touchPoints:[]});
+     await nav.evaluate(n=>n.scrollLeft=0);
+     const strip=await nav.boundingBox();
+     const y=strip.y+strip.height/2;
+     const x=strip.x+strip.width-15;
+     await session.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[{x,y}]});
+     for(const delta of [30,65,105,150])await session.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[{x:x-delta,y}]});
+     await session.send('Input.dispatchTouchEvent',{type:'touchEnd',touchPoints:[]});
+     await page.waitForFunction(()=>document.querySelector('.account-tabs').scrollLeft>40);
+     assert.equal(await nav.locator('[aria-current=page]').getAttribute('data-account-tab'),'expenses');
     }else{
      await target.evaluate(n=>n.addEventListener('click',e=>e.preventDefault(),{once:true}));
      await target.tap();
@@ -77,5 +93,5 @@ try{
    console.log(JSON.stringify({engine:engine.name(),width,grouping:true,interaction:true,logout:true}));
   }finally{await browser.close();}
  }
- assert.equal(signouts,3);
+ assert.equal(signouts,5);
 }finally{await new Promise(r=>server.close(r));}

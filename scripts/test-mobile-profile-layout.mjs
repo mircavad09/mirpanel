@@ -65,6 +65,18 @@ try{
     assert.deepEqual(geometry.heights,[44,44,44,44]);assert(Math.max(...geometry.centers)-Math.min(...geometry.centers)<1);
     assert(geometry.placeholderFits&&geometry.scrollable&&geometry.clippedTab&&!geometry.overflow&&geometry.dock,JSON.stringify(geometry));
     assert.equal(geometry.stats[0],geometry.stats[1]);
+    const frame=search.locator('..');
+    const border=()=>frame.evaluate(form=>getComputedStyle(form).borderColor);
+    const idle=await border();
+    await search.focus();
+    assert.notEqual(await border(),idle);
+    const styles=await search.evaluate(input=>{
+     const style=getComputedStyle(input),icon=input.previousElementSibling;
+     const center=node=>{const box=node.getBoundingClientRect();return box.top+box.height/2;};
+     return {border:style.borderWidth,outline:style.outlineWidth,background:style.backgroundColor,shadow:style.boxShadow,aligned:Math.abs(center(input)-center(icon))<1};
+    });
+    assert.deepEqual(styles,{border:'0px',outline:'0px',background:'rgba(0, 0, 0, 0)',shadow:'none',aligned:true});
+    await search.blur();
     await page.getByRole('button',{name:'Üzlüyü dəyiş'}).waitFor();
     if(width===390&&engine===chromium)await page.screenshot({path:path.join(output,live?'mirpanel-canli-assets-sintetik-profil-390.png':'mirpanel-sintetik-profil-390.png')});
     await page.locator('#aiSupportToggle').click();await page.locator('#aiSupportPanel').waitFor();

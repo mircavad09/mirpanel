@@ -142,7 +142,7 @@
  finishHomeCatalog();
  }finally{window.mirpanelNavigationMounting=false;}}
  async function mountProfileRoute(u,run){
-  const css='/community-assets/account-panel.css?v=profile-menu-2';
+  const css='/community-assets/account-panel.css?v=profile-menu-3';
   if(!document.querySelector('link[href="'+css+'"]')){const style=document.createElement('link');style.rel='stylesheet';style.setAttribute('href',css);style.dataset.shellPersistent='';document.head.append(style);}
   const app=document.createElement('main');app.id='communityApp';app.className='community-shell';root.replaceChildren(app);mounted=true;
   routeClasses.add('community-page');document.body.classList.add('community-page','profile-screen');
