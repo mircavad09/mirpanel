@@ -78,7 +78,7 @@ export async function mountShop({root, call, alive}) {
     const tab = window.open("about:blank", "_blank");
     if (tab) tab.opener = null;
     try {
-      const {url} = await call("/shop", {action:"receipt", id:t.id});
+      const {url} = await call("/shop?" + new URLSearchParams({only:"receipt", id:t.id}));
       if (tab) tab.location.replace(url);
       else window.location.assign(url);
     } catch (e) { tab?.close(); throw e; }
@@ -86,7 +86,7 @@ export async function mountShop({root, call, alive}) {
 
   async function showReceipt(t) {
     if (receiptDialog?.open) return;
-    const {url,mime} = await call("/shop", {action:"receipt", id:t.id});
+    const {url,mime} = await call("/shop?" + new URLSearchParams({only:"receipt", id:t.id}));
     if (stopped || !alive()) return;
     const dialog = el("dialog", null, "paymentActionDialog");
     const box = el("div", null, "paymentActionDialogCard");
@@ -209,27 +209,27 @@ export async function mountShop({root, call, alive}) {
     return card;
   }
 
-  async function fetchList() {
+  async function fetchList(openIntent) {
     const data = await call("/shop?only=topups" + (target ? "&id=" + encodeURIComponent(target) : ""));
     if (stopped || !alive()) return;
     const snapshot = JSON.stringify(data.topups);
-    if (snapshot === lastSnapshot) return;
-    const edits = new Map([...list.querySelectorAll('[data-topup-id]')].map(card => [card.dataset.topupId,card.querySelector('[data-topup-amount]')?.value]));
-    const heading = el("h2", "Balans artırma müraciətləri", "topupListTitle");
-    list.replaceChildren(heading, ...(data.topups.length ? data.topups.map(renderCard) : [el("p", target ? "Müraciət tapılmadı." : "Hələ müraciət yoxdur.")]));
-    lastSnapshot = snapshot;
-    for (const card of list.querySelectorAll('[data-topup-id]')) {
-      const input = card.querySelector('[data-topup-amount]');
-      if (input && edits.has(card.dataset.topupId) && edits.get(card.dataset.topupId) != null) input.value = edits.get(card.dataset.topupId);
-    }
-    if (target) {
-      const all = el("a", "Bütün balans müraciətləri", "btn");
-      all.href = "/admin.html#communityShop";
-      list.prepend(all);
+    if (snapshot !== lastSnapshot) {
+      const edits = new Map([...list.querySelectorAll('[data-topup-id]')].map(card => [card.dataset.topupId,card.querySelector('[data-topup-amount]')?.value]));
+      const heading = el("h2", "Balans artırma müraciətləri", "topupListTitle");
+      list.replaceChildren(heading, ...(data.topups.length ? data.topups.map(renderCard) : [el("p", target ? "Müraciət tapılmadı." : "Hələ müraciət yoxdur.")]));
+      lastSnapshot = snapshot;
+      for (const card of list.querySelectorAll('[data-topup-id]')) {
+        const input = card.querySelector('[data-topup-amount]');
+        if (input && edits.has(card.dataset.topupId) && edits.get(card.dataset.topupId) != null) input.value = edits.get(card.dataset.topupId);
+      }
+      if (target) {
+        const all = el("a", "Bütün balans müraciətləri", "btn");
+        all.href = "/admin.html#communityShop";
+        list.prepend(all);
+      }
     }
     const topup = target && data.topups.find(t => t.id === target);
-    if (!topup || opened) return;
-    opened = true;
+    if (!topup || opened || !openIntent) return;
     if (intent === "receipt") {
       if (topup.receipt_available) await showReceipt(topup);
       else error.textContent = "Qəbz artıq mövcud deyil.";
@@ -237,11 +237,12 @@ export async function mountShop({root, call, alive}) {
       if (intent === "reject") reject(topup);
       if (intent === "approve") list.querySelector("[data-topup-amount]")?.focus();
     }
+    opened = true;
   }
-  function load() {
-    return loading ??= fetchList().finally(() => { loading = null; });
+  function load(openIntent = true) {
+    return loading ??= fetchList(openIntent).finally(() => { loading = null; });
   }
-  const poll = () => { if (!busy && !rejectionDialog?.open && !receiptDialog?.open && !list.contains(document.activeElement)) void load().then(() => { if (!busy) error.textContent = ""; }).catch(e => { if (!stopped) error.textContent = e.message; }); };
+  const poll = () => { if (!busy && !rejectionDialog?.open && !receiptDialog?.open && !list.contains(document.activeElement)) void load(false).then(() => { if (!busy && !(target && intent && !opened)) error.textContent = ""; }).catch(e => { if (!stopped) error.textContent = e.message; }); };
   window.addEventListener('admin-topup-poll', poll);
   busy = true;
   try { await load(); }

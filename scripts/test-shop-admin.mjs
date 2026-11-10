@@ -66,6 +66,7 @@ try{
  await f.shop.admin(f.pool,{id:'owner'},{action:'reject',id:old.id,reason:'Sintetik köhnə müraciət'});
  await p.evaluate(()=>window.refreshAdminTopups());await badge(1);
  const t=draft;
+ eq((await fetch(base+'/api/admin/community/shop?only=receipt&id='+t.id)).status,401);
  eq((await ctx.request.post(base+'/api/admin/community/shop',{data:{action:'receipt',id:t.id}})).status(),403);
  await f.pool.query("update mirpanel_community.wallet_topups set submitted_at='2026-11-01T10:15:00Z' where id=$1",[t.id]);
  const second=await add('b');await p.clock.fastForward(30000);await badge(2);
@@ -121,10 +122,18 @@ try{
   await amount.waitFor();
   eq(await amount.evaluate(node=>node===document.activeElement),true);
   eq(await links.locator('.topupCard').count(),1);
+  let receiptAttempts=0;
+  const receiptRoute='**/api/admin/community/shop?only=receipt&id=*';
+  await links.route(receiptRoute,route=>++receiptAttempts===1?route.fulfill({status:503,json:{error:'Sintetik qəbz xətası'}}):route.continue());
   await links.goto(link(t.id,'receipt'));
+  await links.getByText('Sintetik qəbz xətası',{exact:true}).waitFor();
+  await links.locator('#communityShopView').getByRole('button',{name:'Yenilə',exact:true}).click();
   const preview=links.getByRole('dialog',{name:'Qəbz'});
-  await preview.getByRole('img').evaluate(img=>img.decode());
+  try{await preview.getByRole('img').evaluate(img=>img.decode(),null,{timeout:8000});}
+  catch(error){throw Error('Synthetic receipt deep link: '+await links.locator('#communityShopView .topupError').textContent({timeout:2000}),{cause:error});}
   eq(await preview.getByRole('link',{name:'Qəbzi tam ölçüdə aç'}).count(),1);
+  eq(receiptAttempts,2);
+  await links.unroute(receiptRoute);
   await links.goto(link(second.id,'reject'));
   const form=links.getByRole('dialog',{name:'Bu balans müraciəti rədd edilsin?'});
   await form.getByLabel('Ləğv səbəbi').waitFor();

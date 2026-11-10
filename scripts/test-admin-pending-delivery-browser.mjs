@@ -22,7 +22,7 @@ try{
     window.api=async(path,options={})=>{
      const url=new URL(path,location.origin);
      if(url.pathname.endsWith('/'+wallet.id+'/delivery')){
-      if(options.method!=='POST'){s.deliveryReads++;await new Promise(r=>setTimeout(r,75));return {lines:structuredClone(lines)};}
+      if(options.method!=='POST'){s.deliveryReads++;await new Promise(r=>setTimeout(r,75));const copy=structuredClone(lines);if(s.deliveryReads===1)copy[0].message='';return {lines:copy};}
       const input=JSON.parse(options.body);
       if(!s.deliveryPosts.some(x=>x.requestId===input.requestId))lines[input.line].remaining-=input.quantity;
       s.deliveryPosts.push(input);
@@ -54,6 +54,8 @@ try{
    const modal=p.locator('dialog[data-payment-delivery-dialog]');
    await modal.waitFor();
    assert.equal(await p.evaluate(()=>__fixtureState.deliveryReads),1);
+   await modal.getByRole('status').getByText(/Bu məhsul üçün hazır mesaj yoxdur/).waitFor();
+   assert.equal(await modal.getByRole('button',{name:'Göndər və təhvil ver'}).isDisabled(),true);
    await modal.getByLabel('Məhsul və paket').selectOption('1');
    assert.equal(await modal.getByLabel('Otaq adı').inputValue(),'Sınaq otağı');
    assert.equal(await modal.getByLabel('Otaq kodu').inputValue(),'0408');

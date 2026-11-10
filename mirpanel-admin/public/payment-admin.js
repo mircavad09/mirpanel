@@ -759,7 +759,9 @@
       line.onchange=()=>{const x=lines.find(x=>x.index===Number(line.value));if(!x)return;quantity.max=String(x.netflixRoom?1:x.remaining);quantity.value='1';message.value=x.message||'';
         room.hidden=!x.netflixRoom;
         roomName.required=roomCode.required=!!x.netflixRoom;
-        roomName.value=x.netflixRoom?.name||'';roomCode.value=x.netflixRoom?.code||'';submit.disabled=!message.value;renewalCheck.checked=false;renewalNote.hidden=!x.renewalOrderCode;renewalNote.classList.toggle('hidden',!x.renewalOrderCode);renewalCheck.required=!!x.renewalOrderCode;renewalText.textContent=x.renewalOrderCode?' №'+x.renewalOrderCode+' sifarişinin '+x.renewalSourceLine+'-ci sətrindəki '+x.renewalSourceUnit+'-ci abunəliyi həqiqətən uzatdım.':'';};
+        roomName.value=x.netflixRoom?.name||'';roomCode.value=x.netflixRoom?.code||'';submit.disabled=!message.value;
+        status.textContent=submit.disabled?'Bu məhsul üçün hazır mesaj yoxdur. Hazır hesab stoku bölməsində mesajı saxlayıb təhvil pəncərəsini yenidən açın.':'';
+        renewalCheck.checked=false;renewalNote.hidden=!x.renewalOrderCode;renewalNote.classList.toggle('hidden',!x.renewalOrderCode);renewalCheck.required=!!x.renewalOrderCode;renewalText.textContent=x.renewalOrderCode?' №'+x.renewalOrderCode+' sifarişinin '+x.renewalSourceLine+'-ci sətrindəki '+x.renewalSourceUnit+'-ci abunəliyi həqiqətən uzatdım.':'';};
       let loading=false;
       const load=async()=>{
         if(loading)return;

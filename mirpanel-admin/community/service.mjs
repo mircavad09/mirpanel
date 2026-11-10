@@ -41,7 +41,7 @@ export function createOwnerCommunity(env=process.env,options={}){
    if(part==='/dashboard')return json(res,200,await adminDashboard(r.pool));
    if(part==='/user-controls')return json(res,200,await userControls(r.pool,r.repo,u.searchParams.get('userId'),await options.loadCatalog()));
    if(part==='/user-statistics')return json(res,200,await userStatistics(r.pool,u.searchParams.get('userId'),Object.fromEntries(u.searchParams)));
-   if(part==='/shop'){const only=u.searchParams.get('only');return json(res,200,await options.shopAdmin(r.pool,owner,{action:only==='topup-count'?'topup-count':only==='topups'?'topups':'list',id:only==='topups'?u.searchParams.get('id'):null}));}
+   if(part==='/shop'){const only=u.searchParams.get('only');return json(res,200,await options.shopAdmin(r.pool,owner,{action:only==='topup-count'?'topup-count':only==='topups'?'topups':only==='receipt'?'receipt':'list',id:['topups','receipt'].includes(only)?u.searchParams.get('id'):null}));}
    if(part==='/wallet'){
     const history=await walletHistory(r.pool,u.searchParams.get('userId'),Object.fromEntries(u.searchParams));
     const {rows:[{available}]}=await r.pool.query("select coalesce(has_function_privilege(to_regprocedure('mirpanel_community.wallet_debit(text,text,bigint,text,uuid,bigint)'), 'EXECUTE'),false) available");

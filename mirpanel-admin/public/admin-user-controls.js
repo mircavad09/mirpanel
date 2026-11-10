@@ -40,15 +40,14 @@ export async function renderControlsTab({content,tab,selected,call,valid}){
   try{const r=await call('/customer-view',{userId:identity.id});tab.location.replace(r.url);}
   catch(e){tab.close();throw e;}finally{view.disabled=false;}
  }));
- const support=button('İstifadəçi ilə söhbət — Tezliklə',()=>{});support.disabled=true;
  const banned=selected.user.blocked&&(!selected.user.banUntil||Date.parse(selected.user.banUntil)>Date.now()),ban=button(banned?'Banı aç':'Ban et',safe(async()=>{if(!banned&&!confirm(selected.user.name+' hesabının sayta girişini bağlamaq istəyirsiniz?'))return;await call('/moderate',{action:banned?'unban':'ban',targetId:identity.id,minutes:null,confirmed:!banned,requestId:crypto.randomUUID()});Object.assign(selected,await call('/users/'+encodeURIComponent(identity.id)));await renderControlsTab({content,tab,selected,call,valid});}));
  const other=el('div');other.className='uc-other';
  const card=title=>{const n=el('section');n.className='uc-other-card';n.append(el('h3',title));other.append(n);return n;};
  const field=(parent,label,value)=>{const n=el('div');n.className='uc-other-field';n.append(el('span',label),el('div',value==null||String(value).trim()===''?'Əlavə edilməyib':value));parent.append(n);return n;};
  const addIcon=(node,path)=>{const svg=document.createElementNS('http://www.w3.org/2000/svg','svg'),p=document.createElementNS(svg.namespaceURI,'path');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');p.setAttribute('d',path);svg.append(p);node.prepend(svg);};
  addIcon(view,'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0');
- addIcon(support,'M4 5h16v11H9l-5 4V5Z');addIcon(ban,'M5 5l14 14 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0');ban.classList.add('uc-ban');
- const management=card('İdarəetmə'),actions=el('div');actions.className='uc-other-actions';actions.append(view,support,ban);management.append(actions);
+ addIcon(ban,'M5 5l14 14 M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0');ban.classList.add('uc-ban');
+ const management=card('İdarəetmə'),actions=el('div');actions.className='uc-other-actions';actions.append(view,ban);management.append(actions);
  const login=card('Giriş məlumatları');field(login,'Giriş üsulu',identity.password_login?'E-poçt və şifrə':'Google ilə giriş edir');field(login,'Giriş ünvanı',identity.email);
  const email=field(login,'E-poçt',identity.email),copy=button('Kopyala',safe(async()=>{await navigator.clipboard.writeText(identity.email);copy.textContent='Kopyalandı';}));copy.classList.add('uc-copy');copy.disabled=!identity.email;copy.setAttribute('aria-label','E-poçtu kopyala');email.append(copy);login.append(el('p','E-poçt hazırda dəyişdirilə bilmir'));
  if(identity.password_login&&identity.emailVerified){const reset=button('Şifrəni sıfırla',safe(async()=>{const r=await call('/reset-user-password',{userId:identity.id});error.textContent=r.sent?'Bərpa məktubu göndərildi.':r.message;}));login.append(reset);}else login.append(el('p',identity.password_login?'Şifrə bərpası üçün təsdiqlənmiş e-poçt tələb olunur.':'Şifrə Google hesabınızdan idarə olunur'));
