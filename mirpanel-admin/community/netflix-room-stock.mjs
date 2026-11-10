@@ -50,10 +50,22 @@ export function parseRoomBatch(b){
  })};
 }
 export async function netflixRooms(pool){
- const {rows}=await pool.query(`select r.id,r.room_name as name,g.starts_on::text as "startsOn",g.ends_on::text as "endsOn",
-  case when g.ends_on<=public.payment_baku_date() then 'expired' when r.delivery_id is not null then 'sold' else 'free' end status
+ const {rows}=await pool.query(`select r.id,r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",
+  coalesce(to_jsonb(r)->>'stock_ends_on',g.ends_on::text) as "endsOn",
+  case when coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() then 'expired'
+   when r.delivery_id is not null then 'sold' else 'free' end status
   from ${U} r join ${G} g on g.id=r.group_id order by g.created_at desc,r.room_name,r.id limit 250`);
  return {rooms:rows};
+}
+
+export async function restockNetflixRoom(pool,input){
+ const {id,deliveryId,endsOn}=input||{};
+ const uuid=value=>typeof value==='string'&&/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(value);
+ if(!uuid(id)||!uuid(deliveryId)||!isoDate(endsOn)||endsOn<=bakuDate())throw fail(400,'Otağı və gələcək bitmə tarixini seçin.');
+ const result=await pool.query(`update ${U} set delivery_id=null,stock_ends_on=$3 where id=$1 and delivery_id=$2`,
+  [id,deliveryId,endsOn]);
+ if(!result.rowCount)throw fail(409,'Otağın vəziyyəti dəyişib. Siyahını yeniləyin.');
+ return {restocked:true};
 }
 export async function saveNetflixRooms(pool,security,secret,actor,input){
  const b=parseRoomBatch(input),accountKey=digest(secret,['netflix-room-account',b.email.toLowerCase()]);
@@ -92,7 +104,7 @@ export async function bindNetflixRoom(c,security,secret,deliveryId,{email,passwo
  if(!installed.rows[0].present)return;
  const accountKey=digest(secret,['netflix-room-account',email.trim().toLowerCase()]);
  const {rows:[room]}=await c.query(`select r.id,r.pin_cipher,r.delivery_id,g.id group_id,g.account_cipher,
-   g.ends_on<=public.payment_baku_date() as expired
+   coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() as expired
    from ${U} r join ${G} g on g.id=r.group_id
    where r.account_key=$1 and r.room_key=$2 for update of r`,
   [accountKey,roomName.trim().normalize('NFC').toLowerCase()]);

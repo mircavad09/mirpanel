@@ -67,9 +67,12 @@ export function mountReadyStock(host,api){
  let roomRequest=null,roomBusy=false;
  const roomFields='<label>Otaq adı<input name="room" maxlength="50" required></label><label>PIN<input name="pin" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required></label>';
  function addRoom(){
-  if(roomRows.children.length>=20)return;
+  if(roomRows.children.length>=5)return;
   const row=document.createElement('div');row.className='readyStockAccount netflixRoomRow';
   row.innerHTML=roomFields+'<button type="button" class="btn" aria-label="Otağı sil">×</button>';
+  const taken=new Set([...roomRows.querySelectorAll('[name=room]')].map(input=>input.value.trim()));
+  row.querySelector('[name=room]').value=['1','2','3','4','5'].find(name=>!taken.has(name))||'';
+
   row.querySelector('button').onclick=()=>{if(roomRows.children.length>1){row.remove();roomRequest=null;}};
   roomRows.append(row);
  }
@@ -107,7 +110,7 @@ export function mountReadyStock(host,api){
   }catch(e){roomStatus.textContent=e.message||'Otaq açıla bilmədi.';}
   finally{button.disabled=false;}
  }
- const roomSummary=row=>row.name+' · '+row.startsOn+' → '+row.endsOn+' · '+({free:'Boş',sold:'Satılıb',expired:'Yenilənməyib'}[row.status]||'—');
+ const roomSummary=row=>row.name+' · '+row.startsOn+' → '+row.endsOn+' · '+({free:'Satılmayıb',sold:'Satılıb',expired:'Müddəti bitib'}[row.status]||'—');
  function showRooms(rows){
   roomForm.hidden=!Array.isArray(rows);
   if(!Array.isArray(rows)){roomStatus.textContent='Otaq stoku bazada hələ aktiv deyil.';return;}
@@ -117,6 +120,26 @@ export function mountReadyStock(host,api){
    summary.dataset.roomSummary='';summary.textContent=roomSummary(row);
    edit.type='button';edit.className='btn';edit.textContent='Redaktə et';edit.onclick=()=>void openRoom(node,row,edit);
    node.append(summary,' ',edit);
+   if(row.deliveryId){
+    const button=document.createElement('button');
+    button.type='button';button.className='btn';button.textContent='Yenidən satışa çıxar';
+    button.onclick=async()=>{
+     const [year,month,day]=row.endsOn.split('-');
+     const input=prompt('Otağın yeni bitmə tarixi (məs. 10 dekabr)',Number(day)+' '+months[Number(month)-1]+' '+year);
+     if(input===null)return;
+     const date=roomEndDate(input);
+     if(!date||date.days<1){roomStatus.textContent='Gələcək bitmə tarixini yazın.';return;}
+     if(!confirm('Bu otağı yenidən satışa çıxarmaq istəyirsiniz?'))return;
+     button.disabled=true;
+     try{
+      await api(endpoint,{method:'POST',body:JSON.stringify({restockNetflixRoom:{id:row.id,deliveryId:row.deliveryId,endsOn:date.iso}})});
+      showRooms((await api(endpoint)).netflixRooms);
+      roomStatus.textContent='Otaq yenidən satışa çıxarıldı.';
+     }catch(error){roomStatus.textContent=error.message;button.disabled=false;}
+    };
+    node.append(' ',button);
+   }
+
    return node;
   }));
  }
