@@ -1,0 +1,30 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {shopFixture} from './shop-test-fixture.mjs';
+import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
+import {netflixRooms,saveNetflixRooms} from '../mirpanel-admin/community/netflix-room-stock.mjs';
+const f=await shopFixture();
+try{
+ const migration=f.db.read('mirpanel-admin/community/netflix-room-stock.sql');
+ await f.db.exec(migration);await f.db.exec(migration);
+ const security=createPaymentSecurity({encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')});
+ const secret=crypto.randomBytes(32);
+ const b={requestId:f.id(),email:'demo@example.test',password:'Synthetic-secret',startsOn:'2020-01-01',endsOn:'2099-02-01',rooms:[{name:'1',pin:'0408'},{name:'2',pin:'1234'}]};
+ const save=b=>saveNetflixRooms(f.pool,security,secret,'owner',b);
+ const replay=await Promise.all([save(b),save(b)]);
+ assert.equal(replay.filter(r=>!r.replayed).length,1);
+ await assert.rejects(save({...b,requestId:f.id()}),{status:409});
+ await assert.rejects(save({...b,rooms:[{name:'3',pin:'1234'}]}),{status:409});
+ await assert.rejects(save({...b,requestId:f.id(),rooms:[{name:'3',pin:408}]}),{status:400});
+ await assert.rejects(save({...b,startsOn:'2026-02-30'}),{status:400});
+ const result=await netflixRooms(f.pool);
+ assert.equal(result.rooms.length,2);
+ assert.ok(result.rooms.every(r=>r.status==='free'));
+ assert.doesNotMatch(JSON.stringify(result),/0408|Synthetic-secret|demo@example/);
+ const {rows:[row]}=await f.pool.query("select pin_cipher from mirpanel_community.netflix_room_units where room_name='1'");
+ assert.equal(JSON.parse(security.decryptSecret(row.pin_cipher)).pin,'0408');
+ assert.doesNotMatch(row.pin_cipher,/^0408$/);
+ await f.pool.query("update mirpanel_community.netflix_room_groups set ends_on=public.payment_baku_date()");
+ assert.ok((await netflixRooms(f.pool)).rooms.every(r=>r.status==='expired'));
+ console.log('PASS: batch replay, duplicate prevention, date validation, separate encrypted units, 0408 preserved, expiry status and redacted listing');
+}finally{await f.close();}

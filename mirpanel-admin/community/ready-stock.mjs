@@ -4,6 +4,7 @@ import {planKey} from '../payment-profit.mjs';
 import {adminPendingDeliveries,recordDelivery} from './order-delivery.mjs';
 
 import {readProductMessages} from './ready-stock-product-messages.mjs';
+import {netflixRooms,saveNetflixRooms} from './netflix-room-stock.mjs';
 
 const S='mirpanel_community.ready_stock_';
 const fail=(status,message)=>Object.assign(Error(message),{status});
@@ -32,10 +33,16 @@ export async function readyStockView(pool,catalog,inventory,security){
    });
    return {id:p.id,title:p.title,message:messages.get(p.id)??'',image:typeof p.image==='string'?p.image:'',readyTotal,scope:stock?.scope||'none',version:stock?.version??0,plans};
   })};
+  const roomStockInstalled=(await c.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present;
+  result.netflixRooms=roomStockInstalled?(await netflixRooms(c)).rooms:null;
   await c.query('commit');return result;
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
+ if(input?.netflixRooms){
+  if(!(await pool.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present)throw fail(503,'Netflix otaq stoku üçün baza yeniləməsi lazımdır.');
+  return saveNetflixRooms(pool,security,secret,actor,input.netflixRooms);
+ }
  const {productId,index,planSignature,requestId,messages=[],accounts,autoWallet}=input||{};
  const structured=accounts!==undefined;
  if(structured&&(!Array.isArray(accounts)||accounts.length>20||messages.length||accounts.some(a=>

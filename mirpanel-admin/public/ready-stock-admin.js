@@ -24,7 +24,7 @@ export function mountReadyStock(host,api){
    <p role="status" aria-live="polite"></p>
   </section>
   <section class="readyStockCard"><h3>Məhsullar üzrə hazır stok</h3><p>Bütün paketlər üzrə sifarişə ayrılmamış hazır hesablar.</p><div data-product-list></div></section>
- </div>`;
+ </div><section class="readyStockCard" data-netflix-room-stock></section>`;
  const form=host.querySelector('form'),{product,plan,sales,auto,template}=form.elements;
  const q=s=>host.querySelector(s),messageList=q('[data-messages]'),report=q('[role=status]'),list=q('[data-product-list]');
  const submit=form.querySelector('[type=submit]'),saveSales=q('[data-save-sales]'),editSales=q('[data-edit-sales]'),editor=q('#readyStockSaleEditor'),add=q('[data-add-unit]');
@@ -32,6 +32,54 @@ export function mountReadyStock(host,api){
  const drafts=new Map(),lastPlan=new Map(),messageDrafts=new Map();
  let activeDraft=null,activeProduct;
  let products=[],pending=null,busy=false,loaded=false,read=null;
+ const roomHost=q('[data-netflix-room-stock]');
+ roomHost.innerHTML=`<h3>Netflix Şəxsi — hazır otaq stoku</h3>
+  <p>Sheets bağlantısı olmadan otaq əlavə edə bilərsiniz. Bu bölmədəki otaqlar hələ avtomatik satışa ayrılmır.</p>
+  <form autocomplete="off" hidden>
+   <label>Netflix hesabının e-poçtu<input name="email" type="email" maxlength="254" required></label>
+   <label>Netflix hesabının şifrəsi<input name="password" type="password" maxlength="512" autocomplete="new-password" required></label>
+   <label>Dövrün başlanğıcı<input name="startsOn" type="date" required></label>
+   <label>Dövrün bitməsi<input name="endsOn" type="date" required></label>
+   <div data-rooms></div>
+   <div class="readyStockActions"><button type="button" class="btn" data-room-add>+ Otaq əlavə et</button><button class="btn primary">Otaqları saxla</button></div>
+  </form><p data-room-status role="status"></p><ul data-room-list></ul>`;
+ const roomForm=roomHost.querySelector('form'),roomRows=roomHost.querySelector('[data-rooms]'),roomStatus=roomHost.querySelector('[data-room-status]'),roomList=roomHost.querySelector('[data-room-list]');
+ let roomRequest=null,roomBusy=false;
+ function addRoom(){
+  if(roomRows.children.length>=20)return;
+  const row=document.createElement('div');row.className='readyStockAccount';
+  row.innerHTML='<label>Otaq adı<input name="room" maxlength="50" required></label><label>Dördrəqəmli PIN<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" required></label><button type="button" class="btn">Otağı sil</button>';
+  row.querySelector('button').onclick=()=>{if(roomRows.children.length>1)row.remove();};
+  roomRows.append(row);
+ }
+ function showRooms(rows){
+  roomForm.hidden=!Array.isArray(rows);
+  if(!Array.isArray(rows)){roomStatus.textContent='Otaq stoku bazada hələ aktiv deyil.';return;}
+  roomList.replaceChildren(...rows.map(row=>{
+   const node=document.createElement('li');
+   node.textContent=row.name+' · '+row.startsOn+' → '+row.endsOn+' · '+({free:'Boş',sold:'Satılıb',expired:'Yenilənməyib'}[row.status]||'—');
+   return node;
+  }));
+ }
+ roomHost.querySelector('[data-room-add]').onclick=addRoom;
+ roomForm.oninput=()=>{roomRequest=null;};
+ roomForm.onsubmit=async event=>{
+  event.preventDefault();if(roomBusy)return;
+  const {email,password,startsOn,endsOn}=roomForm.elements;
+  roomRequest??=crypto.randomUUID();
+  const payload={requestId:roomRequest,email:email.value,password:password.value,startsOn:startsOn.value,endsOn:endsOn.value,
+   rooms:[...roomRows.children].map(row=>({name:row.querySelector('[name=room]').value,pin:row.querySelector('[name=pin]').value}))};
+  const fields=[...roomForm.querySelectorAll('input,button')];roomBusy=true;fields.forEach(x=>x.disabled=true);
+  roomStatus.textContent='Otaqlar saxlanılır…';
+  try{
+   const result=await api(endpoint,{method:'POST',body:JSON.stringify({netflixRooms:payload})});
+   roomRequest=null;roomForm.reset();roomRows.replaceChildren();addRoom();
+   roomStatus.textContent=result.added+' otaq saxlanıldı.';
+   showRooms((await api(endpoint)).netflixRooms);
+  }catch(e){roomStatus.textContent=e.message||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.';}
+  finally{roomBusy=false;fields.forEach(x=>x.disabled=false);}
+ };
+ addRoom();
  const selected=()=>{const p=products.find(x=>x.id===product.value);return {p,item:p?.plans.find(x=>String(x.index)===plan.value)};};
  const accounts=()=>[...messageList.children].map(row=>({email:row.querySelector('[type=email]').value.trim(),password:row.querySelector('[name=password]').value}));
  const say=(text,error=false)=>{report.textContent=text;report.dataset.error=String(error);};
@@ -122,7 +170,7 @@ export function mountReadyStock(host,api){
  async function refresh(){
   if(read||pending)return;
   read=api(endpoint);
-  try{const next=await read,p=product.value,i=plan.value;rememberDraft();products=next.products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderProducts();renderPlan();}
+  try{const next=await read,p=product.value,i=plan.value;showRooms(next.netflixRooms);rememberDraft();products=next.products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderProducts();renderPlan();}
   catch(e){say(e.message,true);}
   finally{read=null;controls();}
  }
