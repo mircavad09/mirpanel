@@ -29,12 +29,13 @@ try{await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://12
   const cardChoice=p.getByRole('radio',{name:/Kartdan karta/}),walletChoice=p.getByRole('radio',{name:/Balansla ödə/});
   eq(await cardChoice.isDisabled(),true);eq(await walletChoice.isChecked(),true);
   await p.getByText('Hazırda əlçatan deyil',{exact:true}).waitFor();
-  await p.getByText('0,00 ₼ var, 20,00 ₼ çatmır.',{exact:true}).waitFor();
+  const shortfall=p.locator('.checkout-shortfall-missing strong');await shortfall.waitFor();eq(await shortfall.textContent(),'20,00 ₼');
   eq(await p.getByRole('button',{name:/Sifarişi tamamla/}).isDisabled(),true);
   const rejected=await c.request.post(origin+'/api/payments/shop/checkout',{data:{items:cartItems,mode:'card',methodId:f.method,requestId:f.id(),consentAccepted:true}});
   eq(rejected.status(),409);
   await p.getByRole('link',{name:'Balansını artır',exact:true}).click();
   await p.waitForURL('**/balans?returnTo=*');
+  eq(await p.locator('#balansi-artir').getByRole('link',{name:/Alışa qayıt/}).getAttribute('href'),'/odenis?mode=wallet');
  }else await p.goto(origin+'/balans');
  await p.getByRole('button',{name:'20 ₼',exact:true}).click();eq(await p.getByRole('combobox').count(),0);await p.getByRole('button',{name:'Kartdan karta',exact:true}).click();const cards=p.locator('.wallet-bank-choice');await cards.first().waitFor();eq(await cards.count(),4);await p.waitForFunction(()=>[...document.querySelectorAll('.wallet-bank-image')].every(i=>i.naturalWidth>0));const ys=await cards.evaluateAll(ns=>ns.map(n=>n.getBoundingClientRect().y));eq(ys[0],ys[1]);eq(ys[2],ys[3]);if(width===390){await capture(p,engine);await p.evaluate(async()=>{scrollTo(0,0);await Promise.all([...document.images].map(i=>i.decode().catch(()=>{})));});}if(width===390)await p.screenshot({path:out+'/'+engine+'-selection.png',fullPage:true});
  for(let i=0;i<4;i++){await cards.nth(i).click();eq(await cards.nth(i).getAttribute('aria-pressed'),'true');await p.getByRole('button',{name:'Bu kartla davam et · 20.00 ₼',exact:true}).click();await p.locator('.wallet-bank-number').waitFor({state:'visible'});eq(await p.locator('.wallet-bank-fields').textContent(),'SahibSintetik SahibKöçürüləcək məbləğ20.00 ₼');eq(await p.locator('[role=timer]').count(),0);eq(await p.getByRole('button',{name:'Balans əlavə et',exact:true}).isDisabled(),true);eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);if(i!==3){await p.getByRole('button',{name:'Kartı dəyiş',exact:true}).click();eq(await p.locator('.shop-topup-preview span').textContent(),'20.00 ₼');}}
@@ -52,13 +53,15 @@ try{await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://12
  const other=await b.newContext();await other.addCookies([{name:'test_user',value:'b',url:origin}]);const rr=await other.request.get(origin+'/api/payments/shop/topup?id='+id);eq(rr.status(),404);eq((await other.request.post(origin+'/api/payments/shop/topup/receipt/remove',{data:{id}})).status(),409);eq((await other.request.post(origin+'/api/payments/shop/topup/submit',{data:{id}})).status(),404);await other.close();
  loseSubmit=true;await send.evaluate(n=>{n.click();n.click();});await p.getByRole('heading',{name:'Ödəniş uğurla əlavə edildi!',exact:true}).waitFor();
  const result=p.locator('.wallet-topup-result');eq(await result.locator('.shop-result-reference').textContent(),'Müraciət № '+(await shop.topupState({headers:{cookie:'test_user=a'}},id)).number+' · 20,00 ₼');
- eq(await result.getByRole('link',{name:'Ödənişlərimə bax'}).getAttribute('href'),'/profil?tab=payments&topup='+id);eq(await result.getByRole('link',{name:'Məhsullara bax'}).getAttribute('href'),'/mehsullar');eq(await result.getByRole('link',{name:'Ana səhifə'}).getAttribute('href'),'/');
+ eq(await result.getByRole('link',{name:'Ödənişlərimə bax'}).getAttribute('href'),'/profil?tab=payments&topup='+id);eq(await result.getByRole('link',{name:'Məhsullara bax'}).getAttribute('href'),'/mehsul');eq(await result.getByRole('link',{name:'Ana səhifə'}).getAttribute('href'),'/');
+ eq(await result.getByRole('link').count(),3);
+ eq(await result.getByRole('link',{name:'Alışa qayıt',exact:true}).count(),0);
  eq(await p.locator('.wallet-bank-detail').count(),0);eq(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  eq((await pool.query('select status from wallet_topups where id=$1',[id])).rows[0].status,'reviewing');eq(Number((await pool.query('select count(*) n from wallet_topups')).rows[0].n),before);eq((await shop.wallet({headers:{cookie:'test_user=a'}})).cents,0);eq(errors,[]);
  if(checkoutTest){
   await p.screenshot({path:out+'/result-'+width+'.png',fullPage:true});
   await shop.admin(pool,{id:'owner'},{action:'approve',id,amount:'20'});
-  await p.getByRole('link',{name:'Alışa qayıt',exact:true}).click();
+  await p.goto(origin+'/odenis?mode=wallet');
   await p.waitForURL('**/odenis?mode=wallet');
   await p.getByRole('radio',{name:/Balansla ödə.*20,00/}).waitFor();
   eq(await p.evaluate(()=>window.MirpanelCart.checkout()),cartItems);
