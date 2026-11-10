@@ -11,18 +11,44 @@ const messages={
  sheets:'Google Sheets bağlantısı uğursuz oldu. Sistem yenidən cəhd edəcək.'
 };
 
+async function sheetQueueInstalled(db){
+ return (await db.query("select to_regclass($1) installed",[queue])).rows[0].installed;
+}
+
+export async function queueManualSheetCustomerId(db,deliveryId){
+ if(!await sheetQueueInstalled(db))return;
+ // The room trigger has already queued a stock assignment when one exists.
+ // A manual delivery can also identify a room registered only in the sheet.
+ await db.query(`insert into ${queue}(delivery_id,room_id)
+  select $1,null where exists(select 1 from pg_attribute
+   where attrelid=to_regclass($2) and attname='room_id' and not attnotnull and not attisdropped)
+  on conflict(delivery_id) do nothing`,[deliveryId,queue]);
+}
+
+const present=r=>({deliveryId:r.delivery_id,state:r.state,message:messages[r.reason]});
 export async function sheetCustomerIdStates(db){
- if(!(await db.query("select to_regclass($1) installed",[queue])).rows[0].installed)return new Map();
- const {rows}=await db.query(`select distinct on (room_id) room_id,delivery_id,state,reason from ${queue}
-  order by room_id,created_at desc,delivery_id`);
- return new Map(rows.map(r=>[r.room_id,{deliveryId:r.delivery_id,state:r.state,message:messages[r.reason]}]));
+ if(!await sheetQueueInstalled(db))return {rooms:new Map(),manual:[]};
+ const {rows}=await db.query(`select j.delivery_id,j.room_id,j.state,j.reason,o.order_code::text
+  from ${queue} j
+  left join mirpanel_community.netflix_room_units r on r.id=j.room_id
+  join mirpanel_community.customer_order_deliveries d on d.id=j.delivery_id
+  join public.payment_orders o on o.id=d.order_id
+  where r.delivery_id=j.delivery_id or (j.room_id is null and j.state<>'done')
+  order by j.created_at desc,j.delivery_id`);
+ const rooms=new Map(),manual=[];
+ for(const r of rows){
+  if(r.room_id)rooms.set(r.room_id,present(r));
+  else manual.push({...present(r),orderCode:r.order_code});
+ }
+ return {rooms,manual};
 }
 
 export async function retrySheetCustomerId(db,deliveryId){
  if(typeof deliveryId!=='string'||! /^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(deliveryId))
   throw Object.assign(Error('Təhvil identifikatoru düzgün deyil.'),{status:400});
  const {rowCount}=await db.query(`update ${queue} j set state='pending',reason=null,next_at=now(),attempts=0
-  from mirpanel_community.netflix_room_units r where j.delivery_id=$1 and j.room_id=r.id and r.delivery_id=j.delivery_id and j.state<>'done'`,[deliveryId]);
+  where j.delivery_id=$1 and j.state<>'done' and (j.room_id is null or exists(
+   select 1 from mirpanel_community.netflix_room_units r where r.id=j.room_id and r.delivery_id=j.delivery_id))`,[deliveryId]);
  if(!rowCount)throw Object.assign(Error('Təkrar yazıla bilən cari təhvil tapılmadı.'),{status:409});
  return {queued:true};
 }
@@ -36,17 +62,16 @@ export async function writeNextSheetCustomerId(pool,security,client){
   const {rows:[job]}=await c.query(`select * from ${queue} where state='pending' and next_at<=now()
    order by next_at,created_at limit 1 for update skip locked`);
   if(!job){await c.query('commit');return false;}
-  const {rows:[delivery]}=await c.query(`select d.order_id,d.line_index,d.message_cipher,n.member_number::text,
-   r.delivery_id current_delivery
-   from mirpanel_community.netflix_room_units r
-   join mirpanel_community.customer_order_deliveries d on d.id=$2
+  const current=job.room_id&&(await c.query('select delivery_id from mirpanel_community.netflix_room_units where id=$1 for share',[job.room_id])).rows[0];
+  const {rows:[delivery]}=await c.query(`select d.order_id,d.line_index,d.message_cipher,n.member_number::text
+   from mirpanel_community.customer_order_deliveries d
    join public.payment_orders o on o.id=d.order_id
    join mirpanel_community.community_order_owners u on u.order_id=o.id
    left join mirpanel_community.community_member_numbers n on n.user_id=u.user_id
-   where r.id=$1 and o.payment_confirmed and o.status not in ('rejected','cancelled','expired')
-   for share of r`,[job.room_id,job.delivery_id]);
+   where d.id=$1 and (o.payment_confirmed or o.status in ('approved','completed'))
+    and o.status not in ('rejected','cancelled','expired')`,[job.delivery_id]);
   let state='blocked',reason='delivery';
-  if(delivery&&delivery.current_delivery!==job.delivery_id)reason='released';
+  if(job.room_id&&current?.delivery_id!==job.delivery_id)reason='released';
   else if(delivery?.member_number){
    let snapshot;
    try{snapshot=JSON.parse(security.decryptSecret(delivery.message_cipher));}catch{}

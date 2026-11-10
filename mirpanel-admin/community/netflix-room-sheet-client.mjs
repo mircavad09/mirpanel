@@ -114,7 +114,9 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    start:{sheetId,rowIndex:current.rowIndex,columnIndex:0},
    rows:[{values:[{userEnteredValue:{stringValue:memberNumber}}]}],fields:'userEnteredValue'
   }}]});
-  return {done:true};
+  const saved=await read();
+  if(!saved.done)throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
+  return saved;
  },
  async open(){
   const {metadata,stockSheet,sheetId,range}=await stockDestination();

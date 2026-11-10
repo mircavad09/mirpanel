@@ -14,8 +14,16 @@ try{
   const page=await browser.newPage({viewport:{width,height:900}});let date='2027-01-15',writes=0,editedName='4',removedFive=false;const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const groupId='00000000-0000-4000-8000-000000000001';
   const saved=[];
+  const manualDeliveryId='00000000-0000-4000-8000-000000000099';
+  let manualSheetJob={deliveryId:manualDeliveryId,orderCode:'99',state:'blocked',message:'Uyğun sətrin A xanasında başqa dəyər var.'};
+
   await page.route('**/api/admin/payment-ready-stock',async route=>{
    const input=route.request().method()==='POST'?route.request().postDataJSON():null;
+   if(input?.netflixSheetIdRetry){
+    assert.equal(input.netflixSheetIdRetry.deliveryId,manualDeliveryId);
+    manualSheetJob={...manualSheetJob,state:'pending',message:undefined};
+    return route.fulfill({json:{queued:true}});
+   }
    if(input?.netflixRoomCards){
     assert.equal(input.netflixRoomCards.length,2);
     for(const [index,card] of input.netflixRoomCards.entries()){
@@ -44,11 +52,15 @@ try{
     if(x.action==='preview')return route.fulfill({json:{email:'synthetic@example.test',activeRooms:2,activeCustomers:2,revision:'synthetic-revision'}});
     assert.equal(x.action,'rotate');assert.equal(x.password,'Example-new');assert.equal(x.expectedRevision,'synthetic-revision');writes++;return route.fulfill({json:{changed:true}});
    }
-   return route.fulfill({json:{products:[{id:'netflix',title:'Netflix Şəxsi',message:'',plans:[{index:0,title:'1 ay',signature:'test',sales:10,ready:0}]}],netflixRooms:[...saved,...[5,2,10,1,4,3].filter(n=>n!==5||!removedFive).map(n=>({id:groupId.slice(0,-1)+n,groupId,accountEmail:'synthetic@example.test',name:n===4?editedName:String(n),endsOn:date,canDelete:n===5,deliveryId:n===5?null:'example-'+n,status:[2,3,10].includes(n)?'paid':'expired',active:[2,3].includes(n),statusLabel:[2,3].includes(n)?'Ödəniş edib, ödənilmiş müddəti davam edir':'Müddəti bitib, yenilənməyib'}))]}});
+   return route.fulfill({json:{products:[{id:'netflix',title:'Netflix Şəxsi',message:'',plans:[{index:0,title:'1 ay',signature:'test',sales:10,ready:0}]}],netflixSheetManual:[manualSheetJob],netflixRooms:[...saved,...[5,2,10,1,4,3].filter(n=>n!==5||!removedFive).map(n=>({id:groupId.slice(0,-1)+n,groupId,accountEmail:'synthetic@example.test',name:n===4?editedName:String(n),endsOn:date,canDelete:n===5,deliveryId:n===5?null:'example-'+n,status:[2,3,10].includes(n)?'paid':'expired',active:[2,3].includes(n),statusLabel:[2,3].includes(n)?'Ödəniş edib, ödənilmiş müddəti davam edir':'Müddəti bitib, yenilənməyib'}))]}});
   });
   await page.goto('http://127.0.0.1:'+server.address().port);
   const release=page.getByRole('button',{name:'Boşalt və satışa qaytar',exact:true});await release.first().waitFor();
   assert.equal(await release.count(),2);assert.equal(await release.first().isEnabled(),true);
+  const sheet=page.locator('[data-sheet-manual]');
+  await sheet.getByText(/Sifariş №99.*başqa dəyər/).waitFor();
+  await sheet.getByRole('button',{name:'ID yazısını təkrarla'}).click();
+  await sheet.getByText(/Yazı növbədədir/).waitFor();
   const account=page.locator('.netflixAccountGroup').filter({hasText:'synthetic@example.test'});
   const roomNames=()=>account.locator('[data-room-name]').evaluateAll(nodes=>nodes.map(node=>node.dataset.roomName));
   assert.deepEqual(await roomNames(),['1','2','3','4','5','10']);

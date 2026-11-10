@@ -52,7 +52,7 @@ export function mountReadyStock(host,api){
  let activeDraft=null,activeProduct;
  let products=[],pending=null,busy=false,loaded=false,read=null;
  const roomHost=q('[data-netflix-room-stock]');
- roomHost.innerHTML='<p data-room-status role="status"></p><ul data-room-list></ul>';
+ roomHost.innerHTML='<p data-room-status role="status"></p><div data-sheet-manual hidden></div><ul data-room-list></ul>';
  const roomStatus=roomHost.querySelector('[data-room-status]'),roomList=roomHost.querySelector('[data-room-list]');
  const roomFields='<label>Otaq adı<input name="room" maxlength="50" required></label><label>Otaq kodu (PIN)<input name="pin" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required></label>';
  const editRoom=data=>api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomEdit:data})});
@@ -177,7 +177,27 @@ export function mountReadyStock(host,api){
  const roomOrder=new Intl.Collator('az',{numeric:true,sensitivity:'base'});
  const roomSummary=row=>'Otaq '+row.name+' · '+(row.statusLabel||({free:'Satılmayıb',sold:'Satılıb',expired:'Müddəti bitib',review:'Yoxlama tələb olunur'}[row.status]||'—'));
  const removeRoomLabel=row=>'Sil · Otaq '+row.name+' · '+(row.accountEmail||'Netflix Şəxsi');
- function showRooms(rows){
+ function sheetSyncStatus(sync){
+  const entry=document.createElement('div'),info=document.createElement('p');
+  const label=sync.orderCode?'Sifariş №'+sync.orderCode+' · ':'';
+  info.textContent=label+'Sheets A sütunu · '+(sync.message||(sync.state==='done'?'Müştəri ID-si yazılıb.':'Yazı növbədədir.'));
+  entry.append(info);
+  if(sync.state!=='done'){
+   const retry=document.createElement('button');retry.type='button';retry.className='btn';retry.textContent='ID yazısını təkrarla';
+   retry.onclick=async()=>{
+    retry.disabled=true;
+    try{
+     await api(endpoint,{method:'POST',body:JSON.stringify({netflixSheetIdRetry:{deliveryId:sync.deliveryId}})});
+     await refresh();roomStatus.textContent='Yalnız müştəri ID-si yazısı yenidən növbəyə alındı.';
+    }catch(e){roomStatus.textContent=e.message;retry.disabled=false;}
+   };
+   entry.append(retry);
+  }
+  return entry;
+ }
+ function showRooms(rows,manual=[]){
+  const manualList=roomHost.querySelector('[data-sheet-manual]');
+  manualList.replaceChildren(...manual.map(sheetSyncStatus));manualList.hidden=!manual.length;
   if(!Array.isArray(rows)){roomStatus.textContent='Otaq stoku bazada hələ aktiv deyil.';return;}
   const groups=new Map();
   for(const row of rows){const key=row.groupId||row.id;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
@@ -253,22 +273,7 @@ export function mountReadyStock(host,api){
     };
     actions.append(remove);
    }
-   if(row.sheetCustomerId){
-    const sync=row.sheetCustomerId,info=document.createElement('p');
-    info.textContent='Sheets A sütunu · '+(sync.message||(sync.state==='done'?'Müştəri ID-si yazılıb.':'Yazı növbədədir.'));
-    node.append(info);
-    if(sync.state!=='done'){
-     const retry=document.createElement('button');retry.type='button';retry.className='btn';retry.textContent='ID yazısını təkrarla';
-     retry.onclick=async()=>{
-      retry.disabled=true;
-      try{
-       await api(endpoint,{method:'POST',body:JSON.stringify({netflixSheetIdRetry:{deliveryId:sync.deliveryId}})});
-       await refresh();roomStatus.textContent='Yalnız müştəri ID-si yazısı yenidən növbəyə alındı.';
-      }catch(e){roomStatus.textContent=e.message;retry.disabled=false;}
-     };
-     node.append(retry);
-    }
-   }
+   if(row.sheetCustomerId)node.append(sheetSyncStatus(row.sheetCustomerId));
    if(!row.legacyAssignmentId){
     const bind=document.createElement('button');
     bind.type='button';bind.className='btn netflixRoomBindAction';bind.textContent='Müştəriyə bağla';
@@ -287,7 +292,7 @@ export function mountReadyStock(host,api){
      button.disabled=true;
      try{
       await api(endpoint,{method:'POST',body:JSON.stringify({restockNetflixRoom:{id:row.id,deliveryId:row.deliveryId||null,endsOn:date.iso,confirmedEmpty:true}})});
-      showRooms((await api(endpoint)).netflixRooms);
+      await refresh();
       roomStatus.textContent='Otaq yenidən satışa çıxarıldı.';
      }catch(error){roomStatus.textContent=error.message;button.disabled=false;}
     };
@@ -403,7 +408,7 @@ export function mountReadyStock(host,api){
  async function refresh(){
   if(read||pending)return;
   read=api(endpoint);
-  try{const next=await read,p=product.value,i=plan.value;showRooms(next.netflixRooms);rememberDraft();products=next.products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderProducts();renderPlan();}
+  try{const next=await read,p=product.value,i=plan.value;showRooms(next.netflixRooms,next.netflixSheetManual);rememberDraft();products=next.products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderProducts();renderPlan();}
   catch(e){say(e.message,true);}
   finally{read=null;controls();}
  }

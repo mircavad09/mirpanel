@@ -39,8 +39,9 @@ export async function readyStockView(pool,catalog,inventory,security){
   })};
   const roomStockInstalled=(await c.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present;
   result.netflixRooms=roomStockInstalled?(await netflixRooms(c,security)).rooms:null;
-  if(result.netflixRooms?.length){
-   const states=await sheetCustomerIdStates(c);
+  if(roomStockInstalled){
+   const {rooms:states,manual}=await sheetCustomerIdStates(c);
+   result.netflixSheetManual=manual;
    for(const room of result.netflixRooms){
     const state=states.get(room.id);
     if(state&&state.deliveryId===room.deliveryId)room.sheetCustomerId=state;

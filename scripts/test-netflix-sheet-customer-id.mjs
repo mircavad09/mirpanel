@@ -3,11 +3,11 @@ import crypto from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {bakuDate,shiftCalendarDays} from '../mirpanel-admin/payment-order-lifecycle.mjs';
-import {saveReadyStock,readyStockView} from '../mirpanel-admin/community/ready-stock.mjs';
+import {saveReadyStock,readyStockView,approveCardWithReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
 import {roomSheetClient,sheetHeaders,sheetTitle,locateCustomerIdCell} from '../mirpanel-admin/community/netflix-room-sheet-client.mjs';
 import {writeNextSheetCustomerId} from '../mirpanel-admin/community/netflix-sheet-customer-id.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
-import {ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
+import {adminDelivery,ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
 
 const paymentConfig={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')};
 process.env.MIRPANEL_CART_V2_TEST='1';
@@ -55,7 +55,7 @@ try{
  for(const file of ['ready-stock-migration.sql','ready-stock-product-messages-migration.sql','netflix-room-stock.sql','netflix-room-restock.sql','subscriptions-migration.sql','netflix-room-renewal.sql','netflix-room-legacy.sql','netflix-sheet-customer-id.sql'])
   await fixture.db.exec(fixture.db.read('mirpanel-admin/community/'+file));
  await fixture.db.exec(fixture.db.read('supabase/migrations/202611090902_product_sale_overrides.sql'));
- for(const file of ['netflix-room-sale.sql','netflix-room-form.sql'])await fixture.db.exec(fixture.db.read('mirpanel-admin/community/'+file));
+ for(const file of ['netflix-room-sale.sql','netflix-room-form.sql','netflix-sheet-all-deliveries.sql'])await fixture.db.exec(fixture.db.read('mirpanel-admin/community/'+file));
  const product={id:'netflix',title:'Netflix Şəxsi',stockEnabled:true,plans:[{months:1,label:'1 ay',price:5}]};
  catalog.products.push(product);
  const save=input=>saveReadyStock(pool,security,paymentConfig.tokenSecret,catalog,'admin',input);
@@ -116,7 +116,9 @@ try{
  assert.equal(row1[0],member);assert.equal(row2[0],'');assert.equal(writes,1);
  const queued=(await readyStockView(pool,catalog,[],security)).netflixRooms.find(r=>r.deliveryId===code.id).sheetCustomerId;
  assert.equal(queued.state,'pending');assert.ok(queued.message);
- await save({netflixSheetIdRetry:{deliveryId:code.id}});
+ // Advance the scheduled time, then let the worker retry without admin action.
+ assert.equal(await run(),false);
+ await pool.query('update netflix_sheet_customer_ids set next_at=now() where delivery_id=$1',[code.id]);
  await run();assert.equal(writes,1);
  assert.deepEqual([row1.slice(1),row2.slice(1)],otherCells);
  const second=await shop.checkout(buyer,owner,{...request,requestId:id()});
@@ -142,5 +144,53 @@ try{
  assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries')).rows[0].n,2);
  assert.equal((await pool.query("select cents::int from wallet_accounts where user_id='a'")).rows[0].cents,4000);
  assert.deepEqual(locateCustomerIdCell([header,['=T(1)','2 · 0408',email]],{email,roomName:'2',roomCode:'0408'},member),{reason:'conflict'});
- console.log('PASS: atomic two-card save/reload, replay, delete/restock count, protected reserved/delivered rooms, wallet delivery without customer PIN, moved rows, formatted numeric room/PIN with leading zero, A-only write, lost reply, retry, conflicting/duplicate/missing row and exactly two debits');
+ const newRows=Array.from({length:5},(_,i)=>['','New '+(i+1)+' · 0408',email,'untouched','date','status']);
+ rows.push(...newRows);
+ const extraCards=newRows.slice(0,4).map((_,i)=>({requestId:id(),email,password:'synthetic-only',name:'New '+(i+1),pin:'0408'}));
+ await save({netflixRoomCards:extraCards});
+ const multi=await shop.checkout(buyer,owner,{...request,requestId:id(),items:[{...request.items[0],quantity:2}]});
+ assert.equal(multi.deliveryStatus,'completed');
+ const jobs=async orderId=>(await pool.query(`select j.delivery_id,j.room_id,j.state from netflix_sheet_customer_ids j
+  join customer_order_deliveries d on d.id=j.delivery_id where d.order_id=$1`,[orderId])).rows;
+ assert.equal((await jobs(multi.orderId)).length,2);
+ await run();await run();assert.equal(newRows.filter(r=>r[0]===member).length,2);
+ const card=await shop.checkout(buyer,owner,{...request,requestId:id(),mode:'card',methodId:fixture.method});
+ const receipt={path:'cart/'+card.id+'/synthetic.png',mimeType:'image/png',size:3,sha256:crypto.createHash('sha256').update('abc').digest('hex')};
+ fixture.files.set(receipt.path,Buffer.from('abc'));
+ await shop.savedReceipt(buyer,owner,'cart',card.id,receipt);
+ const cardOrder=await shop.submit(buyer,owner,card.id);
+ await approveCardWithReadyStock(pool,security,cardOrder.orderId,null,'admin',false);
+ assert.equal((await jobs(cardOrder.orderId)).length,1);
+ await run();assert.equal(newRows.filter(r=>r[0]===member).length,3);
+
+ // A historical paid order outside room reservation still follows manual delivery.
+ const oldItem={productId:'ordinary',planIndex:0,quantity:2};
+ const oldQuote=(await shop.quote(buyer,[oldItem],owner)).items[0];
+ const manual=await shop.checkout(buyer,owner,{...request,requestId:id(),items:[{...oldItem,termsVersion:oldQuote.termsVersion}]});
+ const {checkout_snapshot:snapshot}=(await pool.query('select checkout_snapshot from payment_orders where id=$1',[manual.orderId])).rows[0];
+ snapshot.items[0].productId='netflix';
+ await pool.query('update payment_orders set checkout_snapshot=$2 where id=$1',[manual.orderId,snapshot]);
+ const unused=(await stock()).netflixRooms.find(r=>r.status==='free');
+ assert.ok(unused);
+ const send=(requestId,roomName)=>adminDelivery(pool,security,'admin',manual.orderId,{
+  requestId,line:0,quantity:1,message:'Synthetic delivery',email,password:'synthetic-only',roomName,roomCode:'0408'
+ },{roomStockSecret:paymentConfig.tokenSecret});
+ const boundId=id(),unboundId=id();
+ await send(boundId,unused.name);
+ assert.equal((await send(boundId,unused.name)).replayed,true);
+ await send(unboundId,'New 5');
+ assert.equal((await jobs(manual.orderId)).length,2);
+ assert.ok((await jobs(manual.orderId)).some(r=>r.delivery_id===boundId&&r.room_id===unused.id));
+ assert.ok((await jobs(manual.orderId)).some(r=>r.delivery_id===unboundId&&r.room_id===null));
+ newRows[4][0]='999999';
+ await run();await run();
+ assert.equal(newRows.filter(r=>r[0]===member).length,4);
+ const manualState=(await stock()).netflixSheetManual.find(r=>r.deliveryId===unboundId);
+ assert.match(manualState.message,/başqa dəyər/);
+ newRows[4][0]='';
+ await save({netflixSheetIdRetry:{deliveryId:unboundId}});
+ await run();assert.equal(newRows.filter(r=>r[0]===member).length,5);
+ assert.equal(await run(),false);
+ assert.equal(writes,7);
+ console.log('PASS: atomic two-card save/reload, replay, delete/restock count, protected reserved/delivered rooms, wallet delivery without customer PIN, moved rows, formatted numeric room/PIN with leading zero, A-only write, lost reply, retry, conflicting/duplicate/missing row two wallet/card auto paths, manual stock and sheet-only delivery, multi-room jobs and no duplicate delivery');
 }finally{await fixture.close();}
