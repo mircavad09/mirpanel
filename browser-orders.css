@@ -394,3 +394,49 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .netflix-writing{outline:2px solid #e5bf52;outline-offset:2px;animation:netflix-writing-end 0s 2.1s forwards}
 @keyframes netflix-writing-end{to{outline-color:transparent}}
 @media(prefers-reduced-motion:reduce){.netflix-writing{outline:none}}
+
+/* Netflix desktop: the screen changes, not the laptop or its layout. */
+.browser-guide-step.netflix-desktop-guide{display:grid;grid-template-columns:minmax(0,1fr);gap:12px}
+.netflix-desktop-guide .browser-guide-visual{display:block;min-height:0;min-width:0;background:none;border:0;overflow:visible}
+.netflix-laptop{width:min(100%,580px,max(230px,calc((100dvh - 425px)*1.65)));margin:auto}
+.browser-guide-step.netflix-desktop-guide{grid-template-rows:auto auto}
+.netflix-desktop-guide.netflix-guide .browser-guide-text{min-height:3em;margin-block:0}
+@media(max-width:600px){.netflix-desktop-guide.netflix-guide .browser-guide-text{min-height:4.7em}}
+.netflix-laptop-screen{container-type:inline-size;aspect-ratio:2/1;box-sizing:content-box;overflow:hidden;border:5px solid #26282f;border-radius:9px 9px 3px 3px;background:#090404;box-shadow:0 0 0 1px #62646b}
+.netflix-laptop-deck{display:grid;justify-items:center;gap:4px;padding:5px 0 4px;background:linear-gradient(#8b8d96,#50525b);border-radius:2px 2px 18px 18px;box-shadow:0 3px 0 #26282d}
+.netflix-laptop-keyboard{width:63%;display:grid;grid-template-columns:repeat(16,1fr);gap:2px;background:#3a3b41;padding:3px;border-radius:3px}
+.netflix-laptop-keyboard i{aspect-ratio:2.7;background:#17181c;border-radius:1px;box-shadow:inset 0 -1px #55565c}
+.netflix-laptop-touchpad{width:23%;height:clamp(9px,2.6vw,17px);border:1px solid #33343c;border-radius:3px;background:#73757f}
+.netflix-desktop-scene{position:relative;height:100%;overflow:hidden;background:radial-gradient(ellipse at 45% 0,#421719 0%,#23090a 44%,#080303 93%);font:400 1.05cqw/1.4 Arial,sans-serif;color:#fff}
+.netflix-desktop-scene>img{display:block;width:100%;height:100%;max-height:none;object-fit:fill}
+.netflix-desktop-scene .netflix-desktop-brand{padding:0 11.5%;height:11%;display:flex;align-items:center;color:#f30916;border-bottom:1px solid #ffffff19;font-size:3.25cqw;font-weight:900;letter-spacing:-.09em}
+.netflix-desktop-main{width:28%;margin:1.8cqw auto 0}
+.netflix-desktop-main h3{margin:0 0 1.35cqw;font:700 2.05cqw/1.22 Arial,sans-serif;color:white}
+.netflix-desktop-main .netflix-desktop-subtitle{margin:-.9cqw 0 1.3cqw;font-size:1.16cqw;color:#d2c3c3}
+.netflix-desktop-account,.netflix-desktop-field,.netflix-desktop-button{box-sizing:border-box;border-radius:.25cqw}
+.netflix-desktop-account{display:flex;align-items:center;justify-content:space-between;padding:.72cqw 1cqw;margin-bottom:1.45cqw;background:#594646;color:white}
+.netflix-desktop-account u{font-size:.79cqw;font-weight:bold}
+.netflix-desktop-field{height:3.5cqw;padding:.37cqw .9cqw;display:grid;align-content:center;border:1px solid #6b6161;background:#201818;margin-bottom:.7cqw}
+.netflix-desktop-field>span:first-child{font-size:.77cqw;color:#d0c8c8}
+.netflix-desktop-button{text-align:center;background:#ed0914;color:#fff;font-size:1.12cqw;font-weight:700;padding:.72cqw .3cqw}
+.netflix-desktop-button.secondary{background:#4b3d3d}
+.netflix-desktop-or{display:flex;align-items:center;gap:1cqw;margin:.9cqw 0}
+.netflix-desktop-or::before,.netflix-desktop-or::after{content:"";height:1px;background:#645252;flex:1}
+.netflix-desktop-code-boxes{display:flex;gap:.5cqw}
+.netflix-desktop-code-boxes span{width:3.5cqw;height:4.45cqw;background:#201818;border:1px solid #6b6161;border-radius:.25cqw;box-sizing:border-box}
+.netflix-desktop-main .netflix-desktop-expiry{margin:.58cqw 0 0;font-size:.89cqw;color:#d7caca}
+.netflix-desktop-expiry u{color:white}
+.netflix-desktop-help{margin-top:2.75cqw}
+.netflix-desktop-help-label::after{content:"";display:inline-block;width:.44cqw;height:.44cqw;border:solid white;border-width:0 1px 1px 0;transform:translateY(-.17cqw) rotate(45deg);margin-left:.5cqw}
+.netflix-desktop-help-label[data-open=true]::after{transform:rotate(225deg)}
+.netflix-desktop-help ul{display:grid;gap:.65cqw;padding:0;margin:.65cqw 0 0;list-style:none;font-size:.91cqw;text-decoration:underline}
+.netflix-desktop-main .netflix-desktop-notice{margin:2cqw 0 0;font-size:.8cqw;color:#a69696}
+.netflix-desktop-typed>span{visibility:hidden;animation:netflix-type 1ms var(--letter-delay) forwards}
+.netflix-desktop-target{position:relative;--cursor-x:58%;--cursor-y:50%}
+.netflix-desktop-home-signin{position:absolute;top:3%;left:76.42%;width:4.15%;height:3.4%;color:transparent}
+.netflix-desktop-target::before,.netflix-desktop-target::after{position:absolute;left:var(--cursor-x);top:var(--cursor-y);z-index:1;pointer-events:none}
+.netflix-desktop-target::before{content:"";width:1.6cqw;height:2.1cqw;background:white;clip-path:polygon(0 0,100% 64%,61% 68%,79% 94%,61% 100%,43% 74%,15% 100%);filter:drop-shadow(0 0 1px black);animation:netflix-desktop-point .6s var(--click-delay) both}
+.netflix-desktop-target::after{content:"";width:2.3cqw;height:2.3cqw;border:2px solid #ffda65;border-radius:50%;opacity:0;animation:netflix-desktop-ring 1.2s calc(var(--click-delay) + .55s) 2}
+@keyframes netflix-desktop-point{from{opacity:0;transform:translate(5cqw,3cqw)}to{opacity:1;transform:translate(0,0)}}
+@keyframes netflix-desktop-ring{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}20%,55%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(1.5)}}
+@media(prefers-reduced-motion:reduce){.netflix-desktop-target::before,.netflix-desktop-target::after,.netflix-desktop-typed>span{animation:none;visibility:visible}.netflix-desktop-target::after{opacity:1;transform:translate(-50%,-50%)}}

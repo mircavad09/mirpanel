@@ -4,9 +4,11 @@ import http from 'node:http';
 import path from 'node:path';
 import {extractAdminState} from '../mirpanel-admin/core.mjs';
 import {orderGuideFor} from '../mirpanel-admin/order-guide.mjs';
-const {chromium}=await import(process.env.MIRPANEL_PLAYWRIGHT);
+const {chromium,webkit}=await import(process.env.MIRPANEL_PLAYWRIGHT);
 const live=process.argv.includes('--live'),record=process.argv.includes('--record');
+const desktop=process.argv.includes('--desktop');
 const root=process.cwd(),out=path.resolve('../../outputs'),id='11111111-1111-4111-8111-111111111111';
+const desktopOut=path.resolve('outputs/netflix-desktop');if(desktop)fs.mkdirSync(desktopOut,{recursive:true});
 const catalog=extractAdminState(fs.readFileSync('app.js','utf8'));
 for(const productId of ['capcut','netflix_umumi','netflix_sexsi']){
  const product=catalog.products.find(p=>p.id===productId);
@@ -27,14 +29,14 @@ const server=http.createServer((req,res)=>{
  if(p==='/test'){res.setHeader('Content-Type','text/html; charset=utf-8');return res.end('<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/browser-orders.css"><body style="margin:0;background:#080a0d;color:white;font-family:Arial"><section class="account-panel"><main id="browserOrders"></main></section><p id="browserOrdersError"></p><button id="browserOrdersMore" hidden></button><dialog id="browserReceipt"><button id="browserReceiptClose"></button><div id="browserReceiptContent"></div></dialog><script src="/browser-orders.js"></script></html>');}
  const file=path.resolve(root,'.'+p);
  if(!file.startsWith(root)||!fs.existsSync(file)){res.writeHead(404);return res.end();}
- res.setHeader('Content-Type',p.endsWith('.css')?'text/css':'text/javascript');res.end(fs.readFileSync(file));
+ res.setHeader('Content-Type',p.endsWith('.css')?'text/css':p.endsWith('.png')?'image/png':'text/javascript');res.end(fs.readFileSync(file));
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port;
-const browser=await chromium.launch({headless:true,executablePath:process.env.MIRPANEL_CHROME});
+const browser=await (process.argv.includes('--webkit')?webkit:chromium).launch({headless:true,...(process.argv.includes('--webkit')?{}:{executablePath:process.env.MIRPANEL_CHROME})});
 try{
  for(const width of record?[390]:[320,390,430,1440]){
-  const context=await browser.newContext({viewport:{width,height:record?900:850},isMobile:width<600,hasTouch:width<600,...(record?{recordVideo:{dir:'../netflix-recording',size:{width:390,height:900}}}:{})});
+  const context=await browser.newContext({viewport:{width,height:record?900:850},isMobile:width<600,hasTouch:width<600,...(record?{recordVideo:{dir:desktop?desktopOut:'../netflix-recording',size:{width:390,height:900}}}:{})});
   const p=await context.newPage();p.setDefaultTimeout(8000);const errors=[];p.on('pageerror',e=>{errors.push(e.message);console.log('PAGE',e.message)});
   if(live)for(const name of ['browser-orders.js','browser-orders.css']){
    const response=await fetch('https://mirpanel.com/'+name+'?verify='+Date.now());
@@ -46,7 +48,39 @@ try{
   const dlg=p.locator('.browser-order-guide');
   await p.getByText('Mövcud məlumat mətni',{exact:true}).waitFor();
   await dlg.getByRole('button',{name:'Təlimat',exact:true}).click();
-  await dlg.getByRole('button',{name:'Telefonda giriş',exact:true}).click();
+  await dlg.getByRole('button',{name:'Telefonla giriş',exact:true}).click();
+  if(desktop){
+   if(!live)await p.route('https://mirpanel.com/assets/netflix-guide-home.png',r=>r.fulfill({path:'assets/netflix-guide-home.png',contentType:'image/png'}));
+   await dlg.getByRole('button',{name:'Kompüterlə giriş',exact:true}).click();
+   const laptop=dlg.locator('.netflix-laptop'),stage=dlg.locator('.netflix-desktop-scene'),initial=await laptop.boundingBox();
+   let codeLayout;
+   const targets=['Sign In','Continue','Get Help','Use password instead','Sign In'];
+   for(const [i,name] of ['home','email','code','help','password'].entries()){
+    if(i)await dlg.getByRole('button',{name:'Addım '+(i+1),exact:true}).click();
+    assert.equal(await stage.getAttribute('data-scene'),name);
+    assert.equal(await stage.locator('.netflix-desktop-target').textContent(),targets[i]);
+    assert.equal(await stage.locator('input,button,form,a').count(),0);
+    assert.deepEqual(await laptop.boundingBox(),initial);
+    assert.equal(await dlg.evaluate(n=>n.scrollWidth<=n.clientWidth+1),true);
+    assert.equal(await laptop.locator('.netflix-laptop-touchpad').isVisible(),true);
+    if(i===0)await stage.locator('img').evaluate(async img=>{await img.decode();});
+    if(i===2||i===3){
+     const geometry=await stage.locator('.netflix-desktop-code-boxes>span').evaluateAll(ns=>ns.map(n=>[n.textContent,n.offsetLeft,n.offsetTop,n.offsetWidth,n.offsetHeight]));
+     assert.equal(geometry.length,4);assert.ok(geometry.every(x=>x[0]===''));
+     assert.equal(await stage.locator('.netflix-desktop-help li').count(),i===2?0:3);
+     if(i===2)codeLayout=geometry;else{assert.deepEqual(geometry,codeLayout);assert.deepEqual(await stage.locator('.netflix-desktop-help li').allTextContents(),["I can't access this email right now",'Use password instead','Learn more about sign-in']);}
+    }
+    if(i===1||i===4)assert.equal(await stage.locator('.netflix-desktop-typed').textContent(),i===1?'hesab@example.com':'••••••••');
+    if(record||width===1440){await p.waitForTimeout(i===1?2030:i===4?1600:1050);if(!record)await dlg.screenshot({path:path.join(desktopOut,'scene-'+(i+1)+'.png')});}
+   }
+   await dlg.getByRole('button',{name:'Əvvəlki',exact:true}).click();assert.equal(await stage.getAttribute('data-scene'),'help');
+   await dlg.getByRole('button',{name:'Növbəti',exact:true}).click();assert.equal(await stage.getAttribute('data-scene'),'password');
+   await dlg.getByRole('button',{name:'Telefonla giriş',exact:true}).click();await dlg.locator('.netflix-handset').waitFor();
+   await dlg.getByRole('button',{name:'Kompüterlə giriş',exact:true}).click();assert.equal(await stage.getAttribute('data-scene'),'home');
+   if(width===390&&!record){await dlg.getByRole('button',{name:'Avtomatik göstər',exact:true}).click();await p.waitForTimeout(5200);assert.equal(await stage.getAttribute('data-scene'),'email');await dlg.getByRole('button',{name:'Dayandır',exact:true}).click();await dlg.screenshot({path:path.join(desktopOut,'mobile.png')});}
+   const video=p.video();await context.close();if(video){const old=await video.path();fs.renameSync(old,path.join(desktopOut,'animation.webm'));}
+   assert.deepEqual(errors,[]);console.log('PASS desktop guide '+width+'px');continue;
+  }
   const phone=p.locator('.netflix-handset'),scene=p.locator('.netflix-demo'),dots=p.locator('.browser-guide-dots');
   const first=await phone.boundingBox(),dialogFirst=await dlg.boundingBox();
   for(let step=0;step<5;step++){
@@ -92,7 +126,7 @@ try{
   await p.emulateMedia({reducedMotion:'reduce'});
   await p.getByRole('button',{name:'Məlumat və təlimat',exact:true}).click();
   await dlg.getByRole('button',{name:'Təlimat',exact:true}).click();
-  await dlg.getByRole('button',{name:'Telefonda giriş',exact:true}).click();
+  await dlg.getByRole('button',{name:'Telefonla giriş',exact:true}).click();
   await dots.getByRole('button',{name:'Addım 2',exact:true}).click();
   assert.equal(await scene.locator('.netflix-typing>span').evaluateAll(ns=>ns.every(n=>getComputedStyle(n).visibility==='visible')),true);
   assert.equal(await scene.locator('.netflix-target').evaluate(n=>getComputedStyle(n).animationName),'none');

@@ -211,6 +211,50 @@ function netflixScreen(animation,create){
   }
   return content;
  }
+ function netflixDesktopScreen(mode,create){
+  const scene=create('div',null,'netflix-desktop-scene');
+  scene.dataset.scene=mode;scene.lang='en';scene.setAttribute('inert','');
+  const span=(text,cls)=>create('span',text,cls);
+  const target=(node,delay=0)=>{node.classList.add('netflix-desktop-target');node.style.setProperty('--click-delay',delay+'ms');return node;};
+  const typed=text=>{const row=span(null,'netflix-desktop-typed');for(const [i,char] of [...text].entries()){const letter=span(char);letter.style.setProperty('--letter-delay',100+55*i+'ms');row.append(letter);}return row;};
+  const sample='hesab@example.com';
+  const help=open=>{
+   const h=create('div',null,'netflix-desktop-help');
+   const title=span('Get Help','netflix-desktop-help-label');title.dataset.open=String(open);
+   h.append(mode==='code'?target(title):title);
+   if(open){
+    const list=create('ul');
+    for(const [i,label] of ["I can't access this email right now",'Use password instead','Learn more about sign-in'].entries()){
+     const li=create('li'),option=span(label);li.append(i===1?target(option):option);list.append(li);
+    }
+    h.append(list);
+   }
+   return h;
+  };
+  if(mode==='home'){
+   const picture=create('img');picture.src='https://mirpanel.com/assets/netflix-guide-home.png';picture.alt='Netflix ana səhifəsi';picture.referrerPolicy='no-referrer';
+   scene.append(picture,target(span('Sign In','netflix-desktop-home-signin')));
+   return scene;
+  }
+  scene.append(create('header','NETFLIX','netflix-desktop-brand'));
+  const main=create('div',null,'netflix-desktop-main');
+  const button=(label,secondary=false)=>create('div',label,'netflix-desktop-button'+(secondary?' secondary':''));
+  const account=()=>{const n=create('div',null,'netflix-desktop-account');n.append(span(sample),create('u','Change'));return n;};
+  const notice=()=>create('p',"This page is protected by Google reCAPTCHA to ensure you're not a bot.",'netflix-desktop-notice');
+  if(mode==='email'){
+   const field=create('div',null,'netflix-desktop-field');field.append(span('Email or mobile number'),typed(sample));
+   main.append(create('h3','Enter your info to sign in'),create('p','Or get started with a new account.','netflix-desktop-subtitle'),field,target(button('Continue'),1220),help(false),notice());
+  }else if(mode==='code'||mode==='help'){
+   const boxes=create('div',null,'netflix-desktop-code-boxes');for(let i=0;i<4;i++)boxes.append(span());
+   const expiry=create('p','This code will expire in 15 minutes.','netflix-desktop-expiry');
+   expiry.append(create('br'),"Didn't get a code? ",create('u','Resend code.'));
+   main.append(create('h3','Enter the code we sent to your email'),account(),boxes,expiry,help(mode==='help'));
+  }else{
+   const field=create('div',null,'netflix-desktop-field');field.append(span('Password'),typed('••••••••'));
+   main.append(create('h3','Enter your password'),account(),field,target(button('Sign In'),780),span('or','netflix-desktop-or'),button('Use Sign-in Code',true),help(false),notice());
+  }
+  scene.append(main);return scene;
+ }
  function capcutScreen(mode,create){
   const screen=create('div',null,'capcut-demo capcut-demo-'+mode);
   screen.dataset.animation=mode;
@@ -296,6 +340,9 @@ function netflixScreen(animation,create){
   let data=null,failed=false,active='info',track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
   const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
   phoneShell.append(phoneScreen);
+  const laptop=create('div',null,'netflix-laptop'),laptopScreen=create('div',null,'netflix-laptop-screen'),deck=create('div',null,'netflix-laptop-deck'),keys=create('div',null,'netflix-laptop-keyboard');
+  for(let i=0;i<48;i++)keys.append(create('i'));
+  deck.setAttribute('aria-hidden','true');deck.append(keys,create('div',null,'netflix-laptop-touchpad'));laptop.append(laptopScreen,deck);
   const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(info,how);
   function select(mode){autoplay=false;active=mode;wrap.scrollTop=body.scrollTop=0;draw();}
   function draw(){
@@ -308,20 +355,25 @@ function netflixScreen(animation,create){
     if(data.information)body.append(create('div','İstifadə etməzdən əvvəl oxuyun','browser-guide-note'));
     body.append(data.information?renderInformation(data.information):create('p','Bu məhsul üçün məlumat əlavə edilməyib.','browser-guide-text'));return;
    }
-   const tracks=Object.entries({general:'Ümumi addımlar',phone:'Telefonda giriş',desktopQr:'Kompüterdə QR ilə giriş'}).filter(([key])=>data.tracks?.[key]?.length);
+   const tracks=Object.entries({general:'Ümumi addımlar',phone:data.tracks?.desktop?'Telefonla giriş':'Telefonda giriş',desktop:'Kompüterlə giriş',desktopQr:'Kompüterdə QR ilə giriş'}).filter(([key])=>data.tracks?.[key]?.length);
    if(!tracks.length){body.replaceChildren(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}
    if(!tracks.some(([key])=>key===track))track=tracks[0][0];
    const choices=create('div',null,'browser-guide-choices');
    for(const [key,label] of tracks){const b=button(key==='phone'&&data.tracks[key].some(s=>s.animation)&&!data.tracks[key].some(s=>s.animation?.startsWith('netflix-'))?'CapCut-a daxil ol':label,()=>{autoplay=false;track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
    const steps=data.tracks[track],current=steps[step],layout=create('div',null,'browser-guide-step');
-   const compact=track==='phone'&&steps.some(item=>item.animation);
+   const desktop=track==='desktop'&&current.animation?.startsWith('netflix-desktop-');
+   const compact=desktop||track==='phone'&&steps.some(item=>item.animation);
    if(compact)layout.classList.add('browser-guide-compact');
    if(current.animation?.startsWith('netflix-'))layout.classList.add('netflix-guide');
    const visual=create('div',null,'browser-guide-visual');
    const netflix=track==='phone'&&current.animation?.startsWith('netflix-');
    const handset=netflix||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image?.replace(/^https:\/\/mirpanel\.com(?=\/)/,'')||'');
-   const steadyLayout=handset&&body.contains(phoneShell)?phoneShell.closest('.browser-guide-step'):null;
-   if(handset){
+   const steadyLayout=desktop&&body.contains(laptop)?laptop.closest('.browser-guide-step'):handset&&body.contains(phoneShell)?phoneShell.closest('.browser-guide-step'):null;
+   if(desktop){
+    layout.classList.add('netflix-desktop-guide');
+    laptopScreen.replaceChildren(netflixDesktopScreen(current.animation.slice('netflix-desktop-'.length),create));
+    if(!steadyLayout)visual.append(laptop);
+   }else if(handset){
     visual.classList.add('browser-guide-visual-handset');
     phoneScreen.replaceChildren(netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
     phoneShell.classList.toggle('netflix-handset',netflix);
@@ -423,7 +475,7 @@ function netflixScreen(animation,create){
    if(autoplay&&step<steps.length-1)advanceTimer=setTimeout(()=>{
     if(!guideDialog.open||!guideDialog.isConnected)return;
     step++;autoplay=step<steps.length-1;draw();
-   },netflix?5000:4200);
+    },netflix||desktop?5000:4200);
   }
   async function loadGuide(){
    const turn=++guideTurn;failed=false;draw();
