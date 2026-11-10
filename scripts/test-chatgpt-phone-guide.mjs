@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 import {orderGuideFor} from '../mirpanel-admin/order-guide.mjs';
-const live=process.argv.includes('--live'),out='outputs/chatgpt-phone-guide';
+const live=process.argv.includes('--live'),out='outputs/chatgpt-twofa-guide';
 fs.mkdirSync(out,{recursive:true});
 const id='11111111-1111-4111-8111-111111111111',delivery='22222222-2222-4222-8222-222222222222';
 const guide=orderGuideFor({id:'chatgpt',orderGuide:{information:'Sintetik məlumat'}},{},'1 ay');
@@ -13,7 +13,7 @@ assert.equal(guide.information,'Sintetik məlumat');
 const files=new Map();
 for(const name of ['browser-orders.js','browser-orders.css']){
  const local=fs.readFileSync(name,'utf8');
- const data=live?await(await fetch('https://mirpanel.com/'+name+'?v=chatgpt-phone-1')).text():local;
+ const data=live?await(await fetch('https://mirpanel.com/'+name+'?v=chatgpt-twofa-2')).text():local;
  assert.equal(data.replaceAll('\r\n','\n'),local.replaceAll('\r\n','\n'));
  files.set('/'+name,data);
 }
@@ -29,8 +29,9 @@ const server=http.createServer((req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const origin='http://127.0.0.1:'+server.address().port;
-const expectedTargets=['Oturum aç veya kaydol','Devam','Devam','Kod','ChatGPTnumune@example.com284 617','284 617','Devam'];
-const animatedValues={1:'numune@example.com',2:'••••••••',6:'284617'};
+const exampleSecret='DEMO-ONLY-NOT-A-REAL-2FA-KEY-0000';
+const expectedTargets=['Oturum aç veya kaydol','Devam','Devam','Kod','Submit','000000','Devam'];
+const animatedValues={1:'numune@example.com',2:'••••••••',4:exampleSecret,6:'000000'};
 const recording=process.argv.includes('--record');
 try {
  for(const engine of recording?[chromium]:[chromium,webkit]){
@@ -59,6 +60,13 @@ try {
      assert.equal(await phone.evaluate(node=>node===window.firstPhone),true);
      for(const key of ['width','height'])assert.ok(Math.abs((await phone.boundingBox())[key]-first[key])<2,key);
      assert.equal(await scene.evaluate(node=>node.scrollHeight<=node.clientHeight&&node.scrollWidth<=node.clientWidth),true,'scene fits at '+width+' step '+(i+1));
+     assert.equal(await scene.locator('input,textarea,form,a').count(),0,'mock never accepts or submits data');
+     if(i===3)assert.equal(await scene.locator('.chatgpt-demo-field strong').count(),0);
+     if(i===4||i===5){
+      assert.deepEqual(await scene.locator('.chatgpt-demo-field > span').allTextContents(),['2FA Secret','2FA Code']);
+      assert.equal(await scene.locator('.chatgpt-twofa-secret strong').textContent(),exampleSecret);
+      assert.equal(await scene.locator('.chatgpt-twofa-digits').count(),i===5?1:0);
+     }
      const highlights=()=>scene.evaluate(node=>Array.from(node.querySelectorAll('.chatgpt-demo-mark,.chatgpt-demo-typing,.chatgpt-demo-after')).filter(el=>getComputedStyle(el).outlineColor==='rgb(229, 191, 82)').map(el=>el.textContent));
      if(animatedValues[i]){
       const typing=scene.locator('.chatgpt-demo-typing strong');
@@ -67,6 +75,7 @@ try {
       assert.equal((await highlights()).length,1);
       await page.waitForFunction(()=>getComputedStyle(document.querySelector('.chatgpt-demo-after')).outlineColor==='rgb(229, 191, 82)');
      }
+     if(i===5)await page.waitForFunction(()=>getComputedStyle(document.querySelector('.chatgpt-twofa-digits')).outlineColor==='rgb(229, 191, 82)');
      assert.deepEqual(await highlights(),[expectedTargets[i]]);
      if(recording)await page.waitForTimeout(1400);
      if(!recording&&engine===chromium&&width===390)await dialog.screenshot({path:out+'/'+(live?'live-':'')+'step-'+(i+1)+'.png',animations:'allow'});

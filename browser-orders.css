@@ -711,7 +711,7 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .chatgpt-demo-brand{margin-bottom:1cqw;font-weight:700;text-align:center;color:#dedee1}
 .chatgpt-demo-welcome{position:absolute;bottom:5cqw;inset-inline:0;padding-top:6cqw;background:#232325;border-radius:12cqw 12cqw 0 0}
 .chatgpt-demo-welcome h3{margin-bottom:5cqw}
-.chatgpt-demo-action,.chatgpt-demo-field,.chatgpt-demo-entry,.chatgpt-demo-code{position:relative;min-width:0}
+.chatgpt-demo-action,.chatgpt-demo-field{position:relative;min-width:0}
 .chatgpt-demo-action{display:grid;place-items:center;min-height:13cqw;padding:2cqw 1.5cqw;border:1px solid #56565c;border-radius:12cqw;background:#262628;font-weight:700;text-align:center}
 .chatgpt-demo-primary{background:#fff;color:#141414;border-color:#fff}
 .chatgpt-demo-disabled{background:#777;color:#171717}
@@ -720,16 +720,19 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .chatgpt-demo-hint,.chatgpt-demo-divider{text-align:center;color:#dedee1}
 .chatgpt-demo-divider{display:flex;align-items:center;gap:3cqw;margin:2cqw 0}
 .chatgpt-demo-divider::before,.chatgpt-demo-divider::after{content:'';flex:1;border-top:1px solid #505056}
-.chatgpt-demo-auth{background:#f6f8fc;color:#202124}
-.chatgpt-demo-auth .chatgpt-demo-status{background:#e8eefc}
-.chatgpt-demo-auth .chatgpt-demo-tag{color:#435069}
-.chatgpt-demo-auth-bar{display:flex;align-items:center;gap:3cqw;font-size:6.2cqw}
-.chatgpt-demo-search{margin:3cqw 0;padding:3cqw 4cqw;border-radius:10cqw;background:#e5ebf7;color:#3f485a}
-.chatgpt-demo-entry{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4cqw;padding:5cqw;background:#fff;border-radius:4cqw}
-.chatgpt-demo-account{grid-column:1/-1;display:grid;gap:1cqw}
-.chatgpt-demo-account span{color:#455266}
-.chatgpt-demo-code{width:max-content;color:#174ea6;font:bold 12cqw/1.2 Arial,sans-serif;letter-spacing:.6cqw}
-.chatgpt-demo-entry i{width:7cqw;aspect-ratio:1;border-radius:50%;background:conic-gradient(#2565c4 74%,#dce5f4 0)}
+.chatgpt-demo-twofa{background:#191919}
+.chatgpt-demo-twofa .chatgpt-demo-main{gap:4cqw;padding-inline:7cqw}
+.chatgpt-twofa-bar{display:grid;gap:1cqw;margin:0 -7cqw 2cqw;padding:4cqw 7cqw;border-block:1px solid #494949;background:#282828}
+.chatgpt-twofa-bar b{font-size:8cqw}.chatgpt-twofa-bar small{color:#dadada;font-size:5.4cqw}
+.chatgpt-demo-twofa .chatgpt-demo-field{align-content:start;gap:2cqw;min-height:34cqw;padding:3cqw 4cqw;border-radius:2cqw;background:#303030}
+.chatgpt-demo-twofa .chatgpt-demo-field>span{font-weight:700;color:#fff}
+.chatgpt-demo-twofa .chatgpt-demo-field strong,.chatgpt-twofa-output{font:400 5.2cqw/1.4 monospace;white-space:normal;overflow-wrap:anywhere;color:#dedede}
+.chatgpt-demo-twofa .chatgpt-demo-action{justify-self:start;min-height:11cqw;padding:2cqw 5cqw;border:0;border-radius:2cqw;background:#075db9}
+.chatgpt-twofa-output{color:#c5c5c5}
+.chatgpt-demo-twofa .chatgpt-twofa-digits{display:inline-block;position:relative;margin-inline-start:1cqw;border-radius:1cqw;font-weight:700;color:#fff5d2;background:#644b1f;white-space:nowrap;animation:chatgpt-code-select 1.6s ease-out both}
+@keyframes chatgpt-code-select{0%,25%{background:#343434;outline-color:transparent}65%{background:#97732b}}
+.chatgpt-twofa-digits.chatgpt-demo-mark::after{content:none}
+@media(prefers-reduced-motion:reduce){.chatgpt-demo-twofa .chatgpt-twofa-digits{animation:none}}
 .chatgpt-demo-mark,.chatgpt-demo-typing,.chatgpt-demo-after{outline:2px solid transparent;outline-offset:2px}
 .chatgpt-demo-mark{outline-color:#e5bf52}
 .chatgpt-demo-typing{animation:chatgpt-field-focus var(--phase) both}

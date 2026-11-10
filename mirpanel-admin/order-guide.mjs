@@ -19,12 +19,12 @@ const primePhoneSteps=[
 ].map(([animation,description])=>({animation,description,image:''}));
 const chatgptPhoneSteps=[
  ['chatgpt-open','ChatGPT tətbiqini açın və «Oturum aç veya kaydol» düyməsinə toxunun.'],
- ['chatgpt-email','Öz ChatGPT hesabınızın e-poçt ünvanını yazın və «Devam» düyməsinə toxunun.'],
- ['chatgpt-password','Hesabınızın şifrəsini «Parola» xanasına yazın və «Devam» düyməsinə toxunun.'],
- ['chatgpt-verification','Bu ekran çıxarsa, «Kod» xanasını hələ doldurmayın. Əvvəl doğrulama tətbiqinə keçin.'],
- ['chatgpt-authenticator','Əvvəlcədən quraşdırdığınız Google Authenticator və ya Authy tətbiqini açın. ChatGPT hesabınıza uyğun qeydi tapın.'],
- ['chatgpt-code','ChatGPT qeydindəki altırəqəmli birdəfəlik kodu götürün. Vaxtı bitibsə, tətbiqdə görünən yeni kodu istifadə edin.'],
- ['chatgpt-return','ChatGPT-yə qayıdın. Altı rəqəmi «Kod» xanasına yazın və «Devam» düyməsinə toxunun.']
+ ['chatgpt-email','Sizə təqdim etdiyimiz e-poçtu «E-posta» xanasına yazın və «Devam» düyməsinə basın.'],
+ ['chatgpt-password','Sizə təqdim etdiyimiz şifrəni «Parola» xanasına yazın və «Devam» düyməsinə basın.'],
+ ['chatgpt-verification','«Kod» xanasını hələ boş saxlayın. Buraya növbəti addımlarda alınan 6 rəqəmli kod daxil ediləcək.'],
+ ['chatgpt-authenticator','Sizə göndərdiyimiz 2FA.live keçidini açın. Təqdim etdiyimiz uzun 2FA açarını birinci «2FA Secret» xanasına yapışdırın və «Submit» düyməsinə basın.'],
+ ['chatgpt-code','Aşağıdakı «2FA Code» xanasında nəticənin sonundakı yalnız 6 rəqəmi kopyalayın.'],
+ ['chatgpt-return','ChatGPT-yə qayıdın. Kopyaladığınız 6 rəqəmi «Kod» xanasına yapışdırın və «Devam» düyməsinə basın.']
 ].map(([animation,description])=>({animation,description,image:''}));
 const capcutDesktopSteps=[
  ['capcut-desktop-open','CapCut-u kompüterdə açın. «Join Pro» yazısının üstündəki «Sign Up» və ya «Sign in» düyməsinə basın.'],

@@ -70,7 +70,7 @@ function chatgptScreen(animation,create){
  const screen=create('div',null,'chatgpt-demo');
  screen.dataset.scene=scene;
  screen.lang='tr';
- const email='numune@example.com',code='284617';
+ const email='numune@example.com',code='000000',exampleSecret='DEMO-ONLY-NOT-A-REAL-2FA-KEY-0000';
  const make=(text,classes)=>create('div',text,classes);
  const status=make(null,'chatgpt-demo-status');
  status.append(create('span','09:41'),create('span','▮▮▮  ◒  ▰'));
@@ -81,19 +81,19 @@ function chatgptScreen(animation,create){
  const main=make(null,'chatgpt-demo-main');
  screen.append(main);
  let delay=0;
- function field(label,value,animate=false,mark=false){
+ function field(label,value,animate=false,mark=false,paste=false){
   const row=make(null,'chatgpt-demo-field'+(mark?' chatgpt-demo-mark':''));
   row.append(create('span',label));
   if(value){
    const text=create('strong',animate?null:value);
    if(animate){
     row.classList.add('chatgpt-demo-typing');
-    [...value].forEach((char,index)=>{
+    (paste?[value]:[...value]).forEach((char,index)=>{
      const glyph=create('span',char);
      glyph.style.setProperty('--type-at',(.15+index*.058)+'s');
      text.append(glyph);
     });
-    delay=.42+value.length*.058;
+    delay=paste ? .85 : .42+value.length*.058;
     row.style.setProperty('--phase',delay+'s');
    }
    row.append(text);
@@ -101,18 +101,21 @@ function chatgptScreen(animation,create){
   return row;
  }
  if(scene==='authenticator'||scene==='code'){
-  screen.classList.add('chatgpt-demo-auth');
-  const bar=make(null,'chatgpt-demo-auth-bar');
-  bar.append(create('span','☰'),create('b','Google Authenticator'));
-  const search=make('Hesaplarda ara','chatgpt-demo-search');
-  const entry=make(null,'chatgpt-demo-entry'+(scene==='authenticator'?' chatgpt-demo-mark':''));
-  const identity=make(null,'chatgpt-demo-account');
-  identity.append(create('b','ChatGPT'),create('span',email));
-  const token=make('284 617','chatgpt-demo-code'+(scene==='code'?' chatgpt-demo-mark':''));
-  const timer=create('i');
-  timer.setAttribute('aria-hidden','true');
-  entry.append(identity,token,timer);
-  main.append(bar,search,entry);
+  const result=scene==='code';
+  screen.classList.add('chatgpt-demo-twofa');screen.lang='en';
+  const bar=make(null,'chatgpt-twofa-bar');
+  bar.append(create('b','2Fa.Live'),create('small','Authenticator'));
+  const secret=field('2FA Secret',exampleSecret,!result,false,true);
+  secret.classList.add('chatgpt-twofa-secret');
+  const submit=action('Submit',result?'':'chatgpt-demo-after');
+  if(!result)submit.style.setProperty('--phase',delay+'s');
+  const output=field('2FA Code','');
+  const value=make(null,'chatgpt-twofa-output');
+  if(result){
+   value.append(create('span',exampleSecret+' | '),create('strong',code,'chatgpt-twofa-digits chatgpt-demo-mark'));
+  }else value.append(create('span','ABC|2FA Code'));
+  output.append(value);
+  main.append(bar,secret,submit,output,action('Copy'));
   return screen;
  }
  if(scene==='open'){
@@ -128,7 +131,7 @@ function chatgptScreen(animation,create){
  if(scene==='password')main.append(field('E-posta',email));
  if(scene==='email')main.append(field('E-posta',email,true));
  else if(scene==='password')main.append(field('Parola','••••••••',true));
- else main.append(field('Kod',scene==='return'?code:'',scene==='return',scene==='verification'));
+ else main.append(field('Kod',scene==='return'?code:'',scene==='return',scene==='verification',scene==='return'));
  const next=action('Devam',scene==='verification'?'chatgpt-demo-disabled':'chatgpt-demo-primary chatgpt-demo-after');
  if(delay)next.style.setProperty('--phase',delay+'s');
  main.append(next);
@@ -826,7 +829,7 @@ function netflixScreen(animation,create){
      draw();body.querySelector('.browser-guide-play')?.focus({preventScroll:true});
     });
     play.className='browser-guide-play';
-    if(simulated)details.append(create('small',prime?'Nümunə ekran · Məlumatı yalnız rəsmi Prime Video tətbiqində daxil edin.':'Düymələrin dili və görünüşü cihazınıza görə fərqlənə bilər.','netflix-guide-note'));
+    if(simulated)details.append(create('small',prime?'Nümunə ekran · Məlumatı yalnız rəsmi Prime Video tətbiqində daxil edin.':chatgpt&&['chatgpt-authenticator','chatgpt-code'].includes(current.animation)?'Bu, işləməyən nümunədir. Həqiqi 2FA açarını paylaşmayın; onu etibar etdiyiniz doğrulama tətbiqində saxlayın.':'Düymələrin dili və görünüşü cihazınıza görə fərqlənə bilər.','netflix-guide-note'));
     if(compact){
      const icon=create('span',autoplay?'Ⅱ':'▶');icon.setAttribute('aria-hidden','true');play.prepend(icon);
      next.before(dots);details.append(play);
