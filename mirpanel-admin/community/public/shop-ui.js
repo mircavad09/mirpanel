@@ -2,7 +2,7 @@ import {ensureCart} from '/cart-ready.js?v=checkout-sounds-20261108';
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
-import {createWalletTopup} from '/community-assets/wallet-topup.js?v=topup-method-cards-1';
+import {createWalletTopup,topupReviewTime} from '/community-assets/wallet-topup.js?v=topup-faq-1';
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
@@ -250,7 +250,23 @@ function showWallet(data){
  const labelText=el('span','Başqa məbləğ');labelText.id='topupCustomAmountLabel';amount.setAttribute('aria-labelledby',labelText.id);
  currency.setAttribute('aria-hidden','true');amountField.append(amount,currency);amountLabel.append(labelText,amountField);form.append(presets,amountLabel,hint,invalid);
  flow=createWalletTopup({el,button,api,run,money,methods:[],profile,getCents:effective,signal:flowSignal,isClosed:()=>closed||flowSignal.aborted,onBusy:b=>{amount.disabled=b;for(const p of presets.children)p.disabled=b;},restoreCents:c=>{selectedCents=presetAmounts.includes(c/100)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.dataset.cents)===selectedCents));update();},onComplete:async saved=>{if(!flowSignal.aborted)showTopupResult(saved);}});update();
- const history=card('Əməliyyat tarixçəsi');history.classList.add('shop-history');history.id='emeliyyatlar';for(const x of data.items){const row=el('article');row.append(el('strong',(Number(x.cents)>0?'+':'')+money(x.cents)),el('p',x.reason,'shop-muted'),el('small',new Date(x.created_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})));history.append(row);}if(data.more)historyMore(history,1);if(!data.items.length)history.append(el('p','Hələ əməliyyat yoxdur.','shop-muted'));const requests=card('Balans müraciətləri');for(const x of data.topups.filter(x=>x.status!=='draft'))requests.append(el('p',money(x.requested_cents)+' · '+({reviewing:'Yoxlanılır',approved:'Təsdiqləndi',rejected:'Rədd edildi'}[x.status]||x.status)));if(!data.topups.some(x=>x.status!=='draft'))requests.append(el('p','Hələ müraciət yoxdur.','shop-muted'));const back=backFromWallet();if(back){const a=link('← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}requests.append(link('Sifarişlərimdə bax','/sifarislerim'));app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,requests,history,error);void flow.resume();}
+ const back=backFromWallet();
+ if(back){const a=link('← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
+ app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions());void flow.resume();
+}
+function walletQuestions(){
+ const section=el('section',null,'wallet-faq'),title=el('h2','Balans haqqında suallar'),list=el('div',null,'wallet-faq-list');
+ title.id='walletFaqTitle';section.setAttribute('aria-labelledby',title.id);
+ for(const [question,answer] of [
+  ['Balans nəyə üçündür?','Balansınızdakı məbləğlə səbətinizdəki məhsulları hər dəfə kart məlumatı daxil etmədən ala bilərsiniz.'],
+  ['Komissiya tutulurmu?','Xeyr. MirPanel balans artırmaya komissiya tətbiq etmir. Göndərdiyiniz məbləğ tam olaraq balansınıza əlavə olunur.'],
+  ['Köçürmə nə vaxt təsdiqlənir?','Çeki göndərdikdən sonra təsdiq adətən '+topupReviewTime+' çəkir. İş saatlarımız hər gün 11:00–00:00-dır.']
+ ]){
+  const item=el('details');item.append(el('summary',question),el('p',answer));list.append(item);
+ }
+ const historyLink=el('a','Ödənişlərim','wallet-history-link');historyLink.href='/profil?tab=payments';
+ section.append(title,list,historyLink);return section;
+}
 const readSession=()=>import('/session-state.js?v=avatar-20261104').then(m=>m.getCommunityState(checkoutView?{maxAge:0}:undefined));
 function showLoadError(e,retry){
  app.replaceChildren(el('h1','Yükləmə alınmadı'),error,button('Yenidən cəhd et',retry));
@@ -269,7 +285,6 @@ async function loadWallet(knownProfile=false){
   if(!active())return;
   if(account?.ok)profile=account.data.profile;
   showWallet(data);
-  if(location.hash==='#emeliyyatlar')document.getElementById('emeliyyatlar')?.scrollIntoView();
   if(location.hash==='#balansi-artir')document.getElementById('balansi-artir')?.scrollIntoView({block:'start',behavior:'instant'});
  }catch(e){
   if(!active())return;
@@ -303,7 +318,6 @@ on(window,'pagehide',dispose);on(window,'mirpanel:account',e=>{
 on(window,'mirpanel:prices',()=>{if(!closed&&!working&&!group&&['/sebet','/odenis'].includes(route)&&(!checkoutView||profile))void run(refreshBasket);});
 on(window,'mirpanel:before-navigate',e=>{if(working||app.querySelector('input[type=file]')?.files.length){e.preventDefault();status.textContent='Əvvəl aktiv əməliyyatı tamamlayın və ya ləğv edin. Seçilmiş fayl qorunub.';}});
 const boot=()=>start().catch(e=>{if(!closed)showLoadError(e,boot);});void boot();
-function historyMore(history,page){const more=button('Daha çox göstər',()=>run(async()=>{more.disabled=true;try{const d=await api('/wallet?page='+(page+1));more.remove();for(const x of d.items){const row=el('article');row.append(el('strong',(Number(x.cents)>0?'+':'')+money(x.cents)),el('p',x.reason,'shop-muted'),el('small',new Date(x.created_at).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})));history.append(row);}if(d.more)historyMore(history,page+1);}finally{more.disabled=false;}}));history.append(more);}
 window.mirpanelPageDispose=dispose;return dispose;
 }
 if(!new URL(import.meta.url).searchParams.get('v')?.startsWith('shell-')&&!window.mirpanelNavigationMounting&&document.getElementById('shopApp'))mountShop();

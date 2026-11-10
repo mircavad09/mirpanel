@@ -27,7 +27,7 @@ for(const [engine,width] of [[chromium,320],[chromium,1440],[webkit,390]]){
     if(path==='/api/payments/shop/wallet')return r.fulfill({json:{cents,items:[],topups:[]}});
     if(path==='/api/payments/methods')return r.fulfill({json:{methods:[]}});
     if(path==='/api/payments/storefront')return r.fulfill({json:{products:[]}});
-    if(['/odenis','/balans'].includes(path))return r.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/community-assets/shop.css?v=checkout-shortfall-1"><main class="shop-page" id="shopApp"></main><script type="module" src="/community-assets/shop-ui.js?v=checkout-shortfall-1"></script>'});
+    if(['/odenis','/balans'].includes(path))return r.fulfill({contentType:'text/html; charset=utf-8',body:'<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/community-assets/shop.css?v=topup-faq-1"><main class="shop-page" id="shopApp"></main><script type="module" src="/community-assets/shop-ui.js?v=topup-faq-1"></script>'});
     const name=path.split('/').at(-1);
     if(files.has(name))return live?r.continue():r.fulfill({contentType:name.endsWith('.css')?'text/css':'text/javascript',body:files.get(name)});
     return r.fulfill({status:404,body:''});

@@ -25,12 +25,10 @@
 .shop-page.shop-wallet-page .shop-upload input{padding:8px;font-size:13px;overflow:hidden}
 .shop-page.shop-wallet-page .shop-success{font-size:14px;padding:10px;margin:10px 0 0;background:#102b20;border-color:#287f50;color:#b7f1d0}
 .shop-page.shop-wallet-page .shop-muted{font-size:13px;line-height:1.5}
-.shop-page.shop-wallet-page .shop-history article{padding:10px 0}
-.shop-page.shop-wallet-page .shop-history strong{font-size:16px;font-weight:600}
-.shop-page.shop-wallet-page .shop-history small{font-size:12px;color:#b0b9c4}
 @media(max-width:480px){.shop-page.shop-wallet-page{margin-top:14px;padding-inline:12px;padding-bottom:12px}.shop-page.shop-wallet-page h1{font-size:26px;margin-bottom:14px}.shop-page.shop-wallet-page .shop-card{padding:15px}.shop-page.shop-wallet-page .shop-wallet-hero{padding:18px 16px;min-height:140px}.shop-page.shop-wallet-page .shop-wallet-hero strong{font-size:34px}.shop-page.shop-wallet-page .shop-bank{padding:12px}.shop-page.shop-wallet-page .shop-number{font-size:15px}.wallet-page-active #supportWidget{padding-inline:12px;margin-bottom:20px}}
 .shop-page.shop-wallet-page .shop-presets{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px;margin:12px 0 16px}
-.shop-page.shop-wallet-page .shop-presets button{min-width:0;min-height:44px;padding:9px 4px;background:#1c2027;border:1px solid #655a39;box-shadow:0 3px 8px #0003;font-size:15px;white-space:nowrap;color:#f1eee5}
+.shop-page.shop-wallet-page .shop-presets button{min-width:0;min-height:44px;padding:9px 4px;background:#0b0b0b;border:1px solid #3a3d44;box-shadow:0 3px 8px #0003;font-size:15px;white-space:nowrap;color:#fff}
+.shop-page.shop-wallet-page .shop-presets button:hover:not(:disabled),.shop-page.shop-wallet-page .shop-presets button:focus-visible{border-color:#ffd400}
 .shop-page.shop-wallet-page .shop-presets button[aria-pressed=true]{background:#ffd400;color:#171500;border-color:#ffe16a;box-shadow:0 3px 10px #e1b80022}
 .shop-page.shop-wallet-page .shop-presets button:focus-visible{outline:2px solid #ffe16a;outline-offset:3px}
 .shop-page.shop-wallet-page #topupAmountHint{margin:6px 0;font-size:13px}
@@ -45,8 +43,22 @@
 .shop-page .wallet-topup [hidden]{display:none!important}
 .shop-page.shop-wallet-page .wallet-custom-amount{display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:center}
 .wallet-custom-field{position:relative;min-width:0}
-.shop-page.shop-wallet-page .wallet-custom-field input{padding-inline-end:34px}
-.wallet-custom-currency{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);color:#c0c7d0;pointer-events:none}
+.shop-page.shop-wallet-page .wallet-custom-field input{padding-inline-end:34px;background:#0b0b0b;color:#fff}
+.shop-page.shop-wallet-page .wallet-custom-field input::placeholder{color:#fff;opacity:1}
+.wallet-custom-currency{position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);color:#fff;pointer-events:none}
+.wallet-faq{margin:20px 0 12px}
+.shop-page.shop-wallet-page .wallet-faq h2{font-size:17px;margin-bottom:9px}
+.wallet-faq-list{background:#171717;border:1px solid #2d2d2d;border-radius:16px}
+.wallet-faq-list details+details{border-top:1px solid #2d2d2d}
+.wallet-faq-list summary{display:flex;align-items:center;justify-content:space-between;gap:14px;min-height:46px;padding:10px 15px;cursor:pointer;font-weight:600;list-style:none}
+.wallet-faq-list summary::-webkit-details-marker{display:none}
+.wallet-faq-list summary::after{content:'';width:7px;height:7px;border-right:2px solid #a6a6a6;border-bottom:2px solid #a6a6a6;transform:rotate(45deg);flex:none}
+.wallet-faq-list details[open]>summary::after{transform:rotate(225deg)}
+.wallet-faq-list summary:focus-visible{outline:2px solid #ffd400;outline-offset:-3px;border-radius:10px}
+.wallet-faq-list p{margin:0;padding:0 15px 14px;color:#d1d3d7}
+.wallet-history-link{display:inline-flex;align-items:center;min-height:44px;color:#ffdf60}
+/* This page states its top-up review hours in the FAQ. Keep the shared operator links. */
+.wallet-page-active #customerFooter .customer-footer-support p,.wallet-page-active #customerFooter .customer-footer-columns p:has(>a[href^="tel:"])+p{display:none}
 .wallet-method-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .shop-page.shop-wallet-page .wallet-method-tile{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;position:relative;min-width:0;min-height:125px;padding:9px 5px;border:1px solid #3f4650;background:#15191e;color:#f4f5f7;text-align:center}
 .wallet-method-tile .checkout-icon{padding:6px;border-radius:10px;background:#ffffff0d;color:#d2d7df}

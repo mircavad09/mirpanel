@@ -7,7 +7,7 @@ for(const v of ['',null,5,'0','0.99','500.01','-1','1.001','1,001','1e2','NaN','
 const header=fs.readFileSync('customer-header.html','utf8'),id='11111111-1111-4111-8111-111111111111';
 const liveAssets=new Map();
 if(process.argv.includes('--live')){
- const site='https://mirpanel.com',version='topup-method-cards-1';
+ const site='https://mirpanel.com',version='topup-faq-1';
  const get=async path=>{const r=await fetch(site+path,{signal:AbortSignal.timeout(15000)});assert.ok(r.ok,path+' '+r.status);return Buffer.from(await r.arrayBuffer());};
  const html=(await get('/balans')).toString();
  for(const file of ['shop.css','shop-ui.js','wallet-topup.js']){
@@ -23,7 +23,7 @@ const server=http.createServer(async(req,res)=>{const p=new URL(req.url,'http://
  if(p==='/api/community/state')return json({profile:{user_id:'synthetic',display_name:'Sınaq',avatar:0,balanceCents:balance}});
  if(p==='/api/community/notifications')return json({items:[],unread:0});
  if(p==='/api/payments/methods'||p==='/api/payments/shop/topup/methods')return json({methods:[{id,available:true,displayName:'Sintetik bank',maskedNumber:'****0000'}]});
- if(p==='/api/payments/shop/wallet')return json({cents:balance,items:[],topups:[],more:false});
+ if(p==='/api/payments/shop/wallet')return json({cents:balance,items:[{cents:500,reason:'Sintetik tarixçə qeydi',created_at:'2026-11-10T00:00:00Z'}],topups:[{requested_cents:500,status:'reviewing'}],more:true});
  if(p==='/api/payments/shop/topup'){if(req.method==='GET')return json({id,status:'draft',methodId:id,cents:2010,receiptUploaded:false});let text='';for await(const chunk of req)text+=chunk;requests.push(JSON.parse(text));return json({id,status:'draft'});}
  if(p==='/api/payments/shop/method')return json({id,provider:'Sintetik bank',holder:'Sınaq',number:'0000 0000 0000 0000'});
  if(p==='/api/decorations')return json({});
@@ -33,6 +33,27 @@ const server=http.createServer(async(req,res)=>{const p=new URL(req.url,'http://
 });await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 try{for(const engine of ['chrome','webkit']){const b=await(engine==='chrome'?chromium:webkit).launch({headless:true,executablePath:engine==='chrome'?'C:/Program Files/Google/Chrome/Application/chrome.exe':'C:/Users/user/AppData/Local/ms-playwright/webkit-2336/Playwright.exe'});try{for(const width of [320,360,390,430,1440]){const c=await b.newContext({viewport:{width,height:900}}),p=await c.newPage(),errors=[];await c.route('**/*',r=>new URL(r.request().url()).origin===origin?r.continue():r.abort());p.on('pageerror',e=>errors.push(e.message));balance=1200;await p.goto(origin+'/balans');const input=p.getByLabel('Başqa məbləğ',{exact:true}),presets=p.locator('.shop-presets button'),preview=p.locator('.shop-topup-preview span'),next=p.getByRole('button',{name:/^Bu kartla davam et/});await presets.first().waitFor();eq(await p.locator('.shop-wallet-hero').evaluate(n=>getComputedStyle(n).backgroundImage.includes('/assets/wallet/balance-gold.png')),true);eq(await p.locator('#balansi-artir + .wallet-topup h2').textContent(),'Ödəniş üsulu');eq(await p.locator('.wallet-method-tile strong').allTextContents(),['Kartdan karta','Apple Pay','Google Pay','M10','Bank kartı','Hesaba köçürmə']);eq(await p.locator('.wallet-method-tile:disabled .wallet-method-badge').allTextContents(),Array(5).fill('Tezliklə'));eq(await p.locator('.wallet-payment-method').evaluate(el=>getComputedStyle(el).borderColor),'rgb(227, 189, 56)');await p.getByRole('button',{name:'Kartdan karta',exact:true}).click();await p.locator('.wallet-bank-choice').first().click();
  eq(await presets.allTextContents(),['5 ₼','10 ₼','20 ₼','50 ₼','100 ₼']);eq(await input.inputValue(),'');eq(await input.getAttribute('placeholder'),'0,00');eq(await preview.textContent(),'17.00 ₼');
+ const secondary=presets.nth(1),rgb=(target,style,pseudo=null)=>target.evaluate((el,[s,p])=>getComputedStyle(el,p).getPropertyValue(s),[style,pseudo]);
+ eq(await rgb(secondary,'background-color'),'rgb(11, 11, 11)');eq(await rgb(secondary,'color'),'rgb(255, 255, 255)');
+ await secondary.hover();eq(await rgb(secondary,'border-top-color'),'rgb(255, 212, 0)');
+ await p.mouse.move(0,0);await presets.first().focus();await p.keyboard.press('Tab');
+ eq(await secondary.evaluate(n=>n.matches(':focus-visible')),true);eq(await rgb(secondary,'border-top-color'),'rgb(255, 212, 0)');
+ eq(await rgb(presets.first(),'background-color'),'rgb(255, 212, 0)');
+ eq(await rgb(input,'background-color'),'rgb(11, 11, 11)');eq(await rgb(input,'color'),'rgb(255, 255, 255)');
+ eq(await rgb(input,'color','::placeholder'),'rgb(255, 255, 255)');eq(await rgb(p.locator('.wallet-custom-currency'),'color'),'rgb(255, 255, 255)');
+ const faq=p.getByRole('region',{name:'Balans haqqında suallar'}),details=faq.locator('details');
+ eq(await details.count(),3);eq(await faq.locator('details[open]').count(),0);
+ for(const row of await details.all()){
+  const question=row.locator('summary'),answer=row.locator('p');
+  eq(await answer.isVisible(),false);await question.click();eq(await answer.isVisible(),true);
+  await question.press('Enter');eq(await answer.isVisible(),false);
+ }
+ eq(await details.last().locator('p').textContent(),'Çeki göndərdikdən sonra təsdiq adətən 5–10 dəqiqə çəkir. İş saatlarımız hər gün 11:00–00:00-dır.');
+ eq(await p.getByRole('heading',{name:/^(Balans müraciətləri|Əməliyyat tarixçəsi)$/}).count(),0);
+ eq(await p.getByText('Sintetik tarixçə qeydi',{exact:true}).count(),0);
+ eq(await faq.getByRole('link',{name:'Ödənişlərim'}).getAttribute('href'),'/profil?tab=payments');
+ const operator=p.locator('#customerFooter').getByRole('link',{name:'Operatora yaz',exact:true});
+ await operator.waitFor();eq(await operator.getAttribute('href'),'https://wa.me/994515243545');await operator.click({trial:true});
  for(const n of [5,10,20,50,100]){await presets.filter({hasText:new RegExp('^'+n+' ₼$')}).click();eq(await input.inputValue(),'');eq(await preview.textContent(),(12+n).toFixed(2)+' ₼');eq(await p.locator('.shop-presets [aria-pressed=true]').count(),1);}
  for(const [v,sum]of [['1','13.00 ₼'],['500','512.00 ₼'],['5,25','17.25 ₼'],['0.99','—'],['500.01','—'],['-1','—'],['5.123','—'],['5,123','—'],['1e2','—'],['','—'],['1.01','13.01 ₼']]){await input.fill(v);eq(await preview.textContent(),sum,v);eq(await p.locator('.shop-presets [aria-pressed=true]').count(),0);eq(await next.isDisabled(),sum==='—');}
  await presets.first().click();eq(await input.inputValue(),'');eq(await input.getAttribute('aria-invalid'),'false');eq(await preview.textContent(),'17.00 ₼');eq(await p.locator('#topupAmountError').textContent(),'');
