@@ -22,15 +22,29 @@ function repeatPlan(product,savedId,savedName,{historical=false}={}){
 }
 export function createAccountOrders({security,store,resolve}){
  async function scope(request){if(!resolve)throw denied();const s=await resolve(request);if(!s?.userId)throw denied();return s;}
+ async function delivery(s,id){
+   const rows=await s.codes?.(id)||[],r=rows[0];if(!r)throw Object.assign(Error('Təhvil məlumatı tapılmadı.'),{status:404});const original=JSON.parse(security.decryptSecret(r.message_cipher));const value=projectRoomCredentials(security,r,original);if(value.id!==r.id||value.order!==r.order_id||value.line!==r.line_index)throw Error('DELIVERY_REFERENCE_MISMATCH');const line=deliveryLines({...r,quantity:r.order_quantity})[r.line_index];
+    if(r.legacy&&!r.room_access_ended){
+     const account=JSON.parse(security.decryptSecret(r.account_cipher)),pin=JSON.parse(security.decryptSecret(r.pin_cipher));
+     if(account.id!==r.group_id||pin.id!==r.room_id||!/^\d{4}$/.test(pin.pin))throw Error('ROOM_REFERENCE_MISMATCH');
+     Object.assign(value,projectRoomCredentials(security,{room_current_cipher:r.account_cipher,room_group_id:r.group_id},value),{roomName:r.room_name,roomCode:pin.pin});
+    }
+    const room=line?.productId==='netflix'&&typeof value.roomName==='string'&&/^\d{4}$/.test(value.roomCode||'')
+     ? {netflixRoom:{name:value.roomName,code:value.roomCode}}:{};
+    return {text:value.message,...(value.email?{email:value.email}:{}),...(value.password?{password:value.password}:{}),...room};
+ }
  return {
   async list(request,cursor,code){const s=await scope(request);let before=null,id=null;
    if(code&&!orderCodeValid(code))throw Object.assign(Error('Sifariş nömrəsi düzgün deyil.'),{status:400});
    if(cursor){try{const c=JSON.parse(security.decryptSecret(cursor));if(c.purpose!=='account-orders-page'||c.userId!==s.userId||!Number.isFinite(Date.parse(c.createdAt))||! /^[0-9a-f-]{36}$/.test(c.id))throw Error();before=c.createdAt;id=c.id;}catch{throw Object.assign(Error('Səhifə göstəricisi düzgün deyil.'),{status:400});}}
-   const [rows,target,catalog]=await Promise.all([s.page(before,id),!cursor&&code?s.byCode?.(code):null,Promise.resolve().then(()=>s.catalog?.()).catch(()=>null)]),page=rows.slice(0,20),last=page.at(-1);
-   const products=new Map((catalog?.products||[]).map(p=>[p.id,p]));
+   const catalogRequest=Promise.resolve().then(()=>s.catalog?.()).catch(()=>null);
+   const [rows,target,topups]=await Promise.all([s.page(before,id),!cursor&&code?s.byCode?.(code):null,!cursor&&s.topups?s.topups():null]);
+   const page=rows.slice(0,20),last=page.at(-1);
    if(target&&!page.some(o=>o.id===target.id))page.unshift(target);
-   const deliveries=await s.deliveries?.(page.map(o=>o.id)),flows=!deliveries&&page.length&&store.workforceOrders?await store.workforceOrders(page.map(o=>o.id)):new Map();
-   return {accountId:s.userId,...(!cursor&&s.topups?{topups:await s.topups()}:{}),orders:page.map(o=>{
+   const [deliveries,catalog]=await Promise.all([s.deliveries?.(page.map(o=>o.id)),catalogRequest]);
+   const products=new Map((catalog?.products||[]).map(p=>[p.id,p]));
+   const flows=!deliveries&&page.length&&store.workforceOrders?await store.workforceOrders(page.map(o=>o.id)):new Map();
+   const result={accountId:s.userId,...(!cursor&&s.topups?{topups}:{}),orders:page.map(o=>{
     const records=(deliveries||[]).filter(d=>d.order_id===o.id);
     const status=deliveries?customerStatus(o,records):o.status;
     const cancellation=o.fulfillment_cancellation;
@@ -43,18 +57,20 @@ export function createAccountOrders({security,store,resolve}){
      return {...x,image:item.image||current?.image||'',warranty:warrantyText({...item,label:x.planName}),durationMonths:item.durationMonths??null,expiresOn,repeat:repeatPlan(current,item.sourcePlanKey??item.planId,x.planName)};
     }),image:snap?.image||product?.image||'',quantity:o.quantity||snap?.quantity||1,warranty:warrantyText({...snap,label:o.plan_name}),durationMonths:o.duration_months??snap?.durationMonths??null,repeat:repeatPlan(product,snap?.planId??o.plan_id,o.plan_name),plan:o.plan_name,amount:o.amount===null?null:Number(o.amount),currency:o.currency,createdAt:o.created_at,status,statusMessage:cancellation?((cancellation.full?'Sifarişiniz ləğv edildi.':'Təhvil verilməyən məhsullar ləğv edildi.')+' '+refundNote).trim():status==='preparing'?'Ödəniş təsdiqləndi. Sifariş hazırlanır.':customerOrderStatus(status,flows.get(o.id)?.state),autoDelivered:status==='completed'&&records.some(d=>d.automatic),deliveries:['preparing','completed'].includes(status)?records.map(d=>({id:d.id,line:d.line_index,quantity:d.quantity})):[],receiptAvailable:!o.receipt_deleted_at&&!!o.receipt_path};
    }),nextCursor:rows.length>20?security.encryptSecret(JSON.stringify({purpose:'account-orders-page',userId:s.userId,createdAt:last.created_at,id:last.id})):null};
+   if(!cursor){
+    const opened=result.orders.find(o=>code&&String(o.orderCode)===code)||result.orders.find(o=>o.status==='completed');
+    const details=await Promise.all((opened?.deliveries||[]).map(async record=>{
+     try{return [record.id,await delivery(s,record.id)];}
+     catch(error){if(error.status===401||error.status===403)throw error;return null;}
+    }));
+    result.deliveryDetails=Object.fromEntries(details.filter(Boolean));
+   }
+   return result;
   },
   async codes(request,id){
-   const s=await scope(request),rows=await s.codes?.(id)||[];
-   if(id){const r=rows[0];if(!r)throw Object.assign(Error('Təhvil məlumatı tapılmadı.'),{status:404});const original=JSON.parse(security.decryptSecret(r.message_cipher));const value=projectRoomCredentials(security,r,original);if(value.id!==r.id||value.order!==r.order_id||value.line!==r.line_index)throw Error('DELIVERY_REFERENCE_MISMATCH');const line=deliveryLines({...r,quantity:r.order_quantity})[r.line_index];
-    if(r.legacy&&!r.room_access_ended){
-     const account=JSON.parse(security.decryptSecret(r.account_cipher)),pin=JSON.parse(security.decryptSecret(r.pin_cipher));
-     if(account.id!==r.group_id||pin.id!==r.room_id||!/^\d{4}$/.test(pin.pin))throw Error('ROOM_REFERENCE_MISMATCH');
-     Object.assign(value,projectRoomCredentials(security,{room_current_cipher:r.account_cipher,room_group_id:r.group_id},value),{roomName:r.room_name,roomCode:pin.pin});
-    }
-    const room=line?.productId==='netflix'&&typeof value.roomName==='string'&&/^\d{4}$/.test(value.roomCode||'')
-     ? {netflixRoom:{name:value.roomName,code:value.roomCode}}:{};
-    return {text:value.message,...(value.email?{email:value.email}:{}),...(value.password?{password:value.password}:{}),...room};}
+   const s=await scope(request);
+   if(id)return delivery(s,id);
+   const rows=await s.codes?.()||[];
    const catalog=rows.length?await Promise.resolve().then(()=>s.catalog?.()).catch(()=>null):null;
    const products=new Map((catalog?.products||[]).map(p=>[String(p.id),p]));
    const categories=new Map((catalog?.categories||[]).map(c=>[c.key,c.name]));

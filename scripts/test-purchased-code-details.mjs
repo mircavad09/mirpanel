@@ -3,14 +3,19 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
-import {adminDelivery,ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
+import {adminDelivery,ownerCodes,deliveryRecords} from '../mirpanel-admin/community/order-delivery.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{pool,shop,id}=f;
 const security=createPaymentSecurity({encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')});
-const orders=createAccountOrders({security,store:{},resolve:async user=>({userId:user,codes:code=>ownerCodes(pool,user,code)})});
+const orders=createAccountOrders({security,store:{},resolve:async user=>({
+ userId:user,codes:code=>ownerCodes(pool,user,code),catalog:async()=>f.catalog,
+ page:async()=> (await pool.query('select o.* from payment_orders o join community_order_owners l on l.order_id=o.id where l.user_id=$1 order by o.created_at desc,o.id desc limit 21',[user])).rows,
+ byCode:async code=>(await pool.query('select o.* from payment_orders o join community_order_owners l on l.order_id=o.id where l.user_id=$1 and o.order_code::text=$2',[user,code])).rows[0],
+ deliveries:ids=>deliveryRecords(pool,ids)
+})});
 const copyData=new Map();
 let fixtures;
 const names=['Uzun sınaq otağı adı mobil ekranda öz sütununda növbəti sətrə keçir','İkinci sınaq otağı'];
@@ -47,9 +52,21 @@ try{
  fixtures=(await orders.codes('a')).codes;
  assert.equal(fixtures.length,copyData.size);
  assert.deepEqual((await orders.codes('b')).codes,[]);
+ const firstPage=await orders.list('a');
+ const firstCompleted=firstPage.orders.find(o=>o.status==='completed');
+ assert.deepEqual(Object.keys(firstPage.deliveryDetails),firstCompleted.deliveries.map(d=>d.id));
+ for(const record of firstCompleted.deliveries)assert.deepEqual(firstPage.deliveryDetails[record.id],copyData.get(record.id));
+ const multi=firstPage.orders.find(o=>o.deliveries.length===2);
+ const targeted=await orders.list('a',null,String(multi.orderCode));
+ assert.equal(Object.keys(targeted.deliveryDetails).length,2);
+ for(const record of multi.deliveries)assert.deepEqual(targeted.deliveryDetails[record.id],copyData.get(record.id));
+ assert.deepEqual((await orders.list('b')).deliveryDetails,{});
+ await assert.rejects(orders.list(null),{status:401});
+ console.log('PASS: owned first completed delivery and targeted multi-account preload; guest and other account isolated');
 }finally{await f.close();}
 
 
+if(process.env.MIRPANEL_API_ONLY==='1'||process.argv.includes('--api-only'))process.exit(0);
 const {chromium}=await import(process.env.MIRPANEL_PLAYWRIGHT);
 const browser=await chromium.launch({executablePath:process.env.MIRPANEL_CHROME});
 const live=process.argv.includes('--live');

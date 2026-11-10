@@ -649,3 +649,9 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
  .capcut-pc[data-scene=choose] .capcut-pc-qr-window{animation:capcut-pc-show 0s 2.55s both!important}
  .capcut-pc-scanner{animation:capcut-pc-show 0s 2.6s both!important}
 }
+
+.browser-order-delivery{min-block-size:300px}
+.browser-delivery-skeleton{display:grid;gap:8px;padding-block:8px}
+.browser-delivery-skeleton>span{display:block;height:40px;border-radius:8px;background:#24312b}
+.browser-delivery-skeleton>span:last-child{height:100px}
+.browser-delivery-pending [data-copy-delivery]{visibility:hidden}

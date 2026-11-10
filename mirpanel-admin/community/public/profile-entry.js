@@ -13,7 +13,7 @@ export function mountProfile(app,verifiedState){
  style('/community-assets/community.css');
  style(profileCSS);
  style('/community-assets/profile.css?v=compact-profile-editor-1');
- style('/browser-orders.css?v=prime-phone-1');
+ style('/browser-orders.css?v=delivery-stable-1');
  if(!app.querySelector('.account-panel'))app.innerHTML=profileShell(location.search);
  const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v!==undefined)n.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)n.append(c);return n;};
  const button=(text,fn,primary=false)=>el('button',{type:'button',class:primary?'primary':'',onclick:fn},text);
@@ -45,18 +45,22 @@ export function mountProfile(app,verifiedState){
   if(!r.ok)throw Error(r.data.error||'Hesab məlumatı alınmadı.');
   Object.assign(state,r.data);return state.profile;
  }
+ const orderCode=new URLSearchParams(location.search).get('order');
+ const orderSuffix=/^[A-Za-z0-9-]{1,40}$/.test(orderCode||'')?'?order='+encodeURIComponent(orderCode):'';
+ const initialOrdersRequest=new URLSearchParams(location.search).get('tab')==='orders'
+  ?{path:'/api/payments/my-orders'+orderSuffix,promise:api('/api/payments/my-orders'+orderSuffix)}:null;
+ void initialOrdersRequest?.promise.catch(()=>{});
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
  const boot=async(retry=0)=>{let timer;try{
-  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=prime-phone-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
+  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=delivery-stable-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
   if(stopped||!app.isConnected)return;
-  cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin});
+  cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin,initialOrdersRequest});
  }catch{
   if(!stopped){const body=app.querySelector('.account-tab-content');body?.querySelector('.account-tab-spinner')?.remove();body?.append(el('div',{'data-profile-retry':''},el('p',{role:'alert'},'Profil görünüşü açıla bilmədi.'),button('Yenidən cəhd et',()=>{body.querySelector('[data-profile-retry]')?.remove();body.append(el('div',{class:'account-tab-spinner',role:'status','aria-label':'Məlumat hazırlanır'}));void boot(retry+1);})));}
  }finally{clearTimeout(timer);}};
  const dispose=()=>{if(stopped)return;stopped=true;life.abort();cleanup?.();document.body.classList.remove('profile-screen');};
  window.addEventListener('pagehide',event=>{
-  if(event.persisted)window.addEventListener('pageshow',e=>{if(e.persisted&&app.isConnected&&location.pathname==='/profil')mountProfile(app);},{once:true});
-  dispose();
+  if(!event.persisted)dispose();
  },{signal});
  window.mirpanelPageDispose=dispose;void boot();return dispose;
 }

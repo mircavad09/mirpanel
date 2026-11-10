@@ -236,7 +236,11 @@ function netflixScreen(animation,create){
 (()=>{'use strict';window.mountBrowserOrders=(options={})=>{const root=document.getElementById('browserOrders');if(!root)return;const life=new AbortController(),on=(t,n,f)=>t.addEventListener(n,f,{signal:life.signal});
  const error=document.getElementById('browserOrdersError'),more=document.getElementById('browserOrdersMore'),dialog=document.getElementById('browserReceipt'),content=document.getElementById('browserReceiptContent');
  let cursor=null,loading=false,loaded=false,generation=0,timer,focused=false,pageFingerprint=null,hasAppended=false,initialRequest=options.initialRequest,autoOrder=null;const seen=new Set(),requests=new Set(),prior=new Map();
+ if(options.ui?.pageData)options.initial=options.ui.pageData;
  const target=new URLSearchParams(location.search).get('order');
+ const ui=options.ui||{},credentials=ui.credentials??=new Map(),expandedOrders=ui.expanded??=new Set();
+ const orderMarkup=new WeakMap();
+ let accountId=options.initial?.accountId||null;autoOrder=ui.autoOrder??null;
  const sounds=import('/checkout-sounds.js?v=1').catch(()=>null);
  const repeatDialog=document.createElement('dialog');repeatDialog.className='browser-order-repeat';
  const guideDialog=document.createElement('dialog'),guideItems=new WeakMap();
@@ -244,7 +248,7 @@ function netflixScreen(animation,create){
  let guideTurn=0;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function clear(){generation++;guideTurn++;for(const c of requests)c.abort();requests.clear();cursor=null;loading=false;loaded=false;hasAppended=false;pageFingerprint=null;seen.clear();prior.clear();autoOrder=null;focused=false;if(guideDialog.open)guideDialog.close();guideDialog.remove();root.replaceChildren();content.replaceChildren();if(dialog.open)dialog.close();if(repeatDialog.open)repeatDialog.close();repeatDialog.remove();more.hidden=true;error.hidden=true;root.setAttribute('aria-busy','false');}
- function gate(){clear();options.onData?.(null);root.classList.remove('browser-orders-list');root.innerHTML='<div class="browser-orders-message"><h2>Sifarişlərinizi görmək üçün hesabınıza daxil olun.</h2><p>Hesabınız yoxdur? Qeydiyyatdan keçin.</p><div class="orders-login-actions"><a class="orders-action" href="/owner-login?next=%2Fsifarislerim">Daxil ol</a> <a class="orders-action" href="/hesab?mode=signup&amp;next=%2Fsifarislerim">Qeydiyyatdan keç</a></div></div>';}
+ function gate(){credentials.clear();expandedOrders.clear();ui.pageData=null;clear();options.onData?.(null);root.classList.remove('browser-orders-list');root.innerHTML='<div class="browser-orders-message"><h2>Sifarişlərinizi görmək üçün hesabınıza daxil olun.</h2><p>Hesabınız yoxdur? Qeydiyyatdan keçin.</p><div class="orders-login-actions"><a class="orders-action" href="/owner-login?next=%2Fsifarislerim">Daxil ol</a> <a class="orders-action" href="/hesab?mode=signup&amp;next=%2Fsifarislerim">Qeydiyyatdan keç</a></div></div>';}
  async function api(path){if(options.api)return options.api(path);const c=new AbortController(),t=setTimeout(()=>c.abort(),options.profile?12000:20000);requests.add(c);try{const r=await fetch('/api/payments/'+path,{cache:'no-store',credentials:'same-origin',signal:c.signal,headers:{Accept:'application/json'}});if(r.status===401&&!life.signal.aborted)options.onUnauthorized?.();const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Server cavab vermədi.'),{status:r.status});return d;}finally{clearTimeout(t);requests.delete(c);}}
  const money=v=>Number.isFinite(Number(v))?Number(v).toFixed(2).replace('.',',')+' ₼':'—';
  const date=value=>{const d=new Date(value);return value&&Number.isFinite(d.getTime())?new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Baku'}).format(d).replaceAll('/','.').replace(',',''):'Tarix məlum deyil';};
@@ -284,24 +288,36 @@ function netflixScreen(animation,create){
  root.addEventListener('error',e=>{if(e.target.matches?.('.browser-order-image img'))e.target.hidden=true;},{capture:true,signal:life.signal});
  const latestCompleted=d=>d.orders.find(order=>order.status==='completed')?.id??null;
  function paint(d,append=false,{live=false}={}){
-  hasAppended=append;
+  hasAppended=append||d.retainedPages===true;
   if(!append)pageFingerprint=JSON.stringify([d.orders,d.topups]);
-  const expanded=new Set([...root.querySelectorAll('[data-order-id][open]')].map(x=>x.dataset.orderId));
+  const expanded=new Set([...expandedOrders,...[...root.querySelectorAll('[data-order-id][open]')].map(x=>x.dataset.orderId)]);
   if(!target&&(!append||!autoOrder)){
    const newest=latestCompleted(d);
    if(newest!==autoOrder){
-    expanded.delete(autoOrder);
     if(newest)expanded.add(newest);
-    autoOrder=newest;
+    autoOrder=newest;ui.autoOrder=newest;
    }
   }
-  if(!append){root.replaceChildren();seen.clear();for(const t of d.topups||[])root.insertAdjacentHTML('beforeend',topup(t));}
+  if(!append){
+   const ids=new Set(d.orders.map(o=>o.id));
+   for(const node of [...root.children])if(!node.dataset.orderId||!ids.has(node.dataset.orderId))node.remove();
+   seen.clear();
+   for(const t of d.topups||[])root.insertAdjacentHTML('beforeend',topup(t));
+  }
+  for(const [id,data] of Object.entries(d.deliveryDetails||{}))if(typeof data?.text==='string')credentials.set(id,data);
+  const ordered=[];
   for(const o of d.orders){
-   if(seen.has(o.id))continue;seen.add(o.id);const items=orderItems(o);root.insertAdjacentHTML('beforeend',card(o,items));
-   const node=root.lastElementChild;
+   if(seen.has(o.id))continue;seen.add(o.id);const items=orderItems(o),markup=card(o,items);
+   let node=[...root.children].find(n=>n.dataset.orderId===o.id);
+   if(!node||orderMarkup.get(node)!==markup){
+    const template=document.createElement('template');template.innerHTML=markup;
+    const next=template.content.firstElementChild;
+    if(node)node.replaceWith(next);else root.append(next);
+    node=next;orderMarkup.set(node,markup);
+   }
+   ordered.push(node);
    repeats.set(node,items.map(x=>x.repeat));guideItems.set(node,items);
    if(expanded.has(o.id)||(!focused&&target===String(o.orderCode)))node.open=true;
-   if(node.open)showAccounts(node);
    if(!focused&&target===String(o.orderCode)){
     focused=true;node.scrollIntoView({block:'nearest'});
    }
@@ -309,48 +325,58 @@ function netflixScreen(animation,create){
    if(live&&['reviewing','submitted','pending','new_receipt_requested'].includes(prior.get(o.id))&&['preparing','completed'].includes(o.status))void sounds.then(m=>m?.playCheckoutSound('order',o.orderCode));
    prior.set(o.id,o.status);
   }
-  loaded=true;root.classList.add('browser-orders-list');if(!seen.size&&!root.querySelector('[data-topup-id]'))root.innerHTML='<div class="browser-orders-message"><h2>Hələ sifarişiniz yoxdur</h2><p>Hesabınıza bağlı sifarişlər burada görünəcək.</p><a class="orders-action" href="/mehsul">Məhsullara bax</a></div>';cursor=d.nextCursor;more.hidden=!cursor;window.dispatchEvent(new CustomEvent('mirpanel:orders-loaded',{detail:{empty:!seen.size&&!root.querySelector('[data-topup-id]')}}));if(!append)options.onData?.(d);
+  if(!append)for(let i=0;i<ordered.length;i++)if(root.children[i]!==ordered[i])root.insertBefore(ordered[i],root.children[i]||null);
+  ui.pageData=append?{...ui.pageData,orders:[...(ui.pageData?.orders||[]),...d.orders],nextCursor:d.nextCursor,retainedPages:true}:d;
+  loaded=true;root.classList.add('browser-orders-list');if(!seen.size&&!root.querySelector('[data-topup-id]'))root.innerHTML='<div class="browser-orders-message"><h2>Hələ sifarişiniz yoxdur</h2><p>Hesabınıza bağlı sifarişlər burada görünəcək.</p><a class="orders-action" href="/mehsul">Məhsullara bax</a></div>';cursor=d.nextCursor;more.hidden=!cursor;window.dispatchEvent(new CustomEvent('mirpanel:orders-loaded',{detail:{empty:!seen.size&&!root.querySelector('[data-topup-id]')}}));options.onData?.(ui.pageData);
  }
  async function load(append=false,live=false){if(loading)return;const run=generation;loading=true;root.setAttribute('aria-busy','true');more.disabled=true;error.hidden=true;
-  try{const started=!append?initialRequest:null;if(started)initialRequest=null;const d=await(started||api('my-orders'+(append&&cursor?'?cursor='+encodeURIComponent(cursor):target?'?order='+encodeURIComponent(target):'')));if(run!==generation)return;options.validate?.(d);
+  try{const started=!append?initialRequest:null;if(started)initialRequest=null;const d=await(started||api('my-orders'+(append&&cursor?'?cursor='+encodeURIComponent(cursor):target?'?order='+encodeURIComponent(target):'')));if(run!==generation||life.signal.aborted)return;options.validate?.(d);
+   if(accountId&&d.accountId&&accountId!==d.accountId){gate();return;}
+   if(d.accountId)accountId=d.accountId;
    if(live&&(dialog.open||guideDialog.open||repeatDialog.open))return;
    if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=orders');else location.replace('/profil?tab=orders');return;}
-   if(live&&hasAppended&&(target||!latestCompleted(d)||latestCompleted(d)===autoOrder))return;
+   if(live&&hasAppended&&(target||!latestCompleted(d)||latestCompleted(d)===autoOrder)){
+    for(const [id,data] of Object.entries(d.deliveryDetails||{}))if(typeof data?.text==='string')credentials.set(id,data);
+    ui.pageData.deliveryDetails={...ui.pageData.deliveryDetails,...d.deliveryDetails};
+    root.querySelectorAll('[data-order-id][open]').forEach(showAccounts);
+    return;
+   }
    if(append||!loaded||JSON.stringify([d.orders,d.topups])!==pageFingerprint)paint(d,append,{live});
+   else{
+    for(const [id,data] of Object.entries(d.deliveryDetails||{}))if(typeof data?.text==='string')credentials.set(id,data);
+    root.querySelectorAll('[data-order-id][open]').forEach(showAccounts);
+    ui.pageData={...ui.pageData,deliveryDetails:d.deliveryDetails};
+    options.onData?.(d);
+   }
+   if(live)for(const box of root.querySelectorAll('[data-order-id][open] [data-delivery]')){
+    if(credentials.has(box.dataset.delivery)&&!d.deliveryDetails?.[box.dataset.delivery])void loadDelivery(box,true);
+   }
   }catch(e){if(run!==generation)return;if(e.status===401||e.status===403){if(e.status===401&&options.onUnauthorized)options.onUnauthorized();else gate();return;}error.replaceChildren(document.createTextNode('Sifarişləri yükləmək mümkün olmadı. '));error.hidden=false;if(!loaded)root.innerHTML='<div class="browser-orders-message"><button type="button" data-retry>Yenidən cəhd et</button></div>';else{const retry=document.createElement('button');retry.type='button';retry.textContent='Yenidən cəhd et';on(retry,'click',()=>load(append));error.append(retry);}
   }finally{if(run===generation){loading=false;more.disabled=false;root.setAttribute('aria-busy','false');}}
  }
  on(more,'click',()=>load(!!cursor));
  const deliveryData=new WeakMap(),deliveryLoads=new WeakMap(),copyTimers=new WeakMap();
- function hideInfo(panel){
-  panel.hidden=true;
-  for(const box of panel.querySelectorAll('[data-delivery]')){
-   deliveryData.delete(box);deliveryLoads.delete(box);
-   clearTimeout(copyTimers.get(box));box.querySelector('[data-delivery-status]').replaceChildren();
-   box.querySelector('.browser-delivery-credentials').replaceChildren();
-   const pre=box.querySelector('pre');pre.textContent='';pre.hidden=true;box.querySelector('[data-copy-delivery]').disabled=true;
-  }
-  panel.closest('.browser-order-line').querySelector('[data-order-info]').setAttribute('aria-expanded','false');
- }
  function showAccounts(order){
   if(document.hidden)return;
   for(const panel of order.querySelectorAll('.browser-order-instructions')){
    const boxes=panel.querySelectorAll('[data-delivery]');if(!boxes.length)continue;
    panel.hidden=false;panel.closest('.browser-order-line').querySelector('[data-order-info]').setAttribute('aria-expanded','true');
-   for(const box of boxes)void loadDelivery(box);
+   for(const box of boxes){
+    const saved=credentials.get(box.dataset.delivery);
+    if(saved&&deliveryData.get(box)?.d!==saved)renderDelivery(box,saved);
+    else if(!saved)void loadDelivery(box);
+   }
   }
  }
- root.addEventListener('toggle',e=>{if(e.target.matches?.('[data-order-id]')){if(e.target.open)showAccounts(e.target);else e.target.querySelectorAll('.browser-order-instructions').forEach(hideInfo);}},{capture:true,signal:life.signal});
- async function loadDelivery(box){
-  if(deliveryLoads.has(box)||deliveryData.has(box))return;
-  const token={},status=box.querySelector('[data-delivery-status]');
-  deliveryLoads.set(box,token);status.textContent='Təhvil məlumatı yüklənir…';
-  const valid=()=>deliveryLoads.get(box)===token&&box.isConnected&&box.closest('details').open&&!document.hidden;
-  try{
-   const d=await api('my-orders/codes/'+encodeURIComponent(box.dataset.delivery));
-   if(!valid())return;
-   if(typeof d.text!=='string')throw Error();
-   const rows=[['email','E-poçt'],['password','Şifrə']].filter(([key])=>typeof d[key]==='string'&&d[key]);
+ root.addEventListener('toggle',e=>{
+  if(!e.target.matches?.('[data-order-id]'))return;
+  if(e.target.open){expandedOrders.add(e.target.dataset.orderId);showAccounts(e.target);}
+  else expandedOrders.delete(e.target.dataset.orderId);
+ },{capture:true,signal:life.signal});
+ function renderDelivery(box,d){
+  const status=box.querySelector('[data-delivery-status]');
+  if(JSON.stringify(deliveryData.get(box)?.d)===JSON.stringify(d)){status.replaceChildren();return;}
+  const rows=[['email','E-poçt'],['password','Şifrə']].filter(([key])=>typeof d[key]==='string'&&d[key]);
    box.querySelector('.browser-delivery-credentials').innerHTML=rows.map(([key,label])=>'<div><span>'+label+'</span><strong>'+esc(d[key])+'</strong><button type="button" data-copy-delivery-field="'+key+'" aria-label="'+label+' kopyala">'+copyIcon+'</button></div>').join('');
    if(d.netflixRoom){
     const room=document.createElement('div');room.className='browser-netflix-room';
@@ -361,10 +387,27 @@ function netflixScreen(animation,create){
     box.querySelector('.browser-delivery-credentials').append(room);
    }
    const pre=box.querySelector('pre');renderDeliveryMessage(pre,d.text);pre.hidden=false;
-   deliveryData.set(box,{d,rows});box.querySelector('[data-copy-delivery]').disabled=false;status.textContent='';
+   deliveryData.set(box,{d,rows});box.querySelector('[data-copy-delivery]').disabled=false;status.replaceChildren();box.classList.remove('browser-delivery-pending');box.removeAttribute('aria-busy');
+ }
+ async function loadDelivery(box,refresh=false){
+  if(deliveryLoads.has(box)||!refresh&&deliveryData.has(box))return;
+  const token={},status=box.querySelector('[data-delivery-status]'),run=generation;
+  deliveryLoads.set(box,token);
+  if(!deliveryData.has(box)){
+   box.classList.add('browser-delivery-pending');box.setAttribute('aria-busy','true');
+   status.innerHTML='<span class="browser-delivery-skeleton" aria-hidden="true"><span></span><span></span><span></span></span>';
+  }
+  const valid=()=>run===generation&&!life.signal.aborted&&deliveryLoads.get(box)===token&&box.isConnected;
+  try{
+   const d=await api('my-orders/codes/'+encodeURIComponent(box.dataset.delivery));
+   if(!valid())return;
+   if(typeof d.text!=='string')throw Error();
+   credentials.set(box.dataset.delivery,d);
+   if(ui.pageData)(ui.pageData.deliveryDetails??={})[box.dataset.delivery]=d;
+   renderDelivery(box,d);
   }catch(e){
    if(valid()&&(e.status===401||e.status===403)){gate();return;}
-   if(valid())status.innerHTML='Təhvil məlumatı alınmadı. <button type="button" data-retry-delivery>Yenidən cəhd et</button>';
+   if(valid()){box.classList.remove('browser-delivery-pending');box.removeAttribute('aria-busy');status.innerHTML='Təhvil məlumatı alınmadı. <button type="button" data-retry-delivery>Yenidən cəhd et</button>';}
   }finally{if(deliveryLoads.get(box)===token)deliveryLoads.delete(box);}
  }
  async function copyDelivery(button){
@@ -778,20 +821,23 @@ function netflixScreen(animation,create){
   if(info)return openGuide(info,info.closest('.browser-order-line').querySelector('.browser-order-instructions'));
   if(again)return buyAgain(repeats.get(again.closest('[data-order-id]'))?.[Number(again.dataset.buyAgain)]);
   const b=e.target.closest('[data-copy-delivery],[data-copy-delivery-field]');if(b)void copyDelivery(b);
-  const retry=e.target.closest('[data-retry-delivery]');if(retry)void loadDelivery(retry.closest('[data-delivery]'));
+  const retry=e.target.closest('[data-retry-delivery]');if(retry)void loadDelivery(retry.closest('[data-delivery]'),true);
  });
  root.addEventListener('click',async e=>{if(e.target.closest('[data-retry]'))return void load();const b=e.target.closest('[data-receipt]');if(!b||b.disabled)return;const run=generation;b.disabled=true;try{const d=await api('my-orders/'+encodeURIComponent(b.dataset.receipt)+'/receipt');if(run!==generation)return;const u=new URL(d.url);if(u.protocol!=='https:'||!u.hostname.endsWith('.supabase.co'))throw Error();content.replaceChildren();const view=document.createElement(d.mime==='application/pdf'?'iframe':'img');view.src=u.href;view.referrerPolicy='no-referrer';if(view.tagName==='IMG')view.alt='Sifarişin ödəniş çeki';else{view.title='Ödəniş çeki PDF';view.setAttribute('sandbox','allow-same-origin');}content.append(view);dialog.showModal();}catch(e){if(run!==generation)return;if(e.status===401||e.status===403)return void gate();error.textContent=e.status===410?'Çek artıq mövcud deyil':'Çeki açmaq mümkün olmadı. Yenidən cəhd edin.';error.hidden=false;}finally{b.disabled=false;}});
  document.getElementById('browserReceiptClose').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});dialog.addEventListener('close',()=>content.replaceChildren());
  const start=()=>{clearInterval(timer);timer=setInterval(()=>{if(loaded&&!document.hidden&&!dialog.open&&!guideDialog.open&&!repeatDialog.open)load(false,true);},12000);};
- on(window,'mirpanel:account',e=>{if(!e.detail)gate();else if(!loaded)load();});
+ on(window,'mirpanel:account',e=>{const uid=e.detail?.user_id||e.detail?.id;if(!uid||accountId&&uid!==accountId)gate();else if(!loaded)load();});
  on(window,'storage',e=>{if(e.key==='mirpanel.auth.signedOut')gate();});
- // Keep the verified profile list in place, not the revealed credentials or receipt.
+ // Keep revealed data in this verified document until sign-out or account change.
  on(document,'visibilitychange',()=>{
-  if(!document.hidden){root.querySelectorAll('[data-order-id][open]').forEach(showAccounts);if(loaded&&!guideDialog.open&&!repeatDialog.open)void load(false,true);return;}
-  generation++;for(const c of requests)c.abort();requests.clear();loading=false;more.disabled=false;root.setAttribute('aria-busy','false');
-  root.querySelectorAll('.browser-order-instructions').forEach(hideInfo);
-  content.replaceChildren();if(dialog.open)dialog.close();
+  if(!document.hidden){
+   root.querySelectorAll('[data-order-id][open]').forEach(showAccounts);
+   if(loaded&&!guideDialog.open&&!repeatDialog.open)void load(false,true);
+  }else{content.replaceChildren();if(dialog.open)dialog.close();}
  });
- const dispose=()=>{clearInterval(timer);clear();life.abort();};on(window,'pagehide',e=>{if(e.persisted){clearInterval(timer);root.querySelectorAll('.browser-order-instructions').forEach(hideInfo);}else dispose();});on(window,'pageshow',e=>{if(e.persisted){start();root.querySelectorAll('[data-order-id][open]').forEach(showAccounts);load(false,true);}});start();if(options.initial)paint(options.initial);load();window.mirpanelPageDispose=dispose;return dispose;
+ const dispose=()=>{clearInterval(timer);clear();life.abort();};
+ on(window,'pagehide',e=>{if(e.persisted)clearInterval(timer);else dispose();});
+ on(window,'pageshow',e=>{if(e.persisted){start();void load(false,true);}});
+ start();if(options.initial)paint(options.initial);load(false,!!options.initial);window.mirpanelPageDispose=dispose;return dispose;
  };if(!window.mirpanelNavigationMounting&&!window.mirpanelAccountMounting)window.mountBrowserOrders();
 })();

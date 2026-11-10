@@ -71,8 +71,9 @@ export function renderAccountPanel(ctx){
  const paymentPath=(status='all',page=1)=>'/api/community/payment-history?status='+status+'&page='+page;
  const listPath=id==='orders'?'/api/payments/my-orders'+suffix:id==='codes'?'/api/payments/my-orders/codes':id==='payments'?paymentPath(prior?.status,prior?.page):id==='subscriptions'?'/api/payments/shop/subscriptions':null;
  const readList=async()=>{const data=await api(listPath);return data;};
- const pending=listPath?readList():null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=read-navigation-2',orders:'/browser-orders.js?v=prime-phone-1',codes:'./account-codes.js?v=purchased-code-details-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
+ const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
+ if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
+ const url={profile:'./profile.js?v=read-navigation-2',orders:'/browser-orders.js?v=delivery-stable-1',codes:'./account-codes.js?v=purchased-code-details-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
  const retry=moduleRetries.get(id)||0,module=url?import(url+(retry?'&retry='+retry:'')):null;
  let timeout;
  const tabModule=module&&Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).finally(()=>clearTimeout(timeout));
@@ -98,7 +99,7 @@ export function renderAccountPanel(ctx){
   const communityDispose=window.mirpanelPageDispose,initial=sessionLists.entries.get(listPath);
   const onLoaded=e=>{if(!e.detail.empty)content.querySelector('.account-recommendations')?.remove();if(e.detail.empty&&!content.querySelector('.account-recommendations'))void recommendations(content,run).catch(()=>{});};
   window.addEventListener('mirpanel:orders-loaded',onLoaded,{signal:life.signal});
-  disposeChild=window.mountBrowserOrders({initial,initialRequest:pending,validate:ownData,onData:cache,onUnauthorized:unauthorized,profile:true,...(ctx.readOnly?{api:path=>api('/api/payments/'+path)}:{})});window.mirpanelPageDispose=communityDispose;
+  disposeChild=window.mountBrowserOrders({initial,initialRequest:pending,ui,validate:ownData,onData:cache,onUnauthorized:unauthorized,profile:true,...(ctx.readOnly?{api:path=>api('/api/payments/'+path)}:{})});window.mirpanelPageDispose=communityDispose;
   const child=disposeChild;disposeChild=()=>{window.removeEventListener('mirpanel:orders-loaded',onLoaded);child?.();};return;
  }
  const options={content,api,el,button,link,validate:ownData,initial:sessionLists.entries.get(listPath),initialRequest:pending,onData:cache,onUnauthorized:unauthorized,spinner,ui,readOnly:!!ctx.readOnly};
@@ -116,6 +117,7 @@ export function renderAccountPanel(ctx){
  let checking=false;
  async function checkSession(){if(checking||!verified||document.hidden||stopped||!ctx.session)return;checking=true;try{const p=await ctx.session();if(!stopped&&p&&p.user_id!==verified)recheck(p.user_id);}catch{/* Retain current data on a temporary network error. */}finally{checking=false;}}
  document.addEventListener('visibilitychange',checkSession,{signal:life.signal});
+ window.addEventListener('pageshow',e=>{if(e.persisted)void checkSession();},{signal:life.signal});
  const timer=setInterval(checkSession,30000);life.signal.addEventListener('abort',()=>clearInterval(timer),{once:true});
  void show(accountTab(location.search));return dispose;
 }
