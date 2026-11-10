@@ -948,32 +948,13 @@ const DATA = {
       },
       "flow": "name_code_5",
       "soldOut": false,
-      "active": false,
+      "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
       "bestSeller": false,
       "orderFlow": "form_then_whatsapp",
-      "formFields": [
-        {
-          "key": "name",
-          "type": "text",
-          "label": "Ad",
-          "placeholder": "Adınızı yazın",
-          "description": "",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "code_5",
-          "type": "text",
-          "label": "5 rəqəmli kod / PIN",
-          "placeholder": "5 rəqəmli kod yazın",
-          "description": "",
-          "required": true,
-          "enabled": true
-        }
-      ],
+      "formFields": [],
       "formTitle": "",
       "formDescription": "",
       "confirmationModal": {
