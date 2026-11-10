@@ -1,3 +1,97 @@
+function spotifyScreen(animation,create){
+ const screen=create('div',null,'spotify-demo');screen.dataset.scene=animation;screen.lang='tr';
+ const box=(text,cls)=>create('div',text,cls);
+ const pill=(text,cls='')=>box(text,'spotify-pill '+cls);
+ const mark=(node,delayed=false)=>{
+  node.classList.add('netflix-target');
+  if(delayed)node.classList.add('netflix-target-later');
+  return node;
+ };
+ const type=text=>{
+  const node=create('span',null,'netflix-typing');
+  for(const [i,char] of [...text].entries()){
+   const glyph=create('span',char);glyph.style.setProperty('--delay',(0.12+i*.09)+'s');node.append(glyph);
+  }
+  return node;
+ };
+ const logo=()=>{
+  const mark=create('span',null,'spotify-logo');
+  mark.innerHTML='<svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="16" fill="white"/><path d="M6 12q10-4 20 2M7 17q9-3 17 2M8 22q8-2 14 2" fill="none" stroke="#121212" stroke-width="2.5" stroke-linecap="round"/></svg>';
+  return mark;
+ };
+ const status=box(null,'spotify-status');status.append(create('span','01:40'),create('span','▴ ▰ ▱'));screen.append(status);
+ if(animation==='spotify-open'){
+  const hero=box(null,'spotify-hero');hero.append(logo(),create('strong',"Milyonlarca şarkı. Spotify’da ücretsiz."));
+  const actions=box(null,'spotify-welcome-actions');
+  actions.append(pill('Ücretsiz kaydol','spotify-green'),mark(pill('Oturum aç','spotify-outline')));
+  screen.append(hero,actions);return screen;
+ }
+ if(animation==='spotify-premium'){
+  const drawer=box(null,'spotify-drawer'),profile=box(null,'spotify-profile');
+  const name=box(null,'spotify-profile-name');name.append(create('strong','Örnek Hesap'),create('small','Profili görüntüle'));
+  profile.append(box('Ö','spotify-avatar'),name,create('span','⌃'));
+  const accounts=box(null,'spotify-accounts');
+  for(const [initial,label] of [['M','Müzik hesabı'],['D','Demo hesap'],['+','Hesap ekle']]){
+   const account=box(null,'spotify-account');account.append(box(initial,'spotify-avatar'),create('span',label));accounts.append(account);
+  }
+  const card=box(null,'spotify-profile-card');card.append(profile,accounts);drawer.append(card);
+  const premium=box(null,'spotify-menu-row spotify-premium');
+  premium.append(logo(),create('span','Premium üyeliğin'),mark(create('strong','Bireysel','spotify-badge')));drawer.append(premium);
+  for(const [icon,text] of [['↗','Dinleme istatistikleri · Yeni'],['◷','Son çalınanlar'],['♧','Güncellemelerin'],['⚙','Ayarlar ve gizlilik']]){
+   const row=box(null,'spotify-menu-row');row.append(create('span',icon,'spotify-menu-icon'),create('span',text));drawer.append(row);
+  }
+  const activity=box(null,'spotify-activity');
+  for(const [initial,label] of [['Ö','Aktivite'],['+','Arkadaşlarını davet et']]){
+   const action=box(null,'spotify-account');action.append(box(initial,'spotify-avatar'),create('span',label));activity.append(action);
+  }
+  const messages=box(null,'spotify-messages');
+  messages.append(create('strong','Mesajlar ›'),create('small',"Sevdiğin içerikleri Spotify’da arkadaşlarınla paylaş."));
+  const compose=box(null,'spotify-new-message');compose.append(box('✎','spotify-avatar'),create('span','Yeni mesaj'));
+  drawer.append(activity,messages,compose);
+  screen.append(drawer,box('Örnek hesap olarak oturum açtın','spotify-toast'));return screen;
+ }
+ const header=box(null,'spotify-header');
+ header.append(box('‹','spotify-back'),create('strong',animation==='spotify-code'?'':'Oturum aç'));screen.append(header);
+ const main=box(null,'spotify-main');
+ if(animation==='spotify-code'){
+  main.append(create('h3','E-posta adresine gönderdiğimiz kodu gir'),
+   create('p','h****@example.com adresine gönderildi. İstenmeyen posta klasörünü kontrol etmen gerekebilir. E-posta uygulamasını aç.'));
+  const code=box(null,'spotify-codes');
+  for(let i=0;i<6;i++)code.append(box(null,'spotify-code-box'));
+  main.append(code,pill('Oturum aç','spotify-green spotify-unavailable'),box('⟳  Kodu yeniden gönder','spotify-option'),mark(box('Parola ile oturum aç','spotify-option')));
+  const keys=box(null,'spotify-keyboard spotify-numeric');
+  const numbers=['1','2','3','4','5','6','7','8','9','','0','⌫'];
+  const letters=['','ABC','DEF','GHI','JKL','MNO','PQRS','TUV','WXYZ'];
+  for(const [index,n] of numbers.entries()){
+   const key=box(n,n?'spotify-key':'');
+   if(letters[index])key.append(create('small',letters[index]));
+   keys.append(key);
+  }
+  screen.append(main,keys);return screen;
+ }
+ const email=animation==='spotify-email',field=box(null,'spotify-field');
+ field.append(type(email?'hesab@example.com':'••••••••'));
+ if(!email)field.append(create('span','◉','spotify-eye'));
+ main.append(create('strong',email?'E-posta':'Parola','spotify-label'),field,mark(pill(email?'Devam et':'Oturum aç','spotify-green'),true));
+ screen.append(main);
+ if(email){
+  main.append(box('Sosyal medya hesabınla oturum aç','spotify-social-title'));
+  for(const [icon,text] of [['G','Google'],['f','Facebook'],['●','Apple']]){
+   const social=pill(text+' ile devam et','spotify-outline');social.prepend(create('span',icon,'spotify-social-icon'));main.append(social);
+  }
+  const signup=box(null,'spotify-signup');signup.append(create('span','Bir hesabın yok mu?'),create('strong','Kaydol'));screen.append(signup);
+ }else{
+  const keys=box(null,'spotify-keyboard spotify-symbols');
+  keys.append(box('spotify.com parolası · hesab@example.com','spotify-keyboard-label'));
+  for(const char of '1234567890-/:;()₺&@"')keys.append(box(char,'spotify-key'));
+  const symbols=box(null,'spotify-symbol-row');
+  for(const key of ['#+=','. ',',','?','!','’','⌫'])symbols.append(box(key,'spotify-key'));
+  keys.append(symbols,box('ABC','spotify-key spotify-key-mode'),box('boşluk','spotify-key spotify-space'),box('✓','spotify-key spotify-enter'),box('◎','spotify-globe'));
+  screen.append(keys);
+ }
+ return screen;
+}
+
 function netflixScreen(animation,create){
  const screen=create('div',null,'netflix-demo');screen.dataset.scene=animation;
  const icon=path=>{const n=create('span',null,'netflix-icon');n.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+path+'"/></svg>';return n;};
@@ -359,15 +453,23 @@ function netflixScreen(animation,create){
    if(!tracks.length){body.replaceChildren(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}
    if(!tracks.some(([key])=>key===track))track=tracks[0][0];
    const choices=create('div',null,'browser-guide-choices');
-   for(const [key,label] of tracks){const b=button(key==='phone'&&data.tracks[key].some(s=>s.animation)&&!data.tracks[key].some(s=>s.animation?.startsWith('netflix-'))?'CapCut-a daxil ol':label,()=>{autoplay=false;track=key;step=0;draw();});b.setAttribute('aria-pressed',String(track===key));choices.append(b);}
+   for(const [key,label] of tracks){
+    const animation=data.tracks[key].find(step=>step.animation)?.animation;
+    const title=key!=='phone'||!animation||animation.startsWith('netflix-')?label:
+     animation.startsWith('spotify-')?'Telefonla giriş':'CapCut-a daxil ol';
+    const b=button(title,()=>{autoplay=false;track=key;step=0;draw();});
+    b.setAttribute('aria-pressed',String(track===key));choices.append(b);
+   }
    const steps=data.tracks[track],current=steps[step],layout=create('div',null,'browser-guide-step');
    const desktop=track==='desktop'&&current.animation?.startsWith('netflix-desktop-');
    const compact=desktop||track==='phone'&&steps.some(item=>item.animation);
    if(compact)layout.classList.add('browser-guide-compact');
-   if(current.animation?.startsWith('netflix-'))layout.classList.add('netflix-guide');
-   const visual=create('div',null,'browser-guide-visual');
    const netflix=track==='phone'&&current.animation?.startsWith('netflix-');
-   const handset=netflix||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image?.replace(/^https:\/\/mirpanel\.com(?=\/)/,'')||'');
+   const spotify=track==='phone'&&current.animation?.startsWith('spotify-');
+   const simulated=netflix||spotify;
+   if(simulated||desktop)layout.classList.add('netflix-guide');
+   const visual=create('div',null,'browser-guide-visual');
+   const handset=simulated||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image?.replace(/^https:\/\/mirpanel\.com(?=\/)/,'')||'');
    const steadyLayout=desktop&&body.contains(laptop)?laptop.closest('.browser-guide-step'):handset&&body.contains(phoneShell)?phoneShell.closest('.browser-guide-step'):null;
    if(desktop){
     layout.classList.add('netflix-desktop-guide');
@@ -375,8 +477,9 @@ function netflixScreen(animation,create){
     if(!steadyLayout)visual.append(laptop);
    }else if(handset){
     visual.classList.add('browser-guide-visual-handset');
-    phoneScreen.replaceChildren(netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
-    phoneShell.classList.toggle('netflix-handset',netflix);
+    phoneScreen.replaceChildren(spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
+    phoneShell.classList.toggle('netflix-handset',simulated);
+    phoneShell.classList.toggle('spotify-handset',spotify);
     if(!steadyLayout)visual.append(phoneShell);
    }else
    try{
@@ -437,19 +540,19 @@ function netflixScreen(animation,create){
      draw();body.querySelector('.browser-guide-play')?.focus({preventScroll:true});
     });
     play.className='browser-guide-play';
-    if(netflix)details.append(create('small','Düymələrin dili və görünüşü cihazınıza görə fərqlənə bilər.','netflix-guide-note'));
+    if(simulated)details.append(create('small','Düymələrin dili və görünüşü cihazınıza görə fərqlənə bilər.','netflix-guide-note'));
     if(compact){
      const icon=create('span',autoplay?'Ⅱ':'▶');icon.setAttribute('aria-hidden','true');play.prepend(icon);
      next.before(dots);details.append(play);
     }else details.append(dots,play);
     let touch;
     const swipeStart=e=>{touch=e.touches.length===1?{clientX:e.touches[0].clientX,clientY:e.touches[0].clientY}:null;};
-    if(netflix){
+    if(simulated){
      if(phoneTouchStart)phoneShell.removeEventListener('touchstart',phoneTouchStart);
      phoneTouchStart=swipeStart;phoneShell.addEventListener('touchstart',phoneTouchStart,{passive:true});
     }
     else layout.addEventListener('touchstart',swipeStart,{passive:true});
-    if(netflix){
+    if(simulated){
      if(phoneTouchCancel)phoneShell.removeEventListener('touchcancel',phoneTouchCancel);
      phoneTouchCancel=()=>{touch=null;};phoneShell.addEventListener('touchcancel',phoneTouchCancel);
     }else layout.addEventListener('touchcancel',()=>{touch=null;});
@@ -459,7 +562,7 @@ function netflixScreen(animation,create){
      touch=null;
      if(Math.abs(dx)>48&&Math.abs(dx)>Math.abs(dy)*1.3)go(step+(dx<0?1:-1));
     };
-    if(netflix){
+    if(simulated){
      if(phoneTouchEnd)phoneShell.removeEventListener('touchend',phoneTouchEnd);
      phoneTouchEnd=swipeEnd;phoneShell.addEventListener('touchend',phoneTouchEnd,{passive:true});
     }
@@ -475,7 +578,7 @@ function netflixScreen(animation,create){
    if(autoplay&&step<steps.length-1)advanceTimer=setTimeout(()=>{
     if(!guideDialog.open||!guideDialog.isConnected)return;
     step++;autoplay=step<steps.length-1;draw();
-    },netflix||desktop?5000:4200);
+   },simulated||desktop?5000:4200);
   }
   async function loadGuide(){
    const turn=++guideTurn;failed=false;draw();

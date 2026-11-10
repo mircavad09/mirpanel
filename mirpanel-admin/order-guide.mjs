@@ -5,6 +5,13 @@ export const netflixPhoneSteps=[
  ['netflix-help',"Açılan seçimlərdən ‘Use password instead’ seçin."],
  ['netflix-password',"Sizə təqdim olunan şifrəni yazın və qırmızı ‘Sign In’ düyməsinə toxunun."]
 ].map(([animation,description])=>({animation,description,image:''}));
+const spotifyPhoneSteps=[
+ ['spotify-open','Spotify tətbiqini açın və «Oturum aç» düyməsinə toxunun.'],
+ ['spotify-email','Spotify hesabınızın e-poçt ünvanını yazın və «Devam et» düyməsinə toxunun.'],
+ ['spotify-code','Kod ekranı açılarsa, aşağıdakı «Parola ile oturum aç» seçiminə toxunun.'],
+ ['spotify-password','Spotify şifrənizi yazın və «Oturum aç» düyməsinə toxunun.'],
+ ['spotify-premium','Profil menyusunu açın. «Premium üyeliğin» sətrində yaşıl «Bireysel» nişanını yoxlayın.']
+].map(([animation,description])=>({animation,description,image:''}));
 const guideAnimations=new Set(['ben','sign-in','email','password','pro']);
 const netflixDesktopSteps=[
  ['home','Netflix ana səhifəsində sağ üstdəki “Sign In” düyməsinə klikləyin.'],
@@ -49,6 +56,7 @@ export function orderGuideFor(product,plan,savedName){
   tracks.phone=netflixPhoneSteps.map(step=>({...step}));
   tracks.desktop=netflixDesktopSteps.map(step=>({...step}));
  }
+ if(product?.id==='spotify')tracks.phone=spotifyPhoneSteps.map(step=>({...step}));
  if(phoneOnlyGuide(plan)||phoneOnlyGuide({label:savedName}))delete tracks.desktopQr;
  return {information:own?.information||base?.information||'',tracks};
 }
