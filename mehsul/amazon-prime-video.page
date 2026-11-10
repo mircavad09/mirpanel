@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/amazon-prime-video#product","url":"https://mirpanel.com/mehsul/amazon-prime-video","name":"Amazon Prime Video","description":"Amazon Prime Video hesabını sərfəli qiymətə əldə et. Film və serial izləmək üçün premium hesab Mirpanel-də.","image":["https://mirpanel.com/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093"],"sku":"prime","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/amazon-prime-video","price":"3.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/amazon-prime-video","price":"17.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/amazon-prime-video#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Amazon Prime Video","item":"https://mirpanel.com/mehsul/amazon-prime-video"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/amazon-prime-video#product","url":"https://mirpanel.com/mehsul/amazon-prime-video","name":"Amazon Prime Video","description":"Amazon Prime Video hesabını sərfəli qiymətə əldə et. Film və serial izləmək üçün premium hesab Mirpanel-də.","image":["https://mirpanel.com/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093"],"sku":"prime","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/amazon-prime-video","price":"2.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/amazon-prime-video","price":"9.99","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/amazon-prime-video#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Amazon Prime Video","item":"https://mirpanel.com/mehsul/amazon-prime-video"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="prime" data-product-slug="amazon-prime-video">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -104,7 +104,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 aylıq</span><span class="product-page-plan-prices"><strong>3.99 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 aylıq</span><span class="product-page-plan-prices"><strong>17.99 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ay</span><span class="product-page-plan-prices"><strong>2.99 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 ay</span><span class="product-page-plan-prices"><strong>9.99 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -171,7 +171,7 @@
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>Amazon Prime Video üçün hansı planlar mövcuddur?</summary><p>1 aylıq plan — 3.99 ₼, 6 aylıq plan — 17.99 ₼</p></details>
+    <details><summary>Amazon Prime Video üçün hansı planlar mövcuddur?</summary><p>1 ay — 2.99 ₼, 6 ay — 9.99 ₼</p></details>
     <details><summary>Amazon Prime Video sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>
@@ -206,7 +206,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-73004d5867672353"></script>
+  <script src="/app.js?v=catalog-3ce77ca9ad7e9bc0"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=netflix-ready-rooms-1"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>

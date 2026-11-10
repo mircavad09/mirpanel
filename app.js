@@ -977,12 +977,24 @@ const DATA = {
       },
       "plans": [
         {
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 27,
+          "bestValue": false,
+          "label": "1 ay",
           "months": 1,
-          "price": 3.99
+          "price": 2.99,
+          "pricingId": "6814465e-5ab7-43da-9e2b-56199661f001"
         },
         {
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 160,
+          "bestValue": true,
+          "label": "6 ay",
           "months": 6,
-          "price": 17.99
+          "price": 9.99,
+          "pricingId": "9a89cb3d-75f9-4c20-b626-7f879bc6e2df"
         }
       ],
       "orderConfirmation": {
