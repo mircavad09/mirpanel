@@ -2,6 +2,11 @@
  const soundPath='/10-mirpanel-imzasi.wav',enabledKey='mirpanel.admin.notifications.enabled';
  const waiting=new Map(),observed=new Set();
  let baseline=false,audio,sound,database,playing,reading,timer,registration,panel,status,activate,test,disable,enabled=false;
+ const pushFailure=error=>{
+  if(['NotAllowedError','NotSupportedError','AbortError','InvalidStateError'].includes(error.name)||/Registration|permission|push service/i.test(error.message||''))
+   return 'Brauzer Web Push abunəliyini qəbul etmədi. Saytın bildiriş icazəsini və cihazın fon ayarlarını yoxlayın. Xüsusi səsi açıq admin səhifəsində sınaqdan keçirə bilərsiniz.';
+  return error.message||'Bildiriş aktivləşmədi. Yenidən cəhd edin.';
+ };
  const supportsPush=()=>isSecureContext&&'serviceWorker' in navigator&&'PushManager' in window&&'Notification' in window;
  const message=text=>{if(status)status.textContent=text;};
  function db(){
@@ -56,7 +61,7 @@
   finally{playing=false;}
  }
  async function api(data){
-  const options={credentials:'same-origin',cache:'no-store'};
+  const options={credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(15000)};
   if(data){
    const session=await fetch('/api/session',options);
    if(!session.ok)throw Error('Admin hesabınıza yenidən daxil olun.');
@@ -85,6 +90,7 @@
   activate.disabled=true;
   try{
    const result=await permission;
+   await setEnabled(true);
    const config=await api();
    if(result==='granted'){
     await subscribe(config.publicKey);
@@ -93,7 +99,7 @@
     await setEnabled(true);
     message(result==='denied'?'Səs aktivdir. Sistem bildirişi bloklanıb. Brauzerin sayt icazələrində bildirişləri açın.':'Səs aktivdir. Bu brauzerdə Web Push əlçatan deyil.');
    }
-  }catch(e){message(e.message);}
+  }catch(e){message(pushFailure(e));}
   finally{activate.disabled=false;}
  }
  async function stop(){
@@ -160,7 +166,7 @@
     const r=await worker(),subscription=await r.pushManager.getSubscription();
     if(subscription){await api({subscription:subscription.toJSON()});message('Web Push abunəliyi aktivdir. Səs üçün səhifədə klik edin.');}
     else message('Bildiriş abunəliyi yoxdur. Yenidən aktiv edin.');
-   }catch(e){message(e.message);}
+   }catch(e){message(pushFailure(e));}
   }else message(enabled?'Səs aktivdir. Sistem bildirişləri üçün icazə verin.':'Bildirişləri bu brauzerdə aktivləşdirin.');
  }
  function poll(){void refresh();window.dispatchEvent(new Event('admin-topup-poll'));}
