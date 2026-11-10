@@ -2,6 +2,9 @@ import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import {normalizeAdminPayload,extractAdminState} from '../mirpanel-admin/core.mjs';
 import {checkoutFields,validateDetails} from '../mirpanel-admin/community/public/checkout-fields.js';
+import {createDrafts,termsInfo} from '../mirpanel-admin/cart-drafts.mjs';
+import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
+import {randomBytes,randomUUID} from 'node:crypto';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 
 const live=process.argv.includes('--live'),origin=live?'https://mirpanel.com':'https://mirpanel.test';
@@ -25,6 +28,22 @@ const files=new Map();
 for(const name of ['checkout-fields.js','cart-entry.js','cart-entry.css','entry-styles.js']){
  files.set('/community-assets/'+name,await readAsset('mirpanel-admin/community/public/'+name,origin+'/community-assets/'+name+'?v=customer-form-1'));
 }
+const netflix={id:'netflix',title:'Netflix',formFields:[{key:'name',label:'Ad',required:true},{key:'pin',label:'PIN',digits:4,required:true},{key:'custom_note',label:'Qeyd',type:'text',required:true}],plans:[{price:6}]};
+const netflixPlan=netflix.plans[0],netflixTerms=termsInfo(netflix,netflixPlan,0);
+assert.deepEqual(netflixTerms.fields.map(f=>f.key),['custom_note']);
+const draftId=randomUUID();
+const security=createPaymentSecurity({encryptionKey:randomBytes(32).toString('base64'),tokenSecret:randomBytes(32).toString('base64')});
+let draft;
+const pool={async query(sql,params){
+ if(sql.startsWith('insert into'))draft={id:params[0],product_id:params[3],plan_index:params[4],details_cipher:params[5],terms_version:params[7]};
+ return {rows:sql.startsWith('select to_jsonb')?[]:[draft]};
+}};
+const drafts=createDrafts({catalog:async()=>({products:[netflix]}),security});
+const draftInput={id:draftId,productId:'netflix',planIndex:0,termsVersion:netflixTerms.termsVersion};
+await assert.rejects(drafts.save({pool,user:null},'synthetic',{...draftInput,values:{pin:'0408'}}),{status:400});
+await drafts.save({pool,user:null},'synthetic',{...draftInput,values:{custom_note:'Synthetic note'}});
+assert.deepEqual((await drafts.get({pool,user:null},'synthetic',draftId)).values,{custom_note:'Synthetic note'});
+console.log('PASS Netflix stock fields stay excluded; configured additional fields survive the server draft');
 const pin={key:'code_4',label:'Otaq kodu',placeholder:'Məsələn, 0408',type:'pin',digits:4,enabled:true,required:true};
 for(const [engine,width] of [[chromium,390],[chromium,1440],[webkit,390]]){
  const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
