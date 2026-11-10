@@ -133,7 +133,7 @@ export async function customerSubscriptions(pool,user,catalog,snapshot){
   if(!options.has(x.productId)){
    const availability=p&&stock&&inventoryAvailability(p,inventory.get(p.id));
    options.set(x.productId,availability?(p.plans||[]).flatMap((plan,index)=>{
-    if(!availability.plans[index]?.canOrder)return [];
+    if(!availability.plans[index]?.canOrder&&!(p.id==='netflix'&&!availability.salesDisabled&&availability.plans[index]?.active))return [];
     let price;try{price=parseMoneyCents(plan.price,{allowEmpty:false});}catch{return [];}
     const key=planKey(plan,index),cents=prices.get(JSON.stringify([p.id,key,userPriceSignature(plan)]))??price;
     if(cents<=0)return [];

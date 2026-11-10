@@ -23,7 +23,11 @@ try{
   });
   await page.goto('http://127.0.0.1:'+server.address().port);
   const release=page.getByRole('button',{name:'Boşalt və satışa qaytar',exact:true});await release.first().waitFor();
-  assert.equal(await release.count(),5);assert.equal(await release.nth(1).isDisabled(),true);assert.equal(await release.nth(2).isDisabled(),true);assert.equal(await release.first().isEnabled(),true);
+  assert.equal(await release.count(),3);assert.equal(await release.first().isEnabled(),true);
+  assert.equal(await page.locator('.netflixAccountGroup').getByLabel('Hesabın e-poçtu').count(),0);
+  assert.equal(await page.getByRole('button',{name:'+ Yeni hesab əlavə et',exact:true}).isVisible(),false);
+  assert.equal(await page.getByLabel('Müştəriyə təqdim ediləcək hazır mesaj').isVisible(),true);
+  assert.deepEqual(await page.getByLabel('Otaqların vəziyyəti').locator('option').allTextContents(),['Satışa hazır','Müştəriyə bağlanacaq']);
   await page.getByRole('button',{name:'Şifrəni yenilə',exact:true}).click();
   const form=page.locator('.netflixPasswordForm');await form.getByText('synthetic@example.test · Təsirlənəcək aktiv otaqlar: 2 · Müştərilər: 2').waitFor();
   assert.equal(await form.locator('input').getAttribute('type'),'text');await form.locator('input').fill('Example-new');

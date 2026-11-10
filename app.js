@@ -533,7 +533,7 @@ const DATA = {
       "badge": "Film",
       "imageAlt": "Netflix Şəxsi",
       "desc": "Filmlər, seriallar, yüksək keyfiyyət.",
-      "note": "Netflix Şəxsi otaq: Plan seç → Ad və 4 rəqəmli kod yaz.",
+      "note": "Ödəniş təsdiqləndikdən sonra otaq və PIN Sifarişlərim bölməsində göstərilir.",
       "longDescription": "Netflix Şəxsi hesab öz profilindən istifadə etmək istəyənlər üçün rahat seçimdir. Mirpanel Netflix Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş WhatsApp üzərindən tamamlanır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
       "usageRules": "",
       "deliveryText": "",

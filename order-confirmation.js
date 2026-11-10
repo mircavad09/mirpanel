@@ -1194,12 +1194,13 @@
   }
 
   function activeFields(product) {
+    if (product?.id === "netflix") return [];
     // Only catalog-owned configuration may select a customer-information form.
     if (!DATA.products.some((item) => item.id === product?.id)) return [];
     const fields = Array.isArray(product.formFields) ? product.formFields : [];
     const active = fields.filter((field) => field.enabled !== false);
     if (fields.length) return active;
-    const legacyByProduct = { spotify: "spotify", netflix: "name_code_4", hbomax: "name_code_4", prime: "name_code_5", canva: "email", google_ai: "email" };
+    const legacyByProduct = { spotify: "spotify", hbomax: "name_code_4", prime: "name_code_5", canva: "email", google_ai: "email" };
     return LEGACY_FLOW_FIELDS[legacyByProduct[product.id]] || [];
   }
 

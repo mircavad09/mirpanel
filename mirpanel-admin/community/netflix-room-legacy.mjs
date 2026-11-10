@@ -1,6 +1,7 @@
 import crypto from 'node:crypto';
 import {bakuDate,safeCalendarDate} from '../payment-order-lifecycle.mjs';
 import {readProductMessages} from './ready-stock-product-messages.mjs';
+import {roomSalesInstalled} from './netflix-room-sale.mjs';
 
 const T='mirpanel_community.netflix_room_legacy';
 export const legacyRoomSource='Əvvəlki satış — admin tərəfindən əlavə edilib';
@@ -28,6 +29,8 @@ export async function assignLegacyRoom(pool,security,catalog,input){
   const room=(await c.query(`select r.*,g.account_cipher,g.id group_id from mirpanel_community.netflix_room_units r
    join mirpanel_community.netflix_room_groups g on g.id=r.group_id where r.id=$1 for update of r`,[id])).rows[0];
   if(!room)throw fail(404,'Otaq tapılmadı.');
+  if(action==='confirm'&&await roomSalesInstalled(c)&&(await c.query('select held from mirpanel_community.netflix_room_sale_state where id=$1',[id])).rows[0]?.held)
+   throw fail(409,'Otaq aktiv sifariş üçün rezerv edilib.');
   const account=JSON.parse(security.decryptSecret(room.account_cipher)),pin=JSON.parse(security.decryptSecret(room.pin_cipher));
   if(account.id!==room.group_id||pin.id!==room.id||!/^\d{4}$/.test(pin.pin))throw Error('ROOM_REFERENCE_MISMATCH');
   if(action==='open'){await c.query('commit');return {email:account.email,room:room.room_name,pin:pin.pin};}

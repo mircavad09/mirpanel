@@ -102,7 +102,8 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
   const quote=prepared||preparedQuote(product.id,index,{fresh:true,edit:!!editLine});
   if(!quote.readyAt||reaccept||editLine)loading(body);
   try{const d=await quote.request,q=d.items[0];if(life.signal.aborted)return;
-   if(repeatPlanName!==null&&(q.planName!==repeatPlanName||(repeatPlanKey!==null&&q.sourcePlanKey!==repeatPlanKey)||q.available===0)){
+   const soldOut=q.available===0&&!(renewal&&product.id==='netflix'&&!q.salesDisabled);
+   if(repeatPlanName!==null&&(q.planName!==repeatPlanName||(repeatPlanKey!==null&&q.sourcePlanKey!==repeatPlanKey)||soldOut)){
     error.textContent=q.available===0?'Bu paket hazırda stokda yoxdur.':'Paket dəyişib. Sifarişlərim səhifəsini yenidən açın və təkrar yoxlayın.';
     body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));return;
    }

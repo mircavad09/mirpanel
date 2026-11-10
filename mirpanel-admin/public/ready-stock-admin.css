@@ -2,6 +2,7 @@
 .readyStockCard{min-width:0;background:#16191b;border:1px solid #34393d;border-radius:14px;padding:16px}
 .readyStockCard h3{font-size:17px;margin:0 0 5px}.readyStockCard p{color:#bcc1c7;margin:0 0 12px}
 .readyStockCard form,.readyStockCard [data-messages]{display:grid;gap:10px}
+.readyStockCard [hidden]{display:none!important}
 .readyStockCard label:not(.readyStockCheck){display:grid;gap:4px;min-width:0}
 .readyStockCard :is(select,textarea,input[type=number],input[type=email],input[type=password]){width:100%;min-width:0;box-sizing:border-box;font:inherit}
 .readyStockCard .readyStockCheck{display:flex;align-items:center;gap:7px}.readyStockCard input[type=checkbox]{width:18px;height:18px;accent-color:#ffd400}

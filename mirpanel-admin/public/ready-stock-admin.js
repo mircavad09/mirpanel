@@ -59,6 +59,7 @@ export function mountReadyStock(host,api){
     <label>Netflix şifrəsi<input name="password" type="text" maxlength="512" autocomplete="off" spellcheck="false" autocapitalize="off" required></label>
    </div>
    <label>Bitmə tarixi<input name="endsOn" type="text" placeholder="məs. 10 dekabr" maxlength="24" required aria-describedby="netflixRoomDatePreview"></label>
+   <label>Otaqların vəziyyəti<select name="saleMode"><option value="ready">Satışa hazır</option><option value="bind">Müştəriyə bağlanacaq</option></select></label>
    <p id="netflixRoomDatePreview" aria-live="polite"></p>
    <div data-rooms></div>
    <div class="readyStockActions"><button type="button" class="btn" data-room-add>+ Otaq əlavə et</button><button class="btn primary">Otaqları saxla</button></div>
@@ -198,6 +199,19 @@ export function mountReadyStock(host,api){
    const group=document.createElement('li'),heading=document.createElement('h4'),rotate=document.createElement('button'),items=document.createElement('ul');
    group.className='netflixAccountGroup';heading.textContent=(groupRows[0].accountEmail||'Netflix hesabı')+' · '+groupId.slice(0,8);
    rotate.type='button';rotate.className='btn';rotate.textContent='Şifrəni yenilə';group.append(heading,rotate,items);
+   const reviewCount=groupRows.filter(row=>row.canMarkReady).length;
+   if(reviewCount){
+    const ready=document.createElement('button');ready.type='button';ready.className='btn';ready.textContent='Satışa hazır et ('+reviewCount+')';
+    ready.onclick=async()=>{
+     if(!confirm('Bu hesabda yoxlama gözləyən '+reviewCount+' otağın Netflix-də boş olduğunu təsdiqləyirsiniz?'))return;
+     ready.disabled=true;
+     try{
+      const {released}=await api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomsReady:{groupId}})});
+      await refresh();roomStatus.textContent=released?released+' otaq satışa hazırdır.':'Satışa açıla bilən otaq qalmayıb.';
+     }catch(e){roomStatus.textContent=e.message;ready.disabled=false;}
+    };
+    group.insertBefore(ready,items);
+   }
    rotate.onclick=async()=>{
     rotate.disabled=true;roomStatus.textContent='';
     try{
@@ -231,7 +245,7 @@ export function mountReadyStock(host,api){
     bind.type='button';bind.className='btn';bind.textContent='Müştəriyə bağla';
     bind.onclick=()=>void openBinding(row,bind);node.append(' ',bind);
    }
-   if(!row.legacyAssignmentId&&(row.deliveryId||row.status==='review')){
+   if(!row.legacyAssignmentId&&row.deliveryId&&row.status==='expired'){
     const button=document.createElement('button');
     button.type='button';button.className='btn';button.textContent='Boşalt və satışa qaytar';button.disabled=!!row.active;button.title=row.active?'Ödənilmiş müddət davam edir.':'';
     button.onclick=async()=>{
@@ -268,15 +282,15 @@ export function mountReadyStock(host,api){
   const {email,password}=roomForm.elements,date=previewDate();
   if(!date||date.days===0){roomStatus.textContent='Bitmə tarixi Bakı vaxtı ilə bu gündən sonra olmalıdır.';return;}
   roomRequest??=crypto.randomUUID();
-  const payload={requestId:roomRequest,email:email.value,password:password.value,endsOn:date.iso,
+  const payload={requestId:roomRequest,email:email.value,password:password.value,endsOn:date.iso,saleMode:roomForm.elements.saleMode.value,
    rooms:[...roomRows.children].map(row=>({name:row.querySelector('[name=room]').value,pin:row.querySelector('[name=pin]').value}))};
-  const fields=[...roomForm.querySelectorAll('input,button')];roomBusy=true;fields.forEach(x=>x.disabled=true);
+  const fields=[...roomForm.querySelectorAll('input,select,button')];roomBusy=true;fields.forEach(x=>x.disabled=true);
   roomStatus.textContent='Otaqlar saxlanılır…';
   try{
    const result=await api(endpoint,{method:'POST',body:JSON.stringify({netflixRooms:payload})});
    roomRequest=null;roomForm.reset();previewDate();roomRows.replaceChildren();addRoom();
    roomStatus.textContent=result.added+' otaq saxlanıldı.';
-   showRooms((await api(endpoint)).netflixRooms);
+   await refresh();
   }catch(e){roomStatus.textContent=e.message||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.';}
   finally{roomBusy=false;fields.forEach(x=>x.disabled=false);}
  };
@@ -338,6 +352,8 @@ export function mountReadyStock(host,api){
  function renderSwitch(){const badge=q('[data-auto]');badge.textContent=auto.checked?'Aktiv':'Bağlı';badge.dataset.active=String(auto.checked);}
  function renderPlan(){
   const {p,item}=selected();
+  const netflix=p?.id==='netflix';
+  for(const node of [messageList,add,submit,editSales,auto.closest('label')])node.hidden=netflix;
   activeProduct=p?.id;template.value=messageDrafts.get(activeProduct)??p?.message??'';
   q('[data-sales]').textContent=!item?'—':item.sales===null?'Limitsiz':item.sales===0?'Stokda yoxdur':item.sales+' satış vahidi';q('[data-ready]').textContent=item?.ready??'—';
   q('[data-scope]').textContent=p?.scope==='plan'?'Satış stoku bu paketə aiddir.':'Satış stoku məhsul üzrə ortaqdır.';

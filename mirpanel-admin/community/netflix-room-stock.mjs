@@ -1,4 +1,5 @@
 import {roomStates,roomStateLabels} from './netflix-room-state.mjs';
+import {roomSalesInstalled} from './netflix-room-sale.mjs';
 import crypto from 'node:crypto';
 import {bakuDate} from '../payment-order-lifecycle.mjs';
 const G='mirpanel_community.netflix_room_groups', U='mirpanel_community.netflix_room_units';
@@ -50,13 +51,14 @@ export async function editNetflixRoom(pool,security,input,actor='admin'){
  }catch(e){if(e.code==='23505')throw fail(409,'Bu hesabda eyni adlı otaq artıq stokdadır.');throw e;}
 }
 export function parseRoomBatch(b){
- const {requestId,email,password,startsOn,endsOn,rooms}=b||{};
+ const {requestId,email,password,startsOn,endsOn,rooms,saleMode}=b||{};
+ if(saleMode!==undefined&&!['ready','bind'].includes(saleMode))throw fail(400,'Otağın satış vəziyyətini seçin.');
  if(typeof requestId!=='string'||!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(requestId))throw fail(400,'Saxlama sorğusu düzgün deyil.');
  if(typeof email!=='string'||email.length>254||!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())||typeof password!=='string'||!password.trim()||password.length>512||/[\r\n\0]/.test(password))throw fail(400,'Etibarlı hesab e-poçtu və şifrəsi yazın.');
  if(!isoDate(endsOn)||startsOn!==undefined&&(!isoDate(startsOn)||startsOn>=endsOn))throw fail(400,'Bitmə tarixi düzgün deyil.');
  if(!Array.isArray(rooms)||rooms.length<1||rooms.length>20)throw fail(400,'1–20 otaq əlavə edin.');
  const seen=new Set();
- return {requestId,email:email.trim(),password,startsOn,endsOn,rooms:rooms.map(room=>{
+ return {requestId,email:email.trim(),password,startsOn,endsOn,...(saleMode?{saleMode}:{}),rooms:rooms.map(room=>{
   const {name,key,pin}=parseRoom(room);
   if(seen.has(key))throw fail(400,'Eyni otaq adı təkrarlana bilməz.');
   seen.add(key);return {name,key,pin};
@@ -67,7 +69,8 @@ export async function netflixRooms(pool,security){
   const rows=await roomStates(pool);
   return {rooms:rows.map(r=>({id:r.id,groupId:r.group_id,...(security?{accountEmail:JSON.parse(security.decryptSecret(r.account_cipher)).email}:{}),name:r.room_name,endsOn:r.stock_end??r.group_end,
    startsOn:r.period?.startsOn??null,deliveryId:r.delivery_id,legacyAssignmentId:r.legacy_assignment_id,status:r.state,statusLabel:roomStateLabels[r.state],
-   paidUntil:r.legacy_paid_until??r.period?.endsBefore??null,active:r.active}))};
+   paidUntil:r.legacy_paid_until??r.period?.endsBefore??null,active:r.active,sellable:r.sellable===true,
+   canMarkReady:r.state==='review'&&r.unexpired===true&&!r.held&&!r.synthetic&&!r.assigned}))};
  }
  const {rows}=await pool.query(`select r.id,r.group_id as "groupId",r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",to_jsonb(r)->>'legacy_assignment_id' as "legacyAssignmentId",
   coalesce(to_jsonb(r)->>'stock_ends_on',g.ends_on::text) as "endsOn",
@@ -87,6 +90,8 @@ export async function restockNetflixRoom(pool,input){
   const [room]=await roomStates(c,{roomId:id,lock:true});
   if(!room)throw fail(404,'Otaq tapılmadı.');
   if(room.legacy_assignment_id)throw fail(409,'Əvvəlki satışa bağlanmış otaq bu əməliyyatla satışa qaytarıla bilməz.');
+  if(await roomSalesInstalled(c)&&(!room.delivery_id||room.state!=='expired'||room.held))
+   throw fail(409,'Yalnız əvvəl ayrılmış və müddəti bitmiş otağı boşaldıb satışa qaytarmaq olar.');
   if(room.active)throw fail(409,'Ödənilmiş müddəti davam edən otağı satışa qaytarmaq olmaz.');
   if(room.delivery_id&&room.state==='review')throw fail(409,'Otağın sifariş əlaqəsi yoxlanmalıdır. Satışa qaytarılmadı.');
   if(room.delivery_id!==deliveryId)throw fail(409,'Otağın vəziyyəti dəyişib. Siyahını yeniləyin.');
@@ -126,6 +131,7 @@ export async function saveNetflixRooms(pool,security,secret,actor,input){
    const id=crypto.randomUUID();
    await c.query(`insert into ${U}(id,group_id,account_key,room_name,room_key,pin_cipher) values($1,$2,$3,$4,$5,$6)`,
     [id,b.requestId,accountKey,room.name,room.key,security.encryptSecret(JSON.stringify({id,pin:room.pin}))]);
+   if(b.saleMode)await c.query(`update ${U} set availability=$2 where id=$1`,[id,b.saleMode==='ready'&&!actor.startsWith('synthetic:')?'available':'review']);
   }
   await c.query('commit');return {added:b.rooms.length,replayed:!inserted.rowCount};
  }catch(e){await c.query('rollback');if(e.code==='23505')throw fail(409,'Bu hesabda eyni adlı otaq artıq stokdadır.');throw e;}finally{c.release();}
@@ -148,6 +154,8 @@ export async function bindNetflixRoom(c,security,secret,deliveryId,{email,passwo
  if(pin.id!==room.id||account.id!==room.group_id||pin.pin!==roomCode||(password&&password!==account.password))
   throw fail(409,'Təhvil məlumatları stokdakı otağa uyğun gəlmir.');
  if(room.availability==='review')throw fail(409,'Otağın stok vəziyyəti yoxlanmalıdır.');
+ if(await roomSalesInstalled(c)&&(await c.query('select held from mirpanel_community.netflix_room_sale_state where id=$1',[room.id])).rows[0]?.held)
+  throw fail(409,'Otaq aktiv sifariş üçün rezerv edilib.');
  if(room.delivery_id||room.legacy_assignment_id)throw fail(409,'Bu stok otağı artıq təhvil verilib.');
  if(room.expired)throw fail(409,'Bu stok otağının müddəti bitib.');
  await c.query(`update ${U} set delivery_id=$2 where id=$1`,[room.id,deliveryId]);

@@ -2,11 +2,14 @@ import {createHash} from 'node:crypto';
 import {roomSheetClient} from './netflix-room-sheet-client.mjs';
 import {roomPaymentStatus,shortRoomDate} from './netflix-room-paid-period.mjs';
 import {legacyInstalled} from './netflix-room-legacy.mjs';
+import {roomSalesInstalled} from './netflix-room-sale.mjs';
 
 const sync='mirpanel_community.netflix_room_sheet_sync';
 export function roomSheetState(room){
  if(room.legacy_paid_until)return [room.member_number??'',room.legacy_paid_until,
   (room.today>room.legacy_paid_until?'Yenilənməyib':'✓ Ödəniş edib')+'\nÖdənilib: '+shortRoomDate(room.legacy_paid_until)+'adək'];
+ if(room.sale_managed&&!room.delivery_id)return ['',room.stock_end??room.group_end,
+  room.synthetic?'Sınaq — satışdan kənar':room.held?'Rezerv edilib':!room.unexpired?'Yenilənməyib':room.sellable?'Satılmayıb':'Yoxlama tələb olunur'];
  return [room.delivery_id?room.member_number??'':'',room.stock_end??room.group_end,roomPaymentStatus(room)];
 }
 
@@ -17,9 +20,11 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
   const locked=(await c.query('select pg_try_advisory_xact_lock(926110213) locked')).rows[0].locked;
   if(!locked){await c.query('rollback');return cursor;}
   const legacy=await legacyInstalled(c);
+  const managed=await roomSalesInstalled(c);
   const {rows}=await c.query(`select r.*,r.stock_ends_on::text stock_end,g.account_cipher,g.ends_on::text group_end,
     l.user_id,(o.status not in ('cancelled','rejected','expired') and (o.payment_confirmed or o.status in ('approved','completed'))) purchase_paid,
     ${legacy?'a.paid_until::text legacy_paid_until,':''}
+    ${managed?'true sale_managed,rs.synthetic,rs.held,rs.unexpired,(sv.id is not null) sellable,':''}
     n.member_number::text,d.line_index,d.delivered_at,o.checkout_snapshot,o.duration_months,o.plan_name,
     o.quantity order_quantity,o.service_expires_on::text,public.payment_baku_date()::text today,
     case when s.target=$1 then s.sent end sent,
@@ -34,6 +39,7 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
    left join mirpanel_community.community_order_owners l on l.order_id=o.id
    ${legacy?'left join mirpanel_community.netflix_room_legacy a on a.id=r.legacy_assignment_id':''}
    left join mirpanel_community.community_member_numbers n on n.user_id=${legacy?'coalesce(a.user_id,l.user_id)':'l.user_id'}
+   ${managed?'join mirpanel_community.netflix_room_sale_state rs on rs.id=r.id left join mirpanel_community.netflix_room_sellable sv on sv.id=r.id':''}
    left join lateral (
     select jsonb_agg(jsonb_build_object('base',v.base_expires_on,'orderId',v.order_id,
       'paidOn',(coalesce(ro.completed_at,ro.created_at) at time zone 'Asia/Baku')::date,

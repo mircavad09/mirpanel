@@ -40,20 +40,20 @@ try{await pool.query("select wallet_credit('owner','a',2000,'Synthetic browser c
   for(const id of ['capcut','chatgpt','hbomax','netflix']){
    await p.evaluate(id=>openProductPage(id),id);await p.locator('#pp-order-btn').click();await d.getByRole('checkbox').check();
    await d.getByRole('button',{name:'Təsdiqləyirəm',exact:true}).evaluate(b=>{b.click();b.click();});
-   if(id==='netflix'){await d.getByLabel('Ad',{exact:true}).fill('Sintetik');await d.getByLabel('4 rəqəmli kod',{exact:true}).fill('0012');await d.getByRole('button',{name:'Davam et',exact:true}).evaluate(b=>{b.click();b.click();});}
+   if(id==='netflix')eq(await d.locator('input:not([type=checkbox])').count(),0);
    if(id==='hbomax'){await d.getByLabel('HBO Max profil adı',{exact:true}).fill('Sintetik HBO');await d.getByLabel('Profil kodu / PIN',{exact:true}).fill('0012');await d.getByRole('button',{name:'Davam et',exact:true}).evaluate(b=>{b.click();b.click();});}
    await p.locator('.mir-cart-drawer[open]').waitFor();await p.locator('.mir-cart-drawer').getByRole('button',{name:'Səbəti bağla'}).click();
   }
   eq(await p.evaluate(()=>MirpanelCart.read().length),4);
-  eq(await p.evaluate(async()=>{const cart=MirpanelCart.read();return Promise.all(cart.filter(x=>['hbomax','netflix'].includes(x.productId)).map(async x=>{const r=await fetch('/api/payments/shop/draft?id='+x.draftId);const d=await r.json();return d.values?.pin||d.values?.code_4;}));}),['0012','0012']);
+  eq(await p.evaluate(async()=>{const cart=MirpanelCart.read();return Promise.all(cart.filter(x=>['hbomax','netflix'].includes(x.productId)).map(async x=>{const r=await fetch('/api/payments/shop/draft?id='+x.draftId);const d=await r.json();return [x.productId,d.values];}));}),[['hbomax',{name:'Sintetik HBO',code_4:'0012'}],['netflix',{}]]);
   eq(await p.evaluate(()=>JSON.stringify({...localStorage,...sessionStorage}).includes('0012')),false);
   await p.reload();await p.locator('#pp-order-btn').click();await d.getByRole('checkbox').check();await d.getByRole('button',{name:'Təsdiqləyirəm',exact:true}).click();
-  await d.getByLabel('Ad',{exact:true}).fill('Yenilənmiş sintetik');await d.getByLabel('4 rəqəmli kod',{exact:true}).fill('0007');await d.getByRole('button',{name:'Davam et',exact:true}).click();
-  await p.locator('.mir-cart-drawer[open]').waitFor();eq(await p.evaluate(()=>MirpanelCart.read().length),5);
-  await p.locator('.mir-cart-drawer').getByRole('button',{name:'Ödənişə keç'}).click();await p.getByRole('button',{name:'Sifarişi tamamla',exact:true}).click();
-  await p.getByRole('heading',{name:'Bank kartını seçin'}).waitFor();eq(await p.locator('.wallet-bank-choice').count(),4);
-  await p.getByRole('button',{name:/Synthetic ABB/}).click();eq(await p.getByRole('button',{name:/Bu kartla davam et/}).isEnabled(),true);
-  eq(errors,[]);results.push({width,legacyUpgraded:true,terms:true,fields:true,refresh:true,bankSelection:true});await ctx.close();
+  await p.locator('.mir-cart-drawer[open]').waitFor();eq(await p.evaluate(()=>MirpanelCart.read().find(x=>x.productId==='netflix').quantity),2);
+  await p.locator('.mir-cart-drawer').getByRole('button',{name:'Ödənişə keç'}).click();
+  await p.getByRole('button',{name:/^Sifarişi tamamla ·/}).waitFor();
+  eq(await p.getByText('Sifariş məlumatları natamamdır.',{exact:false}).count(),0);
+  eq(await p.locator('input[name="paymentMode"][value="card"]').isDisabled(),true);
+  eq(errors,[]);results.push({width,legacyUpgraded:true,terms:true,netflixWarningOnly:true,hboFields:true,refresh:true,checkoutQuote:true});await ctx.close();
  }
  console.log(JSON.stringify({checks,engine,beforeErrorReproduced:true,results,productionWrites:0,scope:'isolated HTTP/PostgreSQL; viewport emulation, not physical devices'}));
 }finally{await browser?.close();if(server)await new Promise(r=>server.close(r));await f.close();}
