@@ -41,8 +41,8 @@ function identity(t) {
     img.src = "/api/community/media/" + t.avatar_path;
     avatar.append(img);
   }
-  const text = el("span");
-  text.append(el("strong", name), el("small", member));
+  const text = el("span", null, "topupIdentityText");
+  text.append(el("strong", name), " ", el("small", "· " + member));
   link.append(avatar, text);
   return link;
 }
@@ -166,21 +166,26 @@ export async function mountShop({root, call, alive}) {
     const summary = el("div", null, "topupSummary");
     const status = el("span", labels[t.status] || "Naməlum status", "topupStatus");
     status.dataset.status = t.status;
-    summary.append(el("strong", `Müştərinin daxil etdiyi məbləğ: ${money(t.requested_cents)}`), status);
+    const requested = el("strong", "Müştərinin daxil etdiyi məbləğ: ");
+    requested.append(el("span", money(t.requested_cents)));
+    summary.append(requested, status);
     top.append(identity(t), summary);
 
     const details = el("div", null, "topupDetails");
     const bank=typeof t.card_bank==="string"?t.card_bank.trim():"";
-    details.append(el("span", bank&&/^\d{4}$/.test(t.card_last4)?`${bank} •••• ${t.card_last4}`:"Kart məlumatı qeydə alınmayıb"));
+    details.append(el("strong", bank&&/^\d{4}$/.test(t.card_last4)?`${bank} •••• ${t.card_last4}`:"Kart məlumatı qeydə alınmayıb", "topupBank"));
     details.append(time("Göndərilib", t.submitted_at));
-    if (t.status === "approved") {
-      if (t.approved_cents != null) details.append(el("strong", `Təsdiqlənən məbləğ: ${money(t.approved_cents)}`, "topupApproved"));
-      details.append(time("Təsdiqlənib", t.decided_at));
-    }
-    if (t.receipt_available) details.append(button("Çekə bax", () => receipt(t)));
+    if (t.status === "approved" && t.decided_at) details.append(time("Təsdiqlənib", t.decided_at));
+    if (t.status === "rejected") details.append(time("Rədd edilib", t.decided_at));
     card.append(top, details);
+
+    const receiptRow = el("div", null, "topupReceiptRow");
+    if (t.receipt_available) receiptRow.append(button("Çekə bax", () => receipt(t)));
+    if (t.status === "approved" && t.approved_cents != null) {
+      receiptRow.append(el("strong", `Təsdiqlənən məbləğ: ${money(t.approved_cents)}`, "topupApproved"));
+    }
+    if (receiptRow.childElementCount) card.append(receiptRow);
     if(t.status==="rejected"){
-      details.append(time("Rədd edilib",t.decided_at));
       if(t.rejection_reason){
         const note=el("p","Səbəb — "+t.rejection_reason);
         note.style.cssText="white-space:pre-wrap;overflow-wrap:anywhere;margin:6px 0 0";

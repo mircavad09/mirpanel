@@ -62,6 +62,9 @@ try{
  eq((await ctx.request.post(base+'/api/admin/community/shop',{data:{action:'receipt',id:t.id}})).status(),403);
  await f.pool.query("update mirpanel_community.wallet_topups set submitted_at='2026-11-01T10:15:00Z' where id=$1",[t.id]);
  const second=await add('b');await p.clock.fastForward(30000);await badge(2);
+ const longName='Reader B · Çox uzun sintetik müştəri adı və soyadı';
+ await f.pool.query("update \"user\" set name=$1 where id='b'",[longName]);
+ await f.pool.query("update wallet_topups set card_bank='Kapital Bank',card_last4='6446' where id=$1",[second.id]);
  await p.route('**/api/admin/community/shop?only=topup-count',route=>route.fulfill({status:503,json:{error:'isolated failure'}}));
  const failure=p.waitForResponse(r=>r.url().includes('only=topup-count')&&r.status()===503);
  await p.clock.fastForward(30000);await failure;await badge(2);
@@ -76,7 +79,16 @@ try{
   eq(await p.getByRole('button',{name:'Rədd et',exact:true}).count(),2);
   eq(await card.locator('input').inputValue(),'6.00');
   eq(await card.getByText('ABB •••• 1234',{exact:true}).count(),1);
-  eq(await card.getByText('#1022',{exact:true}).count(),1);
+  eq(await card.getByText('· #1022',{exact:true}).count(),1);
+  const top=await card.locator('.topupCardTop').evaluate(node=>{
+   const [name,id,amount,status]=[...node.querySelectorAll('.topupIdentityText strong,.topupIdentityText small,.topupSummary strong,.topupStatus')].map(el=>el.getBoundingClientRect());
+   return {idOnLine:Math.abs(name.top-id.top)<5&&id.left>=name.right,amountAligned:Math.abs(name.top-amount.top)<5,statusBeside:status.left>=amount.right};
+  });
+  eq(top.idOnLine,true);eq(top.statusBeside,true);eq(top.amountAligned,width===1440);
+  const pending=p.locator('.topupCard').filter({hasText:longName});
+  eq(await pending.getByText('Kapital Bank •••• 6446',{exact:true}).count(),1);
+  eq(await pending.locator('.topupApproved').count(),0);
+  eq(await pending.locator('.topupDetails time').count(),1);
   eq(await card.locator('.topupAvatar img').getAttribute('src'),'/api/community/media/'+picture+'.webp');
   await card.locator('.topupAvatar img').evaluate(img=>img.decode());
   eq((await card.locator('time').innerText()).includes('14:15'),true);
@@ -119,6 +131,20 @@ try{
  eq(await card.getByText('Müştərinin daxil etdiyi məbləğ: 6,00 ₼',{exact:true}).count(),1);
  eq(await card.getByText('Təsdiqlənən məbləğ: 7,00 ₼',{exact:true}).count(),1);
  eq(await card.locator('time').count(),2);
+ const output=process.env.MIRPANEL_TOPUP_SCREENSHOTS;
+ if(output)fs.mkdirSync(output,{recursive:true});
+ for(const width of [320,390,1440]){
+  await p.setViewportSize({width,height:900});
+  const layout=await card.evaluate(node=>{
+   const [sent,confirmed]=node.querySelectorAll('.topupDetails time');
+   const [receipt,approved]=[...node.querySelectorAll('.topupReceiptRow .btn,.topupApproved')].map(el=>el.getBoundingClientRect());
+   const green=getComputedStyle(node.querySelector('.topupApproved')).color;
+   return {datesStacked:confirmed.getBoundingClientRect().top>sent.getBoundingClientRect().bottom,approvedBeside:approved.left>=receipt.right&&Math.abs(approved.top+approved.height/2-receipt.top-receipt.height/2)<2,green,overflow:node.scrollWidth>node.clientWidth};
+  });
+  eq(layout,{datesStacked:true,approvedBeside:true,green:'rgb(157, 231, 185)',overflow:false});
+  if(output&&width!==320)await p.locator('.topupList').screenshot({path:output+'/balans-muracietleri-'+width+'.png'});
+ }
+ await p.setViewportSize({width:1440,height:900});
  eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'700');
  const repeat=await ctx.request.post(base+'/api/admin/community/shop',{headers:{'X-CSRF-Token':s.csrfToken,Origin:base},data:{action:'approve',id:t.id,amount:'7'}});eq(repeat.status(),200);
  eq((await f.pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,'700');
@@ -134,7 +160,7 @@ try{
  eq((await f.pool.query("select count(*)::int n from community_audit where action='topup.approved'")).rows[0].n,1);
  await f.pool.query("update mirpanel_community.wallet_topups set decided_at=null where id=$1",[t.id]);
  await p.getByRole('button',{name:'Yenilə',exact:true}).last().click();
- await card.getByText('Təsdiqlənib: vaxt qeyd edilməyib',{exact:true}).waitFor();
+ await card.locator('.topupDetails').getByText(/Təsdiqlənib/).waitFor({state:'detached'});
  eq(await card.locator('time').count(),1);
  eq(errors,[]);console.log(JSON.stringify({checks,realAdminServer:true,realPostgreSQL:true,badge:[0,1,2,1,0],failurePreserved:2,duplicateCredit:false,employeeDenied:true,csrfRequired:true,productionWrites:0}));
 }finally{await browser?.close();if(child&&child.exitCode===null){child.kill();await once(child,'exit');}if(upstream)await new Promise(r=>upstream.close(r));await f.close();}

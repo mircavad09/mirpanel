@@ -149,32 +149,42 @@ button.dashboardCard:hover { border-color: #ffd400; }
 .changeStatus[data-status="failed"] { color: #ff8e98; }
 .navBtn[data-view="communityShop"][data-pending-count]::after { content:attr(data-pending-count); float:right; margin-inline-start:6px; padding:1px 6px; border-radius:999px; background:#ffd400; color:#111; font-size:12px; font-weight:700; }
 #communityShopView { max-width: 920px; }
-#communityShopView .topupHeader, #communityShopView .topupCardTop { display:flex; align-items:center; justify-content:space-between; gap:10px 16px; flex-wrap:wrap; }
+#communityShopView .topupHeader { display:flex; align-items:center; justify-content:space-between; gap:10px 16px; flex-wrap:wrap; }
+#communityShopView .topupCardTop { display:grid; grid-template-columns:minmax(0,1fr) fit-content(60%); align-items:start; gap:8px 16px; }
 #communityShopView .topupHeader h1 { margin:0; font-size:23px; }
-#communityShopView .topupList { display:grid; gap:8px; }
+#communityShopView .topupList { display:grid; gap:8px; container-type:inline-size; }
 #communityShopView .topupListTitle { margin:0; font-size:15px; color:#bfc4c8; }
 #communityShopView .topupCard { min-width:0; padding:12px 14px; border:1px solid #383c40; border-radius:12px; background:#191b1e; display:grid; gap:8px; }
-#communityShopView .topupIdentity { display:flex; align-items:center; gap:10px; color:inherit; text-decoration:none; min-width:0; overflow-wrap:anywhere; }
-#communityShopView a.topupIdentity:hover strong { color:#ffdf54; text-decoration:underline; }
-#communityShopView .topupIdentity small { display:block; margin-top:2px; color:#bfc4c8; }
+#communityShopView .topupIdentity { display:flex; align-items:flex-start; gap:10px; color:inherit; text-decoration:none; min-width:0; }
+#communityShopView .topupIdentityText { min-width:0; padding-top:3px; overflow-wrap:anywhere; }
+#communityShopView a.topupIdentity:is(:hover,:focus-visible) strong { color:#ffdf54; text-decoration:underline; }
+#communityShopView .topupIdentity small { color:#bfc4c8; white-space:nowrap; }
 #communityShopView .topupAvatar { width:38px; height:38px; border-radius:50%; background:#35301a; color:#ffe37e; display:grid; place-items:center; position:relative; overflow:hidden; flex:none; font-weight:650; font-size:13px; }
 #communityShopView .topupAvatar img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; }
-#communityShopView .topupSummary, #communityShopView .topupDetails, #communityShopView .topupActions { display:flex; align-items:center; gap:6px 10px; flex-wrap:wrap; }
-#communityShopView .topupDetails { font-size:13px; color:#c6cacf; }
+#communityShopView .topupActions { display:flex; align-items:center; gap:6px 10px; flex-wrap:wrap; }
+#communityShopView .topupSummary { display:grid; grid-template-columns:minmax(0,auto) auto; align-items:baseline; gap:10px; padding-top:3px; justify-content:end; }
+#communityShopView .topupSummary > strong { min-width:0; overflow-wrap:anywhere; }
+#communityShopView .topupSummary > strong span, #communityShopView .topupSummary .topupStatus { white-space:nowrap; }
+#communityShopView .topupDetails { display:grid; gap:4px; font-size:13px; color:#c6cacf; }
+#communityShopView .topupBank { color:#eef0f2; font-size:16px; overflow-wrap:anywhere; }
 #communityShopView .topupStatus { display:inline-block; border-radius:999px; padding:3px 9px; font-size:12px; font-weight:650; }
 #communityShopView [data-status="reviewing"].topupStatus { color:#ffe37e; background:#493a14; }
 #communityShopView [data-status="approved"].topupStatus { color:#9de7b9; background:#1b422f; }
 #communityShopView [data-status="rejected"].topupStatus { color:#ffadb3; background:#502830; }
-#communityShopView .topupApproved { color:#9de7b9; }
+#communityShopView .topupReceiptRow { display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; justify-items:start; gap:10px; }
+#communityShopView .topupApproved { color:#9de7b9; overflow-wrap:anywhere; }
 #communityShopView .topupActions { border-top:1px solid #383c40; padding-top:8px; align-items:end; justify-content:flex-end; }
 #communityShopView .topupActions label { display:grid; gap:4px; font-size:12px; color:#d3d7da; max-width:100%; }
 #communityShopView .topupActions input { width:min(145px, 100%); min-height:38px; }
 #communityShopView .topupCard .btn { min-height:36px; padding:7px 11px; }
 #communityShopView .topupError { margin:0; color:#ffadb3; }
 #communityShopView .topupError:empty { display:none; }
+@media (max-width:650px) {
+  #communityShopView .topupCardTop { grid-template-columns:minmax(0,1fr); }
+  #communityShopView .topupSummary { justify-content:start; padding-top:0; }
+}
 @media (max-width:550px) {
   #communityShopView .topupCard { padding:10px; }
-  #communityShopView .topupCardTop { align-items:flex-start; flex-direction:column; }
   #communityShopView .topupActions { justify-content:flex-start; }
   #communityShopView .topupCard .btn, #communityShopView .topupActions input { min-height:44px; }
   #communityShopView .topupActions label { flex-basis:100%; }
