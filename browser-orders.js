@@ -65,6 +65,77 @@ function renderDeliveryMessage(pre,text){
  link.setAttribute('aria-haspopup','dialog');
  pre.replaceChildren(text.slice(0,index),link,text.slice(index+caption.length));
 }
+function chatgptScreen(animation,create){
+ const scene=animation.slice('chatgpt-'.length);
+ const screen=create('div',null,'chatgpt-demo');
+ screen.dataset.scene=scene;
+ screen.lang='tr';
+ const email='numune@example.com',code='284617';
+ const make=(text,classes)=>create('div',text,classes);
+ const status=make(null,'chatgpt-demo-status');
+ status.append(create('span','09:41'),create('span','▮▮▮  ◒  ▰'));
+ const demo=create('span','Nümayiş','chatgpt-demo-tag');
+ demo.lang='az';
+ screen.append(status,demo);
+ const action=(label,style='')=>make(label,'chatgpt-demo-action '+style);
+ const main=make(null,'chatgpt-demo-main');
+ screen.append(main);
+ let delay=0;
+ function field(label,value,animate=false,mark=false){
+  const row=make(null,'chatgpt-demo-field'+(mark?' chatgpt-demo-mark':''));
+  row.append(create('span',label));
+  if(value){
+   const text=create('strong',animate?null:value);
+   if(animate){
+    row.classList.add('chatgpt-demo-typing');
+    [...value].forEach((char,index)=>{
+     const glyph=create('span',char);
+     glyph.style.setProperty('--type-at',(.15+index*.058)+'s');
+     text.append(glyph);
+    });
+    delay=.42+value.length*.058;
+    row.style.setProperty('--phase',delay+'s');
+   }
+   row.append(text);
+  }
+  return row;
+ }
+ if(scene==='authenticator'||scene==='code'){
+  screen.classList.add('chatgpt-demo-auth');
+  const bar=make(null,'chatgpt-demo-auth-bar');
+  bar.append(create('span','☰'),create('b','Google Authenticator'));
+  const search=make('Hesaplarda ara','chatgpt-demo-search');
+  const entry=make(null,'chatgpt-demo-entry'+(scene==='authenticator'?' chatgpt-demo-mark':''));
+  const identity=make(null,'chatgpt-demo-account');
+  identity.append(create('b','ChatGPT'),create('span',email));
+  const token=make('284 617','chatgpt-demo-code'+(scene==='code'?' chatgpt-demo-mark':''));
+  const timer=create('i');
+  timer.setAttribute('aria-hidden','true');
+  entry.append(identity,token,timer);
+  main.append(bar,search,entry);
+  return screen;
+ }
+ if(scene==='open'){
+  main.classList.add('chatgpt-demo-welcome');
+  main.append(create('h3','ChatGPT'),action('Apple ile Devam Et','chatgpt-demo-primary'),action('Google ile devam et'),action('Oturum aç veya kaydol','chatgpt-demo-mark'));
+  return screen;
+ }
+ const codeScene=scene==='verification'||scene==='return';
+ const title=codeScene?'Kimlik doğrulama uygulamanı kontrol et':scene==='password'?'Parolanı gir':'Oturum aç veya kaydol';
+ main.append(make('ChatGPT','chatgpt-demo-brand'),create('h3',title));
+ if(codeScene)main.append(create('p','Kimlik doğrulama uygulamasından aldığın 6 haneli kodu gir.'));
+ if(scene==='email')main.append(create('p','ChatGPT hesabına e-posta ile giriş yap.'));
+ if(scene==='password')main.append(field('E-posta',email));
+ if(scene==='email')main.append(field('E-posta',email,true));
+ else if(scene==='password')main.append(field('Parola','••••••••',true));
+ else main.append(field('Kod',scene==='return'?code:'',scene==='return',scene==='verification'));
+ const next=action('Devam',scene==='verification'?'chatgpt-demo-disabled':'chatgpt-demo-primary chatgpt-demo-after');
+ if(delay)next.style.setProperty('--phase',delay+'s');
+ main.append(next);
+ if(scene==='password')main.append(make('Parolanı mı unuttun?','chatgpt-demo-hint'));
+ if(!codeScene)main.append(make('VEYA','chatgpt-demo-divider'),action('Google ile devam et'),action('Apple ile Devam Et'));
+ return screen;
+}
 function primeScreen(animation,create){
  const screen=create('div',null,'prime-demo');screen.dataset.scene=animation;screen.lang='tr';
  const make=(text,cls)=>create('div',text,cls), sample='numune@example.com';
@@ -653,7 +724,7 @@ function netflixScreen(animation,create){
    for(const [key,label] of tracks){
     const animation=data.tracks[key].find(step=>step.animation)?.animation;
     const title=key!=='phone'||!animation||animation.startsWith('netflix-')?label:
-     /^(spotify|prime)-/.test(animation)?'Telefonla giriş':'CapCut-a daxil ol';
+     /^(spotify|prime|chatgpt)-/.test(animation)?'Telefonla giriş':'CapCut-a daxil ol';
     const b=button(title,()=>{autoplay=false;track=key;step=0;draw();});
     b.setAttribute('aria-pressed',String(track===key));choices.append(b);
    }
@@ -666,7 +737,8 @@ function netflixScreen(animation,create){
    const netflix=track==='phone'&&current.animation?.startsWith('netflix-');
    const spotify=track==='phone'&&current.animation?.startsWith('spotify-');
    const prime=track==='phone'&&current.animation?.startsWith('prime-');
-   const simulated=netflix||spotify||prime;
+   const chatgpt=track==='phone'&&current.animation?.startsWith('chatgpt-');
+   const simulated=netflix||spotify||prime||chatgpt;
    if(simulated||desktop||television)layout.classList.add('netflix-guide');
    const visual=create('div',null,'browser-guide-visual');
    const handset=simulated||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image?.replace(/^https:\/\/mirpanel\.com(?=\/)/,'')||'');
@@ -689,10 +761,11 @@ function netflixScreen(animation,create){
     }
    }else if(handset){
     visual.classList.add('browser-guide-visual-handset');
-    phoneScreen.replaceChildren(prime?primeScreen(current.animation,create):spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
+    phoneScreen.replaceChildren(chatgpt?chatgptScreen(current.animation,create):prime?primeScreen(current.animation,create):spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
     phoneShell.classList.toggle('netflix-handset',simulated);
     phoneShell.classList.toggle('spotify-handset',spotify);
     phoneShell.classList.toggle('prime-handset',prime);
+    phoneShell.classList.toggle('chatgpt-handset',chatgpt);
     if(!steadyLayout)visual.append(phoneShell);
    }else
    try{

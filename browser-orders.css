@@ -701,3 +701,47 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 
 .browser-orders-placeholder{box-sizing:border-box;min-block-size:430px;padding:16px;border:1px solid #303b35;border-radius:14px;background:#161b18}
 .browser-orders-placeholder-heading{height:44px;margin-bottom:60px;border-radius:8px;background:#28312c}
+.chatgpt-handset .browser-guide-handset-screen{aspect-ratio:738/1500;background:#141414}
+.chatgpt-demo{position:relative;height:100%;box-sizing:border-box;overflow:hidden;background:#1c1c1e;color:#fff;font:400 5.6cqw/1.25 Arial,sans-serif}
+.chatgpt-demo-status{display:flex;justify-content:space-between;padding:5cqw 7cqw;background:#111;font-weight:700}
+.chatgpt-demo-tag{position:absolute;top:15cqw;right:6cqw;color:#c1c1c4;font-size:5cqw}
+.chatgpt-demo-main{display:grid;gap:4cqw;padding:17cqw 7cqw 6cqw}
+.chatgpt-demo h3{margin:0 0 2cqw;color:inherit;font:700 7.5cqw/1.17 Arial,sans-serif;text-align:center}
+.chatgpt-demo p{margin:0 0 3cqw;color:#dadade;text-align:center}
+.chatgpt-demo-brand{margin-bottom:1cqw;font-weight:700;text-align:center;color:#dedee1}
+.chatgpt-demo-welcome{position:absolute;bottom:5cqw;inset-inline:0;padding-top:6cqw;background:#232325;border-radius:12cqw 12cqw 0 0}
+.chatgpt-demo-welcome h3{margin-bottom:5cqw}
+.chatgpt-demo-action,.chatgpt-demo-field,.chatgpt-demo-entry,.chatgpt-demo-code{position:relative;min-width:0}
+.chatgpt-demo-action{display:grid;place-items:center;min-height:13cqw;padding:2cqw 1.5cqw;border:1px solid #56565c;border-radius:12cqw;background:#262628;font-weight:700;text-align:center}
+.chatgpt-demo-primary{background:#fff;color:#141414;border-color:#fff}
+.chatgpt-demo-disabled{background:#777;color:#171717}
+.chatgpt-demo-field{display:grid;align-content:center;gap:.5cqw;min-height:17cqw;padding:2cqw 4cqw;border:1px solid #6a6a70;border-radius:5cqw;color:#dadade}
+.chatgpt-demo-field strong{font-size:6.4cqw;color:#fff;white-space:nowrap}
+.chatgpt-demo-hint,.chatgpt-demo-divider{text-align:center;color:#dedee1}
+.chatgpt-demo-divider{display:flex;align-items:center;gap:3cqw;margin:2cqw 0}
+.chatgpt-demo-divider::before,.chatgpt-demo-divider::after{content:'';flex:1;border-top:1px solid #505056}
+.chatgpt-demo-auth{background:#f6f8fc;color:#202124}
+.chatgpt-demo-auth .chatgpt-demo-status{background:#e8eefc}
+.chatgpt-demo-auth .chatgpt-demo-tag{color:#435069}
+.chatgpt-demo-auth-bar{display:flex;align-items:center;gap:3cqw;font-size:6.2cqw}
+.chatgpt-demo-search{margin:3cqw 0;padding:3cqw 4cqw;border-radius:10cqw;background:#e5ebf7;color:#3f485a}
+.chatgpt-demo-entry{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4cqw;padding:5cqw;background:#fff;border-radius:4cqw}
+.chatgpt-demo-account{grid-column:1/-1;display:grid;gap:1cqw}
+.chatgpt-demo-account span{color:#455266}
+.chatgpt-demo-code{width:max-content;color:#174ea6;font:bold 12cqw/1.2 Arial,sans-serif;letter-spacing:.6cqw}
+.chatgpt-demo-entry i{width:7cqw;aspect-ratio:1;border-radius:50%;background:conic-gradient(#2565c4 74%,#dce5f4 0)}
+.chatgpt-demo-mark,.chatgpt-demo-typing,.chatgpt-demo-after{outline:2px solid transparent;outline-offset:2px}
+.chatgpt-demo-mark{outline-color:#e5bf52}
+.chatgpt-demo-typing{animation:chatgpt-field-focus var(--phase) both}
+.chatgpt-demo-typing strong>span{visibility:hidden;animation:netflix-type 0s var(--type-at) forwards}
+.chatgpt-demo-after{animation:netflix-mark 0s var(--phase) forwards}
+.chatgpt-demo-mark::after,.chatgpt-demo-after::after{content:'';position:absolute;right:7%;top:30%;width:4cqw;height:4cqw;border:2px solid #e5bf52;border-radius:50%;pointer-events:none;animation:netflix-tap 1.35s ease-out infinite}
+.chatgpt-demo-after::after{opacity:0;animation-delay:var(--phase)}
+@keyframes chatgpt-field-focus{from,99%{outline-color:#e5bf52}to{outline-color:transparent}}
+@media(prefers-reduced-motion:reduce){
+ .chatgpt-demo-typing,.chatgpt-demo-typing strong>span,.chatgpt-demo-after,.chatgpt-demo-mark::after,.chatgpt-demo-after::after{animation:none}
+ .chatgpt-demo-typing strong>span{visibility:visible}
+ .chatgpt-demo-after{outline-color:#e5bf52}
+}
+.chatgpt-demo[data-scene="password"] .chatgpt-demo-main{gap:2.8cqw;padding-top:14cqw}
+.chatgpt-demo[data-scene="password"] .chatgpt-demo-action{min-height:11cqw}

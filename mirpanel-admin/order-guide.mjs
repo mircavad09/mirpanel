@@ -17,6 +17,15 @@ const primePhoneSteps=[
  ['prime-password','Sizə təqdim olunan şifrəni «Amazon şifresi» xanasına yazın və «Giriş yap» düyməsinə toxunun.'],
  ['prime-passkey','Bu ekran yalnız keçid açarı təklifi çıxarsa lazımdır. «Hayır, parola kullanmaya devam et» düyməsinə toxunun.']
 ].map(([animation,description])=>({animation,description,image:''}));
+const chatgptPhoneSteps=[
+ ['chatgpt-open','ChatGPT tətbiqini açın və «Oturum aç veya kaydol» düyməsinə toxunun.'],
+ ['chatgpt-email','Öz ChatGPT hesabınızın e-poçt ünvanını yazın və «Devam» düyməsinə toxunun.'],
+ ['chatgpt-password','Hesabınızın şifrəsini «Parola» xanasına yazın və «Devam» düyməsinə toxunun.'],
+ ['chatgpt-verification','Bu ekran çıxarsa, «Kod» xanasını hələ doldurmayın. Əvvəl doğrulama tətbiqinə keçin.'],
+ ['chatgpt-authenticator','Əvvəlcədən quraşdırdığınız Google Authenticator və ya Authy tətbiqini açın. ChatGPT hesabınıza uyğun qeydi tapın.'],
+ ['chatgpt-code','ChatGPT qeydindəki altırəqəmli birdəfəlik kodu götürün. Vaxtı bitibsə, tətbiqdə görünən yeni kodu istifadə edin.'],
+ ['chatgpt-return','ChatGPT-yə qayıdın. Altı rəqəmi «Kod» xanasına yazın və «Devam» düyməsinə toxunun.']
+].map(([animation,description])=>({animation,description,image:''}));
 const capcutDesktopSteps=[
  ['capcut-desktop-open','CapCut-u kompüterdə açın. «Join Pro» yazısının üstündəki «Sign Up» və ya «Sign in» düyməsinə basın.'],
  ['capcut-desktop-choose','Giriş pəncərəsində «Use QR code» seçin. QR kodu solda, telefonla oxutma qaydası sağda görünür.'],
@@ -79,6 +88,7 @@ export function orderGuideFor(product,plan,savedName){
   delete tracks.desktopQr;
  }
  if(product?.id==='spotify')tracks.phone=spotifyPhoneSteps.map(step=>({...step}));
+ if(product?.id==='chatgpt')tracks.phone=chatgptPhoneSteps.map(step=>({...step}));
  if(product?.id==='prime')tracks.phone=primePhoneSteps.map(step=>({...step}));
  if(phoneOnlyGuide(plan)||phoneOnlyGuide({label:savedName}))delete tracks.desktopQr;
  return {information:own?.information||base?.information||'',tracks};
