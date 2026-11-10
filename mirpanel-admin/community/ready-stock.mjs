@@ -8,7 +8,7 @@ import {adminPendingDeliveries,recordDelivery} from './order-delivery.mjs';
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {assignLegacyRoom} from './netflix-room-legacy.mjs';
 import {roomSalesInstalled,releaseNetflixReview} from './netflix-room-sale.mjs';
-import {netflixRooms,restockNetflixRoom,saveNetflixRooms,editNetflixRoom,netflixRoomPassword} from './netflix-room-stock.mjs';
+import {netflixRooms,restockNetflixRoom,saveNetflixRooms,saveNetflixRoomCards,deleteNetflixRoom,editNetflixRoom,netflixRoomPassword} from './netflix-room-stock.mjs';
 
 const S='mirpanel_community.ready_stock_';
 const fail=(status,message)=>Object.assign(Error(message),{status});
@@ -56,6 +56,8 @@ export async function readyStockView(pool,catalog,inventory,security){
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
+ if(input?.netflixRoomCards)return saveNetflixRoomCards(pool,security,secret,actor,input.netflixRoomCards);
+ if(input?.netflixRoomDelete)return deleteNetflixRoom(pool,actor,input.netflixRoomDelete.id);
  if(input?.netflixSheetIdRetry)return retrySheetCustomerId(pool,input.netflixSheetIdRetry.deliveryId);
  if(input?.netflixRoomsReady)return releaseNetflixReview(pool,actor,input.netflixRoomsReady);
  if(input?.netflixRoomAssign)return assignLegacyRoom(pool,security,catalog,input.netflixRoomAssign);

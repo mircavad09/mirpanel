@@ -16,7 +16,8 @@ from mirpanel_community.netflix_room_units r
 join mirpanel_community.netflix_room_groups g on g.id=r.group_id
 left join public.payment_reservations p on p.id=r.sale_reservation_id
 left join mirpanel_community.shop_lines l on l.reservation_id=p.id
-left join public.payment_orders o on o.id=l.order_id;
+left join public.payment_orders o on o.id=l.order_id
+where to_jsonb(r)->>'deleted_at' is null;
 
 create or replace view mirpanel_community.netflix_room_sellable as
 select id,group_id,room_key from mirpanel_community.netflix_room_sale_state

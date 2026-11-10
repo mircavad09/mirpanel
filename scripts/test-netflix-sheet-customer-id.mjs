@@ -47,14 +47,39 @@ const client=roomSheetClient('synthetic-spreadsheet-id',account,'owner@example.t
 });
 
 try{
- for(const file of ['ready-stock-migration.sql','ready-stock-product-messages-migration.sql','netflix-room-stock.sql','netflix-room-restock.sql','subscriptions-migration.sql','netflix-room-renewal.sql','netflix-room-legacy.sql','netflix-room-sale.sql','netflix-sheet-customer-id.sql'])
+ for(const file of ['ready-stock-migration.sql','ready-stock-product-messages-migration.sql','netflix-room-stock.sql','netflix-room-restock.sql','subscriptions-migration.sql','netflix-room-renewal.sql','netflix-room-legacy.sql','netflix-sheet-customer-id.sql'])
   await fixture.db.exec(fixture.db.read('mirpanel-admin/community/'+file));
  await fixture.db.exec(fixture.db.read('supabase/migrations/202611090902_product_sale_overrides.sql'));
+ for(const file of ['netflix-room-sale.sql','netflix-room-form.sql'])await fixture.db.exec(fixture.db.read('mirpanel-admin/community/'+file));
  const product={id:'netflix',title:'Netflix Şəxsi',stockEnabled:true,plans:[{months:1,label:'1 ay',price:5}]};
  catalog.products.push(product);
  const save=input=>saveReadyStock(pool,security,paymentConfig.tokenSecret,catalog,'admin',input);
- for(const [name,pin] of [['1','4555'],['2','0408']]){
-  await save({netflixRooms:{requestId:id(),email,password:'synthetic-only',endsOn:shiftCalendarDays(bakuDate(),30),saleMode:'ready',rooms:[{name,pin}]}});
+ const cards=[['1','4555'],['2','0408']].map(([name,pin])=>({
+  requestId:'00000000-0000-4000-8000-00000000000'+name,email,password:'synthetic-only',name,pin
+ }));
+ const stock=async()=>await readyStockView(pool,catalog,[],security);
+ const inventory=async()=> (await fixture.rpc('inventory_snapshot')).find(x=>x.productId==='netflix').available;
+ assert.equal((await save({netflixRoomCards:cards})).added,2);
+ assert.equal((await save({netflixRoomCards:cards})).replayed,true);
+ assert.equal(await inventory(),2);
+ let saved=(await stock()).netflixRooms;
+ assert.equal(saved.length,2);assert.ok(saved.every(r=>r.endsOn===null&&r.canDelete));
+ await assert.rejects(save({netflixRoomCards:[{...cards[0],requestId:id(),name:'3'},{...cards[1],requestId:id()}]}),{status:409});
+ assert.equal(await inventory(),2);
+ const removed=saved.find(r=>r.name==='2');
+ await save({netflixRoomDelete:{id:removed.id}});
+ await save({netflixRoomDelete:{id:removed.id}});
+ assert.equal(await inventory(),1);
+ assert.ok(!(await stock()).netflixRooms.some(r=>r.id===removed.id));
+ await save({netflixRoomCards:[{...cards[1],requestId:'00000000-0000-4000-8000-000000000003'}]});
+ assert.equal(await inventory(),2);
+ await save({netflixRooms:{requestId:id(),email:'legacy-form@example.test',password:'synthetic-only',endsOn:shiftCalendarDays(bakuDate(),30),
+  saleMode:'ready',rooms:Array.from({length:5},(_,i)=>({name:String(i+1),pin:'0408'}))}});
+ assert.equal(await inventory(),7);
+ const legacy=(await stock()).netflixRooms.filter(r=>r.accountEmail==='legacy-form@example.test');
+ assert.equal(legacy.length,5);
+ for(const [i,room] of legacy.entries()){
+  assert.ok(room.canDelete);await save({netflixRoomDelete:{id:room.id}});assert.equal(await inventory(),6-i);
  }
  const run=()=>writeNextSheetCustomerId(pool,security,client);
  assert.equal(await run(),false);assert.equal(reads,0);assert.equal(writes,0);
@@ -63,6 +88,12 @@ try{
  const quote=(await shop.quote(buyer,[base],owner)).items[0];
  assert.deepEqual(quote.fields,[]);
  const request={items:[{...base,termsVersion:quote.termsVersion}],requestId:id(),mode:'wallet',consentAccepted:true};
+ const held=await shop.checkout(buyer,owner,{...request,requestId:id(),mode:'card',methodId:fixture.method});
+ const reserved=(await stock()).netflixRooms.find(r=>r.status==='reserved');
+ assert.ok(reserved);assert.equal(reserved.canDelete,false);
+ await assert.rejects(save({netflixRoomDelete:{id:reserved.id}}),{status:409,message:/rezervdə/});
+ assert.equal(await inventory(),1);
+ await shop.cancel(buyer,owner,held.id);assert.equal(await inventory(),2);
  const [first,replay]=await Promise.all([shop.checkout(buyer,owner,request),shop.checkout(buyer,owner,request)]);
  assert.equal(first.orderId,replay.orderId);assert.equal(first.deliveryStatus,'completed');
  const orders=createAccountOrders({security,store:fixture.store,resolve:async r=>({userId:r.user,codes:d=>ownerCodes(pool,r.user,d)})});
@@ -70,6 +101,9 @@ try{
  const delivery=await orders.codes(buyer,code.id);
  assert.deepEqual(delivery.netflixRoom,{name:'1',code:'4555'});
  await assert.rejects(orders.codes({user:'b'},code.id),{status:404});
+ const sold=(await stock()).netflixRooms.find(r=>r.deliveryId===code.id);
+ assert.equal(sold.canDelete,false);
+ await assert.rejects(save({netflixRoomDelete:{id:sold.id}}),{status:409,message:/təhvil verilmiş/});
  const member=(await pool.query("select member_number::text from community_member_numbers where user_id='a'")).rows[0].member_number;
  const otherCells=rows.slice(1).map(r=>r.slice(1));
  sortDuringRead=true;offline=true;
@@ -99,5 +133,5 @@ try{
  assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries')).rows[0].n,2);
  assert.equal((await pool.query("select cents::int from wallet_accounts where user_id='a'")).rows[0].cents,4000);
  assert.deepEqual(locateCustomerIdCell([header,['=T(1)','2 · 0408',email]],{email,roomName:'2',roomCode:'0408'},member),{reason:'conflict'});
- console.log('PASS: two rooms, wallet delivery without customer PIN, moved rows, leading zero and hyphen PIN, A-only write, lost reply, retry, conflicting/duplicate/missing row and exactly two debits');
+ console.log('PASS: atomic two-card save/reload, replay, delete/restock count, protected reserved/delivered rooms, wallet delivery without customer PIN, moved rows, leading zero and hyphen PIN, A-only write, lost reply, retry, conflicting/duplicate/missing row and exactly two debits');
 }finally{await fixture.close();}

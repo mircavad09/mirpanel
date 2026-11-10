@@ -40,9 +40,10 @@ export function mountReadyStock(host,api){
     <div class="readyStockActions"><button class="btn" type="button" data-add-unit>+ Yeni hesab əlavə et</button><button class="btn primary" type="submit">Hesabları və təhvil ayarını saxla</button></div>
    </form>
    <p role="status" aria-live="polite"></p>
+   <div data-netflix-room-stock hidden></div>
   </section>
   <section class="readyStockCard"><h3>Məhsullar üzrə hazır stok</h3><p>Bütün paketlər üzrə sifarişə ayrılmamış hazır hesablar.</p><div data-product-list></div></section>
- </div><div class="readyStockLayout netflixRoomLayout"><section class="readyStockCard" data-netflix-room-stock></section></div>`;
+ </div>`;
  const form=host.querySelector('form'),{product,plan,sales,auto,template}=form.elements;
  const q=s=>host.querySelector(s),messageList=q('[data-messages]'),report=q('[role=status]'),list=q('[data-product-list]');
  const submit=form.querySelector('[type=submit]'),saveSales=q('[data-save-sales]'),editSales=q('[data-edit-sales]'),editor=q('#readyStockSaleEditor'),add=q('[data-add-unit]');
@@ -51,27 +52,9 @@ export function mountReadyStock(host,api){
  let activeDraft=null,activeProduct;
  let products=[],pending=null,busy=false,loaded=false,read=null;
  const roomHost=q('[data-netflix-room-stock]');
- roomHost.innerHTML=`<h3>Netflix Şəxsi — hazır otaq stoku</h3>
-  <p>Hər otağı ayrıca saxlayın. Google Sheets-də otağın sətrini özünüz əlavə edin və A xanasını boş qoyun. Balansla alışdan sonra otaq avtomatik təhvil verilir və uyğun sətrin A xanasına müştəri ID-si yazılır.</p>
-  <form autocomplete="off" hidden>
-   <div class="netflixRoomCredentials">
-    <label>Netflix e-poçtu<input name="email" type="email" maxlength="254" required></label>
-    <label>Netflix şifrəsi<input name="password" type="text" maxlength="512" autocomplete="off" spellcheck="false" autocapitalize="off" required></label>
-   </div>
-   <label>Bitmə tarixi<input name="endsOn" type="text" placeholder="məs. 10 dekabr" maxlength="24" required aria-describedby="netflixRoomDatePreview"></label>
-   <label>Otaqların vəziyyəti<select name="saleMode"><option value="ready">Satışa hazır</option><option value="bind">Müştəriyə bağlanacaq</option></select></label>
-   <p id="netflixRoomDatePreview" aria-live="polite"></p>
-   <div data-rooms></div>
-   <div class="readyStockActions"><button class="btn primary">Otağı saxla</button></div>
-  </form><p data-room-status role="status"></p><ul data-room-list></ul>`;
- const roomForm=roomHost.querySelector('form'),roomRows=roomHost.querySelector('[data-rooms]'),roomStatus=roomHost.querySelector('[data-room-status]'),roomList=roomHost.querySelector('[data-room-list]');
- let roomRequest=null,roomBusy=false;
- const roomFields='<label>Otaq adı<input name="room" maxlength="50" required></label><label>PIN<input name="pin" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required></label>';
- function addRoom(){
-  const row=document.createElement('div');row.className='readyStockAccount netflixRoomRow';
-  row.innerHTML=roomFields;
-  roomRows.replaceChildren(row);
- }
+ roomHost.innerHTML='<p data-room-status role="status"></p><ul data-room-list></ul>';
+ const roomStatus=roomHost.querySelector('[data-room-status]'),roomList=roomHost.querySelector('[data-room-list]');
+ const roomFields='<label>Otaq adı<input name="room" maxlength="50" required></label><label>Otaq kodu (PIN)<input name="pin" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required></label>';
  const editRoom=data=>api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomEdit:data})});
  const assignRoom=data=>api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomAssign:data})});
  let bindingDialog;
@@ -184,9 +167,8 @@ export function mountReadyStock(host,api){
   }catch(e){roomStatus.textContent=e.message||'Otaq açıla bilmədi.';}
   finally{button.disabled=false;}
  }
- const roomSummary=row=>'Otaq '+row.name+' · Hesabın bitməsi: '+row.endsOn+' · '+(row.statusLabel||({free:'Satılmayıb',sold:'Satılıb',expired:'Müddəti bitib',review:'Yoxlama tələb olunur'}[row.status]||'—'))+(row.paidUntil?' · Ödənilmiş müddətin sonu: '+row.paidUntil:'');
+ const roomSummary=row=>'Otaq '+row.name+(row.endsOn?' · Hesabın bitməsi: '+row.endsOn:'')+' · '+(row.statusLabel||({free:'Satılmayıb',sold:'Satılıb',expired:'Müddəti bitib',review:'Yoxlama tələb olunur'}[row.status]||'—'))+(row.paidUntil?' · Ödənilmiş müddətin sonu: '+row.paidUntil:'');
  function showRooms(rows){
-  roomForm.hidden=!Array.isArray(rows);
   if(!Array.isArray(rows)){roomStatus.textContent='Otaq stoku bazada hələ aktiv deyil.';return;}
   const groups=new Map();
   for(const row of rows){const key=row.groupId||row.id;if(!groups.has(key))groups.set(key,[]);groups.get(key).push(row);}
@@ -234,6 +216,19 @@ export function mountReadyStock(host,api){
    summary.dataset.roomSummary='';summary.textContent=roomSummary(row);
    edit.type='button';edit.className='btn';edit.textContent='Redaktə et';edit.onclick=()=>void openRoom(node,row,edit);
    node.append(summary,' ',edit);
+   if(row.canDelete){
+    const remove=document.createElement('button');remove.type='button';remove.className='btn';remove.textContent='Sil';
+    remove.setAttribute('aria-label','Sil · Otaq '+row.name+' · '+(row.accountEmail||'Netflix Şəxsi'));
+    remove.onclick=async()=>{
+     if(!confirm((row.accountEmail||'Netflix Şəxsi')+' · Otaq '+row.name+' silinsin?'))return;
+     remove.disabled=true;
+     try{
+      await api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomDelete:{id:row.id}})});
+      await refresh();roomStatus.textContent='Otaq satış stokundan silindi.';
+     }catch(e){roomStatus.textContent=e.message;remove.disabled=false;}
+    };
+    node.append(remove);
+   }
    if(row.sheetCustomerId){
     const sync=row.sheetCustomerId,info=document.createElement('p');
     info.textContent='Sheets A sütunu · '+(sync.message||(sync.state==='done'?'Müştəri ID-si yazılıb.':'Yazı növbədədir.'));
@@ -260,8 +255,8 @@ export function mountReadyStock(host,api){
     const button=document.createElement('button');
     button.type='button';button.className='btn';button.textContent='Boşalt və satışa qaytar';button.disabled=!!row.active;button.title=row.active?'Ödənilmiş müddət davam edir.':'';
     button.onclick=async()=>{
-     const [year,month,day]=row.endsOn.split('-');
-     const input=prompt('Otağın yeni bitmə tarixi (məs. 10 dekabr)',Number(day)+' '+months[Number(month)-1]+' '+year);
+     const [year,month,day]=(row.endsOn||'').split('-');
+     const input=prompt('Otağın yeni bitmə tarixi (məs. 10 dekabr)',row.endsOn?Number(day)+' '+months[Number(month)-1]+' '+year:'');
      if(input===null)return;
      const date=roomEndDate(input);
      if(!date||date.days<1){roomStatus.textContent='Gələcək bitmə tarixini yazın.';return;}
@@ -280,33 +275,13 @@ export function mountReadyStock(host,api){
   }));return group;
   }));
  }
- const datePreview=roomHost.querySelector('#netflixRoomDatePreview');
- function previewDate(){
-  const value=roomForm.elements.endsOn.value,date=roomEndDate(value);
-  datePreview.textContent=date?date.label+' · '+date.days+' gün qalıb':value?'Tarixi “10 dekabr” və ya “10 dekabr 2026” kimi yazın.':'';
-  return date;
- }
- roomForm.oninput=()=>{roomRequest=null;previewDate();};
- roomForm.onsubmit=async event=>{
-  event.preventDefault();if(roomBusy)return;
-  const {email,password}=roomForm.elements,date=previewDate();
-  if(!date||date.days===0){roomStatus.textContent='Bitmə tarixi Bakı vaxtı ilə bu gündən sonra olmalıdır.';return;}
-  roomRequest??=crypto.randomUUID();
-  const payload={requestId:roomRequest,email:email.value,password:password.value,endsOn:date.iso,saleMode:roomForm.elements.saleMode.value,
-   rooms:[...roomRows.children].map(row=>({name:row.querySelector('[name=room]').value,pin:row.querySelector('[name=pin]').value}))};
-  const fields=[...roomForm.querySelectorAll('input,select,button')];roomBusy=true;fields.forEach(x=>x.disabled=true);
-  roomStatus.textContent='Otaq saxlanılır…';
-  try{
-   const result=await api(endpoint,{method:'POST',body:JSON.stringify({netflixRooms:payload})});
-   roomRequest=null;roomForm.reset();previewDate();roomRows.replaceChildren();addRoom();
-   roomStatus.textContent=result.added+' otaq saxlanıldı.';
-   await refresh();
-  }catch(e){roomStatus.textContent=e.message||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.';}
-  finally{roomBusy=false;fields.forEach(x=>x.disabled=false);}
- };
- addRoom();
  const selected=()=>{const p=products.find(x=>x.id===product.value);return {p,item:p?.plans.find(x=>String(x.index)===plan.value)};};
- const accounts=()=>[...messageList.children].map(row=>({email:row.querySelector('[type=email]').value.trim(),password:row.querySelector('[name=password]').value}));
+ const accounts=()=>[...messageList.children].map(row=>{
+  const value=name=>row.querySelector('[name='+name+']')?.value??'';
+  const account={email:value('email').trim(),password:value('password')};
+  if(row.dataset.roomRequest)return {...account,requestId:row.dataset.roomRequest,name:value('name').trim(),pin:value('pin').trim()};
+  return account;
+ });
  const say=(text,error=false)=>{report.textContent=text;report.dataset.error=String(error);};
  function controls(){
   const locked=busy||!!pending,absent=!selected().item;
@@ -338,10 +313,17 @@ export function mountReadyStock(host,api){
    (nearby?.querySelector('button')||add).focus();
   };
   header.append(heading,remove);row.append(header);
-  for(const [name,field,type,max] of [['Hesabın e-poçtu','email','email',254],['Hesabın şifrəsi','password','text',512]]){
+  const fields=[['Hesabın e-poçtu','email','email',254],['Hesabın şifrəsi','password','text',512]];
+  if(selected().p?.id==='netflix'){
+   row.dataset.roomRequest=value.requestId||crypto.randomUUID();
+   fields.push(['Otaq adı','name','text',50],['Otaq kodu (PIN)','pin','text',4]);
+   row.addEventListener('input',()=>{row.dataset.roomRequest=crypto.randomUUID();});
+  }
+  for(const [name,field,type,max] of fields){
    const label=document.createElement('label'),box=document.createElement('input');
    label.textContent=name;box.name=field;box.type=type;box.maxLength=max;box.autocomplete=field==='password'?'new-password':'off';box.value=value[field]||'';
-   if(field==='password'){box.spellcheck=false;box.autocapitalize='off';}
+   if(field==='password'||field==='pin'){box.spellcheck=false;box.autocapitalize='off';}
+   if(field==='pin'){box.inputMode='numeric';box.pattern='[0-9]{4}';}
    label.append(box);row.append(label);
   }
   messageList.append(row);numberAccounts();controls();
@@ -363,7 +345,8 @@ export function mountReadyStock(host,api){
  function renderPlan(){
   const {p,item}=selected();
   const netflix=p?.id==='netflix';
-  for(const node of [messageList,add,submit,editSales,auto.closest('label')])node.hidden=netflix;
+  for(const node of [editSales,auto.closest('label')])node.hidden=netflix;
+  roomHost.hidden=!netflix;
   activeProduct=p?.id;template.value=messageDrafts.get(activeProduct)??p?.message??'';
   q('[data-sales]').textContent=!item?'—':item.sales===null?'Limitsiz':item.sales===0?'Stokda yoxdur':item.sales+' satış vahidi';q('[data-ready]').textContent=item?.ready??'—';
   q('[data-scope]').textContent=p?.scope==='plan'?'Satış stoku bu paketə aiddir.':'Satış stoku məhsul üzrə ortaqdır.';
@@ -413,11 +396,17 @@ export function mountReadyStock(host,api){
     if(!sales.value||!sales.reportValidity())return say('0–10000 arası satış miqdarı yazın. Limitsiz üçün 0 daxil edin.',true);
     Object.assign(data,{expectedVersion:p.version,available:Number(sales.value)===0?null:Number(sales.value)});
    }else{
-    const values=accounts().filter(x=>x.email||x.password);
+    const values=accounts().filter(x=>x.email||x.password||x.name||x.pin);
+    if(p.id==='netflix'){
+     if(!values.length||values.some(x=>!x.email||!x.password.trim()||!x.name||!/^\d{4}$/.test(x.pin)))
+      return say('Hər doldurulmuş kart üçün e-poçt, şifrə, otaq adı və dörd rəqəmli PIN yazın.',true);
+     pending={type,data:{netflixRoomCards:values}};
+    }else{
     if(values.some(x=>!x.email||!x.password.trim()))return say('Hər hesab üçün e-poçt və şifrə yazın.',true);
     Object.assign(data,{accounts:values});
     if(auto.checked!==item.autoWallet)data.autoWallet=auto.checked;
     if(!data.accounts.length&&data.autoWallet===undefined)return say('Hesab əlavə edin və ya təhvil ayarını dəyişin.',true);
+    }
    }
    pending??={type,data};
   }

@@ -13,28 +13,61 @@ try{
  for(const width of [390,1360]){
   const page=await browser.newPage({viewport:{width,height:900}});let date='2027-01-15',writes=0;const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const groupId='00000000-0000-4000-8000-000000000001';
+  const saved=[];
   await page.route('**/api/admin/payment-ready-stock',async route=>{
    const input=route.request().method()==='POST'?route.request().postDataJSON():null;
+   if(input?.netflixRoomCards){
+    assert.equal(input.netflixRoomCards.length,2);
+    for(const [index,card] of input.netflixRoomCards.entries()){
+     assert.equal(card.name,'Synthetic '+(index+1));assert.equal(card.pin,'0408');
+     assert.deepEqual(Object.keys(card).sort(),['email','name','password','pin','requestId']);
+     saved.push({id:card.requestId,groupId:card.requestId,accountEmail:card.email,name:card.name,canDelete:true,status:'free'});
+    }
+    return route.fulfill({json:{added:2}});
+   }
+   if(input?.netflixRoomDelete){
+    const index=saved.findIndex(r=>r.id===input.netflixRoomDelete.id);assert.equal(index,0);
+    saved.splice(index,1);return route.fulfill({json:{deleted:true}});
+   }
    if(input?.netflixAccountPassword){const x=input.netflixAccountPassword;assert.equal(x.groupId,groupId);
     if(x.action==='preview')return route.fulfill({json:{email:'synthetic@example.test',activeRooms:2,activeCustomers:2,revision:'synthetic-revision'}});
     assert.equal(x.action,'rotate');assert.equal(x.password,'Example-new');assert.equal(x.expectedRevision,'synthetic-revision');writes++;return route.fulfill({json:{changed:true}});
    }
-   return route.fulfill({json:{products:[{id:'netflix',title:'Netflix Şəxsi',message:'',plans:[{index:0,title:'1 ay',signature:'test',sales:10,ready:0}]}],netflixRooms:[1,2,3,4,5].map(n=>({id:groupId.slice(0,-1)+n,groupId,accountEmail:'synthetic@example.test',name:String(n),endsOn:date,deliveryId:'example-'+n,status:[2,3].includes(n)?'paid':'expired',active:[2,3].includes(n),statusLabel:[2,3].includes(n)?'Ödəniş edib, ödənilmiş müddəti davam edir':'Müddəti bitib, yenilənməyib'}))}});
+   return route.fulfill({json:{products:[{id:'netflix',title:'Netflix Şəxsi',message:'',plans:[{index:0,title:'1 ay',signature:'test',sales:10,ready:0}]}],netflixRooms:[...saved,...[1,2,3,4,5].map(n=>({id:groupId.slice(0,-1)+n,groupId,accountEmail:'synthetic@example.test',name:String(n),endsOn:date,deliveryId:'example-'+n,status:[2,3].includes(n)?'paid':'expired',active:[2,3].includes(n),statusLabel:[2,3].includes(n)?'Ödəniş edib, ödənilmiş müddəti davam edir':'Müddəti bitib, yenilənməyib'}))]}});
   });
   await page.goto('http://127.0.0.1:'+server.address().port);
   const release=page.getByRole('button',{name:'Boşalt və satışa qaytar',exact:true});await release.first().waitFor();
   assert.equal(await release.count(),3);assert.equal(await release.first().isEnabled(),true);
   assert.equal(await page.locator('.netflixAccountGroup').getByLabel('Hesabın e-poçtu').count(),0);
-  assert.equal(await page.getByRole('button',{name:'+ Yeni hesab əlavə et',exact:true}).isVisible(),false);
+  assert.equal(await page.getByRole('button',{name:'+ Yeni hesab əlavə et',exact:true}).isVisible(),true);
   assert.equal(await page.getByLabel('Müştəriyə təqdim ediləcək hazır mesaj').isVisible(),true);
-  assert.deepEqual(await page.getByLabel('Otaqların vəziyyəti').locator('option').allTextContents(),['Satışa hazır','Müştəriyə bağlanacaq']);
-  await page.getByRole('button',{name:'Şifrəni yenilə',exact:true}).click();
+  assert.equal(await page.getByText('Netflix Şəxsi — hazır otaq stoku',{exact:true}).count(),0);
+  const formCards=page.locator('[data-messages] .readyStockAccount');
+  await page.getByRole('button',{name:'+ Yeni hesab əlavə et',exact:true}).click();
+  assert.deepEqual(await formCards.locator('h4').allTextContents(),['Hesab 1','Hesab 2']);
+  for(const [index,card] of (await formCards.all()).entries()){
+   assert.equal(await card.locator('input').count(),4);
+   await card.getByLabel('Hesabın e-poçtu').fill('form@example.test');
+   await card.getByLabel('Hesabın şifrəsi').fill('Synthetic-password');
+   await card.getByLabel('Otaq adı').fill('Synthetic '+(index+1));
+   await card.getByLabel('Otaq kodu (PIN)').fill('0408');
+  }
+  await page.getByRole('button',{name:'Hesabları və təhvil ayarını saxla',exact:true}).click();
+  await page.getByText('2 hazır hesab saxlanıldı.',{exact:true}).waitFor();
+  await page.reload();
+  const remove=page.getByRole('button',{name:'Sil · Otaq Synthetic 1 · form@example.test',exact:true});
+  await remove.waitFor();
+  page.once('dialog',async dialog=>{assert.match(dialog.message(),/Otaq Synthetic 1/);await dialog.accept();});
+  await remove.click();await page.getByText('Otaq satış stokundan silindi.').waitFor();
+  assert.equal(await remove.count(),0);
+  assert.equal(await page.getByRole('button',{name:'Sil · Otaq Synthetic 2 · form@example.test',exact:true}).count(),1);
+  await page.locator('.netflixAccountGroup').filter({hasText:'synthetic@example.test'}).getByRole('button',{name:'Şifrəni yenilə',exact:true}).click();
   const form=page.locator('.netflixPasswordForm');await form.getByText('synthetic@example.test · Təsirlənəcək aktiv otaqlar: 2 · Müştərilər: 2').waitFor();
   assert.equal(await form.locator('input').getAttribute('type'),'text');await form.locator('input').fill('Example-new');
   await form.getByRole('button',{name:'Şifrəni saxla',exact:true}).click();
   await page.getByText('Şifrə yeniləndi. Bildirişlər növbəyə əlavə edildi.').waitFor();
   assert.equal(writes,1);assert.deepEqual(errors,[]);
-  assert.ok(await page.locator('.netflixAccountGroup').evaluate(el=>el.getBoundingClientRect().right<=innerWidth));
-  console.log('PASS '+width+'px — account group, five states, protected active rooms, visible password, impact preview and rotation');await page.close();
+  assert.ok(await page.locator('.netflixAccountGroup').last().evaluate(el=>el.getBoundingClientRect().right<=innerWidth));
+  console.log('PASS '+width+'px — two four-field cards, save/reload/delete, protected active rooms and rotation');await page.close();
  }
 }finally{await browser.close();server.close();}

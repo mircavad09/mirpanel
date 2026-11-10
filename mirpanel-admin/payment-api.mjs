@@ -679,7 +679,9 @@ export function createPaymentSystem(options) {
         const body=await readBody(request,700000);
         if((body?.netflixRoomEdit?.action==='password'||body?.netflixAccountPassword||body?.netflixRoomAssign)&&!await options.readyStockOwnerAllowed?.(request))
           throw Object.assign(Error('Saxlanmış Netflix şifrəsi yalnız sahib-adminə açıqdır.'),{status:403});
-        json(response,200,await options.saveReadyStock(security,config.tokenSecret,catalog,actorName,body));return true;
+        const result=await options.saveReadyStock(security,config.tokenSecret,catalog,actorName,body);
+        if(body?.netflixRoomCards||body?.netflixRoomDelete)readInventory.invalidate();
+        json(response,200,result);return true;
       }
     }
 

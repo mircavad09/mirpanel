@@ -27,7 +27,7 @@ export async function assignLegacyRoom(pool,security,catalog,input){
   await c.query('begin');
   if(action==='confirm')await c.query('select pg_advisory_xact_lock(714025001)');
   const room=(await c.query(`select r.*,g.account_cipher,g.id group_id from mirpanel_community.netflix_room_units r
-   join mirpanel_community.netflix_room_groups g on g.id=r.group_id where r.id=$1 for update of r`,[id])).rows[0];
+   join mirpanel_community.netflix_room_groups g on g.id=r.group_id where r.id=$1 and to_jsonb(r)->>'deleted_at' is null for update of r`,[id])).rows[0];
   if(!room)throw fail(404,'Otaq tapılmadı.');
   if(action==='confirm'&&await roomSalesInstalled(c)&&(await c.query('select held from mirpanel_community.netflix_room_sale_state where id=$1',[id])).rows[0]?.held)
    throw fail(409,'Otaq aktiv sifariş üçün rezerv edilib.');
