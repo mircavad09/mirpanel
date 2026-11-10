@@ -153,12 +153,12 @@
 .shop-page .shop-result-actions a:focus-visible{outline:2px solid #ffd557;outline-offset:3px}
 @media(hover:hover){.shop-page .shop-result-actions a:hover{filter:brightness(1.12);text-decoration:underline}}
 
-/* Reserve the default wallet view through the initial data request. Longer histories grow in flow. */
-.shop-wallet-loading-form{min-height:285px}
-.shop-wallet-loading-bar{height:44px;margin:14px 0;border-radius:11px;background:#252b33}
-@media(min-width:761px){
- .shop-page.shop-wallet-page:has(.shop-wallet-loading,.shop-wallet-hero){min-height:916px}
-}
+/* Keep the support footer below the wallet in every initial load state. */
+.shop-page.shop-wallet-page{box-sizing:border-box;min-height:max(916px,100svh);padding-bottom:32px}
+.shop-wallet-loading{display:flex;align-items:center;gap:10px;padding:12px 0;color:#d5d9df}
+.shop-wallet-loading::before{content:'';width:16px;height:16px;flex:none;border:2px solid #494540;border-top-color:#ffd400;border-radius:50%;animation:wallet-loading-spin .8s linear infinite}
+@keyframes wallet-loading-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.shop-wallet-loading::before{animation:none}}
 /* Match the desktop header rows and border before its script upgrades the header. */
 @media(min-width:1000px){
  body.wallet-page-active .site-header{height:121px}

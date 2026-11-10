@@ -8,7 +8,7 @@ const header=fs.readFileSync('customer-header.html','utf8'),id='11111111-1111-41
 const server=http.createServer(async(req,res)=>{const p=new URL(req.url,'http://local').pathname,json=(v,s=200)=>{res.writeHead(s,{'Content-Type':'application/json'});res.end(JSON.stringify(v));};
  if(p==='/api/community/state')return json({profile:{user_id:'synthetic',display_name:'Sınaq',avatar:0,balanceCents:balance}});
  if(p==='/api/community/notifications')return json({items:[],unread:0});
- if(p==='/api/payments/methods')return json({methods:[{id,available:true,displayName:'Sintetik bank',maskedNumber:'****0000'}]});
+ if(p==='/api/payments/methods'||p==='/api/payments/shop/topup/methods')return json({methods:[{id,available:true,displayName:'Sintetik bank',maskedNumber:'****0000'}]});
  if(p==='/api/payments/shop/wallet')return json({cents:balance,items:[],topups:[],more:false});
  if(p==='/api/payments/shop/topup'){if(req.method==='GET')return json({id,status:'draft',methodId:id,cents:2010,receiptUploaded:false});let text='';for await(const chunk of req)text+=chunk;requests.push(JSON.parse(text));return json({id,status:'draft'});}
  if(p==='/api/payments/shop/method')return json({id,provider:'Sintetik bank',holder:'Sınaq',number:'0000 0000 0000 0000'});

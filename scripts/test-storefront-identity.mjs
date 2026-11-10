@@ -3,11 +3,13 @@ import fs from 'node:fs/promises';
 import http from 'node:http';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 import {onRequest} from '../functions/_middleware.js';
+import {onRequest as cartShell} from '../functions/sebet.js';
+import {onRequest as authShell} from '../functions/hesab.js';
 import {withStorefrontHead} from '../storefront-head.mjs';
 
 const live=process.argv.includes('--live');
 const privateRoutes=['/sebet','/odenis','/balans','/qrup','/hesab','/profil'];
-const pages=['/','/mehsul','/mehsul/capcut-pro','/haqqimizda','/sertler','/elaqe','/qrup','/sifarislerim','/profil',...['orders','codes','subscriptions','payments','expenses'].map(tab=>'/profil?tab='+tab),'/sebet','/odenis','/balans'];
+const pages=['/','/mehsul','/mehsul/capcut-pro','/haqqimizda','/sertler','/elaqe','/qrup','/sifarislerim','/hesab','/profil',...['orders','codes','subscriptions','payments','expenses'].map(tab=>'/profil?tab='+tab),'/sebet','/odenis','/balans'];
 const header=await fs.readFile('customer-header.html','utf8');
 const mime={js:'text/javascript',css:'text/css',html:'text/html; charset=utf-8',png:'image/png',webp:'image/webp',svg:'image/svg+xml'};
 const shell=pathname=>{
@@ -19,6 +21,11 @@ const server=http.createServer(async(req,res)=>{
  const request=new Request(local+req.url,{headers:req.headers});
  const response=await onRequest({request,next:async(next=request)=>{
   const pathname=new URL(next.url).pathname;
+  if(pathname==='/sebet'||pathname==='/hesab'){
+   const handle=pathname==='/sebet'?cartShell:authShell;
+   const headerAsset=()=>new Response(header,{headers:{'Content-Type':mime.html}});
+   return handle({request:new Request('https://mirpanel.com'+pathname),next:headerAsset,env:{ASSETS:{fetch:headerAsset}}});
+  }
   if(privateRoutes.includes(pathname))return new Response(shell(pathname),{headers:{'Content-Type':mime.html}});
   const file=pathname==='/'?'index.html':pathname==='/sifarislerim'?'sifarislerim.html':pathname.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+pathname.slice(18):pathname.slice(1);
   if(!/^[\w/.-]+$/.test(file)||file.includes('..'))return new Response(null,{status:404});
@@ -44,7 +51,9 @@ try{
     await page.addInitScript(()=>{
      sessionStorage.setItem('mirpanel.intro.seen','1');
      window.guestSeen=false;
+     window.pendingSeen=false;
      new MutationObserver(()=>{if(document.querySelector('.account-guest-toggle'))window.guestSeen=true;}).observe(document,{childList:true,subtree:true});
+     new MutationObserver(()=>{if(document.querySelector('[data-account-session-bootstrap]'))window.pendingSeen=true;}).observe(document,{childList:true,subtree:true});
     });
     await page.route('**/*',async route=>{
      const url=new URL(route.request().url());
@@ -81,6 +90,7 @@ try{
      if(live&&path.startsWith('/profil')&&!signed)continue;
      await page.goto(origin+path,{waitUntil:'domcontentloaded'});
      await identity();
+     assert(await page.evaluate(()=>window.pendingSeen),path+' has neutral initial markup');
     }
     await page.reload({waitUntil:'domcontentloaded'});
     await identity();
@@ -96,6 +106,13 @@ try{
     await page.waitForFunction(()=>!window.MirpanelNavigation.pending);
     await identity();
     assert(await brand.evaluate(n=>n===document.querySelector('.site-header-brand')));
+    if(!live){
+     for(const path of pages.filter(path=>signed||!path.startsWith('/profil'))){
+      await page.evaluate(path=>window.MirpanelNavigation.go(path),path);
+      assert(await brand.evaluate(n=>n===document.querySelector('.site-header-brand')),path+' preserves the header');
+      await identity();
+     }
+    }
     if(signed){
      assert(await avatar.evaluate(n=>n===document.querySelector('.account-toggle img')));
      await page.getByRole('button',{name:'Bildirişlər',exact:true}).click();

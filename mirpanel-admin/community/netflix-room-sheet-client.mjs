@@ -88,8 +88,22 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   await applyStyle(stockSheet,sheetId,range);
  },
  async writeCustomerId(delivery,memberNumber){
-  const {sheetId,range}=await stockDestination();
-  const read=async()=>locateCustomerIdCell((await request(range('A1:C')+'?valueRenderOption=FORMULA')).values||[],delivery,memberNumber);
+  const {sheetId,stockSheet}=await stockDestination();
+  const range="'"+stockSheet.properties.title.replaceAll("'","''")+"'!A1:C";
+  const query=new URLSearchParams({ranges:range,fields:'sheets(properties(sheetId),data(startRow,startColumn,rowData(values(userEnteredValue,effectiveValue,formattedValue))))'});
+  const read=async()=>{
+   const {sheets}=await request(endpoint+'?'+query);
+   const grid=sheets?.find(sheet=>sheet.properties.sheetId===sheetId)?.data?.[0];
+   if(!grid||grid.startRow||grid.startColumn)throw Error('ROOM_SHEET_DESTINATION');
+   const rows=(grid.rowData||[]).map(({values=[]})=>[
+    enteredCell(values[0]),
+    // Legacy rows may store a number with a custom format displaying “room PIN”.
+    // Read both representations together; never substitute a formula's display.
+    values[1]?.userEnteredValue?.numberValue!==undefined?values[1].formattedValue:enteredCell(values[1],false),
+    enteredCell(values[2],false)
+   ]);
+   return locateCustomerIdCell(rows,delivery,memberNumber);
+  };
   // Resolve again immediately before writing to catch a sort, edit or conflict
   // that happened during the first read.
   const first=await read();
@@ -189,6 +203,11 @@ export function groupRoomRows(rows){
 
 
 function matchText(value){return String(value??'').normalize('NFC').trim().toLowerCase();}
+function enteredCell(cell,includeEffective=true){
+ const value=cell?.userEnteredValue??(includeEffective?cell?.effectiveValue:undefined);
+ if(!value)return undefined;
+ return value.formulaValue??value.stringValue??value.numberValue??value.boolValue??'#CELL_ERROR';
+}
 export function locateCustomerIdCell(rows,delivery,memberNumber){
  if(JSON.stringify(rows[0]?.slice(0,3))!==JSON.stringify(sheetHeaders.slice(0,3)))return {reason:'headers'};
  const email=matchText(delivery.email),name=matchText(delivery.roomName);
