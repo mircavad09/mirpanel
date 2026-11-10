@@ -8,7 +8,7 @@ import {saveNetflixRooms,restockNetflixRoom} from '../mirpanel-admin/community/n
 import {assignLegacyRoom} from '../mirpanel-admin/community/netflix-room-legacy.mjs';
 import {releaseNetflixReview} from '../mirpanel-admin/community/netflix-room-sale.mjs';
 import {approveCardWithReadyStock,readyStockView} from '../mirpanel-admin/community/ready-stock.mjs';
-import {ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
+import {adminDelivery,ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
 import {syncRoomSheetBatch} from '../mirpanel-admin/community/netflix-room-sheet-sync.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
 
@@ -46,8 +46,10 @@ try{
   const admin=await readyStockView(pool,catalog,[inventoryAvailability(product,ledger)],security);
   assert.equal(admin.products.find(p=>p.id==='netflix').readyTotal,count);
   assert.equal(admin.netflixRooms.filter(r=>r.status==='free').length,count);
+  assert.equal(admin.netflixRooms.filter(r=>r.sellable).length,count);
   await syncRoomSheetBatch(pool,security,'fixture',client);
   assert.equal([...sheet.values()].filter(r=>r[5]==='Satılmayıb').length,count);
+  return admin.netflixRooms;
  };
  await verify(5);
  await pool.query("insert into wallet_accounts(user_id,cents) values('a',5000)");
@@ -57,7 +59,11 @@ try{
  const args={items:[{...item,termsVersion:q.termsVersion}],requestId:id(),mode:'wallet',consentAccepted:true};
  const [first,retry]=await Promise.all([shop.checkout(buyer,owner,args),shop.checkout(buyer,owner,args)]);
  assert.equal(first.orderId,retry.orderId);assert.equal(first.deliveryStatus,'completed');
- await verify(4);
+ const walletRooms=await verify(4);
+ const walletRoom=walletRooms.find(r=>r.name==='1'&&r.deliveryId);
+ const customer=async id=>(await pool.query('select u.id,u.name,n.member_number::text as "memberNumber" from "user" u join community_member_numbers n on n.user_id=u.id where u.id=$1',[id])).rows[0];
+ assert.deepEqual(walletRoom.customer,await customer('a'));
+ assert.ok(walletRoom.assignedAt&&walletRoom.paidUntil);
  const api=createAccountOrders({security,store,resolve:async req=>({userId:req.user,codes:d=>ownerCodes(pool,req.user,d)})});
  const [code]=(await api.codes(buyer)).codes;
  assert.deepEqual((await api.codes(buyer,code.id)).netflixRoom,{name:'1',code:'0408'});
@@ -92,5 +98,29 @@ try{
  assert.equal((await shop.quote(buyer,[renewing],owner)).items[0].available,null);
  await shop.checkout(buyer,owner,{...args,requestId:id(),items:[renewing]});
  await verify(0);
+ const manualItem={productId:'ordinary',planIndex:0,quantity:1};
+ const manualQuote=(await shop.quote(buyer,[manualItem],owner)).items[0];
+ const manual=await shop.checkout(buyer,owner,{...args,items:[{...manualItem,termsVersion:manualQuote.termsVersion}],requestId:id()});
+ const {rows:[manualOrder]}=await pool.query('select checkout_snapshot from payment_orders where id=$1',[manual.orderId]);
+ manualOrder.checkout_snapshot.items[0].productId='netflix';
+ await pool.query('update payment_orders set checkout_snapshot=$2 where id=$1',[manual.orderId,manualOrder.checkout_snapshot]);
+ const manualBatch=await batch('manual@example.test',2,'ready');
+ await verify(2);
+ const manualId=id();
+ await adminDelivery(pool,security,'admin',manual.orderId,{requestId:manualId,line:0,quantity:1,
+  message:'Sintetik təhvil',email:'manual@example.test',password:'Synthetic-only',roomName:'1',roomCode:'0408'},{roomStockSecret:paymentConfig.tokenSecret});
+ const afterManual=await verify(1);
+ const delivered=afterManual.find(r=>r.deliveryId===manualId);
+ assert.deepEqual(delivered.customer,await customer('a'));
+ assert.ok(delivered.assignedAt&&delivered.paidUntil);
+ const free=afterManual.find(r=>r.groupId===manualBatch&&r.name==='2');
+ await assignLegacyRoom(pool,security,catalog,{action:'confirm',id:free.id,userId:'b',paidUntil:date});
+ const afterBinding=await verify(0);
+ const bound=afterBinding.find(r=>r.id===free.id);
+ assert.deepEqual(bound.customer,await customer('b'));
+ assert.ok(bound.legacyAssignmentId&&bound.assignedAt);
+ assert.equal(bound.paidUntil,date);
+ assert.ok(afterBinding.some(r=>r.id===delivered.id&&r.deliveryId===manualId));
+ console.log('PASS: manual delivery and binding 2→1→0, confirmed customer and dates after each fresh read');
  console.log('PASS: review 0→5, wallet 5→4, card hold/approval/cancel, PIN 0408, no double allocation, final-unit race and all three stock views');
 }finally{await f.close();}

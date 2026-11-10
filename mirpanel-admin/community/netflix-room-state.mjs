@@ -5,10 +5,10 @@ export async function roomStates(db,{groupId=null,roomId=null,deliveryId=null,lo
  const legacy=await legacyInstalled(db);
  const managed=await roomSalesInstalled(db);
  const {rows}=await db.query(`select r.*,r.stock_ends_on::text stock_end,g.account_cipher,g.ends_on::text group_end,
-  ${legacy?'a.paid_until::text legacy_paid_until,':''}
+  ${legacy?'a.paid_until::text legacy_paid_until,a.created_at bound_at,':''}
   ${managed?'s.unexpired,s.synthetic,s.held,s.assigned,(v.id is not null) sellable,':''}
   d.line_index,d.delivered_at,d.message_cipher,o.product_id,o.checkout_snapshot,o.duration_months,o.plan_name,
-  ${legacy?'coalesce(a.user_id,l.user_id)':'l.user_id'} user_id,n.member_number::text,public.payment_baku_date()::text today,
+  ${legacy?'coalesce(a.user_id,l.user_id)':'l.user_id'} user_id,n.member_number::text,customer.name customer_name,public.payment_baku_date()::text today,
   (o.status not in ('cancelled','rejected','expired') and
    (o.payment_confirmed or o.status in ('approved','completed'))) purchase_paid,
   coalesce((select jsonb_agg(jsonb_build_object('base',v.base_expires_on,'orderId',v.order_id,
@@ -24,6 +24,7 @@ export async function roomStates(db,{groupId=null,roomId=null,deliveryId=null,lo
   left join mirpanel_community.community_order_owners l on l.order_id=o.id
   ${legacy?'left join mirpanel_community.netflix_room_legacy a on a.id=r.legacy_assignment_id':''}
   left join mirpanel_community.community_member_numbers n on n.user_id=${legacy?'coalesce(a.user_id,l.user_id)':'l.user_id'}
+  left join mirpanel_community."user" customer on customer.id=${legacy?'coalesce(a.user_id,l.user_id)':'l.user_id'}
   ${managed?'join mirpanel_community.netflix_room_sale_state s on s.id=r.id left join mirpanel_community.netflix_room_sellable v on v.id=r.id':''}
   where ($1::uuid is null or r.group_id=$1) and ($2::uuid is null or r.id=$2)
    and ($3::uuid is null or r.delivery_id=$3)

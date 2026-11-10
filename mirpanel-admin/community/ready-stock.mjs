@@ -21,7 +21,7 @@ async function enabled(c){
 export async function readyStockView(pool,catalog,inventory,security){
  const c=await pool.connect();
  try{
-  await c.query('begin');
+  await c.query('begin isolation level repeatable read');
   if(!await enabled(c))throw fail(503,'Hazır hesab stoku hazırda bağlıdır.');
   const settings=(await c.query('select p.product_id,p.plan_key,p.plan_signature,p.auto_wallet,count(u.id)::int as ready from '+S+'plans p left join '+S+'units u on (p.product_id,p.plan_key,p.plan_signature)=(u.product_id,u.plan_key,u.plan_signature) and u.delivery_id is null group by p.product_id,p.plan_key,p.plan_signature,p.auto_wallet')).rows;
   const records=new Map(settings.map(x=>[key(x.product_id,x.plan_key,x.plan_signature),x]));

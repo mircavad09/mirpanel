@@ -69,7 +69,8 @@ export async function netflixRooms(pool,security){
   const rows=await roomStates(pool);
   return {rooms:rows.map(r=>({id:r.id,groupId:r.group_id,...(security?{accountEmail:JSON.parse(security.decryptSecret(r.account_cipher)).email}:{}),name:r.room_name,endsOn:isoDate(r.stock_end??r.group_end)?r.stock_end??r.group_end:null,
    startsOn:r.period?.startsOn??null,deliveryId:r.delivery_id,legacyAssignmentId:r.legacy_assignment_id,status:r.state,statusLabel:roomStateLabels[r.state],
-   paidUntil:r.legacy_paid_until??r.period?.endsBefore??null,active:r.active,canDelete:!r.delivery_id&&!r.legacy_assignment_id&&!r.held,sellable:r.sellable===true,
+   paidUntil:r.legacy_paid_until??r.period?.expiresOn??null,assignedAt:r.bound_at??r.delivered_at??null,
+   customer:r.customer_name!=null?{id:r.user_id,name:r.customer_name,memberNumber:r.member_number}:null,active:r.active,canDelete:!r.delivery_id&&!r.legacy_assignment_id&&!r.held,sellable:r.sellable??r.state==='free',
    canMarkReady:r.state==='review'&&r.unexpired===true&&!r.held&&!r.synthetic&&!r.assigned}))};
  }
  const {rows}=await pool.query(`select r.id,r.group_id as "groupId",r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",to_jsonb(r)->>'legacy_assignment_id' as "legacyAssignmentId",
@@ -77,7 +78,7 @@ export async function netflixRooms(pool,security){
   case when coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() then 'expired'
    when r.delivery_id is not null or to_jsonb(r)->>'legacy_assignment_id' is not null then 'sold' else 'free' end status
   from ${U} r join ${G} g on g.id=r.group_id order by g.created_at desc,r.room_name,r.id limit 2000`);
- return {rooms:rows};
+ return {rooms:rows.map(r=>({...r,sellable:r.status==='free'}))};
 }
 export async function restockNetflixRoom(pool,input){
  const {id,deliveryId=null,endsOn,actor='admin',confirmedEmpty}=input||{};
