@@ -7,6 +7,7 @@ import {accountPanel,paymentHistory} from './account-panel.mjs';
 import {customerSubscriptions} from './subscriptions.mjs';
 import {createAccountOrders} from '../account-orders.mjs';
 import {deliveryRecords,ownerCodes} from './order-delivery.mjs';
+import {withLegacyHistory} from './netflix-room-legacy.mjs';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 
 // Never creates a customer session. Even accidental writes in a reused reader
@@ -27,7 +28,7 @@ export async function readCustomerView(pool,userId,path,{catalog,security,store}
    owned:async id=>(await c.query(base+' and o.id=$2::uuid',[userId,id])).rows[0]||null,
    byCode:async code=>(await c.query(base+' and o.order_code::text=$2',[userId,code])).rows[0]||null,
    deliveries:ids=>deliveryRecords(c,ids),codes:id=>ownerCodes(c,userId,id)};
-  const orders=createAccountOrders({security,store,resolve:async()=>scope});
+  const orders=createAccountOrders({security,store,resolve:async()=>withLegacyHistory(c,userId,scope)});
   let result;
   if(p==='/api/community/state')result={profile:await new Repository(c).profile(user,{readOnly:true}),unread:0,readOnly:true};
   else if(p==='/api/community/profile-summary'){

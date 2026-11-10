@@ -77,6 +77,75 @@ export function mountReadyStock(host,api){
   roomRows.append(row);
  }
  const editRoom=data=>api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomEdit:data})});
+ const assignRoom=data=>api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomAssign:data})});
+ let bindingDialog;
+ async function openBinding(row,trigger){
+  if(bindingDialog?.open)return;
+  const dialog=bindingDialog=document.createElement('dialog');
+  dialog.className='readyStockCard netflixRoomBind';
+  dialog.setAttribute('aria-label','Müştəriyə bağla');
+  dialog.innerHTML=`<h3>Müştəriyə bağla</h3><p>Əvvəlki satış — yeni ödəniş və ya məktub yaradılmır.</p>
+   <p data-preview>Otaq məlumatı yüklənir…</p>
+   <form autocomplete="off">
+    <label>Müştəri axtar<input name="customer" type="search" placeholder="Ad, e-poçt və ya MirPanel ID-si"></label>
+    <div data-results aria-live="polite"></div><p data-selected aria-live="polite"></p>
+    <label>Ödənilmiş müddətin bitmə tarixi<input name="date" placeholder="məs. 1 may və ya 1 may 2027" maxlength="24" required></label>
+    <p data-date aria-live="polite"></p><p role="status"></p>
+    <div class="readyStockActions"><button type="submit" class="btn primary" disabled>Müştəriyə bağla</button><button type="button" class="btn">Bağla</button></div>
+   </form>`;
+  const form=dialog.querySelector('form'),{customer,date}=form.elements;
+  const preview=dialog.querySelector('[data-preview]'),results=dialog.querySelector('[data-results]'),selected=dialog.querySelector('[data-selected]'),status=dialog.querySelector('[role=status]');
+  const save=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]');
+  let user=null,roomReady=false,busy=false,timer,revision=0;
+  const update=()=>{
+   const end=roomEndDate(date.value);
+   dialog.querySelector('[data-date]').textContent=end?end.label+' · '+Math.max(0,end.days)+' gün qalıb':date.value?'Tarixi “1 may” və ya “1 may 2027” kimi yazın.':'';
+   save.disabled=busy||!roomReady||!user||!end||end.days<0;
+   return end;
+  };
+  date.oninput=update;
+  customer.oninput=()=>{
+   const q=customer.value.trim(),version=++revision;
+   clearTimeout(timer);user=null;selected.textContent='';results.replaceChildren();update();
+   if(!q)return;
+   timer=setTimeout(async()=>{
+    results.textContent='Axtarılır…';
+    try{
+     const {users}=await assignRoom({action:'search',q});
+     if(!dialog.open||revision!==version)return;
+     results.replaceChildren(...users.map(person=>{
+      const pick=document.createElement('button');pick.type='button';pick.className='btn';
+      const label=person.name+' · #'+person.memberNumber;
+      pick.textContent=label+' · '+person.email;
+      pick.onclick=()=>{user=person;customer.value=label;selected.textContent='Seçildi: '+label;results.replaceChildren();update();date.focus();};
+      return pick;
+     }));
+     if(!users.length)results.textContent='Müştəri tapılmadı.';
+    }catch(e){if(dialog.open&&revision===version)results.textContent=e.message||'Axtarış alınmadı.';}
+   },250);
+  };
+  close.onclick=()=>dialog.close();
+  dialog.oncancel=e=>{if(busy)e.preventDefault();};
+  dialog.onclose=()=>{clearTimeout(timer);preview.textContent='';dialog.remove();if(trigger.isConnected)trigger.focus();};
+  form.onsubmit=async e=>{
+   e.preventDefault();const end=update();if(save.disabled)return;
+   busy=true;customer.disabled=date.disabled=close.disabled=true;update();status.textContent='Saxlanılır…';
+   try{
+    const result=await assignRoom({action:'confirm',id:row.id,userId:user.id,paidUntil:end.iso});
+    dialog.close();
+    try{await refresh();}catch{}
+    roomStatus.textContent=result.reused?'Mövcud təhvil qorundu; onun tarixi dəyişdirilmədi.':'Otaq müştəriyə bağlandı.';
+   }catch(error){status.textContent=error.message||'Otaq bağlana bilmədi.';}
+   finally{busy=false;customer.disabled=date.disabled=close.disabled=false;update();}
+  };
+  roomHost.append(dialog);dialog.showModal();
+  try{
+   const room=await assignRoom({action:'open',id:row.id});
+   if(!dialog.open)return;
+   preview.textContent=room.email+' · Otaq '+room.room+' · PIN '+room.pin;
+   roomReady=true;update();
+  }catch(e){if(dialog.open)preview.textContent=e.message||'Otaq açıla bilmədi.';}
+ }
  async function openRoom(node,row,button){
   button.disabled=true;roomStatus.textContent='';
   try{
@@ -156,7 +225,13 @@ export function mountReadyStock(host,api){
    summary.dataset.roomSummary='';summary.textContent=roomSummary(row);
    edit.type='button';edit.className='btn';edit.textContent='Redaktə et';edit.onclick=()=>void openRoom(node,row,edit);
    node.append(summary,' ',edit);
-   if(row.deliveryId||row.status==='review'){
+   if(row.legacyAssignmentId)node.append(' · Müştəriyə bağlanıb');
+   else{
+    const bind=document.createElement('button');
+    bind.type='button';bind.className='btn';bind.textContent='Müştəriyə bağla';
+    bind.onclick=()=>void openBinding(row,bind);node.append(' ',bind);
+   }
+   if(!row.legacyAssignmentId&&(row.deliveryId||row.status==='review')){
     const button=document.createElement('button');
     button.type='button';button.className='btn';button.textContent='Boşalt və satışa qaytar';button.disabled=!!row.active;button.title=row.active?'Ödənilmiş müddət davam edir.':'';
     button.onclick=async()=>{

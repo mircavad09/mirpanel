@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 import {roomStates} from './netflix-room-state.mjs';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const uuid=x=>typeof x==='string'&&/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(x);
-const revision=(cipher,active)=>crypto.createHash('sha256').update(JSON.stringify([cipher,active.map(r=>[r.delivery_id,r.user_id,r.period.expiresOn])])).digest('hex');
+const revision=(cipher,active)=>crypto.createHash('sha256').update(JSON.stringify([cipher,active.map(r=>[r.legacy_assignment_id??r.delivery_id,r.user_id,r.period.expiresOn])])).digest('hex');
 async function audit(c,actor,action,id,metadata){
  await c.query(`insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata)
  values('admin',$1,$2,'netflix_account',$3,$4)`,[actor,action,id,metadata]);
@@ -33,6 +33,8 @@ export async function updateRoomPassword(pool,security,actor,input){
   await c.query('insert into mirpanel_community.netflix_room_password_events(id,group_id,actor) values($1,$2,$3)',[eventId,groupId,actor]);
   const recipients=new Set();
   for(const room of active){
+   // Legacy entitlements read the current group cipher directly and have no payment order.
+   if(room.legacy_assignment_id)continue;
    const value=JSON.parse(security.decryptSecret(room.message_cipher));
    if(value.id!==room.delivery_id)throw Error('DELIVERY_REFERENCE_MISMATCH');
    const suppress=!!value.message&&(value.message.includes(account.password)||!!value.password&&value.message.includes(value.password));

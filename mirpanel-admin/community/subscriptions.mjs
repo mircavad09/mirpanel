@@ -3,6 +3,7 @@ import {parseMoneyCents,planKey} from '../payment-profit.mjs';
 import {userPriceSignature} from './user-price-key.mjs';
 import {inventoryAvailability} from '../../inventory-availability.mjs';
 import {draftUuid} from '../cart-drafts.mjs';
+import {legacySubscriptions} from './netflix-room-legacy.mjs';
 
 const R='mirpanel_community.subscription_renewals';
 const fail=(status,message)=>Object.assign(Error(message),{status});
@@ -67,6 +68,7 @@ async function readBases(pool,users,source=null,today=bakuDate()){
    image:line?.image??r.checkout_snapshot?.image??'',planKey:line?.sourcePlanKey??r.checkout_snapshot?.sourcePlanKey??null,lastPurchaseCents,
    expiresOn:stored||expiration(startsOn,period),estimated:!stored&&!!period&&!!startsOn,startsOn}];
  });
+ entries.push(...await legacySubscriptions(pool,users,source));
  if(!entries.length)return entries;
  const events=(await pool.query(`
   select r.user_id,r.source_id,r.base_expires_on::text,r.expires_on::text,

@@ -35,15 +35,15 @@ export async function editNetflixRoom(pool,security,input,actor='admin'){
   }catch(e){await c.query('rollback');throw e;}finally{c.release();}
  }
  if(action==='open'){
-  const {rows:[room]}=await pool.query(`select id,room_name,pin_cipher,delivery_id from ${U} where id=$1`,[id]);
+  const {rows:[room]}=await pool.query(`select id,room_name,pin_cipher,delivery_id,to_jsonb(r)->>'legacy_assignment_id' legacy_assignment_id from ${U} r where id=$1`,[id]);
   if(!room)throw fail(404,'Otaq tapılmadı.');
   const value=JSON.parse(security.decryptSecret(room.pin_cipher));
   if(value.id!==room.id||typeof value.pin!=='string'||!/^\d{4}$/.test(value.pin))throw fail(409,'Otağın PIN-i oxunmadı.');
-  return {id:room.id,name:room.room_name,pin:value.pin,editable:!room.delivery_id};
+  return {id:room.id,name:room.room_name,pin:value.pin,editable:!room.delivery_id&&!room.legacy_assignment_id};
  }
  const room=parseRoom(input);
  try{
-  const {rowCount}=await pool.query(`update ${U} set room_name=$2,room_key=$3,pin_cipher=$4 where id=$1 and delivery_id is null`,
+  const {rowCount}=await pool.query(`update ${U} r set room_name=$2,room_key=$3,pin_cipher=$4 where id=$1 and delivery_id is null and to_jsonb(r)->>'legacy_assignment_id' is null`,
    [id,room.name,room.key,security.encryptSecret(JSON.stringify({id:id.toLowerCase(),pin:room.pin}))]);
   if(!rowCount)throw fail(409,'Otaq tapılmadı və ya artıq sifarişə ayrılıb.');
   return {id,name:room.name};
@@ -66,14 +66,14 @@ export async function netflixRooms(pool,security){
  if((await pool.query("select to_regclass('mirpanel_community.netflix_room_password_events') installed")).rows[0].installed){
   const rows=await roomStates(pool);
   return {rooms:rows.map(r=>({id:r.id,groupId:r.group_id,...(security?{accountEmail:JSON.parse(security.decryptSecret(r.account_cipher)).email}:{}),name:r.room_name,endsOn:r.stock_end??r.group_end,
-   startsOn:r.period?.startsOn??null,deliveryId:r.delivery_id,status:r.state,statusLabel:roomStateLabels[r.state],
-   paidUntil:r.period?.endsBefore??null,active:r.active}))};
+   startsOn:r.period?.startsOn??null,deliveryId:r.delivery_id,legacyAssignmentId:r.legacy_assignment_id,status:r.state,statusLabel:roomStateLabels[r.state],
+   paidUntil:r.legacy_paid_until??r.period?.endsBefore??null,active:r.active}))};
  }
- const {rows}=await pool.query(`select r.id,r.group_id as "groupId",r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",
+ const {rows}=await pool.query(`select r.id,r.group_id as "groupId",r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",to_jsonb(r)->>'legacy_assignment_id' as "legacyAssignmentId",
   coalesce(to_jsonb(r)->>'stock_ends_on',g.ends_on::text) as "endsOn",
   case when coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() then 'expired'
-   when r.delivery_id is not null then 'sold' else 'free' end status
-  from ${U} r join ${G} g on g.id=r.group_id order by g.created_at desc,r.room_name,r.id limit 250`);
+   when r.delivery_id is not null or to_jsonb(r)->>'legacy_assignment_id' is not null then 'sold' else 'free' end status
+  from ${U} r join ${G} g on g.id=r.group_id order by g.created_at desc,r.room_name,r.id limit 2000`);
  return {rooms:rows};
 }
 export async function restockNetflixRoom(pool,input){
@@ -86,6 +86,7 @@ export async function restockNetflixRoom(pool,input){
   if(!installed)throw fail(503,'Otaq təhlükəsizliyi üçün baza yeniləməsi lazımdır.');
   const [room]=await roomStates(c,{roomId:id,lock:true});
   if(!room)throw fail(404,'Otaq tapılmadı.');
+  if(room.legacy_assignment_id)throw fail(409,'Əvvəlki satışa bağlanmış otaq bu əməliyyatla satışa qaytarıla bilməz.');
   if(room.active)throw fail(409,'Ödənilmiş müddəti davam edən otağı satışa qaytarmaq olmaz.');
   if(room.delivery_id&&room.state==='review')throw fail(409,'Otağın sifariş əlaqəsi yoxlanmalıdır. Satışa qaytarılmadı.');
   if(room.delivery_id!==deliveryId)throw fail(409,'Otağın vəziyyəti dəyişib. Siyahını yeniləyin.');
@@ -136,7 +137,7 @@ export async function bindNetflixRoom(c,security,secret,deliveryId,{email,passwo
  const installed=await c.query("select to_regclass('mirpanel_community.netflix_room_units') as present");
  if(!installed.rows[0].present)return;
  const accountKey=digest(secret,['netflix-room-account',email.trim().toLowerCase()]);
- const {rows:[room]}=await c.query(`select r.id,r.pin_cipher,r.delivery_id,coalesce(to_jsonb(r)->>'availability','available') availability,g.id group_id,g.account_cipher,
+ const {rows:[room]}=await c.query(`select r.id,r.pin_cipher,r.delivery_id,to_jsonb(r)->>'legacy_assignment_id' legacy_assignment_id,coalesce(to_jsonb(r)->>'availability','available') availability,g.id group_id,g.account_cipher,
    coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() as expired
    from ${U} r join ${G} g on g.id=r.group_id
    where r.account_key=$1 and r.room_key=$2 for update of r`,
@@ -147,7 +148,7 @@ export async function bindNetflixRoom(c,security,secret,deliveryId,{email,passwo
  if(pin.id!==room.id||account.id!==room.group_id||pin.pin!==roomCode||(password&&password!==account.password))
   throw fail(409,'Təhvil məlumatları stokdakı otağa uyğun gəlmir.');
  if(room.availability==='review')throw fail(409,'Otağın stok vəziyyəti yoxlanmalıdır.');
- if(room.delivery_id)throw fail(409,'Bu stok otağı artıq təhvil verilib.');
+ if(room.delivery_id||room.legacy_assignment_id)throw fail(409,'Bu stok otağı artıq təhvil verilib.');
  if(room.expired)throw fail(409,'Bu stok otağının müddəti bitib.');
  await c.query(`update ${U} set delivery_id=$2 where id=$1`,[room.id,deliveryId]);
 }

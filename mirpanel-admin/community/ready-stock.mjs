@@ -5,6 +5,7 @@ import {planKey} from '../payment-profit.mjs';
 import {adminPendingDeliveries,recordDelivery} from './order-delivery.mjs';
 
 import {readProductMessages} from './ready-stock-product-messages.mjs';
+import {assignLegacyRoom} from './netflix-room-legacy.mjs';
 import {netflixRooms,restockNetflixRoom,saveNetflixRooms,editNetflixRoom,netflixRoomPassword} from './netflix-room-stock.mjs';
 
 const S='mirpanel_community.ready_stock_';
@@ -40,6 +41,7 @@ export async function readyStockView(pool,catalog,inventory,security){
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
+ if(input?.netflixRoomAssign)return assignLegacyRoom(pool,security,catalog,input.netflixRoomAssign);
  if(input?.netflixAccountPassword)return updateRoomPassword(pool,security,actor,input.netflixAccountPassword);
  if(input?.restockNetflixRoom)return restockNetflixRoom(pool,{...input.restockNetflixRoom,actor});
  if(input?.netflixRooms||input?.netflixRoomEdit){
@@ -90,7 +92,7 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
    if(![1,3,6].includes(item.durationMonths??item.duration)||item.durationDays)continue;
    const rooms=(await c.query(`select r.id,r.room_name,r.pin_cipher,g.id group_id,g.account_cipher
     from mirpanel_community.netflix_room_units r join mirpanel_community.netflix_room_groups g on g.id=r.group_id
-    where r.delivery_id is null and coalesce(to_jsonb(r)->>'availability','available')='available' and coalesce(r.stock_ends_on,g.ends_on)>public.payment_baku_date()
+    where r.delivery_id is null and to_jsonb(r)->>'legacy_assignment_id' is null and coalesce(to_jsonb(r)->>'availability','available')='available' and coalesce(r.stock_ends_on,g.ends_on)>public.payment_baku_date()
      and g.created_by not like 'synthetic:%'
     order by g.created_at,r.room_key,r.id limit $1 for update of r skip locked`,[item.quantity])).rows;
    security??=securityFactory();

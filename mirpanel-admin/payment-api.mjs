@@ -677,7 +677,7 @@ export function createPaymentSystem(options) {
       }
       if(request.method==='POST'){
         const body=await readBody(request,700000);
-        if((body?.netflixRoomEdit?.action==='password'||body?.netflixAccountPassword)&&!await options.readyStockOwnerAllowed?.(request))
+        if((body?.netflixRoomEdit?.action==='password'||body?.netflixAccountPassword||body?.netflixRoomAssign)&&!await options.readyStockOwnerAllowed?.(request))
           throw Object.assign(Error('Saxlanmış Netflix şifrəsi yalnız sahib-adminə açıqdır.'),{status:403});
         json(response,200,await options.saveReadyStock(security,config.tokenSecret,catalog,actorName,body));return true;
       }
