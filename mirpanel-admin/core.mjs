@@ -1,4 +1,5 @@
 import vm from "node:vm";
+import {randomUUID} from 'node:crypto';
 import { normalizePlanMetadata } from './public/product-plan-utils.mjs';
 import { normalizeOrderGuide } from './order-guide.mjs';
 
@@ -593,6 +594,7 @@ function normalizePlan(plan = {}) {
     ...(orderGuide?{orderGuide}:{}),
     ...(Array.isArray(plan.formFields)?{formFields:plan.formFields.slice(0,10).map(normalizeFormField)}:{}),
     ...normalizePlanMetadata(plan),
+    ...(plan.pricingId ? {pricingId:String(plan.pricingId)} : {}),
     ...(plan.label ? { label: String(plan.label) } : {}),
     months: Number(plan.months) || 1,
     price: Number(plan.price) || 0,
@@ -1230,6 +1232,17 @@ function setupUI() {
 
 export function patchAppSource(source, payload) {
   const admin = normalizeAdminPayload(payload);
+  const previous=extractAdminState(source);
+  for(const product of admin.products){
+    const old=previous.products.find(p=>p.id===product.id);
+    for(const [index,plan]of product.plans.entries()){
+      if(plan.pricingId)continue;
+      const prior=old?.plans[index];
+      const identity=p=>JSON.stringify([p.label??p.name??'',p.months,p.durationDays,p.durationMonths,p.duration_months,p.id]);
+      if(prior&&identity(prior)===identity(plan)){if(prior.pricingId)plan.pricingId=prior.pricingId;}
+      else plan.pricingId=randomUUID();
+    }
+  }
 
   const data = {
     brand: admin.brand,

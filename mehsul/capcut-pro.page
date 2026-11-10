@@ -206,7 +206,7 @@
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=terms-preload-20261108"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>
-  <script src="/product-page.js?v=detail-accordion-20261020-1"></script>
-  <script src="/site-header.js?v=support-faq-20261026-2"></script>
+  <script src="/product-page.js?v=seller-pricing-1"></script>
+  <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>

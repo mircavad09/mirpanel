@@ -1514,7 +1514,7 @@ $("addPlanBtn").addEventListener("click", () => {
   const product = selectedProduct();
   if (!product) return;
   lastPlanAddition = Date.now();
-  product.plans.push({ label: "", months: 1, price: 0 });
+  product.plans.push({ pricingId: crypto.randomUUID(), label: "", months: 1, price: 0 });
   markDirty();
   renderPlans(product);
   renderFormFields(product);

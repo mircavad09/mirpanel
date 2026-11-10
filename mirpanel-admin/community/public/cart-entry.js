@@ -7,7 +7,7 @@ const quotes=new Map(),lifetime=30000;
 let quoteSession;
 window.addEventListener('mirpanel:account',event=>{
  const key=event.detail?.user_id??event.detail?.id??null;
- if(quoteSession!==undefined&&key!==quoteSession)quotes.clear();
+ if(quoteSession!==undefined&&key!==quoteSession){quotes.clear();current?.close();}
  quoteSession=key;
 });
 function preparedQuote(productId,index,{fresh=false,edit=false}={}){

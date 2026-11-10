@@ -121,7 +121,7 @@ export async function customerSubscriptions(pool,user,catalog,snapshot){
  // Expiry data remains useful if catalog or inventory is temporarily unavailable.
  const [data,stock,special]=await Promise.all([
   Promise.resolve().then(catalog).catch(()=>null),Promise.resolve().then(snapshot).catch(()=>null),
-  pool.query('select product_id,plan_key,plan_signature,cents from mirpanel_community.user_special_prices where user_id=$1 and exists(select 1 from mirpanel_community.user_controls_release where id and enabled)',[user])
+  pool.query('select product_id,plan_key,plan_signature,cents from mirpanel_community.user_special_prices where user_id=$1 and exists(select 1 from mirpanel_community.user_controls_release where id and enabled) and exists(select 1 from mirpanel_community.user_seller_settings where user_id=$1 and enabled)',[user])
  ]);
  const products=new Map((data?.products||[]).map(p=>[p.id,p])),inventory=new Map((stock||[]).map(r=>[r.productId,r]));
  const prices=new Map(special.rows.map(p=>[JSON.stringify([p.product_id,p.plan_key,p.plan_signature]),Number(p.cents)]));

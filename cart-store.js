@@ -35,11 +35,15 @@
  const previewKey='mirpanel.cart.preview.v1';
  const catalog=()=>typeof DATA==='undefined'?[]:DATA.products||[];
  function catalogRow(p,idx){
-  const plan=p?.plans?.[idx];if(!plan)return null;const cents=Math.round(Number(plan.price)*100);
+  const plan=p?.plans?.[idx];if(!plan)return null;const cents=Math.round(Number(window.MirpanelPricing?.standard(plan)??plan.price)*100);
   return {title:p.title,planName:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Paket'),image:p.image||'',unitCents:Number.isSafeInteger(cents)&&cents>0?cents:null};
  }
  let preview={};try{preview=JSON.parse(localStorage.getItem(previewKey)||'{}')||{};}catch{}
  function savePreview(next){preview=next;try{const json=JSON.stringify(next);if(localStorage.getItem(previewKey)!==json)localStorage.setItem(previewKey,json);}catch{}}
+ let priceEpoch=0,quoteLife=new AbortController();
+ window.addEventListener('mirpanel:prices',()=>{priceEpoch++;quoteLife.abort();quoteLife=new AbortController();seen.clear();pending.clear();window.dispatchEvent(new Event('mirpanel:cart'));prefetch();});
+ window.addEventListener('pagehide',()=>{priceEpoch++;quoteLife.abort();pending.clear();});
+ window.addEventListener('pageshow',()=>{if(quoteLife.signal.aborted)quoteLife=new AbortController();});
  const seen=new Map(),pending=new Map(),itemKey=x=>x.lineId||line(x.productId,x.planIndex);
  function remember(items){
   const products=catalog();if(!products.length)return;
@@ -48,13 +52,14 @@
  }
  function verify(items){
   const key=JSON.stringify(items);if(pending.has(key))return pending.get(key);
-  const request=(async()=>{
-   const res=await fetch('/api/payments/shop/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal:AbortSignal.timeout(12000),cache:'no-store'});
+  const generation=priceEpoch;const request=(async()=>{
+   const res=await fetch('/api/payments/shop/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal:AbortSignal.any([AbortSignal.timeout(12000),quoteLife.signal]),cache:'no-store'});
    const q=await res.json();if(!res.ok||!Array.isArray(q.items)||!Number.isSafeInteger(q.totalCents))throw Error('Qiymət və stoku yoxlamaq mümkün olmadı.');
+   if(generation!==priceEpoch)throw Error('Account changed.');
    for(const x of q.items){const k=itemKey(x);if(seen.size>=60)seen.delete(seen.keys().next().value);seen.set(k,x);}
    if(JSON.stringify(read())===key){const next={};for(const x of q.items){const k=itemKey(x);next[k]={title:x.title,planName:x.planName,image:x.image,unitCents:Number.isSafeInteger(x.standardCents)?x.standardCents:preview[k]?.unitCents??null};}savePreview(next);}
    return q;
-  })().finally(()=>pending.delete(key));pending.set(key,request);return request;
+  })().finally(()=>{if(pending.get(key)===request)pending.delete(key);});pending.set(key,request);return request;
  }
  function prefetch(){const items=read();remember(items);if(items.length)void verify(items).catch(()=>{});}
  const svg=path=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';

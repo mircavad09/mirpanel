@@ -277,6 +277,7 @@
         saving.append(text('strong','',priceText(m.savings)),document.createTextNode(' qənaət edirsiniz'));summary.append(saving);
       }
     };
+    window.addEventListener('mirpanel:prices',()=>{rows.forEach((row,i)=>{const m=utils.detailPlanMetrics(plans[i]);const price=row.querySelector('.pp-new-price');if(price&&m.price!==null)price.textContent=priceText(m.price);const rate=row.querySelector('.product-detail-rate strong');if(rate&&m.rate!==null)rate.textContent=priceText(m.rate);row.querySelector('.pp-plan-price-meta')?.remove();});update();},{signal});
     container.addEventListener('click', update);
     container.addEventListener('mirpanel:plan-selection-cleared', update);
     if (!rows.some(row=>row.classList.contains('active') && !row.hidden)) rows.find(row=>!row.hidden)?.click();

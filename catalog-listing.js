@@ -74,7 +74,7 @@ document.addEventListener('click', async event => {
  event.preventDefault();
  if(document.querySelector('dialog.cart-entry[open],dialog.homeCardPlanPicker[open]'))return;
  const source=document.getElementById('catalogCartProducts');
- const product=JSON.parse(source.textContent).find(p=>p.id===add.closest('[data-product-id]').dataset.productId);
+ const product=(window.MirpanelPricing?.attach(JSON.parse(source.textContent))||JSON.parse(source.textContent)).find(p=>p.id===add.closest('[data-product-id]').dataset.productId);
  if(!product)return;
  add.dataset.busy='true';add.disabled=true;
  let status=document.getElementById('catalogCartStatus');
@@ -83,7 +83,7 @@ document.addEventListener('click', async event => {
  try{
   const [inventory, entry, model]=await Promise.all([
    fetch('/api/payments/inventory',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Stok məlumatı alınmadı.');return r.json();}),
-   import('/community-assets/cart-entry.js?v=fast-entry-1'),
+   import('/community-assets/cart-entry.js?v=seller-pricing-1'),
    import('/inventory-availability.mjs?v=live-sale-switch-1')
   ]);
   if(!add.isConnected)return;

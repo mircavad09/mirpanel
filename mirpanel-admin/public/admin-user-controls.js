@@ -11,8 +11,21 @@ export async function renderControlsTab({content,tab,selected,call,valid}){
  }
  const data=await call('/user-controls?userId='+encodeURIComponent(selected.user.id));if(!valid())return;
  if(tab==='prices'){
-  const select=el('select'),amount=el('input'),rows=el('div');select.setAttribute('aria-label','Məhsul və plan');amount.setAttribute('aria-label','Xüsusi AZN qiyməti');amount.inputMode='decimal';for(const [i,p]of data.plans.entries()){const o=el('option',p.product+' — '+p.plan);o.value=i;select.append(o);}const show=()=>{const p=data.plans[Number(select.value)];amount.value=p?.special===null?'':(Number(p?.special)/100).toFixed(2);rows.replaceChildren(el('p','Standart: '+money(p?.standard??null)+' · Xüsusi: '+money(p?.special??null)));};select.onchange=show;show();let busy=false;const save=async value=>{if(busy)return;busy=true;try{const p=data.plans[Number(select.value)];if(!p)throw Error('Aktiv plan yoxdur.');await call('/user-controls',{kind:'price',userId:selected.user.id,productId:p.productId,planKey:p.planKey,amount:value});await renderControlsTab({content,tab,selected,call,valid});}finally{busy=false;}};
-  content.replaceChildren(el('h3','Xüsusi qiymətlər'),el('p',data.rule),select,rows,amount,button('Yadda saxla',safe(()=>save(amount.value))),button('Xüsusi qiyməti ləğv et',safe(()=>save(null))),error);return;
+  const priceMoney=c=>c==null?'—':(Number(c)/100).toFixed(2).replace('.',',')+' ₼';
+  const seller=el('input');seller.type='checkbox';seller.checked=data.seller;seller.style.cssText='width:18px;height:18px;margin:0;flex:0 0 18px';
+  const role=el('label','Satıcı — xüsusi qiymətlə alış edən müştəri');role.style.cssText='display:flex;align-items:center;gap:10px';role.prepend(seller);
+  seller.onchange=safe(async()=>{seller.disabled=true;try{await call('/user-controls',{kind:'seller',userId:selected.user.id,enabled:seller.checked});await renderControlsTab({content,tab,selected,call,valid});}catch(e){seller.checked=data.seller;throw e;}finally{seller.disabled=false;}});
+  const product=el('select'),plan=el('select'),amount=el('input'),standard=el('p'),list=el('div');
+  product.setAttribute('aria-label','Məhsul');plan.setAttribute('aria-label','Paket');amount.setAttribute('aria-label','İstifadəçinin qiyməti (₼)');amount.inputMode='decimal';
+  for(const p of data.plans)if(![...product.options].some(o=>o.value===p.productId)){const o=el('option',p.product);o.value=p.productId;product.append(o);}
+  const selectedPlan=()=>data.plans.find(p=>p.productId===product.value&&p.planKey===plan.value);
+  const show=()=>{const p=selectedPlan();amount.value=p?.special==null?'':(Number(p.special)/100).toFixed(2);standard.textContent='Standart qiymət: '+priceMoney(p?.standard);};
+  const choose=()=>{plan.replaceChildren();for(const p of data.plans.filter(p=>p.productId===product.value)){const o=el('option',p.plan);o.value=p.planKey;plan.append(o);}show();};product.onchange=choose;plan.onchange=show;choose();
+  const savePrice=async value=>{const p=selectedPlan();if(!p)throw Error('Paket seçin.');await call('/user-controls',{kind:'price',userId:selected.user.id,productId:p.productId,planKey:p.planKey,amount:value});await renderControlsTab({content,tab,selected,call,valid});};
+  for(const p of data.plans.filter(p=>p.special!==null)){const row=el('p',p.product+' · '+p.plan+' · '+priceMoney(p.special)+' ');row.style.cssText='display:flex;align-items:center;gap:8px;flex-wrap:wrap';row.append(button('Redaktə et',()=>{product.value=p.productId;choose();plan.value=p.planKey;show();amount.focus();}));list.append(row);}
+  const saveButton=button('Qiyməti saxla',safe(()=>savePrice(amount.value.replace(',','.'))));saveButton.disabled=!data.seller;
+  const fields=el('div');fields.style.cssText='display:grid;gap:10px';for(const [name,input]of [['Məhsul',product],['Paket',plan],['İstifadəçinin qiyməti (₼)',amount]]){const label=el('label',name);label.append(input);if(input===amount)fields.append(standard);fields.append(label);}
+  content.replaceChildren(el('h3','Xüsusi qiymətlər'),role,el('p',data.seller?data.rule:'Satıcı seçimi bağlıdır. Saxlanmış qiymətlər qorunur; alışda standart qiymət tətbiq olunur.'),fields,saveButton,button('Xüsusi qiyməti sil',safe(()=>savePrice(null))),el('h4','Saxlanmış qiymətlər'),list,error);return;
  }
  if(tab==='referrals'){
   const input=el('input');input.setAttribute('aria-label','Yönləndirmə faizi');input.inputMode='decimal';input.value=data.referralBasisPoints===null?'':String(data.referralBasisPoints/100);const info=el('p',data.referralBasisPoints===null?'Xüsusi faiz yoxdur. Standart referal qaydası hələ qurulmayıb.':input.value+'% — standart qaydanı əvəz edən xüsusi ayar.');

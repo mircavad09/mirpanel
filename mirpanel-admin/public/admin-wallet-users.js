@@ -1,5 +1,5 @@
 const el=(t,text)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;return n;},money=v=>(Number(v)/100).toFixed(2)+' AZN',button=(t,fn)=>{const n=el('button',t);n.type='button';n.className='btn';n.onclick=fn;return n;};
-import {renderControlsTab} from '/admin-user-controls.js?v=customer-view-1';
+import {renderControlsTab} from '/admin-user-controls.js?v=seller-pricing-1';
 const ledgerDate=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 const ledgerMoney=cents=>cents==null?'—':(Number(cents)/100).toFixed(2).replace('.',',')+' ₼';
 const pendingWallet=new Map();

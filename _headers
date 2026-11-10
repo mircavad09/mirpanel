@@ -134,3 +134,6 @@
 
 /robots.txt
   Content-Type: text/plain; charset=utf-8
+
+/customer-pricing.js
+  Cache-Control: no-cache, must-revalidate

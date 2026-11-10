@@ -1,3 +1,4 @@
+import {customerPrices} from './customer-pricing.mjs';
 import {inventoryAvailability} from '../../inventory-availability.mjs';
 import {productSeoSlug} from '../product-pages.mjs';
 import {walletHistory} from './wallet.mjs';
@@ -39,6 +40,7 @@ export async function readCustomerView(pool,userId,path,{catalog,security,store}
    result={...history,items:history.items.map(({cents,reason,created_at})=>({cents,reason,created_at}))};
   }
   else if(p==='/api/community/payment-history')result=await paymentHistory(c,userId,u.searchParams);
+  else if(p==='/api/payments/shop/prices')result=await customerPrices(c,userId,await catalog());
   else if(p==='/api/payments/shop/subscriptions')result=await customerSubscriptions(c,userId,catalog,()=>store.inventorySnapshot());
   else if(p==='/api/payments/storefront'){
    const [data,stock]=await Promise.all([catalog(),store.inventorySnapshot()]);
