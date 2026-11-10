@@ -128,6 +128,11 @@
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 15.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
+      <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
+      <div class="product-page-similar-category">ai</div>
+      <div class="product-page-similar-price">15.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 2.99 ₼" title="Amazon Prime Video">
       <img src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" class="product-page-similar-image" alt="Amazon Prime Video" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
@@ -208,7 +213,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-08d8fbdd7a941df0"></script>
+  <script src="/app.js?v=catalog-478a5712af0c5a7c"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=netflix-ready-rooms-1"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>

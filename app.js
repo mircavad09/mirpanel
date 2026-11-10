@@ -770,7 +770,7 @@ const DATA = {
       },
       "flow": "whatsapp",
       "soldOut": false,
-      "active": false,
+      "active": true,
       "stock": 1,
       "stockEnabled": true,
       "seller": "",
@@ -799,9 +799,14 @@ const DATA = {
       },
       "plans": [
         {
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyText": "",
+          "warrantyDuration": 27,
+          "bestValue": true,
           "label": "1 ayliq  ",
           "months": 1,
-          "price": 18.99,
+          "price": 15.99,
           "regularPrice": 34
         }
       ],
