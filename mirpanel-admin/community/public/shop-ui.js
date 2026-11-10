@@ -253,7 +253,7 @@ async function start(){
   app.replaceChildren(el('h1',route==='/balans'?'Balansım':'Səbətim'),walletLoading?.cloneNode(true)||el('div',null,'site-route-placeholder'));
  }
  if(route==='/sebet'&&!checkoutView){await basket();return;}
- const session=import('/session-state.js?v=avatar-20261104').then(m=>{if(checkoutView)m.invalidateCommunityState();return m.getCommunityState();});
+ const session=import('/session-state.js?v=avatar-20261104').then(m=>m.getCommunityState(checkoutView?{maxAge:0}:undefined));
  void session.catch(()=>{});
  if(route==='/balans'){
   walletPrefetched=api('/wallet');
@@ -264,7 +264,7 @@ async function start(){
   await wallet();
  }else{
   const s=await session;if(closed)return;
-  if(s.ok){profile=s.data.profile;window.mirpanelAccountProfile=profile||null;window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:profile||null}));}
+  if(s.ok)profile=s.data.profile;
   await payment(true);
  }
  if(location.hash==='#emeliyyatlar')document.getElementById('emeliyyatlar')?.scrollIntoView();

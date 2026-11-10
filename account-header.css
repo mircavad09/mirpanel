@@ -43,5 +43,26 @@ html body #accountDropdown .account-menu-payments .account-icon { color: #ffd400
 .account-session-placeholder i { width: 42px; height: 7px; border-radius: 9px; background: #54575d; }
 .account-session-placeholder i:first-child { width: 20px; height: 20px; border-radius: 50%; }
 @media (max-width: 900px) {
-  .account-session-placeholder { width: 98px; height: 40px; }
+  .account-session-placeholder { width: 109px; }
+  body:has([data-account-session-bootstrap]) .site-header-inner {
+    grid-template-columns: minmax(0,1fr);
+    gap: 8px;
+  }
+  body:has([data-account-session-bootstrap]) .site-header-tools {
+    grid-column: 1;
+    grid-row: 2;
+    display: flex;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+  }
+  body:has([data-account-session-bootstrap]) .site-header-tools > .site-header-search {
+    display: flex;
+    flex: 1 1 0;
+    width: 0;
+    min-width: 0;
+    order: 1;
+  }
+  body:has([data-account-session-bootstrap]) .site-header-tools > .site-header-menu-button { order: 0; }
+  [data-account-session-bootstrap] { order: 2; }
 }
