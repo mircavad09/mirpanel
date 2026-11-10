@@ -503,7 +503,8 @@ const DATA = {
           "bestValue": true,
           "label": " 7 gün",
           "months": 7,
-          "price": 0
+          "price": 1.12,
+          "regularPrice": 8
         }
       ],
       "orderConfirmation": {
