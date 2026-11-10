@@ -59,6 +59,20 @@
  function prefetch(){const items=read();remember(items);if(items.length)void verify(items).catch(()=>{});}
  const svg=path=>'<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';
  const trash=svg('<path d="M4 7h16m-14 0 1 13h10l1-13M9 7V4h6v3m-5 3v6m4-6v6"/>'),arrow=svg('<path d="M5 12h14m-6-6 6 6-6 6"/>');
+ function artwork(image){
+  const tile=node('span',null,'mir-cart-artwork');
+  tile.setAttribute('aria-hidden','true');
+  tile.innerHTML=svg('<path d="m3 7 9-4 9 4v10l-9 4-9-4zM3 7l9 4 9-4M12 11v10"/>');
+  if(typeof image!=='string'||!image.trim())return tile;
+  let url;
+  try{url=new URL(image,location.origin+'/');}catch{return tile;}
+  if(!['https:','http:'].includes(url.protocol)||url.username||url.password)return tile;
+  const img=node('img');img.alt='';img.hidden=true;
+  img.addEventListener('load',()=>{img.hidden=false;tile.firstElementChild.remove();},{once:true});
+  img.addEventListener('error',()=>img.remove(),{once:true});
+  tile.append(img);img.src=url.href;
+  return tile;
+ }
  let drawer;
  cart.open=()=>{
   if(drawer?.open)return;
@@ -80,7 +94,8 @@
    const rows=items.map(x=>{
     const p=quoted?.find(y=>itemKey(y)===itemKey(x))||seen.get(itemKey(x))||preview[itemKey(x)]||{},name=p.title||x.productId;
     const row=node('article',null,'mir-cart-item');row.dataset.cartProduct=x.productId;
-    const img=node('img');img.src=p.image||'/favicon.ico';img.alt='';
+    const product=catalog().find(product=>product.id===x.productId);
+    const img=artwork(product?product.image:p.image);
     const info=node('div',null,'mir-cart-info');info.append(node('strong',name),node('small',p.planName||'Seçilmiş paket'),node('b',p.unitCents==null?'—':azMoney(p.unitCents*x.quantity)));
     if(p.salesDisabled)info.append(node('small','Stokda yoxdur. Ödənişə keçmək üçün məhsulu səbətdən silin.'));
     for(const field of p.maskedDetails||[])info.append(node('small',field.label+': '+field.value));
@@ -93,7 +108,7 @@
    });
    const more=node('section',null,'mir-cart-more');more.append(node('p','Daha çox məhsul əlavə et'));
    for(const {p,price} of related.filter(({p})=>!items.some(x=>x.productId===p.id))){
-    const row=node('article',null,'mir-cart-item mir-cart-suggestion'),img=node('img');img.src=p.image||'/favicon.ico';img.alt='';
+    const row=node('article',null,'mir-cart-item mir-cart-suggestion'),img=artwork(p.image);
     const info=node('div',null,'mir-cart-info');
     info.append(node('strong',p.title),node('b',azMoney(price)+(p.plans.length>1?'-dən başlayır':'')));
     const b=action('+',()=>{
@@ -136,5 +151,5 @@
  }
  function mount(){const order=document.getElementById('pp-order-btn');if(order&&!document.getElementById('cartAddProduct')){const b=document.createElement('button'),about=order.parentElement.querySelector('.product-page-action.is-about'),label=document.createElement('span');b.id='cartAddProduct';b.type='button';b.disabled=order.disabled;b.className='cart-add-product'+(about?' product-page-action is-cart':'');b.innerHTML=icon;label.textContent='Səbətə əlavə et';b.append(label);b.onclick=()=>{try{if(typeof currentProduct==='undefined'||!currentProduct||!Number.isInteger(currentPlanIdx))throw Error('Əvvəlcə məhsul və planı seçin.');if(order.disabled)throw Error('Seçilmiş paket hazırda stokda yoxdur.');cart.add(currentProduct.id,currentPlanIdx);fly(b,currentProduct);label.textContent='Əlavə edildi';clearTimeout(b.feedbackTimer);b.feedbackTimer=setTimeout(()=>label.textContent='Səbətə əlavə et',1400);}catch(e){alert(e.message);}};if(about)about.replaceWith(b);else order.before(b);}
  const header=document.querySelector('.site-header-tools');if(header&&!document.getElementById('cartHeaderLink')){const a=document.createElement('a');a.id='cartHeaderLink';a.href='/sebet';a.className='cart-header-link';a.setAttribute('aria-label','Səbət');a.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l3 13h11l3-9H6 M10 21h.01 M18 21h.01"/></svg><span>Səbət</span><small></small>';header.append(a);}const n=document.querySelector('#cartHeaderLink small'),count=read().reduce((s,x)=>s+x.quantity,0),text=count>99?'99+':count?String(count):'';if(n&&n.textContent!==text)n.textContent=text;const link=document.getElementById('cartHeaderLink');if(link)link.setAttribute('aria-label',count?'Səbət, '+count+' məhsul':'Səbət');}
- const css=document.createElement('link');css.rel='stylesheet';css.href='/cart-store.css?v=guest-order-20261106';document.head.append(css);new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});window.addEventListener('mirpanel:cart',mount);window.addEventListener('storage',e=>{if(e.key===key)mount();});mount();
+ const css=document.createElement('link');css.rel='stylesheet';css.href='/cart-store.css?v=cart-artwork-1';document.head.append(css);new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});window.addEventListener('mirpanel:cart',mount);window.addEventListener('storage',e=>{if(e.key===key)mount();});mount();
 })();
