@@ -262,7 +262,6 @@ function netflixScreen(animation,create){
  life.signal.addEventListener('abort',()=>completedVisibility?.disconnect(),{once:true});
  const icons={preparing:'⏳',approved:'⏳',rejected:'❌'};
  const lineIcon=path=>'<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+path+'"/></svg>';
- const docIcon=lineIcon('M6 3h8l4 4v14H6z M14 3v5h4 M9 12h6 M9 16h6');
  const copyIcon=lineIcon('M8 8h12v12H8z M16 8V4H4v12h4');
  const repeatIcon=lineIcon('M3 12a9 9 0 1 1 2.6 6.4 M3 4v8h8');
  const clockIcon=lineIcon('M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z M12 7v5l3 2');
@@ -285,7 +284,7 @@ function netflixScreen(animation,create){
    const extraDuration=Number.isInteger(duration)&&duration>0&&!new RegExp('(?:^|\\D)'+duration+'\\s*ay','iu').test(x.planName||'')?' · '+duration+' ay':'';
    const delivered=(['preparing','completed'].includes(o.status)?o.deliveries||[]:[]).filter(d=>d.line===i).map(d=>'<article class="browser-order-delivery" data-delivery="'+esc(d.id)+'"><header><span>'+esc(x.title)+' · '+esc(x.planName)+(d.quantity>1?' · '+esc(d.quantity)+' ədəd':'')+'</span><button type="button" data-copy-delivery disabled>'+copyIcon+'Kopyala</button></header><div class="browser-delivery-credentials"></div><pre hidden></pre><span role="status" data-delivery-status></span></article>').join('');
    const cancelled=o.cancellation?.lines?.find(line=>line.index===i)?.quantity||0;
-   return '<section class="browser-order-line"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2><div class="browser-order-line-meta"><span>'+esc(x.planName)+esc(extraDuration)+'</span>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<strong class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</strong></div></div><div class="browser-order-line-buttons"><button type="button" data-order-info="'+i+'" aria-haspopup="dialog" aria-expanded="false">'+docIcon+'Məlumat və təlimat</button><button type="button" data-buy-again="'+i+'">'+repeatIcon+'Yenidən al</button></div></div>'+(cancelled?'<p>'+esc(cancelled)+' ədəd ləğv edildi.</p>':'')+(delivered?expiryBar(x.expiresOn):'')+'<div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(cancelled?'Bu məhsulun təhvil verilməyən hissəsi ləğv edildi.':o.status==='completed'?'Status: Tamamlandı. Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Status: '+esc(statuses[o.status]||'Status məlum deyil')+'. Təhvil məlumatı hazır deyil.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
+   return '<section class="browser-order-line"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2><div class="browser-order-line-meta"><span>'+esc(x.planName)+esc(extraDuration)+'</span>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<strong class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</strong></div></div><div class="browser-order-line-buttons"><button type="button" data-order-info="'+i+'" aria-haspopup="dialog" aria-expanded="false" aria-label="Təlimat" class="order-guide-image-button"><img src="/assets/instruction-button-orange.webp" width="600" height="200" alt="" decoding="async"></button><button type="button" data-buy-again="'+i+'">'+repeatIcon+'Yenidən al</button></div></div>'+(cancelled?'<p>'+esc(cancelled)+' ədəd ləğv edildi.</p>':'')+(delivered?expiryBar(x.expiresOn):'')+'<div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(cancelled?'Bu məhsulun təhvil verilməyən hissəsi ləğv edildi.':o.status==='completed'?'Status: Tamamlandı. Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Status: '+esc(statuses[o.status]||'Status məlum deyil')+'. Təhvil məlumatı hazır deyil.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
   }).join('');
   const total=o.amount==null?'—':esc(money(o.amount));
   return '<details class="browser-order" data-order-id="'+esc(o.id)+'" data-order-code="'+esc(o.orderCode)+'"><summary class="browser-order-header">'+photo(items[0]?.image)+'<div class="browser-order-heading"><div class="browser-order-meta"><span class="browser-order-status" data-status="'+esc(o.status)+'">'+(o.status==='completed'?completedIcon:icons[o.status]?'<span aria-hidden="true">'+icons[o.status]+'</span> ':'')+esc(statuses[o.status]||'Status məlum deyil')+'</span><span class="browser-order-code">№ '+esc(o.orderCode)+'</span><time>'+esc(date(o.createdAt))+'</time></div><strong>'+esc(o.product)+'</strong></div><strong class="browser-order-price">'+total+'</strong><svg class="browser-order-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><div class="browser-order-items">'+rows+(o.cancellation?'<p class="browser-order-cancellation">'+esc(o.statusMessage)+'</p>'+(o.cancellation.reason?'<p class="browser-order-cancellation" style="white-space:pre-wrap">Səbəb — '+esc(o.cancellation.reason)+'</p>':''):'')+'</div><div class="browser-order-actions browser-order-footer"><div class="browser-order-total"><span>Cəmi</span><strong class="browser-order-price">'+total+'</strong></div>'+(o.receiptAvailable?'<button type="button" data-receipt="'+esc(o.id)+'">Qəbzə bax</button>':'')+'</div></details>';
@@ -307,7 +306,7 @@ function netflixScreen(animation,create){
   if(!append){
    const ids=new Set(d.orders.map(o=>o.id));
    for(const node of [...root.children])if(!node.dataset.orderId||!ids.has(node.dataset.orderId)){
-    for(const icon of node.querySelectorAll('.order-completed-icon'))completedVisibility?.unobserve(icon);
+    for(const icon of node.querySelectorAll('.order-completed-icon,.order-guide-image-button'))completedVisibility?.unobserve(icon);
     node.remove();
    }
    seen.clear();
@@ -321,9 +320,9 @@ function netflixScreen(animation,create){
    if(!node||orderMarkup.get(node)!==markup){
     const template=document.createElement('template');template.innerHTML=markup;
     const next=template.content.firstElementChild;
-    if(node){for(const icon of node.querySelectorAll('.order-completed-icon'))completedVisibility?.unobserve(icon);node.replaceWith(next);}else root.append(next);
+    if(node){for(const icon of node.querySelectorAll('.order-completed-icon,.order-guide-image-button'))completedVisibility?.unobserve(icon);node.replaceWith(next);}else root.append(next);
     node=next;orderMarkup.set(node,markup);
-    for(const icon of node.querySelectorAll('.order-completed-icon'))completedVisibility?.observe(icon);
+    for(const icon of node.querySelectorAll('.order-completed-icon,.order-guide-image-button'))completedVisibility?.observe(icon);
    }
    ordered.push(node);
    repeats.set(node,items.map(x=>x.repeat));guideItems.set(node,items);
