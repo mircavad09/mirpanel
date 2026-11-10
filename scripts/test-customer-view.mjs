@@ -30,7 +30,7 @@ try{
   const id=purchase.orderId,delivery=f.id();ids[user]=id;deliveries[user]=delivery;
   const snap={productId:'ordinary',planId:'month',planName:'1 aylıq',unitPrice:5,quantity:1,amount:5,durationMonths:1,image:'/synthetic.png'};
   await f.pool.query(`update public.payment_orders set product_id='ordinary',plan_name='1 aylıq',product_title=$2,status='approved',checkout_snapshot=$3,completed_at=clock_timestamp(),service_expires_on=current_date+20,receipt_path='synthetic/receipt.png',receipt_mime='image/png' where id=$1`,[id,'Sintetik məhsul '+user,snap]);
-  await f.pool.query('insert into customer_order_deliveries(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,0,1,$3,\'synthetic\')',[delivery,id,security.encryptSecret(JSON.stringify({id:delivery,order:id,line:0,message:'Yalnız '+user+' üçün\nİstifadə qaydası',email:user+'@example.test',password:'test-'+user}))]);
+  await f.pool.query('insert into customer_order_deliveries(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,0,1,$3,\'synthetic\')',[delivery,id,security.encryptSecret(JSON.stringify({id:delivery,order:id,line:0,message:'Yalnız '+user+' üçün\nİstifadə qaydası\n\nGirişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.',email:user+'@example.test',password:'test-'+user}))]);
  }
  await f.pool.query("update wallet_accounts set cents=case user_id when 'a' then 4890 else 2100 end where user_id in ('a','b')");
  const dependencies={catalog:async()=>fixtureCatalog,security,store:{...f.store,inventorySnapshot:()=>f.rpc('inventory_snapshot')}};
@@ -100,17 +100,21 @@ try{
     await page.locator('.profile-avatar').click({force:true});
     await page.locator('.customer-view-notice').filter({hasText:'Bu rejim yalnız baxış üçündür.'}).waitFor();
     eq(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
-    for(const tab of ['orders','codes','subscriptions','payments']){
+    const guideOnly=process.argv.includes('--delivery-guide');
+    for(const tab of guideOnly?['orders']:['orders','codes','subscriptions','payments']){
      await page.locator('[data-account-tab="'+tab+'"]').click();
      const target={orders:'.browser-order',codes:'.codes-card',subscriptions:'.subs-card',payments:'.account-payment-list article'}[tab];
      try{await page.locator(target).first().waitFor({timeout:18000});}catch(e){await page.screenshot({path:out+'/failure.png',fullPage:true});console.log(JSON.stringify({tab,text:await page.locator('main').textContent(),pageErrors,serverErrors:errors}));throw e;}
      if(tab==='orders'){
       await page.locator('.browser-order[open]').getByText('Yalnız '+user+' üçün',{exact:false}).waitFor();
-      await page.locator('[data-order-info]').click();
-      await page.locator('.browser-order-guide[open]').getByRole('button',{name:'Təlimat',exact:true}).click();
+      const beforeGuide=page.url(),deliveryGuide=page.getByRole('link',{name:'Məlumat və təlimat',exact:true});
+      await deliveryGuide.click();
+      eq(await page.locator('.browser-order-guide[open]').getByRole('button',{name:'Təlimat',exact:true}).getAttribute('aria-pressed'),'true');
       await page.locator('.browser-guide-handset-screen .capcut-demo').waitFor();
       await page.getByRole('button',{name:'Növbəti',exact:true}).click();
       await page.getByRole('button',{name:'Təlimatı bağla'}).click();
+      eq(page.url(),beforeGuide);
+      eq(await deliveryGuide.evaluate(n=>n===document.activeElement),true);
       await page.locator('[data-receipt]').click();
       await page.locator('#browserReceipt[open] img').waitFor({timeout:6000});
       await page.locator('#browserReceiptClose').click();
@@ -125,6 +129,7 @@ try{
      if(tab==='subscriptions'){eq(await page.locator('.subs-renew').first().getAttribute('aria-disabled'),'true');eq(await page.locator('.subs-image img').first().getAttribute('src'),'https://mirpanel.com/synthetic.png');}
      if(tab==='codes'){await page.getByRole('button',{name:'Göstər',exact:true}).first().click();await page.getByText('Yalnız '+user+' üçün',{exact:false}).waitFor();eq((await page.locator('main').textContent()).includes('test-'+(user==='a'?'b':'a')),false);}
     }
+    if(!guideOnly){
     await page.locator('[data-account-tab="expenses"]').click();
     await page.locator('.account-expenses').waitFor();
     await page.locator('[data-view-products]').click();
@@ -144,6 +149,7 @@ try{
     await page.getByRole('link',{name:'← Profilə qayıt'}).click();
     await page.locator('.profile-hero h1').waitFor();
     if(user==='a'){await page.locator('[data-account-tab="subscriptions"]').click();await page.locator('.subs-card').waitFor();await page.screenshot({path:out+'/'+name+'-'+width+'.png',fullPage:true});}
+    }
     eq(pageErrors,[]);
     for(const path of ['/api/community/profile','/api/community/messages','/api/community/notifications/read','/api/payments/shop/checkout','/api/payments/shop/renew','/api/payments/shop/drafts','/api/payments/shop/topup','/api/payments/orders'])eq((await ctx.request.post(base+grant.url.replace('/admin/','/api/admin/')+'?'+new URLSearchParams({path}),{data:{}})).status(),403);
     await page.close();

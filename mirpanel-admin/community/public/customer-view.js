@@ -1,4 +1,4 @@
-import {renderAccountPanel} from './account-panel.js?v=capcut-desktop-1';
+import {renderAccountPanel} from './account-panel.js?v=delivery-guide-1';
 import {renderViewCatalog} from './customer-view-catalog.js?v=read-navigation-2';
 const app=document.getElementById('communityApp'),base=location.pathname,apiBase=base.replace('/admin/','/api/admin/'),state={};
 const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v!==undefined)n.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)n.append(c);return n;};
@@ -51,13 +51,14 @@ function protect(){
   if(n.tagName==='BUTTON')n.disabled=false;
   if(n.tagName==='A'){n.removeAttribute('href');n.setAttribute('role','button');n.tabIndex=0;}
  });
- app.querySelectorAll('a[href]').forEach(a=>{const u=viewUrl(a.getAttribute('href'));if(u)a.href=u.href;});
+ app.querySelectorAll('a[href]:not([data-delivery-guide])').forEach(a=>{const u=viewUrl(a.getAttribute('href'));if(u)a.href=u.href;});
  app.querySelectorAll('input[type="file"]').forEach(n=>n.disabled=true);
 }
 document.addEventListener('click',e=>{
  if(!e.target.closest('#communityApp,.customer-view-banner'))return;
  if(e.target.closest(denied)){e.preventDefault();e.stopImmediatePropagation();notify();return;}
  const a=e.target.closest('a');if(!a)return;
+ if(a.matches('.browser-order-delivery a[data-delivery-guide][href="#teslim-telimat"]')){e.preventDefault();return;}
  if(a.getAttribute('href')==='/admin.html#communityUsers')return;
  const u=viewUrl(a.getAttribute('href'));
  if(u){e.preventDefault();e.stopImmediatePropagation();void navigate(u.href);return;}

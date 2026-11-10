@@ -28,6 +28,8 @@
 .browser-delivery-credentials>div>span{color:#b6c2ba}
 .account-panel .browser-delivery-credentials button{color:#6ff4cd;border-color:transparent;background:none;display:grid;place-items:center;min-width:40px}
 .account-panel .browser-order-delivery>pre:not([hidden]){background:#0d1412;border-color:transparent}
+.account-panel .browser-order-delivery a[data-delivery-guide]{color:#71e5a6;text-decoration:underline;text-underline-offset:.16em}
+.account-panel .browser-order-delivery a[data-delivery-guide]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .browser-order-delivery [data-delivery-status]:not(:empty){display:block;margin-top:5px;color:#bde9cf}
 @media(max-width:600px){.account-panel .browser-order-delivery button{min-height:44px}}
 .account-panel .browser-order-delivery button{color:#f3f4f6;background:#242a28;border:1px solid #426b5b;border-radius:8px;padding:6px 9px;min-height:36px}

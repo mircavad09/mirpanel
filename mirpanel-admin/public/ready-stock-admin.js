@@ -1,5 +1,6 @@
 const mounts=new WeakMap();
 const endpoint='/api/admin/payment-ready-stock';
+const guideText='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';
 export function mountReadyStock(host,api){
  if(mounts.has(host)){void mounts.get(host)();return;}
  host.innerHTML=`<div class="readyStockLayout">
@@ -16,7 +17,7 @@ export function mountReadyStock(host,api){
     <p data-scope></p>
     <label class="readyStockCheck"><input name="auto" type="checkbox" role="switch"> Ödəniş təsdiqlənəndə avtomatik təhvil <strong data-auto aria-hidden="true">Bağlı</strong></label>
     <label>Müştəriyə təqdim ediləcək hazır mesaj<textarea name="template" rows="4" maxlength="8000" spellcheck="false"></textarea></label>
-    <div class="readyStockActions"><button class="btn" type="button" data-save-message>Hazır mesajı saxla</button></div>
+    <div class="readyStockActions"><button class="btn" type="button" data-add-guide>Məlumat və təlimat keçidini əlavə et</button><button class="btn" type="button" data-save-message>Hazır mesajı saxla</button></div>
     <div data-messages></div>
     <div class="readyStockActions"><button class="btn" type="button" data-add-unit>+ Yeni hesab əlavə et</button><button class="btn primary" type="submit">Hesabları və təhvil ayarını saxla</button></div>
    </form>
@@ -27,7 +28,7 @@ export function mountReadyStock(host,api){
  const form=host.querySelector('form'),{product,plan,sales,auto,template}=form.elements;
  const q=s=>host.querySelector(s),messageList=q('[data-messages]'),report=q('[role=status]'),list=q('[data-product-list]');
  const submit=form.querySelector('[type=submit]'),saveSales=q('[data-save-sales]'),editSales=q('[data-edit-sales]'),editor=q('#readyStockSaleEditor'),add=q('[data-add-unit]');
- const saveMessage=q('[data-save-message]');
+ const saveMessage=q('[data-save-message]'),addGuide=q('[data-add-guide]');
  const drafts=new Map(),lastPlan=new Map(),messageDrafts=new Map();
  let activeDraft=null,activeProduct;
  let products=[],pending=null,busy=false,loaded=false,read=null;
@@ -40,6 +41,7 @@ export function mountReadyStock(host,api){
   sales.disabled=locked||absent;editSales.disabled=locked||absent;
   for(const node of messageList.querySelectorAll('input,button'))node.disabled=locked||absent;
   template.disabled=locked||!selected().p;
+  addGuide.disabled=template.disabled||template.value.trimEnd().split(/\r?\n/).at(-1)===guideText;
   saveMessage.disabled=busy||!selected().p||(pending&&pending.type!=='message')||(!pending&&template.value===selected().p?.message);
   add.disabled=locked||absent||accounts().length>=20;
   submit.disabled=busy||absent||(pending&&pending.type!=='accounts');
@@ -159,6 +161,13 @@ export function mountReadyStock(host,api){
  product.onchange=()=>{rememberDraft();fillPlans(lastPlan.get(product.value));renderPlan();};
  plan.onchange=()=>{rememberDraft();renderPlan();};auto.onchange=renderSwitch;add.onclick=()=>{addAccount();messageList.lastElementChild.querySelector('input').focus();};
  template.oninput=controls;saveMessage.onclick=()=>void send('message');
+ addGuide.onclick=()=>{
+  if(addGuide.disabled)return;
+  const text=template.value.trimEnd(),next=(text?text+'\n\n':'')+guideText;
+  if(next.length>template.maxLength){say('Keçid üçün hazır mesajı bir qədər qısaldın.',true);return;}
+  template.value=next;controls();template.focus();template.setSelectionRange(next.length,next.length);
+  say('Keçid hazır mesaja əlavə edildi. Hazır mesajı saxlayın.');
+ };
  editSales.onclick=()=>{setEditor(editor.hidden);if(!editor.hidden)sales.focus();};
  saveSales.onclick=()=>void send('sales');form.onsubmit=e=>{e.preventDefault();void send('accounts');};
  addAccount();mounts.set(host,refresh);void refresh();

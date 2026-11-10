@@ -54,6 +54,17 @@ function capcutScanPhone(create){
  return phone;
 }
 
+function renderDeliveryMessage(pre,text){
+ const deliveryGuideText='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';
+ const message=text.trimEnd(),start=message.length-deliveryGuideText.length;
+ // Only the fixed final line is interactive. Everything entered by admin
+ // remains text, never markup or a user-supplied navigation destination.
+ if(!message.endsWith(deliveryGuideText)||(start>0&&message[start-1]!=='\n')){pre.textContent=text;return;}
+ const caption='Məlumat və təlimat',index=start+deliveryGuideText.indexOf(caption),link=document.createElement('a');
+ link.textContent=caption;link.href='#teslim-telimat';link.dataset.deliveryGuide='';link.dataset.nativeNavigation='';
+ link.setAttribute('aria-haspopup','dialog');
+ pre.replaceChildren(text.slice(0,index),link,text.slice(index+caption.length));
+}
 function spotifyScreen(animation,create){
  const screen=create('div',null,'spotify-demo');screen.dataset.scene=animation;screen.lang='tr';
  const box=(text,cls)=>create('div',text,cls);
@@ -318,7 +329,7 @@ function netflixScreen(animation,create){
     }
     box.querySelector('.browser-delivery-credentials').append(room);
    }
-   const pre=box.querySelector('pre');pre.textContent=d.text;pre.hidden=false;
+   const pre=box.querySelector('pre');renderDeliveryMessage(pre,d.text);pre.hidden=false;
    deliveryData.set(box,{d,rows});box.querySelector('[data-copy-delivery]').disabled=false;status.textContent='';
   }catch(e){
    if(valid()&&(e.status===401||e.status===403)){gate();return;}
@@ -515,8 +526,8 @@ function netflixScreen(animation,create){
   }
   return screen;
  }
- function openGuide(trigger,accounts){
-  const order=trigger.closest('[data-order-id]'),index=Number(trigger.dataset.orderInfo),item=guideItems.get(order)?.[index];
+ function openGuide(trigger,accounts,initialTab='info'){
+  const line=trigger.closest('.browser-order-line'),order=trigger.closest('[data-order-id]'),index=Number(line.querySelector('[data-order-info]').dataset.orderInfo),item=guideItems.get(order)?.[index];
   if(!item||guideDialog.open)return;
   const create=(tag,text,cls)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(cls)n.className=cls;return n;};
   const button=(label,action)=>{const b=create('button',label);b.type='button';b.onclick=action;return b;};
@@ -528,7 +539,7 @@ function netflixScreen(animation,create){
   const deliveryStatus=accounts.querySelector('[data-delivery]')?null:accounts.querySelector('p')?.textContent;
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
   footer.append(button('Bağla',()=>guideDialog.close()));
-  let data=null,failed=false,active='info',track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
+  let data=null,failed=false,active=initialTab,track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
   const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
   phoneShell.append(phoneScreen);
   const capcutStage=create('div',null,'capcut-pc-stage'),scanSlot=create('div',null,'capcut-pc-scan-slot');
@@ -724,6 +735,11 @@ function netflixScreen(animation,create){
   repeatDialog.showModal();
  }
  on(root,'click',e=>{
+  const deliveryGuide=e.target.closest('[data-delivery-guide]');
+  if(deliveryGuide){
+   e.preventDefault();
+   return openGuide(deliveryGuide,deliveryGuide.closest('.browser-order-instructions'),'steps');
+  }
   const info=e.target.closest('[data-order-info]'),again=e.target.closest('[data-buy-again]');
   if(info)return openGuide(info,info.closest('.browser-order-line').querySelector('.browser-order-instructions'));
   if(again)return buyAgain(repeats.get(again.closest('[data-order-id]'))?.[Number(again.dataset.buyAgain)]);
