@@ -18,6 +18,7 @@ import { createStoriesRepository } from "./stories-repository.mjs";
 import { createHomepageBannersRepository } from "./homepage-banners-repository.mjs";
 import { createProductSalesRepository } from './product-sales-repository.mjs';
 import { createEmployeeSystem } from './employee-api.mjs';
+import {editorIntent,rebaseEditorContent} from './editor-rebase.mjs';
 import {createAdminPush} from './admin-push.mjs';
 import {createAdminSessions,ADMIN_IDLE_MS} from './admin-sessions.mjs';
 import {createOwnerCommunity} from './community/service.mjs';
@@ -252,6 +253,7 @@ async function github(pathname, options = {}) {
 
   const response = await fetch(`https://api.github.com${pathname}`, {
     ...options,
+    cache: "no-store",
     signal: AbortSignal.timeout(!options.method || options.method === "GET" ? 15000 : 25000),
     headers: {
       Accept: "application/vnd.github+json",
@@ -294,6 +296,11 @@ async function getRepoFile(filePath, ref = config.branch) {
 
 async function getAppFile() {
   return getRepoFile("app.js");
+}
+
+async function getEditorAppFile() {
+  const parent = await getBranchHead();
+  return getRepoFile("app.js", parent.commitSha);
 }
 
 function bumpAssetVersions(source, version) {
@@ -565,6 +572,36 @@ async function getBranchHead() {
   };
 }
 
+async function prepareEditorChange(body, current) {
+  const latest = extractAdminState(current.source);
+  let base = latest;
+  if (body.baseSha !== current.sha) {
+    const blob = await github(`/repos/${config.repo}/git/blobs/${body.baseSha}`);
+    const source = Buffer.from(blob.content, "base64").toString("utf8");
+    if (gitBlobSha(source) !== body.baseSha) throw Object.assign(Error("Qaralamanın ilkin versiyası oxunmadı."), {status:409});
+    base = extractAdminState(source);
+  }
+  for (const product of body.data.products || []) {
+    if (product._stableId && base.products.some(row => row.id === product._stableId) && product.id !== product._stableId)
+      throw Object.assign(Error(`${product._stableId}: məhsul ID-si yaradıldıqdan sonra dəyişdirilə bilməz.`), {status:400});
+  }
+  const mine = editorIntent(base, body.data);
+  const choices = body.choices || {};
+  const {data,conflicts} = rebaseEditorContent(base,mine,latest,choices);
+  const digest = editorDigest(body.baseSha,mine,choices);
+  return {data,conflicts,digest,latest};
+}
+
+function editorDigest(baseSha,data,choices={}) {
+  return crypto.createHash("sha256").update(JSON.stringify({baseSha,data,choices})).digest("hex");
+}
+const editorConflict = conflicts => ({
+  code: "EDITOR_FIELD_CONFLICT",
+  error: "Eyni sahə GitHub-da da dəyişib. Saxlanacaq mətni seçin.",
+  conflicts
+});
+const validEditorPayload = body => /^[a-f0-9]{40}$/i.test(body.baseSha || "") && body.data && typeof body.data === "object";
+
 async function createGitBlob(content) {
   const binary = Buffer.isBuffer(content);
   const blob = await github(`/repos/${config.repo}/git/blobs`, {
@@ -617,7 +654,7 @@ async function commitRepoFiles({ parent, files, removedPaths, message }) {
     const current = await getBranchHead().catch(() => null);
     if (current?.commitSha !== commit.sha) {
       if (current && current.commitSha !== parent.commitSha) {
-        throw Object.assign(new Error("Yayım zamanı GitHub məlumatı dəyişdi."), { status: 409 });
+        throw Object.assign(new Error("Yayım zamanı GitHub məlumatı dəyişdi."), { status: 409, code: "EDITOR_REF_MOVED" });
       }
       throw error;
     }
@@ -941,7 +978,7 @@ async function handleApi(request, response) {
   }
 
   if (request.method === "GET" && request.url === "/api/admin/state") {
-    const file = await getAppFile();
+    const file = await getEditorAppFile();
     const session = getSession(request);
     const draft = session.draft;
     const hasDraft = Boolean(draft?.data && draft?.baseSha);
@@ -1166,18 +1203,12 @@ async function handleApi(request, response) {
     const session = requireMutationAuth(request, response);
     if (!session) return;
     const body = await readBody(request);
-    if (!body.baseSha || !body.data) {
+    if (!validEditorPayload(body)) {
       return json(response, 400, { error: "baseSha və data tələb olunur." });
     }
-    const current = await getAppFile();
-    if (current.sha !== body.baseSha) {
-      return json(response, 409, {
-        error: "Məzmun GitHub-da dəyişib. Səhifəni yeniləyin.",
-        currentSha: current.sha
-      });
-    }
-    const currentData = extractAdminState(current.source);
-    const normalized = normalizeAdminPayload(mergeAdminPayload(currentData, body.data));
+    const current = await getEditorAppFile();
+    const {data:normalized,conflicts,digest} = await prepareEditorChange(body,current);
+    if (conflicts.length) return json(response,409,editorConflict(conflicts));
     const previewProductPages = generateProductPageFiles(normalized.products, normalized.siteSections, normalized.cms, normalized.content);
     const previewProductListing = generateProductListingPageFiles(normalized.products, normalized.siteSections, normalized.cms);
     const previewInfoPages = generateInfoPageFiles(normalized.siteSections, normalized.ui, normalized.cms);
@@ -1185,10 +1216,6 @@ async function handleApi(request, response) {
       patchAppSource(current.source, normalized),
       new Map([...previewProductPages, ...previewProductListing, ...previewInfoPages])
     );
-    const digest = crypto
-      .createHash("sha256")
-      .update(JSON.stringify({ baseSha: body.baseSha, data: normalized }))
-      .digest("hex");
     const previewCssPath = path.join(root, "..", "info-page.css");
     const previewCss = fs.existsSync(previewCssPath) ? fs.readFileSync(previewCssPath, "utf8") : "";
     const prepareInfoPreview = (pageHtml) => pageHtml
@@ -1225,13 +1252,10 @@ async function handleApi(request, response) {
     }
     const [historical, current] = await Promise.all([
       getRepoFile("app.js", targetSha),
-      getAppFile()
+      getEditorAppFile()
     ]);
     const normalized = extractAdminState(historical.source);
-    const digest = crypto
-      .createHash("sha256")
-      .update(JSON.stringify({ baseSha: current.sha, data: normalized }))
-      .digest("hex");
+    const digest = editorDigest(current.sha, normalized);
     session.preview = { digest, baseSha: current.sha, at: Date.now(), restoredFrom: targetSha };
     return json(response, 200, {
       ok: true,
@@ -1261,37 +1285,12 @@ async function handleApi(request, response) {
     if (session.lastPublication?.fingerprint === fingerprint) return json(response, 200, session.lastPublication.result);
     if ((session.draft?.savedAt || 0) !== (body.draftRevision || 0)) return json(response, 409, { error: "Qaralama başqa pəncərədə dəyişib." });
 
-    if (!body.baseSha || !body.data) {
-      return json(response, 400, {
-        error: "baseSha və data tələb olunur."
-      });
-    }
-
+    if (!validEditorPayload(body)) return json(response,400,{error:"baseSha və data tələb olunur."});
+    for (let attempt = 0; attempt < 3; attempt++) {
     const parent = await getBranchHead();
     const current = await getRepoFile("app.js", parent.commitSha);
-
-    if (current.sha !== body.baseSha) {
-      return json(response, 409, {
-        error: "app.js GitHub-da başqa yerdə dəyişib. Səhifəni yenilə.",
-        currentSha: current.sha
-      });
-    }
-
-    const previousData = extractAdminState(current.source);
-    const previousIds = new Set(previousData.products.map((product) => product.id));
-    for (const product of body.data.products || []) {
-      const stableId = String(product._stableId || "");
-      if (stableId && previousIds.has(stableId) && stableId !== String(product.id || "")) {
-        return json(response, 400, {
-          error: `${stableId}: məhsul ID-si yaradıldıqdan sonra dəyişdirilə bilməz.`
-        });
-      }
-    }
-    const adminData = normalizeAdminPayload(mergeAdminPayload(previousData, body.data));
-    const digest = crypto
-      .createHash("sha256")
-      .update(JSON.stringify({ baseSha: body.baseSha, data: adminData }))
-      .digest("hex");
+    const {data:adminData,conflicts,digest,latest:previousData} = await prepareEditorChange(body,current);
+    if (conflicts.length) return json(response,409,editorConflict(conflicts));
     if (
       !body.previewDigest ||
       !session.preview ||
@@ -1327,7 +1326,9 @@ async function handleApi(request, response) {
     }
     validateGeneratedOutput(patched, files);
     if ((session.draft?.savedAt || 0) !== (body.draftRevision || 0)) return json(response, 409, { error: "Qaralama başqa pəncərədə dəyişib." });
-    const result = await commitRepoFiles({
+    let result;
+    try {
+    result = await commitRepoFiles({
       parent,
       files,
       removedPaths: [
@@ -1336,6 +1337,10 @@ async function handleApi(request, response) {
       ],
       message: "Update Mirpanel content and product pages from admin panel"
     });
+    } catch (error) {
+      if (error.code === "EDITOR_REF_MOVED" && attempt < 2) continue;
+      throw error;
+    }
     const appSha = result.blobs.get("app.js");
     session.preview = null;
     session.draft = null;
@@ -1343,6 +1348,7 @@ async function handleApi(request, response) {
 
     const publication = {
       sha: appSha,
+      data: adminData,
       version,
       commitSha: result.commitSha,
       cacheCommitSha: result.commitSha,
@@ -1355,6 +1361,7 @@ async function handleApi(request, response) {
     };
     session.lastPublication = { digest, fingerprint, result: publication };
     return json(response, 200, publication);
+    }
     } finally { editorWrites.delete(session); }
   }
 

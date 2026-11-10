@@ -5,7 +5,8 @@ import { once } from "node:events";
 import fs from "node:fs";
 import http from "node:http";
 import vm from "node:vm";
-import { extractAdminState } from "../mirpanel-admin/core.mjs";
+import { termsInfo } from "../mirpanel-admin/cart-drafts.mjs";
+import { extractAdminState, patchAppSource } from "../mirpanel-admin/core.mjs";
 
 // Real admin server and publisher, isolated Git and delivery origins. All outbound
 // traffic from the child is refused except for this loopback fixture.
@@ -17,6 +18,8 @@ const baseTree = new Map(["app.js", "index.html"].map(path => {
   blobs.set(sha, content);
   return [path, sha];
 }));
+let staleContents = null, moveOnCommit = null;
+const parents=new Map();
 let head = "a".repeat(40), live = head, writes = 0, loseRef = false, slow = false, abortRead = false;
 trees.set("root", baseTree); commits.set(head, "root");
 const json = (res, status, value) => { res.writeHead(status, {"content-type":"application/json"}); res.end(JSON.stringify(value)); };
@@ -41,20 +44,23 @@ const mock = http.createServer(async (req, res) => {
   const git = route.replace(/^\/repos\/[^/]+\/[^/]+/,"");
   if (git.startsWith("/contents/")) {
     if (abortRead) { abortRead = false; return res.destroy(); }
-    const ref=u.searchParams.get("ref"), path=decodeURIComponent(git.slice(10)), content=bytes(commits.has(ref)?ref:head,path);
+    const ref=u.searchParams.get("ref"), path=decodeURIComponent(git.slice(10)), content=bytes(commits.has(ref)?ref:staleContents||head,path);
     return content ? json(res,200,{sha:blob(content),content:content.toString("base64")}) : json(res,404,{});
   }
   if (git.startsWith("/git/ref/heads/")) return json(res,200,{object:{sha:head}});
   if (git.startsWith("/git/commits/")) return json(res,200,{tree:{sha:commits.get(git.split("/").at(-1))}});
+  if (git.startsWith("/git/blobs/")) { const data=blobs.get(git.split("/").at(-1));return data?json(res,200,{content:data.toString("base64")}):json(res,404,{}); }
   if (git === "/git/blobs") { const data=Buffer.from(body.content,body.encoding); const sha=blob(data);blobs.set(sha,data);return json(res,201,{sha}); }
   if (git === "/git/trees") {
     const tree=new Map(trees.get(body.base_tree)); for(const entry of body.tree) { if(entry.sha)tree.set(entry.path,entry.sha);else tree.delete(entry.path); }
     const sha=hash(JSON.stringify([...tree]));trees.set(sha,tree);return json(res,201,{sha});
   }
-  if (git === "/git/commits") { const sha=hash(JSON.stringify(body));commits.set(sha,body.tree);return json(res,201,{sha}); }
+  if (git === "/git/commits") { const sha=hash(JSON.stringify(body));commits.set(sha,body.tree);parents.set(sha,body.parents[0]);return json(res,201,{sha}); }
   if (git.startsWith("/git/refs/heads/") && req.method==="PATCH") {
     assert.equal(body.force,false);
     if(slow)await new Promise(resolve=>setTimeout(resolve,350));
+    if(moveOnCommit){head=moveOnCommit;moveOnCommit=null;}
+    if(parents.get(body.sha)!==head)return json(res,422,{message:"not a fast forward"});
     head=body.sha;writes++;
     if(loseRef){loseRef=false;return res.destroy();}
     return json(res,200,{object:{sha:head}});
@@ -83,7 +89,7 @@ try {
   await login();
   const initial=await load();
   const changed=structuredClone(initial.data);
-  const product=changed.products.find(p=>p.id==="hbomax");
+  const product=changed.products.find(p=>p.id==="netflix");
   product.title="Isolated product confirmation";
   const p=await prepare(initial,changed);
   slow=true;loseRef=true;
@@ -92,7 +98,7 @@ try {
   assert.equal(pending.status,200);
   const result=await response;
   assert.equal(writes,1,"lost Git ref acknowledgement must reconcile");
-  assert.equal((await load()).data.products.find(p=>p.id==="hbomax").title,product.title);
+  assert.equal((await load()).data.products.find(p=>p.id==="netflix").title,product.title);
   assert.equal((await (await req("/api/admin/save-status?digest="+p.previewDigest)).json()).publication.commitSha,result.commitSha);
   assert.equal((await save(p)).commitSha,result.commitSha);
   assert.equal(writes,1,"replaying the identical successful operation cannot create a commit");
@@ -126,7 +132,47 @@ try {
   });
   assert.equal(announcement.textContent,home.cms.homepage.announcement.text);
   assert.equal(writes,2);
-  console.log(JSON.stringify({product:"saved, reopened and generated customer page verified",homepage:"saved, reopened and delivered customer content verified",slow:true,lostGitAck:true,expiredSession:true,networkFailure:true,delayedDelivery:true,gitWrites:2,productionWrites:0}));
+  const advance=(change,parent=head)=>{
+    const source=bytes(parent,"app.js").toString("utf8"),data=extractAdminState(source);
+    change(data);
+    const content=Buffer.from(patchAppSource(source,data)), sha=blob(content);
+    blobs.set(sha,content);
+    const tree=new Map(trees.get(commits.get(parent)));tree.set("app.js",sha);
+    const treeId=hash(JSON.stringify([...tree])),commitId=hash(treeId+parent);
+    trees.set(treeId,tree);commits.set(commitId,treeId);return commitId;
+  };
+  const netflix=data=>data.products.find(p=>p.id==="netflix");
+  const editor=await load(), draft=structuredClone(editor.data);
+  netflix(draft).confirmationModal.description="Sintetik Diqqət mətni";
+  const payload={baseSha:editor.sha,data:draft};
+  staleContents=head;
+  head=advance(data=>{data.products.find(p=>p.id==="spotify").note="Parallel Spotify";netflix(data).badge="Parallel Netflix nişanı";});
+  assert.equal((await load()).data.products.find(p=>p.id==="spotify").note,"Parallel Spotify");
+  const preview=await req("/api/admin/preview",payload);assert.equal(preview.status,200,await preview.clone().text());
+  moveOnCommit=advance(data=>{netflix(data).confirmationModal.footerText="Parallel alt mətn";});
+  const rebased=await save({...payload,previewDigest:(await preview.json()).previewDigest});
+  const published=rebased.data;
+  assert.equal(published.products.find(p=>p.id==="spotify").note,"Parallel Spotify");
+  assert.equal(netflix(published).badge,"Parallel Netflix nişanı");
+  assert.equal(netflix(published).confirmationModal.footerText,"Parallel alt mətn");
+  const terms=termsInfo(netflix(published),netflix(published).plans[0],0);
+  assert.equal(terms.terms,"Sintetik Diqqət mətni");assert.deepEqual(terms.fields,[]);
+  const nextEditor=await load(),nextDraft=structuredClone(nextEditor.data);
+  netflix(nextDraft).confirmationModal.description="Mənim qaralamam";
+  const next={baseSha:nextEditor.sha,data:nextDraft};
+  const nextPreview=await req("/api/admin/preview",next);assert.equal(nextPreview.status,200);
+  head=advance(data=>{netflix(data).confirmationModal.description="GitHub mətni";});
+  const conflict=await req("/api/admin/save",{...next,previewDigest:(await nextPreview.json()).previewDigest});
+  assert.equal(conflict.status,409);
+  const {code:conflictCode,conflicts}=await conflict.json();assert.equal(conflictCode,"EDITOR_FIELD_CONFLICT");
+  assert.equal(conflicts.length,1);assert.equal(conflicts[0].mine,"Mənim qaralamam");assert.equal(conflicts[0].latest,"GitHub mətni");
+  for(const choice of ["latest","mine"]){
+    const chosen={...next,choices:{[conflicts[0].token]:choice}};
+    const reviewed=await req("/api/admin/preview",chosen);assert.equal(reviewed.status,200);
+    const result=await save({...chosen,previewDigest:(await reviewed.json()).previewDigest});
+    assert.equal(netflix(result.data).confirmationModal.description,choice==="mine"?"Mənim qaralamam":"GitHub mətni");
+  }
+  console.log(JSON.stringify({product:"saved, reopened and generated customer page verified",homepage:"saved, reopened and delivered customer content verified",slow:true,lostGitAck:true,expiredSession:true,networkFailure:true,delayedDelivery:true,fieldRebase:true,branchRace:true,conflictChoices:true,warningOnly:true,gitWrites:writes,productionWrites:0}));
 } finally {
   if(child.exitCode===null){const stopped=once(child,"exit");child.kill();await stopped;}
   await new Promise(resolve=>mock.close(resolve));

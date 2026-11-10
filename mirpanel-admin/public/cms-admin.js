@@ -1170,13 +1170,31 @@
       else input.value = current ?? "";
     });
   }
+  function showEditorConflicts(conflicts) {
+    const display = value => esc(typeof value === "string" ? value : JSON.stringify(value, null, 2));
+    const labels = {products:"Məhsullar",netflix:"Netflix Şəxsi",confirmationModal:"Sifariş təsdiqi",description:"Modal açıqlaması"};
+    openModal("Yayım konflikti", '<p>Hər sahə üçün saxlanacaq versiyanı seçin. Qaralamanız saxlanılır.</p>' +
+      conflicts.map(({path,mine,latest},i) => {
+        const label = path.map(key => labels[key] || key).join(" / ");
+        return '<fieldset><legend>'+esc(label)+'</legend>'+
+          '<label><input type="radio" name="editor-conflict-'+i+'" value="mine"> Mənim mətnim</label><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+display(mine)+'</pre>'+
+          '<label><input type="radio" name="editor-conflict-'+i+'" value="latest"> GitHub-dakı mətn</label><pre style="white-space:pre-wrap;overflow-wrap:anywhere">'+display(latest)+'</pre></fieldset>';
+      }).join(""), "Seçimləri yoxla", () => {
+        const choices = conflicts.map((_,i) => el("modalBody").querySelector('input[name="editor-conflict-'+i+'"]:checked')?.value);
+        if (choices.some(choice => !choice)) return toast("Hər konflikt üçün bir versiya seçin.", "bad");
+        state.editorChoices = {...state.editorChoices,...Object.fromEntries(conflicts.map(({token},i) => [token,choices[i]]))};
+        closeModal();
+        void showPublishDialog();
+      });
+  }
+  window.showEditorConflicts = showEditorConflicts;
   async function preview() {
     if (!state.data) return;
     setLoading(true, "Məzmun yoxlanılır...");
     try {
       const result = await api("/api/admin/preview", {
         method: "POST",
-        body: JSON.stringify({ baseSha: state.baseSha, data: payloadWithoutTransientPreviews(state.data) })
+        body: JSON.stringify({ baseSha: state.baseSha, choices: state.editorChoices, data: payloadWithoutTransientPreviews(state.data) })
       });
       state.previewDigest = result.previewDigest;
       const previewResult = el("cmsPreviewResult");
@@ -1206,7 +1224,8 @@
     } catch (error) {
       state.previewDigest = "";
       el("cmsPreviewResult").textContent = error.message;
-      toast(error.message, "bad");
+      if (error.code === "EDITOR_FIELD_CONFLICT") showEditorConflicts(error.conflicts);
+      else toast(error.message, "bad");
       return null;
     } finally { setLoading(false); }
   }

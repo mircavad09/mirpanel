@@ -379,6 +379,7 @@ async function api(path, options = {}) {
     const error = new Error(payload.error || `Server xətası: ${response.status}`);
     error.status = response.status;
     error.code = payload.code;
+    error.conflicts = payload.conflicts;
     throw error;
   }
   return payload;
@@ -610,6 +611,7 @@ async function saveState() {
       body: JSON.stringify({
         baseSha: state.baseSha,
         draftRevision: state.draftRevision || 0,
+        choices: state.editorChoices,
         data: payloadWithoutTransientPreviews(state.data),
         previewDigest: state.previewDigest
       })
@@ -626,7 +628,8 @@ async function saveState() {
     if (error.status === 409) state.draftConflict = true;
     renderStats();
     if (error.status === 401 && error.code === "ADMIN_SESSION_REQUIRED") await sessionRequired();
-    else if (error.status === 409) toast(error.message + " Dəyişiklikləriniz qalır. Yeni məlumatı ayrıca pəncərədə açıb müqayisə edin.", "bad");
+    else if (error.code === "EDITOR_FIELD_CONFLICT") window.showEditorConflicts?.(error.conflicts);
+    else if (error.status === 409) toast(error.message + " Dəyişiklikləriniz qalır.", "bad");
     else toast(error.message, "bad");
   } finally {
     setLoading(false);
@@ -651,6 +654,11 @@ async function reconcilePublication() {
 async function acceptPublication(payload) {
     if(typeof payload.sha!=='string'||typeof payload.commitSha!=='string'||!payload.sha||!payload.commitSha)throw Error('Saxlama server tərəfindən təsdiqlənmədi. Yenidən cəhd edin.');
     state.uncertainPublish = "";
+    state.editorChoices = {};
+    if (payload.data) {
+      state.data = payload.data;
+      state.data.products = state.data.products.map(ensureProduct);
+    }
     state.baseSha = payload.sha;
     state.currentSha = payload.sha;
     state.draftRevision = 0;
@@ -661,7 +669,7 @@ async function acceptPublication(payload) {
     state.publishStatus = "cloudflare";
     state.pendingUploads = [];
     $("commitInfo").textContent = `Commit: ${payload.commitSha.slice(0, 7)} / ${new Date(payload.committedAt).toLocaleString("az-AZ")}`;
-    renderStats();
+    renderAll();
     state.lastPublishResult = payload;
     clearTimeout(draftTimer);await window.MirpanelAdminDraft?.clear().catch(()=>{});
     toast("Saxlandı · canlı yayım ayrıca yoxlanılır.");
