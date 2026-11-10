@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 const id='12345678-1234-4234-8234-000000000001',path='/api/payments/shop';
+const live=process.argv.includes('--live-assets');
 let rows=[],saved=null;
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://localhost');
@@ -16,8 +17,8 @@ const server=http.createServer(async(req,res)=>{
  if(u.pathname===path+'/draft'){saved=await input();return json({draftId:id,lineId:id,termsVersion:'current'});}
  if(u.pathname==='/profil'){
   res.setHeader('Content-Type','text/html; charset=utf-8');
-  return res.end(`<!doctype html><html lang="az"><meta name="viewport" content="width=device-width"><body class="profile-screen"><main id="communityApp"><section class="account-panel" id="app"></section></main><script type="module">
-   import {mountSubscriptions} from '/community-assets/account-subscriptions.js';
+  return res.end(`<!doctype html><html lang="az"><meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/community-assets/account-panel.css"><body class="profile-screen"><main id="communityApp"><section class="account-panel" id="app"></section></main><script type="module">
+   import {mountSubscriptions} from '/community-assets/account-subscriptions.js?v=compact-subscription-cards-1';
    window.MirpanelCart={apiVersion:6,read:()=>[],checkout:()=>[],set(){},clear(){},commitDraft(){window.committed=true},open(){window.cartOpen=true}};
    const el=(tag,a,...children)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(a))e.setAttribute(k,String(v));e.append(...children.filter(v=>v!=null));return e;};
    const button=(label,fn)=>{const b=el('button',{type:'button'},label);b.onclick=fn;return b;};
@@ -26,6 +27,12 @@ const server=http.createServer(async(req,res)=>{
   </script></body></html>`);
  }
  const file=u.pathname.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+u.pathname.slice(18):u.pathname.slice(1);
+ if(live&&u.pathname.startsWith('/community-assets/')){
+  const response=await fetch('https://mirpanel.com'+u.pathname+u.search);
+  res.writeHead(response.status,{'Content-Type':response.headers.get('content-type')});
+  return res.end(Buffer.from(await response.arrayBuffer()));
+ }
+ if(file==='assets/capcut.png'){res.setHeader('Content-Type','image/png');return res.end(fs.readFileSync(file));}
  if(/\.(js|css)$/.test(file)&&!file.includes('..')&&fs.existsSync(file)){
   res.setHeader('Content-Type',file.endsWith('.css')?'text/css':'text/javascript');return res.end(fs.readFileSync(file));
  }
@@ -35,7 +42,7 @@ const row=(productId,title,days,price,renewalStatus=null)=>({id,productId,title,
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const url='http://127.0.0.1:'+server.address().port+'/profil?tab=subscriptions';
 try{
- for(const [engine,width] of [[chromium,1440],[chromium,320],[webkit,390]]){
+ for(const [engine,width] of [[chromium,1440],[chromium,320],[webkit,390],[chromium,430]]){
   const b=await engine.launch({headless:true,...(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{})});
   try{
    const p=await b.newPage({viewport:{width,height:820},isMobile:width<600,hasTouch:width<600});
@@ -78,7 +85,7 @@ try{
    await p.getByText('9,98 ₼ · 2 abunəlik',{exact:true}).waitFor();
    assert.equal(await p.getByText(/Təxmini cəm/).count(),0);
    await p.locator('.subs-warning').getByText('1 abunəliyin müddəti bu həftə bitir. Kəsilməməsi üçün indidən yeniləyə bilərsiniz.',{exact:true}).waitFor();
-   assert.equal(await p.getByText('4,99 ₼',{exact:true}).count(),2);
+   assert.equal(await p.locator('.subs-last-price').filter({visible:true}).count(),width<600?0:3);
    assert.equal(await p.getByText('Silinmiş CapCut paketi',{exact:false}).count(),2);
    assert.deepEqual(await cap.locator('time').allTextContents(),['14.11.2026','09.12.2026']);
    const summaryButton=p.getByRole('button',{name:'Balansı hazırla'});
@@ -105,6 +112,36 @@ try{
    await p.getByText('2 abunəliyin müddəti bu həftə bitir. Kəsilməməsi üçün indidən yeniləyə bilərsiniz.',{exact:true}).waitFor();
    rows=[old];await p.reload();await p.getByText('4,99 ₼ · 1 abunəlik',{exact:true}).waitFor();
    assert.equal(await p.locator('.subs-warning').count(),0);
+   if(width<600){
+    const longPlan='1 Aylıq (0–500 AI kredit) endirim (Telefon)';
+    rows=[{...row('capcut','CapCut Pro',6,null),plan:'7 gün',expiresOn:'2026-11-16',image:'/assets/capcut.png',lastPurchaseCents:112},
+     {...row('capcut','CapCut Pro',27,null),id:'12345678-1234-4234-8234-000000000002',plan:longPlan,image:'/assets/capcut.png',lastPurchaseCents:499}];
+    await p.reload();
+    await p.getByText(longPlan,{exact:false}).waitFor();
+    await p.waitForFunction(()=>[...document.styleSheets].some(s=>s.href?.includes('account-subscriptions.css')));
+    const cards=p.locator('.subs-card');
+    for(const card of await cards.all()){
+     const product=await card.locator('.subs-product').boundingBox(),days=await card.locator('.subs-days').boundingBox();
+     const title=await card.locator('h2').boundingBox(),date=await card.locator('.subs-expiry').boundingBox();
+     const renew=await card.locator('.subs-renew').boundingBox(),progress=await card.locator('progress').boundingBox();
+     assert(product.x+product.width<=days.x && date.y>=title.y+title.height && date.x===title.x);
+     assert(renew.height>=44 && progress.x+progress.width<=renew.x);
+     assert(Math.abs(progress.y+progress.height/2-renew.y-renew.height/2)<1);
+     assert.equal(await card.locator('.subs-last-price').isVisible(),false);
+    }
+    for(const selector of ['.subs-days','.subs-renew']){
+     const colors=await cards.first().locator(selector).evaluate(n=>[getComputedStyle(n).backgroundColor,getComputedStyle(n).color]);
+     assert.deepEqual(colors,['rgb(255, 255, 255)','rgb(17, 17, 17)']);
+    }
+    assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+    if(width===390&&process.env.MIRPANEL_SUBS_SCREENSHOT)await p.locator('.subs-list').screenshot({path:process.env.MIRPANEL_SUBS_SCREENSHOT});
+    await cards.last().getByRole('button',{name:'Yenilə'}).tap();
+    await modal.getByRole('button',{name:/1 ay/}).click();await next.click();
+    await terms.getByText('Sınaq şərtləri').waitFor();await terms.getByRole('checkbox').check();
+    await terms.getByRole('button',{name:'Təsdiqləyirəm'}).click();
+    await p.waitForFunction(()=>window.committed&&window.cartOpen);
+    assert.equal(saved.renewalId,rows[1].id);
+   }
    console.log('PASS '+engine.name()+' '+width+'px: summary, date, 10/7/6/3, picker → existing terms → cart, preparing and failed');
   }finally{await b.close();}
  }
