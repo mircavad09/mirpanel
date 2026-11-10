@@ -508,3 +508,56 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 .spotify-messages small{max-width:56cqw}
 .spotify-new-message{display:flex;align-items:center;gap:3cqw}
 .spotify-new-message .spotify-avatar{background:#333;color:#fff}
+.netflix-tv{position:relative;width:min(100%,580px,max(220px,calc((100dvh - 390px)*1.48)));margin:auto;padding-right:clamp(24px,6%,43px)}
+.netflix-tv-screen{aspect-ratio:16/9;container-type:inline-size;overflow:hidden;background:#121427;border:4px solid #23242a;border-radius:5px;box-shadow:0 0 0 1px #696b78}
+.netflix-tv-feet{position:relative;height:12px}
+.netflix-tv-feet::before,.netflix-tv-feet::after{content:"";position:absolute;top:0;width:11%;height:80%;background:#727581;clip-path:polygon(30% 0,60% 0,100% 100%,0 100%)}
+.netflix-tv-feet::before{left:11%}.netflix-tv-feet::after{right:11%}
+.netflix-tv-remote{position:absolute;right:1%;bottom:12px;width:clamp(16px,5%,32px);aspect-ratio:1/3.4;border-radius:20%;border:1px solid #757783;background:#282a31;display:grid;justify-items:center;align-content:space-evenly;transform:rotate(8deg)}
+.netflix-tv-remote i,.netflix-tv-remote b{width:22%;aspect-ratio:1;border-radius:50%;background:#8b8e9a}
+.netflix-tv-remote i:first-child{background:#eb2334}
+.netflix-tv-remote b{width:72%;background:#242631;border:2px solid #777b8a;box-shadow:inset 0 0 0 2px #3b3d49}
+.netflix-tv-scene{position:relative;height:100%;overflow:hidden;background:radial-gradient(ellipse at 20% 3%,#782b61b0,transparent 60%),linear-gradient(180deg,#473058,#171c38 90%);color:#f3f5ff;font:500 1.72cqw/1.23 Arial,sans-serif}
+.netflix-tv-scene[data-scene=sign-in]{background:radial-gradient(ellipse at 82% 98%,#252641,#10101f 68%)}
+.netflix-tv-scene[data-scene=link]{background:radial-gradient(ellipse at 7% 3%,#6a306c,transparent 63%),linear-gradient(115deg,#282743,#252359)}
+.netflix-tv-start{position:absolute;inset:auto 9% 8% 8%;display:flex;justify-content:space-between;align-items:center}
+.netflix-tv-start-buttons,.netflix-tv-link-buttons{display:flex;gap:1.2cqw;justify-content:center}
+.netflix-tv-start-buttons{gap:3.6cqw}.netflix-tv-start-buttons .netflix-tv-key{min-width:12cqw}
+.netflix-tv-key{position:relative;display:inline-grid;place-items:center;min-width:0;border-radius:.24cqw;background:#59658c;color:#fff;padding:.56cqw .75cqw;white-space:nowrap}
+.netflix-tv-key.netflix-tv-red{background:#e50914}.netflix-tv-key.netflix-tv-light,.netflix-tv-key.selected{background:#dceaff;color:#222c42}
+.netflix-tv-focus{outline:1.5px solid #effbff;outline-offset:1px;animation:netflix-tv-focus .62s var(--tv-delay) both}
+@keyframes netflix-tv-focus{0%{outline-color:transparent;box-shadow:none}100%{outline-color:#effbff;box-shadow:0 0 1.7cqw #9ee6ff}}
+.netflix-tv-heading{position:absolute;top:7%;left:50%;transform:translateX(-50%);text-align:center;white-space:nowrap}
+.netflix-tv-scene h3{margin:0;color:#fff;font:700 2.65cqw/1.18 Arial,sans-serif}
+.netflix-tv-brand{position:absolute;top:7%;right:8%;font-weight:900;font-size:3.55cqw;letter-spacing:-.07em;color:#f1091b}
+.netflix-tv-methods{display:inline-flex;margin-top:1.55cqw;border-radius:100px;background:#ffffff1c;padding:.3cqw}
+.netflix-tv-methods .netflix-tv-key{padding:.65cqw 2.1cqw;border-radius:100px;background:transparent}
+.netflix-tv-methods .selected{background:#c5d7f1}
+.netflix-tv-support{position:absolute;bottom:7%;right:9%;text-align:right;font-size:1.32cqw}
+.netflix-tv-support .netflix-tv-key{margin:.8cqw 0 1.7cqw}
+.netflix-tv-entry,.netflix-tv-pair{position:absolute;inset:26% 9% auto 9%;display:grid;grid-template-columns:46% minmax(0,1fr);gap:2.7cqw}
+.netflix-tv-keyboard{display:grid;gap:.24cqw;margin-top:.9cqw}
+.netflix-tv-key-row{display:flex;gap:.24cqw}
+.netflix-tv-key-row .netflix-tv-key{flex:1 1 0;padding:.56cqw 0}
+.netflix-tv-row-3 .netflix-tv-key:first-child{flex:2.08}
+.netflix-tv-actions,.netflix-tv-extra{display:grid;grid-template-columns:38% 1fr;gap:1.2cqw;margin-top:1.18cqw}
+.netflix-tv-actions .netflix-tv-key{padding:.9cqw 0}
+.netflix-tv-extra{grid-template-columns:1fr 1fr;font-size:1.3cqw;margin-top:.9cqw}
+.netflix-tv-remember{display:flex;align-items:center;gap:.75cqw}
+.netflix-tv-fields{display:grid;align-content:start;gap:1.8cqw;margin-top:3.65cqw;font-size:2.1cqw}
+.netflix-tv-field{position:relative;display:flex;align-items:center;min-height:4.25cqw;background:#586789;padding:0 1.25cqw;border-radius:.24cqw}
+.netflix-tv-placeholder{position:absolute;animation:netflix-tv-hide 0s .1s forwards}
+@keyframes netflix-tv-hide{to{visibility:hidden}}
+@media(prefers-reduced-motion:reduce){.netflix-tv-placeholder{visibility:hidden}}
+.netflix-tv-typed>span{visibility:hidden;animation:netflix-type 1ms var(--letter-delay) forwards}
+.netflix-tv-pair{grid-template-columns:1fr 1fr;gap:4cqw}
+.netflix-tv-qr-copy{display:flex;align-items:flex-start;gap:1cqw;font-size:1.85cqw}
+.netflix-tv-qr-copy .netflix-tv-key{border-radius:50%;background:#ffffff30}
+.netflix-tv-qr{width:17cqw;aspect-ratio:1;margin:2cqw 0 0 4.5cqw;border:1.8cqw solid #e5f2ff;border-radius:.7cqw;background:linear-gradient(45deg,transparent 44%,#8d161b 44% 56%,transparent 56%),repeating-conic-gradient(#283143 0 25%,#dcecff 0 50%) 0 0/3cqw 3cqw}
+.netflix-tv-code{font-size:4.6cqw;letter-spacing:.16em;font-weight:700;margin:2cqw 0 0 4cqw}
+.netflix-tv-link{position:absolute;inset:22% 6% auto;text-align:center}
+.netflix-tv-link h3{font-size:3.65cqw}
+.netflix-tv-link p{font-size:2.05cqw;margin:2.5cqw 0}
+.netflix-tv-mail{margin:0 auto 3.25cqw;color:#ff869b;width:7cqw}
+.netflix-tv-mail svg{display:block;width:100%;height:auto}
+@media(prefers-reduced-motion:reduce){.netflix-tv-focus,.netflix-tv-typed>span{animation:none;visibility:visible}.netflix-tv-focus{box-shadow:0 0 1.7cqw #9ee6ff}}

@@ -20,6 +20,13 @@ const netflixDesktopSteps=[
  ['help','Açılan menyuda ikinci seçimə, “Use password instead” sətrinə klikləyin.'],
  ['password','Sizə təqdim olunan şifrəni yazın və qırmızı “Sign In” düyməsinə klikləyin.']
 ].map(([name,description])=>({animation:'netflix-desktop-'+name,description,image:''}));
+const netflixTvSteps=[
+ ['sign-in','Netflix tətbiqini açın və pultla «Sign in» düyməsini seçin.'],
+ ['remote','Pultla davam etmək üçün sağdakı «Use Remote» seçimini seçin.'],
+ ['email','E-poçt ünvanınızı ekran klaviaturası ilə yazın və «Next» seçin.'],
+ ['link','Bu ekran açılarsa, «Use Password Instead» seçin.'],
+ ['password','Şifrənizi ekran klaviaturası ilə yazın və «Next» seçin.']
+].map(([name,description])=>({animation:'netflix-tv-'+name,description,image:''}));
 export const guideTracks=['general','phone','desktopQr'];
 export function phoneOnlyGuide(plan){
  const name=String(plan?.label||plan?.name||'');
@@ -55,6 +62,7 @@ export function orderGuideFor(product,plan,savedName){
  if(product?.id==='netflix'){
   tracks.phone=netflixPhoneSteps.map(step=>({...step}));
   tracks.desktop=netflixDesktopSteps.map(step=>({...step}));
+  tracks.tv=netflixTvSteps.map(step=>({...step}));
  }
  if(product?.id==='spotify')tracks.phone=spotifyPhoneSteps.map(step=>({...step}));
  if(phoneOnlyGuide(plan)||phoneOnlyGuide({label:savedName}))delete tracks.desktopQr;

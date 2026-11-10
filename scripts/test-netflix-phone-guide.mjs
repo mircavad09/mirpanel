@@ -7,8 +7,10 @@ import {orderGuideFor} from '../mirpanel-admin/order-guide.mjs';
 const {chromium,webkit}=await import(process.env.MIRPANEL_PLAYWRIGHT);
 const live=process.argv.includes('--live'),record=process.argv.includes('--record');
 const desktop=process.argv.includes('--desktop');
+const tv=process.argv.includes('--tv');
 const root=process.cwd(),out=path.resolve('../../outputs'),id='11111111-1111-4111-8111-111111111111';
 const desktopOut=path.resolve('outputs/netflix-desktop');if(desktop)fs.mkdirSync(desktopOut,{recursive:true});
+const tvOut=path.resolve('outputs/netflix-tv');if(tv)fs.mkdirSync(tvOut,{recursive:true});
 const catalog=extractAdminState(fs.readFileSync('app.js','utf8'));
 for(const productId of ['capcut','netflix_umumi','netflix_sexsi']){
  const product=catalog.products.find(p=>p.id===productId);
@@ -36,7 +38,7 @@ const origin='http://127.0.0.1:'+server.address().port;
 const browser=await (process.argv.includes('--webkit')?webkit:chromium).launch({headless:true,...(process.argv.includes('--webkit')?{}:{executablePath:process.env.MIRPANEL_CHROME})});
 try{
  for(const width of record?[390]:[320,390,430,1440]){
-  const context=await browser.newContext({viewport:{width,height:record?900:850},isMobile:width<600,hasTouch:width<600,...(record?{recordVideo:{dir:desktop?desktopOut:'../netflix-recording',size:{width:390,height:900}}}:{})});
+  const context=await browser.newContext({viewport:{width,height:record?900:850},isMobile:width<600,hasTouch:width<600,...(record?{recordVideo:{dir:tv?tvOut:desktop?desktopOut:'../netflix-recording',size:{width:390,height:900}}}:{})});
   const p=await context.newPage();p.setDefaultTimeout(8000);const errors=[];p.on('pageerror',e=>{errors.push(e.message);console.log('PAGE',e.message)});
   if(live)for(const name of ['browser-orders.js','browser-orders.css']){
    const response=await fetch('https://mirpanel.com/'+name+'?verify='+Date.now());
@@ -49,6 +51,45 @@ try{
   await p.getByText('Mövcud məlumat mətni',{exact:true}).waitFor();
   await dlg.getByRole('button',{name:'Təlimat',exact:true}).click();
   await dlg.getByRole('button',{name:'Telefonla giriş',exact:true}).click();
+  if(tv){
+   assert.equal(guide.tracks.tv.length,5);
+   assert.deepEqual(await dlg.locator('.browser-guide-choices button').allTextContents(),['Ümumi addımlar','Telefonla giriş','Kompüterlə giriş','Televizorda giriş']);
+   await dlg.locator('.netflix-handset').waitFor();
+   await dlg.getByRole('button',{name:'Kompüterlə giriş',exact:true}).click();await dlg.locator('.netflix-laptop').waitFor();
+   await dlg.getByRole('button',{name:'Televizorda giriş',exact:true}).click();
+   const frame=dlg.locator('.netflix-tv'),screen=frame.locator('.netflix-tv-scene'),first=await frame.boundingBox();
+   const targets=['Sign in','Use Remote','Next','Use Password Instead','Next'];
+   const labels=[
+    ['Privacy','Sign in','Get Started'],
+    ['Choose how to sign in','Use Phone','Use Remote','Use your phone or tablet\'s camera and point to this code, or go to netflix.com/tv2','Confirm this code on your phone or tablet','0000-0000'],
+    ['Enter your email address','Back','Next','Forgot password?','Remember Email','hesab@example.com'],
+    ['Sign in without a password','Send Sign-In Link','Use Password Instead','hesab@example.com'],
+    ['Enter your password','Previous','Next','Forgot password?','Hide Password','Password (4-60 characters)','hesab@example.com','••••••••']
+   ];
+   for(const [i,scene] of ['sign-in','remote','email','link','password'].entries()){
+    if(i)await dlg.getByRole('button',{name:'Addım '+(i+1),exact:true}).click();
+    assert.equal(await screen.getAttribute('data-scene'),scene);
+    assert.equal(await screen.locator('.netflix-tv-focus').textContent(),targets[i]);
+    assert.equal(await screen.locator('input,button,form,a,img').count(),0);
+    assert.deepEqual(await frame.boundingBox(),first);
+    assert.ok(await screen.evaluate(n=>n.scrollWidth<=n.clientWidth+1&&n.scrollHeight<=n.clientHeight+1));
+    assert.ok(await dlg.evaluate(n=>n.scrollWidth<=n.clientWidth+1));
+    for(const label of labels[i])assert.ok((await screen.textContent()).includes(label),label);
+    if(i===2||i===4)assert.deepEqual(await screen.locator('.netflix-tv-key-row').evaluateAll(ns=>ns.map(n=>Array.from(n.children,x=>x.textContent).join('|'))),[
+     '1|2|3|4|5|6|7|8|9|0','q|w|e|r|t|y|u|i|o|p','a|s|d|f|g|h|j|k|l|-',i===2?'↑|z|x|c|v|b|n|m|_':"↑|z|x|c|v|b|n|m|'",
+     ...(i===2?['@hotmail.com|@gmail.com|@yahoo.com','!#$|@|.|.com|⌫']:['!#$|àáâ|␣|⌫'])
+    ]);
+    if(record||width===1440){await p.waitForTimeout(i===2?2100:i===4?1500:1050);if(!record)await dlg.screenshot({path:path.join(tvOut,'scene-'+(i+1)+'.png')});}
+   }
+   await dlg.getByRole('button',{name:'Əvvəlki',exact:true}).click();assert.equal(await screen.getAttribute('data-scene'),'link');
+   await dlg.getByRole('button',{name:'Növbəti',exact:true}).click();assert.equal(await screen.getAttribute('data-scene'),'password');
+   if(width===390&&!record){await dlg.getByRole('button',{name:'Avtomatik göstər',exact:true}).click();await p.waitForTimeout(5200);assert.equal(await screen.getAttribute('data-scene'),'remote');await dlg.getByRole('button',{name:'Dayandır',exact:true}).click();}
+   await dlg.getByRole('button',{name:'Telefonla giriş',exact:true}).click();await dlg.locator('.netflix-handset').waitFor();
+   await dlg.getByRole('button',{name:'Kompüterlə giriş',exact:true}).click();await dlg.locator('.netflix-laptop').waitFor();
+   await dlg.getByRole('button',{name:'Televizorda giriş',exact:true}).click();assert.equal(await screen.getAttribute('data-scene'),'sign-in');
+   const video=p.video();await context.close();if(video)fs.renameSync(await video.path(),path.join(tvOut,'animation.webm'));
+   assert.deepEqual(errors,[]);console.log('PASS TV guide '+width+'px');continue;
+  }
   if(desktop){
    if(!live)await p.route('https://mirpanel.com/assets/netflix-guide-home.png',r=>r.fulfill({path:'assets/netflix-guide-home.png',contentType:'image/png'}));
    await dlg.getByRole('button',{name:'Kompüterlə giriş',exact:true}).click();

@@ -14,7 +14,7 @@ const files=new Map();
 for(const name of ['browser-orders.js','browser-orders.css']){
  const local=fs.readFileSync(name,'utf8');
  if(!live){files.set('/'+name,local);continue;}
- const response=await fetch('https://mirpanel.com/'+name+'?v=spotify-phone-1');
+ const response=await fetch('https://mirpanel.com/'+name+'?v=netflix-tv-1');
  assert.equal(response.status,200);
  const published=await response.text();
  assert.equal(published.replaceAll('\r\n','\n'),local.replaceAll('\r\n','\n'));

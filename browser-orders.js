@@ -305,6 +305,47 @@ function netflixScreen(animation,create){
   }
   return content;
  }
+ function netflixTvScreen(mode,create){
+  const node=(text,cls)=>create('div',text,cls),sample='hesab@example.com';
+  const scene=node(null,'netflix-tv-scene');scene.dataset.scene=mode;scene.lang='en';scene.setAttribute('inert','');
+  const key=(text,cls='')=>create('span',text,'netflix-tv-key '+cls);
+  const focus=(n,delay=280)=>{n.classList.add('netflix-tv-focus');n.style.setProperty('--tv-delay',delay+'ms');return n;};
+  const row=(cls,...children)=>{const n=node(null,cls);n.append(...children);return n;};
+  const typed=text=>row('netflix-tv-typed',...[...text].map((char,i)=>{const n=create('span',char);n.style.setProperty('--letter-delay',100+65*i+'ms');return n;}));
+  if(mode==='sign-in'){
+   scene.append(row('netflix-tv-start',create('u','Privacy'),row('netflix-tv-start-buttons',focus(key('Sign in','netflix-tv-red')),key('Get Started','netflix-tv-light'))));return scene;
+  }
+  if(mode==='link'){
+   const mail=node(null,'netflix-tv-mail');mail.innerHTML=lineIcon('M2 5h20v14H2z M2 5l10 8 10-8');mail.setAttribute('aria-hidden','true');
+   const note=create('p');note.append("Simply tap the one-time link we'll send to ",create('strong',sample),' to',create('br'),'sign in to this TV.');
+   scene.append(row('netflix-tv-link',mail,create('h3','Sign in without a password'),note,row('netflix-tv-link-buttons',key('Send Sign-In Link'),focus(key('Use Password Instead')))));return scene;
+  }
+  const remote=mode==='remote',password=mode==='password';
+  scene.append(node('NETFLIX','netflix-tv-brand'),row('netflix-tv-heading',create('h3','Choose how to sign in'),row('netflix-tv-methods',key('Use Phone',remote?'selected':''),remote?focus(key('Use Remote')):key('Use Remote','selected'))));
+  const support=row('netflix-tv-support',node("Don't have an account?"),key('Sign Up Now'),node('Need help signing in?'),node('Visit https://help.netflix.com/contactus'));
+  scene.append(support);
+  if(remote){
+   const qr=node(null,'netflix-tv-qr');qr.setAttribute('aria-label','Nümayiş üçün işləməyən QR nümunəsi');
+   const first=row('netflix-tv-qr-col',row('netflix-tv-qr-copy',key('1'),node("Use your phone or tablet's camera and point to this code, or go to netflix.com/tv2")),qr);
+   const second=row('netflix-tv-qr-col',row('netflix-tv-qr-copy',key('2'),node('Confirm this code on your phone or tablet')),node('0000-0000','netflix-tv-code'));
+   scene.append(row('netflix-tv-pair',first,second));return scene;
+  }
+  const rows=[
+   ['1','2','3','4','5','6','7','8','9','0'],
+   [...'qwertyuiop'],
+   [...'asdfghjkl-'],
+   ['↑',...'zxcvbnm',password?"'":'_'],
+   ...(password?[]:[['@hotmail.com','@gmail.com','@yahoo.com']]),
+   password?['!#$','àáâ','␣','⌫']:['!#$','@','.','.com','⌫']
+  ];
+  const keyboard=row('netflix-tv-keyboard',...rows.map((letters,i)=>row('netflix-tv-key-row netflix-tv-row-'+i,...letters.map(t=>key(t)))));
+  const actions=row('netflix-tv-actions',key(password?'Previous':'Back'),focus(key('Next'),password?740:1330));
+  const extra=row('netflix-tv-extra',key('Forgot password?'),password?key('Hide Password'):row('netflix-tv-remember',key('✓'),create('span','Remember Email')));
+  const controls=row('netflix-tv-controls',node(password?'Enter your password':'Enter your email address'),keyboard,actions,extra);
+  const fields=row('netflix-tv-fields',...(password?[node(sample),row('netflix-tv-field',typed('••••••••'))]:[row('netflix-tv-field',typed(sample))]));
+  if(password)fields.lastChild.prepend(create('span','Password (4-60 characters)','netflix-tv-placeholder'));
+  scene.append(row('netflix-tv-entry',controls,fields));return scene;
+ }
  function netflixDesktopScreen(mode,create){
   const scene=create('div',null,'netflix-desktop-scene');
   scene.dataset.scene=mode;scene.lang='en';scene.setAttribute('inert','');
@@ -437,6 +478,9 @@ function netflixScreen(animation,create){
   const laptop=create('div',null,'netflix-laptop'),laptopScreen=create('div',null,'netflix-laptop-screen'),deck=create('div',null,'netflix-laptop-deck'),keys=create('div',null,'netflix-laptop-keyboard');
   for(let i=0;i<48;i++)keys.append(create('i'));
   deck.setAttribute('aria-hidden','true');deck.append(keys,create('div',null,'netflix-laptop-touchpad'));laptop.append(laptopScreen,deck);
+  const tv=create('div',null,'netflix-tv'),tvScreen=create('div',null,'netflix-tv-screen'),remote=create('div',null,'netflix-tv-remote');
+  remote.setAttribute('aria-hidden','true');remote.append(create('i'),create('b'),create('i'),create('i'));
+  tv.append(tvScreen,create('div',null,'netflix-tv-feet'),remote);
   const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(info,how);
   function select(mode){autoplay=false;active=mode;wrap.scrollTop=body.scrollTop=0;draw();}
   function draw(){
@@ -449,7 +493,7 @@ function netflixScreen(animation,create){
     if(data.information)body.append(create('div','İstifadə etməzdən əvvəl oxuyun','browser-guide-note'));
     body.append(data.information?renderInformation(data.information):create('p','Bu məhsul üçün məlumat əlavə edilməyib.','browser-guide-text'));return;
    }
-   const tracks=Object.entries({general:'Ümumi addımlar',phone:data.tracks?.desktop?'Telefonla giriş':'Telefonda giriş',desktop:'Kompüterlə giriş',desktopQr:'Kompüterdə QR ilə giriş'}).filter(([key])=>data.tracks?.[key]?.length);
+   const tracks=Object.entries({general:'Ümumi addımlar',phone:data.tracks?.desktop?'Telefonla giriş':'Telefonda giriş',desktop:'Kompüterlə giriş',tv:'Televizorda giriş',desktopQr:'Kompüterdə QR ilə giriş'}).filter(([key])=>data.tracks?.[key]?.length);
    if(!tracks.length){body.replaceChildren(create('p','Bu paket üçün şəkilli təlimat əlavə edilməyib.'));return;}
    if(!tracks.some(([key])=>key===track))track=tracks[0][0];
    const choices=create('div',null,'browser-guide-choices');
@@ -462,16 +506,21 @@ function netflixScreen(animation,create){
    }
    const steps=data.tracks[track],current=steps[step],layout=create('div',null,'browser-guide-step');
    const desktop=track==='desktop'&&current.animation?.startsWith('netflix-desktop-');
-   const compact=desktop||track==='phone'&&steps.some(item=>item.animation);
+   const television=track==='tv'&&current.animation?.startsWith('netflix-tv-');
+   const compact=television||desktop||track==='phone'&&steps.some(item=>item.animation);
    if(compact)layout.classList.add('browser-guide-compact');
    const netflix=track==='phone'&&current.animation?.startsWith('netflix-');
    const spotify=track==='phone'&&current.animation?.startsWith('spotify-');
    const simulated=netflix||spotify;
-   if(simulated||desktop)layout.classList.add('netflix-guide');
+   if(simulated||desktop||television)layout.classList.add('netflix-guide');
    const visual=create('div',null,'browser-guide-visual');
    const handset=simulated||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image?.replace(/^https:\/\/mirpanel\.com(?=\/)/,'')||'');
-   const steadyLayout=desktop&&body.contains(laptop)?laptop.closest('.browser-guide-step'):handset&&body.contains(phoneShell)?phoneShell.closest('.browser-guide-step'):null;
-   if(desktop){
+   const steadyLayout=television&&body.contains(tv)?tv.closest('.browser-guide-step'):desktop&&body.contains(laptop)?laptop.closest('.browser-guide-step'):handset&&body.contains(phoneShell)?phoneShell.closest('.browser-guide-step'):null;
+   if(television){
+    layout.classList.add('netflix-desktop-guide','netflix-tv-guide');
+    tvScreen.replaceChildren(netflixTvScreen(current.animation.slice('netflix-tv-'.length),create));
+    if(!steadyLayout)visual.append(tv);
+   }else if(desktop){
     layout.classList.add('netflix-desktop-guide');
     laptopScreen.replaceChildren(netflixDesktopScreen(current.animation.slice('netflix-desktop-'.length),create));
     if(!steadyLayout)visual.append(laptop);
@@ -578,7 +627,7 @@ function netflixScreen(animation,create){
    if(autoplay&&step<steps.length-1)advanceTimer=setTimeout(()=>{
     if(!guideDialog.open||!guideDialog.isConnected)return;
     step++;autoplay=step<steps.length-1;draw();
-   },simulated||desktop?5000:4200);
+    },simulated||desktop||television?5000:4200);
   }
   async function loadGuide(){
    const turn=++guideTurn;failed=false;draw();
