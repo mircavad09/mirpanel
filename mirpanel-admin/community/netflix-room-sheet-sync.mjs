@@ -85,7 +85,7 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
       target=excluded.target,retry_at=excluded.retry_at,failures=$4`,[room.id,target,delay,room.failures+1]);
     console.warn('NETFLIX_ROOM_SHEET_RETRY');
     await c.query('commit');
-    // After an ambiguous append failure, re-read column H before any retry.
+    // After an ambiguous append failure, re-read hidden column G before retrying.
     return position(room);
    }
   }

@@ -1,4 +1,5 @@
 import {createSign} from 'node:crypto';
+import {roomSheetCells,roomSheetStyleKey,roomSheetStyleVersion,roomSheetStyleRequests,roomPresentationUpdates,roomStatusStyles} from './netflix-room-sheet-style.mjs';
 
 export const sheetTitle='Netflix Şəxsi — Otaq stoku';
 export const sheetHeaders=['Müştəri ID-si','Otaq adı və PIN','Gmail','Şifrə','Bitmə tarixi','Status'];
@@ -43,7 +44,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
      !entries.some(p=>p.type==='user'&&p.role==='owner'&&!p.deleted&&p.emailAddress?.toLowerCase()===ownerEmail.toLowerCase())||
      !entries.some(p=>p.type==='user'&&p.role==='writer'&&!p.deleted&&p.emailAddress===account.client_email))
    throw Error('ROOM_SHEET_ACCESS');
-  const metadata=await request(endpoint+'?fields=properties(title),sheets(properties(sheetId,title,gridProperties(columnCount)))');
+  const metadata=await request(endpoint+'?fields=properties(title),sheets(properties(sheetId,title,gridProperties(columnCount)),developerMetadata,conditionalFormats)');
   if(metadata.sheets?.length!==1)throw Error('ROOM_SHEET_DESTINATION');
   const {sheetId,title}=metadata.sheets[0].properties;
   const range=name=>endpoint+'/values/'+encodeURIComponent("'"+title.replaceAll("'","''")+"'!"+name);
@@ -61,16 +62,47 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    if(columns<7)requests.unshift({appendDimension:{sheetId,dimension:'COLUMNS',length:7-columns}});
    await request(endpoint+':batchUpdate',{requests});
   }else if(metadata.properties?.title!==sheetTitle||JSON.stringify(existing)!==JSON.stringify(header))throw Error('ROOM_SHEET_HEADERS');
+  const styled=metadata.sheets[0].developerMetadata?.some(item=>
+   item.metadataKey===roomSheetStyleKey&&item.metadataValue===roomSheetStyleVersion);
+  if(!styled){
+   const rows=(await request(range('A2:G')+'?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER')).values||[];
+   const updates=roomPresentationUpdates(sheetId,rows);
+   const captions=new Set(roomStatusStyles.map(status=>status.caption));
+   const rules=metadata.sheets[0].conditionalFormats||[];
+   const cleanup=rules.flatMap((rule,index)=>{
+    const owned=rule.ranges?.length===1&&rule.ranges[0].startColumnIndex===5&&rule.ranges[0].endColumnIndex===6&&
+     rule.booleanRule?.condition?.type==='TEXT_EQ'&&captions.has(rule.booleanRule.condition.values?.[0]?.userEnteredValue);
+    return owned?[{deleteConditionalFormatRule:{sheetId,index}}]:[];
+   }).reverse();
+   await request(endpoint+':batchUpdate',{requests:[...cleanup,...roomSheetStyleRequests(sheetId)]});
+   for(let offset=0;offset<updates.length;offset+=200){
+    await request(endpoint+':batchUpdate',{requests:updates.slice(offset,offset+200)});
+   }
+   if(rows.length)await request(endpoint+':batchUpdate',{requests:[{
+    autoResizeDimensions:{dimensions:{sheetId,dimension:'ROWS',startIndex:1,endIndex:rows.length+1}}
+   }]});
+   await request(endpoint+':batchUpdate',{requests:[{createDeveloperMetadata:{developerMetadata:{
+    metadataKey:roomSheetStyleKey,metadataValue:roomSheetStyleVersion,visibility:'DOCUMENT',location:{sheetId}
+   }}}]});
+  }
   return {async upsert(values){
    const ids=(await request(range('G2:G'))).values||[];
    const rowIndex=locateRoomRow(ids,values[6]);
-   // stringValue prevents spreadsheet formula injection and preserves leading zeros.
-   const row={values:values.map((value,index)=>({userEnteredValue:{stringValue:String(value)},
-    ...(index===5?{userEnteredFormat:{textFormat:{foregroundColor:value===paidStatus?{red:.1,green:.55,blue:.23}:{red:0,green:0,blue:0},bold:value===paidStatus}}}:{})}))};
+   const row={values:roomSheetCells(values)};
    const operation=rowIndex===null
-    ? {appendCells:{sheetId,rows:[row],fields:'userEnteredValue,userEnteredFormat.textFormat'}}
-    : {updateCells:{start:{sheetId,rowIndex,columnIndex:0},rows:[row],fields:'userEnteredValue,userEnteredFormat.textFormat'}};
+    ? {appendCells:{sheetId,rows:[row],fields:'userEnteredValue,userEnteredFormat'}}
+    : {updateCells:{start:{sheetId,rowIndex,columnIndex:0},rows:[row],fields:'userEnteredValue,userEnteredFormat'}};
    await request(endpoint+':batchUpdate',{requests:[operation]});
+   let updatedIndex=rowIndex;
+   if(updatedIndex===null){
+    const savedIds=(await request(range('G2:G'))).values||[];
+    updatedIndex=locateRoomRow(savedIds,values[6]);
+   }
+   if(Number.isInteger(updatedIndex)&&updatedIndex>=1){
+    await request(endpoint+':batchUpdate',{requests:[{
+     autoResizeDimensions:{dimensions:{sheetId,dimension:'ROWS',startIndex:updatedIndex,endIndex:updatedIndex+1}}
+    }]});
+   }
   }};
  }};
 }

@@ -37,9 +37,14 @@ async function checkGooglePayload(){
    {type:'user',role:'writer',emailAddress:account.client_email},...(publicLink?[{type:'anyone',role:'reader'}]:[])]});
   if(url.includes('fields=properties'))return Response.json({properties:{title:sheetTitle},sheets:[{properties:{title:'Otaqlar',sheetId:7}}]});
   if(decodeURIComponent(url).endsWith('A1:H1'))return Response.json({values:header?[header]:[]});
-  if(decodeURIComponent(url).endsWith('A2:H'))return Response.json({});
+  if(decodeURIComponent(url).endsWith('A2:H')||url.includes('valueRenderOption=UNFORMATTED_VALUE'))return Response.json({});
   if(decodeURIComponent(url).endsWith('G2:G'))return Response.json({values:[['other-room'],['test-room']]});
-  if(url.endsWith(':batchUpdate')){const operations=JSON.parse(options.body).requests;write=operations[0];if(operations.length>1){header=operations[1].updateCells.rows[0].values.map(v=>v.userEnteredValue.stringValue);assert.equal(operations[2].updateDimensionProperties.properties.hiddenByUser,true);}return Response.json({});}
+  if(url.endsWith(':batchUpdate')){
+   const operations=JSON.parse(options.body).requests;
+   if(operations[0].updateSpreadsheetProperties){header=operations[1].updateCells.rows[0].values.map(v=>v.userEnteredValue.stringValue);}
+   if(operations[0].updateCells)write=operations[0];
+   return Response.json({});
+  }
   throw Error('UNEXPECTED_SYNTHETIC_REQUEST');
  });
  await assert.rejects(api.open(),/ROOM_SHEET_ACCESS/);
@@ -48,7 +53,8 @@ async function checkGooglePayload(){
  assert.deepEqual(header.slice(0,6),sheetHeaders);
  assert.equal(write.updateCells.start.rowIndex,2);
  assert.equal(write.updateCells.rows[0].values[3].userEnteredValue.stringValue,'=1+1');
- assert.ok(write.updateCells.rows[0].values[5].userEnteredFormat.textFormat.foregroundColor.green>.5);
+ assert.equal(write.updateCells.rows[0].values[5].userEnteredValue.stringValue,paidStatus);
+ assert.equal(write.updateCells.rows[0].values[4].userEnteredFormat.numberFormat.pattern,'d \"yanvar\"');
 }
 try{
  await checkGooglePayload();
