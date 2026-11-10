@@ -84,5 +84,37 @@ try {
   assert.deepEqual(today.orders.map(o=>o.orderCode),["3001","3000","6"]);
   assert.deepEqual((await list("spotify","pending",{pendingStage:"payment"})).orders.map(o=>o.orderCode),["5"]);
   await assert.rejects(list("netflix","pending",{pendingStage:"delivery"}),{status:403});
+  const financeRows=Array.from({length:24},(_,i)=>({
+    ...cart(50000+i,'reviewing'),payment_confirmed:true,payment_source:'wallet',quantity:3,
+    checkout_snapshot:{cartVersion:2,items:[
+      {productId:'netflix',title:'Netflix Şəxsi',quantity:2,planName:'1 aylıq',durationMonths:1},
+      {productId:'spotify',title:'Spotify Premium',quantity:1,planName:'3 aylıq',durationMonths:3}
+    ]},
+    amount:10,cost_lines_snapshot:[{quantity:2,unitCost:1,source:'checkout'},{quantity:1,unitCost:0,source:'estimate'}]
+  }));
+  records.push(...financeRows);
+  const financeOptions={
+    pendingDeliveries:async()=>[],
+    deliveryCompletions:async({ids})=>financeRows.filter(o=>!ids||ids.includes(o.id)).map(o=>({id:o.id,completedAt:day})),
+    orderRefunds:async ids=>ids.includes(financeRows[0].id)?[{order_id:financeRows[0].id,cents:200}]:[]
+  };
+  for(const tab of ['today','all']){
+    const query={tab,period:'today',search:'5000',productId:'netflix',durationMonths:'1',preserveFilters:'true'};
+    const subset=await store.listOrders(query,catalog,financeOptions);
+    assert.equal(subset.statistics.revenue,'98.00');
+    assert.equal(subset.statistics.cost,'20.00');
+    assert.equal(subset.statistics.profit,'78.00');
+    assert.equal(subset.statistics.estimatedCostCount,10);
+    const scope={...query,search:'500',productId:'spotify',durationMonths:'3'};
+    const scopeOptions={...financeOptions, pendingDeliveries:async ids=>ids.filter(id=>!financeRows.some(o=>o.id===id))};
+    const one=await store.listOrders(scope,catalog,scopeOptions);
+    const two=await store.listOrders({...scope,page:2},catalog,scopeOptions);
+    assert.equal(one.orders.length,20);assert.equal(two.orders.length,4);
+    assert.deepEqual(one.statistics,two.statistics);
+    assert.equal(two.statistics.count,24);
+    assert.equal(two.statistics.revenue,'238.00');
+    assert.equal(two.statistics.cost,'48.00');
+    assert.equal(two.statistics.profit,'190.00');
+  }
   console.log("PASS: real order store, 1000+ rows, stable ID/legacy alias/title, cart once, search, pending/today/all, empty and all products");
 } finally {await new Promise(resolve=>fixture.close(resolve));}

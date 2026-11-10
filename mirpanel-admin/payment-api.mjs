@@ -790,7 +790,7 @@ export function createPaymentSystem(options) {
       void catalogRequest.catch(()=>{});
       const matchingProducts=query.productId?(await catalogRequest)?.products:[];
       const listingStarted = performance.now();
-      const orders = await store.listOrders(query, matchingProducts || [], {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined});
+      const orders = await store.listOrders(query, matchingProducts || [], {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined,orderRefunds:canDeliver?options.orderRefunds:undefined});
       const listingMs = performance.now()-listingStarted;
       if(query.countsOnly==='true'){json(response,200,orders);return true;}
       const pendingCustomerView=query.tab==='pending'&&Boolean(query.pendingStage);

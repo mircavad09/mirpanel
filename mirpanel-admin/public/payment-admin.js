@@ -202,7 +202,7 @@
         <button class="paymentOrderCardToggle" type="button" data-order-toggle aria-label="Sifariş № ${escp(order.orderCode)}" aria-expanded="${expanded}" aria-controls="${detailId}" aria-describedby="${timeId}"><span class="paymentOrderCardMeta"><span class="statusPill status-${escp(expiring ? order.expiry?.code : displayStatus)}">${escp(expiring ? order.expiry?.label : statusLabel[displayStatus] || "Yoxlanılır")}</span>${orderTimeMarkup(order.createdAt,timeId)}</span><span class="paymentOrderCardPreview">${escp(product)}</span><b class="paymentOrderCardPreview">${escp(money(order.amount,order.currency))}</b><span class="paymentOrderCardArrow" aria-hidden="true">⌄</span></button>
       </div>
       <div class="paymentOrderCardDetails" id="${detailId}"${expanded?'':' hidden'}>
-      <dl><div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div>${order.cancellation?.reason?'<div><dt>Ləğv səbəbi</dt><dd style="white-space:pre-wrap">'+escp(order.cancellation.reason)+'</dd></div>':''}</dl>
+      <dl><div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div>${order.reportCost!==undefined?`<div><dt>Maya</dt><dd>${order.reportCost===null?'Maya məlum deyil':money(order.reportCost)+(order.reportEstimated?' · Təxmini':'')}</dd></div>`:''}${order.cancellation?.reason?'<div><dt>Ləğv səbəbi</dt><dd style="white-space:pre-wrap">'+escp(order.cancellation.reason)+'</dd></div>':''}</dl>
       <div class="paymentOrderActions">
         ${manage && displayStatus==='preparing'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
         ${manage && deliveryQueue?'<button class="btn danger" type="button" data-cancel-fulfillment>Ləğv et</button>':''}
@@ -275,12 +275,21 @@
     fill("paymentOrderMethod", "Bütün banklar", filters.methods, paymentState.orderQuery.methodId, (item) => item.id, (item) => item.label);
   }
 
+  function reportCostLabel(report) {
+    if (report.missingCostCount && !Number(report.cost)) return "Maya məlum deyil";
+    return money(report.cost) + (report.missingCostCount ? " · məlum hissə" : report.estimatedCostCount ? " · təxmini" : "");
+  }
+
+  function reportProfitLabel(report) {
+    return report.missingCostCount ? "Maya məlum deyil" : money(report.profit) + (report.estimatedCostCount ? " · təxmini" : "");
+  }
+
   function reportPrimaryMarkup(report, emptyText = "Bu dövr üçün tamamlanmış sifariş yoxdur.") {
     if (!report) return `<div class="emptyState">${escp(emptyText)}</div>`;
     return `<div class="paymentMonthlyMetric"><small>Tamamlanmış sifariş</small><strong>${Number(report.completedCount || 0)}</strong></div>
       <div class="paymentMonthlyMetric"><small>Ümumi satış</small><strong>${money(report.revenue)}</strong></div>
-      <div class="paymentMonthlyMetric"><small>Ümumi maya</small><strong>${money(report.cost)}</strong></div>
-      <div class="paymentMonthlyMetric ${Number(report.profit) < 0 ? "bad" : ""}"><small>Xalis qazanc</small><strong>${money(report.profit)}</strong></div>`;
+      <div class="paymentMonthlyMetric"><small>Ümumi maya</small><strong>${reportCostLabel(report)}</strong></div>
+      <div class="paymentMonthlyMetric ${Number(report.profit) < 0 ? "bad" : ""}"><small>Xalis qazanc</small><strong>${reportProfitLabel(report)}</strong></div>`;
   }
 
   function reportBreakdownMarkup(report) {
@@ -404,10 +413,13 @@
     if (!host) return;
     const stats = paymentState.orderMeta.statistics || {};
     if (!["today", "all"].includes(paymentState.orderQuery.tab)) { host.innerHTML = ""; if (breakdown) breakdown.innerHTML = ""; return; }
-    host.innerHTML = reportPrimaryMarkup({ completedCount: stats.count, revenue: stats.revenue, cost: stats.cost, profit: stats.profit });
+    host.innerHTML = reportPrimaryMarkup({ ...stats, completedCount: stats.count }) +
+      (stats.missingCostCount ? `<p class="warningBox">Maya məlum deyil: ${Number(stats.missingCostCount)} sifariş.</p>` : "") +
+      (stats.estimatedCostCount ? `<p class="warningBox">Cari maya ilə təxmini hesablanıb: ${Number(stats.estimatedCostCount)} sifariş.</p>` : "");
     if (breakdown) breakdown.innerHTML = reportBreakdownMarkup(stats);
-    if (title) title.textContent = paymentState.orderQuery.tab === "today" ? "Bu günün hesabatı" : "Filtr üzrə maliyyə hesabatı";
-    if (label) label.textContent = paymentState.orderQuery.tab === "today" ? "Bakı vaxtı ilə bu gün tamamlanan sifarişlər" : `${fullDateLabel(paymentState.orderMeta.appliedFilters?.dateFrom)} – ${fullDateLabel(paymentState.orderMeta.appliedFilters?.dateTo)} · Bakı vaxtı`;
+    const today = paymentState.orderMeta.appliedFilters?.period === "today";
+    if (title) title.textContent = today ? "Bu günün hesabatı" : "Filtr üzrə maliyyə hesabatı";
+    if (label) label.textContent = today ? "Bakı vaxtı ilə bu gün tamamlanan sifarişlər" : `${fullDateLabel(paymentState.orderMeta.appliedFilters?.dateFrom)} – ${fullDateLabel(paymentState.orderMeta.appliedFilters?.dateTo)} · Bakı vaxtı`;
   }
 
   function bakuOrderDay(value) {
@@ -427,7 +439,7 @@
     return [...groups].map(([day, orders]) => {
       const stat = statsByDay.get(day) || {};
       const label = fullDateLabel(day);
-      return `<details class="paymentOrderDay" data-live-group="day-${escp(day)}" open><summary><strong>${escp(label)}</strong><span>${Number(stat.count || orders.length)} sifariş · Satış ${money(stat.revenue || 0)} · Maya ${money(stat.cost || 0)} · Xalis qazanc ${money(stat.profit || 0)}</span></summary><div class="paymentOrderDayList">${orders.map(orderCard).join("")}</div></details>`;
+      return `<details class="paymentOrderDay" data-live-group="day-${escp(day)}" open><summary><strong>${escp(label)}</strong><span>${Number(stat.count || orders.length)} sifariş · Satış ${money(stat.revenue || 0)} · Maya ${reportCostLabel(stat)} · Xalis qazanc ${reportProfitLabel(stat)}</span></summary><div class="paymentOrderDayList">${orders.map(orderCard).join("")}</div></details>`;
     }).join("");
   }
 
@@ -542,8 +554,8 @@
     if (paymentState.costBackfillBusy) { host.textContent = "Məlumat yoxlanılır…"; return; }
     if (!preview) { host.textContent = "Əvvəl preview yaradın. Heç bir sifariş preview və ayrıca təsdiq olmadan dəyişdirilmir."; return; }
     const unmatched = (preview.items || []).filter((item) => !item.matched);
-    const matchedRows = (preview.items || []).filter((item) => item.matched).map((item) => `<tr><td>${escp(item.orderCode)}</td><td>${escp(item.productTitle)}</td><td>${escp(item.planName)}</td><td>${money(item.sale)}</td><td>${money(item.cost)}</td><td class="${Number(item.profit) < 0 ? "bad" : ""}">${money(item.profit)}</td></tr>`).join("");
-    host.innerHTML = `<div class="paymentBackfillStats"><span>Snapshot çatışmır: <strong>${Number(preview.missingCount || 0)}</strong></span><span>Dəqiq uyğunlaşdı: <strong>${Number(preview.matchedCount || 0)}</strong></span><span>Uyğunlaşmadı: <strong>${Number(preview.unmatchedCount || 0)}</strong></span><span>Ümumi maya: <strong>${money(preview.cost || 0)}</strong></span><span>Xalis qazanc: <strong>${money(preview.profit || 0)}</strong></span></div>${unmatched.length ? `<p class="warningBox">${unmatched.length} sifarişə maya yazılmayacaq: ${unmatched.map((item) => `${escp(item.orderCode)} — ${escp(item.productTitle)} / ${escp(item.planName)}`).join("; ")}</p>` : ""}${matchedRows ? `<div class="paymentProductProfitTable"><table><thead><tr><th>Sifariş</th><th>Məhsul</th><th>Plan</th><th>Satış</th><th>Tətbiq ediləcək maya</th><th>Xalis qazanc</th></tr></thead><tbody>${matchedRows}</tbody></table></div>` : '<div class="emptyState">Tətbiq ediləcək dəqiq uyğunluq yoxdur.</div>'}`;
+    const matchedRows = (preview.items || []).filter((item) => item.matched).map((item) => `<tr><td>${escp(item.orderCode)}</td><td>${escp(item.productTitle)}</td><td>${escp(item.planName)}</td><td>${money(item.sale)}</td><td>${money(item.cost)}${item.estimated?" · Təxmini":""}</td><td class="${Number(item.profit) < 0 ? "bad" : ""}">${money(item.profit)}</td></tr>`).join("");
+    host.innerHTML = `<div class="paymentBackfillStats"><span>Snapshot çatışmır: <strong>${Number(preview.missingCount || 0)}</strong></span><span>Maya tapıldı: <strong>${Number(preview.matchedCount || 0)}</strong></span><span>Uyğunlaşmadı: <strong>${Number(preview.unmatchedCount || 0)}</strong></span><span>Ümumi maya: <strong>${money(preview.cost || 0)}</strong></span><span>Xalis qazanc: <strong>${money(preview.profit || 0)}</strong></span></div>${unmatched.length ? `<p class="warningBox">${unmatched.length} sifarişə maya yazılmayacaq: ${unmatched.map((item) => `${escp(item.orderCode)} — ${escp(item.productTitle)} / ${escp(item.planName)}`).join("; ")}</p>` : ""}${matchedRows ? `<div class="paymentProductProfitTable"><table><thead><tr><th>Sifariş</th><th>Məhsul</th><th>Plan</th><th>Satış</th><th>Tətbiq ediləcək maya</th><th>Xalis qazanc</th></tr></thead><tbody>${matchedRows}</tbody></table></div>` : '<div class="emptyState">Bərpa edilə bilən maya tapılmadı.</div>'}`;
   }
   async function loadCostBackfillPreview() {
     if (paymentState.costBackfillBusy) return;

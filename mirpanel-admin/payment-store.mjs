@@ -18,7 +18,7 @@ import {
   paymentMethodLabel
 } from "./payment-order-query.mjs";
 import { bakuDate, bakuDayBounds, expiryStatus } from "./payment-order-lifecycle.mjs";
-import { normalizeFinancialStatistics } from "./payment-order-report.mjs";
+import { normalizeFinancialStatistics, reportOrderFinance } from "./payment-order-report.mjs";
 import { durationOptions, durationStatistics, orderDuration } from "./payment-order-duration.mjs";
 import { orderProductMatcher } from "./payment-order-product.mjs";
 import { catalogCostRows, centsToDecimal, parseMoneyCents, planKey } from "./payment-profit.mjs";
@@ -437,12 +437,15 @@ export function createPaymentStore(config) {
       const rows=await rpc('employee_order_workflow',{p_ids:ids});
       return new Map(rows.map(({id,...workflow})=>[id,workflow]));
     },
-    async listOrders(input = {}, catalog = [], { pendingDeliveries, pendingDeliveryProgress, deliveryCompletions } = {}) {
+    async listOrders(input = {}, catalog = [], { pendingDeliveries, pendingDeliveryProgress, deliveryCompletions, orderRefunds } = {}) {
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
+      const financeView = ['today','all'].includes(filters.tab) && Boolean(orderRefunds);
       const select = "id,checkout_snapshot,payment_source,payment_confirmed,fulfillment_cancellation,order_code,product_id,product_title,plan_id,plan_name,quantity,amount,currency,status,created_at,updated_at,approved_at,completed_at,duration_months,service_expires_on,expiry_notification_on,contacted_at,method_name_snapshot,method_last4_snapshot,sale_price_snapshot,cost_price_snapshot,profit_snapshot,profit_margin_snapshot,cost_source,cost_backfilled_at,receipt_path,receipt_deleted_at,payment_methods(display_name,last4,provider_name),payment_reservations(status,expires_at)";
 
-      const rangeStart = filters.tab === "today" ? todayBounds.start : filters.tab === "all" && filters.dateFrom ? filters.dateFrom+"T00:00:00+04:00" : null;
+      const rangeStart = financeView
+        ? (filters.dateFrom ? bakuDayBounds(filters.dateFrom).start : null)
+        : filters.tab === "today" ? todayBounds.start : filters.tab === "all" && filters.dateFrom ? bakuDayBounds(filters.dateFrom).start : null;
       const recent = new Map((deliveryCompletions && rangeStart ? await deliveryCompletions({since:rangeStart}) : []).map(o=>[o.id,o.completedAt]));
 
       const countStatus = async (statusValues, mutate = (value) => value) => {
@@ -536,7 +539,8 @@ export function createPaymentStore(config) {
       const loadQueueInOnePass=deliveryQueue&&deliveryProgress&&deliveryProgress.size<=filters.pageSize&&!matchProduct&&!filters.durationMonths;
       const detailedRows=new Map();
       const facetColumns = loadQueueInOnePass ? select : "id,product_id,product_title,plan_id,plan_name,duration_months,status,completed_at,created_at,payment_confirmed,amount,sale_price_snapshot,cost_price_snapshot,profit_snapshot" +
-        (matchProduct ? ",method_id,method_name_snapshot,method_last4_snapshot,cart_items:checkout_snapshot->items,snapshot_product:checkout_snapshot->>productId" : "");
+        (financeView ? ",quantity,currency,payment_source,cost_source,cost_lines_snapshot,fulfillment_cancellation" : "") +
+        (matchProduct || financeView ? ",method_id,method_name_snapshot,method_last4_snapshot,cart_items:checkout_snapshot->items,snapshot_product:checkout_snapshot->>productId" : "");
       const facetRows = [];
       const seenOrders = new Set();
       const candidateBatches = [[]];
@@ -558,19 +562,25 @@ export function createPaymentStore(config) {
           if (!result.data?.length && offset < facetTotal) throw paymentError(null, "Sifariş filtri tam yüklənmədi. Yenidən cəhd edin.");
           offset += result.data?.length || 0;
           const candidates = (result.data || []).filter(row => !seenOrders.has(row.id) && (!matchProduct || matchProduct(row)));
-          const pending = (deliveryQueue || completedView) && candidates.length
+          const pending = (deliveryQueue || completedView || (financeView && pendingDeliveries)) && candidates.length
             ? deliveryProgress || new Set(await pendingDeliveries(candidates.map(row => row.id))) : null;
-          const completions = paidView && rangeStart && deliveryCompletions && candidates.length
+          const completions = paidView && (rangeStart || financeView) && deliveryCompletions && candidates.length
             ? new Map((await deliveryCompletions({ids:candidates.map(row=>row.id)})).map(o=>[o.id,o.completedAt])) : recent;
-          for (const row of candidates) if (!pending || pending.has(row.id) === deliveryQueue) {
+          for (const row of candidates) if ((!deliveryQueue && !completedView) || !pending || pending.has(row.id) === deliveryQueue) {
             const completedAt = completions.get(row.id) || row.completed_at || row.created_at;
             if (paidView && rangeStart && Date.parse(completedAt)<Date.parse(rangeStart)) continue;
-            const rangeEnd = completedView ? todayBounds.endExclusive : filters.dateTo && bakuDayBounds(filters.dateTo).endExclusive;
+            const rangeEnd = completedView && !financeView ? todayBounds.endExclusive : filters.dateTo && bakuDayBounds(filters.dateTo).endExclusive;
             if (paidView && rangeEnd && Date.parse(completedAt)>=Date.parse(rangeEnd)) continue;
+            const completed = row.status !== 'cancelled' && (completions.has(row.id) ||
+              (['approved','completed'].includes(row.status) && row.completed_at && !pending?.has(row.id)));
+            if (financeView && completedView && !completed) continue;
             seenOrders.add(row.id);
             if(loadQueueInOnePass)detailedRows.set(row.id,row);
             const {cart_items, snapshot_product, ...summary} = row;
-            facetRows.push(completedView||completions.has(row.id)?{...summary,status:'completed',completed_at:completedAt}:summary);
+            facetRows.push(financeView
+              ? {...summary, status:completed?'completed':row.status==='cancelled'?'cancelled':'reviewing',
+                completed_at:completed?completedAt:null, ...(cart_items?{cart_items}:{})}
+              : completedView||completions.has(row.id)?{...summary,status:'completed',completed_at:completedAt}:summary);
           }
         } while (offset < facetTotal);
       }
@@ -579,21 +589,31 @@ export function createPaymentStore(config) {
         facetRows.sort((a,b)=>direction*((Date.parse(a.created_at)||0)-(Date.parse(b.created_at)||0)||a.id.localeCompare(b.id)));
       }
       if(paidView){const direction=filters.sort==='oldest'?1:-1;facetRows.sort((a,b)=>direction*((Date.parse(a.completed_at)||0)-(Date.parse(b.completed_at)||0)||a.id.localeCompare(b.id)));}
-      const durations = durationOptions(facetRows);
+      const durationRows = row => financeView && row.cart_items?.length
+        ? row.cart_items.filter(line=>!matchProduct || matchProduct({product_id:line.productId,product_title:line.title}))
+          .map(line=>({duration_months:line.durationMonths,plan_name:line.planName}))
+        : [row];
+      const durations = durationOptions(facetRows.flatMap(durationRows));
       if (filters.durationMonths && !durations.some((item) => item.value === filters.durationMonths) && input.preserveFilters!=='true') {
         filters.durationMonths = "";
         filters.page = 1;
       }
-      const matchedRows = filters.durationMonths ? facetRows.filter((row) => orderDuration(row) === filters.durationMonths) : facetRows;
+      const matchedRows = filters.durationMonths ? facetRows.filter(row=>durationRows(row).some(line=>orderDuration(line)===filters.durationMonths)) : facetRows;
       const view=adminListWindow(matchedRows,{page:filters.page,pageSize:filters.pageSize,anchorId:safeUuid(input.anchorId),anchorIndex:input.anchorIndex});
       const pageIds = view.rows.map((row) => row.id);
       const query = loadQueueInOnePass ? Promise.resolve({data:pageIds.map(id=>detailedRows.get(id)),error:null})
         : pageIds.length ? matchingQuery(select, {}, pageIds).in("id", pageIds) : Promise.resolve({ data: [], error: null });
 
-      const [{ data, error }, [pendingCount, todayCount, completedCount, expiringCount], methodRows, statistics] = await Promise.all([
+      const financeRequest = financeView ? (async () => {
+        const completed=matchedRows.filter(row=>row.completed_at && row.status==='completed' && row.currency==='AZN');
+        const refunds=new Map((completed.length?await orderRefunds(completed.map(row=>row.id)):[]).map(row=>[row.order_id,row.cents]));
+        return new Map(completed.map(row=>[row.id,reportOrderFinance(row,refunds.get(row.id))]));
+      })() : Promise.resolve(null);
+      const [{ data, error }, [pendingCount, todayCount, completedCount, expiringCount], methodRows, statistics, reportOrders] = await Promise.all([
         query,
         countsRequest,
         methodsRequest,
+        financeView ? financeRequest.then(rows=>durationStatistics([...rows.values()],{includeMethods:true,completeCosts:true})) :
         deliveryQueue || reviewQueue || paidView || filters.durationMonths || matchProduct ? Promise.resolve(durationStatistics(matchedRows.filter(o=>o.status!=="cancelled"), { includeMethods: Boolean(matchProduct) })) : rpc("payment_order_profit_statistics_v2", {
           p_tab: filters.tab,
           p_search: filters.search || null,
@@ -603,14 +623,15 @@ export function createPaymentStore(config) {
           p_date_from: filters.dateFrom || null,
           p_date_to: filters.dateTo || null,
           p_today: filters.today
-        })
+        }),
+        financeRequest
       ]);
       if (error) throw paymentError(error);
       if (methodRows.error) throw paymentError(methodRows.error);
 
       const orders = data || [];
-      if(completedView){const positions=new Map(pageIds.map((id,index)=>[id,index]));orders.sort((a,b)=>positions.get(a.id)-positions.get(b.id));}
-      const displayedCompletions = new Map((deliveryCompletions && !deliveryQueue ? await deliveryCompletions({ids:orders.map(o=>o.id)}) : []).map(o=>[o.id,o.completedAt]));
+      if(paidView){const positions=new Map(pageIds.map((id,index)=>[id,index]));orders.sort((a,b)=>positions.get(a.id)-positions.get(b.id));}
+      const displayedCompletions = new Map((deliveryCompletions && !deliveryQueue && !financeView ? await deliveryCompletions({ids:orders.map(o=>o.id)}) : []).map(o=>[o.id,o.completedAt]));
       const products = new Map();
       for (const row of facetRows) {
         if (row.product_id && !products.has(row.product_id)) products.set(row.product_id, row.product_title);
@@ -618,6 +639,7 @@ export function createPaymentStore(config) {
       const total = matchedRows.length;
       return {
         orders: orders.map((order) => {
+          const report = reportOrders?.get(order.id);
           const method = Array.isArray(order.payment_methods) ? order.payment_methods[0] || {} : order.payment_methods || {};
           const reservation = Array.isArray(order.payment_reservations) ? order.payment_reservations[0] || {} : order.payment_reservations || {};
           return {
@@ -636,14 +658,15 @@ export function createPaymentStore(config) {
             profitSnapshot: order.profit_snapshot === null ? null : Number(order.profit_snapshot),
             profitMarginSnapshot: order.profit_margin_snapshot === null ? null : Number(order.profit_margin_snapshot),
             costSource: order.cost_source || null,
+            ...(report?{reportCost:report.cost_price_snapshot,reportEstimated:report.estimated_cost}:{}),
             costBackfilledAt: order.cost_backfilled_at || null,
             currency: order.currency,
             status: order.status==='cancelled' ? 'cancelled' : order.fulfillment_cancellation ? 'partial_cancelled'
-              : completedView||displayedCompletions.has(order.id) ? 'completed' : adminOrderStatus(order.status, reservation.status),
+              : completedView||report||displayedCompletions.has(order.id) ? 'completed' : adminOrderStatus(order.status, reservation.status),
             ...(order.fulfillment_cancellation ? {cancellation:{lines:order.fulfillment_cancellation.lines,refundStatus:order.fulfillment_cancellation.refundStatus,refundCents:order.fulfillment_cancellation.refundCents,reason:order.fulfillment_cancellation.reason}} : {}),
             reservationStatus: reservation.status || "",
             createdAt: order.created_at,
-            completedAt: order.fulfillment_cancellation?.at || displayedCompletions.get(order.id) || order.completed_at || order.approved_at || (completedView&&order.payment_confirmed ? order.created_at : adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
+            completedAt: report?.completed_at || order.fulfillment_cancellation?.at || displayedCompletions.get(order.id) || order.completed_at || order.approved_at || (completedView&&order.payment_confirmed ? order.created_at : adminOrderStatus(order.status, reservation.status) === "completed" ? order.updated_at : null),
             durationMonths: order.duration_months,
             expiresOn: order.service_expires_on,
             expiryNotificationOn: order.expiry_notification_on,

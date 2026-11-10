@@ -1,5 +1,5 @@
 import { bakuDate } from "./payment-order-lifecycle.mjs";
-import { aggregateSnapshotRows, decimalToCents, normalizeFinancialStatistics } from "./payment-order-report.mjs";
+import { aggregateSnapshotRows, centsToMoney, decimalToCents, normalizeFinancialStatistics } from "./payment-order-report.mjs";
 
 // Persisted duration wins. Parsing is only for orders created before that field existed.
 export function orderDuration(row = {}) {
@@ -29,13 +29,19 @@ export function normalizeDurationFilter(value, legacyPlanName = "") {
 
 // A duration can span many full plan labels. Use the existing immutable finance
 // snapshots and decimal aggregation, never current prices or new financial writes.
-export function durationStatistics(rows = [], { includeMethods = false } = {}) {
+export function durationStatistics(rows = [], { includeMethods = false, completeCosts = false } = {}) {
   const completed = rows.filter((row) => ["approved", "completed"].includes(row.status) && row.completed_at);
   const metric = (items) => {
     const known = items.filter((row) => row.cost_price_snapshot !== null && row.cost_price_snapshot !== undefined);
     const sale = known.reduce((sum, row) => sum + decimalToCents(row.sale_price_snapshot ?? row.amount ?? 0), 0n);
     const profit = known.reduce((sum, row) => sum + decimalToCents(row.profit_snapshot ?? 0), 0n);
-    return { ...aggregateSnapshotRows(items), missingCostCount: items.length - known.length,
+    const missingCostCount = items.length - known.length;
+    const totals = aggregateSnapshotRows(items);
+    if (completeCosts) {
+      totals.cost = centsToMoney(items.reduce((sum,row)=>sum+decimalToCents(row.known_cost_snapshot ?? row.cost_price_snapshot),0n));
+      totals.profit = missingCostCount ? null : centsToMoney(decimalToCents(totals.revenue)-decimalToCents(totals.cost));
+    }
+    return { ...totals, missingCostCount, estimatedCostCount: items.filter(row=>row.estimated_cost).length,
       profitMargin: sale === 0n ? null : Number((Number(profit) / Number(sale) * 100).toFixed(2)) };
   };
   const group = (key, metadata) => {
@@ -56,8 +62,8 @@ export function durationStatistics(rows = [], { includeMethods = false } = {}) {
   const days = group((row) => bakuDate(new Date(row.completed_at)), (row) => ({ date: bakuDate(new Date(row.completed_at)) }));
   days.sort((a, b) => b.date.localeCompare(a.date));
   const paymentMethods = includeMethods ? group(
-    row => JSON.stringify([row.method_id, row.method_name_snapshot, row.method_last4_snapshot]),
-    row => ({ methodId: row.method_id, label: (row.method_name_snapshot || "Ödəniş üsulu") +
+    row => row.payment_source === "wallet" ? "wallet" : JSON.stringify([row.method_id, row.method_name_snapshot, row.method_last4_snapshot]),
+    row => ({ methodId: row.payment_source === "wallet" ? null : row.method_id, label: row.payment_source === "wallet" ? "MirPanel balansı" : (row.method_name_snapshot || "Ödəniş üsulu") +
       (row.method_last4_snapshot ? ` •••• ${row.method_last4_snapshot}` : "") })
   ).sort((a,b) => Number(b.revenue)-Number(a.revenue) || a.label.localeCompare(b.label,"az")) : [];
   const knownProducts = new Map();
