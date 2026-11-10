@@ -31,7 +31,7 @@ export function orderBankDetail({el,button,method,amount,onChange,onCopy}){
 }
 export function createWalletTopup({el,button,api,run,money,methods,profile,getCents,onComplete,onBusy,restoreCents,signal,isClosed}){
  document.body.classList.remove('wallet-topup-active');signal.addEventListener('abort',()=>document.body.classList.remove('wallet-topup-active'),{once:true});
- const root=el('section',null,'shop-card wallet-topup'),title=el('h2','Ödəniş üsulu'),tiles=el('div',null,'wallet-method-tiles'),open=button('',()=>{selection.hidden=!selection.hidden;open.setAttribute('aria-expanded',String(!selection.hidden));document.body.classList.toggle('wallet-topup-active',!selection.hidden);if(!selection.hidden)void refreshCards();}),selection=el('div',null,'wallet-bank-selection'),grid=el('div',null,'wallet-bank-grid'),stage=el('div'),notice=el('p','','shop-error');
+ const root=el('section',null,'shop-card wallet-topup'),title=el('h2','Ödəniş üsulu'),tiles=el('div',null,'wallet-method-tiles'),open=button('',()=>{selection.hidden=false;open.setAttribute('aria-expanded','true');document.body.classList.add('wallet-topup-active');}),selection=el('div',null,'wallet-bank-selection'),grid=el('div',null,'wallet-bank-grid'),stage=el('div'),notice=el('p','','shop-error');
  paymentMethods.forEach(([label,description,path],i)=>{
   const tile=i?button('',null):open,icon=el('span',null,'checkout-icon');
   icon.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';
@@ -50,7 +50,7 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
  const proceed=button('Bu kartla davam et · —',()=>run(async()=>{notice.textContent='';const cents=getCents();if(!selected)throw Error('Ödəniş kartını seçin.');preparing=true;proceed.disabled=open.disabled=true;for(const b of grid.children)b.disabled=true;onBusy(true);try{const input=topupAmountText(cents)+':'+selected,old=read(),requestId=old?.input===input?old.requestId:crypto.randomUUID();remember({input,requestId,cents,methodId:selected});const d=await api('/topup',{amount:topupAmountText(cents),methodId:selected,requestId,allowFallback:true});remember({input,requestId,cents,methodId:selected,id:d.id});if(!alive())return;if(d.status!=='draft'){await completed(d);return;}if(draft?.id!==d.id){file=null;attempt=null;if(objectUrl)URL.revokeObjectURL(objectUrl);objectUrl=null;}draft=await api('/topup?id='+d.id);selected=draft.methodId;receiptReady=draft.receiptUploaded;await detail();}catch(e){if(e.code==='TOPUP_CARD_EXPIRED'){forget();draft=null;}if(['TOPUP_CARD_UNAVAILABLE','TOPUP_CARD_EXPIRED'].includes(e.code))void refreshCards();throw e;}finally{preparing=false;open.disabled=false;for(const b of grid.children)b.disabled=false;onBusy(false);updateAmount();}}),true);
  function updateAmount(){let cents;try{cents=getCents();}catch{}proceed.textContent='Bu kartla davam et · '+(cents===undefined?'—':money(cents));proceed.disabled=cents===undefined||!selected||loadingCards||preparing||uploading||sending;if(draft&&!stage.hidden&&stage.children.length&&cents!==draft.cents&&!preparing&&!uploading&&!sending){stage.hidden=true;selection.hidden=false;tiles.hidden=false;open.setAttribute('aria-expanded','true');}}
  async function refreshCards(){
-  if(loadingCards)return;loadingCards=true;grid.setAttribute('aria-busy','true');grid.replaceChildren(el('p','Kartlar yoxlanılır…','shop-muted'));proceed.disabled=true;
+  if(loadingCards)return;loadingCards=true;grid.setAttribute('aria-busy','true');const loading=el('p','Kartlar yoxlanılır…','shop-muted');loading.setAttribute('role','status');grid.replaceChildren(loading);proceed.disabled=true;
   try{const result=await api('/topup/methods');if(!alive())return;available=result.methods||[];if(!available.some(m=>m.id===selected))selected=available[0]?.id||'';drawCards();}
   catch(e){if(alive()){available=[];selected='';grid.replaceChildren(el('p',e.message,'shop-error'),button('Kartları yenidən yoxla',()=>void refreshCards()));}}
   finally{loadingCards=false;grid.removeAttribute('aria-busy');if(alive())updateAmount();}
@@ -59,7 +59,7 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
   if(!available.length){grid.replaceChildren(el('p','Hazırda limiti boş olan aktiv ödəniş kartı yoxdur.','shop-muted'),button('Kartları yenidən yoxla',()=>void refreshCards()));return;}
   drawBankChoices({el,button,grid,methods:available,selected,onSelect:id=>{selected=id;updateAmount();}});
  }
- open.setAttribute('aria-expanded','false');selection.hidden=true;selection.append(grid,proceed);root.append(title,tiles,selection,stage,notice);drawCards();updateAmount();
+ open.setAttribute('aria-expanded','true');open.setAttribute('aria-pressed','true');selection.hidden=false;selection.append(grid,proceed);root.append(title,tiles,selection,stage,notice);updateAmount();
  async function completed(d){const saved=await api('/topup?id='+encodeURIComponent(d.id));if(!saved.receiptUploaded)throw Error('Çekin saxlanması təsdiqlənmədi. Yenidən cəhd edin.');if(!['reviewing','approved'].includes(saved.status))throw Error('Bu müraciətin vəziyyəti dəyişib. Tarixçəni yoxlayın.');await onComplete(saved);forget();releasePhoto();file=null;attempt=null;document.body.classList.remove('wallet-topup-active');}
  async function detail(){const id=draft.id,cents=draft.cents,d=await api('/method?'+new URLSearchParams({id:draft.methodId,topup:id})),listed=available.find(x=>x.id===draft.methodId),m={...listed,...d,backgroundUrl:d.backgroundUrl||listed?.backgroundUrl};if(!alive())return;releasePhoto();document.body.classList.add('wallet-topup-active');selection.hidden=true;tiles.hidden=true;stage.replaceChildren();
   const panel=el('article',null,'wallet-bank-detail bank-'+bank(m)),head=el('div',null,'wallet-bank-head'),change=button('Kartı dəyiş',()=>{if(uploading||sending)return;stage.hidden=true;selection.hidden=false;tiles.hidden=false;open.setAttribute('aria-expanded','true');updateAmount();});head.append(fallback(el,m),change);panel.append(head);background(el,panel,m);
@@ -77,7 +77,7 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
   input.onchange=()=>{const next=input.files[0];if(!next||uploading||sending)return;file=next;attempt=crypto.randomUUID();receiptReady=false;show();void upload();};show();signal.addEventListener('abort',revoke,{once:true});releasePhoto=()=>{signal.removeEventListener('abort',revoke);revoke();};
  }
  async function resume(){
-  const old=read();if(!old?.id&&!old?.requestId)return;
+  const old=read();if(!old?.id&&!old?.requestId){await refreshCards();return;}
   open.disabled=true;onBusy(true);
   try{
    let id=old.id;
@@ -91,7 +91,7 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
   }catch(e){
    if(e.status===404||e.code==='TOPUP_CARD_EXPIRED')forget();
    if(e.status!==404&&alive())notice.textContent='Əvvəlki müraciət: '+e.message;
-  }finally{if(alive()){open.disabled=false;onBusy(false);}}
+  }finally{if(alive()){open.disabled=false;onBusy(false);if(root.isConnected)await refreshCards();}}
  }
  return{element:root,updateAmount,resume};
 }
