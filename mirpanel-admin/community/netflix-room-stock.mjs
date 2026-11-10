@@ -4,6 +4,30 @@ const G='mirpanel_community.netflix_room_groups', U='mirpanel_community.netflix_
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const digest=(secret,value)=>crypto.createHmac('sha256',secret).update(JSON.stringify(value)).digest('hex');
 const isoDate=value=>typeof value==='string'&&/^\d{4}-\d{2}-\d{2}$/.test(value)&&value.slice(0,4)!=='0000'&&Number.isFinite(Date.parse(value))&&new Date(value).toISOString().slice(0,10)===value;
+const roomId=value=>typeof value==='string'&&/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(value);
+function parseRoom(room){
+ const name=typeof room?.name==='string'?room.name.trim().normalize('NFC'):'',pin=room?.pin;
+ if(!name||name.length>50||/[\x00-\x1f\x7f]/.test(name)||typeof pin!=='string'||!/^\d{4}$/.test(pin))throw fail(400,'Otaq adı və dörd rəqəmli PIN yazın.');
+ return {name,key:name.toLowerCase(),pin};
+}
+export async function editNetflixRoom(pool,security,input){
+ const {id,action}=input;
+ if(!roomId(id)||!['open','save'].includes(action))throw fail(400,'Otaq sorğusu düzgün deyil.');
+ if(action==='open'){
+  const {rows:[room]}=await pool.query(`select id,room_name,pin_cipher,delivery_id from ${U} where id=$1`,[id]);
+  if(!room)throw fail(404,'Otaq tapılmadı.');
+  const value=JSON.parse(security.decryptSecret(room.pin_cipher));
+  if(value.id!==room.id||typeof value.pin!=='string'||!/^\d{4}$/.test(value.pin))throw fail(409,'Otağın PIN-i oxunmadı.');
+  return {id:room.id,name:room.room_name,pin:value.pin,editable:!room.delivery_id};
+ }
+ const room=parseRoom(input);
+ try{
+  const {rowCount}=await pool.query(`update ${U} set room_name=$2,room_key=$3,pin_cipher=$4 where id=$1 and delivery_id is null`,
+   [id,room.name,room.key,security.encryptSecret(JSON.stringify({id:id.toLowerCase(),pin:room.pin}))]);
+  if(!rowCount)throw fail(409,'Otaq tapılmadı və ya artıq sifarişə ayrılıb.');
+  return {id,name:room.name};
+ }catch(e){if(e.code==='23505')throw fail(409,'Bu hesabda eyni adlı otaq artıq stokdadır.');throw e;}
+}
 export function parseRoomBatch(b){
  const {requestId,email,password,startsOn,endsOn,rooms}=b||{};
  if(typeof requestId!=='string'||!/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(requestId))throw fail(400,'Saxlama sorğusu düzgün deyil.');
@@ -12,9 +36,7 @@ export function parseRoomBatch(b){
  if(!Array.isArray(rooms)||rooms.length<1||rooms.length>20)throw fail(400,'1–20 otaq əlavə edin.');
  const seen=new Set();
  return {requestId,email:email.trim(),password,startsOn,endsOn,rooms:rooms.map(room=>{
-  const name=typeof room?.name==='string'?room.name.trim().normalize('NFC'):'',pin=room?.pin;
-  if(!name||name.length>50||/[\x00-\x1f\x7f]/.test(name)||typeof pin!=='string'||!/^\d{4}$/.test(pin))throw fail(400,'Hər otağa ad və dörd rəqəmli PIN yazın.');
-  const key=name.toLowerCase();
+  const {name,key,pin}=parseRoom(room);
   if(seen.has(key))throw fail(400,'Eyni otaq adı təkrarlana bilməz.');
   seen.add(key);return {name,key,pin};
  })};

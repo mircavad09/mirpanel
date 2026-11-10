@@ -65,19 +65,52 @@ export function mountReadyStock(host,api){
   </form><p data-room-status role="status"></p><ul data-room-list></ul>`;
  const roomForm=roomHost.querySelector('form'),roomRows=roomHost.querySelector('[data-rooms]'),roomStatus=roomHost.querySelector('[data-room-status]'),roomList=roomHost.querySelector('[data-room-list]');
  let roomRequest=null,roomBusy=false;
+ const roomFields='<label>Otaq adı<input name="room" maxlength="50" required></label><label>PIN<input name="pin" type="text" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" spellcheck="false" required></label>';
  function addRoom(){
   if(roomRows.children.length>=20)return;
   const row=document.createElement('div');row.className='readyStockAccount netflixRoomRow';
-  row.innerHTML='<label>Otaq adı<input name="room" maxlength="50" required></label><label>PIN<input name="pin" type="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required></label><button type="button" class="btn" aria-label="Otağı sil">×</button>';
+  row.innerHTML=roomFields+'<button type="button" class="btn" aria-label="Otağı sil">×</button>';
   row.querySelector('button').onclick=()=>{if(roomRows.children.length>1){row.remove();roomRequest=null;}};
   roomRows.append(row);
  }
+ const editRoom=data=>api(endpoint,{method:'POST',body:JSON.stringify({netflixRoomEdit:data})});
+ async function openRoom(node,row,button){
+  button.disabled=true;roomStatus.textContent='';
+  try{
+   const result=await editRoom({action:'open',id:row.id});
+   if(!node.isConnected)return;
+   const form=document.createElement('form');
+   form.autocomplete='off';form.className='netflixRoomEdit';
+   form.innerHTML='<div class="readyStockAccount netflixRoomRow">'+roomFields+'</div><div class="readyStockActions"><button type="submit" class="btn primary">Dəyişikliyi saxla</button><button type="button" class="btn">Bağla</button></div>';
+   const {room,pin}=form.elements,save=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]');
+   room.value=result.name;pin.value=result.pin;
+   if(!result.editable){room.readOnly=pin.readOnly=true;save.remove();}
+   const dismiss=()=>{pin.value='';form.remove();button.hidden=false;button.focus();};
+   close.onclick=dismiss;
+   form.onsubmit=async event=>{
+    event.preventDefault();if(!result.editable||save.disabled)return;
+    save.disabled=close.disabled=room.disabled=pin.disabled=true;
+    try{
+     const updated=await editRoom({action:'save',id:row.id,name:room.value,pin:pin.value});
+     row.name=updated.name;node.querySelector('[data-room-summary]').textContent=roomSummary(row);
+     dismiss();roomStatus.textContent='Otaq yeniləndi.';
+    }catch(e){roomStatus.textContent=e.message||'Otaq saxlanılmadı.';}
+    finally{save.disabled=close.disabled=room.disabled=pin.disabled=false;}
+   };
+   button.hidden=true;node.append(form);pin.focus();
+  }catch(e){roomStatus.textContent=e.message||'Otaq açıla bilmədi.';}
+  finally{button.disabled=false;}
+ }
+ const roomSummary=row=>row.name+' · '+row.startsOn+' → '+row.endsOn+' · '+({free:'Boş',sold:'Satılıb',expired:'Yenilənməyib'}[row.status]||'—');
  function showRooms(rows){
   roomForm.hidden=!Array.isArray(rows);
   if(!Array.isArray(rows)){roomStatus.textContent='Otaq stoku bazada hələ aktiv deyil.';return;}
   roomList.replaceChildren(...rows.map(row=>{
    const node=document.createElement('li');
-   node.textContent=row.name+' · '+row.startsOn+' → '+row.endsOn+' · '+({free:'Boş',sold:'Satılıb',expired:'Yenilənməyib'}[row.status]||'—');
+   const summary=document.createElement('span'),edit=document.createElement('button');
+   summary.dataset.roomSummary='';summary.textContent=roomSummary(row);
+   edit.type='button';edit.className='btn';edit.textContent='Redaktə et';edit.onclick=()=>void openRoom(node,row,edit);
+   node.append(summary,' ',edit);
    return node;
   }));
  }
