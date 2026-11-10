@@ -18,6 +18,7 @@ for(const [engine,width] of (before?[[chromium,390],[chromium,1440]]:[[chromium,
  try{
   const context=await browser.newContext({viewport:{width,height:900},isMobile:width===390,hasTouch:width===390});
   const page=await context.newPage();page.setDefaultTimeout(12000);
+  let releaseFirstList;const firstListGate=new Promise(resolve=>{releaseFirstList=resolve;});
   let requests=0,listRequests=0,failDelivery=false,failList=false,includeDetails=!before,revision=0,uid='a',responseDelay=250;
   await context.route('**/*',async r=>{
    const u=new URL(r.request().url()),path=u.pathname;
@@ -27,6 +28,7 @@ for(const [engine,width] of (before?[[chromium,390],[chromium,1440]]:[[chromium,
    if(path==='/api/payments/my-orders'){
     listRequests++;const account=uid;
     if(u.searchParams.has('cursor'))return r.fulfill({json:{accountId:account,orders:[order(4)],nextCursor:null}});
+    if(listRequests===1&&!before)await firstListGate;
     await pause(responseDelay);
     return r.fulfill(failList?{status:503,json:{error:'Sınaq bağlantı xətası'}}:{json:{accountId:account,orders:account==='a'?[order(1),order(2),order(3,revision?'preparing':'reviewing')]:[],deliveryDetails:includeDetails&&account==='a'?{'delivery-1':saved}:{},nextCursor:'next'}});
    }
@@ -43,6 +45,7 @@ for(const [engine,width] of (before?[[chromium,390],[chromium,1440]]:[[chromium,
   if(!before){
    await page.locator('.browser-orders-placeholder').waitFor();
    assert.equal(await page.locator('.account-tab-content .account-tab-spinner').count(),0);
+   releaseFirstList();
   }
   const credentials=page.locator('[data-delivery="delivery-1"] .browser-delivery-credentials');
   await credentials.getByText(saved.password,{exact:true}).waitFor();
