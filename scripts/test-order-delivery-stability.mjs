@@ -22,7 +22,7 @@ for(const [engine,width] of (before?[[chromium,390],[chromium,1440]]:[[chromium,
   await context.route('**/*',async r=>{
    const u=new URL(r.request().url()),path=u.pathname;
    if(u.origin!==base)return r.abort();
-   if(path==='/profil')return r.fulfill({contentType:'text/html',body:'<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body><main id="communityApp" data-profile-entry></main><script type="module" src="/community-assets/profile-entry.js?v=delivery-stable-1"></script>'});
+   if(path==='/profil')return r.fulfill({contentType:'text/html',body:'<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><body><main id="communityApp" data-profile-entry></main><script type="module" src="/community-assets/profile-entry.js?v=delivery-stable-2"></script>'});
    if(path==='/api/community/state'){await pause(200);return r.fulfill({json:{profile:{user_id:uid,display_name:'Sınaq '+uid,email:'test@example.test',avatar:0,balanceCents:0}}});}
    if(path==='/api/payments/my-orders'){
     listRequests++;const account=uid;
@@ -39,7 +39,11 @@ for(const [engine,width] of (before?[[chromium,390],[chromium,1440]]:[[chromium,
    try{return r.fulfill({contentType:path.endsWith('.css')?'text/css':'text/javascript',body:await asset(path)});}catch{return r.fulfill({status:404,body:''});}
   });
   const start=performance.now();
-  await page.goto(base+'/profil?tab=orders');
+  await page.goto(base+'/profil?tab=orders',{waitUntil:'commit'});
+  if(!before){
+   await page.locator('.browser-orders-placeholder').waitFor();
+   assert.equal(await page.locator('.account-tab-content .account-tab-spinner').count(),0);
+  }
   const credentials=page.locator('[data-delivery="delivery-1"] .browser-delivery-credentials');
   await credentials.getByText(saved.password,{exact:true}).waitFor();
   const firstMs=Math.round(performance.now()-start);

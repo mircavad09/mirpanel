@@ -1,4 +1,4 @@
-import {accountLabels,accountTab,accountMenu} from './profile-shell.js?v=topup-mail-1';
+import {accountLabels,accountTab,accountMenu,ordersLoader} from './profile-shell.js?v=delivery-stable-2';
 const sessionKey=Symbol.for('mirpanel.profile.session-lists');
 const sessionLists=window[sessionKey]??={uid:null,entries:new Map(),views:new Map(),listening:false};
 const setOwner=uid=>{if(uid!==sessionLists.uid){sessionLists.entries.clear();sessionLists.views.clear();sessionLists.uid=uid;}};
@@ -14,6 +14,7 @@ export function renderAccountPanel(ctx){
  if(!app.isConnected||location.pathname!=='/profil'&&!ctx.readOnly)return;
  const life=new AbortController(),moduleRetries=new Map();let stopped=false,disposeChild=null,load=0,verified=null,observedOwner,first=ctx.firstSession||Promise.resolve(state.profile),selected='profile',view=null;
  const spinner=()=>el('div',{class:'account-tab-spinner',role:'status','aria-label':'Məlumat hazırlanır'});
+ const ordersPlaceholder=()=>{const n=el('div');n.innerHTML=ordersLoader;return n.firstElementChild;};
  const initialScroll=history.state?.profileScroll;
  function rememberScroll(persist=false){
   if(!view||!verified||sessionLists.uid!==verified)return;
@@ -63,7 +64,7 @@ export function renderAccountPanel(ctx){
  let dragging=false,startX=0,startScroll=0;nav.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;dragging=true;startX=e.clientX;startScroll=nav.scrollLeft;nav.dataset.dragging='false';},{signal:life.signal});nav.addEventListener('pointermove',e=>{if(!dragging)return;if(Math.abs(e.clientX-startX)>5){nav.dataset.dragging='true';nav.setPointerCapture(e.pointerId);nav.scrollLeft=startScroll+startX-e.clientX;}},{signal:life.signal});const endDrag=()=>{dragging=false;setTimeout(()=>nav.dataset.dragging='false',0);};nav.addEventListener('pointerup',endDrag,{signal:life.signal});nav.addEventListener('pointercancel',endDrag,{signal:life.signal});nav.addEventListener('wheel',e=>{if(nav.scrollWidth<=nav.clientWidth)return;const before=nav.scrollLeft;nav.scrollLeft+=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(nav.scrollLeft!==before)e.preventDefault();},{passive:false,signal:life.signal});
  async function recommendations(target,run){const d=await accountData();if(stopped||run!==load||!target.isConnected||target.querySelector('.account-recommendations'))return;const box=el('section',{class:'account-recommendations'},el('h2',{},'Məhsul təklifləri')),grid=el('div',{class:'account-products'});for(const p of d.products.slice(0,4))grid.append(productCard(p,d.wishlist.includes(p.id),()=>show('orders')));box.append(grid);target.append(box);}
  async function show(id){rememberScroll();selected=id;const run=++load;disposeChild?.();disposeChild=null;view=null;
- const label=accountLabels[id];content.replaceChildren(el('h1',{},label),spinner());
+ const label=accountLabels[id];content.replaceChildren(el('h1',{},label),id==='orders'?ordersPlaceholder():spinner());
  for(const a of nav.children){if(a.dataset.accountTab===id){a.setAttribute('aria-current','page');const r=a.getBoundingClientRect(),n=nav.getBoundingClientRect();if(r.left<n.left)nav.scrollLeft+=r.left-n.left;else if(r.right>n.right)nav.scrollLeft+=r.right-n.right;}else a.removeAttribute('aria-current');}document.title=label+' · MirPanel';
  const code=new URLSearchParams(location.search).get('order'),suffix=/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'?order='+encodeURIComponent(code):'';
  const viewKey=id+(id==='orders'?suffix:'');
@@ -73,7 +74,7 @@ export function renderAccountPanel(ctx){
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
  if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=read-navigation-2',orders:'/browser-orders.js?v=delivery-stable-1',codes:'./account-codes.js?v=purchased-code-details-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
+ const url={profile:'./profile.js?v=read-navigation-2',orders:'/browser-orders.js?v=delivery-stable-2',codes:'./account-codes.js?v=purchased-code-details-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
  const retry=moduleRetries.get(id)||0,module=url?import(url+(retry?'&retry='+retry:'')):null;
  let timeout;
  const tabModule=module&&Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).finally(()=>clearTimeout(timeout));
@@ -95,7 +96,7 @@ export function renderAccountPanel(ctx){
  if(id==='profile'){const {renderProfile}=await tabModule;if(stopped||run!==load)return;const uid=verified,profileApi=async(...args)=>{try{const data=await api(...args);if(stopped||run!==load||uid!==verified)throw Error('Bölmə dəyişib.');return data;}catch(e){if(e.status===401)unauthorized();throw e;}};const rendered=renderProfile({...ctx,app:content,api:profileApi});disposeChild=window.mirpanelProfileDispose;window.mirpanelProfileDispose=null;await rendered;restore();return;}
  if(id==='orders'){
   await tabModule;if(stopped||run!==load)return;
-  const list=el('div',{id:'browserOrders'},spinner()),error=el('p',{id:'browserOrdersError',hidden:true,role:'alert'}),more=button('Daha çox göstər',()=>{}),dialog=el('dialog',{id:'browserReceipt',class:'browser-receipt-dialog'},button('Bağla',()=>{}),el('div',{id:'browserReceiptContent'}));more.id='browserOrdersMore';more.hidden=true;dialog.querySelector('button').id='browserReceiptClose';content.replaceChildren(el('h1',{},'Sifarişlərim'),list,error,more,dialog);
+  const list=el('div',{id:'browserOrders'},ordersPlaceholder()),error=el('p',{id:'browserOrdersError',hidden:true,role:'alert'}),more=button('Daha çox göstər',()=>{}),dialog=el('dialog',{id:'browserReceipt',class:'browser-receipt-dialog'},button('Bağla',()=>{}),el('div',{id:'browserReceiptContent'}));more.id='browserOrdersMore';more.hidden=true;dialog.querySelector('button').id='browserReceiptClose';content.replaceChildren(el('h1',{},'Sifarişlərim'),list,error,more,dialog);
   const communityDispose=window.mirpanelPageDispose,initial=sessionLists.entries.get(listPath);
   const onLoaded=e=>{if(!e.detail.empty)content.querySelector('.account-recommendations')?.remove();if(e.detail.empty&&!content.querySelector('.account-recommendations'))void recommendations(content,run).catch(()=>{});};
   window.addEventListener('mirpanel:orders-loaded',onLoaded,{signal:life.signal});

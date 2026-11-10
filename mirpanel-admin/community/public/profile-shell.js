@@ -21,6 +21,7 @@ export function profileReturn(search){
  const tab=accountTab(search),code=new URLSearchParams(search).get('order');
  return tab==='orders'&&/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'/profil?tab=orders&order='+code:accountTabPath(tab);
 }
+export const ordersLoader='<div class="browser-orders-placeholder" role="status" aria-label="Sifarişlər hazırlanır"><div class="browser-orders-placeholder-heading" aria-hidden="true"></div><div class="browser-delivery-skeleton" aria-hidden="true"><span></span><span></span><span></span></div></div>';
 export const profileLoader='<div class="account-tab-spinner" role="status" aria-label="Məlumat hazırlanır"></div>';
 export function accountMenu(active){
  const links=Object.entries(accountLabels).map(([tab,label])=>{
@@ -32,6 +33,6 @@ export function accountMenu(active){
 export function profileShell(search){
  const active=accountTab(search);
  const links=accountMenu(active);
- return '<div class="account-panel"><aside class="account-sidebar"><div class="account-sidebar-card account-identity-pending" aria-hidden="true"></div><nav class="account-tabs" aria-label="Hesab bölmələri">'+links+'</nav></aside><section class="account-tab-content"><h1>'+accountLabels[active]+'</h1>'+profileLoader+'</section></div>';
+ return '<div class="account-panel"><aside class="account-sidebar"><div class="account-sidebar-card account-identity-pending" aria-hidden="true"></div><nav class="account-tabs" aria-label="Hesab bölmələri">'+links+'</nav></aside><section class="account-tab-content"><h1>'+accountLabels[active]+'</h1>'+(active==='orders'?ordersLoader:profileLoader)+'</section></div>';
 }
 export const profileCSS='/community-assets/account-panel.css?v=profile-menu-3';
