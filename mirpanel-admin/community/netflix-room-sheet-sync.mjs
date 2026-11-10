@@ -1,30 +1,10 @@
 import {createHash} from 'node:crypto';
-import {addCalendarMonthsMinusDay,bakuDate,safeCalendarDate} from '../payment-order-lifecycle.mjs';
-import {subscriptionPeriod} from './subscriptions.mjs';
-import {paidStatus,roomSheetClient} from './netflix-room-sheet-client.mjs';
+import {roomSheetClient} from './netflix-room-sheet-client.mjs';
+import {roomPaymentStatus} from './netflix-room-paid-period.mjs';
 
 const sync='mirpanel_community.netflix_room_sheet_sync';
-const pending='Yenilənmə gözlənilir';
 export function roomSheetState(room){
- if(!room.delivery_id)return ['',room.stock_end??room.group_end,'Satılmayıb'];
- const items=room.checkout_snapshot?.items;
- const plan=items?.[room.line_index]??room.checkout_snapshot;
- const period=subscriptionPeriod({
-  durationDays:plan?.durationDays,durationMonths:plan?.durationMonths??room.duration_months,
-  label:plan?.planName??room.plan_name
- });
- const starts=bakuDate(room.delivered_at);
- const months=period?.unit==='months'?period.count:null;
- const explicit=(!items||items.length===1)&&Number(plan?.quantity??room.order_quantity??1)===1;
- let end=(explicit&&safeCalendarDate(room.service_expires_on))||(months?addCalendarMonthsMinusDay(starts,months):'');
- let paid=false;
- for(const renewal of room.renewals){
-  if(renewal.base!==end)continue;
-  if(!renewal.end||room.today<renewal.starts){paid=true;break;}
-  end=renewal.end;
- }
- const status=paid?paidStatus:end&&room.today>end?'Yenilənməyib':pending;
- return [room.member_number??'',end||'',status];
+ return [room.delivery_id?room.member_number??'':'',room.stock_end??room.group_end,roomPaymentStatus(room)];
 }
 
 export async function syncRoomSheetBatch(pool,security,target,client,cursor=null){
@@ -48,11 +28,11 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
    left join mirpanel_community.community_order_owners l on l.order_id=o.id
    left join mirpanel_community.community_member_numbers n on n.user_id=l.user_id
    left join lateral (
-    select jsonb_agg(jsonb_build_object('base',v.base_expires_on,'end',v.expires_on,
-      'starts',greatest(v.base_expires_on+1,(rd.delivered_at at time zone 'Asia/Baku')::date))
-      order by v.base_expires_on, v.expires_on desc nulls last) events
+    select jsonb_agg(jsonb_build_object('base',v.base_expires_on,'orderId',v.order_id,
+      'paidOn',(coalesce(ro.completed_at,ro.created_at) at time zone 'Asia/Baku')::date,
+      'months',case when v.period_unit='months' then v.period_count end,'confirmed',true)
+      order by v.base_expires_on,v.order_id) events
     from mirpanel_community.subscription_renewals v join public.payment_orders ro on ro.id=v.order_id
-    left join mirpanel_community.customer_order_deliveries rd on rd.order_id=v.order_id and rd.line_index=v.line_index
     where v.source_id=r.delivery_id and v.user_id=l.user_id
      and ro.status not in ('cancelled','rejected','expired')
      and (ro.payment_confirmed or ro.status in ('approved','completed'))

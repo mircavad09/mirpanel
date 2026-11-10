@@ -20,7 +20,13 @@ export async function netflixRoomPassword(pool,security,id){
 }
 export async function editNetflixRoom(pool,security,input){
  const {id,action}=input;
- if(!roomId(id)||!['open','save'].includes(action))throw fail(400,'Otaq sorğusu düzgün deyil.');
+ if(!roomId(id)||!['open','save','expiry'].includes(action))throw fail(400,'Otaq sorğusu düzgün deyil.');
+ if(action==='expiry'){
+  if(!isoDate(input.endsOn)||input.endsOn<=bakuDate())throw fail(400,'Hesabın gələcək bitmə tarixini seçin.');
+  const result=await pool.query(`update ${U} set stock_ends_on=$2 where account_key=(select account_key from ${U} where id=$1)`,[id,input.endsOn]);
+  if(!result.rowCount)throw fail(404,'Otaq tapılmadı.');
+  return {endsOn:input.endsOn};
+ }
  if(action==='open'){
   const {rows:[room]}=await pool.query(`select id,room_name,pin_cipher,delivery_id from ${U} where id=$1`,[id]);
   if(!room)throw fail(404,'Otaq tapılmadı.');

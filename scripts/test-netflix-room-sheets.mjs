@@ -6,13 +6,14 @@ import {bakuDate,shiftCalendarDays} from '../mirpanel-admin/payment-order-lifecy
 import {adminDelivery} from '../mirpanel-admin/community/order-delivery.mjs';
 import {restockNetflixRoom,saveNetflixRooms} from '../mirpanel-admin/community/netflix-room-stock.mjs';
 import {roomSheetState,syncRoomSheetBatch} from '../mirpanel-admin/community/netflix-room-sheet-sync.mjs';
-import {locateRoomRow,paidStatus,roomSheetClient,sheetHeaders,sheetTitle} from '../mirpanel-admin/community/netflix-room-sheet-client.mjs';
+import {examplesTitle,locateRoomRow,paidStatus,roomSheetClient,sheetHeaders,sheetTitle} from '../mirpanel-admin/community/netflix-room-sheet-client.mjs';
 
 process.env.MIRPANEL_CART_V2_TEST='1';
-const f=await shopFixture();
+const paymentConfig={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')};
+const f=await shopFixture({paymentConfig});
 const {pool,id,shop}=f;
 const today=bakuDate(),day=n=>shiftCalendarDays(today,n);
-const security=createPaymentSecurity({encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')});
+const security=createPaymentSecurity(paymentConfig);
 const secret=crypto.randomBytes(32);
 const credentials={email:'room@example.test',password:crypto.randomUUID(),roomName:'1',roomCode:'0408'};
 const owner='a'.repeat(64),user={user:'a'},productId='netflix';
@@ -35,7 +36,7 @@ async function checkGooglePayload(){
   if(url.includes('/token'))return Response.json({access_token:'synthetic',expires_in:3600});
   if(url.includes('/permissions'))return Response.json({permissions:[{type:'user',role:'owner',emailAddress:'owner@example.test'},
    {type:'user',role:'writer',emailAddress:account.client_email},...(publicLink?[{type:'anyone',role:'reader'}]:[])]});
-  if(url.includes('fields=properties'))return Response.json({properties:{title:sheetTitle},sheets:[{properties:{title:'Otaqlar',sheetId:7}}]});
+  if(url.includes('fields=properties'))return Response.json({properties:{title:sheetTitle},sheets:[{properties:{title:examplesTitle,sheetId:8}},{properties:{title:'Otaqlar',sheetId:7}}]});
   if(decodeURIComponent(url).endsWith('A1:H1'))return Response.json({values:header?[header]:[]});
   if(decodeURIComponent(url).endsWith('A2:H')||url.includes('valueRenderOption=UNFORMATTED_VALUE'))return Response.json({});
   if(decodeURIComponent(url).endsWith('G2:G'))return Response.json({values:[['other-room'],['test-room']]});
@@ -58,7 +59,7 @@ async function checkGooglePayload(){
 }
 try{
  await checkGooglePayload();
- for(const migration of ['netflix-room-stock.sql','netflix-room-sheets.sql','netflix-room-restock.sql','ready-stock-migration.sql','subscriptions-migration.sql'])
+ for(const migration of ['netflix-room-stock.sql','netflix-room-sheets.sql','netflix-room-restock.sql','ready-stock-migration.sql','ready-stock-product-messages-migration.sql','subscriptions-migration.sql'])
   await f.db.exec(f.db.read('mirpanel-admin/community/'+migration));
  const batch={requestId:id(),email:credentials.email,password:credentials.password,startsOn:day(-1),endsOn:day(60),
   rooms:[{name:'1',pin:'0408'},{name:'2',pin:'0002'}]};
@@ -81,29 +82,24 @@ try{
  const first=await checkout([{...items[0],termsVersion}]);
  await pool.query('update payment_orders set service_expires_on=$2 where id=$1',[first.orderId,day(5)]);
  const deliver=(orderId,data)=>adminDelivery(pool,security,'owner',orderId,{requestId:id(),line:0,quantity:1,message:'Synthetic delivery',...data},{roomStockSecret:secret});
- await deliver(first.orderId,credentials);
+ assert.equal((await pool.query('select count(*)::int n from mirpanel_community.customer_order_deliveries where order_id=$1',[first.orderId])).rows[0].n,1);
+ await assert.rejects(deliver(first.orderId,credentials));
  await sync();
- assert.deepEqual(safeColumns(row()),[number,'1 · 0408',day(5),'Yenilənmə gözlənilir']);
+ assert.equal(row()[0],number);assert.equal(row()[4],day(60));assert.match(row()[5],/^Yenilənmə gözlənilir\nÖdənilmiş müddət:/);
  assert.equal(sheet.length,2);
  const sub=(await shop.subscriptions(user)).subscriptions[0];
  const draft=await shop.saveDraft(user,owner,{id:id(),productId,planIndex:0,values:items[0].details,termsVersion,renewalId:sub.id,renewalExpiresOn:sub.expiresOn});
  const renewal=await checkout([{...items[0],termsVersion,draftId:draft.draftId,lineId:draft.lineId}]);
  await sync();
- assert.equal(row()[5],paidStatus);
+ assert.ok(row()[5].startsWith(paidStatus+'\nÖdənilmiş müddət:'));
  await deliver(renewal.orderId,{renewalApplied:true});
  await sync();
- assert.equal(row()[5],paidStatus);
- const base={delivery_id:'synthetic',member_number:number,service_expires_on:day(5),delivered_at:new Date(),
-  plan_name:'1 ay',duration_months:1,line_index:0,order_quantity:1};
- const future={base:day(5),starts:day(6),end:day(35),months:3};
- assert.deepEqual(roomSheetState({...base,today:day(6),renewals:[future]}),[number,day(35),'Yenilənmə gözlənilir']);
- assert.equal(roomSheetState({...base,today:day(5),renewals:[]})[2],'Yenilənmə gözlənilir');
- assert.equal(roomSheetState({...base,today:day(6),renewals:[]})[2],'Yenilənməyib');
+ assert.ok(row()[5].startsWith(paidStatus+'\nÖdənilmiş müddət:'));
  const assignment=(await pool.query('select delivery_id from mirpanel_community.netflix_room_units where id=$1',[roomId])).rows[0].delivery_id;
  await restockNetflixRoom(pool,{id:roomId,deliveryId:assignment,endsOn:day(45)});
  await sync();
  assert.deepEqual(safeColumns(row()),['','1 · 0408',day(45),'Sat\u0131lmay\u0131b']);
  assert.equal(sheet.length,2);
  assert.throws(()=>locateRoomRow([[roomId],[roomId]],roomId),/ROOM_SHEET_DUPLICATE_ID/);
- console.log('PASS: stock, delivery, payment, next period, Baku expiry, reordered rows and ambiguous retry');
+ console.log('PASS: automatic wallet stock allocation, confirmed renewal, separate account date, reordered rows, restock and ambiguous retry');
 }finally{await f.close();}

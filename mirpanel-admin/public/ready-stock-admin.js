@@ -52,7 +52,7 @@ export function mountReadyStock(host,api){
  let products=[],pending=null,busy=false,loaded=false,read=null;
  const roomHost=q('[data-netflix-room-stock]');
  roomHost.innerHTML=`<h3>Netflix Şəxsi — hazır otaq stoku</h3>
-  <p>Sheets bağlantısı olmadan otaq əlavə edə bilərsiniz. Bu bölmədəki otaqlar hələ avtomatik satışa ayrılmır.</p>
+  <p>Otaqlar saxlananda Google Sheets-ə göndərilir. Təsdiqlənmiş 1, 3 və 6 aylıq alışlarda boş otaq avtomatik ayrılır. Hesabın bitmə tarixi müştərinin ödənilmiş müddətini dəyişmir.</p>
   <form autocomplete="off" hidden>
    <div class="netflixRoomCredentials">
     <label>Netflix e-poçtu<input name="email" type="email" maxlength="254" required></label>
@@ -88,6 +88,15 @@ export function mountReadyStock(host,api){
    const {room,pin}=form.elements,save=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]');
    room.value=result.name;pin.value=result.pin;
    if(!result.editable){room.readOnly=pin.readOnly=true;save.remove();}
+   const expiryLabel=document.createElement('label'),expiry=document.createElement('input'),expirySave=document.createElement('button');
+   expiryLabel.textContent='Netflix hesabının bitmə tarixi';expiry.type='date';expiry.value=row.endsOn;
+   expirySave.type='button';expirySave.className='btn';expirySave.textContent='Bitmə tarixini saxla';expiryLabel.append(expiry,expirySave);form.append(expiryLabel);
+   expirySave.onclick=async()=>{
+    expirySave.disabled=true;
+    try{await editRoom({action:'expiry',id:row.id,endsOn:expiry.value});await refresh();roomStatus.textContent='Hesabın bitmə tarixi yeniləndi. Müştərinin ödənilmiş müddəti qorundu.';}
+    catch(e){roomStatus.textContent=e.message||'Tarix saxlanılmadı.';}
+    finally{expirySave.disabled=false;}
+   };
    const dismiss=()=>{pin.value='';if(form.elements.password)form.elements.password.value='';form.remove();button.hidden=false;button.focus();};
    close.onclick=dismiss;
    form.onsubmit=async event=>{

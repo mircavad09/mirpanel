@@ -1,6 +1,6 @@
 import {safeCalendarDate} from '../payment-order-lifecycle.mjs';
 
-export const roomSheetStyleVersion='1';
+export const roomSheetStyleVersion='2';
 export const roomSheetStyleKey='mirpanel.netflix-room-style';
 const months='yanvar fevral mart aprel may iyun iyul avqust sentyabr oktyabr noyabr dekabr'.split(' ');
 const epoch=Date.UTC(1899,11,30);
@@ -20,9 +20,9 @@ export const roomStatusStyles=[
 ];
 
 export function roomStatusCaption(value){
- const text=String(value??'').trim();
+ const [text,...details]=String(value??'').trim().split('\n');
  const name=text.replace(/^(?:[✕✓◷✔✗×]\s*)+/u,'');
- return roomStatusStyles.find(status=>status.name===name)?.caption??text;
+ return [roomStatusStyles.find(status=>status.name===name)?.caption??text,...details].join('\n');
 }
 
 // Numeric dates retain the original calendar year. Month names are explicit so
@@ -88,14 +88,14 @@ export function roomSheetStyleRequests(sheetId){
   {updateDimensionProperties:{range:{sheetId,dimension:'ROWS',startIndex:0,endIndex:1},
    properties:{pixelSize:44},fields:'pixelSize'}}
  ];
- for(const [index,width] of [145,190,330,330,155,275].entries()){
+ for(const [index,width] of [145,190,330,330,155,430].entries()){
   requests.push({updateDimensionProperties:{range:{sheetId,dimension:'COLUMNS',startIndex:index,endIndex:index+1},
    properties:{pixelSize:width},fields:'pixelSize'}});
  }
  for(const [index,status] of roomStatusStyles.entries()){
   requests.push({addConditionalFormatRule:{index,rule:{
    ranges:[{sheetId,startRowIndex:1,startColumnIndex:5,endColumnIndex:6}],
-   booleanRule:{condition:{type:'TEXT_EQ',values:[{userEnteredValue:status.caption}]},
+   booleanRule:{condition:{type:'CUSTOM_FORMULA',values:[{userEnteredValue:'=LEFT($F2,FIND(CHAR(10),$F2&CHAR(10))-1)="'+status.caption+'"'}]},
     format:{backgroundColor:color(status.background),textFormat:{
      foregroundColor:color(status.foreground),bold:status.name==='Ödəniş edib'
     }}}

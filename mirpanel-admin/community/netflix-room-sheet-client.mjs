@@ -3,6 +3,7 @@ import {roomSheetCells,roomSheetStyleKey,roomSheetStyleVersion,roomSheetStyleReq
 
 export const sheetTitle='Netflix Şəxsi — Otaq stoku';
 export const sheetHeaders=['Müştəri ID-si','Otaq adı və PIN','Gmail','Şifrə','Bitmə tarixi','Status'];
+export const examplesTitle='SINAQ — nümunələr';
 export const paidStatus='✓ Ödəniş edib';
 const b64=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
 const tokenURL='https://oauth2.googleapis.com/token';
@@ -45,11 +46,13 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
      !entries.some(p=>p.type==='user'&&p.role==='writer'&&!p.deleted&&p.emailAddress===account.client_email))
    throw Error('ROOM_SHEET_ACCESS');
   const metadata=await request(endpoint+'?fields=properties(title),sheets(properties(sheetId,title,gridProperties(columnCount)),developerMetadata,conditionalFormats)');
-  if(metadata.sheets?.length!==1)throw Error('ROOM_SHEET_DESTINATION');
-  const {sheetId,title}=metadata.sheets[0].properties;
+  const stockSheets=metadata.sheets?.filter(sheet=>sheet.properties.title!==examplesTitle)??[];
+  if(stockSheets.length!==1||metadata.sheets.length>2)throw Error('ROOM_SHEET_DESTINATION');
+  const stockSheet=stockSheets[0];
+  const {sheetId,title}=stockSheet.properties;
   const range=name=>endpoint+'/values/'+encodeURIComponent("'"+title.replaceAll("'","''")+"'!"+name);
   const header=[...sheetHeaders,'Stok otağının ID-si'];
-  const columns=metadata.sheets[0].properties.gridProperties?.columnCount??26;
+  const columns=stockSheet.properties.gridProperties?.columnCount??26;
   const lastColumn=String.fromCharCode(64+Math.min(columns,8));
   const existing=(await request(range('A1:'+lastColumn+'1'))).values?.[0]||[];
   if(!existing.length){
@@ -62,16 +65,18 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    if(columns<7)requests.unshift({appendDimension:{sheetId,dimension:'COLUMNS',length:7-columns}});
    await request(endpoint+':batchUpdate',{requests});
   }else if(metadata.properties?.title!==sheetTitle||JSON.stringify(existing)!==JSON.stringify(header))throw Error('ROOM_SHEET_HEADERS');
-  const styled=metadata.sheets[0].developerMetadata?.some(item=>
+  const styled=stockSheet.developerMetadata?.some(item=>
    item.metadataKey===roomSheetStyleKey&&item.metadataValue===roomSheetStyleVersion);
   if(!styled){
    const rows=(await request(range('A2:G')+'?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER')).values||[];
    const updates=roomPresentationUpdates(sheetId,rows);
    const captions=new Set(roomStatusStyles.map(status=>status.caption));
-   const rules=metadata.sheets[0].conditionalFormats||[];
+   const rules=stockSheet.conditionalFormats||[];
    const cleanup=rules.flatMap((rule,index)=>{
     const owned=rule.ranges?.length===1&&rule.ranges[0].startColumnIndex===5&&rule.ranges[0].endColumnIndex===6&&
-     rule.booleanRule?.condition?.type==='TEXT_EQ'&&captions.has(rule.booleanRule.condition.values?.[0]?.userEnteredValue);
+     (rule.booleanRule?.condition?.type==='TEXT_EQ'&&captions.has(rule.booleanRule.condition.values?.[0]?.userEnteredValue)||
+      rule.booleanRule?.condition?.type==='CUSTOM_FORMULA'&&[...captions].some(caption=>
+       rule.booleanRule.condition.values?.[0]?.userEnteredValue==='=LEFT($F2,FIND(CHAR(10),$F2&CHAR(10))-1)="'+caption+'"'));
     return owned?[{deleteConditionalFormatRule:{sheetId,index}}]:[];
    }).reverse();
    await request(endpoint+':batchUpdate',{requests:[...cleanup,...roomSheetStyleRequests(sheetId)]});

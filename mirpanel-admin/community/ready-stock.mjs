@@ -84,6 +84,26 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
  let security;
  for(const [line,item] of items.entries()){
   if(item.renewal||!item.sourcePlanKey||!item.signature)continue;
+  if(item.productId==='netflix'&&(await c.query("select to_regclass('mirpanel_community.netflix_room_units') present")).rows[0].present){
+   if(![1,3,6].includes(item.durationMonths??item.duration)||item.durationDays)continue;
+   const rooms=(await c.query(`select r.id,r.room_name,r.pin_cipher,g.id group_id,g.account_cipher
+    from mirpanel_community.netflix_room_units r join mirpanel_community.netflix_room_groups g on g.id=r.group_id
+    where r.delivery_id is null and coalesce(r.stock_ends_on,g.ends_on)>public.payment_baku_date()
+     and g.created_by not like 'synthetic:%'
+    order by g.created_at,r.room_key,r.id limit $1 for update of r skip locked`,[item.quantity])).rows;
+   security??=securityFactory();
+   const message=(await readProductMessages(c,security,[item.productId])).get(item.productId)??'';
+   for(const room of rooms){
+    const account=JSON.parse(security.decryptSecret(room.account_cipher));
+    const pin=JSON.parse(security.decryptSecret(room.pin_cipher));
+    if(account.id!==room.group_id||pin.id!==room.id||!/^\d{4}$/.test(pin.pin))throw Error('ROOM_STOCK_REFERENCE_MISMATCH');
+    const id=crypto.randomUUID();
+    await recordDelivery(c,security,actor,orderId,id,line,1,message,
+     {email:account.email,password:account.password,roomName:room.room_name,roomCode:pin.pin});
+    await c.query('update mirpanel_community.netflix_room_units set delivery_id=$2 where id=$1',[room.id,id]);
+   }
+   continue;
+  }
   const args=[item.productId,item.sourcePlanKey,item.signature];
   const setting=(await c.query('select auto_wallet from '+S+'plans where product_id=$1 and plan_key=$2 and plan_signature=$3 for share',args)).rows[0];
   if(!setting?.auto_wallet)continue;

@@ -128,7 +128,7 @@
     if (view === "history") { void loadHistory(); void verifyPublication(); }
     if (view === "dashboard") { renderDashboard(); void loadDashboard(); }
     if (view === "netflixAccounts") loadNetflixAccounts();
-    if (view === "readyStock") import('/ready-stock-admin.js?v=netflix-room-sheet-3').then(m=>m.mountReadyStock(el('readyStockHost'),api)).catch(()=>{el('readyStockHost').textContent='Bölmə açılmadı. Yenidən cəhd edin.';});
+    if (view === "readyStock") import('/ready-stock-admin.js?v=netflix-room-paid-period-4').then(m=>m.mountReadyStock(el('readyStockHost'),api)).catch(()=>{el('readyStockHost').textContent='Bölmə açılmadı. Yenidən cəhd edin.';});
   }
   async function loadNetflixAccounts() {
     const list = el("netflixAccountsList"); if (!list) return;
