@@ -147,9 +147,9 @@
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">2.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/epinby-3436" aria-label="60 UC — 1.65 ₼" title="60 UC">
-      <img src="/uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049" class="product-page-similar-image" alt="60 UC" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="60 UC">60 UC</div>
+    </a><a class="product-page-similar-card" href="/mehsul/pubg-mobile" aria-label="PUBG Mobile — 1.65 ₼" title="PUBG Mobile">
+      <img src="/uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049" class="product-page-similar-image" alt="PUBG Mobile" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="PUBG Mobile">PUBG Mobile</div>
       <div class="product-page-similar-category">epinby-games</div>
       <div class="product-page-similar-price">1.65 ₼</div>
     </a></div>
@@ -226,7 +226,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-cda41f0ee163c110"></script>
+  <script src="/app.js?v=catalog-5f6f515ed530e613"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>

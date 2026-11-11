@@ -3310,10 +3310,10 @@ const DATA = {
       },
       "plans": [
         {
+          "pricingId": "caf50ff1-bffa-424d-94d3-a8cd86e612f3",
           "label": "60 UC",
           "months": 1,
-          "price": 1.65,
-          "pricingId": "caf50ff1-bffa-424d-94d3-a8cd86e612f3"
+          "price": 1.65
         }
       ],
       "orderConfirmation": {
@@ -3337,31 +3337,159 @@ const DATA = {
       "order": 32,
       "category": "epinby-games",
       "image": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
-      "imageAlt": "PUBG Mobile",
       "currency": "₼",
       "title": "PUBG Mobile",
-      "seoSlug": "pubg-mobile",
-      "active": true,
+      "variant": "",
+      "badge": "",
+      "imageAlt": "PUBG Mobile",
+      "desc": "",
+      "note": "",
+      "longDescription": "",
+      "usageRules": "",
+      "deliveryText": "",
       "availabilityText": "Ödənişdən sonra avtomatik icra",
+      "seoSlug": "pubg-mobile",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoH1": "PUBG Mobile",
+      "seoPrimaryKeyword": "PUBG Mobile almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+        "mobileImage": "",
+        "title": "PUBG Mobile",
+        "description": "",
+        "alt": "PUBG Mobile",
+        "order": 33
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
       "plans": [
         {
-          "id": "epinby_3436",
-          "label": "60 UC",
-          "months": 1,
-          "price": 1.65,
-          "pricingId": "caf50ff1-bffa-424d-94d3-a8cd86e612f3",
-          "image": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
           "supplier": {
             "provider": "epinby",
             "productId": 3436,
             "type": "TOPUP",
             "gameId": 4,
             "categoryId": 223,
-            "fields": [{"key":"player_id","label":"Player ID","required":true}]
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "Player ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
           },
-          "formFields": [{"key":"player_id","type":"text","label":"Player ID","required":true,"enabled":true,"maxLength":400}]
+          "image": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+          "formFields": [
+            {
+              "key": "player_id",
+              "type": "text",
+              "label": "Player ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
+            }
+          ],
+          "id": "epinby_3436",
+          "pricingId": "caf50ff1-bffa-424d-94d3-a8cd86e612f3",
+          "label": "60 UC",
+          "months": 1,
+          "price": 1.65
+        },
+        {
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3437,
+            "type": "TOPUP",
+            "gameId": 4,
+            "categoryId": 223,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "Player ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "image": "/uploads/products/pubg-325-uc.png",
+          "formFields": [
+            {
+              "key": "player_id",
+              "type": "text",
+              "label": "Player ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
+            }
+          ],
+          "id": "epinby_3437",
+          "pricingId": "35e37b19-26f9-4e50-bbb8-762928011291",
+          "label": "325 UC",
+          "months": 1,
+          "price": 8.09
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     }
   ]
 };
