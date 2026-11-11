@@ -148,6 +148,13 @@ const DATA = {
       "order": 8,
       "active": true,
       "icon": "products"
+    },
+    {
+      "key": "sosial-media",
+      "name": "Sosial media",
+      "order": 9,
+      "active": true,
+      "icon": "products"
     }
   ],
   "products": [
@@ -3336,7 +3343,7 @@ const DATA = {
       "epinbyGroup": true,
       "order": 32,
       "category": "epinby-games",
-      "image": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+      "image": "uploads/products/pubg-mobile-cover.webp",
       "currency": "₼",
       "title": "PUBG Mobile",
       "variant": "",
@@ -3515,6 +3522,174 @@ const DATA = {
           "price": 15.89
         }
       ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "free_fire",
+      "_stableId": "free_fire",
+      "epinbyGroup": true,
+      "order": 33,
+      "category": "epinby-games",
+      "image": "uploads/products/free-fire-cover.webp",
+      "currency": "₼",
+      "title": "Free Fire",
+      "variant": "",
+      "badge": "",
+      "imageAlt": "Free Fire",
+      "desc": "",
+      "note": "",
+      "longDescription": "",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "free-fire",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoH1": "Free Fire",
+      "seoPrimaryKeyword": "Free Fire almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "uploads/products/free-fire-cover.webp",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "uploads/products/free-fire-cover.webp",
+        "mobileImage": "",
+        "title": "Free Fire",
+        "description": "",
+        "alt": "Free Fire banneri",
+        "order": 34
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "telegram_premium",
+      "_stableId": "telegram_premium",
+      "epinbyGroup": true,
+      "order": 34,
+      "category": "sosial-media",
+      "image": "uploads/products/telegram-premium-cover.webp",
+      "currency": "₼",
+      "title": "Telegram Premium",
+      "variant": "",
+      "badge": "",
+      "imageAlt": "Telegram Premium",
+      "desc": "",
+      "note": "",
+      "longDescription": "",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "telegram-premium",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoH1": "Telegram Premium",
+      "seoPrimaryKeyword": "Telegram Premium almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "uploads/products/telegram-premium-cover.webp",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "uploads/products/telegram-premium-cover.webp",
+        "mobileImage": "",
+        "title": "Telegram Premium",
+        "description": "",
+        "alt": "Telegram Premium banneri",
+        "order": 35
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [],
       "orderConfirmation": {
         "enabled": false,
         "title": "Diqqət!",

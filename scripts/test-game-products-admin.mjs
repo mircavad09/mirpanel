@@ -11,13 +11,13 @@ const state=extractAdminState(await fs.readFile(new URL('../app.js',import.meta.
 const row={api_key_cipher:'encrypted',webhook_secret_cipher:'never-exposed',credential_version:1,last_status:'confirmed',currency:'USD'};
 const supplierProducts=[
  {id:11,name:'60 UC',game:'PUBG Mobile',game_id:1,category:'UC',category_id:1,type:'TOPUP',fields:[{key:'player_id',label:'Player ID',required:true}],price:'0.8900',stock_status:'FINITE',stock_count:25,image:'https://epinby.com/sample.png'},
- {id:12,name:'100 Diamonds',game:'Mobile Legends',game_id:2,category:'Diamonds',category_id:2,type:'VOUCHER',fields:[],price:'1.1200',stock_status:'UNLIMITED'}
+ {id:12,name:'100 Stars',game:'Telegram',game_id:2,category:'Stars',category_id:2,type:'VOUCHER',fields:[],price:'1.1200',stock_status:'UNLIMITED',image:'https://epinby.com/sample.png'}
 ];
 const calls=[];
 const epinby=createEpinbyConnection({pool:async()=>({query:async()=>({rows:[row]})}),security:{decryptSecret:()=> 'synthetic'},
  transport:async({path,query,body})=>{
   assert.equal(body,undefined);
-  if(path==='/api/v1/games')return {success:true,data:[{id:1,name:'PUBG Mobile'},{id:2,name:'Mobile Legends'}]};
+  if(path==='/api/v1/games')return {success:true,data:[{id:1,name:'PUBG Mobile'},{id:2,name:'Telegram'}]};
   assert.equal(path,'/api/v1/products');calls.push(query.page);
   return {success:true,data:[supplierProducts[query.page-1]],meta:{current_page:query.page,last_page:2,total:2}};
  }});
@@ -171,6 +171,21 @@ try{
     await card.getByRole('button',{name:'Kataloqda var'}).waitFor();
     assert.equal(await card.locator('[data-sale-price]').inputValue(),'3.49');
     assert.equal(await page.evaluate(()=>state.data.products.flatMap(p=>p.plans).filter(p=>p.supplier?.productId===11).length),1);
+    const stars=panel.locator('.gameCatalogProduct').filter({hasText:'100 Stars'});
+    await stars.locator('[data-sale-price]').fill('2.49');
+    await stars.locator('[data-game-add]').click();
+    await picker.waitFor();
+    const targets=picker.getByLabel('Məhsullar',{exact:true});
+    assert.deepEqual(await targets.locator('option').allTextContents(),['Telegram Premium']);
+    assert.equal(await targets.inputValue(),'telegram_premium');
+    await picker.getByRole('button',{name:'Təsdiqlə'}).click();
+    await page.getByRole('heading',{name:'Dəyişiklikləri yoxlayın'}).waitFor();
+    await page.locator('#modalConfirm').click();
+    await page.waitForFunction(()=>!state.dirty);
+    const telegram=published.products.find(p=>p.id==='telegram_premium');
+    assert.equal(telegram.plans.find(p=>p.supplier?.productId===12).price,2.49);
+    assert.equal(published.products.some(p=>p.title==='Telegram Stars'),false);
+    assert.match(generateProductPageFiles([telegram]).get('mehsul/telegram-premium.page'),/100 Stars/);
     // WebKit reports navigation-aborted background badges as access-control errors.
     // Catalog requests must still be error-free.
     assert.deepEqual(errors.filter(e=>!e.includes('/api/admin/payment-orders?tab=pending')&&!e.includes('/api/admin/community/shop?only=topup-count due to access control checks.')),[]);

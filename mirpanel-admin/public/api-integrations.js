@@ -99,8 +99,12 @@
       const dialog=document.createElement('dialog');dialog.className='gameProductPicker';dialog.setAttribute('aria-label','Hansı məhsula əlavə edilsin?');
       dialog.innerHTML='<form method="dialog"><h3>Hansı məhsula əlavə edilsin?</h3><label>Məhsul axtar <input type="search" placeholder="Ad və ya məhsul kodu"></label><label>Kateqoriya <select data-category aria-label="Kateqoriya"></select></label><label>Məhsullar <select data-target aria-label="Məhsullar" size="6" required></select></label><div class="gameProductPickerActions"><button type="button" class="btn" data-cancel>Ləğv et</button><button class="btn primary" value="confirm">Təsdiqlə</button></div></form>';
       const categories=dialog.querySelector('[data-category]'),target=dialog.querySelector('[data-target]'),search=dialog.querySelector('input');
-      const all=state.data.products.filter(p=>p.id!==existing?.product.id);
-      const game=item.game||item.category, suggested=game?all.find(p=>p.active!==false&&norm(p.title)===norm(game)):null;
+      const telegramStars=/\btelegram\s+stars\b/i.test([item.game,item.category,item.name].filter(Boolean).join(' '));
+      const all=state.data.products.filter(p=>p.id!==existing?.product.id&&
+        (!telegramStars||(p.active!==false&&p.id==='telegram_premium')));
+      if(telegramStars&&!all.length){toast('Telegram Premium məhsulu aktiv olmalıdır.','bad');resolve(null);return;}
+      const game=item.game||item.category;
+      const suggested=telegramStars?all[0]:all.find(p=>p.active!==false&&norm(p.title)===norm(game));
       categories.append(new Option('Bütün kateqoriyalar',''),...state.data.categories.map(c=>new Option(c.name,c.key)));
       let selected=suggested?.id||'';
       function draw(){

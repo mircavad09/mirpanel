@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/pubg-mobile#product","url":"https://mirpanel.com/mehsul/pubg-mobile","name":"PUBG Mobile","description":"PUBG Mobile üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.","image":["https://mirpanel.com/uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049"],"sku":"pubg_mobile","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/pubg-mobile","price":"1.65","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/pubg-mobile","price":"8.09","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/pubg-mobile","price":"15.89","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/pubg-mobile#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"PUBG Mobile","item":"https://mirpanel.com/mehsul/pubg-mobile"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/pubg-mobile#product","url":"https://mirpanel.com/mehsul/pubg-mobile","name":"PUBG Mobile","description":"PUBG Mobile üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.","image":["https://mirpanel.com/uploads/products/pubg-mobile-cover.webp"],"sku":"pubg_mobile","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/pubg-mobile","price":"1.65","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/pubg-mobile","price":"8.09","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}},{"@type":"Offer","url":"https://mirpanel.com/mehsul/pubg-mobile","price":"15.89","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/pubg-mobile#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"PUBG Mobile","item":"https://mirpanel.com/mehsul/pubg-mobile"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="pubg_mobile" data-product-slug="pubg-mobile">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -89,8 +89,8 @@
       <article class="product-page-card">
         <div class="product-page-card-grid">
           <div class="product-page-media">
-            <img class="product-page-media-backdrop" src="/uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049" alt="" aria-hidden="true" decoding="async">
-            <img id="pp-main-img" src="/uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049" alt="PUBG Mobile" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img class="product-page-media-backdrop" src="/uploads/products/pubg-mobile-cover.webp" alt="" aria-hidden="true" decoding="async">
+            <img id="pp-main-img" src="/uploads/products/pubg-mobile-cover.webp" alt="PUBG Mobile" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
@@ -117,7 +117,12 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/free-fire" aria-label="Free Fire — Stokda yoxdur" title="Free Fire">
+      <img src="/uploads/products/free-fire-cover.webp" class="product-page-similar-image" alt="Free Fire" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Free Fire">Free Fire</div>
+      <div class="product-page-similar-category">epinby-games</div>
+      <div class="product-page-similar-price">Stokda yoxdur</div>
+    </a><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
       <img src="/uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">musiqi</div>
@@ -152,6 +157,11 @@
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">2.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/telegram-premium" aria-label="Telegram Premium — Stokda yoxdur" title="Telegram Premium">
+      <img src="/uploads/products/telegram-premium-cover.webp" class="product-page-similar-image" alt="Telegram Premium" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Telegram Premium">Telegram Premium</div>
+      <div class="product-page-similar-category">sosial-media</div>
+      <div class="product-page-similar-price">Stokda yoxdur</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -194,7 +204,7 @@
     <div class="modalCard" role="dialog" aria-modal="true" style="max-width:500px">
       <button class="close" id="closeModal" type="button">Bağla ✕</button>
       <div class="mTop">
-        <img src="/uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049" alt="PUBG Mobile" id="mImg" class="mImg">
+        <img src="/uploads/products/pubg-mobile-cover.webp" alt="PUBG Mobile" id="mImg" class="mImg">
         <div class="mTxt">
           <div class="mTitle" id="mTitle">PUBG Mobile</div>
           <div class="mDesc" id="mDesc"></div>
@@ -212,7 +222,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-7314b59505da658f"></script>
+  <script src="/app.js?v=catalog-5003b92fc4986978"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>
