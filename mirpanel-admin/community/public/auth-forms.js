@@ -3,7 +3,7 @@ const confirmationKey='mirpanel:signup-confirmation';
 const el=(tag,attrs={},...children)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs))if(v!==undefined)e.setAttribute(k,String(v));e.append(...children);return e;};
 const button=(label,click)=>{const b=el('button',{type:'button'},label);b.onclick=click;return b;};
 async function loadAuthStyle(){
- const cssUrl='/community-assets/auth-forms.css?v=signup-manual-code-20261108';let css=document.querySelector('link[href="'+cssUrl+'"]');
+ const cssUrl='/community-assets/auth-forms.css?v=signup-duplicate-notice-1';let css=document.querySelector('link[href="'+cssUrl+'"]');
  // A failed preload can expose an empty sheet, or fire before this module starts.
  // Require the form rules and bind load/error before inserting a fresh retry.
  const usable=sheet=>{try{return Array.from(sheet?.sheet?.cssRules||[]).some(r=>r.selectorText?.includes('.auth-form-panel'));}catch{return false;}};
@@ -13,6 +13,34 @@ async function accountApi(url,data,signal){
  const r=await fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal,redirect:'error'});
  if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');
  const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.'),{code:d.code||d.error?.code});return d;
+}
+// Open audio during the submit gesture, but play only after a duplicate response.
+function prepareSignupChime(){
+ let ctx;
+ const dispose=()=>{try{void ctx?.close().catch(()=>{});}catch{}};
+ try{
+  const Audio=window.AudioContext||window.webkitAudioContext;
+  if(Audio){ctx=new Audio();void ctx.resume().catch(()=>{});}
+ }catch{}
+ return {dispose,play(){
+  if(ctx?.state!=='running')return false;
+  try{
+   const now=ctx.currentTime,osc=ctx.createOscillator(),volume=ctx.createGain();
+   osc.type='sine';osc.frequency.setValueAtTime(740,now);osc.frequency.exponentialRampToValueAtTime(554,now+.15);
+   volume.gain.setValueAtTime(.001,now);volume.gain.exponentialRampToValueAtTime(.075,now+.012);volume.gain.exponentialRampToValueAtTime(.001,now+.19);
+   osc.connect(volume).connect(ctx.destination);osc.onended=dispose;osc.start(now);osc.stop(now+.2);return true;
+  }catch{return false;}
+ }};
+}
+function signupDuplicateNotice(host){
+ const text='Bu e-poçt ünvanı ilə artıq hesab yaradılıb.';
+ const close=button('×',dismiss);close.className='auth-duplicate-close';close.setAttribute('aria-label','Bildirişi bağla');
+ const notice=el('div',{class:'auth-duplicate-notice'},el('span',{class:'auth-duplicate-icon','aria-hidden':'true'},'×'),
+  el('span',{role:'alert'},text),close,el('span',{class:'auth-duplicate-timer','aria-hidden':'true'}));
+ const timer=setTimeout(dismiss,4000);
+ function dismiss(){clearTimeout(timer);notice.remove();}
+ host.append(notice);
+ return dismiss;
 }
 function openVerification({pending,host,life,verificationApi,finish,readableError,afterSignup=false,checkout=false,created=false,onClose}){
  const dialog=el('dialog',{class:'auth-code-sheet','aria-labelledby':'authCodeTitle'});let working=false,clock,attempted=false;
@@ -126,7 +154,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  const cartLogin=fromCart&&mode==='login';
  const titles={signup:'Qeydiyyat',login:fromCart?'Daxil ol':'Giriş',reset:'Şifrə bərpası','new-password':'Yeni şifrə'},title=titles[mode];document.title=title+' · MirPanel';
  const error=alert();error.classList.add('auth-feedback');error.setAttribute('role','alert');const success=el('p',{class:'auth-success',role:'status','aria-live':'polite'}),form=el('form',{class:'auth-fields'}),fields={};let busy=false;
- const fieldFeedback={},signup=mode==='signup';let pendingSignup=null,recover,loginRecovery;
+ const fieldFeedback={},signup=mode==='signup';let pendingSignup=null,recover,loginRecovery,dismissDuplicate;
  if(params.has('error'))error.textContent=params.get('error')==='account_not_linked'?'Bu e-poçt hesabını əvvəlcə təsdiqləyin. Google ilə yalnız təsdiqlənmiş eyni e-poçt əlaqələndirilə bilər.':params.get('error')==='test_identity_not_allowed'?'Bu Google hesabı test girişinə əlavə edilməyib.':'Google girişi tamamlanmadı. Yenidən cəhd edin.';
  const closeTo=fromCart?'/sebet':destination.startsWith('/balans')?destination:'/qrup',close=link('×',closeTo,'auth-close');close.setAttribute('aria-label',fromCart?'Bağla və səbətə qayıt':closeTo==='/qrup'?'Bağla və qrupa qayıt':'Bağla və balans səhifəsinə qayıt');
  const panel=el('section',{class:'auth-form-panel'+(cartLogin?' auth-cart-login':''),'aria-labelledby':cartLogin?'authCartWelcome':'authTitle'},close,el('header',{class:'auth-form-heading'},el(cartLogin?'h2':'h1',{id:'authTitle'},title)));
@@ -199,9 +227,10 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  }
  async function submitSignup(resume=false){
   if(busy)return;
-  error.textContent='';success.textContent='';loginRecovery.hidden=true;
+  dismissDuplicate?.();error.textContent='';success.textContent='';loginRecovery.hidden=true;
   const known=matchingSignup(),continuing=resume||!!known;
   if(!validateSignup(continuing?['email','password']:signupFields))return;
+  const sound=continuing?null:prepareSignupChime();let soundPlaying=false;
   busy=true;submit.disabled=recover.disabled=true;submit.setAttribute('aria-busy','true');
   const values=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.type==='checkbox'?v.checked:v.value.trim()]));
   values.password=fields.password.value;
@@ -224,6 +253,13 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
    await startVerification({email:created?.email||values.email,password:values.password,...(!resume&&created?{createdUserId:created.id}:{})},{returnAfterSignup:true,created:!!created});
    recover.hidden=true;
   }catch(e){
+   if(life.signal.aborted)return;
+   if(!continuing&&['REGISTRATION_EMAIL_EXISTS','REGISTRATION_GOOGLE_ONLY'].includes(e.code)){
+    recover.hidden=true;
+    dismissDuplicate=signupDuplicateNotice(app);
+    soundPlaying=sound?.play();
+    return;
+   }
    const key=errorFields[e.code];
    if(key&&!continuing){setFieldError(key,signupErrorText[e.code]||readableError(e));fields[key].focus();}
    else{
@@ -231,7 +267,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
     loginRecovery.hidden=false;
     recover.hidden=e.code==='REGISTRATION_GOOGLE_ONLY';
    }
-  }finally{busy=false;submit.disabled=recover.disabled=false;submit.removeAttribute('aria-busy');updateSignupAction();}
+  }finally{if(!soundPlaying)sound?.dispose();busy=false;submit.disabled=recover.disabled=false;submit.removeAttribute('aria-busy');updateSignupAction();}
  }
 
  form.addEventListener('submit',async e=>{e.preventDefault();if(signup)return submitSignup();if(busy||!form.reportValidity())return;busy=true;submit.disabled=true;submit.setAttribute('aria-busy','true');error.textContent='';success.textContent='';try{const values=Object.fromEntries(Object.entries(fields).map(([k,v])=>[k,v.type==='checkbox'?v.checked:v.value.trim()]));if(fields.password)values.password=fields.password.value;
@@ -242,6 +278,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  panel.append(form);if(mode==='login')panel.append(divider('və ya'),google());
  const footer=el('div',{class:'auth-form-footer'},el('span',{},mode==='signup'?'Artıq hesabın var?':mode==='login'?'Hesabınız yoxdur?':'Girişə qayıt'),link(mode==='signup'?'Daxil ol →':mode==='login'?'Qeydiyyatdan keç →':'Giriş →',target(mode==='login'?'signup':'login'),'auth-switch'));panel.append(footer);
  const life=new AbortController();window.mirpanelAuthDispose=()=>life.abort();
+ life.signal.addEventListener('abort',()=>dismissDuplicate?.(),{once:true});
  signal?.addEventListener('abort',()=>life.abort(),{once:true});
  const verificationApi=(action,data={})=>api('/api/auth/confirm-email/'+action,data);
  async function startVerification(data,{returnAfterSignup=false,created=false}={}){

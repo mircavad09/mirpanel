@@ -26,8 +26,7 @@ export function makePublicAuth(pool,c,send,delivery=createWelcomeDelivery(pool,s
     return ctx.json({...result,registrationCreated:true});
    }
    if(!existing)throw new APIError('CONFLICT',{code:'REGISTRATION_UNCONFIRMED',message:'Hesabın yaradılması təsdiqlənmədi. Yenidən cəhd edin.'});
-   if(!credential&&providers.some(a=>a.providerId==='google'))throw new APIError('CONFLICT',{code:'REGISTRATION_GOOGLE_ONLY',message:'Bu e-poçt Google hesabına bağlıdır. Google ilə davam edin.'});
-   throw new APIError('CONFLICT',{code:'REGISTRATION_EMAIL_EXISTS',message:'Bu e-poçt artıq qeydiyyatlıdır. Hesabınıza daxil olun və ya təsdiqə davam edin.'});
+   throw new APIError('CONFLICT',{code:'REGISTRATION_EMAIL_EXISTS',message:'Bu e-poçt ünvanı ilə artıq hesab yaradılıb.'});
   })},
   emailVerification:{sendOnSignUp:false,sendOnSignIn:false},
   user:{validateUserInfo:({user,source})=>source.method==='oauth'&&(source.oauth?.providerId!=='google'||user.emailVerified!==true)?{error:'unverified_identity',errorDescription:'Təsdiqlənmiş Google hesabı tələb olunur.'}:undefined,additionalFields:{phoneNumber:{type:'string',required:false,input:false,fieldName:'phone_number'},phoneVerified:{type:'boolean',required:false,input:false,defaultValue:false,fieldName:'phone_verified'},registrationTermsAcceptedAt:{type:'date',required:false,input:false,fieldName:'registration_terms_accepted_at'}}},

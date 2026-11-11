@@ -145,6 +145,7 @@ try{
   await tab.close();
   if(width===320){
    await page.locator('.auth-code-close').click();
+   await page.locator('.auth-code-sheet').waitFor({state:'detached'});
    await page.reload();
    assert.equal(await page.locator('.auth-code-sheet[open]').count(),0);
    const original=(await context.storageState()).cookies.find(c=>c.name.endsWith('.session_token'));
@@ -169,7 +170,7 @@ try{
   assert.equal(await page.locator('.auth-code-address strong').innerText(),old);
   assert.equal(record('verify',old).length,0);assert.equal(record('code',old).length,1);
   const duplicate=await request(cookieJar(),'/api/auth/sign-up/email',{name:'Sintetik Hesab',email:old,password});
-  assert.equal(duplicate.status,409);assert.equal((await duplicate.json()).code,'REGISTRATION_EMAIL_EXISTS');
+  assert.equal(duplicate.status,409);const duplicateBody=await duplicate.json();assert.equal(duplicateBody.code,'REGISTRATION_EMAIL_EXISTS');assert.equal(duplicateBody.message,'Bu e-poçt ünvanı ilə artıq hesab yaradılıb.');
   assert.equal(await page.locator('.auth-code-resend').isEnabled(),false);
   const j=cookieJar(),external=await call(j,'send');assert.equal(external.status,401);
   const post=(action,data)=>context.request.post(origin+'/api/auth/confirm-email/'+action,{headers:{origin},data});
@@ -204,7 +205,44 @@ try{
  for(let i=0;i<2;i++){assert.equal((await google()).headers.get('location'),origin+'/odenis');await welcomeDelivery.wake();assert.equal(record('welcome','synthetic-google@example.test').length,1);}
  assert.equal(record('code','synthetic-google@example.test').length,0);
  const googleDuplicate=await request(cookieJar(),'/api/auth/sign-up/email',{name:'Sintetik Hesab',email:'synthetic-google@example.test',password});
- assert.equal(googleDuplicate.status,409);assert.equal((await googleDuplicate.json()).code,'REGISTRATION_GOOGLE_ONLY');
+ assert.equal(googleDuplicate.status,409);assert.equal((await googleDuplicate.json()).code,'REGISTRATION_EMAIL_EXISTS');
+ for(const [width,email,manual,blocked] of [[320,'synthetic-google@example.test',false,false],[1440,'isolated-new-1440@outlook.com',true,false],[390,'synthetic-google@example.test',true,true]]){
+  testClient++;
+  const context=await browser.newContext({viewport:{width,height:790},hasTouch:width<500});
+  await context.addInitScript(({blocked})=>{
+   window.signupChimes=0;
+   if(blocked){window.AudioContext=class{constructor(){throw Error('Audio blocked');}};return;}
+   const start=OscillatorNode.prototype.start;
+   OscillatorNode.prototype.start=function(...args){window.signupChimes++;return start.apply(this,args);};
+  },{blocked});
+  const page=await context.newPage();
+  await page.goto(origin+'/hesab?mode=signup');
+  const values={firstName:'Sintetik',lastName:'Hesab',email,phone:'501234567',password};
+  for(const [key,value] of Object.entries(values))await page.locator('#account-'+key).fill(value);
+  await page.locator('#account-terms').check();
+  await page.locator('.auth-submit').click();
+  const notice=page.locator('.auth-duplicate-notice');
+  await notice.getByRole('alert').filter({hasText:'Bu e-poçt ünvanı ilə artıq hesab yaradılıb.'}).waitFor();
+  assert.equal(await page.evaluate(()=>window.signupChimes),blocked?0:1);
+  assert.equal(await page.locator('.auth-feedback').textContent(),'');
+  assert.equal(await page.locator('.auth-legal-link[hidden]').count(),1);
+  assert.equal(await page.locator('.auth-switch').isVisible(),true);
+  assert.equal(await page.locator('.auth-google').isEnabled(),true);
+  for(const [key,value] of Object.entries(values))assert.equal(await page.locator('#account-'+key).inputValue(),value);
+  assert.equal(await page.locator('#account-terms').isChecked(),true);
+  assert.equal(await notice.evaluate(n=>{const b=n.getBoundingClientRect();return b.top>=0&&b.left>=0&&b.right<=innerWidth;}),true);
+  if(manual)await notice.getByRole('button',{name:'Bildirişi bağla'}).click();
+  else{
+   const timer=notice.locator('.auth-duplicate-timer');
+   assert.equal(await timer.evaluate(n=>getComputedStyle(n).animationDuration),'4s');
+   const before=await timer.evaluate(n=>n.getBoundingClientRect().width);
+   await page.waitForFunction(before=>document.querySelector('.auth-duplicate-timer')?.getBoundingClientRect().width<before*.8,before);
+   assert.equal(await notice.isVisible(),true);
+  }
+  await notice.waitFor({state:'detached',timeout:5000});
+  await context.close();
+  console.log('PASS duplicate toast:',width,manual?'manual close':'4s auto-close',blocked?'audio blocked':'one chime');
+ }
  console.log('PASS: 320px and desktop signup, refresh, wrong code, cooldown, change, verification and return; synthetic Google new/repeat/unverified. No external mail.');
  }
 }finally{await welcomeDelivery.stop();globalThis.fetch=nativeFetch;await browser?.close();await new Promise(r=>server.close(r));await fixture.close();}
