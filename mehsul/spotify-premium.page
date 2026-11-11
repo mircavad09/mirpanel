@@ -138,6 +138,11 @@
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">2.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/canva-premium" aria-label="Canva Premium — 2.99 ₼" title="Canva Premium">
+      <img src="/uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882" class="product-page-similar-image" alt="Canva Premium" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
+      <div class="product-page-similar-category">dizayn</div>
+      <div class="product-page-similar-price">2.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -213,7 +218,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-dd87582d95110699"></script>
+  <script src="/app.js?v=catalog-583777a2c515c545"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=netflix-ready-rooms-1"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>
