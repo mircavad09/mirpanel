@@ -219,6 +219,7 @@ try{
   await page.goto(origin+'/hesab?mode=signup');
   const values={firstName:'Sintetik',lastName:'Hesab',email,phone:'501234567',password};
   for(const [key,value] of Object.entries(values))await page.locator('#account-'+key).fill(value);
+  await page.evaluate(()=>import('/community-assets/auth-forms.js?v=late-preload'));
   await page.locator('#account-terms').check();
   await page.locator('.auth-submit').click();
   const notice=page.locator('.auth-duplicate-notice');

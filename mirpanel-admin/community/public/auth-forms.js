@@ -348,4 +348,7 @@ export function mountAuth(app){
  void renderAuthForms({app,state:{googleEnabled:true},api,el,button,link,alert:()=>el('p'),signal:life.signal}).catch(e=>{if(!life.signal.aborted&&app.isConnected)app.replaceChildren(el('p',{role:'alert'},e.message),button('Yenidən cəhd et',()=>location.reload()));});
  return dispose;
 }
-const initial=document.getElementById('authApp');if(initial&&!window.mirpanelNavigationMounting)window.mirpanelPageDispose=mountAuth(initial);
+// A preloaded module (including an older URL during rollout) must not mount
+// the form a second time. Only the account page's explicit entry script does.
+const initial=document.getElementById('authApp');
+if(initial&&!window.mirpanelNavigationMounting&&[...document.scripts].some(script=>script.type==='module'&&script.src===import.meta.url))window.mirpanelPageDispose=mountAuth(initial);
