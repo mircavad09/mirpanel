@@ -59,8 +59,11 @@
     },250);
   });
   catalogFilters?.addEventListener('reset',()=>queueMicrotask(()=>{searchRun++;categoryRun++;field(catalogFilters,'category').replaceChildren(new Option('Bütün kateqoriyalar',''));void loadProductPage(1);}));
+  const categoryRetry=document.createElement('button');categoryRetry.type='button';categoryRetry.className='btn';categoryRetry.textContent='Kateqoriyaları yenidən yoxla';categoryRetry.hidden=true;
+  $('gameCatalogHint')?.after(categoryRetry);categoryRetry.onclick=()=>field(catalogFilters,'game').dispatchEvent(new Event('change'));
   field(catalogFilters,'game').addEventListener('change',async()=>{
     searchRun++;const run=++categoryRun,game=catalogGames.find(g=>g.id===Number(field(catalogFilters,'game').value));
+    categoryRetry.hidden=true;
     const categories=field(catalogFilters,'category');categories.replaceChildren(new Option('Bütün kateqoriyalar',''));categories.disabled=true;
     void loadProductPage(1);
     if(!game)return;
@@ -78,7 +81,7 @@
       select.disabled=!result.categories.length;
       if(result.categories.some(c=>String(c.id)===current))select.value=current;
       filterCatalog();
-    }catch(error){if(run===categoryRun)$('gameCatalogHint').textContent=error.message;}
+    }catch(error){if(run===categoryRun){$('gameCatalogHint').textContent=error.message;categoryRetry.hidden=false;}}
   });
   field(catalogFilters,'category').addEventListener('change',()=>{searchRun++;void loadProductPage(1);});
   async function addPackage(item,card){
