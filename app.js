@@ -1685,7 +1685,7 @@ const DATA = {
       },
       "flow": "whatsapp",
       "soldOut": false,
-      "active": false,
+      "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
@@ -1714,9 +1714,14 @@ const DATA = {
       },
       "plans": [
         {
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 30,
+          "label": "1 ay",
           "months": 1,
           "price": 4.99,
-          "regularPrice": 26.27
+          "regularPrice": 26.27,
+          "pricingId": "211daf58-234b-4911-992e-bda1537663c4"
         }
       ],
       "orderConfirmation": {
