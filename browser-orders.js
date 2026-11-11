@@ -684,7 +684,7 @@ function netflixScreen(animation,create){
   }
   return screen;
  }
- function openGuide(trigger,accounts,initialTab='info'){
+ function openGuide(trigger,accounts){
   const line=trigger.closest('.browser-order-line'),order=trigger.closest('[data-order-id]'),index=Number(line.querySelector('[data-order-info]').dataset.orderInfo),item=guideItems.get(order)?.[index];
   if(!item||guideDialog.open)return;
   const create=(tag,text,cls)=>{const n=document.createElement(tag);if(text)n.textContent=text;if(cls)n.className=cls;return n;};
@@ -695,10 +695,9 @@ function netflixScreen(animation,create){
   const head=create('div',null,'browser-guide-identity');head.append(identity,close);
   const tabs=create('div',null,'browser-guide-tabs'),body=create('div',null,'browser-guide-body'),footer=create('footer');
   const deliveryStatus=accounts.querySelector('[data-delivery]')?null:accounts.querySelector('p')?.textContent;
-  const primeDelivered=item.productId==='prime'&&Boolean(accounts.querySelector('[data-delivery]'));
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
   footer.append(button('Bağla',()=>guideDialog.close()));
-  let data=null,failed=false,active=primeDelivered?'steps':initialTab,track=primeDelivered?'phone':'',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
+  let data=null,failed=false,active='steps',track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
   const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
   phoneShell.append(phoneScreen);
   const capcutStage=create('div',null,'capcut-pc-stage'),scanSlot=create('div',null,'capcut-pc-scan-slot');
@@ -708,10 +707,11 @@ function netflixScreen(animation,create){
   const tv=create('div',null,'netflix-tv'),tvScreen=create('div',null,'netflix-tv-screen'),remote=create('div',null,'netflix-tv-remote');
   remote.setAttribute('aria-hidden','true');remote.append(create('i'),create('b'),create('i'),create('i'));
   tv.append(tvScreen,create('div',null,'netflix-tv-feet'),remote);
-  const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(info,how);
+  const info=button('Məlumat',()=>select('info')),how=button('Təlimat',()=>select('steps'));tabs.append(how,info);
   function select(mode){autoplay=false;active=mode;wrap.scrollTop=body.scrollTop=0;draw();}
   function draw(){
    clearTimeout(advanceTimer);
+   if(data&&active==='steps'&&!Object.values(data.tracks||{}).some(steps=>Array.isArray(steps)&&steps.length))active='info';
    info.setAttribute('aria-pressed',String(active==='info'));how.setAttribute('aria-pressed',String(active==='steps'));
    if(failed){body.replaceChildren(create('p','Təlimat alınmadı.'),button('Yenidən cəhd et',loadGuide));return;}
    if(!data){const loading=create('p','Məlumat hazırlanır…');loading.setAttribute('role','status');body.replaceChildren(loading);return;}
@@ -901,7 +901,7 @@ function netflixScreen(animation,create){
   const deliveryGuide=e.target.closest('[data-delivery-guide]');
   if(deliveryGuide){
    e.preventDefault();
-   return openGuide(deliveryGuide,deliveryGuide.closest('.browser-order-instructions'),'steps');
+   return openGuide(deliveryGuide,deliveryGuide.closest('.browser-order-instructions'));
   }
   const info=e.target.closest('[data-order-info]'),again=e.target.closest('[data-buy-again]');
   if(info)return openGuide(info,info.closest('.browser-order-line').querySelector('.browser-order-instructions'));
