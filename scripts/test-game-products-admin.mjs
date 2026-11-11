@@ -122,6 +122,7 @@ try{
     assert.equal(await panel.getByRole('searchbox').inputValue(),'');
     await panel.getByLabel('Oyun',{exact:true}).selectOption('1');
     await panel.getByLabel('Kateqoriya',{exact:true}).selectOption('1');
+    await page.waitForFunction(()=>document.querySelector('#gameCatalogHint')?.textContent.startsWith('1 görünən'));
     assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),1);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     assert(await panel.evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1));
@@ -147,6 +148,7 @@ try{
     await page.locator('#modalCancel').click();
     fixture.products[0].price='1.5900';
     await panel.getByRole('button',{name:'Kataloqu yenilə'}).click();
+    await card.getByText('1.5900',{exact:true}).waitFor();
     await card.getByRole('button',{name:'Kataloqda var'}).waitFor();
     assert.equal(await card.locator('[data-sale-price]').inputValue(),'3.49');
     assert.equal(await page.evaluate(()=>state.data.products.filter(p=>p.id==='epinby_11').length),1);
