@@ -2150,7 +2150,7 @@ const DATA = {
           "key": "email",
           "type": "email",
           "label": "Email / Gmail",
-          "placeholder": "Gmail ünvanınızı yazın",
+          "placeholder": "misal@gmail.com",
           "description": "",
           "required": true,
           "enabled": true
