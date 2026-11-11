@@ -4,6 +4,13 @@ import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex
 
 const draftId='f35c6be1-7f3e-4a51-8af1-5d31bda72453';
 const item={productId:'test',planIndex:0,quantity:2,draftId,lineId:draftId};
+if(process.argv.includes('--live')){
+ const response=await fetch('https://mirpanel.com/sebet');
+ assert.ok(response.ok);
+ const html=await response.text();
+ assert.ok(html.includes('/community-assets/shop-ui.js?v=cart-ready-now-1'),'direct cart uses current shop UI');
+ assert.ok(html.includes('/site-header.js?v=cart-ready-now-1'),'direct cart uses current header');
+}
 const scripts=new Map();
 for(const name of ['cart-store.js','cart-ready.js','shop-ui.js']){
  const file=name==='shop-ui.js'?'mirpanel-admin/community/public/'+name:name;
