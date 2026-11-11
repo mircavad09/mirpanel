@@ -18,7 +18,7 @@ catalog.products.push({id:'epinby_92',title:'Synthetic voucher',active:true,plan
 const transport=async input=>{
  assert.equal(input.key,'synthetic-key');assert.equal(input.authHeader,'X-API-Key');
  if(input.path.endsWith('/getMe'))return {success:true,data:{currency:'USD',balance:'100'}};
- if(input.path.endsWith('/games')){catCalls.push('games');return {success:true,data:[{id:4,name:'Test game'}]};}
+ if(input.path.endsWith('/games')){assert.equal(input.maxResponseBytes,524288);catCalls.push('games');return {success:true,data:[{id:4,name:'Test game'}]};}
  if(input.path.endsWith('/categories'))return {success:true,data:[{id:7,name:'Packs'}]};
  if(input.path.endsWith('/products')){
   catCalls.push(input.query);if(failPage&&Number(input.query.page)===2)throw Error('NETWORK');

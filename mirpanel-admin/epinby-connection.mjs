@@ -43,7 +43,7 @@ export function createEpinbyConnection({pool,security,transport=supplierRequest}
     flight.promise=(async()=>{
       try{
         const key=security.decryptSecret(row.api_key_cipher), products=new Map();
-        const options={base:'https://epinby.com',allowlist:new Set(['https://epinby.com']),key,authHeader:'X-API-Key',jsonResponse:true};
+        const options={base:'https://epinby.com',allowlist:new Set(['https://epinby.com']),key,authHeader:'X-API-Key',jsonResponse:true,maxResponseBytes:524288};
         const gamesResponse=gamesOnly?await transport({...options,path:'/api/v1/games'}):{success:true,data:[]};
         if(gamesResponse?.success!==true||!Array.isArray(gamesResponse.data))throw Error('CATALOG_FORMAT');
         const games=gamesResponse.data.filter(g=>Number.isSafeInteger(Number(g.id))&&Number(g.id)>0&&catalogText(g.name))
@@ -87,7 +87,7 @@ export function createEpinbyConnection({pool,security,transport=supplierRequest}
       if(!row?.api_key_cipher||row.last_status!=='confirmed')return {categories:[]};
       try{
         const result=await transport({base:'https://epinby.com',path:'/api/v1/categories',query:{game_id:gameId},
-          allowlist:new Set(['https://epinby.com']),key:security.decryptSecret(row.api_key_cipher),authHeader:'X-API-Key',jsonResponse:true});
+          allowlist:new Set(['https://epinby.com']),key:security.decryptSecret(row.api_key_cipher),authHeader:'X-API-Key',jsonResponse:true,maxResponseBytes:524288});
         if(result?.success!==true||!Array.isArray(result.data))throw Error();
         const current=await read(db);
         if(current?.credential_version!==row.credential_version)throw Error();

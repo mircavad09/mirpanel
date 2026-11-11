@@ -18,7 +18,7 @@ try{
  const session=await(await request('/api/session',{headers:{Cookie:cookie}})).json();csrf=session.csrfToken;
  const started=Date.now();
  const gamesResult=await(await request('/api/admin/api-integrations?view=epinby-catalog&gamesOnly=true',{headers:{Cookie:cookie}})).json();
- const gamesMs=Date.now()-started;assert(!gamesResult.error);assert(gamesResult.games.length>0);
+ const gamesMs=Date.now()-started;assert(!gamesResult.error,gamesResult.error||'Games response failed');assert(gamesResult.games.length>0);
  const result=await request('/api/admin/api-integrations?view=epinby-catalog&page=1',{headers:{Cookie:cookie}});
  assert.equal(result.status,200);
  const data=await result.json();

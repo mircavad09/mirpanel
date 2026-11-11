@@ -19,6 +19,9 @@ shows matches immediately and progressively scans the remaining pages. Results
 are explicitly marked incomplete until the last page; clearing/changing the
 filter cancels that scan. **Daha çox paket yüklə** also permits manual paging.
 Categories require a selected game, as in Epinby's documented API.
+The real 151-game response is 76,983 bytes, above the former 64 KiB supplier
+default. Catalog reads use a bounded 512 KiB budget; order/status reads retain
+the existing protected transport and timeouts.
 
 Apply `supabase/migrations/202611110002_epinby_execution.sql` before deploying the
 Epinby execution worker. It only adds private queue/event tables; existing
