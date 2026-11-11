@@ -10,8 +10,8 @@ const publicDir=new URL('../mirpanel-admin/public/',import.meta.url);
 const state=extractAdminState(await fs.readFile(new URL('../app.js',import.meta.url),'utf8'));
 const row={api_key_cipher:'encrypted',webhook_secret_cipher:'never-exposed',credential_version:1,last_status:'confirmed',currency:'USD'};
 const supplierProducts=[
- {id:11,name:'60 UC',game:'PUBG Mobile',category:'UC',price:'0.8900',stock_status:'FINITE',stock_count:25,image:'https://epinby.com/sample.png'},
- {id:12,name:'100 Diamonds',game:'Mobile Legends',category:'Diamonds',price:'1.1200',stock_status:'UNLIMITED'}
+ {id:11,name:'60 UC',game:'PUBG Mobile',game_id:1,category:'UC',category_id:1,type:'TOPUP',fields:[{key:'player_id',label:'Player ID',required:true}],price:'0.8900',stock_status:'FINITE',stock_count:25,image:'https://epinby.com/sample.png'},
+ {id:12,name:'100 Diamonds',game:'Mobile Legends',game_id:2,category:'Diamonds',category_id:2,type:'VOUCHER',fields:[],price:'1.1200',stock_status:'UNLIMITED'}
 ];
 const calls=[];
 const epinby=createEpinbyConnection({pool:async()=>({query:async()=>({rows:[row]})}),security:{decryptSecret:()=> 'synthetic'},
@@ -22,7 +22,9 @@ const epinby=createEpinbyConnection({pool:async()=>({query:async()=>({rows:[row]
   return {success:true,data:[supplierProducts[query.page-1]],meta:{current_page:query.page,last_page:2,total:2}};
  }});
 const fixture=await epinby({action:'epinby-catalog'});
-assert.deepEqual(calls,[1,2]);assert.equal(fixture.products[0].stockCount,25);
+assert.deepEqual(calls,[1]);assert.equal(fixture.products[0].stockCount,25);assert.equal(fixture.complete,false);
+fixture.products.push(...(await epinby({action:'epinby-catalog',page:2})).products);fixture.meta={page:1,lastPage:1,total:2,perPage:50};
+fixture.games=(await epinby({action:'epinby-catalog',gamesOnly:true})).games;
 assert(!JSON.stringify(fixture).includes('never-exposed'));
 assert.equal(inventoryAvailability({id:'epinby_11',plans:[{price:3}]},{scope:'product',available:100}).canOrder,false);
 const live=process.argv.includes('--live-assets');
@@ -59,9 +61,9 @@ try{
          assert.equal(added.length,1);assert.equal(added[0].id,'epinby_11');assert.equal(added[0].plans[0].price,3.49);
          const catalog=normalizeAdminPayload(req.postDataJSON().data);
          const product=catalog.products.find(p=>p.id==='epinby_11');
-         assert.equal(product.soldOut,true);
+         assert.equal(product.soldOut,false);assert.equal(product.supplier.productId,11);assert.equal(product.formFields[0].key,'player_id');
          assert.match([...generateProductListingPageFiles(catalog.products).values()].join(''),/epinby[-_]11/);
-         assert.match([...generateProductPageFiles([product]).values()].join(''),/disabled>Alış hələ açılmayıb/);
+         assert.doesNotMatch([...generateProductPageFiles([product]).values()].join(''),/disabled>Alış hələ açılmayıb/);
         }
         return route.fulfill({json:{previewDigest:'test',productCount:1,activeProductCount:1,pageCount:1,warnings:[]}});
        }
@@ -109,6 +111,7 @@ try{
     assert.equal(context.pages().length,1);
     await panel.getByText('Bağlantı təsdiqləndi',{exact:true}).waitFor();
     assert.equal(await page.locator('.navBtn[data-view="gameProducts"] .adminMenuIcon').count(),1);
+    await page.waitForFunction(()=>document.querySelectorAll('#gameCatalogProducts .gameCatalogProduct').length===2);
     assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),2);
     assert.equal(integrations,0,'Opening the shell must not call integration APIs');
     await panel.getByRole('searchbox').fill('PUBG Mobile');
@@ -117,8 +120,8 @@ try{
     assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),1);
     await panel.getByRole('button',{name:'Təmizlə',exact:true}).click();
     assert.equal(await panel.getByRole('searchbox').inputValue(),'');
-    await panel.getByLabel('Oyun',{exact:true}).selectOption('PUBG Mobile');
-    await panel.getByLabel('Kateqoriya',{exact:true}).selectOption('UC');
+    await panel.getByLabel('Oyun',{exact:true}).selectOption('1');
+    await panel.getByLabel('Kateqoriya',{exact:true}).selectOption('1');
     assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),1);
     assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
     assert(await panel.evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1));
@@ -130,6 +133,7 @@ try{
     assert.equal(integrations,1);
     await openView('gameProducts');
     // Refresh/direct hash entry restores the same admin workspace.
+    await page.waitForLoadState('networkidle');
     await page.reload();await panel.waitFor({state:'visible'});
     assert.equal(new URL(page.url()).hash,'#gameProducts');
     assert.equal(context.pages().length,1);
@@ -146,7 +150,9 @@ try{
     await card.getByRole('button',{name:'Kataloqda var'}).waitFor();
     assert.equal(await card.locator('[data-sale-price]').inputValue(),'3.49');
     assert.equal(await page.evaluate(()=>state.data.products.filter(p=>p.id==='epinby_11').length),1);
-    assert.deepEqual(errors.filter(e=>!e.includes('/api/admin/payment-orders?tab=pending')),[]);
+    // WebKit reports navigation-aborted background badges as access-control errors.
+    // Catalog requests must still be error-free.
+    assert.deepEqual(errors.filter(e=>!e.includes('/api/admin/payment-orders?tab=pending')&&!e.includes('/api/admin/community/shop?only=topup-count due to access control checks.')),[]);
     await context.close();
     console.log(JSON.stringify({engine:engine.name(),width,mode:live?'live assets / isolated shell':'isolated',inline:true,catalog:true,filters:true,publish:true,noDuplicate:true,salePricePreserved:true}));
    }

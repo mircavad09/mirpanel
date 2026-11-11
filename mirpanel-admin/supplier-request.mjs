@@ -20,7 +20,7 @@ export function approvedUrl(base, path, allowlist) {
   return new URL(path,url);
 }
 
-export async function supplierRequest({base, path, key, allowlist, body, reference, authHeader='Authorization', jsonResponse=false, query, maxResponseBytes=65536}) {
+export async function supplierRequest({base, path, key, allowlist, body, reference, authHeader='Authorization', jsonResponse=false, query, maxResponseBytes=65536,idempotencyHeader='Idempotency-Key'}) {
   const url = approvedUrl(base,path,allowlist);
   const signal = AbortSignal.timeout(8000);
   const records = await lookup(url.hostname,{family:4,all:true});
@@ -38,7 +38,7 @@ export async function supplierRequest({base, path, key, allowlist, body, referen
       headers:{
         [authHeader]:authHeader==='X-API-Key'?key:'Bearer '+key, Accept:'application/json',
         ...(payload ? {'Content-Type':'application/json','Content-Length':Buffer.byteLength(payload),
-          'Idempotency-Key':reference} : {})
+          ...(reference?{[idempotencyHeader]:reference}:{})} : {})
       }
     }, res => {
       const chunks = [];

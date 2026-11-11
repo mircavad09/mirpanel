@@ -704,7 +704,7 @@ async function handleApi(request, response) {
     try {
       const params=new URL(request.url,'http://localhost').searchParams;
       const view=params.get('view');
-      const input = request.method==='POST' ? await readBody(request,25000) : ['epinby-catalog','epinby-categories'].includes(view) ? {action:view,gameId:params.get('gameId')} : undefined;
+      const input = request.method==='POST' ? await readBody(request,25000) : ['epinby-catalog','epinby-categories'].includes(view) ? {action:view,gameId:params.get('gameId'),categoryId:params.get('categoryId'),page:params.get('page'),gamesOnly:params.get('gamesOnly')==='true',search:params.get('search')} : undefined;
       if(request.method==='POST' && ['epinby-catalog','epinby-categories'].includes(input?.action)) return json(response,405,{error:'Kataloq yalnız oxumaq üçündür.'});
       if (request.method==='POST' && (!input || typeof input!=='object')) return json(response,400,{error:'Sorğu düzgün deyil.'});
       return json(response,200,await apiIntegrations.admin(input));
@@ -1469,7 +1469,7 @@ const netflixConfirmationEndpoint = createNetflixConfirmationEndpoint({
 const apiIntegrations = config.encryptionKey && config.tokenSecret && process.env.COMMUNITY_OWNER_ENABLED==='true'
   ? createApiIntegrations({
     pool:()=>ownerCommunity.integrationPool(),security:createPaymentSecurity(config),
-    origins:process.env.SUPPLIER_API_ORIGINS,
+    origins:process.env.SUPPLIER_API_ORIGINS,callbackUrl:new URL('/api/webhooks/epinby',process.env.RENDER_EXTERNAL_URL||'https://mirpanel.onrender.com').href,
     loadCatalog:async()=>extractAdminState((await getAppFile()).source)
   }) : null;
 apiIntegrations?.start();
@@ -1516,6 +1516,12 @@ const server = http.createServer(async (request, response) => {
   try {
     const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
     const pathname = requestUrl.pathname;
+    if(pathname==='/api/webhooks/epinby'){
+      if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'});
+      if(!apiIntegrations)return json(response,503,{error:'Xidmət hazır deyil.'});
+      try{return json(response,200,await apiIntegrations.epinbyOrders.webhook(await readRawBody(request,262144),request.headers));}
+      catch(error){return json(response,error.status||503,{error:error.status?error.message:'Bildiriş saxlanılmadı.'});}
+    }
     if(await ownerCommunity.handle(request,response))return;
     const adminId=getCookies(request).mirpanel_session;
     if(adminId){

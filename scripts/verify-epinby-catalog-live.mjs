@@ -16,19 +16,22 @@ try{
  config.ADMIN_PASSWORD='';assert.equal(login.status,200,'Admin login must succeed');
  cookie=login.headers.get('set-cookie').split(';')[0];
  const session=await(await request('/api/session',{headers:{Cookie:cookie}})).json();csrf=session.csrfToken;
- const result=await request('/api/admin/api-integrations?view=epinby-catalog',{headers:{Cookie:cookie}});
+ const started=Date.now();
+ const gamesResult=await(await request('/api/admin/api-integrations?view=epinby-catalog&gamesOnly=true',{headers:{Cookie:cookie}})).json();
+ const gamesMs=Date.now()-started;assert(!gamesResult.error);assert(gamesResult.games.length>0);
+ const result=await request('/api/admin/api-integrations?view=epinby-catalog&page=1',{headers:{Cookie:cookie}});
  assert.equal(result.status,200);
  const data=await result.json();
  assert(!data.error,data.error||'');
  assert.equal(data.connection.lastStatus,'confirmed');
  assert.equal(data.connection.currency,'USD');
  assert(data.products.length>0,'Real catalog must contain products');
- assert(data.games.length>0,'Real games must load');
- const game=data.games[0];
+ assert(data.meta.lastPage>0);assert(data.meta.total>=data.products.length);
+ const game=gamesResult.games[0];
  const categories=await(await request('/api/admin/api-integrations?view=epinby-categories&gameId='+game.id,{headers:{Cookie:cookie}})).json();
  assert(!categories.error,categories.error||'');
  assert(Array.isArray(categories.categories));
- console.log(JSON.stringify({realCatalog:true,products:data.products.length,games:data.games.length,categories:categories.categories.length,currency:'USD',businessWrites:0}));
+ console.log(JSON.stringify({realCatalog:true,loadedProducts:data.products.length,total:data.meta.total,pages:data.meta.lastPage,games:gamesResult.games.length,gamesMs,categories:categories.categories.length,currency:'USD',businessWrites:0}));
  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
  for(const width of [390,1440]){
   const context=await browser.newContext({viewport:{width,height:950}});

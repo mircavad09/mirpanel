@@ -1,4 +1,5 @@
 import vm from "node:vm";
+import {epinbyProduct} from '../epinby-product.mjs';
 import {randomUUID} from 'node:crypto';
 import { normalizePlanMetadata } from './public/product-plan-utils.mjs';
 import { normalizeOrderGuide } from './order-guide.mjs';
@@ -792,9 +793,9 @@ function normalizeProduct(product = {}, index = 0) {
     id
   );
   const stock = normalizeStock(product.stock);
-  const formFields = normalizeFormFields(product);
+  const formFields = epinbyProduct(product.supplier,id)?.fields.map(normalizeFormField)||normalizeFormFields(product);
   const soldOut =
-    /^epinby_\d+$/.test(id) || Boolean(product.soldOut) ||
+    (/^epinby_\d+$/.test(id)&&!epinbyProduct(product.supplier,id)) || Boolean(product.soldOut) ||
     product.flow === "out_of_stock" ||
     (Boolean(product.stockEnabled) && stock !== null && stock <= 0);
   const productTitle = String(product.title || id);
@@ -818,6 +819,7 @@ function normalizeProduct(product = {}, index = 0) {
   return {
     id,
     _stableId: String(product._stableId || id),
+    ...(epinbyProduct(product.supplier,id)?{supplier:epinbyProduct(product.supplier,id)}:{}),
     order: productOrder,
     category: String(product.category || "all"),
     image: productImage,

@@ -1,4 +1,5 @@
 import {createEpinbyConnection} from './epinby-connection.mjs';
+import {createEpinbyOrders} from './epinby-orders.mjs';
 import {randomUUID} from 'node:crypto';
 import {approvedUrl,supplierRequest} from './supplier-request.mjs';
 import {adminDelivery,deliveryLines,paid} from './community/order-delivery.mjs';
@@ -51,8 +52,9 @@ export async function dispatchResult(job,order,security,send,first) {
   }
 }
 
-export function createApiIntegrations({pool,security,loadCatalog,origins,transport=supplierRequest}) {
+export function createApiIntegrations({pool,security,loadCatalog,origins,callbackUrl,transport=supplierRequest}) {
   const epinby=createEpinbyConnection({pool,security,transport});
+  const epinbyOrders=createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transport});
   const allowlist = new Set(String(origins || '').split(',').map(x=>x.trim()).filter(Boolean));
   const send = input => transport({...input,allowlist});
   const endpoint = (base,path) => {
@@ -65,8 +67,9 @@ export function createApiIntegrations({pool,security,loadCatalog,origins,transpo
       const [catalog, providers, links, jobs, savedDrafts] = await Promise.all([
         loadCatalog(),db.query('select id,name,base_url,test_path from '+suppliers+' order by name'),
         db.query('select * from '+mappings+' order by product_id,plan_key'),
-        db.query(`select d.id,o.order_code,d.line_index,d.state,d.external_id from ${dispatches} d
-          join public.payment_orders o on o.id=d.order_id order by o.created_at desc limit 100`),
+        db.query(`select d.id,o.order_code,d.line_index,d.state,d.external_id,
+          (select string_agg(distinct u.reason,' · ') from mirpanel_community.epinby_order_units u where u.dispatch_id=d.id) reason
+          from ${dispatches} d join public.payment_orders o on o.id=d.order_id order by o.created_at desc limit 100`),
         db.query('select id,details,reason,updated_at from '+drafts+' order by updated_at desc limit 100')
       ]);
       return {drafts:savedDrafts.rows,suppliers:providers.rows,mappings:links.rows,jobs:jobs.rows,origins:[...allowlist],
@@ -199,7 +202,7 @@ export function createApiIntegrations({pool,security,loadCatalog,origins,transpo
       await c.query('begin');
       const job = (await c.query(`select d.*,s.base_url,s.key_cipher from ${dispatches} d
         join ${suppliers} s on s.id=d.supplier_id
-        where d.state in ('queued','checking','succeeded') and d.next_at<=now()
+        where d.state in ('queued','checking','succeeded') and d.next_at<=now() and coalesce(d.settings->>'provider','')<>'epinby'
         order by d.next_at limit 1 for update of d skip locked`)).rows[0];
       if (!job) { await c.query('commit'); return null; }
       const order = (await c.query('select * from public.payment_orders where id=$1 for update',[job.order_id])).rows[0];
@@ -245,10 +248,9 @@ export function createApiIntegrations({pool,security,loadCatalog,origins,transpo
     await db.query("update "+dispatches+" set state='delivered' where id=$1",[job.id]);
   }
   let running;
-  return {admin,drain,start(){
-    if (!allowlist.size) return;
+  return {admin,drain,epinbyOrders,start(){
     setInterval(()=>{
-      running ??= drain().catch(()=>{}).finally(()=>{running=null;});
+      running ??= Promise.all([allowlist.size?drain():null,epinbyOrders.drain()]).catch(()=>{}).finally(()=>{running=null;});
     },5000).unref();
   }};
 }

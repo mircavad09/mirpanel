@@ -1,4 +1,5 @@
 import {customerPrices} from './community/customer-pricing.mjs';
+import {createEpinbyOrders} from './epinby-orders.mjs';
 import crypto from 'node:crypto';
 import {createDrafts,termsInfo,draftUuid} from './cart-drafts.mjs';
 import {validateDetails,maskedDetails} from './community/public/checkout-fields.js';
@@ -23,7 +24,7 @@ export async function postLedger(c,{actor,user,key,cents,kind,reason}){if(cents=
 export function productCardPaymentUnavailable(){
  return Object.assign(Error('Məhsul sifarişləri üçün kartdan karta ödəniş hazırda əlçatan deyil. Balansla ödəyə bilərsiniz.'),{status:409,code:'PRODUCT_CARD_PAYMENT_UNAVAILABLE'});
 }
-export function createShop({context,catalog,snapshot,store,config,adminTopupNotifications=false}){
+export function createShop({context,catalog,snapshot,store,config,adminTopupNotifications=false,epinbyTransport}){
  let drafts;const draftService=()=>drafts??=createDrafts({catalog,security:createPaymentSecurity(config)});
  async function account(req,{verified=true}={}){const value=await context(req);if(value.user){const u=(await value.pool.query('select u."emailVerified",p.blocked,p.ban_until from mirpanel_community."user" u left join mirpanel_community.community_profiles p on p.user_id=u.id where u.id=$1',[value.user])).rows[0];if(!u)throw fail(401,'Hesabınıza daxil olun.');if(verified&&!u.emailVerified)throw Object.assign(fail(403,'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin'),{code:'CHECKOUT_EMAIL_UNVERIFIED'});if(u.blocked&&(!u.ban_until||Date.parse(u.ban_until)>Date.now()))throw fail(403,'Hesabınıza giriş bağlanıb.');}return value;}
  async function ready(pool){if(!(await pool.query('select enabled from mirpanel_community.shop_release where id')).rows[0]?.enabled)throw fail(503,'Səbət və balans xidməti hazırda əlçatan deyil.');}
@@ -36,6 +37,7 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
   if(final)renewal={...await verifyRenewal(c,user,draftRenewal.id,p.id,draftRenewal.expiresOn),period};
  }
  const period=subscriptionPeriod(plan);
+ if(final&&/^epinby_\d+$/.test(p.id))await createEpinbyOrders({pool:async()=>c,security:createPaymentSecurity(config),loadCatalog:catalog,transport:epinbyTransport}).preflight(c,p,plan,x.quantity,values,x.planIndex);
  const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(draftRenewal?{renewalOnly:true}:{}),...(renewal?{renewal}:{}),detailsMissing,termsVersion,termsMissing,note,fields,maskedDetails:maskedDetails(fields,values),...(final&&Object.keys(values).length?{detailsCipher:createPaymentSecurity(config).encryptSecret(JSON.stringify(values))}:{}),terms,title:p.title,planName:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Plan'),image:p.image||'',unitCents:price,standardCents:standard,available:available.salesDisabled?0:p.id==='netflix'&&draftRenewal?null:ip.available??null,salesDisabled:available.salesDisabled,tracked:ip.tracked,signature:signature(plan),sourcePlanKey:planKey(plan,x.planIndex),duration:period?.unit==='months'?period.count:null,...(period?.unit==='days'?{durationDays:period.count}:{})});}return{items:result,totalCents:result.reduce((s,x)=>s+x.unitCents*x.quantity,0)};}
  async function owned(c,id,owner,user,lock=false){if(!uuid(id))throw fail(400,'Sifariş identifikatoru düzgün deyil.');const g=(await c.query('select * from mirpanel_community.shop_checkouts where id=$1 and owner_hash=$2'+(lock?' for update':''),[id,owner])).rows[0];if(!g||g.user_id&&g.user_id!==user)throw fail(404,'Sifariş tapılmadı.');return g;}
  async function group(c,g,sendWhatsApp=false){

@@ -121,7 +121,7 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
   if(item.renewal||!item.sourcePlanKey||!item.signature)continue;
   const quantity=item.quantity-done.filter(d=>d.line_index===line).reduce((n,d)=>n+d.quantity,0);
   if(quantity<=0)continue;
-  if(dispatches&&(await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and state in ('checking','succeeded')",[orderId,line])).rowCount)continue;
+  if(dispatches&&(await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and (state in ('checking','succeeded') or state='queued' and settings->>'provider'='epinby')",[orderId,line])).rowCount)continue;
   if(item.productId==='netflix'&&(await c.query("select to_regclass('mirpanel_community.netflix_room_units') present")).rows[0].present){
    if(![1,3,6].includes(item.durationMonths??item.duration)||item.durationDays)continue;
    const managed=await roomSalesInstalled(c);

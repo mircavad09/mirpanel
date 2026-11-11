@@ -134,7 +134,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
   }
   if(o.fulfillment_cancellation)throw fail(409,'Qalan məhsullar ləğv edilib.');
   if(actor!=='supplier:auto' && (await c.query("select to_regclass('mirpanel_community.api_dispatches') as name")).rows[0]?.name){
-   const busy=await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and state in ('checking','succeeded')",[id,line]);
+   const busy=await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and (state in ('checking','succeeded') or state='queued' and settings->>'provider'='epinby')",[id,line]);
    if(busy.rowCount)throw fail(409,'Təchizatçı bu məhsulun sifarişini yoxlayır.');
   }
   if(quantity>lines[line].quantity-(done[line]||0))throw fail(409,'Bu sayda təhvil verilməmiş məhsul qalmayıb.');

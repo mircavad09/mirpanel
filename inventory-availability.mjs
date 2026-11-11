@@ -4,7 +4,7 @@ export function inventoryAvailability(product, ledger) {
   const count = value => Number.isSafeInteger(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
   const salePaused = ledger?.salePaused;
   const legacyDisabled = ledger?.salesDisabled ?? (scope === 'none' && (product.soldOut === true || product.flow === 'out_of_stock'));
-  const salesDisabled = /^epinby_\d+$/.test(product.id) || (typeof salePaused === 'boolean' ? salePaused : legacyDisabled);
+  const salesDisabled = (/^epinby_\d+$/.test(product.id)&&product.supplier?.provider!=='epinby') || (typeof salePaused === 'boolean' ? salePaused : legacyDisabled);
   const unlimited = scope === 'product' && ledger?.unlimited === true;
   const available = scope === 'product' && !unlimited ? count(ledger?.available ?? 0) : null;
   const plans = (product.plans || []).map((plan, index) => {
