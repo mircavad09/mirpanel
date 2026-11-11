@@ -4,6 +4,8 @@ import {shopFixture} from './shop-test-fixture.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {adminDelivery,adminDeliveryCompletions} from '../mirpanel-admin/community/order-delivery.mjs';
 import {reportOrderFinance} from '../mirpanel-admin/payment-order-report.mjs';
+import {signature} from '../mirpanel-admin/employee-security.mjs';
+import {saveReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
 import {durationStatistics} from '../mirpanel-admin/payment-order-duration.mjs';
 
 process.env.MIRPANEL_CART_V2_TEST='1';
@@ -71,5 +73,38 @@ try{
   assert.equal(report.estimatedCostCount,1);
   assert.equal(report.days.find(day=>day.date==='2026-10-06').profit,'13.50');
   assert.equal(report.paymentMethods[0].label,'MirPanel balansı');
+  await f.db.exec(f.db.read('supabase/migrations/202611110001_delivery_cost_capture.sql'));
+  // A pre-migration wallet order is costed by the same delivery trigger.
+  const legacy=await checkout([item('ordinary',3)]);
+  await pool.query('alter table payment_orders disable trigger payment_order_checkout_cost');
+  await pool.query('update payment_orders set cost_lines_snapshot=null,cost_price_snapshot=null,cost_source=null where id=$1',[legacy]);
+  await pool.query('alter table payment_orders enable trigger payment_order_checkout_cost');
+  const deliveryId=id(),payload={requestId:deliveryId,line:0,quantity:2,message:'Synthetic partial delivery'};
+  await adminDelivery(pool,security,'wallet:auto',legacy,payload);
+  const captured=await get(legacy);
+  assert.equal(captured.cost_price_snapshot,'14.25');
+  await adminDelivery(pool,security,'wallet:auto',legacy,payload);
+  assert.deepEqual((await get(legacy)).cost_lines_snapshot,captured.cost_lines_snapshot);
+  const closed=reportOrderFinance({...captured,fulfillment_cancellation:{lines:[{index:0,quantity:1}]}},500);
+  assert.equal(closed.cost_price_snapshot,'9.50');
+  await f.rpc('save_payment_plan_costs',[JSON.stringify([{productId:'ordinary',planId:'0',cost:7.00}]),'test']);
+  await deliver(legacy,0,1);
+  assert.equal((await get(legacy)).cost_price_snapshot,'14.25');
+  assert.deepEqual((await get(legacy)).cost_lines_snapshot,captured.cost_lines_snapshot);
+  const newOrder=await checkout([item('ordinary'),item('unlimited',2)]);
+  assert.equal((await get(newOrder)).cost_price_snapshot,'7.00');
+  await deliver(newOrder,0,1);await deliver(newOrder,1,2);
+  assert.equal((await get(newOrder)).cost_price_snapshot,'7.00');
+  assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where id=$1',[deliveryId])).rows[0].n,1);
+  for(const file of ['ready-stock-migration.sql','ready-stock-product-messages-migration.sql'])
+    await f.db.exec(f.db.read('mirpanel-admin/community/'+file));
+  await f.db.exec(f.db.read('supabase/migrations/202611090904_topup_emails.sql'));
+  const planSignature=signature(f.catalog.products[0].plans[0]);
+  await saveReadyStock(pool,security,paymentConfig.tokenSecret,f.catalog,'test',{productId:'ordinary',index:0,planSignature,requestId:id(),autoWallet:true,messages:['Synthetic automatic account']});
+  const automatic=await checkout([item('ordinary')]);
+  assert.equal((await get(automatic)).cost_price_snapshot,'7.00');
+  const autoRecords=(await pool.query('select actor from customer_order_deliveries where order_id=$1',[automatic])).rows;
+  assert.deepEqual(autoRecords.map(r=>r.actor),['wallet:auto']);
+  console.log('PASS: old wallet completion, automatic/manual shared capture, partial quantities, repeat delivery and immutable new cart cost');
   console.log('PASS: wallet completion, multi-item quantities, immutable checkout cost, Baku completion date, historical/estimated/zero/missing, refunds and idempotent backfill without wallet writes');
 }finally{await f.close();}
