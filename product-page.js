@@ -165,17 +165,16 @@
     initializeContentTabs();
     if (product) {
       try {
-        const [metrics,compact,display] = await Promise.all([
-          import('/mirpanel-admin/public/product-plan-utils.mjs?v=detail-20261010-1'),
-          product.id === 'capcut' ? import('/capcut-detail.mjs?v=20261020-1') : null,
+        const [metrics,display] = await Promise.all([
+          import('/mirpanel-admin/public/product-plan-utils.mjs?v=product-summary-1'),
           import('/product-detail-display.mjs?v=package-details-1')
         ]);
-        if(!signal.aborted&&activeRoot===root&&root.isConnected)initializeDetailMetadata(root,product, {...metrics,...display}, compact,signal);
+        if(!signal.aborted&&activeRoot===root&&root.isConnected)initializeDetailMetadata(root,product, {...metrics,...display},signal);
       } catch { /* Keep the existing functioning page if enhancement cannot load. */ }
     }
   }
 
-  function initializeDetailMetadata(root,product, utils, compact,signal) {
+  function initializeDetailMetadata(root,product, utils,signal) {
     if (!root || root.dataset.detailEnhanced) return;
     root.dataset.detailEnhanced = 'true';
     root.classList.add('detail-v2');
@@ -187,16 +186,23 @@
     media.before(left); left.append(media);
     const sales = text('p','product-detail-sales',''); sales.hidden = true; left.append(sales);
     const trust = text('ul','product-detail-trust','');
-    trust.append(text('li','','2024-dən fəaliyyət göstərir'));
-    const total = text('li','',''); total.hidden = true; trust.append(total);
-    trust.append(text('li','',utils.deliveryText(product)));
-    if (product.commissionFree === true || (compact && product.commissionFree !== false)) trust.append(text('li','','Komissiyasız ödəniş — əlavə məbləğ tutulmur'));
-    if (compact) {
-      const hours = compact.serviceHoursMilestone(Date.now());
-      if (hours !== null) trust.append(text('li','capcut-service-hours',`${new Intl.NumberFormat('en-US').format(hours).replaceAll(',',' ')}+ saat aktiv xidmət`));
-      const actions = root.querySelector('.product-page-actions');
-      root.querySelector('.product-page-info')?.append(actions);
-    }
+    const iconPaths = [
+      '<path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/>',
+      '<path d="m4 16 5-5 4 3 7-9m-6 0h6v6"/>',
+      '<path d="m13 2-9 12h7l-1 8 10-13h-7l0-7Z"/>',
+      '<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'
+    ];
+    const fact=(value,index)=>{
+      const item=text('li','',''),icon=document.createElementNS('http://www.w3.org/2000/svg','svg');
+      icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');
+      icon.innerHTML=iconPaths[index];item.append(icon,text('span','',value));return item;
+    };
+    trust.append(fact('2024-dən fəaliyyət göstəririk',0));
+    const total=fact('',1);total.hidden=true;trust.append(total);
+    const deliveryFact=fact(utils.deliveryText(product),2);
+    trust.append(deliveryFact,fact('MirPanel əlavə komissiya tutmur',3));
+    const actions=root.querySelector('.product-page-actions');
+    root.querySelector('.product-page-info')?.append(actions);
     left.append(trust);
     root.querySelector('.product-page-delivery strong').textContent = utils.deliveryText(product);
     const summary = text('section','product-detail-summary','');
@@ -230,8 +236,8 @@
       stock.hidden = true;
       notes.append(stock);
       if (m.warranty) notes.append(text('span','plan-fact plan-fact-warranty',m.warranty));
-      if (m.rate !== null) {
-        const rate = text('span','product-detail-rate',m.days !== null ? 'Gündə ' : 'Ayda cəmi ');
+      if (m.rate !== null && (m.days !== null || m.months >= 2)) {
+        const rate = text('span','product-detail-rate',m.days !== null ? 'Gündə ' : 'Ayda ');
         rate.append(text('strong','',priceText(m.rate)));notes.append(rate);
       }
       row.append(notes);
@@ -273,7 +279,7 @@
       if (m.discount !== null) prices.append(text('span','product-detail-best',`-${m.discount}%`));
       summary.append(prices);
       if (m.savings !== null) {
-        const saving = text('p','product-detail-savings','✓ Bu paketlə ');
+        const saving = text('p','product-detail-savings','');
         saving.append(text('strong','',priceText(m.savings)),document.createTextNode(' qənaət edirsiniz'));summary.append(saving);
       }
     };
@@ -295,7 +301,10 @@
         if (signal.aborted||value.productId !== product.id || !value.initialized || !Number.isSafeInteger(value.productTotal) || !Number.isSafeInteger(value.siteTotal)) return;
         sales.replaceChildren(text('span','product-detail-sales-icon','↗'),document.createTextNode(' Bu məhsul '),text('strong','',`≈ ${new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')}+`),document.createTextNode(' dəfə satılıb'));
         sales.title='Satış göstəricisi təxmini tarixi bölgü və tamamlanmış sayt sifarişlərinin cəmidir.';sales.hidden = false;
-        total.textContent = compact && value.siteTotal >= 10000 ? '10 000+ tamamlanmış sifariş' : `${number.format(value.siteTotal)}+ tamamlanmış ümumi sifariş`; total.hidden = false;
+        if(Number.isSafeInteger(value.completedTotal)&&value.completedTotal>=0){
+          total.querySelector('span').textContent=number.format(value.completedTotal)+' tamamlanmış sifariş';
+          total.hidden=false;
+        }
       } catch { /* A network error never creates invented sales numbers. */ }
       finally { loading = false; }
     }

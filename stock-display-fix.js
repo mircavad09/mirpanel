@@ -223,7 +223,7 @@
       let index=typeof currentPlanIdx==='number'?currentPlanIdx:0;
       if(!state.unavailable&&!state.plans[index]?.canOrder){const next=state.plans.findIndex(p=>p.canOrder);if(next>=0&&rows[next]){currentPlanIdx=next;rows[next].click();index=next;}else if(next<0&&index!==-1){currentPlanIdx=-1;index=-1;rows.forEach(row=>{row.classList.remove('active');row.setAttribute('aria-checked','false');});document.getElementById('pp-plans-container')?.dispatchEvent(new Event('mirpanel:plan-selection-cleared'));}}
       const canOrder=state.plans[index]?.canOrder===true;
-      const button=document.getElementById('pp-order-btn');if(button){button.disabled=!canOrder;button.classList.toggle('disabled',!canOrder);button.textContent=state.salesDisabled?'Stokda yoxdur':state.unavailable?(inventoryFailed?'Müvəqqəti əlçatan deyil':'Stok yoxlanılır…'):canOrder?'Sifariş et':'Stokda yoxdur';}
+      const button=document.getElementById('pp-order-btn');if(button){button.disabled=!canOrder;button.classList.toggle('disabled',!canOrder);button.textContent=state.salesDisabled?'Stokda yoxdur':state.unavailable?(inventoryFailed?'Müvəqqəti əlçatan deyil':'Stok yoxlanılır…'):canOrder?(document.body.classList.contains('product-page-document')?'İndi al':'Sifariş et'):'Stokda yoxdur';}
       const add=document.getElementById('cartAddProduct');
       if(add)add.disabled=!canOrder;
       document.querySelectorAll('.product-page-status').forEach(el=>{el.textContent=state.salesDisabled?'Stokda yoxdur':state.unavailable?'Stok məlumatı alınır':state.canOrder?'Mövcuddur':'Stokda yoxdur';el.classList.toggle('is-out',state.salesDisabled||!state.unavailable&&!state.canOrder);});

@@ -16,7 +16,7 @@
   let modalSession = 0;
   let cartOpening, cartModule, cartModuleRetry = 0;
   function entryModule() {
-    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=customer-form-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
+    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=product-summary-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
       .catch(error => {cartModule = null; cartModuleRetry++; throw error;});
     return cartModule;
   }
@@ -2020,7 +2020,7 @@
     // and the stock controller's authoritative readiness check.
     if (button && !isHboProduct(product)) {
       button.disabled = !available;
-      button.textContent = available ? "Sifariş et" : "Stokda yoxdur";
+      button.textContent = available ? (document.body.classList.contains("product-page-document") ? "İndi al" : "Sifariş et") : "Stokda yoxdur";
       button.classList.toggle("disabled", !available);
     }
 
