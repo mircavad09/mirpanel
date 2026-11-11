@@ -1091,6 +1091,9 @@
   function bootPayments() {
     if(location.hash==='#decorations')void loadBackgrounds();
     bindEvents(); setTimeout(openReviewToken, 400);
+    const stockDelivered=()=>{refreshOrderCounts().catch(()=>{});if(!$p("paymentOrdersView")?.classList.contains("hidden")&&!orderRequests.size)loadOrders({automatic:true}).catch(()=>{});};
+    window.addEventListener('mirpanel:ready-stock-delivered',stockDelivered);
+    window.addEventListener('storage',e=>{if(e.key==='mirpanel.ready-stock-delivered')stockDelivered();});
     const timer = setInterval(() => { if (document.visibilityState !== "visible") return; if (!$p("paymentOrdersView")?.classList.contains("hidden")) { if (!orderRequests.size) loadOrders({automatic:true}).catch(() => {}); } else if (!$p("paymentReviewsView")?.classList.contains("hidden")) loadEmails().catch(() => {}); else refreshOrderCounts().catch(() => {}); }, 45_000);
     setTimeout(() => refreshOrderCounts().catch(() => {}), 1000);
     window.addEventListener("beforeunload", (event) => { clearInterval(timer); if (paymentState.costDirty.size) { event.preventDefault(); event.returnValue = ""; } });

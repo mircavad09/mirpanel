@@ -27,7 +27,7 @@ export function customerStatus(o,records){
 const totals=rows=>Object.fromEntries([...new Set(rows.map(r=>r.line_index))].map(i=>[i,rows.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)]));
 export async function deliveryRecords(pool,ids){
  if(!ids.length)return [];
- return (await pool.query(`select id,order_id,line_index,quantity,delivered_at,(actor='wallet:auto') as automatic from ${D} where order_id=any($1::uuid[]) order by delivered_at,id`,[ids])).rows;
+ return (await pool.query(`select id,order_id,line_index,quantity,delivered_at,(actor in ('wallet:auto','card:auto','stock:auto')) as automatic from ${D} where order_id=any($1::uuid[]) order by delivered_at,id`,[ids])).rows;
 }
 export async function ownerCodes(pool,user,id){
  const where=id?'and d.id=$2::uuid':'';

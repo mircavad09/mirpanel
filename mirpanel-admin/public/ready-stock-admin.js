@@ -492,7 +492,13 @@ export function mountReadyStock(host,api){
    const result=await api(endpoint+(type==='accounts'?'':'/'+type),{method:'POST',body:JSON.stringify(pending.data)});
    pending=null;if(type==='accounts'){drafts.delete(activeDraft?.key);activeDraft=null;messageList.replaceChildren();addAccount();}
    if(type==='message'){p.message=result.message;messageDrafts.delete(p.id);template.value=result.message;}
-   say(type==='message'?'Hazır mesaj saxlanıldı.':type==='sales'?'Satış stoku saxlanıldı.':result.added?result.added+' hazır hesab saxlanıldı.':'Təhvil ayarı saxlanıldı.');
+   const fulfillment=result.fulfillment;
+   const notice=fulfillment?.orders?' '+fulfillment.orders+' sifarişə '+fulfillment.units+' hesab təhvil verildi.':fulfillment?.pending?' Gözləyən sifarişlərin təhvili arxa planda yenidən yoxlanacaq.':'';
+   say((type==='message'?'Hazır mesaj saxlanıldı.':type==='sales'?'Satış stoku saxlanıldı.':result.added?result.added+' hazır hesab saxlanıldı.':'Təhvil ayarı saxlanıldı.')+notice);
+   if(fulfillment?.units){
+    window.dispatchEvent(new Event('mirpanel:ready-stock-delivered'));
+    try{localStorage.setItem('mirpanel.ready-stock-delivered',String(Date.now()));}catch{}
+   }
    await refresh();
   }catch(e){
    if([400,409,422].includes(e.status)){pending=null;say(e.message,true);await refresh();}
@@ -519,15 +525,17 @@ export function mountReadyStock(host,api){
   try{
    const next=await read;
    if(!visible()||busy||pending||editing())return;
-   const stock=next.products.find(p=>p.id==='netflix'),current=selected().p;
-   if(stock&&current?.id==='netflix'){
+   for(const stock of next.products){
+    const current=products.find(p=>p.id===stock.id);
+    if(!current)continue;
     current.readyTotal=stock.readyTotal;
     for(const item of current.plans){
      const plan=stock.plans.find(p=>p.index===item.index&&p.signature===item.signature);
      if(plan){item.ready=plan.ready;item.sales=plan.sales;}
     }
-    renderCounts(selected().item);
-    list.querySelector('[data-product="netflix"] [data-product-ready]').textContent=stock.readyTotal+' hazır hesab';
+    if(selected().p?.id===stock.id)renderCounts(selected().item);
+    const counter=[...list.querySelectorAll('[data-product]')].find(n=>n.dataset.product===stock.id)?.querySelector('[data-product-ready]');
+    if(counter)counter.textContent=stock.readyTotal+' hazır hesab';
    }
    showRooms(next.netflixRooms,next.netflixSheetManual??[],false);
   }catch{/* Keep the last confirmed stock visible until the next check. */}

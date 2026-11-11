@@ -3,7 +3,7 @@ import {updateRoomPassword} from './netflix-room-password.mjs';
 import crypto from 'node:crypto';
 import {signature} from '../employee-security.mjs';
 import {planKey} from '../payment-profit.mjs';
-import {adminPendingDeliveries,recordDelivery} from './order-delivery.mjs';
+import {adminPendingDeliveries,deliveryRecords,recordDelivery,paid} from './order-delivery.mjs';
 
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {assignLegacyRoom} from './netflix-room-legacy.mjs';
@@ -103,14 +103,25 @@ export async function saveReadyStock(pool,security,secret,catalog,actor,input){
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 // Runs on the caller's transaction after confirmed payment.
-export async function allocateReadyStock(c,securityFactory,orderId,items,actor='wallet:auto'){
+export async function allocateReadyStock(c,securityFactory,orderId,items,actor='wallet:auto',{backlog=true}={}){
  if(!await enabled(c)){
   if(items.some(item=>item.roomStock))throw fail(503,'Netflix otaqlarının avtomatik təhvili hazırda əlçatan deyil.');
   return;
  }
+ // The same lock is used by checkout, card approval and manual delivery.
+ // Lock the order as well: cancellation uses that row lock.
+ await c.query('select pg_advisory_xact_lock(714025001)');
+ const order=(await c.query('select * from public.payment_orders where id=$1 for update',[orderId])).rows[0];
+ if(!order||!paid(order)||order.fulfillment_cancellation)return;
+ if(backlog)await drainReadyStock(c,securityFactory,{before:order});
+ const done=await deliveryRecords(c,[orderId]);
+ const dispatches=(await c.query("select to_regclass('mirpanel_community.api_dispatches') as name")).rows[0]?.name;
  let security;
  for(const [line,item] of items.entries()){
   if(item.renewal||!item.sourcePlanKey||!item.signature)continue;
+  const quantity=item.quantity-done.filter(d=>d.line_index===line).reduce((n,d)=>n+d.quantity,0);
+  if(quantity<=0)continue;
+  if(dispatches&&(await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and state in ('checking','succeeded')",[orderId,line])).rowCount)continue;
   if(item.productId==='netflix'&&(await c.query("select to_regclass('mirpanel_community.netflix_room_units') present")).rows[0].present){
    if(![1,3,6].includes(item.durationMonths??item.duration)||item.durationDays)continue;
    const managed=await roomSalesInstalled(c);
@@ -125,10 +136,10 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
     where r.delivery_id is null and to_jsonb(r)->>'legacy_assignment_id' is null and coalesce(to_jsonb(r)->>'availability','available')='available' and coalesce(r.stock_ends_on,g.ends_on)>public.payment_baku_date()
      and g.created_by not like 'synthetic:%'
      ${managed?'and exists(select 1 from mirpanel_community.netflix_room_sellable s where s.id=r.id)':''}
-    order by g.created_at,r.room_key,r.id limit $1 for update of r skip locked`,[item.quantity])).rows;
+    order by g.created_at,r.room_key,r.id limit $1 for update of r skip locked`,[quantity])).rows;
    security??=securityFactory();
    const message=(await readProductMessages(c,security,[item.productId])).get(item.productId)??'';
-   if(item.roomStock&&rooms.length!==item.quantity)throw fail(409,'Rezerv edilmiş Netflix otağı təhvilə hazır deyil. Ödəniş təsdiqi saxlanmadı.');
+   if(item.roomStock&&rooms.length!==quantity)throw fail(409,'Rezerv edilmiş Netflix otağı təhvilə hazır deyil. Ödəniş təsdiqi saxlanmadı.');
    for(const room of rooms){
     const account=JSON.parse(security.decryptSecret(room.account_cipher));
     const pin=JSON.parse(security.decryptSecret(room.pin_cipher));
@@ -143,7 +154,7 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
   const args=[item.productId,item.sourcePlanKey,item.signature];
   const setting=(await c.query('select auto_wallet from '+S+'plans where product_id=$1 and plan_key=$2 and plan_signature=$3 for share',args)).rows[0];
   if(!setting?.auto_wallet)continue;
-  const units=(await c.query('select id,message_cipher from '+S+'units where product_id=$1 and plan_key=$2 and plan_signature=$3 and delivery_id is null order by created_at,id limit $4 for update',[...args,item.quantity])).rows;
+  const units=(await c.query('select id,message_cipher from '+S+'units where product_id=$1 and plan_key=$2 and plan_signature=$3 and delivery_id is null order by created_at,id limit $4 for update',[...args,quantity])).rows;
   let productMessage;
   for(const unit of units){
    security??=securityFactory();
@@ -156,6 +167,73 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
    await c.query('update '+S+'units set delivery_id=$2 where id=$1',[unit.id,id]);
   }
  }
+}
+
+// Reconstruct package identity from the immutable checkout, never from today's
+// catalog position/name. Missing or ambiguous evidence is not a package match.
+export async function readyStockOrderItems(c,order,saved){
+ saved??=(await c.query('select product_id,snapshot from mirpanel_community.shop_lines where order_id=$1 order by position',[order.id])).rows;
+ const snap=order.checkout_snapshot||{};
+ if(snap.cartVersion===2&&Array.isArray(snap.items))return snap.items.map(line=>{
+  const matches=saved.filter(x=>x.product_id===line.productId&&
+   (x.snapshot.lineId||x.product_id+':'+x.snapshot.planIndex)===(line.lineId||line.productId+':'+line.planIndex));
+  const source=matches[0]?.snapshot;
+  const exact=matches.length===Number(line.quantity||1)&&matches.every(x=>
+   x.snapshot.signature===source.signature&&x.snapshot.sourcePlanKey===line.sourcePlanKey);
+  return {...line,signature:exact?source?.signature:null,renewal:!!line.renewalOrderCode};
+ });
+ if(saved.length===1)return [{...saved[0].snapshot,productId:saved[0].product_id,quantity:Number(order.quantity||1),renewal:!!saved[0].snapshot.renewal}];
+ if(order.canonical_plan_id){
+  const plan=(await c.query('select source_plan_key,signature from public.employee_catalog_plans where id=$1 and product_id=$2',[order.canonical_plan_id,order.product_id])).rows[0];
+  if(plan)return [{productId:order.product_id,sourcePlanKey:plan.source_plan_key,signature:plan.signature,
+   quantity:Number(order.quantity||snap.quantity||1),durationMonths:order.duration_months,
+   renewal:!!(snap.renewal||snap.renewalOrderCode)}];
+ }
+ return [];
+}
+
+export async function drainReadyStock(c,securityFactory,{before}={}){
+ const result={orders:0,units:0,completed:0,errors:0};
+ if(!await enabled(c))return result;
+ await c.query('select pg_advisory_xact_lock(714025001)');
+ const ready=(await c.query('select distinct product_id,plan_key,plan_signature from '+S+'units u join '+S+'plans p using(product_id,plan_key,plan_signature) where u.delivery_id is null and p.auto_wallet')).rows;
+ const skus=new Set(ready.map(x=>key(x.product_id,x.plan_key,x.plan_signature)));
+ const rooms=(await c.query("select to_regclass('mirpanel_community.netflix_room_sellable') present")).rows[0].present;
+ const roomReady=rooms&&(await c.query('select 1 from mirpanel_community.netflix_room_sellable limit 1')).rowCount>0;
+ if(!ready.length&&!roomReady)return result;
+ const pending=await adminPendingDeliveries(c);
+ if(!pending.length)return result;
+ const candidates=(await c.query(`select o.* from public.payment_orders o where o.id=any($1::uuid[])
+  and ($2::timestamptz is null or (o.created_at,o.id)<($2::timestamptz,$3::uuid))
+  order by o.created_at,o.id`,[pending,before?.created_at||null,before?.id||null])).rows;
+ const saved=new Map();
+ for(const row of (await c.query('select order_id,product_id,snapshot from mirpanel_community.shop_lines where order_id=any($1::uuid[]) order by order_id,position',[candidates.map(x=>x.id)])).rows){
+  if(!saved.has(row.order_id))saved.set(row.order_id,[]);
+  saved.get(row.order_id).push(row);
+ }
+ for(const candidate of candidates){
+  await c.query('savepoint ready_stock_order');
+  try{
+   const items=await readyStockOrderItems(c,candidate,saved.get(candidate.id)||[]);
+   if(!items.some(item=>!item.renewal&&item.sourcePlanKey&&item.signature&&
+    (skus.has(key(item.productId,item.sourcePlanKey,item.signature))||roomReady&&item.productId==='netflix'))){
+    await c.query('release savepoint ready_stock_order');continue;
+   }
+   const order=(await c.query('select * from public.payment_orders where id=$1 for update',[candidate.id])).rows[0];
+   if(!order||!paid(order)||order.fulfillment_cancellation){await c.query('release savepoint ready_stock_order');continue;}
+   const prior=await deliveryRecords(c,[order.id]);
+   if(items.length)await allocateReadyStock(c,securityFactory,order.id,items,'stock:auto',{backlog:false});
+   const after=await deliveryRecords(c,[order.id]);
+   const added=after.length-prior.length;
+   if(added){result.orders++;result.units+=added;if(!await adminPendingDeliveries(c,[order.id]).then(x=>x.length))result.completed++;}
+   await c.query('release savepoint ready_stock_order');
+  }catch{
+   await c.query('rollback to savepoint ready_stock_order');await c.query('release savepoint ready_stock_order');
+   result.errors++;
+   console.warn('READY_STOCK_QUEUE_ORDER_RETRY',candidate.id);
+  }
+ }
+ return result;
 }
 
 export async function approveCardWithReadyStock(pool,security,orderId,duration,actor,employeeEnabled){

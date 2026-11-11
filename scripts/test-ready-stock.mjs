@@ -130,6 +130,9 @@ try{
  eq(mixed.deliveryStatus,'preparing');
  const partial=await adminDelivery(pool,security,'synthetic-admin',mixed.orderId,null);
  eq(partial.lines.map(x=>x.remaining),[1,1]);
+ // Keep this partial-delivery scenario separate: the new FIFO rule would
+ // otherwise correctly consume the next scenario's stock for this older order.
+ for(const line of partial.lines)if(line.remaining)await adminDelivery(pool,security,'synthetic-admin',mixed.orderId,{requestId:id(),line:line.index,quantity:line.remaining,message:'Synthetic partial scenario completion'});
  await add({requestId:id(),messages:['Card must leave this alone']});
  const card=await shop.checkout(buyer,hash,{mode:'card',methodId:method,items,requestId:id(),consentAccepted:true});
  const receipt={path:'cart/'+card.id+'/test.png',mimeType:'image/png',size:3,sha256:crypto.createHash('sha256').update('abc').digest('hex')};
@@ -137,7 +140,7 @@ try{
  const cardOrder=await shop.submit(buyer,hash,card.id);eq((await view()).ready,1);
  await rpc('approve_payment_order_v7',[cardOrder.orderId,null,'synthetic-admin']);
  eq((await view()).ready,1);eq((await adminDelivery(pool,security,'synthetic-admin',cardOrder.orderId,null)).lines[0].remaining,1);
- eq(Number((await sql("select count(*) n from customer_order_mail where delivery_id is not null")).rows[0].n),7);
+ eq(Number((await sql("select count(*) n from customer_order_mail where delivery_id is not null")).rows[0].n),9);
  eq(Number((await sql('select count(*) n from ready_stock_units where delivery_id is not null')).rows[0].n),6);
  const unused=(await sql('select id,message_cipher from ready_stock_units where delivery_id is null')).rows[0];
  const beforeFailure=(await sql("select (select count(*) from shop_checkouts)::int as orders,(select cents::int from wallet_accounts where user_id='a') as balance")).rows[0];
@@ -190,6 +193,12 @@ try{
  eq(completedOrders.find(o=>o.id===waiting.orderId).completedAt,latest.toISOString());
  eq((await adminDeliveryCompletions(pool,{since:latest.toISOString()})).some(o=>o.id===waiting.orderId),true);
  {
+ // Backlog fulfillment now has priority over newer purchases. Finish the old
+ // card test fixtures before exercising independent structured-account cards.
+ for(const orderId of await adminPendingDeliveries(pool)){
+  const detail=await adminDelivery(pool,security,'synthetic-admin',orderId,null);
+  for(const line of detail.lines)if(line.remaining)await adminDelivery(pool,security,'synthetic-admin',orderId,{requestId:id(),line:line.index,quantity:line.remaining,message:'Synthetic prior scenario cleanup'});
+ }
  await db.exec(db.read('mirpanel-admin/community/ready-stock-product-messages-migration.sql'));
  await db.exec(db.read('mirpanel-admin/community/ready-stock-product-messages-migration.sql'));
  const capcut='ordinary',second='unlimited',firstText='CapCut sintetik mesaj\n\nİkinci sətir',nextText='Yeni şablon';
