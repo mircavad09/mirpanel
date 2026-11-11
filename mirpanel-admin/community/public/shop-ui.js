@@ -1,4 +1,4 @@
-import {ensureCart} from '/cart-ready.js?v=checkout-sounds-20261108';
+import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
@@ -45,7 +45,7 @@ async function checkoutVerification(){
  const {requestEmailConfirmation}=await import('/community-assets/auth-forms.js?v=email-confirmation-sheet-1');
  if(!closed)await requestEmailConfirmation({checkout:true,signal:life.signal,onVerified:()=>location.replace('/sebet')});
 }
-function product(x,quantity,controls=false){const n=card(),row=el('div',null,'shop-product'),img=el('img');img.src=x.image||'/favicon.ico';img.alt=x.title;const info=el('div');info.append(el('h2',x.title),el('p',x.planName||x.plan_name,'shop-muted'),el('strong',money(x.unitCents??x.unit_cents),'shop-price'));row.append(img,info);if(x.salesDisabled)info.append(el('p','Stokda yoxdur. Ödənişə keçmək üçün məhsulu səbətdən silin.','shop-error'));if(controls){for(const field of x.maskedDetails||[])info.append(el('small',field.label+': '+field.value));if(x.draftId)info.append(button('Məlumatları redaktə et',()=>void import('/community-assets/cart-entry.js?v=seller-pricing-1').then(m=>m.editCartLine(x)).catch(e=>{error.textContent=e.message;})));const counts=el('div',null,'shop-quantity');for(const delta of [-1,1]){const b=button(delta===-1?'−':'+',()=>run(async()=>{cart.set(x.productId,x.planIndex,quantity+delta,undefined,undefined,x.lineId);await refreshBasket();}));b.disabled=delta===-1?quantity<=1:x.renewalOnly===true||quantity>=20||x.available!=null&&quantity>=x.available;b.setAttribute('aria-label',(delta===-1?'Azalt: ':'Artır: ')+x.title);counts.append(b);if(delta===-1)counts.append(el('span',String(quantity)));}row.append(counts);const remove=button('Sil',()=>run(async()=>{cart.set(x.productId,x.planIndex,0,undefined,undefined,x.lineId);await refreshBasket();}));remove.setAttribute('aria-label','Sil: '+x.title);info.append(remove);}else info.append(el('small',quantity+' ədəd'));n.append(row);return n;}
+function product(x,quantity,controls=false){const n=card(),row=el('div',null,'shop-product'),img=el('img');img.src=x.image||'/favicon.ico';img.alt=x.title;const info=el('div');info.append(el('h2',x.title),el('p',x.planName||x.plan_name,'shop-muted'),el('strong',x.unitCents==null&&x.unit_cents==null?'—':money(x.unitCents??x.unit_cents),'shop-price'));row.append(img,info);if(x.salesDisabled||x.available===0)info.append(el('p','Stokda yoxdur','shop-error'));else if(x.available!=null&&x.available<quantity)info.append(el('p','Stokda '+x.available+' ədəd var.','shop-error'));if(controls){for(const field of x.maskedDetails||[])info.append(el('small',field.label+': '+field.value));if(x.draftId)info.append(button('Məlumatları redaktə et',()=>void import('/community-assets/cart-entry.js?v=cart-ready-now-1').then(m=>m.editCartLine(x)).catch(e=>{error.textContent=e.message;})));const counts=el('div',null,'shop-quantity');for(const delta of [-1,1]){const b=button(delta===-1?'−':'+',()=>run(async()=>{cart.set(x.productId,x.planIndex,quantity+delta,undefined,undefined,x.lineId);await refreshBasket();}));b.disabled=delta===-1?quantity<=1:x.renewalOnly===true||quantity>=20||x.available!=null&&quantity>=x.available;b.setAttribute('aria-label',(delta===-1?'Azalt: ':'Artır: ')+x.title);counts.append(b);if(delta===-1)counts.append(el('span',String(quantity)));}row.append(counts);const remove=button('Sil',()=>run(async()=>{cart.set(x.productId,x.planIndex,0,undefined,undefined,x.lineId);await refreshBasket();}));remove.setAttribute('aria-label','Sil: '+x.title);info.append(remove);}else info.append(el('small',quantity+' ədəd'));n.append(row);return n;}
 let basketEpoch=0,viewCartKey='';
 function refreshBasket(){
  consentAccepted=false;paymentReady=false;
@@ -81,9 +81,16 @@ async function basket(){
  const turn=++basketEpoch,items=cart.read();
  viewCartKey=JSON.stringify(items);
  if(!items.length){const empty=card('Səbətiniz boşdur');empty.classList.add('shop-empty');empty.append(link('Məhsullara bax','/mehsul'));app.replaceChildren(el('h1','Səbətim'),empty,error);return;}
- if(!app.querySelector('.shop-checkout-grid'))app.replaceChildren(el('h1','Səbətim'),el('p','Qiymətlər yoxlanılır…'),error);
- const q=await api('/quote',{items});if(closed||turn!==basketEpoch)return;
- const sum=card(),row=el('div',null,'shop-row');row.append(el('span','Cəmi'),el('strong',checkoutMoney(q.totalCents),'shop-total'));
+ const previewRows=cart.previewRows?.(items)||items.map(x=>({...x,title:x.productId}));
+ const total=previewRows.every(x=>Number.isSafeInteger(x.unitCents))?previewRows.reduce((sum,x)=>sum+x.unitCents*x.quantity,0):null;
+ renderBasket({items:previewRows,totalCents:total});
+ try{
+  const q=await api('/quote',{items});
+  if(!closed&&turn===basketEpoch&&!checkoutView)renderBasket(q);
+ }catch(e){if(!closed&&turn===basketEpoch&&e.code!=='ACCOUNT_CHANGED')error.textContent=e.message;}
+}
+function renderBasket(q){
+ const sum=card(),row=el('div',null,'shop-row');row.append(el('span','Cəmi'),el('strong',q.totalCents==null?'—':checkoutMoney(q.totalCents),'shop-total'));
  const next=button('Ödənişə keç',()=>void run(async()=>{
   if(q.balanceCents===null){await checkoutLogin();return;}
   const preview=paymentPreview();
@@ -95,6 +102,7 @@ async function basket(){
    await payment(true,preview);
   }catch(e){restorePaymentPreview(preview);throw e;}
  }),true);
+ next.disabled=q.items.some(x=>x.termsMissing||x.detailsMissing||x.salesDisabled||x.available!=null&&x.available<x.quantity);
  sum.append(row,next);sum.classList.add('checkout-choices');checkoutLayout(q,sum);
 }
 function topupLink(returnTo){
@@ -156,7 +164,7 @@ async function payment(reveal=false,preview=null){const turn=++basketEpoch;
  else if(q.balanceCents==null)walletStatus.append(el('p','Balansla ödəniş üçün hesabınıza daxil olun.'),topupLink('/odenis?mode=wallet'));
  go.disabled=!paymentReady||!consentAccepted||!stockOk||!detailsOk||!termsOk||q.balanceCents==null||short>0;go.replaceChildren();if(go.disabled)go.append(checkoutIcon('<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>'));go.append(document.createTextNode('Sifarişi tamamla · '+checkoutMoney(q.totalCents)));
  }
- async function submit(){if(!consentAccepted||!paymentReady||JSON.stringify(cart.checkout())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,'wallet','');group=await api('/checkout',{items,mode:'wallet',methodId:'',requestId:key.requestId,consentAccepted,expectedTotalCents:q.totalCents});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id}));await paymentGroup();if(group.orderCreated===true&&group.paymentConfirmed===true&&group.orderCode)void playCheckoutSound('order',group.orderCode);}catch(e){if(e.status===409)await payment();throw e;}}
+ async function submit(){if(!consentAccepted||!paymentReady||JSON.stringify(cart.checkout())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,'wallet','');group=await api('/checkout',{items,mode:'wallet',methodId:'',requestId:key.requestId,consentAccepted,expectedTotalCents:q.totalCents});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id}));await paymentGroup();if(group.orderCreated===true&&group.paymentConfirmed===true&&group.orderCode)void playCheckoutSound('order',group.orderCode);}catch(e){if(e.status===409)await payment().catch(()=>{});throw e;}}
  updateChoice();checkoutLayout(q,choices);if(reveal)revealPayment(choices);
 }
 async function paymentGroup(clearCart=true){

@@ -16,7 +16,7 @@
   let modalSession = 0;
   let cartOpening, cartModule, cartModuleRetry = 0;
   function entryModule() {
-    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=product-summary-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
+    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=cart-ready-now-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
       .catch(error => {cartModule = null; cartModuleRetry++; throw error;});
     return cartModule;
   }
@@ -1938,7 +1938,7 @@
     }
 
     if(!isSpotifyProduct(product)&&!activeFields(product).some(f=>f.type==='password')){
-      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=checkout-sounds-20261108').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
+      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=cart-ready-now-1').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
       const index=product.plans.indexOf(plan);
       openBaseModal(product,plan);const session=modalSession;
       const add=(values,quote)=>{

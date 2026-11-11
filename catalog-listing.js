@@ -83,7 +83,7 @@ document.addEventListener('click', async event => {
  try{
   const [inventory, entry, model]=await Promise.all([
    fetch('/api/payments/inventory',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Stok məlumatı alınmadı.');return r.json();}),
-   import('/community-assets/cart-entry.js?v=customer-form-1'),
+   import('/community-assets/cart-entry.js?v=cart-ready-now-1'),
    import('/inventory-availability.mjs?v=live-sale-switch-1')
   ]);
   if(!add.isConnected)return;

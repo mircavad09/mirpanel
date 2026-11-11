@@ -1,5 +1,5 @@
 import {validateDetails} from './checkout-fields.js?v=customer-form-1';
-import {ensureCart} from '/cart-ready.js?v=product-summary-1';
+import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
 import {ensureEntryStyles} from './entry-styles.js?v=customer-form-1';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
@@ -60,7 +60,7 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
  async function commit(v){
   if(working)return;working=true;error.textContent='';body.querySelectorAll('button').forEach(b=>b.disabled=true);
   let ready;
-  try{ready=await ensureCart();const saved=await api('/draft',{id:draftId,productId:product.id,planIndex:index,values:v,termsVersion:activeQuote.termsVersion,...(renewal?{renewalId:renewal.id,renewalExpiresOn:renewal.expiresOn}:{})});ready.commitDraft(saved,{productId:product.id,planIndex:index,quantity:editLine?.quantity||1,edit:!!editLine||!!renewal&&ready.read().some(x=>x.draftId===saved.draftId)});}
+  try{ready=await ensureCart();const saved=await api('/draft',{id:draftId,productId:product.id,planIndex:index,values:v,termsVersion:activeQuote.termsVersion,...(renewal?{renewalId:renewal.id,renewalExpiresOn:renewal.expiresOn}:{})});ready.commitDraft({...saved,termsVersion:saved.termsVersion||activeQuote.termsVersion},{productId:product.id,planIndex:index,quantity:editLine?.quantity||1,edit:!!editLine||!!renewal&&ready.read().some(x=>x.draftId===saved.draftId)});}
   catch(e){if(!life.signal.aborted){
    if(e.code==='CART_TERMS_CHANGED'||(e.status===409&&e.message==='Paketin şərtləri dəyişib. Yenidən təsdiqləyin.')){
     values=v;activeQuote=null;working=false;await loadTerms(null,true);return;
@@ -107,7 +107,7 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
     error.textContent=q.available===0?'Bu paket hazırda stokda yoxdur.':'Paket dəyişib. Sifarişlərim səhifəsini yenidən açın və təkrar yoxlayın.';
     body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));return;
    }
-   if(editLine?.draftId&&!reaccept){const saved=await api('/draft?id='+encodeURIComponent(editLine.draftId));if(life.signal.aborted)return;values=saved.values;activeQuote=q;if(saved.termsVersion===q.termsVersion&&q.fields.length){fields();return;}}
+   if(editLine?.draftId&&!reaccept){const saved=await api('/draft?id='+encodeURIComponent(editLine.draftId));if(life.signal.aborted)return;values=saved.values;activeQuote=q;if(saved.termsVersion===q.termsVersion){fields();return;}}
    guest=d.balanceCents===null;terms(q);
    if(reaccept)error.textContent='Paketin şərtləri dəyişib. Yeni şərtləri oxuyub yenidən təsdiqləyin.';
   }catch(e){if(!life.signal.aborted){error.textContent=repeatPlanName!==null&&e.status===409?e.message:'Sifariş şərtlərini almaq mümkün olmadı.';body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));}}
