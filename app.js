@@ -141,6 +141,13 @@ const DATA = {
       "order": 7,
       "active": true,
       "icon": "products"
+    },
+    {
+      "key": "epinby-games",
+      "name": "Oyun məhsulları",
+      "order": 8,
+      "active": true,
+      "icon": "products"
     }
   ],
   "products": [
@@ -1717,11 +1724,11 @@ const DATA = {
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 30,
+          "pricingId": "211daf58-234b-4911-992e-bda1537663c4",
           "label": "1 ay",
           "months": 1,
           "price": 4.99,
-          "regularPrice": 26.27,
-          "pricingId": "211daf58-234b-4911-992e-bda1537663c4"
+          "regularPrice": 26.27
         }
       ],
       "orderConfirmation": {
@@ -3197,6 +3204,125 @@ const DATA = {
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
+    },
+    {
+      "id": "epinby_3436",
+      "_stableId": "epinby_3436",
+      "supplier": {
+        "provider": "epinby",
+        "productId": 3436,
+        "type": "TOPUP",
+        "gameId": 4,
+        "categoryId": 223,
+        "fields": [
+          {
+            "key": "player_id",
+            "label": "Player ID",
+            "required": true,
+            "type": "text",
+            "options": [],
+            "maxLength": 400,
+            "enabled": true
+          }
+        ]
+      },
+      "order": 32,
+      "category": "epinby-games",
+      "image": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+      "currency": "₼",
+      "title": "60 UC",
+      "variant": "",
+      "badge": "",
+      "imageAlt": "60 UC",
+      "desc": "",
+      "note": "",
+      "longDescription": "",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "Ödənişdən sonra avtomatik icra",
+      "seoSlug": "epinby-3436",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoH1": "60 UC",
+      "seoPrimaryKeyword": "60 UC almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+        "mobileImage": "",
+        "title": "60 UC",
+        "description": "",
+        "alt": "60 UC",
+        "order": 32
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "form_then_whatsapp",
+      "formFields": [
+        {
+          "key": "player_id",
+          "type": "text",
+          "label": "Player ID",
+          "placeholder": "",
+          "description": "",
+          "required": true,
+          "enabled": true,
+          "maxLength": 400
+        }
+      ],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": false,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "60 UC",
+          "months": 1,
+          "price": 1.65,
+          "pricingId": "caf50ff1-bffa-424d-94d3-a8cd86e612f3"
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
         "helpLink": {
           "enabled": false,
           "label": "",
