@@ -108,12 +108,23 @@ try{
  // Logout suspends the listener, but its opt-in survives the next login.
  const opted=await browser.newContext({permissions:['notifications']});
  const optedPage=await opted.newPage();
- await optedPage.addInitScript(()=>localStorage.setItem('mirpanel.admin.notifications.enabled','true'));
+ await optedPage.addInitScript(()=>{
+  localStorage.setItem('mirpanel.admin.notifications.enabled','true');
+  PushManager.prototype.getSubscription=async()=>({
+   endpoint:'https://fcm.googleapis.com/fcm/send/synthetic-opted',
+   toJSON(){return {endpoint:this.endpoint,keys:{p256dh:'synthetic',auth:'synthetic'}};},
+   async unsubscribe(){return true;}
+  });
+ });
  await optedPage.goto(origin+'/admin.html');
  await optedPage.locator('.admin-notification-settings').waitFor();
  await optedPage.getByText('Admin sınağı',{exact:true}).click();
  await optedPage.evaluate(()=>window.dispatchEvent(new Event('mirpanel:session-expired')));
  await optedPage.waitForFunction(()=>document.querySelector('.admin-notification-settings [role=status]').textContent.includes('dayandırılıb'));
+ assert.equal(await optedPage.evaluate(()=>localStorage.getItem('mirpanel.admin.notifications.enabled')),'true');
+ await optedPage.getByText('Balans bildirişləri',{exact:true}).click();
+ await optedPage.getByRole('button',{name:'Bildiriş ayarlarını yenilə'}).click();
+ await optedPage.waitForFunction(()=>document.querySelector('.admin-notification-settings [role=status]').textContent.includes('Web Push abunəliyi aktivdir'));
  assert.equal(await optedPage.evaluate(()=>localStorage.getItem('mirpanel.admin.notifications.enabled')),'true');
  await opted.close();
  const denied=await browser.newContext();

@@ -102,7 +102,10 @@
  }
  async function enable(event){
   // Both permission and audio activation begin in the explicit user gesture.
+  if(stopped||!enabled){baseline=false;observed.clear();waiting.clear();}
   stopped=false;authorized=true;enabled=true;prepareAudio(event);
+  if(!timer)timer=setInterval(poll,30000);
+  void refresh();
   const permission=supportsPush()?Notification.requestPermission():Promise.resolve('unsupported');
   activate.disabled=true;
   try{
@@ -121,7 +124,7 @@
  }
  async function stop(persist=false){
   stopped=true;authorized=false;
-  clearInterval(timer);enabled=false;waiting.clear();
+  clearInterval(timer);timer=null;enabled=false;waiting.clear();
   await setEnabled(false,persist);
   if(supportsPush()){
    const r=await navigator.serviceWorker.getRegistration('/admin-push-worker.js');

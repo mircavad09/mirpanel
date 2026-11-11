@@ -51,5 +51,23 @@ drop trigger if exists customer_delivery_cost_capture on mirpanel_community.cust
 create trigger customer_delivery_cost_capture after insert on mirpanel_community.customer_order_deliveries
 for each row execute function public.capture_delivered_order_cost();
 revoke execute on function public.capture_delivered_order_cost() from public,anon,authenticated;
+-- Line snapshots already contain unit cost × quantity. The older employee
+-- wrapper multiplied that total again on multi-unit approval.
+create or replace function public.employee_approve_direct(p_order_id uuid,p_duration_months integer,p_actor text)
+returns jsonb language plpgsql security definer set search_path=public as $$
+declare v jsonb;
+begin
+ v:=approve_payment_order_v7(p_order_id,p_duration_months,p_actor);
+ if coalesce((v->>'idempotent')::boolean,false)=false then
+  update payment_orders set profit_snapshot=amount-cost_price_snapshot*quantity,
+   profit_margin_snapshot=round((amount-cost_price_snapshot*quantity)*100/nullif(amount,0),2),
+   cost_price_snapshot=cost_price_snapshot*quantity
+   where id=p_order_id and quantity>1 and cost_price_snapshot is not null and cost_lines_snapshot is null;
+ end if;
+ return v;
+end;
+$$;
+revoke execute on function public.employee_approve_direct(uuid,integer,text) from public,anon,authenticated;
+grant execute on function public.employee_approve_direct(uuid,integer,text) to service_role;
 notify pgrst,'reload schema';
 commit;

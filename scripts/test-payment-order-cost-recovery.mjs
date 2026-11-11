@@ -5,7 +5,7 @@ import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {adminDelivery,adminDeliveryCompletions} from '../mirpanel-admin/community/order-delivery.mjs';
 import {reportOrderFinance} from '../mirpanel-admin/payment-order-report.mjs';
 import {signature} from '../mirpanel-admin/employee-security.mjs';
-import {saveReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
+import {approveCardWithReadyStock,saveReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
 import {durationStatistics} from '../mirpanel-admin/payment-order-duration.mjs';
 
 process.env.MIRPANEL_CART_V2_TEST='1';
@@ -105,6 +105,19 @@ try{
   assert.equal((await get(automatic)).cost_price_snapshot,'7.00');
   const autoRecords=(await pool.query('select actor from customer_order_deliveries where order_id=$1',[automatic])).rows;
   assert.deepEqual(autoRecords.map(r=>r.actor),['wallet:auto']);
+  await saveReadyStock(pool,security,paymentConfig.tokenSecret,f.catalog,'test',{productId:'ordinary',index:0,planSignature,requestId:id(),autoWallet:true,messages:['Synthetic card account A','Synthetic card account B']});
+  const cardItems=[item('ordinary',2)];
+  const cardQuote=await shop.quote(buyer,cardItems,owner);
+  const card=await shop.checkout(buyer,owner,{items:cardItems.map((item,i)=>({...item,termsVersion:cardQuote.items[i].termsVersion})),mode:'card',methodId:f.method,requestId:id(),consentAccepted:true});
+  const receipt={path:'cart/'+card.id+'/synthetic.png',mimeType:'image/png',size:3,sha256:crypto.createHash('sha256').update('abc').digest('hex')};
+  f.files.set(receipt.path,Buffer.from('abc'));
+  await shop.savedReceipt(buyer,owner,'cart',card.id,receipt);
+  const submitted=await shop.submit(buyer,owner,card.id);
+  await approveCardWithReadyStock(pool,security,submitted.orderId,null,'test',true);
+  assert.equal((await get(submitted.orderId)).cost_price_snapshot,'14.00','quantity is applied exactly once through employee-enabled approval');
+  await approveCardWithReadyStock(pool,security,submitted.orderId,null,'test',true);
+  assert.equal((await get(submitted.orderId)).cost_price_snapshot,'14.00');
+  assert.deepEqual((await pool.query('select actor from customer_order_deliveries where order_id=$1',[submitted.orderId])).rows.map(r=>r.actor),['card:auto','card:auto']);
   console.log('PASS: old wallet completion, automatic/manual shared capture, partial quantities, repeat delivery and immutable new cart cost');
   console.log('PASS: wallet completion, multi-item quantities, immutable checkout cost, Baku completion date, historical/estimated/zero/missing, refunds and idempotent backfill without wallet writes');
 }finally{await f.close();}
