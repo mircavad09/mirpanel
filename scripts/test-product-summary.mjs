@@ -8,13 +8,13 @@ import {generateProductPageFiles} from '../mirpanel-admin/product-pages.mjs';
 import {detailPlanMetrics} from '../product-detail-display.mjs';
 const live=process.argv.includes('--live');
 const source=await fs.readFile('app.js','utf8'),state=extractAdminState(source);
-const ids=['spotify','capcut','netflix'],out='outputs/product-summary';
+const ids=['spotify','capcut','netflix'],out='outputs/mobile-product-flow';
 await fs.mkdir(out,{recursive:true});
 const fixturePlans=[
  {label:'1 aylıq — şəxsi hesab və bütün imkanlarla uzun paket adı',months:1,price:5.49,regularPrice:11},
  {label:'2 aylıq',months:2,price:10},
  {label:'3 aylıq',months:3,price:15,regularPrice:24},
- {label:'6 aylıq',months:6,price:24},
+ {label:'6 aylıq',months:6,price:9999.99},
  {label:'7 gün',durationDays:7,price:1.12},
  {label:'1 gün',durationDays:1,price:1}
 ];
@@ -28,7 +28,7 @@ const pages=generateProductPageFiles(state.products,state.siteSections,state.cms
 const assets=new Map();
 if(live)for(const file of ['product-page.js','product-page.css','stock-display-fix.js','order-confirmation.js','cart-ready.js','cart-store.js','product-detail-display.mjs','mirpanel-admin/public/product-plan-utils.mjs','mirpanel-admin/community/public/cart-entry.js']){
  const route=file.startsWith('mirpanel-admin/community/public/')?'/community-assets/'+path.basename(file):'/'+file;
- const response=await fetch('https://mirpanel.com'+route+'?v=product-summary-1',{signal:AbortSignal.timeout(15000)});
+ const response=await fetch('https://mirpanel.com'+route+'?v=mobile-product-flow-1',{signal:AbortSignal.timeout(15000)});
  assert.ok(response.ok,route);
  const text=await response.text();
  const normal=s=>s.replaceAll(String.fromCharCode(13),'');
@@ -56,7 +56,7 @@ try{
  for(const engine of [chromium,webkit]){
   const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{
-   for(const width of [320,390,1440])for(const id of ids){
+   for(const width of [320,390,430,1440])for(const id of ids){
     const p=state.products.find(p=>p.id===id),quotes=[];
     const page=await browser.newPage({viewport:{width,height:1000}});
     page.setDefaultTimeout(10000);
@@ -82,7 +82,19 @@ try{
     assert.equal(await order.textContent(),'İndi al');
     assert.equal((await cart.textContent()).trim(),'Səbətə at');
     const positions=await Promise.all([order.boundingBox(),cart.boundingBox()]);
-    assert.ok(positions[0].x<positions[1].x&&Math.abs(positions[0].y-positions[1].y)<2);
+    if(width<768){
+     assert.ok(Math.abs(positions[0].x-positions[1].x)<2&&positions[0].y+positions[0].height<=positions[1].y);
+     const image=page.locator('#pp-main-img'),media=page.locator('.product-page-media'),card=page.locator('.product-page-card');
+     await image.evaluate(node=>node.decode());
+     const geometry=await Promise.all([image.boundingBox(),media.boundingBox(),card.boundingBox()]);
+     assert.ok(geometry[2].width-geometry[1].width<=20,'image fills card');
+     const ratio=await image.evaluate(n=>n.naturalWidth/n.naturalHeight);
+     assert.ok(Math.abs(geometry[0].width/geometry[0].height-ratio)<.02,'image keeps original ratio');
+     const elements=['.product-page-media','.product-detail-heading','.product-detail-sales','.product-detail-summary','.product-page-section-title','#pp-plans-container','.product-page-actions','.product-detail-trust','.product-page-similar'];
+     const vertical=await page.evaluate(selectors=>selectors.map(s=>document.querySelector(s).getBoundingClientRect().top),elements);
+     assert.ok(vertical.every((top,index)=>index===0||top>=vertical[index-1]),'mobile reading order');
+     assert.equal(await page.locator('.product-detail-sales').innerText(),'2 119+ dəfə satılıb');
+    }else assert.ok(positions[0].x<positions[1].x&&Math.abs(positions[0].y-positions[1].y)<2);
     assert.ok(positions.every(b=>b.height>=44));
     for(let i=0;i<fixturePlans.length;i++){
      await rows.nth(i).click();
@@ -97,6 +109,11 @@ try{
      const rate=rows.nth(i).locator('.product-detail-rate');
      if(plan.months===1)assert.equal(await rate.count(),0);
      else assert.equal(await rate.textContent(),(plan.durationDays?'Gündə ':'Ayda ')+metrics.rate.toFixed(2).replace('.',',')+' ₼');
+     if(width<768&&plan.regularPrice){
+      const savings=summary.locator('.product-detail-savings');
+      const a=await savings.boundingBox(),b=await summary.locator('.product-detail-summary-prices').boundingBox();
+      assert.ok(a.y>=b.y+b.height-1||a.x>=b.x+b.width-1,'summary savings never overlaps prices');
+     }
      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
      assert.ok(await rows.nth(i).evaluate(n=>n.querySelector('.pp-plan-name').getBoundingClientRect().right<=n.querySelector('.pp-plan-right').getBoundingClientRect().left));
      await (i%2?order:cart).click();

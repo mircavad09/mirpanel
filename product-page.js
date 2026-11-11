@@ -277,11 +277,14 @@
       if (m.price !== null) prices.append(text('strong','',priceText(m.price)));
       if (m.oldPrice !== null) prices.append(text('del','',priceText(m.oldPrice)));
       if (m.discount !== null) prices.append(text('span','product-detail-best',`-${m.discount}%`));
-      summary.append(prices);
+      const priceLine=text('div','product-detail-summary-line','');
+      priceLine.append(prices);
+      summary.append(priceLine);
       if (m.savings !== null) {
         const saving = text('p','product-detail-savings','');
-        saving.append(text('strong','',priceText(m.savings)),document.createTextNode(' qənaət edirsiniz'));summary.append(saving);
+        saving.append(text('strong','',priceText(m.savings)),document.createTextNode(' '),text('span','product-detail-savings-caption','qənaət edirsiniz'));priceLine.append(saving);
       }
+      summary.append(text('p','product-detail-summary-delivery',utils.deliveryText(product)));
     };
     window.addEventListener('mirpanel:prices',()=>{rows.forEach((row,i)=>{const m=utils.detailPlanMetrics(plans[i]);const price=row.querySelector('.pp-new-price');if(price&&m.price!==null)price.textContent=priceText(m.price);const rate=row.querySelector('.product-detail-rate strong');if(rate&&m.rate!==null)rate.textContent=priceText(m.rate);row.querySelector('.pp-plan-price-meta')?.remove();});update();},{signal});
     container.addEventListener('click', update);
@@ -299,7 +302,7 @@
         if (!response.ok) return;
         const value = await response.json();
         if (signal.aborted||value.productId !== product.id || !value.initialized || !Number.isSafeInteger(value.productTotal) || !Number.isSafeInteger(value.siteTotal)) return;
-        sales.replaceChildren(text('span','product-detail-sales-icon','↗'),document.createTextNode(' Bu məhsul '),text('strong','',`≈ ${new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')}+`),document.createTextNode(' dəfə satılıb'));
+        sales.replaceChildren(text('span','product-detail-sales-intro','↗ Bu məhsul '),text('span','product-detail-sales-approx','≈ '),text('strong','',`${new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')}+`),document.createTextNode(' dəfə satılıb'));
         sales.title='Satış göstəricisi təxmini tarixi bölgü və tamamlanmış sayt sifarişlərinin cəmidir.';sales.hidden = false;
         if(Number.isSafeInteger(value.completedTotal)&&value.completedTotal>=0){
           total.querySelector('span').textContent=number.format(value.completedTotal)+' tamamlanmış sifariş';
