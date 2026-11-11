@@ -94,7 +94,7 @@ export async function renderProfile({app,state,api,el,button,link,alert,avatars,
  decorate(latest,'M6 5h12l2 15H4z M9 6V3h6v3');decorate(subscription,'M5 5h14v15H5z M8 2v6 M16 2v6 M5 10h14');
  hero.append(stats,balance,editor);
  if(p.emailVerified===false){
-  const verify=button('E-poçtu təsdiqlə',async()=>{verify.disabled=true;status.textContent='';try{const {requestEmailConfirmation}=await import('/community-assets/auth-forms.js?v=verify-session-20261108');if(verify.isConnected)await requestEmailConfirmation();}catch(e){status.textContent=e.message;}finally{verify.disabled=false;}});
+  const verify=button('E-poçtu təsdiqlə',async()=>{verify.disabled=true;status.textContent='';try{const {requestEmailConfirmation}=await import('/community-assets/auth-forms.js?v=email-confirmation-sheet-1');if(verify.isConnected)await requestEmailConfirmation();}catch(e){status.textContent=e.message;}finally{verify.disabled=false;}});
   editor.before(el('section',{class:'profile-balance'},el('div',{},el('strong',{},'E-poçt təsdiqlənməyib')),verify));
  }
  const support=el('div',{class:'profile-support-slot',hidden:''});

@@ -3,7 +3,7 @@ const confirmationKey='mirpanel:signup-confirmation';
 const el=(tag,attrs={},...children)=>{const e=document.createElement(tag);for(const [k,v] of Object.entries(attrs))if(v!==undefined)e.setAttribute(k,String(v));e.append(...children);return e;};
 const button=(label,click)=>{const b=el('button',{type:'button'},label);b.onclick=click;return b;};
 async function loadAuthStyle(){
- const cssUrl='/community-assets/auth-forms.css?v=signup-duplicate-notice-1';let css=document.querySelector('link[href="'+cssUrl+'"]');
+ const cssUrl='/community-assets/auth-forms.css?v=email-confirmation-sheet-1';let css=document.querySelector('link[href="'+cssUrl+'"]');
  // A failed preload can expose an empty sheet, or fire before this module starts.
  // Require the form rules and bind load/error before inserting a fresh retry.
  const usable=sheet=>{try{return Array.from(sheet?.sheet?.cssRules||[]).some(r=>r.selectorText?.includes('.auth-form-panel'));}catch{return false;}};
@@ -52,9 +52,10 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
   dialog.append(close,el('div',{class:'auth-code-icon','aria-hidden':'true'},'✉'),title,contents,feedback);host.append(dialog);
   function draw(s,editing=false){
    clearInterval(clock);contents.replaceChildren();feedback.textContent='';
-   const withCode=s.codeSent&&!editing;title.textContent=checkout?'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin':withCode?'Kodu daxil edin':afterSignup?'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin':'E-poçtunu təsdiqlə';
+   const withCode=s.codeSent&&!editing;
+   title.textContent=editing?'E-poçtu dəyişin':withCode?'Kodu daxil edin':checkout||afterSignup?'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin':'E-poçtunuzu təsdiqləyin';
    const change=button('Dəyiş',()=>{if(!working)draw(s,true);});change.className='auth-code-secondary';
-   const address=el('div',{class:'auth-code-address'},el('div',{},el('small',{},withCode?'Kod göndərilən e-poçt':'Qeyd etdiyin e-poçt'),el('strong',{},s.email)),change);
+   const address=el('div',{class:'auth-code-address'},el('div',{},el('small',{},withCode?'Kod göndərilən e-poçt':'Qeyd etdiyiniz e-poçt'),el('strong',{},s.email)),change);
    async function run(action,data,control,onSuccess){
     if(working)return;working=true;close.disabled=true;control.disabled=true;feedback.textContent='';let succeeded=false;
     try{const response=await verificationApi(action,data);succeeded=true;if(dialog.open)await onSuccess(response);}
@@ -66,19 +67,27 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
      }
      feedback.textContent=readableError(e);
     }
-    finally{working=false;close.disabled=false;if(!succeeded&&control.isConnected)control.disabled=false;}
+    finally{
+     working=false;close.disabled=false;
+     if(action!=='change'&&confirm?.isConnected)refresh();
+     if(!succeeded&&control.isConnected){
+      if(action==='send')tick();
+      else if(action==='change')control.disabled=false;
+     }
+    }
    }
    if(editing){
     const edit=el('form',{class:'auth-code-edit'}),input=el('input',{type:'email',value:s.email,required:true,maxlength:254,'aria-label':'Yeni e-poçt ünvanı',autocomplete:'email'}),save=el('button',{type:'submit',class:'auth-code-primary'},'Yadda saxla');
     edit.append(input,save);edit.onsubmit=e=>{e.preventDefault();if(edit.reportValidity())void run('change',{email:input.value},save,draw);};contents.append(edit);if(dialog.open)input.focus();return;
    }
    if(afterSignup&&created)contents.append(el('p',{class:'auth-code-copy',role:'status'},'Hesabınız yaradılıb'));
-   contents.append(el('p',{class:'auth-code-copy'},withCode&&afterSignup?'Kod göndərildi. E-poçtuna gələn 6 rəqəmli kodu daxil et.':withCode?'E-poçtuna 6 rəqəmli kod göndərdik.':'Sifariş vermək üçün e-poçtunu təsdiqləməlisən. Cəmi 1 dəqiqə çəkir.'));
+   contents.append(el('p',{class:'auth-code-copy'},withCode
+    ?'Kod e-poçtunuza göndərildi. Gələnlər qutusunu yoxlayın və 6 rəqəmli kodu daxil edin.'
+    :'Sifariş vermək üçün e-poçtunuzu təsdiqləməlisiniz. Cəmi 1 dəqiqə çəkir.'));
    if(!withCode)contents.append(el('span',{class:'auth-code-badge'},'Sifariş üçün vacibdir'));
    contents.append(address);
-   if(!withCode)contents.append(el('p',{class:'auth-code-notice'},'Kod e-poçtuna gələcək. Gələnlər qutusunu yoxla.'));
    const cells=[];let confirm;
-   const refresh=()=>{confirm.disabled=cells.some(i=>!/^\d$/.test(i.value));};
+   const refresh=()=>{confirm.disabled=working||cells.some(i=>!/^\d$/.test(i.value));};
    if(withCode){
     const grid=el('div',{class:'auth-code-grid',role:'group','aria-label':'6 rəqəmli təsdiq kodu'});
     const fillCode=(raw,start)=>{const digits=raw.replace(/\D/g,'').slice(0,6);if(digits.length===6)start=0;for(let n=0;n<digits.length&&start+n<6;n++)cells[start+n].value=digits[n];cells[Math.min(5,start+digits.length)].focus();refresh();};
