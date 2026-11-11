@@ -14,7 +14,7 @@ let mode='success',creates=0,external=700,failPage=false,catCalls=[];const suppl
 const fields=[{key:'player_id',label:'Player ID',required:true},{key:'server_id',label:'Server',required:false}];
 const product={id:'epinby_91',title:'Synthetic game',active:true,plans:[{label:'60 UC',price:3.49}],formFields:fields,
  supplier:epinbyProduct({provider:'epinby',productId:91,type:'TOPUP',fields},'epinby_91')};catalog.products.push(product);
-catalog.products.push({id:'epinby_92',title:'Synthetic voucher',active:true,plans:[{label:'Gift code',price:5}],formFields:[],supplier:epinbyProduct({provider:'epinby',productId:92,type:'VOUCHER',fields:[]},'epinby_92')});
+catalog.products.push({id:'synthetic_game_group',title:'Synthetic grouped game',active:true,plans:[{label:'Other package',price:2},{id:'epinby_92',label:'Gift code',price:5,supplier:epinbyProduct({provider:'epinby',productId:92,type:'VOUCHER',fields:[]},'epinby_92')}]});
 const transport=async input=>{
  assert.equal(input.key,'synthetic-key');assert.equal(input.authHeader,'X-API-Key');
  if(input.path.endsWith('/getMe'))return {success:true,data:{currency:'USD',balance:'100'}};
@@ -79,7 +79,9 @@ try{
  const twoItems=[{...items[0],quantity:2,termsVersion:(await shop.quote({user:'a'},items,'a'.repeat(64))).items[0].termsVersion}];
  const multi=await shop.checkout({user:'a'},'a'.repeat(64),{mode:'wallet',items:twoItems,requestId:id(),consentAccepted:true});
  await tick(worker,12);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[multi.orderId])).rows[0].n,2);
- const voucher=await buy(id(),[{productId:'epinby_92',planIndex:0,quantity:1}]);await tick(worker,8);
+ const beforeGrouped=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);
+ const voucher=await buy(id(),[{productId:'synthetic_game_group',planIndex:1,quantity:1}]);await tick(worker,8);
+ assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),beforeGrouped-500);
  const code=(await pool.query('select id from customer_order_deliveries where order_id=$1',[voucher.orderId])).rows[0];
  assert(code);assert(security.decryptSecret((await ownerCodes(pool,'a',code.id))[0].message_cipher).includes('SYNTHETIC-CODE'));assert.equal((await ownerCodes(pool,'b',code.id)).length,0);
  const mails=(await pool.query('select event_key,count(*)::int n from customer_order_mail group by event_key')).rows;assert(mails.every(x=>x.n===1));

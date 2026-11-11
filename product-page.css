@@ -1640,3 +1640,10 @@ body.product-page-document #productPageView.product-page-root .product-page-simi
  body.product-page-document #productPageView.product-page-root.detail-v2 .product-page-action.is-cart{border-color:#ffd400}
  body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-trust{order:10;margin-top:8px}
 }
+.epinby-package-thumb{object-fit:contain;border-radius:6px;display:block;flex:none}
+html body #productPageView.product-page-root #pp-plans-container .pp-plan-left:has(.epinby-package-thumb){grid-template-columns:16px minmax(28px,52px) minmax(0,1fr)!important}
+.epinby-package-thumb{max-width:100%}
+html body #productPageView.product-page-root.epinby-game-page .product-page-card-grid{display:grid;grid-template-columns:minmax(0,1fr)}
+html body #productPageView.product-page-root.epinby-game-page .product-page-media{width:100%;aspect-ratio:16/7;min-height:0!important;max-height:none!important}
+html body #productPageView.product-page-root.epinby-game-page .product-page-media #pp-main-img{width:100%!important;height:100%!important;max-height:none!important;object-fit:contain!important;object-position:center!important}
+html body #productPageView.product-page-root.epinby-game-page .product-page-media-backdrop{object-fit:cover}

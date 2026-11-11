@@ -1564,3 +1564,14 @@ th {
 .productFormGroups .formFieldAdvanced summary{cursor:pointer;color:var(--muted);font-size:13px}
 .productFormGroups .formFieldAdvanced>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:8px;margin-top:8px}
 .productFormGroups [data-field-preview]{display:grid;gap:8px;margin-top:6px}
+.gamePackageImageRow{display:flex;align-items:center;gap:8px;min-width:0}
+.gamePackageImageRow input{min-width:0;flex:1}
+.gamePackageImageRow img{object-fit:contain;border-radius:5px;background:#141414;flex:none}
+.gamePackageImageRow img[hidden]{display:none}
+.gameProductPicker{box-sizing:border-box;width:min(460px,calc(100% - 24px));max-height:90dvh;padding:16px;border:1px solid #45402e;border-radius:14px;background:#181a1c;color:#f7f5ef}
+.gameProductPicker::backdrop{background:#0009}
+.gameProductPicker form,.gameProductPicker label{display:grid;gap:7px;min-width:0}
+.gameProductPicker form{gap:12px}
+.gameProductPicker h3{margin:0}
+.gameProductPicker :is(input,select){box-sizing:border-box;width:100%;min-width:0;background:#101113;color:#fff;border:1px solid #494949;border-radius:8px;padding:8px;font:inherit}
+.gameProductPickerActions{display:flex;flex-wrap:wrap;justify-content:flex-end;gap:8px}

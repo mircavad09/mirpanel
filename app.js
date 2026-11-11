@@ -3254,8 +3254,8 @@ const DATA = {
       "seoRelatedKeywords": "",
       "seoKeywords": "",
       "seoContent": "",
-      "seoIndex": true,
-      "includeInSitemap": true,
+      "seoIndex": false,
+      "includeInSitemap": false,
       "seoOgTitle": "",
       "seoOgDescription": "",
       "seoOgImage": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
@@ -3270,7 +3270,7 @@ const DATA = {
       },
       "flow": "whatsapp",
       "soldOut": false,
-      "active": true,
+      "active": false,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
@@ -3329,6 +3329,39 @@ const DATA = {
           "url": ""
         }
       }
+    },
+    {
+      "id": "pubg_mobile",
+      "_stableId": "pubg_mobile",
+      "epinbyGroup": true,
+      "order": 32,
+      "category": "epinby-games",
+      "image": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+      "imageAlt": "PUBG Mobile",
+      "currency": "₼",
+      "title": "PUBG Mobile",
+      "seoSlug": "pubg-mobile",
+      "active": true,
+      "availabilityText": "Ödənişdən sonra avtomatik icra",
+      "plans": [
+        {
+          "id": "epinby_3436",
+          "label": "60 UC",
+          "months": 1,
+          "price": 1.65,
+          "pricingId": "caf50ff1-bffa-424d-94d3-a8cd86e612f3",
+          "image": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3436,
+            "type": "TOPUP",
+            "gameId": 4,
+            "categoryId": 223,
+            "fields": [{"key":"player_id","label":"Player ID","required":true}]
+          },
+          "formFields": [{"key":"player_id","type":"text","label":"Player ID","required":true,"enabled":true,"maxLength":400}]
+        }
+      ]
     }
   ]
 };
@@ -4072,6 +4105,12 @@ function renderProductPlans(p) {
       currentPlanIdx = idx;
       container.querySelectorAll('.pp-plan-label').forEach(row => row.classList.toggle('active', row === div));
     };
+    if(pl.supplier?.provider==='epinby'&&pl.image){
+      const image=document.createElement('img');
+      image.className='epinby-package-thumb';image.alt='';image.loading='lazy';image.width=52;image.height=38;
+      const url=new URL(pl.image,location.origin+'/');
+      if(['http:','https:'].includes(url.protocol)){image.src=url.href;div.querySelector('.pp-radio-circle').after(image);}
+    }
 
     container.appendChild(div);
   });

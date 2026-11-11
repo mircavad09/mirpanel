@@ -1,6 +1,7 @@
 // Shared, non-secret provider contract. Unsupported fields fail closed.
 export function epinbyProduct(value,id){
- if(!value||value.provider!=='epinby'||String(value.productId)!==String(id).replace(/^epinby_/,''))return null;
+ if(!value||value.provider!=='epinby'||!Number.isSafeInteger(Number(value.productId))||Number(value.productId)<1||
+    id!=null&&String(value.productId)!==String(id).replace(/^epinby_/,''))return null;
  if(!['TOPUP','VOUCHER'].includes(value.type)||!Array.isArray(value.fields)||value.fields.length>8)return null;
  const fields=[];
  for(const f of value.fields){
@@ -11,4 +12,7 @@ export function epinbyProduct(value,id){
  }
  if(value.type==='TOPUP'&&!fields.some(f=>f.key==='player_id'&&f.required))return null;
  return {provider:'epinby',productId:Number(value.productId),type:value.type,gameId:Number(value.gameId)>0?Number(value.gameId):null,categoryId:Number(value.categoryId)>0?Number(value.categoryId):null,fields};
+}
+export function epinbyPlan(product,plan){
+ return plan?.supplier?epinbyProduct(plan.supplier,plan.id||'invalid'):epinbyProduct(product.supplier,product.id);
 }

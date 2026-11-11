@@ -591,9 +591,12 @@ function normalizeDeliveryType(value) {
 }
 function normalizePlan(plan = {}) {
   const orderGuide=normalizeOrderGuide(plan.orderGuide);
+  const supplier=plan.supplier&&epinbyProduct(plan.supplier,plan.id||'invalid');
+  if(plan.supplier&&!supplier)throw new Error('Epinby paketinin əlaqəsi düzgün deyil.');
   return {
     ...(orderGuide?{orderGuide}:{}),
-    ...(Array.isArray(plan.formFields)?{formFields:plan.formFields.slice(0,10).map(normalizeFormField)}:{}),
+    ...(supplier?{supplier,image:safeUrl(plan.image),formFields:supplier.fields.map(normalizeFormField)}:
+      Array.isArray(plan.formFields)?{formFields:plan.formFields.slice(0,10).map(normalizeFormField)}:{}),
     ...normalizePlanMetadata(plan),
     ...(plan.pricingId ? {pricingId:String(plan.pricingId)} : {}),
     ...(plan.label ? { label: String(plan.label) } : {}),
@@ -820,6 +823,7 @@ function normalizeProduct(product = {}, index = 0) {
     id,
     _stableId: String(product._stableId || id),
     ...(epinbyProduct(product.supplier,id)?{supplier:epinbyProduct(product.supplier,id)}:{}),
+    ...(product.epinbyGroup===true?{epinbyGroup:true}:{}),
     order: productOrder,
     category: String(product.category || "all"),
     image: productImage,
@@ -934,6 +938,11 @@ export function normalizeAdminPayload(payload = {}) {
   const products = rawProducts.length
     ? payload.products.map(normalizeProduct)
     : [];
+  const activeSupplierIds=new Set();
+  for(const p of products.filter(p=>p.active!==false))for(const item of [p.supplier,...p.plans.map(plan=>plan.supplier)].filter(Boolean)){
+    if(activeSupplierIds.has(item.productId))throw new Error('Eyni Epinby paketi bir dəfədən çox bağlana bilməz.');
+    activeSupplierIds.add(item.productId);
+  }
   const legacyBanners = Array.isArray(payload.cms?.banners) ? payload.cms.banners : [];
   const rawProductById = new Map(rawProducts.map((product) => [String(product.id || ""), product]));
 

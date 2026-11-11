@@ -481,7 +481,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   ${renderSplashMarkup()}
   ${renderSharedHeader(siteSections, "products")}
 
-  <main id="productPageView" class="product-page-root">
+  <main id="productPageView" class="product-page-root${product.epinbyGroup?' epinby-game-page':''}">
     <nav class="product-page-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Ana səhifə</a><span aria-hidden="true">›</span>
       <a href="/mehsul">Məhsullar</a><span aria-hidden="true">›</span>
@@ -505,7 +505,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
               <strong>${escapeHtml(deliveryText(product))}</strong>
             </div>
 
-            <h2 class="product-page-section-title">Müddət seçin</h2>
+            <h2 class="product-page-section-title">${product.epinbyGroup?'Paket seçin':'Müddət seçin'}</h2>
             <div class="product-page-static-plans" data-static-product-plans>${planMarkup}</div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
@@ -943,7 +943,7 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
     .replace(/(<span class="product-page-availability-badge[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
     .replace(/(<span class="product-page-status[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
     .replace(/(<div class="product-page-delivery">\s*<strong>)[\s\S]*?(<\/strong>)/, `$1${escapeHtml(deliveryText(product))}$2`)
-    .replace(/(<h2 class="product-page-section-title">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(texts.selectDuration || "Müddət seçin")}$2`)
+    .replace(/(<h2 class="product-page-section-title">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(product.epinbyGroup?'Paket seçin':texts.selectDuration || "Müddət seçin")}$2`)
     .replace(/(<a class="product-page-action is-about"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.productAbout || "Məhsul haqqında")}$2`)
     .replace(/(<button class="product-page-action is-order"[^>]*>)[\s\S]*?(<\/button>)/, `$1${escapeHtml(/^epinby_\d+$/.test(product.id)&&product.supplier?.provider!=='epinby'?"Alış hələ açılmayıb":"İndi al")}$2`)
     .replace(/(<h2 class="product-page-similar-heading">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(texts.relatedProducts || "Oxşar məhsullar")}$2`)
@@ -1145,7 +1145,8 @@ function renderPlans(product) {
       : price > 0 ? `<span class="product-page-plan-prices"><strong>${escapeHtml(priceText)}</strong></span>` : '<span class="product-page-plan-prices">Stokda yoxdur</span>';
     const hasNamedMonthlyOffer = plans.some(item => !item.durationDays && Number(item.months) === 1 && /endirim/i.test(item.label || '') && Number(item.regularPrice) > Number(item.price));
     const emphasis = !plan.durationDays && Number(plan.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(plan.label || '')) ? 'discount-month' : 'standard';
-    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}" data-price-emphasis="${emphasis}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${escapeHtml(label)}${(plan.durationDays || plan.durationMonths) && label !== duration ? ` · ${escapeHtml(duration)}` : ""}</span>${priceMarkup}</div>`;
+    const image=plan.supplier?.provider==='epinby'&&plan.image?`<img class="epinby-package-thumb" src="${escapeAttribute(rootRelativeUrl(plan.image))}" alt="" width="52" height="38" loading="lazy">`:'';
+    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}" data-price-emphasis="${emphasis}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${image}${escapeHtml(label)}${(plan.durationDays || plan.durationMonths) && label !== duration ? ` · ${escapeHtml(duration)}` : ""}</span>${priceMarkup}</div>`;
   }).join("");
 }
 

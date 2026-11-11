@@ -1,6 +1,6 @@
 import {createHmac,timingSafeEqual} from 'node:crypto';
 import {supplierRequest} from './supplier-request.mjs';
-import {epinbyProduct} from '../epinby-product.mjs';
+import {epinbyPlan,epinbyProduct} from '../epinby-product.mjs';
 import {planKey} from './payment-profit.mjs';
 import {adminDelivery,paid} from './community/order-delivery.mjs';
 import {validateDetails} from './community/public/checkout-fields.js';
@@ -27,10 +27,12 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   await db.query(`insert into ${S}api_suppliers(id,name,base_url,key_cipher,test_path) values($1,'Epinby','https://epinby.com',$2,'/api/v1/getMe')
    on conflict(id) do update set key_cipher=excluded.key_cipher`,[providerId,row.api_key_cipher]);
   for(const p of products){
-   const supplier=epinbyProduct(p.supplier,p.id);if(!supplier)continue;
-   for(const [i,plan] of (p.plans||[]).entries())await db.query(`insert into ${S}api_mappings(product_id,plan_key,supplier_id,settings,active) values($1,$2,$3,$4,$5)
+   for(const [i,plan] of (p.plans||[]).entries()){
+    const supplier=epinbyPlan(p,plan);if(!supplier)continue;
+    await db.query(`insert into ${S}api_mappings(product_id,plan_key,supplier_id,settings,active) values($1,$2,$3,$4,$5)
     on conflict(product_id,plan_key) do update set settings=excluded.settings,active=excluded.active,supplier_id=excluded.supplier_id`,
     [p.id,planKey(plan,i),providerId,{provider:'epinby',...supplier},p.active!==false&&plan.active!==false&&p.soldOut!==true]);
+   }
   }
  }
  async function synchronize(db){
@@ -39,14 +41,15 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   await configure(db,row,(await loadCatalog()).products);return true;
  }
  async function preflight(db,p,plan,quantity,values,index=0){
-  const supplier=epinbyProduct(p.supplier,p.id);
+  const supplier=epinbyPlan(p,plan);
   if(!supplier)throw fail(409,'Epinby sifariş sazlaması hazır deyil.');
   validateDetails(supplier.fields,values);
   const row=await credentials(db);
   if(row?.last_status!=='confirmed'||!row.webhook_secret_cipher||!(await db.query("select to_regclass('"+U+"') n")).rows[0].n)throw fail(503,'Epinby sifariş xidməti hazır deyil.');
   await configure(db,row,[p]);
   const mapping=(await db.query('select settings from '+S+'api_mappings where product_id=$1 and plan_key=$2 and active and supplier_id=$3 for share',[p.id,planKey(plan,index),providerId])).rows[0];
-  if(!mapping||JSON.stringify(epinbyProduct(mapping.settings,p.id)?.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Paketin sifariş sazlaması yenilənir. Yenidən yoxlayın.');
+  const mapped=epinbyProduct(mapping?.settings);
+  if(!mapped||mapped.productId!==supplier.productId||mapped.type!==supplier.type||JSON.stringify(mapped.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Paketin sifariş sazlaması yenilənir. Yenidən yoxlayın.');
   // The live API ignores undocumented ID filters. Search only the exact game/category,
   // validating every page and the stable product ID before any wallet debit.
   let product;
@@ -58,8 +61,8 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
    if(product||page>=Number(response.meta.last_page))break;
   }
   if(!product)throw fail(409,'Təchizatçı məhsulu təsdiqləyə bilmədi.');
-  const live=epinbyProduct({provider:'epinby',productId:product.id,type:String(product.type).toUpperCase(),fields:product.fields||[]},p.id);
-  if(!live||JSON.stringify(live.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Məhsulun tələb etdiyi sahələr dəyişib. Sifariş formasını yenidən açın.');
+  const live=epinbyProduct({provider:'epinby',productId:product.id,type:String(product.type).toUpperCase(),fields:product.fields||[]});
+  if(!live||live.type!==supplier.type||JSON.stringify(live.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Məhsulun tələb etdiyi sahələr dəyişib. Sifariş formasını yenidən açın.');
   if(!['FINITE','INFINITE','UNLIMITED'].includes(product.stock_status)||product.stock_status==='FINITE'&&(!Number.isSafeInteger(Number(product.stock_count))||Number(product.stock_count)<quantity))throw fail(409,'Təchizatçıda kifayət qədər təsdiqlənmiş stok yoxdur.');
   if(product.supports_player_validation===true){
    let validation;try{validation=await send(row,'validate-player',{body:{product_id:supplier.productId,...values}});}catch{throw fail(503,'Oyunçu məlumatı yoxlanılmadı. Balans tutulmadı.');}

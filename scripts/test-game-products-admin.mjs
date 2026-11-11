@@ -28,7 +28,7 @@ fixture.games=(await epinby({action:'epinby-catalog',gamesOnly:true})).games;
 assert(!JSON.stringify(fixture).includes('never-exposed'));
 assert.equal(inventoryAvailability({id:'epinby_11',plans:[{price:3}]},{scope:'product',available:100}).canOrder,false);
 const live=process.argv.includes('--live-assets');
-const origin=live?'https://mirpanel.onrender.com':'http://mirpanel.test';
+const origin=live?'https://mirpanel.onrender.com':'https://mirpanel.test';
 const mime={html:'text/html',js:'text/javascript',mjs:'text/javascript',css:'text/css'};
 const out=new URL('../outputs/game-products/',import.meta.url);
 await fs.mkdir(out,{recursive:true});
@@ -56,20 +56,25 @@ try{
       if(req.method()!=='GET'){
        if(u.pathname==='/api/admin/api-integrations'&&req.postDataJSON()?.action==='epinby-read')return route.fulfill({json:fixture.connection});
        if(u.pathname==='/api/admin/preview'){
-        const added=req.postDataJSON().data.products.filter(p=>p.id.startsWith('epinby_'));
+        const added=req.postDataJSON().data.products.filter(p=>p.plans.some(plan=>plan.supplier?.productId===11));
         if(added.length){
-         assert.equal(added.length,1);assert.equal(added[0].id,'epinby_11');assert.equal(added[0].plans[0].price,3.49);
+         assert.equal(added.length,1);assert.equal(added[0].id,'pubg_mobile');
          const catalog=normalizeAdminPayload(req.postDataJSON().data);
-         const product=catalog.products.find(p=>p.id==='epinby_11');
-         assert.equal(product.soldOut,false);assert.equal(product.supplier.productId,11);assert.equal(product.formFields[0].key,'player_id');
-         assert.match([...generateProductListingPageFiles(catalog.products).values()].join(''),/epinby[-_]11/);
-         assert.doesNotMatch([...generateProductPageFiles([product]).values()].join(''),/disabled>Alış hələ açılmayıb/);
+         const product=catalog.products.find(p=>p.id==='pubg_mobile');
+         const plan=product.plans.find(p=>p.id==='epinby_11');
+         assert.equal(product.soldOut,false);assert.equal(plan.price,3.49);
+         assert.equal(plan.supplier.productId,11);assert.equal(plan.formFields[0].key,'player_id');
+         assert.equal(plan.image,'https://epinby.com/sample.png');
+         assert.match([...generateProductListingPageFiles(catalog.products).values()].join(''),/pubg-mobile/);
+         const html=[...generateProductPageFiles([product]).values()].join('');
+         assert.match(html,/epinby-package-thumb/);
+         assert.doesNotMatch(html,/disabled>Alış hələ açılmayıb/);
         }
         return route.fulfill({json:{previewDigest:'test',productCount:1,activeProductCount:1,pageCount:1,warnings:[]}});
        }
        if(u.pathname==='/api/admin/save'){
         published=normalizeAdminPayload(req.postDataJSON().data);
-        assert.equal(published.products.filter(p=>p.id==='epinby_11').length,1);
+        assert.equal(published.products.flatMap(p=>p.plans).filter(p=>p.supplier?.productId===11).length,1);
         return route.fulfill({json:{sha:'synthetic-saved',commitSha:'synthetic-commit',committedAt:new Date().toISOString()}});
        }
        writes++;return route.fulfill({status:405,json:{}});
@@ -139,19 +144,33 @@ try{
     assert.equal(new URL(page.url()).hash,'#gameProducts');
     assert.equal(context.pages().length,1);
     const card=panel.locator('.gameCatalogProduct').first();
+    await card.locator('[data-package-preview]').waitFor({state:'visible'});
+    assert.equal(await card.locator('[data-package-preview]').getAttribute('src'),'https://epinby.com/sample.png');
     await card.locator('[data-sale-price]').fill('3.49');
     await card.locator('[data-game-add]').click();
-    await page.getByRole('heading',{name:'Dəyişiklikləri yoxlayın'}).waitFor();
+    const picker=page.getByRole('dialog',{name:'Hansı məhsula əlavə edilsin?'});
+    await picker.waitFor();
+    assert(await picker.locator('option').filter({hasText:'Netflix'}).count());
+    assert(await picker.locator('option').filter({hasText:'CapCut'}).count());
+    await picker.getByLabel('Kateqoriya',{exact:true}).selectOption('epinby-games');
+    await picker.getByLabel('Məhsul axtar').fill('PUBG');
+    await picker.getByLabel('Məhsullar',{exact:true}).selectOption('pubg_mobile');
+    assert(await picker.evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1));
+    await picker.getByRole('button',{name:'Təsdiqlə'}).click();
+    await page.getByRole('heading',{name:'Dəyişiklikləri yoxlayın'}).waitFor({timeout:5000}).catch(async error=>{
+     console.error(await page.locator('body').innerText().then(t=>t.slice(-1800)));
+     throw error;
+    });
     await page.locator('#modalConfirm').click();
     await page.waitForFunction(()=>!state.dirty);
-    assert.equal(published.products.find(p=>p.id==='epinby_11').plans[0].price,3.49);
+    assert.equal(published.products.find(p=>p.id==='pubg_mobile').plans.find(p=>p.id==='epinby_11').price,3.49);
     await page.locator('#modalCancel').click();
     fixture.products[0].price='1.5900';
     await panel.getByRole('button',{name:'Kataloqu yenilə'}).click();
     await card.getByText('1.5900',{exact:true}).waitFor();
     await card.getByRole('button',{name:'Kataloqda var'}).waitFor();
     assert.equal(await card.locator('[data-sale-price]').inputValue(),'3.49');
-    assert.equal(await page.evaluate(()=>state.data.products.filter(p=>p.id==='epinby_11').length),1);
+    assert.equal(await page.evaluate(()=>state.data.products.flatMap(p=>p.plans).filter(p=>p.supplier?.productId===11).length),1);
     // WebKit reports navigation-aborted background badges as access-control errors.
     // Catalog requests must still be error-free.
     assert.deepEqual(errors.filter(e=>!e.includes('/api/admin/payment-orders?tab=pending')&&!e.includes('/api/admin/community/shop?only=topup-count due to access control checks.')),[]);

@@ -1,5 +1,6 @@
 import {customerPrices} from './community/customer-pricing.mjs';
 import {createEpinbyOrders} from './epinby-orders.mjs';
+import {epinbyPlan} from '../epinby-product.mjs';
 import crypto from 'node:crypto';
 import {createDrafts,termsInfo,draftUuid,acceptsTerms} from './cart-drafts.mjs';
 import {validateDetails,maskedDetails} from './community/public/checkout-fields.js';
@@ -56,7 +57,7 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
   if(final)renewal={...await verifyRenewal(c,user,draftRenewal.id,p.id,draftRenewal.expiresOn),period};
  }
  const period=subscriptionPeriod(plan);
- if(final&&/^epinby_\d+$/.test(p.id))await createEpinbyOrders({pool:async()=>c,security:createPaymentSecurity(config),loadCatalog:catalog,transport:epinbyTransport}).preflight(c,p,plan,x.quantity,values,x.planIndex);
+ if(final&&(plan.supplier||epinbyPlan(p,plan)||/^epinby_\d+$/.test(p.id)))await createEpinbyOrders({pool:async()=>c,security:createPaymentSecurity(config),loadCatalog:catalog,transport:epinbyTransport}).preflight(c,p,plan,x.quantity,values,x.planIndex);
  const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(draftRenewal?{renewalOnly:true}:{}),...(renewal?{renewal}:{}),detailsMissing,termsVersion,termsMissing,note,fields,maskedDetails:maskedDetails(fields,values),...(final&&Object.keys(values).length?{detailsCipher:createPaymentSecurity(config).encryptSecret(JSON.stringify(values))}:{}),terms,title:p.title,planName:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Plan'),image:p.image||'',unitCents:price,standardCents:standard,available:remaining,salesDisabled:available.salesDisabled,tracked:ip?.tracked===true,signature:signature(plan),sourcePlanKey:planKey(plan,x.planIndex),duration:period?.unit==='months'?period.count:null,...(period?.unit==='days'?{durationDays:period.count}:{})});}return{items:result,totalCents:result.reduce((s,x)=>s+x.unitCents*x.quantity,0)};}
  async function owned(c,id,owner,user,lock=false){if(!uuid(id))throw fail(400,'Sifariş identifikatoru düzgün deyil.');const g=(await c.query('select * from mirpanel_community.shop_checkouts where id=$1 and owner_hash=$2'+(lock?' for update':''),[id,owner])).rows[0];if(!g||g.user_id&&g.user_id!==user)throw fail(404,'Sifariş tapılmadı.');return g;}
  async function group(c,g,sendWhatsApp=false){

@@ -184,3 +184,4 @@
 @media (prefers-reduced-motion: reduce) {
   :is(.home-page #grid,.catalog-grid) .homeCardAdd { transition: none; }
 }
+.card.epinby-game-card .imgWrap .img{object-fit:contain!important;object-position:center!important;background:#101114}
