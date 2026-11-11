@@ -64,6 +64,8 @@ try {
   `);
   await sql.unsafe(await readFile(new URL('../supabase/migrations/202611090901_api_integrations.sql',import.meta.url),'utf8'));
   await sql.unsafe(await readFile(new URL('../supabase/migrations/202611090902_api_integration_drafts.sql',import.meta.url),'utf8'));
+  const migration=await sql.reserve();
+  try{await migration.unsafe(await readFile(new URL('../supabase/migrations/202611110002_epinby_execution.sql',import.meta.url),'utf8'));}finally{migration.release();}
   fixture.listen(0,'127.0.0.1');
   await once(fixture,'listening');
   const base='https://supplier.example';
