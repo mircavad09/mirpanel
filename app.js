@@ -779,6 +779,10 @@ const DATA = {
       "formFields": [],
       "formTitle": "",
       "formDescription": "",
+      "orderGuide": {
+        "information": "📌 Hesaba Giriş Qaydası:\n1. ChatGPT səhifəsinə daxil olun.\n2. E-poçt ünvanını  yazaraq Davam et düyməsini klikləyin.\n3. Şifrəni daxil edib yenə Davam et düyməsini basın.\n4. Əgər 6 rəqəmli təsdiq kodu istəsə:\n5. Yuxarıda qeyd olunan (https://2fa.live/) keçidinə daxil olun.\n6. 2FA açarını həmin səhifəyə yapışdıraraq kodu əldə edin və ChatGPT-yə yazaraq təsdiq edin.\n7. İkinci pəncərədə gələn kodu kopyalayıb ChatGPT-yə daxil edərək yapışdırın.\n\n⚠️ Vacib Qaydalar və Məlumatlar:\n* Müddət: 30 gün\n* Zəmanət (Qarantiya): 27 gün\n* Hesaba əlavə cihazlarla giriş edə bilərsiniz.\n* Bu hesab yalnız sizə satılıb, başqasına verilmir.\n* Xahiş edirik, hesabın təhlükəsizliyi üçün şifrəni dəyişməyin. 💙",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
