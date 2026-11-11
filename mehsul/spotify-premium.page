@@ -148,11 +148,21 @@
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">2.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/pubg-mobile" aria-label="PUBG Mobile — 1.65 ₼" title="PUBG Mobile">
-      <img src="/uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049" class="product-page-similar-image" alt="PUBG Mobile" width="320" height="320" loading="lazy" decoding="async">
+    </a><a class="product-page-similar-card" href="/mehsul/pubg-mobile" aria-label="PUBG Mobile — Stokda yoxdur" title="PUBG Mobile">
+      <img src="/uploads/products/pubg-mobile-cover.webp" class="product-page-similar-image" alt="PUBG Mobile" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="PUBG Mobile">PUBG Mobile</div>
       <div class="product-page-similar-category">epinby-games</div>
-      <div class="product-page-similar-price">1.65 ₼</div>
+      <div class="product-page-similar-price">Stokda yoxdur</div>
+    </a><a class="product-page-similar-card" href="/mehsul/free-fire" aria-label="Free Fire — Stokda yoxdur" title="Free Fire">
+      <img src="/uploads/products/free-fire-cover.webp" class="product-page-similar-image" alt="Free Fire" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Free Fire">Free Fire</div>
+      <div class="product-page-similar-category">epinby-games</div>
+      <div class="product-page-similar-price">Stokda yoxdur</div>
+    </a><a class="product-page-similar-card" href="/mehsul/telegram-premium" aria-label="Telegram Premium — Stokda yoxdur" title="Telegram Premium">
+      <img src="/uploads/products/telegram-premium-cover.webp" class="product-page-similar-image" alt="Telegram Premium" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Telegram Premium">Telegram Premium</div>
+      <div class="product-page-similar-category">sosial-media</div>
+      <div class="product-page-similar-price">Stokda yoxdur</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -228,7 +238,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-7314b59505da658f"></script>
+  <script src="/app.js?v=catalog-c9d5803ab9f46a9e"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>

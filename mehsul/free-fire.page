@@ -117,11 +117,11 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/pubg-mobile" aria-label="PUBG Mobile — 1.65 ₼" title="PUBG Mobile">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/pubg-mobile" aria-label="PUBG Mobile — Stokda yoxdur" title="PUBG Mobile">
       <img src="/uploads/products/pubg-mobile-cover.webp" class="product-page-similar-image" alt="PUBG Mobile" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="PUBG Mobile">PUBG Mobile</div>
       <div class="product-page-similar-category">epinby-games</div>
-      <div class="product-page-similar-price">1.65 ₼</div>
+      <div class="product-page-similar-price">Stokda yoxdur</div>
     </a><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
       <img src="/uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
@@ -222,7 +222,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-30547b04f1d7d28e"></script>
+  <script src="/app.js?v=catalog-c9d5803ab9f46a9e"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>
