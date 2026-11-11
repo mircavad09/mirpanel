@@ -41,11 +41,13 @@ try{
   const start=AudioBufferSourceNode.prototype.start;
   AudioBufferSourceNode.prototype.start=function(...args){if(this.buffer?.duration>.1)void window.recordSound();return start.apply(this,args);};
  });
- const first=await ctx.newPage();await first.goto(origin+'/admin.html');
- await first.getByText('Balans bildirişləri',{exact:true}).click();
- await first.getByRole('button',{name:'Bildirişləri və səsi aktiv et'}).click();
- await first.getByText('Web Push abunəliyi aktivdir. Cihazda yoxlama üçün yeni sınaq müraciəti göndərin.',{exact:true}).waitFor();
- assert.equal(submissions.length,1);
+ const first=await ctx.newPage();ids.push(crypto.randomUUID());
+ await first.goto(origin+'/admin.html');
+ await first.locator('.admin-notification-settings').waitFor();
+ await first.getByText('Admin sınağı',{exact:true}).click();
+ await first.waitForFunction(()=>document.querySelector('.admin-notification-settings [role=status]')?.textContent.includes('hazır'));
+
+ assert.ok(submissions.length>=1);
  const sw=ctx.serviceWorkers()[0];
  assert.ok(sw);
  // Headless Windows has no OS notification tray. Record only calls to the display API.
@@ -103,5 +105,36 @@ try{
  await push(crypto.randomUUID());await first.waitForTimeout(250);
  assert.equal(sounded.length,3);
  assert.equal(await sw.evaluate(async()=>(await self.registration.getNotifications()).length),2);
+ // Logout suspends the listener, but its opt-in survives the next login.
+ const opted=await browser.newContext({permissions:['notifications']});
+ const optedPage=await opted.newPage();
+ await optedPage.addInitScript(()=>{
+  localStorage.setItem('mirpanel.admin.notifications.enabled','true');
+  PushManager.prototype.getSubscription=async()=>({
+   endpoint:'https://fcm.googleapis.com/fcm/send/synthetic-opted',
+   toJSON(){return {endpoint:this.endpoint,keys:{p256dh:'synthetic',auth:'synthetic'}};},
+   async unsubscribe(){return true;}
+  });
+ });
+ await optedPage.goto(origin+'/admin.html');
+ await optedPage.locator('.admin-notification-settings').waitFor();
+ await optedPage.getByText('Admin sınağı',{exact:true}).click();
+ await optedPage.evaluate(()=>window.dispatchEvent(new Event('mirpanel:session-expired')));
+ await optedPage.waitForFunction(()=>document.querySelector('.admin-notification-settings [role=status]').textContent.includes('dayandırılıb'));
+ assert.equal(await optedPage.evaluate(()=>localStorage.getItem('mirpanel.admin.notifications.enabled')),'true');
+ await optedPage.getByText('Balans bildirişləri',{exact:true}).click();
+ await optedPage.getByRole('button',{name:'Bildiriş ayarlarını yenilə'}).click();
+ await optedPage.waitForFunction(()=>document.querySelector('.admin-notification-settings [role=status]').textContent.includes('Web Push abunəliyi aktivdir'));
+ assert.equal(await optedPage.evaluate(()=>localStorage.getItem('mirpanel.admin.notifications.enabled')),'true');
+ await opted.close();
+ const denied=await browser.newContext();
+ await denied.addInitScript(()=>{
+  localStorage.setItem('mirpanel.admin.notifications.enabled','true');
+  Object.defineProperty(Notification,'permission',{get:()=> 'denied'});
+ });
+ const deniedPage=await denied.newPage();await deniedPage.goto(origin+'/admin.html');
+ await deniedPage.getByText('Balans bildirişləri',{exact:true}).click();
+ await deniedPage.locator('.admin-notification-settings [role=status]').getByText(/bloklanıb/).waitFor();
+ await denied.close();
  console.log(JSON.stringify({transport:'simulated',worker:'real',audioStarts:sounded.length,notifications:3,duplicate:false,reload:false,notificationClick:true,disabled:true,deviceDeliveryVerified:false,systemDisplay:'simulated'}));
 }finally{await browser.close();await new Promise(resolve=>server.close(resolve));}

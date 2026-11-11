@@ -1503,11 +1503,11 @@ function serveFile(response, name) {
   });
 
   if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){
-    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=push-2" data-auto-start></script>';
+    const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=push-restore-4" data-auto-start></script>';
     return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=order-delivery-latency-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=idle-20261027-1"></script>'+notification+'</head>'));
   }
   if (name === "manual-stock-admin.html") {
-    return response.end(fs.readFileSync(file, "utf8").replace("</body>", '<script src="/admin-topup-notification.js?v=push-2" data-auto-start></script></body>'));
+    return response.end(fs.readFileSync(file, "utf8").replace("</body>", '<script src="/admin-topup-notification.js?v=push-restore-4" data-auto-start></script></body>'));
   }
   fs.createReadStream(file).pipe(response);
 }

@@ -1,7 +1,11 @@
 (() => {
  const soundPath='/10-mirpanel-imzasi.wav',enabledKey='mirpanel.admin.notifications.enabled';
  const waiting=new Map(),observed=new Set();
- let baseline=false,audio,sound,database,playing,reading,timer,registration,panel,status,activate,test,disable,enabled=false;
+ let baseline=false,audio,sound,database,playing,reading,timer,registration,panel,status,activate,test,disable,enabled=false,authorized=false,gesture=false,stopped=false;
+ // Restore the preference before the first ordinary click can arrive.
+ let preference;
+ try{preference=localStorage.getItem(enabledKey);}catch{}
+ enabled=preference==='true'||preference===null&&'Notification' in window&&Notification.permission==='granted';
  const pushFailure=error=>{
   if(['NotAllowedError','NotSupportedError','AbortError','InvalidStateError'].includes(error.name)||/Registration|permission|push service/i.test(error.message||''))
    return 'Brauzer Web Push abunəliyini qəbul etmədi. Saytın bildiriş icazəsini və cihazın fon ayarlarını yoxlayın. Xüsusi səsi açıq admin səhifəsində sınaqdan keçirə bilərsiniz.';
@@ -23,33 +27,45 @@
    tx.oncomplete=()=>resolve(true);tx.onabort=()=>resolve(false);
   });
  }
- async function setEnabled(value){
+ async function setEnabled(value,persist=true){
+  if(value&&stopped)return;
   const store=await db();
+  if(value&&stopped)return;
   await new Promise((resolve,reject)=>{
    const tx=store.transaction('played','readwrite');tx.objectStore('played').put(value,'enabled');
    tx.oncomplete=resolve;tx.onabort=()=>reject(tx.error);
   });
-  enabled=value;localStorage.setItem(enabledKey,String(value));
+  if(value&&stopped)return;
+  enabled=value;if(persist)try{localStorage.setItem(enabledKey,String(value));}catch{}
   if(disable)disable.hidden=!value;
  }
  function prepareAudio(event){
-  if(!event?.isTrusted||!enabled)return;
+  if(!event?.isTrusted)return;
+  gesture=true;
+  if(!enabled||stopped)return;
+  startAudio();
+ }
+ function startAudio(){
+  if(!enabled||stopped)return;
   const Context=window.AudioContext||window.webkitAudioContext;
   if(!Context){message('Bu brauzerdə xüsusi səs dəstəklənmir.');return;}
   try{
-   audio??=new Context();
-   void audio.resume().then(playWaiting).catch(()=>message('Səs üçün səhifədə yenidən klik edin.'));
+   if(!audio){
+    audio=new Context();
+    audio.onstatechange=()=>{if(enabled&&audio.state==='suspended')message('Xüsusi səs brauzer tərəfindən dayandırılıb. Səhifədə adi klik və ya toxunuş edin.');};
+   }
+   void audio.resume().then(()=>{if(audio.state==='running'){if(activate)activate.textContent='Bildiriş ayarlarını yenilə';message(supportsPush()&&Notification.permission==='denied'?'Xüsusi 10-cu səs hazırdır. Sistem bildirişləri brauzerdə bloklanıb.':'Xüsusi 10-cu səs hazırdır. Web Push sistem bildirişindən istifadə edir.');}return playWaiting();}).catch(()=>message('Səs üçün səhifədə yenidən klik edin.'));
    sound??=fetch(soundPath).then(r=>{if(!r.ok)throw Error();return r.arrayBuffer();})
-    .then(bytes=>audio.decodeAudioData(bytes)).catch(()=>{sound=null;message('10-cu səs yüklənmədi. Yenidən sınaqdan keçirin.');return null;});
+    .then(async bytes=>{const buffer=await audio.decodeAudioData(bytes);queueMicrotask(()=>void playWaiting());return buffer;}).catch(()=>{sound=null;message('10-cu səs yüklənmədi. Yenidən sınaqdan keçirin.');return null;});
   }catch{message('Brauzer səsi dayandırıb. Səsi sına düyməsinə basın.');}
  }
  async function playWaiting(){
-  if(!enabled||!waiting.size||!sound||audio.state!=='running'||playing)return;
+  if(!authorized||stopped||!enabled||!waiting.size||!sound||audio?.state!=='running'||playing)return;
   playing=true;
   try{
    const buffer=await sound;if(!buffer)return;
    for(const [id,added] of waiting){
-    if(!enabled||audio.state!=='running')break;
+    if(stopped||!authorized||!enabled||audio.state!=='running')break;
     waiting.delete(id);
     if(Date.now()-added>120000||!await claim(id))continue;
     await new Promise(resolve=>{
@@ -80,12 +96,16 @@
   const r=await worker();
   const subscription=await r.pushManager.getSubscription()||await r.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:publicKey});
   await api({subscription:subscription.toJSON()});
+  if(stopped)return;
   await setEnabled(true);
   return subscription;
  }
  async function enable(event){
   // Both permission and audio activation begin in the explicit user gesture.
-  enabled=true;prepareAudio(event);
+  if(stopped||!enabled){baseline=false;observed.clear();waiting.clear();}
+  stopped=false;authorized=true;enabled=true;prepareAudio(event);
+  if(!timer)timer=setInterval(poll,30000);
+  void refresh();
   const permission=supportsPush()?Notification.requestPermission():Promise.resolve('unsupported');
   activate.disabled=true;
   try{
@@ -100,11 +120,12 @@
     message(result==='denied'?'Səs aktivdir. Sistem bildirişi bloklanıb. Brauzerin sayt icazələrində bildirişləri açın.':'Səs aktivdir. Bu brauzerdə Web Push əlçatan deyil.');
    }
   }catch(e){message(pushFailure(e));}
-  finally{activate.disabled=false;}
+  finally{activate.disabled=false;activate.textContent=enabled?'Bildiriş ayarlarını yenilə':'Bildirişləri və səsi aktiv et';}
  }
- async function stop(){
-  enabled=false;waiting.clear();
-  await setEnabled(false);
+ async function stop(persist=false){
+  stopped=true;authorized=false;
+  clearInterval(timer);timer=null;enabled=false;waiting.clear();
+  await setEnabled(false,persist);
   if(supportsPush()){
    const r=await navigator.serviceWorker.getRegistration('/admin-push-worker.js');
    const s=await r?.pushManager.getSubscription();
@@ -121,19 +142,22 @@
    const s=await r?.pushManager.getSubscription();
    if(s)await api({action:'disable',endpoint:s.endpoint});
   }
-  await stop();
+  await stop(true);
  }
  async function refresh(){
+  if(stopped)return;
   if(reading)return reading;
   reading=(async()=>{
    try{
     const r=await fetch('/api/admin/community/shop?only=topup-count',{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(15000)});
-    if(r.status===401){enabled=false;waiting.clear();void stop().catch(()=>{});return;}
+    if(r.status===401||r.status===403){enabled=false;waiting.clear();void stop().catch(()=>{});return;}
     if(!r.ok)throw Error();
     const {pending,ids,recentIds}=await r.json();
+    if(stopped)return;
     if(!Number.isSafeInteger(pending)||pending<0)throw Error();
     if(Array.isArray(ids)){
      for(const id of ids){if(typeof id!=='string'||observed.has(id))continue;observed.add(id);if(baseline&&enabled&&(!recentIds||recentIds.includes(id)))waiting.set(id,Date.now());}
+     if(!baseline)await Promise.all(ids.filter(id=>typeof id==='string').map(claim));
      baseline=true;void playWaiting();
     }
     window.dispatchEvent(new CustomEvent('admin-topup-count',{detail:pending}));
@@ -143,6 +167,8 @@
  }
  async function settings(){
   let config;try{config=await api();}catch{return;}
+  if(stopped)return;
+  authorized=true;
   panel=document.createElement('details');panel.className='admin-notification-settings';
   const title=document.createElement('summary');title.textContent='Balans bildirişləri';
   const box=document.createElement('div'),note=document.createElement('p');
@@ -159,28 +185,46 @@
   box.append(activate,test,disable,status,note);panel.append(title,box);
   const host=document.querySelector('.topbar')||document.querySelector('main')||document.body;
   host.append(panel);
-  try{enabled=localStorage.getItem(enabledKey)==='true';}catch{}
+  try{
+   const store=await db();
+   const saved=await new Promise(resolve=>{const r=store.transaction('played').objectStore('played').get('enabled');r.onsuccess=()=>resolve(r.result);r.onerror=()=>resolve(undefined);});
+   if(preference==null&&typeof saved==='boolean')enabled=saved;
+  }catch{}
+  if(stopped)return;
+  activate.textContent=enabled?'Bildiriş ayarlarını yenilə':'Bildirişləri və səsi aktiv et';
   disable.hidden=!enabled;
+  if(enabled){await setEnabled(true);if(gesture)startAudio();}
+  void refresh();
   if(enabled&&supportsPush()&&Notification.permission==='granted'){
    try{
     const r=await worker(),subscription=await r.pushManager.getSubscription();
-    if(subscription){await api({subscription:subscription.toJSON()});message('Web Push abunəliyi aktivdir. Səs üçün səhifədə klik edin.');}
-    else message('Bildiriş abunəliyi yoxdur. Yenidən aktiv edin.');
+    if(subscription)await api({subscription:subscription.toJSON()});
+    else await subscribe(config.publicKey);
+    message(audio?.state==='running'?'Web Push aktivdir. Xüsusi 10-cu səs hazırdır.':'Web Push aktivdir. Xüsusi 10-cu səs ilk adi klik və ya toxunuşla hazırlanacaq.');
    }catch(e){message(pushFailure(e));}
-  }else message(enabled?'Səs aktivdir. Sistem bildirişləri üçün icazə verin.':'Bildirişləri bu brauzerdə aktivləşdirin.');
+  }else message(enabled?(supportsPush()&&Notification.permission==='denied'
+   ?'Sistem bildirişləri brauzerdə bloklanıb. Xüsusi səs ilk adi klikdən sonra hazırlanacaq.'
+   :'Xüsusi səs ilk adi klikdən sonra hazırlanacaq. Sistem bildirişləri üçün icazə verin.'):'Bildirişlər bu brauzerdə dayandırılıb.');
  }
- function poll(){void refresh();window.dispatchEvent(new Event('admin-topup-poll'));}
+ let configuring=false;
+ async function loadSettings(){
+  if(configuring||authorized||stopped)return;
+  configuring=true;
+  try{await settings();}catch(e){message(pushFailure(e));}finally{configuring=false;}
+ }
+ function poll(){if(!authorized)void loadSettings();else void refresh();window.dispatchEvent(new Event('admin-topup-poll'));}
  window.refreshAdminTopups=refresh;
  for(const name of ['pointerup','click','keydown'])window.addEventListener(name,prepareAudio,{capture:true,passive:true});
  navigator.serviceWorker?.addEventListener('message',event=>{
-  if(event.data?.type==='mirpanel-topup'&&/^[a-f0-9-]{36}$/i.test(event.data.id||'')&&enabled){waiting.set(event.data.id,Date.now());void playWaiting();void refresh();}
+  if(event.data?.type==='mirpanel-topup'&&/^[a-f0-9-]{36}$/i.test(event.data.id||'')&&authorized&&!stopped&&enabled){waiting.set(event.data.id,Date.now());void playWaiting();void refresh();}
  });
- window.addEventListener('storage',event=>{if(event.key===enabledKey){enabled=event.newValue==='true';if(!enabled){waiting.clear();void audio?.suspend();}}});
+ window.addEventListener('storage',event=>{if(event.key===enabledKey){enabled=event.newValue==='true';if(!enabled){waiting.clear();void audio?.suspend();}else if(authorized){stopped=false;if(gesture)startAudio();void refresh();}}});
  window.addEventListener('mirpanel:session-expired',()=>void stop().catch(()=>{}));
  document.addEventListener('visibilitychange',poll);
  window.addEventListener('admin-topup-changed',refresh);
- window.addEventListener('pagehide',event=>{if(!event.persisted)clearInterval(timer);});
+ window.addEventListener('pagehide',()=>clearInterval(timer));
+ window.addEventListener('pageshow',event=>{if(event.persisted&&!stopped){timer=setInterval(poll,30000);poll();}});
  timer=setInterval(poll,30000);
- void settings();
- if(document.currentScript?.hasAttribute('data-auto-start'))void refresh();
+ void loadSettings();
+ // The first authenticated settings response starts polling without an activation click.
 })();
