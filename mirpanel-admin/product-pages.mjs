@@ -470,7 +470,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=detail-accordion-20261020-1">
+  <link rel="stylesheet" href="/product-page.css?v=product-summary-1">
   <link rel="stylesheet" href="/payment-flow.css?v=checkout-cancel-proxy-20261026-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -513,7 +513,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
 
         <div class="product-page-actions">
           <a class="product-page-action is-about" href="${productCanonicalPath(slug)}#product-about">Məhsul haqqında</a>
-          <button class="product-page-action is-order" id="pp-order-btn" type="button"${/^epinby_\d+$/.test(product.id)&&product.supplier?.provider!=='epinby'?' disabled>Alış hələ açılmayıb':product.id==='hbomax'?' disabled>Stok yoxlanılır…':'>Sifariş et'}</button>
+          <button class="product-page-action is-order" id="pp-order-btn" type="button"${/^epinby_\d+$/.test(product.id)&&product.supplier?.provider!=='epinby'?' disabled>Alış hələ açılmayıb':product.id==='hbomax'?' disabled>Stok yoxlanılır…':'>İndi al'}</button>
         </div>
       </article>
 
@@ -576,9 +576,9 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/display-labels.js?v=20261021"></script>
   <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
-  <script src="/order-confirmation.js?v=netflix-ready-rooms-1"></script>
-  <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>
-  <script src="/product-page.js?v=seller-pricing-1"></script>
+  <script src="/order-confirmation.js?v=product-summary-1"></script>
+  <script src="/stock-display-fix.js?v=product-summary-1"></script>
+  <script src="/product-page.js?v=product-summary-1"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>
@@ -942,10 +942,10 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
     .replace(/(<img id="pp-main-img"[^>]* alt=")[^"]*(")/, `$1${escapeAttribute(product.imageAlt || product.title)}$2`)
     .replace(/(<span class="product-page-availability-badge[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
     .replace(/(<span class="product-page-status[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
-    .replace(/(<div class="product-page-delivery">\s*<strong>)[\s\S]*?(<\/strong>)/, `$1${escapeHtml(product.deliveryText || texts.instantDelivery || DELIVERY_TEXT)}$2`)
+    .replace(/(<div class="product-page-delivery">\s*<strong>)[\s\S]*?(<\/strong>)/, `$1${escapeHtml(deliveryText(product))}$2`)
     .replace(/(<h2 class="product-page-section-title">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(texts.selectDuration || "Müddət seçin")}$2`)
     .replace(/(<a class="product-page-action is-about"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.productAbout || "Məhsul haqqında")}$2`)
-    .replace(/(<button class="product-page-action is-order"[^>]*>)[\s\S]*?(<\/button>)/, `$1${escapeHtml(/^epinby_\d+$/.test(product.id)&&product.supplier?.provider!=='epinby'?"Alış hələ açılmayıb":texts.order || "Sifariş et")}$2`)
+    .replace(/(<button class="product-page-action is-order"[^>]*>)[\s\S]*?(<\/button>)/, `$1${escapeHtml(/^epinby_\d+$/.test(product.id)&&product.supplier?.provider!=='epinby'?"Alış hələ açılmayıb":"İndi al")}$2`)
     .replace(/(<h2 class="product-page-similar-heading">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(texts.relatedProducts || "Oxşar məhsullar")}$2`)
     .replace(/(<a class="product-page-similar-more"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.moreProducts || "Daha çox məhsul")}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms)}</footer>`);
@@ -1092,8 +1092,8 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
   next = next
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=seller-pricing-1")
-    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=netflix-ready-rooms-1");
-  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=live-sale-switch-1");
+    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=product-summary-1");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=product-summary-1");
   return next;
 }
 

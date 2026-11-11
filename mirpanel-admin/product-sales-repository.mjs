@@ -51,7 +51,7 @@ export function createProductSalesRepository(client, {loadCatalog}) {
       const data = await snapshot(), product = data.products.find(p=>p.productId===id && p.active);
       if (!product) throw failure('Məhsul tapılmadı.',404);
       return {initialized:!!data.initializedAt, productId:id,historical:product.historical,real:product.real,
-        productTotal:product.total,siteTotal:data.total};
+        productTotal:product.total,siteTotal:data.total,completedTotal:data.realTotal};
     },
     async initialize(actor) {
       const catalog = await loadCatalog();

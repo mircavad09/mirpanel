@@ -45,8 +45,8 @@ export function bestValueIndex(plans = [], inventory = {}) {
   return sorted[0]?.index ?? -1;
 }
 export function deliveryText(product = {}) {
-  if (product.deliveryType === 'automatic') return '7/24 avtomatik təqdim olunur';
-  if (product.deliveryType === 'ready_account' && product.deliveryText) return String(product.deliveryText);
+  if (product.deliveryType === 'automatic') return 'Anında, avtomatik təqdim olunur';
+  if (product.deliveryText) return String(product.deliveryText);
   return 'Ödəniş təsdiqindən sonra təqdim olunur';
 }
 export function normalizePlanMetadata(plan = {}) {

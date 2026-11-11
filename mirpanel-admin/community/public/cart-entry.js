@@ -1,5 +1,5 @@
 import {validateDetails} from './checkout-fields.js?v=customer-form-1';
-import {ensureCart} from '/cart-ready.js?v=checkout-sounds-20261108';
+import {ensureCart} from '/cart-ready.js?v=product-summary-1';
 import {ensureEntryStyles} from './entry-styles.js?v=customer-form-1';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
