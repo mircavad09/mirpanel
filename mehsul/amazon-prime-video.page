@@ -104,7 +104,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ay</span><span class="product-page-plan-prices"><strong>2.99 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 ay</span><span class="product-page-plan-prices"><strong>9.99 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ay</span><span class="product-page-plan-prices"><span class="product-page-regular-price">18.00 ₼</span><strong>2.99 ₼</strong><span class="product-page-discount">-83%</span></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>6 ay</span><span class="product-page-plan-prices"><strong>9.99 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -216,7 +216,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-583777a2c515c545"></script>
+  <script src="/app.js?v=catalog-690ba1ba087b1d66"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=netflix-ready-rooms-1"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>

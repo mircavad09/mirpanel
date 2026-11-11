@@ -335,7 +335,7 @@ const DATA = {
           "label": "1 Ayliq        (Öz hesabınızda aktiv edilir)",
           "months": 1,
           "price": 5.49,
-          "regularPrice": 9.33
+          "regularPrice": 11
         },
         {
           "label": "2 Ayliq        (Öz hesabınızda aktiv edilir)",
@@ -483,7 +483,7 @@ const DATA = {
           "label": "1 Ay (endirim)",
           "months": 1,
           "price": 4.99,
-          "regularPrice": 16.99
+          "regularPrice": 20
         },
         {
           "warrantyMode": "guaranteed",
@@ -492,7 +492,8 @@ const DATA = {
           "bestValue": false,
           "label": "1 ay (1600 AI kredit)",
           "months": 1,
-          "price": 0
+          "price": 0,
+          "regularPrice": 20
         },
         {
           "durationDays": 7,
@@ -615,7 +616,8 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 5.99
+          "price": 5.99,
+          "regularPrice": 25
         },
         {
           "months": 3,
@@ -811,7 +813,7 @@ const DATA = {
           "label": "1 ayliq  ",
           "months": 1,
           "price": 15.99,
-          "regularPrice": 34
+          "regularPrice": 40
         }
       ],
       "orderConfirmation": {
@@ -997,7 +999,8 @@ const DATA = {
           "pricingId": "6814465e-5ab7-43da-9e2b-56199661f001",
           "label": "1 ay",
           "months": 1,
-          "price": 2.99
+          "price": 2.99,
+          "regularPrice": 18
         },
         {
           "warrantyMode": "guaranteed",
@@ -2179,7 +2182,8 @@ const DATA = {
       "plans": [
         {
           "months": 1,
-          "price": 2.99
+          "price": 2.99,
+          "regularPrice": 30
         },
         {
           "months": 12,

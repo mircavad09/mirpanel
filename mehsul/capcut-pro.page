@@ -104,7 +104,7 @@
             </div>
 
             <h2 class="product-page-section-title">Müddət seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 Ay (endirim)</span><span class="product-page-plan-prices"><span class="product-page-regular-price">16.99 ₼</span><strong>4.99 ₼</strong><span class="product-page-discount">-71%</span></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ay (1600 AI kredit)</span><span class="product-page-plan-prices">Stokda yoxdur</span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>7 gün</span><span class="product-page-plan-prices"><span class="product-page-regular-price">8.00 ₼</span><strong>1.12 ₼</strong><span class="product-page-discount">-86%</span></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="discount-month"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 Ay (endirim)</span><span class="product-page-plan-prices"><span class="product-page-regular-price">20.00 ₼</span><strong>4.99 ₼</strong><span class="product-page-discount">-75%</span></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>1 ay (1600 AI kredit)</span><span class="product-page-plan-prices">Stokda yoxdur</span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>7 gün</span><span class="product-page-plan-prices"><span class="product-page-regular-price">8.00 ₼</span><strong>1.12 ₼</strong><span class="product-page-discount">-86%</span></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -119,28 +119,31 @@
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
         <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
       <img src="/uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
-      <span class="capcut-similar-discount">-41%</span>
+      <span class="capcut-similar-discount">-50%</span>
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">musiqi</div>
       <div class="product-page-similar-price">5.49 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/netflix-sexsi" aria-label="Netflix Şəxsi — 5.99 ₼" title="Netflix Şəxsi">
       <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" class="product-page-similar-image" alt="Netflix Şəxsi" width="320" height="320" loading="lazy" decoding="async">
+      <span class="capcut-similar-discount">-76%</span>
       <div class="product-page-similar-title" title="Netflix Şəxsi">Netflix Şəxsi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/chatgpt-plus" aria-label="ChatGPT Plus (Hazır Şəxsi hesab) — 15.99 ₼" title="ChatGPT Plus (Hazır Şəxsi hesab)">
       <img src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" class="product-page-similar-image" alt="ChatGPT Plus (Şəxsi hesab)" width="320" height="320" loading="lazy" decoding="async">
-      <span class="capcut-similar-discount">-53%</span>
+      <span class="capcut-similar-discount">-60%</span>
       <div class="product-page-similar-title" title="ChatGPT Plus (Hazır Şəxsi hesab)">ChatGPT Plus (Hazır Şəxsi hesab)</div>
       <div class="product-page-similar-category">ai</div>
       <div class="product-page-similar-price">15.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 2.99 ₼" title="Amazon Prime Video">
       <img src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" class="product-page-similar-image" alt="Amazon Prime Video" width="320" height="320" loading="lazy" decoding="async">
+      <span class="capcut-similar-discount">-83%</span>
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">2.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/canva-premium" aria-label="Canva Premium — 2.99 ₼" title="Canva Premium">
       <img src="/uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882" class="product-page-similar-image" alt="Canva Premium" width="320" height="320" loading="lazy" decoding="async">
+      <span class="capcut-similar-discount">-90%</span>
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">2.99 ₼</div>
@@ -218,7 +221,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-583777a2c515c545"></script>
+  <script src="/app.js?v=catalog-690ba1ba087b1d66"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=netflix-ready-rooms-1"></script>
   <script src="/stock-display-fix.js?v=live-sale-switch-1"></script>
