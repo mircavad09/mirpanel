@@ -16,8 +16,10 @@ let checkoutView=route==='/odenis'||route==='/sebet'&&new URLSearchParams(locati
 const mobileCheckout=()=>matchMedia('(max-width:760px)').matches;
 function revealPayment(panel){
  if(!mobileCheckout()||!panel?.isConnected)return;
- const header=document.querySelector('.site-header'),gap=(header?.getBoundingClientRect().height||0)+8;
- window.scrollTo({top:Math.max(0,scrollY+panel.getBoundingClientRect().top-gap),behavior:'instant'});
+ const header=document.querySelector('.site-header'),bottom=header?.getBoundingClientRect().bottom||0;
+ const title=panel.querySelector('h2').getBoundingClientRect();
+ if(title.top>=bottom&&title.bottom<innerHeight-72)return;
+ window.scrollTo({top:Math.max(0,scrollY+panel.getBoundingClientRect().top-bottom-8),behavior:'instant'});
 }
 function basketURL(path){if(window.MirpanelNavigation)window.MirpanelNavigation.replaceURL(path);else history.replaceState(history.state,'',path);}
 const requests=new Set();
@@ -350,7 +352,7 @@ async function loadWallet(knownProfile=false){
 async function start(){
  if(route==='/balans')return loadWallet();
  if(route==='/sebet'&&!checkoutView){await basket();return;}
- await payment(true);
+ await payment();
 }
 const dispose=()=>{closed=true;clearTimeout(confirmationTimer);for(const r of requests)r.abort();walletFlow?.abort();life.abort();document.body.classList.remove('wallet-page-active');};
 on(window,'pagehide',dispose);on(window,'mirpanel:account',e=>{

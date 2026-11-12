@@ -81,7 +81,11 @@ try{
    const heading=p.getByRole('heading',{name:'Ödəniş',exact:true});
    const onScreen=()=>heading.evaluate(n=>{const r=n.getBoundingClientRect(),h=document.querySelector('.site-header').getBoundingClientRect();return r.top>=h.bottom-1&&r.bottom<innerHeight-72;});
    const waitAligned=()=>p.waitForFunction(()=>{const n=[...document.querySelectorAll('.checkout-choices h2')].find(x=>x.textContent==='Ödəniş');if(!n)return false;const r=n.getBoundingClientRect(),h=document.querySelector('.site-header').getBoundingClientRect();return r.top>=h.bottom-1&&r.bottom<innerHeight-72;});
-   await p.goto(origin+'/odenis');
+   const checkoutPage=await p.goto(origin+'/odenis');
+   if(live){
+    const html=await checkoutPage.text();
+    for(const asset of ['shop-ui.js','shop.css'])assert.ok(html.includes(asset+'?v=checkout-first-paint-2'),'Live checkout must reference current '+asset);
+   }
    await p.locator('.checkout-methods').waitFor();
    if(!before)assert.equal(await p.locator('.checkout-amount strong').textContent(),'9,98 ₼');
    const direct=await onScreen();
@@ -136,16 +140,20 @@ try{
    assert(await complete.isEnabled());
    assert.equal(await p.getByText('Balans kifayət etmir',{exact:true}).count(),0);
    if(mobile){
-    await p.locator('.browser-bottom-nav [data-browser-nav=payments]').click();
-    await p.waitForURL('**/profil?tab=payments');
-    await p.locator('.account-payments').waitFor();
-    assert.equal(await p.locator('#shopApp').count(),0);
+    const returnPage=live?'/':'/profil?tab=payments';
+    if(live)await p.goto(origin+returnPage);
+    else{
+     await p.locator('.browser-bottom-nav [data-browser-nav=payments]').click();
+     await p.waitForURL(origin+returnPage);
+     await p.locator('.account-payments').waitFor();
+     assert.equal(await p.locator('#shopApp').count(),0);
+    }
     await p.locator('.browser-bottom-nav [data-browser-nav=cart]').click();
     await p.locator('.mir-cart-next:not(:disabled)').click();
     await p.waitForURL('**/odenis');
     await p.locator('.checkout-methods').waitFor();await waitAligned();
     await p.goBack({waitUntil:'commit'});
-    await p.waitForURL('**/profil?tab=payments');
+    await p.waitForURL(origin+returnPage);
    }
    console.log(JSON.stringify({phase:'after',engine:engine.name(),width,methodsMs,balanceMs,retry:true,topupReturn:true,liveAssets:live}));
    assert.deepEqual(await p.evaluate(()=>MirpanelCart.read()),stored);
