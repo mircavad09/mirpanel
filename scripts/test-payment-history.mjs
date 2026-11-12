@@ -17,22 +17,27 @@ async function submit(user,request){
  await shop.submitTopup(user,request.id);
 }
 try{
+ await pool.query('alter table wallet_topups add column if not exists rejection_reason text');
  const legacy=await create(a,'2.00');await submit(a,legacy);
  await pool.query("update wallet_topups set status='rejected',decided_at=null where id=$1",[legacy.id]);
  await db.exec(migration);await db.exec(migration);
  const initial=(await history()).items[0];
  assert.equal(initial.number,'1');assert.equal(initial.operation_at,null);
  const credit=await create(a,'6.00');await submit(a,credit);
- await shop.admin(pool,{id:'owner'},{action:'approve',id:credit.id,amount:'5.00'});
- assert.deepEqual([(await history()).balance,(await history()).total,(await history()).month],['500','0','0']);
+ assert.equal((await history()).month,'0');
+ await shop.admin(pool,{id:'owner'},{action:'approve',id:credit.id,amount:'5.50'});
+ await pool.query("update wallet_topups set submitted_at=(($2::date - 1 + time '23:59:59') at time zone 'Asia/Baku'),decided_at=(($2::date + time '00:00:00') at time zone 'Asia/Baku') where id=$1",[credit.id,month]);
+ const credited=await history();
+ assert.deepEqual([credited.balance,credited.total,credited.month],['550','0','550']);
+ assert.equal((await pool.query("select count(*)::int as n from wallet_ledger where request_id=$1 and kind='topup_credit'",[credit.id])).rows[0].n,1);
  const input={productId:'ordinary',planIndex:0,quantity:1},quote=(await shop.quote(a,[input],hash)).items[0];
  const items=[{...input,termsVersion:quote.termsVersion}];
  const order=await shop.checkout(a,hash,{items,mode:'wallet',requestId:id(),consentAccepted:true});
  await pool.query("update payment_orders set created_at=(($2::date + time '00:00:01') at time zone 'Asia/Baku') where id=$1",[order.orderId,month]);
- const after=await history();assert.deepEqual([after.balance,after.total,after.month,after.rejectedCents,after.rejected],['0','500','500','200',1]);
+ const after=await history();assert.deepEqual([after.balance,after.total,after.month,after.rejectedCents,after.rejected],['50','500','550','200',1]);
  assert.equal(after.items.find(r=>r.id===order.orderId).number,String(order.orderCode));
  const approved=after.items.find(r=>r.id===credit.id);
- assert.equal(approved.number,'2');assert.equal(approved.cents,500);assert.ok(approved.operation_at);
+ assert.equal(approved.number,'2');assert.equal(approved.cents,550);assert.notEqual(approved.submitted_at,approved.operation_at);
  assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'2');
  await assert.rejects(shop.topupReceipt(b,credit.id),{status:404});
  assert.equal((await shop.topupReceipt(a,credit.id)).mime,'image/png');
@@ -44,12 +49,12 @@ try{
  await f.rpc('approve_payment_order_v7',[card.orderId,null,'synthetic-admin']);
  await pool.query("update payment_orders set created_at=(($2::date - 1 + time '23:59:59') at time zone 'Asia/Baku'),approved_at=(($2::date + time '00:00:02') at time zone 'Asia/Baku') where id=$1",[card.orderId,month]);
  const purchased=await history('status=approved');
- assert.equal(purchased.month,'1000');assert.equal(purchased.total,'1000');
+ assert.equal(purchased.month,'1050');assert.equal(purchased.total,'1000');
  const cardRow=purchased.items.find(r=>r.id===card.orderId);assert.equal(cardRow.by_receipt,true);
  assert.notEqual(cardRow.submitted_at,cardRow.operation_at);
  await pool.query('update payment_orders set approved_at=null where id=$1',[card.orderId]);
  const withoutTime=await history('status=approved');
- assert.equal(withoutTime.total,'1000');assert.equal(withoutTime.month,'500');
+ assert.equal(withoutTime.total,'1000');assert.equal(withoutTime.month,'550');
  assert.equal(withoutTime.items.find(r=>r.id===card.orderId).operation_at,null);
  assert.equal((await cards.receipt(a,card.orderId)).mime,'image/png');await assert.rejects(cards.receipt(b,card.orderId),{status:404});
  const pending=await Promise.all(Array.from({length:31},()=>create(a,'1.00')));
@@ -57,12 +62,19 @@ try{
  const firstPage=await history('status=reviewing'),next=await history('status=reviewing&page=2');
  assert.deepEqual([firstPage.items.length,next.items.length,firstPage.more,next.more],[30,1,true,false]);
  assert.equal(next.reviewing,31);assert.equal(next.approved,3);assert.equal(next.rejected,1);
+ for(const data of [firstPage,next])assert.deepEqual([data.month,data.rejectedCents],['550','200']);
  assert.deepEqual([...firstPage.items,...next.items].map(x=>Number(x.number)).sort((x,y)=>x-y),Array.from({length:31},(_,i)=>i+3));
+ await shop.admin(pool,{id:'owner'},{action:'reject',id:pending[0].id,reason:'Sınaq qəbzi'});
+ const decided=await history('status=rejected');
+ assert.deepEqual([decided.month,decided.rejected,decided.rejectedCents],['550',2,'300']);
+ assert.equal(decided.items.find(r=>r.id===pending[0].id).cents,100);
  const other=await create(b);await submit(b,other);
- const isolated=await history('','b');assert.equal(isolated.items.length,1);assert.equal(isolated.items[0].number,'1');
+ await shop.admin(pool,{id:'owner'},{action:'approve',id:other.id,amount:'4.50'});
+ await pool.query("update wallet_topups set decided_at=(($2::date - 1 + time '23:59:59') at time zone 'Asia/Baku') where id=$1",[other.id,month]);
+ const isolated=await history('','b');assert.equal(isolated.items.length,1);assert.equal(isolated.items[0].number,'1');assert.equal(isolated.month,'0');
  await db.exec(migration);assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'2');
  const focused=await history('topup='+legacy.id);assert.equal(focused.items.length,1);assert.equal(focused.items[0].id,legacy.id);assert.equal(focused.more,false);assert.equal(focused.all,(await history()).all);
  assert.equal((await history('topup='+legacy.id,'b')).items.length,0);await assert.rejects(history('topup=invalid'),{status:400});
  const confirmed=await shop.topupState(a,legacy.id);assert.equal(confirmed.number,'1');assert.equal(confirmed.cents,200);assert.equal(confirmed.receiptUploaded,true);
- console.log('PASS payment history: real wallet debit without double counting, Baku month boundary, stable concurrent numbering, full-period counts, private receipts');
+ console.log('PASS payment history: 5.50 approved topup, wallet debit without double counting, Baku month boundary, rejected and pending receipts, stable concurrent numbering, full-period counts, private receipts');
 }finally{await f.close();}

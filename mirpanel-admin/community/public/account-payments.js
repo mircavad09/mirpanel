@@ -130,7 +130,9 @@ export function mountPayments({readOnly=false,content,api,el,button,link,validat
   }}
  }
  const hidePreview=()=>{if(document.hidden&&dialog.open){preview++;media.replaceChildren();dialog.close();}};
+ const refreshRestoredPage=event=>{if(event.persisted)void load(true);};
  document.addEventListener('visibilitychange',hidePreview);
+ window.addEventListener('pageshow',refreshRestoredPage);
  if(initial&&!target)showPage(initial);
- void load(!!initial,initialRequest);return()=>{live=false;version++;preview++;document.removeEventListener('visibilitychange',hidePreview);observer?.disconnect();thumbnails.clear();if(dialog.open)dialog.close();section.remove();};
+ void load(!!initial,initialRequest);return()=>{live=false;version++;preview++;document.removeEventListener('visibilitychange',hidePreview);window.removeEventListener('pageshow',refreshRestoredPage);observer?.disconnect();thumbnails.clear();if(dialog.open)dialog.close();section.remove();};
 }
