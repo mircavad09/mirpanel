@@ -3657,7 +3657,45 @@ const DATA = {
         "includeSeller": true,
         "includeStock": false
       },
-      "plans": [],
+      "plans": [
+        {
+          "supplier": {
+            "provider": "epinby",
+            "productId": 1421,
+            "type": "TELEGRAM_STARS",
+            "starsAmount": 3,
+            "fields": [
+              {
+                "key": "telegram_username",
+                "label": "Telegram istifadəçi adı",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 33,
+                "enabled": true
+              }
+            ]
+          },
+          "image": "",
+          "formFields": [
+            {
+              "key": "telegram_username",
+              "type": "text",
+              "label": "Telegram istifadəçi adı",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 33
+            }
+          ],
+          "id": "epinby_1421",
+          "pricingId": "2da27c28-0306-4d92-925b-0ab82fe5b8ea",
+          "label": "Telegram Premium 3 months",
+          "months": 1,
+          "price": 23.99
+        }
+      ],
       "orderConfirmation": {
         "enabled": false,
         "title": "Diqqət!",

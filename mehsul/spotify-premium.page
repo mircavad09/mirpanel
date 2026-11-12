@@ -158,11 +158,11 @@
       <div class="product-page-similar-title" title="Free Fire">Free Fire</div>
       <div class="product-page-similar-category">epinby-games</div>
       <div class="product-page-similar-price">1.58 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/telegram-premium" aria-label="Telegram Premium — Stokda yoxdur" title="Telegram Premium">
+    </a><a class="product-page-similar-card" href="/mehsul/telegram-premium" aria-label="Telegram Premium — 23.99 ₼" title="Telegram Premium">
       <img src="/uploads/products/telegram-premium-cover.webp" class="product-page-similar-image" alt="Telegram Premium" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Telegram Premium">Telegram Premium</div>
       <div class="product-page-similar-category">sosial-media</div>
-      <div class="product-page-similar-price">Stokda yoxdur</div>
+      <div class="product-page-similar-price">23.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -238,7 +238,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-ce6825bbdb258a29"></script>
+  <script src="/app.js?v=catalog-f04f6fd506dca962"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>
