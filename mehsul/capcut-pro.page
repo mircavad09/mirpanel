@@ -237,7 +237,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-f04f6fd506dca962"></script>
+  <script src="/app.js?v=catalog-bb8d65117b03bc95"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>

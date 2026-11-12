@@ -3694,6 +3694,43 @@ const DATA = {
           "label": "Telegram Premium 3 months",
           "months": 1,
           "price": 23.99
+        },
+        {
+          "supplier": {
+            "provider": "epinby",
+            "productId": 1423,
+            "type": "TELEGRAM_STARS",
+            "starsAmount": 6,
+            "fields": [
+              {
+                "key": "telegram_username",
+                "label": "Telegram istifadəçi adı",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 33,
+                "enabled": true
+              }
+            ]
+          },
+          "image": "",
+          "formFields": [
+            {
+              "key": "telegram_username",
+              "type": "text",
+              "label": "Telegram istifadəçi adı",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 33
+            }
+          ],
+          "id": "epinby_1423",
+          "pricingId": "d4096286-0a18-45a8-af6a-5a0e3a22769f",
+          "label": "Telegram Premium 6 months",
+          "months": 1,
+          "price": 31.99
         }
       ],
       "orderConfirmation": {
