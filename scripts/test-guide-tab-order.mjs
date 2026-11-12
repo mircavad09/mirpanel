@@ -18,7 +18,7 @@ const guide=()=>orderGuideFor(product,{},'1 ay');
 const files=new Map();
 for(const name of ['browser-orders.js','browser-orders.css']){
  const local=fs.readFileSync(name,'utf8');
- const data=live?await(await fetch('https://mirpanel.com/'+name+'?v=guide-tabs-1')).text():local;
+ const data=live?await(await fetch('https://mirpanel.com/'+name+'?v=surfshark-phone-1')).text():local;
  assert.equal(data.replaceAll('\r\n','\n'),local.replaceAll('\r\n','\n'));
  files.set('/'+name,data);
 }

@@ -17,6 +17,10 @@ const primePhoneSteps=[
  ['prime-password','Sizə təqdim olunan şifrəni «Amazon şifresi» xanasına yazın və «Giriş yap» düyməsinə toxunun.'],
  ['prime-passkey','Bu ekran yalnız keçid açarı təklifi çıxarsa lazımdır. «Hayır, parola kullanmaya devam et» düyməsinə toxunun.']
 ].map(([animation,description])=>({animation,description,image:''}));
+const surfsharkPhoneSteps=[
+ ['surfshark-open','Surfshark tətbiqini açın və aşağıdakı ‘Log in’ düyməsinə toxunun.'],
+ ['surfshark-login','Sifarişinizdə sizə təqdim olunan e-poçt və şifrəni daxil edin, sonra ‘Next’ düyməsinə toxunun.']
+].map(([animation,description])=>({animation,description,image:''}));
 const chatgptPhoneSteps=[
  ['chatgpt-open','ChatGPT tətbiqini açın və «Oturum aç veya kaydol» düyməsinə toxunun.'],
  ['chatgpt-email','Sizə təqdim etdiyimiz e-poçtu «E-posta» xanasına yazın və «Devam» düyməsinə basın.'],
@@ -89,6 +93,7 @@ export function orderGuideFor(product,plan,savedName){
  }
  if(product?.id==='spotify')tracks.phone=spotifyPhoneSteps.map(step=>({...step}));
  if(product?.id==='chatgpt')tracks.phone=chatgptPhoneSteps.map(step=>({...step}));
+ if(product?.id==='surfshark')tracks.phone=surfsharkPhoneSteps.map(step=>({...step}));
  if(product?.id==='prime')tracks.phone=primePhoneSteps.map(step=>({...step}));
  if(phoneOnlyGuide(plan)||phoneOnlyGuide({label:savedName}))delete tracks.desktopQr;
  return {information:own?.information||base?.information||'',tracks};

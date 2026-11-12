@@ -170,6 +170,58 @@ function primeScreen(animation,create){
  screen.append(head,main);return screen;
 }
 
+function surfsharkScreen(animation,create,lineIcon){
+ const screen=create('div',null,'surfshark-demo');
+ screen.dataset.scene=animation;screen.lang='en';
+ const box=(text,cls)=>create('div',text,cls);
+ const icon=(path,cls)=>{const n=create('span',null,cls);n.innerHTML=lineIcon(path);return n;};
+ const status=box(null,'surfshark-demo-status');
+ status.setAttribute('aria-hidden','true');
+ status.append(create('span','9:41'),icon('M2 18h2m2 0h2m2 0h2m2 0h2m2 0h2 M4 15a12 12 0 0 1 16 0m-13 3a8 8 0 0 1 10 0m-6 3h2','surfshark-demo-signal'),icon('M3 6h16v12H3zm18 4v4M6 9h10v6H6z','surfshark-demo-battery'));
+ screen.append(status);
+ const action=(text,cls)=>box(text,'surfshark-demo-action '+cls);
+ if(animation==='surfshark-open'){
+  const preview=box(null,'surfshark-demo-preview');
+  preview.setAttribute('aria-hidden','true');
+  const connected=box(null,'surfshark-demo-connected');
+  connected.append(icon('M12 2l8 4v6c0 4-4 7-8 10-4-3-8-6-8-10V6z M8 12l3 3 5-6','surfshark-demo-shield'),
+   create('strong','Connected - 13:46'),box('Your location · Masked','surfshark-demo-masked'),box('🇦🇺  Australia · Perth','surfshark-demo-location'));
+  const actions=box(null,'surfshark-demo-preview-actions');
+  actions.append(box('Disconnect'),box('Pause'));
+  connected.append(actions,create('small','Recently used · Los Angeles'));
+  preview.append(box('VPN','surfshark-demo-preview-title'),connected,box('QUICK SETTINGS','surfshark-demo-settings-title'));
+  for(const [title,note] of [['Auto connect','Connects to the most recent VPN location.'],['CleanWeb','Blocks ads and trackers when VPN is connected.']]){
+   const setting=box(null,'surfshark-demo-setting');setting.append(create('strong',title),create('small',note));preview.append(setting);
+  }
+  const caption=box(null,'surfshark-demo-caption');
+  caption.append(create('strong','Surf in private'),create('p','Our VPN gives you 24/7 protection from tracking and data collecting.'));
+  const dots=box('● ● ● ●','surfshark-demo-preview-dots');dots.setAttribute('aria-hidden','true');
+  screen.append(box('×','surfshark-demo-circle surfshark-demo-dismiss'),preview,caption,dots,
+   action('Create account','surfshark-demo-create surfshark-demo-white'),action('Log in','surfshark-demo-open surfshark-demo-cue'));
+  return screen;
+ }
+ const header=box(null,'surfshark-demo-header');header.append(box('‹','surfshark-demo-circle'),create('strong','Log in'));
+ const field=(label,value,cls)=>{
+  const n=box(null,'surfshark-demo-field surfshark-demo-cue '+cls);
+  n.append(create('small',label),create('span',value));return n;
+ };
+ const password=field('Password','••••••••','surfshark-demo-password');
+ password.append(icon('M2 12s4-6 10-6 10 6 10 6-4 6-10 6S2 12 2 12z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z','surfshark-demo-eye'));
+ const providers=box(null,'surfshark-demo-providers');
+ const provider=(label,mark,cls='')=>{
+  const row=action(label,'surfshark-demo-provider');row.prepend(create('span',mark,cls));return row;
+ };
+ providers.append(provider('Log in with app','S','surfshark-demo-brand'),box('Or','surfshark-demo-or'),
+  provider('Continue with Google','G','surfshark-demo-google'),provider('Continue with Apple','', 'surfshark-demo-apple'));
+ const apple=providers.querySelector('.surfshark-demo-apple');
+ apple.innerHTML='<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M17.1 12.2c0-1.7.8-3 2.4-4-1-1.5-2.5-2.2-4-2.2-1.5 0-2.3.8-3.6.8-1.2 0-2.1-.8-3.5-.8-2.4 0-4.9 2-4.9 5.7 0 3.8 2.8 8.4 4.8 8.4 1 0 1.9-.8 3.6-.8 1.7 0 2.4.8 3.6.8 1.6 0 3.3-2.5 4.2-4.9-1.7-.7-2.6-1.8-2.6-3zm-4.8-6.8c1 0 2.2-.7 2.9-1.6.6-.7 1.1-1.7 1-2.8-1 .1-2.2.7-3 1.5-.6.7-1.2 1.8-.9 2.9z"/></svg>';
+ const footer=box(null,'surfshark-demo-footer');footer.append(box('New user? Create account'),box('Manual connection'));
+ screen.append(header,field('Email','numune@example.com','surfshark-demo-email'),password,
+  action('Next','surfshark-demo-next surfshark-demo-white surfshark-demo-cue'),
+  box('Forgot password','surfshark-demo-forgot'),providers,footer);
+ return screen;
+}
+
 function spotifyScreen(animation,create){
  const screen=create('div',null,'spotify-demo');screen.dataset.scene=animation;screen.lang='tr';
  const box=(text,cls)=>create('div',text,cls);
@@ -727,7 +779,7 @@ function netflixScreen(animation,create){
    for(const [key,label] of tracks){
     const animation=data.tracks[key].find(step=>step.animation)?.animation;
     const title=key!=='phone'||!animation||animation.startsWith('netflix-')?label:
-     /^(spotify|prime|chatgpt)-/.test(animation)?'Telefonla giriş':'CapCut-a daxil ol';
+     /^(spotify|prime|chatgpt|surfshark)-/.test(animation)?'Telefonla giriş':'CapCut-a daxil ol';
     const b=button(title,()=>{autoplay=false;track=key;step=0;draw();});
     b.setAttribute('aria-pressed',String(track===key));choices.append(b);
    }
@@ -741,7 +793,9 @@ function netflixScreen(animation,create){
    const spotify=track==='phone'&&current.animation?.startsWith('spotify-');
    const prime=track==='phone'&&current.animation?.startsWith('prime-');
    const chatgpt=track==='phone'&&current.animation?.startsWith('chatgpt-');
-   const simulated=netflix||spotify||prime||chatgpt;
+   const surfshark=track==='phone'&&current.animation?.startsWith('surfshark-');
+   const simulated=netflix||spotify||prime||chatgpt||surfshark;
+   if(surfshark)layout.classList.add('surfshark-guide');
    if(simulated||desktop||television)layout.classList.add('netflix-guide');
    const visual=create('div',null,'browser-guide-visual');
    const handset=simulated||track==='phone'&&['ben','sign-in','email','password','pro'].includes(current.animation)&&/^\/uploads\/guides\/capcut-mobile\/[1-5]\.png$/.test(current.image?.replace(/^https:\/\/mirpanel\.com(?=\/)/,'')||'');
@@ -764,11 +818,12 @@ function netflixScreen(animation,create){
     }
    }else if(handset){
     visual.classList.add('browser-guide-visual-handset');
-    phoneScreen.replaceChildren(chatgpt?chatgptScreen(current.animation,create):prime?primeScreen(current.animation,create):spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
+    phoneScreen.replaceChildren(surfshark?surfsharkScreen(current.animation,create,lineIcon):chatgpt?chatgptScreen(current.animation,create):prime?primeScreen(current.animation,create):spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
     phoneShell.classList.toggle('netflix-handset',simulated);
     phoneShell.classList.toggle('spotify-handset',spotify);
     phoneShell.classList.toggle('prime-handset',prime);
     phoneShell.classList.toggle('chatgpt-handset',chatgpt);
+    phoneShell.classList.toggle('surfshark-handset',surfshark);
     if(!steadyLayout)visual.append(phoneShell);
    }else
    try{
@@ -805,7 +860,8 @@ function netflixScreen(animation,create){
     if(focus)body.querySelector('.browser-guide-controls button'+focus+':not(:disabled),.browser-guide-controls button:not(:disabled)')?.focus({preventScroll:true});
    };
    const back=button('‹ Əvvəlki',()=>go(step-1,':first-child')),next=button('Növbəti ›',()=>go(step+1,':last-child'));
-   if(compact){
+   if(surfshark){back.textContent='Geri';next.textContent='Növbəti';}
+   else if(compact){
     for(const [arrow,icon,label] of [[back,'‹','Əvvəlki'],[next,'›','Növbəti']]){
      const glyph=create('span',handset?null:icon);
      if(handset)glyph.innerHTML=lineIcon(arrow===back?'m15 5-7 7 7 7':'m9 5 7 7-7 7');
@@ -815,7 +871,7 @@ function netflixScreen(animation,create){
    }
    back.disabled=step===0;next.disabled=step===steps.length-1;
    nav.append(back,next);details.append(description,nav);
-   if(steps.length>1){
+   if(steps.length>1&&!surfshark){
     const dots=create('div',null,'browser-guide-dots');dots.setAttribute('role','group');dots.setAttribute('aria-label','Təlimat addımları');
     steps.forEach((_,index)=>{
      const dot=button('',()=>{go(index);body.querySelector('.browser-guide-dots [aria-current="step"]')?.focus({preventScroll:true});});
