@@ -228,9 +228,14 @@ const DATA = {
       },
       "plans": [
         {
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 28,
+          "label": "1 ay",
           "months": 1,
-          "price": 11.95,
-          "regularPrice": 27.18
+          "price": 9.98,
+          "regularPrice": 27.18,
+          "pricingId": "f042d4ea-0063-4de1-ac11-bfb9aedc42a7"
         }
       ],
       "orderConfirmation": {

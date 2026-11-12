@@ -104,7 +104,7 @@
             </div>
 
             <h2 class="product-page-section-title">Paket seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span><img class="epinby-package-thumb" src="/uploads/products/epinby_3436-1794438474049-f9e16779.png" alt="" width="52" height="38" loading="lazy">60 UC</span><span class="product-page-plan-prices"><strong>1.65 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>60 UC</span><span class="product-page-plan-prices"><strong>1.65 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
