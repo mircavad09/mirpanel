@@ -104,7 +104,7 @@
             </div>
 
             <h2 class="product-page-section-title">Paket seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>Free Fire 110 Almaz (7/24)</span><span class="product-page-plan-prices"><strong>1.58 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>Free Fire 341 Almaz (7/24)</span><span class="product-page-plan-prices"><strong>4.69 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>572</span><span class="product-page-plan-prices"><strong>7.54 ₼</strong></span></div></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>Free Fire 110 Almaz (7/24)</span><span class="product-page-plan-prices"><strong>1.58 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>Free Fire 341 Almaz (7/24)</span><span class="product-page-plan-prices"><strong>4.69 ₼</strong></span></div><div class="product-page-static-plan" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>Free Fire 572 Almaz (7/24)</span><span class="product-page-plan-prices"><strong>7.54 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -187,7 +187,7 @@
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>Free Fire üçün hansı planlar mövcuddur?</summary><p>Free Fire 110 Almaz (7/24) — 1.58 ₼, Free Fire 341 Almaz (7/24) — 4.69 ₼, 572 — 7.54 ₼</p></details>
+    <details><summary>Free Fire üçün hansı planlar mövcuddur?</summary><p>Free Fire 110 Almaz (7/24) — 1.58 ₼, Free Fire 341 Almaz (7/24) — 4.69 ₼, Free Fire 572 Almaz (7/24) — 7.54 ₼</p></details>
     <details><summary>Free Fire sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>
@@ -222,7 +222,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-20369076d95ac0d2"></script>
+  <script src="/app.js?v=catalog-10596b156308199e"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>

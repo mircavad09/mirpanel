@@ -3645,7 +3645,7 @@ const DATA = {
           ],
           "id": "epinby_684",
           "pricingId": "e1835028-8946-47fe-9270-041cdc2d8f7e",
-          "label": "572",
+          "label": "Free Fire 572 Almaz (7/24)",
           "months": 1,
           "price": 7.54
         }
