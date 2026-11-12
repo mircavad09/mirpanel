@@ -1609,6 +1609,9 @@ body.product-page-document #productPageView.product-page-root .product-page-simi
   height:var(--similar-row);
   min-height:0;
  }
+ body.product-page-document #productPageView.product-page-root .product-page-similar-card:hover{
+  transform:none;
+ }
  body.product-page-document #productPageView.product-page-root .product-page-similar-card:focus-visible{
   outline:2px solid #ffd400;
   outline-offset:-2px;
