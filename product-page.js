@@ -92,6 +92,49 @@
     });
   }
 
+  function initializeSimilarScroll(list, signal) {
+    if (!list || list.children.length <= 4) return;
+    let frame = list.parentElement;
+    if (!frame.classList.contains('product-page-similar-scroll')) {
+      frame = document.createElement('div');
+      frame.className = 'product-page-similar-scroll';
+      const track = document.createElement('span');
+      track.className = 'product-page-similar-track';
+      track.setAttribute('aria-hidden', 'true');
+      const thumb = document.createElement('span');
+      thumb.className = 'product-page-similar-thumb';
+      track.append(thumb);
+      list.before(frame);
+      frame.append(list, track);
+    }
+    const mobile = matchMedia('(max-width:767px)');
+    const label = list.closest('aside')?.getAttribute('aria-label') || 'Oxşar məhsullar';
+    const update = () => {
+      const {clientHeight, scrollHeight, scrollTop} = list;
+      const overflow = mobile.matches && scrollHeight > clientHeight;
+      if (frame.hasAttribute('data-overflow') !== overflow) {
+        frame.toggleAttribute('data-overflow', overflow);
+        if (overflow) {
+          list.tabIndex = 0;
+          list.setAttribute('aria-label', label);
+        } else {
+          list.removeAttribute('tabindex');
+          list.removeAttribute('aria-label');
+        }
+      }
+      if (!overflow) return;
+      const height = Math.min(clientHeight, Math.max(18, clientHeight ** 2 / scrollHeight));
+      const progress = Math.max(0, Math.min(1, scrollTop / (scrollHeight - clientHeight)));
+      frame.style.setProperty('--similar-thumb-size', height + 'px');
+      frame.style.setProperty('--similar-thumb-offset', (clientHeight - height) * progress + 'px');
+    };
+    const observer = new ResizeObserver(update);
+    observer.observe(list);
+    list.addEventListener('scroll', update, {passive:true, signal});
+    signal.addEventListener('abort', () => observer.disconnect(), {once:true});
+    update();
+  }
+
   function initializeContentTabs() {
     const tabs = [...document.querySelectorAll(".product-page-tab[data-product-tab]")];
     const panels = [...document.querySelectorAll(".product-page-panel[data-product-panel]")];
@@ -162,6 +205,7 @@
     });
     normalizeProductImages(product);
     convertSimilarCardsToLinks();
+    initializeSimilarScroll(similarList, signal);
     initializeContentTabs();
     if (product) {
       try {
