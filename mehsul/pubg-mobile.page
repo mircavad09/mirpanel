@@ -157,11 +157,11 @@
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">2.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/telegram-premium" aria-label="Telegram Premium — 23.99 ₼" title="Telegram Premium">
+    </a><a class="product-page-similar-card" href="/mehsul/telegram-premium" aria-label="Telegram Premium — 23.75 ₼" title="Telegram Premium">
       <img src="/uploads/products/telegram-premium-cover.webp" class="product-page-similar-image" alt="Telegram Premium" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Telegram Premium">Telegram Premium</div>
       <div class="product-page-similar-category">sosial-media</div>
-      <div class="product-page-similar-price">23.99 ₼</div>
+      <div class="product-page-similar-price">23.75 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -222,7 +222,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-c556cb5a4ffee4af"></script>
+  <script src="/app.js?v=catalog-6aa663af98a6dc98"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>

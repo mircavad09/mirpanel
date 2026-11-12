@@ -3728,10 +3728,14 @@ const DATA = {
             }
           ],
           "id": "epinby_1421",
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 87,
           "pricingId": "2da27c28-0306-4d92-925b-0ab82fe5b8ea",
-          "label": "Telegram Premium 3 months",
+          "label": "Telegram Premium 3 Aylıq",
           "months": 1,
-          "price": 23.99
+          "price": 23.75,
+          "regularPrice": 25.5
         },
         {
           "supplier": {
@@ -3765,10 +3769,14 @@ const DATA = {
             }
           ],
           "id": "epinby_1423",
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 175,
           "pricingId": "d4096286-0a18-45a8-af6a-5a0e3a22769f",
-          "label": "Telegram Premium 6 months",
+          "label": "Telegram Premium 6 Aylıq",
           "months": 1,
-          "price": 31.99
+          "price": 31.99,
+          "regularPrice": 51
         }
       ],
       "orderConfirmation": {
