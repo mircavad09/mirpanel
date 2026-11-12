@@ -76,6 +76,7 @@ for(const engine of mode==='before'?[chromium]:[chromium,webkit]){
      if(original)original.replaceWith(line);else body.append(line);
      const count=()=>getComputedStyle(body).gridTemplateRows.split(' ').length;
      const check=(ok,message)=>{if(!ok)throw Error(message);};
+     check(['inline-flex','flex'].includes(getComputedStyle(badge).display),'Stock should be displayed as a badge: '+getComputedStyle(badge).display);
      for(const hidden of [false,true]){
       sales.hidden=hidden;
       if(!hidden)sales.textContent='≈ 99+ satılıb';

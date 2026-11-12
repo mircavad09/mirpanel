@@ -193,6 +193,36 @@
   :is(.home-page #grid,.catalog-grid) .homeProductCard .cardStockLine {
     grid-area: 4 / 1 / 5 / -1;
     margin: 0;
+    font-size: 10px;
+    line-height: 1.2;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeProductCard .cardStockBadge {
+    display: inline-flex;
+    box-sizing: border-box;
+    align-items: center;
+    max-width: 100%;
+    gap: 4px;
+    padding: 3px 6px;
+    border: 1px solid #c892385c;
+    border-radius: 999px;
+    background: #2b2114;
+    color: #ffc15b;
+    font: 600 10px/1.2 system-ui,sans-serif;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeProductCard .cardStockBadge::before {
+    content: "";
+    width: 5px;
+    height: 5px;
+    flex: none;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeProductCard .cardStockBadge.out {
+    border-color: #9c4552;
+    background: #29171b;
+    color: #ffa7af;
   }
   :is(.home-page #grid,.catalog-grid) .homeProductCard .pad:not(:has(.homeCardSales:not([hidden]))) .cardStockLine {
     grid-row: 3;
