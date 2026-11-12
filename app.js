@@ -3569,7 +3569,7 @@ const DATA = {
           ],
           "id": "epinby_682",
           "pricingId": "d0b70eed-360e-4810-bf1f-9ed34e76cd1f",
-          "label": "110",
+          "label": " Free Fire 110 Almaz (7/24)",
           "months": 1,
           "price": 1.58
         },
@@ -3607,7 +3607,7 @@ const DATA = {
           ],
           "id": "epinby_683",
           "pricingId": "1305b657-1136-415e-b008-41856164e5b0",
-          "label": "341",
+          "label": " Free Fire 341 Almaz (7/24)",
           "months": 1,
           "price": 4.69
         }
