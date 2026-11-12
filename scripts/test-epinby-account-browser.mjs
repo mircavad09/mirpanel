@@ -1,8 +1,12 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {fileURLToPath} from 'node:url';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 
-const version='epinby-account-1';
+const version='player-gold-seal-1';
+const output=new URL('../outputs/player-gold-seal/',import.meta.url);
+await fs.mkdir(output,{recursive:true});
+const longName='Nümunə oyunçu — BakıQızılKomandasınınÇoxUzunOyunçuAdı123456';
 const assets=new Map();
 for(const name of ['cart-entry.js','cart-entry.css','checkout-fields.js','entry-styles.js']){
  const source=await fs.readFile('mirpanel-admin/community/public/'+name,'utf8');
@@ -23,7 +27,7 @@ const products=[
 for(const engine of [chromium,webkit]){
  const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
  try{
-  for(const width of [390,1440]){
+  for(const width of [320,390,1440]){
    const ctx=await browser.newContext({viewport:{width,height:850}}),page=await ctx.newPage();
    let releaseSlow,startSlow,draft,navigated;
    const started=new Promise(r=>startSlow=r);
@@ -47,14 +51,14 @@ for(const engine of [chromium,webkit]){
      if(value==='000005'&&!failed){failed=true;return route.abort('failed');}
      const p=products.find(p=>p.id===productId);
      assert.deepEqual(Object.keys(values).sort(),p.plans[0].fields.map(f=>f.key).sort());
-     return route.fulfill({json:{state:'verified',name:'Nümunə hesab',allowCheckout:true}});
+     return route.fulfill({json:{state:'verified',name:productId==='free_fire'?longName:'Nümunə hesab',allowCheckout:true}});
     }
     if(name==='draft'){
      draft=route.request().postDataJSON();
      return route.fulfill({json:{draftId:draft.id,termsVersion:draft.termsVersion}});
     }
     if(pathname==='/odenis'){navigated=true;return route.fulfill({contentType:'text/html',body:'<h1>Sınaq ödəniş səhifəsi</h1>'});}
-    return route.fulfill({contentType:'text/html',body:`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><button>İndi al</button><script type="module">
+    return route.fulfill({contentType:'text/html',body:`<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>body{background:#101114;color:#eee}</style><button>İndi al</button><script type="module">
      import {startCartEntry} from '/community-assets/cart-entry.js';
      const products=${JSON.stringify(products)}, p=products.find(x=>x.id===new URLSearchParams(location.search).get('product'));
      document.querySelector('button').onclick=()=>startCartEntry(p,p.plans[0],{loginOnGuest:true});
@@ -68,7 +72,14 @@ for(const engine of [chromium,webkit]){
     await dialog.getByRole('button',{name:'Təsdiqləyirəm'}).click();
     assert.equal(await dialog.getByRole('button',{name:/Ödənişə keç/}).textContent(),'Ödənişə keç · '+(p.plans[0].cents/100).toFixed(2).replace('.',',')+' ₼');
    };
-   const verified=dialog.getByText('Hesab təsdiqləndi',{exact:true}),invalid=dialog.getByText('Hesab tapılmadı.',{exact:true});
+   const seal=dialog.locator('.player-result-card'),verified=seal.getByText('Oyunçu tapıldı',{exact:true}),invalid=dialog.getByText('Hesab tapılmadı.',{exact:true});
+   const screenshot=async product=>{
+    assert(await seal.evaluate(card=>{
+     const name=card.querySelector('.player-result-name');
+     return card.getBoundingClientRect().right<=innerWidth&&name.scrollWidth<=name.clientWidth&&getComputedStyle(card).backgroundImage.includes('gradient');
+    }));
+    await dialog.screenshot({path:fileURLToPath(new URL([process.argv.includes('--live-assets')?'live':'local',engine.name(),width,product].join('-')+'.png',output))});
+   };
    const next=dialog.getByRole('button',{name:/Ödənişə keç/});
    await open(products[0]);
    const player=dialog.getByLabel('Player ID',{exact:true});
@@ -76,22 +87,32 @@ for(const engine of [chromium,webkit]){
    assert.equal(await dialog.getByText('ID haradan tapılır?').count(),0);
    await player.fill('000001');await started;
    await dialog.getByText('Hesab yoxlanılır…').waitFor();
+   assert.equal(await seal.count(),0);
    assert.equal(await next.isDisabled(),true);
    await player.fill('000002');await verified.waitFor();
    releaseSlow();await dialog.getByText('Nümunə hesab',{exact:true}).waitFor();
    assert.equal(await dialog.getByText('Gecikmiş hesab').count(),0);
-   await player.fill('000003');await invalid.waitFor();assert.equal(await next.isDisabled(),true);
+   assert.equal(await seal.locator('.player-result-id').textContent(),'Oyunçu ID-si: 000002');
+   assert.equal(await seal.locator('.player-result-content').evaluate(n=>n.childElementCount),3);
+   await screenshot('pubg-mobile');
+   await player.fill('000003');assert.equal(await seal.count(),0);
+   await invalid.waitFor();assert.equal(await next.isDisabled(),true);assert.equal(await seal.count(),0);
    await player.fill('abc');await dialog.getByText('Player ID yalnız rəqəmlərdən ibarət olmalıdır.').waitFor();
    await open(products[1]);
    const before=lookedUp;await player.fill('000004');assert.equal(lookedUp,before);
    await dialog.getByLabel('Server',{exact:true}).fill('0001');
    await dialog.getByText('Hesab adı yoxlanmır.').waitFor();assert.equal(await verified.count(),0);assert.equal(await next.isEnabled(),true);
    await player.fill('000005');await dialog.getByRole('button',{name:'Yenidən cəhd et'}).click();await verified.waitFor();
+   assert.equal(await seal.locator('.player-result-name').textContent(),longName);
+   assert.equal(await seal.locator('.player-result-id').textContent(),'Oyunçu ID-si: 000005');
+   await screenshot('free-fire');
+   await player.fill('');assert.equal(await seal.count(),0);
    await open(products[2]);
    const username=dialog.getByLabel('Telegram istifadəçi adı',{exact:true});
    assert.equal(await player.count(),0);
    await username.fill('@wrong_account');await invalid.waitFor();assert.equal(await next.isDisabled(),true);
-   await username.fill('@synthetic_player');await verified.waitFor();
+   await username.fill('@synthetic_player');await dialog.getByText('Hesab təsdiqləndi',{exact:true}).waitFor();
+   assert.equal(await seal.count(),0);
    await dialog.getByText('@synthetic_player',{exact:true}).waitFor();
    assert(await dialog.evaluate(d=>d.getBoundingClientRect().right<=innerWidth&&d.scrollWidth<=d.clientWidth));
    await next.click();await page.waitForURL('**/odenis');

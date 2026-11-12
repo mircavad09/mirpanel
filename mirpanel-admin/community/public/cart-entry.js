@@ -1,8 +1,19 @@
 import {validateDetails,validateEpinbyDetails} from './checkout-fields.js?v=epinby-account-1';
 import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
-import {ensureEntryStyles} from './entry-styles.js?v=epinby-account-1';
+import {ensureEntryStyles} from './entry-styles.js?v=player-gold-seal-1';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
+function playerResultCard(name,id){
+ const card=el('div',null,'player-result-card');
+ const seal=el('span',null,'player-result-seal');seal.setAttribute('aria-hidden','true');
+ seal.innerHTML='<svg viewBox="0 0 64 64" focusable="false" aria-hidden="true"><defs><linearGradient id="playerSealGold" x2=".8" y2="1"><stop stop-color="#fff2af"/><stop offset=".43" stop-color="#e8b84c"/><stop offset=".65" stop-color="#bd8020"/><stop offset="1" stop-color="#f4ce71"/></linearGradient></defs><path d="M27 5q5-4 10 0l3 2q2 2 5 1h4q6 0 7 6l1 4q0 3 3 5l2 3q3 5 0 10l-2 3q-2 2-2 6l-1 4q-1 6-7 7h-4q-3 0-6 3l-3 2q-5 3-10 0l-3-2q-3-3-6-3h-4q-6-1-7-7l-1-4q0-4-2-6l-2-3q-3-5 0-10l2-3q3-2 3-5l1-4q1-6 7-6h4q3 1 5-1Z" fill="url(#playerSealGold)" stroke="#ffe095" stroke-width="1.1"/><path d="m19 33 9 9 17-18" fill="none" stroke="#1b150c" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+ const content=el('div',null,'player-result-content');
+ const identifier=el('small','Oyunçu ID-si: ','player-result-id');
+ identifier.append(el('bdi',id));
+ content.append(el('span','Oyunçu tapıldı','player-result-title'),el('bdi',name,'player-result-name'),identifier);
+ card.append(seal,content);
+ return card;
+}
 const amount=cents=>Number.isSafeInteger(cents)?(cents/100).toFixed(2).replace('.',',')+' ₼':'';
 function appendTermsText(node,text){
  for(const [i,part] of text.split('**').entries())node.append(el(i%2?'strong':'span',part));
@@ -150,7 +161,8 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
     if(run!==turn||life.signal.aborted||!form.isConnected)return;
     if(result.state==='verified'&&result.name){
      showCheck('verified');
-     feedback.append(el('strong','Hesab təsdiqləndi'),el('b',result.name),el('small',clean[identifier]));
+     if(identifier==='player_id')feedback.append(playerResultCard(result.name,clean[identifier]));
+     else feedback.append(el('strong','Hesab təsdiqləndi'),el('b',result.name),el('small',clean[identifier]));
      feedback.hidden=false;
     }else{
      showCheck(result.state,result.message||'Hesab yoxlanmadı.');
