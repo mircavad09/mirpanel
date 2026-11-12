@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/pubg-mobile#product","url":"https://mirpanel.com/mehsul/pubg-mobile","name":"PUBG Mobile","description":"PUBG Mobile üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.","image":["https://mirpanel.com/uploads/products/pubg-mobile-cover.webp"],"sku":"pubg_mobile","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/pubg-mobile#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"PUBG Mobile","item":"https://mirpanel.com/mehsul/pubg-mobile"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/pubg-mobile#product","url":"https://mirpanel.com/mehsul/pubg-mobile","name":"PUBG Mobile","description":"PUBG Mobile üçün mövcud planları və qiymətləri Mirpanel-də yoxlayın.","image":["https://mirpanel.com/uploads/products/pubg-mobile-cover.webp"],"sku":"pubg_mobile","brand":{"@type":"Brand","name":"Mirpanel"},"offers":[{"@type":"Offer","url":"https://mirpanel.com/mehsul/pubg-mobile","price":"1.65","priceCurrency":"AZN","availability":"https://schema.org/InStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","name":"Mirpanel","url":"https://mirpanel.com"}}]},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/pubg-mobile#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"PUBG Mobile","item":"https://mirpanel.com/mehsul/pubg-mobile"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="pubg_mobile" data-product-slug="pubg-mobile">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -96,7 +96,7 @@
           <div class="product-page-info">
             <div class="product-detail-heading">
               <h1 id="pp-main-title" class="product-page-title">PUBG Mobile</h1>
-              <span class="product-page-status is-out">Ödənişdən sonra avtomatik icra</span>
+              <span class="product-page-status">Ödənişdən sonra avtomatik icra</span>
             </div>
 
             <div class="product-page-delivery">
@@ -104,7 +104,7 @@
             </div>
 
             <h2 class="product-page-section-title">Paket seçin</h2>
-            <div class="product-page-static-plans" data-static-product-plans><p>Mövcud plan yoxdur.</p></div>
+            <div class="product-page-static-plans" data-static-product-plans><div class="product-page-static-plan is-selected" data-price-emphasis="standard"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span><img class="epinby-package-thumb" src="/uploads/products/epinby_3436-1794438474049-f9e16779.png" alt="" width="52" height="38" loading="lazy">60 UC</span><span class="product-page-plan-prices"><strong>1.65 ₼</strong></span></div></div>
             <div id="pp-plans-container" class="pp-plans-container" hidden></div>
           </div>
         </div>
@@ -187,7 +187,7 @@
 
     <section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
-    <details><summary>PUBG Mobile üçün hansı planlar mövcuddur?</summary><p>Hazırda sifariş üçün açıq plan yoxdur.</p></details>
+    <details><summary>PUBG Mobile üçün hansı planlar mövcuddur?</summary><p>60 UC — 1.65 ₼</p></details>
     <details><summary>PUBG Mobile sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>
@@ -222,7 +222,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-c9d5803ab9f46a9e"></script>
+  <script src="/app.js?v=catalog-8bbfeb5347e6a40a"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>

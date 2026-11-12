@@ -147,11 +147,11 @@
       <div class="product-page-similar-title" title="Surfshark VPN">Surfshark VPN</div>
       <div class="product-page-similar-category">video</div>
       <div class="product-page-similar-price">4.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/pubg-mobile" aria-label="PUBG Mobile — Stokda yoxdur" title="PUBG Mobile">
+    </a><a class="product-page-similar-card" href="/mehsul/pubg-mobile" aria-label="PUBG Mobile — 1.65 ₼" title="PUBG Mobile">
       <img src="/uploads/products/pubg-mobile-cover.webp" class="product-page-similar-image" alt="PUBG Mobile" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="PUBG Mobile">PUBG Mobile</div>
       <div class="product-page-similar-category">epinby-games</div>
-      <div class="product-page-similar-price">Stokda yoxdur</div>
+      <div class="product-page-similar-price">1.65 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/free-fire" aria-label="Free Fire — Stokda yoxdur" title="Free Fire">
       <img src="/uploads/products/free-fire-cover.webp" class="product-page-similar-image" alt="Free Fire" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Free Fire">Free Fire</div>
@@ -236,7 +236,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-c9d5803ab9f46a9e"></script>
+  <script src="/app.js?v=catalog-8bbfeb5347e6a40a"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>
