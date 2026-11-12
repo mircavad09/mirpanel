@@ -10,7 +10,7 @@ import {ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{pool,db,catalog,id,rpc}=f;
 const config={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')},security=createPaymentSecurity(config);
-let mode='success',creates=0,external=700,failPage=false,catCalls=[];const supplierOrders=new Map();
+let mode='success',creates=0,external=700,failPage=false,catCalls=[],nameMode='verified';const supplierOrders=new Map();
 const fields=[{key:'player_id',label:'Player ID',required:true},{key:'server_id',label:'Server',required:false}];
 const product={id:'epinby_91',title:'Synthetic game',active:true,plans:[{label:'60 UC',price:3.49}],formFields:fields,
  supplier:epinbyProduct({provider:'epinby',productId:91,type:'TOPUP',fields},'epinby_91')};catalog.products.push(product);
@@ -20,6 +20,11 @@ const transport=async input=>{
  if(input.path.endsWith('/getMe'))return {success:true,data:{currency:'USD',balance:'100'}};
  if(input.path.endsWith('/games')){assert.equal(input.maxResponseBytes,524288);catCalls.push('games');return {success:true,data:[{id:4,name:'Test game'}]};}
  if(input.path.endsWith('/categories'))return {success:true,data:[{id:7,name:'Packs'}]};
+ if(input.path.endsWith('/validate-player')){
+  assert.deepEqual(input.body,{product_id:91,player_id:'000123',server_id:'0001'});
+  if(nameMode==='unavailable')throw Error('NETWORK');
+  return {success:true,data:{player_name:'Synthetic player',nickname_verified:nameMode==='verified'}};
+ }
  if(input.path.endsWith('/products')){
   catCalls.push(input.query);if(failPage&&Number(input.query.page)===2)throw Error('NETWORK');
   return {success:true,data:[{id:91,name:'60 UC',price:'1.00',stock_status:'INFINITE',type:'TOPUP',fields},{id:92,name:'Gift code',price:'2.00',stock_status:'FINITE',stock_count:10,type:'VOUCHER',fields:[]}],meta:{current_page:Number(input.query.page)||1,last_page:122,total:6086}};
@@ -52,6 +57,17 @@ try{
  const games=await api({action:'epinby-catalog',gamesOnly:true});assert.equal(games.games.length,1);assert.deepEqual(catCalls,['games']);
  const page=await api({action:'epinby-catalog',page:1,gameId:4,categoryId:7});assert.equal(page.products.length,2);assert.equal(page.meta.lastPage,122);assert.equal(page.complete,false);assert.equal(catCalls.at(-1).category_id,7);
  failPage=true;assert((await api({action:'epinby-catalog',page:2})).error);assert.equal(page.products.length,2);failPage=false;
+ const [{gameTerms,termsVersion}]=(await shop.quote({},items)).items;
+ assert.equal(gameTerms.rules.length,6);
+ const lookup={productId:product.id,planIndex:0,values:items[0].details,termsVersion};
+ assert.deepEqual(await shop.playerName({},lookup),{verified:true,name:'Synthetic player'});
+ for(const state of ['unverified','unavailable']){nameMode=state;assert.deepEqual(await shop.playerName({},lookup),{verified:false});}
+ await assert.rejects(shop.playerName({}, {...lookup,termsVersion:'expired'}),{status:409});
+ await assert.rejects(shop.playerName({}, {...lookup,values:{player_id:'000123',password:'blocked'}}),{status:400});
+ const [voucherQuote]=(await shop.quote({},[{productId:'synthetic_game_group',planIndex:1,quantity:1}])).items;
+ assert.equal(voucherQuote.gameTerms,undefined);
+ await assert.rejects(shop.playerName({}, {...lookup,productId:voucherQuote.productId,planIndex:1,termsVersion:voucherQuote.termsVersion}),{status:409});
+ assert.equal(creates,0);
  const requestId=id(),before=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);
  const [bought,replayed]=await Promise.all([buy(requestId),buy(requestId)]);assert.equal(bought.orderId,replayed.orderId);
  assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),before-349);

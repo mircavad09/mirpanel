@@ -23,3 +23,12 @@
 @media(max-width:360px){.cart-entry-warning header{padding:14px 14px 11px}.cart-entry-warning .cart-entry-terms{margin-left:14px;margin-right:14px;padding:10px 12px;font-size:13px}.cart-warning-footer{padding:11px 14px 14px}.cart-entry-warning .cart-entry-consent{font-size:13px}.cart-entry-warning h2{font-size:20px}}
 
 .cart-entry .cart-entry-fields{display:grid;gap:10px}.cart-entry-fields .cart-entry-note,.cart-entry .cart-entry-fields label{margin:0}.cart-entry .cart-entry-fields label{gap:4px}.cart-entry .cart-entry-fields .cart-entry-primary{margin:2px 0 0}
+
+.cart-game-entry.cart-entry-warning .cart-entry-terms{border:0;background:transparent;padding:0}
+.cart-entry .cart-game-warning,.cart-entry .cart-game-verified{margin:0;padding:10px 12px;border-radius:10px;overflow-wrap:anywhere}
+.cart-entry .cart-game-warning{background:#302717;border:1px solid #796022;color:#ffe185}
+.cart-entry .cart-game-verified{background:#142a22;border:1px solid #356b53;color:#85eab3}
+.cart-entry-warning .cart-entry-terms .cart-game-rules{list-style:none;padding:0;margin:10px 0 0}
+.cart-entry-warning .cart-game-rules li{display:flex;align-items:baseline;gap:9px;margin:0;padding:7px 0;border-bottom:1px solid #30302b}
+.cart-entry-warning .cart-game-rules li:last-child{border-bottom:0}
+.cart-game-check{color:#64e4a4;font-weight:700;flex:none}

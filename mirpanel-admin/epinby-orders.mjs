@@ -23,6 +23,16 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
  async function credentials(db){return (await db.query('select * from '+S+'epinby_connection where id=true')).rows[0];}
  const send=(row,path,extra={})=>transport({base:'https://epinby.com',path:'/api/v1/'+path,allowlist:allowed,
   key:security.decryptSecret(row.api_key_cipher),authHeader:'X-API-Key',jsonResponse:true,maxResponseBytes:524288,...extra});
+ async function playerName(db,supplier,values){
+  const row=await credentials(db);
+  if(row?.last_status!=='confirmed'||!row.api_key_cipher)return {verified:false};
+  try{
+   const response=await send(row,'validate-player',{body:{product_id:supplier.productId,...values}});
+   const data=response?.data,rawName=data?.player_name||data?.nickname,name=typeof rawName==='string'?rawName.trim():'';
+   if(response?.success===true&&data?.nickname_verified===true&&name)return {verified:true,name:name.slice(0,120)};
+  }catch{}
+  return {verified:false};
+ }
  async function configure(db,row,products){
   await db.query(`insert into ${S}api_suppliers(id,name,base_url,key_cipher,test_path) values($1,'Epinby','https://epinby.com',$2,'/api/v1/getMe')
    on conflict(id) do update set key_cipher=excluded.key_cipher`,[providerId,row.api_key_cipher]);
@@ -153,5 +163,5 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   await record(db,unit,body);await db.query('update '+U+" set next_at=now() where id=$1 and state='succeeded'",[unit.id]);
   return {ok:true};
  }
- return {drain,webhook,preflight,synchronize};
+ return {drain,webhook,preflight,synchronize,playerName};
 }

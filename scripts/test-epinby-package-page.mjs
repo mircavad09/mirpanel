@@ -4,10 +4,14 @@ import path from 'node:path';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 import {extractAdminState,patchAppSource} from '../mirpanel-admin/core.mjs';
 import {generateProductPageFiles,generateProductListingPageFiles} from '../mirpanel-admin/product-pages.mjs';
+import {termsInfo} from '../mirpanel-admin/cart-drafts.mjs';
 
-const live=process.argv.includes('--live'), origin=live?'https://mirpanel.com':'https://mirpanel.test';
+const live=process.argv.includes('--live'), liveFixture=process.argv.includes('--live-fixture');
+const origin=live||liveFixture?'https://mirpanel.com':'https://mirpanel.test';
 const source=await fs.readFile('app.js','utf8'),state=extractAdminState(source);
 const game=state.products.find(p=>p.id==='pubg_mobile'), legacy=state.products.find(p=>p.id==='epinby_3436');
+if(!live&&!game.plans.length)game.plans.push({...legacy.plans[0],id:legacy.id,supplier:legacy.supplier,formFields:legacy.formFields,image:legacy.image});
+if(!game.plans.length)throw Error('No active live PUBG Mobile package in the catalog');
 assert.equal(game.plans[0].price,legacy.plans[0].price);
 assert.equal(game.plans[0].image,legacy.image);
 assert.equal(game.plans[0].supplier.productId,3436);
@@ -27,24 +31,34 @@ await fs.mkdir(out,{recursive:true});
 for(const engine of [chromium,webkit]){
  const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
  try{
-  for(const width of live?[390,1440]:[320,390,430,1440]){
-   const page=await browser.newPage({viewport:{width,height:950},isMobile:width<600,hasTouch:width<600});
-   let quoteIndex=-1;
+  for(const width of live||liveFixture?[390,1440]:[320,390,430,1440]){
+   const page=await browser.newPage({viewport:{width,height:width<600?810:950},isMobile:width<600,hasTouch:width<600,ignoreHTTPSErrors:live||liveFixture});
+   const quoted=new Set();
+   let lookupIndex=-1;
    await page.route('**/*',async route=>{
     const request=route.request(),url=new URL(request.url()),p=url.pathname;
     if(p==='/api/payments/shop/quote'&&!live){
      const items=request.postDataJSON().items.map(item=>{
-      quoteIndex=item.planIndex;const plan=game.plans[quoteIndex];
-      return {...item,unitCents:Math.round(plan.price*100),title:game.title,planName:plan.label,terms:'Sintetik alış şərtləri',termsVersion:'synthetic',available:100,fields:plan.formFields};
+      quoted.add(item.planIndex);const plan=game.plans[item.planIndex];
+      return {...item,unitCents:Math.round(plan.price*100),title:game.title,planName:plan.label,...termsInfo(game,plan,item.planIndex),available:100};
      });
      return route.fulfill({json:{items,totalCents:items[0].unitCents}});
     }
+    if(p==='/api/payments/shop/player-name'&&!live){
+     const {productId,planIndex,values,termsVersion}=request.postDataJSON();
+     lookupIndex=planIndex;
+     assert.equal(productId,game.id);
+     assert.equal(termsVersion,termsInfo(game,game.plans[planIndex],planIndex).termsVersion);
+     return route.fulfill({json:values.player_id==='000123'?{verified:true,name:'Sintetik oyunçu'}:{verified:false}});
+    }
     if(request.method()!=='GET')return route.abort();
+    if(!live&&p==='/api/payments/inventory')return route.fulfill({json:{products:[{productId:game.id,scope:'none',plans:[]}]}});
+    if(!live&&p==='/app.js')return route.fulfill({contentType:mime['.js'],body:patchAppSource(source,state)});
+    if(liveFixture&&p==='/mehsul/pubg-mobile')return route.fulfill({contentType:mime['.page'],body:files.get('mehsul/pubg-mobile.page')});
+    if(liveFixture)return route.continue();
     if(live)return route.continue();
-    if(p==='/api/payments/inventory')return route.fulfill({json:{products:[{productId:game.id,scope:'none',plans:[]}]}});
     if(p.startsWith('/api/'))return route.fulfill({json:{}});
     if(url.origin!==origin)return route.abort();
-    if(p==='/app.js')return route.fulfill({contentType:mime['.js'],body:patchAppSource(source,state)});
     const file=p.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+p.slice(18):p.slice(1);
     try {
      if(files.has(file+'.page'))return route.fulfill({contentType:mime['.page'],body:files.get(file+'.page')});
@@ -66,13 +80,37 @@ for(const engine of [chromium,webkit]){
    assert.equal(await hero.evaluate(el=>getComputedStyle(el).objectFit),'contain');
    const button=page.getByRole('button',{name:'İndi al',exact:true});
    await button.waitFor();
-   if(!live){
-    await button.click();
-    await page.getByRole('dialog').filter({hasText:game.plans.at(-1).label}).waitFor({timeout:12000});
-    assert.equal(quoteIndex,game.plans.length-1);
+   for(const i of new Set([0,game.plans.length-1])){
+    const plan=game.plans[i];await rows.nth(i).click();await button.click();
+    const modal=page.getByRole('dialog',{name:'Sifariş şərtləri'});
+    await modal.waitFor({timeout:16000});
+    assert((await modal.locator('.cart-warning-product').innerText()).includes(plan.label+' · '+Number(plan.price).toFixed(2).replace('.',',')+' ₼'));
+    assert.equal(await modal.locator('.cart-game-check').count(),6);
+    assert.match(await modal.locator('.cart-game-warning').innerText(),/UC yalnız/);
+    assert.equal(await page.getByLabel('Oyunçu ID-si',{exact:true}).count(),0);
+    const next=modal.getByRole('button',{name:'Növbəti',exact:true});
+    assert.equal(await next.isDisabled(),true);
+    await modal.getByLabel('Oxudum və təsdiqlədim').check();
+    await next.click();
+    const details=page.getByRole('dialog',{name:'Oyunçu ID-ni daxil et'});
+    const player=details.getByLabel('Oyunçu ID-si',{exact:true});
+    await player.waitFor();
+    assert((await details.locator('.cart-entry-note').innerText()).includes(plan.label));
+    assert.match(await details.getByRole('status').innerText(),/oyundakı ID ilə tutuşdur/);
+    if(!live){
+     assert(quoted.has(i));
+     const lookup=details.getByRole('button',{name:'Hesab adını yoxla'});
+     await player.fill('000123');await lookup.click();
+     await details.getByText('Təsdiqlənmiş hesab adı · Sintetik oyunçu').waitFor();
+     assert.equal(lookupIndex,i);
+     await player.fill('000124');
+     assert.equal(await details.getByText(/Sintetik oyunçu/).count(),0);
+     await lookup.click();await details.getByText(/Hesab adını yoxlamaq mümkün olmadı/).waitFor();
+    }
+    await details.getByRole('button',{name:'Bağla'}).click();
    }
    await page.screenshot({path:out+'/pubg-'+(live?'live-':'')+engine.name()+'-'+width+'.png'});
-   console.log(JSON.stringify({live,browser:engine.name(),width,packages:game.plans.length,selectedQuote:quoteIndex,images:true,businessWrites:0}));
+   console.log(JSON.stringify({live,liveFixture,browser:engine.name(),width,packages:game.plans.length,termsAndPlayerId:true,businessWrites:0}));
    await page.close();
   }
  }finally{await browser.close();}

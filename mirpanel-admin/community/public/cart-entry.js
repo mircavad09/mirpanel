@@ -1,8 +1,12 @@
 import {validateDetails} from './checkout-fields.js?v=customer-form-1';
 import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
-import {ensureEntryStyles} from './entry-styles.js?v=customer-form-1';
+import {ensureEntryStyles} from './entry-styles.js?v=game-topup-terms-1';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
+const amount=cents=>Number.isSafeInteger(cents)?(cents/100).toFixed(2).replace('.',',')+' ₼':'';
+function appendTermsText(node,text){
+ for(const [i,part] of text.split('**').entries())node.append(el(i%2?'strong':'span',part));
+}
 const quotes=new Map(),lifetime=30000;
 let quoteSession;
 window.addEventListener('mirpanel:account',event=>{
@@ -75,21 +79,74 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
    else location.assign(target);
   }else ready.open();
  }
- function fields(){const fs=activeQuote.fields||[];if(!fs.length)return commit({});dialog.classList.remove('cart-entry-warning');head.replaceChildren(title,close);body.className='';title.textContent='Sifariş məlumatları';const form=el('form',null,'cart-entry-fields'),intro=el('p',product.title+' · '+activeQuote.planName,'cart-entry-note'),controls=new Map();form.append(intro);for(const f of fs){const label=el('label'),caption=el('span',f.label+(f.required?' *':''));let input;if(f.type==='select'){input=el('select');input.append(el('option',''));for(const option of f.options){const x=el('option',option);x.value=option;input.append(x);}}else input=el(f.type==='textarea'?'textarea':'input');if(input.tagName==='INPUT')input.type=['password','email','tel'].includes(f.type)?f.type:'text';input.value=values[f.key]||'';input.required=f.required;input.autocomplete='off';input.spellcheck=false;input.maxLength=f.digits||f.maxLength;input.minLength=f.minLength;input.placeholder=f.placeholder||f.label;input.setAttribute('aria-label',f.label);if(f.digits){input.inputMode='numeric';input.pattern='[0-9]{'+f.digits+'}';input.addEventListener('input',()=>input.value=input.value.replace(/\D/g,'').slice(0,f.digits));}controls.set(f.key,input);label.append(caption,input);if(f.description)label.append(el('small',f.description));form.append(label);}const next=el('button','Davam et','cart-entry-primary');next.type='submit';form.append(next);form.onsubmit=e=>{e.preventDefault();if(!form.reportValidity())return;try{values=validateDetails(fs,Object.fromEntries([...controls].map(([k,n])=>[k,n.value])));void commit(values);}catch(e){error.textContent=e.message;}};body.replaceChildren(form);}
+ function fields(){
+  const fs=activeQuote.fields||[];if(!fs.length)return commit({});
+  const game=activeQuote.gameTerms,form=el('form',null,'cart-entry-fields'),controls=new Map();
+  dialog.classList.remove('cart-entry-warning');head.replaceChildren(title,close);body.className='';
+  title.textContent=game?'Oyunçu ID-ni daxil et':'Sifariş məlumatları';
+  form.append(el('p',[product.title,activeQuote.planName,game&&amount(activeQuote.unitCents)].filter(Boolean).join(' · '),'cart-entry-note'));
+  for(const f of fs){
+   const name=game&&f.key==='player_id'?'Oyunçu ID-si':f.label,label=el('label'),caption=el('span',name+(f.required?' *':''));
+   let input;
+   if(f.type==='select'){
+    input=el('select');input.append(el('option',''));
+    for(const option of f.options){const x=el('option',option);x.value=option;input.append(x);}
+   }else input=el(f.type==='textarea'?'textarea':'input');
+   if(input.tagName==='INPUT')input.type=['password','email','tel'].includes(f.type)?f.type:'text';
+   input.value=values[f.key]||'';input.required=f.required;input.autocomplete='off';input.spellcheck=false;
+   input.maxLength=f.digits||f.maxLength;input.minLength=f.minLength;input.placeholder=f.placeholder||name;
+   input.setAttribute('aria-label',name);
+   if(f.digits){input.inputMode='numeric';input.pattern='[0-9]{'+f.digits+'}';input.addEventListener('input',()=>input.value=input.value.replace(/\D/g,'').slice(0,f.digits));}
+   controls.set(f.key,input);label.append(caption,input);if(f.description)label.append(el('small',f.description));form.append(label);
+  }
+  const read=()=>validateDetails(fs,Object.fromEntries([...controls].map(([key,node])=>[key,node.value])));
+  const next=el('button','Davam et','cart-entry-primary');next.type='submit';
+  if(game){
+   const manual='Ödənişdən əvvəl oyunçu ID-ni oyundakı ID ilə tutuşdur.';
+   const status=el('p',manual,'cart-game-warning');status.setAttribute('role','status');
+   let revision=0;
+   const verify=button('Hesab adını yoxla',async()=>{
+    if(working||!form.reportValidity())return;
+    error.textContent='';
+    let details;try{details=read();}catch(e){error.textContent=e.message;return;}
+    const attempt=++revision;verify.disabled=next.disabled=true;status.className='cart-game-warning';status.textContent='Hesab adı yoxlanılır…';
+    let result;
+    try{result=await api('/player-name',{productId:product.id,planIndex:index,values:details,termsVersion:activeQuote.termsVersion});}catch{}
+    if(attempt!==revision||!form.isConnected||life.signal.aborted)return;
+    verify.disabled=next.disabled=false;
+    if(result?.verified===true&&typeof result.name==='string'&&result.name){
+     status.className='cart-game-verified';status.textContent='Təsdiqlənmiş hesab adı · '+result.name;
+    }else status.textContent='Hesab adını yoxlamaq mümkün olmadı. '+manual;
+   });
+   form.addEventListener('input',()=>{revision++;verify.disabled=next.disabled=working;status.className='cart-game-warning';status.textContent=manual;});
+   form.append(verify,status);
+  }
+  form.append(next);
+  form.onsubmit=e=>{e.preventDefault();if(next.disabled||!form.reportValidity())return;try{values=read();void commit(values);}catch(e){error.textContent=e.message;}};
+  body.replaceChildren(form);
+  if(game){title.tabIndex=-1;title.focus();dialog.scrollTop=0;}
+ }
  function terms(display){
-  dialog.classList.add('cart-entry-warning');body.className='cart-warning-body';title.textContent='Diqqət!';
+  const game=display.gameTerms;
+  dialog.classList.add('cart-entry-warning');dialog.classList.toggle('cart-game-entry',!!game);body.className='cart-warning-body';title.textContent=game?'Sifariş şərtləri':'Diqqət!';
+  title.id='cartEntryTitle';dialog.removeAttribute('aria-label');dialog.setAttribute('aria-labelledby',title.id);
   const icon=el('span',null,'cart-warning-icon');icon.innerHTML='<svg width="23" height="23" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="m10.3 4-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3l-8-14a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4m0 3h.01"/></svg>';
   const heading=el('div',null,'cart-warning-heading');
   const planName=display.planName||plan.label||plan.name||(plan.months?plan.months+' ay':'Seçilmiş paket');
-  heading.append(title,el('p',product.title+' · '+planName,'cart-warning-product'));head.replaceChildren(icon,heading,close);
-  const text=el('div',null,'cart-entry-terms');text.tabIndex=0;text.setAttribute('aria-label','Məhsul xəbərdarlığı');
-  const content=String(display.terms||'Bu məhsul üçün ümumi istifadə və sifariş şərtləri tətbiq olunur.');
+  heading.append(title,el('p',[product.title,planName,game&&amount(display.unitCents)].filter(Boolean).join(' · '),'cart-warning-product'));head.replaceChildren(icon,heading,close);
+  const text=el('div',null,'cart-entry-terms');text.tabIndex=0;text.setAttribute('aria-label',game?'Məhsulun sifariş qaydaları':'Məhsul xəbərdarlığı');
+  if(game){
+   const rules=el('ul',null,'cart-game-rules');rules.setAttribute('role','list');
+   for(const rule of game.rules){const li=el('li'),mark=el('span','✓','cart-game-check'),copy=el('span');mark.setAttribute('aria-hidden','true');appendTermsText(copy,rule);li.append(mark,copy);rules.append(li);}
+   text.append(el('p',game.warning,'cart-game-warning'),rules);
+  }
+  const content=String(display.terms||(!game?'Bu məhsul üçün ümumi istifadə və sifariş şərtləri tətbiq olunur.':''));
   let list=null;
-  for(const line of content.split('\n')){const bullet=/^\s*[-*•]\s+/.test(line);if(bullet&&!list){list=el('ul');text.append(list);}if(!bullet)list=null;const p=el(bullet?'li':'p');for(const [i,part]of line.replace(/^\s*[-*•]\s+/,'').split('**').entries())p.append(el(i%2?'strong':'span',part));(list||text).append(p);}
+  for(const line of content.split('\n')){if(!line.trim())continue;const bullet=/^\s*[-*•]\s+/.test(line);if(bullet&&!list){list=el('ul');text.append(list);}if(!bullet)list=null;const p=el(bullet?'li':'p');appendTermsText(p,line.replace(/^\s*[-*•]\s+/,''));(list||text).append(p);}
   if(display.note)text.append(el('p',display.note));
   const footer=el('footer',null,'cart-warning-footer'),label=el('label',null,'cart-entry-consent'),check=el('input');check.type='checkbox';
-  label.append(check,el('span','Xəbərdarlığı oxudum və qəbul edirəm'));
-  const cancel=button('Ləğv et',()=>{if(!working)dialog.close();}),next=button('Təsdiqləyirəm',async()=>{
+  label.append(check,el('span',game?'Oxudum və təsdiqlədim':'Xəbərdarlığı oxudum və qəbul edirəm'));
+  const cancel=button('Ləğv et',()=>{if(!working)dialog.close();}),next=button(game?'Növbəti':'Təsdiqləyirəm',async()=>{
    if(!check.checked||working)return;working=true;next.disabled=cancel.disabled=true;error.textContent='';
    try{activeQuote=display;working=false;await fields();}
    finally{working=false;next.disabled=!check.checked;cancel.disabled=false;}
@@ -107,7 +164,7 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
     error.textContent=q.available===0?'Bu paket hazırda stokda yoxdur.':'Paket dəyişib. Sifarişlərim səhifəsini yenidən açın və təkrar yoxlayın.';
     body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));return;
    }
-   if(editLine?.draftId&&!reaccept){const saved=await api('/draft?id='+encodeURIComponent(editLine.draftId));if(life.signal.aborted)return;values=saved.values;activeQuote=q;if(saved.termsVersion===q.termsVersion){fields();return;}}
+   if(editLine?.draftId&&!reaccept){const saved=await api('/draft?id='+encodeURIComponent(editLine.draftId));if(life.signal.aborted)return;values=saved.values;activeQuote=q;if(saved.termsVersion===q.termsVersion){title.id='cartEntryTitle';dialog.setAttribute('aria-labelledby',title.id);fields();return;}}
    guest=d.balanceCents===null;terms(q);
    if(reaccept)error.textContent='Paketin şərtləri dəyişib. Yeni şərtləri oxuyub yenidən təsdiqləyin.';
   }catch(e){if(!life.signal.aborted){error.textContent=repeatPlanName!==null&&e.status===409?e.message:'Sifariş şərtlərini almaq mümkün olmadı.';body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));}}

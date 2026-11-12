@@ -58,7 +58,7 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
  }
  const period=subscriptionPeriod(plan);
  if(final&&(plan.supplier||epinbyPlan(p,plan)||/^epinby_\d+$/.test(p.id)))await createEpinbyOrders({pool:async()=>c,security:createPaymentSecurity(config),loadCatalog:catalog,transport:epinbyTransport}).preflight(c,p,plan,x.quantity,values,x.planIndex);
- const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(draftRenewal?{renewalOnly:true}:{}),...(renewal?{renewal}:{}),detailsMissing,termsVersion,termsMissing,note,fields,maskedDetails:maskedDetails(fields,values),...(final&&Object.keys(values).length?{detailsCipher:createPaymentSecurity(config).encryptSecret(JSON.stringify(values))}:{}),terms,title:p.title,planName:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Plan'),image:p.image||'',unitCents:price,standardCents:standard,available:remaining,salesDisabled:available.salesDisabled,tracked:ip?.tracked===true,signature:signature(plan),sourcePlanKey:planKey(plan,x.planIndex),duration:period?.unit==='months'?period.count:null,...(period?.unit==='days'?{durationDays:period.count}:{})});}return{items:result,totalCents:result.reduce((s,x)=>s+x.unitCents*x.quantity,0)};}
+ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(draftRenewal?{renewalOnly:true}:{}),...(renewal?{renewal}:{}),detailsMissing,termsVersion,termsMissing,note,fields,maskedDetails:maskedDetails(fields,values),...(final&&Object.keys(values).length?{detailsCipher:createPaymentSecurity(config).encryptSecret(JSON.stringify(values))}:{}),terms,...(termsState.gameTerms?{gameTerms:termsState.gameTerms}:{}),title:p.title,planName:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Plan'),image:p.image||'',unitCents:price,standardCents:standard,available:remaining,salesDisabled:available.salesDisabled,tracked:ip?.tracked===true,signature:signature(plan),sourcePlanKey:planKey(plan,x.planIndex),duration:period?.unit==='months'?period.count:null,...(period?.unit==='days'?{durationDays:period.count}:{})});}return{items:result,totalCents:result.reduce((s,x)=>s+x.unitCents*x.quantity,0)};}
  async function owned(c,id,owner,user,lock=false){if(!uuid(id))throw fail(400,'Sifariş identifikatoru düzgün deyil.');const g=(await c.query('select * from mirpanel_community.shop_checkouts where id=$1 and owner_hash=$2'+(lock?' for update':''),[id,owner])).rows[0];if(!g||g.user_id&&g.user_id!==user)throw fail(404,'Sifariş tapılmadı.');return g;}
  async function group(c,g,sendWhatsApp=false){
  let rows=(await c.query('select l.id,l.product_id,l.plan_id,l.title,l.plan_name,l.image,l.unit_cents::text,l.snapshot,o.id as order_id,o.order_code,o.status,o.payment_confirmed from mirpanel_community.shop_lines l left join public.payment_orders o on o.id=l.order_id where l.checkout_id=$1 order by position',[g.id])).rows;
@@ -110,6 +110,18 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
  if(g.mode==='wallet')await postLedger(c,{actor:g.user_id,user:g.user_id,key:g.id,cents:-Number(g.total_cents),kind:'purchase_debit',reason:'Səbət sifarişinin balansla ödənişi'});
  await c.query("update mirpanel_community.shop_checkouts set state='submitted',submitted_at=clock_timestamp() where id=$1",[g.id]);g.state='submitted';return group(c,g,true);}
  return{
+ async playerName(req,{productId,planIndex,values,termsVersion}){
+  if(typeof productId!=='string'||!Number.isSafeInteger(planIndex)||planIndex<0)throw fail(400,'Paket məlumatı düzgün deyil.');
+  const {pool}=await account(req,{verified:false});
+  const [data,stock]=await Promise.all([catalog(),snapshot()]);
+  const product=data.products.find(p=>p.id===productId&&p.active!==false),plan=product?.plans?.[planIndex];
+  if(!plan)throw fail(404,'Paket tapılmadı.');
+  const supplier=epinbyPlan(product,plan),inventory=inventoryAvailability(product,stock.find(p=>p.productId===productId));
+  if(supplier?.type!=='TOPUP'||!inventory.plans[planIndex]?.canOrder||!acceptsTerms(termsInfo(product,plan,planIndex),termsVersion))throw fail(409,'Bu paket üçün hesab adı yoxlanılmır.');
+  let details;
+  try{details=validateDetails(supplier.fields,values);}catch(e){throw fail(400,e.message);}
+  return createEpinbyOrders({security:createPaymentSecurity(config),transport:epinbyTransport}).playerName(pool,supplier,details);
+ },
  async subscriptions(req){const {pool,user}=await account(req,{verified:false});if(!user)throw fail(401,'Hesabınıza daxil olun.');return customerSubscriptions(pool,user,catalog,snapshot);},
  async saveDraft(req,owner,b){
   const scope=await account(req,{verified:false});
