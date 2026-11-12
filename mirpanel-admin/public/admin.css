@@ -1523,23 +1523,24 @@ th {
 #gameProductsView .gameCatalogEmpty h3 { font-size: 17px; line-height: 1.5; max-width: 440px; }
 #gameProductsView .gameCatalogEmpty p { color: #a0a7af; font-size: 13px; line-height: 1.6; max-width: 440px; }
 #gameProductsView .gameCatalogEmpty[hidden] { display: none; }
-#gameProductsView .gameCatalogProduct[hidden], #gameProductsView img[hidden] { display: none; }
-#gameProductsView .gameCatalogImagePicker { margin: 10px 0; }
-#gameProductsView [data-game-add] { margin-top: 10px; }
-#gameProductsView .gameCatalogGrid { display: grid; grid-template-columns: repeat(auto-fill,minmax(min(100%,270px),1fr)); gap: 12px; }
-#gameProductsView .gameCatalogGrid:empty { display: none; }
-#gameProductsView .gameCatalogProduct { min-width: 0; padding: 14px; border: 1px solid var(--line); border-radius: 12px; background: #191b1e; }
-#gameProductsView .gameCatalogProductHead { display: flex; align-items: center; gap: 12px; min-width: 0; margin-bottom: 14px; }
-#gameProductsView .gameCatalogProductHead > div { min-width: 0; overflow-wrap: anywhere; }
-#gameProductsView .gameCatalogProductHead img { width: 64px; height: 64px; flex: none; border-radius: 10px; object-fit: contain; background: #101214; }
-#gameProductsView .gameCatalogProductHead h3 { font-size: 15px; line-height: 1.4; margin: 3px 0; }
-#gameProductsView .gameCatalogProductHead small, #gameProductsView .gameCatalogProductHead p { font-size: 12px; line-height: 1.5; color: #a0a7af; }
-#gameProductsView .gameCatalogPrices { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; align-items: end; }
-#gameProductsView .gameCatalogPrices > div > span { display: block; font-size: 12px; color: #a0a7af; }
-#gameProductsView .gameCatalogPrices strong { display: block; margin-top: 8px; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+#gameProductsView .gameCatalogList { display: grid; gap: 5px; }
+#gameProductsView .gameCatalogProduct { display:grid; grid-template-columns:minmax(0,3fr) minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,1.4fr) minmax(120px,auto); align-items:center; gap:6px 12px; min-width:0; padding:7px 10px; border:1px solid var(--line); border-radius:8px; background:#191b1e; }
+#gameProductsView .gameCatalogProductHead { min-width:0; overflow-wrap:anywhere; }
+#gameProductsView .gameCatalogProductHead h3 { font-size:14px; line-height:1.35; margin:0; }
+#gameProductsView .gameCatalogProductHead small:not([hidden]), #gameProductsView .gameCatalogSupplierPrice > span { display:block; font-size:11px; line-height:1.35; color:#aeb5bd; }
+#gameProductsView .gameCatalogStock { font-size:12px; margin:0; overflow-wrap:anywhere; }
+#gameProductsView .gameCatalogSupplierPrice strong { display:block; font-size:14px; font-variant-numeric:tabular-nums; overflow-wrap:anywhere; }
+#gameProductsView .gameCatalogProduct label { gap:3px; font-size:11px; }
+#gameProductsView .gameCatalogProduct :is(input,.btn) { min-height:36px; }
+#gameProductsView [data-game-add] { white-space:normal; min-width:0; }
+#gameProductsView .gameCatalogMore { margin-top:8px; }
 @media (max-width: 1050px) {
   #gameProductsView .gameCatalogFilters { grid-template-columns: repeat(2,minmax(0,1fr)); }
   #gameProductsView .gameCatalogSearch { grid-column: 1 / -1; }
+  #gameProductsView .gameCatalogProduct { grid-template-columns: repeat(2,minmax(0,1fr)); }
+  #gameProductsView .gameCatalogProductHead { grid-column:1/-1; }
+  #gameProductsView .gameCatalogProduct :is(input,.btn) { min-height:44px; }
+  #gameProductsView [data-game-add] { align-self:end; }
 }
 @media (max-width: 600px) {
   #gameProductsView .gameCatalogSupplier { padding: 12px; gap: 12px; }
@@ -1564,10 +1565,6 @@ th {
 .productFormGroups .formFieldAdvanced summary{cursor:pointer;color:var(--muted);font-size:13px}
 .productFormGroups .formFieldAdvanced>div{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,140px),1fr));gap:8px;margin-top:8px}
 .productFormGroups [data-field-preview]{display:grid;gap:8px;margin-top:6px}
-.gamePackageImageRow{display:flex;align-items:center;gap:8px;min-width:0}
-.gamePackageImageRow input{min-width:0;flex:1}
-.gamePackageImageRow img{object-fit:contain;border-radius:5px;background:#141414;flex:none}
-.gamePackageImageRow img[hidden]{display:none}
 .gameProductPicker{box-sizing:border-box;width:min(460px,calc(100% - 24px));max-height:90dvh;padding:16px;border:1px solid #45402e;border-radius:14px;background:#181a1c;color:#f7f5ef}
 .gameProductPicker::backdrop{background:#0009}
 .gameProductPicker form,.gameProductPicker label{display:grid;gap:7px;min-width:0}

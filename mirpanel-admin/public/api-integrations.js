@@ -31,51 +31,68 @@
   }
   const catalogCards=new Map();
   let catalogPending=false, catalogConnected=false, catalogLoaded=false,catalogGames=[],categoryRun=0,catalogRun=0,catalogPage=0,catalogLast=1,catalogTotal=0,searchRun=0,searchTimer;
+  let pageFlight, pageError, catalogCurrency='USD', visibleLimit=50;
   const norm=value=>String(value||'').toLocaleLowerCase('az').normalize('NFC').trim();
-  function filterCatalog(){
-    const {search,game,category}=Object.fromEntries(new FormData(catalogFilters));
-    const query=norm(search);let count=0;
-    for(const {card,item} of catalogCards.values()){
-      card.hidden=Boolean((game&&Number(game)!==item.gameId)||(category&&Number(category)!==item.categoryId)||
-        (query&&!norm([item.game,item.name,item.package].join(' ')).includes(query)));
-      if(!card.hidden)count++;
-    }
-    if(catalogLoaded){
-      $('gameCatalogEmptyTitle').textContent=catalogPage<catalogLast?'Yüklənmiş paketlərdə nəticə yoxdur. Digər səhifələri yükləyin.':'Bu seçimə uyğun paket tapılmadı.';
-      $('gameCatalogEmptyTitle').parentElement.hidden=count>0;
-      $('gameCatalogHint').textContent=count+' görünən · '+catalogCards.size+' / '+catalogTotal+' paket yüklənib'+(catalogPage<catalogLast?' · Kataloq natamamdır.':'');
-    }
+  const searchText=value=>String(value||'').toLowerCase().normalize('NFKD').replace(/\p{M}/gu,'').replace(/ı/g,'i').replace(/[—–]/g,' ').replace(/\s+/g,' ').trim();
+  function gameName(item){
+    const source=[item.game,item.category].join(' ');
+    if(/\bPUBG\b/i.test(source))return 'PUBG Mobile';
+    if(/\bFree\s*Fire\b/i.test(source))return 'Free Fire';
+    return item.game||item.category||'';
   }
-  catalogFilters?.addEventListener('input',filterCatalog);
+  function packageTitle(item){
+    const game=gameName(item);
+    return game&&!searchText(item.name).startsWith(searchText(game)+' ')?game+' — '+item.name:item.name;
+  }
+  function filterCatalog(){
+    if(!catalogLoaded)return;
+    const {search,game,category}=Object.fromEntries(new FormData(catalogFilters));
+    const terms=searchText(search).split(' ').filter(Boolean);
+    const matches=[...catalogCards.values()].filter(({item,key})=>
+      (!game||Number(game)===item.gameId)&&(!category||Number(category)===item.categoryId)&&terms.every(term=>key.includes(term)));
+    const list=$('gameCatalogProducts'),rows=matches.slice(0,visibleLimit).map(entry=>entry.card||(entry.card=renderCatalogRow(entry.item)));
+    const visible=new Set(rows);
+    for(const row of [...list.children])if(!visible.has(row))row.remove();
+    rows.forEach((row,i)=>{if(list.children[i]!==row)list.insertBefore(row,list.children[i]||null);});
+    const incomplete=catalogPage<catalogLast;
+    $('gameCatalogEmptyTitle').textContent=incomplete?'Uyğun paket hələ tapılmayıb.':'Bu seçimə uyğun paket tapılmadı.';
+    $('gameCatalogEmptyTitle').parentElement.hidden=rows.length>0||incomplete;
+    $('gameCatalogHint').textContent=rows.length+' görünən · '+catalogCards.size+' / '+(catalogPage?catalogTotal:'…')+' paket yüklənib'+
+      (pageError?' · '+pageError.message:incomplete?(terms.length?' · Bütün uyğun səhifələrdə axtarılır…':' · Digər paketlər növbəti səhifələrdədir.'):'');
+    more.hidden=!pageError&&matches.length<=visibleLimit&&!incomplete;
+    more.disabled=!!pageFlight;
+    more.textContent=pageError?'Yenidən cəhd et':'Daha çox paket yüklə';
+  }
   // The provider has no documented product-name search. Extend the matching
   // game/category page by page, exposing partial results until the scan finishes.
-  field(catalogFilters,'search').addEventListener('input',()=>{
+  function scanCatalog(delay=0){
     const run=++searchRun;clearTimeout(searchTimer);
-    if(!norm(field(catalogFilters,'search').value))return;
+    if(!catalogConnected||!searchText(field(catalogFilters,'search').value))return;
     searchTimer=setTimeout(async()=>{
-      while(run===searchRun&&catalogPage<catalogLast){
+      while(run===searchRun&&!pageError&&catalogPage<catalogLast){
         if(await loadProductPage(catalogPage+1)!==true)break;
       }
-    },250);
-  });
-  catalogFilters?.addEventListener('reset',()=>queueMicrotask(()=>{searchRun++;categoryRun++;field(catalogFilters,'category').replaceChildren(new Option('Bütün kateqoriyalar',''));void loadProductPage(1);}));
+    },delay);
+  }
+  field(catalogFilters,'search').addEventListener('input',()=>{visibleLimit=50;filterCatalog();scanCatalog(250);});
+  catalogFilters.addEventListener('submit',()=>scanCatalog());
+  catalogFilters.addEventListener('reset',()=>queueMicrotask(()=>{
+    categoryRun++;categoryRetry.hidden=true;
+    const categories=field(catalogFilters,'category');categories.replaceChildren(new Option('Bütün kateqoriyalar',''));categories.disabled=true;
+    restartCatalog();
+  }));
   const categoryRetry=document.createElement('button');categoryRetry.type='button';categoryRetry.className='btn';categoryRetry.textContent='Kateqoriyaları yenidən yoxla';categoryRetry.hidden=true;
   $('gameCatalogHint')?.after(categoryRetry);categoryRetry.onclick=()=>field(catalogFilters,'game').dispatchEvent(new Event('change'));
   field(catalogFilters,'game').addEventListener('change',async()=>{
-    searchRun++;const run=++categoryRun,game=catalogGames.find(g=>g.id===Number(field(catalogFilters,'game').value));
+    const run=++categoryRun,game=catalogGames.find(g=>g.id===Number(field(catalogFilters,'game').value));
     categoryRetry.hidden=true;
     const categories=field(catalogFilters,'category');categories.replaceChildren(new Option('Bütün kateqoriyalar',''));categories.disabled=true;
-    void loadProductPage(1);
+    restartCatalog();
     if(!game)return;
     try{
       const result=await request(url+'?view=epinby-categories&gameId='+game.id);
       if(run!==categoryRun)return;
       if(result.error)throw Error(result.error);
-      for(const {item,card} of catalogCards.values()){
-        if(item.game!==game.name||item.image)continue;
-        const image=result.categories.find(c=>c.id===item.categoryId||c.name===item.category)?.image;
-        if(image){item.image=image;const img=card.querySelector('img');img.hidden=false;img.src=image;}
-      }
       const select=field(catalogFilters,'category'),current=select.value;
       select.replaceChildren(new Option('Bütün kateqoriyalar',''),...result.categories.map(c=>new Option(c.name,c.id)));
       select.disabled=!result.categories.length;
@@ -83,7 +100,7 @@
       filterCatalog();
     }catch(error){if(run===categoryRun){$('gameCatalogHint').textContent=error.message;categoryRetry.hidden=false;}}
   });
-  field(catalogFilters,'category').addEventListener('change',()=>{searchRun++;void loadProductPage(1);});
+  field(catalogFilters,'category').addEventListener('change',restartCatalog);
   const pubgImages={3436:'/uploads/products/epinby_3436-1794438474049-f9e16779.png',...Object.fromEntries([325,660,1800,3850,8100].map((uc,i)=>[3437+i,'/uploads/products/pubg-'+uc+'-uc.png']))};
   function packageLocation(id){
     const products=state.data?.products||[];
@@ -103,7 +120,7 @@
       const all=state.data.products.filter(p=>p.id!==existing?.product.id&&
         (!telegramStars||(p.active!==false&&p.id==='telegram_premium')));
       if(telegramStars&&!all.length){toast('Telegram Premium məhsulu aktiv olmalıdır.','bad');resolve(null);return;}
-      const game=item.game||item.category;
+      const game=gameName(item);
       const suggested=telegramStars?all[0]:all.find(p=>p.active!==false&&norm(p.title)===norm(game));
       categories.append(new Option('Bütün kateqoriyalar',''),...state.data.categories.map(c=>new Option(c.name,c.key)));
       let selected=suggested?.id||'';
@@ -120,97 +137,99 @@
     });
   }
   async function addPackage(item,card){
-    const price=card.querySelector('[data-sale-price]'), picker=card.querySelector('[data-product-file]');
-    const button=card.querySelector('[data-game-add]'), file=picker.files[0];
+    const price=card.querySelector('[data-sale-price]'),button=card.querySelector('[data-game-add]');
     if(button.disabled||!catalogConnected)return;
     if(!state.data){toast('MirPanel kataloqu hələ yüklənir.','bad');return;}
     if(state.dirty){toast('Əvvəl mövcud qaralamanı yayımlayın və ya bağlayın.','bad');return;}
     const existing=packageLocation(item.id);
-    if(existing&&!existing.legacy){toast('Bu paket artıq '+existing.product.title+' məhsulundadır.','bad');return;}
-    if(!existing&&!price.reportValidity())return;
-    let image=existing?.plan.image||existing?.product.image||pubgImages[item.id]||item.image;
-    if(!image&&!file){picker.setCustomValidity('Paket üçün şəkil seçin.');picker.reportValidity();picker.setCustomValidity('');return;}
+    if(!price.reportValidity())return;
+    const salePrice=price.valueAsNumber;
+    const updating=existing&&!existing.legacy;
+    if(updating&&salePrice===Number(existing.plan.price))return;
     const providerFields=item.fields||[];
-    if(!existing?.product.supplier&&(!['TOPUP','VOUCHER'].includes(item.type)||providerFields.some(f=>!['player_id','server_id','input_2','input_3','input_4','input_5','input_6','input_7','input_8'].includes(f.key)))){toast('Bu məhsulun xüsusi sifariş sahələri hələ dəstəklənmir.','bad');return;}
+    if(!existing&&(!['TOPUP','VOUCHER'].includes(item.type)||providerFields.some(f=>!['player_id','server_id','input_2','input_3','input_4','input_5','input_6','input_7','input_8'].includes(f.key)))){toast('Bu məhsulun xüsusi sifariş sahələri hələ dəstəklənmir.','bad');return;}
     const expected=state.data;
     button.disabled=true;
     try{
-      const targetId=await chooseProduct(item,existing);if(!targetId)return;
+      const targetId=updating?existing.product.id:await chooseProduct(item,existing);if(!targetId)return;
       const target=expected.products.find(p=>p.id===targetId);
-      const title=item.game||item.category,groupId=slug(title);
+      const title=gameName(item),groupId=slug(title);
       if(targetId==='__new_game__'&&(!groupId||expected.products.some(p=>p.id===groupId)))throw Error('Məhsulun adı artıq istifadə olunur. Siyahıdan mövcud məhsulu seçin.');
       if(!target&&targetId!=='__new_game__')throw Error('Məhsul tapılmadı.');
       if(target?.supplier)throw Error('Bu ayrıca Epinby kartıdır. Əsas məhsulu seçin.');
-      const cents=existing?Number(existing.plan.price):Number(price.value);
-      if(file){
-        if(!productImageUpload.allowedTypes.has(file.type)||file.size>productImageUpload.maxSize)throw Error('JPG, PNG və ya WebP (ən çox 5 MB) seçin.');
-        const uploaded=await api('/api/upload-product-image',{method:'POST',body:JSON.stringify({
-          productId:'epinby_'+item.id,fileName:file.name,mimeType:file.type,contentBase64:await readFileAsBase64(file)
-        })});
-        if(!uploaded.ok||!uploaded.staged||!uploaded.path)throw Error('Şəkil saxlanılmadı.');
-        image=uploaded.path;
-      }
+      if(target?.active===false)throw Error('Aktiv məhsul seçin.');
       const current=packageLocation(item.id);
       if(state.data!==expected||state.dirty||current?.product!==existing?.product)throw Error('Kataloq dəyişdi. Yenidən yoxlayın.');
-      const category='epinby-games';
-      if(!target&&!expected.categories.some(c=>c.key===category))expected.categories.push({key:category,name:'Oyun məhsulları'});
-      const destination=target||ensureProduct({id:groupId,title,category,image,currency:'₼',seoSlug:groupId,order:nextProductOrder(),active:true,epinbyGroup:true,plans:[]});
-      const supplier=existing?.product.supplier||{provider:'epinby',productId:item.id,type:item.type,gameId:item.gameId,categoryId:item.categoryId,fields:providerFields};
-      destination.plans.push({...existing?.plan,id:'epinby_'+item.id,pricingId:existing?.plan.pricingId||crypto.randomUUID(),label:existing?.plan.label||item.package||item.name,price:cents,image,supplier});
-      if(!target)expected.products.push(destination);
-      if(existing){existing.product.active=false;existing.product.seoIndex=false;existing.product.includeInSitemap=false;}
+      if(updating)existing.plan.price=salePrice;
+      else{
+        const category='epinby-games';
+        if(!target&&!expected.categories.some(c=>c.key===category))expected.categories.push({key:category,name:'Oyun məhsulları'});
+        const image=existing?.plan.image||existing?.product.image||pubgImages[item.id]||item.image||'';
+        const destination=target||ensureProduct({id:groupId,title,category,image,currency:'₼',seoSlug:groupId,order:nextProductOrder(),active:true,epinbyGroup:true,plans:[]});
+        const supplier=existing?.product.supplier||{provider:'epinby',productId:item.id,type:item.type,gameId:item.gameId,categoryId:item.categoryId,fields:providerFields};
+        destination.plans.push({...existing?.plan,id:'epinby_'+item.id,pricingId:existing?.plan.pricingId||crypto.randomUUID(),label:existing?.plan.label||item.package||item.name,price:salePrice,image,supplier});
+        if(!target)expected.products.push(destination);
+        if(existing){existing.product.active=false;existing.product.seoIndex=false;existing.product.includeInSitemap=false;}
+      }
       markDirty();renderAll();
-      toast('Paket '+destination.title+' məhsuluna bağlandı. Canlıya çıxarmaq üçün yayımı təsdiqləyin.','good');
+      refreshPackageBinding(item,card);
+      toast((updating?'Qiymət yeniləndi.':'Paket məhsula bağlandı.')+' Canlıya çıxarmaq üçün yayımı təsdiqləyin.','good');
       $('saveBtn').click();
     }catch(error){toast(error.message,'bad');}
-    finally{button.disabled=Boolean(packageLocation(item.id)&&!packageLocation(item.id).legacy);}
+    finally{button.disabled=false;}
   }
-  function showCatalog(products,currency,append=false){
-    const previous=append?new Map():new Map(catalogCards);if(!append)catalogCards.clear();
-    const list=$('gameCatalogProducts');
-    for(const item of products){
-      const old=previous.get(item.id)||catalogCards.get(item.id);
-      const card=old?.card||$('gameCatalogProductTemplate').content.firstElementChild.cloneNode(true);
-      const put=(selector,value)=>{card.querySelector(selector).textContent=value||'';};
-      put('[data-game-name]',[item.game,item.category].filter(Boolean).join(' · '));put('[data-product-name]',item.name);
-      put('[data-product-package]',item.package);put('[data-supplier-price]',item.price);put('[data-supplier-currency]',currency);
-      put('[data-stock]',['UNLIMITED','INFINITE'].includes(item.stockStatus)?'Mövcuddur · limitsiz':item.stockCount===0||item.stockStatus==='OUT_OF_STOCK'?'Stokda yoxdur':
-        item.stockCount>0?'Mövcuddur · '+item.stockCount+' ədəd':'Mövcudluq məlum deyil');
-      const image=card.querySelector('img');image.hidden=!item.image;
-      image.onerror=()=>{image.hidden=true;const entry=catalogCards.get(item.id);if(entry?.item===item)item.image=null;};
-      if(item.image)image.src=item.image;else image.removeAttribute('src');
-      const saved=packageLocation(item.id),button=card.querySelector('[data-game-add]'),picker=card.querySelector('[data-product-file]');
-      const price=card.querySelector('[data-sale-price]'),thumb=card.querySelector('[data-package-preview]');
-      const fallback=saved?.plan.image||saved?.product.image||pubgImages[item.id]||item.image;
-      const preview=()=>{
-        if(thumb.dataset.objectUrl)URL.revokeObjectURL(thumb.dataset.objectUrl);
-        const file=picker.files[0],source=file?URL.createObjectURL(file):fallback;
-        thumb.dataset.objectUrl=file?source:'';thumb.hidden=!source;
-        if(source)thumb.src=/^(?:https?:|blob:)/i.test(source)?source:'https://mirpanel.com/'+source.replace(/^\/+/, '');else thumb.removeAttribute('src');
-      };
-      picker.onchange=preview;preview();
-      if(saved)price.value=saved.plan.price??'';
-      price.readOnly=!!saved;picker.disabled=!!saved&&!saved.legacy;
-      button.textContent=saved&&!saved.legacy?'Kataloqda var · '+saved.product.title:saved?'Məhsula bağla':'Sayta əlavə et';button.disabled=!!saved&&!saved.legacy;
-      button.onclick=()=>void addPackage(item,card);
-      catalogCards.set(item.id,{item,card});list.append(card);previous.delete(item.id);
-    }
-    for(const {card} of previous.values()){const thumb=card.querySelector('[data-package-preview]');if(thumb.dataset.objectUrl)URL.revokeObjectURL(thumb.dataset.objectUrl);card.remove();}
+  function refreshPackageBinding(item,card){
+    const saved=packageLocation(item.id),bound=card.querySelector('[data-bound-product]');
+    if(saved)card.querySelector('[data-sale-price]').value=saved.plan.price??'';
+    bound.hidden=!saved;
+    bound.textContent=saved?'Kataloqda var · '+saved.product.title:'';
+    card.querySelector('[data-game-add]').textContent=saved&&!saved.legacy?'Qiyməti yenilə':'Sayta əlavə et';
+  }
+  function renderCatalogRow(item){
+    const card=$('gameCatalogProductTemplate').content.firstElementChild.cloneNode(true);
+    const put=(selector,value)=>{card.querySelector(selector).textContent=value||'';};
+    put('[data-game-name]',[...new Set([item.game,item.category,item.region].filter(value=>value&&norm(value)!==norm(gameName(item))))].join(' · '));
+    put('[data-product-name]',packageTitle(item));
+    put('[data-supplier-price]',item.price);put('[data-supplier-currency]',catalogCurrency);
+    put('[data-stock]',['UNLIMITED','INFINITE'].includes(item.stockStatus)?'Mövcuddur · limitsiz':item.stockCount===0||item.stockStatus==='OUT_OF_STOCK'?'Stokda yoxdur':
+      item.stockCount>0?'Mövcuddur · '+item.stockCount+' ədəd':'Mövcudluq məlum deyil');
+    refreshPackageBinding(item,card);
+    card.querySelector('[data-game-add]').onclick=()=>void addPackage(item,card);
+    return card;
+  }
+  const more=document.createElement('button');more.type='button';more.className='btn gameCatalogMore';more.hidden=true;
+  $('gameCatalogProducts')?.after(more);
+  more.onclick=async()=>{
+    const retry=!!pageError;
+    if(!retry)visibleLimit+=50;
+    const shown=$('gameCatalogProducts').childElementCount;
     filterCatalog();
+    if((retry||shown===$('gameCatalogProducts').childElementCount)&&catalogPage<catalogLast){
+      if(await loadProductPage(catalogPage+1))scanCatalog();
+    }
+  };
+  function restartCatalog(){
+    catalogRun++;searchRun++;clearTimeout(searchTimer);
+    catalogCards.clear();catalogPage=0;catalogLast=1;catalogTotal=0;visibleLimit=50;pageFlight=null;pageError=null;
+    if(!catalogConnected)return;
+    void loadProductPage(1);scanCatalog();
   }
-  const more=document.createElement('button');more.type='button';more.className='btn';more.textContent='Daha çox paket yüklə';more.hidden=true;
-  $('gameCatalogProducts')?.after(more);more.onclick=()=>void loadProductPage(catalogPage+1);
-  async function loadProductPage(page){
-    const run=++catalogRun,params=new URLSearchParams({view:'epinby-catalog',page,gameId:field(catalogFilters,'game').value,categoryId:field(catalogFilters,'category').value});
-    more.disabled=true;$('gameCatalogHint').textContent='Paketlər yüklənir… Mövcud nəticələr saxlanılır.';
-    try{
-      const result=await request(url+'?'+params);if(run!==catalogRun)return false;
-      if(result.error)throw Error(result.error);
+  function loadProductPage(page){
+    if(pageFlight)return pageFlight;
+    const run=catalogRun,params=new URLSearchParams({view:'epinby-catalog',page,gameId:field(catalogFilters,'game').value,categoryId:field(catalogFilters,'category').value});
+    pageError=null;
+    pageFlight=request(url+'?'+params).then(result=>{
+      if(run!==catalogRun)return false;
+      if(result.error||!result.meta)throw Error(result.error||'Epinby bağlantısını yoxlayın.');
       catalogPage=result.meta.page;catalogLast=result.meta.lastPage;catalogTotal=result.meta.total;catalogLoaded=true;
-      showCatalog(result.products,result.connection.currency,page>1);more.hidden=catalogPage>=catalogLast;more.textContent='Daha çox paket yüklə';more.onclick=()=>void loadProductPage(catalogPage+1);
+      catalogCurrency=result.connection.currency||'USD';
+      for(const item of result.products)if(!catalogCards.has(item.id))catalogCards.set(item.id,{
+        item,key:searchText([packageTitle(item),item.game,item.category,item.region,item.package,item.id].join(' '))});
       return true;
-    }catch(error){if(run===catalogRun){$('gameCatalogHint').textContent=error.message+' · Mövcud nəticələr natamam ola bilər.';more.hidden=false;more.textContent='Yenidən cəhd et';more.onclick=()=>void loadProductPage(page);}return false;}
-    finally{if(run===catalogRun)more.disabled=false;}
+    }).catch(error=>{if(run===catalogRun)pageError=error;return false;})
+      .finally(()=>{if(run===catalogRun){pageFlight=null;filterCatalog();}});
+    filterCatalog();
+    return pageFlight;
   }
   async function loadGameCatalog(){
     if(!catalogFilters||catalogPending)return;
@@ -225,7 +244,7 @@
       catalogLoaded=catalogConnected;
       const games=field(catalogFilters,'game'),previous=games.value;
       games.replaceChildren(new Option('Bütün oyunlar',''),...catalogGames.map(g=>new Option(g.name,g.id)));games.value=previous;games.disabled=!catalogGames.length;
-      if(catalogConnected)void loadProductPage(1);
+      if(catalogConnected)restartCatalog();
       if(!catalogConnected){$('gameCatalogEmptyTitle').parentElement.hidden=false;$('gameCatalogEmptyTitle').textContent='Məhsulları görmək üçün Epinby API bağlantısını qurun';$('gameCatalogHint').textContent='';}
     }catch(error){
       catalogConnected=false;

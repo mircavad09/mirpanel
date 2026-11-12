@@ -57,7 +57,7 @@ export function createEpinbyConnection({pool,security,transport=supplierRequest}
           for(const item of response.data){
             const id=Number(item?.id), name=catalogText(item?.name), price=String(item?.price??'');
             if(!Number.isSafeInteger(id)||id<1||!name||!/^\d{1,15}(?:\.\d{1,8})?$/.test(price))throw Error('CATALOG_FORMAT');
-            products.set(id,{id,name,game:catalogText(item.game),category:catalogText(item.category),
+            products.set(id,{id,name,game:catalogText(item.game),category:catalogText(item.category),region:catalogText(item.region_name||item.region),
               package:catalogText(item.package_name||item.package),image:catalogImage(item.image||item.image_url),price,
               type:catalogText(item.type).toUpperCase(),fields:Array.isArray(item.fields)?item.fields:[],
               gameId:Number(item.game_id)||null,categoryId:Number(item.category_id)||null,

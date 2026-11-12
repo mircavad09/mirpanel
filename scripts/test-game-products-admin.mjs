@@ -10,7 +10,7 @@ const publicDir=new URL('../mirpanel-admin/public/',import.meta.url);
 const state=extractAdminState(await fs.readFile(new URL('../app.js',import.meta.url),'utf8'));
 const row={api_key_cipher:'encrypted',webhook_secret_cipher:'never-exposed',credential_version:1,last_status:'confirmed',currency:'USD'};
 const supplierProducts=[
- {id:11,name:'60 UC',game:'PUBG Mobile',game_id:1,category:'UC',category_id:1,type:'TOPUP',fields:[{key:'player_id',label:'Player ID',required:true}],price:'0.8900',stock_status:'FINITE',stock_count:25,image:'https://epinby.com/sample.png'},
+ {id:11,name:'60 UC',game:'PUBG MOBIL TOPUP',game_id:1,category:'PUBG WEB CN AUTO',category_id:1,region:'CN',type:'TOPUP',fields:[{key:'player_id',label:'Player ID',required:true}],price:'0.8900',stock_status:'FINITE',stock_count:25,image:'https://epinby.com/sample.png'},
  {id:12,name:'100 Stars',game:'Telegram',game_id:2,category:'Stars',category_id:2,type:'VOUCHER',fields:[],price:'1.1200',stock_status:'UNLIMITED',image:'https://epinby.com/sample.png'}
 ];
 const calls=[];
@@ -23,6 +23,7 @@ const epinby=createEpinbyConnection({pool:async()=>({query:async()=>({rows:[row]
  }});
 const fixture=await epinby({action:'epinby-catalog'});
 assert.deepEqual(calls,[1]);assert.equal(fixture.products[0].stockCount,25);assert.equal(fixture.complete,false);
+assert.equal(fixture.products[0].region,'CN');
 fixture.products.push(...(await epinby({action:'epinby-catalog',page:2})).products);fixture.meta={page:1,lastPage:1,total:2,perPage:50};
 fixture.games=(await epinby({action:'epinby-catalog',gamesOnly:true})).games;
 assert(!JSON.stringify(fixture).includes('never-exposed'));
@@ -42,7 +43,9 @@ try{
     const page=await context.newPage();
     const errors=[];
     page.on('pageerror',e=>errors.push(e.message));
-    let integrations=0,documents=0,published;
+    let integrations=0,documents=0,published,expectedPubgPrice=3.49;
+    const freeFire={id:99,name:'100+10 Diamond',game:'Garena Free Fire Vouchers(Official)',category:'Diamonds',region:'Global',gameId:3,categoryId:3,type:'VOUCHER',price:'0.9364',stockCount:1560,stockStatus:'FINITE'};
+    const fillers=Array.from({length:48},(_,i)=>({...fixture.products[1],id:1000+i,name:'Synthetic credits '+i}));
     await page.addInitScript(()=>window.gameQaDocument=Math.random());
     await context.route('**/*',async route=>{
      const req=route.request(),u=new URL(req.url());
@@ -62,7 +65,7 @@ try{
          const catalog=normalizeAdminPayload(req.postDataJSON().data);
          const product=catalog.products.find(p=>p.id==='pubg_mobile');
          const plan=product.plans.find(p=>p.id==='epinby_11');
-         assert.equal(product.soldOut,false);assert.equal(plan.price,3.49);
+         assert.equal(product.soldOut,false);assert.equal(plan.price,expectedPubgPrice);
          assert.equal(plan.supplier.productId,11);assert.equal(plan.formFields[0].key,'player_id');
          assert.equal(plan.image,'https://epinby.com/sample.png');
          assert.match([...generateProductListingPageFiles(catalog.products).values()].join(''),/pubg-mobile/);
@@ -84,8 +87,11 @@ try{
       if(u.pathname==='/api/admin/state')json={data:state,sha:'synthetic',csrfToken:'synthetic'};
       if(u.pathname==='/api/admin/homepage-banners')json={banners:[],managed:true};
       if(u.pathname==='/api/admin/api-integrations'){
-       if(u.searchParams.get('view')==='epinby-catalog')json=fixture;
-       else if(u.searchParams.get('view')==='epinby-categories')json={categories:[{id:1,name:'UC'}]};
+       if(u.searchParams.get('view')==='epinby-catalog'){
+        const gameId=Number(u.searchParams.get('gameId')),page=Number(u.searchParams.get('page'))||1;
+        const products=gameId===1?[fixture.products[0]]:gameId===3?[freeFire]:[...fixture.products,...fillers,freeFire];
+        json={...fixture,games:[...fixture.games,{id:3,name:'Garena Free Fire Vouchers(Official)'}],products:products.slice((page-1)*50,page*50),meta:{page,lastPage:Math.ceil(products.length/50),total:products.length,perPage:50}};
+       }else if(u.searchParams.get('view')==='epinby-categories')json={categories:Number(u.searchParams.get('gameId'))===3?[{id:3,name:'Diamonds'}]:[{id:1,name:'UC'}]};
        else {integrations++;json={products:[],suppliers:[],mappings:[],jobs:[],drafts:[]};}
       }
       return route.fulfill({json});
@@ -116,9 +122,19 @@ try{
     assert.equal(context.pages().length,1);
     await panel.getByText('Bağlantı təsdiqləndi',{exact:true}).waitFor();
     assert.equal(await page.locator('.navBtn[data-view="gameProducts"] .adminMenuIcon').count(),1);
-    await page.waitForFunction(()=>document.querySelectorAll('#gameCatalogProducts .gameCatalogProduct').length===2);
-    assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),2);
+    await page.waitForFunction(()=>document.querySelectorAll('#gameCatalogProducts .gameCatalogProduct').length===50);
+    assert.equal(await panel.locator('#gameCatalogProducts :is(img,input[type=file])').count(),0);
+    const boxes=await panel.locator('.gameCatalogProduct').evaluateAll(rows=>rows.slice(0,2).map(row=>{const {x,y,width,height}=row.getBoundingClientRect();return {x,y,width,height};}));
+    assert(boxes[1].y>=boxes[0].y+boxes[0].height&&boxes[0].x===boxes[1].x);
     assert.equal(integrations,0,'Opening the shell must not call integration APIs');
+    const search=panel.getByRole('searchbox');
+    await search.fill('Free Fire — 100+10 Diamond');
+    await panel.getByRole('heading',{name:'Free Fire — 100+10 Diamond',exact:true}).waitFor();
+    assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),1);
+    await panel.getByRole('button',{name:'Təmizlə',exact:true}).click();
+    await panel.getByRole('button',{name:'Daha çox paket yüklə'}).click();
+    await panel.getByRole('heading',{name:'Free Fire — 100+10 Diamond',exact:true}).waitFor();
+    assert.equal(await panel.locator('.gameCatalogProduct:visible').count(),51);
     await panel.getByRole('searchbox').fill('PUBG Mobile');
     await panel.getByRole('searchbox').press('Enter');
     assert.equal(documents,1);
@@ -144,8 +160,8 @@ try{
     assert.equal(new URL(page.url()).hash,'#gameProducts');
     assert.equal(context.pages().length,1);
     const card=panel.locator('.gameCatalogProduct').first();
-    await card.locator('[data-package-preview]').waitFor({state:'visible'});
-    assert.equal(await card.locator('[data-package-preview]').getAttribute('src'),'https://epinby.com/sample.png');
+    await card.getByRole('heading',{name:'PUBG Mobile — 60 UC',exact:true}).waitFor();
+    await card.getByText('PUBG WEB CN AUTO',{exact:false}).waitFor();
     await card.locator('[data-sale-price]').fill('3.49');
     await card.locator('[data-game-add]').click();
     const picker=page.getByRole('dialog',{name:'Hansı məhsula əlavə edilsin?'});
@@ -168,9 +184,18 @@ try{
     fixture.products[0].price='1.5900';
     await panel.getByRole('button',{name:'Kataloqu yenilə'}).click();
     await card.getByText('1.5900',{exact:true}).waitFor();
-    await card.getByRole('button',{name:'Kataloqda var'}).waitFor();
+    await card.getByText('Kataloqda var · PUBG Mobile',{exact:true}).waitFor();
     assert.equal(await card.locator('[data-sale-price]').inputValue(),'3.49');
     assert.equal(await page.evaluate(()=>state.data.products.flatMap(p=>p.plans).filter(p=>p.supplier?.productId===11).length),1);
+    const originalPricingId=published.products.find(p=>p.id==='pubg_mobile').plans.find(p=>p.supplier?.productId===11).pricingId;
+    expectedPubgPrice=3.79;
+    await card.locator('[data-sale-price]').fill('3.79');
+    await card.getByRole('button',{name:'Qiyməti yenilə'}).click();
+    await page.getByRole('heading',{name:'Dəyişiklikləri yoxlayın'}).waitFor();
+    await page.locator('#modalConfirm').click();
+    await page.waitForFunction(()=>!state.dirty);
+    assert.equal(published.products.find(p=>p.id==='pubg_mobile').plans.find(p=>p.supplier?.productId===11).pricingId,originalPricingId);
+    await page.locator('#modalCancel').click();
     const stars=panel.locator('.gameCatalogProduct').filter({hasText:'100 Stars'});
     await stars.locator('[data-sale-price]').fill('2.49');
     await stars.locator('[data-game-add]').click();
@@ -186,11 +211,26 @@ try{
     assert.equal(telegram.plans.find(p=>p.supplier?.productId===12).price,2.49);
     assert.equal(published.products.some(p=>p.title==='Telegram Stars'),false);
     assert.match(generateProductPageFiles([telegram]).get('mehsul/telegram-premium.page'),/100 Stars/);
+    await page.locator('#modalCancel').click();
+    await panel.getByLabel('Oyun',{exact:true}).selectOption('3');
+    await panel.getByLabel('Kateqoriya',{exact:true}).selectOption('3');
+    const diamond=panel.locator('.gameCatalogProduct').filter({hasText:'100+10 Diamond'});
+    await diamond.locator('[data-sale-price]').fill('4.49');
+    await diamond.locator('[data-game-add]').click();
+    await picker.waitFor();
+    assert.equal(await targets.inputValue(),'free_fire');
+    await picker.getByRole('button',{name:'Təsdiqlə'}).click();
+    await page.getByRole('heading',{name:'Dəyişiklikləri yoxlayın'}).waitFor();
+    await page.locator('#modalConfirm').click();
+    await page.waitForFunction(()=>!state.dirty);
+    const fire=published.products.find(p=>p.id==='free_fire');
+    assert.equal(fire.plans.find(p=>p.supplier?.productId===99).price,4.49);
+    assert.equal(fire.image,state.products.find(p=>p.id==='free_fire').image);
     // WebKit reports navigation-aborted background badges as access-control errors.
     // Catalog requests must still be error-free.
     assert.deepEqual(errors.filter(e=>!e.includes('/api/admin/payment-orders?tab=pending')&&!e.includes('/api/admin/community/shop?only=topup-count due to access control checks.')),[]);
     await context.close();
-    console.log(JSON.stringify({engine:engine.name(),width,mode:live?'live assets / isolated shell':'isolated',inline:true,catalog:true,filters:true,publish:true,noDuplicate:true,salePricePreserved:true}));
+    console.log(JSON.stringify({engine:engine.name(),width,mode:live?'live assets / isolated shell':'isolated',rows:true,noImages:true,filters:true,pageTwo:true,targets:['PUBG Mobile','Telegram Premium','Free Fire'],noDuplicate:true,priceUpdate:true}));
    }
   }finally{await browser.close();}
  }
