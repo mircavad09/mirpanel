@@ -8,7 +8,7 @@ if(process.argv.includes('--live')){
  const response=await fetch('https://mirpanel.com/sebet');
  assert.ok(response.ok);
  const html=await response.text();
- assert.ok(html.includes('/community-assets/shop-ui.js?v=cart-ready-now-1'),'direct cart uses current shop UI');
+ assert.ok(html.includes('/community-assets/shop-ui.js?v=checkout-first-paint-1'),'direct cart uses current shop UI');
  assert.ok(html.includes('/site-header.js?v=cart-ready-now-1'),'direct cart uses current header');
 }
 const scripts=new Map();
@@ -16,7 +16,7 @@ for(const name of ['cart-store.js','cart-ready.js','shop-ui.js']){
  const file=name==='shop-ui.js'?'mirpanel-admin/community/public/'+name:name;
  const local=await fs.readFile(file,'utf8');
  if(process.argv.includes('--live')){
-  const response=await fetch('https://mirpanel.com/'+(name==='shop-ui.js'?'community-assets/':'')+name+'?v=cart-ready-now-1');
+  const response=await fetch('https://mirpanel.com/'+(name==='shop-ui.js'?'community-assets/':'')+name+'?v='+(name==='shop-ui.js'?'checkout-first-paint-1':'cart-ready-now-1'));
   assert.ok(response.ok);
   const text=await response.text();
   assert.ok(text.replaceAll('\r\n','\n')===local.replaceAll('\r\n','\n'),name+' matches deployed source');
