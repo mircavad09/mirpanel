@@ -7,11 +7,11 @@ for(const v of ['',null,5,'0','0.99','500.01','-1','1.001','1,001','1e2','NaN','
 const header=fs.readFileSync('customer-header.html','utf8'),id='11111111-1111-4111-8111-111111111111',secondId='22222222-2222-4222-8222-222222222222';
 const liveAssets=new Map();
 if(process.argv.includes('--live')){
- const site='https://mirpanel.com',version='topup-auto-cards-1';
+ const site='https://mirpanel.com';
  const get=async path=>{const r=await fetch(site+path,{signal:AbortSignal.timeout(15000)});assert.ok(r.ok,path+' '+r.status);return Buffer.from(await r.arrayBuffer());};
  const html=(await get('/balans')).toString();
  for(const file of ['shop.css','shop-ui.js','wallet-topup.js']){
-  const path='/community-assets/'+file;
+  const path='/community-assets/'+file,version=file==='wallet-topup.js'?'topup-auto-cards-1':'checkout-first-paint-1';
   if(file!=='wallet-topup.js')assert.ok(html.includes(path+'?v='+version),'Live /balans must reference '+path);
   liveAssets.set(path,await get(path+'?v='+version));
  }
