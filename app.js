@@ -3529,7 +3529,46 @@ const DATA = {
         "includeSeller": true,
         "includeStock": false
       },
-      "plans": [],
+      "plans": [
+        {
+          "supplier": {
+            "provider": "epinby",
+            "productId": 682,
+            "type": "TOPUP",
+            "gameId": 5,
+            "categoryId": 20,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "Player ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "image": "",
+          "formFields": [
+            {
+              "key": "player_id",
+              "type": "text",
+              "label": "Player ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
+            }
+          ],
+          "id": "epinby_682",
+          "pricingId": "d0b70eed-360e-4810-bf1f-9ed34e76cd1f",
+          "label": "110",
+          "months": 1,
+          "price": 1.58
+        }
+      ],
       "orderConfirmation": {
         "enabled": false,
         "title": "Diqqət!",
