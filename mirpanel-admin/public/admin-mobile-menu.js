@@ -3,7 +3,6 @@ const menuIconPaths = {
   products: "M3 7l9-4 9 4v10l-9 4-9-4z M3 7l9 4 9-4 M12 11v10",
   communityUsers: "M9 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6z M3 20v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2 M16 5a3 3 0 0 1 0 6 M18 14a4 4 0 0 1 3 4v2",
   communityGroup: "M3 4h13v9H8l-5 4z M19 8h2v10h-3v3l-4-3h-4v-2",
-  employeeStock: "M9 4V2h6v2 M5 4h14v17H5z M12 12a2 2 0 1 0 0-4 2 2 0 0 0 0 4z M8 17a4 4 0 0 1 8 0",
   paymentOrders: "M8 4H5v17h14V4h-3 M8 3h8v4H8z M9 11h6 M9 15h6 M9 18h4",
   readyStock: "M8 3h8v7H8z M3 12h8v8H3z M13 12h8v8h-8z M12 3v3 M7 12v3 M17 12v3",
   communityShop: "M20 8V5H5a2 2 0 0 0 0 4h16v11H5a2 2 0 0 1-2-2V7 M21 12h-5a2 2 0 0 0 0 4h5 M16 14h.1",
@@ -60,19 +59,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const sidebarPosition = document.createComment("Desktop sidebar position");
   sidebar.before(sidebarPosition);
 
-  const quickLinks = ["dashboard", "products", "communityUsers", "paymentOrders", "communityGroup", "apiIntegrations"];
+  const quickLinks = [...nav.querySelectorAll('[data-view="dashboard"], [data-primary-navigation] .navBtn')];
   const groups = [
-    ["Balans və mühasibatlıq", ["communityShop", "paymentCosts", "paymentMethods", "paymentReviews"]],
-    ["Məhsul idarəetməsi", ["readyStock", "categories", "gameProducts", "orderGuide", "orders", "netflixAccounts"]],
+    ["Balans və mühasibatlıq", ["paymentReviews"]],
+    ["Məhsul idarəetməsi", ["categories", "apiIntegrations", "orders", "netflixAccounts"]],
     ["Sayt məzmunu", ["homepage", "navigation", "banners", "stories", "decorations", "media", "about", "contact", "terms", "seo"]],
     ["Sistem", ["history", "/admin/workforce"]]
   ];
   const key = link => link.dataset.view || link.getAttribute("href");
   const links = [...nav.querySelectorAll(".navBtn")];
-  const linkedIcons = { "/admin/employee-stock": "employeeStock", "/admin/workforce": "workforce", "/admin/users": "communityUsers" };
+  const linkedIcons = { "/admin/workforce": "workforce", "/admin/users": "communityUsers" };
   for (const link of links) addMenuIcon(link, link.dataset.view || linkedIcons[key(link)]);
   addMenuIcon(sidebar.querySelector(".logout"), "logout");
-  const stock = links.find(link => key(link) === "/admin/employee-stock");
   const mobileLinks = document.createElement("div");
   mobileLinks.className = "mobileMenuLinks";
   const positions = new Map();
@@ -106,10 +104,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     header.after(sidebar);
     nav.append(mobileLinks);
-    for (const id of quickLinks) {
-      const link = links.find(item => key(item) === id);
-      if (link) moveLink(link, mobileLinks);
-    }
+    for (const link of quickLinks) moveLink(link, mobileLinks);
     for (const [label, ids] of groups) {
       const details = document.createElement("details");
       const summary = document.createElement("summary");
@@ -117,12 +112,11 @@ document.addEventListener("DOMContentLoaded", () => {
       details.append(summary);
       const groupLinks = ids.map(id => links.find(item => key(item) === id)).filter(Boolean);
       if (label === "Sistem") {
-        groupLinks.push(...links.filter(link => !positions.has(link) && !groupLinks.includes(link) && link !== stock));
+        groupLinks.push(...links.filter(link => !positions.has(link) && !groupLinks.includes(link)));
       }
       for (const link of groupLinks) moveLink(link, details);
       if (groupLinks.length) mobileLinks.append(details);
     }
-    if (stock) moveLink(stock, mobileLinks);
   }
 
   function closeMenu() {

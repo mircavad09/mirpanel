@@ -1,7 +1,12 @@
 (function () {
   const viewGroups = [
-    ["Tez istifadə olunanlar", [["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"], ["employeeStock", "İşçi stoku", "/admin/employee-stock"], ["paymentOrders", "Sifarişlər"], ["readyStock", "Hazır hesab stoku"], ["communityShop", "Balans müraciətləri"], ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]]],
-    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["gameProducts", "Oyun məhsulları"], ["orderGuide", "Məlumat və təlimat"], ["apiIntegrations", "API inteqrasiyaları"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
+    ["Tez istifadə olunanlar", [
+      ["products", "Məhsullar"], ["communityUsers", "İstifadəçilər"], ["communityGroup", "Qrup söhbəti"],
+      ["paymentOrders", "Sifarişlər"], ["readyStock", "Hazır hesab stoku"], ["gameProducts", "Oyun məhsulları"],
+      ["orderGuide", "Məlumat və təlimat"], ["communityShop", "Balans müraciətləri"],
+      ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]
+    ]],
+    ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["apiIntegrations", "API inteqrasiyaları"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
     ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sitemap"]]],
     ["Maliyyə nəzarəti", [["paymentReviews", "Ödəniş yoxlamaları"]]],
     ["Sistem", [["history", "Sayt yayımı tarixçəsi"], ["workforce", "İşçi, stok və maaş idarəsi", "/admin/workforce"]]]
@@ -102,7 +107,7 @@
   }
   function installNavigation() {
     const nav = document.querySelector(".nav");
-    nav.innerHTML = '<button class="navBtn active" type="button" data-view="dashboard">İdarə paneli</button>' + viewGroups.map(([group, items]) => `<div class="navGroup">
+    nav.innerHTML = '<button class="navBtn active" type="button" data-view="dashboard">İdarə paneli</button>' + viewGroups.map(([group, items], index) => `<div class="navGroup"${index === 0 ? " data-primary-navigation" : ""}>
       <span class="navGroupTitle">${esc(group)}</span>
       ${items.map(([id, label, href]) => href ? `<a class="navBtn" href="${href}">${esc(label)}</a>` : `<button class="navBtn" type="button" data-view="${id}">${esc(label)}</button>`).join("")}
     </div>`).join("");

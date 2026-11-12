@@ -43,12 +43,13 @@ try{
     const page=await context.newPage();
     const errors=[];
     page.on('pageerror',e=>errors.push(e.message));
-    let integrations=0,documents=0,published,expectedPubgPrice=3.49;
+    let integrations=0,documents=0,published,expectedPubgPrice=3.49,balanceReads=0,balanceFailure=false;
     const freeFire={id:99,name:'100+10 Diamond',game:'Garena Free Fire Vouchers(Official)',category:'Diamonds',region:'Global',gameId:3,categoryId:3,type:'VOUCHER',price:'0.9364',stockCount:1560,stockStatus:'FINITE'};
     const fillers=Array.from({length:48},(_,i)=>({...fixture.products[1],id:1000+i,name:'Synthetic credits '+i}));
     await page.addInitScript(()=>window.gameQaDocument=Math.random());
     await context.route('**/*',async route=>{
      const req=route.request(),u=new URL(req.url());
+     if(u.href==='https://epinby.com/reseller-entry')return route.fulfill({contentType:'text/html',body:'<title>Official Epinby destination fixture</title>'});
      if(u.href==='https://epinby.com/sample.png')return route.fulfill({contentType:'image/svg+xml',body:'<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64"/>'});
      if(u.origin!==origin){
       if(u.hostname.includes('epinby')||['fetch','xhr'].includes(req.resourceType()))supplierRequests++;
@@ -58,6 +59,12 @@ try{
      if(u.pathname.startsWith('/api/')){
       if(req.method()!=='GET'){
        if(u.pathname==='/api/admin/api-integrations'&&req.postDataJSON()?.action==='epinby-read')return route.fulfill({json:fixture.connection});
+       if(u.pathname==='/api/admin/api-integrations'&&req.postDataJSON()?.action==='epinby-test'){
+        assert.equal(req.headers()['x-csrf-token'],'synthetic');
+        balanceReads++;
+        return route.fulfill({json:{...fixture.connection,apiKeySaved:true,balance:balanceReads===1?'24.5000':'30.2500',
+         result:balanceFailure?'timeout':'confirmed',...(balanceFailure?{message:'Epinby vaxtında cavab vermədi. Yenidən yoxlayın.'}:{})}});
+       }
        if(u.pathname==='/api/admin/preview'){
         const added=req.postDataJSON().data.products.filter(p=>p.plans.some(plan=>plan.supplier?.productId===11));
         if(added.length){
@@ -110,9 +117,20 @@ try{
     async function openView(view){
      if(width<600){
       await page.locator('.mobileMenuToggle').click();
-      if(view==='gameProducts')await page.locator('.mobileMenuLinks summary').filter({hasText:'Məhsul idarəetməsi'}).click();
+      if(view==='apiIntegrations')await page.locator('.mobileMenuLinks summary').filter({hasText:'Məhsul idarəetməsi'}).click();
      }
      await page.locator('.navBtn[data-view="'+view+'"]').click();
+    }
+    const expected=['dashboard','products','communityUsers','communityGroup','paymentOrders','readyStock','gameProducts','orderGuide','communityShop','paymentCosts','paymentMethods'];
+    if(width<600)await page.locator('.mobileMenuToggle').click();
+    const primary=page.locator(width<600?'.mobileMenuLinks > .navBtn':'.nav > .navBtn[data-view="dashboard"], [data-primary-navigation] > .navBtn');
+    assert.deepEqual(await primary.evaluateAll(nodes=>nodes.map(n=>n.dataset.view)),expected);
+    assert.equal(await page.locator('#adminSidebar a[href="/admin/employee-stock"]').count(),0);
+    if(width<600)await page.locator('.mobileMenuClose').click();
+    for(const view of expected.filter(view=>view!=='gameProducts')){
+     await openView(view);
+     await page.waitForURL('**/admin.html#'+view);
+     await page.locator('#'+view+'View').waitFor({state:'visible'});
     }
     await openView('gameProducts');
     const panel=page.locator('#gameProductsView');
@@ -126,7 +144,21 @@ try{
     assert.equal(await panel.locator('#gameCatalogProducts :is(img,input[type=file])').count(),0);
     const boxes=await panel.locator('.gameCatalogProduct').evaluateAll(rows=>rows.slice(0,2).map(row=>{const {x,y,width,height}=row.getBoundingClientRect();return {x,y,width,height};}));
     assert(boxes[1].y>=boxes[0].y+boxes[0].height&&boxes[0].x===boxes[1].x);
-    assert.equal(integrations,0,'Opening the shell must not call integration APIs');
+    assert.equal(integrations,0,'Opening the shell must not load integration settings');
+    await panel.getByText('24,5000 USD',{exact:true}).waitFor();
+    const refresh=panel.getByRole('button',{name:'Epinby balansını yenilə'});
+    await refresh.click();await panel.getByText('30,2500 USD',{exact:true}).waitFor();
+    balanceFailure=true;await refresh.click();
+    await panel.getByText('Epinby vaxtında cavab vermədi. Yenidən yoxlayın.',{exact:true}).waitFor();
+    await panel.getByText('Son məlum balans',{exact:true}).waitFor();
+    balanceFailure=false;
+    const addFunds=panel.getByRole('link',{name:'Epinby balansını artır'});
+    const tabPromise=context.waitForEvent('page');
+    await addFunds.click();
+    const tab=await tabPromise;await tab.waitForLoadState('domcontentloaded');
+    assert.equal(tab.url(),'https://epinby.com/reseller-entry');
+    assert.equal(await tab.evaluate(()=>window.opener),null);
+    await tab.close();
     const search=panel.getByRole('searchbox');
     await search.fill('Free Fire — 100+10 Diamond');
     await panel.getByRole('heading',{name:'Free Fire — 100+10 Diamond',exact:true}).waitFor();
@@ -155,6 +187,7 @@ try{
     assert.equal(integrations,1);
     await openView('gameProducts');
     // Refresh/direct hash entry restores the same admin workspace.
+    await page.waitForFunction(()=>!document.getElementById('gameCatalogRefresh').disabled&&!document.getElementById('gameCatalogBalanceRefresh').disabled);
     await page.waitForLoadState('networkidle');
     await page.reload();await panel.waitFor({state:'visible'});
     assert.equal(new URL(page.url()).hash,'#gameProducts');
@@ -226,9 +259,8 @@ try{
     const fire=published.products.find(p=>p.id==='free_fire');
     assert.equal(fire.plans.find(p=>p.supplier?.productId===99).price,4.49);
     assert.equal(fire.image,state.products.find(p=>p.id==='free_fire').image);
-    // WebKit reports navigation-aborted background badges as access-control errors.
-    // Catalog requests must still be error-free.
-    assert.deepEqual(errors.filter(e=>!e.includes('/api/admin/payment-orders?tab=pending')&&!e.includes('/api/admin/community/shop?only=topup-count due to access control checks.')),[]);
+    // WebKit reports canceled catalog requests as access-control errors when a newer filter supersedes them.
+    assert.deepEqual(errors.filter(e=>!e.includes('/api/admin/payment-orders?tab=pending')&&!e.includes('/api/admin/community/shop?only=topup-count due to access control checks.')&&!(e.includes('/api/admin/api-integrations?view=epinby-catalog')&&e.endsWith('due to access control checks.'))),[]);
     await context.close();
     console.log(JSON.stringify({engine:engine.name(),width,mode:live?'live assets / isolated shell':'isolated',rows:true,noImages:true,filters:true,pageTwo:true,targets:['PUBG Mobile','Telegram Premium','Free Fire'],noDuplicate:true,priceUpdate:true}));
    }

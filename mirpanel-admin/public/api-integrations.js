@@ -246,6 +246,33 @@
     filterCatalog();
     return pageFlight;
   }
+  let balancePending=false,balanceChecked=false;
+  function renderGameConnection(connection,stale){
+    $('gameCatalogStatus').textContent=connection.lastStatus==='confirmed'?'Bağlantı təsdiqləndi'
+      :connection.lastStatus==='invalid_key'?'Açar qəbul edilmədi'
+      :connection.apiKeySaved?'Bağlantını yoxlayın':'API bağlantısı qurulmayıb';
+    const hasBalance=connection.balance!=null&&connection.currency;
+    $('gameCatalogBalanceLabel').textContent=hasBalance&&stale?'Son məlum balans':'Balans';
+    $('gameCatalogBalance').textContent=hasBalance?String(connection.balance).replace('.',',')+' '+connection.currency:'—';
+  }
+  async function refreshGameBalance(){
+    if(balancePending)return;
+    balancePending=true;
+    const button=$('gameCatalogBalanceRefresh'),message=$('gameCatalogBalanceMessage');
+    button.disabled=true;message.textContent='Balans oxunur…';
+    try{
+      if(!csrf)csrf=(await request('/api/session')).csrfToken;
+      const connection=await request(url,{action:'epinby-test'});
+      const confirmed=connection.result==='confirmed';
+      balanceChecked=true;
+      renderGameConnection(connection,!confirmed);
+      message.textContent=confirmed?'':connection.message||'Balansı yenidən oxumaq mümkün olmadı.';
+    }catch(error){
+      if($('gameCatalogBalance').textContent!=='—')$('gameCatalogBalanceLabel').textContent='Son məlum balans';
+      message.textContent=error.message;
+    }finally{balancePending=false;button.disabled=false;}
+  }
+  $('gameCatalogBalanceRefresh')?.addEventListener('click',()=>void refreshGameBalance());
   async function loadGameCatalog(){
     if(!catalogFilters||catalogPending)return;
     catalogPending=true;
@@ -254,7 +281,8 @@
       const result=await request(url+'?view=epinby-catalog&gamesOnly=true');
       const connection=result.connection;catalogGames=result.games||[];categoryRun++;
       catalogConnected=connection.lastStatus==='confirmed'&&!result.error;
-      $('gameCatalogStatus').textContent=connection.lastStatus==='confirmed'?'Bağlantı təsdiqləndi':connection.apiKeySaved?'Bağlantını yoxlayın':'API bağlantısı qurulmayıb';
+      if(!balanceChecked&&!balancePending)renderGameConnection(connection,true);
+      if(connection.apiKeySaved)void refreshGameBalance();
       if(result.error)throw Error(result.error);
       catalogLoaded=catalogConnected;
       const games=field(catalogFilters,'game'),previous=games.value;
@@ -419,10 +447,7 @@
   };
   const at=value=>value?new Date(value).toLocaleString('az-AZ',{timeZone:'Asia/Baku'}):'Yoxlanılmayıb';
   function renderEpinby(connection){
-    const badge=$('gameCatalogStatus');
-    if(badge)badge.textContent=connection.lastStatus==='confirmed'?'Epinby · Bağlantı təsdiqləndi'
-      :connection.lastStatus==='invalid_key'?'Epinby · Açar qəbul edilmədi'
-      :connection.apiKeySaved?'Epinby · Bağlantı yoxlanılmayıb':'API bağlantısı qurulmayıb';
+    if(!balancePending&&(!balanceChecked||connection.result||!connection.lastStatus))renderGameConnection(connection,connection.result!=='confirmed');
     for(const [name,saved] of [['apiKey',connection.apiKeySaved],['webhookSecret',connection.webhookSecretSaved]]){
       field(epinbyForm,name).placeholder=saved?'•••••••• (saxlanılıb)':'Daxil edin';
     }

@@ -9,7 +9,7 @@
   <title>Mirpanel Admin</title>
   <link rel="manifest" href="/admin.webmanifest">
   <meta name="robots" content="noindex, nofollow">
-  <link rel="stylesheet" href="admin.css?v=epinby-rows-1">
+  <link rel="stylesheet" href="admin.css?v=primary-nav-balance-1">
   <link rel="stylesheet" href="/ready-stock-admin.css?v=netflix-room-lists-1">
   <link rel="stylesheet" href="admin-mobile-menu.css?v=1">
 </head>
@@ -30,7 +30,6 @@
         <button class="navBtn" type="button" data-view="apiIntegrations">API inteqrasiyaları</button>
         <a class="navBtn" href="/admin/users">İstifadəçilər</a>
         <a class="navBtn" href="/admin/workforce">İşçi, stok və maaş idarəsi</a>
-        <a class="navBtn" href="/admin/employee-stock">İşçi stoku</a>
         <button class="navBtn active" data-view="products">
           Məhsullar
         </button>
@@ -646,7 +645,16 @@
         </div>
         <div class="gameCatalogSupplier">
           <div class="gameCatalogSupplierName"><span class="gameCatalogMark" aria-hidden="true">E</span><div><h3>Epinby</h3><p>Təchizatçı kataloqu</p></div></div>
-          <span class="gameCatalogStatus" role="status"><span aria-hidden="true"></span><b id="gameCatalogStatus">Bağlantı yoxlanılır…</b></span>
+          <div class="gameCatalogAccount">
+            <span class="gameCatalogStatus" role="status"><span aria-hidden="true"></span><b id="gameCatalogStatus">Bağlantı yoxlanılır…</b></span>
+            <div class="gameCatalogBalance" role="status" aria-live="polite">
+              <span id="gameCatalogBalanceLabel">Balans</span>
+              <strong id="gameCatalogBalance">—</strong>
+            </div>
+            <button class="btn" type="button" id="gameCatalogBalanceRefresh" aria-label="Epinby balansını yenilə">Yenilə</button>
+            <a class="btn primary" href="https://epinby.com/reseller-entry" target="_blank" rel="noopener noreferrer">Epinby balansını artır</a>
+            <small id="gameCatalogBalanceMessage" role="status"></small>
+          </div>
         </div>
         <form id="gameCatalogFilters" class="gameCatalogFilters" role="search" aria-label="Oyun məhsullarında axtarış">
           <label class="gameCatalogSearch">Oyun və ya məhsul adı
@@ -784,11 +792,11 @@
   <script src="admin-stock-save-fix.js?v=compact-product-2"></script>
   <script src="homepage-banners-admin.js?v=admin-release-status-20261107"></script>
   <script src="/admin-topup-notification.js?v=push-restore-4"></script>
-  <script src="cms-admin.js?v=ready-stock-backlog-1"></script>
+  <script src="cms-admin.js?v=primary-nav-balance-1"></script>
   <script src="payment-admin.js?v=ready-stock-backlog-1"></script>
   <script src="employee-review-admin.js?v=position-20261028-1"></script>
   <script src="stories-admin.js?v=admin-release-status-20261107"></script>
-  <script src="admin-mobile-menu.js?v=epinby-catalog-shell-1"></script>
-  <script src="api-integrations.js?v=epinby-account-1"></script>
+  <script src="admin-mobile-menu.js?v=primary-nav-balance-1"></script>
+  <script src="api-integrations.js?v=primary-nav-balance-1"></script>
 </body>
 </html>
