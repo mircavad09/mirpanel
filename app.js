@@ -3610,6 +3610,44 @@ const DATA = {
           "label": " Free Fire 341 Almaz (7/24)",
           "months": 1,
           "price": 4.69
+        },
+        {
+          "supplier": {
+            "provider": "epinby",
+            "productId": 684,
+            "type": "TOPUP",
+            "gameId": 5,
+            "categoryId": 20,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "Player ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "image": "",
+          "formFields": [
+            {
+              "key": "player_id",
+              "type": "text",
+              "label": "Player ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
+            }
+          ],
+          "id": "epinby_684",
+          "pricingId": "e1835028-8946-47fe-9270-041cdc2d8f7e",
+          "label": "572",
+          "months": 1,
+          "price": 7.54
         }
       ],
       "orderConfirmation": {
