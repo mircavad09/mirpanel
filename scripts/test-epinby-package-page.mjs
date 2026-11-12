@@ -51,6 +51,7 @@ for(const engine of [chromium,webkit]){
      assert.equal(termsVersion,termsInfo(game,game.plans[planIndex],planIndex).termsVersion);
      return route.fulfill({json:values.player_id==='000123'?{state:'verified',name:'Sintetik oyunçu',allowCheckout:true}:{state:'unavailable',message:'Hesab adı yoxlanmır.',allowCheckout:true}});
     }
+    if(live&&p==='/api/payments/shop/quote'&&request.method()==='POST')return route.continue();
     if(request.method()!=='GET')return route.abort();
     if(!live&&p==='/api/payments/inventory')return route.fulfill({json:{products:[{productId:game.id,scope:'none',plans:[]}]}});
     if(!live&&p==='/app.js')return route.fulfill({contentType:mime['.js'],body:patchAppSource(source,state)});
