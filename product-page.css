@@ -1332,11 +1332,11 @@ body[data-product-id="capcut"] #productPageView .product-page-content { margin-t
 body[data-product-id="capcut"] #productPageView .product-page-tabs { gap:10px; }
 body[data-product-id="capcut"] #productPageView .product-page-tab { min-height:44px; }
 @media(min-width:1024px) {
- body[data-product-id="capcut"] #productPageView.product-page-root { max-width:1440px; width:calc(100% - 48px); }
- body[data-product-id="capcut"] #productPageView .product-page-layout { grid-template-columns:minmax(0,1.9fr) minmax(0,1fr); gap:16px; align-items:stretch; }
+ body[data-product-id="capcut"] #productPageView.product-page-root, body.product-page-document #productPageView.product-page-root.epinby-game-page { max-width:1440px; width:calc(100% - 48px); }
+ body[data-product-id="capcut"] #productPageView .product-page-layout, body.product-page-document #productPageView.epinby-game-page .product-page-layout { grid-template-columns:minmax(0,1.9fr) minmax(0,1fr); gap:16px; align-items:stretch; }
  body[data-product-id="capcut"] #productPageView .product-page-card { padding:18px; }
  body[data-product-id="capcut"] #productPageView .product-page-card-grid { grid-template-columns:minmax(0,.72fr) minmax(0,1.5fr); gap:18px; align-items:start; }
- body[data-product-id="capcut"] #productPageView .product-detail-left { border-right:1px solid #ffffff12; padding-right:18px; }
+ body[data-product-id="capcut"] #productPageView .product-detail-left, body.product-page-document #productPageView.epinby-game-page .product-detail-left { border-right:1px solid #ffffff12; padding-right:18px; }
  body[data-product-id="capcut"] #productPageView .product-page-info { min-width:0; }
  body[data-product-id="capcut"] #productPageView .product-page-eyebrow { display:none; }
  body[data-product-id="capcut"] #productPageView .product-page-title { font-size:25px; line-height:1.2; margin:0 0 8px; }
@@ -1359,7 +1359,7 @@ body[data-product-id="capcut"] #productPageView .product-page-tab { min-height:4
 }
 @media(min-width:1024px) and (max-width:1199px) {
  body[data-product-id="capcut"] #productPageView .product-page-card-grid { grid-template-columns:minmax(0,.6fr) minmax(0,1.5fr); gap:12px; }
- body[data-product-id="capcut"] #productPageView .product-detail-left { padding-right:12px; }
+ body[data-product-id="capcut"] #productPageView .product-detail-left, body.product-page-document #productPageView.epinby-game-page .product-detail-left { padding-right:12px; }
  body[data-product-id="capcut"] #productPageView .product-page-similar-card { grid-template-columns:42px minmax(0,1fr); padding:7px; gap:6px; }
  body[data-product-id="capcut"] #productPageView .product-page-similar-image { width:42px; height:46px; }
  body[data-product-id="capcut"] #productPageView .product-page-similar-title { font-size:11px; }
@@ -1643,7 +1643,9 @@ body.product-page-document #productPageView.product-page-root .product-page-simi
 .epinby-package-thumb{object-fit:contain;border-radius:6px;display:block;flex:none}
 html body #productPageView.product-page-root #pp-plans-container .pp-plan-left:has(.epinby-package-thumb){grid-template-columns:16px minmax(28px,52px) minmax(0,1fr)!important}
 .epinby-package-thumb{max-width:100%}
-html body #productPageView.product-page-root.epinby-game-page .product-page-card-grid{display:grid;grid-template-columns:minmax(0,1fr)}
-html body #productPageView.product-page-root.epinby-game-page .product-page-media{width:100%;aspect-ratio:16/7;min-height:0!important;max-height:none!important}
-html body #productPageView.product-page-root.epinby-game-page .product-page-media #pp-main-img{width:100%!important;height:100%!important;max-height:none!important;object-fit:contain!important;object-position:center!important}
-html body #productPageView.product-page-root.epinby-game-page .product-page-media-backdrop{object-fit:cover}
+/* Older pre-rendered pages may still contain a package thumbnail. */
+#productPageView.epinby-game-page .epinby-package-thumb{display:none}
+/* Match the CapCut frame while keeping the original game artwork uncropped. */
+body.product-page-document #productPageView.product-page-root.epinby-game-page .product-page-media #pp-main-img{
+ aspect-ratio:1.883; height:auto!important; object-fit:contain!important;
+}

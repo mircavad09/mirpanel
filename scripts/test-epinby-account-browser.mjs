@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 
-const version='player-gold-seal-1';
+const version='player-gold-seal-2';
 const output=new URL('../outputs/player-gold-seal/',import.meta.url);
 await fs.mkdir(output,{recursive:true});
 const longName='Nümunə oyunçu — BakıQızılKomandasınınÇoxUzunOyunçuAdı123456';
@@ -74,10 +74,14 @@ for(const engine of [chromium,webkit]){
    };
    const seal=dialog.locator('.player-result-card'),verified=seal.getByText('Oyunçu tapıldı',{exact:true}),invalid=dialog.getByText('Hesab tapılmadı.',{exact:true});
    const screenshot=async product=>{
-    assert(await seal.evaluate(card=>{
+    assert(await seal.evaluate((card,product)=>{
      const name=card.querySelector('.player-result-name');
-     return card.getBoundingClientRect().right<=innerWidth&&name.scrollWidth<=name.clientWidth&&getComputedStyle(card).backgroundImage.includes('gradient');
-    }));
+     const idField=card.closest('form').querySelector('.cart-entry-check-input input');
+     const a=card.getBoundingClientRect(),b=idField.getBoundingClientRect();
+     return a.right<=innerWidth&&name.scrollWidth<=name.clientWidth&&getComputedStyle(card).backgroundImage.includes('gradient')
+      &&Math.abs(a.left-b.left)<1&&Math.abs(a.right-b.right)<1&&a.top>=b.bottom&&a.top-b.bottom<=12
+      &&(product!=='pubg-mobile'||a.height>b.height&&a.height-b.height<=20);
+    },product));
     await dialog.screenshot({path:fileURLToPath(new URL([process.argv.includes('--live-assets')?'live':'local',engine.name(),width,product].join('-')+'.png',output))});
    };
    const next=dialog.getByRole('button',{name:/Ödənişə keç/});

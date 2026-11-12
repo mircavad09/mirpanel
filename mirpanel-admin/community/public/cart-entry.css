@@ -46,12 +46,12 @@
 .cart-entry-check-feedback[data-state="verified"] strong{color:#4ee2ae}
 .cart-entry-check-feedback[data-state="invalid"]{color:#ffb6a9}
 .cart-entry-check-feedback button{margin-top:4px}
-.cart-entry-check-feedback[data-state="verified"]:has(.player-result-card){display:block;min-width:0;padding:0;background:none;border:0}
-.player-result-card{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:clamp(10px,3vw,20px);box-sizing:border-box;padding:12px clamp(10px,3vw,18px);border:1px solid transparent;border-radius:13px;background:linear-gradient(135deg,#23211e,#131211 66%) padding-box,linear-gradient(125deg,#e8bc60,#956324 50%,#f4d780) border-box}
-.player-result-seal{display:grid;place-items:center;position:relative;padding-inline-end:clamp(10px,3vw,18px);align-self:stretch}
+.cart-entry-check-feedback[data-state="verified"]:has(.player-result-card){display:block;width:100%;min-width:0;box-sizing:border-box;padding:0;background:none;border:0}
+.player-result-card{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:center;width:100%;gap:8px;box-sizing:border-box;padding:5px 9px;border:1px solid transparent;border-radius:10px;background:linear-gradient(135deg,#23211e,#131211 66%) padding-box,linear-gradient(125deg,#e8bc60,#956324 50%,#f4d780) border-box}
+.player-result-seal{display:grid;place-items:center;position:relative;padding-inline-end:8px;align-self:stretch}
 .player-result-seal::after{content:"";position:absolute;inset-block:0;inset-inline-end:0;width:1px;background:linear-gradient(transparent,#bd9149 30%,#edbf60 65%,transparent)}
-.player-result-seal svg{display:block;width:clamp(36px,12vw,53px);height:auto;filter:drop-shadow(0 2px 3px #0007)}
-.player-result-content{display:grid;gap:2px;min-width:0;line-height:1.35;overflow-wrap:anywhere}
-.player-result-title{font-size:clamp(15px,4vw,19px);font-weight:750;color:#f5cb6b}
-.player-result-name{font-size:clamp(15px,4vw,18px);font-weight:700;color:#fff5e5;text-align:start}
-.cart-entry .player-result-id{font-size:13px;color:#d2c7b4;font-variant-numeric:tabular-nums}
+.player-result-seal svg{display:block;width:30px;height:auto;filter:drop-shadow(0 2px 3px #0007)}
+.player-result-content{display:grid;min-width:0;line-height:1.2;overflow-wrap:anywhere}
+.player-result-title{font-size:14px;font-weight:750;color:#f5cb6b}
+.player-result-name{font-size:14px;font-weight:700;color:#fff5e5;text-align:start}
+.cart-entry .player-result-id{font-size:12px;color:#d2c7b4;font-variant-numeric:tabular-nums}

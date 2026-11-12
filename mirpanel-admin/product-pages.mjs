@@ -1145,7 +1145,7 @@ function renderPlans(product) {
       : price > 0 ? `<span class="product-page-plan-prices"><strong>${escapeHtml(priceText)}</strong></span>` : '<span class="product-page-plan-prices">Stokda yoxdur</span>';
     const hasNamedMonthlyOffer = plans.some(item => !item.durationDays && Number(item.months) === 1 && /endirim/i.test(item.label || '') && Number(item.regularPrice) > Number(item.price));
     const emphasis = !plan.durationDays && Number(plan.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(plan.label || '')) ? 'discount-month' : 'standard';
-    const image=plan.supplier?.provider==='epinby'&&plan.image?`<img class="epinby-package-thumb" src="${escapeAttribute(rootRelativeUrl(plan.image))}" alt="" width="52" height="38" loading="lazy">`:'';
+    const image=!product.epinbyGroup&&plan.supplier?.provider==='epinby'&&plan.image?`<img class="epinby-package-thumb" src="${escapeAttribute(rootRelativeUrl(plan.image))}" alt="" width="52" height="38" loading="lazy">`:'';
     return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}" data-price-emphasis="${emphasis}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${image}${escapeHtml(label)}${(plan.durationDays || plan.durationMonths) && label !== duration ? ` · ${escapeHtml(duration)}` : ""}</span>${priceMarkup}</div>`;
   }).join("");
 }

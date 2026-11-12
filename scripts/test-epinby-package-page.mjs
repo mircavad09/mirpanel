@@ -34,7 +34,7 @@ for(const engine of [chromium,webkit]){
   for(const width of live||liveFixture?[390,1440]:[320,390,430,1440]){
    const page=await browser.newPage({viewport:{width,height:width<600?810:950},isMobile:width<600,hasTouch:width<600,ignoreHTTPSErrors:live||liveFixture});
    const quoted=new Set();
-   let lookupIndex=-1;
+   let lookupIndex=-1,draft;
    await page.route('**/*',async route=>{
     const request=route.request(),url=new URL(request.url()),p=url.pathname;
     if(p==='/api/payments/shop/quote'&&!live){
@@ -51,6 +51,11 @@ for(const engine of [chromium,webkit]){
      assert.equal(termsVersion,termsInfo(game,game.plans[planIndex],planIndex).termsVersion);
      return route.fulfill({json:values.player_id==='000123'?{state:'verified',name:'Sintetik oyunçu',allowCheckout:true}:{state:'unavailable',message:'Hesab adı yoxlanmır.',allowCheckout:true}});
     }
+    if(!live&&p==='/api/payments/shop/draft'){
+     draft=request.postDataJSON();
+     return route.fulfill({json:{draftId:draft.id,termsVersion:draft.termsVersion}});
+    }
+    if(!live&&['/odenis','/hesab'].includes(p))return route.fulfill({contentType:'text/html',body:'<h1>Sınaq ödəniş keçidi</h1>'});
     if(live&&p==='/api/payments/shop/quote'&&request.method()==='POST')return route.continue();
     if(request.method()!=='GET')return route.abort();
     if(!live&&p==='/api/payments/inventory')return route.fulfill({json:{products:[{productId:game.id,scope:'none',plans:[]}]}});
@@ -66,7 +71,28 @@ for(const engine of [chromium,webkit]){
      return route.fulfill({contentType:mime[path.extname(file)]||'text/plain',body:await fs.readFile(file)});
     }catch{return route.fulfill({status:404});}
    });
-   await page.goto(origin+'/mehsul/pubg-mobile',{waitUntil:'domcontentloaded'});
+   const dimensions=async slug=>{
+    await page.goto(origin+'/mehsul/'+slug,{waitUntil:'domcontentloaded'});
+    const root=page.locator('#productPageView.detail-v2');
+    await root.waitFor();
+    return root.evaluate(async root=>{
+     const image=root.querySelector('#pp-main-img');await image.decode();
+     const a=image.getBoundingClientRect(),media=image.closest('.product-page-media').getBoundingClientRect(),card=root.querySelector('.product-page-card').getBoundingClientRect(),info=root.querySelector('.product-page-info').getBoundingClientRect();
+     return {width:a.width,height:a.height,frameWidth:media.width,cardWidth:card.width,ratio:image.naturalWidth/image.naturalHeight,
+      left:a.right<=info.left+1,fit:getComputedStyle(image).objectFit,display:getComputedStyle(root.querySelector('.product-page-card-grid')).display,images:root.querySelectorAll('#pp-main-img').length};
+    });
+   };
+   const capcut=await dimensions('capcut-pro');
+   for(const slug of ['free-fire','telegram-premium','pubg-mobile']){
+    const size=await dimensions(slug);
+    assert.equal(size.images,1);
+    assert.equal(size.fit,'contain');
+    assert.equal(size.display,capcut.display);
+    assert(Math.abs(size.width-capcut.width)<=2,JSON.stringify({slug,width,size,capcut}));
+    assert(Math.abs(size.height-capcut.height)<=3,JSON.stringify({slug,width,size,capcut}));
+    if(width<768)assert(size.cardWidth-size.frameWidth<=20);
+    else assert(size.left);
+   }
    const rows=page.locator('#pp-plans-container .pp-plan-label:visible');
    await rows.first().waitFor();
    assert.equal(await rows.count(),game.plans.length);
@@ -74,7 +100,7 @@ for(const engine of [chromium,webkit]){
     const row=rows.nth(i);await row.click();
     assert((await row.innerText()).includes(plan.label));
     assert.equal(await row.locator('button').count(),0);
-    assert(await row.locator('.epinby-package-thumb').evaluate(async el=>{await el.decode();return el.naturalWidth>0;}));
+    assert.equal(await row.locator('img:visible').count(),0);
     assert(await row.evaluate(el=>el.getBoundingClientRect().right<=innerWidth+1));
    }
    const hero=page.locator('#pp-main-img');
@@ -107,6 +133,16 @@ for(const engine of [chromium,webkit]){
      await player.fill('000124');
      assert.equal(await details.getByText(/Sintetik oyunçu/).count(),0);
      await details.getByText('Hesab adı yoxlanmır.',{exact:true}).waitFor();
+     if(i===game.plans.length-1){
+      await player.fill('000123');
+      await details.getByText('Oyunçu tapıldı',{exact:true}).waitFor();
+      await details.getByRole('button',{name:/Ödənişə keç/}).click();
+      await page.waitForURL(u=>['/odenis','/hesab'].includes(u.pathname));
+      assert.equal(draft.productId,game.id);
+      assert.equal(draft.planIndex,i);
+      assert.equal(draft.values.player_id,'000123');
+      break;
+     }
     }
     await details.getByRole('button',{name:'Bağla'}).click();
    }

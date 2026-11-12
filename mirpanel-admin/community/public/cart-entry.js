@@ -1,6 +1,6 @@
 import {validateDetails,validateEpinbyDetails} from './checkout-fields.js?v=epinby-account-1';
 import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
-import {ensureEntryStyles} from './entry-styles.js?v=player-gold-seal-1';
+import {ensureEntryStyles} from './entry-styles.js?v=player-gold-seal-2';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
 function playerResultCard(name,id){
@@ -132,7 +132,10 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
    form.append(label);
   }
   const feedback=el('div',null,'cart-entry-check-feedback');feedback.setAttribute('role','status');feedback.hidden=true;
-  if(checksAccount)form.append(feedback);
+  if(checksAccount){
+   if(identifier==='player_id')checkInput.closest('label').after(feedback);
+   else form.append(feedback);
+  }
   const action=editLine?'Yadda saxla':loginOnGuest?'Ödənişə keç':'Səbətə at';
   const priced=cents=>action+(amount(cents)?' · '+amount(cents):'');
   const next=el('button',checksAccount?priced(quote.unitCents):'Davam et','cart-entry-primary');next.type='submit';form.append(next);

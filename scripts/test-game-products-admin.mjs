@@ -77,7 +77,7 @@ try{
          assert.equal(plan.image,'https://epinby.com/sample.png');
          assert.match([...generateProductListingPageFiles(catalog.products).values()].join(''),/pubg-mobile/);
          const html=[...generateProductPageFiles([product]).values()].join('');
-         assert.match(html,/epinby-package-thumb/);
+         assert.doesNotMatch(html,/epinby-package-thumb/);
          assert.doesNotMatch(html,/disabled>Alış hələ açılmayıb/);
         }
         return route.fulfill({json:{previewDigest:'test',productCount:1,activeProductCount:1,pageCount:1,warnings:[]}});

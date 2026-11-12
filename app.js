@@ -4409,7 +4409,7 @@ function renderProductPlans(p) {
       currentPlanIdx = idx;
       container.querySelectorAll('.pp-plan-label').forEach(row => row.classList.toggle('active', row === div));
     };
-    if(pl.supplier?.provider==='epinby'&&pl.image){
+    if(!p.epinbyGroup&&pl.supplier?.provider==='epinby'&&pl.image){
       const image=document.createElement('img');
       image.className='epinby-package-thumb';image.alt='';image.loading='lazy';image.width=52;image.height=38;
       const url=new URL(pl.image,location.origin+'/');
