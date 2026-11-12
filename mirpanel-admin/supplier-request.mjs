@@ -20,7 +20,7 @@ export function approvedUrl(base, path, allowlist) {
   return new URL(path,url);
 }
 
-export async function supplierRequest({base, path, key, allowlist, body, reference, authHeader='Authorization', jsonResponse=false, query, maxResponseBytes=65536,idempotencyHeader='Idempotency-Key'}) {
+export async function supplierRequest({base, path, key, allowlist, body, reference, authHeader='Authorization', jsonResponse=false, query, maxResponseBytes=65536,idempotencyHeader='Idempotency-Key',includeErrorCode=false}) {
   const url = approvedUrl(base,path,allowlist);
   const signal = AbortSignal.timeout(8000);
   const records = await lookup(url.hostname,{family:4,all:true});
@@ -44,7 +44,8 @@ export async function supplierRequest({base, path, key, allowlist, body, referen
       const chunks = [];
       let length = 0;
       res.on('error',reject);
-      if (res.statusCode < 200 || res.statusCode >= 300) {
+      const failed=res.statusCode < 200 || res.statusCode >= 300;
+      if (failed && !includeErrorCode) {
         res.destroy();
         reject(Object.assign(Error('SUPPLIER_HTTP'),{supplierStatus:res.statusCode}));
         return;
@@ -56,8 +57,15 @@ export async function supplierRequest({base, path, key, allowlist, body, referen
       });
       res.on('end',() => {
         if (!reference && !payload && !jsonResponse) return resolve(null);
-        try { resolve(JSON.parse(Buffer.concat(chunks).toString())); }
-        catch { reject(Error('SUPPLIER_JSON')); }
+        let data;
+        try { data=JSON.parse(Buffer.concat(chunks).toString()); }
+        catch { if(!failed)return reject(Error('SUPPLIER_JSON')); }
+        if(failed){
+          const code=data?.error?.code;
+          return reject(Object.assign(Error('SUPPLIER_HTTP'),{supplierStatus:res.statusCode,
+            ...(/^[A-Z0-9_]{1,60}$/.test(code||'')?{supplierCode:code}:{})}));
+        }
+        resolve(data);
       });
     });
     req.on('error',reject);

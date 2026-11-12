@@ -41,7 +41,7 @@ export function mountSubscriptions({content,el,button,link,api,validate,initial,
    if(!selected||loadingOptions)return;
    loadingOptions=true;next.disabled=true;status.textContent='';
    try{
-    const {startCartEntry}=await import('./cart-entry.js?v=netflix-room-renewal-1');
+    const {startCartEntry}=await import('./cart-entry.js?v=epinby-account-1');
     if(!alive()||!d.open)return;
     const plans=Array.from({length:selected.index+1},()=>({}));
     plans[selected.index]={label:selected.label};

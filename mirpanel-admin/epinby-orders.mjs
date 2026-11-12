@@ -3,12 +3,22 @@ import {supplierRequest} from './supplier-request.mjs';
 import {epinbyPlan,epinbyProduct} from '../epinby-product.mjs';
 import {planKey} from './payment-profit.mjs';
 import {adminDelivery,paid} from './community/order-delivery.mjs';
-import {validateDetails} from './community/public/checkout-fields.js';
+import {validateEpinbyDetails} from './community/public/checkout-fields.js';
 const S='mirpanel_community.',U=S+'epinby_order_units',D=S+'api_dispatches';
 const providerId='e91bb000-0000-4000-8000-000000000001';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const allowed=new Set(['https://epinby.com']);
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(v);
+const unavailable=(message='Bu paketdə hesab adı yoxlanmır.',allowCheckout=true)=>({state:'unavailable',message,allowCheckout});
+const invalid=()=>({state:'invalid',message:'Hesab tapılmadı. Daxil etdiyiniz məlumatı yoxlayın.',allowCheckout:false});
+const retry=()=>({state:'retry',message:'Hesab yoxlanmadı. Bir az sonra yenidən cəhd edin.',allowCheckout:false});
+const displayName=value=>typeof value==='string'?value.replace(/[\x00-\x1f\x7f]/g,'').trim().slice(0,120):'';
+function validationError(error,stars){
+ const code=error?.supplierCode||error?.error?.code;
+ if(code==='SUBSCRIPTION_REQUIRED'||code==='GAME_NOT_SUPPORTED'||code==='VALIDATION_NOT_SUPPORTED')return unavailable(code==='SUBSCRIPTION_REQUIRED'?'Hesab adı yoxlaması üçün təchizatçı abunəliyi tələb olunur.':undefined,!stars);
+ if(['PLAYER_NOT_FOUND','RECIPIENT_NOT_FOUND','TELEGRAM_USER_NOT_FOUND','USERNAME_NOT_FOUND','INVALID_INPUT','VALIDATION_ERROR','INVALID_USERNAME'].includes(code)||error?.supplierStatus===404&&!code)return invalid();
+ return retry();
+}
 export function verifyEpinbyWebhook(raw,headers,secret){
  const signature=headers['x-gamex-signature'];
  if(typeof signature!=='string'||!/^sha256=[a-f0-9]{64}$/i.test(signature))throw fail(401,'İmza düzgün deyil.');
@@ -20,6 +30,7 @@ export function verifyEpinbyWebhook(raw,headers,secret){
 }
 export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transport=supplierRequest}){
  let synchronizedAt=0;
+ const productChecks=new Map();
  async function credentials(db){return (await db.query('select * from '+S+'epinby_connection where id=true')).rows[0];}
  const send=(row,path,extra={})=>transport({base:'https://epinby.com',path:'/api/v1/'+path,allowlist:allowed,
   key:security.decryptSecret(row.api_key_cipher),authHeader:'X-API-Key',jsonResponse:true,maxResponseBytes:524288,...extra});
@@ -53,13 +64,31 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
  async function preflight(db,p,plan,quantity,values,index=0){
   const supplier=epinbyPlan(p,plan);
   if(!supplier)throw fail(409,'Epinby sifariş sazlaması hazır deyil.');
-  validateDetails(supplier.fields,values);
+  try{validateEpinbyDetails(supplier.fields,values,p.id);}catch(e){throw fail(400,e.message);}
   const row=await credentials(db);
   if(row?.last_status!=='confirmed'||!row.webhook_secret_cipher||!(await db.query("select to_regclass('"+U+"') n")).rows[0].n)throw fail(503,'Epinby sifariş xidməti hazır deyil.');
   await configure(db,row,[p]);
   const mapping=(await db.query('select settings from '+S+'api_mappings where product_id=$1 and plan_key=$2 and active and supplier_id=$3 for share',[p.id,planKey(plan,index),providerId])).rows[0];
   const mapped=epinbyProduct(mapping?.settings);
-  if(!mapped||mapped.productId!==supplier.productId||mapped.type!==supplier.type||JSON.stringify(mapped.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Paketin sifariş sazlaması yenilənir. Yenidən yoxlayın.');
+  if(!mapped||mapped.productId!==supplier.productId||mapped.type!==supplier.type||mapped.starsAmount!==supplier.starsAmount||JSON.stringify(mapped.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Paketin sifariş sazlaması yenilənir. Yenidən yoxlayın.');
+  if(supplier.type==='TELEGRAM_STARS'){
+   const config=await send(row,'telegram-stars/config');
+   const limit=config?.data;
+   if(config?.success!==true||limit?.enabled!==true||limit.service_online!==true||limit.custom_amount_enabled!==true||
+    !Number.isInteger(limit.min_stars)||!Number.isInteger(limit.max_stars)||supplier.starsAmount<limit.min_stars||supplier.starsAmount>limit.max_stars)
+    throw fail(409,'Bu Telegram Stars paketi təchizatçıda əlçatan deyil.');
+   const check=await checkRecipient(row,supplier,values);
+   if(!check.allowCheckout)throw fail(check.state==='retry'?503:409,check.message);
+   const quoted=await send(row,'telegram-stars/quote',{body:{stars_amount:supplier.starsAmount}});
+   if(quoted?.success!==true||Number(quoted.data?.stars_amount)!==supplier.starsAmount)throw fail(503,'Telegram Stars paketi təchizatçıda təsdiqlənmədi.');
+   return;
+  }
+  const product=await providerProduct(row,supplier);
+  if(!['FINITE','INFINITE','UNLIMITED'].includes(product.stock_status)||product.stock_status==='FINITE'&&(!Number.isSafeInteger(Number(product.stock_count))||Number(product.stock_count)<quantity))throw fail(409,'Təchizatçıda kifayət qədər təsdiqlənmiş stok yoxdur.');
+  const check=await checkRecipient(row,supplier,values,product);
+  if(!check.allowCheckout)throw fail(check.state==='retry'?503:409,check.message);
+ }
+ async function providerProduct(row,supplier){
   // The live API ignores undocumented ID filters. Search only the exact game/category,
   // validating every page and the stable product ID before any wallet debit.
   let product;
@@ -73,11 +102,57 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   if(!product)throw fail(409,'Təchizatçı məhsulu təsdiqləyə bilmədi.');
   const live=epinbyProduct({provider:'epinby',productId:product.id,type:String(product.type).toUpperCase(),fields:product.fields||[]});
   if(!live||live.type!==supplier.type||JSON.stringify(live.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Məhsulun tələb etdiyi sahələr dəyişib. Sifariş formasını yenidən açın.');
-  if(!['FINITE','INFINITE','UNLIMITED'].includes(product.stock_status)||product.stock_status==='FINITE'&&(!Number.isSafeInteger(Number(product.stock_count))||Number(product.stock_count)<quantity))throw fail(409,'Təchizatçıda kifayət qədər təsdiqlənmiş stok yoxdur.');
-  if(product.supports_player_validation===true){
-   let validation;try{validation=await send(row,'validate-player',{body:{product_id:supplier.productId,...values}});}catch{throw fail(503,'Oyunçu məlumatı yoxlanılmadı. Balans tutulmadı.');}
-   if(validation?.success!==true)throw fail(409,'Oyunçu məlumatını yoxlayın. Balans tutulmadı.');
+  return product;
+
+ }
+ async function checkRecipient(row,supplier,values,product){
+  const stars=supplier.type==='TELEGRAM_STARS';
+  if(!stars&&(supplier.type!=='TOPUP'||product?.supports_player_validation!==true))return unavailable();
+  let response;
+  try{
+   response=await send(row,stars?'telegram-stars/recipient':'validate-player',{
+    includeErrorCode:true,
+    body:stars?{telegram_username:values.telegram_username}:{product_id:supplier.productId,...values}
+   });
+  }catch(error){return validationError(error,stars);}
+  if(response?.success!==true)return validationError(response,stars);
+  const data=response.data;
+  if(!data||typeof data!=='object')return retry();
+  if(data.found===false||data.valid===false||data.exists===false)return invalid();
+  const recipient=data.recipient||data;
+  if(stars){
+   if(recipient.found===false||recipient.exists===false||recipient.valid===false||recipient.can_receive===false||recipient.can_receive_stars===false)return invalid();
+   const name=displayName(recipient.display_name||recipient.full_name||recipient.name||[recipient.first_name,recipient.last_name].filter(Boolean).join(' '));
+   const returned=recipient.telegram_username||recipient.username;
+   if(typeof returned==='string'&&returned.replace(/^@/,'').toLowerCase()!==values.telegram_username.replace(/^@/,'').toLowerCase())return invalid();
+   if(name)return {state:'verified',name,allowCheckout:true};
+   return returned||recipient.id||recipient.telegram_user_id||recipient.found===true
+    ?unavailable('Alıcı tapıldı. Təchizatçı hesab adını göstərmir.'):retry();
   }
+  const name=displayName(data.player_name||data.nickname);
+  if(data.nickname_verified===true&&name)return {state:'verified',name,allowCheckout:true};
+  if(data.validation_optional===true)return unavailable();
+  return data.nickname_verified===false?invalid():retry();
+ }
+ function productForCheck(row,supplier){
+  const key=JSON.stringify([row.credential_version,supplier]);
+  const cached=productChecks.get(key),now=Date.now();
+  if(cached&&cached.until>now)return cached.request;
+  const entry={until:now+45000,request:providerProduct(row,supplier)};
+  productChecks.set(key,entry);
+  if(productChecks.size>48)productChecks.delete(productChecks.keys().next().value);
+  void entry.request.catch(()=>{if(productChecks.get(key)===entry)productChecks.delete(key);});
+  return entry.request;
+ }
+ async function check(db,p,plan,raw){
+  const supplier=epinbyPlan(p,plan);
+  if(!supplier?.fields.length)throw fail(400,'Bu paket hesab məlumatı tələb etmir.');
+  let values;try{values=validateEpinbyDetails(supplier.fields,raw,p.id);}catch(e){throw fail(400,e.message);}
+  const row=await credentials(db);
+  if(row?.last_status!=='confirmed'||!row.api_key_cipher)return retry();
+  const stars=supplier.type==='TELEGRAM_STARS';
+  try{return await checkRecipient(row,supplier,values,stars?null:await productForCheck(row,supplier));}
+  catch(e){return e.status===409?{state:'invalid',message:e.message,allowCheckout:false}:retry();}
  }
  async function prepare(db){
   const c=await db.connect();
@@ -91,7 +166,7 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
     const done=(await c.query(`select 1 from ${S}customer_order_deliveries where order_id=$1 and line_index=$2 limit 1`,[job.order_id,job.line_index])).rowCount;
     if(done||!line||!Number.isSafeInteger(line.quantity)||line.quantity<1||line.quantity>100){await c.query("update "+D+" set state='failed' where id=$1",[job.id]);continue;}
     let values={};try{if(line.detailsCipher)values=JSON.parse(security.decryptSecret(line.detailsCipher));}catch{throw Error('EPINBY_DETAILS_UNAVAILABLE');}
-    const body={product_id:job.settings.productId,qty:1,callback_url:callbackUrl,callback_mode:'events'};
+    const body=job.settings.type==='TELEGRAM_STARS'?{stars_amount:job.settings.starsAmount}:{product_id:job.settings.productId,qty:1,callback_url:callbackUrl,callback_mode:'events'};
     for(const f of job.settings.fields||[]){if(f.required&&!values[f.key])throw Error('EPINBY_FIELD_MISSING');if(values[f.key])body[f.key]=String(values[f.key]);}
     for(let unit=0;unit<line.quantity;unit++)await c.query(`insert into ${U}(dispatch_id,unit_index,body_cipher) values($1,$2,$3) on conflict do nothing`,[job.id,unit,security.encryptSecret(JSON.stringify(body))]);
     await c.query("update "+D+" set state='checking' where id=$1",[job.id]);
@@ -107,10 +182,10 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   if(data.product_id!=null&&Number(data.product_id)!==unit.product_id)return;
   if(data.qty!=null&&Number(data.qty)!==1)return;
   let next='checking',reason='Təchizatçı nəticəsi gözlənilir.';
-  const message=unit.type==='VOUCHER'?Array.isArray(data.delivery)?data.delivery.filter(x=>typeof x==='string').join('\n'):null:'Oyun hesabına yükləmə təchizatçı tərəfindən təsdiqləndi.';
+  const message=unit.type==='VOUCHER'?Array.isArray(data.delivery)?data.delivery.filter(x=>typeof x==='string').join('\n'):null:unit.type==='TELEGRAM_STARS'?'Telegram Stars göndərişi təchizatçı tərəfindən təsdiqləndi.':'Oyun hesabına yükləmə təchizatçı tərəfindən təsdiqləndi.';
   if(state==='COMPLETED'&&message){next='succeeded';reason=null;}
   else if(state==='COMPLETED')reason='Təchizatçı təhvili təsdiqlədi; kod məlumatı gözlənilir.';
-  else if(['FAILED','CANCELED'].includes(state)){next='failed';reason='Təchizatçı sifarişi rədd etdi. Admin araşdırması tələb olunur.';}
+  else if(['FAILED','CANCELED','CANCELLED'].includes(state)){next='failed';reason='Təchizatçı sifarişi rədd etdi. Admin araşdırması tələb olunur.';}
   await db.query(`update ${U} set external_id=coalesce(external_id,$2),state=$3,result_cipher=case when $3='succeeded' then $4 else result_cipher end,reason=$5,next_at=case when $3='succeeded' then now() else now()+interval '20 seconds' end
    where id=$1 and state in ('queued','checking')`,[unit.id,external,next,message?security.encryptSecret(message):null,reason]);
  }
@@ -137,16 +212,19 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   }else{
    try{
     let result;
-    if(unit.state==='queued')result=await send(row,'order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
+    if(unit.type==='TELEGRAM_STARS'){
+     result=unit.external_id?await send(row,'telegram-stars/order/'+unit.external_id)
+      :await send(row,'telegram-stars/order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
+    }else if(unit.state==='queued')result=await send(row,'order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
     else if(unit.external_id)result=await send(row,'order/'+unit.external_id);
     else{
      const orders=await send(row,'orders');const found=Array.isArray(orders.data)&&orders.data.find(x=>x.client_order_id===unit.id);
      if(found)result={success:true,data:found};
     }
     if(result?.success===true&&result.data)await record(db,unit,result.data);
-    else if(unit.state==='queued'&&result?.success===false&&['VALIDATION_ERROR','INSUFFICIENT_FUNDS','VALIDATION_REQUIRED','PRODUCT_NOT_FOUND'].includes(result.error?.code))await db.query(`update ${U} set state='failed',reason=$2 where id=$1 and state='checking'`,[unit.id,'Təchizatçı sifarişi qəbul etmədi: '+result.error.code]);
+    else if((unit.state==='queued'||unit.type==='TELEGRAM_STARS'&&!unit.external_id)&&result?.success===false&&['VALIDATION_ERROR','INSUFFICIENT_FUNDS','VALIDATION_REQUIRED','PRODUCT_NOT_FOUND'].includes(result.error?.code))await db.query(`update ${U} set state='failed',reason=$2 where id=$1 and state='checking'`,[unit.id,'Təchizatçı sifarişi qəbul etmədi: '+result.error.code]);
     else await db.query(`update ${U} set reason=$2 where id=$1 and state='checking'`,[unit.id,'Nəticə qeyri-müəyyəndir. Status yoxlanılır; yeni alış göndərilmir.']);
-   }catch(error){await db.query(`update ${U} set state=$3,reason=$2 where id=$1 and state='checking'`,[unit.id,'Təchizatçı cavabı alınmadı. Status yoxlanılır; təkrar alış edilmir.',unit.state==='queued'&&[400,401,402,403,422].includes(error.supplierStatus)?'failed':'checking']);}
+   }catch(error){await db.query(`update ${U} set state=$3,reason=$2 where id=$1 and state='checking'`,[unit.id,'Təchizatçı cavabı alınmadı. Status yoxlanılır; təkrar alış edilmir.',(unit.state==='queued'||unit.type==='TELEGRAM_STARS'&&!unit.external_id)&&[400,401,402,403,422].includes(error.supplierStatus)?'failed':'checking']);}
   }
   await db.query(`update ${D} d set state=case when not exists(select 1 from ${U} u where u.dispatch_id=d.id and u.state<>'delivered') then 'delivered'
    when not exists(select 1 from ${U} u where u.dispatch_id=d.id and u.state not in ('failed','delivered')) then 'failed' else 'checking' end
@@ -163,5 +241,5 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   await record(db,unit,body);await db.query('update '+U+" set next_at=now() where id=$1 and state='succeeded'",[unit.id]);
   return {ok:true};
  }
- return {drain,webhook,preflight,synchronize,playerName};
+ return {drain,webhook,preflight,synchronize,check,playerName};
 }

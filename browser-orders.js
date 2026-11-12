@@ -888,7 +888,7 @@ function netflixScreen(animation,create){
   cancel.onclick=()=>repeatDialog.close();
   if(!selection){add.disabled=true;status.textContent='Bu məhsul və ya əvvəlki paket hazırda satışda deyil və ya müəyyən edilə bilmədi.';}
   add.onclick=async()=>{if(add.disabled)return;add.disabled=true;
-   try{const {startCartEntry}=await import('/community-assets/cart-entry.js?v=game-topup-terms-1');if(!repeatDialog.open||!add.isConnected)return;
+   try{const {startCartEntry}=await import('/community-assets/cart-entry.js?v=epinby-account-1');if(!repeatDialog.open||!add.isConnected)return;
     const plan={label:selection.planName},plans=[];plans[selection.planIndex]=plan;
     repeatDialog.close();
     await startCartEntry({id:selection.productId,title:selection.title,plans},plan,{repeatPlanName:selection.planName,repeatPlanKey:selection.planKey??null});

@@ -16,7 +16,7 @@
   let modalSession = 0;
   let cartOpening, cartModule, cartModuleRetry = 0;
   function entryModule() {
-    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=game-topup-terms-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
+    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=epinby-account-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
       .catch(error => {cartModule = null; cartModuleRetry++; throw error;});
     return cartModule;
   }

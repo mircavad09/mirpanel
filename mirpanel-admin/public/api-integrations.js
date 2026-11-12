@@ -111,12 +111,20 @@
     const product=products.find(p=>p.active!==false&&p.id==='epinby_'+id&&p.plans.length===1);
     return product?{product,plan:product.plans[0],legacy:true}:null;
   }
+  const isTelegramStars=item=>/\btelegram\s+stars\b/i.test([item.game,item.category,item.name].filter(Boolean).join(' '));
+  function starsQuantity(item){
+    for(const label of [item.package,item.name]){
+      const amounts=String(label||'').match(/\d+/g);
+      if(amounts?.length===1&&Number.isSafeInteger(Number(amounts[0]))&&Number(amounts[0])>0)return Number(amounts[0]);
+    }
+    return null;
+  }
   function chooseProduct(item,existing){
     return new Promise(resolve=>{
       const dialog=document.createElement('dialog');dialog.className='gameProductPicker';dialog.setAttribute('aria-label','Hansı məhsula əlavə edilsin?');
       dialog.innerHTML='<form method="dialog"><h3>Hansı məhsula əlavə edilsin?</h3><label>Məhsul axtar <input type="search" placeholder="Ad və ya məhsul kodu"></label><label>Kateqoriya <select data-category aria-label="Kateqoriya"></select></label><label>Məhsullar <select data-target aria-label="Məhsullar" size="6" required></select></label><div class="gameProductPickerActions"><button type="button" class="btn" data-cancel>Ləğv et</button><button class="btn primary" value="confirm">Təsdiqlə</button></div></form>';
       const categories=dialog.querySelector('[data-category]'),target=dialog.querySelector('[data-target]'),search=dialog.querySelector('input');
-      const telegramStars=/\btelegram\s+stars\b/i.test([item.game,item.category,item.name].filter(Boolean).join(' '));
+      const telegramStars=isTelegramStars(item);
       const all=state.data.products.filter(p=>p.id!==existing?.product.id&&
         (!telegramStars||(p.active!==false&&p.id==='telegram_premium')));
       if(telegramStars&&!all.length){toast('Telegram Premium məhsulu aktiv olmalıdır.','bad');resolve(null);return;}
@@ -145,9 +153,11 @@
     if(!price.reportValidity())return;
     const salePrice=price.valueAsNumber;
     const updating=existing&&!existing.legacy;
-    if(updating&&salePrice===Number(existing.plan.price))return;
+    if(updating&&salePrice===Number(existing.plan.price)&&(!isTelegramStars(item)||existing.plan.supplier?.type==='TELEGRAM_STARS'))return;
+    const stars=isTelegramStars(item),starsAmount=stars?starsQuantity(item):null;
+    if(stars&&!starsAmount){toast('Telegram Stars paketində ulduz sayı müəyyən edilmədi.','bad');return;}
     const providerFields=item.fields||[];
-    if(!existing&&(!['TOPUP','VOUCHER'].includes(item.type)||providerFields.some(f=>!['player_id','server_id','input_2','input_3','input_4','input_5','input_6','input_7','input_8'].includes(f.key)))){toast('Bu məhsulun xüsusi sifariş sahələri hələ dəstəklənmir.','bad');return;}
+    if(!stars&&!existing&&(!['TOPUP','VOUCHER'].includes(item.type)||providerFields.some(f=>!['player_id','server_id','input_2','input_3','input_4','input_5','input_6','input_7','input_8'].includes(f.key)))){toast('Bu məhsulun xüsusi sifariş sahələri hələ dəstəklənmir.','bad');return;}
     const expected=state.data;
     button.disabled=true;
     try{
@@ -160,13 +170,18 @@
       if(target?.active===false)throw Error('Aktiv məhsul seçin.');
       const current=packageLocation(item.id);
       if(state.data!==expected||state.dirty||current?.product!==existing?.product)throw Error('Kataloq dəyişdi. Yenidən yoxlayın.');
-      if(updating)existing.plan.price=salePrice;
+      const supplier=stars?{provider:'epinby',productId:item.id,type:'TELEGRAM_STARS',starsAmount}
+        :existing?.product.supplier||{provider:'epinby',productId:item.id,type:item.type,gameId:item.gameId,categoryId:item.categoryId,fields:providerFields};
+      if(stars&&target?.id!=='telegram_premium')throw Error('Telegram Stars üçün Telegram Premium məhsulunu seçin.');
+      if(updating){
+        existing.plan.price=salePrice;
+        if(stars)existing.plan.supplier=supplier;
+      }
       else{
         const category='epinby-games';
         if(!target&&!expected.categories.some(c=>c.key===category))expected.categories.push({key:category,name:'Oyun məhsulları'});
         const image=existing?.plan.image||existing?.product.image||pubgImages[item.id]||item.image||'';
         const destination=target||ensureProduct({id:groupId,title,category,image,currency:'₼',seoSlug:groupId,order:nextProductOrder(),active:true,epinbyGroup:true,plans:[]});
-        const supplier=existing?.product.supplier||{provider:'epinby',productId:item.id,type:item.type,gameId:item.gameId,categoryId:item.categoryId,fields:providerFields};
         destination.plans.push({...existing?.plan,id:'epinby_'+item.id,pricingId:existing?.plan.pricingId||crypto.randomUUID(),label:existing?.plan.label||item.package||item.name,price:salePrice,image,supplier});
         if(!target)expected.products.push(destination);
         if(existing){existing.product.active=false;existing.product.seoIndex=false;existing.product.includeInSitemap=false;}

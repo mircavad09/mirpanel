@@ -10,24 +10,60 @@ import {ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{pool,db,catalog,id,rpc}=f;
 const config={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')},security=createPaymentSecurity(config);
-let mode='success',creates=0,external=700,failPage=false,catCalls=[],nameMode='verified';const supplierOrders=new Map();
+let nameMode='verified',mode='success',lookupMode='found',starsCreates=0,creates=0,external=700,failPage=false,catCalls=[];const supplierOrders=new Map();
 const fields=[{key:'player_id',label:'Player ID',required:true},{key:'server_id',label:'Server',required:false}];
 const product={id:'epinby_91',title:'Synthetic game',active:true,plans:[{label:'60 UC',price:3.49}],formFields:fields,
  supplier:epinbyProduct({provider:'epinby',productId:91,type:'TOPUP',fields},'epinby_91')};catalog.products.push(product);
 catalog.products.push({id:'synthetic_game_group',title:'Synthetic grouped game',active:true,plans:[{label:'Other package',price:2},{id:'epinby_92',label:'Gift code',price:5,supplier:epinbyProduct({provider:'epinby',productId:92,type:'VOUCHER',fields:[]},'epinby_92')}]});
+const pubg={id:'pubg_mobile',title:'PUBG Mobile',active:true,plans:[{id:'epinby_93',label:'60 UC',price:3.49,supplier:{provider:'epinby',productId:93,type:'TOPUP',fields:[fields[0]]}}]};
+const free={id:'free_fire',title:'Free Fire',active:true,plans:[{id:'epinby_94',label:'100 Diamonds',price:2.50,supplier:{provider:'epinby',productId:94,type:'TOPUP',fields}}]};
+const stars={id:'telegram_premium',title:'Telegram Premium',active:true,plans:[{id:'epinby_95',label:'100 Stars',price:2.49,supplier:{provider:'epinby',productId:95,type:'TELEGRAM_STARS',starsAmount:100}}]};
 const transport=async input=>{
  assert.equal(input.key,'synthetic-key');assert.equal(input.authHeader,'X-API-Key');
  if(input.path.endsWith('/getMe'))return {success:true,data:{currency:'USD',balance:'100'}};
  if(input.path.endsWith('/games')){assert.equal(input.maxResponseBytes,524288);catCalls.push('games');return {success:true,data:[{id:4,name:'Test game'}]};}
  if(input.path.endsWith('/categories'))return {success:true,data:[{id:7,name:'Packs'}]};
- if(input.path.endsWith('/validate-player')){
+ if(input.path.endsWith('/products')){
+  catCalls.push(input.query);if(failPage&&Number(input.query.page)===2)throw Error('NETWORK');
+  if(input.query.game_id===100)return {success:true,data:[
+   {id:93,type:'TOPUP',fields:[fields[0]],supports_player_validation:true,stock_status:'INFINITE'},
+   {id:94,type:'TOPUP',fields,supports_player_validation:true,stock_status:'INFINITE'}
+  ],meta:{current_page:1,last_page:1}};
+  return {success:true,data:[{id:91,name:'60 UC',price:'1.00',stock_status:'INFINITE',type:'TOPUP',fields},{id:92,name:'Gift code',price:'2.00',stock_status:'FINITE',stock_count:10,type:'VOUCHER',fields:[]}],meta:{current_page:Number(input.query.page)||1,last_page:122,total:6086}};
+ }
+ if(input.path.endsWith('/validate-player')&&input.body.product_id===91){
   assert.deepEqual(input.body,{product_id:91,player_id:'000123',server_id:'0001'});
   if(nameMode==='unavailable')throw Error('NETWORK');
   return {success:true,data:{player_name:'Synthetic player',nickname_verified:nameMode==='verified'}};
  }
- if(input.path.endsWith('/products')){
-  catCalls.push(input.query);if(failPage&&Number(input.query.page)===2)throw Error('NETWORK');
-  return {success:true,data:[{id:91,name:'60 UC',price:'1.00',stock_status:'INFINITE',type:'TOPUP',fields},{id:92,name:'Gift code',price:'2.00',stock_status:'FINITE',stock_count:10,type:'VOUCHER',fields:[]}],meta:{current_page:Number(input.query.page)||1,last_page:122,total:6086}};
+ if(input.path.endsWith('/validate-player')){
+  assert.ok([93,94].includes(input.body.product_id));
+  assert.equal(input.body.player_id,'000123');
+  if(input.body.product_id===94)assert.equal(input.body.server_id,'0001');
+  if(lookupMode==='missing')throw Object.assign(Error('not found'),{supplierStatus:404,supplierCode:'PLAYER_NOT_FOUND'});
+  if(lookupMode==='offline')throw Error('NETWORK');
+  if(lookupMode==='subscription')throw Object.assign(Error('requires subscription'),{supplierStatus:403,supplierCode:'SUBSCRIPTION_REQUIRED'});
+  return {success:true,data:{nickname_verified:true,player_name:'Synthetic Player'}};
+ }
+ if(input.path.endsWith('/telegram-stars/recipient')){
+  assert.deepEqual(input.body,{telegram_username:'@synthetic_player'});
+  if(lookupMode==='missing')return {success:false,error:{code:'RECIPIENT_NOT_FOUND'}};
+  return {success:true,data:{recipient:{username:'synthetic_player',first_name:'Synthetic Telegram'}}};
+ }
+ if(input.path.endsWith('/telegram-stars/config'))return {success:true,data:{enabled:true,service_online:true,custom_amount_enabled:true,min_stars:50,max_stars:10000}};
+ if(input.path.endsWith('/telegram-stars/quote')){
+  assert.deepEqual(input.body,{stars_amount:100});
+  return {success:true,data:{stars_amount:100}};
+ }
+ if(input.path.endsWith('/telegram-stars/order')){
+  assert.deepEqual(input.body,{stars_amount:100,telegram_username:'@synthetic_player'});
+  assert.equal(input.idempotencyHeader,'X-Idempotency-Key');assert(input.reference);
+  if(!supplierOrders.has(input.reference)){
+   starsCreates++;
+   supplierOrders.set(input.reference,{order_id:++external,client_order_id:input.reference,status:'COMPLETED'});
+   throw Error('Lost Stars response');
+  }
+  return {success:true,data:supplierOrders.get(input.reference)};
  }
  if(input.path.endsWith('/order')){
   creates++;assert.equal(input.idempotencyHeader,'X-Idempotency-Key');assert.equal(input.body.qty,1);
@@ -101,5 +137,34 @@ try{
  const code=(await pool.query('select id from customer_order_deliveries where order_id=$1',[voucher.orderId])).rows[0];
  assert(code);assert(security.decryptSecret((await ownerCodes(pool,'a',code.id))[0].message_cipher).includes('SYNTHETIC-CODE'));assert.equal((await ownerCodes(pool,'b',code.id)).length,0);
  const mails=(await pool.query('select event_key,count(*)::int n from customer_order_mail group by event_key')).rows;assert(mails.every(x=>x.n===1));
+ pubg.plans[0].supplier.gameId=100;free.plans[0].supplier.gameId=100;
+ catalog.products.push(pubg,free,stars);
+ const verify=async(product,values)=>{
+  const selection={productId:product.id,planIndex:0};
+  const q=(await shop.quote({user:'a'},[{...selection,quantity:1}])).items[0];
+  assert.equal(q.accountCheck,true);
+  return shop.checkEpinbyAccount({user:'a'},{...selection,termsVersion:q.termsVersion,values});
+ };
+ const player={player_id:'000123'},freePlayer={...player,server_id:'0001'},telegram={telegram_username:'@synthetic_player'};
+ assert.equal((await verify(pubg,player)).name,'Synthetic Player');
+ assert.equal((await verify(free,freePlayer)).name,'Synthetic Player');
+ assert.equal((await verify(stars,telegram)).name,'Synthetic Telegram');
+ await assert.rejects(verify(pubg,{player_id:'words'}),{status:400});
+ lookupMode='missing';
+ assert.equal((await verify(pubg,player)).state,'invalid');
+ assert.equal((await verify(stars,telegram)).state,'invalid');
+ const beforeInvalid=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);
+ const starsLine={productId:stars.id,planIndex:0,quantity:1,details:telegram};
+ await assert.rejects(buy(id(),[starsLine]),{status:409});
+ assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),beforeInvalid);
+ lookupMode='offline';assert.equal((await verify(free,freePlayer)).state,'retry');
+ lookupMode='subscription';const unavailable=await verify(free,freePlayer);
+ assert.equal(unavailable.state,'unavailable');assert.equal(unavailable.allowCheckout,true);assert.equal(unavailable.name,undefined);
+ lookupMode='found';
+ const starOrder=await buy(id(),[starsLine]);await tick(worker,12);
+ assert.equal(starsCreates,1);
+ assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),beforeInvalid-249);
+ assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[starOrder.orderId])).rows[0].n,1);
+ console.log('PASS: Epinby account checks, unavailable/retry, invalid Stars no debit, Stars dedicated idempotent fulfillment.');
  console.log('PASS: separate games; >40 pages; page failure; dynamic fields/leading zeros; wallet replay; parallel worker; lost response/restart without repurchase; signed duplicate webhook; provider rejection; private delivery; mail idempotence. No real supplier order.');
 }finally{await f.close();}

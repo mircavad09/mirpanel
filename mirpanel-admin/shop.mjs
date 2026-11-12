@@ -27,10 +27,15 @@ export function productCardPaymentUnavailable(){
  return Object.assign(Error('Məhsul sifarişləri üçün kartdan karta ödəniş hazırda əlçatan deyil. Balansla ödəyə bilərsiniz.'),{status:409,code:'PRODUCT_CARD_PAYMENT_UNAVAILABLE'});
 }
 export function createShop({context,catalog,snapshot,store,config,adminTopupNotifications=false,epinbyTransport}){
+ let epinby;const epinbyService=()=>epinby??=createEpinbyOrders({security:createPaymentSecurity(config),loadCatalog:catalog,transport:epinbyTransport});
  let drafts;const draftService=()=>drafts??=createDrafts({catalog,security:createPaymentSecurity(config)});
  async function account(req,{verified=true}={}){const value=await context(req);if(value.user){const u=(await value.pool.query('select u."emailVerified",p.blocked,p.ban_until from mirpanel_community."user" u left join mirpanel_community.community_profiles p on p.user_id=u.id where u.id=$1',[value.user])).rows[0];if(!u)throw fail(401,'Hesabınıza daxil olun.');if(verified&&!u.emailVerified)throw Object.assign(fail(403,'Sifarişinizi tamamlamaq üçün e-poçtunuzu təsdiqləyin'),{code:'CHECKOUT_EMAIL_UNVERIFIED'});if(u.blocked&&(!u.ban_until||Date.parse(u.ban_until)>Date.now()))throw fail(403,'Hesabınıza giriş bağlanıb.');}return value;}
  async function ready(pool){if(!(await pool.query('select enabled from mirpanel_community.shop_release where id')).rows[0]?.enabled)throw fail(503,'Səbət və balans xidməti hazırda əlçatan deyil.');}
- async function quote(c,items,user,final=false,owner=null){const [data,rows]=await Promise.all([catalog(),snapshot()]);const result=[],renewing=new Set(),requestedStock=new Map();for(const x of cartInput(items)){const p=data.products.find(p=>p.id===x.productId&&p.active!==false),plan=p?.plans?.[x.planIndex];if(!p||!plan)throw fail(409,'Məhsul və ya plan artıq aktiv deyil.');const available=inventoryAvailability(p,rows.find(r=>r.productId===p.id)),ip=available.plans.find(p=>p.planKey===String(x.planIndex));if(!ip?.active&&final)throw stockConflict(p.title);if(final&&available.salesDisabled)throw stockConflict(p.title);const termsState=termsInfo(p,plan,x.planIndex),{terms,note,termsVersion,fields}=termsState;
+ async function unitPrice(c,user,p,plan,index){
+  const standard=parseMoneyCents(plan.price,{allowEmpty:false});if(standard<=0)throw fail(409,'Məhsulun qiyməti əlçatan deyil.');let price=standard;if(user){const special=(await c.query('select p.cents from mirpanel_community.user_special_prices p where user_id=$1 and product_id=$2 and plan_key=$3 and plan_signature=$4 and exists(select 1 from mirpanel_community.user_controls_release where id and enabled) and exists(select 1 from mirpanel_community.user_seller_settings where user_id=$1 and enabled)',[user,p.id,planKey(plan,index),userPriceSignature(plan)])).rows[0];if(special)price=Number(special.cents);}
+  return {price,standard};
+ }
+ async function quote(c,items,user,final=false,owner=null){const [data,rows]=await Promise.all([catalog(),snapshot()]);const result=[],renewing=new Set(),requestedStock=new Map();for(const x of cartInput(items)){const p=data.products.find(p=>p.id===x.productId&&p.active!==false),plan=p?.plans?.[x.planIndex];if(!p||!plan)throw fail(409,'Məhsul və ya plan artıq aktiv deyil.');const available=inventoryAvailability(p,rows.find(r=>r.productId===p.id)),ip=available.plans.find(p=>p.planKey===String(x.planIndex));if(!ip?.active&&final)throw stockConflict(p.title);if(final&&available.salesDisabled)throw stockConflict(p.title);const supplier=epinbyPlan(p,plan),termsState=termsInfo(p,plan,x.planIndex),{terms,note,termsVersion,fields}=termsState;
  let detailsMissing=false,values={},draftRenewal=null,accepted=x.draftId?null:x.termsVersion;
  try{
   const draft=x.draftId?await draftService().resolve(c,user,owner,x,termsState):{values:x.details||{}};
@@ -48,7 +53,7 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
   if(quantity>remaining)throw stockConflict(p.title,remaining);
   requestedStock.set(stockKey,quantity);
  }
- const standard=parseMoneyCents(plan.price,{allowEmpty:false});if(standard<=0)throw fail(409,'Məhsulun qiyməti əlçatan deyil.');let price=standard;if(user){const special=(await c.query('select p.cents from mirpanel_community.user_special_prices p where user_id=$1 and product_id=$2 and plan_key=$3 and plan_signature=$4 and exists(select 1 from mirpanel_community.user_controls_release where id and enabled) and exists(select 1 from mirpanel_community.user_seller_settings where user_id=$1 and enabled)',[user,p.id,planKey(plan,x.planIndex),userPriceSignature(plan)])).rows[0];if(special)price=Number(special.cents);}
+ const {price,standard}=await unitPrice(c,user,p,plan,x.planIndex);
  let renewal;
  if(draftRenewal){
   if(final&&(x.quantity!==1||renewing.has(draftRenewal.id)))throw fail(409,'Hər abunəlik bir dəfə yenilənə bilər. Səbətdə sayı 1 seçin.');
@@ -57,8 +62,8 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
   if(final)renewal={...await verifyRenewal(c,user,draftRenewal.id,p.id,draftRenewal.expiresOn),period};
  }
  const period=subscriptionPeriod(plan);
- if(final&&(plan.supplier||epinbyPlan(p,plan)||/^epinby_\d+$/.test(p.id)))await createEpinbyOrders({pool:async()=>c,security:createPaymentSecurity(config),loadCatalog:catalog,transport:epinbyTransport}).preflight(c,p,plan,x.quantity,values,x.planIndex);
- const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(draftRenewal?{renewalOnly:true}:{}),...(renewal?{renewal}:{}),detailsMissing,termsVersion,termsMissing,note,fields,maskedDetails:maskedDetails(fields,values),...(final&&Object.keys(values).length?{detailsCipher:createPaymentSecurity(config).encryptSecret(JSON.stringify(values))}:{}),terms,...(termsState.gameTerms?{gameTerms:termsState.gameTerms}:{}),title:p.title,planName:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Plan'),image:p.image||'',unitCents:price,standardCents:standard,available:remaining,salesDisabled:available.salesDisabled,tracked:ip?.tracked===true,signature:signature(plan),sourcePlanKey:planKey(plan,x.planIndex),duration:period?.unit==='months'?period.count:null,...(period?.unit==='days'?{durationDays:period.count}:{})});}return{items:result,totalCents:result.reduce((s,x)=>s+x.unitCents*x.quantity,0)};}
+ if(final&&(plan.supplier||supplier||/^epinby_\d+$/.test(p.id)))await epinbyService().preflight(c,p,plan,x.quantity,values,x.planIndex);
+ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(draftRenewal?{renewalOnly:true}:{}),...(renewal?{renewal}:{}),detailsMissing,termsVersion,termsMissing,note,fields,accountCheck:!!supplier?.fields.length,maskedDetails:maskedDetails(fields,values),...(final&&Object.keys(values).length?{detailsCipher:createPaymentSecurity(config).encryptSecret(JSON.stringify(values))}:{}),terms,...(termsState.gameTerms?{gameTerms:termsState.gameTerms}:{}),title:p.title,planName:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Plan'),image:p.image||'',unitCents:price,standardCents:standard,available:remaining,salesDisabled:available.salesDisabled,tracked:ip?.tracked===true,signature:signature(plan),sourcePlanKey:planKey(plan,x.planIndex),duration:period?.unit==='months'?period.count:null,...(period?.unit==='days'?{durationDays:period.count}:{})});}return{items:result,totalCents:result.reduce((s,x)=>s+x.unitCents*x.quantity,0)};}
  async function owned(c,id,owner,user,lock=false){if(!uuid(id))throw fail(400,'Sifariş identifikatoru düzgün deyil.');const g=(await c.query('select * from mirpanel_community.shop_checkouts where id=$1 and owner_hash=$2'+(lock?' for update':''),[id,owner])).rows[0];if(!g||g.user_id&&g.user_id!==user)throw fail(404,'Sifariş tapılmadı.');return g;}
  async function group(c,g,sendWhatsApp=false){
  let rows=(await c.query('select l.id,l.product_id,l.plan_id,l.title,l.plan_name,l.image,l.unit_cents::text,l.snapshot,o.id as order_id,o.order_code,o.status,o.payment_confirmed from mirpanel_community.shop_lines l left join public.payment_orders o on o.id=l.order_id where l.checkout_id=$1 order by position',[g.id])).rows;
@@ -138,6 +143,19 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
  async listDrafts(req,owner){return draftService().list(await account(req,{verified:false}),owner);},
  async removeDrafts(req,owner,ids){return draftService().remove(await account(req,{verified:false}),owner,ids);},
  async prices(req){const {pool,user}=await account(req,{verified:false});return customerPrices(pool,user,await catalog());},
+ async checkEpinbyAccount(req,b){
+  const {pool,user}=await account(req,{verified:false});
+  await ready(pool);
+  if(typeof b?.productId!=='string'||!Number.isSafeInteger(b.planIndex)||b.planIndex<0)throw fail(400,'Məhsul və paket seçin.');
+  const [data,stock]=await Promise.all([catalog(),snapshot()]);
+  const p=data.products.find(x=>x.id===b.productId&&x.active!==false),plan=p?.plans?.[b.planIndex];
+  if(!plan||!inventoryAvailability(p,stock.find(item=>item.productId===p.id)).plans[b.planIndex]?.canOrder)throw fail(409,'Bu paket hazırda satışda deyil.');
+  if(b.termsVersion!==termsInfo(p,plan,b.planIndex).termsVersion)throw fail(409,'Paketin məlumatı dəyişib. Pəncərəni yenidən açın.');
+  const result=await epinbyService().check(pool,p,plan,b.values);
+  if(!result.allowCheckout)return result;
+  const {price}=await unitPrice(pool,user,p,plan,b.planIndex);
+  return {...result,unitCents:price};
+ },
  async quote(req,items,owner=null){const {pool,user}=await account(req,{verified:false});await ready(pool);const [result,balance]=await Promise.all([quote(pool,items,user,false,owner),user?pool.query('select cents from mirpanel_community.wallet_accounts where user_id=$1',[user]):null]);return{...result,balanceCents:user?Number(balance.rows[0]?.cents||0):null};},
  async checkout(req,owner,b){if(config.productCardPaymentsPaused&&b.mode==='card')throw productCardPaymentUnavailable();const {pool,user}=await account(req);if(!user)throw Object.assign(fail(401,'Sifarişi tamamlamaq üçün hesabınıza daxil olun.'),{code:'CHECKOUT_LOGIN_REQUIRED'});await ready(pool);if(b.consentAccepted!==true)throw fail(400,'Sifariş şərtlərini qəbul edin.');if(!uuid(b.requestId)||!['card','wallet'].includes(b.mode)||b.mode==='card'&&!uuid(b.methodId))throw fail(400,'Ödəniş seçimi düzgün deyil.');if(b.mode==='wallet'&&!user)throw fail(401,'Balansla ödəniş üçün daxil olun.');const requested=cartInput(b.items),input={items:requested.map(({details,...x})=>({...x,...(details?{detailsTag:crypto.createHmac('sha256',config.tokenSecret).update(JSON.stringify(details)).digest('hex')}:{} )})),mode:b.mode,methodId:b.mode==='wallet'?BALANCE_METHOD:b.methodId};
  return tx(pool,async c=>{await c.query('select pg_advisory_xact_lock(714025001)');await c.query('select pg_advisory_xact_lock(hashtextextended($1,0))',[owner+b.requestId]);const old=(await c.query('select * from mirpanel_community.shop_checkouts where owner_hash=$1 and request_id=$2',[owner,b.requestId])).rows[0];if(old){if(JSON.stringify(old.input)!==JSON.stringify(input)){// jsonb key order is not a request identity

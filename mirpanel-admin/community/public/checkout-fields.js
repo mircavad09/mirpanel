@@ -37,3 +37,10 @@ export function validateDetails(fields,value){
  return clean;
 }
 export function maskedDetails(fields,value){return fields.filter(f=>Object.hasOwn(value||{},f.key)).map(f=>({label:f.label,value:f.sensitive?'••••••':value[f.key]}));}
+
+export function validateEpinbyDetails(fields,value,productId){
+ const clean=validateDetails(fields,value);
+ if(clean.telegram_username&&!/^@?[A-Za-z0-9_]{5,32}$/.test(clean.telegram_username))throw Error('Telegram istifadəçi adını düzgün yazın.');
+ if(['pubg_mobile','pubg-mobile','free_fire','free-fire'].includes(productId)&&clean.player_id&&!/^\d{5,24}$/.test(clean.player_id))throw Error('Player ID yalnız rəqəmlərdən ibarət olmalıdır.');
+ return clean;
+}

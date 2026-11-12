@@ -13,6 +13,10 @@ export async function handleShop({req,res,url,shop,browserOrders,security,readBo
   if(!input||typeof input!=='object')throw Object.assign(Error('Sorğu düzgün deyil.'),{status:400});
   value=await shop.playerName(req,input);
  }
+ else if(path==='/epinby-account'&&post){
+  await rate(req,'shop-player-name',60,12);
+  value=await shop.checkEpinbyAccount(req,await readBody(req,8000));
+ }
  else if(path==='/draft'&&post)value=await shop.saveDraft(req,owner,await readBody(req,8000));
  else if(path==='/prices'&&req.method==='GET')value=await shop.prices(req);
  else if(path==='/subscriptions'&&req.method==='GET')value=await shop.subscriptions(req);

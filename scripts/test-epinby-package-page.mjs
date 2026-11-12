@@ -13,7 +13,7 @@ const game=state.products.find(p=>p.id==='pubg_mobile'), legacy=state.products.f
 if(!live&&!game.plans.length)game.plans.push({...legacy.plans[0],id:legacy.id,supplier:legacy.supplier,formFields:legacy.formFields,image:legacy.image});
 if(!game.plans.length)throw Error('No active live PUBG Mobile package in the catalog');
 assert.equal(game.plans[0].price,legacy.plans[0].price);
-assert.equal(game.plans[0].image,legacy.image);
+assert.equal(new URL(game.plans[0].image,origin).pathname,new URL(legacy.image,origin).pathname);
 assert.equal(game.plans[0].supplier.productId,3436);
 assert.equal(legacy.active,false);
 const amounts=[325,660,1800,3850,8100];
@@ -40,16 +40,16 @@ for(const engine of [chromium,webkit]){
     if(p==='/api/payments/shop/quote'&&!live){
      const items=request.postDataJSON().items.map(item=>{
       quoted.add(item.planIndex);const plan=game.plans[item.planIndex];
-      return {...item,unitCents:Math.round(plan.price*100),title:game.title,planName:plan.label,...termsInfo(game,plan,item.planIndex),available:100};
+      return {...item,unitCents:Math.round(plan.price*100),title:game.title,planName:plan.label,...termsInfo(game,plan,item.planIndex),accountCheck:true,available:100};
      });
      return route.fulfill({json:{items,totalCents:items[0].unitCents}});
     }
-    if(p==='/api/payments/shop/player-name'&&!live){
+    if(p==='/api/payments/shop/epinby-account'&&!live){
      const {productId,planIndex,values,termsVersion}=request.postDataJSON();
      lookupIndex=planIndex;
      assert.equal(productId,game.id);
      assert.equal(termsVersion,termsInfo(game,game.plans[planIndex],planIndex).termsVersion);
-     return route.fulfill({json:values.player_id==='000123'?{verified:true,name:'Sintetik oyunçu'}:{verified:false}});
+     return route.fulfill({json:values.player_id==='000123'?{state:'verified',name:'Sintetik oyunçu',allowCheckout:true}:{state:'unavailable',message:'Hesab adı yoxlanmır.',allowCheckout:true}});
     }
     if(request.method()!=='GET')return route.abort();
     if(!live&&p==='/api/payments/inventory')return route.fulfill({json:{products:[{productId:game.id,scope:'none',plans:[]}]}});
@@ -87,25 +87,25 @@ for(const engine of [chromium,webkit]){
     assert((await modal.locator('.cart-warning-product').innerText()).includes(plan.label+' · '+Number(plan.price).toFixed(2).replace('.',',')+' ₼'));
     assert.equal(await modal.locator('.cart-game-check').count(),6);
     assert.match(await modal.locator('.cart-game-warning').innerText(),/UC yalnız/);
-    assert.equal(await page.getByLabel('Oyunçu ID-si',{exact:true}).count(),0);
+    assert.equal(await page.getByLabel('Player ID',{exact:true}).count(),0);
     const next=modal.getByRole('button',{name:'Növbəti',exact:true});
     assert.equal(await next.isDisabled(),true);
     await modal.getByLabel('Oxudum və təsdiqlədim').check();
     await next.click();
     const details=page.getByRole('dialog',{name:'Oyunçu ID-ni daxil et'});
-    const player=details.getByLabel('Oyunçu ID-si',{exact:true});
+    const player=details.getByLabel('Player ID',{exact:true});
     await player.waitFor();
     assert((await details.locator('.cart-entry-note').innerText()).includes(plan.label));
-    assert.match(await details.getByRole('status').innerText(),/oyundakı ID ilə tutuşdur/);
+    assert.equal(await player.getAttribute('placeholder'),'PUBG Mobile ID nömrənizi daxil edin');
     if(!live){
      assert(quoted.has(i));
-     const lookup=details.getByRole('button',{name:'Hesab adını yoxla'});
-     await player.fill('000123');await lookup.click();
-     await details.getByText('Təsdiqlənmiş hesab adı · Sintetik oyunçu').waitFor();
+     assert.equal(await details.getByRole('button',{name:'Hesab adını yoxla'}).count(),0);
+     await player.fill('000123');
+     await details.getByText('Sintetik oyunçu',{exact:true}).waitFor();
      assert.equal(lookupIndex,i);
      await player.fill('000124');
      assert.equal(await details.getByText(/Sintetik oyunçu/).count(),0);
-     await lookup.click();await details.getByText(/Hesab adını yoxlamaq mümkün olmadı/).waitFor();
+     await details.getByText('Hesab adı yoxlanmır.',{exact:true}).waitFor();
     }
     await details.getByRole('button',{name:'Bağla'}).click();
    }

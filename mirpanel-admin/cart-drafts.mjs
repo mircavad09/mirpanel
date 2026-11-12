@@ -1,17 +1,26 @@
+import {gameTopupTerms} from './game-topup-terms.mjs';
+import {epinbyPlan} from '../epinby-product.mjs';
 import crypto from 'node:crypto';
 import {checkoutFields,validateDetails,maskedDetails} from './community/public/checkout-fields.js';
 import {signature} from './employee-security.mjs';
-import {gameTopupTerms} from './game-topup-terms.mjs';
-import {epinbyPlan} from '../epinby-product.mjs';
 const fail=(status,message,code)=>Object.assign(Error(message),{status,...(code?{code}:{})});
 export const draftUuid=v=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(v);
 const hash=v=>crypto.createHash('sha256').update(JSON.stringify(v)).digest('hex');
 export function termsInfo(p,plan,index){
- const fields=checkoutFields(p,plan),terms=String(plan.terms||(p.confirmationModal||p.orderConfirmation)?.description||'');
+ const supplier=epinbyPlan(p,plan);
+ const buyerFields=supplier?.fields.map(f=>({
+  ...f,
+  ...(['pubg_mobile','pubg-mobile'].includes(p.id)&&f.key==='player_id'?{label:'Player ID',placeholder:'PUBG Mobile ID nömrənizi daxil edin'}:{}),
+  ...(f.key==='telegram_username'?{placeholder:'@istifadəçi_adı'}:{})
+ }));
+ const fields=checkoutFields(p,buyerFields?{...plan,formFields:buyerFields}:plan);
+ const terms=String(plan.terms||(p.confirmationModal||p.orderConfirmation)?.description||'');
  const note=p.id==='netflix'?'Ödəniş təsdiqləndikdən sonra otaq və PIN Sifarişlərim bölməsində göstərilir.':String(p.note||'');
- const gameTerms=epinbyPlan(p,plan)?.type==='TOPUP'?gameTopupTerms(p,fields):null;
- const identity=[p.id,index,signature(plan)],content=[terms,note,fields,...(gameTerms?[gameTerms]:[])];
- return{fields,terms,note,...(gameTerms?{gameTerms}:{}),schemaHash:hash(fields),termsVersion:hash([...identity,...content]),legacyTermsVersion:hash([...identity,plan.price,...content])};
+ const identity=[p.id,index,signature(plan)];
+ if(supplier?.type==='TELEGRAM_STARS')identity.push(supplier.starsAmount);
+ const gameTerms=supplier?.type==='TOPUP'?gameTopupTerms(p,fields):null;
+ const content=[terms,note,fields,...(gameTerms?[gameTerms]:[])];
+ return {fields,terms,note,...(gameTerms?{gameTerms}:{}),schemaHash:hash(fields),termsVersion:hash([...identity,...content]),legacyTermsVersion:hash([...identity,plan.price,...content])};
 }
 export const acceptsTerms=(terms,version)=>!!version&&(version===terms.termsVersion||version===terms.legacyTermsVersion);
 export function createDrafts({catalog,security}){

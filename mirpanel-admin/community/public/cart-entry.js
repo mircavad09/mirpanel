@@ -1,6 +1,6 @@
-import {validateDetails} from './checkout-fields.js?v=customer-form-1';
+import {validateDetails,validateEpinbyDetails} from './checkout-fields.js?v=epinby-account-1';
 import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
-import {ensureEntryStyles} from './entry-styles.js?v=game-topup-terms-1';
+import {ensureEntryStyles} from './entry-styles.js?v=epinby-account-1';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
 const amount=cents=>Number.isSafeInteger(cents)?(cents/100).toFixed(2).replace('.',',')+' ₼':'';
@@ -58,35 +58,49 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
  document.body.classList.add('orderConfirmationActive');
  const before=e=>{if(dialog.open){e.preventDefault();error.textContent='Məlumatları tamamlayın və ya pəncərəni bağlayın.';}};window.addEventListener('mirpanel:before-navigate',before,{signal:life.signal});
  let working=false,activeQuote=null,guest=false,values={},draftId=editLine?.draftId||crypto.randomUUID();
- const api=async(path,data)=>{const request=new AbortController(),abort=()=>request.abort();life.signal.addEventListener('abort',abort,{once:true});const timer=setTimeout(abort,12000);try{const r=await fetch('/api/payments/shop'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined,signal:request.signal});if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Sifariş xidməti düzgün cavab vermədi.');const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.'),{status:r.status,code:d.code});return d;}finally{clearTimeout(timer);life.signal.removeEventListener('abort',abort);}};
+ const api=async(path,data,signal)=>{
+  const signals=[life.signal,AbortSignal.timeout(signal?18000:12000)];if(signal)signals.push(signal);
+  const r=await fetch('/api/payments/shop'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined,signal:AbortSignal.any(signals)});
+  if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Sifariş xidməti düzgün cavab vermədi.');
+  const d=await r.json();
+  if(!r.ok)throw Object.assign(Error(d.error||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.'),{status:r.status,code:d.code});
+  return d;
+ };
  close.onclick=()=>{if(!working)dialog.close();};dialog.addEventListener('cancel',e=>{if(working)e.preventDefault();});dialog.addEventListener('close',()=>{life.abort();document.body.classList.remove('orderConfirmationActive');body.replaceChildren();values={};dialog.remove();if(current===dialog)current=null;},{once:true});
  const button=(text,fn,primary=false)=>{const b=el('button',text,primary?'cart-entry-primary':'');b.type='button';b.onclick=fn;return b;};
  async function commit(v){
-  if(working)return;working=true;error.textContent='';body.querySelectorAll('button').forEach(b=>b.disabled=true);
+  if(working)return;working=true;error.textContent='';const enabled=[...body.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)')];enabled.forEach(control=>control.disabled=true);
   let ready;
   try{ready=await ensureCart();const saved=await api('/draft',{id:draftId,productId:product.id,planIndex:index,values:v,termsVersion:activeQuote.termsVersion,...(renewal?{renewalId:renewal.id,renewalExpiresOn:renewal.expiresOn}:{})});ready.commitDraft({...saved,termsVersion:saved.termsVersion||activeQuote.termsVersion},{productId:product.id,planIndex:index,quantity:editLine?.quantity||1,edit:!!editLine||!!renewal&&ready.read().some(x=>x.draftId===saved.draftId)});}
   catch(e){if(!life.signal.aborted){
    if(e.code==='CART_TERMS_CHANGED'||(e.status===409&&e.message==='Paketin şərtləri dəyişib. Yenidən təsdiqləyin.')){
     values=v;activeQuote=null;working=false;await loadTerms(null,true);return;
    }
-   error.textContent=e.message;body.querySelectorAll('button').forEach(b=>b.disabled=false);
+   error.textContent=e.message;enabled.forEach(control=>control.disabled=false);
   }return;}
   finally{working=false;}
   dialog.close();
-  if(!editLine&&loginOnGuest&&guest){
+  if(!editLine&&loginOnGuest&&activeQuote.accountCheck){
+   const target=guest?'/hesab?next=%2Fodenis&from=cart':'/odenis';
+   location.assign(target);
+  }else if(!editLine&&loginOnGuest&&guest){
    const target='/hesab?next=%2Fsebet&from=cart';
    if(window.MirpanelNavigation)void window.MirpanelNavigation.go(target);
    else location.assign(target);
   }else ready.open();
  }
  function fields(){
-  const fs=activeQuote.fields||[];if(!fs.length)return commit({});
-  const game=activeQuote.gameTerms,form=el('form',null,'cart-entry-fields'),controls=new Map();
-  dialog.classList.remove('cart-entry-warning');head.replaceChildren(title,close);body.className='';
-  title.textContent=game?'Oyunçu ID-ni daxil et':'Sifariş məlumatları';
-  form.append(el('p',[product.title,activeQuote.planName,game&&amount(activeQuote.unitCents)].filter(Boolean).join(' · '),'cart-entry-note'));
+  const fs=activeQuote.fields||[];
+  if(!fs.length)return commit({});
+  const quote=activeQuote,checksAccount=quote.accountCheck===true;
+  dialog.classList.remove('cart-entry-warning');head.replaceChildren(title,close);body.className='';title.textContent=quote.gameTerms?'Oyunçu ID-ni daxil et':'Sifariş məlumatları';
+  const form=el('form',null,'cart-entry-fields'),controls=new Map();
+  const intro=el('p',product.title+' · '+quote.planName,'cart-entry-note');
+  form.append(intro);
+  let indicator,checkInput;
+  const identifier=fs.find(f=>['player_id','telegram_username'].includes(f.key))?.key||fs[0].key;
   for(const f of fs){
-   const name=game&&f.key==='player_id'?'Oyunçu ID-si':f.label,label=el('label'),caption=el('span',name+(f.required?' *':''));
+   const label=el('label'),caption=el('span',f.label+(f.required?' *':''));
    let input;
    if(f.type==='select'){
     input=el('select');input.append(el('option',''));
@@ -94,37 +108,74 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
    }else input=el(f.type==='textarea'?'textarea':'input');
    if(input.tagName==='INPUT')input.type=['password','email','tel'].includes(f.type)?f.type:'text';
    input.value=values[f.key]||'';input.required=f.required;input.autocomplete='off';input.spellcheck=false;
-   input.maxLength=f.digits||f.maxLength;input.minLength=f.minLength;input.placeholder=f.placeholder||name;
-   input.setAttribute('aria-label',name);
+   input.maxLength=f.digits||f.maxLength;input.minLength=f.minLength;input.placeholder=f.placeholder||f.label;input.setAttribute('aria-label',f.label);
    if(f.digits){input.inputMode='numeric';input.pattern='[0-9]{'+f.digits+'}';input.addEventListener('input',()=>input.value=input.value.replace(/\D/g,'').slice(0,f.digits));}
-   controls.set(f.key,input);label.append(caption,input);if(f.description)label.append(el('small',f.description));form.append(label);
+   if(checksAccount&&f.key==='player_id'&&['pubg_mobile','pubg-mobile','free_fire','free-fire'].includes(product.id))input.inputMode='numeric';
+   controls.set(f.key,input);label.append(caption);
+   if(checksAccount&&f.key===identifier){
+    checkInput=el('span',null,'cart-entry-check-input');
+    indicator=el('span',null,'cart-entry-check-icon');indicator.setAttribute('aria-hidden','true');
+    checkInput.append(input,indicator);label.append(checkInput);
+   }else label.append(input);
+   if(f.description&&!checksAccount)label.append(el('small',f.description));
+   form.append(label);
   }
-  const read=()=>validateDetails(fs,Object.fromEntries([...controls].map(([key,node])=>[key,node.value])));
-  const next=el('button','Davam et','cart-entry-primary');next.type='submit';
-  if(game){
-   const manual='Ödənişdən əvvəl oyunçu ID-ni oyundakı ID ilə tutuşdur.';
-   const status=el('p',manual,'cart-game-warning');status.setAttribute('role','status');
-   let revision=0;
-   const verify=button('Hesab adını yoxla',async()=>{
-    if(working||!form.reportValidity())return;
-    error.textContent='';
-    let details;try{details=read();}catch(e){error.textContent=e.message;return;}
-    const attempt=++revision;verify.disabled=next.disabled=true;status.className='cart-game-warning';status.textContent='Hesab adı yoxlanılır…';
+  const feedback=el('div',null,'cart-entry-check-feedback');feedback.setAttribute('role','status');feedback.hidden=true;
+  if(checksAccount)form.append(feedback);
+  const action=editLine?'Yadda saxla':loginOnGuest?'Ödənişə keç':'Səbətə at';
+  const priced=cents=>action+(amount(cents)?' · '+amount(cents):'');
+  const next=el('button',checksAccount?priced(quote.unitCents):'Davam et','cart-entry-primary');next.type='submit';form.append(next);
+  let timer,request,turn=0,accepted=null;
+  const read=()=>Object.fromEntries([...controls].map(([key,input])=>[key,input.value]));
+  function showCheck(state,message=''){
+   feedback.dataset.state=state;checkInput.dataset.state=state;
+   checkInput.setAttribute('aria-busy',String(state==='loading'));
+   indicator.textContent=state==='verified'?'✓':'';
+   feedback.replaceChildren();
+   if(message)feedback.append(el('p',message));
+   feedback.hidden=!message;
+  }
+  function schedule(delay=450){
+   clearTimeout(timer);request?.abort();
+   const run=++turn;accepted=null;next.disabled=true;error.textContent='';showCheck('');
+   const raw=read();
+   if(fs.some(f=>f.required&&!raw[f.key]?.trim()))return;
+   let clean;try{clean=validateEpinbyDetails(fs,raw,product.id);}catch(e){showCheck('invalid',e.message);return;}
+   timer=setTimeout(async()=>{
+    if(!form.isConnected||life.signal.aborted)return;
+    request=new AbortController();showCheck('loading','Hesab yoxlanılır…');
     let result;
-    try{result=await api('/player-name',{productId:product.id,planIndex:index,values:details,termsVersion:activeQuote.termsVersion});}catch{}
-    if(attempt!==revision||!form.isConnected||life.signal.aborted)return;
-    verify.disabled=next.disabled=false;
-    if(result?.verified===true&&typeof result.name==='string'&&result.name){
-     status.className='cart-game-verified';status.textContent='Təsdiqlənmiş hesab adı · '+result.name;
-    }else status.textContent='Hesab adını yoxlamaq mümkün olmadı. '+manual;
-   });
-   form.addEventListener('input',()=>{revision++;verify.disabled=next.disabled=working;status.className='cart-game-warning';status.textContent=manual;});
-   form.append(verify,status);
+    try{result=await api('/epinby-account',{productId:product.id,planIndex:index,termsVersion:quote.termsVersion,values:clean},request.signal);}
+    catch(e){result=e.status===400||e.status===409?{state:'invalid',message:e.message}:{state:'retry',message:'Hesab yoxlanmadı. Yenidən cəhd edin.'};}
+    if(run!==turn||life.signal.aborted||!form.isConnected)return;
+    if(result.state==='verified'&&result.name){
+     showCheck('verified');
+     feedback.append(el('strong','Hesab təsdiqləndi'),el('b',result.name),el('small',clean[identifier]));
+     feedback.hidden=false;
+    }else{
+     showCheck(result.state,result.message||'Hesab yoxlanmadı.');
+     if(result.state==='retry')feedback.append(button('Yenidən cəhd et',()=>schedule(0)));
+    }
+    if(result.allowCheckout===true&&(result.state==='unavailable'||result.state==='verified'&&result.name)){
+     if(Number.isSafeInteger(result.unitCents))next.textContent=priced(result.unitCents);
+     accepted=JSON.stringify(clean);next.disabled=false;
+    }
+   },delay);
   }
-  form.append(next);
-  form.onsubmit=e=>{e.preventDefault();if(next.disabled||!form.reportValidity())return;try{values=read();void commit(values);}catch(e){error.textContent=e.message;}};
-  body.replaceChildren(form);
-  if(game){title.tabIndex=-1;title.focus();dialog.scrollTop=0;}
+  if(checksAccount){
+   form.addEventListener('input',()=>schedule(),{signal:life.signal});
+   life.signal.addEventListener('abort',()=>{clearTimeout(timer);request?.abort();},{once:true});
+  }
+  form.onsubmit=e=>{
+   e.preventDefault();if(!form.reportValidity())return;
+   try{
+    const nextValues=checksAccount?validateEpinbyDetails(fs,read(),product.id):validateDetails(fs,read());
+    if(checksAccount&&JSON.stringify(nextValues)!==accepted)return;
+    values=nextValues;void commit(values);
+   }catch(e){error.textContent=e.message;}
+  };
+  body.replaceChildren(form);if(checksAccount)schedule();
+  if(quote.gameTerms){title.tabIndex=-1;title.focus();dialog.scrollTop=0;}
  }
  function terms(display){
   const game=display.gameTerms;

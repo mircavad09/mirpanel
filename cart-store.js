@@ -142,7 +142,7 @@
     if(p.salesDisabled||p.available===0)info.append(node('small','Stokda yoxdur'));
     else if(p.available!=null&&p.available<x.quantity)info.append(node('small','Stokda '+p.available+' ədəd var.'));
     for(const field of p.maskedDetails||[])info.append(node('small',field.label+': '+field.value));
-    if(x.draftId)info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{d.close();void import('/community-assets/cart-entry.js?v=game-topup-terms-1').then(m=>m.editCartLine(x)).catch(e=>alert(e.message));}));
+    if(x.draftId)info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{d.close();void import('/community-assets/cart-entry.js?v=epinby-account-1').then(m=>m.editCartLine(x)).catch(e=>alert(e.message));}));
     const controls=node('div',null,'mir-cart-controls'),qty=node('div',null,'mir-cart-qty'),change=n=>{try{cart.set(x.productId,x.planIndex,n,undefined,undefined,x.lineId);}catch(e){notice.textContent=e.message;}};
     const minus=action('−',()=>change(x.quantity-1)),plus=action('+',()=>change(x.quantity+1)),del=action('Sil',()=>change(0),'mir-cart-remove');del.insertAdjacentHTML('afterbegin',trash);
     for(const [b,label] of [[minus,'Azalt'],[plus,'Artır'],[del,'Sil']]){b.setAttribute('aria-label',label+': '+name);b.dataset.cartFocus=itemKey(x)+label;}
