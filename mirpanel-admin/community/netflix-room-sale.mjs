@@ -2,12 +2,17 @@ const fail=(status,message)=>Object.assign(Error(message),{status});
 export async function roomSalesInstalled(db){
  return !!(await db.query("select to_regclass('mirpanel_community.netflix_room_sellable') installed")).rows[0].installed;
 }
-export async function reserveNetflixRoom(db,reservationId){
+export async function independentNetflixSales(db){
+ if(!(await db.query("select to_regclass('mirpanel_community.ready_stock_sales_products') installed")).rows[0].installed)return false;
+ return (await db.query("select 1 from mirpanel_community.ready_stock_sales_products where product_id='netflix'")).rowCount>0;
+}
+export async function reserveNetflixRoom(db,reservationId,{allowWaiting=false}={}){
  const result=await db.query(`with choice as (
   select r.id from mirpanel_community.netflix_room_units r join mirpanel_community.netflix_room_sellable s on s.id=r.id
   order by s.group_id,s.room_key,r.id limit 1 for update of r
  ) update mirpanel_community.netflix_room_units r set sale_reservation_id=$1 from choice where r.id=choice.id returning r.id`,[reservationId]);
- if(!result.rowCount)throw fail(409,'Netflix Şəxsi üçün satışa hazır otaq qalmayıb.');
+ if(!result.rowCount&&!allowWaiting)throw fail(409,'Netflix Şəxsi üçün satışa hazır otaq qalmayıb.');
+ return result.rowCount>0;
 }
 export async function releaseNetflixReview(pool,actor,{groupId}={}){
  if(typeof groupId!=='string'||! /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(groupId))throw fail(400,'Netflix hesabını seçin.');

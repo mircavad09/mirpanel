@@ -45,8 +45,9 @@ try{
     if(route.request().method()==='GET')return route.fulfill({json:catalog});
     const input=route.request().postDataJSON();
     if(route.request().url().endsWith('/sales')){
-     assert.equal(input.expectedVersion,p.version);salesWrites.push(input.available);p.version++;
-     for(const x of p.plans)x.sales=input.available;
+     const selected=catalog.products.find(x=>x.id===input.productId);
+     assert.equal(input.expectedVersion,selected.version);salesWrites.push(input.available);selected.version++;
+     for(const x of selected.plans)x.sales=input.available;
      return route.fulfill({json:{ok:true}});
     }
     if(route.request().url().endsWith('/message')){
@@ -63,11 +64,12 @@ try{
    const capcut=page.getByRole('button',{name:/CapCut Pro/}),netflix=page.getByRole('button',{name:/Netflix/}),price=page.getByLabel('Satış miqdarı');
    const stock=page.locator('[data-edit-sales]'),saveSales=page.getByRole('button',{name:'Satış stokunu saxla'});
    const messages=page.getByRole('textbox',{name:'Müştəriyə təqdim ediləcək hazır mesaj'}),automatic=page.getByRole('switch',{name:/Ödəniş təsdiqlənəndə avtomatik təhvil/});
-   await netflix.click();assert.equal(await plan.locator('option').count(),1);assert.match(await stock.innerText(),/Stokda yoxdur/);
+   assert.equal(await price.isVisible(),true);
+   await netflix.click();assert.equal(await price.isVisible(),true);assert.equal(await plan.locator('option').count(),1);assert.match(await stock.innerText(),/Stokda yoxdur/);
    await capcut.click();assert.equal(await plan.locator('option').count(),2);
-   await stock.click();await price.fill('0');await saveSales.click();
+   await price.fill('0');await saveSales.click();
    await page.waitForFunction(()=>document.querySelector('[data-sales]').textContent==='Limitsiz');
-   await stock.click();await price.fill('50');await saveSales.click();
+   await price.fill('50');await saveSales.click();
    await page.waitForFunction(()=>document.querySelector('[data-sales]').textContent==='50 satış vahidi');
    assert.deepEqual(salesWrites,[null,50]);assert.match(await capcut.innerText(),/8 hazır hesab/);
    const saveMessage=page.getByRole('button',{name:'Hazır mesajı saxla'});
@@ -120,6 +122,16 @@ try{
    assert.equal(await email.count(),1);assert.equal(await email.first().inputValue(),'');assert.equal(await password.first().inputValue(),'');
    assert.equal(await messages.inputValue(),note);
    await netflix.click();assert.equal(await messages.inputValue(),note2);
+   for(const id of ['spotify','netflix']){
+    await product.selectOption(id);
+    assert.equal(await price.isVisible(),true);
+    await price.fill('50');await saveSales.click();
+    await page.waitForFunction(()=>document.querySelector('[data-sales]').textContent==='50 satış vahidi');
+    const ready=catalog.products.find(p=>p.id===id).plans[0].ready;
+    assert.equal(await page.locator('[data-ready]').textContent(),String(ready));
+    await page.reload();await product.selectOption(id);
+    assert.equal(await price.inputValue(),'50');
+   }
    await capcut.click();await capcut.locator('img').evaluate(img=>img.decode());
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    await page.close();

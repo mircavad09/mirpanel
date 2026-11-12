@@ -27,8 +27,8 @@ export function mountReadyStock(host,api){
    <form autocomplete="off">
     <label>Məhsul<select name="product" aria-label="Məhsul" required></select></label>
     <label>Paket<select name="plan" aria-label="Paket" required></select></label>
-    <div class="readyStockCounts"><button type="button" data-edit-sales aria-expanded="false" aria-controls="readyStockSaleEditor">Satış stoku <strong data-sales>—</strong></button><span>Hazır hesab <strong data-ready>—</strong></span></div>
-    <div id="readyStockSaleEditor" hidden>
+    <div class="readyStockCounts"><button type="button" data-edit-sales aria-expanded="false" aria-controls="readyStockSaleEditor">Satış stoku <strong data-sales>—</strong></button><span>Seçilmiş paketin hazır hesabları <strong data-ready>—</strong></span></div>
+    <div id="readyStockSaleEditor">
      <div class="readyStockSale"><label>Satış miqdarı<input name="sales" type="number" min="0" max="10000" step="1" inputmode="numeric" aria-describedby="readyStockSaleHelp"></label><button class="btn" type="button" data-save-sales>Satış stokunu saxla</button></div>
      <p id="readyStockSaleHelp">Bu xanada 0 = Limitsiz. 1–10000 = satış limiti. Əvvəldən sıfır olan stok “Stokda yoxdur” kimi qalır.</p>
     </div>
@@ -417,12 +417,12 @@ export function mountReadyStock(host,api){
  function renderPlan(){
   const {p,item}=selected();
   const netflix=p?.id==='netflix';
-  for(const node of [editSales,auto.closest('label')])node.hidden=netflix;
+  editSales.hidden=false;auto.closest('label').hidden=netflix;
   roomHost.hidden=!netflix;
   activeProduct=p?.id;template.value=messageDrafts.get(activeProduct)??p?.message??'';
   renderCounts(item);
   q('[data-scope]').textContent=p?.scope==='plan'?'Satış stoku bu paketə aiddir.':'Satış stoku məhsul üzrə ortaqdır.';
-  sales.value=item?.sales>0?item.sales:'';setEditor(false);
+  sales.value=item?.sales===null?'0':item?.sales>0?String(item.sales):'';setEditor(true);
   const draftKey=item?JSON.stringify([p.id,item.index,item.signature]):null;
   activeDraft=draftKey?{key:draftKey,originalAuto:item.autoWallet}:null;
   if(p&&item)lastPlan.set(p.id,plan.value);

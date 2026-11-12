@@ -7,7 +7,7 @@ import {adminPendingDeliveries,deliveryRecords,recordDelivery,paid} from './orde
 
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {assignLegacyRoom} from './netflix-room-legacy.mjs';
-import {roomSalesInstalled,releaseNetflixReview} from './netflix-room-sale.mjs';
+import {roomSalesInstalled,independentNetflixSales,releaseNetflixReview} from './netflix-room-sale.mjs';
 import {netflixRooms,restockNetflixRoom,saveNetflixRooms,saveNetflixRoomCards,deleteNetflixRoom,editNetflixRoom,netflixRoomPassword} from './netflix-room-stock.mjs';
 
 const S='mirpanel_community.ready_stock_';
@@ -51,7 +51,7 @@ export async function readyStockView(pool,catalog,inventory,security){
   if(netflix&&await roomSalesInstalled(c)){
    const ready=(await c.query('select count(*)::int ready from mirpanel_community.netflix_room_sellable')).rows[0].ready;
    netflix.readyTotal=ready;
-   for(const plan of netflix.plans){plan.ready=ready;plan.sales=ready;}
+   for(const plan of netflix.plans){plan.ready=ready;}
   }
   await c.query('commit');return result;
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
@@ -125,21 +125,24 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
   if(item.productId==='netflix'&&(await c.query("select to_regclass('mirpanel_community.netflix_room_units') present")).rows[0].present){
    if(![1,3,6].includes(item.durationMonths??item.duration)||item.durationDays)continue;
    const managed=await roomSalesInstalled(c);
-   const rooms=item.roomStock?(await c.query(`select r.id,r.room_name,r.pin_cipher,g.id group_id,g.account_cipher
+   const held=item.roomStock?(await c.query(`select r.id,r.room_name,r.pin_cipher,g.id group_id,g.account_cipher
     from mirpanel_community.shop_lines l join mirpanel_community.netflix_room_units r on r.sale_reservation_id=l.reservation_id
     join mirpanel_community.netflix_room_groups g on g.id=r.group_id
     join mirpanel_community.netflix_room_sale_state s on s.id=r.id
     where l.order_id=$1 and coalesce(l.snapshot->>'lineId',l.product_id||':'||l.plan_id)=$2
      and not s.assigned and not s.synthetic and s.unexpired and s.availability='available'
-    order by l.position for update of r`,[orderId,item.lineId])).rows:(await c.query(`select r.id,r.room_name,r.pin_cipher,g.id group_id,g.account_cipher
+    order by l.position for update of r`,[orderId,item.lineId])).rows:[];
+   const free=held.length<quantity?(await c.query(`select r.id,r.room_name,r.pin_cipher,g.id group_id,g.account_cipher
     from mirpanel_community.netflix_room_units r join mirpanel_community.netflix_room_groups g on g.id=r.group_id
     where r.delivery_id is null and to_jsonb(r)->>'legacy_assignment_id' is null and coalesce(to_jsonb(r)->>'availability','available')='available' and coalesce(r.stock_ends_on,g.ends_on)>public.payment_baku_date()
      and g.created_by not like 'synthetic:%'
      ${managed?'and exists(select 1 from mirpanel_community.netflix_room_sellable s where s.id=r.id)':''}
-    order by g.created_at,r.room_key,r.id limit $1 for update of r skip locked`,[quantity])).rows;
+    order by g.created_at,r.room_key,r.id limit $1 for update of r skip locked`,[quantity-held.length])).rows:[];
+   const rooms=[...held,...free];
+   if(item.roomStock&&rooms.length!==quantity&&!await independentNetflixSales(c))
+    throw fail(409,'Rezerv edilmiş Netflix otağı təhvilə hazır deyil. Ödəniş təsdiqi saxlanmadı.');
    security??=securityFactory();
    const message=(await readProductMessages(c,security,[item.productId])).get(item.productId)??'';
-   if(item.roomStock&&rooms.length!==quantity)throw fail(409,'Rezerv edilmiş Netflix otağı təhvilə hazır deyil. Ödəniş təsdiqi saxlanmadı.');
    for(const room of rooms){
     const account=JSON.parse(security.decryptSecret(room.account_cipher));
     const pin=JSON.parse(security.decryptSecret(room.pin_cipher));

@@ -1388,6 +1388,7 @@ const paymentSystem = createPaymentSystem({
   readyStockOwnerAllowed: async request=>getSession(request)?.role==='admin'&&!!await ownerCommunity.verifiedOwnerId(),
   readyStock: (...args)=>ownerCommunity.readyStock(...args),
   saveProductMessage: (...args)=>ownerCommunity.saveProductMessage(...args),
+  saveReadyStockSales: (...args)=>ownerCommunity.saveReadyStockSales(...args),
   saveReadyStock: (...args)=>ownerCommunity.saveReadyStock(...args),
   pendingDeliveries: ids=>ownerCommunity.pendingDeliveries(ids),
   deliveryCompletions: filter=>ownerCommunity.deliveryCompletions(filter),

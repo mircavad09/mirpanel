@@ -13,8 +13,8 @@ import {parseTopupCents} from './community/public/topup-amount.js';
 import {availableTopupCards,topupCardLock,topupUnavailable,topupExpired} from './topup-cards.mjs';
 import {isOwner} from './community/owner-auth.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
-import {allocateReadyStock} from './community/ready-stock.mjs';
-import {roomSalesInstalled,reserveNetflixRoom} from './community/netflix-room-sale.mjs';
+import {allocateReadyStock,drainReadyStock} from './community/ready-stock.mjs';
+import {roomSalesInstalled,independentNetflixSales,reserveNetflixRoom} from './community/netflix-room-sale.mjs';
 import {customerStatus,deliveryRecords,queueReceiptReview} from './community/order-delivery.mjs';
 import {customerSubscriptions,verifyRenewal,subscriptionPeriod,reserveRenewals,linkRenewals} from './community/subscriptions.mjs';
 const stockConflict=(title,available=0)=>Object.assign(Error(available>0?title+' — stokda '+available+' ədəd var.':title+' stokda yoxdur.'),{status:409,code:'CART_STOCK_CHANGED'});
@@ -170,13 +170,15 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
  const parentExpiry=(await c.query('select expires_at from public.payment_reservations where id=$1',[parent])).rows[0].expires_at;
  await c.query('update mirpanel_community.shop_checkouts set main_reservation_id=$2,main_checkout_key=$3,expires_at=$4 where id=$1',[id,parent,mainKey,parentExpiry]);g.main_reservation_id=parent;g.main_checkout_key=mainKey;g.expires_at=parentExpiry;
  const netflixRooms=q.items.some(x=>x.productId==='netflix')&&await roomSalesInstalled(c);
+ const netflixSales=netflixRooms&&await independentNetflixSales(c);
+ if(netflixSales)await drainReadyStock(c,()=>createPaymentSecurity(config));
  if(netflixRooms)await c.query("select set_config('mirpanel.netflix_room_checkout','true',true)");
  if(netflixRooms&&q.items.some(x=>x.productId==='netflix'&&!x.renewal&&(![1,3,6].includes(x.duration)||x.durationDays)))
   throw fail(409,'Bu Netflix paketi hazır otaqla təhvil üçün əlçatan deyil.');
- for(const x of q.items)for(let n=0;n<x.quantity;n++){const roomStock=netflixRooms&&x.productId==='netflix'&&!x.renewal;const ck=crypto.randomUUID(),ik=crypto.randomUUID();await c.query("select set_config('mirpanel.inventory_required',$1,true)",[x.tracked&&!(netflixRooms&&x.productId==='netflix')?x.productId:'']);let rid;try{rid=(await c.query("insert into public.payment_reservations(method_id,product_id,plan_id,amount,currency,idempotency_key,checkout_key,expires_at,capacity_shadow,cart_parent_reservation_id) values($1,$2,$3,$4,'AZN',$5,$6,(select expires_at from public.payment_reservations where id=$7),true,$7) returning id",[g.method_id,x.productId,String(x.planIndex),x.unitCents/100,ik,ck,parent])).rows[0].id;
- if(roomStock)await reserveNetflixRoom(c,rid);
+ for(const x of q.items)for(let n=0;n<x.quantity;n++){const roomStock=netflixRooms&&x.productId==='netflix'&&!x.renewal;const ck=crypto.randomUUID(),ik=crypto.randomUUID();await c.query("select set_config('mirpanel.inventory_required',$1,true)",[x.tracked&&(!netflixRooms||x.productId!=='netflix'||netflixSales&&!x.renewal)?x.productId:'']);let rid;try{rid=(await c.query("insert into public.payment_reservations(method_id,product_id,plan_id,amount,currency,idempotency_key,checkout_key,expires_at,capacity_shadow,cart_parent_reservation_id) values($1,$2,$3,$4,'AZN',$5,$6,(select expires_at from public.payment_reservations where id=$7),true,$7) returning id",[g.method_id,x.productId,String(x.planIndex),x.unitCents/100,ik,ck,parent])).rows[0].id;
+ if(roomStock)await reserveNetflixRoom(c,rid,{allowWaiting:netflixSales});
  }catch(e){if(String(e.message).includes('INVENTORY_EMPTY')||roomStock&&e.status===409)throw stockConflict(x.title);throw e;}
- await c.query('insert into mirpanel_community.shop_lines(checkout_id,position,reservation_id,checkout_key,product_id,plan_id,title,plan_name,image,unit_cents,snapshot) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',[id,position++,rid,ck,x.productId,String(x.planIndex),x.title,x.planName,x.image,x.unitCents,netflixRooms&&x.productId==='netflix'?{...x,tracked:false,...(roomStock?{roomStock:true}:{})}:x]);}
+ await c.query('insert into mirpanel_community.shop_lines(checkout_id,position,reservation_id,checkout_key,product_id,plan_id,title,plan_name,image,unit_cents,snapshot) values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)',[id,position++,rid,ck,x.productId,String(x.planIndex),x.title,x.planName,x.image,x.unitCents,netflixRooms&&x.productId==='netflix'?{...x,tracked:netflixSales&&!x.renewal&&x.tracked,...(roomStock?{roomStock:true}:{})}:x]);}
  return b.mode==='wallet'?{...await finish(c,g,null),orderCreated:true}:group(c,g);});},
  async get(req,owner,id){const {pool,user}=await account(req);return group(pool,await owned(pool,id,owner,user));},
  async whatsapp(req,owner,id){const {pool,user}=await account(req),g=await owned(pool,id,owner,user);if(g.state!=='submitted'||g.mode!=='card')throw fail(409,'Əvvəlcə sifarişi tamamlayın.');return(await group(pool,g,true)).whatsappUrl;},

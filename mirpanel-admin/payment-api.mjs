@@ -668,7 +668,11 @@ export function createPaymentSystem(options) {
         const b=await readBody(request,10000),id=safeUuid(b.requestId),p=catalog.products.find(x=>x.id===b.productId&&x.active!==false),plan=p?.plans?.[b.index];
         if(!id||!Number.isSafeInteger(b.index)||!Number.isSafeInteger(b.expectedVersion)||!plan||signature(plan)!==b.planSignature||!(b.available===null||(Number.isSafeInteger(b.available)&&b.available>=0&&b.available<=10000)))throw Object.assign(new Error('Məhsul, paket və stok miqdarı düzgün deyil.'),{status:400});
         const inventory=await readInventory({fresh:true}),scope=inventory.find(x=>x.productId===p.id)?.scope;
-        json(response,200,await store.setInventory(p.id,b.available,actorName,id,b.expectedVersion,scope==='plan'?String(b.index):null));return true;
+        const result=p.id==='netflix'&&options.saveReadyStockSales
+         ?await options.saveReadyStockSales({...b,requestId:id},actorName)
+         :await store.setInventory(p.id,b.available,actorName,id,b.expectedVersion,scope==='plan'?String(b.index):null);
+        readInventory.invalidate();storefront=undefined;
+        json(response,200,result);return true;
       }
       if(url.pathname.endsWith('/sales'))return false;
       if(request.method==='GET'){
