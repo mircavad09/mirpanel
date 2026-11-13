@@ -55,11 +55,12 @@ function capcutScanPhone(create){
 }
 
 function linkDeliveryUrls(pre,text){
- void import('/delivery-message.mjs?v=delivery-links-2').then(({linkDeliveryMessage})=>{
+ void import('/delivery-message.mjs?v=delivery-links-3').then(({linkDeliveryMessage})=>{
   if(pre.textContent===text)linkDeliveryMessage(pre);
  }).catch(()=>{});
 }
 function renderDeliveryMessage(pre,text){
+ text=text.replace(/\r\n?/g,'\n');
  const deliveryGuideText='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';
  const message=text.trimEnd(),start=message.length-deliveryGuideText.length;
  // The fixed final line opens this product's guide inside the order.

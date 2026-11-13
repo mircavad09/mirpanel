@@ -21,7 +21,7 @@ const assets=new Map();
 for(const [name,file] of Object.entries({'browser-orders.js':'browser-orders.js','browser-orders.css':'browser-orders.css','delivery-message.mjs':'delivery-message.mjs','ready-stock-admin.js':'mirpanel-admin/public/ready-stock-admin.js'})){
  const body=fs.readFileSync(file,'utf8');
  if(live){
-  const response=await fetch((name.startsWith('ready-')?'https://mirpanel.onrender.com/':'https://mirpanel.com/')+name+'?v=delivery-links-2');
+  const response=await fetch((name.startsWith('ready-')?'https://mirpanel.onrender.com/':'https://mirpanel.com/')+name+'?v=delivery-links-3');
   assert.equal(response.status,200);assert.equal((await response.text()).replaceAll('\r\n','\n'),body.replaceAll('\r\n','\n'));
  }
  assets.set('/'+name,body);
@@ -71,6 +71,7 @@ try{
     assert.equal(await page.locator('.browser-order-delivery pre script').count(),0);
     assert.equal(await page.evaluate(()=>window.messageExecuted),undefined);
     assert.equal(await page.locator('.browser-order-delivery pre').first().textContent(),sample);
+    assert.equal((await page.locator('.browser-order-delivery pre').nth(1).textContent()).replace('<img onerror="alert(1)">\n',''),sample);
     await page.locator('[data-copy-delivery]').first().click();
     await page.waitForFunction(text=>window.copiedMessage===text,sample);
     for(const link of await external.all()){
