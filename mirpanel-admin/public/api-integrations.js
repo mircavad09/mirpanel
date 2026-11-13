@@ -497,5 +497,5 @@
     if(event.detail==='apiIntegrations')open();
     if(event.detail==='gameProducts')void loadGameCatalog();
   });
-  if(location.hash==='#apiIntegrations')open();
+  if(['#apiIntegrations','#api-inteqrasiyalari'].includes(location.hash))open();
 })();

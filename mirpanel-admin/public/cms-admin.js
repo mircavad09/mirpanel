@@ -7,12 +7,15 @@
       ["paymentCosts", "Maya dəyəri və qazanc"], ["paymentMethods", "Ödəniş üsulları"]
     ]],
     ["Məhsul idarəetməsi", [["categories", "Kateqoriyalar"], ["apiIntegrations", "API inteqrasiyaları"], ["orders", "Sifariş parametrləri"], ["netflixAccounts", "Netflix hesabları"]]],
-    ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sitemap"]]],
+    ["Sayt məzmunu", [["homepage", "Ana səhifə"], ["navigation", "Naviqasiya və keçidlər"], ["banners", "Ana səhifə bannerləri"], ["decorations", "Şəkillər və fonlar"], ["media", "Şəkil kitabxanası"], ["about", "Haqqımızda"], ["contact", "Əlaqə"], ["terms", "Şərtlər"], ["seo", "SEO və sayt xəritəsi"]]],
     ["Maliyyə nəzarəti", [["paymentReviews", "Ödəniş yoxlamaları"]]],
-    ["Sistem", [["history", "Sayt yayımı tarixçəsi"], ["workforce", "İşçi, stok və maaş idarəsi", "/admin/workforce"]]]
+    ["Sistem", [["history", "Sayt yayımı tarixçəsi"], ["workforce", "İşçi, stok və maaş idarəsi", "/admin/isci-stok-maas"]]]
   ];
   const viewLabels = viewGroups.flatMap(([, items]) => items);
-  viewLabels.push(["dashboard", "İdarə paneli"], ["stories", "Stories"]);
+  viewLabels.push(["dashboard", "İdarə paneli"], ["stories", "Hekayələr"]);
+  const slug = label => label.toLocaleLowerCase('az').replace(/[əıöüçşğ]/g,char=>({'ə':'e','ı':'i','ö':'o','ü':'u','ç':'c','ş':'s','ğ':'g'}[char])).replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'');
+  const viewAddress = view => slug(viewLabels.find(([id])=>id===view)?.[1]||'İdarə paneli');
+  const resolveView = value => viewLabels.find(([id,label])=>id===value||slug(label)===value)?.[0];
   let dashboardRead = 0;
   let dashboardSummaryRead = 0;
   let deployRead = false;
@@ -116,8 +119,13 @@
       if (button) activateView(button.dataset.view);
     });
   }
-  function activateView(view, userFilter) {
-    if (location.hash !== '#' + view) history.replaceState(history.state, '', location.pathname + location.search + '#' + view);
+  function activateView(view, userFilter, restoring=false) {
+    const hash='#'+viewAddress(view);
+    if(location.hash!==hash){
+      const legacy=resolveView(location.hash.slice(1))===view;
+      history[restoring||legacy||!location.hash?'replaceState':'pushState'](history.state,'',location.pathname+location.search+hash);
+    }
+    document.title=(viewLabels.find(([id])=>id===view)?.[1]||'İdarə paneli')+' | MirPanel idarə paneli';
     window.dispatchEvent(new CustomEvent('admin-community-view',{detail:view}));
     if(['communityUsers','communityGroup','communityShop'].includes(view)){
       if(!el(`${view}View`))createView(view,'');
@@ -246,8 +254,8 @@
     createView("about", pageForm("haqqimizda", "Haqqımızda"));
     createView("contact", contactForm());
     createView("terms", termsForm());
-    createView("seo", panel("SEO və sitemap", "Canonical, Open Graph və indekslənmə parametrləri", `<div class="warningBox">“Noindex” seçimi səhifənin axtarış nəticələrindən çıxmasına səbəb ola bilər.</div><div class="formGrid">
-      ${field("Ana səhifə SEO title", "seo.home.title")}
+    createView("seo", panel("SEO və sayt xəritəsi", "Canonical, Open Graph və indekslənmə parametrləri", `<div class="warningBox">“Noindex” seçimi səhifənin axtarış nəticələrindən çıxmasına səbəb ola bilər.</div><div class="formGrid">
+      ${field("Ana səhifə SEO başlığı", "seo.home.title")}
       ${field("Ana səhifə meta description", "seo.home.description", { type: "textarea", full: true })}
       ${field("Open Graph title", "seo.home.ogTitle")}
       ${field("Open Graph şəkli", "seo.home.ogImage")}
@@ -275,7 +283,7 @@
       return panel(label, "Haqqımızda səhifəsinin məzmunu, keçidləri və SEO məlumatları", `<div class="formGrid" data-site-page="${key}">
         ${siteField("Aktivdir", key, "enabled", "checkbox")}${siteField("Slug", key, "slug")}
         ${siteField("Kiçik üst etiket", key, "kicker")}${siteField("Əsas H1", key, "title")}
-        ${siteField("SEO title", key, "seoTitle")}${siteField("Meta description", key, "seoDescription", "textarea", true)}
+        ${siteField("SEO başlığı", key, "seoTitle")}${siteField("Meta açıqlaması", key, "seoDescription", "textarea", true)}
         ${siteField("Open Graph title", key, "ogTitle")}${siteField("Open Graph şəkli", key, "ogImage")}
         ${siteField("Open Graph description", key, "ogDescription", "textarea", true)}
         ${siteField("İndekslənsin", key, "index", "checkbox")}${siteField("Sitemap-a daxil olsun", key, "includeInSitemap", "checkbox")}
@@ -286,7 +294,7 @@
       ${siteField("H1", key, "title")}${siteField("Giriş mətni", key, "subtitle")}
       ${siteField("Əsas mətn", key, "body", "richtext", true)}
       ${siteField("Düymə mətni", key, "buttonText")}${siteField("Düymə keçidi", key, "buttonUrl")}
-      ${siteField("SEO title", key, "seoTitle")}${siteField("Meta description", key, "seoDescription", "textarea", true)}
+      ${siteField("SEO başlığı", key, "seoTitle")}${siteField("Meta açıqlaması", key, "seoDescription", "textarea", true)}
       ${siteField("Open Graph title", key, "ogTitle")}${siteField("Open Graph şəkli", key, "ogImage")}
       ${siteField("Open Graph description", key, "ogDescription", "textarea", true)}
       ${siteField("İndekslənsin", key, "index", "checkbox")}${siteField("Sitemap-a daxil olsun", key, "includeInSitemap", "checkbox")}
@@ -299,7 +307,7 @@
       ${field("WhatsApp nömrəsi", "site.whatsappNumber")}${field("Ekranda görünən telefon", "site.phoneDisplay")}
       ${siteField("WhatsApp düyməsi", "elaqe", "buttonText")}${siteField("Hazır WhatsApp mesajı", "elaqe", "whatsappMessage")}
       ${siteField("Dəstək məlumatı", "elaqe", "body", "textarea", true)}${siteField("İş saatları", "elaqe", "workHours", "textarea", true)}
-      ${siteField("SEO title", "elaqe", "seoTitle")}${siteField("Meta description", "elaqe", "seoDescription", "textarea", true)}
+      ${siteField("SEO başlığı", "elaqe", "seoTitle")}${siteField("Meta açıqlaması", "elaqe", "seoDescription", "textarea", true)}
     </div><div class="sectionHead"><h3>Əlavə bölmələr</h3><button class="btn" type="button" data-add-block="elaqe">Bölmə əlavə et</button></div><div class="cmsList" data-block-list="elaqe"></div>`);
   }
   function termsForm() {
@@ -307,7 +315,7 @@
       ${siteField("Aktivdir", "sertler", "enabled", "checkbox")}${siteField("Slug", "sertler", "slug")}
       ${siteField("H1", "sertler", "title")}
       <label class="full">Tam hüquqi mətn<textarea class="legalTextEditor" rows="32" data-site="sertler.body"></textarea><small># əsas bölmə, ## alt bölmə, - siyahı, **qalın mətn** və [keçid](URL) formatları dəstəklənir. Script, iframe və təhlükəli HTML bloklanır.</small></label>
-      ${siteField("SEO title", "sertler", "seoTitle")}${siteField("Meta description", "sertler", "seoDescription", "textarea", true)}
+      ${siteField("SEO başlığı", "sertler", "seoTitle")}${siteField("Meta açıqlaması", "sertler", "seoDescription", "textarea", true)}
       ${siteField("Open Graph title", "sertler", "ogTitle")}${siteField("Open Graph şəkli", "sertler", "ogImage")}
       ${siteField("Open Graph description", "sertler", "ogDescription", "textarea", true)}
       ${siteField("İndekslənsin", "sertler", "index", "checkbox")}${siteField("Sitemap-a daxil olsun", "sertler", "includeInSitemap", "checkbox")}
@@ -1240,7 +1248,7 @@
       ["Məhsullar", "products"], ["Kateqoriyalar", "categories"], ["Ana səhifə", "cms.homepage"],
       ["Naviqasiya və keçidlər", "cms.navigation"], ["Haqqımızda", "siteSections.haqqimizda"],
       ["Əlaqə", "siteSections.elaqe"], ["Şərtlər", "siteSections.sertler"], ["Şəkil kitabxanası", "cms.media"],
-      ["Sifariş parametrləri", "cms.orderSettings"], ["SEO və sitemap", "cms.seo"]
+      ["Sifariş parametrləri", "cms.orderSettings"], ["SEO və sayt xəritəsi", "cms.seo"]
     ];
     const get = (source, path) => path.split(".").reduce((current, key) => current?.[key], source);
     return checks.filter(([, path]) => JSON.stringify(get(baselineData, path)) !== JSON.stringify(get(state.data, path))).map(([label]) => label);
@@ -1456,10 +1464,17 @@
     installActions();
     installHooks();
     if (state.data) renderCms();
-    const requested = location.hash.slice(1) || (new URLSearchParams(location.search).has('topup') ? 'communityShop' : '');
+    const requested = resolveView(location.hash.slice(1)) || (new URLSearchParams(location.search).has('topup') ? 'communityShop' : '');
+    const restore=()=>{
+      const view=resolveView(location.hash.slice(1))||'dashboard';
+      if(document.querySelector('.navBtn.active[data-view]')?.dataset.view===view&&location.hash==='#'+viewAddress(view))return;
+      activateView(view,undefined,true);
+    };
+    window.addEventListener('popstate',restore);
+    window.addEventListener('hashchange',restore);
     window.addEventListener("admin-topup-count", showPendingTopups);
     window.addEventListener("admin-topup-poll", () => {
-      if (location.hash === "#dashboard") void loadDashboardSummary();
+      if (resolveView(location.hash.slice(1)) === "dashboard") void loadDashboardSummary();
     });
     setTimeout(() => {
       const button = [...document.querySelectorAll(".navBtn[data-view]")].find(item => item.dataset.view === requested);

@@ -82,7 +82,7 @@ export function projectRoomCredentials(security,row,value){
  return {...value,email:account.email,password:account.password,...(row.room_suppress_message||conflictingPassword(value.message,account.password)?{message:'Hazır mesajdakı köhnə giriş məlumatı gizlədildi. Cari e-poçt və şifrə yuxarıda göstərilir.'}:{})};
 }
 export function roomPasswordMail(job,o,origin){
- const url=origin+'/profil?tab=orders&order='+encodeURIComponent(o.order_code);
+ const url=origin+'/profil?tab=sifarislerim&order='+encodeURIComponent(o.order_code);
  const text='Hesabınızın şifrəsi yeniləndi. Yeni şifrəni MirPanel-də Sifarişlərim bölməsindən görə bilərsiniz.';
  return {user:{email:o.email},subject:'MirPanel — Hesabınızın şifrəsi yeniləndi',idempotencyKey:job.event_key,
   textBody:text+'\n\nSifarişlərimə bax: '+url,

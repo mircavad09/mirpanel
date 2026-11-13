@@ -1142,7 +1142,7 @@
   }
 
   function bootPayments() {
-    if(location.hash==='#decorations')void loadBackgrounds();
+    if(['#decorations','#sekiller-ve-fonlar'].includes(location.hash))void loadBackgrounds();
     bindEvents(); setTimeout(openReviewToken, 400);
     const stockDelivered=()=>{refreshOrderCounts().catch(()=>{});if(!$p("paymentOrdersView")?.classList.contains("hidden")&&!orderRequests.size)loadOrders({automatic:true}).catch(()=>{});};
     window.addEventListener('mirpanel:ready-stock-delivered',stockDelivered);

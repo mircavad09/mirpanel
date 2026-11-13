@@ -8,7 +8,7 @@
   let storyWrite = false;
   let storyRead = false;
   const storyStatus = (text) => { document.getElementById("storiesStatus").textContent = text; };
-  const storySaved = () => storyStatus("Saxlandı · aktiv Stories növbəti oxunuşda yenilənir; ayrıca yayım lazım deyil.");
+  const storySaved = () => storyStatus("Saxlandı · aktiv hekayələr növbəti oxunuşda yenilənir; ayrıca yayım lazım deyil.");
 
   function finalSaveButton(scope) {
     return scope?.querySelector("[data-story-final-save],[data-item-save]");
@@ -198,7 +198,7 @@
     const bannerButton = document.querySelector('.navBtn[data-view="banners"]');
     if (bannerButton && !document.querySelector('.navBtn[data-view="stories"]')) {
       const button = document.createElement("button");
-      button.className = "navBtn"; button.type = "button"; button.dataset.view = "stories"; button.textContent = "Stories";
+      button.className = "navBtn"; button.type = "button"; button.dataset.view = "stories"; button.textContent = "Hekayələr";
       bannerButton.after(button);
       button.addEventListener("click", () => queueMicrotask(() => { document.getElementById("crumb").textContent = "Stories"; loadStories(); }));
     }

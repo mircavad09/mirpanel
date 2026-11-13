@@ -1,4 +1,4 @@
-import {profileReturn,profileCSS,profileShell} from './profile-shell.js?v=chatgpt-phone-1';
+import {profileReturn,profileCSS,profileShell,accountTab} from './profile-shell.js?v=az-addresses-1';
 import {getCommunityState,invalidateCommunityState,communityJson} from '/session-state.js?v=auth-recovery-20261107';
 
 export function mountProfile(app,verifiedState){
@@ -47,12 +47,12 @@ export function mountProfile(app,verifiedState){
  }
  const orderCode=new URLSearchParams(location.search).get('order');
  const orderSuffix=/^[A-Za-z0-9-]{1,40}$/.test(orderCode||'')?'?order='+encodeURIComponent(orderCode):'';
- const initialOrdersRequest=new URLSearchParams(location.search).get('tab')==='orders'
+ const initialOrdersRequest=accountTab(location.search)==='orders'
   ?{path:'/api/payments/my-orders'+orderSuffix,promise:api('/api/payments/my-orders'+orderSuffix)}:null;
  void initialOrdersRequest?.promise.catch(()=>{});
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
  const boot=async(retry=0)=>{let timer;try{
-  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=account-delivery-soft-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
+  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=az-addresses-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin,initialOrdersRequest});
  }catch{

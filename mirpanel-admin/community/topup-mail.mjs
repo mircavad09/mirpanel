@@ -7,7 +7,7 @@ export function topupMail(job,user,origin){
  const approved=job.event_key.startsWith('topup-approved:');
  const rejected=job.event_key.startsWith('topup-rejected:');
  const snapshot=job.topup_snapshot;
- const url=new URL('/profil?tab=payments&topup='+encodeURIComponent(job.topup_id),origin).href;
+ const url=new URL('/profil?tab=odenislerim&topup='+encodeURIComponent(job.topup_id),origin).href;
  const subject=rejected?'MirPanel — Ödənişiniz ləğv olundu':approved?'MirPanel — Ödənişiniz təsdiqləndi':'MirPanel — Ödəniş qəbziniz qəbul edildi';
  const paragraphs=approved?[
   'Salam, '+user.name+'!',

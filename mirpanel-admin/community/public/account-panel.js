@@ -1,4 +1,4 @@
-import {accountLabels,accountTab,accountMenu,ordersLoader} from './profile-shell.js?v=chatgpt-phone-1';
+import {accountLabels,accountTab,accountMenu,accountSlugs,ordersLoader} from './profile-shell.js?v=az-addresses-1';
 const sessionKey=Symbol.for('mirpanel.profile.session-lists');
 const sessionLists=window[sessionKey]??={uid:null,entries:new Map(),views:new Map(),listening:false};
 const setOwner=uid=>{if(uid!==sessionLists.uid){sessionLists.entries.clear();sessionLists.views.clear();sessionLists.uid=uid;}};
@@ -64,8 +64,13 @@ export function renderAccountPanel(ctx){
  let dragging=false,startX=0,startScroll=0;nav.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;dragging=true;startX=e.clientX;startScroll=nav.scrollLeft;nav.dataset.dragging='false';},{signal:life.signal});nav.addEventListener('pointermove',e=>{if(!dragging)return;if(Math.abs(e.clientX-startX)>5){nav.dataset.dragging='true';nav.setPointerCapture(e.pointerId);nav.scrollLeft=startScroll+startX-e.clientX;}},{signal:life.signal});const endDrag=()=>{dragging=false;setTimeout(()=>nav.dataset.dragging='false',0);};nav.addEventListener('pointerup',endDrag,{signal:life.signal});nav.addEventListener('pointercancel',endDrag,{signal:life.signal});nav.addEventListener('wheel',e=>{if(nav.scrollWidth<=nav.clientWidth)return;const before=nav.scrollLeft;nav.scrollLeft+=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(nav.scrollLeft!==before)e.preventDefault();},{passive:false,signal:life.signal});
  async function recommendations(target,run){const d=await accountData();if(stopped||run!==load||!target.isConnected||target.querySelector('.account-recommendations'))return;const box=el('section',{class:'account-recommendations'},el('h2',{},'Məhsul təklifləri')),grid=el('div',{class:'account-products'});for(const p of d.products.slice(0,4))grid.append(productCard(p,d.wishlist.includes(p.id),()=>show('orders')));box.append(grid);target.append(box);}
  async function show(id){rememberScroll();selected=id;const run=++load;disposeChild?.();disposeChild=null;view=null;
+ if(location.pathname==='/profil'){
+  const address=new URL(location.href);address.searchParams.set('tab',accountSlugs[id]);
+  if(window.MirpanelNavigation)window.MirpanelNavigation.replaceURL(address.href);
+  else history.replaceState(history.state,'',address.href);
+ }
  const label=accountLabels[id];content.replaceChildren(el('h1',{},label),id==='orders'?ordersPlaceholder():spinner());
- for(const a of nav.children){if(a.dataset.accountTab===id){a.setAttribute('aria-current','page');const r=a.getBoundingClientRect(),n=nav.getBoundingClientRect();if(r.left<n.left)nav.scrollLeft+=r.left-n.left;else if(r.right>n.right)nav.scrollLeft+=r.right-n.right;}else a.removeAttribute('aria-current');}document.title=label+' · MirPanel';
+ for(const a of nav.children){if(a.dataset.accountTab===id){a.setAttribute('aria-current','page');const r=a.getBoundingClientRect(),n=nav.getBoundingClientRect();if(r.left<n.left)nav.scrollLeft+=r.left-n.left;else if(r.right>n.right)nav.scrollLeft+=r.right-n.right;}else a.removeAttribute('aria-current');}document.title=label+' | MirPanel';
  const code=new URLSearchParams(location.search).get('order'),suffix=/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'?order='+encodeURIComponent(code):'';
  const viewKey=id+(id==='orders'?suffix:'');
  const prior=verified&&sessionLists.uid===verified?sessionLists.views.get(viewKey):null;

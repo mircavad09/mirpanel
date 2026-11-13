@@ -61,8 +61,9 @@ form.addEventListener("submit", async (event) => {
 
     const next = new URLSearchParams(location.search).get("next");
     const destination = new URL("/admin.html", location.origin);
-    if (next && /^\/admin\.html(?:[?#]|$)/.test(next)) {
+    if (next && /^\/admin(?:\.html|\/isci-stok-maas)(?:[?#]|$)/.test(next)) {
       const requested = new URL(next, location.origin);
+      destination.pathname=requested.pathname;
       destination.search = requested.search;
       destination.hash = requested.hash;
     }

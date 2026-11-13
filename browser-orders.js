@@ -481,7 +481,7 @@ function netflixScreen(animation,create){
    if(accountId&&d.accountId&&accountId!==d.accountId){gate();return;}
    if(d.accountId)accountId=d.accountId;
    if(live&&(dialog.open||guideDialog.open||repeatDialog.open))return;
-   if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=orders');else location.replace('/profil?tab=orders');return;}
+   if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=sifarislerim');else location.replace('/profil?tab=sifarislerim');return;}
    if(live&&hasAppended&&(target||!latestCompleted(d)||latestCompleted(d)===autoOrder)){
     for(const [id,data] of Object.entries(d.deliveryDetails||{}))if(typeof data?.text==='string')credentials.set(id,data);
     ui.pageData.deliveryDetails={...ui.pageData.deliveryDetails,...d.deliveryDetails};

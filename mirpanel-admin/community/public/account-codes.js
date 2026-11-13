@@ -84,7 +84,7 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
    if(row.orderCode&&Number.isSafeInteger(row.lineIndex)&&row.lineIndex>=0){
     const caption='Məlumat və təlimat',at=message.lastIndexOf(caption);
     if(at>=0){
-     const guide=el('a',{href:'/profil?tab=orders&order='+encodeURIComponent(row.orderCode)+'&guide='+row.lineIndex},caption);
+     const guide=el('a',{href:'/profil?tab=sifarislerim&order='+encodeURIComponent(row.orderCode)+'&guide='+row.lineIndex},caption);
      guide.style.cssText='color:#2583FF;text-decoration:underline';
      text.replaceChildren(message.slice(0,at),guide,message.slice(at+caption.length));
     }

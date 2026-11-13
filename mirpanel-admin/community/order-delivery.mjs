@@ -166,7 +166,7 @@ const orderDate=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'nume
 function cancellationMail(job,o,origin){
  const code=String(o.order_code);if(!orderCodeValid(code))throw Error('INVALID_ORDER_CODE');
  const cancellation=o.fulfillment_cancellation;
- const url=new URL('/profil?tab=orders&order='+encodeURIComponent(code),origin).href;
+ const url=new URL('/profil?tab=sifarislerim&order='+encodeURIComponent(code),origin).href;
  const title=cancellation.full?'Sifarişiniz ləğv olundu':'Sifarişiniz qismən ləğv olundu';
  const date=orderDate.format(new Date(o.created_at)).replaceAll('/','.');
  const greeting='Salam'+(o.account_name?', '+o.account_name:'')+'!';
@@ -194,14 +194,14 @@ function cancellationMail(job,o,origin){
 }
 function receiptReviewMail(o,origin){
  const code=String(o.order_code);if(!orderCodeValid(code))throw Error('INVALID_ORDER_CODE');
- const url=new URL('/profil?tab=orders&order='+encodeURIComponent(code),origin).href;
+ const url=new URL('/profil?tab=sifarislerim&order='+encodeURIComponent(code),origin).href;
  const title='Çekiniz qəbul edildi',detail='№'+code+' sifarişinizin çeki yoxlama üçün qəbul edildi. Bu bildiriş ödəniş təsdiqi deyil. Sifarişin cari statusuna hesabınızda baxa bilərsiniz.';
  return {user:{email:o.email},subject:title+' — Sifariş №'+code,textBody:title+'\n\n'+detail+'\n\nSifarişə bax: '+url,
   htmlBody:`<div lang="az" style="font:15px/1.5 Arial,sans-serif"><h1>${title}</h1><p>${esc(detail)}</p><p><a href="${esc(url)}">Sifarişə bax</a></p><p>MirPanel komandası</p></div>`};
 }
 export function orderMail(o,origin,{records=[],catalog}={}){
  const code=String(o.order_code);if(!orderCodeValid(code))throw Error('INVALID_ORDER_CODE');
- const url=new URL('/profil?tab=orders&order='+encodeURIComponent(code),origin).href;
+ const url=new URL('/profil?tab=sifarislerim&order='+encodeURIComponent(code),origin).href;
  const ready=!!o.delivery_id, lines=deliveryLines(o), chosen=ready?[{...lines[o.line_index],quantity:o.delivered_quantity}]:lines;
  const title=ready?'Sifarişiniz hazırdır':'Sifarişiniz təsdiqləndi',subject=title+' — Sifariş №'+code;
  const name=o.customer_name||o.name||'',phone=o.customer_phone||o.phone;
@@ -243,7 +243,7 @@ export function subscriptionReminderMail(job,{entry,account},origin){
  };
  const v=variants[days];if(!v)throw Error('INVALID_REMINDER_DAYS');
  const greeting=account.name?'Salam, '+account.name+'!':'Salam!';
- const url=new URL('/profil?tab=subscriptions',origin).href,label='Abunəliklərimə bax';
+ const url=new URL('/profil?tab=abuneliklerim',origin).href,label='Abunəliklərimə bax';
  const warning='Müddət bitdikdən sonra xidmətə girişiniz dayana bilər. Yeniləməni son ana saxlamayın.';
  // Escape catalog text before adding the fixed emphasis markup.
  const intro=v.intro.replace(title,()=>esc(title));

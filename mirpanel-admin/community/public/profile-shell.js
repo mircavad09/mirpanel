@@ -12,14 +12,15 @@ export function accountTabIcon(tab) {
 }
 export function accountTab(search){
  const name=new URLSearchParams(search).get('tab');
- return Object.hasOwn(accountLabels,name)?name:'profile';
+ return Object.hasOwn(accountLabels,name)?name:Object.keys(accountSlugs).find(key=>accountSlugs[key]===name)||'profile';
 }
-export const accountTabPath=tab=>'/profil'+(tab==='profile'?'':'?tab='+tab);
+export const accountSlugs={profile:'profilim',orders:'sifarislerim',codes:'kodlarim',subscriptions:'abuneliklerim',payments:'odenislerim',expenses:'xerclerim'};
+export const accountTabPath=tab=>'/profil?tab='+accountSlugs[tab];
 export function profileReturn(search){
  const topup=new URLSearchParams(search).get('topup');
- if(accountTab(search)==='payments'&&/^[a-f0-9-]{36}$/i.test(topup||''))return '/profil?tab=payments&topup='+topup;
+ if(accountTab(search)==='payments'&&/^[a-f0-9-]{36}$/i.test(topup||''))return accountTabPath('payments')+'&topup='+topup;
  const tab=accountTab(search),code=new URLSearchParams(search).get('order');
- return tab==='orders'&&/^[A-Za-z0-9-]{1,40}$/.test(code||'')?'/profil?tab=orders&order='+code:accountTabPath(tab);
+ return tab==='orders'&&/^[A-Za-z0-9-]{1,40}$/.test(code||'')?accountTabPath(tab)+'&order='+code:accountTabPath(tab);
 }
 export const ordersLoader='<div class="browser-orders-placeholder" role="status" aria-label="Sifarişlər hazırlanır"><div class="browser-orders-placeholder-heading" aria-hidden="true"></div><div class="browser-delivery-skeleton" aria-hidden="true"><span></span><span></span><span></span></div></div>';
 export const profileLoader='<div class="account-tab-spinner" role="status" aria-label="Məlumat hazırlanır"></div>';

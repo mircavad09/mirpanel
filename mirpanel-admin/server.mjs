@@ -1602,7 +1602,15 @@ const server = http.createServer(async (request, response) => {
       return serveFile(response,'employee.html');
     }
     if(pathname==='/admin/workforce'){
+      response.writeHead(302,{Location:'/admin/isci-stok-maas'+requestUrl.search,'Cache-Control':'no-store'});
+      return response.end();
+    }
+    if(pathname==='/admin/isci-stok-maas'){
       if(await employeeSystem.blockAdmin(request,response))return;
+      if(!getSession(request)){
+        response.writeHead(302,{Location:'/login.html?next='+encodeURIComponent('/admin/isci-stok-maas'+requestUrl.search),'Cache-Control':'no-store'});
+        return response.end();
+      }
       if(!requireAuth(request,response))return;
       return serveFile(response,'workforce-admin.html');
     }

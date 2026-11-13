@@ -1449,7 +1449,7 @@
         <h2 id="paymentWhatsAppFallbackTitle">Sifariş qəbul edildi</h2>
         <p>Sifariş nömrəsi: <strong>${escapeHtml(orderCode || "")}</strong></p>
         <p id="paymentCustomerOrderStatus">${escapeHtml(statusMessage||'Sifarişiniz yoxlanılır.')}</p>
-        <a data-native-navigation href="/profil?tab=orders&amp;order=${encodeURIComponent(orderCode || '')}">Sifarişlərimə bax</a>
+        <a data-native-navigation href="/profil?tab=sifarislerim&amp;order=${encodeURIComponent(orderCode || '')}">Sifarişlərimə bax</a>
         <a data-native-navigation href="/mehsul">Məhsullara bax</a>
         <a data-native-navigation href="/">Ana səhifə</a>
       </section>
@@ -1898,7 +1898,7 @@
         try{const order=await directApi('checkout',{items:items.map((x,i)=>({...x,termsVersion:data.items?.[i]?.termsVersion})),mode:'wallet',requestId:pending.requestId,consentAccepted:true,expectedTotalCents:pending.total});if(!order.paymentConfirmed)throw Error('Ödəniş təsdiqlənmədi.');
           clearPending();
           window.refreshCommunityNav?.();if(!root.isConnected||session!==modalSession)return;
-          const url=order.orderCode?'/profil?tab=orders&amp;order='+encodeURIComponent(order.orderCode):'/profil?tab=orders';
+          const url=order.orderCode?'/profil?tab=sifarislerim&amp;order='+encodeURIComponent(order.orderCode):'/profil?tab=sifarislerim';
           renderModalContent('<section class="direct-pay-options direct-pay-chooser"><h2 id="directPaymentTitle">Ödəniş təsdiqləndi</h2><p>Balansdan ödəniş edildi. Məhsulun hazırlanması gözlənilir.</p><a href="'+url+'">Sifarişlərimə bax</a> · <a href="/mehsul">Məhsullara bax</a> · <a href="/">Ana səhifə</a></section>');
           if(order.orderCreated===true&&order.orderCode)void import('/checkout-sounds.js?v=1').then(m=>m.playCheckoutSound('order',order.orderCode)).catch(()=>{});
         }catch(e){error.textContent=e.status?e.message:'Cavab alınmadı. Eyni ödənişi yenidən yoxlayın.';if([400,401,403,409].includes(e.status)){clearPending();await quote();}}
