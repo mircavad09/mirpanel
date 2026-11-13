@@ -681,10 +681,10 @@ export function createPaymentSystem(options) {
       }
       if(request.method==='POST'){
         const body=await readBody(request,700000);
-        if((body?.netflixRoomEdit?.action==='password'||body?.netflixAccountPassword||body?.netflixRoomAssign)&&!await options.readyStockOwnerAllowed?.(request))
-          throw Object.assign(Error('Saxlanmış Netflix şifrəsi yalnız sahib-adminə açıqdır.'),{status:403});
+        if((body?.netflixRoomEdit?.action==='password'||body?.netflixAccountPassword||body?.netflixRoomAssign||body?.accountManage)&&!await options.readyStockOwnerAllowed?.(request))
+          throw Object.assign(Error('Saxlanmış hesabların idarəetməsi yalnız sahib-adminə açıqdır.'),{status:403});
         const result=await options.saveReadyStock(security,config.tokenSecret,catalog,actorName,body);
-        if(body?.netflixRoomCards||body?.netflixRoomDelete)readInventory.invalidate();
+        if(body?.netflixRoomCards||body?.netflixRoomDelete||body?.accountManage){readInventory.invalidate();storefront=undefined;}
         json(response,200,result);return true;
       }
     }

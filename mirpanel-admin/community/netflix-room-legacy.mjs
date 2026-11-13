@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import {withReadyAccountHistory} from './ready-stock-management.mjs';
 import {bakuDate,safeCalendarDate} from '../payment-order-lifecycle.mjs';
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {roomSalesInstalled} from './netflix-room-sale.mjs';
@@ -80,7 +81,7 @@ export async function legacyOrders(pool,user,{before=null,id=null,ids=null,code=
 export function withLegacyHistory(pool,user,scope){
  const load=filter=>legacyOrders(pool,user,filter);
  const sort=(a,b)=>new Date(b.created_at)-new Date(a.created_at)||b.id.localeCompare(a.id);
- return {...scope,
+ return withReadyAccountHistory(pool,user,{...scope,
   page:async(before,id)=>{
    const [orders,legacy]=await Promise.all([scope.page(before,id),load({before,id})]);
    return [...orders,...legacy].sort(sort).slice(0,21);
@@ -101,7 +102,7 @@ export function withLegacyHistory(pool,user,scope){
     where a.user_id=$1 ${id?'and a.id=$2::uuid':''} order by a.created_at desc,a.id desc`,id?[user,id]:[user])).rows;
    return [...old,...rows];
   }
- };
+ });
 }
 
 export async function legacySubscriptions(pool,users,source){
