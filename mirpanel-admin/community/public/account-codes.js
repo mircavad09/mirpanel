@@ -30,7 +30,7 @@ function credentialRows(delivery){
  return fields.filter(([,value])=>typeof value==='string'&&value.trim());
 }
 export function mountCodes({content,el,button,initial,initialRequest,validate,onData,onUnauthorized,api,spinner,ui={}}){
- const css='/community-assets/account-codes.css?v=account-delivery-blue-1';
+ const css='/community-assets/account-codes.css?v=account-delivery-soft-1';
  if(!document.head.querySelector('link[data-account-codes]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-account-codes':''}));
  const life=new AbortController(),root=el('div',{class:'account-codes'}),status=el('p',{class:'codes-status',role:'status'}),list=el('div',{class:'codes-list'}),count=el('span',{class:'codes-count',hidden:''});
  const search=el('input',{type:'search',placeholder:'Məhsul adına görə axtar…','aria-label':'Məhsul adına görə axtar',autocomplete:'off'});

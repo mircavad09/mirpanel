@@ -20,20 +20,20 @@
 .account-panel details[open]>summary .browser-order-arrow{transform:rotate(180deg)}
 .account-panel .browser-order-status[data-status=preparing],.account-panel .browser-order-status[data-status=approved]:not(.browser-order-topup *){background:#61470970;color:#ffe08a}
 .account-panel .browser-order-delivery{margin-top:8px}
-.account-panel .browser-order-delivery{padding:10px;border:1px solid #2583FF;border-radius:12px;background:#111111;color:#ffffff;min-width:0}
+.account-panel .browser-order-delivery{padding:10px;border:1px solid #3C5870;border-radius:12px;background:#1C2B38;color:#ffffff;box-shadow:none;min-width:0}
 .account-panel .browser-order-delivery>header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;color:#d1d5db;overflow-wrap:anywhere}
 .account-panel .browser-order-delivery>header button{display:inline-flex;align-items:center;gap:5px;flex:none}
 .account-panel .browser-order-delivery>.browser-delivery-credentials{display:grid;gap:5px}
-.browser-delivery-credentials>div{display:grid;grid-template-columns:clamp(53px,12%,100px) minmax(0,1fr) auto;align-items:center;gap:7px;padding:3px 6px 3px 9px;border:1px solid #2583FF;border-radius:8px;background:#000000;color:#ffffff;overflow-wrap:anywhere}
+.browser-delivery-credentials>div{display:grid;grid-template-columns:clamp(53px,12%,100px) minmax(0,1fr) auto;align-items:center;gap:7px;padding:3px 6px 3px 9px;border:1px solid #3C5870;border-radius:8px;background:#000000;color:#ffffff;overflow-wrap:anywhere}
 .browser-delivery-credentials>div>span{color:#d1d5db}
 .account-panel .browser-delivery-credentials button{color:#ffffff;border-color:transparent;background:#000000;display:grid;place-items:center;min-width:40px}
-.account-panel .browser-order-delivery>pre:not([hidden]){background:#000000;border-color:#2583FF}
+.account-panel .browser-order-delivery>pre:not([hidden]){background:#000000;border-color:#3C5870}
 .account-panel .browser-order-delivery a[data-delivery-guide]{color:#2583FF;text-decoration:underline;text-underline-offset:.16em}
 .account-panel .browser-order-delivery a[data-delivery-guide]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .browser-order-delivery [data-delivery-status]:not(:empty){display:block;margin-top:5px;color:#bde9cf}
 @media(max-width:600px){.account-panel .browser-order-delivery button{min-height:44px}}
-.account-panel .browser-order-delivery button{color:#ffffff;background:#000000;border:1px solid #2583FF;border-radius:8px;padding:6px 9px;min-height:36px}
-.account-panel :is(.browser-order-delivery pre,.account-code-text){margin:8px 0 0;padding:12px;background:#000000;color:#ffffff;border:1px solid #2583FF;border-radius:10px;font:inherit;white-space:pre-wrap;overflow-wrap:anywhere}
+.account-panel .browser-order-delivery button{color:#ffffff;background:#000000;box-shadow:none;border:1px solid #3C5870;border-radius:8px;padding:6px 9px;min-height:36px}
+.account-panel :is(.browser-order-delivery pre,.account-code-text){margin:8px 0 0;padding:12px;background:#000000;color:#ffffff;border:1px solid #3C5870;border-radius:10px;font:inherit;white-space:pre-wrap;overflow-wrap:anywhere}
 .account-panel .account-code-text{margin:0 14px 14px}
 .account-panel .account-code .browser-order-actions{justify-content:flex-start;border-top:0}
 .account-panel .account-code .browser-order-header{border:0}
@@ -104,7 +104,7 @@
 .browser-order-expiry time{margin-inline-start:auto;color:#e2c47b;white-space:nowrap}
 .browser-order-expiry[data-expired]{color:#f0d69b;background:#272117}
 .browser-order-line-buttons button:focus-visible,.browser-order-delivery button:focus-visible,.browser-order-repeat button:focus-visible{outline:2px solid #ffdf45;outline-offset:2px}
-.browser-order-instructions{margin:10px 0 2px;padding:12px;border:1px solid #2583FF;border-radius:10px;background:#111111;color:#ffffff}
+.browser-order-instructions{margin:10px 0 2px;padding:12px;border:1px solid #3C5870;border-radius:10px;background:#1C2B38;color:#ffffff;box-shadow:none}
 .browser-order-instructions :is(h3,p){margin:0;font-size:14px}
 .browser-order-instructions [data-line-feedback]:not(:empty){display:block;margin-top:6px;color:#c8e5d5}
 .account-panel .browser-order-footer{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
@@ -821,3 +821,5 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
  .surfshark-demo-cue,.surfshark-demo-cue::after{animation:none}
  .surfshark-demo-open,.surfshark-demo-next{outline-color:#ffd66a}
 }
+
+.account-panel .browser-order-delivery button:hover:not(:disabled){border-color:#6A8CA8;box-shadow:none}
