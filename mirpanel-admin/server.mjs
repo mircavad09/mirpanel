@@ -789,9 +789,9 @@ async function handleApi(request, response) {
     // Never report logout success until server-side revocation is confirmed.
     if(!requireMutationAuth(request,response))return;
     const id = getCookies(request).mirpanel_session;
-    await adminPush.removeSession(id);
     await adminSessions.revoke(id);
     if (id) sessions.delete(id);
+    void adminPush.removeSession(id).catch(()=>console.warn('ADMIN_PUSH_SESSION_CLEANUP_FAILED'));
 
     return json(response, 200, { ok: true }, {
       "Set-Cookie": sessionCookie("", 0)
@@ -1505,7 +1505,7 @@ function serveFile(response, name) {
 
   if(['admin.html','admin-users.html','workforce-admin.html'].includes(name)){
     const notification = name === 'admin.html' ? '' : '<script defer src="/admin-topup-notification.js?v=push-restore-4" data-auto-start></script>';
-    return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=order-delivery-latency-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=idle-20261027-1"></script>'+notification+'</head>'));
+    return response.end(fs.readFileSync(file,'utf8').replace('</head>','<script src="/admin-live-list.js?v=order-delivery-latency-1"></script><script src="/admin-draft.js?v=idle-20261027-1"></script><script defer src="/admin-session.js?v=order-fields-batch-1"></script>'+notification+'</head>'));
   }
   if (name === "manual-stock-admin.html") {
     return response.end(fs.readFileSync(file, "utf8").replace("</body>", '<script src="/admin-topup-notification.js?v=push-restore-4" data-auto-start></script></body>'));

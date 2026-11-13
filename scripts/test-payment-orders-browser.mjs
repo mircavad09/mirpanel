@@ -215,7 +215,7 @@ try {
   assert.equal(await missingCost.inputValue(), "4.25");
   await page.click(".paymentBackfillPanel > summary");
   await page.click("#paymentCostBackfillPreview");
-  await page.waitForFunction(() => document.getElementById("paymentCostBackfillResult")?.textContent.includes("Dəqiq uyğunlaşdı"));
+  await page.waitForFunction(() => document.getElementById("paymentCostBackfillResult")?.textContent.includes("Maya tapıldı"));
   assert.match(await page.textContent("#paymentCostBackfillResult"), /Uyğunlaşmadı: 1/);
   assert.equal(await page.locator("#paymentCostBackfillApply").isDisabled(), false);
   await page.evaluate(()=>{

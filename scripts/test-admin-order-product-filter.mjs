@@ -51,6 +51,11 @@ await new Promise(resolve=>fixture.listen(0,"127.0.0.1",resolve));
 try {
   const store=createPaymentStore({supabaseUrl:`http://127.0.0.1:${fixture.address().port}`,supabaseSecretKey:"fixture"});
   const list=(productId,tab="pending",extra={})=>store.listOrders({productId,tab,period:"all",...extra},catalog);
+  let rawPage;
+  const withSnapshots=await store.listOrders({tab:'pending',period:'all'},catalog,{onPageRows:rows=>{rawPage=rows;}});
+  assert.equal(rawPage.length,withSnapshots.orders.length);
+  assert.deepEqual(rawPage.map(row=>row.id),withSnapshots.orders.map(row=>row.id));
+  assert.ok(!JSON.stringify(withSnapshots).includes('detailsCipher'));
   const first=await list("netflix"), second=await list("netflix","pending",{page:"2"});
   assert.equal(first.pagination.total,25);
   assert.deepEqual([...first.orders,...second.orders].filter(o=>o.orderCode==="5").map(o=>o.orderCode),["5"]);

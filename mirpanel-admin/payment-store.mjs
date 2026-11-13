@@ -437,7 +437,7 @@ export function createPaymentStore(config) {
       const rows=await rpc('employee_order_workflow',{p_ids:ids});
       return new Map(rows.map(({id,...workflow})=>[id,workflow]));
     },
-    async listOrders(input = {}, catalog = [], { pendingDeliveries, pendingDeliveryProgress, deliveryCompletions, orderRefunds } = {}) {
+    async listOrders(input = {}, catalog = [], { pendingDeliveries, pendingDeliveryProgress, deliveryCompletions, orderRefunds, onPageRows } = {}) {
       const filters = normalizeOrderListParams(input);
       const todayBounds = bakuDayBounds(filters.today);
       const financeView = ['today','all'].includes(filters.tab) && Boolean(orderRefunds);
@@ -630,6 +630,7 @@ export function createPaymentStore(config) {
       if (methodRows.error) throw paymentError(methodRows.error);
 
       const orders = data || [];
+      onPageRows?.(orders);
       if(paidView){const positions=new Map(pageIds.map((id,index)=>[id,index]));orders.sort((a,b)=>positions.get(a.id)-positions.get(b.id));}
       const displayedCompletions = new Map((deliveryCompletions && !deliveryQueue && !financeView ? await deliveryCompletions({ids:orders.map(o=>o.id)}) : []).map(o=>[o.id,o.completedAt]));
       const products = new Map();

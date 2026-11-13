@@ -793,8 +793,9 @@ export function createPaymentSystem(options) {
       const catalogRequest = query.countsOnly==='true' ? Promise.resolve(null) : loadCatalog();
       void catalogRequest.catch(()=>{});
       const matchingProducts=query.productId?(await catalogRequest)?.products:[];
+      const pageRows=new Map();
       const listingStarted = performance.now();
-      const orders = await store.listOrders(query, matchingProducts || [], {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined,orderRefunds:canDeliver?options.orderRefunds:undefined});
+      const orders = await store.listOrders(query, matchingProducts || [], {pendingDeliveries:canDeliver?options.pendingDeliveries:undefined,pendingDeliveryProgress:canDeliver?options.pendingDeliveryProgress:undefined,deliveryCompletions:canDeliver?options.deliveryCompletions:undefined,orderRefunds:canDeliver?options.orderRefunds:undefined,onPageRows:canDeliver?rows=>{for(const row of rows)pageRows.set(row.id,row);}:undefined});
       const listingMs = performance.now()-listingStarted;
       if(query.countsOnly==='true'){json(response,200,orders);return true;}
       const pendingCustomerView=query.tab==='pending'&&Boolean(query.pendingStage);
@@ -820,6 +821,17 @@ export function createPaymentSystem(options) {
       })();
       await Promise.all([customersTask,pendingTask,workforceTask]);
       const catalog=await catalogRequest;
+      if(canDeliver){
+        for(const order of orders.orders){
+          const raw=pageRows.get(order.id);
+          try{
+            if(!raw)throw Error('ORDER_SNAPSHOT_MISSING');
+            order.fieldLines=adminOrderFields(raw,catalog,security);
+          }catch{
+            order.fieldError='Sifariş sahələri açıla bilmədi.';
+          }
+        }
+      }
       orders.permissions={fields:!!canDeliver,manage:!!canDeliver};
       orders.filters ||= {};
       orders.filters.products = (catalog?.products || [])

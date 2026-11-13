@@ -1638,7 +1638,7 @@ document.querySelectorAll(".navBtn[data-view]").forEach((button) => {
   button.addEventListener("click", () => showView(button.dataset.view));
 });
 $("logoutBtn").addEventListener("click", async () => {
-  try{await api("/api/logout", { method: "POST" });await window.stopAdminTopupNotifications?.().catch(()=>{});clearTimeout(draftTimer);await window.MirpanelAdminDraft?.clear();location.href = "/login.html";}
+  try{await api("/api/logout", { method: "POST" });window.dispatchEvent(new Event("mirpanel:admin-logout"));await window.stopAdminTopupNotifications?.().catch(()=>{});clearTimeout(draftTimer);await window.MirpanelAdminDraft?.clear();location.href = "/login.html";}
   catch(error){toast(error.message||'Çıxış təsdiqlənmədi. Yenidən cəhd edin.','bad');}
 });
 window.addEventListener('mirpanel:session-expired',()=>{void preserveEditor();toast('Sessiya bitib. Redaktə qaralaması qorunur; saxlamaq üçün yenidən daxil olun.','bad');});

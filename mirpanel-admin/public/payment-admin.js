@@ -19,7 +19,9 @@
   };
   const $p = (id) => document.getElementById(id);
   const loadedFields = new WeakSet();
-  const fieldRequests = new WeakMap();
+  const fieldRequests = new Map();
+  const fieldCache = new Map();
+  let fieldSession = 0;
   const fieldsObserver = new IntersectionObserver(entries=>{for(const {target,isIntersecting} of entries)if(isIntersecting){fieldsObserver.unobserve(target);void loadCardFields(target);}});
   const mobileOrderFilters = () => matchMedia("(max-width:650px)").matches;
   const orderPages = new Map();
@@ -34,7 +36,13 @@
   const statusLabel = { reviewing: "Yoxlanılır", preparing: "Təhvil gözlənilir", completed: "Tamamlandı", rejected: "Rədd edilib", expired: "Vaxtı bitib", cancelled:"Ləğv edildi", partial_cancelled:"Qismən ləğv edildi" };
   const methodStatusLabel = { active: "Aktiv", inactive: "Deaktiv", pending: "Gözləmədə", temporarily_busy: "Müvəqqəti rezervdədir", limit_reached: "Limit dolub", deleted: "Silinib" };
 
-  async function paymentApi(path, options) { return api(path, options); }
+  async function paymentApi(path, options) {
+    try{return await api(path, options);}
+    catch(error){
+      if(error.status===401)window.dispatchEvent(new Event('mirpanel:session-expired'));
+      throw error;
+    }
+  }
   const money = (value, currency = "AZN") => `${Number(value || 0).toFixed(2)} ${currency === "AZN" ? "₼" : currency}`;
   const dateTime = (value) => value ? new Date(value).toLocaleString("az-AZ", { timeZone: "Asia/Baku" }) : "—";
   const orderTimeFormat = new Intl.DateTimeFormat("en-GB", {
@@ -223,31 +231,67 @@
   }
 
   function clearCardFields(card) {
-    fieldRequests.delete(card);
     loadedFields.delete(card);
     paintCardFields(card);
   }
 
-  async function loadCardFields(card) {
-    const visible=()=>paymentState.permissions.fields&&!document.hidden&&card.isConnected&&
+  function paintOrderFields(card,order) {
+    const saved=fieldCache.get(order.id);
+    if(!saved&&!order.fieldError)return false;
+    paintCardFields(card,saved?.lines||[]);
+    loadedFields.add(card);
+    if(order.fieldError){
+      const host=card.querySelector('[data-order-line-fields]');
+      if(host){
+        const note=document.createElement('p'),retry=document.createElement('button');
+        note.textContent=order.fieldError;
+        retry.type='button';retry.className='btn compact';retry.dataset.retryOrderFields='';
+        retry.textContent='Yenidən cəhd et';host.append(note,retry);
+      }
+    }
+    return true;
+  }
+
+  async function loadCardFields(card,{retry=false}={}) {
+    const visible=()=>paymentState.permissions.fields&&card.isConnected&&
       !card.querySelector('.paymentOrderCardDetails')?.hidden&&!card.closest('.workspace.hidden,.singlePanel.hidden');
-    if(!visible()||loadedFields.has(card)||fieldRequests.has(card))return;
+    if(!visible()||!retry&&loadedFields.has(card))return;
+    const id=card.dataset.paymentOrderId,order=paymentState.orders.find(order=>order.id===id);
+    if(!order)return;
+    if(!retry&&paintOrderFields(card,order))return;
     const host=card.querySelector('[data-order-line-fields]');
     if(!host)return;
-    host.textContent='Sifariş sahələri yüklənir…';
-    const request=paymentApi('/api/admin/payment-orders/'+card.dataset.paymentOrderId+'/details');
-    fieldRequests.set(card,request);
-    try{
-      const {lines}=await request;
-      if(fieldRequests.get(card)===request&&visible()){
-        paintCardFields(card,lines);
-        loadedFields.add(card);
-      }
-    }catch{
-      if(fieldRequests.get(card)===request&&visible())host.innerHTML='<button class="btn compact" type="button" data-retry-order-fields>Sifariş sahələri alınmadı · Yenidən cəhd et</button>';
-    }finally{
-      if(fieldRequests.get(card)===request)fieldRequests.delete(card);
+    let request=fieldRequests.get(id);
+    if(!request){
+      const session=fieldSession,previous=fieldCache.get(id);
+      request=paymentApi('/api/admin/payment-orders/'+id+'/details').then(({lines})=>{
+        if(session!==fieldSession||fieldCache.get(id)!==previous)return;
+        fieldCache.set(id,{lines:Array.isArray(lines)?lines:[]});
+        for(const result of orderPages.values()){
+          const cached=result.orders?.find(order=>order.id===id);
+          if(cached){cached.fieldLines=lines;delete cached.fieldError;}
+        }
+        const current=paymentState.orders.find(order=>order.id===id);
+        if(current){current.fieldLines=lines;delete current.fieldError;}
+      }).finally(()=>{if(fieldRequests.get(id)===request)fieldRequests.delete(id);});
+      fieldRequests.set(id,request);
     }
+    if(!fieldCache.has(id))host.textContent='Sifariş sahələri yüklənir…';
+    const button=host.querySelector('[data-retry-order-fields]');
+    if(button)button.disabled=true;
+    const session=fieldSession;
+    try{
+      await request;
+      if(session===fieldSession&&visible()){
+        const current=paymentState.orders.find(order=>order.id===id);
+        if(current)paintOrderFields(card,current);
+      }
+    }catch(error){
+      if(session===fieldSession&&visible()){
+        order.fieldError=error.message||'Sifariş sahələri açıla bilmədi.';
+        paintOrderFields(card,order);
+      }
+    }finally{if(button?.isConnected)button.disabled=false;}
   }
 
   function updateOrderCounts(counts = paymentState.orderMeta.counts) {
@@ -455,7 +499,10 @@
         else if(card.dataset.orderRenderVersion!==version)clearCardFields(card);
       }
       lastOrderMarkup=markup;
-      if(paymentState.permissions.fields)for(const card of list.querySelectorAll('[data-payment-order-id]'))if(!loadedFields.has(card)&&!fieldRequests.has(card)&&!card.querySelector('.paymentOrderCardDetails')?.hidden)fieldsObserver.observe(card);
+      if(paymentState.permissions.fields)for(const card of list.querySelectorAll('[data-payment-order-id]')){
+        const order=paymentState.orders.find(order=>order.id===card.dataset.paymentOrderId);
+        if(!paintOrderFields(card,order)&&!card.querySelector('.paymentOrderCardDetails')?.hidden)fieldsObserver.observe(card);
+      }
     }
     const pagination = paymentState.orderMeta.pagination;
     if ($p("paymentOrdersPageInfo")) $p("paymentOrdersPageInfo").textContent = `Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
@@ -627,6 +674,9 @@
     const cached = orderPages.get(key);
     const pageChanged = visibleOrderPage !== key;
     const apply = (result, background, fromCache = false) => {
+      if(result.permissions?.fields)for(const order of result.orders||[]){
+        if(Array.isArray(order.fieldLines))fieldCache.set(order.id,{lines:order.fieldLines});
+      }
       paymentState.orders = result.orders || [];
       paymentState.permissions = result.permissions || {};
       paymentState.orderMeta = { counts: fromCache ? paymentState.orderMeta.counts : result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
@@ -842,20 +892,23 @@
     const cards=()=>document.querySelectorAll('#paymentOrdersList [data-payment-order-id]');
     const clearFields=()=>{for(const card of cards())clearCardFields(card);};
     document.addEventListener('visibilitychange',()=>{
-      if(document.hidden)clearFields();
-      else for(const card of cards())fieldsObserver.observe(card);
+      if(!document.hidden)for(const card of cards())fieldsObserver.observe(card);
     });
-    window.addEventListener('pagehide',clearFields);
-    window.addEventListener('mirpanel:session-expired',()=>{
+    const endSession=()=>{
+      fieldSession++;
       invalidateOrders();
+      fieldCache.clear();fieldRequests.clear();orderCardVersions.clear();
+      paymentState.orders=[];lastOrderMarkup=null;
       deliveryPreviewRequests.clear();
       document.querySelector('[data-payment-delivery-dialog][open]')?.close();
-      paymentState.permissions.fields=false;
+      paymentState.permissions={};
       clearFields();
-    });
+    };
+    window.addEventListener('mirpanel:session-expired',endSession);
+    window.addEventListener('mirpanel:admin-logout',endSession);
+    window.addEventListener('pagehide',event=>{if(!event.persisted)endSession();});
     window.addEventListener('admin-community-view',event=>{
-      if(event.detail!=='paymentOrders')clearFields();
-      else for(const card of cards())fieldsObserver.observe(card);
+      if(event.detail==='paymentOrders')for(const card of cards())fieldsObserver.observe(card);
     });
     document.addEventListener('change',e=>{const key=e.target.dataset.bankBackground;if(key)void changeBankBackground(key,e.target.files?.[0]);});
     document.addEventListener('click',e=>{const b=e.target.closest('[data-bank-background-remove]');if(b)void changeBankBackground(b.dataset.bankBackgroundRemove,null,true);});
@@ -1027,10 +1080,10 @@
           const open=orderToggle.getAttribute("aria-expanded")!=="true",id=card.dataset.paymentOrderId;
           paymentState.openOrders.set(id,open);
           orderToggle.setAttribute("aria-expanded",String(open));card.querySelector('.paymentOrderCardDetails').hidden=!open;
-          if(open)void loadCardFields(card);else clearCardFields(card);return;
+          if(open)void loadCardFields(card);return;
         }
         if (card && event.target.closest("[data-copy-order-id]")) { await navigator.clipboard.writeText(card.dataset.orderCode); toast("Sifariş ID-si kopyalandı."); }
-        if (card && event.target.closest("[data-retry-order-fields]")) { await loadCardFields(card);return; }
+        if (card && event.target.closest("[data-retry-order-fields]")) { await loadCardFields(card,{retry:true});return; }
         const copyFields=event.target.closest('[data-copy-order-fields]');
         if(card&&copyFields&&paymentState.permissions.fields){
           const block=copyFields.closest('[data-order-line-fields]');
