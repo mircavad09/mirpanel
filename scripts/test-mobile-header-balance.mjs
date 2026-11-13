@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 import {withStorefrontHead} from '../storefront-head.mjs';
 const live=process.argv.includes('--live'),origin='https://mirpanel.com';
 const out=path.resolve('../../outputs/mobile-header-balance');await fs.mkdir(out,{recursive:true});
-const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+const browser=await (process.argv.includes('--webkit')?webkit.launch():chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 try{for(const width of (process.argv.includes('--desktop')?[1440]:[320,390,430,1440])){
  const context=await browser.newContext({viewport:{width,height:900},serviceWorkers:'block'});
@@ -21,6 +21,7 @@ try{for(const width of (process.argv.includes('--desktop')?[1440]:[320,390,430,1
   if(!live&&['/account-header.js','/account-header.css','/browser-nav.js'].includes(u.pathname))return route.fulfill({body:await fs.readFile(u.pathname.slice(1)),contentType:u.pathname.endsWith('.js')?'text/javascript':'text/css'});
   if(!live&& (route.request().isNavigationRequest()||route.request().headers()['x-mirpanel-navigation'])){
    const response=await route.fetch();let html=await response.text();
+   html=html.replace(/<a class="account-mobile-balance"[^>]*>[\s\S]*?<\/a>/g,'');
    html=html.replace(/<div class="account-header-controls account-guest-controls" data-account-session-bootstrap>[\s\S]*?<\/div>/,'');
    return route.fulfill({response,body:withStorefrontHead(html)});
   }
@@ -40,14 +41,15 @@ try{for(const width of (process.argv.includes('--desktop')?[1440]:[320,390,430,1
  async function geometry(){
   assert.equal(await wallet.count(),1);assert.equal(await wallet.getAttribute('href'),'/balans');assert(await wallet.locator('strong').evaluate(e=>e.scrollWidth<=e.clientWidth),'amount fits wallet');
   const w=await wallet.boundingBox(),brand=await p.locator('.site-header-brand').boundingBox(),search=await p.locator('.site-header-tools .site-header-search').boundingBox();
-  assert(w.x>=brand.x+brand.width-1);assert(Math.abs(w.y+24-brand.y-brand.height/2)<5);assert(search.y>=w.y+w.height);
+  assert(w.x>=brand.x+brand.width-1);assert(Math.abs(w.y+w.height/2-brand.y-brand.height/2)<5);assert(search.y>=w.y+w.height);
   assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  }
  await geometry();await p.waitForTimeout(1000);await p.screenshot({path:path.join(out,(live?'live':'local')+'-'+width+'.png')});
- for(const cents of [123456789,875,550]){
+ for(const cents of [0,12550,125000,123456789,550]){
   profile={...profile,balanceCents:cents};await p.evaluate(()=>window.refreshCommunityNav());
-  assert.equal(await wallet.locator('strong').innerText(),({123456789:'1 234 567,89 ₼',875:'8,75 ₼',550:'5,50 ₼'})[cents]);
+  assert.equal(await wallet.locator('strong').innerText(),({0:'0,00 ₼',12550:'125,50 ₼',125000:'1 250,00 ₼',123456789:'1 234 567,89 ₼',875:'8,75 ₼',550:'5,50 ₼'})[cents]);
   await geometry();
+  if(cents===125000)await p.screenshot({path:path.join(out,(live?'live':'local')+'-compact-'+width+'.png')});
  }
  await p.locator('.account-toggle').click();assert.equal(await p.locator('.account-menu-amount').innerText(),'5,50 ₼');
  await p.screenshot({path:path.join(out,(live?'live':'local')+'-menu-'+width+'.png')});

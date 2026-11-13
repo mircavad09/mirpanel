@@ -6,7 +6,7 @@ const walletPlaceholder='<a class="account-mobile-balance" href="/balans" aria-l
 
 export function withStorefrontHead(html){
  const hasHeader=html.includes('class="site-header-tools"');
- const styles=hasHeader?'<link rel="stylesheet" href="/account-header.css?v=mobile-wallet-1" data-shell-persistent>':'';
+ const styles=hasHeader?'<link rel="stylesheet" href="/account-header.css?v=mobile-wallet-compact-2" data-shell-persistent>':'';
  const page=html.replace(/<link\b[^>]*\brel=["'](?:shortcut )?icon["'][^>]*>/gi,'')
   .replace(/<link\b[^>]*\bhref=["']\/?account-header\.css(?:\?[^"']*)?["'][^>]*>/gi,'')
   .replace(/(<meta charset=["'][^"']+["']\s*\/?>)/i,'$1'+icon+styles);
