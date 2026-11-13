@@ -137,3 +137,6 @@
 
 /customer-pricing.js
   Cache-Control: no-cache, must-revalidate
+
+/delivery-message.mjs
+  Cache-Control: private, no-cache, no-store, must-revalidate

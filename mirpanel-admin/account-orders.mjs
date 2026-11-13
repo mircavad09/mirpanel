@@ -77,7 +77,7 @@ export function createAccountOrders({security,store,resolve}){
    return {accountId:s.userId,codes:rows.map(r=>{
     const x=deliveryLines({...r,quantity:r.order_quantity})[r.line_index],p=products.get(String(x.productId));
     const category=categories.get(p?.category);
-    return{id:r.id,title:x.title,plan:x.planName,image:x.image||p?.image||'',quantity:r.quantity,deliveredAt:r.delivered_at,purchasedAt:r.created_at,category:category?{key:p.category,label:category}:null};
+    return{id:r.id,orderCode:r.order_code,lineIndex:r.line_index,title:x.title,plan:x.planName,image:x.image||p?.image||'',quantity:r.quantity,deliveredAt:r.delivered_at,purchasedAt:r.created_at,category:category?{key:p.category,label:category}:null};
    })};
   },
   async guide(request,id,line){

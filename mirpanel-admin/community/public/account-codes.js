@@ -1,4 +1,4 @@
-import {linkDeliveryMessage} from '/delivery-message.mjs?v=account-delivery-blue-1';
+import {linkDeliveryMessage} from '/delivery-message.mjs?v=delivery-links-2';
 const paths={
  key:'M14.5 3a5.5 5.5 0 0 0-5.1 7.6L3 17v4h4v-3h3v-3l2.4-2.4A5.5 5.5 0 1 0 14.5 3Z M16 8h.01',
  search:'M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM16 16l4 4',
@@ -80,6 +80,14 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   const getDelivery=async()=>{const result=await readDelivery(row.id);if(!active()||deliveries.get(row.id)!==result)throw Error();return result;};
   const reveal=delivery=>{
    text.textContent=delivery.text;
+   if(row.orderCode&&Number.isSafeInteger(row.lineIndex)&&row.lineIndex>=0){
+    const caption='Məlumat və təlimat',at=delivery.text.lastIndexOf(caption);
+    if(at>=0){
+     const guide=el('a',{href:'/profil?tab=orders&order='+encodeURIComponent(row.orderCode)+'&guide='+row.lineIndex},caption);
+     guide.style.cssText='color:#2583FF;text-decoration:underline';
+     text.replaceChildren(delivery.text.slice(0,at),guide,delivery.text.slice(at+caption.length));
+    }
+   }
    linkDeliveryMessage(text);
    credentials.replaceChildren(...credentialRows(delivery).map(([label,value])=>el('div',{class:'codes-credential'},el('span',{},label),el('strong',{},value))));
    details.hidden=false;toggleLabel(true);

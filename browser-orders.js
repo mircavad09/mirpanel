@@ -55,15 +55,15 @@ function capcutScanPhone(create){
 }
 
 function linkDeliveryUrls(pre,text){
- void import('/delivery-message.mjs?v=account-delivery-blue-1').then(({linkDeliveryMessage})=>{
-  if(pre.isConnected&&pre.textContent===text)linkDeliveryMessage(pre);
+ void import('/delivery-message.mjs?v=delivery-links-2').then(({linkDeliveryMessage})=>{
+  if(pre.textContent===text)linkDeliveryMessage(pre);
  }).catch(()=>{});
 }
 function renderDeliveryMessage(pre,text){
  const deliveryGuideText='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';
  const message=text.trimEnd(),start=message.length-deliveryGuideText.length;
  // The fixed final line opens this product's guide inside the order.
- if(!message.endsWith(deliveryGuideText)||(start>0&&message[start-1]!=='\n')){pre.textContent=text;linkDeliveryUrls(pre,text);return;}
+ if(!message.endsWith(deliveryGuideText)||(start>0&&!/[\r\n]/.test(message[start-1]))){pre.textContent=text;linkDeliveryUrls(pre,text);return;}
  const caption='Məlumat və təlimat',index=start+deliveryGuideText.indexOf(caption),link=document.createElement('a');
  link.textContent=caption;link.href='#teslim-telimat';link.dataset.deliveryGuide='';link.dataset.nativeNavigation='';
  link.setAttribute('aria-haspopup','dialog');
@@ -368,7 +368,8 @@ function netflixScreen(animation,create){
  const error=document.getElementById('browserOrdersError'),more=document.getElementById('browserOrdersMore'),dialog=document.getElementById('browserReceipt'),content=document.getElementById('browserReceiptContent');
  let cursor=null,loading=false,loaded=false,generation=0,timer,focused=false,pageFingerprint=null,hasAppended=false,initialRequest=options.initialRequest,autoOrder=null;const seen=new Set(),requests=new Set(),prior=new Map();
  if(options.ui?.pageData)options.initial=options.ui.pageData;
- const target=new URLSearchParams(location.search).get('order');
+ const params=new URLSearchParams(location.search),target=params.get('order');
+ const guideLine=/^\d+$/.test(params.get('guide')||'')?Number(params.get('guide')):null;let focusedGuide=false;
  const ui=options.ui||{},credentials=ui.credentials??=new Map(),expandedOrders=ui.expanded??=new Set();
  const orderMarkup=new WeakMap();
  let accountId=options.initial?.accountId||null;autoOrder=ui.autoOrder??null;
@@ -463,6 +464,10 @@ function netflixScreen(animation,create){
     focused=true;node.scrollIntoView({block:'nearest'});
    }
    if(node.open)showAccounts(node);
+   if(!focusedGuide&&target===String(o.orderCode)&&guideLine!==null){
+    const trigger=node.querySelector('[data-order-info="'+guideLine+'"]');
+    if(trigger){focusedGuide=true;queueMicrotask(()=>{if(node.isConnected&&!life.signal.aborted)trigger.click();});}
+   }
    if(live&&['reviewing','submitted','pending','new_receipt_requested'].includes(prior.get(o.id))&&['preparing','completed'].includes(o.status))void sounds.then(m=>m?.playCheckoutSound('order',o.orderCode));
    prior.set(o.id,o.status);
   }
