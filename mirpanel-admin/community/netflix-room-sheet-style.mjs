@@ -15,6 +15,7 @@ export const roomStatusStyles=[
  {name:'Yoxlama tələb olunur',caption:'⚠ Yoxlama tələb olunur'},
  {name:'Satılmayıb',caption:'✕ Satılmayıb'},
  {name:'Satılıb',caption:'✓ Satılıb'},
+ {name:'Yenilənib',caption:'✓ Yenilənib'},
  {name:'Yenilənmə gözlənilir',caption:'◷ Yenilənmə gözlənilir'},
  {name:'Ödəniş edib',caption:'✓ Ödəniş edib'},
  {name:'Yenilənməyib',caption:'✕ Yenilənməyib'}

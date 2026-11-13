@@ -5,7 +5,7 @@ import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {bakuDate,shiftCalendarDays} from '../mirpanel-admin/payment-order-lifecycle.mjs';
 import {saveReadyStock,readyStockView,approveCardWithReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
 import {roomSheetClient,sheetHeaders,sheetTitle,locateCustomerIdCell} from '../mirpanel-admin/community/netflix-room-sheet-client.mjs';
-import {writeNextSheetCustomerId} from '../mirpanel-admin/community/netflix-sheet-customer-id.mjs';
+import {writeNextSheetCustomerId,reconcileSheetDeliveryQueue} from '../mirpanel-admin/community/netflix-sheet-customer-id.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
 import {adminDelivery,ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
 
@@ -25,10 +25,10 @@ const client=roomSheetClient('synthetic-spreadsheet-id',account,'owner@example.t
  if(url.endsWith('/token'))return Response.json({access_token:'synthetic',expires_in:3600});
  if(url.includes('/permissions'))return Response.json({permissions:[{type:'user',role:'owner',emailAddress:'owner@example.test'},{type:'user',role:'writer',emailAddress:account.client_email}]});
  if(url.includes('?fields=properties'))return Response.json({properties:{title:sheetTitle},sheets:[{properties:{sheetId:7,title:'Stock'}}]});
- if(new URL(url).searchParams.get('ranges')==="'Stock'!A1:C"){
+ if(new URL(url).searchParams.get('ranges')==="'Stock'!A1:F"){
   reads++;
   if(sortDuringRead&&reads===2)rows=[header,row2,row1];
-  return Response.json({sheets:[{properties:{sheetId:7},data:[{rowData:rows.map(r=>({values:r.slice(0,3).map((value,col)=>
+  return Response.json({sheets:[{properties:{sheetId:7},data:[{rowData:rows.map(r=>({values:r.slice(0,6).map((value,col)=>
    col===1&&numberFormatted.has(r)?numberFormatted.get(r):
    value.startsWith('=')?{userEnteredValue:{formulaValue:value},formattedValue:''}:
    value?{userEnteredValue:{stringValue:value},formattedValue:value}:{}
@@ -36,7 +36,7 @@ const client=roomSheetClient('synthetic-spreadsheet-id',account,'owner@example.t
  }
  if(url.endsWith(':batchUpdate')){
   const {requests}=JSON.parse(options.body);
-  assert.equal(requests.length,1);
+  assert.equal(requests.length,2);
   const {updateCells:write}=requests[0];
   assert.equal(write.start.sheetId,7);
   assert.equal(write.start.columnIndex,0);
@@ -44,6 +44,8 @@ const client=roomSheetClient('synthetic-spreadsheet-id',account,'owner@example.t
   assert.equal(write.rows.length,1);
   assert.equal(write.rows[0].values.length,1);
   rows[write.start.rowIndex][0]=write.rows[0].values[0].userEnteredValue.stringValue;
+  const status=requests[1].updateCells;assert.equal(status.start.columnIndex,5);assert.equal(status.start.rowIndex,write.start.rowIndex);
+  rows[status.start.rowIndex][5]=status.rows[0].values[0].userEnteredValue.stringValue;
   writes++;
   if(offline){offline=false;return new Response(null,{status:503});}
   return Response.json({});
@@ -110,7 +112,7 @@ try{
  assert.equal(sold.canDelete,false);
  await assert.rejects(save({netflixRoomDelete:{id:sold.id}}),{status:409,message:/təhvil verilmiş/});
  const member=(await pool.query("select member_number::text from community_member_numbers where user_id='a'")).rows[0].member_number;
- const otherCells=rows.slice(1).map(r=>r.slice(1));
+ const otherCells=rows.slice(1).map(r=>r.slice(1,5));
  sortDuringRead=true;offline=true;
  assert.equal(await run(),true);
  assert.equal(row1[0],member);assert.equal(row2[0],'');assert.equal(writes,1);
@@ -120,7 +122,8 @@ try{
  assert.equal(await run(),false);
  await pool.query('update netflix_sheet_customer_ids set next_at=now() where delivery_id=$1',[code.id]);
  await run();assert.equal(writes,1);
- assert.deepEqual([row1.slice(1),row2.slice(1)],otherCells);
+ assert.deepEqual([row1.slice(1,5),row2.slice(1,5)],otherCells);
+ assert.equal(row1[5],'✓ Satılıb');
  const second=await shop.checkout(buyer,owner,{...request,requestId:id()});
  assert.equal(second.deliveryStatus,'completed');
  const secondCode=(await orders.codes(buyer)).codes.find(c=>c.id!==code.id);
@@ -192,5 +195,14 @@ try{
  await run();assert.equal(newRows.filter(r=>r[0]===member).length,5);
  assert.equal(await run(),false);
  assert.equal(writes,7);
- console.log('PASS: atomic two-card save/reload, replay, delete/restock count, protected reserved/delivered rooms, wallet delivery without customer PIN, moved rows, formatted numeric room/PIN with leading zero, A-only write, lost reply, retry, conflicting/duplicate/missing row two wallet/card auto paths, manual stock and sheet-only delivery, multi-room jobs and no duplicate delivery');
+ // Previously successful writes are verified again, not trusted forever.
+ row1[0]='';row1[5]='✕ Satılmayıb';
+ await pool.query('update netflix_sheet_customer_ids set next_at=now() where delivery_id=$1',[code.id]);
+ await run();assert.equal(row1[0],member);assert.equal(row1[5],'✓ Satılıb');
+ await pool.query('delete from netflix_sheet_customer_ids where delivery_id=$1',[unboundId]);
+ assert.equal(await reconcileSheetDeliveryQueue(pool),1);
+ assert.equal(await reconcileSheetDeliveryQueue(pool),0);
+ await run();
+ assert.equal((await pool.query('select state from netflix_sheet_customer_ids where delivery_id=$1',[unboundId])).rows[0].state,'done');
+ console.log('PASS: automatic/manual/card delivery, atomic A+status-only write, numeric/formatted PIN, moved rows, lost reply/retry, missing/conflict/duplicate protection, done-job recheck and historical queue backfill without duplicate delivery');
 }finally{await fixture.close();}

@@ -44,7 +44,7 @@ export async function readyStockView(pool,catalog,inventory,security){
    result.netflixSheetManual=manual;
    for(const room of result.netflixRooms){
     const state=states.get(room.id);
-    if(state&&state.deliveryId===room.deliveryId)room.sheetCustomerId=state;
+    if(state&&(!state.deliveryId||state.deliveryId===room.deliveryId))room.sheetCustomerId=state;
    }
   }
   const netflix=result.products.find(p=>p.id==='netflix');

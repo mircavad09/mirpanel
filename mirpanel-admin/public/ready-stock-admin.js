@@ -184,9 +184,9 @@ export function mountReadyStock(host,api){
  function sheetSyncStatus(sync){
   const entry=document.createElement('div'),info=document.createElement('p');
   const label=sync.orderCode?'Sifariş №'+sync.orderCode+' · ':'';
-  info.textContent=label+'Sheets A sütunu · '+(sync.message||(sync.state==='done'?'Müştəri ID-si yazılıb.':'Yazı növbədədir.'));
+  info.textContent=label+'Sheets ID və status · '+(sync.message||(sync.state==='done'?'Müştəri ID-si və status yazılıb.':'Yazı avtomatik təkrar cəhd növbəsindədir.'));
   entry.append(info);
-  if(sync.state!=='done'){
+  if(sync.state!=='done'&&sync.deliveryId){
    const retry=document.createElement('button');retry.type='button';retry.className='btn';retry.textContent='ID yazısını təkrarla';
    retry.onclick=async()=>{
     retry.disabled=true;

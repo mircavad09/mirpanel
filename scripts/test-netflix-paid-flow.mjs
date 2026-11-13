@@ -33,8 +33,9 @@ try{
  assert.notEqual(stock[0].delivery_id,stock[1].delivery_id);
  assert.equal((await ownerCodes(pool,'b',stock[0].delivery_id)).length,0);
  const firstRow=rows.get(stock[0].id),secondRow=rows.get(stock[1].id);
- assert.ok(firstRow[5].startsWith('✓ Ödəniş edib\n'));assert.ok(secondRow[5].startsWith('✓ Ödəniş edib\n'));
- assert.notEqual(firstRow[5],secondRow[5]);
+ assert.equal(firstRow[5],'✓ Satılıb');assert.equal(secondRow[5],'✓ Satılıb');
+ const soldSnapshots=(await pool.query('select checkout_snapshot from payment_orders where id=any($1::uuid[])',[ [first.orderId,second.orderId] ])).rows;
+ assert.deepEqual(soldSnapshots.map(r=>r.checkout_snapshot.items[0].durationMonths).sort((a,b)=>a-b),[3,6]);
  await editNetflixRoom(pool,security,{action:'expiry',id:stock[0].id,endsOn:day(60)});await sync();
  assert.equal(rows.get(stock[0].id)[5],firstRow[5]);assert.equal(rows.get(stock[0].id)[4],day(60));
  const sub=(await shop.subscriptions(buyer)).subscriptions[0];
@@ -62,7 +63,7 @@ try{
  assert.equal((await pool.query('select delivery_id from netflix_room_units where id=$1',[stock[2].id])).rows[0].delivery_id,null);
  await approveCardWithReadyStock(pool,security,order.orderId,null,'synthetic-admin',false);
  await approveCardWithReadyStock(pool,security,order.orderId,null,'synthetic-admin',false);await sync();
- assert.equal(rows.size,3);assert.ok(rows.get(stock[2].id)[5].startsWith('Yenilənmə gözlənilir\n'));
+ assert.equal(rows.size,3);assert.equal(rows.get(stock[2].id)[5],'✓ Satılıb');
  const empty=await wallet(await item(0));assert.equal(empty.deliveryStatus,'preparing');
  console.log('PASS: real synthetic wallet/card sales, 1/3/6 month snapshots, isolation, pending/rejected renewal, early approval/replay/fulfillment, account expiry update, stock exhaustion and stable three sheet rows');
 }finally{await f.close();}
