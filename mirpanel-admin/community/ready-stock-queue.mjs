@@ -1,3 +1,4 @@
+import {freeManagementClause} from './ready-stock-management.mjs';
 import {drainReadyStock} from './ready-stock.mjs';
 
 // The paid, still-undelivered orders are the durable queue. A restart therefore
@@ -12,7 +13,8 @@ export function createReadyStockQueue(pool,securityFactory,{onDelivered=()=>{},p
    const locked=(await c.query('select pg_try_advisory_xact_lock(714025001) acquired')).rows[0].acquired;
    if(!locked){await c.query('rollback');return {pending:true};}
    const result=await drainReadyStock(c,securityFactory);
-   const remaining=(await c.query(`select count(*)::int n from mirpanel_community.ready_stock_units where delivery_id is null`)).rows[0].n;
+   const free=await freeManagementClause(c);
+   const remaining=(await c.query(`select count(*)::int n from mirpanel_community.ready_stock_units u where delivery_id is null${free}`)).rows[0].n;
    await c.query('commit');
    last={...result,remaining,checkedAt:new Date().toISOString(),pending:result.errors>0};
    console.info('READY_STOCK_QUEUE_RESULT',JSON.stringify(last));

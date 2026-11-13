@@ -1,3 +1,4 @@
+import {readyAccountList,manageReadyAccount,freeManagementClause} from './ready-stock-management.mjs';
 import {sheetCustomerIdStates,retrySheetCustomerId} from './netflix-sheet-customer-id.mjs';
 import {updateRoomPassword} from './netflix-room-password.mjs';
 import crypto from 'node:crypto';
@@ -23,7 +24,8 @@ export async function readyStockView(pool,catalog,inventory,security){
  try{
   await c.query('begin isolation level repeatable read');
   if(!await enabled(c))throw fail(503,'Hazır hesab stoku hazırda bağlıdır.');
-  const settings=(await c.query('select p.product_id,p.plan_key,p.plan_signature,p.auto_wallet,count(u.id)::int as ready from '+S+'plans p left join '+S+'units u on (p.product_id,p.plan_key,p.plan_signature)=(u.product_id,u.plan_key,u.plan_signature) and u.delivery_id is null group by p.product_id,p.plan_key,p.plan_signature,p.auto_wallet')).rows;
+  const free=await freeManagementClause(c,'u');
+  const settings=(await c.query('select p.product_id,p.plan_key,p.plan_signature,p.auto_wallet,count(u.id)::int as ready from '+S+'plans p left join '+S+'units u on (p.product_id,p.plan_key,p.plan_signature)=(u.product_id,u.plan_key,u.plan_signature) and u.delivery_id is null'+free+' group by p.product_id,p.plan_key,p.plan_signature,p.auto_wallet')).rows;
   const records=new Map(settings.map(x=>[key(x.product_id,x.plan_key,x.plan_signature),x]));
   const availability=new Map(inventory.map(x=>[x.productId,x]));
   const messages=security?await readProductMessages(c,security,catalog.products.map(p=>p.id)):new Map();
@@ -53,10 +55,12 @@ export async function readyStockView(pool,catalog,inventory,security){
    netflix.readyTotal=ready;
    for(const plan of netflix.plans){plan.ready=ready;}
   }
+  result.accounts=security?await readyAccountList(c,security,catalog):[];
   await c.query('commit');return result;
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
+ if(input?.accountManage)return manageReadyAccount(pool,security,catalog,actor,input.accountManage);
  if(input?.netflixRoomCards)return saveNetflixRoomCards(pool,security,secret,actor,input.netflixRoomCards);
  if(input?.netflixRoomDelete)return deleteNetflixRoom(pool,actor,input.netflixRoomDelete.id);
  if(input?.netflixSheetIdRetry)return retrySheetCustomerId(pool,input.netflixSheetIdRetry.deliveryId);
@@ -157,7 +161,8 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
   const args=[item.productId,item.sourcePlanKey,item.signature];
   const setting=(await c.query('select auto_wallet from '+S+'plans where product_id=$1 and plan_key=$2 and plan_signature=$3 for share',args)).rows[0];
   if(!setting?.auto_wallet)continue;
-  const units=(await c.query('select id,message_cipher from '+S+'units where product_id=$1 and plan_key=$2 and plan_signature=$3 and delivery_id is null order by created_at,id limit $4 for update',[...args,quantity])).rows;
+  const free=await freeManagementClause(c);
+  const units=(await c.query('select u.id,u.message_cipher from '+S+'units u where product_id=$1 and plan_key=$2 and plan_signature=$3 and delivery_id is null'+free+' order by created_at,id limit $4 for update',[...args,quantity])).rows;
   let productMessage;
   for(const unit of units){
    security??=securityFactory();
@@ -166,7 +171,7 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
    if(value.account&&productMessage===undefined)productMessage=(await readProductMessages(c,security,[item.productId])).get(item.productId)??null;
    if(value.account&&productMessage===null)break;
    const id=crypto.randomUUID();
-   await recordDelivery(c,security,actor,orderId,id,line,1,value.account?productMessage:value.message,value.account);
+   await recordDelivery(c,security,actor,orderId,id,line,1,value.account?[productMessage,value.message].filter(Boolean).join('\n\n'):value.message,value.account);
    await c.query('update '+S+'units set delivery_id=$2 where id=$1',[unit.id,id]);
   }
  }
@@ -199,7 +204,8 @@ export async function drainReadyStock(c,securityFactory,{before}={}){
  const result={orders:0,units:0,completed:0,errors:0};
  if(!await enabled(c))return result;
  await c.query('select pg_advisory_xact_lock(714025001)');
- const ready=(await c.query('select distinct product_id,plan_key,plan_signature from '+S+'units u join '+S+'plans p using(product_id,plan_key,plan_signature) where u.delivery_id is null and p.auto_wallet')).rows;
+ const free=await freeManagementClause(c);
+ const ready=(await c.query('select distinct product_id,plan_key,plan_signature from '+S+'units u join '+S+'plans p using(product_id,plan_key,plan_signature) where u.delivery_id is null and p.auto_wallet'+free)).rows;
  const skus=new Set(ready.map(x=>key(x.product_id,x.plan_key,x.plan_signature)));
  const rooms=(await c.query("select to_regclass('mirpanel_community.netflix_room_sellable') present")).rows[0].present;
  const roomReady=rooms&&(await c.query('select 1 from mirpanel_community.netflix_room_sellable limit 1')).rowCount>0;
