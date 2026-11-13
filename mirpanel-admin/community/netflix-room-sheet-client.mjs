@@ -7,6 +7,7 @@ export const examplesTitle='SINAQ — nümunələr';
 export const paidStatus='✓ Ödəniş edib';
 const b64=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
 const tokenURL='https://oauth2.googleapis.com/token';
+let lastRoomSheetRequest=0;
 
 export function roomSheetClient(id,account,ownerEmail,http=fetch){
  if(!/^[\w-]{20,}$/.test(id)||!account.client_email?.endsWith('.gserviceaccount.com')||!account.private_key||
@@ -29,8 +30,12 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   return token;
  }
  async function request(url,body){
+  const authorization='Bearer '+await access();
+  // Keep automatic recovery below Google's per-user request quota. The DB
+  // advisory lock serializes workers; test transports remain instantaneous.
+  if(http===fetch){const wait=Math.max(0,lastRoomSheetRequest+1150-Date.now());if(wait)await new Promise(r=>setTimeout(r,wait));lastRoomSheetRequest=Date.now();}
   const response=await http(url,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(10000),
-   headers:{Authorization:'Bearer '+await access(),...(body?{'Content-Type':'application/json'}:{})},
+   headers:{Authorization:authorization,...(body?{'Content-Type':'application/json'}:{})},
    ...(body?{body:JSON.stringify(body)}:{})});
   if(!response.ok)throw Error('ROOM_SHEET_REQUEST');
   return response.json();
