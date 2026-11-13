@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=mobile-product-flow-1">
+  <link rel="stylesheet" href="/product-page.css?v=similar-scroll-2">
   <link rel="stylesheet" href="/payment-flow.css?v=checkout-cancel-proxy-20261026-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -222,11 +222,11 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-10596b156308199e"></script>
+  <script src="/app.js?v=catalog-91c4b3fc0acb041a"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
   <script src="/stock-display-fix.js?v=product-summary-1"></script>
-  <script src="/product-page.js?v=mobile-product-flow-1"></script>
+  <script src="/product-page.js?v=similar-scroll-2"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>

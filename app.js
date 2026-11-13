@@ -231,11 +231,11 @@ const DATA = {
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 28,
+          "pricingId": "f042d4ea-0063-4de1-ac11-bfb9aedc42a7",
           "label": "1 ay",
           "months": 1,
           "price": 9.98,
-          "regularPrice": 27.18,
-          "pricingId": "f042d4ea-0063-4de1-ac11-bfb9aedc42a7"
+          "regularPrice": 27.18
         }
       ],
       "orderConfirmation": {
@@ -355,19 +355,6 @@ const DATA = {
           "months": 1,
           "price": 5.49,
           "regularPrice": 11
-        },
-        {
-          "label": "2 Ayliq        (Öz hesabınızda aktiv edilir)",
-          "months": 2,
-          "price": 0,
-          "regularPrice": 18.74
-        },
-        {
-          "active": true,
-          "label": "3 Ayliq        (Öz hesabınızda aktiv edilir)",
-          "months": 3,
-          "price": 0,
-          "regularPrice": 27.53
         }
       ],
       "orderConfirmation": {
