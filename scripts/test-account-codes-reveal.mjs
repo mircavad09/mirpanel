@@ -8,7 +8,7 @@ const origin=live?'https://mirpanel.com':'https://mirpanel.test',pause=ms=>new P
 const list='/api/payments/my-orders/codes';
 const rows=[{id:'delivery-netflix',title:'Netflix Şəxsi'},{id:'delivery-capcut',title:'CapCut Pro'}].map(r=>({...r,plan:'1 ay',purchasedAt:'2026-11-09T12:00:00Z'}));
 const secrets=[
- {text:'Netflix üçün sintetik hazır mesaj\nİkinci sətir',email:'netflix@example.test',password:'Synthetic-N',netflixRoom:{name:'Otaq A',code:'0408'}},
+ {text:'Netflix üçün sintetik hazır mesaj\n[https://2fa.live/], http://example.test/help.\nŞifrə: https://example.test/private\n2FA açarı: DEMO-ONLY-0000\n<script>window.messageExecuted=true</script>\nİkinci sətir',email:'netflix@example.test',password:'Synthetic-N',netflixRoom:{name:'Otaq A',code:'0408'}},
  {text:'CapCut üçün ayrı sintetik hazır mesaj',email:'capcut@example.test',password:'Synthetic-C'}
 ];
 const files=new Map();
@@ -67,6 +67,11 @@ for(const [engine,width] of viewports){
   }
   const firstMs=await reveal(first);
   assert.equal(await first.locator('.codes-text').textContent(),secrets[0].text);
+  if(!before){
+   assert.deepEqual(await first.locator('.delivery-message-link').evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href'))),['https://2fa.live/','http://example.test/help']);
+   assert.equal(await first.locator('.codes-text script').count(),0);assert.equal(await page.evaluate(()=>window.messageExecuted),undefined);
+   assert.equal(await first.locator('.delivery-message-link').first().evaluate(n=>getComputedStyle(n).color),'rgb(113, 229, 166)');
+  }
   for(const value of ['netflix@example.test','Synthetic-N','Otaq A','0408'])await first.getByText(value,{exact:true}).waitFor();
   await first.getByRole('button',{name:'Gizlət'}).click();
   assert.equal(await first.locator('.codes-text').textContent(),'');

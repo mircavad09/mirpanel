@@ -7,10 +7,12 @@ import {orderGuideFor} from '../mirpanel-admin/order-guide.mjs';
 const {chromium,webkit}=await import(process.env.MIRPANEL_PLAYWRIGHT);
 const live=process.argv.includes('--live'),out='outputs/delivery-guide-link';
 const footer='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';
+const sample='Sınaq təhvil mesajı\nE-poçt: sample@example.test\nŞifrə: https://example.test/secret\n2FA açarı: DEMO-ONLY-0000\n[https://2fa.live/]\nDigər keçid (http://example.test/reset?x=1&y=2). Sonra https://example.test/path(a),\n<script>window.messageExecuted=true</script>\n\n'+footer;
+const expectedLinks=['https://2fa.live/','http://example.test/reset?x=1&y=2','https://example.test/path(a)'];
 const products=['Netflix Şəxsi','Spotify'],orderId='11111111-1111-4111-8111-111111111111';
 const guides=['netflix','spotify'].map(id=>orderGuideFor({id},null,'1 aylıq'));
 const assets=new Map();
-for(const [name,file] of Object.entries({'browser-orders.js':'browser-orders.js','browser-orders.css':'browser-orders.css','ready-stock-admin.js':'mirpanel-admin/public/ready-stock-admin.js'})){
+for(const [name,file] of Object.entries({'browser-orders.js':'browser-orders.js','browser-orders.css':'browser-orders.css','delivery-message.mjs':'delivery-message.mjs','ready-stock-admin.js':'mirpanel-admin/public/ready-stock-admin.js'})){
  const body=fs.readFileSync(file,'utf8');
  if(live){
   const response=await fetch((name.startsWith('ready-')?'https://mirpanel.onrender.com/':'https://mirpanel.com/')+name+'?v=delivery-guide-1');
@@ -24,7 +26,7 @@ const server=http.createServer((req,res)=>{
  const json=value=>{res.setHeader('Content-Type','application/json');res.end(JSON.stringify(value));};
  if(assets.has(p)){res.setHeader('Content-Type',p.endsWith('.css')?'text/css':'text/javascript');return res.end(assets.get(p));}
  if(p==='/api/payments/my-orders')return json({orders:[{id:orderId,orderCode:'SINAQ-01',product:products.join(' · '),status:'completed',amount:10,items:products.map(title=>({title,planName:'1 aylıq',quantity:1,unitCents:500})),deliveries:products.map((_,i)=>({id:'delivery-'+i,line:i,quantity:1}))}]});
- if(p.includes('/codes/delivery-'))return json({text:'Sınaq təhvil mesajı\nHesaba daxil olmaq üçün təqdim edilmiş məlumatlardan istifadə edin.\n\n'+footer});
+ if(p.includes('/codes/delivery-'))return json({text:sample});
  if(/\/guide\/[01]$/.test(p))return json(guides[Number(p.at(-1))]);
  if(p==='/admin-fixture'){
   res.setHeader('Content-Type','text/html; charset=utf-8');
@@ -44,6 +46,11 @@ try{
     const record=name==='chrome'&&width===390;
     const ctx=await browser.newContext({viewport:{width,height:850},...(record?{recordVideo:{dir:out,size:{width,height:850}}}:{})});
     const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
+    await page.addInitScript(()=>Object.defineProperty(navigator,'clipboard',{value:{
+     write:async items=>{window.copiedMessage=await(await items[0].getType('text/plain')).text();},
+     writeText:async text=>{window.copiedMessage=text;}
+    }}));
+    await ctx.route('https://2fa.live/**',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><title>Synthetic external target</title>'}));
     if(!record)await page.route('**/codes/delivery-1',async route=>{
      const response=await route.fetch(),body=await response.json();
      await route.fulfill({json:{text:'<img onerror="alert(1)">\n'+body.text}});
@@ -52,6 +59,22 @@ try{
     const links=page.getByRole('link',{name:'Məlumat və təlimat',exact:true});
     await links.first().waitFor();
     assert.equal(await links.count(),2);assert.equal(await page.locator('.browser-order-delivery pre img').count(),0);
+    const external=page.locator('.delivery-message-link');
+    await external.nth(5).waitFor();
+    assert.deepEqual(await external.evaluateAll(nodes=>nodes.map(n=>n.getAttribute('href'))),[...expectedLinks,...expectedLinks]);
+    assert.equal(await page.locator('.browser-order-delivery pre script').count(),0);
+    assert.equal(await page.evaluate(()=>window.messageExecuted),undefined);
+    assert.equal(await page.locator('.browser-order-delivery pre').first().textContent(),sample);
+    await page.locator('[data-copy-delivery]').first().click();
+    await page.waitForFunction(text=>window.copiedMessage===text,sample);
+    for(const link of await external.all()){
+     assert.equal(await link.getAttribute('target'),'_blank');
+     assert.match(await link.getAttribute('rel'),/noopener/);
+     assert.equal(await link.evaluate(n=>getComputedStyle(n).color),'rgb(113, 229, 166)');
+     assert.match(await link.evaluate(n=>getComputedStyle(n).textDecorationLine),/underline/);
+    }
+    const popupPromise=ctx.waitForEvent('page');await external.first().click();const popup=await popupPromise;
+    await popup.waitForLoadState();assert.equal(await popup.evaluate(()=>window.opener),null);await popup.close();
     for(const [i,title] of products.entries()){
      const link=links.nth(i),initial=page.url();
      assert.equal(await link.evaluate(n=>getComputedStyle(n).color),'rgb(113, 229, 166)');

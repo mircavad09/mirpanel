@@ -54,16 +54,21 @@ function capcutScanPhone(create){
  return phone;
 }
 
+function linkDeliveryUrls(pre,text){
+ void import('/delivery-message.mjs?v=delivery-links-1').then(({linkDeliveryMessage})=>{
+  if(pre.isConnected&&pre.textContent===text)linkDeliveryMessage(pre);
+ }).catch(()=>{});
+}
 function renderDeliveryMessage(pre,text){
  const deliveryGuideText='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';
  const message=text.trimEnd(),start=message.length-deliveryGuideText.length;
- // Only the fixed final line is interactive. Everything entered by admin
- // remains text, never markup or a user-supplied navigation destination.
- if(!message.endsWith(deliveryGuideText)||(start>0&&message[start-1]!=='\n')){pre.textContent=text;return;}
+ // The fixed final line opens this product's guide inside the order.
+ if(!message.endsWith(deliveryGuideText)||(start>0&&message[start-1]!=='\n')){pre.textContent=text;linkDeliveryUrls(pre,text);return;}
  const caption='Məlumat və təlimat',index=start+deliveryGuideText.indexOf(caption),link=document.createElement('a');
  link.textContent=caption;link.href='#teslim-telimat';link.dataset.deliveryGuide='';link.dataset.nativeNavigation='';
  link.setAttribute('aria-haspopup','dialog');
  pre.replaceChildren(text.slice(0,index),link,text.slice(index+caption.length));
+ linkDeliveryUrls(pre,text);
 }
 function chatgptScreen(animation,create){
  const scene=animation.slice('chatgpt-'.length);

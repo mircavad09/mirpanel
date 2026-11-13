@@ -74,7 +74,7 @@ export function renderAccountPanel(ctx){
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
  if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=surfshark-phone-1',codes:'./account-codes.js?v=codes-reveal-2',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
+ const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=delivery-links-1',codes:'./account-codes.js?v=delivery-links-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
  const retry=moduleRetries.get(id)||0,module=url?import(url+(retry?'&retry='+retry:'')):null;
  let timeout;
  const tabModule=module&&Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).finally(()=>clearTimeout(timeout));
