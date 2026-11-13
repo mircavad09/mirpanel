@@ -40,28 +40,37 @@ neutral alternating-row rule. Those unrelated presentation assertions were not
 changed to hide their failures. The paid-period calculations before that
 assertion pass; the new ownership suite checks 1/3/6-month entitlement isolation.
 
-## Live release gate — NOT completed
+## Live recovery, 14 November 2026 (Baku)
 
-No live spreadsheet cell, payment, order, room assignment or balance was changed.
-Render API currently returns 401. Browser inventory reports local browser access
-unavailable for this chat. Google Drive is available but not connected.
+The user explicitly authorized the pre-existing service account instead of a
+new Google Drive connection. Official Render CLI authentication refreshed the
+existing local credential. No new Google account/key or permission was created.
 
-Before pushing/deploying this change:
+The entire spreadsheet, including raw/formatted cells and hidden identifiers,
+was backed up using Windows CurrentUser DPAPI. Each encrypted backup was decrypted
+in memory and its SHA-256 verified before any repair. Backups remain under the
+ignored private outputs/netflix-sheet-recovery directory, never in Git.
 
-1. Connect Google Drive with the authorized sheet owner's account and refresh
-   the existing protected Render access; do not paste secrets in chat.
-2. Back up the full spreadsheet including hidden identifiers and formatting.
-   Verify the copy is readable and retains the existing access restrictions.
-3. Read paid Netflix orders, delivery snapshots, room units, legacy assignments,
-   renewal confirmations, queue states and spreadsheet raw/formatted cells.
-   Produce a private identity reconciliation; do not export credentials publicly.
-4. Review every duplicate, missing identity or nonmatching A value. Never
-   overwrite an existing different customer ID or infer ownership from stock alone.
-5. Restore only proven empty A cells and factual F statuses, and record counts
-   separately for IDs, statuses and unresolved conflicts. Do not recreate sales.
-6. Merge current main, rerun targeted tests, deploy and verify the actual version.
-   Read back every repaired row, run another automatic sync cycle, and read again
-   to prove the ownership/status persists. Record counts, not private identifiers.
+Initial audit: 989 sheet rows, 52 paid deliveries, one legacy binding and 33
+uniquely matched entitled rows. Their customer IDs were present at audit time;
+33 statuses were stale. A real sale occurred independently during recovery,
+raising the verified total to 34. First-backup comparison shows 34 status changes
+and one new-sale ID (not a recovered historical ID). No historical empty ID was
+found among the uniquely matched current rows.
 
-Do not report a live cause, restored counts or completed repair until these
-checks actually run. The prepared implementation is not itself a live recovery.
+All 34 matched rows were read back with correct customer IDs and factual status.
+The changes were merged with the latest parallel ready-stock management work;
+Render confirmed bf5403f live and the new admin JS served successfully.
+
+Twenty historical delivery claims have no exact current sheet identity: 19 have
+no matching Gmail row; one has Gmail rows but no matching room/PIN. They are not
+silently appended or written over another room. The live automatic queue records
+them as missing and exposes the reason in the admin stock view. Additional hidden
+identifier conflicts found by whole-row sync are preserved for administrator
+review rather than overwriting their existing metadata.
+
+No payment, balance, order or delivery was created or replayed by recovery.
+The historical writer responsible for past ID disappearance cannot be conclusively
+attributed from current records alone. The destructive whole-row write risk is
+proven in code/tests and removed; the missing-status behavior in the old active
+delivery writer is directly confirmed.

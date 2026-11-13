@@ -81,6 +81,15 @@ try{
   claims.push({identity:snapshot,member:d.member_number,status:d.renewed?'✓ Yenilənib':'✓ Satılıb',source:'delivery',roomId:d.room_id});
  }
  const rooms=await roomStates(pool);
+ const stockIdentityIssues=[];
+ for(const room of rooms.filter(r=>!r.deleted_at)){
+  const a=JSON.parse(security.decryptSecret(room.account_cipher)),p=JSON.parse(security.decryptSecret(room.pin_cipher));
+  const identity={email:a.email,roomName:room.room_name,roomCode:p.pin};
+  const matches=rows.filter(row=>roomIdentityMatches(row,identity)),keyed=rows.filter(row=>row[6]===room.id);
+  if(matches.length!==1||keyed.length!==1||keyed[0]!==matches[0]||matches[0][7]!==room.group_id)
+   stockIdentityIssues.push({matched:matches.length,keyed:keyed.length,sameRow:matches[0]===keyed[0],groupMatches:matches[0]?.[7]===room.group_id,
+    roomIdMatches:matches[0]?.[6]===room.id,existingGroupBlank:!matches[0]?.[7],existingRoomBlank:!matches[0]?.[6],hasMember:!!matches[0]?.[0]});
+ }
  for(const room of rooms.filter(r=>!r.deleted_at&&r.legacy_assignment_id)){
   const a=JSON.parse(security.decryptSecret(room.account_cipher)),p=JSON.parse(security.decryptSecret(room.pin_cipher));
   if(a.id!==room.group_id||p.id!==room.id)throw Error('LEGACY_REFERENCE_MISMATCH');
@@ -116,8 +125,24 @@ try{
  const idCandidates=[...proposed.values()].filter(c=>String(rows[c.index][0]??'')!==c.member).length;
  const statusCandidates=[...proposed.values()].filter(c=>rows[c.index][5]!==c.status).length;
  const reasonCounts=Object.fromEntries([...new Set(issues.map(i=>i.kind))].map(k=>[k,issues.filter(i=>i.kind===k).length]));
+ const queueStats=(await pool.query(`select state,reason,count(*)::int count from mirpanel_community.netflix_sheet_customer_ids group by state,reason order by state,reason`)).rows;
+ const stockSyncStats=(await pool.query(`select count(*)::int total,count(*) filter(where failures>0)::int errors,
+  count(*) filter(where failures=0 and retry_at>clock_timestamp())::int checked,
+  max(retry_at) filter(where failures=0)::text latestNextCheck from mirpanel_community.netflix_room_sheet_sync`)).rows[0];
  const summary={mode:apply?'repair':'audit',sheetRows:rows.length-1,stockRooms:rooms.length,paidDeliveries:deliveries.length,legacyAssignments:claims.filter(c=>c.source==='legacy').length,uniqueProvenRows:proposed.size,idCandidates,statusCandidates,freeStatusCandidates,openIssues:reasonCounts,
-  issueDiagnostics:issues};
+  issueDiagnostics:issues,stockIdentityIssues,queueStats,stockSyncStats};
+ const compareIndex=process.argv.indexOf('--compare-backup');
+ if(compareIndex!==-1){
+  const original=JSON.parse((await privateBytes(await fs.readFile(path.resolve(process.argv[compareIndex+1])),true)).toString('utf8'));
+  const before=cells(original.spreadsheet);let changedIds=0,changedStatuses=0;
+  for(const claim of proposed.values()){
+   const old=before.filter((row,i)=>i>0&&roomIdentityMatches(row,claim.identity));
+   if(old.length!==1)continue;
+   if(String(old[0][0]??'')!==String(rows[claim.index][0]??''))changedIds++;
+   if(old[0][5]!==rows[claim.index][5])changedStatuses++;
+  }
+  summary.sinceFirstBackup={changedIds,changedStatuses};
+ }
  if(apply){
   let lastRequest=0;
   const quotaFetch=async(url,options)=>{
