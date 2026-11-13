@@ -200,13 +200,13 @@
       const button = document.createElement("button");
       button.className = "navBtn"; button.type = "button"; button.dataset.view = "stories"; button.textContent = "Hekayələr";
       bannerButton.after(button);
-      button.addEventListener("click", () => queueMicrotask(() => { document.getElementById("crumb").textContent = "Stories"; loadStories(); }));
+      button.addEventListener("click", () => queueMicrotask(() => { document.getElementById("crumb").textContent = "Hekayələr"; loadStories(); }));
     }
     if (document.getElementById("storiesView")) return;
     const view = document.createElement("section");
     view.id = "storiesView"; view.className = "workspace hidden cmsWorkspace";
     view.innerHTML = `<div class="panel editorPanel cmsPanel">
-      <div class="panelHead"><div><h2>Stories</h2><p>Ana səhifədə görünən story dairələrini və media ardıcıllığını idarə edin.</p></div><button class="btn" id="storiesRefresh" type="button">Yenilə</button></div>
+      <div class="panelHead"><div><h2>Hekayələr</h2><p>Ana səhifədə görünən hekayə dairələrini və media ardıcıllığını idarə edin.</p></div><button class="btn" id="storiesRefresh" type="button">Yenilə</button></div>
       <div class="storyAdminStats" id="storyAdminStats"></div>
       <p id="storiesStatus" role="status"></p>
       <form class="storyAdminCreate" id="storyCreateForm">
