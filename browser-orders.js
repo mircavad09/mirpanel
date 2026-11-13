@@ -55,7 +55,7 @@ function capcutScanPhone(create){
 }
 
 function linkDeliveryUrls(pre,text){
- void import('/delivery-message.mjs?v=delivery-links-1').then(({linkDeliveryMessage})=>{
+ void import('/delivery-message.mjs?v=account-delivery-blue-1').then(({linkDeliveryMessage})=>{
   if(pre.isConnected&&pre.textContent===text)linkDeliveryMessage(pre);
  }).catch(()=>{});
 }

@@ -20,20 +20,20 @@
 .account-panel details[open]>summary .browser-order-arrow{transform:rotate(180deg)}
 .account-panel .browser-order-status[data-status=preparing],.account-panel .browser-order-status[data-status=approved]:not(.browser-order-topup *){background:#61470970;color:#ffe08a}
 .account-panel .browser-order-delivery{margin-top:8px}
-.account-panel .browser-order-delivery{padding:10px;border:1px solid #285447;border-radius:12px;background:#151e1a;min-width:0}
-.account-panel .browser-order-delivery>header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;color:#bdc6c0;overflow-wrap:anywhere}
+.account-panel .browser-order-delivery{padding:10px;border:1px solid #2583FF;border-radius:12px;background:#111111;color:#ffffff;min-width:0}
+.account-panel .browser-order-delivery>header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px;color:#d1d5db;overflow-wrap:anywhere}
 .account-panel .browser-order-delivery>header button{display:inline-flex;align-items:center;gap:5px;flex:none}
 .account-panel .browser-order-delivery>.browser-delivery-credentials{display:grid;gap:5px}
-.browser-delivery-credentials>div{display:grid;grid-template-columns:clamp(53px,12%,100px) minmax(0,1fr) auto;align-items:center;gap:7px;padding:3px 6px 3px 9px;border:1px solid #214438;border-radius:8px;background:#0d1412;overflow-wrap:anywhere}
-.browser-delivery-credentials>div>span{color:#b6c2ba}
-.account-panel .browser-delivery-credentials button{color:#6ff4cd;border-color:transparent;background:none;display:grid;place-items:center;min-width:40px}
-.account-panel .browser-order-delivery>pre:not([hidden]){background:#0d1412;border-color:transparent}
-.account-panel .browser-order-delivery a[data-delivery-guide]{color:#71e5a6;text-decoration:underline;text-underline-offset:.16em}
+.browser-delivery-credentials>div{display:grid;grid-template-columns:clamp(53px,12%,100px) minmax(0,1fr) auto;align-items:center;gap:7px;padding:3px 6px 3px 9px;border:1px solid #2583FF;border-radius:8px;background:#000000;color:#ffffff;overflow-wrap:anywhere}
+.browser-delivery-credentials>div>span{color:#d1d5db}
+.account-panel .browser-delivery-credentials button{color:#ffffff;border-color:transparent;background:#000000;display:grid;place-items:center;min-width:40px}
+.account-panel .browser-order-delivery>pre:not([hidden]){background:#000000;border-color:#2583FF}
+.account-panel .browser-order-delivery a[data-delivery-guide]{color:#2583FF;text-decoration:underline;text-underline-offset:.16em}
 .account-panel .browser-order-delivery a[data-delivery-guide]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
 .browser-order-delivery [data-delivery-status]:not(:empty){display:block;margin-top:5px;color:#bde9cf}
 @media(max-width:600px){.account-panel .browser-order-delivery button{min-height:44px}}
-.account-panel .browser-order-delivery button{color:#f3f4f6;background:#242a28;border:1px solid #426b5b;border-radius:8px;padding:6px 9px;min-height:36px}
-.account-panel :is(.browser-order-delivery pre,.account-code-text){margin:8px 0 0;padding:12px;background:#14201c;color:#e4f5ec;border:1px solid #2c5645;border-radius:10px;font:inherit;white-space:pre-wrap;overflow-wrap:anywhere}
+.account-panel .browser-order-delivery button{color:#ffffff;background:#000000;border:1px solid #2583FF;border-radius:8px;padding:6px 9px;min-height:36px}
+.account-panel :is(.browser-order-delivery pre,.account-code-text){margin:8px 0 0;padding:12px;background:#000000;color:#ffffff;border:1px solid #2583FF;border-radius:10px;font:inherit;white-space:pre-wrap;overflow-wrap:anywhere}
 .account-panel .account-code-text{margin:0 14px 14px}
 .account-panel .account-code .browser-order-actions{justify-content:flex-start;border-top:0}
 .account-panel .account-code .browser-order-header{border:0}
@@ -104,7 +104,7 @@
 .browser-order-expiry time{margin-inline-start:auto;color:#e2c47b;white-space:nowrap}
 .browser-order-expiry[data-expired]{color:#f0d69b;background:#272117}
 .browser-order-line-buttons button:focus-visible,.browser-order-delivery button:focus-visible,.browser-order-repeat button:focus-visible{outline:2px solid #ffdf45;outline-offset:2px}
-.browser-order-instructions{margin:10px 0 2px;padding:12px;border:1px solid #325344;border-radius:10px;background:#161e1b}
+.browser-order-instructions{margin:10px 0 2px;padding:12px;border:1px solid #2583FF;border-radius:10px;background:#111111;color:#ffffff}
 .browser-order-instructions :is(h3,p){margin:0;font-size:14px}
 .browser-order-instructions [data-line-feedback]:not(:empty){display:block;margin-top:6px;color:#c8e5d5}
 .account-panel .browser-order-footer{display:grid;grid-template-columns:minmax(0,1fr);gap:8px}
@@ -356,7 +356,7 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 
 .browser-delivery-credentials>.browser-netflix-room{grid-template-columns:minmax(0,1fr) minmax(5.25rem,max-content);align-items:start;padding:8px 9px}
 .browser-netflix-room>div{display:grid;min-width:0;gap:2px;overflow-wrap:anywhere}
-.browser-netflix-room>div>span{color:#b6c2ba}
+.browser-netflix-room>div>span{color:#d1d5db}
 .browser-netflix-room>div:last-child{white-space:nowrap}
 /* Netflix personal phone walkthrough, rendered as a local explanatory mockup. */
 .netflix-handset{width:230px;max-width:100%;container-type:inline-size}

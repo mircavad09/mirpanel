@@ -34,7 +34,7 @@ export function linkDeliveryMessage(container){
     link.href=href;link.textContent=href;link.className='delivery-message-link';
     link.target='_blank';link.rel='noopener noreferrer';link.referrerPolicy='no-referrer';
     link.dataset.nativeNavigation='';
-    link.style.cssText='color:#71e5a6;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere';
+    link.style.cssText='color:#2583FF;text-decoration:underline;text-underline-offset:2px;overflow-wrap:anywhere';
     fragment.append(link);cursor=match.index+href.length;
    }
    fragment.append(line.slice(cursor));

@@ -1,4 +1,4 @@
-import {linkDeliveryMessage} from '/delivery-message.mjs?v=delivery-links-1';
+import {linkDeliveryMessage} from '/delivery-message.mjs?v=account-delivery-blue-1';
 const paths={
  key:'M14.5 3a5.5 5.5 0 0 0-5.1 7.6L3 17v4h4v-3h3v-3l2.4-2.4A5.5 5.5 0 1 0 14.5 3Z M16 8h.01',
  search:'M10.5 4a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM16 16l4 4',
@@ -30,7 +30,7 @@ function credentialRows(delivery){
  return fields.filter(([,value])=>typeof value==='string'&&value.trim());
 }
 export function mountCodes({content,el,button,initial,initialRequest,validate,onData,onUnauthorized,api,spinner,ui={}}){
- const css='/community-assets/account-codes.css?v=2';
+ const css='/community-assets/account-codes.css?v=account-delivery-blue-1';
  if(!document.head.querySelector('link[data-account-codes]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-account-codes':''}));
  const life=new AbortController(),root=el('div',{class:'account-codes'}),status=el('p',{class:'codes-status',role:'status'}),list=el('div',{class:'codes-list'}),count=el('span',{class:'codes-count',hidden:''});
  const search=el('input',{type:'search',placeholder:'Məhsul adına görə axtar…','aria-label':'Məhsul adına görə axtar',autocomplete:'off'});
