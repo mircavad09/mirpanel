@@ -1,5 +1,5 @@
 (()=>{'use strict';if(window.mirpanelAccountHeader)return;window.mirpanelAccountHeader=true;
- if(!document.querySelector('link[href="/account-header.css?v=mobile-wallet-compact-2"]')){const css=document.createElement('link');css.rel='stylesheet';css.href='/account-header.css?v=mobile-wallet-compact-2';css.dataset.shellPersistent='';document.head.append(css);}
+ if(!document.querySelector('link[href="/account-header.css?v=mobile-wallet-inline-3"]')){const css=document.createElement('link');css.rel='stylesheet';css.href='/account-header.css?v=mobile-wallet-inline-3';css.dataset.shellPersistent='';document.head.append(css);}
  const paths={bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9M10 21h4',arrow:'m8 10 4 4 4-4',profile:'M16 7a4 4 0 1 1-8 0 4 4 0 0 1 8 0ZM4 21v-2a8 8 0 0 1 16 0v2',wallet:'M4 6h16v14H4z M4 6V3h13 M15 11h5v5h-5z',orders:'M5 7h14v14H5V7Zm4 0V5a3 3 0 0 1 6 0v2',card:'M3 5h18v14H3z M3 10h18',group:'M4 4h16v12H9l-5 4V4Z',support:'M4 14v-3a8 8 0 0 1 16 0v3M4 12H2v7h5v-7H4Zm16 0h2v7h-5v-7h3',logout:'M9 4H4v16h5 M13 8l4 4-4 4 M8 12h13'};
  const el=(tag,cls,text)=>{const e=document.createElement(tag);if(cls)e.className=cls;if(text)e.textContent=text;return e;};
  const icon=k=>{const e=el('span','account-icon');e.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="'+paths[k]+'"/></svg>';return e;};

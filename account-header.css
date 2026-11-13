@@ -78,12 +78,13 @@ html body .account-mobile-balance{display:none}
  html body #mainHeader.site-header .site-header-tools>.site-header-search{display:flex;order:1;flex:1 1 0;width:0;min-width:0;max-width:none;padding:0 8px;gap:5px}
  html body #mainHeader.site-header .site-header-tools>.site-header-menu-button{order:0;flex:none}
  html body #mainHeader.site-header .site-header-tools>.account-header-controls{order:2}
- html body #mainHeader.site-header .account-mobile-balance{box-sizing:border-box;display:flex;grid-column:2;grid-row:1;align-items:center;justify-content:flex-start;gap:4px;width:116px;min-width:44px;height:44px;min-height:44px;padding:3px 7px;border:1px solid #8d7737;border-radius:12px;background:#141619;color:#f3ce42;text-decoration:none;box-shadow:none}
- html body .account-mobile-balance .account-icon svg{width:18px;height:18px}
- html body .account-mobile-balance-copy{display:flex;flex-direction:column;align-items:flex-start;min-width:0;gap:0;text-align:left}
- html body .account-mobile-balance small{color:#acadb1;font:600 10px/1.1 system-ui,sans-serif}
- html body .account-mobile-balance strong{color:#fff;font:750 14px/1.2 system-ui,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:-.25px}
- html body .account-mobile-balance.is-long strong{font-size:10px}
+ html body #mainHeader.site-header .account-mobile-balance{box-sizing:border-box;position:relative;isolation:isolate;display:flex;grid-column:2;grid-row:1;align-items:center;justify-content:center;gap:4px;width:max-content;min-width:44px;height:44px;min-height:44px;padding:0 7px;border:0;border-radius:9px;background:transparent;color:#f3ce42;text-decoration:none;box-shadow:none}
+ html body .account-mobile-balance::before{content:"";position:absolute;z-index:-1;inset:8px 0;border:1px solid #8d7737;border-radius:9px;background:#141619;pointer-events:none}
+ html body .account-mobile-balance .account-icon svg{width:13px;height:13px}
+ html body .account-mobile-balance-copy{display:flex;flex-direction:row;align-items:center;min-width:0;gap:4px;text-align:left;white-space:nowrap}
+ html body .account-mobile-balance small{color:#d1d2d4;font:500 10px/1.2 system-ui,sans-serif}
+ html body .account-mobile-balance strong{color:#fff;font:500 12px/1.2 system-ui,sans-serif;font-variant-numeric:tabular-nums;white-space:nowrap;letter-spacing:0}
+ html body .account-mobile-balance.is-long strong{font-size:11px}
  html body .account-mobile-balance:focus-visible{outline:2px solid #ffd400;outline-offset:2px}
- html body .account-mobile-balance:hover{border-color:#c5a44b}
+ html body .account-mobile-balance:hover::before{border-color:#c5a44b}
 }
