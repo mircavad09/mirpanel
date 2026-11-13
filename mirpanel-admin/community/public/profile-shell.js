@@ -22,8 +22,10 @@ export function profileReturn(search){
  const tab=accountTab(search),code=new URLSearchParams(search).get('order');
  return tab==='orders'&&/^[A-Za-z0-9-]{1,40}$/.test(code||'')?accountTabPath(tab)+'&order='+code:accountTabPath(tab);
 }
-export const ordersLoader='<div class="browser-orders-placeholder" role="status" aria-label="Sifarişlər hazırlanır"><div class="browser-orders-placeholder-heading" aria-hidden="true"></div><div class="browser-delivery-skeleton" aria-hidden="true"><span></span><span></span><span></span></div></div>';
-export const profileLoader='<div class="account-tab-spinner" role="status" aria-label="Məlumat hazırlanır"></div>';
+export const profileLoadingCSS='.account-tab-content{min-block-size:520px;background:#000;border-radius:14px}.account-loading{box-sizing:border-box;min-block-size:430px;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;border-radius:14px;background:#000;color:#cbd0d6;font:400 14px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}.account-loading-wheel{box-sizing:border-box;display:block;width:24px;height:24px;flex:none;border:2px solid #ffffff30;border-top-color:#a8c9ed;border-radius:50%;animation:account-loading-spin .8s linear infinite}.account-loading>span:last-child{margin:0}.account-loading-compact{min-block-size:260px}.account-tab-content [data-profile-retry]{padding:24px;background:#000;text-align:center}@keyframes account-loading-spin{to{transform:rotate(1turn)}}@media(prefers-reduced-motion:reduce){.account-loading-wheel{animation:none}}';
+export const profileLoader='<div class="account-loading" role="status" aria-label="Yüklənir…"><span class="account-loading-wheel" aria-hidden="true"></span><span>Yüklənir…</span></div>';
+export const ordersLoader=profileLoader;
+export function ensureProfileLoadingStyle(){let style=document.getElementById('profile-loading-style');if(!style){style=document.createElement('style');style.id='profile-loading-style';style.dataset.shellPersistent='';style.textContent=profileLoadingCSS;}if(style.parentNode!==document.head)document.head.append(style);}
 export function accountMenu(active){
  const links=Object.entries(accountLabels).map(([tab,label])=>{
   const heading=tab==='orders'?'<span class="account-menu-heading">ALIŞ-VERİŞ</span>':tab==='payments'?'<span class="account-menu-heading">BALANS</span>':'';
@@ -34,6 +36,6 @@ export function accountMenu(active){
 export function profileShell(search){
  const active=accountTab(search);
  const links=accountMenu(active);
- return '<div class="account-panel"><aside class="account-sidebar"><div class="account-sidebar-card account-identity-pending" aria-hidden="true"></div><nav class="account-tabs" aria-label="Hesab bölmələri">'+links+'</nav></aside><section class="account-tab-content"><h1>'+accountLabels[active]+'</h1>'+(active==='orders'?ordersLoader:profileLoader)+'</section></div>';
+ return '<style id="profile-loading-style" data-shell-persistent>'+profileLoadingCSS+'</style><div class="account-panel"><aside class="account-sidebar"><div class="account-sidebar-card account-identity-pending" aria-hidden="true"></div><nav class="account-tabs" aria-label="Hesab bölmələri">'+links+'</nav></aside><section class="account-tab-content"><h1>'+accountLabels[active]+'</h1>'+(active==='orders'?ordersLoader:profileLoader)+'</section></div>';
 }
-export const profileCSS='/community-assets/account-panel.css?v=profile-menu-3';
+export const profileCSS='/community-assets/account-panel.css?v=profile-loading-1';

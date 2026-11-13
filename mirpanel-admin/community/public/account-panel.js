@@ -1,4 +1,5 @@
-import {accountLabels,accountTab,accountMenu,accountSlugs,ordersLoader} from './profile-shell.js?v=az-addresses-1';
+import {accountLabels,accountTab,accountMenu,accountSlugs,ordersLoader,profileLoader,ensureProfileLoadingStyle} from './profile-shell.js?v=profile-loading-1';
+const tabModules=new Map();
 const sessionKey=Symbol.for('mirpanel.profile.session-lists');
 const sessionLists=window[sessionKey]??={uid:null,entries:new Map(),views:new Map(),listening:false};
 const setOwner=uid=>{if(uid!==sessionLists.uid){sessionLists.entries.clear();sessionLists.views.clear();sessionLists.uid=uid;}};
@@ -9,11 +10,11 @@ if(!sessionLists.listening){
  window.addEventListener('pagehide',()=>sessionLists.entries.clear());
 }
 export function renderAccountPanel(ctx){
- document.body.classList.add('profile-screen');
+ document.body.classList.add('profile-screen');ensureProfileLoadingStyle();
  const {app,state,api,el,button,link,money}=ctx;
  if(!app.isConnected||location.pathname!=='/profil'&&!ctx.readOnly)return;
  const life=new AbortController(),moduleRetries=new Map();let stopped=false,disposeChild=null,load=0,verified=null,observedOwner,first=ctx.firstSession||Promise.resolve(state.profile),selected='profile',view=null;
- const spinner=()=>el('div',{class:'account-tab-spinner',role:'status','aria-label':'Məlumat hazırlanır'});
+ const spinner=()=>{const n=el('div');n.innerHTML=profileLoader;return n.firstElementChild;};
  const ordersPlaceholder=()=>{const n=el('div');n.innerHTML=ordersLoader;return n.firstElementChild;};
  const initialScroll=history.state?.profileScroll;
  function rememberScroll(persist=false){
@@ -79,11 +80,11 @@ export function renderAccountPanel(ctx){
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
  if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=account-delivery-soft-1',codes:'./account-codes.js?v=account-delivery-soft-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
- const retry=moduleRetries.get(id)||0,module=url?import(url+(retry?'&retry='+retry:'')):null;
+ const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=profile-loading-1',codes:'./account-codes.js?v=profile-loading-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
+ const retry=moduleRetries.get(id)||0,module=url?(tabModules.get(id)||import(url+(retry?'&retry='+retry:''))):null;
  let timeout;
- const tabModule=module&&Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).finally(()=>clearTimeout(timeout));
- void tabModule?.catch(()=>{});
+ const tabModule=module&&(tabModules.has(id)?module:Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).then(m=>{tabModules.set(id,m);return m;}).finally(()=>clearTimeout(timeout)));
+ void tabModule?.catch?.(()=>{});
  try{
  if(!verified){
   const profile=await first;if(stopped||run!==load||!profile)return;
@@ -98,9 +99,9 @@ export function renderAccountPanel(ctx){
  const ownData=d=>{if(!stopped&&run===load&&d?.accountId&&d.accountId!==verified)recheck(d.accountId);if(stopped||run!==load||!d||d.accountId!==verified||sessionLists.uid!==verified)throw Error('Hesab məlumatı yenilənib. Yenidən cəhd edin.');return d;};
  const unauthorized=()=>{if(!stopped&&run===load)window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));};
  const cache=(d,path=listPath)=>{if(!stopped&&run===load&&sessionLists.uid===verified){if(!d)sessionLists.entries.delete(path);else if(d.accountId===verified){sessionLists.entries.delete(path);sessionLists.entries.set(path,d);if(sessionLists.entries.size>12)sessionLists.entries.delete(sessionLists.entries.keys().next().value);restore();}}};
- if(id==='profile'){const {renderProfile}=await tabModule;if(stopped||run!==load)return;const uid=verified,profileApi=async(...args)=>{try{const data=await api(...args);if(stopped||run!==load||uid!==verified)throw Error('Bölmə dəyişib.');return data;}catch(e){if(e.status===401)unauthorized();throw e;}};const rendered=renderProfile({...ctx,app:content,api:profileApi});disposeChild=window.mirpanelProfileDispose;window.mirpanelProfileDispose=null;await rendered;restore();return;}
+ if(id==='profile'){const {renderProfile}=tabModules.get(id)||await tabModule;if(stopped||run!==load)return;const uid=verified,profileApi=async(...args)=>{try{const data=await api(...args);if(stopped||run!==load||uid!==verified)throw Error('Bölmə dəyişib.');return data;}catch(e){if(e.status===401)unauthorized();throw e;}};const rendered=renderProfile({...ctx,app:content,api:profileApi});disposeChild=window.mirpanelProfileDispose;window.mirpanelProfileDispose=null;await rendered;restore();return;}
  if(id==='orders'){
-  await tabModule;if(stopped||run!==load)return;
+  tabModules.get(id)||await tabModule;if(stopped||run!==load)return;
   const list=el('div',{id:'browserOrders'},ordersPlaceholder()),error=el('p',{id:'browserOrdersError',hidden:true,role:'alert'}),more=button('Daha çox göstər',()=>{}),dialog=el('dialog',{id:'browserReceipt',class:'browser-receipt-dialog'},button('Bağla',()=>{}),el('div',{id:'browserReceiptContent'}));more.id='browserOrdersMore';more.hidden=true;dialog.querySelector('button').id='browserReceiptClose';content.replaceChildren(el('h1',{},'Sifarişlərim'),list,error,more,dialog);
   const communityDispose=window.mirpanelPageDispose,initial=sessionLists.entries.get(listPath);
   const onLoaded=e=>{if(!e.detail.empty)content.querySelector('.account-recommendations')?.remove();if(e.detail.empty&&!content.querySelector('.account-recommendations'))void recommendations(content,run).catch(()=>{});};
@@ -109,13 +110,12 @@ export function renderAccountPanel(ctx){
   const child=disposeChild;disposeChild=()=>{window.removeEventListener('mirpanel:orders-loaded',onLoaded);child?.();};return;
  }
  const options={content,api,el,button,link,validate:ownData,initial:sessionLists.entries.get(listPath),initialRequest:pending,onData:cache,onUnauthorized:unauthorized,spinner,ui,readOnly:!!ctx.readOnly};
- if(id==='payments'){const {mountPayments}=await tabModule;if(!stopped&&run===load)disposeChild=mountPayments({...options,initial:sessionLists.entries.get(paymentPath(ui.status,ui.page)),initialRequest:listPath===paymentPath(ui.status,ui.page)?pending:null,getCached:(s,p)=>sessionLists.entries.get(paymentPath(s,p)),onData:(d,s,p)=>cache(d,paymentPath(s,p))});return;}
- if(id==='codes'){const {mountCodes}=await tabModule;if(!stopped&&run===load)disposeChild=mountCodes(options);return;}
- if(id==='subscriptions'){const {mountSubscriptions}=await tabModule;if(!stopped&&run===load)disposeChild=mountSubscriptions(options);return;}
- content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},summaryCache?money(summaryCache.expensesCents):'—')));
- const d=await accountData();if(stopped||run!==load)return;
- if(id==='expenses')content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},money(d.expensesCents)),el('p',{},d.completedOrders+' təsdiqlənmiş alış · AZN'),el('p',{},'Balans əlavələri xərc sayılmır. Qaytarılmış məbləğlər çıxılıb.')));
- else content.replaceChildren(empty(id==='codes'?'Hələ kodunuz yoxdur':'Aktiv abunəliyiniz yoxdur',id==='codes'?'Hesabınıza bağlı kod qeydi yoxdur.':'Hesabınıza bağlı aktiv abunəlik qeydi yoxdur.'));
+ if(id==='payments'){const {mountPayments}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountPayments({...options,initial:sessionLists.entries.get(paymentPath(ui.status,ui.page)),initialRequest:listPath===paymentPath(ui.status,ui.page)?pending:null,getCached:(s,p)=>sessionLists.entries.get(paymentPath(s,p)),onData:(d,s,p)=>cache(d,paymentPath(s,p))});return;}
+ if(id==='codes'){const {mountCodes}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountCodes(options);return;}
+ if(id==='subscriptions'){const {mountSubscriptions}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountSubscriptions(options);return;}
+ const renderExpenses=d=>content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},money(d.expensesCents)),el('p',{},d.completedOrders+' təsdiqlənmiş alış · AZN'),el('p',{},'Balans əlavələri xərc sayılmır. Qaytarılmış məbləğlər çıxılıb.')));
+ const priorSummary=ui.summary;if(priorSummary)renderExpenses(priorSummary);
+ try{const d=await accountData();if(stopped||run!==load)return;ui.summary=d;renderExpenses(d);}catch(e){if(!priorSummary)throw e;content.append(button('Yenidən cəhd et',()=>show(id)));}
  }catch(e){if(!stopped&&run===load){if(e.status===401){window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));return;}content.replaceChildren(el('h1',{},label),empty('Məlumat yüklənmədi','Yenidən cəhd edin.'),button('Yenidən cəhd et',()=>{if(!verified&&ctx.session){first=ctx.session(true);void first.catch(()=>{});}void show(id);}));}}}
  function recheck(uid){observedOwner=uid;if(uid===verified&&uid)return;if(!verified&&uid)return;setOwner(uid);load++;disposeChild?.();disposeChild=null;view=null;verified=null;identity.replaceChildren();identity.classList.add('account-identity-pending');summaryCache=summaryPending=null;if(!uid){content.replaceChildren();ctx.goLogin?.();return;}if(ctx.session){first=ctx.session(true);void first.catch(()=>{});void show(selected);}else dispose();}
  window.addEventListener('mirpanel:account',e=>recheck(e.detail?.user_id||null),{signal:life.signal});

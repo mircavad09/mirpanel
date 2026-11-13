@@ -694,13 +694,8 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 }
 
 .browser-order-delivery{min-block-size:300px}
-.browser-delivery-skeleton{display:grid;gap:8px;padding-block:8px}
-.browser-delivery-skeleton>span{display:block;height:40px;border-radius:8px;background:#24312b}
-.browser-delivery-skeleton>span:last-child{height:100px}
 .browser-delivery-pending [data-copy-delivery]{visibility:hidden}
 
-.browser-orders-placeholder{box-sizing:border-box;min-block-size:430px;padding:16px;border:1px solid #303b35;border-radius:14px;background:#161b18}
-.browser-orders-placeholder-heading{height:44px;margin-bottom:60px;border-radius:8px;background:#28312c}
 .chatgpt-handset .browser-guide-handset-screen{aspect-ratio:738/1500;background:#141414}
 .chatgpt-demo{position:relative;height:100%;box-sizing:border-box;overflow:hidden;background:#1c1c1e;color:#fff;font:400 5.6cqw/1.25 Arial,sans-serif}
 .chatgpt-demo-status{display:flex;justify-content:space-between;padding:5cqw 7cqw;background:#111;font-weight:700}

@@ -1,10 +1,10 @@
-import {profileReturn,profileCSS,profileShell,accountTab} from './profile-shell.js?v=az-addresses-1';
+import {profileReturn,profileCSS,profileShell,accountTab,profileLoader,ensureProfileLoadingStyle} from './profile-shell.js?v=profile-loading-1';
 import {getCommunityState,invalidateCommunityState,communityJson} from '/session-state.js?v=auth-recovery-20261107';
 
 export function mountProfile(app,verifiedState){
  const life=new AbortController(),signal=life.signal,state={...verifiedState},avatars=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'];
  let cleanup,stopped=false;
- document.body.classList.add('profile-screen');
+ document.body.classList.add('profile-screen');ensureProfileLoadingStyle();
  function style(href){
   let n=[...document.querySelectorAll('link[rel=stylesheet]')].find(x=>x.href===new URL(href,location.origin).href);
   if(!n){n=document.createElement('link');n.rel='stylesheet';n.href=href;document.head.append(n);}
@@ -13,7 +13,7 @@ export function mountProfile(app,verifiedState){
  style('/community-assets/community.css');
  style(profileCSS);
  style('/community-assets/profile.css?v=profile-contact-1');
- style('/browser-orders.css?v=account-delivery-soft-1');
+ style('/browser-orders.css?v=profile-loading-1');
  if(!app.querySelector('.account-panel'))app.innerHTML=profileShell(location.search);
  const el=(tag,attrs={},...children)=>{const n=document.createElement(tag);for(const [k,v] of Object.entries(attrs)){if(k.startsWith('on'))n.addEventListener(k.slice(2),v);else if(v!==undefined)n.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)n.append(c);return n;};
  const button=(text,fn,primary=false)=>el('button',{type:'button',class:primary?'primary':'',onclick:fn},text);
@@ -52,11 +52,11 @@ export function mountProfile(app,verifiedState){
  void initialOrdersRequest?.promise.catch(()=>{});
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
  const boot=async(retry=0)=>{let timer;try{
-  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=az-addresses-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
+  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=profile-loading-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin,initialOrdersRequest});
  }catch{
-  if(!stopped){const body=app.querySelector('.account-tab-content');body?.querySelector('.account-tab-spinner')?.remove();body?.append(el('div',{'data-profile-retry':''},el('p',{role:'alert'},'Profil görünüşü açıla bilmədi.'),button('Yenidən cəhd et',()=>{body.querySelector('[data-profile-retry]')?.remove();body.append(el('div',{class:'account-tab-spinner',role:'status','aria-label':'Məlumat hazırlanır'}));void boot(retry+1);})));}
+  if(!stopped){const body=app.querySelector('.account-tab-content');body?.querySelector('.account-loading')?.remove();body?.append(el('div',{'data-profile-retry':''},el('p',{role:'alert'},'Profil görünüşü açıla bilmədi.'),button('Yenidən cəhd et',()=>{body.querySelector('[data-profile-retry]')?.remove();body.insertAdjacentHTML('beforeend',profileLoader);void boot(retry+1);})));}
  }finally{clearTimeout(timer);}};
  const dispose=()=>{if(stopped)return;stopped=true;life.abort();cleanup?.();document.body.classList.remove('profile-screen');};
  window.addEventListener('pagehide',event=>{

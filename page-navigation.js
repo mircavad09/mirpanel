@@ -69,7 +69,7 @@
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=az-addresses-1';
- const profileModule='/community-assets/profile-entry.js?v=az-addresses-1';
+ const profileModule='/community-assets/profile-entry.js?v=profile-loading-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
@@ -139,7 +139,7 @@
   dispose=m.mountShop();
  }
  else if(document.getElementById('communityApp')){const m=await(preparedModule||moduleWithin(groupModule));if(run!==generation)return;dispose=m.mountCommunity();}
- else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=account-delivery-soft-1',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
+ else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=profile-loading-1',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
  else if(!v.started){
   // Fetch together but execute in document order. A superseded route may
   // finish downloading; its scripts must never execute over the new view.
@@ -166,13 +166,13 @@
  finishHomeCatalog();
  }finally{window.mirpanelNavigationMounting=false;}}
  async function mountProfileRoute(u,run){
-  const css='/community-assets/account-panel.css?v=profile-menu-3';
+  const css='/community-assets/account-panel.css?v=profile-loading-1';
   if(!document.querySelector('link[href="'+css+'"]')){const style=document.createElement('link');style.rel='stylesheet';style.setAttribute('href',css);style.dataset.shellPersistent='';document.head.append(style);}
   const app=document.createElement('main');app.id='communityApp';app.className='community-shell';root.replaceChildren(app);mounted=true;
   routeClasses.add('community-page');document.body.classList.add('community-page','profile-screen');
   const labels={orders:'Sifarişlərim',codes:'Kodlarım',payments:'Ödənişlərim',expenses:'Xərclərim',subscriptions:'Abunəliklərim'};
   const rawTab=new URLSearchParams(u.search).get('tab'),tab=Object.keys(profileSlugs).find(key=>profileSlugs[key]===rawTab)||rawTab,heading=document.createElement('h1');heading.textContent=Object.hasOwn(labels,tab)?labels[tab]:'Profil';
-  const card=document.createElement('div');card.className='account-tab-spinner';card.setAttribute('role','status');card.setAttribute('aria-label','Məlumat hazırlanır');
+  const card=document.createElement('div');card.className='account-loading';card.setAttribute('role','status');card.style.cssText='min-height:430px;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;color:#cbd0d6';card.innerHTML='<style>@keyframes account-loading-spin{to{transform:rotate(1turn)}}</style><span class="account-loading-wheel" style="box-sizing:border-box;width:24px;height:24px;border:2px solid #ffffff30;border-top-color:#a8c9ed;border-radius:50%;animation:account-loading-spin .8s linear infinite" aria-hidden="true"></span><span>Yüklənir…</span>';
   const section=document.createElement('section');section.className='site-route-loading';section.append(heading,card);app.append(section);
   for(const n of styles.values())if(!n.hasAttribute('data-shell-persistent')&&!n.hasAttribute('data-cart-entry-css')){if(n.tagName==='LINK'){if(new URL(n.href).origin===location.origin)n.disabled=true;}else n.media='not all';}
   window.scrollTo(0,0);

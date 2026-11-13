@@ -476,7 +476,7 @@ function netflixScreen(animation,create){
   ui.pageData=append?{...ui.pageData,orders:[...(ui.pageData?.orders||[]),...d.orders],nextCursor:d.nextCursor,retainedPages:true}:d;
   loaded=true;root.classList.add('browser-orders-list');if(!seen.size&&!root.querySelector('[data-topup-id]'))root.innerHTML='<div class="browser-orders-message"><h2>Hələ sifarişiniz yoxdur</h2><p>Hesabınıza bağlı sifarişlər burada görünəcək.</p><a class="orders-action" href="/mehsul">Məhsullara bax</a></div>';cursor=d.nextCursor;more.hidden=!cursor;window.dispatchEvent(new CustomEvent('mirpanel:orders-loaded',{detail:{empty:!seen.size&&!root.querySelector('[data-topup-id]')}}));options.onData?.(ui.pageData);
  }
- async function load(append=false,live=false){if(loading)return;const run=generation;loading=true;root.setAttribute('aria-busy','true');more.disabled=true;error.hidden=true;
+ async function load(append=false,live=false){if(loading)return;const run=generation;loading=true;root.setAttribute('aria-busy','true');more.disabled=true;error.hidden=true;if(!loaded)root.innerHTML='<div class="account-loading" role="status"><span class="account-loading-wheel" aria-hidden="true"></span><span>Yüklənir…</span></div>';
   try{const started=!append?initialRequest:null;if(started)initialRequest=null;const d=await(started||api('my-orders'+(append&&cursor?'?cursor='+encodeURIComponent(cursor):target?'?order='+encodeURIComponent(target):'')));if(run!==generation||life.signal.aborted)return;options.validate?.(d);
    if(accountId&&d.accountId&&accountId!==d.accountId){gate();return;}
    if(d.accountId)accountId=d.accountId;
@@ -542,7 +542,7 @@ function netflixScreen(animation,create){
   deliveryLoads.set(box,token);
   if(!deliveryData.has(box)){
    box.classList.add('browser-delivery-pending');box.setAttribute('aria-busy','true');
-   status.innerHTML='<span class="browser-delivery-skeleton" aria-hidden="true"><span></span><span></span><span></span></span>';
+   status.innerHTML='<span class="account-loading account-loading-compact" role="status"><span class="account-loading-wheel" aria-hidden="true"></span><span>Yüklənir…</span></span>';
   }
   const valid=()=>run===generation&&!life.signal.aborted&&deliveryLoads.get(box)===token&&box.isConnected;
   try{
