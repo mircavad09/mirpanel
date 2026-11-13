@@ -31,6 +31,8 @@ try{for(const width of (process.argv.includes('--desktop')?[1440]:[320,390,430,1
  await p.goto(origin+'/',{waitUntil:'commit'});
  if(width>=1000){await p.locator('.account-toggle').waitFor().catch(async e=>{await p.screenshot({path:path.join(out,'desktop-failure.png')});console.log({errors,requests,body:(await p.locator('.site-header').innerText()).slice(0,800),state:await p.evaluate(()=>window.mirpanelAccountProfile)});throw e;});assert(await wallet.isHidden());assert.match(await p.locator('.desktop-balance').innerText(),/5\.50/);await p.locator('.account-toggle').click();assert.equal(await p.locator('.account-menu-amount').innerText(),'5,50 ₼');assert.deepEqual(errors,[]);console.log('PASS desktop 1440: existing header and wallet preserved');await context.close();continue;}
  await wallet.waitFor();
+ // Inspect the first styled frame, rather than forcing layout while render-blocking CSS is pending.
+ await p.waitForFunction(()=>getComputedStyle(document.querySelector('.account-mobile-balance-copy')).flexDirection==='column');
  assert.equal(await wallet.innerText(),'Balans\n—');const pending=await wallet.boundingBox();
  await p.waitForFunction(()=>document.querySelector('.account-mobile-balance strong')?.textContent==='5,50 ₼').catch(async e=>{console.log({errors,requests,text:await wallet.innerText(),state:await p.evaluate(()=>({profile:window.mirpanelAccountProfile,loaded:window.mirpanelAccountHeader,nav:window.mirpanelSharedNav}))});throw e;});
  assert.deepEqual(await wallet.boundingBox(),pending,'wallet geometry stable after session');
