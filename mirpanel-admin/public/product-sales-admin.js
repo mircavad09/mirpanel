@@ -23,8 +23,9 @@
     editor.replaceChildren();
     const distributed=Number(data.distributed)||0;
     editor.append(el('p',`Tarixi ümumi: 10.000 · Bölüşdürülüb: ${number.format(distributed)} · Qalıq: ${number.format(10000-distributed)}`));
-    editor.append(el('p',`Initialization: ${data.initializedAt?new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'medium',timeStyle:'short'}).format(new Date(data.initializedAt)):'Hələ yaradılmayıb'} · Versiya: ${data.version}`));
-    editor.append(el('p',`Saytda real tamamlanmış: ${number.format(data.realTotal)} · Ümumi: ${number.format(data.total)}`));
+    editor.append(el('p',`Başlanğıc: ${data.initializedAt?new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'medium',timeStyle:'short'}).format(new Date(data.initializedAt)):'Hələ yaradılmayıb'} · Versiya: ${data.version}`));
+    editor.append(el('p',`Saytda satılmış vahid: ${number.format(data.realTotal)} · Ümumi: ${number.format(data.total)}`));
+    if(data.legacyInferredUnits)editor.append(el('p',`Köhnə təsdiq qeydlərindən qorunan vahidlər: ${number.format(data.legacyInferredUnits)}. Bu qeydlərdə dəqiq təhvil vaxtı və tarixi başlanğıca daxil edilib-edilməməsi məlum deyil. Yeni satışlar faktiki təhvil sayından hesablanır.`));
     if(!data.initializedAt){
       const init=el('button','10.000 tarixi sifarişi bölüşdür','btn primary');init.type='button';
       init.addEventListener('click',()=>{

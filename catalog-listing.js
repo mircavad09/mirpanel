@@ -34,14 +34,19 @@
   if(state.stockRequest||document.hidden)return;
   state.stockRequest=paintStock(state).catch(()=>{}).finally(()=>{state.stockRequest=null;});
  }
- function stop(){clearInterval(scope?.stockTimer);scope?.controller.abort();scope?.observer?.disconnect();scope=null;}
+ function stop(){clearInterval(scope?.stockTimer);clearInterval(scope?.salesTimer);scope?.controller.abort();scope?.observer?.disconnect();scope=null;}
  function start(){
   if(location.pathname!=='/mehsul'||scope)return;
-  const nodes=[...document.querySelectorAll('.catalog-grid [data-home-sales-id]:not([data-sales-ready])')];
+  const nodes=[...document.querySelectorAll('.catalog-grid [data-home-sales-id]')];
   if(!document.getElementById('catalogCartProducts'))return;
   const state={controller:new AbortController(),observer:null,queue:[],busy:0};scope=state;
   refreshStock(state);
   state.stockTimer=setInterval(()=>refreshStock(state),2000);
+  state.salesTimer=setInterval(()=>{
+   if(document.hidden||state!==scope)return;
+   for(const line of nodes){const box=line.closest('.card')?.getBoundingClientRect();if(box&&box.bottom>0&&box.top<innerHeight+160&&!state.queue.includes(line))state.queue.push(line);}
+   drain();
+  },10000);
   const drain=()=>{while(state.busy<3&&state.queue.length&&!state.controller.signal.aborted){
    const line=state.queue.shift(),id=line.dataset.homeSalesId;state.busy++;
    fetch('https://mirpanel.onrender.com/api/product-sales?productId='+encodeURIComponent(id),{
@@ -64,6 +69,8 @@
  window.addEventListener('mirpanel:route-ready',start);
  window.addEventListener('pagehide',stop);
  window.addEventListener('pageshow',start);
+ window.addEventListener('focus',()=>{stop();start();});
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden){stop();start();}});
  start();
 })();
 

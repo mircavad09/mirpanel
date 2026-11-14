@@ -82,10 +82,10 @@ alter table shop_drafts enable row level security;alter table cart_v2_release en
 do $sales$declare d text;begin
  if to_regprocedure('public.product_sales_snapshot()') is not null then
  d:=pg_get_functiondef('public.product_sales_snapshot()'::regprocedure);
- if position('cart_product_units' in d)=0 then
+ if position('cart_product_units' in d)=0 and position('product_sales_delivered_units' in d)=0 then
  d:=regexp_replace(d,'select product_id,count\(\*\) as count\s+from public\.payment_orders\s+where status in \(''approved'',''completed''\)\s+group by product_id',
  'select product_id,sum(n) as count from (select product_id,1::bigint n from public.payment_orders where status in (''approved'',''completed'') and coalesce(checkout_snapshot->>''cartVersion'','''')<>''2'' union all select x->>''productId'',(x->>''quantity'')::bigint from public.payment_orders o cross join lateral jsonb_array_elements(o.checkout_snapshot->''items'') x where o.status in (''approved'',''completed'') and o.checkout_snapshot->>''cartVersion''=''2'') cart_product_units group by product_id','i');
- if position('cart_product_units' in d)=0 then raise exception 'SALES_READER_PATTERN_MISMATCH';end if;execute d;
+ if position('cart_product_units' in d)=0 and position('product_sales_delivered_units' in d)=0 then raise exception 'SALES_READER_PATTERN_MISMATCH';end if;execute d;
  end if;end if;
 end$sales$;
 revoke all on shop_drafts,cart_v2_release from public,anon,authenticated;

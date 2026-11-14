@@ -1,0 +1,38 @@
+import assert from 'node:assert/strict';
+import {localEmployeeDatabase} from './employee-local-postgres.mjs';
+const db=await localEmployeeDatabase();
+try{
+ await db.exec(`create table public.payment_orders(id uuid primary key,product_id text,status text,quantity integer,checkout_snapshot jsonb,payment_confirmed boolean);create schema mirpanel_community;create table mirpanel_community.customer_order_deliveries(id uuid primary key,order_id uuid,line_index integer,quantity integer);`);
+ await db.exec(db.read('supabase/migrations/202610100001_product_sales.sql'));
+ const ids=Array.from({length:10},(_,i)=>'00000000-0000-4000-8000-'+String(i+1).padStart(12,'0'));
+ const add=async(i,product,status,quantity,paid=false,snapshot=null)=>db.sql`insert into payment_orders values(${ids[i]},${product},${status},${quantity},${snapshot?db.sql.json(snapshot):null},${paid})`;
+ await add(0,'capcut','approved',2);
+ await db.exec(db.read('mirpanel-admin/community/product-sales-delivery.sql'));
+ await db.sql`select public.product_sales_initialize('[{"product_id":"chatgpt","count":99},{"product_id":"capcut","count":9901}]','synthetic')`;
+ const snapshot=async()=>(await db.sql`select public.product_sales_snapshot() v`)[0].v;
+ const count=async p=>(await snapshot()).real.find(x=>x.product_id===p)?.count||0;
+ const deliver=async(i,line,quantity,n)=>db.sql`insert into mirpanel_community.customer_order_deliveries values(${'10000000-0000-4000-8000-'+String(n).padStart(12,'0')},${ids[i]},${line},${quantity}) on conflict do nothing`;
+ await add(1,'chatgpt','reviewing',3,true);
+ assert.equal(await count('chatgpt'),0);
+ await deliver(1,0,1,1);assert.equal(99+await count('chatgpt'),100);
+ await deliver(1,0,2,2);assert.equal(99+await count('chatgpt'),102);
+ await deliver(1,0,2,2);assert.equal(99+await count('chatgpt'),102);
+ await db.sql`update payment_orders set status='approved' where id=${ids[1]}`;
+ assert.equal(await count('chatgpt'),3);
+ await add(2,'__cart__','reviewing',5,true,{cartVersion:2,items:[{productId:'capcut',quantity:3},{productId:'spotify',quantity:2}]});
+ await deliver(2,0,1,3);await deliver(2,1,2,4);
+ assert.equal(await count('capcut'),3);assert.equal(await count('spotify'),2);
+ await db.sql`update payment_orders set status='cancelled' where id=${ids[2]}`;
+ assert.equal(await count('capcut'),3);assert.equal(await count('spotify'),2);
+ for(const [i,status]of [[3,'reviewing'],[4,'rejected'],[5,'cancelled'],[6,'approved']])await add(i,'chatgpt',status,4,false);
+ assert.equal(await count('chatgpt'),3,'pending/rejected/cancelled and new untracked approval excluded');
+ await deliver(4,0,1,5);assert.equal(await count('chatgpt'),3);
+ await deliver(0,0,1,6);assert.equal(await count('capcut'),2,'delivery replaces inferred legacy quantity rather than adding twice');
+ await db.exec(db.read('mirpanel-admin/community/product-sales-delivery.sql'));
+ assert.equal(await count('chatgpt'),3,'repeat migration cannot absorb new approvals');
+ assert.equal(await count('capcut'),2);
+ const a=await snapshot(),b=await snapshot();assert.deepEqual(a,b);assert.equal(Number(a.realTotal),7);
+ const con=db.connection();assert.deepEqual((await con`select public.product_sales_snapshot() v`)[0].v,a);await con.end();
+ assert.equal((await db.sql`select has_table_privilege('anon','public.product_sales_delivered_units','select') allowed`)[0].allowed,false);
+ console.log(JSON.stringify({baseline99Then100Then102:true,quantity:true,partialCancellation:true,retry:true,restart:true,legacyNoDoubleCount:true,rejectedAndUnpaidExcluded:true,publicTableAccess:false}));
+}finally{await db.close();}

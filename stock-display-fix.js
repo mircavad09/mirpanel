@@ -1,7 +1,7 @@
 (async function () {
   window.MirpanelInventory?.dispose?.();
   const {inventoryAvailability}=await import('/inventory-availability.mjs?v=live-sale-switch-1');
-  const inventory = new Map();let inventoryTimer,painting=false,inventoryDisplayValid=false,inventoryFailed=false;
+  const inventory = new Map();let inventoryTimer,homeSalesTimer,painting=false,inventoryDisplayValid=false,inventoryFailed=false;
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -111,12 +111,12 @@
         .then(response=>response.ok?response.json():null).then(value=>{
           const valid=value?.productId===id && value.initialized===true && Number.isSafeInteger(value.productTotal) && value.productTotal>=0;
           const count=valid?value.productTotal:null;
-          homeSalesCache.set(id,{count,expires:Date.now()+60000});resolve(count);
+          homeSalesCache.set(id,{count,expires:Date.now()+5000});resolve(count);
         }).catch(()=>resolve(null)).finally(()=>{clearTimeout(timeout);homeSalesActive--;homeSalesPending.delete(id);pumpHomeSales();});
     }
   }
   function hydrateHomeCardSales() {
-    if(!document.body.classList.contains('home-page'))return;
+    if(document.hidden||!document.body.classList.contains('home-page'))return;
     document.querySelectorAll('#grid [data-home-sales-id]').forEach(line=>{
       const id=line.dataset.homeSalesId, cached=homeSalesCache.get(id);
       let result;
@@ -278,7 +278,7 @@
       }finally{clearTimeout(timeout);if(inventoryRequest===pending){inventoryRequest=null;inventoryController=null;}}
     })();inventoryRequest=pending;return pending;
   }
-  window.MirpanelInventory={productState:stateFor,planState:planFor,refresh:refreshInventory,paint:paintInventory,dispose(){disposed=true;cancelInventory();clearInterval(inventoryTimer);},async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
+  window.MirpanelInventory={productState:stateFor,planState:planFor,refresh:refreshInventory,paint:paintInventory,dispose(){disposed=true;cancelInventory();clearInterval(inventoryTimer);clearInterval(homeSalesTimer);},async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
   document.addEventListener('click',event=>{
     const el=event.target.closest('.homeCardOrder,#pp-order-btn,#cartAddProduct,.pp-plan-label');if(!el)return;
     const product=el.classList.contains('homeCardOrder')?(typeof DATA!=='undefined'?DATA.products.find(p=>p.id===el.closest('[data-product-id]')?.dataset.productId):null):(typeof currentProduct!=='undefined'?currentProduct:null);if(!product)return;
@@ -287,7 +287,7 @@
     if(!allowed){event.preventDefault();event.stopImmediatePropagation();return;}if(el.matches('.pp-plan-label'))setTimeout(paintInventory,0);
   },true);
   document.addEventListener('keydown',event=>{const row=event.target.closest('.pp-plan-label');if(!row||!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;const product=typeof currentProduct!=='undefined'?currentProduct:null;if(!product)return;event.preventDefault();event.stopImmediatePropagation();const rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')],available=rows.filter((_,i)=>planFor(product,i)?.canOrder);if(!available.length)return;const at=available.indexOf(row),step=['ArrowUp','ArrowLeft'].includes(event.key)?-1:1,next=available[(at+step+available.length)%available.length];next.click();next.focus();},true);
-  function startInventoryTimer(){clearInterval(inventoryTimer);paintInventory();refreshInventory();inventoryTimer=setInterval(()=>{paintInventory();refreshInventory();},15000);}
+  function startInventoryTimer(){clearInterval(inventoryTimer);clearInterval(homeSalesTimer);hydrateHomeCardSales();homeSalesTimer=setInterval(hydrateHomeCardSales,10000);paintInventory();refreshInventory();inventoryTimer=setInterval(()=>{paintInventory();refreshInventory();},15000);}
   function installCatalogAndDetail() {
     window.addEventListener("mirpanel:home-catalog-rendered", () => {
       hydrateHomeCardSales();
@@ -298,7 +298,7 @@
   }
   if (typeof renderGrid === "function") installCatalogAndDetail();
   else window.addEventListener("mirpanel:catalog-runtime-ready", installCatalogAndDetail, { once: true });
-  startInventoryTimer();window.addEventListener('pagehide',()=>{clearInterval(inventoryTimer);cancelInventory();});window.addEventListener('mirpanel:route-leave',()=>{clearInterval(inventoryTimer);cancelInventory();});window.addEventListener('mirpanel:route-ready',e=>{if(['/','/mehsul'].includes(e.detail.path)||e.detail.path.startsWith('/mehsul/'))startInventoryTimer();});window.addEventListener('pageshow',event=>{if(event.persisted)startInventoryTimer();});document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshInventory();});window.addEventListener('online',()=>refreshInventory());
+  startInventoryTimer();window.addEventListener('pagehide',()=>{clearInterval(inventoryTimer);clearInterval(homeSalesTimer);cancelInventory();});window.addEventListener('mirpanel:route-leave',()=>{clearInterval(inventoryTimer);clearInterval(homeSalesTimer);cancelInventory();});window.addEventListener('mirpanel:route-ready',e=>{if(['/','/mehsul'].includes(e.detail.path)||e.detail.path.startsWith('/mehsul/'))startInventoryTimer();});window.addEventListener('pageshow',event=>{if(event.persisted)startInventoryTimer();});document.addEventListener('visibilitychange',()=>{if(!document.hidden){homeSalesCache.clear();refreshInventory();hydrateHomeCardSales();}});window.addEventListener('focus',()=>{homeSalesCache.clear();hydrateHomeCardSales();});window.addEventListener('online',()=>refreshInventory());
 })();
 
 (function () {
