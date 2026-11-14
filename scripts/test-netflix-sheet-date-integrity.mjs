@@ -12,6 +12,8 @@ for(const date of ['infinity','-infinity','',null,undefined,'2026-02-30','not-a-
 }
 const unknown=['',...row.slice(1)];unknown[4]='infinity';
 assert.equal(protectedRoomUpsert([sheetHeaders],unknown).values[4],null);
+const withWarning=[...row];withWarning[5]+='\nHesabın bitmə tarixi yoxlanılır';
+assert(!protectedRoomUpsert([sheetHeaders,withWarning],['',...withWarning.slice(1)]).values[5].includes('yoxlanılır'));
 assert.throws(()=>protectedRoomUpsert([sheetHeaders,row],['5678',...row.slice(1)]),/OWNER_CONFLICT/);
 const release={roomId:'room',eventId:'12345678-0000-4000-8000-000000000001',previousMember:'1234'};
 assert.equal(protectedRoomUpsert([sheetHeaders,row],['5678',...row.slice(1)],{release}).values[0],'5678');

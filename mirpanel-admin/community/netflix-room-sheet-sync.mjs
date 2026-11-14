@@ -75,7 +75,7 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
    const state=roomSheetState(room);
    const revision=createHash('sha256').update(JSON.stringify([room.room_name,room.account_cipher,room.pin_cipher])).digest('hex');
    const checkpoint={state,revision,groupId:room.group_id,...(!state[1]?{warning:'ROOM_SHEET_DATE_MISSING'}:{})};
-   if(room.deferred&&JSON.stringify(room.sent)===JSON.stringify(checkpoint))continue;
+   if(room.deferred&&room.sent?.revision===revision&&room.sent?.groupId===room.group_id&&JSON.stringify(room.sent?.state)===JSON.stringify(state))continue;
    try{
     sheet??=await client.open();
     const account=JSON.parse(security.decryptSecret(room.account_cipher));
@@ -83,7 +83,8 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
     if(pin.id!==room.id||account.id!==room.group_id||!/^\d{4}$/.test(pin.pin))throw Error('ROOM_SHEET_DATA');
     const [member,end,status]=state;
     if((room.delivery_id||room.legacy_paid_until)&&(!/^\d+$/.test(member)||room.purchase_paid===false))throw Error('ROOM_SHEET_DATA');
-    await sheet.upsert([member,room.room_name+' · '+pin.pin,account.email,account.password,end,status,room.id,room.group_id],{release:room.release_id?{roomId:room.id,eventId:room.release_id,previousMember:room.previous_member}:null});
+    const writeResult=await sheet.upsert([member,room.room_name+' · '+pin.pin,account.email,account.password,end,status,room.id,room.group_id],{release:room.release_id?{roomId:room.id,eventId:room.release_id,previousMember:room.previous_member}:null});
+    if(writeResult?.dateKnown)delete checkpoint.warning;
     await c.query(`insert into ${sync}(room_id,target,sent,retry_at) values($1,$2,$3,clock_timestamp()+interval '15 minutes')
      on conflict(room_id) do update set target=excluded.target,sent=excluded.sent,retry_at=excluded.retry_at,failures=0`,
     [room.id,target,JSON.stringify(checkpoint)]);

@@ -165,8 +165,8 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
     const desired=i===5?roomSheetCells(current.values)[i].userEnteredValue.stringValue:String(value??'');
     return String(current.actual[i]??'')===desired;
    });
-   const first=await read();if(equal(first))return {changed:false};
-   const current=await read();if(equal(current))return {changed:false};
+   const first=await read();if(equal(first))return {changed:false,dateKnown:!!roomDateCell(first.actual?.[4])};
+   const current=await read();if(equal(current))return {changed:false,dateKnown:!!roomDateCell(current.actual?.[4])};
    const {rowIndex,values:safeValues}=current;
    const row={values:roomSheetCells(safeValues)},ops=[];
    if(rowIndex===null)ops.push({appendCells:{sheetId,rows:[row],fields:'userEnteredValue,userEnteredFormat'}});
@@ -190,6 +190,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    if(!actual||String(actual[0]??'')!==String(safeValues[0])||actual[3]!==safeValues[3]||
     actual[5]!==row.values[5].userEnteredValue.stringValue||actual[6]!==safeValues[6]||
     roomDateCell(values[4])&&Number(actual[4])!==roomDateCell(values[4]).userEnteredValue.numberValue)throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
+   return {changed:true,dateKnown:!!roomDateCell(actual[4])};
   }};
  }};
 }
@@ -259,6 +260,7 @@ export function protectedRoomUpsert(rows,incoming,{release=null}={}){
   }
  }
  if(!roomDateCell(value[4]))value[4]=null;
+ else value[5]=String(value[5]??'').split('\n').filter(line=>line!=='Hesabın bitmə tarixi yoxlanılır').join('\n');
  return {rowIndex,values:value};
 }
 function enteredCell(cell,includeEffective=true){
