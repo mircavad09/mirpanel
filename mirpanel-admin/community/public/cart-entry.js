@@ -1,6 +1,6 @@
 import {withRequestSignal,orderRequestMessage} from '/request-lifecycle.mjs?v=abort-compat-1';
 import {validateDetails,validateEpinbyDetails} from './checkout-fields.js?v=epinby-account-1';
-import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
+import {ensureCart} from '/cart-ready.js?v=abort-compat-1';
 import {ensureEntryStyles} from './entry-styles.js?v=player-gold-seal-2';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};

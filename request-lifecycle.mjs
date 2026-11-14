@@ -11,7 +11,7 @@ export async function withRequestSignal(signals,timeout,run){
  }
  try{
   if(controller.signal.aborted)throw reason();
-  timer=setTimeout(()=>{timedOut=true;abort();},timeout);
+  timer=setTimeout(()=>{if(!controller.signal.aborted){timedOut=true;abort();}},timeout);
   const result=await run(controller.signal);
   if(controller.signal.aborted)throw reason();
   return result;

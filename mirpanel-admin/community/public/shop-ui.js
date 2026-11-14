@@ -1,4 +1,4 @@
-import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
+import {ensureCart} from '/cart-ready.js?v=abort-compat-1';
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
