@@ -29,6 +29,12 @@ inventory, delivery or authorization rules have been removed.
   balance. The form can render without the profile response; legacy responses
   retain a guarded fallback. Draft storage is keyed by the verified owner.
   Existing history API behavior and all account/release checks remain intact.
+* Live remeasurement also exposed slow origin-rendered wallet HTML (up to
+  3.8 s before any wallet request). Reuse the cart's edge-rendered public shell
+  for `/balans`, retaining the same header/loading/footer and return behavior.
+  Personal balance and every operation remain API-authorized; no private data
+  enters the shell. Lazy-load the top-up form only on the wallet route so cart
+  and checkout no longer wait for an unused receipt-form module.
 
 ## Measurements and reproducibility
 

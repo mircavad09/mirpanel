@@ -1,1 +1,2 @@
-export {proxyCommunity as onRequest} from './_owner-community.js';
+import {shopShell} from './sebet.js';
+export const onRequest=context=>shopShell(context,{balance:true});

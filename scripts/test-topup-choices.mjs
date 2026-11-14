@@ -11,7 +11,7 @@ if(process.argv.includes('--live')){
  const get=async path=>{const r=await fetch(site+path,{signal:AbortSignal.timeout(15000)});assert.ok(r.ok,path+' '+r.status);return Buffer.from(await r.arrayBuffer());};
  const html=(await get('/balans')).toString();
  for(const file of ['shop.css','shop-ui.js','wallet-topup.js']){
-  const path='/community-assets/'+file,version=file==='wallet-topup.js'?'topup-auto-cards-1':file==='shop-ui.js'?'customer-perf-1':'checkout-first-paint-2';
+  const path='/community-assets/'+file,version=file==='wallet-topup.js'?'topup-auto-cards-1':file==='shop-ui.js'?'customer-perf-2':'checkout-first-paint-2';
   if(file!=='wallet-topup.js')assert.ok(html.includes(path+'?v='+version),'Live /balans must reference '+path);
   liveAssets.set(path,await get(path+'?v='+version));
  }

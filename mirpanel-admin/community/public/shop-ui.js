@@ -2,7 +2,8 @@ import {ensureCart} from '/cart-ready.js?v=abort-compat-1';
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
-import {createWalletTopup,topupReviewTime} from '/community-assets/wallet-topup.js?v=topup-auto-cards-1';
+let walletModule;
+const loadWalletModule=()=>walletModule??=import('/community-assets/wallet-topup.js?v=topup-auto-cards-1').catch(e=>{walletModule=null;throw e;});
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
@@ -289,7 +290,7 @@ function showWalletLoading(){
  loading.setAttribute('role','status');
  app.replaceChildren(el('h1','Balansım'),loading);
 }
-function showWallet(data){
+function showWallet(data,{createWalletTopup,topupReviewTime}){
  walletFlow?.abort();
  walletFlow=new AbortController();
  const flowSignal=walletFlow.signal;
@@ -309,9 +310,9 @@ function showWallet(data){
  flow=createWalletTopup({el,button,api,run,money,methods:[],profile,getCents:effective,signal:flowSignal,isClosed:()=>closed||flowSignal.aborted,onBusy:b=>{amount.disabled=b;for(const p of presets.children)p.disabled=b;},restoreCents:c=>{selectedCents=presetAmounts.includes(c/100)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.dataset.cents)===selectedCents));update();},onComplete:async saved=>{if(!flowSignal.aborted)showTopupResult(saved);}});update();
  const back=backFromWallet();
  if(back){const a=link('← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
- app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions());void flow.resume();
+ app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions(topupReviewTime));void flow.resume();
 }
-function walletQuestions(){
+function walletQuestions(topupReviewTime){
  const section=el('section',null,'wallet-faq'),title=el('h2','Balans haqqında suallar'),list=el('div',null,'wallet-faq-list');
  title.id='walletFaqTitle';section.setAttribute('aria-labelledby',title.id);
  for(const [question,answer] of [
@@ -337,7 +338,7 @@ async function loadWallet(knownProfile=false){
  // details and unused ledger history must not delay the top-up form.
  const session=knownProfile?null:readSession().catch(()=>null);
  try{
-  const data=await api('/wallet?summary=1');
+  const [data,form]=await Promise.all([api('/wallet?summary=1'),loadWalletModule()]);
   const account=data.accountId?null:await session;
   if(!active())return;
   if(data.accountId){
@@ -346,7 +347,7 @@ async function loadWallet(knownProfile=false){
    profile={...profile,user_id:data.accountId};
   }else if(account?.ok)profile=account.data.profile;
   else if(!profile?.user_id&&!profile?.id)throw Error('Hesab təsdiqlənmədi. Yenidən cəhd edin.');
-  showWallet(data);
+  showWallet(data,form);
   if(location.hash==='#balansi-artir')document.getElementById('balansi-artir')?.scrollIntoView({block:'start',behavior:'instant'});
  }catch(e){
   if(!active())return;
