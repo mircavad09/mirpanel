@@ -226,10 +226,12 @@
       const el = document.createElement(tag); el.className = className; el.textContent = value; return el;
     };
     const media = root.querySelector('.product-page-media');
-    const left = text('div','product-detail-left','');
-    media.before(left); left.append(media);
-    const sales = text('p','product-detail-sales',''); sales.hidden = true; left.append(sales);
-    const trust = text('ul','product-detail-trust','');
+    const left = root.querySelector('.product-detail-left') || text('div','product-detail-left','');
+    if(!left.isConnected){media.before(left); left.append(media);}
+    const sales = left.querySelector('.product-detail-sales') || text('p','product-detail-sales','');
+    if(!sales.isConnected){sales.hidden = true; left.append(sales);}
+    const trust = left.querySelector('.product-detail-trust') || text('ul','product-detail-trust','');
+    trust.replaceChildren();
     const iconPaths = [
       '<path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/>',
       '<path d="m4 16 5-5 4 3 7-9m-6 0h6v6"/>',
@@ -249,16 +251,17 @@
     root.querySelector('.product-page-info')?.append(actions);
     left.append(trust);
     root.querySelector('.product-page-delivery strong').textContent = utils.deliveryText(product);
-    const summary = text('section','product-detail-summary','');
+    const summary = root.querySelector('.product-detail-summary') || text('section','product-detail-summary','');
     summary.setAttribute('aria-live','polite');
     const container = document.getElementById('pp-plans-container');
-    root.querySelector('.product-page-section-title').before(summary);
+    if(!summary.isConnected)root.querySelector('.product-page-section-title').before(summary);
     const priceText = value => utils.formatPrice(value).replace('.', ',') + ' ₼';
     const rows = [...container.querySelectorAll('.pp-plan-label')];
     const plans = product.plans || [];
     const delivery = product.deliveryText?.trim() || (product.deliveryType === 'automatic' ? 'Anında' : '');
     rows.forEach((row, index) => {
       const plan = plans[index], m = utils.detailPlanMetrics(plan);
+      if(!container.hasAttribute('data-server-plans')) {
       row.hidden = plan.active === false;
       row.setAttribute('role','radio'); row.tabIndex = row.hidden ? -1 : 0;
       const duration = m.days !== null ? `${m.days} gün` : plan.durationMonths && m.months !== null ? `${m.months} ay` : '';
@@ -292,6 +295,7 @@
         const old = text('div','pp-plan-price-meta','');
         old.append(text('div','pp-old-price',priceText(m.oldPrice)),text('div','pp-plan-disc-badge',`-${m.discount}%`));
         row.querySelector('.pp-plan-right').prepend(old);
+      }
       }
       row.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); row.click(); }
@@ -330,7 +334,18 @@
       }
       summary.append(text('p','product-detail-summary-delivery',utils.deliveryText(product)));
     };
-    window.addEventListener('mirpanel:prices',()=>{rows.forEach((row,i)=>{const m=utils.detailPlanMetrics(plans[i]);const price=row.querySelector('.pp-new-price');if(price&&m.price!==null)price.textContent=priceText(m.price);const rate=row.querySelector('.product-detail-rate strong');if(rate&&m.rate!==null)rate.textContent=priceText(m.rate);row.querySelector('.pp-plan-price-meta')?.remove();});update();},{signal});
+    window.addEventListener('mirpanel:prices',()=>{rows.forEach((row,i)=>{
+      const m=utils.detailPlanMetrics(plans[i]),price=row.querySelector('.pp-new-price');
+      if(price&&m.price!==null)price.textContent=priceText(m.price);
+      const rate=row.querySelector('.product-detail-rate strong');if(rate&&m.rate!==null)rate.textContent=priceText(m.rate);
+      let meta=row.querySelector('.pp-plan-price-meta');
+      if(m.oldPrice===null)meta?.remove();
+      else {
+        if(!meta){meta=text('div','pp-plan-price-meta','');meta.append(text('div','pp-old-price',''),text('div','pp-plan-disc-badge',''));row.querySelector('.pp-plan-right').prepend(meta);}
+        meta.querySelector('.pp-old-price').textContent=priceText(m.oldPrice);
+        meta.querySelector('.pp-plan-disc-badge').textContent=`-${m.discount}%`;
+      }
+    });update();},{signal});
     container.addEventListener('click', update);
     container.addEventListener('mirpanel:plan-selection-cleared', update);
     if (!rows.some(row=>row.classList.contains('active') && !row.hidden)) rows.find(row=>!row.hidden)?.click();

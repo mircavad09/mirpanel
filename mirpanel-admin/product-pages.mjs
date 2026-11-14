@@ -2,6 +2,7 @@ import { planMetrics, deliveryText } from './public/product-plan-utils.mjs';
 import { createHash } from 'node:crypto';
 import displayLabels from '../display-labels.js';
 import catalogCard from '../catalog-card.js';
+import {renderPlanRows, renderPlanSummary, renderPlanTrust} from '../product-plan-view.mjs';
 const { normalizeDisplayLabel } = displayLabels;
 const SITE_URL = "https://mirpanel.com";
 const DELIVERY_TEXT = "7/24 anında təqdim edilir";
@@ -363,9 +364,9 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
     ]
   });
   const html = `<!DOCTYPE html>
-<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
+<html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=stable-buy-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document">${renderSplashMarkup()}${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=seller-pricing-1"></script></body></html>`;
-  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=desktop-compact-price-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=card-buy-hover-1"></script><script src="/catalog-listing.js?v=delivered-sales-1"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
+  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=mobile-plus-36-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=mobile-plus-36-1"></script><script src="/catalog-listing.js?v=delivered-sales-1"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
@@ -394,7 +395,8 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
     cleanText(product.orderConfirmation?.description) ||
     cleanText(product.note);
   const aboutText = cleanText(product.seoContent) || cleanText(product.desc);
-  const planMarkup = renderPlans(product);
+  const selectedPlan = Math.max(0, (product.plans || []).findIndex(plan => plan.active !== false));
+  const planMarkup = renderPlanRows(product, selectedPlan);
   const similarMarkup = renderSimilar(product.id === 'capcut' ? similar.slice(0,8) : similar, product.id === 'capcut');
   const structuredData = safeJson({
     "@context": "https://schema.org",
@@ -470,7 +472,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=similar-scroll-2">
+  <link rel="stylesheet" href="/product-page.css?v=stable-buy-1">
   <link rel="stylesheet" href="/payment-flow.css?v=checkout-cancel-proxy-20261026-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -481,7 +483,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   ${renderSplashMarkup()}
   ${renderSharedHeader(siteSections, "products")}
 
-  <main id="productPageView" class="product-page-root${product.epinbyGroup?' epinby-game-page':''}">
+  <main id="productPageView" class="product-page-root detail-v2${product.epinbyGroup?' epinby-game-page':''}" data-plan-shell="stable">
     <nav class="product-page-breadcrumb" aria-label="Breadcrumb">
       <a href="/">Ana səhifə</a><span aria-hidden="true">›</span>
       <a href="/mehsul">Məhsullar</a><span aria-hidden="true">›</span>
@@ -506,14 +508,13 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
             </div>
 
             <h2 class="product-page-section-title">${product.epinbyGroup?'Paket seçin':'Müddət seçin'}</h2>
-            <div class="product-page-static-plans" data-static-product-plans>${planMarkup}</div>
-            <div id="pp-plans-container" class="pp-plans-container" hidden></div>
+            <div id="pp-plans-container" class="pp-plans-container" role="radiogroup" data-server-plans>${planMarkup}</div>
           </div>
         </div>
 
         <div class="product-page-actions">
           <a class="product-page-action is-about" href="${productCanonicalPath(slug)}#product-about">Məhsul haqqında</a>
-          <button class="product-page-action is-order" id="pp-order-btn" type="button"${/^epinby_\d+$/.test(product.id)&&product.supplier?.provider!=='epinby'?' disabled>Alış hələ açılmayıb':product.id==='hbomax'?' disabled>Stok yoxlanılır…':'>İndi al'}</button>
+          <button class="product-page-action is-order" id="pp-order-btn" type="button" disabled>İndi al</button>
         </div>
       </article>
 
@@ -574,16 +575,20 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
+  <script src="/app.js?v=stable-buy-1-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
-  <script src="/order-confirmation.js?v=product-summary-1"></script>
-  <script src="/stock-display-fix.js?v=delivered-sales-1"></script>
-  <script src="/product-page.js?v=delivered-sales-1"></script>
+  <script src="/order-confirmation.js?v=stable-buy-1"></script>
+  <script src="/stock-display-fix.js?v=stable-buy-1"></script>
+  <script src="/product-page.js?v=stable-buy-1"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>
 `.replace(/[ \t]+$/gm, "");
-  return applyCmsToProductHtml(html, product, cms, content);
+  // Emit the final structure before any client script or inventory reply runs.
+  const initial = html.replace(/(<div class="product-page-media">[\s\S]*?<\/div>)/, `<div class="product-detail-left">$1<p class="product-detail-sales" hidden></p><ul class="product-detail-trust">${renderPlanTrust(product)}</ul></div>`)
+    .replace('<h2 class="product-page-section-title">', `<section class="product-detail-summary" aria-live="polite">${renderPlanSummary(product,selectedPlan)}</section><h2 class="product-page-section-title">`)
+    .replace(/(\s*<\/div>\s*<\/div>)\s*(<div class="product-page-actions">[\s\S]*?<\/div>)/, '$2$1');
+  return applyCmsToProductHtml(initial, product, cms, content);
 }
 
 function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
@@ -633,7 +638,7 @@ function generateInfoPageHtml(page, siteSections, ui, cms = {}) {
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
-  <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
+  <link rel="stylesheet" href="/product-page.css?v=stable-buy-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="stylesheet" href="/info-page.css?v=${page.key === "haqqimizda" ? "20260731-about-2" : page.key === "sertler" ? "20260731-terms-2" : "20260728-1"}">
@@ -945,7 +950,7 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
     .replace(/(<div class="product-page-delivery">\s*<strong>)[\s\S]*?(<\/strong>)/, `$1${escapeHtml(deliveryText(product))}$2`)
     .replace(/(<h2 class="product-page-section-title">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(product.epinbyGroup?'Paket seçin':texts.selectDuration || "Müddət seçin")}$2`)
     .replace(/(<a class="product-page-action is-about"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.productAbout || "Məhsul haqqında")}$2`)
-    .replace(/(<button class="product-page-action is-order"[^>]*>)[\s\S]*?(<\/button>)/, `$1${escapeHtml(/^epinby_\d+$/.test(product.id)&&product.supplier?.provider!=='epinby'?"Alış hələ açılmayıb":"İndi al")}$2`)
+    .replace(/(<button class="product-page-action is-order"[^>]*>)[\s\S]*?(<\/button>)/, '$1İndi al$2')
     .replace(/(<h2 class="product-page-similar-heading">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(texts.relatedProducts || "Oxşar məhsullar")}$2`)
     .replace(/(<a class="product-page-similar-more"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.moreProducts || "Daha çox məhsul")}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms)}</footer>`);
@@ -1022,7 +1027,7 @@ export function generateNetflixConfirmationPageFiles(siteSections = {}, cms = {}
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css?v=20260804-mobile-nav-2">
-  <link rel="stylesheet" href="/product-page.css?v=20260804-mobile-layout-1">
+  <link rel="stylesheet" href="/product-page.css?v=stable-buy-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="stylesheet" href="/netflix-confirmation.css?v=20260901-1">
@@ -1092,8 +1097,8 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
   next = next
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=seller-pricing-1")
-    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=product-summary-1");
-  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=delivered-sales-1");
+    .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=stable-buy-1");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=stable-buy-1");
   return next;
 }
 
@@ -1124,30 +1129,6 @@ function fixMojibake(value) {
     (text, [broken, correct]) => text.split(broken).join(correct),
     cleanText(value)
   );
-}
-
-function renderPlans(product) {
-  const plans = Array.isArray(product.plans) ? product.plans : [];
-  if (!plans.length) return `<p>Mövcud plan yoxdur.</p>`;
-  return plans.map((plan, index) => {
-    if (plan.active === false) return '';
-    const duration = plan.durationDays ? `${plan.durationDays} gün` : `${plan.durationMonths ?? plan.months ?? 1} ay`;
-    const label = normalizeDisplayLabel(cleanText(plan.label)) || (plan.durationDays ? duration : `${Number(plan.months) || 1} aylıq`);
-    const metrics = planMetrics(plan);
-    const price = metrics.price;
-    const regularPrice = metrics.oldPrice;
-    const discount = metrics.discount || 0;
-    const priceText = price > 0
-      ? `${price.toFixed(2)} ${cleanText(product.currency)}`
-      : '';
-    const priceMarkup = discount > 0
-      ? `<span class="product-page-plan-prices"><span class="product-page-regular-price">${escapeHtml(`${regularPrice.toFixed(2)} ${cleanText(product.currency)}`)}</span><strong>${escapeHtml(priceText)}</strong><span class="product-page-discount">-${discount}%</span></span>`
-      : price > 0 ? `<span class="product-page-plan-prices"><strong>${escapeHtml(priceText)}</strong></span>` : '<span class="product-page-plan-prices">Stokda yoxdur</span>';
-    const hasNamedMonthlyOffer = plans.some(item => !item.durationDays && Number(item.months) === 1 && /endirim/i.test(item.label || '') && Number(item.regularPrice) > Number(item.price));
-    const emphasis = !plan.durationDays && Number(plan.months) === 1 && discount > 0 && (!hasNamedMonthlyOffer || /endirim/i.test(plan.label || '')) ? 'discount-month' : 'standard';
-    const image=!product.epinbyGroup&&plan.supplier?.provider==='epinby'&&plan.image?`<img class="epinby-package-thumb" src="${escapeAttribute(rootRelativeUrl(plan.image))}" alt="" width="52" height="38" loading="lazy">`:'';
-    return `<div class="product-page-static-plan${index === 0 ? " is-selected" : ""}" data-price-emphasis="${emphasis}"><span class="product-page-static-plan-name"><span class="product-page-static-radio" aria-hidden="true"></span>${image}${escapeHtml(label)}${(plan.durationDays || plan.durationMonths) && label !== duration ? ` · ${escapeHtml(duration)}` : ""}</span>${priceMarkup}</div>`;
-  }).join("");
 }
 
 function similarProducts(product, activeProducts) {

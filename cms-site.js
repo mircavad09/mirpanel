@@ -414,7 +414,7 @@
     const mapping = {
       stokVar: common.available,
       stokOut: common.outOfStock,
-      orderBtn: common.order,
+      orderBtn: 'İndi al',
       productAbout: common.productAbout,
       sendWa: common.sendWhatsapp,
       reqEmail: common.invalidEmail

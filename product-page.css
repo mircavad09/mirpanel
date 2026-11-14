@@ -1694,3 +1694,10 @@ html body #productPageView.product-page-root #pp-plans-container .pp-plan-left:h
 body.product-page-document #productPageView.product-page-root.epinby-game-page .product-page-media #pp-main-img{
  aspect-ratio:1.883; height:auto!important; object-fit:contain!important;
 }
+/* Reserve inventory/plan metadata in the initial HTML, including while hidden. */
+html body #productPageView[data-plan-shell="stable"] #pp-plans-container [data-inventory-plan]{
+ display:inline-flex!important;align-items:center;min-height:22px;line-height:14px;
+ padding:3px 6px;border:1px solid transparent;border-radius:999px;justify-self:start;
+}
+html body #productPageView[data-plan-shell="stable"] #pp-plans-container [data-inventory-plan][hidden]{visibility:hidden}
+html body #productPageView[data-plan-shell="stable"] #pp-plans-container .product-detail-plan-notes[hidden]:has(> :not([hidden])){display:flex!important;visibility:hidden}

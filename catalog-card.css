@@ -239,12 +239,12 @@
     display: grid;
     place-items: center;
     box-sizing: border-box;
-    width: 28px;
-    height: 28px;
-    border: 1px solid #bd932b;
+    width: 36px;
+    height: 36px;
+    border: 1.5px solid #e1b33e;
     border-radius: 50%;
     background: #111214;
-    font-size: 21px;
+    font-size: 22px;
   }
 }
 @media (max-width: 350px) {

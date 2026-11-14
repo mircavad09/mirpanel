@@ -21,7 +21,7 @@ const UI = {
   "chatBtn": "Göndər",
   "search": "Məhsul axtar... (məs: Netflix, Zoom)",
   "month": "aylıq",
-  "orderBtn": "Sifariş et",
+  "orderBtn": "İndi al",
   "noPlan": "Plan yoxdur (WhatsApp-da dəqiqləşdirilir).",
   "formTitle": "Məlumatları daxil et",
   "stokOut": "Stokta yoxdur",
@@ -3995,7 +3995,7 @@ const CMS_CONTENT = {
     "available": "Mövcuddur",
     "outOfStock": "Stokda yoxdur",
     "selectDuration": "Müddət seçin",
-    "order": "Sifariş et",
+    "order": "İndi al",
     "productAbout": "Məhsul haqqında",
     "usageRules": "İstifadə qaydaları",
     "relatedProducts": "Oxşar məhsullar",
@@ -4511,6 +4511,15 @@ document.querySelector(".brand")?.addEventListener("click", () => {
 function renderProductPlans(p) {
   const container = document.getElementById("pp-plans-container");
   if(!container) return;
+  if(container.hasAttribute('data-server-plans')) {
+    const rows=[...container.querySelectorAll('.pp-plan-label')];
+    currentPlanIdx=Math.max(0,rows.findIndex(row=>row.classList.contains('active')));
+    rows.forEach((row,idx)=>{row.onclick=()=>{
+      currentPlanIdx=idx;
+      rows.forEach(item=>item.classList.toggle('active',item===row));
+    };});
+    return;
+  }
   container.innerHTML = "";
 
   const plans = p.plans || [];
@@ -4993,6 +5002,7 @@ function setupUI() {
   renderSiteSectionsFromAdmin();
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const key = el.getAttribute('data-i18n');
+    if(el.id==='pp-order-btn') return;
     if(UI[key]) {
        if (el.tagName.toLowerCase() === 'input' && el.hasAttribute('placeholder')) {
            el.placeholder = UI[key];

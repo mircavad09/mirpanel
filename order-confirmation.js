@@ -2020,7 +2020,7 @@
     // and the stock controller's authoritative readiness check.
     if (button && !isHboProduct(product)) {
       button.disabled = !available;
-      button.textContent = available ? (document.body.classList.contains("product-page-document") ? "İndi al" : "Sifariş et") : "Stokda yoxdur";
+      button.title = available ? '' : 'Stokda yoxdur';
       button.classList.toggle("disabled", !available);
     }
 
