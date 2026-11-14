@@ -7,7 +7,11 @@ const key=fs.readFileSync(process.env.USERPROFILE+'/.render/cli.yaml','utf8').ma
 const r=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars?limit=100',{headers:{Authorization:'Bearer '+key}});
 if(!r.ok)throw Error('CONFIG_READ_'+r.status);
 const env=Object.fromEntries((await r.json()).map(x=>[x.envVar.key,x.envVar.value]));
+const service=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg',{headers:{Authorization:'Bearer '+key}});
+const details=service.ok?(await service.json()).serviceDetails:{};
+const dbRegion=new URL(env.COMMUNITY_DATABASE_URL).hostname.match(/(?:aws-\d-)?((?:us|eu|ap|sa|ca|me|af)-[a-z]+-\d)/)?.[1]??'not-disclosed';
+console.log(JSON.stringify({scope:'configuration metadata only',renderRegion:details?.region??'not-disclosed',plan:details?.plan??'not-disclosed',databasePoolRegion:dbRegion}));
 const pool=new pg.Pool({connectionString:env.COMMUNITY_DATABASE_URL,ssl:{rejectUnauthorized:true,ca:env.COMMUNITY_DATABASE_CA},max:5,options:'-c search_path=mirpanel_community,public -c default_transaction_read_only=on -c statement_timeout=15000'});
 const samples=[];
 const wrapped={query:async(...args)=>{const at=performance.now();try{return await pool.query(...args);}finally{samples.push(Math.round(performance.now()-at));}}};
-try{const repo=new Repository(wrapped);for(let i=0;i<5;i++){samples.length=0;const at=performance.now();await repo.messages();console.log(JSON.stringify({scope:'Windows-to-production database read-only, not Render execution',operation:'snapshot',ms:Math.round(performance.now()-at),queryMs:samples.slice()}));const t=performance.now();await counts(pool);console.log(JSON.stringify({operation:'counts',ms:Math.round(performance.now()-t)}));}}finally{await pool.end();}
+try{const repo=new Repository(wrapped);for(let i=0;i<5;i++){samples.length=0;const at=performance.now();await repo.messages();console.log(JSON.stringify({scope:'Windows-to-production database read-only, not Render execution',operation:'snapshot',ms:Math.round(performance.now()-at),queryMs:samples.slice()}));const t=performance.now();await counts(pool);console.log(JSON.stringify({operation:'counts',ms:Math.round(performance.now()-t)}));}const plan=(await pool.query('explain (analyze,format json) select 1')).rows[0]['QUERY PLAN'][0];console.log(JSON.stringify({operation:'select-1',databaseExecutionMs:plan['Execution Time'],planningMs:plan['Planning Time']}));}finally{await pool.end();}

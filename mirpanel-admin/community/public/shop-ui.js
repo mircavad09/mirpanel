@@ -333,14 +333,19 @@ async function loadWallet(knownProfile=false){
  const epoch=accountEpoch,active=()=>!closed&&epoch===accountEpoch;
  showWalletLoading();
  // The public card list is loaded by the top-up form only when opened.
- // The session identifies the local draft to resume. The wallet endpoint
- // itself authorizes the balance and decides whether sign-in is required.
+ // The authorized summary identifies the draft owner too. Unrelated profile
+ // details and unused ledger history must not delay the top-up form.
  const session=knownProfile?null:readSession().catch(()=>null);
  try{
-  const data=await api('/wallet');
-  const account=await session;
+  const data=await api('/wallet?summary=1');
+  const account=data.accountId?null:await session;
   if(!active())return;
-  if(account?.ok)profile=account.data.profile;
+  if(data.accountId){
+   const prior=profile?.user_id??profile?.id;
+   if(prior&&prior!==data.accountId)throw Error('Hesab dəyişib. Balansı yenidən açın.');
+   profile={...profile,user_id:data.accountId};
+  }else if(account?.ok)profile=account.data.profile;
+  else if(!profile?.user_id&&!profile?.id)throw Error('Hesab təsdiqlənmədi. Yenidən cəhd edin.');
   showWallet(data);
   if(location.hash==='#balansi-artir')document.getElementById('balansi-artir')?.scrollIntoView({block:'start',behavior:'instant'});
  }catch(e){

@@ -1,12 +1,18 @@
 /* Read-only sales figures are fetched near the viewport, not ahead of the next route. */
 (()=>{'use strict';if(window.mirpanelCatalogSales)return;window.mirpanelCatalogSales=true;
  let scope=null;
+ const transport=import('/request-lifecycle.mjs?v=abort-compat-1');
  async function paintStock(state){
-  const response=await fetch('/api/payments/inventory',{signal:AbortSignal.any([state.controller.signal,AbortSignal.timeout(10000)]),cache:'no-store'});
-  if(!response.ok)return;
-  const {products:inventory}=await response.json();
+  const {withRequestSignal}=await transport;
+  const data=await withRequestSignal([state.controller.signal],10000,async signal=>{
+   const response=await fetch('/api/payments/inventory',{signal,cache:'no-store'});
+   return response.ok?response.json():null;
+  });
+  if(!data)return;
+  const {products:inventory}=data;
   const source=document.getElementById('catalogCartProducts');
   if(state!==scope||!source||!Array.isArray(inventory))return;
+  state.stockAt=performance.now();
   const byId=new Map(inventory.map(row=>[row.productId,row]));
   for(const product of JSON.parse(source.textContent)){
    const ledger=byId.get(product.id);
@@ -31,7 +37,7 @@
   }
  }
  function refreshStock(state){
-  if(state.stockRequest||document.hidden)return;
+  if(state.stockRequest||document.hidden||performance.now()-(state.stockAt??-Infinity)<10000)return;
   state.stockRequest=paintStock(state).catch(()=>{}).finally(()=>{state.stockRequest=null;});
  }
  function stop(){clearInterval(scope?.stockTimer);clearInterval(scope?.salesTimer);scope?.controller.abort();scope?.observer?.disconnect();scope=null;}
@@ -41,7 +47,7 @@
   if(!document.getElementById('catalogCartProducts'))return;
   const state={controller:new AbortController(),observer:null,queue:[],busy:0};scope=state;
   refreshStock(state);
-  state.stockTimer=setInterval(()=>refreshStock(state),2000);
+  state.stockTimer=setInterval(()=>refreshStock(state),10000);
   state.salesTimer=setInterval(()=>{
    if(document.hidden||state!==scope)return;
    for(const line of nodes){const box=line.closest('.card')?.getBoundingClientRect();if(box&&box.bottom>0&&box.top<innerHeight+160&&!state.queue.includes(line))state.queue.push(line);}
@@ -49,10 +55,11 @@
   },10000);
   const drain=()=>{while(state.busy<3&&state.queue.length&&!state.controller.signal.aborted){
    const line=state.queue.shift(),id=line.dataset.homeSalesId;state.busy++;
-   fetch('https://mirpanel.onrender.com/api/product-sales?productId='+encodeURIComponent(id),{
-    priority:'low',signal:AbortSignal.any([state.controller.signal,AbortSignal.timeout(15000)])
-   }).then(async r=>{
-    if(!r.ok)return;const v=await r.json();
+   transport.then(({withRequestSignal})=>withRequestSignal([state.controller.signal],15000,async signal=>{
+    const r=await fetch('https://mirpanel.onrender.com/api/product-sales?productId='+encodeURIComponent(id),{priority:'low',signal});
+    return r.ok?r.json():null;
+   })).then(v=>{
+    if(!v)return;
     if(state!==scope||!line.isConnected||v.productId!==id||v.initialized!==true||!Number.isSafeInteger(v.productTotal)||v.productTotal<0)return;
     line.textContent='≈ '+new Intl.NumberFormat('en-US').format(v.productTotal).replaceAll(',',' ')+'+ satılıb';line.hidden=false;line.dataset.salesReady='';
    }).catch(()=>{}).finally(()=>{state.busy--;drain();});
@@ -69,8 +76,9 @@
  window.addEventListener('mirpanel:route-ready',start);
  window.addEventListener('pagehide',stop);
  window.addEventListener('pageshow',start);
- window.addEventListener('focus',()=>{stop();start();});
- document.addEventListener('visibilitychange',()=>{if(!document.hidden){stop();start();}});
+ const resume=()=>{start();if(scope)refreshStock(scope);};
+ window.addEventListener('focus',resume);
+ document.addEventListener('visibilitychange',()=>{if(!document.hidden)resume();});
  start();
 })();
 
@@ -84,16 +92,21 @@ document.addEventListener('click', async event => {
  const product=(window.MirpanelPricing?.attach(JSON.parse(source.textContent))||JSON.parse(source.textContent)).find(p=>p.id===add.closest('[data-product-id]').dataset.productId);
  if(!product)return;
  add.dataset.busy='true';add.disabled=true;
+ const clickLife=new AbortController(),cancel=()=>clickLife.abort();
+ window.addEventListener('mirpanel:route-leave',cancel,{once:true});
  let status=document.getElementById('catalogCartStatus');
  if(!status){status=document.createElement('p');status.id='catalogCartStatus';status.setAttribute('role','status');document.querySelector('.catalog-grid').before(status);}
  status.textContent='';
  try{
   const [inventory, entry, model]=await Promise.all([
-   fetch('/api/payments/inventory',{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('Stok məlumatı alınmadı.');return r.json();}),
+   import('/request-lifecycle.mjs?v=abort-compat-1').then(({withRequestSignal})=>withRequestSignal([clickLife.signal],10000,async signal=>{
+    const r=await fetch('/api/payments/inventory',{cache:'no-store',signal});
+    if(!r.ok)throw Error('Stok məlumatı alınmadı.');return r.json();
+   })),
    import('/community-assets/cart-entry.js?v=epinby-account-1'),
    import('/inventory-availability.mjs?v=live-sale-switch-1')
   ]);
-  if(!add.isConnected)return;
+  if(!add.isConnected||clickLife.signal.aborted)return;
   const state=model.inventoryAvailability(product,inventory.products.find(p=>p.productId===product.id));
   const choices=product.plans.map((plan,index)=>({plan,available:state.plans[index].canOrder})).filter(x=>x.plan.active!==false&&Number(x.plan.price)>0);
   if(!choices.some(x=>x.available))throw Error('Stokda yoxdur.');
@@ -113,6 +126,6 @@ document.addEventListener('click', async event => {
   window.addEventListener('mirpanel:route-leave',()=>dialog.close(),{signal:life.signal});
   dialog.addEventListener('close',()=>{life.abort();dialog.remove();},{once:true});
   document.body.append(dialog);dialog.showModal();
- }catch(error){status.textContent=error.message||'Sifariş açıla bilmədi.';}
- finally{delete add.dataset.busy;add.disabled=add.dataset.stockDisabled==='true';}
+ }catch(error){if(add.isConnected&&!clickLife.signal.aborted)status.textContent=error.name==='TimeoutError'?'Stok cavabı gecikir. Yenidən + düyməsinə basın.':error.message||'Sifariş açıla bilmədi.';}
+ finally{window.removeEventListener('mirpanel:route-leave',cancel);delete add.dataset.busy;add.disabled=add.dataset.stockDisabled==='true';}
 });

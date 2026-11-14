@@ -25,7 +25,7 @@
   await Promise.all(keys.map(key=>{
    const node=styles.get(key);
    if(!node||node.tagName!=='LINK')return;
-   node.disabled=false;
+   node.disabled=false;node.media='all';
    if(node.sheet)return;
    return new Promise((resolve,reject)=>{
     const cleanup=()=>{node.removeEventListener('load',ready);node.removeEventListener('error',failed);signal.removeEventListener('abort',failed);};
@@ -35,6 +35,21 @@
     if(signal.aborted)failed();else if(node.sheet)ready();
    });
   }));
+ }
+ function retainParsedStyle(key,node){
+  if(node.tagName!=='LINK'||new URL(node.href).origin!==location.origin||!node.sheet)return node;
+  try{
+   const rules=[...node.sheet.cssRules];
+   // Keep imported/external sheets on the browser's normal loading path.
+   if(rules.some(rule=>rule.type===3))return node;
+   const css=rules.map(rule=>rule.cssText).join('\n').replace(/url\(\s*(["']?)([^)"']+)\1\s*\)/g,(all,quote,url)=>{
+    if(/^(?:data:|#|https?:|\/\/)/i.test(url))return all;
+    return 'url('+JSON.stringify(new URL(url,node.href).href)+')';
+   });
+   const style=document.createElement('style');style.textContent=css;style.media=node.media;
+   style.dataset.routeStyle=key;if(node.nonce)style.nonce=node.nonce;
+   node.replaceWith(style);styles.set(key,style);return style;
+  }catch{return node;}
  }
  const initialStyles=rememberStyles(document,location.href);for(const s of document.scripts)if(s.src)loaded.add(new URL(s.src).pathname);
  for(const n of [...document.head.querySelectorAll('link[rel=stylesheet]')])if(shared.test(new URL(n.href).pathname))document.head.append(n);
@@ -77,7 +92,7 @@
  void import(authModule).catch(()=>{});
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
  async function moduleWithin(url){let timer;try{return await Promise.race([import(url),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}finally{clearTimeout(timer);}}
- const shopModule='/community-assets/shop-ui.js?v=abort-compat-1',groupModule='/community-assets/community.js?v=shell-chat-compose-1';
+ const shopModule='/community-assets/shop-ui.js?v=customer-perf-1',groupModule='/community-assets/community.js?v=shell-chat-compose-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&((u.pathname===location.pathname&&(a.dataset.browserNav!=='orders'||u.searchParams.get('tab')===new URLSearchParams(location.search).get('tab')))||u.pathname==='/mehsul'&&isProduct(location.pathname)))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));const profile=new URL(current,location.origin).pathname==='/profil';((profile&&window.mirpanelPageDispose)||dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
@@ -216,7 +231,9 @@
  if(run!==generation)return false;
  // Apply the search to the detached catalog before any unfiltered cards can be displayed.
  if(u.pathname==='/mehsul'){const search=new URLSearchParams(location.search).get('search')?.toLocaleLowerCase('az');for(const card of next.fragment.querySelectorAll('.grid .card'))card.hidden=!!search&&!card.textContent.toLocaleLowerCase('az').includes(search);}
- for(const[k,n]of styles){if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css'))continue;if(n.tagName==='LINK'&&new URL(n.href).origin!==location.origin)continue;const enabled=next.styles.includes(k);if(n.tagName==='LINK')n.disabled=!enabled;else n.media=enabled?'all':'not all';}root.replaceChildren(next.fragment);next.fragment=null;view=next;mounted=true;emptyStatus();
+ // Keep parsed sheets attached. Disabling a no-store stylesheet discards it in
+ // browsers and makes every return navigation download it again.
+ for(const[k,n]of styles){if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css'))continue;if(n.tagName==='LINK'&&new URL(n.href).origin!==location.origin)continue;retainParsedStyle(k,n).media=next.styles.includes(k)?'all':'not all';}root.replaceChildren(next.fragment);next.fragment=null;view=next;mounted=true;emptyStatus();
  for(const c of next.body.split(/\s+/).filter(Boolean))routeClasses.add(c);const classes=[...document.body.classList].filter(c=>!routeClasses.has(c)||['has-bottom-nav','has-account-header','has-guest-header'].includes(c));document.body.className=[...new Set([...classes,...next.body.split(/\s+/).filter(Boolean)])].join(' ');document.documentElement.classList.toggle('community-chat-screen',next.html.includes('community-chat-screen'));document.title=next.title;
  if(next.productId){document.body.dataset.productId=next.productId;document.body.dataset.productSlug=next.productSlug||u.pathname.split('/').at(-1);}
  await mount(next,run,preparedModule);if(run!==generation)return false;loading=false;active();

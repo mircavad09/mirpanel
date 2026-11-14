@@ -1,6 +1,6 @@
 (function () {
   "use strict";
-  if(!window.MirpanelPricing&&!document.querySelector('script[data-customer-pricing]')){const script=document.createElement('script');script.src='/customer-pricing.js?v=seller-1';script.dataset.customerPricing='';script.dataset.shellPersistent='';document.head.append(script);}
+  if(!window.MirpanelPricing&&!document.querySelector('script[data-customer-pricing]')){const script=document.createElement('script');script.src='/customer-pricing.js?v=customer-perf-1';script.dataset.customerPricing='';script.dataset.shellPersistent='';document.head.append(script);}
 
   if(!document.querySelector('link[data-mobile-profile-style]')){
     const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/mobile-profile.css?v=2';sheet.media='(max-width: 767px)';sheet.dataset.mobileProfileStyle='';sheet.dataset.shellPersistent='';document.head.append(sheet);

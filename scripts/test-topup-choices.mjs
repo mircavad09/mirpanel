@@ -11,7 +11,7 @@ if(process.argv.includes('--live')){
  const get=async path=>{const r=await fetch(site+path,{signal:AbortSignal.timeout(15000)});assert.ok(r.ok,path+' '+r.status);return Buffer.from(await r.arrayBuffer());};
  const html=(await get('/balans')).toString();
  for(const file of ['shop.css','shop-ui.js','wallet-topup.js']){
-  const path='/community-assets/'+file,version=file==='wallet-topup.js'?'topup-auto-cards-1':'checkout-first-paint-2';
+  const path='/community-assets/'+file,version=file==='wallet-topup.js'?'topup-auto-cards-1':file==='shop-ui.js'?'customer-perf-1':'checkout-first-paint-2';
   if(file!=='wallet-topup.js')assert.ok(html.includes(path+'?v='+version),'Live /balans must reference '+path);
   liveAssets.set(path,await get(path+'?v='+version));
  }
@@ -60,7 +60,7 @@ try{for(const engine of ['chrome','webkit']){const b=await(engine==='chrome'?chr
  eq(await details.last().locator('p').textContent(),'Çeki göndərdikdən sonra təsdiq adətən 5–10 dəqiqə çəkir. İş saatlarımız hər gün 11:00–00:00-dır.');
  eq(await p.getByRole('heading',{name:/^(Balans müraciətləri|Əməliyyat tarixçəsi)$/}).count(),0);
  eq(await p.getByText('Sintetik tarixçə qeydi',{exact:true}).count(),0);
- eq(await faq.getByRole('link',{name:'Ödənişlərim'}).getAttribute('href'),'/profil?tab=payments');
+ eq(await faq.getByRole('link',{name:'Ödənişlərim'}).getAttribute('href'),'/profil?tab=odenislerim');
  const operator=p.locator('#customerFooter').getByRole('link',{name:'Operatora yaz',exact:true});
  await operator.waitFor();eq(await operator.getAttribute('href'),'https://wa.me/994515243545');await operator.click({trial:true});
  for(const n of [5,10,20,50,100]){await presets.filter({hasText:new RegExp('^'+n+' ₼$')}).click();eq(await input.inputValue(),'');eq(await preview.textContent(),(12+n).toFixed(2)+' ₼');eq(await p.locator('.shop-presets [aria-pressed=true]').count(),1);}
