@@ -24,9 +24,11 @@ export function deploymentRuntime(env=process.env){
   readOnlyFetch(send){return async(input,init={})=>{
    const url=new URL(typeof input==='string'||input instanceof URL?input:input.url),method=String(init.method||input?.method||'GET').toUpperCase();
    const readRpc=url.origin===new URL(env.SUPABASE_URL).origin&&/^\/rest\/v1\/rpc\/(?:inventory_snapshot|employee_system_ready)$/.test(url.pathname);
+   const mediaSign=url.origin===new URL(env.SUPABASE_URL).origin&&url.pathname.startsWith('/storage/v1/object/sign/'+encodeURIComponent(env.SUPABASE_STORIES_BUCKET||'mirpanel-stories')+'/');
    // No mail, supplier orders, Sheets writes, reservations, queue refresh RPC,
-   // migrations or storage signing/uploads can escape standby via HTTP.
-   if(!['GET','HEAD'].includes(method)&&!(method==='POST'&&readRpc))throw Error('STANDBY_OUTBOUND_WRITE_BLOCKED');
+   // migrations, receipt signing or storage uploads can escape standby via HTTP.
+   // Public stories/banner signing issues a short-lived read URL, never uploads.
+   if(!['GET','HEAD'].includes(method)&&!(method==='POST'&&(readRpc||mediaSign)))throw Error('STANDBY_OUTBOUND_WRITE_BLOCKED');
    return send(input,init);
   };}
  };
