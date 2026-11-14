@@ -193,6 +193,7 @@ export function createPaymentSystem(options) {
   }
 
   async function publicRate(request, action, seconds, maxHits) {
+    if(config.deploymentStandby)return; // Standby reads require the private probe token at the server boundary.
     await store.rateLimit(`${action}:${security.ipHash(clientIp(request))}`, seconds, maxHits);
   }
 
@@ -948,6 +949,7 @@ export function createPaymentSystem(options) {
       await store.rateLimit(`admin-login:${security.ipHash(clientIp(request))}`, 15 * 60, 12);
     },
     start() {
+      if(config.deploymentStandby)return;
       mailer.start();
       const cleanup = () => store.cleanupExpiredReceipts().then(()=>shop?.cleanup()).catch((error) => console.error("Payment receipt cleanup", error.code || 'CLEANUP_FAILED'));
       const stagedCleanup = () => store.cleanupStagedReceipts().catch(error=>console.error('Receipt staging cleanup',error.code || 'STORAGE_ERROR'));

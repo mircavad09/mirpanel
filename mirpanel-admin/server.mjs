@@ -1,4 +1,7 @@
 import crypto from "node:crypto";
+import {deploymentRuntime} from './deployment-runtime.mjs';
+const deployment=deploymentRuntime();
+if(deployment.standby)globalThis.fetch=deployment.readOnlyFetch(globalThis.fetch);
 import { createClient } from "@supabase/supabase-js";
 import fs from "node:fs";
 import http from "node:http";
@@ -41,6 +44,7 @@ const publicDir = path.join(root, "public");
 loadEnv(path.join(root, ".env"));
 
 const config = {
+  deploymentStandby: deployment.standby,
   employeeEnabled: process.env.EMPLOYEE_PANEL_ENABLED === 'true',
   port: Number(process.env.PORT || 8787),
   repo: process.env.MIRPANEL_GITHUB_REPO || "mircavad09/mirpanel",
@@ -1473,8 +1477,7 @@ const apiIntegrations = config.encryptionKey && config.tokenSecret && process.en
     origins:process.env.SUPPLIER_API_ORIGINS,callbackUrl:new URL('/api/webhooks/epinby',process.env.RENDER_EXTERNAL_URL||'https://mirpanel.onrender.com').href,
     loadCatalog:async()=>extractAdminState((await getAppFile()).source)
   }) : null;
-apiIntegrations?.start();
-paymentSystem.start();
+if(deployment.workers){apiIntegrations?.start();paymentSystem.start();}
 
 const customerView=createCustomerView({
  authorize:async request=>getSession(request)?.role==='admin'?ownerCommunity.verifiedOwnerId():null,
@@ -1517,6 +1520,11 @@ const server = http.createServer(async (request, response) => {
   try {
     const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
     const pathname = requestUrl.pathname;
+    if(deployment.guard(request,response))return;
+    if(deployment.standby&&pathname==='/__deployment/probe'){
+      const {readOnlyDeploymentProbe}=await import('./deployment-probe.mjs');
+      return json(response,200,await readOnlyDeploymentProbe(process.env,()=>getAppFile()));
+    }
     if(pathname==='/api/webhooks/epinby'){
       if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'});
       if(!apiIntegrations)return json(response,503,{error:'Xidmət hazır deyil.'});
@@ -1653,6 +1661,7 @@ const server = http.createServer(async (request, response) => {
 });
 
 server.listen(config.port, () => {
+  if(!deployment.workers){console.log('DEPLOYMENT_STANDBY_READ_ONLY');return;}
   if(process.env.COMMUNITY_PUBLIC_ENABLED==='true')adminPush.start();
   void ownerCommunity.startWelcomeDelivery().catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
   if(process.env.NETFLIX_ROOM_SHEET_ID){
