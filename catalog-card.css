@@ -256,3 +256,43 @@
   :is(.home-page #grid,.catalog-grid) .homeCardAdd { transition: none; }
 }
 .card.epinby-game-card .imgWrap .img{object-fit:contain!important;object-position:center!important;background:#101114}
+
+/* Desktop: keep the purchase action beside the price, without an empty footer. */
+@media (min-width: 768px) {
+  :is(.home-page #grid,.catalog-grid) .homeProductCard .pad {
+    grid-template-columns: minmax(0, 1fr) 116px;
+    grid-template-rows: 35px 48px;
+    grid-template-areas: "title title" "price action";
+    grid-auto-rows: auto;
+    align-content: start;
+    gap: 2px 4px!important;
+    padding: 8px 12px 11px!important;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeCardPrices {
+    align-self: center;
+    align-content: center;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeCardSales {
+    grid-area: auto;
+    grid-column: 1 / -1;
+    min-height: 0;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeCardSales[hidden],
+  :is(.home-page #grid,.catalog-grid) .cardStockLine:is(:empty,[hidden]) {
+    display: none!important;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeProductCard .cardStockLine {
+    grid-area: auto;
+    grid-column: 1 / -1;
+    margin: 0;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeCardAdd {
+    align-self: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+  }
+  :is(.home-page #grid,.catalog-grid) .homeCardAdd:focus-visible:not(:disabled) {
+    border-radius: 24px;
+  }
+}
