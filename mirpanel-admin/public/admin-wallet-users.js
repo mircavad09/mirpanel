@@ -117,17 +117,17 @@ export async function mountUsers({root,call,alive,userFilter='all'}){
    if(entry.revision!==revision){lease.active=false;return;}
    if(entry.loaded&&signature(tab,responses)===entry.signature){lease.active=false;return;}
    // Fetch while editing, but never replace a form or an open operation dialog.
-   if(entry.loaded&&!force&&editing(entry)){lease.active=false;errors.textContent='Məlumat arxa planda alındı. Formadakı dəyişiklikləriniz qorunur.';return;}
+   if(entry.loaded&&!force&&editing(entry)){lease.active=false;preservePosition(()=>{errors.textContent='Məlumat arxa planda alındı. Formadakı dəyişiklikləriniz qorunur.';});return;}
    preservePosition(()=>{entry.lease.active=false;entry.lease=lease;stage.hidden=tab!==activeTab;entry.panel.replaceWith(stage);entry.panel=stage;entry.responses=responses;entry.signature=signature(tab,responses);entry.loaded=true;});
    for(const name of ['input','change'])stage.addEventListener(name,()=>{entry.dirty=true;entry.editVersion++;});
-  }catch(e){lease.active=false;if(valid()&&selected?.user.id===userId){errors.textContent=e.message;if(!entry.loaded)entry.panel.replaceChildren(el('p',e.message),button('Yenidən cəhd et',safe(()=>refreshTab(tab))));}}
+  }catch(e){lease.active=false;if(valid()&&selected?.user.id===userId){preservePosition(()=>{errors.textContent=e.message;});if(!entry.loaded)entry.panel.replaceChildren(el('p',e.message),button('Yenidən cəhd et',safe(()=>refreshTab(tab))));}}
   finally{if(entry.pending===run)entry.pending=null;}});entry.pending=run;return run;
  }
  async function history(){return refreshTab('balance',{force:true});}
  async function refreshProfile({automatic=false}={}){
   if(!valid()||detail.hidden||!selected)return;if(profileRead)return profileRead;
   const userId=selected.user.id,runId=showRequest;
-  const run=Promise.resolve().then(async()=>{try{const r=await coalesced('/users/'+encodeURIComponent(userId));if(!valid()||selected?.user.id!==userId||runId!==showRequest)return;Object.assign(selected,r);updateIdentity();await Promise.all([...tabsCache.keys()].map(tab=>refreshTab(tab,{automatic})));}catch(e){if(valid())errors.textContent=e.message;}finally{if(profileRead===run)profileRead=null;}});profileRead=run;return run;
+  const run=Promise.resolve().then(async()=>{try{const r=await coalesced('/users/'+encodeURIComponent(userId));if(!valid()||selected?.user.id!==userId||runId!==showRequest)return;Object.assign(selected,r);preservePosition(updateIdentity);await Promise.all([...tabsCache.keys()].map(tab=>refreshTab(tab,{automatic})));}catch(e){if(valid())preservePosition(()=>{errors.textContent=e.message;});}finally{if(profileRead===run)profileRead=null;}});profileRead=run;return run;
  }
  async function drawHistory(target,read){const r=await read('/wallet?'+new URLSearchParams({userId:selected.user.id,page:historyPage,q:historyQ,view:historyView}));if(!valid())return;const summary=el('div');summary.className='wu-balance';summary.append(el('strong',money(r.cents)),button('Balansı idarə et',safe(()=>manage(r.cents,r.debitAvailable))));const search=el('input');search.placeholder='Əməliyyat və ya səbəb axtar';search.value=historyQ;const filter=el('select');filter.append(el('option','Hamısı'));const tools=el('div');tools.append(button('Tarix',()=>{historyView='history';historyPage=1;safe(history)();}),button('Ödənişlər',()=>{historyView='payments';historyPage=1;safe(history)();}),search,button('Axtar',()=>{historyQ=search.value;historyPage=1;safe(history)();}),filter);const rows=el('div');rows.className='wu-ledger';for(const x of r.items){rows.append(walletCard(x,selected.user.memberNumber));}if(!r.items.length)rows.append(el('p','Əməliyyat yoxdur.'));const previous=button('Əvvəlki',()=>{historyPage--;safe(history)();}),more=button('Növbəti',()=>{historyPage++;safe(history)();});previous.disabled=historyPage===1;more.disabled=!r.more;target.replaceChildren(summary,tools,rows,previous,more);}
  function manage(cents,debitAvailable){
