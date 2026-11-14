@@ -140,3 +140,15 @@
 
 /delivery-message.mjs
   Cache-Control: private, no-cache, no-store, must-revalidate
+
+/home-loading.js
+  Cache-Control: private, no-cache, no-store, must-revalidate
+
+/home-loading.css
+  Cache-Control: private, no-cache, no-store, must-revalidate
+
+/cms-site.js
+  Cache-Control: private, no-cache, no-store, must-revalidate
+
+/stories.js
+  Cache-Control: private, no-cache, no-store, must-revalidate

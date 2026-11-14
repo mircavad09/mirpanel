@@ -251,14 +251,15 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=profile-loading-1$2');
   next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=epinby-account-1$2');
   next=next.replace(/(src=["'])\/?browser-nav\.js(?:\?[^"']*)?(["'])/g,'$1/browser-nav.js?v=seven-chat-panel-1$2');
-  next=next.replace(/(src=["'])\/?(home-loading|seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
+  next=next.replace(/(src=["'])\/?(seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
   next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=epinby-compact-1$3');
   next=next.replace(/(src=["'])\/?catalog-card\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-card.js?v=game-covers-1$2');
   next=next.replace(/(src=["'])\/?catalog-listing\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-listing.js?v=epinby-account-1$2');
   next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=product-summary-1$2');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
-  next=next.replace(/(src=["'])\/?cms-site\.js(?:\?[^"']*)?(["'])/g,'$1/cms-site.js?v=home-stable-20261031$2');
-  next=next.replace(/(src=["'])\/?stories\.js(?:\?[^"']*)?(["'])/g,'$1/stories.js?v=home-first-paint-1$2');
+  next=next.replace(/(src=["'])\/?(home-loading|cms-site|stories|stock-display-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-recovery-1$3');
+  next=next.replace(/(href=["'])\/?home-loading\.css(?:\?[^"']*)?(["'])/g,'$1/home-loading.css?v=home-recovery-1$2');
+
   next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=seven-chat-panel-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=home-first-paint-1$2');
   next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=desktop-compact-price-1$2');
@@ -319,7 +320,7 @@ export async function onRequest(context) {
 
   if (isStaticAsset(pathname)) {
     const response = await fastProductImage(context,url) || await context.next();
-    if (!/^\/(?:app\.js|browser-orders\.js|delivery-message\.mjs|page-navigation\.js|stock-display-fix\.js|catalog-card\.(?:css|js))$/.test(pathname)) return response;
+    if (!/^\/(?:app\.js|browser-orders\.js|delivery-message\.mjs|page-navigation\.js|stock-display-fix\.js|catalog-card\.(?:css|js)|home-loading\.(?:css|js)|cms-site\.js|stories\.js)$/.test(pathname)) return response;
     const headers = new Headers(response.headers);
     headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
     headers.set("Cloudflare-CDN-Cache-Control", "no-store");
@@ -363,7 +364,7 @@ export async function onRequest(context) {
     let html = withSeoScripts(await response.text());
     html = html.replace(/(src=["'])\/?product-page\.js(?:\?[^"']*)?(["'])/g,'$1/product-page.js?v=similar-scroll-2$2');
     html = html.replace(/(href=["'])\/?product-page\.css(?:\?[^"']*)?(["'])/g,'$1/product-page.css?v=similar-scroll-2$2');
-    html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(10000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
+    html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(25000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
     // The static order button must not accept an early click before the
     // current product and the real order handler have both initialized.
     html = html.replace(/<button\b[^>]*\bid="pp-order-btn"[^>]*>/i, tag =>

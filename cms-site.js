@@ -1,8 +1,8 @@
 (function () {
-  const source = typeof CMS_CONTENT === "object" && CMS_CONTENT ? CMS_CONTENT : {};
-  const site = source.site || {};
-  const home = source.homepage || {};
-  const common = source.commonTexts || {};
+  let source = typeof CMS_CONTENT === "object" && CMS_CONTENT ? CMS_CONTENT : {};
+  let site = source.site || {};
+  let home = source.homepage || {};
+  let common = source.commonTexts || {};
   // Do not revive a deleted static banner while the first CMS read is pending.
   let liveBanners = [];let initialBannersResolved=false;
   let bannersManaged = false;
@@ -300,6 +300,23 @@
       return link;
   }
 
+  function showBannerFailure(){
+    const layout=document.getElementById('homeHero');if(!layout||layout.querySelector('[data-media-retry]'))return;
+    const status=document.createElement('p'),button=document.createElement('button');status.className='home-media-retry';status.dataset.mediaRetry='';status.setAttribute('role','status');status.append('Bannerlər yüklənmədi. ');button.type='button';button.textContent='Yenidən cəhd et';button.onclick=()=>void pollHomepageBanners();status.append(button);layout.append(status);
+  }
+  function receiveBanners(payload){
+    document.querySelector('#homeHero [data-media-retry]')?.remove();
+      if(payload.managed===false && !bannersManaged) {
+        if(bannerRevision!=='legacy') {initialBannersResolved=true;liveBanners=null;bannerRevision='legacy';applyBanners();}
+        return;
+      }
+      if(payload.managed!==true || !Array.isArray(payload.banners)) return;
+      const revision=JSON.stringify(payload.banners);
+      if(revision===bannerRevision) return;
+      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,productId:b.productId,productTitle:b.productTitle,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus})).sort((a,b)=>a.order-b.order || String(a.id).localeCompare(String(b.id)));
+      // Render metadata immediately; an image must not gate the whole panel.
+      initialBannersResolved=true;liveBanners=next; bannersManaged=true; bannerRevision=revision; applyBanners();
+  }
   async function pollHomepageBanners() {
     clearTimeout(bannerPollTimer);
     if(window.MirpanelNavigation&&location.pathname!=='/')return;
@@ -311,20 +328,11 @@
       const early=window.mirpanelHomeMedia;const response=early?null:await fetch(`${base}/api/homepage-banners`,{cache:'no-cache',signal:controller.signal});
       if(response&&!response.ok) return;
       const payload=early?await early.request('banners'):await response.json();
-      if(payload.managed===false && !bannersManaged) {
-        if(bannerRevision!=='legacy') {initialBannersResolved=true;liveBanners=null;bannerRevision='legacy';applyBanners();}
-        return;
-      }
-      if(payload.managed!==true || !Array.isArray(payload.banners)) return;
-      const revision=JSON.stringify(payload.banners);
-      if(revision===bannerRevision) return;
-      const next=payload.banners.filter(b=>b.active===true && safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,productId:b.productId,productTitle:b.productTitle,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus})).sort((a,b)=>a.order-b.order || String(a.id).localeCompare(String(b.id)));
-      // Render metadata immediately; an image must not gate the whole panel.
-      initialBannersResolved=true;liveBanners=next; bannersManaged=true; bannerRevision=revision; applyBanners();
-    } catch {if(!initialBannersResolved){initialBannersResolved=true;applyBanners();} /* retain last functioning banners */ }
+      receiveBanners(payload);
+    } catch {showBannerFailure(); /* Never collapse pending geometry on a failed read. */ }
     finally {
       clearTimeout(timeout); bannerPollBusy=false;
-      if(!document.hidden&&(!window.MirpanelNavigation||location.pathname==='/')) bannerPollTimer=setTimeout(pollHomepageBanners,3000);
+      if(!document.hidden&&(!window.MirpanelNavigation||location.pathname==='/')) bannerPollTimer=setTimeout(pollHomepageBanners,15000);
     }
   }
 
@@ -480,13 +488,17 @@
     }
   }
 
-  applyBrand();
-  applyContact();
-  applyHomepage();
-  applyNavigation();
+  function applyContent(){
+    if(typeof CMS_CONTENT!=='object'||!CMS_CONTENT)return;
+    source=CMS_CONTENT;site=source.site||{};home=source.homepage||{};common=source.commonTexts||{};
+    applyBrand();applyContact();applyHomepage();applyNavigation();applySecondaryProductBanner();applySupportCard();applyCommonTexts();applyFooter();applySeo();
+  }
+  applyContent();window.addEventListener('mirpanel:catalog-runtime-ready',()=>{applyContent();applyBanners();});
+
   const cachedBanners=window.mirpanelHomeMedia?.cached('banners');
   if(cachedBanners?.managed===true&&Array.isArray(cachedBanners.banners)){liveBanners=cachedBanners.banners.filter(b=>b.active===true&&safeImage(b.image)).map(b=>({desktopImage:b.image,mobileImage:b.mobileImage,title:b.title,alt:b.title,url:b.url,productId:b.productId,productTitle:b.productTitle,newTab:b.newTab,order:b.order,id:b.id,placement:b.placement==='side'?'side':'main',focus:b.focus}));initialBannersResolved=true;bannerRevision=JSON.stringify(cachedBanners.banners);}
   applyBanners();
+  window.mirpanelHomeMedia?.subscribe('banners',receiveBanners);
   void pollHomepageBanners();
   window.addEventListener('mirpanel:route-leave',()=>clearTimeout(bannerPollTimer));
   window.addEventListener('mirpanel:route-ready',e=>{if(e.detail.path==='/')void pollHomepageBanners();});
@@ -494,23 +506,5 @@
     clearTimeout(bannerPollTimer);
     if(!document.hidden) void pollHomepageBanners();
   });
-  applySecondaryProductBanner();
-  applySupportCard();
-  applyCommonTexts();
-  applyFooter();
-  applySeo();
-  window.addEventListener("DOMContentLoaded", () => {
-    setTimeout(() => {
-      applyBrand();
-      applyContact();
-      applyHomepage();
-      applyNavigation();
-      applyBanners();
-      applySecondaryProductBanner();
-      applySupportCard();
-      applyCommonTexts();
-      applyFooter();
-      applySeo();
-    }, 0);
-  });
+  window.addEventListener('DOMContentLoaded',applyContent);
 })();

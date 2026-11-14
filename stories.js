@@ -163,14 +163,17 @@
     section.classList.remove('media-pending');section.hidden = !stories.length;
   }
 
+  function receiveStories(payload){section.querySelector('[data-media-retry]')?.remove();
+      const nextRevision=JSON.stringify(payload.stories||[]);if(nextRevision===revision)return;revision=nextRevision;stories = (payload.stories || []).filter((story) => story.active !== false && story.coverUrl && Array.isArray(story.items) && story.items.length);
+      render();
+  }
   async function load() {
     try {
       const early=window.mirpanelHomeMedia;const response=early?null:await fetch(`${API_BASE}/api/stories`, { mode: "cors", credentials: "omit", cache: "no-cache",signal:AbortSignal.timeout(10000) });
       if (response&&!response.ok) throw new Error("Stories cavabı uğursuzdur.");
       const payload = early?await early.request('stories'):await response.json();
-      const nextRevision=JSON.stringify(payload.stories||[]);if(nextRevision===revision)return;revision=nextRevision;stories = (payload.stories || []).filter((story) => story.active !== false && story.coverUrl && Array.isArray(story.items) && story.items.length);
-      render();
-    } catch {if(!stories.length){section.classList.remove('media-pending');section.hidden = true;} }
+      receiveStories(payload);
+    } catch {if(!section.querySelector('[data-media-retry]')){const status=document.createElement('p'),button=document.createElement('button');status.dataset.mediaRetry='';status.className='home-media-retry';status.append('Storylər yüklənmədi. ');button.type='button';button.textContent='Yenidən cəhd et';button.onclick=()=>void load();status.append(button);section.append(status);}}
   }
 
   document.getElementById("storyViewerClose").addEventListener("click", closeViewer);
@@ -190,6 +193,7 @@
   });
   viewer.addEventListener("touchstart", (event) => { touchX = event.touches[0]?.clientX || 0; }, { passive: true });
   viewer.addEventListener("touchend", (event) => { const distance = (event.changedTouches[0]?.clientX || touchX) - touchX; if (Math.abs(distance) > 50) move(distance < 0 ? 1 : -1); }, { passive: true });
+  window.mirpanelHomeMedia?.subscribe('stories',receiveStories);
   const cached=window.mirpanelHomeMedia?.cached('stories');
   if(cached){stories=(cached.stories||[]).filter(s=>s.active!==false&&s.coverUrl&&Array.isArray(s.items)&&s.items.length);render();}
   let refreshTimer;const refreshStories=()=>{clearTimeout(refreshTimer);if(!document.hidden&&(!window.MirpanelNavigation||location.pathname==='/'))load().finally(()=>{if(!window.MirpanelNavigation||location.pathname==='/')refreshTimer=setTimeout(refreshStories,15000);});};
