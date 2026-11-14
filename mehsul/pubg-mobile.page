@@ -224,7 +224,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=stable-buy-1-1b4d64a8af213970"></script>
+  <script src="/app.js?v=stable-buy-1-08e9de200eef48e8"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=stable-buy-1"></script>
   <script src="/stock-display-fix.js?v=stable-buy-1"></script>
