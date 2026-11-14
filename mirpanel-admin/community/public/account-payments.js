@@ -91,7 +91,7 @@ export function mountPayments({readOnly=false,content,api,el,button,link,validat
   if(!data)return;
   clearRows();
   const q=normalize(search.value);
-  const rows=data.items.filter(row=>!q||normalize([
+  const rows=data.items.filter(row=>row.kind==='topup').filter(row=>!q||normalize([
    row.title,row.by_receipt?'Qəbzlə ödəniş':'',numberLabel(row),statuses[row.status],money(row.cents),timestamp(row.submitted_at),timestamp(row.operation_at)
   ].join(' ')).includes(q));
   list.append(...rows.map(renderRow));
@@ -129,7 +129,7 @@ export function mountPayments({readOnly=false,content,api,el,button,link,validat
    message.replaceChildren('Ödənişlər yüklənmədi. ',button('Yenidən cəhd et',()=>load(!!data)));
   }}
  }
- const hidePreview=()=>{if(document.hidden&&dialog.open){preview++;media.replaceChildren();dialog.close();}};
+ const hidePreview=()=>{if(document.hidden&&dialog.open){preview++;media.replaceChildren();dialog.close();}else if(!document.hidden)void load(true);};
  const refreshRestoredPage=event=>{if(event.persisted)void load(true);};
  document.addEventListener('visibilitychange',hidePreview);
  window.addEventListener('pageshow',refreshRestoredPage);

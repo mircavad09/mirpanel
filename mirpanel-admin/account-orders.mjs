@@ -38,13 +38,13 @@ export function createAccountOrders({security,store,resolve}){
    if(code&&!orderCodeValid(code))throw Object.assign(Error('Sifariş nömrəsi düzgün deyil.'),{status:400});
    if(cursor){try{const c=JSON.parse(security.decryptSecret(cursor));if(c.purpose!=='account-orders-page'||c.userId!==s.userId||!Number.isFinite(Date.parse(c.createdAt))||! /^[0-9a-f-]{36}$/.test(c.id))throw Error();before=c.createdAt;id=c.id;}catch{throw Object.assign(Error('Səhifə göstəricisi düzgün deyil.'),{status:400});}}
    const catalogRequest=Promise.resolve().then(()=>s.catalog?.()).catch(()=>null);
-   const [rows,target,topups]=await Promise.all([s.page(before,id),!cursor&&code?s.byCode?.(code):null,!cursor&&s.topups?s.topups():null]);
+   const [rows,target]=await Promise.all([s.page(before,id),!cursor&&code?s.byCode?.(code):null]);
    const page=rows.slice(0,20),last=page.at(-1);
    if(target&&!page.some(o=>o.id===target.id))page.unshift(target);
    const [deliveries,catalog]=await Promise.all([s.deliveries?.(page.map(o=>o.id)),catalogRequest]);
    const products=new Map((catalog?.products||[]).map(p=>[p.id,p]));
    const flows=!deliveries&&page.length&&store.workforceOrders?await store.workforceOrders(page.map(o=>o.id)):new Map();
-   const result={accountId:s.userId,...(!cursor&&s.topups?{topups}:{}),orders:page.map(o=>{
+   const result={accountId:s.userId,orders:page.map(o=>{
     const records=(deliveries||[]).filter(d=>d.order_id===o.id);
     const status=deliveries?customerStatus(o,records):o.status;
     const cancellation=o.fulfillment_cancellation;

@@ -80,7 +80,7 @@ export function renderAccountPanel(ctx){
  const readList=async()=>{const data=await api(listPath);return data;};
  const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
  if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
- const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=profile-loading-1',codes:'./account-codes.js?v=code-artwork-1',payments:'./account-payments.js?v=read-navigation-3',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
+ const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=topups-only-1',codes:'./account-codes.js?v=code-artwork-1',payments:'./account-payments.js?v=topups-only-1',subscriptions:'./account-subscriptions.js?v=netflix-room-renewal-1'}[id];
  const retry=moduleRetries.get(id)||0,module=url?(tabModules.get(id)||import(url+(retry?'&retry='+retry:''))):null;
  let timeout;
  const tabModule=module&&(tabModules.has(id)?module:Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).then(m=>{tabModules.set(id,m);return m;}).finally(()=>clearTimeout(timeout)));
@@ -113,7 +113,12 @@ export function renderAccountPanel(ctx){
  if(id==='payments'){const {mountPayments}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountPayments({...options,initial:sessionLists.entries.get(paymentPath(ui.status,ui.page)),initialRequest:listPath===paymentPath(ui.status,ui.page)?pending:null,getCached:(s,p)=>sessionLists.entries.get(paymentPath(s,p)),onData:(d,s,p)=>cache(d,paymentPath(s,p))});return;}
  if(id==='codes'){const {mountCodes}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountCodes(options);return;}
  if(id==='subscriptions'){const {mountSubscriptions}=tabModules.get(id)||await tabModule;if(!stopped&&run===load)disposeChild=mountSubscriptions(options);return;}
- const renderExpenses=d=>content.replaceChildren(el('section',{class:'account-empty'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},money(d.expensesCents)),el('p',{},d.completedOrders+' təsdiqlənmiş alış · AZN'),el('p',{},'Balans əlavələri xərc sayılmır. Qaytarılmış məbləğlər çıxılıb.')));
+ const renderExpenses=d=>{
+  if(!document.head.querySelector('link[data-payment-history]'))document.head.append(el('link',{rel:'stylesheet',href:'/community-assets/account-payments.css?v=topup-result-1','data-payment-history':'','data-shell-persistent':''}));
+  const rows=el('div',{class:'account-payment-list'});
+  for(const row of d.payments||[])rows.append(el('article',{class:'account-payment-row'},el('div',{class:'account-payment-info'},link(row.product_title||'Məhsul sifarişi','/profil?tab=sifarislerim&order='+encodeURIComponent(row.order_code)),el('small',{},row.plan_name||''),el('small',{},new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'short',timeStyle:'short'}).format(new Date(row.created_at)))),el('strong',{},money(Number(row.cents)))));
+  content.replaceChildren(el('section',{class:'account-expense-history'},el('h1',{},'Xərclərim'),el('strong',{class:'account-expenses'},money(d.expensesCents)),el('p',{},d.completedOrders+' təsdiqlənmiş alış · AZN'),el('p',{},'Balans əlavələri xərc sayılmır. Qaytarılmış məbləğlər çıxılıb.'),rows));
+ };
  const priorSummary=ui.summary;if(priorSummary)renderExpenses(priorSummary);
  try{const d=await accountData();if(stopped||run!==load)return;ui.summary=d;renderExpenses(d);}catch(e){if(!priorSummary)throw e;content.append(button('Yenidən cəhd et',()=>show(id)));}
  }catch(e){if(!stopped&&run===load){if(e.status===401){window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));return;}content.replaceChildren(el('h1',{},label),empty('Məlumat yüklənmədi','Yenidən cəhd edin.'),button('Yenidən cəhd et',()=>{if(!verified&&ctx.session){first=ctx.session(true);void first.catch(()=>{});}void show(id);}));}}}

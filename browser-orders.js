@@ -423,12 +423,12 @@ function netflixScreen(animation,create){
   const total=o.amount==null?'—':esc(money(o.amount));
   return '<details class="browser-order" data-order-id="'+esc(o.id)+'" data-order-code="'+esc(o.orderCode)+'"><summary class="browser-order-header">'+photo(items[0]?.image)+'<div class="browser-order-heading"><div class="browser-order-meta"><span class="browser-order-status" data-status="'+esc(o.status)+'">'+(o.status==='completed'?completedIcon:icons[o.status]?'<span aria-hidden="true">'+icons[o.status]+'</span> ':'')+esc(statuses[o.status]||'Status məlum deyil')+'</span><span class="browser-order-code">№ '+esc(o.orderCode)+'</span><time>'+esc(date(o.createdAt))+'</time></div><strong>'+esc(o.product)+'</strong></div><strong class="browser-order-price">'+total+'</strong><svg class="browser-order-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><div class="browser-order-items">'+rows+(o.cancellation?'<p class="browser-order-cancellation">'+esc(o.statusMessage)+'</p>'+(o.cancellation.reason?'<p class="browser-order-cancellation" style="white-space:pre-wrap">Səbəb — '+esc(o.cancellation.reason)+'</p>':''):'')+'</div><div class="browser-order-actions browser-order-footer"><div class="browser-order-total"><span>Cəmi</span><strong class="browser-order-price">'+total+'</strong></div>'+(o.receiptAvailable?'<button type="button" data-receipt="'+esc(o.id)+'">Qəbzə bax</button>':'')+'</div></details>';
  }
- function topup(t){const status={reviewing:'Yoxlanılır',approved:'Təsdiqləndi',rejected:'Rədd edildi'}[t.status];if(!status)return '';return '<article class="browser-order browser-order-topup" data-topup-id="'+esc(t.id)+'"><header class="browser-order-header"><div><span class="browser-order-code">Balans artırma</span><time>'+esc(date(t.created_at))+'</time></div><span class="browser-order-status" data-status="'+esc(t.status)+'">'+status+'</span><strong class="browser-order-price">'+esc(money(Number(t.approved_cents??t.requested_cents)/100))+'</strong></header></article>';}
+
  root.addEventListener('error',e=>{if(e.target.matches?.('.browser-order-image img'))e.target.hidden=true;},{capture:true,signal:life.signal});
  const latestCompleted=d=>d.orders.find(order=>order.status==='completed')?.id??null;
  function paint(d,append=false,{live=false}={}){
   hasAppended=append||d.retainedPages===true;
-  if(!append)pageFingerprint=JSON.stringify([d.orders,d.topups]);
+  if(!append)pageFingerprint=JSON.stringify(d.orders);
   const expanded=new Set([...expandedOrders,...[...root.querySelectorAll('[data-order-id][open]')].map(x=>x.dataset.orderId)]);
   if(!target&&(!append||!autoOrder)){
    const newest=latestCompleted(d);
@@ -444,7 +444,6 @@ function netflixScreen(animation,create){
     node.remove();
    }
    seen.clear();
-   for(const t of d.topups||[])root.insertAdjacentHTML('beforeend',topup(t));
   }
   for(const [id,data] of Object.entries(d.deliveryDetails||{}))if(typeof data?.text==='string')credentials.set(id,data);
   const ordered=[];
@@ -488,7 +487,7 @@ function netflixScreen(animation,create){
     root.querySelectorAll('[data-order-id][open]').forEach(showAccounts);
     return;
    }
-   if(append||!loaded||JSON.stringify([d.orders,d.topups])!==pageFingerprint)paint(d,append,{live});
+   if(append||!loaded||JSON.stringify(d.orders)!==pageFingerprint)paint(d,append,{live});
    else{
     for(const [id,data] of Object.entries(d.deliveryDetails||{}))if(typeof data?.text==='string')credentials.set(id,data);
     root.querySelectorAll('[data-order-id][open]').forEach(showAccounts);

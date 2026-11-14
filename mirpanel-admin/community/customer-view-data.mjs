@@ -23,7 +23,6 @@ export async function readCustomerView(pool,userId,path,{catalog,security,store}
   const fields="to_jsonb(o)->>'product_id' as product_id,to_jsonb(o)->>'plan_id' as plan_id,(to_jsonb(o)->>'duration_months')::integer as duration_months,to_jsonb(o)->>'service_expires_on' as service_expires_on,o.id,o.checkout_snapshot,o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.created_at,o.status,to_jsonb(o)->'fulfillment_cancellation' as fulfillment_cancellation,(to_jsonb(o)->>'payment_confirmed')::boolean as payment_confirmed,(to_jsonb(o)->>'quantity')::integer as quantity,o.receipt_path,o.receipt_mime,o.receipt_deleted_at";
   const base=`select ${fields} from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1`;
   const scope={userId,catalog,
-   topups:async()=>(await c.query("select id,requested_cents::text,approved_cents::text,status,created_at from wallet_topups where user_id=$1 and status<>'draft' order by created_at desc,id desc limit 30",[userId])).rows,
    page:async(before,id)=>(await c.query(base+' and ($2::timestamptz is null or (o.created_at,o.id)<($2::timestamptz,$3::uuid)) order by o.created_at desc,o.id desc limit 21',[userId,before,id])).rows,
    owned:async id=>(await c.query(base+' and o.id=$2::uuid',[userId,id])).rows[0]||null,
    byCode:async code=>(await c.query(base+' and o.order_code::text=$2',[userId,code])).rows[0]||null,

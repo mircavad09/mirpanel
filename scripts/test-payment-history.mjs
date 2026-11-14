@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import {shopFixture} from './shop-test-fixture.mjs';
-import {paymentHistory} from '../mirpanel-admin/community/account-panel.mjs';
+import {accountPanel,paymentHistory} from '../mirpanel-admin/community/account-panel.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
 import {bakuDate} from '../mirpanel-admin/payment-order-lifecycle.mjs';
 
@@ -28,14 +28,14 @@ try{
  await shop.admin(pool,{id:'owner'},{action:'approve',id:credit.id,amount:'5.50'});
  await pool.query("update wallet_topups set submitted_at=(($2::date - 1 + time '23:59:59') at time zone 'Asia/Baku'),decided_at=(($2::date + time '00:00:00') at time zone 'Asia/Baku') where id=$1",[credit.id,month]);
  const credited=await history();
- assert.deepEqual([credited.balance,credited.total,credited.month],['550','0','550']);
+ assert.deepEqual([credited.balance,credited.total,credited.month],['550','550','550']);
  assert.equal((await pool.query("select count(*)::int as n from wallet_ledger where request_id=$1 and kind='topup_credit'",[credit.id])).rows[0].n,1);
  const input={productId:'ordinary',planIndex:0,quantity:1},quote=(await shop.quote(a,[input],hash)).items[0];
  const items=[{...input,termsVersion:quote.termsVersion}];
  const order=await shop.checkout(a,hash,{items,mode:'wallet',requestId:id(),consentAccepted:true});
  await pool.query("update payment_orders set created_at=(($2::date + time '00:00:01') at time zone 'Asia/Baku') where id=$1",[order.orderId,month]);
- const after=await history();assert.deepEqual([after.balance,after.total,after.month,after.rejectedCents,after.rejected],['50','500','550','200',1]);
- assert.equal(after.items.find(r=>r.id===order.orderId).number,String(order.orderCode));
+ const after=await history();assert.deepEqual([after.balance,after.total,after.month,after.rejectedCents,after.rejected],['50','550','550','200',1]);
+ assert.equal(after.items.some(r=>r.id===order.orderId),false);assert(after.items.every(r=>r.kind==='topup'));
  const approved=after.items.find(r=>r.id===credit.id);
  assert.equal(approved.number,'2');assert.equal(approved.cents,550);assert.notEqual(approved.submitted_at,approved.operation_at);
  assert.equal((await history('status=approved')).items.find(r=>r.id===credit.id).number,'2');
@@ -49,19 +49,18 @@ try{
  await f.rpc('approve_payment_order_v7',[card.orderId,null,'synthetic-admin']);
  await pool.query("update payment_orders set created_at=(($2::date - 1 + time '23:59:59') at time zone 'Asia/Baku'),approved_at=(($2::date + time '00:00:02') at time zone 'Asia/Baku') where id=$1",[card.orderId,month]);
  const purchased=await history('status=approved');
- assert.equal(purchased.month,'1050');assert.equal(purchased.total,'1000');
- const cardRow=purchased.items.find(r=>r.id===card.orderId);assert.equal(cardRow.by_receipt,true);
- assert.notEqual(cardRow.submitted_at,cardRow.operation_at);
+ assert.equal(purchased.month,'550');assert.equal(purchased.total,'550');
+ assert.equal(purchased.items.some(r=>r.id===card.orderId),false);
  await pool.query('update payment_orders set approved_at=null where id=$1',[card.orderId]);
  const withoutTime=await history('status=approved');
- assert.equal(withoutTime.total,'1000');assert.equal(withoutTime.month,'550');
- assert.equal(withoutTime.items.find(r=>r.id===card.orderId).operation_at,null);
+ assert.equal(withoutTime.total,'550');assert.equal(withoutTime.month,'550');
+
  assert.equal((await cards.receipt(a,card.orderId)).mime,'image/png');await assert.rejects(cards.receipt(b,card.orderId),{status:404});
  const pending=await Promise.all(Array.from({length:31},()=>create(a,'1.00')));
  await Promise.all(pending.map(r=>submit(a,r)));
  const firstPage=await history('status=reviewing'),next=await history('status=reviewing&page=2');
  assert.deepEqual([firstPage.items.length,next.items.length,firstPage.more,next.more],[30,1,true,false]);
- assert.equal(next.reviewing,31);assert.equal(next.approved,3);assert.equal(next.rejected,1);
+ assert.equal(next.reviewing,31);assert.equal(next.approved,1);assert.equal(next.rejected,1);
  for(const data of [firstPage,next])assert.deepEqual([data.month,data.rejectedCents],['550','200']);
  assert.deepEqual([...firstPage.items,...next.items].map(x=>Number(x.number)).sort((x,y)=>x-y),Array.from({length:31},(_,i)=>i+3));
  await shop.admin(pool,{id:'owner'},{action:'reject',id:pending[0].id,reason:'Sınaq qəbzi'});
@@ -76,5 +75,16 @@ try{
  const focused=await history('topup='+legacy.id);assert.equal(focused.items.length,1);assert.equal(focused.items[0].id,legacy.id);assert.equal(focused.more,false);assert.equal(focused.all,(await history()).all);
  assert.equal((await history('topup='+legacy.id,'b')).items.length,0);await assert.rejects(history('topup=invalid'),{status:400});
  const confirmed=await shop.topupState(a,legacy.id);assert.equal(confirmed.number,'1');assert.equal(confirmed.cents,200);assert.equal(confirmed.receiptUploaded,true);
+ // Reproduce the reported 6.00 topup / 5.49 purchase entirely through real shop transactions.
+ f.catalog.products[0].plans[0].price=0.50;
+ const remainderQuote=(await shop.quote(a,[input],hash)).items[0];await shop.checkout(a,hash,{items:[{...input,termsVersion:remainderQuote.termsVersion}],mode:'wallet',requestId:id(),consentAccepted:true});
+ const six=await create(a,'6.00');await submit(a,six);await shop.admin(pool,{id:'owner'},{action:'approve',id:six.id,amount:'6.00'});
+ f.catalog.products[0].plans[0].price=5.49;
+ const spotifyQuote=(await shop.quote(a,[input],hash)).items[0];const purchase=await shop.checkout(a,hash,{items:[{...input,termsVersion:spotifyQuote.termsVersion}],mode:'wallet',requestId:id(),consentAccepted:true});
+ const exact=await history();assert.deepEqual([exact.balance,exact.total,exact.month],['51','1150','1150']);assert(exact.items.every(r=>r.kind==='topup'));assert.equal(exact.items.some(r=>r.id===purchase.orderId),false);
+ await pool.query('create table if not exists account_wishlist(user_id text,product_id text,created_at timestamptz default now())');
+ const expenses=await accountPanel(pool,'a',async()=>f.catalog);assert(expenses.payments.some(r=>String(r.order_code)===String(purchase.orderCode)&&r.cents==='549'));assert(expenses.payments.every(r=>r.product_title));
+ const orderReader=createAccountOrders({security:{},store:{},resolve:async()=>({userId:'a',page:async()=>(await pool.query('select o.* from payment_orders o join community_order_owners l on l.order_id=o.id where l.user_id=$1 order by o.created_at desc limit 21',['a'])).rows,topups:()=>{throw Error('Orders must never request topups');}})});
+ const list=await orderReader.list({});assert(!Object.hasOwn(list,'topups'));assert(list.orders.some(r=>r.id===purchase.orderId));
  console.log('PASS payment history: 5.50 approved topup, wallet debit without double counting, Baku month boundary, rejected and pending receipts, stable concurrent numbering, full-period counts, private receipts');
 }finally{await f.close();}

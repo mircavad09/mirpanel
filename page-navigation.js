@@ -69,7 +69,7 @@
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=az-addresses-1';
- const profileModule='/community-assets/profile-entry.js?v=code-artwork-1';
+ const profileModule='/community-assets/profile-entry.js?v=topups-only-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
@@ -139,7 +139,7 @@
   dispose=m.mountShop();
  }
  else if(document.getElementById('communityApp')){const m=await(preparedModule||moduleWithin(groupModule));if(run!==generation)return;dispose=m.mountCommunity();}
- else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=profile-loading-1',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
+ else if(document.getElementById('browserOrders')){await resource('/browser-orders.js?v=topups-only-1',run);if(run!==generation)return;dispose=window.mountBrowserOrders?.();}
  else if(!v.started){
   // Fetch together but execute in document order. A superseded route may
   // finish downloading; its scripts must never execute over the new view.
