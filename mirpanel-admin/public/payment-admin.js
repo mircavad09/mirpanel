@@ -808,6 +808,20 @@
       const dlg=document.createElement('dialog'),form=document.createElement('form');
       dlg.className='paymentActionDialog paymentDeliveryDialog';dlg.dataset.paymentDeliveryDialog='';form.innerHTML='<h2>Müştəri hesabına təhvil ver</h2><p>Hazır mesajı dəyişmək üçün Hazır hesab stoku bölməsini açın.</p><label>Məhsul və paket <select name="line"></select></label><label>Say <input name="quantity" type="number" min="1" step="1" value="1" required></label><label>Hesabın e-poçtu (istəyə bağlı)<input name="email" type="email" maxlength="254" autocomplete="off"></label><label>Hesabın şifrəsi (istəyə bağlı)<input name="password" type="text" maxlength="512" autocomplete="new-password" spellcheck="false" autocapitalize="off"></label><label>Müştəriyə hazır mesaj <textarea name="message" rows="7" readonly spellcheck="false"></textarea></label><p role="alert"></p><button class="btn" type="button">Bağla</button> <button class="btn primary" type="submit">Göndər və təhvil ver</button>';
       const {line,quantity,email,password,message}=form.elements,submit=form.querySelector('[type=submit]'),close=form.querySelector('[type=button]'),error=form.querySelector('[role=alert]');
+      // Per-dialog, per-line drafts: late preview replies must not erase admin input.
+      const accountDrafts=new Map(),earlyDraft={},earlyEdits=new Set();let accountLine=null;
+      for(const field of [email,password])field.addEventListener('input',()=>{
+        if(accountLine===null){earlyDraft[field.name]=field.value;earlyEdits.add(field.name);}
+        else accountDrafts.get(accountLine)[field.name]=field.value;
+      });
+      const fillAccount=x=>{
+        let draft=accountDrafts.get(x.index);
+        if(!draft){draft={email:x.customerAccount?.email||'',password:x.customerAccount?.password||''};
+          if(accountLine===null)for(const name of earlyEdits)draft[name]=earlyDraft[name];
+          accountDrafts.set(x.index,draft);
+        }
+        accountLine=x.index;email.value=draft.email;password.value=draft.password;
+      };
       const room=document.createElement('fieldset');
       room.hidden=true;
       room.innerHTML='<legend>Netflix Şəxsi</legend><label>Otaq adı<input name="roomName" maxlength="400" autocomplete="off"></label><label>Otaq kodu<input name="roomCode" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off"></label>';
@@ -819,6 +833,7 @@
       const renewalNote=document.createElement('label'),renewalCheck=document.createElement('input'),renewalText=document.createElement('span');
       renewalCheck.type='checkbox';renewalNote.append(renewalCheck,renewalText);error.before(renewalNote);
       line.onchange=()=>{const x=lines.find(x=>x.index===Number(line.value));if(!x)return;quantity.max=String(x.netflixRoom?1:x.remaining);quantity.value='1';message.value=x.message||'';
+        fillAccount(x);
         room.hidden=!x.netflixRoom;
         roomName.required=roomCode.required=!!x.netflixRoom;
         roomName.value=x.netflixRoom?.name||'';roomCode.value=x.netflixRoom?.code||'';submit.disabled=!message.value;
@@ -828,7 +843,7 @@
       const load=async()=>{
         if(loading)return;
         loading=true;retry.hidden=true;error.textContent='';status.textContent='Təhvil məlumatı yüklənir…';
-        for(const field of [line,quantity,email,password,message,submit,renewalCheck])field.disabled=true;
+        for(const field of [line,quantity,message,submit,renewalCheck])field.disabled=true;
         renewalNote.hidden=true;renewalNote.classList.add('hidden');
         try{
           let request=deliveryPreviewRequests.get(id);
@@ -841,6 +856,7 @@
           lines=state.lines.filter(x=>x.remaining>0);
           status.textContent=lines.length?'':'Təhvil üçün məhsul qalmayıb.';
           if(!lines.length)return;
+          line.replaceChildren();
           for(const x of lines)line.add(new Option(x.title+' · '+x.plan+' ('+x.remaining+' qalıb)'+(x.renewalOrderCode?' · Yeniləmə №'+x.renewalOrderCode:''),x.index));
           for(const field of [line,quantity,email,password,message,renewalCheck])field.disabled=false;
           line.onchange();

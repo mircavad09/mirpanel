@@ -7,6 +7,7 @@ import {topupMail} from './topup-mail.mjs';
 import {readProductMessages} from './ready-stock-product-messages.mjs';
 import {orderLines} from '../order-lines.mjs';
 import {bindNetflixRoom} from './netflix-room-stock.mjs';
+import {spotifyDeliveryPrefill} from './spotify-delivery-prefill.mjs';
 
 const D='mirpanel_community.customer_order_deliveries', M='mirpanel_community.customer_order_mail';
 const O='mirpanel_community.community_order_owners';
@@ -113,8 +114,9 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
    return {netflixRoom:{name:typeof values.name==='string'?values.name:'',
     code:typeof values.code_4==='string'?values.code_4:''}};
   };
-  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...netflixRoom(i),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
-  if(!input){await c.query('commit');return view();}
+  const prefill=i=>{if(input)return {};const value=spotifyDeliveryPrefill(o,lines[i],i,security);return value?{customerAccount:value}:{};};
+  const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...netflixRoom(i),...prefill(i),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
+  if(!input){const result=view();await c.query('commit');return result;}
   const {requestId,line,quantity}=input;
   let {message}=input;
   if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||(!productMessage&&(typeof message!=='string'||!message.trim()||message.length>8000)))throw fail(400,'Təhvil məlumatları düzgün deyil.');
