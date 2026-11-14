@@ -42,8 +42,11 @@ export async function ownerCodes(pool,user,id){
 export async function recordDelivery(c,security,actor,orderId,id,line,quantity,message,credentials={}){
  const {email,password,roomName,roomCode}=credentials;
  const cipher=security.encryptSecret(JSON.stringify({id,order:orderId,line,message,...(email?{email}:{}),...(password?{password}:{}),...(roomName&&roomCode?{roomName,roomCode}:{})}));
- const record=(await c.query(`insert into ${D}(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,$3,$4,$5,$6) returning id,line_index,quantity`,[id,orderId,line,quantity,cipher,actor])).rows[0];
- await c.query(`insert into ${M}(event_key,order_id,delivery_id) values($1,$2,$3)`,['delivery:'+id,orderId,id]);
+ // Delivery and durable notification job are a single atomic database write.
+ const record=(await c.query(`with delivered as (
+  insert into ${D}(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,$3,$4,$5,$6) returning id,order_id,line_index,quantity
+ ), queued as (insert into ${M}(event_key,order_id,delivery_id) select 'delivery:'||id,order_id,id from delivered)
+ select id,line_index,quantity from delivered`,[id,orderId,line,quantity,cipher,actor])).rows[0];
  return record;
 }
 export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
@@ -95,15 +98,29 @@ export async function adminOrderCustomers(pool,ids){
    left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id
    where o.id=any($1::uuid[])`,[ids])).rows;
 }
-export async function adminDelivery(pool,security,actor,id,input,{productMessage=false,roomStockSecret}={}){
+export async function adminDelivery(pool,security,actor,id,input,{productMessage=false,roomStockSecret,onTiming}={}){
+ const started=performance.now(),timing={};let mark=started,queries=0;
+ const stage=name=>{const now=performance.now();timing[name]=now-mark;mark=now;};
  const c=await pool.connect();
+ stage('connection');
+ const db={query:(...args)=>{queries++;return c.query(...args);}};
  try{
-  await c.query(input?'begin':'begin isolation level repeatable read read only');
-  if(input)await c.query('select pg_advisory_xact_lock(714025001)');
-  const o=(await c.query(`select o.* from public.payment_orders o where o.id=$1 and exists(select 1 from ${O} where order_id=o.id)${input?' for update':''}`,[id])).rows[0];
+  await db.query(input?'begin; select pg_advisory_xact_lock(714025001)':'begin isolation level repeatable read read only');
+  stage('lock');
+  // Read the order, delivery progress and idempotency record in one round trip,
+  // after the shared fulfillment/cancellation lock has been acquired.
+  const o=(await db.query(`select o.*,
+   coalesce((select jsonb_agg(jsonb_build_object('id',d.id,'order_id',d.order_id,'line_index',d.line_index,'quantity',d.quantity,'delivered_at',d.delivered_at)) from ${D} d where d.order_id=o.id),'[]'::jsonb) as delivery_records,
+   (select to_jsonb(d) from ${D} d where d.id=$2::uuid) as previous_delivery,
+   to_regclass('mirpanel_community.api_dispatches') as dispatch_table,
+   to_regclass('mirpanel_community.netflix_room_units') is not null as room_table,
+   to_regclass('mirpanel_community.netflix_room_sale_state') is not null as room_sale_table,
+   to_regclass('mirpanel_community.netflix_sheet_customer_ids') is not null as sheet_queue
+   from public.payment_orders o where o.id=$1 and exists(select 1 from ${O} where order_id=o.id)${input?' for update of o':''}`,[id,uuid(input?.requestId)?input.requestId:null])).rows[0];
   if(!o)throw fail(404,'Hesaba bağlı sifariş tapılmadı.');
   if(!paid(o))throw fail(409,'Əvvəl ödəniş təsdiqlənməlidir.');
-  const lines=deliveryLines(o),records=await deliveryRecords(c,[id]),done=totals(records);
+  const lines=deliveryLines(o),records=o.delivery_records,done=totals(records);
+  stage('snapshot');
   const renewalCode=i=>o.checkout_snapshot?.items?.[i]?.renewalOrderCode;
   const templates=productMessage&&!input?await readProductMessages(c,security,[...new Set(lines.map(x=>x.productId).filter(Boolean))]):new Map();
   const netflixRoom=i=>{
@@ -116,7 +133,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
   };
   const prefill=i=>{if(input)return {};const value=spotifyDeliveryPrefill(o,lines[i],i,security);return value?{customerAccount:value}:{};};
   const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...netflixRoom(i),...prefill(i),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
-  if(!input){const result=view();await c.query('commit');return result;}
+  if(!input){const result=view();stage('validation');await db.query('commit');stage('commit');return result;}
   const {requestId,line,quantity}=input;
   let {message}=input;
   if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||(!productMessage&&(typeof message!=='string'||!message.trim()||message.length>8000)))throw fail(400,'Təhvil məlumatları düzgün deyil.');
@@ -128,31 +145,32 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
    throw fail(400,'Otaq adını və 4 rəqəmli otaq kodunu düzgün daxil edin.');
   if((email||password||roomName)&&quantity!==1)throw fail(400,'E-poçt və şifrəni hər vahid üçün ayrıca göndərin.');
   if(renewalCode(line)&&input.renewalApplied!==true)throw fail(400,'Əvvəl mövcud abunəliyin həqiqətən uzadıldığını təsdiqləyin.');
-  const previous=(await c.query(`select order_id,line_index,quantity,message_cipher from ${D} where id=$1`,[requestId])).rows[0];
+  const previous=o.previous_delivery;
   if(previous){
    const saved=JSON.parse(security.decryptSecret(previous.message_cipher));
    if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||(!productMessage&&saved.message!==message)||(saved.email||'')!==email||(saved.password||'')!==password||(saved.roomName||'')!==roomName||(saved.roomCode||'')!==roomCode)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
-   await c.query('commit');return {...view(),replayed:true};
+   stage('validation');await db.query('commit');stage('commit');return {...view(),replayed:true};
   }
   if(o.fulfillment_cancellation)throw fail(409,'Qalan məhsullar ləğv edilib.');
-  if(actor!=='supplier:auto' && (await c.query("select to_regclass('mirpanel_community.api_dispatches') as name")).rows[0]?.name){
-   const busy=await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and (state in ('checking','succeeded') or state='queued' and settings->>'provider'='epinby')",[id,line]);
+  if(actor!=='supplier:auto' && o.dispatch_table){
+   const busy=await db.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and (state in ('checking','succeeded') or state='queued' and settings->>'provider'='epinby')",[id,line]);
    if(busy.rowCount)throw fail(409,'Təchizatçı bu məhsulun sifarişini yoxlayır.');
   }
   if(quantity>lines[line].quantity-(done[line]||0))throw fail(409,'Bu sayda təhvil verilməmiş məhsul qalmayıb.');
   if(productMessage){
-   message=(await readProductMessages(c,security,[lines[line].productId])).get(lines[line].productId);
+   message=(await readProductMessages(db,security,[lines[line].productId])).get(lines[line].productId);
    if(!message)throw fail(409,'Əvvəl Hazır hesab stoku bölməsində məhsul mesajını saxlayın.');
    if(input.message!==message)throw fail(409,'Hazır mesaj dəyişib. Təhvil pəncərəsini yenidən açın.');
   }
-  const record=await recordDelivery(c,security,actor,id,requestId,line,quantity,message,{email,password,roomName,roomCode});
+  stage('validation');
+  const record=await recordDelivery(db,security,actor,id,requestId,line,quantity,message,{email,password,roomName,roomCode});
   if(lines[line].productId==='netflix'&&!renewalCode(line)){
-   await bindNetflixRoom(c,security,roomStockSecret,record.id,{email,password,roomName,roomCode});
-   await queueManualSheetCustomerId(c,record.id);
+   await bindNetflixRoom(db,security,roomStockSecret,record.id,{email,password,roomName,roomCode},{installed:o.room_table,sales:o.room_sale_table});
+   await queueManualSheetCustomerId(db,record.id,{installed:o.sheet_queue});
   }
   records.push(record);done[line]=(done[line]||0)+quantity;
-  await c.query('commit');return view();
- }catch(e){await c.query('rollback');throw e;}finally{c.release();}
+  stage('persist');await db.query('commit');stage('commit');return view();
+ }catch(e){await db.query('rollback');throw e;}finally{c.release();onTiming?.({...timing,total:performance.now()-started,queries});}
 }
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

@@ -879,8 +879,11 @@ export function createPaymentSystem(options) {
         response.setHeader('Cache-Control','private, no-store');
         const input=request.method==='POST'?await readBody(request,50_000):null;
         const started=performance.now();
-        const result=await options.customerDelivery(security,actorName,id,input);
-        json(response,200,result,input?undefined:{"Server-Timing":`delivery;dur=${(performance.now()-started).toFixed(1)}`});return true;
+        let stages={};
+        const result=await options.customerDelivery(security,actorName,id,input,{onTiming:value=>{stages=value;}});
+        const metrics=Object.entries(stages).filter(([key,value])=>key!=='queries'&&Number.isFinite(value)).map(([key,value])=>'delivery_'+key+';dur='+value.toFixed(1));
+        metrics.push(`delivery;dur=${(performance.now()-started).toFixed(1)}`);
+        json(response,200,result,{"Server-Timing":metrics.join(', ')});return true;
       }
       if (action === "details" && ["GET","POST"].includes(request.method)) {
         if(!options.readyStockAllowed?.(request))throw Object.assign(new Error('Sifariş sahələri yalnız adminə açıqdır.'),{status:403});

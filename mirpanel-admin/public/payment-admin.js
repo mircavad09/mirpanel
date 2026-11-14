@@ -744,13 +744,49 @@
   }
 
   async function loadEmails() { const result = await paymentApi("/api/admin/payment-emails"); paymentState.emails = result.emails || []; renderEmails(); }
-  async function refreshOrderCounts() {
-    if (orderCountRequest || orderRequests.size || !$p("paymentOrdersView")?.classList.contains("hidden")) return orderCountRequest;
+  async function refreshOrderCounts(force=false) {
+    if (orderCountRequest || orderRequests.size || !force&&!$p("paymentOrdersView")?.classList.contains("hidden")) return orderCountRequest;
     const revision = orderRevision, sequence = paymentState.orderRequestSequence;
     const pending = paymentApi("/api/admin/payment-orders?tab=pending&countsOnly=true").then(result=>{
       if (revision===orderRevision && sequence===paymentState.orderRequestSequence) updateOrderCounts(result.counts || {});
     }).finally(()=>{if(orderCountRequest===pending)orderCountRequest=undefined;});
     return orderCountRequest=pending;
+  }
+
+  function applyDeliveredOrder(id,result) {
+    const order=paymentState.orders.find(o=>o.id===id);
+    // Supersede late pre-delivery list responses without requesting a full list.
+    invalidateOrders();paymentState.orderRequestSequence++;
+    if(!order)return;
+    const remaining=result.lines?.map(x=>x.remaining);
+    if(remaining)order.remainingDelivery=remaining;
+    const completed=result.status==='completed';
+    order.deliveryPending=!completed;order.customerStatus=result.status;
+    if(completed)order.status='completed';
+    if(completed){
+      const counts={...paymentState.orderMeta.counts};
+      if(paymentState.pendingStage==='delivery'){
+        counts.delivery=Math.max(0,(counts.delivery||0)-1);
+        counts.pendingTotal=Math.max(0,(counts.pendingTotal??counts.pending??0)-1);
+      }
+      updateOrderCounts(counts);
+    }
+    const remove=completed&&paymentState.orderQuery.tab==='pending'&&paymentState.pendingStage==='delivery';
+    const card=$p('paymentOrdersList')?.querySelector('[data-payment-order-id="'+CSS.escape(id)+'"]');
+    if(remove){
+      paymentState.orders=paymentState.orders.filter(o=>o.id!==id);card?.remove();
+      paymentState.orderMeta.pagination.total=Math.max(0,(paymentState.orderMeta.pagination.total||0)-1);
+      const pagination=paymentState.orderMeta.pagination;
+      if($p('paymentOrdersPageInfo'))$p('paymentOrdersPageInfo').textContent=`Səhifə ${pagination.page} / ${pagination.totalPages} · ${pagination.total} sifariş`;
+      if(!paymentState.orders.length)$p('paymentOrdersList')?.insertAdjacentHTML('beforeend','<div class="emptyState">Bu seçimə uyğun sifariş tapılmadı.</div>');
+    }else if(card){
+      const template=document.createElement('template');template.innerHTML=orderCard(order);
+      const fresh=template.content.firstElementChild;fieldsObserver.unobserve(card);card.replaceWith(fresh);
+      if(paymentState.permissions.fields)paintOrderFields(fresh,order);
+    }
+    lastOrderMarkup=null;
+    // Counts-only reconciliation is independent of the committed delivery UI.
+    void refreshOrderCounts(true).catch(()=>{});
   }
 
   async function saveMethod(form) {
@@ -873,9 +909,11 @@
         const data={line:Number(line.value),quantity:Number(quantity.value),message:message.value,...(email.value?{email:email.value}:{}),...(password.value?{password:password.value}:{}),...(!room.hidden?{roomName:roomName.value.trim(),roomCode:roomCode.value}:{}),...(renewalCheck.required?{renewalApplied:renewalCheck.checked}:{})};
         pending??={...data,requestId:crypto.randomUUID()};
         for(const field of [...controls,submit])field.disabled=true;
+        submit.textContent='Göndərilir…';submit.setAttribute('aria-busy','true');
         error.textContent='';
-        try{const result=await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});invalidateOrders();dlg.close();toast(result.status==='completed'?'Sifariş tamamlandı.':'Təhvil məlumatı müştəri hesabına əlavə edildi.');void loadOrders();}
-        catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;for(const field of controls)field.disabled=false;}submit.disabled=err.status===409;}
+        try{const result=await paymentApi(url,{method:'POST',body:JSON.stringify(pending)});applyDeliveredOrder(id,result);dlg.close();toast(result.status==='completed'?'Sifariş tamamlandı.':'Təhvil məlumatı müştəri hesabına əlavə edildi.');}
+        catch(err){const definite=Number(err.status)>=400&&Number(err.status)<500;error.textContent=(err.message||'Təhvil təsdiqlənmədi.')+(definite?'':' Eyni əməliyyatı yenidən sınayın.');if(definite){pending=null;for(const field of controls)field.disabled=false;}submit.disabled=err.status===409;if(err.status===409)retry.hidden=false;}
+        finally{submit.textContent='Göndər və təhvil ver';submit.removeAttribute('aria-busy');}
       };
       dlg.append(form);document.body.append(dlg);dlg.showModal();close.focus();void load();return;
     }

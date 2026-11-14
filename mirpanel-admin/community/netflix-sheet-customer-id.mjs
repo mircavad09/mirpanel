@@ -9,8 +9,8 @@ async function sheetQueueInstalled(db){
  return (await db.query("select to_regclass($1) installed",[queue])).rows[0].installed;
 }
 
-export async function queueManualSheetCustomerId(db,deliveryId){
- if(!await sheetQueueInstalled(db))return;
+export async function queueManualSheetCustomerId(db,deliveryId,{installed}={}){
+ if(!(installed??await sheetQueueInstalled(db)))return;
  // The room trigger has already queued a stock assignment when one exists.
  // A manual delivery can also identify a room registered only in the sheet.
  await db.query(`insert into ${queue}(delivery_id,room_id)

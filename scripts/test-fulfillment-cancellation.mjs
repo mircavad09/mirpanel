@@ -116,7 +116,7 @@ try{
   assert.equal(messages.length,1);
   assert.deepEqual(messages[0].to,['a@example.test']);
   const code=history.find(x=>x.id===order).orderCode;
-  const link='https://mirpanel.com/profil?tab=orders&order='+code;
+  const link='https://mirpanel.com/profil?tab=sifarislerim&order='+code;
   assert.ok(messages[0].text.includes('Sifarişlərimə bax: '+link));
   assert.ok(messages[0].html.includes(link.replace('&','&amp;')));
   assert.deepEqual((await sql('select state,attempts from mirpanel_community.customer_order_mail where event_key=$1',[key])).rows,[{state:'accepted',attempts:1}]);

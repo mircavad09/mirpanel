@@ -188,14 +188,16 @@ export async function deleteNetflixRoom(pool,actor,id){
 }
 
 // Only the exact account, room and PIN from an ordinary delivery can claim stock.
-export async function bindNetflixRoom(c,security,secret,deliveryId,{email,password,roomName,roomCode}){
+export async function bindNetflixRoom(c,security,secret,deliveryId,{email,password,roomName,roomCode},capabilities){
  if(!secret||!email||!roomName||!roomCode)return;
- const installed=await c.query("select to_regclass('mirpanel_community.netflix_room_units') as present");
- if(!installed.rows[0].present)return;
+ const installed=capabilities?.installed??(await c.query("select to_regclass('mirpanel_community.netflix_room_units') as present")).rows[0].present;
+ if(!installed)return;
+ const sales=capabilities?.sales??await roomSalesInstalled(c);
  const accountKey=digest(secret,['netflix-room-account',email.trim().toLowerCase()]);
  const {rows:[room]}=await c.query(`select r.id,r.pin_cipher,r.delivery_id,to_jsonb(r)->>'legacy_assignment_id' legacy_assignment_id,coalesce(to_jsonb(r)->>'availability','available') availability,g.id group_id,g.account_cipher,
+   ${sales?'coalesce(s.held,false)':'false'} as held,
    coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() as expired
-   from ${U} r join ${G} g on g.id=r.group_id
+   from ${U} r join ${G} g on g.id=r.group_id ${sales?'left join mirpanel_community.netflix_room_sale_state s on s.id=r.id':''}
    where r.account_key=$1 and r.room_key=$2 and to_jsonb(r)->>'deleted_at' is null for update of r`,
   [accountKey,roomName.trim().normalize('NFC').toLowerCase()]);
  if(!room)return;
@@ -204,7 +206,7 @@ export async function bindNetflixRoom(c,security,secret,deliveryId,{email,passwo
  if(pin.id!==room.id||account.id!==room.group_id||pin.pin!==roomCode||(password&&password!==account.password))
   throw fail(409,'Təhvil məlumatları stokdakı otağa uyğun gəlmir.');
  if(room.availability==='review')throw fail(409,'Otağın stok vəziyyəti yoxlanmalıdır.');
- if(await roomSalesInstalled(c)&&(await c.query('select held from mirpanel_community.netflix_room_sale_state where id=$1',[room.id])).rows[0]?.held)
+ if(room.held)
   throw fail(409,'Otaq aktiv sifariş üçün rezerv edilib.');
  if(room.delivery_id||room.legacy_assignment_id)throw fail(409,'Bu stok otağı artıq təhvil verilib.');
  if(room.expired)throw fail(409,'Bu stok otağının müddəti bitib.');

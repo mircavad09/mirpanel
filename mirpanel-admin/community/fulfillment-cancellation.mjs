@@ -8,7 +8,8 @@ const unavailable=()=>conflict('Bu sifarişdə ləğv edilə bilən təhvil qalm
 export async function cancelFulfillment(pool,actor,id,input){
  const c=await pool.connect();
  try{
-  await c.query('begin');
+  // Same lock order as checkout, stock fulfillment and manual delivery.
+  await c.query('begin; select pg_advisory_xact_lock(714025001)');
   const order=(await c.query(`select o.*,u.user_id,m.provider_name,m.last4 from public.payment_orders o
    join mirpanel_community.community_order_owners u on u.order_id=o.id
    left join public.payment_methods m on m.id=o.method_id where o.id=$1 for update of o`,[id])).rows[0];
