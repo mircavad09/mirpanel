@@ -320,7 +320,7 @@ export async function onRequest(context) {
 
   if (isStaticAsset(pathname)) {
     const response = await fastProductImage(context,url) || await context.next();
-    if (!/^\/(?:site-header\.js|app\.js|browser-orders\.js|delivery-message\.mjs|page-navigation\.js|stock-display-fix\.js|catalog-card\.(?:css|js)|home-loading\.(?:css|js)|cms-site\.js|stories\.js)$/.test(pathname)) return response;
+    if (!/^\/(?:request-lifecycle\.mjs|cart-store\.js|site-header\.js|app\.js|browser-orders\.js|delivery-message\.mjs|page-navigation\.js|stock-display-fix\.js|catalog-card\.(?:css|js)|home-loading\.(?:css|js)|cms-site\.js|stories\.js)$/.test(pathname)) return response;
     const headers = new Headers(response.headers);
     headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
     headers.set("Cloudflare-CDN-Cache-Control", "no-store");

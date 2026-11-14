@@ -152,3 +152,7 @@
 
 /stories.js
   Cache-Control: private, no-cache, no-store, must-revalidate
+
+/request-lifecycle.mjs
+  Cache-Control: private, no-cache, no-store, must-revalidate
+  Content-Type: text/javascript; charset=utf-8

@@ -8,10 +8,10 @@ const output=new URL('../outputs/player-gold-seal/',import.meta.url);
 await fs.mkdir(output,{recursive:true});
 const longName='Nümunə oyunçu — BakıQızılKomandasınınÇoxUzunOyunçuAdı123456';
 const assets=new Map();
-for(const name of ['cart-entry.js','cart-entry.css','checkout-fields.js','entry-styles.js']){
- const source=await fs.readFile('mirpanel-admin/community/public/'+name,'utf8');
+for(const name of ['cart-entry.js','cart-entry.css','checkout-fields.js','entry-styles.js','request-lifecycle.mjs']){
+ const source=await fs.readFile(name==='request-lifecycle.mjs'?name:'mirpanel-admin/community/public/'+name,'utf8');
  if(process.argv.includes('--live-assets')){
-  const response=await fetch('https://mirpanel.com/community-assets/'+name+'?v='+version);
+  const response=await fetch('https://mirpanel.com/'+(name==='request-lifecycle.mjs'?'':'community-assets/')+name+'?v='+version);
   assert.ok(response.ok);
   const deployed=await response.text();
   assert.equal(deployed.replaceAll('\r\n','\n'),source.replaceAll('\r\n','\n'));
@@ -29,6 +29,7 @@ for(const engine of [chromium,webkit]){
  try{
   for(const width of [320,390,1440]){
    const ctx=await browser.newContext({viewport:{width,height:850}}),page=await ctx.newPage();
+   if(process.argv.includes('--without-any'))await ctx.addInitScript(()=>{Object.defineProperty(AbortSignal,'any',{configurable:true,value:undefined});Object.defineProperty(AbortSignal,'timeout',{configurable:true,value:undefined});});
    let releaseSlow,startSlow,draft,navigated;
    const started=new Promise(r=>startSlow=r);
    const delayed=new Promise(r=>releaseSlow=r);

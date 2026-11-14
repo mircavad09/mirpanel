@@ -76,8 +76,11 @@
  function verify(items){
   const key=JSON.stringify(items);if(pending.has(key))return pending.get(key);
   const generation=priceEpoch;const request=(async()=>{
-   const res=await fetch('/api/payments/shop/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal:AbortSignal.any([AbortSignal.timeout(12000),quoteLife.signal]),cache:'no-store'});
-   const q=await res.json();if(!res.ok||!Array.isArray(q.items)||!Number.isSafeInteger(q.totalCents))throw Error('Qiymət və stoku yoxlamaq mümkün olmadı.');
+   const {withRequestSignal}=await import('/request-lifecycle.mjs?v=abort-compat-1');
+   const q=await withRequestSignal([quoteLife.signal],12000,async signal=>{
+   const res=await fetch('/api/payments/shop/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal,cache:'no-store'});
+   const data=await res.json();if(!res.ok||!Array.isArray(data.items)||!Number.isSafeInteger(data.totalCents))throw Error('Qiymət və stoku yoxlamaq mümkün olmadı.');return data;
+   });
    if(generation!==priceEpoch)throw Error('Account changed.');
    for(const x of q.items){const k=itemKey(x);if(seen.size>=60)seen.delete(seen.keys().next().value);seen.set(k,x);}
    if(JSON.stringify(read())===key){const next={};for(const x of q.items){const k=itemKey(x);next[k]={title:x.title,planName:x.planName,image:x.image,available:x.available,salesDisabled:x.salesDisabled,unitCents:Number.isSafeInteger(x.standardCents)?x.standardCents:preview[k]?.unitCents??null};}savePreview(next);}

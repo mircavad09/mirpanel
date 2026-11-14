@@ -1,3 +1,4 @@
+import {withRequestSignal,orderRequestMessage} from '/request-lifecycle.mjs?v=abort-compat-1';
 import {validateDetails,validateEpinbyDetails} from './checkout-fields.js?v=epinby-account-1';
 import {ensureCart} from '/cart-ready.js?v=cart-ready-now-1';
 import {ensureEntryStyles} from './entry-styles.js?v=player-gold-seal-2';
@@ -29,15 +30,15 @@ function preparedQuote(productId,index,{fresh=false,edit=false}={}){
  const key=JSON.stringify([productId,index]),old=quotes.get(key);
  if(!fresh&&!edit&&old&&(!old.readyAt||Date.now()-old.readyAt<lifetime))return old;
  const entry={readyAt:0};
- const request=(async()=>{
-  const r=await fetch('/api/payments/shop/quote',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[{productId,planIndex:index,quantity:1}]}),signal:AbortSignal.timeout(12000)});
+ const request=withRequestSignal([],12000,async signal=>{
+  const r=await fetch('/api/payments/shop/quote',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:[{productId,planIndex:index,quantity:1}]}),signal});
   if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Sifariş xidməti düzgün cavab vermədi.');
   const d=await r.json(),q=d.items?.[0];
   if(!r.ok)throw Object.assign(Error(d.error||'Sifariş şərtləri tapılmadı.'),{status:r.status});
   if(q?.productId!==productId||q.planIndex!==index||typeof q.terms!=='string'||!q.termsVersion||!Array.isArray(q.fields))throw Error('Sifariş şərtləri tapılmadı.');
   entry.readyAt=Date.now();
   return d;
- })();
+ });
  entry.request=request;
  if(!edit){
   quotes.delete(key);quotes.set(key,entry);
@@ -69,25 +70,24 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
  document.body.classList.add('orderConfirmationActive');
  const before=e=>{if(dialog.open){e.preventDefault();error.textContent='Məlumatları tamamlayın və ya pəncərəni bağlayın.';}};window.addEventListener('mirpanel:before-navigate',before,{signal:life.signal});
  let working=false,activeQuote=null,guest=false,values={},draftId=editLine?.draftId||crypto.randomUUID();
- const api=async(path,data,signal)=>{
-  const signals=[life.signal,AbortSignal.timeout(signal?18000:12000)];if(signal)signals.push(signal);
-  const r=await fetch('/api/payments/shop'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined,signal:AbortSignal.any(signals)});
+ const api=(path,data,signal)=>withRequestSignal([life.signal,signal],signal?18000:12000,async combined=>{
+  const r=await fetch('/api/payments/shop'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined,signal:combined});
   if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Sifariş xidməti düzgün cavab vermədi.');
   const d=await r.json();
   if(!r.ok)throw Object.assign(Error(d.error||'Saxlama təsdiqlənmədi. Yenidən cəhd edin.'),{status:r.status,code:d.code});
   return d;
- };
+ });
  close.onclick=()=>{if(!working)dialog.close();};dialog.addEventListener('cancel',e=>{if(working)e.preventDefault();});dialog.addEventListener('close',()=>{life.abort();document.body.classList.remove('orderConfirmationActive');body.replaceChildren();values={};dialog.remove();if(current===dialog)current=null;},{once:true});
  const button=(text,fn,primary=false)=>{const b=el('button',text,primary?'cart-entry-primary':'');b.type='button';b.onclick=fn;return b;};
  async function commit(v){
   if(working)return;working=true;error.textContent='';const enabled=[...body.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled)')];enabled.forEach(control=>control.disabled=true);
   let ready;
-  try{ready=await ensureCart();const saved=await api('/draft',{id:draftId,productId:product.id,planIndex:index,values:v,termsVersion:activeQuote.termsVersion,...(renewal?{renewalId:renewal.id,renewalExpiresOn:renewal.expiresOn}:{})});ready.commitDraft({...saved,termsVersion:saved.termsVersion||activeQuote.termsVersion},{productId:product.id,planIndex:index,quantity:editLine?.quantity||1,edit:!!editLine||!!renewal&&ready.read().some(x=>x.draftId===saved.draftId)});}
+  try{ready=await ensureCart();if(life.signal.aborted)return;const saved=await api('/draft',{id:draftId,productId:product.id,planIndex:index,values:v,termsVersion:activeQuote.termsVersion,...(renewal?{renewalId:renewal.id,renewalExpiresOn:renewal.expiresOn}:{})});if(life.signal.aborted)return;ready.commitDraft({...saved,termsVersion:saved.termsVersion||activeQuote.termsVersion},{productId:product.id,planIndex:index,quantity:editLine?.quantity||1,edit:!!editLine||!!renewal&&ready.read().some(x=>x.draftId===saved.draftId)});}
   catch(e){if(!life.signal.aborted){
    if(e.code==='CART_TERMS_CHANGED'||(e.status===409&&e.message==='Paketin şərtləri dəyişib. Yenidən təsdiqləyin.')){
     values=v;activeQuote=null;working=false;await loadTerms(null,true);return;
    }
-   error.textContent=e.message;enabled.forEach(control=>control.disabled=false);
+   error.textContent=orderRequestMessage(e);enabled.forEach(control=>control.disabled=false);
   }return;}
   finally{working=false;}
   dialog.close();
