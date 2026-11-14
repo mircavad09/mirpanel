@@ -492,16 +492,6 @@ const DATA = {
           "regularPrice": 20
         },
         {
-          "warrantyMode": "guaranteed",
-          "warrantyUnit": "day",
-          "warrantyDuration": 28,
-          "bestValue": false,
-          "label": "1 ay (1600 AI kredit)",
-          "months": 1,
-          "price": 0,
-          "regularPrice": 20
-        },
-        {
           "durationDays": 7,
           "duration_months": 7,
           "warrantyMode": "guaranteed",
@@ -511,7 +501,8 @@ const DATA = {
           "label": " 7 gün",
           "months": 7,
           "price": 1.12,
-          "regularPrice": 8
+          "regularPrice": 8,
+          "pricingId": "fc790f2d-3f2d-4f31-9e61-a2ea1737e351"
         }
       ],
       "orderConfirmation": {
