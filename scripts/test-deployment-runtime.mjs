@@ -18,3 +18,6 @@ for(const path of ['inventory_snapshot','employee_system_ready'])await send('htt
 for(const url of ['https://synthetic.supabase.co/rest/v1/rpc/payment_method_queue_snapshot','https://synthetic.supabase.co/storage/v1/object/sign/receipt','https://sheets.googleapis.com/v4/spreadsheets/test','https://epinby.com/api/orders','https://api.resend.com/emails'])await assert.rejects(send(url,{method:'POST'}),/STANDBY_OUTBOUND_WRITE_BLOCKED/);
 await assert.rejects(send(new Request('https://synthetic.supabase.co/rest/v1/rpc/inventory_set_quantity',{method:'POST'})),/STANDBY_OUTBOUND_WRITE_BLOCKED/);
 assert.equal(sent,2);console.log('PASS: standby private read allowlist, no customer/auth/webhook/mutation routes, no background workers or outbound writes; active behavior preserved');
+await send('https://synthetic.supabase.co/storage/v1/object/sign/mirpanel-stories/synthetic.webp',{method:'POST'});
+await assert.rejects(send('https://synthetic.supabase.co/storage/v1/object/mirpanel-stories/synthetic.webp',{method:'POST'}),/STANDBY_OUTBOUND_WRITE_BLOCKED/);
+assert.equal(sent,3);
