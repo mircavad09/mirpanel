@@ -3,7 +3,7 @@ import{chromium,webkit}from 'file:///C:/Users/user/.cache/codex-runtimes/codex-p
 const base='http://localhost:45937',out='outputs/user-profile-refresh';await fs.mkdir(out,{recursive:true});
 for(const engine of[chromium,webkit]){const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
 try{for(const width of[390,1440]){
- const page=await browser.newPage({viewport:{width,height:850}});await page.clock.install();let special=200,cents=10000,fail=false;const counts=new Map(),writes=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
+ const page=await browser.newPage({viewport:{width,height:850}});await page.clock.install();let special=200,cents=10000,fail=false,delayControls=false,heldControls;const counts=new Map(),writes=[],errors=[];page.on('pageerror',e=>errors.push(e.message));
  const controlReads=()=>[...counts].filter(([k])=>k.startsWith('/api/admin/community/user-controls')).reduce((n,[,v])=>n+v,0);
  const user={id:'synthetic',name:'Sınaq Müştərisi',memberNumber:1234,email:'synthetic@example.test',orderCount:1};
  const controls=()=>({seller:true,rule:'Sınaq qaydası',plans:[{productId:'capcut',product:'CapCut Pro',planKey:'0',plan:'7 gün',standard:500,special},{productId:'chatgpt',product:'ChatGPT',planKey:'0',plan:'1 ay',standard:1500,special:null}],referralBasisPoints:500,identity:{id:user.id,email:user.email,emailVerified:true,password_login:false}});
@@ -15,7 +15,7 @@ try{for(const width of[390,1440]){
  if(p.endsWith('/users'))return route.fulfill({json:{users:[{...user,balanceCents:cents,spentCents:500,lastSeen:'2026-11-15T01:00:00Z'}],total:1,hasMore:false}});
  if(p.endsWith('/users/synthetic'))return route.fulfill({json:{user,profile:{phone:'+994 00 000 00 00'},totalCents:500,orders:[{order_code:'TEST123',product_title:'CapCut Pro',plan_name:'7 gün',amount:5,currency:'AZN',status:'completed'}]}});
  if(p.endsWith('/wallet'))return route.fulfill({json:{cents,debitAvailable:true,items:[],more:false}});
- if(p.endsWith('/user-controls'))return route.fulfill({json:controls()});
+ if(p.endsWith('/user-controls')){const snapshot=controls();if(delayControls){heldControls=()=>route.fulfill({json:snapshot});return;}return route.fulfill({json:snapshot});}
  if(p.endsWith('/user-statistics'))return route.fulfill({json:{period:u.searchParams.get('period'),items:[]}});
  return route.fulfill({json:{}});
  }
@@ -37,6 +37,8 @@ try{for(const width of[390,1440]){
  await page.locator('#refreshBtn').click();await page.getByText('200.00 AZN',{exact:true}).waitFor();
  await tab('Xüsusi qiymətlər').click();await amount.waitFor();const node=await amount.elementHandle();const n=controlReads();await page.evaluate(()=>{for(let i=0;i<4;i++)document.querySelector('#refreshBtn').click();});await page.waitForTimeout(180);assert.equal(controlReads(),n+1);assert(await amount.evaluate((e,old)=>e===old,node));
  fail=true;await page.locator('#refreshBtn').click();await page.getByText('Sınaq bağlantı xətası',{exact:true}).waitFor();assert(await amount.isVisible());assert.equal(await amount.inputValue(),'3.45');fail=false;
+ // A response started before a save must not replace the saved price.
+ delayControls=true;await page.locator('#refreshBtn').click();while(!heldControls)await new Promise(r=>setTimeout(r,10));delayControls=false;await amount.fill('4,56');await page.getByRole('button',{name:'Qiyməti saxla',exact:true}).click();await panel('prices').getByText('CapCut Pro · 7 gün · 4,56 ₼',{exact:false}).waitFor();await heldControls();await page.waitForTimeout(180);assert.equal(await amount.inputValue(),'4.56');
  assert.equal(await page.evaluate(()=>loadFlashes),0);assert.deepEqual(errors,[]);
  await page.screenshot({path:out+'/'+engine.name()+'-'+width+'.png'});await page.close();console.log(JSON.stringify({engine:engine.name(),width,tenMinutes:true,tabsRetained:true,draftsAndDialogRetained:true,repeatedMountNoReload:true,focusAndNotificationsNoReload:true,manualRefresh:true,saveImmediate:true,coalescedReads:true,noLoadingFlash:true}));
  }}finally{await browser.close();}}

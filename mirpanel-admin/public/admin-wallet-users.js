@@ -99,21 +99,22 @@ export async function mountUsers({root,call,alive,userFilter='all'}){
   for(const[key,entry]of tabsCache)entry.panel.hidden=key!==tab;
   if(tabsCache.has(tab))return tabsCache.get(tab).pending;
   const panel=el('div');panel.dataset.userTabPanel=tab;panel.append(el('p','Yüklənir…'));content.append(panel);
-  tabsCache.set(tab,{panel,dirty:false,editVersion:0,saving:0,lease:{active:true},responses:new Map(),loaded:false});return refreshTab(tab);
+  tabsCache.set(tab,{panel,dirty:false,editVersion:0,saving:0,revision:0,lease:{active:true},responses:new Map(),loaded:false});return refreshTab(tab);
  }
  async function refreshTab(tab,{automatic=false,force=false}={}){
-  const entry=tabsCache.get(tab);if(!entry||!selected)return;if(entry.pending)return entry.pending;
-  const userId=selected.user.id,lease={active:true},stage=el('div'),responses=new Map();stage.dataset.userTabPanel=tab;
+  const entry=tabsCache.get(tab);if(!entry||!selected)return;if(entry.pending){if(force){await entry.pending;return refreshTab(tab,{automatic,force});}return entry.pending;}
+  const revision=entry.revision,userId=selected.user.id,lease={active:true},stage=el('div'),responses=new Map();stage.dataset.userTabPanel=tab;
   const current=()=>valid()&&selected?.user.id===userId&&tabsCache.get(tab)===entry&&lease.active;
   const read=async(path,body)=>{
    if(body===undefined){const value=await coalesced(path);responses.set(path,value);return value;}
-   const version=entry.editVersion;entry.saving++;try{const result=await call(path,body);if(current()&&version===entry.editVersion)entry.dirty=false;return result;}finally{entry.saving--;}
+   const version=entry.editVersion;entry.revision++;entry.saving++;try{const result=await call(path,body);reads.clear();if(current()&&version===entry.editVersion)entry.dirty=false;return result;}finally{entry.saving--;}
   };
   const run=Promise.resolve().then(async()=>{try{
    if(tab==='balance')await drawHistory(stage,read);
    else if(['prices','stats','referrals','other'].includes(tab))await renderControlsTab({content:stage,tab,selected,call:read,valid:current,initialState:snapshotControls(entry.panel)});
    else{for(const o of selected.orders)stage.append(el('p',[o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status].join(' · ')));if(!selected.orders.length)stage.append(el('p','Hələ sifariş yoxdur.'));}
    if(!current())return;
+   if(entry.revision!==revision){lease.active=false;return;}
    if(entry.loaded&&signature(tab,responses)===entry.signature){lease.active=false;return;}
    // Fetch while editing, but never replace a form or an open operation dialog.
    if(entry.loaded&&!force&&editing(entry)){lease.active=false;errors.textContent='Məlumat arxa planda alındı. Formadakı dəyişiklikləriniz qorunur.';return;}
