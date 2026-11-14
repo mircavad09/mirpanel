@@ -6,10 +6,10 @@ await fs.mkdir(out,{recursive:true});
 const files=new Map();
 for(const f of ['browser-nav.js','browser-nav.css']){
  const local=await fs.readFile(f,'utf8');
- if(live){const r=await fetch(base+'/'+f+'?v=orange-chat-nav-1');assert.equal((await r.text()).replaceAll('\r',''),local.replaceAll('\r',''));}
+ if(live){const r=await fetch(base+'/'+f+'?v=seven-chat-panel-1');assert.equal((await r.text()).replaceAll('\r',''),local.replaceAll('\r',''));}
  files.set('/'+f,local);
 }
-const routes=[['home','/'],['products','/mehsul'],['payments','/profil?tab=payments'],['balance','/balans'],['orders','/profil?tab=orders'],['cart','/sebet'],['group','/qrup'],['profile','/profil']];
+const routes=[['home','/'],['products','/mehsul'],['payments','/profil?tab=odenislerim'],['balance','/balans'],['orders','/profil?tab=sifarislerim'],['cart','/sebet'],['profile','/profil']];
 for(const engine of [chromium,webkit]){
  const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
  try{
@@ -29,7 +29,7 @@ for(const engine of [chromium,webkit]){
    await link.click();await page.waitForURL(base+url);
    await page.locator('link[href*="browser-nav.css"]').waitFor({state:'attached'});
    await page.waitForFunction(()=>document.querySelector('nav.browser-bottom-nav')?.getBoundingClientRect().height>0);
-   assert.equal(await page.locator('nav.browser-bottom-nav a').count(),8);
+   assert.equal(await page.locator('nav.browser-bottom-nav a').count(),7);
    assert.equal(await page.locator('nav.browser-bottom-nav [aria-current=page]').count(),1);
    assert.equal(await page.locator('nav.browser-bottom-nav [aria-current=page]').getAttribute('data-browser-nav'),key);
    assert(await page.locator('nav.browser-bottom-nav').evaluate(nav=>[...nav.children].every(a=>{const r=a.getBoundingClientRect();return r.width>=44&&r.height>=44&&r.left>=0&&r.right<=innerWidth;})));
@@ -43,7 +43,7 @@ for(const engine of [chromium,webkit]){
   assert(await page.locator('#end').evaluate(el=>el.getBoundingClientRect().bottom<=document.querySelector('nav.browser-bottom-nav').getBoundingClientRect().top));
   await page.screenshot({path:out+'/'+engine.name()+'-'+width+'.png'});
   await context.close();
-  console.log(engine.name(),width,'PASS 8 links, active state, 44px targets, stable animation, reduced motion, end content');
+  console.log(engine.name(),width,'PASS 7 links, active state, 44px targets, stable animation, reduced motion, end content');
  }
  }finally{await browser.close();}
 }

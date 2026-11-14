@@ -30,12 +30,6 @@ html body nav.browser-bottom-nav a:focus-visible{outline:2px solid #ffe15b;outli
  0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 0 3px #0c0d0f,0 0 8px #ff8d2433}
  50%{transform:translateX(-50%) scale(1.055);box-shadow:0 0 0 3px #0c0d0f,0 0 17px #ff8d2470}
 }
-@media(max-width:357px){
- :root{--browser-nav-height:120px}
- html body.has-bottom-nav{padding-bottom:calc(138px + var(--browser-safe))!important}
- html body.has-bottom-nav nav.browser-bottom-nav{grid-template-columns:repeat(4,minmax(0,1fr));row-gap:2px}
- html body.has-bottom-nav nav.browser-bottom-nav a{font-size:10px}
-}
 @media(prefers-reduced-motion:reduce){
  html body.has-bottom-nav nav.browser-bottom-nav a[data-browser-nav=balance] svg{animation:none;box-shadow:0 0 0 3px #0c0d0f,0 0 8px #ff8d2433}
 }

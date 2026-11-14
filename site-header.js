@@ -29,8 +29,8 @@
   } catch {}
   if(!document.querySelector('link[data-mobile-menu-style]')){const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/site-header-menu.css?v=dropdown-20261106';sheet.dataset.mobileMenuStyle='true';document.head.append(sheet);}
   if(!document.querySelector('script[data-decorations-loader]')){const s=document.createElement('script');s.src='/decorative-backgrounds.js?v=plain-header-20261103';s.dataset.decorationsLoader='true';document.head.append(s);}
-  if(!document.querySelector('script[data-support-loader]')){const script=document.createElement('script');script.src='/support-widget.js?v=mobile-profile-1';script.dataset.supportLoader='true';document.head.append(script);}
-  if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=az-addresses-1';script.dataset.browserNavLoader='true';document.head.append(script);}
+  if(!document.querySelector('script[data-support-loader]')){const script=document.createElement('script');script.src='/support-widget.js?v=chat-panel-20261114';script.dataset.supportLoader='true';document.head.append(script);}
+  if(!document.querySelector('script[data-browser-nav-loader]')){const script=document.createElement('script');script.src='/browser-nav.js?v=seven-chat-panel-1';script.dataset.browserNavLoader='true';document.head.append(script);}
 
   function normalize(value) {
     return String(value || "").toLocaleLowerCase("az").trim();
