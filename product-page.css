@@ -1706,3 +1706,18 @@ html body #productPageView[data-plan-shell="stable"] #pp-plans-container [data-i
 }
 html body #productPageView[data-plan-shell="stable"] #pp-plans-container [data-inventory-plan][hidden]{visibility:hidden}
 html body #productPageView[data-plan-shell="stable"] #pp-plans-container .product-detail-plan-notes[hidden]:has(> :not([hidden])){display:flex!important;visibility:hidden}
+
+/* Share the stock pill with server-rendered plan rows. */
+html body #productPageView[data-plan-shell="stable"] #pp-plans-container .inventory-plan-count.plan-fact-stock{
+ border-color:#64e6a54a;border-radius:999px;
+}
+/* Keep savings at the right edge, wrapping below prices when space is tight. */
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary-line{
+ display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px;min-width:0;
+}
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-summary-prices{
+ flex:1 1 150px;min-width:0;
+}
+body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-savings{
+ flex:0 1 auto;margin:0 0 0 auto;text-align:right;min-width:0;
+}

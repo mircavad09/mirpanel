@@ -244,7 +244,7 @@
         }
         let line=row.querySelector('[data-inventory-plan]');
         if(!line){line=document.createElement('span');line.dataset.inventoryPlan='';row.append(line);}
-        line.className=out?'mpStockBadge cardStockBadge out inventory-plan-badge':'inventory-plan-count';
+        line.className=out?'mpStockBadge cardStockBadge out inventory-plan-badge':'plan-fact plan-fact-stock inventory-plan-count';
         line.textContent=out?'Stokda yoxdur':!stock&&showCount?`${plan.available} stokda`:'';
         line.hidden=!out&&(!!stock||!showCount);
       });
