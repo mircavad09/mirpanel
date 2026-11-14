@@ -7,7 +7,7 @@ const app=document.getElementById('communityApp'),avatars=['🌙','🌟','🌿',
 function el(tag,attrs={},...children){const e=document.createElement(tag);for(const[k,v]of Object.entries(attrs)){if(k.startsWith('on'))e.addEventListener(k.slice(2),v);else if(k==='class')e.className=v;else if(k==='text')e.textContent=v;else if(v!==undefined)e.setAttribute(k,String(v));}for(const c of children.flat())if(c!=null)e.append(typeof c==='string'?document.createTextNode(c):c);return e;}
 const cleanups=[];const every=(fn,ms)=>{const id=setInterval(fn,ms);cleanups.push(()=>clearInterval(id));};
 const requests=new Set();let groupTimer,groupTick,groupPause,groupResume;
-const dispose=()=>{stopped=true;groupPause?.();for(const fn of cleanups.splice(0))fn();for(const c of requests)c.abort();life.abort();window.mirpanelProfileDispose?.();window.mirpanelProfileDispose=null;window.mirpanelAuthDispose?.();window.mirpanelAuthDispose=null;document.documentElement.classList.remove('community-chat-screen');document.body.classList.remove('profile-screen','auth-screen');};
+const dispose=()=>{stopped=true;groupPause?.();for(const fn of cleanups.splice(0))fn();for(const c of requests)c.abort();life.abort();window.mirpanelProfileDispose?.();window.mirpanelProfileDispose=null;window.mirpanelAuthDispose?.();window.mirpanelAuthDispose=null;document.documentElement.classList.remove('community-chat-screen','chat-keyboard-open');document.body.classList.remove('profile-screen','auth-screen');};
 on(window,'pagehide',dispose);
 async function api(url,data,method='POST'){const controller=new AbortController();requests.add(controller);try{const r=await fetch(url,{method:data===undefined?'GET':method,credentials:'same-origin',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store',signal:controller.signal});const v=await communityJson(r);if(!r.ok)throw Object.assign(Error(v.warning||v.error?.message||v.error||v.message||'Xidmət xətası. Yenidən cəhd edin.'),{status:r.status,blocked:v.blocked,code:v.code||v.error?.code});return v;}finally{requests.delete(controller);}}
 const money=n=>(n/100).toFixed(2)+' ₼',button=(text,fn,primary=false)=>el('button',{type:'button',class:primary?'primary':'',onclick:fn},text),link=(text,href,cls='button')=>el('a',{href,class:cls},text),alert=()=>el('p',{class:'community-alert',role:'status','aria-live':'polite'});
@@ -22,7 +22,18 @@ function sidebar(){const p=el('aside',{class:'community-sidebar'},el('section',{
 async function group(){
  document.documentElement.classList.add('community-chat-screen');document.title='Ümumi söhbət · MirPanel';document.querySelector('.community-demo')?.remove();
  document.querySelector('.community-brand')?.replaceChildren(el('img',{src:'/assets/logo.png',alt:'',width:28,height:28}),el('span',{},'MirPanel'));
- const viewport=()=>{const v=window.visualViewport;document.documentElement.style.setProperty('--chat-visible-height',(v?.height||innerHeight)+'px');document.documentElement.style.setProperty('--chat-visible-top',(v?.offsetTop||0)+'px');};viewport();window.addEventListener('resize',viewport,{signal:life.signal});window.visualViewport?.addEventListener('resize',viewport,{signal:life.signal});window.visualViewport?.addEventListener('scroll',viewport,{signal:life.signal});
+ let fullViewport=window.visualViewport?.height||innerHeight,resizeComposer=()=>{};
+ const viewport=()=>{
+  const v=window.visualViewport,height=v?.height||innerHeight,root=document.documentElement;
+  const editing=document.activeElement?.matches('.community-compose textarea');
+  if(!editing)fullViewport=Math.max(fullViewport,height);
+  const keyboard=editing&&matchMedia('(max-width:849px)').matches&&fullViewport-height>100;
+  root.classList.toggle('chat-keyboard-open',!!keyboard);
+  root.style.setProperty('--chat-visible-height',height+'px');root.style.setProperty('--chat-visible-top',(v?.offsetTop||0)+'px');
+  resizeComposer();
+ };
+ viewport();on(window,'resize',viewport);if(window.visualViewport){on(visualViewport,'resize',viewport);on(visualViewport,'scroll',viewport);}
+ on(document,'focusin',viewport);on(document,'focusout',()=>requestAnimationFrame(()=>{if(!stopped)viewport();}));
  const msgList=el('div',{class:'community-messages','aria-label':'Ümumi qrup mesajları',tabindex:'0'}),error=alert(),newButton=button('Yeni mesajlar ↓',()=>{msgList.scrollTop=msgList.scrollHeight;newButton.hidden=true;mark();});newButton.hidden=true;
  const olderStatus=el('span',{class:'community-older-status',role:'status','aria-live':'polite'},'Mesajlar yüklənir…');olderStatus.hidden=true;
  const refreshButton=button('Yenidən cəhd et',()=>msgList.scrollTop<=40&&hasOlder?loadOlder():poll(false,true));refreshButton.hidden=true;
@@ -35,7 +46,8 @@ async function group(){
  const controls=createGroupAdmin({state,api,el,button,onChange:()=>poll(true)});if(controls.settingsButton)card.querySelector('.community-chat-head').append(controls.settingsButton);
  const groupInfo=el('div',{class:'group-information'});card.querySelector('.community-chat-head').after(groupInfo);
  let composeInput=null,composeSend=null;
- function syncGroup(r){controls.updateSettings(r.settings);groupInfo.replaceChildren();if(r.settings?.rules)groupInfo.append(el('details',{},el('summary',{},'Qrup qaydaları'),el('p',{},r.settings.rules)));if(r.settings?.pinned)groupInfo.append(el('div',{class:'group-pinned'},'📌 '+r.settings.pinned.body));const muted=r.restrictions?.muted_permanent||r.restrictions?.muted_until&&new Date(r.restrictions.muted_until)>new Date(),locked=muted||r.settings?.muted&&!state.profile?.isModerator;if(composeInput)composeInput.disabled=!!locked;if(composeSend)composeSend.disabled=busy||!!locked;if(locked)error.textContent=muted?'Mesaj yazmağınız məhdudlaşdırılıb.':'Qrup susdurulub. Mesajları oxuya bilərsiniz.';}
+ function updateSend(){if(composeSend)composeSend.disabled=busy||composeInput.disabled||!composeInput.value.trim();}
+ function syncGroup(r){controls.updateSettings(r.settings);groupInfo.replaceChildren();if(r.settings?.rules)groupInfo.append(el('details',{},el('summary',{},'Qrup qaydaları'),el('p',{},r.settings.rules)));if(r.settings?.pinned)groupInfo.append(el('div',{class:'group-pinned'},'📌 '+r.settings.pinned.body));const muted=r.restrictions?.muted_permanent||r.restrictions?.muted_until&&new Date(r.restrictions.muted_until)>new Date(),locked=muted||r.settings?.muted&&!state.profile?.isModerator;if(composeInput)composeInput.disabled=!!locked;updateSend();if(locked)error.textContent=muted?'Mesaj yazmağınız məhdudlaşdırılıb.':'Qrup susdurulub. Mesajları oxuya bilərsiniz.';}
  let messages=new Map(),oldest=null,latest=0,busy=false,pollBusy=false,draftId=null,lastBody=null,readBusy=false,hasOlder=false,olderBusy=false,ready=false;
  const nearBottom=()=>msgList.scrollHeight-msgList.clientHeight-msgList.scrollTop<65;
  const readTags=new Set(),tagTimers=new Map();let highlighted=null,jumping=false;
@@ -50,7 +62,7 @@ async function group(){
   if(m.author?.system===true&&m.tag&&m.body.startsWith('@'+m.tag.name+', ')){const text=bubble.querySelector('.community-message-body');text.replaceChildren(el('span',{class:'bot-user-tag','data-user-id':m.tag.userId},'@'+m.tag.name),m.body.slice(m.tag.name.length+1));}
   content.append(el('div',{class:'community-message-head'},el('strong',{},author.name),author.role==='bot'?el('span',{class:'community-badge'},'Nəzarətçi'):author.role==='admin'?el('span',{class:'community-badge'},'Admin'):tier==='standard'?null:el('span',{class:'community-badge'},tierLabel(tier))));
   content.append(bubble);
-  const node=el('article',{class:'community-message tier-'+tier+(own?' is-own':' is-other'),'data-message-id':m.id,'aria-label':own?'Sizin mesajınız':author.name+' adlı iştirakçının mesajı'});
+  const node=el('article',{class:'community-message tier-'+tier+(own?' is-own':' is-other'),'data-message-id':m.id,'data-author-role':author.role||'member','aria-label':own?'Sizin mesajınız':author.name+' adlı iştirakçının mesajı'});
   if(m.tag?.userId===state.profile?.user_id&&!m.hidden)node.dataset.ownTag='true';if(m.id===highlighted)node.classList.add('tag-jump-highlight');
   node.append(messageAvatar(author,tier));
   node.append(content);
@@ -63,14 +75,47 @@ async function group(){
  async function jumpToTag(){const id=new URLSearchParams(location.search).get('tag');if(!/^\d+$/.test(id||'')||!state.profile)return;jumping=true;try{const r=await api('/api/community/tag-message?messageId='+encodeURIComponent(id));messages.set(r.item.id,r.item);highlighted=id;render();const node=msgList.querySelector('[data-message-id="'+id+'"]');node?.scrollIntoView({block:'center',behavior:'instant'});setTimeout(()=>{jumping=false;highlighted=null;node?.classList.remove('tag-jump-highlight');},2500);}catch(e){jumping=false;error.textContent=e.message;}}
  async function loadOlder(){if(!ready||!hasOlder||!oldest||olderBusy)return;olderBusy=true;olderStatus.hidden=false;try{const r=await api('/api/community/messages?before='+oldest);for(const m of r.items)messages.set(m.id,m);oldest=r.items[0]?.id||oldest;hasOlder=r.more;render(true);error.textContent='';refreshButton.hidden=true;}catch(e){error.textContent=e.message;refreshButton.hidden=false;}finally{olderBusy=false;olderStatus.hidden=true;}}
  async function poll(initial=false,snapshot=false){if(pollBusy||stopped)return;initial=initial||!ready;pollBusy=true;try{const bottom=nearBottom(),query=new URLSearchParams({known:[...messages.keys()].slice(-500).join(',')});if(!initial&&!snapshot)query.set('after',String(latest));const r=await api('/api/community/messages?'+query);for(const id of r.removed||[])messages.delete(id);let added=false;for(const m of r.items){if(!messages.has(m.id))added=true;messages.set(m.id,m);latest=Math.max(latest,Number(m.id));}if(initial){oldest=r.items[0]?.id;hasOlder=r.more;}render();if(initial||bottom){msgList.scrollTop=msgList.scrollHeight;if(initial)ready=true;await mark();}else if(added)newButton.hidden=false;error.textContent='';syncGroup(r);refreshButton.hidden=true;}catch(e){error.textContent='Bağlantı kəsildi. Mesajlarınız silinmir. '+e.message;refreshButton.hidden=false;if(e.message.includes('giriş bağlanıb')){if(composeInput)composeInput.disabled=true;if(composeSend)composeSend.disabled=true;}}finally{pollBusy=false;}}
- if(state.profile){const input=el('textarea',{rows:'1',maxlength:'2000',placeholder:'Mesajınızı yazın…','aria-label':'Mesaj'}),send=el('button',{type:'submit',class:'primary'},'Göndər'),form=el('form',{class:'community-compose'},input,send);form.addEventListener('submit',async e=>{e.preventDefault();if(busy||!input.value.trim())return;busy=true;send.disabled=true;send.textContent='Göndərilir…';const value=input.value;if(lastBody!==value){draftId=crypto.randomUUID();lastBody=value;}try{await api('/api/community/messages',{body:value,clientId:draftId});if(input.value===value)input.value='';draftId=null;lastBody=null;if(!publicChat)await poll();}catch(e){if(e.blocked){await poll();input.value='';draftId=null;lastBody=null;}error.textContent=e.message;}finally{busy=false;send.disabled=false;send.textContent='Göndər';}});bottom.append(form);if(state.profile.blocked||state.profile.muted_until&&new Date(state.profile.muted_until)>new Date()){input.disabled=true;send.disabled=true;error.textContent='Mesaj yazma icazəniz məhdudlaşdırılıb.';}}
+ if(state.profile){
+  const input=el('textarea',{rows:'1',maxlength:'2000',placeholder:'Mesajınızı yazın…','aria-label':'Mesaj'});
+  const send=el('button',{type:'submit',class:'primary','aria-label':'Göndər',title:'Göndər'});
+  const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');
+  const arrow=document.createElementNS('http://www.w3.org/2000/svg','path');arrow.setAttribute('d','m4 4 17 8-17 8 3-8-3-8Zm3 8h14');icon.append(arrow);send.append(icon);
+  const form=el('form',{class:'community-compose'},input,send);
+  resizeComposer=()=>{
+   if(!input.isConnected)return;
+   const pin=nearBottom(),top=msgList.scrollTop,style=getComputedStyle(input),line=parseFloat(style.lineHeight);
+   const padding=parseFloat(style.paddingTop)+parseFloat(style.paddingBottom),border=parseFloat(style.borderTopWidth)+parseFloat(style.borderBottomWidth);
+   const limit=Math.max(line*6+padding+border,(window.visualViewport?.height||innerHeight)/3);
+   input.style.maxHeight=limit+'px';input.style.height='0px';
+   input.style.height=Math.max(44,Math.min(input.scrollHeight+border,limit))+'px';
+   input.style.overflowY=input.scrollHeight>input.clientHeight+1?'auto':'hidden';
+   if(input.style.overflowY==='hidden')input.scrollTop=0;
+   else if(input.selectionEnd===input.value.length)input.scrollTop=input.scrollHeight;
+   msgList.scrollTop=pin?msgList.scrollHeight:top;
+  };
+  input.addEventListener('input',()=>{resizeComposer();updateSend();});
+  form.addEventListener('submit',async e=>{
+   e.preventDefault();if(busy||input.disabled||!input.value.trim())return;
+   busy=true;updateSend();send.setAttribute('aria-label','Göndərilir');send.setAttribute('aria-busy','true');
+   const value=input.value;if(lastBody!==value){draftId=crypto.randomUUID();lastBody=value;}
+   try{
+    await api('/api/community/messages',{body:value,clientId:draftId});
+    if(stopped)return;
+    if(input.value===value)input.value='';draftId=null;lastBody=null;resizeComposer();
+    if(!publicChat)await poll();
+   }catch(e){if(!stopped){if(e.blocked)await poll();error.textContent=e.message;}}
+   finally{busy=false;updateSend();send.setAttribute('aria-label','Göndər');send.removeAttribute('aria-busy');}
+  });
+  bottom.append(form);
+  if(state.profile.blocked||state.profile.muted_until&&new Date(state.profile.muted_until)>new Date()){input.disabled=true;error.textContent='Mesaj yazma icazəniz məhdudlaşdırılıb.';}
+ }
  else bottom.append(el('div',{class:'community-guest'},el('p',{},'Söhbətə qoşulmaq üçün əvvəlcə qeydiyyatdan keçin.'),link('Qeydiyyatdan keç','/hesab?mode=signup')));
- composeInput=bottom.querySelector('textarea');composeSend=bottom.querySelector('button[type=submit]');
+ composeInput=bottom.querySelector('textarea');composeSend=bottom.querySelector('button[type=submit]');updateSend();
  function receive(r,initial=false){const bottom=nearBottom();let added=false;for(const id of r.removed||[])messages.delete(id);for(const m of r.items||[]){if(m.hidden){messages.delete(m.id);continue;}if(!messages.has(m.id))added=true;messages.set(m.id,m);latest=Math.max(latest,Number(m.id));}if(initial){oldest=r.items?.[0]?.id;hasOlder=!!r.more;}render();if(initial||bottom)msgList.scrollTop=msgList.scrollHeight;else if(added)newButton.hidden=false;ready=true;if(r.settings)syncGroup(r);error.textContent='';refreshButton.hidden=true;if(r.items?.some(m=>m.tag?.userId===state.profile?.user_id)||r.removed?.length)document.dispatchEvent(new Event('community-tag-read'));}
  let stream=null,reconnect=null,delay=500;
  function connect(){if(stopped)return;stream?.close();const known=[...messages.keys()].slice(-500).join(',');stream=new EventSource('/api/community/events?after='+latest+'&known='+encodeURIComponent(known));stream.addEventListener('open',()=>{delay=500;});stream.addEventListener('messages',e=>{if(!stopped)receive(JSON.parse(e.data));});stream.addEventListener('counts',e=>showCounts(JSON.parse(e.data)));stream.addEventListener('settings',()=>{void poll(false,true);});stream.onerror=()=>{stream?.close();error.textContent='Bağlantı bərpa olunur. Yazdığınız mətn saxlanılır.';clearTimeout(reconnect);reconnect=setTimeout(connect,delay);delay=Math.min(15000,delay*2);};}
  cleanups.push(()=>{stream?.close();clearTimeout(reconnect);});
- msgList.addEventListener('scroll',()=>{if(nearBottom()){newButton.hidden=true;mark();}if(!jumping&&ready&&msgList.scrollTop<=40)void loadOlder();});setPage(el('div',{class:'community-chat-layout'},card));if(state.initialMessages){receive(state.initialMessages,true);void jumpToTag();connect();}else void poll(true).then(()=>{void jumpToTag();if(publicChat)connect();});
+ msgList.addEventListener('scroll',()=>{if(nearBottom()){newButton.hidden=true;mark();}if(!jumping&&ready&&msgList.scrollTop<=40)void loadOlder();});setPage(el('div',{class:'community-chat-layout'},card));resizeComposer();if(state.initialMessages){receive(state.initialMessages,true);void jumpToTag();connect();}else void poll(true).then(()=>{void jumpToTag();if(publicChat)connect();});
 }
 async function account(){const {renderAuthForms}=await import('/community-assets/auth-forms.js?v=az-addresses-1');if(!stopped)await renderAuthForms({app,state,api,el,button,link,alert});}
 async function profile(){const {mountProfile}=await import('/community-assets/profile-entry.js?v=code-artwork-1');if(!stopped){cleanups.push(mountProfile(app,state));window.mirpanelPageDispose=dispose;}}
