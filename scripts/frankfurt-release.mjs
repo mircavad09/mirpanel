@@ -15,6 +15,12 @@ try{
  }else if(mode==='promote'){
   const old=await health(oldUrl),next=await health(newUrl);if(old.role!=='relay'||old.workers!==false||next.role!=='web')throw Error('LEGACY_RELAY_AND_FRANKFURT_WEB_REQUIRED');
   await role(active,'active');await api('/services/'+active,'PATCH',{branch:'main',autoDeployTrigger:'commit'});await deploy(active);
+ }else if(mode==='rollback-web'){
+  if((await health(oldUrl)).role!=='relay')throw Error('LEGACY_RELAY_REQUIRED');await role(active,'web');await deploy(active);
+ }else if(mode==='rollback-legacy'){
+  if((await health(newUrl)).role!=='web')throw Error('FRANKFURT_WORKERS_MUST_STOP_FIRST');await role(legacy,'active');await deploy(legacy);
+ }else if(mode==='rollback-edge'){
+  if((await health(newUrl)).role!=='web'||(await health(oldUrl)).role!=='active')throw Error('ROLLBACK_LEGACY_ACTIVE_REQUIRED');await role(active,'relay-old');await deploy(active);
  }else if(mode==='status'){
   for(const [id,url]of[[legacy,oldUrl],[active,newUrl]]){const s=await api('/services/'+id),d=await api('/services/'+id+'/deploys?limit=1');console.log(JSON.stringify({id,region:s.serviceDetails.region,plan:s.serviceDetails.plan,branch:s.branch,autoDeploy:s.autoDeploy,deploy:d[0]?.deploy.status,commit:d[0]?.deploy.commit?.id,health:await health(url)}));}
  }else throw Error('UNKNOWN_RELEASE_MODE');
