@@ -52,7 +52,7 @@ export function mountReadyStock(host,api){
  let activeDraft=null,activeProduct;
  let products=[],pending=null,busy=false,loaded=false,read=null;
  const roomHost=q('[data-netflix-room-stock]');
- roomHost.innerHTML='<p data-room-status role="status"></p><div data-sheet-manual hidden></div><div data-room-lists></div>';
+ roomHost.innerHTML='<p data-room-status role="status"></p><details data-sheet-manual class="readyStockSheetQueue"><summary></summary><div data-sheet-entries style="max-height:440px;overflow:auto"></div></details><div data-room-lists></div>';
  const roomStatus=roomHost.querySelector('[data-room-status]'),roomLists=roomHost.querySelector('[data-room-lists]');
  let savedAccounts=[],accountDialog;
  const accountHost=q('[data-saved-accounts]');
@@ -185,29 +185,41 @@ export function mountReadyStock(host,api){
  const roomSummary=row=>'Otaq '+row.name+' · '+(row.statusLabel||({free:'Satılmayıb',sold:'Satılıb',expired:'Müddəti bitib',review:'Yoxlama tələb olunur'}[row.status]||'—'));
  const removeRoomLabel=row=>'Sil · Otaq '+row.name+' · '+(row.accountEmail||'Netflix Şəxsi');
  function sheetSyncStatus(sync){
-  const entry=document.createElement('div'),info=document.createElement('p');
-  const label=sync.orderCode?'Sifariş №'+sync.orderCode+' · ':'';
-  info.textContent=label+'Sheets ID və status · '+(sync.message||(sync.state==='done'?'Müştəri ID-si və status yazılıb.':'Yazı avtomatik təkrar cəhd növbəsindədir.'));
-  entry.append(info);
-  if(sync.state!=='done'&&sync.deliveryId){
-   const retry=document.createElement('button');retry.type='button';retry.className='btn';retry.textContent='ID yazısını təkrarla';
+  const entry=document.createElement('article');entry.className='readyStockSheetQueueEntry';
+  entry.style.cssText='border-top:1px solid #363b40;padding:10px 0;display:grid;gap:6px;overflow-wrap:anywhere';
+  const title=document.createElement('strong'),state=document.createElement('span'),reason=document.createElement('p'),fix=document.createElement('p');
+  title.textContent=sync.orderCode?'Sifariş №'+sync.orderCode:'Otaq '+(sync.roomName||'—')+' · sifariş nömrəsi yoxdur';
+  state.textContent=sync.needsReview?'Yoxlama tələb edir':'Avtomatik təkrar cəhd gözlənilir';
+  state.style.color=sync.needsReview?'#ffce69':'#a4ccd9';
+  reason.textContent=sync.message||'İlkin yoxlama gözlənilir.';fix.textContent=sync.fix||'';
+  reason.style.margin=fix.style.margin='0';entry.append(title,state,reason,fix);
+  if(sync.nextAt&&Number.isFinite(Date.parse(sync.nextAt))){const next=document.createElement('small');next.textContent='Növbəti yoxlama: '+roomTime.format(new Date(sync.nextAt));entry.append(next);}
+  if(sync.state!=='done'&&(sync.deliveryId||sync.roomRetryId)){
+   const retry=document.createElement('button');retry.type='button';retry.className='btn';retry.style.cssText='justify-self:start;max-width:100%;white-space:normal';
+   retry.textContent=sync.needsReview?'Düzəliş etdim — yenidən yoxla':'İndi yenidən cəhd et';
    retry.onclick=async()=>{
     retry.disabled=true;
     try{
-     await api(endpoint,{method:'POST',body:JSON.stringify({netflixSheetIdRetry:{deliveryId:sync.deliveryId}})});
-     await refresh();roomStatus.textContent='Yalnız müştəri ID-si yazısı yenidən növbəyə alındı.';
+     const action={...(sync.retryDelivery!==false&&sync.deliveryId?{deliveryId:sync.deliveryId}:{}),...(sync.roomRetryId?{roomId:sync.roomRetryId}:{})};
+     await api(endpoint,{method:'POST',body:JSON.stringify({netflixSheetIdRetry:action})});
+     await refresh();roomStatus.textContent='Mövcud sinxronizasiya yenidən yoxlanacaq. Yeni təhvil və ya ödəniş yaradılmadı.';
     }catch(e){roomStatus.textContent=e.message;retry.disabled=false;}
    };
    entry.append(retry);
   }
   return entry;
  }
- function showRooms(rows,manual,force){
-  const snapshot=JSON.stringify([rows,manual]);
+
+ function showRooms(rows,manual,force,queue){
+  const snapshot=JSON.stringify([rows,manual,queue]);
   if(!force&&snapshot===lastRooms)return;
   lastRooms=snapshot;
   const manualList=roomHost.querySelector('[data-sheet-manual]');
-  manualList.replaceChildren(...manual.map(sheetSyncStatus));manualList.hidden=!manual.length;
+  const entries=(queue||[...manual,...(rows||[]).map(r=>r.sheetCustomerId).filter(Boolean)]).filter(r=>r.state!=='done');
+  const review=entries.filter(r=>r.needsReview||r.state==='blocked').length;
+  manualList.querySelector('summary').textContent='Google Sheets sinxronizasiyası — '+(entries.length-review)+' gözləyir, '+review+' yoxlama tələb edir';
+  manualList.querySelector('[data-sheet-entries]').replaceChildren(...entries.map(sheetSyncStatus));
+  if(!entries.length)manualList.querySelector('[data-sheet-entries]').textContent='Gözləyən sinxronizasiya yoxdur.';
   if(!Array.isArray(rows)){
    roomLists.replaceChildren();
    roomStatus.textContent='Otaq stoku bazada hələ aktiv deyil.';
@@ -319,7 +331,7 @@ export function mountReadyStock(host,api){
     };
     actions.append(remove);
    }
-   if(row.sheetCustomerId)node.append(sheetSyncStatus(row.sheetCustomerId));
+
    if(!assigned(row)&&row.status!=='reserved'){
     const bind=document.createElement('button');
     bind.type='button';bind.className='btn netflixRoomBindAction';bind.textContent='Müştəriyə bağla';
@@ -529,7 +541,7 @@ export function mountReadyStock(host,api){
   if(pending)return;
   if(read)await read.catch(()=>{});
   const request=read=api(endpoint);
-  try{const next=await request,p=product.value,i=plan.value;showRooms(next.netflixRooms,next.netflixSheetManual??[],true);rememberDraft();savedAccounts=next.accounts||[];products=next.products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderProducts();renderPlan();}
+  try{const next=await request,p=product.value,i=plan.value;showRooms(next.netflixRooms,next.netflixSheetManual??[],true,next.netflixSheetQueue);rememberDraft();savedAccounts=next.accounts||[];products=next.products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderProducts();renderPlan();}
   catch(e){say(e.message,true);}
   finally{if(read===request)read=null;controls();}
  }
@@ -609,7 +621,7 @@ export function mountReadyStock(host,api){
     const counter=[...list.querySelectorAll('[data-product]')].find(n=>n.dataset.product===stock.id)?.querySelector('[data-product-ready]');
     if(counter)counter.textContent=stock.readyTotal+' hazır hesab';
    }
-   showRooms(next.netflixRooms,next.netflixSheetManual??[],false);
+   showRooms(next.netflixRooms,next.netflixSheetManual??[],false,next.netflixSheetQueue);
    if(JSON.stringify(savedAccounts)!==JSON.stringify(next.accounts||[])){savedAccounts=next.accounts||[];renderSavedAccounts();}
   }catch{/* Keep the last confirmed stock visible until the next check. */}
   finally{read=null;}

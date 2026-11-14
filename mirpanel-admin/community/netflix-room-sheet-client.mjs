@@ -23,7 +23,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   const signature=createSign('RSA-SHA256').update(claims).sign(account.private_key,'base64url');
   const response=await http(tokenURL,{method:'POST',redirect:'error',signal:AbortSignal.timeout(10000),
    body:new URLSearchParams({grant_type:'urn:ietf:params:oauth:grant-type:jwt-bearer',assertion:claims+'.'+signature})});
-  if(!response.ok)throw Error('ROOM_SHEET_AUTH');
+  if(!response.ok){token=null;validUntil=0;throw Object.assign(Error('ROOM_SHEET_AUTH'),{sheetReason:response.status===429?'quota':response.status>=500?'connection':'auth'});}
   const data=await response.json();
   token=data.access_token;validUntil=now+Number(data.expires_in)-60;
   if(!token)throw Error('ROOM_SHEET_AUTH');
@@ -37,7 +37,12 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   const response=await http(url,{method:body?'POST':'GET',redirect:'error',signal:AbortSignal.timeout(10000),
    headers:{Authorization:authorization,...(body?{'Content-Type':'application/json'}:{})},
    ...(body?{body:JSON.stringify(body)}:{})});
-  if(!response.ok)throw Error('ROOM_SHEET_REQUEST');
+  if(!response.ok){
+   if(response.status===401){token=null;validUntil=0;}
+   let data;try{data=await response.json();}catch{}
+   const limited=response.status===429||data?.error?.errors?.some(e=>['rateLimitExceeded','userRateLimitExceeded','quotaExceeded'].includes(e.reason));
+   throw Object.assign(Error('ROOM_SHEET_REQUEST'),{sheetReason:limited?'quota':response.status===401?'auth':response.status===403?'permission':response.status===404?'destination':'connection'});
+  }
   return response.json();
  }
  async function stockDestination(){

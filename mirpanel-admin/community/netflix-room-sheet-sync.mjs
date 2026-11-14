@@ -1,3 +1,4 @@
+import {sheetReason} from './netflix-sheet-errors.mjs';
 import {safeCalendarDate} from '../payment-order-lifecycle.mjs';
 import {roomPaidPeriod,shortRoomDate} from './netflix-room-paid-period.mjs';
 import {createHash} from 'node:crypto';
@@ -89,7 +90,7 @@ export async function syncRoomSheetBatch(pool,security,target,client,cursor=null
      on conflict(room_id) do update set target=excluded.target,sent=excluded.sent,retry_at=excluded.retry_at,failures=0`,
     [room.id,target,JSON.stringify(checkpoint)]);
    }catch(error){
-    const reason=/^ROOM_SHEET_(?:DUPLICATE(?:_ID)?|MISSING|OWNER_CONFLICT|IDENTITY_CONFLICT|HEADERS|DATA|DATE_INVALID|DATE_MISSING)$/.test(error.message)?error.message:'ROOM_SHEET_RETRY';
+    const reason=/^ROOM_SHEET_(?:DUPLICATE(?:_ID)?|MISSING|OWNER_CONFLICT|IDENTITY_CONFLICT|HEADERS|DATA|DATE_INVALID|DATE_MISSING)$/.test(error.message)?error.message:sheetReason(error);
     const delay=Math.min(3600,30*2**Math.min(room.failures,7));
     await c.query(`insert into ${sync} as previous(room_id,target,retry_at,failures,sent)
      values($1,$2,clock_timestamp()+make_interval(secs=>$3),1,jsonb_build_object('error',$5::text))

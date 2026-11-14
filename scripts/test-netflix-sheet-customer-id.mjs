@@ -5,7 +5,8 @@ import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {bakuDate,shiftCalendarDays} from '../mirpanel-admin/payment-order-lifecycle.mjs';
 import {saveReadyStock,readyStockView,approveCardWithReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
 import {roomSheetClient,sheetHeaders,sheetTitle,locateCustomerIdCell} from '../mirpanel-admin/community/netflix-room-sheet-client.mjs';
-import {writeNextSheetCustomerId,reconcileSheetDeliveryQueue} from '../mirpanel-admin/community/netflix-sheet-customer-id.mjs';
+import {writeNextSheetCustomerId,reconcileSheetDeliveryQueue,retrySheetCustomerId} from '../mirpanel-admin/community/netflix-sheet-customer-id.mjs';
+import {sheetReason,sheetIssue} from '../mirpanel-admin/community/netflix-sheet-errors.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
 import {adminDelivery,ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
 
@@ -142,7 +143,7 @@ try{
  assert.match((await blocked()).message,/tapılmadı/);assert.equal(writes,1);
  rows=[header,row1,row2];
  await save({netflixSheetIdRetry:{deliveryId:secondCode.id}});await run();
- assert.equal(row2[0],member);assert.equal(writes,2);assert.equal((await blocked()).state,'done');
+ assert.equal(row2[0],member);assert.equal(writes,2);assert.equal(await blocked(),undefined);
  assert.equal(await run(),false);
  assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries')).rows[0].n,2);
  assert.equal((await pool.query("select cents::int from wallet_accounts where user_id='a'")).rows[0].cents,4000);
@@ -204,5 +205,23 @@ try{
  assert.equal(await reconcileSheetDeliveryQueue(pool),0);
  await run();
  assert.equal((await pool.query('select state from netflix_sheet_customer_ids where delivery_id=$1',[unboundId])).rows[0].state,'done');
+ // Failed writes retain their exact safe category; retries never add a second job or erase attempt history.
+ for(const [reason,expected] of [['connection','pending'],['quota','pending'],['timeout','pending'],['verify','pending'],['permission','blocked'],['auth','blocked']]){
+  await pool.query("update netflix_sheet_customer_ids set state='pending',next_at=now() where delivery_id=$1",[unboundId]);
+  await writeNextSheetCustomerId(pool,security,{writeCustomerId:async()=>{throw Object.assign(Error('ROOM_SHEET_REQUEST'),{sheetReason:reason});}});
+  const state=(await pool.query('select state,reason,attempts from netflix_sheet_customer_ids where delivery_id=$1',[unboundId])).rows[0];assert.equal(state.state,expected);assert.equal(state.reason,reason);assert(sheetIssue(reason,expected).message);assert.equal(sheetIssue(reason,expected).needsReview,expected==='blocked');
+  await Promise.all([retrySheetCustomerId(pool,unboundId),retrySheetCustomerId(pool,unboundId)]);
+  assert.equal((await pool.query('select attempts from netflix_sheet_customer_ids where delivery_id=$1',[unboundId])).rows[0].attempts,state.attempts);
+  assert.equal((await pool.query('select count(*)::int n from netflix_sheet_customer_ids where delivery_id=$1',[unboundId])).rows[0].n,1);
+  await run();assert.equal((await pool.query('select state from netflix_sheet_customer_ids where delivery_id=$1',[unboundId])).rows[0].state,'done');
+ }
+ // A completed job cannot starve a newly queued write.
+ await retrySheetCustomerId(pool,unboundId).catch(()=>{});
+ await pool.query("update netflix_sheet_customer_ids set state='pending',next_at=now() where delivery_id=$1",[unboundId]);
+ await pool.query("update netflix_sheet_customer_ids set next_at=now()-interval '1 hour' where delivery_id=$1",[code.id]);
+ let selected;await writeNextSheetCustomerId(pool,security,{writeCustomerId:async snapshot=>{selected=snapshot.id;return {done:true};}});assert.equal(selected,unboundId);
+ await run();
+ assert.equal((await stock()).netflixSheetQueue.length,0);
+ assert.equal(sheetReason(new DOMException('Timed out','TimeoutError')),'timeout');
  console.log('PASS: automatic/manual/card delivery, atomic A+status-only write, numeric/formatted PIN, moved rows, lost reply/retry, missing/conflict/duplicate protection, done-job recheck and historical queue backfill without duplicate delivery');
 }finally{await fixture.close();}

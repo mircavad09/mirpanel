@@ -1,5 +1,5 @@
 import {readyAccountList,manageReadyAccount,freeManagementClause} from './ready-stock-management.mjs';
-import {sheetCustomerIdStates,retrySheetCustomerId} from './netflix-sheet-customer-id.mjs';
+import {sheetCustomerIdStates,retrySheetCustomerId,retrySheetRoom} from './netflix-sheet-customer-id.mjs';
 import {updateRoomPassword} from './netflix-room-password.mjs';
 import crypto from 'node:crypto';
 import {signature} from '../employee-security.mjs';
@@ -42,7 +42,8 @@ export async function readyStockView(pool,catalog,inventory,security){
   const roomStockInstalled=(await c.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present;
   result.netflixRooms=roomStockInstalled?(await netflixRooms(c,security)).rooms:null;
   if(roomStockInstalled){
-   const {rooms:states,manual}=await sheetCustomerIdStates(c);
+   const {rooms:states,manual,entries}=await sheetCustomerIdStates(c);
+   result.netflixSheetQueue=entries;
    result.netflixSheetManual=manual;
    for(const room of result.netflixRooms){
     const state=states.get(room.id);
@@ -63,7 +64,13 @@ export async function saveReadyStock(pool,security,secret,catalog,actor,input){
  if(input?.accountManage)return manageReadyAccount(pool,security,catalog,actor,input.accountManage);
  if(input?.netflixRoomCards)return saveNetflixRoomCards(pool,security,secret,actor,input.netflixRoomCards);
  if(input?.netflixRoomDelete)return deleteNetflixRoom(pool,actor,input.netflixRoomDelete.id);
- if(input?.netflixSheetIdRetry)return retrySheetCustomerId(pool,input.netflixSheetIdRetry.deliveryId);
+ if(input?.netflixSheetIdRetry){
+  const {deliveryId,roomId}=input.netflixSheetIdRetry;
+  if(!deliveryId&&!roomId)throw fail(400,'Təkrar yoxlama üçün qeyd seçilməyib.');
+  if(deliveryId)await retrySheetCustomerId(pool,deliveryId);
+  if(roomId)await retrySheetRoom(pool,roomId);
+  return {queued:true};
+ }
  if(input?.netflixRoomsReady)return releaseNetflixReview(pool,actor,input.netflixRoomsReady);
  if(input?.netflixRoomAssign)return assignLegacyRoom(pool,security,catalog,input.netflixRoomAssign);
  if(input?.netflixAccountPassword)return updateRoomPassword(pool,security,actor,input.netflixAccountPassword);
