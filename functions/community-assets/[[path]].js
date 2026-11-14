@@ -12,6 +12,7 @@ export async function onRequest(context){
   if(r.ok&&(u.pathname.endsWith('.js')?/^(text|application)\/javascript$/.test(type):type===(u.pathname.endsWith('.css')?'text/css':sticker?'image/webp':'image/png'))){
    if(!shopAsset)return r;
    const headers=new Headers(r.headers);headers.append('Server-Timing','shop-asset;desc="edge"');
+   if(u.pathname==='/community-assets/shop-ui.js'){headers.set('Cache-Control','private, no-cache, no-store, must-revalidate');headers.set('Cloudflare-CDN-Cache-Control','no-store');}
    return new Response(r.body,{status:r.status,headers});
   }
  }
