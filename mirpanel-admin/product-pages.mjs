@@ -472,7 +472,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=stable-buy-1">
+  <link rel="stylesheet" href="/product-page.css?v=similar-natural-1">
   <link rel="stylesheet" href="/payment-flow.css?v=checkout-cancel-proxy-20261026-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
