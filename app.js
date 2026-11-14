@@ -3541,6 +3541,44 @@ const DATA = {
           "label": "1800 UC",
           "months": 1,
           "price": 39.87
+        },
+        {
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3440,
+            "type": "TOPUP",
+            "gameId": 4,
+            "categoryId": 223,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "Player ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "image": "/uploads/products/pubg-3850-uc.png",
+          "formFields": [
+            {
+              "key": "player_id",
+              "type": "text",
+              "label": "Player ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
+            }
+          ],
+          "id": "epinby_3440",
+          "pricingId": "4fef9151-b07e-4377-a15d-218ff5f7d9a4",
+          "label": "3850 UC",
+          "months": 1,
+          "price": 78.7
         }
       ],
       "orderConfirmation": {
