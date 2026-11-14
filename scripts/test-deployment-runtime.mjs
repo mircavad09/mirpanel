@@ -21,3 +21,6 @@ assert.equal(sent,2);console.log('PASS: standby private read allowlist, no custo
 await send('https://synthetic.supabase.co/storage/v1/object/sign/mirpanel-stories/synthetic.webp',{method:'POST'});
 await assert.rejects(send('https://synthetic.supabase.co/storage/v1/object/mirpanel-stories/synthetic.webp',{method:'POST'}),/STANDBY_OUTBOUND_WRITE_BLOCKED/);
 assert.equal(sent,3);
+await send('https://oauth2.googleapis.com/token',{method:'POST'});
+await assert.rejects(send('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST'}),/STANDBY_OUTBOUND_WRITE_BLOCKED/);
+assert.equal(sent,4);

@@ -25,10 +25,11 @@ export function deploymentRuntime(env=process.env){
    const url=new URL(typeof input==='string'||input instanceof URL?input:input.url),method=String(init.method||input?.method||'GET').toUpperCase();
    const readRpc=url.origin===new URL(env.SUPABASE_URL).origin&&/^\/rest\/v1\/rpc\/(?:inventory_snapshot|employee_system_ready|product_sales_snapshot)$/.test(url.pathname);
    const mediaSign=url.origin===new URL(env.SUPABASE_URL).origin&&url.pathname.startsWith('/storage/v1/object/sign/'+encodeURIComponent(env.SUPABASE_STORIES_BUCKET||'mirpanel-stories')+'/');
+   const oauthToken=url.href==='https://oauth2.googleapis.com/token';
    // No mail, supplier orders, Sheets writes, reservations, queue refresh RPC,
    // migrations, receipt signing or storage uploads can escape standby via HTTP.
    // Public stories/banner signing issues a short-lived read URL, never uploads.
-   if(!['GET','HEAD'].includes(method)&&!(method==='POST'&&(readRpc||mediaSign)))throw Error('STANDBY_OUTBOUND_WRITE_BLOCKED');
+   if(!['GET','HEAD'].includes(method)&&!(method==='POST'&&(readRpc||mediaSign||oauthToken)))throw Error('STANDBY_OUTBOUND_WRITE_BLOCKED');
    return send(input,init);
   };}
  };
