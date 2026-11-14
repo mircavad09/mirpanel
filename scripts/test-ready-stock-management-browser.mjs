@@ -14,16 +14,16 @@ import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex
 process.env.MIRPANEL_CART_V2_TEST='1';
 const live=process.argv.includes('--live'),f=await shopFixture(),{pool,db,catalog,id,rpc}=f;
 const secret=crypto.randomBytes(32),security=createPaymentSecurity({encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:secret.toString('base64')});
-const out='outputs/ready-stock-management';fs.mkdirSync(out,{recursive:true});
+const out='../../outputs/ready-stock-cards';fs.mkdirSync(out,{recursive:true});
 let server;
 try{
  for(const file of ['ready-stock-migration.sql','ready-stock-product-messages-migration.sql'])await db.exec(db.read('mirpanel-admin/community/'+file));
  await ensureReadyStockManagement(pool);
- catalog.products[0].title='CapCut Pro';catalog.products[1].title='Spotify Premium';
+ catalog.products[0].title='CapCut Pro';catalog.products[1].title='Spotify Premium';catalog.products[0].plans[0].label='1 Ay (endirim) — uzun paket adı və bütün cihazlarda istifadə';
  for(const p of catalog.products){await saveProductMessage(pool,security,catalog,{productId:p.id,message:'Sintetik ümumi qayda'});await rpc('inventory_set_nullable_quantity',[p.id,50,'synthetic-admin',id(),(await rpc('inventory_snapshot')).find(x=>x.productId===p.id)?.version||0,null]);}
  const assets={};for(const name of ['ready-stock-admin.js','ready-stock-admin.css']){
   const local=fs.readFileSync('mirpanel-admin/public/'+name,'utf8');
-  if(live){const r=await fetch('https://mirpanel.onrender.com/'+name+'?v=account-management-1');assert.equal(r.status,200);const body=await r.text();assert.equal(body.replaceAll('\r\n','\n'),local.replaceAll('\r\n','\n'));assets[name]=body;}else assets[name]=local;
+  if(live){const r=await fetch('https://mirpanel.onrender.com/'+name+'?v=account-cards-2');assert.equal(r.status,200);const body=await r.text();assert.equal(body.replaceAll('\r\n','\n'),local.replaceAll('\r\n','\n'));assets[name]=body;}else assets[name]=local;
  }
  server=http.createServer(async(req,res)=>{
   try{
@@ -37,14 +37,17 @@ try{
    res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end('<!doctype html><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/ready-stock-admin.css"><style>body{background:#0b0d0f;color:white;font:14px system-ui;margin:8px}button,input,select,textarea{font:inherit}.btn{border:1px solid #4c5259;border-radius:7px;padding:7px;background:#252a31;color:white}input,select,textarea{padding:8px;background:#0b0e10;border:1px solid #555;color:white;border-radius:7px}button{cursor:pointer}label{display:grid;gap:5px}</style><main id="host"></main><script type="module">import {mountReadyStock} from "/ready-stock-admin.js";const api=async(path,opts)=>{const r=await fetch(path,opts),d=await r.json();if(!r.ok)throw Object.assign(Error(d.error),{status:r.status});return d;};mountReadyStock(document.querySelector("#host"),api);</script>');
   }catch(e){res.writeHead(e.status||500,{'Content-Type':'application/json'});res.end(JSON.stringify({error:e.status?e.message:'Synthetic test failed'}));}
  });await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;
- for(const [engine,width] of [[chromium,390],[chromium,1440],[webkit,390],[webkit,1440]]){
+ for(const [engine,width] of (process.argv.includes('--webkit')?[[webkit,390]]:[[chromium,320],[chromium,390],[chromium,1440],[webkit,390],[webkit,1440]])){
   // Separate SKU data for each browser run; all data lives in a disposable database.
   await pool.query('delete from ready_stock_account_revisions');await pool.query('delete from ready_stock_management');await pool.query('delete from ready_stock_units');
-  for(const p of catalog.products.slice(0,2))await saveReadyStock(pool,security,secret,catalog,'synthetic-admin',{productId:p.id,index:0,planSignature:signature(p.plans[0]),requestId:id(),autoWallet:false,accounts:[1,2,3].map(n=>({email:p.id+n+'@example.test',password:'Synthetic-'+n}))});
+  for(const p of catalog.products.slice(0,2))await saveReadyStock(pool,security,secret,catalog,'synthetic-admin',{productId:p.id,index:0,planSignature:signature(p.plans[0]),requestId:id(),autoWallet:false,accounts:[1,2,3].map(n=>({email:p.id+n+'-long-email-for-mobile-layout@example.test',password:'Synthetic-'+n}))});
   const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{
    const context=await browser.newContext({viewport:{width,height:900}}),page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
    await page.goto(base);const cards=page.locator('.readySavedAccount');await cards.nth(2).waitFor();
+   assert.match(await cards.first().innerText(),/CapCut Pro · 1 Ay/);
+   const geometry=await cards.first().evaluate(card=>{const bs=[...card.querySelectorAll('.readySavedActions button')].map(b=>b.getBoundingClientRect());const text=card.querySelector('.readySavedDetails').getBoundingClientRect();return bs.every((b,i)=>b.x>=text.right&&Math.abs(b.width-bs[0].width)<1&&(!i||b.y>=bs[i-1].bottom));});assert(geometry,'same-width vertical actions on right');
+   assert.deepEqual(await cards.first().locator('.readySavedActions button').allTextContents(),['Redaktə et','Sil','Müştəriyə bağla']);
    await cards.first().getByRole('button',{name:'Redaktə et',exact:true}).click();const dialog=page.getByRole('dialog',{name:'Hesabı redaktə et'});await dialog.waitFor();
    assert.equal(await dialog.locator('[name=password]').getAttribute('type'),'text');await dialog.locator('[name=email]').fill('edited@example.test');await dialog.locator('[name=password]').fill('Synthetic-edited');await dialog.locator('[name=message]').fill('Əlavə sintetik məlumat');
    await dialog.getByRole('button',{name:'Dəyişikliyi saxla'}).click();await page.getByText('Hesab yeniləndi.',{exact:true}).waitFor();await page.reload();await page.getByText('edited@example.test',{exact:true}).waitFor();
@@ -54,9 +57,20 @@ try{
    const sold=page.locator('[data-saved-accounts] section').nth(1);await sold.getByText(/Reader A/).waitFor();assert.equal(await sold.getByRole('button',{name:'Sil',exact:true}).isDisabled(),true);assert.equal(await page.locator('[data-ready]').innerText(),'1');
    await page.locator('[name=product]').selectOption('finite');await cards.nth(2).waitFor();assert.equal(await cards.count(),3);assert.equal(await page.getByText('edited@example.test',{exact:true}).count(),0);
    await page.locator('[name=product]').selectOption('ordinary');await sold.getByText(/Reader A/).waitFor();
+   // A legacy record with no resolvable name is explicitly repaired in the edit form.
+   const orphan=(await pool.query('select u.* from ready_stock_units u left join ready_stock_management m on m.unit_id=u.id where u.product_id=$1 and u.delivery_id is null and m.unit_id is null limit 1',['ordinary'])).rows[0];
+   const decoded=JSON.parse(security.decryptSecret(orphan.message_cipher));decoded.scope=['ordinary','missing','legacy-signature'];
+   await pool.query('insert into ready_stock_plans(product_id,plan_key,plan_signature) values($1,$2,$3) on conflict do nothing',decoded.scope);
+   await pool.query('update ready_stock_units set plan_key=$2,plan_signature=$3,message_cipher=$4 where id=$1',[orphan.id,'missing','legacy-signature',security.encryptSecret(JSON.stringify(decoded))]);
+   await page.reload();await page.getByText('CapCut Pro · Paket adı tapılmadı',{exact:true}).waitFor();
+   const missing=cards.filter({hasText:'Paket adı tapılmadı'});await missing.getByRole('button',{name:'Redaktə et',exact:true}).click();
+   assert.equal(await dialog.locator('[name=accountPlan]').inputValue(),'');await dialog.locator('[name=accountPlan]').selectOption('0');
+   await dialog.getByRole('button',{name:'Dəyişikliyi saxla'}).click();await page.getByText('Hesab yeniləndi.',{exact:true}).waitFor();
+   assert.equal(await cards.filter({hasText:'Paket adı tapılmadı'}).count(),0);
+   assert.match(await cards.first().innerText(),/CapCut Pro · 1 Ay/);
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);assert.deepEqual(errors,[]);
    await page.locator('[data-saved-accounts]').screenshot({path:out+'/'+(live?'live-':'')+engine.name()+'-'+width+'.png'});
-   console.log('PASS',live?'live assets':'local',engine.name(),width,'edit persisted, plain password, delete count, bind, customer metadata, product isolation');await context.close();
+   console.log('PASS',live?'live assets':'local',engine.name(),width,'edit persisted, plain password, delete count, bind, customer metadata, product isolation, missing package repaired, right-side action rail');await context.close();
   }finally{await browser.close();}
  }
 }finally{if(server){server.closeAllConnections();await new Promise(r=>server.close(r));}await f.close();}

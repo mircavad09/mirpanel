@@ -369,7 +369,16 @@ export function mountReadyStock(host,api){
    const actions=document.createElement('div'),save=document.createElement('button'),close=document.createElement('button');actions.className='readyStockActions';save.type='submit';save.className='btn primary';save.textContent=action==='edit'?'Dəyişikliyi saxla':'Müştəriyə bağla';close.type='button';close.className='btn';close.textContent='Bağla';actions.append(save,close);form.append(status,actions);dialog.append(heading,preview,form);accountHost.append(dialog);
    let user=null,timer,revision=0,saving=false;
    const update=()=>{save.disabled=saving||current.reserved||(action==='bind'&&(!user||!form.elements.date.value||!form.elements.verified.checked));};
-   if(action==='edit'){form.elements.email.value=current.email;form.elements.password.value=current.password;form.elements.message.value=current.message;}
+   if(action==='edit'){
+    form.elements.email.value=current.email;form.elements.password.value=current.password;form.elements.message.value=current.message;
+    if(!row.assigned){
+     const label=document.createElement('label'),select=document.createElement('select');label.textContent='Paket';select.name='accountPlan';select.append(new Option('Paketi seçin',''));
+     for(const item of products.find(p=>p.id===row.productId)?.plans||[])select.append(new Option(item.title,String(item.index)));
+     select.value=current.planIndex===null||current.planIndex===undefined?'':String(current.planIndex);
+     select.required=!current.packageAvailable;label.append(select);form.prepend(label);
+     if(!current.packageAvailable)status.textContent='Saxlanmış paket tam uyğun deyil. Düzgün paketi seçib yadda saxlayın.';
+    }
+   }
    else{
     const {customer,date,verified}=form.elements;date.oninput=verified.onchange=update;
     customer.oninput=()=>{
@@ -385,6 +394,10 @@ export function mountReadyStock(host,api){
    form.onsubmit=async e=>{
     e.preventDefault();update();if(save.disabled)return;saving=true;close.disabled=true;update();status.textContent='Saxlanılır…';
     const values=action==='edit'?{email:form.elements.email.value,password:form.elements.password.value,message:form.elements.message.value}:{userId:user.id,paidUntil:form.elements.date.value,planSignature:row.planSignature};
+    if(action==='edit'&&form.elements.accountPlan?.value){
+     const index=Number(form.elements.accountPlan.value),item=products.find(p=>p.id===row.productId)?.plans.find(p=>p.index===index);
+     if(index!==current.planIndex&&item){values.index=index;values.planSignature=item.signature;}
+    }
     try{await manageAccount({action:action==='edit'?'edit':'bind',id:row.id,revision:current.revision,...values});dialog.close();await refresh();accountStatus(action==='edit'?'Hesab yeniləndi.':'Hesab müştəriyə bağlandı. Əlavə balans tutulmadı.');}
     catch(error){status.textContent=error.message||'Saxlanılmadı.';}finally{saving=false;close.disabled=false;update();}
    };
@@ -398,8 +411,8 @@ export function mountReadyStock(host,api){
    const section=document.createElement('section'),heading=document.createElement('h3');heading.textContent=title;section.append(heading);
    if(!accounts.length){const empty=document.createElement('p');empty.textContent='Bu siyahıda hesab yoxdur.';section.append(empty);}
    for(const row of accounts){
-    const card=document.createElement('article'),name=document.createElement('strong'),planName=document.createElement('p'),actions=document.createElement('div');card.className='readySavedAccount';name.textContent=row.email||'Hazır mesajla saxlanmış hesab';planName.textContent='Paket: '+row.planName;actions.className='readySavedActions';card.append(name,planName);
-    if(row.customer){const customer=document.createElement('p');customer.textContent=row.customer.name+(row.customer.id?' · #'+row.customer.id:'')+(row.customer.assignedAt?' · Bağlanma / təhvil: '+roomTime.format(new Date(row.customer.assignedAt)):'')+(row.paidUntil?' · Ödənilib: '+row.paidUntil:'');card.append(customer);}
+    const card=document.createElement('article'),details=document.createElement('div'),name=document.createElement('strong'),planName=document.createElement('p'),actions=document.createElement('div');card.className='readySavedAccount';details.className='readySavedDetails';name.textContent=row.email||'Hazır mesajla saxlanmış hesab';planName.textContent=(row.productName||products.find(p=>p.id===row.productId)?.title||'Məhsul adı tapılmadı')+' · '+(row.planName||'Paket adı tapılmadı');actions.className='readySavedActions';details.append(name,planName);card.append(details);
+    if(row.customer){const customer=document.createElement('p');customer.textContent=row.customer.name+(row.customer.id?' · #'+row.customer.id:'')+(row.customer.assignedAt?' · Bağlanma / təhvil: '+roomTime.format(new Date(row.customer.assignedAt)):'')+(row.paidUntil?' · Ödənilib: '+row.paidUntil:'');details.append(customer);}
     for(const [action,label,cls] of [['edit','Redaktə et','readyAccountEdit'],['delete','Sil','readyAccountDelete'],['bind','Müştəriyə bağla','readyAccountBind']]){const b=document.createElement('button');b.type='button';b.className='btn '+cls;b.textContent=label;b.disabled=!row.editable||row.assigned&&action!=='edit';b.title=b.disabled?'Təhvil və sifariş tarixçəsi qorunur':'';b.onclick=()=>void accountAction(row,action,b);actions.append(b);}
     card.append(actions);section.append(card);
    }

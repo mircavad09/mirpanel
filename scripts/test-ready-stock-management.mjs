@@ -6,7 +6,7 @@ import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {signature} from '../mirpanel-admin/employee-security.mjs';
 import {saveReadyStock,readyStockView} from '../mirpanel-admin/community/ready-stock.mjs';
 import {saveProductMessage} from '../mirpanel-admin/community/ready-stock-product-messages.mjs';
-import {ensureReadyStockManagement,manageReadyAccount,readyAccountList} from '../mirpanel-admin/community/ready-stock-management.mjs';
+import {ensureReadyStockManagement,manageReadyAccount,readyAccountList,readyAccountPackage} from '../mirpanel-admin/community/ready-stock-management.mjs';
 import {withLegacyHistory} from '../mirpanel-admin/community/netflix-room-legacy.mjs';
 import {ownerCodes,deliveryRecords} from '../mirpanel-admin/community/order-delivery.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
@@ -82,5 +82,21 @@ try{
  assert.ok(logs.length>=4);assert.ok(!JSON.stringify(logs).includes('Synthetic-edited'));assert.ok(!JSON.stringify(logs).includes('updated@example.test'));
  // Package recreation is deliberately not matched to old private stock.
  capcut.plans[0]={label:'Yeni 7 gün',days:7,price:9};await assert.rejects(call({action:'bind',id:free.id,revision:free.revision,userId:'a',paidUntil:date(4),planSignature:free.planSignature}),{status:409});
+ // Legacy numeric keys can be named without silently allocating to a recreated SKU.
+ const legacy={product_id:capcut.id,plan_key:'2',plan_signature:'old-signature'};
+ capcut.plans.push({label:'Başqa paket',months:3,price:12},{label:'1 Ay (endirim)',months:1,price:4});
+ assert.equal(readyAccountPackage(catalog,legacy).planName,'1 Ay (endirim)');
+ assert.equal(readyAccountPackage(catalog,legacy).packageAvailable,false);
+ assert.equal(readyAccountPackage(catalog,{...legacy,plan_key:'missing'}).planName,'Paket adı tapılmadı');
+ const repair=id(),scope=[capcut.id,'2','old-signature'];
+ await pool.query('insert into ready_stock_plans(product_id,plan_key,plan_signature) values($1,$2,$3)',scope);
+ await pool.query('insert into ready_stock_units(id,product_id,plan_key,plan_signature,batch_id,message_cipher) select $1,$2,$3,$4,batch_id,$5 from ready_stock_units limit 1',[repair,...scope,security.encryptSecret(JSON.stringify({id:repair,scope,account:{email:'legacy@example.test',password:'Synthetic-legacy'}}))]);
+ const repairOpen=await call({action:'open',id:repair});assert.equal(repairOpen.planIndex,null);
+ await assert.rejects(call({action:'edit',id:repair,revision:0,email:repairOpen.email,password:repairOpen.password,index:2,planSignature:'stale'}),{status:409});
+ await call({action:'edit',id:repair,revision:0,email:repairOpen.email,password:repairOpen.password,index:2,planSignature:signature(capcut.plans[2])});
+ const fixed=(await units()).find(r=>r.id===repair);assert.equal(fixed.planIndex,2);assert.equal(fixed.packageAvailable,true);assert.equal(fixed.planName,'1 Ay (endirim)');
+ assert.equal((await call({action:'open',id:repair})).password,'Synthetic-legacy');
+ await assert.rejects(call({action:'edit',id:sold.id,revision:sold.revision,email:'sold@example.test',password:'Synthetic-sold',index:0,planSignature:signature(spotify.plans[0])}),{status:409});
+
  console.log(JSON.stringify({edit:true,delete:true,bindWithoutCharge:true,historyAndCodes:true,subscriptionDate:true,ownerIsolation:true,reservedBlocked:true,parallelBindSingle:true,twoPurchasesOneDelivery:true,salesLimitSeparate:true,auditNoSecrets:true,packageIdentityProtected:true,syntheticOnly:true}));
 }finally{await f.close();}

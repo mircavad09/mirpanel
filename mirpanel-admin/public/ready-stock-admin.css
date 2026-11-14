@@ -71,3 +71,16 @@
 }
 
 .readySavedAccount{margin:8px 0;padding:12px;border:1px solid #3b4148;border-radius:10px;background:#111417;overflow-wrap:anywhere}.readySavedAccount p{margin:6px 0;font-size:12px}.readySavedActions{display:flex;flex-wrap:wrap;gap:6px}.readySavedActions .btn{min-height:34px;padding:5px 9px;font-size:12px}.readySavedActions .readyAccountEdit{background:#ffd54a;color:#201900;border-color:#ffd54a}.readySavedActions .readyAccountDelete{background:#632c32;color:#ffe5e7;border-color:#b64c58}.readySavedActions .readyAccountBind{background:#1765ab;color:#fff;border-color:#438ed2}.readySavedActions button:disabled{opacity:.45;cursor:not-allowed}.readyAccountDialog{width:min(540px,calc(100vw - 24px));max-height:90dvh;overflow:auto;background:#14171a;color:#fff}.readyAccountDialog::backdrop{background:#000b}.readyAccountDialog form{display:grid;gap:10px}.readyAccountDialog [data-results]{display:grid;gap:5px}.readyAccountDialog [data-results] button{text-align:left;white-space:normal;overflow-wrap:anywhere}.readyAccountDialog input,.readyAccountDialog textarea{min-width:0;box-sizing:border-box;width:100%}.readyAccountDialog input[type=checkbox]{width:auto}@media(max-width:760px){.readySavedActions .btn{min-height:44px}.readySavedAccount{padding:10px}.readySavedActions{gap:5px}}
+
+/* Keep account metadata and a compact, consistently ordered action rail separate. */
+.readySavedAccount{display:grid;grid-template-columns:minmax(0,1fr) 120px;align-items:start;gap:10px;padding:10px}
+.readySavedDetails{min-width:0;overflow-wrap:anywhere}
+.readySavedDetails>strong{display:block;overflow-wrap:anywhere}
+.readySavedDetails p{margin:5px 0 0}
+.readySavedAccount .readySavedActions{display:grid;grid-template-columns:minmax(0,1fr);gap:4px;align-content:start}
+.readySavedAccount .readySavedActions .btn{width:100%;box-sizing:border-box;min-height:32px;padding:5px 6px;font-size:12px;line-height:1.25;white-space:normal;margin:0}
+@media(max-width:760px){.readySavedAccount{grid-template-columns:minmax(0,1fr) 108px;gap:8px}.readySavedAccount .readySavedActions .btn{min-height:44px}}
+
+.readyStockCard select{max-width:100%;overflow:hidden;text-overflow:ellipsis}
+
+.readyStockCard label:has(>select){overflow:hidden}

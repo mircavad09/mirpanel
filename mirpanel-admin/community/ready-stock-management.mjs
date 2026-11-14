@@ -25,6 +25,16 @@ function planMatch(catalog,row){
  const p=catalog.products.find(p=>p.id===row.product_id),matches=p?.plans?.map((plan,i)=>({plan,i})).filter(({plan,i})=>planKey(plan,i)===row.plan_key&&signature(plan)===row.plan_signature)||[];
  return {p,match:matches.length===1?matches[0]:null};
 }
+export function readyAccountPackage(catalog,row){
+ const {p,match}=planMatch(catalog,row);
+ // Naming a legacy key is harmless; allocation still requires the exact signature.
+ const plans=p?.plans?.map((plan,i)=>({plan,i}))||[];
+ const bySignature=plans.filter(x=>signature(x.plan)===row.plan_signature);
+ const byKey=plans.filter(x=>planKey(x.plan,x.i)===String(row.plan_key));
+ const legacyIndex=/^(0|[1-9]\d*)$/.test(String(row.plan_key))?plans[Number(row.plan_key)]:null;
+ const named=match||(bySignature.length===1?bySignature[0]:byKey.length===1?byKey[0]:legacyIndex);
+ return {productName:p?.title||'Məhsul adı tapılmadı',planName:named?.plan.label||named?.plan.name||'Paket adı tapılmadı',planIndex:match?.i??null,packageAvailable:!!match};
+}
 // Generic units are not reserved by ID. A live reservation for their exact SKU
 // protects that ready pool until it is released or fulfilled.
 async function held(db,row){
@@ -45,7 +55,7 @@ export async function readyAccountList(db,security,catalog){
   where m.deleted_at is null order by u.created_at desc,u.id desc`)).rows;
  return rows.map(row=>{
   const data=decode(security,row),{p,match}=planMatch(catalog,row),sold=!!(row.delivery_id||row.assignment_id);
-  return {id:row.id,productId:row.product_id,planKey:row.plan_key,planSignature:row.plan_signature,planName:match?.plan.label||match?.plan.name||row.plan_key,
+  return {id:row.id,productId:row.product_id,planKey:row.plan_key,planSignature:row.plan_signature,...readyAccountPackage(catalog,row),
    email:data.account?.email||'',structured:!!data.account,status:sold?'sold':'ready',revision:row.revision||0,
    customer:sold?{name:row.customer_name||'Müştəri',id:row.member_number,assignedAt:row.linked_at}:null,
    paidUntil:row.paid_until,editable:true,assigned:sold,packageAvailable:!!(p&&match)};
@@ -78,7 +88,7 @@ export async function manageReadyAccount(pool,security,catalog,actor,input){
   const existingCipher=delivery?.message_cipher||row.assigned_cipher;
   const delivered=existingCipher?JSON.parse(security.decryptSecret(existingCipher)):null;
   if(delivered&&(delivery?(delivered.id!==delivery.id||delivered.order!==delivery.order_id||delivered.line!==delivery.line_index):(delivered.id!==row.assignment_id||delivered.order!==row.assignment_id||delivered.line!==0)))throw Error('DELIVERY_REFERENCE_MISMATCH');
-  if(action==='open'){await c.query('commit');return {email:delivered?.email??data.account?.email??'',password:delivered?.password??data.account?.password??'',message:delivered?.message??data.message??'',revision:row.revision||0,reserved,planName:match?.plan.label||match?.plan.name||row.plan_key};}
+  if(action==='open'){await c.query('commit');return {email:delivered?.email??data.account?.email??'',password:delivered?.password??data.account?.password??'',message:delivered?.message??data.message??'',revision:row.revision||0,reserved,...readyAccountPackage(catalog,row)};}
   if(reserved)throw fail(409,'Bu paket aktiv sifariş üçün rezervdədir. Rezerv bitənədək hesab dəyişdirilə, silinə və ya bağlana bilməz.');
   if(input.revision!==(row.revision||0))throw fail(409,'Hesab dəyişib. Yenidən açın.');
   await c.query(`insert into ${T}(unit_id) values($1) on conflict do nothing`,[id]);
@@ -86,14 +96,24 @@ export async function manageReadyAccount(pool,security,catalog,actor,input){
   if(action==='edit'){
    const {email='',password='',message=''}=input;
    if(typeof message!=='string'||message.length>8000||typeof email!=='string'||typeof password!=='string'||email.length>254||password.length>512||/[\r\n\0]/.test(password)||((email||password)&&(!/^\S+@\S+\.\S+$/.test(email)||!password.trim()))||(!email&&!password&&!message.trim()))throw fail(400,'Hesabın e-poçtunu və şifrəsini, yaxud mövcud hazır mətnini düzgün yazın.');
-   const value={...data,...(email?{account:{...data.account,email:email.trim(),password}}:{account:undefined}),message};
+   let scope=data.scope;
+   if(input.index!==undefined){
+    if(sold)throw fail(409,'Satılmış hesabın paketini dəyişmək olmaz.');
+    const next=p?.plans?.[input.index];
+    if(!Number.isSafeInteger(input.index)||!next||signature(next)!==input.planSignature)throw fail(409,'Kataloq dəyişib. Paketi yenidən seçin.');
+    const nextKey=planKey(next,input.index),nextSignature=signature(next);
+    if(await held(c,{product_id:row.product_id,plan_key:nextKey,plan_signature:nextSignature}))throw fail(409,'Seçilmiş paket aktiv sifariş üçün rezervdədir.');
+    scope=[row.product_id,nextKey,nextSignature];
+    await c.query('insert into mirpanel_community.ready_stock_plans(product_id,plan_key,plan_signature) values($1,$2,$3) on conflict do nothing',scope);
+   }
+   const value={...data,scope,...(email?{account:{...data.account,email:email.trim(),password}}:{account:undefined}),message};
    await c.query(`insert into mirpanel_community.ready_stock_account_revisions(unit_id,revision,stock_cipher,delivery_cipher,actor_ref) values($1,$2,$3,$4,$5)`,[id,row.revision||0,row.message_cipher,existingCipher||null,actor]);
    if(delivered){
     const cipher=security.encryptSecret(JSON.stringify({...delivered,email:email.trim()||undefined,password:password||undefined,message}));
     if(delivery)await c.query('update mirpanel_community.customer_order_deliveries set message_cipher=$2 where id=$1',[delivery.id,cipher]);
     else await c.query(`update ${T} set message_cipher=$2 where unit_id=$1`,[id,cipher]);
    }
-   await c.query(`update ${U} set message_cipher=$2 where id=$1`,[id,security.encryptSecret(JSON.stringify(value))]);
+   await c.query(`update ${U} set message_cipher=$2,plan_key=$3,plan_signature=$4 where id=$1`,[id,security.encryptSecret(JSON.stringify(value)),scope[1],scope[2]]);
    await c.query(`update ${T} set revision=revision+1 where unit_id=$1`,[id]);
   }
   if(action==='bind'){
