@@ -58,9 +58,9 @@ export async function sheetCustomerIdStates(db){
   else manual.push({...present(r),orderCode:r.order_code});
  }
  if((await db.query("select to_regclass('mirpanel_community.netflix_room_sheet_sync') present")).rows[0].present){
-  const failures=(await db.query(`select room_id,sent->>'error' reason from mirpanel_community.netflix_room_sheet_sync where failures>0`)).rows;
+  const failures=(await db.query(`select room_id,coalesce(sent->>'error',sent->>'warning') reason from mirpanel_community.netflix_room_sheet_sync where failures>0 or sent->>'warning' is not null`)).rows;
   const descriptions={ROOM_SHEET_DUPLICATE:messages.duplicate,ROOM_SHEET_DUPLICATE_ID:messages.duplicate,ROOM_SHEET_MISSING:messages.missing,ROOM_SHEET_DATA:messages.delivery,
-   ROOM_SHEET_OWNER_CONFLICT:messages.conflict,ROOM_SHEET_IDENTITY_CONFLICT:'Sabit otaq ID-si ilə Gmail, otaq adı və PIN uyğun gəlmir.',ROOM_SHEET_HEADERS:messages.headers};
+   ROOM_SHEET_DATE_MISSING:'Hesabın bitmə tarixi tapılmadı. Sheets-də mövcud düzgün tarix qorundu; hesab üçün bitmə tarixini qeyd edin.',ROOM_SHEET_DATE_INVALID:'Etibarsız tarix Sheets-ə göndərilmədi.',ROOM_SHEET_OWNER_CONFLICT:messages.conflict,ROOM_SHEET_IDENTITY_CONFLICT:'Sabit otaq ID-si ilə Gmail, otaq adı və PIN uyğun gəlmir.',ROOM_SHEET_HEADERS:messages.headers};
   for(const row of failures)rooms.set(row.room_id,{state:'pending',message:descriptions[row.reason]??messages.sheets});
  }
  return {rooms,manual};

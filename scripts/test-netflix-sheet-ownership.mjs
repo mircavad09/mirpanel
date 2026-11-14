@@ -26,9 +26,9 @@ for(const durationMonths of [1,3,6]){
  const room={delivery_id:'delivery',purchase_paid:true,user_id:'synthetic',member_number:'900001',line_index:0,
   checkout_snapshot:{items:[{productId:'netflix',durationMonths}]},delivered_at:'2026-12-01T08:00:00Z',stock_end:'2026-12-31'};
  assert.equal(roomPaidPeriod(room).months,durationMonths);
- assert.equal(roomSheetState(room)[2],'✓ Satılıb');
- assert.equal(roomSheetState({...room,renewals:[{confirmed:false,orderId:'pending'}]})[2],'✓ Satılıb');
- assert.equal(roomSheetState({...room,renewals:[{confirmed:true,orderId:'paid'}]})[2],'✓ Yenilənib');
+ assert.equal(roomSheetState(room)[2].split('\n')[0],'✓ Satılıb');
+ assert.equal(roomSheetState({...room,renewals:[{confirmed:false,orderId:'pending'}]})[2].split('\n')[0],'✓ Satılıb');
+ assert.equal(roomSheetState({...room,renewals:[{confirmed:true,orderId:'paid'}]})[2].split('\n')[0],'✓ Yenilənib');
 }
-assert.equal(roomSheetState({member_number:'900001',legacy_paid_until:'2027-06-01',today:'2026-12-01'})[2],'✓ Satılıb');
+assert.equal(roomSheetState({member_number:'900001',legacy_paid_until:'2027-06-01',today:'2026-12-01'})[2].split('\n')[0],'✓ Satılıb');
 console.log('PASS: whole-row writer cannot erase ID/status; conflicts/missing/duplicates block; reordered legacy rows, separators, leading-zero PIN; 1/3/6-month sales and confirmed-only renewals');

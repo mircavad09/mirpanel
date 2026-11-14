@@ -1,5 +1,5 @@
 import {createSign} from 'node:crypto';
-import {roomSheetCells,roomSheetStyleKey,roomSheetStyleVersion,roomSheetStyleRequests,roomPresentationUpdates,roomStatusStyles,roomStripeFormula} from './netflix-room-sheet-style.mjs';
+import {roomDateCell,roomSheetCells,roomSheetStyleKey,roomSheetStyleVersion,roomSheetStyleRequests,roomPresentationUpdates,roomStatusStyles,roomStripeFormula} from './netflix-room-sheet-style.mjs';
 
 export const sheetTitle='Netflix Şəxsi — Otaq stoku';
 export const sheetHeaders=['Müştəri ID-si','Otaq adı və PIN','Gmail','Şifrə','Bitmə tarixi','Status'];
@@ -110,7 +110,8 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    const result=locateCustomerIdCell(rows,delivery,memberNumber);
    if(result.reason)return result;
    const rowIndex=result.rowIndex??rows.findIndex((row,i)=>i>0&&roomIdentityMatches(row,delivery));
-   return {rowIndex,done:result.done&&rows[rowIndex]?.[5]===status};
+   const safeStatus=mergeRoomStatus(rows[rowIndex]?.[5],status);
+   return {rowIndex,status:safeStatus,done:result.done&&rows[rowIndex]?.[5]===safeStatus};
   };
   // Resolve again immediately before writing to catch a sort, edit or conflict
   // that happened during the first read.
@@ -122,7 +123,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    start:{sheetId,rowIndex:current.rowIndex,columnIndex:0},
    rows:[{values:[{userEnteredValue:{stringValue:memberNumber}}]}],fields:'userEnteredValue'
   }},{updateCells:{start:{sheetId,rowIndex:current.rowIndex,columnIndex:5},
-   rows:[{values:[{userEnteredValue:{stringValue:status}}]}],fields:'userEnteredValue'}}]});
+   rows:[{values:[{userEnteredValue:{stringValue:current.status}}]}],fields:'userEnteredValue'}}]});
   const saved=await read();
   if(!saved.done)throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
   return saved;
@@ -150,34 +151,31 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    await request(endpoint+':batchUpdate',{requests});
   }else if(JSON.stringify(existing)!==JSON.stringify(header))throw Error('ROOM_SHEET_HEADERS');
   await applyStyle(stockSheet,sheetId,range);
-  return {async group(){
-   const rows=(await request(range('A2:H')+'?valueRenderOption=UNFORMATTED_VALUE&dateTimeRenderOption=SERIAL_NUMBER')).values||[];
-   const grouped=groupRoomRows(rows);if(!grouped)return;
-   if(JSON.stringify(rows.map(r=>Array.from({length:8},(_,i)=>r[i]??'')))===JSON.stringify(grouped.rows))return;
-   const requiredRows=Math.max(rows.length,grouped.rows.length)+1;
-   const requests=[{updateCells:{range:{sheetId,startRowIndex:1,endRowIndex:requiredRows,startColumnIndex:0,endColumnIndex:8},
-    rows:grouped.rows.map(values=>({values:roomSheetCells(values)})),fields:'userEnteredValue,userEnteredFormat'}}];
-   const capacity=stockSheet.properties.gridProperties?.rowCount??1000;
-   if(requiredRows>capacity)requests.unshift({appendDimension:{sheetId,dimension:'ROWS',length:requiredRows-capacity}});
-   for(const index of grouped.ends)requests.push({updateBorders:{range:{sheetId,startRowIndex:index+1,endRowIndex:index+2,startColumnIndex:0,endColumnIndex:6},bottom:{style:'SOLID_MEDIUM',color:{red:.55,green:.55,blue:.55}}}});
-   requests.push({autoResizeDimensions:{dimensions:{sheetId,dimension:'ROWS',startIndex:1,endIndex:grouped.rows.length+1}}});
-   await request(endpoint+':batchUpdate',{requests});
-  },async upsert(values){
+  return {async group(){return {skipped:true,reason:'manual_sort_only'};},async upsert(values,{release=null}={}){
    const read=async()=>{
     const q=new URLSearchParams({ranges:"'"+stockSheet.properties.title.replaceAll("'","''")+"'!A1:H",fields:'sheets(properties(sheetId),data(startRow,startColumn,rowData(values(userEnteredValue,effectiveValue,formattedValue))))'});
     const response=await request(endpoint+'?'+q),grid=response.sheets?.find(s=>s.properties.sheetId===sheetId)?.data?.[0];
     if(!grid||grid.startRow||grid.startColumn)throw Error('ROOM_SHEET_DESTINATION');
     const rows=(grid.rowData||[]).map(({values=[]})=>Array.from({length:8},(_,i)=>i===1&&values[i]?.userEnteredValue?.numberValue!==undefined?values[i].formattedValue:enteredCell(values[i])));
-    const resolved=protectedRoomUpsert(rows,values);
+    const resolved=protectedRoomUpsert(rows,values,{release});
     return {...resolved,actual:resolved.rowIndex===null?null:rows[resolved.rowIndex]};
    };
-   await read();
-   const {rowIndex,values:safeValues}=await read();
-   const row={values:roomSheetCells(safeValues)};
-   const operation=rowIndex===null
-    ? {appendCells:{sheetId,rows:[row],fields:'userEnteredValue,userEnteredFormat'}}
-    : {updateCells:{start:{sheetId,rowIndex,columnIndex:0},rows:[row],fields:'userEnteredValue,userEnteredFormat.numberFormat'}};
-   await request(endpoint+':batchUpdate',{requests:[operation]});
+   const equal=current=>current.actual&&current.values.every((value,i)=>{
+    if(i===4){const date=roomDateCell(values[4]);return !date||Number(current.actual[4])===date.userEnteredValue.numberValue;}
+    const desired=i===5?roomSheetCells(current.values)[i].userEnteredValue.stringValue:String(value??'');
+    return String(current.actual[i]??'')===desired;
+   });
+   const first=await read();if(equal(first))return {changed:false};
+   const current=await read();if(equal(current))return {changed:false};
+   const {rowIndex,values:safeValues}=current;
+   const row={values:roomSheetCells(safeValues)},ops=[];
+   if(rowIndex===null)ops.push({appendCells:{sheetId,rows:[row],fields:'userEnteredValue,userEnteredFormat'}});
+   else for(let columnIndex=0;columnIndex<safeValues.length;columnIndex++){
+    // Unknown ownership and date are never sent as clearing writes.
+    if(columnIndex===0&&!String(values[0]??'').trim()&&!release||columnIndex===4&&!roomDateCell(values[4]))continue;
+    ops.push({updateCells:{start:{sheetId,rowIndex,columnIndex},rows:[{values:[row.values[columnIndex]]}],fields:'userEnteredValue,userEnteredFormat.numberFormat'}});
+   }
+   if(ops.length)await request(endpoint+':batchUpdate',{requests:ops});
    let updatedIndex=rowIndex;
    if(updatedIndex===null){
     const savedIds=(await request(range('G2:G'))).values||[];
@@ -190,7 +188,8 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    }
    const saved=await read(),actual=saved.actual;
    if(!actual||String(actual[0]??'')!==String(safeValues[0])||actual[3]!==safeValues[3]||
-    actual[5]!==row.values[5].userEnteredValue.stringValue||actual[6]!==safeValues[6])throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
+    actual[5]!==row.values[5].userEnteredValue.stringValue||actual[6]!==safeValues[6]||
+    roomDateCell(values[4])&&Number(actual[4])!==roomDateCell(values[4]).userEnteredValue.numberValue)throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
   }};
  }};
 }
@@ -235,7 +234,7 @@ export function roomIdentityMatches(row,delivery){
 
 // All whole-row writers share this ownership guard. Unknown ownership must
 // never erase the proven owner written by a delivery job.
-export function protectedRoomUpsert(rows,incoming){
+export function protectedRoomUpsert(rows,incoming,{release=null}={}){
  if(JSON.stringify(rows[0]?.slice(0,6))!==JSON.stringify(sheetHeaders))throw Error('ROOM_SHEET_HEADERS');
  const value=[...incoming],parsed=String(value[1]).match(/^(.+) · (\d{4})$/u);
  if(!parsed)throw Error('ROOM_SHEET_DATA');
@@ -248,14 +247,18 @@ export function protectedRoomUpsert(rows,incoming){
  if(rowIndex===null&&value[0]!=='')throw Error('ROOM_SHEET_MISSING');
  if(rowIndex!==null){
   const old=rows[rowIndex];
+  if(!roomDateCell(value[4]))value[4]=roomDateCell(old[4])?old[4]:null;
+  const released=release?.roomId===value[6]&&/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(release.eventId??'')&&String(release.previousMember)===String(old[0]);
+  if(!released)value[5]=mergeRoomStatus(old[5],value[5]);
   if(old[6]&&old[6]!==value[6])throw Error('ROOM_SHEET_IDENTITY_CONFLICT');
   if(old[7]&&old[7]!==value[7])throw Error('ROOM_SHEET_IDENTITY_CONFLICT');
   if(old[0]!==''&&old[0]!=null){
    if(!/^\d+$/.test(String(old[0])))throw Error('ROOM_SHEET_OWNER_CONFLICT');
-   if(value[0]!==''&&String(value[0])!==String(old[0]))throw Error('ROOM_SHEET_OWNER_CONFLICT');
-   if(value[0]===''){value[0]=old[0];value[5]=old[5];}
+   if(!released&&value[0]!==''&&String(value[0])!==String(old[0]))throw Error('ROOM_SHEET_OWNER_CONFLICT');
+   if(!released&&value[0]===''){value[0]=old[0];value[5]=old[5];}
   }
  }
+ if(!roomDateCell(value[4]))value[4]=null;
  return {rowIndex,values:value};
 }
 function enteredCell(cell,includeEffective=true){
@@ -278,4 +281,12 @@ export function locateCustomerIdCell(rows,delivery,memberNumber){
  if(String(id??'')===memberNumber)return {done:true};
  if(id!==''&&id!==undefined&&id!==null)return {reason:'conflict'};
  return {rowIndex};
+}
+
+// A delayed sold-only writer cannot downgrade a confirmed renewal or erase detail.
+export function mergeRoomStatus(previous,incoming){
+ const old=String(previous??''),next=String(incoming??'');
+ if(old.startsWith('✓ Yenilənib')&&next.startsWith('✓ Satılıb'))return old;
+ if(next.split('\n')[0]===old.split('\n')[0]&&!next.includes('\n')&&old.includes('\n'))return old;
+ return next;
 }

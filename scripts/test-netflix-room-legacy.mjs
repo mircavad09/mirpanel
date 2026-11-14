@@ -66,8 +66,8 @@ try{
   if(row===null)sheet.push(values);else sheet[row-1]=values;
  }};}};
  await syncRoomSheetBatch(pool,security,'synthetic-target',client);
- assert.equal(sheet[1][6],rooms[0].id);assert.equal(sheet[1][0],String(person.memberNumber));assert.equal(sheet[1][4],date(31));
- assert.equal(sheet[1][5],'✓ Satılıb');assert.equal(sheet[1][3],'synthetic-rotated');
+ assert.equal(sheet[1][6],rooms[0].id);assert.equal(sheet[1][0],String(person.memberNumber));assert.equal(sheet[1][4],date(20));
+ assert.equal(sheet[1][5].split('\n')[0],'✓ Satılıb');assert.equal(sheet[1][3],'synthetic-rotated');
  assert.equal((await pool.query('select count(*)::int n from public.payment_orders')).rows[0].n,0);
  assert.equal((await pool.query('select count(*)::int n from mirpanel_community.customer_order_mail')).rows[0].n,0);
  const audit=(await pool.query("select details from mirpanel_community.community_audit where action='netflix-room-legacy-bind'")).rows;

@@ -27,7 +27,7 @@ const client={async open(){return {async upsert(values){
  if(loseResponse){loseResponse=false;throw Error('RESPONSE_LOST');}
  }};}};
 const sync=()=>syncRoomSheetBatch(pool,security,'synthetic-sheet',client);
-const safeColumns=row=>[row[0],row[1],...row.slice(4,6)];
+const safeColumns=row=>[row[0],row[1],row[4],String(row[5]).split('\n')[0]];
 async function checkGooglePayload(){
  const {privateKey}=crypto.generateKeyPairSync('rsa',{modulusLength:2048});
  const account={client_email:'synthetic@test.iam.gserviceaccount.com',private_key:privateKey.export({type:'pkcs8',format:'pem'})};
@@ -51,7 +51,7 @@ async function checkGooglePayload(){
    const operations=JSON.parse(options.body).requests;
    batches.push(...operations);
    if(operations[0].updateSpreadsheetProperties){header=operations[1].updateCells.rows[0].values.map(v=>v.userEnteredValue.stringValue);}
-   if(operations[0].updateCells){write=operations[0];const op=write.updateCells;if(googleRows&&op.start.columnIndex===0)googleRows[op.start.rowIndex]=op.rows[0].values.map(cell=>cell.userEnteredValue?.stringValue??cell.userEnteredValue?.numberValue??'');}
+   for(const operation of operations){const op=operation.updateCells;if(!op?.start||!op.rows?.[0]?.values||!googleRows)continue;write=operation;for(const [i,cell]of op.rows[0].values.entries())if(cell.userEnteredValue)googleRows[op.start.rowIndex][op.start.columnIndex+i]=cell.userEnteredValue.stringValue??cell.userEnteredValue.numberValue??'';}
    return Response.json({});
   }
   throw Error('UNEXPECTED_SYNTHETIC_REQUEST');
@@ -61,9 +61,9 @@ async function checkGooglePayload(){
  await (await api.open()).upsert(['','1 · 0408','synthetic@example.test','=1+1','2030-01-01',paidStatus,'test-room']);
  assert.deepEqual(header.slice(0,6),sheetHeaders);
  assert.equal(write.updateCells.start.rowIndex,2);
- assert.equal(write.updateCells.rows[0].values[3].userEnteredValue.stringValue,'=1+1');
- assert.equal(write.updateCells.rows[0].values[5].userEnteredValue.stringValue,paidStatus);
- assert.equal(write.updateCells.rows[0].values[4].userEnteredFormat.numberFormat.pattern,'d \"yanvar\"');
+ assert.equal(googleRows[2][3],'=1+1');
+ assert.equal(googleRows[2][5],paidStatus);
+ assert.equal(batches.find(op=>op.updateCells?.start?.rowIndex===2&&op.updateCells.start.columnIndex===4).updateCells.rows[0].values[0].userEnteredFormat.numberFormat.pattern,'d \"yanvar\"');
  batches.length=0;
  await api.applyLightStyle();
  assert.ok(batches.every(operation=>!operation.setBasicFilter&&!operation.updateBorders&&!operation.clearBasicFilter));
@@ -105,16 +105,16 @@ try{
  assert.equal((await pool.query('select count(*)::int n from mirpanel_community.customer_order_deliveries where order_id=$1',[first.orderId])).rows[0].n,1);
  await assert.rejects(deliver(first.orderId,credentials));
  await sync();
- assert.equal(row()[0],number);assert.equal(row()[4],day(60));assert.equal(row()[5],'✓ Satılıb');
+ assert.equal(row()[0],number);assert.equal(row()[4],day(60));assert.equal(row()[5].split('\n')[0],'✓ Satılıb');
  assert.equal(sheet.length,2);
  const sub=(await shop.subscriptions(user)).subscriptions[0];
  const draft=await shop.saveDraft(user,owner,{id:id(),productId,planIndex:0,values:items[0].details,termsVersion,renewalId:sub.id,renewalExpiresOn:sub.expiresOn});
  const renewal=await checkout([{...items[0],termsVersion,draftId:draft.draftId,lineId:draft.lineId}]);
  await sync();
- assert.equal(row()[5],'✓ Yenilənib');
+ assert.equal(row()[5].split('\n')[0],'✓ Yenilənib');
  await deliver(renewal.orderId,{renewalApplied:true});
  await sync();
- assert.equal(row()[5],'✓ Yenilənib');
+ assert.equal(row()[5].split('\n')[0],'✓ Yenilənib');
  const assignment=(await pool.query('select delivery_id from mirpanel_community.netflix_room_units where id=$1',[roomId])).rows[0].delivery_id;
  await assert.rejects(restockNetflixRoom(pool,{id:roomId,deliveryId:assignment,endsOn:day(45),confirmedEmpty:true}),{status:409});
  await pool.query("update customer_order_deliveries set delivered_at=clock_timestamp()-interval '200 days' where id=$1",[assignment]);

@@ -57,6 +57,7 @@ export function roomCellFormat(index){
 export function roomSheetCells(values){
  return values.map((value,index)=>{
   const date=index===4?roomDateCell(value):null;
+  if(index===4&&value!==''&&value!=null&&!date)throw Error('ROOM_SHEET_DATE_INVALID');
   return {
    userEnteredValue:date?.userEnteredValue??{stringValue:index===5?roomStatusCaption(value):String(value??'')},
    userEnteredFormat:{...roomCellFormat(index),...date?.userEnteredFormat}
