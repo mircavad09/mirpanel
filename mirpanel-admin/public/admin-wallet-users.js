@@ -1,5 +1,5 @@
 const el=(t,text)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;return n;},money=v=>(Number(v)/100).toFixed(2)+' AZN',button=(t,fn)=>{const n=el('button',t);n.type='button';n.className='btn';n.onclick=fn;return n;};
-import {renderControlsTab} from '/admin-user-controls.js?v=admin-audit-1';
+import {renderControlsTab} from '/admin-user-controls.js?v=retained-profile-1';
 const ledgerDate=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 const ledgerMoney=cents=>cents==null?'—':(Number(cents)/100).toFixed(2).replace('.',',')+' ₼';
 const pendingWallet=new Map();
@@ -56,12 +56,13 @@ export async function mountUsers({root,call,alive,userFilter='all'}){
   links.append(button('Profilə bax',safe(()=>show(u.id))),button('Sifarişlər',safe(()=>show(u.id,'orders'))));
   extra.append(links);details.append(el('summary','Ətraflı və əməliyyatlar'),extra);cell.append(details);tr.append(cell);return tr;
  }
- let listRequest=0,searchTimer;
+ let listRequest=0,searchTimer,showRequest=0,activeTab='balance',profileRead,refreshTimer;const tabsCache=new Map(),reads=new Map();
+ const coalesced=path=>{if(reads.has(path))return reads.get(path);const promise=Promise.resolve().then(()=>call(path)).finally(()=>{if(reads.get(path)===promise)reads.delete(path);});reads.set(path,promise);return promise;};
  async function load(){
   const request=++listRequest, requestedPage=page;
   errors.textContent='';list.setAttribute('aria-busy','true');prev.disabled=next.disabled=true;
   try{
-   const r=await call('/users?'+new URLSearchParams({q,page:requestedPage,filter:userFilter}));
+   const r=await coalesced('/users?'+new URLSearchParams({q,page:requestedPage,filter:userFilter}));
    if(!valid()||request!==listRequest)return;
    if(requestedPage>1&&!r.users.length){
     page=Math.max(1,Math.ceil(r.total/20));return load();
@@ -81,9 +82,53 @@ export async function mountUsers({root,call,alive,userFilter='all'}){
   if(delay)searchTimer=setTimeout(load,delay);else void load();
  }
  const content=el('div');let returnY=0;
- async function show(id,tab='balance'){returnY=window.scrollY;const r=await call('/users/'+encodeURIComponent(id));if(!valid())return;selected=r;wrap.hidden=true;detail.hidden=false;detail.replaceChildren();const header=el('header'),back=button('← Geri',()=>{detail.hidden=true;wrap.hidden=false;window.scrollTo(0,returnY);}),identity=el('div'),stats=el('div');header.className='wu-detail-head';identity.className='wu-detail-identity';identity.append(el('h2',r.user.name),el('small',activity(r.user,true)));stats.className='wu-detail-stats';stats.append(el('strong',money(r.totalCents)),el('small','Ümumi xərclənib'),el('span',String(r.user.orderCount)),el('small','Sifarişlər'));header.append(back,avatar(r.user),identity,stats);detail.append(header);const tabs=el('nav');tabs.className='wu-tabs';for(const [key,label]of [['balance','Balans'],['prices','Xüsusi qiymətlər'],['stats','Statistika'],['referrals','Referallar'],['other','Digər'],['orders','Sifarişlər']]){const b=button(label,safe(()=>{for(const n of tabs.children)n.setAttribute('aria-pressed',String(n===b));return renderTab(key);}));b.setAttribute('aria-pressed',String(key===tab));tabs.append(b);}detail.append(tabs,content);historyPage=1;await renderTab(tab);}
- async function renderTab(tab){content.replaceChildren();if(tab==='balance'){await history();return;}if(['prices','stats','referrals','other'].includes(tab))return renderControlsTab({content,tab,selected,call,valid});if(tab==='orders'){for(const o of selected.orders)content.append(el('p',[o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status].join(' · ')));if(!selected.orders.length)content.append(el('p','Hələ sifariş yoxdur.'));return;}}
- async function history(){const r=await call('/wallet?'+new URLSearchParams({userId:selected.user.id,page:historyPage,q:historyQ,view:historyView}));if(!valid())return;const summary=el('div');summary.className='wu-balance';summary.append(el('strong',money(r.cents)),button('Balansı idarə et',safe(()=>manage(r.cents,r.debitAvailable))));const search=el('input');search.placeholder='Əməliyyat və ya səbəb axtar';search.value=historyQ;const filter=el('select');filter.append(el('option','Hamısı'));const tools=el('div');tools.append(button('Tarix',()=>{historyView='history';historyPage=1;safe(history)();}),button('Ödənişlər',()=>{historyView='payments';historyPage=1;safe(history)();}),search,button('Axtar',()=>{historyQ=search.value;historyPage=1;safe(history)();}),filter);const rows=el('div');rows.className='wu-ledger';for(const x of r.items){rows.append(walletCard(x,selected.user.memberNumber));}if(!r.items.length)rows.append(el('p','Əməliyyat yoxdur.'));const previous=button('Əvvəlki',()=>{historyPage--;safe(history)();}),more=button('Növbəti',()=>{historyPage++;safe(history)();});previous.disabled=historyPage===1;more.disabled=!r.more;content.replaceChildren(summary,tools,rows,previous,more);}
+ function snapshotControls(panel){return {from:panel?.querySelector('[aria-label="Başlanğıc tarix"]')?.value,to:panel?.querySelector('[aria-label="Son tarix"]')?.value};}
+ const signature=(tab,data)=>JSON.stringify([...data])+ (tab==='orders'?JSON.stringify(selected.orders):tab==='other'?JSON.stringify([selected.user,selected.profile]):'');
+ function editing(entry){return entry.dirty||entry.saving||entry.panel.contains(document.activeElement)&&document.activeElement.matches('input,textarea,select')||document.querySelector('dialog[open],#modal:not(.hidden)');}
+ function preservePosition(work){const x=scrollX,y=scrollY,positions=[...detail.querySelectorAll('*')].filter(n=>n.scrollTop||n.scrollLeft).map(n=>[n,n.scrollTop,n.scrollLeft]);work();window.scrollTo(x,y);for(const[n,top,left]of positions){n.scrollTop=top;n.scrollLeft=left;}}
+ function updateIdentity(){if(!selected)return;const head=detail.querySelector('.wu-detail-identity');if(head){head.querySelector('h2').textContent=selected.user.name;head.querySelector('small').textContent=activity(selected.user,true);}const stats=detail.querySelector('.wu-detail-stats');if(stats){stats.querySelector('strong').textContent=money(selected.totalCents);stats.querySelector('span').textContent=String(selected.user.orderCount);}}
+ async function show(id,tab='balance'){
+  if(selected?.user.id===id&&!detail.hidden)return renderTab(tab);
+  const run=++showRequest;if(detail.hidden)returnY=window.scrollY;const r=await coalesced('/users/'+encodeURIComponent(id));if(!valid()||run!==showRequest)return;
+  for(const entry of tabsCache.values())entry.lease.active=false;tabsCache.clear();selected=r;activeTab=tab;wrap.hidden=true;detail.hidden=false;detail.replaceChildren();content.replaceChildren();
+  const header=el('header'),back=button('← Geri',()=>{++showRequest;detail.hidden=true;wrap.hidden=false;window.scrollTo(0,returnY);}),identity=el('div'),stats=el('div');header.className='wu-detail-head';identity.className='wu-detail-identity';identity.append(el('h2',r.user.name),el('small',activity(r.user,true)));stats.className='wu-detail-stats';stats.append(el('strong',money(r.totalCents)),el('small','Ümumi xərclənib'),el('span',String(r.user.orderCount)),el('small','Sifarişlər'));header.append(back,avatar(r.user),identity,stats,button('Yenilə',safe(()=>refreshProfile())));detail.append(header);
+  const tabs=el('nav');tabs.className='wu-tabs';for(const[key,label]of [['balance','Balans'],['prices','Xüsusi qiymətlər'],['stats','Statistika'],['referrals','Referallar'],['other','Digər'],['orders','Sifarişlər']]){const b=button(label,safe(()=>renderTab(key)));b.dataset.userTab=key;b.setAttribute('aria-pressed',String(key===tab));tabs.append(b);}detail.append(tabs,content);historyPage=1;await renderTab(tab);
+ }
+ async function renderTab(tab){
+  activeTab=tab;for(const b of detail.querySelectorAll('[data-user-tab]'))b.setAttribute('aria-pressed',String(b.dataset.userTab===tab));
+  for(const[key,entry]of tabsCache)entry.panel.hidden=key!==tab;
+  if(tabsCache.has(tab))return tabsCache.get(tab).pending;
+  const panel=el('div');panel.dataset.userTabPanel=tab;panel.append(el('p','Yüklənir…'));content.append(panel);
+  tabsCache.set(tab,{panel,dirty:false,editVersion:0,saving:0,lease:{active:true},responses:new Map(),loaded:false});return refreshTab(tab);
+ }
+ async function refreshTab(tab,{automatic=false,force=false}={}){
+  const entry=tabsCache.get(tab);if(!entry||!selected)return;if(entry.pending)return entry.pending;
+  const userId=selected.user.id,lease={active:true},stage=el('div'),responses=new Map();stage.dataset.userTabPanel=tab;
+  const current=()=>valid()&&selected?.user.id===userId&&tabsCache.get(tab)===entry&&lease.active;
+  const read=async(path,body)=>{
+   if(body===undefined){const value=await coalesced(path);responses.set(path,value);return value;}
+   const version=entry.editVersion;entry.saving++;try{const result=await call(path,body);if(current()&&version===entry.editVersion)entry.dirty=false;return result;}finally{entry.saving--;}
+  };
+  const run=Promise.resolve().then(async()=>{try{
+   if(tab==='balance')await drawHistory(stage,read);
+   else if(['prices','stats','referrals','other'].includes(tab))await renderControlsTab({content:stage,tab,selected,call:read,valid:current,initialState:snapshotControls(entry.panel)});
+   else{for(const o of selected.orders)stage.append(el('p',[o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status].join(' · ')));if(!selected.orders.length)stage.append(el('p','Hələ sifariş yoxdur.'));}
+   if(!current())return;
+   if(entry.loaded&&signature(tab,responses)===entry.signature){lease.active=false;return;}
+   // Fetch while editing, but never replace a form or an open operation dialog.
+   if(entry.loaded&&!force&&editing(entry)){lease.active=false;errors.textContent='Məlumat arxa planda alındı. Formadakı dəyişiklikləriniz qorunur.';return;}
+   preservePosition(()=>{entry.lease.active=false;entry.lease=lease;stage.hidden=tab!==activeTab;entry.panel.replaceWith(stage);entry.panel=stage;entry.responses=responses;entry.signature=signature(tab,responses);entry.loaded=true;});
+   for(const name of ['input','change'])stage.addEventListener(name,()=>{entry.dirty=true;entry.editVersion++;});
+  }catch(e){lease.active=false;if(valid()&&selected?.user.id===userId){errors.textContent=e.message;if(!entry.loaded)entry.panel.replaceChildren(el('p',e.message),button('Yenidən cəhd et',safe(()=>refreshTab(tab))));}}
+  finally{if(entry.pending===run)entry.pending=null;}});entry.pending=run;return run;
+ }
+ async function history(){return refreshTab('balance',{force:true});}
+ async function refreshProfile({automatic=false}={}){
+  if(!valid()||detail.hidden||!selected)return;if(profileRead)return profileRead;
+  const userId=selected.user.id,runId=showRequest;
+  const run=Promise.resolve().then(async()=>{try{const r=await coalesced('/users/'+encodeURIComponent(userId));if(!valid()||selected?.user.id!==userId||runId!==showRequest)return;Object.assign(selected,r);updateIdentity();await Promise.all([...tabsCache.keys()].map(tab=>refreshTab(tab,{automatic})));}catch(e){if(valid())errors.textContent=e.message;}finally{if(profileRead===run)profileRead=null;}});profileRead=run;return run;
+ }
+ async function drawHistory(target,read){const r=await read('/wallet?'+new URLSearchParams({userId:selected.user.id,page:historyPage,q:historyQ,view:historyView}));if(!valid())return;const summary=el('div');summary.className='wu-balance';summary.append(el('strong',money(r.cents)),button('Balansı idarə et',safe(()=>manage(r.cents,r.debitAvailable))));const search=el('input');search.placeholder='Əməliyyat və ya səbəb axtar';search.value=historyQ;const filter=el('select');filter.append(el('option','Hamısı'));const tools=el('div');tools.append(button('Tarix',()=>{historyView='history';historyPage=1;safe(history)();}),button('Ödənişlər',()=>{historyView='payments';historyPage=1;safe(history)();}),search,button('Axtar',()=>{historyQ=search.value;historyPage=1;safe(history)();}),filter);const rows=el('div');rows.className='wu-ledger';for(const x of r.items){rows.append(walletCard(x,selected.user.memberNumber));}if(!r.items.length)rows.append(el('p','Əməliyyat yoxdur.'));const previous=button('Əvvəlki',()=>{historyPage--;safe(history)();}),more=button('Növbəti',()=>{historyPage++;safe(history)();});previous.disabled=historyPage===1;more.disabled=!r.more;target.replaceChildren(summary,tools,rows,previous,more);}
  function manage(cents,debitAvailable){
   const user=selected.user,storageKey='mirpanel.wallet.pending.v1:'+user.id;
   const dialog=el('dialog');dialog.className='wu-dialog';dialog.setAttribute('aria-label','Balansı idarə et');
@@ -151,8 +196,10 @@ export async function mountUsers({root,call,alive,userFilter='all'}){
  search.onsubmit=event=>{event.preventDefault();searchUsers();};
  toolbar.append(filters,search);wrap.append(el('h1','İstifadəçilər'),toolbar,list,prev,pager,next);
  root.classList.add('wallet-users');root.replaceChildren(errors,wrap,detail);await load();
- const refreshActive=()=>{if(valid()&&userFilter==='active30'&&!list.hasAttribute('aria-busy'))void load();};
+ const refreshActive=()=>{if(valid()&&detail.hidden&&userFilter==='active30'&&!list.hasAttribute('aria-busy'))void load();};
+ refreshTimer=setInterval(()=>{if(valid()&&!document.hidden&&!detail.hidden)void refreshProfile({automatic:true});},600000);
+ const refreshButton=document.getElementById('refreshBtn'),manualRefresh=event=>{if(!valid()||root.closest('.hidden'))return;event.stopImmediatePropagation();void safe(()=>detail.hidden?load():refreshProfile())();};refreshButton?.addEventListener('click',manualRefresh,true);
  if(valid())window.addEventListener('admin-topup-poll',refreshActive);
  const target=new URL(location.href).searchParams.get('topupUser');if(userFilter==='all'&&target&&target.length<=160)await safe(()=>show(target))();
- return()=>{closed=true;window.removeEventListener('admin-topup-poll',refreshActive);clearTimeout(searchTimer);root.classList.remove('wallet-users');for(const d of document.querySelectorAll('.wu-dialog'))d.remove();};
+ return()=>{closed=true;++showRequest;clearInterval(refreshTimer);refreshButton?.removeEventListener('click',manualRefresh,true);for(const entry of tabsCache.values())entry.lease.active=false;tabsCache.clear();reads.clear();window.removeEventListener('admin-topup-poll',refreshActive);clearTimeout(searchTimer);root.classList.remove('wallet-users');for(const d of document.querySelectorAll('.wu-dialog'))d.remove();};
 }
