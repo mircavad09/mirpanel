@@ -267,7 +267,7 @@ const DATA = {
       "note": "",
       "longDescription": "Spotify Premium ilə reklamsız musiqi dinləyə, playlistlərinizi rahat idarə edə və premium imkanlardan istifadə edə bilərsiniz. Mirpanel Spotify Premium almaq istəyənlər üçün sərfəli qiymət və sürətli aktivləşdirmə təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən tamamlanır.",
       "usageRules": "",
-      "deliveryText": "",
+      "deliveryText": "1-3 saat",
       "availabilityText": "",
       "seoSlug": "spotify-premium",
       "seoTitle": "Spotify Premium almaq Azərbaycanda | Mirpanel",
