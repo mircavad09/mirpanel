@@ -23,7 +23,7 @@ export function deploymentRuntime(env=process.env){
   },
   readOnlyFetch(send){return async(input,init={})=>{
    const url=new URL(typeof input==='string'||input instanceof URL?input:input.url),method=String(init.method||input?.method||'GET').toUpperCase();
-   const readRpc=url.origin===new URL(env.SUPABASE_URL).origin&&/^\/rest\/v1\/rpc\/(?:inventory_snapshot|employee_system_ready)$/.test(url.pathname);
+   const readRpc=url.origin===new URL(env.SUPABASE_URL).origin&&/^\/rest\/v1\/rpc\/(?:inventory_snapshot|employee_system_ready|product_sales_snapshot)$/.test(url.pathname);
    const mediaSign=url.origin===new URL(env.SUPABASE_URL).origin&&url.pathname.startsWith('/storage/v1/object/sign/'+encodeURIComponent(env.SUPABASE_STORIES_BUCKET||'mirpanel-stories')+'/');
    // No mail, supplier orders, Sheets writes, reservations, queue refresh RPC,
    // migrations, receipt signing or storage uploads can escape standby via HTTP.
