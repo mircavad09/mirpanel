@@ -4,16 +4,16 @@ import crypto from 'node:crypto';
 // explicit configuration change after validation and traffic/worker handover.
 export function deploymentRuntime(env=process.env){
  const role=env.MIRPANEL_RUNTIME_ROLE||'active';
- if(!['active','standby'].includes(role))throw Error('INVALID_DEPLOYMENT_ROLE');
+ if(!['active','standby','web'].includes(role))throw Error('INVALID_DEPLOYMENT_ROLE');
  const standby=role==='standby',token=env.MIRPANEL_STANDBY_TOKEN||'';
  if(standby&&token.length<32)throw Error('STANDBY_TOKEN_REQUIRED');
  const reads=new Set(['/api/payments/inventory','/api/homepage-banners','/api/stories','/api/product-sales','/__deployment/probe']);
  function authorized(req){const supplied=Buffer.from(String(req.headers['x-mirpanel-standby']||'')),expected=Buffer.from(token);return supplied.length===expected.length&&crypto.timingSafeEqual(supplied,expected);}
- return {role,standby,workers:!standby,
+ return {role,standby,workers:role==='active',
   guard(req,res){
    const pathname=new URL(req.url,'http://localhost').pathname;
    if(pathname==='/__deployment/health'&&req.method==='GET'){
-    res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store','X-Robots-Tag':'noindex'});res.end(JSON.stringify({ok:true,role,workers:!standby,commit:env.RENDER_GIT_COMMIT||null}));return true;
+    res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store','X-Robots-Tag':'noindex'});res.end(JSON.stringify({ok:true,role,workers:role==='active',commit:env.RENDER_GIT_COMMIT||null}));return true;
    }
    if(!standby)return false;
    const allowed=req.method==='GET'&&reads.has(pathname)&&authorized(req);

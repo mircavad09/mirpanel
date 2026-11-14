@@ -1,6 +1,6 @@
 // Public media metadata only. Neither identity nor inventory gates this transport.
 (()=>{if(window.mirpanelHomeMedia)return;
- const base=window.MIRPANEL_ADMIN_BASE||'https://mirpanel.onrender.com',entries=new Map(),listeners=new Map();
+ const base=window.MIRPANEL_ADMIN_BASE||'https://mirpanel-frankfurt.onrender.com',entries=new Map(),listeners=new Map();
  window.prepareHomeHeader=()=>{if(innerWidth<1000)return;const inner=document.querySelector('.site-header-inner'),tools=inner?.querySelector('.site-header-tools'),search=tools?.querySelector(':scope>.site-header-search');if(search)inner.insertBefore(search,tools);};window.prepareHomeHeader();
  const primed=new Set(),images=[];
  function prime(kind,data){const urls=kind==='banners'?[...(data.banners||[])].filter(b=>b.active===true&&b.placement!=='side').sort((a,b)=>a.order-b.order).slice(0,1).map(b=>innerWidth<768&&b.mobileImage?b.mobileImage:b.image):(data.stories||[]).filter(s=>s.active!==false).slice(0,4).map(s=>s.coverUrl);

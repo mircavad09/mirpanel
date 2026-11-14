@@ -107,7 +107,7 @@
     while(homeSalesActive<4 && homeSalesQueue.length){
       const {id,resolve}=homeSalesQueue.shift();homeSalesActive++;
       const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
-      fetch(`https://mirpanel.onrender.com/api/product-sales?productId=${encodeURIComponent(id)}`,{cache:'no-store',signal:controller.signal})
+      fetch(`https://mirpanel-frankfurt.onrender.com/api/product-sales?productId=${encodeURIComponent(id)}`,{cache:'no-store',signal:controller.signal})
         .then(response=>response.ok?response.json():null).then(value=>{
           const valid=value?.productId===id && value.initialized===true && Number.isSafeInteger(value.productTotal) && value.productTotal>=0;
           const count=valid?value.productTotal:null;
@@ -261,7 +261,7 @@
     const run=++revision,controller=inventoryController=new AbortController(),timeout=setTimeout(()=>controller.abort(),25000);
     const pending=(async()=>{
       try{
-        const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel.onrender.com',url=base+'/api/payments/inventory',early=window.mirpanelInitialInventory;delete window.mirpanelInitialInventory;
+        const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel-frankfurt.onrender.com',url=base+'/api/payments/inventory',early=window.mirpanelInitialInventory;delete window.mirpanelInitialInventory;
         const initial=early?.url===url?await early.request.catch(()=>null):null;
         if(run!==revision||disposed)return false;
         // Consume a successful prefetch once; do not discard it after one second.

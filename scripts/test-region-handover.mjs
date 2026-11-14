@@ -1,0 +1,31 @@
+import assert from 'node:assert/strict';import crypto from 'node:crypto';
+import {shopFixture} from './shop-test-fixture.mjs';import {createShop}from '../mirpanel-admin/shop.mjs';
+import {createAdminSessions}from '../mirpanel-admin/admin-sessions.mjs';
+import {createCustomerOrderMailer}from '../mirpanel-admin/community/order-delivery.mjs';
+const config={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')};
+process.env.MIRPANEL_CART_V2_TEST='1';const f=await shopFixture({paymentConfig:config});
+const second=createShop({context:async req=>({pool:f.pool,user:req.user||null}),catalog:async()=>f.catalog,snapshot:()=>f.rpc('inventory_snapshot'),store:f.store,config}),owner='a'.repeat(64),buyer={user:'a'};
+try{
+ await f.db.exec(f.db.read('supabase/migrations/202610270003_admin_sessions.sql'));
+ await f.db.exec(f.db.read('supabase/migrations/202611090904_topup_emails.sql'));
+ await f.pool.query('alter table public.payment_orders add column if not exists fulfillment_cancellation jsonb');
+ const client={rpc:async(_,p)=>({data:(await f.pool.query('select public.admin_session_action($1,$2,$3) v',[p.p_action,p.p_hash,p.p_binding])).rows[0].v})};
+ const authConfig={client,username:'synthetic',password:'SyntheticOnly',secret:config.tokenSecret};
+ const oldAuth=createAdminSessions(authConfig),newAuth=createAdminSessions(authConfig),session=await oldAuth.create();
+ assert.equal((await newAuth.read(session.id)).csrfToken,session.session.csrfToken);await newAuth.revoke(session.id);assert.equal(await oldAuth.read(session.id),null);
+ await f.pool.query("select wallet_credit('owner','a',2000,'Synthetic handover',$1)",[f.id()]);
+ const items=[{productId:'ordinary',planIndex:0,quantity:1}],q=await f.shop.quote(buyer,items),input={items:items.map(x=>({...x,termsVersion:q.items[0].termsVersion})),mode:'wallet',requestId:f.id(),consentAccepted:true};
+ const [a,b]=await Promise.all([f.shop.checkout(buyer,owner,input),second.checkout(buyer,owner,input)]);assert.equal(a.id,b.id);
+ assert.equal((await f.pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents,'1500');
+ assert.equal((await f.pool.query("select count(*)::int n from wallet_ledger where kind='purchase_debit'")).rows[0].n,1);
+ const messages=[],send=async(kind,m)=>{assert.equal(kind,'order');messages.push(m.subject);return {id:'synthetic-'+messages.length};};
+ const m1=createCustomerOrderMailer(f.pool,send,'https://mirpanel.test',{loadCatalog:async()=>f.catalog}),m2=createCustomerOrderMailer(f.pool,send,'https://mirpanel.test',{loadCatalog:async()=>f.catalog});
+ await Promise.all([m1.wake(),m2.wake()]);assert.equal(new Set(messages).size,messages.length);assert.equal(messages.length,1);
+ await f.pool.query("select wallet_credit('owner','b',2000,'Synthetic handover',$1)",[f.id()]);
+ const finite=[{productId:'finite',planIndex:0,quantity:1}],fq=await f.shop.quote(buyer,finite),args=()=>({items:finite.map(x=>({...x,termsVersion:fq.items[0].termsVersion})),mode:'wallet',requestId:f.id(),consentAccepted:true});
+ const attempts=await Promise.allSettled([f.shop.checkout(buyer,owner,args()),second.checkout({user:'b'},'b'.repeat(64),args())]);
+ assert.equal(attempts.filter(x=>x.status==='fulfilled').length,1);assert.equal(attempts.filter(x=>x.status==='rejected').length,1);
+ assert.equal((await f.pool.query("select count(*)::int n from wallet_ledger where kind='purchase_debit'")).rows[0].n,2);
+ await Promise.all([m1.stop(),m2.stop()]);
+ console.log('PASS: two application instances share admin session/revocation; simultaneous wallet replay debits once; last stock sold once; parallel customer-mail claims send once; isolated database only');
+}finally{await f.close();}

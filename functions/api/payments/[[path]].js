@@ -1,5 +1,5 @@
 // Narrow public payment proxy. Never forwards admin/employee authorization.
-const UPSTREAM='https://mirpanel.onrender.com';
+const UPSTREAM='https://mirpanel-frankfurt.onrender.com';
 export async function onRequest({request}){
  const u=new URL(request.url),path=u.pathname;
  const receipt=request.method==='POST'&&['/api/payments/receipts','/api/payments/orders'].includes(path),incoming=request.headers.get('X-Upload-Trace'),traceId=receipt?(/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(incoming||'')?incoming:crypto.randomUUID()):null;

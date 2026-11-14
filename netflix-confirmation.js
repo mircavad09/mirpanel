@@ -1,7 +1,7 @@
 (function () {
   "use strict";
 
-  const API_URL = "https://mirpanel.onrender.com/api/netflix/confirmation";
+  const API_URL = "https://mirpanel-frankfurt.onrender.com/api/netflix/confirmation";
   const form = document.getElementById("netflixConfirmationForm");
   const input = document.getElementById("netflixConfirmationEmail");
   const button = form?.querySelector('button[type="submit"]');

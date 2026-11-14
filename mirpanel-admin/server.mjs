@@ -26,7 +26,7 @@ import {createAdminPush} from './admin-push.mjs';
 import {createAdminSessions,ADMIN_IDLE_MS} from './admin-sessions.mjs';
 import {createOwnerCommunity} from './community/service.mjs';
 import {createCustomerView} from './customer-view.mjs';
-const ownerCommunity=createOwnerCommunity(process.env,{loadCatalog:async()=>extractAdminState((await getAppFile()).source),adminOrigin:process.env.RENDER_EXTERNAL_URL||'https://mirpanel.onrender.com',topupPreview:(path,mime)=>paymentSystem.store.receiptThumbnail(path,mime),shopAdmin:(pool,owner,b)=>paymentSystem.shop.admin(pool,owner,b)});
+const ownerCommunity=createOwnerCommunity(process.env,{loadCatalog:async()=>extractAdminState((await getAppFile()).source),adminOrigin:process.env.RENDER_EXTERNAL_URL||'https://mirpanel-frankfurt.onrender.com',topupPreview:(path,mime)=>paymentSystem.store.receiptThumbnail(path,mime),shopAdmin:(pool,owner,b)=>paymentSystem.shop.admin(pool,owner,b)});
 import {
   generateInfoPageFiles,
   generateProductListingPageFiles,
@@ -69,7 +69,7 @@ const config = {
   receiptValidationRequested: false, // Broad schema-6 workflow superseded; not deployed.
   receiptOcrUrl: process.env.RECEIPT_OCR_URL || '',
   receiptOcrToken: process.env.RECEIPT_OCR_TOKEN || '',
-  adminBaseUrl: process.env.RENDER_EXTERNAL_URL || "https://mirpanel.onrender.com",
+  adminBaseUrl: process.env.RENDER_EXTERNAL_URL || "https://mirpanel-frankfurt.onrender.com",
   siteBaseUrl: process.env.MIRPANEL_SITE_URL || "https://mirpanel.com",
   whatsappPhone: process.env.MIRPANEL_WHATSAPP_PHONE || "994515243545",
   notificationEmail: process.env.PAYMENT_NOTIFICATION_EMAIL || "",
@@ -455,9 +455,9 @@ const defaultSitePageSlugs = {
 };
 
 const adminRedirects = [
-  "/admin https://mirpanel.onrender.com/ 302",
-  "/admin.html https://mirpanel.onrender.com/ 302",
-  "/admin/* https://mirpanel.onrender.com/:splat 302"
+  "/admin https://mirpanel-frankfurt.onrender.com/ 302",
+  "/admin.html https://mirpanel-frankfurt.onrender.com/ 302",
+  "/admin/* https://mirpanel-frankfurt.onrender.com/:splat 302"
 ];
 
 const standaloneSeoRedirects = [
@@ -1081,7 +1081,7 @@ async function handleApi(request, response) {
         }
       },
       render: {
-        url: "https://mirpanel.onrender.com/",
+        url: "https://mirpanel-frankfurt.onrender.com/",
         commit: renderCommit,
         live: renderResult.value === true
       }
@@ -1474,7 +1474,7 @@ const netflixConfirmationEndpoint = createNetflixConfirmationEndpoint({
 const apiIntegrations = config.encryptionKey && config.tokenSecret && process.env.COMMUNITY_OWNER_ENABLED==='true'
   ? createApiIntegrations({
     pool:()=>ownerCommunity.integrationPool(),security:createPaymentSecurity(config),
-    origins:process.env.SUPPLIER_API_ORIGINS,callbackUrl:new URL('/api/webhooks/epinby',process.env.RENDER_EXTERNAL_URL||'https://mirpanel.onrender.com').href,
+    origins:process.env.SUPPLIER_API_ORIGINS,callbackUrl:new URL('/api/webhooks/epinby',process.env.RENDER_EXTERNAL_URL||'https://mirpanel-frankfurt.onrender.com').href,
     loadCatalog:async()=>extractAdminState((await getAppFile()).source)
   }) : null;
 if(deployment.workers){apiIntegrations?.start();paymentSystem.start();}

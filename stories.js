@@ -1,5 +1,5 @@
 (() => {
-  const API_BASE = window.MIRPANEL_ADMIN_BASE || "https://mirpanel.onrender.com";
+  const API_BASE = window.MIRPANEL_ADMIN_BASE || "https://mirpanel-frankfurt.onrender.com";
   const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
   const section = document.getElementById("homeStories");
   const track = document.getElementById("homeStoriesTrack");

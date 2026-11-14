@@ -56,7 +56,7 @@
   const drain=()=>{while(state.busy<3&&state.queue.length&&!state.controller.signal.aborted){
    const line=state.queue.shift(),id=line.dataset.homeSalesId;state.busy++;
    transport.then(({withRequestSignal})=>withRequestSignal([state.controller.signal],15000,async signal=>{
-    const r=await fetch('https://mirpanel.onrender.com/api/product-sales?productId='+encodeURIComponent(id),{priority:'low',signal});
+    const r=await fetch('https://mirpanel-frankfurt.onrender.com/api/product-sales?productId='+encodeURIComponent(id),{priority:'low',signal});
     return r.ok?r.json():null;
    })).then(v=>{
     if(!v)return;

@@ -2,6 +2,8 @@ import assert from 'node:assert/strict';
 import {deploymentRuntime} from '../mirpanel-admin/deployment-runtime.mjs';
 const token='synthetic-probe-token-'.repeat(3),active=deploymentRuntime({}),standby=deploymentRuntime({MIRPANEL_RUNTIME_ROLE:'standby',MIRPANEL_STANDBY_TOKEN:token,SUPABASE_URL:'https://synthetic.supabase.co'});
 assert(active.workers);assert(!standby.workers);assert.throws(()=>deploymentRuntime({MIRPANEL_RUNTIME_ROLE:'typo'}));assert.throws(()=>deploymentRuntime({MIRPANEL_RUNTIME_ROLE:'standby'}));
+assert.equal(deploymentRuntime({MIRPANEL_RUNTIME_ROLE:'web'}).workers,false);
+assert.equal(deploymentRuntime({MIRPANEL_RUNTIME_ROLE:'web'}).guard({url:'/api/payments/shop/wallet',method:'POST',headers:{}},{}),false);
 function request(method,url,secret){let status,body;const handled=standby.guard({method,url,headers:secret?{'x-mirpanel-standby':secret}:{}},{writeHead(s){status=s;},end(b){body=JSON.parse(b);}});return {handled,status,body};}
 assert.equal(request('GET','/__deployment/health').body.workers,false);
 for(const path of ['/api/payments/inventory','/api/homepage-banners','/api/stories','/api/product-sales?productId=capcut','/__deployment/probe']){

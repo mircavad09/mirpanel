@@ -365,7 +365,7 @@ export async function onRequest(context) {
     let html = withSeoScripts(await response.text());
     html = html.replace(/(src=["'])\/?product-page\.js(?:\?[^"']*)?(["'])/g,'$1/product-page.js?v=delivered-sales-1$2');
     html = html.replace(/(href=["'])\/?product-page\.css(?:\?[^"']*)?(["'])/g,'$1/product-page.css?v=similar-natural-1$2');
-    html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(25000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
+    html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel-frankfurt.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(25000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
     // The static order button must not accept an early click before the
     // current product and the real order handler have both initialized.
     html = html.replace(/<button\b[^>]*\bid="pp-order-btn"[^>]*>/i, tag =>

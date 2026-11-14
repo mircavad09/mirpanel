@@ -1,4 +1,4 @@
-const UPSTREAM='https://mirpanel.onrender.com';
+const UPSTREAM='https://mirpanel-frankfurt.onrender.com';
 const pagePaths=['/qrup','/hesab','/profil','/owner-login','/sebet','/balans','/odenis'];
 const allowedPath=p=>pagePaths.includes(p)||/^\/api\/(?:auth|community)\/[a-z/-]+$/.test(p)||/^\/api\/auth\/reset-password\/[A-Za-z0-9_-]{1,256}$/.test(p)||/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(p)||/^\/community-assets\/[a-z.-]+$/.test(p);
 const unavailable=()=>Response.json({error:'Hesab xidməti müvəqqəti açıla bilmir. Yenidən cəhd edin.',code:'COMMUNITY_UPSTREAM_RESPONSE'},{status:503,headers:{'Cache-Control':'private,no-store','X-Content-Type-Options':'nosniff'}});

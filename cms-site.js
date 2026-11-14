@@ -324,7 +324,7 @@
     bannerPollBusy=true;
     const controller=new AbortController(), timeout=setTimeout(()=>controller.abort(),10000);
     try {
-      const base=window.MIRPANEL_ADMIN_BASE || 'https://mirpanel.onrender.com';
+      const base=window.MIRPANEL_ADMIN_BASE || 'https://mirpanel-frankfurt.onrender.com';
       const early=window.mirpanelHomeMedia;const response=early?null:await fetch(`${base}/api/homepage-banners`,{cache:'no-cache',signal:controller.signal});
       if(response&&!response.ok) return;
       const payload=early?await early.request('banners'):await response.json();

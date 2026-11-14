@@ -5,7 +5,7 @@
   "engines": {"node": ">=24.15.0 <25"},
   "scripts": {
     "postinstall": "node ../scripts/install-receipt-runtime.mjs",
-    "start": "node server.mjs",
+    "start": "node start.mjs",
     "test:payments": "node ../scripts/test-payment-system.mjs",
     "test:payment-orders": "node ../scripts/test-payment-orders-admin.mjs",
     "test:payment-usage-day": "node ../scripts/test-payment-usage-day.mjs",
