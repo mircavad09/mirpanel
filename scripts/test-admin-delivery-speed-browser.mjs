@@ -5,7 +5,7 @@ const fixture=spawn(process.execPath,['scripts/payment-orders-browser-fixture.mj
 try{
  await Promise.race([once(fixture.stdout,'data'),once(fixture,'exit').then(()=>{throw Error('Fixture stopped');})]);
  const server=JSON.parse(await fs.readFile('outputs/admin-delivery-speed/'+(before?'before':'after')+'-server.json','utf8'));
- let deployed;if(live){const r=await fetch('https://mirpanel.onrender.com/payment-admin.js?v=delivery-latency-1');assert(r.ok);deployed=await r.text();assert.equal(deployed.replaceAll('\r\n','\n'),(await fs.readFile('mirpanel-admin/public/payment-admin.js','utf8')).replaceAll('\r\n','\n'));}
+ let deployed;if(live){const r=await fetch('https://mirpanel-frankfurt.onrender.com/payment-admin.js?v=delivery-latency-1');assert(r.ok);deployed=await r.text();assert.equal(deployed.replaceAll('\r\n','\n'),(await fs.readFile('mirpanel-admin/public/payment-admin.js','utf8')).replaceAll('\r\n','\n'));}
  for(const engine of [chromium,webkit])for(const width of [390,1440]){
   const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{const p=await browser.newPage({viewport:{width,height:850}});p.setDefaultTimeout(12000);

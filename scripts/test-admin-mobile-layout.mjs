@@ -62,7 +62,7 @@ const server=http.createServer((req,res)=>{
  return res.end(baseline&&baseFiles.includes(path.basename(f))?execFileSync('git',['show','c22c61f:mirpanel-admin/public/'+path.basename(f)]):fs.readFileSync(f));
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
-const origin=live?'https://mirpanel.onrender.com':'http://127.0.0.1:'+server.address().port;
+const origin=live?'https://mirpanel-frankfurt.onrender.com':'http://127.0.0.1:'+server.address().port;
 const viewSelector=v=>'.navBtn[data-view="'+v+'"]';
 const layout=page=>page.evaluate(()=>{
  const view=[...document.querySelectorAll('main>section')].find(n=>n.offsetWidth>0);

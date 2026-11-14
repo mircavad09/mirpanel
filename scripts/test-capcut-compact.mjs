@@ -22,7 +22,7 @@ if(server)await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=live
 const {chromium}=await import(pathToFileURL(path.join(process.env.MIRPANEL_NODE_MODULES,'playwright/index.mjs')));
 const browser=await chromium.launch({headless:true,executablePath:process.env.MIRPANEL_BROWSER_PATH});
 const errors=[],writes=[],apiIds=new Set(),checks=[],beforeMetrics=[];
-const expectedSales=live?await(await fetch('https://mirpanel.onrender.com/api/product-sales?productId=capcut')).json():{initialized:true,productId:'capcut',productTotal:2188,siteTotal:12741};
+const expectedSales=live?await(await fetch('https://mirpanel-frankfurt.onrender.com/api/product-sales?productId=capcut')).json():{initialized:true,productId:'capcut',productTotal:2188,siteTotal:12741};
 async function open(width,route='/mehsul/capcut-pro'){
  const context=await browser.newContext({viewport:{width,height:width===320?568:width===390?844:width===430?932:900},reducedMotion:'reduce'});
  await context.route('**/*',r=>{

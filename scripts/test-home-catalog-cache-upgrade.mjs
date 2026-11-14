@@ -20,7 +20,7 @@ const server=http.createServer(async(req,res)=>{
   try{bytes=!upgraded&&old.has(name)?old.get(name):await fs.readFile(name);}catch{return new Response('',{status:404});}
   const ext=path.extname(name),isText=['.js','.mjs','.css','.html'].includes(ext);
   if(isText){
-   let s=bytes.toString().replaceAll('https://mirpanel.onrender.com',origin);
+   let s=bytes.toString().replaceAll('https://mirpanel-frankfurt.onrender.com',origin);
    if(ext==='.html')s=s.replace('<head>','<head><script>window.MIRPANEL_ADMIN_BASE=location.origin;window.MIRPANEL_PAYMENT_API=location.origin;</script>');
    bytes=s;
   }

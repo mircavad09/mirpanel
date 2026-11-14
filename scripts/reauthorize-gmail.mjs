@@ -44,7 +44,7 @@ async function main(){
  finally{if(fs.existsSync(probe))fs.rmSync(probe,{recursive:true,force:true});}
  console.log('PRIVATE_CREDENTIAL_STORAGE_PREFLIGHT_OK');
  const key=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');
- const r=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars?limit=100',{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(15000)});
+ const r=await fetch('https://api.render.com/v1/services/srv-dbse90u1egvs73djpp2g/env-vars?limit=100',{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(15000)});
  if(!r.ok)throw Error('RENDER_CONFIGURATION_UNAVAILABLE');
  const env=Object.fromEntries((await r.json()).map(x=>[x.envVar.key,x.envVar.value]));
  for(const name of ['GMAIL_CLIENT_ID','GMAIL_CLIENT_SECRET','GMAIL_SENDER_EMAIL'])if(!env[name])throw Error('GMAIL_CONFIGURATION_MISSING');

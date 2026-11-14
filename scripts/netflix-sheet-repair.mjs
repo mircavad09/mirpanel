@@ -24,7 +24,7 @@ try{
  const config=await fs.readFile(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8');
  const key=config.match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');
  const setting=async name=>{
-  const r=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars/'+name,{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(20000)});
+  const r=await fetch('https://api.render.com/v1/services/srv-dbse90u1egvs73djpp2g/env-vars/'+name,{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(20000)});
   if(!r.ok)throw Error('RENDER_'+r.status);const d=await r.json();return d.value??d.envVar?.value;
  };
  const names=['COMMUNITY_DATABASE_URL','COMMUNITY_DATABASE_CA','PAYMENT_ENCRYPTION_KEY_B64','PAYMENT_TOKEN_SECRET_B64','NETFLIX_ROOM_SHEET_SERVICE_ACCOUNT','NETFLIX_ROOM_SHEET_ID','NETFLIX_ROOM_SHEET_OWNER_EMAIL'];

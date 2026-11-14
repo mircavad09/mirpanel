@@ -1,6 +1,6 @@
 // Deployment metadata only. No business-data or environment-variable mutations.
 import fs from'node:fs';import path from'node:path';import{execFileSync}from'node:child_process';
-const target=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),mode=process.argv[2]||'status',service='srv-d8ead74m0tmc73emhsvg',account='b4f44ce8fa1d4ebe4731bb4c529e4b8b',project='mirpanel';
+const target=execFileSync('git',['rev-parse','HEAD'],{encoding:'utf8'}).trim(),mode=process.argv[2]||'status',service='srv-dbse90u1egvs73djpp2g',account='b4f44ce8fa1d4ebe4731bb4c529e4b8b',project='mirpanel';
 const rk=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');const ck=fs.readFileSync(path.join(process.env.APPDATA,'xdg.config/.wrangler/config/default.toml'),'utf8').match(/^oauth_token\s*=\s*"([^"]+)"/m)[1];
 async function request(url,key,body){const r=await fetch(url,{headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},...(body?{method:'POST',body:JSON.stringify(body)}:{}),signal:AbortSignal.timeout(45000)});if(!r.ok)throw Error('Deployment API HTTP '+r.status);return r.json();}
 const render=(p,b)=>request('https://api.render.com/v1'+p,rk,b),cf=async p=>{const r=await request('https://api.cloudflare.com/client/v4/accounts/'+account+'/pages/projects/'+project+p,ck);if(!r.success)throw Error('Cloudflare failed');return r.result;};

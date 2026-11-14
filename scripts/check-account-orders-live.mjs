@@ -2,7 +2,7 @@
 import fs from 'node:fs';import assert from 'node:assert/strict';import {pathToFileURL} from 'node:url';
 const {chromium}=await import(pathToFileURL('C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs'));
 let checks=0;const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;};
-for(const base of ['https://mirpanel.onrender.com','https://mirpanel.com']){
+for(const base of ['https://mirpanel-frankfurt.onrender.com','https://mirpanel.com']){
  for(const path of ['/api/payments/my-orders','/api/payments/my-orders/11111111-1111-4111-8111-111111111111/receipt']){const r=await fetch(base+path);eq(r.status,401,'guest API denied');eq(r.headers.get('cache-control').includes('no-store'),true);}
 }
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});const rows=[];fs.mkdirSync('payment-test-artifacts/account-orders',{recursive:true});

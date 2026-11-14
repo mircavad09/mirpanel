@@ -12,7 +12,7 @@ for(const [input,expected] of [['1 Ayliq PRO','1 aylıq PRO'],['3 ayliq','3 ayl�
 const app=live?await(await fetch('https://mirpanel.com/app.js')).text():fs.readFileSync('app.js','utf8');
 const state=extractAdminState(app),snapshot=JSON.stringify(state),active=activeProductsWithSlugs(state.products);
 assert.equal(active.length,22);
-const storyBefore=await(await fetch('https://mirpanel.onrender.com/api/stories')).json();
+const storyBefore=await(await fetch('https://mirpanel-frankfurt.onrender.com/api/stories')).json();
 const storyMedia=new Set(storyBefore.stories.flatMap(s=>[s.coverUrl,...s.items.map(i=>i.mediaUrl)]));
 const mediaStatus=await Promise.all([...storyMedia].map(async url=>{const res=await fetch(url,{method:'HEAD'});return res.status;}));
 assert.ok(mediaStatus.every(status=>status===200),JSON.stringify(mediaStatus));
@@ -80,7 +80,7 @@ try{
  await page.waitForFunction(()=>[...document.querySelectorAll('.card')].at(-1).textContent==='1 aylıq Telefon və kompüter');
  assert.deepEqual(await page.locator('.card').last().evaluate(e=>[e.getAttribute('href'),e.dataset.productId,e.querySelector('input').value,e.querySelector('span').title]),['/mehsul/Youtube','mehsul','sifaris','kompüter']);
  assert.equal(writes,0);assert.equal(errors.length,0,errors.join('\n'));assert.equal(missing.length,0,missing.join('\n'));assert.equal(JSON.stringify(state),snapshot);
- const storyAfter=await(await fetch('https://mirpanel.onrender.com/api/stories')).json();assert.deepEqual(identity(storyAfter),identity(storyBefore));
+ const storyAfter=await(await fetch('https://mirpanel-frankfurt.onrender.com/api/stories')).json();assert.deepEqual(identity(storyAfter),identity(storyBefore));
  const report={ok:true,live,products:active.length,plans:active.reduce((s,{product})=>s+product.plans.length,0),widths,checks:checks.length,storyCount:storyBefore.stories.length,mediaCount:storyBefore.stories.reduce((s,v)=>s+v.items.length,0),overflow:0,brokenImages:0,consoleErrors:errors,missing,writes,viewedPersistence:true,canonicalAndRawDataUnchanged:true};
  if(visual)fs.writeFileSync(path.join(visual,live?'live-report.json':'local-report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
 }finally{await browser.close();if(server)await new Promise(r=>server.close(r));}

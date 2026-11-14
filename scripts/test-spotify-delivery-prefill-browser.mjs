@@ -9,7 +9,7 @@ const fixture=spawn(process.execPath,['scripts/payment-orders-browser-fixture.mj
 try{
  await Promise.race([once(fixture.stdout,'data'),once(fixture,'exit').then(()=>{throw Error('Fixture stopped');})]);
  let liveScript;
- if(live){const r=await fetch('https://mirpanel.onrender.com/payment-admin.js?v=spotify-delivery-prefill-1');assert(r.ok);liveScript=await r.text();assert(liveScript.includes('const fillAccount='));}
+ if(live){const r=await fetch('https://mirpanel-frankfurt.onrender.com/payment-admin.js?v=spotify-delivery-prefill-1');assert(r.ok);liveScript=await r.text();assert(liveScript.includes('const fillAccount='));}
  for(const engine of [chromium,webkit])for(const width of [390,1440]){
   const b=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{

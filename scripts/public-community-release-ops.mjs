@@ -1,7 +1,7 @@
 // Explicit production operator operations. No business fixtures or secret output.
 import fs from 'node:fs';import path from 'node:path';import crypto from 'node:crypto';
 import pg from '../mirpanel-admin/node_modules/pg/lib/index.js';
-const mode=process.argv[2],service='srv-d8ead74m0tmc73emhsvg';
+const mode=process.argv[2],service='srv-dbse90u1egvs73djpp2g';
 const key=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');
 async function api(suffix,method='GET',body){const r=await fetch('https://api.render.com/v1/services/'+service+suffix,{method,headers:{Authorization:'Bearer '+key,'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined,signal:AbortSignal.timeout(30000)});if(!r.ok)throw Error('RENDER_'+r.status);const text=await r.text();return text?JSON.parse(text):null;}
 const env=Object.fromEntries((await api('/env-vars?limit=100')).map(x=>[x.envVar.key,x.envVar.value]));

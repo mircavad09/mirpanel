@@ -38,7 +38,7 @@ for(const [engine,width] of [[chromium,390],[chromium,1440],[webkit,390]]){
     try{
      const name=u.pathname.slice(1);
      let body=baseline&&name==='payment-admin.js'?baseline:live&&name==='payment-admin.js'
-      ?await(await fetch('https://mirpanel.onrender.com/payment-admin.js?v=order-fields-batch-1')).text()
+      ?await(await fetch('https://mirpanel-frankfurt.onrender.com/payment-admin.js?v=order-fields-batch-1')).text()
       :await readFile(new URL(name,directory));
      if(name==='admin.html')body=String(body).replace('</body>','<script src="/admin-session.js"></script></body>');
      return route.fulfill({body,contentType:name.endsWith('.css')?'text/css':name.endsWith('.js')||name.endsWith('.mjs')?'text/javascript':'text/html'});

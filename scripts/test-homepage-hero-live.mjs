@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {pathToFileURL} from 'node:url';
 const {chromium}=await import(pathToFileURL(path.join(process.env.MIRPANEL_NODE_MODULES,'playwright/index.mjs')));
-const base='https://mirpanel.onrender.com';
+const base='https://mirpanel-frankfurt.onrender.com';
 const before=await fetch(`${base}/api/stories`).then(r=>r.json());
 const shape=data=>data.stories.map(s=>({id:s.id,title:s.title,items:s.items.map(i=>i.id)}));
 const banners=await fetch(`${base}/api/homepage-banners`).then(r=>r.json());

@@ -22,7 +22,7 @@ try{
   if(live){
    const ctx=await browser.newContext();
    for(const name of Object.keys(paths)){
-    const r=await ctx.request.get('https://mirpanel.onrender.com'+name+'?v=ready-account-password-1');
+    const r=await ctx.request.get('https://mirpanel-frankfurt.onrender.com'+name+'?v=ready-account-password-1');
     assert(r.ok());
     assert.equal((await r.text()).replaceAll('\r\n','\n'),fs.readFileSync(paths[name],'utf8').replaceAll('\r\n','\n'));
    }
@@ -37,7 +37,7 @@ try{
    const saves=[],salesWrites=[],p=catalog.products[0];let first=true;
    const note='Sintetik mesaj 1\n\nİstifadə qaydası: sınaq',note2='Sintetik mesaj 2\nİkinci sətir';
    if(live)for(const name of Object.keys(paths))await page.route(origin+name,async route=>{
-    const r=await route.fetch({url:'https://mirpanel.onrender.com'+name+'?v=ready-account-password-1'});
+    const r=await route.fetch({url:'https://mirpanel-frankfurt.onrender.com'+name+'?v=ready-account-password-1'});
     return route.fulfill({response:r});
    });
    await page.route('https://mirpanel.com/assets/*',route=>route.fulfill({contentType:'image/png',body:fs.readFileSync('.'+new URL(route.request().url()).pathname)}));

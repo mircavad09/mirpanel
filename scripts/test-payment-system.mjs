@@ -235,7 +235,7 @@ assert.equal(cancelRpcSql.includes("payment_daily_usage"), false, "Rezerv ləğv
 const mail = paymentEmailContent({
   order: { order_code: "MP-A1B2C3", product_title: "Test", plan_name: "1 aylıq", amount: 5.99, currency: "AZN", created_at: new Date().toISOString() },
   method: { display_name: "ABB •••• 4655" },
-  reviewUrl: "https://mirpanel.onrender.com/admin/review?token=safe-token",
+  reviewUrl: "https://mirpanel-frankfurt.onrender.com/admin/review?token=safe-token",
   recipient: "admin@example.com",
   fromName: "Mirpanel"
 });

@@ -27,7 +27,7 @@ const server=http.createServer(async(req,res)=>{
  const file=p==='/'?'index.html':p.slice(1),absolute=path.resolve(file);
  if(!absolute.startsWith(root+path.sep)||!fs.existsSync(absolute)||!fs.statSync(absolute).isFile()){res.writeHead(404);res.end();return;}
  if(file==='app.js')await sleep(appDelay);
- let body=source(file).replaceAll('https://mirpanel.onrender.com',origin);if(file==='index.html')body=body.replace(/<link[^>]+href="https:\/\/fonts[^>]*>/g,'');
+ let body=source(file).replaceAll('https://mirpanel-frankfurt.onrender.com',origin);if(file==='index.html')body=body.replace(/<link[^>]+href="https:\/\/fonts[^>]*>/g,'');
  res.writeHead(200,{'Content-Type':file.endsWith('.css')?'text/css':file.endsWith('.js')||file.endsWith('.mjs')?'text/javascript':'text/html; charset=utf-8','Cache-Control':'no-store'});res.end(body);
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));origin='http://127.0.0.1:'+server.address().port;

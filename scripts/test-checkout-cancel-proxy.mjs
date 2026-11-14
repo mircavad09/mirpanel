@@ -20,7 +20,7 @@ const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;},id=()=>crypto.randomUUID()
 globalThis.fetch=(input,options={})=>{
  const u=String(input?.url||input);
  if(u.startsWith('https://isolated-db.invalid/rest/v1/')){queries.push(new URL(u));return Promise.resolve(dbFailure?Response.json({message:'synthetic read failure'},{status:400}):Response.json(u.includes('/payment_orders?')?dbOrders:dbRows));}
- if(u.startsWith('https://mirpanel.onrender.com/')){upstreamCalls++;if(transportFailure)return Promise.reject(Error('isolated transport outage'));input=f.origin+u.slice('https://mirpanel.onrender.com'.length);}
+ if(u.startsWith('https://mirpanel-frankfurt.onrender.com/')){upstreamCalls++;if(transportFailure)return Promise.reject(Error('isolated transport outage'));input=f.origin+u.slice('https://mirpanel-frankfurt.onrender.com'.length);}
  return originalFetch(input,{...options,...(options.body instanceof ReadableStream?{duplex:'half'}:{})});
 };
 const front=http.createServer(async(req,res)=>{try{

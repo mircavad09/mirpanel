@@ -1,5 +1,5 @@
 // Public, read-only HTTP diagnostics. No credentials or response bodies logged.
-for(const path of ['https://mirpanel.com/','https://mirpanel.com/mehsul/capcut-pro','https://mirpanel.com/api/payments/inventory','https://mirpanel.com/api/community/state','https://mirpanel.onrender.com/api/community/state']){
+for(const path of ['https://mirpanel.com/','https://mirpanel.com/mehsul/capcut-pro','https://mirpanel.com/api/payments/inventory','https://mirpanel.com/api/community/state','https://mirpanel-frankfurt.onrender.com/api/community/state']){
  for(let run=1;run<=5;run++){
   const start=performance.now();
   try{const r=await fetch(path,{signal:AbortSignal.timeout(20000)}),ttfb=Math.round(performance.now()-start);const bytes=(await r.arrayBuffer()).byteLength;

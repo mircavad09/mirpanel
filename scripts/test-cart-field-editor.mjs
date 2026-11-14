@@ -8,7 +8,7 @@ import {randomBytes,randomUUID} from 'node:crypto';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 
 const live=process.argv.includes('--live'),origin=live?'https://mirpanel.com':'https://mirpanel.test';
-const adminOrigin=live?'https://mirpanel.onrender.com':origin;
+const adminOrigin=live?'https://mirpanel-frankfurt.onrender.com':origin;
 const readAsset=async(file,url)=>{
  if(!live)return fs.readFile(file,'utf8');
  const r=await fetch(url,{signal:AbortSignal.timeout(12000)});assert.ok(r.ok,url);return r.text();

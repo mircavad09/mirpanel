@@ -208,7 +208,7 @@ const sitemap = generateSitemap(excluded.products, excluded.siteSections, new Da
 assert.equal(sitemap.includes(`https://mirpanel.com/mehsul/${excludedSlug}`), false, "Noindex məhsul sitemap-da qaldı");
 
 const redirects = generateRedirects(state.products, state.siteSections);
-assert.ok(redirects.includes("https://mirpanel.onrender.com/"));
+assert.ok(redirects.includes("https://mirpanel-frankfurt.onrender.com/"));
 assert.equal(redirects.includes(["mirpanel", "admin.onrender.com"].join("-")), false);
 const renamed = structuredClone(state);
 const originalSlug = renamed.products[0].seoSlug;

@@ -23,7 +23,7 @@ try{
  for(const p of catalog.products){await saveProductMessage(pool,security,catalog,{productId:p.id,message:'Sintetik ümumi qayda'});await rpc('inventory_set_nullable_quantity',[p.id,50,'synthetic-admin',id(),(await rpc('inventory_snapshot')).find(x=>x.productId===p.id)?.version||0,null]);}
  const assets={};for(const name of ['ready-stock-admin.js','ready-stock-admin.css']){
   const local=fs.readFileSync('mirpanel-admin/public/'+name,'utf8');
-  if(live){const r=await fetch('https://mirpanel.onrender.com/'+name+'?v=account-cards-2');assert.equal(r.status,200);const body=await r.text();assert.equal(body.replaceAll('\r\n','\n'),local.replaceAll('\r\n','\n'));assets[name]=body;}else assets[name]=local;
+  if(live){const r=await fetch('https://mirpanel-frankfurt.onrender.com/'+name+'?v=account-cards-2');assert.equal(r.status,200);const body=await r.text();assert.equal(body.replaceAll('\r\n','\n'),local.replaceAll('\r\n','\n'));assets[name]=body;}else assets[name]=local;
  }
  server=http.createServer(async(req,res)=>{
   try{

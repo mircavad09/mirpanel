@@ -5,7 +5,7 @@ async function main(){
  const raw=execFileSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','Add-Type -AssemblyName System.Security; $p=Join-Path $env:LOCALAPPDATA "MirpanelPrivateCredentials/gmail-reauthorized.dpapi"; $b=[Security.Cryptography.ProtectedData]::Unprotect([IO.File]::ReadAllBytes($p),$null,[Security.Cryptography.DataProtectionScope]::CurrentUser); [Console]::Write([Text.Encoding]::UTF8.GetString($b))'],{encoding:'utf8',stdio:['ignore','pipe','ignore'],windowsHide:true});
  const credential=JSON.parse(raw);
  const key=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');
- const base='https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars';
+ const base='https://api.render.com/v1/services/srv-dbse90u1egvs73djpp2g/env-vars';
  const headers={Authorization:'Bearer '+key,'Content-Type':'application/json'};
  async function getEnv(){const r=await fetch(base+'?limit=100',{headers,signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('RENDER_READ_FAILED');return Object.fromEntries((await r.json()).map(x=>[x.envVar.key,x.envVar.value]));}
  const before=await getEnv();

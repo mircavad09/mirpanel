@@ -29,7 +29,7 @@ fixture.games=(await epinby({action:'epinby-catalog',gamesOnly:true})).games;
 assert(!JSON.stringify(fixture).includes('never-exposed'));
 assert.equal(inventoryAvailability({id:'epinby_11',plans:[{price:3}]},{scope:'product',available:100}).canOrder,false);
 const live=process.argv.includes('--live-assets');
-const origin=live?'https://mirpanel.onrender.com':'https://mirpanel.test';
+const origin=live?'https://mirpanel-frankfurt.onrender.com':'https://mirpanel.test';
 const mime={html:'text/html',js:'text/javascript',mjs:'text/javascript',css:'text/css'};
 const out=new URL('../outputs/game-products/',import.meta.url);
 await fs.mkdir(out,{recursive:true});

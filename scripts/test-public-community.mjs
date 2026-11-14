@@ -3,7 +3,7 @@ import {createOwnerCommunity} from '../mirpanel-admin/community/service.mjs';imp
 import {createAuthMailer} from '../mirpanel-admin/community/auth-mail.mjs';
 import {liveChecks} from './community-live-checks.mjs';
 const realMail=process.argv.includes('--real-mail');let mailEnv;
-if(realMail){const key=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');const r=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars?limit=100',{headers:{Authorization:'Bearer '+key}});if(!r.ok)throw Error('MAIL_TEST_CONFIGURATION_FAILED');mailEnv=Object.fromEntries((await r.json()).map(x=>[x.envVar.key,x.envVar.value]));}
+if(realMail){const key=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');const r=await fetch('https://api.render.com/v1/services/srv-dbse90u1egvs73djpp2g/env-vars?limit=100',{headers:{Authorization:'Bearer '+key}});if(!r.ok)throw Error('MAIL_TEST_CONFIGURATION_FAILED');mailEnv=Object.fromEntries((await r.json()).map(x=>[x.envVar.key,x.envVar.value]));}
 const local=JSON.parse(fs.readFileSync(process.env.LOCALAPPDATA+'/MirpanelCommunityPreview/config.json'));assert.equal(local.db.host,'127.0.0.1');
 const database='mirpanel_public_release_test_'+Date.now(),control=new pg.Pool({...local.db,database:'postgres'});let pool,app,server,browser;let checks=0;const eq=(a,b,m)=>{assert.deepEqual(a,b,m);checks++;};
 try{

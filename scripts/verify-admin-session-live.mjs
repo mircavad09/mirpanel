@@ -1,9 +1,9 @@
 // Login/read/logout only. Never edits catalogue, uploads files or creates orders.
 import fs from'node:fs';import path from'node:path';import crypto from'node:crypto';import assert from'node:assert/strict';
 const key=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');
-const r=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars?limit=100',{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('ENV_READ_UNAVAILABLE');const config=Object.fromEntries((await r.json()).map(x=>[x.envVar.key,x.envVar.value]));
+const r=await fetch('https://api.render.com/v1/services/srv-dbse90u1egvs73djpp2g/env-vars?limit=100',{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(20000)});if(!r.ok)throw Error('ENV_READ_UNAVAILABLE');const config=Object.fromEntries((await r.json()).map(x=>[x.envVar.key,x.envVar.value]));
 if(!config.ADMIN_USERNAME||!config.ADMIN_PASSWORD)throw Error('ADMIN_CREDENTIALS_NOT_RETURNED');
-const base='https://mirpanel.onrender.com',report={businessWrites:0,uploads:0,sessionWrites:'one login/activity/logout only'};
+const base='https://mirpanel-frankfurt.onrender.com',report={businessWrites:0,uploads:0,sessionWrites:'one login/activity/logout only'};
 const request=(p,options={})=>fetch(base+p,{...options,signal:AbortSignal.timeout(30000),redirect:'manual'});
 let cookie='',csrf='';
 try{

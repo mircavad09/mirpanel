@@ -55,7 +55,7 @@ const jwk={...publicKey.export({format:'jwk'}),alg:'RS256',use:'sig',kid:'synthe
 let googleVerified=true,nonce='';
 globalThis.fetch=(url,opts)=>{
  const dest=typeof url==='string'?url:url.url||url.href;
- if(dest?.startsWith('https://mirpanel.onrender.com/')){
+ if(dest?.startsWith('https://mirpanel-frankfurt.onrender.com/')){
   const headers=new Headers(opts.headers);headers.set('x-test-upstream','1');headers.set('origin',origin);headers.set('x-forwarded-for','192.0.2.'+testClient);
   return nativeFetch(origin+new URL(dest).pathname+new URL(dest).search,{...opts,headers,duplex:'half'});
  }

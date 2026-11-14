@@ -5,7 +5,7 @@ import {extractAdminState} from '../mirpanel-admin/core.mjs';
 
 const {chromium}=await import(process.env.MIRPANEL_PLAYWRIGHT || 'playwright');
 const live=process.argv.includes('--live');
-const origin=live?'https://mirpanel.onrender.com':'http://mirpanel.test';
+const origin=live?'https://mirpanel-frankfurt.onrender.com':'http://mirpanel.test';
 const endpoint='/api/admin/payment-orders';
 const publicDir=new URL('../mirpanel-admin/public/',import.meta.url);
 const output=path.resolve('../../outputs/sifaris-vaxti');
@@ -23,7 +23,7 @@ const browser=await chromium.launch({executablePath:process.env.MIRPANEL_CHROME}
 try {
   if(live){
     const key=(await readFile(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8')).match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');
-    const response=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars?limit=100',{headers:{Authorization:'Bearer '+key}});
+    const response=await fetch('https://api.render.com/v1/services/srv-dbse90u1egvs73djpp2g/env-vars?limit=100',{headers:{Authorization:'Bearer '+key}});
     assert.equal(response.status,200,'Render environment lookup');
     const values=Object.fromEntries((await response.json()).map(({envVar})=>[envVar.key,envVar.value]));
     assert(values.ADMIN_USERNAME&&values.ADMIN_PASSWORD,'Admin login config');

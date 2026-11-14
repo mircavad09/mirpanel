@@ -21,7 +21,7 @@ const assets=new Map();
 for(const [name,file] of Object.entries({'browser-orders.js':'browser-orders.js','browser-orders.css':'browser-orders.css','delivery-message.mjs':'delivery-message.mjs','ready-stock-admin.js':'mirpanel-admin/public/ready-stock-admin.js'})){
  const body=fs.readFileSync(file,'utf8');
  if(live){
-  const response=await fetch((name.startsWith('ready-')?'https://mirpanel.onrender.com/':'https://mirpanel.com/')+name+'?v=delivery-links-3');
+  const response=await fetch((name.startsWith('ready-')?'https://mirpanel-frankfurt.onrender.com/':'https://mirpanel.com/')+name+'?v=delivery-links-3');
   assert.equal(response.status,200);assert.equal((await response.text()).replaceAll('\r\n','\n'),body.replaceAll('\r\n','\n'));
  }
  assets.set('/'+name,body);

@@ -4,11 +4,11 @@ import path from 'node:path';
 import assert from 'node:assert/strict';
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 const key=fs.readFileSync(path.join(process.env.USERPROFILE,'.render/cli.yaml'),'utf8').match(/^\s*key:\s*(.+)$/m)[1].trim().replace(/^['"]|['"]$/g,'');
-const response=await fetch('https://api.render.com/v1/services/srv-d8ead74m0tmc73emhsvg/env-vars?limit=100',{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(20000)});
+const response=await fetch('https://api.render.com/v1/services/srv-dbse90u1egvs73djpp2g/env-vars?limit=100',{headers:{Authorization:'Bearer '+key},signal:AbortSignal.timeout(20000)});
 assert(response.ok,'Render read access required');
 const config=Object.fromEntries((await response.json()).map(x=>[x.envVar.key,x.envVar.value]));
 assert(config.ADMIN_USERNAME&&config.ADMIN_PASSWORD,'Admin login unavailable');
-const base='https://mirpanel.onrender.com';
+const base='https://mirpanel-frankfurt.onrender.com';
 const request=(p,options={})=>fetch(base+p,{...options,signal:AbortSignal.timeout(60000),redirect:'manual'});
 let cookie,csrf,browser;
 try{
