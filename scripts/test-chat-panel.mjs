@@ -11,8 +11,8 @@ const expected=[['home','/'],['products','/mehsul'],['payments','/profil?tab=ode
 const questions=['Necə sifariş edə bilərəm?','Ödənişi necə edim?','Çeki necə yükləyim?','Sifarişlərimə haradan baxım?'];
 for(const engine of (site?[chromium]:[chromium,webkit])){
  const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
- try{for(const width of (site?[390]:[320,390,430,1440])){
-  const ctx=await browser.newContext({viewport:{width,height:site?800:640},serviceWorkers:'block',recordVideo:site?{dir:out,size:{width,height:800}}:undefined});
+ try{for(const width of [320,390,430,1440]){
+  const ctx=await browser.newContext({viewport:{width,height:site?800:640},serviceWorkers:'block',recordVideo:site&&width===390?{dir:out,size:{width,height:800}}:undefined});
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));
   await ctx.route('**/*',async route=>{
    const u=new URL(route.request().url());
