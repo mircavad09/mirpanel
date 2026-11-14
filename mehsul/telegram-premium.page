@@ -117,7 +117,12 @@
 
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
-        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
+        <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/zoom-pro" aria-label="Zoom Pro — 9.98 ₼" title="Zoom Pro">
+      <img src="/uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656" class="product-page-similar-image" alt="Zoom Pro" width="320" height="320" loading="lazy" decoding="async">
+      <div class="product-page-similar-title" title="Zoom Pro">Zoom Pro</div>
+      <div class="product-page-similar-category">meeting</div>
+      <div class="product-page-similar-price">9.98 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/spotify-premium" aria-label="Spotify Premium (Öz hesabınız) — 5.49 ₼" title="Spotify Premium (Öz hesabınız)">
       <img src="/uploads/products/spotify-1792446476574-ac5a1948.png?v=1792446476574" class="product-page-similar-image" alt="Spotify Premium" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Spotify Premium (Öz hesabınız)">Spotify Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">musiqi</div>
@@ -222,11 +227,11 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=catalog-712efa01c8d2c574"></script>
+  <script src="/app.js?v=catalog-c86b14518e7359e1"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=product-summary-1"></script>
-  <script src="/stock-display-fix.js?v=product-summary-1"></script>
-  <script src="/product-page.js?v=similar-scroll-2"></script>
+  <script src="/stock-display-fix.js?v=delivered-sales-1"></script>
+  <script src="/product-page.js?v=delivered-sales-1"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>

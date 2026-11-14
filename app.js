@@ -199,7 +199,7 @@ const DATA = {
       },
       "flow": "whatsapp",
       "soldOut": false,
-      "active": false,
+      "active": true,
       "stock": null,
       "stockEnabled": true,
       "seller": "",
@@ -498,11 +498,11 @@ const DATA = {
           "warrantyUnit": "day",
           "warrantyDuration": 6,
           "bestValue": true,
+          "pricingId": "fc790f2d-3f2d-4f31-9e61-a2ea1737e351",
           "label": " 7 gün",
           "months": 7,
           "price": 1.12,
-          "regularPrice": 8,
-          "pricingId": "fc790f2d-3f2d-4f31-9e61-a2ea1737e351"
+          "regularPrice": 8
         }
       ],
       "orderConfirmation": {
