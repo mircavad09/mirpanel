@@ -36,18 +36,55 @@
     return String(value || "").toLocaleLowerCase("az").trim();
   }
 
+  const searchIcon = '<svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 4.5 4.5"/></svg>';
+  function emptySearch(grid, clear) {
+    const state=document.createElement('div');state.className='catalog-search-state';state.setAttribute('role','status');
+    state.innerHTML=searchIcon+'<h2>Məhsul tapılmadı</h2><p>Başqa adla axtarın və ya axtarışı təmizləyin.</p>';
+    const button=document.createElement('button');button.type='button';button.textContent='Axtarışı təmizlə';button.onclick=clear;state.append(button);grid.append(state);
+  }
+  function clearSearch(){
+    document.querySelectorAll('[data-site-header-search] input[type="search"],#q').forEach(input=>{input.value='';input.dispatchEvent(new Event('input',{bubbles:true}));});
+    if(location.pathname==='/')document.querySelector('[data-home-filter=all]')?.click();
+    if(location.pathname==='/mehsul'){
+      if(window.MirpanelNavigation)window.MirpanelNavigation.replaceURL('/mehsul');else history.replaceState(null,'','/mehsul');
+      applyListingSearch('');
+    }
+  }
   function applyListingSearch(query) {
     if (location.pathname !== "/mehsul") return;
-    const value = normalize(query);
-    document.querySelectorAll(".grid .card").forEach((card) => {
-      card.hidden = Boolean(value) && !normalize(card.textContent).includes(value);
+    const grid=document.querySelector('.catalog-grid');if(!grid)return;
+    const value = normalize(query);grid.querySelector('.catalog-search-state')?.remove();
+    let count=0;
+    grid.querySelectorAll('.card').forEach(card=>{
+      card.hidden=Boolean(value)&&!normalize(card.textContent).includes(value);if(!card.hidden)count++;
     });
+    grid.removeAttribute('aria-busy');
+    if(!count)emptySearch(grid,clearSearch);
   }
+  window.MirpanelCatalogSearch={apply:applyListingSearch,empty:grid=>emptySearch(grid,clearSearch)};
+  const searchStyle=document.createElement('style');searchStyle.dataset.shellPersistent='';searchStyle.textContent=`
+    .catalog-grid,#grid{min-height:clamp(430px,65svh,740px);align-content:start}
+    .catalog-grid .card[hidden]{display:none!important}
+    .catalog-search-state{grid-column:1/-1;align-self:stretch;min-height:clamp(430px,65svh,740px);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:32px 16px;text-align:center;color:#d2d6dc;font:15px/1.5 system-ui,sans-serif}
+    .catalog-search-state h2{margin:0;font-size:21px;color:#f0f2f5}.catalog-search-state p{margin:0;color:#b8bdc5}
+    .catalog-search-state button{min-height:44px;padding:10px 18px;margin-top:6px;border:1px solid #a58a1f;border-radius:12px;background:#ffd400;color:#111;font-weight:700;cursor:pointer}
+    .site-route-loading[data-route="/mehsul"]{max-width:1200px;min-height:clamp(520px,75svh,850px)}
+    .catalog-search-wheel{width:25px;height:25px;border:2px solid #ffffff30;border-top-color:#ffd400;border-radius:50%;animation:catalog-search-spin .8s linear infinite}
+    @keyframes catalog-search-spin{to{transform:rotate(1turn)}}
+    @media(prefers-reduced-motion:reduce){.catalog-search-wheel{animation:none}}
+  `;document.head.append(searchStyle);
+  function restoreSearch(){
+    if(location.pathname!=='/mehsul')return;
+    const query=new URLSearchParams(location.search).get('search')||'';
+    document.querySelectorAll('[data-site-header-search] input[type="search"]').forEach(input=>{input.value=query;});applyListingSearch(query);
+  }
+  window.addEventListener('mirpanel:route-ready',restoreSearch);
+  window.addEventListener('pageshow',restoreSearch);
 
   function runSearch(form) {
     const input = form.querySelector('input[type="search"]');
     const query = String(input?.value || "").trim();
-    if (!query) return;
+    if (!query && location.pathname !== "/mehsul") return;
     if (location.pathname === "/") {
       const homeSearch = document.getElementById("q");
       if (homeSearch) {
@@ -125,6 +162,14 @@
     window.visualViewport?.addEventListener('resize',()=>{if(header.classList.contains('is-menu-open'))positionMenu();});
 
     header.querySelectorAll("[data-site-header-search]").forEach((form) => {
+      form.addEventListener('input',()=>{
+        if(location.pathname!=='/mehsul')return;
+        const value=form.querySelector('input[type="search"]').value;
+        document.querySelectorAll('[data-site-header-search] input[type="search"]').forEach(input=>{input.value=value;});
+        const url='/mehsul'+(value?'?search='+encodeURIComponent(value):'');
+        if(window.MirpanelNavigation)window.MirpanelNavigation.replaceURL(url);else history.replaceState(null,'',url);
+        applyListingSearch(value);
+      });
       form.addEventListener("submit", (event) => {
         event.preventDefault();
         runSearch(form);

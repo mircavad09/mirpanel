@@ -260,10 +260,10 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?(home-loading|cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-recovery-1$3');
   next=next.replace(/(href=["'])\/?home-loading\.css(?:\?[^"']*)?(["'])/g,'$1/home-loading.css?v=home-recovery-1$2');
 
-  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=seven-chat-panel-1$2');
+  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=catalog-search-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=home-first-paint-1$2');
   next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=desktop-compact-price-1$2');
-  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=profile-loading-1" data-page-navigation-loader></script></head>');
+  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=catalog-search-1" data-page-navigation-loader></script></head>');
   if(earlyProductLinks)next=next.replace(/(<head\b[^>]*>)/i,`$1<script>(()=>{let pending,timer;function click(e){if(window.MirpanelNavigation||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.altKey||e.shiftKey)return;const a=e.target.closest?.('a[href]');if(!a||a.target&&a.target!=='_self'||a.hasAttribute('download')||a.hasAttribute('data-native-navigation'))return;const u=new URL(a.href);if(u.origin!==location.origin||!/^\\/mehsul\\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.pathname))return;e.preventDefault();pending=u.href;clearTimeout(timer);timer=setTimeout(()=>{if(pending)location.assign(pending);},2500);}document.addEventListener('click',click,true);window.addEventListener('mirpanel:navigation-ready',()=>{document.removeEventListener('click',click,true);clearTimeout(timer);if(pending)void window.MirpanelNavigation.go(pending);},{once:true});})();</script>`);
   next=next.replace(/(href=["'])\/?desktop-header\.css(?:\?[^"']*)?(["'])/g,'$1/desktop-header.css?v=mobile-anthracite-20261031$2');
   if(!next.includes('/desktop-header.css?v=mobile-anthracite-20261031'))next=next.replace(/<\/head>/i,'<link rel="stylesheet" href="/desktop-header.css?v=mobile-anthracite-20261031"></head>');
@@ -320,7 +320,7 @@ export async function onRequest(context) {
 
   if (isStaticAsset(pathname)) {
     const response = await fastProductImage(context,url) || await context.next();
-    if (!/^\/(?:app\.js|browser-orders\.js|delivery-message\.mjs|page-navigation\.js|stock-display-fix\.js|catalog-card\.(?:css|js)|home-loading\.(?:css|js)|cms-site\.js|stories\.js)$/.test(pathname)) return response;
+    if (!/^\/(?:site-header\.js|app\.js|browser-orders\.js|delivery-message\.mjs|page-navigation\.js|stock-display-fix\.js|catalog-card\.(?:css|js)|home-loading\.(?:css|js)|cms-site\.js|stories\.js)$/.test(pathname)) return response;
     const headers = new Headers(response.headers);
     headers.set("Cache-Control", "private, no-cache, no-store, must-revalidate");
     headers.set("Cloudflare-CDN-Cache-Control", "no-store");

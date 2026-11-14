@@ -5215,7 +5215,8 @@ function renderGrid() {
     product.active !== false && matchesHomeFilter(product) && productMatches(product, query)
   ));
   grid.innerHTML = list.length ? list.map((p, idx) => cardHTML(p, idx)).join("") :
-    '<div class="home-catalog-status">Nəticə tapılmadı</div>';
+    '';
+  if(!list.length)window.MirpanelCatalogSearch?.empty(grid);
   grid.removeAttribute("aria-busy");
   window.dispatchEvent(new Event("mirpanel:home-catalog-rendered"));
 }
