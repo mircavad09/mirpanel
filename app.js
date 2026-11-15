@@ -208,6 +208,10 @@ const DATA = {
       "formFields": [],
       "formTitle": "",
       "formDescription": "",
+      "orderGuide": {
+        "information": "💻 Necə istifadə etməli?\nHesabdan həm telefonunuzdan, həm də noutbuk və ya kompüterinizdən rahatlıqla daxil olub istifadə edə bilərsiniz.\n\n⚠️ Vacib Qaydalar və Qeydlər:\nŞifrəni dəyişməyin: Hər hansı problem yaranarsa dərhal kömək edə bilməyimiz üçün zəhmət olmasa şifrəni dəyişməyin. Əgər mütləq dəyişməli olursunuzsa, dərhal bizə yeni şifrəni bildirin!\n\n2FA (İki mərhələli doğrulama): Giriş zamanı 2FA tələbi gələrsə, sadəcə \"Skip\" (Ötür) düyməsini seçin.\n\nOTP kodu: E-poçtda 333333 kodunu görsəniz, bu, sadəcə sistemin yer tutucusudur. Düzgün 6 rəqəmli kodu görmək üçün həmin sətrin/kodun üzərinə klikləməlisiniz. Birbaşa 333333 yazmayın, əks halda səhv verəcək (əgər hesab bloklanarsa, açılması üçün 30 dəqiqə gözləməli olacaqsınız).",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
