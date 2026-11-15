@@ -1467,9 +1467,9 @@ const DATA = {
       "formTitle": "HBO Max profil məlumatları",
       "formDescription": "HBO Max profil adını və 4 rəqəmli profil kodunu daxil edin.",
       "confirmationModal": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "HBO Max Azərbaycanda rəsmi olaraq dəstəklənmir.\nMirpanel'in hesabları qlobaldır, işləyir.\n\n💡 Məsləhət: Sifarişdən əvvəl HBO Max tətbiqinə və ya veb saytına giriş edə bildiyinizdən əmin olun. Sifarişdən sonra sizə \"HBO MAX\" hesab məlumatlarını təqdim edəcəyik.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -1497,9 +1497,9 @@ const DATA = {
         }
       ],
       "orderConfirmation": {
-        "enabled": false,
+        "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "HBO Max Azərbaycanda rəsmi olaraq dəstəklənmir.\nMirpanel'in hesabları qlobaldır, işləyir.\n\n💡 Məsləhət: Sifarişdən əvvəl HBO Max tətbiqinə və ya veb saytına giriş edə bildiyinizdən əmin olun. Sifarişdən sonra sizə \"HBO MAX\" hesab məlumatlarını təqdim edəcəyik.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
