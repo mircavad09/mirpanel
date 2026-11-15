@@ -54,9 +54,17 @@ export function createAccountOrders({security,store,resolve}){
     const expiresOn=status==='completed'&&lines.length<=1&&records.some(d=>d.line_index===0)?safeCalendarDate(o.service_expires_on)||null:null;
     return {id:o.id,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus,reason:cancellation.reason}}:{}),items:lines.map((x,i)=>{
      const item=snap.items[i],current=products.get(x.productId);
-     return {...x,image:item.image||current?.image||'',warranty:warrantyText({...item,label:x.planName}),durationMonths:item.durationMonths??null,expiresOn,repeat:repeatPlan(current,item.sourcePlanKey??item.planId,x.planName)};
+     const deliveredQuantity=records.filter(d=>d.line_index===i).reduce((n,d)=>n+d.quantity,0);
+     const cancelledQuantity=cancellation?.lines?.find(line=>line.index===i)?.quantity||0;
+     const remainingQuantity=Math.max(0,x.quantity-deliveredQuantity-cancelledQuantity);
+     const fulfillmentStatus=deliveredQuantity>=x.quantity?'completed':cancelledQuantity&&remainingQuantity===0?'cancelled':deliveredQuantity>0?'partial':status==='preparing'?'preparing':status;
+     return {...x,fulfillmentStatus,deliveredQuantity,remainingQuantity,image:item.image||current?.image||'',warranty:warrantyText({...item,label:x.planName}),durationMonths:item.durationMonths??null,expiresOn,repeat:repeatPlan(current,item.sourcePlanKey??item.planId,x.planName)};
     }),image:snap?.image||product?.image||'',quantity:o.quantity||snap?.quantity||1,warranty:warrantyText({...snap,label:o.plan_name}),durationMonths:o.duration_months??snap?.durationMonths??null,repeat:repeatPlan(product,snap?.planId??o.plan_id,o.plan_name),plan:o.plan_name,amount:o.amount===null?null:Number(o.amount),currency:o.currency,createdAt:o.created_at,status,statusMessage:cancellation?((cancellation.full?'Sifarişiniz ləğv edildi.':'Təhvil verilməyən məhsullar ləğv edildi.')+' '+refundNote).trim():status==='preparing'?'Ödəniş təsdiqləndi. Sifariş hazırlanır.':customerOrderStatus(status,flows.get(o.id)?.state),autoDelivered:status==='completed'&&records.some(d=>d.automatic),deliveries:['preparing','completed'].includes(status)?records.map(d=>({id:d.id,line:d.line_index,quantity:d.quantity})):[],receiptAvailable:!o.receipt_deleted_at&&!!o.receipt_path};
    }),nextCursor:rows.length>20?security.encryptSecret(JSON.stringify({purpose:'account-orders-page',userId:s.userId,createdAt:last.created_at,id:last.id})):null};
+   for(const order of result.orders){
+    if(order.status==='preparing'&&order.deliveries.length){order.fulfillmentStatus='partial';order.statusMessage='Qismən təhvil verildi. Qalan məhsullar hazırlanır.';}
+    else order.fulfillmentStatus=order.status;
+   }
    if(!cursor){
     const opened=result.orders.find(o=>code&&String(o.orderCode)===code)||result.orders.find(o=>o.status==='completed');
     const details=await Promise.all((opened?.deliveries||[]).map(async record=>{

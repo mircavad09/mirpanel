@@ -410,18 +410,34 @@ function netflixScreen(animation,create){
   return '<div class="browser-order-expiry"'+(days<=0?' data-expired':'')+'>'+clockIcon+'<span>'+label+'</span><time datetime="'+value+'">'+value.split('-').reverse().join('.')+' · Bakı vaxtı</time></div>';
  }
  const repeats=new WeakMap();
+ const selectedProducts=new Map(),orderData=new WeakMap();
+ const productImages=items=>items.map((item,line)=>({...item,line})).filter((item,i,all)=>all.findIndex(x=>(x.productId||x.title)===(item.productId||item.title))===i);
+ function photos(o,items){
+  const images=productImages(items);if(images.length<2)return photo(images[0]?.image);
+  const selected=Math.min(selectedProducts.get(o.id)||0,images.length-1);
+  // Show the selected product in front and the next product behind it.
+  const back=(selected+1)%images.length;
+  return '<span class="browser-order-image-stack" role="group" aria-label="Sifarişdəki məhsullar">'+[selected,back].map((index,position)=>'<button type="button" class="browser-order-image-choice '+(position?'is-back':'is-front')+'" data-order-image="'+index+'" aria-label="'+esc(images[index].title)+' seç" aria-pressed="'+String(!position)+'">'+photo(images[index].image)+'</button>').join('')+(images.length>2?'<button type="button" class="browser-order-image-more" data-order-image="'+back+'" aria-label="Digər məhsulu göstər">+'+(images.length-2)+'</button>':'')+'</span>';
+ }
  function orderItems(o){return o.items?.length?o.items:[{title:o.product,planName:o.plan,quantity:o.quantity||1,unitCents:o.amount==null?null:Math.round(Number(o.amount)*100)/(o.quantity||1),image:o.image,warranty:o.warranty,durationMonths:o.durationMonths,repeat:o.repeat,expiresOn:o.expiresOn}];}
  function card(o,items){
   const rows=items.map((x,i)=>{
    const qty=Number(x.quantity),unit=x.unitCents==null?null:Number(x.unitCents)/100;
    const duration=Number(x.durationMonths);
    const extraDuration=Number.isInteger(duration)&&duration>0&&!new RegExp('(?:^|\\D)'+duration+'\\s*ay','iu').test(x.planName||'')?' · '+duration+' ay':'';
-   const delivered=(['preparing','completed'].includes(o.status)?o.deliveries||[]:[]).filter(d=>d.line===i).map(d=>'<article class="browser-order-delivery" data-delivery="'+esc(d.id)+'"><header><span>'+esc(x.title)+' · '+esc(x.planName)+(d.quantity>1?' · '+esc(d.quantity)+' ədəd':'')+'</span><button type="button" data-copy-delivery disabled>'+copyIcon+'Kopyala</button></header><div class="browser-delivery-credentials"></div><pre hidden></pre><span role="status" data-delivery-status></span></article>').join('');
+   const lineDeliveries=(['preparing','completed'].includes(o.status)?o.deliveries||[]:[]).filter(d=>d.line===i);
+   const delivered=lineDeliveries.map(d=>'<article class="browser-order-delivery" data-delivery="'+esc(d.id)+'"><header><span>'+esc(x.title)+' · '+esc(x.planName)+(d.quantity>1?' · '+esc(d.quantity)+' ədəd':'')+'</span><button type="button" data-copy-delivery disabled>'+copyIcon+'Kopyala</button></header><div class="browser-delivery-credentials"></div><pre hidden></pre><span role="status" data-delivery-status></span></article>').join('');
    const cancelled=o.cancellation?.lines?.find(line=>line.index===i)?.quantity||0;
-   return '<section class="browser-order-line"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2><div class="browser-order-line-meta"><span>'+esc(x.planName)+esc(extraDuration)+'</span>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<strong class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</strong></div></div><div class="browser-order-line-buttons"><button type="button" data-order-info="'+i+'" aria-haspopup="dialog" aria-expanded="false" class="order-guide-button">'+docIcon+'<span>Təlimat</span></button><button type="button" data-buy-again="'+i+'">'+repeatIcon+'Yenidən al</button></div></div>'+(cancelled?'<p>'+esc(cancelled)+' ədəd ləğv edildi.</p>':'')+(delivered?expiryBar(x.expiresOn):'')+'<div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(cancelled?'Bu məhsulun təhvil verilməyən hissəsi ləğv edildi.':o.status==='completed'?'Status: Tamamlandı. Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Status: '+esc(statuses[o.status]||'Status məlum deyil')+'. Təhvil məlumatı hazır deyil.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
+   const count=lineDeliveries.reduce((n,d)=>n+d.quantity,0),remaining=Math.max(0,qty-count-cancelled);
+   const state=x.fulfillmentStatus||(count>=qty?'completed':count>0?'partial':cancelled&&!remaining?'cancelled':o.status);
+   const label=state==='partial'?'Qismən təhvil verildi':state==='completed'?'Təhvil verildi':statuses[state]||'Hazırlanır';
+   const progress='<p class="browser-order-line-progress" data-line-status="'+esc(state)+'">'+esc(label)+(count?' · '+count+'/'+qty:'')+(count&&remaining?' · '+remaining+' ədəd hazırlanır':'')+'</p>';
+   return '<section class="browser-order-line" data-order-line="'+i+'"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2>'+progress+'<div class="browser-order-line-meta"><span>'+esc(x.planName)+esc(extraDuration)+'</span>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<strong class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</strong></div></div><div class="browser-order-line-buttons"><button type="button" data-order-info="'+i+'" aria-haspopup="dialog" aria-expanded="false" class="order-guide-button">'+docIcon+'<span>Təlimat</span></button><button type="button" data-buy-again="'+i+'">'+repeatIcon+'Yenidən al</button></div></div>'+(cancelled?'<p>'+esc(cancelled)+' ədəd ləğv edildi.</p>':'')+(delivered?expiryBar(x.expiresOn):'')+'<div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(cancelled?'Bu məhsulun təhvil verilməyən hissəsi ləğv edildi.':o.status==='completed'?'Status: Tamamlandı. Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Status: '+esc(statuses[o.status]||'Status məlum deyil')+'. Təhvil məlumatı hazır deyil.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
   }).join('');
   const total=o.amount==null?'—':esc(money(o.amount));
-  return '<details class="browser-order" data-order-id="'+esc(o.id)+'" data-order-code="'+esc(o.orderCode)+'"><summary class="browser-order-header">'+photo(items[0]?.image)+'<div class="browser-order-heading"><div class="browser-order-meta"><span class="browser-order-status" data-status="'+esc(o.status)+'">'+(o.status==='completed'?completedIcon:icons[o.status]?'<span aria-hidden="true">'+icons[o.status]+'</span> ':'')+esc(statuses[o.status]||'Status məlum deyil')+'</span><span class="browser-order-code">№ '+esc(o.orderCode)+'</span><time>'+esc(date(o.createdAt))+'</time></div><strong>'+esc(o.product)+'</strong></div><strong class="browser-order-price">'+total+'</strong><svg class="browser-order-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><div class="browser-order-items">'+rows+(o.cancellation?'<p class="browser-order-cancellation">'+esc(o.statusMessage)+'</p>'+(o.cancellation.reason?'<p class="browser-order-cancellation" style="white-space:pre-wrap">Səbəb — '+esc(o.cancellation.reason)+'</p>':''):'')+'</div><div class="browser-order-actions browser-order-footer"><div class="browser-order-total"><span>Cəmi</span><strong class="browser-order-price">'+total+'</strong></div>'+(o.receiptAvailable?'<button type="button" data-receipt="'+esc(o.id)+'">Qəbzə bax</button>':'')+'</div></details>';
+  const partial=o.fulfillmentStatus==='partial'||o.status==='preparing'&&(o.deliveries||[]).some(d=>d.quantity>0);
+  const summaryStatus=partial?'partial':o.status,summaryLabel=partial?'Qismən təhvil verildi':statuses[o.status]||'Status məlum deyil';
+  return '<details class="browser-order" data-order-id="'+esc(o.id)+'" data-order-code="'+esc(o.orderCode)+'"><summary class="browser-order-header">'+photos(o,items)+'<div class="browser-order-heading"><div class="browser-order-meta"><span class="browser-order-status" data-status="'+esc(summaryStatus)+'">'+(o.status==='completed'?completedIcon:icons[o.status]?'<span aria-hidden="true">'+icons[o.status]+'</span> ':'')+esc(summaryLabel)+'</span><span class="browser-order-code">№ '+esc(o.orderCode)+'</span><time>'+esc(date(o.createdAt))+'</time></div><strong>'+esc(o.product)+'</strong></div><strong class="browser-order-price">'+total+'</strong><svg class="browser-order-arrow" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" aria-hidden="true"><path d="m4 6 4 4 4-4"/></svg></summary><div class="browser-order-items">'+rows+(o.cancellation?'<p class="browser-order-cancellation">'+esc(o.statusMessage)+'</p>'+(o.cancellation.reason?'<p class="browser-order-cancellation" style="white-space:pre-wrap">Səbəb — '+esc(o.cancellation.reason)+'</p>':''):'')+'</div><div class="browser-order-actions browser-order-footer"><div class="browser-order-total"><span>Cəmi</span><strong class="browser-order-price">'+total+'</strong></div>'+(o.receiptAvailable?'<button type="button" data-receipt="'+esc(o.id)+'">Qəbzə bax</button>':'')+'</div></details>';
  }
 
  root.addEventListener('error',e=>{if(e.target.matches?.('.browser-order-image img'))e.target.hidden=true;},{capture:true,signal:life.signal});
@@ -458,7 +474,7 @@ function netflixScreen(animation,create){
     for(const icon of node.querySelectorAll('.order-completed-icon,.order-guide-button'))completedVisibility?.observe(icon);
    }
    ordered.push(node);
-   repeats.set(node,items.map(x=>x.repeat));guideItems.set(node,items);
+   repeats.set(node,items.map(x=>x.repeat));guideItems.set(node,items);orderData.set(node,{o,items});
    if(expanded.has(o.id)||(!focused&&target===String(o.orderCode)))node.open=true;
    if(!focused&&target===String(o.orderCode)){
     focused=true;node.scrollIntoView({block:'nearest'});
@@ -482,6 +498,14 @@ function netflixScreen(animation,create){
    if(live&&(dialog.open||guideDialog.open||repeatDialog.open))return;
    if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=sifarislerim');else location.replace('/profil?tab=sifarislerim');return;}
    if(live&&hasAppended&&(target||!latestCompleted(d)||latestCompleted(d)===autoOrder)){
+    // Preserve loaded history pages, but never freeze a visible paid order's
+    // newly delivered units just because no whole order completed yet.
+    const retained=new Map((ui.pageData?.orders||[]).map(order=>[order.id,order]));
+    let progressChanged=false;
+    for(const order of d.orders){const old=retained.get(order.id);if(!old)continue;
+     if(JSON.stringify([old.status,old.fulfillmentStatus,old.deliveries])!==JSON.stringify([order.status,order.fulfillmentStatus,order.deliveries])){retained.set(order.id,order);progressChanged=true;}
+    }
+    if(progressChanged){paint({...ui.pageData,orders:[...retained.values()],deliveryDetails:{...ui.pageData.deliveryDetails,...d.deliveryDetails}},false,{live});return;}
     for(const [id,data] of Object.entries(d.deliveryDetails||{}))if(typeof data?.text==='string')credentials.set(id,data);
     ui.pageData.deliveryDetails={...ui.pageData.deliveryDetails,...d.deliveryDetails};
     root.querySelectorAll('[data-order-id][open]').forEach(showAccounts);
@@ -505,7 +529,7 @@ function netflixScreen(animation,create){
  function showAccounts(order){
   if(document.hidden)return;
   for(const panel of order.querySelectorAll('.browser-order-instructions')){
-   const boxes=panel.querySelectorAll('[data-delivery]');if(!boxes.length)continue;
+   const boxes=panel.querySelectorAll('[data-delivery]');
    panel.hidden=false;panel.closest('.browser-order-line').querySelector('[data-order-info]').setAttribute('aria-expanded','true');
    for(const box of boxes){
     const saved=credentials.get(box.dataset.delivery);
@@ -964,6 +988,18 @@ function netflixScreen(animation,create){
   repeatDialog.showModal();
  }
  on(root,'click',e=>{
+  const image=e.target.closest('[data-order-image]');
+  if(image){
+   e.preventDefault();e.stopPropagation();
+   const order=image.closest('[data-order-id]'),data=orderData.get(order);if(!data)return;
+   const index=Number(image.dataset.orderImage),images=productImages(data.items);if(!images[index])return;
+   selectedProducts.set(data.o.id,index);
+   const stack=order.querySelector('.browser-order-image-stack'),template=document.createElement('template');template.innerHTML=photos(data.o,data.items);
+   stack.replaceWith(template.content.firstElementChild);
+   order.querySelector('[data-order-image="'+index+'"]')?.focus({preventScroll:true});
+   order.querySelectorAll('[data-order-line]').forEach(line=>line.classList.toggle('is-selected-product',Number(line.dataset.orderLine)===images[index].line));
+   orderMarkup.set(order,card(data.o,data.items));return;
+  }
   const deliveryGuide=e.target.closest('[data-delivery-guide]');
   if(deliveryGuide){
    e.preventDefault();
@@ -977,6 +1013,13 @@ function netflixScreen(animation,create){
  });
  root.addEventListener('click',async e=>{if(e.target.closest('[data-retry]'))return void load();const b=e.target.closest('[data-receipt]');if(!b||b.disabled)return;const run=generation;b.disabled=true;try{const d=await api('my-orders/'+encodeURIComponent(b.dataset.receipt)+'/receipt');if(run!==generation)return;const u=new URL(d.url);if(u.protocol!=='https:'||!u.hostname.endsWith('.supabase.co'))throw Error();content.replaceChildren();const view=document.createElement(d.mime==='application/pdf'?'iframe':'img');view.src=u.href;view.referrerPolicy='no-referrer';if(view.tagName==='IMG')view.alt='Sifarişin ödəniş çeki';else{view.title='Ödəniş çeki PDF';view.setAttribute('sandbox','allow-same-origin');}content.append(view);dialog.showModal();}catch(e){if(run!==generation)return;if(e.status===401||e.status===403)return void gate();error.textContent=e.status===410?'Çek artıq mövcud deyil':'Çeki açmaq mümkün olmadı. Yenidən cəhd edin.';error.hidden=false;}finally{b.disabled=false;}});
  document.getElementById('browserReceiptClose').onclick=()=>dialog.close();dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});dialog.addEventListener('close',()=>content.replaceChildren());
+ on(root,'keydown',e=>{
+  const image=e.target.closest('[data-order-image]');if(!image||!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;
+  e.preventDefault();e.stopPropagation();const order=image.closest('[data-order-id]'),data=orderData.get(order),images=productImages(data?.items||[]);if(!images.length)return;
+  const current=selectedProducts.get(order.dataset.orderId)||0;
+  const next=e.key==='Home'?0:e.key==='End'?images.length-1:(current+(e.key==='ArrowRight'?1:-1)+images.length)%images.length;
+  image.dataset.orderImage=String(next);image.click();
+ });
  const start=()=>{clearInterval(timer);timer=setInterval(()=>{if(loaded&&!document.hidden&&!dialog.open&&!guideDialog.open&&!repeatDialog.open)load(false,true);},12000);};
  on(window,'mirpanel:account',e=>{const uid=e.detail?.user_id||e.detail?.id;if(!uid||accountId&&uid!==accountId)gate();else if(!loaded)load();});
  on(window,'storage',e=>{if(e.key==='mirpanel.auth.signedOut')gate();});
