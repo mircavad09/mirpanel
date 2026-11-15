@@ -4,7 +4,7 @@ import {roomSalesInstalled} from './netflix-room-sale.mjs';
 export async function roomStates(db,{groupId=null,roomId=null,deliveryId=null,lock=false}={}){
  const legacy=await legacyInstalled(db);
  const managed=await roomSalesInstalled(db);
- const {rows}=await db.query(`select r.*,r.stock_ends_on::text stock_end,g.account_cipher,g.ends_on::text group_end,
+ const {rows}=await db.query(`select r.*,r.stock_ends_on::text stock_end,g.account_cipher,g.ends_on::text group_end,g.created_at stock_created_at,
   ${legacy?'a.paid_until::text legacy_paid_until,a.created_at bound_at,':''}
   ${managed?'s.unexpired,s.synthetic,s.held,s.assigned,(v.id is not null) sellable,':''}
   d.line_index,d.delivered_at,d.message_cipher,o.product_id,o.checkout_snapshot,o.duration_months,o.plan_name,o.order_code::text order_code,

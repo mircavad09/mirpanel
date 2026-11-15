@@ -1,4 +1,12 @@
 const order=new Intl.Collator('az',{numeric:true,sensitivity:'base'});
+const addedDate=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',day:'numeric',month:'numeric'});
+const addedMonths=['yanvar','fevral','mart','aprel','may','iyun','iyul','avqust','sentyabr','oktyabr','noyabr','dekabr'];
+export function stockAddedLabel(value){
+ const date=typeof value==='string'&&/^\d{4}-\d{2}-\d{2}T/.test(value)?new Date(value):null;
+ if(!date||!Number.isFinite(date.getTime()))return 'Əlavə edilmə tarixi məlum deyil';
+ const parts=Object.fromEntries(addedDate.formatToParts(date).map(p=>[p.type,p.value]));
+ return 'Əlavə edilib: '+Number(parts.day)+' '+addedMonths[Number(parts.month)-1];
+}
 export function sortStockRows(rows){return [...rows].sort((a,b)=>order.compare(a.email||'',b.email||'')||order.compare(a.room||a.plan||'',b.room||b.plan||'')||order.compare(a.id,b.id));}
 const el=(tag,cls,text)=>{const n=document.createElement(tag);if(cls)n.className=cls;if(text!==undefined)n.textContent=text;return n;};
 const key=r=>r.kind+':'+r.id;
@@ -16,7 +24,7 @@ export function createStockBrowser({search,renderRow}){
   if(old?.node.querySelector('form,dialog[open]'))return old.node;
   const node=el('article','readyStockRecord'+(compact?' is-archive':''));node.dataset.stockRecord=id;
   const heading=el('div','readyStockRecordHeading'),name=el('strong','',row.room?'Otaq '+row.room:row.email||'Hesab'),badge=el('span','readyStockRecordState',row.data?.statusLabel||(row.bucket==='sold'?'Satılıb / müştəriyə bağlı':row.bucket==='ready'?'Hazır':'Satışa hazır deyil'));
-  heading.append(name,badge);const meta=el('p','readyStockRecordMeta',[row.plan,row.customerLabel,row.orderCode&&'Sifariş №'+row.orderCode].filter(Boolean).join(' · '));node.append(heading,meta);
+  heading.append(name,badge);const meta=el('p','readyStockRecordMeta',[row.plan,row.customerLabel,row.orderCode&&'Sifariş №'+row.orderCode].filter(Boolean).join(' · '));meta.append(el('small','readyStockAddedAt',stockAddedLabel(row.data?.createdAt)));node.append(heading,meta);
   if(compact){const details=el('details','readyStockRecordOperations'),summary=el('summary','', 'İdarə et');details.append(summary);details.addEventListener('toggle',()=>{if(details.open&&!details.dataset.loaded){details.dataset.loaded='true';details.append(renderRow(row));}});node.append(details);}
   else node.append(renderRow(row));
   old?.node.remove();state.cache.set(id,{node,snapshot});return node;

@@ -67,13 +67,13 @@ export function parseRoomBatch(b,{undated=false}={}){
 export async function netflixRooms(pool,security){
  if((await pool.query("select to_regclass('mirpanel_community.netflix_room_password_events') installed")).rows[0].installed){
   const rows=await roomStates(pool);
-  return {rooms:rows.map(r=>({id:r.id,groupId:r.group_id,...(security?{accountEmail:JSON.parse(security.decryptSecret(r.account_cipher)).email}:{}),name:r.room_name,orderCode:r.order_code||null,planName:r.plan_name||null,endsOn:isoDate(r.stock_end??r.group_end)?r.stock_end??r.group_end:null,
+  return {rooms:rows.map(r=>({id:r.id,groupId:r.group_id,createdAt:r.stock_created_at??null,...(security?{accountEmail:JSON.parse(security.decryptSecret(r.account_cipher)).email}:{}),name:r.room_name,orderCode:r.order_code||null,planName:r.plan_name||null,endsOn:isoDate(r.stock_end??r.group_end)?r.stock_end??r.group_end:null,
    startsOn:r.period?.startsOn??null,deliveryId:r.delivery_id,legacyAssignmentId:r.legacy_assignment_id,status:r.state,statusLabel:roomStateLabels[r.state],
    paidUntil:r.legacy_paid_until??r.period?.expiresOn??null,assignedAt:r.bound_at??r.delivered_at??null,
    customer:r.customer_name!=null?{id:r.user_id,name:r.customer_name,memberNumber:r.member_number}:null,active:r.active,canDelete:!r.delivery_id&&!r.legacy_assignment_id&&!r.held,sellable:r.sellable??r.state==='free',
    canMarkReady:r.state==='review'&&r.unexpired===true&&!r.held&&!r.synthetic&&!r.assigned}))};
  }
- const {rows}=await pool.query(`select r.id,r.group_id as "groupId",r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",to_jsonb(r)->>'legacy_assignment_id' as "legacyAssignmentId",
+ const {rows}=await pool.query(`select r.id,r.group_id as "groupId",g.created_at as "createdAt",r.room_name as name,g.starts_on::text as "startsOn",r.delivery_id as "deliveryId",to_jsonb(r)->>'legacy_assignment_id' as "legacyAssignmentId",
   coalesce(to_jsonb(r)->>'stock_ends_on',g.ends_on::text) as "endsOn",
   case when coalesce((to_jsonb(r)->>'stock_ends_on')::date,g.ends_on)<=public.payment_baku_date() then 'expired'
    when r.delivery_id is not null or to_jsonb(r)->>'legacy_assignment_id' is not null then 'sold' else 'free' end status

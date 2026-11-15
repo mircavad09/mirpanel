@@ -106,6 +106,7 @@
 .readyStockRecordHeading{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 8px;font-size:13px}
 .readyStockRecordState{font-size:11px;color:#b5d5c7}
 .readyStockRecordMeta{margin:3px 0;font-size:12px;line-height:1.4;color:#bdc6d0}
+.readyStockAddedAt{display:block;margin-top:2px;font-size:11px;line-height:1.4;color:#a4adb7}
 .readyStockArchive,.readyStockOther{margin-top:12px;border-top:1px solid #3d444b;padding-top:6px}
 .readyStockArchive>summary,.readyStockOther>summary{min-height:44px;display:list-item;align-content:center;cursor:pointer;font-size:14px;font-weight:700;overflow-wrap:anywhere}
 .readyStockRecordOperations>summary{display:list-item;box-sizing:border-box;width:fit-content;padding:10px 12px;cursor:pointer;font-size:12px;border:1px solid #454c54;border-radius:7px;background:#24292f;color:#ffe08a}

@@ -1,4 +1,4 @@
-import {createStockBrowser} from './ready-stock-browser.js?v=compact-archive-1';
+import {createStockBrowser} from './ready-stock-browser.js?v=stock-added-date-1';
 const mounts=new WeakMap();
 const endpoint='/api/admin/payment-ready-stock';
 const guideText='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';

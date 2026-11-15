@@ -57,7 +57,7 @@ export async function readyAccountList(db,security,catalog){
  return rows.map(row=>{
   const data=decode(security,row),{p,match}=planMatch(catalog,row),sold=!!(row.delivery_id||row.assignment_id);
   return {id:row.id,productId:row.product_id,planKey:row.plan_key,planSignature:row.plan_signature,...readyAccountPackage(catalog,row),
-   orderCode:row.order_code||null,email:data.account?.email||'',structured:!!data.account,status:sold?'sold':'ready',revision:row.revision||0,
+   createdAt:row.created_at??null,orderCode:row.order_code||null,email:data.account?.email||'',structured:!!data.account,status:sold?'sold':'ready',revision:row.revision||0,
    customer:sold?{name:row.customer_name||'Müştəri',id:row.member_number,assignedAt:row.linked_at}:null,
    paidUntil:row.paid_until,editable:true,assigned:sold,packageAvailable:!!(p&&match)};
  });

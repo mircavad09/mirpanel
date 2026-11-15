@@ -30,6 +30,7 @@ try{
  await saveProductMessage(pool,security,f.catalog,{productId:'netflix',message:'Qaydalar\nŞifrə: Example-old\nDəyişməyin.'});
  await pool.query("insert into wallet_accounts(user_id,cents) values('a',100000),('b',100000)");
  const group=batch([1,2,3,4,5],'account-one@example.test','Example-old');await saveNetflixRooms(pool,security,config.tokenSecret,'owner',group);
+ const addedAt=(await netflixRooms(pool)).rooms.find(r=>r.groupId===group.requestId).createdAt;assert.ok(addedAt instanceof Date);
  const item=async(who,index=0)=>{const x={productId:'netflix',planIndex:index,quantity:1,details:{name:'1',code_4:'0408'}};return {...x,termsVersion:(await shop.quote({user:who},[x],hash)).items[0].termsVersion};};
  const buy=async(who,index=0)=>shop.checkout({user:who},hash,{mode:'wallet',items:[await item(who,index)],requestId:id(),consentAccepted:true});
  const orders=[];for(const who of ['a','a','b','a','b'])orders.push(await buy(who));
@@ -77,9 +78,10 @@ try{
  const sent=[];let offline=true;
  const mailer=createCustomerOrderMailer(pool,async(_kind,msg)=>{if(offline)throw Object.assign(Error('Synthetic offline'),{deliveryDisposition:'retry',deliveryCode:'TOKEN_TEMPORARY'});sent.push(msg);return {id:id()};},'https://mirpanel.com');
  await mailer.wake();assert.equal(sent.length,0);offline=false;await pool.query("update customer_order_mail set next_at=now() where event_key like 'netflix-password:%'");await mailer.wake();await mailer.wake();assert.equal(sent.length,4);
- for(const msg of sent){assert.ok(msg.idempotencyKey.startsWith('netflix-password:'));assert.match(msg.textBody,/profil\?tab=orders&order=/);assert.doesNotMatch(JSON.stringify(msg),/Example-old|Example-new|Example-other-new|0408/);}
+ for(const msg of sent){assert.ok(msg.idempotencyKey.startsWith('netflix-password:'));assert.match(msg.textBody,/profil\?tab=sifarislerim&order=/);assert.doesNotMatch(JSON.stringify(msg),/Example-old|Example-new|Example-other-new|0408/);}
  const audit=JSON.stringify((await pool.query("select metadata from public.payment_audit_log where action like 'netflix.%'")).rows);assert.doesNotMatch(audit,/Example-old|Example-new|Example-other-new|0408/);
  assert.equal((await pool.query('select count(*)::int n from netflix_room_assignment_history')).rows[0].n,1);
+ assert.deepEqual((await netflixRooms(pool)).rooms.filter(r=>r.groupId===group.requestId).map(r=>r.createdAt),Array(5).fill(addedAt));
  console.log('PASS: five rooms only 2/3 renewed, active release blocked, old-owner isolation, 3/6 month preservation, parallel rotation and one notice per customer, mail/Sheets retry, account-ID groups and legacy review');
 }finally{await f.close();}
 

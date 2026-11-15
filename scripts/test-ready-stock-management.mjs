@@ -30,7 +30,7 @@ try{
  }
  const view=()=>readyStockView(pool,catalog,[],security),units=()=>readyAccountList(pool,security,catalog);
  let rows=(await units()).filter(r=>r.productId===capcut.id);assert.equal(rows.length,5);
- const first=rows[0],open=await call({action:'open',id:first.id});assert.ok(open.password.startsWith('Synthetic-'));
+ const first=rows[0];assert.ok(first.createdAt instanceof Date);const firstAddedAt=first.createdAt;const open=await call({action:'open',id:first.id});assert.ok(open.password.startsWith('Synthetic-'));
  await call({action:'edit',id:first.id,revision:open.revision,email:'updated@example.test',password:'Synthetic-edited',message:'Əlavə sintetik məlumat'});
  assert.equal((await call({action:'open',id:first.id})).password,'Synthetic-edited');
  await assert.rejects(call({action:'edit',id:first.id,revision:0,email:'old@example.test',password:'wrong'}),{status:409});
@@ -101,5 +101,6 @@ try{
  assert.equal((await call({action:'open',id:repair})).password,'Synthetic-legacy');
  await assert.rejects(call({action:'edit',id:sold.id,revision:sold.revision,email:'sold@example.test',password:'Synthetic-sold',index:0,planSignature:signature(spotify.plans[0])}),{status:409});
 
- console.log(JSON.stringify({edit:true,delete:true,bindWithoutCharge:true,historyAndCodes:true,subscriptionDate:true,ownerIsolation:true,reservedBlocked:true,parallelBindSingle:true,twoPurchasesOneDelivery:true,salesLimitSeparate:true,auditNoSecrets:true,packageIdentityProtected:true,syntheticOnly:true}));
+ assert.deepEqual((await units()).find(r=>r.id===first.id).createdAt,firstAddedAt);
+ console.log(JSON.stringify({originalAddedDatePreserved:true,edit:true,delete:true,bindWithoutCharge:true,historyAndCodes:true,subscriptionDate:true,ownerIsolation:true,reservedBlocked:true,parallelBindSingle:true,twoPurchasesOneDelivery:true,salesLimitSeparate:true,auditNoSecrets:true,packageIdentityProtected:true,syntheticOnly:true}));
 }finally{await f.close();}

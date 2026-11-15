@@ -32,7 +32,7 @@ try{
  const {rows:[row]}=await f.pool.query("select pin_cipher from mirpanel_community.netflix_room_units where room_name='1'");
  assert.equal(JSON.parse(security.decryptSecret(row.pin_cipher)).pin,'0408');
  assert.doesNotMatch(row.pin_cipher,/^0408$/);
- const id=result.rooms.find(r=>r.name==='1').id;
+ const id=result.rooms.find(r=>r.name==='1').id;const addedAt=result.rooms.find(r=>r.id===id).createdAt;assert.ok(addedAt instanceof Date);
  assert.deepEqual(await netflixRoomPassword(f.pool,security,id),{password:b.password});
  await assert.rejects(netflixRoomPassword(f.pool,security,f.id()),{status:404});
  const edit=input=>editNetflixRoom(f.pool,security,{id,...input});
@@ -44,5 +44,6 @@ try{
  assert.doesNotMatch(JSON.stringify(await netflixRooms(f.pool)),/0042/);
  await f.pool.query("update mirpanel_community.netflix_room_groups set starts_on=public.payment_baku_date()-1,ends_on=public.payment_baku_date()");
  assert.ok((await netflixRooms(f.pool)).rooms.every(r=>r.status==='expired'));
+ assert.deepEqual((await netflixRooms(f.pool)).rooms.find(r=>r.id===id).createdAt,addedAt);
  console.log('PASS: batch replay, duplicate prevention, date validation, separate encrypted units, 0408 preserved, expiry status and redacted listing');
 }finally{await f.close();}
