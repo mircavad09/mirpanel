@@ -50,7 +50,7 @@ export function createStockBrowser({search,renderRow}){
   const archive=el('details','readyStockArchive'),summary=el('summary','', 'Satılan və müştəriyə bağlanan hesablar · '+sold.length),body=el('div');archive.append(summary,body);archive.open=state.archiveOpen;
   const fill=()=>{state.archiveOpen=archive.open;if(!archive.open)return;state.page=Math.min(state.page,Math.max(1,Math.ceil(sold.length/20)));body.replaceChildren(groups(sortStockRows(sold).slice((state.page-1)*20,state.page*20),true),pager(sold.length,state.page,p=>{state.page=p;fill();}));};
   archive.addEventListener('toggle',()=>{if(archive.isConnected)fill();});if(archive.open)fill();content.append(archive);
-  if(other.length){const details=el('details','readyStockOther');details.append(el('summary','', 'Satışa hazır olmayan hesablar · '+other.length));details.addEventListener('toggle',()=>{if(details.open&&!details.dataset.loaded){details.dataset.loaded='true';details.append(groups(other,false));}});content.append(details);}
+  if(other.length){const details=el('details','readyStockOther');details.open=!!state.otherOpen;details.append(el('summary','', 'Satışa hazır olmayan hesablar · '+other.length));const fillOther=()=>{state.otherOpen=details.open;if(details.open&&!details.dataset.loaded){details.dataset.loaded='true';details.append(groups(other,false));}};details.addEventListener('toggle',()=>{if(details.isConnected)fillOther();});if(details.open)fillOther();content.append(details);}
   restore();
  }
  async function run(s){
@@ -61,7 +61,7 @@ export function createStockBrowser({search,renderRow}){
   catch{if(revision!==s.revision)return;s.error=true;}
   finally{if(revision===s.revision){s.loading=false;if(state===s)draw();}}
  }
- input.oninput=()=>{if(!state)return;state.q=input.value;state.searchPage=1;state.matches=null;state.error=false;state.loading=!!state.q;++state.revision;clearTimeout(timer);draw();const s=state;timer=setTimeout(()=>void run(s),250);};
+ input.oninput=()=>{if(!state)return;state.q=input.value.trim()?input.value:'';state.searchPage=1;state.matches=null;state.error=false;state.loading=!!state.q;++state.revision;clearTimeout(timer);draw();const s=state;timer=setTimeout(()=>void run(s),250);};
  clear.onclick=()=>{clearTimeout(timer);state.q='';state.matches=null;state.loading=false;state.error=false;++state.revision;draw();input.focus();};
  function reset(){expired=true;clearTimeout(timer);for(const s of states.values()){s.q='';s.matches=null;s.cache.clear();++s.revision;}inflight.clear();states.clear();root.replaceChildren();}
  for(const name of ['mirpanel:session-expired','mirpanel:admin-logout'])window.addEventListener(name,reset,{once:true});
