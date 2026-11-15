@@ -1463,26 +1463,7 @@ const DATA = {
       "seller": "",
       "bestSeller": false,
       "orderFlow": "form_then_whatsapp",
-      "formFields": [
-        {
-          "key": "name",
-          "type": "text",
-          "label": "HBO Max profil adı",
-          "placeholder": "HBO Max profil adınızı yazın",
-          "description": "",
-          "required": true,
-          "enabled": true
-        },
-        {
-          "key": "code_4",
-          "type": "text",
-          "label": "Profil kodu / PIN",
-          "placeholder": "4 rəqəmli profil kodunu yazın",
-          "description": "",
-          "required": true,
-          "enabled": true
-        }
-      ],
+      "formFields": [],
       "formTitle": "HBO Max profil məlumatları",
       "formDescription": "HBO Max profil adını və 4 rəqəmli profil kodunu daxil edin.",
       "confirmationModal": {
@@ -1508,11 +1489,11 @@ const DATA = {
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 27,
+          "pricingId": "9862f006-0b4b-4c63-97ef-eda5829158da",
           "label": "1 ay ",
           "months": 1,
           "price": 3.99,
-          "regularPrice": 13,
-          "pricingId": "9862f006-0b4b-4c63-97ef-eda5829158da"
+          "regularPrice": 13
         }
       ],
       "orderConfirmation": {
