@@ -1470,6 +1470,10 @@ const DATA = {
       "formFields": [],
       "formTitle": "HBO Max profil məlumatları",
       "formDescription": "HBO Max profil adını və 4 rəqəmli profil kodunu daxil edin.",
+      "orderGuide": {
+        "information": "🎬 HBO Max Hesabından İstifadə və Giriş Qaydaları\nCihaz Seçimi və İstifadə Qaydası:\nHesaba telefon, televizor və ya noutbuk vasitəsilə daxil ola bilərsiniz (bu üç cihazdan istənilən biri ilə daxil olmaq mümkündür).\n\n⚠️ Vacib şərt: Hesabı eyni anda yalnız bir cihazda izləyin. Əgər eyni anda iki cihazda (məsələn, həm telefonda, həm də televizor/noutbukda) eyni anda filmə baxılarsa, hesab sistemdən atılar və bloklana bilər.\nQeyd: Bu qaydanın pozulması nəticəsində hesab bloklanarsa, geri ödəniş və ya hesabın əvəzlənməsi (zəmanət) tətbiq olunmur. Zəhmət olmasa, bu qaydanı diqqətə alaraq istifadə edin.\n\nGiriş Təlimatı:\nHesaba giriş qaydası ilə bağlı ətraflı məlumatı sistemdəki \"Təlimat\" düyməsinə klikləməklə əldə edə bilərsiniz.\n\nOtaq Ayarları:\nÖz otağınızın adını dəyişə bilərsiniz.\n❌ Otağın kodunu dəyişmək isə qəti qadağandır.\n\nZəmanət Müddəti:\nHesaba 28 gün zəmanət veririk. Tam 30 gün işləməyə bilər; təxmini işləmə müddəti 28-30 gün arası dəyişir (28 gün də işləyə bilər, 30 gün də). Tam 30 gün işləyəcəyinə dair zəmanət verilmir.",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
