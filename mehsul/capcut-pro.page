@@ -150,17 +150,18 @@
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">2.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 3.99 ₼" title="HBO Max">
+      <img src="/uploads/products/hbomax-1794730390763-0efc1b5b.png?v=1794730390763" class="product-page-similar-image" alt="HBO Max" width="320" height="320" loading="lazy" decoding="async">
+      <span class="capcut-similar-discount">-69%</span>
+      <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
+      <div class="product-page-similar-category">film</div>
+      <div class="product-page-similar-price">3.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/canva-premium" aria-label="Canva Premium — 2.99 ₼" title="Canva Premium">
       <img src="/uploads/products/canva-1792448677882-81e67e07.png?v=1792448677882" class="product-page-similar-image" alt="Canva Premium" width="320" height="320" loading="lazy" decoding="async">
       <span class="capcut-similar-discount">-90%</span>
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">dizayn</div>
       <div class="product-page-similar-price">2.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/pubg-mobile" aria-label="PUBG Mobile — 1.65 ₼" title="PUBG Mobile">
-      <img src="/uploads/products/pubg-mobile-cover.webp" class="product-page-similar-image" alt="PUBG Mobile" width="320" height="320" loading="lazy" decoding="async">
-      <div class="product-page-similar-title" title="PUBG Mobile">PUBG Mobile</div>
-      <div class="product-page-similar-category">epinby-games</div>
-      <div class="product-page-similar-price">1.65 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -235,7 +236,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=stable-buy-1-08e9de200eef48e8"></script>
+  <script src="/app.js?v=stable-buy-1-eb67c4bfb1d241fb"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=stable-buy-1"></script>
   <script src="/stock-display-fix.js?v=stable-buy-1"></script>

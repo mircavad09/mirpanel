@@ -1421,7 +1421,7 @@ const DATA = {
       "_stableId": "hbomax",
       "order": 13,
       "category": "film",
-      "image": "uploads/products/hbomax-1792448430771-91c8a1ec.png?v=1792448430771",
+      "image": "uploads/products/hbomax-1794730390763-0efc1b5b.png?v=1794730390763",
       "currency": "₼",
       "title": "HBO Max",
       "variant": "Şəxsi Otaq",
@@ -1457,7 +1457,7 @@ const DATA = {
       },
       "flow": "name_code_4",
       "soldOut": false,
-      "active": false,
+      "active": true,
       "stock": null,
       "stockEnabled": false,
       "seller": "",
@@ -1505,8 +1505,14 @@ const DATA = {
       },
       "plans": [
         {
+          "warrantyMode": "guaranteed",
+          "warrantyUnit": "day",
+          "warrantyDuration": 27,
+          "label": "1 ay ",
           "months": 1,
-          "price": 5.99
+          "price": 3.99,
+          "regularPrice": 13,
+          "pricingId": "9862f006-0b4b-4c63-97ef-eda5829158da"
         }
       ],
       "orderConfirmation": {
