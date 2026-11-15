@@ -7,7 +7,7 @@ export async function roomStates(db,{groupId=null,roomId=null,deliveryId=null,lo
  const {rows}=await db.query(`select r.*,r.stock_ends_on::text stock_end,g.account_cipher,g.ends_on::text group_end,
   ${legacy?'a.paid_until::text legacy_paid_until,a.created_at bound_at,':''}
   ${managed?'s.unexpired,s.synthetic,s.held,s.assigned,(v.id is not null) sellable,':''}
-  d.line_index,d.delivered_at,d.message_cipher,o.product_id,o.checkout_snapshot,o.duration_months,o.plan_name,
+  d.line_index,d.delivered_at,d.message_cipher,o.product_id,o.checkout_snapshot,o.duration_months,o.plan_name,o.order_code::text order_code,
   ${legacy?'coalesce(a.user_id,l.user_id)':'l.user_id'} user_id,n.member_number::text,customer.name customer_name,public.payment_baku_date()::text today,
   (o.status not in ('cancelled','rejected','expired') and
    (o.payment_confirmed or o.status in ('approved','completed'))) purchase_paid,

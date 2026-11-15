@@ -84,3 +84,44 @@
 .readyStockCard select{max-width:100%;overflow:hidden;text-overflow:ellipsis}
 
 .readyStockCard label:has(>select){overflow:hidden}
+
+/* Browsing only: operations keep their existing handlers and record IDs. */
+.readyStockBrowser{min-width:0;margin-top:12px}
+.readyStockBrowserHeader{display:flex;align-items:center;flex-wrap:wrap;gap:8px}
+.readyStockBrowserHeader h3{margin:0;font-size:16px;flex:0 0 auto}
+.readyStockBrowserHeader .readyStockSearch{flex:1 1 240px;min-width:0;display:block}
+.readyStockSearch input{width:100%;min-width:0;box-sizing:border-box;min-height:44px;padding:8px 10px;border:1px solid #51575f;border-radius:9px;background:#0c0f12;color:#fff;font:inherit;font-size:13px}
+.readyStockBrowser .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.readyStockBrowser button,.readyStockBrowser .readyStockRecordOperations>summary{min-height:44px!important}
+.readyStockBrowser [hidden]{display:none!important}
+.readyStockSearchStatus{margin:6px 0;font-size:12px;color:#b9d6e7}
+.readyStockEmailGroup{margin:6px 0;border:1px solid #3d444b;border-radius:9px;background:#14181b;min-width:0}
+.readyStockEmailGroup>summary{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:44px;padding:6px 10px;box-sizing:border-box;cursor:pointer;overflow-wrap:anywhere;font-size:13px}
+.readyStockEmailGroup>summary::before{content:'▸';flex:0 0 auto;color:#ffd54a}
+.readyStockEmailGroup[open]>summary::before{content:'▾'}
+.readyStockEmailGroup>summary strong{flex:1;min-width:0}
+.readyStockEmailGroup>summary span{font-size:11px;color:#b9c2cb;white-space:nowrap}
+.readyStockEmailRows{padding:0 8px 6px}
+.readyStockRecord{padding:7px 0;border-top:1px solid #32383e;min-width:0;overflow-wrap:anywhere}
+.readyStockRecordHeading{display:flex;flex-wrap:wrap;align-items:baseline;gap:3px 8px;font-size:13px}
+.readyStockRecordState{font-size:11px;color:#b5d5c7}
+.readyStockRecordMeta{margin:3px 0;font-size:12px;line-height:1.4;color:#bdc6d0}
+.readyStockArchive,.readyStockOther{margin-top:12px;border-top:1px solid #3d444b;padding-top:6px}
+.readyStockArchive>summary,.readyStockOther>summary{min-height:44px;display:list-item;align-content:center;cursor:pointer;font-size:14px;font-weight:700;overflow-wrap:anywhere}
+.readyStockRecordOperations>summary{display:list-item;box-sizing:border-box;width:fit-content;padding:10px 12px;cursor:pointer;font-size:12px;border:1px solid #454c54;border-radius:7px;background:#24292f;color:#ffe08a}
+.readyStockRecord.is-archive{display:grid;grid-template-columns:minmax(0,1fr) auto;column-gap:8px;align-items:center}
+.readyStockRecord.is-archive>.readyStockRecordHeading,.readyStockRecord.is-archive>.readyStockRecordMeta{grid-column:1;min-width:0}
+.readyStockRecordOperations{grid-column:2;grid-row:1 / span 2;min-width:0}
+.readyStockRecordOperations[open]{grid-column:1 / -1;grid-row:3}
+.readyStockRecord .netflixAccountGroup{margin:4px 0 0;padding:0;border:0;border-radius:0}
+.readyStockRecord .netflixAccountHeader{padding:0;gap:6px}
+.readyStockRecord .netflixAccountHeader h4{font-size:11px;color:#bdc6d0}
+.readyStockRecord .netflixAccountHeader code{font-size:10px}
+.readyStockRecord .netflixAccountGroup>ul>li{padding:4px 0 0;border:0}
+.readyStockRecord .readySavedAccount{margin:0;padding:6px 0;border:0;background:none}
+.readyStockRecord .readySavedDetails>strong{display:none}
+.readyStockRecord .netflixRoomCustomer{margin:3px 0;font-size:12px}
+.readyStockRecord .netflixRoomDates{font-size:11px}
+.readyStockPager{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px;margin:8px 0}
+.readyStockPager span{font-size:12px;color:#c5ccd3}
+@media(max-width:480px){.readyStockBrowserHeader h3{flex-basis:100%}.readyStockBrowserHeader .readyStockSearch{flex-basis:180px}.readyStockEmailRows{padding-inline:6px}.readyStockRecord .netflixRoomActions{margin-inline-start:0}.readyStockRecord .netflixAccountHeader h4{max-width:45%}.readyStockSearch input{font-size:12px}}

@@ -46,17 +46,18 @@ export async function readyAccountList(db,security,catalog){
  if(!await managementInstalled(db))return [];
  const rows=(await db.query(`select u.*,m.revision,m.assignment_id,m.user_id,m.paid_until::text,m.assigned_at,
   coalesce(m.user_id,o.user_id) customer_id,coalesce(m.assigned_at,d.delivered_at) linked_at,
-  person.name customer_name,n.member_number
+  person.name customer_name,n.member_number,orders.order_code::text order_code
   from ${U} u left join ${T} m on m.unit_id=u.id
   left join mirpanel_community.customer_order_deliveries d on d.id=u.delivery_id
   left join mirpanel_community.community_order_owners o on o.order_id=d.order_id
+  left join public.payment_orders orders on orders.id=d.order_id
   left join mirpanel_community."user" person on person.id=coalesce(m.user_id,o.user_id)
   left join mirpanel_community.community_member_numbers n on n.user_id=person.id
   where m.deleted_at is null order by u.created_at desc,u.id desc`)).rows;
  return rows.map(row=>{
   const data=decode(security,row),{p,match}=planMatch(catalog,row),sold=!!(row.delivery_id||row.assignment_id);
   return {id:row.id,productId:row.product_id,planKey:row.plan_key,planSignature:row.plan_signature,...readyAccountPackage(catalog,row),
-   email:data.account?.email||'',structured:!!data.account,status:sold?'sold':'ready',revision:row.revision||0,
+   orderCode:row.order_code||null,email:data.account?.email||'',structured:!!data.account,status:sold?'sold':'ready',revision:row.revision||0,
    customer:sold?{name:row.customer_name||'Müştəri',id:row.member_number,assignedAt:row.linked_at}:null,
    paidUntil:row.paid_until,editable:true,assigned:sold,packageAvailable:!!(p&&match)};
  });

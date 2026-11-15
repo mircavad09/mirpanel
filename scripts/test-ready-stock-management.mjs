@@ -1,3 +1,4 @@
+import {searchReadyStock,stockSearchMatches} from '../mirpanel-admin/community/ready-stock-search.mjs';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
@@ -51,6 +52,8 @@ try{
  await assert.rejects(call({action:'delete',id:first.id,revision:2}),{status:409});
  await call({action:'edit',id:first.id,revision:2,email:'new@example.test',password:'Synthetic-current',message:'Yenilənmiş hesab qeydi'});
  assert.equal((await api('a').codes(null,order.id)).password,'Synthetic-current');
+ const found=await searchReadyStock(pool,security,{productId:capcut.id,q:'Synthetic-current'});assert.deepEqual(found.matches,[{kind:'account',id:first.id}]);assert.ok(!JSON.stringify(found).includes('Synthetic-current'));assert.ok(!(await searchReadyStock(pool,security,{productId:spotify.id,q:'Synthetic-current'})).matches.length);assert.ok(stockSearchMatches('45-55',['4555']));assert.ok(stockSearchMatches('0408',['0408']));assert.ok(!stockSearchMatches('0408',['408']));assert.ok((await searchReadyStock(pool,security,{productId:capcut.id,q:'new@example.test'})).matches.some(r=>r.id===first.id));
+
  assert.equal((await pool.query('select count(*)::int n from ready_stock_account_revisions where unit_id=$1',[first.id])).rows[0].n,2);
  assert.equal((await customerSubscriptions(pool,'a',async()=>catalog,async()=>[])).subscriptions.find(s=>s.id===order.id).expiresOn,date(3));
  const contested=rows[2];const parallel=await Promise.allSettled(['a','b'].map(userId=>call({action:'bind',id:contested.id,revision:0,userId,paidUntil:date(12),planSignature:contested.planSignature})));assert.equal(parallel.filter(r=>r.status==='fulfilled').length,1);

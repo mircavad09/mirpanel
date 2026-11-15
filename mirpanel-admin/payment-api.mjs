@@ -657,10 +657,18 @@ export function createPaymentSystem(options) {
       if(request.method==='GET'){json(response,200,{products:await inventoryView()});return true;}
       if(request.method==='POST'){const b=await readBody(request,10000),key=safeUuid(request.headers['x-idempotency-key']);const c=await loadCatalog();if(!key||b.confirm!==true||!(b.available===null||(Number.isSafeInteger(b.available)&&b.available>=0&&b.available<=10000))||!Number.isSafeInteger(b.expectedVersion)||!c.products.some(p=>p.id===b.productId&&(b.planKey==null||(typeof b.planKey==='string'&&/^\d+$/.test(b.planKey)&&p.plans?.[Number(b.planKey)]))))throw Object.assign(new Error('Məhsul, stok miqdarı və təsdiq tələb olunur.'),{status:400});json(response,200,await store.setInventory(b.productId,b.available,actorName,key,b.expectedVersion,b.planKey??null));return true;}
     }
-    if(['/api/admin/payment-ready-stock','/api/admin/payment-ready-stock/sales','/api/admin/payment-ready-stock/message'].includes(url.pathname)&&options.readyStockAllowed){
+    if(['/api/admin/payment-ready-stock','/api/admin/payment-ready-stock/sales','/api/admin/payment-ready-stock/message','/api/admin/payment-ready-stock/search'].includes(url.pathname)&&options.readyStockAllowed){
       if(!options.readyStockAllowed(request))throw Object.assign(new Error('Bu bölmə yalnız adminə açıqdır.'),{status:403});
       response.setHeader('Cache-Control','private, no-store');
       const catalog=await loadCatalog();
+      if(url.pathname.endsWith('/search')){
+        if(request.method!=='POST')throw Object.assign(Error('POST tələb olunur.'),{status:405});
+        if(!await options.readyStockOwnerAllowed?.(request))throw Object.assign(Error('Hesab axtarışı yalnız icazəli sahib-adminə açıqdır.'),{status:403});
+        let input;try{input=await readBody(request,5000);}catch{throw Object.assign(Error('Axtarış sorğusu düzgün deyil.'),{status:400});}
+        if(!input||typeof input!=='object'||Array.isArray(input))throw Object.assign(Error('Axtarış sorğusu düzgün deyil.'),{status:400});
+        if(!catalog.products.some(p=>p.id===input.productId))throw Object.assign(Error('Məhsul tapılmadı.'),{status:404});
+        json(response,200,await options.searchReadyStock(security,input));return true;
+      }
       if(url.pathname.endsWith('/message')){
         if(request.method!=='POST')return false;
         json(response,200,await options.saveProductMessage(security,catalog,await readBody(request,50_000)));return true;

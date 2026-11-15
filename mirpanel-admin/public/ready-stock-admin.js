@@ -1,3 +1,4 @@
+import {createStockBrowser} from './ready-stock-browser.js?v=compact-archive-1';
 const mounts=new WeakMap();
 const endpoint='/api/admin/payment-ready-stock';
 const guideText='Girişdə çətinlik yaşayırsınızsa, zəhmət olmasa, Məlumat və təlimat keçidinə klikləyin.';
@@ -57,6 +58,19 @@ export function mountReadyStock(host,api){
  let savedAccounts=[],accountDialog;
  const accountHost=q('[data-saved-accounts]');
  const manageAccount=data=>api(endpoint,{method:'POST',body:JSON.stringify({accountManage:data})});
+ let roomData=[];
+ const stockBrowser=createStockBrowser({search:(productId,q)=>api(endpoint+'/search',{method:'POST',body:JSON.stringify({productId,q})}),renderRow:entry=>{
+  if(entry.kind==='account')return renderSavedAccount(entry.data);
+  const section=roomSection('',roomData.filter(r=>(r.groupId||r.id)===(entry.data.groupId||entry.id)),undefined,entry.id);const group=section.querySelector('.netflixAccountGroup');
+  const heading=group.querySelector('.netflixAccountHeader h4');const id=heading.querySelector('code');heading.replaceChildren('Hesab ',id);return group;
+ }});
+ function updateStockBrowser(){
+  const id=product.value,netflix=id==='netflix';accountHost.hidden=netflix||!id;
+  const parent=netflix?roomLists:accountHost;if(stockBrowser.element.parentElement!==parent)parent.append(stockBrowser.element);
+  const rows=netflix?roomData.map(r=>({kind:'room',id:r.id,email:r.accountEmail||'',room:r.name,plan:r.planName||'Bütün uyğun paketlər',orderCode:r.orderCode,customerLabel:r.customer?r.customer.name+(r.customer.memberNumber?' · #'+r.customer.memberNumber:''):'',bucket:assigned(r)?'sold':r.sellable?'ready':'other',data:r})):
+   savedAccounts.filter(r=>r.productId===id).map(r=>({kind:'account',id:r.id,email:r.email,plan:r.planName,orderCode:r.orderCode,customerLabel:r.customer?r.customer.name+(r.customer.id?' · #'+r.customer.id:''):'',bucket:r.status==='sold'?'sold':'ready',data:r}));
+  stockBrowser.update(id,rows);
+ }
  let lastRooms;
  const assigned=row=>!!(row.deliveryId||row.legacyAssignmentId);
  const roomTime=new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'medium',timeStyle:'short'});
@@ -167,7 +181,7 @@ export function mountReadyStock(host,api){
      const list=node.parentElement;
      const next=[...list.children].find(other=>other!==node&&roomOrder.compare(other.dataset.roomName,row.name)>0);
      list.insertBefore(node,next||null);
-     dismiss();roomStatus.textContent='Otaq yeniləndi.';
+     dismiss();updateStockBrowser();roomStatus.textContent='Otaq yeniləndi.';
     }catch(e){roomStatus.textContent=e.message||'Otaq saxlanılmadı.';}
     finally{save.disabled=close.disabled=room.disabled=pin.disabled=false;}
    };
@@ -225,15 +239,9 @@ export function mountReadyStock(host,api){
    roomStatus.textContent='Otaq stoku bazada hələ aktiv deyil.';
    return;
   }
-  const ready=[],sold=[],other=[];
-  for(const row of rows)(assigned(row)?sold:row.sellable?ready:other).push(row);
-  roomLists.replaceChildren(
-   roomSection('Hazır stok',ready,'Satışa hazır otaq yoxdur.'),
-   roomSection('Satılan və müştəriyə bağlanan otaqlar',sold,'Satılmış və ya bağlanmış otaq yoxdur.')
-  );
-  if(other.length)roomLists.append(roomSection('Satışa hazır olmayan otaqlar',other));
+  roomData=rows;updateStockBrowser();
  }
- function roomSection(title,rows,empty){
+ function roomSection(title,rows,empty,onlyRoomId){
   const section=document.createElement('section'),heading=document.createElement('h3'),roomList=document.createElement('ul');
   heading.textContent=title;
   section.setAttribute('aria-label',title);section.append(heading);
@@ -280,12 +288,12 @@ export function mountReadyStock(host,api){
       event.preventDefault();save.disabled=close.disabled=true;
       try{
        const result=await api(endpoint,{method:'POST',body:JSON.stringify({netflixAccountPassword:{action:'rotate',groupId,password:password.value,expectedRevision:preview.revision}})});
-       password.value='';await refresh();roomStatus.textContent=result.changed?'Şifrə yeniləndi. Bildirişlər növbəyə əlavə edildi.':'Şifrə eynidir. Əlavə bildiriş yaradılmadı.';
+       password.value='';form.remove();rotate.hidden=false;rotate.disabled=false;await refresh();roomStatus.textContent=result.changed?'Şifrə yeniləndi. Bildirişlər növbəyə əlavə edildi.':'Şifrə eynidir. Əlavə bildiriş yaradılmadı.';
       }catch(e){roomStatus.textContent=e.message||'Şifrə saxlanılmadı.';}finally{save.disabled=close.disabled=false;}
      };
     }catch(e){roomStatus.textContent=e.message||'Hesab açıla bilmədi.';rotate.disabled=false;}
    };
-   items.replaceChildren(...groupRows.sort((a,b)=>roomOrder.compare(a.name,b.name)).map(row=>{
+   items.replaceChildren(...groupRows.sort((a,b)=>roomOrder.compare(a.name,b.name)).filter(row=>!onlyRoomId||row.id===onlyRoomId).map(row=>{
    const node=document.createElement('li');
    node.dataset.roomName=row.name;
    const bar=document.createElement('div'),meta=document.createElement('div'),actions=document.createElement('div');
@@ -416,21 +424,14 @@ export function mountReadyStock(host,api){
    update();dialog.showModal();
   }catch(e){say(e.message||'Hesab açıla bilmədi.',true);}finally{trigger.disabled=false;}
  }
- function renderSavedAccounts(){
-  const productId=product.value;accountHost.hidden=productId==='netflix'||!productId;
-  const rows=savedAccounts.filter(r=>r.productId===productId);accountHost.replaceChildren();
-  for(const [title,accounts] of [['Satışa hazır hesablar',rows.filter(r=>r.status==='ready')],['Satılan / müştəriyə bağlanan hesablar',rows.filter(r=>r.status==='sold')]]){
-   const section=document.createElement('section'),heading=document.createElement('h3');heading.textContent=title;section.append(heading);
-   if(!accounts.length){const empty=document.createElement('p');empty.textContent='Bu siyahıda hesab yoxdur.';section.append(empty);}
-   for(const row of accounts){
+ function renderSavedAccount(row){
     const card=document.createElement('article'),details=document.createElement('div'),name=document.createElement('strong'),planName=document.createElement('p'),actions=document.createElement('div');card.className='readySavedAccount';details.className='readySavedDetails';name.textContent=row.email||'Hazır mesajla saxlanmış hesab';planName.textContent=(row.productName||products.find(p=>p.id===row.productId)?.title||'Məhsul adı tapılmadı')+' · '+(row.planName||'Paket adı tapılmadı');actions.className='readySavedActions';details.append(name,planName);card.append(details);
     if(row.customer){const customer=document.createElement('p');customer.textContent=row.customer.name+(row.customer.id?' · #'+row.customer.id:'')+(row.customer.assignedAt?' · Bağlanma / təhvil: '+roomTime.format(new Date(row.customer.assignedAt)):'')+(row.paidUntil?' · Ödənilib: '+row.paidUntil:'');details.append(customer);}
     for(const [action,label,cls] of [['edit','Redaktə et','readyAccountEdit'],['delete','Sil','readyAccountDelete'],['bind','Müştəriyə bağla','readyAccountBind']]){const b=document.createElement('button');b.type='button';b.className='btn '+cls;b.textContent=label;b.disabled=!row.editable||row.assigned&&action!=='edit';b.title=b.disabled?'Təhvil və sifariş tarixçəsi qorunur':'';b.onclick=()=>void accountAction(row,action,b);actions.append(b);}
-    card.append(actions);section.append(card);
-   }
-   accountHost.append(section);
-  }
+    card.append(actions);return card;
  }
+ function renderSavedAccounts(){updateStockBrowser();}
+
  const selected=()=>{const p=products.find(x=>x.id===product.value);return {p,item:p?.plans.find(x=>String(x.index)===plan.value)};};
  const accounts=()=>[...messageList.children].map(row=>{
   const value=name=>row.querySelector('[name='+name+']')?.value??'';
