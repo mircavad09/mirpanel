@@ -25,7 +25,7 @@ async function ensurePreviewStorage(pool){
  try{await pending;}catch(error){initialized.delete(pool);throw error;}
 }
 
-export async function influencerPreview(db,actor,input){
+export async function influencerPreview(db,actor,input,catalog){
  const {rows:accounts}=await db.query(`select u.id,p.avatar,p.avatar_path from mirpanel_community.community_member_numbers n
   join mirpanel_community."user" u on u.id=n.user_id
   left join mirpanel_community.community_profiles p on p.user_id=u.id
@@ -42,9 +42,15 @@ export async function influencerPreview(db,actor,input){
  }else if(input?.action==='delete'){
   if(!uuid(input.id))throw fail(400,'Sınaq mesajını seçin.');
   await db.query('delete from '+table+' where id=$1 and actor_id=$2 and target_id=$3',[input.id,actor,account.id]);
+ }else if(input?.action==='reset'){
+  await db.query('delete from '+table+' where actor_id=$1 and target_id=$2',[actor,account.id]);
  }else if(input)throw fail(400,'Sınaq əməliyyatı düzgün deyil.');
  const {rows}=await db.query(`select id,body,created_at as "createdAt",true as test from (
   select id,body,created_at from ${table} where actor_id=$1 and target_id=$2
   order by created_at desc,id desc limit 100) recent order by created_at,id`,[actor,account.id]);
- return {name:'Çiçək Məmmədova',avatarUrl:avatarSource(account),test:true,items:rows};
+ const products=(catalog?.products||[]).filter(p=>p.active!==false).map(p=>({id:p.id,title:p.title,image:p.image,
+  url:'/mehsul/'+encodeURIComponent(String(p.seoSlug||p.id||'').replace(/-almaq$/,'')),plans:(p.plans||[]).map((plan,index)=>({index,
+   label:plan.label||plan.name||(plan.months?plan.months+' ay':'Paket '+(index+1)),price:Number(plan.price),
+   active:plan.active!==false})).filter(p=>p.active&&Number.isFinite(p.price)&&p.price>0)})).filter(p=>p.plans.length);
+ return {name:'Çiçək Məmmədova',memberNumber:1554,avatarUrl:avatarSource(account),test:true,items:rows,...(catalog?{products}:{})};
 }

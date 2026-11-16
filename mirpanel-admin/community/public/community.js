@@ -1,5 +1,6 @@
 import {getCommunityState,communityJson} from '/session-state.js?v=latency-1';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
 import {tierLabel} from '/community-assets/tier-labels.js';
+import {messageBubble} from '/community-assets/chat-components.js?v=interactive-preview-1';
 import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
 export function mountCommunity(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
@@ -57,8 +58,7 @@ async function group(){
  async function mark(){/* Tags are marked individually by the visibility observer, not by opening the group. */}
  function message(m){
   const author=m.author||{name:'İştirakçı',avatar:0,tier:'standard'},own=Boolean(state.profile?.user_id&&author.id===state.profile.user_id),tier=['standard','bronze','silver','gold','vip'].includes(author.tier)?author.tier:'standard';
-  const time=el('time',{datetime:m.createdAt},new Date(m.createdAt).toLocaleTimeString('az-AZ',{hour:'2-digit',minute:'2-digit'}));
-  const bubble=el('div',{class:'community-message-bubble'},el('p',{class:'community-message-body'},m.body),time),content=el('div',{class:'community-message-content'});
+  const bubble=messageBubble(m),content=el('div',{class:'community-message-content'});
   if(m.author?.system===true&&m.tag&&m.body.startsWith('@'+m.tag.name+', ')){const text=bubble.querySelector('.community-message-body');text.replaceChildren(el('span',{class:'bot-user-tag','data-user-id':m.tag.userId},'@'+m.tag.name),m.body.slice(m.tag.name.length+1));}
   content.append(el('div',{class:'community-message-head'},el('strong',{},author.name),author.role==='bot'?el('span',{class:'community-badge'},'Nəzarətçi'):author.role==='admin'?el('span',{class:'community-badge'},'Admin'):tier==='standard'?null:el('span',{class:'community-badge'},tierLabel(tier))));
   content.append(bubble);
