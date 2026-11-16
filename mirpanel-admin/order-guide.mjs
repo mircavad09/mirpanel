@@ -50,6 +50,15 @@ const netflixTvSteps=[
  ['link','Bu ekran açılarsa, «Use Password Instead» seçin.'],
  ['password','Şifrənizi ekran klaviaturası ilə yazın və «Next» seçin.']
 ].map(([name,description])=>({animation:'netflix-tv-'+name,description,image:''}));
+export const zoomPhoneSteps=[
+ ['welcome','Zoom tətbiqini açın. “Giriş yapın” düyməsinə toxunun.'],
+ ['email','Hesabın e-poçtunu daxil edin. MirPanel sifarişinizdə təqdim edilmiş e-poçt ünvanını yazın və “Sonraki” düyməsinə toxunun.'],
+ ['password','Şifrəni daxil edin. Sifarişinizdəki şifrəni yazın və “Giriş yapın” düyməsinə toxunun.'],
+ ['otp','Təsdiq kodu tələb olunarsa… Zoom bu ekranı göstərərsə, e-poçtunuza göndərilən altırəqəmli kodu əldə etmək üçün növbəti addımları izləyin. Kod istənməzsə, bu mərhələləri keçə bilərsiniz.'],
+ ['webmail','Webmail səhifəsini açın. https://tinyhost.shop ünvanına daxil olun. “Email” sahəsinə sifarişinizdə təqdim edilmiş e-poçt ünvanını daxil edin. Domen ayrıca seçilirsə, ünvanın @ işarəsindən sonrakı hissəsinə uyğun domeni seçin. Sonra mavi “Check Inbox” düyməsinə toxunun.'],
+ ['inbox','Ən son Zoom məktubunu açın. Aşağı sürüşdürərək “Inbox” siyahısına keçin. Tarix və saata görə ən yeni Zoom giriş kodu məktubunu tapın və qarşısındakı mavi “View” düyməsinə toxunun.'],
+ ['code','Altırəqəmli kodu Zoom-a daxil edin. Açılan məktubdakı altırəqəmli giriş kodunu kopyalayın. Zoom tətbiqinə qayıdın və 4-cü addımda göstərilən xanalara daxil edin. Şəkildəki kod nümunədir. Öz hesabınıza gələn ən son koddan istifadə edin.']
+].map(([scene,description])=>({animation:'zoom-'+scene,description,image:''}));
 export const guideTracks=['general','phone','desktopQr'];
 export function phoneOnlyGuide(plan){
  const name=String(plan?.label||plan?.name||'');
@@ -95,6 +104,7 @@ export function orderGuideFor(product,plan,savedName){
  if(product?.id==='chatgpt')tracks.phone=chatgptPhoneSteps.map(step=>({...step}));
  if(product?.id==='surfshark')tracks.phone=surfsharkPhoneSteps.map(step=>({...step}));
  if(product?.id==='prime')tracks.phone=primePhoneSteps.map(step=>({...step}));
+ if(product?.id==='zoom')tracks.phone=zoomPhoneSteps.map(step=>({...step}));
  if(phoneOnlyGuide(plan)||phoneOnlyGuide({label:savedName}))delete tracks.desktopQr;
  return {information:own?.information||base?.information||'',tracks};
 }

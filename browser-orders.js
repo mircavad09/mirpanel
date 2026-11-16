@@ -783,7 +783,7 @@ function netflixScreen(animation,create){
   const deliveryStatus=accounts.querySelector('[data-delivery]')?null:accounts.querySelector('p')?.textContent;
   tabs.setAttribute('role','group');tabs.setAttribute('aria-label','Təlimat bölmələri');
   footer.append(button('Bağla',()=>guideDialog.close()));
-  let data=null,failed=false,active='steps',track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel;
+  let data=null,failed=false,active='steps',track='',step=0,autoplay=false,advanceTimer,phoneTouchStart,phoneTouchEnd,phoneTouchCancel,zoomRenderer,zoomPaused=false;
   const phoneShell=create('div',null,'browser-guide-handset'),phoneScreen=create('div',null,'browser-guide-handset-screen');
   phoneShell.append(phoneScreen);
   const capcutStage=create('div',null,'capcut-pc-stage'),scanSlot=create('div',null,'capcut-pc-scan-slot');
@@ -813,7 +813,7 @@ function netflixScreen(animation,create){
    for(const [key,label] of tracks){
     const animation=data.tracks[key].find(step=>step.animation)?.animation;
     const title=key!=='phone'||!animation||animation.startsWith('netflix-')?label:
-     /^(spotify|prime|chatgpt|surfshark)-/.test(animation)?'Telefonla giriş':'CapCut-a daxil ol';
+     /^(spotify|prime|chatgpt|surfshark|zoom)-/.test(animation)?'Telefonla giriş':'CapCut-a daxil ol';
     const b=button(title,()=>{autoplay=false;track=key;step=0;draw();});
     b.setAttribute('aria-pressed',String(track===key));choices.append(b);
    }
@@ -828,7 +828,9 @@ function netflixScreen(animation,create){
    const prime=track==='phone'&&current.animation?.startsWith('prime-');
    const chatgpt=track==='phone'&&current.animation?.startsWith('chatgpt-');
    const surfshark=track==='phone'&&current.animation?.startsWith('surfshark-');
-   const simulated=netflix||spotify||prime||chatgpt||surfshark;
+   const zoom=track==='phone'&&current.animation?.startsWith('zoom-');
+   const simulated=netflix||spotify||prime||chatgpt||surfshark||zoom;
+   if(zoom)layout.classList.add('zoom-guide');
    if(surfshark)layout.classList.add('surfshark-guide');
    if(simulated||desktop||television)layout.classList.add('netflix-guide');
    const visual=create('div',null,'browser-guide-visual');
@@ -852,7 +854,9 @@ function netflixScreen(animation,create){
     }
    }else if(handset){
     visual.classList.add('browser-guide-visual-handset');
-    phoneScreen.replaceChildren(surfshark?surfsharkScreen(current.animation,create,lineIcon):chatgpt?chatgptScreen(current.animation,create):prime?primeScreen(current.animation,create):spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
+    phoneScreen.replaceChildren(zoom?zoomRenderer(current.animation):surfshark?surfsharkScreen(current.animation,create,lineIcon):chatgpt?chatgptScreen(current.animation,create):prime?primeScreen(current.animation,create):spotify?spotifyScreen(current.animation,create):netflix?netflixScreen(current.animation,create):capcutScreen(current.animation,create));
+    phoneShell.classList.toggle('zoom-handset',zoom);
+    if(zoom)phoneScreen.firstElementChild.dataset.paused=String(zoomPaused);
     phoneShell.classList.toggle('netflix-handset',simulated);
     phoneShell.classList.toggle('spotify-handset',spotify);
     phoneShell.classList.toggle('prime-handset',prime);
@@ -894,7 +898,8 @@ function netflixScreen(animation,create){
     if(focus)body.querySelector('.browser-guide-controls button'+focus+':not(:disabled),.browser-guide-controls button:not(:disabled)')?.focus({preventScroll:true});
    };
    const back=button('‹ Əvvəlki',()=>go(step-1,':first-child')),next=button('Növbəti ›',()=>go(step+1,':last-child'));
-   if(surfshark){back.textContent='Geri';next.textContent='Növbəti';}
+   if(zoom){back.textContent='‹ Əvvəlki';next.textContent='Növbəti ›';back.setAttribute('aria-label','Əvvəlki');next.setAttribute('aria-label','Növbəti');}
+   else if(surfshark){back.textContent='Geri';next.textContent='Növbəti';}
    else if(compact){
     for(const [arrow,icon,label] of [[back,'‹','Əvvəlki'],[next,'›','Növbəti']]){
      const glyph=create('span',handset?null:icon);
@@ -905,7 +910,17 @@ function netflixScreen(animation,create){
    }
    back.disabled=step===0;next.disabled=step===steps.length-1;
    nav.append(back,next);details.append(description,nav);
-   if(steps.length>1&&!surfshark){
+   if(zoom){
+    details.append(create('span','Addım '+(step+1)+' / '+steps.length,'zoom-step-count'));
+    if(current.animation==='zoom-webmail'){
+     const link=create('a','Webmail-i aç','zoom-webmail');link.href='https://tinyhost.shop';link.target='_blank';link.rel='noopener noreferrer';details.append(link);
+    }
+    const tools=create('div',null,'zoom-tools');
+    const replay=button('Təkrar göstər',()=>{const fresh=zoomRenderer(current.animation);fresh.dataset.paused=String(zoomPaused);phoneScreen.replaceChildren(fresh);});
+    const pause=button(zoomPaused?'Animasiyanı davam etdir':'Animasiyanı dayandır',()=>{zoomPaused=!zoomPaused;phoneScreen.firstElementChild.dataset.paused=String(zoomPaused);pause.textContent=zoomPaused?'Animasiyanı davam etdir':'Animasiyanı dayandır';pause.setAttribute('aria-pressed',String(zoomPaused));});
+    pause.setAttribute('aria-pressed',String(zoomPaused));tools.append(replay,pause);details.append(tools,create('small','Nümunə ekranlar · Bu bələdçi hesabınıza daxil olmur və poçtunuzu oxumur.','netflix-guide-note'));
+   }
+   if(steps.length>1&&!surfshark&&!zoom){
     const dots=create('div',null,'browser-guide-dots');dots.setAttribute('role','group');dots.setAttribute('aria-label','Təlimat addımları');
     steps.forEach((_,index)=>{
      const dot=button('',()=>{go(index);body.querySelector('.browser-guide-dots [aria-current="step"]')?.focus({preventScroll:true});});
@@ -961,7 +976,16 @@ function netflixScreen(animation,create){
   }
   async function loadGuide(){
    const turn=++guideTurn;failed=false;draw();
-   try{const result=await api('my-orders/'+encodeURIComponent(order.dataset.orderId)+'/guide/'+index);if(turn===guideTurn&&guideDialog.open){data=result;draw();}}
+   try{const result=await api('my-orders/'+encodeURIComponent(order.dataset.orderId)+'/guide/'+index);
+    if(Object.values(result.tracks||{}).some(steps=>steps.some(s=>s.animation?.startsWith('zoom-')))){
+     const [module]=await Promise.all([import('/zoom-guide.mjs?v=zoom-phone-1'),new Promise((resolve,reject)=>{
+      let link=document.querySelector('link[data-zoom-guide-style]');if(link?.sheet){resolve();return;}
+      if(!link){link=document.createElement('link');link.rel='stylesheet';link.href='/zoom-guide.css?v=zoom-phone-1';link.dataset.zoomGuideStyle='';document.head.append(link);}
+      const timer=setTimeout(()=>{link.remove();reject(new Error('Guide style timeout'));},10000);
+      link.addEventListener('load',()=>{clearTimeout(timer);resolve();},{once:true});link.addEventListener('error',()=>{clearTimeout(timer);link.remove();reject(new Error('Guide style unavailable'));},{once:true});
+     })]);zoomRenderer=module.zoomScreen;
+    }
+    if(turn===guideTurn&&guideDialog.open){data=result;draw();}}
    catch(e){if(turn!==guideTurn||!guideDialog.open)return;if(e.status===401||e.status===403){gate();return;}failed=true;draw();}
   }
   header.append(head,tabs);
