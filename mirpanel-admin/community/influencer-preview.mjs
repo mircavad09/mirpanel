@@ -2,6 +2,7 @@ import {avatarSource} from './public/avatar-stickers.js';
 const table='mirpanel_community.influencer_preview_messages';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const uuid=value=>/^[a-f0-9]{8}-(?:[a-f0-9]{4}-){3}[a-f0-9]{12}$/i.test(value||'');
+const publicImage=value=>{try{const u=new URL(value||'', 'https://mirpanel.com/');return value&&['https:','http:'].includes(u.protocol)?u.href:'';}catch{return '';}};
 
 const initialized=new WeakMap();
 async function ensurePreviewStorage(pool){
@@ -48,8 +49,8 @@ export async function influencerPreview(db,actor,input,catalog){
  const {rows}=await db.query(`select id,body,created_at as "createdAt",true as test from (
   select id,body,created_at from ${table} where actor_id=$1 and target_id=$2
   order by created_at desc,id desc limit 100) recent order by created_at,id`,[actor,account.id]);
- const products=(catalog?.products||[]).filter(p=>p.active!==false).map(p=>({id:p.id,title:p.title,image:p.image,
-  url:'/mehsul/'+encodeURIComponent(String(p.seoSlug||p.id||'').replace(/-almaq$/,'')),plans:(p.plans||[]).map((plan,index)=>({index,
+ const products=(catalog?.products||[]).filter(p=>p.active!==false).map(p=>({id:p.id,title:p.title,image:publicImage(p.image),
+  url:'https://mirpanel.com/mehsul/'+encodeURIComponent(String(p.seoSlug||p.id||'').replace(/-almaq$/,'')),plans:(p.plans||[]).map((plan,index)=>({index,
    label:plan.label||plan.name||(plan.months?plan.months+' ay':'Paket '+(index+1)),price:Number(plan.price),
    active:plan.active!==false})).filter(p=>p.active&&Number.isFinite(p.price)&&p.price>0)})).filter(p=>p.plans.length);
  return {name:'Çiçək Məmmədova',memberNumber:1554,avatarUrl:avatarSource(account),test:true,items:rows,...(catalog?{products}:{})};

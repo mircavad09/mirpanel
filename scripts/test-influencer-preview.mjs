@@ -9,7 +9,7 @@ try{
  assert.deepEqual((await influencerPreview(pool,'owner')).items,[]);
  const catalog={products:[{id:'zoom',title:'Zoom Pro',seoSlug:'zoom-pro-almaq',image:'/zoom.webp',secret:'never-return',supplier:{private:'never-return'},plans:[{label:'1 ay',price:9.98,supplier:{private:'never-return'}},{label:'Inactive',price:1,active:false},{label:'Missing',price:null}]},{id:'hidden',active:false,plans:[{price:1}]}]};
  const projection=await influencerPreview(pool,'owner',undefined,catalog);
- assert.equal(projection.memberNumber,1554);assert.equal(projection.products.length,1);assert.equal(projection.products[0].plans.length,1);assert.equal(projection.products[0].url,'/mehsul/zoom-pro');assert.equal(JSON.stringify(projection).includes('never-return'),false);
+ assert.equal(projection.memberNumber,1554);assert.equal(projection.products.length,1);assert.equal(projection.products[0].plans.length,1);assert.equal(projection.products[0].url,'https://mirpanel.com/mehsul/zoom-pro');assert.equal(projection.products[0].image,'https://mirpanel.com/zoom.webp');assert.equal(JSON.stringify(projection).includes('never-return'),false);
  const input={action:'send',clientId:id(),body:'Salam!\nİkinci sətir 💛'};
  const [a,b]=await Promise.all([influencerPreview(pool,'owner',input),influencerPreview(pool,'owner',input)]);
  assert.equal(a.items[0].id,b.items[0].id);
