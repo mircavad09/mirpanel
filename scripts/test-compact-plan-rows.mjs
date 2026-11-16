@@ -99,8 +99,12 @@ try{for(const [engineName,engine] of [['chrome',chromium],['webkit',webkit]]){
   await page.goto(origin+'/mehsul/'+p.seoSlug+(mode==='legacy-client'?'?legacy=1':''));
   if(mode==='legacy-client')await page.locator('#productPageView[data-detail-enhanced]').waitFor();
   const first=page.locator('#pp-plans-container .pp-plan-label').first();await first.waitFor();
+  // The legacy enhancement retains the existing 180 ms row transition.
+  // Measure its settled geometry rather than a partially interpolated frame.
+  await page.waitForTimeout(250);
   assert.equal(await first.locator('.pp-plan-meta').count(),1);assert.ok(await first.locator('.plan-fact-warranty').isVisible());
-  assert.ok(await first.evaluate(n=>n.getBoundingClientRect().height>=64&&n.getBoundingClientRect().height<=72));
+  const settledHeight=await first.evaluate(n=>n.getBoundingClientRect().height);
+  assert.ok(settledHeight>=64&&settledHeight<=72,mode+': '+settledHeight);
   results.push({engine:engineName,mode,passed:true});await page.close();console.log('PASS',engineName,mode);
  }
  }finally{await browser.close();}
