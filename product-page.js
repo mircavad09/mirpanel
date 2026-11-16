@@ -245,12 +245,14 @@
     };
     trust.append(fact('2024-dən fəaliyyət göstəririk',0));
     const total=fact('',1);total.hidden=true;trust.append(total);
-    const deliveryFact=fact(utils.deliveryText(product),2);
+    const initialDelivery=product.supplier?.provider==='epinby'||product.plans?.some(p=>p.supplier?.provider==='epinby')
+      ? utils.deliveryText(product) : 'Təhvil məlumatı yoxlanılır…';
+    const deliveryFact=fact(initialDelivery,2);
     trust.append(deliveryFact,fact('MirPanel əlavə komissiya tutmur',3));
     const actions=root.querySelector('.product-page-actions');
     root.querySelector('.product-page-info')?.append(actions);
     left.append(trust);
-    root.querySelector('.product-page-delivery strong').textContent = utils.deliveryText(product);
+    root.querySelector('.product-page-delivery strong').textContent = initialDelivery;
     const summary = root.querySelector('.product-detail-summary') || text('section','product-detail-summary','');
     summary.setAttribute('aria-live','polite');
     const container = document.getElementById('pp-plans-container');
@@ -258,7 +260,7 @@
     const priceText = value => utils.formatPrice(value).replace('.', ',') + ' ₼';
     const rows = [...container.querySelectorAll('.pp-plan-label')];
     const plans = product.plans || [];
-    const delivery = product.deliveryText?.trim() || (product.deliveryType === 'automatic' ? 'Anında' : '');
+    const delivery = initialDelivery;
     rows.forEach((row, index) => {
       const plan = plans[index], m = utils.detailPlanMetrics(plan);
       if(!container.hasAttribute('data-server-plans')) {
@@ -328,7 +330,7 @@
       rows.forEach((row,i)=>{
         row.setAttribute('aria-checked',String(i===index));row.tabIndex=i===index?0:-1;
         const notes=row.querySelector('.product-detail-plan-notes');
-        notes.hidden=i!==index;
+        notes.hidden=false;
       });
       if (index < 0) {
         summary.append(text('p','','Aktiv paket yoxdur.'));
@@ -348,7 +350,7 @@
         const saving = text('p','product-detail-savings','');
         saving.append(text('strong','',priceText(m.savings)),document.createTextNode(' '),text('span','product-detail-savings-caption','qənaət edirsiniz'));priceLine.append(saving);
       }
-      summary.append(text('p','product-detail-summary-delivery',utils.deliveryText(product)));
+      summary.append(text('p','product-detail-summary-delivery',initialDelivery));
     };
     window.addEventListener('mirpanel:prices',()=>{rows.forEach((row,i)=>{
       const m=utils.detailPlanMetrics(plans[i]),price=row.querySelector('.pp-new-price');
@@ -361,8 +363,8 @@
         meta.querySelector('.pp-old-price').textContent=priceText(m.oldPrice);
         meta.querySelector('.pp-plan-disc-badge').textContent=`-${m.discount}%`;
       }
-    });update();},{signal});
-    container.addEventListener('click', update);
+    });update();window.MirpanelInventory?.paint?.();},{signal});
+    container.addEventListener('click',()=>{update();window.MirpanelInventory?.paint?.();});
     container.addEventListener('mirpanel:plan-selection-cleared', update);
     if (!rows.some(row=>row.classList.contains('active') && !row.hidden)) rows.find(row=>!row.hidden)?.click();
     update();

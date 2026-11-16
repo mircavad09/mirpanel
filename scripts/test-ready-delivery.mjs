@@ -1,0 +1,56 @@
+import {createShop} from '../mirpanel-admin/shop.mjs';
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {shopFixture} from './shop-test-fixture.mjs';
+import {ensureReadyDeliverySettings,readyDeliverySnapshot,saveReadyDeliverySettings} from '../mirpanel-admin/community/ready-stock-availability.mjs';
+import {saveReadyStock,readyStockView} from '../mirpanel-admin/community/ready-stock.mjs';
+import {signature} from '../mirpanel-admin/employee-security.mjs';
+import {planKey} from '../mirpanel-admin/payment-profit.mjs';
+import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
+import {readyDeliveryText} from '../ready-delivery.mjs';
+import {inventoryAvailability} from '../inventory-availability.mjs';
+process.env.MIRPANEL_CART_V2_TEST='1';
+const f=await shopFixture(),{pool,db,catalog,id,rpc}=f;
+const config={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')},security=createPaymentSecurity(config);
+const shop=createShop({context:async req=>({pool,user:req.user}),catalog:async()=>catalog,snapshot:()=>rpc('inventory_snapshot'),store:f.store,config});
+try{
+ await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));
+ await ensureReadyDeliverySettings(pool);await ensureReadyDeliverySettings(pool);
+ const p=catalog.products[0];p.plans.push({...p.plans[0],label:'3 ay',months:3});
+ const read=async()=> (await readyDeliverySnapshot(pool,catalog)).get(p.id);
+ const save=(n,auto=true,index=0)=>saveReadyStock(pool,security,config.tokenSecret,catalog,'synthetic',{productId:p.id,index,planSignature:signature(p.plans[index]),requestId:id(),autoWallet:auto,messages:Array.from({length:n},()=> 'Synthetic account '+id())});
+ const setting=allowWaiting=>saveReadyDeliverySettings(pool,catalog,'synthetic',{productId:p.id,index:0,planSignature:signature(p.plans[0]),allowWaiting});
+ await rpc('inventory_set_nullable_quantity',[p.id,50,'synthetic',id(),0,null]);
+ await save(0);assert.equal((await read())[0].ready,0);assert.equal(readyDeliveryText((await read())[0],true),'Ödəniş təsdiqindən sonra təqdim olunur');
+ await setting(true);assert.equal(readyDeliveryText((await read())[0],true),'15–30 dəqiqə ərzində tamamlanır');
+ await save(1,true,1);assert.equal((await read())[0].ready,0);assert.equal((await read())[1].ready,1);
+ await save(1);assert.equal(readyDeliveryText((await read())[0],true),'Anında təqdim olunur');
+ await save(0,false);assert.equal(readyDeliveryText((await read())[0],true),'Ödəniş təsdiqindən sonra təqdim olunur');
+ await save(0,true);
+ // A live checkout reservation is not available for instant delivery to others.
+ const rid=id();await pool.query(`insert into public.payment_reservations(id,method_id,product_id,plan_id,amount,idempotency_key,status,expires_at) values($1,$2,'ordinary','0',5,$3,'reserved',clock_timestamp()+interval '5 minutes')`,[rid,f.method,id()]);
+ const checkout=id();await pool.query(`insert into mirpanel_community.shop_checkouts(id,owner_hash,user_id,request_id,input,method_id,mode,total_cents,state,expires_at) values($1,$2,'a',$3,'{}',$4,'card',500,'reserved',clock_timestamp()+interval '5 minutes')`,[checkout,'a'.repeat(64),id(),f.method]);
+ await pool.query(`insert into mirpanel_community.shop_lines(id,checkout_id,position,product_id,plan_id,title,plan_name,image,unit_cents,reservation_id,checkout_key,snapshot) values($1,$2,0,$3,'0','Synthetic','1 ay','',500,$4,$5,$6)`,[id(),checkout,p.id,rid,id(),{sourcePlanKey:planKey(p.plans[0],0),signature:signature(p.plans[0])}]);
+ assert.equal((await read())[0].ready,0);
+ await pool.query("update public.payment_reservations set status='expired' where id=$1",[rid]);assert.equal((await read())[0].ready,1);
+ // Sale/assignment and deletion are reflected without altering sale limits.
+ await pool.query('delete from mirpanel_community.ready_stock_units where product_id=$1 and plan_signature=$2',[p.id,signature(p.plans[0])]);
+ assert.equal(readyDeliveryText((await read())[0],true),'15–30 dəqiqə ərzində tamamlanır');
+ await save(1);assert.equal(readyDeliveryText((await read())[0],true),'Anında təqdim olunur');
+ const stock=(await rpc('inventory_snapshot')).find(x=>x.productId===p.id);assert.equal(stock.available,50);
+ const before=JSON.stringify(stock);await setting(false);assert.equal(JSON.stringify((await rpc('inventory_snapshot')).find(x=>x.productId===p.id)),before);
+ const state=inventoryAvailability(p,{...stock,plans:[{planKey:'0',fulfillment:(await read())[0]}]});assert.equal(state.plans[0].fulfillment.ready,1);
+ await pool.query("insert into wallet_accounts(user_id,cents) values('a',10000)");
+ const item={productId:p.id,planIndex:0,quantity:1},quote=await shop.quote({user:'a'},[item],'a'.repeat(64));
+ await shop.checkout({user:'a'},'a'.repeat(64),{mode:'wallet',items:[{...item,termsVersion:quote.items[0].termsVersion}],requestId:id(),consentAccepted:true});
+ assert.equal((await read())[0].ready,0);assert.equal((await rpc('inventory_snapshot')).find(x=>x.productId===p.id).available,49);
+ await save(1);assert.equal((await read())[0].ready,1);
+ await db.exec(db.read('mirpanel-admin/community/ready-stock-management.sql'));
+ const unit=(await pool.query('select id from ready_stock_units where product_id=$1 and plan_signature=$2 and delivery_id is null',[p.id,signature(p.plans[0])])).rows[0].id;
+ await pool.query('insert into ready_stock_management(unit_id,deleted_at) values($1,clock_timestamp())',[unit]);
+ assert.equal((await read())[0].ready,0);await save(1);assert.equal((await read())[0].ready,1);
+ const view=await readyStockView(pool,catalog,[],null);assert.equal(view.products[0].plans[0].allowWaiting,false);
+ catalog.products.push({id:'epinby_1',supplier:{provider:'epinby',productId:1,type:'VOUCHER',fields:[]},plans:[{price:1}]});assert.equal((await readyDeliverySnapshot(pool,catalog)).has('epinby_1'),false);
+ assert.equal(readyDeliveryText({ready:1,automatic:true},false),'Stokda yoxdur');
+ console.log('PASS: exact SKU, separate 50-unit sale limit, ready absent/present, automatic off, reserved/expired, removed/added, settings persistence, Epinby excluded. Synthetic local data only.');
+}finally{await f.close();}

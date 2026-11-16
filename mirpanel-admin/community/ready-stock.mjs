@@ -1,3 +1,5 @@
+import {epinbyPlan} from '../../epinby-product.mjs';
+import {saveReadyDeliverySettings} from './ready-stock-availability.mjs';
 import {readyAccountList,manageReadyAccount,freeManagementClause} from './ready-stock-management.mjs';
 import {sheetCustomerIdStates,retrySheetCustomerId,retrySheetRoom} from './netflix-sheet-customer-id.mjs';
 import {updateRoomPassword} from './netflix-room-password.mjs';
@@ -25,7 +27,7 @@ export async function readyStockView(pool,catalog,inventory,security){
   await c.query('begin isolation level repeatable read');
   if(!await enabled(c))throw fail(503,'Hazır hesab stoku hazırda bağlıdır.');
   const free=await freeManagementClause(c,'u');
-  const settings=(await c.query('select p.product_id,p.plan_key,p.plan_signature,p.auto_wallet,count(u.id)::int as ready from '+S+'plans p left join '+S+'units u on (p.product_id,p.plan_key,p.plan_signature)=(u.product_id,u.plan_key,u.plan_signature) and u.delivery_id is null'+free+' group by p.product_id,p.plan_key,p.plan_signature,p.auto_wallet')).rows;
+  const settings=(await c.query('select p.product_id,p.plan_key,p.plan_signature,p.auto_wallet,coalesce((to_jsonb(p)->>\'allow_waiting\')::boolean,false) allow_waiting,count(u.id)::int as ready from '+S+'plans p left join '+S+'units u on (p.product_id,p.plan_key,p.plan_signature)=(u.product_id,u.plan_key,u.plan_signature) and u.delivery_id is null'+free+' group by p.product_id,p.plan_key,p.plan_signature,p.auto_wallet')).rows;
   const records=new Map(settings.map(x=>[key(x.product_id,x.plan_key,x.plan_signature),x]));
   const availability=new Map(inventory.map(x=>[x.productId,x]));
   const messages=security?await readProductMessages(c,security,catalog.products.map(p=>p.id)):new Map();
@@ -35,7 +37,7 @@ export async function readyStockView(pool,catalog,inventory,security){
    const plans=p.plans.map((plan,i)=>{
     const sig=signature(plan),sku=key(p.id,planKey(plan,i),sig),config=records.get(sku),inv=stock?.plans.find(x=>x.planKey===String(i));
     if(!counted.has(sku)){counted.add(sku);readyTotal+=config?.ready??0;}
-    return {index:i,title:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Paket '+(i+1)),signature:sig,sales:inv?.available??null,tracked:inv?.tracked??false,active:inv?.active??false,ready:config?.ready??0,autoWallet:config?.auto_wallet??false};
+    return {index:i,title:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Paket '+(i+1)),signature:sig,sales:inv?.available??null,tracked:inv?.tracked??false,active:inv?.active??false,ready:config?.ready??0,readyManaged:!epinbyPlan(p,plan)&&p.supplier?.provider!=='epinby'&&plan.supplier?.provider!=='epinby',autoWallet:config?.auto_wallet??false,allowWaiting:config?.allow_waiting??false};
    });
    return {id:p.id,title:p.title,message:messages.get(p.id)??'',image:typeof p.image==='string'?p.image:'',readyTotal,scope:stock?.scope||'none',version:stock?.version??0,plans};
   })};
@@ -61,6 +63,7 @@ export async function readyStockView(pool,catalog,inventory,security){
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function saveReadyStock(pool,security,secret,catalog,actor,input){
+ if(input?.readyDeliverySettings)return saveReadyDeliverySettings(pool,catalog,actor,input.readyDeliverySettings);
  if(input?.accountManage)return manageReadyAccount(pool,security,catalog,actor,input.accountManage);
  if(input?.netflixRoomCards)return saveNetflixRoomCards(pool,security,secret,actor,input.netflixRoomCards);
  if(input?.netflixRoomDelete)return deleteNetflixRoom(pool,actor,input.netflixRoomDelete.id);

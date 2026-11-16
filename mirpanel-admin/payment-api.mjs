@@ -214,7 +214,18 @@ export function createPaymentSystem(options) {
     }
   }
 
-  async function inventoryView(all=false){const [rows,c]=await Promise.all([readInventory({fresh:!all}),loadCatalog()]);return c.products.filter(p=>p.active!==false&&(all||p.stockEnabled===true||rows.some(r=>r.productId===p.id))).map(p=>inventoryAvailability(p,rows.find(r=>r.productId===p.id)));}
+  async function inventoryView(all=false){
+    const catalog=loadCatalog();
+    const fulfillment=all&&options.readyDeliverySnapshot
+      ? catalog.then(options.readyDeliverySnapshot).catch(()=>new Map())
+      : Promise.resolve(new Map());
+    const [rows,c,delivery]=await Promise.all([readInventory({fresh:!all}),catalog,fulfillment]);
+    return c.products.filter(p=>p.active!==false&&(all||p.stockEnabled===true||rows.some(r=>r.productId===p.id))).map(p=>{
+      const state=inventoryAvailability(p,rows.find(r=>r.productId===p.id));
+      for(const plan of state.plans){const fulfillment=delivery.get(p.id)?.[Number(plan.planKey)];if(fulfillment)plan.fulfillment=fulfillment;}
+      return state;
+    });
+  }
 
   async function catalogSelection(productId, planIndex) {
     const data = await loadCatalog();

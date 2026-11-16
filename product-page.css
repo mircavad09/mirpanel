@@ -1748,3 +1748,23 @@ html body.product-page-document #productPageView.product-page-root:is(.detail-v2
 html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label:not(:has(.pp-plan-meta [data-inventory-plan]:not([hidden]),.pp-plan-meta>.plan-fact-warranty,.pp-plan-meta .product-detail-plan-notes:not([hidden])>:not([hidden]))){
  grid-template-rows:auto;min-height:44px!important;align-content:center;
 }
+
+/* Evidence-based delivery facts; compact shared plan geometry stays unchanged. */
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-stock{
+ padding:0;border:0;border-radius:0;background:none;color:#64e6a5;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-stock::after{display:none}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery{order:-1;color:#b5b8bb}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery::before{display:none}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery.is-instant{color:#64e6a5}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery.is-instant::before{display:block}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-warranty::before{background:#64e6a5}
+@media(prefers-reduced-motion:no-preference){
+ @supports(background-clip:text){
+  html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-stock{
+   background:linear-gradient(110deg,#64e6a5 35%,#fff 50%,#64e6a5 65%);background-size:300% 100%;
+   background-clip:text;-webkit-background-clip:text;color:transparent;animation:planStockTextShine 6s ease-in-out infinite;
+  }
+ }
+}
+@keyframes planStockTextShine{0%,65%{background-position:100% 0}85%,100%{background-position:0 0}}

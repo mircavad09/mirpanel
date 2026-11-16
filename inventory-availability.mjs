@@ -15,6 +15,7 @@ export function inventoryAvailability(product, ledger) {
     const quantity = scope === 'product' ? available : tracked ? count(item?.available ?? 0) : null;
     const active = plan.active !== false && Number.isFinite(Number(plan.price)) && Number(plan.price) > 0;
     return {planKey:String(index), active, tracked, available:quantity,
+      ...(item?.fulfillment?{fulfillment:item.fulfillment}:{}),
       canOrder:product.active !== false && active && !salesDisabled && (!tracked || quantity > 0)};
   });
   return {productId:product.id, scope, version:ledger?.version || 0, available, unlimited,
