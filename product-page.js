@@ -297,6 +297,22 @@
         row.querySelector('.pp-plan-right').prepend(old);
       }
       }
+      // Presentation only: share one wrapping metadata line with the initial HTML.
+      let meta = row.querySelector('.pp-plan-meta');
+      if (!meta) {
+        meta = text('div','pp-plan-meta','');
+        let inventory = row.querySelector('[data-inventory-plan]');
+        if (!inventory) {
+          inventory = text('span','inventory-plan-count','');
+          inventory.dataset.inventoryPlan = ''; inventory.hidden = true;
+        }
+        meta.append(inventory);
+        const notes = row.querySelector('.product-detail-plan-notes');
+        if (notes) meta.append(notes);
+        row.append(meta);
+      }
+      const warranty = meta.querySelector('.plan-fact-warranty');
+      if (warranty && warranty.parentElement !== meta) meta.append(warranty);
       row.addEventListener('keydown', event => {
         if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); row.click(); }
         if(['ArrowDown','ArrowRight','ArrowUp','ArrowLeft'].includes(event.key)) {

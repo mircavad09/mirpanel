@@ -1699,14 +1699,6 @@ html body #productPageView.product-page-root #pp-plans-container .pp-plan-left:h
 body.product-page-document #productPageView.product-page-root.epinby-game-page .product-page-media #pp-main-img{
  aspect-ratio:1.883; height:auto!important; object-fit:contain!important;
 }
-/* Reserve inventory/plan metadata in the initial HTML, including while hidden. */
-html body #productPageView[data-plan-shell="stable"] #pp-plans-container [data-inventory-plan]{
- display:inline-flex!important;align-items:center;min-height:22px;line-height:14px;
- padding:3px 6px;border:1px solid transparent;border-radius:999px;justify-self:start;
-}
-html body #productPageView[data-plan-shell="stable"] #pp-plans-container [data-inventory-plan][hidden]{visibility:hidden}
-html body #productPageView[data-plan-shell="stable"] #pp-plans-container .product-detail-plan-notes[hidden]:has(> :not([hidden])){display:flex!important;visibility:hidden}
-
 /* Share the stock pill with server-rendered plan rows. */
 html body #productPageView[data-plan-shell="stable"] #pp-plans-container .inventory-plan-count.plan-fact-stock{
  border-color:#64e6a54a;border-radius:999px;
@@ -1720,4 +1712,39 @@ body.product-page-document #productPageView.product-page-root.detail-v2 .product
 }
 body.product-page-document #productPageView.product-page-root.detail-v2 .product-detail-savings{
  flex:0 1 auto;margin:0 0 0 auto;text-align:right;min-width:0;
+}
+
+/* Shared compact package rows, for both server HTML and client enhancement. */
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label{
+ box-sizing:border-box;height:auto!important;min-height:64px!important;
+ padding:9px 10px!important;grid-template-rows:auto auto;align-content:end;
+ gap:3px 8px!important;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-left{grid-column:1;grid-row:1;gap:7px!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-right{grid-column:2;grid-row:1;gap:0!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-new-price{font-size:16px!important;line-height:20px!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-price-meta{display:flex;gap:4px;align-items:center;justify-content:flex-end;margin:0;line-height:11px}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-old-price{font-size:10px!important;line-height:11px!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-disc-badge{font-size:9px!important;line-height:11px!important;min-height:0!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta{
+ grid-column:1/-1;grid-row:2;display:flex;flex-wrap:wrap;align-items:center;
+ gap:2px 7px;margin:0 0 0 23px;min-width:0;font-size:11px;line-height:14px;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .product-detail-plan-notes{
+ display:contents!important;visibility:visible;width:auto;max-width:none;margin:0;font-size:inherit;line-height:inherit;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta :is([data-inventory-plan],.plan-fact,.product-detail-rate){
+ box-sizing:border-box;max-width:100%;margin:0;min-height:0;font-size:11px;line-height:14px;overflow-wrap:anywhere;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta [data-inventory-plan]{display:inline-flex;align-items:center;padding:1px 4px}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta :is(.plan-fact-stock,.inventory-plan-badge){order:0}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-warranty{order:1}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery{order:2}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .product-detail-rate{order:3}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta [hidden],
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta:not(:has([data-inventory-plan]:not([hidden]),>.plan-fact-warranty,.product-detail-plan-notes:not([hidden])>:not([hidden]))){display:none!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-stock{padding:1px 4px}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact::before{width:10px;height:10px;flex-basis:10px}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label:not(:has(.pp-plan-meta [data-inventory-plan]:not([hidden]),.pp-plan-meta>.plan-fact-warranty,.pp-plan-meta .product-detail-plan-notes:not([hidden])>:not([hidden]))){
+ grid-template-rows:auto;min-height:44px!important;align-content:center;
 }

@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=similar-natural-1">
+  <link rel="stylesheet" href="/product-page.css?v=compact-plans-1">
   <link rel="stylesheet" href="/payment-flow.css?v=checkout-cancel-proxy-20261026-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -104,7 +104,7 @@
             </div>
 
             <section class="product-detail-summary" aria-live="polite"><p class="product-detail-summary-label">Seçilmiş paket: 1 ayliq</p><div class="product-detail-summary-line"><div class="product-detail-summary-prices"><strong>15,99 ₼</strong><del>40,00 ₼</del><span class="product-detail-best">-60%</span></div><p class="product-detail-savings"><strong>24,01 ₼</strong> <span class="product-detail-savings-caption">qənaət edirsiniz</span></p></div><p class="product-detail-summary-delivery">Ödəniş təsdiqindən sonra təqdim olunur</p></section><h2 class="product-page-section-title">Müddət seçin</h2>
-            <div id="pp-plans-container" class="pp-plans-container" role="radiogroup" data-server-plans><div class="pp-plan-label active" data-price-emphasis="discount-month" role="radio" aria-label="1 ayliq" aria-checked="true" aria-controls="plan-details-chatgpt-0" tabindex="0"><div class="pp-plan-left"><div class="pp-radio-circle"></div><div class="pp-plan-name">1 ayliq <span class="product-detail-best">Ən sərfəli</span></div></div><div class="pp-plan-right"><div class="pp-plan-price-meta"><div class="pp-old-price">40,00 ₼</div><div class="pp-plan-disc-badge">-60%</div></div><div class="pp-new-price">15,99 ₼</div></div><span data-inventory-plan class="inventory-plan-count" hidden></span><span class="product-detail-plan-notes" id="plan-details-chatgpt-0" role="region" aria-label="Paketin əlavə məlumatları"><span class="plan-fact plan-fact-warranty">27 gün zəmanət</span></span></div></div><div class="product-page-actions">
+            <div id="pp-plans-container" class="pp-plans-container" role="radiogroup" data-server-plans><div class="pp-plan-label active" data-price-emphasis="discount-month" role="radio" aria-label="1 ayliq" aria-checked="true" aria-controls="plan-details-chatgpt-0" tabindex="0"><div class="pp-plan-left"><div class="pp-radio-circle"></div><div class="pp-plan-name">1 ayliq <span class="product-detail-best">Ən sərfəli</span></div></div><div class="pp-plan-right"><div class="pp-plan-price-meta"><div class="pp-old-price">40,00 ₼</div><div class="pp-plan-disc-badge">-60%</div></div><div class="pp-new-price">15,99 ₼</div></div><div class="pp-plan-meta"><span data-inventory-plan class="inventory-plan-count" hidden></span><span class="plan-fact plan-fact-warranty">27 gün zəmanət</span><span class="product-detail-plan-notes" id="plan-details-chatgpt-0" role="region" aria-label="Paketin əlavə məlumatları"></span></div></div></div><div class="product-page-actions">
           <a class="product-page-action is-about" href="/mehsul/chatgpt-plus#product-about">Məhsul haqqında</a>
           <button class="product-page-action is-order" id="pp-order-btn" type="button" disabled>İndi al</button>
         </div>
@@ -242,7 +242,7 @@
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=incident-recovery-1"></script>
   <script src="/stock-display-fix.js?v=incident-recovery-1"></script>
-  <script src="/product-page.js?v=stable-buy-1"></script>
+  <script src="/product-page.js?v=compact-plans-1"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>
