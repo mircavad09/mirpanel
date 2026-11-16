@@ -32,7 +32,7 @@ const transport=async input=>{
    {id:93,type:'TOPUP',fields:[fields[0]],supports_player_validation:true,stock_status:'INFINITE'},
    {id:94,type:'TOPUP',fields,supports_player_validation:true,stock_status:'INFINITE'}
   ],meta:{current_page:1,last_page:1}};
-  return {success:true,data:[{id:91,name:'60 UC',price:'1.00',stock_status:'INFINITE',type:'TOPUP',fields},{id:92,name:'Gift code',price:'2.00',stock_status:'FINITE',stock_count:10,type:'VOUCHER',fields:[]}],meta:{current_page:Number(input.query.page)||1,last_page:122,total:6086}};
+  return {success:true,data:[{id:91,name:'60 UC',price:'1.00',currency:'USD',stock_status:'INFINITE',type:'TOPUP',fields},{id:92,name:'Gift code',price:'2.00',currency:'AZN',stock_status:'FINITE',stock_count:10,type:'VOUCHER',fields:[]}],meta:{current_page:Number(input.query.page)||1,last_page:122,total:6086}};
  }
  if(input.path.endsWith('/validate-player')&&input.body.product_id===91){
   assert.deepEqual(input.body,{product_id:91,player_id:'000123',server_id:'0001'});
@@ -73,7 +73,7 @@ const transport=async input=>{
   if(input.body.product_id===91){assert.equal(input.body.player_id,'000123');assert.equal(input.body.server_id,'0001');}else assert.equal(input.body.player_id,undefined);
   if(mode==='http-funds')throw Object.assign(Error('HTTP'),{supplierStatus:402,supplierCode:'INSUFFICIENT_FUNDS'});if(mode==='invalid')throw Object.assign(Error('HTTP'),{supplierStatus:422,supplierCode:'INVALID_INPUT'});
   if(mode==='reject')return {success:false,error:{code:'INSUFFICIENT_FUNDS'}};
-  const data={order_id:++external,client_order_id:input.reference,product_id:input.body.product_id,status:mode==='pending'?'PENDING':'COMPLETED',...(input.body.product_id===92?{delivery:['SYNTHETIC-CODE-'+input.reference]}:{})};supplierOrders.set(input.reference,data);
+  const data={order_id:++external,client_order_id:input.reference,product_id:input.body.product_id,status:mode==='pending'?'PENDING':'COMPLETED',...(input.body.product_id===92?{delivery:['SYNTHETIC-CODE-'+input.reference]}:{price:'1.0011',currency:'USD'})};supplierOrders.set(input.reference,data);
   if(mode==='unknown'){supplierOrders.delete(input.reference);throw Error('ECONNRESET');}
   if(mode==='lost')throw Error('ECONNRESET');return {success:true,data};
  }
@@ -87,7 +87,7 @@ const items=[{productId:product.id,quantity:1,planIndex:0,details:{player_id:'00
 const buy=async(requestId=id(),chosen=items)=>{const quote=await shop.quote({user:'a'},chosen,'a'.repeat(64));return shop.checkout({user:'a'},'a'.repeat(64),{mode:'wallet',items:chosen.map((x,i)=>({...x,termsVersion:quote.items[i].termsVersion})),requestId,consentAccepted:true});};
 const tick=async(worker,n=1)=>{for(let i=0;i<n;i++){await pool.query("update epinby_order_units set next_at=next_at-interval '61 seconds'");await worker.drain();}};
 try{
- for(const file of ['202611090901_api_integrations','202611090902_api_integration_drafts','202611090903_epinby_connection','202611110002_epinby_execution'])await db.exec(db.read('supabase/migrations/'+file+'.sql'));
+ for(const file of ['202611090901_api_integrations','202611090902_api_integration_drafts','202611090903_epinby_connection','202611110002_epinby_execution','202611160020_epinby_finance'])await db.exec(db.read('supabase/migrations/'+file+'.sql'));
  await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));await db.exec(db.read('mirpanel-admin/community/ready-stock-product-messages-migration.sql'));await saveProductMessage(pool,security,catalog,{productId:product.id,message:'SYNTHETIC ADMIN SUCCESS MESSAGE'});
  await db.exec(db.read('supabase/migrations/202611090911_fulfillment_cancellation.sql'));
  await pool.query("update epinby_connection set api_key_cipher=$1,webhook_secret_cipher=$2,last_status='confirmed',currency='USD'",[security.encryptSecret('synthetic-key'),security.encryptSecret('synthetic-webhook')]);
@@ -96,6 +96,9 @@ try{
  const api=createEpinbyConnection({pool:async()=>pool,security,transport});
  const games=await api({action:'epinby-catalog',gamesOnly:true});assert.equal(games.games.length,1);assert.deepEqual(catCalls,['games']);
  const page=await api({action:'epinby-catalog',page:1,gameId:4,categoryId:7});assert.equal(page.products.length,2);assert.equal(page.meta.lastPage,122);assert.equal(page.complete,false);assert.equal(catCalls.at(-1).category_id,7);
+ assert.equal(page.products[1].currency,'AZN');
+ for(let i=0;i<2;i++)assert.equal((await api({action:'epinby-package-cost',productId:91,gameId:4,categoryId:7})).cost.azn,'1.7');
+ assert.equal((await pool.query('select count(*)::int n from epinby_catalog_costs where supplier_product_id=91')).rows[0].n,1);
  failPage=true;assert((await api({action:'epinby-catalog',page:2})).error);assert.equal(page.products.length,2);failPage=false;
  const [{gameTerms,termsVersion}]=(await shop.quote({},items)).items;
  assert.equal(gameTerms.rules.length,6);
@@ -112,6 +115,10 @@ try{
  const [bought,replayed]=await Promise.all([buy(requestId),buy(requestId)]);assert.equal(bought.orderId,replayed.orderId);
  assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),before-349);
  await Promise.all([worker.drain(),makeWorker().drain()]);await tick(worker,3);assert.equal(creates,1);
+ const captured=(await pool.query('select execution_quote,supplier_charge from epinby_order_units where external_id is not null limit 1')).rows[0];
+ assert.equal(captured.execution_quote.azn,'1.7');
+ assert.equal(captured.supplier_charge.azn,'1.70187');
+ assert.equal(captured.supplier_charge.differenceAzn,'0.00187');
  let deliveries=(await pool.query('select * from customer_order_deliveries where order_id=$1',[bought.orderId])).rows;assert.equal(deliveries.length,1);assert.ok(JSON.parse(security.decryptSecret(deliveries[0].message_cipher)).message.includes('SYNTHETIC ADMIN SUCCESS MESSAGE'));
  assert.equal((await ownerCodes(pool,'b',deliveries[0].id)).length,0);
  mode='lost';const lost=await buy();await tick(worker);const lostCreates=creates;worker=makeWorker();await tick(worker,3);assert.equal(creates,lostCreates);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[lost.orderId])).rows[0].n,1);

@@ -145,7 +145,7 @@ export function rowMethod(row, stats = {}) {
   };
 }
 
-export function createPaymentStore(config) {
+export function createPaymentStore(config,{epinbyCatalogCosts,epinbyOrderCosts}={}) {
   let receiptCleanupOffset = 0;
   const shopCleanupOffsets={cart:0,topup:0};
   if (!config.supabaseUrl || !config.supabaseSecretKey) throw new Error("Supabase ödəniş konfiqurasiyası tamamlanmayıb.");
@@ -391,11 +391,11 @@ export function createPaymentStore(config) {
     browserOrderPage(owner,before,beforeId){return rpc('browser_orders_page',{p_owner_hash:owner,p_before:before,p_before_id:beforeId,p_limit:21});},
     async browserOwnedOrder(owner,id){const{data,error}=await client.from('browser_order_owners').select('payment_orders!inner(id,receipt_path,receipt_deleted_at,receipt_mime)').eq('token_hash',owner).eq('order_id',id).maybeSingle();if(error)throw paymentError(error);return data?.payment_orders||null;},
     async planCosts(catalog) {
-      const { data, error } = await client.from("payment_plan_costs")
+      const [{ data, error },supplierCosts] = await Promise.all([client.from("payment_plan_costs")
         .select("product_id,plan_id,cost_amount,updated_at")
-        .order("product_id", { ascending: true });
+        .order("product_id", { ascending: true }),epinbyCatalogCosts?.(catalog)]);
       if (error) throw paymentError(error);
-      return catalogCostRows(catalog, data || []);
+      return catalogCostRows(catalog, data || [],supplierCosts);
     },
     async savePlanCosts(items, catalog, actor = "admin") {
       const valid = new Set((catalog?.products || []).flatMap((product) =>
@@ -606,8 +606,10 @@ export function createPaymentStore(config) {
 
       const financeRequest = financeView ? (async () => {
         const completed=matchedRows.filter(row=>row.completed_at && row.status==='completed' && row.currency==='AZN');
-        const refunds=new Map((completed.length?await orderRefunds(completed.map(row=>row.id)):[]).map(row=>[row.order_id,row.cents]));
-        return new Map(completed.map(row=>[row.id,reportOrderFinance(row,refunds.get(row.id))]));
+        const ids=completed.map(row=>row.id);
+        const [refundRows,supplierCosts]=await Promise.all([ids.length?orderRefunds(ids):[],ids.length&&epinbyOrderCosts?epinbyOrderCosts(ids):null]);
+        const refunds=new Map(refundRows.map(row=>[row.order_id,row.cents]));
+        return new Map(completed.map(row=>[row.id,reportOrderFinance(row,refunds.get(row.id),supplierCosts?.get(row.id))]));
       })() : Promise.resolve(null);
       const [{ data, error }, [pendingCount, todayCount, completedCount, expiringCount], methodRows, statistics, reportOrders] = await Promise.all([
         query,
@@ -659,7 +661,7 @@ export function createPaymentStore(config) {
             profitSnapshot: order.profit_snapshot === null ? null : Number(order.profit_snapshot),
             profitMarginSnapshot: order.profit_margin_snapshot === null ? null : Number(order.profit_margin_snapshot),
             costSource: order.cost_source || null,
-            ...(report?{reportCost:report.cost_price_snapshot,reportEstimated:report.estimated_cost}:{}),
+            ...(report?{reportCost:report.cost_price_snapshot,reportEstimated:report.estimated_cost,costEvidence:report.costEvidence}:{}),
             costBackfilledAt: order.cost_backfilled_at || null,
             currency: order.currency,
             status: order.status==='cancelled' ? 'cancelled' : order.fulfillment_cancellation ? 'partial_cancelled'
@@ -694,6 +696,9 @@ export function createPaymentStore(config) {
           expiring: filters.tab === "expiring" ? total : expiringCount
         },
         statistics: normalizeFinancialStatistics(statistics || { count: 0, revenue: 0, cost: 0, profit: 0, missingCostCount: 0, topProduct: "—", products: [], plans: [], days: [] }),
+        missingCosts: reportOrders?[...reportOrders.values()].filter(r=>r.cost_price_snapshot==null&&r.costEvidence).slice(0,100).map(r=>({
+          orderCode:r.order_code,reasons:[...new Set(r.costEvidence.flatMap(line=>line.costs.map(cost=>cost.reason).filter(Boolean)))],
+        })):[],
         appliedFilters: filters,
         filters: {
           products: [...products].map(([id, title]) => ({ id, title })),

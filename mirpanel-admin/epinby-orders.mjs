@@ -5,6 +5,7 @@ import {readProductMessages} from './community/ready-stock-product-messages.mjs'
 import {planKey} from './payment-profit.mjs';
 import {adminDelivery,paid} from './community/order-delivery.mjs';
 import {validateEpinbyDetails} from './community/public/checkout-fields.js';
+import {supplierCost,supplierCharge} from './epinby-finance.mjs';
 const S='mirpanel_community.',U=S+'epinby_order_units',D=S+'api_dispatches';
 const providerId='e91bb000-0000-4000-8000-000000000001';
 const fail=(status,message)=>Object.assign(Error(message),{status});
@@ -189,8 +190,37 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   if(state==='COMPLETED'&&message){next='succeeded';reason=null;}
   else if(state==='COMPLETED')reason='Təchizatçı təhvili təsdiqlədi; kod məlumatı gözlənilir.';
   else if(['FAILED','CANCELED','CANCELLED'].includes(state)){next='failed';reason='Təchizatçı sifarişi rədd etdi. Admin araşdırması tələb olunur.';}
-  await db.query(`update ${U} set external_id=coalesce(external_id,$2),state=$3,result_cipher=case when $3='succeeded' then $4 else result_cipher end,reason=$5,next_at=case when $3='succeeded' then now() else now()+interval '20 seconds' end
-   where id=$1 and state in ('queued','checking')`,[unit.id,external,next,message?security.encryptSecret(message):null,reason]);
+  const charge=state==='COMPLETED'?supplierCharge(data,unit,unit.execution_quote):null;
+  await db.query(`update ${U} set external_id=coalesce(external_id,$2),state=$3,result_cipher=case when $3='succeeded' then $4 else result_cipher end,reason=$5,next_at=case when $3='succeeded' then now() else now()+interval '20 seconds' end,
+   supplier_charge=coalesce(supplier_charge,$6)
+   where id=$1 and state in ('queued','checking') and (external_id is null or external_id=$2)`,[unit.id,external,next,message?security.encryptSecret(message):null,reason,charge]);
+ }
+ async function snapshotQuote(db,row,unit){
+  if(unit.execution_quote||unit.state!=='queued'||unit.external_id)return;
+  let raw;
+  try{
+   const settings=epinbyProduct(unit.settings);
+   if(!settings)throw Error('EPINBY_QUOTE_MAPPING_INVALID');
+   if(unit.type==='TELEGRAM_STARS'){
+    const quoted=await send(row,'telegram-stars/quote',{body:{stars_amount:settings.starsAmount}});
+    if(quoted?.success===true&&Number(quoted.data?.stars_amount)===settings.starsAmount)raw=quoted.data;
+   }else raw=await providerProduct(row,settings);
+  }catch{}
+  const quote=supplierCost(raw,{source:'execution_quote',productId:unit.product_id});
+  if(!raw)quote.reason='İcradan əvvəl təchizatçı qiyməti yoxlanmadı.';
+  unit.execution_quote=(await db.query(`update ${U} set execution_quote=coalesce(execution_quote,$2) where id=$1 and external_id is null returning execution_quote`,[unit.id,quote])).rows[0]?.execution_quote;
+ }
+ async function readFinalCharge(db,row,unit){
+  if(unit.supplier_charge||!unit.external_id)return;
+  try{
+   const result=await send(row,(unit.type==='TELEGRAM_STARS'?'telegram-stars/':'')+'order/'+unit.external_id);
+   const data=result?.data;
+   if(result?.success!==true||String(data?.order_id)!==String(unit.external_id)||
+     (data.client_order_id&&data.client_order_id!==unit.id)||String(data.status).toUpperCase()!=='COMPLETED'||
+     (data.product_id!=null&&Number(data.product_id)!==unit.product_id)||(data.qty!=null&&Number(data.qty)!==1))return;
+   const charge=supplierCharge(data,unit,unit.execution_quote);
+   if(charge)await db.query(`update ${U} set supplier_charge=$3 where id=$1 and external_id=$2 and state='succeeded' and supplier_charge is null`,[unit.id,unit.external_id,charge]);
+  }catch{console.warn('EPINBY_CHARGE_READ_UNAVAILABLE');}
  }
  async function run(db){
   if(!(await db.query("select to_regclass('"+U+"') n")).rows[0].n)return;
@@ -200,7 +230,7 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   const c=await db.connect();let unit;
   try{
    await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
-   unit=(await c.query(`select u.*,d.order_id,d.line_index,d.settings->>'type' type,(d.settings->>'productId')::int product_id
+   unit=(await c.query(`select u.*,d.order_id,d.line_index,d.settings,d.settings->>'type' type,(d.settings->>'productId')::int product_id
     from ${U} u join ${D} d on d.id=u.dispatch_id join public.payment_orders o on o.id=d.order_id where (o.payment_confirmed=true or o.status='approved') and o.status not in ('cancelled','rejected','expired','completed') and o.fulfillment_cancellation is null and u.state in ('queued','checking','succeeded') and u.next_at<=now() and (u.external_id is not null or u.state='succeeded' or not exists(select 1 from ${U} waiting where waiting.state='queued' and waiting.reason like 'Epinby balansı%' and waiting.next_at>now()))
     order by case when u.external_id is not null or u.state='succeeded' then 0 else 1 end,o.created_at,d.line_index,u.unit_index limit 1 for update of u,d,o skip locked`)).rows[0];
    if(unit)await c.query(`update ${U} set state=case when state='queued' then 'checking' else state end,reason=case when state='queued' then 'Göndəriş başlanıb; nəticə təsdiqi gözlənilir.' else reason end,next_at=now()+interval '1 minute' where id=$1`,[unit.id]);
@@ -210,10 +240,12 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   if(!unit)return;
   const row=await credentials(db);
   if(unit.state==='succeeded'){
+   await readFinalCharge(db,row,unit);
    await adminDelivery(db,security,'supplier:auto',unit.order_id,{requestId:unit.id,line:unit.line_index,quantity:1,message:await deliveryMessage(db,unit)});
    await db.query("update "+U+" set state='delivered',reason=null where id=$1",[unit.id]);
   }else{
    try{
+    await snapshotQuote(db,row,unit);
     let result;
     if(unit.type==='TELEGRAM_STARS'){
      result=unit.external_id?await send(row,'telegram-stars/order/'+unit.external_id)

@@ -1,3 +1,5 @@
+import {epinbyPlan} from '../epinby-product.mjs';
+import {displayMoney,exactMoney} from './epinby-finance.mjs';
 const MAX_MONEY_CENTS = 999_999_999;
 
 export function parseMoneyCents(value, { allowEmpty = true } = {}) {
@@ -38,13 +40,21 @@ export function planKey(plan, index) {
   return String(plan?.id ?? index);
 }
 
-export function catalogCostRows(catalog, savedCosts = []) {
+export function catalogCostRows(catalog, savedCosts = [],supplierCosts=new Map()) {
   const costs = new Map(savedCosts.map((row) => [`${row.product_id}:${row.plan_id}`, row]));
   const products = Array.isArray(catalog?.products) ? catalog.products : [];
   return products.flatMap((product) => (product.plans || []).map((plan, index) => {
     const planId = planKey(plan, index);
     const saved = costs.get(`${product.id}:${planId}`);
-    const metrics = moneyMetrics(plan.price, saved?.cost_amount ?? null);
+    const supplier=epinbyPlan(product,plan);
+    const evidence=supplier?(supplierCosts.get(supplier.productId)||{provider:'epinby',productId:supplier.productId,
+      reason:'Təchizatçı qiyməti hələ yoxlanmayıb.'}):null;
+    const metrics = moneyMetrics(plan.price, evidence?null:saved?.cost_amount ?? null);
+    if(evidence?.azn!=null){
+      const difference=exactMoney(metrics.sale)-exactMoney(evidence.azn);
+      metrics.cost=displayMoney(exactMoney(evidence.azn));metrics.profit=displayMoney(difference);
+      metrics.margin=Number(metrics.sale)?Number((100*Number(difference)/Number(exactMoney(metrics.sale))).toFixed(2)):null;
+    }
     return {
       productId: String(product.id),
       productTitle: String(product.title || "Məhsul"),
@@ -57,7 +67,8 @@ export function catalogCostRows(catalog, savedCosts = []) {
       costAmount: metrics.cost,
       profit: metrics.profit,
       margin: metrics.margin,
-      updatedAt: saved?.updated_at || null
+      updatedAt: evidence?evidence.checkedAt:saved?.updated_at || null,
+      ...(evidence?{costEvidence:evidence}:{})
     };
   }));
 }

@@ -1,4 +1,5 @@
 import {supplierRequest} from './supplier-request.mjs';
+import {findEpinbyCostProduct,saveCatalogCost,supplierCost} from './epinby-finance.mjs';
 
 const table='mirpanel_community.epinby_connection';
 export const epinbyMessages={
@@ -55,10 +56,11 @@ export function createEpinbyConnection({pool,security,transport=supplierRequest}
           const last=Number(response?.meta?.last_page);
           if(response?.success!==true||!Array.isArray(response.data)||Number(response.meta?.current_page)!==page||!Number.isSafeInteger(last)||last<0)throw Error('CATALOG_FORMAT');
           for(const item of response.data){
-            const id=Number(item?.id), name=catalogText(item?.name), price=String(item?.price??'');
-            if(!Number.isSafeInteger(id)||id<1||!name||!/^\d{1,15}(?:\.\d{1,8})?$/.test(price))throw Error('CATALOG_FORMAT');
+            const id=Number(item?.id), name=catalogText(item?.name);
+            if(!Number.isSafeInteger(id)||id<1||!name)throw Error('CATALOG_FORMAT');
+            const cost=supplierCost(item,{source:'catalog',productId:id});
             products.set(id,{id,name,game:catalogText(item.game),category:catalogText(item.category),region:catalogText(item.region_name||item.region),
-              package:catalogText(item.package_name||item.package),image:catalogImage(item.image||item.image_url),price,
+              package:catalogText(item.package_name||item.package),image:catalogImage(item.image||item.image_url),price:cost.amount,currency:cost.currency,cost,
               type:catalogText(item.type).toUpperCase(),fields:Array.isArray(item.fields)?item.fields:[],
               gameId:Number(item.game_id)||null,categoryId:Number(item.category_id)||null,
               stockStatus:catalogText(item.stock_status).toUpperCase(),
@@ -81,6 +83,22 @@ export function createEpinbyConnection({pool,security,transport=supplierRequest}
     const db=await pool();
     if(input.action==='epinby-read')return projection(await read(db));
     if(input.action==='epinby-catalog')return catalog(db,await read(db),input);
+    if(input.action==='epinby-package-cost'){
+      const productId=Number(input.productId),gameId=Number(input.gameId),categoryId=Number(input.categoryId);
+      if(!Number.isSafeInteger(productId)||productId<1)throw Object.assign(Error('Təchizatçı paket ID-si düzgün deyil.'),{status:400});
+      const row=await read(db);
+      if(row?.last_status!=='confirmed'||!row.api_key_cipher)throw Object.assign(Error('Epinby bağlantısı təsdiqlənməyib.'),{status:409});
+      const send=query=>transport({base:'https://epinby.com',path:'/api/v1/products',query,allowlist:new Set(['https://epinby.com']),
+        key:security.decryptSecret(row.api_key_cipher),authHeader:'X-API-Key',jsonResponse:true,maxResponseBytes:524288});
+      let item,lookupError;
+      try{item=await findEpinbyCostProduct(send,{productId,gameId:gameId>0?gameId:null,categoryId:categoryId>0?categoryId:null});}
+      catch{lookupError='Epinby kataloqu yoxlanmadı. Qiyməti yenidən yoxlayın.';}
+      const cost=supplierCost(item,{source:'catalog',productId});
+      if(!item)cost.reason=lookupError||'Paket Epinby kataloqunda tapılmadı.';
+      if((await read(db))?.credential_version!==row.credential_version)throw Object.assign(Error('Epinby bağlantısı dəyişib. Yenidən cəhd edin.'),{status:409});
+      await saveCatalogCost(db,cost);
+      return {cost};
+    }
     if(input.action==='epinby-categories'){
       const row=await read(db), gameId=Number(input.gameId);
       if(!Number.isSafeInteger(gameId)||gameId<1)throw bad();

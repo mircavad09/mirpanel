@@ -31,7 +31,7 @@
   }
   const catalogCards=new Map();
   let catalogPending=false, catalogConnected=false, catalogLoaded=false,catalogGames=[],categoryRun=0,catalogRun=0,catalogPage=0,catalogLast=1,catalogTotal=0,searchRun=0,searchTimer;
-  let pageFlight, pageError, catalogCurrency='USD', visibleLimit=50;
+  let pageFlight, pageError, visibleLimit=50;
   const norm=value=>String(value||'').toLocaleLowerCase('az').normalize('NFC').trim();
   const searchText=value=>String(value||'').toLowerCase().normalize('NFKD').replace(/\p{M}/gu,'').replace(/ı/g,'i').replace(/[—–]/g,' ').replace(/\s+/g,' ').trim();
   function gameName(item){
@@ -153,7 +153,6 @@
     if(!price.reportValidity())return;
     const salePrice=price.valueAsNumber;
     const updating=existing&&!existing.legacy;
-    if(updating&&salePrice===Number(existing.plan.price)&&(!isTelegramStars(item)||existing.plan.supplier?.type==='TELEGRAM_STARS'))return;
     const stars=isTelegramStars(item),starsAmount=stars?starsQuantity(item):null;
     if(stars&&!starsAmount){toast('Telegram Stars paketində ulduz sayı müəyyən edilmədi.','bad');return;}
     const providerFields=item.fields||[];
@@ -170,6 +169,11 @@
       if(target?.active===false)throw Error('Aktiv məhsul seçin.');
       const current=packageLocation(item.id);
       if(state.data!==expected||state.dirty||current?.product!==existing?.product)throw Error('Kataloq dəyişdi. Yenidən yoxlayın.');
+      const {cost}=await request(url,{action:'epinby-package-cost',productId:item.id,gameId:item.gameId,categoryId:item.categoryId});
+      if(state.data!==expected||state.dirty||packageLocation(item.id)?.product!==existing?.product)throw Error('Kataloq dəyişdi. Yenidən yoxlayın.');
+      if(updating&&salePrice===Number(existing.plan.price)&&(!isTelegramStars(item)||existing.plan.supplier?.type==='TELEGRAM_STARS')){
+        toast(cost?.reason||'Təchizatçı mayası yeniləndi.',cost?.reason?'bad':'good');return;
+      }
       const supplier=stars?{provider:'epinby',productId:item.id,type:'TELEGRAM_STARS',starsAmount}
         :existing?.product.supplier||{provider:'epinby',productId:item.id,type:item.type,gameId:item.gameId,categoryId:item.categoryId,fields:providerFields};
       if(stars&&target?.id!=='telegram_premium')throw Error('Telegram Stars üçün Telegram Premium məhsulunu seçin.');
@@ -205,7 +209,8 @@
     const put=(selector,value)=>{card.querySelector(selector).textContent=value||'';};
     put('[data-game-name]',[...new Set([item.game,item.category,item.region].filter(value=>value&&norm(value)!==norm(gameName(item))))].join(' · '));
     put('[data-product-name]',packageTitle(item));
-    put('[data-supplier-price]',item.price);put('[data-supplier-currency]',catalogCurrency);
+    put('[data-supplier-price]',item.price??'Maya məlum deyil');put('[data-supplier-currency]',item.currency);
+    card.querySelector('[data-supplier-price]').title=item.cost?.reason||'';
     put('[data-stock]',['UNLIMITED','INFINITE'].includes(item.stockStatus)?'Mövcuddur · limitsiz':item.stockCount===0||item.stockStatus==='OUT_OF_STOCK'?'Stokda yoxdur':
       item.stockCount>0?'Mövcuddur · '+item.stockCount+' ədəd':'Mövcudluq məlum deyil');
     refreshPackageBinding(item,card);
@@ -237,7 +242,6 @@
       if(run!==catalogRun)return false;
       if(result.error||!result.meta)throw Error(result.error||'Epinby bağlantısını yoxlayın.');
       catalogPage=result.meta.page;catalogLast=result.meta.lastPage;catalogTotal=result.meta.total;catalogLoaded=true;
-      catalogCurrency=result.connection.currency||'USD';
       for(const item of result.products)if(!catalogCards.has(item.id))catalogCards.set(item.id,{
         item,key:searchText([packageTitle(item),item.game,item.category,item.region,item.package,item.id].join(' '))});
       return true;

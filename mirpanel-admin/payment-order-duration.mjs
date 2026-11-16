@@ -1,5 +1,6 @@
 import { bakuDate } from "./payment-order-lifecycle.mjs";
 import { aggregateSnapshotRows, centsToMoney, decimalToCents, normalizeFinancialStatistics } from "./payment-order-report.mjs";
+import {displayMoney,exactMoney} from './epinby-finance.mjs';
 
 // Persisted duration wins. Parsing is only for orders created before that field existed.
 export function orderDuration(row = {}) {
@@ -38,26 +39,29 @@ export function durationStatistics(rows = [], { includeMethods = false, complete
     const missingCostCount = items.length - known.length;
     const totals = aggregateSnapshotRows(items);
     if (completeCosts) {
-      totals.cost = centsToMoney(items.reduce((sum,row)=>sum+decimalToCents(row.known_cost_snapshot ?? row.cost_price_snapshot),0n));
-      totals.profit = missingCostCount ? null : centsToMoney(decimalToCents(totals.revenue)-decimalToCents(totals.cost));
+      const exactCost=items.reduce((sum,row)=>sum+(row.exactKnownCost??exactMoney(row.known_cost_snapshot ?? row.cost_price_snapshot)),0n);
+      totals.cost = displayMoney(exactCost);
+      totals.profit = missingCostCount ? null : displayMoney(exactMoney(totals.revenue)-exactCost);
+      if(items.some(row=>row.exactKnownCost!=null))totals.exactSupplierTotals=true;
     }
     return { ...totals, missingCostCount, estimatedCostCount: items.filter(row=>row.estimated_cost).length,
       profitMargin: sale === 0n ? null : Number((Number(profit) / Number(sale) * 100).toFixed(2)) };
   };
-  const group = (key, metadata) => {
+  const group = (key, metadata, source=completed) => {
     const groups = new Map();
-    for (const row of completed) {
+    for (const row of source) {
       const id = key(row);
       if (!groups.has(id)) groups.set(id, { metadata: metadata(row), rows: [] });
       groups.get(id).rows.push(row);
     }
     return [...groups.values()].map((item) => ({ ...item.metadata, ...metric(item.rows) }));
   };
+  const reportLines=completed.flatMap(row=>row.financeLines??[row]);
   const products = group((row) => JSON.stringify([row.product_id, row.product_title]),
-    (row) => ({ productId: row.product_id, title: row.product_title }));
+    (row) => ({ productId: row.product_id, title: row.product_title }),reportLines);
   products.sort((a, b) => b.count - a.count || String(a.title).localeCompare(String(b.title), "az"));
   const plans = group((row) => JSON.stringify([row.product_id, row.product_title, row.plan_id, row.plan_name]),
-    (row) => ({ productId: row.product_id, productTitle: row.product_title, planId: row.plan_id, planName: row.plan_name }));
+    (row) => ({ productId: row.product_id, productTitle: row.product_title, planId: row.plan_id, planName: row.plan_name }),reportLines);
   plans.sort((a, b) => b.count - a.count || String(a.productTitle).localeCompare(String(b.productTitle), "az") || String(a.planName).localeCompare(String(b.planName), "az"));
   const days = group((row) => bakuDate(new Date(row.completed_at)), (row) => ({ date: bakuDate(new Date(row.completed_at)) }));
   days.sort((a, b) => b.date.localeCompare(a.date));

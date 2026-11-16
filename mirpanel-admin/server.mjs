@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
+import {readCatalogCosts,readEpinbyOrderCosts} from './epinby-finance.mjs';
 import {startSheetCustomerIdSync} from './community/netflix-sheet-customer-id.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
 import { createNetflixConfirmationEndpoint } from "./netflix-confirmation-endpoint.mjs";
@@ -1401,6 +1402,8 @@ const paymentSystem = createPaymentSystem({
   deliveryCompletions: filter=>ownerCommunity.deliveryCompletions(filter),
   orderRefunds: async ids => (await (await ownerCommunity.integrationPool()).query(
     'select order_id,cents from mirpanel_community.community_refunds where order_id=any($1::uuid[])',[ids])).rows,
+  epinbyCatalogCosts: async catalog=>readCatalogCosts(await ownerCommunity.integrationPool(),catalog),
+  epinbyOrderCosts: async ids=>readEpinbyOrderCosts(await ownerCommunity.integrationPool(),ids),
   pendingDeliveryProgress: ids=>ownerCommunity.pendingDeliveries(ids,{progress:true}),
   orderCustomers: ids=>ownerCommunity.orderCustomers(ids),
   accountForCheckout: request=>ownerCommunity.checkoutAccount(request),

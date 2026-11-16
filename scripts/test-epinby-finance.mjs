@@ -1,0 +1,43 @@
+import assert from 'node:assert/strict';
+import {findEpinbyCostProduct,supplierCost,supplierCharge} from '../mirpanel-admin/epinby-finance.mjs';
+import {reportOrderFinance} from '../mirpanel-admin/payment-order-report.mjs';
+import {durationStatistics} from '../mirpanel-admin/payment-order-duration.mjs';
+import {catalogCostRows} from '../mirpanel-admin/payment-profit.mjs';
+const price=(amount,currency,source='execution_quote')=>supplierCost({price:amount,currency},{rate:'1.70',source,productId:684});
+assert.equal(price('3.8471','USD').azn,'6.54007');
+assert.equal(price('3.8471','AZN').azn,'3.8471');
+assert.equal(price('3.8471','EUR').azn,null);
+assert.match(price(null,'USD').reason,/qiymət/);
+assert.match(price('0.2',null).reason,/valyuta/);
+const quote=price('3.84','USD');
+const charge=supplierCharge({order_id:88,price:'3.8471',currency:'USD'},{product_id:684},quote,'2.00');
+assert.equal(charge.differenceAzn,'0.01207');
+assert.equal(charge.exchangeRate,'1.70');
+const pages=[];
+assert.equal((await findEpinbyCostProduct(async({page})=>{
+ pages.push(page);return {success:true,data:[{id:page===3?684:1}],meta:{current_page:page,last_page:4}};
+},{productId:684})).id,684);
+assert.deepEqual(pages,[1,2,3]);
+await assert.rejects(findEpinbyCostProduct(async({page})=>({success:true,data:[],meta:{current_page:page===2?1:page,last_page:4}}),{productId:684}));
+const delivery=(index,fields)=>({unit_index:index,state:'delivered',...fields});
+const row={status:'completed',completed_at:'2026-11-16T14:00:00Z',product_id:'__cart__',amount:'22.08',quantity:3,
+ cart_items:[{productId:'free_fire',title:'Free Fire',planName:'100 Diamond',unitCents:754,quantity:2},{productId:'capcut',title:'CapCut',planName:'1 ay',unitCents:700,quantity:1}],
+ cost_price_snapshot:9,cost_lines_snapshot:[{quantity:2,unitCost:3},{quantity:1,unitCost:2}]};
+const units=new Map([[0,[delivery(0,{supplier_charge:charge,execution_quote:quote}),delivery(1,{execution_quote:quote})]]]);
+const saved=reportOrderFinance(row,0,units);
+assert.equal(saved.cost_price_snapshot,'15.07');assert.equal(saved.estimated_cost,true);
+assert.equal(saved.financeLines[0].product_id,'free_fire');
+assert.equal(saved.financeLines[0].cost_price_snapshot,'13.07');
+assert.equal(saved.financeLines[1].cost_price_snapshot,'2.00');
+assert.equal(reportOrderFinance({...row,fulfillment_cancellation:{lines:[{index:0,quantity:1}]}},754,new Map([[0,[units.get(0)[0],{state:'checking'}]]])).cost_price_snapshot,'8.54');
+assert.equal(reportOrderFinance(row,0,new Map([[0,[units.get(0)[0]]]])).cost_price_snapshot,null);
+const cheap=price('0.004','AZN','supplier_charge');
+const tiny=()=>reportOrderFinance({status:'completed',completed_at:row.completed_at,amount:'1.00',quantity:1},0,new Map([[0,[delivery(0,{supplier_charge:cheap})]]]));
+assert.equal(tiny().cost_price_snapshot,'0.00');
+assert.equal(durationStatistics([tiny(),tiny()],{completeCosts:true}).cost,'0.01');
+const catalog={products:[{id:'free_fire',plans:[{id:'epinby_684',price:7.54,supplier:{provider:'epinby',productId:684,type:'TOPUP',fields:[{key:'player_id',required:true}]}}]}]};
+const newCost=price('5.25','USD','catalog');
+assert.equal(catalogCostRows(catalog,[],new Map([[684,newCost]]))[0].costAmount,'8.93');
+assert.equal(catalogCostRows(catalog)[0].costAmount,null);
+assert.equal(reportOrderFinance(row,0,units).cost_price_snapshot,saved.cost_price_snapshot);
+console.log('Epinby finance: currencies, decimal aggregation, pagination, immutable costs, partial and multi-product passed');

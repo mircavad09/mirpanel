@@ -212,6 +212,7 @@
       <div class="paymentOrderCardDetails" id="${detailId}"${expanded?'':' hidden'}>
       <dl>${order.supplierProgress?.reason?`<div><dt>Epinby</dt><dd>${escp(order.supplierProgress.reason)}</dd></div>`:""}<div><dt>Məhsul</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div>${order.reportCost!==undefined?`<div><dt>Maya</dt><dd>${order.reportCost===null?'Maya məlum deyil':money(order.reportCost)+(order.reportEstimated?' · Təxmini':'')}</dd></div>`:''}${order.cancellation?.reason?'<div><dt>Ləğv səbəbi</dt><dd style="white-space:pre-wrap">'+escp(order.cancellation.reason)+'</dd></div>':''}</dl>
       <div class="paymentOrderActions">
+        ${order.costEvidence?.length?`<ul aria-label="Təchizatçı maya qeydləri">${order.costEvidence.flatMap(line=>line.costs.map(cost=>`<li>${escp(lines[line.lineIndex]||'Epinby paketi')} · ${escp(supplierEvidence(cost))}</li>`)).join('')}</ul>`:''}
         ${manage && displayStatus==='preparing'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
         ${manage && deliveryQueue?'<button class="btn danger" type="button" data-cancel-fulfillment>Ləğv et</button>':''}
         ${order.cancellation?`<small>${escp(order.cancellation.refundStatus==='wallet_refunded'?'Balansa qaytarılıb: ':'Kart üzrə əl ilə qaytarılmalıdır: ')}${escp(money(order.cancellation.refundCents/100,order.currency))}</small>`:''}
@@ -333,7 +334,7 @@
     return `<div class="paymentMonthlyMetric"><small>Tamamlanmış sifariş</small><strong>${Number(report.completedCount || 0)}</strong></div>
       <div class="paymentMonthlyMetric"><small>Ümumi satış</small><strong>${money(report.revenue)}</strong></div>
       <div class="paymentMonthlyMetric"><small>Ümumi maya</small><strong>${reportCostLabel(report)}</strong></div>
-      <div class="paymentMonthlyMetric ${Number(report.profit) < 0 ? "bad" : ""}"><small>Xalis qazanc</small><strong>${reportProfitLabel(report)}</strong></div>`;
+      <div class="paymentMonthlyMetric ${Number(report.profit) < 0 ? "bad" : ""}"><small>Qazanc (komissiyasız)</small><strong>${reportProfitLabel(report)}</strong></div>`;
   }
 
   function reportBreakdownMarkup(report) {
@@ -458,7 +459,7 @@
     const stats = paymentState.orderMeta.statistics || {};
     if (!["today", "all"].includes(paymentState.orderQuery.tab)) { host.innerHTML = ""; if (breakdown) breakdown.innerHTML = ""; return; }
     host.innerHTML = reportPrimaryMarkup({ ...stats, completedCount: stats.count }) +
-      (stats.missingCostCount ? `<p class="warningBox">Maya məlum deyil: ${Number(stats.missingCostCount)} sifariş.</p>` : "") +
+      (stats.missingCostCount ? `<div class="warningBox">Maya məlum deyil: ${Number(stats.missingCostCount)} sifariş.${paymentState.orderMeta.missingCosts?.length?`<ul>${paymentState.orderMeta.missingCosts.map(row=>`<li>№ ${escp(row.orderCode)} — ${escp(row.reasons.join(' ')||'Sifarişin başqa paketinin maya qeydi yoxdur.')}</li>`).join('')}</ul>`:''}</div>` : "") +
       (stats.estimatedCostCount ? `<p class="warningBox">Cari maya ilə təxmini hesablanıb: ${Number(stats.estimatedCostCount)} sifariş.</p>` : "");
     if (breakdown) breakdown.innerHTML = reportBreakdownMarkup(stats);
     const today = paymentState.orderMeta.appliedFilters?.period === "today";
@@ -483,7 +484,7 @@
     return [...groups].map(([day, orders]) => {
       const stat = statsByDay.get(day) || {};
       const label = fullDateLabel(day);
-      return `<details class="paymentOrderDay" data-live-group="day-${escp(day)}" open><summary><strong>${escp(label)}</strong><span>${Number(stat.count || orders.length)} sifariş · Satış ${money(stat.revenue || 0)} · Maya ${reportCostLabel(stat)} · Xalis qazanc ${reportProfitLabel(stat)}</span></summary><div class="paymentOrderDayList">${orders.map(orderCard).join("")}</div></details>`;
+      return `<details class="paymentOrderDay" data-live-group="day-${escp(day)}" open><summary><strong>${escp(label)}</strong><span>${Number(stat.count || orders.length)} sifariş · Satış ${money(stat.revenue || 0)} · Maya ${reportCostLabel(stat)} · Qazanc (komissiyasız) ${reportProfitLabel(stat)}</span></summary><div class="paymentOrderDayList">${orders.map(orderCard).join("")}</div></details>`;
     }).join("");
   }
 
@@ -552,6 +553,12 @@
   }
 
   function costKey(row) { return `${row.productId}:${row.planId}`; }
+  function supplierEvidence(cost) {
+    if(!cost||cost.azn==null)return cost?.reason||'Təchizatçı mayası təsdiqlənməyib.';
+    const source=cost.source==='supplier_charge'?'Epinby faktiki tutulma':cost.source==='execution_quote'?'Epinby icra qiyməti (təxmini)':'Epinby kataloq qiyməti';
+    return source+' · '+cost.amount+' '+cost.currency+' × '+cost.exchangeRate+
+      (cost.differenceAzn&&cost.differenceAzn!=='0'?' · İcra qiymətindən fərq: '+money(cost.differenceAzn):'');
+  }
   function costMetrics(row, rawCost) {
     const normalized = String(rawCost ?? "").trim().replace(",", ".");
     if (normalized === "") return { cost: null, profit: null, margin: null, invalid: false };
@@ -571,16 +578,16 @@
     host.innerHTML = [...groups.values()].map((plans) => {
       const first = plans[0];
       return `<details class="paymentCostProduct" open><summary><strong>${escp(first.productTitle)}</strong><span class="statusPill ${first.productActive ? "ok" : ""}">${first.productActive ? "Aktiv" : "Deaktiv"}</span><small>${plans.length} plan</small></summary><div class="paymentCostPlanList">${plans.map((row) => {
-        const key = costKey(row); const dirty = paymentState.costDirty.has(key); const metrics = costMetrics(row, row.costAmount);
+        const key = costKey(row); const dirty = paymentState.costDirty.has(key); const metrics = row.costEvidence?{...row,profit:row.profit==null?null:Number(row.profit)}:costMetrics(row, row.costAmount);
         const negative = metrics.profit !== null && metrics.profit < 0;
         return `<div class="paymentCostRow${dirty ? " isDirty" : ""}${negative ? " hasLoss" : ""}" data-payment-cost-key="${escp(key)}" data-product-id="${escp(row.productId)}" data-plan-id="${escp(row.planId)}">
           <span><b>Plan</b><em>${escp(row.planName)}${row.durationMonths ? ` · ${Number(row.durationMonths)} ay` : ""}</em></span>
           <span><b>Satış qiyməti</b><em>${money(row.salePrice)}</em></span>
-          <label><b>Maya dəyəri</b><input data-payment-cost-input inputmode="decimal" autocomplete="off" placeholder="Qeyd edilməyib" value="${row.costAmount === null ? "" : escp(row.costAmount)}"></label>
+          ${row.costEvidence?`<span><b>Maya dəyəri</b><em>${row.costAmount===null?'Maya məlum deyil':money(row.costAmount)}</em><small>${escp(supplierEvidence(row.costEvidence))} · #${escp(row.costEvidence.productId)}</small></span>`:`<label><b>Maya dəyəri</b><input data-payment-cost-input inputmode="decimal" autocomplete="off" placeholder="Qeyd edilməyib" value="${row.costAmount === null ? "" : escp(row.costAmount)}"></label>`}
           <span><b>Bir satışdan mənfəət</b><em data-cost-profit class="${negative ? "bad" : ""}">${metrics.invalid ? "Yanlış məbləğ" : metrics.profit === null ? "Qeyd edilməyib" : money(metrics.profit)}</em></span>
           <span><b>Mənfəət faizi</b><em data-cost-margin class="${negative ? "bad" : ""}">${metrics.invalid ? "—" : metrics.margin === null ? "Qeyd edilməyib" : `${metrics.margin.toFixed(2)}%`}</em></span>
           <span><b>Son yenilənmə</b><em>${row.updatedAt ? dateTime(row.updatedAt) : "Qeyd edilməyib"}</em></span>
-          <button class="btn compact" type="button" data-save-payment-cost ${dirty ? "" : "disabled"}>Yadda saxla</button>
+          ${row.costEvidence?'':`<button class="btn compact" type="button" data-save-payment-cost ${dirty ? "" : "disabled"}>Yadda saxla</button>`}
         </div>`;
       }).join("")}</div></details>`;
     }).join("") || '<div class="emptyState">Filtrə uyğun məhsul planı tapılmadı.</div>';
@@ -679,7 +686,7 @@
       }
       paymentState.orders = result.orders || [];
       paymentState.permissions = result.permissions || {};
-      paymentState.orderMeta = { counts: fromCache ? paymentState.orderMeta.counts : result.counts || {}, statistics: result.statistics || {}, pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
+      paymentState.orderMeta = { counts: fromCache ? paymentState.orderMeta.counts : result.counts || {}, statistics: result.statistics || {}, missingCosts:result.missingCosts||[],pagination: result.pagination || {}, filters: result.filters || {}, appliedFilters: result.appliedFilters || {}, selection: result.selection || { ids: [], total: 0 } };
       renderOrders(background);
       visibleOrderPage = key;
       list?.setAttribute("data-order-page", key);

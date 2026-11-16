@@ -130,7 +130,7 @@ export function createPaymentSystem(options) {
   }
 
   const security = createPaymentSecurity(config);
-  const store = options.store || createPaymentStore(config);
+  const store = options.store || createPaymentStore(config,{epinbyCatalogCosts:options.epinbyCatalogCosts,epinbyOrderCosts:options.epinbyOrderCosts});
   const bankBackgrounds=options.bankBackgrounds||(store.client?createBankBackgrounds(store.client,config.storiesBucket):null);
   async function backgroundList(){
     if(!bankBackgrounds)return {};
