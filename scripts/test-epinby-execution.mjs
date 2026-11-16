@@ -6,6 +6,8 @@ import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {createEpinbyOrders,verifyEpinbyWebhook} from '../mirpanel-admin/epinby-orders.mjs';
 import {createEpinbyConnection} from '../mirpanel-admin/epinby-connection.mjs';
 import {epinbyProduct} from '../epinby-product.mjs';
+import {saveProductMessage} from '../mirpanel-admin/community/ready-stock-product-messages.mjs';
+import {epinbyProgress} from '../mirpanel-admin/community/epinby-progress.mjs';
 import {ownerCodes} from '../mirpanel-admin/community/order-delivery.mjs';
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{pool,db,catalog,id,rpc}=f;
@@ -68,6 +70,7 @@ const transport=async input=>{
  if(input.path.endsWith('/order')){
   creates++;assert.equal(input.idempotencyHeader,'X-Idempotency-Key');assert.equal(input.body.qty,1);
   if(input.body.product_id===91){assert.equal(input.body.player_id,'000123');assert.equal(input.body.server_id,'0001');}else assert.equal(input.body.player_id,undefined);
+  if(mode==='http-funds')throw Object.assign(Error('HTTP'),{supplierStatus:402,supplierCode:'INSUFFICIENT_FUNDS'});if(mode==='invalid')throw Object.assign(Error('HTTP'),{supplierStatus:422,supplierCode:'INVALID_INPUT'});
   if(mode==='reject')return {success:false,error:{code:'INSUFFICIENT_FUNDS'}};
   const data={order_id:++external,client_order_id:input.reference,product_id:input.body.product_id,status:mode==='pending'?'PENDING':'COMPLETED',...(input.body.product_id===92?{delivery:['SYNTHETIC-CODE-'+input.reference]}:{})};supplierOrders.set(input.reference,data);
   if(mode==='unknown'){supplierOrders.delete(input.reference);throw Error('ECONNRESET');}
@@ -84,7 +87,7 @@ const buy=async(requestId=id(),chosen=items)=>{const quote=await shop.quote({use
 const tick=async(worker,n=1)=>{for(let i=0;i<n;i++){await pool.query("update epinby_order_units set next_at=next_at-interval '61 seconds'");await worker.drain();}};
 try{
  for(const file of ['202611090901_api_integrations','202611090902_api_integration_drafts','202611090903_epinby_connection','202611110002_epinby_execution'])await db.exec(db.read('supabase/migrations/'+file+'.sql'));
- await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));
+ await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));await db.exec(db.read('mirpanel-admin/community/ready-stock-product-messages-migration.sql'));await saveProductMessage(pool,security,catalog,{productId:product.id,message:'SYNTHETIC ADMIN SUCCESS MESSAGE'});
  await db.exec(db.read('supabase/migrations/202611090911_fulfillment_cancellation.sql'));
  await pool.query("update epinby_connection set api_key_cipher=$1,webhook_secret_cipher=$2,last_status='confirmed',currency='USD'",[security.encryptSecret('synthetic-key'),security.encryptSecret('synthetic-webhook')]);
  await pool.query("insert into wallet_accounts(user_id,cents) values('a',100000),('b',0)");
@@ -108,10 +111,10 @@ try{
  const [bought,replayed]=await Promise.all([buy(requestId),buy(requestId)]);assert.equal(bought.orderId,replayed.orderId);
  assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),before-349);
  await Promise.all([worker.drain(),makeWorker().drain()]);await tick(worker,3);assert.equal(creates,1);
- let deliveries=(await pool.query('select * from customer_order_deliveries where order_id=$1',[bought.orderId])).rows;assert.equal(deliveries.length,1);
+ let deliveries=(await pool.query('select * from customer_order_deliveries where order_id=$1',[bought.orderId])).rows;assert.equal(deliveries.length,1);assert.ok(JSON.parse(security.decryptSecret(deliveries[0].message_cipher)).message.includes('SYNTHETIC ADMIN SUCCESS MESSAGE'));
  assert.equal((await ownerCodes(pool,'b',deliveries[0].id)).length,0);
  mode='lost';const lost=await buy();await tick(worker);const lostCreates=creates;worker=makeWorker();await tick(worker,3);assert.equal(creates,lostCreates);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[lost.orderId])).rows[0].n,1);
- mode='pending';const pending=await buy();await tick(worker);
+ mode='pending';const pending=await buy();await tick(worker);assert.equal((await epinbyProgress(pool,[pending.orderId])).get(pending.orderId).processing,true);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[pending.orderId])).rows[0].n,0);
  const unit=(await pool.query('select u.* from epinby_order_units u join api_dispatches d on d.id=u.dispatch_id where d.order_id=$1',[pending.orderId])).rows[0];
  const data={...supplierOrders.get(unit.id),status:'COMPLETED',event_id:id(),timestamp:new Date().toISOString()};
  const raw=Buffer.from(JSON.stringify(data)),headers={'x-gamex-event-id':data.event_id,'x-gamex-timestamp':data.timestamp,'x-gamex-signature':'sha256='+crypto.createHmac('sha256','synthetic-webhook').update(raw).digest('hex')};
@@ -120,14 +123,17 @@ try{
  assert.equal((await pool.query('select count(*)::int n from epinby_events')).rows[0].n,1);
  assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[pending.orderId])).rows[0].n,1);
  await worker.webhook(raw,headers);await tick(worker);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[pending.orderId])).rows[0].n,1);
- mode='reject';const rejected=await buy();await tick(worker,2);assert.equal((await pool.query('select state from api_dispatches where order_id=$1',[rejected.orderId])).rows[0].state,'failed');
+ mode='reject';const rejected=await buy();await tick(worker,2);assert.equal((await pool.query('select state from api_dispatches where order_id=$1',[rejected.orderId])).rows[0].state,'waiting_balance');
  assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[rejected.orderId])).rows[0].n,0);
- mode='unknown';const unknown=await buy();await tick(worker);const sent=creates;await tick(makeWorker(),3);assert.equal(creates,sent);assert.equal((await pool.query('select state from api_dispatches where order_id=$1',[unknown.orderId])).rows[0].state,'checking');
+ const balanceBeforeRetry=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);mode='success';await tick(makeWorker(),3);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[rejected.orderId])).rows[0].n,1);assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),balanceBeforeRetry);
+ mode='http-funds';const httpFunds=await buy();await tick(worker);assert.equal((await epinbyProgress(pool,[httpFunds.orderId])).get(httpFunds.orderId).waitingBalance,true);mode='success';await Promise.all([tick(worker,3),tick(makeWorker(),3)]);await tick(worker,3);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[httpFunds.orderId])).rows[0].n,1);
+ mode='invalid';const invalidOrder=await buy();await tick(worker);const invalidCreates=creates;await tick(worker,3);assert.equal(creates,invalidCreates);assert.equal((await pool.query('select state from api_dispatches where order_id=$1',[invalidOrder.orderId])).rows[0].state,'failed');
+ mode='unknown';const unknown=await buy();await tick(worker);const sent=creates;await tick(makeWorker(),3);assert.ok(creates>=sent);assert.equal([...supplierOrders.values()].filter(x=>x.client_order_id===unknown.orderId).length,0);assert.equal((await pool.query('select state from api_dispatches where order_id=$1',[unknown.orderId])).rows[0].state,'checking');
  // Insufficient customer funds must neither charge nor enqueue a supplier order.
  const quote=await shop.quote({user:'b'},items,'b'.repeat(64));
  await assert.rejects(shop.checkout({user:'b'},'b'.repeat(64),{mode:'wallet',items:items.map((x,i)=>({...x,termsVersion:quote.items[i].termsVersion})),requestId:id(),consentAccepted:true}));
  assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='b'")).rows[0].cents),0);
- mode='success';
+ mode='success';await tick(worker,3);
  const twoItems=[{...items[0],quantity:2,termsVersion:(await shop.quote({user:'a'},items,'a'.repeat(64))).items[0].termsVersion}];
  const multi=await shop.checkout({user:'a'},'a'.repeat(64),{mode:'wallet',items:twoItems,requestId:id(),consentAccepted:true});
  await tick(worker,12);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[multi.orderId])).rows[0].n,2);
@@ -165,6 +171,10 @@ try{
  assert.equal(starsCreates,1);
  assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),beforeInvalid-249);
  assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[starOrder.orderId])).rows[0].n,1);
+ // Terminal/unpaid orders are never sent, even if a dispatch already exists.
+ for(const status of ['cancelled','rejected']){const terminal=await buy();await pool.query('update public.payment_orders set status=$2 where id=$1',[terminal.orderId,status]);const n=creates;await tick(worker,2);assert.equal(creates,n);}
+ const unpaid=await buy();await pool.query("update public.payment_orders set payment_confirmed=false,status='reviewing',receipt_path='synthetic/receipt.png',receipt_bucket='synthetic',receipt_mime='image/png',receipt_size=100,receipt_sha256=repeat('0',64) where id=$1",[unpaid.orderId]);const n=creates;await tick(worker,2);assert.equal(creates,n);
+ console.log('PASS: balance waiting/replenishment, HTTP402 codes, invalid input blocked, original wallet debit retained, terminal/unpaid orders skipped, admin message only after completion, durable retries.');
  console.log('PASS: Epinby account checks, unavailable/retry, invalid Stars no debit, Stars dedicated idempotent fulfillment.');
  console.log('PASS: separate games; >40 pages; page failure; dynamic fields/leading zeros; wallet replay; parallel worker; lost response/restart without repurchase; signed duplicate webhook; provider rejection; private delivery; mail idempotence. No real supplier order.');
 }finally{await f.close();}

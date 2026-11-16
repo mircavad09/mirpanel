@@ -1,6 +1,7 @@
 import {createHmac,timingSafeEqual} from 'node:crypto';
 import {supplierRequest} from './supplier-request.mjs';
 import {epinbyPlan,epinbyProduct} from '../epinby-product.mjs';
+import {readProductMessages} from './community/ready-stock-product-messages.mjs';
 import {planKey} from './payment-profit.mjs';
 import {adminDelivery,paid} from './community/order-delivery.mjs';
 import {validateEpinbyDetails} from './community/public/checkout-fields.js';
@@ -33,7 +34,7 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
  const productChecks=new Map();
  async function credentials(db){return (await db.query('select * from '+S+'epinby_connection where id=true')).rows[0];}
  const send=(row,path,extra={})=>transport({base:'https://epinby.com',path:'/api/v1/'+path,allowlist:allowed,
-  key:security.decryptSecret(row.api_key_cipher),authHeader:'X-API-Key',jsonResponse:true,maxResponseBytes:524288,...extra});
+  key:security.decryptSecret(row.api_key_cipher),authHeader:'X-API-Key',jsonResponse:true,maxResponseBytes:524288,includeErrorCode:true,...extra});
  async function playerName(db,supplier,values){
   const row=await credentials(db);
   if(row?.last_status!=='confirmed'||!row.api_key_cipher)return {verified:false};
@@ -165,9 +166,10 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
     const line=job.checkout_snapshot?.items?.[job.line_index];
     const done=(await c.query(`select 1 from ${S}customer_order_deliveries where order_id=$1 and line_index=$2 limit 1`,[job.order_id,job.line_index])).rowCount;
     if(done||!line||!Number.isSafeInteger(line.quantity)||line.quantity<1||line.quantity>100){await c.query("update "+D+" set state='failed' where id=$1",[job.id]);continue;}
-    let values={};try{if(line.detailsCipher)values=JSON.parse(security.decryptSecret(line.detailsCipher));}catch{throw Error('EPINBY_DETAILS_UNAVAILABLE');}
+    let values={};try{if(line.detailsCipher)values=JSON.parse(security.decryptSecret(line.detailsCipher));}catch{values=null;}
     const body=job.settings.type==='TELEGRAM_STARS'?{stars_amount:job.settings.starsAmount}:{product_id:job.settings.productId,qty:1,callback_url:callbackUrl,callback_mode:'events'};
-    for(const f of job.settings.fields||[]){if(f.required&&!values[f.key])throw Error('EPINBY_FIELD_MISSING');if(values[f.key])body[f.key]=String(values[f.key]);}
+    for(const f of job.settings.fields||[]){if(values===null)break;if(f.required&&!values[f.key]){values=null;break;}if(values[f.key])body[f.key]=String(values[f.key]);}
+    if(values===null){await c.query(`insert into ${U}(dispatch_id,unit_index,body_cipher,state,reason) values($1,0,$2,'failed','Epinby yoxlama tələb edir · Alıcı məlumatları oxunmadı və ya tələb olunan sahə yoxdur.') on conflict do nothing`,[job.id,security.encryptSecret(JSON.stringify(body))]);await c.query("update "+D+" set state='failed' where id=$1",[job.id]);continue;}
     for(let unit=0;unit<line.quantity;unit++)await c.query(`insert into ${U}(dispatch_id,unit_index,body_cipher) values($1,$2,$3) on conflict do nothing`,[job.id,unit,security.encryptSecret(JSON.stringify(body))]);
     await c.query("update "+D+" set state='checking' where id=$1",[job.id]);
    }
@@ -189,25 +191,25 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   await db.query(`update ${U} set external_id=coalesce(external_id,$2),state=$3,result_cipher=case when $3='succeeded' then $4 else result_cipher end,reason=$5,next_at=case when $3='succeeded' then now() else now()+interval '20 seconds' end
    where id=$1 and state in ('queued','checking')`,[unit.id,external,next,message?security.encryptSecret(message):null,reason]);
  }
- async function drain(){
-  const db=await pool();
+ async function run(db){
   if(!(await db.query("select to_regclass('"+U+"') n")).rows[0].n)return;
   const credentialsRow=await credentials(db);if(credentialsRow?.last_status!=='confirmed'||!credentialsRow.webhook_secret_cipher)return;
   if(Date.now()-synchronizedAt>=60000){synchronizedAt=Date.now();try{await synchronize(db);}catch{console.warn('EPINBY_MAPPING_REFRESH_RETRY');}}
   await prepare(db);
   const c=await db.connect();let unit;
   try{
-   await c.query('begin');
+   await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
    unit=(await c.query(`select u.*,d.order_id,d.line_index,d.settings->>'type' type,(d.settings->>'productId')::int product_id
-    from ${U} u join ${D} d on d.id=u.dispatch_id where u.state in ('queued','checking','succeeded') and u.next_at<=now()
-    order by u.next_at,u.created_at,u.unit_index limit 1 for update of u skip locked`)).rows[0];
+    from ${U} u join ${D} d on d.id=u.dispatch_id join public.payment_orders o on o.id=d.order_id where (o.payment_confirmed=true or o.status='approved') and o.status not in ('cancelled','rejected','expired','completed') and o.fulfillment_cancellation is null and u.state in ('queued','checking','succeeded') and u.next_at<=now() and (u.external_id is not null or u.state='succeeded' or not exists(select 1 from ${U} waiting where waiting.state='queued' and waiting.reason like 'Epinby balansı%' and waiting.next_at>now()))
+    order by case when u.external_id is not null or u.state='succeeded' then 0 else 1 end,o.created_at,d.line_index,u.unit_index limit 1 for update of u,d,o skip locked`)).rows[0];
    if(unit)await c.query(`update ${U} set state=case when state='queued' then 'checking' else state end,reason=case when state='queued' then 'Göndəriş başlanıb; nəticə təsdiqi gözlənilir.' else reason end,next_at=now()+interval '1 minute' where id=$1`,[unit.id]);
+   if(unit)await c.query("update "+D+" set state='checking' where id=$1",[unit.dispatch_id]);
    await c.query('commit');
   }catch(e){await c.query('rollback');throw e;}finally{c.release();}
   if(!unit)return;
   const row=await credentials(db);
   if(unit.state==='succeeded'){
-   await adminDelivery(db,security,'supplier:auto',unit.order_id,{requestId:unit.id,line:unit.line_index,quantity:1,message:security.decryptSecret(unit.result_cipher)});
+   await adminDelivery(db,security,'supplier:auto',unit.order_id,{requestId:unit.id,line:unit.line_index,quantity:1,message:await deliveryMessage(db,unit)});
    await db.query("update "+U+" set state='delivered',reason=null where id=$1",[unit.id]);
   }else{
    try{
@@ -220,15 +222,40 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
     else{
      const orders=await send(row,'orders');const found=Array.isArray(orders.data)&&orders.data.find(x=>x.client_order_id===unit.id);
      if(found)result={success:true,data:found};
+     else if(orders.success===true&&Array.isArray(orders.data))result=await send(row,'order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
     }
+    if(result?.success===false&&result.error?.code)throw Object.assign(Error('SUPPLIER_REJECTED'),{supplierCode:result.error.code});
     if(result?.success===true&&result.data)await record(db,unit,result.data);
-    else if((unit.state==='queued'||unit.type==='TELEGRAM_STARS'&&!unit.external_id)&&result?.success===false&&['VALIDATION_ERROR','INSUFFICIENT_FUNDS','VALIDATION_REQUIRED','PRODUCT_NOT_FOUND'].includes(result.error?.code))await db.query(`update ${U} set state='failed',reason=$2 where id=$1 and state='checking'`,[unit.id,'Təchizatçı sifarişi qəbul etmədi: '+result.error.code]);
+
     else await db.query(`update ${U} set reason=$2 where id=$1 and state='checking'`,[unit.id,'Nəticə qeyri-müəyyəndir. Status yoxlanılır; yeni alış göndərilmir.']);
-   }catch(error){await db.query(`update ${U} set state=$3,reason=$2 where id=$1 and state='checking'`,[unit.id,'Təchizatçı cavabı alınmadı. Status yoxlanılır; təkrar alış edilmir.',(unit.state==='queued'||unit.type==='TELEGRAM_STARS'&&!unit.external_id)&&[400,401,402,403,422].includes(error.supplierStatus)?'failed':'checking']);}
+   }catch(error){
+    const code=error.supplierCode;
+    const balance=['INSUFFICIENT_FUNDS','INSUFFICIENT_BALANCE','BALANCE_NOT_ENOUGH'].includes(code);
+    const blocked=['VALIDATION_ERROR','INVALID_INPUT','PLAYER_NOT_FOUND','PRODUCT_NOT_FOUND','VALIDATION_REQUIRED','IDEMPOTENCY_CONFLICT'].includes(code)||[400,401,403,422].includes(error.supplierStatus);
+    const state=balance?'queued':blocked?'failed':'checking';
+    const reason=balance?'Epinby balansı gözlənilir · '+code:blocked?'Epinby yoxlama tələb edir · '+(code||'HTTP_'+error.supplierStatus):'Nəticə qeyri-müəyyəndir. Eyni göndəriş açarı ilə status yoxlanılır.';
+    await db.query(`update ${U} set state=$3,reason=$2,next_at=now()+interval '60 seconds' where id=$1 and state='checking'`,[unit.id,reason,state]);
+   }
   }
   await db.query(`update ${D} d set state=case when not exists(select 1 from ${U} u where u.dispatch_id=d.id and u.state<>'delivered') then 'delivered'
-   when not exists(select 1 from ${U} u where u.dispatch_id=d.id and u.state not in ('failed','delivered')) then 'failed' else 'checking' end
+   when exists(select 1 from ${U} u where u.dispatch_id=d.id and u.state='queued' and u.reason like 'Epinby balansı%') then 'waiting_balance' when not exists(select 1 from ${U} u where u.dispatch_id=d.id and u.state not in ('failed','delivered')) then 'failed' else 'checking' end
    where d.id=$1`,[unit.dispatch_id]);
+ }
+ async function deliveryMessage(db,unit){
+  let message=security.decryptSecret(unit.result_cipher);
+  if((await db.query("select to_regclass('mirpanel_community.ready_stock_product_messages') n")).rows[0].n){
+   const order=(await db.query('select checkout_snapshot from public.payment_orders where id=$1',[unit.order_id])).rows[0];
+   const productId=order?.checkout_snapshot?.items?.[unit.line_index]?.productId;
+   const template=productId?(await readProductMessages(db,security,[productId])).get(productId):null;
+   if(template?.trim())message=[message,template].join('\n\n').slice(0,8000);
+  }return message;
+ }
+ async function drain(){
+  const db=await pool(),lock=await db.connect();let acquired=false;
+  try{
+   acquired=(await lock.query('select pg_try_advisory_lock(714025099) acquired')).rows[0].acquired;
+   if(acquired)await run(db);
+  }finally{try{if(acquired)await lock.query('select pg_advisory_unlock(714025099)');}finally{lock.release();}}
  }
  async function webhook(raw,headers){
   const db=await pool(),row=await credentials(db);if(!row?.webhook_secret_cipher)throw fail(503,'Bildiriş xidməti hazır deyil.');

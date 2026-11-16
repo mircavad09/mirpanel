@@ -247,10 +247,10 @@ export function createApiIntegrations({pool,security,loadCatalog,origins,callbac
     });
     await db.query("update "+dispatches+" set state='delivered' where id=$1",[job.id]);
   }
-  let running;
+  let running,balanceAt=0;
   return {admin,drain,epinbyOrders,start(){
     setInterval(()=>{
-      running ??= Promise.all([allowlist.size?drain():null,epinbyOrders.drain()]).catch(()=>{}).finally(()=>{running=null;});
+      running ??= Promise.all([allowlist.size?drain():null,epinbyOrders.drain(),Date.now()-balanceAt>=60000?(balanceAt=Date.now(),epinby({action:'epinby-test'})):null]).catch(()=>{}).finally(()=>{running=null;});
     },5000).unref();
   }};
 }

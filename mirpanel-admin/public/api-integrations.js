@@ -252,7 +252,7 @@
       :connection.lastStatus==='invalid_key'?'Açar qəbul edilmədi'
       :connection.apiKeySaved?'Bağlantını yoxlayın':'API bağlantısı qurulmayıb';
     const hasBalance=connection.balance!=null&&connection.currency;
-    $('gameCatalogBalanceLabel').textContent=hasBalance&&stale?'Son məlum balans':'Balans';
+    $('gameCatalogBalanceLabel').textContent=(hasBalance&&stale?'Son məlum balans':'Balans')+(connection.lastCheckedAt?' · '+new Date(connection.lastCheckedAt).toLocaleString('az-AZ',{timeZone:'Asia/Baku'}):'');
     $('gameCatalogBalance').textContent=hasBalance?String(connection.balance).replace('.',',')+' '+connection.currency:'—';
   }
   async function refreshGameBalance(){
@@ -320,7 +320,7 @@
     $('integrationNewSupplier').hidden=Boolean(field(mapping,'supplierId').value);
     $('integrationTest').hidden=!field(mapping,'supplierId').value;
   }
-  const states = {queued:'Növbədə',checking:'Təchizatçıdan cavab gözlənilir',
+  const states = {waiting_balance:'Epinby balansı gözlənilir',queued:'Növbədə',checking:'İcra olunur',
     succeeded:'Təchizatçı təsdiqlədi',delivered:'Təhvil tamamlandı',failed:'Uğursuz',skipped:'Göndərilmədi'};
   function renderDrafts() {
     select($('integrationDrafts'),data.drafts.map(d=>[d.id,
@@ -498,4 +498,5 @@
     if(event.detail==='gameProducts')void loadGameCatalog();
   });
   if(['#apiIntegrations','#api-inteqrasiyalari'].includes(location.hash))open();
+  setInterval(()=>{if(!document.hidden&&$('gameCatalogBalance')?.offsetParent)void refreshGameBalance();},60000);
 })();

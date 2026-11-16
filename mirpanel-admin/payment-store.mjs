@@ -478,7 +478,7 @@ export function createPaymentStore(config) {
       };
 
       const deliveryProgressRequest = pendingDeliveryProgress
-        ? pendingDeliveryProgress().then(rows=>new Map(rows.map(({id,remaining})=>[id,remaining])))
+        ? pendingDeliveryProgress().then(rows=>new Map(rows.map(({id,remaining,supplierProgress})=>{if(supplierProgress)remaining.supplierProgress=supplierProgress;return [id,remaining];})))
         : Promise.resolve(null);
       void deliveryProgressRequest.catch(() => {});
       const countsRequest = Promise.all([
@@ -649,7 +649,7 @@ export function createPaymentStore(config) {
             productId: order.product_id,
             productTitle: order.product_title,
             items:orderLines(order.checkout_snapshot),
-            ...(deliveryQueue && deliveryProgress ? {remainingDelivery:deliveryProgress.get(order.id)} : {}),
+            ...(deliveryQueue && deliveryProgress ? {remainingDelivery:deliveryProgress.get(order.id),supplierProgress:deliveryProgress.get(order.id)?.supplierProgress} : {}),
             planId: order.plan_id,
             planName: order.plan_name,
             quantity: order.quantity,

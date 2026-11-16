@@ -1,3 +1,4 @@
+import {epinbyProgress} from './epinby-progress.mjs';
 import {queueManualSheetCustomerId} from './netflix-sheet-customer-id.mjs';
 import {roomCredentialData,roomPasswordMail} from './netflix-room-password.mjs';
 import {bakuDate} from '../payment-order-lifecycle.mjs';
@@ -67,9 +68,10 @@ export async function adminPendingDeliveries(pool,ids,{progress=false}={}){
    and (o.payment_confirmed is true
      or (o.completed_at is null and exists(select 1 from ${M} m where m.event_key='payment:'||o.id::text))
      or exists(select 1 from ${D} d where d.order_id=o.id))`,ids?[ids]:[])).rows;
+ const supplierProgress=progress?await epinbyProgress(pool,orders.map(o=>o.id)):new Map();
  const remaining=orders.map(o=>{
   const done=o.delivered_units||{};
-  return {id:o.id,remaining:deliveryLines(o).map((line,i)=>Math.max(0,line.quantity-(done[i]||0)))};
+  return {id:o.id,supplierProgress:supplierProgress.get(o.id),remaining:deliveryLines(o).map((line,i)=>Math.max(0,line.quantity-(done[i]||0)))};
  }).filter(o=>o.remaining.some(n=>n>0));
  return progress?remaining:remaining.map(o=>o.id);
 }
@@ -153,7 +155,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
   }
   if(o.fulfillment_cancellation)throw fail(409,'Qalan məhsullar ləğv edilib.');
   if(actor!=='supplier:auto' && o.dispatch_table){
-   const busy=await db.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and (state in ('checking','succeeded') or state='queued' and settings->>'provider'='epinby')",[id,line]);
+   const busy=await db.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and (state in ('checking','succeeded','waiting_balance') or state='queued' and settings->>'provider'='epinby')",[id,line]);
    if(busy.rowCount)throw fail(409,'Təchizatçı bu məhsulun sifarişini yoxlayır.');
   }
   if(quantity>lines[line].quantity-(done[line]||0))throw fail(409,'Bu sayda təhvil verilməmiş məhsul qalmayıb.');

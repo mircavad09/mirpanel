@@ -41,7 +41,7 @@ export function createAccountOrders({security,store,resolve}){
    const [rows,target]=await Promise.all([s.page(before,id),!cursor&&code?s.byCode?.(code):null]);
    const page=rows.slice(0,20),last=page.at(-1);
    if(target&&!page.some(o=>o.id===target.id))page.unshift(target);
-   const [deliveries,catalog]=await Promise.all([s.deliveries?.(page.map(o=>o.id)),catalogRequest]);
+   const [deliveries,catalog,supplierProgress]=await Promise.all([s.deliveries?.(page.map(o=>o.id)),catalogRequest,s.supplierProgress?.(page.map(o=>o.id))]);
    const products=new Map((catalog?.products||[]).map(p=>[p.id,p]));
    const flows=!deliveries&&page.length&&store.workforceOrders?await store.workforceOrders(page.map(o=>o.id)):new Map();
    const result={accountId:s.userId,orders:page.map(o=>{
@@ -52,7 +52,7 @@ export function createAccountOrders({security,store,resolve}){
     const snap=o.checkout_snapshot,product=products.get(o.product_id||snap?.productId),lines=orderLines(snap);
     // An order-wide expiry cannot identify a package in a multi-line purchase.
     const expiresOn=status==='completed'&&lines.length<=1&&records.some(d=>d.line_index===0)?safeCalendarDate(o.service_expires_on)||null:null;
-    return {id:o.id,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus,reason:cancellation.reason}}:{}),items:lines.map((x,i)=>{
+    return {id:o.id,supplierProcessing:status==='preparing'&&supplierProgress?.get(o.id)?.processing===true,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus,reason:cancellation.reason}}:{}),items:lines.map((x,i)=>{
      const item=snap.items[i],current=products.get(x.productId);
      const deliveredQuantity=records.filter(d=>d.line_index===i).reduce((n,d)=>n+d.quantity,0);
      const cancelledQuantity=cancellation?.lines?.find(line=>line.index===i)?.quantity||0;
