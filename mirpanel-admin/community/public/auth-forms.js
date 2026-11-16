@@ -112,7 +112,7 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
  }
 
 let confirmationOpening;
-export function requestEmailConfirmation({checkout=false,signal,onVerified=()=>location.reload()}={}){
+export function requestEmailConfirmation({checkout=false,signal,onVerified=()=>location.reload(),onCancel}={}){
  if(signal?.aborted||document.querySelector('.auth-code-sheet[open]'))return Promise.resolve();
  if(confirmationOpening)return confirmationOpening;
  const life=new AbortController();
@@ -126,7 +126,7 @@ export function requestEmailConfirmation({checkout=false,signal,onVerified=()=>l
   if(life.signal.aborted)return;
   if(pending.verified){await onVerified();return;}
   if(!pending.email)throw Error('Hesabınıza daxil olun və e-poçtunuzu təsdiqləyin.');
-  if(!document.querySelector('.auth-code-sheet[open]'))openVerification({pending,host:document.body,life,verificationApi,finish:onVerified,readableError:e=>e.message,checkout,onClose:()=>life.abort()});
+  if(!document.querySelector('.auth-code-sheet[open]'))openVerification({pending,host:document.body,life,verificationApi,finish:onVerified,readableError:e=>e.message,checkout,onClose:()=>{const active=!life.signal.aborted;life.abort();if(active)onCancel?.();}});
  })().finally(()=>{confirmationOpening=null;if(!document.querySelector('.auth-code-sheet[open]'))life.abort();});
  return confirmationOpening;
 }

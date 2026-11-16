@@ -56,7 +56,7 @@ function loading(body){
  const status=el('div',null,'cart-entry-skeleton');status.setAttribute('role','status');status.setAttribute('aria-label','Qaydalar hazırlanır');status.setAttribute('aria-busy','true');
  body.replaceChildren(status);
 }
-export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=false,loadingDialog=null,onReady,repeatPlanName=null,repeatPlanKey=null,renewal=null}={}){
+export async function startCartEntry(product,plan,{editLine=null,loadingDialog=null,onReady,repeatPlanName=null,repeatPlanKey=null,renewal=null}={}){
  if(current?.open){current.focus();return;}
  const index=product.plans.indexOf(plan);if(index<0)return;
  const initial=preparedQuote(product.id,index,{edit:!!editLine,fresh:repeatPlanName!==null});void initial.request.catch(()=>{});
@@ -69,7 +69,7 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
  else{document.body.append(dialog);dialog.showModal();}
  document.body.classList.add('orderConfirmationActive');
  const before=e=>{if(dialog.open){e.preventDefault();error.textContent='Məlumatları tamamlayın və ya pəncərəni bağlayın.';}};window.addEventListener('mirpanel:before-navigate',before,{signal:life.signal});
- let working=false,activeQuote=null,guest=false,values={},draftId=editLine?.draftId||crypto.randomUUID();
+ let working=false,activeQuote=null,values={},draftId=editLine?.draftId||crypto.randomUUID();
  const api=(path,data,signal)=>withRequestSignal([life.signal,signal],signal?18000:12000,async combined=>{
   const r=await fetch('/api/payments/shop'+path,{method:data?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:data?{'Content-Type':'application/json'}:{},body:data?JSON.stringify(data):undefined,signal:combined});
   if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Sifariş xidməti düzgün cavab vermədi.');
@@ -91,14 +91,7 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
   }return;}
   finally{working=false;}
   dialog.close();
-  if(!editLine&&loginOnGuest&&activeQuote.accountCheck){
-   const target=guest?'/hesab?next=%2Fodenis&from=cart':'/odenis';
-   location.assign(target);
-  }else if(!editLine&&loginOnGuest&&guest){
-   const target='/hesab?next=%2Fsebet&from=cart';
-   if(window.MirpanelNavigation)void window.MirpanelNavigation.go(target);
-   else location.assign(target);
-  }else ready.open();
+  ready.open();
  }
  function fields(){
   const fs=activeQuote.fields||[];
@@ -136,7 +129,7 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
    if(identifier==='player_id')checkInput.closest('label').after(feedback);
    else form.append(feedback);
   }
-  const action=editLine?'Yadda saxla':loginOnGuest?'Ödənişə keç':'Səbətə at';
+  const action=editLine?'Yadda saxla':'Səbətə at';
   const priced=cents=>action+(amount(cents)?' · '+amount(cents):'');
   const next=el('button',checksAccount?priced(quote.unitCents):'Davam et','cart-entry-primary');next.type='submit';form.append(next);
   let timer,request,turn=0,accepted=null;
@@ -231,7 +224,7 @@ export async function startCartEntry(product,plan,{editLine=null,loginOnGuest=fa
     body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));return;
    }
    if(editLine?.draftId&&!reaccept){const saved=await api('/draft?id='+encodeURIComponent(editLine.draftId));if(life.signal.aborted)return;values=saved.values;activeQuote=q;if(saved.termsVersion===q.termsVersion){title.id='cartEntryTitle';dialog.setAttribute('aria-labelledby',title.id);fields();return;}}
-   guest=d.balanceCents===null;terms(q);
+   terms(q);
    if(reaccept)error.textContent='Paketin şərtləri dəyişib. Yeni şərtləri oxuyub yenidən təsdiqləyin.';
   }catch(e){if(!life.signal.aborted){error.textContent=repeatPlanName!==null&&e.status===409?e.message:'Sifariş şərtlərini almaq mümkün olmadı.';body.replaceChildren(button('Yenidən cəhd et',()=>loadTerms(null,reaccept)));}}
  }

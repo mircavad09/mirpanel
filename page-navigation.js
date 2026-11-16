@@ -16,7 +16,7 @@
  const shared=/\/(?:site-header|site-header-menu|desktop-header|account-header|browser-nav|support-widget|cart-store|decorative-backgrounds|community-notices)\.(?:js|css)$/;
  const allowedScripts=new Set(['home-loading.js','display-labels.js','catalog-card.js','catalog-listing.js','app.js','cms-site.js','stories.js','payment-flow.js','order-confirmation.js','stock-display-fix.js','search-suggestions-fix.js','frontend-routing-detail-fix.js','seo-router.js','i18n.js','webmcp.js','site-sections-render.js','browser-orders.js','product-page.js']);
  const cache=new Map(),templates=new Map(),productTemplates=new Map(),styles=new Map(),loaded=new Set(),scriptDownloads=new Map(),scrolls=new Map(),routeClasses=new Set(document.body.classList);let current=location.pathname+location.search+location.hash,generation=0,controller,dispose,loading=false,view,mounted=true;
- const templateKey=p=>['/sebet','/odenis'].includes(p)?'shop':['/qrup','/profil','/hesab'].includes(p)?'community':null;
+ const templateKey=p=>p==='/odenis'?'shop':['/qrup','/profil','/hesab'].includes(p)?'community':null;
  // A checkout return can open its verification sheet before the router loads.
  // Moving an open modal out of the body would remove it from the top layer.
  const persistent=n=>n.matches?.('.site-header,.browser-bottom-nav,#supportWidget,#accountDropdown,#accountNotifications,#accountGuest,#newSplashScreen,#splashLoadStatus,dialog.auth-code-sheet[open],[data-shell-persistent]');
@@ -99,7 +99,7 @@
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
  const moduleAttempts=new Map();
  async function moduleWithin(url){const attempt=moduleAttempts.get(url)||0;let timer;try{return await Promise.race([import(url+(attempt?(url.includes('?')?'&':'?')+'routeRetry='+attempt:'')),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}catch(error){moduleAttempts.set(url,attempt+1);throw error;}finally{clearTimeout(timer);}}
- const shopModule='/community-assets/shop-ui.js?v=customer-perf-2',groupModule='/community-assets/community.js?v=shell-chat-compose-1';
+ const shopModule='/community-assets/shop-ui.js?v=compact-cart-1',groupModule='/community-assets/community.js?v=shell-chat-compose-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&((u.pathname===location.pathname&&(a.dataset.browserNav!=='orders'||u.searchParams.get('tab')===new URLSearchParams(location.search).get('tab')))||u.pathname==='/mehsul'&&isProduct(location.pathname)))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));const profile=new URL(current,location.origin).pathname==='/profil';((profile&&window.mirpanelPageDispose)||dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
@@ -209,6 +209,10 @@
   }
  }
  async function go(href,{pop=false,retry=false}={}){const u=profileAddress(new URL(href,location.href));if(u.origin!==location.origin||!canRoute(u.pathname)){if(pop&&u.href===location.href)location.reload();else location.assign(u.href);return false;}const key=u.pathname+u.search+u.hash;if(!retry&&key===current&&!loading)return true;if(!retry&&!guard()){if(pop)history.pushState({mirpanel:true},'',current);return false;}
+ if(u.pathname==='/sebet'||new URL(current,location.origin).pathname==='/sebet'){
+  if(pop)location.reload();else location.assign(u.href);
+  return true;
+ }
  if(mounted&&location.pathname==='/profil'&&new URL(current,location.origin).pathname==='/profil'&&u.pathname==='/profil'&&window.mirpanelAccountNavigate){if(!pop)history.pushState({mirpanel:true},'',key);current=key;active();await window.mirpanelAccountNavigate(u.href);return true;}
  const run=++generation;controller?.abort();controller=new AbortController();const requestController=controller,timeout=setTimeout(()=>requestController.abort(),20000);scrolls.set(current,{x:scrollX,y:scrollY});if(mounted)leave();loading=true;if(!pop&&!retry)history.pushState({mirpanel:true},'',key);current=key;active();
  document.querySelector('.site-header')?.classList.remove('is-menu-open');document.body.classList.remove('site-header-menu-open','home-page','profile-screen','wallet-page-active','auth-screen');document.body.style.overflow='';document.documentElement.classList.remove('community-chat-screen');

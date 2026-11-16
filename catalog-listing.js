@@ -107,7 +107,7 @@ document.addEventListener('click', async event => {
     const r=await fetch('/api/payments/inventory',{cache:'no-store',signal});
     if(!r.ok)throw Error('Stok məlumatı alınmadı.');return r.json();
    })),
-   import('/community-assets/cart-entry.js?v=epinby-account-1'),
+   import('/community-assets/cart-entry.js?v=compact-cart-1'),
    import('/inventory-availability.mjs?v=live-sale-switch-1')
   ]);
   if(!add.isConnected||clickLife.signal.aborted)return;

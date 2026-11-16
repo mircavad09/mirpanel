@@ -16,7 +16,7 @@
   let modalSession = 0;
   let cartOpening, cartModule, cartModuleRetry = 0;
   function entryModule() {
-    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=abort-compat-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
+    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=compact-cart-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
       .catch(error => {cartModule = null; cartModuleRetry++; throw error;});
     return cartModule;
   }
@@ -27,7 +27,7 @@
     if (Number(plan?.price) > 0) void entryModule().then(m => m.prepareCartEntry(product, plan)).catch(() => {});
   }
 
-  function openPreparedCartEntry(product, plan, loginOnGuest) {
+  function openPreparedCartEntry(product, plan) {
     if (cartOpening?.open || document.querySelector("dialog.cart-entry[open]")) return;
     const life = new AbortController(), dialog = document.createElement("dialog"), title = document.createElement("h2"),
       close = document.createElement("button"), status = document.createElement("p"), retry = document.createElement("button");
@@ -61,7 +61,7 @@
           new Promise((_, reject) => {timer = setTimeout(() => {cartModule = null; cartModuleRetry++; reject(Error("Order module timeout"));}, 12000);})
         ]);
         if (!dialog.open || cartOpening !== dialog) return;
-        await m.startCartEntry(product, plan, {loginOnGuest, loadingDialog:dialog, onReady:() => {handedOff = true; cartOpening = null; life.abort();}});
+        await m.startCartEntry(product, plan, {loadingDialog:dialog, onReady:() => {handedOff = true; cartOpening = null; life.abort();}});
       } catch {
         if (dialog.open && cartOpening === dialog) {
           status.removeAttribute("style"); status.setAttribute("aria-busy", "false"); status.removeAttribute("aria-label");
@@ -1919,7 +1919,7 @@
   window.addEventListener('pageshow',()=>setTimeout(restoreDirectSelection,100));
   window.addEventListener('mirpanel:route-ready',restoreDirectSelection);
 
-  function runOrderFlow(product, plan, loginOnGuest=true) {
+  function runOrderFlow(product, plan) {
     const catalogProduct = DATA.products.find((item) => item.id === product?.id);
     if (catalogProduct) {
       if (!(catalogProduct.plans || []).includes(plan)) {
@@ -1929,7 +1929,7 @@
       product = catalogProduct;
     }
     if(plan&&Number(plan.price)>0){
-      openPreparedCartEntry(product,plan,loginOnGuest);return;
+      openPreparedCartEntry(product,plan);return;
     }
     if (!stockIsAvailable(product, plan) || !plan || Number(plan.price) <= 0) {
       decorateProductPage(product);
@@ -1938,7 +1938,7 @@
     }
 
     if(!isSpotifyProduct(product)&&!activeFields(product).some(f=>f.type==='password')){
-      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=abort-compat-1').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
+      if(!window.MirpanelCart?.open){void import('/cart-store.js?v=compact-cart-1').then(()=>{if(window.MirpanelCart?.open)runOrderFlow(product,plan);else toastMessage('Səbət hazırda açılmır.');}).catch(()=>toastMessage('Səbət hazırda açılmır.'));return;}
       const index=product.plans.indexOf(plan);
       openBaseModal(product,plan);const session=modalSession;
       const add=(values,quote)=>{

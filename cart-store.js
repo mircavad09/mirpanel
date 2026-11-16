@@ -119,33 +119,52 @@
   return tile;
  }
  let drawer;
+ const isCartPage=()=>location.pathname==='/sebet';
  cart.open=()=>{
+  if(!isCartPage()){location.assign('/sebet');return;}
+  mountDrawer();
+ };
+ function cartDestination(){
+  try{
+   const previous=new URL(document.referrer);
+   if(previous.origin===location.origin&&(/^\/mehsul(?:\/[a-z0-9-]+)?\/?$/.test(previous.pathname)||['/','/profil','/sifarislerim','/qrup','/balans'].includes(previous.pathname)))return previous.pathname+previous.search;
+  }catch{}
+  return '/mehsul';
+ }
+ function mountDrawer(){
   if(drawer?.open)return;
+  const loading=document.querySelector('[data-cart-loading]');
   const d=node('dialog',null,'mir-cart-drawer');drawer=d;d.setAttribute('aria-label','Səbət');
   const heading=node('header'),title=node('strong','Səbət'),badge=node('span',null,'mir-cart-heading'),close=action('×',()=>d.close());
   badge.innerHTML=icon;badge.append(title);close.setAttribute('aria-label','Səbəti bağla');close.autofocus=true;heading.append(badge,close);
-  const body=node('div',null,'mir-cart-body'),foot=node('footer'),life=new AbortController(),notice=node('p',null,'mir-cart-notice'),total=node('strong','—'),sum=node('div',null,'mir-cart-sum'),next=action('Ödənişə keç',async e=>{if(requiresLogin){e.stopPropagation();d.close();await import('/account-header.js?v=az-addresses-1');if(!window.MirpanelRequireLogin?.('/odenis'))location.assign('/hesab?next=%2Fodenis');}else location.assign('/odenis');},'mir-cart-next'),retry=action('Yenidən yoxla',()=>void draw(),'mir-cart-retry');
+  const body=node('div',null,'mir-cart-body'),foot=node('footer'),life=new AbortController(),notice=node('p',null,'mir-cart-notice'),total=node('strong','—'),sum=node('div',null,'mir-cart-sum'),next=action('Ödənişə keç',()=>location.assign(requiresLogin?'/hesab?next=%2Fsebet&from=cart':'/odenis'),'mir-cart-next'),retry=action('Yenidən yoxla',()=>void draw(),'mir-cart-retry');
   const nextArrow=node('span',null,'mir-cart-arrow');nextArrow.innerHTML=arrow;next.append(nextArrow);
   notice.setAttribute('role','status');sum.append(node('span','Cəmi'),total);foot.append(notice,retry,sum,next);d.append(heading,body,foot);
   let generation=0,requiresLogin=false;
-  const initial=read(),products=catalog(),source=products.find(p=>p.id===initial.at(-1)?.productId);
-  const related=products.filter(p=>p.active!==false&&!p.soldOut&&p.plans?.length&&!initial.some(x=>x.productId===p.id))
-   .map(p=>({p,rank:Number(!!source?.category&&p.category===source.category),random:Math.random(),price:Math.min(...p.plans.map((plan,i)=>!plan.soldOut&&window.MirpanelInventory?.planState(p,i)?.canOrder!==false?catalogRow(p,i)?.unitCents:null).filter(Number.isSafeInteger))}))
-   .filter(x=>Number.isFinite(x.price)).sort((a,b)=>b.rank-a.rank||a.random-b.random).slice(0,3);
+  let products=[];
+  void fetch('/api/payments/storefront',{signal:life.signal})
+   .then(response=>response.ok?response.json():null).then(data=>{
+    if(!Array.isArray(data?.products)||life.signal.aborted)return;
+    products=data.products.filter(p=>Number.isSafeInteger(p.priceCents)&&p.priceCents>0&&/^\/mehsul\/[a-z0-9-]+$/.test(p.path));
+    const items=read();
+    render(items,previewRows(items));
+   }).catch(()=>{});
   d.addEventListener('click',e=>{if(e.target===d){const r=d.getBoundingClientRect();if(e.clientX<r.left||e.clientX>r.right||e.clientY<r.top||e.clientY>r.bottom)d.close();}});
-  d.addEventListener('close',()=>{life.abort();if(addedNotice?.parentElement===d)placeCartAdded(document.body);d.remove();if(drawer===d)drawer=null;},{once:true});
+  d.addEventListener('close',()=>{life.abort();if(addedNotice?.parentElement===d)placeCartAdded(document.body);d.remove();if(drawer===d)drawer=null;if(isCartPage())location.replace(cartDestination());},{once:true});
   function render(items,quoted){
    const top=body.scrollTop,focus=document.activeElement?.dataset?.cartFocus;
    const rows=items.map(x=>{
     const p=quoted.find(y=>itemKey(y)===itemKey(x))||{},name=p.title||x.productId;
     const row=node('article',null,'mir-cart-item');row.dataset.cartProduct=x.productId;
     const product=catalog().find(product=>product.id===x.productId);
-    const img=artwork(product?product.image:p.image);
+    const img=artwork(p.image||product?.image);
     const info=node('div',null,'mir-cart-info');info.append(node('strong',name),node('small',p.planName||'Seçilmiş paket'),node('b',p.unitCents==null?'—':azMoney(p.unitCents*x.quantity)));
     if(p.salesDisabled||p.available===0)info.append(node('small','Stokda yoxdur'));
     else if(p.available!=null&&p.available<x.quantity)info.append(node('small','Stokda '+p.available+' ədəd var.'));
     for(const field of p.maskedDetails||[])info.append(node('small',field.label+': '+field.value));
-    if(x.draftId)info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{d.close();void import('/community-assets/cart-entry.js?v=epinby-account-1').then(m=>m.editCartLine(x)).catch(e=>alert(e.message));}));
+    if(x.draftId&&(p.termsMissing||p.fields?.length))info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{
+     void import('/community-assets/cart-entry.js?v=compact-cart-1').then(m=>m.editCartLine(x)).catch(e=>{notice.textContent=e.message;});
+    }));
     const controls=node('div',null,'mir-cart-controls'),qty=node('div',null,'mir-cart-qty'),change=n=>{try{cart.set(x.productId,x.planIndex,n,undefined,undefined,x.lineId);}catch(e){notice.textContent=e.message;}};
     const minus=action('−',()=>change(x.quantity-1)),plus=action('+',()=>change(x.quantity+1)),del=action('Sil',()=>change(0),'mir-cart-remove');del.insertAdjacentHTML('afterbegin',trash);
     for(const [b,label] of [[minus,'Azalt'],[plus,'Artır'],[del,'Sil']]){b.setAttribute('aria-label',label+': '+name);b.dataset.cartFocus=itemKey(x)+label;}
@@ -153,16 +172,19 @@
     qty.append(minus,node('span',x.quantity),plus);controls.append(qty,del);row.append(img,info,controls);return row;
    });
    const more=node('section',null,'mir-cart-more');more.append(node('p','Daha çox məhsul əlavə et'));
-   for(const {p,price} of related.filter(({p})=>!items.some(x=>x.productId===p.id))){
+   const inCart=new Set(items.map(x=>x.productId));
+   const category=products.find(p=>p.id===items.at(-1)?.productId)?.category;
+   const related=products.filter(p=>!inCart.has(p.id))
+    .sort((a,b)=>Number(b.category===category)-Number(a.category===category)).slice(0,3);
+   for(const p of related){
     const row=node('article',null,'mir-cart-item mir-cart-suggestion'),img=artwork(p.image);
     const info=node('div',null,'mir-cart-info');
-    info.append(node('strong',p.title),node('b',azMoney(price)+(p.plans.length>1?'-dən başlayır':'')));
-    const b=action('+',()=>{
-     d.close();if(typeof window.openProductPage==='function')window.openProductPage(p.id);else location.assign('/mehsul');
-    });
-    b.setAttribute('aria-label',p.title+' seç');row.append(img,info,b);more.append(row);
+    const price=window.MirpanelPricing?.minimum(p.id,p.priceCents)??p.priceCents;
+    info.append(node('strong',p.title),node('b',azMoney(price)+(p.from?'-dən başlayır':'')));
+    const choose=node('a','+','mir-cart-offer');choose.href=p.path;
+    choose.setAttribute('aria-label',p.title+' seç');row.append(img,info,choose);more.append(row);
    }
-   if(more.children.length===1){const a=node('a','+ Məhsullara bax');a.href='/mehsul';a.onclick=()=>d.close();more.append(a);}
+   if(more.children.length===1){const a=node('a','+ Məhsullara bax');a.href='/mehsul';more.append(a);}
    body.replaceChildren(...(rows.length?rows:[node('p','Səbətiniz boşdur.')]),more);body.scrollTop=top;
    if(focus)[...body.querySelectorAll('[data-cart-focus]')].find(n=>n.dataset.cartFocus===focus)?.focus({preventScroll:true});
   }
@@ -177,21 +199,18 @@
     next.disabled=!items.length||rows.length!==items.length||short||termsMissing||detailsMissing;
     notice.textContent=termsMissing?'Məhsulun şərtlərini yenidən təsdiqləyin.':detailsMissing?'Sifariş məlumatlarını tamamlayın.':'';
    }
-   show(rows);
+   render(items,rows);
+   notice.textContent=items.length?'Qiymət və stok yoxlanılır…':'';
    if(!items.length)return;
    try{
     const q=await verify(items);if(run!==generation||life.signal.aborted)return;
     requiresLogin=q.balanceCents===null;show(q.items);total.textContent=azMoney(q.totalCents);
-   }catch{if(run===generation&&!life.signal.aborted)retry.hidden=false;}
+   }catch{if(run===generation&&!life.signal.aborted){notice.textContent='Qiymət və stoku yoxlamaq mümkün olmadı.';retry.hidden=false;}}
   }
   window.addEventListener('mirpanel:cart',draw,{signal:life.signal});window.addEventListener('storage',e=>{if(e.key===key)void draw();},{signal:life.signal});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void draw();},{signal:life.signal});
-  document.body.append(d);placeCartAdded(d);void draw();d.showModal();
- };
- document.addEventListener('click',e=>{
-  const a=e.target.closest?.('#cartHeaderLink,[data-browser-nav=cart]');if(!a||e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;
-  e.preventDefault();e.stopImmediatePropagation();cart.open();
- },true);
+  loading?.remove();document.body.append(d);placeCartAdded(d);void draw();d.showModal();
+ }
  window.addEventListener('mirpanel:cart',()=>{if(!drawer?.open)prefetch();});
  window.addEventListener('mirpanel:route-ready',()=>remember(read()));
  let accountId;
@@ -202,7 +221,7 @@
   window.dispatchEvent(new Event('mirpanel:cart'));
   if(nextId)void restore();
  });
- window.addEventListener('pageshow',event=>{if(event.persisted)window.dispatchEvent(new Event('mirpanel:cart'));});
+ window.addEventListener('pageshow',event=>{if(event.persisted){if(isCartPage())mountDrawer();window.dispatchEvent(new Event('mirpanel:cart'));}});
  prefetch();void restore();
  const icon='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l3 13h11l3-9H6 M10 21h.01 M18 21h.01"/></svg>';
  function fly(b,p){if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;const target=[...document.querySelectorAll('#cartHeaderLink,[data-browser-nav=cart]')].find(n=>n.getClientRects().length),image=document.getElementById('pp-main-img')?.currentSrc||p.image;if(!target||!image||!b.animate)return;
@@ -211,5 +230,5 @@
  }
  function mount(){const order=document.getElementById('pp-order-btn');if(order&&!document.getElementById('cartAddProduct')){const b=document.createElement('button'),about=order.parentElement.querySelector('.product-page-action.is-about'),label=document.createElement('span');b.id='cartAddProduct';b.type='button';b.disabled=order.disabled;b.className='cart-add-product'+(about?' product-page-action is-cart':'');b.innerHTML=icon;label.textContent=about?'Səbətə at':'Səbətə əlavə et';b.append(label);b.onclick=()=>{try{if(typeof currentProduct==='undefined'||!currentProduct||!Number.isInteger(currentPlanIdx))throw Error('Əvvəlcə məhsul və planı seçin.');if(order.disabled)throw Error('Seçilmiş paket hazırda stokda yoxdur.');cart.add(currentProduct.id,currentPlanIdx);fly(b,currentProduct);label.textContent='Əlavə edildi';clearTimeout(b.feedbackTimer);b.feedbackTimer=setTimeout(()=>label.textContent=about?'Səbətə at':'Səbətə əlavə et',1400);}catch(e){alert(e.message);}};if(about)about.replaceWith(b);else order.before(b);}
  const header=document.querySelector('.site-header-tools');if(header&&!document.getElementById('cartHeaderLink')){const a=document.createElement('a');a.id='cartHeaderLink';a.href='/sebet';a.className='cart-header-link';a.setAttribute('aria-label','Səbət');a.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h2l3 13h11l3-9H6 M10 21h.01 M18 21h.01"/></svg><span>Səbət</span><small></small>';header.append(a);}const n=document.querySelector('#cartHeaderLink small'),count=read().reduce((s,x)=>s+x.quantity,0),text=count>99?'99+':count?String(count):'';if(n&&n.textContent!==text)n.textContent=text;const link=document.getElementById('cartHeaderLink');if(link)link.setAttribute('aria-label',count?'Səbət, '+count+' məhsul':'Səbət');}
- const css=document.createElement('link');css.rel='stylesheet';css.href='/cart-store.css?v=cart-added-notice-1';document.head.append(css);new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});window.addEventListener('mirpanel:cart',mount);window.addEventListener('pagehide',dismissCartAdded);window.addEventListener('storage',e=>{if(e.key===key)mount();});mount();
+ const css=document.createElement('link');css.rel='stylesheet';css.href='/cart-store.css?v=compact-cart-1';if(!document.querySelector('link[href="/cart-store.css?v=compact-cart-1"]'))document.head.append(css);new MutationObserver(mount).observe(document.body,{childList:true,subtree:true});window.addEventListener('mirpanel:cart',mount);window.addEventListener('pagehide',dismissCartAdded);window.addEventListener('storage',e=>{if(e.key===key)mount();});mount();if(isCartPage())mountDrawer();
 })();

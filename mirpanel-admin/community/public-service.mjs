@@ -1,3 +1,4 @@
+import {cartPageContent,cartPageScript,cartPageStyle} from '../../cart-page.mjs';
 import {withStorefrontHead} from '../../storefront-head.mjs';
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import {Readable} from 'node:stream';
 import {toNodeHandler,fromNodeHeaders} from 'better-auth/node';import {authFormPolicy} from './auth-form-policy.mjs';
@@ -35,10 +36,10 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html:
  res.setHeader('Server-Timing',`release;dur=${gateMs.toFixed(1)}, auth;dur=${authMs.toFixed(1)}`);
  const need=()=>{if(!user)throw fail(401,'Əvvəlcə daxil olun.');return user;};
  if(req.method==='GET'&&['/sebet','/balans','/odenis'].includes(route)){
-  const balance=route==='/balans';
+  const balance=route==='/balans',cart=route==='/sebet';
   const loading=balance?`<h1>Balansım</h1>
    <div class="shop-wallet-loading" role="status">Balans məlumatı yüklənir…</div>`:'';
-  html(res,`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel · Səbət və balans</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/shop.css?v=checkout-first-paint-2">${balance?'<link rel="stylesheet" href="/customer-footer.css?v=route-recovery-1" data-shell-persistent data-customer-footer-style>':''}<body class="community-page${balance?' wallet-page-active':''}">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main id="shopApp" class="shop-page${balance?' shop-wallet-page':''}">${loading}</main><script type="module" src="/community-assets/shop-ui.js?v=customer-perf-2"></script><script defer src="/page-navigation.js?v=route-recovery-1" data-page-navigation-loader></script><script src="/site-header.js?v=storefront-identity-1" defer></script></body></html>`);
+  html(res,`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>MirPanel · Səbət və balans</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/site-header.css">${cart?cartPageStyle:'<link rel="stylesheet" href="/community-assets/shop.css?v=checkout-first-paint-2">'}${balance?'<link rel="stylesheet" href="/customer-footer.css?v=route-recovery-1" data-shell-persistent data-customer-footer-style>':''}<body class="community-page${balance?' wallet-page-active':''}">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}${cart?cartPageContent+cartPageScript:`<main id="shopApp" class="shop-page${balance?' shop-wallet-page':''}">${loading}</main><script type="module" src="/community-assets/shop-ui.js?v=${balance?'customer-perf-2':'compact-cart-1'}"></script>`}<script defer src="/page-navigation.js?v=route-recovery-1" data-page-navigation-loader></script><script src="/site-header.js?v=storefront-identity-1" defer></script></body></html>`);
   return true;
  }
  if(route==='/api/community/events'&&req.method==='GET'){runtime.live??=new CommunityLive(pool,repo,counts);await runtime.live.attach(req,res,session,u);return true;}
