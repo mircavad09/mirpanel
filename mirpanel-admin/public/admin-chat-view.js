@@ -8,6 +8,10 @@ const button=(text,fn)=>{const n=el('button',{type:'button',class:'btn'},text);n
 export async function mountChat({root,state,call,alive}){
  let stream,closed=false,key=crypto.randomUUID(),messages=new Map();const dialogs=new Set();
  const valid=()=>!closed&&alive(),error=el('p',{role:'alert',class:'ac-error'}),list=el('div',{class:'ac-messages','aria-label':'Qrup mesajları',tabindex:'0'}),input=el('textarea',{'aria-label':'Qrup mesajı',placeholder:'Mesajınızı yazın…',maxlength:'2000',rows:'1'});
+ const preview=button('Influencer görünüşünü sına',async()=>{
+  try{const {openInfluencerPreview}=await import('/influencer-preview.js?v=1');if(valid())await openInfluencerPreview({call,alive:valid});}
+  catch(failure){if(valid())error.textContent=failure.message;}
+ });
  const near=()=>list.scrollHeight-list.clientHeight-list.scrollTop<65;
  const newer=button('Yeni mesajlar ↓',()=>{list.scrollTop=list.scrollHeight;newer.hidden=true;});newer.hidden=true;newer.classList.add('ac-new');
  const guard=fn=>async(...args)=>{try{await fn(...args);}catch(e){if(valid())error.textContent=e.message;}};
@@ -26,7 +30,7 @@ export async function mountChat({root,state,call,alive}){
  if(initial||bottom){list.scrollTop=list.scrollHeight;newer.hidden=true;}else{const kept=anchor&&list.querySelector('[data-message-id="'+anchor.dataset.messageId+'"]');list.scrollTop=kept?kept.offsetTop-offset:top;}}
  async function refresh(){const r=await call('/messages');if(!valid())return;messages=new Map(r.items.map(m=>[m.id,m]));paint(!list.children.length);}
  const send=button('Göndər',guard(async()=>{if(send.disabled||!input.value.trim())return;send.disabled=input.disabled=true;send.textContent='Göndərilir…';try{await call('/messages',{body:input.value,clientId:key});input.value='';key=crypto.randomUUID();await refresh();}finally{send.disabled=input.disabled=false;send.textContent='Göndər';}}));send.classList.add('primary');input.addEventListener('input',()=>{key=crypto.randomUUID();});list.addEventListener('scroll',()=>{if(near())newer.hidden=true;});
- root.replaceChildren(el('header',{class:'ac-header'},el('h1',{},'Qrup söhbət'),controls.settingsButton),error,list,newer,el('div',{class:'ac-compose'},input,send));
+ root.replaceChildren(el('header',{class:'ac-header'},el('h1',{},'Qrup söhbət'),controls.settingsButton,preview),error,list,newer,el('div',{class:'ac-compose'},input,send));
  await refresh();if(valid()){stream=new EventSource('/api/admin/community/events?after='+Math.max(0,...[...messages.keys()].map(Number))+'&known='+[...messages.keys()].join(','));stream.addEventListener('messages',x=>{if(!valid())return;const r=JSON.parse(x.data),added=r.items.some(m=>!messages.has(m.id)),bottom=near();for(const id of r.removed||[])messages.delete(id);for(const m of r.items)messages.set(m.id,m);paint();if(added&&!bottom)newer.hidden=false;});stream.onerror=()=>{if(valid())error.textContent='Bağlantı bərpa olunur.';};stream.onopen=()=>{error.textContent='';};}
  return()=>{closed=true;stream?.close();for(const d of dialogs)d.remove();};
 }

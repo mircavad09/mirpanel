@@ -1,3 +1,4 @@
+import {influencerPreview} from './influencer-preview.mjs';
 import {ensureReadyDeliverySettings,readyDeliverySnapshot} from './ready-stock-availability.mjs';
 import {epinbyProgress} from './epinby-progress.mjs';
 import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} from 'node:url';import pg from 'pg';import {toNodeHandler,fromNodeHeaders} from 'better-auth/node';import {Repository,displayName} from './repository.mjs';import {GroupControl} from './group-control.mjs';import {makeOwnerAuth,isOwner} from './owner-auth.mjs';
@@ -59,6 +60,7 @@ export function createOwnerCommunity(env=process.env,options={}){
     return json(res,200,{...history,debitAvailable:available});
    }
    if(part==='/users'||part.startsWith('/users/'))return json(res,200,await adminDirectory(r.pool,r.repo,{...Object.fromEntries(u.searchParams),id:part.startsWith('/users/')?decodeURIComponent(part.slice(7)):null}));
+   if(part==='/influencer-preview')return json(res,200,await influencerPreview(r.pool,owner.id));
    if(part==='/state')return json(res,200,{profile:await r.repo.profile(owner),settings:await r.group.settings()});
    if(part==='/messages')return json(res,200,await r.repo.messages(Object.fromEntries(u.searchParams)));
    if(part==='/manage')return json(res,200,await r.group.review(owner,Object.fromEntries(u.searchParams)));
@@ -66,6 +68,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   }
   if(req.method==='POST'){
    const b=await body(req);
+   if(part==='/influencer-preview')return json(res,200,await influencerPreview(r.pool,owner.id,b));
    if(part==='/shop')return json(res,200,await options.shopAdmin(r.pool,owner,b));
    if(part==='/user-controls')return json(res,200,await saveUserControls(r.pool,owner,b,await options.loadCatalog()));
    if(part==='/reset-user-password'){const user=(await r.pool.query('select id,email,"emailVerified" from "user" where id=$1',[b.userId])).rows[0];if(!user?.emailVerified)throw Object.assign(Error('Təsdiqlənmiş e-poçt tələb olunur.'),{status:400});const password=(await r.pool.query('select 1 from account where "userId"=$1 and "providerId"=\'credential\'',[user.id])).rowCount;if(!password)return json(res,200,{sent:false,message:'Bu hesab Google ilə daxil olur. Şifrə Google hesabında idarə edilir.'});await r.auth.api.requestPasswordReset({body:{email:user.email,redirectTo:origin+'/hesab?mode=new-password'}});return json(res,200,{sent:true});}

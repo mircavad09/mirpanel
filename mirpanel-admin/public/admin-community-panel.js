@@ -1,4 +1,4 @@
-import {mountChat} from '/admin-chat-view.js?v=polish-20261102';
+import {mountChat} from '/admin-chat-view.js?v=influencer-preview-1';
 const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/admin-community-panel.css?v=bubbles-20261102';document.head.append(sheet);
 const base='/api/admin/community';let stop=()=>{},activeRoot,activeView,activeFilter;
 const e=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
