@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Telegram Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel</title>
   <meta name="description" content="Telegram Premium paket adlarını, AZN qiymətlərini və faktiki xidmət növünü MirPanel-də yoxlayın. Premium abunəliklə Stars fərqini ödənişdən əvvəl dəqiqləşdirin.">
-  <meta name="robots" content="index, follow, max-image-preview:large">
+  <meta name="robots" content="noindex, follow">
   <link rel="canonical" href="https://mirpanel.com/mehsul/telegram-premium">
   <meta property="og:type" content="product">
   <meta property="og:title" content="Telegram Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel">
@@ -228,7 +228,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=stable-buy-1-42fadd40db3f8e71"></script>
+  <script src="/app.js?v=stable-buy-1-b5c1a402362bf0c0"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=incident-recovery-1"></script>
   <script src="/stock-display-fix.js?v=ready-delivery-1"></script>
