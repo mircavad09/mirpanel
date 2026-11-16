@@ -249,14 +249,14 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?account-header\.js(?:\?[^"']*)?(["'])/g,'$1/account-header.js?v=mobile-wallet-compact-2$2');
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=zoom-phone-1$2');
-  next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=abort-compat-1$2');
+  next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=incident-recovery-1$2');
   next=next.replace(/(src=["'])\/?browser-nav\.js(?:\?[^"']*)?(["'])/g,'$1/browser-nav.js?v=abort-compat-1$2');
   next=next.replace(/(src=["'])\/?(seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
   next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=epinby-compact-1$3');
   next=next.replace(/(src=["'])\/?catalog-card\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-card.js?v=game-covers-1$2');
   next=next.replace(/(src=["'])\/?catalog-listing\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-listing.js?v=customer-perf-1$2');
   next=next.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=customer-perf-1$2');
-  next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=delivered-sales-1$2');
+  next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=incident-recovery-1$2');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?(home-loading|cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-recovery-1$3');
   next=next.replace(/(href=["'])\/?home-loading\.css(?:\?[^"']*)?(["'])/g,'$1/home-loading.css?v=home-recovery-1$2');

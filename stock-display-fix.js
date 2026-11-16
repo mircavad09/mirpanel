@@ -197,6 +197,9 @@
 
   function stateFor(product){const state=inventoryAvailability(product,inventory.get(product?.id));return inventoryDisplayValid&&inventory.has(product?.id)?state:{...state,unavailable:true,available:null,canOrder:false,plans:state.plans.map(p=>({...p,available:null,canOrder:false}))};}
   function planFor(product,index){return stateFor(product).plans.find(p=>p.planKey===String(index));}
+  // Opening the read-only order window is safe while inventory is unknown.
+  // Quote and checkout still confirm the actual price, availability and balance.
+  function canOpenOrder(product,index){const state=stateFor(product),plan=state.plans.find(p=>p.planKey===String(index));return product.active!==false&&!state.salesDisabled&&plan?.active===true&&(state.unavailable||plan.canOrder===true);}
   function paintInventory(){
     if(painting)return;painting=true;
     try{
@@ -227,10 +230,10 @@
       const state=stateFor(product),rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')];
       let index=typeof currentPlanIdx==='number'?currentPlanIdx:0;
       if(!state.unavailable&&!state.plans[index]?.canOrder){const next=state.plans.findIndex(p=>p.canOrder);if(next>=0&&rows[next]){currentPlanIdx=next;rows[next].click();index=next;}else if(next<0&&index!==-1){currentPlanIdx=-1;index=-1;rows.forEach(row=>{row.classList.remove('active');row.setAttribute('aria-checked','false');});document.getElementById('pp-plans-container')?.dispatchEvent(new Event('mirpanel:plan-selection-cleared'));}}
-      const canOrder=state.plans[index]?.canOrder===true;
-      const button=document.getElementById('pp-order-btn');if(button){button.disabled=!canOrder;button.classList.toggle('disabled',!canOrder);button.title=state.salesDisabled?'Stokda yoxdur':state.unavailable?(inventoryFailed?'Müvəqqəti əlçatan deyil':'Stok yoxlanılır…'):canOrder?'':'Stokda yoxdur';}
+      const canOrder=state.plans[index]?.canOrder===true,canOpen=canOpenOrder(product,index);
+      const button=document.getElementById('pp-order-btn');if(button){button.disabled=!canOpen;button.classList.toggle('disabled',!canOpen);button.title=state.salesDisabled?'Stokda yoxdur':state.unavailable?(inventoryFailed?'Müvəqqəti əlçatan deyil':'Stok yoxlanılır…'):canOrder?'':'Stokda yoxdur';}
       const add=document.getElementById('cartAddProduct');
-      if(add)add.disabled=!canOrder;
+      if(add)add.disabled=!canOpen;
       document.querySelectorAll('.product-page-status').forEach(el=>{el.textContent=state.salesDisabled?'Stokda yoxdur':state.unavailable?'Stok məlumatı alınır':state.canOrder?'Mövcuddur':'Stokda yoxdur';el.classList.toggle('is-out',state.salesDisabled||!state.unavailable&&!state.canOrder);});
       rows.forEach((row,i)=>{
         const plan=state.plans[i],out=!state.unavailable&&!plan?.canOrder;row.setAttribute('aria-disabled',String(out));row.tabIndex=out?-1:i===index?0:-1;
@@ -278,12 +281,12 @@
       }finally{clearTimeout(timeout);if(inventoryRequest===pending){inventoryRequest=null;inventoryController=null;}}
     })();inventoryRequest=pending;return pending;
   }
-  window.MirpanelInventory={productState:stateFor,planState:planFor,refresh:refreshInventory,paint:paintInventory,dispose(){disposed=true;cancelInventory();clearInterval(inventoryTimer);clearInterval(homeSalesTimer);},async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
+  window.MirpanelInventory={canOpenOrder,productState:stateFor,planState:planFor,refresh:refreshInventory,paint:paintInventory,dispose(){disposed=true;cancelInventory();clearInterval(inventoryTimer);clearInterval(homeSalesTimer);},async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
   document.addEventListener('click',event=>{
     const el=event.target.closest('.homeCardOrder,#pp-order-btn,#cartAddProduct,.pp-plan-label');if(!el)return;
     const product=el.classList.contains('homeCardOrder')?(typeof DATA!=='undefined'?DATA.products.find(p=>p.id===el.closest('[data-product-id]')?.dataset.productId):null):(typeof currentProduct!=='undefined'?currentProduct:null);if(!product)return;
     const rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')];
-    const unknown=stateFor(product).unavailable;const allowed=el.matches('.pp-plan-label')?(unknown||planFor(product,rows.indexOf(el))?.canOrder):el.matches('#pp-order-btn,#cartAddProduct')?planFor(product,currentPlanIdx)?.canOrder:!stateFor(product).salesDisabled&&(unknown||stateFor(product).canOrder);
+    const unknown=stateFor(product).unavailable;const allowed=el.matches('.pp-plan-label')?(unknown||planFor(product,rows.indexOf(el))?.canOrder):el.matches('#pp-order-btn,#cartAddProduct')?canOpenOrder(product,currentPlanIdx):!stateFor(product).salesDisabled&&(unknown||stateFor(product).canOrder);
     if(!allowed){event.preventDefault();event.stopImmediatePropagation();return;}if(el.matches('.pp-plan-label'))setTimeout(paintInventory,0);
   },true);
   document.addEventListener('keydown',event=>{const row=event.target.closest('.pp-plan-label');if(!row||!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;const product=typeof currentProduct!=='undefined'?currentProduct:null;if(!product)return;event.preventDefault();event.stopImmediatePropagation();const rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')],available=rows.filter((_,i)=>planFor(product,i)?.canOrder);if(!available.length)return;const at=available.indexOf(row),step=['ArrowUp','ArrowLeft'].includes(event.key)?-1:1,next=available[(at+step+available.length)%available.length];next.click();next.focus();},true);
