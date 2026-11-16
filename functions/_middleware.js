@@ -256,7 +256,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?catalog-card\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-card.js?v=game-covers-1$2');
   next=next.replace(/(src=["'])\/?catalog-listing\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-listing.js?v=customer-perf-1$2');
   next=next.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=customer-perf-1$2');
-  next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=incident-recovery-1$2');
+  next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=system-recovery-1$2');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?(home-loading|cms-site|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-recovery-1$3');
   next=next.replace(/(href=["'])\/?home-loading\.css(?:\?[^"']*)?(["'])/g,'$1/home-loading.css?v=home-recovery-1$2');

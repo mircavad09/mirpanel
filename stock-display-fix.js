@@ -255,7 +255,7 @@
   }
   let inventoryRequest=null,inventoryController=null,retryTimer=null,revision=0,failures=0,disposed=false;
   const activeRoute=()=>!window.MirpanelNavigation||['/','/mehsul'].includes(location.pathname)||location.pathname.startsWith('/mehsul/');
-  function scheduleInventory(){clearTimeout(retryTimer);if(!document.hidden&&activeRoute()&&!disposed)retryTimer=setTimeout(()=>void refreshInventory(),Math.min(15000,750*2**Math.min(failures-1,5)));}
+  function scheduleInventory(){clearTimeout(retryTimer);if(!document.hidden&&activeRoute()&&!disposed){const delay=Math.min(30000,3000*2**Math.min(failures-1,5));retryTimer=setTimeout(()=>void refreshInventory(),Math.round(delay*(.8+Math.random()*.4)));}}
   function cancelInventory(){revision++;inventoryController?.abort();inventoryController=null;inventoryRequest=null;clearTimeout(retryTimer);}
   function refreshInventory({force=false}={}){
     if(disposed||!activeRoute()||document.hidden)return Promise.resolve(false);

@@ -1,4 +1,5 @@
 import crypto from 'node:crypto';
+import {publicReadCache} from './public-read-cache.mjs';
 import {bannerProducts,resolveBannerTarget} from './banner-target.mjs';
 import { detectStoryMedia } from './stories-repository.mjs';
 export const BANNER_IMAGE_MAX_BYTES = 20 * 1024 * 1024;
@@ -45,6 +46,7 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
   const table = () => client.from('homepage_banners');
   const storage = () => client.storage.from(bucket);
   const pending = new Map(), urls = new Map();
+  const signing=new Map();
   // The public endpoint is polled every 3s: coalesce catalog reads across visitors.
   let catalogCache=null,catalogUntil=0,catalogRead=null;
   async function catalogProducts(fresh=false) {
@@ -115,10 +117,14 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     });
   }
   async function privateImage(path) {
+      if(signing.has(path))return signing.get(path);
       let cached = urls.get(path);
       if(!cached || cached.until<=now()) {
-        const signed = check(await storage().createSignedUrl(path,7200));
-        cached = {url:signed.signedUrl,until:now()+3600000}; urls.set(path,cached);
+        const read=(async()=>{
+          const signed = check(await storage().createSignedUrl(path,7200));
+          const fresh = {url:signed.signedUrl,until:now()+3600000}; urls.set(path,fresh);return fresh.url;
+        })().finally(()=>signing.delete(path));
+        signing.set(path,read);return read;
       }
       return cached.url;
   }
@@ -135,7 +141,9 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
       placement:row.options?.placement==='side'?'side':'main',focus:['left','right'].includes(row.options?.focus)?row.options.focus:'center',
       order:row.sort_order,active:row.active,version:row.updated_at};
   }
-  async function list(admin=false) {
+  const publicList=publicReadCache(()=>loadList(false),{now});
+  async function list(admin=false){if(admin)publicList.invalidate();return admin?loadList(true):publicList();}
+  async function loadList(admin=false) {
     if(admin) await initialize();
     if(!await managed()) return {managed:false,banners:[]};
     const data = (await rows()).filter(row=>admin || row.active);
@@ -228,5 +236,6 @@ export function createHomepageBannersRepository(client, {bucket, loadCatalog, no
     if(deleted.media_path) await cleanup(deleted.media_path).catch(()=>{});
     if(deleted.options?.mobileMediaPath) await cleanup(deleted.options.mobileMediaPath).catch(()=>{});
   }
-  return {list,begin,complete,update,reorder,remove};
+  const changed=fn=>async(...args)=>{try{return await fn(...args);}finally{publicList.invalidate();}};
+  return {list,begin,complete:changed(complete),update:changed(update),reorder:changed(reorder),remove:changed(remove)};
 }

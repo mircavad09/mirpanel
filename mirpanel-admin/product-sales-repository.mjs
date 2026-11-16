@@ -1,3 +1,4 @@
+import {publicReadCache} from './public-read-cache.mjs';
 export const HISTORICAL_TOTAL = 10000;
 const priority = new Set(['capcut', 'spotify', 'netflix']);
 const failure = (message, status = 400) => Object.assign(new Error(message), {status});
@@ -45,10 +46,11 @@ export function createProductSalesRepository(client, {loadCatalog}) {
       total:(baseline.get(id)||0)+(counts.get(id)||0)})),realTotal:Number(raw.realTotal)||0,
       total:(raw.initializedAt ? HISTORICAL_TOTAL : 0)+(Number(raw.realTotal)||0)};
   }
+  const publicSnapshot=publicReadCache(snapshot,{ttlMs:10000});
   return {
     snapshot,
     async publicProduct(id) {
-      const data = await snapshot(), product = data.products.find(p=>p.productId===id && p.active);
+      const data = await publicSnapshot(), product = data.products.find(p=>p.productId===id && p.active);
       if (!product) throw failure('Məhsul tapılmadı.',404);
       return {initialized:!!data.initializedAt, productId:id,historical:product.historical,real:product.real,
         productTotal:product.total,siteTotal:data.total,completedTotal:data.realTotal};
@@ -56,6 +58,7 @@ export function createProductSalesRepository(client, {loadCatalog}) {
     async initialize(actor) {
       const catalog = await loadCatalog();
       await rpc('product_sales_initialize',{p_allocation:weightedAllocation(catalog.products),p_actor:actor});
+      publicSnapshot.invalidate();
       return snapshot();
     },
     async save(body,actor) {
@@ -65,6 +68,7 @@ export function createProductSalesRepository(client, {loadCatalog}) {
         throw failure('Bütün məhsulların tarixi sayları birlikdə göndərilməlidir.');
       if (!Number.isSafeInteger(body.version)) throw failure('Statistika versiyası etibarsızdır.');
       await rpc('product_sales_save',{p_allocation:items,p_actor:actor,p_version:body.version});
+      publicSnapshot.invalidate();
       return snapshot();
     }
   };

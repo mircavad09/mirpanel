@@ -243,7 +243,7 @@
   <script src="/app.js?v=stable-buy-1-6f27f1481b61bd77"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=incident-recovery-1"></script>
-  <script src="/stock-display-fix.js?v=incident-recovery-1"></script>
+  <script src="/stock-display-fix.js?v=system-recovery-1"></script>
   <script src="/product-page.js?v=compact-plans-1"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>

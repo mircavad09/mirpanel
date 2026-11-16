@@ -1,4 +1,5 @@
 import crypto from "node:crypto";
+import {publicReadCache} from './public-read-cache.mjs';
 
 const IMAGE_LIMIT = 5 * 1024 * 1024;
 const VIDEO_LIMIT = 1024 * 1024 * 1024;
@@ -58,6 +59,7 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
   const categories = () => client.from("story_categories");
   const items = () => client.from("story_items");
   const pendingUploads = new Map();
+  const signedReads=new Map();
 
   function directUploadError(message, status = 400, code = "STORY_DIRECT_UPLOAD_INVALID") {
     return Object.assign(new Error(message), { status, code });
@@ -162,9 +164,15 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
 
   async function signed(path) {
     if (!path) return "";
-    const { data, error } = await client.storage.from(bucket).createSignedUrl(path, signedUrlSeconds);
-    storageError(error, "Story media keçidi hazırlanmadı.");
-    return data?.signedUrl || "";
+    if(!signedReads.has(path)){
+      if(signedReads.size>=256)signedReads.delete(signedReads.keys().next().value);
+      signedReads.set(path,publicReadCache(async()=>{
+        const { data, error } = await client.storage.from(bucket).createSignedUrl(path, signedUrlSeconds);
+        storageError(error, "Story media keçidi hazırlanmadı.");
+        return data?.signedUrl || "";
+      },{ttlMs:Math.max(1000,(signedUrlSeconds-60)*1000)}));
+    }
+    return signedReads.get(path)();
   }
 
   async function attachUrls(rows, includeInactive = false) {
@@ -180,6 +188,7 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
   }
 
   async function list(includeInactive = false) {
+    if(includeInactive)publicList.invalidate();
     let categoryQuery = categories().select("id,title,cover_path,sort_order,active,created_at,updated_at").order("sort_order").order("created_at");
     let itemQuery = items().select("id,story_id,media_type,media_path,caption,sort_order,active,created_at,updated_at").order("sort_order").order("created_at");
     if (!includeInactive) {
@@ -330,7 +339,9 @@ export function createStoriesRepository(client, { bucket = "mirpanel-stories", s
     await removePathsIfUnused([current.media_path]).catch(() => {});
   }
 
-  return { listPublic: () => list(false), listAdmin: () => list(true), createStory, updateStory, deleteStory, createItem, updateItem, deleteItem, beginVideoUpload, verifyVideoUpload, cancelVideoUpload };
+  const publicList=publicReadCache(()=>list(false));
+  const changed=fn=>async(...args)=>{try{return await fn(...args);}finally{publicList.invalidate();}};
+  return { listPublic: publicList, listAdmin: () => list(true), createStory:changed(createStory), updateStory:changed(updateStory), deleteStory:changed(deleteStory), createItem:changed(createItem), updateItem:changed(updateItem), deleteItem:changed(deleteItem), beginVideoUpload, verifyVideoUpload, cancelVideoUpload };
 }
 
 export const STORY_LIMITS = { imageBytes: IMAGE_LIMIT, videoBytes: VIDEO_LIMIT };

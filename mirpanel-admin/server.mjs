@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import {deploymentRuntime} from './deployment-runtime.mjs';
+import {boundedReadFetch} from './bounded-read-fetch.mjs';
 const deployment=deploymentRuntime();
 if(deployment.standby)globalThis.fetch=deployment.readOnlyFetch(globalThis.fetch);
 import { createClient } from "@supabase/supabase-js";
@@ -1423,7 +1424,7 @@ const netflixSupabase = config.supabaseUrl && config.supabaseSecretKey
   : null;
 const netflixAccounts = netflixSupabase ? createNetflixAccountRepository(netflixSupabase) : null;
 const storiesSupabase = config.supabaseUrl && config.supabaseSecretKey
-  ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false } })
+  ? createClient(config.supabaseUrl, config.supabaseSecretKey, { auth: { persistSession: false, autoRefreshToken: false },global:{fetch:(input,init)=>boundedReadFetch(input,init,{timeoutMs:8000})} })
   : null;
 const storiesRepository = storiesSupabase ? createStoriesRepository(storiesSupabase, { bucket: config.storiesBucket }) : null;
 const adminSessions=createAdminSessions({client:storiesSupabase?createClient(config.supabaseUrl,config.supabaseSecretKey,{auth:{persistSession:false,autoRefreshToken:false},global:{fetch:(input,init={})=>fetch(input,{...init,signal:AbortSignal.timeout(10000)})}}):null,username:config.username,password:config.password,secret:config.tokenSecret});
