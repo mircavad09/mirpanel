@@ -872,7 +872,7 @@ const DATA = {
       },
       "flow": "out_of_stock",
       "soldOut": true,
-      "active": false,
+      "active": true,
       "stock": null,
       "stockEnabled": true,
       "seller": "",
