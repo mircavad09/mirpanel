@@ -58,7 +58,21 @@ export function productSeoCopy(product){
  const name=topic?.[0]||String(product.title||'Rəqəmsal məhsul').trim();
  return {name,queries:topic?.[1]||name+' almaq, '+name+' qiyməti',
   title:name+' almaq Azərbaycanda | Qiymət və paketlər — MirPanel',
-  description:name+' üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.',
+  description:({
+   netflix:'Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.',
+   netflix_umumi:'Netflix Ümumi hesab üçün cari AZN qiymətini və paylaşılan giriş şərtlərini yoxlayın. Şəxsi otaq paketindən fərqini öyrənib MirPanel-də sifariş edin.',
+   spotify:'Spotify Premium-u öz hesabınızda aktivləşdirmək üçün MirPanel paketinə baxın. AZN qiyməti, tələb olunan e-poçt və giriş məlumatlarını əvvəlcədən yoxlayın.',
+   zoom:'Zoom Pro almaq üçün MirPanel-də mövcud müddət və AZN qiymətinə baxın. Hazır hesabın təhvili, telefonla giriş və təsdiq kodu addımları ilə tanış olun.',
+   capcut:'CapCut Pro almaq üçün qısa və aylıq paketləri MirPanel-də müqayisə edin. AZN qiymətləri, paket zəmanəti və təhvil sonrası giriş təlimatını yoxlayın.',
+   chatgpt:'ChatGPT Plus hazır şəxsi hesab üçün MirPanel-in paket və AZN qiymətinə baxın. Paylaşılan hesabdan fərqi, təhvil və təhlükəsiz giriş qaydalarını oxuyun.',
+   prime:'Amazon Prime Video almaq üçün bir və altı aylıq seçimləri müqayisə edin. MirPanel-də AZN qiymətlərini, hesab təhvilini və telefonla girişi yoxlayın.',
+   hbomax:'HBO Max hesabı üçün MirPanel-də müddət, AZN qiyməti və paket şərtlərinə baxın. Otaq, PIN və təhvil məlumatlarını ödənişdən əvvəl dəqiqləşdirin.',
+   surfshark:'Surfshark VPN almaq üçün MirPanel-də paket müddətini və AZN qiymətini yoxlayın. Hesab təhvili, cihaz uyğunluğu və VPN istifadə məhdudiyyətlərini oxuyun.',
+   canva:'Canva Premium almaq üçün MirPanel paketlərini və AZN qiymətlərini müqayisə edin. Aktivləşdirmə e-poçtu, giriş formatı və təhvil qaydası ilə tanış olun.',
+   pubg_mobile:'PUBG Mobile UC almaq üçün 60 UC, 325 UC və digər paketləri müqayisə edin. MirPanel-də AZN qiymətlərini, Player ID və region uyğunluğunu yoxlayın.',
+   free_fire:'Free Fire almaz almaq üçün MirPanel paketlərini və AZN qiymətlərini yoxlayın. Almaz sayı, bonus, region və Player ID məlumatlarını sifarişdən əvvəl tutuşdurun.',
+   telegram_premium:'Telegram Premium paket adlarını, AZN qiymətlərini və faktiki xidmət növünü MirPanel-də yoxlayın. Premium abunəliklə Stars fərqini ödənişdən əvvəl dəqiqləşdirin.'
+  })[product.id]||name+' üçün paketləri, AZN qiymətini, tələb olunan məlumatları və təhvil qaydasını MirPanel-də yoxlayın.',
   intro:topic?.[2]||name+' üçün cari paketləri və onların qiymətlərini bu səhifədə müqayisə edin.',
   usage:topic?.[3]||'Seçilmiş paketin tələb etdiyi məlumatları sifariş formasında yoxlayın.',
   question:topic?.[4]||name+' sifarişinin məlumatlarını haradan açım?',

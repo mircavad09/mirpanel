@@ -177,7 +177,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "zoom-pro",
       "seoTitle": "Zoom Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Zoom Pro üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Zoom Pro almaq üçün MirPanel-də mövcud müddət və AZN qiymətinə baxın. Hazır hesabın təhvili, telefonla giriş və təsdiq kodu addımları ilə tanış olun.",
       "seoH1": "Zoom Pro",
       "seoPrimaryKeyword": "Zoom Pro almaq",
       "seoRelatedKeywords": " Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
@@ -186,7 +186,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Zoom Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Zoom Pro üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Zoom Pro almaq üçün MirPanel-də mövcud müddət və AZN qiymətinə baxın. Hazır hesabın təhvili, telefonla giriş və təsdiq kodu addımları ilə tanış olun.",
       "seoOgImage": "assets/zoom.png",
       "banner": {
         "enabled": false,
@@ -255,7 +255,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.660Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
     },
     {
       "id": "spotify",
@@ -276,7 +276,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "spotify-premium",
       "seoTitle": "Spotify Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Spotify Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Spotify Premium-u öz hesabınızda aktivləşdirmək üçün MirPanel paketinə baxın. AZN qiyməti, tələb olunan e-poçt və giriş məlumatlarını əvvəlcədən yoxlayın.",
       "seoH1": "Spotify Premium",
       "seoPrimaryKeyword": "Spotify Premium almaq",
       "seoRelatedKeywords": " Spotify Premium Azərbaycan, Spotify qiyməti",
@@ -285,7 +285,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Spotify Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Spotify Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Spotify Premium-u öz hesabınızda aktivləşdirmək üçün MirPanel paketinə baxın. AZN qiyməti, tələb olunan e-poçt və giriş məlumatlarını əvvəlcədən yoxlayın.",
       "seoOgImage": "assets/spotify.png",
       "banner": {
         "enabled": false,
@@ -375,7 +375,7 @@ const DATA = {
           "url": "https://accounts.spotify.com/az/password-reset"
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
     },
     {
       "id": "capcut",
@@ -396,7 +396,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "capcut-pro",
       "seoTitle": "CapCut Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "CapCut Pro üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "CapCut Pro almaq üçün qısa və aylıq paketləri MirPanel-də müqayisə edin. AZN qiymətləri, paket zəmanəti və təhvil sonrası giriş təlimatını yoxlayın.",
       "seoH1": "CapCut Pro",
       "seoPrimaryKeyword": "CapCut Pro almaq",
       "seoRelatedKeywords": " CapCut Pro Azərbaycan, CapCut qiyməti",
@@ -405,7 +405,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "CapCut Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "CapCut Pro üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "CapCut Pro almaq üçün qısa və aylıq paketləri MirPanel-də müqayisə edin. AZN qiymətləri, paket zəmanəti və təhvil sonrası giriş təlimatını yoxlayın.",
       "seoOgImage": "assets/capcut.png",
       "banner": {
         "enabled": true,
@@ -524,7 +524,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
     },
     {
       "id": "netflix",
@@ -545,7 +545,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "netflix-sexsi",
       "seoTitle": "Netflix Şəxsi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Netflix Şəxsi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.",
       "seoH1": "Netflix Şəxsi",
       "seoPrimaryKeyword": "Netflix almaq",
       "seoRelatedKeywords": " Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
@@ -554,7 +554,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Netflix Şəxsi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Netflix Şəxsi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.",
       "seoOgImage": "assets/netflix.png",
       "banner": {
         "enabled": false,
@@ -645,7 +645,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
     },
     {
       "id": "chatgpt_ortaq",
@@ -755,7 +755,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "chatgpt-plus",
       "seoTitle": "ChatGPT Plus şəxsi hesab almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "ChatGPT Plus şəxsi hesab üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "ChatGPT Plus hazır şəxsi hesab üçün MirPanel-in paket və AZN qiymətinə baxın. Paylaşılan hesabdan fərqi, təhvil və təhlükəsiz giriş qaydalarını oxuyun.",
       "seoH1": "ChatGPT Plus şəxsi hesab",
       "seoPrimaryKeyword": "ChatGPT Plus almaq",
       "seoRelatedKeywords": " ChatGPT şəxsi hesab Azərbaycan",
@@ -764,7 +764,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "ChatGPT Plus şəxsi hesab almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "ChatGPT Plus şəxsi hesab üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "ChatGPT Plus hazır şəxsi hesab üçün MirPanel-in paket və AZN qiymətinə baxın. Paylaşılan hesabdan fərqi, təhvil və təhlükəsiz giriş qaydalarını oxuyun.",
       "seoOgImage": "assets/chatgpt.png",
       "banner": {
         "enabled": false,
@@ -834,7 +834,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
     },
     {
       "id": "netflix_umumi",
@@ -855,7 +855,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "netflix-umumi",
       "seoTitle": "Netflix Ümumi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Netflix Ümumi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Netflix Ümumi hesab üçün cari AZN qiymətini və paylaşılan giriş şərtlərini yoxlayın. Şəxsi otaq paketindən fərqini öyrənib MirPanel-də sifariş edin.",
       "seoH1": "Netflix Ümumi",
       "seoPrimaryKeyword": "Netflix ümumi hesab almaq",
       "seoRelatedKeywords": " paylaşılan Netflix hesabı",
@@ -864,7 +864,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Netflix Ümumi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Netflix Ümumi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Netflix Ümumi hesab üçün cari AZN qiymətini və paylaşılan giriş şərtlərini yoxlayın. Şəxsi otaq paketindən fərqini öyrənib MirPanel-də sifariş edin.",
       "seoOgImage": "assets/netflix.png",
       "banner": {
         "enabled": false,
@@ -923,7 +923,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
     },
     {
       "id": "prime",
@@ -944,7 +944,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "amazon-prime-video",
       "seoTitle": "Amazon Prime Video almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Amazon Prime Video üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Amazon Prime Video almaq üçün bir və altı aylıq seçimləri müqayisə edin. MirPanel-də AZN qiymətlərini, hesab təhvilini və telefonla girişi yoxlayın.",
       "seoH1": "Amazon Prime Video",
       "seoPrimaryKeyword": "Prime Video almaq",
       "seoRelatedKeywords": " Amazon Prime Video Azərbaycan, Prime Video qiyməti",
@@ -953,7 +953,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Amazon Prime Video almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Amazon Prime Video üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Amazon Prime Video almaq üçün bir və altı aylıq seçimləri müqayisə edin. MirPanel-də AZN qiymətlərini, hesab təhvilini və telefonla girişi yoxlayın.",
       "seoOgImage": "assets/prime.png",
       "banner": {
         "enabled": false,
@@ -1033,7 +1033,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
     },
     {
       "id": "claude_ai",
@@ -1446,7 +1446,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "hbo-max",
       "seoTitle": "HBO Max almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "HBO Max üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "HBO Max hesabı üçün MirPanel-də müddət, AZN qiyməti və paket şərtlərinə baxın. Otaq, PIN və təhvil məlumatlarını ödənişdən əvvəl dəqiqləşdirin.",
       "seoH1": "HBO Max",
       "seoPrimaryKeyword": "HBO Max almaq",
       "seoRelatedKeywords": " HBO Max Azərbaycan, HBO Max hesab qiyməti",
@@ -1455,7 +1455,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "HBO Max almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "HBO Max üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "HBO Max hesabı üçün MirPanel-də müddət, AZN qiyməti və paket şərtlərinə baxın. Otaq, PIN və təhvil məlumatlarını ödənişdən əvvəl dəqiqləşdirin.",
       "seoOgImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
       "banner": {
         "enabled": false,
@@ -1524,7 +1524,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
     },
     {
       "id": "tiktok_jeton",
@@ -1663,7 +1663,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "surfshark-vpn",
       "seoTitle": "Surfshark VPN almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Surfshark VPN üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Surfshark VPN almaq üçün MirPanel-də paket müddətini və AZN qiymətini yoxlayın. Hesab təhvili, cihaz uyğunluğu və VPN istifadə məhdudiyyətlərini oxuyun.",
       "seoH1": "Surfshark VPN",
       "seoPrimaryKeyword": "Surfshark VPN almaq",
       "seoRelatedKeywords": " VPN Azərbaycan, Surfshark qiyməti",
@@ -1672,7 +1672,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Surfshark VPN almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Surfshark VPN üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Surfshark VPN almaq üçün MirPanel-də paket müddətini və AZN qiymətini yoxlayın. Hesab təhvili, cihaz uyğunluğu və VPN istifadə məhdudiyyətlərini oxuyun.",
       "seoOgImage": "assets/surfshark.png",
       "banner": {
         "enabled": false,
@@ -1737,7 +1737,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
     },
     {
       "id": "google_ai_ultra",
@@ -2126,7 +2126,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "canva-premium",
       "seoTitle": "Canva Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Canva Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Canva Premium almaq üçün MirPanel paketlərini və AZN qiymətlərini müqayisə edin. Aktivləşdirmə e-poçtu, giriş formatı və təhvil qaydası ilə tanış olun.",
       "seoH1": "Canva Premium",
       "seoPrimaryKeyword": "Canva Premium almaq",
       "seoRelatedKeywords": " Canva hesabı Azərbaycan, Canva qiyməti",
@@ -2135,7 +2135,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Canva Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Canva Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Canva Premium almaq üçün MirPanel paketlərini və AZN qiymətlərini müqayisə edin. Aktivləşdirmə e-poçtu, giriş formatı və təhvil qaydası ilə tanış olun.",
       "seoOgImage": "assets/canva.png",
       "banner": {
         "enabled": false,
@@ -2209,7 +2209,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
     },
     {
       "id": "netflix_sexsi",
@@ -3345,7 +3345,7 @@ const DATA = {
       "availabilityText": "Ödənişdən sonra avtomatik icra",
       "seoSlug": "pubg-mobile",
       "seoTitle": "PUBG Mobile UC almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "PUBG Mobile UC üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "PUBG Mobile UC almaq üçün 60 UC, 325 UC və digər paketləri müqayisə edin. MirPanel-də AZN qiymətlərini, Player ID və region uyğunluğunu yoxlayın.",
       "seoH1": "PUBG Mobile UC",
       "seoPrimaryKeyword": "PUBG Mobile UC almaq",
       "seoRelatedKeywords": " PUBG UC Azərbaycan, UC qiyməti",
@@ -3354,7 +3354,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "PUBG Mobile UC almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "PUBG Mobile UC üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "PUBG Mobile UC almaq üçün 60 UC, 325 UC və digər paketləri müqayisə edin. MirPanel-də AZN qiymətlərini, Player ID və region uyğunluğunu yoxlayın.",
       "seoOgImage": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
       "banner": {
         "enabled": false,
@@ -3637,7 +3637,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
     },
     {
       "id": "free_fire",
@@ -3659,7 +3659,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "free-fire",
       "seoTitle": "Free Fire almaz almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Free Fire almaz üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Free Fire almaz almaq üçün MirPanel paketlərini və AZN qiymətlərini yoxlayın. Almaz sayı, bonus, region və Player ID məlumatlarını sifarişdən əvvəl tutuşdurun.",
       "seoH1": "Free Fire almaz",
       "seoPrimaryKeyword": "Free Fire almaz almaq",
       "seoRelatedKeywords": " Free Fire Azərbaycan, almaz qiyməti",
@@ -3668,7 +3668,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Free Fire almaz almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Free Fire almaz üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Free Fire almaz almaq üçün MirPanel paketlərini və AZN qiymətlərini yoxlayın. Almaz sayı, bonus, region və Player ID məlumatlarını sifarişdən əvvəl tutuşdurun.",
       "seoOgImage": "/uploads/products/free-fire-cover.webp",
       "banner": {
         "enabled": false,
@@ -3951,7 +3951,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
     },
     {
       "id": "telegram_premium",
@@ -3973,7 +3973,7 @@ const DATA = {
       "availabilityText": "",
       "seoSlug": "telegram-premium",
       "seoTitle": "Telegram Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoDescription": "Telegram Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoDescription": "Telegram Premium paket adlarını, AZN qiymətlərini və faktiki xidmət növünü MirPanel-də yoxlayın. Premium abunəliklə Stars fərqini ödənişdən əvvəl dəqiqləşdirin.",
       "seoH1": "Telegram Premium",
       "seoPrimaryKeyword": "Telegram Premium almaq",
       "seoRelatedKeywords": " Telegram Premium Azərbaycan, Telegram qiyməti",
@@ -3982,7 +3982,7 @@ const DATA = {
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Telegram Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
-      "seoOgDescription": "Telegram Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoOgDescription": "Telegram Premium paket adlarını, AZN qiymətlərini və faktiki xidmət növünü MirPanel-də yoxlayın. Premium abunəliklə Stars fərqini ödənişdən əvvəl dəqiqləşdirin.",
       "seoOgImage": "/uploads/products/telegram-premium-cover.webp",
       "banner": {
         "enabled": false,
@@ -4119,7 +4119,7 @@ const DATA = {
           "url": ""
         }
       },
-      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
     }
   ]
 };

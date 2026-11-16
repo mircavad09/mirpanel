@@ -5,12 +5,12 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Netflix Ümumi almaq Azərbaycanda | Qiymət və paketlər — MirPanel</title>
-  <meta name="description" content="Netflix Ümumi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.">
+  <meta name="description" content="Netflix Ümumi hesab üçün cari AZN qiymətini və paylaşılan giriş şərtlərini yoxlayın. Şəxsi otaq paketindən fərqini öyrənib MirPanel-də sifariş edin.">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="https://mirpanel.com/mehsul/netflix-umumi">
   <meta property="og:type" content="product">
   <meta property="og:title" content="Netflix Ümumi almaq Azərbaycanda | Qiymət və paketlər — MirPanel">
-  <meta property="og:description" content="Netflix Ümumi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.">
+  <meta property="og:description" content="Netflix Ümumi hesab üçün cari AZN qiymətini və paylaşılan giriş şərtlərini yoxlayın. Şəxsi otaq paketindən fərqini öyrənib MirPanel-də sifariş edin.">
   <meta property="og:image" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
   <meta property="og:image:secure_url" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
   <meta property="og:image:type" content="image/png">
@@ -20,7 +20,7 @@
   <meta property="og:url" content="https://mirpanel.com/mehsul/netflix-umumi">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Netflix Ümumi almaq Azərbaycanda | Qiymət və paketlər — MirPanel">
-  <meta name="twitter:description" content="Netflix Ümumi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.">
+  <meta name="twitter:description" content="Netflix Ümumi hesab üçün cari AZN qiymətini və paylaşılan giriş şərtlərini yoxlayın. Şəxsi otaq paketindən fərqini öyrənib MirPanel-də sifariş edin.">
   <meta name="twitter:image" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
   <meta name="twitter:image:alt" content="Netflix Ümumi — MirPanel məhsul şəkli">
   <meta name="theme-color" content="#070707">
@@ -36,7 +36,7 @@
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
   <link rel="icon" href="/assets/logo.png">
-  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/netflix-umumi#product","url":"https://mirpanel.com/mehsul/netflix-umumi","name":"Netflix Ümumi","description":"Netflix Ümumi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.","image":["https://mirpanel.com/uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068"],"sku":"netflix_umumi","offers":[{"@type":"Offer","@id":"https://mirpanel.com/mehsul/netflix-umumi#offer-0","name":"1 aylıq","url":"https://mirpanel.com/mehsul/netflix-umumi","price":"3.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","@id":"https://mirpanel.com/#organization","name":"MirPanel","url":"https://mirpanel.com"}}]},{"@type":"Organization","@id":"https://mirpanel.com/#organization","name":"MirPanel","url":"https://mirpanel.com/","logo":"https://mirpanel.com/assets/logo.png","contactPoint":{"@type":"ContactPoint","contactType":"customer support","url":"https://mirpanel.com/elaqe","availableLanguage":"az"}},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/netflix-umumi#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Netflix Ümumi","item":"https://mirpanel.com/mehsul/netflix-umumi"}]}]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@graph":[{"@type":"Product","@id":"https://mirpanel.com/mehsul/netflix-umumi#product","url":"https://mirpanel.com/mehsul/netflix-umumi","name":"Netflix Ümumi","description":"Netflix Ümumi hesab üçün cari AZN qiymətini və paylaşılan giriş şərtlərini yoxlayın. Şəxsi otaq paketindən fərqini öyrənib MirPanel-də sifariş edin.","image":["https://mirpanel.com/uploads/products/netflix_umumi-1792446909068-646ca735.png?v=1792446909068"],"sku":"netflix_umumi","offers":[{"@type":"Offer","@id":"https://mirpanel.com/mehsul/netflix-umumi#offer-0","name":"1 aylıq","url":"https://mirpanel.com/mehsul/netflix-umumi","price":"3.99","priceCurrency":"AZN","availability":"https://schema.org/OutOfStock","itemCondition":"https://schema.org/NewCondition","seller":{"@type":"Organization","@id":"https://mirpanel.com/#organization","name":"MirPanel","url":"https://mirpanel.com"}}]},{"@type":"Organization","@id":"https://mirpanel.com/#organization","name":"MirPanel","url":"https://mirpanel.com/","logo":"https://mirpanel.com/assets/logo.png","contactPoint":{"@type":"ContactPoint","contactType":"customer support","url":"https://mirpanel.com/elaqe","availableLanguage":"az"}},{"@type":"BreadcrumbList","@id":"https://mirpanel.com/mehsul/netflix-umumi#breadcrumb","itemListElement":[{"@type":"ListItem","position":1,"name":"Ana səhifə","item":"https://mirpanel.com/"},{"@type":"ListItem","position":2,"name":"Məhsullar","item":"https://mirpanel.com/mehsul"},{"@type":"ListItem","position":3,"name":"Netflix Ümumi","item":"https://mirpanel.com/mehsul/netflix-umumi"}]}]}</script>
 </head>
 <body class="product-page-document" data-product-id="netflix_umumi" data-product-slug="netflix-umumi">
   <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
@@ -225,7 +225,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=stable-buy-1-cd9a2cad7dd4930d"></script>
+  <script src="/app.js?v=stable-buy-1-42fadd40db3f8e71"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=incident-recovery-1"></script>
   <script src="/stock-display-fix.js?v=ready-delivery-1"></script>
