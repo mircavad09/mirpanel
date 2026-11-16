@@ -38,43 +38,6 @@ const SEO_ALIASES = {
   adobecc: ["adobe-cc-almaq"]
 };
 
-const MARKDOWN = `---
-title: Mirpanel
-description: Premium hesablar və etibarlı aktivləşdirmə xidməti.
-url: https://mirpanel.com/
----
-
-# Mirpanel
-
-Mirpanel premium hesablar və rəqəmsal xidmətlər üçün public saytdır. Saytda məhsullar, qiymətlər, stok statusu və sifariş düymələri göstərilir. Brauzer istifadəçiləri üçün normal HTML sayt əsas cavab olaraq qalır.
-
-## Əsas Menyu
-
-- Ana Səhifə
-- Məhsullar
-- Haqqımızda
-- Şərtlər
-- Əlaqə
-
-## Məhsullar Haqqında
-
-Mirpanel-də Netflix, Spotify, YouTube Premium, CapCut Pro, Zoom Pro, HBO Max, Amazon Prime Video və digər premium hesab və xidmətlər təqdim olunur. Məhsul kartlarında ad, kateqoriya, qiymət və varsa stok statusu göstərilir.
-
-## Axtarış və Sifariş
-
-İstifadəçi sayt üzərində məhsul axtara, məhsul detail səhifəsinə keçə, mövcud planı seçə və sifariş düyməsi ilə WhatsApp sifariş axınına davam edə bilər.
-
-## Public Discovery Resursları
-
-- Sitemap: https://mirpanel.com/sitemap.xml
-- Robots: https://mirpanel.com/robots.txt
-- API Catalog: https://mirpanel.com/.well-known/api-catalog
-- Agent Card: https://mirpanel.com/.well-known/agent-card.json
-
-## Public API Status
-
-Bu discovery sənədi public sayt haqqında məlumat verir. Admin panel, login, token, private API endpoint-ləri və gizli idarəetmə URL-ləri public discovery üçün paylaşılmır.
-`;
 
 function wantsMarkdown(request) {
   return (request.headers.get("Accept") || "").toLowerCase().includes("text/markdown");
@@ -312,6 +275,11 @@ export async function onRequest(context) {
   const usersBoundary=adminUsersBoundary(request);if(usersBoundary)return usersBoundary;
   const url = new URL(request.url);
   const pathname = url.pathname;
+  // Do not expose generated source documents as independently indexable URLs.
+  if(pathname==='/index.html'||pathname==='/mehsul.page'||/^\/mehsul\/[a-z0-9-]+\.page$/.test(pathname)){
+    const target=new URL(url);target.pathname=pathname==='/index.html'?'/':pathname.replace(/\.page$/,'');
+    return Response.redirect(target.href,301);
+  }
   if(['/qrup','/hesab','/profil','/owner-login','/sebet','/balans','/odenis'].includes(pathname)||/^\/(?:api\/(?:auth|community)\/|community-assets\/)/.test(pathname))return context.next();
   if(url.hostname==='www.mirpanel.com'&&['GET','HEAD'].includes(request.method)&&!pathname.startsWith('/api/')){const canonical=new URL(url);canonical.hostname='mirpanel.com';return Response.redirect(canonical.href,308);}
   if(pathname.startsWith('/api/payments/'))return context.next();
@@ -377,18 +345,6 @@ export async function onRequest(context) {
     headers.set("Content-Type", "text/html; charset=utf-8");
     headers.append("Vary", "Accept");
     return new Response(html, { status: response.status, headers });
-  }
-
-  if (wantsMarkdown(request) && isHtmlLikePath(pathname)) {
-    return new Response(MARKDOWN, {
-      status: 200,
-      headers: {
-        "Content-Type": "text/markdown; charset=utf-8",
-        "Vary": "Accept",
-        "x-markdown-tokens": estimateTokens(MARKDOWN),
-        "Link": "</.well-known/api-catalog>; rel=\"api-catalog\"; type=\"application/json\", </sitemap.xml>; rel=\"sitemap\"; type=\"application/xml\""
-      }
-    });
   }
 
   const response = await context.next();

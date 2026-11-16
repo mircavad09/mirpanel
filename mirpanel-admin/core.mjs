@@ -858,6 +858,8 @@ function normalizeProduct(product = {}, index = 0) {
       ? product.seoKeywords.map((keyword) => String(keyword).trim()).filter(Boolean).join(", ")
       : String(product.seoKeywords || ""),
     seoContent: String(product.seoContent || ""),
+    seoUpdatedAt: /^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(String(product.seoUpdatedAt||''))&&Number.isFinite(Date.parse(product.seoUpdatedAt))
+      ?new Date(product.seoUpdatedAt).toISOString():null,
     seoIndex: product.seoIndex !== false,
     includeInSitemap: product.includeInSitemap !== false,
     seoOgTitle: cleanText(product.seoOgTitle || "", "", 160),
@@ -1244,6 +1246,11 @@ export function patchAppSource(source, payload) {
   const previous=extractAdminState(source);
   for(const product of admin.products){
     const old=previous.products.find(p=>p.id===product.id);
+    // lastmod is a content change timestamp, never the deployment/build date.
+    const publicContent=p=>JSON.stringify(Object.fromEntries(Object.entries(p||{}).filter(([key])=>
+      ['title','desc','longDescription','image','imageAlt','plans','note','active','soldOut'].includes(key)||
+      key.startsWith('seo')&&key!=='seoUpdatedAt')));
+    if(!old||publicContent(old)!==publicContent(product))product.seoUpdatedAt=new Date().toISOString();
     for(const [index,plan]of product.plans.entries()){
       if(plan.pricingId)continue;
       const prior=old?.plans[index];

@@ -4,5 +4,10 @@ Disallow: /admin
 Disallow: /admin/
 Disallow: /api/
 Disallow: /preview/
+Disallow: /employee
+
+# Public search and retrieval are allowed; training policy stays separate.
+# OAI-SearchBot and Bingbot inherit these public/private path rules.
+# Private pages also send noindex in the HTTP response.
 
 Sitemap: https://mirpanel.com/sitemap.xml

@@ -28,7 +28,7 @@
    <div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
     <div class="premium-splash-content">
       <div class="splash-logo-frame"><img src="/assets/logo.png" alt="Mirpanel Logo" class="premium-logo" width="150" height="150"></div>
-      <h1 class="premium-brand-text">MIRPANEL</h1>
+      <div class="premium-brand-text">MIRPANEL</div>
       <p class="premium-sub-text">Premium Hesablar • Etibarlı Aktivləşmə</p>
     </div>
   </div>

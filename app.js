@@ -168,25 +168,25 @@ const DATA = {
       "title": "Zoom Pro",
       "variant": "Pro",
       "badge": "Görüş",
-      "imageAlt": "Zoom Pro",
+      "imageAlt": "Zoom Pro — MirPanel məhsul şəkli",
       "desc": "Peşəkar onlayn görüşlər.",
       "note": "Hesab aktiv və hazır şəkildə təqdim olunur.",
-      "longDescription": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
+      "longDescription": "Zoom Pro onlayn dərs, iş görüşü və toplantılar üçün hesab təklifidir. Müddəti və qiyməti aşağıdakı paket seçimində müqayisə edə bilərsiniz. Təhvil verilən hesabın e-poçt və şifrəsi ilə Zoom tətbiqinə daxil olun. Zoom təsdiq kodu istəyərsə sifarişinizdəki Telefonla giriş təlimatını izləyin.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "zoom-pro",
-      "seoTitle": "Zoom Pro almaq | Ucuz Zoom hesab Azərbaycan - Mirpanel",
-      "seoDescription": "Zoom Pro hesabını sərfəli qiymətə əldə et. Online görüşlər və premium Zoom imkanları Mirpanel-də.",
+      "seoTitle": "Zoom Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Zoom Pro üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoH1": "Zoom Pro",
       "seoPrimaryKeyword": "Zoom Pro almaq",
-      "seoRelatedKeywords": " Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
-      "seoKeywords": "Zoom Pro almaq, Zoom Pro ucuz, Zoom Pro Azərbaycan, Zoom hesab almaq, Zoom premium almaq, Zoom meeting hesabı, Zoom görüş hesabı, Zoom limitsiz görüş",
-      "seoContent": "Zoom Pro online görüşlər, dərslər və iş toplantıları üçün premium imkanlar təqdim edir. Mirpanel Zoom Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Aktivləşdirmə sürətli şəkildə həyata keçirilir.",
+      "seoRelatedKeywords": " Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
+      "seoKeywords": "Zoom Pro almaq, Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
+      "seoContent": "Zoom Pro onlayn dərs, iş görüşü və toplantılar üçün hesab təklifidir. Müddəti və qiyməti aşağıdakı paket seçimində müqayisə edə bilərsiniz.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Zoom Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Zoom Pro üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/zoom.png",
       "banner": {
         "enabled": false,
@@ -254,7 +254,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.660Z"
     },
     {
       "id": "spotify",
@@ -266,25 +267,25 @@ const DATA = {
       "title": "Spotify Premium (Öz hesabınız)",
       "variant": "Şəxsi hesab",
       "badge": "Musiqi",
-      "imageAlt": "Spotify Premium",
+      "imageAlt": "Spotify Premium — MirPanel məhsul şəkli",
       "desc": "Reklamsız musiqi, yüksək səs keyfiyyəti və limitsiz mahnı keçidləri.\n",
       "note": "",
-      "longDescription": "Spotify Premium ilə reklamsız musiqi dinləyə, playlistlərinizi rahat idarə edə və premium imkanlardan istifadə edə bilərsiniz. Mirpanel Spotify Premium almaq istəyənlər üçün sərfəli qiymət və sürətli aktivləşdirmə təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən tamamlanır.",
+      "longDescription": "Bu Spotify Premium təklifi müştərinin öz hesabında aktivləşdirmə üçündür. Mövcud hesabınızı istifadə etmək istəyirsinizsə seçilən paketin adını və tələb olunan giriş məlumatlarını yoxlayın. Sifariş formasında tələb edilən e-poçt və Spotify şifrəsini yalnız saytın sifariş pəncərəsində daxil edin. Məlumatların düzgünlüyünü təsdiqləyin və aktivləşdirməni Sifarişlərimdən izləyin.",
       "usageRules": "",
       "deliveryText": "1-3 saat",
       "availabilityText": "",
       "seoSlug": "spotify-premium",
-      "seoTitle": "Spotify Premium almaq Azərbaycanda | Mirpanel",
-      "seoDescription": "Spotify Premium hesabını sərfəli qiymətə al. Reklamsız musiqi, premium imkanlar və sürətli aktivləşdirmə.",
-      "seoH1": "Spotify Premium almaq",
+      "seoTitle": "Spotify Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Spotify Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoH1": "Spotify Premium",
       "seoPrimaryKeyword": "Spotify Premium almaq",
-      "seoRelatedKeywords": "Spotify almaq, Spotify Premium qiyməti, Spotify Premium Azərbaycan",
-      "seoKeywords": "Spotify almaq, Spotify Premium almaq, Spotify ucuz, Spotify Azərbaycan, Spotify hesab almaq, Spotify aylıq, Spotify reklamsız, Spotify premium hesab, Spotify qiyməti",
-      "seoContent": "Spotify Premium ilə reklamsız musiqi dinləyə, playlistlərinizi rahat idarə edə və premium imkanlardan istifadə edə bilərsiniz. Mirpanel Spotify Premium almaq istəyənlər üçün sərfəli qiymət və sürətli aktivləşdirmə təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən tamamlanır.",
+      "seoRelatedKeywords": " Spotify Premium Azərbaycan, Spotify qiyməti",
+      "seoKeywords": "Spotify Premium almaq, Spotify Premium Azərbaycan, Spotify qiyməti",
+      "seoContent": "Bu Spotify Premium təklifi müştərinin öz hesabında aktivləşdirmə üçündür. Mövcud hesabınızı istifadə etmək istəyirsinizsə seçilən paketin adını və tələb olunan giriş məlumatlarını yoxlayın.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Spotify Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Spotify Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/spotify.png",
       "banner": {
         "enabled": false,
@@ -373,7 +374,8 @@ const DATA = {
           "label": "👉Şifrənizi unutmusunuzsa sıfırlayın👈Toxunun",
           "url": "https://accounts.spotify.com/az/password-reset"
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "capcut",
@@ -385,25 +387,25 @@ const DATA = {
       "title": "CapCut Pro",
       "variant": "Pro",
       "badge": "Video",
-      "imageAlt": "CapCut Pro almaq Azərbaycanda | Mirpanel",
+      "imageAlt": "CapCut Pro — MirPanel məhsul şəkli",
       "desc": "Rəsmi Pro funksiyalar, 4K eksport, premium effektlər və şablonlar.",
       "note": "",
-      "longDescription": "CapCut Pro video montaj edən istifadəçilər üçün premium effektlər, şablonlar və əlavə funksiyalar təqdim edir. Mirpanel vasitəsilə CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "longDescription": "CapCut Pro video montajı üçün premium hesab təklifidir. Qısa müddətli və aylıq paketləri eyni səhifədə görüb ümumi qiymətlərini müqayisə edə bilərsiniz. Seçilən paket üçün verilmiş hesab və giriş üsulunu Sifarişlərimdən açın. Tətbiq versiyası və cihazla bağlı göstərişlər üçün məhsulun Təlimat bölməsinə baxın.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "capcut-pro",
-      "seoTitle": "CapCut Pro almaq Azərbaycanda | Mirpanel",
-      "seoDescription": "CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə et. Video montaj üçün premium funksiyalar və sürətli aktivləşdirmə.",
-      "seoH1": "CapCut Pro almaq",
+      "seoTitle": "CapCut Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "CapCut Pro üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoH1": "CapCut Pro",
       "seoPrimaryKeyword": "CapCut Pro almaq",
-      "seoRelatedKeywords": "CapCut Pro qiyməti, CapCut Premium almaq, CapCut Pro Azərbaycan",
-      "seoKeywords": "CapCut Pro almaq, CapCut Pro ucuz, CapCut Pro Azərbaycan, CapCut hesab almaq, CapCut premium, CapCut Pro video montaj, CapCut Pro aktivləşdirmə, CapCut Pro qiyməti, CapCut Pro hazır hesab",
-      "seoContent": "CapCut Pro video montaj edən istifadəçilər üçün premium effektlər, şablonlar və əlavə funksiyalar təqdim edir. Mirpanel vasitəsilə CapCut Pro hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoRelatedKeywords": " CapCut Pro Azərbaycan, CapCut qiyməti",
+      "seoKeywords": "CapCut Pro almaq, CapCut Pro Azərbaycan, CapCut qiyməti",
+      "seoContent": "CapCut Pro video montajı üçün premium hesab təklifidir. Qısa müddətli və aylıq paketləri eyni səhifədə görüb ümumi qiymətlərini müqayisə edə bilərsiniz.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "CapCut Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "CapCut Pro üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/capcut.png",
       "banner": {
         "enabled": true,
@@ -521,7 +523,8 @@ const DATA = {
           "label": "Gmail yaradı",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "netflix",
@@ -533,25 +536,25 @@ const DATA = {
       "title": "Netflix Şəxsi",
       "variant": "Premium",
       "badge": "Film",
-      "imageAlt": "Netflix Şəxsi",
+      "imageAlt": "Netflix Şəxsi — MirPanel məhsul şəkli",
       "desc": "Filmlər, seriallar, yüksək keyfiyyət.",
       "note": "Ödəniş təsdiqləndikdən sonra otaq və PIN Sifarişlərim bölməsində göstərilir.",
-      "longDescription": "Netflix Şəxsi hesab öz profilindən istifadə etmək istəyənlər üçün rahat seçimdir. Mirpanel Netflix Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş WhatsApp üzərindən tamamlanır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "longDescription": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır. Təhvil tamamlandıqda hesab, otaq və PIN məlumatlarını Sifarişlərim bölməsindən açın. Ayrılmış profildən istifadə edin; digər profillərin məlumatlarını dəyişməyin.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "netflix-sexsi",
-      "seoTitle": "Netflix almaq Azərbaycanda | Şəxsi hesab – Mirpanel",
-      "seoDescription": "Netflix şəxsi hesabını sərfəli qiymətə əldə et. Premium izləmə, rahat sifariş və sürətli aktivləşdirmə Mirpanel-də.",
-      "seoH1": "Netflix şəxsi hesab almaq",
+      "seoTitle": "Netflix Şəxsi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Netflix Şəxsi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoH1": "Netflix Şəxsi",
       "seoPrimaryKeyword": "Netflix almaq",
-      "seoRelatedKeywords": "Netflix Premium almaq, Netflix şəxsi hesab, Netflix qiyməti",
-      "seoKeywords": "Netflix şəxsi almaq, Netflix şəxsi hesab, Netflix almaq, Netflix Premium almaq, Netflix ucuz, Netflix Azərbaycan, Netflix hesab almaq, Netflix profil almaq, Netflix aylıq",
-      "seoContent": "Netflix Şəxsi hesab öz profilindən istifadə etmək istəyənlər üçün rahat seçimdir. Mirpanel Netflix Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş WhatsApp üzərindən tamamlanır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoRelatedKeywords": " Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
+      "seoKeywords": "Netflix almaq, Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
+      "seoContent": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Netflix Şəxsi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Netflix Şəxsi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/netflix.png",
       "banner": {
         "enabled": false,
@@ -641,7 +644,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "chatgpt_ortaq",
@@ -742,25 +746,25 @@ const DATA = {
       "title": "ChatGPT Plus (Hazır Şəxsi hesab)",
       "variant": "Plus",
       "badge": "AI",
-      "imageAlt": "ChatGPT Plus (Şəxsi hesab)",
+      "imageAlt": "ChatGPT Plus şəxsi hesab — MirPanel məhsul şəkli",
       "desc": "Daha güclü model, fayl/şəkil imkanları.",
       "note": "Hesabınızın Email və Şifrəsini qeyd edin.",
-      "longDescription": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "longDescription": "Bu səhifə hazır şəxsi ChatGPT Plus hesabı təklifi üçündür. Paylaşılan hesabla qarışdırmamaq üçün məhsul adını və seçilmiş müddəti yoxlayın. Təhvil məlumatlarını Sifarişlərimdə açın. Giriş və iki mərhələli təsdiq üçün məhsula aid təlimatı izləyin; təsdiq kodunu və gizli açarı açıq söhbətdə paylaşmayın.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "chatgpt-plus",
-      "seoTitle": "ChatGPT Plus şəxsi hesab almaq | Mirpanel",
-      "seoDescription": "ChatGPT Plus hesabını sərfəli qiymətə əldə et. Premium AI imkanları və sürətli aktivləşdirmə Mirpanel-də.",
-      "seoH1": "ChatGPT Plus şəxsi hesab almaq",
+      "seoTitle": "ChatGPT Plus şəxsi hesab almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "ChatGPT Plus şəxsi hesab üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoH1": "ChatGPT Plus şəxsi hesab",
       "seoPrimaryKeyword": "ChatGPT Plus almaq",
-      "seoRelatedKeywords": "ChatGPT Plus şəxsi hesab, ChatGPT Plus qiyməti, ChatGPT Plus Azərbaycan",
-      "seoKeywords": "ChatGPT Plus almaq, ChatGPT Plus ucuz, ChatGPT Plus Azərbaycan, ChatGPT hesab almaq, ChatGPT premium almaq, GPT Plus almaq, OpenAI hesab almaq, ÇatGPT almaq",
-      "seoContent": "ChatGPT Plus süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel ChatGPT Plus hesabını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoRelatedKeywords": " ChatGPT şəxsi hesab Azərbaycan",
+      "seoKeywords": "ChatGPT Plus almaq, ChatGPT şəxsi hesab Azərbaycan",
+      "seoContent": "Bu səhifə hazır şəxsi ChatGPT Plus hesabı təklifi üçündür. Paylaşılan hesabla qarışdırmamaq üçün məhsul adını və seçilmiş müddəti yoxlayın.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "ChatGPT Plus şəxsi hesab almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "ChatGPT Plus şəxsi hesab üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/chatgpt.png",
       "banner": {
         "enabled": false,
@@ -829,7 +833,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "netflix_umumi",
@@ -841,25 +846,25 @@ const DATA = {
       "title": "Netflix Ümumi",
       "variant": "Premium",
       "badge": "Film",
-      "imageAlt": "Netflix Ümumi",
+      "imageAlt": "Netflix Ümumi — MirPanel məhsul şəkli",
       "desc": "Ümumi hesab (paylaşılan).",
       "note": "Hazır hesab verilir. Sifarişi təsdiqləyin.",
-      "longDescription": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
+      "longDescription": "Netflix Ümumi paylaşılan hesab formatında təqdim edilir. Şəxsi otaq təklifi ilə eyni məhsul deyil; giriş və istifadə qaydalarını ödənişdən əvvəl müqayisə edin. Hesabı təhvil aldıqdan sonra sifarişdəki giriş təlimatını izləyin. Paylaşılan hesabda parolu və digər istifadəçilərin profillərini icazəsiz dəyişməyin.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "netflix-umumi",
-      "seoTitle": "Netflix ümumi hesab almaq | Mirpanel",
-      "seoDescription": "Netflix ümumi hesabını sərfəli qiymətə al. Film və serialları rahat izləmək üçün sürətli aktivləşdirmə.",
-      "seoH1": "Netflix ümumi hesab almaq",
+      "seoTitle": "Netflix Ümumi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Netflix Ümumi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoH1": "Netflix Ümumi",
       "seoPrimaryKeyword": "Netflix ümumi hesab almaq",
-      "seoRelatedKeywords": "Netflix ortaq hesab, Netflix ümumi profil, Netflix hesab qiyməti",
-      "seoKeywords": "Netflix ümumi almaq, Netflix ümumi hesab, Netflix almaq, Netflix ucuz almaq, Netflix Azərbaycan, Netflix Premium qiyməti, Netflix hesab qiyməti, Netflix paket almaq",
-      "seoContent": "Netflix Ümumi hesab film və serial izləmək istəyənlər üçün sərfəli premium seçimdir. Mirpanel vasitəsilə Netflix hesabını rahat sifariş edə və qısa müddətdə aktivləşdirə bilərsiniz. Azərbaycanda ucuz Netflix almaq istəyənlər üçün uyğun seçimdir.",
+      "seoRelatedKeywords": " paylaşılan Netflix hesabı",
+      "seoKeywords": "Netflix ümumi hesab almaq, paylaşılan Netflix hesabı",
+      "seoContent": "Netflix Ümumi paylaşılan hesab formatında təqdim edilir. Şəxsi otaq təklifi ilə eyni məhsul deyil; giriş və istifadə qaydalarını ödənişdən əvvəl müqayisə edin.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Netflix Ümumi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Netflix Ümumi üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/netflix.png",
       "banner": {
         "enabled": false,
@@ -917,7 +922,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "prime",
@@ -929,25 +935,25 @@ const DATA = {
       "title": "Amazon Prime Video",
       "variant": "Premium",
       "badge": "Film",
-      "imageAlt": "Amazon Prime Video",
+      "imageAlt": "Amazon Prime Video — MirPanel məhsul şəkli",
       "desc": "Prime Video filmlər və seriallar.",
       "note": "Plan seç → Ad və 5 rəqəmli kod yaz.",
-      "longDescription": "Amazon Prime Video film və serial izləmək üçün premium platformalardan biridir. Mirpanel vasitəsilə Prime Video hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "longDescription": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin. Təhvil verilən e-poçt və şifrə ilə Prime Video-ya daxil olun. Keçid açarı təklifi görünərsə məhsulun telefonla giriş təlimatındakı şifrə ilə davam etmə addımına baxın.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "amazon-prime-video",
-      "seoTitle": "Amazon Prime Video almaq | Ucuz Prime Video Azərbaycan - Mirpanel",
-      "seoDescription": "Amazon Prime Video hesabını sərfəli qiymətə əldə et. Film və serial izləmək üçün premium hesab Mirpanel-də.",
+      "seoTitle": "Amazon Prime Video almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Amazon Prime Video üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoH1": "Amazon Prime Video",
-      "seoPrimaryKeyword": "Amazon Prime Video almaq",
-      "seoRelatedKeywords": " Prime Video almaq, Amazon Prime almaq, Amazon Prime ucuz, Prime Video ucuz, Amazon Prime Azərbaycan, Prime Video Azərbaycan, Amazon Prime hesab almaq",
-      "seoKeywords": "Amazon Prime Video almaq, Prime Video almaq, Amazon Prime almaq, Amazon Prime ucuz, Prime Video ucuz, Amazon Prime Azərbaycan, Prime Video Azərbaycan, Amazon Prime hesab almaq",
-      "seoContent": "Amazon Prime Video film və serial izləmək üçün premium platformalardan biridir. Mirpanel vasitəsilə Prime Video hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Sifariş rahatdır və aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoPrimaryKeyword": "Prime Video almaq",
+      "seoRelatedKeywords": " Amazon Prime Video Azərbaycan, Prime Video qiyməti",
+      "seoKeywords": "Prime Video almaq, Amazon Prime Video Azərbaycan, Prime Video qiyməti",
+      "seoContent": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Amazon Prime Video almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Amazon Prime Video üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/prime.png",
       "banner": {
         "enabled": false,
@@ -1026,7 +1032,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "claude_ai",
@@ -1430,25 +1437,25 @@ const DATA = {
       "title": "HBO Max",
       "variant": "Şəxsi Otaq",
       "badge": "Film",
-      "imageAlt": "HBO Max",
+      "imageAlt": "HBO Max — MirPanel məhsul şəkli",
       "desc": "Ən yeni HBO serialları. Surfshark VPN Hədiyyə!",
       "note": "Plan seç → Otaq adı və 4 rəqəmli kod yaz.",
-      "longDescription": "HBO Max premium film və serial izləmək istəyənlər üçün geniş məzmun təqdim edir. Mirpanel HBO Max hesablarını Azərbaycanda sərfəli qiymətə təklif edir. Sifariş WhatsApp üzərindən rahat şəkildə tamamlanır.",
+      "longDescription": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın. Sifariş forması otaq adı və PIN istəyərsə onları düzgün daxil edin. Verilən hesabdan məhsulun istifadə təlimatına uyğun yararlanın; əlavə xidmətin mövcudluğunu paket şərtlərində yoxlayın.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "hbo-max",
-      "seoTitle": "HBO Max almaq | Ucuz HBO Max hesab Azərbaycan - Mirpanel",
-      "seoDescription": "HBO Max hesabını sərfəli qiymətə al. Film, serial və premium izləmə imkanları Mirpanel-də.",
+      "seoTitle": "HBO Max almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "HBO Max üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoH1": "HBO Max",
       "seoPrimaryKeyword": "HBO Max almaq",
-      "seoRelatedKeywords": " HBO Max ucuz, HBO Max qiyməti, HBO Max Azərbaycan, HBO Max hesab almaq, HBO Max aylıq, HBO Max premium, HBO Max film hesabı",
-      "seoKeywords": "HBO Max almaq, HBO Max ucuz, HBO Max qiyməti, HBO Max Azərbaycan, HBO Max hesab almaq, HBO Max aylıq, HBO Max premium, HBO Max film hesabı",
-      "seoContent": "HBO Max premium film və serial izləmək istəyənlər üçün geniş məzmun təqdim edir. Mirpanel HBO Max hesablarını Azərbaycanda sərfəli qiymətə təklif edir. Sifariş WhatsApp üzərindən rahat şəkildə tamamlanır.",
+      "seoRelatedKeywords": " HBO Max Azərbaycan, HBO Max hesab qiyməti",
+      "seoKeywords": "HBO Max almaq, HBO Max Azərbaycan, HBO Max hesab qiyməti",
+      "seoContent": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "HBO Max almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "HBO Max üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "uploads/products/hbomax-1783292107083-520c4b4a.jpg?v=1783292107083",
       "banner": {
         "enabled": false,
@@ -1516,7 +1523,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "tiktok_jeton",
@@ -1646,25 +1654,25 @@ const DATA = {
       "title": "Surfshark VPN ",
       "variant": "VPN",
       "badge": "VPN",
-      "imageAlt": "Surfshark VPN",
+      "imageAlt": "Surfshark VPN — MirPanel məhsul şəkli",
       "desc": "IP gizlətmə, güclü şifrələmə.",
       "note": "Hesab hazır şəkildə verilir.",
-      "longDescription": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
+      "longDescription": "Surfshark VPN internet bağlantısı üçün VPN hesabı təklifidir. Bu məhsul bağlantının məxfiliyi üçün alətdir; tam anonimlik və ya bütün saytlara giriş zəmanəti kimi təqdim edilmir. Təhvil verilmiş hesabla uyğun Surfshark tətbiqinə daxil olun. Cihaz, tətbiq və bağlantı qaydalarını sifarişin Təlimat bölməsində yoxlayın.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "surfshark-vpn",
-      "seoTitle": "Surfshark VPN almaq | Ucuz VPN Azərbaycan - Mirpanel",
-      "seoDescription": "Surfshark VPN hesabını sərfəli qiymətə al. Təhlükəsiz internet və premium VPN xidməti Mirpanel-də.",
+      "seoTitle": "Surfshark VPN almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Surfshark VPN üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoH1": "Surfshark VPN",
       "seoPrimaryKeyword": "Surfshark VPN almaq",
-      "seoRelatedKeywords": " Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
-      "seoKeywords": "Surfshark VPN almaq, Surfshark almaq, Surfshark VPN ucuz, VPN almaq, ucuz VPN almaq, VPN Azərbaycan, premium VPN almaq, Surfshark hesab almaq",
-      "seoContent": "Surfshark VPN internetdə daha təhlükəsiz və rahat istifadə üçün premium VPN xidmətidir. Mirpanel Surfshark VPN hesabını Azərbaycanda sərfəli qiymətə təqdim edir. VPN almaq istəyənlər üçün etibarlı və rahat seçimdir.",
+      "seoRelatedKeywords": " VPN Azərbaycan, Surfshark qiyməti",
+      "seoKeywords": "Surfshark VPN almaq, VPN Azərbaycan, Surfshark qiyməti",
+      "seoContent": "Surfshark VPN internet bağlantısı üçün VPN hesabı təklifidir. Bu məhsul bağlantının məxfiliyi üçün alətdir; tam anonimlik və ya bütün saytlara giriş zəmanəti kimi təqdim edilmir.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Surfshark VPN almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Surfshark VPN üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/surfshark.png",
       "banner": {
         "enabled": false,
@@ -1728,7 +1736,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "google_ai_ultra",
@@ -2108,25 +2117,25 @@ const DATA = {
       "title": "Canva Premium",
       "variant": "Pro",
       "badge": "Dizayn",
-      "imageAlt": "Canva Premium",
+      "imageAlt": "Canva Premium — MirPanel məhsul şəkli",
       "desc": "Premium template, elementlər.",
       "note": "Aktivləşmə üçün Gmail qeyd edin.",
-      "longDescription": "Canva Premium dizayn hazırlamaq, sosial media postları və təqdimatlar yaratmaq üçün premium imkanlar təqdim edir. Mirpanel Canva Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat seçimdir. Aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "longDescription": "Canva Premium dizayn və təqdimat hazırlamaq üçün paket təklifidir. Müddət və giriş formatı seçdiyiniz paketə görə fərqlənə bilər. Aktivləşdirmə üçün forma Gmail ünvanı istəyərsə istifadə etdiyiniz ünvanı düzgün yazın. Təhvil və dəvət qaydasını sifarişinizdəki məlumatdan izləyin.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "canva-premium",
-      "seoTitle": "Canva Premium almaq | Ucuz Canva Pro Azərbaycan - Mirpanel",
-      "seoDescription": "Canva Premium və Canva Pro hesabını sərfəli qiymətə əldə et. Dizayn üçün premium alətlər Mirpanel-də.",
+      "seoTitle": "Canva Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Canva Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoH1": "Canva Premium",
       "seoPrimaryKeyword": "Canva Premium almaq",
-      "seoRelatedKeywords": " Canva Pro almaq, Canva ucuz, Canva Azərbaycan, Canva hesab almaq, Canva Pro hesab, Canva dizayn hesabı, Kanva almaq",
-      "seoKeywords": "Canva Premium almaq, Canva Pro almaq, Canva ucuz, Canva Azərbaycan, Canva hesab almaq, Canva Pro hesab, Canva dizayn hesabı, Kanva almaq",
-      "seoContent": "Canva Premium dizayn hazırlamaq, sosial media postları və təqdimatlar yaratmaq üçün premium imkanlar təqdim edir. Mirpanel Canva Pro hesabını Azərbaycanda sərfəli qiymətə əldə etmək istəyənlər üçün rahat seçimdir. Aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoRelatedKeywords": " Canva hesabı Azərbaycan, Canva qiyməti",
+      "seoKeywords": "Canva Premium almaq, Canva hesabı Azərbaycan, Canva qiyməti",
+      "seoContent": "Canva Premium dizayn və təqdimat hazırlamaq üçün paket təklifidir. Müddət və giriş formatı seçdiyiniz paketə görə fərqlənə bilər.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Canva Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Canva Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "assets/canva.png",
       "banner": {
         "enabled": false,
@@ -2199,7 +2208,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "netflix_sexsi",
@@ -3326,25 +3336,25 @@ const DATA = {
       "title": "PUBG Mobile",
       "variant": "",
       "badge": "",
-      "imageAlt": "PUBG Mobile",
+      "imageAlt": "PUBG Mobile UC — MirPanel məhsul şəkli",
       "desc": "",
       "note": "",
-      "longDescription": "",
+      "longDescription": "PUBG Mobile UC paketlərini eyni məhsul səhifəsində müqayisə edin. 60 UC, 325 UC və digər seçimlərin qiyməti ayrıca göstərilir; sifariş seçdiyiniz paketə bağlanır. UC yükləməsi üçün seçilən paketin tələb etdiyi Player ID və varsa server/region məlumatını daxil edin. Yoxlama hesab adını təsdiqləyirsə adı da tutuşdurun. Şifrəni oyunçu ID-si əvəzinə yazmayın.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "Ödənişdən sonra avtomatik icra",
       "seoSlug": "pubg-mobile",
-      "seoTitle": "",
-      "seoDescription": "",
-      "seoH1": "PUBG Mobile",
-      "seoPrimaryKeyword": "PUBG Mobile almaq",
-      "seoRelatedKeywords": "",
-      "seoKeywords": "",
-      "seoContent": "",
+      "seoTitle": "PUBG Mobile UC almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "PUBG Mobile UC üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoH1": "PUBG Mobile UC",
+      "seoPrimaryKeyword": "PUBG Mobile UC almaq",
+      "seoRelatedKeywords": " PUBG UC Azərbaycan, UC qiyməti",
+      "seoKeywords": "PUBG Mobile UC almaq, PUBG UC Azərbaycan, UC qiyməti",
+      "seoContent": "PUBG Mobile UC paketlərini eyni məhsul səhifəsində müqayisə edin. 60 UC, 325 UC və digər seçimlərin qiyməti ayrıca göstərilir; sifariş seçdiyiniz paketə bağlanır.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "PUBG Mobile UC almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "PUBG Mobile UC üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "uploads/products/epinby_3436-1794438474049-f9e16779.png?v=1794438474049",
       "banner": {
         "enabled": false,
@@ -3626,7 +3636,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "free_fire",
@@ -3639,25 +3650,25 @@ const DATA = {
       "title": "Free Fire",
       "variant": "",
       "badge": "",
-      "imageAlt": "Free Fire",
+      "imageAlt": "Free Fire almaz — MirPanel məhsul şəkli",
       "desc": "",
       "note": "",
-      "longDescription": "",
+      "longDescription": "Free Fire almaz paketləri bu səhifədə bir yerdə təqdim olunur. Paket adındakı almaz sayını, varsa bonusu və regionu qiymətlə birlikdə yoxlayın. Free Fire Player ID-ni və paket tələb edirsə digər məlumatları daxil edin. Hesab adı yoxlaması əlçatandırsa nəticəni yoxlayın; adı təsdiqlənməmiş hesabı təsdiqlənmiş kimi qəbul etməyin.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "free-fire",
-      "seoTitle": "",
-      "seoDescription": "",
-      "seoH1": "Free Fire",
-      "seoPrimaryKeyword": "Free Fire almaq",
-      "seoRelatedKeywords": "",
-      "seoKeywords": "",
-      "seoContent": "",
+      "seoTitle": "Free Fire almaz almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Free Fire almaz üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
+      "seoH1": "Free Fire almaz",
+      "seoPrimaryKeyword": "Free Fire almaz almaq",
+      "seoRelatedKeywords": " Free Fire Azərbaycan, almaz qiyməti",
+      "seoKeywords": "Free Fire almaz almaq, Free Fire Azərbaycan, almaz qiyməti",
+      "seoContent": "Free Fire almaz paketləri bu səhifədə bir yerdə təqdim olunur. Paket adındakı almaz sayını, varsa bonusu və regionu qiymətlə birlikdə yoxlayın.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Free Fire almaz almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Free Fire almaz üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "/uploads/products/free-fire-cover.webp",
       "banner": {
         "enabled": false,
@@ -3939,7 +3950,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     },
     {
       "id": "telegram_premium",
@@ -3952,25 +3964,25 @@ const DATA = {
       "title": "Telegram Premium",
       "variant": "",
       "badge": "",
-      "imageAlt": "Telegram Premium",
+      "imageAlt": "Telegram Premium — MirPanel məhsul şəkli",
       "desc": "",
       "note": "",
-      "longDescription": "",
+      "longDescription": "Telegram Premium üçün üç və altı aylıq seçimləri müqayisə edin. Premium abunəliklə Telegram Stars eyni məhsul deyil; təsdiqdə göstərilən xidmət növünü yoxlayın. Telegram istifadəçi adını sifariş formasında tələb olunduğu kimi yazın. Paket adı ilə təsdiq ekranındakı xidmət fərqlənirsə ödəniş etmədən operatora müraciət edin.",
       "usageRules": "",
       "deliveryText": "",
       "availabilityText": "",
       "seoSlug": "telegram-premium",
-      "seoTitle": "",
-      "seoDescription": "",
+      "seoTitle": "Telegram Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoDescription": "Telegram Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoH1": "Telegram Premium",
       "seoPrimaryKeyword": "Telegram Premium almaq",
-      "seoRelatedKeywords": "",
-      "seoKeywords": "",
-      "seoContent": "",
+      "seoRelatedKeywords": " Telegram Premium Azərbaycan, Telegram qiyməti",
+      "seoKeywords": "Telegram Premium almaq, Telegram Premium Azərbaycan, Telegram qiyməti",
+      "seoContent": "Telegram Premium üçün üç və altı aylıq seçimləri müqayisə edin. Premium abunəliklə Telegram Stars eyni məhsul deyil; təsdiqdə göstərilən xidmət növünü yoxlayın.",
       "seoIndex": true,
       "includeInSitemap": true,
-      "seoOgTitle": "",
-      "seoOgDescription": "",
+      "seoOgTitle": "Telegram Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
+      "seoOgDescription": "Telegram Premium üçün MirPanel-də paketləri və AZN qiymətlərini müqayisə edin. Giriş məlumatları, təhvil, zəmanət və sifariş addımlarını ödənişdən əvvəl yoxlayın.",
       "seoOgImage": "/uploads/products/telegram-premium-cover.webp",
       "banner": {
         "enabled": false,
@@ -4106,7 +4118,8 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      }
+      },
+      "seoUpdatedAt": "2026-11-16T20:39:37.661Z"
     }
   ]
 };
@@ -4528,31 +4541,31 @@ const SITE_SECTIONS = {
 
 const ADMIN_CONTENT = {
   "zoom": {
-    "aboutHtml": "<h3>Zoom Pro - Peşəkar Onlayn Görüş və Video Konfrans Həlli</h3>\n<p>Zoom Pro, iş görüşləri, dərslər, vebinarlar və komanda toplantıları üçün hazırlanmış premium video konfrans platformasıdır. Standart versiyadan fərqli olaraq, Pro abunəliyi daha uzun görüş müddəti, daha geniş idarəetmə imkanları və peşəkar onlayn ünsiyyət üçün əlavə funksiyalar təqdim edir. Uzaqdan işləyən komandalar, müəllimlər, biznes sahibləri və onlayn xidmət göstərən şəxslər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Zoom Pro, istifadəçilərə yüksək keyfiyyətli video və audio ilə onlayn görüşlər keçirmək, ekran paylaşmaq, görüşləri qeyd etmək və iştirakçıları rahat idarə etmək imkanı verir. Platforma kompüter, telefon və planşet üzərindən istifadə oluna bilir və müxtəlif iş proseslərinə asanlıqla uyğunlaşır. Pro abunəliyi xüsusilə uzunmüddətli görüşlər, peşəkar təqdimatlar və müntəzəm onlayn toplantılar üçün daha rahat təcrübə yaradır.</p>\n\n<h3>Zoom Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Biznes Sahibləri və Komandalar:</strong> İş görüşləri, layihə müzakirələri və komanda toplantılarını onlayn şəkildə idarə edənlər.</li>\n  <li><strong>Müəllimlər və Təlimçilər:</strong> Onlayn dərslər, kurslar, təlimlər və seminarlar keçirən şəxslər.</li>\n  <li><strong>Frilanserlər və Konsultantlar:</strong> Müştərilərlə video zənglər, təqdimatlar və məsləhət görüşləri aparanlar.</li>\n  <li><strong>SMM və Rəqəmsal Xidmət Göstərənlər:</strong> Müştəri görüşləri, kontent planlaması və komanda koordinasiyası üçün stabil platformaya ehtiyac duyanlar.</li>\n</ul>\n\n<h3>Zoom Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>⏱️ Uzunmüddətli Görüşlər:</strong> Standart versiyadakı vaxt məhdudiyyətlərini azaltmaqla daha rahat və fasiləsiz toplantılar keçirmək imkanı.</li>\n  <li><strong>🎥 Yüksək Keyfiyyətli Video və Audio:</strong> Peşəkar görünüşlü görüşlər üçün stabil bağlantı, aydın səs və keyfiyyətli görüntü təcrübəsi.</li>\n  <li><strong>🖥️ Ekran Paylaşımı və Təqdimatlar:</strong> Sənədləri, slaydları, layihələri və tətbiqləri iştirakçılarla canlı şəkildə paylaşmaq imkanı.</li>\n  <li><strong>☁️ Görüş Qeydləri:</strong> Vacib görüşləri qeyd edərək daha sonra izləmək, paylaşmaq və arxivləmək üçün rahat imkanlar.</li>\n  <li><strong>🔐 Təhlükəsiz Görüş İdarəetməsi:</strong> Şifrə, gözləmə otağı, iştirakçı icazələri və idarəetmə alətləri ilə daha təhlükəsiz onlayn görüşlər.</li>\n</ul>",
+    "aboutHtml": "<p>Zoom Pro onlayn dərs, iş görüşü və toplantılar üçün hesab təklifidir. Müddəti və qiyməti aşağıdakı paket seçimində müqayisə edə bilərsiniz.</p>",
     "rulesHtml": ""
   },
   "spotify": {
-    "aboutHtml": "<h3>Spotify Premium - Reklamsız Musiqi və Podcast Təcrübəsi</h3>\n<p>Spotify Premium, musiqi və podcast dinləməyi daha rahat, keyfiyyətli və fasiləsiz etmək üçün hazırlanmış premium abunəlik xidmətidir. Standart versiyadan fərqli olaraq, Premium abunəliyi reklamsız dinləmə, offline yükləmə, istənilən mahnını seçərək dinləmə və daha yüksək səs keyfiyyəti təqdim edir. Gündəlik musiqi zövqünü daha sərbəst və komfortlu yaşamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Spotify Premium, istifadəçilərə milyonlarla mahnı, albom, playlist və podcasta limitsiz giriş imkanı verir. İstifadəçilər sevdikləri musiqiləri reklamsız dinləyə, internet bağlantısı olmadan istifadə üçün yükləyə və istədikləri mahnını istənilən vaxt seçə bilərlər. Premium abunəlik həm mobil cihazlarda, həm kompüterdə, həm də smart TV və digər dəstəklənən cihazlarda daha rahat musiqi təcrübəsi yaradır.</p>\n\n<h3>Spotify Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Musiqi Sevərlər:</strong> Sevdiyi mahnıları, albomları və playlistləri reklamsız və limitsiz dinləmək istəyənlər.</li>\n  <li><strong>Podcast Dinləyiciləri:</strong> Maarifləndirici, əyləncəli və motivasiyaedici podcastları fasiləsiz dinləmək istəyən istifadəçilər.</li>\n  <li><strong>Səyahət Edənlər və Mobil İstifadəçilər:</strong> Musiqiləri əvvəlcədən yükləyib internet olmadan dinləmək istəyənlər.</li>\n  <li><strong>İdman və İş Zamanı Musiqi Dinləyənlər:</strong> Məşq, iş, dərs və gündəlik fəaliyyətlər zamanı rahat musiqi axını istəyənlər.</li>\n</ul>\n\n<h3>Spotify Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🚫 Reklamsız Dinləmə:</strong> Mahnılar və podcastlar arasında reklam fasilələri olmadan daha axıcı dinləmə təcrübəsi.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz mahnıları, albomları və playlistləri cihazınıza yükləyərək internet olmadan dinləmək imkanı.</li>\n  <li><strong>🎵 İstənilən Mahnını Seçmə:</strong> Mobil cihazda belə istədiyiniz mahnını seçib dərhal dinləmək və limitsiz keçid etmək imkanı.</li>\n  <li><strong>🔊 Yüksək Səs Keyfiyyəti:</strong> Daha təmiz, aydın və keyfiyyətli musiqi dinləmə təcrübəsi.</li>\n  <li><strong>📱 Bütün Cihazlarda İstifadə:</strong> Telefon, kompüter, planşet, smart TV və digər dəstəklənən cihazlarda rahat istifadə.</li>\n</ul>",
+    "aboutHtml": "<p>Bu Spotify Premium təklifi müştərinin öz hesabında aktivləşdirmə üçündür. Mövcud hesabınızı istifadə etmək istəyirsinizsə seçilən paketin adını və tələb olunan giriş məlumatlarını yoxlayın.</p>",
     "rulesHtml": ""
   },
   "capcut": {
-    "aboutHtml": "<h3>CapCut PRO - Peşəkar Video Redaktə Həlli</h3>\n<p>CapCut PRO, həm mobil cihazlarda, həm də kompüterdə yüksək keyfiyyətli videolar hazırlamaq üçün nəzərdə tutulmuş, süni intellekt dəstəkli peşəkar video montaj platformasıdır. Standart versiyadan fərqli olaraq, PRO abunəliyi istifadəçilərə premium effektlər, inkişaf etmiş montaj alətləri, trend şablonlar və daha sürətli iş axını təqdim edir. Sosial şəbəkələrdə fərqlənən, estetik və peşəkar görünüşlü kontent hazırlamaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>CapCut PRO, mürəkkəb montaj proqramlarının güclü imkanlarını sadə və rahat interfeysdə birləşdirir. İstifadəçilər videolarını kəsmə, birləşdirmə, rəngləmə, altyazı əlavə etmə, musiqi yerləşdirmə və xüsusi effektlərlə daha peşəkar hala gətirə bilərlər. Bulud yaddaşı dəstəyi sayəsində layihələrə müxtəlif cihazlardan giriş etmək və iş prosesini daha rahat idarə etmək mümkündür.</p>\n\n<h3>CapCut PRO Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Bloqerlər və Kontent Yaradıcıları:</strong> TikTok, Instagram Reels və YouTube Shorts üçün sürətli, trend və diqqətçəkən videolar hazırlayanlar.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Brendlər üçün peşəkar reklam videoları, tanıtım çarxları və sosial media kontenti yaradanlar.</li>\n  <li><strong>Video Redaktorlar və Frilanserlər:</strong> Müştərilərinə qısa müddətdə keyfiyyətli və estetik montaj xidməti təqdim etmək istəyənlər.</li>\n  <li><strong>Biznes Sahibləri:</strong> Məhsul və xidmətlərini sosial şəbəkələrdə daha premium və cəlbedici formada tanıtmaq istəyənlər.</li>\n</ul>\n\n<h3>CapCut PRO-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>👑 Premium Effektlər və Filtrlər:</strong> Standart versiyada olmayan eksklüziv keçidlər, kinematik filtrlər, animasiyalar və trend vizual effektlər.</li>\n  <li><strong>🤖 Süni İntellekt Alətləri:</strong> Avtomatik arxa fon silmə, səsin keyfiyyətini artırma, obyekt izləmə və ağıllı redaktə funksiyaları.</li>\n  <li><strong>✨ PRO Altyazı və Mətn Şablonları:</strong> Avtomatik altyazı yaratmaq, animasiyalı mətn üslubları əlavə etmək və videoları daha dinamik göstərmək imkanı.</li>\n  <li><strong>🎵 Geniş Media Kitabxanası:</strong> Premium musiqilər, səs effektləri, stok videolar və hazır şablonlarla daha zəngin kontent hazırlamaq.</li>\n  <li><strong>🚀 Yüksək Keyfiyyətli İxrac:</strong> Videoları 4K keyfiyyətdə, 60 FPS axıcılığında və daha sürətli render etmə imkanı.</li>\n</ul>",
+    "aboutHtml": "<p>CapCut Pro video montajı üçün premium hesab təklifidir. Qısa müddətli və aylıq paketləri eyni səhifədə görüb ümumi qiymətlərini müqayisə edə bilərsiniz.</p>",
     "rulesHtml": ""
   },
   "netflix": {
-    "aboutHtml": "<h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>\n<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>\n\n<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>\n  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>\n  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>\n  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>\n</ul>\n\n<h3>Netflix Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>\n  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>\n  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>\n  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>\n  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>\n</ul>",
+    "aboutHtml": "<p>Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.</p>",
     "rulesHtml": ""
   },
   "chatgpt": {
-    "aboutHtml": "<h3>ChatGPT Plus - Premium Süni İntellekt Köməkçisi</h3>\n<p>ChatGPT Plus, gündəlik işləri daha sürətli yerinə yetirmək, mətn yazmaq, ideya yaratmaq, suallara cavab almaq və müxtəlif mövzularda peşəkar AI dəstəyi əldə etmək istəyən istifadəçilər üçün hazırlanmış premium süni intellekt xidmətidir. Standart istifadədən fərqli olaraq, Plus abunəliyi daha güclü model imkanları, daha sürətli cavablar və daha məhsuldar iş təcrübəsi təqdim edir. Təhsil, biznes, kontent istehsalı və şəxsi inkişaf üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>ChatGPT Plus, istifadəçilərə mətn hazırlamaq, tərcümə etmək, ideyaları inkişaf etdirmək, kod yazmaq, plan qurmaq, araşdırma aparmaq və gündəlik tapşırıqları daha rahat idarə etmək imkanı verir. Platforma həm sadə suallar, həm də daha mürəkkəb peşəkar işlər üçün ağıllı köməkçi kimi istifadə oluna bilər. Plus imkanları sayəsində istifadəçi daha sürətli, daha çevik və daha effektiv süni intellekt təcrübəsi əldə edir.</p>\n\n<h3>ChatGPT Plus Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Tələbələr və Araşdırma Aparanlar:</strong> Mövzuları izah etmək, xülasə hazırlamaq, esse və təqdimat strukturu qurmaq istəyənlər.</li>\n  <li><strong>Kontent Yaradıcıları və Kopirayterlər:</strong> Sosial media mətnləri, reklam yazıları, video ssenariləri və kreativ ideyalar hazırlayanlar.</li>\n  <li><strong>Biznes Sahibləri və Peşəkarlar:</strong> Email, plan, hesabat, təqdimat və strategiya mətnlərini daha sürətli hazırlamaq istəyənlər.</li>\n  <li><strong>Proqramçılar və Texniki İstifadəçilər:</strong> Kod yazmaq, səhvləri izah etmək, texniki mövzuları analiz etmək və layihə ideyalarını inkişaf etdirmək istəyənlər.</li>\n</ul>\n\n<h3>ChatGPT Plus-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü AI Dəstəyi:</strong> Mətn yazmaq, suallara cavab vermək, ideya yaratmaq və mürəkkəb mövzuları daha sadə izah etmək imkanı.</li>\n  <li><strong>⚡ Daha Sürətli Cavablar:</strong> Gündəlik yazı, araşdırma, planlama və iş tapşırıqlarını daha qısa zamanda yerinə yetirməyə kömək edir.</li>\n  <li><strong>📚 Təhsil və Araşdırma Üçün Faydalı:</strong> Mövzuları öyrənmək, xülasə çıxarmaq, mətnləri təkmilləşdirmək və məlumatları strukturlaşdırmaq.</li>\n  <li><strong>💻 Kod və Texniki Yardım:</strong> Proqramlaşdırma, kod nümunələri, səhv izahı və texniki layihələr üçün faydalı AI köməkçisi.</li>\n  <li><strong>💼 Biznes və Kontent Üçün Uyğun:</strong> Reklam mətnləri, strategiya ideyaları, təqdimatlar, email yazışmaları və sosial media kontenti hazırlamaq.</li>\n</ul>",
+    "aboutHtml": "<p>Bu səhifə hazır şəxsi ChatGPT Plus hesabı təklifi üçündür. Paylaşılan hesabla qarışdırmamaq üçün məhsul adını və seçilmiş müddəti yoxlayın.</p>",
     "rulesHtml": ""
   },
   "netflix_umumi": {
-    "aboutHtml": "<h3>Netflix Premium - Yüksək Keyfiyyətli Film və Serial Təcrübəsi</h3>\n<p>Netflix Premium, film, serial, sənədli film, animasiya və eksklüziv kontentləri ən yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım abunəliyidir. Standart izləmə paketlərindən fərqli olaraq, Premium abunəlik daha yüksək görüntü keyfiyyəti, çox cihaz dəstəyi və ailə üzvləri ilə rahat istifadə imkanı təqdim edir. Evdə, səyahətdə və gündəlik istirahət zamanı keyfiyyətli əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Netflix Premium, istifadəçilərə dünyanın müxtəlif ölkələrindən filmlər, seriallar, Netflix Originals layihələri, sənədli filmlər və ailəvi kontentləri izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunur. Premium paket sayəsində daha yüksək görüntü keyfiyyəti, eyni anda bir neçə cihazda izləmə və daha komfortlu baxış təcrübəsi əldə edilir.</p>\n\n<h3>Netflix Premium Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Populyar filmləri, reytinqli serialları və eksklüziv layihələri yüksək keyfiyyətdə izləmək istəyənlər.</li>\n  <li><strong>Ailəvi İstifadəçilər:</strong> Eyni hesabdan bir neçə nəfərin fərqli cihazlarda rahat şəkildə istifadə etməsini istəyən ailələr.</li>\n  <li><strong>Netflix Originals İzləyiciləri:</strong> Netflix-ə məxsus eksklüziv seriallar, filmlər və sənədli layihələrə maraq göstərən istifadəçilər.</li>\n  <li><strong>Smart TV və Böyük Ekran İstifadəçiləri:</strong> Filmləri və serialları daha böyük ekranda yüksək görüntü keyfiyyəti ilə izləmək istəyənlər.</li>\n</ul>\n\n<h3>Netflix Premium-un Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər, animasiyalar və ailəvi kontentlərə rahat giriş.</li>\n  <li><strong>⭐ Netflix Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və sənədli layihələri izləmək imkanı.</li>\n  <li><strong>📺 Yüksək Görüntü Keyfiyyəti:</strong> Böyük ekranlarda daha aydın, detallı və komfortlu baxış təcrübəsi.</li>\n  <li><strong>👥 Çox Cihazda İstifadə:</strong> Eyni hesabla ailə üzvlərinin və istifadəçilərin fərqli cihazlarda rahat izləmə imkanı.</li>\n  <li><strong>📱 Bütün Cihazlarda Rahat Baxış:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda sevdiyiniz kontentə istənilən vaxt giriş.</li>\n</ul>",
+    "aboutHtml": "<p>Netflix Ümumi paylaşılan hesab formatında təqdim edilir. Şəxsi otaq təklifi ilə eyni məhsul deyil; giriş və istifadə qaydalarını ödənişdən əvvəl müqayisə edin.</p>",
     "rulesHtml": ""
   },
   "prime": {
-    "aboutHtml": "<h3>Prime Video - Premium Film və Serial İzləmə Platforması</h3>\n<p>Prime Video, film, serial, sənədli film və eksklüziv kontentləri yüksək keyfiyyətdə izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım platformasıdır. Standart televiziya və təsadüfi video izləmə təcrübəsindən fərqli olaraq, Prime Video istifadəçilərə geniş kontent kitabxanası, orijinal istehsallar və müxtəlif cihazlardan rahat izləmə imkanı təqdim edir. Əyləncəni daha komfortlu, keyfiyyətli və əlçatan etmək istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Prime Video, istifadəçilərə müxtəlif janrlarda filmlər, seriallar, animasiyalar, sənədli filmlər və Amazon Originals kontentlərini izləmək imkanı verir. Platforma telefon, kompüter, planşet, smart TV və digər cihazlarda istifadə oluna bilir. İstifadəçilər sevdikləri kontenti istədikləri vaxt izləyə, bəzi məzmunları offline baxış üçün yükləyə və ailəvi əyləncə təcrübəsindən rahat şəkildə yararlana bilərlər.</p>\n\n<h3>Prime Video Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Geniş film və serial seçimini yüksək keyfiyyətdə izləmək istəyən istifadəçilər.</li>\n  <li><strong>Ailəvi İzləyicilər:</strong> Evdə ailə ilə birlikdə film gecələri, animasiyalar və müxtəlif janrlarda kontent izləmək istəyənlər.</li>\n  <li><strong>Səyahət Edənlər:</strong> Sevdikləri filmləri və serialları əvvəlcədən yükləyib internet olmayan yerlərdə izləmək istəyənlər.</li>\n  <li><strong>Eksklüziv Kontent İzləyənlər:</strong> Amazon Originals və platformaya məxsus xüsusi serial və filmləri izləmək istəyənlər.</li>\n</ul>\n\n<h3>Prime Video-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Geniş Film və Serial Kitabxanası:</strong> Müxtəlif janrlarda filmlər, seriallar, sənədli filmlər və animasiyalara rahat giriş imkanı.</li>\n  <li><strong>⭐ Amazon Originals Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, filmlər və xüsusi istehsalları izləmək imkanı.</li>\n  <li><strong>📥 Offline Yükləmə:</strong> Sevdiyiniz kontentləri cihazınıza yükləyərək internet bağlantısı olmadan izləmək.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda rahat baxış təcrübəsi.</li>\n  <li><strong>🔊 Yüksək Keyfiyyətli İzləmə:</strong> Keyfiyyətli görüntü və səs imkanları ilə daha komfortlu film və serial təcrübəsi.</li>\n</ul>sıdır.</p>",
+    "aboutHtml": "<p>Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.</p>",
     "rulesHtml": ""
   },
   "claude_ai": {
@@ -4568,7 +4581,7 @@ const ADMIN_CONTENT = {
     "rulesHtml": ""
   },
   "hbomax": {
-    "aboutHtml": "<h3>HBO Max - Premium Film və Serial İzləmə Platforması</h3>\n<p>HBO Max, yüksək keyfiyyətli filmlər, seriallar, sənədli filmlər və eksklüziv kontentləri izləmək istəyən istifadəçilər üçün hazırlanmış premium video yayım platformasıdır. Standart izləmə təcrübəsindən fərqli olaraq, HBO Max istifadəçilərə məşhur HBO serialları, Warner Bros. filmləri, orijinal istehsallar və geniş əyləncə kitabxanası təqdim edir. Keyfiyyətli kontent, rahat izləmə və premium əyləncə istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>HBO Max, istifadəçilərə dram, komediya, fantastika, kriminal, animasiya, sənədli film və ailəvi kontent daxil olmaqla müxtəlif janrlarda geniş seçim imkanı yaradır. Platformada HBO Original serialları, məşhur filmlər, yeni buraxılışlar və seçilmiş premium kontentlər izlənilə bilir. Telefon, kompüter, planşet, smart TV və digər cihazlarda rahat istifadə olunduğu üçün sevdiyiniz kontentə istənilən vaxt giriş mümkündür.</p>\n\n<h3>HBO Max Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Film və Serial Sevərlər:</strong> Keyfiyyətli filmlər, reytinqli seriallar və premium kontentləri izləmək istəyən istifadəçilər.</li>\n  <li><strong>HBO Original İzləyiciləri:</strong> HBO istehsalı olan məşhur və eksklüziv seriallara maraq göstərənlər.</li>\n  <li><strong>Ailəvi İzləyicilər:</strong> Evdə ailə ilə birlikdə film gecələri, animasiyalar və müxtəlif janrlarda kontent izləmək istəyənlər.</li>\n  <li><strong>Sənədli Film Sevərlər:</strong> Real hekayələr, bioqrafiyalar, tarix, kriminal və maarifləndirici sənədli filmlərə baxmaq istəyənlər.</li>\n</ul>\n\n<h3>HBO Max-in Üstünlükləri</h3>\n<ul>\n  <li><strong>🎬 Premium Film və Serial Kitabxanası:</strong> Məşhur filmlər, reytinqli seriallar, sənədli filmlər və ailəvi kontentlərə geniş giriş imkanı.</li>\n  <li><strong>⭐ HBO Original Kontentləri:</strong> Platformaya məxsus eksklüziv seriallar, xüsusi istehsallar və yüksək keyfiyyətli layihələr.</li>\n  <li><strong>🍿 Warner Bros. və Populyar Filmlər:</strong> Məşhur kinostudiyaların seçilmiş filmlərini rahat şəkildə izləmək imkanı.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, planşet, kompüter, smart TV və digər cihazlarda hesabınıza daxil olaraq izləməyə davam etmək.</li>\n  <li><strong>🔊 Yüksək Keyfiyyətli İzləmə:</strong> Keyfiyyətli görüntü və səs imkanları ilə daha komfortlu film və serial təcrübəsi.</li>\n</ul>",
+    "aboutHtml": "<p>HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.</p>",
     "rulesHtml": ""
   },
   "tiktok_jeton": {
@@ -4576,7 +4589,7 @@ const ADMIN_CONTENT = {
     "rulesHtml": ""
   },
   "surfshark": {
-    "aboutHtml": "<h3>Surfshark VPN - Təhlükəsiz və Məxfi İnternet Təcrübəsi</h3>\n<p>Surfshark VPN, internetdə daha təhlükəsiz, məxfi və sərbəst şəkildə gəzmək istəyən istifadəçilər üçün hazırlanmış premium VPN xidmətidir. Standart internet bağlantısından fərqli olaraq, Surfshark məlumatlarınızı şifrələyir, IP ünvanınızı gizlədir və onlayn fəaliyyətlərinizi daha qorunan hala gətirir. Məxfilik, təhlükəsizlik və region məhdudiyyətlərini aşmaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Surfshark VPN, istifadəçilərə müxtəlif ölkələrdə yerləşən serverlərə qoşularaq internet bağlantısını daha təhlükəsiz və məxfi idarə etmək imkanı verir. Xidmət şəxsi məlumatların qorunmasına, ictimai Wi-Fi şəbəkələrində təhlükəsizliyə və bəzi region məhdudiyyətli kontentlərə girişə kömək edir. Telefon, kompüter, planşet və digər cihazlarda istifadə oluna bilir.</p>\n\n<h3>Surfshark VPN Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Məxfilik İstəyən İstifadəçilər:</strong> IP ünvanını gizlətmək və internet fəaliyyətlərini daha qorunan saxlamaq istəyənlər.</li>\n  <li><strong>Səyahət Edənlər:</strong> Xarici ölkələrdə təhlükəsiz internetdən istifadə etmək və bəzi yerli məhdudiyyətləri aşmaq istəyənlər.</li>\n  <li><strong>İctimai Wi-Fi İstifadəçiləri:</strong> Kafe, otel, hava limanı və digər açıq şəbəkələrdə məlumatlarını qorumaq istəyənlər.</li>\n  <li><strong>Remote İşçilər və Frilanserlər:</strong> Onlayn iş zamanı bağlantı təhlükəsizliyini artırmaq və şəxsi məlumatları qorumaq istəyənlər.</li>\n</ul>\n\n<h3>Surfshark VPN-in Üstünlükləri</h3>\n<ul>\n  <li><strong>🔐 Şifrələnmiş Bağlantı:</strong> İnternet trafikinizi qoruyaraq şəxsi məlumatların üçüncü şəxslər tərəfindən izlənməsini çətinləşdirir.</li>\n  <li><strong>🌍 Geniş Server Seçimi:</strong> Müxtəlif ölkələrdəki serverlərə qoşularaq daha sərbəst və çevik internet istifadəsi yaradır.</li>\n  <li><strong>🛡️ IP Ünvanının Gizlədilməsi:</strong> Real IP ünvanınızı gizlədərək onlayn məxfiliyinizi daha da gücləndirir.</li>\n  <li><strong>📶 İctimai Wi-Fi Təhlükəsizliyi:</strong> Açıq şəbəkələrdə bank, email və şəxsi hesab məlumatlarının qorunmasına kömək edir.</li>\n  <li><strong>📱 Çox Cihaz Dəstəyi:</strong> Telefon, kompüter, planşet və digər cihazlarda rahat istifadə imkanı təqdim edir.</li>\n</ul>",
+    "aboutHtml": "<p>Surfshark VPN internet bağlantısı üçün VPN hesabı təklifidir. Bu məhsul bağlantının məxfiliyi üçün alətdir; tam anonimlik və ya bütün saytlara giriş zəmanəti kimi təqdim edilmir.</p>",
     "rulesHtml": ""
   },
   "google_ai_ultra": {
@@ -4596,7 +4609,7 @@ const ADMIN_CONTENT = {
     "rulesHtml": ""
   },
   "canva": {
-    "aboutHtml": "<h3>Canva Pro - Peşəkar Dizayn və Kontent Yaratma Platforması</h3>\n<p>Canva Pro, sosial media postları, təqdimatlar, loqolar, reklam materialları, video kontent və biznes dizaynları hazırlamaq istəyən istifadəçilər üçün yaradılmış premium dizayn platformasıdır. Standart Canva versiyasından fərqli olaraq, Pro abunəliyi daha geniş şablon kitabxanası, premium elementlər, arxa fon silmə, brend kit və komanda ilə işləmə imkanları təqdim edir. Dizayn bacarığı olmadan belə peşəkar və estetik vizuallar yaratmaq istəyənlər üçün ideal rəqəmsal həlldir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Canva Pro, istifadəçilərə hazır şablonlar, premium şəkillər, ikonlar, videolar, animasiyalar və dizayn elementləri vasitəsilə sürətli və keyfiyyətli vizual kontent hazırlamaq imkanı verir. Platforma sosial media postları, story dizaynları, təqdimatlar, afişalar, CV-lər, reklam bannerləri və video layihələr üçün rahat alətlər təqdim edir. Canva Pro həm fərdi istifadəçilər, həm də biznes və komandalar üçün dizayn prosesini daha sadə və məhsuldar edir.</p>\n\n<h3>Canva Pro Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Sosial media postları, reklam bannerləri, kampaniya vizualları və brend kontenti hazırlayanlar.</li>\n  <li><strong>Biznes Sahibləri və Sahibkarlar:</strong> Məhsul və xidmətlərini peşəkar dizaynlarla tanıtmaq və brend görünüşünü gücləndirmək istəyənlər.</li>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Instagram, TikTok, YouTube və digər platformalar üçün estetik vizual və video kontent hazırlayanlar.</li>\n  <li><strong>Tələbələr və Peşəkarlar:</strong> Təqdimatlar, CV-lər, layihə dizaynları və gündəlik vizual materiallar hazırlamaq istəyənlər.</li>\n</ul>\n\n<h3>Canva Pro-nun Üstünlükləri</h3>\n<ul>\n  <li><strong>🎨 Premium Şablonlar və Elementlər:</strong> Minlərlə peşəkar hazır dizayn, ikon, şəkil, video və qrafik elementlərə geniş giriş.</li>\n  <li><strong>🪄 Arxa Fon Silmə Aləti:</strong> Şəkillərin arxa fonunu tək kliklə silərək məhsul, profil və reklam dizaynlarını daha peşəkar göstərmək.</li>\n  <li><strong>🏷️ Brand Kit Dəstəyi:</strong> Loqo, rəng palitrası və şriftləri saxlayaraq bütün dizaynlarda brend üslubunu qorumaq imkanı.</li>\n  <li><strong>📱 Sosial Media Üçün Hazır Formatlar:</strong> Instagram post, story, Reels cover, YouTube thumbnail, banner və digər ölçülərdə sürətli dizayn yaratmaq.</li>\n  <li><strong>🚀 Vaxta Qənaət və Asan İstifadə:</strong> Dizayn təcrübəsi olmadan belə qısa zamanda estetik, peşəkar və paylaşmağa hazır vizuallar hazırlamaq.</li>\n</ul>",
+    "aboutHtml": "<p>Canva Premium dizayn və təqdimat hazırlamaq üçün paket təklifidir. Müddət və giriş formatı seçdiyiniz paketə görə fərqlənə bilər.</p>",
     "rulesHtml": ""
   },
   "linkedin_career": {
@@ -4634,6 +4647,15 @@ const ADMIN_CONTENT = {
   "google_ai": {
     "aboutHtml": "<h3>Google AI Pro + VEO 3 - Premium Süni İntellekt və Video Yaratma Həlli</h3>\n<p>Google AI Pro + VEO 3, süni intellekt vasitəsilə mətn yazmaq, ideya yaratmaq, kontent hazırlamaq və peşəkar səviyyədə AI video generasiya etmək istəyən istifadəçilər üçün hazırlanmış premium rəqəmsal xidmətdir. Standart AI alətlərindən fərqli olaraq, Google AI Pro daha güclü Gemini imkanları, geniş yaradıcılıq funksiyaları və VEO 3 ilə yüksək keyfiyyətli video yaratma təcrübəsi təqdim edir. Kontent istehsalı, biznes, təhsil və kreativ layihələr üçün ideal süni intellekt həllidir.</p>\n\n<h3>Məhsul Haqqında</h3>\n<p>Google AI Pro, istifadəçilərə Gemini süni intellekt modeli vasitəsilə mətn yazmaq, araşdırma aparmaq, ideyalar hazırlamaq, təqdimatlar üçün kontent yaratmaq və gündəlik iş proseslərini daha sürətli idarə etmək imkanı verir. VEO 3 dəstəyi isə mətn təsvirləri əsasında realistik, kreativ və yüksək keyfiyyətli videolar yaratmağa kömək edir. Bu xidmət həm fərdi istifadəçilər, həm də peşəkar kontent yaradıcıları üçün vaxt qazandıran güclü AI platformasıdır.</p>\n\n<h3>Google AI Pro + VEO 3 Kimlər Üçün Uyğundur?</h3>\n<ul>\n  <li><strong>Kontent Yaradıcıları və Bloqerlər:</strong> Sosial şəbəkələr üçün kreativ ideyalar, mətnlər, video ssenarilər və AI videolar hazırlamaq istəyənlər.</li>\n  <li><strong>SMM Menecerlər və Marketoloqlar:</strong> Reklam ideyaları, post mətnləri, kampaniya konseptləri və video kontent hazırlayan mütəxəssislər.</li>\n  <li><strong>Biznes Sahibləri və Sahibkarlar:</strong> Məhsul və xidmətlərini daha peşəkar təqdim etmək üçün süni intellektdən istifadə etmək istəyənlər.</li>\n  <li><strong>Tələbələr və Peşəkarlar:</strong> Araşdırma, yazı, təqdimat, planlama və gündəlik işlərdə AI dəstəyinə ehtiyac duyan istifadəçilər.</li>\n</ul>\n\n<h3>Google AI Pro + VEO 3-ün Üstünlükləri</h3>\n<ul>\n  <li><strong>🤖 Güclü Gemini AI İmkanları:</strong> Mətn yazmaq, suallara cavab almaq, ideya yaratmaq, analiz etmək və iş proseslərini sürətləndirmək üçün inkişaf etmiş süni intellekt dəstəyi.</li>\n  <li><strong>🎬 VEO 3 ilə AI Video Yaratma:</strong> Mətn təsvirləri əsasında kreativ, realistik və peşəkar görünüşlü videolar hazırlamaq imkanı.</li>\n  <li><strong>✨ Kontent İstehsalında Vaxta Qənaət:</strong> Sosial media postları, reklam ssenariləri, video ideyaları və təqdimat mətnlərini daha sürətli hazırlamaq.</li>\n  <li><strong>📚 Araşdırma və Planlama Dəstəyi:</strong> Mövzular üzrə məlumat toplamaq, struktur qurmaq, mətnləri təkmilləşdirmək və layihələri daha rahat planlamaq.</li>\n  <li><strong>🚀 Kreativ və Peşəkar Nəticələr:</strong> AI dəstəyi ilə daha keyfiyyətli vizuallar, ideyalar, mətnlər və video kontent hazırlayaraq rəqəmsal işlərdə fərqlənmək.</li>\n</ul>",
     "rulesHtml": ""
+  },
+  "pubg_mobile": {
+    "aboutHtml": "<p>PUBG Mobile UC paketlərini eyni məhsul səhifəsində müqayisə edin. 60 UC, 325 UC və digər seçimlərin qiyməti ayrıca göstərilir; sifariş seçdiyiniz paketə bağlanır.</p>"
+  },
+  "free_fire": {
+    "aboutHtml": "<p>Free Fire almaz paketləri bu səhifədə bir yerdə təqdim olunur. Paket adındakı almaz sayını, varsa bonusu və regionu qiymətlə birlikdə yoxlayın.</p>"
+  },
+  "telegram_premium": {
+    "aboutHtml": "<p>Telegram Premium üçün üç və altı aylıq seçimləri müqayisə edin. Premium abunəliklə Telegram Stars eyni məhsul deyil; təsdiqdə göstərilən xidmət növünü yoxlayın.</p>"
   }
 };
 

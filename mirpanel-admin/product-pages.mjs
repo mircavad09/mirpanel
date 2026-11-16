@@ -3,6 +3,8 @@ import { createHash } from 'node:crypto';
 import displayLabels from '../display-labels.js';
 import catalogCard from '../catalog-card.js';
 import {renderPlanRows, renderPlanSummary, renderPlanTrust} from '../product-plan-view.mjs';
+import {productSeoCopy} from '../product-seo-content.mjs';
+import {planName} from '../product-plan-view.mjs';
 const { normalizeDisplayLabel } = displayLabels;
 const SITE_URL = "https://mirpanel.com";
 const DELIVERY_TEXT = "7/24 anında təqdim edilir";
@@ -11,7 +13,7 @@ function renderSplashMarkup() {
   return `<div id="newSplashScreen" class="premium-splash" hidden aria-hidden="true" style="display:none">
     <div class="premium-splash-content">
       <div class="splash-logo-frame"><img src="/assets/logo.png" alt="Mirpanel Logo" class="premium-logo" width="150" height="150"></div>
-      <h1 class="premium-brand-text">MIRPANEL</h1>
+      <div class="premium-brand-text">MIRPANEL</div>
       <p class="premium-sub-text">Premium Hesablar • Etibarlı Aktivləşmə</p>
     </div>
   </div>
@@ -188,16 +190,12 @@ export function removedInfoPagePaths(previousSiteSections = {}, nextSiteSections
 }
 
 export function generateSitemap(products = [], siteSections = {}, date = new Date(), cms = {}) {
-  const lastmod = new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Baku",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit"
-  }).format(date);
   const urls = new Map();
-  const add = (path, changefreq, priority) => {
+  const add = (path, changefreq, priority, updatedAt) => {
     const url = `${SITE_URL}${path}`;
-    if (!urls.has(url)) urls.set(url, { changefreq, priority });
+    const lastmod=typeof updatedAt==='string'&&/^\d{4}-\d{2}-\d{2}(?:T.*)?$/.test(updatedAt)&&Number.isFinite(Date.parse(updatedAt))&&Date.parse(updatedAt)<=+date
+      ?new Date(updatedAt).toISOString():null;
+    if (!urls.has(url)) urls.set(url, { changefreq, priority,lastmod });
   };
 
   if (cms?.seo?.home?.includeInSitemap !== false && cms?.seo?.home?.index !== false) {
@@ -206,17 +204,17 @@ export function generateSitemap(products = [], siteSections = {}, date = new Dat
   add("/mehsul", "daily", "0.9");
   for (const { slug, section } of activeSitePages(siteSections)) {
     if (section.includeInSitemap !== false && section.index !== false) {
-      add(`/${slug}`, "monthly", "0.7");
+      add(`/${slug}`, "monthly", "0.7",section.updatedAt);
     }
   }
   for (const { product, slug } of activeProductsWithSlugs(products)) {
     if (product.includeInSitemap !== false && product.seoIndex !== false) {
-      add(productCanonicalPath(slug), "weekly", "0.9");
+      add(productCanonicalPath(slug), "weekly", "0.9",product.seoUpdatedAt);
     }
   }
 
   const entries = [...urls].map(([url, meta]) =>
-    `  <url><loc>${escapeXml(url)}</loc><lastmod>${lastmod}</lastmod><changefreq>${meta.changefreq}</changefreq><priority>${meta.priority}</priority></url>`
+    `  <url><loc>${escapeXml(url)}</loc>${meta.lastmod?`<lastmod>${meta.lastmod}</lastmod>`:''}<changefreq>${meta.changefreq}</changefreq><priority>${meta.priority}</priority></url>`
   );
 
   return `<?xml version="1.0" encoding="UTF-8"?>
@@ -336,7 +334,14 @@ export function patchHomeCatalog(source,products) {
 export function generateProductListingPageFiles(products = [], siteSections = {}, cms = {}) {
   const active = activeProductsWithSlugs(products);
   const canonical = `${SITE_URL}/mehsul`;
-  const cards = renderCatalogCards(active);
+  let cards = renderCatalogCards(active);
+  const categories=[...new Set(active.map(({product})=>product.category).filter(Boolean))];
+  const labels={film:'Film və serial',video:'Video və VPN',meeting:'Onlayn görüş',musiqi:'Musiqi',ai:'Süni intellekt',dizayn:'Dizayn','epinby-games':'Oyun məhsulları','sosial-media':'Sosial media'};
+  for(const category of categories){
+    const first=active.find(({product})=>product.category===category).product;
+    cards=cards.replace(`data-product-id="${escapeAttribute(first.id)}"`,`id="category-${seoSlug(category)}" data-product-id="${escapeAttribute(first.id)}"`);
+  }
+  const categoryLinks='<nav aria-label="Məhsul kateqoriyaları" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0">'+categories.map(c=>`<a href="/mehsul#category-${seoSlug(c)}" style="padding:8px">${escapeHtml(labels[c]||c)}</a>`).join('')+'</nav>';
   const structuredData = safeJson({
     "@context": "https://schema.org",
     "@graph": [
@@ -366,7 +371,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
   const html = `<!DOCTYPE html>
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=stable-buy-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document">${renderSplashMarkup()}${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=seller-pricing-1"></script></body></html>`;
-  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=ready-delivery-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=ready-delivery-1"></script><script src="/catalog-listing.js?v=ready-delivery-1"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
+  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('</h1>','</h1>'+categoryLinks).replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=ready-delivery-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=ready-delivery-1"></script><script src="/catalog-listing.js?v=ready-delivery-1"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
@@ -409,8 +414,11 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         description,
         image: [imageUrl],
         sku: String(product.id || ""),
-        brand: { "@type": "Brand", name: "Mirpanel" },
         offers
+      },
+      {
+        "@type":"Organization","@id":`${SITE_URL}/#organization`,name:"MirPanel",url:SITE_URL+"/",logo:SITE_URL+"/assets/logo.png",
+        contactPoint:{"@type":"ContactPoint",contactType:"customer support",url:SITE_URL+"/elaqe",availableLanguage:"az"}
       },
       {
         "@type": "BreadcrumbList",
@@ -447,7 +455,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>${escapeHtml(title)}</title>
   <meta name="description" content="${escapeAttribute(description)}">
-  <meta name="robots" content="index, follow">
+  <meta name="robots" content="${product.seoIndex===false?'noindex, follow':'index, follow, max-image-preview:large'}">
   <link rel="canonical" href="${canonical}">
   <meta property="og:type" content="product">
   <meta property="og:title" content="${escapeAttribute(socialTitle)}">
@@ -494,13 +502,13 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         <div class="product-page-card-grid">
           <div class="product-page-media">
             <img class="product-page-media-backdrop" src="${escapeAttribute(imageSrc)}" alt="" aria-hidden="true" decoding="async">
-            <img id="pp-main-img" src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(displayTitle)}" width="1200" height="1200" fetchpriority="high" decoding="async">
+            <img id="pp-main-img" src="${escapeAttribute(imageSrc)}" alt="${escapeAttribute(product.imageAlt||displayTitle+' — MirPanel məhsul şəkli')}" width="1200" height="1200" fetchpriority="high" decoding="async">
           </div>
 
           <div class="product-page-info">
             <div class="product-detail-heading">
               <h1 id="pp-main-title" class="product-page-title">${escapeHtml(h1)}</h1>
-              <span class="product-page-status${availability.inStock ? "" : " is-out"}">${escapeHtml(availability.label)}</span>
+              <span class="product-page-status${availability.inStock===false ? " is-out" : ""}">${escapeHtml(availability.label)}</span>
             </div>
             ${product.desc ? `<p class="product-page-description">${escapeHtml(product.desc)}</p>` : ""}
             <div class="product-page-delivery">
@@ -535,6 +543,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
           <h2>${escapeHtml(displayTitle)} haqqında</h2>
           ${product.desc && product.desc !== aboutText ? `<p>${escapeHtml(product.desc)}</p>` : ""}
           <p>${escapeHtml(aboutText || `${product.title} üçün mövcud planları və qiymətləri bu səhifədə görə bilərsiniz.`)}</p>
+          ${renderPurchaseGuidance(product)}
         </article>
         <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden>
           <h2>İstifadə qaydaları</h2>
@@ -569,7 +578,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
       <div class="mForm" id="mForm" style="margin-top:25px"></div>
       <div class="mBottom">
         <div class="mInfo" id="mInfo"></div>
-        <div class="mSmall">Sifariş etdikdə WhatsApp avtomatik açılacaq.</div>
+        <div class="mSmall">Sifariş məlumatlarını yoxlayın və saytda ödənişə davam edin.</div>
       </div>
     </div>
   </div>
@@ -937,7 +946,7 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
   const brand = cleanText(cms.site?.brandName) || "Mirpanel";
   const availability = productAvailability(product);
   const availabilityText = cleanText(product.availabilityText) ||
-    (availability.inStock ? cleanText(texts.available) : cleanText(texts.outOfStock)) ||
+    (availability.inStock===true ? cleanText(texts.available) : availability.inStock===false ? cleanText(texts.outOfStock):'') ||
     availability.label;
   const about = cleanText(content.aboutHtml || product.longDescription || product.seoContent || product.desc);
   const rules = cleanText(content.rulesHtml || product.usageRules || product.note || product.desc);
@@ -955,7 +964,7 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
     .replace(/(<a class="product-page-similar-more"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.moreProducts || "Daha çox məhsul")}$2`)
     .replace(/<footer class="product-page-footer">[\s\S]*?<\/footer>/, `<footer class="product-page-footer">${renderCmsFooter(cms)}</footer>`);
   if (about) {
-    next = next.replace(/(<article\b(?=[^>]*class="product-page-panel")(?=[^>]*data-product-panel="about")[^>]*>)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(publicProductTitle(product.title))} ${escapeHtml(texts.productAbout || "haqqında")}</h2>${about}$2`);
+    next = next.replace(/(<article\b(?=[^>]*class="product-page-panel")(?=[^>]*data-product-panel="about")[^>]*>)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(publicProductTitle(product.title))} ${escapeHtml(texts.productAbout || "haqqında")}</h2>${about}${renderPurchaseGuidance(product)}$2`);
   }
   if (rules) {
     next = next.replace(/(<article\b(?=[^>]*class="product-page-panel")(?=[^>]*data-product-panel="rules")[^>]*>)[\s\S]*?(<\/article>)/, `$1<h2>${escapeHtml(texts.usageRules || "İstifadə qaydaları")}</h2>${rules}$2`);
@@ -1163,36 +1172,54 @@ function renderSimilar(similar, compact = false) {
 
 function productOffers(product, canonical, availability, priceCurrency, sellerName) {
   return (product.plans || [])
-    .map((plan) => Number(plan.price))
-    .filter((price) => Number.isFinite(price) && price >= 0)
-    .map((price) => ({
+    .filter(plan=>plan.active!==false&&Number.isFinite(Number(plan.price))&&Number(plan.price)>0)
+    .map((plan,index) => ({
       "@type": "Offer",
+      "@id": canonical+'#offer-'+encodeURIComponent(plan.id??index),
+      name:planName(plan),
       url: canonical,
-      price: price.toFixed(2),
+      price: Number(plan.price).toFixed(2),
       priceCurrency,
       availability: availability.schema,
       itemCondition: "https://schema.org/NewCondition",
-      seller: { "@type": "Organization", name: sellerName, url: SITE_URL }
+      seller: { "@type": "Organization","@id":SITE_URL+"/#organization", name: "MirPanel", url: SITE_URL }
     }));
 }
 
 function renderProductFaq(product) {
   const title = cleanText(product.title);
+  const copy=productSeoCopy(product);
   const plans = (product.plans || [])
-    .filter((plan) => Number.isFinite(Number(plan.price)))
-    .map((plan) => `${normalizeDisplayLabel(cleanText(plan.label)) || `${Number(plan.months) || 1} aylıq plan`} — ${Number(plan.price).toFixed(2)} ${cleanText(product.currency) || "AZN"}`);
+    .filter((plan) => plan.active!==false&&Number(plan.price)>0)
+    .map((plan) => `${planName(plan)} — ${Number(plan.price).toFixed(2)} ${cleanText(product.currency) || "AZN"}`);
   const planText = plans.length ? plans.join(", ") : "Hazırda sifariş üçün açıq plan yoxdur.";
   return `<section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
     <details><summary>${escapeHtml(title)} üçün hansı planlar mövcuddur?</summary><p>${escapeHtml(planText)}</p></details>
-    <details><summary>${escapeHtml(title)} sifarişi necə verilir?</summary><p>Səhifədə planı seçib “Sifariş et” düyməsinə toxunun. Məlumatları yoxlayıb təsdiqlədikdən sonra mövcud WhatsApp sifariş axını açılır.</p></details>
+    <details><summary>${escapeHtml(copy.question)}</summary><p>${escapeHtml(copy.answer)}</p></details>
+    <details><summary>${escapeHtml(title)} sifarişi necə verilir?</summary><p>Paketi seçib “İndi al” düyməsinə toxunun. Sifariş formasındakı məlumatları və yekun qiyməti yoxlayın, sonra mövcud ödəniş üsulu ilə davam edin. Qiymət və stok ödənişdən əvvəl serverdə yoxlanılır.</p></details>
     <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
   </section>`;
 }
 
+function renderPurchaseGuidance(product){
+ const copy=productSeoCopy(product);
+ const plans=(product.plans||[]).filter(p=>p.active!==false&&Number(p.price)>0);
+ const warranties=plans.map(p=>[planName(p),planMetrics(p).warranty]).filter(([,w])=>w);
+  const fields=[...new Set([...(product.formFields||[]),...plans.flatMap(p=>p.supplier?.fields||p.formFields||[])].filter(f=>f.enabled!==false&&f.active!==false).map(f=>cleanText(f.label)).filter(Boolean))];
+ return `<h3>Giriş və təhvil qaydası</h3><p>${escapeHtml(copy.usage)}</p>
+ <p>${fields.length?'Sifariş formasındakı məlumat sahələri: '+escapeHtml(fields.join(', '))+'.':'Əlavə məlumat tələb olunarsa seçilən paketin sifariş formasında göstərilir.'} Şəxsi giriş məlumatlarını yalnız sifariş formasında daxil edin, açıq qrup söhbətində paylaşmayın.</p>
+ <p>Ödənişin təsdiqi ilə təhvilin tamamlanması ayrı mərhələlərdir. Hazır hesab və ya aktivləşdirmə vəziyyətini <a href="/profil?tab=sifarislerim">Sifarişlərim</a> bölməsindən izləyin. Məhsula aid Təlimat təhvil məlumatları ilə birlikdə açılır.</p>
+ <h3>Paket zəmanəti və istifadə şərtləri</h3>
+ ${warranties.length?`<ul>${warranties.map(([p,w])=>`<li>${escapeHtml(p)}: ${escapeHtml(w)}</li>`).join('')}</ul>`:'<p>Bu məhsulun paketlərində ayrıca zəmanət müddəti göstərilməyib. Ödənişdən əvvəl operatorla dəqiqləşdirin; əlavə zəmanət vədi verilmir.</p>'}
+ <p>Ümumi <a href="/sertler">sifariş və istifadə şərtlərini</a> oxuyun. Sualınız varsa <a href="/elaqe">MirPanel ilə əlaqə saxlayın</a>. MirPanel bu xidmətlərin rəsmi saytı deyil; rəsmi tərəfdaşlıq iddiası edilmir.</p>
+ <h3>Alış addımları</h3><ol><li>Bu səhifədə paket və müddəti seçin.</li><li>“İndi al” düyməsi ilə tələb olunan məlumatları və hesab uyğunluğunu yoxlayın.</li><li>Yekun AZN qiymətini təsdiqləyərək saytda ödənişi tamamlayın.</li><li>Təhvil vəziyyətini və giriş təlimatını Sifarişlərimdən açın.</li></ol>
+ <p><a href="/mehsul#category-${seoSlug(product.category)}">Bu kateqoriyadakı məhsullara baxın</a> · <a href="/mehsul">Bütün məhsullar</a>.</p>`;
+}
+
 function productAvailability(product) {
   const rawStock = product.stock ?? product.stockCount ?? product.stockQuantity;
-  const hasPurchasablePlan = (product.plans || []).some((plan) => Number(plan.price) > 0);
+  const hasPurchasablePlan = (product.plans || []).some((plan) => plan.active!==false&&Number(plan.price) > 0);
   const exhausted =
     (product.stockEnabled === true &&
       rawStock !== null &&
@@ -1204,11 +1231,12 @@ function productAvailability(product) {
     !hasPurchasablePlan;
   return exhausted
     ? { inStock: false, label: "Stokda yoxdur", schema: "https://schema.org/OutOfStock" }
-    : { inStock: true, label: "Mövcuddur", schema: "https://schema.org/InStock" };
+    : { inStock: null, label: "Stok yoxlanılır", schema: undefined };
 }
 
 function minimumPrice(product) {
   const values = (product.plans || [])
+    .filter(plan=>plan.active!==false)
     .map((plan) => Number(plan.price))
     .filter((price) => Number.isFinite(price) && price > 0);
   return values.length ? Math.min(...values) : 0;
