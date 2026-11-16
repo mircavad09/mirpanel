@@ -830,3 +830,5 @@ details.browser-order .browser-order-footer>button[data-receipt]{margin-inline-s
 }
 
 .account-panel .browser-order-delivery button:hover:not(:disabled){border-color:#6A8CA8;box-shadow:none}
+
+.browser-order-player{display:grid;gap:6px;margin-top:10px;font-size:14px;min-width:0}.browser-order-player>div{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.browser-order-player strong{overflow-wrap:anywhere;min-width:0}.browser-order-player [data-player-id]{word-break:break-all}.browser-order-player [data-copy-player-id]{display:inline-flex;align-items:center;justify-content:center;min-width:44px;min-height:44px;padding:8px;flex:0 0 auto}.browser-order-player [data-copy-player-id] svg{width:18px;height:18px}.browser-order-player [data-player-copy-status]{color:#68d99b}.browser-order-player-unverified{color:#bfc6cc}

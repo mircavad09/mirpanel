@@ -1,3 +1,4 @@
+import {orderPlayer} from '../mirpanel-admin/order-player.mjs';
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
 import {shopFixture} from './shop-test-fixture.mjs';
@@ -174,6 +175,11 @@ try{
  // Terminal/unpaid orders are never sent, even if a dispatch already exists.
  for(const status of ['cancelled','rejected']){const terminal=await buy();await pool.query('update public.payment_orders set status=$2 where id=$1',[terminal.orderId,status]);const n=creates;await tick(worker,2);assert.equal(creates,n);}
  const unpaid=await buy();await pool.query("update public.payment_orders set payment_confirmed=false,status='reviewing',receipt_path='synthetic/receipt.png',receipt_bucket='synthetic',receipt_mime='image/png',receipt_size=100,receipt_sha256=repeat('0',64) where id=$1",[unpaid.orderId]);const n=creates;await tick(worker,2);assert.equal(creates,n);
+ const verifiedOrder=await buy(id(),[{productId:free.id,planIndex:0,quantity:1,details:freePlayer}]);
+ const savedOrder=(await pool.query('select checkout_snapshot from public.payment_orders where id=$1',[verifiedOrder.orderId])).rows[0].checkout_snapshot;
+ assert.deepEqual(orderPlayer(security,savedOrder.items[0],free.id),{id:'000123',name:'Synthetic Player',verified:true});
+ await verify(pubg,{player_id:'000123'});
+ assert.deepEqual(orderPlayer(security,savedOrder.items[0],free.id),{id:'000123',name:'Synthetic Player',verified:true},'a later package lookup never mutates the purchased identity');
  console.log('PASS: balance waiting/replenishment, HTTP402 codes, invalid input blocked, original wallet debit retained, terminal/unpaid orders skipped, admin message only after completion, durable retries.');
  console.log('PASS: Epinby account checks, unavailable/retry, invalid Stars no debit, Stars dedicated idempotent fulfillment.');
  console.log('PASS: separate games; >40 pages; page failure; dynamic fields/leading zeros; wallet replay; parallel worker; lost response/restart without repurchase; signed duplicate webhook; provider rejection; private delivery; mail idempotence. No real supplier order.');

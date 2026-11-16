@@ -1,0 +1,34 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
+import {sealOrderPlayer,orderPlayer} from '../mirpanel-admin/order-player.mjs';
+import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
+const security=createPaymentSecurity({encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')});
+const values={player_id:'00123456789',server_id:'0012',password:'DO-NOT-PROJECT'};
+const snapshot={productId:'free_fire',sourcePlanKey:'epinby_42',detailsCipher:security.encryptSecret(JSON.stringify(values))};
+snapshot.playerIdentityCipher=sealOrderPlayer(security,{...snapshot,values},{state:'verified',name:'Sınaq oyunçusu '+('UzunAd'.repeat(12))});
+const saved=JSON.parse(JSON.stringify(snapshot)),expected=orderPlayer(security,snapshot,'free_fire');
+assert.equal(expected.id,values.player_id);assert.equal(expected.verified,true);assert(expected.name.startsWith('Sınaq oyunçusu'));
+assert.deepEqual(orderPlayer(security,saved,'free_fire'),expected);
+for(const bad of [{...snapshot,sourcePlanKey:'other-package'},{...snapshot,detailsCipher:security.encryptSecret(JSON.stringify({...values,player_id:'99999'}))},{...snapshot,detailsCipher:security.encryptSecret(JSON.stringify({...values,server_id:'9999'}))},{...snapshot,playerIdentityCipher:'damaged'}])assert.equal(orderPlayer(security,bad,'free_fire').verified,false);
+assert.equal(orderPlayer(security,snapshot,'pubg_mobile').verified,false);
+assert.equal(orderPlayer(security,{detailsCipher:snapshot.detailsCipher},'free_fire').name,null);
+assert.equal(orderPlayer(security,{detailsCipher:'damaged'},'free_fire'),null);
+assert.equal(orderPlayer(security,{detailsCipher:security.encryptSecret(JSON.stringify({email:'secret@example.test',password:'secret'}))},'spotify'),null);
+assert.equal(sealOrderPlayer(security,{...snapshot,values:{}},{state:'verified',name:'Profile name'}),null);
+const item={...snapshot,title:'Free Fire',planName:'572 Almaz — sınaq',quantity:2,unitCents:754};
+let records=[],processing=false;
+const row={id:'00000000-0000-4000-8000-000000000001',order_code:'12919',product_id:'__cart__',product_title:'Free Fire',plan_name:'1 məhsul',amount:'15.08',currency:'AZN',quantity:2,status:'reviewing',payment_confirmed:true,created_at:'2026-11-16T12:00:00Z',checkout_snapshot:{cartVersion:2,items:[item]}};
+const service=createAccountOrders({security,store:{},resolve:async request=>request?.userId?{userId:request.userId,page:async()=>request.userId==='owner'?[row]:[],deliveries:async()=>records,supplierProgress:async()=>new Map([[row.id,{processing}]])}:null});
+for(const state of ['preparing','processing','completed']){
+ processing=state==='processing';records=state==='completed'?[{id:'delivery',order_id:row.id,line_index:0,quantity:2}]:[];
+ const result=await service.list({userId:'owner'});const order=result.orders[0];
+ assert.deepEqual(order.items[0].player,expected);assert.equal(order.items[0].quantity,2);assert.equal(order.items[0].unitCents,754);assert.equal(order.items[0].planName,item.planName);assert.equal(order.status,state==='completed'?'completed':'preparing');assert.equal(order.supplierProcessing,processing);
+ const json=JSON.stringify(result);for(const secret of ['DO-NOT-PROJECT','playerIdentityCipher','detailsCipher','server_id'])assert(!json.includes(secret));
+}
+row.checkout_snapshot={...saved};row.product_id='free_fire';row.product_title='Free Fire';row.plan_name='Legacy 572 Almaz';row.status='reviewing';records=[];
+assert.deepEqual((await service.list({userId:'owner'})).orders[0].player,expected);
+delete row.checkout_snapshot.playerIdentityCipher;assert.equal((await service.list({userId:'owner'})).orders[0].player.name,null);
+assert.equal((await service.list({userId:'other'})).orders.length,0);
+await assert.rejects(service.list({}),{status:401});
+console.log('PASS: immutable checkout identity, legacy ID, verified-name proof binding, package/input isolation, preparing/processing/completed projection, no private fields, owner-only scope.');

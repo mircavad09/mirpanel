@@ -82,12 +82,13 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
    if(!check.allowCheckout)throw fail(check.state==='retry'?503:409,check.message);
    const quoted=await send(row,'telegram-stars/quote',{body:{stars_amount:supplier.starsAmount}});
    if(quoted?.success!==true||Number(quoted.data?.stars_amount)!==supplier.starsAmount)throw fail(503,'Telegram Stars paketi təchizatçıda təsdiqlənmədi.');
-   return;
+   return check;
   }
   const product=await providerProduct(row,supplier);
   if(!['FINITE','INFINITE','UNLIMITED'].includes(product.stock_status)||product.stock_status==='FINITE'&&(!Number.isSafeInteger(Number(product.stock_count))||Number(product.stock_count)<quantity))throw fail(409,'Təchizatçıda kifayət qədər təsdiqlənmiş stok yoxdur.');
   const check=await checkRecipient(row,supplier,values,product);
   if(!check.allowCheckout)throw fail(check.state==='retry'?503:409,check.message);
+  return check;
  }
  async function providerProduct(row,supplier){
   // The live API ignores undocumented ID filters. Search only the exact game/category,
