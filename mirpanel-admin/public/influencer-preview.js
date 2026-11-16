@@ -17,7 +17,7 @@ export async function openInfluencerPreview({call,alive}){
  const messages=element('section',undefined,'influencer-preview-messages');messages.setAttribute('aria-label','Sınaq mesajları');
  const status=element('p','','influencer-preview-status');status.setAttribute('role','status');
  const form=element('form'),input=element('textarea'),send=element('button','Göndər');
- input.rows=2;input.maxLength=2000;input.placeholder='Sınaq mesajınızı yazın…';input.setAttribute('aria-label','Sınaq mesajı');send.type='submit';form.append(input,send);
+ input.rows=2;input.maxLength=2000;input.placeholder='Sınaq mesajınızı yazın…';input.setAttribute('aria-label','Sınaq mesajı');send.type='submit';send.disabled=true;form.append(input,send);
  dialog.append(header,element('h2','Ümumi söhbət'),messages,status,form);document.body.append(dialog);
  let closed=false,busy=false,clientId=null,lastBody=null,profile;
  const available=()=>!closed&&alive()&&dialog.isConnected;
@@ -44,7 +44,7 @@ export async function openInfluencerPreview({call,alive}){
  }
  async function load(){
   status.textContent='Sınaq görünüşü yüklənir…';
-  try{const data=await call('/influencer-preview');if(available()){paint(data);status.textContent='';}}
+  try{const data=await call('/influencer-preview');if(available()){paint(data);send.disabled=false;status.textContent='';}}
   catch(error){if(available()){status.replaceChildren(element('span',error.message+' '));const retry=element('button','Yenidən cəhd et');retry.type='button';retry.onclick=load;status.append(retry);}}
  }
  form.onsubmit=async event=>{

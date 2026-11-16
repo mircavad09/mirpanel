@@ -9,7 +9,7 @@ export async function mountChat({root,state,call,alive}){
  let stream,closed=false,key=crypto.randomUUID(),messages=new Map();const dialogs=new Set();
  const valid=()=>!closed&&alive(),error=el('p',{role:'alert',class:'ac-error'}),list=el('div',{class:'ac-messages','aria-label':'Qrup mesajları',tabindex:'0'}),input=el('textarea',{'aria-label':'Qrup mesajı',placeholder:'Mesajınızı yazın…',maxlength:'2000',rows:'1'});
  const preview=button('Influencer görünüşünü sına',async()=>{
-  try{const {openInfluencerPreview}=await import('/influencer-preview.js?v=1');if(valid())await openInfluencerPreview({call,alive:valid});}
+  try{const {openInfluencerPreview}=await import('/influencer-preview.js?v=2');if(valid())await openInfluencerPreview({call,alive:valid});}
   catch(failure){if(valid())error.textContent=failure.message;}
  });
  const near=()=>list.scrollHeight-list.clientHeight-list.scrollTop<65;
