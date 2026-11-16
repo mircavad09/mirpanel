@@ -11,7 +11,7 @@ async function ensurePreviewStorage(pool){
   try{
    await client.query('begin');
    await client.query('select pg_advisory_xact_lock(714025121)');
- await client.query(`create table if not exists ${table}(
+   await client.query(`create table if not exists ${table}(
   id uuid primary key default gen_random_uuid(),actor_id text not null references mirpanel_community."user"(id),
   target_id text not null references mirpanel_community."user"(id),client_id uuid not null,
   body text not null check(char_length(body) between 1 and 2000),
