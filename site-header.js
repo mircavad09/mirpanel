@@ -6,7 +6,7 @@
     const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/mobile-profile.css?v=2';sheet.media='(max-width: 767px)';sheet.dataset.mobileProfileStyle='';sheet.dataset.shellPersistent='';document.head.append(sheet);
   }
   if(!document.querySelector('script[data-customer-footer-loader]')){
-    const footer=document.createElement('script');footer.src='/customer-footer.js?v=total-sales-20261108';footer.dataset.customerFooterLoader='true';document.head.append(footer);
+    const footer=document.createElement('script');footer.src='/customer-footer.js?v=route-recovery-1';footer.dataset.customerFooterLoader='true';document.head.append(footer);
   }
   // Only a successful email registration/recovery leaves this tab-local marker.
   try {

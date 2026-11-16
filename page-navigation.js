@@ -20,17 +20,23 @@
  // A checkout return can open its verification sheet before the router loads.
  // Moving an open modal out of the body would remove it from the top layer.
  const persistent=n=>n.matches?.('.site-header,.browser-bottom-nav,#supportWidget,#accountDropdown,#accountNotifications,#accountGuest,#newSplashScreen,#splashLoadStatus,dialog.auth-code-sheet[open],[data-shell-persistent]');
- function rememberStyles(doc,base){const keys=[];for(const n of doc.head.querySelectorAll('link[rel=stylesheet],style')){const url=n.tagName==='LINK'?new URL(n.getAttribute('href'),base):null;if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css')||url&&shared.test(url.pathname))continue;const key=url?url.pathname:'inline:'+n.textContent;keys.push(key);if(!styles.has(key)){const copy=n.ownerDocument===document?n:n.cloneNode(true);if(url&&copy!==n)copy.href=url.href;if(!copy.isConnected)document.head.insertBefore(copy,document.head.querySelector('link[href*="site-header.css"]'));styles.set(key,copy);}}return keys;}
+ function rememberStyles(doc,base){const keys=[];for(const n of doc.head.querySelectorAll('link[rel=stylesheet],style')){const url=n.tagName==='LINK'?new URL(n.getAttribute('href'),base):null;if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css')||url&&shared.test(url.pathname))continue;const key=url?url.href:'inline:'+n.textContent;keys.push(key);if(!styles.has(key)){const copy=n.ownerDocument===document?n:n.cloneNode(true);if(url&&copy!==n)copy.href=url.href;if(!copy.isConnected)document.head.insertBefore(copy,document.head.querySelector('link[href*="site-header.css"]'));styles.set(key,copy);}}return keys;}
  async function prepareStyles(keys,signal){
   await Promise.all(keys.map(key=>{
-   const node=styles.get(key);
+   let node=styles.get(key);
    if(!node||node.tagName!=='LINK')return;
+   if(node.dataset.routeFailed==='true'){
+    const fresh=node.cloneNode(false),url=new URL(node.href);
+    url.searchParams.set('routeRetry',String((Number(node.dataset.routeRetry)||0)+1));
+    fresh.href=url.href;fresh.dataset.routeRetry=url.searchParams.get('routeRetry');delete fresh.dataset.routeFailed;
+    node.replaceWith(fresh);styles.set(key,fresh);node=fresh;
+   }
    node.disabled=false;node.media='all';
    if(node.sheet)return;
    return new Promise((resolve,reject)=>{
     const cleanup=()=>{node.removeEventListener('load',ready);node.removeEventListener('error',failed);signal.removeEventListener('abort',failed);};
-    const ready=()=>{cleanup();resolve();};
-    const failed=()=>{cleanup();reject(Error('Bölmənin üslubları yüklənmədi. Yenidən cəhd edin.'));};
+    const ready=()=>{delete node.dataset.routeFailed;cleanup();resolve();};
+    const failed=()=>{node.dataset.routeFailed='true';cleanup();reject(Error('Bölmənin üslubları yüklənmədi. Yenidən cəhd edin.'));};
     node.addEventListener('load',ready,{once:true});node.addEventListener('error',failed,{once:true});signal.addEventListener('abort',failed,{once:true});
     if(signal.aborted)failed();else if(node.sheet)ready();
    });
@@ -81,7 +87,7 @@
  for(const event of ['pointerover','pointerdown','focusin'])document.addEventListener(event,listingIntent,{passive:true});
  if(location.pathname==='/'&&!navigator.connection?.saveData&&typeof requestIdleCallback==='function')
   requestIdleCallback(()=>{if(location.pathname==='/'&&!document.hidden)void prepareListing();},{timeout:1200});
- const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=shell-20261104';document.head.append(sheet);
+ const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=route-recovery-1';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=az-addresses-1';
  const profileModule='/community-assets/profile-entry.js?v=zoom-phone-1';
@@ -91,7 +97,8 @@
  if(window.mirpanelAccountProfile)void prepareProfile().catch(()=>{});
  void import(authModule).catch(()=>{});
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
- async function moduleWithin(url){let timer;try{return await Promise.race([import(url),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}finally{clearTimeout(timer);}}
+ const moduleAttempts=new Map();
+ async function moduleWithin(url){const attempt=moduleAttempts.get(url)||0;let timer;try{return await Promise.race([import(url+(attempt?(url.includes('?')?'&':'?')+'routeRetry='+attempt:'')),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}catch(error){moduleAttempts.set(url,attempt+1);throw error;}finally{clearTimeout(timer);}}
  const shopModule='/community-assets/shop-ui.js?v=customer-perf-2',groupModule='/community-assets/community.js?v=shell-chat-compose-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&((u.pathname===location.pathname&&(a.dataset.browserNav!=='orders'||u.searchParams.get('tab')===new URLSearchParams(location.search).get('tab')))||u.pathname==='/mehsul'&&isProduct(location.pathname)))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}

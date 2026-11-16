@@ -1,0 +1,27 @@
+import fs from 'node:fs';import http from 'node:http';import assert from 'node:assert/strict';import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+const before=process.argv.includes('--before'),out='outputs/route-recovery';fs.mkdirSync(out,{recursive:true});let failures=1,cssRequests=0,version='1',moduleFailures=1,moduleRequests=0;
+const shell=(body,extra='')=>`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">${extra}<link rel="stylesheet" href="/customer-footer.css" data-shell-persistent><body><header class="site-header"><a href="/elaqe">Əlaqə</a><a href="/sertler">Şərtlər</a><a href="/sebet">Səbət</a><a href="/mehsul">Məhsullar</a></header>${body}<footer id="customerFooter" data-shell-persistent><h2>Sualınız var? Operatora yazın.</h2></footer><script src="/page-navigation.js"></script></body></html>`;
+const server=http.createServer((req,res)=>{let p=new URL(req.url,'http://local').pathname;res.setHeader('Content-Type','text/html');if(p==='/')return res.end(shell('<main><h1>Ana səhifə</h1></main>'));
+ if(['/elaqe','/sertler','/haqqimizda'].includes(p))return res.end(shell('<main class="test-content"><h1>Hazır bölmə</h1><a href="/sertler">Şərtlər</a></main>','<link rel="stylesheet" href="/test-route.css?v='+version+'">'));
+ if(p==='/test-route.css'){cssRequests++;if(failures-->0){res.writeHead(503);return res.end('Unavailable');}res.setHeader('Content-Type','text/css');return res.end('.test-content{min-height:500px;color:'+(version==='1'?'rgb(1, 2, 3)':'rgb(4, 5, 6)')+'}');}
+ if(p==='/sebet')return res.end(shell('<main id="shopApp"></main>'));
+ if(p==='/community-assets/shop-ui.js'){moduleRequests++;res.setHeader('Content-Type','text/javascript');if(moduleFailures-->0){res.writeHead(503);return res.end('Unavailable');}return res.end('export function mountShop(){document.querySelector("#shopApp").innerHTML="<h1>Səbət hazırdır</h1>";return ()=>{};}');}
+ if(p==='/community-assets/auth-forms.js'){res.setHeader('Content-Type','text/javascript');return res.end('export const fixture=true;');}
+ if(['/page-navigation.js','/page-navigation.css','/customer-footer.css'].includes(p)){res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':'text/css');return res.end(fs.readFileSync('.'+p));}
+ res.statusCode=404;res.end('');});await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port,results=[];
+try{for(const engine of [chromium,webkit]){const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});try{
+ const page=await browser.newPage({viewport:{width:390,height:850}});failures=1;cssRequests=0;version='1';await page.goto(base);await page.getByRole('link',{name:'Əlaqə',exact:true}).click();await page.getByRole('button',{name:'Yenidən cəhd et',exact:true}).waitFor();const first=cssRequests;
+ await page.getByRole('button',{name:'Yenidən cəhd et',exact:true}).click();
+ let recovered=true;try{await page.getByRole('heading',{name:'Hazır bölmə'}).waitFor({timeout:2500});}catch{recovered=false;}
+ if(before){const color=recovered?await page.locator('.test-content').evaluate(n=>getComputedStyle(n).color):null;console.log(JSON.stringify({engine:engine.name(),firstCssRequests:first,afterRetryCssRequests:cssRequests,recovered,styled:color==='rgb(1, 2, 3)',color,synthetic:true}));assert.ok(!recovered||color!=='rgb(1, 2, 3)');continue;}
+ assert.equal(recovered,true);assert.ok(cssRequests>first,'Retry must issue a new stylesheet request');
+ assert.equal(await page.locator('.test-content').evaluate(n=>getComputedStyle(n).color),'rgb(1, 2, 3)');version='2';
+ await page.getByRole('link',{name:'Şərtlər',exact:true}).first().click();await page.getByRole('heading',{name:'Hazır bölmə'}).waitFor();
+ assert.equal(await page.locator('.test-content').evaluate(n=>getComputedStyle(n).color),'rgb(4, 5, 6)','New release CSS must replace the old path version');
+ moduleFailures=1;moduleRequests=0;await page.getByRole('link',{name:'Səbət',exact:true}).click();await page.getByRole('button',{name:'Yenidən cəhd et',exact:true}).waitFor();
+ const footer=await page.locator('#customerFooter').boundingBox(),retry=await page.getByRole('button',{name:'Yenidən cəhd et',exact:true}).boundingBox();assert.ok(footer.y>retry.y+retry.height,'Footer cannot replace retry content');
+ await page.getByRole('button',{name:'Yenidən cəhd et',exact:true}).click();await page.getByRole('heading',{name:'Səbət hazırdır'}).waitFor();assert.ok(moduleRequests>=2);
+ await page.context().setOffline(true);await page.evaluate(()=>window.MirpanelNavigation.go('/haqqimizda'));await page.getByRole('button',{name:'Yenidən cəhd et',exact:true}).waitFor();
+ await page.context().setOffline(false);await page.getByRole('button',{name:'Yenidən cəhd et',exact:true}).click();await page.getByRole('heading',{name:'Hazır bölmə'}).waitFor();
+ results.push({engine:engine.name(),retryRecovered:true,cssRequests,versionUpdated:true,moduleRetry:true,footerBelowContent:true,offlineOnlineRecovered:true,synthetic:true});console.log(JSON.stringify(results.at(-1)));
+ }finally{await browser.close();}}fs.writeFileSync(out+'/resource-results'+(before?'-before':'')+'.json',JSON.stringify(results,null,2));}finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
