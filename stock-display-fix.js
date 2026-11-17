@@ -1,7 +1,7 @@
 (async function () {
   window.MirpanelInventory?.dispose?.();
   const {inventoryAvailability}=await import('/inventory-availability.mjs?v=ready-delivery-1');
-  const {readyDeliveryText}=await import('/ready-delivery.mjs?v=ready-delivery-1');
+  const {packageDeliveryText}=await import('/ready-delivery.mjs?v=selected-package-1');
   const inventory = new Map();let inventoryTimer,homeSalesTimer,painting=false,inventoryDisplayValid=false,inventoryFailed=false;
   function escapeHtml(value) {
     return String(value ?? "")
@@ -86,7 +86,7 @@
     const discounted = Number.isSafeInteger(cents) && cents>0 && Number.isSafeInteger(oldCents) && oldCents>cents;
     const percent = discounted ? Math.round((oldCents-cents)/oldCents*100) : 0;
     const title = publicProductTitle(product.title), id=escapeHtml(product.id);
-    const labels = [product.bestSeller===true?'🔥 Ən çox satılan':'',product.deliveryType==='automatic'&&product.supplier?.provider==='epinby'?'⚡ Anında':''].filter(Boolean);
+    const labels = [product.bestSeller===true?'🔥 Ən çox satılan':''].filter(Boolean);
     return `<article class="card homeProductCard" data-product-id="${id}" aria-labelledby="home-card-${id}" style="animation-delay:${Math.min(index*.03,.25)}s">
       <div class="imgWrap"><img class="img" src="${escapeHtml(product.image)}" alt="${escapeHtml(product.imageAlt || title)}" loading="lazy" decoding="async">
         ${percent>0?`<span class="homeCardDiscount">-${percent}%</span>`:''}
@@ -202,10 +202,8 @@
   // Quote and checkout still confirm the actual price, availability and balance.
   function canOpenOrder(product,index){const state=stateFor(product),plan=state.plans.find(p=>p.planKey===String(index));return product.active!==false&&!state.salesDisabled&&plan?.active===true&&(state.unavailable||plan.canOrder===true);}
   function deliveryFor(product,index){
-    const state=stateFor(product),plan=state.plans[index];
-    if(product.supplier?.provider==='epinby'||product.plans?.[index]?.supplier?.provider==='epinby')return null;
-    if(state.unavailable||inventoryFailed||!plan?.fulfillment)return 'Təhvil məlumatı yoxlanılır…';
-    return readyDeliveryText(plan.fulfillment,plan.canOrder);
+    const state=stateFor(product);
+    return packageDeliveryText(product,index,state.plans[index],{unavailable:state.unavailable||inventoryFailed});
   }
   function paintDelivery(product,rows,index){
     rows.forEach((row,i)=>{
@@ -255,6 +253,10 @@
       if(add)add.disabled=!canOpen;
       document.querySelectorAll('.product-page-status').forEach(el=>{el.textContent=state.salesDisabled?'Stokda yoxdur':state.unavailable?'Stok məlumatı alınır':state.canOrder?'Mövcuddur':'Stokda yoxdur';el.classList.toggle('is-out',state.salesDisabled||!state.unavailable&&!state.canOrder);});
       rows.forEach((row,i)=>{
+        const selected=i===index;
+        const meta=row.querySelector('.pp-plan-meta');
+        if(meta)meta.hidden=!selected;
+        row.setAttribute('aria-expanded',String(selected));
         const plan=state.plans[i],out=!state.unavailable&&!inventoryFailed&&!plan?.canOrder;row.setAttribute('aria-disabled',String(out));row.tabIndex=out?-1:i===index?0:-1;
         const stock=row.querySelector('[data-plan-stock]');
         const showCount=!state.unavailable && !inventoryFailed && !state.salesDisabled && plan?.tracked && Number.isSafeInteger(plan.available)

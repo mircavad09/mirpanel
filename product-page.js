@@ -245,8 +245,7 @@
     };
     trust.append(fact('2024-dən fəaliyyət göstəririk',0));
     const total=fact('',1);total.hidden=true;trust.append(total);
-    const initialDelivery=product.supplier?.provider==='epinby'||product.plans?.some(p=>p.supplier?.provider==='epinby')
-      ? utils.deliveryText(product) : 'Təhvil məlumatı yoxlanılır…';
+    const initialDelivery='Təhvil məlumatı yoxlanılır…';
     const deliveryFact=fact(initialDelivery,2);
     trust.append(deliveryFact,fact('MirPanel əlavə komissiya tutmur',3));
     const actions=root.querySelector('.product-page-actions');
@@ -330,7 +329,10 @@
       rows.forEach((row,i)=>{
         row.setAttribute('aria-checked',String(i===index));row.tabIndex=i===index?0:-1;
         const notes=row.querySelector('.product-detail-plan-notes');
-        notes.hidden=false;
+        notes.hidden=i!==index;
+        const meta=row.querySelector('.pp-plan-meta');
+        if(meta)meta.hidden=i!==index;
+        row.setAttribute('aria-expanded',String(i===index));
       });
       if (index < 0) {
         summary.append(text('p','','Aktiv paket yoxdur.'));
