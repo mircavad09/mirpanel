@@ -192,6 +192,7 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
 export async function readyStockOrderItems(c,order,saved){
  saved??=(await c.query('select product_id,snapshot from mirpanel_community.shop_lines where order_id=$1 order by position',[order.id])).rows;
  const snap=order.checkout_snapshot||{};
+ if(snap.influencerGift===true)return [];
  if(snap.cartVersion===2&&Array.isArray(snap.items))return snap.items.map(line=>{
   const matches=saved.filter(x=>x.product_id===line.productId&&
    (x.snapshot.lineId||x.product_id+':'+x.snapshot.planIndex)===(line.lineId||line.productId+':'+line.planIndex));

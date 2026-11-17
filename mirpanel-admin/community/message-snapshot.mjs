@@ -6,12 +6,12 @@ export async function messageSnapshot(pool,{before,after,ids}){
  order by case when $2::bigint is not null then id end asc,
  case when $2::bigint is null then id end desc limit 31
  ), authors as (
- select p.user_id,p.display_name,p.avatar,p.avatar_path,g.role,
+ select p.user_id,p.display_name,p.avatar,p.avatar_path,g.role,coalesce(i.enabled,false) as influencer,
  (select coalesce(sum(greatest(0,round(o.amount*100)::bigint-coalesce(f.cents,0))),0)::text
  from community_order_owners l join payment_orders o on o.id=l.order_id
  left join community_refunds f on f.order_id=o.id where l.user_id=p.user_id
  and o.status in ('approved','completed') and o.currency='AZN') as total_cents
- from community_profiles p left join community_group_roles g on g.user_id=p.user_id
+ from community_profiles p left join chat_influencers i on i.user_id=p.user_id left join community_group_roles g on g.user_id=p.user_id
  where p.user_id in (select user_id from page)
  ) select (select row_to_json(c) from community_config c where id=true) as config,
  coalesce((select json_agg(x) from (select m.id::text,m.user_id,m.body,m.created_at,
@@ -20,6 +20,7 @@ export async function messageSnapshot(pool,{before,after,ids}){
  left join community_bot_tags t on t.message_id=m.id
  order by case when $2::bigint is not null then m.id end asc,
  case when $2::bigint is null then m.id end desc) x),'[]'::json) as items,
- coalesce((select json_agg(id::text) from community_messages where id=any($3::bigint[]) and hidden=true),'[]'::json) as removed`,[before,after,ids])).rows[0];
+ coalesce((select json_agg(id::text) from community_messages where id=any($3::bigint[]) and hidden=true),'[]'::json) as removed,
+ coalesce((select json_agg(x) from (select distinct m.user_id,coalesce(i.enabled,false) as influencer from community_messages m left join chat_influencers i on i.user_id=m.user_id where m.id=any($3::bigint[])) x),'[]'::json) as author_flags`,[before,after,ids])).rows[0];
  return r;
 }

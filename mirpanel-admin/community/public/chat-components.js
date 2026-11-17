@@ -1,6 +1,7 @@
 // Shared display-only primitives. No API, storage, balance or order access.
-if(!document.querySelector('[data-chat-components-style]')){
- const link=document.createElement('link');link.rel='stylesheet';link.href='/community-assets/chat-components.css?v=interactive-preview-1';link.dataset.chatComponentsStyle='';document.head.append(link);
+const existingChatStyle=document.querySelector('[data-chat-components-style]');if(existingChatStyle)existingChatStyle.href='/community-assets/chat-components.css?v=live-influencers-1';
+if(!existingChatStyle){
+ const link=document.createElement('link');link.rel='stylesheet';link.href='/community-assets/chat-components.css?v=live-influencers-1';link.dataset.chatComponentsStyle='';document.head.append(link);
 }
 export function chatElement(tag,text,className){
  const n=document.createElement(tag);if(text!=null)n.textContent=text;if(className)n.className=className;return n;
@@ -39,8 +40,8 @@ export function decorateInfluencer(row,author,{onProfile,onGift,own=false}={}){
  if(!head)return;
  head.append(chatElement('span','Influencer','chat-influencer-badge'));
  if(onGift){
-  const gift=chatButton('🎁 Hədiyyə et',onGift,'chat-gift-button');
-  gift.disabled=own;gift.title=own?'Özünüzə hədiyyə göndərmək olmaz':'Hədiyyə seçin';
+  const gift=chatButton('',onGift,'chat-gift-button');gift.setAttribute('aria-label','Hədiyyə et');const icon=document.createElementNS('http://www.w3.org/2000/svg','svg');icon.setAttribute('viewBox','0 0 24 24');icon.setAttribute('aria-hidden','true');const path=document.createElementNS(icon.namespaceURI,'path');path.setAttribute('d','M3 8h18v4H3z M5 12v9h14v-9 M12 8v13 M12 8H8a3 3 0 1 1 3-3l1 3Zm0 0h4a3 3 0 1 0-3-3l-1 3Z');icon.append(path);gift.append(icon);
+  gift.disabled=own;gift.title=own?'Özünüzə hədiyyə göndərmək olmaz':author.name+' üçün hədiyyə seç';
   head.append(gift);
  }
  if(onProfile){
