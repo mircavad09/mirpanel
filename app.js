@@ -183,6 +183,7 @@ const DATA = {
       "seoRelatedKeywords": " Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
       "seoKeywords": "Zoom Pro almaq, Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
       "seoContent": "Zoom Pro onlayn dərs, iş görüşü və toplantılar üçün hesab təklifidir. Müddəti və qiyməti aşağıdakı paket seçimində müqayisə edə bilərsiniz.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Zoom Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -254,8 +255,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
+      }
     },
     {
       "id": "spotify",
@@ -282,6 +282,7 @@ const DATA = {
       "seoRelatedKeywords": " Spotify Premium Azərbaycan, Spotify qiyməti",
       "seoKeywords": "Spotify Premium almaq, Spotify Premium Azərbaycan, Spotify qiyməti",
       "seoContent": "Bu Spotify Premium təklifi müştərinin öz hesabında aktivləşdirmə üçündür. Mövcud hesabınızı istifadə etmək istəyirsinizsə seçilən paketin adını və tələb olunan giriş məlumatlarını yoxlayın.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Spotify Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -374,8 +375,7 @@ const DATA = {
           "label": "👉Şifrənizi unutmusunuzsa sıfırlayın👈Toxunun",
           "url": "https://accounts.spotify.com/az/password-reset"
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
+      }
     },
     {
       "id": "capcut",
@@ -402,6 +402,7 @@ const DATA = {
       "seoRelatedKeywords": " CapCut Pro Azərbaycan, CapCut qiyməti",
       "seoKeywords": "CapCut Pro almaq, CapCut Pro Azərbaycan, CapCut qiyməti",
       "seoContent": "CapCut Pro video montajı üçün premium hesab təklifidir. Qısa müddətli və aylıq paketləri eyni səhifədə görüb ümumi qiymətlərini müqayisə edə bilərsiniz.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "CapCut Pro almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -523,8 +524,7 @@ const DATA = {
           "label": "Gmail yaradı",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
+      }
     },
     {
       "id": "netflix",
@@ -551,6 +551,7 @@ const DATA = {
       "seoRelatedKeywords": " Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
       "seoKeywords": "Netflix almaq, Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti",
       "seoContent": "Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Netflix Şəxsi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -644,8 +645,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
+      }
     },
     {
       "id": "chatgpt_ortaq",
@@ -672,6 +672,7 @@ const DATA = {
       "seoRelatedKeywords": "ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
       "seoKeywords": "ChatGPT Plus ortaq hesab almaq, ChatGPT Plus almaq, ortaq ChatGPT hesabı, ChatGPT Plus qiyməti",
       "seoContent": "ChatGPT Plus ortaq hesab planı xidmətdən ortaq istifadə variantı axtaranlar üçündür. Səhifədə göstərilən plan və qiymət admin paneldə saxlanılan cari məhsul məlumatıdır. Sifariş üçün planı seçin, məlumatları yoxlayın və mövcud WhatsApp axını ilə müraciəti tamamlayın. İstifadədən əvvəl məhsula aid qaydaları oxuyun.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -761,6 +762,7 @@ const DATA = {
       "seoRelatedKeywords": " ChatGPT şəxsi hesab Azərbaycan",
       "seoKeywords": "ChatGPT Plus almaq, ChatGPT şəxsi hesab Azərbaycan",
       "seoContent": "Bu səhifə hazır şəxsi ChatGPT Plus hesabı təklifi üçündür. Paylaşılan hesabla qarışdırmamaq üçün məhsul adını və seçilmiş müddəti yoxlayın.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.638Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "ChatGPT Plus şəxsi hesab almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -833,8 +835,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.638Z"
+      }
     },
     {
       "id": "netflix_umumi",
@@ -861,6 +862,7 @@ const DATA = {
       "seoRelatedKeywords": " paylaşılan Netflix hesabı",
       "seoKeywords": "Netflix ümumi hesab almaq, paylaşılan Netflix hesabı",
       "seoContent": "Netflix Ümumi paylaşılan hesab formatında təqdim edilir. Şəxsi otaq təklifi ilə eyni məhsul deyil; giriş və istifadə qaydalarını ödənişdən əvvəl müqayisə edin.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Netflix Ümumi almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -922,8 +924,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
+      }
     },
     {
       "id": "prime",
@@ -950,6 +951,7 @@ const DATA = {
       "seoRelatedKeywords": " Amazon Prime Video Azərbaycan, Prime Video qiyməti",
       "seoKeywords": "Prime Video almaq, Amazon Prime Video Azərbaycan, Prime Video qiyməti",
       "seoContent": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.",
+      "seoUpdatedAt": "2026-11-17T00:24:15.001Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Amazon Prime Video almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -1006,7 +1008,7 @@ const DATA = {
           "pricingId": "6814465e-5ab7-43da-9e2b-56199661f001",
           "label": "1 ay",
           "months": 1,
-          "price": 2.99,
+          "price": 2.89,
           "regularPrice": 18
         },
         {
@@ -1017,7 +1019,7 @@ const DATA = {
           "pricingId": "9a89cb3d-75f9-4c20-b626-7f879bc6e2df",
           "label": "6 ay",
           "months": 6,
-          "price": 9.99
+          "price": 8.99
         }
       ],
       "orderConfirmation": {
@@ -1032,8 +1034,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
+      }
     },
     {
       "id": "claude_ai",
@@ -1060,6 +1061,7 @@ const DATA = {
       "seoRelatedKeywords": "Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
       "seoKeywords": "Claude AI almaq, Claude AI qiyməti, Claude AI Azərbaycan, Claude premium hesab",
       "seoContent": "Claude AI mətn, yazı və kod tapşırıqları üçün süni intellekt xidmətidir. Səhifədə məhsulun mövcud planı, qiyməti və stok vəziyyəti real admin məlumatından göstərilir. Sifariş mövcud WhatsApp axını ilə tamamlanır.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -1150,6 +1152,7 @@ const DATA = {
       "seoRelatedKeywords": "YouTube Premium almaq, YouTube Premium qiyməti, eyni hesabda YouTube Premium",
       "seoKeywords": "YouTube Premium eyni hesabda almaq, YouTube Premium almaq, YouTube Premium qiyməti, eyni hesabda YouTube Premium",
       "seoContent": "YouTube Premium eyni hesab variantı mövcud hesabında premium istifadəyə davam etmək istəyənlər üçün nəzərdə tutulur. Mövcud plan və qiymət məhsul məlumatından avtomatik göstərilir. Sifariş zamanı planı seçin və WhatsApp-a keçməzdən əvvəl məlumatları təsdiqləyin. Məhsula aid istifadə qaydalarını bu səhifədə ayrıca oxuya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -1258,6 +1261,7 @@ const DATA = {
       "seoRelatedKeywords": "YouTube Premium qiyməti, YouTube Music almaq, YouTube Premium Azərbaycan",
       "seoKeywords": "YouTube Premium almaq, YouTube Premium ucuz, YouTube Premium Azərbaycan, YouTube hesab almaq, YouTube reklamsız almaq, YouTube Music almaq, Youtube premium almaq, Yutub premium almaq",
       "seoContent": "YouTube Premium ilə reklamsız video izləyə və YouTube Music imkanlarından istifadə edə bilərsiniz. Mirpanel YouTube Premium hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş prosesi sadədir və aktivləşdirmə qısa müddətdə edilir.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -1364,6 +1368,7 @@ const DATA = {
       "seoRelatedKeywords": " Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
       "seoKeywords": "Adobe Creative Cloud almaq, Adobe CC almaq, Adobe ucuz, Adobe Azərbaycan, Adobe hesab almaq, Photoshop almaq, Illustrator almaq, Premiere Pro almaq, Adobe paket almaq",
       "seoContent": "Adobe Creative Cloud dizayn, video montaj və kreativ işlər üçün premium proqramlar təqdim edir. Mirpanel Adobe hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. Photoshop, Illustrator və digər Adobe alətlərindən istifadə üçün uyğun seçimdir.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -1452,6 +1457,7 @@ const DATA = {
       "seoRelatedKeywords": " HBO Max Azərbaycan, HBO Max hesab qiyməti",
       "seoKeywords": "HBO Max almaq, HBO Max Azərbaycan, HBO Max hesab qiyməti",
       "seoContent": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "HBO Max almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -1523,8 +1529,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
+      }
     },
     {
       "id": "tiktok_jeton",
@@ -1551,6 +1556,7 @@ const DATA = {
       "seoRelatedKeywords": " TikTok jeton ucuz, TikTok jeton Azərbaycan, TikTok coin almaq, TikTok coin ucuz, TikTok balans artırmaq, TikTok hədiyyə jeton",
       "seoKeywords": "TikTok Jeton almaq, TikTok jeton ucuz, TikTok jeton Azərbaycan, TikTok coin almaq, TikTok coin ucuz, TikTok balans artırmaq, TikTok hədiyyə jeton",
       "seoContent": "TikTok Jeton canlı yayımlarda hədiyyə göndərmək və balans artırmaq üçün istifadə olunur. Mirpanel TikTok jeton almaq istəyənlər üçün rahat və sərfəli sifariş imkanı təqdim edir. Sifariş prosesi sadədir və WhatsApp üzərindən aparılır.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -1669,6 +1675,7 @@ const DATA = {
       "seoRelatedKeywords": " VPN Azərbaycan, Surfshark qiyməti",
       "seoKeywords": "Surfshark VPN almaq, VPN Azərbaycan, Surfshark qiyməti",
       "seoContent": "Surfshark VPN internet bağlantısı üçün VPN hesabı təklifidir. Bu məhsul bağlantının məxfiliyi üçün alətdir; tam anonimlik və ya bütün saytlara giriş zəmanəti kimi təqdim edilmir.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Surfshark VPN almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -1736,8 +1743,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
+      }
     },
     {
       "id": "google_ai_ultra",
@@ -1764,6 +1770,7 @@ const DATA = {
       "seoRelatedKeywords": " Google AI Ultra almaq, Google AI Ultra ucuz, Google Gemini Ultra almaq, Gemini Ultra almaq, Gemini Advanced almaq, Google AI premium hesab",
       "seoKeywords": "Google AI Pro Ultra almaq, Google AI Ultra almaq, Google AI Ultra ucuz, Google Gemini Ultra almaq, Gemini Ultra almaq, Gemini Advanced almaq, Google AI premium hesab",
       "seoContent": "Google AI Pro Ultra daha güclü süni intellekt imkanları üçün premium hesab seçimidir. Mirpanel vasitəsilə Google AI Pro Ultra hesabını Azərbaycanda sərfəli qiymətə əldə edə bilərsiniz. Aktivləşdirmə qısa müddətdə həyata keçirilir.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -1853,6 +1860,7 @@ const DATA = {
       "seoRelatedKeywords": " Captions AI Pro almaq, Captions AI ucuz, Captions AI Azərbaycan, Captions AI hesab almaq, Captions premium almaq, AI video montaj almaq",
       "seoKeywords": "Captions AI almaq, Captions AI Pro almaq, Captions AI ucuz, Captions AI Azərbaycan, Captions AI hesab almaq, Captions premium almaq, AI video montaj almaq",
       "seoContent": "Captions AI video kontent hazırlayanlar üçün süni intellekt əsaslı premium alətlər təqdim edir. Mirpanel Captions AI hesabını sərfəli qiymətə əldə etmək istəyənlər üçün rahat sifariş imkanı yaradır. AI video montaj üçün yaxşı seçimdir.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -1949,6 +1957,7 @@ const DATA = {
       "seoRelatedKeywords": " Grok AI Pro almaq, Grok AI ucuz, Grok AI Azərbaycan, Grok hesab almaq, Grok premium almaq, X AI Grok almaq, Super Grok almaq, Super Grok AI almaq",
       "seoKeywords": "Grok AI almaq, Grok AI Pro almaq, Grok AI ucuz, Grok AI Azərbaycan, Grok hesab almaq, Grok premium almaq, X AI Grok almaq, Super Grok almaq, Super Grok AI almaq",
       "seoContent": "Grok AI süni intellekt imkanlarından istifadə etmək istəyənlər üçün premium hesab seçimidir. Mirpanel Grok AI hesablarını Azərbaycanda sərfəli qiymətə təqdim edir. Sifariş rahat şəkildə WhatsApp üzərindən tamamlanır.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2038,6 +2047,7 @@ const DATA = {
       "seoRelatedKeywords": " Duolingo Premium almaq, Duolingo ucuz, Duolingo Azərbaycan, Duolingo hesab almaq, Duolingo Super hesab, Duolingo dil öyrənmə",
       "seoKeywords": "Duolingo Super almaq, Duolingo Premium almaq, Duolingo ucuz, Duolingo Azərbaycan, Duolingo hesab almaq, Duolingo Super hesab, Duolingo dil öyrənmə",
       "seoContent": "Duolingo Super dil öyrənmək istəyənlər üçün daha rahat və premium imkanlar təqdim edir. Mirpanel Duolingo Super hesabını sərfəli qiymətə təqdim edir. Dil öyrənmə prosesini daha effektiv etmək istəyənlər üçün uyğun seçimdir.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2132,6 +2142,7 @@ const DATA = {
       "seoRelatedKeywords": " Canva hesabı Azərbaycan, Canva qiyməti",
       "seoKeywords": "Canva Premium almaq, Canva hesabı Azərbaycan, Canva qiyməti",
       "seoContent": "Canva Premium dizayn və təqdimat hazırlamaq üçün paket təklifidir. Müddət və giriş formatı seçdiyiniz paketə görə fərqlənə bilər.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Canva Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -2208,8 +2219,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
+      }
     },
     {
       "id": "netflix_sexsi",
@@ -2236,6 +2246,7 @@ const DATA = {
       "seoRelatedKeywords": "",
       "seoKeywords": "",
       "seoContent": "",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2336,6 +2347,7 @@ const DATA = {
       "seoRelatedKeywords": " Linkedin Career ucuz, Linkedin Career Azərbaycan, Linkedin Career hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Linkedin Career almaq, Linkedin Career ucuz, Linkedin Career Azərbaycan, Linkedin Career hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Linkedin Career üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2424,6 +2436,7 @@ const DATA = {
       "seoRelatedKeywords": " Elevenlabs Creator ucuz, Elevenlabs Creator Azərbaycan, Elevenlabs Creator hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Elevenlabs Creator almaq, Elevenlabs Creator ucuz, Elevenlabs Creator Azərbaycan, Elevenlabs Creator hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Elevenlabs Creator üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2512,6 +2525,7 @@ const DATA = {
       "seoRelatedKeywords": " Semrush Premium ucuz, Semrush Premium Azərbaycan, Semrush Premium hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Semrush Premium almaq, Semrush Premium ucuz, Semrush Premium Azərbaycan, Semrush Premium hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Semrush Premium üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2600,6 +2614,7 @@ const DATA = {
       "seoRelatedKeywords": " Adobe Express ucuz, Adobe Express Azərbaycan, Adobe Express hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Adobe Express almaq, Adobe Express ucuz, Adobe Express Azərbaycan, Adobe Express hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Adobe Express üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2688,6 +2703,7 @@ const DATA = {
       "seoRelatedKeywords": " Notion Plus ucuz, Notion Plus Azərbaycan, Notion Plus hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Notion Plus almaq, Notion Plus ucuz, Notion Plus Azərbaycan, Notion Plus hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Notion Plus üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2776,6 +2792,7 @@ const DATA = {
       "seoRelatedKeywords": " Picsart Premium ucuz, Picsart Premium Azərbaycan, Picsart Premium hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Picsart Premium almaq, Picsart Premium ucuz, Picsart Premium Azərbaycan, Picsart Premium hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Picsart Premium üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2864,6 +2881,7 @@ const DATA = {
       "seoRelatedKeywords": " Blink Starter ucuz, Blink Starter Azərbaycan, Blink Starter hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Blink Starter almaq, Blink Starter ucuz, Blink Starter Azərbaycan, Blink Starter hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Blink Starter üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -2952,6 +2970,7 @@ const DATA = {
       "seoRelatedKeywords": " Lightroom Photo ucuz, Lightroom Photo Azərbaycan, Lightroom Photo hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Lightroom Photo almaq, Lightroom Photo ucuz, Lightroom Photo Azərbaycan, Lightroom Photo hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Lightroom Photo üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -3040,6 +3059,7 @@ const DATA = {
       "seoRelatedKeywords": " Gemini AI Pro ucuz, Gemini AI Pro Azərbaycan, Gemini AI Pro hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoKeywords": "Gemini AI Pro almaq, Gemini AI Pro ucuz, Gemini AI Pro Azərbaycan, Gemini AI Pro hesab almaq, premium hesab almaq, ucuz premium hesab",
       "seoContent": "Gemini AI Pro üçün Mirpanel rahat sifariş və premium hesab aktivləşdirmə imkanı təqdim edir. Məhsulu Azərbaycanda sərfəli qiymətə əldə edə və sifarişi WhatsApp üzərindən tamamlaya bilərsiniz.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -3132,6 +3152,7 @@ const DATA = {
       "seoRelatedKeywords": " Google AI Pro V3 almaq, Google AI ucuz, Google AI Azərbaycan, Google AI hesab almaq, Google Gemini Pro almaq, Gemini AI almaq",
       "seoKeywords": "Google AI Pro almaq, Google AI Pro V3 almaq, Google AI ucuz, Google AI Azərbaycan, Google AI hesab almaq, Google Gemini Pro almaq, Gemini AI almaq",
       "seoContent": "Google AI Pro V3 süni intellekt imkanlarından daha geniş istifadə etmək istəyənlər üçün premium seçimdir. Mirpanel Google AI hesablarını sərfəli qiymətə təqdim edir. AI premium hesab almaq istəyənlər üçün rahat sifariş imkanı var.",
+      "seoUpdatedAt": null,
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -3249,6 +3270,7 @@ const DATA = {
       "seoRelatedKeywords": "",
       "seoKeywords": "",
       "seoContent": "",
+      "seoUpdatedAt": null,
       "seoIndex": false,
       "includeInSitemap": false,
       "seoOgTitle": "",
@@ -3351,6 +3373,7 @@ const DATA = {
       "seoRelatedKeywords": " PUBG UC Azərbaycan, UC qiyməti",
       "seoKeywords": "PUBG Mobile UC almaq, PUBG UC Azərbaycan, UC qiyməti",
       "seoContent": "PUBG Mobile UC paketlərini eyni məhsul səhifəsində müqayisə edin. 60 UC, 325 UC və digər seçimlərin qiyməti ayrıca göstərilir; sifariş seçdiyiniz paketə bağlanır.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "PUBG Mobile UC almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -3636,8 +3659,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
+      }
     },
     {
       "id": "free_fire",
@@ -3665,6 +3687,7 @@ const DATA = {
       "seoRelatedKeywords": " Free Fire Azərbaycan, almaz qiyməti",
       "seoKeywords": "Free Fire almaz almaq, Free Fire Azərbaycan, almaz qiyməti",
       "seoContent": "Free Fire almaz paketləri bu səhifədə bir yerdə təqdim olunur. Paket adındakı almaz sayını, varsa bonusu və regionu qiymətlə birlikdə yoxlayın.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Free Fire almaz almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -3950,8 +3973,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
+      }
     },
     {
       "id": "telegram_premium",
@@ -3979,6 +4001,7 @@ const DATA = {
       "seoRelatedKeywords": " Telegram Premium Azərbaycan, Telegram qiyməti",
       "seoKeywords": "Telegram Premium almaq, Telegram Premium Azərbaycan, Telegram qiyməti",
       "seoContent": "Telegram Premium üçün üç və altı aylıq seçimləri müqayisə edin. Premium abunəliklə Telegram Stars eyni məhsul deyil; təsdiqdə göstərilən xidmət növünü yoxlayın.",
+      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
       "seoIndex": false,
       "includeInSitemap": false,
       "seoOgTitle": "Telegram Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -4118,8 +4141,7 @@ const DATA = {
           "label": "",
           "url": ""
         }
-      },
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z"
+      }
     }
   ]
 };
@@ -4649,13 +4671,16 @@ const ADMIN_CONTENT = {
     "rulesHtml": ""
   },
   "pubg_mobile": {
-    "aboutHtml": "<p>PUBG Mobile UC paketlərini eyni məhsul səhifəsində müqayisə edin. 60 UC, 325 UC və digər seçimlərin qiyməti ayrıca göstərilir; sifariş seçdiyiniz paketə bağlanır.</p>"
+    "aboutHtml": "<p>PUBG Mobile UC paketlərini eyni məhsul səhifəsində müqayisə edin. 60 UC, 325 UC və digər seçimlərin qiyməti ayrıca göstərilir; sifariş seçdiyiniz paketə bağlanır.</p>",
+    "rulesHtml": ""
   },
   "free_fire": {
-    "aboutHtml": "<p>Free Fire almaz paketləri bu səhifədə bir yerdə təqdim olunur. Paket adındakı almaz sayını, varsa bonusu və regionu qiymətlə birlikdə yoxlayın.</p>"
+    "aboutHtml": "<p>Free Fire almaz paketləri bu səhifədə bir yerdə təqdim olunur. Paket adındakı almaz sayını, varsa bonusu və regionu qiymətlə birlikdə yoxlayın.</p>",
+    "rulesHtml": ""
   },
   "telegram_premium": {
-    "aboutHtml": "<p>Telegram Premium üçün üç və altı aylıq seçimləri müqayisə edin. Premium abunəliklə Telegram Stars eyni məhsul deyil; təsdiqdə göstərilən xidmət növünü yoxlayın.</p>"
+    "aboutHtml": "<p>Telegram Premium üçün üç və altı aylıq seçimləri müqayisə edin. Premium abunəliklə Telegram Stars eyni məhsul deyil; təsdiqdə göstərilən xidmət növünü yoxlayın.</p>",
+    "rulesHtml": ""
   }
 };
 

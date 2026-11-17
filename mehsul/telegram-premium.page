@@ -144,11 +144,11 @@
       <div class="product-page-similar-title" title="Netflix Ümumi">Netflix Ümumi</div>
       <div class="product-page-similar-category">film</div>
       <div class="product-page-similar-price">3.99 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 2.99 ₼" title="Amazon Prime Video">
+    </a><a class="product-page-similar-card" href="/mehsul/amazon-prime-video" aria-label="Amazon Prime Video — 2.89 ₼" title="Amazon Prime Video">
       <img src="/uploads/products/prime-1792446922093-1fb61bd1.png?v=1792446922093" class="product-page-similar-image" alt="Amazon Prime Video — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">film</div>
-      <div class="product-page-similar-price">2.99 ₼</div>
+      <div class="product-page-similar-price">2.89 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 3.99 ₼" title="HBO Max">
       <img src="/uploads/products/hbomax-1794730390763-0efc1b5b.png?v=1794730390763" class="product-page-similar-image" alt="HBO Max — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
@@ -228,7 +228,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-b5c1a402362bf0c0"></script>
+  <script src="/app.js?v=image-alt-20261117-026453bcf5c4bacc"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=selected-package-1"></script>
