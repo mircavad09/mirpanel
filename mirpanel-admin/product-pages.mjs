@@ -584,9 +584,9 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=stable-buy-1-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
+  <script src="/app.js?v=image-alt-20261117-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
-  <script src="/order-confirmation.js?v=incident-recovery-1"></script>
+  <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=ready-delivery-1"></script>
   <script src="/product-page.js?v=ready-delivery-1"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>

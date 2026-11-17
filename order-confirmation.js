@@ -1344,7 +1344,7 @@
     const plans = document.getElementById("mPlans");
     const selectedPlanLabel = planLabel(plan);
 
-    if (img) img.src = product.image || "";
+    if (img) { img.alt = String(product.imageAlt || '').trim() || publicProductTitle(product.title) || 'Məhsul'; img.src = product.image || ""; }
     if (title) title.textContent = publicProductTitle(product.title);
     if (desc) desc.textContent = product.desc || "";
     if (info) info.textContent = selectedPlanLabel ? `${selectedPlanLabel} / ${priceText(product, plan)}` : priceText(product, plan);

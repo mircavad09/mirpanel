@@ -4787,6 +4787,9 @@ window.mirpanelResetProductSelection=()=>{currentProduct=null;currentPlanIdx=0;}
 function publicProductTitle(value) {
   return String(value || "").replace(/\s+almaq\s*$/i, "").trim();
 }
+function productImageAlt(product) {
+  return window.MirpanelCatalogCard?.imageAlt?.(product, publicProductTitle(product.seoH1 || product.title)) || String(product.imageAlt || '').trim() || publicProductTitle(product.seoH1 || product.title) || 'Məhsul';
+}
 
 window.openProductPage = (id) => {
   const p = DATA.products.find(x => x.id === id);
@@ -4801,7 +4804,7 @@ window.openProductPage = (id) => {
   window.scrollTo(0, 0);
 
   const mainImg = document.getElementById("pp-main-img");
-  if(mainImg) mainImg.src = p.image;
+  if(mainImg) { mainImg.alt = productImageAlt(p); mainImg.src = p.image; }
   
   const titleEl = document.getElementById("pp-main-title");
   if(titleEl) titleEl.textContent = publicProductTitle(p.seoH1 || (p.variant ? `${p.title} - (${p.variant})` : p.title));
@@ -4905,7 +4908,7 @@ function renderSimilarProducts(p) {
     const minP = getMinPrice(sp);
     return `
       <div class="pp-sim-card" onclick="window.openProductPage('${sp.id}')">
-        <img src="${sp.image}" class="pp-sim-img" alt="">
+        <img src="${sp.image}" class="pp-sim-img" alt="${esc(productImageAlt(sp))}">
         <div class="pp-sim-info">
            <div class="pp-sim-title">${publicProductTitle(sp.title)}</div>
            <div class="pp-sim-price">${minP > 0 ? minP.toFixed(2) + ' ₼' : UI.stokOut}</div>
@@ -5578,7 +5581,7 @@ function cardHTML(p, idx) {
   }
   return `
     <a class="card" href="/mehsul/${productSlug}" data-product-id="${p.id}" style="animation-delay:${Math.min(idx * 0.03, 0.25)}s">
-      <div class="imgWrap"><img class="img" src="${p.image}" alt=""><div class="cornerPrice">${showPrice}</div></div>
+      <div class="imgWrap"><img class="img" src="${p.image}" alt="${esc(productImageAlt(p))}"><div class="cornerPrice">${showPrice}</div></div>
       <div class="pad">
         <div class="topline"><h3 class="title">${esc(publicProductTitle(p.title))}</h3><div class="badge">${esc(p.badge)}</div></div>
         <div class="meta">${esc(p.desc)}</div>

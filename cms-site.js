@@ -272,8 +272,14 @@
         link.addEventListener('keydown',event=>{if(event.key===' '){event.preventDefault();if(!event.repeat)link.click();}});
       }
       if (href && (banner.newTab || new URL(href,location.href).origin!==location.origin)) {link.target='_blank';link.rel='noopener noreferrer';}
-      if (banner.title || banner.alt) link.setAttribute("aria-label", banner.alt || banner.title);
-      if(banner.productTitle)link.setAttribute('aria-label',`${banner.productTitle} məhsuluna keç`);
+      const title=String(banner.alt || banner.title || '').trim();
+      const generic=!title || /^mirpanel(?: ana səhifə)? banneri$/i.test(title);
+      const productTitle=String(banner.productTitle || banner.product?.title || '').trim();
+      // An image-only link needs its destination described, not a repeated CMS placeholder.
+      const alternative=productTitle && generic ? `${productTitle} — paketlərə baxın`
+        : /^(?:canlı dəstək|operator)$/i.test(title) ? `${title} — operatorla əlaqə`
+        : !generic ? title : href ? 'MirPanel təklifinə baxın' : '';
+      if(alternative)link.setAttribute('aria-label',alternative);
       const picture = document.createElement("picture");
       const desktopImage = safeImage(banner.desktopImage);
       const mobileImage = safeImage(banner.mobileImage);
@@ -287,7 +293,7 @@
       image.draggable=false;
       if(!main || active) image.src = desktopImage;
       else image.dataset.src = desktopImage;
-      image.alt = banner.alt || banner.title || "";
+      image.alt = alternative;
       image.className = "full-slide-img";
       image.loading = main && active ? "eager" : "lazy";
       image.decoding = "async";
