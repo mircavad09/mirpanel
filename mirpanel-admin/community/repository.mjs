@@ -1,5 +1,6 @@
 import {messageTags} from './bot-tags.mjs';import crypto from 'node:crypto';import {safeName,BOT_ID} from './bot-policy.mjs';import {checkBot} from './bot-filter.mjs';
 import {GroupControl,groupRole,requireAllowed,requireOwner} from './group-control.mjs';
+import {tokenGifts} from './tokens.mjs';
 import {influencerRecipient} from './influencers.mjs';
 import {messageSnapshot} from './message-snapshot.mjs';
 import {walletBalance} from './wallet.mjs';
@@ -27,7 +28,7 @@ export class Repository{
   const r=await messageSnapshot(this.pool,{before:b,after:a,ids});
   if(!r.config?.enabled)throw fail(503,'Önizləmə xidməti bağlıdır.');
   const more=r.items.length>30,items=r.items.slice(0,30);if(!a)items.reverse();
-  return{items:items.map(m=>{const p=m.author;return{id:m.id,body:m.body,hidden:false,createdAt:m.created_at,
+  return{items:items.map(m=>{const p=m.author;return{id:m.id,body:m.body,hidden:false,createdAt:m.created_at,...(tokenGifts[m.token_gift_kind]?{tokenGift:{...tokenGifts[m.token_gift_kind],kind:m.token_gift_kind,recipientName:m.token_gift_recipient}}:{}),
    tag:m.recipient_id?{userId:m.recipient_id,name:m.tag_name}:null,
    author:p?{id:p.user_id,name:p.display_name,avatar:p.avatar,influencer:p.influencer===true,system:p.user_id===BOT_ID,
     avatarUrl:p.user_id===BOT_ID?'/community-assets/bot-avatar.svg':avatarSource(p),

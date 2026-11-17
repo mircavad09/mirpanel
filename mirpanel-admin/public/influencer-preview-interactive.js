@@ -1,5 +1,5 @@
-import {chatElement as el,chatButton as btn,messageBubble,chatModal,openChatProfile,decorateInfluencer} from '/community-assets/chat-components.js?v=gift-compact-4';
-import {openGiftDialog} from '/community-assets/gift-dialog.js?v=interactive-preview-1';
+import {chatElement as el,chatButton as btn,messageBubble,chatModal,openChatProfile,decorateInfluencer} from '/community-assets/chat-components.js?v=tokens-1';
+import {openGiftDialog} from '/community-assets/gift-dialog.js?v=tokens-1';
 let active;
 const money=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
 export async function openInfluencerPreview({call,alive=()=>true}){

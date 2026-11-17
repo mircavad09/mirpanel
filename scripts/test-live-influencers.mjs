@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {readyStockOrderItems} from '../mirpanel-admin/community/ready-stock.mjs';
+import {ensureTokens} from '../mirpanel-admin/community/tokens.mjs';
 import {Repository} from '../mirpanel-admin/community/repository.mjs';
 import {ensureInfluencers,setInfluencer,influencerRecipient,giftAdmin,influencerCatalog} from '../mirpanel-admin/community/influencers.mjs';
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{pool,shop,catalog,id,rpc}=f,repo=new Repository(pool),owner={id:'owner'},reader={id:'a',name:'Reader A',emailVerified:true},target={id:'b',name:'Reader B',emailVerified:false},token='a'.repeat(64);
 try{
- await ensureInfluencers(pool);await ensureInfluencers(pool);await f.db.exec(f.db.read('supabase/migrations/202611090901_api_integrations.sql'));const supplier=id();await pool.query("insert into api_suppliers(id,name,base_url,key_cipher,test_path) values($1,'Synthetic','https://invalid.local','synthetic','/test')",[supplier]);await pool.query("insert into api_mappings(product_id,plan_key,supplier_id,settings,active) values('finite','0',$1,'{}',true)",[supplier]);
+ await ensureInfluencers(pool);await ensureTokens(pool);await ensureInfluencers(pool);await f.db.exec(f.db.read('supabase/migrations/202611090901_api_integrations.sql'));const supplier=id();await pool.query("insert into api_suppliers(id,name,base_url,key_cipher,test_path) values($1,'Synthetic','https://invalid.local','synthetic','/test')",[supplier]);await pool.query("insert into api_mappings(product_id,plan_key,supplier_id,settings,active) values('finite','0',$1,'{}',true)",[supplier]);
  await assert.rejects(setInfluencer(repo,reader,{userId:'b',enabled:true}),{status:403});
  await setInfluencer(repo,owner,{userId:'b',enabled:true});await repo.ensure(target);
  assert.equal((await influencerRecipient(pool,'b')).name,'Reader B');

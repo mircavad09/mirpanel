@@ -1,4 +1,4 @@
-import {accountLabels,accountTab,accountMenu,accountSlugs,ordersLoader,profileLoader,ensureProfileLoadingStyle} from './profile-shell.js?v=profile-loading-1';
+import {accountLabels,accountTab,accountMenu,accountSlugs,ordersLoader,profileLoader,ensureProfileLoadingStyle} from './profile-shell.js?v=tokens-1';
 const tabModules=new Map();
 const sessionKey=Symbol.for('mirpanel.profile.session-lists');
 const sessionLists=window[sessionKey]??={uid:null,entries:new Map(),views:new Map(),listening:false};
@@ -99,6 +99,7 @@ export function renderAccountPanel(ctx){
  const ownData=d=>{if(!stopped&&run===load&&d?.accountId&&d.accountId!==verified)recheck(d.accountId);if(stopped||run!==load||!d||d.accountId!==verified||sessionLists.uid!==verified)throw Error('Hesab məlumatı yenilənib. Yenidən cəhd edin.');return d;};
  const unauthorized=()=>{if(!stopped&&run===load)window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));};
  const cache=(d,path=listPath)=>{if(!stopped&&run===load&&sessionLists.uid===verified){if(!d)sessionLists.entries.delete(path);else if(d.accountId===verified){sessionLists.entries.delete(path);sessionLists.entries.set(path,d);if(sessionLists.entries.size>12)sessionLists.entries.delete(sessionLists.entries.keys().next().value);restore();}}};
+ if(id==='tokens'){const {mountTokenWallet}=await import('./token-ui.js?v=tokens-1');if(!stopped&&run===load)disposeChild=mountTokenWallet({root:content,api,validate:ownData});return;}
  if(id==='profile'){const {renderProfile}=tabModules.get(id)||await tabModule;if(stopped||run!==load)return;const uid=verified,profileApi=async(...args)=>{try{const data=await api(...args);if(stopped||run!==load||uid!==verified)throw Error('Bölmə dəyişib.');return data;}catch(e){if(e.status===401)unauthorized();throw e;}};const rendered=renderProfile({...ctx,app:content,api:profileApi});disposeChild=window.mirpanelProfileDispose;window.mirpanelProfileDispose=null;await rendered;restore();return;}
  if(id==='orders'){
   tabModules.get(id)||await tabModule;if(stopped||run!==load)return;

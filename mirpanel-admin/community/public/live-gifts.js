@@ -1,15 +1,16 @@
-import {chatElement as el,chatButton as button,chatModal} from './chat-components.js?v=gift-compact-4';
+import {tokenStyle,tokenApi} from './token-ui.js?v=tokens-1';
+import {chatElement as el,chatButton as button,chatModal} from './chat-components.js?v=tokens-1';
 const key='mirpanel.influencer-gift.v1',money=c=>(Number(c)/100).toFixed(2).replace('.',',')+' ₼';
 let open=false,activeGift=null;
 function read(){try{return JSON.parse(sessionStorage.getItem(key)||'null');}catch{return null;}}
 function save(draft){try{sessionStorage.setItem(key,JSON.stringify(draft));}catch{}}
 async function api(path,data){const c=new AbortController(),timer=setTimeout(()=>c.abort(),25000);try{const r=await fetch(path,{method:data===undefined?'GET':'POST',credentials:'same-origin',cache:'no-store',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),signal:c.signal});const v=await r.json();if(!r.ok)throw Object.assign(Error(v.error?.message||v.error||'Sorğu alınmadı. Yenidən cəhd edin.'),{status:r.status});return v;}catch(e){if(e.name==='AbortError'||e instanceof TypeError)throw Error('Bağlantı təsdiqlənmədi. Seçiminiz saxlanılıb; yenidən cəhd edin.');throw e;}finally{clearTimeout(timer);}}
-export function resumeInfluencerGift(){const selected=new URLSearchParams(location.search).get('gift');const draft=read();if(selected&&!draft?.attempt){void openLiveGift({id:selected});return;}if(draft?.resume){draft.resume=false;save(draft);void openLiveGift({id:draft.recipientId},draft);}}
-window.addEventListener('pageshow',event=>{if(event.persisted&&read()?.resume){if(activeGift?.box.open){activeGift.box.addEventListener('close',resumeInfluencerGift,{once:true});activeGift.box.close();}else{open=false;resumeInfluencerGift();}}});
+export function resumeInfluencerGift(){const selected=new URLSearchParams(location.search).get('gift');const draft=read();if(selected&&!draft?.attempt&&!draft?.tokenAttempt&&!draft?.resume){void openLiveGift({id:selected});return;}if(draft?.resume){draft.resume=false;save(draft);void openLiveGift({id:draft.recipientId},draft);}}
+window.addEventListener('pageshow',event=>{if(location.pathname==='/qrup'&&event.persisted&&read()?.resume){if(activeGift?.box.open){activeGift.box.addEventListener('close',resumeInfluencerGift,{once:true});activeGift.box.close();}else{open=false;resumeInfluencerGift();}}});
 window.addEventListener('mirpanel:route-leave',()=>activeGift?.box.close());
 export async function openLiveGift(recipient,restored=null){
- if(open)return;open=true;
- let draft=restored||(read()?.attempt?read():null)||{recipientId:recipient.id,requestId:crypto.randomUUID()},data,product,plan,quote,busy=false,closed=false,generation=0;
+ if(open)return;open=true;tokenStyle();
+ let draft=restored||((read()?.attempt||read()?.tokenAttempt)?read():null)||{recipientId:recipient.id,requestId:crypto.randomUUID()},data,product,plan,quote,tokenBalance=null,busy=false,closed=false,generation=0;
  const modal=chatModal({title:(recipient.name||'Influencer')+' üçün hədiyyə seç',onClose:()=>{closed=true;generation++;if(activeGift?.box===box){activeGift=null;open=false;}}}),{body,box}=modal;activeGift=modal;box.classList.add('live-gift-dialog');
  const error=el('p',null,'chat-gift-error');error.setAttribute('role','alert');const screen=el('div',null,'live-gift-screen');body.append(error,screen);
  const guard=fn=>async()=>{if(busy)return;busy=true;error.textContent='';try{await fn();}catch(e){if(!closed)error.textContent=e.message;}finally{busy=false;}};
@@ -20,13 +21,26 @@ export async function openLiveGift(recipient,restored=null){
  function recipientLine(){const n=el('div',null,'live-gift-recipient');n.append(el('small','Hədiyyə alan'),el('strong',data.recipient.name));return n;}
  function totalLine(){const n=el('div',null,'live-gift-total');n.append(el('span','Yekun məbləğ'),el('strong',money(draft.attempt?.expectedTotalCents??quote.totalCents)));return n;}
  function list(){
-  generation++;draft.stage='products';screen.replaceChildren(el('h3','Məhsul seçin'));
+  generation++;draft.stage='products';screen.replaceChildren();tokenHeader();
+  const choices=el('div',null,'token-gift-options');
+  for(const [kind,name,cost] of [['rose','Gül',1],['heart','Ürək',5]]){
+   const row=button('',()=>{draft.tokenGiftKind=kind;draft.requestId=crypto.randomUUID();delete draft.productId;delete draft.planIndex;persist();tokenConfirm();});
+   const img=el('img');img.src='/assets/tokens/'+kind+'.webp';img.alt='';row.append(img,el('strong',name+' · '+cost+' token'));choices.append(row);
+  }
+  screen.append(choices,el('h3','Məhsul hədiyyələri'));
   const grid=el('div',null,'live-gift-grid');
   for(const p of data.products){
-   const row=button('',()=>{draft.productId=p.id;delete draft.planIndex;draft.requestId=crypto.randomUUID();persist();product=p;plan=null;packages();},'live-gift-product');row.title=p.title;row.setAttribute('aria-label',p.title);
+   const row=button('',()=>{draft.productId=p.id;delete draft.tokenGiftKind;delete draft.planIndex;draft.requestId=crypto.randomUUID();persist();product=p;plan=null;packages();},'live-gift-product');row.title=p.title;row.setAttribute('aria-label',p.title);
    const img=el('img');img.src=p.image;img.alt='';img.loading='lazy';const text=el('span');text.append(el('strong',p.shortTitle||p.title),el('small',money(Math.min(...p.plans.map(x=>x.cents)))));row.append(img,text);grid.append(row);
   }
   screen.append(grid);if(!data.products.length)screen.append(el('p','Hədiyyə üçün aktiv məhsul yoxdur.'));
+ }
+ function tokenHeader(){const row=el('div',null,'token-gift-balance');row.append(el('strong',tokenBalance===null?'Token balansı üçün daxil olun':tokenBalance+' token'),button('Token al',()=>leave('/mehsul/mirpanel-token')));screen.append(row);}
+ function tokenConfirm(){const gift=draft.tokenGiftKind==='rose'?{name:'Gül',cost:1}:{name:'Ürək',cost:5};screen.replaceChildren(el('h3','Hədiyyə alan — '+data.recipient.name));tokenHeader();const img=el('img');img.src='/assets/tokens/'+draft.tokenGiftKind+'.webp';img.alt=gift.name;img.width=96;img.height=96;screen.append(img,el('p',gift.name+' · '+gift.cost+' token'));if(!draft.tokenAttempt)screen.append(button('Geri',list));
+ if(tokenBalance===null){screen.append(button('Daxil ol',()=>leave('/hesab?next=%2Fqrup')));return;}
+ if(tokenBalance<gift.cost&&!draft.tokenAttempt){screen.append(el('strong','Kifayət qədər tokeniniz yoxdur'),el('p','Mövcud: '+tokenBalance+' token · '+(gift.cost-tokenBalance)+' token çatmır'),button('Token al',()=>leave('/mehsul/mirpanel-token')));return;}
+ if(draft.tokenAttempt?.accountId&&draft.tokenAttempt.accountId!==draft.tokenAccountId){screen.append(el('p','Bu göndərişi başladığınız hesaba daxil olun.'),button('Daxil ol',()=>leave('/hesab?next=%2Fqrup')));return;}
+ const send=button(draft.tokenAttempt?'Eyni göndərişi yenidən yoxla':'Göndər',guard(async()=>{send.disabled=true;try{draft.tokenAttempt??={accountId:draft.tokenAccountId,recipientId:draft.recipientId,kind:draft.tokenGiftKind,requestId:draft.requestId};persist();await tokenApi('/api/community/token-gifts',draft.tokenAttempt);const wallet=await tokenApi('/api/community/tokens');tokenBalance=wallet.balance;sessionStorage.removeItem(key);window.dispatchEvent(new Event('mirpanel:token-balance-changed'));screen.replaceChildren(el('h3','Hədiyyəniz göndərildi'),el('p',gift.name+' · '+data.recipient.name),el('p','Token balansı: '+tokenBalance),button('Daha bir hədiyyə',()=>{delete draft.tokenAttempt;draft.requestId=crypto.randomUUID();delete draft.tokenGiftKind;list();}));}catch(e){if([400,401,403,409,422].includes(e.status)){delete draft.tokenAttempt;persist();const wallet=await tokenApi('/api/community/tokens').catch(()=>null);tokenBalance=wallet?.balance??tokenBalance;tokenConfirm();}throw e;}finally{send.disabled=false;}}));screen.append(send);
  }
  function packages(){
   if(product.plans.length===1&&product.plans[0].available!==0){plan=product.plans[0];draft.planIndex=plan.index;}
@@ -83,10 +97,13 @@ export async function openLiveGift(recipient,restored=null){
  async function load(){
   screen.replaceChildren(el('p','Məhsullar yüklənir…'));
   if(draft.attempt){const status=await api('/api/payments/shop/gift-status?requestId='+encodeURIComponent(draft.requestId));if(closed)return;if(status.paymentConfirmed){sessionStorage.removeItem(key);screen.replaceChildren(el('h3','Hədiyyəniz qeydə alındı 🎁'),el('p','Hədiyyə admin tərəfindən təqdim ediləcək.'));return;}}
-  data=await api('/api/community/influencer-catalog?recipientId='+encodeURIComponent(draft.recipientId));if(closed)return;
+  [data,tokenBalance]=await Promise.all([
+   api('/api/community/influencer-catalog?recipientId='+encodeURIComponent(draft.recipientId)),
+   tokenApi('/api/community/tokens').then(d=>{draft.tokenAccountId=d.accountId;return d.balance;}).catch(e=>{if(e.status===401)return null;throw e;})
+  ]);if(closed)return;
   box.querySelector('h2').textContent=data.recipient.name+' üçün hədiyyə seç';box.setAttribute('aria-label',data.recipient.name+' üçün hədiyyə seç');
   product=data.products.find(p=>p.id===draft.productId);plan=product?.plans.find(p=>p.index===draft.planIndex);
-  if(plan)await summary();else if(product)packages();else list();
+  if(draft.tokenGiftKind)tokenConfirm();else if(plan)await summary();else if(product)packages();else list();
  }
  try{await load();}catch(e){if(!closed){error.textContent=e.message;screen.replaceChildren(button('Yenidən cəhd et',guard(load)));}}
  return modal;

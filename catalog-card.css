@@ -299,3 +299,5 @@
 
 .homeCardDelivery{grid-column:1/-1;grid-row:5;margin:4px 0 0;color:#b5b8bb;font-size:11px;line-height:1.4;overflow-wrap:anywhere}.homeCardDelivery.is-instant{color:#64e6a5}
 .homeCardDelivery.is-instant::before{content:'';display:inline-block;width:11px;height:13px;margin-right:4px;vertical-align:-2px;background:currentColor;clip-path:polygon(55% 0,10% 56%,43% 56%,36% 100%,92% 39%,59% 39%)}
+
+[data-product-id="mirpanel-token"] .imgWrap .img{object-fit:contain!important;object-position:center;background:#080810}

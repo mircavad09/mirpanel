@@ -95,3 +95,5 @@
 .live-gift-dialog .live-gift-shortfall button{min-width:64px;min-height:44px;font-size:12px;padding:7px 9px;white-space:nowrap}
 .live-gift-shortfall .live-gift-shortfall-note{grid-column:1/-1;margin:0;padding-top:8px;border-top:1px solid #5a4223;font-size:11px;line-height:1.5;color:#d7cbbb}
 @media(max-width:360px){.live-gift-grid{gap:7px 4px}.live-gift-product strong,.live-gift-product small{font-size:10px}.live-gift-dialog .chat-component-modal-body{padding:10px}.live-gift-dialog .live-gift-price{font-size:15px}}
+
+.token-gift-event-image{display:block;width:96px;height:96px;object-fit:contain;margin:4px auto 8px}

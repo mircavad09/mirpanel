@@ -15,9 +15,10 @@ export async function messageSnapshot(pool,{before,after,ids}){
  where p.user_id in (select user_id from page)
  ) select (select row_to_json(c) from community_config c where id=true) as config,
  coalesce((select json_agg(x) from (select m.id::text,m.user_id,m.body,m.created_at,
- row_to_json(a) as author,t.recipient_id,t.display_name as tag_name
+ row_to_json(a) as author,t.recipient_id,t.display_name as tag_name,tg.kind as token_gift_kind,coalesce(rp.display_name,ru.name) as token_gift_recipient
  from page m left join authors a on a.user_id=m.user_id
  left join community_bot_tags t on t.message_id=m.id
+ left join token_gifts tg on tg.message_id=m.id left join "user" ru on ru.id=tg.recipient_id left join community_profiles rp on rp.user_id=tg.recipient_id
  order by case when $2::bigint is not null then m.id end asc,
  case when $2::bigint is null then m.id end desc) x),'[]'::json) as items,
  coalesce((select json_agg(id::text) from community_messages where id=any($3::bigint[]) and hidden=true),'[]'::json) as removed,

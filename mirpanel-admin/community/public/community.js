@@ -1,7 +1,7 @@
 import {getCommunityState,communityJson} from '/session-state.js?v=latency-1';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
 import {tierLabel} from '/community-assets/tier-labels.js';
-import {messageBubble,decorateInfluencer} from '/community-assets/chat-components.js?v=gift-compact-4';
-import {openLiveGift,resumeInfluencerGift} from '/community-assets/live-gifts.js?v=gift-compact-4';
+import {messageBubble,decorateInfluencer} from '/community-assets/chat-components.js?v=tokens-1';
+import {openLiveGift,resumeInfluencerGift} from '/community-assets/live-gifts.js?v=tokens-1';
 import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
 export function mountCommunity(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
@@ -119,8 +119,8 @@ async function group(){
  cleanups.push(()=>{stream?.close();clearTimeout(reconnect);});
  msgList.addEventListener('scroll',()=>{if(nearBottom()){newButton.hidden=true;mark();}if(!jumping&&ready&&msgList.scrollTop<=40)void loadOlder();});setPage(el('div',{class:'community-chat-layout'},card));resumeInfluencerGift();resizeComposer();if(state.initialMessages){receive(state.initialMessages,true);void jumpToTag();connect();}else void poll(true).then(()=>{void jumpToTag();if(publicChat)connect();});
 }
-async function account(){const {renderAuthForms}=await import('/community-assets/auth-forms.js?v=gift-return-3');if(!stopped)await renderAuthForms({app,state,api,el,button,link,alert});}
-async function profile(){const {mountProfile}=await import('/community-assets/profile-entry.js?v=code-artwork-1');if(!stopped){cleanups.push(mountProfile(app,state));window.mirpanelPageDispose=dispose;}}
+async function account(){const {renderAuthForms}=await import('/community-assets/auth-forms.js?v=tokens-1');if(!stopped)await renderAuthForms({app,state,api,el,button,link,alert});}
+async function profile(){const {mountProfile}=await import('/community-assets/profile-entry.js?v=tokens-1');if(!stopped){cleanups.push(mountProfile(app,state));window.mirpanelPageDispose=dispose;}}
 async function moderation(){if(!state.profile?.isModerator){setPage(el('p',{role:'alert'},'Bu bölməyə icazəniz yoxdur.'));return;}const r=await api('/api/community/audit');setPage(el('section',{class:'community-panel'},el('h1',{},'Moderasiya auditi'),...r.items.map(m=>el('p',{},`${m.action} · ${m.reason} · ${new Date(m.created_at).toLocaleString('az-AZ')}`)),link('Mesajları idarə etmək üçün qrupa keç','/qrup')));}
 const boot=async()=>{try{if(location.pathname==='/hesab'){state={googleEnabled:true};await account();return;}await refresh();if(stopped)return;if(location.pathname==='/qrup')await group();else if(location.pathname==='/profil')await profile();else if(location.pathname==='/hesab')await account();else if(location.pathname==='/moderasiya')await moderation();else location.replace('/');}catch(e){if(!stopped)setPage(el('section',{class:'community-panel'},el('h1',{},'Yükləmə alınmadı'),el('p',{role:'alert'},e.message),button('Yenidən cəhd et',boot)));}};void boot();
 // Keep the composer above the software keyboard without locking the page when closed.

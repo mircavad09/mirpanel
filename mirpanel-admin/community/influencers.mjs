@@ -47,7 +47,7 @@ export async function setInfluencer(repo,actor,b){
 }
 export async function influencerCatalog(pool,id,catalog,stock){
  const recipient=await influencerRecipient(pool,id);
- const products=catalog.products.filter(p=>p.active!==false).map(p=>{const available=inventoryAvailability(p,stock.find(s=>s.productId===p.id));
+ const products=catalog.products.filter(p=>p.active!==false&&p.id!=='mirpanel-token').map(p=>{const available=inventoryAvailability(p,stock.find(s=>s.productId===p.id));
  const plans=(p.plans||[]).flatMap((plan,index)=>{if(!giftPlanAllowed(p,plan))return [];let cents;try{cents=parseMoneyCents(plan.price,{allowEmpty:false});}catch{return [];}const s=available.plans.find(x=>x.planKey===String(index));return cents>0&&s?.active?[{index,label:giftPlanLabel(plan),cents,available:available.salesDisabled?0:s.available??null}]:[];});
  return {id:p.id,title:p.title,shortTitle:giftShortTitle(p),image:p.image||'',plans};}).filter(p=>p.plans.length);
  return {recipient,products};

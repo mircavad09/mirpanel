@@ -4142,6 +4142,97 @@ const DATA = {
           "url": ""
         }
       }
+    },
+    {
+      "id": "mirpanel-token",
+      "_stableId": "mirpanel-token",
+      "order": 36,
+      "category": "sosial-media",
+      "image": "/assets/tokens/mirpanel-token.webp",
+      "currency": "₼",
+      "title": "Mirpanel Token",
+      "variant": "",
+      "badge": "",
+      "imageAlt": "Mirpanel Token — qızılı M hərfli jeton",
+      "desc": "1 token = 0,02 ₼. Influencerlərə gül və ürək hədiyyə edin.",
+      "note": "",
+      "longDescription": "",
+      "usageRules": "",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "mirpanel-token",
+      "seoTitle": "",
+      "seoDescription": "",
+      "seoH1": "Mirpanel Token",
+      "seoPrimaryKeyword": "Mirpanel Token almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoUpdatedAt": "2026-11-17T15:22:34.129Z",
+      "seoIndex": true,
+      "includeInSitemap": true,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "/assets/tokens/mirpanel-token.webp",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "/assets/tokens/mirpanel-token.webp",
+        "mobileImage": "",
+        "title": "Mirpanel Token",
+        "description": "1 token = 0,02 ₼. Influencerlərə gül və ürək hədiyyə edin.",
+        "alt": "Mirpanel Token — qızılı M hərfli jeton",
+        "order": 36
+      },
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
+      "orderFlow": "direct_whatsapp",
+      "formFields": [],
+      "formTitle": "",
+      "formDescription": "",
+      "confirmationModal": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
+      },
+      "plans": [
+        {
+          "label": "50 token",
+          "months": 1,
+          "price": 1,
+          "pricingId": "0dfe589f-5f80-4212-806b-98206f532dfb"
+        }
+      ],
+      "orderConfirmation": {
+        "enabled": false,
+        "title": "Diqqət!",
+        "description": "",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Ləğv et",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     }
   ]
 };

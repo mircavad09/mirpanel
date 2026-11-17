@@ -1,5 +1,5 @@
-export const accountLabels={profile:'Profilim',orders:'Sifarişlərim',codes:'Kodlarım',subscriptions:'Abunəliklərim',payments:'Ödənişlərim',expenses:'Xərclərim'};
-const tabIconPaths = {
+export const accountLabels={profile:'Profilim',orders:'Sifarişlərim',codes:'Kodlarım',subscriptions:'Abunəliklərim',payments:'Ödənişlərim',expenses:'Xərclərim',tokens:'Tokenlərim'};
+const tabIconPaths = {tokens:'M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18 M8 16V8l4 5 4-5v8',
  profile: 'M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z M5 21v-2a7 7 0 0 1 14 0v2',
  orders: 'M3 7l9-4 9 4v10l-9 4-9-4z M3 7l9 4 9-4 M12 11v10 M8 5l9 4',
  codes: 'M14.5 14a5.5 5.5 0 1 0-4.7-2.6L3 18v3h4v-3h3l2.8-4.3a5.5 5.5 0 0 0 1.7.3z M16 8h.1',
@@ -14,7 +14,7 @@ export function accountTab(search){
  const name=new URLSearchParams(search).get('tab');
  return Object.hasOwn(accountLabels,name)?name:Object.keys(accountSlugs).find(key=>accountSlugs[key]===name)||'profile';
 }
-export const accountSlugs={profile:'profilim',orders:'sifarislerim',codes:'kodlarim',subscriptions:'abuneliklerim',payments:'odenislerim',expenses:'xerclerim'};
+export const accountSlugs={profile:'profilim',orders:'sifarislerim',codes:'kodlarim',subscriptions:'abuneliklerim',payments:'odenislerim',expenses:'xerclerim',tokens:'tokenlerim'};
 export const accountTabPath=tab=>'/profil?tab='+accountSlugs[tab];
 export function profileReturn(search){
  const topup=new URLSearchParams(search).get('topup');

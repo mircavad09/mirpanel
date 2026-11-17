@@ -11,6 +11,7 @@ const server=http.createServer(async(req,res)=>{const url=new URL(req.url,'http:
  if(route==='/api/admin/community/moderate'){messages=messages.filter(m=>m.id!==b.targetId);return json({ok:true});}
  if(route==='/api/admin/community/users/'+target.id)return json({user:{id:target.id,name:target.name},profile:{},tier:{id:'standard'}});
  if(route==='/api/admin/community/events'){res.writeHead(200,{'content-type':'text/event-stream'});res.write(': connected\n\n');return;}
+ if(route==='/api/community/tokens')return json({balance:0});
  if(route==='/api/community/influencer-catalog')return json({recipient:target,products});
  if(route==='/api/payments/shop/gift-status')return json({paymentConfirmed:false});
  if(route==='/api/payments/shop/quote'){const p=products.find(x=>x.id===b.items[0].productId),plan=p.plans.find(x=>x.index===b.items[0].planIndex);return json({balanceCents:balance,totalCents:plan.cents,items:[{available:p.id==='netflix'&&purchases.size?0:5,terms:'İzolyasiya edilmiş sınaq şərtləri',termsVersion:'a'.repeat(64),title:p.title,planName:plan.label}]});}

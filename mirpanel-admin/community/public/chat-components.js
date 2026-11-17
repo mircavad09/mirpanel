@@ -1,7 +1,7 @@
 // Shared display-only primitives. No API, storage, balance or order access.
-const existingChatStyle=document.querySelector('[data-chat-components-style]');if(existingChatStyle)existingChatStyle.href='/community-assets/chat-components.css?v=gift-compact-4';
+const existingChatStyle=document.querySelector('[data-chat-components-style]');if(existingChatStyle)existingChatStyle.href='/community-assets/chat-components.css?v=tokens-1';
 if(!existingChatStyle){
- const link=document.createElement('link');link.rel='stylesheet';link.href='/community-assets/chat-components.css?v=gift-compact-4';link.dataset.chatComponentsStyle='';document.head.append(link);
+ const link=document.createElement('link');link.rel='stylesheet';link.href='/community-assets/chat-components.css?v=tokens-1';link.dataset.chatComponentsStyle='';document.head.append(link);
 }
 export function chatElement(tag,text,className){
  const n=document.createElement(tag);if(text!=null)n.textContent=text;if(className)n.className=className;return n;
@@ -14,7 +14,7 @@ export function messageBubble(message){
  const body=chatElement('p',message.deleted?'Mesaj silindi':message.body,'community-message-body');
  if(message.deleted){body.classList.add('is-deleted');body.setAttribute('aria-label','Silinmiş mesaj');}
  const time=chatElement('time',new Date(message.createdAt).toLocaleTimeString('az-AZ',{hour:'2-digit',minute:'2-digit'}));
- time.dateTime=message.createdAt;bubble.append(body,time);return bubble;
+ time.dateTime=message.createdAt;if(message.tokenGift&&!message.deleted){const gift=chatElement('img',null,'token-gift-event-image');gift.src=message.tokenGift.image;gift.alt=message.tokenGift.name;gift.width=96;gift.height=96;bubble.append(gift);}bubble.append(body,time);return bubble;
 }
 export function chatModal({title,parent=document.body,test=false,onClose}){
  const box=chatElement('dialog',null,'chat-component-modal'+(test?' is-test':''));

@@ -23,6 +23,7 @@ export function deliveryLines(o){
 }
 export function customerStatus(o,records){
  if(!paid(o))return o.status;
+ if(o.checkout_snapshot?.tokenPurchaseCount)return 'completed';
  if(o.fulfillment_cancellation)return o.fulfillment_cancellation.full?'cancelled':'completed';
  return deliveryLines(o).every((x,i)=>records.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)>=x.quantity)?'completed':'preparing';
 }

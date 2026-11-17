@@ -11,7 +11,7 @@
  const initialAddress=profileAddress(new URL(location.href));
  if(initialAddress.href!==location.href)history.replaceState(history.state,'',initialAddress.href);
  const routes=new Set(['/','/mehsul','/haqqimizda','/sertler','/elaqe','/balans','/sebet','/odenis','/sifarislerim','/profil','/qrup','/hesab','/owner-login']);
- const isProduct=p=>/^\/mehsul\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p);
+ const isProduct=p=>p!=='/mehsul/mirpanel-token'&&/^\/mehsul\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(p);
  const canRoute=p=>routes.has(p)||isProduct(p);
  const shared=/\/(?:site-header|site-header-menu|desktop-header|account-header|browser-nav|support-widget|cart-store|decorative-backgrounds|community-notices)\.(?:js|css)$/;
  const allowedScripts=new Set(['home-loading.js','display-labels.js','catalog-card.js','catalog-listing.js','app.js','cms-site.js','stories.js','payment-flow.js','order-confirmation.js','stock-display-fix.js','search-suggestions-fix.js','frontend-routing-detail-fix.js','seo-router.js','i18n.js','webmcp.js','site-sections-render.js','browser-orders.js','product-page.js']);
@@ -87,10 +87,10 @@
  for(const event of ['pointerover','pointerdown','focusin'])document.addEventListener(event,listingIntent,{passive:true});
  if(location.pathname==='/'&&!navigator.connection?.saveData&&typeof requestIdleCallback==='function')
   requestIdleCallback(()=>{if(location.pathname==='/'&&!document.hidden)void prepareListing();},{timeout:1200});
- const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=route-recovery-1';document.head.append(sheet);
+ const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=tokens-1';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=gift-return-3';
- const profileModule='/community-assets/profile-entry.js?v=zoom-phone-1';
+ const profileModule='/community-assets/profile-entry.js?v=tokens-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
@@ -99,7 +99,7 @@
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
  const moduleAttempts=new Map();
  async function moduleWithin(url){const attempt=moduleAttempts.get(url)||0;let timer;try{return await Promise.race([import(url+(attempt?(url.includes('?')?'&':'?')+'routeRetry='+attempt:'')),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}catch(error){moduleAttempts.set(url,attempt+1);throw error;}finally{clearTimeout(timer);}}
- const shopModule='/community-assets/shop-ui.js?v=shell-gift-return-3',groupModule='/community-assets/community.js?v=shell-gift-compact-4';
+ const shopModule='/community-assets/shop-ui.js?v=shell-gift-return-3',groupModule='/community-assets/community.js?v=shell-tokens-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&((u.pathname===location.pathname&&(a.dataset.browserNav!=='orders'||u.searchParams.get('tab')===new URLSearchParams(location.search).get('tab')))||u.pathname==='/mehsul'&&isProduct(location.pathname)))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));const profile=new URL(current,location.origin).pathname==='/profil';((profile&&window.mirpanelPageDispose)||dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
@@ -188,7 +188,7 @@
  finishHomeCatalog();
  }finally{window.mirpanelNavigationMounting=false;}}
  async function mountProfileRoute(u,run){
-  const css='/community-assets/account-panel.css?v=profile-loading-1';
+  const css='/community-assets/account-panel.css?v=tokens-1';
   if(!document.querySelector('link[href="'+css+'"]')){const style=document.createElement('link');style.rel='stylesheet';style.setAttribute('href',css);style.dataset.shellPersistent='';document.head.append(style);}
   const app=document.createElement('main');app.id='communityApp';app.className='community-shell';root.replaceChildren(app);mounted=true;
   routeClasses.add('community-page');document.body.classList.add('community-page','profile-screen');
