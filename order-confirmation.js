@@ -2135,7 +2135,15 @@
       const add=event.target.closest('.home-page #grid .homeCardAdd');
       if(add){
         event.preventDefault();event.stopImmediatePropagation();
-        if(!add.disabled)void openHomeCart(add);
+        if(add.disabled)return;
+        if(add.closest('[data-product-id="mirpanel-token"]')){
+          const item=window.MirpanelCart?.read().find(row=>row.productId==='mirpanel-token');
+          void import('/community-assets/token-ui.js?v=token-cart-1')
+            .then(module=>module.confirmTokenPurchase(item?.tokenCount??50,true))
+            .catch(()=>location.assign('/mehsul/mirpanel-token'));
+          return;
+        }
+        void openHomeCart(add);
         return;
       }
       const button = event.target.closest("#pp-order-btn, #cartAddProduct");
