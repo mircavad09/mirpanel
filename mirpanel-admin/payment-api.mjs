@@ -1,3 +1,4 @@
+import {TOKEN_PRODUCT} from './community/tokens.mjs';
 import { createPaymentMailer, paymentEmailContent } from "./payment-mail.mjs";
 import {randomUUID} from 'node:crypto';
 import {
@@ -228,6 +229,7 @@ export function createPaymentSystem(options) {
   }
 
   async function catalogSelection(productId, planIndex) {
+    if(productId===TOKEN_PRODUCT)throw Object.assign(Error('Token sayını Mirpanel Token səhifəsində seçin.'),{status:400,code:'TOKEN_CHECKOUT_REQUIRED'});
     const data = await loadCatalog();
     const product = data.products.find((item) => item.id === productId && item.active !== false);
     const index = Number(planIndex);
