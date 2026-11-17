@@ -93,6 +93,7 @@ export async function writeNextSheetCustomerId(pool,security,client){
   if(!job){await c.query('commit');return false;}
   const current=job.room_id&&(await c.query('select delivery_id from mirpanel_community.netflix_room_units where id=$1 for share',[job.room_id])).rows[0];
   const {rows:[delivery]}=await c.query(`select d.order_id,d.line_index,d.message_cipher,n.member_number::text,
+   coalesce(nullif(btrim(ct.name),''),nullif(btrim(o.customer_name),''),person.name) customer_name,
    exists(select 1 from mirpanel_community.subscription_renewals v join public.payment_orders ro on ro.id=v.order_id
     where v.source_id=d.id and v.user_id=u.user_id and ro.status not in ('cancelled','rejected','expired')
     and (ro.payment_confirmed or ro.status in ('approved','completed'))) renewed
@@ -100,6 +101,8 @@ export async function writeNextSheetCustomerId(pool,security,client){
    join public.payment_orders o on o.id=d.order_id
    join mirpanel_community.community_order_owners u on u.order_id=o.id
    left join mirpanel_community.community_member_numbers n on n.user_id=u.user_id
+   left join mirpanel_community."user" person on person.id=u.user_id
+   left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id
    where d.id=$1 and (o.payment_confirmed or o.status in ('approved','completed'))
     and o.status not in ('rejected','cancelled','expired')`,[job.delivery_id]);
   let state='blocked',reason='delivery';
@@ -109,7 +112,7 @@ export async function writeNextSheetCustomerId(pool,security,client){
    try{snapshot=JSON.parse(security.decryptSecret(delivery.message_cipher));}catch{}
    if(snapshot?.id===job.delivery_id&&snapshot.order===delivery.order_id&&snapshot.line===delivery.line_index){
     try{
-     const result=await client.writeCustomerId(snapshot,delivery.member_number,{status:delivery.renewed?'✓ Yenilənib':'✓ Satılıb'});
+     const result=await client.writeCustomerId(snapshot,delivery.member_number,{status:delivery.renewed?'✓ Yenilənib':'✓ Satılıb',customerName:delivery.customer_name});
      if(!result.done&&!result.reason)throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
      state=result.done?'done':'blocked';reason=result.reason??null;
     }catch(error){reason=sheetReason(error);state=retryableSheetReason(reason)?'pending':'blocked';}

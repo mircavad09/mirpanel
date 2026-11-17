@@ -3,6 +3,7 @@ import {roomDateCell,roomSheetCells,roomSheetStyleKey,roomSheetStyleVersion,room
 
 export const sheetTitle='Netflix Şəxsi — Otaq stoku';
 export const sheetHeaders=['Müştəri ID-si','Otaq adı və PIN','Gmail','Şifrə','Bitmə tarixi','Status'];
+export const customerNameHeader='Müştəri adı';
 export const examplesTitle='SINAQ — nümunələr';
 export const paidStatus='✓ Ödəniş edib';
 const b64=value=>Buffer.from(JSON.stringify(value)).toString('base64url');
@@ -89,7 +90,65 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    metadataKey:roomSheetStyleKey,metadataValue:roomSheetStyleVersion,visibility:'DOCUMENT',location:{sheetId}
   }}}]});
  }
+ function cellWrite(sheetId,rowIndex,columnIndex,stringValue){
+  return {updateCells:{start:{sheetId,rowIndex,columnIndex},
+   rows:[{values:[{userEnteredValue:{stringValue}}]}],fields:'userEnteredValue'}};
+ }
+ async function readStockRows(sheetId,stockSheet,lastColumn){
+  const range="'"+stockSheet.properties.title.replaceAll("'","''")+"'!A1:"+lastColumn;
+  const query=new URLSearchParams({ranges:range,fields:'sheets(properties(sheetId),data(startRow,startColumn,rowData(values(userEnteredValue,effectiveValue,formattedValue))))'});
+  const {sheets}=await request(endpoint+'?'+query);
+  const grid=sheets?.find(sheet=>sheet.properties.sheetId===sheetId)?.data?.[0];
+  if(!grid||grid.startRow||grid.startColumn)throw Error('ROOM_SHEET_DESTINATION');
+  return (grid.rowData||[]).map(({values=[]})=>Array.from({length:lastColumn.charCodeAt(0)-64},(_,i)=>
+   i===1&&values[i]?.userEnteredValue?.numberValue!==undefined?values[i].formattedValue:enteredCell(values[i],i!==1&&i!==2)));
+ }
  return {
+ async prepareCustomerNameColumn(){
+  const {metadata,stockSheet,sheetId,range}=await stockDestination();
+  const headers=(await request(range('A1:I1'))).values?.[0]||[];
+  if(metadata.properties?.title!==sheetTitle||JSON.stringify(headers.slice(0,8))!==JSON.stringify([...sheetHeaders,'Stok otağının ID-si','Netflix hesabının ID-si']))
+   throw Error('ROOM_SHEET_HEADERS');
+  if(headers[8]===customerNameHeader)return false;
+  if(headers[8])throw Error('ROOM_SHEET_HEADERS');
+  const column={sheetId,dimension:'COLUMNS',startIndex:8,endIndex:9};
+  const requests=[
+   {insertDimension:{range:column,inheritFromBefore:false}},
+   cellWrite(sheetId,0,8,customerNameHeader),
+   {updateDimensionProperties:{range:column,properties:{hiddenByUser:false,pixelSize:220},fields:'hiddenByUser,pixelSize'}}
+  ];
+  for(const [kind,filter] of [['basic',stockSheet.basicFilter],...(stockSheet.filterViews||[]).map(view=>['view',view])]){
+   if(filter?.range?.startColumnIndex!==0||filter.range.endColumnIndex!==8)continue;
+   const expanded={...filter,range:{...filter.range,sheetId,endColumnIndex:9}};
+   requests.push(kind==='basic'?{setBasicFilter:{filter:expanded}}:{updateFilterView:{filter:expanded,fields:'range'}});
+  }
+  await request(endpoint+':batchUpdate',{requests});
+  if((await request(range('I1'))).values?.[0]?.[0]!==customerNameHeader)throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
+  return true;
+ },
+ async writeCustomerNames(entries){
+  if(!entries.length)return {written:0,already:0,skipped:[]};
+  const {metadata,sheetId,stockSheet}=await stockDestination();
+  if(metadata.properties?.title!==sheetTitle)throw Error('ROOM_SHEET_HEADERS');
+  const rows=await readStockRows(sheetId,stockSheet,'I');
+  if(rows[0]?.[8]!==customerNameHeader)throw Error('ROOM_SHEET_HEADERS');
+  const operations=[],pending=[],skipped=[],seen=new Set();let already=0;
+  for(const entry of entries){
+   const verdict=locateCustomerNameCell(rows,entry,entry.memberNumber,entry.name);
+   if(verdict.reason){skipped.push({order:entry.orderCode,reason:verdict.reason});continue;}
+   if(seen.has(verdict.rowIndex))throw Error('ROOM_SHEET_DUPLICATE');
+   seen.add(verdict.rowIndex);
+   if(verdict.done){already++;continue;}
+   operations.push(cellWrite(sheetId,verdict.rowIndex,8,verdict.name));pending.push(entry);
+  }
+  if(operations.length){
+   await request(endpoint+':batchUpdate',{requests:operations});
+   const saved=await readStockRows(sheetId,stockSheet,'I');
+   if(pending.some(entry=>!locateCustomerNameCell(saved,entry,entry.memberNumber,entry.name).done))
+    throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
+  }
+  return {written:operations.length,already,skipped};
+ },
  async applyLightStyle(){
   const {metadata,stockSheet,sheetId,range}=await stockDestination();
   const headers=(await request(range('A1:F1'))).values?.[0];
@@ -97,26 +156,19 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    throw Error('ROOM_SHEET_HEADERS');
   await applyStyle(stockSheet,sheetId,range);
  },
- async writeCustomerId(delivery,memberNumber,{status='✓ Satılıb'}={}){
+ async writeCustomerId(delivery,memberNumber,{status='✓ Satılıb',customerName}={}){
   const {sheetId,stockSheet}=await stockDestination();
-  const range="'"+stockSheet.properties.title.replaceAll("'","''")+"'!A1:F";
-  const query=new URLSearchParams({ranges:range,fields:'sheets(properties(sheetId),data(startRow,startColumn,rowData(values(userEnteredValue,effectiveValue,formattedValue))))'});
   const read=async()=>{
-   const {sheets}=await request(endpoint+'?'+query);
-   const grid=sheets?.find(sheet=>sheet.properties.sheetId===sheetId)?.data?.[0];
-   if(!grid||grid.startRow||grid.startColumn)throw Error('ROOM_SHEET_DESTINATION');
-   const rows=(grid.rowData||[]).map(({values=[]})=>[
-    enteredCell(values[0]),
-    // Legacy rows may store a number with a custom format displaying “room PIN”.
-    // Read both representations together; never substitute a formula's display.
-    values[1]?.userEnteredValue?.numberValue!==undefined?values[1].formattedValue:enteredCell(values[1],false),
-    enteredCell(values[2],false),enteredCell(values[3]),enteredCell(values[4]),enteredCell(values[5])
-   ]);
+   const rows=await readStockRows(sheetId,stockSheet,customerName?'I':'F');
+   if(customerName&&rows[0]?.[8]!==customerNameHeader)throw Error('ROOM_SHEET_HEADERS');
    const result=locateCustomerIdCell(rows,delivery,memberNumber);
    if(result.reason)return result;
    const rowIndex=result.rowIndex??rows.findIndex((row,i)=>i>0&&roomIdentityMatches(row,delivery));
    const safeStatus=mergeRoomStatus(rows[rowIndex]?.[5],status);
-   return {rowIndex,status:safeStatus,done:result.done&&rows[rowIndex]?.[5]===safeStatus};
+   const name=customerName?locateCustomerNameCell(rows,delivery,memberNumber,customerName):null;
+   const pendingName=name&&!name.reason&&!name.done?name.name:null;
+   return {rowIndex,status:safeStatus,name:pendingName,
+    done:result.done&&rows[rowIndex]?.[5]===safeStatus&&!pendingName};
   };
   // Resolve again immediately before writing to catch a sort, edit or conflict
   // that happened during the first read.
@@ -124,11 +176,9 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   if(first.reason||first.done)return first;
   const current=await read();
   if(current.reason||current.done)return current;
-  await request(endpoint+':batchUpdate',{requests:[{updateCells:{
-   start:{sheetId,rowIndex:current.rowIndex,columnIndex:0},
-   rows:[{values:[{userEnteredValue:{stringValue:memberNumber}}]}],fields:'userEnteredValue'
-  }},{updateCells:{start:{sheetId,rowIndex:current.rowIndex,columnIndex:5},
-   rows:[{values:[{userEnteredValue:{stringValue:current.status}}]}],fields:'userEnteredValue'}}]});
+  const requests=[cellWrite(sheetId,current.rowIndex,0,memberNumber),cellWrite(sheetId,current.rowIndex,5,current.status)];
+  if(current.name)requests.push(cellWrite(sheetId,current.rowIndex,8,current.name));
+  await request(endpoint+':batchUpdate',{requests});
   const saved=await read();
   if(!saved.done)throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
   return saved;
@@ -158,14 +208,15 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
   await applyStyle(stockSheet,sheetId,range);
   return {async group(){return {skipped:true,reason:'manual_sort_only'};},async upsert(values,{release=null}={}){
    const read=async()=>{
-    const q=new URLSearchParams({ranges:"'"+stockSheet.properties.title.replaceAll("'","''")+"'!A1:H",fields:'sheets(properties(sheetId),data(startRow,startColumn,rowData(values(userEnteredValue,effectiveValue,formattedValue))))'});
+    const q=new URLSearchParams({ranges:"'"+stockSheet.properties.title.replaceAll("'","''")+"'!A1:"+(release?"I":"H"),fields:'sheets(properties(sheetId),data(startRow,startColumn,rowData(values(userEnteredValue,effectiveValue,formattedValue))))'});
     const response=await request(endpoint+'?'+q),grid=response.sheets?.find(s=>s.properties.sheetId===sheetId)?.data?.[0];
     if(!grid||grid.startRow||grid.startColumn)throw Error('ROOM_SHEET_DESTINATION');
-    const rows=(grid.rowData||[]).map(({values=[]})=>Array.from({length:8},(_,i)=>i===1&&values[i]?.userEnteredValue?.numberValue!==undefined?values[i].formattedValue:enteredCell(values[i])));
+    const rows=(grid.rowData||[]).map(({values=[]})=>Array.from({length:release?9:8},(_,i)=>i===1&&values[i]?.userEnteredValue?.numberValue!==undefined?values[i].formattedValue:enteredCell(values[i])));
     const resolved=protectedRoomUpsert(rows,values,{release});
-    return {...resolved,actual:resolved.rowIndex===null?null:rows[resolved.rowIndex]};
+    return {...resolved,actual:resolved.rowIndex===null?null:rows[resolved.rowIndex],hasNameColumn:rows[0]?.[8]===customerNameHeader};
    };
-   const equal=current=>current.actual&&current.values.every((value,i)=>{
+   const needsNameClear=current=>current.released&&current.hasNameColumn&&current.actual?.[8]&&String(current.actual[0]??'')!==String(current.values[0]??'');
+   const equal=current=>current.actual&&!needsNameClear(current)&&current.values.every((value,i)=>{
     if(i===4){const date=roomDateCell(values[4]);return !date||Number(current.actual[4])===date.userEnteredValue.numberValue;}
     const desired=i===5?roomSheetCells(current.values)[i].userEnteredValue.stringValue:String(value??'');
     return String(current.actual[i]??'')===desired;
@@ -180,6 +231,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
     if(columnIndex===0&&!String(values[0]??'').trim()&&!release||columnIndex===4&&!roomDateCell(values[4]))continue;
     ops.push({updateCells:{start:{sheetId,rowIndex,columnIndex},rows:[{values:[row.values[columnIndex]]}],fields:'userEnteredValue,userEnteredFormat.numberFormat'}});
    }
+   if(needsNameClear(current))ops.push(cellWrite(sheetId,rowIndex,8,''));
    if(ops.length)await request(endpoint+':batchUpdate',{requests:ops});
    let updatedIndex=rowIndex;
    if(updatedIndex===null){
@@ -193,7 +245,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    }
    const saved=await read(),actual=saved.actual;
    if(!actual||String(actual[0]??'')!==String(safeValues[0])||actual[3]!==safeValues[3]||
-    actual[5]!==row.values[5].userEnteredValue.stringValue||actual[6]!==safeValues[6]||
+    actual[5]!==row.values[5].userEnteredValue.stringValue||needsNameClear(current)&&String(actual[8]??'')!==''||actual[6]!==safeValues[6]||
     roomDateCell(values[4])&&Number(actual[4])!==roomDateCell(values[4]).userEnteredValue.numberValue)throw Error('ROOM_SHEET_WRITE_NOT_CONFIRMED');
    return {changed:true,dateKnown:!!roomDateCell(actual[4])};
   }};
@@ -251,10 +303,11 @@ export function protectedRoomUpsert(rows,incoming,{release=null}={}){
  if(keyed!==null&&!roomIdentityMatches(rows[keyed],identity))throw Error('ROOM_SHEET_IDENTITY_CONFLICT');
  const rowIndex=keyed??matches[0]??null;
  if(rowIndex===null&&value[0]!=='')throw Error('ROOM_SHEET_MISSING');
+ let released=false;
  if(rowIndex!==null){
   const old=rows[rowIndex];
   if(!roomDateCell(value[4]))value[4]=roomDateCell(old[4])?old[4]:null;
-  const released=release?.roomId===value[6]&&/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(release.eventId??'')&&String(release.previousMember)===String(old[0]);
+  released=release?.roomId===value[6]&&/^[a-f\d]{8}(?:-[a-f\d]{4}){3}-[a-f\d]{12}$/i.test(release.eventId??'')&&String(release.previousMember)===String(old[0]);
   if(!released)value[5]=mergeRoomStatus(old[5],value[5]);
   if(old[6]&&old[6]!==value[6])throw Error('ROOM_SHEET_IDENTITY_CONFLICT');
   if(old[7]&&old[7]!==value[7])throw Error('ROOM_SHEET_IDENTITY_CONFLICT');
@@ -266,7 +319,7 @@ export function protectedRoomUpsert(rows,incoming,{release=null}={}){
  }
  if(!roomDateCell(value[4]))value[4]=null;
  else value[5]=String(value[5]??'').split('\n').filter(line=>line!=='Hesabın bitmə tarixi yoxlanılır').join('\n');
- return {rowIndex,values:value};
+ return {rowIndex,values:value,...(released?{released:true}:{})};
 }
 function enteredCell(cell,includeEffective=true){
  const value=cell?.userEnteredValue??(includeEffective?cell?.effectiveValue:undefined);
@@ -286,8 +339,21 @@ export function locateCustomerIdCell(rows,delivery,memberNumber){
  if(matches.length!==1)return {reason:'duplicate'};
  const {id,rowIndex}=matches[0];
  if(String(id??'')===memberNumber)return {done:true};
- if(id!==''&&id!==undefined&&id!==null)return {reason:'conflict'};
+ if(String(id??'').trim())return {reason:'conflict'};
  return {rowIndex};
+}
+
+export function locateCustomerNameCell(rows,delivery,memberNumber,name){
+ const safeName=typeof name==='string'?name.trim():'';
+ if(!safeName||safeName.length>250||/[\x00-\x1f\x7f]/.test(safeName))return {reason:'delivery'};
+ if(rows[0]?.[8]!==customerNameHeader)return {reason:'headers'};
+ const matches=rows.flatMap((row,index)=>index&&roomIdentityMatches(row,delivery)?[index]:[]);
+ if(matches.length!==1)return {reason:matches.length?'duplicate':'missing'};
+ const rowIndex=matches[0],row=rows[rowIndex],existingMember=String(row[0]??'').trim();
+ if(existingMember&&existingMember!==String(memberNumber??''))return {reason:'conflict'};
+ const existingName=String(row[8]??'').trim();
+ if(existingName&&existingName!==safeName)return {reason:'conflict'};
+ return {rowIndex,name:safeName,done:existingName===safeName};
 }
 
 // A delayed sold-only writer cannot downgrade a confirmed renewal or erase detail.

@@ -4,7 +4,7 @@ import {shopFixture} from './shop-test-fixture.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {bakuDate,shiftCalendarDays} from '../mirpanel-admin/payment-order-lifecycle.mjs';
 import {saveReadyStock,readyStockView,approveCardWithReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
-import {roomSheetClient,sheetHeaders,sheetTitle,locateCustomerIdCell} from '../mirpanel-admin/community/netflix-room-sheet-client.mjs';
+import {roomSheetClient,sheetHeaders,sheetTitle,customerNameHeader,locateCustomerIdCell} from '../mirpanel-admin/community/netflix-room-sheet-client.mjs';
 import {writeNextSheetCustomerId,reconcileSheetDeliveryQueue,retrySheetCustomerId} from '../mirpanel-admin/community/netflix-sheet-customer-id.mjs';
 import {sheetReason,sheetIssue} from '../mirpanel-admin/community/netflix-sheet-errors.mjs';
 import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
@@ -17,7 +17,7 @@ const {pool,shop,catalog,id}=fixture,security=createPaymentSecurity(paymentConfi
 const buyer={user:'a'},owner='a'.repeat(64),email='same@example.test';
 const {privateKey}=crypto.generateKeyPairSync('rsa',{modulusLength:2048});
 const account={client_email:'test@example.iam.gserviceaccount.com',private_key:privateKey.export({type:'pkcs8',format:'pem'})};
-const header=[...sheetHeaders];
+const header=[...sheetHeaders,'Stok otağının ID-si','Netflix hesabının ID-si',customerNameHeader];
 const row1=['','1 · 45-55',email,'test-secret','date','status'];
 const row2=['','2 · 0408',email,'test-secret','date','status'];
 const numberFormatted=new Map([[row1,{userEnteredValue:{numberValue:123456},formattedValue:'1 4555'}],[row2,{userEnteredValue:{numberValue:654321},formattedValue:'2 0408'}]]);
@@ -26,18 +26,17 @@ const client=roomSheetClient('synthetic-spreadsheet-id',account,'owner@example.t
  if(url.endsWith('/token'))return Response.json({access_token:'synthetic',expires_in:3600});
  if(url.includes('/permissions'))return Response.json({permissions:[{type:'user',role:'owner',emailAddress:'owner@example.test'},{type:'user',role:'writer',emailAddress:account.client_email}]});
  if(url.includes('?fields=properties'))return Response.json({properties:{title:sheetTitle},sheets:[{properties:{sheetId:7,title:'Stock'}}]});
- if(new URL(url).searchParams.get('ranges')==="'Stock'!A1:F"){
+ if(["'Stock'!A1:F","'Stock'!A1:I"].includes(new URL(url).searchParams.get('ranges'))){
   reads++;
   if(sortDuringRead&&reads===2)rows=[header,row2,row1];
-  return Response.json({sheets:[{properties:{sheetId:7},data:[{rowData:rows.map(r=>({values:r.slice(0,6).map((value,col)=>
-   col===1&&numberFormatted.has(r)?numberFormatted.get(r):
+  return Response.json({sheets:[{properties:{sheetId:7},data:[{rowData:rows.map(r=>({values:Array.from(r,(entry,col)=>{const value=entry??'';return col===1&&numberFormatted.has(r)?numberFormatted.get(r):
    value.startsWith('=')?{userEnteredValue:{formulaValue:value},formattedValue:''}:
    value?{userEnteredValue:{stringValue:value},formattedValue:value}:{}
-  )}))}]}]});
+  })}))}]}]});
  }
  if(url.endsWith(':batchUpdate')){
   const {requests}=JSON.parse(options.body);
-  assert.equal(requests.length,2);
+  assert(requests.length===2||requests.length===3);
   const {updateCells:write}=requests[0];
   assert.equal(write.start.sheetId,7);
   assert.equal(write.start.columnIndex,0);
@@ -47,12 +46,14 @@ const client=roomSheetClient('synthetic-spreadsheet-id',account,'owner@example.t
   rows[write.start.rowIndex][0]=write.rows[0].values[0].userEnteredValue.stringValue;
   const status=requests[1].updateCells;assert.equal(status.start.columnIndex,5);assert.equal(status.start.rowIndex,write.start.rowIndex);
   rows[status.start.rowIndex][5]=status.rows[0].values[0].userEnteredValue.stringValue;
+  if(requests[2]){const name=requests[2].updateCells;assert.equal(name.start.columnIndex,8);rows[name.start.rowIndex][8]=name.rows[0].values[0].userEnteredValue.stringValue;}
   writes++;
   if(offline){offline=false;return new Response(null,{status:503});}
   return Response.json({});
  }
  throw Error('Unexpected synthetic Google API request');
 });
+
 
 try{
  for(const file of ['ready-stock-migration.sql','ready-stock-product-messages-migration.sql','netflix-room-stock.sql','netflix-room-restock.sql','subscriptions-migration.sql','netflix-room-renewal.sql','netflix-room-legacy.sql','netflix-sheet-customer-id.sql'])
@@ -116,7 +117,7 @@ try{
  const otherCells=rows.slice(1).map(r=>r.slice(1,5));
  sortDuringRead=true;offline=true;
  assert.equal(await run(),true);
- assert.equal(row1[0],member);assert.equal(row2[0],'');assert.equal(writes,1);
+ assert.equal(row1[0],member);assert.equal(row2[0],'');assert.equal(writes,1);assert(row1[8]);assert(!row2[8]);
  const queued=(await readyStockView(pool,catalog,[],security)).netflixRooms.find(r=>r.deliveryId===code.id).sheetCustomerId;
  assert.equal(queued.state,'pending');assert.ok(queued.message);
  // Advance the scheduled time, then let the worker retry without admin action.
@@ -223,5 +224,5 @@ try{
  await run();
  assert.equal((await stock()).netflixSheetQueue.length,0);
  assert.equal(sheetReason(new DOMException('Timed out','TimeoutError')),'timeout');
- console.log('PASS: automatic/manual/card delivery, atomic A+status-only write, numeric/formatted PIN, moved rows, lost reply/retry, missing/conflict/duplicate protection, done-job recheck and historical queue backfill without duplicate delivery');
+ console.log('PASS: automatic/manual/card delivery, atomic ID, status and customer name, numeric/formatted PIN, moved rows, lost reply/retry, missing/conflict/duplicate protection, done-job recheck and historical queue backfill without duplicate delivery');
 }finally{await fixture.close();}
