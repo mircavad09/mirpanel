@@ -1,4 +1,4 @@
-import {decorateInfluencer} from '/community-assets/chat-components.js?v=live-influencers-1';
+import {decorateInfluencer} from '/community-assets/chat-components.js?v=live-influencers-2';
 import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
 import {applyPngTier} from '/community-assets/tier-png-component.js';
 import {tierLabel} from '/community-assets/tier-labels.js';

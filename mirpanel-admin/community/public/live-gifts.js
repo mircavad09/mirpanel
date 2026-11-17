@@ -1,4 +1,4 @@
-import {chatElement as el,chatButton as button,chatModal} from './chat-components.js?v=live-influencers-1';
+import {chatElement as el,chatButton as button,chatModal} from './chat-components.js?v=live-influencers-2';
 const key='mirpanel.influencer-gift.v1',money=c=>(Number(c)/100).toFixed(2).replace('.',',')+' ₼';
 let open=false;
 function read(){try{return JSON.parse(sessionStorage.getItem(key)||'null');}catch{return null;}}

@@ -31,3 +31,11 @@
 .chat-influencer-message .community-message-head{display:grid;grid-template-columns:minmax(0,1fr) 44px;gap:4px 8px}.chat-influencer-message .community-message-head>strong,.chat-influencer-message .community-message-head>.ac-name,.chat-influencer-message .community-message-head>.chat-author-button{grid-column:1;grid-row:1;min-width:0;overflow-wrap:anywhere}.chat-influencer-message .chat-influencer-badge{grid-column:1;grid-row:2;justify-self:start}.chat-influencer-message .chat-gift-button{grid-column:2;grid-row:1 / span 2;align-self:start;margin:0!important}.chat-influencer-message .community-message-content{background:#080808!important}.chat-influencer-message .community-message-bubble{border:0!important;box-shadow:none!important;background:#080808!important}
 
 .chat-influencer-message .community-message-head>.community-badge{grid-column:1;grid-row:3;justify-self:start}
+
+/* Group moderation lays ordinary message content out with display:contents.
+   Influencer content needs its own painted box and remains in that same grid. */
+.community-chat-screen .community-message.chat-influencer-message .community-message-content{display:flex!important;flex-direction:column;align-items:flex-start;grid-column:2;grid-row:1 / span 3;max-width:100%;width:100%;box-sizing:border-box;border:1px solid #b99440;border-radius:13px;padding:10px}
+.community-chat-screen .community-message.chat-influencer-message.is-own .community-message-content{grid-column:1}
+.community-chat-screen .chat-influencer-message .community-message-head{align-self:stretch;width:100%;margin:0 0 4px}
+.community-chat-screen .chat-influencer-message .community-message-head strong{max-width:none;white-space:normal;overflow:visible}
+.community-chat-screen .chat-influencer-message .chat-gift-button{color:#f2d188;border-color:#b38d31;background:#17130a}

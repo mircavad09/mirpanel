@@ -1,4 +1,4 @@
-import {chatElement as el,chatButton as button,chatModal} from './chat-components.js?v=live-influencers-1';
+import {chatElement as el,chatButton as button,chatModal} from './chat-components.js?v=live-influencers-2';
 const money=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
 // The caller supplies every read and write. Preview never receives a live transport.
 export function openGiftDialog({products,recipient,getBalance,submit,addBalance,test=false,parent,onClose}){

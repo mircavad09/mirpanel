@@ -1,5 +1,5 @@
-import {chatElement as el,chatButton as button,chatModal} from '/community-assets/chat-components.js?v=live-influencers-1';
-import {mountChat} from '/admin-chat-view.js?v=live-influencers-1';
+import {chatElement as el,chatButton as button,chatModal} from '/community-assets/chat-components.js?v=live-influencers-2';
+import {mountChat} from '/admin-chat-view.js?v=live-influencers-2';
 export async function openInfluencerView({call,userId,alive=()=>true}){
  const data=await call('/influencer-view?userId='+encodeURIComponent(userId));if(!alive())return;
  let stop=()=>{},closed=false;

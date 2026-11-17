@@ -1,7 +1,7 @@
 import {getCommunityState,communityJson} from '/session-state.js?v=latency-1';import {applyPngTier} from '/community-assets/tier-png-component.js?v=public-community-v1';
 import {tierLabel} from '/community-assets/tier-labels.js';
-import {messageBubble,decorateInfluencer} from '/community-assets/chat-components.js?v=live-influencers-1';
-import {openLiveGift,resumeInfluencerGift} from '/community-assets/live-gifts.js?v=live-influencers-1';
+import {messageBubble,decorateInfluencer} from '/community-assets/chat-components.js?v=live-influencers-2';
+import {openLiveGift,resumeInfluencerGift} from '/community-assets/live-gifts.js?v=live-influencers-2';
 import {createGroupAdmin} from '/community-assets/group-admin.js?v=audit-20261102';
 export function mountCommunity(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
