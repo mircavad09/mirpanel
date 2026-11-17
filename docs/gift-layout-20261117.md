@@ -11,6 +11,8 @@ Only shared influencer presentation, the existing live gift dialog and gift-spec
 5. Insufficient balance uses the orange wallet panel with current balance, exact shortfall and the requested explanatory sentence. No cart-return action is introduced into the gift flow.
 6. Gift-specific wallet URLs retain the existing safe `/qrup` return target with `flow=gift`. Wallet/login return actions say “Hədiyyəyə qayıt”. The gift draft retains recipient, product, plan, request ID and payment stage. Returning through the link, browser Back or BFCache fetches a fresh quote/balance and restores the payment screen. Consent and an explicit click are still required; return never submits checkout automatically.
 
+Expired-session login and registration preserve the two exact gift-wallet return URLs (with/without the top-up anchor) on both client and server. External destinations and added redirect parameters remain rejected.
+
 Uncertain checkout attempts retain the original buyer key and idempotency request. They can only check the same payment again, including if current stock has since reached zero; a fresh purchase is not created. Fresh out-of-stock selections remain blocked.
 
 Entry/module/style versions are advanced for direct loads, admin views and client-side navigation. No unrelated product/page design was changed.
@@ -22,5 +24,6 @@ Entry/module/style versions are advanced for direct loads, admin views and clien
 - `test-influencer-interactive-browser.mjs`: existing isolated admin preview remains functional at all four widths in Chrome/WebKit.
 - `test-live-influencers.mjs`: disposable local PostgreSQL, parallel gift request yields one order/debit, role/owner authorization, gift queue, presentation replay and unchanged ordinary purchases.
 - `test-page-navigation.mjs`: isolated navigation regression checks. Its artificial benchmark is not a live-site performance measurement.
+- `test-gift-auth-return.mjs`: Chrome/WebKit, 390/1440, login and registration retain the gift-wallet callback; server allowlist rejects external and extra redirect targets. No real authentication is attempted.
 
 Production checks must use only public reads and quote inspection; never click the final live checkout button. Public/anonymous live rendering and isolated funded/insufficient-balance scenarios must be reported separately.
