@@ -28,7 +28,7 @@ const error=el('p','','shop-error');error.setAttribute('role','alert');const sta
 async function api(path,body,{file,timeout=30000}={}){const epoch=accountEpoch;const c=new AbortController();requests.add(c);const t=setTimeout(()=>c.abort(),timeout);try{const r=await fetch(base+path,{method:body!==undefined||file?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:file?{'Content-Type':file.type||'application/octet-stream'}:body!==undefined?{'Content-Type':'application/json'}:{},body:file|| (body===undefined?undefined:JSON.stringify(body)),signal:c.signal});const d=await r.json().catch(()=>({}));if(epoch!==accountEpoch)throw Object.assign(Error('Account changed.'),{code:'ACCOUNT_CHANGED'});if(!r.ok)throw Object.assign(Error(d.error||'Əməliyyat tamamlanmadı. Yenidən cəhd edin.'),{status:r.status,code:d.code});return d;}catch(e){if(epoch!==accountEpoch)throw Object.assign(Error('Account changed.'),{code:'ACCOUNT_CHANGED'});if(e.name==='AbortError')throw Object.assign(Error('Cavab gecikdi. Eyni əməliyyatı yenidən sınayın.'),{status:504});throw e;}finally{clearTimeout(t);requests.delete(c);}}
 async function run(fn){if(working)return;working=true;error.textContent='';app.setAttribute('aria-busy','true');try{await fn();}catch(e){if(!closed&&e.code!=='ACCOUNT_CHANGED'){if(e.code==='CHECKOUT_EMAIL_UNVERIFIED'&&route!=='/balans'){try{await checkoutVerification();}catch(err){error.textContent=err.message;}}else error.textContent=e.message;}}finally{working=false;app.removeAttribute('aria-busy');}}
 function card(title){const n=el('section',null,'shop-card');if(title)n.append(el('h2',title));return n;}
-function login(){const n=card('Balansı artırmaq üçün daxil olun və ya qeydiyyatdan keçin'),back=backFromWallet(),destination=back?'/balans?returnTo='+encodeURIComponent(back):'/balans',next=encodeURIComponent(destination+(location.hash==='#balansi-artir'?location.hash:'')),actions=el('div',null,'shop-actions');actions.append(link('Daxil ol','/hesab?next='+next),link('Qeydiyyatdan keç','/hesab?mode=signup&next='+next));n.append(actions);if(back)n.append(link('← Alışa qayıt',back));app.replaceChildren(el('h1','Balansım'),n,error);}
+function login(){const n=card('Balansı artırmaq üçün daxil olun və ya qeydiyyatdan keçin'),back=backFromWallet(),destination=back?'/balans?returnTo='+encodeURIComponent(back)+(giftReturn()?'&flow=gift':''):'/balans',next=encodeURIComponent(destination+(location.hash==='#balansi-artir'?location.hash:'')),actions=el('div',null,'shop-actions');actions.append(link('Daxil ol','/hesab?next='+next),link('Qeydiyyatdan keç','/hesab?mode=signup&next='+next));n.append(actions);if(back)n.append(link(giftReturn()?'← Hədiyyəyə qayıt':'← Alışa qayıt',back));app.replaceChildren(el('h1','Balansım'),n,error);}
 function refreshAccount(){window.refreshCommunityNav?.();}
 function checkoutLogin(){
  const box=card('Hesabına daxil ol');
@@ -78,6 +78,7 @@ function topupLink(){
  return a;
 }
 function backFromWallet(){const value=new URLSearchParams(location.search).get('returnTo')||'';return /^\/(?:mehsul(?:\/[a-z0-9-]+\/?)?|odenis\?mode=wallet|sebet|qrup)?$/.test(value)?value:'';}
+function giftReturn(){return backFromWallet()==='/qrup'&&new URLSearchParams(location.search).get('flow')==='gift';}
 const pendingKey='mirpanel.cart.checkout.v1';
 function savedCheckout(){try{return JSON.parse(localStorage.getItem(pendingKey)||'null');}catch{return null;}}
 async function requestKey(items,mode,methodId){const bytes=new TextEncoder().encode(JSON.stringify({items,mode,methodId})),digest=await crypto.subtle.digest('SHA-256',bytes),input=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''),old=savedCheckout();if(old?.input===input)return old;const value={input,requestId:crypto.randomUUID()};localStorage.setItem(pendingKey,JSON.stringify(value));return value;}
@@ -288,7 +289,7 @@ function showWallet(data,{createWalletTopup,topupReviewTime}){
  currency.setAttribute('aria-hidden','true');amountField.append(amount,currency);amountLabel.append(labelText,amountField);form.append(presets,amountLabel,hint,invalid);
  flow=createWalletTopup({el,button,api,run,money,methods:[],profile,getCents:effective,signal:flowSignal,isClosed:()=>closed||flowSignal.aborted,onBusy:b=>{amount.disabled=b;for(const p of presets.children)p.disabled=b;},restoreCents:c=>{selectedCents=presetAmounts.includes(c/100)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.dataset.cents)===selectedCents));update();},onComplete:async saved=>{if(!flowSignal.aborted)showTopupResult(saved);}});update();
  const back=backFromWallet();
- if(back){const a=link('← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
+ if(back){const a=link(giftReturn()?'← Hədiyyəyə qayıt':'← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
  app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions(topupReviewTime));void flow.resume();
 }
 function walletQuestions(topupReviewTime){

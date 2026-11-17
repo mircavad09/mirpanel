@@ -39,3 +39,58 @@
 .community-chat-screen .chat-influencer-message .community-message-head{align-self:stretch;width:100%;margin:0 0 4px}
 .community-chat-screen .chat-influencer-message .community-message-head strong{max-width:none;white-space:normal;overflow:visible}
 .community-chat-screen .chat-influencer-message .chat-gift-button{color:#f2d188;border-color:#b38d31;background:#17130a}
+
+/* Use the ordinary/admin bubble geometry. The header and menu do not pad the bubble. */
+.chat-influencer-message .community-message-content{width:fit-content;min-height:0;padding:0;border:0;background:none!important}
+.community-chat-screen .community-message.chat-influencer-message .community-message-content{display:contents!important;width:auto;padding:0;border:0;background:none!important}
+.chat-influencer-message .community-message-bubble{width:fit-content;min-height:0;max-width:100%;padding:7px 11px 5px!important;border:1px solid #b99440!important;border-radius:17px 17px 17px 5px;background:#080808!important;box-shadow:0 0 0 1px #d8b85d16!important}
+.chat-influencer-message.is-own .community-message-bubble{border-radius:17px 17px 5px 17px}
+.chat-influencer-message .community-message-head{position:relative;display:flex!important;flex-wrap:wrap;align-items:center;gap:3px 5px;box-sizing:border-box;min-height:15px;padding-right:36px;margin:0 0 2px!important;width:fit-content;max-width:100%;font-size:11px;line-height:1.3}
+.community-chat-screen .chat-influencer-message .community-message-head{width:auto;justify-self:stretch}
+.chat-influencer-message .community-message-head .chat-influencer-badge{font-size:9px;padding:1px 4px;line-height:1.2;flex:0 0 auto}
+.chat-influencer-message .community-message-head .chat-gift-button{position:absolute;right:-7px;top:50%;transform:translateY(-50%);width:44px;height:44px;min-width:44px;min-height:44px;flex:none;display:grid;place-items:center;padding:12px!important;margin:0!important;border:0!important;background:transparent!important;border-radius:9px;color:#f2d188}
+.chat-influencer-message .community-message-head .chat-gift-button::before{content:'';position:absolute;inset:8px;border:1px solid #b38d31;border-radius:7px;background:#17130a;z-index:-1}
+.chat-influencer-message .community-message-head .chat-gift-button svg{width:18px;height:18px}
+.chat-influencer-message .community-message-head .chat-gift-button:hover::before{background:#3d3014}
+.chat-influencer-message .community-message-head .chat-gift-button:focus-visible{outline:2px solid #ffda00;outline-offset:-3px}
+
+/* Gift selection remains inside the native modal, with five columns at every width. */
+.live-gift-dialog[open]{display:flex;flex-direction:column;width:min(620px,calc(100vw - 16px));max-height:calc(100dvh - 20px);overflow:hidden}
+.live-gift-dialog>header{flex:0 0 auto;min-width:0;gap:10px;padding:12px}
+.live-gift-dialog>header h2{min-width:0;font-size:17px;line-height:1.35;overflow-wrap:anywhere}
+.live-gift-dialog>header button{flex:0 0 auto;min-width:44px}
+.live-gift-dialog .chat-component-modal-body{flex:1 1 auto;min-height:0;max-height:none;overflow-y:auto;padding:12px;overscroll-behavior:contain}
+.live-gift-dialog .chat-gift-error{margin:0 0 10px}.live-gift-dialog .chat-gift-error:empty{display:none}
+.live-gift-screen{min-width:0}.live-gift-screen h3{margin:0 0 10px;font-size:16px}.live-gift-screen p{margin:8px 0}
+.live-gift-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px 5px;align-items:stretch}
+.live-gift-dialog .live-gift-product{display:flex!important;flex-direction:column;align-items:stretch;justify-content:flex-start;gap:5px;width:100%;min-width:0;min-height:0;height:100%;margin:0;padding:5px 3px;text-align:center;border:1px solid #5d512e;border-radius:9px;overflow:hidden;background:#1a1c1f}
+.live-gift-product img{width:100%;height:auto;aspect-ratio:4/3;object-fit:cover;flex:none;border-radius:5px}
+.live-gift-product span{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.live-gift-product strong{font-size:11px;line-height:1.25;font-weight:600;overflow-wrap:anywhere}
+.live-gift-product small{font-size:11px;line-height:1.25;font-weight:750;color:#ffda00;margin-top:auto;overflow-wrap:anywhere}
+.live-gift-product:hover,.live-gift-product:focus-visible{border-color:#ffda00;background:#292516}
+.live-gift-toolbar{display:flex;justify-content:flex-end;margin:0 0 10px;min-width:0}
+.live-gift-dialog .live-gift-back{padding:6px 10px;min-height:44px;font-size:12px}
+.live-gift-hero{display:flex;align-items:center;gap:10px;margin:0 0 14px;min-width:0}
+.live-gift-hero img{width:64px;height:46px;object-fit:cover;border-radius:8px;flex:0 0 auto}
+.live-gift-hero>div{min-width:0}.live-gift-hero h3{font-size:16px;margin:0;overflow-wrap:anywhere}.live-gift-hero p{font-size:13px;color:#bec2c7;line-height:1.4;margin:4px 0 0;overflow-wrap:anywhere}
+.live-gift-packages{display:grid;gap:8px}
+.live-gift-dialog .live-gift-package{display:grid;grid-template-columns:18px minmax(0,1fr) auto;align-items:center;gap:8px;width:100%;min-height:52px;margin:0;padding:9px 10px;background:#1a1c1f;border-color:#565039}
+.live-gift-package-name{font-size:13px;line-height:1.35;text-align:left;overflow-wrap:anywhere}
+.live-gift-dialog .live-gift-price{color:#ffda00;font-size:17px;line-height:1.2;font-weight:800;white-space:nowrap;text-align:right}
+.live-gift-radio{width:17px;height:17px;display:grid;place-items:center;border:1.5px solid #8b8d90;border-radius:50%;font-size:11px;color:#141414}
+.live-gift-dialog .live-gift-package.is-selected{border-color:#ffda00;background:#302a12}
+.live-gift-package.is-selected .live-gift-radio{background:#ffda00;border-color:#ffda00}
+.live-gift-recipient{display:grid;gap:3px;margin:0 0 12px;min-width:0}.live-gift-recipient small{font-size:11px;color:#aeb3b9}.live-gift-recipient strong{font-size:15px;overflow-wrap:anywhere}
+.live-gift-total{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:6px 12px;border-top:1px solid #363330;padding:12px 0;margin:0 0 5px}
+.live-gift-total>span{font-size:13px;color:#c6c9cd}.live-gift-total>strong{font-size:28px;line-height:1.15;font-weight:800;color:#ffda00;overflow-wrap:anywhere}
+.live-gift-dialog .live-gift-submit{width:100%;min-height:48px;padding:11px;font-size:14px;font-weight:750;line-height:1.4}
+.live-gift-balance{font-size:13px;color:#c4c8cc}.live-gift-terms{font-size:12px;line-height:1.5;color:#bfc3c9;white-space:pre-wrap;overflow-wrap:anywhere}
+.live-gift-dialog .live-gift-consent{display:flex;align-items:flex-start;gap:8px;margin:12px 0;font-size:13px;line-height:1.5}
+.live-gift-dialog .live-gift-consent input{width:20px;height:20px;min-height:20px;flex:0 0 20px;margin:0;accent-color:#ffda00}
+.live-gift-shortfall{display:grid;grid-template-columns:28px minmax(0,1fr) auto;align-items:center;gap:8px;padding:10px;border:1px solid #b77725;border-radius:12px;background:#2b2013}
+.live-gift-wallet{display:grid;place-items:center;width:28px;height:28px;background:#9d4d0b;color:#ffe7c8;border-radius:7px}.live-gift-wallet svg{width:21px;height:21px}
+.live-gift-shortfall-text{display:grid;gap:3px;min-width:0}.live-gift-shortfall-text strong{font-size:12px;line-height:1.35;color:#ffd36f}.live-gift-shortfall-text span{font-size:11px;line-height:1.4;color:#dbd0c1;overflow-wrap:anywhere}
+.live-gift-dialog .live-gift-shortfall button{min-width:64px;min-height:44px;font-size:12px;padding:7px 9px;white-space:nowrap}
+.live-gift-shortfall .live-gift-shortfall-note{grid-column:1/-1;margin:0;padding-top:8px;border-top:1px solid #5a4223;font-size:11px;line-height:1.5;color:#d7cbbb}
+@media(max-width:360px){.live-gift-grid{gap:7px 4px}.live-gift-product strong,.live-gift-product small{font-size:10px}.live-gift-dialog .chat-component-modal-body{padding:10px}.live-gift-dialog .live-gift-price{font-size:15px}}
