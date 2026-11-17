@@ -44,6 +44,38 @@ try{
  const normal=await shop.quote({user:'a'},[{productId:'ordinary',planIndex:0,quantity:1}],token);
  const order=await shop.checkout({user:'a'},token,{mode:'wallet',consentAccepted:true,requestId:id(),items:[{productId:'ordinary',planIndex:0,quantity:1,termsVersion:normal.items[0].termsVersion}]});assert(order.paymentConfirmed);
  assert.equal((await pool.query('select count(*)::int n from community_order_owners')).rows[0].n,1);
+ // Gift-only policy: no donor credentials/player data, real gift terms, manual presentation.
+ await setInfluencer(repo,owner,{userId:'b',enabled:true});
+ const required=[{key:'email',label:'E-poçt',type:'email',required:true},{key:'password',label:'Şifrə',type:'password',required:true}];
+ const additions=[
+  {id:'spotify',title:'Spotify Premium (Öz hesabınız)',formFields:required},
+  {id:'canva',title:'Canva Premium',formFields:required.slice(0,1)},
+  {id:'chatgpt',title:'ChatGPT Plus (Hazır Şəxsi hesab)',formFields:[]},
+  {id:'chatgpt_ortaq',title:'ChatGPT Ortaq',formFields:[]},
+  {id:'gift_game',title:'Gift game',formFields:[{key:'player_id',label:'Player ID',type:'text',required:true}]}
+ ].map(p=>({...p,active:true,plans:[{label:'1 ay',months:1,price:1,terms:'Ordinary activation instructions — not gift terms'}]}));
+ additions.find(p=>p.id==='chatgpt').plans.push({label:'Ortaq hesab',months:1,price:1});catalog.products.push(...additions);
+ for(const p of additions)await rpc('inventory_set_nullable_quantity',[p.id,null,'synthetic-admin',id(),0,null]);
+ const offered=await influencerCatalog(pool,'b',catalog,await rpc('inventory_snapshot'));
+ assert.equal(offered.products.find(p=>p.id==='spotify').shortTitle,'Spotify Premium');
+ assert.equal(offered.products.find(p=>p.id==='chatgpt').shortTitle,'ChatGPT Şəxsi');
+ assert.equal(offered.products.some(p=>p.id==='chatgpt_ortaq'),false);
+ assert.deepEqual(offered.products.find(p=>p.id==='chatgpt').plans.map(p=>p.index),[0]);
+ for(const p of additions.filter(p=>p.id!=='chatgpt_ortaq')){
+  const items=[{productId:p.id,planIndex:0,quantity:1}],q=await shop.quote({user:'a'},items,token,'b');
+  assert.deepEqual(q.items[0].fields,[]);assert.deepEqual(q.items[0].maskedDetails,[]);assert.equal(q.items[0].accountCheck,false);assert.equal(q.items[0].detailsMissing,false);
+  assert.ok(q.items[0].terms.includes('adminin influencerə təqdim etməsi'));assert.ok(!q.items[0].terms.includes('Ordinary activation instructions'));
+  const input={giftRecipient:'b',mode:'wallet',requestId:id(),consentAccepted:true,expectedTotalCents:q.totalCents,items:[{...items[0],termsVersion:q.items[0].termsVersion}]};
+  const first=await shop.checkout({user:'a'},token,input),again=await shop.checkout({user:'a'},'d'.repeat(64),input);assert.equal(first.orderId,again.orderId);
+  const stored=(await pool.query('select checkout_snapshot from payment_orders where id=$1',[first.orderId])).rows[0].checkout_snapshot;
+  assert.equal(stored.influencerGift,true);assert.equal(stored.items[0].productId,p.id);assert.equal(stored.items[0].title,p.title);assert.equal(stored.items[0].planIndex,0);assert.deepEqual(stored.items[0].fields,[]);assert.equal(stored.items[0].detailsCipher,undefined);assert.equal(stored.items[0].sourcePlanKey,undefined);
+  assert.equal((await pool.query('select count(*)::int n from wallet_ledger where request_id=$1',[stored.cartGroupId])).rows[0].n,1);
+ }
+ for(const [productId,planIndex]of [['chatgpt_ortaq',0],['chatgpt',1]])await assert.rejects(shop.quote({user:'a'},[{productId,planIndex,quantity:1}],token,'b'),{status:409});
+ await assert.rejects(shop.checkout({user:'a'},token,{giftRecipient:'b',mode:'wallet',requestId:id(),consentAccepted:true,expectedTotalCents:100,items:[{productId:'chatgpt_ortaq',planIndex:0,quantity:1,termsVersion:'a'.repeat(64)}]}),{status:409});
+ const normalSpotify=await shop.quote({user:'a'},[{productId:'spotify',planIndex:0,quantity:1}],token);assert.equal(normalSpotify.items[0].detailsMissing,true);assert.equal(normalSpotify.items[0].fields.length,2);
+ assert.equal((await pool.query('select count(*)::int n from community_order_owners')).rows[0].n,1,'Gifts never activate the donor account');
+ assert.equal((await pool.query('select count(*)::int n from api_dispatches')).rows[0].n,0,'Gifts never dispatch automatic supplier activation');
  for(const table of ['chat_influencers','chat_message_actors','influencer_gifts']){const permissions=(await pool.query("select has_table_privilege('anon',$1,'SELECT') exposed,has_table_privilege('authenticated',$1,'SELECT') auth_exposed",['mirpanel_community.'+table])).rows[0];assert.deepEqual(permissions,{exposed:false,auth_exposed:false});}
  console.log('PASS isolated live influencers: grant/revoke, owner enforcement, real messages + actor audit, parallel send once, removal, public flags, staged catalog, gift one order/debit across browser tokens, manual gift queue, presentation once, normal purchases preserved.');
 }finally{await f.close();}

@@ -1,7 +1,7 @@
 // Shared display-only primitives. No API, storage, balance or order access.
-const existingChatStyle=document.querySelector('[data-chat-components-style]');if(existingChatStyle)existingChatStyle.href='/community-assets/chat-components.css?v=gift-layout-3';
+const existingChatStyle=document.querySelector('[data-chat-components-style]');if(existingChatStyle)existingChatStyle.href='/community-assets/chat-components.css?v=gift-compact-4';
 if(!existingChatStyle){
- const link=document.createElement('link');link.rel='stylesheet';link.href='/community-assets/chat-components.css?v=gift-layout-3';link.dataset.chatComponentsStyle='';document.head.append(link);
+ const link=document.createElement('link');link.rel='stylesheet';link.href='/community-assets/chat-components.css?v=gift-compact-4';link.dataset.chatComponentsStyle='';document.head.append(link);
 }
 export function chatElement(tag,text,className){
  const n=document.createElement(tag);if(text!=null)n.textContent=text;if(className)n.className=className;return n;

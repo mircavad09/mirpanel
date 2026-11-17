@@ -1,4 +1,4 @@
-import {mountChat} from '/admin-chat-view.js?v=gift-layout-3';
+import {mountChat} from '/admin-chat-view.js?v=gift-compact-4';
 const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/admin-community-panel.css?v=influencer-preview-1';document.head.append(sheet);
 const base='/api/admin/community';let stop=()=>{},activeRoot,activeView,activeFilter;
 const e=(tag,text)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;return n;};
@@ -8,7 +8,7 @@ export async function mount(root,view,userFilter){if(root===activeRoot&&view===a
  const error=e('p');error.setAttribute('role','alert');
  try{
  if(view==='communityShop'){const {mountShop}=await import('/admin-shop.js?v=admin-receipt-retry-1');const close=await mountShop({root,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();activeRoot=null;activeView=null;};return;}
- if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=gift-layout-3');const close=await mountUsers({root,call,alive:()=>alive,userFilter});if(!alive)close();else stop=()=>{alive=false;close();activeRoot=null;activeView=null;};return;}
+ if(view==='communityUsers'){const {mountUsers}=await import('/admin-wallet-users.js?v=gift-compact-4');const close=await mountUsers({root,call,alive:()=>alive,userFilter});if(!alive)close();else stop=()=>{alive=false;close();activeRoot=null;activeView=null;};return;}
  const state=await call('/state');if(!alive)return;
  const close=await mountChat({root,state,call,alive:()=>alive});if(!alive)close();else stop=()=>{alive=false;close();activeRoot=null;activeView=null;};
  }catch(x){if(alive)root.replaceChildren(error);error.textContent=x.message;}

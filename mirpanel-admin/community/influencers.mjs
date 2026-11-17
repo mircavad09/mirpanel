@@ -3,6 +3,7 @@ import {requireOwner,requireAllowed} from './group-control.mjs';
 import {avatarSource} from './public/avatar-stickers.js';
 import {inventoryAvailability} from '../../inventory-availability.mjs';
 import {parseMoneyCents} from '../payment-profit.mjs';
+import {giftShortTitle,giftPlanAllowed,giftPlanLabel} from './gift-policy.mjs';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const initialized=new WeakMap();
 export function ensureInfluencers(pool){
@@ -47,8 +48,8 @@ export async function setInfluencer(repo,actor,b){
 export async function influencerCatalog(pool,id,catalog,stock){
  const recipient=await influencerRecipient(pool,id);
  const products=catalog.products.filter(p=>p.active!==false).map(p=>{const available=inventoryAvailability(p,stock.find(s=>s.productId===p.id));
- const plans=(p.plans||[]).flatMap((plan,index)=>{let cents;try{cents=parseMoneyCents(plan.price,{allowEmpty:false});}catch{return [];}const s=available.plans.find(x=>x.planKey===String(index));return cents>0&&s?.active?[{index,label:plan.label||plan.name||'Paket',cents,available:available.salesDisabled?0:s.available??null}]:[];});
- return {id:p.id,title:p.title,image:p.image||'',plans};}).filter(p=>p.plans.length);
+ const plans=(p.plans||[]).flatMap((plan,index)=>{if(!giftPlanAllowed(p,plan))return [];let cents;try{cents=parseMoneyCents(plan.price,{allowEmpty:false});}catch{return [];}const s=available.plans.find(x=>x.planKey===String(index));return cents>0&&s?.active?[{index,label:giftPlanLabel(plan),cents,available:available.salesDisabled?0:s.available??null}]:[];});
+ return {id:p.id,title:p.title,shortTitle:giftShortTitle(p),image:p.image||'',plans};}).filter(p=>p.plans.length);
  return {recipient,products};
 }
 export async function giftAdmin(repo,actor,b={}){

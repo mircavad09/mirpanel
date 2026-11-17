@@ -1,4 +1,4 @@
-import {chatElement as el,chatButton as button,chatModal} from './chat-components.js?v=gift-layout-3';
+import {chatElement as el,chatButton as button,chatModal} from './chat-components.js?v=gift-compact-4';
 const key='mirpanel.influencer-gift.v1',money=c=>(Number(c)/100).toFixed(2).replace('.',',')+' ₼';
 let open=false,activeGift=null;
 function read(){try{return JSON.parse(sessionStorage.getItem(key)||'null');}catch{return null;}}
@@ -23,20 +23,26 @@ export async function openLiveGift(recipient,restored=null){
   generation++;draft.stage='products';screen.replaceChildren(el('h3','Məhsul seçin'));
   const grid=el('div',null,'live-gift-grid');
   for(const p of data.products){
-   const row=button('',()=>{draft.productId=p.id;delete draft.planIndex;draft.requestId=crypto.randomUUID();persist();product=p;plan=null;packages();},'live-gift-product');row.title=p.title;
-   const img=el('img');img.src=p.image;img.alt='';img.loading='lazy';const text=el('span');text.append(el('strong',p.title),el('small',money(Math.min(...p.plans.map(x=>x.cents)))));row.append(img,text);grid.append(row);
+   const row=button('',()=>{draft.productId=p.id;delete draft.planIndex;draft.requestId=crypto.randomUUID();persist();product=p;plan=null;packages();},'live-gift-product');row.title=p.title;row.setAttribute('aria-label',p.title);
+   const img=el('img');img.src=p.image;img.alt='';img.loading='lazy';const text=el('span');text.append(el('strong',p.shortTitle||p.title),el('small',money(Math.min(...p.plans.map(x=>x.cents)))));row.append(img,text);grid.append(row);
   }
   screen.append(grid);if(!data.products.length)screen.append(el('p','Hədiyyə üçün aktiv məhsul yoxdur.'));
  }
  function packages(){
+  if(product.plans.length===1&&product.plans[0].available!==0){plan=product.plans[0];draft.planIndex=plan.index;}
   generation++;draft.stage='packages';screen.replaceChildren(toolbar('← Məhsullar',list),hero(),el('h3','Paket seçin'));
   const options=el('div',null,'live-gift-packages');
+  const next=button('Hədiyyə et',guard(async()=>{if(!plan||plan.available===0)return;draft.stage='summary';persist();await summary();}),'primary live-gift-next');next.disabled=!plan||plan.available===0;
   for(const p of product.plans){
-   const selected=draft.planIndex===p.index,choose=button('',guard(async()=>{draft.planIndex=p.index;draft.stage='summary';draft.requestId=crypto.randomUUID();persist();plan=p;await summary();}),'live-gift-package'+(selected?' is-selected':''));
+   const selected=draft.planIndex===p.index,choose=button('',()=>{
+    if(draft.planIndex!==p.index)draft.requestId=crypto.randomUUID();draft.planIndex=p.index;plan=p;persist();
+    for(const row of options.children){const active=row===choose;row.classList.toggle('is-selected',active);row.setAttribute('aria-pressed',String(active));row.querySelector('.live-gift-radio').textContent=active?'✓':'';}
+    next.disabled=false;
+   },'live-gift-package'+(selected?' is-selected':''));
    choose.setAttribute('aria-pressed',String(selected));const tick=el('span',selected?'✓':'','live-gift-radio');tick.setAttribute('aria-hidden','true');
    choose.append(tick,el('span',p.label,'live-gift-package-name'),el('strong',money(p.cents),'live-gift-price'));choose.disabled=p.available===0;options.append(choose);
   }
-  screen.append(options);
+  screen.append(options,next);persist();
  }
  function shortfall(){
   const panel=el('section',null,'live-gift-shortfall'),wallet=el('span',null,'live-gift-wallet');wallet.setAttribute('aria-hidden','true');
@@ -54,14 +60,14 @@ export async function openLiveGift(recipient,restored=null){
   const label=el('label',null,'live-gift-consent'),consent=el('input');consent.type='checkbox';consent.checked=!!draft.attempt;label.append(consent,el('span','Sifariş şərtlərini təsdiqləyirəm.'));
   const terms=el('p',item.terms||'','live-gift-terms');screen.append(terms,label);
   const pay=button((draft.attempt?'Ödənişin nəticəsini yenidən yoxla':'Ödə və hədiyyə et')+' · '+money(draft.attempt?.expectedTotalCents??quote.totalCents),guard(async()=>{
-   if(!consent.checked)throw Error('Sifariş şərtlərini təsdiqləyin.');pay.disabled=true;modal.close.disabled=true;
+   if(!consent.checked)throw Error('Sifariş şərtlərini təsdiqləyin.');pay.disabled=true;consent.disabled=true;modal.close.disabled=true;
    try{
     draft.attempt??={giftRecipient:draft.recipientId,requestId:draft.requestId,mode:'wallet',consentAccepted:true,expectedTotalCents:quote.totalCents,items:[{productId:product.id,planIndex:plan.index,quantity:1,termsVersion:item.termsVersion}]};persist();
     const result=await api('/api/payments/shop/checkout',draft.attempt);
     if(!result.paymentConfirmed)throw Error('Ödənişin təsdiqi gözlənilir. Eyni sorğu ilə yenidən yoxlayın.');
     sessionStorage.removeItem(key);if(!closed)screen.replaceChildren(el('h3','Hədiyyəniz qeydə alındı 🎁'),el('p','Hədiyyə admin tərəfindən təqdim ediləcək.'));
-   }catch(e){if([400,401,403,409,422].includes(e.status)){delete draft.attempt;persist();await summary();}throw e;}finally{pay.disabled=false;modal.close.disabled=false;}
-  }),'primary live-gift-submit');screen.append(pay);
+   }catch(e){if([400,401,403,409,422].includes(e.status)){delete draft.attempt;persist();await summary();}throw e;}finally{pay.disabled=!consent.checked;consent.disabled=false;modal.close.disabled=false;}
+  }),'primary live-gift-submit');pay.disabled=!consent.checked;consent.onchange=()=>{pay.disabled=!consent.checked||busy;};screen.append(pay);
  }
  async function summary(){
   const n=++generation;screen.replaceChildren(el('p','Qiymət və balans yoxlanılır…'));
