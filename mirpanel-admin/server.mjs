@@ -12,6 +12,7 @@ import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
+import {verifyEpointResult,settleEpointResult} from './epoint-result.mjs';
 import {readCatalogCosts,readEpinbyOrderCosts} from './epinby-finance.mjs';
 import {startSheetCustomerIdSync} from './community/netflix-sheet-customer-id.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
@@ -1530,6 +1531,19 @@ const server = http.createServer(async (request, response) => {
     if(deployment.standby&&pathname==='/__deployment/probe'){
       const {readOnlyDeploymentProbe}=await import('./deployment-probe.mjs');
       return json(response,200,await readOnlyDeploymentProbe(process.env,()=>getAppFile()));
+    }
+    if(pathname==='/api/payments/epoint/result'){
+      if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'},{Allow:'POST'});
+      try{
+        const result=verifyEpointResult(await readRawBody(request,65536),request.headers['content-type'],process.env.EPOINT_PRIVATE_KEY);
+        const {pool}=await ownerCommunity.shopContext({headers:{}});
+        await settleEpointResult(pool,result);
+        return json(response,200,{ok:true});
+      }catch(error){
+        const status=Number.isInteger(error.status)&&error.status>=400&&error.status<=599?error.status:503;
+        if(status===503&&!error.status)console.warn('EPOINT_RESULT_NOT_COMMITTED');
+        return json(response,status,{error:status===503?'Epoint nəticəsi hazırda emal olunmur.':error.message},status===503?{'Retry-After':'60'}:{});
+      }
     }
     if(pathname==='/api/webhooks/epinby'){
       if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'});

@@ -284,7 +284,7 @@ export async function onRequest(context) {
   }
   if(['/qrup','/hesab','/profil','/owner-login','/sebet','/balans','/odenis'].includes(pathname)||/^\/(?:api\/(?:auth|community)\/|community-assets\/)/.test(pathname))return context.next();
   if(url.hostname==='www.mirpanel.com'&&['GET','HEAD'].includes(request.method)&&!pathname.startsWith('/api/')){const canonical=new URL(url);canonical.hostname='mirpanel.com';return Response.redirect(canonical.href,308);}
-  if(pathname.startsWith('/api/payments/'))return context.next();
+  if(pathname.startsWith('/api/payments/')||pathname.startsWith('/odenis/epoint/'))return context.next();
   const route = pathname.replace(/\/+$/, "") || "/";
 
   if (pathname==='/favicon.ico')return Response.redirect(new URL(storefrontIcon,url),302);
