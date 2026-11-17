@@ -1,10 +1,10 @@
 /* Read-only sales figures are fetched near the viewport, not ahead of the next route. */
 (()=>{'use strict';if(window.mirpanelCatalogSales)return;window.mirpanelCatalogSales=true;
  let scope=null;
- const deliveryModel=import('/ready-delivery.mjs?v=ready-delivery-1');
+ const deliveryModel=import('/ready-delivery.mjs?v=selected-package-1');
  const transport=import('/request-lifecycle.mjs?v=abort-compat-1');
  async function paintStock(state){
-  const [{withRequestSignal},{readyDeliveryText}]=await Promise.all([transport,deliveryModel]);
+  const [{withRequestSignal},{packageDeliveryText}]=await Promise.all([transport,deliveryModel]);
   const data=await withRequestSignal([state.controller.signal],10000,async signal=>{
    const response=await fetch('/api/payments/inventory',{signal,cache:'no-store'});
    return response.ok?response.json():null;
@@ -24,7 +24,10 @@
    const count=ledger.scope==='product'&&!ledger.unlimited?ledger.available:ledger.scope==='plan'&&plan?.tracked!==false?plan?.available:null;
    const card=document.querySelector('.catalog-grid [data-product-id="'+CSS.escape(product.id)+'"]');
    if(!card)continue;
-   if(product.supplier?.provider!=='epinby'&&product.plans?.[index]?.supplier?.provider!=='epinby'){let delivery=card.querySelector('.homeCardDelivery');if(!delivery){delivery=document.createElement('p');delivery.className='homeCardDelivery';card.querySelector('.pad').append(delivery);}delivery.textContent=readyDeliveryText(plan?.fulfillment,plan?.canOrder)??'Təhvil məlumatı yoxlanılır…';delivery.classList.toggle('is-instant',delivery.textContent==='Anında təqdim olunur');}
+   let delivery=card.querySelector('.homeCardDelivery');
+   if(!delivery){delivery=document.createElement('p');delivery.className='homeCardDelivery';card.querySelector('.pad').append(delivery);}
+   delivery.textContent=packageDeliveryText(product,index,plan);
+   delivery.classList.toggle('is-instant',delivery.textContent==='Anında təqdim olunur');
    const add=card.querySelector('.homeCardAdd');
    if(add){add.dataset.stockDisabled=String(!ledger.canOrder);add.disabled=!ledger.canOrder||add.dataset.busy==='true';}
    const line=card.querySelector('.cardStockLine');
@@ -49,7 +52,7 @@
   if(!document.getElementById('catalogCartProducts'))return;
   const state={controller:new AbortController(),observer:null,queue:[],busy:0};scope=state;
   const catalog=JSON.parse(document.getElementById('catalogCartProducts').textContent);
-  for(const p of catalog){if(p.supplier?.provider==='epinby'||p.plans?.some(p=>p.supplier?.provider==='epinby'))continue;const card=document.querySelector('.catalog-grid [data-product-id="'+CSS.escape(p.id)+'"]');if(card&&!card.querySelector('.homeCardDelivery')){const n=document.createElement('p');n.className='homeCardDelivery';n.textContent='Təhvil məlumatı yoxlanılır…';card.querySelector('.pad').append(n);}}
+  for(const p of catalog){const card=document.querySelector('.catalog-grid [data-product-id="'+CSS.escape(p.id)+'"]');if(card&&!card.querySelector('.homeCardDelivery')){const n=document.createElement('p');n.className='homeCardDelivery';n.textContent='Təhvil məlumatı yoxlanılır…';card.querySelector('.pad').append(n);}}
   refreshStock(state);
   state.stockTimer=setInterval(()=>refreshStock(state),10000);
   state.salesTimer=setInterval(()=>{

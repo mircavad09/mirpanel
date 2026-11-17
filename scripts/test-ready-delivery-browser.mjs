@@ -59,6 +59,7 @@ try{for(const [engineName,engine]of [['chrome',chromium],['webkit',webkit]]){
   // Click anywhere on the row, including its price; no informational buttons.
   await rows.nth(1).locator('.pp-new-price').click();assert.equal(await page.evaluate(()=>currentPlanIdx),1);
   assert.equal(await page.locator('.product-detail-summary-delivery').textContent(),'15–30 dəqiqə ərzində tamamlanır');
+  await rows.first().click();
   ready=0;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').textContent(),'15–30 dəqiqə ərzində tamamlanır');
   ready=1;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').textContent(),'Anında təqdim olunur');
   failed=true;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').textContent(),'Təhvil məlumatı yoxlanılır…');

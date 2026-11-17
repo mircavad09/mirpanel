@@ -1768,3 +1768,22 @@ html body.product-page-document #productPageView.product-page-root:is(.detail-v2
  }
 }
 @keyframes planStockTextShine{0%,65%{background-position:100% 0}85%,100%{background-position:0 0}}
+
+/* Only the selected package exposes its facts, including in the first HTML. */
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label:not(.active){
+ min-height:44px!important;grid-template-rows:auto;align-content:center;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label:not(.active) :is(.pp-plan-meta,.pp-plan-price-meta,.product-detail-best,.epinby-package-thumb){
+ display:none!important;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta[hidden]{display:none!important}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label{
+ transition:background-color .14s ease,border-color .14s ease,min-height .14s ease;
+}
+@media(prefers-reduced-motion:no-preference){
+ html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label.active .pp-plan-meta{animation:packageFactsEnter .14s ease-out}
+}
+@keyframes packageFactsEnter{from{opacity:0;transform:translateY(-3px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){
+ html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label{transition:none}
+}
