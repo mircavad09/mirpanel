@@ -54,7 +54,7 @@ export async function influencerCatalog(pool,id,catalog,stock){
 export async function giftAdmin(repo,actor,b={}){
  await requireOwner(repo.pool,actor);
  if(b.action==='present'&&!/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(b.orderId||''))throw fail(400,'Hədiyyə identifikatoru düzgün deyil.');
- if(b.action==='present')return repo.tx(async c=>{
+ if(b.action==='present')return repo.tx(async c=>{await c.query('select pg_advisory_xact_lock(714025001)');
  const row=(await c.query(`select g.*,o.status,o.payment_confirmed from mirpanel_community.influencer_gifts g join public.payment_orders o on o.id=g.order_id where g.order_id=$1 for update of g,o`,[b.orderId])).rows[0];
  if(!row)throw fail(404,'Hədiyyə tapılmadı.');if(['cancelled','rejected','expired','refunded'].includes(row.status)||!row.payment_confirmed)throw fail(409,'Yalnız ödənilmiş, ləğv edilməmiş hədiyyə təqdim edilə bilər.');
  if(row.presented_at)return {ok:true,idempotent:true};

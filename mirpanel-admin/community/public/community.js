@@ -62,7 +62,7 @@ async function group(){
   const author=m.author||{name:'İştirakçı',avatar:0,tier:'standard'},own=Boolean(state.profile?.user_id&&author.id===state.profile.user_id),tier=['standard','bronze','silver','gold','vip'].includes(author.tier)?author.tier:'standard';
   const bubble=messageBubble(m),content=el('div',{class:'community-message-content'});
   if(m.author?.system===true&&m.tag&&m.body.startsWith('@'+m.tag.name+', ')){const text=bubble.querySelector('.community-message-body');text.replaceChildren(el('span',{class:'bot-user-tag','data-user-id':m.tag.userId},'@'+m.tag.name),m.body.slice(m.tag.name.length+1));}
-  content.append(el('div',{class:'community-message-head'},el('strong',{},author.name),author.role==='bot'?el('span',{class:'community-badge'},'Nəzarətçi'):author.role==='admin'?el('span',{class:'community-badge'},'Admin'):tier==='standard'?null:el('span',{class:'community-badge'},tierLabel(tier))));
+  content.append(el('div',{class:'community-message-head'},el('strong',{},author.name),author.role==='bot'?el('span',{class:'community-badge'},'Nəzarətçi'):author.role==='admin'?el('span',{class:'community-badge'},'Admin'):author.influencer||tier==='standard'?null:el('span',{class:'community-badge'},tierLabel(tier))));
   content.append(bubble);
   const node=el('article',{class:'community-message tier-'+tier+(own?' is-own':' is-other'),'data-message-id':m.id,'data-author-role':author.role||'member','aria-label':own?'Sizin mesajınız':author.name+' adlı iştirakçının mesajı'});
   if(m.tag?.userId===state.profile?.user_id&&!m.hidden)node.dataset.ownTag='true';if(m.id===highlighted)node.classList.add('tag-jump-highlight');
