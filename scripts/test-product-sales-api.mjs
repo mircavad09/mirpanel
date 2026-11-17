@@ -1,15 +1,16 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import net from 'node:net';
+import crypto from 'node:crypto';
 const temporary=net.createServer();await new Promise(r=>temporary.listen(0,'127.0.0.1',r));
 const port=temporary.address().port;await new Promise(r=>temporary.close(r));
-const child=spawn(process.execPath,['mirpanel-admin/server.mjs'],{env:{...process.env,PORT:String(port),SUPABASE_URL:'',SUPABASE_SECRET_KEY:'',ADMIN_USERNAME:'',ADMIN_PASSWORD:''},stdio:['ignore','pipe','pipe']});
+const child=spawn(process.execPath,['mirpanel-admin/server.mjs'],{env:{...process.env,PORT:String(port),SUPABASE_URL:'',SUPABASE_SECRET_KEY:'',ADMIN_USERNAME:'',ADMIN_PASSWORD:'',PAYMENT_ENCRYPTION_KEY_B64:crypto.randomBytes(32).toString('base64'),PAYMENT_TOKEN_SECRET_B64:crypto.randomBytes(32).toString('base64'),COMMUNITY_OWNER_ENABLED:'false',COMMUNITY_PUBLIC_ENABLED:'false'},stdio:['ignore','pipe','pipe']});
 let started='';child.stdout.on('data',b=>started+=b);let stderr='';child.stderr.on('data',b=>stderr+=b);
 try{
  const origin=`http://127.0.0.1:${port}`;
  let ready=false;
  for(let i=0;i<100;i++){try{await fetch(origin+'/product-plan-utils.mjs');ready=true;break;}catch{await new Promise(r=>setTimeout(r,100));}}
- assert.ok(ready,'isolated server starts');
+ assert.ok(ready,'isolated server starts: '+stderr.slice(0,1400));
  const module=await fetch(origin+'/product-plan-utils.mjs');assert.equal(module.status,200);assert.match(module.headers.get('content-type'),/javascript/);
  for(const method of ['GET','PATCH']){
   const res=await fetch(origin+'/api/admin/product-sales',{method,...(method==='PATCH'?{headers:{'Content-Type':'application/json'},body:'{}'}:{})});assert.equal(res.status,401);
@@ -19,4 +20,4 @@ try{
  const absent=await fetch(origin+'/api/product-sales?productId=capcut',{headers:{Origin:'https://mirpanel.com'}});assert.equal(absent.status,503);assert.equal(absent.headers.get('cache-control'),'no-store');
  assert.equal(absent.headers.get('access-control-allow-origin'),'https://mirpanel.com');
  console.log(JSON.stringify({unauthenticatedRead:401,unauthenticatedEdit:401,unauthenticatedInitialization:401,publicCors:204,missingDatabase:503,noFakeStatistics:true,moduleMime:'JavaScript',productionWrites:0}));
-}finally{child.kill();await new Promise(r=>child.once('exit',r));}
+}finally{if(child.exitCode===null&&child.signalCode===null){const exited=new Promise(r=>child.once('exit',r));child.kill();await exited;}}

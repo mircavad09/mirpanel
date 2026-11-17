@@ -128,7 +128,7 @@
       }
       void result.then(count=>{
         if(!line.isConnected || count===null)return;
-        line.textContent=`≈ ${new Intl.NumberFormat('en-US').format(count).replaceAll(',',' ')}+ satılıb`;
+        line.textContent=`${new Intl.NumberFormat('en-US').format(count).replaceAll(',',' ')} dəfə satılıb`;
         line.hidden=false;
       });
     });

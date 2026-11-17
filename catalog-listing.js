@@ -50,29 +50,30 @@
   if(location.pathname!=='/mehsul'||scope)return;
   const nodes=[...document.querySelectorAll('.catalog-grid [data-home-sales-id]')];
   if(!document.getElementById('catalogCartProducts'))return;
-  const state={controller:new AbortController(),observer:null,queue:[],busy:0};scope=state;
+  const state={controller:new AbortController(),observer:null,queue:[],pending:new Set(),busy:0};scope=state;
   refreshStock(state);
   state.stockTimer=setInterval(()=>refreshStock(state),10000);
-  state.salesTimer=setInterval(()=>{
+  state.refreshSales=()=>{
    if(document.hidden||state!==scope)return;
-   for(const line of nodes){const box=line.closest('.card')?.getBoundingClientRect();if(box&&box.bottom>0&&box.top<innerHeight+160&&!state.queue.includes(line))state.queue.push(line);}
+   for(const line of nodes){const box=line.closest('.card')?.getBoundingClientRect();if(box&&box.bottom>0&&box.top<innerHeight+160&&!state.pending.has(line)&&!state.queue.includes(line))state.queue.push(line);}
    drain();
-  },10000);
+  };
+  state.salesTimer=setInterval(()=>state.refreshSales(),10000);
   const drain=()=>{while(state.busy<3&&state.queue.length&&!state.controller.signal.aborted){
-   const line=state.queue.shift(),id=line.dataset.homeSalesId;state.busy++;
+   const line=state.queue.shift(),id=line.dataset.homeSalesId;state.busy++;state.pending.add(line);
    transport.then(({withRequestSignal})=>withRequestSignal([state.controller.signal],15000,async signal=>{
-    const r=await fetch('https://mirpanel-frankfurt.onrender.com/api/product-sales?productId='+encodeURIComponent(id),{priority:'low',signal});
+    const r=await fetch('https://mirpanel-frankfurt.onrender.com/api/product-sales?productId='+encodeURIComponent(id),{priority:'low',cache:'no-store',signal});
     return r.ok?r.json():null;
    })).then(v=>{
     if(!v)return;
     if(state!==scope||!line.isConnected||v.productId!==id||v.initialized!==true||!Number.isSafeInteger(v.productTotal)||v.productTotal<0)return;
-    line.textContent='≈ '+new Intl.NumberFormat('en-US').format(v.productTotal).replaceAll(',',' ')+'+ satılıb';line.hidden=false;line.dataset.salesReady='';
-   }).catch(()=>{}).finally(()=>{state.busy--;drain();});
+    line.textContent=new Intl.NumberFormat('en-US').format(v.productTotal).replaceAll(',',' ')+' dəfə satılıb';line.hidden=false;line.dataset.salesReady='';
+   }).catch(()=>{}).finally(()=>{state.busy--;state.pending.delete(line);drain();});
   }};
   if(typeof IntersectionObserver!=='function'){state.queue.push(...nodes);drain();return;}
   const lines=new Map(nodes.map(n=>[n.closest('.card'),n]));
   state.observer=new IntersectionObserver(entries=>{
-   for(const entry of entries)if(entry.isIntersecting){state.observer.unobserve(entry.target);state.queue.push(lines.get(entry.target));}
+   for(const entry of entries)if(entry.isIntersecting){state.observer.unobserve(entry.target);const line=lines.get(entry.target);if(!state.pending.has(line)&&!state.queue.includes(line))state.queue.push(line);}
    drain();
   },{rootMargin:'160px'});
   for(const card of lines.keys())if(card)state.observer.observe(card);
@@ -81,7 +82,7 @@
  window.addEventListener('mirpanel:route-ready',start);
  window.addEventListener('pagehide',stop);
  window.addEventListener('pageshow',start);
- const resume=()=>{start();if(scope)refreshStock(scope);};
+ const resume=()=>{start();if(scope){refreshStock(scope);scope.refreshSales?.();}};
  window.addEventListener('focus',resume);
  document.addEventListener('visibilitychange',()=>{if(!document.hidden)resume();});
  start();

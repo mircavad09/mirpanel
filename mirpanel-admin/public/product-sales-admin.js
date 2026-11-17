@@ -22,7 +22,8 @@
   function render(){
     editor.replaceChildren();
     const distributed=Number(data.distributed)||0;
-    editor.append(el('p',`Tarixi ümumi: 10.000 · Bölüşdürülüb: ${number.format(distributed)} · Qalıq: ${number.format(10000-distributed)}`));
+    editor.append(el('p',`Başlanğıc satış saylarının cəmi: ${number.format(distributed)}`));
+    editor.append(el('p','Görünən say = başlanğıc sayı + faktiki təhvil verilmiş vahidlər. Başlanğıc sayı stok və satış limiti deyil; bir məhsulun sayını dəyişmək digərlərinin sayını dəyişmir.'));
     editor.append(el('p',`Başlanğıc: ${data.initializedAt?new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'medium',timeStyle:'short'}).format(new Date(data.initializedAt)):'Hələ yaradılmayıb'} · Versiya: ${data.version}`));
     editor.append(el('p',`Saytda satılmış vahid: ${number.format(data.realTotal)} · Ümumi: ${number.format(data.total)}`));
     if(data.legacyInferredUnits)editor.append(el('p',`Köhnə təsdiq qeydlərindən qorunan vahidlər: ${number.format(data.legacyInferredUnits)}. Bu qeydlərdə dəqiq təhvil vaxtı və tarixi başlanğıca daxil edilib-edilməməsi məlum deyil. Yeni satışlar faktiki təhvil sayından hesablanır.`));
@@ -38,14 +39,14 @@
       const row=el('label','','salesProductRow');
       const name=el('span',`${product.title} (${product.productId})`);
       const input=document.createElement('input');input.type='number';input.min='0';input.step='1';input.value=product.historical;input.dataset.productId=product.productId;
-      input.setAttribute('aria-label',`${product.title}: tarixi başlanğıc sayı`);
+      input.setAttribute('aria-label',`${product.title}: başlanğıc satış sayı (stok deyil)`);
       const result=el('span',`Real: ${number.format(product.real)} · Görünən: ${number.format(product.total)}`);
       input.addEventListener('input',()=>{dirty=true;result.textContent=`Real: ${number.format(product.real)} · Görünən: ${number.format((Number(input.value)||0)+product.real)}`;checkTotal();});
       row.append(name,input,result);table.append(row);
     }
     editor.append(table);
     const diff=el('p','','salesSumStatus');diff.id='salesSumStatus';editor.append(diff);
-    const save=el('button','Tarixi sayları yadda saxla','btn primary');save.type='button';save.id='salesSave';
+    const save=el('button','Başlanğıc satış saylarını yadda saxla','btn primary');save.type='button';save.id='salesSave';
     save.addEventListener('click',()=>{
       if(busy || !checkTotal())return;
       const items=[...editor.querySelectorAll('[data-product-id]')].map(e=>({product_id:e.dataset.productId,count:Number(e.value)}));
@@ -54,8 +55,8 @@
   }
   function checkTotal(){
     const inputs=[...editor.querySelectorAll('[data-product-id]')], total=inputs.reduce((s,e)=>s+Number(e.value),0);
-    const valid=total===10000 && inputs.every(e=>e.value!=='' && Number.isSafeInteger(Number(e.value)) && Number(e.value)>=0);
-    const label=document.getElementById('salesSumStatus');if(label)label.textContent=valid?'Cəm: 10.000.':'Cəm dəqiq 10.000 olmalıdır. Fərq: '+number.format(10000-total);
+    const valid=Number.isSafeInteger(total)&&total<=2147483647&&inputs.every(e=>e.value!=='' && Number.isSafeInteger(Number(e.value)) && Number(e.value)>=0);
+    const label=document.getElementById('salesSumStatus');if(label)label.textContent=valid?'Başlanğıc sayların cəmi: '+number.format(total)+'.':'Mənfi olmayan tam satış sayı yazın. Cəm 2.147.483.647-dən böyük ola bilməz.';
     const save=document.getElementById('salesSave');if(save)save.disabled=busy || !valid;return valid;
   }
   document.getElementById('salesRefresh').addEventListener('click',load);

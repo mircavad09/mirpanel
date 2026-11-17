@@ -87,6 +87,7 @@ const items=[{productId:product.id,quantity:1,planIndex:0,details:{player_id:'00
 const buy=async(requestId=id(),chosen=items)=>{const quote=await shop.quote({user:'a'},chosen,'a'.repeat(64));return shop.checkout({user:'a'},'a'.repeat(64),{mode:'wallet',items:chosen.map((x,i)=>({...x,termsVersion:quote.items[i].termsVersion})),requestId,consentAccepted:true});};
 const tick=async(worker,n=1)=>{for(let i=0;i<n;i++){await pool.query("update epinby_order_units set next_at=next_at-interval '61 seconds'");await worker.drain();}};
 try{
+ for(const file of ['product-sales-delivery.sql','product-sales-baselines.sql'])await db.exec(db.read('mirpanel-admin/community/'+file));
  for(const file of ['202611090901_api_integrations','202611090902_api_integration_drafts','202611090903_epinby_connection','202611110002_epinby_execution','202611160020_epinby_finance'])await db.exec(db.read('supabase/migrations/'+file+'.sql'));
  await db.exec(db.read('mirpanel-admin/community/ready-stock-migration.sql'));await db.exec(db.read('mirpanel-admin/community/ready-stock-product-messages-migration.sql'));await saveProductMessage(pool,security,catalog,{productId:product.id,message:'SYNTHETIC ADMIN SUCCESS MESSAGE'});
  await db.exec(db.read('supabase/migrations/202611090911_fulfillment_cancellation.sql'));
@@ -145,6 +146,7 @@ try{
  const twoItems=[{...items[0],quantity:2,termsVersion:(await shop.quote({user:'a'},items,'a'.repeat(64))).items[0].termsVersion}];
  const multi=await shop.checkout({user:'a'},'a'.repeat(64),{mode:'wallet',items:twoItems,requestId:id(),consentAccepted:true});
  await tick(worker,12);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[multi.orderId])).rows[0].n,2);
+ for(const [order,quantity]of [[bought,1],[lost,1],[pending,1],[multi,2]])assert.equal(Number((await pool.query('select coalesce(sum(quantity),0) n from public.product_sales_delivered_units where order_id=$1',[order.orderId])).rows[0].n),quantity,'Supplier delivery/retry counts each purchased unit once');
  const beforeGrouped=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);
  const voucher=await buy(id(),[{productId:'synthetic_game_group',planIndex:1,quantity:1}]);await tick(worker,8);
  assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),beforeGrouped-500);

@@ -383,7 +383,7 @@
         if (!response.ok) return;
         const value = await response.json();
         if (signal.aborted||value.productId !== product.id || !value.initialized || !Number.isSafeInteger(value.productTotal) || !Number.isSafeInteger(value.siteTotal)) return;
-        sales.replaceChildren(text('span','product-detail-sales-intro','↗ Bu məhsul '),text('span','product-detail-sales-approx','≈ '),text('strong','',`${new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')}+`),document.createTextNode(' dəfə satılıb'));
+        sales.replaceChildren(text('span','product-detail-sales-intro','↗ Bu məhsul '),text('strong','',new Intl.NumberFormat('en-US').format(value.productTotal).replaceAll(',',' ')),document.createTextNode(' dəfə satılıb'));
         sales.title='Satış göstəricisi təxmini tarixi başlanğıc sayı və təhvil verilmiş məhsul vahidlərinin cəmidir.';sales.hidden = false;
         if(Number.isSafeInteger(value.completedTotal)&&value.completedTotal>=0){
           total.querySelector('span').textContent=number.format(value.completedTotal)+' satılmış vahid';

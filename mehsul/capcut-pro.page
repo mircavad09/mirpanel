@@ -222,11 +222,11 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-5ac48ac2c3bdd6fa"></script>
+  <script src="/app.js?v=image-alt-20261117-e00d21b207f58ff3"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
-  <script src="/stock-display-fix.js?v=ready-sku-2"></script>
-  <script src="/product-page.js?v=ready-sku-2"></script>
+  <script src="/stock-display-fix.js?v=sales-count-2"></script>
+  <script src="/product-page.js?v=sales-count-2"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>
