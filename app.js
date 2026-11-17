@@ -5362,25 +5362,21 @@ function productSlugForHome(product) {
 function renderHomeDiscovery() {
   const activeProducts = DATA.products.filter((product) => product.active !== false);
   const quickLinks = document.getElementById("homeQuickLinks");
-  if (quickLinks) {
+  if (quickLinks && window.MirpanelHomeShortcuts) {
     const preferred = ["youtube", "netflix", "capcut", "spotify"];
     const chosen = [...preferred.map((id) => activeProducts.find((product) => product.id === id)).filter(Boolean), ...activeProducts.filter((product) => !preferred.includes(product.id))].slice(0, 6);
     const buildLink = (product, duplicate = false) => {
-      const identity = `${product.id || ""} ${product.title || ""}`.toLocaleLowerCase("az");
-      const presentation = identity.includes("netflix") ? { title: "Netflix", logo: "assets/netflix.png", brand: "netflix" }
-        : identity.includes("spotify") ? { title: "Spotify", logo: "assets/spotify.png", brand: "spotify" }
-        : identity.includes("youtube") ? { title: "YouTube", logo: "assets/youtube.png", brand: "youtube" }
-        : identity.includes("capcut") ? { title: "CapCut Pro", logo: "assets/capcut.png", brand: "capcut" }
-        : identity.includes("google") && identity.includes("ai") ? { title: "Google AI", logo: "assets/google-ai.png", brand: "google-ai" }
-        : { title: publicProductTitle(product.title), logo: product.image, brand: "other" };
+      const presentation = window.MirpanelHomeShortcuts.presentation(product);
       const link = document.createElement("a");
       link.className = "home-quick-link";
       link.dataset.quickBrand = presentation.brand;
+      link.dataset.quickProduct = product.id;
       link.href = `/mehsul/${productSlugForHome(product)}`;
-      link.setAttribute("aria-label", `${presentation.title} səhifəsinə keç`);
-      if (duplicate) link.tabIndex = -1;
+      // The visible product name is also the accessible name; do not announce the logo twice.
+      link.tabIndex = duplicate ? -1 : 0;
+      if (duplicate) link.setAttribute('aria-hidden','true');
       const logo = document.createElement("span"); logo.className = "home-quick-logo"; logo.setAttribute("aria-hidden", "true");
-      const image = document.createElement("img"); image.src = presentation.logo; image.alt = ""; image.loading = "lazy"; image.addEventListener("error", () => logo.remove(), { once: true });
+      const image = document.createElement("img"); image.src = presentation.logo; image.alt = ""; image.setAttribute('role','presentation'); image.loading = "lazy"; image.addEventListener("error", () => logo.remove(), { once: true });
       const label = document.createElement("span"); label.className = "home-quick-label"; label.textContent = presentation.title;
       logo.appendChild(image); link.append(logo, label); return link;
     };

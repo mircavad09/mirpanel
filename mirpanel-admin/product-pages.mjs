@@ -2,6 +2,7 @@ import { planMetrics, deliveryText } from './public/product-plan-utils.mjs';
 import { createHash } from 'node:crypto';
 import displayLabels from '../display-labels.js';
 import catalogCard from '../catalog-card.js';
+import homeShortcuts from '../home-shortcuts.js';
 import {renderPlanRows, renderPlanSummary, renderPlanTrust} from '../product-plan-view.mjs';
 import {productSeoCopy} from '../product-seo-content.mjs';
 import {planName} from '../product-plan-view.mjs';
@@ -320,9 +321,8 @@ export function patchHomeCatalog(source,products) {
   const priority=['youtube','netflix','capcut','spotify'];
   const quick=[...priority.map(id=>active.find(({product})=>product.id===id)).filter(Boolean),...active.filter(({product})=>!priority.includes(product.id))].slice(0,6);
   const shortcuts=duplicate=>quick.map(({product,slug})=>{
-    const id=product.id,brand={youtube:['YouTube','youtube'],netflix:['Netflix','netflix'],capcut:['CapCut Pro','capcut'],spotify:['Spotify','spotify']}[id];
-    const title=escapeHtml(brand?.[0]||publicProductTitle(product.title)),image=escapeHtml(brand?'/assets/'+brand[1]+'.png':rootRelativeUrl(product.image));
-    return `<a class="home-quick-link" data-quick-brand="${brand?.[1]||'other'}" href="${productCanonicalPath(slug)}" aria-label="${title} səhifəsinə keç"${duplicate?' tabindex="-1"':''}><span class="home-quick-logo" aria-hidden="true"><img src="${image}" loading="lazy" decoding="async" alt=""></span><span class="home-quick-label">${title}</span></a>`;
+    const item=homeShortcuts.presentation(product),title=escapeHtml(item.title),image=escapeHtml(item.logo);
+    return `<a class="home-quick-link" data-quick-product="${escapeAttribute(product.id)}" data-quick-brand="${item.brand}" href="${productCanonicalPath(slug)}"${duplicate?' tabindex="-1" aria-hidden="true"':' tabindex="0"'}><span class="home-quick-logo" aria-hidden="true"><img src="${image}" loading="lazy" decoding="async" alt="" role="presentation"></span><span class="home-quick-label">${title}</span></a>`;
   }).join('');
   return source
     .replace(/(<nav class="home-quick-links" id="homeQuickLinks" aria-label="Tez keçidlər")(?: hidden)?>([\s\S]*?)<\/nav>/,(_,tag)=>tag+(quick.length?'':' hidden')+'>'
