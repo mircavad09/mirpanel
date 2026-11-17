@@ -13,6 +13,7 @@ import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSo
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
 import {verifyEpointResult,settleEpointResult} from './epoint-result.mjs';
+import {epointCheckoutEnabled,startEpointCheckout,readEpointCheckout} from './epoint-checkout.mjs';
 import {readCatalogCosts,readEpinbyOrderCosts} from './epinby-finance.mjs';
 import {startSheetCustomerIdSync} from './community/netflix-sheet-customer-id.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
@@ -1532,10 +1533,31 @@ const server = http.createServer(async (request, response) => {
       const {readOnlyDeploymentProbe}=await import('./deployment-probe.mjs');
       return json(response,200,await readOnlyDeploymentProbe(process.env,()=>getAppFile()));
     }
+    if(['/api/payments/epoint/start','/api/payments/epoint/status'].includes(pathname)){
+      const start=pathname.endsWith('/start'),method=start?'POST':'GET';
+      if(request.method!==method)return json(response,405,{error:method+' tələb olunur.'},{Allow:method});
+      if(start&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğunun mənbəyi icazəli deyil.'});
+      const ref=requestUrl.searchParams.get('ref');
+      if(!start&&!ref)return json(response,200,{enabled:epointCheckoutEnabled(process.env)});
+      if(start&&!epointCheckoutEnabled(process.env))return json(response,503,{error:'Epoint ilə balans artırma aktiv deyil.'});
+      try{
+        const user=await ownerCommunity.checkoutAccount(request,{verified:start});
+        if(!user)return json(response,401,{error:'Hesabınıza daxil olun.'});
+        const {pool}=await ownerCommunity.shopContext({headers:{}});
+        if(!start)return json(response,200,await readEpointCheckout(pool,user,ref));
+        if(String(request.headers['content-type']).split(';')[0]!=='application/json')return json(response,415,{error:'JSON tələb olunur.'});
+        const raw=await readRawBody(request,1024);
+        let body;try{body=JSON.parse(raw.toString('utf8'));}catch{return json(response,400,{error:'Ödəniş sorğusu düzgün deyil.'});}
+        return json(response,200,await startEpointCheckout(pool,user,body));
+      }catch(error){
+        const status=Number.isInteger(error.status)&&error.status>=400&&error.status<=599?error.status:503;
+        return json(response,status,{error:error.status?error.message:'Epoint hazırda cavab vermir. Ödənişin vəziyyətini yoxlayın.'});
+      }
+    }
     if(pathname==='/api/payments/epoint/result'){
       if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'},{Allow:'POST'});
       try{
-        const result=verifyEpointResult(await readRawBody(request,65536),request.headers['content-type'],process.env.EPOINT_PRIVATE_KEY);
+        const result=verifyEpointResult(await readRawBody(request,65536),request.headers['content-type'],process.env.EPOINT_PRIVATE_KEY?.trim());
         const {pool}=await ownerCommunity.shopContext({headers:{}});
         await settleEpointResult(pool,result);
         return json(response,200,{ok:true});

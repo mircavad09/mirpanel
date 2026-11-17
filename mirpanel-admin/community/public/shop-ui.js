@@ -307,6 +307,9 @@ function showWallet(data,{createWalletTopup,topupReviewTime}){
  const back=backFromWallet();
  if(back){const a=link(giftReturn()?'← Hədiyyəyə qayıt':'← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
  app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions(topupReviewTime));void flow.resume();
+ void import('/community-assets/epoint-wallet.js?v=epoint-wallet-1').then(m=>{
+  if(!flowSignal.aborted)return m.mountEpointWallet({form,accountId:profile?.user_id,getCents:effective,signal:flowSignal,back,el,button,link});
+ }).catch(()=>{});
 }
 function walletQuestions(topupReviewTime){
  const section=el('section',null,'wallet-faq'),title=el('h2','Balans haqqında suallar'),list=el('div',null,'wallet-faq-list');

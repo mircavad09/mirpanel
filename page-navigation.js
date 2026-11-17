@@ -89,7 +89,7 @@
   requestIdleCallback(()=>{if(location.pathname==='/'&&!document.hidden)void prepareListing();},{timeout:1200});
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=tokens-1';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
- const authModule='/community-assets/auth-forms.js?v=gift-return-3';
+ const authModule='/community-assets/auth-forms.js?v=epoint-wallet-1';
  const profileModule='/community-assets/profile-entry.js?v=tokens-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
@@ -99,7 +99,7 @@
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
  const moduleAttempts=new Map();
  async function moduleWithin(url){const attempt=moduleAttempts.get(url)||0;let timer;try{return await Promise.race([import(url+(attempt?(url.includes('?')?'&':'?')+'routeRetry='+attempt:'')),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}catch(error){moduleAttempts.set(url,attempt+1);throw error;}finally{clearTimeout(timer);}}
- const shopModule='/community-assets/shop-ui.js?v=shell-token-cart-1',groupModule='/community-assets/community.js?v=shell-tokens-1';
+ const shopModule='/community-assets/shop-ui.js?v=shell-epoint-wallet-1',groupModule='/community-assets/community.js?v=shell-tokens-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&((u.pathname===location.pathname&&(a.dataset.browserNav!=='orders'||u.searchParams.get('tab')===new URLSearchParams(location.search).get('tab')))||u.pathname==='/mehsul'&&isProduct(location.pathname)))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));const profile=new URL(current,location.origin).pathname==='/profil';((profile&&window.mirpanelPageDispose)||dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
