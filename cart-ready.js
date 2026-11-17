@@ -1,9 +1,9 @@
 // One capability-checked entry point shared by classic-script and module callers.
-const compatible=c=>c?.apiVersion>=6&&['read','checkout','set','clear','commitDraft','open'].every(k=>typeof c[k]==='function');
+const compatible=c=>c?.apiVersion>=7&&['read','checkout','set','clear','commitDraft','open'].every(k=>typeof c[k]==='function');
 let pending;
 export async function ensureCart(){
  if(compatible(window.MirpanelCart))return window.MirpanelCart;
- if(!pending)pending=import('/cart-store.js?v=compact-cart-1').then(()=>{
+ if(!pending)pending=import('/cart-store.js?v=token-cart-1').then(()=>{
   if(!compatible(window.MirpanelCart))throw Error('Səbət modulu tam açıla bilmədi. Yenidən cəhd edin.');
   return window.MirpanelCart;
  }).catch(e=>{pending=null;throw e;});

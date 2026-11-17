@@ -1,34 +1,124 @@
-import fs from 'node:fs';import http from 'node:http';import assert from 'node:assert/strict';import path from 'node:path';
+import fs from 'node:fs';
+import http from 'node:http';
+import assert from 'node:assert/strict';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 import catalogCard from '../catalog-card.js';
-const recipient={id:'controlled-influencer',name:'Nəzarət olunan influencer'},products=[{id:'capcut',title:'CapCut Pro',image:'/assets/tokens/mirpanel-token.webp',plans:[{index:0,label:'7 gün',cents:112,available:5}]}];
-let balance=0,tokens=0,purchases=new Map(),gifts=new Map(),failPayment=true;
-const server=http.createServer(async(req,res)=>{const u=new URL(req.url,'http://local'),route=u.pathname;let b;if(req.method==='POST'){let raw='';for await(const part of req)raw+=part;b=JSON.parse(raw);}const json=(value,status=200)=>{res.writeHead(status,{'content-type':'application/json'});res.end(JSON.stringify(value));};
- if(route==='/api/payments/shop/quote'){const n=b.tokenCount;return json({tokenCount:n,buyerKey:'synthetic-buyer',totalCents:n?n*2:112,balanceCents:balance,items:[{terms:'Sınaq alış şərtləri',termsVersion:'a'.repeat(64),available:null}]});}
- if(route==='/api/payments/shop/token-status')return json({paymentConfirmed:purchases.has(u.searchParams.get('requestId'))});
- if(route==='/api/payments/shop/checkout'){if(!purchases.has(b.requestId)){assert(Number.isInteger(b.tokenCount));assert(b.tokenCount>=50&&b.tokenCount<=5000);assert.equal(b.expectedTotalCents,b.tokenCount*2);assert(balance>=b.expectedTotalCents);purchases.set(b.requestId,b);balance-=b.expectedTotalCents;tokens+=b.tokenCount;}if(failPayment){failPayment=false;return json({error:'Bağlantı təsdiqlənmədi'},503);}return json({paymentConfirmed:true});}
- if(route==='/api/community/tokens')return json({accountId:'a',balance:tokens,items:[...purchases.values()].map((p,i)=>({id:String(i+1),delta:p.tokenCount,balance_after:tokens,kind:'purchase',order_code:String(i+1),created_at:'2026-11-17T20:30:00Z',source_id:p.requestId})),pending:[],more:false});
- if(route==='/api/community/influencer-catalog')return json({recipient,products});
- if(route==='/api/community/token-gifts'){if(!gifts.has(b.requestId)){const cost=b.kind==='rose'?1:5;if(tokens<cost)return json({error:'Kifayət qədər tokeniniz yoxdur'},409);tokens-=cost;gifts.set(b.requestId,b);}return json({id:b.requestId,balance:tokens});}
- if(route==='/api/payments/shop/gift-status')return json({paymentConfirmed:false});
- if(route==='/balans'||route==='/hesab'){balance=20000;res.setHeader('content-type','text/html;charset=utf-8');return res.end('<meta name="viewport" content="width=device-width"><a href="/mehsul/mirpanel-token">Alışa qayıt</a>');}
- if(route==='/mehsul/mirpanel-token'){res.setHeader('content-type','text/html;charset=utf-8');return res.end(fs.readFileSync('mehsul/mirpanel-token.page','utf8').replace(/<script src="\/site-header[^<]*<\/script>/g,''));}
- let asset=route.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+route.slice(18):route.slice(1);
- if(!route.includes('..')&&fs.existsSync(asset)&&fs.statSync(asset).isFile()){res.setHeader('content-type',route.endsWith('.js')?'text/javascript':route.endsWith('.css')?'text/css':route.endsWith('.webp')?'image/webp':'text/html');return res.end(fs.readFileSync(asset));}
- res.setHeader('content-type','text/html;charset=utf-8');const wallet=route==='/profil';const p={id:'mirpanel-token',title:'Mirpanel Token',image:'/assets/tokens/mirpanel-token.webp',plans:[{price:1}]};res.end(`<meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/community-assets/token.css"><link rel="stylesheet" href="/catalog-card.css"><body style="margin:8px;background:#080808;color:#fff;font-family:system-ui"><div style="max-width:350px">${catalogCard.render(p,0,'/mehsul/mirpanel-token',p.title,1,'1,00 ₼')}</div><button id="gift">Hədiyyə seç</button><main id="wallet"></main><script type="module">import {openLiveGift,resumeInfluencerGift} from '/community-assets/live-gifts.js';import {mountTokenWallet} from '/community-assets/token-ui.js';document.querySelector('#gift').onclick=()=>openLiveGift(${JSON.stringify(recipient)});${wallet?"mountTokenWallet({root:document.querySelector('#wallet')});":''}resumeInfluencerGift();</script>`);
-});
-await new Promise(r=>server.listen(0,'127.0.0.1',r));const base='http://127.0.0.1:'+server.address().port;fs.mkdirSync('outputs/tokens',{recursive:true});
-try{for(const engine of [chromium,webkit]){const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});try{for(const width of [320,390,430,1440]){
- balance=0;tokens=0;purchases=new Map();gifts=new Map();failPayment=true;const page=await browser.newPage({viewport:{width,height:950}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.goto(base);assert.equal(await page.locator('[data-product-id="mirpanel-token"] .homeCardAdd').count(),0);await page.getByRole('link',{name:'Mirpanel Token',exact:true}).click();const input=page.getByRole('spinbutton',{name:'Token sayı',exact:true});await input.waitFor();await page.waitForFunction(()=>document.querySelector('.token-cover img')?.naturalWidth>0);
- for(const n of [50,55,100,500,5000]){await input.fill(String(n));assert.equal(await page.locator('.token-total').textContent(),(n*.02).toFixed(2).replace('.',',')+' ₼');}
- for(const value of ['','-1','49','5001','50.5']){await input.fill(value);assert.equal(await page.locator('.token-total').textContent(),'—');assert((await page.locator('.token-error').textContent()).length>5);assert.equal(await page.getByRole('button',{name:'Ödənişə keç',exact:true}).count(),0);}
- await input.fill('55');await page.getByRole('button',{name:'Ödənişə keç',exact:true}).click();await page.getByText('1,10 ₼ çatmır',{exact:true}).waitFor();await page.getByRole('link',{name:'+ Artır',exact:true}).click();await page.getByRole('link',{name:'Alışa qayıt'}).click();assert.equal(await input.inputValue(),'55');
- await page.getByRole('button',{name:'Ödənişə keç',exact:true}).click();await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Balansla ödə · 1,10 ₼',exact:true}).evaluate(n=>{n.click();n.click();});await page.getByRole('button',{name:'Alışın nəticəsini yoxla',exact:true}).waitFor();assert.equal(purchases.size,1);await page.reload();await page.getByText('Tokenlər hesabınıza əlavə edildi',{exact:true}).waitFor();assert.equal(tokens,55);assert.equal(purchases.size,1);
- assert.equal(await page.locator('main').evaluate(n=>n.scrollWidth>n.clientWidth),false);await page.screenshot({path:`outputs/tokens/product-${engine.name()}-${width}.png`});await page.getByRole('link',{name:'Tokenlərim',exact:true}).click();await page.getByText('55 token',{exact:true}).waitFor();await page.screenshot({path:`outputs/tokens/wallet-${engine.name()}-${width}.png`});
- tokens=0;await page.goto(base+'/qrup');await page.getByRole('button',{name:'Hədiyyə seç',exact:true}).click();let modal=page.getByRole('dialog',{name:recipient.name+' üçün hədiyyə seç',exact:true});await modal.locator('.token-gift-options img').first().waitFor();assert.equal(await modal.locator('.token-gift-options button').count(),2);assert.equal(await modal.locator('.live-gift-product').count(),1);await modal.locator('.token-gift-options button').first().click();await modal.getByText('Kifayət qədər tokeniniz yoxdur',{exact:true}).waitFor();await modal.getByText('Mövcud: 0 token · 1 token çatmır',{exact:true}).waitFor();await modal.getByRole('button',{name:'Token al',exact:true}).last().click();await input.waitFor();assert.equal(await input.inputValue(),'50');await page.getByRole('button',{name:'Ödənişə keç',exact:true}).click();await page.getByRole('checkbox').check();await page.getByRole('button',{name:'Balansla ödə · 1,00 ₼',exact:true}).click();await page.getByText('Tokenlər hesabınıza əlavə edildi',{exact:true}).waitFor();await page.getByRole('link',{name:'Hədiyyəyə qayıt',exact:true}).click();await modal.getByText('Gül · 1 token',{exact:true}).waitFor();assert.equal(gifts.size,0);
- await modal.getByRole('button',{name:'Göndər',exact:true}).evaluate(n=>{n.click();n.click();});await modal.getByText('Hədiyyəniz göndərildi',{exact:true}).waitFor();assert.equal(tokens,49);assert.equal(gifts.size,1);await modal.getByRole('button',{name:'Daha bir hədiyyə',exact:true}).click();await modal.locator('.token-gift-options button').nth(1).click();await modal.getByRole('button',{name:'Göndər',exact:true}).click();await modal.getByText('Hədiyyəniz göndərildi',{exact:true}).waitFor();assert.equal(tokens,44);assert.equal(gifts.size,2);
- await modal.getByRole('button',{name:'Daha bir hədiyyə',exact:true}).click();await modal.locator('.token-gift-options img').first().evaluate(img=>img.decode());await modal.screenshot({path:`outputs/tokens/gifts-${engine.name()}-${width}.png`});assert.equal(await modal.evaluate(n=>n.scrollWidth>n.clientWidth),false);
- await modal.getByRole('button',{name:'CapCut Pro',exact:false}).click();assert.equal(await modal.locator('.live-gift-package').count(),1);await modal.locator('.live-gift-package').click();await modal.getByRole('button',{name:'Hədiyyə et',exact:true}).click();await modal.getByRole('heading',{name:'CapCut Pro',exact:true}).waitFor();await modal.getByRole('button',{name:'Ödə və hədiyyə et',exact:true}).click();await modal.getByRole('checkbox').waitFor();assert.equal(tokens,44);assert.deepEqual(errors,[]);console.log('PASS',engine.name(),width,'cover/card, variable counts, invalid input, topup resume, one credit after lost response/reload, Tokenlərim, unified gifts, rose/heart, selected recipient/gift resume with manual send, product gift preserved');await page.close();
- }}finally{await browser.close();}}}finally{server.closeAllConnections();await new Promise(r=>server.close(r));}
+import {shopFixture} from './shop-test-fixture.mjs';
+import {tokenWallet} from '../mirpanel-admin/community/tokens.mjs';
 
+process.env.MIRPANEL_CART_V2_TEST='1';
+const fixture=await shopFixture(),{pool,shop,catalog}=fixture;
+const product={id:'mirpanel-token',title:'Mirpanel Token',image:'/assets/tokens/mirpanel-token.webp',plans:[{price:1}]};
+catalog.products.push(product);
+const customer={user:'a'},owner='a'.repeat(64);
+const profile={user_id:'a',name:'Sınaq',emailVerified:true};
+await pool.query("insert into wallet_accounts(user_id,cents) values('a',0)");
+let checkoutRequests=[],lastCheckout=null,loseNextResponse=false;
+const shell=(body)=>'<meta name="viewport" content="width=device-width"><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/community-assets/shop.css"><body>'+body+'</body>';
+const server=http.createServer(async(req,res)=>{
+ const url=new URL(req.url,'http://local'),route=url.pathname;
+ const respond=(data,status=200)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
+ const html=s=>{res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(s);};
+ try{
+  let body;
+  if(req.method==='POST'){let raw='';for await(const chunk of req)raw+=chunk;body=JSON.parse(raw);}
+  if(route==='/api/community/state')return respond({profile});
+  if(route==='/api/community/tokens')return respond(await tokenWallet(pool,customer.user));
+  if(route==='/api/payments/shop/quote')return respond(await shop.quote(customer,body.items,owner,null,body.tokenCount??null));
+  if(route==='/api/payments/shop/checkout'&&body){
+   checkoutRequests.push(body);const result=await shop.checkout(customer,owner,body);lastCheckout=result;
+   if(loseNextResponse){loseNextResponse=false;return respond({error:'Bağlantı təsdiqlənmədi'},503);}
+   return respond(result);
+  }
+  if(route==='/api/payments/shop/checkout')return respond(await shop.get(customer,owner,url.searchParams.get('id')));
+  if(route==='/api/payments/shop/drafts'||route==='/api/payments/storefront')return respond({items:[],products:[]});
+  if(route==='/api/payments/shop/draft/remove')return respond({removed:true});
+  if(route==='/odenis')return html(shell('<main id="shopApp" class="shop-page"></main><script type="module" src="/community-assets/shop-ui.js"></script>'));
+  if(route==='/balans'){
+   assert.equal(url.searchParams.get('returnTo'),'/odenis?mode=wallet&token=1');
+   await pool.query("update wallet_accounts set cents=20000 where user_id='a'");
+   return html(shell('<p>Sınaq balansı artırıldı</p><a href="/odenis?mode=wallet&amp;token=1">Alışa qayıt</a>'));
+  }
+  if(route==='/profil')return html(shell('<main id="wallet"></main><script type="module">import {mountTokenWallet} from "/community-assets/token-ui.js";mountTokenWallet({root:document.getElementById("wallet")});</script>'));
+  if(route==='/mehsul/mirpanel-token')return html(fs.readFileSync('mehsul/mirpanel-token.page','utf8').replace(/<script src="\/site-header[^<]*<\/script>/g,''));
+  if(route==='/')return html(shell(catalogCard.render(product,0,'/mehsul/mirpanel-token',product.title,1,'1,00 ₼')+'<script defer src="/cart-store.js"></script>'));
+  const asset=route.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+route.slice(18):route.slice(1);
+  if(!route.includes('..')&&fs.existsSync(asset)&&fs.statSync(asset).isFile()){
+   res.writeHead(200,{'Content-Type':/\.(?:js|mjs)$/.test(route)?'text/javascript':route.endsWith('.css')?'text/css':route.endsWith('.webp')?'image/webp':'application/octet-stream'});return res.end(fs.readFileSync(asset));
+  }
+  respond({},404);
+ }catch(e){respond({error:e.message},e.status||500);}
+});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const base='http://127.0.0.1:'+server.address().port;
+fs.mkdirSync('outputs/token-compact',{recursive:true});
+const fakeDraft={productId:'ordinary',planIndex:0,quantity:1,termsVersion:(await shop.quote(customer,[{productId:'ordinary',planIndex:0,quantity:1}],owner)).items[0].termsVersion};
+try{
+ for(const engine of [chromium,webkit]){
+  const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
+  try{
+   for(const width of [320,390,430,1440]){
+    await pool.query("update wallet_accounts set cents=0 where user_id='a'");
+    let purchased=0;
+    try{purchased=(await tokenWallet(pool,'a')).balance;}catch(e){if(e.code!=='42P01')throw e;}
+    checkoutRequests=[];loseNextResponse=true;
+    const page=await browser.newPage({viewport:{width,height:950}}),errors=[];
+    page.on('pageerror',err=>errors.push(err.message));
+    const warning=page.getByRole('dialog',{name:'Diqqət! Almamışdan əvvəl oxuyun.'});
+    const drawer=page.getByRole('dialog',{name:'Səbət',exact:true});
+    const rows=()=>page.evaluate(()=>window.MirpanelCart.read());
+
+    await page.goto(base);await page.waitForFunction(()=>window.MirpanelCart?.apiVersion===7);
+    await page.locator('.homeCardAdd').click();await warning.waitFor();
+    assert.equal(await warning.getByRole('button',{name:'Davam et'}).isDisabled(),true);
+    await warning.getByRole('button',{name:'Ləğv et'}).click();assert.deepEqual(await rows(),[]);
+    await page.locator('.homeCardOrder').click();await warning.getByRole('checkbox',{name:'Oxudum və təsdiqləyirəm'}).check();
+    await warning.getByRole('button',{name:'Davam et'}).click();await drawer.getByText('50 token',{exact:true}).waitFor();
+    await drawer.getByRole('button',{name:'Səbəti bağla'}).click();
+
+    await page.getByRole('heading',{name:'Mirpanel Token',exact:true}).getByRole('link').click();
+    const input=page.getByRole('spinbutton',{name:'Miqdar seçin'});
+    assert.equal(await input.inputValue(),'50');
+    for(const [n,total] of [[50,'1,00 ₼'],[55,'1,10 ₼'],[5000,'100,00 ₼']]){
+     await input.fill(String(n));
+     assert.equal(await page.locator('.token-total').textContent(),total);
+     await page.getByText('Seçilmiş miqdar: '+n+' token',{exact:true}).waitFor();
+    }
+    await input.fill('');assert.equal(await input.getAttribute('placeholder'),'50–5000');
+    for(const invalid of ['', '49','5001','50.5','-1']){
+     await input.fill(invalid);assert.equal(await page.getByRole('button',{name:'İndi al',exact:true}).isDisabled(),true);
+     assert.equal(await page.getByRole('button',{name:'Səbətə at',exact:true}).isDisabled(),true);
+    }
+    await input.fill('55');assert.equal(await page.getByText('+ Artır',{exact:true}).count(),0);
+    await page.screenshot({path:'outputs/token-compact/product-'+engine.name()+'-'+width+'.png'});
+    await page.getByRole('button',{name:'Səbətə at',exact:true}).click();
+    await warning.getByRole('checkbox').check();await warning.getByRole('button',{name:'Davam et'}).click();
+    await page.getByRole('status').filter({hasText:'Məhsul səbətə əlavə edildi'}).waitFor();
+    assert.equal(await drawer.count(),0);assert.equal((await rows())[0].tokenCount,55);
+    await page.evaluate(row=>localStorage.setItem('mirpanel.cart.v1',JSON.stringify([row,...window.MirpanelCart.read()])),fakeDraft);
+    await page.getByRole('button',{name:'İndi al',exact:true}).click();
+    await warning.getByRole('checkbox').check();await warning.getByRole('button',{name:'Davam et'}).click();
+    await drawer.getByText('55 token',{exact:true}).waitFor();await drawer.getByRole('button',{name:'Token üçün ödənişə keç',exact:true}).click();
+    await page.getByText('1,10 ₼ çatmır',{exact:true}).waitFor();
+    await page.getByRole('link',{name:'+ Artır',exact:true}).click();
+    await page.getByRole('link',{name:'Alışa qayıt'}).click();
+    await page.getByText('55 token',{exact:true}).waitFor();
+    const pay=page.getByRole('button',{name:'Sifarişi tamamla · 1,10 ₼',exact:true});
+    assert.equal(await pay.isDisabled(),true);assert.equal(checkoutRequests.length,0);
+    await page.getByRole('checkbox').check();await pay.click();await page.getByText('Bağlantı təsdiqlənmədi',{exact:true}).waitFor();
+    assert.equal((await tokenWallet(pool,'a')).balance,purchased+55);
+    await page.reload();await page.getByRole('checkbox').check();await pay.click();
+    await page.getByText('55 token hesabınıza əlavə edildi.',{exact:true}).waitFor();
+    assert.equal(checkoutRequests[0].requestId,checkoutRequests[1].requestId);
+    assert.equal(checkoutRequests[0].tokenCount,55);assert.equal(checkoutRequests[0].expectedTotalCents,110);
+    assert.equal((await tokenWallet(pool,'a')).balance,purchased+55);
+    assert.equal((await rows()).length,1);assert.equal((await rows())[0].productId,'ordinary');
+    await page.reload();await page.getByText('55 token hesabınıza əlavə edildi.',{exact:true}).waitFor();
+    assert.equal((await shop.get(customer,owner,lastCheckout.id)).tokenCount,55);
+    await page.getByRole('link',{name:'Tokenlərim',exact:true}).click();
+    await page.getByText(purchased+55+' token',{exact:true}).waitFor();
+    assert.deepEqual(errors,[]);await page.close();console.log('PASS',engine.name(),width,'prices, placeholder, confirmation, cart, top-up return, retry and one credit');
+   }
+  }finally{await browser.close();}
+ }
+}finally{server.closeAllConnections();await new Promise(r=>server.close(r));await fixture.close();}

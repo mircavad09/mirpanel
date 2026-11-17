@@ -1,28 +1,58 @@
-const purchaseKey='mirpanel.token-purchase.v1',giftKey='mirpanel.influencer-gift.v1',path='/mehsul/mirpanel-token';
+import {TOKEN_NOTICE,TOKEN_TERMS_VERSION} from './token-terms.js?v=1';
+const path='/mehsul/mirpanel-token';
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;},money=n=>(n/100).toFixed(2).replace('.',',')+' ₼';
 const button=(text,fn)=>{const n=el('button',text);n.type='button';n.onclick=fn;return n;};
 const link=(text,href)=>{const n=el('a',text,'token-button');n.href=href;return n;};
-const read=key=>{try{return JSON.parse(sessionStorage.getItem(key)||'null');}catch{return null;}},save=(key,value)=>{try{sessionStorage.setItem(key,JSON.stringify(value));}catch{}};
 export const tokenDate=value=>new Intl.DateTimeFormat('az-AZ',{timeZone:'Asia/Baku',dateStyle:'long',timeStyle:'short'}).format(new Date(value));
 export async function tokenApi(url,data){const c=new AbortController(),timer=setTimeout(()=>c.abort(),20000);try{const r=await fetch(url,{credentials:'same-origin',cache:'no-store',method:data===undefined?'GET':'POST',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),signal:c.signal});const v=await r.json();if(!r.ok)throw Object.assign(Error(v.error?.message||v.error||'Sorğu alınmadı. Yenidən cəhd edin.'),{status:r.status});return v;}catch(e){if(e.name==='AbortError'||e instanceof TypeError)throw Error('Bağlantı təsdiqlənmədi. Eyni sorğu ilə yenidən cəhd edin.');throw e;}finally{clearTimeout(timer);}}
-export function tokenStyle(){if(!document.querySelector('[data-token-style]')){const n=el('link');n.rel='stylesheet';n.href='/community-assets/token.css?v=tokens-1';n.dataset.tokenStyle='';document.head.append(n);}}
+export function tokenStyle(){if(!document.querySelector('[data-token-style]')){const n=el('link');n.rel='stylesheet';n.href='/community-assets/token.css?v=token-cart-1';n.dataset.tokenStyle='';document.head.append(n);}}
+let confirmation;
+export async function confirmTokenPurchase(count,openCart=false){
+ if(!Number.isInteger(count)||count<50||count>5000||confirmation?.open)return;
+ tokenStyle();
+ const dialog=el('dialog',null,'token-confirm');
+ const title=el('h2','Diqqət! Almamışdan əvvəl oxuyun.');
+ title.id='token-confirm-title';dialog.setAttribute('aria-labelledby',title.id);
+ const check=el('input'),label=el('label','Oxudum və təsdiqləyirəm');
+ check.type='checkbox';label.prepend(check);
+ const error=el('p',null,'token-error');error.setAttribute('role','alert');
+ const next=button('Davam et',async()=>{
+  if(!check.checked||next.disabled)return;
+  next.disabled=true;
+  try{
+   const {ensureCart}=await import('/cart-ready.js?v=token-cart-1');
+   const cart=await ensureCart();if(!dialog.open)return;
+   cart.addToken(count,TOKEN_TERMS_VERSION);
+   dialog.close();if(openCart)cart.open({inline:true});
+  }catch(e){error.textContent=e.message;next.disabled=false;}
+ });
+ next.disabled=true;check.onchange=()=>{next.disabled=!check.checked;};
+ const actions=el('div',null,'token-confirm-actions');actions.append(button('Ləğv et',()=>dialog.close()),next);
+ dialog.append(title,el('p',TOKEN_NOTICE),label,error,actions);document.body.append(dialog);
+ dialog.addEventListener('close',()=>{dialog.remove();if(confirmation===dialog)confirmation=null;},{once:true});
+ confirmation=dialog;dialog.showModal();
+}
 export function mountTokenPurchase(root){
- tokenStyle();let draft=read(purchaseKey)||{count:'50',requestId:crypto.randomUUID()},busy=false,disposed=false;
- const error=el('p',null,'token-error');error.setAttribute('role','alert');const form=el('div'),payment=el('div'),label=el('label','Token sayı'),input=el('input'),total=el('strong',null,'token-total');input.type='number';input.min='50';input.max='5000';input.step='1';input.inputMode='numeric';input.value=draft.count??'50';input.setAttribute('aria-label','Token sayı');label.append(input);form.append(label,el('small','50–5000 arasında istənilən tam ədəd'),total);root.replaceChildren(form,error,payment);
- const persist=()=>save(purchaseKey,draft),count=()=>{if(!/^\d+$/.test(input.value))throw Error('Token sayını tam ədədlə yazın.');const n=Number(input.value);if(n<50||n>5000)throw Error('Minimum 50, maksimum 5000 token ala bilərsiniz.');return n;};
- const guard=fn=>async()=>{if(busy)return;busy=true;error.textContent='';try{await fn();}catch(e){if(!disposed)error.textContent=e.message;}finally{busy=false;}};
- function update(){payment.replaceChildren();if(draft.attempt){input.disabled=true;total.textContent=money(draft.attempt.expectedTotalCents);payment.append(button('Alışın nəticəsini yoxla',guard(recover)));return;}try{const n=count();total.textContent=money(n*2);error.textContent='';payment.append(button('Ödənişə keç',guard(quote)));}catch(e){total.textContent='—';error.textContent=e.message;}}
- input.oninput=()=>{draft.count=input.value;draft.requestId=crypto.randomUUID();persist();update();};
- function success(){window.refreshCommunityNav?.();sessionStorage.removeItem(purchaseKey);window.dispatchEvent(new Event('mirpanel:token-balance-changed'));payment.replaceChildren(el('h2','Tokenlər hesabınıza əlavə edildi'),link('Tokenlərim','/profil?tab=tokenlerim'));const gift=read(giftKey);if(gift?.recipientId){gift.resume=true;save(giftKey,gift);payment.append(link('Hədiyyəyə qayıt','/qrup'));}input.disabled=true;}
- async function recover(){const r=await tokenApi('/api/payments/shop/token-status?requestId='+encodeURIComponent(draft.requestId));if(disposed)return;if(r.paymentConfirmed){success();return;}const current=await tokenApi('/api/payments/shop/quote',{tokenCount:draft.attempt.tokenCount,items:draft.attempt.items});if(draft.buyerKey&&current.buyerKey!==draft.buyerKey){payment.replaceChildren(el('p','Bu alışı başladığınız hesaba daxil olun.'),link('Daxil ol','/hesab?next='+encodeURIComponent(path)));return;}payment.replaceChildren(el('p','Ödəniş hələ təsdiqlənməyib.'),button('Eyni sorğu ilə yenidən cəhd et',guard(pay)));}
- async function quote(){const n=count(),requestId=draft.requestId;const r=await tokenApi('/api/payments/shop/quote',{tokenCount:n,items:[{productId:'mirpanel-token',planIndex:0,quantity:1}]});if(disposed||requestId!==draft.requestId)return;if(r.tokenCount!==n||r.totalCents!==n*2)throw Error('Token xidməti yenilənir. Seçiminiz saxlanılıb; yenidən cəhd edin.');
- if(r.balanceCents===null){persist();payment.replaceChildren(el('p','Token almaq üçün hesabınıza daxil olun.'),link('Daxil ol','/hesab?next='+encodeURIComponent(path)));return;}
- payment.replaceChildren(el('h2',n+' token · '+money(r.totalCents)),el('p','Balans: '+money(r.balanceCents)));
- if(r.balanceCents<r.totalCents){payment.append(el('strong',money(r.totalCents-r.balanceCents)+' çatmır'),link('+ Artır','/balans?returnTo='+encodeURIComponent(path)+'#balansi-artir'));persist();return;}
- const consent=el('input');consent.type='checkbox';const terms=el('label',r.items[0].terms||'Token alışını təsdiqləyirəm.');terms.prepend(consent);payment.append(terms,button('Balansla ödə · '+money(r.totalCents),guard(async()=>{if(!consent.checked)throw Error('Alış şərtlərini təsdiqləyin.');draft.buyerKey=r.buyerKey;draft.attempt={mode:'wallet',requestId:draft.requestId,consentAccepted:true,tokenCount:n,expectedTotalCents:r.totalCents,items:[{productId:'mirpanel-token',planIndex:0,quantity:1,termsVersion:r.items[0].termsVersion}]};persist();input.disabled=true;await pay();})));
+ tokenStyle();
+ const summary=el('div',null,'token-summary'),selection=el('span'),total=el('strong',null,'token-total');
+ summary.setAttribute('aria-live','polite');summary.append(selection,total);
+ const input=el('input'),label=el('label','Miqdar seçin'),unit=el('small','0,02 ₼ / token'),field=el('div',null,'token-quantity');
+ input.type='number';input.min='50';input.max='5000';input.step='1';input.inputMode='numeric';input.placeholder='50–5000';
+ input.id='token-count';input.value='50';label.htmlFor=input.id;
+ const error=el('small',null,'token-error');error.id='token-count-error';error.setAttribute('role','alert');
+ input.setAttribute('aria-describedby',error.id);field.append(input,unit,error);
+ const actions=el('div',null,'token-actions');
+ const buy=button('İndi al',()=>confirmTokenPurchase(Number(input.value),true));
+ const add=button('Səbətə at',()=>confirmTokenPurchase(Number(input.value)));
+ actions.append(buy,add);root.replaceChildren(summary,label,field,actions);
+ function update(){
+  const value=input.value,n=Number(value),valid=/^\d+$/.test(value)&&Number.isInteger(n)&&n>=50&&n<=5000;
+  selection.textContent=valid?'Seçilmiş miqdar: '+n+' token':'Seçilmiş miqdar: —';
+  total.textContent=valid?money(n*2):'—';
+  error.textContent=!valid&&(value||input.validity.badInput)?'50–5000 arası tam ədəd yazın.':'';
+  input.setAttribute('aria-invalid',String(!!error.textContent));buy.disabled=add.disabled=!valid;
  }
- async function pay(){if(!draft.attempt)return;const buttons=[...payment.querySelectorAll('button')];buttons.forEach(b=>b.disabled=true);try{const r=await tokenApi('/api/payments/shop/checkout',draft.attempt);if(!disposed){if(r.paymentConfirmed)success();else payment.replaceChildren(el('p','Ödənişin təsdiqi gözlənilir.'),button('Yenidən yoxla',guard(recover)));}}catch(e){if(!disposed){if([400,401,403,409,422].includes(e.status)){delete draft.attempt;input.disabled=false;persist();update();}else payment.replaceChildren(button('Alışın nəticəsini yoxla',guard(recover)));}throw e;}finally{buttons.forEach(b=>b.disabled=false);}}
- update();if(draft.attempt)void guard(recover)();return()=>{disposed=true;};
+ input.addEventListener('input',update);update();
 }
 export function mountTokenWallet({root,api=tokenApi,validate=d=>d}){
  tokenStyle();let stopped=false,busy=false;const life=new AbortController(),head=el('section',null,'token-wallet-head'),rows=el('div'),error=el('p',null,'token-error');error.setAttribute('role','alert');root.replaceChildren(el('h1','Tokenlərim'),head,error,rows);let before=null;

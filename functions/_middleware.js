@@ -214,10 +214,10 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=epinby-retry-1$2');
   next=next.replace(/(src=["'])\/order-confirmation\.js\?v=cart-signup-20261107(["'])/g,'$1/order-confirmation.js?v=image-alt-20261117$2');
-  next=next.replace(/(src=["'])\/?browser-nav\.js(?:\?[^"']*)?(["'])/g,'$1/browser-nav.js?v=abort-compat-1$2');
+  next=next.replace(/(src=["'])\/?browser-nav\.js(?:\?[^"']*)?(["'])/g,'$1/browser-nav.js?v=token-cart-1$2');
   next=next.replace(/(src=["'])\/?(seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
   next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=shortcut-a11y-20261117$3');
-  next=next.replace(/(src=["'])\/?catalog-card\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-card.js?v=ready-sku-2$2');
+  next=next.replace(/(src=["'])\/?catalog-card\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-card.js?v=token-cart-1$2');
   next=next.replace(/(src=["'])\/?catalog-listing\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-listing.js?v=sales-count-2$2');
   next=next.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=gift-compact-4$2');
   next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=sales-count-2$2');

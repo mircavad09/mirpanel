@@ -156,7 +156,7 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
  const policy=state.authFormPolicy||{minPasswordLength:6,maxPasswordLength:128,termsUrl:'/sertler',privacyUrl:'/sertler#sertler-10'};
  document.body.classList.add('auth-screen');await loadAuthStyle();
  if(signal?.aborted||!app.isConnected)return;
- const params=new URLSearchParams(location.search),next=params.get('next')||'',destination=['/','/profil','/qrup','/mehsul','/sebet','/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet','/balans?returnTo=%2Fqrup&flow=gift','/balans?returnTo=%2Fqrup&flow=gift#balansi-artir','/balans?returnTo=%2Fmehsul%2Fmirpanel-token','/balans?returnTo=%2Fmehsul%2Fmirpanel-token#balansi-artir'].includes(next)||/^\/mehsul\/[a-z0-9-]+$/i.test(next)||/^\/profil\?tab=(?:(?:orders|sifarislerim)(?:&order=[A-Za-z0-9-]{1,40})?|(?:payments|odenislerim)(?:&topup=[a-f0-9-]{36})?|profile|profilim|codes|kodlarim|subscriptions|abuneliklerim|expenses|xerclerim|tokens|tokenlerim)$/.test(next)?next:'/profil',requested=params.get('mode')||'login',mode=['login','signup','reset','new-password'].includes(requested)?requested:'login';
+ const params=new URLSearchParams(location.search),next=params.get('next')||'',destination=['/','/profil','/qrup','/mehsul','/sebet','/sifarislerim','/balans','/odenis','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet%26token%3D1','/balans?returnTo=%2Fodenis%3Fmode%3Dwallet%26token%3D1#balansi-artir','/balans?returnTo=%2Fqrup&flow=gift','/balans?returnTo=%2Fqrup&flow=gift#balansi-artir','/balans?returnTo=%2Fmehsul%2Fmirpanel-token','/balans?returnTo=%2Fmehsul%2Fmirpanel-token#balansi-artir'].includes(next)||/^\/mehsul\/[a-z0-9-]+$/i.test(next)||/^\/profil\?tab=(?:(?:orders|sifarislerim)(?:&order=[A-Za-z0-9-]{1,40})?|(?:payments|odenislerim)(?:&topup=[a-f0-9-]{36})?|profile|profilim|codes|kodlarim|subscriptions|abuneliklerim|expenses|xerclerim|tokens|tokenlerim)$/.test(next)?next:'/profil',requested=params.get('mode')||'login',mode=['login','signup','reset','new-password'].includes(requested)?requested:'login';
  const fromCart=params.get('from')==='cart'&&destination==='/sebet';
  const referrer=(()=>{try{const u=new URL(document.referrer);return u.origin===location.origin?u.pathname:'';}catch{return '';}})();
  const signupDestination=destination==='/sebet'||destination.startsWith('/balans?returnTo=%2Fqrup&flow=gift')||destination.startsWith('/balans?returnTo=%2Fmehsul%2Fmirpanel-token')?destination:/^\/mehsul\/[a-z0-9-]+$/i.test(destination)?destination:/^\/mehsul\/[a-z0-9-]+$/i.test(referrer)?referrer:'/';
@@ -329,12 +329,17 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
   const money=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
   async function loadSummary(){
    rows.replaceChildren();try{
-    const {ensureCart}=await import('/cart-ready.js?v=account-update-20261107'),cart=await ensureCart(),items=cart.read();
+    const {ensureCart}=await import('/cart-ready.js?v=token-cart-1'),cart=await ensureCart(),items=cart.read();
     const quantity=items.reduce((n,x)=>n+x.quantity,0);count.textContent=cartLogin?'Səbətinizdə '+quantity+' məhsul':quantity+' məhsul';
     if(!quantity||life.signal.aborted)return;
-    const r=await fetch('/api/payments/shop/quote',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal:life.signal});
-    if(!r.ok||!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error();
-    const q=await r.json();
+    const products=items.filter(x=>x.productId!=='mirpanel-token'),tokens=items.filter(x=>x.productId==='mirpanel-token');
+    const q={items:[],totalCents:0};
+    if(products.length){
+     const r=await fetch('/api/payments/shop/quote',{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({items:products}),signal:life.signal});
+     if(!r.ok)throw Error();
+     Object.assign(q,await r.json());
+    }
+    for(const row of cart.previewRows(tokens)){q.items.push(row);q.totalCents+=row.unitCents;}
     if(!Number.isSafeInteger(q.totalCents)||!Array.isArray(q.items)||q.items.length!==items.length)throw Error();
     if(cartLogin)count.replaceChildren('Səbətinizdə '+quantity+' məhsul · ',el('span',{class:'auth-order-total'},money(q.totalCents)));
     else count.textContent=quantity+' məhsul · Cəmi '+money(q.totalCents);
