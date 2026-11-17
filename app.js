@@ -3687,7 +3687,7 @@ const DATA = {
       "seoRelatedKeywords": " Free Fire Azərbaycan, almaz qiyməti",
       "seoKeywords": "Free Fire almaz almaq, Free Fire Azərbaycan, almaz qiyməti",
       "seoContent": "Free Fire almaz paketləri bu səhifədə bir yerdə təqdim olunur. Paket adındakı almaz sayını, varsa bonusu və regionu qiymətlə birlikdə yoxlayın.",
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
+      "seoUpdatedAt": "2026-11-17T14:02:07.573Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Free Fire almaz almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -3880,7 +3880,7 @@ const DATA = {
           ],
           "id": "epinby_690",
           "pricingId": "c83337cb-5625-426c-8763-c3d5d1670fdd",
-          "label": "1166",
+          "label": "Free Fire 1166 Almaz (7/24)",
           "months": 1,
           "price": 13.83
         },
@@ -3918,7 +3918,7 @@ const DATA = {
           ],
           "id": "epinby_677",
           "pricingId": "39824726-1360-4e3f-bde3-9c4d05461eb1",
-          "label": "2398",
+          "label": "Free Fire 2398 Almaz (7/24)",
           "months": 1,
           "price": 27.58
         },
@@ -3956,7 +3956,7 @@ const DATA = {
           ],
           "id": "epinby_685",
           "pricingId": "d67f0849-89e9-4d01-9d71-1b4b66115541",
-          "label": "6160",
+          "label": "Free Fire 6160 Almaz (7/24)",
           "months": 1,
           "price": 69.56
         }
