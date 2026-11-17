@@ -371,7 +371,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
   const html = `<!DOCTYPE html>
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=stable-buy-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document">${renderSplashMarkup()}${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=seller-pricing-1"></script></body></html>`;
-  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('</h1>','</h1>'+categoryLinks).replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=ready-delivery-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=selected-package-1"></script><script src="/catalog-listing.js?v=selected-package-1"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
+  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('</h1>','</h1>'+categoryLinks).replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=ready-sku-2"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=ready-sku-2"></script><script src="/catalog-listing.js?v=ready-sku-2"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {
@@ -480,7 +480,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=selected-package-1">
+  <link rel="stylesheet" href="/product-page.css?v=ready-sku-2">
   <link rel="stylesheet" href="/payment-flow.css?v=checkout-cancel-proxy-20261026-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -511,7 +511,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
               <span class="product-page-status${availability.inStock===false ? " is-out" : ""}">${escapeHtml(availability.label)}</span>
             </div>
             ${product.desc ? `<p class="product-page-description">${escapeHtml(product.desc)}</p>` : ""}
-            <div class="product-page-delivery">
+            <div class="product-page-delivery" hidden>
               <strong>${escapeHtml(deliveryText(product))}</strong>
             </div>
 
@@ -587,8 +587,8 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/app.js?v=image-alt-20261117-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
-  <script src="/stock-display-fix.js?v=selected-package-1"></script>
-  <script src="/product-page.js?v=selected-package-1"></script>
+  <script src="/stock-display-fix.js?v=ready-sku-2"></script>
+  <script src="/product-page.js?v=ready-sku-2"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>
@@ -956,7 +956,7 @@ function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
     .replace(/(<img id="pp-main-img"[^>]* alt=")[^"]*(")/, `$1${escapeAttribute(product.imageAlt || product.title)}$2`)
     .replace(/(<span class="product-page-availability-badge[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
     .replace(/(<span class="product-page-status[^"]*">)[\s\S]*?(<\/span>)/, `$1${escapeHtml(availabilityText)}$2`)
-    .replace(/(<div class="product-page-delivery">\s*<strong>)[\s\S]*?(<\/strong>)/, `$1${escapeHtml(deliveryText(product))}$2`)
+    .replace(/(<div class="product-page-delivery"(?: hidden)?>\s*<strong>)[\s\S]*?(<\/strong>)/, `$1${escapeHtml(deliveryText(product))}$2`)
     .replace(/(<h2 class="product-page-section-title">)[\s\S]*?(<\/h2>)/, `$1${escapeHtml(product.epinbyGroup?'Paket seçin':texts.selectDuration || "Müddət seçin")}$2`)
     .replace(/(<a class="product-page-action is-about"[^>]*>)[\s\S]*?(<\/a>)/, `$1${escapeHtml(texts.productAbout || "Məhsul haqqında")}$2`)
     .replace(/(<button class="product-page-action is-order"[^>]*>)[\s\S]*?(<\/button>)/, '$1İndi al$2')
@@ -1107,7 +1107,7 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=seller-pricing-1")
     .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=incident-recovery-1");
-  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=selected-package-1");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=ready-sku-2");
   return next;
 }
 

@@ -245,13 +245,15 @@
     };
     trust.append(fact('2024-dən fəaliyyət göstəririk',0));
     const total=fact('',1);total.hidden=true;trust.append(total);
-    const initialDelivery='Təhvil məlumatı yoxlanılır…';
+    const initialDelivery='';
     const deliveryFact=fact(initialDelivery,2);
+    deliveryFact.hidden=true;
     trust.append(deliveryFact,fact('MirPanel əlavə komissiya tutmur',3));
     const actions=root.querySelector('.product-page-actions');
     root.querySelector('.product-page-info')?.append(actions);
     left.append(trust);
     root.querySelector('.product-page-delivery strong').textContent = initialDelivery;
+    root.querySelector('.product-page-delivery').hidden=true;
     const summary = root.querySelector('.product-detail-summary') || text('section','product-detail-summary','');
     summary.setAttribute('aria-live','polite');
     const container = document.getElementById('pp-plans-container');
@@ -352,7 +354,7 @@
         const saving = text('p','product-detail-savings','');
         saving.append(text('strong','',priceText(m.savings)),document.createTextNode(' '),text('span','product-detail-savings-caption','qənaət edirsiniz'));priceLine.append(saving);
       }
-      summary.append(text('p','product-detail-summary-delivery',initialDelivery));
+      const deliveryLine=text('p','product-detail-summary-delivery',initialDelivery);deliveryLine.hidden=true;summary.append(deliveryLine);
     };
     window.addEventListener('mirpanel:prices',()=>{rows.forEach((row,i)=>{
       const m=utils.detailPlanMetrics(plans[i]),price=row.querySelector('.pp-new-price');

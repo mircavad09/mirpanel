@@ -46,9 +46,9 @@ try{for(const [engineName,engine]of [['chrome',chromium],['webkit',webkit]]){
   await page.goto(origin+'/mehsul/'+product.seoSlug);await page.locator('#productPageView[data-detail-enhanced]').waitFor();
   const rows=page.locator('#pp-plans-container .pp-plan-label');
   await rows.first().getByText('Anında təqdim olunur',{exact:true}).waitFor();
-  assert.equal(await rows.nth(1).locator('.plan-fact-delivery').textContent(),'15–30 dəqiqə ərzində tamamlanır');
-  assert.equal(await rows.nth(2).locator('.plan-fact-delivery').textContent(),'Ödəniş təsdiqindən sonra təqdim olunur');
-  assert.equal(await rows.nth(4).locator('.plan-fact-delivery').textContent(),'Stokda yoxdur');
+  assert.equal(await rows.nth(1).locator('.plan-fact-delivery').count(),0);
+  assert.equal(await rows.nth(2).locator('.plan-fact-delivery').count(),0);
+  assert.equal(await rows.nth(4).locator('.plan-fact-delivery').count(),0);
   const box=await rows.first().boundingBox();assert.ok(box.height<=82,JSON.stringify({width,box}));
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   const style=await rows.first().locator('.plan-fact-stock').evaluate(n=>({border:getComputedStyle(n).borderTopWidth,background:getComputedStyle(n).backgroundColor,animation:getComputedStyle(n).animationName}));
@@ -58,11 +58,11 @@ try{for(const [engineName,engine]of [['chrome',chromium],['webkit',webkit]]){
   await page.emulateMedia({reducedMotion:'no-preference'});
   // Click anywhere on the row, including its price; no informational buttons.
   await rows.nth(1).locator('.pp-new-price').click();assert.equal(await page.evaluate(()=>currentPlanIdx),1);
-  assert.equal(await page.locator('.product-detail-summary-delivery').textContent(),'15–30 dəqiqə ərzində tamamlanır');
+  assert.equal(await page.locator('.product-detail-summary-delivery').isVisible(),false);
   await rows.first().click();
-  ready=0;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').textContent(),'15–30 dəqiqə ərzində tamamlanır');
+  ready=0;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').count(),0);
   ready=1;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').textContent(),'Anında təqdim olunur');
-  failed=true;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').textContent(),'Təhvil məlumatı yoxlanılır…');
+  failed=true;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').count(),0);
   failed=false;await page.evaluate(()=>MirpanelInventory.refresh());await rows.first().getByText('Anında təqdim olunur',{exact:true}).waitFor();assert.equal(await page.locator('#inventoryServiceStatus').count(),0);
   await rows.first().click();
   if(engineName==='chrome')await page.locator('#pp-plans-container').screenshot({path:`${out}/${product.id}-${width}-plans.png`});

@@ -45,9 +45,8 @@ export function bestValueIndex(plans = [], inventory = {}) {
   return sorted[0]?.index ?? -1;
 }
 export function deliveryText(product = {}) {
-  if (product.deliveryType === 'automatic') return 'Anında, avtomatik təqdim olunur';
-  if (product.deliveryText) return String(product.deliveryText);
-  return 'Ödəniş təsdiqindən sonra təqdim olunur';
+  // Public HTML has no live, exact-SKU ready-account evidence yet.
+  return '';
 }
 export function normalizePlanMetadata(plan = {}) {
   for (const field of ['price', 'regularPrice']) if (plan[field] !== undefined && plan[field] !== '' && money(plan[field]) === null)

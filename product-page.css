@@ -1758,6 +1758,9 @@ html body.product-page-document #productPageView.product-page-root:is(.detail-v2
 html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery::before{display:none}
 html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery.is-instant{color:#64e6a5}
 html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery.is-instant::before{display:block}
+html body #productPageView .product-page-delivery[hidden],html body #productPageView .product-detail-summary-delivery[hidden],html body #productPageView .product-detail-trust li[hidden]{display:none!important}
+#productPageView .product-page-delivery strong.is-instant,#productPageView .product-detail-summary-delivery.is-instant,#productPageView .product-detail-trust .is-instant{color:#64e6a5!important}
+#productPageView .product-page-delivery strong.is-instant::before,#productPageView .product-detail-summary-delivery.is-instant::before{content:'';display:inline-block;width:12px;height:14px;margin-right:4px;vertical-align:-2px;background:currentColor;clip-path:polygon(55% 0,10% 56%,43% 56%,36% 100%,92% 39%,59% 39%)}
 html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-warranty::before{background:#64e6a5}
 @media(prefers-reduced-motion:no-preference){
  @supports(background-clip:text){

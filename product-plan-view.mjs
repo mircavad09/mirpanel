@@ -4,7 +4,7 @@ const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;
 const money=value=>Number(value).toFixed(2).replace('.',',')+' ₼';
 export function renderPlanTrust(product){
  const paths=['<path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/>','<path d="m4 16 5-5 4 3 7-9m-6 0h6v6"/>','<path d="m13 2-9 12h7l-1 8 10-13h-7l0-7Z"/>','<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>'];
- return ['2024-dən fəaliyyət göstəririk','','Təhvil məlumatı yoxlanılır…','MirPanel əlavə komissiya tutmur'].map((value,index)=>`<li${index===1?' hidden':''}><svg viewBox="0 0 24 24" aria-hidden="true">${paths[index]}</svg><span>${esc(value)}</span></li>`).join('');
+ return ['2024-dən fəaliyyət göstəririk','','','MirPanel əlavə komissiya tutmur'].map((value,index)=>`<li${index===1||index===2?' hidden':''}><svg viewBox="0 0 24 24" aria-hidden="true">${paths[index]}</svg><span>${esc(value)}</span></li>`).join('');
 }
 export function planName(plan){
  const m=detailPlanMetrics(plan),duration=m.days!==null?`${m.days} gün`:plan.durationMonths&&m.months!==null?`${m.months} ay`:'';
@@ -12,7 +12,7 @@ export function planName(plan){
  return duration&&label!==duration?`${label} · ${duration}`:label;
 }
 export function renderPlanRows(product,selected=0){
- const plans=product.plans||[],delivery='Təhvil məlumatı yoxlanılır…';
+ const plans=product.plans||[],delivery='';
  return plans.map((plan,index)=>{
   const m=detailPlanMetrics(plan),active=index===selected,name=planName(plan),id=`plan-details-${product.id}-${index}`;
   const image=!product.epinbyGroup&&plan.supplier?.provider==='epinby'&&/^\/?(?:assets|uploads)\//.test(plan.image||'')?`<img class="epinby-package-thumb" src="${esc(plan.image)}" alt="" width="52" height="38" loading="lazy">`:'';
@@ -24,5 +24,5 @@ export function renderPlanRows(product,selected=0){
 export function renderPlanSummary(product,index=0){
  const plan=product.plans?.[index];if(!plan)return '<p>Aktiv paket yoxdur.</p>';
  const m=detailPlanMetrics(plan);
- return `<p class="product-detail-summary-label">Seçilmiş paket: ${esc(planName(plan))}</p><div class="product-detail-summary-line"><div class="product-detail-summary-prices">${m.price!==null?`<strong>${money(m.price)}</strong>`:''}${m.oldPrice!==null?`<del>${money(m.oldPrice)}</del>`:''}${m.discount!==null?`<span class="product-detail-best">-${m.discount}%</span>`:''}</div>${m.savings!==null?`<p class="product-detail-savings"><strong>${money(m.savings)}</strong> <span class="product-detail-savings-caption">qənaət edirsiniz</span></p>`:''}</div><p class="product-detail-summary-delivery">${esc('Təhvil məlumatı yoxlanılır…')}</p>`;
+ return `<p class="product-detail-summary-label">Seçilmiş paket: ${esc(planName(plan))}</p><div class="product-detail-summary-line"><div class="product-detail-summary-prices">${m.price!==null?`<strong>${money(m.price)}</strong>`:''}${m.oldPrice!==null?`<del>${money(m.oldPrice)}</del>`:''}${m.discount!==null?`<span class="product-detail-best">-${m.discount}%</span>`:''}</div>${m.savings!==null?`<p class="product-detail-savings"><strong>${money(m.savings)}</strong> <span class="product-detail-savings-caption">qənaət edirsiniz</span></p>`:''}</div><p class="product-detail-summary-delivery" hidden></p>`;
 }

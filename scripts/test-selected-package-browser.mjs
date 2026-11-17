@@ -85,15 +85,19 @@ try{for(const [engineName,engine]of [['chrome',chromium],['webkit',webkit]]){
   for(const index of [1,2,3,0]){
    await rows.nth(index).locator('.pp-new-price').click();
    await assertSelection(index);
-   const text=await rows.nth(index).locator('.plan-fact-delivery').textContent();
+   const text=await rows.nth(index).locator('.plan-fact-delivery').count()?await rows.nth(index).locator('.plan-fact-delivery').textContent():'';
    assert.equal(await page.locator('.product-page-delivery strong').textContent(),text);
   }
   if(product.id!=='free_fire'){
-   ready=0;await page.evaluate(()=>MirpanelInventory.refresh());await rows.first().getByText('15–30 dəqiqə ərzində tamamlanır',{exact:true}).waitFor();
+   ready=0;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').count(),0);
+   assert.equal(await page.locator('.product-detail-trust li').nth(2).isVisible(),false);
+   assert.equal(await page.locator('.product-detail-summary-delivery').isVisible(),false);
    ready=1;auto=false;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.is-instant').count(),0);
    auto=true;await page.evaluate(()=>MirpanelInventory.refresh());await rows.first().getByText('Anında təqdim olunur',{exact:true}).waitFor();
   }
-  failed=true;await page.evaluate(()=>MirpanelInventory.refresh());await rows.first().getByText('Təhvil məlumatı yoxlanılır…',{exact:true}).waitFor();
+  failed=true;await page.evaluate(()=>MirpanelInventory.refresh());
+  if(product.id==='free_fire')await rows.first().getByText('Təhvil məlumatı yoxlanılır…',{exact:true}).waitFor();
+  else assert.equal(await rows.first().locator('.plan-fact-delivery').count(),0);
   assert.equal(await rows.first().locator('.plan-fact-stock:visible').count(),0);
   failed=false;await page.evaluate(()=>MirpanelInventory.refresh());await rows.first().getByText(expected,{exact:true}).waitFor();
   await assertSelection(0);

@@ -31,7 +31,7 @@
   <link rel="stylesheet" href="/premium-compact-glow.css?v=20260804-mobile-layout-1">
   <link rel="stylesheet" href="/stock-display-fix.css?v=stock-unified-20261024-2">
   <link rel="stylesheet" href="/mobile-detail-unified.css?v=20260705-premium-layout-1">
-  <link rel="stylesheet" href="/product-page.css?v=selected-package-1">
+  <link rel="stylesheet" href="/product-page.css?v=ready-sku-2">
   <link rel="stylesheet" href="/payment-flow.css?v=checkout-cancel-proxy-20261026-1">
   <link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1">
   <link rel="stylesheet" href="/splash.css?v=20260903-1">
@@ -91,7 +91,7 @@
           <div class="product-detail-left"><div class="product-page-media">
             <img class="product-page-media-backdrop" src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" alt="" aria-hidden="true" decoding="async">
             <img id="pp-main-img" src="/uploads/products/chatgpt-1792447571091-e78cfb71.png?v=1792447571091" alt="ChatGPT Plus şəxsi hesab — MirPanel məhsul şəkli" width="1200" height="1200" fetchpriority="high" decoding="async">
-          </div><p class="product-detail-sales" hidden></p><ul class="product-detail-trust"><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/></svg><span>2024-dən fəaliyyət göstəririk</span></li><li hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16 5-5 4 3 7-9m-6 0h6v6"/></svg><span></span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-13h-7l0-7Z"/></svg><span>Təhvil məlumatı yoxlanılır…</span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg><span>MirPanel əlavə komissiya tutmur</span></li></ul></div>
+          </div><p class="product-detail-sales" hidden></p><ul class="product-detail-trust"><li><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6l-8-3Z"/><path d="m8 12 3 3 5-6"/></svg><span>2024-dən fəaliyyət göstəririk</span></li><li hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m4 16 5-5 4 3 7-9m-6 0h6v6"/></svg><span></span></li><li hidden><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m13 2-9 12h7l-1 8 10-13h-7l0-7Z"/></svg><span></span></li><li><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/></svg><span>MirPanel əlavə komissiya tutmur</span></li></ul></div>
 
           <div class="product-page-info">
             <div class="product-detail-heading">
@@ -99,12 +99,12 @@
               <span class="product-page-status">Stok yoxlanılır</span>
             </div>
             <p class="product-page-description">Daha güclü model, fayl/şəkil imkanları.</p>
-            <div class="product-page-delivery">
-              <strong>Ödəniş təsdiqindən sonra təqdim olunur</strong>
+            <div class="product-page-delivery" hidden>
+              <strong></strong>
             </div>
 
-            <section class="product-detail-summary" aria-live="polite"><p class="product-detail-summary-label">Seçilmiş paket: 1 ayliq</p><div class="product-detail-summary-line"><div class="product-detail-summary-prices"><strong>15,99 ₼</strong><del>40,00 ₼</del><span class="product-detail-best">-60%</span></div><p class="product-detail-savings"><strong>24,01 ₼</strong> <span class="product-detail-savings-caption">qənaət edirsiniz</span></p></div><p class="product-detail-summary-delivery">Təhvil məlumatı yoxlanılır…</p></section><h2 class="product-page-section-title">Müddət seçin</h2>
-            <div id="pp-plans-container" class="pp-plans-container" role="radiogroup" data-server-plans><div class="pp-plan-label active" data-price-emphasis="discount-month" role="radio" aria-label="1 ayliq" aria-checked="true" aria-expanded="true" aria-controls="plan-details-chatgpt-0" tabindex="0"><div class="pp-plan-left"><div class="pp-radio-circle"></div><div class="pp-plan-name">1 ayliq <span class="product-detail-best">Ən sərfəli</span></div></div><div class="pp-plan-right"><div class="pp-plan-price-meta"><div class="pp-old-price">40,00 ₼</div><div class="pp-plan-disc-badge">-60%</div></div><div class="pp-new-price">15,99 ₼</div></div><div class="pp-plan-meta"><span data-inventory-plan class="inventory-plan-count" hidden></span><span class="plan-fact plan-fact-warranty">27 gün zəmanət</span><span class="product-detail-plan-notes" id="plan-details-chatgpt-0" role="region" aria-label="Paketin əlavə məlumatları"><span class="plan-fact plan-fact-delivery">Təhvil məlumatı yoxlanılır…</span></span></div></div></div><div class="product-page-actions">
+            <section class="product-detail-summary" aria-live="polite"><p class="product-detail-summary-label">Seçilmiş paket: 1 ayliq</p><div class="product-detail-summary-line"><div class="product-detail-summary-prices"><strong>15,99 ₼</strong><del>40,00 ₼</del><span class="product-detail-best">-60%</span></div><p class="product-detail-savings"><strong>24,01 ₼</strong> <span class="product-detail-savings-caption">qənaət edirsiniz</span></p></div><p class="product-detail-summary-delivery" hidden></p></section><h2 class="product-page-section-title">Müddət seçin</h2>
+            <div id="pp-plans-container" class="pp-plans-container" role="radiogroup" data-server-plans><div class="pp-plan-label active" data-price-emphasis="discount-month" role="radio" aria-label="1 ayliq" aria-checked="true" aria-expanded="true" aria-controls="plan-details-chatgpt-0" tabindex="0"><div class="pp-plan-left"><div class="pp-radio-circle"></div><div class="pp-plan-name">1 ayliq <span class="product-detail-best">Ən sərfəli</span></div></div><div class="pp-plan-right"><div class="pp-plan-price-meta"><div class="pp-old-price">40,00 ₼</div><div class="pp-plan-disc-badge">-60%</div></div><div class="pp-new-price">15,99 ₼</div></div><div class="pp-plan-meta"><span data-inventory-plan class="inventory-plan-count" hidden></span><span class="plan-fact plan-fact-warranty">27 gün zəmanət</span><span class="product-detail-plan-notes" id="plan-details-chatgpt-0" role="region" aria-label="Paketin əlavə məlumatları"></span></div></div></div><div class="product-page-actions">
           <a class="product-page-action is-about" href="/mehsul/chatgpt-plus#product-about">Məhsul haqqında</a>
           <button class="product-page-action is-order" id="pp-order-btn" type="button" disabled>İndi al</button>
         </div>
@@ -225,11 +225,11 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-026453bcf5c4bacc"></script>
+  <script src="/app.js?v=image-alt-20261117-8db3dabbaea50167"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
-  <script src="/stock-display-fix.js?v=selected-package-1"></script>
-  <script src="/product-page.js?v=selected-package-1"></script>
+  <script src="/stock-display-fix.js?v=ready-sku-2"></script>
+  <script src="/product-page.js?v=ready-sku-2"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
 </html>

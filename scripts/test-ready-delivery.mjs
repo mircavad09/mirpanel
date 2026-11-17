@@ -12,13 +12,14 @@ import {inventoryAvailability} from '../inventory-availability.mjs';
 const displayProduct={deliveryText:'1–3 saat ərzində tamamlanır',plans:[{deliveryText:'15–30 dəqiqə ərzində tamamlanır'},{deliveryText:'2 saat ərzində tamamlanır'}]};
 const instant={canOrder:true,fulfillment:{ready:1,automatic:true,allowWaiting:true}};
 assert.equal(packageDeliveryText(displayProduct,0,instant),'Anında təqdim olunur');
-assert.equal(packageDeliveryText(displayProduct,1,{canOrder:true,fulfillment:{ready:0,automatic:true,allowWaiting:true}}),'2 saat ərzində tamamlanır');
-assert.equal(packageDeliveryText(displayProduct,0,{canOrder:true,fulfillment:{ready:1,automatic:false,allowWaiting:false}}),'15–30 dəqiqə ərzində tamamlanır');
-assert.equal(packageDeliveryText(displayProduct,0,instant,{unavailable:true}),'Təhvil məlumatı yoxlanılır…');
-assert.equal(packageDeliveryText(displayProduct,0,{...instant,canOrder:false}),'Stokda yoxdur');
+assert.equal(packageDeliveryText(displayProduct,1,{canOrder:true,fulfillment:{ready:0,automatic:true,allowWaiting:true}}),'');
+assert.equal(packageDeliveryText(displayProduct,0,{canOrder:true,fulfillment:{ready:1,automatic:false,allowWaiting:false}}),'');
+assert.equal(packageDeliveryText(displayProduct,0,instant,{unavailable:true}),'');
+assert.equal(packageDeliveryText(displayProduct,0,{...instant,canOrder:false}),'');
 assert.equal(packageDeliveryText({plans:[{supplier:{provider:'epinby'}}]},0,{canOrder:true}),'Ödənişdən sonra avtomatik icra olunur');
 assert.equal(packageDeliveryText({deliveryText:'Anında',plans:[{supplier:{provider:'epinby'}}]},0,{canOrder:true}),'Ödənişdən sonra avtomatik icra olunur');
-assert.equal(packageDeliveryText(displayProduct,0,null),'Təhvil məlumatı yoxlanılır…');
+assert.equal(packageDeliveryText(displayProduct,0,null),'');
+for(const fulfillment of [null,{}, {ready:50,automatic:false},{ready:0,automatic:true},{ready:-1,automatic:true},{ready:1.5,automatic:true},{ready:'1',automatic:true},{ready:1,automatic:'true'}])assert.equal(readyDeliveryText(fulfillment,true),'');
 process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture(),{pool,db,catalog,id,rpc}=f;
 const config={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')},security=createPaymentSecurity(config);
@@ -31,11 +32,11 @@ try{
  const save=(n,auto=true,index=0)=>saveReadyStock(pool,security,config.tokenSecret,catalog,'synthetic',{productId:p.id,index,planSignature:signature(p.plans[index]),requestId:id(),autoWallet:auto,messages:Array.from({length:n},()=> 'Synthetic account '+id())});
  const setting=allowWaiting=>saveReadyDeliverySettings(pool,catalog,'synthetic',{productId:p.id,index:0,planSignature:signature(p.plans[0]),allowWaiting});
  await rpc('inventory_set_nullable_quantity',[p.id,50,'synthetic',id(),0,null]);
- await save(0);assert.equal((await read())[0].ready,0);assert.equal(readyDeliveryText((await read())[0],true),'Ödəniş təsdiqindən sonra təqdim olunur');
- await setting(true);assert.equal(readyDeliveryText((await read())[0],true),'15–30 dəqiqə ərzində tamamlanır');
+ await save(0);assert.equal((await read())[0].ready,0);assert.equal(readyDeliveryText((await read())[0],true),'');
+ await setting(true);assert.equal(readyDeliveryText((await read())[0],true),'');
  await save(1,true,1);assert.equal((await read())[0].ready,0);assert.equal((await read())[1].ready,1);
  await save(1);assert.equal(readyDeliveryText((await read())[0],true),'Anında təqdim olunur');
- await save(0,false);assert.equal(readyDeliveryText((await read())[0],true),'Ödəniş təsdiqindən sonra təqdim olunur');
+ await save(0,false);assert.equal(readyDeliveryText((await read())[0],true),'');
  await save(0,true);
  // A live checkout reservation is not available for instant delivery to others.
  const rid=id();await pool.query(`insert into public.payment_reservations(id,method_id,product_id,plan_id,amount,idempotency_key,status,expires_at) values($1,$2,'ordinary','0',5,$3,'reserved',clock_timestamp()+interval '5 minutes')`,[rid,f.method,id()]);
@@ -45,7 +46,7 @@ try{
  await pool.query("update public.payment_reservations set status='expired' where id=$1",[rid]);assert.equal((await read())[0].ready,1);
  // Sale/assignment and deletion are reflected without altering sale limits.
  await pool.query('delete from mirpanel_community.ready_stock_units where product_id=$1 and plan_signature=$2',[p.id,signature(p.plans[0])]);
- assert.equal(readyDeliveryText((await read())[0],true),'15–30 dəqiqə ərzində tamamlanır');
+ assert.equal(readyDeliveryText((await read())[0],true),'');
  await save(1);assert.equal(readyDeliveryText((await read())[0],true),'Anında təqdim olunur');
  const stock=(await rpc('inventory_snapshot')).find(x=>x.productId===p.id);assert.equal(stock.available,50);
  const before=JSON.stringify(stock);await setting(false);assert.equal(JSON.stringify((await rpc('inventory_snapshot')).find(x=>x.productId===p.id)),before);
@@ -61,6 +62,6 @@ try{
  assert.equal((await read())[0].ready,0);await save(1);assert.equal((await read())[0].ready,1);
  const view=await readyStockView(pool,catalog,[],null);assert.equal(view.products[0].plans[0].allowWaiting,false);
  catalog.products.push({id:'epinby_1',supplier:{provider:'epinby',productId:1,type:'VOUCHER',fields:[]},plans:[{price:1}]});assert.equal((await readyDeliverySnapshot(pool,catalog)).has('epinby_1'),false);
- assert.equal(readyDeliveryText({ready:1,automatic:true},false),'Stokda yoxdur');
+ assert.equal(readyDeliveryText({ready:1,automatic:true},false),'');
  console.log('PASS: exact SKU, separate 50-unit sale limit, ready absent/present, automatic off, reserved/expired, removed/added, settings persistence, Epinby excluded. Synthetic local data only.');
 }finally{await f.close();}

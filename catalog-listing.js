@@ -1,7 +1,7 @@
 /* Read-only sales figures are fetched near the viewport, not ahead of the next route. */
 (()=>{'use strict';if(window.mirpanelCatalogSales)return;window.mirpanelCatalogSales=true;
  let scope=null;
- const deliveryModel=import('/ready-delivery.mjs?v=selected-package-1');
+ const deliveryModel=import('/ready-delivery.mjs?v=ready-sku-2');
  const transport=import('/request-lifecycle.mjs?v=abort-compat-1');
  async function paintStock(state){
   const [{withRequestSignal},{packageDeliveryText}]=await Promise.all([transport,deliveryModel]);
@@ -17,7 +17,7 @@
   const byId=new Map(inventory.map(row=>[row.productId,row]));
   for(const product of JSON.parse(source.textContent)){
    const ledger=byId.get(product.id);
-   if(!ledger)continue;
+   if(!ledger){document.querySelector('.catalog-grid [data-product-id="'+CSS.escape(product.id)+'"] .homeCardDelivery')?.remove();continue;}
    const price=product.id==='tiktok_jeton'?10:Math.min(...product.plans.filter(p=>Number(p.price)>0).map(p=>Number(p.price)));
    const index=product.plans.findIndex(p=>Number(p.price)===price);
    const plan=ledger.plans?.find(p=>p.planKey===String(index));
@@ -25,9 +25,9 @@
    const card=document.querySelector('.catalog-grid [data-product-id="'+CSS.escape(product.id)+'"]');
    if(!card)continue;
    let delivery=card.querySelector('.homeCardDelivery');
-   if(!delivery){delivery=document.createElement('p');delivery.className='homeCardDelivery';card.querySelector('.pad').append(delivery);}
-   delivery.textContent=packageDeliveryText(product,index,plan);
-   delivery.classList.toggle('is-instant',delivery.textContent==='Anında təqdim olunur');
+   const deliveryLabel=packageDeliveryText(product,index,plan);
+   if(!deliveryLabel)delivery?.remove();
+   else{if(!delivery){delivery=document.createElement('p');delivery.className='homeCardDelivery';card.querySelector('.pad').append(delivery);}delivery.textContent=deliveryLabel;delivery.classList.toggle('is-instant',deliveryLabel==='Anında təqdim olunur');}
    const add=card.querySelector('.homeCardAdd');
    if(add){add.dataset.stockDisabled=String(!ledger.canOrder);add.disabled=!ledger.canOrder||add.dataset.busy==='true';}
    const line=card.querySelector('.cardStockLine');
@@ -43,7 +43,7 @@
  }
  function refreshStock(state){
   if(state.stockRequest||document.hidden||performance.now()-(state.stockAt??-Infinity)<10000)return;
-  state.stockRequest=paintStock(state).catch(()=>{if(state===scope)document.querySelectorAll('.catalog-grid .homeCardDelivery').forEach(n=>{n.textContent='Təhvil məlumatı yoxlanılır…';n.classList.remove('is-instant');});}).finally(()=>{state.stockRequest=null;});
+  state.stockRequest=paintStock(state).catch(()=>{if(state===scope)document.querySelectorAll('.catalog-grid .homeCardDelivery').forEach(n=>n.remove());}).finally(()=>{state.stockRequest=null;});
  }
  function stop(){clearInterval(scope?.stockTimer);clearInterval(scope?.salesTimer);scope?.controller.abort();scope?.observer?.disconnect();scope=null;}
  function start(){
@@ -51,8 +51,6 @@
   const nodes=[...document.querySelectorAll('.catalog-grid [data-home-sales-id]')];
   if(!document.getElementById('catalogCartProducts'))return;
   const state={controller:new AbortController(),observer:null,queue:[],busy:0};scope=state;
-  const catalog=JSON.parse(document.getElementById('catalogCartProducts').textContent);
-  for(const p of catalog){const card=document.querySelector('.catalog-grid [data-product-id="'+CSS.escape(p.id)+'"]');if(card&&!card.querySelector('.homeCardDelivery')){const n=document.createElement('p');n.className='homeCardDelivery';n.textContent='Təhvil məlumatı yoxlanılır…';card.querySelector('.pad').append(n);}}
   refreshStock(state);
   state.stockTimer=setInterval(()=>refreshStock(state),10000);
   state.salesTimer=setInterval(()=>{

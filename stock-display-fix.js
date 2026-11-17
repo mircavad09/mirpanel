@@ -1,7 +1,7 @@
 (async function () {
   window.MirpanelInventory?.dispose?.();
-  const {inventoryAvailability}=await import('/inventory-availability.mjs?v=ready-delivery-1');
-  const {packageDeliveryText}=await import('/ready-delivery.mjs?v=selected-package-1');
+  const {inventoryAvailability}=await import('/inventory-availability.mjs?v=ready-sku-2');
+  const {packageDeliveryText}=await import('/ready-delivery.mjs?v=ready-sku-2');
   const inventory = new Map();let inventoryTimer,homeSalesTimer,painting=false,inventoryDisplayValid=false,inventoryFailed=false;
   function escapeHtml(value) {
     return String(value ?? "")
@@ -207,13 +207,18 @@
   }
   function paintDelivery(product,rows,index){
     rows.forEach((row,i)=>{
-      const label=deliveryFor(product,i);if(label===null)return;
+      const label=deliveryFor(product,i);
       let line=row.querySelector('.plan-fact-delivery');
+      if(!label){line?.remove();return;}
       if(!line){line=document.createElement('span');line.className='plan-fact plan-fact-delivery';row.querySelector('.pp-plan-meta')?.prepend(line);}
       line.textContent=label;line.hidden=label==='Stokda yoxdur';line.classList.toggle('is-instant',label==='Anında təqdim olunur');
     });
-    const label=deliveryFor(product,index);if(label===null)return;
-    document.querySelectorAll('.product-detail-summary-delivery,.product-page-delivery strong,.product-detail-trust li:nth-child(3) span').forEach(el=>el.textContent=label);
+    const label=deliveryFor(product,index);
+    document.querySelectorAll('.product-detail-summary-delivery,.product-page-delivery strong,.product-detail-trust li:nth-child(3) span').forEach(el=>{
+      el.textContent=label;el.classList.toggle('is-instant',label==='Anında təqdim olunur');
+      const line=el.closest('.product-page-delivery')||el.closest('.product-detail-trust li')||el;
+      line.hidden=!label;
+    });
   }
   function paintInventory(){
     if(painting)return;painting=true;
@@ -237,7 +242,10 @@
             label.className='mpStockBadge cardStockBadge '+badge.className;label.textContent=badge.text;
           }
           const start=(product.plans||[]).findIndex(p=>Number(p.price)===minPrice(product)),label=deliveryFor(product,start);
-          if(label!==null){card.querySelector('.homeCardInstant')?.remove();let delivery=card.querySelector('.homeCardDelivery');if(!delivery){delivery=document.createElement('p');delivery.className='homeCardDelivery';card.querySelector('.pad').append(delivery);}delivery.textContent=label;delivery.classList.toggle('is-instant',label==='Anında təqdim olunur');}
+          card.querySelector('.homeCardInstant')?.remove();
+          let delivery=card.querySelector('.homeCardDelivery');
+          if(!label)delivery?.remove();
+          else{if(!delivery){delivery=document.createElement('p');delivery.className='homeCardDelivery';card.querySelector('.pad').append(delivery);}delivery.textContent=label;delivery.classList.toggle('is-instant',label==='Anında təqdim olunur');}
           const add=card.querySelector('.homeCardAdd');
           if(add){add.disabled=state.salesDisabled||!state.unavailable&&!state.canOrder;card.toggleAttribute('data-cart-available',!state.unavailable&&state.canOrder);}
           const button=card.querySelector('.homeCardOrder');if(button){const navigate=!state.salesDisabled&&(state.unavailable||state.canOrder);button.setAttribute('aria-disabled',String(!navigate));button.tabIndex=navigate?0:-1;button.style.opacity=navigate?'':'.45';}
