@@ -282,7 +282,7 @@ const DATA = {
       "seoRelatedKeywords": " Spotify Premium Azərbaycan, Spotify qiyməti",
       "seoKeywords": "Spotify Premium almaq, Spotify Premium Azərbaycan, Spotify qiyməti",
       "seoContent": "Bu Spotify Premium təklifi müştərinin öz hesabında aktivləşdirmə üçündür. Mövcud hesabınızı istifadə etmək istəyirsinizsə seçilən paketin adını və tələb olunan giriş məlumatlarını yoxlayın.",
-      "seoUpdatedAt": "2026-11-16T20:51:15.638Z",
+      "seoUpdatedAt": "2026-11-18T19:17:19.620Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Spotify Premium almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -357,10 +357,23 @@ const DATA = {
       },
       "plans": [
         {
-          "label": "1 Ayliq        (Öz hesabınızda aktiv edilir)",
+          "warrantyDuration": 1,
+          "label": "1 Ay  (Öz hesabınızda aktiv edilir)",
           "months": 1,
           "price": 5.49,
-          "regularPrice": 11
+          "regularPrice": 11,
+          "pricingId": "018ff8cf-5756-474c-ad89-a437b2e5d2c9"
+        },
+        {
+          "durationMonths": 12,
+          "duration_months": 12,
+          "warrantyMode": "guaranteed",
+          "warrantyDuration": 12,
+          "pricingId": "f7552b80-54eb-4779-9bb1-6d4b56f7b30e",
+          "label": "12 Ay (Öz hesabınızda aktiv edilir) endirim💥",
+          "months": 12,
+          "price": 44.99,
+          "regularPrice": 168.12
         }
       ],
       "orderConfirmation": {
@@ -4144,8 +4157,8 @@ const DATA = {
       }
     },
     {
-      "id": "mirpanel-token",
-      "_stableId": "mirpanel-token",
+      "id": "mirpanel_token",
+      "_stableId": "mirpanel_token",
       "order": 36,
       "category": "sosial-media",
       "image": "/assets/tokens/mirpanel-token.webp",
@@ -4168,7 +4181,7 @@ const DATA = {
       "seoRelatedKeywords": "",
       "seoKeywords": "",
       "seoContent": "",
-      "seoUpdatedAt": "2026-11-17T15:22:34.129Z",
+      "seoUpdatedAt": "2026-11-18T19:17:19.622Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "",
@@ -4214,10 +4227,10 @@ const DATA = {
       },
       "plans": [
         {
+          "pricingId": "0dfe589f-5f80-4212-806b-98206f532dfb",
           "label": "50 token",
           "months": 1,
-          "price": 1,
-          "pricingId": "0dfe589f-5f80-4212-806b-98206f532dfb"
+          "price": 1
         }
       ],
       "orderConfirmation": {
