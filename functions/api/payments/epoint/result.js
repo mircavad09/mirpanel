@@ -18,15 +18,19 @@ async function readPacket(request){
 }
 export async function onRequest({request}){
  if(request.method!=='POST')return Response.json({error:'POST tələb olunur.'},{status:405,headers:{...safeHeaders,Allow:'POST'}});
+ const unavailable=stage=>Response.json({error:'Epoint nəticəsi hazırda emal olunmur.'},{status:503,headers:{...safeHeaders,'Retry-After':'60','Server-Timing':'epoint-proxy;desc="'+stage+'"'}});
+ let phase='read';
  try{
   // Forward the exact signed bytes as a known-length payload, rather than
   // passing the incoming stream through the edge runtime to a second origin.
   const body=await readPacket(request);
   if(body===null)return Response.json({error:'Bildiriş həddən artıq böyükdür.'},{status:413,headers:safeHeaders});
-  const r=await fetch(endpoint,{method:'POST',headers:{'Content-Type':request.headers.get('Content-Type')||'application/octet-stream'},body,redirect:'error',signal:AbortSignal.timeout(20000)});
-  if(!r.headers.get('Content-Type')?.startsWith('application/json'))throw Error('Invalid upstream response');
+  phase='transport';
+  const r=await fetch(new URL(endpoint),{method:'POST',headers:{'Content-Type':request.headers.get('Content-Type')||'application/octet-stream',Accept:'application/json',Origin:new URL(request.url).origin},body,redirect:'manual',signal:AbortSignal.timeout(20000)});
+  if(!r.headers.get('Content-Type')?.startsWith('application/json')||r.status>=300&&r.status<400)return unavailable('upstream-'+r.status);
+  phase='response';
   const headers={...safeHeaders,'Content-Type':'application/json; charset=utf-8'};
   if(r.headers.has('Retry-After'))headers['Retry-After']=r.headers.get('Retry-After');
-  return new Response(r.body,{status:r.status,headers});
- }catch{return Response.json({error:'Epoint nəticəsi hazırda emal olunmur.'},{status:503,headers:{...safeHeaders,'Retry-After':'60'}});}
+  return new Response(await r.text(),{status:r.status,headers});
+ }catch{return unavailable(phase);}
 }
