@@ -38,7 +38,7 @@
 
   // Homepage only: the exact starting-price plan represented by the card.
   // Never aggregate unrelated plan pools, or display a synthetic fail-closed zero.
-  function homeStockBadgeData(product) {
+  function homeStockBadgeData(product,homepage=true) {
     const ledger=inventory.get(product.id);
     if(ledger?.salesDisabled)return {text:'Stokda yoxdur',className:'out'};
     if(!inventoryDisplayValid||!ledger||ledger.needsSetup)return null;
@@ -54,8 +54,9 @@
       stock=plan.available;
     }else return null;
     if(!Number.isSafeInteger(stock)||stock<0)return null;
-    return stock===0?{text:'Stokda yoxdur',className:'out'}:
-      stock<10?{text:`Son ${stock} ədəd`,className:'low'}:
+    if(stock===0)return {text:'Stokda yoxdur',className:'out'};
+    if(homepage)return stock<=5?{text:`Son ${stock} ədəd`,className:'low'}:null;
+    return stock<10?{text:`Son ${stock} ədəd`,className:'low'}:
       {text:`Stok: ${stock}`,className:'count'};
   }
 
@@ -234,7 +235,7 @@
         const state=stateFor(product);
         document.querySelectorAll('.homeProductCard[data-product-id]').forEach(card=>{
           if(card.dataset.productId!==product.id)return;
-          const badge=homeStockBadgeData(product);let line=card.querySelector('.cardStockLine');
+          const badge=homeStockBadgeData(product,!!card.closest('#homePageView #grid'));let line=card.querySelector('.cardStockLine');
           if(!badge)line?.remove();
           else{
             if(!line){line=document.createElement('div');line.className='cardStockLine';card.querySelector('.pad').append(line);}
@@ -242,7 +243,16 @@
             label.className='mpStockBadge cardStockBadge '+badge.className;label.textContent=badge.text;
           }
           if(card.closest('#homePageView #grid')) {
-            card.querySelectorAll('.homeCardInstant,.homeCardDelivery').forEach(node=>node.remove());
+            card.querySelector('.homeCardDelivery')?.remove();
+            const price=product.id==='tiktok_jeton'?10:minPrice(product);
+            const index=(product.plans||[]).findIndex(plan=>Number(plan.price)===price);
+            const instant=deliveryFor(product,index)==='Anında təqdim olunur';
+            let badge=card.querySelector('.homeCardInstant');
+            if(!instant)badge?.remove();
+            else if(!badge){
+              badge=document.createElement('span');badge.className='homeCardInstant';
+              badge.textContent='Anında';card.querySelector('.imgWrap')?.append(badge);
+            }
           } else {
             const start=(product.plans||[]).findIndex(p=>Number(p.price)===minPrice(product)),label=deliveryFor(product,start);
             card.querySelector('.homeCardInstant')?.remove();

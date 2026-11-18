@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import http from 'node:http';
 import path from 'node:path';
-import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
+import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 import {extractAdminState} from '../mirpanel-admin/core.mjs';
 import {cartPageContent,cartPageScript,cartPageStyle} from '../cart-page.mjs';
 
@@ -20,14 +20,16 @@ const server=http.createServer(async(req,res)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port;
-const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+let browser;
 const output=path.resolve('outputs/home-product-cards');
 const forbidden=/Anında təqdim olunur|Ödənişdən (?:dərhal )?sonra avtomatik icra olunur/i;
 await fs.mkdir(output,{recursive:true});
 try{
- for(const width of [320,390,430,768,1024,1440,1920]){
+ for(const [engineName,engine] of [['chrome',chromium],['webkit',webkit]]){
+ browser=await engine.launch(engineName==='chrome'?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
+ for(const width of [320,390,430,1440]){
   const mobile=width<768,ctx=await browser.newContext({viewport:{width,height:880},isMobile:mobile,hasTouch:mobile,reducedMotion:'reduce'});
-  let stock=27,calls=0;const drafts=[];
+  let stock=6,calls=0,unknown=false,ready=2,otherReady=2,automatic=true,failed=false;const drafts=[];
   try{
    await ctx.addInitScript(()=>sessionStorage.setItem('mirpanel.intro.seen','1'));
    await ctx.route('**/*',route=>{
@@ -35,10 +37,11 @@ try{
     const json=data=>route.fulfill({json:data});
     if(p==='/api/payments/inventory'){
      calls++;
+     if(failed)return route.fulfill({status:503,json:{}});
      return json({products:products.map(product=>{
-      const tracked=['zoom','capcut'].includes(product.id),count=product.id==='zoom'?stock:24;
+      const tracked=['zoom','capcut'].includes(product.id),count=product.id==='zoom'?(unknown?null:stock):24;
       return {productId:product.id,canOrder:true,scope:'product',unlimited:!tracked,available:tracked?count:null,
-       plans:product.plans.map((_,i)=>({planKey:String(i),canOrder:true,tracked,available:tracked?count:null,fulfillment:{automatic:true,ready:count}}))};
+       plans:product.plans.map((_,i)=>({planKey:String(i),canOrder:true,tracked,available:tracked?count:null,fulfillment:{automatic,ready:product.id==='capcut'?(i===0?otherReady:ready):ready}}))};
      })});
     }
     if(p==='/api/product-sales'){
@@ -62,14 +65,36 @@ try{
    await page.goto(origin,{waitUntil:'domcontentloaded'});
    const grid=page.locator('#homePageView #grid'),cards=grid.locator('.homeProductCard');
    const zoom=grid.locator('[data-product-id="zoom"]'),capcut=grid.locator('[data-product-id="capcut"]');
-   await zoom.getByText('Stok: 27',{exact:true}).waitFor();
+   await page.waitForFunction(()=>!!window.MirpanelInventory);
+   await page.evaluate(()=>window.MirpanelInventory.refresh({force:true}));
    await zoom.getByText('129+ dəfə satılıb',{exact:true}).waitFor();
    await capcut.getByText('2 319+ dəfə satılıb',{exact:true}).waitFor();
-   const noDelivery=async()=>{
-    assert.equal(await grid.locator('.homeCardInstant,.homeCardDelivery').count(),0);
+   const noLongDelivery=async()=>{
+    assert.equal(await grid.locator('.homeCardDelivery').count(),0);
     assert.doesNotMatch(await grid.textContent(),forbidden);
    };
-   await noDelivery();
+   await noLongDelivery();
+   await capcut.locator('.imgWrap .homeCardInstant').getByText('Anında',{exact:true}).waitFor();
+   const refresh=()=>page.evaluate(()=>window.MirpanelInventory.refresh({force:true}));
+   for(const count of [1,2,3,4,5]){
+    stock=count;await refresh();
+    const low=zoom.getByText('Son '+count+' ədəd',{exact:true});await low.waitFor();
+    const style=await low.evaluate(n=>({border:getComputedStyle(n).borderWidth,bg:getComputedStyle(n).backgroundColor,color:getComputedStyle(n).color}));
+    assert.deepEqual(style,{border:'0px',bg:'rgba(0, 0, 0, 0)',color:'rgb(255, 119, 126)'});
+    assert(await zoom.locator('.homeCardPrices').isVisible());
+   }
+   stock=0;await refresh();await zoom.getByText('Stokda yoxdur',{exact:true}).waitFor();
+   assert.equal(await zoom.locator('.homeCardAdd').isEnabled(),false);
+   assert(await zoom.locator('.homeCardPrices').isVisible());
+   stock=6;await refresh();
+   unknown=true;await refresh();assert.equal(await zoom.locator('.cardStockLine').count(),0);unknown=false;await refresh();
+   assert.equal(await zoom.locator('.cardStockLine').count(),0);
+   ready=0;await refresh();assert.equal(await capcut.locator('.homeCardInstant').count(),0);
+   ready=1;automatic=false;await refresh();assert.equal(await capcut.locator('.homeCardInstant').count(),0);
+   automatic=true;await refresh();await capcut.locator('.homeCardInstant').waitFor();
+   failed=true;await refresh();assert.equal(await capcut.locator('.homeCardInstant').count(),0);
+   assert.equal(await zoom.locator('.cardStockLine').count(),0);
+   failed=false;await refresh();await capcut.locator('.homeCardInstant').waitFor();
    const geometry=await cards.evaluateAll(elements=>elements.map(card=>{
     const rect=el=>el?.getBoundingClientRect().toJSON();
     const find=s=>rect(card.querySelector(s));
@@ -89,8 +114,19 @@ try{
      assert(Math.abs((g.plus.top+g.plus.bottom-g.icon.top-g.icon.bottom)/2)<1,g.id);
      assert(Math.abs((g.plus.left+g.plus.right-g.icon.left-g.icon.right)/2)<1,g.id);
     }
+    if(g.sales)assert(g.sales.top-g.price.bottom>=0&&g.sales.top-g.price.bottom<=6,JSON.stringify(g));
     if(g.sales&&g.stock)assert(g.stock.top>=g.sales.bottom,g.id);
     if(g.stock)assert(g.card.bottom-g.stock.bottom<=10,g.id);
+   }
+   for(const card of [zoom,capcut]){
+    const placement=await card.evaluate(n=>{
+     const img=n.querySelector('.imgWrap').getBoundingClientRect(),a=n.querySelector('.homeCardInstant').getBoundingClientRect();
+     const b=n.querySelector('.homeCardLabels')?.getBoundingClientRect();
+     return {left:a.left-img.left,bottom:img.bottom-a.bottom,overlap:!!b&&b.bottom>a.top};
+    });
+    assert(placement.left>=4&&placement.left<=8);
+    assert(placement.bottom>=3&&placement.bottom<=7);
+    assert.equal(placement.overlap,false);
    }
    assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    if([390,1440].includes(width)){
@@ -100,19 +136,19 @@ try{
     const bounds=await grid.boundingBox(),top=Math.floor(boxes[0].y),bottom=Math.ceil(Math.max(...boxes.map(box=>box.y+box.height)));
     await page.screenshot({path:path.join(output,'ana-sehife-'+width+'.png'),animations:'disabled',clip:{x:Math.ceil(bounds.x),y:top,width:Math.floor(bounds.width),height:bottom-top}});
    }
-   stock=28;const before=calls;
+   stock=6;const before=calls;
    await page.evaluate(()=>window.MirpanelInventory.refresh({force:true}));
-   await zoom.getByText('Stok: 28',{exact:true}).waitFor();assert(calls>before);
-   await noDelivery();
+   assert.equal(await zoom.locator('.cardStockLine').count(),0);assert(calls>before);
+   await noLongDelivery();
    await page.locator('#tabs [data-home-filter="best"]').click();
    assert((await cards.count())<geometry.length);
-   await noDelivery();
+   await noLongDelivery();
    await page.getByRole('tab',{name:'Hamısı',exact:true}).click();
    assert.equal(await cards.count(),geometry.length);
    await capcut.getByText('2 319+ dəfə satılıb',{exact:true}).waitFor();
-   await noDelivery();
-   if(mobile){
-    await zoom.getByRole('button',{name:'Səbətə əlavə et'}).tap();
+   await noLongDelivery();
+   {
+    await zoom.getByRole('button',{name:'Səbətə əlavə et'}).click();
     const consent=page.locator('dialog.cart-entry[open]');
     await consent.getByText('Səbət sınağı',{exact:true}).waitFor();
     await consent.getByRole('checkbox').check();
@@ -123,7 +159,9 @@ try{
     const cart=await page.evaluate(()=>JSON.parse(localStorage.getItem('mirpanel.cart.v1')||'[]'));
     assert(cart.some(item=>item.productId==='zoom'&&item.planIndex===0&&item.quantity===1));
    }
-   console.log(width+'px: rows '+[...rows.values()].join('/')+', card geometry, forced stock refresh, filters'+(mobile?' and cart':''));
+   console.log(engineName+' '+width+'px: rows '+[...rows.values()].join('/')+', card geometry, forced stock refresh, filters'+(mobile?' and cart':''));
   }finally{await ctx.close();}
  }
-}finally{await browser.close();await new Promise(r=>server.close(r));}
+ await browser.close();
+ }
+}finally{await browser?.close();await new Promise(r=>server.close(r));}

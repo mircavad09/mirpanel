@@ -98,3 +98,62 @@
     padding: 7px !important;
   }
 }
+
+/* The circle owns its border at every breakpoint and stays inside a 44px target. */
+#homePageView #grid :is(.homeCardAdd, .homeCardOrder) {
+  grid-area: action;
+  margin: -6px 0;
+  border: 1px solid #d9ad32;
+  background: #111214;
+  color: #ffd43c;
+}
+#homePageView #grid .homeCardAdd span {
+  border-radius: 0;
+}
+#homePageView #grid .homeCardBody .cardStockBadge.low {
+  display: inline;
+  border: 0;
+  padding: 0;
+  border-radius: 0;
+  background: none;
+  color: #ff777e;
+  box-shadow: none;
+  font: 500 10px/1.3 system-ui, sans-serif;
+}
+#homePageView #grid .homeCardBody .cardStockBadge.low::before {
+  content: none;
+}
+#homePageView #grid .homeProductCard .imgWrap .homeCardInstant {
+  position: absolute;
+  left: 6px;
+  bottom: 5px;
+  display: inline-flex !important;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  background: #080d0deb;
+  color: #72edac;
+  font: 600 10px/1.3 system-ui, sans-serif;
+  pointer-events: none;
+}
+#homePageView #grid .homeCardInstant::before {
+  content: "";
+  width: 9px;
+  height: 11px;
+  background: currentColor;
+  clip-path: polygon(55% 0,10% 56%,43% 56%,36% 100%,92% 39%,59% 39%);
+}
+#homePageView #grid .imgWrap:has(.homeCardInstant) .homeCardLabels {
+  bottom: 25px;
+}
+#homePageView #grid .homeCardPrices {
+  align-items: baseline;
+}
+#homePageView #grid .homeCardSales {
+  min-height: 0;
+}
+
+#homePageView #grid .homeCardBody .homeCardSales {
+  grid-area: sales;
+}
