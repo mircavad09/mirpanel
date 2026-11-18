@@ -1,0 +1,100 @@
+/* Homepage only. Catalog and product-detail layouts retain their own rules. */
+#homePageView #grid {
+  align-items: start;
+}
+
+@media (min-width: 768px) {
+  #homePageView #grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+}
+
+#homePageView #grid .homeProductCard {
+  min-width: 0;
+  min-height: 0 !important;
+}
+
+#homePageView #grid .homeCardBody {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 44px;
+  grid-template-areas: "title title" "price action";
+  grid-template-rows: auto auto;
+  grid-auto-rows: auto;
+  align-content: start;
+  align-items: start;
+  gap: 3px 6px !important;
+  padding: 8px 9px !important;
+}
+
+#homePageView #grid .homeCardBody:has(.homeCardSales:not([hidden])) {
+  grid-template-areas: "title title" "price action" "sales action";
+  grid-template-rows: auto min-content auto;
+}
+
+#homePageView #grid .homeCardBody:has(.cardStockLine:not(:empty,[hidden])) {
+  grid-template-areas: "title title" "price action" "stock stock";
+  grid-template-rows: auto auto auto;
+}
+
+#homePageView #grid .homeCardBody:has(.homeCardSales:not([hidden])):has(.cardStockLine:not(:empty,[hidden])) {
+  grid-template-areas: "title title" "price action" "sales action" "stock stock";
+  grid-template-rows: auto min-content auto auto;
+}
+
+#homePageView #grid .homeCardBody .title {
+  display: block !important;
+  height: auto;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0;
+  overflow-wrap: anywhere !important;
+}
+
+#homePageView #grid .homeCardPrices {
+  align-self: start;
+  align-content: start;
+}
+
+#homePageView #grid :is(.homeCardSales[hidden], .cardStockLine:is(:empty,[hidden]), .homeCardDelivery, .homeCardInstant) {
+  display: none !important;
+}
+
+#homePageView #grid .homeCardBody .cardStockLine {
+  margin: 0;
+  min-width: 0;
+}
+
+#homePageView #grid :is(.homeCardAdd, .homeCardOrder) {
+  display: grid;
+  place-items: center;
+  align-self: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+#homePageView #grid .homeProductCard:has(.homeCardAdd) .homeCardOrder {
+  display: none;
+}
+
+#homePageView #grid .homeCardAdd::after {
+  content: none;
+}
+
+#homePageView #grid .homeCardAdd span {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border: 0;
+  font-size: 0;
+  background: linear-gradient(currentColor,currentColor) center / 14px 2px no-repeat,
+              linear-gradient(currentColor,currentColor) center / 2px 14px no-repeat;
+}
+
+@media (max-width: 767px) {
+  #homePageView #grid .homeCardBody {
+    gap: 3px 4px !important;
+    padding: 7px !important;
+  }
+}

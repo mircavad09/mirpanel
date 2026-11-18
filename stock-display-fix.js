@@ -128,7 +128,7 @@
       }
       void result.then(count=>{
         if(!line.isConnected || count===null)return;
-        line.textContent=`${new Intl.NumberFormat('en-US').format(count).replaceAll(',',' ')} dəfə satılıb`;
+        line.textContent=`${new Intl.NumberFormat('en-US').format(count).replaceAll(',',' ')}+ dəfə satılıb`;
         line.hidden=false;
       });
     });
@@ -241,11 +241,15 @@
             let label=line.querySelector('.cardStockBadge');if(!label){label=document.createElement('span');line.replaceChildren(label);}
             label.className='mpStockBadge cardStockBadge '+badge.className;label.textContent=badge.text;
           }
-          const start=(product.plans||[]).findIndex(p=>Number(p.price)===minPrice(product)),label=deliveryFor(product,start);
-          card.querySelector('.homeCardInstant')?.remove();
-          let delivery=card.querySelector('.homeCardDelivery');
-          if(!label)delivery?.remove();
-          else{if(!delivery){delivery=document.createElement('p');delivery.className='homeCardDelivery';card.querySelector('.pad').append(delivery);}delivery.textContent=label;delivery.classList.toggle('is-instant',label==='Anında təqdim olunur');}
+          if(card.closest('#homePageView #grid')) {
+            card.querySelectorAll('.homeCardInstant,.homeCardDelivery').forEach(node=>node.remove());
+          } else {
+            const start=(product.plans||[]).findIndex(p=>Number(p.price)===minPrice(product)),label=deliveryFor(product,start);
+            card.querySelector('.homeCardInstant')?.remove();
+            let delivery=card.querySelector('.homeCardDelivery');
+            if(!label)delivery?.remove();
+            else{if(!delivery){delivery=document.createElement('p');delivery.className='homeCardDelivery';card.querySelector('.pad').append(delivery);}delivery.textContent=label;delivery.classList.toggle('is-instant',label==='Anında təqdim olunur');}
+          }
           const add=card.querySelector('.homeCardAdd');
           if(add){add.disabled=state.salesDisabled||!state.unavailable&&!state.canOrder;card.toggleAttribute('data-cart-available',!state.unavailable&&state.canOrder);}
           const button=card.querySelector('.homeCardOrder');if(button){const navigate=!state.salesDisabled&&(state.unavailable||state.canOrder);button.setAttribute('aria-disabled',String(!navigate));button.tabIndex=navigate?0:-1;button.style.opacity=navigate?'':'.45';}

@@ -1,88 +1,129 @@
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import path from 'node:path';
+import fs from 'node:fs/promises';
 import http from 'node:http';
-import {execFileSync} from 'node:child_process';
-import {pathToFileURL} from 'node:url';
+import path from 'node:path';
+import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 import {extractAdminState} from '../mirpanel-admin/core.mjs';
-const root=process.cwd(),catalog=extractAdminState(fs.readFileSync('app.js','utf8'));
-const active=catalog.products.filter(p=>p.active!==false),counts=new Map(active.map((p,i)=>[p.id,1000+i*13]));
-const originalJs=execFileSync('git',['show','10221ab:stock-display-fix.js'],{encoding:'utf8'}),originalCss=execFileSync('git',['show','10221ab:stock-display-fix.css'],{encoding:'utf8'});
-let baseline=false,initialized=true,mismatched=false,writes=0;
-const server=http.createServer((req,res)=>{
- if(req.method!=='GET'){writes++;res.writeHead(405);return res.end();}
- const url=new URL(req.url,'http://local');let file=url.pathname==='/'?'index.html':decodeURIComponent(url.pathname.slice(1));
- if(file.startsWith('mehsul/')&&!path.extname(file))file+='.page';
- const name=path.resolve(root,file);
- if(!name.startsWith(root+path.sep)||!fs.existsSync(name)||!fs.statSync(name).isFile()){res.writeHead(404);return res.end();}
- res.setHeader('Content-Type',({'.html':'text/html; charset=utf-8','.page':'text/html; charset=utf-8','.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.png':'image/png','.jpg':'image/jpeg','.webp':'image/webp','.svg':'image/svg+xml'})[path.extname(name)]||'application/octet-stream');
- res.end(baseline&&file==='stock-display-fix.js'?originalJs:baseline&&file==='stock-display-fix.css'?originalCss:fs.readFileSync(name));
-});
-await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;
-const {chromium}=await import(pathToFileURL(path.join(process.env.MIRPANEL_NODE_MODULES,'playwright/index.mjs')));
-const browser=await chromium.launch({headless:true,executablePath:process.env.MIRPANEL_BROWSER_PATH});
-const visual=process.env.MIRPANEL_VISUAL_DIR;if(visual)fs.mkdirSync(visual,{recursive:true});
-const errors=[],checks=[],apiIds=new Set();
-async function open(width){
- const context=await browser.newContext({viewport:{width,height:width<500?844:900},reducedMotion:'reduce'});
- await context.route('**/*',async route=>{
-  const req=route.request(),url=new URL(req.url());
-  if(!['GET','HEAD'].includes(req.method())){writes++;return route.abort();}
-  if(url.origin===origin)return route.continue();
-  if(url.pathname==='/api/product-sales'){
-   const id=url.searchParams.get('productId');apiIds.add(id);
-   return route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({initialized,productId:mismatched?'unknown-other-id':id,productTotal:counts.get(id)||0,siteTotal:12000})});
-  }
-  return route.fulfill({status:200,contentType:'application/json',body:'{}'});
- });
- const page=await context.newPage();page.on('pageerror',e=>errors.push(e.message));
- await page.goto(origin,{waitUntil:'networkidle'});await page.waitForSelector('#grid .card');
- await page.waitForTimeout(500);return page;
-}
-async function snapshot(page){return page.locator('#grid .card').evaluateAll(cards=>cards.map(c=>({id:c.dataset.productId,href:c.getAttribute('href')||c.querySelector('.homeCardOrder')?.getAttribute('href'),image:c.querySelector('img').getAttribute('src'),price:(c.querySelector('.cornerPrice')||c.querySelector('.homeCardPrices strong')).textContent})));}
-async function scrollCards(page){await page.evaluate(()=>window.scrollTo(0,document.getElementById('grid').getBoundingClientRect().top+scrollY-document.querySelector('#mainHeader').getBoundingClientRect().height-12));}
-try{
- for(const width of [320,390,430,768,1440]){
-  baseline=true;const before=await open(width);const old=await snapshot(before);
-  const protectedBefore=await before.locator('#homeHero,.stories-section,.site-header,.footer').evaluateAll(els=>els.map(e=>{const c=e.cloneNode(true);for(const n of c.querySelectorAll('*')){const a=[...n.attributes].map(v=>[v.name,v.value]).sort((a,b)=>a[0].localeCompare(b[0]));for(const v of [...n.attributes])n.removeAttribute(v.name);for(const[k,v]of a)n.setAttribute(k,v);}return[e.id,e.className,c.innerHTML];}));
-  await scrollCards(before);if(visual)await before.screenshot({path:path.join(visual,`before-${width}.png`)});
-  await before.context().close();baseline=false;const page=await open(width);
-  await page.waitForFunction(()=>[...document.querySelectorAll('#grid .homeCardSales')].every(e=>!e.hidden));
-  assert.deepEqual(await snapshot(page),old,'IDs/order/images/prices/links changed');
-  const protectedAfter=await page.locator('#homeHero,.stories-section,.site-header,.footer').evaluateAll(els=>els.map(e=>{const c=e.cloneNode(true);for(const n of c.querySelectorAll('*')){const a=[...n.attributes].map(v=>[v.name,v.value]).sort((a,b)=>a[0].localeCompare(b[0]));for(const v of [...n.attributes])n.removeAttribute(v.name);for(const[k,v]of a)n.setAttribute(k,v);}return[e.id,e.className,c.innerHTML];}));
-  assert.deepEqual(protectedAfter,protectedBefore,'Protected homepage DOM changed');
-  assert.equal(await page.locator('#grid .cornerPrice,#grid .btn.primary').count(),0);
-  for(const p of active){
-   const card=page.locator(`#grid [data-product-id="${p.id}"]`);assert.equal(await card.count(),1);
-   assert.equal(await card.locator('.homeCardSales').textContent(),`≈ ${String(counts.get(p.id)).replace(/\B(?=(\d{3})+(?!\d))/g,' ')}+ satılıb`);
-   const amount=p.id==='tiktok_jeton'?10:Math.min(...p.plans.filter(v=>v.price>0).map(v=>v.price));
-   const plan=p.plans.find(v=>Number(v.price)===amount),oldCents=Math.round(Number(plan?.regularPrice)*100),cents=Math.round(amount*100);
-   const discounted=Number.isSafeInteger(oldCents)&&oldCents>cents&&cents>0;
-   assert.equal(await card.locator('.homeCardPrices del').count(),discounted?1:0);
-   assert.equal(await card.locator('.homeCardDiscount').count(),discounted?1:0);
-   if(discounted)assert.equal(await card.locator('.homeCardDiscount').textContent(),`-${Math.round((oldCents-cents)/oldCents*100)}%`);
-   assert.equal(await card.locator('.homeCardLabels').getByText('🔥 Ən çox satılan',{exact:true}).count(),p.bestSeller===true?1:0);
-   assert.equal(await card.locator('.homeCardLabels').getByText('⚡ Anında',{exact:true}).count(),p.deliveryType==='automatic'?1:0);
-   assert.ok(await card.evaluate(e=>{const r=e.getBoundingClientRect(),button=e.querySelector('.homeCardOrder').getBoundingClientRect(),image=e.querySelector('.imgWrap').getBoundingClientRect(),price=e.querySelector('.homeCardPrices').getBoundingClientRect();return button.width>=44&&button.height>=44&&button.right<=r.right+1&&price.top>=image.bottom&&e.scrollWidth<=e.clientWidth+1;}));
-  }
-  const arrow=page.locator('.homeCardOrder').first();await arrow.focus();
-  assert.ok(await arrow.evaluate(e=>getComputedStyle(e).outlineStyle!=='none'));
-  const g=await page.evaluate(()=>({overflow:document.documentElement.scrollWidth-innerWidth,columns:getComputedStyle(document.getElementById('grid')).gridTemplateColumns.split(' ').length}));
-  assert.equal(g.overflow,0);if(width<500)assert.equal(g.columns,2);
-  await scrollCards(page);if(visual)await page.screenshot({path:path.join(visual,`after-${width}.png`)});
-  checks.push({width,...g,cards:old.length,discounts:true,canonicalSales:true});
-  // Compare the existing filter/sort/search results, not new filtering rules.
-  await page.locator('.site-header-search input:visible').first().fill('Spotify');assert.ok((await snapshot(page)).every(c=>/spotify/.test(c.id)));
-  await page.locator('.site-header-search input:visible').first().fill('');await page.selectOption('#sortSelect','price-asc',{force:true});
-  baseline=true;const compare=await open(width);await compare.selectOption('#sortSelect','price-asc',{force:true});assert.deepEqual(await snapshot(page),await snapshot(compare));await compare.context().close();baseline=false;
-  await page.locator('.homeCardOrder').first().click();await page.waitForURL('**/mehsul/**');assert.equal(await page.locator('#productPageView').count(),1);
-  await page.context().close();
+import {cartPageContent,cartPageScript,cartPageStyle} from '../cart-page.mjs';
+
+const {products}=extractAdminState(await fs.readFile('app.js','utf8'));
+const types={'.html':'text/html','.css':'text/css','.js':'text/javascript','.mjs':'text/javascript','.png':'image/png','.webp':'image/webp','.jpg':'image/jpeg','.svg':'image/svg+xml'};
+const server=http.createServer(async(req,res)=>{
+ const url=new URL(req.url,'http://localhost');
+ if(url.pathname==='/sebet'){
+  res.setHeader('Content-Type','text/html; charset=utf-8');
+  return res.end('<!doctype html><meta charset="utf-8">'+cartPageStyle+cartPageContent+cartPageScript);
  }
- initialized=false;let page=await open(390);assert.equal(await page.locator('.homeCardSales:not([hidden])').count(),0);assert.ok(!(await page.locator('#grid').textContent()).includes('0+ satılıb'));await page.context().close();
- initialized=true;mismatched=true;page=await open(390);assert.equal(await page.locator('.homeCardSales:not([hidden])').count(),0);await page.context().close();mismatched=false;
- page=await open(390);
- const unit=await page.evaluate(()=>{const p=DATA.products[0];return [undefined,0,4,5,10].map(old=>{const doc=new DOMParser().parseFromString(cardHTML({...p,id:'unit',plans:[{price:5,regularPrice:old}]},0),'text/html');return{old:doc.querySelectorAll('del').length,discount:doc.querySelector('.homeCardDiscount')?.textContent||null};});});
- assert.deepEqual(unit,[{old:0,discount:null},{old:0,discount:null},{old:0,discount:null},{old:0,discount:null},{old:1,discount:'-50%'}]);await page.context().close();
- assert.equal(apiIds.size,active.length);assert.deepEqual(errors,[]);assert.equal(writes,0);
- console.log(JSON.stringify({checks,uninitializedHidden:true,wrongIdHidden:true,noInventedBadges:true,priceVariants:unit,appErrors:errors,realOrders:0,realReservations:0,protectedDataWrites:writes},null,2));
+ const file=url.pathname==='/'?'index.html':url.pathname.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+url.pathname.slice(18):url.pathname.slice(1);
+ try{const bytes=await fs.readFile(file);res.setHeader('Content-Type',types[path.extname(file)]||'application/octet-stream');res.end(bytes);}
+ catch{res.writeHead(404);res.end();}
+});
+await new Promise(r=>server.listen(0,'127.0.0.1',r));
+const origin='http://127.0.0.1:'+server.address().port;
+const browser=await chromium.launch({executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+const output=path.resolve('outputs/home-product-cards');
+const forbidden=/Anında təqdim olunur|Ödənişdən (?:dərhal )?sonra avtomatik icra olunur/i;
+await fs.mkdir(output,{recursive:true});
+try{
+ for(const width of [320,390,430,768,1024,1440,1920]){
+  const mobile=width<768,ctx=await browser.newContext({viewport:{width,height:880},isMobile:mobile,hasTouch:mobile,reducedMotion:'reduce'});
+  let stock=27,calls=0;const drafts=[];
+  try{
+   await ctx.addInitScript(()=>sessionStorage.setItem('mirpanel.intro.seen','1'));
+   await ctx.route('**/*',route=>{
+    const req=route.request(),url=new URL(req.url()),p=url.pathname;
+    const json=data=>route.fulfill({json:data});
+    if(p==='/api/payments/inventory'){
+     calls++;
+     return json({products:products.map(product=>{
+      const tracked=['zoom','capcut'].includes(product.id),count=product.id==='zoom'?stock:24;
+      return {productId:product.id,canOrder:true,scope:'product',unlimited:!tracked,available:tracked?count:null,
+       plans:product.plans.map((_,i)=>({planKey:String(i),canOrder:true,tracked,available:tracked?count:null,fulfillment:{automatic:true,ready:count}}))};
+     })});
+    }
+    if(p==='/api/product-sales'){
+     const productId=url.searchParams.get('productId');
+     return json({initialized:true,productId,productTotal:productId==='capcut'?2319:productId==='zoom'?129:2737,siteTotal:12000});
+    }
+    if(p==='/api/payments/shop/quote'&&req.method()==='POST')return json({items:req.postDataJSON().items.map(x=>{
+     const product=products.find(y=>y.id===x.productId),plan=product.plans[x.planIndex];
+     return {...x,title:product.title,planName:plan.label||'Aylıq',terms:'Səbət sınağı',termsVersion:'fixture',unitCents:Math.round(plan.price*100),available:27,fields:[]};
+    })});
+    if(p==='/api/payments/shop/draft'&&req.method()==='POST'){
+     const {id,productId,planIndex,termsVersion}=req.postDataJSON();
+     drafts.push({productId,planIndex});return json({draftId:id,lineId:id,productId,planIndex,termsVersion,quantity:1});
+    }
+    if(url.origin!==origin||req.method()!=='GET')return route.abort();
+    if(p.startsWith('/api/'))return json({banners:[],stories:[],items:[],products:[]});
+    return route.continue();
+   });
+   const page=await ctx.newPage();
+   page.setDefaultTimeout(10000);
+   await page.goto(origin,{waitUntil:'domcontentloaded'});
+   const grid=page.locator('#homePageView #grid'),cards=grid.locator('.homeProductCard');
+   const zoom=grid.locator('[data-product-id="zoom"]'),capcut=grid.locator('[data-product-id="capcut"]');
+   await zoom.getByText('Stok: 27',{exact:true}).waitFor();
+   await zoom.getByText('129+ dəfə satılıb',{exact:true}).waitFor();
+   await capcut.getByText('2 319+ dəfə satılıb',{exact:true}).waitFor();
+   const noDelivery=async()=>{
+    assert.equal(await grid.locator('.homeCardInstant,.homeCardDelivery').count(),0);
+    assert.doesNotMatch(await grid.textContent(),forbidden);
+   };
+   await noDelivery();
+   const geometry=await cards.evaluateAll(elements=>elements.map(card=>{
+    const rect=el=>el?.getBoundingClientRect().toJSON();
+    const find=s=>rect(card.querySelector(s));
+    return {id:card.dataset.productId,card:rect(card),image:find('.imgWrap'),title:find('.title'),price:find('.homeCardPrices'),plus:find('.homeCardAdd'),icon:find('.homeCardAdd span'),sales:find('.homeCardSales:not([hidden])'),stock:find('.cardStockLine')};
+   }));
+   const rows=new Map();
+   for(const item of geometry){const key=Math.round(item.card.top);rows.set(key,(rows.get(key)||0)+1);}
+   const perRow=mobile?2:5;
+   assert.deepEqual([...rows.values()].slice(0,2),[perRow,perRow]);
+   assert([...rows.values()].slice(0,-1).every(n=>n===perRow));
+   assert.equal([...rows.values()].at(-1),(geometry.length%perRow)||perRow);
+   for(const g of geometry){
+    assert(Math.abs(g.image.width/g.image.height-16/9)<.02,g.id);
+    assert(g.price.top-g.title.bottom>=0&&g.price.top-g.title.bottom<=6,g.id);
+    if(g.plus){
+     assert(g.plus.left>=g.price.right-1&&Math.min(g.plus.height,g.plus.width)>=44,g.id);
+     assert(Math.abs((g.plus.top+g.plus.bottom-g.icon.top-g.icon.bottom)/2)<1,g.id);
+     assert(Math.abs((g.plus.left+g.plus.right-g.icon.left-g.icon.right)/2)<1,g.id);
+    }
+    if(g.sales&&g.stock)assert(g.stock.top>=g.sales.bottom,g.id);
+    if(g.stock)assert(g.card.bottom-g.stock.bottom<=10,g.id);
+   }
+   assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+   if([390,1440].includes(width)){
+    await grid.evaluate(node=>scrollBy(0,node.getBoundingClientRect().top-135));
+    await cards.locator('.img').evaluateAll(nodes=>Promise.all(nodes.slice(0,10).map(img=>img.decode().catch(()=>{}))));
+    const boxes=await Promise.all(Array.from({length:perRow*2},(_,i)=>cards.nth(i).boundingBox()));
+    const bounds=await grid.boundingBox(),top=Math.floor(boxes[0].y),bottom=Math.ceil(Math.max(...boxes.map(box=>box.y+box.height)));
+    await page.screenshot({path:path.join(output,'ana-sehife-'+width+'.png'),animations:'disabled',clip:{x:Math.ceil(bounds.x),y:top,width:Math.floor(bounds.width),height:bottom-top}});
+   }
+   stock=28;const before=calls;
+   await page.evaluate(()=>window.MirpanelInventory.refresh({force:true}));
+   await zoom.getByText('Stok: 28',{exact:true}).waitFor();assert(calls>before);
+   await noDelivery();
+   await page.locator('#tabs [data-home-filter="best"]').click();
+   assert((await cards.count())<geometry.length);
+   await noDelivery();
+   await page.getByRole('tab',{name:'Hamısı',exact:true}).click();
+   assert.equal(await cards.count(),geometry.length);
+   await capcut.getByText('2 319+ dəfə satılıb',{exact:true}).waitFor();
+   await noDelivery();
+   if(mobile){
+    await zoom.getByRole('button',{name:'Səbətə əlavə et'}).tap();
+    const consent=page.locator('dialog.cart-entry[open]');
+    await consent.getByText('Səbət sınağı',{exact:true}).waitFor();
+    await consent.getByRole('checkbox').check();
+    await consent.getByRole('button',{name:'Təsdiqləyirəm'}).click();
+    await page.waitForURL(origin+'/sebet');
+    await page.getByRole('dialog',{name:'Səbət'}).waitFor();
+    assert.deepEqual(drafts,[{productId:'zoom',planIndex:0}]);
+    const cart=await page.evaluate(()=>JSON.parse(localStorage.getItem('mirpanel.cart.v1')||'[]'));
+    assert(cart.some(item=>item.productId==='zoom'&&item.planIndex===0&&item.quantity===1));
+   }
+   console.log(width+'px: rows '+[...rows.values()].join('/')+', card geometry, forced stock refresh, filters'+(mobile?' and cart':''));
+  }finally{await ctx.close();}
+ }
 }finally{await browser.close();await new Promise(r=>server.close(r));}
