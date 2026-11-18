@@ -229,7 +229,7 @@ export function roomSheetClient(id,account,ownerEmail,http=fetch){
    else for(let columnIndex=0;columnIndex<safeValues.length;columnIndex++){
     // Unknown ownership and date are never sent as clearing writes.
     if(columnIndex===0&&!String(values[0]??'').trim()&&!release||columnIndex===4&&!roomDateCell(values[4]))continue;
-    ops.push({updateCells:{start:{sheetId,rowIndex,columnIndex},rows:[{values:[row.values[columnIndex]]}],fields:'userEnteredValue,userEnteredFormat.numberFormat'}});
+    ops.push({updateCells:{start:{sheetId,rowIndex,columnIndex},rows:[{values:[row.values[columnIndex]]}],fields:'userEnteredValue,userEnteredFormat.numberFormat,userEnteredFormat.textFormat.fontSize'}});
    }
    if(needsNameClear(current))ops.push(cellWrite(sheetId,rowIndex,8,''));
    if(ops.length)await request(endpoint+':batchUpdate',{requests:ops});

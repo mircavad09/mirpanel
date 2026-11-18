@@ -46,7 +46,7 @@ export function roomDateCell(value){
 export function roomCellFormat(index){
  return {
   backgroundColor:color('#FFFFFF'),
-  textFormat:{fontFamily:'Arial',fontSize:11,foregroundColor:color('#20262D'),bold:index===0||index===1},
+  textFormat:{fontFamily:'Arial',fontSize:10,foregroundColor:color('#20262D'),bold:index===0||index===1},
   verticalAlignment:'MIDDLE',
   horizontalAlignment:'LEFT',
   wrapStrategy:'WRAP',
