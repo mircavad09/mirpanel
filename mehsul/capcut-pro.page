@@ -120,6 +120,12 @@
       <div class="product-page-similar-title" title="Canva Premium">Canva Premium</div>
       <div class="product-page-similar-category">design</div>
       <div class="product-page-similar-price">2.99 ₼</div>
+    </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Premium (Öz hesabınız) — 5.99 ₼" title="YouTube Premium (Öz hesabınız)">
+      <img src="/uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653" class="product-page-similar-image" alt="YouTube Yeni hesab" width="320" height="320" loading="lazy" decoding="async">
+      <span class="capcut-similar-discount">-60%</span>
+      <div class="product-page-similar-title" title="YouTube Premium (Öz hesabınız)">YouTube Premium (Öz hesabınız)</div>
+      <div class="product-page-similar-category">subscriptions</div>
+      <div class="product-page-similar-price">5.99 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/zoom-pro" aria-label="Zoom Pro — 9.98 ₼" title="Zoom Pro">
       <img src="/uploads/products/zoom-1793128113656-08a17411.png?v=1793128113656" class="product-page-similar-image" alt="Zoom Pro — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <span class="capcut-similar-discount">-63%</span>
@@ -155,12 +161,6 @@
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">subscriptions</div>
       <div class="product-page-similar-price">2.89 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 3.33 ₼" title="HBO Max">
-      <img src="/uploads/products/hbomax-1794730390763-0efc1b5b.png?v=1794730390763" class="product-page-similar-image" alt="HBO Max — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
-      <span class="capcut-similar-discount">-74%</span>
-      <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
-      <div class="product-page-similar-category">subscriptions</div>
-      <div class="product-page-similar-price">3.33 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -222,7 +222,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-922025ba8b1dfa70"></script>
+  <script src="/app.js?v=image-alt-20261117-2d5c16d89fb08b00"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=sales-count-2"></script>
