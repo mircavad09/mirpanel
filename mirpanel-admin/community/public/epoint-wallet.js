@@ -76,7 +76,11 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
   frame.allow='payment '+url.origin;frame.referrerPolicy='strict-origin-when-cross-origin';
   frame.style.cssText='display:block;width:100%;max-width:100%;height:400px;border:0';
   close=button('Ödəniş pəncərəsini bağla',()=>{stopWidget();say('Ödənişin vəziyyətini yoxlaya və ya eyni ödənişə davam edə bilərsiniz.');setLabels();});
-  showDigital?.(true);form.append(frame,close);say('Ödəniş yoxlanılır…');frame.scrollIntoView({block:'nearest'});void poll();
+  showDigital?.(true);form.append(frame,close);
+  say('Epoint ödəniş pəncərəsi açılır…');
+  const openedFrame=frame;
+  frame.addEventListener('load',()=>{if(frame===openedFrame&&frame.isConnected)say('Ödənişi Epoint pəncərəsində tamamlayın. Düymə görünmürsə, cihazınızda uyğun Apple Pay və ya Google Pay ödəniş vasitəsinin aktiv olduğunu yoxlayın. Balans yalnız server təsdiqindən sonra artırılır.');},{once:true});
+  frame.scrollIntoView({block:'nearest'});void poll();
  }
  window.addEventListener('message',event=>{
   if(!frame||event.source!==frame.contentWindow||event.origin!==new URL(frame.src).origin||!['success','failed','error'].includes(event.data?.status))return;

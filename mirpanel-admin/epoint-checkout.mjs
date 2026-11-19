@@ -2,6 +2,7 @@ import {createHash} from 'node:crypto';
 import {registerEpointWalletIntent} from './epoint-result.mjs';
 import {parseTopupCents,topupAmountText} from './community/public/topup-amount.js';
 import {epointWallets} from './epoint-api.mjs';
+import {inspectWalletOpening} from './epoint-opening.mjs';
 
 const origin='https://mirpanel.com';
 const endpoint='https://epoint.az/api/1/request';
@@ -27,6 +28,8 @@ export function ensureEpointCheckout(pool){
       check(method in ('card','apple-pay','google-pay','m10','birbank'));
      alter table mirpanel_community.epoint_checkout_requests add column if not exists wallet_id text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists candidate_transaction text;
+     alter table mirpanel_community.epoint_checkout_requests add column if not exists provider_trace text;
+     alter table mirpanel_community.epoint_checkout_requests add column if not exists provider_issue text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_status text not null default 'new';
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_code text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists next_check_at timestamptz not null default clock_timestamp();
@@ -95,7 +98,7 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
   return publicResult(old);
  }
  const orderId='mp_ep_'+id;
- const payload={public_key:env.EPOINT_PUBLIC_KEY.trim(),amount:widget?cents/100:topupAmountText(cents),order_id:orderId,description:'MirPanel balans artırma'};
+ const payload={public_key:env.EPOINT_PUBLIC_KEY.trim(),amount:widget||wallet?cents/100:topupAmountText(cents),order_id:orderId,description:'MirPanel balans artırma'};
  if(!widget)Object.assign(payload,{currency:'AZN',language:'az',success_redirect_url:origin+'/odenis/epoint/ugurlu?ref='+id,error_redirect_url:origin+'/odenis/epoint/ugursuz?ref='+id});
  if(wallet){payload.wallet_id=walletId;delete payload.success_redirect_url;delete payload.error_redirect_url;}
  const data=Buffer.from(JSON.stringify(payload)).toString('base64'),key=env.EPOINT_PRIVATE_KEY.trim();
@@ -111,7 +114,12 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
   await pool.query("update mirpanel_community.epoint_checkout_requests set state='declined' where id=$1",[id]);
   return {state:'declined'};
  }
- if(answer?.status!=='success'||(!widget&&typeof answer.transaction!=='string'))throw fail(503,pendingMessage);
+ if(wallet){
+  const opening=inspectWalletOpening(answer);
+  // Persist safe diagnostics even for null/invalid links. Never resend this UUID.
+  await pool.query('update mirpanel_community.epoint_checkout_requests set candidate_transaction=$2,provider_trace=$3,provider_issue=$4 where id=$1',[id,opening.transaction,opening.trace,opening.issue]);
+  if(!opening.ready)throw fail(503,opening.issue==='missing_redirect_url'?'Epoint ödəniş keçidini qaytarmadı. Təkrar ödəniş yaratmadan dəstəyə müraciət edin.':pendingMessage);
+ }else if(answer?.status!=='success'||(!widget&&typeof answer.transaction!=='string'))throw fail(503,pendingMessage);
  // The documented widget response may contain only a URL. Its signed callback binds the transaction.
  const redirect=redirectUrl(widget?answer.widget_url:answer.redirect_url,env);
  if(widget){

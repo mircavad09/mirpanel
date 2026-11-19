@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {inspectWalletOpening as inspect} from '../mirpanel-admin/epoint-opening.mjs';
+const transaction='te024150195',trace_id='trace-test';
+assert.equal(inspect({status:'success',transaction,trace_id,redirect_url:'https://epoint.az/pay'}).ready,true);
+assert.equal(inspect({transaction,trace_id,redirect_url:'https://epoint.az/pay'}).ready,true);
+assert.deepEqual(inspect({transaction,trace_id,redirect_url:null}),{transaction,trace:'trace-test',issue:'missing_redirect_url',url:null,ready:false});
+const bank={status:403,code:'invalid_policy',message:'PaymentCreatorPolicy failed, reason: Merchant EXAMPLE is disabled'};
+const redirect_url='https://epoint.az/wallet/pay-with-wallet/bir_bank?payload='+encodeURIComponent(Buffer.from(JSON.stringify(bank)).toString('base64'));
+assert.equal(inspect({transaction,redirect_url}).issue,'provider_rejected_redirect');
+assert.equal(inspect({transaction,redirect_url:'not a url'}).ready,false);
+assert.equal(inspect({status:'error',transaction,redirect_url:'https://epoint.az/pay'}).ready,false);
+assert.equal(inspect({redirect_url:'https://epoint.az/pay'}).ready,false);
+console.log('PASS wallet opening: documented response, observed missing status, null link, embedded bank rejection, invalid URL and absent transaction. No provider calls.');
