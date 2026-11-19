@@ -129,3 +129,15 @@ body:has(.mir-cart-drawer[open]){overflow:hidden}
 @keyframes mir-cart-nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(3px)}}
 @media(max-width:360px){.mir-cart-drawer{width:calc(100% - 24px)}.mir-cart-body{padding:9px}.mir-cart-item{gap:5px 7px;padding:8px}.mir-cart-item>.mir-cart-artwork{width:48px;height:42px}.mir-cart-item{grid-template-columns:48px minmax(0,1fr)}.mir-cart-item>.mir-cart-info{padding-right:29px}.mir-cart-info>strong{font-size:12px}.mir-cart-info>b{padding-right:59px;font-size:14px}.mir-cart-suggestion{grid-template-columns:40px minmax(0,1fr) 44px}.mir-cart-suggestion>.mir-cart-info{padding:0}.mir-cart-suggestion>.mir-cart-artwork{width:40px;height:35px}.mir-cart-savings{font-size:10px}}
 @media(prefers-reduced-motion:reduce){.mir-cart-drawer[open],.mir-cart-next::before,.mir-cart-arrow svg{animation:none}.mir-cart-next::before{display:none}}
+
+/* One visual-viewport coordinate system, including direct /sebet entry. */
+html.mir-cart-open{overflow:hidden;overscroll-behavior:none}
+html.mir-cart-open :is(.site-header,.browser-bottom-nav,.community-bottom-nav,.account-mobile-balance,.whatsapp-float,.floating-whatsapp){pointer-events:none}
+html body dialog.mir-cart-drawer[data-cart-window]{position:fixed;inset:auto 0 auto;margin:0 auto;top:calc(var(--cart-view-top,0px) + var(--cart-view-height,100dvh)/2);transform:translateY(-50%);width:min(440px,calc(100% - 28px));height:auto;min-height:0;max-height:calc(var(--cart-view-height,100dvh) - 48px - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));padding:0;z-index:2147483646;animation:mir-cart-viewport-in .18s ease-out}
+html body dialog.mir-cart-drawer[data-cart-window][open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto}
+html body dialog.mir-cart-drawer[data-cart-window][open]:has(>.mir-cart-added){grid-template-rows:auto auto minmax(0,1fr) auto}
+html body dialog.mir-cart-drawer[data-cart-window]>.mir-cart-body{min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+html body dialog.mir-cart-drawer[data-cart-window]>:is(header,footer){position:relative;flex:none;min-height:0}
+html body dialog.mir-cart-drawer[data-cart-window]>header button{background:transparent;border:0;box-shadow:none;min-width:44px;min-height:44px;padding:0}
+@keyframes mir-cart-viewport-in{from{opacity:.4}to{opacity:1}}
+@media(prefers-reduced-motion:reduce){html body dialog.mir-cart-drawer[data-cart-window]{animation:none}}

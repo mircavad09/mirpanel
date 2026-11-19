@@ -19,7 +19,7 @@
  const templateKey=p=>p==='/odenis'?'shop':['/qrup','/profil','/hesab'].includes(p)?'community':null;
  // A checkout return can open its verification sheet before the router loads.
  // Moving an open modal out of the body would remove it from the top layer.
- const persistent=n=>n.matches?.('.site-header,.browser-bottom-nav,#supportWidget,#accountDropdown,#accountNotifications,#accountGuest,#newSplashScreen,#splashLoadStatus,dialog.auth-code-sheet[open],[data-shell-persistent]');
+ const persistent=n=>n.matches?.('.site-header,.browser-bottom-nav,#supportWidget,#accountDropdown,#accountNotifications,#accountGuest,#newSplashScreen,#splashLoadStatus,dialog.auth-code-sheet[open],dialog.mir-cart-drawer[open],[data-shell-persistent]');
  function rememberStyles(doc,base){const keys=[];for(const n of doc.head.querySelectorAll('link[rel=stylesheet],style')){const url=n.tagName==='LINK'?new URL(n.getAttribute('href'),base):null;if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css')||url&&shared.test(url.pathname))continue;const key=url?url.href:'inline:'+n.textContent;keys.push(key);if(!styles.has(key)){const copy=n.ownerDocument===document?n:n.cloneNode(true);if(url&&copy!==n)copy.href=url.href;if(!copy.isConnected)document.head.insertBefore(copy,document.head.querySelector('link[href*="site-header.css"]'));styles.set(key,copy);}}return keys;}
  async function prepareStyles(keys,signal){
   await Promise.all(keys.map(key=>{

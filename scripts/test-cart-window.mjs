@@ -2,6 +2,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import assert from 'node:assert/strict';
 import {extractAdminState} from '../mirpanel-admin/core.mjs';
+import {cartPageContent,cartPageScript,cartPageStyle} from '../cart-page.mjs';
 const {chromium,webkit}=await import('file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs');
 const products=extractAdminState(fs.readFileSync('app.js','utf8')).products;
 const names=['Netflix Şəxsi','Amazon Prime Video','CapCut Pro','Spotify Premium','Zoom Pro'];
@@ -18,6 +19,7 @@ const server=http.createServer(async(req,res)=>{
  if(u.pathname==='/api/payments/storefront')return json(200,{products:items.map(p=>({...p,path:'/mehsul/'+p.id,priceCents:Math.round(p.plans[0].price*100)}))});
  if(u.pathname.startsWith('/api/'))return json(200,{});
  if(u.pathname==='/odenis'){res.writeHead(200,{'Content-Type':'text/html'});return res.end('<h1>Sintetik ödəniş mərhələsi</h1>');}
+if(u.pathname==='/sebet'){res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});return res.end('<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="stylesheet" href="/mirpanel-admin/community/public/community.css">'+cartPageStyle+'<body class="community-page"><header style="position:fixed;top:0;z-index:2147483647">MIRPANEL fixed header</header>'+cartPageContent+'<nav style="position:fixed;bottom:0;z-index:2147483647">Fixed navigation</nav>'+cartPageScript+'<script defer src="/page-navigation.js"></script>');}
  if(u.pathname==='/'||u.pathname.startsWith('/mehsul/')){
   res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});
   return res.end(`<!doctype html><meta name="viewport" content="width=device-width,initial-scale=1"><style>body{margin:0;background:#0d1013;color:white;font:15px system-ui}header{padding:24px;background:#191d20}main{padding:20px;display:grid;grid-template-columns:repeat(2,1fr);gap:12px}article{background:#232525;border-radius:14px;overflow:hidden}article img{width:100%}h2{font-size:16px;padding:8px}.browser-bottom-nav{position:fixed;bottom:0;height:60px;background:#20221b;width:100%;display:flex;align-items:center;justify-content:space-around}@media(min-width:700px){main{grid-template-columns:repeat(5,1fr)}.browser-bottom-nav{display:none}}</style><header>MIRPANEL · <a id="cartHeaderLink" href="/sebet">Səbət</a></header><main>${items.map(p=>'<article><img src="'+p.image+'"><h2>'+p.title+'</h2></article>').join('')}</main><nav class="browser-bottom-nav">Ana səhifə　Məhsullar　Balans　Səbət　Profilim</nav><script>const DATA=${JSON.stringify({products:items})};</script><script src="/cart-store.js"></script>`);
@@ -52,11 +54,23 @@ try{
    await dialog.getByRole('button',{name:'Səbəti bağla',exact:true}).click();await page.evaluate(()=>MirpanelCart.commitDraft({draftId:crypto.randomUUID(),termsVersion:'test'},{productId:'test0',planIndex:0,quantity:1}));quoteFail=true;await page.locator('#cartHeaderLink').click();await dialog.getByRole('button',{name:'Yenidən yoxla',exact:true}).waitFor();assert(await next.isDisabled());quoteFail=false;await dialog.getByRole('button',{name:'Yenidən yoxla',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.mir-cart-next').disabled);
    await page.setViewportSize({width,height:600});await page.evaluate(()=>window.dispatchEvent(new Event('resize')));
    assert(await dialog.locator('.mir-cart-body').evaluate(b=>b.scrollHeight>b.clientHeight));
-   const bounds=await dialog.evaluate(d=>({bottom:d.getBoundingClientRect().bottom,footer:d.querySelector('footer').getBoundingClientRect().bottom}));assert(bounds.bottom<600-(width<700?60:0)&&bounds.footer<=bounds.bottom);
+   const bounds=await dialog.evaluate(d=>({bottom:d.getBoundingClientRect().bottom,footer:d.querySelector('footer').getBoundingClientRect().bottom}));assert(bounds.bottom<580&&bounds.footer<=bounds.bottom);
    const old=items[0].plans[0].regularPrice;items[0].plans[0].regularPrice=null;
    await dialog.getByRole('button',{name:'Səbəti bağla',exact:true}).click();await page.locator('.mir-cart-drawer').waitFor({state:'detached'});await page.locator('#cartHeaderLink').click();await page.waitForFunction(()=>!document.querySelector('.mir-cart-next').disabled);
    assert.equal(await dialog.locator('.mir-cart-savings').innerText(),'Səbətin səni gözləyir');items[0].plans[0].regularPrice=old;
-   assert.deepEqual(errors,[]);results.push({engine,width,status:'passed',rect});console.log('PASS',engine,width);await ctx.close();
+   await dialog.getByRole('button',{name:'Səbəti bağla',exact:true}).click();await dialog.waitFor({state:'detached'});
+   await page.evaluate(()=>{document.body.style.minHeight='2200px';window.scrollTo(0,300);});
+   const beforeScroll=await page.evaluate(()=>scrollY);await page.evaluate(()=>MirpanelCart.open());await dialog.waitFor();await dialog.getByRole('button',{name:'Səbəti bağla',exact:true}).click();await dialog.waitFor({state:'detached'});assert.equal(await page.evaluate(()=>scrollY),beforeScroll);
+   await page.goto(origin+'/sebet');await dialog.waitFor();await page.waitForFunction(()=>!document.querySelector('.mir-cart-next').disabled);
+   assert(await dialog.evaluate(d=>d.matches(':modal')));
+   for(const height of [480,600,844]){
+    await page.setViewportSize({width,height});await page.waitForTimeout(100);
+    const fits=await dialog.evaluate(d=>{const r=d.getBoundingClientRect(),h=d.querySelector('header').getBoundingClientRect(),f=d.querySelector('footer').getBoundingClientRect();return {top:r.top,bottom:r.bottom,headerTop:h.top,footerBottom:f.bottom,height:visualViewport.height};});
+    assert(fits.top>=20&&fits.bottom<=fits.height-20&&fits.headerTop>=fits.top&&fits.footerBottom<=fits.bottom);
+   }
+   // A short empty cart must not be stretched to the viewport cap.
+   await page.evaluate(()=>MirpanelCart.clear());await page.waitForTimeout(100);const compact=await dialog.evaluate(d=>d.getBoundingClientRect().height);assert(compact<700);
+   assert.deepEqual(errors,[]);results.push({engine,width,status:'passed',rect,compactEmptyHeight:compact});console.log('PASS',engine,width);await ctx.close();
   }}finally{await browser.close();}
  }
  console.log(JSON.stringify(results,null,2));fs.writeFileSync(out+'/results.json',JSON.stringify(results,null,2));

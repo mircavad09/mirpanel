@@ -5,5 +5,5 @@ export const cartPageContent = `<main id="shopApp" class="shop-page" data-cart-p
   <footer><div class="mir-cart-sum"><span>Cəmi</span><strong>—</strong></div><button type="button" class="mir-cart-next" disabled>Ödənişə keç</button></footer>
  </dialog>
 </main>`;
-export const cartPageStyle = '<link rel="stylesheet" href="/cart-store.css?v=cart-window-2">';
-export const cartPageScript = '<script defer src="/cart-store.js?v=cart-window-2"></script>';
+export const cartPageStyle = '<link rel="stylesheet" href="/cart-store.css?v=cart-viewport-3">';
+export const cartPageScript = '<script defer src="/cart-store.js?v=cart-viewport-3"></script>';
