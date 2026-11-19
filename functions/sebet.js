@@ -7,6 +7,7 @@ export async function onRequest(context){
 }
 export async function shopShell(context,{balance=false}={}){
  const {request}=context,url=new URL(request.url);
+ if(balance&&url.searchParams.get('google-pay-preview')==='1')return proxyCommunity(context);
  if(request.method!=='GET'||url.hostname!=='mirpanel.com'||
     request.headers.has('Origin')&&request.headers.get('Origin')!==url.origin)return proxyCommunity(context);
  // The cart shell contains neither cart data nor session information. The
