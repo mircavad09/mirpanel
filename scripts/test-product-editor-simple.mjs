@@ -10,7 +10,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const publicDir = path.join(root, "mirpanel-admin", "public");
 const playwrightPath = process.env.MIRPANEL_PLAYWRIGHT_PATH;
 if (!playwrightPath) throw new Error("MIRPANEL_PLAYWRIGHT_PATH təyin edilməyib.");
-const { chromium } = await import(pathToFileURL(playwrightPath));
+const engines = await import(pathToFileURL(playwrightPath));
+const engine = process.env.MIRPANEL_TEST_ENGINE || "chromium";
 const originalState = extractAdminState(fs.readFileSync(path.join(root, "app.js"), "utf8"));
 const mime = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
 let bannerCount=7, renderLive=false, saveCalls=0, saveMode=500, savedData=structuredClone(originalState), saveReceipt;
@@ -67,7 +68,7 @@ const server = http.createServer(async (request, response) => {
 });
 await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const address = server.address();
-const browser = await chromium.launch({ headless: true, executablePath: process.env.MIRPANEL_BROWSER_PATH });
+const browser = await engines[engine].launch({ headless: true, ...(engine === "chromium" ? {executablePath: process.env.MIRPANEL_BROWSER_PATH} : {}) });
 const screenshotDir = process.env.MIRPANEL_SCREENSHOT_DIR || path.join(root, "test-output");
 fs.mkdirSync(screenshotDir, { recursive: true });
 const consoleErrors = [];

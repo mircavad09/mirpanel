@@ -1611,3 +1611,9 @@ th {
 #plans .packageBody>.planDuration{grid-column:auto}
 .productGroup{scroll-margin-top:80px}
 }
+
+.productPositionField{display:grid;align-content:start;gap:5px;min-width:0;font-size:12px}
+
+.editorSecondarySettings{border:1px solid var(--border);border-radius:9px;padding:10px}
+.editorSecondarySettings>summary{cursor:pointer;min-height:30px;font-size:13px}
+.editorSecondarySettings[open]>summary{margin-bottom:10px}

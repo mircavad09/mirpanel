@@ -1117,6 +1117,14 @@
     };
     const basicGrid = makeGrid(basic);
     ["productTitle", "productOrder", "productCategory"].forEach(id => moveControl(id, basicGrid));
+    // A label may activate its first button in WebKit; the position picker
+    // contains several buttons and must not be wrapped by a form label.
+    const positionLabel = el("productOrder").closest("label");
+    const positionField = document.createElement("div");
+    positionField.className = "productPositionField";
+    const positionTitle = document.createElement("span"); positionTitle.textContent = "Sıra";
+    positionField.append(positionTitle, el("productOrder"));
+    positionLabel.replaceWith(positionField);
     const image = pairControl("productImage", basicGrid, "productImagePair");
     image.append(el("productImagePickBtn").closest(".imageUploadBox"));
     ["productDesc"].forEach(id => moveControl(id, basicGrid).classList.remove("full"));
@@ -1130,6 +1138,14 @@
     pricingGrid.append(form.querySelector(".fieldHelp"));
     moveSection("plans", pricing);
     pricing.append(form.querySelector(".productDetailSettings"), el("productSalesSettings"));
+    const fold = (node, title) => {
+      const details = document.createElement("details"); details.className = "editorSecondarySettings";
+      const summary = document.createElement("summary"); summary.textContent = title;
+      details.append(summary, node); pricing.append(details);
+    };
+    fold(pricingGrid, "Məhsulun stok və satış ayarları");
+    fold(pricing.querySelector(".productDetailSettings"), "Təhvil və ödəniş məlumatı");
+    fold(el("productSalesSettings"), "Başlanğıc satış sayları");
 
     moveSection("productOrderFlow", advanced);
     const fields = el("productFieldActions");
