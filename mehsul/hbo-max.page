@@ -104,7 +104,7 @@
             </div>
 
             <section class="product-detail-summary" aria-live="polite"><p class="product-detail-summary-label">Seçilmiş paket: 25 · 25 gün</p><div class="product-detail-summary-line"><div class="product-detail-summary-prices"><strong>3,33 ₼</strong><del>13,00 ₼</del><span class="product-detail-best">-74%</span></div><p class="product-detail-savings"><strong>9,67 ₼</strong> <span class="product-detail-savings-caption">qənaət edirsiniz</span></p></div><p class="product-detail-summary-delivery" hidden></p></section><h2 class="product-page-section-title">Müddət seçin</h2>
-            <div id="pp-plans-container" class="pp-plans-container" role="radiogroup" data-server-plans><div class="pp-plan-label active" data-price-emphasis="standard" role="radio" aria-label="25 · 25 gün" aria-checked="true" aria-expanded="true" aria-controls="plan-details-hbomax-0" tabindex="0"><div class="pp-plan-left"><div class="pp-radio-circle"></div><div class="pp-plan-name">25 · 25 gün</div></div><div class="pp-plan-right"><div class="pp-plan-price-meta"><div class="pp-old-price">13,00 ₼</div><div class="pp-plan-disc-badge">-74%</div></div><div class="pp-new-price">3,33 ₼</div></div><div class="pp-plan-meta"><span data-inventory-plan class="inventory-plan-count" hidden></span><span class="plan-fact plan-fact-warranty">27 gün zəmanət</span><span class="product-detail-plan-notes" id="plan-details-hbomax-0" role="region" aria-label="Paketin əlavə məlumatları"><span class="product-detail-rate">Gündə <strong>0,13 ₼</strong></span></span></div></div></div><div class="product-page-actions">
+            <div id="pp-plans-container" class="pp-plans-container" role="radiogroup" data-server-plans><div class="pp-plan-label active" data-price-emphasis="standard" role="radio" aria-label="25 · 25 gün" aria-checked="true" aria-expanded="true" aria-controls="plan-details-hbomax-0" tabindex="0"><div class="pp-plan-left"><div class="pp-radio-circle"></div><div class="pp-plan-name">25 · 25 gün</div></div><div class="pp-plan-right"><div class="pp-plan-price-meta"><div class="pp-old-price">13,00 ₼</div><div class="pp-plan-disc-badge">-74%</div></div><div class="pp-new-price">3,33 ₼</div></div><div class="pp-plan-meta"><span data-inventory-plan class="inventory-plan-count" hidden></span><span class="plan-fact plan-fact-warranty">24 gün zəmanət</span><span class="product-detail-plan-notes" id="plan-details-hbomax-0" role="region" aria-label="Paketin əlavə məlumatları"><span class="product-detail-rate">Gündə <strong>0,13 ₼</strong></span></span></div></div></div><div class="product-page-actions">
           <a class="product-page-action is-about" href="/mehsul/hbo-max#product-about">Məhsul haqqında</a>
           <button class="product-page-action is-order" id="pp-order-btn" type="button" disabled>İndi al</button>
         </div>
@@ -179,7 +179,7 @@
  <p>Əlavə məlumat tələb olunarsa seçilən paketin sifariş formasında göstərilir. Şəxsi giriş məlumatlarını yalnız sifariş formasında daxil edin, açıq qrup söhbətində paylaşmayın.</p>
  <p>Ödənişin təsdiqi ilə təhvilin tamamlanması ayrı mərhələlərdir. Hazır hesab və ya aktivləşdirmə vəziyyətini <a href="/profil?tab=sifarislerim">Sifarişlərim</a> bölməsindən izləyin. Məhsula aid Təlimat təhvil məlumatları ilə birlikdə açılır.</p>
  <h3>Paket zəmanəti və istifadə şərtləri</h3>
- <ul><li>25 · 25 gün: 27 gün zəmanət</li></ul>
+ <ul><li>25 · 25 gün: 24 gün zəmanət</li></ul>
  <p>Ümumi <a href="/sertler">sifariş və istifadə şərtlərini</a> oxuyun. Sualınız varsa <a href="/elaqe">MirPanel ilə əlaqə saxlayın</a>. MirPanel bu xidmətlərin rəsmi saytı deyil; rəsmi tərəfdaşlıq iddiası edilmir.</p>
  <h3>Alış addımları</h3><ol><li>Bu səhifədə paket və müddəti seçin.</li><li>“İndi al” düyməsi ilə tələb olunan məlumatları və hesab uyğunluğunu yoxlayın.</li><li>Yekun AZN qiymətini təsdiqləyərək saytda ödənişi tamamlayın.</li><li>Təhvil vəziyyətini və giriş təlimatını Sifarişlərimdən açın.</li></ol>
  <p><a href="/mehsul#category-subscriptions">Bu kateqoriyadakı məhsullara baxın</a> · <a href="/mehsul">Bütün məhsullar</a>.</p></article>
@@ -225,7 +225,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-f3a6cf51045018b6"></script>
+  <script src="/app.js?v=image-alt-20261117-922025ba8b1dfa70"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=sales-count-2"></script>
