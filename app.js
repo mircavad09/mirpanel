@@ -209,7 +209,7 @@ const DATA = {
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "Sifarişdən sonra \"Zoom Pro\" paketi aktiv edilmiş yeni və tam şəxsi hesab təqdim olunur.\nCihaz İstifadəsi: Hesaba əlavə cihaz qoşa bilərsiniz — həm telefon, həm də noutbuk/kompüterdən eyni vaxtda daxil olmaq mümkündür.\nMəxfilik və Şifrə: Hesab tam sizə aid olduğu üçün daxil olduqdan sonra şifrəsini dəyişərək hesabın məxfiliyini tam qoruya bilərsiniz.\nPlatforma Qaydaları: \"ZOOM\" platformasının daxili təhlükəsizlik qaydaları, təsdiq mexanizmləri və etdiyi sistem dəyişiklikləri bizim nəzarətimizdə deyil.\nZəmanət və Cavabdehlik: Mirpanel.com sifarişə uyğun aktiv məhsulun düzgün təqdimatına tam cavabdehdir.\n\n💡 Vacib Məsləhət: Hesab təhvil verildikdən sonra ilk 24 saat ərzində daxil olun, sifariş məlumatlarındakı qeydləri nəzərə alın, təhlükəsizlik tədbirlərini görün (şifrəni yeniləyin) və \"Təlimat\" bölməsini mütləq oxuyun.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -239,7 +239,7 @@ const DATA = {
       "orderConfirmation": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "",
+        "description": "Sifarişdən sonra \"Zoom Pro\" paketi aktiv edilmiş yeni və tam şəxsi hesab təqdim olunur.\nCihaz İstifadəsi: Hesaba əlavə cihaz qoşa bilərsiniz — həm telefon, həm də noutbuk/kompüterdən eyni vaxtda daxil olmaq mümkündür.\nMəxfilik və Şifrə: Hesab tam sizə aid olduğu üçün daxil olduqdan sonra şifrəsini dəyişərək hesabın məxfiliyini tam qoruya bilərsiniz.\nPlatforma Qaydaları: \"ZOOM\" platformasının daxili təhlükəsizlik qaydaları, təsdiq mexanizmləri və etdiyi sistem dəyişiklikləri bizim nəzarətimizdə deyil.\nZəmanət və Cavabdehlik: Mirpanel.com sifarişə uyğun aktiv məhsulun düzgün təqdimatına tam cavabdehdir.\n\n💡 Vacib Məsləhət: Hesab təhvil verildikdən sonra ilk 24 saat ərzində daxil olun, sifariş məlumatlarındakı qeydləri nəzərə alın, təhlükəsizlik tədbirlərini görün (şifrəni yeniləyin) və \"Təlimat\" bölməsini mütləq oxuyun.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -430,7 +430,7 @@ const DATA = {
       "stockEnabled": true,
       "seller": "",
       "bestSeller": true,
-      "orderFlow": "confirm_then_whatsapp",
+      "orderFlow": "direct_whatsapp",
       "formFields": [
         {
           "key": "email",
@@ -477,7 +477,7 @@ const DATA = {
         }
       },
       "confirmationModal": {
-        "enabled": true,
+        "enabled": false,
         "title": "Sifarişi təsdiqləyin",
         "description": "Sifarişinizi tamamlamazdan öncə qaydalarla tanış olun:\n\nTəhvil: CapCut Pro bizim tərəfimizdən hazır hesab kimi 30-60 saniyə ərzində təhvil verilir.\n\nQayda: Hesaba eyni anda yalnız 1 cihaz daxil ola bilər. İkinci cihaz qoşulduqda hesab bloklana bilər.\n\nMəsuliyyət: Qayda pozuntusuna görə hesab bloklanarsa, geri ödəniş edilmir və hesab əvəzlənmir.\nSifarişi təsdiqləməklə bu şərtləri tam qəbul etmiş sayılırsınız",
         "confirmText": "Təsdiqləyirəm",
@@ -519,7 +519,7 @@ const DATA = {
         }
       ],
       "orderConfirmation": {
-        "enabled": true,
+        "enabled": false,
         "title": "Sifarişi təsdiqləyin",
         "description": "Sifarişinizi tamamlamazdan öncə qaydalarla tanış olun:\n\nTəhvil: CapCut Pro bizim tərəfimizdən hazır hesab kimi 30-60 saniyə ərzində təhvil verilir.\n\nQayda: Hesaba eyni anda yalnız 1 cihaz daxil ola bilər. İkinci cihaz qoşulduqda hesab bloklana bilər.\n\nMəsuliyyət: Qayda pozuntusuna görə hesab bloklanarsa, geri ödəniş edilmir və hesab əvəzlənmir.\nSifarişi təsdiqləməklə bu şərtləri tam qəbul etmiş sayılırsınız",
         "confirmText": "Təsdiqləyirəm",
