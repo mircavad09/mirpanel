@@ -5,7 +5,7 @@ import {extractAdminState} from '../mirpanel-admin/core.mjs';
 const {chromium,webkit}=await import('file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs');
 const real=extractAdminState(fs.readFileSync('app.js','utf8')).products;
 const products=['prime','netflix','spotify','capcut','zoom'].map((id,i)=>({...real.find(p=>p.id===id)||real[i],id,plans:[{price:i?5.99:2.89,regularPrice:18,label:'1 ay'}]}));
-const out='outputs/cart-holiday';fs.mkdirSync(out,{recursive:true});
+const out='outputs/cart-lights';fs.mkdirSync(out,{recursive:true});
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://local'),json=data=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(data));};
  if(u.pathname==='/api/payments/shop/quote'){let body='';for await(const b of req)body+=b;const items=JSON.parse(body).items.map(x=>{const p=products.find(p=>p.id===x.productId);return {...x,title:p.title,image:p.image,planName:'1 ay',unitCents:Math.round(p.plans[0].price*100),oldUnitCents:1800,available:5,termsMissing:false};});return json({items,totalCents:items.reduce((n,x)=>n+x.quantity*x.unitCents,0),balanceCents:10000});}
@@ -30,11 +30,23 @@ try{for(const [engine,launcher] of [['chrome',chromium],['webkit',webkit]]){
   assert.equal(await dialog.locator('.mir-cart-lights i').count(),36);assert(await dialog.locator('.mir-cart-hat').isVisible());
   const prices=await dialog.locator('.mir-cart-suggestion .mir-cart-info>b').allTextContents();assert(prices.every(x=>/^\d+,\d{2} ₼$/.test(x)));assert.equal(prices[0],'5,99 ₼');
   const close=dialog.getByRole('button',{name:'Səbəti bağla',exact:true}),next=dialog.getByRole('button',{name:'Ödənişə keç',exact:true});
+  const geometry=async offer=>offer.evaluate(el=>{const a=el.getBoundingClientRect(),b=el.querySelector('svg').getBoundingClientRect();return {dx:Math.abs(a.x+a.width/2-b.x-b.width/2),dy:Math.abs(a.y+a.height/2-b.y-b.height/2),width:a.width,height:a.height};});
+  for(const offer of await dialog.locator('.mir-cart-offer').all()){
+   await offer.scrollIntoViewIfNeeded();const normal=await geometry(offer);assert(normal.dx<.5&&normal.dy<.5&&normal.width===44&&normal.height===44);
+   await offer.hover();assert.deepEqual(await geometry(offer),normal);await page.mouse.down();assert.deepEqual(await geometry(offer),normal);await page.mouse.move(10,10);await page.mouse.up();
+  }
+  await dialog.locator('.mir-cart-body').evaluate(b=>b.scrollTop=0);
+  const qtyStyle=await dialog.locator('.mir-cart-qty').evaluate(el=>{const s=getComputedStyle(el);return {border:s.borderTopWidth,background:s.backgroundColor,shadow:s.boxShadow};});assert.deepEqual(qtyStyle,{border:'0px',background:'rgba(0, 0, 0, 0)',shadow:'none'});
+  for(const button of await dialog.locator('.mir-cart-qty button').all()){const r=await button.boundingBox();assert(r.width>=44&&r.height>=44);}
+  assert(await dialog.getByRole('button',{name:'Azalt: Amazon Prime Video',exact:true}).isDisabled());
+  const bulb=await dialog.locator('.mir-cart-lights i').first().evaluate(el=>{const s=getComputedStyle(el);return {width:s.width,gradient:s.backgroundImage,shadow:s.boxShadow};});assert.equal(bulb.width,'5px');assert(bulb.gradient.includes('radial-gradient')&&bulb.shadow.includes('inset'));
   for(const target of [close,next,dialog.getByRole('button',{name:'Artır: Amazon Prime Video',exact:true})]){
    assert(await target.evaluate(el=>{const r=el.getBoundingClientRect();const hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return hit===el||el.contains(hit);}));
   }
   const initial=await dialog.boundingBox();await page.screenshot({path:out+'/'+engine+'-'+width+'.png'});
   await dialog.getByRole('button',{name:'Artır: Amazon Prime Video',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.mir-cart-next').disabled);assert.match(await dialog.locator('.mir-cart-sum').innerText(),/5,78/);assert.match(await dialog.locator('.mir-cart-savings').innerText(),/30,22/);
+  for(let n=3;n<=5;n++){await dialog.getByRole('button',{name:'Artır: Amazon Prime Video',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.mir-cart-next').disabled);}assert(await dialog.getByRole('button',{name:'Artır: Amazon Prime Video',exact:true}).isDisabled());assert.match(await dialog.locator('.mir-cart-sum').innerText(),/14,45/);
+  for(let n=4;n>=1;n--){await dialog.getByRole('button',{name:'Azalt: Amazon Prime Video',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('.mir-cart-next').disabled);}assert(await dialog.getByRole('button',{name:'Azalt: Amazon Prime Video',exact:true}).isDisabled());assert.match(await dialog.locator('.mir-cart-sum').innerText(),/2,89/);
   await page.emulateMedia({reducedMotion:'reduce'});assert.equal(await dialog.locator('.mir-cart-lights i').first().evaluate(el=>getComputedStyle(el).animationName),'none');
   await page.setViewportSize({width,height:480});await page.waitForTimeout(100);const short=await dialog.boundingBox();assert(short.y>=20&&short.y+short.height<=460);assert(await dialog.locator('.mir-cart-body').evaluate(el=>el.scrollHeight>el.clientHeight));
   await close.click();await dialog.waitFor({state:'detached'});assert.equal(await page.evaluate(()=>scrollY),120);

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 import {chromium} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
-const out='outputs/cart-holiday';fs.mkdirSync(out,{recursive:true});
+const out='outputs/cart-lights';fs.mkdirSync(out,{recursive:true});
 const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}),results=[];
 try{for(const width of [390,1440]){
  const ctx=await browser.newContext({viewport:{width,height:width===390?620:1000}}),page=await ctx.newPage();let blocked=0;
@@ -20,6 +20,12 @@ try{for(const width of [390,1440]){
  await page.waitForFunction(()=>!document.querySelector('.mir-cart-notice').textContent.includes('yoxlanılır'));await page.waitForTimeout(400);
  const info=await dialog.evaluate(d=>({modal:d.matches(':modal'),background:getComputedStyle(d).backgroundColor,rect:d.getBoundingClientRect().toJSON(),prices:[...d.querySelectorAll('.mir-cart-suggestion .mir-cart-info>b')].map(x=>x.textContent),hat:!!d.querySelector('.mir-cart-hat'),lights:d.querySelectorAll('.mir-cart-lights i').length,total:d.querySelector('.mir-cart-sum').textContent,savings:d.querySelector('.mir-cart-savings').textContent}));
  assert(info.modal&&info.hat&&info.lights===36);assert.equal(info.background,'rgb(0, 0, 0)');assert(info.prices.every(x=>/^\d+,\d{2} ₼$/.test(x)));
+ for(const offer of await dialog.locator('.mir-cart-offer').all()){
+  await offer.scrollIntoViewIfNeeded();await offer.hover();const center=await offer.evaluate(el=>{const a=el.getBoundingClientRect(),b=el.querySelector('svg').getBoundingClientRect();return {x:Math.abs(a.x+a.width/2-b.x-b.width/2),y:Math.abs(a.y+a.height/2-b.y-b.height/2)};});assert(center.x<.5&&center.y<.5);
+ }
+ await dialog.locator('.mir-cart-body').evaluate(b=>b.scrollTop=0);
+ const qty=await dialog.locator('.mir-cart-qty').evaluate(el=>({border:getComputedStyle(el).borderTopWidth,background:getComputedStyle(el).backgroundColor}));assert.deepEqual(qty,{border:'0px',background:'rgba(0, 0, 0, 0)'});
+ assert.equal(await dialog.locator('.mir-cart-lights i').first().evaluate(el=>getComputedStyle(el).width),'5px');
  assert(info.rect.top>=20&&info.rect.bottom<=(width===390?620:1000)-20);
  for(const button of [dialog.getByRole('button',{name:'Səbəti bağla',exact:true}),dialog.locator('.mir-cart-next')])assert(await button.evaluate(el=>{const r=el.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return el===hit||el.contains(hit);}));
  // Move focus off the initially autofocus close control for the pointer-view screenshot.

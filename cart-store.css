@@ -158,10 +158,18 @@ html body dialog.mir-cart-drawer[data-cart-window]{background:#000;border-color:
 .mir-cart-lights.is-top{top:3px}.mir-cart-lights.is-bottom{bottom:3px}
 .mir-cart-lights.is-left,.mir-cart-lights.is-right{top:22px;bottom:22px;width:1px;background:#4e411f}
 .mir-cart-lights.is-left{left:3px}.mir-cart-lights.is-right{right:3px}
-.mir-cart-lights i{position:absolute;display:block;width:3px;height:4px;border-radius:50%;background:#ffd977;color:#ffd977;box-shadow:0 0 4px currentColor;animation:mir-cart-light 3.2s ease-in-out infinite;animation-delay:var(--bulb-delay)}
-.mir-cart-lights i:nth-child(3n+1){background:#e84d55;color:#e84d55}
-.mir-cart-lights i:nth-child(3n+2){background:#55b98b;color:#55b98b}
-.mir-cart-lights.is-top i,.mir-cart-lights.is-bottom i{left:var(--bulb-position);top:-1px}
-.mir-cart-lights.is-left i,.mir-cart-lights.is-right i{top:var(--bulb-position);left:-1px}
-@keyframes mir-cart-light{0%,100%{opacity:.45;box-shadow:0 0 2px currentColor}50%{opacity:1;box-shadow:0 0 5px currentColor}}
-@media(prefers-reduced-motion:reduce){.mir-cart-lights i{animation:none;opacity:.8}}
+.mir-cart-lights i{position:absolute;display:block;width:5px;height:7px;border-radius:48% 48% 42% 42%;color:#ffdc73;background:radial-gradient(ellipse at 36% 27%,#fff 0 11%,#fff9 18%,currentColor 42%,#0009 100%);box-shadow:inset -1px -1px 2px #0008,0 1px 1px #000b,0 0 5px currentColor,0 0 11px currentColor;animation:mir-cart-light 3.2s ease-in-out infinite;animation-delay:var(--bulb-delay)}
+.mir-cart-lights i:nth-child(3n+1){color:#ff6572}
+.mir-cart-lights i:nth-child(3n+2){color:#65e7ab}
+.mir-cart-lights.is-top i,.mir-cart-lights.is-bottom i{left:var(--bulb-position);top:-3px}
+.mir-cart-lights.is-left i,.mir-cart-lights.is-right i{top:var(--bulb-position);left:-2px}
+@keyframes mir-cart-light{0%,100%{opacity:.65;filter:brightness(.9)}50%{opacity:1;filter:brightness(1.35)}}
+@media(prefers-reduced-motion:reduce){.mir-cart-lights i{animation:none;opacity:1;filter:brightness(1.1)}}
+
+/* Stable SVG centering, independent of font metrics and interaction state. */
+html body .mir-cart-drawer a.mir-cart-offer,
+html body .mir-cart-drawer a.mir-cart-offer:is(:hover,:active,:focus){display:grid;place-items:center;box-sizing:border-box;width:44px;height:44px;min-width:44px;min-height:44px;padding:0;line-height:1;transform:none;translate:none;text-indent:0}
+.mir-cart-drawer .mir-cart-offer>svg{display:block;width:18px;height:18px;margin:0;transform:none;flex:none}
+html body .mir-cart-drawer .mir-cart-qty{border:0;border-radius:0;background:transparent;box-shadow:none;padding:0;gap:0}
+html body .mir-cart-drawer .mir-cart-qty button{display:grid;place-items:center;width:44px;min-width:44px;height:44px;min-height:44px;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;line-height:1;transform:none}
+.mir-cart-drawer .mir-cart-qty>span{min-width:18px;line-height:1;text-align:center}
