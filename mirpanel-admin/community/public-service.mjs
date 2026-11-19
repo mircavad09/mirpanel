@@ -39,7 +39,7 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html:
  res.setHeader('Server-Timing',`release;dur=${gateMs.toFixed(1)}, auth;dur=${authMs.toFixed(1)}`);
  const need=()=>{if(!user)throw fail(401,'Əvvəlcə daxil olun.');return user;};
  if(req.method==='GET'&&['/sebet','/balans','/odenis'].includes(route)){
-  if(route==='/balans'&&u.searchParams.get('google-pay-preview')==='1'){html(res,googlePreviewHTML);return true;}
+  if(route==='/balans'&&u.searchParams.get('google-pay-preview')==='1'){html(res,googlePreviewHTML.replace('<main>','<main id="shopApp">'));return true;}
   const balance=route==='/balans',cart=route==='/sebet';
   const loading=balance?`<h1>Balansım</h1>
    <div class="shop-wallet-loading" role="status">Balans məlumatı yüklənir…</div>`:'';
