@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import http from 'node:http';
 import {randomUUID} from 'node:crypto';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
-const product={id:'spotify',title:'Spotify Premium (Öz hesabınız)',image:'/assets/spotify.png',plans:[{label:'1 Ay (Öz hesabınızda aktiv edilir)',price:5.49}]};
+const product={id:'spotify',title:'Spotify Premium (Öz hesabınız)',image:'/assets/spotify.png',confirmationModal:{enabled:true},plans:[{label:'1 Ay (Öz hesabınızda aktiv edilir)',price:5.49}]};
 const fields=[{key:'email',type:'email',label:'Gmail ünvanınız',required:true,maxLength:160},{key:'password',type:'password',label:'Spotify şifrəniz',required:true,maxLength:160}];
 let secret='',requests=0,failOnce=true,saved=0;
 const server=http.createServer(async(req,res)=>{

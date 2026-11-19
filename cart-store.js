@@ -188,7 +188,7 @@
     else if(p.available!=null&&p.available<x.quantity)info.append(node('small','Stokda '+p.available+' ədəd var.'));
     for(const field of p.maskedDetails||[])info.append(node('small',field.label+': '+field.value));
     if(x.draftId&&(p.termsMissing||p.fields?.length))info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{
-     void import('/community-assets/cart-entry.js?v=compact-cart-1').then(m=>m.editCartLine(x)).catch(e=>{notice.textContent=e.message;});
+     void import('/community-assets/cart-entry.js?v=confirmation-toggle-1').then(m=>m.editCartLine(x)).catch(e=>{notice.textContent=e.message;});
     }));
     const controls=node('div',null,'mir-cart-controls'),qty=node('div',null,'mir-cart-qty'),change=n=>{try{cart.set(x.productId,x.planIndex,n,undefined,undefined,x.lineId);}catch(e){notice.textContent=e.message;}};
     const minus=action('−',()=>change(x.quantity-1)),plus=action('+',()=>change(x.quantity+1)),del=action('Sil',()=>change(0),'mir-cart-remove');del.insertAdjacentHTML('afterbegin',trash);

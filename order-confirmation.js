@@ -14,9 +14,9 @@
   const DEFAULT_SPOTIFY_RESET_URL = "https://accounts.spotify.com/az/password-reset";
   let orderTermsAccepted = false;
   let modalSession = 0;
-  let cartOpening, cartModule, cartModuleRetry = 0;
+  let cartOpening, cartModule, cartModuleRetry = 0, silentOpening=false;
   function entryModule() {
-    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=spotify-compact-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
+    if (!cartModule) cartModule = import("/community-assets/cart-entry.js?v=confirmation-toggle-1" + (cartModuleRetry ? "&retry=" + cartModuleRetry : ""))
       .catch(error => {cartModule = null; cartModuleRetry++; throw error;});
     return cartModule;
   }
@@ -28,7 +28,14 @@
   }
 
   function openPreparedCartEntry(product, plan) {
-    if (cartOpening?.open || document.querySelector("dialog.cart-entry[open]")) return;
+    if (silentOpening || cartOpening?.open || document.querySelector("dialog.cart-entry[open]")) return;
+    if(confirmationFor(product).enabled!==true){
+      silentOpening=true;
+      const trigger=document.getElementById('pp-order-btn');trigger?.setAttribute('aria-busy','true');
+      let timer;
+      void Promise.race([entryModule(),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Order module timeout')),12000);})]).then(m=>m.startCartEntry(product,plan)).catch(()=>toastMessage('Sifariş məlumatları alınmadı. Yenidən cəhd edin.')).finally(()=>{clearTimeout(timer);silentOpening=false;trigger?.removeAttribute('aria-busy');});
+      return;
+    }
     const life = new AbortController(), dialog = document.createElement("dialog"), title = document.createElement("h2"),
       close = document.createElement("button"), status = document.createElement("p"), retry = document.createElement("button");
     dialog.className = "cart-entry";
@@ -1754,6 +1761,7 @@
     resetOrderConsent();
     setPremiumFormMode(false);
     const settings = confirmationFor(product);
+    if((cartQuote?.confirmationEnabled??settings.enabled)!==true){orderTermsAccepted=true;onConfirm(formData);return;}
     const isSpotify = isSpotifyProduct(product);
     const helpUrl = String(settings.helpLink?.url || "").trim();
     const defaultSpotifyHelpLabel = "Şifrənizi bilmirsiniz? Buradan sıfırlayın";
@@ -1970,7 +1978,7 @@
     const session = modalSession;
     const flow = flowFor(product);
     const needsForm = flow === "form_then_whatsapp" || flow === "form_confirm_whatsapp";
-    const needsConfirmation = true;
+    const needsConfirmation = confirmationFor(product).enabled===true;
 
     const continueToFormOrWhatsApp = () => {
       if (session !== modalSession) return;
@@ -1988,7 +1996,8 @@
       return;
     }
 
-    continueToFormOrWhatsApp();
+    orderTermsAccepted=true;
+    directChoices(product,plan,continueToFormOrWhatsApp,session);
   }
 
   function requireOrderConsent(product, plan, onAccepted) {

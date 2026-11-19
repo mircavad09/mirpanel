@@ -20,7 +20,7 @@ export function termsInfo(p,plan,index){
  if(supplier?.type==='TELEGRAM_STARS')identity.push(supplier.starsAmount);
  const gameTerms=supplier?.type==='TOPUP'?gameTopupTerms(p,fields):null;
  const content=[terms,note,fields,...(gameTerms?[gameTerms]:[])];
- return {fields,terms,note,...(gameTerms?{gameTerms}:{}),schemaHash:hash(fields),termsVersion:hash([...identity,...content]),legacyTermsVersion:hash([...identity,plan.price,...content])};
+ return {fields,terms,note,confirmationEnabled:(p.confirmationModal||p.orderConfirmation||{}).enabled===true,...(gameTerms?{gameTerms}:{}),schemaHash:hash(fields),termsVersion:hash([...identity,...content]),legacyTermsVersion:hash([...identity,plan.price,...content])};
 }
 export const acceptsTerms=(terms,version)=>!!version&&(version===terms.termsVersion||version===terms.legacyTermsVersion);
 export function createDrafts({catalog,security}){
