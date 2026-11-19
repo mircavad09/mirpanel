@@ -7,4 +7,4 @@ try{
  const r=await fetch('/api/payments/epoint/status?preview=google',{credentials:'same-origin',cache:'no-store'});
  const data=await r.json();if(!r.ok)throw Error(data.error||'Yoxlama açılmadı.');
  await mountEpointWallet({form,accountId:data.accountId,getCents:()=>100,signal:new AbortController().signal,el,button,link,walletOnly:true,preview:true,fixedRequestId:data.requestId});
-}catch(e){form.append(el('p',e.message),link('Hesabıma daxil ol','/hesab?next='+encodeURIComponent('/api/payments/epoint/status?preview=google&screen=1')));}
+}catch(e){form.append(el('p',e.message),link('Hesabıma daxil ol','/hesab?next='+encodeURIComponent('/balans')));}
