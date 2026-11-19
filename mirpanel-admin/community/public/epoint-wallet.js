@@ -149,7 +149,7 @@ export async function showEpointReturn(doc=document){
     if(products)products.hidden=false;
    }else if(data.status==='failed'){
     clearDraft(ref);stopped=true;check.hidden=true;
-    finish(data.providerStatus==='returned'?'Ödəniş geri qaytarıldı':'Ödəniş tamamlanmadı','Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa, yenidən ödəməzdən əvvəl dəstəyə müraciət edin.');
+    finish(data.cancelled===true?'Ödəniş ləğv edildi':data.providerStatus==='returned'?'Ödəniş geri qaytarıldı':'Ödəniş tamamlanmadı','Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa, yenidən ödəməzdən əvvəl dəstəyə müraciət edin.');
    }else{
     finish('Ödəniş yoxlanılır…','Ödəniş hələ balansınıza əlavə edilməyib. Vəziyyəti yenidən yoxlaya bilərsiniz.');
     if(++count<45)timer=setTimeout(refresh,4000);

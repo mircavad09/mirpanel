@@ -1,5 +1,6 @@
 import {epointPost} from './epoint-api.mjs';
 import {settleEpointResult} from './epoint-result.mjs';
+import {ensureEpointCheckout} from './epoint-checkout.mjs';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const ref=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value);
 function cents(value){
@@ -9,6 +10,7 @@ function cents(value){
 export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=null,force=false}={}){
  const exists=(await pool.query("select exists(select 1 from information_schema.columns where table_schema='mirpanel_community' and table_name='epoint_checkout_requests' and column_name='candidate_transaction') present")).rows[0].present;
  if(!exists)return;
+ await ensureEpointCheckout(pool);
  // Claim a bounded lease in the database. No external call is held inside a transaction.
  const row=(await pool.query(`update mirpanel_community.epoint_checkout_requests set next_check_at=clock_timestamp()+interval '30 seconds'
   where id=$1 and method<>'card' and state='ready' and candidate_transaction is not null
@@ -24,8 +26,10 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
   if(result.currency!=null&&result.currency!=='AZN')throw fail(409,'Epoint valyutası uyğun deyil.');
   if(cents(result.amount)!==Number(row.cents))throw fail(409,'Epoint məbləği uyğun deyil.');
   if(!['new','success','failed','error','server_error','returned'].includes(result.status))throw fail(503,'Epoint yekun vəziyyəti təsdiqləmədi.');
+  const code=/^\d{1,3}$/.test(String(result.code))?String(result.code).padStart(3,'0'):null;
+  if(result.status==='success'&&code!=='000')throw fail(409,'Epoint bank təsdiqi uyğun deyil.');
   if(result.status==='success')await settleEpointResult(pool,{id,status:'success',transaction:result.transaction,cents:Number(row.cents)});
-  await pool.query("update mirpanel_community.epoint_checkout_requests set result_status=$2,check_failures=0,next_check_at=clock_timestamp()+interval '30 seconds' where id=$1 and result_status<>'success'",[id,result.status]);
+  await pool.query("update mirpanel_community.epoint_checkout_requests set result_status=$2,result_code=$3,check_failures=0,next_check_at=clock_timestamp()+interval '30 seconds' where id=$1 and result_status<>'success'",[id,result.status,code]);
  }catch(error){
   await pool.query("update mirpanel_community.epoint_checkout_requests set check_failures=least(check_failures+1,10),next_check_at=clock_timestamp()+make_interval(secs=>least(900,30*(2^least(check_failures,5))::int)) where id=$1 and result_status<>'success'",[id]);
   throw error;

@@ -29,7 +29,7 @@ try{
    if(url.endsWith('/get-status')){
     checks++;assert.equal(p.transaction,transaction);
     if(drop)throw Error('Synthetic transport outage');
-    return Response.json({status:providerStatus,operation_code:'100',amount:bad==='amount'?2.99:1.99,
+    return Response.json({status:providerStatus,code:bad==='code'?'100':'000',operation_code:'100',amount:bad==='amount'?2.99:1.99,
      currency:bad==='currency'?'USD':'AZN',order_id:bad==='order'?'wrong':'mp_ep_'+id,
      transaction:bad==='transaction'?'wrong':transaction});
    }
@@ -58,7 +58,7 @@ try{
   await acceptEpointResult(pool,callback(),opts);assert.equal(await actualBalance(),balance); // Browser/callback success cannot overrule "new".
   assert.equal((await readEpointCheckout(pool,'a',id)).status,'pending');
   providerStatus='success';
-  for(bad of ['amount','currency','order','transaction'])await assert.rejects(acceptEpointResult(pool,callback(),opts),{status:409});
+  for(bad of ['amount','currency','order','transaction','code'])await assert.rejects(acceptEpointResult(pool,callback(),opts),{status:409});
   bad=null;drop=true;await assert.rejects(acceptEpointResult(pool,callback(),opts));
   assert.equal(await actualBalance(),balance);
   assert((await pool.query('select check_failures from mirpanel_community.epoint_checkout_requests where id=$1',[id])).rows[0].check_failures>0);
@@ -80,10 +80,11 @@ try{
  const send=async(url,o)=>{
   if(url.endsWith('wallet/status'))return Response.json({'9':'M10'});
   if(url.endsWith('wallet/payment'))return Response.json({status:'success',transaction,redirect_url:'https://epoint.az/checkout/recovery'});
-  return Response.json({status:'failed',transaction,amount:'1.00',operation_code:'100',currency:'AZN'});
+  return Response.json({status:'failed',code:'180',transaction,amount:'1.00',operation_code:'100',currency:'AZN'});
  };
  await startEpointCheckout(pool,'a',{requestId:id,amount:'1',method:'m10'},{env,send});
  await reconcileEpoint(pool,id,{env,send,force:true});
- assert.equal((await readEpointCheckout(pool,'a',id)).status,'failed');assert.equal(await actualBalance(),balance);
+ assert.equal((await readEpointCheckout(pool,'a',id)).status,'failed');
+ assert.equal((await readEpointCheckout(pool,'a',id)).cancelled,true);assert.equal(await actualBalance(),balance);
  console.log('PASS provider failure does not credit; no real Epoint calls');
 }finally{await f.close();}

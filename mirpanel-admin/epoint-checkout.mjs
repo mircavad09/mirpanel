@@ -9,7 +9,7 @@ const uuid=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const pendingMessage='Ödəniş başlatma nəticəsi hələ məlum deyil. Yenidən ödəniş yaratmadan vəziyyəti yoxlayın.';
 const tables=new WeakMap();
-function ensure(pool){
+export function ensureEpointCheckout(pool){
  if(!tables.has(pool)){
   const task=(async()=>{
    const c=await pool.connect();
@@ -28,6 +28,7 @@ function ensure(pool){
      alter table mirpanel_community.epoint_checkout_requests add column if not exists wallet_id text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists candidate_transaction text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_status text not null default 'new';
+     alter table mirpanel_community.epoint_checkout_requests add column if not exists result_code text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists next_check_at timestamptz not null default clock_timestamp();
      alter table mirpanel_community.epoint_checkout_requests add column if not exists check_failures integer not null default 0;
      create index if not exists epoint_checkout_pending_check_idx on mirpanel_community.epoint_checkout_requests(next_check_at)
@@ -79,7 +80,7 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  const id=body.requestId,cents=parseTopupCents(body.amount);
  const release=(await pool.query('select exists(select 1 from mirpanel_community.wallet_release where id and enabled) and exists(select 1 from mirpanel_community.shop_release where id and enabled) allowed')).rows[0];
  if(!release?.allowed)throw fail(503,'Balans xidməti aktiv deyil.');
- await ensure(pool);
+ await ensureEpointCheckout(pool);
  let walletId=null;
  if(wallet){walletId=(await epointWallets({env,send}))[method];if(!walletId)throw fail(503,'Bu cüzdan Epoint hesabında əlçatan deyil.');}
  const inserted=await pool.query('insert into mirpanel_community.epoint_checkout_requests(id,user_id,cents,method,wallet_id) values($1,$2,$3,$4,$5) on conflict(id) do nothing returning id',[id,user,cents,method,walletId]);
@@ -127,10 +128,10 @@ export async function readEpointCheckout(pool,user,id){
  if(typeof id!=='string'||!uuid.test(id))throw fail(400,'Ödəniş identifikatoru düzgün deyil.');
  const present=(await pool.query("select to_regclass('mirpanel_community.epoint_checkout_requests') requests,to_regclass('mirpanel_community.epoint_wallet_intents') intents")).rows[0];
  if(!present.requests)throw fail(404,'Ödəniş tapılmadı.');
- const row=(await pool.query("select state,cents,to_jsonb(r)->>'result_status' as result_status,to_jsonb(r)->>'method' as method from mirpanel_community.epoint_checkout_requests r where id=$1 and user_id=$2",[id,user])).rows[0];
+ const row=(await pool.query("select state,cents,to_jsonb(r)->>'result_status' as result_status,to_jsonb(r)->>'result_code' as result_code,to_jsonb(r)->>'method' as method from mirpanel_community.epoint_checkout_requests r where id=$1 and user_id=$2",[id,user])).rows[0];
  if(!row)throw fail(404,'Ödəniş tapılmadı.');
  if(row.state==='declined')return {status:'failed'};
- const providerStatus=row.method&&row.method!=='card'?{providerStatus:row.result_status||'new'}:{};
+ const providerStatus=row.method&&row.method!=='card'?{providerStatus:row.result_status||'new',...(['failed','error'].includes(row.result_status)&&row.result_code==='180'?{cancelled:true}:{})}:{};
  if(!present.intents)return {status:['failed','error','returned'].includes(row.result_status)?'failed':'pending',...providerStatus};
  const intent=(await pool.query('select status,credited_at,cents from mirpanel_community.epoint_wallet_intents where id=$1 and user_id=$2',[id,user])).rows[0];
  if(intent?.status==='success'&&intent.credited_at&&Number(intent.cents)===row.cents){
