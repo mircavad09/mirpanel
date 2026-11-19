@@ -609,7 +609,7 @@ const DATA = {
       "confirmationModal": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "Yalnız sizə ayrılmış Netflix profilindən istifadə edin. Eyni anda bir cihazda izləyin. Hesabın şifrəsini dəyişməyin və giriş məlumatlarını paylaşmayın.",
+        "description": "Profil tamamilə sizə aid olur. Öz profilinizin adını və PİN kodunu istədiyiniz kimi dəyişə bilərsiniz.\n\nCihaz Limiti: Hesaba maksimum 3 cihazdan daxil olmaq mümkündür (məsələn: Telefon, TV və Noutbuk).\n\nİzləmə Qaydası: Eyni anda yalnız 1 cihazdan film və ya serial izləmək olar.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -642,7 +642,7 @@ const DATA = {
       "orderConfirmation": {
         "enabled": false,
         "title": "Sifarişi təsdiqləyin",
-        "description": "Yalnız sizə ayrılmış Netflix profilindən istifadə edin. Eyni anda bir cihazda izləyin. Hesabın şifrəsini dəyişməyin və giriş məlumatlarını paylaşmayın.",
+        "description": "Profil tamamilə sizə aid olur. Öz profilinizin adını və PİN kodunu istədiyiniz kimi dəyişə bilərsiniz.\n\nCihaz Limiti: Hesaba maksimum 3 cihazdan daxil olmaq mümkündür (məsələn: Telefon, TV və Noutbuk).\n\nİzləmə Qaydası: Eyni anda yalnız 1 cihazdan film və ya serial izləmək olar.",
         "confirmText": "Təsdiqləyirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
