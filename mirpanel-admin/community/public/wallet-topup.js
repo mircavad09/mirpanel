@@ -32,11 +32,18 @@ export function orderBankDetail({el,button,method,amount,onChange,onCopy}){
 export function createWalletTopup({el,button,api,run,money,methods,profile,getCents,onComplete,onBusy,restoreCents,signal,isClosed}){
  document.body.classList.remove('wallet-topup-active');signal.addEventListener('abort',()=>document.body.classList.remove('wallet-topup-active'),{once:true});
  const root=el('section',null,'shop-card wallet-topup'),title=el('h2','Ödəniş üsulu'),tiles=el('div',null,'wallet-method-tiles'),open=button('',()=>{selection.hidden=false;open.setAttribute('aria-expanded','true');document.body.classList.add('wallet-topup-active');}),selection=el('div',null,'wallet-bank-selection'),grid=el('div',null,'wallet-bank-grid'),stage=el('div'),notice=el('p','','shop-error');
- paymentMethods.forEach(([label,description,path],i)=>{
-  const tile=i?button('',null):open,icon=el('span',null,'checkout-icon');
+ function makeTile([label,description,path],tile){
+  const icon=el('span',null,'checkout-icon');
   icon.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';
-  tile.className='wallet-method-tile'+(i?'':' wallet-payment-method');
-  tile.append(icon,el('strong',label),el('small',description));
+  tile.className='wallet-method-tile';
+  const title=el('strong',label);tile.append(icon,title,el('small',description));
+  return title;
+ }
+ paymentMethods.forEach((method,i)=>{
+  if(i===1||i===2||i===3)return; // Digital wallets require a confirmed server capability.
+  const [label,description]=method,tile=i?button('',null):open;
+  makeTile(method,tile);
+  if(!i)tile.classList.add('wallet-payment-method');
   if(i){tile.disabled=true;tile.append(el('span','Tezliklə','wallet-method-badge'));}
   else{
    tile.setAttribute('aria-label',label);tile.setAttribute('aria-description',description);
@@ -93,5 +100,14 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
    if(e.status!==404&&alive())notice.textContent='Əvvəlki müraciət: '+e.message;
   }finally{if(alive()){open.disabled=false;onBusy(false);if(root.isConnected)await refreshCards();}}
  }
- return{element:root,updateAmount,resume};
+ const digital=el('div');root.insertBefore(digital,selection);
+ function walletTile(method,onClick){
+  const model=method==='apple-pay'?paymentMethods[1]:method==='google-pay'?paymentMethods[2]:method==='m10'?paymentMethods[3]:['Birbank','Elektron pulqabı',paymentMethods[0][2]];
+  const tile=button('',onClick),label=makeTile(model,tile);
+  const last=Array.from(tiles.querySelectorAll('[data-digital-wallet]')).at(-1)||open;
+  tile.dataset.digitalWallet=method;last.after(tile);
+  return {tile,label};
+ }
+ function showDigital(active){selection.hidden=active;open.disabled=active;open.setAttribute('aria-expanded',String(!active));}
+ return{element:root,updateAmount,resume,digital,walletTile,showDigital};
 }

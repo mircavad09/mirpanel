@@ -61,7 +61,7 @@ export function verifyEpointResult(raw,contentType,privateKey){
  if(value.operation_code!=null&&String(value.operation_code)!=='100')throw fail(422,'Bu əməliyyat dəstəklənmir.');
  if(value.currency!=null&&value.currency!=='AZN')throw fail(409,'Ödəniş valyutası uyğun deyil.');
  if(value.status==='success'&&(!reference(value.transaction)||String(value.operation_code??'100')!=='100'))throw fail(400,'Əməliyyat identifikatoru düzgün deyil.');
- return {id:value.order_id.slice(prefix.length),status:value.status,transaction:reference(value.transaction)?value.transaction:null,cents:value.status==='success'?parseCents(value.amount):null};
+ return {id:value.order_id.slice(prefix.length),status:value.status,transaction:reference(value.transaction)?value.transaction:null,cents:value.amount!=null?parseCents(value.amount):null};
 }
 
 // Server-only handoff from a future payment-creation flow. The provider ID must
@@ -81,7 +81,27 @@ export async function settleEpointResult(pool,result){
  const c=await pool.connect();
  try{
   await c.query('begin');
-  const intent=(await c.query('select * from mirpanel_community.epoint_wallet_intents where id=$1 for update',[result.id])).rows[0];
+  const readIntent=async()=>(await c.query('select * from mirpanel_community.epoint_wallet_intents where id=$1 for update',[result.id])).rows[0];
+  let intent=await readIntent();
+  // Widget creation does not guarantee a transaction ID. Only an already
+  // issued, owner-bound widget and a verified callback may establish the link.
+  if(!intent&&(await c.query("select exists(select 1 from information_schema.columns where table_schema='mirpanel_community' and table_name='epoint_checkout_requests' and column_name='method') present")).rows[0].present){
+   const request=(await c.query("select user_id,cents from mirpanel_community.epoint_checkout_requests where id=$1 and state='ready' and method in ('apple-pay','google-pay') for update",[result.id])).rows[0];
+   if(request){
+    intent=await readIntent();
+    if(!intent&&result.status==='success'){
+     if(Number(request.cents)!==result.cents||!reference(result.transaction))throw fail(409,'Ödəniş məlumatı uyğun deyil.');
+     try{
+      await c.query('insert into mirpanel_community.epoint_wallet_intents(id,user_id,cents,provider_transaction) values($1,$2,$3,$4)',[result.id,request.user_id,request.cents,result.transaction]);
+     }catch(e){if(e.code==='23505')throw fail(409,'Əməliyyat başqa ödənişə bağlıdır.');throw e;}
+     intent=await readIntent();
+    }else if(!intent){
+     // The widget may allow another attempt on the same order. Keep the
+     // reference pending until there is a successful, matchable transaction.
+     await c.query('commit');return;
+    }
+   }
+  }
   if(!intent)throw fail(404,'Ödəniş qeydi tapılmadı.');
   if(result.transaction&&intent.provider_transaction!==result.transaction)throw fail(409,'Əməliyyat identifikatoru uyğun deyil.');
   if(result.status==='success'&&(intent.provider_transaction!==result.transaction||Number(intent.cents)!==result.cents))throw fail(409,'Ödəniş məlumatı uyğun deyil.');

@@ -1,5 +1,7 @@
 # Epoint callback and return pages
 
+For the newer four-method rollout and current verification rules, see [epoint-four-methods.md](epoint-four-methods.md). The historical hosted-card notes below describe the original decba60 release.
+
 - success_url: https://mirpanel.com/odenis/epoint/ugurlu
 - error_url: https://mirpanel.com/odenis/epoint/ugursuz
 - result_url: https://mirpanel.com/api/payments/epoint/result

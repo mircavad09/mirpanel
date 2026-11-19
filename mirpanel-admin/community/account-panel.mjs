@@ -3,6 +3,7 @@ export async function paymentHistory(pool,userId,query){
  const filter=query.get('status')||'all',page=Number(query.get('page')||1),topup=query.get('topup')||'';
  if(topup&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(topup))throw fail(400,'Müraciət düzgün deyil.');
  if(!['all','approved','reviewing','rejected'].includes(filter)||!Number.isSafeInteger(page)||page<1||page>10000)throw fail(400,'Ödəniş filtri düzgün deyil.');
+ const epoint=(await pool.query("select to_regclass('mirpanel_community.epoint_wallet_intents') is not null as present")).rows[0].present;
  const {rows:[result]}=await pool.query(`
  WITH payments AS (
    SELECT 'topup' AS kind,t.id::text,t.history_number::text AS number,'Balans yükləmə' AS title,
@@ -11,6 +12,10 @@ export async function paymentHistory(pool,userId,query){
      CASE WHEN t.receipt_deleted_at IS NULL AND t.receipt IS NOT NULL THEN coalesce(t.receipt->>'mimeType','unknown') END AS mime,
      CASE WHEN t.status='rejected' THEN to_jsonb(t)->>'rejection_reason' END AS rejection_reason
    FROM wallet_topups t WHERE t.user_id=$1 AND t.status<>'draft'
+   ${epoint?`UNION ALL
+   SELECT 'topup',e.id::text,null::text,'Epoint · Balans yükləmə',e.cents,e.credited_at,e.credited_at,
+     'approved',e.credited_at,false,null::text,null::text
+   FROM mirpanel_community.epoint_wallet_intents e WHERE e.user_id=$1 AND e.credited_at IS NOT NULL`:''}
  ), selected AS (
    SELECT kind,id,number,title,cents,submitted_at,sort_at,status,operation_at,by_receipt,mime,rejection_reason
    FROM payments WHERE ($2='all' OR status=$2) AND ($4='' OR (kind='topup' AND id=$4)) ORDER BY sort_at DESC,kind,id DESC LIMIT 31 OFFSET $3

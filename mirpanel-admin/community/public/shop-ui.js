@@ -3,7 +3,7 @@ import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
 let walletModule;
-const loadWalletModule=()=>walletModule??=import('/community-assets/wallet-topup.js?v=topup-auto-cards-1').catch(e=>{walletModule=null;throw e;});
+const loadWalletModule=()=>walletModule??=import('/community-assets/wallet-topup.js?v=epoint-four-1').catch(e=>{walletModule=null;throw e;});
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
@@ -307,8 +307,8 @@ function showWallet(data,{createWalletTopup,topupReviewTime}){
  const back=backFromWallet();
  if(back){const a=link(giftReturn()?'← Hədiyyəyə qayıt':'← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
  app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions(topupReviewTime));void flow.resume();
- void import('/community-assets/epoint-wallet.js?v=epoint-wallet-1').then(m=>{
-  if(!flowSignal.aborted)return m.mountEpointWallet({form,accountId:profile?.user_id,getCents:effective,signal:flowSignal,back,el,button,link});
+ void import('/community-assets/epoint-wallet.js?v=epoint-four-1').then(m=>{
+  if(!flowSignal.aborted)return m.mountEpointWallet({form:flow.digital,accountId:profile?.user_id??profile?.id,getCents:effective,signal:flowSignal,back,el,button,link,walletTile:flow.walletTile,showDigital:flow.showDigital});
  }).catch(()=>{});
 }
 function walletQuestions(topupReviewTime){
@@ -317,7 +317,7 @@ function walletQuestions(topupReviewTime){
  for(const [question,answer] of [
   ['Balans nəyə üçündür?','Balansınızdakı məbləğlə səbətinizdəki məhsulları hər dəfə kart məlumatı daxil etmədən ala bilərsiniz.'],
   ['Komissiya tutulurmu?','Xeyr. MirPanel balans artırmaya komissiya tətbiq etmir. Göndərdiyiniz məbləğ tam olaraq balansınıza əlavə olunur.'],
-  ['Köçürmə nə vaxt təsdiqlənir?','Çeki göndərdikdən sonra təsdiq adətən '+topupReviewTime+' çəkir. İş saatlarımız hər gün 11:00–00:00-dır.']
+  ['Köçürmə nə vaxt təsdiqlənir?','Kartdan karta köçürmədə çeki göndərdikdən sonra təsdiq adətən '+topupReviewTime+' çəkir. İş saatlarımız hər gün 11:00–00:00-dır. Epoint üsullarında çek tələb olunmur; balans yalnız ödəniş xidməti serverdə təsdiqləndikdən sonra avtomatik artır.']
  ]){
   const item=el('details');item.append(el('summary',question),el('p',answer));list.append(item);
  }

@@ -7,31 +7,95 @@ function readDraft(){
 }
 function clearDraft(ref){try{if(readDraft()?.ref===ref)sessionStorage.removeItem(storeKey);}catch{}}
 const resultPath=ref=>'/odenis/epoint/ugurlu?ref='+encodeURIComponent(ref);
+const money=c=>new Intl.NumberFormat('az-AZ',{style:'currency',currency:'AZN'}).format(c/100);
+const walletNames={'apple-pay':'Apple Pay','google-pay':'Google Pay',m10:'m10',birbank:'Birbank'};
+export async function walletDeviceSupports(method,device=globalThis){
+ try{
+  if(method==='m10'||method==='birbank')return true;
+  if(method==='apple-pay')return device.ApplePaySession?.canMakePayments()===true;
+  if(method!=='google-pay'||!device.PaymentRequest)return false;
+  // Capability probe only; the Epoint iframe owns the payment sheet.
+  const request=new device.PaymentRequest([{supportedMethods:'https://google.com/pay',data:{apiVersion:2,apiVersionMinor:0,
+   allowedPaymentMethods:[{type:'CARD',parameters:{allowedAuthMethods:['PAN_ONLY','CRYPTOGRAM_3DS'],allowedCardNetworks:['VISA','MASTERCARD']}}]}}],
+   {total:{label:'MirPanel',amount:{currency:'AZN',value:'1.00'}}});
+  return await request.canMakePayment()===true;
+ }catch{return false;}
+}
 async function api(route,options={}){
  const r=await fetch(base+route,{cache:'no-store',credentials:'same-origin',...options});
  const data=await r.json().catch(()=>({}));
  if(!r.ok)throw Object.assign(Error(data.error||'Epoint xidməti cavab vermədi.'),{status:r.status});
  return data;
 }
-export async function mountEpointWallet({form,accountId,getCents,signal,back,el,button,link}){
+export async function mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly=false,walletTile,showDigital,amountHint}){
+ if(!accountId||signal.aborted)return;
  const block=el('div',null,'shop-actions'),notice=el('p',null,'shop-muted');
+ notice.hidden=true;
  notice.setAttribute('role','status');
  const active=()=>{const d=readDraft();return d?.accountId===accountId?d:null;};
  const statusLink=()=>{const d=active();return d?link('Epoint ödənişinin vəziyyəti',resultPath(d.ref)):null;};
- let checking=statusLink();if(checking)block.append(checking);
+ let checking=statusLink();
+ let config;
+ try{config=await api('status',{signal});}catch{}
+ const methods=(await Promise.all(Object.keys(walletNames).map(async m=>config?.methods?.[m]===true&&await walletDeviceSupports(m)?m:null))).filter(Boolean);
+ if(!walletOnly&&config?.enabled===true)methods.push('card');
+ if(signal.aborted)return;
+ if(!methods.length&&!checking){
+  if(!config||config.walletError){
+   notice.hidden=false;notice.textContent='Epoint ödəniş üsulları hazırda alınmır. ';
+   const retry=button('Yenidən cəhd et',()=>{retry.disabled=true;block.remove();notice.remove();void mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly,walletTile,showDigital,amountHint});});
+   block.append(retry);form.append(notice,block);
+  }
+  return;
+ }
+ if(checking)block.append(checking);
+ if(methods.length&&Number.isSafeInteger(amountHint))form.append(el('p','Balansa əlavə ediləcək: '+money(amountHint)+' · Sifarişi ayrıca təsdiqləyəcəksiniz.','shop-muted'));
  form.append(block,notice);
- let enabled=false;
- try{enabled=(await api('status',{signal})).enabled===true;}catch{}
- if(signal.aborted||!enabled)return;
- const start=button('Epoint ilə ödə',async()=>{
-  if(start.disabled||signal.aborted)return;
-  let d=active(),cents;
-  try{cents=d?.cents??getCents();}catch(e){notice.textContent=e.message;return;}
-  start.disabled=true;notice.textContent='Epoint ödəniş səhifəsi hazırlanır…';
+ const buttons=new Map();let busy=false,frame=null,timer=null,polls=0,polling=false,close=null,hintAt=0;
+ const stopWidget=()=>{clearTimeout(timer);if(frame)showDigital?.(false);frame?.remove();frame=null;close?.remove();close=null;};
+ signal.addEventListener('abort',stopWidget,{once:true});
+ const say=copy=>{notice.hidden=false;notice.textContent=copy;};
+ async function poll(){
+  if(signal.aborted||!frame||polling)return;
+  clearTimeout(timer);polling=true;const current=frame,d=active();
+  if(!d){polling=false;stopWidget();return;}
   try{
-   if(!d){d={ref:crypto.randomUUID(),accountId,cents,back:back==='/qrup'?back:null};sessionStorage.setItem(storeKey,JSON.stringify(d));}
-   const response=await api('start',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:d.ref,amount:(cents/100).toFixed(2)})});
+   const data=await api('status?ref='+encodeURIComponent(d.ref),{signal:AbortSignal.timeout(8000)});
+   if(frame!==current||signal.aborted)return;
+   if(data.status==='success'||data.status==='failed'){stopWidget();location.assign(resultPath(d.ref));return;}
+  }catch{}finally{polling=false;}
+  if(frame!==current||signal.aborted)return;
+  if(++polls<60)timer=setTimeout(poll,4000);
+  else say('Ödəniş hələ təsdiqlənməyib. Vəziyyəti ayrıca yoxlaya bilərsiniz.');
+ }
+ function openWidget(value){
+  const url=new URL(value);
+  if(url.protocol!=='https:'||url.port||url.username||url.password||!(url.hostname==='epoint.az'||url.hostname.endsWith('.epoint.az')))throw Error('Vidcet ünvanı düzgün deyil.');
+  stopWidget();polls=0;hintAt=0;
+  frame=el('iframe',null,'shop-epoint-widget');frame.title='Epoint təhlükəsiz ödəniş';frame.src=url.href;
+  frame.allow='payment '+url.origin;frame.referrerPolicy='strict-origin-when-cross-origin';
+  frame.style.cssText='display:block;width:100%;max-width:100%;height:400px;border:0';
+  close=button('Ödəniş pəncərəsini bağla',()=>{stopWidget();say('Ödənişin vəziyyətini yoxlaya və ya eyni ödənişə davam edə bilərsiniz.');setLabels();});
+  showDigital?.(true);form.append(frame,close);say('Ödəniş yoxlanılır…');frame.scrollIntoView({block:'nearest'});void poll();
+ }
+ window.addEventListener('message',event=>{
+  if(!frame||event.source!==frame.contentWindow||event.origin!==new URL(frame.src).origin||!['success','failed','error'].includes(event.data?.status))return;
+  // No transaction, status or amount from the browser is trusted for settlement.
+  if(Date.now()-hintAt<3000)return;
+  hintAt=Date.now();say('Ödəniş yoxlanılır…');void poll();
+ },{signal});
+ async function start(method){
+  if(busy||frame||signal.aborted||!form.isConnected)return;
+  let d=active(),cents;
+  const prior=d?.method??'card';
+  if(d&&prior!==method)return;
+  try{cents=d?.cents??getCents();}catch(e){say(e.message);return;}
+  busy=true;setLabels();say('Epoint ödəniş səhifəsi hazırlanır…');
+  try{
+   if(!d){d={ref:crypto.randomUUID(),accountId,cents,method,back:['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(back)?back:null};sessionStorage.setItem(storeKey,JSON.stringify(d));}
+   const response=await api('start',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:d.ref,amount:(cents/100).toFixed(2),...(method==='card'?{}:{method})})});
    if(signal.aborted)return;
+   if(response.state==='ready'&&['apple-pay','google-pay'].includes(method)){openWidget(response.widget);return;}
    if(response.state==='ready'){location.assign(response.redirect);return;}
    if(response.state==='credited'){location.assign(resultPath(d.ref));return;}
    if(response.state==='declined'){clearDraft(d.ref);notice.textContent='Epoint ödənişi başlatmadı. Məbləği yoxlayıb yenidən cəhd edə bilərsiniz.';return;}
@@ -42,15 +106,23 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
     notice.textContent=e.status?e.message:'Epoint ilə əlaqə alınmadı. Eyni ödənişin vəziyyətini yoxlayın.';
    }
   }finally{
-   if(!signal.aborted){checking?.remove();checking=statusLink();if(checking)block.append(checking);setLabel();start.disabled=false;}
+   busy=false;
+   if(!signal.aborted){checking?.remove();checking=statusLink();if(checking)block.append(checking);setLabels();}
   }
- },true);
- function setLabel(){
-  const d=active();
-  start.textContent=d?'Epoint ödənişinə davam et · '+(d.cents/100).toFixed(2).replace('.',',')+' ₼':'Epoint ilə ödə';
  }
- setLabel();
- block.prepend(start);
+ function setLabels(){
+  const d=active();
+  for(const [method,{tile,label}] of buttons){
+   const name=walletNames[method];
+   tile.disabled=busy||!!frame||!!d&&(d.method??'card')!==method;
+   label.textContent=d&&(d.method??'card')===method?(name?name+' · ':'Epoint ödənişinə ')+'davam et · '+money(d.cents):name?name+(walletOnly?' ilə balansı artır':walletTile?'':' ilə ödə'):'Epoint ilə ödə';
+  }
+ }
+ for(const method of methods){
+  if(walletTile&&method!=='card')buttons.set(method,walletTile(method,()=>void start(method)));
+  else{const b=button('',()=>void start(method),true);buttons.set(method,{tile:b,label:b});block.append(b);}
+ }
+ setLabels();
 }
 
 export async function showEpointReturn(doc=document){
@@ -60,7 +132,7 @@ export async function showEpointReturn(doc=document){
  const supplied=new URLSearchParams(location.search).get('ref'),draft=readDraft(),ref=supplied===null?draft?.ref:supplied;
  if(!validRef(ref))return;
  const back=main.querySelector('[data-epoint-back]');
- if(draft?.ref===ref&&draft.back==='/qrup'){back.href='/qrup';back.textContent='Hədiyyəyə qayıt';}
+ if(draft?.ref===ref&&['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(draft.back)){back.href=draft.back;back.textContent=draft.back==='/qrup'?'Hədiyyəyə qayıt':'Alışa qayıt';}
  login.href='/hesab?next='+encodeURIComponent(resultPath(ref));
  const finish=(heading,copy)=>{title.textContent=heading;message.textContent=copy;doc.title=heading+' — MirPanel';};
  let stopped=false,running=false,timer=null,count=0;
@@ -71,13 +143,16 @@ export async function showEpointReturn(doc=document){
    const data=await api('status?ref='+encodeURIComponent(ref),{signal:AbortSignal.timeout(8000)});
    if(data.status==='success'&&Number.isSafeInteger(data.cents)&&data.cents>0){
     clearDraft(ref);stopped=true;check.hidden=true;
-    finish('Balansınız uğurla artırıldı',new Intl.NumberFormat('az-AZ',{style:'currency',currency:'AZN'}).format(data.cents/100)+' balansınıza əlavə edildi.');
+    finish('Balansınız uğurla artırıldı',money(data.cents)+' balansınıza əlavə edildi.');
+    const balance=main.querySelector('[data-epoint-balance]'),products=main.querySelector('[data-epoint-products]');
+    if(balance&&Number.isSafeInteger(data.balanceCents)){balance.textContent='Yeni balans: '+money(data.balanceCents);balance.hidden=false;}
+    if(products)products.hidden=false;
    }else if(data.status==='failed'){
     clearDraft(ref);stopped=true;check.hidden=true;
-    finish('Ödəniş tamamlanmadı','Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa, yenidən ödəməzdən əvvəl dəstəyə müraciət edin.');
+    finish(data.providerStatus==='returned'?'Ödəniş geri qaytarıldı':'Ödəniş tamamlanmadı','Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa, yenidən ödəməzdən əvvəl dəstəyə müraciət edin.');
    }else{
-    finish('Ödənişin təsdiqi gözlənilir','Ödəniş hələ balansınıza əlavə edilməyib. Vəziyyəti yenidən yoxlaya bilərsiniz.');
-    if(++count<6)timer=setTimeout(refresh,4000);
+    finish('Ödəniş yoxlanılır…','Ödəniş hələ balansınıza əlavə edilməyib. Vəziyyəti yenidən yoxlaya bilərsiniz.');
+    if(++count<45)timer=setTimeout(refresh,4000);
    }
   }catch(e){
    if(e.status===401){login.hidden=false;finish('Ödəniş vəziyyətini yoxlayın','Nəticəni görmək üçün ödənişi başladığınız hesabla daxil olun.');}

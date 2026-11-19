@@ -1,13 +1,16 @@
 import assert from 'node:assert/strict';
 import {createHash,randomUUID} from 'node:crypto';
+import {readFile} from 'node:fs/promises';
 import {shopFixture} from './shop-test-fixture.mjs';
-import {epointCheckoutEnabled,startEpointCheckout,readEpointCheckout} from '../mirpanel-admin/epoint-checkout.mjs';
+import {epointCheckoutEnabled,epointMethods,startEpointCheckout,readEpointCheckout} from '../mirpanel-admin/epoint-checkout.mjs';
 import {verifyEpointResult,settleEpointResult} from '../mirpanel-admin/epoint-result.mjs';
+import {paymentHistory} from '../mirpanel-admin/community/account-panel.mjs';
 
 const env={EPOINT_CHECKOUT_ENABLED:'true',EPOINT_PUBLIC_KEY:'synthetic-public',EPOINT_PRIVATE_KEY:'synthetic-private'};
 assert.equal(epointCheckoutEnabled({ ...env,EPOINT_CHECKOUT_ENABLED:'false' }),false);
 const f=await shopFixture();
 try{
+ await f.pool.query(await readFile(new URL('../mirpanel-admin/community/payment-history-number-migration.sql',import.meta.url),'utf8'));
  const ref=randomUUID(),body={requestId:ref,amount:'4,99'};
  const calls=[];
  let release;
@@ -50,7 +53,7 @@ try{
  const raw=Buffer.from(new URLSearchParams({data,signature}).toString());
  const verified=verifyEpointResult(raw,'application/x-www-form-urlencoded',env.EPOINT_PRIVATE_KEY);
  await Promise.all(Array.from({length:6},()=>settleEpointResult(pool,verified)));
- assert.deepEqual(await readEpointCheckout(pool,'a',ref),{status:'success',cents:499});
+ assert.equal((await readEpointCheckout(pool,'a',ref)).cents,499);
  assert.deepEqual(await startEpointCheckout(pool,'a',body,options),{state:'credited'});
  assert.equal((await pool.query("select count(*)::int total from mirpanel_community.wallet_ledger where kind='topup_credit'")).rows[0].total,1);
  assert.equal(calls.length,1);
@@ -65,5 +68,44 @@ try{
  assert.deepEqual(await readEpointCheckout(pool,'a',declined.requestId),{status:'failed'});
  const unsafe={requestId:randomUUID(),amount:'5.00'};
  await assert.rejects(startEpointCheckout(pool,'a',unsafe,{env,send:async(...args)=>{verifyBody(...args);return Response.json({status:'success',transaction:'te_synthetic_bad',redirect_url:'http://127.0.0.1/checkout'});}}),{status:503});
- console.log('PASS: signed creation, owner checks, one active request per reference, timeout no repeat, decline, safe redirect, six callbacks and one credit.');
+ const wallets={...env,EPOINT_TOKEN_WIDGET_ENABLED:'true',EPOINT_APPLE_PAY_ENABLED:'true',EPOINT_GOOGLE_PAY_ENABLED:'true'};
+ assert.equal(epointMethods(wallets)['apple-pay'],false);
+ assert.equal(epointMethods(wallets)['google-pay'],true);
+ assert.equal(epointMethods({...wallets,EPOINT_PRIVATE_KEY:''})['google-pay'],false);
+ wallets.EPOINT_APPLE_DOMAIN_VERIFIED='true';
+ const startBalance=Number((await pool.query("select cents from mirpanel_community.wallet_accounts where user_id='a'")).rows[0].cents);
+ let firstTx;
+ for(const method of ['apple-pay','google-pay']){
+  const widgetRef=randomUUID(),input={requestId:widgetRef,amount:'2.51',method};
+  const msg={...callback,order_id:'mp_ep_'+widgetRef,transaction:'te_'+widgetRef,amount:'2.51'};
+  const signed=value=>{
+   const data=Buffer.from(JSON.stringify(value)).toString('base64');
+   const signature=createHash('sha1').update(env.EPOINT_PRIVATE_KEY+data+env.EPOINT_PRIVATE_KEY).digest('base64');
+   return verifyEpointResult(Buffer.from(JSON.stringify({data,signature})),'application/json',env.EPOINT_PRIVATE_KEY);
+  };
+  await assert.rejects(settleEpointResult(pool,signed(msg)),{status:404});
+  let calls=0;
+  const config={env:wallets,send:async(url,request)=>{
+   calls++;assert.equal(url,'https://epoint.az/api/1/token/widget');assert.equal(request.method,'POST');
+   const data=request.body.get('data');
+   assert.equal(request.body.get('signature'),createHash('sha1').update(env.EPOINT_PRIVATE_KEY+data+env.EPOINT_PRIVATE_KEY).digest('base64'));
+   assert.deepEqual(JSON.parse(Buffer.from(data,'base64')),{public_key:env.EPOINT_PUBLIC_KEY,amount:2.51,order_id:msg.order_id,description:'MirPanel balans artırma'});
+   return Response.json({status:'success',widget_url:'https://epoint.az/api/1/token/widget/test'});
+  }};
+  const widget=await startEpointCheckout(pool,'a',input,config);
+  assert.deepEqual(widget,{state:'ready',widget:'https://epoint.az/api/1/token/widget/test'});
+  assert.deepEqual(await startEpointCheckout(pool,'a',input,config),widget);assert.equal(calls,1);
+  await assert.rejects(readEpointCheckout(pool,'b',widgetRef),{status:404});
+  await assert.rejects(settleEpointResult(pool,signed({...msg,amount:251})),{status:409});
+  if(firstTx)await assert.rejects(settleEpointResult(pool,signed({...msg,transaction:firstTx})),{status:409});
+  assert.deepEqual(await readEpointCheckout(pool,'a',widgetRef),{status:'pending',providerStatus:'new'});
+  await Promise.all(Array.from({length:8},()=>settleEpointResult(pool,signed(msg))));
+  assert.deepEqual(await readEpointCheckout(pool,'a',widgetRef),{status:'success',cents:251,balanceCents:startBalance+(firstTx?502:251)});
+  await assert.rejects(settleEpointResult(pool,signed({...msg,transaction:'different_transaction'})),{status:409});
+  const history=await paymentHistory(pool,'a',new URLSearchParams({topup:widgetRef}));
+  assert.equal(history.items.length,1);assert.equal(history.items[0].by_receipt,false);
+  firstTx=msg.transaction;
+ }
+ assert.equal((await pool.query("select count(*)::int total from mirpanel_community.wallet_ledger where kind='topup_credit'")).rows[0].total,3);
+ console.log('PASS: card regression and both wallet methods, no transaction at creation, signed matching, ownership, rejected mismatches, concurrent callbacks and payment history.');
 }finally{await f.close();}

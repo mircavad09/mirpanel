@@ -12,8 +12,10 @@ import { fileURLToPath } from "node:url";
 import { extractAdminState, mergeAdminPayload, normalizeAdminPayload, patchAppSource } from "./core.mjs";
 import {createApiIntegrations} from './api-integrations.mjs';
 import {createPaymentSecurity} from './payment-security.mjs';
-import {verifyEpointResult,settleEpointResult} from './epoint-result.mjs';
-import {epointCheckoutEnabled,startEpointCheckout,readEpointCheckout} from './epoint-checkout.mjs';
+import {verifyEpointResult} from './epoint-result.mjs';
+import {epointMethods,startEpointCheckout,readEpointCheckout} from './epoint-checkout.mjs';
+import {epointWallets} from './epoint-api.mjs';
+import {acceptEpointResult,reconcileEpoint,startEpointReconciliation} from './epoint-reconcile.mjs';
 import {readCatalogCosts,readEpinbyOrderCosts} from './epinby-finance.mjs';
 import {startSheetCustomerIdSync} from './community/netflix-sheet-customer-id.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
@@ -1538,13 +1540,26 @@ const server = http.createServer(async (request, response) => {
       if(request.method!==method)return json(response,405,{error:method+' tələb olunur.'},{Allow:method});
       if(start&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğunun mənbəyi icazəli deyil.'});
       const ref=requestUrl.searchParams.get('ref');
-      if(!start&&!ref)return json(response,200,{enabled:epointCheckoutEnabled(process.env)});
-      if(start&&!epointCheckoutEnabled(process.env))return json(response,503,{error:'Epoint ilə balans artırma aktiv deyil.'});
+      const methods=epointMethods(process.env);
+      if(!start&&!ref){
+        let walletError=false;
+        if(methods.m10||methods.birbank){
+          try{const wallets=await epointWallets();methods.m10=methods.m10&&!!wallets.m10;methods.birbank=methods.birbank&&!!wallets.birbank;}
+          catch{methods.m10=false;methods.birbank=false;walletError=true;}
+        }
+        return json(response,200,{enabled:methods.card,methods,walletError});
+      }
+      if(start&&!Object.values(methods).some(Boolean))return json(response,503,{error:'Epoint ilə balans artırma aktiv deyil.'});
       try{
         const user=await ownerCommunity.checkoutAccount(request,{verified:start});
         if(!user)return json(response,401,{error:'Hesabınıza daxil olun.'});
         const {pool}=await ownerCommunity.shopContext({headers:{}});
-        if(!start)return json(response,200,await readEpointCheckout(pool,user,ref));
+        if(!start){
+          // Read ownership before initiating any provider lookup.
+          const current=await readEpointCheckout(pool,user,ref);
+          if(current.status!=='success')await reconcileEpoint(pool,ref,{user}).catch(()=>{});
+          return json(response,200,await readEpointCheckout(pool,user,ref));
+        }
         if(String(request.headers['content-type']).split(';')[0]!=='application/json')return json(response,415,{error:'JSON tələb olunur.'});
         const raw=await readRawBody(request,1024);
         let body;try{body=JSON.parse(raw.toString('utf8'));}catch{return json(response,400,{error:'Ödəniş sorğusu düzgün deyil.'});}
@@ -1559,7 +1574,7 @@ const server = http.createServer(async (request, response) => {
       try{
         const result=verifyEpointResult(await readRawBody(request,65536),request.headers['content-type'],process.env.EPOINT_PRIVATE_KEY?.trim());
         const {pool}=await ownerCommunity.shopContext({headers:{}});
-        await settleEpointResult(pool,result);
+        await acceptEpointResult(pool,result);
         return json(response,200,{ok:true});
       }catch(error){
         const status=Number.isInteger(error.status)&&error.status>=400&&error.status<=599?error.status:503;
@@ -1704,6 +1719,7 @@ const server = http.createServer(async (request, response) => {
 
 server.listen(config.port, () => {
   if(!deployment.workers){console.log('DEPLOYMENT_STANDBY_READ_ONLY');return;}
+  startEpointReconciliation(()=>ownerCommunity.integrationPool());
   if(process.env.COMMUNITY_PUBLIC_ENABLED==='true')adminPush.start();
   void ownerCommunity.startWelcomeDelivery().catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
   if(process.env.NETFLIX_ROOM_SHEET_ID){
