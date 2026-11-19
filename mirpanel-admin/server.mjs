@@ -1,5 +1,6 @@
 import crypto from "node:crypto";
 import {deploymentRuntime} from './deployment-runtime.mjs';
+import {staffHTML,staffRequest} from './community/staff-readonly.mjs';
 import {boundedReadFetch} from './bounded-read-fetch.mjs';
 const deployment=deploymentRuntime();
 if(deployment.standby)globalThis.fetch=deployment.readOnlyFetch(globalThis.fetch);
@@ -1532,6 +1533,19 @@ const server = http.createServer(async (request, response) => {
     const requestUrl = new URL(request.url, `http://${request.headers.host || "localhost"}`);
     const pathname = requestUrl.pathname;
     if(deployment.guard(request,response))return;
+    const staffRestrictedPath=/^\/(?:admin(?:[./]|$)|api\/(?:admin|employee)\/|employee(?:\/|$))/.test(pathname)||pathname.startsWith('/api/')&&!['GET','HEAD','OPTIONS'].includes(request.method)&&!pathname.startsWith('/api/auth/')&&!pathname.startsWith('/api/community/staff/');
+    if(staffRestrictedPath&&/(?:__Secure-)?mirpanel_owner\.session_token=/.test(request.headers.cookie||'')){
+      try{if(await ownerCommunity.staffRestricted(request))return json(response,403,{error:'İşçi hesabı yalnız istifadəçi, balans və sifariş məlumatlarını oxuya bilər.'});}
+      catch{return json(response,503,{error:'İşçi icazəsi hazırda yoxlanılmır.'});}
+    }
+    if(pathname==='/isci'||pathname==='/profil'&&requestUrl.searchParams.get('tab')==='isci'){
+      if(request.method!=='GET')return json(response,405,{error:'Yalnız oxuma üçün.'});
+      response.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'private,no-store','X-Robots-Tag':'noindex,nofollow','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self'; base-uri 'none'; frame-ancestors 'none'"});return response.end(staffHTML);
+    }
+    if(pathname.startsWith('/api/community/staff/')){
+      try{return json(response,200,await staffRequest(ownerCommunity,request,requestUrl));}
+      catch(e){return json(response,e.status||503,{error:e.status?e.message:'İstifadəçi məlumatı hazırda alınmır.'});}
+    }
     if(deployment.standby&&pathname==='/__deployment/probe'){
       const {readOnlyDeploymentProbe}=await import('./deployment-probe.mjs');
       return json(response,200,await readOnlyDeploymentProbe(process.env,()=>getAppFile()));
