@@ -1080,8 +1080,8 @@
       return details.querySelector(".productGroupBody");
     };
     const basic = makeGroup("Əsas məlumatlar", "Ad, kateqoriya, şəkil və açıqlama", true);
-    const pricing = makeGroup("Qiymət və planlar", "Satış vəziyyəti, stok və paketlər", true);
-    const orders = makeGroup("Sifariş və müştəri forması", "Sifariş ardıcıllığı və forma sahələri");
+    const pricing = makeGroup("Qiymət və paketlər", "Paketlər, qiymətlər və stok");
+    const orders = makeGroup("Müştəridən alınan məlumatlar", "Sifariş zamanı müştəridən hansı məlumatların istənəcəyini seçin.");
     const confirmation = makeGroup("Sifariş təsdiqi", "Təsdiq pəncərəsi və onun mətnləri");
     const advanced = makeGroup("Geniş parametrlər", "Texniki məlumatlar, SEO və schema");
     const makeGrid = (body, heading) => {
@@ -1116,10 +1116,10 @@
       return heading;
     };
     const basicGrid = makeGrid(basic);
-    ["productTitle", "productOrder", "productVariant", "productCategory", "productBadge"].forEach(id => moveControl(id, basicGrid));
+    ["productTitle", "productOrder", "productCategory"].forEach(id => moveControl(id, basicGrid));
     const image = pairControl("productImage", basicGrid, "productImagePair");
     image.append(el("productImagePickBtn").closest(".imageUploadBox"));
-    ["productDesc", "productNote"].forEach(id => moveControl(id, basicGrid).classList.remove("full"));
+    ["productDesc"].forEach(id => moveControl(id, basicGrid).classList.remove("full"));
 
     const pricingGrid = makeGrid(pricing);
     pricingGrid.classList.add("productStockGrid");
@@ -1131,11 +1131,11 @@
     moveSection("plans", pricing);
     pricing.append(form.querySelector(".productDetailSettings"), el("productSalesSettings"));
 
-    moveSection("productOrderFlow", orders);
+    moveSection("productOrderFlow", advanced);
     const fields = el("productFieldActions");
     moveSection(fields.id, orders);
     orders.append(el("formFields"), el("spotifyPasswordResetSettings"));
-    moveSection("whatsappExtraMessage", orders);
+    moveSection("whatsappExtraMessage", advanced);
 
     const confirmationHeading = moveSection("orderConfirmationEnabled", confirmation);
     confirmationHeading.classList.add("productConfirmationHead");
@@ -1147,8 +1147,9 @@
     confirmationHeading.after(note);
     el("orderConfirmationTitle").closest(".formGrid").classList.add("productConfirmationGrid");
 
+    groups.insertBefore(confirmation.closest("details"), orders.closest("details"));
     const technical = makeGrid(advanced, "Texniki məlumatlar");
-    ["productId", "productFlow", "productSeller"].forEach(id => moveControl(id, technical));
+    ["productId", "productFlow", "productSeller", "productVariant", "productBadge", "productNote"].forEach(id => moveControl(id, technical));
     const seo = el("productSeoSlug").closest(".confirmationSettings");
     seo.previousElementSibling.remove();
     const seoBasics = makeGrid(advanced, "SEO əsasları");
@@ -1162,6 +1163,36 @@
     advanced.appendChild(section);
     const danger = el("deleteProductBtn")?.closest(".dangerZone");
     if (danger) advanced.appendChild(danger);
+    advanced.closest("details").hidden = true;
+    const nav = document.createElement("nav");
+    nav.className = "productEditorNav";
+    nav.setAttribute("aria-label", "Məhsul bölmələri");
+    [basic, pricing, confirmation, orders].forEach((body, index) => {
+      const group = body.closest("details");
+      group.id = "product-section-" + index;
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "btn";
+      button.textContent = group.querySelector("summary span").textContent;
+      button.onclick = () => { group.open = true; group.scrollIntoView({block:"start", behavior:"smooth"}); group.querySelector("summary").focus(); };
+      nav.append(button);
+    });
+    groups.before(nav);
+    const actions = document.createElement("div");
+    actions.className = "productEditorActions";
+    actions.innerHTML = '<button type="button" class="btn" id="saveProductDraft">Yadda saxla</button><button type="button" class="btn primary" id="publishProduct">Yayımla</button><p>Yadda saxla — bu brauzerdə qaralama saxlayır. Yayımla — yoxlamadan sonra dəyişiklikləri sayta tətbiq edir.</p>';
+    nav.after(actions);
+    el("saveProductDraft").onclick = async () => { if (await preserveEditor()) toast("Qaralama bu brauzerdə saxlanıldı. Sayta yayımlanmayıb.", "good"); };
+    el("publishProduct").onclick = () => el("saveBtn").click();
+    el("orderConfirmationEnabled").nextElementSibling.textContent = "Müştəriyə sifariş təsdiqi göstər";
+    el("addPlanBtn").textContent = "Paket əlavə et";
+    const updateConfirmation = () => {
+      confirmation.querySelectorAll(".confirmationSettings input, .confirmationSettings textarea").forEach(input => {
+        if (input.id !== "orderConfirmationEnabled") input.disabled = !el("orderConfirmationEnabled").checked || (input.closest("#orderConfirmationHelpFields") && !el("orderConfirmationHelpEnabled").checked);
+      });
+    };
+    el("orderConfirmationEnabled").addEventListener("change", updateConfirmation);
+    document.addEventListener("mirpanel:product-render", updateConfirmation);
+    updateConfirmation();
     form.querySelectorAll(":scope > .formGrid").forEach((grid) => { if (!grid.children.length) grid.remove(); });
   }
   function enhanceCategories() {

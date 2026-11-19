@@ -18,7 +18,7 @@ let draftTimer;
 const recoveredImages=new Set();
 async function preserveEditor(){
   if(!state.data||!state.dirty)return;
-  try{await window.MirpanelAdminDraft?.save({data:payloadWithoutTransientPreviews(state.data),baseSha:state.baseSha,selectedId:state.selectedId});}
+  try{if (!window.MirpanelAdminDraft) throw Error(); await window.MirpanelAdminDraft.save({data:payloadWithoutTransientPreviews(state.data),baseSha:state.baseSha,selectedId:state.selectedId}); return true;}
   catch{toast('Lokal qaralama saxlanmadı. Redaktələri itirməmək üçün bu səhifəni bağlamayın.','bad');}
 }
 async function sessionRequired(){await preserveEditor();location.href='/login.html?reason=session_required';}
@@ -90,7 +90,7 @@ function validHttpsUrl(value) {
 }
 
 const formFieldTypes = [
-  ["text", "Mətn"],
+  ["text", "Mətn / oyunçu ID-si"],
   ["tel", "Telefon"],
   ["email", "E-poçt"],
   ["pin", "PIN / kod"],
@@ -795,7 +795,7 @@ function renderProductForm() {
   updatePublicTitlePreview(product);
 
   setValue("productActive", product.active !== false, "checked");
-  setValue("productOrder", product.order ?? "");
+  renderProductPosition(product);
   setValue("productId", product.id);
   setValue("productTitle", product.title);
   setValue("productVariant", product.variant);
@@ -839,7 +839,7 @@ function renderProductForm() {
   setValue("orderConfirmationDescription", confirmation.description);
   setValue("orderConfirmationConfirmText", confirmation.confirmText);
   setValue("orderConfirmationCancelText", confirmation.cancelText);
-  setValue("orderConfirmationFooterText", confirmation.footerText);
+  setValue("orderConfirmationFooterText", /WhatsApp avtomatik açılacaq/i.test(confirmation.footerText || "") ? "Təsdiqdən sonra səbətə və ödənişə keçə bilərsiniz." : confirmation.footerText);
   updateLegacyConfirmationHint(confirmation.footerText);
   setValue("orderConfirmationHelpEnabled", confirmation.helpLink.enabled, "checked");
   setValue("orderConfirmationHelpLabel", confirmation.helpLink.label);
@@ -857,6 +857,7 @@ function renderProductForm() {
   updateHelpFields();
   renderPlans(product);
   renderFormFields(product);
+  document.dispatchEvent(new Event("mirpanel:product-render"));
 }
 
 function setValue(id, value, prop = "value") {
@@ -942,63 +943,27 @@ function bindProductField(id, update) {
 }
 
 bindProductField("productActive", (p, e) => p.active = e.checked);
-$("productOrder").addEventListener("change", () => {
-  const product = selectedProduct();
-  if (!product) return;
-
-  const products = state.data.products;
-  const previousOrder = validProductOrder(product) || products.indexOf(product) + 1;
-  const requestedOrder = Number.parseInt($("productOrder").value, 10);
-
-  if (!Number.isFinite(requestedOrder)) {
-    $("productOrder").value = previousOrder;
-    return;
-  }
-
-  const nextOrder = Math.min(products.length, Math.max(1, requestedOrder));
-  const originalOrders = new Map(products.map((item) => [item, item.order]));
-  const targetProducts = products.filter(
-    (item) => item !== product && validProductOrder(item) === nextOrder
-  );
-  const displacedProduct = targetProducts[0] || null;
-  let collision = displacedProduct;
-  let collisionOrder = nextOrder;
-  let needsRenumber = targetProducts.length > 1;
-  const movedProducts = new Set([product]);
-
-  while (collision && !needsRenumber) {
-    if (collisionOrder <= 1) {
-      needsRenumber = true;
-      break;
-    }
-
-    const lowerOrder = collisionOrder - 1;
-    const lowerProducts = products.filter(
-      (item) => item !== product &&
-        !movedProducts.has(item) &&
-        validProductOrder(item) === lowerOrder
-    );
-
-    collision.order = lowerOrder;
-    movedProducts.add(collision);
-    collision = lowerProducts[0] || null;
-    collisionOrder = lowerOrder;
-    if (lowerProducts.length > 1) needsRenumber = true;
-  }
-
-  product.order = nextOrder;
-
-  if (needsRenumber || !hasUniqueProductOrders()) {
-    for (const [item, order] of originalOrders) item.order = order;
-    renumberProducts(product, nextOrder, displacedProduct);
-  } else {
-    sortProductsByOrder();
-  }
-
-  markDirty();
-  renderProducts();
-  renderProductForm();
-});
+function renderProductPosition(product) {
+  const host = $("productOrder");
+  host.innerHTML = '<summary>Мövqeyi seç</summary><div class="productPositionOptions"></div>'.replace('М','M');
+  const summary = host.querySelector('summary');
+  const list = host.querySelector('div');
+  const products = [...state.data.products].sort((a,b)=>(validProductOrder(a)||99999)-(validProductOrder(b)||99999));
+  summary.textContent = 'Sıra: ' + (products.indexOf(product)+1) + ' · Mövqeyi dəyiş';
+  const option = (anchor, after) => {
+    const button = document.createElement('button'); button.type='button';button.className='productPositionOption';
+    if(anchor){const image=document.createElement('img');image.src=imageUrl(anchor.image);image.alt='';button.append(image);}
+    const text=document.createElement('span');text.textContent=anchor ? anchor.title+(after?' — sonra':' — əvvəl') : 'Sona yerləşdir';button.append(text);
+    button.onclick=()=>{
+      const ordered=products.filter(p=>p!==product);
+      const position=anchor?ordered.indexOf(anchor)+(after?1:0):ordered.length;
+      ordered.splice(position,0,product);
+      ordered.forEach((p,i)=>p.order=i+1);state.data.products=ordered;
+      markDirty();renderProducts();renderProductPosition(product);
+    }; list.append(button);
+  };
+  products.filter(p=>p!==product&&p.active!==false).forEach(p=>{option(p,false);option(p,true);}); option(null);
+}
 bindProductField("productId", (p, e) => {
   const oldId = p.id;
   const nextId = slug(e.value);
@@ -1086,7 +1051,7 @@ bindProductField("orderConfirmationDescription", (p, e) => ensureConfirmation(p)
 bindProductField("orderConfirmationConfirmText", (p, e) => ensureConfirmation(p).confirmText = e.value);
 bindProductField("orderConfirmationCancelText", (p, e) => ensureConfirmation(p).cancelText = e.value);
 function updateLegacyConfirmationHint(value) {
-  $("legacyConfirmationHint").hidden = !/WhatsApp avtomatik açılacaq/i.test(value || "");
+  $("legacyConfirmationHint").hidden = true;
 }
 bindProductField("orderConfirmationFooterText", (p, e) => {
   ensureConfirmation(p).footerText = e.value;
@@ -1111,9 +1076,16 @@ function updateHelpFields() {
   $("orderConfirmationHelpUrl").disabled = !enabled;
 }
 
+function packageSummary(plan, row) {
+  row.querySelector('[data-package-title]').textContent=plan.label || 'Paket';
+  row.querySelector('[data-package-meta]').textContent=(plan.durationDays ? plan.durationDays+' gün' : (plan.durationMonths ?? plan.months ?? 1)+' ay')+' · '+(plan.price ?? 0)+' ₼ · '+(plan.active!==false?'Aktiv':'Passiv');
+}
 function renderPlans(product) {
+  const opened = new Set($('plans').dataset.productId === product.id ? [...$('plans').querySelectorAll('.planRow[open]')].map(row=>Number(row.dataset.package)) : []);
+  $('plans').dataset.productId = product.id;
   $("plans").innerHTML = (product.plans || []).map((plan, index) => `
-    <div class="planRow">
+    <details class="planRow" data-package="${index}">
+      <summary><strong data-package-title>${escapeHtml(plan.label || 'Paket '+(index+1))}</strong><span data-package-meta>${escapeHtml(plan.durationDays ? plan.durationDays+' gün' : (plan.durationMonths ?? plan.months ?? 1)+' ay')} · ${escapeHtml(plan.price ?? 0)} ₼ · ${plan.active!==false?'Aktiv':'Passiv'}</span></summary><div class="packageBody">
       <label>Paketin adı<input data-plan="${index}" data-field="label" value="${escapeHtml(plan.label || "")}"></label>
       <div class="planDuration">
         <label>Paketin müddəti<input data-plan="${index}" data-duration type="number" min="1" step="1" required value="${escapeHtml(plan.durationDays ?? plan.durationMonths ?? plan.duration_months ?? plan.months ?? 1)}"></label>
@@ -1121,15 +1093,15 @@ function renderPlans(product) {
       </div>
       <label>Satış qiyməti<span class="planPrice"><input data-plan="${index}" data-field="price" type="number" min="0" step="0.01" value="${escapeHtml(plan.price ?? "")}"><span aria-hidden="true">₼</span></span></label>
       <label>Əvvəlki qiymət<span class="planPrice"><input data-plan="${index}" data-field="regularPrice" type="number" min="0" step="0.01" value="${escapeHtml(plan.regularPrice ?? "")}"><span aria-hidden="true">₼</span></span></label>
-      <fieldset class="planMetadata"><legend>Zəmanət</legend>
+      <details class="packageExtras"><summary>Zəmanət</summary><fieldset class="planMetadata"><legend>Zəmanət ayarları</legend>
         <label>Zəmanət<select data-plan="${index}" data-planmeta="warrantyMode"><option value="inherit" ${!plan.warrantyMode || plan.warrantyMode==='inherit'?'selected':''}>Paketin adından götür</option><option value="guaranteed" ${plan.warrantyMode==='guaranteed'?'selected':''}>Zəmanət var</option><option value="none" ${plan.warrantyMode==='none'?'selected':''}>Zəmanətsiz</option></select></label>
         <label>Zəmanət müddəti<input type="number" min="1" step="1" data-plan="${index}" data-planmeta="warrantyDuration" value="${escapeHtml(plan.warrantyDuration ?? '')}"></label>
         <label>Zəmanət vahidi<select data-plan="${index}" data-planmeta="warrantyUnit"><option value="month">Ay</option><option value="day" ${plan.warrantyUnit==='day'?'selected':''}>Gün</option></select></label>
         <label>Zəmanət mətni<input type="text" maxlength="300" data-plan="${index}" data-planmeta="warrantyText" value="${escapeHtml(plan.warrantyText || '')}"></label>
-      </fieldset>
+      </fieldset></details>
       <div class="planControls">
-        <label>Stok mətninin görünüşü<select data-plan="${index}" data-planmeta="stockVisibility"><option value="hide">Stok mətnini gizlət</option><option value="show" ${plan.stockVisibility==='show'?'selected':''}>Real stoku göstər</option></select></label>
-        <label class="switchLine"><input type="checkbox" data-plan="${index}" data-planmeta="active" ${plan.active!==false?'checked':''}>Aktiv plan</label>
+        <details class="packageExtras packageStock"><summary>Stok görünüşü</summary><label>Stok mətninin görünüşü<select data-plan="${index}" data-planmeta="stockVisibility"><option value="hide">Stok mətnini gizlət</option><option value="show" ${plan.stockVisibility==='show'?'selected':''}>Real stoku göstər</option></select></label></details>
+        <label class="switchLine"><input type="checkbox" data-plan="${index}" data-planmeta="active" ${plan.active!==false?'checked':''}>Aktiv paket</label>
         <label class="switchLine"><input type="checkbox" data-plan="${index}" data-planmeta="bestValue" ${plan.bestValue===true?'checked':''}>Ən sərfəli</label>
         <div class="planActions">
           <button class="iconBtn movePlan" data-plan="${index}" data-direction="-1" type="button" aria-label="Yuxarı">↑</button>
@@ -1138,7 +1110,7 @@ function renderPlans(product) {
         </div>
         <p class="planMetadataHint">Plan üzrə real stok mənbəyi yoxdursa stok gizlənir. Məhsulun ümumi stoku planlara köçürülmür.${Number(plan.regularPrice)>0 && Number(plan.regularPrice)<=Number(plan.price)?' Əvvəlki qiymət cari qiymətdən yüksək deyil; endirim göstərilməyəcək.':''}</p>
       </div>
-    </div>
+    </div></div></details>
   `).join("");
 
   $("plans").querySelectorAll('[data-planmeta]').forEach(input => input.addEventListener('change',()=>{
@@ -1154,6 +1126,7 @@ function renderPlans(product) {
       if (input.value==='') delete plan[field]; else plan[field]=Number(input.value);
     } else plan[field]=input.value;
     markDirty();
+    packageSummary(plan,input.closest('.planRow'));
     if (field==='bestValue') renderPlans(product);
   }));
 
@@ -1173,7 +1146,7 @@ function renderPlans(product) {
         plan.duration_months = value;
         plan.durationMonths = value;
       }
-      markDirty();
+      markDirty();packageSummary(plan,group.closest('.planRow'));
     };
     amount.addEventListener("change", updateDuration);
     unit.addEventListener("change", updateDuration);
@@ -1191,14 +1164,16 @@ function renderPlans(product) {
       else {
         plan[input.dataset.field] = Number(input.value);
       }
-      markDirty();
+      markDirty();packageSummary(plan,input.closest(".planRow"));
       renderProducts();
     });
   });
+  opened.forEach(index=>{const row=$("plans").querySelector(`[data-package="${index}"]`);if(row)row.open=true;});
 
   document.querySelectorAll(".removePlan").forEach((button) => {
     button.addEventListener("click", () => {
       const index = Number(button.dataset.plan);
+      if (!confirm(`“${product.plans[index].label || "Paket"}” silinsin? Əvvəlki sifarişlərin saxlanmış paket məlumatları qorunacaq.`)) return;
       if (formScope === String(index)) formScope = "product";
       else if (Number(formScope) > index) formScope = String(Number(formScope) - 1);
       product.plans.splice(index, 1);
@@ -1232,10 +1207,10 @@ function renderFormFields(product) {
   if(formProductId!==product.id){formProductId=product.id;formScope='product';}
   const scope=$('formFieldScope'),container=$('formFields');
   if(formScope!=='product'&&!product.plans[Number(formScope)])formScope='product';
-  scope.innerHTML='<option value="product">Bütün paketlər üçün ümumi sahələr</option>'+product.plans.map((p,i)=>{
+  scope.innerHTML='<option value="product">Bütün paketlər üçün</option>'+product.plans.map((p,i)=>{
     const title=p.label||p.name||('Paket '+(i+1));
     const mode=Array.isArray(p.formFields)?'ayrıca ayar':'ümumi sahələr';
-    return '<option value="'+i+'">'+escapeHtml(title+' · '+mode)+'</option>';
+    return '<option value="'+i+'">'+escapeHtml('Seçilmiş paket üçün: '+title+' · '+mode)+'</option>';
   }).join('');
   scope.value=formScope;
   scope.onchange=()=>{formScope=scope.value;renderFormFields(product);};
@@ -1290,7 +1265,12 @@ function renderFormFields(product) {
       </div></details>
     </section>`;
   }).join('');
-  container.innerHTML='<p class="fieldHelp">'+scopeNote+'</p>'+ (editor||'<div class="emptyMini">Sahə əlavə olunmayıb.</div>')+preview;
+  container.innerHTML='<p class="fieldHelp">'+scopeNote+'</p><label class="switchLine"><input type="checkbox" id="noCustomerFields" '+(!orderedFields.some(f=>f.enabled!==false)?'checked':'')+'>Məlumat tələb olunmur</label>'+ (editor||'<div class="emptyMini">Sahə əlavə olunmayıb.</div>')+preview;
+  $('noCustomerFields').onchange=()=>{
+    if($('noCustomerFields').checked && target.formFields.some(f=>f.enabled!==false) && !confirm('Bu sahələr bu seçim üçün deaktiv edilsin? Saxlanmış sahələr silinməyəcək.')) { $('noCustomerFields').checked=false;return; }
+    target.formFields.forEach(field=>field.enabled=!$('noCustomerFields').checked);
+    syncOrderFlow(product);markDirty();renderFormFields(product);
+  };
   refreshCustomerFormPreview(product,target,container);
 
   const changed=()=>{
@@ -1579,6 +1559,7 @@ $("addPlanBtn").addEventListener("click", () => {
   product.plans.push({ pricingId: crypto.randomUUID(), label: "", months: 1, price: 0 });
   markDirty();
   renderPlans(product);
+  $("plans").lastElementChild.open = true;
   renderFormFields(product);
   renderProducts();
 });
