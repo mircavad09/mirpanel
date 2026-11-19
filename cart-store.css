@@ -141,3 +141,27 @@ html body dialog.mir-cart-drawer[data-cart-window]>:is(header,footer){position:r
 html body dialog.mir-cart-drawer[data-cart-window]>header button{background:transparent;border:0;box-shadow:none;min-width:44px;min-height:44px;padding:0}
 @keyframes mir-cart-viewport-in{from{opacity:.4}to{opacity:1}}
 @media(prefers-reduced-motion:reduce){html body dialog.mir-cart-drawer[data-cart-window]{animation:none}}
+
+/* Cart-only festive trim: decorative, inert and outside all click targets. */
+html body dialog.mir-cart-drawer[data-cart-window]{background:#000;border-color:#3a321b}
+.mir-cart-drawer :is(header,footer),.mir-cart-drawer .mir-cart-body{background:#000}
+.mir-cart-drawer .mir-cart-item{background:#090909;border-color:#242424}
+.mir-cart-drawer .mir-cart-artwork{background:#0d0d0d}
+.mir-cart-drawer .mir-cart-qty{background:#030303;border-color:#3c3825}
+.mir-cart-drawer .mir-cart-more{border-color:#242424}
+.mir-cart-festive{position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;user-select:none;overflow:hidden}
+.mir-cart-festive *{pointer-events:none}
+.mir-cart-hat{position:absolute;right:52px;top:1px;width:32px;height:29px;transform:rotate(12deg)}
+.mir-cart-hat svg{display:block;width:100%;height:100%}
+.mir-cart-lights{position:absolute;opacity:.85}
+.mir-cart-lights.is-top,.mir-cart-lights.is-bottom{left:20px;right:20px;height:1px;background:#4e411f}
+.mir-cart-lights.is-top{top:3px}.mir-cart-lights.is-bottom{bottom:3px}
+.mir-cart-lights.is-left,.mir-cart-lights.is-right{top:22px;bottom:22px;width:1px;background:#4e411f}
+.mir-cart-lights.is-left{left:3px}.mir-cart-lights.is-right{right:3px}
+.mir-cart-lights i{position:absolute;display:block;width:3px;height:4px;border-radius:50%;background:#ffd977;color:#ffd977;box-shadow:0 0 4px currentColor;animation:mir-cart-light 3.2s ease-in-out infinite;animation-delay:var(--bulb-delay)}
+.mir-cart-lights i:nth-child(3n+1){background:#e84d55;color:#e84d55}
+.mir-cart-lights i:nth-child(3n+2){background:#55b98b;color:#55b98b}
+.mir-cart-lights.is-top i,.mir-cart-lights.is-bottom i{left:var(--bulb-position);top:-1px}
+.mir-cart-lights.is-left i,.mir-cart-lights.is-right i{top:var(--bulb-position);left:-1px}
+@keyframes mir-cart-light{0%,100%{opacity:.45;box-shadow:0 0 2px currentColor}50%{opacity:1;box-shadow:0 0 5px currentColor}}
+@media(prefers-reduced-motion:reduce){.mir-cart-lights i{animation:none;opacity:.8}}
