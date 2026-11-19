@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import displayLabels from '../display-labels.js';
 import catalogCard from '../catalog-card.js';
 import homeShortcuts from '../home-shortcuts.js';
+import homeSections from '../home-sections.js';
 import {renderPlanRows, renderPlanSummary, renderPlanTrust} from '../product-plan-view.mjs';
 import {productSeoCopy} from '../product-seo-content.mjs';
 import {planName} from '../product-plan-view.mjs';
@@ -315,7 +316,7 @@ function renderCatalogCards(active) {
   }).join("");
 }
 
-export function patchHomeCatalog(source,products) {
+export function patchHomeCatalog(source,products,categories=[]) {
   const active=activeProductsWithSlugs(products);
   const best=active.filter(({product})=>product.bestSeller===true);
   const priority=['youtube','netflix','capcut','spotify'];
@@ -327,11 +328,11 @@ export function patchHomeCatalog(source,products) {
   return source
     .replace(/(<nav class="home-quick-links" id="homeQuickLinks" aria-label="Tez keçidlər")(?: hidden)?>([\s\S]*?)<\/nav>/,(_,tag)=>tag+(quick.length?'':' hidden')+'>'
       + (quick.length?'<div class="home-quick-track"><div class="home-quick-group">'+shortcuts(false)+'</div><div class="home-quick-group" aria-hidden="true">'+shortcuts(true)+'</div></div>':'')+'</nav>')
-    .replace(/(<div class="grid" id="grid" aria-live="polite")[^>]*>[\s\S]*?(?=<\/div>\s*<\/main>)/,(_,tag)=>tag+' aria-busy="true" data-home-static="1">'+renderCatalogCards(best.length?best:active)
+    .replace(/(<div class="grid" id="grid" aria-live="polite")[^>]*>[\s\S]*?(?=<\/div>\s*<\/main>)/,(_,tag)=>tag+' aria-busy="true" data-home-static="1">'+homeSections.render(active.map(item=>item.product),categories,(product)=>renderCatalogCards(active.filter(item=>item.product.id===product.id)))
       + '<div class="home-catalog-status" data-home-catalog-status><span role="status">Məhsullar yüklənir…</span><button type="button" hidden>Yenidən cəhd et</button></div>');
 }
 
-export function generateProductListingPageFiles(products = [], siteSections = {}, cms = {}) {
+export function generateProductListingPageFiles(products = [], siteSections = {}, cms = {}, categoryConfig = []) {
   const active = activeProductsWithSlugs(products);
   const canonical = `${SITE_URL}/mehsul`;
   let cards = renderCatalogCards(active);
@@ -341,7 +342,8 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
     const first=active.find(({product})=>product.category===category).product;
     cards=cards.replace(`data-product-id="${escapeAttribute(first.id)}"`,`id="category-${seoSlug(category)}" data-product-id="${escapeAttribute(first.id)}"`);
   }
-  const categoryLinks='<nav aria-label="Məhsul kateqoriyaları" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0">'+categories.map(c=>`<a href="/mehsul#category-${seoSlug(c)}" style="padding:8px">${escapeHtml(labels[c]||c)}</a>`).join('')+'</nav>';
+  Object.assign(labels,Object.fromEntries(categoryConfig.map(c=>[c.key,c.name])));
+  const categoryLinks='<nav aria-label="Məhsul kateqoriyaları" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0">'+categories.map(c=>`<a href="/mehsul?category=${encodeURIComponent(c)}" data-catalog-category="${escapeAttribute(c)}" style="padding:8px">${escapeHtml(labels[c]||c)}</a>`).join('')+'</nav>';
   const structuredData = safeJson({
     "@context": "https://schema.org",
     "@graph": [
@@ -371,7 +373,7 @@ export function generateProductListingPageFiles(products = [], siteSections = {}
   const html = `<!DOCTYPE html>
 <html lang="az"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"><title>Premium rəqəmsal məhsullar | Mirpanel</title><meta name="description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta name="robots" content="index, follow"><link rel="canonical" href="${canonical}"><meta property="og:type" content="website"><meta property="og:title" content="Premium rəqəmsal məhsullar | Mirpanel"><meta property="og:description" content="Mirpanel-də bütün aktiv premium rəqəmsal məhsulların planlarını və cari qiymətlərini bir siyahıda nəzərdən keçirin."><meta property="og:url" content="${canonical}"><meta property="og:image" content="${SITE_URL}/assets/logo.png"><link rel="stylesheet" href="/style.css?v=20260805-shared-header-1"><link rel="stylesheet" href="/product-page.css?v=stable-buy-1"><link rel="stylesheet" href="/site-header.css?v=20260902-controls-removed-1"><link rel="stylesheet" href="/splash.css?v=20260903-1"><link rel="icon" href="/assets/logo.png"><script type="application/ld+json">${structuredData}</script></head>
 <body class="product-page-document">${renderSplashMarkup()}${renderSharedHeader(siteSections, "products")}<main class="wrap" role="main"><nav class="product-page-breadcrumb" aria-label="Breadcrumb"><a href="/">Ana səhifə</a><span aria-hidden="true">›</span><span aria-current="page">Məhsullar</span></nav><h1>Premium rəqəmsal məhsullar</h1><div class="grid" aria-live="polite">${cards}</div></main><footer class="product-page-footer">${renderCmsFooter(cms)}</footer><script src="/site-header.js?v=seller-pricing-1"></script></body></html>`;
-  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('</h1>','</h1>'+categoryLinks).replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=tokens-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=tokens-1"></script><script src="/catalog-listing.js?v=sales-count-2"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
+  return new Map([["mehsul.page", applyCmsBrandAndNav(html.replace('</h1>','</h1>'+categoryLinks).replace('class="grid"','class="grid catalog-grid"').replace('</head>','<link rel="stylesheet" href="/catalog-card.css?v=tokens-1"></head>').replace('</body>', '<script type="application/json" id="catalogCartProducts">'+safeJson(active.map(({product})=>product))+'</script><script src="/catalog-card.js?v=tokens-1"></script><script src="/catalog-listing.js?v=categories-1"></script><script src="/display-labels.js?v=20261021"></script></body>'), cms, "products")]]);
 }
 
 export function generateProductPageHtml(product, slug, activeProducts, siteSections = {}, cms = {}, content = {}) {

@@ -135,3 +135,25 @@ document.addEventListener('click', async event => {
  }catch(error){if(add.isConnected&&!clickLife.signal.aborted)status.textContent=error.name==='TimeoutError'?'Stok cavabı gecikir. Yenidən + düyməsinə basın.':error.message||'Sifariş açıla bilmədi.';}
  finally{window.removeEventListener('mirpanel:route-leave',cancel);delete add.dataset.busy;add.disabled=add.dataset.stockDisabled==='true';}
 });
+
+// A category link narrows only the catalog list, preserving each product URL.
+(function(){
+ function filterCategory(){
+  if(location.pathname!=='/mehsul')return;
+  const grid=document.querySelector('.catalog-grid'),source=document.getElementById('catalogCartProducts');
+  if(!grid||!source)return;
+  const selected=new URLSearchParams(location.search).get('category');
+  let products;try{products=JSON.parse(source.textContent);}catch{return;}
+  const name=[...document.querySelectorAll('[data-catalog-category]')].find(n=>n.dataset.catalogCategory===selected)?.textContent;
+  const title=document.querySelector('main h1');
+  if(title)title.textContent=selected==='featured'?'Hamı bunu alır':name||'Premium rəqəmsal məhsullar';
+  const ids=new Set(products.filter(p=>!selected||p.category===selected||selected==='featured'&&p.bestSeller===true).map(p=>p.id));
+  for(const card of grid.querySelectorAll('[data-product-id]'))card.hidden=!ids.has(card.dataset.productId);
+  let empty=document.getElementById('catalogCategoryEmpty');
+  if(!ids.size&&!empty){empty=document.createElement('p');empty.id='catalogCategoryEmpty';empty.textContent='Məhsul tapılmadı';grid.after(empty);}
+  if(empty)empty.hidden=!!ids.size;
+ }
+ window.addEventListener('mirpanel:route-ready',filterCategory);
+ window.addEventListener('popstate',filterCategory);
+ filterCategory();
+})();

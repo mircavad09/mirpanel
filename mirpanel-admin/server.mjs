@@ -1221,7 +1221,7 @@ async function handleApi(request, response) {
     const {data:normalized,conflicts,digest} = await prepareEditorChange(body,current);
     if (conflicts.length) return json(response,409,editorConflict(conflicts));
     const previewProductPages = generateProductPageFiles(normalized.products, normalized.siteSections, normalized.cms, normalized.content);
-    const previewProductListing = generateProductListingPageFiles(normalized.products, normalized.siteSections, normalized.cms);
+    const previewProductListing = generateProductListingPageFiles(normalized.products, normalized.siteSections, normalized.cms, normalized.categories);
     const previewInfoPages = generateInfoPageFiles(normalized.siteSections, normalized.ui, normalized.cms);
     validateGeneratedOutput(
       patchAppSource(current.source, normalized),
@@ -1316,12 +1316,12 @@ async function handleApi(request, response) {
     const indexFile = await getRepoFile("index.html", parent.commitSha);
     const version = `admin-${Date.now()}`;
     const patchedIndex = patchHomeStructuredData(
-      patchHomeCatalog(patchHomeHeader(bumpAssetVersions(indexFile.source, version), adminData.siteSections, adminData.cms),adminData.products),
+      patchHomeCatalog(patchHomeHeader(bumpAssetVersions(indexFile.source, version), adminData.siteSections, adminData.cms),adminData.products,adminData.categories),
       adminData.cms,
       adminData.products
     );
     const productPages = generateProductPageFiles(adminData.products, adminData.siteSections, adminData.cms, adminData.content);
-    const productListing = generateProductListingPageFiles(adminData.products, adminData.siteSections, adminData.cms);
+    const productListing = generateProductListingPageFiles(adminData.products, adminData.siteSections, adminData.cms, adminData.categories);
     const infoPages = generateInfoPageFiles(adminData.siteSections, adminData.ui, adminData.cms);
     const files = new Map([
       ["app.js", patched],
