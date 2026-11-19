@@ -2100,7 +2100,7 @@
     try{
       const inventory=window.MirpanelInventory;
       if(!inventory||!await inventory.refresh())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');
-      if(!button.isConnected||!button.closest('.home-page #grid'))return;
+      if(location.pathname!=='/'||!document.querySelector('#homePageView #grid [data-product-id="'+CSS.escape(product.id)+'"]'))return;
       const state=inventory.productState(product);
       const choices=(product.plans||[]).map((plan,index)=>({plan,available:state.plans[index]?.canOrder}))
         .filter(({plan})=>plan.active!==false&&Number(plan.price)>0);

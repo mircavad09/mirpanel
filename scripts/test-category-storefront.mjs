@@ -67,6 +67,10 @@ try{for(const [engineName,engine] of [['chrome',chromium],['webkit',webkit]]){
   assert.equal(await grid.locator('.homeProductCard').count(),1);
   await page.goto(origin);await page.waitForFunction(()=>!!window.MirpanelInventory);
   const zoom=grid.locator('.home-featured [data-product-id="zoom"]');
+  await page.evaluate(()=>{
+   const previous=MirpanelInventory.refresh;
+   MirpanelInventory.refresh=async(...args)=>{const result=await previous(...args);renderGrid();return result;};
+  });
   await zoom.locator('.homeCardAdd').click();
   const consent=page.locator('dialog.cart-entry[open]');await consent.waitFor();
   await consent.getByRole('button',{name:'Bağla',exact:true}).click();
