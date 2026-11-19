@@ -1,9 +1,15 @@
 import {withRequestSignal,orderRequestMessage} from '/request-lifecycle.mjs?v=abort-compat-1';
 import {validateDetails,validateEpinbyDetails} from './checkout-fields.js?v=epinby-account-1';
 import {ensureCart} from '/cart-ready.js?v=token-cart-1';
-import {ensureEntryStyles} from './entry-styles.js?v=player-gold-seal-2';
+import {ensureEntryStyles} from './entry-styles.js?v=spotify-compact-1';
 let current=null;
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
+function spotifyIcon(kind){
+ const node=el('span',null,'spotify-field-icon');node.setAttribute('aria-hidden','true');
+ const paths={email:'M3 5h18v14H3z M3 6l9 7 9-7',password:'M5 10h14v11H5z M8 10V6a4 4 0 0 1 8 0v4',key:'M14 6a4 4 0 1 1-2 7L5 20H2v-3l7-7a4 4 0 0 1 5-4',eye:'M2 12s3-7 10-7 10 7 10 7-3 7-10 7S2 12 2 12Z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6',hidden:'M3 3l18 18 M9 5a12 12 0 0 1 3 0c7 0 10 7 10 7a18 18 0 0 1-4 5 M6 6a18 18 0 0 0-4 6s3 7 10 7a13 13 0 0 0 4-1'};
+ node.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="'+paths[kind]+'"/></svg>';
+ return node;
+}
 function playerResultCard(name,id){
  const card=el('div',null,'player-result-card');
  const seal=el('span',null,'player-result-seal');seal.setAttribute('aria-hidden','true');
@@ -100,7 +106,15 @@ export async function startCartEntry(product,plan,{editLine=null,loadingDialog=n
   dialog.classList.remove('cart-entry-warning');head.replaceChildren(title,close);body.className='';title.textContent=quote.gameTerms?'Oyunçu ID-ni daxil et':'Sifariş məlumatları';
   const form=el('form',null,'cart-entry-fields'),controls=new Map();
   const intro=el('p',product.title+' · '+quote.planName,'cart-entry-note');
-  form.append(intro);
+  const spotify=product.id==='spotify'||product.id==='spotify-premium';
+  dialog.classList.toggle('spotify-entry',spotify);
+  if(spotify){
+   title.textContent='Məlumat daxil edin';
+   const heading=el('div',null,'spotify-entry-heading'),image=el('img',null,'spotify-entry-logo');
+   image.src=product.image||'/assets/spotify.png';image.alt='';image.width=image.height=28;
+   heading.append(title,intro);head.replaceChildren(image,heading,close);
+   form.append(el('p','Spotify hesab məlumatlarınızı daxil edin','spotify-entry-intro'));
+  }else form.append(intro);
   let indicator,checkInput;
   const identifier=fs.find(f=>['player_id','telegram_username'].includes(f.key))?.key||fs[0].key;
   for(const f of fs){
@@ -120,9 +134,31 @@ export async function startCartEntry(product,plan,{editLine=null,loadingDialog=n
     checkInput=el('span',null,'cart-entry-check-input');
     indicator=el('span',null,'cart-entry-check-icon');indicator.setAttribute('aria-hidden','true');
     checkInput.append(input,indicator);label.append(checkInput);
+   }else if(spotify&&(f.type==='email'||f.type==='password')){
+    const password=f.type==='password',name=password?'Spotify hesab şifrəsi':'Spotify hesabınızın e-poçt ünvanı';
+    caption.textContent=name;input.setAttribute('aria-label',name);
+    input.placeholder=password?'Şifrənizi daxil edin':'example@email.com';
+    const field=el('span',null,'spotify-entry-input');field.append(spotifyIcon(password?'password':'email'),input);
+    if(password){
+     const toggle=el('button',null,'spotify-password-toggle');toggle.type='button';
+     toggle.setAttribute('aria-label','Şifrəni göstər');toggle.setAttribute('aria-pressed','false');toggle.append(spotifyIcon('hidden'));
+     toggle.onclick=()=>{
+      const shown=input.type==='password';input.type=shown?'text':'password';
+      toggle.setAttribute('aria-label',shown?'Şifrəni gizlət':'Şifrəni göstər');toggle.setAttribute('aria-pressed',String(shown));
+      toggle.replaceChildren(spotifyIcon(shown?'eye':'hidden'));
+     };
+     field.append(toggle);
+    }
+    label.append(field);
    }else label.append(input);
-   if(f.description&&!checksAccount)label.append(el('small',f.description));
+   if(f.description&&!checksAccount&&!spotify)label.append(el('small',f.description));
    form.append(label);
+   if(spotify&&f.type==='password'){
+    const help=el('aside',null,'spotify-password-help'),text=el('div');
+    text.append(el('span','Spotify hesab şifrənizi bilmirsinizsə, aşağıdakı link vasitəsilə yeniləyə bilərsiniz.'));
+    const reset=el('a','password-reset');reset.href='https://www.spotify.com/password-reset/';reset.target='_blank';reset.rel='noopener noreferrer';
+    text.append(reset);help.append(spotifyIcon('key'),text);form.append(help);
+   }
   }
   const feedback=el('div',null,'cart-entry-check-feedback');feedback.setAttribute('role','status');feedback.hidden=true;
   if(checksAccount){
@@ -186,6 +222,7 @@ export async function startCartEntry(product,plan,{editLine=null,loadingDialog=n
   if(quote.gameTerms){title.tabIndex=-1;title.focus();dialog.scrollTop=0;}
  }
  function terms(display){
+  dialog.classList.remove('spotify-entry');
   const game=display.gameTerms;
   dialog.classList.add('cart-entry-warning');dialog.classList.toggle('cart-game-entry',!!game);body.className='cart-warning-body';title.textContent=game?'Sifariş şərtləri':'Diqqət!';
   title.id='cartEntryTitle';dialog.removeAttribute('aria-label');dialog.setAttribute('aria-labelledby',title.id);
