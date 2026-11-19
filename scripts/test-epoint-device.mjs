@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {walletDeviceSupports} from '../mirpanel-admin/community/public/epoint-wallet.js';
+assert.equal(await walletDeviceSupports('m10',{}),true);
+assert.equal(await walletDeviceSupports('birbank',{}),true);
+assert.equal(await walletDeviceSupports('apple-pay',{}),false);
+assert.equal(await walletDeviceSupports('apple-pay',{ApplePaySession:{canMakePayments:()=>true}}),true);
+let parameters;
+const device={PaymentRequest:class{constructor(methods){parameters=methods[0].data.allowedPaymentMethods[0].parameters;}canMakePayment(){return Promise.resolve(true);}}};
+assert.equal(await walletDeviceSupports('google-pay',device),true);
+assert.deepEqual(parameters.allowedAuthMethods,['CRYPTOGRAM_3DS']);
+assert.equal(await walletDeviceSupports('google-pay',{PaymentRequest:class{canMakePayment(){return Promise.reject(Error('not supported'));}}}),false);
+const before=Date.now();
+assert.equal(await walletDeviceSupports('google-pay',{PaymentRequest:class{canMakePayment(){return new Promise(()=>{});}}}),false);
+assert(Date.now()-before<4000);
+console.log('PASS capability probes: token-only parameters, unsupported device, rejected probe and bounded stalled probe; no provider requests');

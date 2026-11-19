@@ -16,9 +16,13 @@ export async function walletDeviceSupports(method,device=globalThis){
   if(method!=='google-pay'||!device.PaymentRequest)return false;
   // Capability probe only; the Epoint iframe owns the payment sheet.
   const request=new device.PaymentRequest([{supportedMethods:'https://google.com/pay',data:{apiVersion:2,apiVersionMinor:0,
-   allowedPaymentMethods:[{type:'CARD',parameters:{allowedAuthMethods:['PAN_ONLY','CRYPTOGRAM_3DS'],allowedCardNetworks:['VISA','MASTERCARD']}}]}}],
+   allowedPaymentMethods:[{type:'CARD',parameters:{allowedAuthMethods:['CRYPTOGRAM_3DS'],allowedCardNetworks:['VISA','MASTERCARD']}}]}}],
    {total:{label:'MirPanel',amount:{currency:'AZN',value:'1.00'}}});
-  return await request.canMakePayment()===true;
+  // Match Epoint's widget: PAN_ONLY readiness must not advertise a token-only flow.
+  // A stalled capability probe must not hide unrelated wallet/card methods.
+  let timer;
+  try{return await Promise.race([request.canMakePayment(),new Promise(resolve=>{timer=setTimeout(()=>resolve(false),2500);})])===true;}
+  finally{clearTimeout(timer);}
  }catch{return false;}
 }
 async function api(route,options={}){
