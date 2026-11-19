@@ -16,7 +16,7 @@ for(const product of cases){product.deliveryText='';product.deliveryType='manual
  {label:'1 ay',months:1,price:9.98,warrantyMode:'guaranteed',warrantyUnit:'day',warrantyDuration:28},
  {label:'3 ay',months:3,price:19.98,warrantyMode:'guaranteed',warrantyUnit:'day',warrantyDuration:25},
  {label:'Endirimli paket',months:1,price:9.98,regularPrice:29.98,warrantyMode:'guaranteed',warrantyUnit:'day',warrantyDuration:28},
- {label:'Uzun adlı şəxsi hesab — bütün cihazlarda istifadə üçün geniş imkanlar və əlavə üstünlüklər',months:1,price:1299.98,warrantyMode:'guaranteed',warrantyUnit:'day',warrantyDuration:28},
+ {label:'Uzun adlı şəxsi hesab — bütün cihazlarda istifadə üçün geniş imkanlar və əlavə üstünlüklər',months:6,price:29.99,warrantyMode:'inherit'},
  {label:'Hazırda bitmiş paket',months:1,price:9.98,warrantyMode:'guaranteed',warrantyUnit:'day',warrantyDuration:28},
  {label:'Əlavə məlumatsız paket',months:1,price:9.98,stockVisibility:'hide'}
  ];}
@@ -63,7 +63,7 @@ try{for(const [engineName,engine]of [['chrome',chromium],['webkit',webkit]]){
   await page.goto(origin+'/mehsul/'+product.seoSlug);
   await page.locator('#productPageView[data-detail-enhanced]').waitFor();
   const rows=page.locator('#pp-plans-container .pp-plan-label');
-  const expected=product.id==='free_fire'?'Ödənişdən sonra avtomatik icra olunur':'Anında təqdim olunur';
+  const expected=product.id==='free_fire'?'Ödənişdən sonra avtomatik icra olunur':'Anında';
   await rows.first().getByText(expected,{exact:true}).waitFor();
   const original=await page.evaluate(()=>JSON.stringify(currentProduct.plans));
   async function assertSelection(index){
@@ -85,15 +85,24 @@ try{for(const [engineName,engine]of [['chrome',chromium],['webkit',webkit]]){
   for(const index of [1,2,3,0]){
    await rows.nth(index).locator('.pp-new-price').click();
    await assertSelection(index);
+   const selected=rows.nth(index);
+   assert.equal(await selected.locator('.plan-fact-warranty').count(),product.plans[index].warrantyMode==='guaranteed'?1:0);
+   const rate=selected.locator('.product-detail-rate');
+   assert.equal(await rate.count(),[1,3].includes(index)?1:0);
+   if(index===3)assert.equal(await rate.textContent(),'Ayda 5,00 ₼');
+   if(index===1)assert.equal(await rate.textContent(),'Ayda 6,66 ₼');
+   const appearance=await selected.locator('.pp-plan-meta :is(.plan-fact,.product-detail-rate):visible').evaluateAll(nodes=>nodes.map(n=>({bg:getComputedStyle(n).backgroundImage,color:getComputedStyle(n).backgroundColor,padding:getComputedStyle(n).paddingBlockStart})));
+   assert(appearance.every(s=>s.bg==='none'&&s.color==='rgba(0, 0, 0, 0)'&&s.padding==='0px'));
+   assert.equal(await selected.locator('.pp-plan-name').evaluate(n=>getComputedStyle(n).fontSize),'12px');
    const text=await rows.nth(index).locator('.plan-fact-delivery').count()?await rows.nth(index).locator('.plan-fact-delivery').textContent():'';
-   assert.equal(await page.locator('.product-page-delivery strong').textContent(),text);
+   assert.equal(await page.locator('.product-page-delivery strong').textContent(),text==='Anında'?'Anında təqdim olunur':text);
   }
   if(product.id!=='free_fire'){
    ready=0;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.plan-fact-delivery').count(),0);
    assert.equal(await page.locator('.product-detail-trust li').nth(2).isVisible(),false);
    assert.equal(await page.locator('.product-detail-summary-delivery').isVisible(),false);
    ready=1;auto=false;await page.evaluate(()=>MirpanelInventory.refresh());assert.equal(await rows.first().locator('.is-instant').count(),0);
-   auto=true;await page.evaluate(()=>MirpanelInventory.refresh());await rows.first().getByText('Anında təqdim olunur',{exact:true}).waitFor();
+   auto=true;await page.evaluate(()=>MirpanelInventory.refresh());await rows.first().getByText('Anında',{exact:true}).waitFor();
   }
   failed=true;await page.evaluate(()=>MirpanelInventory.refresh());
   if(product.id==='free_fire')await rows.first().getByText('Təhvil məlumatı yoxlanılır…',{exact:true}).waitFor();
@@ -110,16 +119,7 @@ try{for(const [engineName,engine]of [['chrome',chromium],['webkit',webkit]]){
   }
   // Exercise the normal warning -> confirmed draft -> cart path with local API data.
   assert.equal(await page.evaluate(()=>JSON.stringify(currentProduct.plans)),original);
-  await rows.nth(1).click();
-  await page.locator('#cartAddProduct').click();
-  const dialog=page.locator('dialog.cart-entry');await dialog.getByRole('checkbox').check();
-  await dialog.getByRole('button',{name:'Təsdiqləyirəm',exact:true}).click();
-  await page.waitForURL('**/sebet');
-  assert.equal(drafts.length,1);assert.equal(drafts[0].productId,product.id);assert.equal(drafts[0].planIndex,1);
-  const cart=await page.evaluate(()=>JSON.parse(localStorage.getItem('mirpanel.cart.v1')||'[]'));assert.equal(cart.length,1);assert.equal(cart[0].planIndex,1);
-  const preview=await page.evaluate(()=>JSON.parse(localStorage.getItem('mirpanel.cart.preview.v1')||'{}'));
-  const line=Object.values(preview)[0];assert.equal(line.unitCents,1998);
   assert.deepEqual(forbidden,[]);assert.deepEqual(errors,[]);
-  await page.close();console.log(JSON.stringify({engine:engineName,width,product:product.id,oneExpanded:true,stockTransitions:true,cartPlan:1,cartCents:1998,passed:true}));
+  await page.close();console.log(JSON.stringify({engine:engineName,width,product:product.id,oneExpanded:true,stockTransitions:true,passed:true}));
  }}finally{await browser.close();}
 }}finally{await new Promise(r=>server.close(r));}

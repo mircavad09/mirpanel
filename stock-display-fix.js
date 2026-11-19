@@ -212,7 +212,7 @@
       let line=row.querySelector('.plan-fact-delivery');
       if(!label){line?.remove();return;}
       if(!line){line=document.createElement('span');line.className='plan-fact plan-fact-delivery';row.querySelector('.pp-plan-meta')?.prepend(line);}
-      line.textContent=label;line.hidden=label==='Stokda yoxdur';line.classList.toggle('is-instant',label==='Anında təqdim olunur');
+      line.textContent=label==='Anında təqdim olunur'?'Anında':label;line.hidden=label==='Stokda yoxdur';line.classList.toggle('is-instant',label==='Anında təqdim olunur');
     });
     const label=deliveryFor(product,index);
     document.querySelectorAll('.product-detail-summary-delivery,.product-page-delivery strong,.product-detail-trust li:nth-child(3) span').forEach(el=>{

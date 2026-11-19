@@ -1790,3 +1790,26 @@ html body.product-page-document #productPageView.product-page-root:is(.detail-v2
 @media(prefers-reduced-motion:reduce){
  html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-label{transition:none}
 }
+
+/* Selected package facts share a small, unboxed line. */
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-name{
+ font-size:12px!important;line-height:1.35!important;font-weight:600!important;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta{
+ gap:3px 0;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta :is(.plan-fact,[data-inventory-plan],.product-detail-rate){
+ display:inline-flex;align-items:center;gap:3px;
+ padding:0 6px!important;margin:0!important;min-height:0;
+ border:0;border-radius:0;background:none!important;box-shadow:none;
+ font:400 10px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif!important;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .product-detail-rate strong{font:inherit}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-stock{
+ color:#64e6a5!important;-webkit-text-fill-color:currentColor;animation:none;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta>.plan-fact:not([hidden])~.plan-fact:not([hidden]),
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta:has(>.plan-fact:not([hidden])) .product-detail-rate{
+ border-inline-start:1px solid #686852;
+}
+html body.product-page-document #productPageView.product-page-root:is(.detail-v2,[data-plan-shell]) #pp-plans-container .pp-plan-meta .plan-fact-delivery{order:-1}

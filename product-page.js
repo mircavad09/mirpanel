@@ -285,8 +285,8 @@
       stock.dataset.planStock = '';
       stock.hidden = true;
       notes.append(stock);
-      if (m.warranty) notes.append(text('span','plan-fact plan-fact-warranty',m.warranty));
-      if (m.rate !== null && (m.days !== null || m.months >= 2)) {
+      if (plan.warrantyMode==='guaranteed'&&m.warranty) notes.append(text('span','plan-fact plan-fact-warranty',m.warranty));
+      if (m.rate !== null && m.days === null && m.months >= 2) {
         const rate = text('span','product-detail-rate',m.days !== null ? 'Gündə ' : 'Ayda ');
         rate.append(text('strong','',priceText(m.rate)));notes.append(rate);
       }
