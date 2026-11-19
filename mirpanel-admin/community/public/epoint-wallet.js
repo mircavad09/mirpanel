@@ -35,7 +35,7 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
  const draftKey=preview?storeKey+'.preview':storeKey;
  const readDraft=()=>{try{const d=JSON.parse(sessionStorage.getItem(draftKey));return validRef(d?.ref)?d:null;}catch{return null;}};
  const clearDraft=ref=>{try{if(readDraft()?.ref===ref)sessionStorage.removeItem(draftKey);}catch{}};
- const request=(route,options)=>api((preview?'google-pay-preview/':'')+route,options);
+ const request=(route,options)=>api(route+(preview?(route.includes('?')?'&':'?')+'preview=google':''),options);
  if(!accountId||signal.aborted)return;
  const block=el('div',null,'shop-actions'),notice=el('p',null,'shop-muted');
  notice.hidden=true;

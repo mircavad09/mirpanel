@@ -1536,13 +1536,13 @@ const server = http.createServer(async (request, response) => {
       const {readOnlyDeploymentProbe}=await import('./deployment-probe.mjs');
       return json(response,200,await readOnlyDeploymentProbe(process.env,()=>getAppFile()));
     }
-    if(/^\/api\/payments\/epoint\/google-pay-preview(?:\/(?:start|status))?$/.test(pathname)){
+    if(/^\/api\/payments\/epoint\/google-pay-preview(?:\/(?:start|status))?$/.test(pathname)||(['/api/payments/epoint/start','/api/payments/epoint/status'].includes(pathname)&&requestUrl.searchParams.get('preview')==='google')){
       try{
         const start=pathname.endsWith('/start');
         if(request.method!==(start?'POST':'GET'))return json(response,405,{error:'Sorğu üsulu düzgün deyil.'});
         if(start&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğu mənbəyi icazəli deyil.'});
         const user=await previewOwner(ownerCommunity,request);
-        if(pathname.endsWith('/status')){
+        if(pathname.endsWith('/status')&&requestUrl.searchParams.get('screen')!=='1'){
           const ref=requestUrl.searchParams.get('ref');
           if(!ref)return json(response,200,{accountId:user,requestId:googlePreviewRef(user),enabled:false,methods:{'google-pay':true}});
           if(!/^[0-9a-f-]{36}$/.test(ref))return json(response,400,{error:'Sorğu nömrəsi düzgün deyil.'});
