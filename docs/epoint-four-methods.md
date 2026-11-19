@@ -35,6 +35,14 @@ Widget closing is not treated as a bank-confirmed cancellation. Failed/error out
 
 ## Activation
 
+### Owner-only Android opening preview
+
+`https://mirpanel.com/api/payments/epoint/google-pay-preview` is a noindex/no-store page authorized by the existing verified owner identity, not an email query parameter or client flag. Anonymous and other users are rejected. The preview does not enable public payment flags. Only google-pay, exactly 1 AZN and a deterministic per-owner campaign UUID are accepted; repeated opens reuse the same request, including after browser storage is cleared. Provider creation occurs only when the owner presses the opening button. The shared widget and normal signed callback/get-status/idempotent ledger code are used, not a simulated Google Pay sheet. Separate browser draft storage keeps preview and customer checkout drafts apart.
+
+The page explicitly warns that this is a LIVE 1 AZN widget and payment must not be approved. It exposes the wrapper even on a desktop so the owner can diagnose the provider UI; Google's actual button remains subject to the provider's device/wallet readiness. Android Google Wallet testing requires the user's eligible physical Android phone; desktop emulation is not evidence of this test. A real payment still requires separate approval.
+
+Apple certificate/association material is pending from Epoint. Do not invent a filename, bytes or deployment path, and do not publish a substitute. m10/Birbank errors and pending provider actions remain unchanged.
+
 Render service: mirpanel-frankfurt. Existing secrets: EPOINT_PUBLIC_KEY, EPOINT_PRIVATE_KEY.
 
 - EPOINT_TOKEN_WIDGET_ENABLED=true is the widget master gate.

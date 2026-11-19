@@ -31,7 +31,11 @@ async function api(route,options={}){
  if(!r.ok)throw Object.assign(Error(data.error||'Epoint xidməti cavab vermədi.'),{status:r.status});
  return data;
 }
-export async function mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly=false,walletTile,showDigital,amountHint}){
+export async function mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly=false,walletTile,showDigital,amountHint,preview=false,fixedRequestId}){
+ const draftKey=preview?storeKey+'.preview':storeKey;
+ const readDraft=()=>{try{const d=JSON.parse(sessionStorage.getItem(draftKey));return validRef(d?.ref)?d:null;}catch{return null;}};
+ const clearDraft=ref=>{try{if(readDraft()?.ref===ref)sessionStorage.removeItem(draftKey);}catch{}};
+ const request=(route,options)=>api((preview?'google-pay-preview/':'')+route,options);
  if(!accountId||signal.aborted)return;
  const block=el('div',null,'shop-actions'),notice=el('p',null,'shop-muted');
  notice.hidden=true;
@@ -40,14 +44,14 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
  const statusLink=()=>{const d=active();return d?link('Epoint ödənişinin vəziyyəti',resultPath(d.ref)):null;};
  let checking=statusLink();
  let config;
- try{config=await api('status',{signal});}catch{}
- const methods=(await Promise.all(Object.keys(walletNames).map(async m=>config?.methods?.[m]===true&&await walletDeviceSupports(m)?m:null))).filter(Boolean);
+ try{config=await request('status',{signal});}catch{}
+ const methods=(await Promise.all(Object.keys(walletNames).map(async m=>config?.methods?.[m]===true&&(preview&&m==='google-pay'||await walletDeviceSupports(m))?m:null))).filter(Boolean);
  if(!walletOnly&&config?.enabled===true)methods.push('card');
  if(signal.aborted)return;
  if(!methods.length&&!checking){
   if(!config||config.walletError){
    notice.hidden=false;notice.textContent='Epoint ödəniş üsulları hazırda alınmır. ';
-   const retry=button('Yenidən cəhd et',()=>{retry.disabled=true;block.remove();notice.remove();void mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly,walletTile,showDigital,amountHint});});
+   const retry=button('Yenidən cəhd et',()=>{retry.disabled=true;block.remove();notice.remove();void mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly,walletTile,showDigital,amountHint,preview,fixedRequestId});});
    block.append(retry);form.append(notice,block);
   }
   return;
@@ -64,7 +68,7 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
   clearTimeout(timer);polling=true;const current=frame,d=active();
   if(!d){polling=false;stopWidget();return;}
   try{
-   const data=await api('status?ref='+encodeURIComponent(d.ref),{signal:AbortSignal.timeout(8000)});
+   const data=await request('status?ref='+encodeURIComponent(d.ref),{signal:AbortSignal.timeout(8000)});
    if(frame!==current||signal.aborted)return;
    if(data.status==='success'||data.status==='failed'){stopWidget();location.assign(resultPath(d.ref));return;}
   }catch{}finally{polling=false;}
@@ -100,8 +104,8 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
   try{cents=d?.cents??getCents();}catch(e){say(e.message);return;}
   busy=true;setLabels();say('Epoint ödəniş səhifəsi hazırlanır…');
   try{
-   if(!d){d={ref:crypto.randomUUID(),accountId,cents,method,back:['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(back)?back:null};sessionStorage.setItem(storeKey,JSON.stringify(d));}
-   const response=await api('start',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:d.ref,amount:(cents/100).toFixed(2),...(method==='card'?{}:{method})})});
+   if(!d){d={ref:preview?fixedRequestId:crypto.randomUUID(),accountId,cents,method,back:['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(back)?back:null};sessionStorage.setItem(draftKey,JSON.stringify(d));}
+   const response=await request('start',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:d.ref,amount:(cents/100).toFixed(2),...(method==='card'?{}:{method})})});
    if(signal.aborted)return;
    if(response.state==='ready'&&['apple-pay','google-pay'].includes(method)){openWidget(response.widget);return;}
    if(response.state==='ready'){location.assign(response.redirect);return;}

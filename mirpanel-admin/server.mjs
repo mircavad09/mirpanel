@@ -15,6 +15,7 @@ import {createPaymentSecurity} from './payment-security.mjs';
 import {verifyEpointResult} from './epoint-result.mjs';
 import {epointMethods,startEpointCheckout,readEpointCheckout} from './epoint-checkout.mjs';
 import {epointWallets} from './epoint-api.mjs';
+import {previewOwner,startGooglePreview,readGooglePreview,googlePreviewHTML,googlePreviewRef} from './epoint-preview.mjs';
 import {acceptEpointResult,reconcileEpoint,startEpointReconciliation} from './epoint-reconcile.mjs';
 import {readCatalogCosts,readEpinbyOrderCosts} from './epinby-finance.mjs';
 import {startSheetCustomerIdSync} from './community/netflix-sheet-customer-id.mjs';
@@ -1534,6 +1535,26 @@ const server = http.createServer(async (request, response) => {
     if(deployment.standby&&pathname==='/__deployment/probe'){
       const {readOnlyDeploymentProbe}=await import('./deployment-probe.mjs');
       return json(response,200,await readOnlyDeploymentProbe(process.env,()=>getAppFile()));
+    }
+    if(/^\/api\/payments\/epoint\/google-pay-preview(?:\/(?:start|status))?$/.test(pathname)){
+      try{
+        const start=pathname.endsWith('/start');
+        if(request.method!==(start?'POST':'GET'))return json(response,405,{error:'Sorğu üsulu düzgün deyil.'});
+        if(start&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğu mənbəyi icazəli deyil.'});
+        const user=await previewOwner(ownerCommunity,request);
+        if(pathname.endsWith('/status')){
+          const ref=requestUrl.searchParams.get('ref');
+          if(!ref)return json(response,200,{accountId:user,requestId:googlePreviewRef(user),enabled:false,methods:{'google-pay':true}});
+          if(!/^[0-9a-f-]{36}$/.test(ref))return json(response,400,{error:'Sorğu nömrəsi düzgün deyil.'});
+          const {pool}=await ownerCommunity.shopContext({headers:{}});
+          return json(response,200,await readGooglePreview(pool,user,ref));
+        }
+        if(!start){response.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'private,no-store','X-Robots-Tag':'noindex,nofollow','Content-Security-Policy':"default-src 'none'; script-src 'self'; style-src 'unsafe-inline'; connect-src 'self'; frame-src https://epoint.az; frame-ancestors 'none'; base-uri 'none'"});return response.end(googlePreviewHTML);}
+        if(String(request.headers['content-type']).split(';')[0]!=='application/json')return json(response,415,{error:'JSON tələb olunur.'});
+        let body;try{body=JSON.parse((await readRawBody(request,1024)).toString('utf8'));}catch{return json(response,400,{error:'Sorğu düzgün deyil.'});}
+        const {pool}=await ownerCommunity.shopContext({headers:{}});
+        return json(response,200,await startGooglePreview(pool,user,body));
+      }catch(e){return json(response,e.status||503,{error:e.status?e.message:'Yoxlama hazırda açılmır.'});}
     }
     if(['/api/payments/epoint/start','/api/payments/epoint/status'].includes(pathname)){
       const start=pathname.endsWith('/start'),method=start?'POST':'GET';
