@@ -29,8 +29,8 @@ const transport=async input=>{
  if(input.path.endsWith('/products')){
   catCalls.push(input.query);if(failPage&&Number(input.query.page)===2)throw Error('NETWORK');
   if(input.query.game_id===100)return {success:true,data:[
-   {id:93,type:'TOPUP',fields:[fields[0]],supports_player_validation:true,stock_status:'INFINITE'},
-   {id:94,type:'TOPUP',fields,supports_player_validation:true,stock_status:'INFINITE'}
+   {id:93,game_id:100,type:'TOPUP',fields:[fields[0]],supports_player_validation:true,stock_status:'INFINITE'},
+   {id:94,game_id:100,type:'TOPUP',fields,supports_player_validation:true,stock_status:'INFINITE'}
   ],meta:{current_page:1,last_page:1}};
   return {success:true,data:[{id:91,name:'60 UC',price:'1.00',currency:'USD',stock_status:'INFINITE',type:'TOPUP',fields},{id:92,name:'Gift code',price:'2.00',currency:'AZN',stock_status:'FINITE',stock_count:10,type:'VOUCHER',fields:[]}],meta:{current_page:Number(input.query.page)||1,last_page:122,total:6086}};
  }
@@ -165,7 +165,7 @@ try{
  assert.equal((await verify(pubg,player)).name,'Synthetic Player');
  assert.equal((await verify(free,freePlayer)).name,'Synthetic Player');
  assert.equal((await verify(stars,telegram)).name,'Synthetic Telegram');
- await assert.rejects(verify(pubg,{player_id:'words'}),{status:400});
+ await assert.rejects(verify(pubg,{player_id:123}),{status:400});
  lookupMode='missing';
  assert.equal((await verify(pubg,player)).state,'invalid');
  assert.equal((await verify(stars,telegram)).state,'invalid');

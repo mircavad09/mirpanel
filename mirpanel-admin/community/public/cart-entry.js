@@ -1,5 +1,5 @@
 import {withRequestSignal,orderRequestMessage} from '/request-lifecycle.mjs?v=abort-compat-1';
-import {validateDetails,validateEpinbyDetails} from './checkout-fields.js?v=epinby-account-1';
+import {validateDetails,validateEpinbyDetails} from './checkout-fields.js?v=game-validation-1';
 import {ensureCart} from '/cart-ready.js?v=token-cart-1';
 import {ensureEntryStyles} from './entry-styles.js?v=spotify-compact-1';
 let current=null;
@@ -186,7 +186,8 @@ export async function startCartEntry(product,plan,{editLine=null,loadingDialog=n
    clearTimeout(timer);request?.abort();
    const run=++turn;accepted=null;next.disabled=true;error.textContent='';showCheck('');
    const raw=read();
-   if(fs.some(f=>f.required&&!raw[f.key]?.trim()))return;
+   const missing=fs.find(f=>f.required&&!raw[f.key]?.trim());
+   if(missing){if(raw[identifier]?.trim())showCheck('invalid','«'+missing.label+'» sahəsini doldurun.');return;}
    let clean;try{clean=validateEpinbyDetails(fs,raw,product.id);}catch(e){showCheck('invalid',e.message);return;}
    timer=setTimeout(async()=>{
     if(!form.isConnected||life.signal.aborted)return;

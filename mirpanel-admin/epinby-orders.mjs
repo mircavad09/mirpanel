@@ -8,7 +8,7 @@ import {validateEpinbyDetails} from './community/public/checkout-fields.js';
 import {supplierCost,supplierCharge} from './epinby-finance.mjs';
 const S='mirpanel_community.',U=S+'epinby_order_units',D=S+'api_dispatches';
 const providerId='e91bb000-0000-4000-8000-000000000001';
-const fail=(status,message)=>Object.assign(Error(message),{status});
+const fail=(status,message,code)=>Object.assign(Error(message),{status,...(code?{code}:{})});
 const allowed=new Set(['https://epinby.com']);
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(v);
 const unavailable=(message='Bu paketdə hesab adı yoxlanmır.',allowCheckout=true)=>({state:'unavailable',message,allowCheckout});
@@ -17,8 +17,9 @@ const retry=()=>({state:'retry',message:'Hesab yoxlanmadı. Bir az sonra yenidə
 const displayName=value=>typeof value==='string'?value.replace(/[\x00-\x1f\x7f]/g,'').trim().slice(0,120):'';
 function validationError(error,stars){
  const code=error?.supplierCode||error?.error?.code;
- if(code==='SUBSCRIPTION_REQUIRED'||code==='GAME_NOT_SUPPORTED'||code==='VALIDATION_NOT_SUPPORTED')return unavailable(code==='SUBSCRIPTION_REQUIRED'?'Hesab adı yoxlaması üçün təchizatçı abunəliyi tələb olunur.':undefined,!stars);
- if(['PLAYER_NOT_FOUND','RECIPIENT_NOT_FOUND','TELEGRAM_USER_NOT_FOUND','USERNAME_NOT_FOUND','INVALID_INPUT','VALIDATION_ERROR','INVALID_USERNAME'].includes(code)||error?.supplierStatus===404&&!code)return invalid();
+ if(code==='SUBSCRIPTION_REQUIRED'||code==='GAME_NOT_SUPPORTED'||code==='VALIDATION_NOT_SUPPORTED')return unavailable(code==='SUBSCRIPTION_REQUIRED'?'Təchizatçı ad yoxlamasına giriş vermədi. Hesab adı təsdiqlənməyib.':undefined,!stars);
+ if(['INVALID_INPUT','VALIDATION_ERROR'].includes(code))return {state:'invalid',code:'EPINBY_PLAYER_INPUT',message:'Oyunçu ID-si, server və ya region məlumatlarını yoxlayın.',allowCheckout:false};
+ if(['PLAYER_NOT_FOUND','RECIPIENT_NOT_FOUND','TELEGRAM_USER_NOT_FOUND','USERNAME_NOT_FOUND','INVALID_USERNAME'].includes(code)||error?.supplierStatus===404&&!code)return invalid();
  return retry();
 }
 export function verifyEpinbyWebhook(raw,headers,secret){
@@ -95,16 +96,18 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   // The live API ignores undocumented ID filters. Search only the exact game/category,
   // validating every page and the stable product ID before any wallet debit.
   let product;
-  for(let page=1;page<=20;page++){
+  for(let page=1;;page++){
    const query={page,per_page:100,...(supplier.gameId?{game_id:supplier.gameId}:{}),...(supplier.categoryId?{category_id:supplier.categoryId}:{})};
-   let response;try{response=await send(row,'products',{query});}catch{throw fail(503,'Təchizatçı stoku yoxlanılmadı. Balans tutulmadı; yenidən cəhd edin.');}
-   if(response?.success!==true||!Array.isArray(response.data)||Number(response.meta?.current_page)!==page)throw fail(503,'Təchizatçı stoku yoxlanılmadı. Yenidən cəhd edin.');
+   let response;try{response=await send(row,'products',{query});}catch{throw fail(503,'Təchizatçı ilə bağlantı alınmadı. Yenidən cəhd edin.','EPINBY_CATALOG_UNAVAILABLE');}
+   const last=Number(response?.meta?.last_page);
+   if(response?.success!==true||!Array.isArray(response.data)||Number(response.meta?.current_page)!==page||!Number.isSafeInteger(last)||last<1||last>10000)throw fail(503,'Təchizatçı kataloqu yoxlanılmadı. Yenidən cəhd edin.','EPINBY_CATALOG_UNAVAILABLE');
    product=response.data.find(x=>Number(x.id)===supplier.productId);
-   if(product||page>=Number(response.meta.last_page))break;
+   if(product||page>=last)break;
   }
-  if(!product)throw fail(409,'Təchizatçı məhsulu təsdiqləyə bilmədi.');
+  if(!product)throw fail(409,'Seçilmiş paket hazırda təchizatçının aktiv kataloqunda yoxdur. Başqa paket seçin və ya dəstəyə yazın.','EPINBY_PRODUCT_UNAVAILABLE');
   const live=epinbyProduct({provider:'epinby',productId:product.id,type:String(product.type).toUpperCase(),fields:product.fields||[]});
-  if(!live||live.type!==supplier.type||JSON.stringify(live.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Məhsulun tələb etdiyi sahələr dəyişib. Sifariş formasını yenidən açın.');
+  if(!live||live.type!==supplier.type||JSON.stringify(live.fields)!==JSON.stringify(supplier.fields))throw fail(409,'Paketin təchizatçı uyğunluğu və ya tələb olunan sahələri dəyişib. Formanı yenidən açın; problem qalarsa dəstəyə yazın.','EPINBY_SCHEMA_CHANGED');
+  if(supplier.gameId&&Number(product.game_id)!==supplier.gameId||supplier.categoryId&&Number(product.category_id)!==supplier.categoryId)throw fail(409,'Seçilmiş paketin oyun və ya region uyğunluğu təsdiqlənmədi. Dəstəyə yazın.','EPINBY_MAPPING_MISMATCH');
   return product;
 
  }
@@ -121,6 +124,7 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   if(response?.success!==true)return validationError(response,stars);
   const data=response.data;
   if(!data||typeof data!=='object')return retry();
+  if(!stars&&['player_id','server_id',...supplier.fields.map(f=>f.key)].some(key=>data[key]!=null&&values[key]!=null&&String(data[key])!==values[key]))return {state:'retry',message:'Təchizatçının cavabı daxil etdiyiniz hesaba uyğun deyil. Yenidən cəhd edin.',allowCheckout:false};
   if(data.found===false||data.valid===false||data.exists===false)return invalid();
   const recipient=data.recipient||data;
   if(stars){
@@ -155,7 +159,7 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   if(row?.last_status!=='confirmed'||!row.api_key_cipher)return retry();
   const stars=supplier.type==='TELEGRAM_STARS';
   try{return await checkRecipient(row,supplier,values,stars?null:await productForCheck(row,supplier));}
-  catch(e){return e.status===409?{state:'invalid',message:e.message,allowCheckout:false}:retry();}
+  catch(e){return e.status===409?{state:'unavailable',code:e.code||'EPINBY_MAPPING_UNAVAILABLE',message:e.message,allowCheckout:false}:e.code?{state:'retry',code:e.code,message:e.message,allowCheckout:false}:retry();}
  }
  async function prepare(db){
   const c=await db.connect();

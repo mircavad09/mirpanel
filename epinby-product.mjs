@@ -14,7 +14,8 @@ export function epinbyProduct(value,id){
   if(!f||!['player_id','server_id','input_2','input_3','input_4','input_5','input_6','input_7','input_8'].includes(f.key)||fields.some(x=>x.key===f.key))return null;
   const options=Array.isArray(f.options)?f.options.map(x=>typeof x==='string'?x:x?.value):[];
   if(options.some(x=>typeof x!=='string'))return null;
-  fields.push({key:f.key,label:String(f.label||f.key).slice(0,100),required:!!f.required,type:options.length?'select':'text',options,maxLength:400,enabled:true});
+  const max=Number(f.maxLength??f.max_length),min=Number(f.minLength??f.min_length);
+  fields.push({key:f.key,label:String(f.label||f.key).slice(0,100),required:!!f.required,type:options.length?'select':'text',options,maxLength:Number.isInteger(max)&&max>0&&max<=400?max:400,...(Number.isInteger(min)&&min>0&&min<=400?{minLength:min}:{}),enabled:true});
  }
  if(value.type==='TOPUP'&&!fields.some(f=>f.key==='player_id'&&f.required))return null;
  return {provider:'epinby',productId:Number(value.productId),type:value.type,gameId:Number(value.gameId)>0?Number(value.gameId):null,categoryId:Number(value.categoryId)>0?Number(value.categoryId):null,fields};
