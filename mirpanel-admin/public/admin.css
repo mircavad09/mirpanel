@@ -1617,3 +1617,8 @@ th {
 .editorSecondarySettings{border:1px solid var(--border);border-radius:9px;padding:10px}
 .editorSecondarySettings>summary{cursor:pointer;min-height:30px;font-size:13px}
 .editorSecondarySettings[open]>summary{margin-bottom:10px}
+.paymentScheduledRenewals{margin:12px 0;padding:14px;border:1px solid #574b1c;border-radius:14px;background:#111;color:#eee;min-width:0}
+.renewalFilterBar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:10px 0}
+.renewalRows{display:grid;gap:8px}.renewalRows article{display:grid;gap:4px;border:1px solid #333;border-radius:9px;padding:10px;overflow-wrap:anywhere;font-size:12px}.renewalRows b{color:#ffd600}
+.renewalPolicy{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,1fr);align-items:center;gap:8px;margin:8px 0;font-size:12px}.renewalPolicy select{width:100%;min-height:44px;background:#181818;color:#fff;border:1px solid #444;border-radius:8px;padding:6px}.paymentScheduledRenewals button{min-height:44px}
+@media(max-width:600px){.renewalPolicy{grid-template-columns:1fr}.paymentScheduledRenewals{padding:10px}.renewalFilterBar .btn{flex:1 1 130px;font-size:11px}}

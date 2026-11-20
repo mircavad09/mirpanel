@@ -34,7 +34,7 @@ async function saveCard(g){
 const denied=(p,status)=>assert.rejects(p,e=>e.status===status);
 try{
  for(const file of ['order-delivery-migration.sql','ready-stock-migration.sql','subscriptions-migration.sql','subscriptions-migration.sql'])await db.exec(db.read('mirpanel-admin/community/'+file));
- assert.deepEqual(await shop.subscriptions(a),{accountId:'a',subscriptions:[]});
+ assert.deepEqual(await shop.subscriptions(a),{accountId:'a',subscriptions:[],renewals:[]});
  assert.deepEqual([11,10,8,7,6,4,3,0].map(urgency),['green','orange','orange','amber','amber','amber','red','red']);
  assert.deepEqual(subscriptionPeriod({label:'7 gün'}),{unit:'days',count:7});
  assert.equal(subscriptionPeriod({label:'7 gün zəmanət'}),null);
@@ -50,7 +50,7 @@ try{
  assert.deepEqual([first.days,second.days],[6,10]);
  assert.deepEqual(summarize(await rows()),{active:2,soon:2,week:1,unpriced:0,estimated:0,total:1100});
  assert.deepEqual(summarize([{days:10,renewalCents:null}]),{active:1,soon:1,week:0,unpriced:1,estimated:0,total:null});
- assert.deepEqual(await shop.subscriptions(b),{accountId:'b',subscriptions:[]});await denied(shop.subscriptions({}),401);
+ assert.deepEqual(await shop.subscriptions(b),{accountId:'b',subscriptions:[],renewals:[]});await denied(shop.subscriptions({}),401);
  await denied(draft(first,0,b),404);
  const [one,same]=await Promise.all([draft(first,1),draft(first,1)]);
  assert.equal(one.draftId,same.draftId);

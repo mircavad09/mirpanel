@@ -1,4 +1,13 @@
 body.profile-screen:has(#communityApp .account-subscriptions){background:#0c0c0c}
+.account-subscriptions .subs-renewal-history{display:grid;gap:6px;padding:12px 0;border-bottom:1px solid #333;overflow-wrap:anywhere}
+.account-subscriptions .subs-renewal-history h3{margin:0;font-size:15px}
+.account-subscriptions .subs-renewal-history a{color:#ffd600}
+.account-subscriptions .subs-renewal-preview{padding:0 16px 12px;display:grid;gap:8px;overflow-wrap:anywhere}
+.account-subscriptions .subs-picker>select{box-sizing:border-box;margin:0 16px 12px;width:calc(100% - 32px);min-height:44px;color:#fff;background:#222;border:1px solid #555;border-radius:8px;font:inherit;padding:8px}
+.account-subscriptions .subs-picker>label{display:block;padding:0 16px 14px;font-size:12px;line-height:1.55}
+.account-subscriptions .subs-picker>label input{width:20px;height:20px;vertical-align:middle;margin:0 7px 0 0;accent-color:#ffd600}
+.account-subscriptions .subs-picker header h2{min-width:0;overflow-wrap:anywhere;font-size:17px}
+.account-subscriptions .subs-picker button{min-height:44px}
 .account-subscriptions{color:#f2f2f2;min-width:0;background:#0c0c0c;font:400 14px/1.45 system-ui,sans-serif}
 .account-subscriptions .subs-body{display:grid;gap:14px;margin-top:14px}
 .account-subscriptions :is(.subs-panel,.subs-card,.subs-warning){margin:0;min-width:0;padding:15px;border:1px solid #2b2b2b;border-radius:16px;background:#131313}

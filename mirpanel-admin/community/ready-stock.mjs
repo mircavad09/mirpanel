@@ -170,7 +170,12 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
   }
   const args=[item.productId,item.sourcePlanKey,item.signature];
   const setting=(await c.query('select auto_wallet from '+S+'plans where product_id=$1 and plan_key=$2 and plan_signature=$3 for share',args)).rows[0];
-  if(!setting?.auto_wallet)continue;
+  if(!setting?.auto_wallet){
+   // A scheduled new-account renewal is explicitly authorized by its renewal
+   // policy, independently of ordinary purchase auto-delivery. Never trust a
+   // client/snapshot flag alone: bind it to the paid server-side renewal order.
+   if(!item.renewalScheduleId||!(await c.query("select 1 from mirpanel_community.scheduled_renewals where id=$1 and new_order_id=$2 and method='new_account' and state='awaiting_delivery'",[item.renewalScheduleId,orderId])).rowCount)continue;
+  }
   const free=await freeManagementClause(c);
   const units=(await c.query('select u.id,u.message_cipher from '+S+'units u where product_id=$1 and plan_key=$2 and plan_signature=$3 and delivery_id is null'+free+' order by created_at,id limit $4 for update',[...args,quantity])).rows;
   let productMessage;
@@ -216,7 +221,9 @@ export async function drainReadyStock(c,securityFactory,{before}={}){
  if(!await enabled(c))return result;
  await c.query('select pg_advisory_xact_lock(714025001)');
  const free=await freeManagementClause(c);
- const ready=(await c.query('select distinct product_id,plan_key,plan_signature from '+S+'units u join '+S+'plans p using(product_id,plan_key,plan_signature) where u.delivery_id is null and p.auto_wallet'+free)).rows;
+ const scheduled=(await c.query("select to_regclass('mirpanel_community.scheduled_renewals') present")).rows[0].present;
+ const renewalReady=scheduled?" or exists(select 1 from mirpanel_community.scheduled_renewals r where r.product_id=u.product_id and r.plan_key=u.plan_key and r.plan_signature=u.plan_signature and r.method='new_account' and r.state='awaiting_delivery')":'';
+ const ready=(await c.query('select distinct product_id,plan_key,plan_signature from '+S+'units u join '+S+'plans p using(product_id,plan_key,plan_signature) where u.delivery_id is null and (p.auto_wallet'+renewalReady+')'+free)).rows;
  const skus=new Set(ready.map(x=>key(x.product_id,x.plan_key,x.plan_signature)));
  const rooms=(await c.query("select to_regclass('mirpanel_community.netflix_room_sellable') present")).rows[0].present;
  const roomReady=rooms&&(await c.query('select 1 from mirpanel_community.netflix_room_sellable limit 1')).rowCount>0;

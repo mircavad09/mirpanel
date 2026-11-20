@@ -71,7 +71,7 @@ try{
  for(const mail of sent){
   assert.equal(mail.user.email,'a@example.test');
   assert.match(mail.textBody,/Salam, Reader A!/);
-  assert.match(mail.htmlBody,/href="https:\/\/mirpanel\.com\/profil\?tab=subscriptions"[^>]*>[\s\S]*Abunəliklərimə bax<\/a>/);
+  assert.match(mail.htmlBody,/href="https:\/\/mirpanel\.com\/profil\?tab=abuneliklerim"[^>]*>[\s\S]*Abunəliklərimə bax<\/a>/);
   assert.doesNotMatch(mail.textBody+mail.htmlBody,/PRIVATE-9876|0123/);
  }
  assert.ok((await reminders()).every(row=>row.state==='accepted'));

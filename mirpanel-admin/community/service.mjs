@@ -33,6 +33,7 @@ import {createPaymentSecurity} from '../payment-security.mjs';
 import {cancelFulfillment} from './fulfillment-cancellation.mjs';
 import {readCustomerView} from './customer-view-data.mjs';
 import {searchReadyStock} from './ready-stock-search.mjs';
+import {ensureScheduledRenewals,createScheduledRenewalWorker,adminScheduledRenewals} from './scheduled-renewals.mjs';
 export function createOwnerCommunity(env=process.env,options={}){
  const publicEnabled=env.COMMUNITY_PUBLIC_ENABLED==='true';
  const enabled=env.COMMUNITY_OWNER_ENABLED==='true',origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';let runtime,initializing,deliveryPending;
@@ -44,7 +45,10 @@ export function createOwnerCommunity(env=process.env,options={}){
   const send=publicEnabled&&(options.sendAuthEmail||createAuthMailer(env)),welcome=publicEnabled&&createWelcomeDelivery(pool,send);
   const orderMailer=publicEnabled&&createCustomerOrderMailer(pool,options.sendAuthEmail||createOrderMailTransport(env,send),origin,{loadCatalog:options.loadCatalog,adminOrigin:options.adminOrigin,topupPreview:options.topupPreview,subscriptionReminders:true,requireDeliveryNotice:env.ORDER_MAIL_PROVIDER==='resend'});
   const readyQueue=publicEnabled&&createReadyStockQueue(pool,()=>createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),{onDelivered:()=>orderMailer?.wake()});
-  const auth=publicEnabled?makePublicAuth(pool,authConfig,send,welcome):makeOwnerAuth(pool,authConfig);runtime={pool,repo,group,auth,welcome,orderMailer,readyQueue};return runtime;}catch(error){await pool.end().catch(()=>{});throw error;}}
+  if(publicEnabled)try{await ensureScheduledRenewals(pool);}catch{console.warn('SCHEDULED_RENEWAL_SETUP_RETRY');}
+  const renewalQueue=publicEnabled&&options.loadCatalog&&createScheduledRenewalWorker(pool,options.loadCatalog,()=>createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),{onWork:()=>{void readyQueue?.wake();void orderMailer?.wake();}});
+  renewalQueue?.start();
+  const auth=publicEnabled?makePublicAuth(pool,authConfig,send,welcome):makeOwnerAuth(pool,authConfig);runtime={pool,repo,group,auth,welcome,orderMailer,readyQueue,renewalQueue};return runtime;}catch(error){await pool.end().catch(()=>{});throw error;}}
  function init(){if(runtime)return Promise.resolve(runtime);if(!initializing)initializing=initializeRuntime().finally(()=>{initializing=null;});return initializing;}
  async function body(req){let n=0,parts=[];for await(const b of req){n+=b.length;if(n>16384)throw Object.assign(Error('Sorğu çox böyükdür.'),{status:413});parts.push(b);}try{return JSON.parse(Buffer.concat(parts).toString()||'{}');}catch{throw Object.assign(Error('Sorğu düzgün deyil.'),{status:400});}}
  return {async readyDeliverySnapshot(catalog){if(deliveryPending)return deliveryPending;const read=(async()=>readyDeliverySnapshot((await init()).pool,catalog))();deliveryPending=read;try{return await read;}finally{if(deliveryPending===read)deliveryPending=null;}},async searchReadyStock(security,input){return searchReadyStock((await init()).pool,security,input);},async saveReadyStockSales(input,actor){return saveNetflixSales((await init()).pool,input,actor);},async cancelFulfillment(...args){const r=await init(),result=await cancelFulfillment(r.pool,...args);if(result.ok)void r.orderMailer?.wake();return result;},async integrationPool(){return (await init()).pool;},async approveCardWithReadyStock(security,id,duration,actor,employeeEnabled){const r=await init();const result=await approveCardWithReadyStock(r.pool,security,id,duration,actor,employeeEnabled);void r.orderMailer?.wake();void r.readyQueue?.wake();return result;},async readyStock(catalog,inventory,security){const r=await init();return {...await readyStockView(r.pool,catalog,inventory,security),fulfillment:r.readyQueue?.status()};},async saveProductMessage(security,catalog,input){return saveProductMessage((await init()).pool,security,catalog,input);},async saveReadyStock(security,secret,catalog,actor,input){const r=await init(),saved=await saveReadyStock(r.pool,security,secret,catalog,actor,input);return input?.accountManage?saved:{...saved,fulfillment:await r.readyQueue?.wake()};},async pendingDeliveries(ids,opts){return adminPendingDeliveries((await init()).pool,ids,opts);},async deliveryCompletions(filter){return adminDeliveryCompletions((await init()).pool,filter);},async orderCustomers(ids){return adminOrderCustomers((await init()).pool,ids);},async startWelcomeDelivery(){if(enabled&&publicEnabled){const r=await init();r.welcome.start();if((await r.pool.query("select to_regclass('mirpanel_community.customer_order_mail') as available")).rows[0]?.available)r.orderMailer.start();r.readyQueue?.start();}},async adminDelivery(security,actor,id,input,telemetry={}){const r=await init();const result=await adminDelivery(r.pool,security,actor,id,input,{productMessage:true,roomStockSecret:env.PAYMENT_TOKEN_SECRET_B64,onTiming:telemetry.onTiming});if(input)void r.orderMailer?.wake();return result;},async verifiedOwnerId(){const r=await init(),owner=(await r.pool.query('select u.* from owner_identity o join "user" u on u.id=o.user_id where o.id=true')).rows[0];return await isOwner(r.pool,owner)?owner.id:null;},async adminHandle(req,res,{json,body}){
@@ -53,6 +57,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   const owner=(await r.pool.query('select u.* from owner_identity o join "user" u on u.id=o.user_id where o.id=true')).rows[0];
   if(!await isOwner(r.pool,owner))throw Object.assign(Error('Təsdiqlənmiş sahib hesabı tapılmadı.'),{status:403});
   if(req.method==='GET'){
+   if(part==='/renewals')return json(res,200,await adminScheduledRenewals(r.pool,await options.loadCatalog(),Object.fromEntries(u.searchParams),owner.id));
    if(part==='/tokens')return json(res,200,await tokenAdmin(r.pool,owner,Object.fromEntries(u.searchParams)));
    if(part==='/influencer-gifts')return json(res,200,await giftAdmin(r.repo,owner,Object.fromEntries(u.searchParams)));
    if(part==='/influencer-view'){const recipient=await influencerRecipient(r.pool,u.searchParams.get('userId'));return json(res,200,{recipient,...await r.repo.messages(Object.fromEntries(u.searchParams))});}
@@ -75,6 +80,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   }
   if(req.method==='POST'){
    const b=await body(req);
+   if(part==='/renewals')return json(res,200,await adminScheduledRenewals(r.pool,await options.loadCatalog(),b,owner.id));
    if(part==='/staff-role')return json(res,200,await setStaffRole(r.pool,owner.id,b));
    if(part==='/influencer')return json(res,200,await setInfluencer(r.repo,owner,b));
    if(part==='/tokens')return json(res,200,await tokenAdmin(r.pool,owner,Object.fromEntries(u.searchParams)));

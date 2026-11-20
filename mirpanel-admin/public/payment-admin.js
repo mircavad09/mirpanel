@@ -434,6 +434,7 @@
   async function setOrderTab(tab) {
     const safeTab = ["pending", "today", "all", "expiring"].includes(tab) ? tab : "pending";
     paymentState.orderQuery = emptyQuery(safeTab);
+    if($p('scheduledRenewals'))$p('scheduledRenewals').hidden=safeTab!=='expiring';
     clearOrderSelection();
     renderOrderContext();
     if (["today", "all"].includes(safeTab)) void loadMonthlyReports().catch(() => {});
@@ -671,6 +672,7 @@
   }
 
   async function loadOrders({automatic=false}={}) {
+    if(paymentState.orderQuery.tab==='expiring')void renderScheduledRenewals().catch(()=>{});
     const status = $p("paymentOrdersStatus"); const list = $p("paymentOrdersList");
     const requestSequence = ++paymentState.orderRequestSequence;
     const query = new URLSearchParams(Object.entries(paymentState.orderQuery).filter(([, value]) => value !== ""));
@@ -748,6 +750,22 @@
       list?.querySelector('[data-retry-payment-orders]')?.remove();
       list?.prepend(retry);
     } finally { if (requestSequence === paymentState.orderRequestSequence) list?.removeAttribute("aria-busy"); }
+  }
+
+  let renewalFilter='waiting',renewalPage=1,renewalRequest=0;
+  async function renderScheduledRenewals(){
+    let host=$p('scheduledRenewals');
+    if(!host){host=document.createElement('section');host.id='scheduledRenewals';host.className='paymentScheduledRenewals';$p('paymentOrdersList')?.before(host);}
+    host.hidden=paymentState.orderQuery.tab!=='expiring';if(host.hidden)return;
+    const request=++renewalRequest;
+    try{
+      const data=await paymentApi('/api/admin/community/renewals?'+new URLSearchParams({filter:renewalFilter,page:renewalPage}));if(request!==renewalRequest||paymentState.orderQuery.tab!=='expiring')return;
+      const names={waiting:'Yenilənmə gözləyənlər',renewed:'Yenilənənlər',unrenewed:'Yenilənməyənlər',delivery:'Ödənilib — təhvil gözlənilir'};
+      host.innerHTML=`<h3>Müddətli məhsul yenilənmələri</h3><div class="renewalFilterBar">${Object.entries(names).map(([key,name])=>`<button class="btn ${key===renewalFilter?'primary':''}" data-renewal-filter="${key}">${name}</button>`).join('')}</div><p>Avtomatik yoxlama: ${data.pollSeconds} saniyə · ${data.total} qeyd</p><div class="renewalRows">${data.rows.map(r=>`<article><strong>${escp(r.customer)} · ID ${escp(r.customerId)}</strong><b>${escp(r.title)} — ${escp(r.plan)}</b><span>Əvvəlki № ${escp(r.sourceOrderCode)} · Bitmə/başlanğıc: ${escp(new Date(r.dueAt).toLocaleString('az-AZ',{timeZone:'Asia/Baku'}))}</span><span>${escp(r.status)}${r.orderCode?' · Yeni № '+escp(r.orderCode):''}</span>${r.reason?`<small>${escp(r.reason)}</small>`:''}</article>`).join('')||'<p>Bu seçimdə qeyd yoxdur.</p>'}</div><div class="renewalFilterBar"><button class="btn" data-renewal-prev ${data.page<=1?'disabled':''}>Əvvəlki</button><span>${data.page} / ${data.pages}</span><button class="btn" data-renewal-next ${data.page>=data.pages?'disabled':''}>Növbəti</button></div><details><summary>Məhsul və paket üzrə yenilənmə qaydaları</summary>${data.policies.map((p,i)=>`<label class="renewalPolicy"><span>${escp(p.title)} — ${escp(p.plan)}</span><select data-renewal-policy="${i}">${Object.entries({new_account:'Stokdan yeni hesab təqdim et',extend_existing:'Mövcud hesabın müddətini uzat',operator:'Operator tərəfindən yenilə',disabled:'Yenilənmə bağlıdır'}).map(([v,label])=>`<option value="${v}" ${v===p.method?'selected':''}>${label}</option>`).join('')}</select></label>`).join('')}</details><p data-renewal-error role="status"></p><h4>Əvvəlki sifarişlərin bitmə tarixçəsi</h4>`;
+      host.querySelectorAll('[data-renewal-filter]').forEach(button=>button.onclick=()=>{renewalFilter=button.dataset.renewalFilter;renewalPage=1;void renderScheduledRenewals();});
+      host.querySelector('[data-renewal-prev]').onclick=()=>{renewalPage--;void renderScheduledRenewals();};host.querySelector('[data-renewal-next]').onclick=()=>{renewalPage++;void renderScheduledRenewals();};
+      host.querySelectorAll('[data-renewal-policy]').forEach(select=>select.onchange=async()=>{select.disabled=true;const p=data.policies[Number(select.dataset.renewalPolicy)];try{await paymentApi('/api/admin/community/renewals',{method:'POST',body:JSON.stringify({action:'policy',productId:p.productId,planIndex:p.planIndex,method:select.value})});}catch(e){host.querySelector('[data-renewal-error]').textContent=e.message;}finally{select.disabled=false;}});
+    }catch(e){if(request===renewalRequest){host.replaceChildren();const text=document.createElement('p');text.textContent=e.message||'Yenilənmələr yüklənmədi.';const retry=document.createElement('button');retry.className='btn';retry.textContent='Yenidən cəhd et';retry.onclick=()=>void renderScheduledRenewals();host.append(text,retry);}}
   }
 
   async function loadEmails() { const result = await paymentApi("/api/admin/payment-emails"); paymentState.emails = result.emails || []; renderEmails(); }
@@ -956,6 +974,7 @@
       if(!document.hidden)for(const card of cards())fieldsObserver.observe(card);
     });
     const endSession=()=>{
+      renewalRequest++;const renewals=$p('scheduledRenewals');if(renewals){renewals.replaceChildren();renewals.hidden=true;}
       fieldSession++;
       invalidateOrders();
       fieldCache.clear();fieldRequests.clear();orderCardVersions.clear();

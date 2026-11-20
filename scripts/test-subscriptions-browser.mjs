@@ -10,6 +10,7 @@ const server=http.createServer(async(req,res)=>{
  const json=data=>{res.setHeader('Content-Type','application/json');res.end(JSON.stringify(data));};
  const input=async()=>{const parts=[];for await(const p of req)parts.push(p);return JSON.parse(Buffer.concat(parts));};
  if(u.pathname===path+'/subscriptions')return json({accountId:'a',subscriptions:rows});
+ if(u.pathname===path+'/renewal'){const b=await input();if(b.action==='quote')return json({cents:549,dueAt:'2026-12-03T20:00:00.000Z',method:'new_account',plan:'1 ay'});saved=b;return json({status:'Ödənilib — yenilənmə tarixi gözlənilir'});}
  if(u.pathname===path+'/quote'){
   const {items:[x]}=await input();
   return json({balanceCents:1000,items:[{...x,available:4,unitCents:549,planName:'1 ay',sourcePlanKey:'month',terms:'Sınaq şərtləri',termsVersion:'current',fields:[]}]});
@@ -22,7 +23,7 @@ const server=http.createServer(async(req,res)=>{
    window.MirpanelCart={apiVersion:6,read:()=>[],checkout:()=>[],set(){},clear(){},commitDraft(){window.committed=true},open(){window.cartOpen=true}};
    const el=(tag,a,...children)=>{const e=document.createElement(tag);for(const[k,v]of Object.entries(a))e.setAttribute(k,String(v));e.append(...children.filter(v=>v!=null));return e;};
    const button=(label,fn)=>{const b=el('button',{type:'button'},label);b.onclick=fn;return b;};
-   const api=u=>fetch(u).then(r=>r.json());
+   const api=(u,data)=>fetch(u,{method:data?'POST':'GET',headers:{'Content-Type':'application/json'},body:data?JSON.stringify(data):undefined}).then(r=>r.json());
    mountSubscriptions({content:document.querySelector('#app'),el,button,link:(label,href,cls)=>el('a',{href,class:cls},label),api,validate:d=>{if(d.accountId!=='a')throw Error();}});
   </script></body></html>`);
  }
@@ -60,15 +61,12 @@ try{
    assert.equal(await net.getByRole('button',{name:'Yenilə'}).getAttribute('data-urgent'),null);
    assert.equal(await cap.locator('time').textContent(),'03.12.2026');
    await cap.getByRole('button',{name:'Yenilə'}).click();
-   const modal=p.getByRole('dialog',{name:'Paket seç'}),next=modal.getByRole('button',{name:'Davam et'});
+   const modal=p.getByRole('dialog',{name:'Yenilənməni planlaşdır'}),next=modal.getByRole('button',{name:'Yenilənməni təsdiqlə'});
    assert.equal(await next.isDisabled(),true);
    assert.equal(await modal.getByText('Netflix Şəxsi',{exact:true}).count(),0);
-   await modal.getByRole('button',{name:/1 ay/}).click();await next.click();
-   const terms=p.locator('dialog.cart-entry');
-   await terms.getByText('Sınaq şərtləri').waitFor();await terms.getByRole('checkbox').check();
-   await terms.getByRole('button',{name:'Təsdiqləyirəm'}).click();
-   await p.waitForFunction(()=>window.committed&&window.cartOpen);
-   assert.equal(saved.renewalId,id);assert.equal(saved.renewalExpiresOn,'2026-12-03');assert.equal(saved.productId,'capcut');
+   await modal.getByRole('button',{name:/1 ay/}).click();await modal.getByText('Planlaşdırılan başlanğıc:',{exact:false}).waitFor();await modal.getByRole('checkbox').check();await next.click();
+   await modal.waitFor({state:'hidden'});
+   assert.equal(saved.sourceId,id);assert.equal(saved.expectedCents,549);assert.equal(saved.mode,'prepaid');
    assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    rows=[row('capcut','CapCut Pro',3,null,'preparing'),row('netflix','Netflix Şəxsi',7,299,'failed')];
    await p.reload();await p.getByText('Hazırlanır',{exact:true}).waitFor();await p.getByText('Son yeniləmə tamamlanmadı',{exact:true}).waitFor();
@@ -101,11 +99,9 @@ try{
    await cap.first().getByRole('button',{name:'Yenilə'}).click();
    await modal.getByText('5,49 ₼',{exact:true}).waitFor();
    assert.equal(saved,null,'Opening the picker must not write a draft');
-   await modal.getByRole('button',{name:/1 ay/}).click();await next.click();
-   await terms.getByText('Sınaq şərtləri').waitFor();await terms.getByRole('checkbox').check();
-   await terms.getByRole('button',{name:'Təsdiqləyirəm'}).click();
-   await p.waitForFunction(()=>window.committed&&window.cartOpen);
-   assert.equal(saved.productId,'capcut');
+   await modal.getByRole('button',{name:/1 ay/}).click();await modal.getByText('Planlaşdırılan başlanğıc:',{exact:false}).waitFor();await modal.getByRole('checkbox').check();await next.click();
+   await modal.waitFor({state:'hidden'});
+   assert.equal(saved.sourceId,id);
    rows=[old,{...old,days:7}];await p.reload();
    await p.getByText('1 abunəliyin müddəti bu həftə bitir. Kəsilməməsi üçün indidən yeniləyə bilərsiniz.',{exact:true}).waitFor();
    rows=[{...old,days:5},{...old,days:7}];await p.reload();
@@ -139,13 +135,11 @@ try{
     if(screenshot)await cards.nth(2).screenshot({path:screenshot});
     const renewButton=cards.last().getByRole('button',{name:'Yenilə'});
     if(width<600)await renewButton.tap();else await renewButton.click();
-    await modal.getByRole('button',{name:/1 ay/}).click();await next.click();
-    await terms.getByText('Sınaq şərtləri').waitFor();await terms.getByRole('checkbox').check();
-    await terms.getByRole('button',{name:'Təsdiqləyirəm'}).click();
-    await p.waitForFunction(()=>window.committed&&window.cartOpen);
-    assert.equal(saved.renewalId,rows[3].id);
+    await modal.getByRole('button',{name:/1 ay/}).click();await modal.getByText('Planlaşdırılan başlanğıc:',{exact:false}).waitFor();await modal.getByRole('checkbox').check();await next.click();
+    await modal.waitFor({state:'hidden'});
+    assert.equal(saved.sourceId,rows[3].id);
    }
-   console.log('PASS '+engine.name()+' '+width+'px: card parity at 8/7/6/1 days, long plan, summary, and correct renewal → existing terms → cart');
+   console.log('PASS '+engine.name()+' '+width+'px: card parity at 8/7/6/1 days, long plan, summary, scheduled renewal consent');
   }finally{await b.close();}
  }
 }finally{await new Promise(r=>server.close(r));}

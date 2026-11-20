@@ -20,6 +20,7 @@ export async function handleShop({req,res,url,shop,browserOrders,security,readBo
  else if(path==='/draft'&&post)value=await shop.saveDraft(req,owner,await readBody(req,8000));
  else if(path==='/prices'&&req.method==='GET')value=await shop.prices(req);
  else if(path==='/subscriptions'&&req.method==='GET')value=await shop.subscriptions(req);
+ else if(path==='/renewal'&&post)value=await shop.renewal(req,await readBody(req,4000));
  else if(path==='/draft'&&req.method==='GET')value=await shop.getDraft(req,owner,url.searchParams.get('id'));
  else if(path==='/drafts'&&req.method==='GET')value=await shop.listDrafts(req,owner);
  else if(path==='/draft/remove'&&post)value=await shop.removeDrafts(req,owner,(await readBody(req,4000)).ids);

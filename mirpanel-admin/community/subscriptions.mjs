@@ -115,6 +115,7 @@ export async function verifyRenewal(pool,user,id,productId,expected){
  if(!x||x.productId!==productId)throw fail(404,'Abunəlik tapılmadı.');
  if(x.days===null||x.days<0||expected&&x.expiresOn!==expected)throw fail(409,'Abunəliyin müddəti dəyişib. Siyahını yeniləyin.');
  if(['preparing','pending','reserved'].includes(x.renewalStatus))throw fail(409,'Bu abunəlik üçün yeniləmə artıq davam edir.');
+ if((await pool.query("select to_regclass('mirpanel_community.scheduled_renewals') present")).rows[0].present&&(await pool.query("select 1 from mirpanel_community.scheduled_renewals where source_id=$1 and base_expires_on=$2 and state<>'cancelled'",[id,x.expiresOn])).rowCount)throw fail(409,'Bu müddət üçün yenilənmə artıq planlaşdırılıb.');
  return {id:x.id,expiresOn:x.expiresOn,orderCode:x.orderCode,sourceLine:x.sourceLine,sourceUnit:x.sourceUnit};
 }
 export async function customerSubscriptions(pool,user,catalog,snapshot){
@@ -134,7 +135,9 @@ export async function customerSubscriptions(pool,user,catalog,snapshot){
   if(!options.has(x.productId)){
    const availability=p&&stock&&inventoryAvailability(p,inventory.get(p.id));
    options.set(x.productId,availability?(p.plans||[]).flatMap((plan,index)=>{
-    if(!availability.plans[index]?.canOrder&&!(p.id==='netflix'&&!availability.salesDisabled&&availability.plans[index]?.active))return [];
+    // A future renewal may wait for replenishment; today's ready-stock count is
+    // not a reason to hide an otherwise active term package.
+    if(availability.salesDisabled||!availability.plans[index]?.active)return [];
     let price;try{price=parseMoneyCents(plan.price,{allowEmpty:false});}catch{return [];}
     const key=planKey(plan,index),cents=prices.get(JSON.stringify([p.id,key,userPriceSignature(plan)]))??price;
     if(cents<=0)return [];
