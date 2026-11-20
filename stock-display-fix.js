@@ -1,6 +1,6 @@
 (async function () {
   window.MirpanelInventory?.dispose?.();
-  const {inventoryAvailability}=await import('/inventory-availability.mjs?v=ready-sku-2');
+  const {inventoryAvailability}=await import('/inventory-availability.mjs?v=epinby-stock-1');
   const {packageDeliveryText}=await import('/ready-delivery.mjs?v=ready-sku-2');
   const inventory = new Map();let inventoryTimer,homeSalesTimer,painting=false,inventoryDisplayValid=false,inventoryFailed=false;
   function escapeHtml(value) {
@@ -42,6 +42,16 @@
     const ledger=inventory.get(product.id);
     if(ledger?.salesDisabled)return {text:'Stokda yoxdur',className:'out'};
     if(!inventoryDisplayValid||!ledger||ledger.needsSetup)return null;
+    const pricePlan=(product.plans||[]).findIndex(plan=>Number(plan.price)===minPrice(product));
+    const supplier=ledger.plans?.find(plan=>plan.planKey===String(pricePlan))?.supplierStock;
+    if(supplier&&inventoryFailed)return {text:'Stok yoxlanıla bilmir',className:'unknown'};
+    if(supplier?.status==='out')return {text:'Stokda bitib',className:'out'};
+    if(supplier?.status==='unknown')return {text:'Stok yoxlanıla bilmir',className:'unknown'};
+    if(supplier?.status==='available'){
+      if(!Number.isSafeInteger(supplier.count))return null;
+      const count=stateFor(product).plans[pricePlan]?.available;
+      return Number.isSafeInteger(count)?{text:count===0?'Stokda bitib':'Stok: '+count,className:count===0?'out':count<=5?'low':'count'}:null;
+    }
     let stock;
     if(ledger.scope==='product'){
       if(ledger.unlimited===true)return null;
@@ -197,7 +207,12 @@
     };
   }
 
-  function stateFor(product){const state=inventoryAvailability(product,inventory.get(product?.id));return inventoryDisplayValid&&inventory.has(product?.id)?state:{...state,unavailable:true,available:null,canOrder:false,plans:state.plans.map(p=>({...p,available:null,canOrder:false}))};}
+  function stateFor(product){
+    const state=inventoryAvailability(product,inventory.get(product?.id));
+    if(!inventoryDisplayValid||!inventory.has(product?.id))return {...state,unavailable:true,available:null,canOrder:false,plans:state.plans.map(p=>({...p,available:null,canOrder:false}))};
+    if(inventoryFailed){state.plans=state.plans.map(p=>p.supplierStock?{...p,available:null,canOrder:false,supplierStock:{...p.supplierStock,status:'unknown',count:null}}:p);state.canOrder=state.plans.some(p=>p.canOrder);}
+    return state;
+  }
   function planFor(product,index){return stateFor(product).plans.find(p=>p.planKey===String(index));}
   // Opening the read-only order window is safe while inventory is unknown.
   // Quote and checkout still confirm the actual price, availability and balance.
@@ -273,15 +288,15 @@
       const button=document.getElementById('pp-order-btn');if(button){button.disabled=!canOpen;button.classList.toggle('disabled',!canOpen);button.title=state.salesDisabled?'Stokda yoxdur':state.unavailable?(inventoryFailed?'Müvəqqəti əlçatan deyil':'Stok yoxlanılır…'):canOrder?'':'Stokda yoxdur';}
       const add=document.getElementById('cartAddProduct');
       if(add)add.disabled=!canOpen;
-      document.querySelectorAll('.product-page-status').forEach(el=>{el.textContent=state.salesDisabled?'Stokda yoxdur':state.unavailable?'Stok məlumatı alınır':state.canOrder?'Mövcuddur':'Stokda yoxdur';el.classList.toggle('is-out',state.salesDisabled||!state.unavailable&&!state.canOrder);});
+      document.querySelectorAll('.product-page-status').forEach(el=>{el.textContent=state.salesDisabled?'Stokda yoxdur':state.unavailable?'Stok məlumatı alınır':state.canOrder?'Mövcuddur':state.plans.some(p=>p.supplierStock?.status==='unknown')?'Stok yoxlanıla bilmir':state.plans.some(p=>p.supplierStock?.status==='out')?'Stokda bitib':'Stokda yoxdur';el.classList.toggle('is-out',state.salesDisabled||!state.unavailable&&!state.canOrder);});
       rows.forEach((row,i)=>{
         const selected=i===index;
         const meta=row.querySelector('.pp-plan-meta');
         if(meta)meta.hidden=!selected;
         row.setAttribute('aria-expanded',String(selected));
-        const plan=state.plans[i],out=!state.unavailable&&!inventoryFailed&&!plan?.canOrder;row.setAttribute('aria-disabled',String(out));row.tabIndex=out?-1:i===index?0:-1;
+        const plan=state.plans[i],unknown=plan?.supplierStock?.status==='unknown',out=!unknown&&!state.unavailable&&!inventoryFailed&&!plan?.canOrder;row.setAttribute('aria-disabled',String(out||unknown));row.tabIndex=out||unknown?-1:i===index?0:-1;
         const stock=row.querySelector('[data-plan-stock]');
-        const showCount=!state.unavailable && !inventoryFailed && !state.salesDisabled && plan?.tracked && Number.isSafeInteger(plan.available)
+        const showCount=!unknown&&!state.unavailable && !inventoryFailed && !state.salesDisabled && (!plan?.supplierStock||Number.isSafeInteger(plan.supplierStock.count)) && (plan?.tracked||Number.isSafeInteger(plan?.supplierStock?.count)) && Number.isSafeInteger(plan.available)
           && product.plans[i]?.stockVisibility!=='hide';
         if(stock){
           stock.hidden=!showCount;
@@ -291,8 +306,8 @@
         let line=row.querySelector('[data-inventory-plan]');
         if(!line){line=document.createElement('span');line.dataset.inventoryPlan='';row.append(line);}
         line.className=out?'mpStockBadge cardStockBadge out inventory-plan-badge':'plan-fact plan-fact-stock inventory-plan-count';
-        line.textContent=out?'Stokda yoxdur':!stock&&showCount?`${plan.available} stokda`:'';
-        line.hidden=!out&&(!!stock||!showCount);
+        line.textContent=unknown?'Stok yoxlanıla bilmir':out?(plan?.supplierStock?.status==='out'?'Stokda bitib':'Stokda yoxdur'):!stock&&showCount?`${plan.available} stokda`:'';
+        line.hidden=!unknown&&!out&&(!!stock||!showCount);
       });
       paintDelivery(product,rows,index);
     }finally{painting=false;}

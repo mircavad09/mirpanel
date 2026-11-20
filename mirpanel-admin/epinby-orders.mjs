@@ -6,6 +6,7 @@ import {planKey} from './payment-profit.mjs';
 import {adminDelivery,paid} from './community/order-delivery.mjs';
 import {validateEpinbyDetails} from './community/public/checkout-fields.js';
 import {supplierCost,supplierCharge} from './epinby-finance.mjs';
+import {epinbyStockState} from './epinby-stock.mjs';
 const S='mirpanel_community.',U=S+'epinby_order_units',D=S+'api_dispatches';
 const providerId='e91bb000-0000-4000-8000-000000000001';
 const fail=(status,message,code)=>Object.assign(Error(message),{status,...(code?{code}:{})});
@@ -87,7 +88,9 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
    return check;
   }
   const product=await providerProduct(row,supplier);
-  if(!['FINITE','INFINITE','UNLIMITED'].includes(product.stock_status)||product.stock_status==='FINITE'&&(!Number.isSafeInteger(Number(product.stock_count))||Number(product.stock_count)<quantity))throw fail(409,'Təchizatçıda kifayət qədər təsdiqlənmiş stok yoxdur.');
+  const stock=epinbyStockState(product);
+  if(stock.status==='unknown')throw fail(503,'Stok yoxlanıla bilmir. Yenidən cəhd edin.','EPINBY_STOCK_UNKNOWN');
+  if(stock.status==='out'||stock.count!==null&&stock.count<quantity)throw fail(409,'Stokda bitib və ya seçilmiş sayda əlçatan deyil.','EPINBY_OUT_OF_STOCK');
   const check=await checkRecipient(row,supplier,values,product);
   if(!check.allowCheckout)throw fail(check.state==='retry'?503:409,check.message);
   return check;
@@ -140,6 +143,14 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   if(data.nickname_verified===true&&name)return {state:'verified',name,allowCheckout:true};
   if(data.validation_optional===true)return unavailable();
   return data.nickname_verified===false?invalid():retry();
+ }
+ async function sendStockCheckedOrder(row,unit){
+  const settings=epinbyProduct(unit.settings);
+  if(!settings)throw fail(409,'Paketin təchizatçı uyğunluğu təsdiqlənmədi.','EPINBY_SCHEMA_CHANGED');
+  const product=await providerProduct(row,settings),stock=epinbyStockState(product);
+  if(stock.status==='out')throw fail(409,'Təchizatçıda stokda bitib; stok yenilənməsi gözlənilir.','EPINBY_OUT_OF_STOCK');
+  if(stock.status!=='available')throw fail(503,'Təchizatçı stoku yoxlanıla bilmir.','EPINBY_STOCK_UNKNOWN');
+  return send(row,'order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
  }
  function productForCheck(row,supplier){
   const key=JSON.stringify([row.credential_version,supplier]);
@@ -254,12 +265,12 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
     if(unit.type==='TELEGRAM_STARS'){
      result=unit.external_id?await send(row,'telegram-stars/order/'+unit.external_id)
       :await send(row,'telegram-stars/order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
-    }else if(unit.state==='queued')result=await send(row,'order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
+    }else if(unit.state==='queued')result=await sendStockCheckedOrder(row,unit);
     else if(unit.external_id)result=await send(row,'order/'+unit.external_id);
     else{
      const orders=await send(row,'orders');const found=Array.isArray(orders.data)&&orders.data.find(x=>x.client_order_id===unit.id);
      if(found)result={success:true,data:found};
-     else if(orders.success===true&&Array.isArray(orders.data))result=await send(row,'order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
+     else if(orders.success===true&&Array.isArray(orders.data))result=await sendStockCheckedOrder(row,unit);
     }
     if(result?.success===false&&result.error?.code)throw Object.assign(Error('SUPPLIER_REJECTED'),{supplierCode:result.error.code});
     if(result?.success===true&&result.data)await record(db,unit,result.data);
@@ -269,8 +280,9 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
     const code=error.supplierCode;
     const balance=['INSUFFICIENT_FUNDS','INSUFFICIENT_BALANCE','BALANCE_NOT_ENOUGH'].includes(code);
     const blocked=['VALIDATION_ERROR','INVALID_INPUT','PLAYER_NOT_FOUND','PRODUCT_NOT_FOUND','VALIDATION_REQUIRED','IDEMPOTENCY_CONFLICT'].includes(code)||[400,401,403,422].includes(error.supplierStatus);
-    const state=balance?'queued':blocked?'failed':'checking';
-    const reason=balance?'Epinby balansı gözlənilir · '+code:blocked?'Epinby yoxlama tələb edir · '+(code||'HTTP_'+error.supplierStatus):'Nəticə qeyri-müəyyəndir. Eyni göndəriş açarı ilə status yoxlanılır.';
+    const stockWaiting=['EPINBY_OUT_OF_STOCK','EPINBY_STOCK_UNKNOWN','EPINBY_PRODUCT_UNAVAILABLE','EPINBY_CATALOG_UNAVAILABLE','EPINBY_SCHEMA_CHANGED','EPINBY_MAPPING_MISMATCH'].includes(error.code);
+    const state=balance||stockWaiting&&unit.state==='queued'?'queued':blocked?'failed':'checking';
+    const reason=stockWaiting?'Təchizatçı stoku gözlənilir · '+error.message:balance?'Epinby balansı gözlənilir · '+code:blocked?'Epinby yoxlama tələb edir · '+(code||'HTTP_'+error.supplierStatus):'Nəticə qeyri-müəyyəndir. Eyni göndəriş açarı ilə status yoxlanılır.';
     await db.query(`update ${U} set state=$3,reason=$2,next_at=now()+interval '60 seconds' where id=$1 and state='checking'`,[unit.id,reason,state]);
    }
   }

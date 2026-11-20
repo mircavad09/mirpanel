@@ -23,6 +23,7 @@ import {userPriceSignature} from './community/user-price-key.mjs';
 import {customerOrderStatus} from './employee-order-status.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
 import {createInventoryReader,inventoryUnavailable} from './inventory-reader.mjs';
+import {createEpinbyStock} from './epinby-stock.mjs';
 import {validateReceiptFile,FILE_SAFETY_ENGINE} from './receipt-file-safety.mjs';
 import {createBrowserOrders} from './browser-orders.mjs';
 import {createAccountOrders} from './account-orders.mjs';
@@ -141,7 +142,11 @@ export function createPaymentSystem(options) {
   async function withBackground(method){
     const backgrounds=await backgroundList();return {...method,backgroundUrl:backgrounds[bankKey(method)]||''};
   }
-  const readInventory=createInventoryReader({snapshot:()=>store.inventorySnapshot(),ready:store.inventoryReady?()=>store.inventoryReady():null,enabled:()=>config.inventoryEnabled===true,onReady:()=>{config.inventoryEnabled=true;},cacheMs:options.store?0:2000});
+  const localInventory=createInventoryReader({snapshot:()=>store.inventorySnapshot(),ready:store.inventoryReady?()=>store.inventoryReady():null,enabled:()=>config.inventoryEnabled===true,onReady:()=>{config.inventoryEnabled=true;},cacheMs:options.store?0:2000});
+  const supplierStock=options.supplierPool?createEpinbyStock({pool:options.supplierPool,security,catalog:loadCatalog,transport:options.epinbyTransport}):null;
+  supplierStock?.start();
+  const readInventory=async opts=>{const rows=await localInventory(opts);return supplierStock?supplierStock.decorate(await loadCatalog(),rows):rows;};
+  readInventory.invalidate=()=>localInventory.invalidate();
   const validateFile = options.validateReceiptFile || validateReceiptFile;
   // Coalesce only authenticated reservation + identical raw bytes. Never cache a
   // failed attempt; storage itself remains the durable, immutable hash authority.
@@ -149,7 +154,7 @@ export function createPaymentSystem(options) {
   const browserOrders=createBrowserOrders({security,store,enabled:config.browserOrdersEnabled===true});
   const accountOrders=createAccountOrders({security,store,resolve:options.accountHistory});
   const mailer = options.mailer || createPaymentMailer(config, store);
-  const shop=options.shopContext?createShop({context:options.shopContext,catalog:loadCatalog,snapshot:()=>readInventory({fresh:true}),store,config,adminTopupNotifications:options.adminTopupNotifications}):null;
+  const shop=options.shopContext?createShop({context:options.shopContext,catalog:loadCatalog,snapshot:()=>readInventory({fresh:true}),store,config,adminTopupNotifications:options.adminTopupNotifications,epinbyTransport:options.epinbyTransport}):null;
   const allowedOrigins = new Set(config.allowedOrigins);
 
   function clientIp(request) {
@@ -220,7 +225,7 @@ export function createPaymentSystem(options) {
     const fulfillment=all&&options.readyDeliverySnapshot
       ? catalog.then(options.readyDeliverySnapshot).catch(()=>new Map())
       : Promise.resolve(new Map());
-    const [rows,c,delivery]=await Promise.all([readInventory({fresh:!all}),catalog,fulfillment]);
+    const [rows,c,delivery]=await Promise.all([all?readInventory({fresh:false}):localInventory({fresh:true}),catalog,fulfillment]);
     return c.products.filter(p=>p.active!==false&&(all||p.stockEnabled===true||rows.some(r=>r.productId===p.id))).map(p=>{
       const state=inventoryAvailability(p,rows.find(r=>r.productId===p.id));
       for(const plan of state.plans){const fulfillment=delivery.get(p.id)?.[Number(plan.planKey)];if(fulfillment)plan.fulfillment=fulfillment;}
@@ -241,6 +246,8 @@ export function createPaymentSystem(options) {
     // Zero quantity is enforced by the atomic RPC, not a pre-check that would
     // reject the legitimate retry of a reservation which took the last unit.
     if(availability?.salesDisabled)throw Object.assign(Error('Məhsul stokda yoxdur.'),{status:409,code:'PRODUCT_SALE_PAUSED'});
+    if(inventoryPlan?.supplierStock?.status==='out')throw Object.assign(Error('Stokda bitib.'),{status:409,code:'EPINBY_OUT_OF_STOCK'});
+    if(inventoryPlan?.supplierStock?.status==='unknown')throw Object.assign(Error('Stok yoxlanıla bilmir. Yenidən cəhd edin.'),{status:503,code:'EPINBY_STOCK_UNKNOWN'});
     const unavailableStock=!inventoryPlan?.active;
     if (!product || unavailableStock || !plan || !Number.isFinite(Number(plan.price)) || Number(plan.price) <= 0) {
       throw Object.assign(new Error("Məhsul və ya plan artıq sifariş üçün açıq deyil."), { status: 409 });
@@ -964,6 +971,7 @@ export function createPaymentSystem(options) {
   return {
     configured: true,
     shop,
+    supplierStock,
     store,
     mailer,
     async guardLogin(request) {

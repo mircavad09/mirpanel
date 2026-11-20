@@ -1392,6 +1392,7 @@ const mime = {
 const paymentSystem = createPaymentSystem({
   adminTopupNotifications: process.env.COMMUNITY_PUBLIC_ENABLED==='true',
   shopContext: request=>ownerCommunity.shopContext(request),
+  supplierPool:()=>ownerCommunity.integrationPool(),
   accountHistory: request=>ownerCommunity.orderHistory(request),
   customerDelivery: (...args)=>ownerCommunity.adminDelivery(...args),
   cancelFulfillment: (...args)=>ownerCommunity.cancelFulfillment(...args),

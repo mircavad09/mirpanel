@@ -214,14 +214,14 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=epinby-retry-1$2');
   next=next.replace(/(src=["'])\/?order-confirmation\.js(?:\?[^"']*)?(["'])/g,'$1/order-confirmation.js?v=game-validation-1$2');
-  next=next.replace(/(src=["'])\/?cart-store\.js(?:\?[^"']*)?(["'])/g,'$1/cart-store.js?v=cart-lights-2$2');
+  next=next.replace(/(src=["'])\/?cart-store\.js(?:\?[^"']*)?(["'])/g,'$1/cart-store.js?v=epinby-stock-1$2');
   next=next.replace(/(src=["'])\/?browser-nav\.js(?:\?[^"']*)?(["'])/g,'$1/browser-nav.js?v=token-cart-1$2');
   next=next.replace(/(src=["'])\/?(seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
   next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=category-storefront-1$3');
   next=next.replace(/(src=["'])\/?catalog-card\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-card.js?v=token-cart-1$2');
   next=next.replace(/(src=["'])\/?catalog-listing\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-listing.js?v=spotify-compact-1$2');
   next=next.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=categories-1$2');
-  next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v='+(html.includes('id="homePageView"')?'home-cards-2':'compact-plan-facts-1')+'$2');
+  next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=epinby-stock-1$2');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?(home-loading|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-recovery-1$3');
   next=next.replace(/(src=["'])\/?cms-site\.js(?:\?[^"']*)?(["'])/g,'$1/cms-site.js?v=image-alt-20261117$2');

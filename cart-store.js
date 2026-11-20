@@ -199,8 +199,9 @@
     const product=catalog().find(product=>product.id===x.productId);
     const img=artwork(p.image||product?.image);
     const info=node('div',null,'mir-cart-info');info.append(node('strong',name),node('small',p.planName||'Seçilmiş paket'),node('b',p.unitCents==null?'—':azMoney(p.unitCents*x.quantity)));
-    if(p.salesDisabled||p.available===0)info.append(node('small','Stokda yoxdur'));
-    else if(p.available!=null&&p.available<x.quantity)info.append(node('small','Stokda '+p.available+' ədəd var.'));
+    if(p.supplierStock?.status==='unknown')info.append(node('small','Stok yoxlanıla bilmir'));
+    else if(p.salesDisabled||p.available===0)info.append(node('small',p.supplierStock?.status==='out'?'Stokda bitib':'Stokda yoxdur'));
+    else if(p.available!=null&&p.available<x.quantity)info.append(node('small',p.supplierStock&&p.supplierStock.count===null?'Bu paket seçilmiş sayda əlçatan deyil.':'Stokda '+p.available+' ədəd var.'));
     for(const field of p.maskedDetails||[])info.append(node('small',field.label+': '+field.value));
     if(x.draftId&&(p.termsMissing||p.fields?.length))info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{
      void import('/community-assets/cart-entry.js?v=game-validation-1').then(m=>m.editCartLine(x)).catch(e=>{notice.textContent=e.message;});
@@ -235,12 +236,14 @@
    function show(rows){
     render(items,rows);
     const termsMissing=rows.some(x=>x.termsMissing),detailsMissing=rows.some(x=>x.detailsMissing);
-    const short=rows.some(x=>x.salesDisabled||x.available!=null&&x.available<x.quantity);
+    const stockUnknown=rows.some(x=>x.supplierStock?.status==='unknown');
+    const short=stockUnknown||rows.some(x=>x.salesDisabled||x.available!=null&&x.available<x.quantity);
     next.disabled=tokenPresent?rows.some(x=>isToken(x)&&x.termsMissing):!items.length||rows.length!==items.length||short||termsMissing||detailsMissing;
     other.hidden=!tokenPresent||!items.some(x=>!isToken(x));
-    other.disabled=rows.some(x=>!isToken(x)&&(x.termsMissing||x.detailsMissing||x.salesDisabled||x.available!=null&&x.available<x.quantity));
+    other.disabled=rows.some(x=>!isToken(x)&&(x.termsMissing||x.detailsMissing||x.salesDisabled||x.supplierStock?.status==='unknown'||x.available!=null&&x.available<x.quantity));
     next.firstChild.textContent=other.hidden?'Ödənişə keç':'Token üçün ödənişə keç';
-    notice.textContent=termsMissing?'Məhsulun şərtlərini yenidən təsdiqləyin.':detailsMissing?'Sifariş məlumatlarını tamamlayın.':'';
+    notice.textContent=stockUnknown?'Stok yoxlanıla bilmir. Yenidən yoxlayın.':short?'Səbətdəki bəzi paketlər stokda bitib və ya seçilmiş sayda yoxdur.':termsMissing?'Məhsulun şərtlərini yenidən təsdiqləyin.':detailsMissing?'Sifariş məlumatlarını tamamlayın.':'';
+    retry.hidden=!stockUnknown;
    }
    render(items,rows);
    notice.textContent=items.length?'Qiymət və stok yoxlanılır…':'';
@@ -252,6 +255,7 @@
   }
   window.addEventListener('mirpanel:cart',draw,{signal:life.signal});window.addEventListener('storage',e=>{if(e.key===key)void draw();},{signal:life.signal});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void draw();},{signal:life.signal});
+  const stockTimer=setInterval(()=>{if(!document.hidden)void draw();},15000);life.signal.addEventListener('abort',()=>clearInterval(stockTimer),{once:true});
   const viewport=window.visualViewport;
   const fit=()=>{d.style.setProperty('--cart-view-height',(viewport?.height||innerHeight)+'px');d.style.setProperty('--cart-view-top',(viewport?.offsetTop||0)+'px');};
   const resizeObserver=new ResizeObserver(fit);resizeObserver.observe(document.documentElement);

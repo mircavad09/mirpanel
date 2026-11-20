@@ -1,4 +1,5 @@
-// Shared public/server decision model. Counts come only from the inventory ledger.
+// Shared public/server decision model: local ledger limits plus explicit supplier
+// evidence. Supplier counts never change local reservation tracking.
 export function inventoryAvailability(product, ledger) {
   const scope = ['product','plan'].includes(ledger?.scope) ? ledger.scope : product.stockEnabled === true ? 'product' : 'none';
   const count = value => Number.isSafeInteger(Number(value)) && Number(value) >= 0 ? Number(value) : 0;
@@ -12,11 +13,14 @@ export function inventoryAvailability(product, ledger) {
     // A newly added plan in a plan-managed product fails closed until configured.
     // Explicitly untracked plans retain their existing unlimited/manual flow.
     const tracked = (scope === 'product' && !unlimited) || (scope === 'plan' && item?.tracked !== false);
-    const quantity = scope === 'product' ? available : tracked ? count(item?.available ?? 0) : null;
-    const active = plan.active !== false && Number.isFinite(Number(plan.price)) && Number(plan.price) > 0;
-    return {planKey:String(index), active, tracked, available:quantity,
+    let quantity = scope === 'product' ? available : tracked ? count(item?.available ?? 0) : null;
+    const supplierStock=item?.supplierStock;
+    if(supplierStock?.status==='out')quantity=0;
+    else if(supplierStock?.status==='available'&&Number.isSafeInteger(supplierStock.count))quantity=quantity===null?supplierStock.count:Math.min(quantity,supplierStock.count);
+    const active = plan.active !== false && item?.active !== false && Number.isFinite(Number(plan.price)) && Number(plan.price) > 0;
+    return {planKey:String(index), active, tracked, available:quantity,...(supplierStock?{supplierStock}:{}),
       ...(item?.fulfillment?{fulfillment:item.fulfillment}:{}),
-      canOrder:product.active !== false && active && !salesDisabled && (!tracked || quantity > 0)};
+      canOrder:product.active !== false && active && !salesDisabled && (!supplierStock||supplierStock.status==='available') && (!tracked || quantity > 0)};
   });
   return {productId:product.id, scope, version:ledger?.version || 0, available, unlimited,
     ...(typeof salePaused === 'boolean' ? {salePaused} : {}), needsSetup:scope === 'product' && (!ledger || ledger.scope === 'none'), salesDisabled,

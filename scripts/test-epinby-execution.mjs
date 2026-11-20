@@ -15,6 +15,7 @@ const f=await shopFixture(),{pool,db,catalog,id,rpc}=f;
 const config={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')},security=createPaymentSecurity(config);
 let nameMode='verified',mode='success',lookupMode='found',starsCreates=0,creates=0,external=700,failPage=false,catCalls=[];const supplierOrders=new Map();
 const fields=[{key:'player_id',label:'Player ID',required:true},{key:'server_id',label:'Server',required:false}];
+let supplierStockMode='available';
 const product={id:'epinby_91',title:'Synthetic game',active:true,plans:[{label:'60 UC',price:3.49}],formFields:fields,
  supplier:epinbyProduct({provider:'epinby',productId:91,type:'TOPUP',fields},'epinby_91')};catalog.products.push(product);
 catalog.products.push({id:'synthetic_game_group',title:'Synthetic grouped game',active:true,plans:[{label:'Other package',price:2},{id:'epinby_92',label:'Gift code',price:5,supplier:epinbyProduct({provider:'epinby',productId:92,type:'VOUCHER',fields:[]},'epinby_92')}]});
@@ -32,7 +33,7 @@ const transport=async input=>{
    {id:93,game_id:100,type:'TOPUP',fields:[fields[0]],supports_player_validation:true,stock_status:'INFINITE'},
    {id:94,game_id:100,type:'TOPUP',fields,supports_player_validation:true,stock_status:'INFINITE'}
   ],meta:{current_page:1,last_page:1}};
-  return {success:true,data:[{id:91,name:'60 UC',price:'1.00',currency:'USD',stock_status:'INFINITE',type:'TOPUP',fields},{id:92,name:'Gift code',price:'2.00',currency:'AZN',stock_status:'FINITE',stock_count:10,type:'VOUCHER',fields:[]}],meta:{current_page:Number(input.query.page)||1,last_page:122,total:6086}};
+return {success:true,data:[{id:91,name:'60 UC',price:'1.00',currency:'USD',stock_status:supplierStockMode==='available'?'INFINITE':supplierStockMode==='out'?'FINITE':'UNKNOWN',stock_count:supplierStockMode==='out'?0:null,type:'TOPUP',fields},{id:92,name:'Gift code',price:'2.00',currency:'AZN',stock_status:'FINITE',stock_count:10,type:'VOUCHER',fields:[]}],meta:{current_page:Number(input.query.page)||1,last_page:122,total:6086}};
  }
  if(input.path.endsWith('/validate-player')&&input.body.product_id===91){
   assert.deepEqual(input.body,{product_id:91,player_id:'000123',server_id:'0001'});
@@ -113,8 +114,13 @@ try{
  await assert.rejects(shop.playerName({}, {...lookup,productId:voucherQuote.productId,planIndex:1,termsVersion:voucherQuote.termsVersion}),{status:409});
  assert.equal(creates,0);
  const requestId=id(),before=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);
+ supplierStockMode='out';await assert.rejects(buy(),{status:409,code:'EPINBY_OUT_OF_STOCK'});
+ supplierStockMode='unknown';await assert.rejects(buy(),{status:503,code:'EPINBY_STOCK_UNKNOWN'});
+ assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),before);assert.equal(creates,0);
+ supplierStockMode='available';
  const [bought,replayed]=await Promise.all([buy(requestId),buy(requestId)]);assert.equal(bought.orderId,replayed.orderId);
  assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),before-349);
+ supplierStockMode='out';await worker.drain();assert.equal(creates,0,'stock loss after payment blocks supplier submission');supplierStockMode='available';
  await Promise.all([worker.drain(),makeWorker().drain()]);await tick(worker,3);assert.equal(creates,1);
  const captured=(await pool.query('select execution_quote,supplier_charge from epinby_order_units where external_id is not null limit 1')).rows[0];
  assert.equal(captured.execution_quote.azn,'1.7');
