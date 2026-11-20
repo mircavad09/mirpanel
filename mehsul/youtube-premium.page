@@ -177,7 +177,7 @@
       <div class="product-page-content-card">
         <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about"><h2>YouTube Premium (Öz hesabınız) Məhsul haqqında</h2><h3>YouTube Premium - Reklamsız İzləmə</h3>
       <p>YouTube Premium hesabı, videoları reklamsız izləmək və YouTube Music xidmətindən istifadə etmək üçündür.</p><h3>Giriş və təhvil qaydası</h3><p>Seçilmiş paketin tələb etdiyi məlumatları sifariş formasında yoxlayın.</p>
- <p>Sifariş formasındakı məlumat sahələri: Email / Gmail. Şəxsi giriş məlumatlarını yalnız sifariş formasında daxil edin, açıq qrup söhbətində paylaşmayın.</p>
+ <p>Sifariş formasındakı məlumat sahələri: Email / Gmail, Email / Gmail Şifrəsi. Şəxsi giriş məlumatlarını yalnız sifariş formasında daxil edin, açıq qrup söhbətində paylaşmayın.</p>
  <p>Ödənişin təsdiqi ilə təhvilin tamamlanması ayrı mərhələlərdir. Hazır hesab və ya aktivləşdirmə vəziyyətini <a href="/profil?tab=sifarislerim">Sifarişlərim</a> bölməsindən izləyin. Məhsula aid Təlimat təhvil məlumatları ilə birlikdə açılır.</p>
  <h3>Paket zəmanəti və istifadə şərtləri</h3>
  <ul><li>12 Ay · 12 ay: 12 ay zəmanət</li></ul>
@@ -226,7 +226,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-2d5c16d89fb08b00"></script>
+  <script src="/app.js?v=image-alt-20261117-38c32c2aa004da98"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=sales-count-2"></script>

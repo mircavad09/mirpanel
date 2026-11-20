@@ -207,7 +207,18 @@ const DATA = {
           "placeholder": "Gmail ünvanınızı yazın",
           "description": "",
           "required": true,
-          "enabled": true
+          "enabled": true,
+          "order": 1
+        },
+        {
+          "key": "custom_6cd47184e15c44f6b78fbd1d0fb85073",
+          "type": "text",
+          "label": "Email / Gmail Şifrəsi",
+          "placeholder": "Şifrə",
+          "description": "",
+          "required": false,
+          "enabled": true,
+          "order": 2
         }
       ],
       "formTitle": "",
@@ -234,11 +245,11 @@ const DATA = {
         {
           "warrantyUnit": "day",
           "warrantyDuration": 30,
+          "pricingId": "6b70f3f1-26b6-47f3-9b60-1ccf560aa27c",
           "label": "1 Ay",
           "months": 1,
           "price": 5.99,
-          "regularPrice": 15,
-          "pricingId": "6b70f3f1-26b6-47f3-9b60-1ccf560aa27c"
+          "regularPrice": 15
         },
         {
           "durationMonths": 12,
@@ -246,11 +257,11 @@ const DATA = {
           "warrantyMode": "guaranteed",
           "stockVisibility": "show",
           "warrantyDuration": 12,
+          "pricingId": "24f61b10-9eb3-4ca7-bf6d-5ea460c68e8f",
           "label": "12 Ay",
           "months": 12,
           "price": 49.49,
-          "regularPrice": 165,
-          "pricingId": "24f61b10-9eb3-4ca7-bf6d-5ea460c68e8f"
+          "regularPrice": 165
         }
       ],
       "orderConfirmation": {
