@@ -11,7 +11,7 @@ import {cancelFulfillment} from '../mirpanel-admin/community/fulfillment-cancell
 import {ensureReadyStockManagement,manageReadyAccount,readyAccountList} from '../mirpanel-admin/community/ready-stock-management.mjs';
 import {saveProductMessage} from '../mirpanel-admin/community/ready-stock-product-messages.mjs';
 process.env.MIRPANEL_CART_V2_TEST='1';
-const paymentConfig={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')};
+const paymentConfig={allowLegacyRenewalCheckout:false,encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')};
 const f=await shopFixture({paymentConfig}),{pool,shop,id,catalog,db}=f,a={user:'a'},hash='a'.repeat(64);
 const security=createPaymentSecurity(paymentConfig);
 let worker;
@@ -25,6 +25,7 @@ try{
  async function source(){const item={productId:'capcut',planIndex:0,quantity:1},q=await shop.quote(a,[item],hash),order=await shop.checkout(a,hash,{items:[{...item,termsVersion:q.items[0].termsVersion}],mode:'wallet',requestId:id(),consentAccepted:true});if(!(await pool.query('select 1 from customer_order_deliveries where order_id=$1',[order.orderId])).rowCount)await adminDelivery(pool,security,'synthetic-admin',order.orderId,{requestId:id(),line:0,quantity:1,message:'OLD ACCOUNT — synthetic'});await pool.query('update payment_orders set service_expires_on=$2 where id=$1',[order.orderId,shiftCalendarDays(bakuDate(),2)]);return (await shop.subscriptions(a)).subscriptions.find(x=>x.orderCode===order.orderCode);}
  async function request(row,mode='prepaid'){const q=await shop.renewal(a,{action:'quote',sourceId:row.id,planIndex:0});return {sourceId:row.id,planIndex:0,requestId:id(),mode,consent:true,expectedCents:q.cents,expectedDueAt:q.dueAt};}
  const row=await source(),input=await request(row),before=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);
+ await assert.rejects(shop.saveDraft(a,hash,{id:id(),productId:'capcut',planIndex:0,renewalId:row.id,renewalExpiresOn:row.expiresOn}),e=>e.status===409);log.push('Cached legacy renewal entry is rejected before any early order or debit');
  const [r,again]=await Promise.all([shop.renewal(a,input),shop.renewal(a,input)]);assert.equal(r.id,again.id);assert.equal(r.state,'paid_waiting');
  assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),before-200);
  assert.equal((await pool.query('select count(*)::int n from payment_orders')).rows[0].n,1);

@@ -53,6 +53,7 @@ export function createShop({context,catalog,snapshot,store,config,adminTopupNoti
   values=giftRecipient?{}:validateDetails(fields,mapped);
  }catch(e){if(final)throw Object.assign(e,{status:e.status||400});detailsMissing=true;}
  const termsMissing=!acceptsTerms(termsState,accepted);
+ if(final&&draftRenewal&&config.allowLegacyRenewalCheckout!==true)throw fail(409,'Yenilənmə sistemi yenilənib. Səhifəni yenidən açın və “Yenilə” düyməsindən istifadə edin.');
  if(final&&termsMissing)throw fail(409,p.title+' paketinin şərtlərini yenidən təsdiqləyin.');
  const remaining=available.salesDisabled||!ip?.active?0:p.id==='netflix'&&draftRenewal?null:ip.available??null;
  if(final&&remaining!==null){
@@ -143,6 +144,7 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
  async saveDraft(req,owner,b){
   const scope=await account(req,{verified:false});
   if(!Object.hasOwn(b,'renewalId'))return draftService().save(scope,owner,b);
+  if(config.allowLegacyRenewalCheckout!==true)throw fail(409,'Yenilənmə sistemi yenilənib. Səhifəni yenidən açın və “Yenilə” düyməsindən istifadə edin.');
   return tx(scope.pool,async c=>{
    if(typeof b.renewalExpiresOn!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(b.renewalExpiresOn))throw fail(400,'Abunəliyin müddəti düzgün deyil.');
    const renewal=await verifyRenewal(c,scope.user,b.renewalId,b.productId,b.renewalExpiresOn);
