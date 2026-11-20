@@ -38,7 +38,7 @@ begin
  ending:=case when r.period_unit='days' then new.delivered_at+make_interval(days=>r.period_count) else new.delivered_at+make_interval(months=>r.period_count) end;
  update scheduled_renewals set state='delivered',delivered_at=new.delivered_at,expires_at=ending,reason=null where id=r.id;
  update payment_orders set service_expires_on=(ending at time zone 'Asia/Baku')::date where id=new.order_id;
- insert into renewal_events(renewal_id,event,message) values(r.id,'delivered',(r.snapshot->>'title')||' üçün yeni '||(r.snapshot->>'planName')||' xidməti təqdim edildi') on conflict do nothing;
+ insert into renewal_events(renewal_id,event,message) values(r.id,'delivered',(r.snapshot->>'title')||' üçün yeni '||r.period_count||case when r.period_unit='days' then ' günlük' else ' aylıq' end||case when r.method='new_account' then ' hesab təqdim edildi' else ' xidməti təqdim edildi' end) on conflict do nothing;
  return new;
 end;$$;
 drop trigger if exists scheduled_renewal_delivered on mirpanel_community.customer_order_deliveries;

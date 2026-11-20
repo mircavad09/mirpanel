@@ -26,7 +26,7 @@ async function planEnabled(c,p,index){
  // Paid future work is allowed to wait for stock, not to bypass an admin pause.
  return !available.salesDisabled&&available.plans[index]?.active===true;
 }
-const publicRow=r=>({id:r.id,sourceId:r.source_id,sourceOrderCode:r.source_order_code,productId:r.product_id,title:r.snapshot.title,plan:r.snapshot.planName,cents:Number(r.cents),dueAt:r.due_at,expiresAt:r.expires_at,state:r.state,status:r.state==='delivered'&&r.method==='new_account'?r.snapshot.title+' üçün yeni '+r.snapshot.planName+' hesab təqdim edildi':renewalLabels[r.state],reason:r.reason,mode:r.mode,method:r.method,orderId:r.new_order_id,orderCode:r.new_order_code,deliveredAt:r.delivered_at});
+const publicRow=r=>({id:r.id,sourceId:r.source_id,sourceOrderCode:r.source_order_code,productId:r.product_id,title:r.snapshot.title,plan:r.snapshot.planName,cents:Number(r.cents),dueAt:r.due_at,expiresAt:r.expires_at,state:r.state,status:r.state==='delivered'&&r.method==='new_account'?r.snapshot.title+' üçün yeni '+r.period_count+(r.period_unit==='days'?' günlük':' aylıq')+' hesab təqdim edildi':renewalLabels[r.state],reason:r.reason,mode:r.mode,method:r.method,orderId:r.new_order_id,orderCode:r.new_order_code,deliveredAt:r.delivered_at});
 async function event(c,r,type,message){await c.query('insert into mirpanel_community.renewal_events(renewal_id,event,message) values($1,$2,$3) on conflict do nothing',[r.id,type,message]);}
 export async function renewalMethod(c,p,plan,index){
  if(!renewalProductAllowed(p,plan))return 'disabled';
@@ -120,7 +120,8 @@ export function createScheduledRenewalWorker(pool,loadCatalog,securityFactory,{o
    const allowed=(await c.query('select u."emailVerified",coalesce(p.blocked,false) and (p.ban_until is null or p.ban_until>clock_timestamp()) blocked from mirpanel_community."user" u left join mirpanel_community.community_profiles p on p.user_id=u.id where u.id=$1',[r.user_id])).rows[0];
    if(!allowed?.emailVerified||allowed.blocked){await c.query(`update ${T} set reason='Hesabın giriş icazəsi yoxlanmalıdır' where id=$1`,[id]);return;}
    const p=catalog.products.find(p=>p.id===r.product_id&&p.active!==false),index=p?.plans?.findIndex((plan,i)=>planKey(plan,i)===r.plan_key&&signature(plan)===r.plan_signature),plan=index>=0?p.plans[index]:null;
-   if(!plan||!await planEnabled(c,p,index)||await renewalMethod(c,p,plan,index)==='disabled'){await c.query(`update ${T} set reason='Məhsul/paket dəyişib və ya yenilənmə bağlıdır' where id=$1`,[id]);await event(c,r,'configuration','Paket sazlaması dəyişib. Operator yoxlaması lazımdır; əlavə pul tutulmayıb.');return;}
+   const period=plan&&subscriptionPeriod(plan);
+   if(!plan||period?.unit!==r.period_unit||period?.count!==r.period_count||!await planEnabled(c,p,index)||await renewalMethod(c,p,plan,index)==='disabled'){await c.query(`update ${T} set reason='Məhsul/paket dəyişib və ya yenilənmə bağlıdır' where id=$1`,[id]);await event(c,r,'configuration','Paket sazlaması dəyişib. Operator yoxlaması lazımdır; əlavə pul tutulmayıb.');return;}
    r.plan_index=index;
    if(!r.checkout_id){const balance=Number((await c.query('select cents from mirpanel_community.wallet_accounts where user_id=$1 for update',[r.user_id])).rows[0]?.cents||0);if(balance<Number(r.cents)){await c.query(`update ${T} set state='needs_funds',reason='Balans kifayət etmir' where id=$1`,[id]);await event(c,r,'needs_funds','Yenilənmə üçün balans kifayət etmir. Balansı artırın və ya yenilənməni ləğv edin.');return;}await charge(c,r);}
    const {order,item}=await createOrder(c,r);
