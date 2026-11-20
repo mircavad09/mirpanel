@@ -6,6 +6,7 @@ import {customerOrderStatus} from './employee-order-status.mjs';
 import {customerStatus,deliveryLines,orderCodeValid} from './community/order-delivery.mjs';
 import {safeCalendarDate} from './payment-order-lifecycle.mjs';
 import {orderGuideFor} from './order-guide.mjs';
+import {renewalProductAllowed} from './community/renewal-product.mjs';
 const denied=()=>Object.assign(Error('Sifarişlərinizi görmək üçün hesabınıza daxil olun.'),{status:401});
 const planLabel=p=>p.label||p.name||(p.months?p.months+' aylıq':'Plan');
 const normalized=v=>String(v??'').normalize('NFC').trim().replace(/\s+/g,' ').toLocaleLowerCase('az');
@@ -59,7 +60,7 @@ export function createAccountOrders({security,store,resolve}){
      const cancelledQuantity=cancellation?.lines?.find(line=>line.index===i)?.quantity||0;
      const remainingQuantity=Math.max(0,x.quantity-deliveredQuantity-cancelledQuantity);
      const fulfillmentStatus=deliveredQuantity>=x.quantity?'completed':cancelledQuantity&&remainingQuantity===0?'cancelled':deliveredQuantity>0?'partial':status==='preparing'?'preparing':status;
-     return {...x,player:orderPlayer(security,item,x.productId),fulfillmentStatus,deliveredQuantity,remainingQuantity,image:item.image||current?.image||'',warranty:warrantyText({...item,label:x.planName}),durationMonths:item.durationMonths??null,durationDays:item.durationDays??null,expiresOn,repeat:repeatPlan(current,item.sourcePlanKey??item.planId,x.planName)};
+     return {...x,renewable:renewalProductAllowed(current,current?.plans?.[item.planIndex]||item),player:orderPlayer(security,item,x.productId),fulfillmentStatus,deliveredQuantity,remainingQuantity,image:item.image||current?.image||'',warranty:warrantyText({...item,label:x.planName}),durationMonths:item.durationMonths??null,durationDays:item.durationDays??null,expiresOn,repeat:repeatPlan(current,item.sourcePlanKey??item.planId,x.planName)};
     }),player:lines.length?null:orderPlayer(security,snap,o.product_id||snap?.productId),image:snap?.image||product?.image||'',quantity:o.quantity||snap?.quantity||1,warranty:warrantyText({...snap,label:o.plan_name}),durationMonths:o.duration_months??snap?.durationMonths??null,repeat:repeatPlan(product,snap?.planId??o.plan_id,o.plan_name),plan:o.plan_name,amount:o.amount===null?null:Number(o.amount),currency:o.currency,createdAt:o.created_at,status,statusMessage:cancellation?((cancellation.full?'Sifarişiniz ləğv edildi.':'Təhvil verilməyən məhsullar ləğv edildi.')+' '+refundNote).trim():status==='preparing'?'Ödəniş təsdiqləndi. Sifariş hazırlanır.':customerOrderStatus(status,flows.get(o.id)?.state),autoDelivered:status==='completed'&&records.some(d=>d.automatic),deliveries:['preparing','completed'].includes(status)?records.map(d=>({id:d.id,line:d.line_index,quantity:d.quantity})):[],receiptAvailable:!o.receipt_deleted_at&&!!o.receipt_path};
    }),nextCursor:rows.length>20?security.encryptSecret(JSON.stringify({purpose:'account-orders-page',userId:s.userId,createdAt:last.created_at,id:last.id})):null};
    for(const order of result.orders){

@@ -5,7 +5,7 @@ import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {adminDelivery} from '../mirpanel-admin/community/order-delivery.mjs';
 import {saveReadyStock,drainReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
 import {signature} from '../mirpanel-admin/employee-security.mjs';
-import {createScheduledRenewalWorker,ensureScheduledRenewals,adminScheduledRenewals} from '../mirpanel-admin/community/scheduled-renewals.mjs';
+import {createScheduledRenewalWorker,ensureScheduledRenewals,adminScheduledRenewals,renewalMethod} from '../mirpanel-admin/community/scheduled-renewals.mjs';
 import {bakuDate,shiftCalendarDays} from '../mirpanel-admin/payment-order-lifecycle.mjs';
 import {cancelFulfillment} from '../mirpanel-admin/community/fulfillment-cancellation.mjs';
 import {ensureReadyStockManagement,manageReadyAccount,readyAccountList} from '../mirpanel-admin/community/ready-stock-management.mjs';
@@ -73,5 +73,6 @@ try{
  const account=(await readyAccountList(pool,security,catalog)).find(x=>x.email==='legacy@example.test');await manageReadyAccount(pool,security,catalog,'synthetic-admin',{action:'bind',id:account.id,revision:0,userId:'a',paidUntil:shiftCalendarDays(bakuDate(),3),planSignature:account.planSignature});
  const legacy=(await shop.subscriptions(a)).subscriptions.find(x=>x.orderCode.startsWith('RGA'));const legacyRenewal=await shop.renewal(a,await request(legacy));assert.equal(legacyRenewal.state,'paid_waiting');assert.equal((await pool.query('select source_order_id from scheduled_renewals where id=$1',[legacyRenewal.id])).rows[0].source_order_id,null);log.push('Legacy bound-account entitlement renews without inventing an old payment order');
  const expired=await source();await pool.query("update payment_orders set service_expires_on=$2 where order_code=$1",[expired.orderCode,shiftCalendarDays(bakuDate(),-3)]);const unrenewed=await adminScheduledRenewals(pool,catalog,{filter:'unrenewed'},'owner');assert(unrenewed.rows.some(x=>x.sourceOrderCode===expired.orderCode));log.push('Expired historical order appears in paginated unrenewed filter');
+ const game={id:'pubg_mobile',title:'PUBG Mobile',plans:[{label:'60 UC',months:1,price:2,supplier:{provider:'epinby'}}]},tokens={id:'mirpanel_token',title:'Token',plans:[{label:'50 token',months:1,price:5}]};catalog.products.push(game,tokens);assert.equal(await renewalMethod(pool,game,game.plans[0],0),'disabled');assert.equal(await renewalMethod(pool,tokens,tokens.plans[0],0),'disabled');assert(!(await adminScheduledRenewals(pool,catalog,{},'owner')).policies.some(p=>p.productId==='pubg_mobile'||p.productId==='mirpanel_token'));log.push('Consumable game/token packages cannot renew despite stale default month metadata');
  console.log(JSON.stringify({ok:true,scenarios:log},null,2));
 }finally{await worker?.stop();await f.close();}

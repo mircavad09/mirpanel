@@ -7,6 +7,8 @@ import {userPriceSignature} from './user-price-key.mjs';
 import {postLedger} from '../shop.mjs';
 import {drainReadyStock} from './ready-stock.mjs';
 import {inventoryAvailability} from '../../inventory-availability.mjs';
+import {renewalProductAllowed} from './renewal-product.mjs';
+export {renewalProductAllowed} from './renewal-product.mjs';
 const T='mirpanel_community.scheduled_renewals',BALANCE='635fc131-b9a4-4c93-9dc3-9fd25bfd25e0';
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/i.test(v);
 const fail=(status,message)=>Object.assign(Error(message),{status});
@@ -17,6 +19,7 @@ export function ensureScheduledRenewals(pool){
 async function transaction(pool,fn){const c=await pool.connect();try{await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');const v=await fn(c);await c.query('commit');return v;}catch(e){await c.query('rollback');throw e;}finally{c.release();}}
 export const renewalLabels={authorized:'Balansdan avtomatik yenilənməyə razılıq verilib',paid_waiting:'Ödənilib — yenilənmə tarixi gözlənilir',needs_funds:'Balans kifayət etmir',awaiting_delivery:'Ödənilib — hesab təhvili gözlənilir',delivered:'Yeniləndi',cancelled:'Ləğv edilib',blocked:'Operator yoxlaması tələb olunur'};
 const defaultMethod=p=>/capcut/i.test(p.id)?'new_account':p.id==='netflix'?'extend_existing':'operator';
+const planLabel=plan=>plan.label||plan.name||(subscriptionPeriod(plan)?.count+(subscriptionPeriod(plan)?.unit==='days'?' gün':' ay'));
 async function planEnabled(c,p,index){
  const rows=(await c.query('select public.inventory_snapshot() inventory')).rows[0].inventory;
  const available=inventoryAvailability(p,rows.find(r=>r.productId===p.id));
@@ -26,6 +29,7 @@ async function planEnabled(c,p,index){
 const publicRow=r=>({id:r.id,sourceId:r.source_id,sourceOrderCode:r.source_order_code,productId:r.product_id,title:r.snapshot.title,plan:r.snapshot.planName,cents:Number(r.cents),dueAt:r.due_at,expiresAt:r.expires_at,state:r.state,status:r.state==='delivered'&&r.method==='new_account'?r.snapshot.title+' üçün yeni '+r.snapshot.planName+' hesab təqdim edildi':renewalLabels[r.state],reason:r.reason,mode:r.mode,method:r.method,orderId:r.new_order_id,orderCode:r.new_order_code,deliveredAt:r.delivered_at});
 async function event(c,r,type,message){await c.query('insert into mirpanel_community.renewal_events(renewal_id,event,message) values($1,$2,$3) on conflict do nothing',[r.id,type,message]);}
 export async function renewalMethod(c,p,plan,index){
+ if(!renewalProductAllowed(p,plan))return 'disabled';
  const key=planKey(plan,index),rows=(await c.query("select method,plan_key from mirpanel_community.renewal_policies where product_id=$1 and plan_key in ($2,'*') order by (plan_key='*')",[p.id,key])).rows;
  return rows[0]?.method||defaultMethod(p);
 }
@@ -45,7 +49,7 @@ export async function renewalQuote(c,user,catalog,input){
  // their saved Baku calendar expiry; never rewrite historical entitlements.
  const previous=(await c.query(`select expires_at from ${T} where (new_order_id=$1 or source_id=$2 and method='extend_existing') and state='delivered' order by expires_at desc limit 1`,[source.orderId,source.id])).rows[0];
  const dueAt=previous?.expires_at||new Date(Date.parse(source.expiresOn+'T00:00:00+04:00')+86400000).toISOString();
- return {source,p,plan,period,method,cents,dueAt,key:planKey(plan,input.planIndex),signature:signature(plan)};
+ return {source,p,plan,period,method,cents,dueAt,label:planLabel(plan),key:planKey(plan,input.planIndex),signature:signature(plan)};
 }
 async function charge(c,r){
  if(r.checkout_id)return;
@@ -65,7 +69,7 @@ export async function scheduleRenewal(pool,user,catalog,input){
   const q=await renewalQuote(c,user,catalog,input);
   if(q.cents!==input.expectedCents||String(input.expectedDueAt)!==new Date(q.dueAt).toISOString())throw fail(409,'Qiymət və ya başlanğıc tarixi dəyişib. Yenidən yoxlayın.');
   if((await c.query(`select 1 from ${T} where source_id=$1 and base_expires_on=$2 and state<>'cancelled'`,[input.sourceId,q.source.expiresOn])).rowCount)throw fail(409,'Bu müddət üçün yenilənmə artıq qeydə alınıb.');
-  const snap={title:q.p.title,planName:q.plan.label||q.plan.name||(q.period.count+(q.period.unit==='days'?' gün':' ay')),image:q.p.image||'',unitCents:q.cents,sourcePlanKey:q.key,duration:q.period.unit==='months'?q.period.count:null,durationMonths:q.period.unit==='months'?q.period.count:null,...(q.period.unit==='days'?{durationDays:q.period.count}:{}),quantity:1,productId:q.p.id,planIndex:input.planIndex};
+  const snap={title:q.p.title,planName:q.label,image:q.p.image||'',unitCents:q.cents,sourcePlanKey:q.key,duration:q.period.unit==='months'?q.period.count:null,durationMonths:q.period.unit==='months'?q.period.count:null,...(q.period.unit==='days'?{durationDays:q.period.count}:{}),quantity:1,productId:q.p.id,planIndex:input.planIndex};
   // LEG/RGA assignments are proven entitlements but not payment_orders rows.
   // Keep their real source identity/code, without inventing an old sale.
   const sourceOrder=(await c.query('select id from public.payment_orders where id=$1',[q.source.orderId])).rows[0]?.id||null;
@@ -132,7 +136,7 @@ export async function adminScheduledRenewals(pool,catalog,input={},actor){
  await ensureScheduledRenewals(pool);
  if(input.action==='policy'){
   const p=catalog.products.find(p=>p.id===input.productId),plan=input.planIndex==null?null:p?.plans?.[input.planIndex];
-  if(!p||input.planIndex!=null&&!plan||!['new_account','extend_existing','operator','disabled'].includes(input.method))throw fail(400,'Məhsul, paket və yenilənmə üsulunu seçin.');
+  if(!p||input.planIndex!=null&&!plan||!renewalProductAllowed(p,plan)||!['new_account','extend_existing','operator','disabled'].includes(input.method))throw fail(400,'Müddətli məhsul, paket və yenilənmə üsulunu seçin.');
   await pool.query('insert into mirpanel_community.renewal_policies(product_id,plan_key,method,updated_by) values($1,$2,$3,$4) on conflict(product_id,plan_key) do update set method=excluded.method,updated_by=excluded.updated_by,updated_at=clock_timestamp()',[p.id,plan?planKey(plan,input.planIndex):'*',input.method,actor]);
  }
  const page=Math.max(1,Math.min(100000,Number(input.page)||1)),filter=['waiting','renewed','unrenewed','delivery'].includes(input.filter)?input.filter:'waiting';
@@ -144,12 +148,12 @@ export async function adminScheduledRenewals(pool,catalog,input={},actor){
   do{const users=(await pool.query('select u.id,u.name,n.member_number from mirpanel_community."user" u left join mirpanel_community.community_member_numbers n on n.user_id=u.id where u.id>$1 and exists(select 1 from mirpanel_community.community_order_owners o where o.user_id=u.id) order by u.id limit 100',[after])).rows;if(!users.length)break;
    const pending=new Set((await pool.query(`select source_id from ${T} where user_id=any($1::text[]) and state<>'cancelled'`,[users.map(u=>u.id)])).rows.map(r=>r.source_id));
    const entries=await subscriptionReminderEntries(pool,users.map(u=>u.id));const identities=new Map(users.map(u=>[u.id,u]));
-   for(const x of entries)if(x.days!==null&&x.days<0&&!pending.has(x.id)&&!['pending','preparing','reserved'].includes(x.renewalStatus)){const u=identities.get(x.userId);history.push({id:x.id,sourceId:x.id,sourceOrderCode:x.orderCode,productId:x.productId,title:x.title,plan:x.plan,dueAt:new Date(Date.parse(x.expiresOn+'T00:00:00+04:00')+86400000).toISOString(),state:'unrenewed',status:'Müddəti bitib — yenilənməyib',customer:u.name,customerId:u.member_number});}
+   for(const x of entries)if(x.days!==null&&x.days<0&&!pending.has(x.id)&&!['pending','preparing','reserved'].includes(x.renewalStatus)){const p=catalog.products.find(p=>p.id===x.productId);if(p&&!p.plans?.some(plan=>renewalProductAllowed(p,plan)))continue;const u=identities.get(x.userId);history.push({id:x.id,sourceId:x.id,sourceOrderCode:x.orderCode,productId:x.productId,title:x.title,plan:x.plan,dueAt:new Date(Date.parse(x.expiresOn+'T00:00:00+04:00')+86400000).toISOString(),state:'unrenewed',status:'Müddəti bitib — yenilənməyib',customer:u.name,customerId:u.member_number});}
    if(users.length<100)break;after=users.at(-1).id;
   }while(true);
   history.sort((a,b)=>Date.parse(b.dueAt)-Date.parse(a.dueAt)||a.id.localeCompare(b.id));total=history.length;rows=history.slice((page-1)*20,page*20);
  }
  const configured=new Map((await pool.query('select product_id,plan_key,method from mirpanel_community.renewal_policies')).rows.map(r=>[JSON.stringify([r.product_id,r.plan_key]),r.method]));
- const policies=[];for(const p of catalog.products.filter(p=>p.active!==false))for(const [i,plan]of(p.plans||[]).entries())if(subscriptionPeriod(plan))policies.push({productId:p.id,title:p.title,planIndex:i,plan:plan.label||plan.name,method:configured.get(JSON.stringify([p.id,planKey(plan,i)]))||configured.get(JSON.stringify([p.id,'*']))||defaultMethod(p)});
+ const policies=[];for(const p of catalog.products.filter(p=>p.active!==false))for(const [i,plan]of(p.plans||[]).entries())if(subscriptionPeriod(plan)&&renewalProductAllowed(p,plan))policies.push({productId:p.id,title:p.title,planIndex:i,plan:planLabel(plan),method:configured.get(JSON.stringify([p.id,planKey(plan,i)]))||configured.get(JSON.stringify([p.id,'*']))||defaultMethod(p)});
  return {rows,page,total,pages:Math.max(1,Math.ceil(total/20)),filter,policies,pollSeconds:30};
 }
