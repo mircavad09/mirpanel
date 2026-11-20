@@ -226,7 +226,7 @@ const DATA = {
       "confirmationModal": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
+        "description": "YouTube Premium abunəliyini tam zəmanətli və problemsiz aktivləşdirmək üçün bizə yeni bir Google (Gmail) hesabı təqdim etməyiniz tövsiyə olunur.\n\nKöhnə Gmail hesabı üzərindən də aktivləşdirmək mümkündür, lakin hesabın əvvəlki bölgə tarixçəsindən asılı olaraq 50% ehtimalla aktivasiya alınmaya bilər.  ",
         "confirmText": "Təsdiq edirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
@@ -267,7 +267,7 @@ const DATA = {
       "orderConfirmation": {
         "enabled": true,
         "title": "Sifarişi təsdiqləyin",
-        "description": "Təqdim edilən hesab yeni Gmail olmalı və heç bir ailə planına qoşulmamalıdır.",
+        "description": "YouTube Premium abunəliyini tam zəmanətli və problemsiz aktivləşdirmək üçün bizə yeni bir Google (Gmail) hesabı təqdim etməyiniz tövsiyə olunur.\n\nKöhnə Gmail hesabı üzərindən də aktivləşdirmək mümkündür, lakin hesabın əvvəlki bölgə tarixçəsindən asılı olaraq 50% ehtimalla aktivasiya alınmaya bilər.  ",
         "confirmText": "Təsdiq edirəm",
         "cancelText": "Ləğv et",
         "footerText": "Sifarişi təsdiqlədikdə WhatsApp avtomatik açılacaq.",
