@@ -3,6 +3,11 @@
   const {inventoryAvailability}=await import('/inventory-availability.mjs?v=epinby-stock-1');
   const {packageDeliveryText}=await import('/ready-delivery.mjs?v=ready-sku-2');
   const inventory = new Map();let inventoryTimer,homeSalesTimer,painting=false,inventoryDisplayValid=false,inventoryFailed=false;
+  if(!document.querySelector('style[data-supplier-stock-style]')){
+    const style=document.createElement('style');style.dataset.supplierStockStyle='';style.dataset.shellPersistent='';
+    style.textContent='#pp-plans-container .pp-plan-label>.supplier-stock-unavailable{display:inline-flex;grid-column:1/-1;grid-row:2;justify-self:start;align-self:center;max-width:calc(100% - 23px);margin:0 0 0 23px;padding:1px 5px;font-size:11px;line-height:14px;overflow-wrap:anywhere}#pp-plans-container .supplier-stock-unavailable[data-supplier-state="unknown"]{color:#f4ce66}';
+    document.head.append(style);
+  }
   function escapeHtml(value) {
     return String(value ?? "")
       .replaceAll("&", "&amp;")
@@ -306,6 +311,10 @@
         let line=row.querySelector('[data-inventory-plan]');
         if(!line){line=document.createElement('span');line.dataset.inventoryPlan='';row.append(line);}
         line.className=out?'mpStockBadge cardStockBadge out inventory-plan-badge':'plan-fact plan-fact-stock inventory-plan-count';
+        const supplierUnavailable=!!plan?.supplierStock&&(out||unknown);
+        line.classList.toggle('supplier-stock-unavailable',supplierUnavailable);
+        if(supplierUnavailable){line.dataset.supplierState=plan.supplierStock.status;if(line.parentElement!==row)row.append(line);}
+        else if(plan?.supplierStock&&line.parentElement===row&&meta)meta.prepend(line);
         line.textContent=unknown?'Stok yoxlanıla bilmir':out?(plan?.supplierStock?.status==='out'?'Stokda bitib':'Stokda yoxdur'):!stock&&showCount?`${plan.available} stokda`:'';
         line.hidden=!unknown&&!out&&(!!stock||!showCount);
       });
