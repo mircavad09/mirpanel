@@ -381,7 +381,7 @@ function netflixScreen(animation,create){
  let guideTurn=0;
  const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  function clear(){completedVisibility?.disconnect();generation++;guideTurn++;for(const c of requests)c.abort();requests.clear();cursor=null;loading=false;loaded=false;hasAppended=false;pageFingerprint=null;seen.clear();prior.clear();autoOrder=null;focused=false;if(guideDialog.open)guideDialog.close();guideDialog.remove();root.replaceChildren();content.replaceChildren();if(dialog.open)dialog.close();if(repeatDialog.open)repeatDialog.close();repeatDialog.remove();more.hidden=true;error.hidden=true;root.setAttribute('aria-busy','false');}
- function gate(){credentials.clear();expandedOrders.clear();ui.pageData=null;clear();options.onData?.(null);root.classList.remove('browser-orders-list');root.innerHTML='<div class="browser-orders-message"><h2>Sifarişlərinizi görmək üçün hesabınıza daxil olun.</h2><p>Hesabınız yoxdur? Qeydiyyatdan keçin.</p><div class="orders-login-actions"><a class="orders-action" href="/owner-login?next=%2Fsifarislerim">Daxil ol</a> <a class="orders-action" href="/hesab?mode=signup&amp;next=%2Fsifarislerim">Qeydiyyatdan keç</a></div></div>';}
+ function gate(){credentials.clear();expandedOrders.clear();ui.pageData=null;delete ui.ordersInitialized;delete ui.latestKnown;delete ui.knownOrderIds;clear();options.onData?.(null);root.classList.remove('browser-orders-list');root.innerHTML='<div class="browser-orders-message"><h2>Sifarişlərinizi görmək üçün hesabınıza daxil olun.</h2><p>Hesabınız yoxdur? Qeydiyyatdan keçin.</p><div class="orders-login-actions"><a class="orders-action" href="/owner-login?next=%2Fsifarislerim">Daxil ol</a> <a class="orders-action" href="/hesab?mode=signup&amp;next=%2Fsifarislerim">Qeydiyyatdan keç</a></div></div>';}
  async function api(path){if(options.api)return options.api(path);const c=new AbortController(),t=setTimeout(()=>c.abort(),options.profile?12000:20000);requests.add(c);try{const r=await fetch('/api/payments/'+path,{cache:'no-store',credentials:'same-origin',signal:c.signal,headers:{Accept:'application/json'}});if(r.status===401&&!life.signal.aborted)options.onUnauthorized?.();const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Server cavab vermədi.'),{status:r.status});return d;}finally{clearTimeout(t);requests.delete(c);}}
  const money=v=>Number.isFinite(Number(v))?Number(v).toFixed(2).replace('.',',')+' ₼':'—';
  const date=value=>{const d=new Date(value);return value&&Number.isFinite(d.getTime())?new Intl.DateTimeFormat('en-GB',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit',hourCycle:'h23',timeZone:'Asia/Baku'}).format(d).replaceAll('/','.').replace(',',''):'Tarix məlum deyil';};
@@ -436,9 +436,8 @@ function netflixScreen(animation,create){
    const count=lineDeliveries.reduce((n,d)=>n+d.quantity,0),remaining=Math.max(0,qty-count-cancelled);
    const state=x.fulfillmentStatus||(count>=qty?'completed':count>0?'partial':cancelled&&!remaining?'cancelled':o.status);
    const label=state==='partial'?'Qismən təhvil verildi':state==='completed'?'Təhvil verildi':statuses[state]||'Hazırlanır';
-   const renewable=x.renewable!==false&&(x.expiresOn||Number(x.durationMonths)>0||Number(x.durationDays)>0||/^\d+\s*(?:ay|gün)(?:lıq|lük)?(?:\b|\s|\()/iu.test(x.planName||''));
-   const progress='<p class="browser-order-line-progress" data-line-status="'+esc(state)+'">'+esc(label)+(count?' · '+count+'/'+qty:'')+(count&&remaining?' · '+remaining+' ədəd hazırlanır':'')+'</p>'+((count>0||state==='completed')&&renewable?'<a class="orders-action" href="/profil?tab=abuneliklerim&amp;renewOrder='+encodeURIComponent(o.orderCode)+'&amp;renewLine='+(i+1)+'">Yenilə</a>':'');
-   return '<section class="browser-order-line" data-order-line="'+i+'"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2>'+progress+'<div class="browser-order-line-meta"><span>'+esc(x.planName)+esc(extraDuration)+'</span>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<strong class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</strong></div>'+playerInfo(x.player)+'</div><div class="browser-order-line-buttons"><button type="button" data-order-info="'+i+'" aria-haspopup="dialog" aria-expanded="false" class="order-guide-button">'+docIcon+'<span>Təlimat</span></button><button type="button" data-buy-again="'+i+'">'+repeatIcon+'Yenidən al</button></div></div>'+(cancelled?'<p>'+esc(cancelled)+' ədəd ləğv edildi.</p>':'')+(delivered?expiryBar(x.expiresOn):'')+'<div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(cancelled?'Bu məhsulun təhvil verilməyən hissəsi ləğv edildi.':o.status==='completed'?'Status: Tamamlandı. Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Status: '+esc(statuses[o.status]||'Status məlum deyil')+'. Təhvil məlumatı hazır deyil.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
+   const progress='<p class="browser-order-line-progress" data-line-status="'+esc(state)+'">'+esc(label)+(count?' · '+count+'/'+qty:'')+(count&&remaining?' · '+remaining+' ədəd hazırlanır':'')+'</p>';
+   return '<section class="browser-order-line" data-order-line="'+i+'"><div class="browser-order-line-main"><div class="browser-order-item-info"><h2>'+esc(x.title)+'</h2>'+progress+'<div class="browser-order-line-meta"><span>'+esc(x.planName)+esc(extraDuration)+'</span>'+(x.warranty?'<small class="browser-order-warranty">'+esc(x.warranty)+'</small>':'')+'<strong class="browser-order-unit">'+esc(qty)+' × '+(unit==null?'—':esc(money(unit)))+'</strong></div>'+playerInfo(x.player)+'</div><div class="browser-order-line-buttons"><button type="button" data-order-info="'+i+'" aria-haspopup="dialog" aria-expanded="false" class="order-guide-button">'+docIcon+'<span>Təlimat</span></button><button type="button" data-buy-again="'+i+'"'+(!x.repeat?' disabled title="Bu paket haz\u0131rda sat\u0131\u015fda deyil"':'')+'>'+repeatIcon+'Yenidən al</button></div></div>'+(cancelled?'<p>'+esc(cancelled)+' ədəd ləğv edildi.</p>':'')+(delivered?expiryBar(x.expiresOn):'')+'<div class="browser-order-instructions" hidden>'+(delivered?'<h3>Alınmış hesablar</h3>'+delivered:'<p>'+(cancelled?'Bu məhsulun təhvil verilməyən hissəsi ləğv edildi.':o.status==='completed'?'Status: Tamamlandı. Bu məhsul üçün ayrıca təhvil məlumatı yoxdur.':'Status: '+esc(statuses[o.status]||'Status məlum deyil')+'. Təhvil məlumatı hazır deyil.')+'</p>')+'<span role="status" data-line-feedback></span></div></section>';
   }).join('');
   const total=o.amount==null?'—':esc(money(o.amount));
   const partial=o.fulfillmentStatus==='partial'||o.status==='preparing'&&(o.deliveries||[]).some(d=>d.quantity>0);
@@ -447,18 +446,26 @@ function netflixScreen(animation,create){
  }
 
  root.addEventListener('error',e=>{if(e.target.matches?.('.browser-order-image img'))e.target.hidden=true;},{capture:true,signal:life.signal});
- const latestCompleted=d=>d.orders.find(order=>order.status==='completed')?.id??null;
+ const newestFirst=(a,b)=>(Date.parse(b.createdAt)||0)-(Date.parse(a.createdAt)||0)||String(b.orderCode).localeCompare(String(a.orderCode),'en',{numeric:true});
+ const latestOrder=d=>[...d.orders].sort(newestFirst)[0];
  function paint(d,append=false,{live=false}={}){
   hasAppended=append||d.retainedPages===true;
   if(!append)pageFingerprint=JSON.stringify(d.orders);
-  const expanded=new Set([...expandedOrders,...[...root.querySelectorAll('[data-order-id][open]')].map(x=>x.dataset.orderId)]);
-  if(!target&&(!append||!autoOrder)){
-   const newest=latestCompleted(d);
-   if(newest!==autoOrder){
-    if(newest)expanded.add(newest);
-    autoOrder=newest;ui.autoOrder=newest;
-   }
+  d={...d,orders:[...d.orders].sort(newestFirst)};
+  const cards=[...root.querySelectorAll('[data-order-id]')];
+  const expanded=new Set(cards.length?cards.filter(x=>x.open).map(x=>x.dataset.orderId):expandedOrders);
+  const newest=latestOrder(d),previous=ui.latestKnown,known=ui.knownOrderIds??=new Set();
+  const first=!ui.ordersInitialized;
+  const arrived=!append&&newest&&!known.has(newest.id)&&(!previous||newest.id!==previous.id&&newestFirst(newest,previous)<0);
+  if(first||arrived){
+   expanded.clear();
+   const requested=first&&target?d.orders.find(o=>String(o.orderCode)===target):null;
+   if(requested||newest)expanded.add((requested||newest).id);
   }
+  if(!append){ui.ordersInitialized=true;if(newest&&(!previous||newestFirst(newest,previous)<0))ui.latestKnown={id:newest.id,createdAt:newest.createdAt,orderCode:newest.orderCode};}
+  for(const order of d.orders)known.add(order.id);
+  autoOrder=ui.latestKnown?.id??null;ui.autoOrder=autoOrder;
+  expandedOrders.clear();for(const id of [...expanded].slice(0,1))expandedOrders.add(id);
   if(!append){
    const ids=new Set(d.orders.map(o=>o.id));
    for(const node of [...root.children])if(!node.dataset.orderId||!ids.has(node.dataset.orderId)){
@@ -481,7 +488,7 @@ function netflixScreen(animation,create){
    }
    ordered.push(node);
    repeats.set(node,items.map(x=>x.repeat));guideItems.set(node,items);orderData.set(node,{o,items});
-   if(expanded.has(o.id)||(!focused&&target===String(o.orderCode)))node.open=true;
+   node.open=expandedOrders.has(o.id);
    if(!focused&&target===String(o.orderCode)){
     focused=true;node.scrollIntoView({block:'nearest'});
    }
@@ -503,7 +510,7 @@ function netflixScreen(animation,create){
    if(d.accountId)accountId=d.accountId;
    if(live&&(dialog.open||guideDialog.open||repeatDialog.open))return;
    if(!root.closest('.account-panel')){if(window.MirpanelNavigation)void window.MirpanelNavigation.go('/profil?tab=sifarislerim');else location.replace('/profil?tab=sifarislerim');return;}
-   if(live&&hasAppended&&(target||!latestCompleted(d)||latestCompleted(d)===autoOrder)){
+   if(live&&hasAppended&&(target||!latestOrder(d)||latestOrder(d).id===autoOrder)){
     // Preserve loaded history pages, but never freeze a visible paid order's
     // newly delivered units just because no whole order completed yet.
     const retained=new Map((ui.pageData?.orders||[]).map(order=>[order.id,order]));
@@ -545,8 +552,8 @@ function netflixScreen(animation,create){
   }
  }
  root.addEventListener('toggle',e=>{
-  if(!e.target.matches?.('[data-order-id]'))return;
-  if(e.target.open){expandedOrders.add(e.target.dataset.orderId);showAccounts(e.target);}
+  if(!e.target.matches?.('[data-order-id]')||!e.target.isConnected)return;
+  if(e.target.open){for(const other of root.querySelectorAll('[data-order-id][open]'))if(other!==e.target)other.open=false;expandedOrders.clear();expandedOrders.add(e.target.dataset.orderId);showAccounts(e.target);}
   else expandedOrders.delete(e.target.dataset.orderId);
  },{capture:true,signal:life.signal});
  function renderDelivery(box,d){

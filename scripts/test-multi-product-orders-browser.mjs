@@ -31,11 +31,11 @@ for(const engine of [chromium,webkit])for(const width of [320,390,430,1440]){
  await p.goto('https://multi.test/profil?tab=sifarislerim');const order=p.locator('[data-order-id=synthetic-order]');await order.waitFor();
  await order.locator('[data-status=partial]').getByText('Qismən təhvil verildi').waitFor();
  const header=order.locator('summary'),front=()=>order.locator('.browser-order-image-choice.is-front'),back=()=>order.locator('.browser-order-image-choice.is-back');
- assert.equal(await order.evaluate(n=>n.open),false);assert.equal(await front().getAttribute('aria-label'),'Netflix Şəxsi seç');
+ assert.equal(await order.evaluate(n=>n.open),true);assert.equal(await front().getAttribute('aria-label'),'Netflix Şəxsi seç');
  const rects=await p.evaluate(()=>{const a=document.querySelector('.is-front').getBoundingClientRect(),b=document.querySelector('.is-back').getBoundingClientRect();return {ax:a.x,ay:a.y,bx:b.x,by:b.y};});assert(rects.bx>rects.ax&&rects.by<rects.ay);
- await back().click({position:{x:39,y:7}});assert.equal(await front().getAttribute('aria-label'),'Amazon Prime Video seç');assert.equal(await order.evaluate(n=>n.open),false);
- await front().focus();await p.keyboard.press('ArrowLeft');assert.equal(await front().getAttribute('aria-label'),'Netflix Şəxsi seç');assert.equal(await order.evaluate(n=>n.open),false);
- await header.locator('.browser-order-heading').click();assert.equal(await order.evaluate(n=>n.open),true);
+ await back().click({position:{x:39,y:7}});assert.equal(await front().getAttribute('aria-label'),'Amazon Prime Video seç');assert.equal(await order.evaluate(n=>n.open),true);
+ await front().focus();await p.keyboard.press('ArrowLeft');assert.equal(await front().getAttribute('aria-label'),'Netflix Şəxsi seç');assert.equal(await order.evaluate(n=>n.open),true);
+ assert.equal(await order.evaluate(n=>n.open),true);
  const netflix=order.locator('[data-order-line="0"]'),prime=order.locator('[data-order-line="1"]');
  await netflix.getByText('Təhvil verildi · 1/1',{exact:true}).waitFor();await prime.locator('[data-line-status=preparing]').waitFor();
  await netflix.getByText('synthetic-netflix',{exact:true}).waitFor();await netflix.getByText('0408',{exact:true}).waitFor();assert.equal(await prime.locator('[data-delivery]').count(),0);
@@ -46,7 +46,7 @@ for(const engine of [chromium,webkit])for(const width of [320,390,430,1440]){
  await back().focus();await p.keyboard.press('Enter');assert.equal(await order.evaluate(n=>n.open),true);await header.locator('.browser-order-heading').click();assert.equal(await order.evaluate(n=>n.open),false);
  done=true;await p.reload();await order.locator('[data-status=completed]').waitFor();if(!await order.evaluate(n=>n.open))await header.locator('.browser-order-heading').click();await order.getByText('synthetic-prime',{exact:true}).waitFor();
  many=true;done=false;await p.reload();await order.locator('.browser-order-image-more').waitFor();assert.equal(await order.locator('.browser-order-image-choice').count(),2);await front().focus();await p.keyboard.press('End');assert.match(await front().getAttribute('aria-label'),/məhsul adı 4/);assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
- await header.locator('.browser-order-heading').click();await p.getByRole('button',{name:'Daha çox göstər',exact:true}).click();await p.locator('[data-order-id=historical-order]').waitFor();
+ await p.getByRole('button',{name:'Daha çox göstər',exact:true}).click();await p.locator('[data-order-id=historical-order]').waitFor();
  done=true;await p.evaluate(()=>document.dispatchEvent(new Event('visibilitychange')));await order.getByText('synthetic-prime',{exact:true}).waitFor();assert.equal(await p.locator('[data-order-id=historical-order]').count(),1);await order.locator('[data-status=partial]').waitFor();
  single=true;many=false;await p.reload();await order.waitFor();assert.equal(await order.locator('.browser-order-image-stack').count(),0);assert.equal(await header.locator('.browser-order-image').count(),1);
  assert.deepEqual(errors,[]);results.push({engine:engine.name(),width,partial:true,images:true,touchAndKeyboard:true,perLineGuide:true,completion:true,manyProducts:true,singleImage:true,retainedHistoryProgress:true});console.log(JSON.stringify(results.at(-1)));await context.close();
