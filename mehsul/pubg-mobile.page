@@ -159,11 +159,11 @@
       <div class="product-page-similar-title" title="Amazon Prime Video">Amazon Prime Video</div>
       <div class="product-page-similar-category">subscriptions</div>
       <div class="product-page-similar-price">2.89 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 3.33 ₼" title="HBO Max">
+    </a><a class="product-page-similar-card" href="/mehsul/hbo-max" aria-label="HBO Max — 3.99 ₼" title="HBO Max">
       <img src="/uploads/products/hbomax-1794730390763-0efc1b5b.png?v=1794730390763" class="product-page-similar-image" alt="HBO Max — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="HBO Max">HBO Max</div>
       <div class="product-page-similar-category">subscriptions</div>
-      <div class="product-page-similar-price">3.33 ₼</div>
+      <div class="product-page-similar-price">3.99 ₼</div>
     </a></div>
         <a class="product-page-similar-more" href="/mehsul">Daha çox məhsul</a>
       </aside>
@@ -228,7 +228,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-e1e8da2970b3b4a5"></script>
+  <script src="/app.js?v=image-alt-20261117-5eb4f7245b03e3b4"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=sales-count-2"></script>

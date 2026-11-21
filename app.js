@@ -1483,7 +1483,7 @@ const DATA = {
       "seoRelatedKeywords": " HBO Max Azərbaycan, HBO Max hesab qiyməti",
       "seoKeywords": "HBO Max almaq, HBO Max Azərbaycan, HBO Max hesab qiyməti",
       "seoContent": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
-      "seoUpdatedAt": "2026-11-16T20:51:15.639Z",
+      "seoUpdatedAt": "2026-11-21T17:16:10.858Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "HBO Max almaq Azərbaycanda | Qiymət və paketlər — MirPanel",
@@ -1533,14 +1533,15 @@ const DATA = {
       },
       "plans": [
         {
-          "durationDays": 25,
+          "durationMonths": 1,
+          "duration_months": 1,
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 24,
           "pricingId": "9862f006-0b4b-4c63-97ef-eda5829158da",
-          "label": "25",
+          "label": "1 ay",
           "months": 1,
-          "price": 3.33,
+          "price": 3.99,
           "regularPrice": 13
         }
       ],
