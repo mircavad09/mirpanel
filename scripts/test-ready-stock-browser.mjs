@@ -7,6 +7,7 @@ const live=process.argv.includes('--live');
 const paths={'/admin.css':'mirpanel-admin/public/admin.css','/ready-stock-admin.css':'mirpanel-admin/public/ready-stock-admin.css','/ready-stock-admin.js':'mirpanel-admin/public/ready-stock-admin.js'};
 const server=http.createServer((req,res)=>{
  const p=new URL(req.url,'http://localhost').pathname;
+ if(p!=='/admin.html'&&!paths[p]&&!p.includes('..')&&fs.existsSync('mirpanel-admin/public'+p)){res.setHeader('Content-Type',p.endsWith('.css')?'text/css':'text/javascript');return res.end(fs.readFileSync('mirpanel-admin/public'+p));}
  if(paths[p]){res.setHeader('Content-Type',p.endsWith('.css')?'text/css':'text/javascript');return res.end(fs.readFileSync(paths[p]));}
  if(p!=='/admin.html'){res.writeHead(404);return res.end();}
  res.setHeader('Content-Type','text/html; charset=utf-8');
@@ -47,7 +48,7 @@ try{
     if(route.request().url().endsWith('/sales')){
      const selected=catalog.products.find(x=>x.id===input.productId);
      assert.equal(input.expectedVersion,selected.version);salesWrites.push(input.available);selected.version++;
-     for(const x of selected.plans)x.sales=input.available;
+     for(const x of selected.plans)if(selected.scope!=='plan'||x.index===input.index)x.sales=input.available;
      return route.fulfill({json:{ok:true}});
     }
     if(route.request().url().endsWith('/message')){
@@ -64,14 +65,20 @@ try{
    const capcut=page.getByRole('button',{name:/CapCut Pro/}),netflix=page.getByRole('button',{name:/Netflix/}),price=page.getByLabel('Satış miqdarı');
    const stock=page.locator('[data-edit-sales]'),saveSales=page.getByRole('button',{name:'Satış stokunu saxla'});
    const messages=page.getByRole('textbox',{name:'Müştəriyə təqdim ediləcək hazır mesaj'}),automatic=page.getByRole('switch',{name:/Ödəniş təsdiqlənəndə avtomatik təhvil/});
-   assert.equal(await price.isVisible(),true);
+   await price.waitFor();assert.equal(await price.isVisible(),true);
    await netflix.click();assert.equal(await price.isVisible(),true);assert.equal(await plan.locator('option').count(),1);assert.match(await stock.innerText(),/Stokda yoxdur/);
    await capcut.click();assert.equal(await plan.locator('option').count(),2);
-   await price.fill('0');await saveSales.click();
-   await page.waitForFunction(()=>document.querySelector('[data-sales]').textContent==='Limitsiz');
+   for(const raw of ['','0','3','0','']){
+    await price.fill(raw);await saveSales.click();
+    const expected=raw===''?'Limitsiz':raw==='0'?'Stokda yoxdur':raw+' satış vahidi';
+    await page.waitForFunction(text=>document.querySelector('[data-sales]').textContent===text,expected);
+    await page.reload();await capcut.click();assert.equal(await price.inputValue(),raw);
+   }
+   const written=salesWrites.length;
+   for(const raw of ['-1','1.5']){await price.fill(raw);await saveSales.click();assert.equal(salesWrites.length,written);}
    await price.fill('50');await saveSales.click();
    await page.waitForFunction(()=>document.querySelector('[data-sales]').textContent==='50 satış vahidi');
-   assert.deepEqual(salesWrites,[null,50]);assert.match(await capcut.innerText(),/8 hazır hesab/);
+   assert.deepEqual(salesWrites,[null,0,3,0,null,50]);assert.match(await capcut.innerText(),/8 hazır hesab/);
    const saveMessage=page.getByRole('button',{name:'Hazır mesajı saxla'});
    await messages.fill(note);await saveMessage.click();await page.getByText('Hazır mesaj saxlanıldı.').waitFor();
    assert.equal(await page.locator('[data-ready]').innerText(),'0');
@@ -125,6 +132,11 @@ try{
    for(const id of ['spotify','netflix']){
     await product.selectOption(id);
     assert.equal(await price.isVisible(),true);
+    for(const raw of ['','0','3','0','']){
+     await price.fill(raw);await saveSales.click();
+     await page.waitForFunction(text=>document.querySelector('[data-sales]').textContent===text,raw===''?'Limitsiz':raw==='0'?'Stokda yoxdur':raw+' satış vahidi');
+     await page.reload();await product.selectOption(id);assert.equal(await price.inputValue(),raw);
+    }
     await price.fill('50');await saveSales.click();
     await page.waitForFunction(()=>document.querySelector('[data-sales]').textContent==='50 satış vahidi');
     const ready=catalog.products.find(p=>p.id===id).plans[0].ready;
@@ -135,7 +147,7 @@ try{
    await capcut.click();await capcut.locator('img').evaluate(img=>img.decode());
    assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
    await page.close();
-   console.log('PASS '+width+'px — catalog photos, 0/50, previous out-of-stock, product messages, three cards, middle removal, persistence, retry and aggregate counts');
+   console.log('PASS '+width+'px — empty→0→3→0→empty for product and plan stock, invalid inputs, reopen persistence, product messages, safe retry and independent ready-account counts');
   }
  }finally{await browser.close();}
 }finally{await new Promise(r=>server.close(r));}

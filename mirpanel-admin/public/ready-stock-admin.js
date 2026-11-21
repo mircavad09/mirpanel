@@ -31,7 +31,7 @@ export function mountReadyStock(host,api){
     <div class="readyStockCounts"><button type="button" data-edit-sales aria-expanded="false" aria-controls="readyStockSaleEditor">Satış stoku <strong data-sales>—</strong></button><span>Seçilmiş paketin hazır hesabları <strong data-ready>—</strong></span></div>
     <div id="readyStockSaleEditor">
      <div class="readyStockSale"><label>Satış miqdarı<input name="sales" type="number" min="0" max="10000" step="1" inputmode="numeric" aria-describedby="readyStockSaleHelp"></label><button class="btn" type="button" data-save-sales>Satış stokunu saxla</button></div>
-     <p id="readyStockSaleHelp">Bu xanada 0 = Limitsiz. 1–10000 = satış limiti. Əvvəldən sıfır olan stok “Stokda yoxdur” kimi qalır.</p>
+     <p id="readyStockSaleHelp">Boş = limitsiz; 0 = stokda yoxdur; 1–10000 = həmin say qədər stok.</p>
     </div>
     <p data-scope></p>
     <label class="readyStockCheck"><input name="auto" type="checkbox" role="switch"> Ödəniş təsdiqlənəndə avtomatik təhvil <strong data-auto aria-hidden="true">Bağlı</strong></label>
@@ -513,7 +513,7 @@ export function mountReadyStock(host,api){
   activeProduct=p?.id;template.value=messageDrafts.get(activeProduct)??p?.message??'';
   renderCounts(item);
   q('[data-scope]').textContent=p?.scope==='plan'?'Satış stoku bu paketə aiddir.':'Satış stoku məhsul üzrə ortaqdır.';
-  sales.value=item?.sales===null?'0':item?.sales>0?String(item.sales):'';setEditor(true);
+  sales.value=item?.sales==null?'':String(item.sales);setEditor(true);
   const draftKey=item?JSON.stringify([p.id,item.index,item.signature]):null;
   activeDraft=draftKey?{key:draftKey,originalAuto:item.autoWallet}:null;
   if(p&&item)lastPlan.set(p.id,plan.value);
@@ -562,8 +562,9 @@ export function mountReadyStock(host,api){
     if(!template.value.trim())return say('Hazır mesajı yazın.',true);
     pending={type,data:{productId:p.id,message:template.value}};
    }else if(type==='sales'){
-    if(!sales.value||!sales.reportValidity())return say('0–10000 arası satış miqdarı yazın. Limitsiz üçün 0 daxil edin.',true);
-    Object.assign(data,{expectedVersion:p.version,available:Number(sales.value)===0?null:Number(sales.value)});
+    const raw=sales.value.trim();
+    if(sales.validity.badInput||!sales.reportValidity()||(raw!==''&&(!/^\d+$/.test(raw)||!Number.isSafeInteger(Number(raw))||Number(raw)>10000)))return say('Boş (limitsiz) və ya 0–10000 arası tam stok sayı yazın.',true);
+    Object.assign(data,{expectedVersion:p.version,available:raw===''?null:Number(raw)});
    }else{
     const values=accounts().filter(x=>x.email||x.password||x.name||x.pin);
     if(p.id==='netflix'){
