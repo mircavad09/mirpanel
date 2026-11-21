@@ -33,6 +33,7 @@ import {createPaymentSecurity} from '../payment-security.mjs';
 import {cancelFulfillment} from './fulfillment-cancellation.mjs';
 import {readCustomerView} from './customer-view-data.mjs';
 import {searchReadyStock} from './ready-stock-search.mjs';
+import {ensurePublicGroup,setPublicGroup} from './public-group.mjs';
 import {ensureScheduledRenewals,createScheduledRenewalWorker,adminScheduledRenewals} from './scheduled-renewals.mjs';
 export function createOwnerCommunity(env=process.env,options={}){
  const publicEnabled=env.COMMUNITY_PUBLIC_ENABLED==='true';
@@ -45,6 +46,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   const send=publicEnabled&&(options.sendAuthEmail||createAuthMailer(env)),welcome=publicEnabled&&createWelcomeDelivery(pool,send);
   const orderMailer=publicEnabled&&createCustomerOrderMailer(pool,options.sendAuthEmail||createOrderMailTransport(env,send),origin,{loadCatalog:options.loadCatalog,adminOrigin:options.adminOrigin,topupPreview:options.topupPreview,subscriptionReminders:true,requireDeliveryNotice:env.ORDER_MAIL_PROVIDER==='resend'});
   const readyQueue=publicEnabled&&createReadyStockQueue(pool,()=>createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),{onDelivered:()=>orderMailer?.wake()});
+  if(publicEnabled)try{await ensurePublicGroup(pool);}catch{console.warn('PUBLIC_GROUP_SETUP_RETRY');}
   if(publicEnabled)try{await ensureScheduledRenewals(pool);}catch{console.warn('SCHEDULED_RENEWAL_SETUP_RETRY');}
   const renewalQueue=publicEnabled&&options.loadCatalog&&createScheduledRenewalWorker(pool,options.loadCatalog,()=>createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),{onWork:()=>{void readyQueue?.wake();void orderMailer?.wake();}});
   renewalQueue?.start();
@@ -80,6 +82,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   }
   if(req.method==='POST'){
    const b=await body(req);
+   if(part==='/public-group')return json(res,200,await setPublicGroup(r.repo,owner,b));
    if(part==='/renewals')return json(res,200,await adminScheduledRenewals(r.pool,await options.loadCatalog(),b,owner.id));
    if(part==='/staff-role')return json(res,200,await setStaffRole(r.pool,owner.id,b));
    if(part==='/influencer')return json(res,200,await setInfluencer(r.repo,owner,b));

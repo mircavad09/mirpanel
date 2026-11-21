@@ -5,7 +5,7 @@ export async function requireAllowed(pool,id){if(!id)return;const p=(await pool.
 export async function requireOwner(pool,user){if(!user)throw fail(401,'Əvvəlcə daxil olun.');await requireAllowed(pool,user.id);if(await groupRole(pool,user.id)!=='owner')throw fail(403,'Yalnız sahib-admin üçün icazə verilir.');}
 export class GroupControl{
  constructor(repo){this.repo=repo;this.pool=repo.pool;}
- async settings(){const s=(await this.pool.query('select muted,rules,slow_seconds,pinned_message_id::text,version from community_group_settings where id=true')).rows[0];if(s?.pinned_message_id){const m=(await this.pool.query('select id::text,user_id,body,created_at from community_messages where id=$1 and not hidden',[s.pinned_message_id])).rows[0];s.pinned=m?{id:m.id,body:m.body,createdAt:m.created_at}:null;}return s;}
+ async settings(){const s=(await this.pool.query("select muted,rules,slow_seconds,pinned_message_id::text,version,coalesce((to_jsonb(g)->>'public_open')::boolean,false) public_open from community_group_settings g where id=true")).rows[0];if(s?.pinned_message_id){const m=(await this.pool.query('select id::text,user_id,body,created_at from community_messages where id=$1 and not hidden',[s.pinned_message_id])).rows[0];s.pinned=m?{id:m.id,body:m.body,createdAt:m.created_at}:null;}return s;}
  async act(actor,b){
   const automatic={ban:'Admin tərəfindən hesab qadağan edildi',unban:'Admin tərəfindən hesabın qadağası açıldı',mute:'Admin tərəfindən istifadəçi susduruldu',unmute:'Admin tərəfindən susdurma açıldı',pin:'Admin tərəfindən mesaj sabitləndi',unpin:'Admin tərəfindən mesajın sabitlənməsi götürüldü'};
   if(b&&automatic[b.action]&&b.reason===undefined)b={...b,reason:automatic[b.action]};

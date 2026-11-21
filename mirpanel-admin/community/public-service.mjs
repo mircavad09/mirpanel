@@ -9,6 +9,7 @@ import {requireAllowed} from './group-control.mjs';import {saveProfile,uploadPro
 import {tagCount,notifications,markTag,tagMessage} from './bot-tags.mjs';
 import {accountPanel,paymentHistory} from './account-panel.mjs';
 import {CommunityLive} from './live.mjs';
+import {publicGroupOpen,requirePublicGroup,GROUP_CLOSED} from './public-group.mjs';
 import {profileCSS,profileShell,profileReturn} from './public/profile-shell.js';
 const dir=path.dirname(fileURLToPath(import.meta.url));const fail=(s,m)=>Object.assign(Error(m),{status:s});
 export const SITE_PRESENCE_ID = '00000000-0000-0000-0000-000000000001';
@@ -33,6 +34,12 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html:
   if(['/api/auth/sign-up/email','/api/auth/callback/google','/api/auth/sign-out'].includes(route))void pool.query("select pg_notify('mirpanel_community_live','{}')").catch(()=>{});return true;
  }
  // Public shells contain no account data. Authenticate the data API, not the HTML shell.
+ if(route==='/api/community/group-availability'&&req.method==='GET'){json(res,200,{open:await publicGroupOpen(pool)});return true;}
+ const groupOpen=['/qrup','/api/community/state','/api/community/messages','/api/community/events','/api/community/tag-message','/api/community/reports','/api/community/notifications'].includes(route)?await publicGroupOpen(pool):false;
+ if(!groupOpen&&route==='/qrup'&&req.method==='GET'){
+  html(res,`<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="robots" content="noindex,nofollow"><title>${GROUP_CLOSED} · MirPanel</title><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/site-header.css"><body class="community-page">${fs.readFileSync(path.resolve(dir,'../../customer-header.html'),'utf8')}<main class="community-shell"><section class="community-panel" data-public-group-closed><h1>${GROUP_CLOSED}</h1><p>Sualınız və sifarişinizlə bağlı şəxsi dəstəyə yaza bilərsiniz.</p><a class="button primary" href="/elaqe">Şəxsi dəstəyə yaz</a><p><a href="/">Ana səhifə</a></p></section></main><script src="/site-header.js?v=public-group-1" defer></script></body></html>`);return true;
+ }
+ if(['/api/community/messages','/api/community/events','/api/community/tag-message','/api/community/reports'].includes(route))await requirePublicGroup(pool);
  const publicShell=req.method==='GET'&&['/qrup','/hesab','/sebet','/balans','/odenis'].includes(route);
  const session=publicShell?null:await auth.api.getSession({headers:fromNodeHeaders(req.headers)}),user=session?.user||null;if(user)await requireAllowed(pool,user.id);
  const authMs=performance.now()-started-gateMs;
@@ -67,16 +74,16 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html:
  if(route==='/api/community/tokens'&&req.method==='GET'){need();json(res,200,await tokenWallet(pool,user.id,Object.fromEntries(u.searchParams)));return true;}
  if(route==='/api/community/token-gifts'&&req.method==='POST'){need();json(res,200,await sendTokenGift(repo,user,b));return true;}
  if(route==='/api/community/state'&&req.method==='GET'){
-  const mode=u.searchParams.get('group'),groupRead=mode==='1'||mode==='messages';
+  const mode=u.searchParams.get('group'),groupRead=groupOpen&&(mode==='1'||mode==='messages');
   const lean=mode==='messages';
   const [profile,unreadTags,config,initial,count]=await Promise.all([
-   user?repo.profile(user):null,user?tagCount(pool,user.id):0,lean?null:repo.config(),
+   user?repo.profile(user):null,user&&groupOpen?tagCount(pool,user.id):0,lean?null:repo.config(),
    groupRead?Promise.all([repo.messages(lean?{includeTiers:true}:undefined),group.settings()]):null,
    mode==='1'?counts(pool):null
   ]);
   res.setHeader('Server-Timing',`release;dur=${gateMs.toFixed(1)}, auth;dur=${authMs.toFixed(1)}, state;dur=${(performance.now()-started-gateMs-authMs).toFixed(1)}`);
   const {tiers,...messages}=initial?.[0]||{};
-  json(res,200,{publicCommunity:true,profile,unreadTags,unread:0,tiers:lean?tiers:config.tiers,googleEnabled:true,authFormPolicy,...(initial?{initialMessages:{...messages,settings:initial[1],restrictions:profile}}:{}),...(count?{counts:count}:{})});
+  json(res,200,{publicCommunity:true,groupClosed:!groupOpen,profile,unreadTags,unread:0,tiers:lean?tiers:config.tiers,googleEnabled:true,authFormPolicy,...(initial?{initialMessages:{...messages,settings:initial[1],restrictions:profile}}:{}),...(count?{counts:count}:{})});
  }
  else if(route==='/api/community/messages'&&req.method==='GET'){const [messages,settings,profile]=await Promise.all([repo.messages({before:u.searchParams.get('before'),after:u.searchParams.get('after'),known:u.searchParams.get('known')}),group.settings(),user?repo.profile(user):null]);json(res,200,{...messages,settings,restrictions:profile});}
  else if(route==='/api/community/messages'&&b){need();if(Object.keys(b).some(k=>!['body','clientId'].includes(k)))throw fail(400,'Yalnız mətn göndərmək olar.');const result=await repo.send(user,b.body,b.clientId);json(res,result.blocked?422:201,result);}
@@ -91,7 +98,7 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html:
   json(res,200,{ok:true});
  }
  else if(route==='/api/community/presence'&&b){need();if(!/^[a-f0-9-]{36}$/i.test(b.tabId||''))throw fail(400,'Səhifə identifikatoru düzgün deyil.');if(b.leave===true)await pool.query('delete from community_presence where user_id=$1 and session_id=$2 and tab_id=$3',[user.id,session.session.id,b.tabId]);else await pool.query('insert into community_presence(user_id,session_id,tab_id) values($1,$2,$3) on conflict(session_id,tab_id) do update set last_seen=clock_timestamp()',[user.id,session.session.id,b.tabId]);json(res,200,await counts(pool));}
- else if(route==='/api/community/notifications'&&req.method==='GET')json(res,200,await notifications(pool,need().id));
+ else if(route==='/api/community/notifications'&&req.method==='GET'){need();json(res,200,groupOpen?await notifications(pool,user.id):{unread:0,items:[]});}
  else if(route==='/api/community/notifications/read'&&b)json(res,200,await markTag(pool,need().id,b.messageId));
  else if(route==='/api/community/tag-message'&&req.method==='GET')json(res,200,await tagMessage(repo,need().id,u.searchParams.get('messageId')));
  else if(route==='/api/community/moderate'&&b)json(res,200,await group.act(need(),b));

@@ -1,4 +1,5 @@
 import {randomUUID} from 'node:crypto';
+import {publicGroupOpen,requirePublicGroup,GROUP_CLOSED} from './public-group.mjs';
 
 // One database listener per application, never one polling query per viewer.
 export class CommunityLive {
@@ -16,19 +17,23 @@ export class CommunityLive {
  schedule(){this.serial=this.serial.then(()=>this.broadcast()).catch(()=>{for(const x of this.clients)x.res.end();});return this.serial;}
  async broadcast(){
   if(!this.clients.size)return;
+  await this.enforcePublicAccess();
+  if(!this.clients.size)return;
   // Share hydration across tabs with the same cursor and visible IDs.
   const batches=new Map(),viewers=[...this.clients],countPromise=this.counts(this.pool);
   for(const x of viewers){const key=x.after+'|'+[...x.known].join(',');if(!batches.has(key))batches.set(key,this.repo.messages({after:x.after||null,known:[...x.known].join(',')}));}
+  await Promise.all(batches.values());await this.enforcePublicAccess();
   for(const x of viewers){const key=x.after+'|'+[...x.known].join(',');const r=await batches.get(key);if(this.clients.has(x))this.deliver(x,r);}
   const count=await countPromise;for(const x of this.clients)this.write(x,'counts',count);
  }
  deliver(x,r){for(const id of r.removed||[])x.known.delete(id);for(const m of r.items){x.known.add(m.id);x.after=Math.max(x.after,Number(m.id));}while(x.known.size>500)x.known.delete(x.known.values().next().value);this.write(x,'messages',r);if(r.more)this.schedule();}
  async attach(req,res,session,u){
+  const admin=u.pathname.startsWith('/api/admin/');if(!admin)await requirePublicGroup(this.pool);
   if(this.closed||this.clients.size>=200)throw Object.assign(Error('Canlı bağlantı hazırda məşğuldur.'),{status:503});
   const raw=u.searchParams.get('after')||'0',known=u.searchParams.get('known')||'';
   if(!/^\d{1,19}$/.test(raw)||!Number.isSafeInteger(Number(raw))||known.length>10000||known&&!/^\d{1,19}(,\d{1,19}){0,499}$/.test(known)||known.split(',').some(id=>id&&BigInt(id)>9223372036854775807n))throw Object.assign(Error('Sorğu düzgün deyil.'),{status:400});
   await this.start();
-  const x={res,after:Number(raw),known:new Set(known?known.split(','):[]),user:session?.user?.id,sid:session?.session?.id,tab:randomUUID()};
+  const x={res,admin,after:Number(raw),known:new Set(known?known.split(','):[]),user:session?.user?.id,sid:session?.session?.id,tab:randomUUID()};
   if(x.user)await this.pool.query('insert into community_presence(user_id,session_id,tab_id) values($1,$2,$3)',[x.user,x.sid,x.tab]);
   res.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'private,no-store,no-transform','X-Accel-Buffering':'no','Vary':'Cookie, Origin','X-Content-Type-Options':'nosniff'});res.flushHeaders?.();res.write(': connected\n\n');this.clients.add(x);
   res.once('close',()=>{this.clients.delete(x);if(x.user)this.pool.query('delete from community_presence where session_id=$1 and tab_id=$2',[x.sid,x.tab]).then(()=>this.pool.query("select pg_notify('mirpanel_community_live','{}')")).catch(()=>{});});
@@ -37,12 +42,13 @@ export class CommunityLive {
   this.serial=this.serial.then(async()=>{
    if(!this.clients.has(x))return;
    const [snapshot,count]=await Promise.all([this.repo.messages({after:x.after||null,known:[...x.known].join(',')}),this.counts(this.pool)]);
-   if(!this.clients.has(x))return;this.deliver(x,snapshot);this.write(x,'counts',count);
+   await this.enforcePublicAccess();if(!this.clients.has(x))return;this.deliver(x,snapshot);this.write(x,'counts',count);
    if(x.user)await this.pool.query("select pg_notify('mirpanel_community_live','{}')");
   }).catch(()=>res.destroy());await this.serial;
  }
  async heartbeat(){
   if(!this.clients.size)return;
+  await this.enforcePublicAccess();
   if(!(await this.pool.query('select ready from public_community_release where version=1')).rows[0]?.ready){for(const x of this.clients)x.res.end();return;}
   const signed=[...this.clients].filter(x=>x.user);
   if(signed.length){const valid=new Set((await this.pool.query(`select s.id from session s left join community_profiles p on p.user_id=s."userId" where s.id=any($1::text[]) and s."expiresAt">clock_timestamp() and (p.blocked is distinct from true or p.ban_until<=clock_timestamp())`,[signed.map(x=>x.sid)])).rows.map(x=>x.id));for(const x of signed)if(!valid.has(x.sid))x.res.end();
@@ -51,4 +57,5 @@ export class CommunityLive {
   const count=await this.counts(this.pool);for(const x of this.clients){x.res.write(': heartbeat\n\n');this.write(x,'counts',count);}
  }
  async close(){this.closed=true;clearInterval(this.timer);for(const x of this.clients)x.res.end();if(this.listener){const c=this.listener;this.listener=null;await c.query('UNLISTEN mirpanel_community_live');c.release();}}
+ async enforcePublicAccess(){if(await publicGroupOpen(this.pool))return;for(const x of this.clients)if(!x.admin){this.write(x,'messages',{items:[],removed:[...x.known],more:false});this.write(x,'settings',{public_open:false});this.write(x,'group-closed',{message:GROUP_CLOSED});this.clients.delete(x);x.res.end();}}
 }

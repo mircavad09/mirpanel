@@ -1,3 +1,4 @@
+html:not([data-public-group-open="1"]) a[href^="/qrup"],html:not([data-public-group-open="1"]) a[href^="https://mirpanel.com/qrup"],html:not([data-public-group-open="1"]) li:has(>a[href^="/qrup"]){display:none!important}
 .site-header {
   font-family:system-ui,sans-serif;
   font-size:16px;

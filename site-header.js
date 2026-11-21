@@ -1,5 +1,11 @@
 (function () {
   "use strict";
+  if(!window.MirpanelPublicGroup){
+    window.MirpanelPublicGroup=true;let running=false;
+    const apply=open=>{if(open)document.documentElement.dataset.publicGroupOpen='1';else delete document.documentElement.dataset.publicGroupOpen;window.dispatchEvent(new CustomEvent('mirpanel:public-group',{detail:{open}}));};
+    const refresh=async()=>{if(running||document.hidden)return;running=true;const controller=new AbortController(),timer=setTimeout(()=>controller.abort(),8000);try{const r=await fetch('/api/community/group-availability',{cache:'no-store',credentials:'omit',signal:controller.signal});const value=r.ok?await r.json():{};apply(value.open===true);}catch{apply(false);}finally{clearTimeout(timer);running=false;}};
+    void refresh();setInterval(()=>void refresh(),20000);window.addEventListener('pageshow',()=>void refresh());document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refresh();});
+  }
   if(!window.MirpanelPricing&&!document.querySelector('script[data-customer-pricing]')){const script=document.createElement('script');script.src='/customer-pricing.js?v=customer-perf-1';script.dataset.customerPricing='';script.dataset.shellPersistent='';document.head.append(script);}
 
   if(!document.querySelector('link[data-mobile-profile-style]')){
