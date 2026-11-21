@@ -135,6 +135,11 @@
 /robots.txt
   Content-Type: text/plain; charset=utf-8
 
+/.well-known/apple-developer-merchantid-domain-association.txt
+  Content-Type: text/plain
+  Cache-Control: no-cache, no-store, must-revalidate
+  Cloudflare-CDN-Cache-Control: no-store
+
 /customer-pricing.js
   Cache-Control: no-cache, must-revalidate
 
