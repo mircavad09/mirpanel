@@ -1,7 +1,9 @@
 import {safeName} from './bot-policy.mjs';
 export const authFormPolicy={minPasswordLength:6,maxPasswordLength:128,termsUrl:'/sertler',privacyUrl:'/sertler#sertler-10',privacyIsSection:true};
 const fieldError=(code,message)=>Object.assign(Error(message),{code:'REGISTRATION_FIELD_'+code});
+export const confirmationEmailProblem=address=>/@gmail\.con$/i.test(String(address).trim())?'E-poçt ünvanında gmail.con yazılıb. Ünvanı yoxlayın; Gmail üçün gmail.com olmalıdır.':null;
 export function registrationDetails(b){
+ if(confirmationEmailProblem(b.email))throw fieldError('EMAIL',confirmationEmailProblem(b.email));
  const name=(v,label,max,code)=>{if(typeof v!=='string')throw fieldError(code,label+' yazın.');const s=v.normalize('NFKC').trim().replace(/\s+/g,' ');if(!s||s.length>max||/[<>\p{C}]/u.test(s))throw fieldError(code,label+' düzgün deyil.');try{safeName(s);}catch(e){throw fieldError(code,e.message);}return s;};
  const first=name(b.firstName,'Adınızı',40,'FIRST_NAME'),last=name(b.lastName,'Soyadınızı',50,'LAST_NAME');
  if((first+' '+last).length>80)throw fieldError('LAST_NAME','Ad və soyad birlikdə 80 simvoldan uzun ola bilməz.');

@@ -12,7 +12,7 @@ async function loadAuthStyle(){
 async function accountApi(url,data,signal){
  const r=await fetch(url,{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify(data),signal,redirect:'error'});
  if(!/^application\/json\b/i.test(r.headers.get('Content-Type')||''))throw Error('Hesab xidməti düzgün cavab vermədi. Yenidən cəhd edin.');
- const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.'),{code:d.code||d.error?.code});return d;
+ const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error?.message||d.message||d.error||'Əməliyyat alınmadı.'),{code:d.code||d.error?.code,status:r.status});return d;
 }
 // Open audio during the submit gesture, but play only after a duplicate response.
 function prepareSignupChime(){
@@ -63,7 +63,7 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
      if(!dialog.open)return;
      if(action==='send'){
       // The provider may have accepted the message before the response was lost.
-      try{const current=await verificationApi('status');if(current.email&&dialog.open){draw(current);succeeded=true;if(current.codeSent)return;}}catch{}
+      try{const current=await verificationApi('status');if(current.email&&dialog.open){draw(current);succeeded=true;if(current.codeSent&&!e.status&&current.sendVersion!==s.sendVersion)return;}}catch{}
      }
      feedback.textContent=readableError(e);
     }
@@ -82,7 +82,7 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
    }
    if(afterSignup&&created)contents.append(el('p',{class:'auth-code-copy',role:'status'},'Hesabınız yaradılıb'));
    contents.append(el('p',{class:'auth-code-copy'},withCode
-    ?'Kod e-poçtunuza göndərildi. Gələnlər qutusunu yoxlayın və 6 rəqəmli kodu daxil edin.'
+    ?'Kod göndərmə xidməti tərəfindən qəbul edildi. Gələnlər və Spam qovluqlarını yoxlayın. Kod 10 dəqiqə qüvvədədir. Məktub gəlmirsə, ünvanı və poçt qutusunda boş yeri yoxlayın.'
     :'Sifariş vermək üçün e-poçtunuzu təsdiqləməlisiniz. Cəmi 1 dəqiqə çəkir.'));
    if(!withCode)contents.append(el('span',{class:'auth-code-badge'},'Sifariş üçün vacibdir'));
    contents.append(address);
@@ -264,7 +264,8 @@ export async function renderAuthForms({app,state,api,el,button,link,alert,signal
   }catch(e){
    if(life.signal.aborted)return;
    if(!continuing&&['REGISTRATION_EMAIL_EXISTS','REGISTRATION_GOOGLE_ONLY'].includes(e.code)){
-    recover.hidden=true;
+    recover.hidden=e.code==='REGISTRATION_GOOGLE_ONLY';
+    loginRecovery.hidden=false;
     dismissDuplicate=signupDuplicateNotice(app);
     soundPlaying=sound?.play();
     return;

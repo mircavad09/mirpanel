@@ -34,8 +34,8 @@ const server=http.createServer(async(req,res)=>{
 });
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin='http://127.0.0.1:'+server.address().port,clientId='synthetic-google-client';
-let failCodeFor;
-const send=async(kind,value)=>{if(kind==='code'&&value.user.email===failCodeFor){failCodeFor=null;throw Error('Synthetic provider failure');}mail.push({kind,...value});return {id:'synthetic-accepted'};};
+let failCodeFor,codeFailure;
+const send=async(kind,value)=>{if(kind==='code'&&value.user.email===failCodeFor){failCodeFor=null;throw codeFailure||Error('Synthetic provider failure');}mail.push({kind,...value});return {id:'synthetic-accepted'};};
 const welcomeDelivery=createWelcomeDelivery(pool,send);
 const createAuth=()=>makePublicAuth(pool,{origin,clientId,secret:'synthetic-isolated-secret-32-characters',clientSecret:'synthetic-only'},send,welcomeDelivery);
 let auth=createAuth(),testClient=1;
@@ -49,7 +49,7 @@ const request=async(jar,path,data)=>{
  return r;
 };
 const call=(j,a,b={})=>request(j,'/api/auth/confirm-email/'+a,b);
-const expire=async(address,changes)=>pool.query(`update verification v set value=(v.value::jsonb||$2::jsonb)::text from "user" u where u.email=$1 and v.id='mirpanel-email-code:'||u.id`,[address,JSON.stringify(changes)]);
+const expire=async(address,changes)=>pool.query(`update verification v set value=(v.value::jsonb||$2::jsonb)::text from "user" u where u.email=$1 and v.id='mirpanel-email-code:'||u.id`,[address,JSON.stringify({...changes,...(changes.sent===0?{retryAt:0}:{})})]);
 const {privateKey,publicKey}=generateKeyPairSync('rsa',{modulusLength:2048});
 const jwk={...publicKey.export({format:'jwk'}),alg:'RS256',use:'sig',kid:'synthetic-google'};
 let googleVerified=true,nonce='';
@@ -69,6 +69,40 @@ globalThis.fetch=(url,opts)=>{
 };
 let browser;
 try{
+ if(process.argv.includes('--delivery-errors')){
+  testClient++;
+  const jar=cookieJar(),address='synthetic-mail-recovery@gmail.com';
+  const data={name:'Sintetik Hesab',firstName:'Sintetik',lastName:'Hesab',email:address,password,countryCode:'994',phone:'501234567',termsAccepted:true,registrationForm:true};
+  assert.equal((await request(jar,'/api/auth/sign-up/email',data)).status,200);
+  failCodeFor=address;codeFailure=Object.assign(Error('Synthetic rate limit'),{deliveryCode:'SEND_RATE_LIMITED',deliveryDisposition:'retry',retryAfterMs:90000});
+  const limited=await call(jar,'send'),failure=await limited.json();assert.equal(limited.status,429);assert.equal(failure.code,'SEND_RATE_LIMITED');
+  const status=await (await call(jar,'status')).json();assert.equal(status.codeSent,false);assert(status.retryAfter>=89);
+  await expire(address,{sent:0,retryAt:0});codeFailure=null;
+  assert.equal((await call(jar,'send')).status,200);
+  const row=(await pool.query(`select v.value::jsonb as value from verification v join "user" u on v.id='mirpanel-email-code:'||u.id where u.email=$1`,[address])).rows[0].value;
+  assert.equal(row.providerId,'synthetic-accepted');assert.equal(row.deliveryState,'accepted');
+  const oldCode=record('code',address).at(-1).code;
+  await expire(address,{expires:0});assert.equal((await call(jar,'verify',{code:oldCode})).status,400);
+  await expire(address,{sent:0,retryAt:0});assert.equal((await call(jar,'send')).status,200);
+  const typo=await call(jar,'change',{email:'synthetic@gmail.con'});assert.equal(typo.status,400);assert.match((await typo.json()).message,/gmail.com/);
+  browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
+  for(const width of [390,1440]){
+   testClient++;
+   const context=await browser.newContext({viewport:{width,height:850}}),page=await context.newPage();
+   await page.goto(origin+'/hesab?mode=signup');
+   for(const [key,value] of Object.entries({firstName:'Sintetik',lastName:'Hesab',email:address,phone:'501234567',password}))await page.locator('#account-'+key).fill(value);
+   await page.locator('#account-terms').check();await page.locator('.auth-submit').click();
+   await page.getByRole('button',{name:'Mövcud hesabın təsdiqinə davam et',exact:true}).waitFor();
+   await page.getByRole('button',{name:'Mövcud hesabın təsdiqinə davam et',exact:true}).click();
+   await page.locator('.auth-code-grid').waitFor();
+   assert.equal(await page.locator('.auth-code-address strong').innerText(),address);
+   assert.equal((await pool.query('select count(*)::int as n from "user" where email=$1',[address])).rows[0].n,1);
+   await context.close();
+  }
+  assert.equal((await call(jar,'verify',{code:record('code',address).at(-1).code})).status,200);
+  assert.equal((await pool.query('select "emailVerified" from "user" where email=$1',[address])).rows[0].emailVerified,true);
+  console.log('PASS: provider rate limit and cooldown, persisted acceptance receipt, expired code, typo, pending duplicate recovery at mobile/desktop, one account and verified completion.');
+ }
  if(process.argv.includes('--registration-recovery')){
   browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
   const context=await browser.newContext({viewport:{width:390,height:800}}),page=await context.newPage(),address='registration-recovery@example.test';
@@ -111,7 +145,7 @@ try{
   console.log('PASS: failed verification start resumed without repeating signup; successful code returned to cart.');
   await context.close();
  }
- if(!process.argv.includes('--registration-recovery')){
+ if(!process.argv.includes('--registration-recovery')&&!process.argv.includes('--delivery-errors')){
  for(const [width,domain] of [[320,'gmail.com'],[1440,'icloud.com']]){
   // Separate browser/IP scenarios must not consume each other's rate limit.
   testClient++;
@@ -170,7 +204,7 @@ try{
   await page.clock.install();
   await sendButton.click();
   await page.getByRole('heading',{name:'Kodu daxil edin',exact:true}).waitFor();
-  await page.getByText('Kod e-poçtunuza göndərildi. Gələnlər qutusunu yoxlayın və 6 rəqəmli kodu daxil edin.',{exact:true}).waitFor();
+  await page.getByText('Kod göndərmə xidməti tərəfindən qəbul edildi. Gələnlər və Spam qovluqlarını yoxlayın. Kod 10 dəqiqə qüvvədədir. Məktub gəlmirsə, ünvanı və poçt qutusunda boş yeri yoxlayın.',{exact:true}).waitFor();
   const cells=page.locator('.auth-code-grid input'),confirm=page.getByRole('button',{name:'Təsdiqlə',exact:true}),resend=page.locator('.auth-code-resend');
   assert.equal(await cells.count(),6);
   assert.equal(await cells.first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');
@@ -244,7 +278,8 @@ try{
   await notice.getByRole('alert').filter({hasText:'Bu e-poçt ünvanı ilə artıq hesab yaradılıb.'}).waitFor();
   assert.equal(await page.evaluate(()=>window.signupChimes),blocked?0:1);
   assert.equal(await page.locator('.auth-feedback').textContent(),'');
-  assert.equal(await page.locator('.auth-legal-link[hidden]').count(),1);
+  assert.equal(await page.locator('.auth-resend').isVisible(),true);
+  assert.equal(await page.locator('.auth-legal-link[hidden]').count(),0);
   assert.equal(await page.locator('.auth-switch').isVisible(),true);
   assert.equal(await page.locator('.auth-google').isEnabled(),true);
   for(const [key,value] of Object.entries(values))assert.equal(await page.locator('#account-'+key).inputValue(),value);

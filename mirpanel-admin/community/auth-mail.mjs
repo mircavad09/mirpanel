@@ -30,13 +30,14 @@ export function createAuthMailer(env){let token=null,expires=0,pending;
   const accessToken=await access();let r;
   try{r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({raw:Buffer.from(raw).toString('base64url')}),signal:AbortSignal.timeout(15000),...(durable?{redirect:'error'}:{})});}
   catch{throw delivery('AUTH_MAIL_DELIVERY_FAILED','uncertain','SEND_RESULT_UNKNOWN');}
-  if(!durable){if(!r.ok)throw Error('AUTH_MAIL_DELIVERY_FAILED');return;}
   const result=await r.json().catch(()=>null);
   if(r.ok&&typeof result?.id==='string'&&result.id)return {id:result.id};
   // Retry only explicit provider rejections, not transport failures or 5xx.
-  const limited=r.status===429||r.status===403&&result?.error?.errors?.some?.(e=>['rateLimitExceeded','userRateLimitExceeded'].includes(e.reason));
-  if(limited)throw delivery('AUTH_MAIL_DELIVERY_FAILED','retry','SEND_RATE_LIMITED',retryAfter(r));
-  if([400,401,403,404,413,422].includes(r.status))throw delivery('AUTH_MAIL_DELIVERY_FAILED','failed','SEND_REJECTED');
-  throw delivery('AUTH_MAIL_DELIVERY_FAILED','uncertain','SEND_RESULT_UNKNOWN');
+  const providerReason=(result?.error?.errors||[]).map(x=>x.reason).find(x=>['rateLimitExceeded','userRateLimitExceeded','dailyLimitExceeded','quotaExceeded','authError','invalidArgument','forbidden','insufficientPermissions','backendError'].includes(x))||null;
+  const rejected=(...args)=>Object.assign(delivery(...args),{providerStatus:r.status,providerReason});
+  const limited=r.status===429||r.status===403&&result?.error?.errors?.some?.(e=>['rateLimitExceeded','userRateLimitExceeded','dailyLimitExceeded','quotaExceeded'].includes(e.reason));
+  if(limited)throw rejected('AUTH_MAIL_DELIVERY_FAILED','retry','SEND_RATE_LIMITED',retryAfter(r));
+  if([400,401,403,404,413,422].includes(r.status))throw rejected('AUTH_MAIL_DELIVERY_FAILED','failed','SEND_REJECTED');
+  throw rejected('AUTH_MAIL_DELIVERY_FAILED','uncertain','SEND_RESULT_UNKNOWN');
  };
 }

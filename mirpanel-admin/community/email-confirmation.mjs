@@ -3,17 +3,18 @@ import {APIError,createAuthEndpoint,getSessionFromCtx} from 'better-auth/api';
 import {setSessionCookie} from 'better-auth/cookies';
 import {z} from 'zod';
 import {requireAllowed} from './group-control.mjs';
+import {confirmationEmailProblem} from './auth-form-policy.mjs';
 import {OWNER_EMAIL} from './owner-auth.mjs';
 
 const validity=10*60_000,cooldown=60_000;
 const email=z.string().trim().toLowerCase().email().max(254);
-const problem=(status,message)=>new APIError(status,{message});
+const problem=(status,message,details={})=>new APIError(status,{message,...details});
 export function emailConfirmation(pool,config,send,welcome){
  const key=id=>'mirpanel-email-code:'+id;
  const digest=(id,address,otp)=>createHmac('sha256',config.secret).update(JSON.stringify(['email-confirmation',id,address,otp])).digest('hex');
- const set=(client,id,record)=>client.query(`insert into verification(id,identifier,value,"expiresAt") values($1,$1,$2,now()+interval '1 hour') on conflict(id) do update set value=excluded.value,"expiresAt"=excluded."expiresAt","updatedAt"=now()`,[key(id),JSON.stringify(record)]);
+ const set=(client,id,record)=>client.query(`insert into verification(id,identifier,value,"expiresAt") values($1,$1,$2,$3) on conflict(id) do update set value=excluded.value,"expiresAt"=excluded."expiresAt","updatedAt"=now()`,[key(id),JSON.stringify(record),new Date(Math.max(Date.now()+3600_000,record.retryAt||0))]);
  const read=(client,id)=>client.query('select value from verification where id=$1 and "expiresAt">now()',[key(id)]).then(r=>r.rows[0]?JSON.parse(r.rows[0].value):null);
- const show=(u,r)=>({email:r?.email||u.email,codeSent:!!r?.delivered&&r.expires>Date.now(),retryAfter:Math.max(0,Math.ceil(((r?.sent||0)+cooldown-Date.now())/1000))});
+ const show=(u,r)=>({email:r?.email||u.email,codeSent:!!r?.delivered&&r.expires>Date.now(),sendVersion:r?.delivered?(r.acceptedAt||r.sent):null,retryAfter:Math.max(0,Math.ceil((Math.max((r?.sent||0)+cooldown,r?.retryAt||0)-Date.now())/1000))});
  async function locked(ctx,work){
   const session=await getSessionFromCtx(ctx,{disableCookieCache:true,disableRefresh:true});
   const id=session?.user?.id;
@@ -54,22 +55,32 @@ export function emailConfirmation(pool,config,send,welcome){
    catch(e){if(e.status==='UNAUTHORIZED'||e.status==='FORBIDDEN')return ctx.json({});throw e;}
   }),
   changeMirpanelEmail: endpoint('change',z.object({email}),async ctx=>ctx.json(await locked(ctx,async(c,u,r)=>{
-   pending(u);const address=ctx.body.email;if(address===r.email)return show(u,r);
+   pending(u);const address=ctx.body.email;if(confirmationEmailProblem(address))throw problem('BAD_REQUEST',confirmationEmailProblem(address));if(address===r.email)return show(u,r);
    if(address===OWNER_EMAIL||(await c.query('select 1 from "user" where email=$1 and id<>$2',[address,u.id])).rowCount)throw problem('CONFLICT','Bu e-poçt ünvanı istifadə edilə bilməz.');
-   const next={email:address,sent:r.sent};await set(c,u.id,next);return show(u,next);
+   const next={email:address,sent:r.sent,retryAt:r.retryAt};await set(c,u.id,next);return show(u,next);
   }))),
   sendMirpanelEmail: endpoint('send',z.object({}),async ctx=>{
    const otp=String(randomInt(1_000_000)).padStart(6,'0');
    const request=await locked(ctx,async(c,u,r)=>{
-    pending(u);if(show(u,r).retryAfter)throw problem('TOO_MANY_REQUESTS','Təkrar kod göndərmək üçün geri sayımın bitməsini gözləyin.');
+    pending(u);if(confirmationEmailProblem(r.email))throw problem('BAD_REQUEST',confirmationEmailProblem(r.email));if(show(u,r).retryAfter)throw problem('TOO_MANY_REQUESTS','Təkrar kod göndərmək üçün geri sayımın bitməsini gözləyin.',{code:'EMAIL_CODE_COOLDOWN',retryAfter:show(u,r).retryAfter});
     if(r.email===OWNER_EMAIL||(await c.query('select 1 from "user" where email=$1 and id<>$2',[r.email,u.id])).rowCount)throw problem('CONFLICT','Bu e-poçt ünvanı istifadə edilə bilməz.');
-    const sent=Date.now(),hash=digest(u.id,r.email,otp);await set(c,u.id,{email:r.email,sent,hash,expires:sent+validity,attempts:0});return {address:r.email,sent,hash};
+    const sent=Date.now(),hash=digest(u.id,r.email,otp);await set(c,u.id,{email:r.email,sent,hash,expires:sent+validity,attempts:0});return {userId:u.id,address:r.email,sent,hash};
    });
-   try{await send('code',{user:{email:request.address},code:otp});}catch{throw problem('BAD_GATEWAY','Kodun göndərilməsi təsdiqlənmədi. Bir dəqiqə sonra yenidən cəhd edin.');}
+   let receipt;
+   try{receipt=await send('code',{user:{email:request.address},code:otp});}
+   catch(e){
+    const known=new Set(['AUTH_CONFIGURATION','TOKEN_REJECTED','TOKEN_TEMPORARY','SEND_RATE_LIMITED','SEND_REJECTED','SEND_RESULT_UNKNOWN']);
+    const reason=known.has(e?.deliveryCode)?e.deliveryCode:'SEND_RESULT_UNKNOWN';
+    const retryAt=Date.now()+Math.max(cooldown,Number(e?.retryAfterMs)||0),state=['failed','retry'].includes(e?.deliveryDisposition)?'failed':'uncertain';
+    await locked(ctx,async(c,u,r)=>{if(r.hash===request.hash&&r.sent===request.sent){r.deliveryState=state;r.deliveryCode=reason;if(Number.isInteger(e?.providerStatus))r.providerStatus=e.providerStatus;r.retryAt=retryAt;await set(c,u.id,r);}});
+    console.warn('COMMUNITY_EMAIL_CONFIRMATION',JSON.stringify({state,reason,userId:request.userId,attemptAt:request.sent,providerStatus:e?.providerStatus||null}));
+    const limited=reason==='SEND_RATE_LIMITED';
+    throw problem(limited?'TOO_MANY_REQUESTS':'BAD_GATEWAY',limited?'E-poçt xidməti göndəriş limitinə çatıb. Göstərilən gözləmə müddətindən sonra yenidən cəhd edin.':'Kodun göndərilməsi təsdiqlənmədi. Bir dəqiqə sonra yenidən cəhd edin.',{code:reason,retryAfter:Math.max(0,Math.ceil((retryAt-Date.now())/1000))});
+   }
    const result=await locked(ctx,async(c,u,r)=>{
     pending(u);if(r.hash!==request.hash||r.sent!==request.sent)throw problem('CONFLICT','E-poçt dəyişib. Yeni kod istəyin.');
-    const now=Date.now();r.delivered=true;r.sent=now;r.expires=now+validity;await set(c,u.id,r);return show(u,r);
-   });return ctx.json(result);
+    const now=Date.now();r.delivered=true;r.deliveryState='accepted';if(typeof receipt?.id==='string')r.providerId=receipt.id;r.acceptedAt=now;r.sent=now;r.expires=now+validity;await set(c,u.id,r);return show(u,r);
+   });console.info('COMMUNITY_EMAIL_CONFIRMATION',JSON.stringify({state:'accepted',userId:request.userId,attemptAt:request.sent,providerId:receipt?.id||null}));return ctx.json(result);
   }),
   finishMirpanelEmail: endpoint('verify',z.object({code:z.string().regex(/^\d{6}$/)}),async ctx=>{
    const result=await locked(ctx,async(c,u,r)=>{
