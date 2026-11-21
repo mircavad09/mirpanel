@@ -85,6 +85,7 @@ try{
   await expire(address,{expires:0});assert.equal((await call(jar,'verify',{code:oldCode})).status,400);
   await expire(address,{sent:0,retryAt:0});assert.equal((await call(jar,'send')).status,200);
   const typo=await call(jar,'change',{email:'synthetic@gmail.con'});assert.equal(typo.status,400);assert.match((await typo.json()).message,/gmail.com/);
+  const transposed=await call(jar,'change',{email:'synthetic@gamil.com'});assert.equal(transposed.status,400);assert.match((await transposed.json()).message,/gamil.com.*gmail.com/);
   browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
   for(const width of [390,1440]){
    testClient++;
