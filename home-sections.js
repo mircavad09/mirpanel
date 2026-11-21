@@ -12,7 +12,7 @@
  };
  const icons=Object.fromEntries(Object.entries(paths).map(([key,path])=>[key,'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="'+path+'"/></svg>']));
  const url=p=>'/mehsul/'+encodeURIComponent(String(p.seoSlug||p.id).replace(/-almaq$/,''));
- function render(products,categories,card,{query='',filtered=false}={}){
+ function render(products,categories,card,{query='',filtered=false,title='Məhsullar'}={}){
   const active=products.filter(p=>p.active!==false);
   const wrap=(key,title,items,icon,href,limited=true)=>{
    if(!items.length)return '';
@@ -20,7 +20,7 @@
    const cards=items.slice(0,limited?10:items.length).map((p,i)=>card(p,i).replaceAll('home-card-'+p.id,'home-card-'+key+'-'+p.id)).join('');
    return '<section class="home-product-section" aria-labelledby="'+id+'"><header class="home-section-heading"><h2 id="'+id+'"><span aria-hidden="true">'+(icons[icon]||icons.products)+'</span>'+esc(title)+'</h2>'+(href?'<a href="'+href+'">Hamısına bax →</a>':'')+'</header><div class="home-section-grid'+(limited?' home-section-limited':'')+'">'+cards+'</div></section>';
   };
-  if(query||filtered)return wrap('results',query?'Axtarış nəticələri':'Ən çox satılanlar',active,'products','',false);
+  if(query||filtered)return wrap('results',query?'Axtarış nəticələri':title,active,'products','',false);
   const configured=[...(categories||[])].sort((a,b)=>Number(a.order)-Number(b.order));
   const visible=configured.filter(c=>c.active!==false);
   const sections=visible.map(c=>wrap(c.key,c.name,active.filter(p=>p.category===c.key),c.icon,'/mehsul?category='+encodeURIComponent(c.key))).join('');

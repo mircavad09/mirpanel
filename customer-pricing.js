@@ -13,7 +13,8 @@
   if(typeof DATA!=='undefined')attach(DATA.products);
   if(typeof renderGrid==='function'&&document.getElementById('grid'))renderGrid();
   for(const card of document.querySelectorAll('.catalog-grid [data-product-id]')){
-   const rows=[...prices.values()].filter(x=>x.productId===card.dataset.productId&&x.standardCents>0);
+   const exact=card.dataset.instantPlan;
+   const rows=[...prices.values()].filter(x=>x.productId===card.dataset.productId&&x.standardCents>0&&(exact===undefined||String(x.planIndex)===exact));
    const minimum=rows.length?Math.min(...rows.map(x=>x.cents)):null;
    if(minimum!==null){const strong=card.querySelector('.homeCardPrices strong');if(strong)strong.textContent=(minimum/100).toFixed(2)+' ₼';}
   }

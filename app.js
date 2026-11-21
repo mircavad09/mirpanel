@@ -5493,9 +5493,8 @@ function saveHomeCatalogState() {
 }
 
 function matchesHomeFilter(product) {
-  if (homeCatalogState.filter === "best") return product.bestSeller === true;
-  if (homeCatalogState.filter === "premium") return product.badge === "Premium";
-  return true;
+  if(homeCatalogState.filter==='instant')return window.MirpanelInventory?.instantPlans(product).length>0;
+  return homeCatalogState.filter==='all'||product.category===homeCatalogState.filter;
 }
 
 function productSlugForHome(product) {
@@ -5552,13 +5551,15 @@ function buildTabs() {
   const tabs = document.getElementById("tabs");
   if (!tabs) return;
   const activeProducts = DATA.products.filter((product) => product.active !== false);
-  const hasPremium = activeProducts.some((product) => product.badge === "Premium");
-  const hasBestSeller = activeProducts.some((product) => product.bestSeller === true);
+  const params=new URLSearchParams(location.search);
+  if(params.get('delivery')==='instant')homeCatalogState.filter='instant';
+  else if(params.has('category'))homeCatalogState.filter=params.get('category');
+  const categories=[...DATA.categories].filter(c=>c.active!==false&&activeProducts.some(p=>p.category===c.key)).sort((a,b)=>Number(a.order)-Number(b.order));
   tabs.innerHTML = `
     <div class="home-filter-tabs" role="tablist" aria-label="Məhsul filtrləri">
       <button type="button" class="home-filter-tab" data-home-filter="all" role="tab">Hamısı</button>
-      ${hasBestSeller ? '<button type="button" class="home-filter-tab" data-home-filter="best" role="tab">Ən çox satılanlar</button>' : ''}
-      ${hasPremium ? '<button type="button" class="home-filter-tab" data-home-filter="premium" role="tab" aria-selected="false">Premium</button>' : ''}
+      <button type="button" class="home-filter-tab" data-home-filter="instant" role="tab">⚡ Anında təhvil</button>
+      ${categories.map(c=>`<button type="button" class="home-filter-tab" data-home-filter="${escapeSectionHtml(c.key)}" role="tab">${escapeSectionHtml(c.key==='games'?'Oyunlar':c.name)}</button>`).join('')}
     </div>
     <div class="glass-sort-container">
       <select id="sortSelect" class="glass-sort-select">
@@ -5588,10 +5589,16 @@ function buildTabs() {
     }
   }
   paintFilters();
+  tabs.querySelector('[aria-selected="true"]')?.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
   for (const button of filters) button.addEventListener("click", () => {
     homeCatalogState.filter = button.dataset.homeFilter;
     saveHomeCatalogState();
     paintFilters();
+    const url=new URL(location.href);url.searchParams.delete('delivery');url.searchParams.delete('category');
+    if(homeCatalogState.filter==='instant')url.searchParams.set('delivery','instant');
+    else if(homeCatalogState.filter!=='all')url.searchParams.set('category',homeCatalogState.filter);
+    history.replaceState(history.state,'',url);
+    button.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
     renderGrid();
   });
 }
@@ -5649,6 +5656,7 @@ function productMatches(product, query) {
 function sortedProducts(products) {
   const sortVal = document.getElementById("sortSelect")?.value || "default";
   const getPrice = (product) => {
+    if(homeCatalogState.filter==='instant'){const i=window.MirpanelInventory?.instantPlans(product)[0];return Number(product.plans[i]?.price)||999999;}
     if (product.id === "tiktok_jeton") return 10;
     const price = getMinPrice(product);
     return price === Infinity || price === 0 ? 999999 : price;
@@ -5674,12 +5682,19 @@ function renderGrid() {
   const grid = document.getElementById("grid");
   if (!grid) return;
   const query = normalizeSearch(homeCatalogState.query);
+  const instant=homeCatalogState.filter==='instant';
+  window.mirpanelHomeInstant=instant;
+  if(instant&&!window.MirpanelInventory?.instantValid()){
+    grid.innerHTML='<p class="home-catalog-status" role="status">'+(window.MirpanelInventory?.instantFailed()?'Stok yoxlanıla bilmir. <button type="button" onclick="MirpanelInventory.refresh()">Yenidən cəhd et</button>':'Hazır hesablar yoxlanılır…')+'</p>';
+    grid.setAttribute('aria-busy',String(!window.MirpanelInventory?.instantFailed()));return;
+  }
   const list = sortedProducts(DATA.products.filter(product =>
     product.active !== false && matchesHomeFilter(product) && productMatches(product, query)
   ));
-  grid.innerHTML = list.length ? (window.MirpanelHomeSections ? window.MirpanelHomeSections.render(list, DATA.categories, cardHTML, {query, filtered:homeCatalogState.filter!=="all"}) : list.map((p, idx) => cardHTML(p, idx)).join("")) :
+  const title=instant?'Anında təhvil':DATA.categories.find(c=>c.key===homeCatalogState.filter)?.name;
+  grid.innerHTML = list.length ? (window.MirpanelHomeSections ? window.MirpanelHomeSections.render(list, DATA.categories, cardHTML, {query, filtered:homeCatalogState.filter!=="all",title}) : list.map((p, idx) => cardHTML(p, idx)).join("")) :
     '';
-  if(!list.length)window.MirpanelCatalogSearch?.empty(grid);
+  if(!list.length){if(instant)grid.innerHTML='<p class="home-catalog-status">Hazırda anında təhvil verilən hesab yoxdur<br><a href="/mehsul">Bütün məhsullara bax</a></p>';else window.MirpanelCatalogSearch?.empty(grid);}
   grid.removeAttribute("aria-busy");
   window.dispatchEvent(new Event("mirpanel:home-catalog-rendered"));
 }

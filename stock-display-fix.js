@@ -1,7 +1,7 @@
 (async function () {
   window.MirpanelInventory?.dispose?.();
   const {inventoryAvailability}=await import('/inventory-availability.mjs?v=epinby-stock-1');
-  const {packageDeliveryText}=await import('/ready-delivery.mjs?v=ready-sku-2');
+  const {packageDeliveryText,instantPlanIndices}=await import('/ready-delivery.mjs?v=instant-filter-1');
   const inventory = new Map();let inventoryTimer,homeSalesTimer,painting=false,inventoryDisplayValid=false,inventoryFailed=false;
   if(!document.querySelector('style[data-supplier-stock-style]')){
     const style=document.createElement('style');style.dataset.supplierStockStyle='';style.dataset.shellPersistent='';
@@ -47,7 +47,7 @@
     const ledger=inventory.get(product.id);
     if(ledger?.salesDisabled)return {text:'Stokda yoxdur',className:'out'};
     if(!inventoryDisplayValid||!ledger||ledger.needsSetup)return null;
-    const pricePlan=(product.plans||[]).findIndex(plan=>Number(plan.price)===minPrice(product));
+    const pricePlan=window.mirpanelHomeInstant?instantPlans(product)[0]:(product.plans||[]).findIndex(plan=>Number(plan.price)===minPrice(product));
     const supplier=ledger.plans?.find(plan=>plan.planKey===String(pricePlan))?.supplierStock;
     if(supplier&&inventoryFailed)return {text:'Stok yoxlanıla bilmir',className:'unknown'};
     if(supplier?.status==='out')return {text:'Stokda bitib',className:'out'};
@@ -63,7 +63,7 @@
       stock=ledger.available;
     }else if(ledger.scope==='plan'){
       const price=product.id==='tiktok_jeton'?10:minPrice(product);
-      const index=(product.plans||[]).findIndex(plan=>Number(plan.price)===price);
+      const index=window.mirpanelHomeInstant?instantPlans(product)[0]:(product.plans||[]).findIndex(plan=>Number(plan.price)===price);
       const plan=ledger.plans?.find(plan=>plan.planKey===String(index));
       if(!plan||plan.tracked===false)return null;
       stock=plan.available;
@@ -95,6 +95,9 @@
 
   // Home card presentation only. Keep the catalog, filtering and navigation unchanged.
   function homeCardHTML(product, index, productUrl) {
+    if(window.mirpanelHomeInstant){const exact=instantPlans(product)[0];if(exact===undefined)return '';productUrl+='?plan='+exact;
+      return window.MirpanelCatalogCard.render(product,index,productUrl,publicProductTitle(product.title),Number(product.plans[exact].price),priceText(product),homeStockBadgeHTML(product),true).replace('<article ','<article data-instant-plan="'+exact+'" ');
+    }
     if(window.MirpanelCatalogCard)return window.MirpanelCatalogCard.render(product,index,productUrl,publicProductTitle(product.title),product.id==='tiktok_jeton'?10:minPrice(product),priceText(product),homeStockBadgeHTML(product),true);
     const price = product.id === 'tiktok_jeton' ? 10 : minPrice(product);
     const plan = (product.plans || []).find(item=>Number(item.price)===price);
@@ -340,16 +343,17 @@
         if(!response.ok)throw Error('Inventory unavailable');const data=await response.json();if(!Array.isArray(data.products))throw Error('Invalid inventory');
         if(run!==revision||disposed)return false;
         inventory.clear();for(const row of data.products)inventory.set(row.productId,row);
-        inventoryDisplayValid=true;inventoryFailed=false;failures=0;paintInventory();return true;
+        inventoryDisplayValid=true;inventoryFailed=false;failures=0;paintInventory();if(window.mirpanelHomeInstant&&location.pathname==='/')renderGrid();return true;
       }catch(error){
         if(run!==revision||disposed)return false;
         // Keep the last confirmed snapshot on transient failures. Checkout still
         // checks price and stock atomically on the server.
-        inventoryFailed=true;failures++;paintInventory();scheduleInventory();return false;
+        inventoryFailed=true;failures++;paintInventory();if(window.mirpanelHomeInstant&&location.pathname==='/')renderGrid();scheduleInventory();return false;
       }finally{clearTimeout(timeout);if(inventoryRequest===pending){inventoryRequest=null;inventoryController=null;}}
     })();inventoryRequest=pending;return pending;
   }
-  window.MirpanelInventory={canOpenOrder,productState:stateFor,planState:planFor,refresh:refreshInventory,paint:paintInventory,dispose(){disposed=true;cancelInventory();clearInterval(inventoryTimer);clearInterval(homeSalesTimer);},async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
+  function instantPlans(product){return instantPlanIndices(product,stateFor(product).plans,{valid:inventoryDisplayValid&&!inventoryFailed});}
+  window.MirpanelInventory={instantPlans,instantValid:()=>inventoryDisplayValid&&!inventoryFailed,instantFailed:()=>inventoryFailed,canOpenOrder,productState:stateFor,planState:planFor,refresh:refreshInventory,paint:paintInventory,dispose(){disposed=true;cancelInventory();clearInterval(inventoryTimer);clearInterval(homeSalesTimer);},async assertCanOrder(product,index){if(!await refreshInventory())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');if(!planFor(product,index)?.canOrder)throw Error('Stokda yoxdur.');}};
   document.addEventListener('click',event=>{
     const el=event.target.closest('.homeCardOrder,#pp-order-btn,#cartAddProduct,.pp-plan-label');if(!el)return;
     const product=el.classList.contains('homeCardOrder')?(typeof DATA!=='undefined'?DATA.products.find(p=>p.id===el.closest('[data-product-id]')?.dataset.productId):null):(typeof currentProduct!=='undefined'?currentProduct:null);if(!product)return;

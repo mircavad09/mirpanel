@@ -2105,12 +2105,14 @@
     if(homeCartOpening||cartOpening?.open||document.querySelector('dialog.homeCardPlanPicker[open],dialog.cart-entry[open]'))return;
     const product=DATA.products.find(item=>item.id===button.closest('[data-product-id]')?.dataset.productId);
     if(!product)return;
+    const instantIndex=button.closest('[data-instant-plan]')?.dataset.instantPlan;
     homeCartOpening=true;
     try{
       const inventory=window.MirpanelInventory;
       if(!inventory||!await inventory.refresh())throw Error('Stok məlumatı alınmadı. Yenidən cəhd edin.');
       if(location.pathname!=='/'||!document.querySelector('#homePageView #grid [data-product-id="'+CSS.escape(product.id)+'"]'))return;
       const state=inventory.productState(product);
+      if(instantIndex!==undefined){const index=Number(instantIndex);if(!inventory.instantPlans(product).includes(index))throw Error('Bu paket üçün hazır hesab artıq yoxdur.');runOrderFlow(product,product.plans[index],false);return;}
       const choices=(product.plans||[]).map((plan,index)=>({plan,available:state.plans[index]?.canOrder}))
         .filter(({plan})=>plan.active!==false&&Number(plan.price)>0);
       if(!choices.some(item=>item.available))throw Error('Stokda yoxdur.');

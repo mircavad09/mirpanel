@@ -359,7 +359,9 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
 
 /* TABS & MƏHSUL KARTLARI */
 .tabs{display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;position:relative}
-.home-filter-tabs { display:flex; gap:8px; flex-wrap:wrap; width:100%; }
+.home-filter-tabs { display:flex; gap:8px; flex-wrap:nowrap; overflow-x:auto; min-width:0; width:100%; scrollbar-width:none; }
+.home-filter-tabs::-webkit-scrollbar{display:none}
+.home-filter-tab{flex-shrink:0;white-space:nowrap}
 .home-filter-tab { min-height:38px; border:1px solid rgba(255,255,255,.13); border-radius:999px; padding:8px 13px; background:rgba(255,255,255,.035); color:rgba(255,255,255,.84); font:inherit; font-size:13px; font-weight:650; cursor:pointer; }
 .home-filter-tab.active,.home-filter-tab:hover,.home-filter-tab:focus-visible { border-color:rgba(255,212,0,.65); background:rgba(255,212,0,.12); color:#ffd400; outline:none; }
 .tab{
@@ -1055,7 +1057,7 @@ a.support-box-img:hover { transform: translateY(-4px); box-shadow: 0 15px 35px r
     border-radius:18px;
     background:rgba(255,255,255,.025);
   }
-  .home-page .home-filter-tabs { width:auto; flex:0 0 auto; flex-wrap:nowrap; }
+  .home-page .home-filter-tabs { width:auto; flex:1 1 0; flex-wrap:nowrap; }
   .home-page .glass-sort-container { width:min(360px,32vw); margin:0 0 0 auto !important; }
   .home-page .glass-sort-select { height:40px !important; min-height:40px !important; padding-block:8px !important; box-sizing:border-box; }
   .home-page .grid { margin-top:12px; }

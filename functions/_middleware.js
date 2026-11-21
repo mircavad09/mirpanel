@@ -237,6 +237,8 @@ function withSeoScripts(html,earlyProductLinks=false) {
   if (!next.includes("site-sections-render.js?v=20260728-info-pages-1")) {
     next = next.replace(/<script (defer )?src="\/?app\.js[^>]*><\/script>/i, (tag,defer)=>tag+'\n  <script '+(defer||'')+'src="/site-sections-render.js?v=20260728-info-pages-1"></script>');
   }
+  next=next.replace(/(src=["'])\/?(home-sections|catalog-card|catalog-listing|stock-display-fix|order-confirmation|customer-pricing)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=instant-filter-1$3');
+  next=next.replace(/(href=["'])\/?(style|catalog-card)\.css(?:\?[^"']*)?(["'])/g,'$1/$2.css?v=instant-filter-1$3');
   return next;
 }
 
@@ -334,7 +336,7 @@ export async function onRequest(context) {
     const response = await context.next(new Request(assetUrl, request));
     if (!response.ok) return response;
     let html = withSeoScripts(await response.text());
-    html = html.replace(/(src=["'])\/?product-page\.js(?:\?[^"']*)?(["'])/g,'$1/product-page.js?v=compact-plan-facts-1$2');
+    html = html.replace(/(src=["'])\/?product-page\.js(?:\?[^"']*)?(["'])/g,'$1/product-page.js?v=instant-filter-1$2');
     html = html.replace(/(href=["'])\/?product-page\.css(?:\?[^"']*)?(["'])/g,'$1/product-page.css?v=compact-plan-facts-1$2');
     html = html.replace(/(<head\b[^>]*>)/i,'$1<script>(()=>{const url=(window.MIRPANEL_PAYMENT_API||"https://mirpanel-frankfurt.onrender.com")+"/api/payments/inventory";const request=fetch(url,{cache:"no-store",signal:AbortSignal.timeout(25000)}).then(response=>({response,at:performance.now()}));request.catch(()=>{});window.mirpanelInitialInventory={url,request};})();</script>');
     // The static order button must not accept an early click before the

@@ -184,6 +184,8 @@
     if(scope)disposeProductPage();activeRoot=root;scope=new AbortController();const {signal}=scope;
     const staticSimilarMarkup = document.getElementById("pp-similar-list")?.innerHTML || "";
     window.openProductPage(productId);
+    const requested=new URLSearchParams(location.search).get('plan');
+    if(requested!==null&&/^\d+$/.test(requested))document.querySelectorAll('#pp-plans-container .pp-plan-label')[Number(requested)]?.click();
     const similarList = document.getElementById("pp-similar-list");
     if (similarList && staticSimilarMarkup) similarList.innerHTML = staticSimilarMarkup;
     document.querySelector("[data-static-product-plans]")?.setAttribute("hidden", "");

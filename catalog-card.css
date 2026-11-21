@@ -72,6 +72,9 @@
 
 .home-catalog-status{grid-column:1/-1;padding:12px 0;color:var(--muted,#ccc);text-align:center}
 .home-catalog-status button{margin-inline-start:8px}
+.catalog-filter-tabs{flex-wrap:nowrap!important;overflow-x:auto;min-width:0;max-width:100%;scrollbar-width:none;scroll-margin-top:150px}
+.catalog-filter-tabs a{flex-shrink:0;white-space:nowrap;border:1px solid #454130;border-radius:24px;text-decoration:none;min-height:44px;box-sizing:border-box;display:inline-flex;align-items:center}
+.catalog-filter-tabs a.active{background:#ffd400;color:#121212;border-color:#ffd400}
 
 /* Reserve a bottom row so the desktop action can expand beside any card content. */
 :is(.home-page #grid,.catalog-grid) .homeProductCard {
@@ -301,3 +304,6 @@
 .homeCardDelivery.is-instant::before{content:'';display:inline-block;width:11px;height:13px;margin-right:4px;vertical-align:-2px;background:currentColor;clip-path:polygon(55% 0,10% 56%,43% 56%,36% 100%,92% 39%,59% 39%)}
 
 [data-product-id="mirpanel-token"] .imgWrap .img{object-fit:contain!important;object-position:center;background:#080810}
+:is(.home-page #grid,.catalog-grid) [data-instant-plan] .title{height:auto!important;-webkit-line-clamp:unset!important;overflow:visible;overflow-wrap:anywhere!important}
+:is(.home-page #grid,.catalog-grid) [data-instant-plan] .pad{grid-template-rows:auto minmax(24px,auto) minmax(15px,auto) minmax(23px,auto) 44px}
+@media(max-width:767px){:is(.home-page #grid,.catalog-grid) [data-instant-plan] .pad{grid-template-rows:auto auto auto auto}}

@@ -14,6 +14,8 @@
   const source=document.getElementById('catalogCartProducts');
   if(state!==scope||!source||!Array.isArray(inventory))return;
   state.stockAt=performance.now();
+  window.dispatchEvent(new CustomEvent('mirpanel:catalog-stock',{detail:{source,inventory,valid:true}}));
+  if(new URLSearchParams(location.search).get('delivery')==='instant')return;
   const byId=new Map(inventory.map(row=>[row.productId,row]));
   for(const product of JSON.parse(source.textContent)){
    const ledger=byId.get(product.id);
@@ -43,7 +45,7 @@
  }
  function refreshStock(state){
   if(state.stockRequest||document.hidden||performance.now()-(state.stockAt??-Infinity)<10000)return;
-  state.stockRequest=paintStock(state).catch(()=>{if(state===scope)document.querySelectorAll('.catalog-grid .homeCardDelivery').forEach(n=>n.remove());}).finally(()=>{state.stockRequest=null;});
+  state.stockRequest=paintStock(state).catch(()=>{if(state===scope){document.querySelectorAll('.catalog-grid .homeCardDelivery').forEach(n=>n.remove());window.dispatchEvent(new CustomEvent('mirpanel:catalog-stock',{detail:{source:document.getElementById('catalogCartProducts'),valid:false}}));}}).finally(()=>{state.stockRequest=null;});
  }
  function stop(){clearInterval(scope?.stockTimer);clearInterval(scope?.salesTimer);scope?.controller.abort();scope?.observer?.disconnect();scope=null;}
  function start(){
@@ -55,7 +57,7 @@
   state.stockTimer=setInterval(()=>refreshStock(state),10000);
   state.refreshSales=()=>{
    if(document.hidden||state!==scope)return;
-   for(const line of nodes){const box=line.closest('.card')?.getBoundingClientRect();if(box&&box.bottom>0&&box.top<innerHeight+160&&!state.pending.has(line)&&!state.queue.includes(line))state.queue.push(line);}
+   for(const line of document.querySelectorAll('.catalog-grid [data-home-sales-id]')){const box=line.closest('.card')?.getBoundingClientRect();if(box&&box.bottom>0&&box.top<innerHeight+160&&!state.pending.has(line)&&!state.queue.includes(line))state.queue.push(line);}
    drain();
   };
   state.salesTimer=setInterval(()=>state.refreshSales(),10000);
@@ -79,6 +81,8 @@
   for(const card of lines.keys())if(card)state.observer.observe(card);
  }
  window.addEventListener('mirpanel:route-leave',stop);
+ window.addEventListener('mirpanel:catalog-filtered',()=>scope?.refreshSales?.());
+ window.addEventListener('mirpanel:catalog-stock-retry',()=>{if(scope){scope.stockAt=-Infinity;refreshStock(scope);}});
  window.addEventListener('mirpanel:route-ready',start);
  window.addEventListener('pagehide',stop);
  window.addEventListener('pageshow',start);
@@ -114,6 +118,8 @@ document.addEventListener('click', async event => {
   ]);
   if(!add.isConnected||clickLife.signal.aborted)return;
   const state=model.inventoryAvailability(product,inventory.products.find(p=>p.productId===product.id));
+  const exact=add.closest('[data-instant-plan]')?.dataset.instantPlan;
+  if(exact!==undefined){const {instantPlanIndices}=await import('/ready-delivery.mjs?v=instant-filter-1');const index=Number(exact);if(!instantPlanIndices(product,state.plans).includes(index))throw Error('Bu paket üçün hazır hesab artıq yoxdur.');await entry.startCartEntry(product,product.plans[index]);return;}
   const choices=product.plans.map((plan,index)=>({plan,available:state.plans[index].canOrder})).filter(x=>x.plan.active!==false&&Number(x.plan.price)>0);
   if(!choices.some(x=>x.available))throw Error('Stokda yoxdur.');
   if(choices.length===1){await entry.startCartEntry(product,choices[0].plan);return;}
@@ -137,16 +143,38 @@ document.addEventListener('click', async event => {
 });
 
 // A category link narrows only the catalog list, preserving each product URL.
-(function(){
+(async function(){
+ const [{instantPlanIndices},{inventoryAvailability}]=await Promise.all([import('/ready-delivery.mjs?v=instant-filter-1'),import('/inventory-availability.mjs?v=epinby-stock-1')]);
+ const originals=new WeakMap();let snapshot=null;
  function filterCategory(){
   if(location.pathname!=='/mehsul')return;
   const grid=document.querySelector('.catalog-grid'),source=document.getElementById('catalogCartProducts');
   if(!grid||!source)return;
+  if(!originals.has(grid))originals.set(grid,grid.innerHTML);
   const selected=new URLSearchParams(location.search).get('category');
+  const instant=new URLSearchParams(location.search).get('delivery')==='instant';
   let products;try{products=JSON.parse(source.textContent);}catch{return;}
   const name=[...document.querySelectorAll('[data-catalog-category]')].find(n=>n.dataset.catalogCategory===selected)?.textContent;
   const title=document.querySelector('main h1');
-  if(title)title.textContent=selected==='featured'?'Hamı bunu alır':name||'Premium rəqəmsal məhsullar';
+  if(title)title.textContent=instant?'Anında təhvil':selected==='featured'?'Hamı bunu alır':name||'Premium rəqəmsal məhsullar';
+  let instantLink=document.querySelector('[data-catalog-instant]');
+  const nav=document.querySelector('nav[aria-label="Məhsul kateqoriyaları"]');
+  if(nav&&!instantLink){const all=document.createElement('a');all.href='/mehsul';all.textContent='Hamısı';instantLink=document.createElement('a');instantLink.href='/mehsul?delivery=instant';instantLink.textContent='⚡ Anında təhvil';instantLink.dataset.catalogInstant='';nav.prepend(all,instantLink);}
+  if(nav){nav.classList.add('catalog-filter-tabs');for(const a of nav.querySelectorAll('a')){const u=new URL(a.href);const chosen=instant?a===instantLink:!u.searchParams.has('delivery')&&(u.searchParams.get('category')||'')===(selected||'');a.classList.toggle('active',chosen);a.setAttribute('aria-current',chosen?'true':'false');}}
+  if(instant){
+   if(!grid.dataset.instantScrolled){grid.dataset.instantScrolled='1';nav?.scrollIntoView({block:'start',behavior:'instant'});}
+   document.getElementById('catalogCategoryEmpty')?.remove();
+   if(snapshot?.source!==source||snapshot.valid!==true){grid.innerHTML='<p class="home-catalog-status" role="status">'+(snapshot?.source===source?'Stok yoxlanıla bilmir. <button type="button" data-instant-retry>Yenidən cəhd et</button>':'Hazır hesablar yoxlanılır…')+'</p>';grid.querySelector('[data-instant-retry]')?.addEventListener('click',()=>window.dispatchEvent(new Event('mirpanel:catalog-stock-retry')));return;}
+   const byId=new Map(snapshot.inventory.map(p=>[p.productId,p]));
+   const chosen=products.map(p=>({p,index:instantPlanIndices(p,inventoryAvailability(p,byId.get(p.id)).plans)[0]})).filter(v=>v.index!==undefined);
+   grid.innerHTML=chosen.map(({p,index},i)=>{
+    const url='/mehsul/'+String(p.seoSlug||p.id).replace(/-almaq$/,'')+'?plan='+index;
+    return window.MirpanelCatalogCard.render(p,i,url,p.title,Number(p.plans[index].price),Number(p.plans[index].price).toFixed(2)+' '+(p.currency||'₼'),'',true).replace('<article ','<article data-instant-plan="'+index+'" ');
+   }).join('')||'<p class="home-catalog-status">Hazırda anında təhvil verilən hesab yoxdur<br><a href="/mehsul">Bütün məhsullara bax</a></p>';
+   window.dispatchEvent(new Event('mirpanel:catalog-filtered'));return;
+  }
+  if(grid.querySelector('[data-instant-plan],.home-catalog-status'))grid.innerHTML=originals.get(grid);
+  delete grid.dataset.instantScrolled;
   const ids=new Set(products.filter(p=>!selected||p.category===selected||selected==='featured'&&p.bestSeller===true).map(p=>p.id));
   for(const card of grid.querySelectorAll('[data-product-id]'))card.hidden=!ids.has(card.dataset.productId);
   let empty=document.getElementById('catalogCategoryEmpty');
@@ -154,6 +182,8 @@ document.addEventListener('click', async event => {
   if(empty)empty.hidden=!!ids.size;
  }
  window.addEventListener('mirpanel:route-ready',filterCategory);
+ window.addEventListener('mirpanel:catalog-stock',event=>{snapshot=event.detail;filterCategory();});
+ window.addEventListener('mirpanel:prices',()=>{if(new URLSearchParams(location.search).get('delivery')==='instant')filterCategory();});
  window.addEventListener('popstate',filterCategory);
  filterCategory();
 })();
