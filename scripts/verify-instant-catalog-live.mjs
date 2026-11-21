@@ -11,7 +11,7 @@ try{for(const width of [390,1440]){
   const selector=route.startsWith('/?')?'#grid':'.catalog-grid';
   await page.waitForFunction(s=>{const n=document.querySelector(s);return n?.querySelector('[data-instant-plan]')||n?.textContent.includes('Hazırda anında təhvil verilən hesab yoxdur');},selector);
   const cards=await page.locator(selector+' [data-instant-plan]').evaluateAll(ns=>ns.map(n=>({product:n.dataset.productId,plan:Number(n.dataset.instantPlan),title:n.querySelector('.title').textContent,price:n.querySelector('.homeCardPrices strong').textContent,href:n.querySelector('.homeCardOrder').getAttribute('href')})));
-  for(const card of cards){assert(card.href.endsWith('?plan='+card.plan));assert(card.title.includes(' — '));}
+  for(const card of cards){assert(card.href.endsWith('?plan='+card.plan));assert(card.title.includes(' — '));assert(!/undefined|null/.test(card.title));}
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   const filter=page.locator(route.startsWith('/?')?'.home-filter-tabs':'.catalog-filter-tabs');await filter.scrollIntoViewIfNeeded();
   await page.screenshot({path:`${out}/live-${route.startsWith('/?')?'home':'listing'}-${width}.png`});

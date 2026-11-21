@@ -5,7 +5,7 @@
  function render(p,index,url,title,price,shownPrice,stock='',home=true){
   const exact=new URL(url,'https://mirpanel.com').searchParams.get('plan');
   if(root.MirpanelPricing){root.MirpanelPricing.attach([p]);const values=(p.plans||[]).filter(plan=>root.MirpanelPricing.standard(plan)>0).map(plan=>Number(plan.price));if(values.length){price=Math.min(...values);shownPrice=price.toFixed(2)+' '+(p.currency||'₼');}}
-  if(exact!==null&&/^\d+$/.test(exact)&&p.plans?.[Number(exact)]){const selected=p.plans[Number(exact)];price=Number(selected.price);shownPrice=price.toFixed(2)+' '+(p.currency||'₼');title+=' — '+(selected.label||selected.name||selected.durationDays+' gün');}
+  if(exact!==null&&/^\d+$/.test(exact)&&p.plans?.[Number(exact)]){const selected=p.plans[Number(exact)];price=Number(selected.price);shownPrice=price.toFixed(2)+' '+(p.currency||'₼');title+=' — '+(String(selected.label||selected.name||'').trim()||(selected.durationDays?selected.durationDays+' gün':selected.months?selected.months+' ay':'Paket'));}
   const plan=exact!==null?p.plans?.[Number(exact)]:(p.plans||[]).find(v=>Number(v.price)===price),cents=Math.round(price*100),old=Math.round(Number(plan?.regularPrice)*100),discount=Number.isSafeInteger(cents)&&cents>0&&Number.isSafeInteger(old)&&old>cents;
   const canBuy=Number.isFinite(price)&&price>0, action=canBuy?"Sifariş et":"Məhsula bax";
   const href=esc(url),id=esc(p.id),labels=[p.bestSeller===true?'🔥 Ən çox satılan':''].filter(Boolean);

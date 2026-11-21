@@ -43,11 +43,11 @@
 
   // Homepage only: the exact starting-price plan represented by the card.
   // Never aggregate unrelated plan pools, or display a synthetic fail-closed zero.
-  function homeStockBadgeData(product,homepage=true) {
+  function homeStockBadgeData(product,homepage=true,exactIndex) {
     const ledger=inventory.get(product.id);
     if(ledger?.salesDisabled)return {text:'Stokda yoxdur',className:'out'};
     if(!inventoryDisplayValid||!ledger||ledger.needsSetup)return null;
-    const pricePlan=window.mirpanelHomeInstant?instantPlans(product)[0]:(product.plans||[]).findIndex(plan=>Number(plan.price)===minPrice(product));
+    const pricePlan=exactIndex??(window.mirpanelHomeInstant?instantPlans(product)[0]:(product.plans||[]).findIndex(plan=>Number(plan.price)===minPrice(product)));
     const supplier=ledger.plans?.find(plan=>plan.planKey===String(pricePlan))?.supplierStock;
     if(supplier&&inventoryFailed)return {text:'Stok yoxlanıla bilmir',className:'unknown'};
     if(supplier?.status==='out')return {text:'Stokda bitib',className:'out'};
@@ -63,7 +63,7 @@
       stock=ledger.available;
     }else if(ledger.scope==='plan'){
       const price=product.id==='tiktok_jeton'?10:minPrice(product);
-      const index=window.mirpanelHomeInstant?instantPlans(product)[0]:(product.plans||[]).findIndex(plan=>Number(plan.price)===price);
+      const index=pricePlan;
       const plan=ledger.plans?.find(plan=>plan.planKey===String(index));
       if(!plan||plan.tracked===false)return null;
       stock=plan.available;
@@ -258,7 +258,8 @@
         const state=stateFor(product);
         document.querySelectorAll('.homeProductCard[data-product-id]').forEach(card=>{
           if(card.dataset.productId!==product.id)return;
-          const badge=homeStockBadgeData(product,!!card.closest('#homePageView #grid'));let line=card.querySelector('.cardStockLine');
+          const exact=card.dataset.instantPlan===undefined?undefined:Number(card.dataset.instantPlan);
+          const badge=homeStockBadgeData(product,!!card.closest('#homePageView #grid'),exact);let line=card.querySelector('.cardStockLine');
           if(!badge)line?.remove();
           else{
             if(!line){line=document.createElement('div');line.className='cardStockLine';card.querySelector('.pad').append(line);}
@@ -277,7 +278,7 @@
               badge.textContent='Anında';card.querySelector('.imgWrap')?.append(badge);
             }
           } else {
-            const start=(product.plans||[]).findIndex(p=>Number(p.price)===minPrice(product)),label=deliveryFor(product,start);
+            const start=exact??(product.plans||[]).findIndex(p=>Number(p.price)===minPrice(product)),label=deliveryFor(product,start);
             card.querySelector('.homeCardInstant')?.remove();
             let delivery=card.querySelector('.homeCardDelivery');
             if(!label)delivery?.remove();
