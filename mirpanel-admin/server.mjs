@@ -79,7 +79,9 @@ const config = {
   receiptOcrToken: process.env.RECEIPT_OCR_TOKEN || '',
   adminBaseUrl: process.env.RENDER_EXTERNAL_URL || "https://mirpanel-frankfurt.onrender.com",
   siteBaseUrl: process.env.MIRPANEL_SITE_URL || "https://mirpanel.com",
-  whatsappPhone: process.env.MIRPANEL_WHATSAPP_PHONE || "994515243545",
+  // Migrate the retired support number even when an older deployment env retains it.
+  whatsappPhone: /^(?:994|0)515243545$/.test(String(process.env.MIRPANEL_WHATSAPP_PHONE || '').replace(/\D/g, ''))
+    ? "994514113545" : process.env.MIRPANEL_WHATSAPP_PHONE || "994514113545",
   notificationEmail: process.env.PAYMENT_NOTIFICATION_EMAIL || "",
   gmailClientId: process.env.GMAIL_CLIENT_ID || "",
   gmailClientSecret: process.env.GMAIL_CLIENT_SECRET || "",

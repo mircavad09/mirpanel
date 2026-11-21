@@ -52,8 +52,8 @@ for(const engine of (site?[chromium]:[chromium,webkit])){
   }
   await panel.locator('#support-question-2').click();
   await page.screenshot({path:out+'/'+(live?'live':'local')+'-'+engine.name()+'-'+width+'.png'});
-  const operator=panel.getByRole('link',{name:'Operatorla danış',exact:true});assert.equal(await operator.getAttribute('href'),'https://wa.me/994515243545');
-  const popupPromise=page.waitForEvent('popup');await operator.click();const popup=await popupPromise;await popup.waitForLoadState();assert(popup.url().startsWith('https://wa.me/994515243545'));await popup.close();
+  const operator=panel.getByRole('link',{name:'Operatorla danış',exact:true});assert.equal(await operator.getAttribute('href'),'https://wa.me/994514113545');
+  const popupPromise=page.waitForEvent('popup');await operator.click();const popup=await popupPromise;await popup.waitForLoadState();assert(popup.url().startsWith('https://wa.me/994514113545'));await popup.close();
   await panel.getByRole('button',{name:'Söhbəti bağla'}).click();await panel.waitFor({state:'hidden'});
   assert.equal(await page.evaluate(()=>document.body.style.overflow),'');
   await launcher.click();await page.keyboard.press('Escape');await panel.waitFor({state:'hidden'});

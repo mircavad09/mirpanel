@@ -47,7 +47,7 @@ try{for(const width of (process.env.SHELL_WIDTHS||'390,1440').split(',').map(Num
    await footer.locator('[data-network]:visible').first().waitFor();
    if(label)await footer.getByText(label+' tamamlanmış satış',{exact:true}).waitFor();
    else eq(await footer.locator('#footerCompleted').isHidden(),true);
-   eq(await cta.getAttribute('href'),'https://wa.me/994515243545');eq(await cta.getAttribute('target'),'_blank');
+   eq(await cta.getAttribute('href'),'https://wa.me/994514113545');eq(await cta.getAttribute('target'),'_blank');
   }
   rows.push({width,whatsapp:true,verifiedCount:true});await c.close();continue;
  }

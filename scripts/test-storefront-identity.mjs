@@ -119,7 +119,7 @@ try{
      await page.locator('#accountNotifications').waitFor();
      await page.keyboard.press('Escape');
      await page.locator('.account-toggle').click();
-     assert.equal(await page.locator('#accountDropdown a[target="_blank"]').getAttribute('href'),'https://wa.me/994515243545');
+     assert.equal(await page.locator('#accountDropdown a[target="_blank"]').getAttribute('href'),'https://wa.me/994514113545');
      profile=second;
      await page.evaluate(()=>window.refreshCommunityNav());
      await identity();

@@ -92,7 +92,7 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
     message.push('');
    }
    message.push('Cəmi: '+(Number(g.total_cents)/100).toFixed(2)+' AZN','Çek MirPanel-ə yüklənib. Ödənişi yoxlayın.');
-   const phone=/^\d{8,15}$/.test(String(config.whatsappPhone||'').replace(/\D/g,''))?String(config.whatsappPhone).replace(/\D/g,''):'994515243545';
+   const phone=/^\d{8,15}$/.test(String(config.whatsappPhone||'').replace(/\D/g,''))?String(config.whatsappPhone).replace(/\D/g,''):'994514113545';
    whatsappUrl='https://wa.me/'+phone+'?text='+encodeURIComponent(message.join('\n'));
   }
  }

@@ -3,7 +3,7 @@ import {shopFixture} from './shop-test-fixture.mjs';import {createShop} from '..
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';import {termsInfo} from '../mirpanel-admin/cart-drafts.mjs';import {extractAdminState,patchAppSource} from '../mirpanel-admin/core.mjs';
 const {chromium}=await import('file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs');
 process.env.MIRPANEL_CART_V2_TEST='1';const f=await shopFixture();let browser,server;
-const config={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64'),receiptsBucket:'synthetic',whatsappPhone:'994515243545'},security=createPaymentSecurity(config);
+const config={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64'),receiptsBucket:'synthetic',whatsappPhone:'994514113545'},security=createPaymentSecurity(config);
 const source=fs.readFileSync('app.js','utf8'),state=extractAdminState(source),prime=state.products.find(p=>p.id==='prime');
 assert.equal(prime.confirmationModal.enabled,false);assert.equal(extractAdminState(patchAppSource(source,state)).products.find(p=>p.id==='prime').confirmationModal.enabled,false);
 f.catalog.products=[{id:'prime',title:'Amazon Prime Video',active:true,formFields:[],plans:[{price:5,months:1,label:'1 ay'}],confirmationModal:{enabled:false,description:'Sintetik Amazon xəbərdarlığı'}},

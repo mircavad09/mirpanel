@@ -51,7 +51,7 @@
       slug: "elaqe",
       title: "Əlaqə",
       subtitle: "Mirpanel dəstək komandası ilə əlaqə",
-      whatsappNumber: "051 524 35 45",
+      whatsappNumber: "051 411 35 45",
       buttonText: "WhatsApp ilə əlaqə",
       body: "Sualınız varsa WhatsApp üzərindən bizimlə əlaqə saxlaya bilərsiniz.",
       workHours: "Dəstək WhatsApp üzərindən göstərilir.",

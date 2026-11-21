@@ -39,7 +39,7 @@ function planName(plan) {
 export function buildCanonicalWhatsApp(order, methodLabel, extraText, configuredPhone) {
   let phone = String(configuredPhone || "").replace(/\D/g, "");
   if (phone.startsWith("0")) phone = `994${phone.slice(1)}`;
-  if (!/^\d{8,15}$/.test(phone)) phone = "994515243545";
+  if (!/^\d{8,15}$/.test(phone)) phone = "994514113545";
   const extra = safeMultiline(extraText, 2000);
   const message = [
     "Salam, ödəniş etmişəm.", "",
@@ -630,7 +630,7 @@ export function createPaymentSystem(options) {
       await store.markCapcutNotified(delivery.order_id);
       const order = delivery.payment_orders || {};
       const message = `Salam. CapCut sifarişimin yoxlanmasını gözləyirəm.\nSifariş: ${safeText(order.order_code, 30)}\nMüştəri nömrəsi: +${delivery.customer_phone}\nMəhsul: CapCut\nMəbləğ: ${Number(order.amount).toFixed(2)} ${safeText(order.currency || "AZN", 8)}\nÇek yüklənib, yoxlama gözlənilir.`;
-      const phone = String(config.whatsappPhone || "994515243545").replace(/\D/g, "");
+      const phone = String(config.whatsappPhone || "994514113545").replace(/\D/g, "");
       publicJson(request, response, 200, { status: delivery.status, whatsappUrl: `https://wa.me/${phone}?text=${encodeURIComponent(message)}` }); return true;
     }
     return false;

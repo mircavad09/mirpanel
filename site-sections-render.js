@@ -32,7 +32,7 @@
       slug: "elaqe",
       title: "Əlaqə",
       subtitle: "Mirpanel dəstək komandası ilə əlaqə",
-      whatsappNumber: "051 524 35 45",
+      whatsappNumber: "051 411 35 45",
       buttonText: "WhatsApp ilə əlaqə",
       body: "Sualınız varsa WhatsApp üzərindən bizimlə əlaqə saxlaya bilərsiniz.",
       workHours: "Dəstək WhatsApp üzərindən göstərilir.",
@@ -122,7 +122,7 @@
 
   function whatsappHref(number) {
     const digits = String(number || "").replace(/\D/g, "");
-    if (!digits) return "https://wa.me/994515243545";
+    if (!digits) return "https://wa.me/994514113545";
     return `https://wa.me/${digits.startsWith("0") ? `994${digits.slice(1)}` : digits}`;
   }
 

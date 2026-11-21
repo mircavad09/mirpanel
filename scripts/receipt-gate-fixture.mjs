@@ -5,7 +5,7 @@ import {execFileSync} from 'node:child_process';
 import {createPaymentSystem} from '../mirpanel-admin/payment-api.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 export async function receiptFixture({employeeEnabled=false,browserOrdersEnabled=false,receiptValidationEnabled=false,receiptShapeEnabled=false,analyzeReceipt,analyzeReceiptShape,createSystem=createPaymentSystem}={}){
- const config={supabaseUrl:'https://test.invalid',supabaseSecretKey:'test-only',receiptsBucket:'private-test',encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64'),allowedOrigins:[],maxReceiptBytes:5*1024*1024,notificationEmail:'test@example.invalid',adminBaseUrl:'https://admin.invalid',whatsappPhone:'994515243545'};
+ const config={supabaseUrl:'https://test.invalid',supabaseSecretKey:'test-only',receiptsBucket:'private-test',encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64'),allowedOrigins:[],maxReceiptBytes:5*1024*1024,notificationEmail:'test@example.invalid',adminBaseUrl:'https://admin.invalid',whatsappPhone:'994514113545'};
  const security=createPaymentSecurity(config),methodId=crypto.randomUUID(),reservations=new Map(),orders=new Map(),files=new Map();
  config.employeeEnabled=employeeEnabled;config.inventoryEnabled=true;
  config.browserOrdersEnabled=browserOrdersEnabled;

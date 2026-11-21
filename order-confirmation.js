@@ -1439,7 +1439,7 @@
     }
     phone = String(phone).replace(/\D/g, "");
     if (phone.startsWith("0")) phone = `994${phone.slice(1)}`;
-    if (!/^\d{8,15}$/.test(phone)) phone = "994515243545";
+    if (!/^\d{8,15}$/.test(phone)) phone = "994514113545";
 
     const whatsappUrl = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
     const verified = new URL(whatsappUrl);

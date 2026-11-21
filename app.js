@@ -2,7 +2,7 @@
    app.js — Mirpanel (TAM FINAL: YENİ SIRALAMA BANNERİ VƏ YAN MENYU)
    ========================================================= */
 
-let PHONE_WA = "https://wa.me/994515243545";
+let PHONE_WA = "https://wa.me/994514113545";
 
 /* =========================
    UI MƏTNLƏRİ (YALNIZ AZ)
@@ -4273,8 +4273,8 @@ const CMS_CONTENT = {
     "brandName": "Mirpanel",
     "logo": "assets/logo.png",
     "brandSubtitle": "Premium Hesablar • Etibarlı Aktivləşmə",
-    "whatsappNumber": "994515243545",
-    "phoneDisplay": "051 524 35 45"
+    "whatsappNumber": "994514113545",
+    "phoneDisplay": "051 411 35 45"
   },
   "homepage": {
     "announcement": {
@@ -4403,15 +4403,15 @@ const CMS_CONTENT = {
     "title": "",
     "workHours": "",
     "alt": "Canlı Dəstək",
-    "url": "https://wa.me/994515243545",
+    "url": "https://wa.me/994514113545",
     "enabled": true
   },
   "footer": {
     "copyrightText": "Bütün hüquqlar qorunur",
     "year": 2026,
     "brandName": "Mirpanel",
-    "phone": "051 524 35 45",
-    "whatsapp": "994515243545",
+    "phone": "051 411 35 45",
+    "whatsapp": "994514113545",
     "shortText": "",
     "links": [
       {
@@ -4658,7 +4658,7 @@ const SITE_SECTIONS = {
   "elaqe": {
     "enabled": true,
     "title": "Əlaqə",
-    "whatsappNumber": "051 524 35 45",
+    "whatsappNumber": "051 411 35 45",
     "buttonText": "WhatsApp ilЙ™ yaz",
     "text": "",
     "order": 3,

@@ -1387,7 +1387,7 @@ function renderCategories() {
 function renderSettings() {
   const ui = state.data.ui || {};
   setValue("settingBrand", state.data.brand || "Mirpanel");
-  setValue("settingPhone", state.data.phone_wa || "https://wa.me/994515243545");
+  setValue("settingPhone", state.data.phone_wa || "https://wa.me/994514113545");
   setValue("settingBrandSub", ui.brandSub || "");
   setValue("settingBannerText", ui.bannerText || "");
   setValue("settingSearchTitle", ui.searchTitle || "");

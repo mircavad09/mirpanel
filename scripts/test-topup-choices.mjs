@@ -62,7 +62,7 @@ try{for(const engine of ['chrome','webkit']){const b=await(engine==='chrome'?chr
  eq(await p.getByText('Sintetik tarixçə qeydi',{exact:true}).count(),0);
  eq(await faq.getByRole('link',{name:'Ödənişlərim'}).getAttribute('href'),'/profil?tab=odenislerim');
  const operator=p.locator('#customerFooter').getByRole('link',{name:'Operatora yaz',exact:true});
- await operator.waitFor();eq(await operator.getAttribute('href'),'https://wa.me/994515243545');await operator.click({trial:true});
+ await operator.waitFor();eq(await operator.getAttribute('href'),'https://wa.me/994514113545');await operator.click({trial:true});
  for(const n of [5,10,20,50,100]){await presets.filter({hasText:new RegExp('^'+n+' ₼$')}).click();eq(await input.inputValue(),'');eq(await preview.textContent(),(12+n).toFixed(2)+' ₼');eq(await p.locator('.shop-presets [aria-pressed=true]').count(),1);}
  for(const [v,sum]of [['1','13.00 ₼'],['500','512.00 ₼'],['5,25','17.25 ₼'],['0.99','—'],['500.01','—'],['-1','—'],['5.123','—'],['5,123','—'],['1e2','—'],['','—'],['1.01','13.01 ₼']]){await input.fill(v);eq(await preview.textContent(),sum,v);eq(await p.locator('.shop-presets [aria-pressed=true]').count(),0);eq(await next.isDisabled(),sum==='—');}
  await presets.first().click();eq(await input.inputValue(),'');eq(await input.getAttribute('aria-invalid'),'false');eq(await preview.textContent(),'17.00 ₼');eq(await p.locator('#topupAmountError').textContent(),'');

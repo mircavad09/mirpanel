@@ -146,7 +146,7 @@ function normalizeInfoCard(item = {}, fallback = {}) {
 }
 
 function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
-  const whatsappNumber = String(phone_wa || "").replace(/\D/g, "") || "994515243545";
+  const whatsappNumber = String(phone_wa || "").replace(/\D/g, "") || "994514113545";
   const searchMarkup = String(ui?.searchTitle || "");
   const searchHighlight = searchMarkup.match(/<span[^>]*>([\s\S]*?)<\/span>/i)?.[1] || "";
   const searchPrefix = searchMarkup.replace(/<span[^>]*>[\s\S]*?<\/span>/gi, "").replace(/<[^>]+>/g, "").trim();
@@ -157,7 +157,7 @@ function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
       logo: "",
       brandSubtitle: cleanText(ui?.brandSub),
       whatsappNumber,
-      phoneDisplay: cleanText(siteSections?.elaqe?.whatsappNumber, "051 524 35 45", 40)
+      phoneDisplay: cleanText(siteSections?.elaqe?.whatsappNumber, "051 411 35 45", 40)
     },
     homepage: {
       announcement: { enabled: Boolean(ui?.bannerText), text: cleanText(ui?.bannerText) },
@@ -210,7 +210,7 @@ function cmsDefaults({ brand, phone_wa, ui, siteSections } = {}) {
       copyrightText: cleanText(ui?.footRights, "Bütün hüquqlar qorunur."),
       year: new Date().getUTCFullYear(),
       brandName: cleanText(brand, "Mirpanel", 80),
-      phone: cleanText(siteSections?.elaqe?.whatsappNumber, "051 524 35 45", 40),
+      phone: cleanText(siteSections?.elaqe?.whatsappNumber, "051 411 35 45", 40),
       whatsapp: whatsappNumber,
       shortText: "",
       links: []
@@ -394,7 +394,7 @@ const SITE_SECTION_DEFAULTS = {
   elaqe: {
     enabled: true,
     title: "Əlaqə",
-    whatsappNumber: "051 524 35 45",
+    whatsappNumber: "051 411 35 45",
     buttonText: "WhatsApp ilə yaz",
     text: "",
     order: 3
@@ -1029,7 +1029,7 @@ export function normalizeAdminPayload(payload = {}) {
 
   return {
     brand: String(payload.brand || "Mirpanel"),
-    phone_wa: String(payload.phone_wa || "https://wa.me/994515243545"),
+    phone_wa: String(payload.phone_wa || "https://wa.me/994514113545"),
     categories,
     products,
     content,
@@ -1052,7 +1052,7 @@ export function normalizeAdminPayload(payload = {}) {
 function extractPhone(source) {
   return (
     source.match(/const\s+PHONE_WA\s*=\s*["']([^"']+)["']\s*;/)?.[1] ||
-    "https://wa.me/994515243545"
+    "https://wa.me/994514113545"
   );
 }
 
