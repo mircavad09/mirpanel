@@ -295,9 +295,14 @@ export function subscriptionReminderMail(job,{entry,account},origin){
   </td></tr></table></td></tr></table></body></html>`};
 }
 export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCatalog,adminOrigin=origin,topupPreview,requireDeliveryNotice=false,subscriptionReminders=false,now=()=>new Date()}={}){
- let timer,running,nextReminderScan=0;
+ let timer,running,nextReminderScan=0,recoveredRateLimits=false;
  const report=(id,state,reason)=>console.warn('CUSTOMER_ORDER_MAIL',id,state,reason);
  async function drain(){
+  if(!recoveredRateLimits){
+   // These rows were explicit provider rejections, never accepted submissions.
+   await pool.query(`update ${M} set state='queued',next_at=now(),updated_at=now() where state='failed' and reason='SEND_RATE_LIMITED' and provider_id is null`);
+   recoveredRateLimits=true;
+  }
   const current=now();
   if(subscriptionReminders&&current.getTime()>=nextReminderScan){
    nextReminderScan=current.getTime()+15*60*1000;
@@ -358,14 +363,16 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
       }
       adminMessage=adminTopupMail(job,adminOrigin,preview,{test:job.topup_snapshot.test===true});
      }
-     const result=await send('order',adminMessage??(active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):passwordNotice?roomPasswordMail(job,o,origin):orderMail(o,origin,{records,catalog})));
+     const message=adminMessage??(active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):passwordNotice?roomPasswordMail(job,o,origin):orderMail(o,origin,{records,catalog}));
+     const result=await send('order',{...message,idempotencyKey:job.event_key});
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
      state='accepted';reason=requireDeliveryNotice&&!reminder&&(job.topup_id||!receipt&&!cancellation&&!passwordNotice&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;
     }catch(e){
-     const retry=e.deliveryDisposition==='retry'&&job.attempts<3;
+     const providerPaused=e.deliveryDisposition==='retry'&&['SEND_RATE_LIMITED','SEND_DAILY_QUOTA','SEND_MONTHLY_QUOTA'].includes(e.deliveryCode);
+     const retry=e.deliveryDisposition==='retry'&&(providerPaused||job.attempts<3);
      state=retry?'queued':['retry','failed'].includes(e.deliveryDisposition)?'failed':'uncertain';
-     reason=['TOKEN_TEMPORARY','TOKEN_REJECTED','AUTH_CONFIGURATION','SEND_RATE_LIMITED','SEND_REJECTED','TOPUP_PREVIEW_UNAVAILABLE'].includes(e.deliveryCode)?e.deliveryCode:'SEND_RESULT_UNKNOWN';
-     delay=Math.max(Number(e.retryAfterMs)||0,job.attempts*30000);
+     reason=['TOKEN_TEMPORARY','TOKEN_REJECTED','AUTH_CONFIGURATION','SEND_RATE_LIMITED','SEND_DAILY_QUOTA','SEND_MONTHLY_QUOTA','SEND_REJECTED','TOPUP_PREVIEW_UNAVAILABLE'].includes(e.deliveryCode)?e.deliveryCode:'SEND_RESULT_UNKNOWN';
+     delay=Math.max(Number(e.retryAfterMs)||0,providerPaused?Math.min(300000,30000*2**Math.min(job.attempts-1,4)):job.attempts*30000);
     }
    }else if(o?.emailVerified){reason='PAYMENT_NOT_CONFIRMED';}
    await pool.query(`update ${M} set state=$2,reason=$3,provider_id=$4,next_at=now()+$5*interval '1 millisecond',updated_at=now() where event_key=$1 and state='sending'`,[job.event_key,state,reason,provider,delay]);

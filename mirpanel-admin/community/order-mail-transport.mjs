@@ -22,7 +22,9 @@ export function createOrderMailTransport(env,defaultSend,{fetcher=fetch}={}){
     if(response.status===429){
       const after=response.headers.get('Retry-After');
       const delay=after&&/^\d+$/.test(after)?Number(after)*1000:Math.max(0,Date.parse(after)-Date.now())||0;
-      throw fail('retry','SEND_RATE_LIMITED',delay);
+      const quota=result?.name==='daily_quota_exceeded'?'SEND_DAILY_QUOTA':result?.name==='monthly_quota_exceeded'?'SEND_MONTHLY_QUOTA':'SEND_RATE_LIMITED';
+      const now=new Date(),reset=quota==='SEND_DAILY_QUOTA'?Date.UTC(now.getUTCFullYear(),now.getUTCMonth(),now.getUTCDate()+1):quota==='SEND_MONTHLY_QUOTA'?Date.UTC(now.getUTCFullYear(),now.getUTCMonth()+1,1):0;
+      throw fail('retry',quota,Math.max(delay,reset?reset-Date.now()+2000:2000));
     }
     if([400,401,403,404,413,422].includes(response.status))throw fail('failed','SEND_REJECTED');
     // Do not switch providers or replay a submission whose acceptance is unknown.
