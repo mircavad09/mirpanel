@@ -177,7 +177,7 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   try{
    await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
    const jobs=(await c.query(`select d.*,o.checkout_snapshot,o.status,o.payment_confirmed,o.fulfillment_cancellation from ${D} d join public.payment_orders o on o.id=d.order_id
-    where d.supplier_id=$1 and d.state='queued' order by o.created_at,d.line_index for update of d,o skip locked limit 20`,[providerId])).rows;
+    where d.supplier_id=$1 and d.state='queued' and exists(select 1 from mirpanel_community.community_order_owners owner where owner.order_id=o.id) order by o.created_at,d.line_index for update of d,o skip locked limit 20`,[providerId])).rows;
    for(const job of jobs){
     if(!paid(job)||job.fulfillment_cancellation){await c.query("update "+D+" set state='skipped' where id=$1",[job.id]);continue;}
     const line=job.checkout_snapshot?.items?.[job.line_index];
@@ -237,17 +237,24 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
    if(charge)await db.query(`update ${U} set supplier_charge=$3 where id=$1 and external_id=$2 and state='succeeded' and supplier_charge is null`,[unit.id,unit.external_id,charge]);
   }catch{console.warn('EPINBY_CHARGE_READ_UNAVAILABLE');}
  }
+ async function reconcileEvents(db){
+  const events=(await db.query(`select e.event_id,e.payload_cipher,u.*,d.settings->>'type' type,(d.settings->>'productId')::int product_id
+   from mirpanel_community.epinby_events e join ${U} u on u.id=e.unit_id join ${D} d on d.id=u.dispatch_id
+   where u.state in ('queued','checking') order by e.received_at limit 100`)).rows;
+  for(const event of events)await record(db,event,JSON.parse(security.decryptSecret(event.payload_cipher)));
+ }
  async function run(db){
   if(!(await db.query("select to_regclass('"+U+"') n")).rows[0].n)return;
   const credentialsRow=await credentials(db);if(credentialsRow?.last_status!=='confirmed'||!credentialsRow.webhook_secret_cipher)return;
   if(Date.now()-synchronizedAt>=60000){synchronizedAt=Date.now();try{await synchronize(db);}catch{console.warn('EPINBY_MAPPING_REFRESH_RETRY');}}
+  await reconcileEvents(db);
   await prepare(db);
   const c=await db.connect();let unit;
   try{
    await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
    unit=(await c.query(`select u.*,d.order_id,d.line_index,d.settings,d.settings->>'type' type,(d.settings->>'productId')::int product_id
-    from ${U} u join ${D} d on d.id=u.dispatch_id join public.payment_orders o on o.id=d.order_id where (o.payment_confirmed=true or o.status='approved') and o.status not in ('cancelled','rejected','expired','completed') and o.fulfillment_cancellation is null and u.state in ('queued','checking','succeeded') and u.next_at<=now() and (u.external_id is not null or u.state='succeeded' or not exists(select 1 from ${U} waiting where waiting.state='queued' and waiting.reason like 'Epinby balansı%' and waiting.next_at>now()))
-    order by case when u.external_id is not null or u.state='succeeded' then 0 else 1 end,o.created_at,d.line_index,u.unit_index limit 1 for update of u,d,o skip locked`)).rows[0];
+    from ${U} u join ${D} d on d.id=u.dispatch_id join public.payment_orders o on o.id=d.order_id where exists(select 1 from mirpanel_community.community_order_owners owner where owner.order_id=o.id) and (o.payment_confirmed=true or o.status='approved') and o.status not in ('cancelled','rejected','expired','completed') and o.fulfillment_cancellation is null and u.state in ('queued','checking','succeeded') and u.next_at<=now() and (u.external_id is not null or u.state='succeeded' or not exists(select 1 from ${U} waiting where waiting.state='queued' and waiting.reason like 'Epinby balansı%' and waiting.next_at>now()))
+    order by case when u.external_id is not null or u.state='succeeded' then 0 when u.state='queued' then 1 else 2 end,u.next_at,o.created_at,d.line_index,u.unit_index limit 1 for update of u,d,o skip locked`)).rows[0];
    if(unit)await c.query(`update ${U} set state=case when state='queued' then 'checking' else state end,reason=case when state='queued' then 'Göndəriş başlanıb; nəticə təsdiqi gözlənilir.' else reason end,next_at=now()+interval '1 minute' where id=$1`,[unit.id]);
    if(unit)await c.query("update "+D+" set state='checking' where id=$1",[unit.dispatch_id]);
    await c.query('commit');
@@ -262,27 +269,27 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
    try{
     await snapshotQuote(db,row,unit);
     let result;
-    if(unit.type==='TELEGRAM_STARS'){
+    if(unit.state!=='queued'&&!unit.external_id){
+     const orders=await send(row,'orders');
+     const found=Array.isArray(orders.data)&&orders.data.find(x=>x.client_order_id===unit.id);
+     if(found)result={success:true,data:found};
+    }else if(unit.type==='TELEGRAM_STARS'){
      result=unit.external_id?await send(row,'telegram-stars/order/'+unit.external_id)
       :await send(row,'telegram-stars/order',{body:JSON.parse(security.decryptSecret(unit.body_cipher)),reference:unit.id,idempotencyHeader:'X-Idempotency-Key'});
     }else if(unit.state==='queued')result=await sendStockCheckedOrder(row,unit);
     else if(unit.external_id)result=await send(row,'order/'+unit.external_id);
-    else{
-     const orders=await send(row,'orders');const found=Array.isArray(orders.data)&&orders.data.find(x=>x.client_order_id===unit.id);
-     if(found)result={success:true,data:found};
-     else if(orders.success===true&&Array.isArray(orders.data))result=await sendStockCheckedOrder(row,unit);
-    }
+    // Absence from a partial or delayed list never authorizes another purchase.
     if(result?.success===false&&result.error?.code)throw Object.assign(Error('SUPPLIER_REJECTED'),{supplierCode:result.error.code});
     if(result?.success===true&&result.data)await record(db,unit,result.data);
 
-    else await db.query(`update ${U} set reason=$2 where id=$1 and state='checking'`,[unit.id,'Nəticə qeyri-müəyyəndir. Status yoxlanılır; yeni alış göndərilmir.']);
+    else await db.query(`update ${U} set reason=$2 where id=$1 and state='checking'`,[unit.id,'Yoxlama gözləyir · Nəticə qeyri-müəyyəndir; yeni alış göndərilmir.']);
    }catch(error){
     const code=error.supplierCode;
     const balance=['INSUFFICIENT_FUNDS','INSUFFICIENT_BALANCE','BALANCE_NOT_ENOUGH'].includes(code);
     const blocked=['VALIDATION_ERROR','INVALID_INPUT','PLAYER_NOT_FOUND','PRODUCT_NOT_FOUND','VALIDATION_REQUIRED','IDEMPOTENCY_CONFLICT'].includes(code)||[400,401,403,422].includes(error.supplierStatus);
     const stockWaiting=['EPINBY_OUT_OF_STOCK','EPINBY_STOCK_UNKNOWN','EPINBY_PRODUCT_UNAVAILABLE','EPINBY_CATALOG_UNAVAILABLE','EPINBY_SCHEMA_CHANGED','EPINBY_MAPPING_MISMATCH'].includes(error.code);
-    const state=balance||stockWaiting&&unit.state==='queued'?'queued':blocked?'failed':'checking';
-    const reason=stockWaiting?'Təchizatçı stoku gözlənilir · '+error.message:balance?'Epinby balansı gözlənilir · '+code:blocked?'Epinby yoxlama tələb edir · '+(code||'HTTP_'+error.supplierStatus):'Nəticə qeyri-müəyyəndir. Eyni göndəriş açarı ilə status yoxlanılır.';
+    const state=unit.state==='queued'&&(balance||stockWaiting)?'queued':unit.state==='queued'&&blocked?'failed':'checking';
+    const reason=unit.state!=='queued'?'Yoxlama gözləyir · Əvvəlki göndərişin nəticəsi təsdiqlənməyib; təkrar alış və avtomatik geri ödəniş edilmir.':stockWaiting?'Təchizatçı stoku gözlənilir · '+error.message:balance?'Epinby balansı gözlənilir · '+code:blocked?'Epinby yoxlama tələb edir · '+(code||'HTTP_'+error.supplierStatus):'Yoxlama gözləyir · Nəticə qeyri-müəyyəndir; yalnız mövcud göndəriş yoxlanılır.';
     await db.query(`update ${U} set state=$3,reason=$2,next_at=now()+interval '60 seconds' where id=$1 and state='checking'`,[unit.id,reason,state]);
    }
   }

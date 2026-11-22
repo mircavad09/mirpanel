@@ -143,7 +143,7 @@ try{
  const balanceBeforeRetry=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);mode='success';await tick(makeWorker(),3);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[rejected.orderId])).rows[0].n,1);assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),balanceBeforeRetry);
  mode='http-funds';const httpFunds=await buy();await tick(worker);assert.equal((await epinbyProgress(pool,[httpFunds.orderId])).get(httpFunds.orderId).waitingBalance,true);mode='success';await Promise.all([tick(worker,3),tick(makeWorker(),3)]);await tick(worker,3);assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[httpFunds.orderId])).rows[0].n,1);
  mode='invalid';const invalidOrder=await buy();await tick(worker);const invalidCreates=creates;await tick(worker,3);assert.equal(creates,invalidCreates);assert.equal((await pool.query('select state from api_dispatches where order_id=$1',[invalidOrder.orderId])).rows[0].state,'failed');
- mode='unknown';const unknown=await buy();await tick(worker);const sent=creates;await tick(makeWorker(),3);assert.ok(creates>=sent);assert.equal([...supplierOrders.values()].filter(x=>x.client_order_id===unknown.orderId).length,0);assert.equal((await pool.query('select state from api_dispatches where order_id=$1',[unknown.orderId])).rows[0].state,'checking');
+ mode='unknown';const unknown=await buy();await tick(worker);const sent=creates;await tick(makeWorker(),3);assert.equal(creates,sent);assert.equal([...supplierOrders.values()].filter(x=>x.client_order_id===unknown.orderId).length,0);assert.equal((await pool.query('select state from api_dispatches where order_id=$1',[unknown.orderId])).rows[0].state,'checking');
  // Insufficient customer funds must neither charge nor enqueue a supplier order.
  const quote=await shop.quote({user:'b'},items,'b'.repeat(64));
  await assert.rejects(shop.checkout({user:'b'},'b'.repeat(64),{mode:'wallet',items:items.map((x,i)=>({...x,termsVersion:quote.items[i].termsVersion})),requestId:id(),consentAccepted:true}));
@@ -190,6 +190,31 @@ try{
  // Terminal/unpaid orders are never sent, even if a dispatch already exists.
  for(const status of ['cancelled','rejected']){const terminal=await buy();await pool.query('update public.payment_orders set status=$2 where id=$1',[terminal.orderId,status]);const n=creates;await tick(worker,2);assert.equal(creates,n);}
  const unpaid=await buy();await pool.query("update public.payment_orders set payment_confirmed=false,status='reviewing',receipt_path='synthetic/receipt.png',receipt_bucket='synthetic',receipt_mime='image/png',receipt_size=100,receipt_sha256=repeat('0',64) where id=$1",[unpaid.orderId]);const n=creates;await tick(worker,2);assert.equal(creates,n);
+ // Persisted supplier success survives a local result-write failure and restart.
+ mode='success';
+ const writeLost=await buy();
+ const walletAfterWriteLost=Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);
+ let failResult=true;
+ const failingDb={connect:()=>pool.connect(),query:(sql,args)=>{
+  if(failResult&&String(sql).includes('set external_id=coalesce')){failResult=false;throw Error('SYNTHETIC_RESULT_WRITE_LOSS');}
+  return pool.query(sql,args);
+ }};
+ const failingWorker=createEpinbyOrders({pool:async()=>failingDb,security,loadCatalog:async()=>catalog,callbackUrl:'https://test.invalid/api/webhooks/epinby',transport});
+ await tick(failingWorker);
+ const afterWriteLost=creates;
+ await tick(makeWorker(),8);
+ assert.equal(creates,afterWriteLost);
+ assert.equal(Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents),walletAfterWriteLost);
+ assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[writeLost.orderId])).rows[0].n,1);
+ // A signed event committed before a crash is replayed without a second webhook.
+ mode='pending';const eventLost=await buy();await tick(worker);
+ const eventUnit=(await pool.query('select u.* from epinby_order_units u join api_dispatches d on d.id=u.dispatch_id where d.order_id=$1',[eventLost.orderId])).rows[0];
+ const eventBody={...supplierOrders.get(eventUnit.id),status:'COMPLETED',event_id:id(),timestamp:new Date().toISOString()};
+ await pool.query('insert into epinby_events(event_id,unit_id,payload_cipher) values($1,$2,$3)',[eventBody.event_id,eventUnit.id,security.encryptSecret(JSON.stringify(eventBody))]);
+ const beforeEventRecovery=creates;
+ await tick(makeWorker(),8);
+ assert.equal(creates,beforeEventRecovery);
+ assert.equal((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[eventLost.orderId])).rows[0].n,1);
  const verifiedOrder=await buy(id(),[{productId:free.id,planIndex:0,quantity:1,details:freePlayer}]);
  const savedOrder=(await pool.query('select checkout_snapshot from public.payment_orders where id=$1',[verifiedOrder.orderId])).rows[0].checkout_snapshot;
  assert.deepEqual(orderPlayer(security,savedOrder.items[0],free.id),{id:'000123',name:'Synthetic Player',verified:true});
