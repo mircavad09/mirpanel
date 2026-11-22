@@ -13,6 +13,7 @@ export function organizationSchema(){
 }
 export function withSiteIdentity(html){
  if(!/<\/html>/i.test(html))return html;
+ html=html.replace(/(src=["'])\/?customer-footer\.js(?:\?[^"']*)?(["'])/g,'$1/customer-footer.js?v=geo-identity-1$2');
  let found=false;
  let next=html.replace(/<script\b([^>]*type=["']application\/ld\+json["'][^>]*)>([\s\S]*?)<\/script>/gi,(tag,attrs,text)=>{
   try{

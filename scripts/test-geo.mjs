@@ -21,4 +21,6 @@ assert.equal(s.products.find(p=>p.id==='google_ai_ultra').active,false);
 const robots=fs.readFileSync('robots.txt','utf8');
 for(const path of ['/admin','/api/','/preview/','/employee'])assert(robots.includes('Disallow: '+path));
 assert.equal(withSiteIdentity('<header>fragment</header>'),'<header>fragment</header>');
+assert(fs.readFileSync('site-header.js','utf8').includes('/customer-footer.js?v=geo-identity-1'));
+assert(fs.readFileSync('functions/_middleware.js','utf8').includes('/site-header.js?v=catalog-search-1-geo-identity-1'));
 console.log(JSON.stringify({initialHtmlProducts:pages.size,identity:true,faq:true,approvedHboWarranty:28,privateRobotsPreserved:true}));

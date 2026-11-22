@@ -52,6 +52,9 @@ try{
      assert.equal(await page.locator('h1').count(),1);
      assert.equal(await page.locator('link[rel=canonical]').getAttribute('href'),'https://mirpanel.com/mehsul/'+p.seoSlug);
      assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,p.id+' horizontal overflow');
+     // Live inventory may disable a package after hydration. Observe the settled
+     // answer before deciding to click; never force a real out-of-stock choice.
+     if(live)await page.waitForFunction(()=>window.MirpanelInventory?.instantValid()||window.MirpanelInventory?.instantFailed(),{},{timeout:30000});
      const plans=page.locator('#pp-plans-container .pp-plan-label');
      const index=p.plans.findLastIndex(p=>p.active!==false);
      const selectable=await plans.nth(index).isEnabled();

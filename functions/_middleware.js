@@ -228,7 +228,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?cms-site\.js(?:\?[^"']*)?(["'])/g,'$1/cms-site.js?v=image-alt-20261117$2');
   next=next.replace(/(href=["'])\/?home-loading\.css(?:\?[^"']*)?(["'])/g,'$1/home-loading.css?v=home-recovery-1$2');
 
-  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=catalog-search-1$2');
+  next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=catalog-search-1-geo-identity-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=home-first-paint-1$2');
   next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=ready-sku-2$2');
   if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=categories-1" data-page-navigation-loader></script></head>');
