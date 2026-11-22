@@ -12,6 +12,7 @@ import {uploadProfileMedia,saveProfileSticker} from './profile-media.mjs';
 import {Repository as OwnerRepository} from './owner-repository.mjs';
 import {makePublicAuth} from './public-auth.mjs';import {createAuthMailer} from './auth-mail.mjs';import {handlePublicCommunity} from './public-service.mjs';
 import {requireAllowed} from './group-control.mjs';
+import {adminCustomerOrder} from './admin-customer-order.mjs';
 import {adminDirectory} from './admin-directory.mjs';
 import {adminDashboard} from './admin-dashboard.mjs';
 import {CommunityLive} from './live.mjs';
@@ -74,7 +75,9 @@ export function createOwnerCommunity(env=process.env,options={}){
     const {rows:[{available}]}=await r.pool.query("select coalesce(has_function_privilege(to_regprocedure('mirpanel_community.wallet_debit(text,text,bigint,text,uuid,bigint)'), 'EXECUTE'),false) available");
     return json(res,200,{...history,debitAvailable:available});
    }
-   if(part==='/users'||part.startsWith('/users/'))return json(res,200,await adminDirectory(r.pool,r.repo,{...Object.fromEntries(u.searchParams),id:part.startsWith('/users/')?decodeURIComponent(part.slice(7)):null}));
+   const userOrder=part.match(/^\/users\/([^/]+)\/orders\/([a-f0-9-]{36})$/i);
+   if(userOrder){res.setHeader('Cache-Control','private, no-store');return json(res,200,await adminCustomerOrder(r.pool,createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),decodeURIComponent(userOrder[1]),userOrder[2]));}
+   if(part==='/users'||part.startsWith('/users/')){res.setHeader('Cache-Control','private, no-store');return json(res,200,await adminDirectory(r.pool,r.repo,{...Object.fromEntries(u.searchParams),id:part.startsWith('/users/')?decodeURIComponent(part.slice(7)):null}));}
    if(part==='/influencer-preview')return json(res,200,await influencerPreview(r.pool,owner.id,undefined,await options.loadCatalog()));
    if(part==='/state')return json(res,200,{profile:await r.repo.profile(owner),settings:await r.group.settings()});
    if(part==='/messages')return json(res,200,await r.repo.messages(Object.fromEntries(u.searchParams)));

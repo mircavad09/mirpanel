@@ -1,4 +1,5 @@
 const el=(t,text)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;return n;},money=v=>(Number(v)/100).toFixed(2)+' AZN',button=(t,fn)=>{const n=el('button',t);n.type='button';n.className='btn';n.onclick=fn;return n;};
+import {renderUserOrders} from '/admin-user-orders.js?v=1';
 import {renderControlsTab} from '/admin-user-controls.js?v=gift-compact-4';
 const ledgerDate=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 const ledgerMoney=cents=>cents==null?'—':(Number(cents)/100).toFixed(2).replace('.',',')+' ₼';
@@ -35,7 +36,7 @@ function activity(u,full=false,now=Date.now()){const seen=Date.parse(u.lastSeen)
 function avatar(u){const n=el('span');n.className='wu-avatar';if(u.avatarUrl){const img=el('img');img.src=u.avatarUrl;img.alt='';n.append(img);}else n.textContent=['🌙','🌟','🌿','🦁','💎','🦉','🚀','🌊'][u.avatar]||'🌙';return n;}
 function icon(kind){const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',kind==='cart'?'M3 3h2l3 12h11l2-8H6 M9 20h.01 M18 20h.01':'M10 3h4l1 3 3 1 3 3v4l-3 1-1 3-3 3h-4l-1-3-3-1-3-3v-4l3-1 1-3 3-3Z M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0');svg.append(p);return svg;}
 export async function mountUsers({root,call,alive,userFilter='all'}){
- const css=document.createElement('link');css.rel='stylesheet';css.href='/admin-wallet-users.css?v=wallet-debit-search-1';document.head.append(css);
+ const css=document.createElement('link');css.rel='stylesheet';css.href='/admin-wallet-users.css?v=user-orders-1';document.head.append(css);
  let closed=false,page=1,q='',selected,historyPage=1,historyQ='',historyView='history';const valid=()=>!closed&&alive(),errors=el('p'),wrap=el('div'),detail=el('section'),list=el('div'),query=el('input'),pager=el('span');detail.hidden=true;query.placeholder='Ad, e-poçt və üzv ID-si';const safe=fn=>async(...a)=>{try{await fn(...a);}catch(e){errors.textContent=e.message;}};
  const prev=button('Əvvəlki',()=>{page--;load();}),next=button('Növbəti',()=>{page++;load();});
  function userRow(u,now){
@@ -82,7 +83,7 @@ export async function mountUsers({root,call,alive,userFilter='all'}){
   if(delay)searchTimer=setTimeout(load,delay);else void load();
  }
  const content=el('div');let returnY=0;
- function snapshotControls(panel){return {from:panel?.querySelector('[aria-label="Başlanğıc tarix"]')?.value,to:panel?.querySelector('[aria-label="Son tarix"]')?.value};}
+ function snapshotControls(panel){return {orderSearch:panel?.querySelector('[data-order-search]')?.value,orderStatus:panel?.querySelector('[data-order-status]')?.value,from:panel?.querySelector('[aria-label="Başlanğıc tarix"]')?.value,to:panel?.querySelector('[aria-label="Son tarix"]')?.value};}
  const signature=(tab,data)=>JSON.stringify([...data])+ (tab==='orders'?JSON.stringify(selected.orders):tab==='other'?JSON.stringify([selected.user,selected.profile]):'');
  function editing(entry){return entry.dirty||entry.saving||entry.panel.contains(document.activeElement)&&document.activeElement.matches('input,textarea,select')||document.querySelector('dialog[open],#modal:not(.hidden)');}
  function preservePosition(work){const x=scrollX,y=scrollY,positions=[...detail.querySelectorAll('*')].filter(n=>n.scrollTop||n.scrollLeft).map(n=>[n,n.scrollTop,n.scrollLeft]);work();window.scrollTo(x,y);for(const[n,top,left]of positions){n.scrollTop=top;n.scrollLeft=left;}}
@@ -117,7 +118,7 @@ export async function mountUsers({root,call,alive,userFilter='all'}){
   const run=Promise.resolve().then(async()=>{try{
    if(tab==='balance')await drawHistory(stage,read);
    else if(['prices','stats','referrals','other'].includes(tab))await renderControlsTab({content:stage,tab,selected,call:read,valid:current,initialState:snapshotControls(entry.panel)});
-   else{for(const o of selected.orders)stage.append(el('p',[o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status].join(' · ')));if(!selected.orders.length)stage.append(el('p','Hələ sifariş yoxdur.'));}
+   else renderUserOrders({target:stage,orders:selected.orders,user:selected.user,call,valid:current,initialState:snapshotControls(entry.panel)});
    if(!current())return;
    if(entry.revision!==revision){lease.active=false;return;}
    if(entry.loaded&&signature(tab,responses)===entry.signature){lease.active=false;return;}

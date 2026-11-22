@@ -88,7 +88,7 @@ try{
  const signed=await ctx.request.post(base+'/api/auth/sign-in/email',{headers:{Origin:'http://127.0.0.1:55464'},data:{email:'a@example.test',password:'Synthetic-only-Staff-729!'}});
  assert.equal(signed.status(),200,await signed.text());
  const listResponse=await ctx.request.get(base+'/api/community/staff/users');assert.equal(listResponse.status(),200,await listResponse.text());
- for(const path of ['/api/admin/community/users','/api/admin/community/staff-role','/api/admin/workforce','/admin.html','/employee'])assert.equal((await ctx.request.get(base+path)).status(),403,path);
+ for(const path of ['/api/admin/community/users','/api/admin/community/users/b/orders/'+purchase.orderId,'/api/admin/users/b/orders/'+purchase.orderId,'/api/admin/community/staff-role','/api/admin/workforce','/admin.html','/employee'])assert.equal((await ctx.request.get(base+path)).status(),403,path);
  for(const path of ['/api/payments/shop/checkout','/api/payments/shop/cancel','/api/payments/shop/topup/submit','/api/admin/community/wallet/credit','/api/admin/community/user-controls','/api/employee/manual-stock/deliver','/api/community/profile','/api/community/staff/customer'])assert.equal((await ctx.request.post(base+path,{data:{}})).status(),403,path);
  await setStaffRole(f.pool,'owner',{userId:'a',enabled:false});assert.equal((await ctx.request.get(base+'/api/community/staff/users')).status(),403);
  await ctx.close();console.log('PASS production server HTTP: independent staff login, own cookie, staff reads, denied admin pages/APIs, checkout/cancel/topup/delivery/profile mutations, role revocation.');
