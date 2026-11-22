@@ -1719,7 +1719,7 @@ const server = http.createServer(async (request, response) => {
     }
     if(['/employee.js','/employee.css','/employee-login.js','/receipt-analysis-view.js'].includes(pathname))return serveFile(response,pathname.slice(1));
     if(pathname.startsWith('/admin')&&await employeeSystem.blockAdmin(request,response))return;
-    if(['/influencer-live-admin.js','/influencer-preview-interactive.js','/influencer-preview-interactive.css','/influencer-preview.js','/influencer-preview.css','/admin-community-panel.js','/admin-community-panel.css','/admin-chat-view.js','/admin-wallet-users.js','/admin-wallet-users.css','/admin-user-controls.js','/admin-shop.js'].includes(pathname)){
+    if(['/influencer-live-admin.js','/influencer-preview-interactive.js','/influencer-preview-interactive.css','/influencer-preview.js','/influencer-preview.css','/admin-community-panel.js','/admin-community-panel.css','/admin-chat-view.js','/admin-wallet-users.js','/admin-user-orders.js','/admin-wallet-users.css','/admin-user-controls.js','/admin-shop.js'].includes(pathname)){
       if(!requireAuth(request,response))return;
       if(getSession(request)?.role!=='admin')return json(response,403,{error:'Yalnız admin üçün.'});
       return serveFile(response,pathname.slice(1));

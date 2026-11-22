@@ -1,4 +1,6 @@
 // Explicit projections only: never expose credentials, sessions or OAuth tokens.
+import {adminOrderSummary} from './admin-customer-order.mjs';
+import {deliveryRecords} from './order-delivery.mjs';
 import {tierFor} from './repository.mjs';
 import {avatarSource} from './public/avatar-stickers.js';
 import {SITE_PRESENCE_ID} from './public-service.mjs';
@@ -45,7 +47,10 @@ export async function adminDirectory(pool,repo,{q='',page='1',id,filter='all'}={
  if(!id)return{users:rows,total,page:Number(page),hasMore:Number(page)*20<total,asOf};
  if(!rows[0])throw Object.assign(Error('İstifadəçi tapılmadı.'),{status:404});
  const profile=(await pool.query(`select display_name,avatar,avatar_path,first_name,last_name,phone,whatsapp,social_links from community_profiles where user_id=$1`,[id])).rows[0]||null;
- const orders=(await pool.query(`select o.id,o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status,o.created_at from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 order by o.created_at desc limit 50`,[id])).rows;
+ const rawOrders=(await pool.query(`select o.id,o.order_code,o.product_title,o.plan_name,o.amount,o.currency,o.status,o.created_at,to_jsonb(o)->'checkout_snapshot' as checkout_snapshot,(to_jsonb(o)->>'quantity')::int as quantity,(to_jsonb(o)->>'payment_confirmed')::boolean as payment_confirmed,to_jsonb(o)->>'completed_at' as completed_at,to_jsonb(o)->'fulfillment_cancellation' as fulfillment_cancellation from community_order_owners l join public.payment_orders o on o.id=l.order_id where l.user_id=$1 order by o.created_at desc limit 50`,[id])).rows;
+ const deliveryTable=(await pool.query("select to_regclass('mirpanel_community.customer_order_deliveries') present")).rows[0].present;
+ const records=deliveryTable?await deliveryRecords(pool,rawOrders.map(o=>o.id)):[];
+ const orders=rawOrders.map(o=>adminOrderSummary(o,records.filter(d=>d.order_id===o.id)));
  const totalCents=await repo.total(id),cfg=await repo.config();
  if(profile)profile.avatarUrl=avatarSource(profile);
  return{user:rows[0],profile,orders,totalCents,tier:tierFor(totalCents,cfg.tiers),ordersLimited:orders.length===50};

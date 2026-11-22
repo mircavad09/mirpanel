@@ -313,6 +313,13 @@ export function createPaymentSystem(options) {
       await publicRate(request,'browser-orders',60,60);
       publicJson(request,response,200,await accountOrders.list(request,url.searchParams.get('cursor'),url.searchParams.get('order')));return true;
     }
+    const orderInputs=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/inputs$/);
+    if(request.method==='GET'&&orderInputs){
+      if(!safeUuid(orderInputs[1]))throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});
+      if(request.headers['sec-fetch-site']==='cross-site')throw Object.assign(Error('Sorğunun mənbəyi icazəli deyil.'),{status:403});
+      await publicRate(request,'account-order-inputs',60,30);
+      publicJson(request,response,200,await accountOrders.inputs(request,orderInputs[1]));return true;
+    }
     const codes=url.pathname.match(/^\/api\/payments\/my-orders\/codes(?:\/([0-9a-f-]{36}))?$/);
     if(request.method==='GET'&&codes){publicJson(request,response,200,await accountOrders.codes(request,codes[1]));return true;}
     const orderGuide=url.pathname.match(/^\/api\/payments\/my-orders\/([0-9a-f-]{36})\/guide\/(\d{1,3})$/);

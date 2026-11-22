@@ -1,4 +1,5 @@
 import {orderPlayer} from './order-player.mjs';
+import {customerOrderInputs} from './customer-order-inputs.mjs';
 import {projectRoomCredentials} from './community/netflix-room-password.mjs';
 import {orderLines} from './order-lines.mjs';
 import {warrantyText} from './public/product-plan-utils.mjs';
@@ -54,7 +55,7 @@ export function createAccountOrders({security,store,resolve}){
     const snap=o.checkout_snapshot,product=products.get(o.product_id||snap?.productId),lines=orderLines(snap);
     // An order-wide expiry cannot identify a package in a multi-line purchase.
     const expiresOn=status==='completed'&&lines.length<=1&&records.some(d=>d.line_index===0)?safeCalendarDate(o.service_expires_on)||null:null;
-    return {id:o.id,supplierProcessing:status==='preparing'&&supplierProgress?.get(o.id)?.processing===true,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus,reason:cancellation.reason}}:{}),items:lines.map((x,i)=>{
+    return {id:o.id,supplierProcessing:status==='preparing'&&supplierProgress?.get(o.id)?.processing===true,orderCode:o.order_code,product:o.product_title,...(!lines.length?{expiresOn}:{}),...(cancellation?{cancellation:{full:cancellation.full===true,lines:cancellation.lines,refundCents:cancellation.refundCents,refundStatus:cancellation.refundStatus,reason:cancellation.reason}}:{}),items:lines.map((x,i)=>{
      const item=snap.items[i],current=products.get(x.productId);
      const deliveredQuantity=records.filter(d=>d.line_index===i).reduce((n,d)=>n+d.quantity,0);
      const cancelledQuantity=cancellation?.lines?.find(line=>line.index===i)?.quantity||0;
@@ -76,6 +77,12 @@ export function createAccountOrders({security,store,resolve}){
     result.deliveryDetails=Object.fromEntries(details.filter(Boolean));
    }
    return result;
+  },
+  async inputs(request,id){
+   const s=await scope(request),o=await s.owned(id);
+   if(!o||!['cancelled','rejected'].includes(o.status)&&!o.fulfillment_cancellation)throw Object.assign(Error('Sifariş tapılmadı.'),{status:404});
+   const catalog=await s.catalog?.();
+   return {accountId:s.userId,orderId:o.id,lines:customerOrderInputs(o,catalog,security)};
   },
   async codes(request,id){
    const s=await scope(request);
