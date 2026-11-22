@@ -213,7 +213,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   let next = withSiteIdentity(withStorefrontHead(html));
   next=next.replace(/(src=["'])\/?account-header\.js(?:\?[^"']*)?(["'])/g,'$1/account-header.js?v=mobile-wallet-compact-2$2');
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
-  next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=orders-open-latest-1$2');
+  next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=cancelled-inputs-1$2');
   next=next.replace(/(src=["'])\/?order-confirmation\.js(?:\?[^"']*)?(["'])/g,'$1/order-confirmation.js?v=game-validation-1$2');
   next=next.replace(/(src=["'])\/?cart-store\.js(?:\?[^"']*)?(["'])/g,'$1/cart-store.js?v=epinby-stock-1$2');
   next=next.replace(/(src=["'])\/?browser-nav\.js(?:\?[^"']*)?(["'])/g,'$1/browser-nav.js?v=token-cart-1$2');
