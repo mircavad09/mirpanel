@@ -40,7 +40,7 @@ are written to persistent browser storage by this mechanism.
 
 Validation:
 
-- `test-section-recovery.mjs`: 80 Chromium/WebKit assertions; original timeout,
+- `test-section-recovery.mjs`: 88 Chromium/WebKit assertions; original timeout,
   delayed module single evaluation, initial JS/CSS failure, 5xx, interrupted
   connection, timeout, Retry-After (real one-second wait), offline/online,
   hidden/visible, cancellation, cached native dependency error, true 404,

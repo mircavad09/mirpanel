@@ -52,7 +52,7 @@ export function mountProfile(app,verifiedState){
   ?{path:'/api/payments/my-orders'+orderSuffix,promise:api('/api/payments/my-orders'+orderSuffix)}:null;
  void initialOrdersRequest?.promise.catch(()=>{});
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
- const bootOnce=async()=>{try{
+ const bootOnce=async()=>{app.querySelector('[data-profile-retry]')?.remove();try{
   const {renderAccountPanel}=await window.MirpanelRecovery.module('/community-assets/account-panel.js?v=bounded-cancelled-inputs-1',{signal});
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin,initialOrdersRequest});
