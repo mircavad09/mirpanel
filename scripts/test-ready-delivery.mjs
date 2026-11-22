@@ -9,6 +9,7 @@ import {planKey} from '../mirpanel-admin/payment-profit.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
 import {readyDeliveryText,packageDeliveryText} from '../ready-delivery.mjs';
 import {inventoryAvailability} from '../inventory-availability.mjs';
+import {normalizeAdminPayload} from '../mirpanel-admin/core.mjs';
 const displayProduct={deliveryText:'1–3 saat ərzində tamamlanır',plans:[{deliveryText:'15–30 dəqiqə ərzində tamamlanır'},{deliveryText:'2 saat ərzində tamamlanır'}]};
 const instant={canOrder:true,fulfillment:{ready:1,automatic:true,allowWaiting:true}};
 assert.equal(packageDeliveryText(displayProduct,0,instant),'Anında təqdim olunur');
@@ -36,6 +37,13 @@ try{
  await setting(true);assert.equal(readyDeliveryText((await read())[0],true),'');
  await save(1,true,1);assert.equal((await read())[0].ready,0);assert.equal((await read())[1].ready,1);
  await save(1);assert.equal(readyDeliveryText((await read())[0],true),'Anında təqdim olunur');
+ // Ready stock written before catalog normalization must still match after the
+ // editor adds stable cost IDs. Neither credentials nor database rows migrate.
+ const normalized=normalizeAdminPayload(catalog);
+ assert.deepEqual((await readyDeliverySnapshot(pool,normalized)).get(p.id),await read());
+ const reordered=structuredClone(normalized);reordered.products.find(x=>x.id===p.id).plans.reverse();
+ const reorderedReady=(await readyDeliverySnapshot(pool,reordered)).get(p.id);
+ assert.equal(reorderedReady[0].ready,1);assert.equal(reorderedReady[1].ready,1);
  await save(0,false);assert.equal(readyDeliveryText((await read())[0],true),'');
  await save(0,true);
  // A live checkout reservation is not available for instant delivery to others.

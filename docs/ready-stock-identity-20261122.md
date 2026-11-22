@@ -40,3 +40,7 @@ HBO's three older-signature free rows existed separately from the current packag
 - Profit and SEO regression tests passed. A broader legacy `test-ready-stock.mjs` reached its later list projection assertion and failed because current order results include `supplierProgress:undefined` while that old expected literal omits it; no production behavior was changed to satisfy that unrelated assertion.
 
 Remaining read-only evidence to obtain after browser access returns: authenticated admin/API vs database comparison after release, order numbers for fully delivered ChatGPT/Zoom units, Netflix delivery-vs-manual split, and historical explanation for the older HBO signature. No claim that those three older HBO units were repaired or made saleable is made.
+
+## Live verification after deployment
+
+At 20:33 Baku, the deployed ready-stock JavaScript contained the new unmatched-SKU warning and failed-read message. Public `/api/payments/inventory` returned 200: CapCut ready `[4,2]`, Prime `[3,4,0,0]`, HBO `[7]`, Surfshark `[8]`, ChatGPT `[0]`, Zoom `[0]`. Separate sales availability remained CapCut 27, Prime 22, HBO 16, Surfshark 124, ChatGPT 22 and Zoom 26. Netflix returned 1 ready room and sales availability 6; this differs from the earlier 2-room database observation. The reason for that live operational change has not been confirmed and must not be inferred as a sale or reservation without the later database read. The audit itself created no orders and performed no account delivery or wallet write.
