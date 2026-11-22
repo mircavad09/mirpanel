@@ -10,7 +10,7 @@
  footer.innerHTML=`
  <div class="customer-footer-inner">
   <section class="customer-footer-support" aria-labelledby="footerSupportTitle">
-   <div><h2 id="footerSupportTitle">Sualınız var? Operatora yazın.</h2><p>Hər gün 11:00–01:00 arası aktivik. Bizə yazın, dərhal cavab alacaqsınız.</p></div>
+   <div><h2 id="footerSupportTitle">Sualınız var? Operatora yazın.</h2><p>Hər gün 11:00–01:00 · Bakı vaxtı. Sifarişlə bağlı müraciətdə sifariş nömrəsini göstərin.</p></div>
    <a class="customer-footer-cta" href="${wa}" target="_blank" rel="noopener noreferrer">Operatora yaz</a>
    <a href="/elaqe">Əlaqə səhifəsi</a>
   </section>
@@ -21,7 +21,7 @@
    <li><strong>Komissiyasız ödəniş</strong><small>MirPanel əlavə komissiya tutmur; bankın köçürmə tarifi tətbiq oluna bilər.</small></li>
   </ul>
   <div class="customer-footer-columns">
-   <section><h2><a href="/">MirPanel.com</a></h2><p>Rəqəmsal hesablar, abunəliklər, proqram lisenziyaları və rəqəmsal məhsullar bir yerdə.</p></section>
+   <section><h2><a href="/">MirPanel.com</a></h2><p>Azərbaycanda rəqəmsal hesablar, abunəliklər, proqram lisenziyaları və oyun paketləri bir yerdə.</p></section>
    <section><h2>Kəşf et</h2><ul>
     <li><a href="/mehsul">Hesablar və abunəliklər</a></li>
     <li><a href="/mehsul?search=Adobe">Proqram lisenziyaları</a></li>

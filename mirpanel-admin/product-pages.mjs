@@ -6,6 +6,7 @@ import homeShortcuts from '../home-shortcuts.js';
 import homeSections from '../home-sections.js';
 import {renderPlanRows, renderPlanSummary, renderPlanTrust} from '../product-plan-view.mjs';
 import {productSeoCopy} from '../product-seo-content.mjs';
+import {organizationSchema,siteIdentity,withSiteIdentity} from '../site-identity.mjs';
 import {planName} from '../product-plan-view.mjs';
 const { normalizeDisplayLabel } = displayLabels;
 const SITE_URL = "https://mirpanel.com";
@@ -428,10 +429,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
         sku: String(product.id || ""),
         offers
       },
-      {
-        "@type":"Organization","@id":`${SITE_URL}/#organization`,name:"MirPanel",url:SITE_URL+"/",logo:SITE_URL+"/assets/logo.png",
-        contactPoint:{"@type":"ContactPoint",contactType:"customer support",url:SITE_URL+"/elaqe",availableLanguage:"az"}
-      },
+      organizationSchema(),
       {
         "@type": "BreadcrumbList",
         "@id": `${canonical}#breadcrumb`,
@@ -937,7 +935,7 @@ function renderCmsFooter(cms = {}, ui = {}) {
     .sort((a, b) => Number(a.order) - Number(b.order))
     .map((item) => `<a href="${escapeAttribute(canonicalSiteUrl(item.url))}"${item.newTab ? ` target="_blank" rel="noopener noreferrer"` : ""}>${escapeHtml(item.label)}</a>`)
     .join(" · ");
-  return `© ${year} ${escapeHtml(brand)} · ${escapeHtml(rights)}${links ? ` · ${links}` : ""}`;
+  return `<span>© ${year} ${escapeHtml(brand)} · ${escapeHtml(rights)}${links ? ` · ${links}` : ""}</span><p>MirPanel — Azərbaycanda rəqəmsal hesablar, abunəliklər və oyun paketləri. <a href="tel:${siteIdentity.phone}">${siteIdentity.displayPhone}</a> · ${siteIdentity.hours}. <a href="${siteIdentity.whatsapp}">WhatsApp dəstəyi</a> · <a href="/sertler">Xidmət şərtləri</a>.</p>`;
 }
 
 function applyCmsBrandAndNav(html, cms, currentKey = null) {
@@ -950,7 +948,7 @@ function applyCmsBrandAndNav(html, cms, currentKey = null) {
   if (navigation) {
     next = next.replace(/(<nav class="product-page-nav[^"]*"[^>]*>)[\s\S]*?(<\/nav>)/g, `$1${navigation}$2`);
   }
-  return next;
+  return withSiteIdentity(next);
 }
 
 function applyCmsToProductHtml(html, product, cms = {}, content = {}) {
@@ -1207,10 +1205,11 @@ function renderProductFaq(product) {
   const planText = plans.length ? plans.join(", ") : "Hazırda sifariş üçün açıq plan yoxdur.";
   return `<section class="product-page-faq" aria-labelledby="product-faq-title">
     <h2 id="product-faq-title">Tez-tez verilən suallar</h2>
+    <details><summary>Azərbaycanda ${escapeHtml(copy.name)} necə alınır?</summary><p>${escapeHtml(copy.intro)} MirPanel-də bu səhifədən paketi seçin, AZN qiymətini və sifariş şərtlərini yoxlayın. ${escapeHtml(copy.usage)}</p></details>
     <details><summary>${escapeHtml(title)} üçün hansı planlar mövcuddur?</summary><p>${escapeHtml(planText)}</p></details>
     <details><summary>${escapeHtml(copy.question)}</summary><p>${escapeHtml(copy.answer)}</p></details>
     <details><summary>${escapeHtml(title)} sifarişi necə verilir?</summary><p>Paketi seçib “İndi al” düyməsinə toxunun. Sifariş formasındakı məlumatları və yekun qiyməti yoxlayın, sonra mövcud ödəniş üsulu ilə davam edin. Qiymət və stok ödənişdən əvvəl serverdə yoxlanılır.</p></details>
-    <details><summary>İstifadə qaydalarını haradan oxumaq olar?</summary><p>Bu səhifədəki “İstifadə qaydaları” bölməsində məhsula aid, admin paneldə saxlanılan şərtlər göstərilir.</p></details>
+    <details><summary>Təhvil məlumatları və dəstək haradadır?</summary><p>Ödəniş və təhvil ayrı mərhələlərdir. Sifarişin vəziyyətini, təhvil verilmiş məlumatları və mövcud təlimatı <a href="/profil?tab=sifarislerim">Sifarişlərim</a> bölməsindən açın. Bu səhifədə “İstifadə qaydaları”nı oxuyun. Problem varsa sifariş nömrəsi ilə <a href="/elaqe">dəstəyə yazın</a>; açıq mesajda şifrənizi paylaşmayın.</p></details>
   </section>`;
 }
 

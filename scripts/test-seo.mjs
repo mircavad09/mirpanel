@@ -4,6 +4,7 @@ import {execFileSync} from 'node:child_process';
 import {extractAdminState,patchAppSource} from '../mirpanel-admin/core.mjs';
 import {generateProductPageFiles,generateSitemap,generateProductPageHtml} from '../mirpanel-admin/product-pages.mjs';
 import {productSeoCopy} from '../product-seo-content.mjs';
+import {productCustomerContent} from '../product-seo-content.mjs';
 const source=fs.readFileSync('app.js','utf8'),state=extractAdminState(source);
 const active=state.products.filter(p=>p.active!==false);
 const pages=generateProductPageFiles(state.products,state.siteSections,state.cms,state.content);
@@ -40,6 +41,10 @@ const html=generateProductPageHtml(fixture,fixture.seoSlug,[]);
 assert(html.includes('noindex, follow'));
 assert(!html.includes('"price":"123.00"'));
 const original=extractAdminState(execFileSync('git',['show','HEAD:app.js'],{encoding:'utf8',maxBuffer:8e6}));
+const approvedHbo=original.products.find(p=>p.id==='hbomax');
+// Explicit owner clarification on 2026-11-22, not a general commerce exemption.
+approvedHbo.plans.find(p=>p.pricingId==='9862f006-0b4b-4c63-97ef-eda5829158da').warrantyDuration=28;
+original.content.hbomax.rulesHtml=productCustomerContent(approvedHbo).rulesHtml;
 const strip=p=>Object.fromEntries(Object.entries(p).filter(([k])=>!k.startsWith('seo')&&!['imageAlt','longDescription','includeInSitemap'].includes(k)));
 assert.deepEqual(JSON.parse(JSON.stringify(state.products.map(strip))),JSON.parse(JSON.stringify(original.products.map(strip))),'Commerce fields unchanged');
 const telegram=state.products.find(p=>p.id==='telegram_premium');

@@ -9,7 +9,10 @@ const baseline=execFileSync('git',['-c','safe.directory='+process.cwd().replaceA
 const before=extractAdminState(baseline);
 const commerce=p=>Object.fromEntries(Object.entries(p).filter(([k])=>!k.startsWith('seo')&&!['imageAlt','longDescription','desc',...(p.id==='chatgpt'?['note']:[])].includes(k)));
 const rawData=s=>JSON.parse(s.match(/const DATA\s*=\s*({[\s\S]*?\n});/)[1]);
-assert.deepEqual(rawData(source).products.map(commerce),rawData(baseline).products.map(commerce),'No price, stock, package, supplier, flow, activation or private-guide changes');
+const approvedBaseline=rawData(baseline);
+// Owner confirmed 28 days on 2026-11-22; no other commerce exception.
+approvedBaseline.products.find(p=>p.id==='hbomax').plans.find(p=>p.pricingId==='9862f006-0b4b-4c63-97ef-eda5829158da').warrantyDuration=28;
+assert.deepEqual(rawData(source).products.map(commerce),approvedBaseline.products.map(commerce),'Only owner-approved HBO warranty changes; prices, stock, supplier and private guides unchanged');
 for(const key of ['categories','siteSections','ui','cms','phone_wa'])assert.equal(JSON.stringify(state[key]),JSON.stringify(before[key]),key+' unchanged');
 assert.equal(state.products.length,36);
 const titles=new Set(),descriptions=new Set(),pages=generateProductPageFiles(state.products,state.siteSections,state.cms,state.content);

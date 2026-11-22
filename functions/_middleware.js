@@ -1,4 +1,5 @@
 import {storefrontIcon,withStorefrontHead} from '../storefront-head.mjs';
+import {withSiteIdentity} from '../site-identity.mjs';
 import {fastProductImage} from './_fast-product-images.js';
 const STATIC_ASSET_RE = /\.(?:mjs|js|css|png|jpe?g|webp|svg|ico|gif|avif|xml|txt|json|map|woff2?|ttf|eot|pdf)$/i;
 
@@ -209,7 +210,7 @@ function injectScript(html, needle, scriptTag) {
 
 function withSeoScripts(html,earlyProductLinks=false) {
   html=html.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=categories-1$2');
-  let next = withStorefrontHead(html);
+  let next = withSiteIdentity(withStorefrontHead(html));
   next=next.replace(/(src=["'])\/?account-header\.js(?:\?[^"']*)?(["'])/g,'$1/account-header.js?v=mobile-wallet-compact-2$2');
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=orders-open-latest-1$2');
