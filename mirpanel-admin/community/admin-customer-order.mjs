@@ -51,7 +51,7 @@ export async function adminCustomerOrder(pool,security,userId,orderId){
   const completionEvents=[lastDelivery,cancellation?.at].filter(v=>Number.isFinite(Date.parse(v)));
   const completedAt=completionEvents.length?completionEvents.sort((a,b)=>Date.parse(b)-Date.parse(a))[0]:o.completed_at||null;
   const result={...summary,customer:{name:o.order_customer_name,memberNumber:o.member_number},
-   payment:{method:o.payment_source==='wallet'?'MirPanel balansı':o.method_name_snapshot||null,last4:o.method_last4_snapshot||null,confirmed:paid(o)||o.payment_confirmed===true,status:o.payment_confirmed||paid(o)?'Ödəniş təsdiqlənib':o.status==='rejected'?'Ödəniş rədd edilib':'Ödəniş təsdiqlənməyib'},
+   payment:{method:o.payment_source==='wallet'?'MirPanel balansı':o.method_name_snapshot||null,last4:o.payment_source==='wallet'?null:o.method_last4_snapshot||null,confirmed:paid(o)||o.payment_confirmed===true,status:o.payment_confirmed||paid(o)?'Ödəniş təsdiqlənib':o.status==='rejected'?'Ödəniş rədd edilib':'Ödəniş təsdiqlənməyib'},
    dates:{created:o.created_at,confirmed:confirmedAt,delivered:lastDelivery,completed:summary.status==='completed'?completedAt:null,cancelled:cancellation?.at||o.rejected_at||null},
    items:summary.items.map((x,index)=>({...x,delivered:records.filter(d=>d.line_index===index).reduce((n,d)=>n+d.quantity,0),cancelled:cancellation?.lines?.find(l=>l.index===index)?.quantity??null})),
    customerFields,deliveries,cancellation:cancellation||o.rejection_reason?{reason:cancellation?.reason||o.rejection_reason,lines:cancellation?.lines?.map(x=>({index:x.index,quantity:x.quantity})),requestedCents:cancellation?.refundCents??null,refundStatus:cancellation?.refundStatus||null}:null,
