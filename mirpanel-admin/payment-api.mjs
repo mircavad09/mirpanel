@@ -198,9 +198,10 @@ export function createPaymentSystem(options) {
     };
   }
 
-  async function publicRate(request, action, seconds, maxHits) {
+  async function publicRate(request, action, seconds, maxHits, accountId = null) {
     if(config.deploymentStandby)return; // Standby reads require the private probe token at the server boundary.
-    await store.rateLimit(`${action}:${security.ipHash(clientIp(request))}`, seconds, maxHits);
+    const identity = accountId === null ? security.ipHash(clientIp(request)) : security.hashToken('rate-account:' + accountId);
+    await store.rateLimit(`${action}:${identity}`, seconds, maxHits);
   }
 
   // An authenticated-encrypted receipt capability, not a public storage URL.
@@ -1006,7 +1007,13 @@ export function createPaymentSystem(options) {
         if(request.receiptTrace){request.receiptStage=error.receiptStage||request.receiptStage;request.receiptCode=/^[A-Z_]+$/.test(error.code||'')?error.code:'PAYMENT_ERROR';}
         if(['/api/payments/receipts','/api/payments/orders'].includes(url.pathname))console.error('Payment upload',JSON.stringify({stage:request.receiptStage||'request',status,code:/^[A-Z_]+$/.test(error.code||'')?error.code:'PAYMENT_ERROR',diagnostic:/^(?:file_safety:RECEIPT_[A-Z_]+|storage_(?:upload|verify):http_\d{1,3})$/.test(error.diagnostic||'')?error.diagnostic:undefined}));
         else console.error("Payment API", error.code || "PAYMENT_ERROR", error.diagnostic || error.message);
-        if (isPublic) publicJson(request, response, status, { error: error.message, code: error.code || "PAYMENT_ERROR", ...(Array.isArray(error.reasonCodes)?{reasonCodes:error.reasonCodes}:{} ) });
+        if (isPublic) {
+          const retryAfter = status === 429 ? Math.max(1, Math.ceil(Number(error.retryAfter) || 30)) : null;
+          if (retryAfter) response.setHeader('Retry-After', String(retryAfter));
+          publicJson(request, response, status, { error: error.message, code: error.code || "PAYMENT_ERROR",
+            ...(retryAfter ? {retryAfter} : {}),
+            ...(Array.isArray(error.reasonCodes)?{reasonCodes:error.reasonCodes}:{} ) });
+        }
         else json(response, status, { error: error.message, code: error.code || "PAYMENT_ERROR" });
         return true;
       }

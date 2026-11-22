@@ -899,6 +899,15 @@ export function createPaymentStore(config,{epinbyCatalogCosts,epinbyOrderCosts}=
         diagnostic: `storage_upload:http_${Number(error.statusCode)||0}`
       });
     },
+    async hasUploadedReceipt(path, size) {
+      try {
+        await this.verifyUploadedReceipt(path, size);
+        return true;
+      } catch (error) {
+        if (error.code === 'RECEIPT_CONFIRMATION_INVALID') return false;
+        throw error;
+      }
+    },
     async verifyUploadedReceipt(path, size) {
       const slash = path.lastIndexOf('/');
       const {data,error} = await client.storage.from(config.receiptsBucket).list(path.slice(0,slash), {search:path.slice(slash+1),limit:100});
@@ -934,7 +943,10 @@ export function createPaymentStore(config,{epinbyCatalogCosts,epinbyOrderCosts}=
     },
     async rateLimit(key, seconds, maxHits) {
       const result = await rpc("consume_payment_rate_limit", { p_rate_key: key, p_window_seconds: seconds, p_max_hits: maxHits });
-      if (!result?.allowed) throw Object.assign(new Error("Çox sayda sorğu göndərilib. Bir qədər sonra yenidən cəhd edin."), { status: 429 });
+      if (!result?.allowed) throw Object.assign(new Error("Çox sayda sorğu göndərilib. Bir qədər sonra yenidən cəhd edin."), {
+        status: 429, code: 'PAYMENT_RATE_LIMITED',
+        retryAfter: Math.max(1, Math.ceil((Date.parse(result.resetAt) - Date.now()) / 1000) || seconds)
+      });
       return result;
     },
     async getSettings() {

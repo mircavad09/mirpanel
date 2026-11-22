@@ -75,13 +75,70 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
   const steps=el('section',null,'wallet-topup-steps'),list=el('ol');steps.append(el('h3','Addımlar'),list);for(const t of ['Yuxarıdakı kart nömrəsini kopyalayın.','Seçdiyiniz məbləği həmin karta köçürün.','“Qalereyadan çek seç” düyməsinə basın.','Ödəniş çekini seçib yükləyin, sonra “Balans əlavə et” düyməsinə basın.','Operator müraciətinizi yoxlayacaq. Təsdiq adətən '+topupReviewTime+' çəkir.'])list.append(el('li',t));
   const box=el('section',null,'wallet-receipt'),input=el('input'),pick=button('Qalereyadan çek seç',()=>input.click(),true),info=el('p','','shop-muted'),preview=el('div',null,'wallet-receipt-preview'),retry=button('Yenidən cəhd et',()=>void upload()),remove=button('Sil',()=>void clearReceipt()),replace=button('Dəyiş',()=>input.click()),controls=el('div',null,'wallet-receipt-actions');
   input.type='file';input.accept='image/jpeg,image/png,application/pdf,.jpg,.jpeg,.png,.pdf';input.hidden=true;input.setAttribute('aria-label','Çek faylı');retry.hidden=true;controls.append(replace,remove,retry);box.append(pick,input,el('p','JPG/JPEG, PNG və PDF · maksimum 5 MB','shop-muted'),preview,controls,info);info.setAttribute('role','status');notice.setAttribute('role','alert');
-  const send=button('Balans əlavə et',()=>run(async()=>{if(!receiptReady||uploading||sending)return;sending=true;setBusy(true);try{let r;try{r=await api('/topup/submit',{id});}catch(e){try{const saved=await api('/topup?id='+id);if(['reviewing','approved'].includes(saved.status))r=saved;}catch{}if(!r)throw Error(e.message+' Eyni müraciəti yenidən göndərmək üçün “Balans əlavə et” düyməsinə basın.');}await completed(r);}finally{sending=false;setBusy(false);}}),true);send.disabled=!receiptReady;stage.hidden=false;stage.append(panel,steps,box,send,el('p','Balans yalnız operator təsdiqindən sonra artırılır. Göstərilən vaxt təxminidir.','shop-muted'));
+  let cooldownUntil=0,cooldownTimer=null,cooldownAction=null,uploadUncertain=false;
+  const retrySeconds=()=>Math.max(0,Math.ceil((cooldownUntil-Date.now())/1000));
+  function renderCooldown(){
+   if(!alive())return;
+   const seconds=retrySeconds(),busy=uploading||sending;
+   retry.disabled=busy||seconds>0;
+   input.disabled=pick.disabled=replace.disabled=remove.disabled=change.disabled=busy||seconds>0;
+   send.disabled=busy||seconds>0||!receiptReady;
+   if(seconds){
+    info.textContent='Sorğu limiti dolub. '+seconds+' saniyə sonra yenidən cəhd edə bilərsiniz.';
+    retry.textContent='Yenidən cəhd et · '+seconds+' san.';
+   }else if(cooldownAction){
+    clearInterval(cooldownTimer);cooldownTimer=null;
+    info.textContent='Gözləmə bitdi. Yenidən cəhd edə bilərsiniz.';
+    retry.textContent='Yenidən cəhd et';
+    if(cooldownAction==='submit')send.textContent='Balans əlavə et';
+    cooldownAction=null;
+   }
+  }
+  function limited(error,action){
+   if(error.status!==429)return false;
+   cooldownUntil=Date.now()+Math.max(1,Number(error.retryAfter)||30)*1000;
+   cooldownAction=action;retry.hidden=action!=='upload';
+   clearInterval(cooldownTimer);renderCooldown();
+   cooldownTimer=setInterval(renderCooldown,250);
+   return true;
+  }
+  const send=button('Balans əlavə et',()=>run(async()=>{if(!receiptReady||uploading||sending||retrySeconds())return;sending=true;setBusy(true);try{let r;try{r=await api('/topup/submit',{id});}catch(e){if(limited(e,'submit'))return;try{const saved=await api('/topup?id='+id);if(['reviewing','approved'].includes(saved.status))r=saved;}catch{}if(!r)throw Error(e.message+' Eyni müraciəti yenidən göndərmək üçün “Balans əlavə et” düyməsinə basın.');}await completed(r);}finally{sending=false;setBusy(false);}}),true);send.disabled=!receiptReady;stage.hidden=false;stage.append(panel,steps,box,send,el('p','Balans yalnız operator təsdiqindən sonra artırılır. Göstərilən vaxt təxminidir.','shop-muted'));
   function revoke(){if(objectUrl){URL.revokeObjectURL(objectUrl);objectUrl=null;}}
   function show(){preview.replaceChildren();if(file){if(file.type.startsWith('image/')){revoke();objectUrl=URL.createObjectURL(file);const img=el('img');img.src=objectUrl;img.alt='Seçilmiş çekin önizləməsi';preview.append(img);}preview.append(el('span',file.name));}else if(receiptReady)preview.append(el('span','Əvvəl yüklənmiş çek'));controls.hidden=!file&&!receiptReady;info.textContent=receiptReady?'Çek uğurla yükləndi':'';send.disabled=!receiptReady;}
-  function setBusy(b){uploading=b;onBusy(b);input.disabled=pick.disabled=replace.disabled=remove.disabled=retry.disabled=change.disabled=b;send.disabled=b||!receiptReady;updateAmount();}
-  async function clearReceipt(){if(uploading||sending)return;setBusy(true);try{await api('/topup/receipt/remove',{id});receiptReady=false;file=null;attempt=null;input.value='';revoke();retry.hidden=true;show();}catch(e){info.textContent=e.message;}finally{setBusy(false);}}
-  async function upload(){if(uploading||sending||!file)return;receiptReady=false;send.disabled=true;retry.hidden=true;if(file.size>5242880){info.textContent='Fayl maksimum 5 MB ola bilər.';return;}setBusy(true);info.textContent='Çek yüklənir…';try{const r=await api('/receipt?kind=topup&id='+id+'&attempt='+attempt,undefined,{file,timeout:105000});if(!r.receiptUploaded)throw Error('Çekin saxlanması təsdiqlənmədi.');if(alive()){receiptReady=true;info.textContent='Çek uğurla yükləndi';}}catch(e){if(!alive())return;try{const s=await api('/topup?id='+id);receiptReady=s.receiptUploaded&&s.receiptRequestId===attempt;}catch{}info.textContent=receiptReady?'Çek uğurla yükləndi':e.status?e.message:'Çek yüklənmədi. Bağlantını yoxlayın və yenidən cəhd edin.';retry.hidden=receiptReady;}finally{if(alive())setBusy(false);}}
-  input.onchange=()=>{const next=input.files[0];if(!next||uploading||sending)return;file=next;attempt=crypto.randomUUID();receiptReady=false;show();void upload();};show();signal.addEventListener('abort',revoke,{once:true});releasePhoto=()=>{signal.removeEventListener('abort',revoke);revoke();};
+  function setBusy(b){uploading=b;onBusy(b);renderCooldown();updateAmount();}
+  async function clearReceipt(){if(uploading||sending||retrySeconds())return;setBusy(true);try{await api('/topup/receipt/remove',{id});receiptReady=false;file=null;attempt=null;input.value='';revoke();retry.hidden=true;show();}catch(e){if(!limited(e,'remove'))info.textContent=e.message;}finally{setBusy(false);}}
+  async function recoverUpload(){
+   const saved=await api('/topup?id='+id);
+   receiptReady=Boolean(saved.receiptUploaded&&saved.receiptRequestId===attempt);
+   return receiptReady;
+  }
+  async function upload(){
+   if(uploading||sending||!file||retrySeconds())return;
+   receiptReady=false;send.disabled=true;retry.hidden=true;
+   if(file.size>5242880){info.textContent='Fayl maksimum 5 MB ola bilər.';return;}
+   if(!['image/jpeg','image/png','application/pdf'].includes(file.type)&&!/^.*\.(?:jpe?g|png|pdf)$/i.test(file.name)){
+    info.textContent='JPG/JPEG, PNG və ya PDF faylı seçin.';return;
+   }
+   setBusy(true);info.textContent='Çek yüklənir…';
+   try{
+    if(uploadUncertain&&await recoverUpload()){
+     info.textContent='Çek uğurla yükləndi';return;
+    }
+    const result=await api('/receipt?kind=topup&id='+id+'&attempt='+attempt,undefined,{file,timeout:105000});
+    if(!result.receiptUploaded)throw Error('Çekin saxlanması təsdiqlənmədi.');
+    if(alive()){receiptReady=true;uploadUncertain=false;info.textContent='Çek uğurla yükləndi';}
+   }catch(e){
+    if(!alive())return;
+    uploadUncertain=true;
+    if(limited(e,'upload'))return;
+    try{await recoverUpload();}catch(recovery){if(limited(recovery,'upload'))return;}
+    info.textContent=receiptReady?'Çek uğurla yükləndi':e.status?e.message:'Çek yüklənmədi. Bağlantını yoxlayın və yenidən cəhd edin.';
+    retry.hidden=receiptReady;
+   }finally{if(alive())setBusy(false);}
+  }
+  input.onchange=()=>{const next=input.files[0];if(!next||uploading||sending||retrySeconds()||next===file)return;file=next;attempt=crypto.randomUUID();uploadUncertain=false;receiptReady=false;show();void upload();};show();signal.addEventListener('abort',revoke,{once:true});const stopCooldown=()=>clearInterval(cooldownTimer);
+  signal.addEventListener('abort',stopCooldown,{once:true});
+  releasePhoto=()=>{signal.removeEventListener('abort',revoke);signal.removeEventListener('abort',stopCooldown);stopCooldown();revoke();};
  }
  async function resume(){
   const old=read();if(!old?.id&&!old?.requestId){await refreshCards();return;}
