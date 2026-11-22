@@ -1741,7 +1741,7 @@ const server = http.createServer(async (request, response) => {
       return response.end();
     }
 
-    if (["/api-integrations.js", "/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-browser.js", "/ready-stock-admin.css", "/admin-topup-notification.js", "/10-mirpanel-imzasi.wav"].includes(pathname)) {
+    if (["/package-cost-admin.js", "/api-integrations.js", "/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-browser.js", "/ready-stock-admin.css", "/admin-topup-notification.js", "/10-mirpanel-imzasi.wav"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 

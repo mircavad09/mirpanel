@@ -80,6 +80,8 @@ try {
   });
   let cookie, csrf;
   const req=(path,body)=>fetch(origin+path,{redirect:"manual",signal:AbortSignal.timeout(9000),method:body===undefined?"GET":"POST",headers:{Origin:origin,"content-type":"application/json",...(cookie?{Cookie:cookie,"X-CSRF-Token":csrf}:{} )},body:body===undefined?undefined:JSON.stringify(body)});
+  const costEditorAsset=await req('/package-cost-admin.js?v=package-cost-20261122-1');
+  assert.equal(costEditorAsset.status,200);assert.match(await costEditorAsset.text(),/MirpanelPackageCosts/);
   const login=async()=>{const r=await req("/api/login",{username,password});assert.equal(r.status,200);cookie=r.headers.get("set-cookie").split(";")[0];csrf=(await (await req("/api/session")).json()).csrfToken;};
   const load=async()=>{const r=await req("/api/admin/state");assert.equal(r.status,200);return r.json();};
   const prepare=async(current,data)=>{const r=await req("/api/admin/preview",{baseSha:current.sha,data});assert.equal(r.status,200);return{baseSha:current.sha,previewDigest:(await r.json()).previewDigest,data};};
