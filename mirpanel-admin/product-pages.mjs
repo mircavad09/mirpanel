@@ -233,6 +233,14 @@ export function generateRedirects(products = [], siteSections = {}, previous = {
   );
 
   lines.push("/mehsul /mehsul.page 200", "/sifarislerim/ /sifarislerim 301", "/mehsul/ /mehsul 301");
+  // Retired supplier cards may now be packages under a single game product.
+  for(const retired of products.filter(p=>p.active===false&&/^epinby_\d+$/.test(p.id||''))){
+    const matches=products.filter(p=>p.active!==false).flatMap(p=>(p.plans||[]).map((plan,index)=>({p,plan,index})).filter(x=>x.plan.active!==false&&x.plan.id===retired.id));
+    const oldSlug=productSeoSlug(retired);
+    if(matches.length!==1||!oldSlug)continue;
+    const {p,index}=matches[0],target=productCanonicalPath(productSeoSlug(p))+'?plan='+index;
+    lines.push(`/mehsul/${oldSlug} ${target} 301`,`/mehsul/${oldSlug}/ ${target} 301`);
+  }
 
   for (const [productId, aliases] of Object.entries(defaultSeoAliases)) {
     const primary = primaryById.get(productId);

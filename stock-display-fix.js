@@ -222,6 +222,26 @@
     return state;
   }
   function planFor(product,index){return stateFor(product).plans.find(p=>p.planKey===String(index));}
+  // Presentation only: use the same exact-plan evidence as the visible stock UI.
+  function syncProductSchema(product,state){
+    if(document.body.dataset.productId!==product.id)return;
+    document.querySelectorAll('script[type="application/ld+json"]').forEach(script=>{
+      let data;try{data=JSON.parse(script.textContent);}catch{return;}
+      let changed=false;
+      for(const node of data['@graph']||[data]){
+        if(node['@type']!=='Product'||node.sku!==product.id)continue;
+        for(const offer of Array.isArray(node.offers)?node.offers:[node.offers].filter(Boolean)){
+          const key=decodeURIComponent((offer['@id']||'').split('#offer-')[1]||'');
+          const index=product.plans.findIndex((plan,i)=>String(plan.id??i)===key);
+          const plan=state.plans.find(p=>p.planKey===String(index));
+          const unknown=inventoryFailed||state.unavailable||plan?.supplierStock?.status==='unknown';
+          const availability=unknown||!plan?undefined:'https://schema.org/'+(plan.canOrder?'InStock':'OutOfStock');
+          if(offer.availability!==availability){if(availability)offer.availability=availability;else delete offer.availability;changed=true;}
+        }
+      }
+      if(changed)script.textContent=JSON.stringify(data);
+    });
+  }
   // Opening the read-only order window is safe while inventory is unknown.
   // Quote and checkout still confirm the actual price, availability and balance.
   function canOpenOrder(product,index){const state=stateFor(product),plan=state.plans.find(p=>p.planKey===String(index));return product.active!==false&&!state.salesDisabled&&plan?.active===true&&(state.unavailable||plan.canOrder===true);}
@@ -256,6 +276,7 @@
 
       for(const product of (typeof DATA!=='undefined'?DATA.products:[])){
         const state=stateFor(product);
+        syncProductSchema(product,state);
         document.querySelectorAll('.homeProductCard[data-product-id]').forEach(card=>{
           if(card.dataset.productId!==product.id)return;
           const exact=card.dataset.instantPlan===undefined?undefined:Number(card.dataset.instantPlan);

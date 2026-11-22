@@ -5,7 +5,8 @@ import assert from 'node:assert/strict';
 import {extractAdminState} from '../mirpanel-admin/core.mjs';
 import {generateProductPageFiles} from '../mirpanel-admin/product-pages.mjs';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
-const state=extractAdminState(fs.readFileSync('app.js','utf8')),products=state.products.filter(p=>p.active!==false);
+const stockOnly=process.argv.includes('--stock-only');
+const state=extractAdminState(fs.readFileSync('app.js','utf8')),products=state.products.filter(p=>p.active!==false&&(!stockOnly||p.id==='pubg_mobile'));
 const pages=generateProductPageFiles(state.products,state.siteSections,state.cms,state.content),live=process.argv.includes('--live');
 const out='outputs/seo';fs.mkdirSync(out,{recursive:true});
 const server=http.createServer((req,res)=>{
@@ -22,10 +23,10 @@ if(!live)await new Promise(r=>server.listen(0,'127.0.0.1',r));
 const origin=live?'https://mirpanel.com':'http://127.0.0.1:'+server.address().port;
 const results=[];
 try{
- for(const engine of [chromium,webkit]){
+ for(const engine of stockOnly?[chromium]:[chromium,webkit]){
   const browser=await engine.launch(engine===chromium?{executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'}:{});
   try{
-   for(const width of live?[390,1440]:engine===webkit?[390,1440]:[320,390,430,1440]){
+   for(const width of stockOnly?[390]:live?[390,1440]:engine===webkit?[390,1440]:[320,390,430,1440]){
     const context=await browser.newContext({viewport:{width,height:950},serviceWorkers:'block'});
     let quote;const blockedWrites=[];
     await context.route('**/*',async route=>{
@@ -56,6 +57,32 @@ try{
      const selectable=await plans.nth(index).isEnabled();
      if(selectable){await plans.nth(index).click();assert.equal(await page.evaluate(()=>currentPlanIdx),index);}
      await page.getByText('Giriş və təhvil qaydası',{exact:true}).waitFor();
+     await page.getByRole('tab',{name:'İstifadə qaydaları',exact:true}).click();
+     await page.locator('[data-product-panel="rules"]').getByText('Təhvil və kömək',{exact:true}).waitFor();
+     assert((await page.locator('[data-product-panel="rules"]').innerText()).includes('Sifarişlərim'));
+     await page.getByRole('tab',{name:'Məhsul haqqında',exact:true}).click();
+     if(!live){
+      await page.waitForFunction(id=>{const p=DATA.products.find(x=>x.id===id);return p&&window.MirpanelInventory?.productState(p)&&!window.MirpanelInventory.productState(p).unavailable;},p.id);
+      const matches=await page.evaluate(id=>{
+       const p=DATA.products.find(x=>x.id===id),s=window.MirpanelInventory.productState(p);
+       const graph=JSON.parse([...document.querySelectorAll('script[type="application/ld+json"]')].find(e=>e.textContent.includes('"sku":"'+id+'"')).textContent)['@graph'];
+       return graph.find(n=>n.sku===id).offers.every(o=>{const key=decodeURIComponent(o['@id'].split('#offer-')[1]),i=p.plans.findIndex((x,j)=>String(x.id??j)===key),plan=s.plans.find(x=>x.planKey===String(i));return o.availability==='https://schema.org/'+(plan.canOrder?'InStock':'OutOfStock');});
+      },p.id);assert(matches,p.id+' structured availability equals visible exact-plan inventory');
+      if(p.id==='pubg_mobile'&&width===390&&engine===chromium){
+       const offer=()=>page.evaluate(()=>JSON.parse([...document.querySelectorAll('script[type="application/ld+json"]')].find(e=>e.textContent.includes('"sku":"pubg_mobile"')).textContent)['@graph'].find(n=>n.sku==='pubg_mobile').offers[0]);
+       const inventoryRoute='**/api/payments/inventory';
+       await page.route(inventoryRoute,r=>r.fulfill({json:{products:[{productId:p.id,scope:'plan',plans:p.plans.map((_,i)=>({planKey:String(i),tracked:true,available:i===0?0:100,supplierStock:{status:i===0?'out':'available',count:null}}))}]}}));
+       await page.evaluate(()=>window.MirpanelInventory.refresh({force:true}));
+       assert.equal((await offer()).availability,'https://schema.org/OutOfStock');
+       await page.unroute(inventoryRoute);
+       await page.route(inventoryRoute,r=>r.fulfill({status:503,json:{error:'Synthetic unavailable'}}));
+       await page.evaluate(()=>window.MirpanelInventory.refresh({force:true}));
+       assert.equal((await offer()).availability,undefined);
+       await page.unroute(inventoryRoute);await page.evaluate(()=>window.MirpanelInventory.refresh({force:true}));
+       assert.equal((await offer()).availability,'https://schema.org/InStock');
+       console.log('PASS: exact package out, connection unknown, and restored structured availability; no commerce writes.');
+      }
+     }
      let selected=false;
      const button=page.locator('#pp-order-btn');
      assert.equal((await button.textContent()).trim(),'İndi al');
@@ -76,4 +103,4 @@ try{
    }
   }finally{await browser.close();}
  }
-}finally{if(!live)await new Promise(r=>server.close(r));fs.writeFileSync(out+'/'+(live?'live':'local')+'-browser.json',JSON.stringify(results,null,2));}
+}finally{if(!live)await new Promise(r=>server.close(r));fs.writeFileSync(out+'/'+(live?'live':'local')+(stockOnly?'-stock':'')+'-browser.json',JSON.stringify(results,null,2));}

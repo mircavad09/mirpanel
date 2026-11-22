@@ -16,6 +16,14 @@ import {
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const appSource = fs.readFileSync(path.join(projectRoot, "app.js"), "utf8");
 const state = extractAdminState(appSource);
+if(process.argv.includes('--redirects-only')){
+ fs.writeFileSync(path.join(projectRoot,'_redirects'),generateRedirects(state.products,state.siteSections),'utf8');
+ process.exit(0);
+}
+if(process.argv.includes('--sitemap-only')){
+ fs.writeFileSync(path.join(projectRoot,'sitemap.xml'),generateSitemap(state.products,state.siteSections,new Date(),state.cms),'utf8');
+ process.exit(0);
+}
 const productsOnly = process.argv.includes("--products-only");
 if(process.argv.includes('--home-catalog')){
  const file=path.join(projectRoot,'index.html');

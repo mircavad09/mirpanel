@@ -4,12 +4,12 @@
   <meta charset="UTF-8">
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Netflix Şəxsi almaq Azərbaycanda | Qiymət və paketlər — MirPanel</title>
+  <title>Netflix Şəxsi almaq | Qiymət və paketlər — MirPanel</title>
   <meta name="description" content="Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.">
   <meta name="robots" content="index, follow, max-image-preview:large">
   <link rel="canonical" href="https://mirpanel.com/mehsul/netflix-sexsi">
   <meta property="og:type" content="product">
-  <meta property="og:title" content="Netflix Şəxsi almaq Azərbaycanda | Qiymət və paketlər — MirPanel">
+  <meta property="og:title" content="Netflix Şəxsi almaq | Qiymət və paketlər — MirPanel">
   <meta property="og:description" content="Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.">
   <meta property="og:image" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
   <meta property="og:image:secure_url" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
@@ -19,7 +19,7 @@
   <meta property="og:image:alt" content="Netflix Şəxsi — MirPanel məhsul şəkli">
   <meta property="og:url" content="https://mirpanel.com/mehsul/netflix-sexsi">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Netflix Şəxsi almaq Azərbaycanda | Qiymət və paketlər — MirPanel">
+  <meta name="twitter:title" content="Netflix Şəxsi almaq | Qiymət və paketlər — MirPanel">
   <meta name="twitter:description" content="Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.">
   <meta name="twitter:image" content="https://mirpanel.com/assets/netflix.png?social=2u60sa">
   <meta name="twitter:image:alt" content="Netflix Şəxsi — MirPanel məhsul şəkli">
@@ -98,7 +98,7 @@
               <h1 id="pp-main-title" class="product-page-title">Netflix Şəxsi</h1>
               <span class="product-page-status">Stok yoxlanılır</span>
             </div>
-            <p class="product-page-description">Filmlər, seriallar, yüksək keyfiyyət.</p>
+            <p class="product-page-description">Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.</p>
             <div class="product-page-delivery" hidden>
               <strong></strong>
             </div>
@@ -115,7 +115,7 @@
       <aside class="product-page-similar" aria-label="Oxşar məhsullar">
         <h2 class="product-page-similar-heading">Oxşar məhsullar</h2>
         <div id="pp-similar-list" class="product-page-similar-list"><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Premium (Öz hesabınız) — 5.99 ₼" title="YouTube Premium (Öz hesabınız)">
-      <img src="/uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653" class="product-page-similar-image" alt="YouTube Yeni hesab" width="320" height="320" loading="lazy" decoding="async">
+      <img src="/uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653" class="product-page-similar-image" alt="YouTube Premium — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="YouTube Premium (Öz hesabınız)">YouTube Premium (Öz hesabınız)</div>
       <div class="product-page-similar-category">subscriptions</div>
       <div class="product-page-similar-price">5.99 ₼</div>
@@ -175,7 +175,7 @@
         <button id="product-tab-rules" class="product-page-tab" type="button" role="tab" aria-selected="false" aria-controls="product-panel-rules" tabindex="-1" data-product-tab="rules">İstifadə qaydaları</button>
       </div>
       <div class="product-page-content-card">
-        <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about"><h2>Netflix Şəxsi Məhsul haqqında</h2><p>Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.</p><h3>Giriş və təhvil qaydası</h3><p>Təhvil tamamlandıqda hesab, otaq və PIN məlumatlarını Sifarişlərim bölməsindən açın. Ayrılmış profildən istifadə edin; digər profillərin məlumatlarını dəyişməyin.</p>
+        <article id="product-panel-about" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-about" tabindex="0" data-product-panel="about"><h2>Netflix Şəxsi Məhsul haqqında</h2><h3>Nə əldə edirsiniz?</h3><p>Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.</p><h3>Paketlərin fərqi</h3><ul><li><strong>1 aylıq</strong> — 5,99 ₼.</li><li><strong>3 aylıq</strong> — 16,49 ₼.</li><li><strong>6 aylıq</strong> — 29,99 ₼.</li></ul><p>Sifariş üçün tələb olunan məlumatlar: Ad, Otaq kodu.</p><h3>Giriş və təhvil qaydası</h3><p>Təhvil tamamlandıqda hesab, otaq və PIN məlumatlarını Sifarişlərim bölməsindən açın. Ayrılmış profildən istifadə edin; digər profillərin məlumatlarını dəyişməyin.</p>
  <p>Sifariş formasındakı məlumat sahələri: Ad, Otaq kodu. Şəxsi giriş məlumatlarını yalnız sifariş formasında daxil edin, açıq qrup söhbətində paylaşmayın.</p>
  <p>Ödənişin təsdiqi ilə təhvilin tamamlanması ayrı mərhələlərdir. Hazır hesab və ya aktivləşdirmə vəziyyətini <a href="/profil?tab=sifarislerim">Sifarişlərim</a> bölməsindən izləyin. Məhsula aid Təlimat təhvil məlumatları ilə birlikdə açılır.</p>
  <h3>Paket zəmanəti və istifadə şərtləri</h3>
@@ -183,7 +183,7 @@
  <p>Ümumi <a href="/sertler">sifariş və istifadə şərtlərini</a> oxuyun. Sualınız varsa <a href="/elaqe">MirPanel ilə əlaqə saxlayın</a>. MirPanel bu xidmətlərin rəsmi saytı deyil; rəsmi tərəfdaşlıq iddiası edilmir.</p>
  <h3>Alış addımları</h3><ol><li>Bu səhifədə paket və müddəti seçin.</li><li>“İndi al” düyməsi ilə tələb olunan məlumatları və hesab uyğunluğunu yoxlayın.</li><li>Yekun AZN qiymətini təsdiqləyərək saytda ödənişi tamamlayın.</li><li>Təhvil vəziyyətini və giriş təlimatını Sifarişlərimdən açın.</li></ol>
  <p><a href="/mehsul#category-subscriptions">Bu kateqoriyadakı məhsullara baxın</a> · <a href="/mehsul">Bütün məhsullar</a>.</p></article>
-        <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden><h2>İstifadə qaydaları</h2>Ödəniş təsdiqləndikdən sonra otaq və PIN Sifarişlərim bölməsində göstərilir.</article>
+        <article id="product-panel-rules" class="product-page-panel" role="tabpanel" aria-labelledby="product-tab-rules" tabindex="0" data-product-panel="rules" hidden><h2>İstifadə qaydaları</h2><h3>Netflix Şəxsi — istifadə addımları</h3><ol><li>Təhvil məlumatındakı Netflix hesabına daxil olub sizə ayrılmış otağı/profili və PIN-i seçin.</li><li>Başqa müştərinin profilinə keçməyin. Otaqla bağlı dəyişiklikdən əvvəl sifarişinizdəki cari istifadə qaydasını oxuyun.</li></ol><h3>Müddət və zəmanət</h3><ul><li><strong>1 aylıq</strong> — 5,99 ₼.</li><li><strong>3 aylıq</strong> — 16,49 ₼.</li><li><strong>6 aylıq</strong> — 29,99 ₼.</li></ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href="/profil?tab=sifarislerim">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href="/elaqe">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p></article>
       </div>
     </section>
 
@@ -210,7 +210,7 @@
         <img src="/uploads/products/netflix-1792446904161-56cd3ef4.png?v=1792446904161" alt="Netflix Şəxsi" id="mImg" class="mImg">
         <div class="mTxt">
           <div class="mTitle" id="mTitle">Netflix Şəxsi</div>
-          <div class="mDesc" id="mDesc">Filmlər, seriallar, yüksək keyfiyyət.</div>
+          <div class="mDesc" id="mDesc">Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.</div>
         </div>
       </div>
       <div id="mInfoBox" class="mInfoBox"></div>
@@ -225,7 +225,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-5eb4f7245b03e3b4"></script>
+  <script src="/app.js?v=image-alt-20261117-c4deecdcdf5ad4f2"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=sales-count-2"></script>

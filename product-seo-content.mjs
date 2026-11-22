@@ -1,4 +1,31 @@
 // Public factual purchase guidance. No testimonials, ratings or partner claims.
+import {planName} from './product-plan-view.mjs';
+import {planMetrics} from './mirpanel-admin/public/product-plan-utils.mjs';
+const extraTopics={
+ youtube:['YouTube Premium','YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.','Sifarişdə tələb olunan Google hesabı məlumatlarını yalnız qorunan sifariş formasında yazın. Aktivləşdirmədən sonra məhz həmin hesabla YouTube-a daxil olub abunəlik vəziyyətini yoxlayın.'],
+ mirpanel_token:['MirPanel Token','MirPanel daxilində rəqəmsal hədiyyələr üçün istifadə olunan token paketidir. Başqa platformanın oyun valyutası və ya premium hesab abunəliyi deyil.','Paketdəki token sayını və yekun AZN qiymətini yoxlayın. Ödəniş təsdiqləndikdən sonra hesabınızdakı token vəziyyətini yoxlayın; dəstəyə müraciətdə sifariş nömrəsini göstərin.'],
+ chatgpt_ortaq:['ChatGPT Plus ortaq hesab','Süni intellektlə işləmək üçün paylaşılan hesab təklifidir; hazır şəxsi ChatGPT Plus məhsulundan ayrıdır.','Paylaşılan girişdə hesabın şifrəsini və digər istifadəçilərin məlumatlarını dəyişməyin. İcazə verilən istifadə formasını təhvil təlimatından yoxlayın.'],
+ claude_ai:['Claude AI','Mətnlə işləmək, araşdırma və kodla bağlı tapşırıqlar üçün süni intellekt xidmətinin paket təklifidir.','Giriş formatı və istifadə limiti dəqiqləşdirildikdən sonra təhvil təlimatını izləyin. Paket adı göstərilməyən əlavə model və limitlər vəd edilmir.'],
+ youtube_sexsi:['YouTube Premium yenilənməsi','Mövcud YouTube abunəliyini yeniləmək üçün kataloq qeydidir; yeni hesab məhsulu deyil.','Əvvəlki abunəliyin hansı Google hesabına aid olduğunu və yenilənmə müddətini operatorla dəqiqləşdirin.'],
+ adobecc:['Adobe Creative Cloud','Yaradıcı proqramlarla işləmək üçün Adobe Creative Cloud paket təklifidir.','Paketə daxil olan tətbiqləri və hesabın giriş formasını dəqiqləşdirin; təsdiqlənməyən əlavə proqram və yaddaş həcmi daxil sayılmır.'],
+ tiktok_jeton:['TikTok Jeton','TikTok hesabı üçün seçilən sayda jeton paketidir; aylıq abunəlik deyil.','TikTok istifadəçi identifikatorunu və jeton sayını təsdiqdən əvvəl tutuşdurun. Hesabınızda yüklənməni yoxlayıb uyğunsuzluğu sifariş nömrəsi ilə bildirin.'],
+ google_ai_ultra:['Google AI Ultra + VEO 3','Google süni intellekt və video yaratma xidmətləri üçün kataloq təklifidir.','Model, video limiti və hesab formatı təsdiqlənmədən satınalma qərarı verməyin. Hazırda müsbət qiymətli paket yoxdur.'],
+ captions:['Captions AI','Video və altyazı hazırlamaq üçün Pro və Max paket seçimləri olan süni intellekt alətidir.','Pro və Max paket adlarını ayırın. Aktivləşdirmədən sonra aldığınız səviyyənin hesabda göründüyünü yoxlayın; əlavə istifadə limiti ayrıca təsdiqlənməlidir.'],
+ grok_supergrok:['Grok AI','Sual-cavab və mətn tapşırıqları üçün Grok süni intellekt xidməti üzrə paket təklifidir.','Giriş formasını və konkret abunəlik səviyyəsini dəqiqləşdirin. Məhsul adı bütün modellərə limitsiz giriş vədi deyil.'],
+ duolingo:['Duolingo Super','Dil öyrənmə üçün Duolingo Super abunəlik paketidir.','Aktivləşən Duolingo hesabını və paket müddətini yoxlayın. Öyrənmə irəliləyişinizi saxlayan hesabın seçilməsini operatorla dəqiqləşdirin.'],
+ netflix_sexsi:['Netflix Şəxsi yenilənməsi','Mövcud Netflix Şəxsi otağının yenilənməsi üçün köhnə kataloq qeydidir.','Yenilənmə üçün əvvəlki sifariş və otaq məlumatını dəqiqləşdirin. Yeni otaq satışı ilə mövcud otağın yenilənməsini qarışdırmayın.'],
+ linkedin_career:['LinkedIn Career','Peşəkar profil və iş axtarışı üçün LinkedIn Career paket təklifidir.','Təqdim ediləcək hesabı və abunəlik səviyyəsini aktivləşdirmədən əvvəl dəqiqləşdirin; iş tapılması və ya müraciət nəticəsi barədə zəmanət verilmir.'],
+ elevenlabs_creator:['ElevenLabs Creator','Səs yaratma və səsli kontent üzərində işləmək üçün Creator paket təklifidir.','Səs yaratma limiti və istifadə hüquqlarını konkret paket üzrə yoxlayın. Kontentdən istifadə qaydaları üçün xidmətin öz şərtlərini də oxuyun.'],
+ semrush_premium:['Semrush Premium','Sayt və axtarış təhlili üçün Semrush alətlərinə aid paket təklifidir.','Giriş formatını, layihə və sorğu limitlərini dəqiqləşdirin. Alətə giriş axtarışda mövqe və ya trafik zəmanəti deyil.'],
+ adobe_express:['Adobe Express','Sosial media vizualları və sadə yaradıcı işlər üçün dizayn alətinə aid paketdir.','Aldığınız hesabın Express paketini yoxlayın. Creative Cloud proqramlarının hamısını bu paketə daxil hesab etməyin.'],
+ notion_plus:['Notion Plus','Qeydlər, sənədlər və işlərin təşkili üçün Notion Plus paket təklifidir.','Dəvət və ya giriş aldıqda düzgün iş sahəsini açın. Komanda hüquqları və əlavə AI imkanları ayrıca təsdiqlənməlidir.'],
+ picsart_premium:['Picsart Premium','Foto redaktəsi və vizual kontent hazırlamaq üçün Picsart paket təklifidir.','Girişdən sonra hesabın paketini yoxlayın. Əlavə AI kreditləri və cihaz sayı konkret sifarişdə təsdiqlənməlidir.'],
+ blink_starter:['Blink Starter','Veb layihələrin ilkin hazırlanması üçün Starter səviyyəli platforma paketidir.','Hesab formatını, layihə və istifadə limitlərini dəqiqləşdirin. Domen, əlavə kredit və yayımlama xidməti ayrıca göstərilmədikdə daxil sayılmır.'],
+ lightroom_photo:['Lightroom Photo','Fotoşəkillərin rəng və işıq redaktəsi üçün Lightroom paket təklifidir.','Giriş formasını və uyğun tətbiqi yoxlayın. Bulud yaddaşı və əlavə Adobe proqramlarının daxil olub-olmadığını ayrıca dəqiqləşdirin.'],
+ gemini_ai_pro:['Gemini AI Pro','Google Gemini ilə mətn və süni intellekt tapşırıqları üçün Pro paket təklifidir.','Paketə uyğun hesabla daxil olun. Model, region və kredit limitləri konkret sifariş üzrə dəqiqləşdirilməlidir.'],
+ google_ai:['Gemini AI Pro + 5 TB yaddaş','Gemini süni intellekt və məhsul adında göstərilən yaddaş təklifinə aid kataloq qeydidir.','Google hesabının giriş formatını, yaddaşın tətbiqini və AI paketini dəqiqləşdirin. Bu qeyd başqa Google AI məhsulları ilə eyniləşdirilmir.'],
+ epinby_3436:['PUBG Mobile 60 UC — arxiv paket','PUBG Mobile məhsuluna birləşdirilmiş əvvəlki 60 UC kataloq qeydidir.','Aktual paket üçün PUBG Mobile məhsul səhifəsinə baxın. Bu arxiv qeydindən ayrıca alış nəzərdə tutulmur.']
+};
 export const productTopics={
  netflix:['Netflix Şəxsi','Netflix almaq, Netflix Premium Azərbaycan, Netflix hesabı, Netflix qiyməti',
   'Netflix Şəxsi film və serial izləmək üçün ayrılan otaq/profil təklifidir. Bu məhsulu ümumi hesabdan fərqləndirən hissə sifarişinizə aid otaq və PIN məlumatıdır.',
@@ -54,10 +81,11 @@ export const productTopics={
   'Telegram Premium və Stars eynidirmi?','Xeyr. Premium müddətli abunəlikdir, Stars isə ayrıca rəqəmsal vahiddir. Yalnız sifariş təsdiqində uyğun xidmət göstəriləndə davam edin.']
 };
 export function productSeoCopy(product){
- const topic=productTopics[product.id];
+ const extra=extraTopics[product.id];
+ const topic=productTopics[product.id]||(extra?[extra[0],extra[0]+' almaq, '+extra[0]+' qiyməti',extra[1],extra[2],extra[0]+' necə təqdim olunur?',extra[2]]:null);
  const name=topic?.[0]||String(product.title||'Rəqəmsal məhsul').trim();
  return {name,queries:topic?.[1]||name+' almaq, '+name+' qiyməti',
-  title:name+' almaq Azərbaycanda | Qiymət və paketlər — MirPanel',
+  title:name+' almaq | Qiymət və paketlər — MirPanel',
   description:({
    netflix:'Netflix Şəxsi hesab almaq üçün aylıq və uzunmüddətli paketləri müqayisə edin. MirPanel-də AZN qiymətləri, ayrılmış otaq, PIN və təhvil qaydasını yoxlayın.',
    netflix_umumi:'Netflix Ümumi hesab üçün cari AZN qiymətini və paylaşılan giriş şərtlərini yoxlayın. Şəxsi otaq paketindən fərqini öyrənib MirPanel-də sifariş edin.',
@@ -72,9 +100,39 @@ export function productSeoCopy(product){
    pubg_mobile:'PUBG Mobile UC almaq üçün 60 UC, 325 UC və digər paketləri müqayisə edin. MirPanel-də AZN qiymətlərini, Player ID və region uyğunluğunu yoxlayın.',
    free_fire:'Free Fire almaz almaq üçün MirPanel paketlərini və AZN qiymətlərini yoxlayın. Almaz sayı, bonus, region və Player ID məlumatlarını sifarişdən əvvəl tutuşdurun.',
    telegram_premium:'Telegram Premium paket adlarını, AZN qiymətlərini və faktiki xidmət növünü MirPanel-də yoxlayın. Premium abunəliklə Stars fərqini ödənişdən əvvəl dəqiqləşdirin.'
-  })[product.id]||name+' üçün paketləri, AZN qiymətini, tələb olunan məlumatları və təhvil qaydasını MirPanel-də yoxlayın.',
+  })[product.id]||(extra?extra[1]+' MirPanel-də paket qiymətini və təhvil qaydasını yoxlayın.':name+' üçün paketləri, AZN qiymətini, tələb olunan məlumatları və təhvil qaydasını MirPanel-də yoxlayın.'),
   intro:topic?.[2]||name+' üçün cari paketləri və onların qiymətlərini bu səhifədə müqayisə edin.',
   usage:topic?.[3]||'Seçilmiş paketin tələb etdiyi məlumatları sifariş formasında yoxlayın.',
   question:topic?.[4]||name+' sifarişinin məlumatlarını haradan açım?',
   answer:topic?.[5]||'Təhvil verilmiş sifarişin məlumatları və təlimatı Sifarişlərim bölməsində göstərilir.'};
+}
+
+const esc=value=>String(value??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const specificRules={
+ youtube:['Aktivləşdirmə öz Google hesabınız üçündür. Yeni hesabın sizə veriləcəyini gözləməyin.','Abunəlik açıldıqda YouTube profilində Premium vəziyyətini yoxlayın. Məhsul hazırda sifarişə bağlıdırsa alternativ sifariş yaratmayın.'],
+ zoom:['Təqdim edilən e-poçt və şifrə ilə Zoom tətbiqində “Giriş yapın” seçin.','Təsdiq kodu tələb olunarsa Zoom üçün telefonlu təlimatı izləyin; nümunə kodu yox, öz hesabınıza gələn ən son kodu istifadə edin.','Şifrə dəyişməzdən əvvəl sifarişin cari təhvil qeydlərini yoxlayın və operatorla razılaşdırın.'],
+ spotify:['Öz Spotify hesabınıza aktivləşdirmə edilir; e-poçt və Spotify şifrəsini sifariş formasında düzgün yazın.','Təkrar şifrə sahəsi varsa eyni şifrəni yazın. Aktivləşdirmə bitdikdə həmin hesabın Premium vəziyyətini yoxlayın.'],
+ netflix:['Təhvil məlumatındakı Netflix hesabına daxil olub sizə ayrılmış otağı/profili və PIN-i seçin.','Başqa müştərinin profilinə keçməyin. Otaqla bağlı dəyişiklikdən əvvəl sifarişinizdəki cari istifadə qaydasını oxuyun.'],
+ netflix_umumi:['Bu paylaşılan hesabdır, ayrıca şəxsi otaq paketi deyil.','Yalnız təhvil qeydində göstərilən giriş qaydasını izləyin; digər istifadəçilərin şifrəsini və profillərini dəyişməyin.'],
+ capcut:['Paketdə seçdiyiniz müddətə uyğun hazır hesabın giriş məlumatını açın.','Telefonda e-poçt və şifrə ilə giriş üçün CapCut təlimatını izləyin. Paket kompüter girişini dəstəkləyirsə, QR ilə giriş zamanı kodu daxil olduğunuz telefondan oxudun.','7 günlük paketlə aylıq paketin xidmət və zəmanət müddətləri eyni deyil; aşağıdakı paket məlumatını ayrıca yoxlayın.'],
+ chatgpt:['Sizə verilən şəxsi hesabın e-poçt və şifrəsi ilə ChatGPT-yə daxil olun.','Əlavə təsdiq tələb olunarsa yalnız sifarişdəki şəxsi təlimatdan istifadə edin. Şifrəni, təsdiq kodunu və 2FA açarını açıq söhbətdə paylaşmayın.'],
+ prime:['Amazon Prime Video-ya təqdim olunan e-poçt və şifrə ilə daxil olun, ayrılmış profili seçin.','Keçid açarı təklifi çıxarsa Prime Video təlimatındakı şifrə ilə davam etmə addımını izləyin.','Otaq adı və kodu istənilərsə seçilmiş paket formasını doldurun; başqa məhsulun PIN qaydasını tətbiq etməyin.'],
+ hbomax:['Təqdim edilən hesabla HBO Max-a daxil olun və sizə ayrılan otaq/profili seçin.','Sifariş forması otaq adı və dördrəqəmli kod istəyirsə düzgün daxil edin. İstifadə zamanı təhvil qaydalarındakı cihaz məhdudiyyətini yoxlayın.','Tətbiqin cihazınızda və regionunuzda açılmasını alışdan əvvəl yoxlayın; işləməyən cihaz üçün ümumi giriş vədi verilmir.'],
+ surfshark:['Uyğun Surfshark tətbiqini açıb təqdim olunan hesabla daxil olun.','Bağlantını seçdikdən sonra işləməsini yoxlayın. Şəbəkə və üçüncü tərəf məhdudiyyətləri səbəbindən bütün xidmətlərə giriş vədi verilmir.'],
+ canva:['Sifarişdə aktiv istifadə etdiyiniz e-poçt/Gmail ünvanını yazın; hazır hesab veriləcəyini fərz etməyin.','Aktivləşdirmə və ya dəvət təhvil edildikdə həmin ünvanla Canva hesabına daxil olub paket vəziyyətini yoxlayın.'],
+ pubg_mobile:['Oyundakı Player ID-ni mətn kimi köçürün; başlanğıc sıfırlarını silməyin.','Seçilmiş UC paketini və tələb edilərsə region/serveri yoxlayın. Hesab adı qaytarılarsa öz hesabınızla tutuşdurun.','Yükləmə nəticəsi təsdiqləndikdən sonra oyunda UC balansını yoxlayın. Oyun şifrəsini Player ID xanasına yazmayın.'],
+ free_fire:['Free Fire Player ID-ni öz oyun profilinizdən köçürün və almaz paketini seçin.','Paketin regionu və hesab uyğunluğu vacibdir. Oyunçu adı yoxlanılıbsa adı təsdiqdən əvvəl tutuşdurun.','İcra tamamlandıqdan sonra oyun balansını yoxlayın; yanlış nəticədə sifariş nömrəsi ilə dəstəyə yazın.'],
+ telegram_premium:['Diqqət: paket adları Premium göstərsə də təchizatçı bağlantısı hazırda TELEGRAM_STARS kimi saxlanılıb.','Premium abunəlik və Stars fərqli məhsullardır. Xidmət uyğunluğu operator tərəfindən düzəldilmədən bu səhifədən Premium alışı etməyin.'],
+ mirpanel_token:['Seçdiyiniz token sayını və yekun məbləği təsdiq edin. Tokenlər başqa platformanın hesab məlumatı deyil.','Ödənişdən sonra hesabınızdakı token vəziyyətini yoxlayın. Uyğunsuzluqda əməliyyatı təkrar ödəmədən sifariş nömrəsi ilə dəstəyə müraciət edin.']
+};
+export function productCustomerContent(product){
+ const copy=productSeoCopy(product),plans=(product.plans||[]).filter(p=>p.active!==false);
+ const fields=[...new Set([...(product.formFields||[]),...plans.flatMap(p=>p.formFields||p.supplier?.fields||[])].filter(f=>f.enabled!==false&&f.active!==false).map(f=>f.label).filter(Boolean))];
+ const flowFields={name_code_4:['Otaq adı','4 rəqəmli otaq kodu'],name_code_5:['Ad','5 rəqəmli kod']};
+ const labels=fields.length?fields:flowFields[product.flow]||[];
+ const facts=plans.map(p=>{const m=planMetrics(p);return '<li><strong>'+esc(planName(p))+'</strong> — '+esc(Number(p.price).toFixed(2).replace('.',','))+' '+esc(product.currency||'₼')+(m.warranty?'; '+esc(m.warranty):'')+'.</li>';}).join('');
+ const aboutHtml='<h3>Nə əldə edirsiniz?</h3><p>'+esc(copy.intro)+'</p><h3>Paketlərin fərqi</h3><ul>'+facts+'</ul><p>'+esc(labels.length?'Sifariş üçün tələb olunan məlumatlar: '+labels.join(', ')+'.':'Bu məhsulun açıq sifariş ayarında əlavə müştəri məlumatı göstərilmir. Təhvil üçün lazım olan məlumat varsa seçilmiş paketin formasında dəqiqləşdirilir.')+'</p>';
+ const steps=specificRules[product.id]||[copy.usage,'Hesabın giriş formatını və paketə daxil olanları dəqiqləşdirmədən başqa məhsulun təlimatını tətbiq etməyin.'];
+ const rulesHtml='<h3>'+esc(copy.name)+' — istifadə addımları</h3><ol>'+steps.map(s=>'<li>'+esc(s)+'</li>').join('')+'</ol><h3>Müddət və zəmanət</h3><ul>'+facts+'</ul><p>Paketdə göstərilməyən cihaz sayı, region və əlavə zəmanət vəd edilmir. Müddət və zəmanət ayrı anlayışlardır; seçilmiş paketin məlumatını əsas götürün.</p><h3>Təhvil və kömək</h3><p>Sifarişin statusunu və təqdim edilən məlumatları <a href="/profil?tab=sifarislerim">Sifarişlərim</a> bölməsində açın. Məhsula aid bələdçi varsa həmin sifarişdə “Təlimat” düyməsindən baxın. Problem olduqda sifariş nömrəsini göstərərək <a href="/elaqe">MirPanel dəstəyinə yazın</a>; şifrə və təsdiq kodunu açıq paylaşmayın.</p>';
+ return {aboutHtml,rulesHtml};
 }
