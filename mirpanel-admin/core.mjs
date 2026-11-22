@@ -600,6 +600,8 @@ function normalizePlan(plan = {}, index = 0) {
     ...normalizePlanMetadata(plan),
     // Freeze legacy cost/order keys once, before the editor can reorder plans.
     id: String(plan.id ?? index),
+    // Adding a stable editor/cost ID must not change an existing fulfillment SKU.
+    ...((Object.hasOwn(plan,'stockIdentityId')||plan.id==null)?{stockIdentityId:plan.stockIdentityId??null}:{}),
     ...(plan.pricingId ? {pricingId:String(plan.pricingId)} : {}),
     ...(plan.label ? { label: String(plan.label) } : {}),
     months: Number(plan.months) || 1,

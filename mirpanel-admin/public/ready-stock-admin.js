@@ -543,7 +543,7 @@ export function mountReadyStock(host,api){
     }
    }catch{}
    const title=document.createElement('strong'),numbers=document.createElement('span');
-   title.textContent=x.title;numbers.dataset.productReady='';numbers.textContent=x.readyTotal+' hazır hesab';
+   title.textContent=x.title;numbers.dataset.productReady='';numbers.textContent=x.readyTotal+' hazır hesab'+(x.unmatchedReady?' · '+x.unmatchedReady+' köhnə paketdə — yoxlama tələb olunur':'');
    b.append(image,title,numbers);b.onclick=()=>{if(product.value!==x.id){rememberDraft();product.value=x.id;fillPlans(lastPlan.get(x.id));renderPlan();}};list.append(b);
   }
  }
@@ -552,7 +552,7 @@ export function mountReadyStock(host,api){
   if(read)await read.catch(()=>{});
   const request=read=api(endpoint);
   try{const next=await request,p=product.value,i=plan.value;showRooms(next.netflixRooms,next.netflixSheetManual??[],true,next.netflixSheetQueue);rememberDraft();savedAccounts=next.accounts||[];products=next.products;loaded=true;product.replaceChildren(...products.map(x=>new Option(x.title,x.id)));if(products.some(x=>x.id===p))product.value=p;fillPlans(i);renderProducts();renderPlan();}
-  catch(e){say(e.message,true);}
+  catch(e){say('Stok yüklənmədi. '+(e.message||'Yenidən cəhd edin.'),true);}
   finally{if(read===request)read=null;controls();}
  }
  async function send(type){
@@ -646,11 +646,11 @@ export function mountReadyStock(host,api){
     }
     if(selected().p?.id===stock.id){renderCounts(selected().item);deliveryProgress.textContent=(selected().item?.waiting??0)+' ödənilmiş sifariş təhvil gözləyir.';}
     const counter=[...list.querySelectorAll('[data-product]')].find(n=>n.dataset.product===stock.id)?.querySelector('[data-product-ready]');
-    if(counter)counter.textContent=stock.readyTotal+' hazır hesab';
+    if(counter)counter.textContent=stock.readyTotal+' hazır hesab'+(stock.unmatchedReady?' · '+stock.unmatchedReady+' köhnə paketdə — yoxlama tələb olunur':'');
    }
    showRooms(next.netflixRooms,next.netflixSheetManual??[],false,next.netflixSheetQueue);
    if(JSON.stringify(savedAccounts)!==JSON.stringify(next.accounts||[])){savedAccounts=next.accounts||[];renderSavedAccounts();}
-  }catch{/* Keep the last confirmed stock visible until the next check. */}
+  }catch(e){say('Stok yüklənmədi. Son təsdiqlənmiş məlumat saxlanılır. '+(e.message||''),true);}
   finally{read=null;}
  }
  const timer=setInterval(()=>{if(host.isConnected)void pollRooms();else clearInterval(timer);},5000);

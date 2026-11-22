@@ -40,7 +40,8 @@ export async function readyStockView(pool,catalog,inventory,security){
     if(!counted.has(sku)){counted.add(sku);readyTotal+=config?.ready??0;}
     return {index:i,title:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Paket '+(i+1)),signature:sig,sales:inv?.available??null,tracked:inv?.tracked??false,active:inv?.active??false,ready:config?.ready??0,readyManaged:!epinbyPlan(p,plan)&&p.supplier?.provider!=='epinby'&&plan.supplier?.provider!=='epinby',waiting:waiting.get(sku)??0,autoWallet:config?.auto_wallet??false,allowWaiting:config?.allow_waiting??false};
    });
-   return {id:p.id,title:p.title,message:messages.get(p.id)??'',image:typeof p.image==='string'?p.image:'',readyTotal,scope:stock?.scope||'none',version:stock?.version??0,plans};
+   const unmatchedReady=settings.filter(row=>row.product_id===p.id&&!counted.has(key(row.product_id,row.plan_key,row.plan_signature))).reduce((n,row)=>n+row.ready,0);
+   return {id:p.id,title:p.title,message:messages.get(p.id)??'',image:typeof p.image==='string'?p.image:'',readyTotal,unmatchedReady,scope:stock?.scope||'none',version:stock?.version??0,plans};
   })};
   const roomStockInstalled=(await c.query("select to_regclass('mirpanel_community.netflix_room_units') is not null present")).rows[0].present;
   result.netflixRooms=roomStockInstalled?(await netflixRooms(c,security)).rooms:null;

@@ -9,7 +9,7 @@ export function customerDetails(input={}){
  if(name.length<2||!/^[1-9]\d{7,14}$/.test(phone))throw fail('Ad və ölkə kodu ilə WhatsApp nömrəsi tələb olunur.');
  return {name,phone,quantity:quantity(input.quantity)};
 }
-export const signature=plan=>crypto.createHash('sha256').update(JSON.stringify([plan.id??null,plan.label||plan.name||'',plan.duration_months??plan.durationMonths??plan.months??null])).digest('hex');
+export const signature=plan=>crypto.createHash('sha256').update(JSON.stringify([Object.hasOwn(plan,'stockIdentityId')?plan.stockIdentityId:plan.id??null,plan.label||plan.name||'',plan.duration_months??plan.durationMonths??plan.months??null])).digest('hex');
 export async function hashPassword(password){if(typeof password!=='string'||password.length<12||password.length>200)throw fail('Şifrə 12–200 simvol olmalıdır.');const salt=crypto.randomBytes(16).toString('hex');return `scrypt:${salt}:${Buffer.from(await scrypt(password,salt,64)).toString('hex')}`;}
 export async function verifyPassword(password,hash){if(typeof password!=='string'||password.length>200)return false;const [kind,salt,hex]=String(hash).split(':');if(kind!=='scrypt'||!/^[a-f0-9]{32}$/.test(salt)||!/^[a-f0-9]{128}$/.test(hex))return false;return crypto.timingSafeEqual(Buffer.from(await scrypt(password,salt,64)),Buffer.from(hex,'hex'));}
 export function createStockCrypto(base64){const base=Buffer.from(base64||'','base64');if(typeof base64!=='string'||!/^[A-Za-z0-9+/]{43}=$/.test(base64)||base.length!==32||base.toString('base64')!==base64)throw fail('Stok şifrələmə xidməti konfiqurasiya edilməyib.',503);const key=Buffer.from(crypto.hkdfSync('sha256',base,Buffer.from('Mirpanel'),Buffer.from('employee-stock-v1'),32));
