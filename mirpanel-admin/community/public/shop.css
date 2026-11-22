@@ -182,6 +182,34 @@
 .shop-page .shop-result-actions a:focus-visible{outline:2px solid #ffd557;outline-offset:3px}
 @media(hover:hover){.shop-page .shop-result-actions a:hover{filter:brightness(1.12);text-decoration:underline}}
 
+/* Only the confirmed order result link; never pending results or token/top-up links. */
+@property --orders-success-edge-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
+.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"]){
+ position:relative;isolation:isolate;overflow:hidden;
+ border-color:#fff8;box-shadow:0 0 18px #ffc53d26,inset 0 0 0 1px #ffffff24;
+}
+.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])>span{position:relative;z-index:1}
+.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::before,
+.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::after{
+ content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
+}
+.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::before{
+ background:linear-gradient(110deg,transparent 39%,#ffffff0a 43%,#ffffff80 49%,#ffffffad 50%,#ffffff24 54%,transparent 60%);
+ transform:translateX(-115%);animation:orders-success-sheen 3s ease-in-out infinite;
+}
+.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::after{
+ padding:1px;background:conic-gradient(from var(--orders-success-edge-angle),transparent 0deg 295deg,#ffffff30 315deg,#fff 343deg,transparent 360deg);
+ -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
+ -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
+ animation:orders-success-edge 3s linear infinite;
+}
+@keyframes orders-success-sheen{0%,12%{transform:translateX(-115%)}70%,100%{transform:translateX(115%)}}
+@keyframes orders-success-edge{to{--orders-success-edge-angle:360deg}}
+@media(prefers-reduced-motion:reduce){
+ .shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::before,
+ .shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::after{animation:none;content:none}
+}
+
 /* Keep the support footer below the wallet in every initial load state. */
 .shop-page.shop-wallet-page{box-sizing:border-box;min-height:max(916px,100svh);padding-bottom:32px}
 .shop-wallet-loading{display:flex;align-items:center;gap:10px;padding:12px 0;color:#d5d9df}
