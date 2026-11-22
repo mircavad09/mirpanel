@@ -119,11 +119,11 @@
       <div class="product-page-similar-title" title="Free Fire">Free Fire</div>
       <div class="product-page-similar-category">games</div>
       <div class="product-page-similar-price">1.58 ₼</div>
-    </a><a class="product-page-similar-card" href="/mehsul/mobile-legends" aria-label="Mobile Legends — Stokda yoxdur" title="Mobile Legends">
+    </a><a class="product-page-similar-card" href="/mehsul/mobile-legends" aria-label="Mobile Legends — 1.49 ₼" title="Mobile Legends">
       <img src="/uploads/products/mobile-legends-cover.webp" class="product-page-similar-image" alt="Mobile Legends — oyun məhsulunun banneri" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="Mobile Legends">Mobile Legends</div>
       <div class="product-page-similar-category">games</div>
-      <div class="product-page-similar-price">Stokda yoxdur</div>
+      <div class="product-page-similar-price">1.49 ₼</div>
     </a><a class="product-page-similar-card" href="/mehsul/youtube-premium" aria-label="YouTube Premium (Öz hesabınız) — 5.99 ₼" title="YouTube Premium (Öz hesabınız)">
       <img src="/uploads/products/youtube-1792448135653-d84f34dc.png?v=1792448135653" class="product-page-similar-image" alt="YouTube Premium — MirPanel məhsul şəkli" width="320" height="320" loading="lazy" decoding="async">
       <div class="product-page-similar-title" title="YouTube Premium (Öz hesabınız)">YouTube Premium (Öz hesabınız)</div>
@@ -226,7 +226,7 @@
   </div>
 
   <script src="/display-labels.js?v=20261021"></script>
-  <script src="/app.js?v=image-alt-20261117-bf40051af0c2a80e"></script>
+  <script src="/app.js?v=image-alt-20261117-47d65890bb23de40"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
   <script src="/stock-display-fix.js?v=home-equal-rows-1"></script>

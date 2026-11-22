@@ -176,7 +176,7 @@ const DATA = {
       "seoRelatedKeywords": " YouTube Premium qiyməti",
       "seoKeywords": "YouTube Premium almaq, YouTube Premium qiyməti",
       "seoContent": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.",
-      "seoUpdatedAt": "2026-11-22T21:26:43.965Z",
+      "seoUpdatedAt": "2026-11-22T12:17:59.742Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "YouTube Premium almaq | Qiymət və paketlər — MirPanel",
@@ -311,7 +311,7 @@ const DATA = {
       "seoRelatedKeywords": " Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
       "seoKeywords": "Zoom Pro almaq, Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
       "seoContent": "Zoom Pro onlayn dərs, iş görüşü və toplantılar üçün hesab təklifidir. Müddəti və qiyməti aşağıdakı paket seçimində müqayisə edə bilərsiniz.",
-      "seoUpdatedAt": "2026-11-22T21:26:43.965Z",
+      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Zoom Pro almaq | Qiymət və paketlər — MirPanel",
@@ -414,7 +414,7 @@ const DATA = {
       "seoRelatedKeywords": " Spotify Premium Azərbaycan, Spotify qiyməti",
       "seoKeywords": "Spotify Premium almaq, Spotify Premium Azərbaycan, Spotify qiyməti",
       "seoContent": "Bu Spotify Premium təklifi müştərinin öz hesabında aktivləşdirmə üçündür. Mövcud hesabınızı istifadə etmək istəyirsinizsə seçilən paketin adını və tələb olunan giriş məlumatlarını yoxlayın.",
-      "seoUpdatedAt": "2026-11-22T21:26:43.965Z",
+      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Spotify Premium almaq | Qiymət və paketlər — MirPanel",
@@ -688,7 +688,7 @@ const DATA = {
       "seoRelatedKeywords": " CapCut Pro Azərbaycan, CapCut qiyməti",
       "seoKeywords": "CapCut Pro almaq, CapCut Pro Azərbaycan, CapCut qiyməti",
       "seoContent": "CapCut Pro video montajı üçün premium hesab təklifidir. Qısa müddətli və aylıq paketləri eyni səhifədə görüb ümumi qiymətlərini müqayisə edə bilərsiniz.",
-      "seoUpdatedAt": "2026-11-22T21:26:43.965Z",
+      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "CapCut Pro almaq | Qiymət və paketlər — MirPanel",
@@ -939,7 +939,7 @@ const DATA = {
       "seoRelatedKeywords": " ChatGPT şəxsi hesab Azərbaycan",
       "seoKeywords": "ChatGPT Plus almaq, ChatGPT şəxsi hesab Azərbaycan",
       "seoContent": "Bu səhifə hazır şəxsi ChatGPT Plus hesabı təklifi üçündür. Paylaşılan hesabla qarışdırmamaq üçün məhsul adını və seçilmiş müddəti yoxlayın.",
-      "seoUpdatedAt": "2026-11-22T21:26:43.966Z",
+      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "ChatGPT Plus şəxsi hesab almaq | Qiymət və paketlər — MirPanel",
@@ -1136,7 +1136,7 @@ const DATA = {
       "seoRelatedKeywords": " Amazon Prime Video Azərbaycan, Prime Video qiyməti",
       "seoKeywords": "Prime Video almaq, Amazon Prime Video Azərbaycan, Prime Video qiyməti",
       "seoContent": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.",
-      "seoUpdatedAt": "2026-11-22T21:26:43.966Z",
+      "seoUpdatedAt": "2026-11-22T15:22:01.159Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Amazon Prime Video almaq | Qiymət və paketlər — MirPanel",
@@ -1582,7 +1582,7 @@ const DATA = {
       "seoRelatedKeywords": " HBO Max Azərbaycan, HBO Max hesab qiyməti",
       "seoKeywords": "HBO Max almaq, HBO Max Azərbaycan, HBO Max hesab qiyməti",
       "seoContent": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
-      "seoUpdatedAt": "2026-11-22T21:26:43.966Z",
+      "seoUpdatedAt": "2026-11-22T12:17:59.744Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "HBO Max almaq | Qiymət və paketlər — MirPanel",
@@ -1814,7 +1814,7 @@ const DATA = {
       "seoRelatedKeywords": " VPN Azərbaycan, Surfshark qiyməti",
       "seoKeywords": "Surfshark VPN almaq, VPN Azərbaycan, Surfshark qiyməti",
       "seoContent": "Surfshark VPN internet bağlantısı üçün VPN hesabı təklifidir. Bu məhsul bağlantının məxfiliyi üçün alətdir; tam anonimlik və ya bütün saytlara giriş zəmanəti kimi təqdim edilmir.",
-      "seoUpdatedAt": "2026-11-22T21:26:43.966Z",
+      "seoUpdatedAt": "2026-11-22T12:17:59.744Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Surfshark VPN almaq | Qiymət və paketlər — MirPanel",
@@ -4531,7 +4531,7 @@ const DATA = {
       "seoRelatedKeywords": "",
       "seoKeywords": "",
       "seoContent": "",
-      "seoUpdatedAt": "2026-11-22T21:26:43.967Z",
+      "seoUpdatedAt": "2026-11-22T21:27:58.918Z",
       "seoIndex": false,
       "includeInSitemap": false,
       "seoOgTitle": "",
@@ -4726,6 +4726,65 @@ const DATA = {
           "label": "Twilight",
           "months": 1,
           "price": 15.3
+        },
+        {
+          "stockSignature": "b042d05697a757161cc30aa2a89123ef81464d79b8644c72c89e32da80f86446",
+          "stockContract": "[null,1,null]",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 2754,
+            "type": "TOPUP",
+            "gameId": 6,
+            "categoryId": 11,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "Player ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              },
+              {
+                "key": "server_id",
+                "label": "Server ID",
+                "required": false,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "image": "",
+          "formFields": [
+            {
+              "key": "player_id",
+              "type": "text",
+              "label": "Player ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
+            },
+            {
+              "key": "server_id",
+              "type": "text",
+              "label": "Server ID",
+              "placeholder": "",
+              "description": "",
+              "required": false,
+              "enabled": true,
+              "maxLength": 400
+            }
+          ],
+          "id": "epinby_2754",
+          "pricingId": "06acf32b-ebc5-4bd5-9c6c-a88bdc0f0732",
+          "label": "50 + 5 Diamonds (First Top-Up Bonus)",
+          "months": 1,
+          "price": 1.49
         }
       ],
       "orderConfirmation": {
