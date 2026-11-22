@@ -1117,6 +1117,7 @@ function renderPlans(product) {
     </div></div></details>
   `).join("");
 
+  window.MirpanelPackageCosts?.render(product);
   $("plans").querySelectorAll('[data-planmeta]').forEach(input => input.addEventListener('change',()=>{
     const plan=product.plans[Number(input.dataset.plan)], field=input.dataset.planmeta;
     if(!plan) return;
@@ -1560,7 +1561,7 @@ $("addPlanBtn").addEventListener("click", () => {
   const product = selectedProduct();
   if (!product) return;
   lastPlanAddition = Date.now();
-  product.plans.push({ pricingId: crypto.randomUUID(), label: "", months: 1, price: 0 });
+  product.plans.push({ id: crypto.randomUUID(), pricingId: crypto.randomUUID(), label: "", months: 1, price: 0 });
   markDirty();
   renderPlans(product);
   $("plans").lastElementChild.open = true;

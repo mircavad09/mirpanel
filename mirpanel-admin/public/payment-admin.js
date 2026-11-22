@@ -601,6 +601,11 @@
     const category = $p("paymentCostCategory"); if (category) category.innerHTML = '<option value="">Bütün kateqoriyalar</option>' + (result.categories || []).map((item) => `<option value="${escp(item)}">${escp(item)}</option>`).join("");
     renderCosts();
   }
+  window.addEventListener('mirpanel:costs-saved',event=>{
+    const current=new Map(paymentState.costs.map(row=>[costKey(row),row]));
+    paymentState.costs=(event.detail.rows||[]).map(row=>paymentState.costDirty.has(costKey(row))?current.get(costKey(row))||row:row);
+    if($p('paymentCostsList'))renderCosts();
+  });
   function renderCostBackfill() {
     const host = $p("paymentCostBackfillResult"); const apply = $p("paymentCostBackfillApply");
     if (!host || !apply) return;
@@ -641,12 +646,14 @@
       const row = paymentState.costs.find((item) => costKey(item) === key); const input = document.querySelector(`[data-payment-cost-key="${CSS.escape(key)}"] [data-payment-cost-input]`);
       const value = String(input?.value ?? row?.costAmount ?? "").trim().replace(",", ".");
       if (value && (!/^\d+(?:\.\d{1,2})?$/.test(value) || Number(value) > 9999999.99)) throw new Error("Maya dəyəri mənfi olmayan və maksimum iki onluq rəqəmli məbləğ olmalıdır.");
-      return { productId: row.productId, planId: row.planId, cost: value || null };
+      return { productId: row.productId, planId: row.planId, cost: value || null, expectedUpdatedAt: row.updatedAt };
     });
     paymentState.costSaving = true; renderCosts();
     try {
       const result = await paymentApi("/api/admin/payment-costs", { method: "POST", body: JSON.stringify({ items }) });
-      paymentState.costs = result.rows || paymentState.costs; selected.forEach((key) => paymentState.costDirty.delete(key));
+      const unsaved=new Map(paymentState.costs.filter(row=>!selected.includes(costKey(row))&&paymentState.costDirty.has(costKey(row))).map(row=>[costKey(row),row]));
+      paymentState.costs = (result.rows || paymentState.costs).map(row=>unsaved.get(costKey(row))||row); selected.forEach((key) => paymentState.costDirty.delete(key));
+      window.dispatchEvent(new CustomEvent('mirpanel:costs-saved',{detail:result}));
       paymentState.costBackfillPreview = null; renderCostBackfill();
       toast(result.idempotent ? "Bu dəyərlər artıq saxlanılıb." : "Maya dəyərləri təhlükəsiz saxlanıldı."); renderCosts();
     } catch (error) { toast(error.message || "Maya dəyərləri saxlanmadı."); renderCosts(); throw error; }

@@ -589,7 +589,7 @@ function normalizeDeliveryType(value) {
   if (!['manual','automatic','ready_account'].includes(value)) throw new Error('Çatdırılma tipi etibarsızdır.');
   return value;
 }
-function normalizePlan(plan = {}) {
+function normalizePlan(plan = {}, index = 0) {
   const orderGuide=normalizeOrderGuide(plan.orderGuide);
   const supplier=plan.supplier&&epinbyProduct(plan.supplier,plan.id||'invalid');
   if(plan.supplier&&!supplier)throw new Error('Epinby paketinin əlaqəsi düzgün deyil.');
@@ -598,6 +598,8 @@ function normalizePlan(plan = {}) {
     ...(supplier?{supplier,image:safeUrl(plan.image),formFields:supplier.fields.map(normalizeFormField)}:
       Array.isArray(plan.formFields)?{formFields:plan.formFields.slice(0,10).map(normalizeFormField)}:{}),
     ...normalizePlanMetadata(plan),
+    // Freeze legacy cost/order keys once, before the editor can reorder plans.
+    id: String(plan.id ?? index),
     ...(plan.pricingId ? {pricingId:String(plan.pricingId)} : {}),
     ...(plan.label ? { label: String(plan.label) } : {}),
     months: Number(plan.months) || 1,
@@ -941,6 +943,10 @@ export function normalizeAdminPayload(payload = {}) {
     ? payload.products.map(normalizeProduct)
     : [];
   const activeSupplierIds=new Set();
+  for(const p of products){
+    const ids=p.plans.map(plan=>plan.id);
+    if(new Set(ids).size!==ids.length)throw new Error('Paket identifikatorları təkrarlana bilməz.');
+  }
   for(const p of products.filter(p=>p.active!==false))for(const item of [p.supplier,...p.plans.map(plan=>plan.supplier)].filter(Boolean)){
     if(activeSupplierIds.has(item.productId))throw new Error('Eyni Epinby paketi bir dəfədən çox bağlana bilməz.');
     activeSupplierIds.add(item.productId);

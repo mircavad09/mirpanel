@@ -555,6 +555,12 @@ label textarea {
 #plans .planDuration { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(76px, 1fr); gap: 6px; }
 #plans .planPrice { position: relative; display: block; }
 #plans .planPrice input { padding-right: 32px; }
+.packageCost { min-width:0; display:grid; gap:6px; }
+.packageCostActions { display:flex; flex-wrap:wrap; gap:6px; }
+.packageCost small { color:#b6bac2; font-size:11px; overflow-wrap:anywhere; }
+.packageCostActions button { min-height:44px; }
+#plans .packagePrices { grid-column:1/-1; display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; align-items:start; }
+@media(max-width:600px){ #plans .packagePrices { grid-template-columns:minmax(0,1fr); } }
 #plans .planPrice > span { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #e5bc60; pointer-events: none; }
 #plans .planMetadata, #plans .planControls { grid-column: 1 / -1; display: grid; gap: 8px; min-width: 0; }
 #plans .planMetadata {

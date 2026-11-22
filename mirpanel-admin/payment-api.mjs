@@ -1,4 +1,5 @@
 import {TOKEN_PRODUCT} from './community/tokens.mjs';
+import {savePackageCosts} from './package-costs.mjs';
 import { createPaymentMailer, paymentEmailContent } from "./payment-mail.mjs";
 import {randomUUID} from 'node:crypto';
 import {
@@ -754,6 +755,8 @@ export function createPaymentSystem(options) {
       json(response, 200, result); return true;
     }
     if (request.method === "GET" && url.pathname === "/api/admin/payment-costs") {
+      if(!options.readyStockAllowed?.(request))throw Object.assign(Error('Maya yalnız səlahiyyətli adminə açıqdır.'),{status:403});
+      response.setHeader('Cache-Control','private, no-store');
       const catalog = await loadCatalog();
       const rows = await store.planCosts(catalog);
       json(response, 200, {
@@ -765,10 +768,11 @@ export function createPaymentSystem(options) {
       return true;
     }
     if (request.method === "POST" && url.pathname === "/api/admin/payment-costs") {
+      if(!options.readyStockAllowed?.(request))throw Object.assign(Error('Maya yalnız səlahiyyətli adminə açıqdır.'),{status:403});
       const body = await readBody(request, 100_000);
       if (!Array.isArray(body.items) || body.items.length > 500) throw Object.assign(new Error("Maya dəyəri siyahısı düzgün deyil."), { status: 400 });
       const catalog = await loadCatalog();
-      const result = await store.savePlanCosts(body.items, catalog, actorName);
+      const result = await savePackageCosts(await options.supplierPool(),body.items,catalog,actorName);
       json(response, 200, { ...result, rows: await store.planCosts(catalog) });
       return true;
     }
