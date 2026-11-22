@@ -1,4 +1,5 @@
 // Transactional authentication mail only. Never logs addresses, URLs or tokens.
+import {setTimeout as pause} from 'node:timers/promises';
 const delivery=(message,deliveryDisposition,deliveryCode,retryAfterMs)=>Object.assign(Error(message),{deliveryDisposition,deliveryCode,retryAfterMs});
 function retryAfter(response){const v=response.headers.get('Retry-After');return !v?0:/^\d+$/.test(v)?Number(v)*1000:Math.max(0,Date.parse(v)-Date.now())||0;}
 export function createAuthMailer(env){let token=null,expires=0,pending;
@@ -9,14 +10,14 @@ export function createAuthMailer(env){let token=null,expires=0,pending;
    if(!r.ok||!v?.access_token){const temporary=r.ok||r.status===429||r.status>=500;throw delivery('AUTH_MAIL_AUTHORIZATION_FAILED',temporary?'retry':'failed',temporary?'TOKEN_TEMPORARY':'TOKEN_REJECTED',retryAfter(r));}
    token=v.access_token;expires=Date.now()+Math.max(0,(Number(v.expires_in)||300)-60)*1000;return token;})();try{return await pending;}finally{pending=null;}
  }
- return async(kind,{user,url,code,subject,textBody,htmlBody,attachments})=>{const origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';
+ const sendOnce=async(kind,{user,url,code,subject,textBody,htmlBody,attachments,isCurrent})=>{const origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';
   if(!['verify','reset','welcome','code','order'].includes(kind))throw Error('AUTH_MAIL_KIND_DENIED');
   const u=['verify','reset'].includes(kind)?new URL(url):null;if(u&&u.origin!==origin)throw Error('AUTH_MAIL_URL_DENIED');
   if(kind==='code'&&!/^\d{6}$/.test(code||''))throw Error('AUTH_MAIL_CODE_INVALID');
   const email=v=>{if(!/^[^\s<>\r\n@]+@[^\s<>\r\n@]+\.[^\s<>\r\n@]+$/.test(v||''))throw delivery('AUTH_MAIL_ADDRESS_INVALID','failed','AUTH_CONFIGURATION');return v;};
   const durable=kind==='welcome'||kind==='order';
   const title=kind==='order'?subject:{verify:'MirPanel — e-poçtunuzu təsdiqləyin',reset:'MirPanel — şifrə bərpası',code:'MirPanel — e-poçt təsdiq kodu',welcome:'MirPanel-ə xoş gəlmisiniz!'}[kind];
-  const text=kind==='order'?textBody:kind==='welcome'?'Salam!\n\nQeydiyyatınız uğurla tamamlandı. MirPanel-ə xoş gəlmisiniz! 🎉\n\nİlk sifarişinizi vermək üçün hesabınıza daxil olun, balansınızı artırın və bəyəndiyiniz məhsulu seçin.\n\nBalansımı artır: https://mirpanel.com/balans\nMəhsullara bax: https://mirpanel.com/\n\nSualınız olsa, saytdakı canlı dəstəkdən bizə yaza bilərsiniz.\n\nMirPanel komandası':(kind==='code'?'E-poçt təsdiq kodunuz: '+code+'\n\nKod 10 dəqiqə qüvvədədir.':(kind==='verify'?'E-poçtunuzu təsdiqləmək üçün bu keçidi açın:':'Şifrənizi yeniləmək üçün bu keçidi açın:')+'\n\n'+u.href)+'\n\nBu sorğunu siz etməmisinizsə, məktuba məhəl qoymayın.';
+  const text=kind==='order'?textBody:kind==='welcome'?'Salam!\n\nQeydiyyatınız uğurla tamamlandı. MirPanel-ə xoş gəlmisiniz! 🎉\n\nİlk sifarişinizi vermək üçün hesabınıza daxil olun, balansınızı artırın və bəyəndiyiniz məhsulu seçin.\n\nBalansımı artır: https://mirpanel.com/balans\nMəhsullara bax: https://mirpanel.com/\n\nSualınız olsa, saytdakı canlı dəstəkdən bizə yaza bilərsiniz.\n\nMirPanel komandası':(kind==='code'?'E-poçt təsdiq kodunuz: '+code+'\n\nKod sorğudan etibarən 10 dəqiqə qüvvədədir. Təkrar kod istəmisinizsə, yalnız son uğurla göndərilmiş sorğunun kodu keçərlidir. Məktublar gecikib fərqli ardıcıllıqla gələ bilər; göndərilmə vaxtını yoxlayın.':(kind==='verify'?'E-poçtunuzu təsdiqləmək üçün bu keçidi açın:':'Şifrənizi yeniləmək üçün bu keçidi açın:')+'\n\n'+u.href)+'\n\nBu sorğunu siz etməmisinizsə, məktuba məhəl qoymayın.';
   const part=(type,body)=>['Content-Type: text/'+type+'; charset=UTF-8','Content-Transfer-Encoding: base64','',Buffer.from(body).toString('base64').match(/.{1,76}/g).join('\r\n')];
   const boundary='mirpanel-welcome-alternative',html=kind==='order'?htmlBody:kind==='welcome'?text.replace('Balansımı artır: https://mirpanel.com/balans\nMəhsullara bax: https://mirpanel.com/','<a href="https://mirpanel.com/balans">Balansımı artır</a> · <a href="https://mirpanel.com/">Məhsullara bax</a>').split('\n\n').map(p=>'<p>'+p+'</p>').join(''):null;
   const senderName=kind==='code'?'"MirPanel"':'MirPanel';
@@ -27,7 +28,8 @@ export function createAuthMailer(env){let token=null,expires=0,pending;
    '--'+related,'Content-Type: image/jpeg; name="qebz.jpg"','Content-Disposition: inline; filename="qebz.jpg"',
    'Content-ID: <topup-receipt>','Content-Transfer-Encoding: base64','',inline.content.match(/.{1,76}/g).join('\r\n'),'--'+related+'--']:alternative;
   const raw=['From: '+senderName+' <'+email(env.GMAIL_SENDER_EMAIL)+'>','To: '+email(user.email),'Subject: =?UTF-8?B?'+Buffer.from(title).toString('base64')+'?=','MIME-Version: 1.0',...body].join('\r\n');
-  const accessToken=await access();let r;
+  const current=async()=>{if(kind==='code'&&isCurrent&&!await isCurrent())throw delivery('AUTH_MAIL_REQUEST_SUPERSEDED','failed','SEND_SUPERSEDED');};
+  await current();const accessToken=await access();await current();let r;
   try{r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({raw:Buffer.from(raw).toString('base64url')}),signal:AbortSignal.timeout(15000),...(durable?{redirect:'error'}:{})});}
   catch{throw delivery('AUTH_MAIL_DELIVERY_FAILED','uncertain','SEND_RESULT_UNKNOWN');}
   const result=await r.json().catch(()=>null);
@@ -39,5 +41,16 @@ export function createAuthMailer(env){let token=null,expires=0,pending;
   if(limited)throw rejected('AUTH_MAIL_DELIVERY_FAILED','retry','SEND_RATE_LIMITED',retryAfter(r));
   if([400,401,403,404,413,422].includes(r.status))throw rejected('AUTH_MAIL_DELIVERY_FAILED','failed','SEND_REJECTED');
   throw rejected('AUTH_MAIL_DELIVERY_FAILED','uncertain','SEND_RESULT_UNKNOWN');
+ };
+ return async(kind,payload)=>{
+  const started=Date.now();
+  try{return await sendOnce(kind,payload);}catch(e){
+   // A timeout/5xx may already have sent mail. Never retry an uncertain send.
+   // Short, explicit rejections get just one retry in this request, not a stale-code queue.
+   if(kind!=='code'||Date.now()-started>1000||e.deliveryDisposition!=='retry'||!['TOKEN_TEMPORARY','SEND_RATE_LIMITED'].includes(e.deliveryCode)||Number(e.retryAfterMs)>1000)throw e;
+   if(e.deliveryCode==='SEND_RATE_LIMITED'&&!['rateLimitExceeded','userRateLimitExceeded'].includes(e.providerReason))throw e;
+   await pause(Math.max(500,Number(e.retryAfterMs)||0));
+   return sendOnce(kind,payload);
+  }
  };
 }

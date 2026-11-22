@@ -10,5 +10,14 @@ try{
  await assert.rejects(()=>createAuthMailer(env)('code',{user:{email:'recipient@example.test'},code:'123456'}),e=>e.deliveryCode==='SEND_RESULT_UNKNOWN');
  globalThis.fetch=async url=>url.endsWith('/token')?Response.json({error:'invalid_grant'},{status:400}):Response.json({});
  await assert.rejects(()=>createAuthMailer(env)('code',{user:{email:'recipient@example.test'},code:'123456'}),e=>e.deliveryCode==='TOKEN_REJECTED');
- console.log(JSON.stringify({checks:6,providerFailuresClassified:true,realEmailsSent:0}));
+ let sends=0;
+ globalThis.fetch=async url=>url.endsWith('/token')?Response.json({access_token:'synthetic',expires_in:3600}):++sends===1?Response.json({error:{errors:[{reason:'rateLimitExceeded'}]}},{status:429}):Response.json({id:'synthetic-retry'});
+ assert.equal((await createAuthMailer(env)('code',{user:{email:'recipient@example.test'},code:'123456',isCurrent:async()=>true})).id,'synthetic-retry');assert.equal(sends,2);
+ sends=0;let current=true;
+ globalThis.fetch=async url=>url.endsWith('/token')?Response.json({access_token:'synthetic',expires_in:3600}):(++sends,current=false,Response.json({error:{errors:[{reason:'rateLimitExceeded'}]}},{status:429}));
+ await assert.rejects(()=>createAuthMailer(env)('code',{user:{email:'recipient@example.test'},code:'123456',isCurrent:async()=>current}),e=>e.deliveryCode==='SEND_SUPERSEDED');assert.equal(sends,1);
+ sends=0;
+ globalThis.fetch=async url=>url.endsWith('/token')?Response.json({access_token:'synthetic',expires_in:3600}):(++sends,Promise.reject(Error('Synthetic lost response')));
+ await assert.rejects(()=>createAuthMailer(env)('code',{user:{email:'recipient@example.test'},code:'123456'}),e=>e.deliveryCode==='SEND_RESULT_UNKNOWN');assert.equal(sends,1);
+ console.log(JSON.stringify({checks:9,providerFailuresClassified:true,boundedRetry:true,staleRetryBlocked:true,unknownSendNotRepeated:true,realEmailsSent:0}));
 }finally{globalThis.fetch=original;}

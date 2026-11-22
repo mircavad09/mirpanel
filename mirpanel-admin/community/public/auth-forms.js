@@ -82,7 +82,7 @@ function openVerification({pending,host,life,verificationApi,finish,readableErro
    }
    if(afterSignup&&created)contents.append(el('p',{class:'auth-code-copy',role:'status'},'Hesabınız yaradılıb'));
    contents.append(el('p',{class:'auth-code-copy'},withCode
-    ?'Kod göndərmə xidməti tərəfindən qəbul edildi. Gələnlər və Spam qovluqlarını yoxlayın. Kod 10 dəqiqə qüvvədədir. Məktub gəlmirsə, ünvanı və poçt qutusunda boş yeri yoxlayın.'
+    ?'Kod göndərmə xidməti tərəfindən qəbul edildi. Gələnlər və Spam qovluqlarını yoxlayın. Kod 10 dəqiqə qüvvədədir. Təkrar istəmisinizsə, yalnız son uğurla göndərilmiş sorğunun kodunu yazın; məktubun göndərilmə vaxtına baxın. Məktub gəlmirsə, ünvanı və poçt qutusunda boş yeri yoxlayın.'
     :'Sifariş vermək üçün e-poçtunuzu təsdiqləməlisiniz. Cəmi 1 dəqiqə çəkir.'));
    if(!withCode)contents.append(el('span',{class:'auth-code-badge'},'Sifariş üçün vacibdir'));
    contents.append(address);

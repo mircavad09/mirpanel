@@ -18,7 +18,7 @@
   try {
     const pending = JSON.parse(sessionStorage.getItem('mirpanel:signup-confirmation'));
     if (pending?.path === location.pathname) {
-      import('/community-assets/auth-forms.js?v=signup-email-recovery-1')
+      import('/community-assets/auth-forms.js?v=signup-delivery-2')
         .then(module => module.resumeSignupConfirmation())
         .catch(() => {
           const notice = document.createElement('p');

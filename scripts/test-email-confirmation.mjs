@@ -82,10 +82,19 @@ try{
   const row=(await pool.query(`select v.value::jsonb as value from verification v join "user" u on v.id='mirpanel-email-code:'||u.id where u.email=$1`,[address])).rows[0].value;
   assert.equal(row.providerId,'synthetic-accepted');assert.equal(row.deliveryState,'accepted');
   const oldCode=record('code',address).at(-1).code;
+  await expire(address,{sent:0,retryAt:0});
+  failCodeFor=address;codeFailure=Object.assign(Error('Synthetic rejected resend'),{deliveryCode:'SEND_RATE_LIMITED',deliveryDisposition:'retry',retryAfterMs:90000});
+  assert.equal((await call(jar,'send')).status,429);
+  const preserved=(await call(jar,'status'));assert.equal((await preserved.json()).codeSent,true);
+  const preservedRow=(await pool.query(`select v.value::jsonb as value from verification v join "user" u on v.id='mirpanel-email-code:'||u.id where u.email=$1`,[address])).rows[0].value;
+  assert.equal(preservedRow.acceptedAt,row.acceptedAt);assert.equal(preservedRow.pendingHash,undefined);
+  codeFailure=null;
   await expire(address,{expires:0});assert.equal((await call(jar,'verify',{code:oldCode})).status,400);
   await expire(address,{sent:0,retryAt:0});assert.equal((await call(jar,'send')).status,200);
+  assert.equal((await call(jar,'verify',{code:oldCode})).status,400);
   const typo=await call(jar,'change',{email:'synthetic@gmail.con'});assert.equal(typo.status,400);assert.match((await typo.json()).message,/gmail.com/);
   const transposed=await call(jar,'change',{email:'synthetic@gamil.com'});assert.equal(transposed.status,400);assert.match((await transposed.json()).message,/gamil.com.*gmail.com/);
+  const missingLetter=await call(jar,'change',{email:'synthetic@gmal.com'});assert.equal(missingLetter.status,400);assert.match((await missingLetter.json()).message,/gmal.com.*gmail.com/);
   browser=await chromium.launch({headless:true,executablePath:'C:/Program Files/Google/Chrome/Application/chrome.exe'});
   for(const width of [390,1440]){
    testClient++;
@@ -102,6 +111,14 @@ try{
   }
   assert.equal((await call(jar,'verify',{code:record('code',address).at(-1).code})).status,200);
   assert.equal((await pool.query('select "emailVerified" from "user" where email=$1',[address])).rows[0].emailVerified,true);
+  testClient++;
+  const recoveryJar=cookieJar(),recoveryAddress='synthetic-preserved-code@gmail.com';
+  assert.equal((await request(recoveryJar,'/api/auth/sign-up/email',{...data,email:recoveryAddress})).status,200);
+  assert.equal((await call(recoveryJar,'send')).status,200);const workingCode=record('code',recoveryAddress).at(-1).code;
+  await expire(recoveryAddress,{sent:0,retryAt:0});failCodeFor=recoveryAddress;
+  codeFailure=Object.assign(Error('Synthetic explicit failure'),{deliveryCode:'SEND_REJECTED',deliveryDisposition:'failed'});
+  assert.equal((await call(recoveryJar,'send')).status,502);
+  assert.equal((await call(recoveryJar,'verify',{code:workingCode})).status,200);codeFailure=null;
   console.log('PASS: provider rate limit and cooldown, persisted acceptance receipt, expired code, typo, pending duplicate recovery at mobile/desktop, one account and verified completion.');
  }
  if(process.argv.includes('--registration-recovery')){
@@ -205,7 +222,7 @@ try{
   await page.clock.install();
   await sendButton.click();
   await page.getByRole('heading',{name:'Kodu daxil edin',exact:true}).waitFor();
-  await page.getByText('Kod göndərmə xidməti tərəfindən qəbul edildi. Gələnlər və Spam qovluqlarını yoxlayın. Kod 10 dəqiqə qüvvədədir. Məktub gəlmirsə, ünvanı və poçt qutusunda boş yeri yoxlayın.',{exact:true}).waitFor();
+  await page.getByText('Kod göndərmə xidməti tərəfindən qəbul edildi. Gələnlər və Spam qovluqlarını yoxlayın. Kod 10 dəqiqə qüvvədədir. Təkrar istəmisinizsə, yalnız son uğurla göndərilmiş sorğunun kodunu yazın; məktubun göndərilmə vaxtına baxın. Məktub gəlmirsə, ünvanı və poçt qutusunda boş yeri yoxlayın.',{exact:true}).waitFor();
   const cells=page.locator('.auth-code-grid input'),confirm=page.getByRole('button',{name:'Təsdiqlə',exact:true}),resend=page.locator('.auth-code-resend');
   assert.equal(await cells.count(),6);
   assert.equal(await cells.first().evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(0, 0, 0)');

@@ -64,22 +64,28 @@ export function emailConfirmation(pool,config,send,welcome){
    const request=await locked(ctx,async(c,u,r)=>{
     pending(u);if(confirmationEmailProblem(r.email))throw problem('BAD_REQUEST',confirmationEmailProblem(r.email));if(show(u,r).retryAfter)throw problem('TOO_MANY_REQUESTS','Təkrar kod göndərmək üçün geri sayımın bitməsini gözləyin.',{code:'EMAIL_CODE_COOLDOWN',retryAfter:show(u,r).retryAfter});
     if(r.email===OWNER_EMAIL||(await c.query('select 1 from "user" where email=$1 and id<>$2',[r.email,u.id])).rowCount)throw problem('CONFLICT','Bu e-poçt ünvanı istifadə edilə bilməz.');
-    const sent=Date.now(),hash=digest(u.id,r.email,otp);await set(c,u.id,{email:r.email,sent,hash,expires:sent+validity,attempts:0});return {userId:u.id,address:r.email,sent,hash};
+    const sent=Date.now(),hash=digest(u.id,r.email,otp);
+    // Keep the last accepted code usable until a replacement is accepted.
+    const previous=r.delivered&&r.expires>sent?{hash:r.hash,expires:r.expires,attempts:r.attempts,delivered:true,acceptedAt:r.acceptedAt,providerId:r.providerId}:{};
+    await set(c,u.id,{email:r.email,sent,...previous,pendingHash:hash,pendingExpires:sent+validity,deliveryState:'sending'});return {userId:u.id,address:r.email,sent,hash};
    });
+   console.info('COMMUNITY_EMAIL_CONFIRMATION',JSON.stringify({state:'sending',userId:request.userId,attemptAt:request.sent}));
    let receipt;
-   try{receipt=await send('code',{user:{email:request.address},code:otp});}
+   const isCurrent=async()=>{const r=await read(pool,request.userId);return r?.pendingHash===request.hash&&r.sent===request.sent&&r.pendingExpires>Date.now();};
+   try{receipt=await send('code',{user:{email:request.address},code:otp,isCurrent});}
    catch(e){
-    const known=new Set(['AUTH_CONFIGURATION','TOKEN_REJECTED','TOKEN_TEMPORARY','SEND_RATE_LIMITED','SEND_REJECTED','SEND_RESULT_UNKNOWN']);
+    const known=new Set(['AUTH_CONFIGURATION','TOKEN_REJECTED','TOKEN_TEMPORARY','SEND_RATE_LIMITED','SEND_REJECTED','SEND_RESULT_UNKNOWN','SEND_SUPERSEDED']);
     const reason=known.has(e?.deliveryCode)?e.deliveryCode:'SEND_RESULT_UNKNOWN';
     const retryAt=Date.now()+Math.max(cooldown,Number(e?.retryAfterMs)||0),state=['failed','retry'].includes(e?.deliveryDisposition)?'failed':'uncertain';
-    await locked(ctx,async(c,u,r)=>{if(r.hash===request.hash&&r.sent===request.sent){r.deliveryState=state;r.deliveryCode=reason;if(Number.isInteger(e?.providerStatus))r.providerStatus=e.providerStatus;r.retryAt=retryAt;await set(c,u.id,r);}});
+    await locked(ctx,async(c,u,r)=>{if(r.pendingHash===request.hash&&r.sent===request.sent){delete r.pendingHash;delete r.pendingExpires;r.deliveryState=state;r.deliveryCode=reason;if(Number.isInteger(e?.providerStatus))r.providerStatus=e.providerStatus;r.retryAt=retryAt;await set(c,u.id,r);}});
     console.warn('COMMUNITY_EMAIL_CONFIRMATION',JSON.stringify({state,reason,userId:request.userId,attemptAt:request.sent,providerStatus:e?.providerStatus||null}));
+    if(reason==='SEND_SUPERSEDED')throw problem('CONFLICT','Sorğu dəyişib və ya vaxtı bitib. Yeni kod istəyin.',{code:reason});
     const limited=reason==='SEND_RATE_LIMITED';
     throw problem(limited?'TOO_MANY_REQUESTS':'BAD_GATEWAY',limited?'E-poçt xidməti göndəriş limitinə çatıb. Göstərilən gözləmə müddətindən sonra yenidən cəhd edin.':'Kodun göndərilməsi təsdiqlənmədi. Bir dəqiqə sonra yenidən cəhd edin.',{code:reason,retryAfter:Math.max(0,Math.ceil((retryAt-Date.now())/1000))});
    }
    const result=await locked(ctx,async(c,u,r)=>{
-    pending(u);if(r.hash!==request.hash||r.sent!==request.sent)throw problem('CONFLICT','E-poçt dəyişib. Yeni kod istəyin.');
-    const now=Date.now();r.delivered=true;r.deliveryState='accepted';if(typeof receipt?.id==='string')r.providerId=receipt.id;r.acceptedAt=now;r.sent=now;r.expires=now+validity;await set(c,u.id,r);return show(u,r);
+    pending(u);if(r.pendingHash!==request.hash||r.sent!==request.sent||r.pendingExpires<=Date.now())throw problem('CONFLICT','Sorğu dəyişib və ya vaxtı bitib. Yeni kod istəyin.');
+    const now=Date.now();r.hash=r.pendingHash;r.expires=r.pendingExpires;r.attempts=0;delete r.pendingHash;delete r.pendingExpires;r.delivered=true;r.deliveryState='accepted';if(typeof receipt?.id==='string')r.providerId=receipt.id;r.acceptedAt=now;r.sent=now;await set(c,u.id,r);return show(u,r);
    });console.info('COMMUNITY_EMAIL_CONFIRMATION',JSON.stringify({state:'accepted',userId:request.userId,attemptAt:request.sent,providerId:receipt?.id||null}));return ctx.json(result);
   }),
   finishMirpanelEmail: endpoint('verify',z.object({code:z.string().regex(/^\d{6}$/)}),async ctx=>{
