@@ -58,7 +58,7 @@ try{
      const plans=page.locator('#pp-plans-container .pp-plan-label');
      const index=p.plans.findLastIndex(p=>p.active!==false);
      const selectable=await plans.nth(index).isEnabled();
-     if(selectable){await plans.nth(index).click();assert.equal(await page.evaluate(()=>currentPlanIdx),index);}
+     if(selectable){await plans.nth(index).click();await page.waitForFunction(i=>currentPlanIdx===i,index);}
      await page.getByText('Giriş və təhvil qaydası',{exact:true}).waitFor();
      await page.getByRole('tab',{name:'İstifadə qaydaları',exact:true}).click();
      await page.locator('[data-product-panel="rules"]').getByText('Təhvil və kömək',{exact:true}).waitFor();
