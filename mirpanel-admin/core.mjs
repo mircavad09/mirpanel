@@ -1,6 +1,7 @@
 import vm from "node:vm";
 import {epinbyProduct} from '../epinby-product.mjs';
 import {randomUUID} from 'node:crypto';
+import {signature,stockContract} from './employee-security.mjs';
 import { normalizePlanMetadata } from './public/product-plan-utils.mjs';
 import { normalizeOrderGuide } from './order-guide.mjs';
 
@@ -594,6 +595,8 @@ function normalizePlan(plan = {}, index = 0) {
   const supplier=plan.supplier&&epinbyProduct(plan.supplier,plan.id||'invalid');
   if(plan.supplier&&!supplier)throw new Error('Epinby paketinin əlaqəsi düzgün deyil.');
   return {
+    stockSignature:signature(plan),
+    stockContract:stockContract(plan),
     ...(orderGuide?{orderGuide}:{}),
     ...(supplier?{supplier,image:safeUrl(plan.image),formFields:supplier.fields.map(normalizeFormField)}:
       Array.isArray(plan.formFields)?{formFields:plan.formFields.slice(0,10).map(normalizeFormField)}:{}),
@@ -1260,6 +1263,19 @@ export function patchAppSource(source, payload) {
       key.startsWith('seo')&&key!=='seoUpdatedAt')));
     if(!old||publicContent(old)!==publicContent(product))product.seoUpdatedAt=new Date().toISOString();
     for(const [index,plan]of product.plans.entries()){
+      // Trust existing stable IDs, never the position/name or an incoming hash,
+      // when keeping stock identity through an administrative presentation edit.
+      const matches=(old?.plans||[]).filter(p=>p.id===plan.id||p.pricingId&&p.pricingId===plan.pricingId);
+      if(matches.length>1)throw new Error('Paketin stok əlaqəsi qeyri-müəyyəndir.');
+      const priorStock=matches[0];
+      if(priorStock&&stockContract(priorStock)===stockContract(plan)){
+        plan.stockSignature=signature(priorStock);plan.stockContract=stockContract(plan);
+      }else if(priorStock){
+        plan.stockSignature=signature({...plan,stockSignature:signature(priorStock),stockContract:stockContract(priorStock)});plan.stockContract=stockContract(plan);
+      }else{
+        const {stockSignature:ignored,stockContract:ignoredContract,...fresh}=plan;
+        plan.stockSignature=signature(fresh);plan.stockContract=stockContract(plan);
+      }
       if(plan.pricingId)continue;
       const prior=old?.plans[index];
       const identity=p=>JSON.stringify([p.label??p.name??'',p.months,p.durationDays,p.durationMonths,p.duration_months,p.id]);
