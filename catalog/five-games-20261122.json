@@ -1,0 +1,2585 @@
+{
+  "source": "MirPanel-kataloq-ve-qiymet-arasdirmasi.xlsx",
+  "sourceSha256": "37d8e6d6f47b5185619bd1c6895fd41871178960f833a0dd2334249fe1aa00e1",
+  "sheet": "Qiymət təklifi",
+  "range": "H6:H22",
+  "researchDate": "2026-11-22",
+  "exchangeRate": "1.73",
+  "separateCommission": "0",
+  "currentAccountCatalogVerified": false,
+  "products": [
+    {
+      "id": "mobile_legends",
+      "title": "Mobile Legends",
+      "slug": "mobile-legends",
+      "gameId": 6,
+      "categoryId": 11,
+      "image": "/uploads/products/mobile-legends-cover.webp",
+      "originalSha256": "a2465b91fdbf52b6937a62452a5c536da1b8f9f04eca3164a7c5a80174b9c81e",
+      "originalSize": [
+        1672,
+        941
+      ],
+      "optimizedSize": [
+        1200,
+        675
+      ],
+      "optimizedBytes": 210982
+    },
+    {
+      "id": "honor_of_kings",
+      "title": "Honor of Kings",
+      "slug": "honor-of-kings",
+      "gameId": 48,
+      "categoryId": 229,
+      "image": "/uploads/products/honor-of-kings-cover.webp",
+      "originalSha256": "ce540c836d0a06b3741f2c4abea55bd9a88d9436aebe9590fae2c9885f03b0dc",
+      "originalSize": [
+        1672,
+        941
+      ],
+      "optimizedSize": [
+        1200,
+        675
+      ],
+      "optimizedBytes": 216416
+    },
+    {
+      "id": "arena_breakout",
+      "title": "Arena Breakout — mobil",
+      "slug": "arena-breakout",
+      "gameId": 14,
+      "categoryId": 33,
+      "image": "/uploads/products/arena-breakout-cover.webp",
+      "originalSha256": "962e3956f07ee2a861eaa6c280774483af73fc72bba632bcabc9e22e7857e619",
+      "originalSize": [
+        1672,
+        941
+      ],
+      "optimizedSize": [
+        1200,
+        675
+      ],
+      "optimizedBytes": 147682
+    },
+    {
+      "id": "arena_breakout_infinite",
+      "title": "Arena Breakout Infinite — PC",
+      "slug": "arena-breakout-infinite",
+      "gameId": 13,
+      "categoryId": 34,
+      "image": "/uploads/products/arena-breakout-infinite-cover.webp",
+      "originalSha256": "35c0ddf988168396dd393283bffbc529dc3ec336dc996d92b5cf8837bdc87d30",
+      "originalSize": [
+        1672,
+        941
+      ],
+      "optimizedSize": [
+        1200,
+        675
+      ],
+      "optimizedBytes": 177966
+    },
+    {
+      "id": "stumble_guys",
+      "title": "Stumble Guys",
+      "slug": "stumble-guys",
+      "gameId": 143,
+      "categoryId": 342,
+      "image": "/uploads/products/stumble-guys-cover.webp",
+      "originalSha256": "863d30c05768118ddc7cb8fb11ae2981b281380f9e47985b40d58fe1b921f80f",
+      "originalSize": [
+        1672,
+        941
+      ],
+      "optimizedSize": [
+        1200,
+        675
+      ],
+      "optimizedBytes": 141584
+    }
+  ],
+  "packages": [
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 230,
+      "name": "5  Dimaond",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 902,
+      "name": "66",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 914,
+      "name": "100",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3825,
+      "name": "16 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-16-tokens",
+      "targetPrice": "0.39",
+      "targetCell": "H6"
+    },
+    {
+      "productId": "stumble_guys",
+      "supplierProductId": 7247,
+      "name": "250 Gems",
+      "gameId": 143,
+      "categoryId": 342,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/stumble-guys-top-up",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 903,
+      "name": "335",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 915,
+      "name": "500",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2733,
+      "name": "10 + 1 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3826,
+      "name": "Double Token Lucky Bag",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-double-token-lucky-bag",
+      "targetPrice": "0.63",
+      "targetCell": "H7"
+    },
+    {
+      "productId": "stumble_guys",
+      "supplierProductId": 7248,
+      "name": "800 Gems",
+      "gameId": 143,
+      "categoryId": 342,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/stumble-guys-top-up",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 239,
+      "name": "12  Dimaond",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 904,
+      "name": "675",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 916,
+      "name": "1000",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3827,
+      "name": "Honor Point Value Pack",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-honor-point-value-pack",
+      "targetPrice": "0.63",
+      "targetCell": "H8"
+    },
+    {
+      "productId": "stumble_guys",
+      "supplierProductId": 7249,
+      "name": "120 Tokens",
+      "gameId": 143,
+      "categoryId": 342,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/stumble-guys-top-up",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 905,
+      "name": "1690",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 917,
+      "name": "2500",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2737,
+      "name": "14 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3828,
+      "name": "Standard Purchase Rebate Pack",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "stumble_guys",
+      "supplierProductId": 7250,
+      "name": "1600 Gems + 75 Tokens",
+      "gameId": 143,
+      "categoryId": 342,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/stumble-guys-top-up",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 240,
+      "name": "19  Dimaond",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 910,
+      "name": "3400",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 920,
+      "name": "5000",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3829,
+      "name": "Infernal Shadow Zilong",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "stumble_guys",
+      "supplierProductId": 7251,
+      "name": "5000 Gems + 275 Tokens",
+      "gameId": 143,
+      "categoryId": 342,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/stumble-guys-top-up",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 906,
+      "name": "6820",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 921,
+      "name": "10000",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2743,
+      "name": "20 + 2 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3830,
+      "name": "80 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-80-tokens",
+      "targetPrice": "1.81",
+      "targetCell": "H9"
+    },
+    {
+      "productId": "stumble_guys",
+      "supplierProductId": 7252,
+      "name": "1300 Tokens",
+      "gameId": 143,
+      "categoryId": 342,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/stumble-guys-top-up",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 233,
+      "name": "28  Dimaond",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 918,
+      "name": "Copper Works Skin Bundle I",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3831,
+      "name": "Weekly Card",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-weekly-card",
+      "targetPrice": "2.06",
+      "targetCell": "H10"
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 919,
+      "name": "Copper Works Skin Bundle II",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2751,
+      "name": "42 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3832,
+      "name": "Premium Purchase Rebate Pack",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-premium-purchase-rebate-pack",
+      "targetPrice": "2.37",
+      "targetCell": "H11"
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 909,
+      "name": "Bulletproof Case (30d)",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 922,
+      "name": "Premium Battle Pass Activation Card",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3833,
+      "name": "240 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-240-tokens",
+      "targetPrice": "5.2",
+      "targetCell": "H12"
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 901,
+      "name": "Composition Case (30d)",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 923,
+      "name": "Advanced Battle Pass Activation Card",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2754,
+      "name": "50 + 5 Diamonds (First Top-Up Bonus)",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3834,
+      "name": "Weekly Card Plus",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-weekly-card-plus",
+      "targetPrice": "5.44",
+      "targetCell": "H13"
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 908,
+      "name": "Beginner Select",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 924,
+      "name": "Classic Craftsmanship Skin Bundle I",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2757,
+      "name": "51 + 5 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3835,
+      "name": "400 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-400-tokens",
+      "targetPrice": "8.48",
+      "targetCell": "H14"
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 911,
+      "name": "Monthly Advanced Battle Pass Activation Pass",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout_infinite",
+      "supplierProductId": 925,
+      "name": "Classic Craftsmanship Skin Bundle II",
+      "gameId": 13,
+      "categoryId": 34,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-infinite-34",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3836,
+      "name": "560 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-560-tokens",
+      "targetPrice": "11.79",
+      "targetCell": "H15"
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 912,
+      "name": "Monthly Premium Battle Pass Activation Pass",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2759,
+      "name": "70 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3837,
+      "name": "830 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-830-tokens",
+      "targetPrice": "16.67",
+      "targetCell": "H16"
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 913,
+      "name": "Quarterly Premium Battle Pass Bundle Activation Pass Bundle",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2763,
+      "name": "78 + 8 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3838,
+      "name": "1245 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-1245-tokens",
+      "targetPrice": "24.72",
+      "targetCell": "H17"
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3700,
+      "name": "MAXACE Ash",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3839,
+      "name": "2508 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-2508-tokens",
+      "targetPrice": "49.39",
+      "targetCell": "H18"
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2735,
+      "name": "102 + 10 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3701,
+      "name": "MAXACE Carbon Scales",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3840,
+      "name": "4180 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-4180-tokens",
+      "targetPrice": "82.19",
+      "targetCell": "H19"
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2738,
+      "name": "140 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3702,
+      "name": "MAXACE Finality",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "honor_of_kings",
+      "supplierProductId": 3841,
+      "name": "8360 Tokens",
+      "gameId": 48,
+      "categoryId": 229,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/honor-of-kings",
+      "competitorSource": "https://www.dolphgame.com/game/product/honor-of-kings-8360-tokens",
+      "targetPrice": "162.71",
+      "targetCell": "H20"
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2740,
+      "name": "150 + 15 Diamonds (First Top-Up Bonus)",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3703,
+      "name": "MAXACE Molten Fire",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2741,
+      "name": "156 + 16 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3704,
+      "name": "MAXACE Original",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 235,
+      "name": "170  Dimaond",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3705,
+      "name": "MAXACE Venom",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2745,
+      "name": "234 + 23 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3706,
+      "name": "TAGTICAL Bundle I",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 241,
+      "name": "240  Dimaond",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3707,
+      "name": "TAGTICAL Bundle II",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2746,
+      "name": "250 + 25 Diamonds (First Top-Up Bonus)",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3708,
+      "name": "TAGTICAL Bundle III",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2747,
+      "name": "284 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3709,
+      "name": "TAGTICAL Bundle IV",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 232,
+      "name": "296  Dimaond",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3710,
+      "name": "TAGTICAL Bundle V",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2750,
+      "name": "355 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3711,
+      "name": "TAGTICAL Bundle VI",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "arena_breakout",
+      "supplierProductId": 3712,
+      "name": "TAGTICAL Complete Bundle",
+      "gameId": 14,
+      "categoryId": 33,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Təchizatçı bütün/Global istifadəçiləri açıq göstərir. Seçilmiş oyunun doğru versiyası və sifariş sahələri şərtdir.",
+      "supplierSource": "https://epinby.com/category/arena-breakout-33",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2752,
+      "name": "429 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2755,
+      "name": "500 + 65 Diamonds (First Top-Up Bonus)",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2756,
+      "name": "504 + 66 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2758,
+      "name": "625 + 81 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2760,
+      "name": "716 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2734,
+      "name": "1007 + 156 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2736,
+      "name": "1084 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2739,
+      "name": "1446 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2742,
+      "name": "1860 + 335 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 236,
+      "name": "2010  Dimaond",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2744,
+      "name": "2015 + 383 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2748,
+      "name": "2976 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2749,
+      "name": "3099 + 589 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2753,
+      "name": "4649 + 883 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2761,
+      "name": "7502 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2762,
+      "name": "7740 + 1548 Diamonds",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 413,
+      "name": "Weekly",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": "https://www.dolphgame.com/game/product/weekly-diomand-pass",
+      "targetPrice": "2.91",
+      "targetCell": "H21"
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 414,
+      "name": "Twilight",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": "https://www.dolphgame.com/game/product/twilight-pass",
+      "targetPrice": "15.3",
+      "targetCell": "H22"
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2764,
+      "name": "Monthly Elite Pack",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    },
+    {
+      "productId": "mobile_legends",
+      "supplierProductId": 2765,
+      "name": "Weekly Elite Pack",
+      "gameId": 6,
+      "categoryId": 11,
+      "type": "TOPUP",
+      "fields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "researchCheckedAt": "2026-11-22 19:48:56.567000",
+      "regionDecision": "Şərtli namizəd",
+      "restriction": "Global hesab. ID/BR istisnaları var; bəzi paketlər MY/SG/PH/ID/RU üçün bağlıdır. İlk alış bonusu ayrıca yoxlanmalıdır.",
+      "supplierSource": "https://epinby.com/category/mobile-legends-global-11",
+      "competitorSource": null,
+      "targetPrice": null,
+      "targetCell": null
+    }
+  ]
+}

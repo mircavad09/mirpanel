@@ -4280,6 +4280,1051 @@ const DATA = {
           "url": ""
         }
       }
+    },
+    {
+      "id": "mobile_legends",
+      "_stableId": "mobile_legends",
+      "title": "Mobile Legends",
+      "order": 37,
+      "category": "games",
+      "epinbyGroup": true,
+      "active": false,
+      "soldOut": false,
+      "stock": null,
+      "stockEnabled": false,
+      "currency": "₼",
+      "image": "/uploads/products/mobile-legends-cover.webp",
+      "imageAlt": "Mobile Legends — oyun məhsulunun banneri",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "/uploads/products/mobile-legends-cover.webp",
+        "mobileImage": "/uploads/products/mobile-legends-cover.webp",
+        "alt": "Mobile Legends"
+      },
+      "desc": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
+      "longDescription": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
+      "usageRules": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "orderFlow": "form_then_whatsapp",
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "formFields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        },
+        {
+          "key": "server_id",
+          "label": "Server ID",
+          "required": false
+        }
+      ],
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "orderGuide": {
+        "information": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
+      "seoSlug": "mobile-legends",
+      "seoH1": "Mobile Legends",
+      "seoTitle": "Mobile Legends paketləri | MirPanel",
+      "seoDescription": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "plans": [
+        {
+          "id": "epinby_413",
+          "pricingId": "five-games-413",
+          "label": "Weekly",
+          "price": 2.91,
+          "active": false,
+          "image": "/uploads/products/mobile-legends-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 413,
+            "type": "TOPUP",
+            "gameId": 6,
+            "categoryId": 11,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "Player ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              },
+              {
+                "key": "server_id",
+                "label": "Server ID",
+                "required": false,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "Player ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            },
+            {
+              "key": "server_id",
+              "label": "Server ID",
+              "required": false,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_414",
+          "pricingId": "five-games-414",
+          "label": "Twilight",
+          "price": 15.3,
+          "active": false,
+          "image": "/uploads/products/mobile-legends-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 414,
+            "type": "TOPUP",
+            "gameId": 6,
+            "categoryId": 11,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "Player ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              },
+              {
+                "key": "server_id",
+                "label": "Server ID",
+                "required": false,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "Player ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            },
+            {
+              "key": "server_id",
+              "label": "Server ID",
+              "required": false,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "honor_of_kings",
+      "_stableId": "honor_of_kings",
+      "title": "Honor of Kings",
+      "order": 38,
+      "category": "games",
+      "epinbyGroup": true,
+      "active": false,
+      "soldOut": false,
+      "stock": null,
+      "stockEnabled": false,
+      "currency": "₼",
+      "image": "/uploads/products/honor-of-kings-cover.webp",
+      "imageAlt": "Honor of Kings — oyun məhsulunun banneri",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "/uploads/products/honor-of-kings-cover.webp",
+        "mobileImage": "/uploads/products/honor-of-kings-cover.webp",
+        "alt": "Honor of Kings"
+      },
+      "desc": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
+      "longDescription": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
+      "usageRules": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "orderFlow": "form_then_whatsapp",
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "formFields": [
+        {
+          "key": "player_id",
+          "label": "User ID",
+          "required": true
+        }
+      ],
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "orderGuide": {
+        "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
+      "seoSlug": "honor-of-kings",
+      "seoH1": "Honor of Kings",
+      "seoTitle": "Honor of Kings paketləri | MirPanel",
+      "seoDescription": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "plans": [
+        {
+          "id": "epinby_3825",
+          "pricingId": "five-games-3825",
+          "label": "16 Tokens",
+          "price": 0.39,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3825,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3826",
+          "pricingId": "five-games-3826",
+          "label": "Double Token Lucky Bag",
+          "price": 0.63,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3826,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3827",
+          "pricingId": "five-games-3827",
+          "label": "Honor Point Value Pack",
+          "price": 0.63,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3827,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3830",
+          "pricingId": "five-games-3830",
+          "label": "80 Tokens",
+          "price": 1.81,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3830,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3831",
+          "pricingId": "five-games-3831",
+          "label": "Weekly Card",
+          "price": 2.06,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3831,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3832",
+          "pricingId": "five-games-3832",
+          "label": "Premium Purchase Rebate Pack",
+          "price": 2.37,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3832,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3833",
+          "pricingId": "five-games-3833",
+          "label": "240 Tokens",
+          "price": 5.2,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3833,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3834",
+          "pricingId": "five-games-3834",
+          "label": "Weekly Card Plus",
+          "price": 5.44,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3834,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3835",
+          "pricingId": "five-games-3835",
+          "label": "400 Tokens",
+          "price": 8.48,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3835,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3836",
+          "pricingId": "five-games-3836",
+          "label": "560 Tokens",
+          "price": 11.79,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3836,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3837",
+          "pricingId": "five-games-3837",
+          "label": "830 Tokens",
+          "price": 16.67,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3837,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3838",
+          "pricingId": "five-games-3838",
+          "label": "1245 Tokens",
+          "price": 24.72,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3838,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3839",
+          "pricingId": "five-games-3839",
+          "label": "2508 Tokens",
+          "price": 49.39,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3839,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3840",
+          "pricingId": "five-games-3840",
+          "label": "4180 Tokens",
+          "price": 82.19,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3840,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        },
+        {
+          "id": "epinby_3841",
+          "pricingId": "five-games-3841",
+          "label": "8360 Tokens",
+          "price": 162.71,
+          "active": false,
+          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "supplier": {
+            "provider": "epinby",
+            "productId": 3841,
+            "type": "TOPUP",
+            "gameId": 48,
+            "categoryId": 229,
+            "fields": [
+              {
+                "key": "player_id",
+                "label": "User ID",
+                "required": true,
+                "type": "text",
+                "options": [],
+                "maxLength": 400,
+                "enabled": true
+              }
+            ]
+          },
+          "formFields": [
+            {
+              "key": "player_id",
+              "label": "User ID",
+              "required": true,
+              "type": "text",
+              "options": [],
+              "maxLength": 400,
+              "enabled": true
+            }
+          ],
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          }
+        }
+      ]
+    },
+    {
+      "id": "arena_breakout",
+      "_stableId": "arena_breakout",
+      "title": "Arena Breakout — mobil",
+      "order": 39,
+      "category": "games",
+      "epinbyGroup": true,
+      "active": false,
+      "soldOut": false,
+      "stock": null,
+      "stockEnabled": false,
+      "currency": "₼",
+      "image": "/uploads/products/arena-breakout-cover.webp",
+      "imageAlt": "Arena Breakout — mobil — oyun məhsulunun banneri",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "/uploads/products/arena-breakout-cover.webp",
+        "mobileImage": "/uploads/products/arena-breakout-cover.webp",
+        "alt": "Arena Breakout — mobil"
+      },
+      "desc": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
+      "longDescription": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
+      "usageRules": "Mobil oyunun User ID / Player ID məlumatından istifadə edin. PC hesabı ilə qarışdırmayın. Satış qiyməti, cari təchizatçı paketi, hesab bölgəsi və valyuta təsdiqlənənədək sifariş bağlıdır.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "orderFlow": "form_then_whatsapp",
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "formFields": [
+        {
+          "key": "player_id",
+          "label": "User ID / Player ID:",
+          "required": true
+        }
+      ],
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "Mobil oyunun User ID / Player ID məlumatından istifadə edin. PC hesabı ilə qarışdırmayın. Satış qiyməti, cari təchizatçı paketi, hesab bölgəsi və valyuta təsdiqlənənədək sifariş bağlıdır.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "orderGuide": {
+        "information": "Mobil oyunun User ID / Player ID məlumatından istifadə edin. PC hesabı ilə qarışdırmayın. Satış qiyməti, cari təchizatçı paketi, hesab bölgəsi və valyuta təsdiqlənənədək sifariş bağlıdır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
+      "seoSlug": "arena-breakout",
+      "seoH1": "Arena Breakout — mobil",
+      "seoTitle": "Arena Breakout — mobil paketləri | MirPanel",
+      "seoDescription": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "plans": []
+    },
+    {
+      "id": "arena_breakout_infinite",
+      "_stableId": "arena_breakout_infinite",
+      "title": "Arena Breakout Infinite — PC",
+      "order": 40,
+      "category": "games",
+      "epinbyGroup": true,
+      "active": false,
+      "soldOut": false,
+      "stock": null,
+      "stockEnabled": false,
+      "currency": "₼",
+      "image": "/uploads/products/arena-breakout-infinite-cover.webp",
+      "imageAlt": "Arena Breakout Infinite — PC — oyun məhsulunun banneri",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "/uploads/products/arena-breakout-infinite-cover.webp",
+        "mobileImage": "/uploads/products/arena-breakout-infinite-cover.webp",
+        "alt": "Arena Breakout Infinite — PC"
+      },
+      "desc": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
+      "longDescription": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
+      "usageRules": "PC oyunundakı Player ID-ni yoxlayın. Mobil Arena Breakout ID-sini daxil etməyin. Satış qiyməti, cari paket və Azərbaycan hesabına uyğunluq təsdiqlənənədək sifariş açılmır.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "orderFlow": "form_then_whatsapp",
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "formFields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "PC oyunundakı Player ID-ni yoxlayın. Mobil Arena Breakout ID-sini daxil etməyin. Satış qiyməti, cari paket və Azərbaycan hesabına uyğunluq təsdiqlənənədək sifariş açılmır.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "orderGuide": {
+        "information": "PC oyunundakı Player ID-ni yoxlayın. Mobil Arena Breakout ID-sini daxil etməyin. Satış qiyməti, cari paket və Azərbaycan hesabına uyğunluq təsdiqlənənədək sifariş açılmır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
+      "seoSlug": "arena-breakout-infinite",
+      "seoH1": "Arena Breakout Infinite — PC",
+      "seoTitle": "Arena Breakout Infinite — PC paketləri | MirPanel",
+      "seoDescription": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "plans": []
+    },
+    {
+      "id": "stumble_guys",
+      "_stableId": "stumble_guys",
+      "title": "Stumble Guys",
+      "order": 41,
+      "category": "games",
+      "epinbyGroup": true,
+      "active": false,
+      "soldOut": false,
+      "stock": null,
+      "stockEnabled": false,
+      "currency": "₼",
+      "image": "/uploads/products/stumble-guys-cover.webp",
+      "imageAlt": "Stumble Guys — oyun məhsulunun banneri",
+      "banner": {
+        "enabled": false,
+        "desktopImage": "/uploads/products/stumble-guys-cover.webp",
+        "mobileImage": "/uploads/products/stumble-guys-cover.webp",
+        "alt": "Stumble Guys"
+      },
+      "desc": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
+      "longDescription": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
+      "usageRules": "Player ID ilə yanaşı hesabın platforması və paketin valyutası təchizatçı üzrə dəqiqləşdirilməlidir. Mobil, PC və konsol hesablarının eyni qaydada işlədiyi fərz edilmir. Satış qiyməti və platforma uyğunluğu təsdiqlənənədək alış bağlıdır.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "orderFlow": "form_then_whatsapp",
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "formFields": [
+        {
+          "key": "player_id",
+          "label": "Player ID",
+          "required": true
+        }
+      ],
+      "confirmationModal": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "Player ID ilə yanaşı hesabın platforması və paketin valyutası təchizatçı üzrə dəqiqləşdirilməlidir. Mobil, PC və konsol hesablarının eyni qaydada işlədiyi fərz edilmir. Satış qiyməti və platforma uyğunluğu təsdiqlənənədək alış bağlıdır.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      },
+      "orderGuide": {
+        "information": "Player ID ilə yanaşı hesabın platforması və paketin valyutası təchizatçı üzrə dəqiqləşdirilməlidir. Mobil, PC və konsol hesablarının eyni qaydada işlədiyi fərz edilmir. Satış qiyməti və platforma uyğunluğu təsdiqlənənədək alış bağlıdır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
+      "seoSlug": "stumble-guys",
+      "seoH1": "Stumble Guys",
+      "seoTitle": "Stumble Guys paketləri | MirPanel",
+      "seoDescription": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "plans": []
     }
   ]
 };
