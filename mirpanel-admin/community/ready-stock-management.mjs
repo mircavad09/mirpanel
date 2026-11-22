@@ -71,7 +71,7 @@ export async function manageReadyAccount(pool,security,catalog,actor,input){
   const pattern='%'+q.replace(/[\\%_]/g,'\\$&')+'%';
   return {users:(await pool.query(`select u.id,u.name,u.email,n.member_number as "memberNumber" from mirpanel_community."user" u join mirpanel_community.community_member_numbers n on n.user_id=u.id where u.name ilike $1 or u.email ilike $1 or n.member_number::text=$2 order by u.name,u.id limit 20`,[pattern,q.replace(/^#/,'')])).rows};
  }
- if(!uuid(id)||!['open','edit','delete','bind'].includes(action))throw fail(400,'Hesab əməliyyatı düzgün deyil.');
+ if(!uuid(id)||!['open','edit','relink','delete','bind'].includes(action))throw fail(400,'Hesab əməliyyatı düzgün deyil.');
  const c=await pool.connect();
  try{
   await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
@@ -91,8 +91,26 @@ export async function manageReadyAccount(pool,security,catalog,actor,input){
   if(delivered&&(delivery?(delivered.id!==delivery.id||delivered.order!==delivery.order_id||delivered.line!==delivery.line_index):(delivered.id!==row.assignment_id||delivered.order!==row.assignment_id||delivered.line!==0)))throw Error('DELIVERY_REFERENCE_MISMATCH');
   if(action==='open'){await c.query('commit');return {email:delivered?.email??data.account?.email??'',password:delivered?.password??data.account?.password??'',message:delivered?.message??data.message??'',revision:row.revision||0,reserved,...readyAccountPackage(catalog,row)};}
   if(reserved)throw fail(409,'Bu paket aktiv sifariş üçün rezervdədir. Rezerv bitənədək hesab dəyişdirilə, silinə və ya bağlana bilməz.');
+  let relinkScope;
+  if(action==='relink'){
+   const next=p?.plans?.[input.index];
+   if(!Number.isSafeInteger(input.index)||!next||signature(next)!==input.planSignature)throw fail(409,'Kataloq dəyişib. Paketi yenidən seçin.');
+   relinkScope=[row.product_id,planKey(next,input.index),signature(next)];
+   if(JSON.stringify(data.scope)===JSON.stringify(relinkScope)){await c.query('commit');return {saved:true,replayed:true};}
+   if(input.fromSignature!==row.plan_signature)throw fail(409,'Hesabın əvvəlki paket əlaqəsi dəyişib. Yenidən açın.');
+   if(await held(c,{product_id:row.product_id,plan_key:relinkScope[1],plan_signature:relinkScope[2]}))throw fail(409,'Seçilmiş paket aktiv sifariş üçün rezervdədir.');
+  }
   if(input.revision!==(row.revision||0))throw fail(409,'Hesab dəyişib. Yenidən açın.');
   await c.query(`insert into ${T}(unit_id) values($1) on conflict do nothing`,[id]);
+  if(action==='relink'){
+   // A scope repair never reconstructs credentials/free text. Keep an encrypted
+   // before-image and preserve the complete decoded payload except its scope.
+   await c.query(`insert into mirpanel_community.ready_stock_account_revisions(unit_id,revision,stock_cipher,delivery_cipher,actor_ref) values($1,$2,$3,null,$4)`,[id,row.revision||0,row.message_cipher,actor]);
+   await c.query('insert into mirpanel_community.ready_stock_plans(product_id,plan_key,plan_signature) values($1,$2,$3) on conflict do nothing',relinkScope);
+   const cipher=security.encryptSecret(JSON.stringify({...data,scope:relinkScope}));
+   await c.query(`update ${U} set message_cipher=$2,plan_key=$3,plan_signature=$4 where id=$1`,[id,cipher,relinkScope[1],relinkScope[2]]);
+   await c.query(`update ${T} set revision=revision+1 where unit_id=$1`,[id]);
+  }
   if(action==='delete')await c.query(`update ${T} set deleted_at=clock_timestamp(),revision=revision+1 where unit_id=$1`,[id]);
   if(action==='edit'){
    const {email='',password='',message=''}=input;
@@ -128,7 +146,7 @@ export async function manageReadyAccount(pool,security,catalog,actor,input){
    await c.query(`update ${T} set assignment_id=$2,user_id=$3,paid_until=$4,plan_snapshot=$5,message_cipher=$6,actor_ref=$7,assigned_at=clock_timestamp(),revision=revision+1 where unit_id=$1`,[id,assignment,input.userId,input.paidUntil,snapshot,cipher,actor]);
   }
   // No credentials, arbitrary free text, balance movement or mail enters audit.
-  await c.query(`insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('admin',$1,$2,'ready_stock_unit',$3,$4)`,[actor,'ready.account_'+action,id,{productId:row.product_id,planKey:row.plan_key,...(action==='bind'?{userId:input.userId,paidUntil:input.paidUntil}:{})}]);
+  await c.query(`insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('admin',$1,$2,'ready_stock_unit',$3,$4)`,[actor,'ready.account_'+action,id,{productId:row.product_id,planKey:row.plan_key,...(action==='relink'?{fromSignature:row.plan_signature,toPlanKey:relinkScope[1],toSignature:relinkScope[2]}:{}),...(action==='bind'?{userId:input.userId,paidUntil:input.paidUntil}:{})}]);
   await c.query('commit');return action==='delete'?{deleted:true}:action==='bind'?{assigned:true}:{saved:true};
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }

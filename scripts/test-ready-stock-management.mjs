@@ -63,6 +63,7 @@ try{
  const reserved=await request(capcut,'a','card'),free=(await units()).find(r=>r.productId===capcut.id&&r.status==='ready');
  assert.equal((await call({action:'open',id:free.id})).reserved,true);
  await assert.rejects(call({action:'delete',id:free.id,revision:free.revision}),{status:409});
+ await assert.rejects(call({action:'relink',id:free.id,revision:free.revision,index:0,planSignature:free.planSignature,fromSignature:free.planSignature}),{status:409});
  await assert.rejects(call({action:'bind',id:free.id,revision:free.revision,userId:'a',paidUntil:date(5),planSignature:free.planSignature}),{status:409});
  await shop.cancel({user:'a'},'a'.repeat(64),reserved.id);
  await pool.query("insert into wallet_accounts(user_id,cents) values('a',100000),('b',100000)");
@@ -93,14 +94,29 @@ try{
  assert.equal(readyAccountPackage(catalog,{...legacy,plan_key:'missing'}).planName,'Paket adı tapılmadı');
  const repair=id(),scope=[capcut.id,'2','old-signature'];
  await pool.query('insert into ready_stock_plans(product_id,plan_key,plan_signature) values($1,$2,$3)',scope);
- await pool.query('insert into ready_stock_units(id,product_id,plan_key,plan_signature,batch_id,message_cipher) select $1,$2,$3,$4,batch_id,$5 from ready_stock_units limit 1',[repair,...scope,security.encryptSecret(JSON.stringify({id:repair,scope,account:{email:'legacy@example.test',password:'Synthetic-legacy'}}))]);
+ const originalData={id:repair,scope,account:{email:'legacy@example.test',password:'Synthetic-legacy',extra:'preserve'},message:'  Original\nmessage  ',unknownFutureField:{retained:true}};
+ const originalCipher=security.encryptSecret(JSON.stringify(originalData));
+ await pool.query('insert into ready_stock_units(id,product_id,plan_key,plan_signature,batch_id,message_cipher) select $1,$2,$3,$4,batch_id,$5 from ready_stock_units limit 1',[repair,...scope,originalCipher]);
  const repairOpen=await call({action:'open',id:repair});assert.equal(repairOpen.planIndex,null);
  await assert.rejects(call({action:'edit',id:repair,revision:0,email:repairOpen.email,password:repairOpen.password,index:2,planSignature:'stale'}),{status:409});
- await call({action:'edit',id:repair,revision:0,email:repairOpen.email,password:repairOpen.password,index:2,planSignature:signature(capcut.plans[2])});
+ const relink={action:'relink',id:repair,revision:0,index:2,planSignature:signature(capcut.plans[2]),fromSignature:'old-signature'};
+ await assert.rejects(call({...relink,fromSignature:'wrong-old-signature'}),{status:409});
+ const beforeTotal=(await pool.query('select count(*)::int n from ready_stock_units')).rows[0].n;
+ const migrated=await Promise.all([call(relink),call(relink)]);
+ assert.equal(migrated.filter(x=>x.replayed).length,1,'Concurrent repeats must be a no-op');
+ assert.equal((await call(relink)).replayed,true);
+ assert.equal((await pool.query('select count(*)::int n from ready_stock_units')).rows[0].n,beforeTotal);
+ const repairedRow=(await pool.query('select u.*,m.revision from ready_stock_units u join ready_stock_management m on m.unit_id=u.id where u.id=$1',[repair])).rows[0];
+ const repairedData=JSON.parse(security.decryptSecret(repairedRow.message_cipher));
+ assert.deepEqual({...repairedData,scope:originalData.scope},originalData,'Only the scope may change');
+ assert.equal(repairedRow.revision,1);
+ const backups=(await pool.query('select stock_cipher from ready_stock_account_revisions where unit_id=$1',[repair])).rows;
+ assert.equal(backups.length,1);assert.equal(backups[0].stock_cipher,originalCipher);
  const fixed=(await units()).find(r=>r.id===repair);assert.equal(fixed.planIndex,2);assert.equal(fixed.packageAvailable,true);assert.equal(fixed.planName,'1 Ay (endirim)');
  assert.equal((await call({action:'open',id:repair})).password,'Synthetic-legacy');
  await assert.rejects(call({action:'edit',id:sold.id,revision:sold.revision,email:'sold@example.test',password:'Synthetic-sold',index:0,planSignature:signature(spotify.plans[0])}),{status:409});
+ await assert.rejects(call({...relink,id:sold.id}),{status:409});
 
  assert.deepEqual((await units()).find(r=>r.id===first.id).createdAt,firstAddedAt);
- console.log(JSON.stringify({originalAddedDatePreserved:true,edit:true,delete:true,bindWithoutCharge:true,historyAndCodes:true,subscriptionDate:true,ownerIsolation:true,reservedBlocked:true,parallelBindSingle:true,twoPurchasesOneDelivery:true,salesLimitSeparate:true,auditNoSecrets:true,packageIdentityProtected:true,syntheticOnly:true}));
+ console.log(JSON.stringify({originalAddedDatePreserved:true,edit:true,delete:true,bindWithoutCharge:true,historyAndCodes:true,subscriptionDate:true,ownerIsolation:true,reservedBlocked:true,parallelBindSingle:true,twoPurchasesOneDelivery:true,salesLimitSeparate:true,auditNoSecrets:true,packageIdentityProtected:true,scopeOnlyRepairPreservesContent:true,encryptedBeforeImage:true,concurrentRepairIdempotent:true,syntheticOnly:true}));
 }finally{await f.close();}

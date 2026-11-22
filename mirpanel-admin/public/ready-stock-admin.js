@@ -392,10 +392,11 @@ export function mountReadyStock(host,api){
    form.innerHTML=action==='edit'?`<label>Hesabın e-poçtu<input name="email" type="email" maxlength="254" autocomplete="off"></label><label>Hesabın şifrəsi<input name="password" type="text" maxlength="512" autocomplete="off" spellcheck="false"></label><label>Hesaba aid əlavə məlumat<textarea name="message" rows="4" maxlength="8000" spellcheck="false"></textarea></label>`:
     `<p>Əvvəlki satışın bağlanmasıdır. Əlavə ödəniş və balans tutulması yaradılmır. Hesab saxlanmış paketinə bağlanır.</p><label>Müştəri axtar<input name="customer" type="search" placeholder="Ad, e-poçt və ya MirPanel ID-si" autocomplete="off"></label><div data-results></div><p data-selected></p><label>Ödənilmiş son tarix<input name="date" type="date" required></label><label class="readyStockCheck"><input name="verified" type="checkbox" required> Hesabı, paketi və müştərinin ödənilmiş son tarixini yoxladım</label>`;
    const actions=document.createElement('div'),save=document.createElement('button'),close=document.createElement('button');actions.className='readyStockActions';save.type='submit';save.className='btn primary';save.textContent=action==='edit'?'Dəyişikliyi saxla':'Müştəriyə bağla';close.type='button';close.className='btn';close.textContent='Bağla';actions.append(save,close);form.append(status,actions);dialog.append(heading,preview,form);accountHost.append(dialog);
-   let user=null,timer,revision=0,saving=false;
+   let user=null,timer,revision=0,saving=false,originalAccountValues;
    const update=()=>{save.disabled=saving||current.reserved||(action==='bind'&&(!user||!form.elements.date.value||!form.elements.verified.checked));};
    if(action==='edit'){
     form.elements.email.value=current.email;form.elements.password.value=current.password;form.elements.message.value=current.message;
+    originalAccountValues={email:form.elements.email.value,password:form.elements.password.value,message:form.elements.message.value};
     if(!row.assigned){
      const label=document.createElement('label'),select=document.createElement('select');label.textContent='Paket';select.name='accountPlan';select.append(new Option('Paketi seçin',''));
      for(const item of products.find(p=>p.id===row.productId)?.plans||[])select.append(new Option(item.title,String(item.index)));
@@ -423,7 +424,9 @@ export function mountReadyStock(host,api){
      const index=Number(form.elements.accountPlan.value),item=products.find(p=>p.id===row.productId)?.plans.find(p=>p.index===index);
      if(index!==current.planIndex&&item){values.index=index;values.planSignature=item.signature;}
     }
-    try{await manageAccount({action:action==='edit'?'edit':'bind',id:row.id,revision:current.revision,...values});dialog.close();await refresh();accountStatus(action==='edit'?'Hesab yeniləndi.':'Hesab müştəriyə bağlandı. Əlavə balans tutulmadı.');}
+    const scopeOnly=action==='edit'&&values.index!==undefined&&['email','password','message'].every(key=>values[key]===originalAccountValues[key]);
+    const command=scopeOnly?{action:'relink',id:row.id,revision:current.revision,index:values.index,planSignature:values.planSignature,fromSignature:row.planSignature}:{action:action==='edit'?'edit':'bind',id:row.id,revision:current.revision,...values};
+    try{await manageAccount(command);dialog.close();await refresh();accountStatus(action==='edit'?'Hesab yeniləndi.':'Hesab müştəriyə bağlandı. Əlavə balans tutulmadı.');}
     catch(error){status.textContent=error.message||'Saxlanılmadı.';}finally{saving=false;close.disabled=false;update();}
    };
    update();dialog.showModal();
