@@ -588,6 +588,7 @@ async function saveState() {
     state.selectedId = spotify.id;
     showView("products");
     renderProductForm();
+    window.revealProductEditorField?.($("spotifyPasswordResetUrl"));
     $("spotifyPasswordResetUrl").focus();
     return;
   }
@@ -599,6 +600,9 @@ async function saveState() {
 
   if (invalidHelp) {
     toast(`${invalidHelp.title}: kömək linki yalnız https:// ilə başlamalıdır.`, "bad");
+    state.selectedId=invalidHelp.id;showView('products');renderProductForm();
+    window.revealProductEditorField?.($("orderConfirmationHelpUrl"));
+    $("orderConfirmationHelpUrl").focus();
     return;
   }
 

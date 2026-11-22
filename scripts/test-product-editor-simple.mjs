@@ -90,6 +90,20 @@ try {
   for (const width of [1440,390]){ await page.setViewportSize({width,height:1000});
   for (const id of ids){
     await page.evaluate(id=>{state.selectedId=id;renderProductForm();},id);
+    assert.equal(await page.locator('.productEditorNav [aria-pressed="true"]').innerText(),'Əsas məlumatlar');
+    assert.equal(await page.locator('.productFormGroups > .productGroup:visible').count(),1);
+    const description=await page.locator('#productDesc').inputValue();
+    await page.locator('#productDesc').fill(description+' — saxlanmamış sınaq');
+    for(const name of ['Qiymət və paketlər','Sifariş təsdiqi','Müştəridən alınan məlumatlar','Əsas məlumatlar']){
+      await page.locator('.productEditorNav').getByRole('button',{name,exact:true}).click();
+      assert.equal(await page.locator('.productFormGroups > .productGroup:visible').count(),1);
+      assert.equal(await page.locator('.productEditorNav [aria-pressed="true"]').innerText(),name);
+      assert.equal(await page.locator('#productDesc').inputValue(),description+' — saxlanmamış sınaq');
+      for(const selector of ['.editorHero','#productActive','#saveProductDraft','#publishProduct'])assert(await page.locator(selector).isVisible());
+    }
+    await page.locator('#productDesc').fill(description);
+    await page.locator('.productEditorNav').getByRole('button',{name:'Hamısı',exact:true}).click();
+    assert.equal(await page.locator('.productFormGroups > .productGroup:visible').count(),4);
     await page.locator('.productEditorNav button').nth(1).click();
     const pkg=page.locator('#plans .planRow').first();await pkg.locator(':scope>summary').click();
     const price=pkg.locator('[data-field="price"]');const value=await price.inputValue();await price.fill('12.34');await price.fill(value);
@@ -149,6 +163,37 @@ try {
     await page.locator('#productForm').screenshot({path:path.join(screenshotDir,'product-editor-'+width+'.png')});
     assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'overflow '+width);
   }
+  // A native error in a hidden, collapsed package must reveal its full path.
+  const priceInput=page.locator('#plans [data-field="price"]').first();
+  await priceInput.evaluate(input=>input.setCustomValidity('İzolyasiya edilmiş paket xətası'));
+  const callsBefore=saveCalls;
+  await page.locator('#publishProduct').click();
+  assert.equal(await page.locator('.productEditorNav [aria-pressed="true"]').innerText(),'Qiymət və paketlər');
+  assert(await priceInput.isVisible());assert.equal(saveCalls,callsBefore);
+  assert(await priceInput.evaluate(input=>document.activeElement===input));
+  await priceInput.evaluate(input=>input.setCustomValidity(''));
+  // A custom HTTPS error also opens its previously hidden parent.
+  await page.evaluate(()=>{const c=ensureConfirmation(selectedProduct());c.enabled=true;c.helpLink={enabled:true,label:'Kömək',url:'http://example.test/help'};renderProductForm();});
+  await page.locator('.productEditorNav button').nth(0).click();await page.locator('#publishProduct').click();
+  assert.equal(await page.locator('.productEditorNav [aria-pressed="true"]').innerText(),'Sifariş təsdiqi');
+  assert(await page.locator('#orderConfirmationHelpUrl').isVisible());assert.equal(saveCalls,callsBefore);
+  await page.locator('#orderConfirmationHelpUrl').fill('https://example.test/help');
+  await page.locator('#orderConfirmationDescription').fill('Gizli sifariş təsdiqi — yalnız sınaq');
+  await page.locator('.productEditorNav button').nth(0).click();
+  await page.locator('#productDesc').fill('Əsas məlumat — yalnız izolyasiya edilmiş sınaq');
+  const hiddenExpected=await page.evaluate(()=>structuredClone(state.data));
+  await page.locator('#saveProductDraft').click();
+  const draft=await page.evaluate(async()=>structuredClone((await MirpanelAdminDraft.read()).data));
+  assert.deepEqual(normalizeAdminPayload(draft).products,normalizeAdminPayload(hiddenExpected).products,'Draft preserves every persisted hidden field (excluding transient editor IDs)');
+  saveMode=200;renderLive=true;
+  await page.locator('#publishProduct').click();await page.locator('#modalConfirm').click();
+  await page.waitForFunction(()=>!!state.lastPublishResult&&!state.dirty);
+  assert.equal(saveCalls,callsBefore+1);
+  const normalizedSaved=normalizeAdminPayload(savedData),normalizedExpected=normalizeAdminPayload(hiddenExpected);
+  assert.deepEqual(normalizedSaved.products,normalizedExpected.products,'Published payload preserves hidden values and all package/stock fields');
+  const roundtrip=extractAdminState(patchAppSource(fs.readFileSync(path.join(root,'app.js'),'utf8'),savedData));
+  const withoutGeneratedTimestamp=products=>JSON.parse(JSON.stringify(products.map(({seoUpdatedAt,...product})=>product)));
+  assert.deepEqual(withoutGeneratedTimestamp(roundtrip.products),withoutGeneratedTimestamp(normalizedExpected.products));
   assert.deepEqual(errors,[]);console.log('Product editor: source publish roundtrip, Prime terms on/off, field disable preserves values, package reorder, 3 products, hidden-data roundtrip, confirmation switch, package fields, ordering, deletion cancel, draft and 320/390/1440 passed');
 }finally{await browser.close();server.close();}
 

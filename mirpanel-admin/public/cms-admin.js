@@ -1183,15 +1183,61 @@
     const nav = document.createElement("nav");
     nav.className = "productEditorNav";
     nav.setAttribute("aria-label", "Məhsul bölmələri");
-    [basic, pricing, confirmation, orders].forEach((body, index) => {
+    const bodies=[basic, pricing, confirmation, orders], buttons=[];
+    let currentSection='0',renderedProduct=state.selectedId;
+    const selectSection = key => {
+      currentSection=key;
+      bodies.forEach((body,index)=>{
+        const group=body.closest('details');group.hidden=key!=='all'&&key!==String(index);
+        if(!group.hidden)group.open=true;
+      });
+      advanced.closest('details').hidden=true;
+      buttons.forEach(button=>{
+        const selected=button.dataset.productSection===key;
+        button.classList.toggle('primary',selected);button.setAttribute('aria-pressed',String(selected));
+      });
+    };
+    bodies.forEach((body, index) => {
       const group = body.closest("details");
       group.id = "product-section-" + index;
       const button = document.createElement("button");
       button.type = "button"; button.className = "btn";
       button.textContent = group.querySelector("summary span").textContent;
-      button.onclick = () => { group.open = true; group.scrollIntoView({block:"start", behavior:"smooth"}); group.querySelector("summary").focus(); };
+      button.dataset.productSection=String(index);button.setAttribute('aria-controls',group.id);
+      button.onclick = () => selectSection(String(index));
+      buttons.push(button);
       nav.append(button);
     });
+    const allButton=document.createElement('button');allButton.type='button';allButton.className='btn';allButton.textContent='Hamısı';allButton.dataset.productSection='all';allButton.setAttribute('aria-controls',bodies.map(body=>body.closest('details').id).join(' '));allButton.onclick=()=>selectSection('all');buttons.push(allButton);nav.append(allButton);
+    const revealField = field => {
+      const group=field?.closest('.productGroup');if(!group)return;
+      const index=bodies.findIndex(body=>body.closest('details')===group);
+      selectSection(index<0?'all':String(index));group.hidden=false;
+      for(let parent=field.parentElement;parent&&parent!==form;parent=parent.parentElement)if(parent.tagName==='DETAILS')parent.open=true;
+    };
+    window.revealProductEditorField=revealField;
+    window.validateProductEditor=()=>{
+      if(form.closest('.workspace')?.classList.contains('hidden')||form.classList.contains('hidden'))return true;
+      const invalid=[...form.querySelectorAll('input,select,textarea')].find(input=>input.willValidate&&!input.checkValidity());
+      if(invalid){revealField(invalid);invalid.reportValidity();invalid.focus();return false;}
+      // Preserve the existing HTTPS rules, but locate the field before opening
+      // the publish dialog so an error cannot remain behind a hidden section.
+      const badReset=state.data?.products.find(p=>p.id==='spotify'&&!validHttpsUrl(p.spotifyPasswordResetUrl));
+      const badHelp=state.data?.products.find(p=>{const h=ensureConfirmation(p).helpLink;return h.enabled&&h.url&&!h.url.startsWith('https://');});
+      const bad=badReset||badHelp;
+      if(bad){
+        state.selectedId=bad.id;showView('products');renderProductForm();
+        const field=el(badReset?'spotifyPasswordResetUrl':'orderConfirmationHelpUrl');revealField(field);field.focus();
+        toast(badReset?'Spotify şifrə sıfırlama linki etibarlı https:// URL olmalıdır.':`${bad.title}: kömək linki yalnız https:// ilə başlamalıdır.`,'bad');return false;
+      }
+      return true;
+    };
+    form.addEventListener('invalid',event=>revealField(event.target),true);
+    document.addEventListener('mirpanel:product-render',()=>{
+      if(renderedProduct!==state.selectedId){renderedProduct=state.selectedId;selectSection('0');}
+      else selectSection(currentSection);
+    });
+    selectSection('0');
     groups.before(nav);
     const actions = document.createElement("div");
     actions.className = "productEditorActions";
@@ -1302,6 +1348,7 @@
   }
   async function showPublishDialog() {
     if (publishBusy) return;
+    if(window.validateProductEditor?.()===false)return;
     if (!state.dirty) return toast("Yayımlanacaq dəyişiklik yoxdur.", "bad");
     const sections = changedSections();
     publishBusy = true;
