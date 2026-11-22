@@ -10,7 +10,7 @@ export function createAuthMailer(env){let token=null,expires=0,pending;
    if(!r.ok||!v?.access_token){const temporary=r.ok||r.status===429||r.status>=500;throw delivery('AUTH_MAIL_AUTHORIZATION_FAILED',temporary?'retry':'failed',temporary?'TOKEN_TEMPORARY':'TOKEN_REJECTED',retryAfter(r));}
    token=v.access_token;expires=Date.now()+Math.max(0,(Number(v.expires_in)||300)-60)*1000;return token;})();try{return await pending;}finally{pending=null;}
  }
- const sendOnce=async(kind,{user,url,code,subject,textBody,htmlBody,attachments,isCurrent})=>{const origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';
+ const sendOnce=async(kind,payload,attempt)=>{const {user,url,code,subject,textBody,htmlBody,attachments,isCurrent}=payload;const origin=env.COMMUNITY_ORIGIN||'https://mirpanel.com';
   if(!['verify','reset','welcome','code','order'].includes(kind))throw Error('AUTH_MAIL_KIND_DENIED');
   const u=['verify','reset'].includes(kind)?new URL(url):null;if(u&&u.origin!==origin)throw Error('AUTH_MAIL_URL_DENIED');
   if(kind==='code'&&!/^\d{6}$/.test(code||''))throw Error('AUTH_MAIL_CODE_INVALID');
@@ -30,10 +30,17 @@ export function createAuthMailer(env){let token=null,expires=0,pending;
   const raw=['From: '+senderName+' <'+email(env.GMAIL_SENDER_EMAIL)+'>','To: '+email(user.email),'Subject: =?UTF-8?B?'+Buffer.from(title).toString('base64')+'?=','MIME-Version: 1.0',...body].join('\r\n');
   const current=async()=>{if(kind==='code'&&isCurrent&&!await isCurrent())throw delivery('AUTH_MAIL_REQUEST_SUPERSEDED','failed','SEND_SUPERSEDED');};
   await current();const accessToken=await access();await current();let r;
+  attempt.sends++;
   try{r=await fetch('https://gmail.googleapis.com/gmail/v1/users/me/messages/send',{method:'POST',headers:{Authorization:'Bearer '+accessToken,'Content-Type':'application/json'},body:JSON.stringify({raw:Buffer.from(raw).toString('base64url')}),signal:AbortSignal.timeout(15000),...(durable?{redirect:'error'}:{})});}
   catch{throw delivery('AUTH_MAIL_DELIVERY_FAILED','uncertain','SEND_RESULT_UNKNOWN');}
   const result=await r.json().catch(()=>null);
   if(r.ok&&typeof result?.id==='string'&&result.id)return {id:result.id};
+  // Gmail explicitly rejected this send: refresh once, never on a timeout or
+  // ambiguous response. A late rejection must not invalidate a newer token.
+  if(kind==='code'&&r.status===401&&!attempt.authRefreshed&&attempt.sends<2){
+   attempt.authRefreshed=true;if(token===accessToken){token=null;expires=0;}
+   return sendOnce(kind,payload,attempt);
+  }
   // Retry only explicit provider rejections, not transport failures or 5xx.
   const providerReason=(result?.error?.errors||[]).map(x=>x.reason).find(x=>['rateLimitExceeded','userRateLimitExceeded','dailyLimitExceeded','quotaExceeded','authError','invalidArgument','forbidden','insufficientPermissions','backendError'].includes(x))||null;
   const rejected=(...args)=>Object.assign(delivery(...args),{providerStatus:r.status,providerReason});
@@ -43,14 +50,14 @@ export function createAuthMailer(env){let token=null,expires=0,pending;
   throw rejected('AUTH_MAIL_DELIVERY_FAILED','uncertain','SEND_RESULT_UNKNOWN');
  };
  return async(kind,payload)=>{
-  const started=Date.now();
-  try{return await sendOnce(kind,payload);}catch(e){
+  const started=Date.now(),attempt={sends:0,authRefreshed:false};
+  try{return await sendOnce(kind,payload,attempt);}catch(e){
    // A timeout/5xx may already have sent mail. Never retry an uncertain send.
    // Short, explicit rejections get just one retry in this request, not a stale-code queue.
-   if(kind!=='code'||Date.now()-started>1000||e.deliveryDisposition!=='retry'||!['TOKEN_TEMPORARY','SEND_RATE_LIMITED'].includes(e.deliveryCode)||Number(e.retryAfterMs)>1000)throw e;
+   if(kind!=='code'||attempt.sends>=2||Date.now()-started>1000||e.deliveryDisposition!=='retry'||!['TOKEN_TEMPORARY','SEND_RATE_LIMITED'].includes(e.deliveryCode)||Number(e.retryAfterMs)>1000)throw e;
    if(e.deliveryCode==='SEND_RATE_LIMITED'&&!['rateLimitExceeded','userRateLimitExceeded'].includes(e.providerReason))throw e;
    await pause(Math.max(500,Number(e.retryAfterMs)||0));
-   return sendOnce(kind,payload);
+   return sendOnce(kind,payload,attempt);
   }
  };
 }

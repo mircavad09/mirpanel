@@ -116,8 +116,10 @@ try{
   assert.equal((await request(recoveryJar,'/api/auth/sign-up/email',{...data,email:recoveryAddress})).status,200);
   assert.equal((await call(recoveryJar,'send')).status,200);const workingCode=record('code',recoveryAddress).at(-1).code;
   await expire(recoveryAddress,{sent:0,retryAt:0});failCodeFor=recoveryAddress;
-  codeFailure=Object.assign(Error('Synthetic explicit failure'),{deliveryCode:'SEND_REJECTED',deliveryDisposition:'failed'});
-  assert.equal((await call(recoveryJar,'send')).status,502);
+  codeFailure=Object.assign(Error('Synthetic explicit failure'),{deliveryCode:'SEND_REJECTED',deliveryDisposition:'failed',providerStatus:401});
+  const rejectedResend=await call(recoveryJar,'send');assert.equal(rejectedResend.status,502);assert.equal((await rejectedResend.json()).code,'SEND_REJECTED');
+  const rejectedState=(await pool.query(`select v.value::jsonb as value from verification v join "user" u on v.id='mirpanel-email-code:'||u.id where u.email=$1`,[recoveryAddress])).rows[0].value;
+  assert.equal(rejectedState.deliveryState,'failed');assert.equal(rejectedState.providerStatus,401);assert.equal(rejectedState.pendingHash,undefined);
   assert.equal((await call(recoveryJar,'verify',{code:workingCode})).status,200);codeFailure=null;
   console.log('PASS: provider rate limit and cooldown, persisted acceptance receipt, expired code, typo, pending duplicate recovery at mobile/desktop, one account and verified completion.');
  }
