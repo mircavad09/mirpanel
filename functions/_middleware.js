@@ -221,7 +221,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?catalog-card\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-card.js?v=token-cart-1$2');
   next=next.replace(/(src=["'])\/?catalog-listing\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-listing.js?v=spotify-compact-1$2');
   next=next.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=categories-1$2');
-  next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=epinby-stock-1$2');
+  next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=home-equal-rows-1$2');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?(home-loading|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-recovery-1$3');
   next=next.replace(/(src=["'])\/?cms-site\.js(?:\?[^"']*)?(["'])/g,'$1/cms-site.js?v=image-alt-20261117$2');
@@ -237,7 +237,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   if (!next.includes("site-sections-render.js?v=20260728-info-pages-1")) {
     next = next.replace(/<script (defer )?src="\/?app\.js[^>]*><\/script>/i, (tag,defer)=>tag+'\n  <script '+(defer||'')+'src="/site-sections-render.js?v=20260728-info-pages-1"></script>');
   }
-  next=next.replace(/(src=["'])\/?(home-sections|catalog-card|catalog-listing|stock-display-fix|order-confirmation|customer-pricing)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=instant-filter-1$3');
+  next=next.replace(/(src=["'])\/?(home-sections|catalog-card|catalog-listing|order-confirmation|customer-pricing)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=instant-filter-1$3');
   next=next.replace(/(href=["'])\/?(style|catalog-card)\.css(?:\?[^"']*)?(["'])/g,'$1/$2.css?v=instant-filter-1$3');
   return next;
 }
