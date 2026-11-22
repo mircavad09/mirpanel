@@ -42,17 +42,18 @@ export async function readyDeliverySnapshot(db,catalog){
 }
 
 export async function saveReadyDeliverySettings(pool,catalog,actor,input){
- const {productId,index,planSignature,allowWaiting}=input||{};
+ const {productId,index,planSignature,allowWaiting,autoWallet}=input||{};
  const product=catalog.products.find(p=>p.id===productId),plan=product?.plans?.[index];
- if(!Number.isSafeInteger(index)||!plan||signature(plan)!==planSignature||typeof allowWaiting!=='boolean'||epinbyPlan(product,plan)||product.supplier?.provider==='epinby'||plan.supplier?.provider==='epinby')
+ if(!Number.isSafeInteger(index)||!plan||signature(plan)!==planSignature||typeof allowWaiting!=='boolean'||(autoWallet!==undefined&&typeof autoWallet!=='boolean')||epinbyPlan(product,plan)||product.supplier?.provider==='epinby'||plan.supplier?.provider==='epinby')
   throw Object.assign(Error('Təhvil ayarı üçün uyğun hazır hesab paketini seçin.'),{status:400});
  const c=await pool.connect();
  try{
   await c.query('begin');
-  await c.query('insert into mirpanel_community.ready_stock_plans(product_id,plan_key,plan_signature,allow_waiting) values($1,$2,$3,$4) on conflict(product_id,plan_key,plan_signature) do update set allow_waiting=excluded.allow_waiting',
-   [productId,planKey(plan,index),planSignature,allowWaiting]);
+  await c.query('select pg_advisory_xact_lock(714025001)');
+  await c.query('insert into mirpanel_community.ready_stock_plans(product_id,plan_key,plan_signature,allow_waiting,auto_wallet) values($1,$2,$3,$4,coalesce($5,false)) on conflict(product_id,plan_key,plan_signature) do update set allow_waiting=excluded.allow_waiting,auto_wallet=coalesce($5,ready_stock_plans.auto_wallet)',
+   [productId,planKey(plan,index),planSignature,allowWaiting,autoWallet??null]);
   await c.query(`insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata)
-   values('admin',$1,'ready_stock.delivery_setting','product',$2,$3)`,[actor,productId,{index,allowWaiting}]);
-  await c.query('commit');return {saved:true};
+   values('admin',$1,'ready_stock.delivery_setting','product',$2,$3)`,[actor,productId,{index,allowWaiting,...(autoWallet!==undefined?{autoWallet}:{})}]);
+  await c.query('commit');return {saved:true,scope:{productId,planKey:planKey(plan,index),signature:planSignature},autoWallet};
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }

@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import crypto from 'node:crypto';
+import {spawn} from 'node:child_process';
 import {shopFixture} from './shop-test-fixture.mjs';
 import {createShop} from '../mirpanel-admin/shop.mjs';
 import {signature} from '../mirpanel-admin/employee-security.mjs';
 import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
+import {ensureReadyDeliverySettings,saveReadyDeliverySettings} from '../mirpanel-admin/community/ready-stock-availability.mjs';
 import {saveReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
 import {createReadyStockQueue} from '../mirpanel-admin/community/ready-stock-queue.mjs';
 import {adminDelivery,adminPendingDeliveries,ownerCodes,customerStatus,deliveryRecords} from '../mirpanel-admin/community/order-delivery.mjs';
@@ -105,5 +107,64 @@ try{
  eq((await switchQueue.wake()).units,0);
  eq((await delivered(historical)).length,0);
  await switchQueue.stop();
+ // The separate settings button must persist autoWallet and wake only its exact SKU.
+ await ensureReadyDeliverySettings(pool);
+ await db.exec(db.read('supabase/migrations/202611090911_fulfillment_cancellation.sql'));
+ const custom={id:'new_ready_product',title:'Synthetic future product',active:true,plans:[{pricingId:id(),label:'Birinci paket',months:1,price:5},{pricingId:id(),label:'İkinci paket',months:3,price:10}]};
+ catalog.products.push(custom);
+ await rpc('inventory_set_nullable_quantity',[custom.id,100,'synthetic-admin',id(),0,null]);
+ await save(custom.id,3,false,0);await save(custom.id,2,true,1);
+ const backlog=[];for(let i=0;i<5;i++)backlog.push(await buy(custom.id));
+ const second=await buy([{productId:custom.id,quantity:1,planIndex:1}]);
+ // Unpaid/cancelled/completed must never be resurrected.
+ const excluded=[];
+ for(const status of ['cancelled','rejected','reviewing']){
+  const o=await buy(custom.id);excluded.push(o);
+  await pool.query("update public.payment_orders set status=$2,payment_confirmed=false,payment_source='card',receipt_bucket='synthetic',receipt_path='test.png',receipt_mime='image/png',receipt_size=3,receipt_sha256=$3 where id=$1",[o.orderId,status,'a'.repeat(64)]);
+ }
+ const balanceBefore=(await pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents;
+ const configInput={productId:custom.id,index:0,planSignature:signature(custom.plans[0]),autoWallet:true,allowWaiting:true};
+ const saved=await saveReadyDeliverySettings(pool,catalog,'synthetic-admin',configInput);
+ eq((await pool.query('select auto_wallet from ready_stock_plans where product_id=$1 and plan_key=$2',[custom.id,saved.scope.planKey])).rows[0].auto_wallet,true);
+ const settingsQueue=createReadyStockQueue(pool,()=>security);
+ const completed=await settingsQueue.wake(saved.scope);
+ eq([completed.completed,completed.waiting,completed.units],[3,2,3]);
+ eq(await Promise.all(backlog.map(async o=>(await delivered(o)).length)),[1,1,1,0,0]);
+ eq((await delivered(second)).length,1); // Its own purchase was already delivered; no cross-package allocation.
+ eq(await Promise.all(excluded.map(async o=>(await delivered(o)).length)),[0,0,0]);
+ eq((await settingsQueue.wake(saved.scope)).units,0);
+ const otherQueue=createReadyStockQueue(pool,()=>security);
+ await save(custom.id,1,true);
+ const parallel=await Promise.all([settingsQueue.wake(saved.scope),otherQueue.wake(saved.scope),settingsQueue.wake(saved.scope)]);
+ eq(parallel.reduce((n,r)=>n+(r.units||0),0),1);
+ eq((await delivered(backlog[3])).length,1);eq((await delivered(backlog[4])).length,0);
+ await settingsQueue.stop();await otherQueue.stop();
+ // Persisted queue survives a new worker instance; later stock wakes it without a browser.
+ const restarted=createReadyStockQueue(pool,()=>security,{pollMs:30});restarted.start();
+ await save(custom.id,1,true);
+ for(let i=0;i<60&&!(await delivered(backlog[4])).length;i++)await new Promise(r=>setTimeout(r,30));
+ eq((await delivered(backlog[4])).length,1);await restarted.stop();
+ await saveReadyDeliverySettings(pool,catalog,'synthetic-admin',{...configInput,autoWallet:false});
+ const stopOrder=await buy(custom.id);await save(custom.id,1,false);
+ const disabledWorker=createReadyStockQueue(pool,()=>security);
+ eq((await disabledWorker.wake(saved.scope)).units,0);eq((await delivered(stopOrder)).length,0);
+ await disabledWorker.stop();
+ // A brand-new Node process has no access to the former worker's memory.
+ await saveReadyDeliverySettings(pool,catalog,'synthetic-admin',configInput);
+ const child=spawn(process.execPath,['--input-type=module','-e',`
+  import pg from './mirpanel-admin/node_modules/pg/lib/index.js';
+  import {createReadyStockQueue} from './mirpanel-admin/community/ready-stock-queue.mjs';
+  import {createPaymentSecurity} from './mirpanel-admin/payment-security.mjs';
+  let raw='';for await(const chunk of process.stdin)raw+=chunk;const x=JSON.parse(raw);
+  if(x.connection.host!=='127.0.0.1'||!x.connection.database.startsWith('mirpanel_shop_'))throw Error('LOCAL_ONLY');
+  const pool=new pg.Pool({...x.connection,options:'-c search_path=mirpanel_community,public'});
+  const worker=createReadyStockQueue(pool,()=>createPaymentSecurity(x.config));
+  try{await worker.wake(x.scope);}finally{await worker.stop();await pool.end();}
+ `],{stdio:['pipe','ignore','pipe'],windowsHide:true});
+ let childError='';child.stderr.on('data',b=>childError+=b);child.stdin.end(JSON.stringify({connection:f.connection,config,scope:saved.scope}));
+ await new Promise((resolve,reject)=>{const timer=setTimeout(()=>{child.kill();reject(Error('WORKER_TIMEOUT'));},15000);child.on('error',reject);child.on('exit',code=>{clearTimeout(timer);code===0?resolve():reject(Error(childError));});});
+ eq((await delivered(stopOrder)).length,1);
+ eq((await pool.query("select cents::text from wallet_accounts where user_id='a'")).rows[0].cents,String(Number(balanceBefore)-500));
+ eq((await pool.query('select delivery_id from ready_stock_units where delivery_id is not null group by delivery_id having count(*)>1')).rowCount,0);
  console.log(JSON.stringify({checks,syntheticOnly:true,fiveWaiting:5,tenUnits:10,completed:5,remaining:5,fifo:true,partial:true,parallel:true,retry:true,ownerDenied:true}));
 }finally{await queue.stop();await f.close();}

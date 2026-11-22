@@ -29,6 +29,7 @@ export async function readyStockView(pool,catalog,inventory,security){
   const free=await freeManagementClause(c,'u');
   const settings=(await c.query('select p.product_id,p.plan_key,p.plan_signature,p.auto_wallet,coalesce((to_jsonb(p)->>\'allow_waiting\')::boolean,false) allow_waiting,count(u.id)::int as ready from '+S+'plans p left join '+S+'units u on (p.product_id,p.plan_key,p.plan_signature)=(u.product_id,u.plan_key,u.plan_signature) and u.delivery_id is null'+free+' group by p.product_id,p.plan_key,p.plan_signature,p.auto_wallet')).rows;
   const records=new Map(settings.map(x=>[key(x.product_id,x.plan_key,x.plan_signature),x]));
+  const waiting=await readyStockWaitingScopes(c);
   const availability=new Map(inventory.map(x=>[x.productId,x]));
   const messages=security?await readProductMessages(c,security,catalog.products.map(p=>p.id)):new Map();
   const result={products:catalog.products.filter(p=>p.active!==false&&p.plans?.length).map(p=>{
@@ -37,7 +38,7 @@ export async function readyStockView(pool,catalog,inventory,security){
    const plans=p.plans.map((plan,i)=>{
     const sig=signature(plan),sku=key(p.id,planKey(plan,i),sig),config=records.get(sku),inv=stock?.plans.find(x=>x.planKey===String(i));
     if(!counted.has(sku)){counted.add(sku);readyTotal+=config?.ready??0;}
-    return {index:i,title:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Paket '+(i+1)),signature:sig,sales:inv?.available??null,tracked:inv?.tracked??false,active:inv?.active??false,ready:config?.ready??0,readyManaged:!epinbyPlan(p,plan)&&p.supplier?.provider!=='epinby'&&plan.supplier?.provider!=='epinby',autoWallet:config?.auto_wallet??false,allowWaiting:config?.allow_waiting??false};
+    return {index:i,title:plan.label||plan.name||(plan.months?plan.months+' aylıq':'Paket '+(i+1)),signature:sig,sales:inv?.available??null,tracked:inv?.tracked??false,active:inv?.active??false,ready:config?.ready??0,readyManaged:!epinbyPlan(p,plan)&&p.supplier?.provider!=='epinby'&&plan.supplier?.provider!=='epinby',waiting:waiting.get(sku)??0,autoWallet:config?.auto_wallet??false,allowWaiting:config?.allow_waiting??false};
    });
    return {id:p.id,title:p.title,message:messages.get(p.id)??'',image:typeof p.image==='string'?p.image:'',readyTotal,scope:stock?.scope||'none',version:stock?.version??0,plans};
   })};
@@ -117,7 +118,7 @@ export async function saveReadyStock(pool,security,secret,catalog,actor,input){
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 // Runs on the caller's transaction after confirmed payment.
-export async function allocateReadyStock(c,securityFactory,orderId,items,actor='wallet:auto',{backlog=true}={}){
+export async function allocateReadyStock(c,securityFactory,orderId,items,actor='wallet:auto',{backlog=true,scope}={}){
  if(!await enabled(c)){
   if(items.some(item=>item.roomStock))throw fail(503,'Netflix otaqlarının avtomatik təhvili hazırda əlçatan deyil.');
   return;
@@ -132,7 +133,7 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
  const dispatches=(await c.query("select to_regclass('mirpanel_community.api_dispatches') as name")).rows[0]?.name;
  let security;
  for(const [line,item] of items.entries()){
-  if(item.renewal||!item.sourcePlanKey||!item.signature)continue;
+  if(item.renewal||!item.sourcePlanKey||!item.signature||scope&&!matchesReadyScope(item,scope))continue;
   const quantity=item.quantity-done.filter(d=>d.line_index===line).reduce((n,d)=>n+d.quantity,0);
   if(quantity<=0)continue;
   if(dispatches&&(await c.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and (state in ('checking','succeeded') or state='queued' and settings->>'provider'='epinby')",[orderId,line])).rowCount)continue;
@@ -216,7 +217,27 @@ export async function readyStockOrderItems(c,order,saved){
  return [];
 }
 
-export async function drainReadyStock(c,securityFactory,{before}={}){
+export const matchesReadyScope=(item,scope)=>item.productId===scope.productId&&item.sourcePlanKey===scope.planKey&&item.signature===scope.signature;
+export async function readyStockWaitingScopes(c){
+ const counts=new Map(),ids=await adminPendingDeliveries(c);
+ if(!ids.length)return counts;
+ const orders=(await c.query('select * from public.payment_orders where id=any($1::uuid[])',[ids])).rows;
+ const allDone=await deliveryRecords(c,ids),saved=new Map();
+ for(const row of (await c.query('select order_id,product_id,snapshot from mirpanel_community.shop_lines where order_id=any($1::uuid[]) order by order_id,position',[ids])).rows){
+  if(!saved.has(row.order_id))saved.set(row.order_id,[]);saved.get(row.order_id).push(row);
+ }
+ for(const order of orders){
+  if(!paid(order)||order.fulfillment_cancellation)continue;
+  const items=await readyStockOrderItems(c,order,saved.get(order.id)||[]),done=allDone.filter(d=>d.order_id===order.id),scopes=new Set();
+  items.forEach((item,line)=>{
+   if(!item.renewal&&item.sourcePlanKey&&item.signature&&Number(item.quantity)>done.filter(d=>d.line_index===line).reduce((n,d)=>n+d.quantity,0))scopes.add(key(item.productId,item.sourcePlanKey,item.signature));
+  });
+  for(const sku of scopes)counts.set(sku,(counts.get(sku)||0)+1);
+ }
+ return counts;
+}
+export async function readyStockWaiting(c,scope){return (await readyStockWaitingScopes(c)).get(key(scope.productId,scope.planKey,scope.signature))||0;}
+export async function drainReadyStock(c,securityFactory,{before,scope}={}){
  const result={orders:0,units:0,completed:0,errors:0};
  if(!await enabled(c))return result;
  await c.query('select pg_advisory_xact_lock(714025001)');
@@ -224,9 +245,9 @@ export async function drainReadyStock(c,securityFactory,{before}={}){
  const scheduled=(await c.query("select to_regclass('mirpanel_community.scheduled_renewals') present")).rows[0].present;
  const renewalReady=scheduled?" or exists(select 1 from mirpanel_community.scheduled_renewals r where r.product_id=u.product_id and r.plan_key=u.plan_key and r.plan_signature=u.plan_signature and r.method='new_account' and r.state='awaiting_delivery')":'';
  const ready=(await c.query('select distinct product_id,plan_key,plan_signature from '+S+'units u join '+S+'plans p using(product_id,plan_key,plan_signature) where u.delivery_id is null and (p.auto_wallet'+renewalReady+')'+free)).rows;
- const skus=new Set(ready.map(x=>key(x.product_id,x.plan_key,x.plan_signature)));
+ const skus=new Set(ready.filter(x=>!scope||key(x.product_id,x.plan_key,x.plan_signature)===key(scope.productId,scope.planKey,scope.signature)).map(x=>key(x.product_id,x.plan_key,x.plan_signature)));
  const rooms=(await c.query("select to_regclass('mirpanel_community.netflix_room_sellable') present")).rows[0].present;
- const roomReady=rooms&&(await c.query('select 1 from mirpanel_community.netflix_room_sellable limit 1')).rowCount>0;
+ const roomReady=(!scope||scope.productId==='netflix')&&rooms&&(await c.query('select 1 from mirpanel_community.netflix_room_sellable limit 1')).rowCount>0;
  if(!ready.length&&!roomReady)return result;
  const pending=await adminPendingDeliveries(c);
  if(!pending.length)return result;
@@ -249,7 +270,7 @@ export async function drainReadyStock(c,securityFactory,{before}={}){
    const order=(await c.query('select * from public.payment_orders where id=$1 for update',[candidate.id])).rows[0];
    if(!order||!paid(order)||order.fulfillment_cancellation){await c.query('release savepoint ready_stock_order');continue;}
    const prior=await deliveryRecords(c,[order.id]);
-   if(items.length)await allocateReadyStock(c,securityFactory,order.id,items,'stock:auto',{backlog:false});
+   if(items.length)await allocateReadyStock(c,securityFactory,order.id,items,'stock:auto',{backlog:false,scope});
    const after=await deliveryRecords(c,[order.id]);
    const added=after.length-prior.length;
    if(added){result.orders++;result.units+=added;if(!await adminPendingDeliveries(c,[order.id]).then(x=>x.length))result.completed++;}

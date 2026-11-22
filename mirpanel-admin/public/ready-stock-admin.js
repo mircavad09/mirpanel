@@ -52,6 +52,7 @@ export function mountReadyStock(host,api){
  const q=s=>host.querySelector(s),messageList=q('[data-messages]'),report=q('[role=status]'),list=q('[data-product-list]');
  const submit=form.querySelector('[type=submit]'),saveSales=q('[data-save-sales]'),editSales=q('[data-edit-sales]'),editor=q('#readyStockSaleEditor'),add=q('[data-add-unit]');
  const saveDelivery=q('[data-save-delivery]');
+ const deliveryProgress=document.createElement('p');deliveryProgress.dataset.deliveryProgress='';deliveryProgress.setAttribute('role','status');saveDelivery.after(deliveryProgress);
  const saveMessage=q('[data-save-message]'),addGuide=q('[data-add-guide]');
  const drafts=new Map(),lastPlan=new Map(),messageDrafts=new Map();
  let activeDraft=null,activeProduct;
@@ -520,6 +521,7 @@ export function mountReadyStock(host,api){
   const draft=drafts.get(draftKey);
   allowWaiting.checked=draft?.allowWaiting??!!item?.allowWaiting;
   auto.checked=draft?.auto??!!item?.autoWallet;renderSwitch();
+  deliveryProgress.textContent=item?.readyManaged===false?'':(item?.waiting??0)+' ödənilmiş sifariş təhvil gözləyir.';
   messageList.replaceChildren();
   for(const value of draft?.accounts||[{}])addAccount(value);
   for(const b of list.querySelectorAll('button'))b.setAttribute('aria-pressed',String(b.dataset.product===p?.id));
@@ -602,7 +604,17 @@ export function mountReadyStock(host,api){
  saveDelivery.onclick=async()=>{
   if(busy||pending)return;const {p,item}=selected();if(!item)return;
   busy=true;controls();say('Saxlanılır…');
-  try{await api(endpoint,{method:'POST',body:JSON.stringify({readyDeliverySettings:{productId:p.id,index:item.index,planSignature:item.signature,allowWaiting:allowWaiting.checked}})});item.allowWaiting=allowWaiting.checked;rememberDraft();say('Təhvil seçimi saxlandı.');}
+  try{
+   const enabled=auto.checked,waiting=allowWaiting.checked;
+   const result=await api(endpoint,{method:'POST',body:JSON.stringify({readyDeliverySettings:{productId:p.id,index:item.index,planSignature:item.signature,autoWallet:enabled,allowWaiting:waiting}})});
+   item.autoWallet=enabled;item.allowWaiting=waiting;
+   if(activeDraft)activeDraft.originalAuto=enabled;
+   rememberDraft();
+   const status=result.fulfillment;
+   say(!enabled?'Avtomatik təhvil söndürüldü.':status?.pending?'Avtomatik təhvil aktivləşdirildi. Emal arxa planda davam edir.':'Avtomatik təhvil aktivləşdirildi. '+(status?.completed||0)+' sifariş tamamlandı, '+(status?.waiting||0)+' sifariş stok gözləyir.');
+   if(status?.units)window.dispatchEvent(new Event('mirpanel:ready-stock-delivered'));
+   await refresh();
+  }
   catch(e){say(e.message,true);}finally{busy=false;controls();}
  };
  plan.onchange=()=>{rememberDraft();renderPlan();};auto.onchange=renderSwitch;add.onclick=()=>{addAccount();messageList.lastElementChild.querySelector('input').focus();};
@@ -630,9 +642,9 @@ export function mountReadyStock(host,api){
     current.readyTotal=stock.readyTotal;
     for(const item of current.plans){
      const plan=stock.plans.find(p=>p.index===item.index&&p.signature===item.signature);
-     if(plan){item.ready=plan.ready;item.sales=plan.sales;}
+     if(plan){item.ready=plan.ready;item.sales=plan.sales;item.waiting=plan.waiting;}
     }
-    if(selected().p?.id===stock.id)renderCounts(selected().item);
+    if(selected().p?.id===stock.id){renderCounts(selected().item);deliveryProgress.textContent=(selected().item?.waiting??0)+' ödənilmiş sifariş təhvil gözləyir.';}
     const counter=[...list.querySelectorAll('[data-product]')].find(n=>n.dataset.product===stock.id)?.querySelector('[data-product-ready]');
     if(counter)counter.textContent=stock.readyTotal+' hazır hesab';
    }
