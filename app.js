@@ -176,7 +176,7 @@ const DATA = {
       "seoRelatedKeywords": " YouTube Premium qiyməti",
       "seoKeywords": "YouTube Premium almaq, YouTube Premium qiyməti",
       "seoContent": "YouTube-da video izləmək və musiqi dinləmək üçün öz Google hesabınızda aktivləşdirilən abunəlikdir. Hazır yeni hesab satışı ilə eyni deyil.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.742Z",
+      "seoUpdatedAt": "2026-11-22T21:26:43.965Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "YouTube Premium almaq | Qiymət və paketlər — MirPanel",
@@ -243,8 +243,12 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "d93e40ae155d53635ab4545b35924c2da3a228c2a8d94b0613e5f9591e2490ea",
+          "stockContract": "[null,1,null]",
+          "id": "0",
           "warrantyUnit": "day",
           "warrantyDuration": 30,
+          "stockIdentityId": null,
           "pricingId": "6b70f3f1-26b6-47f3-9b60-1ccf560aa27c",
           "label": "1 Ay",
           "months": 1,
@@ -252,11 +256,15 @@ const DATA = {
           "regularPrice": 15
         },
         {
+          "stockSignature": "d8299fd93481a2bd30a135c447452dd34c85eaab84f009d6e53a3ac5fc31f727",
+          "stockContract": "[null,12,null]",
+          "id": "1",
           "durationMonths": 12,
           "duration_months": 12,
           "warrantyMode": "guaranteed",
           "stockVisibility": "show",
           "warrantyDuration": 12,
+          "stockIdentityId": null,
           "pricingId": "24f61b10-9eb3-4ca7-bf6d-5ea460c68e8f",
           "label": "12 Ay",
           "months": 12,
@@ -303,7 +311,7 @@ const DATA = {
       "seoRelatedKeywords": " Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
       "seoKeywords": "Zoom Pro almaq, Zoom Pro Azərbaycan, Zoom hesabı qiyməti",
       "seoContent": "Zoom Pro onlayn dərs, iş görüşü və toplantılar üçün hesab təklifidir. Müddəti və qiyməti aşağıdakı paket seçimində müqayisə edə bilərsiniz.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
+      "seoUpdatedAt": "2026-11-22T21:26:43.965Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Zoom Pro almaq | Qiymət və paketlər — MirPanel",
@@ -353,9 +361,13 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "d1062bd2f0a1d6513aee999392c1f94a5434b9ca7c60dc2e90295acc53b11f80",
+          "stockContract": "[null,1,null]",
+          "id": "0",
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 28,
+          "stockIdentityId": null,
           "pricingId": "f042d4ea-0063-4de1-ac11-bfb9aedc42a7",
           "label": "1 ay",
           "months": 1,
@@ -402,7 +414,7 @@ const DATA = {
       "seoRelatedKeywords": " Spotify Premium Azərbaycan, Spotify qiyməti",
       "seoKeywords": "Spotify Premium almaq, Spotify Premium Azərbaycan, Spotify qiyməti",
       "seoContent": "Bu Spotify Premium təklifi müştərinin öz hesabında aktivləşdirmə üçündür. Mövcud hesabınızı istifadə etmək istəyirsinizsə seçilən paketin adını və tələb olunan giriş məlumatlarını yoxlayın.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
+      "seoUpdatedAt": "2026-11-22T21:26:43.965Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Spotify Premium almaq | Qiymət və paketlər — MirPanel",
@@ -477,7 +489,11 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "3395b03a29f6d9ded72e3af03704e84379290492cbf29058dec239c44a895d6f",
+          "stockContract": "[null,1,null]",
+          "id": "0",
           "warrantyDuration": 1,
+          "stockIdentityId": null,
           "pricingId": "018ff8cf-5756-474c-ad89-a437b2e5d2c9",
           "label": "1 Ay  (Öz hesabınızda aktiv edilir)",
           "months": 1,
@@ -485,10 +501,14 @@ const DATA = {
           "regularPrice": 11
         },
         {
+          "stockSignature": "df1026fd058c6c674df6c33c1e8cb2b463f4e8aaf006159eb2c677abeb9996ef",
+          "stockContract": "[null,12,null]",
+          "id": "1",
           "durationMonths": 12,
           "duration_months": 12,
           "warrantyMode": "guaranteed",
           "warrantyDuration": 12,
+          "stockIdentityId": null,
           "pricingId": "f7552b80-54eb-4779-9bb1-6d4b56f7b30e",
           "label": "12 Ay (Öz hesabınızda aktiv edilir) endirim💥",
           "months": 12,
@@ -604,15 +624,27 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 5.99,
           "regularPrice": 25
         },
         {
+          "stockSignature": "be6c1277e7e29010d7b003e0d41272847365ca1372ccc7791a6de60445bd05d4",
+          "stockContract": "[null,3,null]",
+          "id": "1",
+          "stockIdentityId": null,
           "months": 3,
           "price": 16.49
         },
         {
+          "stockSignature": "6ba9a2b7ac0962c00573a86023d4eb50f8566376ac3bada7d5762216c6351acd",
+          "stockContract": "[null,6,null]",
+          "id": "2",
+          "stockIdentityId": null,
           "months": 6,
           "price": 29.99
         }
@@ -656,7 +688,7 @@ const DATA = {
       "seoRelatedKeywords": " CapCut Pro Azərbaycan, CapCut qiyməti",
       "seoKeywords": "CapCut Pro almaq, CapCut Pro Azərbaycan, CapCut qiyməti",
       "seoContent": "CapCut Pro video montajı üçün premium hesab təklifidir. Qısa müddətli və aylıq paketləri eyni səhifədə görüb ümumi qiymətlərini müqayisə edə bilərsiniz.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
+      "seoUpdatedAt": "2026-11-22T21:26:43.965Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "CapCut Pro almaq | Qiymət və paketlər — MirPanel",
@@ -744,21 +776,29 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "c4a75349add27e1f8325ad85695875ef1530ae76f7af27efd7159dd36f122d95",
+          "stockContract": "[null,1,null]",
+          "id": "0",
           "warrantyUnit": "day",
           "warrantyDuration": 28,
           "bestValue": false,
+          "stockIdentityId": null,
           "label": "1 Ay (endirim)",
           "months": 1,
           "price": 4.99,
           "regularPrice": 20
         },
         {
+          "stockSignature": "079579ddca6eef092b4dc445cc40dff05357d423c19b982de3c2881898d9f717",
+          "stockContract": "[7,7,null]",
+          "id": "1",
           "durationDays": 7,
           "duration_months": 7,
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 6,
           "bestValue": true,
+          "stockIdentityId": null,
           "pricingId": "fc790f2d-3f2d-4f31-9e61-a2ea1737e351",
           "label": " 7 gün",
           "months": 7,
@@ -851,6 +891,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "1c21f3cf25dcadddd3380bd8b5deb5fcf2d9207d2a858502fa6559dd7eabe2b9",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "label": "1 ayliq ",
           "months": 1,
           "price": 5.99
@@ -895,7 +939,7 @@ const DATA = {
       "seoRelatedKeywords": " ChatGPT şəxsi hesab Azərbaycan",
       "seoKeywords": "ChatGPT Plus almaq, ChatGPT şəxsi hesab Azərbaycan",
       "seoContent": "Bu səhifə hazır şəxsi ChatGPT Plus hesabı təklifi üçündür. Paylaşılan hesabla qarışdırmamaq üçün məhsul adını və seçilmiş müddəti yoxlayın.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.743Z",
+      "seoUpdatedAt": "2026-11-22T21:26:43.966Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "ChatGPT Plus şəxsi hesab almaq | Qiymət və paketlər — MirPanel",
@@ -945,11 +989,15 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "0867790b2a80241e19dcdcddeb5fbf95e3e2d7d0f4aa8c4639c335942cf0dea5",
+          "stockContract": "[null,1,null]",
+          "id": "0",
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyText": "",
           "warrantyDuration": 27,
           "bestValue": true,
+          "stockIdentityId": null,
           "label": "1 ayliq  ",
           "months": 1,
           "price": 15.99,
@@ -1041,6 +1089,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 3.99
         }
@@ -1084,7 +1136,7 @@ const DATA = {
       "seoRelatedKeywords": " Amazon Prime Video Azərbaycan, Prime Video qiyməti",
       "seoKeywords": "Prime Video almaq, Amazon Prime Video Azərbaycan, Prime Video qiyməti",
       "seoContent": "Amazon Prime Video film və serial izləmək üçün hesab təklifidir. Paket müddətini və qiymətini bu səhifədə seçin; bu məhsulu Amazon alış-veriş xidmətləri ilə eyniləşdirməyin.",
-      "seoUpdatedAt": "2026-11-22T15:22:01.159Z",
+      "seoUpdatedAt": "2026-11-22T21:26:43.966Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Amazon Prime Video almaq | Qiymət və paketlər — MirPanel",
@@ -1134,10 +1186,14 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "d1062bd2f0a1d6513aee999392c1f94a5434b9ca7c60dc2e90295acc53b11f80",
+          "stockContract": "[null,1,null]",
+          "id": "0",
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 27,
           "bestValue": false,
+          "stockIdentityId": null,
           "pricingId": "6814465e-5ab7-43da-9e2b-56199661f001",
           "label": "1 ay",
           "months": 1,
@@ -1145,28 +1201,40 @@ const DATA = {
           "regularPrice": 18
         },
         {
+          "stockSignature": "6730c2fc4d203a289b03787d05d90bcdb430a8648d6900b6977f4887a0c12125",
+          "stockContract": "[null,6,null]",
+          "id": "1",
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 160,
           "bestValue": true,
+          "stockIdentityId": null,
           "pricingId": "9a89cb3d-75f9-4c20-b626-7f879bc6e2df",
           "label": "6 ay",
           "months": 6,
           "price": 8.99
         },
         {
+          "stockSignature": "1fcaebf871789fde2a99170cf7e3d6aec7e5604596b42af63f3570c13b4aa08f",
+          "stockContract": "[null,1,null]",
+          "id": "2",
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 28,
+          "stockIdentityId": null,
           "pricingId": "34ab6efa-6bba-42a6-b0cf-fe48c0397813",
           "label": "1 ay Tam şəxsi hesab (6 şəxsi otaq)",
           "months": 1,
           "price": 10.99
         },
         {
+          "stockSignature": "c65ebd0695e6e46de01bfa6ec02112f57ee075218a76412a9604ef469ce82468",
+          "stockContract": "[null,1,null]",
+          "id": "3",
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 173,
+          "stockIdentityId": null,
           "pricingId": "939fd711-4b69-456c-bd10-5a732eeaf129",
           "label": "6 ay Tam şəxsi hesab (6 şəxsi otaq)",
           "months": 1,
@@ -1259,6 +1327,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "2ff860e90c86485822a0dfa28902b057953d3d586b0d4254631d0a6b962144e2",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "label": "1 Ayliq",
           "months": 1,
           "price": 37.4,
@@ -1369,6 +1441,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "14df93de4f84da463547349a0783995b5446a632d6cbffc930d95c762566ad8f",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "label": "1 ayliq",
           "months": 1,
           "price": 5.99
@@ -1459,6 +1535,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "dd5f09493268584705d24eb114c4e72fc608b8122b66dfa2bcda411443a161d7",
+          "stockContract": "[null,4,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 4,
           "price": 22.99
         }
@@ -1502,7 +1582,7 @@ const DATA = {
       "seoRelatedKeywords": " HBO Max Azərbaycan, HBO Max hesab qiyməti",
       "seoKeywords": "HBO Max almaq, HBO Max Azərbaycan, HBO Max hesab qiyməti",
       "seoContent": "HBO Max film və serial izləmək üçün hesab təklifidir. Sifariş üçün mövcud müddəti, qiyməti və paket şərtlərini birlikdə yoxlayın.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.744Z",
+      "seoUpdatedAt": "2026-11-22T21:26:43.966Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "HBO Max almaq | Qiymət və paketlər — MirPanel",
@@ -1552,11 +1632,15 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "d1062bd2f0a1d6513aee999392c1f94a5434b9ca7c60dc2e90295acc53b11f80",
+          "stockContract": "[null,1,null]",
+          "id": "0",
           "durationMonths": 1,
           "duration_months": 1,
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 28,
+          "stockIdentityId": null,
           "pricingId": "9862f006-0b4b-4c63-97ef-eda5829158da",
           "label": "1 ay",
           "months": 1,
@@ -1673,11 +1757,19 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "47de19b1560e31d6100178d81c412f811798254c31ab4e1681fdc024efe6d58a",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "label": "500 jeton",
           "months": 1,
           "price": 11
         },
         {
+          "stockSignature": "244113b78fdcd3c1f4e1049b84030595cfe040900f3a5988e043a8a3f01e7304",
+          "stockContract": "[null,1,null]",
+          "id": "1",
+          "stockIdentityId": null,
           "label": "1000 jeton",
           "months": 1,
           "price": 21
@@ -1722,7 +1814,7 @@ const DATA = {
       "seoRelatedKeywords": " VPN Azərbaycan, Surfshark qiyməti",
       "seoKeywords": "Surfshark VPN almaq, VPN Azərbaycan, Surfshark qiyməti",
       "seoContent": "Surfshark VPN internet bağlantısı üçün VPN hesabı təklifidir. Bu məhsul bağlantının məxfiliyi üçün alətdir; tam anonimlik və ya bütün saytlara giriş zəmanəti kimi təqdim edilmir.",
-      "seoUpdatedAt": "2026-11-22T12:17:59.744Z",
+      "seoUpdatedAt": "2026-11-22T21:26:43.966Z",
       "seoIndex": true,
       "includeInSitemap": true,
       "seoOgTitle": "Surfshark VPN almaq | Qiymət və paketlər — MirPanel",
@@ -1768,9 +1860,13 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "d1062bd2f0a1d6513aee999392c1f94a5434b9ca7c60dc2e90295acc53b11f80",
+          "stockContract": "[null,1,null]",
+          "id": "0",
           "warrantyMode": "guaranteed",
           "warrantyUnit": "day",
           "warrantyDuration": 30,
+          "stockIdentityId": null,
           "pricingId": "211daf58-234b-4911-992e-bda1537663c4",
           "label": "1 ay",
           "months": 1,
@@ -1863,6 +1959,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "97d003b47329f91efaee01176e1985c541c821030c05307259cce013eac75355",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "label": "Stokta yoxdur",
           "months": 1,
           "price": 0
@@ -1953,12 +2053,20 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "f7713a35ebea46200b9b6c28fb236e63572832356d4eccf8dfb35def35eccf6a",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "label": "1 aylıq PRO",
           "months": 1,
           "price": 11.99,
           "regularPrice": 16.98
         },
         {
+          "stockSignature": "6bf4ed5ae5d099a727761a825a57ca6920c7c4bc84297099e7989383e5fcd4ee",
+          "stockContract": "[null,1,null]",
+          "id": "1",
+          "stockIdentityId": null,
           "label": "1 aylıq MAX",
           "months": 1,
           "price": 19.99,
@@ -2050,6 +2158,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 29.99,
           "regularPrice": 51
@@ -2140,11 +2252,19 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 3.99,
           "regularPrice": 12
         },
         {
+          "stockSignature": "14d47c6bb51bf203ea17727bc99f63e67a83ce46a746ade5b27eede4abd0fb60",
+          "stockContract": "[null,12,null]",
+          "id": "1",
+          "stockIdentityId": null,
           "months": 12,
           "price": 29.99,
           "regularPrice": 99
@@ -2245,11 +2365,19 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 2.99,
           "regularPrice": 30
         },
         {
+          "stockSignature": "14d47c6bb51bf203ea17727bc99f63e67a83ce46a746ade5b27eede4abd0fb60",
+          "stockContract": "[null,12,null]",
+          "id": "1",
+          "stockIdentityId": null,
           "months": 12,
           "price": 4.99
         }
@@ -2339,18 +2467,34 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 5.99
         },
         {
+          "stockSignature": "be60937201ab614a2a40efc78c4ad60ec29ed69390f7b52f5b5b169b353660b0",
+          "stockContract": "[null,2,null]",
+          "id": "1",
+          "stockIdentityId": null,
           "months": 2,
           "price": 11.99
         },
         {
+          "stockSignature": "be6c1277e7e29010d7b003e0d41272847365ca1372ccc7791a6de60445bd05d4",
+          "stockContract": "[null,3,null]",
+          "id": "2",
+          "stockIdentityId": null,
           "months": 3,
           "price": 16.5
         },
         {
+          "stockSignature": "6ba9a2b7ac0962c00573a86023d4eb50f8566376ac3bada7d5762216c6351acd",
+          "stockContract": "[null,6,null]",
+          "id": "3",
+          "stockIdentityId": null,
           "months": 6,
           "price": 29.99
         }
@@ -2440,6 +2584,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "be6c1277e7e29010d7b003e0d41272847365ca1372ccc7791a6de60445bd05d4",
+          "stockContract": "[null,3,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 3,
           "price": 19.99
         }
@@ -2529,6 +2677,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 19.99
         }
@@ -2618,6 +2770,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 6.99
         }
@@ -2707,6 +2863,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 9.99
         }
@@ -2796,6 +2956,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "be6c1277e7e29010d7b003e0d41272847365ca1372ccc7791a6de60445bd05d4",
+          "stockContract": "[null,3,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 3,
           "price": 14.99
         }
@@ -2885,6 +3049,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 2.89
         }
@@ -2974,6 +3142,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 16.99
         }
@@ -3063,6 +3235,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 6.99
         }
@@ -3152,10 +3328,18 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "ca420f969f473158e725d62b85940f9fca05b482d98ea6056a555f1162a88478",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 1,
           "price": 8.99
         },
         {
+          "stockSignature": "dd5f09493268584705d24eb114c4e72fc608b8122b66dfa2bcda411443a161d7",
+          "stockContract": "[null,4,null]",
+          "id": "1",
+          "stockIdentityId": null,
           "months": 4,
           "price": 14.99
         }
@@ -3255,6 +3439,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "d3ee54916d002a9b49a48ec9489287cd8cebe44d2579dfb905b43c05cd78b745",
+          "stockContract": "[null,18,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "months": 18,
           "price": 8.99,
           "regularPrice": 700
@@ -3374,6 +3562,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "72b909893116fb6b7f65d0cfb6b87ee2c6a172146923fd870cb3274113e8e007",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "pricingId": "caf50ff1-bffa-424d-94d3-a8cd86e612f3",
           "label": "60 UC",
           "months": 1,
@@ -3466,6 +3658,8 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "112d86d11912ff1ff177aaebdb7e1a30df546f4b38e747e93924a5d7ddae77d9",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 3436,
@@ -3504,6 +3698,8 @@ const DATA = {
           "price": 1.65
         },
         {
+          "stockSignature": "4967d5f36049c6c6343253dd48bdeabd14c170e13cc52fe32bcbdaf49248c5cb",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 3437,
@@ -3542,6 +3738,8 @@ const DATA = {
           "price": 7.99
         },
         {
+          "stockSignature": "3049ac92d9f3184ab8951b9e9425bd2349a9c6966f020a38e2c124f5fe694d54",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 3438,
@@ -3580,6 +3778,8 @@ const DATA = {
           "price": 15.54
         },
         {
+          "stockSignature": "2714609e38d8f6a7cfffd78b57e847497d19f86177bdba3a2e7fdeaf4120fd88",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 3439,
@@ -3618,6 +3818,8 @@ const DATA = {
           "price": 39.87
         },
         {
+          "stockSignature": "5380f8b77f45edc894350b22975c1ef8e112d6de162ca7c33fa1f927072448f8",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 3440,
@@ -3656,6 +3858,8 @@ const DATA = {
           "price": 78.7
         },
         {
+          "stockSignature": "994e3e2a5751efa903131195bdbba8439d9a84061ed6b86f716726b64dccb4ca",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 3441,
@@ -3780,6 +3984,8 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "eaf3c0234951e4050dd40d93d3d077a038c980645e4d78f92bf13ff182816bd0",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 682,
@@ -3818,6 +4024,8 @@ const DATA = {
           "price": 1.58
         },
         {
+          "stockSignature": "3773640be451004a485f19e2aaee1d5dd0c69418323af2cf62fca01fe28447a8",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 683,
@@ -3856,6 +4064,8 @@ const DATA = {
           "price": 4.69
         },
         {
+          "stockSignature": "d72859d25f82d1ffd9b80ec494571df9c8d23e1d4a28cd29deb6962afc2e4803",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 684,
@@ -3894,6 +4104,8 @@ const DATA = {
           "price": 7.54
         },
         {
+          "stockSignature": "b57e7a4835d9718b2e69aed4a3ec11b21edd0c393260254dc998950407bab02b",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 690,
@@ -3932,6 +4144,8 @@ const DATA = {
           "price": 13.83
         },
         {
+          "stockSignature": "4ef2d22e3b4b181ef87e82aea185833985b66b07542e64f54e3a137bc63e8e22",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 677,
@@ -3970,6 +4184,8 @@ const DATA = {
           "price": 27.58
         },
         {
+          "stockSignature": "6e541730ade7086b30197f9f121afd62f25a752601b220774bec3be3a1e18e0c",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 685,
@@ -4094,6 +4310,8 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "1ef2acc3a573641f512299796b492bd8934b929ae64380c795892bfcd4d14f20",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 1421,
@@ -4135,6 +4353,8 @@ const DATA = {
           "regularPrice": 25.5
         },
         {
+          "stockSignature": "6efadcdd618b110b6e920426d4aae9ca3ffd2d275aec04a22b6f971d94afad12",
+          "stockContract": "[null,1,null]",
           "supplier": {
             "provider": "epinby",
             "productId": 1423,
@@ -4261,6 +4481,10 @@ const DATA = {
       },
       "plans": [
         {
+          "stockSignature": "a899816b520b8fbaf2eaa085933af0fae6d0bc9df381541e0f398d50f0b2a33d",
+          "stockContract": "[null,1,null]",
+          "id": "0",
+          "stockIdentityId": null,
           "pricingId": "0dfe589f-5f80-4212-806b-98206f532dfb",
           "label": "50 token",
           "months": 1,
@@ -4284,44 +4508,78 @@ const DATA = {
     {
       "id": "mobile_legends",
       "_stableId": "mobile_legends",
-      "title": "Mobile Legends",
+      "epinbyGroup": true,
       "order": 37,
       "category": "games",
-      "epinbyGroup": true,
-      "active": false,
-      "soldOut": false,
-      "stock": null,
-      "stockEnabled": false,
-      "currency": "₼",
       "image": "/uploads/products/mobile-legends-cover.webp",
+      "currency": "₼",
+      "title": "Mobile Legends",
+      "variant": "",
+      "badge": "",
       "imageAlt": "Mobile Legends — oyun məhsulunun banneri",
+      "desc": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "longDescription": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
+      "usageRules": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "mobile-legends",
+      "seoTitle": "Mobile Legends paketləri | MirPanel",
+      "seoDescription": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
+      "seoH1": "Mobile Legends",
+      "seoPrimaryKeyword": "Mobile Legends almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoUpdatedAt": "2026-11-22T21:26:43.967Z",
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "/uploads/products/mobile-legends-cover.webp",
       "banner": {
         "enabled": false,
         "desktopImage": "/uploads/products/mobile-legends-cover.webp",
         "mobileImage": "/uploads/products/mobile-legends-cover.webp",
-        "alt": "Mobile Legends"
+        "title": "Mobile Legends",
+        "description": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
+        "alt": "Mobile Legends",
+        "order": 37
       },
-      "desc": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
-      "longDescription": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
-      "usageRules": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir.",
-      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
-      "deliveryText": "",
-      "availabilityText": "",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": true,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
       "orderFlow": "form_then_whatsapp",
-      "formTitle": "Oyun hesabının məlumatları",
-      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
       "formFields": [
         {
           "key": "player_id",
+          "type": "text",
           "label": "Player ID",
-          "required": true
+          "placeholder": "",
+          "description": "",
+          "required": true,
+          "enabled": true
         },
         {
           "key": "server_id",
+          "type": "text",
           "label": "Server ID",
-          "required": false
+          "placeholder": "",
+          "description": "",
+          "required": false,
+          "enabled": true
         }
       ],
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "orderGuide": {
+        "information": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": true,
         "title": "Oyun hesabını yoxlayın",
@@ -4335,24 +4593,19 @@ const DATA = {
           "url": ""
         }
       },
-      "orderGuide": {
-        "information": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
-        "tracks": {}
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
       },
-      "seoSlug": "mobile-legends",
-      "seoH1": "Mobile Legends",
-      "seoTitle": "Mobile Legends paketləri | MirPanel",
-      "seoDescription": "Mobile Legends: Bang Bang üçün seçilmiş Weekly və Twilight paketlərinin oyun hesabına yüklənməsi. Paket oyunçu ID-si və təchizatçının tələb etdiyi server məlumatı ilə əlaqələndirilir. Hesab şifrəsi tələb olunmur.",
-      "seoIndex": false,
-      "includeInSitemap": false,
       "plans": [
         {
-          "id": "epinby_413",
-          "pricingId": "five-games-413",
-          "label": "Weekly",
-          "price": 2.91,
-          "active": false,
-          "image": "/uploads/products/mobile-legends-cover.webp",
+          "stockSignature": "016d19116ed2cb2215e8a5a33a924dfa268245ba953a8456c43cf5f017f5f7dc",
+          "stockContract": "[null,1,null]",
+          "orderGuide": {
+            "information": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 413,
@@ -4380,38 +4633,43 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/mobile-legends-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "Player ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "Player ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             },
             {
               "key": "server_id",
-              "label": "Server ID",
-              "required": false,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "Server ID",
+              "placeholder": "",
+              "description": "",
+              "required": false,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_413",
+          "active": false,
+          "pricingId": "five-games-413",
+          "label": "Weekly",
+          "months": 1,
+          "price": 2.91
+        },
+        {
+          "stockSignature": "40a5c9839de7f10f65066a9bcc06698d7a7927e5a33ba2f0df12c90863d7023b",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_414",
-          "pricingId": "five-games-414",
-          "label": "Twilight",
-          "price": 15.3,
-          "active": false,
-          "image": "/uploads/products/mobile-legends-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 414,
@@ -4439,69 +4697,117 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/mobile-legends-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "Player ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "Player ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             },
             {
               "key": "server_id",
-              "label": "Server ID",
-              "required": false,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "Server ID",
+              "placeholder": "",
+              "description": "",
+              "required": false,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
-          "orderGuide": {
-            "information": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
-            "tracks": {}
-          }
+          "id": "epinby_414",
+          "active": false,
+          "pricingId": "five-games-414",
+          "label": "Twilight",
+          "months": 1,
+          "price": 15.3
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "Bu əlaqələr Mobile Legends Global kateqoriyasına aiddir; İndoneziya və Braziliya hesabları uyğun deyil. Weekly paketi MY/SG/PH/ID/RU hesabları üçün də bağlıdır. Hesab ölkəsini server nömrəsindən təxmin etməyin. İlk alış bonusu yalnız uyğun bonus paketində və limit yoxlanandan sonra tətbiq edilə bilər; Weekly və Twilight üçün əlavə bonus vəd edilmir.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "honor_of_kings",
       "_stableId": "honor_of_kings",
-      "title": "Honor of Kings",
+      "epinbyGroup": true,
       "order": 38,
       "category": "games",
-      "epinbyGroup": true,
-      "active": false,
-      "soldOut": false,
-      "stock": null,
-      "stockEnabled": false,
-      "currency": "₼",
       "image": "/uploads/products/honor-of-kings-cover.webp",
+      "currency": "₼",
+      "title": "Honor of Kings",
+      "variant": "",
+      "badge": "",
       "imageAlt": "Honor of Kings — oyun məhsulunun banneri",
+      "desc": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "longDescription": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
+      "usageRules": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "honor-of-kings",
+      "seoTitle": "Honor of Kings paketləri | MirPanel",
+      "seoDescription": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
+      "seoH1": "Honor of Kings",
+      "seoPrimaryKeyword": "Honor of Kings almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoUpdatedAt": null,
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "/uploads/products/honor-of-kings-cover.webp",
       "banner": {
         "enabled": false,
         "desktopImage": "/uploads/products/honor-of-kings-cover.webp",
         "mobileImage": "/uploads/products/honor-of-kings-cover.webp",
-        "alt": "Honor of Kings"
+        "title": "Honor of Kings",
+        "description": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
+        "alt": "Honor of Kings",
+        "order": 38
       },
-      "desc": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
-      "longDescription": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
-      "usageRules": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir.",
-      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
-      "deliveryText": "",
-      "availabilityText": "",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": false,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
       "orderFlow": "form_then_whatsapp",
-      "formTitle": "Oyun hesabının məlumatları",
-      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
       "formFields": [
         {
           "key": "player_id",
+          "type": "text",
           "label": "User ID",
-          "required": true
+          "placeholder": "",
+          "description": "",
+          "required": true,
+          "enabled": true
         }
       ],
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "orderGuide": {
+        "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": true,
         "title": "Oyun hesabını yoxlayın",
@@ -4515,24 +4821,19 @@ const DATA = {
           "url": ""
         }
       },
-      "orderGuide": {
-        "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
-        "tracks": {}
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
       },
-      "seoSlug": "honor-of-kings",
-      "seoH1": "Honor of Kings",
-      "seoTitle": "Honor of Kings paketləri | MirPanel",
-      "seoDescription": "Honor of Kings üçün Tokens və seçilmiş oyun paketləri. Yükləmə seçilmiş paket və həmin sifarişdə yazılmış User ID üzrə aparılır; oyun hesabının şifrəsi istənmir.",
-      "seoIndex": false,
-      "includeInSitemap": false,
       "plans": [
         {
-          "id": "epinby_3825",
-          "pricingId": "five-games-3825",
-          "label": "16 Tokens",
-          "price": 0.39,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          "stockSignature": "b7dd0fcc6bf8178d9460d4e388fe5adc7409e7ac71cb08552dc3e0ea22148251",
+          "stockContract": "[null,1,null]",
+          "orderGuide": {
+            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+            "tracks": {}
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3825,
@@ -4551,29 +4852,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3825",
+          "active": false,
+          "pricingId": "five-games-3825",
+          "label": "16 Tokens",
+          "months": 1,
+          "price": 0.39
+        },
+        {
+          "stockSignature": "d080cb43cf08d177ef07172fc2a35e036e108e45336c454ab826b6ded75b96b1",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3826",
-          "pricingId": "five-games-3826",
-          "label": "Double Token Lucky Bag",
-          "price": 0.63,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3826,
@@ -4592,29 +4897,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3826",
+          "active": false,
+          "pricingId": "five-games-3826",
+          "label": "Double Token Lucky Bag",
+          "months": 1,
+          "price": 0.63
+        },
+        {
+          "stockSignature": "a07a394b0a39ef4f14c15e0f81ce4e757ee8fc9ca4c3aace51cf3dc83f3221d0",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3827",
-          "pricingId": "five-games-3827",
-          "label": "Honor Point Value Pack",
-          "price": 0.63,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3827,
@@ -4633,29 +4942,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3827",
+          "active": false,
+          "pricingId": "five-games-3827",
+          "label": "Honor Point Value Pack",
+          "months": 1,
+          "price": 0.63
+        },
+        {
+          "stockSignature": "ab1260318c227745c706dca92224e5b4c1b50fa71cdcf239e8a9a29d42a2ebc6",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3830",
-          "pricingId": "five-games-3830",
-          "label": "80 Tokens",
-          "price": 1.81,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3830,
@@ -4674,29 +4987,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3830",
+          "active": false,
+          "pricingId": "five-games-3830",
+          "label": "80 Tokens",
+          "months": 1,
+          "price": 1.81
+        },
+        {
+          "stockSignature": "1618f3442b08ee106731a8c0a1212f8fcfab90b0978d478de9da21c83ea73876",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3831",
-          "pricingId": "five-games-3831",
-          "label": "Weekly Card",
-          "price": 2.06,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3831,
@@ -4715,29 +5032,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3831",
+          "active": false,
+          "pricingId": "five-games-3831",
+          "label": "Weekly Card",
+          "months": 1,
+          "price": 2.06
+        },
+        {
+          "stockSignature": "fafc3665809a8bc809c7e079979365210f8b39b482fb4034f4c02968ec143fb5",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3832",
-          "pricingId": "five-games-3832",
-          "label": "Premium Purchase Rebate Pack",
-          "price": 2.37,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3832,
@@ -4756,29 +5077,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3832",
+          "active": false,
+          "pricingId": "five-games-3832",
+          "label": "Premium Purchase Rebate Pack",
+          "months": 1,
+          "price": 2.37
+        },
+        {
+          "stockSignature": "e3f057c2ac194ef3dbf2f7e6f9f248e1c5a454226e02826ffc3a84d7dc39a7a9",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3833",
-          "pricingId": "five-games-3833",
-          "label": "240 Tokens",
-          "price": 5.2,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3833,
@@ -4797,29 +5122,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3833",
+          "active": false,
+          "pricingId": "five-games-3833",
+          "label": "240 Tokens",
+          "months": 1,
+          "price": 5.2
+        },
+        {
+          "stockSignature": "add6aa1a1294615d2ca8fbde93fb9d8828218630bbc27a11df6ede7cb9e83c04",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3834",
-          "pricingId": "five-games-3834",
-          "label": "Weekly Card Plus",
-          "price": 5.44,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3834,
@@ -4838,29 +5167,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3834",
+          "active": false,
+          "pricingId": "five-games-3834",
+          "label": "Weekly Card Plus",
+          "months": 1,
+          "price": 5.44
+        },
+        {
+          "stockSignature": "3e467769a7fdc305b9e209007904be0d2d72399e7e3f497da45343dd5a505697",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3835",
-          "pricingId": "five-games-3835",
-          "label": "400 Tokens",
-          "price": 8.48,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3835,
@@ -4879,29 +5212,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3835",
+          "active": false,
+          "pricingId": "five-games-3835",
+          "label": "400 Tokens",
+          "months": 1,
+          "price": 8.48
+        },
+        {
+          "stockSignature": "e0580df4851b586a283d176e57feb75a28da85a3b9e2dee2827f13d34e0ca295",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3836",
-          "pricingId": "five-games-3836",
-          "label": "560 Tokens",
-          "price": 11.79,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3836,
@@ -4920,29 +5257,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3836",
+          "active": false,
+          "pricingId": "five-games-3836",
+          "label": "560 Tokens",
+          "months": 1,
+          "price": 11.79
+        },
+        {
+          "stockSignature": "d5afbb252fc5adc547cdf4c0fde63434e9c8f3b5c647095289e85eae9aafff03",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3837",
-          "pricingId": "five-games-3837",
-          "label": "830 Tokens",
-          "price": 16.67,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3837,
@@ -4961,29 +5302,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3837",
+          "active": false,
+          "pricingId": "five-games-3837",
+          "label": "830 Tokens",
+          "months": 1,
+          "price": 16.67
+        },
+        {
+          "stockSignature": "7adce7731bb74a9a6e5c625e3e9a0569b87ab0c0eb7759160c211e74ab76c84a",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3838",
-          "pricingId": "five-games-3838",
-          "label": "1245 Tokens",
-          "price": 24.72,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3838,
@@ -5002,29 +5347,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3838",
+          "active": false,
+          "pricingId": "five-games-3838",
+          "label": "1245 Tokens",
+          "months": 1,
+          "price": 24.72
+        },
+        {
+          "stockSignature": "041f28df066e669b2e2081c8235b3f12def764eb6fe4421587c0f82c5e39e6ae",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3839",
-          "pricingId": "five-games-3839",
-          "label": "2508 Tokens",
-          "price": 49.39,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3839,
@@ -5043,29 +5392,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3839",
+          "active": false,
+          "pricingId": "five-games-3839",
+          "label": "2508 Tokens",
+          "months": 1,
+          "price": 49.39
+        },
+        {
+          "stockSignature": "f8e6597549be2d0768d7a5df56193c4462f5c3d0f08770c6354209d2b7d8486e",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3840",
-          "pricingId": "five-games-3840",
-          "label": "4180 Tokens",
-          "price": 82.19,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3840,
@@ -5084,29 +5437,33 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
+          "id": "epinby_3840",
+          "active": false,
+          "pricingId": "five-games-3840",
+          "label": "4180 Tokens",
+          "months": 1,
+          "price": 82.19
+        },
+        {
+          "stockSignature": "376dd0539be9ffb1b1ab25fc121798c64ae6cc101d7de3f90508f3ffd2a49492",
+          "stockContract": "[null,1,null]",
           "orderGuide": {
             "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
             "tracks": {}
-          }
-        },
-        {
-          "id": "epinby_3841",
-          "pricingId": "five-games-3841",
-          "label": "8360 Tokens",
-          "price": 162.71,
-          "active": false,
-          "image": "/uploads/products/honor-of-kings-cover.webp",
+          },
           "supplier": {
             "provider": "epinby",
             "productId": 3841,
@@ -5125,60 +5482,107 @@ const DATA = {
               }
             ]
           },
+          "image": "/uploads/products/honor-of-kings-cover.webp",
           "formFields": [
             {
               "key": "player_id",
-              "label": "User ID",
-              "required": true,
               "type": "text",
-              "options": [],
-              "maxLength": 400,
-              "enabled": true
+              "label": "User ID",
+              "placeholder": "",
+              "description": "",
+              "required": true,
+              "enabled": true,
+              "maxLength": 400
             }
           ],
-          "orderGuide": {
-            "information": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir. Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
-            "tracks": {}
-          }
+          "id": "epinby_3841",
+          "active": false,
+          "pricingId": "five-games-3841",
+          "label": "8360 Tokens",
+          "months": 1,
+          "price": 162.71
         }
-      ]
+      ],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "Oyun daxilindəki User ID-ni mətn kimi köçürün və paketin nominalını yoxlayın. Təchizatçının araşdırma səhifəsində bütün istifadəçilər qeyd edilsə də, cari paket və Azərbaycan hesabı uyğunluğu satış açılmazdan əvvəl yenidən təsdiqlənməlidir.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "arena_breakout",
       "_stableId": "arena_breakout",
-      "title": "Arena Breakout — mobil",
+      "epinbyGroup": true,
       "order": 39,
       "category": "games",
-      "epinbyGroup": true,
-      "active": false,
-      "soldOut": false,
-      "stock": null,
-      "stockEnabled": false,
-      "currency": "₼",
       "image": "/uploads/products/arena-breakout-cover.webp",
+      "currency": "₼",
+      "title": "Arena Breakout — mobil",
+      "variant": "",
+      "badge": "",
       "imageAlt": "Arena Breakout — mobil — oyun məhsulunun banneri",
+      "desc": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "longDescription": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
+      "usageRules": "Mobil oyunun User ID / Player ID məlumatından istifadə edin. PC hesabı ilə qarışdırmayın. Satış qiyməti, cari təchizatçı paketi, hesab bölgəsi və valyuta təsdiqlənənədək sifariş bağlıdır.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "arena-breakout",
+      "seoTitle": "Arena Breakout — mobil paketləri | MirPanel",
+      "seoDescription": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
+      "seoH1": "Arena Breakout — mobil",
+      "seoPrimaryKeyword": "Arena Breakout — mobil almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoUpdatedAt": null,
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "/uploads/products/arena-breakout-cover.webp",
       "banner": {
         "enabled": false,
         "desktopImage": "/uploads/products/arena-breakout-cover.webp",
         "mobileImage": "/uploads/products/arena-breakout-cover.webp",
-        "alt": "Arena Breakout — mobil"
+        "title": "Arena Breakout — mobil",
+        "description": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
+        "alt": "Arena Breakout — mobil",
+        "order": 39
       },
-      "desc": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
-      "longDescription": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
-      "usageRules": "Mobil oyunun User ID / Player ID məlumatından istifadə edin. PC hesabı ilə qarışdırmayın. Satış qiyməti, cari təchizatçı paketi, hesab bölgəsi və valyuta təsdiqlənənədək sifariş bağlıdır.",
-      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
-      "deliveryText": "",
-      "availabilityText": "",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": false,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
       "orderFlow": "form_then_whatsapp",
-      "formTitle": "Oyun hesabının məlumatları",
-      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
       "formFields": [
         {
           "key": "player_id",
+          "type": "text",
           "label": "User ID / Player ID:",
-          "required": true
+          "placeholder": "",
+          "description": "",
+          "required": true,
+          "enabled": true
         }
       ],
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "orderGuide": {
+        "information": "Mobil oyunun User ID / Player ID məlumatından istifadə edin. PC hesabı ilə qarışdırmayın. Satış qiyməti, cari təchizatçı paketi, hesab bölgəsi və valyuta təsdiqlənənədək sifariş bağlıdır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": true,
         "title": "Oyun hesabını yoxlayın",
@@ -5192,54 +5596,92 @@ const DATA = {
           "url": ""
         }
       },
-      "orderGuide": {
-        "information": "Mobil oyunun User ID / Player ID məlumatından istifadə edin. PC hesabı ilə qarışdırmayın. Satış qiyməti, cari təchizatçı paketi, hesab bölgəsi və valyuta təsdiqlənənədək sifariş bağlıdır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
-        "tracks": {}
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
       },
-      "seoSlug": "arena-breakout",
-      "seoH1": "Arena Breakout — mobil",
-      "seoTitle": "Arena Breakout — mobil paketləri | MirPanel",
-      "seoDescription": "Arena Breakout mobil versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout Infinite PC versiyası üçün deyil. Dəqiq nominal və valyuta seçiləcək təchizatçı paketi ilə müəyyən olunur, bannerdən götürülmür.",
-      "seoIndex": false,
-      "includeInSitemap": false,
-      "plans": []
+      "plans": [],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "Mobil oyunun User ID / Player ID məlumatından istifadə edin. PC hesabı ilə qarışdırmayın. Satış qiyməti, cari təchizatçı paketi, hesab bölgəsi və valyuta təsdiqlənənədək sifariş bağlıdır.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "arena_breakout_infinite",
       "_stableId": "arena_breakout_infinite",
-      "title": "Arena Breakout Infinite — PC",
+      "epinbyGroup": true,
       "order": 40,
       "category": "games",
-      "epinbyGroup": true,
-      "active": false,
-      "soldOut": false,
-      "stock": null,
-      "stockEnabled": false,
-      "currency": "₼",
       "image": "/uploads/products/arena-breakout-infinite-cover.webp",
+      "currency": "₼",
+      "title": "Arena Breakout Infinite — PC",
+      "variant": "",
+      "badge": "",
       "imageAlt": "Arena Breakout Infinite — PC — oyun məhsulunun banneri",
+      "desc": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "longDescription": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
+      "usageRules": "PC oyunundakı Player ID-ni yoxlayın. Mobil Arena Breakout ID-sini daxil etməyin. Satış qiyməti, cari paket və Azərbaycan hesabına uyğunluq təsdiqlənənədək sifariş açılmır.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "arena-breakout-infinite",
+      "seoTitle": "Arena Breakout Infinite — PC paketləri | MirPanel",
+      "seoDescription": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
+      "seoH1": "Arena Breakout Infinite — PC",
+      "seoPrimaryKeyword": "Arena Breakout Infinite — PC almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoUpdatedAt": null,
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "/uploads/products/arena-breakout-infinite-cover.webp",
       "banner": {
         "enabled": false,
         "desktopImage": "/uploads/products/arena-breakout-infinite-cover.webp",
         "mobileImage": "/uploads/products/arena-breakout-infinite-cover.webp",
-        "alt": "Arena Breakout Infinite — PC"
+        "title": "Arena Breakout Infinite — PC",
+        "description": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
+        "alt": "Arena Breakout Infinite — PC",
+        "order": 40
       },
-      "desc": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
-      "longDescription": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
-      "usageRules": "PC oyunundakı Player ID-ni yoxlayın. Mobil Arena Breakout ID-sini daxil etməyin. Satış qiyməti, cari paket və Azərbaycan hesabına uyğunluq təsdiqlənənədək sifariş açılmır.",
-      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
-      "deliveryText": "",
-      "availabilityText": "",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": false,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
       "orderFlow": "form_then_whatsapp",
-      "formTitle": "Oyun hesabının məlumatları",
-      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
       "formFields": [
         {
           "key": "player_id",
+          "type": "text",
           "label": "Player ID",
-          "required": true
+          "placeholder": "",
+          "description": "",
+          "required": true,
+          "enabled": true
         }
       ],
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "orderGuide": {
+        "information": "PC oyunundakı Player ID-ni yoxlayın. Mobil Arena Breakout ID-sini daxil etməyin. Satış qiyməti, cari paket və Azərbaycan hesabına uyğunluq təsdiqlənənədək sifariş açılmır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": true,
         "title": "Oyun hesabını yoxlayın",
@@ -5253,54 +5695,92 @@ const DATA = {
           "url": ""
         }
       },
-      "orderGuide": {
-        "information": "PC oyunundakı Player ID-ni yoxlayın. Mobil Arena Breakout ID-sini daxil etməyin. Satış qiyməti, cari paket və Azərbaycan hesabına uyğunluq təsdiqlənənədək sifariş açılmır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
-        "tracks": {}
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
       },
-      "seoSlug": "arena-breakout-infinite",
-      "seoH1": "Arena Breakout Infinite — PC",
-      "seoTitle": "Arena Breakout Infinite — PC paketləri | MirPanel",
-      "seoDescription": "Arena Breakout Infinite PC versiyası üçün oyun paketlərinin qaralaması. Bu məhsul Arena Breakout mobil oyunu üçün deyil. Paket nominalı və oyun valyutası ayrıca təchizatçı məlumatı ilə təsdiqlənir.",
-      "seoIndex": false,
-      "includeInSitemap": false,
-      "plans": []
+      "plans": [],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "PC oyunundakı Player ID-ni yoxlayın. Mobil Arena Breakout ID-sini daxil etməyin. Satış qiyməti, cari paket və Azərbaycan hesabına uyğunluq təsdiqlənənədək sifariş açılmır.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     },
     {
       "id": "stumble_guys",
       "_stableId": "stumble_guys",
-      "title": "Stumble Guys",
+      "epinbyGroup": true,
       "order": 41,
       "category": "games",
-      "epinbyGroup": true,
-      "active": false,
-      "soldOut": false,
-      "stock": null,
-      "stockEnabled": false,
-      "currency": "₼",
       "image": "/uploads/products/stumble-guys-cover.webp",
+      "currency": "₼",
+      "title": "Stumble Guys",
+      "variant": "",
+      "badge": "",
       "imageAlt": "Stumble Guys — oyun məhsulunun banneri",
+      "desc": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
+      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
+      "longDescription": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
+      "usageRules": "Player ID ilə yanaşı hesabın platforması və paketin valyutası təchizatçı üzrə dəqiqləşdirilməlidir. Mobil, PC və konsol hesablarının eyni qaydada işlədiyi fərz edilmir. Satış qiyməti və platforma uyğunluğu təsdiqlənənədək alış bağlıdır.",
+      "deliveryText": "",
+      "availabilityText": "",
+      "seoSlug": "stumble-guys",
+      "seoTitle": "Stumble Guys paketləri | MirPanel",
+      "seoDescription": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
+      "seoH1": "Stumble Guys",
+      "seoPrimaryKeyword": "Stumble Guys almaq",
+      "seoRelatedKeywords": "",
+      "seoKeywords": "",
+      "seoContent": "",
+      "seoUpdatedAt": null,
+      "seoIndex": false,
+      "includeInSitemap": false,
+      "seoOgTitle": "",
+      "seoOgDescription": "",
+      "seoOgImage": "/uploads/products/stumble-guys-cover.webp",
       "banner": {
         "enabled": false,
         "desktopImage": "/uploads/products/stumble-guys-cover.webp",
         "mobileImage": "/uploads/products/stumble-guys-cover.webp",
-        "alt": "Stumble Guys"
+        "title": "Stumble Guys",
+        "description": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
+        "alt": "Stumble Guys",
+        "order": 41
       },
-      "desc": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
-      "longDescription": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
-      "usageRules": "Player ID ilə yanaşı hesabın platforması və paketin valyutası təchizatçı üzrə dəqiqləşdirilməlidir. Mobil, PC və konsol hesablarının eyni qaydada işlədiyi fərz edilmir. Satış qiyməti və platforma uyğunluğu təsdiqlənənədək alış bağlıdır.",
-      "note": "Qaralama: cari EpinBy hesab API qiyməti, stok və Azərbaycan hesabı uyğunluğu təsdiqlənməyib. Satış bağlıdır.",
-      "deliveryText": "",
-      "availabilityText": "",
+      "flow": "whatsapp",
+      "soldOut": false,
+      "active": false,
+      "stock": null,
+      "stockEnabled": false,
+      "seller": "",
+      "bestSeller": false,
       "orderFlow": "form_then_whatsapp",
-      "formTitle": "Oyun hesabının məlumatları",
-      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
       "formFields": [
         {
           "key": "player_id",
+          "type": "text",
           "label": "Player ID",
-          "required": true
+          "placeholder": "",
+          "description": "",
+          "required": true,
+          "enabled": true
         }
       ],
+      "formTitle": "Oyun hesabının məlumatları",
+      "formDescription": "Məlumatları oyun hesabınızdan olduğu kimi köçürün. Hesab şifrənizi yazmayın.",
+      "orderGuide": {
+        "information": "Player ID ilə yanaşı hesabın platforması və paketin valyutası təchizatçı üzrə dəqiqləşdirilməlidir. Mobil, PC və konsol hesablarının eyni qaydada işlədiyi fərz edilmir. Satış qiyməti və platforma uyğunluğu təsdiqlənənədək alış bağlıdır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
+        "tracks": {}
+      },
       "confirmationModal": {
         "enabled": true,
         "title": "Oyun hesabını yoxlayın",
@@ -5314,17 +5794,25 @@ const DATA = {
           "url": ""
         }
       },
-      "orderGuide": {
-        "information": "Player ID ilə yanaşı hesabın platforması və paketin valyutası təchizatçı üzrə dəqiqləşdirilməlidir. Mobil, PC və konsol hesablarının eyni qaydada işlədiyi fərz edilmir. Satış qiyməti və platforma uyğunluğu təsdiqlənənədək alış bağlıdır. Ödəniş təsdiqlənmədən yükləmə göndərilmir. Status və nəticə Sifarişlərim bölməsində göstərilir. Yükləmə müddəti təchizatçının cavabından asılıdır; anında təhvil zəmanəti verilmir.",
-        "tracks": {}
+      "whatsapp": {
+        "extraMessage": "",
+        "includeSeller": true,
+        "includeStock": false
       },
-      "seoSlug": "stumble-guys",
-      "seoH1": "Stumble Guys",
-      "seoTitle": "Stumble Guys paketləri | MirPanel",
-      "seoDescription": "Stumble Guys üçün Gems, Tokens və qarışıq paket namizədləri. Hər nominal ayrıca təchizatçı ID-si ilə əlaqələndirilib. Bannerin Gems yazısı bütün paketlərin Gems olması demək deyil.",
-      "seoIndex": false,
-      "includeInSitemap": false,
-      "plans": []
+      "plans": [],
+      "orderConfirmation": {
+        "enabled": true,
+        "title": "Oyun hesabını yoxlayın",
+        "description": "Player ID ilə yanaşı hesabın platforması və paketin valyutası təchizatçı üzrə dəqiqləşdirilməlidir. Mobil, PC və konsol hesablarının eyni qaydada işlədiyi fərz edilmir. Satış qiyməti və platforma uyğunluğu təsdiqlənənədək alış bağlıdır.",
+        "confirmText": "Oxudum və təsdiqləyirəm",
+        "cancelText": "Geri",
+        "footerText": "",
+        "helpLink": {
+          "enabled": false,
+          "label": "",
+          "url": ""
+        }
+      }
     }
   ]
 };
