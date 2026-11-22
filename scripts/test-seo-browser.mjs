@@ -6,7 +6,7 @@ import {extractAdminState} from '../mirpanel-admin/core.mjs';
 import {generateProductPageFiles} from '../mirpanel-admin/product-pages.mjs';
 import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright/index.mjs';
 const stockOnly=process.argv.includes('--stock-only');
-const state=extractAdminState(fs.readFileSync('app.js','utf8')),products=state.products.filter(p=>p.active!==false&&(!stockOnly||p.id==='pubg_mobile'));
+const state=extractAdminState(fs.readFileSync('app.js','utf8')),products=state.products.filter(p=>p.active!==false&&(!stockOnly||p.id==='pubg_mobile')&&(!process.argv.includes('--core-products')||['netflix','spotify','capcut','zoom'].includes(p.id)));
 const pages=generateProductPageFiles(state.products,state.siteSections,state.cms,state.content),live=process.argv.includes('--live');
 const out='outputs/seo';fs.mkdirSync(out,{recursive:true});
 const server=http.createServer((req,res)=>{

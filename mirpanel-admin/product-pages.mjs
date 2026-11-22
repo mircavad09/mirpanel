@@ -6,7 +6,7 @@ import homeShortcuts from '../home-shortcuts.js';
 import homeSections from '../home-sections.js';
 import {renderPlanRows, renderPlanSummary, renderPlanTrust} from '../product-plan-view.mjs';
 import {productSeoCopy} from '../product-seo-content.mjs';
-import {organizationSchema,siteIdentity,withSiteIdentity} from '../site-identity.mjs';
+import {organizationSchema,siteIdentity,withSiteIdentity,contactPageMetadata} from '../site-identity.mjs';
 import {planName} from '../product-plan-view.mjs';
 const { normalizeDisplayLabel } = displayLabels;
 const SITE_URL = "https://mirpanel.com";
@@ -50,11 +50,7 @@ const infoPageMetadata = {
     description: "Mirpanel, təqdim etdiyi premium hesab xidmətləri və sifariş prosesi haqqında məlumat.",
     h1: "Mirpanel haqqında"
   },
-  elaqe: {
-    title: "Mirpanel ilə əlaqə | WhatsApp dəstək",
-    description: "Mirpanel dəstək komandası ilə WhatsApp vasitəsilə əlaqə saxlayın.",
-    h1: "Mirpanel ilə əlaqə"
-  },
+  elaqe: contactPageMetadata,
   sertler: {
     title: "İstifadə və sifariş şərtləri | Mirpanel",
     description: "Mirpanel sifariş, istifadə və hesab təhlükəsizliyi şərtləri ilə tanış olun.",
@@ -1007,7 +1003,7 @@ function applyCmsToInfoHtml(html, page, cms = {}, ui = {}) {
     next = next.replace(/(<div class="info-page-actions">[\s\S]*?)(<\/div>)/, `$1<a class="is-primary" href="${escapeAttribute(buttonUrl)}">${escapeHtml(buttonText)}</a>$2`);
   }
   if (page.key !== "haqqimizda" && blocks) next = next.replace(/(<\/article>\s*<\/main>)/, `<div class="info-page-sections">${blocks}</div>$1`);
-  return next;
+  return withSiteIdentity(next);
 }
 
 function renderSiteNav(siteSections = {}, currentKey = null) {

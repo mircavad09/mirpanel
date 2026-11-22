@@ -1,0 +1,17 @@
+import fs from 'node:fs';import assert from 'node:assert/strict';
+import {extractAdminState} from '../mirpanel-admin/core.mjs';
+import {generateInfoPageFiles,generateProductPageFiles} from '../mirpanel-admin/product-pages.mjs';
+import {withSiteIdentity,siteIdentity} from '../site-identity.mjs';
+const s=extractAdminState(fs.readFileSync('app.js','utf8'));
+const contact=generateInfoPageFiles(s.siteSections,s.ui,s.cms).get('elaqe');
+assert(contact.includes('<title>Əlaqə | MirPanel</title>'));assert(contact.includes('dəstək: +994 51 411 35 45.'));
+assert(!contact.includes('Mirpanel ilə WhatsApp üzərindən əlaqə saxlayın.'));
+const nodes=html=>[...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g)].flatMap(m=>{const v=JSON.parse(m[1]);return v['@graph']||[v];});
+assert.equal(nodes(contact).filter(x=>x['@type']==='ContactPage').length,1);
+assert.equal(nodes(contact).find(x=>x['@type']==='ContactPage').mainEntity['@id'],siteIdentity.url+'#organization');
+assert.equal(withSiteIdentity(contact),contact);
+const custom=contact.replace('Əlaqə | MirPanel','Bizimlə əlaqə — xüsusi başlıq').replace('MirPanel sifarişləri və rəqəmsal məhsullar üzrə dəstək:','Xüsusi dəstək:');
+assert.equal(withSiteIdentity(custom),custom);
+for(const html of generateProductPageFiles(s.products,s.siteSections,s.cms,s.content).values())assert.equal(nodes(html).filter(x=>x['@type']==='ContactPage').length,0);
+assert.equal(s.products.find(p=>p.id==='telegram_premium').seoIndex,false);
+console.log(JSON.stringify({contactIdentity:true,customMetadataPreserved:true,idempotent:true,productSchemasUnchanged:true,telegramStillNoindex:true}));
