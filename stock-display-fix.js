@@ -44,6 +44,12 @@
   // Homepage only: the exact starting-price plan represented by the card.
   // Never aggregate unrelated plan pools, or display a synthetic fail-closed zero.
   function homeStockBadgeData(product,homepage=true,exactIndex) {
+    const badge=cardStockBadgeData(product,homepage,exactIndex);
+    // Homepage presentation only; inventory and catalog availability stay unchanged.
+    return homepage?(badge?.className==='out'?{...badge,text:'Stokda yoxdur'}:null):badge;
+  }
+
+  function cardStockBadgeData(product,homepage=true,exactIndex) {
     const ledger=inventory.get(product.id);
     if(ledger?.salesDisabled)return {text:'Stokda yoxdur',className:'out'};
     if(!inventoryDisplayValid||!ledger||ledger.needsSetup)return null;

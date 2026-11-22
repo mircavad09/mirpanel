@@ -1,6 +1,6 @@
 /* Homepage only. Catalog and product-detail layouts retain their own rules. */
 #homePageView #grid {
-  align-items: start;
+  align-items: stretch;
 }
 
 @media (min-width: 768px) {
@@ -14,39 +14,30 @@
   min-height: 0 !important;
 }
 
+/* Explicit tracks reserve the same compact space even before sales/stock arrive. */
 #homePageView #grid .homeCardBody {
+  --home-title-size: 14px;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 44px;
-  grid-template-areas: "title title" "price action";
-  grid-template-rows: auto auto;
-  grid-auto-rows: auto;
+  grid-template-areas: "title title" "price action" "sales action" "stock stock";
+  grid-template-rows: calc(var(--home-title-size) * 2.5) 23px 15px 18px;
   align-content: start;
   align-items: start;
-  gap: 3px 6px !important;
+  gap: 2px 6px !important;
   padding: 8px 9px !important;
 }
 
-#homePageView #grid .homeCardBody:has(.homeCardSales:not([hidden])) {
-  grid-template-areas: "title title" "price action" "sales action";
-  grid-template-rows: auto min-content auto;
-}
-
-#homePageView #grid .homeCardBody:has(.cardStockLine:not(:empty,[hidden])) {
-  grid-template-areas: "title title" "price action" "stock stock";
-  grid-template-rows: auto auto auto;
-}
-
-#homePageView #grid .homeCardBody:has(.homeCardSales:not([hidden])):has(.cardStockLine:not(:empty,[hidden])) {
-  grid-template-areas: "title title" "price action" "sales action" "stock stock";
-  grid-template-rows: auto min-content auto auto;
-}
-
 #homePageView #grid .homeCardBody .title {
-  display: block !important;
-  height: auto;
+  display: -webkit-box !important;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  height: 2.5em !important;
   min-height: 0 !important;
-  max-height: none !important;
+  max-height: 2.5em !important;
+  font-size: var(--home-title-size) !important;
+  line-height: 1.25 !important;
   margin: 0;
+  overflow: hidden;
   overflow-wrap: anywhere !important;
 }
 
@@ -94,7 +85,9 @@
 
 @media (max-width: 767px) {
   #homePageView #grid .homeCardBody {
-    gap: 3px 4px !important;
+    --home-title-size: 11.5px;
+    grid-template-rows: calc(var(--home-title-size) * 2.5) 18px 13px 18px;
+    gap: 2px 4px !important;
     padding: 7px !important;
   }
 }
@@ -102,7 +95,8 @@
 /* The circle owns its border at every breakpoint and stays inside a 44px target. */
 #homePageView #grid :is(.homeCardAdd, .homeCardOrder) {
   grid-area: action;
-  margin: -6px 0;
+  grid-row: 2 / 5;
+  margin: 0;
   border: 1px solid #d9ad32;
   background: #111214;
   color: #ffd43c;
@@ -156,4 +150,29 @@
 
 #homePageView #grid .homeCardBody .homeCardSales {
   grid-area: sales;
+}
+
+/* Keep the image and every text baseline independent of stock/title length. */
+#homePageView #grid .homeProductCard .imgWrap {
+  width: 100%;
+  height: auto !important;
+  aspect-ratio: 16 / 9;
+  flex: 0 0 auto !important;
+}
+#homePageView #grid .homeCardPrices {
+  grid-area: price;
+  flex-wrap: nowrap;
+  min-height: 0;
+}
+#homePageView #grid .homeCardBody .cardStockLine {
+  grid-area: stock;
+  min-height: 0;
+  height: 18px;
+  align-items: center;
+}
+#homePageView #grid .homeCardBody .cardStockBadge.out {
+  font-size: 9px;
+  line-height: 12px;
+  padding: 1px 5px;
+  gap: 4px;
 }

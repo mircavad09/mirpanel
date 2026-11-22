@@ -599,7 +599,7 @@ export function generateProductPageHtml(product, slug, activeProducts, siteSecti
   <script src="/app.js?v=image-alt-20261117-${createHash('sha256').update(JSON.stringify(activeProducts)).digest('hex').slice(0,16)}"></script>
   <script src="/payment-flow.js?v=order-delivery-20261108"></script>
   <script src="/order-confirmation.js?v=image-alt-20261117"></script>
-  <script src="/stock-display-fix.js?v=sales-count-2"></script>
+  <script src="/stock-display-fix.js?v=home-equal-rows-1"></script>
   <script src="/product-page.js?v=sales-count-2"></script>
   <script src="/site-header.js?v=seller-pricing-1"></script>
 </body>
@@ -1119,7 +1119,7 @@ export function patchHomeHeader(source, siteSections = {}, cms = {}) {
     .replace(/site-header\.css\?v=[^"']+/g, "site-header.css?v=20260902-controls-removed-1")
     .replace(/site-header\.js\?v=[^"']+/g, "site-header.js?v=seller-pricing-1")
     .replace(/order-confirmation\.js\?v=[^"']+/g, "order-confirmation.js?v=incident-recovery-1");
-  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=sales-count-2");
+  next = next.replace(/stock-display-fix\.js\?v=[^"']+/g, "stock-display-fix.js?v=home-equal-rows-1");
   return next;
 }
 

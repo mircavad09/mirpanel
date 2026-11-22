@@ -3,7 +3,7 @@
 #homePageView .home-section-grid {
  display:grid;
  grid-template-columns:repeat(5,minmax(0,1fr));
- align-items:start;
+ align-items:stretch;
  gap:12px;
 }
 .home-product-section {margin:24px 0 0;min-width:0;}
