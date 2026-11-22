@@ -381,7 +381,7 @@
       if (loading || document.hidden || signal.aborted) return;
       loading = true;
       try {
-        const response = await fetch(`https://mirpanel-frankfurt.onrender.com/api/product-sales?productId=${encodeURIComponent(product.id)}`, {cache:'no-store',priority:'low',signal});
+        const response = await (window.MirpanelRecovery?.read||fetch)(`https://mirpanel-frankfurt.onrender.com/api/product-sales?productId=${encodeURIComponent(product.id)}`, {cache:'no-store',priority:'low',signal});
         if (!response.ok) return;
         const value = await response.json();
         if (signal.aborted||value.productId !== product.id || !value.initialized || !Number.isSafeInteger(value.productTotal) || !Number.isSafeInteger(value.siteTotal)) return;

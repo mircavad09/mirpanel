@@ -1,3 +1,4 @@
+import '/request-recovery.js?v=bounded-1';
 import {profileReturn,profileCSS,profileShell,accountTab,profileLoader,ensureProfileLoadingStyle} from './profile-shell.js?v=tokens-1';
 import {getCommunityState,invalidateCommunityState,communityJson} from '/session-state.js?v=auth-recovery-20261107';
 
@@ -23,9 +24,9 @@ export function mountProfile(app,verifiedState){
  async function api(url,data,method='POST'){
   const controller=new AbortController(),abort=()=>controller.abort();
   if(signal.aborted)abort();else signal.addEventListener('abort',abort,{once:true});
-  const timer=setTimeout(abort,12000);
+  const timer=data===undefined?null:setTimeout(abort,12000);
   try{
-   const r=await fetch(url,{method:data===undefined?'GET':method,credentials:'same-origin',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store',signal:controller.signal});
+   const r=await (data===undefined?window.MirpanelRecovery.read:fetch)(url,{method:data===undefined?'GET':method,credentials:'same-origin',headers:data===undefined?{}:{'Content-Type':'application/json'},body:data===undefined?undefined:JSON.stringify(data),cache:'no-store',signal:controller.signal});
    if(r.status===401)throw Object.assign(Error('Sessiya bitib.'),{status:401});
    const value=await communityJson(r);
    if(!r.ok)throw Object.assign(Error(value.error||'Məlumat alınmadı.'),{status:r.status});
@@ -51,17 +52,19 @@ export function mountProfile(app,verifiedState){
   ?{path:'/api/payments/my-orders'+orderSuffix,promise:api('/api/payments/my-orders'+orderSuffix)}:null;
  void initialOrdersRequest?.promise.catch(()=>{});
  const firstSession=verifiedState?.profile?Promise.resolve(verifiedState.profile):session();void firstSession.catch(()=>{});
- const boot=async(retry=0)=>{let timer;try{
-  const {renderAccountPanel}=await Promise.race([import('./account-panel.js?v=cancelled-inputs-1'+(retry?'&retry='+retry:'')),new Promise((_,reject)=>{timer=setTimeout(reject,12000);})]);
+ const bootOnce=async()=>{try{
+  const {renderAccountPanel}=await window.MirpanelRecovery.module('/community-assets/account-panel.js?v=bounded-cancelled-inputs-1',{signal});
   if(stopped||!app.isConnected)return;
   cleanup=renderAccountPanel({app,state,api,el,button,link,alert,avatars,money,firstSession,session,goLogin,initialOrdersRequest});
- }catch{
-  if(!stopped){const body=app.querySelector('.account-tab-content');body?.querySelector('.account-loading')?.remove();body?.append(el('div',{'data-profile-retry':''},el('p',{role:'alert'},'Profil görünüşü açıla bilmədi.'),button('Yenidən cəhd et',()=>{body.querySelector('[data-profile-retry]')?.remove();body.insertAdjacentHTML('beforeend',profileLoader);void boot(retry+1);})));}
- }finally{clearTimeout(timer);}};
+ }catch(error){
+  if(!stopped){const body=app.querySelector('.account-tab-content');body?.querySelector('.account-loading')?.remove();body?.append(el('div',{'data-profile-retry':''},el('p',{role:'alert'},'Profil görünüşü açıla bilmədi.'),button('Yenidən cəhd et',()=>{body.querySelector('[data-profile-retry]')?.remove();body.insertAdjacentHTML('beforeend',profileLoader);void boot().catch(()=>{});})));}
+  throw error;
+ }};
+ const boot=window.MirpanelRecovery.watch(bootOnce,{signal});
  const dispose=()=>{if(stopped)return;stopped=true;life.abort();cleanup?.();document.body.classList.remove('profile-screen');};
  window.addEventListener('pagehide',event=>{
   if(!event.persisted)dispose();
  },{signal});
- window.mirpanelPageDispose=dispose;void boot();return dispose;
+ window.mirpanelPageDispose=dispose;void boot().catch(()=>{});return dispose;
 }
-if(document.getElementById('communityApp')?.hasAttribute('data-profile-entry')&&!window.mirpanelNavigationMounting)mountProfile(document.getElementById('communityApp'));
+if(!new URL(import.meta.url).searchParams.get('v')?.startsWith('shell-')&&document.getElementById('communityApp')?.hasAttribute('data-profile-entry')&&!window.mirpanelNavigationMounting)mountProfile(document.getElementById('communityApp'));

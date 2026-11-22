@@ -1,5 +1,5 @@
 /* Progressive customer router. HTML shells contain no private account data. */
-(()=>{'use strict';if(window.mirpanelPageNavigation)return;window.mirpanelPageNavigation=true;
+(async()=>{'use strict';if(!window.MirpanelRecovery)await import('/request-recovery.js?v=bounded-1');const recovery=window.MirpanelRecovery;if(window.mirpanelPageNavigation)return;window.mirpanelPageNavigation=true;
  const profileSlugs={profile:'profilim',orders:'sifarislerim',codes:'kodlarim',subscriptions:'abuneliklerim',payments:'odenislerim',expenses:'xerclerim'};
  function profileAddress(url){
   if(url.pathname==='/profil'){
@@ -15,14 +15,16 @@
  const canRoute=p=>routes.has(p)||isProduct(p);
  const shared=/\/(?:site-header|site-header-menu|desktop-header|account-header|browser-nav|support-widget|cart-store|decorative-backgrounds|community-notices)\.(?:js|css)$/;
  const allowedScripts=new Set(['home-sections.js','home-loading.js','display-labels.js','catalog-card.js','catalog-listing.js','app.js','cms-site.js','stories.js','payment-flow.js','order-confirmation.js','stock-display-fix.js','search-suggestions-fix.js','frontend-routing-detail-fix.js','seo-router.js','i18n.js','webmcp.js','site-sections-render.js','browser-orders.js','product-page.js']);
+ let failedRoute=null;
  const cache=new Map(),templates=new Map(),productTemplates=new Map(),styles=new Map(),loaded=new Set(),scriptDownloads=new Map(),scrolls=new Map(),routeClasses=new Set(document.body.classList);let current=location.pathname+location.search+location.hash,generation=0,controller,dispose,loading=false,view,mounted=true;
  const templateKey=p=>p==='/odenis'?'shop':['/qrup','/profil','/hesab'].includes(p)?'community':null;
  // A checkout return can open its verification sheet before the router loads.
  // Moving an open modal out of the body would remove it from the top layer.
  const persistent=n=>n.matches?.('.site-header,.browser-bottom-nav,#supportWidget,#accountDropdown,#accountNotifications,#accountGuest,#newSplashScreen,#splashLoadStatus,dialog.auth-code-sheet[open],dialog.mir-cart-drawer[open],[data-shell-persistent]');
- function rememberStyles(doc,base){const keys=[];for(const n of doc.head.querySelectorAll('link[rel=stylesheet],style')){const url=n.tagName==='LINK'?new URL(n.getAttribute('href'),base):null;if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css')||url&&shared.test(url.pathname))continue;const key=url?url.href:'inline:'+n.textContent;keys.push(key);if(!styles.has(key)){const copy=n.ownerDocument===document?n:n.cloneNode(true);if(url&&copy!==n)copy.href=url.href;if(!copy.isConnected)document.head.insertBefore(copy,document.head.querySelector('link[href*="site-header.css"]'));styles.set(key,copy);}}return keys;}
- async function prepareStyles(keys,signal){
-  await Promise.all(keys.map(key=>{
+ function rememberStyles(doc,base){const keys=[];for(const n of doc.head.querySelectorAll('link[rel=stylesheet],style')){const url=n.tagName==='LINK'?new URL(n.getAttribute('href'),base):null;if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css')||url&&shared.test(url.pathname))continue;const key=url?url.href:'inline:'+n.textContent;keys.push(key);if(!styles.has(key)){const copy=n.ownerDocument===document?n:n.cloneNode(true);if(url&&copy!==n)copy.href=url.href;if(copy.tagName==='LINK')copy.dataset.routeManaged='';if(!copy.isConnected)document.head.insertBefore(copy,document.head.querySelector('link[href*="site-header.css"]'));styles.set(key,copy);}}return keys;}
+ async function prepareStyles(keys,signal){return recovery.run(()=>prepareStylesOnce(keys,signal),{signal});}
+ async function prepareStylesOnce(keys,signal){
+  await Promise.all(keys.map(async key=>{
    let node=styles.get(key);
    if(!node||node.tagName!=='LINK')return;
    if(node.dataset.routeFailed==='true'){
@@ -33,11 +35,17 @@
    }
    node.disabled=false;node.media='all';
    if(node.sheet)return;
+   // Probe status/Retry-After before reattaching a failed native stylesheet.
+   const response=await recovery.read(node.href,{signal,cache:'reload'},{attempts:0});
+   if(!response.ok)throw Object.assign(Error('Bölmənin üslubları yüklənmədi.'),{status:response.status});
+   if(signal.aborted)throw new DOMException('Bölmə dəyişib.','AbortError');
+   if(node.sheet)return;
+   const copy=node.cloneNode(false);copy.href=node.href;node.replaceWith(copy);styles.set(key,copy);node=copy;
    return new Promise((resolve,reject)=>{
-    const cleanup=()=>{node.removeEventListener('load',ready);node.removeEventListener('error',failed);signal.removeEventListener('abort',failed);};
+    let timer;const cleanup=()=>{clearTimeout(timer);node.removeEventListener('load',ready);node.removeEventListener('error',failed);signal.removeEventListener('abort',failed);};
     const ready=()=>{delete node.dataset.routeFailed;cleanup();resolve();};
-    const failed=()=>{node.dataset.routeFailed='true';cleanup();reject(Error('Bölmənin üslubları yüklənmədi. Yenidən cəhd edin.'));};
-    node.addEventListener('load',ready,{once:true});node.addEventListener('error',failed,{once:true});signal.addEventListener('abort',failed,{once:true});
+    const failed=()=>{node.dataset.routeFailed='true';cleanup();reject(Object.assign(Error('Bölmənin üslubları yüklənmədi. Yenidən cəhd edin.'),{retryable:true}));};
+    timer=setTimeout(failed,15000);node.addEventListener('load',ready,{once:true});node.addEventListener('error',failed,{once:true});signal.addEventListener('abort',failed,{once:true});
     if(signal.aborted)failed();else if(node.sheet)ready();
    });
   }));
@@ -90,16 +98,15 @@
  const sheet=document.createElement('link');sheet.rel='stylesheet';sheet.href='/page-navigation.css?v=tokens-1';document.head.append(sheet);
  const frame=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
  const authModule='/community-assets/auth-forms.js?v=epoint-wallet-1';
- const profileModule='/community-assets/profile-entry.js?v=tokens-1';
+ const profileModule='/community-assets/profile-entry.js?v=shell-bounded-recovery-1';
  let profileReady;
  const prepareProfile=()=>profileReady??=(moduleWithin(profileModule).catch(e=>{profileReady=null;throw e;}));
  window.addEventListener('mirpanel:account',e=>{if(e.detail)void prepareProfile().catch(()=>{});});
  if(window.mirpanelAccountProfile)void prepareProfile().catch(()=>{});
- void import(authModule).catch(()=>{});
+ void recovery.module(authModule).catch(()=>{});
  function emptyStatus(){const app=root.querySelector('#shopApp:empty,#communityApp:empty:not([data-profile-entry])');if(app){const p=document.createElement('div');p.setAttribute('role','status');p.setAttribute('aria-label','Məlumat hazırlanır');p.className='site-route-placeholder';app.append(p);}}emptyStatus();
- const moduleAttempts=new Map();
- async function moduleWithin(url){const attempt=moduleAttempts.get(url)||0;let timer;try{return await Promise.race([import(url+(attempt?(url.includes('?')?'&':'?')+'routeRetry='+attempt:'')),new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('Bölmə resursu gecikir. Yenidən cəhd edin.')),15000);})]);}catch(error){moduleAttempts.set(url,attempt+1);throw error;}finally{clearTimeout(timer);}}
- const shopModule='/community-assets/shop-ui.js?v=shell-topup-receipt-recovery-1',groupModule='/community-assets/community.js?v=shell-tokens-1';
+ function moduleWithin(url){return recovery.module(url,{signal:controller?.signal});}
+ const shopModule='/community-assets/shop-ui.js?v=shell-bounded-recovery-1',groupModule='/community-assets/community.js?v=shell-tokens-1';
  function active(){window.dispatchEvent(new Event('mirpanel:route-change'));for(const a of document.querySelectorAll('.site-header a[href]')){const u=new URL(a.href);if(u.origin===location.origin&&((u.pathname===location.pathname&&(a.dataset.browserNav!=='orders'||u.searchParams.get('tab')===new URLSearchParams(location.search).get('tab')))||u.pathname==='/mehsul'&&isProduct(location.pathname)))a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');}}
  function guard(){const e=new Event('mirpanel:before-navigate',{cancelable:true});window.dispatchEvent(e);if(e.defaultPrevented)return false;if(document.body.classList.contains('paymentCheckoutOpen')||document.querySelector('.paymentFlow')&&document.querySelector('.modal.show')){window.alert('Aktiv ödənişi tamamlayın və ya pəncərədə “Ləğv et” seçin. Seçilmiş çek qorunur.');return false;}return true;}
  function leave(){window.dispatchEvent(new CustomEvent('mirpanel:route-leave',{detail:{from:current}}));const profile=new URL(current,location.origin).pathname==='/profil';((profile&&window.mirpanelPageDispose)||dispose||window.mirpanelPageDispose)?.();dispose=null;window.mirpanelPageDispose=null;
@@ -107,7 +114,7 @@
  if(view&&isStatic(new URL(current,location.origin).pathname)){const fragment=document.createDocumentFragment();while(root.firstChild)fragment.append(root.firstChild);view.fragment=fragment;cache.set(new URL(current,location.origin).pathname,view);}else root.replaceChildren();mounted=false;view=null;}
  function skeleton(u){const titles={'/':'Ana səhifə','/mehsul':'Məhsullar','/balans':'Balansım','/sebet':'Səbət','/odenis':'Ödəniş','/sifarislerim':'Sifarişlərim','/profil':'Profil','/qrup':'Ümumi söhbət','/hesab':'Giriş'};const main=document.createElement('main');main.className='site-route-loading';main.dataset.route=u.pathname;main.setAttribute('aria-busy','true');const h=document.createElement('h1');h.textContent=titles[u.pathname]||(isProduct(u.pathname)?'Məhsul':'Giriş');main.append(h);for(let i=0;i<(['/balans','/mehsul'].includes(u.pathname)?0:3);i++){const bar=document.createElement('div');bar.className='site-route-placeholder';main.append(bar);}if(u.pathname==='/balans'){const status=document.createElement('p');status.setAttribute('role','status');status.textContent='Balans məlumatı yüklənir…';main.append(status);}if(u.pathname==='/mehsul'){const state=document.createElement('div');state.className='catalog-search-state';state.setAttribute('role','status');state.innerHTML='<span class="catalog-search-wheel" aria-hidden="true"></span><span>Axtarılır…</span>';main.append(state);}root.replaceChildren(main);}
  function downloadResource(src){const u=new URL(src,location.href),key=u.pathname;if(u.origin!==location.origin||!allowedScripts.has(key.split('/').at(-1))||loaded.has(key))return null;
- let download=scriptDownloads.get(u.href);if(!download){download=fetch(u.href,{signal:AbortSignal.timeout(10000),cache:'default'}).then(r=>{if(!r.ok)throw Error('Ümumi resurs yüklənmədi.');return r.text();}).finally(()=>scriptDownloads.delete(u.href));scriptDownloads.set(u.href,download);}
+ let download=scriptDownloads.get(u.href);if(!download){download=recovery.read(u.href,{cache:'default'}).then(r=>{if(!r.ok)throw Error('Ümumi resurs yüklənmədi.');return r.text();}).finally(()=>scriptDownloads.delete(u.href));scriptDownloads.set(u.href,download);}
  return {key,download};}
  async function resource(src,run,prepared=downloadResource(src)){if(!prepared)return;const {key,download}=prepared;
  const code=await download;if(run!==generation||loaded.has(key))return;
@@ -128,7 +135,7 @@
    try{
     if(!window.mirpanelRestoreCatalog&&src){
      loaded.delete('/app.js');
-     const download=fetch(src,{cache:'reload',signal:AbortSignal.timeout(10000)}).then(r=>{
+     const download=recovery.read(src,{cache:'reload',signal:controller?.signal}).then(r=>{
       if(!r.ok)throw Error('Məhsul siyahısı yüklənmədi.');
       return r.text();
      });
@@ -156,7 +163,7 @@
    const url=new URL(src);
    return url.origin===location.origin&&url.pathname==='/community-assets/shop-ui.js';
   });
-  const m=await(source?moduleWithin(source):preparedModule||moduleWithin(shopModule));
+  const m=await(source?moduleWithin(source+(source.includes('?')?'&':'?')+'shell=1'):preparedModule||moduleWithin(shopModule));
   if(run!==generation)return;
   dispose=m.mountShop();
  }
@@ -203,8 +210,8 @@
    const m=await mod;if(run!==generation)return false;
    dispose=m.mountProfile(app);loading=false;active();
    window.dispatchEvent(new CustomEvent('mirpanel:route-ready',{detail:{path:u.pathname}}));return true;
-  }catch{
-   if(run!==generation)return false;loading=false;
+  }catch(error){
+   if(run!==generation)return false;failedRoute=recovery.transient(error)?{key:current,run}:null;loading=false;
    card.remove();const retry=document.createElement('button');retry.textContent='Yenidən cəhd et';retry.onclick=()=>go(u.href,{retry:true});section.append(retry);return false;
   }
  }
@@ -214,12 +221,12 @@
   return true;
  }
  if(mounted&&location.pathname==='/profil'&&new URL(current,location.origin).pathname==='/profil'&&u.pathname==='/profil'&&window.mirpanelAccountNavigate){if(!pop)history.pushState({mirpanel:true},'',key);current=key;active();await window.mirpanelAccountNavigate(u.href);return true;}
- const run=++generation;controller?.abort();controller=new AbortController();const requestController=controller,timeout=setTimeout(()=>requestController.abort(),20000);scrolls.set(current,{x:scrollX,y:scrollY});if(mounted)leave();loading=true;if(!pop&&!retry)history.pushState({mirpanel:true},'',key);current=key;active();
+ const run=++generation;controller?.abort();controller=new AbortController();const requestController=controller,timeout=null;scrolls.set(current,{x:scrollX,y:scrollY});if(mounted)leave();loading=true;failedRoute=null;if(!pop&&!retry)history.pushState({mirpanel:true},'',key);current=key;active();
  document.querySelector('.site-header')?.classList.remove('is-menu-open');document.body.classList.remove('site-header-menu-open','home-page','profile-screen','wallet-page-active','auth-screen');document.body.style.overflow='';document.documentElement.classList.remove('community-chat-screen');
  if(u.pathname==='/profil'){try{return await mountProfileRoute(u,run);}finally{clearTimeout(timeout);}}
  if(u.pathname==='/hesab'){
   const app=document.createElement('main');app.className='community-shell';root.replaceChildren(app);document.body.classList.add('community-page','auth-screen');mounted=true;window.scrollTo(0,0);
-  try{const m=await moduleWithin(authModule);if(run!==generation)return false;const cleanup=await m.mountAuth(app);if(run!==generation){cleanup();return false;}dispose=cleanup;loading=false;active();return true;}catch{if(run===generation){loading=false;const b=document.createElement('button');b.textContent='Giriş formasını yenidən aç';b.onclick=()=>location.reload();app.replaceChildren(b);}return false;}finally{clearTimeout(timeout);}
+  try{const m=await moduleWithin(authModule);if(run!==generation)return false;const cleanup=await m.mountAuth(app);if(run!==generation){cleanup();return false;}dispose=cleanup;loading=false;active();return true;}catch(error){if(run===generation){failedRoute=recovery.transient(error)?{key:current,run}:null;loading=false;const b=document.createElement('button');b.textContent='Giriş formasını yenidən aç';b.onclick=()=>go(u.href,{retry:true});app.replaceChildren(b);}return false;}finally{clearTimeout(timeout);}
  }
  skeleton(u);window.scrollTo(0,0);
  const sectionType=templateKey(u.pathname),preparedModule=sectionType?moduleWithin(sectionType==='shop'?shopModule:groupModule):null;
@@ -227,8 +234,8 @@
  if(u.pathname==='/qrup')void import('/session-state.js?v=latency-1').then(m=>run===generation?m.getCommunityState({group:true}):null).catch(()=>{});
  try{let next=isStatic(u.pathname)?cache.get(u.pathname):null;const detail=productTemplates.get(u.pathname);if(!next&&detail)next={...detail,fragment:detail.fragment.cloneNode(true)};const savedTemplate=templates.get(templateKey(u.pathname));if(!next&&savedTemplate)next={...savedTemplate,fragment:savedTemplate.fragment.cloneNode(true),html:u.pathname==='/qrup'?'community-chat-screen':''};
  if(!next){const prepared=u.pathname==='/mehsul'&&listingRequest&&Date.now()-listingAt<30000?await listingRequest:null;if(run!==generation)return false;
- const r=prepared?null:await fetch(u.href,{signal:controller.signal,credentials:'same-origin',cache:isStatic(u.pathname)?'default':'no-store',headers:{Accept:'text/html','X-Mirpanel-Navigation':'content'}});
- if(run!==generation)return false;if(r&&[401,403].includes(r.status)&&u.pathname==='/profil')return go('/hesab');if(r&&!r.ok)throw Error('Bölmə hazırda yüklənmir. Yenidən cəhd edin.');const final=r?new URL(r.url):u;if(final.origin!==location.origin)throw Error('Giriş üçün səhifəni yenidən açın.');if(r?.redirected&&canRoute(final.pathname)){u.href=final.href;current=u.pathname+u.search+u.hash;history.replaceState({mirpanel:true},'',current);if(u.pathname==='/hesab')return go(u.href,{pop:true,retry:true});active();}
+ const r=prepared?null:await recovery.read(u.href,{signal:controller.signal,credentials:'same-origin',cache:isStatic(u.pathname)?'default':'no-store',headers:{Accept:'text/html','X-Mirpanel-Navigation':'content'}});
+ if(run!==generation)return false;if(r&&[401,403].includes(r.status)&&u.pathname==='/profil')return go('/hesab');if(r&&!r.ok)throw Object.assign(Error('Bölmə hazırda yüklənmir. Yenidən cəhd edin.'),{status:r.status});const final=r?new URL(r.url):u;if(final.origin!==location.origin)throw Error('Giriş üçün səhifəni yenidən açın.');if(r?.redirected&&canRoute(final.pathname)){u.href=final.href;current=u.pathname+u.search+u.hash;history.replaceState({mirpanel:true},'',current);if(u.pathname==='/hesab')return go(u.href,{pop:true,retry:true});active();}
  const text=prepared??await r.text();if(run!==generation)return false;const doc=new DOMParser().parseFromString(text,'text/html');if(u.pathname==='/mehsul'&&!doc.querySelector('.catalog-grid'))throw Error('Məhsul siyahısı düzgün cavab qaytarmadı.');const expected=templateKey(u.pathname);if((expected||u.pathname==='/balans')&&!doc.querySelector(expected==='community'?'#communityApp':'#shopApp'))throw Error('Hesab xidməti düzgün səhifə qaytarmadı. Yenidən cəhd edin.');if(document.getElementById('supportWidget'))for(const duplicate of doc.querySelectorAll('#waFab,.waFab'))duplicate.remove();next={fragment:document.createDocumentFragment(),styles:rememberStyles(doc,u.href),title:doc.title,body:doc.body.className,html:doc.documentElement.className,scripts:[]};for(const s of doc.querySelectorAll('script[src]'))next.scripts.push(new URL(s.getAttribute('src'),u.href).href);for(const n of [...doc.body.children])if(!persistent(n)&&!['SCRIPT','LINK'].includes(n.tagName)){for(const s of n.querySelectorAll('script'))s.remove();next.fragment.append(document.importNode(n,true));}if(u.pathname==='/mehsul'){const catalog=doc.getElementById('catalogCartProducts');if(catalog)next.fragment.append(document.importNode(catalog,true));}if(!next.fragment.childNodes.length)throw Error('Bölmənin məzmunu alınmadı.');
  // Cache only verified empty public shells, never rendered profile/wallet/orders.
  const tk=templateKey(u.pathname);if(tk&&next.fragment.querySelector('#shopApp:empty,#shopApp .shop-wallet-loading,#communityApp:empty'))templates.set(tk,{...next,fragment:next.fragment.cloneNode(true)});
@@ -247,9 +254,10 @@
  for(const[k,n]of styles){if(n.hasAttribute('data-shell-persistent')||n.hasAttribute('data-cart-entry-css'))continue;if(n.tagName==='LINK'&&new URL(n.href).origin!==location.origin)continue;retainParsedStyle(k,n).media=next.styles.includes(k)?'all':'not all';}root.replaceChildren(next.fragment);next.fragment=null;view=next;mounted=true;emptyStatus();
  for(const c of next.body.split(/\s+/).filter(Boolean))routeClasses.add(c);const classes=[...document.body.classList].filter(c=>!routeClasses.has(c)||['has-bottom-nav','has-account-header','has-guest-header'].includes(c));document.body.className=[...new Set([...classes,...next.body.split(/\s+/).filter(Boolean)])].join(' ');document.documentElement.classList.toggle('community-chat-screen',next.html.includes('community-chat-screen'));document.title=next.title;
  if(next.productId){document.body.dataset.productId=next.productId;document.body.dataset.productSlug=next.productSlug||u.pathname.split('/').at(-1);}
- await mount(next,run,preparedModule);if(run!==generation)return false;loading=false;active();
+ await mount(next,run,preparedModule);if(run!==generation)return false;loading=false;failedRoute=null;active();
  await frame();if(run!==generation)return false;const saved=scrolls.get(current);if(saved)window.scrollTo(saved.x,saved.y);else if(u.hash)document.getElementById(decodeURIComponent(u.hash.slice(1)))?.scrollIntoView();else window.scrollTo(0,0);window.dispatchEvent(new CustomEvent('mirpanel:route-ready',{detail:{path:u.pathname}}));return true;
- }catch(e){if(run!==generation)return false;loading=false;mounted=false;view=null;const main=document.createElement('main');main.className='site-route-loading';main.dataset.route=u.pathname;const h=document.createElement('h1');h.textContent=u.pathname==='/mehsul'?'Məhsulları yükləmək alınmadı':'Yükləmə alınmadı';const p=document.createElement('p');p.textContent=e.name==='AbortError'?'Serverin cavabı gecikdi. Yenidən cəhd edin.':e.message;const b=document.createElement('button');b.textContent='Yenidən cəhd et';b.onclick=()=>go(current,{retry:true});main.append(h,p,b);root.replaceChildren(main);return false;}finally{clearTimeout(timeout);}}
+ }catch(e){if(run!==generation)return false;failedRoute=recovery.transient(e)?{key:current,run}:null;loading=false;mounted=false;view=null;const main=document.createElement('main');main.className='site-route-loading';main.dataset.route=u.pathname;const h=document.createElement('h1');h.textContent=u.pathname==='/mehsul'?'Məhsulları yükləmək alınmadı':'Yükləmə alınmadı';const p=document.createElement('p');p.textContent=e.name==='AbortError'?'Serverin cavabı gecikdi. Yenidən cəhd edin.':e.message;const b=document.createElement('button');b.textContent='Yenidən cəhd et';b.onclick=()=>go(current,{retry:true});main.append(h,p,b);root.replaceChildren(main);return false;}finally{clearTimeout(timeout);}}
+ let wasHidden=document.hidden;const resumeRoute=()=>{if(failedRoute&&failedRoute.run===generation&&failedRoute.key===current&&!loading)void go(current,{retry:true});};window.addEventListener('online',resumeRoute);document.addEventListener('visibilitychange',()=>{const returned=wasHidden&&!document.hidden;wasHidden=document.hidden;if(returned)resumeRoute();});
  window.MirpanelNavigation={go,replaceURL(href){const u=new URL(href,location.href);if(u.origin!==location.origin||u.pathname!==location.pathname)return;current=u.pathname+u.search+u.hash;history.replaceState({mirpanel:true},'',current);active();},get pending(){return loading;}};
  document.addEventListener('click',e=>{if(e.defaultPrevented||e.button!==0||e.ctrlKey||e.metaKey||e.shiftKey||e.altKey)return;const a=e.target.closest('a[href]');if(!a||(window.MirpanelCart?.open&&a.matches('#cartHeaderLink,[data-browser-nav=cart]'))||a.hasAttribute('download')||a.target&&a.target!=='_self'||a.dataset.nativeNavigation!==undefined)return;let u;try{u=new URL(a.href);}catch{return;}if(u.origin!==location.origin||!canRoute(u.pathname)||!/^https?:$/.test(u.protocol))return;if(a.closest('.account-tabs')?.dataset.dragging==='true'){e.preventDefault();return;}e.preventDefault();e.stopPropagation();void go(u.href);},true);
  history.replaceState({...history.state,mirpanel:true},'',location.href);history.scrollRestoration='manual';window.addEventListener('popstate',()=>void go(location.href,{pop:true}));active();

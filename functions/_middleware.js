@@ -1,3 +1,4 @@
+import {withModuleRecovery} from '../module-recovery.mjs';
 import {storefrontIcon,withStorefrontHead} from '../storefront-head.mjs';
 import {withSiteIdentity} from '../site-identity.mjs';
 import {fastProductImage} from './_fast-product-images.js';
@@ -209,19 +210,20 @@ function injectScript(html, needle, scriptTag) {
 }
 
 function withSeoScripts(html,earlyProductLinks=false) {
-  html=html.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=categories-1$2');
+  html=html.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=bounded-recovery-1$2');
   let next = withSiteIdentity(withStorefrontHead(html));
+  if(!next.includes('src="/request-recovery.js'))next=next.replace(/<head\b[^>]*>/i,'$&<script src="/request-recovery.js?v=bounded-1"></script>');
   next=next.replace(/(src=["'])\/?account-header\.js(?:\?[^"']*)?(["'])/g,'$1/account-header.js?v=mobile-wallet-compact-2$2');
   next=next.replace(/(src=["'])\/?(order-confirmation|browser-nav)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=cart-signup-20261107$3');
   next=next.replace(/(src=["'])\/?browser-orders\.js(?:\?[^"']*)?(["'])/g,'$1/browser-orders.js?v=cancelled-inputs-1$2');
   next=next.replace(/(src=["'])\/?order-confirmation\.js(?:\?[^"']*)?(["'])/g,'$1/order-confirmation.js?v=game-validation-1$2');
-  next=next.replace(/(src=["'])\/?cart-store\.js(?:\?[^"']*)?(["'])/g,'$1/cart-store.js?v=epinby-stock-1$2');
+  next=next.replace(/(src=["'])\/?cart-store\.js(?:\?[^"']*)?(["'])/g,'$1/cart-store.js?v=bounded-recovery-1$2');
   next=next.replace(/(src=["'])\/?browser-nav\.js(?:\?[^"']*)?(["'])/g,'$1/browser-nav.js?v=token-cart-1$2');
   next=next.replace(/(src=["'])\/?(seo-router|frontend-routing-detail-fix)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=product-transition-1$3');
   next=next.replace(/(src=["'])\/?app\.js\?v=([^"']+)(["'])/g,'$1/app.js?v=$2&route=category-storefront-1$3');
   next=next.replace(/(src=["'])\/?catalog-card\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-card.js?v=token-cart-1$2');
   next=next.replace(/(src=["'])\/?catalog-listing\.js(?:\?[^"']*)?(["'])/g,'$1/catalog-listing.js?v=spotify-compact-1$2');
-  next=next.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=categories-1$2');
+  next=next.replace(/(src=["'])\/?page-navigation\.js(?:\?[^"']*)?(["'])/g,'$1/page-navigation.js?v=bounded-recovery-1$2');
   next=next.replace(/(src=["'])\/?stock-display-fix\.js(?:\?[^"']*)?(["'])/g,'$1/stock-display-fix.js?v=home-equal-rows-1$2');
   next=next.replace(/(src=["'])\/?payment-flow\.js(?:\?[^"']*)?(["'])/g,'$1/payment-flow.js?v=order-delivery-20261108$2');
   next=next.replace(/(src=["'])\/?(home-loading|stories)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=home-recovery-1$3');
@@ -231,7 +233,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?site-header\.js(?:\?[^"']*)?(["'])/g,'$1/site-header.js?v=catalog-search-1-geo-identity-1$2');
   next=next.replace(/(src=["'])\/?splash\.js(?:\?[^"']*)?(["'])/g,'$1/splash.js?v=home-first-paint-1$2');
   next=next.replace(/(href=["'])\/?catalog-card\.css(?:\?[^"']*)?(["'])/g,'$1/catalog-card.css?v=ready-sku-2$2');
-  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=categories-1" data-page-navigation-loader></script></head>');
+  if(!next.includes('data-page-navigation-loader'))next=next.replace(/<\/head>/i,'<script defer src="/page-navigation.js?v=bounded-recovery-1" data-page-navigation-loader></script></head>');
   if(earlyProductLinks)next=next.replace(/(<head\b[^>]*>)/i,`$1<script>(()=>{let pending,timer;function click(e){if(window.MirpanelNavigation||e.defaultPrevented||e.button!==0||e.metaKey||e.ctrlKey||e.altKey||e.shiftKey)return;const a=e.target.closest?.('a[href]');if(!a||a.target&&a.target!=='_self'||a.hasAttribute('download')||a.hasAttribute('data-native-navigation'))return;const u=new URL(a.href);if(u.origin!==location.origin||!/^\\/mehsul\\/[a-z0-9]+(?:-[a-z0-9]+)*$/.test(u.pathname))return;e.preventDefault();pending=u.href;clearTimeout(timer);timer=setTimeout(()=>{if(pending)location.assign(pending);},2500);}document.addEventListener('click',click,true);window.addEventListener('mirpanel:navigation-ready',()=>{document.removeEventListener('click',click,true);clearTimeout(timer);if(pending)void window.MirpanelNavigation.go(pending);},{once:true});})();</script>`);
   next=next.replace(/(href=["'])\/?desktop-header\.css(?:\?[^"']*)?(["'])/g,'$1/desktop-header.css?v=mobile-anthracite-20261031$2');
   if(!next.includes('/desktop-header.css?v=mobile-anthracite-20261031'))next=next.replace(/<\/head>/i,'<link rel="stylesheet" href="/desktop-header.css?v=mobile-anthracite-20261031"></head>');
@@ -281,6 +283,12 @@ export async function onRequest(context) {
   const usersBoundary=adminUsersBoundary(request);if(usersBoundary)return usersBoundary;
   const url = new URL(request.url);
   const pathname = url.pathname;
+  if(request.method==='GET'&&/\.m?js$/.test(pathname)&&/^[1-9]\d?$/.test(url.searchParams.get('loadRetry')||'')){
+    const response=await context.next();
+    if(!response.ok||!/(?:javascript|ecmascript)/i.test(response.headers.get('Content-Type')||''))return response;
+    const headers=new Headers(response.headers);headers.delete('Content-Length');headers.delete('Content-Encoding');headers.delete('ETag');headers.set('Cache-Control','no-cache, must-revalidate');
+    return new Response(withModuleRecovery(await response.text(),url.href),{status:response.status,headers});
+  }
   // Do not expose generated source documents as independently indexable URLs.
   if(pathname==='/index.html'||pathname==='/mehsul.page'||/^\/mehsul\/[a-z0-9-]+\.page$/.test(pathname)){
     const target=new URL(url);target.pathname=pathname==='/index.html'?'/':pathname.replace(/\.page$/,'');

@@ -44,7 +44,7 @@
  // A legacy tab already owns the drawer, badge listeners and observer. Upgrade
  // its public API in place, retaining references and installing no second UI.
  if(previous){window.dispatchEvent(new Event('mirpanel:cart'));return;}
- async function restore(){const before=JSON.stringify(read()),epoch=priceEpoch;try{const r=await fetch('/api/payments/shop/drafts',{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;const d=await r.json();if(epoch!==priceEpoch||JSON.stringify(read())!==before)return;const gone=new Set(removed()),fresh=new Map((d.items||[]).map(x=>[x.draftId,x]));let a=[];for(const old of read())a=combine(a,clean({...old,termsVersion:old.termsVersion||fresh.get(old.draftId)?.termsVersion,mergeKey:fresh.get(old.draftId)?.mergeKey||old.mergeKey}));for(const x of d.items||[])if(!gone.has(x.draftId)&&a.length<20)a=combine(a,clean(x));save(a);}catch{}}
+ async function restore(){const before=JSON.stringify(read()),epoch=priceEpoch;try{const r=await (window.MirpanelRecovery?.read||fetch)('/api/payments/shop/drafts',{credentials:'same-origin',cache:'no-store'});if(!r.ok)return;const d=await r.json();if(epoch!==priceEpoch||JSON.stringify(read())!==before)return;const gone=new Set(removed()),fresh=new Map((d.items||[]).map(x=>[x.draftId,x]));let a=[];for(const old of read())a=combine(a,clean({...old,termsVersion:old.termsVersion||fresh.get(old.draftId)?.termsVersion,mergeKey:fresh.get(old.draftId)?.mergeKey||old.mergeKey}));for(const x of d.items||[])if(!gone.has(x.draftId)&&a.length<20)a=combine(a,clean(x));save(a);}catch{}}
  const azMoney=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
  function node(tag,value,cls){const n=document.createElement(tag);if(value!=null)n.textContent=value;if(cls)n.className=cls;return n;}
  function action(label,fn,cls){const b=node('button',label,cls);b.type='button';b.onclick=fn;return b;}
@@ -102,8 +102,8 @@
   const key=JSON.stringify(items);if(pending.has(key))return pending.get(key);
   const generation=priceEpoch;const request=(async()=>{
    const {withRequestSignal}=await import('/request-lifecycle.mjs?v=abort-compat-1');
-   const q=await withRequestSignal([quoteLife.signal],12000,async signal=>{
-   const res=await fetch('/api/payments/shop/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal,cache:'no-store'});
+   const q=await withRequestSignal([quoteLife.signal],window.MirpanelRecovery?75000:12000,async signal=>{
+   const res=await (window.MirpanelRecovery?.read||fetch)('/api/payments/shop/quote',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({items}),signal,cache:'no-store'},{quote:true});
    const data=await res.json();if(!res.ok||!Array.isArray(data.items)||!Number.isSafeInteger(data.totalCents))throw Error('Qiymət və stoku yoxlamaq mümkün olmadı.');return data;
    });
    if(generation!==priceEpoch)throw Error('Account changed.');
@@ -204,7 +204,7 @@
     else if(p.available!=null&&p.available<x.quantity)info.append(node('small',p.supplierStock&&p.supplierStock.count===null?'Bu paket seçilmiş sayda əlçatan deyil.':'Stokda '+p.available+' ədəd var.'));
     for(const field of p.maskedDetails||[])info.append(node('small',field.label+': '+field.value));
     if(x.draftId&&(p.termsMissing||p.fields?.length))info.append(action(p.termsMissing?'Şərtləri təsdiqlə':'Məlumatları redaktə et',()=>{
-     void import('/community-assets/cart-entry.js?v=game-validation-1').then(m=>m.editCartLine(x)).catch(e=>{notice.textContent=e.message;});
+     void (window.MirpanelRecovery?window.MirpanelRecovery.module('/community-assets/cart-entry.js?v=game-validation-1'):import('/community-assets/cart-entry.js?v=game-validation-1')).then(m=>m.editCartLine(x)).catch(e=>{notice.textContent=e.message;});
     }));
     const controls=node('div',null,'mir-cart-controls'),qty=node('div',null,'mir-cart-qty'),change=n=>{try{cart.set(x.productId,x.planIndex,n,undefined,undefined,x.lineId);}catch(e){notice.textContent=e.message;}};
     const minus=action('−',()=>change(x.quantity-1)),plus=action('+',()=>change(x.quantity+1)),del=action('',()=>change(0),'mir-cart-remove');del.innerHTML=trash;
@@ -229,7 +229,8 @@
    body.replaceChildren(...(rows.length?rows:[node('p','Səbətiniz boşdur.','mir-cart-empty')]),more);body.scrollTop=top;
    if(focus)[...body.querySelectorAll('[data-cart-focus]')].find(n=>n.dataset.cartFocus===focus)?.focus({preventScroll:true});
   }
-  async function draw(){
+  let readFailed=false;
+  async function draw(){readFailed=false;
    const run=++generation,items=read();tokenPresent=items.some(isToken);other.hidden=true;remember(items);title.textContent='Səbət ('+items.reduce((s,x)=>s+x.quantity,0)+')';next.disabled=true;retry.hidden=true;
    const rows=previewRows(items),prices=rows.map(x=>[x.quantity,x.unitCents]);
    total.textContent=prices.every(([,c])=>Number.isSafeInteger(c))?azMoney(prices.reduce((s,[n,c])=>s+n*c,0)):'—';
@@ -251,11 +252,12 @@
    try{
     const q=await verify(items);if(run!==generation||life.signal.aborted)return;
     requiresLogin=q.balanceCents===null;show(q.items);total.textContent=azMoney(q.totalCents);
-   }catch{if(run===generation&&!life.signal.aborted){notice.textContent='Qiymət və stoku yoxlamaq mümkün olmadı.';retry.hidden=false;if(tokenPresent){next.firstChild.textContent='Token üçün ödənişə keç';next.disabled=false;}}}
+   }catch{if(run===generation&&!life.signal.aborted){readFailed=true;notice.textContent='Qiymət və stoku yoxlamaq mümkün olmadı.';retry.hidden=false;if(tokenPresent){next.firstChild.textContent='Token üçün ödənişə keç';next.disabled=false;}}}
   }
   window.addEventListener('mirpanel:cart',draw,{signal:life.signal});window.addEventListener('storage',e=>{if(e.key===key)void draw();},{signal:life.signal});
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void draw();},{signal:life.signal});
-  const stockTimer=setInterval(()=>{if(!document.hidden)void draw();},15000);life.signal.addEventListener('abort',()=>clearInterval(stockTimer),{once:true});
+  window.addEventListener('online',()=>{if(readFailed)void draw();},{signal:life.signal});
+  const stockTimer=setInterval(()=>{if(!document.hidden&&!readFailed)void draw();},15000);life.signal.addEventListener('abort',()=>clearInterval(stockTimer),{once:true});
   const viewport=window.visualViewport;
   const fit=()=>{d.style.setProperty('--cart-view-height',(viewport?.height||innerHeight)+'px');d.style.setProperty('--cart-view-top',(viewport?.offsetTop||0)+'px');};
   const resizeObserver=new ResizeObserver(fit);resizeObserver.observe(document.documentElement);

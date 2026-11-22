@@ -1646,7 +1646,7 @@ const server = http.createServer(async (request, response) => {
     if(await customerView(request,response))return;
     // The isolated customer preview runs on the admin origin too. Serve the
     // same checked-in presentation assets, without starting the customer shell.
-    if(['/browser-orders.js','/browser-orders.css','/checkout-sounds.js','/zoom-guide.mjs','/zoom-guide.css'].includes(pathname)){
+    if(['/request-recovery.js','/browser-orders.js','/browser-orders.css','/checkout-sounds.js','/zoom-guide.mjs','/zoom-guide.css'].includes(pathname)){
       const file=path.join(root,'..',pathname.slice(1));
       response.writeHead(200,{'Content-Type':pathname.endsWith('.css')?'text/css; charset=utf-8':'text/javascript; charset=utf-8','Cache-Control':'no-cache','X-Content-Type-Options':'nosniff'});
       response.end(fs.readFileSync(file));return;

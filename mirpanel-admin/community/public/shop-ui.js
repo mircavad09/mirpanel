@@ -1,9 +1,10 @@
-import {ensureCart} from '/cart-ready.js?v=token-cart-1';
+import '/request-recovery.js?v=bounded-1';
+const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
 let walletModule;
-const loadWalletModule=()=>walletModule??=import('/community-assets/wallet-topup.js?v=topup-receipt-recovery-1').catch(e=>{walletModule=null;throw e;});
+const loadWalletModule=()=>walletModule??=window.MirpanelRecovery.module('/community-assets/wallet-topup.js?v=topup-receipt-recovery-1').catch(e=>{walletModule=null;throw e;});
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
@@ -35,7 +36,7 @@ function retryDelay(header, fallback){
  return Math.max(1,Math.ceil(Number(fallback)||30));
 }
 const error=el('p','','shop-error');error.setAttribute('role','alert');const status=el('p');status.setAttribute('role','status');
-async function api(path,body,{file,timeout=30000,signal}={}){const epoch=accountEpoch;const c=new AbortController(),abort=()=>c.abort();if(signal?.aborted)c.abort();else signal?.addEventListener('abort',abort,{once:true});requests.add(c);const t=setTimeout(()=>c.abort(),timeout);try{const r=await fetch(base+path,{method:body!==undefined||file?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:file?{'Content-Type':file.type||'application/octet-stream'}:body!==undefined?{'Content-Type':'application/json'}:{},body:file|| (body===undefined?undefined:JSON.stringify(body)),signal:c.signal});const d=await r.json().catch(()=>({}));if(epoch!==accountEpoch)throw Object.assign(Error('Account changed.'),{code:'ACCOUNT_CHANGED'});if(!r.ok)throw Object.assign(Error(d.error||'Əməliyyat tamamlanmadı. Yenidən cəhd edin.'),{status:r.status,code:d.code,
+async function api(path,body,{file,timeout=30000,signal}={}){const epoch=accountEpoch;const c=new AbortController(),abort=()=>c.abort();if(signal?.aborted)c.abort();else signal?.addEventListener('abort',abort,{once:true});requests.add(c);const retryRead=body===undefined&&!file||path==='/quote',t=retryRead?null:setTimeout(()=>c.abort(),timeout);try{const r=await (retryRead?window.MirpanelRecovery.read:fetch)(base+path,{method:body!==undefined||file?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:file?{'Content-Type':file.type||'application/octet-stream'}:body!==undefined?{'Content-Type':'application/json'}:{},body:file|| (body===undefined?undefined:JSON.stringify(body)),signal:c.signal},retryRead?{timeout,quote:path==='/quote'}:undefined);const d=await r.json().catch(()=>({}));if(epoch!==accountEpoch)throw Object.assign(Error('Account changed.'),{code:'ACCOUNT_CHANGED'});if(!r.ok)throw Object.assign(Error(d.error||'Əməliyyat tamamlanmadı. Yenidən cəhd edin.'),{status:r.status,code:d.code,
   retryAfter:r.status===429?retryDelay(r.headers.get('Retry-After'),d.retryAfter):0});return d;}catch(e){if(epoch!==accountEpoch)throw Object.assign(Error('Account changed.'),{code:'ACCOUNT_CHANGED'});if(e.name==='AbortError')throw Object.assign(Error('Cavab gecikdi. Eyni əməliyyatı yenidən sınayın.'),{status:504});throw e;}finally{clearTimeout(t);signal?.removeEventListener('abort',abort);requests.delete(c);}}
 async function run(fn){if(working)return;working=true;error.textContent='';app.setAttribute('aria-busy','true');try{await fn();}catch(e){if(!closed&&e.code!=='ACCOUNT_CHANGED'){if(e.code==='CHECKOUT_EMAIL_UNVERIFIED'&&route!=='/balans'){try{await checkoutVerification();}catch(err){error.textContent=err.message;}}else error.textContent=e.message;}}finally{working=false;app.removeAttribute('aria-busy');}}
 function card(title){const n=el('section',null,'shop-card');if(title)n.append(el('h2',title));return n;}
@@ -331,7 +332,7 @@ function walletQuestions(topupReviewTime){
  const historyLink=el('a','Ödənişlərim','wallet-history-link');historyLink.href='/profil?tab=odenislerim';
  section.append(title,list,historyLink);return section;
 }
-const readSession=()=>import('/session-state.js?v=avatar-20261104').then(m=>m.getCommunityState(checkoutView?{maxAge:0}:undefined));
+const readSession=()=>window.MirpanelRecovery.module('/session-state.js?v=bounded-1',{signal:life.signal}).then(m=>m.getCommunityState(checkoutView?{maxAge:0}:undefined));
 function showLoadError(e,retry){
  app.replaceChildren(el('h1','Yükləmə alınmadı'),error,button('Yenidən cəhd et',retry));
  error.textContent=e.message;
@@ -358,11 +359,12 @@ async function loadWallet(knownProfile=false){
  }catch(e){
   if(!active())return;
   if(e.status===401)login();
-  else showLoadError(e,()=>void loadWallet());
+  else{showLoadError(e,()=>void walletStart().catch(()=>{}));throw e;}
  }finally{if(active())app.removeAttribute('aria-busy');}
 }
+const walletStart=window.MirpanelRecovery.watch(()=>loadWallet(),{signal:life.signal});
 async function start(){
- if(route==='/balans')return loadWallet();
+ if(route==='/balans')return walletStart();
  if(route==='/sebet'){cart.open();return;}
  await payment();
 }
@@ -375,7 +377,7 @@ on(window,'pagehide',dispose);on(window,'mirpanel:account',e=>{
  localStorage.removeItem(pendingKey);clearTimeout(confirmationTimer);
  if(route==='/balans'){
   if(!next){app.removeAttribute('aria-busy');login();}
-  else void loadWallet(true);
+  else void loadWallet(true).catch(()=>{});
   return;
  }
  if(checkoutView&&!next)void checkoutLogin();else void run(refreshBasket);
@@ -385,4 +387,4 @@ on(window,'mirpanel:before-navigate',e=>{if(working||app.querySelector('input[ty
 const boot=()=>start().catch(e=>{if(!closed)showLoadError(e,boot);});void boot();
 window.mirpanelPageDispose=dispose;return dispose;
 }
-if(!new URL(import.meta.url).searchParams.get('v')?.startsWith('shell-')&&!window.mirpanelNavigationMounting&&document.getElementById('shopApp'))mountShop();
+if(!new URL(import.meta.url).searchParams.has('shell')&&!new URL(import.meta.url).searchParams.get('v')?.startsWith('shell-')&&!window.mirpanelNavigationMounting&&document.getElementById('shopApp'))mountShop();

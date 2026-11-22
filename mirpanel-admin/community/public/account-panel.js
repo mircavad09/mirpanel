@@ -1,3 +1,4 @@
+import '/request-recovery.js?v=bounded-1';
 import {accountLabels,accountTab,accountMenu,accountSlugs,ordersLoader,profileLoader,ensureProfileLoadingStyle} from './profile-shell.js?v=tokens-1';
 const tabModules=new Map();
 const sessionKey=Symbol.for('mirpanel.profile.session-lists');
@@ -64,7 +65,9 @@ export function renderAccountPanel(ctx){
  const navigate=u=>show(accountTab(new URL(u,location.href).search));window.mirpanelAccountNavigate=navigate;
  let dragging=false,startX=0,startScroll=0;nav.addEventListener('pointerdown',e=>{if(e.pointerType!=='mouse'||e.button!==0)return;dragging=true;startX=e.clientX;startScroll=nav.scrollLeft;nav.dataset.dragging='false';},{signal:life.signal});nav.addEventListener('pointermove',e=>{if(!dragging)return;if(Math.abs(e.clientX-startX)>5){nav.dataset.dragging='true';nav.setPointerCapture(e.pointerId);nav.scrollLeft=startScroll+startX-e.clientX;}},{signal:life.signal});const endDrag=()=>{dragging=false;setTimeout(()=>nav.dataset.dragging='false',0);};nav.addEventListener('pointerup',endDrag,{signal:life.signal});nav.addEventListener('pointercancel',endDrag,{signal:life.signal});nav.addEventListener('wheel',e=>{if(nav.scrollWidth<=nav.clientWidth)return;const before=nav.scrollLeft;nav.scrollLeft+=Math.abs(e.deltaX)>Math.abs(e.deltaY)?e.deltaX:e.deltaY;if(nav.scrollLeft!==before)e.preventDefault();},{passive:false,signal:life.signal});
  async function recommendations(target,run){const d=await accountData();if(stopped||run!==load||!target.isConnected||target.querySelector('.account-recommendations'))return;const box=el('section',{class:'account-recommendations'},el('h2',{},'Məhsul təklifləri')),grid=el('div',{class:'account-products'});for(const p of d.products.slice(0,4))grid.append(productCard(p,d.wishlist.includes(p.id),()=>show('orders')));box.append(grid);target.append(box);}
- async function show(id){rememberScroll();selected=id;const run=++load;disposeChild?.();disposeChild=null;view=null;
+ let failedShow=null,wasHidden=document.hidden;
+ const resumeShow=()=>{if(failedShow===selected&&!stopped){failedShow=null;if(!verified&&ctx.session){first=ctx.session(true);void first.catch(()=>{});}void show(selected);}};window.addEventListener('online',resumeShow,{signal:life.signal});document.addEventListener('visibilitychange',()=>{const returned=wasHidden&&!document.hidden;wasHidden=document.hidden;if(returned)resumeShow();},{signal:life.signal});
+ async function show(id){failedShow=null;rememberScroll();selected=id;const run=++load;disposeChild?.();disposeChild=null;view=null;
  if(location.pathname==='/profil'){
   const address=new URL(location.href);address.searchParams.set('tab',accountSlugs[id]);
   if(window.MirpanelNavigation)window.MirpanelNavigation.replaceURL(address.href);
@@ -81,9 +84,7 @@ export function renderAccountPanel(ctx){
  const pending=listPath?(ctx.initialOrdersRequest?.path===listPath?ctx.initialOrdersRequest.promise:readList()):null;
  if(ctx.initialOrdersRequest?.path===listPath)ctx.initialOrdersRequest=null;void pending?.catch(()=>{});
  const url={profile:'./profile.js?v=profile-contact-1',orders:'/browser-orders.js?v=cancelled-inputs-1',codes:'./account-codes.js?v=code-artwork-1',payments:'./account-payments.js?v=topups-only-1',subscriptions:'./account-subscriptions.js?v=scheduled-renewal-1'}[id];
- const retry=moduleRetries.get(id)||0,module=url?(tabModules.get(id)||import(url+(retry?'&retry='+retry:''))):null;
- let timeout;
- const tabModule=module&&(tabModules.has(id)?module:Promise.race([module,new Promise((_,reject)=>{timeout=setTimeout(()=>reject(Error('Bölmə gec açılır.')),12000);})]).catch(e=>{moduleRetries.set(id,Math.max(retry+1,moduleRetries.get(id)||0));throw e;}).then(m=>{tabModules.set(id,m);return m;}).finally(()=>clearTimeout(timeout)));
+ const tabModule=url?(tabModules.get(id)||window.MirpanelRecovery.module(new URL(url,import.meta.url).href,{signal:life.signal}).then(m=>{tabModules.set(id,m);return m;})):null;
  void tabModule?.catch?.(()=>{});
  try{
  if(!verified){
@@ -122,7 +123,7 @@ export function renderAccountPanel(ctx){
  };
  const priorSummary=ui.summary;if(priorSummary)renderExpenses(priorSummary);
  try{const d=await accountData();if(stopped||run!==load)return;ui.summary=d;renderExpenses(d);}catch(e){if(!priorSummary)throw e;content.append(button('Yenidən cəhd et',()=>show(id)));}
- }catch(e){if(!stopped&&run===load){if(e.status===401){window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));return;}content.replaceChildren(el('h1',{},label),empty('Məlumat yüklənmədi','Yenidən cəhd edin.'),button('Yenidən cəhd et',()=>{if(!verified&&ctx.session){first=ctx.session(true);void first.catch(()=>{});}void show(id);}));}}}
+ }catch(e){if(!stopped&&run===load){failedShow=window.MirpanelRecovery.transient(e)?id:null;if(e.status===401){window.dispatchEvent(new CustomEvent('mirpanel:account',{detail:null}));return;}content.replaceChildren(el('h1',{},label),empty('Məlumat yüklənmədi','Yenidən cəhd edin.'),button('Yenidən cəhd et',()=>{if(!verified&&ctx.session){first=ctx.session(true);void first.catch(()=>{});}void show(id);}));}}}
  function recheck(uid){observedOwner=uid;if(uid===verified&&uid)return;if(!verified&&uid)return;setOwner(uid);load++;disposeChild?.();disposeChild=null;view=null;verified=null;identity.replaceChildren();identity.classList.add('account-identity-pending');summaryCache=summaryPending=null;if(!uid){content.replaceChildren();ctx.goLogin?.();return;}if(ctx.session){first=ctx.session(true);void first.catch(()=>{});void show(selected);}else dispose();}
  window.addEventListener('mirpanel:account',e=>recheck(e.detail?.user_id||null),{signal:life.signal});
  window.addEventListener('storage',e=>{if(e.key==='mirpanel.auth.signedOut')recheck(null);},{signal:life.signal});

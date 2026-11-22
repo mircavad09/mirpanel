@@ -161,3 +161,6 @@
 /request-lifecycle.mjs
   Cache-Control: private, no-cache, no-store, must-revalidate
   Content-Type: text/javascript; charset=utf-8
+
+/request-recovery.js
+  Cache-Control: no-cache, must-revalidate

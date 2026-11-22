@@ -354,20 +354,20 @@
   }
   let inventoryRequest=null,inventoryController=null,retryTimer=null,revision=0,failures=0,disposed=false;
   const activeRoute=()=>!window.MirpanelNavigation||['/','/mehsul'].includes(location.pathname)||location.pathname.startsWith('/mehsul/');
-  function scheduleInventory(){clearTimeout(retryTimer);if(!document.hidden&&activeRoute()&&!disposed){const delay=Math.min(30000,3000*2**Math.min(failures-1,5));retryTimer=setTimeout(()=>void refreshInventory(),Math.round(delay*(.8+Math.random()*.4)));}}
+  function scheduleInventory(){if(window.MirpanelRecovery||failures>3)return;clearTimeout(retryTimer);if(!document.hidden&&activeRoute()&&!disposed){const delay=Math.min(30000,3000*2**Math.min(failures-1,5));retryTimer=setTimeout(()=>void refreshInventory(),Math.round(delay*(.8+Math.random()*.4)));}}
   function cancelInventory(){revision++;inventoryController?.abort();inventoryController=null;inventoryRequest=null;clearTimeout(retryTimer);}
   function refreshInventory({force=false}={}){
     if(disposed||!activeRoute()||document.hidden)return Promise.resolve(false);
     if(inventoryRequest&&!force)return inventoryRequest;
     if(force)cancelInventory();clearTimeout(retryTimer);
-    const run=++revision,controller=inventoryController=new AbortController(),timeout=setTimeout(()=>controller.abort(),25000);
+    const run=++revision,controller=inventoryController=new AbortController(),timeout=window.MirpanelRecovery?null:setTimeout(()=>controller.abort(),25000);
     const pending=(async()=>{
       try{
         const base=window.MIRPANEL_PAYMENT_API||'https://mirpanel-frankfurt.onrender.com',url=base+'/api/payments/inventory',early=window.mirpanelInitialInventory;delete window.mirpanelInitialInventory;
         const initial=early?.url===url?await early.request.catch(()=>null):null;
         if(run!==revision||disposed)return false;
         // Consume a successful prefetch once; do not discard it after one second.
-        const response=initial?.response?.ok?initial.response:await fetch(url,{cache:'no-store',signal:controller.signal});
+        const response=initial?.response?.ok?initial.response:await (window.MirpanelRecovery?.read||fetch)(url,{cache:'no-store',signal:controller.signal});
         if(!response.ok)throw Error('Inventory unavailable');const data=await response.json();if(!Array.isArray(data.products))throw Error('Invalid inventory');
         if(run!==revision||disposed)return false;
         inventory.clear();for(const row of data.products)inventory.set(row.productId,row);
@@ -390,7 +390,7 @@
     if(!allowed){event.preventDefault();event.stopImmediatePropagation();return;}if(el.matches('.pp-plan-label'))setTimeout(paintInventory,0);
   },true);
   document.addEventListener('keydown',event=>{const row=event.target.closest('.pp-plan-label');if(!row||!['ArrowDown','ArrowUp','ArrowLeft','ArrowRight'].includes(event.key))return;const product=typeof currentProduct!=='undefined'?currentProduct:null;if(!product)return;event.preventDefault();event.stopImmediatePropagation();const rows=[...document.querySelectorAll('#pp-plans-container .pp-plan-label')],available=rows.filter((_,i)=>planFor(product,i)?.canOrder);if(!available.length)return;const at=available.indexOf(row),step=['ArrowUp','ArrowLeft'].includes(event.key)?-1:1,next=available[(at+step+available.length)%available.length];next.click();next.focus();},true);
-  function startInventoryTimer(){clearInterval(inventoryTimer);clearInterval(homeSalesTimer);hydrateHomeCardSales();homeSalesTimer=setInterval(hydrateHomeCardSales,10000);paintInventory();refreshInventory();inventoryTimer=setInterval(()=>{paintInventory();refreshInventory();},15000);}
+  function startInventoryTimer(){clearInterval(inventoryTimer);clearInterval(homeSalesTimer);hydrateHomeCardSales();homeSalesTimer=setInterval(hydrateHomeCardSales,10000);paintInventory();refreshInventory();inventoryTimer=setInterval(()=>{paintInventory();if(!inventoryFailed)refreshInventory();},15000);}
   function installCatalogAndDetail() {
     window.addEventListener("mirpanel:home-catalog-rendered", () => {
       hydrateHomeCardSales();

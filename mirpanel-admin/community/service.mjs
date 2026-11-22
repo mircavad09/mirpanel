@@ -1,3 +1,4 @@
+import {withModuleRecovery} from '../../module-recovery.mjs';
 import {scheduleResendMail} from './resend-mail-scheduler.mjs';
 import {ensureInfluencers,setInfluencer,influencerRecipient,giftAdmin} from './influencers.mjs';
 import {staffRole,setStaffRole,staffRead} from './staff-readonly.mjs';
@@ -130,7 +131,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   return publicEnabled?withLegacyHistory(pool,user.id,scope):scope;
  },async handle(req,res){const u=new URL(req.url,origin),route=u.pathname;if(!['/qrup','/hesab','/profil','/owner-login','/sebet','/balans','/odenis'].includes(route)&&!route.startsWith('/api/community/')&&!route.startsWith('/api/auth/')&&!route.startsWith('/community-assets/'))return false;
  try{
- if(route.startsWith('/community-assets/')){const n=route.slice(18);if(!/^[a-z.-]+$/.test(n))return json(res,404,{error:'Tapılmadı.'}),true;const f=path.join(dir,'public',n);if(!fs.existsSync(f))return json(res,404,{error:'Tapılmadı.'}),true;res.writeHead(200,{'Content-Type':n.endsWith('.css')?'text/css':n.endsWith('.js')?'text/javascript':n.endsWith('.png')?'image/png':n.endsWith('.svg')?'image/svg+xml':n.endsWith('.webp')?'image/webp':'application/octet-stream','Cache-Control':'public,max-age=300','X-Content-Type-Options':'nosniff'});res.end(fs.readFileSync(f));return true;}
+ if(route.startsWith('/community-assets/')){const n=route.slice(18);if(!/^[a-z.-]+$/.test(n))return json(res,404,{error:'Tapılmadı.'}),true;const f=path.join(dir,'public',n);if(!fs.existsSync(f))return json(res,404,{error:'Tapılmadı.'}),true;res.writeHead(200,{'Content-Type':n.endsWith('.css')?'text/css':n.endsWith('.js')?'text/javascript':n.endsWith('.png')?'image/png':n.endsWith('.svg')?'image/svg+xml':n.endsWith('.webp')?'image/webp':'application/octet-stream','Cache-Control':n.endsWith('.js')||n.endsWith('.css')?'no-cache,must-revalidate':'public,max-age=300','X-Content-Type-Options':'nosniff'});res.end(n.endsWith('.js')?withModuleRecovery(fs.readFileSync(f,'utf8'),u.href):fs.readFileSync(f));return true;}
  if(!publicEnabled){if(route==='/hesab'){html(res,entry(true));return true;}if(route==='/owner-login'){html(res,entry(false,true));return true;}}
  if(!enabled){if(route==='/qrup'||route==='/profil')html(res,entry());else json(res,503,{error:'Qrup tezliklə açılacaq.'});return true;}
  if(route==='/api/community/order-mail-webhook'){
