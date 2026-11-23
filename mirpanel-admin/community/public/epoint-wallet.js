@@ -198,7 +198,7 @@ export async function showEpointReturn(doc=document){
    if(data.purpose==='purchase'){
     back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Sifarişə qayıt';
     if(data.status==='success'){stopped=true;check.hidden=true;location.replace(back.href);return;}
-    finish(data.status==='failed'?'Sifariş ödənişi tamamlanmadı':'Ödəniş yoxlanılır…',data.status==='failed'?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Yenidən ödəməzdən əvvəl vəziyyəti yoxlayın.':'Ödəniş təsdiqi gözlənilir. Bu əməliyyat balans artırması deyil.');
+    finish(data.status==='failed'?(data.cancelled?'Sifariş ödənişi ləğv edildi':'Sifariş ödənişi tamamlanmadı'):'Ödəniş yoxlanılır…',data.status==='failed'?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Yenidən ödəməzdən əvvəl vəziyyəti yoxlayın.':'Ödəniş təsdiqi gözlənilir. Bu əməliyyat balans artırması deyil.');
     if(data.status==='failed'){stopped=true;check.hidden=true;}else if(++count<45)timer=setTimeout(refresh,4000);
     return;
    }

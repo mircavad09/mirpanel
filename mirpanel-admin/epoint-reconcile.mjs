@@ -1,6 +1,7 @@
 import {epointPost} from './epoint-api.mjs';
 import {settleEpointResult} from './epoint-result.mjs';
 import {ensureEpointCheckout} from './epoint-checkout.mjs';
+import {recordPurchaseStatus} from './epoint-purchase.mjs';
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const ref=value=>typeof value==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(value);
 function cents(value){
@@ -39,6 +40,7 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
   }
   if(result.status==='success')await settleEpointResult(pool,{id,status:'success',transaction:result.transaction,cents:Number(row.cents)});
   await pool.query("update mirpanel_community.epoint_checkout_requests set result_status=$2,result_code=$3,check_failures=0,next_check_at=clock_timestamp()+interval '30 seconds' where id=$1 and result_status<>'success'",[id,result.status,code]);
+  await recordPurchaseStatus(pool,id,result.status,code);
  }catch(error){
   await pool.query("update mirpanel_community.epoint_checkout_requests set check_failures=least(check_failures+1,10),next_check_at=clock_timestamp()+make_interval(secs=>least(900,30*(2^least(check_failures,5))::int)) where id=$1 and result_status<>'success'",[id]);
   throw error;

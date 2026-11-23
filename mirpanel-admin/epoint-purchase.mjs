@@ -31,9 +31,14 @@ export async function settlePurchase(c,result){
  const state=p.reservation_released_at?'awaiting_stock':'queued';
  const fee=Math.floor((Number(p.cents)*p.fee_basis_points+5000)/10000);
  await c.query('update mirpanel_community.epoint_purchases set transaction=$2,paid_at=clock_timestamp(),state=$3,fee_cents=$4 where id=$1',[p.id,result.transaction,state,fee]);
- await c.query("update public.payment_orders set payment_confirmed=true,checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=$1",[p.order_id,JSON.stringify({state,feeCents:fee,feeSource:p.fee_source,feeBasisPoints:p.fee_basis_points,paid:true})]);
+ await c.query("update public.payment_orders set payment_confirmed=true,checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=$1",[p.order_id,JSON.stringify({state,providerStatus:'success',cancelled:false,feeCents:fee,feeSource:p.fee_source,feeBasisPoints:p.fee_basis_points,paid:true})]);
  await c.query("insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('system','epoint','order.epoint_paid','order',$1,$2)",[p.order_id,{paymentId:p.id,method:p.method,transaction:result.transaction,cents:Number(p.cents),feeCents:fee,feeBasisPoints:p.fee_basis_points,feeSource:p.fee_source,state}]);
  return true;
+}
+export async function recordPurchaseStatus(pool,id,status,code){
+ if(!(await pool.query("select to_regclass('mirpanel_community.epoint_purchases') present")).rows[0].present)return;
+ const value={providerStatus:status,cancelled:['failed','error'].includes(status)&&['180','canceled','cancelled'].includes(code)};
+ await pool.query("update public.payment_orders o set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=(select order_id from mirpanel_community.epoint_purchases where id=$1 and paid_at is null) and payment_source='epoint' and payment_confirmed is false",[id,JSON.stringify(value)]);
 }
 export async function drainEpointPurchases(pool,config){
  if(!(await pool.query("select to_regclass('mirpanel_community.epoint_purchases') present")).rows[0].present)return;

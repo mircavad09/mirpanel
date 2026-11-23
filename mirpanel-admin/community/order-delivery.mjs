@@ -22,6 +22,7 @@ export function deliveryLines(o){
   [{title:o.product_title,planName:o.plan_name,productId:o.product_id,image:o.checkout_snapshot?.image||'',quantity:Number(o.quantity||o.checkout_snapshot?.quantity||1),unitCents:Math.round(Number(o.amount)*100)/Number(o.quantity||o.checkout_snapshot?.quantity||1)}];
 }
 export function customerStatus(o,records){
+ if(!o.payment_confirmed&&['failed','error','returned'].includes(o.checkout_snapshot?.epointPayment?.providerStatus))return o.checkout_snapshot.epointPayment.cancelled?'cancelled':'rejected';
  if(o.payment_confirmed&&o.checkout_snapshot?.epointPayment?.state==='awaiting_stock')return 'preparing';
  if(!paid(o))return o.status;
  if(o.checkout_snapshot?.tokenPurchaseCount)return 'completed';

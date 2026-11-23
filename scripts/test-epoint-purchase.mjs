@@ -48,7 +48,7 @@ try{
   await assert.rejects(startEpointCheckout(pool,'a',{method,requestId:g.id,amount:'10'},{env,send}),{status:409});checks++;
   const callback=(overrides={})=>{const data=Buffer.from(JSON.stringify({order_id:'mp_ep_'+g.id,transaction,status:'success',operation_code:'100',amount:'10.00',currency:'AZN',...overrides})).toString('base64');return verifyEpointResult(Buffer.from(JSON.stringify({data,signature:createHash('sha1').update(env.EPOINT_PRIVATE_KEY+data+env.EPOINT_PRIVATE_KEY).digest('base64')})),'application/json',env.EPOINT_PRIVATE_KEY);};
   await assert.rejects(acceptEpointResult(pool,callback({amount:'11'}),{env,send}),{status:409});checks++;
-  status='failed';await acceptEpointResult(pool,callback(),{env,send});eq((await readEpointPayment(pool,'a',g.id)).status,'failed');eq(await balance(),1500);
+  status='failed';await acceptEpointResult(pool,callback(),{env,send});eq((await readEpointPayment(pool,'a',g.id)).status,'failed');eq(await balance(),1500);eq((await shop.get(req,owner,g.id)).items[0].status,'rejected');
   status='success';badAmount=true;await assert.rejects(acceptEpointResult(pool,callback(),{env,send}),{status:409});checks++;badAmount=false;
   await Promise.all(Array.from({length:8},()=>acceptEpointResult(pool,callback(),{env,send})));
   const paid=await readEpointPayment(pool,'a',g.id);eq(paid.status,'success');eq(paid.orderId,g.orderId);eq(await balance(),1500);
