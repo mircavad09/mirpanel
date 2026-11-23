@@ -1,4 +1,4 @@
-import {walletDeviceSupports,appleMoney as money,rememberWidgetTransaction,recoverWidgetPayment} from './epoint-wallet.js?v=selection-1';
+import {walletDeviceSupports,appleMoney as money} from './epoint-wallet.js?v=selection-1';
 const names={'apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'};
 const validRef=value=>typeof value==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value);
 export async function showEpointPayment(doc=document){
@@ -10,7 +10,6 @@ export async function showEpointPayment(doc=document){
  async function refresh(){
   if(running||stopped)return;clearTimeout(timer);running=true;retry.disabled=true;retry.hidden=true;login.hidden=true;
   try{
-   await recoverWidgetPayment(ref);
    const r=await fetch('/api/payments/epoint/checkout?ref='+encodeURIComponent(ref),{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000)}),data=await r.json().catch(()=>({}));
    if(!r.ok)throw Object.assign(Error(data.error||'Ödəniş məlumatı alınmadı.'),{status:r.status});
    const name=names[data.method];if(!name||!Number.isSafeInteger(data.cents)||data.cents<=0)throw Error('Ödəniş məlumatı uyğun deyil.');
@@ -35,7 +34,7 @@ export async function showEpointPayment(doc=document){
   finally{running=false;retry.disabled=false;}
  }
  retry.addEventListener('click',()=>{count=0;clearTimeout(frameTimer);if(frame){frame.remove();frame=null;}void refresh();});
- window.addEventListener('message',event=>{if(!frame||event.source!==frame.contentWindow||event.origin!==new URL(frame.src).origin||!['success','failed','error'].includes(event.data?.status)||Date.now()-hintAt<3000)return;hintAt=Date.now();rememberWidgetTransaction(ref,event.data);status.textContent='Ödəniş yoxlanılır…';void refresh();});
+ window.addEventListener('message',event=>{if(!frame||event.source!==frame.contentWindow||event.origin!==new URL(frame.src).origin||!['success','failed','error'].includes(event.data?.status)||Date.now()-hintAt<3000)return;hintAt=Date.now();status.textContent='Ödəniş yoxlanılır…';void refresh();});
  window.addEventListener('pagehide',()=>{clearTimeout(timer);clearTimeout(frameTimer);});window.addEventListener('pageshow',event=>{if(event.persisted&&!stopped){count=0;void refresh();}});await refresh();
 }
 if(typeof document!=='undefined')void showEpointPayment();
