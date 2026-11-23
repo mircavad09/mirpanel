@@ -13,7 +13,7 @@ export function supportView(content,data,{call,button,cards,reload}){
   }
  }
  content.append(el('h2','Balans artırma və ödəniş tarixçəsi'));
- for(const t of data.topups||[]){const row=el('article');row.append(el('strong',money(t.approved_cents||t.requested_cents)),el('p',date(t.created_at)+' · '+t.method+' · '+t.status));content.append(row);}
+ for(const t of data.topups||[]){const row=el('article');row.append(el('strong',money(t.approved_cents||t.requested_cents)),el('p',date(t.created_at)+' · '+t.method+' · '+({draft:'Çek gözlənilir',reviewing:'Yoxlanılır',approved:'Təsdiqlənib',rejected:'Rədd edilib'}[t.status]||t.status)));content.append(row);}
  const kinds={topup_credit:'Balans artırılması',purchase_debit:'Balansla ödəniş',purchase_refund:'Geri ödəniş',admin_credit:'Admin əlavəsi',admin_debit:'Admin çıxılması'};
  for(const l of data.ledger||[])content.append(el('p',date(l.created_at)+' · '+money(l.cents)+' · '+(kinds[l.kind]||l.kind)));
  content.append(el('h2','Əvəzləmə tarixçəsi'));

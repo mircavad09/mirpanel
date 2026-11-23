@@ -7,6 +7,7 @@ import fs from 'node:fs';import path from 'node:path';import {fileURLToPath} fro
 import {toNodeHandler,fromNodeHeaders} from 'better-auth/node';import {authFormPolicy} from './auth-form-policy.mjs';
 import {requireAllowed} from './group-control.mjs';import {saveProfile,uploadProfile,saveProfileSticker} from './public-profile.mjs';
 import {tagCount,notifications,markTag,tagMessage} from './bot-tags.mjs';
+import {replacementNotices,markReplacementNotice} from './replacement-notices.mjs';
 import {accountPanel,paymentHistory} from './account-panel.mjs';
 import {CommunityLive} from './live.mjs';
 import {publicGroupOpen,requirePublicGroup,GROUP_CLOSED} from './public-group.mjs';
@@ -98,8 +99,8 @@ export async function handlePublicCommunity({req,res,u,origin,runtime,json,html:
   json(res,200,{ok:true});
  }
  else if(route==='/api/community/presence'&&b){need();if(!/^[a-f0-9-]{36}$/i.test(b.tabId||''))throw fail(400,'Səhifə identifikatoru düzgün deyil.');if(b.leave===true)await pool.query('delete from community_presence where user_id=$1 and session_id=$2 and tab_id=$3',[user.id,session.session.id,b.tabId]);else await pool.query('insert into community_presence(user_id,session_id,tab_id) values($1,$2,$3) on conflict(session_id,tab_id) do update set last_seen=clock_timestamp()',[user.id,session.session.id,b.tabId]);json(res,200,await counts(pool));}
- else if(route==='/api/community/notifications'&&req.method==='GET'){need();json(res,200,groupOpen?await notifications(pool,user.id):{unread:0,items:[]});}
- else if(route==='/api/community/notifications/read'&&b)json(res,200,await markTag(pool,need().id,b.messageId));
+ else if(route==='/api/community/notifications'&&req.method==='GET'){need();const base=groupOpen?await notifications(pool,user.id):{unread:0,items:[]},replacements=await replacementNotices(pool,user.id);json(res,200,{unread:base.unread+replacements.unread,items:[...base.items,...replacements.items].sort((a,b)=>Date.parse(b.createdAt)-Date.parse(a.createdAt)).slice(0,50)});}
+ else if(route==='/api/community/notifications/read'&&b){const id=need().id;if(typeof b.messageId==='string'&&b.messageId.startsWith('replacement:')){await markReplacementNotice(pool,id,b.messageId);json(res,200,{ok:true,unread:(await replacementNotices(pool,id)).unread+await tagCount(pool,id)});}else json(res,200,await markTag(pool,id,b.messageId));}
  else if(route==='/api/community/tag-message'&&req.method==='GET')json(res,200,await tagMessage(repo,need().id,u.searchParams.get('messageId')));
  else if(route==='/api/community/moderate'&&b)json(res,200,await group.act(need(),b));
  else if(['/api/community/manage','/api/community/audit'].includes(route)&&req.method==='GET')json(res,200,await group.review(need(),{kind:u.searchParams.get('kind')||'audit',page:u.searchParams.get('page')||1}));

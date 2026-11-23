@@ -1,4 +1,5 @@
 import fs from 'node:fs/promises';
+import {epinbyPlan} from '../../epinby-product.mjs';
 import {paid,deliveryLines,customerStatus} from './order-delivery.mjs';
 import {signature} from '../employee-security.mjs';
 import {planKey} from '../payment-profit.mjs';
@@ -48,8 +49,8 @@ async function eligibility(c,security,catalog,o,d,subscriptions){
  result.reason=!paid(o)||o.fulfillment_cancellation?'Sifariş ödənilməyib və ya ləğv edilib.':
   previous?.state==='completed'?'Əvvəlki əvəzləmə tamamlanıb; təkrar müraciət üçün admin baxışı lazımdır.':
   previous?.state==='admin_review'?'Admin baxışı gözlənilir.':
-  d.quantity!==1||!unit?'Bu təhvil hazır hesab vahidi deyil.':
-  !plan||!product||product.supplier?.provider||plan.supplier?.provider||/pubg|free.?fire|diamond|uc\b/i.test(product.id)?'Bu paket hazır hesab əvəzləməsinə uyğun deyil.':
+  d.quantity!==1||!unit||item?.productId!==unit.product_id||saved?.sourcePlanKey!==unit.plan_key?'Bu təhvil uyğun hazır hesab vahidi deyil.':
+  !plan||!product||epinbyPlan(product,plan)||product.supplier?.provider||plan.supplier?.provider||/pubg|free.?fire|diamond|uc\b/i.test(product.id)?'Bu paket hazır hesab əvəzləməsinə uyğun deyil.':
   (saved?.accountType??null)!==(plan.accountType??null)||JSON.stringify(subscriptionPeriod({...saved,label:item?.planName}))!==JSON.stringify(subscriptionPeriod(plan))?'Hesab növü və ya paket müddəti dəyişib — admin baxışı tələb olunur.':
   !policy?.enabled||policy.account_type!==(plan.accountType||'ready_account')?'Admin bu paketdə işçi əvəzləməsini açmayıb.':
   !account(security,unit)?'Kod və sərbəst təhvil mətni hazır hesab sayılmır.':
@@ -67,11 +68,11 @@ export async function supportCustomer(pool,security,catalog,actor,id,page=1){
   for(const o of orders){
    const records=(await c.query(`select id,line_index,quantity,delivered_at from ${S}customer_order_deliveries where order_id=$1 order by delivered_at,id`,[o.id])).rows;
    const units=[];for(const d of records){const {view}=await eligibility(c,security,catalog,o,d,subscriptions);units.push({...view,canReplace:permissions.replacement&&view.eligible,canReview:permissions.replacement&&view.reviewRequired});}
-   details.push({number:String(o.order_code),status:customerStatus(o,records),method:o.payment_source==='wallet'?'MirPanel balansı':o.method_provider||'Kart ödənişi',units});
+   details.push({number:String(o.order_code),status:customerStatus(o,records),lines:deliveryLines(o).map(x=>({product:x.title,package:x.planName,quantity:x.quantity})),method:o.payment_source==='wallet'?'MirPanel balansı':o.method_provider||'Kart ödənişi',units});
   }
   const topups=(await c.query(`select t.id,t.created_at,t.requested_cents::text,t.approved_cents::text,t.status,m.display_name as method from ${S}wallet_topups t join public.payment_methods m on m.id=t.method_id where t.user_id=$1 order by t.created_at desc,t.id desc limit 21 offset $2`,[id,(page-1)*20])).rows;
   const ledger=(await c.query(`select id::text,cents::text,kind,created_at from ${S}wallet_ledger where user_id=$1 order by id desc limit 21 offset $2`,[id,(page-1)*20])).rows;
-  const history=(await c.query(`select r.id,r.delivery_id,r.order_id,o.order_code::text,r.state,r.reason,r.old_unit_id,r.new_unit_id,r.created_at,r.completed_at,r.service_until::text,r.warranty_until::text,u.name as actor from ${S}staff_replacements r join public.payment_orders o on o.id=r.order_id join ${S}"user" u on u.id=r.actor_id where r.user_id=$1 order by r.created_at desc limit 21 offset $2`,[id,(page-1)*20])).rows;
+  const history=(await c.query(`select r.id,r.delivery_id,r.order_id,o.order_code::text,r.state,r.reason,r.old_unit_id,r.new_unit_id,r.created_at,r.completed_at,r.service_until::text,r.warranty_until::text,coalesce(done.name,u.name) as actor,u.name as requested_by from ${S}staff_replacements r join public.payment_orders o on o.id=r.order_id join ${S}"user" u on u.id=r.actor_id left join ${S}"user" done on done.id=r.completed_by where r.user_id=$1 order by r.created_at desc limit 21 offset $2`,[id,(page-1)*20])).rows;
   const notes=(await c.query(`select n.id,n.body,n.created_at,u.name as actor from ${S}staff_support_notes n join ${S}"user" u on u.id=n.actor_id where n.user_id=$1 order by n.created_at desc limit 21 offset $2`,[id,(page-1)*20])).rows;
   await c.query('commit');return {permissions,details,topups:topups.slice(0,20),ledger:ledger.slice(0,20),history:history.slice(0,20),notes:notes.slice(0,20),historyMore:[topups,ledger,history,notes].some(x=>x.length>20)};
  }catch(e){await c.query('rollback');throw e;}finally{c.release();}
@@ -137,7 +138,7 @@ export async function supportMutation(pool,security,catalog,actor,path,b){
   await c.query(`update ${S}ready_stock_units set delivery_id=null where id=$1`,[unit.id]);
   await c.query(`update ${S}ready_stock_units set delivery_id=$2 where id=$1`,[next.id,d.id]);
   await c.query(`update ${S}customer_order_deliveries set message_cipher=$2,replacement_at=clock_timestamp() where id=$1`,[d.id,cipher]);
-  await c.query(`update ${S}staff_replacements set state='completed',old_cipher=$2,new_unit_id=$3,completed_at=clock_timestamp() where id=$1`,[id,d.message_cipher,next.id]);
+  await c.query(`update ${S}staff_replacements set state='completed',old_cipher=$2,new_unit_id=$3,completed_by=$4,completed_at=clock_timestamp() where id=$1`,[id,d.message_cipher,next.id,actor]);
   await c.query(`insert into ${S}customer_order_mail(event_key,order_id,delivery_id) values($1,$2,$3) on conflict do nothing`,['replacement:'+id,o.id,d.id]);
   await c.query(`insert into ${S}community_audit(actor_id,action,target_id,reason,details) values($1,'staff-replacement',$2,'Hazır hesab əvəzləndi',$3)`,[actor,b.userId,{replacementId:id,orderId:o.id,deliveryId:d.id,oldUnitId:unit.id,newUnitId:next.id,result:'completed'}]);
   await c.query('commit');return {id,state:'completed'};
@@ -149,7 +150,7 @@ export async function replacementPolicies(pool,catalog,actor,input){
  if(!(await pool.query(`select 1 from ${S}owner_identity where id and user_id=$1`,[actor])).rowCount)throw fail(403,'Yalnız sahib üçün.');
  if(input){
   const product=catalog.products.find(p=>p.id===input.productId),plan=product?.plans?.[input.index];
-  if(!plan||signature(plan)!==input.signature||typeof input.enabled!=='boolean'||product.supplier?.provider||plan.supplier?.provider||/pubg|free.?fire/i.test(product.id))throw fail(400,'Hazır hesab paketi seçin.');
+  if(!plan||signature(plan)!==input.signature||typeof input.enabled!=='boolean'||epinbyPlan(product,plan)||product.supplier?.provider||plan.supplier?.provider||/pubg|free.?fire/i.test(product.id))throw fail(400,'Hazır hesab paketi seçin.');
   const c=await pool.connect();try{
    await c.query('begin');
    await c.query(`insert into ${S}staff_replacement_policies(product_id,plan_key,plan_signature,enabled,account_type,updated_by) values($1,$2,$3,$4,$5,$6) on conflict(product_id,plan_key,plan_signature) do update set enabled=excluded.enabled,account_type=excluded.account_type,updated_by=excluded.updated_by,updated_at=clock_timestamp()`,[product.id,planKey(plan,input.index),signature(plan),input.enabled,plan.accountType||'ready_account',actor]);
@@ -158,7 +159,7 @@ export async function replacementPolicies(pool,catalog,actor,input){
   }catch(e){await c.query('rollback');throw e;}finally{c.release();}
  }
  const policies=(await pool.query(`select product_id,plan_key,plan_signature,enabled from ${S}staff_replacement_policies`)).rows;
- const plans=catalog.products.flatMap(p=>(p.plans||[]).map((plan,index)=>({productId:p.id,title:p.title,package:plan.label||plan.name,index,signature:signature(plan),accountType:plan.accountType||'ready_account',eligible:!p.supplier?.provider&&!plan.supplier?.provider&&!/pubg|free.?fire/i.test(p.id),enabled:policies.some(x=>x.product_id===p.id&&x.plan_key===planKey(plan,index)&&x.plan_signature===signature(plan)&&x.enabled)})));
- const history=(await pool.query(`select r.id,r.state,r.reason,r.delivery_id,r.old_unit_id,r.new_unit_id,r.created_at,r.completed_at,r.service_until::text,r.warranty_until::text,o.order_code::text,u.name as customer,a.name as actor from ${S}staff_replacements r join public.payment_orders o on o.id=r.order_id join ${S}"user" u on u.id=r.user_id join ${S}"user" a on a.id=r.actor_id order by r.created_at desc limit 100`)).rows;
+ const plans=catalog.products.flatMap(p=>(p.plans||[]).map((plan,index)=>({productId:p.id,title:p.title,package:plan.label||plan.name,index,signature:signature(plan),accountType:plan.accountType||'ready_account',eligible:!epinbyPlan(p,plan)&&!p.supplier?.provider&&!plan.supplier?.provider&&!/pubg|free.?fire/i.test(p.id),enabled:policies.some(x=>x.product_id===p.id&&x.plan_key===planKey(plan,index)&&x.plan_signature===signature(plan)&&x.enabled)})));
+ const history=(await pool.query(`select r.id,r.state,r.reason,r.delivery_id,r.old_unit_id,r.new_unit_id,r.created_at,r.completed_at,r.service_until::text,r.warranty_until::text,o.order_code::text,u.name as customer,coalesce(done.name,a.name) as actor,a.name as requested_by from ${S}staff_replacements r join public.payment_orders o on o.id=r.order_id join ${S}"user" u on u.id=r.user_id join ${S}"user" a on a.id=r.actor_id left join ${S}"user" done on done.id=r.completed_by order by r.created_at desc limit 100`)).rows;
  return {plans,history};
 }

@@ -91,6 +91,10 @@ try{
  const listResponse=await ctx.request.get(base+'/api/community/staff/users');assert.equal(listResponse.status(),200,await listResponse.text());
  for(const path of ['/api/admin/community/users','/api/admin/community/users/b/orders/'+purchase.orderId,'/api/admin/users/b/orders/'+purchase.orderId,'/api/admin/community/staff-role','/api/admin/workforce','/admin.html','/employee'])assert.equal((await ctx.request.get(base+path)).status(),403,path);
  for(const path of ['/api/payments/shop/checkout','/api/payments/shop/cancel','/api/payments/shop/topup/submit','/api/admin/community/wallet/credit','/api/admin/community/user-controls','/api/employee/manual-stock/deliver','/api/community/profile','/api/community/staff/customer'])assert.equal((await ctx.request.post(base+path,{data:{}})).status(),403,path);
+ await setStaffRole(f.pool,'owner',{userId:'a',enabled:true,support:true,replacement:true});
+ const support=await ctx.request.get(base+'/api/community/staff/customer?id=b');assert.equal(support.status(),200,await support.text());assert((await support.json()).permissions.support);
+ const note=await ctx.request.post(base+'/api/community/staff/note',{headers:{Origin:'http://127.0.0.1:55464'},data:{userId:'b',requestId:f.id(),body:'Synthetic production-router support note'}});assert.equal(note.status(),200,await note.text());
+ assert.equal((await ctx.request.post(base+'/api/community/staff/credentials',{headers:{Origin:'http://127.0.0.1:55464'},data:{userId:'b',requestId:f.id(),deliveryId:delivery}})).status(),403);
  await setStaffRole(f.pool,'owner',{userId:'a',enabled:false});assert.equal((await ctx.request.get(base+'/api/community/staff/users')).status(),403);
  await ctx.close();console.log('PASS production server HTTP: independent staff login, own cookie, staff reads, denied admin pages/APIs, checkout/cancel/topup/delivery/profile mutations, role revocation.');
  assert.equal((await f.pool.query("select cents::text from wallet_accounts where user_id='b'")).rows[0].cents,before);

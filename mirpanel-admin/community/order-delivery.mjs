@@ -323,7 +323,7 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
       select 1 from ${M} prior where prior.event_key='topup-received:'||j.topup_id
        and prior.state='accepted' and prior.provider_id is not null
        and (not $1::boolean or prior.reason='RESEND_DELIVERED')))
-    and (j.delivery_id is null or exists(select 1 from ${M} p where p.event_key='payment:'||j.order_id and p.order_id=j.order_id and p.delivery_id is null and p.state='accepted' and p.provider_id is not null and (not $1::boolean or p.reason='RESEND_DELIVERED')))
+    and (j.delivery_id is null or j.event_key like 'replacement:%' or exists(select 1 from ${M} p where p.event_key='payment:'||j.order_id and p.order_id=j.order_id and p.delivery_id is null and p.state='accepted' and p.provider_id is not null and (not $1::boolean or p.reason='RESEND_DELIVERED')))
     order by j.next_at,j.event_key for update of j skip locked limit 1)
    update ${M} m set state='sending',attempts=attempts+1,updated_at=now() from next where next.event_key=m.event_key returning m.*`,[requireDeliveryNotice]);
    if(!job)return;

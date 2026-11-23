@@ -26,7 +26,8 @@ async function detail(id,view=false){
  if(!view&&!d.permissions?.support){content.append(button('İstifadəçi gözündən bax',()=>{orderPage=1;return detail(id,true);}));return;}
  const notice=el('p','Baxılan müştəri: '+d.user.name+' · #'+d.user.memberNumber+(d.permissions?.support?' — müştəri dəstəyi. Müştəri sessiyası açılmır.':' — yalnız oxuma. Şifrə, kod və təhvil hesabları göstərilmir.'));notice.className='readonly';content.append(notice,el('h2','Sifarişlər'));const cards=new Map();
  for(const o of d.orders){const card=el('article');card.append(el('strong','Sifariş № '+o.number));
-  if(o.lines?.length){for(const line of o.lines)card.append(el('p',line.product),el('p','Paket: '+line.package+' · '+line.quantity+' ədəd'));}
+  const lines=d.details?.find(x=>x.number===o.number)?.lines||o.lines;
+  if(lines?.length){for(const line of lines)card.append(el('p',line.product),el('p','Paket: '+line.package+' · '+line.quantity+' ədəd'));}
   else card.append(el('p',o.product),el('p','Paket: '+o.package));
   const state=d.details?.find(x=>x.number===o.number)?.status||o.status;card.append(el('p',new Date(o.date).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})),el('p',o.amount+' '+o.currency),el('p','Status: '+(statusName[state]||state)));content.append(card);cards.set(o.number,card);}
  if(!d.orders.length)content.append(el('p','Sifariş yoxdur.'));

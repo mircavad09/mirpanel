@@ -36,6 +36,12 @@ export async function runStaffBrowser({f,security}){
    if(width===1440){await setStaffRole(pool,'owner',{userId:'a',enabled:false});await page.getByText('İşçi icazəniz yoxdur və ya ləğv edilib.',{exact:false}).waitFor({timeout:14000});assert.equal(await page.getByRole('heading',{name:'Dəstək qeydləri'}).count(),0);await setStaffRole(pool,'owner',{userId:'a',enabled:true,support:true,replacement:true});}
    await ctx.close();
   }
-  console.log('PASS browser own-account login, customer search, safe support history, note submission, mobile 320/390/430 and desktop 1440 no overflow, credentials hidden, live role revocation clears UI.');
+  const noticeContext=await browser.newContext(),noticePage=await noticeContext.newPage(),noticeId='replacement:'+crypto.randomUUID();
+  await noticePage.route('**/api/community/notifications',r=>r.fulfill({json:{unread:1,items:[{messageId:noticeId,createdAt:new Date().toISOString(),readAt:null,text:'Hesabınız əvəzləndi',href:'/profil?tab=sifarislerim&order=975'}]}}));
+  await noticePage.route('**/api/community/notifications/read',r=>r.fulfill({json:{ok:true}}));
+  await noticePage.route('**/community-notices.js',r=>r.fulfill({contentType:'text/javascript',body:fs.readFileSync('community-notices.js','utf8')}));
+  await noticePage.route('**/notice-fixture',r=>r.fulfill({contentType:'text/html',body:'<button class="account-bell">Bildirişlər</button><div id="accountNotifications"></div><script>window.mirpanelAccountProfile={user_id:"synthetic-customer"}</script><script src="/community-notices.js"></script>'}));
+  await noticePage.goto(origin+'/notice-fixture');const noticeLink=noticePage.getByRole('link',{name:'Hesabınız əvəzləndi',exact:true});await noticeLink.waitFor();assert.equal(await noticeLink.getAttribute('href'),'/profil?tab=sifarislerim&order=975');const [marked]=await Promise.all([noticePage.waitForRequest(r=>r.url().endsWith('/notifications/read')),noticeLink.click()]);assert.equal(marked.postDataJSON().messageId,noticeId);await noticeContext.close();
+  console.log('PASS browser own-account login, customer search, safe support history, note submission, mobile 320/390/430 and desktop 1440 no overflow, credentials hidden, live role revocation clears UI, existing notification bell opens order and marks only owned replacement notice.');
  }finally{await browser?.close();if(server)await new Promise(r=>server.close(r));}
 }

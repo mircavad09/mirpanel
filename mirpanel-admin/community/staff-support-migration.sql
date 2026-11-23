@@ -22,6 +22,8 @@ create table if not exists mirpanel_community.staff_support_notes(
  id uuid primary key,user_id text not null references mirpanel_community."user"(id),actor_id text not null references mirpanel_community."user"(id),
  body text not null check(length(body) between 3 and 1000),created_at timestamptz not null default clock_timestamp());
 create index if not exists staff_replacements_customer on mirpanel_community.staff_replacements(user_id,created_at desc);
+alter table mirpanel_community.staff_replacements add column if not exists notice_read_at timestamptz;
+alter table mirpanel_community.staff_replacements add column if not exists completed_by text references mirpanel_community."user"(id);
 create index if not exists staff_support_notes_customer on mirpanel_community.staff_support_notes(user_id,created_at desc);
 alter table mirpanel_community.staff_replacement_policies enable row level security;
 alter table mirpanel_community.staff_replacements enable row level security;
