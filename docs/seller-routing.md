@@ -62,7 +62,7 @@ Schema is installed transactionally under a separate migration lock during the
 existing community initialization. New routes start empty and disabled. No
 customer order, real invitation, seller role or payment is changed on deployment.
 
-Validation: `test-seller-routing.mjs` passes 98 isolated PostgreSQL/HTTP/browser
+Validation: `test-seller-routing.mjs` passes 102 isolated PostgreSQL/HTTP/browser
 checks, including three-way concurrent claim, repeated completion, restart,
 cross-seller/customer privacy, pass/reclaim, uncertain activation review, expired
 invite, deactivation, multi-product partial fulfillment, no-eligible fallback,

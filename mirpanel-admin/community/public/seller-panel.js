@@ -1,8 +1,8 @@
 const $=id=>document.getElementById(id),life=new AbortController();let items=[],current=null,busy=false,polling=false;
-const fragment=new URLSearchParams(location.hash.slice(1)),token=fragment.get('invite');
-if(token)history.replaceState(history.state,'',location.pathname+location.search);
+let token;
 // Invitation token and fulfillment fields live in memory only.
-$('sellerInvite').hidden=!token;
+function readInvitation(){const next=new URLSearchParams(location.hash.slice(1)).get('invite');if(!next)return;token=next;history.replaceState(history.state,'',location.pathname+location.search);$('sellerInvite').hidden=false;}
+readInvitation();window.addEventListener('hashchange',readInvitation,{signal:life.signal});
 const el=(tag,text,cls)=>{const n=document.createElement(tag);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;};
 async function api(path,body){const c=new AbortController(),stop=()=>c.abort();life.signal.addEventListener('abort',stop,{once:true});const timer=setTimeout(stop,20000);try{const r=await fetch('/api/community/seller/'+path,{method:body?'POST':'GET',credentials:'same-origin',cache:'no-store',headers:body?{'Content-Type':'application/json'}:{},body:body?JSON.stringify(body):undefined,signal:c.signal});const d=await r.json();if(!r.ok)throw Object.assign(Error(d.error||'Request failed.'),{status:r.status});return d;}finally{clearTimeout(timer);life.signal.removeEventListener('abort',stop);}}
 function close(){current=null;$('sellerFields').replaceChildren();$('sellerResult').replaceChildren();$('sellerWorkStatus').textContent='';$('sellerDialog').close();}
