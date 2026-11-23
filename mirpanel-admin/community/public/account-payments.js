@@ -91,7 +91,7 @@ export function mountPayments({readOnly=false,content,api,el,button,link,validat
   if(!data)return;
   clearRows();
   const q=normalize(search.value);
-  const rows=data.items.filter(row=>row.kind==='topup').filter(row=>!q||normalize([
+    const rows=data.items.filter(row=>['topup','order'].includes(row.kind)).filter(row=>!q||normalize([
    row.title,row.by_receipt?'Qəbzlə ödəniş':'',numberLabel(row),statuses[row.status],money(row.cents),timestamp(row.submitted_at),timestamp(row.operation_at)
   ].join(' ')).includes(q));
   list.append(...rows.map(renderRow));

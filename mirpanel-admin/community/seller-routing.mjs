@@ -76,7 +76,7 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
   await c.query(`insert into ${S}seller_mail(event_key,seller_id,task_id) select 'seller-task:'||a.task_id||':'||a.seller_id,a.seller_id,a.task_id from ${S}seller_task_audience a join ${S}seller_tasks t on t.id=a.task_id where t.state='open' and not a.passed on conflict do nothing`);
   const rules=(await c.query(`select * from ${S}seller_routes where enabled`)).rows;if(!rules.length)return {created:0};
   const earliest=rules.reduce((at,r)=>at<r.enabled_at?at:r.enabled_at,rules[0].enabled_at);
-  const orders=(await c.query(`select o.* from public.payment_orders o join ${S}community_order_owners ow on ow.order_id=o.id where o.created_at>=$1 and o.payment_confirmed is true and o.status not in('rejected','cancelled','expired') and to_jsonb(o)->>'fulfillment_cancellation' is null and o.checkout_snapshot->>'tokenPurchaseCount' is null and exists(
+  const orders=(await c.query(`select o.* from public.payment_orders o join ${S}community_order_owners ow on ow.order_id=o.id where o.created_at>=$1 and coalesce(o.checkout_snapshot->'epointPayment'->>'state','ready') not in ('awaiting_payment','awaiting_stock') and o.payment_confirmed is true and o.status not in('rejected','cancelled','expired') and to_jsonb(o)->>'fulfillment_cancellation' is null and o.checkout_snapshot->>'tokenPurchaseCount' is null and exists(
     select 1 from jsonb_array_elements(case when o.checkout_snapshot->>'cartVersion'='2' then o.checkout_snapshot->'items' else jsonb_build_array(coalesce(o.checkout_snapshot,'{}'::jsonb)||jsonb_build_object('productId',o.product_id,'quantity',o.quantity)) end) with ordinality entry(item,position)
     join ${S}seller_routes sr on sr.product_id=entry.item->>'productId' and sr.plan_key=coalesce(entry.item->>'sourcePlanKey',entry.item->>'planId',o.plan_id::text) and sr.enabled and o.created_at>=sr.enabled_at
     join ${S}seller_route_members rm on rm.product_id=sr.product_id and rm.plan_key=sr.plan_key join ${S}routing_sellers rs on rs.id=rm.seller_id and rs.active and rs.user_id is not null
@@ -109,7 +109,7 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
   const catalog=await loadCatalog(),product=catalog.products?.find(p=>p.id===t.product_id),plan=product?.plans?.find((p,i)=>planKey(p,i)===t.plan_key);
   const route=(await c.query(`select plan_signature from ${S}seller_routes where product_id=$1 and plan_key=$2`,[t.product_id,t.plan_key])).rows[0];
   if(!plan||product.active===false||plan.active===false||signature(plan)!==route?.plan_signature||epinbyPlan(product,plan)||product.supplier?.provider==='epinby'||plan.supplier?.provider==='epinby')throw fail(409,'Package changed. Admin review required.');
-  if(!allowed||!t.payment_confirmed||['rejected','cancelled','expired'].includes(t.order_status)||t.cancellation)throw fail(403,'Order access has been revoked.');
+  if(['awaiting_payment','awaiting_stock'].includes(t.checkout_snapshot?.epointPayment?.state)||!allowed||!t.payment_confirmed||['rejected','cancelled','expired'].includes(t.order_status)||t.cancellation)throw fail(403,'Order access has been revoked.');
   if(assigned&&(t.seller_id!==seller.id||t.state!=='claimed'))throw fail(403,'Only the current claiming seller can access this order.');
   if(await competing(c,t.product_id,t.plan_key,t.line_index,t.order_id))throw fail(409,'Another fulfillment mechanism is active. Needs review.');return t;
  }

@@ -1,11 +1,12 @@
 import {readFile} from 'node:fs/promises';
 import {createPaymentSecurity} from './payment-security.mjs';
 import {allocateReadyStock,readyStockOrderItems} from './community/ready-stock.mjs';
+import {ensureEpointCheckout} from './epoint-checkout.mjs';
 const installed=new WeakMap();
 const fail=(status,message)=>Object.assign(Error(message),{status});
 export function ensureEpointPurchases(pool){
  if(!installed.has(pool)){
-  const task=(async()=>{const c=await pool.connect();try{
+  const task=(async()=>{await ensureEpointCheckout(pool);const c=await pool.connect();try{
    await c.query('begin');await c.query("set local lock_timeout='5s'");
    await c.query('select pg_advisory_xact_lock(714025001)');
    await c.query(await readFile(new URL('./community/epoint-purchase.sql',import.meta.url),'utf8'));await c.query('commit');
@@ -19,6 +20,7 @@ export async function settlePurchase(c,result){
  if(!(await c.query("select to_regclass('mirpanel_community.epoint_purchases') present")).rows[0].present)return false;
  const p=(await c.query('select * from mirpanel_community.epoint_purchases where id=$1 for update',[result.id])).rows[0];
  if(!p)return false;
+ if(result.transaction&&(await c.query('select 1 from mirpanel_community.epoint_wallet_intents where provider_transaction=$1',[result.transaction])).rowCount)throw fail(409,'Əməliyyat balans artırmasına bağlıdır.');
  if(result.status!=='success')return true;
  if(Number(p.cents)!==result.cents||!result.transaction||p.transaction&&p.transaction!==result.transaction)throw fail(409,'Sifariş ödənişi uyğun deyil.');
  const request=(await c.query("select * from mirpanel_community.epoint_checkout_requests where id=$1 for update",[p.id])).rows[0];
@@ -40,7 +42,7 @@ export async function drainEpointPurchases(pool,config){
   await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
   const p=(await c.query('select * from mirpanel_community.epoint_purchases where id=$1 for update',[id])).rows[0];
   const order=(await c.query('select * from public.payment_orders where id=$1 for update',[p.order_id])).rows[0];
-  if(!p.paid_at&&!p.reservation_released_at){
+  if(!p.paid_at&&!p.reservation_released_at&&Date.now()-Date.parse(p.created_at)>=600000){
    await c.query('select public.inventory_release($1,$2)',[order.reservation_id,order.id]);
    await c.query("update public.payment_reservations set status='expired',updated_at=clock_timestamp() where (id=$1 or cart_parent_reservation_id=$1) and status in ('reserved','reviewing')",[order.reservation_id]);
    await c.query('update mirpanel_community.epoint_purchases set reservation_released_at=clock_timestamp() where id=$1',[id]);

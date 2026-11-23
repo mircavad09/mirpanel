@@ -84,6 +84,8 @@ export async function settleEpointResult(pool,result){
   await c.query('begin');
   await c.query('select pg_advisory_xact_lock(714025001)');
   if(await settlePurchase(c,result)){await c.query('commit');return;}
+  if(result.transaction&&(await c.query("select to_regclass('mirpanel_community.epoint_purchases') present")).rows[0].present&&
+    (await c.query('select 1 from mirpanel_community.epoint_purchases where transaction=$1',[result.transaction])).rowCount)throw fail(409,'Əməliyyat məhsul alışına bağlıdır.');
   // A purchase may never fall back to the balance-credit path, even if its
   // linked order is temporarily unavailable.
   if((await c.query("select to_regclass('mirpanel_community.epoint_checkout_requests') present")).rows[0].present){
