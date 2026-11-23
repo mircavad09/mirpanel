@@ -12,6 +12,9 @@ const walletNames={'apple-pay':'Apple Pay','google-pay':'Google Pay',m10:'m10',b
 export async function walletDeviceSupports(method,device=globalThis){
  try{
   if(method==='m10'||method==='birbank')return true;
+  // Use Apple's capability API, not an iPhone/user-agent allowlist. Compatible
+  // Macs, iPads and other supported browser/device combinations are eligible.
+  // The Epoint widget performs the final active-Wallet/payment-sheet check.
   if(method==='apple-pay')return device.ApplePaySession?.canMakePayments()===true;
   if(method!=='google-pay'||!device.PaymentRequest)return false;
   // Epoint accepts device tokens only. Google documents CRYPTOGRAM_3DS as

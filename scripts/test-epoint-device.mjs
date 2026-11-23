@@ -4,6 +4,11 @@ assert.equal(await walletDeviceSupports('m10',{}),true);
 assert.equal(await walletDeviceSupports('birbank',{}),true);
 assert.equal(await walletDeviceSupports('apple-pay',{}),false);
 assert.equal(await walletDeviceSupports('apple-pay',{ApplePaySession:{canMakePayments:()=>true}}),true);
+for(const userAgent of ['Mozilla/5.0 (Macintosh; Intel Mac OS X) Safari/605.1.15','Mozilla/5.0 (iPad) Safari/605.1.15']){
+ assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent},ApplePaySession:{canMakePayments:()=>true}}),true,'Apple capability, not iPhone name, controls availability');
+}
+assert.equal(await walletDeviceSupports('apple-pay',{ApplePaySession:{canMakePayments:()=>false}}),false);
+assert.equal(await walletDeviceSupports('apple-pay',{ApplePaySession:{canMakePayments:()=>{throw Error('unsupported context');}}}),false);
 let parameters;
 const android={userAgent:'Mozilla/5.0 (Linux; Android 14) Chrome/140.0'};
 const device={navigator:android,PaymentRequest:class{constructor(methods){parameters=methods[0].data.allowedPaymentMethods[0].parameters;}canMakePayment(){return Promise.resolve(true);}}};

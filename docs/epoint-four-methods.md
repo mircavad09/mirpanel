@@ -59,7 +59,17 @@ There is one shared Apple/Google widget and no documented method-selection param
 
 The cited sections do not mandate a separate test cabinet. Do not invent one as a prerequisite. Local tests inject provider replies. Live unpaid sessions verify only creation and opening, not completed payment or final credit. Obtain explicit per-method authorization before a real charge.
 
-## Current recheck — 2026-11-23 (supersedes historical observations below)
+## Apple Pay owner-confirmed domain activation — 2026-11-23
+
+The owner explicitly confirmed that Epoint has approved mirpanel.com for Apple Pay. This supersedes the earlier pending-domain observation; do not request the same attestation again. Enable only EPOINT_APPLE_PAY_ENABLED=true and EPOINT_APPLE_DOMAIN_VERIFIED=true. The existing token-widget master gate is already enabled. Preserve all Google Pay, Birbank, m10, hosted-card and secret values.
+
+The current Epoint Apple Pay documentation still specifies Token Widget in a 400px iframe, active Apple Pay on the device and a verified domain. MirPanel uses ApplePaySession.canMakePayments(), without an iPhone-name restriction; capable Macs/iPads are included. This API proves device support, not that an active card exists; Epoint performs final Wallet readiness. Current official references: https://developer.epoint.az/token-payment/apple-pay and https://developer.apple.com/documentation/applepayontheweb/applepaysession/canmakepayments .
+
+Use the existing owner-bound unpaid widget 24269585 for an opening-only recheck, without creating another provider record or authorizing payment. A physical Apple device is not connected to the available Windows Chrome browser. Synthetic Apple/Mac/iPad capability, iframe, ownership, amount/currency/signature, callback replay and committed-credit tests must not be described as a physical-device or real financial test.
+
+Owner's final 1 AZN test: open https://mirpanel.com/balans on a supported Apple Pay device/browser, sign into the intended MirPanel account, enter exactly 1.00 AZN and select Apple Pay. Check 1.00 AZN in the Epoint sheet before approving. Only the owner may authorize the final payment; afterward the success screen must follow the persisted server credit. Opening the return link alone is not proof of payment.
+
+## Earlier recheck — 2026-11-23 (historical state before owner confirmation)
 
 Read the authenticated cabinet's current official developer portal: authentication, token-payment/widget, token-payment/apple-pay, token-payment/google-pay, wallet/wallet-payment, status/get-status and callbacks. Widget now consistently documents POST (including its sample). Wallet `wallet_id` is a JSON number, discovered from the signed wallet/status response (m10 9, Birbank 10), not a guessed merchant ID. Current wallet responses and docs omit a top-level status; current get-status also omits operation_code. Keep the payment operation code mandatory on a successful signed callback before binding a widget transaction. An already server-issued wallet transaction can be verified against get-status without an omitted operation_code; reject explicit non-payment codes. Amount, transaction, optional order/currency, status/code and ownership checks remain mandatory.
 
