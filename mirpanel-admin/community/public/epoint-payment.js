@@ -18,7 +18,7 @@ export async function showEpointPayment(doc=document){
    amount.textContent=(purchase?'Sifariş məbləği: ':'Balansa əlavə ediləcək: ')+money(data.cents);
    if(purchase){const back=main.querySelector('a[href="/balans"]');if(back){back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Geri — Sifarişə qayıt';}}
    if(data.status==='success'||data.status==='failed'){stopped=true;location.replace(resultURL);return;}
-   if(!await walletDeviceSupports(data.method)){status.textContent='Bu cihazda '+name+' açılmır. Balansa qayıdıb başqa üsul seçin.';return;}
+   if(!await walletDeviceSupports(data.method)){status.textContent='Bu cihazda '+name+' açılmır. '+(purchase?'Sifarişə qayıdıb':'Balansa qayıdıb')+' başqa üsul seçin.';return;}
    if(['birbank','m10'].includes(data.method)&&data.redirect){
     const target=new URL(data.redirect);if(target.protocol!=='https:'||target.username||target.password||target.port)throw Error('Ödəniş keçidi düzgün deyil.');
     status.textContent=name+' ödəniş səhifəsi açılır…';stopped=true;location.replace(target.href);return;

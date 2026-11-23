@@ -148,7 +148,7 @@ export async function readEpointCheckout(pool,user,id){
  if(row.purpose==='purchase'){
   const p=(await pool.query('select p.*,o.order_code,o.payment_confirmed from mirpanel_community.epoint_purchases p join public.payment_orders o on o.id=p.order_id where p.id=$1 and p.user_id=$2',[id,user])).rows[0];
   if(!p)throw fail(503,'Sifariş ödənişi yoxlanmadı.');
-  return {purpose:'purchase',status:p.paid_at&&p.payment_confirmed?'success':['failed','error','returned'].includes(row.result_status)||row.state==='declined'?'failed':'pending',cents:Number(p.cents),orderId:p.order_id,orderCode:p.order_code,checkoutId:p.id,fulfillmentState:p.state};
+  return {purpose:'purchase',status:p.paid_at&&p.payment_confirmed?'success':['failed','error','returned'].includes(row.result_status)||row.state==='declined'?'failed':'pending',providerStatus:row.result_status,...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{}),cents:Number(p.cents),orderId:p.order_id,orderCode:p.order_code,checkoutId:p.id,fulfillmentState:p.state};
  }
  if(row.state==='declined')return {status:'failed'};
  const providerStatus=row.method&&row.method!=='card'?{providerStatus:row.result_status||'new',...(['failed','error'].includes(row.result_status)&&['180','canceled','cancelled'].includes(row.result_code)?{cancelled:true}:{})}:{};
