@@ -2,7 +2,7 @@ import {proxyCommunity} from '../_owner-community.js';
 export async function onRequest(context){
  const {request,env}=context,u=new URL(request.url);
  const sticker=/^\/community-assets\/avatar-(?:robot|pisik|bayqus|ayi|pinqvin)\.webp$/.test(u.pathname);
- const shopAsset=/^\/community-assets\/(?:shop-ui|topup-amount|wallet-topup)\.js$/.test(u.pathname);
+ const shopAsset=/^\/community-assets\/(?:shop-ui|topup-amount|wallet-topup|product-payment)\.js$/.test(u.pathname);
  // These exact files are public client code, not account or payment API data.
  if(u.hostname==='mirpanel.com'&&['GET','HEAD'].includes(request.method)&&env?.ASSETS&&
     (!request.headers.has('Origin')||request.headers.get('Origin')===u.origin)&&
