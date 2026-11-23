@@ -85,7 +85,7 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  if(!release?.allowed)throw fail(503,'Balans xidməti aktiv deyil.');
  await ensureEpointCheckout(pool);
  let walletId=null;
- if(wallet){walletId=(await epointWallets({env,send}))[method];if(!walletId)throw fail(503,'Bu cüzdan Epoint hesabında əlçatan deyil.');}
+ if(wallet){walletId=(await epointWallets({env,send}))[method];if(!walletId||!/^\d+$/.test(walletId)||!Number.isSafeInteger(Number(walletId))||Number(walletId)<=0)throw fail(503,'Bu cüzdan Epoint hesabında əlçatan deyil.');}
  const inserted=await pool.query('insert into mirpanel_community.epoint_checkout_requests(id,user_id,cents,method,wallet_id) values($1,$2,$3,$4,$5) on conflict(id) do nothing returning id',[id,user,cents,method,walletId]);
  if(!inserted.rowCount){
   const old=(await pool.query('select user_id,cents,state,method,redirect_url from mirpanel_community.epoint_checkout_requests where id=$1',[id])).rows[0];
@@ -100,7 +100,7 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  const orderId='mp_ep_'+id;
  const payload={public_key:env.EPOINT_PUBLIC_KEY.trim(),amount:widget||wallet?cents/100:topupAmountText(cents),order_id:orderId,description:'MirPanel balans artırma'};
  if(!widget)Object.assign(payload,{currency:'AZN',language:'az',success_redirect_url:origin+'/odenis/epoint/ugurlu?ref='+id,error_redirect_url:origin+'/odenis/epoint/ugursuz?ref='+id});
- if(wallet){payload.wallet_id=walletId;delete payload.success_redirect_url;delete payload.error_redirect_url;}
+ if(wallet){payload.wallet_id=Number(walletId);delete payload.success_redirect_url;delete payload.error_redirect_url;}
  const data=Buffer.from(JSON.stringify(payload)).toString('base64'),key=env.EPOINT_PRIVATE_KEY.trim();
  const signature=createHash('sha1').update(key).update(data).update(key).digest('base64');
  let answer;
@@ -143,8 +143,9 @@ export async function readEpointCheckout(pool,user,id){
  if(!present.intents)return {status:['failed','error','returned'].includes(row.result_status)?'failed':'pending',...providerStatus};
  const intent=(await pool.query('select status,credited_at,cents from mirpanel_community.epoint_wallet_intents where id=$1 and user_id=$2',[id,user])).rows[0];
  if(intent?.status==='success'&&intent.credited_at&&Number(intent.cents)===row.cents){
-  const credit=(await pool.query("select after_cents from mirpanel_community.wallet_ledger where user_id=$1 and request_id=$2 and kind='topup_credit'",[user,id])).rows[0];
-  return {status:'success',cents:row.cents,...(credit?{balanceCents:Number(credit.after_cents)}:{})};
+  const credit=(await pool.query("select after_cents,cents from mirpanel_community.wallet_ledger where user_id=$1 and request_id=$2 and kind='topup_credit'",[user,id])).rows[0];
+  if(!credit||Number(credit.cents)!==Number(row.cents))throw fail(503,'Balans mədaxili hələ təsdiqlənmədi. Vəziyyəti yenidən yoxlayın.');
+  return {status:'success',cents:row.cents,balanceCents:Number(credit.after_cents)};
  }
  return {status:['failed','error','returned'].includes(row.result_status||intent?.status)?'failed':'pending',...providerStatus};
 }

@@ -59,6 +59,25 @@ There is one shared Apple/Google widget and no documented method-selection param
 
 The cited sections do not mandate a separate test cabinet. Do not invent one as a prerequisite. Local tests inject provider replies. Live unpaid sessions verify only creation and opening, not completed payment or final credit. Obtain explicit per-method authorization before a real charge.
 
+## Current recheck — 2026-11-23 (supersedes historical observations below)
+
+Read the authenticated cabinet's current official developer portal: authentication, token-payment/widget, token-payment/apple-pay, token-payment/google-pay, wallet/wallet-payment, status/get-status and callbacks. Widget now consistently documents POST (including its sample). Wallet `wallet_id` is a JSON number, discovered from the signed wallet/status response (m10 9, Birbank 10), not a guessed merchant ID. Current wallet responses and docs omit a top-level status; current get-status also omits operation_code. Keep the payment operation code mandatory on a successful signed callback before binding a widget transaction. An already server-issued wallet transaction can be verified against get-status without an omitted operation_code; reject explicit non-payment codes. Amount, transaction, optional order/currency, status/code and ownership checks remain mandatory.
+
+Read-only deployment baseline was f8f54512 on Render and matching main frontend bytes. Apple association .txt is HTTP 200 text/plain, without redirect, byte-identical to the supplied original. This is placement evidence only, not Epoint/Apple domain approval. Existing hosted-card activation and keys must remain unchanged.
+
+Exactly one new owner-bound unpaid 1 AZN request was created per method, using the normal checkout module. Private provider replies/URLs are outside git in outputs/epoint-methods-20261123/unpaid. No authorization, charge or synthetic production credit was performed.
+
+| Method | Provider reference | Current opening observation |
+| --- | --- | --- |
+| Apple Pay | widget 24269585 | Creation succeeded; outer widget opened on Windows Chrome, no eligible Apple button. No connected Apple device or separate domain-approval confirmation. |
+| Google Pay | widget 24269586 | Creation succeeded; outer widget opened on Windows Chrome, no eligible Google button. No physical Android/active Wallet test. |
+| m10 | te024269587 | HTTP 200, redirect_url null; get-status new. Trace 16b043cb45413ae4b2bd06f680bcc261. No documented continuation request. Keep closed. |
+| Birbank | te024269589 | Real 1 AZN QR, Mirpanel merchant and app.birbank.az application link opened. Previous disabled-merchant error no longer present. No phone authorization/charge tested. |
+
+Release policy: Birbank can be opened following the verified QR opening and isolated settlement tests. Google Pay remains device-gated; public availability is conditional on its readiness probe, not a claim that a physical Android payment was tested. Apple stays closed until domain approval is confirmed; m10 stays closed until a usable redirect is returned. No method silently falls back to another. Unsupported devices receive an explanation and alternative methods. The success reader now requires the committed, amount-matching ledger credit as well as the successful intent; return URLs and browser messages do not credit balances.
+
+Current local regression tests cover all four methods, repeated/concurrent callbacks, incorrect signatures/amounts/currency/operation codes, pending/failure/return/server-error states, fake browser success, double-click request reuse and success-without-ledger rejection. These are isolated tests, not real completed payments. Reuse existing request IDs for status/retry; never recreate an unknown-outcome request. Final financial approval remains with the owner.
+
 ## Test commands
 
 - node scripts/test-epoint-result.mjs

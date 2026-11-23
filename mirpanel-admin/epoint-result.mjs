@@ -61,7 +61,7 @@ export function verifyEpointResult(raw,contentType,privateKey){
  if(value.operation_code!=null&&String(value.operation_code)!=='100')throw fail(422,'Bu əməliyyat dəstəklənmir.');
  if(value.currency!=null&&value.currency!=='AZN')throw fail(409,'Ödəniş valyutası uyğun deyil.');
  if(value.status==='success'&&(!reference(value.transaction)||String(value.operation_code??'100')!=='100'))throw fail(400,'Əməliyyat identifikatoru düzgün deyil.');
- return {id:value.order_id.slice(prefix.length),status:value.status,transaction:reference(value.transaction)?value.transaction:null,cents:value.amount!=null?parseCents(value.amount):null};
+ return {id:value.order_id.slice(prefix.length),status:value.status,transaction:reference(value.transaction)?value.transaction:null,cents:value.amount!=null?parseCents(value.amount):null,...(value.operation_code!=null?{operationCode:String(value.operation_code)}:{})};
 }
 
 // Server-only handoff from a future payment-creation flow. The provider ID must

@@ -19,7 +19,10 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
  if(!row)return;
  try{
   const result=await epointPost('get-status',{transaction:row.candidate_transaction},{env,send});
-  if(result.transaction!==row.candidate_transaction||String(result.operation_code)!=='100')throw fail(409,'Epoint əməliyyatı uyğun deyil.');
+  // Current get-status schema and actual responses omit operation_code. The
+  // transaction was issued by wallet/payment or bound by a signed payment
+  // callback. Never infer an ID, and reject an explicit non-payment code.
+  if(result.transaction!==row.candidate_transaction||result.operation_code!=null&&String(result.operation_code)!=='100')throw fail(409,'Epoint əməliyyatı uyğun deyil.');
   if(result.order_id!=null&&result.order_id!=='mp_ep_'+id)throw fail(409,'Epoint sifariş nömrəsi uyğun deyil.');
   // get-status does not document a currency field. These intents are issued
   // only in AZN. Explicit currency values from either channel must match.
@@ -39,6 +42,7 @@ export async function acceptEpointResult(pool,result,options={}){
  const exists=(await pool.query("select exists(select 1 from information_schema.columns where table_schema='mirpanel_community' and table_name='epoint_checkout_requests' and column_name='candidate_transaction') present")).rows[0].present;
  const row=exists?(await pool.query('select method,cents,state,candidate_transaction,result_status from mirpanel_community.epoint_checkout_requests where id=$1',[result.id])).rows[0]:null;
  if(!row||row.method==='card')return settleEpointResult(pool,result); // Existing hosted card contract is unchanged.
+ if(result.status==='success'&&result.operationCode!=='100')throw fail(422,'Ödəniş əməliyyatının növü təsdiqlənmədi.');
  if(row.state!=='ready')throw fail(409,'Ödəniş hələ hazır deyil.');
  if(result.cents!=null&&Number(row.cents)!==result.cents)throw fail(409,'Ödəniş məbləği uyğun deyil.');
  if(!ref(result.transaction))throw fail(400,'Epoint əməliyyat nömrəsi çatışmır.');

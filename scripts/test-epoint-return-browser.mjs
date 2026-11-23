@@ -86,7 +86,7 @@ try{
   assert.equal(await p.getByRole('button',{name:new RegExp(wrong)}).count(),0);
   await pay.evaluate(n=>{n.click();n.click();});
   if(method.endsWith('-pay')){
-   const widget=p.frameLocator('iframe[title="Epoint təhlükəsiz ödəniş"]');
+   const widget=p.frameLocator('iframe[title="'+label+' — Epoint təhlükəsiz ödəniş"]');
    await widget.getByRole('button').click();
    await p.getByText('Ödəniş yoxlanılır…',{exact:true}).waitFor();
   }else await p.getByRole('heading',{name:'Ödəniş yoxlanılır…'}).waitFor();

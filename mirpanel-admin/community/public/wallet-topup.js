@@ -159,7 +159,7 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
  }
  const digital=el('div');root.insertBefore(digital,selection);
  function walletTile(method,onClick){
-  const model=method==='apple-pay'?paymentMethods[1]:method==='google-pay'?paymentMethods[2]:method==='m10'?paymentMethods[3]:['Birbank','Elektron pulqabı',paymentMethods[0][2]];
+  const model=method==='apple-pay'?paymentMethods[1]:method==='google-pay'?paymentMethods[2]:method==='m10'?paymentMethods[3]:['Birbank','Elektron pulqabı','<path d="M7 3h6a5 5 0 0 1 0 10H7m0-2h7a5 5 0 0 1 0 10H7V3Z"/>'];
   const tile=button('',onClick),label=makeTile(model,tile);
   const last=Array.from(tiles.querySelectorAll('[data-digital-wallet]')).at(-1)||open;
   tile.dataset.digitalWallet=method;last.after(tile);

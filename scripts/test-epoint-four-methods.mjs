@@ -29,7 +29,7 @@ try{
    if(url.endsWith('/get-status')){
     checks++;assert.equal(p.transaction,transaction);
     if(drop)throw Error('Synthetic transport outage');
-    return Response.json({status:providerStatus,code:bad==='code'?'100':'000',operation_code:'100',amount:bad==='amount'?2.99:1.99,
+    return Response.json({status:providerStatus,code:bad==='code'?'100':'000',...(bad==='operation'?{operation_code:'001'}:{}),amount:bad==='amount'?2.99:1.99,
      currency:bad==='currency'?'USD':'AZN',order_id:bad==='order'?'wrong':'mp_ep_'+id,
      transaction:bad==='transaction'?'wrong':transaction});
    }
@@ -40,7 +40,7 @@ try{
     return Response.json({status:'success',widget_url:'https://epoint.az/api/1/token/widget/test'});
    }
    assert.equal(url,'https://epoint.az/api/1/wallet/payment');
-   assert.equal(p.currency,'AZN');assert.equal(p.wallet_id,method==='m10'?'9':'10');
+   assert.equal(p.currency,'AZN');assert.equal(p.wallet_id,method==='m10'?9:10);
    return Response.json({status:'success',transaction,redirect_url:'https://epoint.az/wallet/checkout/test'});
   };
   const opts={env,send},input={requestId:id,amount:'1.99',method};
@@ -54,11 +54,12 @@ try{
    return verifyEpointResult(Buffer.from(JSON.stringify({data,signature:createHash('sha1').update(env.EPOINT_PRIVATE_KEY+data+env.EPOINT_PRIVATE_KEY).digest('base64')})),'application/json',env.EPOINT_PRIVATE_KEY);
   };
   assert.throws(()=>callback('success',{currency:'USD'}),{status:409});
+  await assert.rejects(acceptEpointResult(pool,callback('success',{operation_code:undefined}),opts),{status:422});
   await assert.rejects(acceptEpointResult(pool,callback('success',{amount:'2.99'}),opts),{status:409});
   await acceptEpointResult(pool,callback(),opts);assert.equal(await actualBalance(),balance); // Browser/callback success cannot overrule "new".
   assert.equal((await readEpointCheckout(pool,'a',id)).status,'pending');
   providerStatus='success';
-  for(bad of ['amount','currency','order','transaction','code'])await assert.rejects(acceptEpointResult(pool,callback(),opts),{status:409});
+  for(bad of ['amount','currency','order','transaction','code','operation'])await assert.rejects(acceptEpointResult(pool,callback(),opts),{status:409});
   bad=null;drop=true;await assert.rejects(acceptEpointResult(pool,callback(),opts));
   assert.equal(await actualBalance(),balance);
   assert((await pool.query('select check_failures from mirpanel_community.epoint_checkout_requests where id=$1',[id])).rows[0].check_failures>0);
@@ -71,6 +72,26 @@ try{
   await reconcileEpoint(pool,id,{...opts,user:'a',force:true});
   assert.equal(await actualBalance(),balance);
   assert.equal(creates,1);assert(checks>=7);
+  let uncreditedId;
+  for(const outcome of ['new','failed','error','returned','server_error']){
+   const next=randomUUID(),tx='te_outcome_'+next;uncreditedId=next;
+   const outcomeSend=async url=>{
+    if(url.endsWith('/wallet/status'))return Response.json({'9':'M10','10':'BirBank'});
+    if(url.endsWith('/get-status'))return Response.json({status:outcome,transaction:tx,amount:1.99,code:outcome==='failed'?'180':'000',currency:'AZN',order_id:'mp_ep_'+next});
+    return Response.json({status:'success',transaction:tx,...(widget?{widget_url:'https://epoint.az/api/1/token/widget/synthetic-outcome'}:{redirect_url:'https://epoint.az/wallet/synthetic-outcome'})});
+   };
+   const outcomeOptions={env,send:outcomeSend};
+   await startEpointCheckout(pool,'a',{requestId:next,amount:'1.99',method},outcomeOptions);
+   await acceptEpointResult(pool,callback(outcome,{order_id:'mp_ep_'+next,transaction:tx}),outcomeOptions);
+   const state=await readEpointCheckout(pool,'a',next);
+   assert.equal(state.status,['new','server_error'].includes(outcome)?'pending':'failed');
+   if(outcome==='failed')assert.equal(state.cancelled,true);
+   assert.equal(await actualBalance(),balance);
+  }
+  // Even an inconsistent success marker cannot display success without a
+  // matching committed ledger entry. This row is synthetic and never settled.
+  await pool.query("update epoint_wallet_intents set status='success',credited_at=clock_timestamp() where id=$1",[uncreditedId]);
+  await assert.rejects(readEpointCheckout(pool,'a',uncreditedId),{status:503});
   console.log('PASS '+method+': exact endpoint/signature, owner, pending, wrong values, outage recovery, 8 parallel callbacks and one credit');
  }
  const count=(await pool.query("select count(*)::int n from mirpanel_community.wallet_ledger where kind='topup_credit'")).rows[0].n;
