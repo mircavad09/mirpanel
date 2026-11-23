@@ -60,6 +60,7 @@ try{
   eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,2);
   await drainEpointPurchases(pool,config);
   eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,2);
+  eq((await shop.get(req,owner,g.id)).deliveryStatus,'completed');
   const order=(await pool.query('select * from payment_orders where id=$1',[g.orderId])).rows[0];
   const finance=reportOrderFinance({...order,cost_price_snapshot:'2.00',cost_lines_snapshot:null});
   eq(finance.cost_price_snapshot,method==='apple-pay'?'2.30':'2.00');eq(finance.profit_snapshot,method==='apple-pay'?'7.70':'8.00');

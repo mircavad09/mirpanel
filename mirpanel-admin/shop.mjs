@@ -106,7 +106,7 @@ const {details,termsVersion:acceptedVersion,...line}=x;result.push({...line,...(
    whatsappUrl='https://wa.me/'+phone+'?text='+encodeURIComponent(message.join('\n'));
   }
  }
- if(g.state==='submitted'&&g.mode==='wallet'&&g.model_version===2&&g.order_id&&(await c.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name){
+ if(g.state==='submitted'&&['wallet','epoint'].includes(g.mode)&&g.model_version===2&&g.order_id&&(await c.query("select to_regclass('mirpanel_community.customer_order_deliveries') as name")).rows[0]?.name){
   deliveryStatus=customerStatus({status:rows[0]?.status,payment_confirmed:rows[0]?.payment_confirmed,checkout_snapshot:{cartVersion:2,items:rows.map(x=>x.snapshot)}},await deliveryRecords(c,[g.order_id]));
  }
  return{id:g.id,...(g.input?.tokenCount?{tokenCount:g.input.tokenCount}:{}),orderId:g.order_id||rows[0]?.order_id||null,orderCode,methodId:g.method_id,mode:g.mode,state:g.state==='reserved'&&Date.parse(g.expires_at)<=Date.now()?'expired':g.state,totalCents:Number(g.total_cents),expiresAt:g.expires_at,receiptUploaded:!!g.receipt,items:rows.map(({snapshot,payment_confirmed,...x})=>x),paymentConfirmed:g.state==='submitted'&&rows.length>0&&rows.every(o=>!['rejected','cancelled','expired'].includes(o.status)&&(o.payment_confirmed===true||['approved','completed'].includes(o.status))),...(g.input?.tokenCount&&g.state==='submitted'?{deliveryStatus:'completed'}:deliveryStatus?{deliveryStatus}:{}),...(whatsappUrl?{whatsappUrl}:{})};
