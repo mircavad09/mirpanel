@@ -78,6 +78,8 @@ Release policy: Birbank can be opened following the verified QR opening and isol
 
 Current local regression tests cover all four methods, repeated/concurrent callbacks, incorrect signatures/amounts/currency/operation codes, pending/failure/return/server-error states, fake browser success, double-click request reuse and success-without-ledger rejection. These are isolated tests, not real completed payments. Reuse existing request IDs for status/retry; never recreate an unknown-outcome request. Final financial approval remains with the owner.
 
+Live desktop inspection exposed a positive generic PaymentRequest capability even though the provider had no Google button. Google's current official FAQ states DPAN/CRYPTOGRAM_3DS is Android-only (https://developers.google.com/pay/api/faq). As Epoint's widget accepts only this mode, the production Google button also requires Android; a generic desktop positive result is rejected. Isolated browser tests deliberately simulate this device condition and are not physical Android evidence. The unpaid Birbank test was not approved; its later get-status is error/code=canceled, message Canceled, after the QR opening. No replacement request was created.
+
 ## Test commands
 
 - node scripts/test-epoint-result.mjs

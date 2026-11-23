@@ -76,6 +76,7 @@ try{
   state='pending';walletMethods={[method]:true};
   const p=await browser.newPage({viewport:{width,height:900}});
   await p.addInitScript(device=>{
+   if(device==='google')Object.defineProperty(navigator,'userAgent',{value:'Mozilla/5.0 (Linux; Android 14) Chrome/140.0'});
    Object.defineProperty(window,'ApplePaySession',{value:device==='apple'?{canMakePayments:()=>true}:undefined});
    Object.defineProperty(window,'PaymentRequest',{value:class{canMakePayment(){return Promise.resolve(device==='google');}}});
   },device);

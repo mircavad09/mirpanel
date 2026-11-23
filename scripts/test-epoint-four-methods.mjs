@@ -86,6 +86,10 @@ try{
    const state=await readEpointCheckout(pool,'a',next);
    assert.equal(state.status,['new','server_error'].includes(outcome)?'pending':'failed');
    if(outcome==='failed')assert.equal(state.cancelled,true);
+   if(outcome==='error'){
+    await pool.query("update mirpanel_community.epoint_checkout_requests set result_code='canceled' where id=$1",[next]);
+    assert.equal((await readEpointCheckout(pool,'a',next)).cancelled,true,'observed Birbank canceled code is rendered as cancellation');
+   }
    assert.equal(await actualBalance(),balance);
   }
   // Even an inconsistent success marker cannot display success without a

@@ -14,6 +14,9 @@ export async function walletDeviceSupports(method,device=globalThis){
   if(method==='m10'||method==='birbank')return true;
   if(method==='apple-pay')return device.ApplePaySession?.canMakePayments()===true;
   if(method!=='google-pay'||!device.PaymentRequest)return false;
+  // Epoint accepts device tokens only. Google documents CRYPTOGRAM_3DS as
+  // Android-only; desktop canMakePayment() may still return a false positive.
+  if(!/Android/i.test(device.navigator?.userAgent||'')&&device.navigator?.userAgentData?.platform!=='Android')return false;
   // Capability probe only; the Epoint iframe owns the payment sheet.
   const request=new device.PaymentRequest([{supportedMethods:'https://google.com/pay',data:{apiVersion:2,apiVersionMinor:0,
    allowedPaymentMethods:[{type:'CARD',parameters:{allowedAuthMethods:['CRYPTOGRAM_3DS'],allowedCardNetworks:['VISA','MASTERCARD']}}]}}],
@@ -47,7 +50,7 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
  try{config=await request('status',{signal});}catch{}
  const capabilities=await Promise.all(Object.keys(walletNames).filter(m=>config?.methods?.[m]===true).map(async method=>({method,supported:preview&&method==='google-pay'||await walletDeviceSupports(method)})));
  const methods=capabilities.filter(x=>x.supported).map(x=>x.method),unsupported=capabilities.filter(x=>!x.supported).map(x=>x.method);
- const deviceHint=unsupported.map(m=>m==='apple-pay'?'Apple Pay üçün Apple Pay aktiv olan uyğun Apple cihazı və brauzer lazımdır.':'Google Pay üçün Google Cüzdanı aktiv olan uyğun cihaz və brauzer lazımdır.').join(' ');
+ const deviceHint=unsupported.map(m=>m==='apple-pay'?'Apple Pay üçün Apple Pay aktiv olan uyğun Apple cihazı və brauzer lazımdır.':'Google Pay üçün Google Cüzdanı aktiv olan uyğun Android cihazı və brauzer lazımdır.').join(' ');
  if(!walletOnly&&config?.enabled===true)methods.push('card');
  if(signal.aborted)return;
  if(!methods.length&&!checking){
