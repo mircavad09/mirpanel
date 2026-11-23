@@ -18,6 +18,7 @@ import {epointMethods,startEpointCheckout,readEpointCheckout,readAppleCheckout,r
 import {epointWallets} from './epoint-api.mjs';
 import {previewOwner,startGooglePreview,readGooglePreview,googlePreviewHTML,googlePreviewRef} from './epoint-preview.mjs';
 import {acceptEpointResult,reconcileEpoint,startEpointReconciliation} from './epoint-reconcile.mjs';
+import {startEpointPurchaseWorker} from './epoint-purchase.mjs';
 import {readCatalogCosts,readEpinbyOrderCosts} from './epinby-finance.mjs';
 import {startSheetCustomerIdSync} from './community/netflix-sheet-customer-id.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
@@ -1585,7 +1586,7 @@ const server = http.createServer(async (request, response) => {
           try{const wallets=await epointWallets();methods.m10=methods.m10&&!!wallets.m10;methods.birbank=methods.birbank&&!!wallets.birbank;}
           catch{methods.m10=false;methods.birbank=false;walletError=true;}
         }
-        return json(response,200,{enabled:methods.card,methods,walletError,limits:epointLimits});
+        return json(response,200,{enabled:methods.card,methods,purchaseMethods:process.env.EPOINT_PRODUCT_PURCHASES_ENABLED==='true'?{...methods,card:false}:{},walletError,limits:epointLimits});
       }
       if(start&&!Object.values(methods).some(Boolean))return json(response,503,{error:'Epoint ilə balans artırma aktiv deyil.'});
       try{
@@ -1762,6 +1763,7 @@ const server = http.createServer(async (request, response) => {
 server.listen(config.port, () => {
   if(!deployment.workers){console.log('DEPLOYMENT_STANDBY_READ_ONLY');return;}
   startEpointReconciliation(()=>ownerCommunity.integrationPool());
+  startEpointPurchaseWorker(()=>ownerCommunity.integrationPool(),config);
   if(process.env.COMMUNITY_PUBLIC_ENABLED==='true')adminPush.start();
   void ownerCommunity.startWelcomeDelivery().catch(()=>console.warn('COMMUNITY_WELCOME_START_FAILED'));
   if(process.env.NETFLIX_ROOM_SHEET_ID){

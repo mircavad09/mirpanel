@@ -266,3 +266,5 @@
 .apple-topup-confirm button{flex:1;min-height:44px;padding:10px;border:1px solid #42464c;border-radius:11px;background:#25282c;color:#fff;font:600 15px system-ui;cursor:pointer}
 .apple-topup-confirm button.shop-primary{background:#ffda00;border-color:#ffda00;color:#111}
 .apple-topup-confirm button:disabled{opacity:.5;cursor:wait}
+.checkout-choices .checkout-warning[hidden]{display:none!important}
+.checkout-choices>.shop-link{display:flex;align-items:center;justify-content:center;margin-top:10px;text-align:center}

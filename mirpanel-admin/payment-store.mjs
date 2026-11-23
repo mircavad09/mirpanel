@@ -677,6 +677,7 @@ export function createPaymentStore(config,{epinbyCatalogCosts,epinbyOrderCosts}=
             contactedAt: order.contacted_at,
             receiptAvailable: Boolean(order.receipt_path && !order.receipt_deleted_at && order.payment_source!=='wallet'),paymentSource:order.payment_source||'card',paymentConfirmed:order.payment_confirmed===true,
             paymentMethodLabel: paymentMethodLabel({ ...method, method_name_snapshot: order.method_name_snapshot, method_last4_snapshot: order.method_last4_snapshot }),
+            ...(order.checkout_snapshot?.epointPayment?{externalPayment:{method:order.checkout_snapshot.epointPayment.method,state:order.checkout_snapshot.epointPayment.state,feeCents:order.checkout_snapshot.epointPayment.feeCents,feeSource:order.checkout_snapshot.epointPayment.feeSource}}:{}),
             ...(deliveryQueue ? { deliveryPending: true } : {})
           };
         }),

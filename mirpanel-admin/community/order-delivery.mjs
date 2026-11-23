@@ -15,13 +15,14 @@ const O='mirpanel_community.community_order_owners';
 const fail=(status,msg)=>Object.assign(Error(msg),{status});
 const uuid=v=>typeof v==='string'&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(v);
 export const orderCodeValid=v=>typeof v==='string'&&/^[A-Za-z0-9-]{1,40}$/.test(v);
-export const paid=o=>!['rejected','cancelled','expired'].includes(o.status)&&(o.payment_confirmed===true||['approved','completed'].includes(o.status));
+export const paid=o=>!['awaiting_payment','awaiting_stock'].includes(o.checkout_snapshot?.epointPayment?.state)&&!['rejected','cancelled','expired'].includes(o.status)&&(o.payment_confirmed===true||['approved','completed'].includes(o.status));
 export function deliveryLines(o){
  const lines=orderLines(o.checkout_snapshot);
  return lines.length?lines.map((line,i)=>({...line,image:o.checkout_snapshot.items[i].image||''})):
   [{title:o.product_title,planName:o.plan_name,productId:o.product_id,image:o.checkout_snapshot?.image||'',quantity:Number(o.quantity||o.checkout_snapshot?.quantity||1),unitCents:Math.round(Number(o.amount)*100)/Number(o.quantity||o.checkout_snapshot?.quantity||1)}];
 }
 export function customerStatus(o,records){
+ if(o.payment_confirmed&&o.checkout_snapshot?.epointPayment?.state==='awaiting_stock')return 'preparing';
  if(!paid(o))return o.status;
  if(o.checkout_snapshot?.tokenPurchaseCount)return 'completed';
  if(o.fulfillment_cancellation)return o.fulfillment_cancellation.full?'cancelled':'completed';

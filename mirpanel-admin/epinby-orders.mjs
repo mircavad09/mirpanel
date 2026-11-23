@@ -179,6 +179,7 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
    const jobs=(await c.query(`select d.*,o.checkout_snapshot,o.status,o.payment_confirmed,o.fulfillment_cancellation from ${D} d join public.payment_orders o on o.id=d.order_id
     where d.supplier_id=$1 and d.state='queued' and exists(select 1 from mirpanel_community.community_order_owners owner where owner.order_id=o.id) order by o.created_at,d.line_index for update of d,o skip locked limit 20`,[providerId])).rows;
    for(const job of jobs){
+    if(job.checkout_snapshot?.epointPayment&&!['queued','ready'].includes(job.checkout_snapshot.epointPayment.state))continue;
     if(!paid(job)||job.fulfillment_cancellation){await c.query("update "+D+" set state='skipped' where id=$1",[job.id]);continue;}
     const line=job.checkout_snapshot?.items?.[job.line_index];
     const done=(await c.query(`select 1 from ${S}customer_order_deliveries where order_id=$1 and line_index=$2 limit 1`,[job.order_id,job.line_index])).rowCount;
@@ -253,7 +254,7 @@ export function createEpinbyOrders({pool,security,loadCatalog,callbackUrl,transp
   try{
    await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
    unit=(await c.query(`select u.*,d.order_id,d.line_index,d.settings,d.settings->>'type' type,(d.settings->>'productId')::int product_id
-    from ${U} u join ${D} d on d.id=u.dispatch_id join public.payment_orders o on o.id=d.order_id where exists(select 1 from mirpanel_community.community_order_owners owner where owner.order_id=o.id) and (o.payment_confirmed=true or o.status='approved') and o.status not in ('cancelled','rejected','expired','completed') and o.fulfillment_cancellation is null and u.state in ('queued','checking','succeeded') and u.next_at<=now() and (u.external_id is not null or u.state='succeeded' or not exists(select 1 from ${U} waiting where waiting.state='queued' and waiting.reason like 'Epinby balansı%' and waiting.next_at>now()))
+    from ${U} u join ${D} d on d.id=u.dispatch_id join public.payment_orders o on o.id=d.order_id where exists(select 1 from mirpanel_community.community_order_owners owner where owner.order_id=o.id) and coalesce(o.checkout_snapshot->'epointPayment'->>'state','ready') in ('queued','ready') and (o.payment_confirmed=true or o.status='approved') and o.status not in ('cancelled','rejected','expired','completed') and o.fulfillment_cancellation is null and u.state in ('queued','checking','succeeded') and u.next_at<=now() and (u.external_id is not null or u.state='succeeded' or not exists(select 1 from ${U} waiting where waiting.state='queued' and waiting.reason like 'Epinby balansı%' and waiting.next_at>now()))
     order by case when u.external_id is not null or u.state='succeeded' then 0 when u.state='queued' then 1 else 2 end,u.next_at,o.created_at,d.line_index,u.unit_index limit 1 for update of u,d,o skip locked`)).rows[0];
    if(unit)await c.query(`update ${U} set state=case when state='queued' then 'checking' else state end,reason=case when state='queued' then 'Göndəriş başlanıb; nəticə təsdiqi gözlənilir.' else reason end,next_at=now()+interval '1 minute' where id=$1`,[unit.id]);
    if(unit)await c.query("update "+D+" set state='checking' where id=$1",[unit.dispatch_id]);

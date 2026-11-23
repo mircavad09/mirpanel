@@ -948,6 +948,7 @@ export function createPaymentSystem(options) {
       }
       if (request.method === "POST" && action === "approve") {
         const order = await store.getOrder(id);
+        if(order.payment_source==='epoint')throw Object.assign(new Error('Epoint ödənişi yalnız provayderin server nəticəsi ilə təsdiqlənir.'),{status:409});
         let durationMonths = order.duration_months || null;
         if (!durationMonths) {
           try {

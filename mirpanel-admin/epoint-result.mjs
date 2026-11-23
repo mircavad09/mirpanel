@@ -1,6 +1,7 @@
 import {createHash,timingSafeEqual,randomUUID} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {postLedger} from './shop.mjs';
+import {settlePurchase} from './epoint-purchase.mjs';
 
 const fail=(status,message)=>Object.assign(Error(message),{status});
 const reference=v=>typeof v==='string'&&/^[A-Za-z0-9_-]{1,128}$/.test(v);
@@ -81,6 +82,14 @@ export async function settleEpointResult(pool,result){
  const c=await pool.connect();
  try{
   await c.query('begin');
+  await c.query('select pg_advisory_xact_lock(714025001)');
+  if(await settlePurchase(c,result)){await c.query('commit');return;}
+  // A purchase may never fall back to the balance-credit path, even if its
+  // linked order is temporarily unavailable.
+  if((await c.query("select to_regclass('mirpanel_community.epoint_checkout_requests') present")).rows[0].present){
+   const purpose=(await c.query("select to_jsonb(r)->>'purpose' purpose from mirpanel_community.epoint_checkout_requests r where id=$1",[result.id])).rows[0]?.purpose;
+   if(purpose==='purchase')throw fail(409,'Sifariş ödənişinin əlaqəsi tapılmadı.');
+  }
   const readIntent=async()=>(await c.query('select * from mirpanel_community.epoint_wallet_intents where id=$1 for update',[result.id])).rows[0];
   let intent=await readIntent();
   // Widget creation does not guarantee a transaction ID. Only an already

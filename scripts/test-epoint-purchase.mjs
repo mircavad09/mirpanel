@@ -1,0 +1,79 @@
+import assert from 'node:assert/strict';
+import {createHash,randomBytes} from 'node:crypto';
+import {shopFixture} from './shop-test-fixture.mjs';
+import {startEpointCheckout,readEpointPayment} from '../mirpanel-admin/epoint-checkout.mjs';
+import {acceptEpointResult} from '../mirpanel-admin/epoint-reconcile.mjs';
+import {verifyEpointResult,settleEpointResult} from '../mirpanel-admin/epoint-result.mjs';
+import {drainEpointPurchases,ensureEpointPurchases} from '../mirpanel-admin/epoint-purchase.mjs';
+import {saveReadyStock} from '../mirpanel-admin/community/ready-stock.mjs';
+import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
+import {signature} from '../mirpanel-admin/employee-security.mjs';
+import {reportOrderFinance} from '../mirpanel-admin/payment-order-report.mjs';
+process.env.MIRPANEL_CART_V2_TEST='1';
+const env={EPOINT_PUBLIC_KEY:'synthetic-direct-public',EPOINT_PRIVATE_KEY:'synthetic-private',EPOINT_TOKEN_WIDGET_ENABLED:'true',EPOINT_APPLE_DOMAIN_VERIFIED:'true',EPOINT_APPLE_PAY_ENABLED:'true',EPOINT_GOOGLE_PAY_ENABLED:'true',EPOINT_BIRBANK_ENABLED:'true',EPOINT_M10_ENABLED:'true',EPOINT_PRODUCT_PURCHASES_ENABLED:'true'};
+Object.assign(process.env,env);
+const config={epointProductPaymentsEnabled:true,encryptionKey:randomBytes(32).toString('base64'),tokenSecret:randomBytes(32).toString('base64')};
+const f=await shopFixture({paymentConfig:config}),{pool,shop,id}=f,owner='a'.repeat(64),req={user:'a'};
+let checks=0;const eq=(a,b)=>{assert.deepEqual(a,b);checks++;};
+try{
+ await pool.query("insert into wallet_accounts(user_id,cents) values('a',2000)");
+ await ensureEpointPurchases(pool);await ensureEpointPurchases(pool);
+ await f.db.exec(f.db.read('mirpanel-admin/community/ready-stock-migration.sql'));
+ await saveReadyStock(pool,createPaymentSecurity(config),config.tokenSecret,f.catalog,'synthetic',{productId:'ordinary',index:0,planSignature:signature(f.catalog.products[0].plans[0]),requestId:id(),autoWallet:true,messages:Array.from({length:15},(_,i)=>'Synthetic isolated account '+i)});
+ const quote=await shop.quote(req,[{productId:'ordinary',planIndex:0,quantity:1}],owner);
+ const ordinary={productId:'ordinary',planIndex:0,quantity:1,termsVersion:quote.items[0].termsVersion};
+ const wallet=await shop.checkout(req,owner,{items:[ordinary],mode:'wallet',requestId:id(),consentAccepted:true});eq(wallet.paymentConfirmed,true);
+ const balance=async()=>Number((await pool.query("select cents from wallet_accounts where user_id='a'")).rows[0].cents);
+ eq(await balance(),1500);
+ for(const method of ['apple-pay','google-pay','birbank','m10']){
+  const body={items:[{...ordinary,quantity:2}],mode:'epoint',epointMethod:method,requestId:id(),consentAccepted:true,expectedTotalCents:1000};
+  const [g,h]=await Promise.all([shop.checkout(req,owner,body),shop.checkout(req,owner,body)]);eq(g.id,h.id);eq(g.paymentConfirmed,false);eq(g.totalCents,1000);
+  const transaction='synthetic_'+g.id;let creates=0,status='new',badAmount=false;
+  const send=async(url,options)=>{
+   const p=JSON.parse(Buffer.from(options.body.get('data'),'base64'));
+   if(url.endsWith('/wallet/status'))return Response.json({'9':'m10','10':'Birbank'});
+   if(url.endsWith('/get-status'))return Response.json({status,code:'000',amount:badAmount?11:10,currency:'AZN',transaction,order_id:'mp_ep_'+g.id});
+   creates++;eq(p.amount,10);eq(p.order_id,'mp_ep_'+g.id);
+   return Response.json(method.endsWith('-pay')?{status:'success',widget_url:'https://epoint.az/synthetic-widget'}:{transaction,redirect_url:'https://epoint.az/synthetic-wallet'});
+  };
+  const start=()=>startEpointCheckout(pool,'a',{method,requestId:g.id},{env,send,purchaseId:g.id});
+  await Promise.all([start(),start()]);eq(creates,1);
+  const page=await readEpointPayment(pool,'a',g.id);eq(page.purpose,'purchase');eq(page.cents,1000);eq(page.status,'pending');
+  await assert.rejects(readEpointPayment(pool,'b',g.id),{status:404});checks++;
+  await assert.rejects(startEpointCheckout(pool,'a',{method,requestId:g.id,amount:'10'},{env,send}),{status:409});checks++;
+  const callback=(overrides={})=>{const data=Buffer.from(JSON.stringify({order_id:'mp_ep_'+g.id,transaction,status:'success',operation_code:'100',amount:'10.00',currency:'AZN',...overrides})).toString('base64');return verifyEpointResult(Buffer.from(JSON.stringify({data,signature:createHash('sha1').update(env.EPOINT_PRIVATE_KEY+data+env.EPOINT_PRIVATE_KEY).digest('base64')})),'application/json',env.EPOINT_PRIVATE_KEY);};
+  await assert.rejects(acceptEpointResult(pool,callback({amount:'11'}),{env,send}),{status:409});checks++;
+  status='failed';await acceptEpointResult(pool,callback(),{env,send});eq((await readEpointPayment(pool,'a',g.id)).status,'failed');eq(await balance(),1500);
+  status='success';badAmount=true;await assert.rejects(acceptEpointResult(pool,callback(),{env,send}),{status:409});checks++;badAmount=false;
+  await Promise.all(Array.from({length:8},()=>acceptEpointResult(pool,callback(),{env,send})));
+  const paid=await readEpointPayment(pool,'a',g.id);eq(paid.status,'success');eq(paid.orderId,g.orderId);eq(await balance(),1500);
+  eq((await pool.query('select fee_cents from epoint_purchases where id=$1',[g.id])).rows[0].fee_cents,method==='apple-pay'?30:0);
+  eq((await pool.query("select count(*)::int n from wallet_ledger where request_id=$1",[g.id])).rows[0].n,0);
+  await settleEpointResult(pool,callback());eq(await balance(),1500);
+  eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,0);
+  await Promise.all([drainEpointPurchases(pool,config),drainEpointPurchases(pool,config)]);
+  eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,2);
+  await drainEpointPurchases(pool,config);
+  eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,2);
+  const order=(await pool.query('select * from payment_orders where id=$1',[g.orderId])).rows[0];
+  const finance=reportOrderFinance({...order,cost_price_snapshot:'2.00',cost_lines_snapshot:null});
+  eq(finance.cost_price_snapshot,method==='apple-pay'?'2.30':'2.00');eq(finance.profit_snapshot,method==='apple-pay'?'7.70':'8.00');
+ }
+ // A paid notification after the reservation has expired remains a real paid
+ // order, blocked from automatic fulfillment; it never becomes a wallet credit.
+ const late=await shop.checkout(req,owner,{items:[ordinary],mode:'epoint',epointMethod:'birbank',requestId:id(),consentAccepted:true});
+ await pool.query("update epoint_purchases set created_at=now()-interval '11 minutes' where id=$1",[late.id]);
+ await drainEpointPurchases(pool,config);
+ eq(!!(await pool.query('select reservation_released_at from epoint_purchases where id=$1',[late.id])).rows[0].reservation_released_at,true);
+ const lateTransaction='synthetic_late_'+late.id;
+ await startEpointCheckout(pool,'a',{requestId:late.id,method:'birbank'},{env,purchaseId:late.id,send:async url=>Response.json(url.endsWith('/wallet/status')?{'10':'Birbank'}:{transaction:lateTransaction,redirect_url:'https://epoint.az/synthetic'})});
+ await acceptEpointResult(pool,{id:late.id,cents:500,status:'success',transaction:lateTransaction,operationCode:'100'},{env,send:async()=>Response.json({transaction:lateTransaction,status:'success',code:'000',amount:5,currency:'AZN'})});
+ eq((await readEpointPayment(pool,'a',late.id)).fulfillmentState,'awaiting_stock');
+ await drainEpointPurchases(pool,config);
+ eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[late.orderId])).rows[0].n,0);
+ eq(await balance(),1500);
+ await assert.rejects(shop.checkout(req,owner,{items:[{...ordinary,productId:'zero'}],mode:'epoint',epointMethod:'birbank',requestId:id(),consentAccepted:true}),{status:409});checks++;
+ const count=Number((await pool.query('select count(*) n from epoint_purchases')).rows[0].n);
+ await ensureEpointPurchases(pool);eq(Number((await pool.query('select count(*) n from epoint_purchases')).rows[0].n),count);
+ console.log(JSON.stringify({checks,realProviderCalls:0,realPayments:0,walletUnchangedOnDirectPurchase:true}));
+}finally{await f.close();}

@@ -195,6 +195,13 @@ export async function showEpointReturn(doc=document){
   clearTimeout(timer);running=true;check.disabled=true;login.hidden=true;
   try{
    const data=await api('status?ref='+encodeURIComponent(ref),{signal:AbortSignal.timeout(8000)});
+   if(data.purpose==='purchase'){
+    back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Sifarişə qayıt';
+    if(data.status==='success'){stopped=true;check.hidden=true;location.replace(back.href);return;}
+    finish(data.status==='failed'?'Sifariş ödənişi tamamlanmadı':'Ödəniş yoxlanılır…',data.status==='failed'?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Yenidən ödəməzdən əvvəl vəziyyəti yoxlayın.':'Ödəniş təsdiqi gözlənilir. Bu əməliyyat balans artırması deyil.');
+    if(data.status==='failed'){stopped=true;check.hidden=true;}else if(++count<45)timer=setTimeout(refresh,4000);
+    return;
+   }
    if(data.status==='success'&&Number.isSafeInteger(data.cents)&&data.cents>0){
     clearDraft(ref);stopped=true;check.hidden=true;
     finish('Balansınız uğurla artırıldı',money(data.cents)+' balansınıza əlavə edildi.');

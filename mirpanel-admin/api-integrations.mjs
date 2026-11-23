@@ -206,6 +206,10 @@ export function createApiIntegrations({pool,security,loadCatalog,origins,callbac
         order by d.next_at limit 1 for update of d skip locked`)).rows[0];
       if (!job) { await c.query('commit'); return null; }
       const order = (await c.query('select * from public.payment_orders where id=$1 for update',[job.order_id])).rows[0];
+      if(['awaiting_payment','awaiting_stock'].includes(order.checkout_snapshot?.epointPayment?.state)){
+        await c.query("update "+dispatches+" set next_at=now()+interval '1 minute' where id=$1",[job.id]);
+        await c.query('commit');return null;
+      }
       const first = job.state === 'queued';
       const delivered = first && (await c.query(`select 1 from ${schema}.customer_order_deliveries
         where order_id=$1 and line_index=$2 limit 1`,[order.id,job.line_index])).rowCount;

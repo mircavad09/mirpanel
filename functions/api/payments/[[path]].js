@@ -7,7 +7,7 @@ export async function onRequest({request}){
  const fail=(s,e,code)=>{if(traceId)console.info('Receipt proxy',JSON.stringify({traceId,stage:'proxy',status:s,code:code||'RECEIPT_PROXY_REJECTED'}));return Response.json({error:e,...(code?{code}:{}),...(traceId?{traceId}:{})},{status:s,headers:{'Cache-Control':'private, no-store','Vary':'Cookie, Origin',...(traceId?{'X-Upload-Trace':traceId}:{})}});};
  const preview=(request.method==='GET'&&/^\/api\/payments\/epoint\/google-pay-preview(?:\/status)?$/.test(path))||(request.method==='POST'&&path==='/api/payments/epoint/google-pay-preview/start');
  const applePage=request.method==='GET'&&['/api/payments/epoint/apple-checkout','/api/payments/epoint/checkout'].includes(path);
- const renewal=request.method==='POST'&&path==='/api/payments/shop/renewal';
+ const renewal=request.method==='POST'&&['/api/payments/shop/renewal','/api/payments/shop/epoint'].includes(path);
  const inputs=request.method==='GET'&&/^\/api\/payments\/my-orders\/[0-9a-f-]{36}\/inputs$/.test(path);
  if((!allowed&&!preview&&!renewal&&!inputs&&!applePage)||!['GET','POST','OPTIONS'].includes(request.method))return fail(404,'Tapılmadı.','PAYMENT_PROXY_ROUTE_NOT_FOUND');
  const origin=request.headers.get('Origin');if(origin&&origin!==u.origin)return fail(403,'Sorğunun mənbəyi icazəli deyil.');

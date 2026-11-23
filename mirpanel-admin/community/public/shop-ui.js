@@ -1,3 +1,4 @@
+import {productPaymentChoices,confirmProductPayment} from './product-payment.js?v=direct-1';
 import '/request-recovery.js?v=bounded-1';
 const {ensureCart}=await window.MirpanelRecovery.module('/cart-ready.js?v=bounded-recovery-1');
 import {playCheckoutSound} from '/checkout-sounds.js?v=1';
@@ -153,16 +154,16 @@ async function payment(reveal=false,preview=null){
  }
 }
 function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
- const confirmed=!pending&&!failure;
+ const confirmed=!pending&&!failure;let selectedMethod='wallet';
  const choices=card('Ödəniş');choices.classList.add('checkout-choices');const amount=el('p',null,'checkout-amount');amount.append(el('span','Cəmi'),el('strong',q.totalCents==null?'—':checkoutMoney(q.totalCents)));choices.append(amount);
  const options=el('fieldset',null,'checkout-methods');options.append(el('legend','Ödəniş üsulu'));
  for(const [value,title,sub,icon] of [
-  ['card','Kartdan karta','Hazırda əlçatan deyil',cardIcon],
-  ['wallet','Balansla ödə',confirmed?checkoutMoney(q.balanceCents):null,walletIcon]
+
+  ['wallet','MirPanel balansı ilə ödə',confirmed?checkoutMoney(q.balanceCents):null,walletIcon]
  ]){
   const tile=el('label',null,'checkout-tile'),radio=el('input');
   radio.type='radio';radio.name='paymentMode';radio.value=value;
-  radio.disabled=value==='card';radio.checked=value==='wallet';
+  radio.disabled=false;radio.checked=value==='wallet';radio.onchange=()=>{if(radio.checked){selectedMethod=value;updateChoice();}};
   if(radio.disabled)tile.classList.add('checkout-tile-disabled');
   const detail=el('small',sub);
   if(value==='wallet'&&!confirmed){
@@ -173,6 +174,7 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
   tile.append(radio,icon(),el('strong',title),detail,el('span','✓','checkout-check'));
   options.append(tile);
  }
+ if(confirmed&&q.totalCents>=100&&q.totalCents<=50000&&!readyForTokens&&!q.items.some(x=>x.renewalOnly))void productPaymentChoices({host:options,el,signal:life.signal,select:method=>{selectedMethod=method;updateChoice();}}).catch(()=>{});
  choices.append(options);const walletStatus=el('div',null,'checkout-warning');choices.append(walletStatus);
  const stockOk=q.items.every(x=>!x.salesDisabled&&(x.available==null||x.available>=x.quantity));if(confirmed&&!stockOk)choices.append(el('p','Səbətdəki bəzi məhsullar seçdiyiniz sayda stokda yoxdur.','shop-error'),link('Səbətə qayıt','/sebet'));
  const detailsOk=q.items.every(x=>!x.detailsMissing);if(confirmed&&!detailsOk)choices.append(el('p','Sifariş məlumatları natamamdır. Paketi məhsul səhifəsində yenidən seçib məlumatları daxil edin.','shop-error'),link('Məhsullara bax','/mehsul'));
@@ -181,7 +183,7 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
  const legalLink=(title,id)=>{const a=link(title,'/sertler#sertler-'+id);a.target='_blank';a.rel='noopener';return a;};
  legal.append(legalLink('Ödəniş qaydalarını',4),', ',legalLink('geri qaytarma şərtlərini',6),' və ',legalLink('məsuliyyət hədlərini',8),' oxudum və qəbul edirəm.');
  consent.append(accept,legal);choices.append(consent);accept.onchange=()=>{consentAccepted=accept.checked;updateChoice();};
- const go=button('Sifarişi tamamla',()=>{if(go.disabled||!consentAccepted||!paymentReady)return;void run(submit);},true);choices.append(go,link('Ləğv et və səbətə qayıt','/sebet'));
+ const go=button('Sifarişi tamamla',()=>{if(go.disabled||!consentAccepted||!paymentReady)return;if(selectedMethod==='wallet')void run(submit);else confirmProductPayment({items:q.items,cents:q.totalCents,method:selectedMethod,el,signal:life.signal,onConfirm:()=>void run(submitElectronic)});},true);choices.append(go,link('Ləğv et və səbətə qayıt','/sebet'));
  const short=confirmed?Math.max(0,q.totalCents-q.balanceCents):0;
  if(failure){
   walletStatus.classList.add('checkout-retry');walletStatus.append(el('span','Ödəniş məlumatları alınmadı.'),button('Yenidən cəhd et',()=>void payment(true,q)));
@@ -197,12 +199,19 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
    el('p','Balansını artır, sonra səbətinə qayıdıb ödənişi tamamla.','checkout-shortfall-note'));
  }else walletStatus.hidden=true;
  function updateChoice(){
-  go.disabled=!confirmed||!paymentReady||!consentAccepted||!stockOk||!detailsOk||!termsOk||short>0;
+  walletStatus.hidden=selectedMethod!=='wallet'||(!failure&&!short);
+  go.disabled=!confirmed||!paymentReady||!consentAccepted||!stockOk||!detailsOk||!termsOk||(selectedMethod==='wallet'&&short>0);
   go.replaceChildren();
   if(go.disabled)go.append(checkoutIcon('<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>'));
-  go.append('Sifarişi tamamla'+(q.totalCents==null?'':' · '+checkoutMoney(q.totalCents)));
+  go.append((selectedMethod==='wallet'?'Sifarişi tamamla':'Ödənişə keç')+(q.totalCents==null?'':' · '+checkoutMoney(q.totalCents)));
  }
  async function submit(){if(!consentAccepted||!paymentReady||JSON.stringify(checkoutItems())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,'wallet','');group=await api('/checkout',{items,...tokenPayload(items),mode:'wallet',methodId:'',requestId:key.requestId,consentAccepted,expectedTotalCents:q.totalCents});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id,tokenCount:items[0]?.tokenCount,tokenTermsVersion:items[0]?.termsVersion}));await paymentGroup();if(group.orderCreated===true&&group.paymentConfirmed===true&&group.orderCode)void playCheckoutSound('order',group.orderCode);}catch(e){if(e.status===409)await payment().catch(()=>{});throw e;}}
+ async function submitElectronic(){
+  if(!consentAccepted||!paymentReady||JSON.stringify(checkoutItems())!==JSON.stringify(items))return refreshBasket();
+  const method=selectedMethod,key=await requestKey(items,'epoint',method);
+  const next=await api('/epoint',{items,mode:'epoint',epointMethod:method,requestId:key.requestId,consentAccepted:true,expectedTotalCents:q.totalCents});
+  localStorage.setItem(pendingKey,JSON.stringify({...key,id:next.id}));location.assign(next.paymentUrl);
+ }
  updateChoice();checkoutLayout(q,choices);if(reveal)revealPayment(choices);
 }
 async function paymentGroup(clearCart=true){
@@ -210,7 +219,7 @@ async function paymentGroup(clearCart=true){
  if(closed)return;
  const rejected=group.items.some(x=>['rejected','expired','cancelled'].includes(x.status));
  if(group.state==='submitted'){
-  if(clearCart){
+  if(clearCart&&(group.mode!=='epoint'||group.paymentConfirmed===true)){
    const pending=savedCheckout();
    cart.clearPaid(group.tokenCount,pending?.id===group.id?pending.tokenTermsVersion:null);
    localStorage.removeItem(pendingKey);
@@ -218,7 +227,7 @@ async function paymentGroup(clearCart=true){
   }
   const paid=group.paymentConfirmed===true, delivered=group.deliveryStatus==='completed';
   const heading=paid?'Ödənişiniz uğurla tamamlandı!':rejected?'Ödəniş təsdiqlənmədi':'Ödəniş yoxlanılır';
-  const detail=paid?(group.tokenCount?group.tokenCount+' token hesabınıza əlavə edildi.':delivered?'Hesab məlumatlarınız Sifarişlərim bölməsində hazırdır.':'Sifarişiniz hazırlanır. Təhvil vəziyyətini Sifarişlərim bölməsindən izləyə bilərsiniz.'):rejected?'Sifarişinizin cari statusuna Sifarişlərim bölməsində baxa bilərsiniz.':'Çekiniz qəbul edildi. Ödəniş təsdiqlənəndə sifarişinizin statusu yenilənəcək.';
+  const detail=paid?(group.tokenCount?group.tokenCount+' token hesabınıza əlavə edildi.':delivered?'Hesab məlumatlarınız Sifarişlərim bölməsində hazırdır.':'Sifarişiniz hazırlanır. Təhvil vəziyyətini Sifarişlərim bölməsindən izləyə bilərsiniz.'):rejected?'Sifarişinizin cari statusuna Sifarişlərim bölməsində baxa bilərsiniz.':group.mode==='epoint'?'Ödəniş təsdiqi gözlənilir. Sifarişiniz hələ təhvil verilmir.':'Çekiniz qəbul edildi. Ödəniş təsdiqlənəndə sifarişinizin statusu yenilənəcək.';
   const summary=el('section',null,'shop-result'),message=el('div',null,'shop-result-message'),actions=el('nav',null,'shop-result-actions');
   summary.dataset.result=paid?'paid':rejected?'rejected':'reviewing';
   const badge=checkoutIcon(paid?'<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>':rejected?'<circle cx="12" cy="12" r="9"/><path d="m9 9 6 6m0-6-6 6"/>':'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>');badge.classList.add('shop-result-badge');
@@ -233,6 +242,7 @@ async function paymentGroup(clearCart=true){
    const a=link('',url);a.classList.add('shop-result-action--'+variant);
    a.append(checkoutIcon(icon),el('span',label));actions.append(a);
   }
+  if(!paid&&group.mode==='epoint')actions.append(link('Ödənişə davam et','/odenis/epoint/odeme?ref='+encodeURIComponent(group.id)));
   if(paid&&group.tokenCount){
    window.dispatchEvent(new Event('mirpanel:token-balance-changed'));
    try{
@@ -244,7 +254,7 @@ async function paymentGroup(clearCart=true){
   if(existing){existing.dataset.result=summary.dataset.result;existing.querySelector('.shop-result-badge').replaceWith(badge);existing.querySelector('.shop-result-message').replaceChildren(...message.childNodes);}
   else{summary.append(badge,message,actions);app.replaceChildren(summary,error);if(clearCart)window.scrollTo({top:0,behavior:'instant'});}
   refreshAccount();
-  if(group.mode==='card'&&!group.paymentConfirmed&&!rejected){
+  if(['card','epoint'].includes(group.mode)&&!group.paymentConfirmed&&!rejected){
    const initial=group;
    const poll=async()=>{
     if(closed||group!==initial)return;

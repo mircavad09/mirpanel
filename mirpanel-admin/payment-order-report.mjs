@@ -64,7 +64,26 @@ export function aggregateSnapshotRows(rows = []) {
   };
 }
 
-export function reportOrderFinance(order, refundCents = 0, supplierLines) {
+export function reportOrderFinance(order,refundCents=0,supplierLines){
+ const result=productFinance(order,refundCents,supplierLines),payment=order.checkout_snapshot?.epointPayment;
+ // Immutable payment-time fee, never a balance movement or a retrospective tariff.
+ const cents=payment?.paid===true&&payment.method==='apple-pay'&&payment.feeBasisPoints===300&&Number.isSafeInteger(payment.feeCents)&&payment.feeCents>=0?payment.feeCents:0;
+ if(!cents)return result;
+ const fee=exactMoney(centsToMoney(cents));
+ const withFee=(row,amount)=>({...row,
+  payment_fee_snapshot:displayMoney(amount),payment_fee_source:payment.feeSource,
+  cost_price_snapshot:row.cost_price_snapshot==null?null:displayMoney(exactMoney(row.cost_price_snapshot)+amount),
+  known_cost_snapshot:displayMoney((row.exactKnownCost??exactMoney(row.known_cost_snapshot))+amount),
+  profit_snapshot:row.profit_snapshot==null?null:displayMoney(exactMoney(row.profit_snapshot)-amount),
+  ...(row.exactKnownCost!=null?{exactKnownCost:row.exactKnownCost+amount}:{})});
+ const output=withFee(result,fee);
+ if(result.financeLines?.length){
+  const total=result.financeLines.reduce((n,row)=>n+decimalToCents(row.sale_price_snapshot),0n);let assigned=0n;
+  output.financeLines=result.financeLines.map((row,index)=>{const share=index===result.financeLines.length-1?BigInt(cents)-assigned:total?BigInt(cents)*decimalToCents(row.sale_price_snapshot)/total:0n;assigned+=share;return withFee(row,exactMoney(centsToMoney(share)));});
+ }
+ return output;
+}
+function productFinance(order, refundCents = 0, supplierLines) {
   const sale = decimalToCents(order.sale_price_snapshot ?? order.amount);
   const refunded = BigInt(refundCents);
   const revenue = sale > refunded ? sale - refunded : 0n;

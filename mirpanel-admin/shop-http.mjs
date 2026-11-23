@@ -39,6 +39,7 @@ export async function handleShop({req,res,url,shop,browserOrders,security,readBo
  else if(path==='/token-status'&&req.method==='GET')value=await shop.tokenStatus(req,url.searchParams.get('requestId'));
  else if(path==='/gift-status'&&req.method==='GET')value=await shop.giftStatus(req,url.searchParams.get('requestId'));
  else if(path==='/checkout'&&post)value=await shop.checkout(req,owner,await readBody(req,40000));
+ else if(path==='/epoint'&&post)value=await shop.startProductPayment(req,owner,await readBody(req,40000));
  else if(path==='/checkout'&&req.method==='GET')value=await shop.get(req,owner,url.searchParams.get('id'));
  else if(path==='/whatsapp'&&req.method==='GET'){const target=await shop.whatsapp(req,owner,url.searchParams.get('id'));res.writeHead(302,{'Location':target,'Cache-Control':'private,no-store','Referrer-Policy':'no-referrer'});res.end();return true;}
  else if(path==='/cancel'&&post)value=await shop.cancel(req,owner,(await readBody(req,2000)).id);
