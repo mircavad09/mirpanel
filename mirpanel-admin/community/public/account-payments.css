@@ -53,3 +53,4 @@
 }
 
 .account-payment-row.account-payment-selected{outline:2px solid #e7bb42;outline-offset:3px;scroll-margin-top:160px}
+.account-payments button[data-document=confirmation]{width:80px;min-height:44px;height:auto;padding:8px;font-size:12px;line-height:1.3;white-space:normal}

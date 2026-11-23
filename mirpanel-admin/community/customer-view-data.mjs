@@ -1,3 +1,4 @@
+import {topupConfirmation} from '../topup-confirmation.mjs';
 import {customerPrices} from './customer-pricing.mjs';
 import {inventoryAvailability} from '../../inventory-availability.mjs';
 import {productSeoSlug} from '../product-pages.mjs';
@@ -39,7 +40,7 @@ export async function readCustomerView(pool,userId,path,{catalog,security,store}
    const history=await walletHistory(c,userId,{page:u.searchParams.get('page')||'1'});
    result={...history,items:history.items.map(({cents,reason,created_at})=>({cents,reason,created_at}))};
   }
-  else if(p==='/api/community/payment-history')result=await paymentHistory(c,userId,u.searchParams);
+  else if(p==='/api/community/payment-history')result=await paymentHistory(c,userId,u.searchParams,{readOnly:true});
   else if(p==='/api/payments/shop/prices')result=await customerPrices(c,userId,await catalog());
   else if(p==='/api/payments/shop/subscriptions')result=await customerSubscriptions(c,userId,catalog,()=>store.inventorySnapshot());
   else if(p==='/api/payments/storefront'){
@@ -62,8 +63,9 @@ export async function readCustomerView(pool,userId,path,{catalog,security,store}
   else if(/^\/api\/payments\/my-orders\/[a-f0-9-]{36}\/receipt$/.test(p))result=await orders.receipt(null,p.split('/').at(-2));
   else if(p==='/api/payments/shop/topup/receipt'){
    const row=(await c.query('select receipt,receipt_deleted_at from wallet_topups where id=$1::uuid and user_id=$2 and status<>\'draft\'',[u.searchParams.get('id'),userId])).rows[0];
-   if(!row?.receipt?.path||row.receipt_deleted_at)throw fail(404,'Qəbz tapılmadı.');
-   result={url:await store.signedReceipt(row.receipt.path,60,'owner-view',u.searchParams.get('id')),mime:row.receipt.mimeType};
+   if(!row)result=await topupConfirmation(c,u.searchParams.get('id'),{userId,readOnly:true});
+   else {if(!row.receipt?.path||row.receipt_deleted_at)throw fail(404,'Qəbz tapılmadı.');
+   result={url:await store.signedReceipt(row.receipt.path,60,'owner-view',u.searchParams.get('id')),mime:row.receipt.mimeType};}
   }else if(/^\/api\/community\/media\/[a-f0-9-]{36}\.webp$/.test(p)){
    const media=(await c.query('select bytes from profile_media where id=$1::uuid and user_id=$2',[p.split('/').at(-1).slice(0,-5),userId])).rows[0];
    if(!media)throw fail(404,'Şəkil tapılmadı.');result={media:media.bytes};

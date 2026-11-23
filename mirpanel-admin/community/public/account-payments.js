@@ -1,3 +1,4 @@
+import {renderPaymentConfirmation} from './payment-confirmation.js';
 // Receipt URLs are fetched only for visible thumbnails or an explicit preview.
 const statuses={all:'Hamısı',approved:'Təsdiqləndi',reviewing:'Yoxlanılır',rejected:'Rədd edildi',cancelled:'Ləğv edildi',canceled:'Ləğv edildi',expired:'Müddəti bitdi'};
 const scope=['all','approved','reviewing','rejected'];
@@ -53,6 +54,7 @@ export function mountPayments({readOnly=false,content,api,el,button,link,validat
  const isImage=m=>/^image\/(png|jpeg|webp)$/i.test(m||'');
  async function receipt(row){
   let d;try{d=await api(row.kind==='topup'?'/api/payments/shop/topup/receipt?id='+encodeURIComponent(row.id):'/api/payments/my-orders/'+encodeURIComponent(row.id)+'/receipt');}catch(e){if(e.status===401&&live)onUnauthorized?.();throw e;}
+  if(d.document)return d;
   const url=new URL(d.url);if(url.protocol!=='https:'||!url.hostname.endsWith('.supabase.co')||url.username||url.password)throw Error('Qəbz ünvanı düzgün deyil.');
   return {url:url.href,mime:d.mime};
  }
@@ -60,7 +62,8 @@ export function mountPayments({readOnly=false,content,api,el,button,link,validat
  async function open(row){
   const turn=++preview;media.replaceChildren(el('p',{},'Qəbz açılır…'));if(!dialog.open)dialog.showModal();
   try{const d=await receipt(row);if(!live||turn!==preview||!dialog.open)return;
-   if(isImage(d.mime))media.replaceChildren(image(d.url));
+   if(d.document)renderPaymentConfirmation(media,d.document);
+   else if(isImage(d.mime))media.replaceChildren(image(d.url));
    else if(d.mime==='application/pdf')media.replaceChildren(el('a',{href:d.url,target:'_blank',rel:'noopener noreferrer'},'PDF qəbzini aç'),el('iframe',{src:d.url,title:'PDF qəbzi',sandbox:'allow-same-origin',referrerpolicy:'no-referrer'}));
    else media.replaceChildren(el('p',{},'Bu qəbz formatı önizlənmir.'));
   }catch{if(live&&turn===preview&&dialog.open)media.replaceChildren(el('p',{},'Qəbz əlçatan deyil.'),button('Yenidən cəhd et',()=>open(row)));}
@@ -70,8 +73,8 @@ export function mountPayments({readOnly=false,content,api,el,button,link,validat
  }):null;
  function renderRow(row){
   const number=numberLabel(row);
-  const thumb=row.mime?button(row.mime==='application/pdf'?'PDF':'Qəbz',()=>open(row)):el('span',{},'Qəbz yoxdur');thumb.className='account-payment-thumb';
-  if(row.mime){thumb.setAttribute('aria-label','Qəbzi böyüt'+(number?': '+number:''));if(isImage(row.mime)&&observer){thumbnails.set(thumb,row);observer.observe(thumb);}}
+  const thumb=row.mime?button(row.mime==='application/vnd.mirpanel.confirmation'?'Ödəniş təsdiqi':row.mime==='application/pdf'?'PDF':'Çek',()=>open(row)):el('span',{},'Qəbz yoxdur');thumb.className='account-payment-thumb';if(row.mime==='application/vnd.mirpanel.confirmation'){thumb.dataset.document='confirmation';}
+  if(row.mime){thumb.setAttribute('aria-label',(row.mime==='application/vnd.mirpanel.confirmation'?'Ödəniş təsdiqini aç':'Qəbzi böyüt')+(number?': '+number:''));if(isImage(row.mime)&&observer){thumbnails.set(thumb,row);observer.observe(thumb);}}
   const credit=row.kind==='topup'&&row.status==='approved'&&row.cents!=null;
   const amount=el('strong',{class:credit?'account-payment-credit':''},(credit?'+':'')+money(row.cents));
   const title=row.by_receipt?'Qəbzlə ödəniş':row.kind==='topup'?'Balans yükləmə':row.title||'Alış ödənişi';

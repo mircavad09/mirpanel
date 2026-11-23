@@ -6,6 +6,9 @@ create table if not exists mirpanel_community.topup_fee_tariffs (
 );
 insert into mirpanel_community.topup_fee_tariffs(id,method,basis_points,effective_at,source)
  values('owner-apple-pay-20261123','apple-pay',300,'2026-11-23T00:00:00+04:00','Sahibin 23.11.2026 tapşırığı: Apple Pay üçün 3%; provayderin faktiki tutulması deyil') on conflict do nothing;
+insert into mirpanel_community.topup_fee_tariffs(id,method,basis_points,effective_at,source) values
+ ('owner-google-pay-20261123','google-pay',300,'2026-11-23T00:00:00+04:00','Sahibin bildirdiyi 3% tarif; provayderin faktiki xərc qeydi deyil'),
+ ('owner-birbank-20261123','birbank',300,'2026-11-23T00:00:00+04:00','Sahibin bildirdiyi 3% tarif; provayderin faktiki xərc qeydi deyil') on conflict do nothing;
 -- An optional, evidence-backed finance journal. Each provider event is unique;
 -- refunds and fee reversals are separate facts, not inferred wallet debits.
 create table if not exists mirpanel_community.topup_finance_facts (

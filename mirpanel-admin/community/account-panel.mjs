@@ -1,10 +1,13 @@
+import {ensurePaymentNumbers} from '../topup-confirmation.mjs';
 const fail=(status,message)=>Object.assign(Error(message),{status});
-export async function paymentHistory(pool,userId,query){
+export async function paymentHistory(pool,userId,query,{readOnly=false}={}){
  const filter=query.get('status')||'all',page=Number(query.get('page')||1),topup=query.get('topup')||'';
  if(topup&&!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(topup))throw fail(400,'Müraciət düzgün deyil.');
  if(!['all','approved','reviewing','rejected'].includes(filter)||!Number.isSafeInteger(page)||page<1||page>10000)throw fail(400,'Ödəniş filtri düzgün deyil.');
  const epoint=(await pool.query("select to_regclass('mirpanel_community.epoint_wallet_intents') is not null as present")).rows[0].present;
  const purchases=(await pool.query("select to_regclass('mirpanel_community.epoint_purchases') is not null as present")).rows[0].present;
+ if(epoint&&!readOnly)await ensurePaymentNumbers(pool);
+ const numbered=(await pool.query("select to_regclass('mirpanel_community.topup_document_numbers') n")).rows[0].n;
  const {rows:[result]}=await pool.query(`
  WITH payments AS (
    SELECT 'topup' AS kind,t.id::text,t.history_number::text AS number,'Balans yükləmə' AS title,
@@ -14,9 +17,9 @@ export async function paymentHistory(pool,userId,query){
      CASE WHEN t.status='rejected' THEN to_jsonb(t)->>'rejection_reason' END AS rejection_reason
    FROM wallet_topups t WHERE t.user_id=$1 AND t.status<>'draft'
    ${epoint?`UNION ALL
-   SELECT 'topup',e.id::text,null::text,'Epoint · Balans yükləmə',e.cents,e.credited_at,e.credited_at,
-     'approved',e.credited_at,false,null::text,null::text
-   FROM mirpanel_community.epoint_wallet_intents e WHERE e.user_id=$1 AND e.credited_at IS NOT NULL`:''}
+   SELECT 'topup',e.id::text,${numbered?"('MP-'||n.number::text)":'null::text'},'Epoint · Balans yükləmə',e.cents,e.credited_at,e.credited_at,
+     'approved',e.credited_at,false,'application/vnd.mirpanel.confirmation'::text,null::text
+   FROM mirpanel_community.epoint_wallet_intents e ${numbered?"left join mirpanel_community.topup_document_numbers n on n.source='epoint' and n.operation_id=e.id":''} WHERE e.user_id=$1 AND e.credited_at IS NOT NULL`:''}
    ${purchases?`UNION ALL
    SELECT 'order',p.id::text,o.order_code::text,
      o.product_title||' · '||case p.method when 'apple-pay' then 'Apple Pay' when 'google-pay' then 'Google Pay' when 'birbank' then 'Birbank' else 'm10' end,

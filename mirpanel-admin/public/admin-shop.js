@@ -1,3 +1,4 @@
+import {renderPaymentConfirmation} from '/community-assets/payment-confirmation.js';
 const el = (tag, text, className) => {
   const node = document.createElement(tag);
   if (text != null) node.textContent = text;
@@ -50,7 +51,7 @@ function identity(t) {
 }
 
 export async function mountShop({root, call, alive}) {
-  if(!document.querySelector('link[data-topup-finance]')){const css=el('link');css.rel='stylesheet';css.href='/admin-topup-finance.css?v=1';css.dataset.topupFinance='';document.head.append(css);}
+  if(!document.querySelector('link[data-topup-finance]')){const css=el('link');css.rel='stylesheet';css.href='/admin-topup-finance.css?v=2';css.dataset.topupFinance='';document.head.append(css);}
   let stopped = false, busy = false, rejectionDialog, receiptDialog, opened = false, loading = null, lastSnapshot = '';
   const params = new URLSearchParams(location.search);
   const target = params.get("topup");
@@ -72,7 +73,16 @@ export async function mountShop({root, call, alive}) {
   root.replaceChildren(header, filters, error, report, list, pages);
   async function reload(){run++;lastSnapshot='';try{await load(false);}catch(e){error.textContent=e.message;}}
   function renderReport(data){const r=data.report;if(!r)return;report.replaceChildren(el('h2','Seçilmiş dövr üzrə mədaxillər'));
-    const grid=el('div',null,'topupFinanceGrid');for(const [name,value]of [['Tamamlanmış mədaxil',r.completedCount],['Ümumi məbləğ',money(r.grossCents)],['Müştəri balansına mədaxil',money(r.creditedCents)],['Faktiki komissiya',r.actualCount?money(r.actualFeeCents)+` · ${r.actualCount} əməliyyat`:'Faktiki xərc qeydə alınmayıb'],['Tariflə hesablanan komissiya',money(r.estimatedFeeCents)+` · ${r.estimatedCount} əməliyyat`],['Komissiyası məlum olmayan',r.unknownFeeCount+' əməliyyat'],['Geri qaytarma',money(r.refundCents)+` · ${r.refundCount} əməliyyat`],['Komissiya geri ödənişi',money(r.feeRefundCents)],['Faktiki komissiyalı hissənin daxilolması',r.actualCount?money(r.actualNetCents):'Faktiki xərc qeydi yoxdur'],['Tariflə hesablanan hissənin daxilolması',money(r.estimatedNetCents)]]){const cell=el('div');cell.append(el('small',name),el('strong',String(value)));grid.append(cell);}report.append(grid,el('p',`Apple Pay: 3% · 23.11.2026-dan · mənbə: sahibin bildirdiyi tarif. Hesablanmış rəqəmlər bankın faktiki nəticəsi deyil. ${r.unknownFeeCount?'Naməlum komissiyalı hissə üçün xalis daxilolma hesablanmayıb.':''}`),el('p',data.refundNote));
+    const specific=['apple-pay','google-pay','birbank'].includes(method),covered=r.calculatedCount>0,partial=r.uncalculatedCount>0;
+    const grid=el('div',null,'topupFinanceGrid');
+    for(const [name,value,note]of [
+      ['Tamamlanmış mədaxil sayı',r.completedCount],['Ümumi ödəniş',money(r.grossCents)],['Müştəri balansına əlavə olunan',money(r.creditedCents)],
+      [specific?'Komissiya — 3%':'Hesablanmış komissiya',covered?money(r.calculatedFeeCents):'Hesablanmır',partial?'3%-li üsullar üzrə':'' ],
+      ['Komissiyadan sonra qalan',covered?money(r.calculatedNetCents):'Hesablanmır',partial?'3%-li üsullar üzrə':'' ],['Geri qaytarılan məbləğ',money(r.refundCents)]
+    ]){const cell=el('div');cell.append(el('small',name),el('strong',String(value)));if(note)cell.append(el('small',note));grid.append(cell);}
+    const extra=el('details',null,'topupTechnical');extra.append(el('summary','Ətraflı'),el('p',data.refundNote));
+    extra.append(el('p',`Faktiki komissiya: ${r.actualCount?money(r.actualFeeCents):'qeydə alınmayıb'} · Komissiya geri ödənişi: ${money(r.feeRefundCents)}`),el('p',`Tarifi olmayan ${r.uncalculatedCount} əməliyyatın komissiyası sıfır sayılmayıb; həmin hissə hesablanmış cəmlərə daxil deyil.`));
+    report.append(grid,el('p','Komissiya göstərilən tarif üzrə hesablanır.'),extra);
   }
 
   function button(text, fn, className = "") {
@@ -102,7 +112,7 @@ export async function mountShop({root, call, alive}) {
 
   async function showReceipt(t) {
     if (receiptDialog?.open) return;
-    const {url,mime} = await call("/shop?" + new URLSearchParams({only:"receipt", id:t.id}));
+    const {url,mime,document:confirmation} = await call("/shop?" + new URLSearchParams({only:"receipt", id:t.id}));
     if (stopped || !alive()) return;
     const dialog = el("dialog", null, "paymentActionDialog");
     const box = el("div", null, "paymentActionDialogCard");
@@ -116,6 +126,7 @@ export async function mountShop({root, call, alive}) {
     const title = el("h3", "Qəbz");
     title.id = "topupReceiptTitle";
     dialog.setAttribute("aria-labelledby", title.id);
+    if(confirmation){const preview=el('div');renderPaymentConfirmation(preview,confirmation);box.append(title,preview,close);dialog.append(box);document.body.append(dialog);receiptDialog=dialog;dialog.addEventListener('close',()=>dialog.remove(),{once:true});dialog.showModal();return;}
     const preview = el(mime === "application/pdf" ? "iframe" : "img");
     preview.style.cssText = "display:block;width:100%;max-height:65dvh;object-fit:contain;margin:8px 0";
     if (preview.tagName === "IFRAME") {
@@ -183,7 +194,7 @@ export async function mountShop({root, call, alive}) {
     const summary = el("div", null, "topupSummary");
     const status = el("span", labels[t.status] || "Naməlum status", "topupStatus");
     status.dataset.status = t.status;
-    const requested = el("strong", "Müştərinin daxil etdiyi məbləğ: ");
+    const requested = el("strong", "Məbləğ: ");
     requested.append(el("span", money(t.gross_cents??t.requested_cents)));
     summary.append(requested, status);
     top.append(identity(t), summary);
@@ -192,21 +203,22 @@ export async function mountShop({root, call, alive}) {
     const bank=typeof t.card_bank==="string"?t.card_bank.trim():"";
     details.append(el('strong',methodNames[t.method]||'Kartdan karta','topupBank'));
     if(t.source!=='epoint')details.append(el("strong", bank&&/^\d{4}$/.test(t.card_last4)?`${bank} •••• ${t.card_last4}`:"Kart məlumatı qeydə alınmayıb", "topupBank"));
-    details.append(el('span',t.source==='epoint'?'MirPanel əməliyyatı: mp_ep_'+t.id:'Müraciət № '+(t.history_number||t.id)));
-    if(t.source==='epoint')details.append(el('span','Epoint transaction: '+(t.provider_transaction||'Hələ verilməyib')));
-    details.append(time("Müraciət vaxtı (Bakı)", t.submitted_at||t.created_at));
-    if(t.settled_at)details.append(time('Təsdiq vaxtı (Bakı)',t.settled_at));
-    if(t.credited_cents>0){details.append(el('span','Müştəri balansına mədaxil: '+money(t.credited_cents)));details.append(el('span',t.fee_cents==null?'Komissiya: məlum deyil':`Komissiya (${t.fee_basis==='actual'?'faktiki':'tariflə hesablanmış'}): ${money(t.fee_cents)}`));if(t.actual_fee_cents!=null&&t.estimated_fee_cents!=null)details.append(el('span','Tarif müqayisəsi: '+money(t.estimated_fee_cents)));details.append(el('span','Komissiyadan sonrakı daxilolma: '+(t.net_cents==null?'hesablanmır':money(t.net_cents)+(t.fee_basis==='estimated'?' · hesablanmış':''))));if(t.tariff_source)details.append(el('small',t.tariff_source+' · qüvvəyə minmə: '+dateFormat.format(new Date(t.tariff_effective_at))));if(t.evidence)details.append(el('small','Faktiki maliyyə mənbəyi: '+t.evidence));if(t.refund_cents)details.append(el('span','Geri qaytarılıb: '+money(t.refund_cents)));}
-    if (t.status === "approved" && t.decided_at) details.append(time("Təsdiqlənib", t.decided_at));
-    if (t.status === "rejected") details.append(time("Rədd edilib", t.decided_at));
-    card.append(top, details);
-
-    const receiptRow = el("div", null, "topupReceiptRow");
-    if (t.receipt_available) receiptRow.append(button("Çekə bax", () => receipt(t)));
-    if (t.manual_status === "approved" && t.credited_cents != null) {
-      receiptRow.append(el("strong", `Təsdiqlənən məbləğ: ${money(t.credited_cents)}`, "topupApproved"));
-    }
-    if (receiptRow.childElementCount) card.append(receiptRow);
+    const reference=el('div',null,'topupReference'),number=t.display_number||t.history_number||'Hələ verilməyib';
+    reference.append(el('span','Əməliyyat № '+number));
+    if(t.display_number||t.history_number)reference.append(button('Kopyala',()=>navigator.clipboard.writeText(String(number))));details.append(reference);
+    if(t.source==='epoint')details.append(el('span','Epoint əməliyyat № '+(t.provider_transaction||'Hələ verilməyib')));
+    details.append(time('Yaradılıb',t.created_at||t.submitted_at));
+    details.append(t.settled_at?time('Tamamlanıb',t.settled_at):el('span','Tamamlanıb: —'));
+    if(t.credited_cents>0){details.append(el('span','Müştəri balansına əlavə olunan: '+money(t.credited_cents)),el('span',t.estimated_fee_cents==null?'Komissiya: məlum deyil':`Komissiya: ${Number(t.basis_points)/100}% · ${money(t.estimated_fee_cents)}`),el('span','Komissiyadan sonra qalan: '+(t.calculated_net_cents==null?'hesablanmır':money(t.calculated_net_cents))));if(t.refund_cents)details.append(el('span','Geri qaytarılıb: '+money(t.refund_cents)));}
+    const technical=el('details',null,'topupTechnical');technical.append(el('summary','Ətraflı'),el('small','Daxili ID: '+t.id));
+    if(t.source==='epoint')technical.append(el('small','Sorğu: mp_ep_'+t.id));
+    if(t.tariff_source)technical.append(el('small',t.tariff_source));
+    if(t.actual_fee_cents!=null)technical.append(el('small','Faktiki komissiya: '+money(t.actual_fee_cents)));
+    if(t.evidence)technical.append(el('small','Mənbə: '+t.evidence));
+    technical.append(el('small','Komissiya geri ödənişi: '+money(t.fee_refund_cents||0)));details.append(technical);
+    card.append(top,details);
+    const canReceipt=t.receipt_available||t.source==='epoint'&&t.credited_cents>0;
+    const check=button('Çek',()=>showReceipt(t),'topupCheck');check.disabled=!canReceipt;check.title=canReceipt?(t.source==='epoint'?'MirPanel ödəniş təsdiqi':'Yüklənmiş çek'):'Tamamlanmış ödəniş sənədi yoxdur';top.append(check);
     if(t.status==="rejected"){
       if(t.rejection_reason){
         const note=el("p","Səbəb — "+t.rejection_reason);
