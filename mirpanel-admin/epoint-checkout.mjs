@@ -1,10 +1,11 @@
 import {createHash} from 'node:crypto';
 import {registerEpointWalletIntent} from './epoint-result.mjs';
-import {parseTopupCents,topupAmountText} from './community/public/topup-amount.js';
+import {parseTopupCents,topupAmountText,TOPUP_MIN_CENTS,TOPUP_MAX_CENTS} from './community/public/topup-amount.js';
 import {epointWallets} from './epoint-api.mjs';
 import {inspectWalletOpening} from './epoint-opening.mjs';
 
 const origin='https://mirpanel.com';
+export const epointLimits=Object.freeze({minCents:TOPUP_MIN_CENTS,maxCents:TOPUP_MAX_CENTS});
 const endpoint='https://epoint.az/api/1/request';
 const uuid=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
 const fail=(status,message)=>Object.assign(Error(message),{status});
@@ -148,4 +149,12 @@ export async function readEpointCheckout(pool,user,id){
   return {status:'success',cents:row.cents,balanceCents:Number(credit.after_cents)};
  }
  return {status:['failed','error','returned'].includes(row.result_status||intent?.status)?'failed':'pending',...providerStatus};
+}
+
+export async function readAppleCheckout(pool,user,id){
+ // Ownership and committed-credit checks are identical to the normal return.
+ const status=await readEpointCheckout(pool,user,id);
+ const row=(await pool.query("select method,state,cents,redirect_url from mirpanel_community.epoint_checkout_requests where id=$1 and user_id=$2",[id,user])).rows[0];
+ if(row?.method!=='apple-pay')throw fail(404,'Apple Pay ödənişi tapılmadı.');
+ return {...status,method:'apple-pay',state:row.state,cents:Number(row.cents),...(row.state==='ready'&&status.status==='pending'?{widget:redirectUrl(row.redirect_url,{})}:{})};
 }

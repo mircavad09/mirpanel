@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {shopFixture} from './shop-test-fixture.mjs';
-import {startEpointCheckout,readEpointCheckout,epointMethods} from '../mirpanel-admin/epoint-checkout.mjs';
+import {startEpointCheckout,readEpointCheckout,readAppleCheckout,epointMethods,epointLimits} from '../mirpanel-admin/epoint-checkout.mjs';
 import {acceptEpointResult,reconcileEpoint} from '../mirpanel-admin/epoint-reconcile.mjs';
 import {verifyEpointResult} from '../mirpanel-admin/epoint-result.mjs';
 import {walletMap} from '../mirpanel-admin/epoint-api.mjs';
@@ -11,6 +11,7 @@ const env={EPOINT_PUBLIC_KEY:'test-public',EPOINT_PRIVATE_KEY:'test-private',
  EPOINT_GOOGLE_PAY_ENABLED:'true',EPOINT_M10_ENABLED:'true',EPOINT_BIRBANK_ENABLED:'true'};
 assert.deepEqual(walletMap({'8':'Portmanat','9':'M10','10':'BirBank'}),{m10:'9',birbank:'10'});
 assert.equal(epointMethods({...env,EPOINT_APPLE_DOMAIN_VERIFIED:'false'})['apple-pay'],false);
+assert.deepEqual(epointLimits,{minCents:100,maxCents:50000});
 const f=await shopFixture();
 try{
  const pool=f.pool;
@@ -47,6 +48,11 @@ try{
   await startEpointCheckout(pool,'a',input,opts);
   await startEpointCheckout(pool,'a',input,opts);
   assert.equal(creates,1);
+  if(method==='apple-pay'){
+   const page=await readAppleCheckout(pool,'a',id);assert.equal(page.cents,amount);assert.equal(page.method,'apple-pay');assert.equal(page.status,'pending');assert.ok(page.widget);
+   await assert.rejects(readAppleCheckout(pool,'b',id),{status:404});
+   await assert.rejects(readAppleCheckout(pool,null,id),{status:401});
+  }else await assert.rejects(readAppleCheckout(pool,'a',id),{status:404});
   await assert.rejects(startEpointCheckout(pool,'b',input,opts),{status:409});
   await assert.rejects(readEpointCheckout(pool,'b',id),{status:404});
   const callback=(status='success',extra={})=>{
@@ -68,6 +74,7 @@ try{
   balance+=amount;assert.equal(await actualBalance(),balance);
   const status=await readEpointCheckout(pool,'a',id);
   assert.deepEqual(status,{status:'success',cents:199,balanceCents:balance});
+  if(method==='apple-pay'){const paid=await readAppleCheckout(pool,'a',id);assert.equal(paid.status,'success');assert.equal(paid.cents,199);assert.equal(paid.widget,undefined);}
   await acceptEpointResult(pool,callback(),opts);
   await reconcileEpoint(pool,id,{...opts,user:'a',force:true});
   assert.equal(await actualBalance(),balance);

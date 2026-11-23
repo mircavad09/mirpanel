@@ -59,7 +59,17 @@ There is one shared Apple/Google widget and no documented method-selection param
 
 The cited sections do not mandate a separate test cabinet. Do not invent one as a prerequisite. Local tests inject provider replies. Live unpaid sessions verify only creation and opening, not completed payment or final credit. Obtain explicit per-method authorization before a real charge.
 
-## Apple Pay owner-confirmed domain activation — 2026-11-23
+## Current Apple Pay customer flow — 2026-11-23
+
+The owner's new display policy supersedes the earlier broad Apple-device policy: show Apple Pay only when the user agent identifies iPhone AND ApplePaySession.canMakePayments() returns true. iPad, Android and desktop are excluded even if they expose a positive Apple API. Final Wallet/card readiness still belongs to the official Epoint widget. No merchant/domain flags or other methods' settings change in this release.
+
+On eligible iPhones the existing methods panel precedes the amount panel. Apple Pay selection highlights the existing tile without creating a provider request. The shared server top-up policy is returned as limits in the existing status configuration. The amount CTA opens a native accessible confirmation dialog; Back preserves both selections. Confirm uses the existing start endpoint with one persisted UUID and navigates in the same tab to `/odenis/epoint/apple-pay?ref=UUID`.
+
+The separate noindex page reads `/api/payments/epoint/apple-checkout?ref=UUID`, authenticated through the existing narrow payment proxy. The server validates ownership and Apple method and reads the amount/widget from its existing checkout row, not URL amount parameters. No payment key/token/card data is added to the MirPanel page URL. The page embeds the Epoint widget with payment permission and keeps the provider's official financial button; it never fabricates one or opens an automatic popup. Refresh/retry/back reuse the same request. Browser messages only initiate bounded status checks. Only a server-confirmed committed credit leads to the existing success page. Apple drafts are isolated from other payment drafts and legacy Apple drafts retain their UUID.
+
+Targeted commands: test-apple-iphone-flow.mjs (isolated Chromium/WebKit at 320/390/430/1440, no external provider calls), test-apple-route.mjs, test-epoint-device.mjs, test-epoint-four-methods.mjs, test-epoint-checkout.mjs, test-epoint-result.mjs, test-epoint-return-browser.mjs. Synthetic iPhone identity and Apple APIs in these tests are not a physical iPhone payment test. Live checks must not create a new charge or credit.
+
+## Earlier Apple Pay owner-confirmed domain activation — 2026-11-23
 
 The owner explicitly confirmed that Epoint has approved mirpanel.com for Apple Pay. This supersedes the earlier pending-domain observation; do not request the same attestation again. Enable only EPOINT_APPLE_PAY_ENABLED=true and EPOINT_APPLE_DOMAIN_VERIFIED=true. The existing token-widget master gate is already enabled. Preserve all Google Pay, Birbank, m10, hosted-card and secret values.
 

@@ -4,7 +4,7 @@ import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
 let walletModule;
-const loadWalletModule=()=>walletModule??=window.MirpanelRecovery.module('/community-assets/wallet-topup.js?v=epoint-wallets-20261123').catch(e=>{walletModule=null;throw e;});
+const loadWalletModule=()=>walletModule??=window.MirpanelRecovery.module('/community-assets/wallet-topup.js?v=apple-iphone-flow-1').catch(e=>{walletModule=null;throw e;});
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
@@ -305,7 +305,7 @@ function showWallet(data,{createWalletTopup,topupReviewTime}){
  form.id='balansi-artir';
  amount.inputMode='decimal';amount.placeholder='0,00';amount.maxLength=32;hint.id='topupAmountHint';invalid.id='topupAmountError';amount.setAttribute('aria-describedby',hint.id+' '+invalid.id);invalid.setAttribute('aria-live','polite');
  const effective=()=>selectedCents??parseTopupCents(amount.value);
- function update(){let cents;try{cents=effective();invalid.textContent='';amount.setAttribute('aria-invalid','false');}catch(e){invalid.textContent=amount.value?e.message:'';amount.setAttribute('aria-invalid',String(!!amount.value));}result.textContent=cents!==undefined&&Number.isSafeInteger(data.cents)&&Number.isSafeInteger(data.cents+cents)?money(data.cents+cents):'—';flow?.updateAmount();}
+ function update(){let cents;try{cents=effective();invalid.textContent='';amount.setAttribute('aria-invalid','false');}catch(e){invalid.textContent=amount.value?e.message:'';amount.setAttribute('aria-invalid',String(!!amount.value));}result.textContent=cents!==undefined&&Number.isSafeInteger(data.cents)&&Number.isSafeInteger(data.cents+cents)?money(data.cents+cents):'—';flow?.updateAmount();form.dispatchEvent(new Event('wallet-amount-change'));}
  for(const n of presetAmounts){const b=button(n+' ₼',()=>{selectedCents=n*100;amount.value='';for(const p of presets.children)p.setAttribute('aria-pressed',String(p===b));update();});b.dataset.cents=String(n*100);b.setAttribute('aria-pressed',String(n===5));presets.append(b);}
  amount.oninput=()=>{selectedCents=null;for(const p of presets.children)p.setAttribute('aria-pressed','false');update();};
  const amountLabel=el('label',null,'wallet-custom-amount'),amountField=el('span',null,'wallet-custom-field'),currency=el('span','₼','wallet-custom-currency');
@@ -316,7 +316,7 @@ function showWallet(data,{createWalletTopup,topupReviewTime}){
  if(back){const a=link(giftReturn()?'← Hədiyyəyə qayıt':'← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
  app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions(topupReviewTime));void flow.resume();
  void import('/community-assets/epoint-wallet.js?v=epoint-four-1').then(m=>{
-  if(!flowSignal.aborted)return m.mountEpointWallet({form:flow.digital,accountId:profile?.user_id??profile?.id,getCents:effective,signal:flowSignal,back,el,button,link,walletTile:flow.walletTile,showDigital:flow.showDigital});
+  if(!flowSignal.aborted)return m.mountEpointWallet({form:flow.digital,accountId:profile?.user_id??profile?.id,getCents:effective,signal:flowSignal,back,el,button,link,walletTile:flow.walletTile,showDigital:flow.showDigital,appleFlow:{amountElement:form,methodElement:flow.element,select:()=>flow.selectDigital('apple-pay'),lockAmount:locked=>{amount.disabled=locked;for(const p of presets.children)p.disabled=locked;},restoreCents:c=>{selectedCents=presetAmounts.includes(c/100)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.dataset.cents)===selectedCents));update();}}});
  }).catch(()=>{});
 }
 function walletQuestions(topupReviewTime){

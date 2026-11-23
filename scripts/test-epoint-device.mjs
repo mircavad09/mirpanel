@@ -3,10 +3,12 @@ import {walletDeviceSupports} from '../mirpanel-admin/community/public/epoint-wa
 assert.equal(await walletDeviceSupports('m10',{}),true);
 assert.equal(await walletDeviceSupports('birbank',{}),true);
 assert.equal(await walletDeviceSupports('apple-pay',{}),false);
-assert.equal(await walletDeviceSupports('apple-pay',{ApplePaySession:{canMakePayments:()=>true}}),true);
+assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'},ApplePaySession:{canMakePayments:()=>true}}),true);
 for(const userAgent of ['Mozilla/5.0 (Macintosh; Intel Mac OS X) Safari/605.1.15','Mozilla/5.0 (iPad) Safari/605.1.15']){
- assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent},ApplePaySession:{canMakePayments:()=>true}}),true,'Apple capability, not iPhone name, controls availability');
+ assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent},ApplePaySession:{canMakePayments:()=>true}}),false,'owner policy excludes iPad and Mac even with Apple capability');
 }
+assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent:'Mozilla/5.0 (Linux; Android 14)'},ApplePaySession:{canMakePayments:()=>true}}),false);
+assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent:'iPhone'},ApplePaySession:{canMakePayments:()=>false}}),false,'iPhone name alone is insufficient');
 assert.equal(await walletDeviceSupports('apple-pay',{ApplePaySession:{canMakePayments:()=>false}}),false);
 assert.equal(await walletDeviceSupports('apple-pay',{ApplePaySession:{canMakePayments:()=>{throw Error('unsupported context');}}}),false);
 let parameters;

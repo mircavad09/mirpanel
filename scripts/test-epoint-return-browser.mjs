@@ -72,7 +72,7 @@ try{
  await page.reload();await page.getByRole('button',{name:/Epoint ödənişinə davam et/}).waitFor();
  await page.close();
  enabled=false;
- for(const [method,device,width] of [['apple-pay','apple',390],['google-pay','google',1440],['m10','none',390],['birbank','none',1440]]){
+ for(const [method,device,width] of [['google-pay','google',1440],['m10','none',390],['birbank','none',1440]]){
   state='pending';walletMethods={[method]:true};
   const p=await browser.newPage({viewport:{width,height:900}});
   await p.addInitScript(device=>{
@@ -96,6 +96,6 @@ try{
   assert.match(await p.locator('[data-epoint-balance]').textContent(),/12[,.]50/);
   await p.close();
  }
- assert.equal(starts,5);
- console.log('PASS: mobile/desktop Apple Pay, Google Pay, m10 and Birbank, widget/redirect, fake browser success rejected, verified success and one request per double click.');
+ assert.equal(starts,4);
+ console.log('PASS: mobile/desktop Google Pay, m10 and Birbank regression, widget/redirect, fake browser success rejected, verified success and one request per double click. Apple flow has its dedicated test.');
 }finally{await browser.close();await new Promise(r=>server.close(r));}

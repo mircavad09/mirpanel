@@ -31,7 +31,7 @@ export function orderBankDetail({el,button,method,amount,onChange,onCopy}){
 }
 export function createWalletTopup({el,button,api,run,money,methods,profile,getCents,onComplete,onBusy,restoreCents,signal,isClosed}){
  document.body.classList.remove('wallet-topup-active');signal.addEventListener('abort',()=>document.body.classList.remove('wallet-topup-active'),{once:true});
- const root=el('section',null,'shop-card wallet-topup'),title=el('h2','Ödəniş üsulu'),tiles=el('div',null,'wallet-method-tiles'),open=button('',()=>{selection.hidden=false;open.setAttribute('aria-expanded','true');document.body.classList.add('wallet-topup-active');}),selection=el('div',null,'wallet-bank-selection'),grid=el('div',null,'wallet-bank-grid'),stage=el('div'),notice=el('p','','shop-error');
+ const root=el('section',null,'shop-card wallet-topup'),title=el('h2','Ödəniş üsulu'),tiles=el('div',null,'wallet-method-tiles'),open=button('',()=>{selectDigital(null);selection.hidden=false;open.setAttribute('aria-expanded','true');document.body.classList.add('wallet-topup-active');}),selection=el('div',null,'wallet-bank-selection'),grid=el('div',null,'wallet-bank-grid'),stage=el('div'),notice=el('p','','shop-error');
  function makeTile([label,description,path],tile){
   const icon=el('span',null,'checkout-icon');
   icon.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.65" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';
@@ -160,11 +160,17 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
  const digital=el('div');root.insertBefore(digital,selection);
  function walletTile(method,onClick){
   const model=method==='apple-pay'?paymentMethods[1]:method==='google-pay'?paymentMethods[2]:method==='m10'?paymentMethods[3]:['Birbank','Elektron pulqabı','<path d="M7 3h6a5 5 0 0 1 0 10H7m0-2h7a5 5 0 0 1 0 10H7V3Z"/>'];
-  const tile=button('',onClick),label=makeTile(model,tile);
+  const tile=button('',()=>{selectDigital(method);onClick();}),label=makeTile(model,tile);
   const last=Array.from(tiles.querySelectorAll('[data-digital-wallet]')).at(-1)||open;
   tile.dataset.digitalWallet=method;last.after(tile);
+  if(method==='apple-pay'){tile.setAttribute('aria-pressed','false');const check=el('span','✓','wallet-method-check');check.setAttribute('aria-hidden','true');tile.append(check);}
   return {tile,label};
  }
  function showDigital(active){selection.hidden=active;open.disabled=active;open.setAttribute('aria-expanded',String(!active));}
- return{element:root,updateAmount,resume,digital,walletTile,showDigital};
+ function selectDigital(method){
+  for(const tile of tiles.children){const selected=method?tile.dataset.digitalWallet===method:tile===open;tile.classList.toggle('wallet-payment-method',selected);tile.setAttribute('aria-pressed',String(selected));}
+  selection.hidden=!!method;stage.hidden=!!method;open.setAttribute('aria-expanded',String(!method));
+  root.dispatchEvent(new CustomEvent('wallet-method-change',{detail:{method}}));
+ }
+ return{element:root,updateAmount,resume,digital,walletTile,showDigital,selectDigital};
 }

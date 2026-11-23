@@ -1,21 +1,23 @@
 const base='/api/payments/epoint/';
 const storeKey='mirpanel.epoint.wallet.v1';
+const appleStoreKey=storeKey+'.apple';
 const refPattern=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
 const validRef=value=>typeof value==='string'&&refPattern.test(value);
 function readDraft(){
  try{const d=JSON.parse(sessionStorage.getItem(storeKey));return validRef(d?.ref)?d:null;}catch{return null;}
 }
-function clearDraft(ref){try{if(readDraft()?.ref===ref)sessionStorage.removeItem(storeKey);}catch{}}
+function appleDraft(){try{const d=JSON.parse(sessionStorage.getItem(appleStoreKey));return validRef(d?.ref)?d:null;}catch{return null;}}
+function clearDraft(ref){try{if(readDraft()?.ref===ref)sessionStorage.removeItem(storeKey);if(appleDraft()?.ref===ref)sessionStorage.removeItem(appleStoreKey);}catch{}}
 const resultPath=ref=>'/odenis/epoint/ugurlu?ref='+encodeURIComponent(ref);
 const money=c=>new Intl.NumberFormat('az-AZ',{style:'currency',currency:'AZN'}).format(c/100);
+export const appleMoney=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
 const walletNames={'apple-pay':'Apple Pay','google-pay':'Google Pay',m10:'m10',birbank:'Birbank'};
 export async function walletDeviceSupports(method,device=globalThis){
  try{
   if(method==='m10'||method==='birbank')return true;
-  // Use Apple's capability API, not an iPhone/user-agent allowlist. Compatible
-  // Macs, iPads and other supported browser/device combinations are eligible.
-  // The Epoint widget performs the final active-Wallet/payment-sheet check.
-  if(method==='apple-pay')return device.ApplePaySession?.canMakePayments()===true;
+  // Owner policy is iPhone-only, AND Apple capability must be available.
+  // The Epoint widget still performs the final active-Wallet check.
+  if(method==='apple-pay')return /\biPhone\b/i.test(device.navigator?.userAgent||'')&&device.ApplePaySession?.canMakePayments()===true;
   if(method!=='google-pay'||!device.PaymentRequest)return false;
   // Epoint accepts device tokens only. Google documents CRYPTOGRAM_3DS as
   // Android-only; desktop canMakePayment() may still return a false positive.
@@ -37,29 +39,32 @@ async function api(route,options={}){
  if(!r.ok)throw Object.assign(Error(data.error||'Epoint xidməti cavab vermədi.'),{status:r.status});
  return data;
 }
-export async function mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly=false,walletTile,showDigital,amountHint,preview=false,fixedRequestId}){
+export async function mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly=false,walletTile,showDigital,amountHint,preview=false,fixedRequestId,appleFlow}){
  const draftKey=preview?storeKey+'.preview':storeKey;
  const readDraft=()=>{try{const d=JSON.parse(sessionStorage.getItem(draftKey));return validRef(d?.ref)?d:null;}catch{return null;}};
  const clearDraft=ref=>{try{if(readDraft()?.ref===ref)sessionStorage.removeItem(draftKey);}catch{}};
  const request=(route,options)=>api(route+(preview?(route.includes('?')?'&':'?')+'preview=google':''),options);
  if(!accountId||signal.aborted)return;
+ // Keep pending Apple payments independent from the other existing methods.
+ const legacy=readDraft();if(!preview&&legacy?.accountId===accountId&&legacy.method==='apple-pay'){sessionStorage.setItem(appleStoreKey,JSON.stringify(legacy));sessionStorage.removeItem(draftKey);}
+ const activeApple=()=>{const d=appleDraft();return d?.accountId===accountId?d:null;};
  const block=el('div',null,'shop-actions'),notice=el('p',null,'shop-muted');
  notice.hidden=true;
  notice.setAttribute('role','status');
  const active=()=>{const d=readDraft();return d?.accountId===accountId?d:null;};
- const statusLink=()=>{const d=active();return d?link('Epoint ödənişinin vəziyyəti',resultPath(d.ref)):null;};
+ const statusLink=()=>{const d=active()||activeApple();return d?link('Epoint ödənişinin vəziyyəti',resultPath(d.ref)):null;};
  let checking=statusLink();
  let config;
  try{config=await request('status',{signal});}catch{}
  const capabilities=await Promise.all(Object.keys(walletNames).filter(m=>config?.methods?.[m]===true).map(async method=>({method,supported:preview&&method==='google-pay'||await walletDeviceSupports(method)})));
  const methods=capabilities.filter(x=>x.supported).map(x=>x.method),unsupported=capabilities.filter(x=>!x.supported).map(x=>x.method);
- const deviceHint=unsupported.map(m=>m==='apple-pay'?'Apple Pay üçün Apple Pay aktiv olan uyğun Apple cihazı və brauzer lazımdır.':'Google Pay üçün Google Cüzdanı aktiv olan uyğun Android cihazı və brauzer lazımdır.').join(' ');
+ const deviceHint=unsupported.map(m=>m==='apple-pay'?'Apple Pay yalnız dəstəklənən iPhone-da istifadə olunur.':'Google Pay üçün Google Cüzdanı aktiv olan uyğun Android cihazı və brauzer lazımdır.').join(' ');
  if(!walletOnly&&config?.enabled===true)methods.push('card');
  if(signal.aborted)return;
  if(!methods.length&&!checking){
   if(!config||config.walletError){
    notice.hidden=false;notice.textContent='Epoint ödəniş üsulları hazırda alınmır. ';
-   const retry=button('Yenidən cəhd et',()=>{retry.disabled=true;block.remove();notice.remove();void mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly,walletTile,showDigital,amountHint,preview,fixedRequestId});});
+   const retry=button('Yenidən cəhd et',()=>{retry.disabled=true;block.remove();notice.remove();void mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly,walletTile,showDigital,amountHint,preview,fixedRequestId,appleFlow});});
    block.append(retry);form.append(notice,block);
   }
   else if(deviceHint){notice.hidden=false;notice.textContent=deviceHint+' Digər ödəniş üsulunu seçə bilərsiniz.';form.append(notice);}
@@ -70,6 +75,7 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
  form.append(block,notice);
  if(deviceHint){notice.hidden=false;notice.textContent=deviceHint+' Digər ödəniş üsulunu seçə bilərsiniz.';}
  const buttons=new Map();let busy=false,frame=null,timer=null,polls=0,polling=false,close=null,hintAt=0;
+ let appleSelected=false,appleActions=null,appleSubmit=null,appleDialog=null;
  const stopWidget=()=>{clearTimeout(timer);if(frame)showDigital?.(false);frame?.remove();frame=null;close?.remove();close=null;};
  signal.addEventListener('abort',stopWidget,{once:true});
  const say=copy=>{notice.hidden=false;notice.textContent=copy;};
@@ -108,23 +114,24 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
  },{signal});
  async function start(method){
   if(busy||frame||signal.aborted||!form.isConnected)return;
-  let d=active(),cents;
+  let d=method==='apple-pay'?activeApple():active(),cents;
   const prior=d?.method??'card';
   if(d&&prior!==method)return;
   try{cents=d?.cents??getCents();}catch(e){say(e.message);return;}
   busy=true;setLabels();say('Epoint ödəniş səhifəsi hazırlanır…');
   try{
-   if(!d){d={ref:preview?fixedRequestId:crypto.randomUUID(),accountId,cents,method,back:['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(back)?back:null};sessionStorage.setItem(draftKey,JSON.stringify(d));}
+   if(!d){d={ref:preview?fixedRequestId:crypto.randomUUID(),accountId,cents,method,back:['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(back)?back:null};sessionStorage.setItem(method==='apple-pay'?appleStoreKey:draftKey,JSON.stringify(d));}
    const response=await request('start',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:d.ref,amount:(cents/100).toFixed(2),...(method==='card'?{}:{method})})});
    if(signal.aborted)return;
-   if(response.state==='ready'&&['apple-pay','google-pay'].includes(method)){openWidget(response.widget,method);return;}
+   if(response.state==='ready'&&method==='apple-pay'){location.assign('/odenis/epoint/apple-pay?ref='+encodeURIComponent(d.ref));return;}
+   if(response.state==='ready'&&method==='google-pay'){openWidget(response.widget,method);return;}
    if(response.state==='ready'){location.assign(response.redirect);return;}
    if(response.state==='credited'){location.assign(resultPath(d.ref));return;}
-   if(response.state==='declined'){clearDraft(d.ref);notice.textContent='Epoint ödənişi başlatmadı. Məbləği yoxlayıb yenidən cəhd edə bilərsiniz.';return;}
+   if(response.state==='declined'){if(method==='apple-pay')sessionStorage.removeItem(appleStoreKey);else clearDraft(d.ref);notice.textContent='Epoint ödənişi başlatmadı. Məbləği yoxlayıb yenidən cəhd edə bilərsiniz.';return;}
    notice.textContent='Ödəniş başlatma nəticəsi gözlənilir. Vəziyyəti yoxlayın.';
   }catch(e){
    if(!signal.aborted){
-    if([400,415].includes(e.status)&&d)clearDraft(d.ref);
+    if([400,415].includes(e.status)&&d){if(method==='apple-pay')sessionStorage.removeItem(appleStoreKey);else clearDraft(d.ref);}
     notice.textContent=e.status?e.message:'Epoint ilə əlaqə alınmadı. Eyni ödənişin vəziyyətini yoxlayın.';
    }
   }finally{
@@ -133,16 +140,35 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
   }
  }
  function setLabels(){
-  const d=active();
   for(const [method,{tile,label}] of buttons){
+   const d=method==='apple-pay'?activeApple():active();
    const name=walletNames[method];
    tile.disabled=busy||!!frame||!!d&&(d.method??'card')!==method;
-   label.textContent=d&&(d.method??'card')===method?(name?name+' · ':'Epoint ödənişinə ')+'davam et · '+money(d.cents):name?name+(walletOnly?' ilə balansı artır':walletTile?'':' ilə ödə'):'Epoint ilə ödə';
+   label.textContent=method==='apple-pay'?'Apple Pay':d&&(d.method??'card')===method?(name?name+' · ':'Epoint ödənişinə ')+'davam et · '+money(d.cents):name?name+(walletOnly?' ilə balansı artır':walletTile?'':' ilə ödə'):'Epoint ilə ödə';
   }
+  refreshApple();
+ }
+ function appleCents(){const cents=activeApple()?.cents??getCents(),limits=config?.limits;if(!Number.isSafeInteger(cents)||!Number.isSafeInteger(limits?.minCents)||!Number.isSafeInteger(limits?.maxCents)||cents<limits.minCents||cents>limits.maxCents)throw Error('Etibarlı məbləğ seçin.');return cents;}
+ function refreshApple(){if(!appleSubmit)return;let cents;try{cents=appleCents();}catch{}appleSubmit.textContent=cents===undefined?'Balansa əlavə et':'Balansa '+appleMoney(cents)+' əlavə et';appleSubmit.disabled=!appleSelected||busy||cents===undefined;appleFlow?.lockAmount?.(appleSelected&&!!activeApple());}
+ function selectApple(){appleSelected=true;appleFlow?.select?.();if(activeApple())appleFlow?.restoreCents?.(activeApple().cents);appleActions.hidden=false;refreshApple();}
+ function confirmApple(){
+  let cents;try{cents=appleCents();}catch{return;}if(busy||appleDialog?.open)return;
+  const dialog=el('dialog',null,'apple-topup-confirm'),title=el('h2','Balans artımını təsdiqləyin'),copy=el('p','Balansınıza '+appleMoney(cents)+' əlavə etmək istəyirsiniz?'),method=el('p','Ödəniş üsulu: Apple Pay'),actions=el('div',null,'shop-actions');
+  title.id='appleTopupConfirmTitle';dialog.setAttribute('aria-labelledby',title.id);
+  const backButton=button('Geri',()=>dialog.close()),confirm=button('Təsdiq et',()=>{if(busy||confirm.disabled)return;let current;try{current=appleCents();}catch{}if(current!==cents){dialog.close();say('Məbləğ dəyişib. Yenidən təsdiqləyin.');return;}confirm.disabled=true;dialog.close();void start('apple-pay');},true);
+  actions.append(backButton,confirm);dialog.append(title,copy,method,el('p','Bu təsdiq ödəniş və ya balans artımı deyil. Son təsdiq Apple Pay-də verilir.','shop-muted'),actions);document.body.append(dialog);appleDialog=dialog;
+  dialog.addEventListener('close',()=>{dialog.remove();appleDialog=null;appleSubmit?.focus();},{once:true});dialog.showModal();
  }
  for(const method of methods){
-  if(walletTile&&method!=='card')buttons.set(method,walletTile(method,()=>void start(method)));
-  else{const b=button('',()=>void start(method),true);buttons.set(method,{tile:b,label:b});block.append(b);}
+  const handler=method==='apple-pay'?selectApple:()=>void start(method);
+  if(walletTile&&method!=='card')buttons.set(method,walletTile(method,handler));
+  else{const b=button('',handler,true);buttons.set(method,{tile:b,label:b});block.append(b);}
+ }
+ if(methods.includes('apple-pay')){
+  appleActions=el('div',null,'apple-topup-actions');appleActions.hidden=true;appleSubmit=button('Balansa əlavə et',confirmApple,true);appleActions.append(appleSubmit);(appleFlow?.amountElement||form).append(appleActions);
+  if(appleFlow){appleFlow.amountElement.before(appleFlow.methodElement);appleFlow.amountElement.addEventListener('wallet-amount-change',refreshApple,{signal});appleFlow.methodElement.addEventListener('wallet-method-change',e=>{appleSelected=e.detail?.method==='apple-pay';appleActions.hidden=!appleSelected;refreshApple();},{signal});}
+  signal.addEventListener('abort',()=>{appleDialog?.remove();appleActions.remove();},{once:true});
+  if(activeApple())selectApple();
  }
  setLabels();
 }
@@ -151,7 +177,7 @@ export async function showEpointReturn(doc=document){
  const main=doc.querySelector('[data-epoint-return]');
  if(!main)return;
  const title=main.querySelector('h1'),message=main.querySelector('[data-epoint-message]'),check=main.querySelector('[data-epoint-check]'),login=main.querySelector('[data-epoint-login]');
- const supplied=new URLSearchParams(location.search).get('ref'),draft=readDraft(),ref=supplied===null?draft?.ref:supplied;
+ const supplied=new URLSearchParams(location.search).get('ref'),draft=appleDraft()?.ref===supplied?appleDraft():readDraft(),ref=supplied===null?draft?.ref:supplied;
  if(!validRef(ref))return;
  const back=main.querySelector('[data-epoint-back]');
  if(draft?.ref===ref&&['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(draft.back)){back.href=draft.back;back.textContent=draft.back==='/qrup'?'Hədiyyəyə qayıt':'Alışa qayıt';}
