@@ -30,7 +30,7 @@ export function customerStatus(o,records){
 const totals=rows=>Object.fromEntries([...new Set(rows.map(r=>r.line_index))].map(i=>[i,rows.filter(r=>r.line_index===i).reduce((n,r)=>n+r.quantity,0)]));
 export async function deliveryRecords(pool,ids){
  if(!ids.length)return [];
- return (await pool.query(`select id,order_id,line_index,quantity,delivered_at,(actor in ('wallet:auto','card:auto','stock:auto')) as automatic from ${D} where order_id=any($1::uuid[]) order by delivered_at,id`,[ids])).rows;
+ return (await pool.query(`select id,order_id,line_index,quantity,delivered_at,to_jsonb(d)->>'replacement_at' as replaced_at,(actor in ('wallet:auto','card:auto','stock:auto')) as automatic from ${D} d where order_id=any($1::uuid[]) order by delivered_at,id`,[ids])).rows;
 }
 export async function ownerCodes(pool,user,id){
  const where=id?'and d.id=$2::uuid':'';
@@ -363,7 +363,9 @@ export function createCustomerOrderMailer(pool,send,origin,{pollMs=10000,loadCat
       }
       adminMessage=adminTopupMail(job,adminOrigin,preview,{test:job.topup_snapshot.test===true});
      }
-     const message=adminMessage??(active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):passwordNotice?roomPasswordMail(job,o,origin):orderMail(o,origin,{records,catalog}));
+     const replacementNotice=job.event_key.startsWith('replacement:');
+     const replacementMessage=replacementNotice?{user:{email:o.email},subject:'Hesabınız əvəzləndi — Sifariş № '+o.order_code,textBody:'Hesabınız əvəzləndi. Yeni hesab və əvəzləmə tarixi Sifarişlərim bölməsində göstərilir. Mövcud xidmət müddəti və zəmanət dəyişməyib. '+origin+'/profil?tab=sifarislerim&order='+encodeURIComponent(o.order_code)}:null;
+     const message=replacementMessage??adminMessage??(active?subscriptionReminderMail(job,active,origin):job.topup_id?topupMail(job,o,origin):cancellation?cancellationMail(job,o,origin):receipt?receiptReviewMail(o,origin):passwordNotice?roomPasswordMail(job,o,origin):orderMail(o,origin,{records,catalog}));
      const result=await send('order',{...message,idempotencyKey:job.event_key});
      if(typeof result?.id!=='string'||!result.id)throw Error('Missing provider receipt');
      state='accepted';reason=requireDeliveryNotice&&!reminder&&(job.topup_id||!receipt&&!cancellation&&!passwordNotice&&!job.delivery_id)?'RESEND_AWAITING_DELIVERY':null;provider=result.id;

@@ -1,9 +1,10 @@
+import {supportView} from './staff-support.js?v=1';
 const content=document.querySelector('#staffContent'),error=document.querySelector('#staffError');
 const el=(t,text)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;return n;};
 const button=(text,fn)=>{const b=el('button',text);b.type='button';b.onclick=()=>void run(fn);return b;};
 const money=v=>(Number(v)/100).toLocaleString('az-AZ',{minimumFractionDigits:2,maximumFractionDigits:2})+' ₼';
 let page=1,q='',selected=null,orderPage=1,revision=0,blocked=false;
-async function call(route){const r=await fetch('/api/community/staff'+route,{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(12000)});const d=await r.json();if(!r.ok){if([401,403].includes(r.status)){blocked=true;revision++;content.replaceChildren();if(r.status===401)login();}throw Error(d.error||'Yükləmə alınmadı.');}return d;}
+async function call(route,body){const r=await fetch('/api/community/staff'+route,{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(20000),...(body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{})});const d=await r.json();if(!r.ok){if([401,403].includes(r.status)){blocked=true;revision++;document.querySelectorAll('dialog').forEach(n=>n.remove());content.replaceChildren();if(r.status===401)login();}throw Error(d.error||'Yükləmə alınmadı.');}return d;}
 function login(){
  const form=el('form'),email=el('input'),password=el('input'),submit=el('button','İşçi hesabı ilə daxil ol');email.type='email';email.autocomplete='username';email.placeholder='İşçinin e-poçtu';email.required=true;email.setAttribute('aria-label','E-poçt');password.type='password';password.autocomplete='current-password';password.placeholder='Şifrə';password.required=true;password.setAttribute('aria-label','Şifrə');submit.type='submit';form.append(email,password,submit);form.onsubmit=async e=>{e.preventDefault();submit.disabled=true;error.textContent='';try{const r=await fetch('/api/auth/sign-in/email',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email.value,password:password.value})});if(!r.ok)throw Error('Giriş alınmadı. Hesab məlumatlarınızı yoxlayın.');password.value='';location.reload();}catch(e){error.textContent=e.message;}finally{submit.disabled=false;}};content.append(el('h2','İşçi girişi'),form,el('p','Google hesabı ilə giriş üçün yuxarıdakı “Öz hesabımla daxil ol” keçidindən istifadə edin, sonra bu ünvana qayıdın.'));
 }
@@ -22,14 +23,15 @@ const statusName={completed:'Tamamlandı',approved:'Ödəniş təsdiqlənib',rev
 async function detail(id,view=false){
  const rev=++revision;const d=await call('/customer?'+new URLSearchParams({id,page:orderPage}));if(blocked||rev!==revision)return;selected=id;
  content.replaceChildren(button('← İşçi panelinə qayıt',()=>{orderPage=1;return list();}),identity(d.user));
- if(!view){content.append(button('İstifadəçi gözündən bax',()=>{orderPage=1;return detail(id,true);}));return;}
- const notice=el('p','Baxılan müştəri: '+d.user.name+' · #'+d.user.memberNumber+' — yalnız oxuma. Şifrə, kod və təhvil hesabları göstərilmir.');notice.className='readonly';content.append(notice,el('h2','Sifarişlər'));
+ if(!view&&!d.permissions?.support){content.append(button('İstifadəçi gözündən bax',()=>{orderPage=1;return detail(id,true);}));return;}
+ const notice=el('p','Baxılan müştəri: '+d.user.name+' · #'+d.user.memberNumber+(d.permissions?.support?' — müştəri dəstəyi. Müştəri sessiyası açılmır.':' — yalnız oxuma. Şifrə, kod və təhvil hesabları göstərilmir.'));notice.className='readonly';content.append(notice,el('h2','Sifarişlər'));const cards=new Map();
  for(const o of d.orders){const card=el('article');card.append(el('strong','Sifariş № '+o.number));
   if(o.lines?.length){for(const line of o.lines)card.append(el('p',line.product),el('p','Paket: '+line.package+' · '+line.quantity+' ədəd'));}
   else card.append(el('p',o.product),el('p','Paket: '+o.package));
-  card.append(el('p',new Date(o.date).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})),el('p',o.amount+' '+o.currency),el('p','Status: '+(statusName[o.status]||o.status)));content.append(card);}
+  const state=d.details?.find(x=>x.number===o.number)?.status||o.status;card.append(el('p',new Date(o.date).toLocaleString('az-AZ',{timeZone:'Asia/Baku'})),el('p',o.amount+' '+o.currency),el('p','Status: '+(statusName[state]||state)));content.append(card);cards.set(o.number,card);}
  if(!d.orders.length)content.append(el('p','Sifariş yoxdur.'));
- content.append(pager(orderPage,d.more,()=>{orderPage--;return detail(id,true);},()=>{orderPage++;return detail(id,true);}));
+ if(d.permissions?.support)supportView(content,d,{call,button,cards,reload:()=>detail(id,true)});
+ content.append(pager(orderPage,d.more||d.historyMore,()=>{orderPage--;return detail(id,true);},()=>{orderPage++;return detail(id,true);}));
 }
 document.querySelector('#staffLogout').onclick=()=>void run(async()=>{const r=await fetch('/api/auth/sign-out',{method:'POST',credentials:'same-origin',headers:{'Content-Type':'application/json'},body:'{}'});if(!r.ok)throw Error('Çıxış alınmadı.');blocked=true;revision++;content.replaceChildren();location.assign('/hesab');});
 // No personal data is persisted; role revocation clears open content within 10s.

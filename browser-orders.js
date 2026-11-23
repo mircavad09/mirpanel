@@ -451,7 +451,7 @@ function netflixScreen(animation,create){
    const duration=Number(x.durationMonths);
    const extraDuration=Number.isInteger(duration)&&duration>0&&!new RegExp('(?:^|\\D)'+duration+'\\s*ay','iu').test(x.planName||'')?' · '+duration+' ay':'';
    const lineDeliveries=(['preparing','completed'].includes(o.status)?o.deliveries||[]:[]).filter(d=>d.line===i);
-   const delivered=lineDeliveries.map(d=>'<article class="browser-order-delivery" data-delivery="'+esc(d.id)+'"><header><span>'+esc(x.title)+' · '+esc(x.planName)+(d.quantity>1?' · '+esc(d.quantity)+' ədəd':'')+'</span><button type="button" data-copy-delivery disabled>'+copyIcon+'Kopyala</button></header><div class="browser-delivery-credentials"></div><pre hidden></pre><span role="status" data-delivery-status></span></article>').join('');
+   const delivered=lineDeliveries.map(d=>'<article class="browser-order-delivery" data-delivery="'+esc(d.id)+'"><header><span>'+esc(x.title)+' · '+esc(x.planName)+(d.quantity>1?' · '+esc(d.quantity)+' ədəd':'')+'</span><button type="button" data-copy-delivery disabled>'+copyIcon+'Kopyala</button></header>'+(d.replacedAt?'<p class="browser-order-replacement">Hesabınız əvəzləndi · '+esc(date(d.replacedAt))+'</p>':'')+'<div class="browser-delivery-credentials"></div><pre hidden></pre><span role="status" data-delivery-status></span></article>').join('');
    const cancelled=o.cancellation?.lines?.find(line=>line.index===i)?.quantity||0;
    const count=lineDeliveries.reduce((n,d)=>n+d.quantity,0),remaining=Math.max(0,qty-count-cancelled);
    const state=x.fulfillmentStatus||(count>=qty?'completed':count>0?'partial':cancelled&&!remaining?'cancelled':o.status);

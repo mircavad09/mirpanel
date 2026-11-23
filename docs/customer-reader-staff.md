@@ -1,5 +1,7 @@
 # Məhdud istifadəçi-baxış işçisi
 
+Yeni ayrıca dəstək icazələri üçün [Müştəri dəstəyi qaydaları](staff-customer-support.md). Aşağıdakı yalnız oxuma məhdudiyyətləri dəstək icazəsi verilməmiş əvvəlki işçilərə tətbiq olunur; yeni POST əməliyyatları ayrıca server icazəsi tələb edir.
+
 Giriş: https://mirpanel.com/isci (alternativ: /profil?tab=isci)
 
 Bu, stok/təhvil işçisindən ayrı `customer-reader` roludur. İşçi adi MirPanel hesabı yaradır və e-poçtunu təsdiqləyir. Sahib Admin → İstifadəçilər → həmin istifadəçi → “Yalnız oxuyan işçi rolu ver” seçir. Eyni yerdə “İşçi rolunu götür” rolunu ləğv edir. İşçinin şifrəsi adi autentifikasiya sistemində, sahib şifrəsindən müstəqildir. Google hesabı ilə giriş də adi hesab səhifəsindən mümkündür; sonra işçi ünvanını açır.

@@ -1,7 +1,8 @@
 import {withModuleRecovery} from '../../module-recovery.mjs';
 import {scheduleResendMail} from './resend-mail-scheduler.mjs';
 import {ensureInfluencers,setInfluencer,influencerRecipient,giftAdmin} from './influencers.mjs';
-import {staffRole,setStaffRole,staffRead} from './staff-readonly.mjs';
+import {staffRole,staffPermissions,ensureStaffReaders,setStaffRole,staffRead} from './staff-readonly.mjs';
+import {supportCustomer,supportMutation,replacementPolicies} from './staff-support.mjs';
 import {ensureTokens,tokenAdmin} from './tokens.mjs';
 import {influencerPreview} from './influencer-preview.mjs';
 import {ensureReadyDeliverySettings,readyDeliverySnapshot} from './ready-stock-availability.mjs';
@@ -66,7 +67,8 @@ export function createOwnerCommunity(env=process.env,options={}){
    if(part==='/tokens')return json(res,200,await tokenAdmin(r.pool,owner,Object.fromEntries(u.searchParams)));
    if(part==='/influencer-gifts')return json(res,200,await giftAdmin(r.repo,owner,Object.fromEntries(u.searchParams)));
    if(part==='/influencer-view'){const recipient=await influencerRecipient(r.pool,u.searchParams.get('userId'));return json(res,200,{recipient,...await r.repo.messages(Object.fromEntries(u.searchParams))});}
-   if(part==='/staff-role')return json(res,200,{enabled:await staffRole(r.pool,u.searchParams.get('userId'))});
+   if(part==='/staff-role')return json(res,200,await staffPermissions(r.pool,u.searchParams.get('userId')));
+   if(part==='/staff-policy'){await ensureStaffReaders(r.pool);return json(res,200,await replacementPolicies(r.pool,await options.loadCatalog(),owner.id));}
    if(part==='/dashboard')return json(res,200,await adminDashboard(r.pool));
    if(part==='/user-controls')return json(res,200,await userControls(r.pool,r.repo,u.searchParams.get('userId'),await options.loadCatalog()));
    if(part==='/user-statistics')return json(res,200,await userStatistics(r.pool,u.searchParams.get('userId'),Object.fromEntries(u.searchParams)));
@@ -90,6 +92,7 @@ export function createOwnerCommunity(env=process.env,options={}){
    if(part==='/public-group')return json(res,200,await setPublicGroup(r.repo,owner,b));
    if(part==='/renewals')return json(res,200,await adminScheduledRenewals(r.pool,await options.loadCatalog(),b,owner.id));
    if(part==='/staff-role')return json(res,200,await setStaffRole(r.pool,owner.id,b));
+   if(part==='/staff-policy'){await ensureStaffReaders(r.pool);return json(res,200,await replacementPolicies(r.pool,await options.loadCatalog(),owner.id,b));}
    if(part==='/influencer')return json(res,200,await setInfluencer(r.repo,owner,b));
    if(part==='/tokens')return json(res,200,await tokenAdmin(r.pool,owner,Object.fromEntries(u.searchParams)));
    if(part==='/influencer-gifts')return json(res,200,await giftAdmin(r.repo,owner,b));
@@ -105,7 +108,10 @@ export function createOwnerCommunity(env=process.env,options={}){
   }
   return json(res,404,{error:'Endpoint tapılmadı.'});
  },async staffRestricted(req){const user=await this.checkoutAccount(req,{verified:false});return user?staffRole((await init()).pool,user):false;
- },async staffRead(req,path,query){const user=await this.checkoutAccount(req,{verified:true});return staffRead((await init()).pool,user,path,query);
+ },async staffRead(req,path,query){const user=await this.checkoutAccount(req,{verified:true}),r=await init(),data=await staffRead(r.pool,user,path,query);
+  if(path==='/customer'&&(await staffPermissions(r.pool,user)).support){const security=createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64});Object.assign(data,await supportCustomer(r.pool,security,await options.loadCatalog(),user,query.get('id'),Number(query.get('page')||1)));}
+  return data;
+ },async staffWrite(req,path){const user=await this.checkoutAccount(req,{verified:true}),r=await init();await ensureStaffReaders(r.pool);const security=createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64});const result=await supportMutation(r.pool,security,await options.loadCatalog(),user,path,await body(req));if(result.state==='completed')void r.orderMailer?.wake();return result;
  },async shopContext(req){const {pool}=await init();return{pool,user:await this.checkoutAccount(req,{verified:false})};
  },async accountReserve(req,a){const id=await this.checkoutAccount(req);if(!id)return null;const {pool}=await init();return(await pool.query('select reserve_user_price_v1($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) value',[id,a.methodId,a.productId,a.planId,a.planKey,a.signature,a.amount,a.idempotencyKey,a.checkoutKey,a.previousReservationId,a.minutes,a.requireStock])).rows[0].value;
  },async reservedPrice(req,id){const {pool}=await init();const p=(await pool.query('select user_id,effective_cents from user_reservation_prices where reservation_id=$1',[id])).rows[0];if(!p)return null;if(await this.checkoutAccount(req)!==p.user_id)throw Object.assign(Error('Rezerv hesabı uyğun deyil. Hesabınıza daxil olun.'),{status:403});return Number(p.effective_cents)/100;

@@ -1,5 +1,6 @@
 const el=(t,text)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;return n;},money=v=>(Number(v)/100).toFixed(2)+' AZN',button=(t,fn)=>{const n=el('button',t);n.type='button';n.className='btn';n.onclick=fn;return n;};
 import {renderUserOrders} from '/admin-user-orders.js?v=1';
+import {staffSupportSettings} from '/admin-staff-support.js?v=1';
 import {renderControlsTab} from '/admin-user-controls.js?v=gift-compact-4';
 const ledgerDate=new Intl.DateTimeFormat('en-GB',{timeZone:'Asia/Baku',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'});
 const ledgerMoney=cents=>cents==null?'—':(Number(cents)/100).toFixed(2).replace('.',',')+' ₼';
@@ -93,11 +94,8 @@ export async function mountUsers({root,call,alive,userFilter='all'}){
   const run=++showRequest;if(detail.hidden)returnY=window.scrollY;const r=await coalesced('/users/'+encodeURIComponent(id));if(!valid()||run!==showRequest)return;
   for(const entry of tabsCache.values())entry.lease.active=false;tabsCache.clear();selected=r;activeTab=tab;wrap.hidden=true;detail.hidden=false;detail.replaceChildren();content.replaceChildren();
   const header=el('header'),back=button('← Geri',()=>{++showRequest;detail.hidden=true;wrap.hidden=false;window.scrollTo(0,returnY);}),identity=el('div'),stats=el('div');header.className='wu-detail-head';identity.className='wu-detail-identity';identity.append(el('h2',r.user.name),el('small',activity(r.user,true)));stats.className='wu-detail-stats';stats.append(el('strong',money(r.totalCents)),el('small','Ümumi xərclənib'),el('span',String(r.user.orderCount)),el('small','Sifarişlər'));header.append(back,avatar(r.user),identity,stats,button('Yenilə',safe(()=>refreshProfile())));detail.append(header);
-  const rolePanel=el('section'),roleStatus=el('p','İşçi rolu yoxlanılır…');rolePanel.append(roleStatus);detail.append(rolePanel);
-  void safe(async()=>{const role=await call('/staff-role?userId='+encodeURIComponent(id));if(!valid()||showRequest!==run)return;
-   const toggle=button(role.enabled?'İşçi rolunu götür':'Yalnız oxuyan işçi rolu ver',safe(async()=>{toggle.disabled=true;try{const saved=await call('/staff-role',{userId:id,enabled:!role.enabled});role.enabled=saved.enabled;roleStatus.textContent=role.enabled?'İşçi: istifadəçilər, balans və sifarişlər — yalnız oxuma.':'İşçi rolu yoxdur.';toggle.textContent=role.enabled?'İşçi rolunu götür':'Yalnız oxuyan işçi rolu ver';}finally{toggle.disabled=false;}}));
-   const entry=el('a','İşçi giriş ünvanı');entry.href='https://mirpanel.com/isci';entry.target='_blank';entry.rel='noopener';rolePanel.append(toggle,entry);roleStatus.textContent=role.enabled?'İşçi: istifadəçilər, balans və sifarişlər — yalnız oxuma.':'İşçi rolu yoxdur.';
-  })();
+  const rolePanel=el('section');detail.append(rolePanel);
+  void staffSupportSettings(rolePanel,call,id,()=>valid()&&showRequest===run);
   const tabs=el('nav');tabs.className='wu-tabs';for(const[key,label]of [['balance','Balans'],['prices','Xüsusi qiymətlər'],['stats','Statistika'],['referrals','Referallar'],['other','Digər'],['orders','Sifarişlər']]){const b=button(label,safe(()=>renderTab(key)));b.dataset.userTab=key;b.setAttribute('aria-pressed',String(key===tab));tabs.append(b);}detail.append(tabs,content);historyPage=1;await renderTab(tab);
  }
  async function renderTab(tab){

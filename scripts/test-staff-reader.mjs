@@ -9,6 +9,7 @@ process.env.MIRPANEL_CART_V2_TEST='1';
 const f=await shopFixture();let server,browser,upstream,child;
 const output='outputs/staff-reader';fs.mkdirSync(output,{recursive:true});
 try{
+ await f.db.exec(f.db.read('mirpanel-admin/community/ready-stock-migration.sql'));
  await f.pool.query("insert into community_profiles(user_id,display_name) values('a','İşçi Sınaq'),('b','Uzun adlı müştəri — sınaq məlumatı') on conflict do nothing");
  await f.pool.query("insert into wallet_accounts(user_id,cents) values('a',5000),('b',12345) on conflict(user_id) do update set cents=excluded.cents");
  const member=(await f.pool.query("select member_number::text n from community_member_numbers where user_id='b'")).rows[0].n;
@@ -43,7 +44,7 @@ try{
    if(u.pathname.startsWith('/api/community/staff/'))return send(200,await staffRequest(context,req,u));
    if(u.pathname.startsWith('/api/admin/')||u.pathname.startsWith('/api/employee/'))return send(403,{error:'Admin/işçi idarəetmə icazəsi yoxdur.'});
    if(u.pathname==='/profil'){res.writeHead(200,{'Content-Type':'text/html'});return res.end(staffHTML);}
-   if(u.pathname.startsWith('/community-assets/')){const name=u.pathname.slice(18);if(!['staff-reader.js','staff-reader.css'].includes(name))return send(404,{});res.writeHead(200,{'Content-Type':name.endsWith('.js')?'text/javascript':'text/css'});return res.end(fs.readFileSync('mirpanel-admin/community/public/'+name));}
+   if(u.pathname.startsWith('/community-assets/')){const name=u.pathname.slice(18);if(!['staff-reader.js','staff-support.js','staff-reader.css'].includes(name))return send(404,{});res.writeHead(200,{'Content-Type':name.endsWith('.js')?'text/javascript':'text/css'});return res.end(fs.readFileSync('mirpanel-admin/community/public/'+name));}
    return send(404,{});
   }catch(e){send(e.status||503,{error:e.message});}
  });

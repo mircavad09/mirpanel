@@ -1,0 +1,98 @@
+import assert from 'node:assert/strict';
+import crypto from 'node:crypto';
+import {execFile} from 'node:child_process';
+import {promisify} from 'node:util';
+import {shopFixture} from './shop-test-fixture.mjs';
+import {createPaymentSecurity} from '../mirpanel-admin/payment-security.mjs';
+import {signature} from '../mirpanel-admin/employee-security.mjs';
+import {planKey} from '../mirpanel-admin/payment-profit.mjs';
+import {staffRead,setStaffRole,staffPermissions,staffRequest} from '../mirpanel-admin/community/staff-readonly.mjs';
+import {supportCustomer,supportMutation,replacementPolicies} from '../mirpanel-admin/community/staff-support.mjs';
+import {ensureReadyStockManagement,freeManagementClause} from '../mirpanel-admin/community/ready-stock-management.mjs';
+import {recordDelivery,ownerCodes,deliveryRecords,createCustomerOrderMailer} from '../mirpanel-admin/community/order-delivery.mjs';
+import {createAccountOrders} from '../mirpanel-admin/account-orders.mjs';
+process.env.MIRPANEL_CART_V2_TEST='1';
+const f=await shopFixture(),{pool,db,id,catalog}=f;
+const securityConfig={encryptionKey:crypto.randomBytes(32).toString('base64'),tokenSecret:crypto.randomBytes(32).toString('base64')},security=createPaymentSecurity(securityConfig);
+const plan=catalog.products[0].plans[0];Object.assign(plan,{warrantyMode:'guaranteed',warrantyDuration:20,warrantyUnit:'day'});
+let savedOrder;
+try{
+ for(const name of ['ready-stock-migration.sql','subscriptions-migration.sql'])await db.exec(db.read('mirpanel-admin/community/'+name));
+ await db.exec(db.read('supabase/migrations/202611090904_topup_emails.sql'));
+ await ensureReadyStockManagement(pool);
+ await setStaffRole(pool,'owner',{userId:'a',enabled:true});
+ assert.equal((await staffPermissions(pool,'a')).replacement,false,'Existing reader never upgraded');
+ await assert.rejects(supportCustomer(pool,security,catalog,'a','b'),{status:403});
+ await setStaffRole(pool,'owner',{userId:'a',enabled:true,support:true,replacement:true});
+ await pool.query(`insert into "user"(id,name,email,"emailVerified") values('worker2','Worker Two','worker2@example.test',true)`);
+ await setStaffRole(pool,'owner',{userId:'worker2',enabled:true,support:true,replacement:true});
+ await pool.query("insert into wallet_accounts(user_id,cents) values('b',50000) on conflict(user_id) do update set cents=50000");
+ await replacementPolicies(pool,catalog,'owner',{productId:'ordinary',index:0,signature:signature(plan),enabled:true});
+ const batch=id();await pool.query('insert into ready_stock_batches(id,fingerprint,actor,units) values($1,\'synthetic\',\'owner\',20)',[batch]);
+ async function stock(product='ordinary',key=planKey(plan,0),sig=signature(plan)){
+  await pool.query('insert into ready_stock_plans(product_id,plan_key,plan_signature) values($1,$2,$3) on conflict do nothing',[product,key,sig]);
+  const unit=id();await pool.query('insert into ready_stock_units(id,product_id,plan_key,plan_signature,batch_id,message_cipher) values($1,$2,$3,$4,$5,$6)',[unit,product,key,sig,batch,security.encryptSecret(JSON.stringify({id:unit,scope:[product,key,sig],account:{email:unit+'@example.test',password:'SYNTHETIC-PASSWORD-'+unit}}))]);return unit;
+ }
+ async function purchase({warranty=true,quantity=1}={}){
+  const items=[{productId:'ordinary',planIndex:0,quantity},{productId:'unlimited',planIndex:0,quantity:1}];
+  const quote=await f.shop.quote({user:'b'},items,'b'.repeat(64));
+  const result=await f.shop.checkout({user:'b'},'b'.repeat(64),{mode:'wallet',items:items.map((x,i)=>({...x,termsVersion:quote.items.find(q=>q.productId===x.productId).termsVersion})),requestId:id(),consentAccepted:true});
+  const snapshot=(await pool.query('select checkout_snapshot from payment_orders where id=$1',[result.orderId])).rows[0].checkout_snapshot;
+  assert.equal(snapshot.items[0].warrantyDuration,20,'Checkout saves the actual purchased warranty');
+  if(!warranty)await pool.query(`update payment_orders set checkout_snapshot=jsonb_set(checkout_snapshot,'{items,0}',checkout_snapshot->'items'->0||$2::jsonb) where id=$1`,[result.orderId,JSON.stringify({warrantyMode:'none'})]);
+  const delivery=id(),unit=await stock();
+  await recordDelivery(pool,security,'synthetic',result.orderId,delivery,0,1,'Synthetic product instructions',{email:'old@example.test',password:'SYNTHETIC-OLD'});
+  await pool.query('update ready_stock_units set delivery_id=$2 where id=$1',[unit,delivery]);
+  return {...result,delivery,unit};
+ }
+ const a=await purchase();savedOrder=a;
+ const before=await pool.query("select cents::text from wallet_accounts where user_id='b'");
+ const data=await supportCustomer(pool,security,catalog,'a','b');assert(data.details[0].units[0].canReplace);assert(!JSON.stringify(data).includes('SYNTHETIC-OLD'));assert(data.ledger.length);
+ const user=await staffRead(pool,'a','/users',new URLSearchParams({q:'b@example.test'}));assert(user.users.some(x=>x.id==='b'));
+ const mutate=(actor,b)=>supportMutation(pool,security,catalog,actor,'/replace',b);
+ const request={userId:'b',deliveryId:a.delivery,requestId:id(),reason:'Synthetic login failure',confirmed:true};
+ await assert.rejects(mutate('a',{...request,userId:'a'}),{status:404});
+ await assert.rejects(supportMutation(pool,security,catalog,'a','/credentials',{...request}),{status:403});
+ const wrong=await stock('ordinary','wrong-package','f'.repeat(64));
+ const waiting=await mutate('a',request);assert.equal(waiting.state,'waiting_stock');
+ assert.equal((await pool.query('select delivery_id from ready_stock_units where id=$1',[wrong])).rows[0].delivery_id,null);
+ const next=await stock();
+ const results=await Promise.all([mutate('a',request),mutate('worker2',{...request,requestId:id()})]);assert(results.every(x=>x.state==='completed'));assert(results.some(x=>x.replayed));
+ assert.equal((await pool.query('select count(*)::int n from staff_replacements where delivery_id=$1',[a.delivery])).rows[0].n,1);
+ assert.equal((await pool.query('select delivery_id from ready_stock_units where id=$1',[next])).rows[0].delivery_id,a.delivery);
+ assert((await pool.query('select deleted_at from ready_stock_management where unit_id=$1',[a.unit])).rows[0].deleted_at);
+ assert.equal((await pool.query('select message_cipher from customer_order_deliveries where id=$1',[a.delivery])).rows[0].message_cipher!==undefined,true);
+ assert.equal((await pool.query('select count(*)::int n from customer_order_mail where event_key like \'replacement:%\'')).rows[0].n,1);
+ assert.equal((await pool.query('select old_cipher from staff_replacements where delivery_id=$1',[a.delivery])).rows[0].old_cipher!==null,true);
+ assert.equal((await pool.query('select cents::text from wallet_accounts where user_id=\'b\'')).rows[0].cents,before.rows[0].cents);
+ const replay=await mutate('a',{...request,requestId:id()});assert(replay.replayed,'A new click must still return prior replacement');
+ await pool.query("update customer_order_mail set state='accepted',provider_id='synthetic-prior' where event_key not like 'replacement:%'");
+ const notices=[],mailer=createCustomerOrderMailer(pool,async(kind,msg)=>{notices.push(msg);return {id:'synthetic-replacement-mail'};},'https://mirpanel.com');
+ await mailer.wake();await mailer.wake();await mailer.stop();assert.equal(notices.length,1);assert.match(notices[0].subject,/Hesabınız əvəzləndi/);assert(!JSON.stringify(notices).includes('SYNTHETIC-PASSWORD'));
+ const accountApi=createAccountOrders({security,store:{},resolve:async()=>({userId:'b',page:async()=> (await pool.query('select * from payment_orders where id=$1',[a.orderId])).rows,deliveries:ids=>deliveryRecords(pool,ids),codes:x=>ownerCodes(pool,'b',x),catalog:async()=>catalog})});
+ const current=await accountApi.codes({},a.delivery);assert(current.email.includes(next));
+ const customerList=await accountApi.list({});assert(customerList.orders[0].deliveries[0].replacedAt);assert.equal(customerList.orders[0].items[1].deliveredQuantity,0,'Other product untouched');
+ const after=await supportCustomer(pool,security,catalog,'a','b');assert(!after.details[0].units[0].canReplace);assert(after.history[0].actor);assert(!JSON.stringify(after).includes('SYNTHETIC-PASSWORD'));
+ const noWarranty=await purchase({warranty:false});await stock();const review=await mutate('a',{...request,deliveryId:noWarranty.delivery,requestId:id()});assert.equal(review.state,'admin_review');
+ const unpaid=await purchase();await pool.query('update payment_orders set status=\'rejected\' where id=$1',[unpaid.orderId]);await assert.rejects(mutate('a',{...request,deliveryId:unpaid.delivery,requestId:id()}),{status:409});
+ const rollback=await purchase();const backup=await stock();
+ await pool.query(`create function fail_replacement() returns trigger language plpgsql as $$begin if new.state='completed' then raise exception 'SYNTHETIC_WRITE_FAILURE';end if;return new;end$$;create trigger fail_replacement before update on staff_replacements for each row execute function fail_replacement()`);
+ const retry={...request,deliveryId:rollback.delivery,requestId:id()};await assert.rejects(mutate('a',retry),/SYNTHETIC_WRITE_FAILURE/);
+ assert.equal((await pool.query('select delivery_id from ready_stock_units where id=$1',[backup])).rows[0].delivery_id,null);
+ await pool.query('drop trigger fail_replacement on staff_replacements;drop function fail_replacement()');
+ // A fresh Node process has no pending promises, in-memory keys or connections.
+ const code=`import pg from './mirpanel-admin/node_modules/pg/lib/index.js';import {supportMutation} from './mirpanel-admin/community/staff-support.mjs';import {createPaymentSecurity} from './mirpanel-admin/payment-security.mjs';const b=JSON.parse(process.env.STAFF_SYNTHETIC_RESTART),p=new pg.Pool({...b.connection,options:'-c search_path=mirpanel_community,public'});try{console.log(JSON.stringify(await supportMutation(p,createPaymentSecurity(b.security),b.catalog,'worker2','/replace',b.request)))}finally{await p.end()}`;
+ const restarted=await promisify(execFile)(process.execPath,['--input-type=module','-e',code],{windowsHide:true,env:{...process.env,STAFF_SYNTHETIC_RESTART:JSON.stringify({connection:f.connection,security:securityConfig,catalog,request:retry})}});
+ assert.equal(JSON.parse(restarted.stdout).state,'completed');assert((await mutate('a',retry)).replayed);
+ const expired=await purchase();await pool.query("update customer_order_deliveries set delivered_at=clock_timestamp()-interval '25 days' where id=$1",[expired.delivery]);
+ assert.equal((await mutate('worker2',{...request,deliveryId:expired.delivery,requestId:id()})).state,'admin_review');
+ const single=await purchase({quantity:2});await pool.query('update customer_order_deliveries set quantity=2 where id=$1',[single.delivery]);await assert.rejects(mutate('worker2',{...request,deliveryId:single.delivery,requestId:id()}),{status:409});
+ await setStaffRole(pool,'owner',{userId:'worker2',enabled:true,support:true,credentials:true,replacement:false});
+ const credentials=await supportMutation(pool,security,catalog,'worker2','/credentials',{...request,requestId:id()});assert.equal(credentials.email,current.email);
+ await assert.rejects(mutate('worker2',request),{status:403});
+ const audit=(await pool.query('select reason,details from community_audit')).rows;assert(!JSON.stringify(audit).includes('SYNTHETIC-PASSWORD'));
+ await setStaffRole(pool,'owner',{userId:'a',enabled:false});await assert.rejects(mutate('a',request),{status:403});
+ await assert.rejects(staffRequest({},{method:'POST',headers:{origin:'https://evil.example'}},new URL('https://mirpanel.com/api/community/staff/replace')),{status:403});
+ console.log('PASS synthetic PostgreSQL: reader isolation, support search/history, exact owner + unit, mixed cart, wrong SKU ignored, waiting stock, 2 parallel workers / double click, one stock + mail, old encrypted history, preserved dates/balance, no warranty -> review, unpaid blocked, DB error rollback + restart/lost response replay, revocation, credentials separate, CSRF.');
+ if(process.env.STAFF_BROWSER_TEST){await purchase();await stock();await import('./test-staff-support-browser.mjs').then(x=>x.runStaffBrowser({f,security,savedOrder}));}
+}finally{await f.close();}
