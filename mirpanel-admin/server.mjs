@@ -17,7 +17,7 @@ import {verifyEpointResult} from './epoint-result.mjs';
 import {epointMethods,startEpointCheckout,readEpointCheckout,readAppleCheckout,readEpointPayment,epointLimits} from './epoint-checkout.mjs';
 import {epointWallets} from './epoint-api.mjs';
 import {previewOwner,startGooglePreview,readGooglePreview,googlePreviewHTML,googlePreviewRef} from './epoint-preview.mjs';
-import {acceptEpointResult,reconcileEpoint,startEpointReconciliation} from './epoint-reconcile.mjs';
+import {acceptEpointResult,reconcileEpoint,recoverWidgetTransaction,startEpointReconciliation} from './epoint-reconcile.mjs';
 import {readCatalogCosts,readEpinbyOrderCosts} from './epinby-finance.mjs';
 import {startSheetCustomerIdSync} from './community/netflix-sheet-customer-id.mjs';
 import { createPaymentSystem } from "./payment-api.mjs";
@@ -1574,12 +1574,13 @@ const server = http.createServer(async (request, response) => {
       }catch(e){return json(response,e.status||503,{error:e.status?e.message:'Yoxlama hazırda açılmır.'});}
     }
     if(['/api/payments/epoint/start','/api/payments/epoint/status','/api/payments/epoint/apple-checkout','/api/payments/epoint/checkout'].includes(pathname)){
-      const start=pathname.endsWith('/start'),method=start?'POST':'GET';
+      const recovery=pathname.endsWith('/status')&&request.method==='POST';
+      const start=pathname.endsWith('/start'),method=start||recovery?'POST':'GET';
       if(request.method!==method)return json(response,405,{error:method+' tələb olunur.'},{Allow:method});
-      if(start&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğunun mənbəyi icazəli deyil.'});
+      if((start||recovery)&&(request.headers.origin!=='https://mirpanel.com'||request.headers['sec-fetch-site']==='cross-site'))return json(response,403,{error:'Sorğunun mənbəyi icazəli deyil.'});
       const ref=requestUrl.searchParams.get('ref');
       const methods=epointMethods(process.env);
-      if(!start&&!ref&&pathname.endsWith('/status')){
+      if(!start&&!recovery&&!ref&&pathname.endsWith('/status')){
         let walletError=false;
         if(methods.m10||methods.birbank){
           try{const wallets=await epointWallets();methods.m10=methods.m10&&!!wallets.m10;methods.birbank=methods.birbank&&!!wallets.birbank;}
@@ -1589,9 +1590,15 @@ const server = http.createServer(async (request, response) => {
       }
       if(start&&!Object.values(methods).some(Boolean))return json(response,503,{error:'Epoint ilə balans artırma aktiv deyil.'});
       try{
-        const user=await ownerCommunity.checkoutAccount(request,{verified:start});
+        const user=await ownerCommunity.checkoutAccount(request,{verified:start||recovery});
         if(!user)return json(response,401,{error:'Hesabınıza daxil olun.'});
         const {pool}=await ownerCommunity.shopContext({headers:{}});
+        if(recovery){
+          if(String(request.headers['content-type']).split(';')[0]!=='application/json')return json(response,415,{error:'JSON tələb olunur.'});
+          let body;try{body=JSON.parse((await readRawBody(request,1024)).toString('utf8'));}catch{return json(response,400,{error:'Ödəniş sorğusu düzgün deyil.'});}
+          await recoverWidgetTransaction(pool,user,ref,body?.transaction);
+          return json(response,200,await readEpointCheckout(pool,user,ref));
+        }
         if(!start){
           // Read ownership before initiating any provider lookup.
           const reader=pathname.endsWith('/apple-checkout')?readAppleCheckout:pathname.endsWith('/checkout')?readEpointPayment:readEpointCheckout;
@@ -1609,15 +1616,18 @@ const server = http.createServer(async (request, response) => {
       }
     }
     if(pathname==='/api/payments/epoint/result'){
+      let verifiedResult;
       if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'},{Allow:'POST'});
       try{
         const result=verifyEpointResult(await readRawBody(request,65536),request.headers['content-type'],process.env.EPOINT_PRIVATE_KEY?.trim());
+        verifiedResult={ref:result.id,transaction:result.transaction,providerStatus:result.status};
         const {pool}=await ownerCommunity.shopContext({headers:{}});
         await acceptEpointResult(pool,result);
+        console.info('EPOINT_RESULT',JSON.stringify({...verifiedResult,signatureVerified:true,httpStatus:200}));
         return json(response,200,{ok:true});
       }catch(error){
         const status=Number.isInteger(error.status)&&error.status>=400&&error.status<=599?error.status:503;
-        if(status===503&&!error.status)console.warn('EPOINT_RESULT_NOT_COMMITTED');
+        console.warn('EPOINT_RESULT',JSON.stringify({...verifiedResult,signatureVerified:!!verifiedResult,httpStatus:status}));
         return json(response,status,{error:status===503?'Epoint nəticəsi hazırda emal olunmur.':error.message},status===503?{'Retry-After':'60'}:{});
       }
     }

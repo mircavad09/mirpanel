@@ -3,6 +3,18 @@ const storeKey='mirpanel.epoint.wallet.v1';
 const appleStoreKey=storeKey+'.apple';
 const refPattern=/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/;
 const validRef=value=>typeof value==='string'&&refPattern.test(value);
+// Browser data is an untrusted lookup hint; only the server can verify and credit.
+export function rememberWidgetTransaction(ref,data){
+ const transaction=data?.payment?.transaction;
+ if(!validRef(ref)||typeof transaction!=='string'||!/^[A-Za-z0-9_-]{1,128}$/.test(transaction))return;
+ try{sessionStorage.setItem('mirpanel.epoint.hint.'+ref,transaction);}catch{}
+}
+export async function recoverWidgetPayment(ref){
+ let transaction;try{transaction=sessionStorage.getItem('mirpanel.epoint.hint.'+ref);}catch{}
+ if(!validRef(ref)||!transaction)return;
+ try{await fetch(base+'status?ref='+encodeURIComponent(ref),{method:'POST',credentials:'same-origin',cache:'no-store',headers:{'Content-Type':'application/json'},body:JSON.stringify({transaction}),signal:AbortSignal.timeout(10000)});}catch{}
+}
+
 function readDraft(){
  try{const d=JSON.parse(sessionStorage.getItem(storeKey));return validRef(d?.ref)?d:null;}catch{return null;}
 }
@@ -116,7 +128,7 @@ async function mountLegacyEpoint({form,accountId,getCents,signal,back,el,button,
   if(!frame||event.source!==frame.contentWindow||event.origin!==new URL(frame.src).origin||!['success','failed','error'].includes(event.data?.status))return;
   // No transaction, status or amount from the browser is trusted for settlement.
   if(Date.now()-hintAt<3000)return;
-  hintAt=Date.now();say('Ödəniş yoxlanılır…');void poll();
+  hintAt=Date.now();rememberWidgetTransaction(active()?.ref,event.data);say('Ödəniş yoxlanılır…');void recoverWidgetPayment(active()?.ref).then(()=>poll());
  },{signal});
  async function start(method){
   if(busy||frame||signal.aborted||!form.isConnected)return;
@@ -194,9 +206,10 @@ export async function showEpointReturn(doc=document){
   if(stopped||running)return;
   clearTimeout(timer);running=true;check.disabled=true;login.hidden=true;
   try{
+   await recoverWidgetPayment(ref);
    const data=await api('status?ref='+encodeURIComponent(ref),{signal:AbortSignal.timeout(8000)});
    if(data.status==='success'&&Number.isSafeInteger(data.cents)&&data.cents>0){
-    clearDraft(ref);stopped=true;check.hidden=true;
+    clearDraft(ref);try{sessionStorage.removeItem('mirpanel.epoint.hint.'+ref);}catch{}stopped=true;check.hidden=true;
     finish('Balansınız uğurla artırıldı',money(data.cents)+' balansınıza əlavə edildi.');
     const balance=main.querySelector('[data-epoint-balance]'),products=main.querySelector('[data-epoint-products]');
     if(balance&&Number.isSafeInteger(data.balanceCents)){balance.textContent='Yeni balans: '+money(data.balanceCents);balance.hidden=false;}

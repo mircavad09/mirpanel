@@ -1,4 +1,4 @@
-import {walletDeviceSupports,appleMoney as money} from './epoint-wallet.js?v=apple-iphone-flow-1';
+import {walletDeviceSupports,appleMoney as money,rememberWidgetTransaction,recoverWidgetPayment} from './epoint-wallet.js?v=apple-iphone-flow-1';
 const validRef=value=>typeof value==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value);
 export async function showApplePayment(doc=document){
  const main=doc.querySelector('[data-apple-payment]');if(!main)return;
@@ -10,6 +10,7 @@ export async function showApplePayment(doc=document){
  async function refresh(){
   if(running||stopped)return;clearTimeout(timer);running=true;retry.disabled=true;retry.hidden=true;login.hidden=true;
   try{
+   await recoverWidgetPayment(ref);
    const r=await fetch('/api/payments/epoint/apple-checkout?ref='+encodeURIComponent(ref),{credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(10000)}),data=await r.json().catch(()=>({}));
    if(!r.ok)throw Object.assign(Error(data.error||'Ödəniş məlumatı alınmadı.'),{status:r.status});
    if(data.method!=='apple-pay'||!Number.isSafeInteger(data.cents)||data.cents<=0)throw Error('Ödəniş məlumatı uyğun deyil.');
@@ -34,7 +35,7 @@ export async function showApplePayment(doc=document){
  retry.addEventListener('click',()=>{count=0;clearTimeout(frameTimer);if(frame){frame.remove();frame=null;}void refresh();});
  window.addEventListener('message',event=>{
   if(!frame||event.source!==frame.contentWindow||event.origin!==new URL(frame.src).origin||!['success','failed','error'].includes(event.data?.status)||Date.now()-hintAt<3000)return;
-  hintAt=Date.now();status.textContent='Ödəniş yoxlanılır…';void refresh();
+  hintAt=Date.now();rememberWidgetTransaction(ref,event.data);status.textContent='Ödəniş yoxlanılır…';void refresh();
  });
  window.addEventListener('pagehide',()=>{clearTimeout(timer);clearTimeout(frameTimer);});
  window.addEventListener('pageshow',event=>{if(event.persisted&&!stopped){count=0;void refresh();}});

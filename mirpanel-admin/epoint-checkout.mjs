@@ -146,7 +146,8 @@ export async function readEpointCheckout(pool,user,id){
  if(intent?.status==='success'&&intent.credited_at&&Number(intent.cents)===row.cents){
   const credit=(await pool.query("select after_cents,cents from mirpanel_community.wallet_ledger where user_id=$1 and request_id=$2 and kind='topup_credit'",[user,id])).rows[0];
   if(!credit||Number(credit.cents)!==Number(row.cents))throw fail(503,'Balans mədaxili hələ təsdiqlənmədi. Vəziyyəti yenidən yoxlayın.');
-  return {status:'success',cents:row.cents,balanceCents:Number(credit.after_cents)};
+  const balance=(await pool.query('select cents from mirpanel_community.wallet_accounts where user_id=$1',[user])).rows[0];
+  return {status:'success',cents:row.cents,balanceCents:Number(balance?.cents??credit.after_cents)};
  }
  return {status:['failed','error','returned'].includes(row.result_status||intent?.status)?'failed':'pending',...providerStatus};
 }
