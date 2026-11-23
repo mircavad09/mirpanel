@@ -31,6 +31,7 @@ try{
  for(const method of ['apple-pay','google-pay','birbank','m10']){
   const body={items:[{...ordinary,quantity:2}],mode:'epoint',epointMethod:method,requestId:id(),consentAccepted:true,expectedTotalCents:1000};
   const [g,h]=await Promise.all([shop.checkout(req,owner,body),shop.checkout(req,owner,body)]);eq(g.id,h.id);eq(g.paymentConfirmed,false);eq(g.totalCents,1000);
+  eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,0);
   await assert.rejects(pool.query("update payment_orders set payment_confirmed=true where id=$1",[g.orderId]),/EPOINT_PAYMENT_NOT_CONFIRMED/);checks++;
   const transaction='synthetic_'+g.id;let creates=0,status='new',badAmount=false;
   const send=async(url,options)=>{
@@ -91,5 +92,19 @@ try{
  await assert.rejects(apiShop.startProductPayment(req,owner,{...request,requestId:id(),expectedTotalCents:1}),{status:409});checks++;
  eq(starts,1);
  await ensureEpointPurchases(pool);eq(Number((await pool.query('select count(*) n from epoint_purchases')).rows[0].n),count+1);
+ const bundleQuote=await shop.quote(req,[ordinary,{productId:'unlimited',planIndex:0,quantity:1}],owner);
+ const bundleItems=bundleQuote.items.map(x=>({productId:x.productId,planIndex:x.planIndex,quantity:x.quantity,termsVersion:x.termsVersion}));
+ const bundle=await shop.checkout(req,owner,{items:bundleItems,mode:'epoint',epointMethod:'google-pay',requestId:id(),expectedTotalCents:1100,consentAccepted:true});
+ eq(bundle.items.length,2);
+ const bundleTx='synthetic_bundle_'+bundle.id;
+ await startEpointCheckout(pool,'a',{method:'google-pay',requestId:bundle.id},{env,purchaseId:bundle.id,send:async()=>Response.json({status:'success',widget_url:'https://epoint.az/synthetic-bundle'})});
+ await acceptEpointResult(pool,{id:bundle.id,status:'success',transaction:bundleTx,cents:1100,operationCode:'100'},{env,send:async()=>Response.json({status:'success',transaction:bundleTx,amount:11,code:'000',currency:'AZN',order_id:'mp_ep_'+bundle.id})});
+ await drainEpointPurchases(pool,config);eq((await readEpointPayment(pool,'a',bundle.id)).status,'success');eq(await balance(),1500);
+ eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[bundle.orderId])).rows[0].n,1);
+ const finiteQuote=await shop.quote(req,[{productId:'finite',planIndex:0,quantity:1}],owner);
+ const finite={productId:'finite',planIndex:0,quantity:1,termsVersion:finiteQuote.items[0].termsVersion};
+ const races=await Promise.allSettled([id(),id()].map(requestId=>shop.checkout(req,owner,{items:[finite],mode:'epoint',epointMethod:'birbank',requestId,consentAccepted:true,expectedTotalCents:600})));
+ eq(races.filter(x=>x.status==='fulfilled').length,1);eq(races.filter(x=>x.status==='rejected'&&x.reason.status===409).length,1);eq(await balance(),1500);
+ eq((await f.rpc('inventory_snapshot')).find(x=>x.productId==='finite').available,0);
  console.log(JSON.stringify({checks,realProviderCalls:0,realPayments:0,walletUnchangedOnDirectPurchase:true}));
 }finally{await f.close();}
