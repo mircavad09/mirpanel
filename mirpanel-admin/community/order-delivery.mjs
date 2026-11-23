@@ -101,14 +101,14 @@ export async function adminOrderCustomers(pool,ids){
    left join mirpanel_community.customer_order_contacts ct on ct.order_id=o.id
    where o.id=any($1::uuid[])`,[ids])).rows;
 }
-export async function adminDelivery(pool,security,actor,id,input,{productMessage=false,roomStockSecret,onTiming}={}){
+export async function adminDelivery(pool,security,actor,id,input,{productMessage=false,roomStockSecret,onTiming,transaction}={}){
  const started=performance.now(),timing={};let mark=started,queries=0;
  const stage=name=>{const now=performance.now();timing[name]=now-mark;mark=now;};
- const c=await pool.connect();
+ const c=transaction||await pool.connect();
  stage('connection');
  const db={query:(...args)=>{queries++;return c.query(...args);}};
  try{
-  await db.query(input?'begin; select pg_advisory_xact_lock(714025001)':'begin isolation level repeatable read read only');
+  if(!transaction)await db.query(input?'begin; select pg_advisory_xact_lock(714025001)':'begin isolation level repeatable read read only');
   stage('lock');
   // Read the order, delivery progress and idempotency record in one round trip,
   // after the shared fulfillment/cancellation lock has been acquired.
@@ -136,7 +136,7 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
   };
   const prefill=i=>{if(input)return {};const value=spotifyDeliveryPrefill(o,lines[i],i,security);return value?{customerAccount:value}:{};};
   const view=()=>({lines:lines.map((x,i)=>({index:i,title:x.title,plan:x.planName,remaining:o.fulfillment_cancellation?0:x.quantity-(done[i]||0),...netflixRoom(i),...prefill(i),...(productMessage&&!input?{message:templates.get(x.productId)??''}:{}),...(renewalCode(i)?{renewalOrderCode:renewalCode(i),renewalSourceLine:o.checkout_snapshot.items[i].renewalSourceLine,renewalSourceUnit:o.checkout_snapshot.items[i].renewalSourceUnit}:{})})),status:customerStatus(o,records)});
-  if(!input){const result=view();stage('validation');await db.query('commit');stage('commit');return result;}
+  if(!input){const result=view();stage('validation');if(!transaction)await db.query('commit');stage('commit');return result;}
   const {requestId,line,quantity}=input;
   let {message}=input;
   if(!uuid(requestId)||!Number.isInteger(line)||!lines[line]||!Number.isInteger(quantity)||quantity<1||(!productMessage&&(typeof message!=='string'||!message.trim()||message.length>8000)))throw fail(400,'Təhvil məlumatları düzgün deyil.');
@@ -152,9 +152,13 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
   if(previous){
    const saved=JSON.parse(security.decryptSecret(previous.message_cipher));
    if(previous.order_id!==id||previous.line_index!==line||previous.quantity!==quantity||(!productMessage&&saved.message!==message)||(saved.email||'')!==email||(saved.password||'')!==password||(saved.roomName||'')!==roomName||(saved.roomCode||'')!==roomCode)throw fail(409,'Əvvəlki sorğunun məlumatı fərqlidir.');
-   stage('validation');await db.query('commit');stage('commit');return {...view(),replayed:true};
+   stage('validation');if(!transaction)await db.query('commit');stage('commit');return {...view(),replayed:true};
   }
   if(o.fulfillment_cancellation)throw fail(409,'Qalan məhsullar ləğv edilib.');
+  if((await db.query("select to_regclass('mirpanel_community.seller_tasks') present")).rows[0].present){
+   const assigned=(await db.query("select seller_id,state from mirpanel_community.seller_tasks where order_id=$1 and line_index=$2 and state in('claimed','needs_review')",[id,line])).rows[0];
+   if(assigned&&(assigned.state!=='claimed'||actor!=='seller:'+assigned.seller_id))throw fail(409,'Məhsul satıcının öhdəliyindədir. Əvvəl Satıcılar bölməsində yoxlayın.');
+  }
   if(actor!=='supplier:auto' && o.dispatch_table){
    const busy=await db.query("select 1 from mirpanel_community.api_dispatches where order_id=$1 and line_index=$2 and (state in ('checking','succeeded','waiting_balance') or state='queued' and settings->>'provider'='epinby')",[id,line]);
    if(busy.rowCount)throw fail(409,'Təchizatçı bu məhsulun sifarişini yoxlayır.');
@@ -172,8 +176,8 @@ export async function adminDelivery(pool,security,actor,id,input,{productMessage
    await queueManualSheetCustomerId(db,record.id,{installed:o.sheet_queue});
   }
   records.push(record);done[line]=(done[line]||0)+quantity;
-  stage('persist');await db.query('commit');stage('commit');return view();
- }catch(e){await db.query('rollback');throw e;}finally{c.release();onTiming?.({...timing,total:performance.now()-started,queries});}
+  stage('persist');if(!transaction)await db.query('commit');stage('commit');return view();
+ }catch(e){if(!transaction)await db.query('rollback');throw e;}finally{if(!transaction)c.release();onTiming?.({...timing,total:performance.now()-started,queries});}
 }
 
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
