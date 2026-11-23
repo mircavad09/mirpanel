@@ -4,7 +4,7 @@ import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
 let walletModule;
-const loadWalletModule=()=>walletModule??=window.MirpanelRecovery.module('/community-assets/wallet-topup.js?v=topup-receipt-recovery-1').catch(e=>{walletModule=null;throw e;});
+const loadWalletModule=()=>walletModule??=window.MirpanelRecovery.module('/community-assets/wallet-topup.js?v=epoint-wallets-20261123').catch(e=>{walletModule=null;throw e;});
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
