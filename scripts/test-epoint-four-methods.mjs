@@ -72,12 +72,21 @@ try{
   await reconcileEpoint(pool,id,{...opts,user:'a',force:true});
   assert.equal(await actualBalance(),balance);
   assert.equal(creates,1);assert(checks>=7);
+  // A fresh connection has no checkout-local state. Persistent references and
+  // ledger uniqueness, not a browser or process flag, must prevent replay.
+  const reopened=new pool.constructor({...pool.options,max:1});
+  try{
+   await startEpointCheckout(reopened,'a',input,opts);
+   await acceptEpointResult(reopened,callback(),opts);
+   assert.deepEqual(await readEpointCheckout(reopened,'a',id),status);
+   assert.equal(creates,1);assert.equal(await actualBalance(),balance);
+  }finally{await reopened.end();}
   let uncreditedId;
   for(const outcome of ['new','failed','error','returned','server_error']){
    const next=randomUUID(),tx='te_outcome_'+next;uncreditedId=next;
    const outcomeSend=async url=>{
     if(url.endsWith('/wallet/status'))return Response.json({'9':'M10','10':'BirBank'});
-    if(url.endsWith('/get-status'))return Response.json({status:outcome,transaction:tx,amount:1.99,code:outcome==='failed'?'180':'000',currency:'AZN',order_id:'mp_ep_'+next});
+    if(url.endsWith('/get-status'))return Response.json({status:outcome,transaction:tx,amount:1.99,code:outcome==='failed'?'180':outcome==='error'?'canceled':'000',currency:'AZN',order_id:'mp_ep_'+next});
     return Response.json({status:'success',transaction:tx,...(widget?{widget_url:'https://epoint.az/api/1/token/widget/synthetic-outcome'}:{redirect_url:'https://epoint.az/wallet/synthetic-outcome'})});
    };
    const outcomeOptions={env,send:outcomeSend};
@@ -87,7 +96,6 @@ try{
    assert.equal(state.status,['new','server_error'].includes(outcome)?'pending':'failed');
    if(outcome==='failed')assert.equal(state.cancelled,true);
    if(outcome==='error'){
-    await pool.query("update mirpanel_community.epoint_checkout_requests set result_code='canceled' where id=$1",[next]);
     assert.equal((await readEpointCheckout(pool,'a',next)).cancelled,true,'observed Birbank canceled code is rendered as cancellation');
    }
    assert.equal(await actualBalance(),balance);
