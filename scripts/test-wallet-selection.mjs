@@ -4,8 +4,17 @@ import {chromium,webkit} from 'file:///C:/Users/user/.cache/codex-runtimes/codex
 import {onRequest as paymentPage} from '../functions/odenis/epoint/[[path]].js';
 const records=new Map(),out='payment-test-artifacts/wallet-selection';fs.mkdirSync(out,{recursive:true});let posts=0,m10=false;
 const names={'apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'},header=fs.readFileSync('customer-header.html','utf8'),id='11111111-1111-4111-8111-111111111111';
+const liveAssets=new Map();
+if(process.argv.includes('--live-assets')){
+ for(const name of ['shop-ui.js','wallet-topup.js','epoint-wallet.js','wallet-selection.js','epoint-payment.js','topup-amount.js','shop.css']){
+  const p='/community-assets/'+name,r=await fetch('https://mirpanel.com'+p+'?verify='+Date.now(),{cache:'no-store'});assert.equal(r.status,200,p);const bytes=Buffer.from(await r.arrayBuffer());assert.equal(bytes.toString().replaceAll('\r\n','\n'),fs.readFileSync('mirpanel-admin/community/public/'+name,'utf8').replaceAll('\r\n','\n'),p+' deployed source');liveAssets.set(p,bytes);
+ }
+ for(const name of ['apple-pay','birbank','m10']){const p='/assets/wallet/methods/'+name+'.webp',r=await fetch('https://mirpanel.com'+p+'?verify='+Date.now(),{cache:'no-store'});assert.equal(r.status,200);const bytes=Buffer.from(await r.arrayBuffer());assert(bytes.equals(fs.readFileSync(p.slice(1))));liveAssets.set(p,bytes);}
+ console.log('Verified deployed assets downloaded; all payment APIs below remain isolated fixtures');
+}
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://local'),p=u.pathname,json=(value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
+ if(liveAssets.has(p)){res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':'image/webp');return res.end(liveAssets.get(p));}
  if(p==='/api/community/state')return json({profile:{user_id:'isolated-wallet',display_name:'Sınaq',balanceCents:1200}});
  if(p==='/api/community/notifications')return json({items:[],unread:0});
  if(p==='/api/payments/shop/wallet')return json({cents:1200,items:[],topups:[],more:false});
