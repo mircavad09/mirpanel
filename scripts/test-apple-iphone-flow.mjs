@@ -46,6 +46,7 @@ try{
     assert(await p.locator('.wallet-topup').evaluate(n=>n.getBoundingClientRect().top<document.querySelector('#balansi-artir').getBoundingClientRect().top));
     await apple.click();assert.equal(await apple.getAttribute('aria-pressed'),'true');assert.equal(records.size,initialSize);
     const input=p.getByLabel('Başqa məbləğ',{exact:true}),submit=p.locator('.apple-topup-actions button');
+    assert.equal(await submit.isEnabled(),false,'fresh Apple selection requires a subsequent amount choice');
     await p.getByRole('button',{name:'10 ₼',exact:true}).click();assert.match(await submit.textContent(),/10,00/);
     for(const bad of ['0.99','','500.01','-1','1.001']){await input.fill(bad);assert.equal(await submit.isEnabled(),false);}
     await input.fill('5,00');assert.match(await submit.textContent(),/5[,.]00/);assert.equal(writes,initialWrites);
@@ -75,7 +76,7 @@ try{
    for(const [agent,supported] of [['Mozilla/5.0 (iPad) Safari',true],['Mozilla/5.0 (Macintosh) Safari',true],['Mozilla/5.0 (Linux; Android 14) Chrome',true],[iphone,false]]){
     const c=await context(browser,390,agent,supported),p=await c.newPage();await p.goto(origin+'/balans');await p.locator('[data-digital-wallet="birbank"]').waitFor();assert.equal(await p.locator('[data-digital-wallet="apple-pay"]').count(),0);await c.close();
    }
-   const c=await context(browser,390),p=await c.newPage();await p.goto(origin+'/balans');await p.locator('[data-digital-wallet="apple-pay"]').click();const size=records.size;
+   const c=await context(browser,390),p=await c.newPage();await p.goto(origin+'/balans');await p.locator('[data-digital-wallet="apple-pay"]').click();await p.getByRole('button',{name:'5 ₼',exact:true}).click();const size=records.size;
    failStart=true;await p.locator('.apple-topup-actions button').click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.getByText('Sintetik itmiş cavab. Eyni ödənişə davam edin.').waitFor();
    await p.locator('.apple-topup-actions button').click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.waitForURL('**/odenis/epoint/apple-pay?ref=*');assert.equal(records.size,size+1);await c.close();
    console.log('PASS '+engine+': Android/iPad/desktop/unsupported iPhone hidden, alternatives remain; lost create reply reuses one operation');

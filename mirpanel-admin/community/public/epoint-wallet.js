@@ -75,7 +75,7 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
  form.append(block,notice);
  if(deviceHint){notice.hidden=false;notice.textContent=deviceHint+' Digər ödəniş üsulunu seçə bilərsiniz.';}
  const buttons=new Map();let busy=false,frame=null,timer=null,polls=0,polling=false,close=null,hintAt=0;
- let appleSelected=false,appleActions=null,appleSubmit=null,appleDialog=null;
+ let appleSelected=false,appleVisited=false,appleActions=null,appleSubmit=null,appleDialog=null;
  const stopWidget=()=>{clearTimeout(timer);if(frame)showDigital?.(false);frame?.remove();frame=null;close?.remove();close=null;};
  signal.addEventListener('abort',stopWidget,{once:true});
  const say=copy=>{notice.hidden=false;notice.textContent=copy;};
@@ -150,7 +150,7 @@ export async function mountEpointWallet({form,accountId,getCents,signal,back,el,
  }
  function appleCents(){const cents=activeApple()?.cents??getCents(),limits=config?.limits;if(!Number.isSafeInteger(cents)||!Number.isSafeInteger(limits?.minCents)||!Number.isSafeInteger(limits?.maxCents)||cents<limits.minCents||cents>limits.maxCents)throw Error('Etibarlı məbləğ seçin.');return cents;}
  function refreshApple(){if(!appleSubmit)return;let cents;try{cents=appleCents();}catch{}appleSubmit.textContent=cents===undefined?'Balansa əlavə et':'Balansa '+appleMoney(cents)+' əlavə et';appleSubmit.disabled=!appleSelected||busy||cents===undefined;appleFlow?.lockAmount?.(appleSelected&&!!activeApple());}
- function selectApple(){appleSelected=true;appleFlow?.select?.();if(activeApple())appleFlow?.restoreCents?.(activeApple().cents);appleActions.hidden=false;refreshApple();}
+ function selectApple(){appleSelected=true;appleFlow?.select?.();if(activeApple())appleFlow?.restoreCents?.(activeApple().cents);else if(!appleVisited)appleFlow?.resetAmount?.();appleVisited=true;appleActions.hidden=false;refreshApple();}
  function confirmApple(){
   let cents;try{cents=appleCents();}catch{return;}if(busy||appleDialog?.open)return;
   const dialog=el('dialog',null,'apple-topup-confirm'),title=el('h2','Balans artımını təsdiqləyin'),copy=el('p','Balansınıza '+appleMoney(cents)+' əlavə etmək istəyirsiniz?'),method=el('p','Ödəniş üsulu: Apple Pay'),actions=el('div',null,'shop-actions');
