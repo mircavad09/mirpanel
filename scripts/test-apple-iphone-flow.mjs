@@ -17,7 +17,7 @@ const server=http.createServer(async(req,res)=>{
   return json({state:'ready',widget:'https://epoint.az/api/1/token/widget/isolated-apple'});
  }
  if(p==='/api/payments/epoint/status'&&!u.searchParams.has('ref'))return json({enabled:false,methods:{'apple-pay':true,'google-pay':true,birbank:true,m10:false},limits:{minCents:100,maxCents:50000}});
- if(p==='/api/payments/epoint/status'||p==='/api/payments/epoint/apple-checkout'){
+ if(p==='/api/payments/epoint/status'||p==='/api/payments/epoint/apple-checkout'||p==='/api/payments/epoint/checkout'){
   if(failRead)return json({error:'Sintetik müvəqqəti bağlantı xətası'},503);
   const row=records.get(u.searchParams.get('ref'));if(!row)return json({error:'Tapılmadı'},404);
   return json({...row,method:'apple-pay',state:'ready',...(row.status==='pending'?{widget:'https://epoint.az/api/1/token/widget/isolated-apple'}:{}),...(row.status==='success'?{balanceCents:1200+row.cents}:{})});
@@ -27,7 +27,7 @@ const server=http.createServer(async(req,res)=>{
  if(p==='/balans'){res.setHeader('Content-Type','text/html');return res.end('<!doctype html><html lang="az"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/community-assets/community.css"><link rel="stylesheet" href="/site-header.css"><link rel="stylesheet" href="/community-assets/shop.css"><body class="community-page">'+header+'<main id="shopApp" class="shop-page"></main><script type="module" src="/community-assets/shop-ui.js"></script><script src="/site-header.js"></script></body></html>');}
  const file=p.startsWith('/community-assets/')?'mirpanel-admin/community/public/'+p.slice(18):p.slice(1);
  if(file.includes('..')||!fs.existsSync(file)||!fs.statSync(file).isFile()){res.writeHead(404);return res.end();}
- res.setHeader('Content-Type',/\.m?js$/.test(file)?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':'image/svg+xml');res.end(fs.readFileSync(file));
+ res.setHeader('Content-Type',/\.m?js$/.test(file)?'text/javascript':file.endsWith('.css')?'text/css':file.endsWith('.png')?'image/png':file.endsWith('.webp')?'image/webp':'image/svg+xml');res.end(fs.readFileSync(file));
 });await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin='http://127.0.0.1:'+server.address().port;
 const iphone='Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile Safari/604.1';
 async function context(browser,width,userAgent=iphone,supported=true){
@@ -43,10 +43,11 @@ try{
    for(const width of [320,390,430,1440]){
     const c=await context(browser,width),p=await c.newPage(),errors=[],consoleErrors=[];p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')consoleErrors.push(m.text());});const initialSize=records.size,initialWrites=writes;
     await p.goto(origin+'/balans');const apple=p.locator('[data-digital-wallet="apple-pay"]');await apple.waitFor();
-    assert(await p.locator('.wallet-topup').evaluate(n=>n.getBoundingClientRect().top<document.querySelector('#balansi-artir').getBoundingClientRect().top));
+    assert(await p.locator('.wallet-topup').evaluate(n=>n.getBoundingClientRect().top>document.querySelector('#balansi-artir').getBoundingClientRect().bottom));
     await apple.click();assert.equal(await apple.getAttribute('aria-pressed'),'true');assert.equal(records.size,initialSize);
-    const input=p.getByLabel('Başqa məbləğ',{exact:true}),submit=p.locator('.apple-topup-actions button');
-    assert.equal(await submit.isEnabled(),false,'fresh Apple selection requires a subsequent amount choice');
+    const input=p.getByLabel('Başqa məbləğ',{exact:true}),submit=p.locator('.wallet-topup-continue');
+    assert.equal(await submit.isEnabled(),true,'selection keeps the previously chosen valid amount');
+    assert.equal(await p.getByText(/Google Pay üçün Google Cüzdanı|Epoint ödənişinin vəziyyəti/).count(),0);
     await p.getByRole('button',{name:'10 ₼',exact:true}).click();assert.match(await submit.textContent(),/10,00/);
     for(const bad of ['0.99','','500.01','-1','1.001']){await input.fill(bad);assert.equal(await submit.isEnabled(),false);}
     await input.fill('5,00');assert.match(await submit.textContent(),/5[,.]00/);assert.equal(writes,initialWrites);
@@ -55,15 +56,15 @@ try{
     if(width===390)await p.screenshot({path:out+'/'+engine+'-confirmation.jpg'});
     await dialog.getByRole('button',{name:'Geri',exact:true}).click();assert.equal(await input.inputValue(),'5,00');assert.equal(records.size,initialSize);
     await submit.click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).evaluate(n=>{n.click();n.click();});
-    await p.waitForURL('**/odenis/epoint/apple-pay?ref=*');let ref=new URL(p.url()).searchParams.get('ref');assert.equal(records.size,initialSize+1);assert.equal(writes,initialWrites+1);
+    await p.waitForURL('**/odenis/epoint/odeme?ref=*');let ref=new URL(p.url()).searchParams.get('ref');assert.equal(records.size,initialSize+1);assert.equal(writes,initialWrites+1);
     assert.equal(new URL(p.url()).searchParams.has('amount'),false);assert.equal(records.get(ref).cents,500);
     const frame=p.frameLocator('iframe[title="Apple Pay — Epoint təhlükəsiz ödəniş"]');try{await frame.getByText('İzolə edilmiş Epoint vidcet sahəsi',{exact:false}).waitFor({timeout:8000});}catch(e){console.log(JSON.stringify({url:p.url(),body:await p.locator('body').innerText(),errors,consoleErrors}));throw e;}
     await p.goto(p.url()+'&amount=999');await p.locator('iframe').waitFor();assert.match(await p.locator('[data-apple-amount]').textContent(),/5[,.]00/);
     assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert.equal(writes,initialWrites+1);
     if(width===390)await p.screenshot({path:out+'/'+engine+'-payment.jpg',fullPage:true});
-    await p.getByRole('link',{name:'Geri — Balansa qayıt',exact:true}).click();await p.locator('.apple-topup-actions button').waitFor();assert.equal(await input.isEnabled(),false);assert.match(await submit.textContent(),/5[,.]00/);
-    await submit.click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.waitForURL('**/odenis/epoint/apple-pay?ref=*');assert.equal(new URL(p.url()).searchParams.get('ref'),ref);assert.equal(records.size,initialSize+1);
-    await p.goBack();await p.locator('.apple-topup-actions button').waitFor();assert.match(await submit.textContent(),/5,00/);await submit.click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.waitForURL('**/odenis/epoint/apple-pay?ref=*');assert.equal(new URL(p.url()).searchParams.get('ref'),ref);
+    await p.getByRole('link',{name:'Geri — Balansa qayıt',exact:true}).click();await p.locator('.wallet-topup-continue').waitFor();assert.equal(await input.isEnabled(),true);assert.match(await submit.textContent(),/5[,.]00/);
+    await submit.click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.waitForURL('**/odenis/epoint/odeme?ref=*');assert.equal(new URL(p.url()).searchParams.get('ref'),ref);assert.equal(records.size,initialSize+1);
+    await p.goBack();await p.locator('.wallet-topup-continue').waitFor();assert.match(await submit.textContent(),/5,00/);await submit.click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.waitForURL('**/odenis/epoint/odeme?ref=*');assert.equal(new URL(p.url()).searchParams.get('ref'),ref);
     await frame.getByRole('button',{name:'Sintetik bildiriş'}).click();assert.equal(records.get(ref).status,'pending');assert.equal(await p.getByRole('heading',{name:'Balansınız uğurla artırıldı'}).count(),0);
     failRead=true;await p.getByRole('button',{name:'Yenidən cəhd et'}).click();await p.getByText('Sintetik müvəqqəti bağlantı xətası').waitFor();failRead=false;
     records.get(ref).status=width===320?'failed':'success';if(width===320)records.get(ref).cancelled=true;
@@ -77,8 +78,8 @@ try{
     const c=await context(browser,390,agent,supported),p=await c.newPage();await p.goto(origin+'/balans');await p.locator('[data-digital-wallet="birbank"]').waitFor();assert.equal(await p.locator('[data-digital-wallet="apple-pay"]').count(),0);await c.close();
    }
    const c=await context(browser,390),p=await c.newPage();await p.goto(origin+'/balans');await p.locator('[data-digital-wallet="apple-pay"]').click();await p.getByRole('button',{name:'5 ₼',exact:true}).click();const size=records.size;
-   failStart=true;await p.locator('.apple-topup-actions button').click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.getByText('Sintetik itmiş cavab. Eyni ödənişə davam edin.').waitFor();
-   await p.locator('.apple-topup-actions button').click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.waitForURL('**/odenis/epoint/apple-pay?ref=*');assert.equal(records.size,size+1);await c.close();
+   failStart=true;await p.locator('.wallet-topup-continue').click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.getByText('Sintetik itmiş cavab. Eyni ödənişə davam edin.').waitFor();
+   await p.locator('.wallet-topup-continue').click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).click();await p.waitForURL('**/odenis/epoint/odeme?ref=*');assert.equal(records.size,size+1);await c.close();
    console.log('PASS '+engine+': Android/iPad/desktop/unsupported iPhone hidden, alternatives remain; lost create reply reuses one operation');
   }finally{await browser.close();}
  }

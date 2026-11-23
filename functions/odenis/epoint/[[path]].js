@@ -5,12 +5,12 @@ const headers={
 };
 export function onRequest({request}){
  const path=new URL(request.url).pathname;
- if(path==='/odenis/epoint/apple-pay'){
+ if(['/odenis/epoint/apple-pay','/odenis/epoint/odeme'].includes(path)){
   const h={...headers,'Permissions-Policy':'payment=(self "https://epoint.az")','Content-Security-Policy':headers['Content-Security-Policy']+"; frame-src https://epoint.az https://*.epoint.az"};
   if(!['GET','HEAD'].includes(request.method))return new Response(null,{status:405,headers:{...h,Allow:'GET, HEAD'}});
   const html=`<!doctype html><html lang="az"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Apple Pay ilə balans artırma — MirPanel</title><style>
+<title>Balans artırma ödənişi — MirPanel</title><style>
 body{margin:0;background:#08090b;color:#f5f5f5;font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{box-sizing:border-box;width:min(calc(100% - 24px),38rem);margin:24px auto;padding:20px;border:1px solid #554622;border-radius:18px;background:#131518}
 h1{font-size:1.4rem}strong{color:#ffda00}a{color:#ffe068}
@@ -18,12 +18,12 @@ a,button{display:inline-flex;align-items:center;min-height:44px;margin:4px 12px 
 button{background:#ffda00;color:#101010;border:0;border-radius:9px;padding:8px 14px;font:inherit}
 iframe{display:block;width:100%;height:400px;border:0;border-radius:12px;max-width:100%;background:#fff}
 [hidden]{display:none!important}[role=status]{overflow-wrap:anywhere}
-</style><main data-apple-payment><small>MirPanel · Epoint</small>
-<h1>Apple Pay ilə balans artırma</h1><p>Ödəniş üsulu: <strong>Apple Pay</strong></p>
+</style><main data-apple-payment data-epoint-payment><small>MirPanel · Epoint</small>
+<h1>Balans artırma ödənişi</h1><p>Ödəniş üsulu: <strong data-payment-method>Yoxlanılır…</strong></p>
 <p data-apple-amount>Məbləğ yoxlanılır…</p><p role="status" data-apple-status>Ödəniş məlumatı yüklənir…</p>
 <div data-apple-widget></div><button type="button" data-apple-retry hidden>Yenidən cəhd et</button>
 <a href="/balans">Geri — Balansa qayıt</a><a data-apple-result hidden>Ödənişin vəziyyəti</a><a data-apple-login hidden>Daxil ol</a>
-</main><script type="module" src="/community-assets/apple-payment.js?v=iphone-flow-1"></script></html>`;
+</main><script type="module" src="/community-assets/epoint-payment.js?v=selection-1"></script></html>`;
   return new Response(request.method==='HEAD'?null:html,{headers:h});
  }
  const success=path==='/odenis/epoint/ugurlu';

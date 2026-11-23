@@ -59,7 +59,21 @@ There is one shared Apple/Google widget and no documented method-selection param
 
 The cited sections do not mandate a separate test cabinet. Do not invent one as a prerequisite. Local tests inject provider replies. Live unpaid sessions verify only creation and opening, not completed payment or final credit. Obtain explicit per-method authorization before a real charge.
 
-## Current Apple Pay customer flow — 2026-11-23
+## Current balance method selection — 2026-11-23 (supersedes earlier ordering)
+
+Owner changed the requested order to balance → amount → method → continue → confirmation → dedicated payment page. The public balance cards now use wallet-selection.js via the existing mountEpointWallet entry. A card click only selects/highlights; amount edits and the confirmation Back button perform zero payment POSTs and no navigation. The one yellow CTA reads `Balansa əlavə et · 5,00 ₼` and only Confirm calls the existing start endpoint. No long device/diagnostic text or payment-status link is rendered on the initial selection screen. Capability gates and short actual errors remain.
+
+Apple Pay remains iPhone + ApplePaySession support only; Google retains the Android/token capability probe. m10 remains disabled in live settings. Supplied selection art is optimized into assets/wallet/methods/{apple-pay,birbank,m10}.webp, uses contain without distortion/cropping, and the separate readable method name and interface checkmark remain outside the image. These are selector illustrations, never replacements for provider financial buttons.
+
+All four digital methods share `/odenis/epoint/odeme?ref=UUID` and the authenticated GET `/api/payments/epoint/checkout`. That server read validates owner and method and reads amount, widget/redirect from the existing database row. Apple/Google show Epoint's widget; Birbank/m10 proceed to the server-validated provider URL in the same tab. The old Apple page remains a compatibility alias. No key/card/amount is trusted from a page URL. Card-to-card receipt upload and hosted-card settings are not changed.
+
+Per-account selection and method/amount attempt references persist before the creation POST. Refresh/back/lost response reuses the same operation. Distinct selected method or amount is never silently mapped to a prior different operation. Success/failure return clears only that attempt. Server idempotency, signed callback verification, get-status and committed-ledger requirements are unchanged.
+
+Tests: test-wallet-selection.mjs (Chromium/WebKit, 320/390/430/1440, Google/Birbank/m10 only in isolated fixtures), test-apple-iphone-flow.mjs (Apple policy/amount/dialog/return/lost response), existing server settlement and receipt flow regressions. m10 fixture enablement is not live activation. Synthetic device identities and mocked provider pages are not physical-device or real financial tests. No live payment may be created for visual QA.
+
+Receipt regression `test-wallet-bank-flow.mjs --topup-only` passed 450 checks, 42 isolated safety-decoder calls and 35 local storage writes in Chrome/WebKit; production writes, orders and balance credits were zero. Its optional cart-entry path uses an older inventory fixture and stalled on the disabled cart checkout button; that unrelated path was not marked passed or changed. The existing payment-history route assertion was updated from the obsolete `tab=payments` to the current `tab=odenislerim` without changing product code.
+
+## Earlier Apple Pay customer flow — 2026-11-23
 
 The owner's new display policy supersedes the earlier broad Apple-device policy: show Apple Pay only when the user agent identifies iPhone AND ApplePaySession.canMakePayments() returns true. iPad, Android and desktop are excluded even if they expose a positive Apple API. Final Wallet/card readiness still belongs to the official Epoint widget. No merchant/domain flags or other methods' settings change in this release.
 

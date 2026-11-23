@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import {randomUUID,createHash} from 'node:crypto';
 import {readFile} from 'node:fs/promises';
 import {shopFixture} from './shop-test-fixture.mjs';
-import {startEpointCheckout,readEpointCheckout,readAppleCheckout,epointMethods,epointLimits} from '../mirpanel-admin/epoint-checkout.mjs';
+import {startEpointCheckout,readEpointCheckout,readAppleCheckout,readEpointPayment,epointMethods,epointLimits} from '../mirpanel-admin/epoint-checkout.mjs';
 import {acceptEpointResult,reconcileEpoint} from '../mirpanel-admin/epoint-reconcile.mjs';
 import {verifyEpointResult} from '../mirpanel-admin/epoint-result.mjs';
 import {walletMap} from '../mirpanel-admin/epoint-api.mjs';
@@ -48,6 +48,8 @@ try{
   await startEpointCheckout(pool,'a',input,opts);
   await startEpointCheckout(pool,'a',input,opts);
   assert.equal(creates,1);
+  const payment=await readEpointPayment(pool,'a',id);assert.equal(payment.cents,amount);assert.equal(payment.method,method);assert.equal(payment.status,'pending');assert.ok(payment[widget?'widget':'redirect']);
+  await assert.rejects(readEpointPayment(pool,'b',id),{status:404});await assert.rejects(readEpointPayment(pool,null,id),{status:401});
   if(method==='apple-pay'){
    const page=await readAppleCheckout(pool,'a',id);assert.equal(page.cents,amount);assert.equal(page.method,'apple-pay');assert.equal(page.status,'pending');assert.ok(page.widget);
    await assert.rejects(readAppleCheckout(pool,'b',id),{status:404});

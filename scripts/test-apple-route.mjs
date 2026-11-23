@@ -12,5 +12,9 @@ try{
  const html=page({request:new Request('https://mirpanel.com/odenis/epoint/apple-pay?amount=999')});
  assert.equal(html.status,200);assert.match(html.headers.get('Content-Security-Policy'),/frame-src https:\/\/epoint.az/);assert.match(html.headers.get('Permissions-Policy'),/payment=/);assert.match(html.headers.get('X-Robots-Tag'),/noindex/);assert(!(await html.text()).includes('999'));
  assert.equal(page({request:new Request('https://mirpanel.com/odenis/epoint/apple-pay',{method:'POST'})}).status,405);
+ const generic=page({request:new Request('https://mirpanel.com/odenis/epoint/odeme?amount=999')});assert.equal(generic.status,200);assert(!(await generic.text()).includes('999'));
+ globalThis.fetch=async(url,options)=>{assert.equal(new URL(url).pathname,'/api/payments/epoint/checkout');assert.equal(options.headers.get('Cookie'),'mirpanel_owner.session_token=synthetic');return Response.json({error:'Login required'},{status:401});};
+ assert.equal((await proxy({request:new Request('https://mirpanel.com/api/payments/epoint/checkout?ref=x',{headers:{Cookie:'mirpanel_owner.session_token=synthetic'}})})).status,401);
+ assert.equal((await proxy({request:new Request('https://mirpanel.com/api/payments/epoint/checkout?ref=x',{method:'POST'})})).status,404);
  console.log('PASS Apple payment page: no URL amount interpolation, noindex/CSP, narrow GET-only owner-session proxy, admin cookie stripped, cross-origin rejected');
 }finally{globalThis.fetch=original;}

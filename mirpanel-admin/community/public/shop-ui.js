@@ -4,7 +4,7 @@ import {playCheckoutSound} from '/checkout-sounds.js?v=1';
 await ensureCart();
 import {parseTopupCents,topupAmountText} from '/community-assets/topup-amount.js?v=topup-20261104';
 let walletModule;
-const loadWalletModule=()=>walletModule??=window.MirpanelRecovery.module('/community-assets/wallet-topup.js?v=apple-iphone-flow-1').catch(e=>{walletModule=null;throw e;});
+const loadWalletModule=()=>walletModule??=window.MirpanelRecovery.module('/community-assets/wallet-topup.js?v=method-cards-confirm-1').catch(e=>{walletModule=null;throw e;});
 export function mountShop(){
 const life=new AbortController(),on=(target,name,fn)=>target.addEventListener(name,fn,{signal:life.signal});
 const app=document.getElementById('shopApp'),cart=window.MirpanelCart,route=location.pathname,base='/api/payments/shop',money=c=>(Number(c)/100).toFixed(2)+' ₼';
@@ -316,8 +316,8 @@ function showWallet(data,{createWalletTopup,topupReviewTime}){
  if(back){const a=link(giftReturn()?'← Hədiyyəyə qayıt':'← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
  app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions(topupReviewTime));void flow.resume();
  void import('/community-assets/epoint-wallet.js?v=epoint-four-1').then(m=>{
-  if(!flowSignal.aborted)return m.mountEpointWallet({form:flow.digital,accountId:profile?.user_id??profile?.id,getCents:effective,signal:flowSignal,back,el,button,link,walletTile:flow.walletTile,showDigital:flow.showDigital,appleFlow:{amountElement:form,methodElement:flow.element,select:()=>flow.selectDigital('apple-pay'),lockAmount:locked=>{amount.disabled=locked;for(const p of presets.children)p.disabled=locked;},resetAmount:()=>{selectedCents=null;amount.value='';for(const p of presets.children)p.setAttribute('aria-pressed','false');update();},restoreCents:c=>{selectedCents=presetAmounts.includes(c/100)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.dataset.cents)===selectedCents));update();}}});
- }).catch(()=>{});
+  if(!flowSignal.aborted)return m.mountEpointWallet({form:flow.digital,accountId:profile?.user_id??profile?.id,getCents:effective,signal:flowSignal,back,el,button,link,walletTile:flow.walletTile,showDigital:flow.showDigital,selectionFlow:{amountElement:form,methodElement:flow.element,select:method=>flow.selectDigital(method),lockAmount:locked=>{amount.disabled=locked;for(const p of presets.children)p.disabled=locked;},restoreCents:c=>{selectedCents=presetAmounts.includes(c/100)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.dataset.cents)===selectedCents));update();}}});
+ }).catch(()=>{if(!flowSignal.aborted)flow.digital.append(el('p','Ödəniş üsulları alınmadı.','shop-error'),button('Yenidən cəhd et',()=>location.reload()));});
 }
 function walletQuestions(topupReviewTime){
  const section=el('section',null,'wallet-faq'),title=el('h2','Balans haqqında suallar'),list=el('div',null,'wallet-faq-list');

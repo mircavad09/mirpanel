@@ -161,9 +161,12 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
  function walletTile(method,onClick){
   const model=method==='apple-pay'?paymentMethods[1]:method==='google-pay'?paymentMethods[2]:method==='m10'?paymentMethods[3]:['Birbank','Elektron pulqabı','<path d="M7 3h6a5 5 0 0 1 0 10H7m0-2h7a5 5 0 0 1 0 10H7V3Z"/>'];
   const tile=button('',()=>{selectDigital(method);onClick();}),label=makeTile(model,tile);
+  if(['apple-pay','birbank','m10'].includes(method)){
+   const image=el('img');image.src='/assets/wallet/methods/'+method+'.webp';image.alt='';image.width=480;image.height=320;image.decoding='async';image.className='wallet-method-art';tile.querySelector('.checkout-icon').replaceWith(image);tile.classList.add('has-method-art');
+  }
   const last=Array.from(tiles.querySelectorAll('[data-digital-wallet]')).at(-1)||open;
   tile.dataset.digitalWallet=method;last.after(tile);
-  if(method==='apple-pay'){tile.setAttribute('aria-pressed','false');const check=el('span','✓','wallet-method-check');check.setAttribute('aria-hidden','true');tile.append(check);}
+  tile.setAttribute('aria-pressed','false');const check=el('span','✓','wallet-method-check');check.setAttribute('aria-hidden','true');tile.append(check);
   return {tile,label};
  }
  function showDigital(active){selection.hidden=active;open.disabled=active;open.setAttribute('aria-expanded',String(!active));}

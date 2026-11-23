@@ -7,7 +7,7 @@ function readDraft(){
  try{const d=JSON.parse(sessionStorage.getItem(storeKey));return validRef(d?.ref)?d:null;}catch{return null;}
 }
 function appleDraft(){try{const d=JSON.parse(sessionStorage.getItem(appleStoreKey));return validRef(d?.ref)?d:null;}catch{return null;}}
-function clearDraft(ref){try{if(readDraft()?.ref===ref)sessionStorage.removeItem(storeKey);if(appleDraft()?.ref===ref)sessionStorage.removeItem(appleStoreKey);}catch{}}
+function clearDraft(ref){try{if(readDraft()?.ref===ref)sessionStorage.removeItem(storeKey);if(appleDraft()?.ref===ref)sessionStorage.removeItem(appleStoreKey);const key=storeKey+'.selection',choice=JSON.parse(sessionStorage.getItem(key)||'null');if(choice?.attempts){for(const [k,d] of Object.entries(choice.attempts))if(d?.ref===ref)delete choice.attempts[k];sessionStorage.setItem(key,JSON.stringify(choice));}}catch{}}
 const resultPath=ref=>'/odenis/epoint/ugurlu?ref='+encodeURIComponent(ref);
 const money=c=>new Intl.NumberFormat('az-AZ',{style:'currency',currency:'AZN'}).format(c/100);
 export const appleMoney=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
@@ -39,7 +39,13 @@ async function api(route,options={}){
  if(!r.ok)throw Object.assign(Error(data.error||'Epoint xidməti cavab vermədi.'),{status:r.status});
  return data;
 }
-export async function mountEpointWallet({form,accountId,getCents,signal,back,el,button,link,walletOnly=false,walletTile,showDigital,amountHint,preview=false,fixedRequestId,appleFlow}){
+export async function mountEpointWallet(options){
+ // Public balance cards are selectors only. Keep the existing owner-only
+ // diagnostic preview and non-card checkout controls on their legacy path.
+ if(options.walletTile&&!options.preview){const m=await import('./wallet-selection.js?v=confirm-all-1');return m.mountWalletSelection({...options,request:api,deviceSupports:walletDeviceSupports});}
+ return mountLegacyEpoint(options);
+}
+async function mountLegacyEpoint({form,accountId,getCents,signal,back,el,button,link,walletOnly=false,walletTile,showDigital,amountHint,preview=false,fixedRequestId,appleFlow}){
  const draftKey=preview?storeKey+'.preview':storeKey;
  const readDraft=()=>{try{const d=JSON.parse(sessionStorage.getItem(draftKey));return validRef(d?.ref)?d:null;}catch{return null;}};
  const clearDraft=ref=>{try{if(readDraft()?.ref===ref)sessionStorage.removeItem(draftKey);}catch{}};
