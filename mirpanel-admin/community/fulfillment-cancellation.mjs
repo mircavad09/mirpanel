@@ -62,6 +62,7 @@ export async function cancelFulfillment(pool,actor,id,input){
     throw conflict('Təchizatçıda icrası başlanmış məhsul var. Təchizatçı nəticəsi dəqiqləşmədən ləğv etmək olmaz.');
    if(input)await c.query("update mirpanel_community.api_dispatches set state='skipped' where order_id=$1 and line_index=any($2::int[]) and state='queued'",[id,remaining.map(x=>x.index)]);
   }
+  if((await c.query("select to_regclass('mirpanel_community.seller_tasks') present")).rows[0].present&&(await c.query("select 1 from mirpanel_community.seller_tasks where order_id=$1 and state in('claimed','needs_review')",[id])).rowCount)throw conflict('Satıcının icrasında olan məhsul var. Əvvəl Satıcılar bölməsində nəticəni yoxlayın.');
   const bank=order.method_name_snapshot||order.provider_name||'Kartdan karta';
   const last4=order.method_last4_snapshot||order.last4;
   const preview={orderCode:order.order_code,method:wallet?'MirPanel balansı':bank+(/^\d{4}$/.test(last4||'')?' •••• '+last4:''),refundCents,full,refundStatus:wallet?'wallet_refunded':'card_pending',lines:remaining};

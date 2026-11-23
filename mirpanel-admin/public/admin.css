@@ -1628,3 +1628,5 @@ th {
 .renewalRows{display:grid;gap:8px}.renewalRows article{display:grid;gap:4px;border:1px solid #333;border-radius:9px;padding:10px;overflow-wrap:anywhere;font-size:12px}.renewalRows b{color:#ffd600}
 .renewalPolicy{display:grid;grid-template-columns:minmax(0,1fr) minmax(160px,1fr);align-items:center;gap:8px;margin:8px 0;font-size:12px}.renewalPolicy select{width:100%;min-height:44px;background:#181818;color:#fff;border:1px solid #444;border-radius:8px;padding:6px}.paymentScheduledRenewals button{min-height:44px}
 @media(max-width:600px){.renewalPolicy{grid-template-columns:1fr}.paymentScheduledRenewals{padding:10px}.renewalFilterBar .btn{flex:1 1 130px;font-size:11px}}
+
+.seller-admin-form,.seller-admin-card{padding:16px;border:1px solid #34404c;border-radius:12px;margin:14px 0;overflow-wrap:anywhere}.seller-admin-form label{display:block;margin:10px 0}.seller-admin-form input[type=checkbox]{width:auto}.seller-admin-form select{max-width:100%;margin:8px}.seller-admin-status{white-space:pre-wrap}.seller-admin-card input{max-width:100%}

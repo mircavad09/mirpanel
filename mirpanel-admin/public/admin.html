@@ -27,6 +27,7 @@
       </div>
 
       <nav class="nav">
+        <button class="navBtn" type="button" data-view="sellers">Satıcılar</button>
         <button class="navBtn" type="button" data-view="apiIntegrations">API inteqrasiyaları</button>
         <a class="navBtn" href="/admin/users">İstifadəçilər</a>
         <a class="navBtn" href="/admin/isci-stok-maas">İşçi, stok və maaş idarəsi</a>
@@ -682,6 +683,7 @@
           </article>
         </template>
       </section>
+      <section class="panel singlePanel hidden" id="sellersView"></section>
       <section class="panel singlePanel hidden" id="apiIntegrationsView">
         <section class="settingsForm" aria-labelledby="epinbyTitle">
           <h2 id="epinbyTitle">Epinby bağlantısı</h2>
@@ -799,5 +801,6 @@
   <script src="stories-admin.js?v=az-addresses-1"></script>
   <script src="admin-mobile-menu.js?v=primary-nav-balance-1"></script>
   <script src="api-integrations.js?v=epinby-finance-1"></script>
+<script src="/sellers-admin.js?v=1"></script>
 </body>
 </html>

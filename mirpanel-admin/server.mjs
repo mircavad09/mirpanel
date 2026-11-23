@@ -1609,15 +1609,18 @@ const server = http.createServer(async (request, response) => {
       }
     }
     if(pathname==='/api/payments/epoint/result'){
+      let verifiedResult;
       if(request.method!=='POST')return json(response,405,{error:'POST tələb olunur.'},{Allow:'POST'});
       try{
         const result=verifyEpointResult(await readRawBody(request,65536),request.headers['content-type'],process.env.EPOINT_PRIVATE_KEY?.trim());
+        verifiedResult={ref:result.id,transaction:result.transaction,providerStatus:result.status};
         const {pool}=await ownerCommunity.shopContext({headers:{}});
         await acceptEpointResult(pool,result);
+        console.info('EPOINT_RESULT',JSON.stringify({...verifiedResult,signatureVerified:true,httpStatus:200}));
         return json(response,200,{ok:true});
       }catch(error){
         const status=Number.isInteger(error.status)&&error.status>=400&&error.status<=599?error.status:503;
-        if(status===503&&!error.status)console.warn('EPOINT_RESULT_NOT_COMMITTED');
+        console.warn('EPOINT_RESULT',JSON.stringify({...verifiedResult,signatureVerified:!!verifiedResult,httpStatus:status}));
         return json(response,status,{error:status===503?'Epoint nəticəsi hazırda emal olunmur.':error.message},status===503?{'Retry-After':'60'}:{});
       }
     }
@@ -1720,7 +1723,7 @@ const server = http.createServer(async (request, response) => {
     }
     if(['/employee.js','/employee.css','/employee-login.js','/receipt-analysis-view.js'].includes(pathname))return serveFile(response,pathname.slice(1));
     if(pathname.startsWith('/admin')&&await employeeSystem.blockAdmin(request,response))return;
-    if(['/influencer-live-admin.js','/influencer-preview-interactive.js','/influencer-preview-interactive.css','/influencer-preview.js','/influencer-preview.css','/admin-community-panel.js','/admin-community-panel.css','/admin-chat-view.js','/admin-wallet-users.js','/admin-staff-support.js','/admin-user-orders.js','/admin-wallet-users.css','/admin-user-controls.js','/admin-shop.js'].includes(pathname)){
+    if(['/influencer-live-admin.js','/influencer-preview-interactive.js','/influencer-preview-interactive.css','/influencer-preview.js','/influencer-preview.css','/admin-community-panel.js','/admin-community-panel.css','/admin-chat-view.js','/admin-wallet-users.js','/admin-staff-support.js','/admin-user-orders.js','/admin-wallet-users.css','/admin-user-controls.js','/admin-shop.js','/admin-topup-finance.css'].includes(pathname)){
       if(!requireAuth(request,response))return;
       if(getSession(request)?.role!=='admin')return json(response,403,{error:'Yalnız admin üçün.'});
       return serveFile(response,pathname.slice(1));
@@ -1742,7 +1745,7 @@ const server = http.createServer(async (request, response) => {
       return response.end();
     }
 
-    if (["/package-cost-admin.js", "/api-integrations.js", "/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-browser.js", "/ready-stock-admin.css", "/admin-topup-notification.js", "/10-mirpanel-imzasi.wav"].includes(pathname)) {
+    if (["/sellers-admin.js", "/package-cost-admin.js", "/api-integrations.js", "/admin-live-list.js", "/admin-session.js", "/admin-draft.js", "/admin.css", "/admin-mobile-menu.css", "/admin-mobile-menu.js", "/admin.js", "/admin-order-guide.js", "/product-sales-admin.js", "/product-plan-utils.mjs", "/login.js", "/admin-stock-save-fix.js", "/cms-admin.js", "/homepage-banners-admin.js", "/payment-admin.js", "/employee-review-admin.js", "/stories-admin.js", "/ready-stock-admin.js", "/ready-stock-browser.js", "/ready-stock-admin.css", "/admin-topup-notification.js", "/10-mirpanel-imzasi.wav"].includes(pathname)) {
       return serveFile(response, pathname.slice(1));
     }
 
