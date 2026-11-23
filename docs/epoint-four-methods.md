@@ -59,7 +59,13 @@ There is one shared Apple/Google widget and no documented method-selection param
 
 The cited sections do not mandate a separate test cabinet. Do not invent one as a prerequisite. Local tests inject provider replies. Live unpaid sessions verify only creation and opening, not completed payment or final credit. Obtain explicit per-method authorization before a real charge.
 
-## Current balance method selection — 2026-11-23 (supersedes earlier ordering)
+## Current compact payment identities — 2026-11-23
+
+Presentation-only follow-up: selector cards retain three columns and use equal 108px heights. The large generated WebP banners are no longer rendered. Official-source SVG identities are listed in assets/wallet/methods/LOGO-SOURCES.md: red Birbank symbol, monochrome Apple Pay mark on dark, turquoise m10 logo. Method names remain separate static accessible text; the checkmark remains an interface overlay. No status/amount/continue text is injected into these digital cards. The existing separate amount/CTA/dialog/status-page flow and all settlement code remain untouched. A versioned wallet-topup import prevents an old cached banner renderer from surviving the release.
+
+Apple visibility audit: live config returned apple-pay=true and domain-confirmed=true; the current public balance renderer calls walletDeviceSupports before adding a tile. The gate requires iPhone UA plus ApplePaySession.canMakePayments()===true, with exceptions returning false. Tests cover Safari and CriOS iPhone strings with a positive Apple API, and exclude iPad/Mac/Android and unsupported iPhone. There is no separate Safari-name restriction. No physical supported iPhone was connected, so an actual reported disappearance was not reproduced or assigned an unproven cause. The gate is preserved rather than weakened. A new browser connection attempt reported local browser access unavailable. Screenshots/tests use isolated sessions; deployed bytes are checked separately.
+
+## Earlier balance method selection — 2026-11-23
 
 Owner changed the requested order to balance → amount → method → continue → confirmation → dedicated payment page. The public balance cards now use wallet-selection.js via the existing mountEpointWallet entry. A card click only selects/highlights; amount edits and the confirmation Back button perform zero payment POSTs and no navigation. The one yellow CTA reads `Balansa əlavə et · 5,00 ₼` and only Confirm calls the existing start endpoint. No long device/diagnostic text or payment-status link is rendered on the initial selection screen. Capability gates and short actual errors remain.
 

@@ -4,6 +4,9 @@ assert.equal(await walletDeviceSupports('m10',{}),true);
 assert.equal(await walletDeviceSupports('birbank',{}),true);
 assert.equal(await walletDeviceSupports('apple-pay',{}),false);
 assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X)'},ApplePaySession:{canMakePayments:()=>true}}),true);
+for(const userAgent of ['Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1','Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 CriOS/140.0 Mobile/15E148 Safari/604.1']){
+ assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent},ApplePaySession:{canMakePayments:()=>true}}),true,'supported iPhone browsers are not hidden by browser-name filtering');
+}
 for(const userAgent of ['Mozilla/5.0 (Macintosh; Intel Mac OS X) Safari/605.1.15','Mozilla/5.0 (iPad) Safari/605.1.15']){
  assert.equal(await walletDeviceSupports('apple-pay',{navigator:{userAgent},ApplePaySession:{canMakePayments:()=>true}}),false,'owner policy excludes iPad and Mac even with Apple capability');
 }

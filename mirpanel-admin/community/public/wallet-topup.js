@@ -159,10 +159,11 @@ export function createWalletTopup({el,button,api,run,money,methods,profile,getCe
  }
  const digital=el('div');root.insertBefore(digital,selection);
  function walletTile(method,onClick){
-  const model=method==='apple-pay'?paymentMethods[1]:method==='google-pay'?paymentMethods[2]:method==='m10'?paymentMethods[3]:['Birbank','Elektron pulqabı','<path d="M7 3h6a5 5 0 0 1 0 10H7m0-2h7a5 5 0 0 1 0 10H7V3Z"/>'];
+  const model=method==='apple-pay'?['Apple Pay','',paymentMethods[1][2]]:method==='google-pay'?paymentMethods[2]:method==='m10'?['m10','',paymentMethods[3][2]]:['Birbank','Elektron pulqabı','<path d="M7 3h6a5 5 0 0 1 0 10H7m0-2h7a5 5 0 0 1 0 10H7V3Z"/>'];
   const tile=button('',()=>{selectDigital(method);onClick();}),label=makeTile(model,tile);
   if(['apple-pay','birbank','m10'].includes(method)){
-   const image=el('img');image.src='/assets/wallet/methods/'+method+'.webp';image.alt='';image.width=480;image.height=320;image.decoding='async';image.className='wallet-method-art';tile.querySelector('.checkout-icon').replaceWith(image);tile.classList.add('has-method-art');
+   const logos={'apple-pay':'apple-pay-mark.svg',birbank:'birbank-symbol.svg',m10:'m10-logo.svg'};
+   const image=el('img');image.src='/assets/wallet/methods/'+logos[method];image.alt='';image.width=64;image.height=40;image.decoding='async';image.className='wallet-method-logo wallet-method-logo--'+method;tile.querySelector('.checkout-icon').replaceWith(image);tile.classList.add('has-method-logo');
   }
   const last=Array.from(tiles.querySelectorAll('[data-digital-wallet]')).at(-1)||open;
   tile.dataset.digitalWallet=method;last.after(tile);

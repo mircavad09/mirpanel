@@ -45,6 +45,8 @@ try{
     await p.goto(origin+'/balans');const apple=p.locator('[data-digital-wallet="apple-pay"]');await apple.waitFor();
     assert(await p.locator('.wallet-topup').evaluate(n=>n.getBoundingClientRect().top>document.querySelector('#balansi-artir').getBoundingClientRect().bottom));
     await apple.click();assert.equal(await apple.getAttribute('aria-pressed'),'true');assert.equal(records.size,initialSize);
+    assert.equal(await apple.locator('strong').textContent(),'Apple Pay');assert.equal(await p.locator('.wallet-method-art').count(),0);
+    await apple.locator('img').evaluate(n=>n.decode());assert.equal(await apple.locator('img').evaluate(n=>n.naturalWidth>0&&n.src.endsWith('apple-pay-mark.svg')&&getComputedStyle(n).objectFit==='contain'),true);
     const input=p.getByLabel('Başqa məbləğ',{exact:true}),submit=p.locator('.wallet-topup-continue');
     assert.equal(await submit.isEnabled(),true,'selection keeps the previously chosen valid amount');
     assert.equal(await p.getByText(/Google Pay üçün Google Cüzdanı|Epoint ödənişinin vəziyyəti/).count(),0);

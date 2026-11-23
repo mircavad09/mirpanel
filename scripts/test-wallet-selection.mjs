@@ -9,12 +9,12 @@ if(process.argv.includes('--live-assets')){
  for(const name of ['shop-ui.js','wallet-topup.js','epoint-wallet.js','wallet-selection.js','epoint-payment.js','topup-amount.js','shop.css']){
   const p='/community-assets/'+name,r=await fetch('https://mirpanel.com'+p+'?verify='+Date.now(),{cache:'no-store'});assert.equal(r.status,200,p);const bytes=Buffer.from(await r.arrayBuffer());assert.equal(bytes.toString().replaceAll('\r\n','\n'),fs.readFileSync('mirpanel-admin/community/public/'+name,'utf8').replaceAll('\r\n','\n'),p+' deployed source');liveAssets.set(p,bytes);
  }
- for(const name of ['apple-pay','birbank','m10']){const p='/assets/wallet/methods/'+name+'.webp',r=await fetch('https://mirpanel.com'+p+'?verify='+Date.now(),{cache:'no-store'});assert.equal(r.status,200);const bytes=Buffer.from(await r.arrayBuffer());assert(bytes.equals(fs.readFileSync(p.slice(1))));liveAssets.set(p,bytes);}
+ for(const name of ['apple-pay-mark','birbank-symbol','m10-logo']){const p='/assets/wallet/methods/'+name+'.svg',r=await fetch('https://mirpanel.com'+p+'?verify='+Date.now(),{cache:'no-store'});assert.equal(r.status,200);const bytes=Buffer.from(await r.arrayBuffer());assert.equal(bytes.toString().replaceAll('\r\n','\n'),fs.readFileSync(p.slice(1),'utf8').replaceAll('\r\n','\n'));liveAssets.set(p,bytes);}
  console.log('Verified deployed assets downloaded; all payment APIs below remain isolated fixtures');
 }
 const server=http.createServer(async(req,res)=>{
  const u=new URL(req.url,'http://local'),p=u.pathname,json=(value,status=200)=>{res.writeHead(status,{'Content-Type':'application/json'});res.end(JSON.stringify(value));};
- if(liveAssets.has(p)){res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':'image/webp');return res.end(liveAssets.get(p));}
+ if(liveAssets.has(p)){res.setHeader('Content-Type',p.endsWith('.js')?'text/javascript':p.endsWith('.css')?'text/css':p.endsWith('.svg')?'image/svg+xml':'image/webp');return res.end(liveAssets.get(p));}
  if(p==='/api/community/state')return json({profile:{user_id:'isolated-wallet',display_name:'Sınaq',balanceCents:1200}});
  if(p==='/api/community/notifications')return json({items:[],unread:0});
  if(p==='/api/payments/shop/wallet')return json({cents:1200,items:[],topups:[],more:false});
@@ -54,9 +54,12 @@ try{
    if(!m10)assert.equal(await p.locator('[data-digital-wallet="m10"]').count(),0);
    await tile.click();await p.getByRole('button',{name:'10 ₼',exact:true}).click();await p.getByRole('button',{name:'5 ₼',exact:true}).click();await tile.click();
    assert.equal(posts,writes);assert.equal(records.size,size);assert.equal(new URL(p.url()).pathname,'/balans');assert.equal(await tile.getAttribute('aria-pressed'),'true');assert.match(await next.textContent(),/Balansa əlavə et · 5,00/);
-   await p.locator('.wallet-method-art').evaluateAll(async nodes=>{await Promise.all(nodes.map(n=>n.decode()));});assert(await p.locator('.wallet-method-art').evaluateAll(nodes=>nodes.every(n=>n.naturalWidth>0&&getComputedStyle(n).objectFit==='contain')));
+   assert.equal(await p.locator('.wallet-method-art').count(),0,'no banner artwork');
+   await p.locator('.wallet-method-logo').evaluateAll(async nodes=>{await Promise.all(nodes.map(n=>n.decode()));});assert(await p.locator('.wallet-method-logo').evaluateAll(nodes=>nodes.length>0&&nodes.every(n=>n.naturalWidth>0&&getComputedStyle(n).objectFit==='contain'&&n.src.endsWith('.svg'))));
+   assert.equal(await p.locator('.wallet-method-tiles').evaluate(n=>getComputedStyle(n).gridTemplateColumns.split(' ').length),3);
+   for(const label of await p.locator('[data-digital-wallet] strong').allTextContents())assert(!/davam|AZN|\d+[.,]\d{2}/.test(label),'static method names only');
    const heights=await p.locator('.wallet-method-tile').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().height));assert(Math.max(...heights)-Math.min(...heights)<2,'equal card heights');
-   await next.scrollIntoViewIfNeeded();assert(await next.evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
+   await next.evaluate(n=>n.scrollIntoView({block:'center',behavior:'instant'}));assert(await next.evaluate(n=>{const r=n.getBoundingClientRect();return n.contains(document.elementFromPoint(r.x+r.width/2,r.y+r.height/2));}));assert(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    if(width===390)await p.screenshot({path:out+'/'+engine+'-'+method+'-mobile.jpg'});
    await next.click();let dialog=p.getByRole('dialog');await dialog.waitFor();assert.match(await dialog.textContent(),/Balansınıza 5,00/);assert.match(await dialog.textContent(),new RegExp(names[method]));await dialog.getByRole('button',{name:'Geri',exact:true}).click();assert.equal(posts,writes);assert.equal(records.size,size);assert.equal(await tile.getAttribute('aria-pressed'),'true');
    await next.click();await p.getByRole('button',{name:'Təsdiq et',exact:true}).evaluate(n=>{n.click();n.click();});
