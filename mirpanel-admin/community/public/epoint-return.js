@@ -54,8 +54,8 @@ async function mount(main,doc){
     window.dispatchEvent(new Event('mirpanel:balance-refresh'));void window.refreshCommunityNav?.();
    }else if(d.status==='failed'){
     stopped=true;check.hidden=true;
-    finish(d.cancelled?'Ödəniş ləğv edildi':d.providerStatus==='returned'?'Ödəniş geri qaytarıldı':'Ödəniş tamamlanmadı',purchase?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Vəsait çıxılıbsa dəstəyə müraciət edin.':'Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa dəstəyə müraciət edin.','rejected');
-    if(purchase&&d.cancelled){
+    finish((d.openingExpired||d.openingFailed)?'Ödəniş səhifəsi açıla bilmədi':d.cancelled?'Ödəniş ləğv edildi':d.providerStatus==='returned'?'Ödəniş geri qaytarıldı':'Ödəniş tamamlanmadı',purchase?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Vəsait çıxılıbsa dəstəyə müraciət edin.':'Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa dəstəyə müraciət edin.','rejected');
+    if(purchase&&(d.cancelled||d.openingExpired)){
      try{const key='mirpanel.cart.checkout.v1';if(read(localStorage,key)?.id===ref)localStorage.removeItem(key);}catch{}
      back.hidden=false;back.href='/odenis';back.textContent='Başqa üsulla ödə';
     }

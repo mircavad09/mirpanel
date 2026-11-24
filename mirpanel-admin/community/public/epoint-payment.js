@@ -18,6 +18,7 @@ export async function showEpointPayment(doc=document){
    main.querySelector('h1').textContent=name+(purchase?' ilə sifariş ödənişi':' ilə balans artırma');doc.title=name+' — MirPanel';const method=main.querySelector('[data-payment-method]');if(method)method.textContent=name;
    amount.textContent=(purchase?'Sifariş məbləği: ':'Balansa əlavə ediləcək: ')+money(data.cents);
    if(purchase){const back=main.querySelector('a[href="/balans"]');if(back){back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Geri — Sifarişə qayıt';}}
+   if(data.openingExpired||data.openingFailed){status.textContent=data.openingExpired?'Ödəniş səhifəsi açıla bilmədi: keçidin müddəti bitib. Bank təsdiqi alınmayıb.':'Ödəniş səhifəsi açıla bilmədi. Provayder ödəniş səhifəsini yaratmadı; bank təsdiqi alınmayıb.';host.replaceChildren();const back=main.querySelector('a[href^="/odenis?completed="]');if(back){back.href='/odenis';back.textContent='Sifarişə qayıt';}try{const key='mirpanel.cart.checkout.v1';if(JSON.parse(localStorage.getItem(key)||'null')?.id===ref)localStorage.removeItem(key);}catch{}stopped=true;return;}
    if(data.status==='success'||data.status==='failed'){stopped=true;location.replace(resultURL);return;}
    if(data.openingIssue){status.textContent='Bu üsulla ödəniş səhifəsi açılmadı. Əvvəlki cəhdin vəziyyətini yoxlayın.';retry.hidden=false;return;}
    if(!await walletDeviceSupports(data.method)){status.textContent=data.method==='apple-pay'?'Apple Pay üçün Safari-də açın. Ödənişə başlamazdan əvvəl bank kartını da seçə bilərsiniz.':'Google Pay üçün uyğun Android telefonda Chrome-da açın. Ödənişə başlamazdan əvvəl bank kartını da seçə bilərsiniz.';return;}
@@ -35,7 +36,7 @@ export async function showEpointPayment(doc=document){
     frame.src=url.href;host.replaceChildren(frame);status.textContent='Ödəniş ekranı açılır…';frameTimer=setTimeout(()=>{if(frame===nextFrame&&frame.isConnected){status.textContent='Ödəniş ekranı gecikir. Yenidən cəhd edin.';retry.hidden=false;}},12000);
    }
    if(++count<45)timer=setTimeout(refresh,4000);else{status.textContent='Ödəniş yoxlanılır… Vəziyyəti ayrıca yoxlaya bilərsiniz.';retry.hidden=false;}
-  }catch(e){status.textContent=e.status===401?'Ödənişi başladığınız hesabla daxil olun.':e.status===404?'Bu hesab üçün ödəniş tapılmadı.':e.message;login.hidden=e.status!==401;retry.hidden=false;}
+  }catch(e){status.textContent=e.status===401?'Ödənişi başladığınız hesabla daxil olun.':e.status===404?'Bu hesab üçün ödəniş tapılmadı.':'Ödəniş səhifəsi açıla bilmədi. Mövcud əməliyyatın vəziyyətini yenidən yoxlayın.';login.hidden=e.status!==401;retry.hidden=false;}
   finally{running=false;retry.disabled=false;}
  }
  retry.addEventListener('click',()=>{count=0;clearTimeout(frameTimer);if(frame){frame.remove();frame=null;}void refresh();});

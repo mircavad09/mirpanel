@@ -32,7 +32,7 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
   if(cents(result.amount)!==Number(row.cents))throw fail(409,'Epoint məbləği uyğun deyil.');
   if(!['new','success','failed','error','server_error','returned'].includes(result.status))throw fail(503,'Epoint yekun vəziyyəti təsdiqləmədi.');
   const rawCode=String(result.code??'');
-  const code=/^\d{1,3}$/.test(rawCode)?rawCode.padStart(3,'0'):['canceled','cancelled','succeeded'].includes(rawCode)?rawCode:null;
+  const code=/^\d{1,3}$/.test(rawCode)?rawCode.padStart(3,'0'):['canceled','cancelled','succeeded','TIMEOUT'].includes(rawCode)?rawCode:null;
   if(result.status==='success'&&code!=='000'&&!(code==='succeeded'&&result.order_id==='mp_ep_'+id))throw fail(409,'Epoint bank təsdiqi uyğun deyil.');
   if(!row.candidate_transaction){
    const bound=await pool.query("update mirpanel_community.epoint_checkout_requests set candidate_transaction=$2 where id=$1 and (candidate_transaction is null or candidate_transaction=$2) returning id",[id,result.transaction]);

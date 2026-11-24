@@ -95,8 +95,8 @@ try{
  await assert.rejects(shop.checkout(req,owner,{items:[{...ordinary,productId:'zero'}],mode:'epoint',epointMethod:'birbank',requestId:id(),consentAccepted:true}),{status:409});checks++;
  await pool.query("update shop_checkouts set created_at=now()-interval '1 minute'");
  const count=Number((await pool.query('select count(*) n from epoint_purchases')).rows[0].n);
- let starts=0,startId,apiStatus='new';const apiShop=createShop({context:async r=>({pool,user:r.user}),catalog:async()=>f.catalog,snapshot:()=>f.rpc('inventory_snapshot'),store:f.store,config,epointTransport:async url=>{
-  if(url.endsWith('/wallet/status'))return Response.json({'10':'Birbank'});if(url.endsWith('/get-status'))return Response.json({status:apiStatus,code:apiStatus==='error'?'canceled':apiStatus==='success'?'succeeded':null,amount:5,transaction:'synthetic_api_tx',order_id:'mp_ep_'+startId});starts++;
+ let starts=0,startId,apiStatus='new',apiCode=null;const apiShop=createShop({context:async r=>({pool,user:r.user}),catalog:async()=>f.catalog,snapshot:()=>f.rpc('inventory_snapshot'),store:f.store,config,epointTransport:async url=>{
+  if(url.endsWith('/wallet/status'))return Response.json({'10':'Birbank'});if(url.endsWith('/get-status'))return Response.json({status:apiStatus,code:apiCode||(apiStatus==='error'?'canceled':apiStatus==='success'?'succeeded':null),amount:5,transaction:'synthetic_api_tx',order_id:'mp_ep_'+startId});starts++;
   return Response.json({status:'success',transaction:'synthetic_api_tx',redirect_url:'https://epoint.az/synthetic-api'});
  }});
  const request={items:[ordinary],epointMethod:'birbank',requestId:id(),expectedTotalCents:500,consentAccepted:true};
@@ -109,12 +109,13 @@ try{
  eq(starts,1);
  await ensureEpointPurchases(pool);eq(Number((await pool.query('select count(*) n from epoint_purchases')).rows[0].n),count+1);
  // New UUIDs and a different method must reuse an unresolved purchase.
- const resumed=await apiShop.startProductPayment(req,owner,{...request,epointMethod:'card',requestId:id()});eq(resumed.id,start1.id);eq(starts,1);
+ await assert.rejects(apiShop.startProductPayment(req,owner,{...request,epointMethod:'card',requestId:id()}),e=>e.code==='PAYMENT_METHOD_PENDING');checks++;eq(starts,1);
  eq((await pool.query('select payment_confirmed from payment_orders where id=(select order_id from epoint_purchases where id=$1)',[start1.id])).rows[0].payment_confirmed,false);
  // A fresh signed-provider cancellation is the only safe replacement here.
- apiStatus='error';const replacement=await apiShop.startProductPayment(req,owner,{...request,epointMethod:'card',requestId:id()});assert.notEqual(replacement.id,start1.id);checks++;eq(starts,2);
+ apiStatus='error';const replacementRequest=id();const replacement=await apiShop.startProductPayment(req,owner,{...request,epointMethod:'card',requestId:replacementRequest});assert.notEqual(replacement.id,start1.id);checks++;eq(starts,2);
  eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=(select order_id from epoint_purchases where id=$1)',[replacement.id])).rows[0].n,0);
  eq(await balance(),1500);
+ apiCode='TIMEOUT';startId=replacement.id;await assert.rejects(apiShop.startProductPayment(req,owner,{...request,epointMethod:'card',requestId:replacementRequest}),e=>e.code==='PAYMENT_LINK_EXPIRED');checks++;const expired=await readEpointPayment(pool,'a',replacement.id);eq(expired.openingExpired,true);eq(expired.status,'failed');eq(starts,2);apiCode=null;
  // This is a ready-account package, not a manual service with no stock policy.
  await saveReadyStock(pool,createPaymentSecurity(config),config.tokenSecret,f.catalog,'synthetic',{productId:'unlimited',index:0,planSignature:signature(f.catalog.products.find(p=>p.id==='unlimited').plans[0]),requestId:id(),autoWallet:true,messages:[]});
  const bundleQuote=await shop.quote(req,[ordinary,{productId:'unlimited',planIndex:0,quantity:1}],owner);

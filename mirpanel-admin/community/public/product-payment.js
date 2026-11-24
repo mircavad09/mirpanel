@@ -6,7 +6,7 @@ const methods={
  birbank:{title:'Birbank',logo:'birbank-symbol.svg'},
  m10:{title:'m10',logo:'m10-logo.svg'}
 };
-export async function productPaymentChoices({host,el,select,signal,preferDirect=()=>false}){
+export async function productPaymentChoices({host,el,select,signal,getSelected=()=>'wallet'}){
  const response=await fetch('/api/payments/epoint/status',{credentials:'same-origin',cache:'no-store',signal});
  if(!response.ok)throw Error('Ödəniş üsulları alınmadı.');
  const config=await response.json();
@@ -22,7 +22,7 @@ export async function productPaymentChoices({host,el,select,signal,preferDirect=
   card.append(el('span','✓','checkout-check'));return card;
  }
  const card=tile('card',{...methods.card,...(!available.has('card')?{detail:'Hazırda mövcud deyil'}:{})},!available.has('card'));
- primary.prepend(card);
+ primary.append(card);
  if(available.has('apple-pay'))primary.append(tile('apple-pay',methods['apple-pay']));
  const other=el('details',null,'checkout-other-methods'),summary=el('summary','Digər ödənişlər'),grid=el('div',null,'checkout-secondary-methods');
  summary.setAttribute('aria-label','Digər ödənişlər');other.append(summary,grid);
@@ -32,10 +32,7 @@ export async function productPaymentChoices({host,el,select,signal,preferDirect=
  grid.append(tile('transfer',{title:'Kartdan karta',detail:'Hazırda mövcud deyil',logo:'bank-card.svg'},true));
  grid.append(tile('bank-account',{title:'Hesaba köçürmə',detail:'Tezliklə',logo:'bank-card.svg'},true));
  host.append(other);
- if(preferDirect()){
-  const method=['card','apple-pay','google-pay','birbank','m10'].find(x=>available.has(x));
-  if(method){const radio=host.querySelector('input[value="'+method+'"]');radio.checked=true;if(radio.closest('details'))other.open=true;select(method);}
- }
+ const selected=host.querySelector('input[value="'+getSelected()+'"]');if(selected&&!selected.disabled){selected.checked=true;if(selected.closest('details'))other.open=true;}else if(getSelected()!=='wallet'){select(null);host.append(el('small','Seçilmiş ödəniş üsulu bu brauzerdə açılmır. Safari-də açın və ya bank kartını özünüz seçin.','shop-muted checkout-method-hint'));}
  const ua=navigator.userAgent||'';
  if(/iPhone/i.test(ua)&&!available.has('apple-pay'))host.append(el('small','Apple Pay üçün Safari-də açın və ya bank kartını seçin.','shop-muted checkout-method-hint'));
  if(/Android/i.test(ua)&&!available.has('google-pay'))host.append(el('small','Google Pay açılmırsa, bank kartını seçin.','shop-muted checkout-method-hint'));
