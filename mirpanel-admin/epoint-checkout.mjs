@@ -36,6 +36,7 @@ export function ensureEpointCheckout(pool){
      alter table mirpanel_community.epoint_checkout_requests add column if not exists recovery_hold boolean not null default false;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_status text not null default 'new';
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_code text;
+     alter table mirpanel_community.epoint_checkout_requests add column if not exists result_checked_at timestamptz;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists next_check_at timestamptz not null default clock_timestamp();
      alter table mirpanel_community.epoint_checkout_requests add column if not exists check_failures integer not null default 0;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists purpose text not null default 'topup' check(purpose in ('topup','purchase'));

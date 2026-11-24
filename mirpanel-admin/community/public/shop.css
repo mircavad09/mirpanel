@@ -280,3 +280,18 @@
 @keyframes payment-confirm-in{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
 @keyframes payment-confirm-check{to{stroke-dashoffset:0}}
 @media(prefers-reduced-motion:reduce){.shop-page .product-payment-result[data-result=paid] .shop-result-badge,.shop-page .product-payment-result[data-result=paid] .shop-result-badge svg path{animation:none;stroke-dashoffset:0}}
+
+/* Payment selection only; basket, summary and result layouts stay unchanged. */
+.shop-checkout-grid .checkout-methods.checkout-payment-groups{display:block}
+.checkout-primary-methods,.checkout-secondary-methods{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;min-width:0}
+.shop-page .checkout-payment-groups .checkout-tile{height:128px;min-height:128px;grid-template-rows:32px auto auto;gap:4px;padding:10px 5px;font-size:14px;line-height:1.25}
+.checkout-payment-groups .checkout-tile img{width:48px;height:32px;object-fit:contain}
+.checkout-payment-groups .checkout-icon{height:32px}
+.checkout-payment-groups .checkout-tile small{font-size:12px;line-height:1.25}
+.checkout-payment-groups .checkout-tile:has(input[value="wallet"]:checked) .checkout-check{color:#ffd400}
+.checkout-other-methods{margin-top:12px;padding:0}
+.checkout-other-methods summary{border:1px solid #3e3b31;border-radius:12px;padding:0 10px;min-height:44px;display:list-item;align-content:center;cursor:pointer;font-weight:650;font-size:14px}
+.checkout-secondary-methods{padding:4px 0 10px}
+.checkout-method-hint{display:block;margin-top:10px;line-height:1.5}
+.checkout-payment-groups img[src$="apple-pay-mark.svg"]{filter:invert(1)}
+.checkout-payment-groups img[src$="google-pay-mark.svg"]{background:#fff;border-radius:5px;padding:3px}
