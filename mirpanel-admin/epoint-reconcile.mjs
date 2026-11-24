@@ -14,7 +14,7 @@ export async function reconcileEpoint(pool,id,{env=process.env,send=fetch,user=n
  await ensureEpointCheckout(pool);
  // Claim a bounded lease in the database. No external call is held inside a transaction.
  const row=(await pool.query(`update mirpanel_community.epoint_checkout_requests set next_check_at=clock_timestamp()+interval '30 seconds'
-  where id=$1 and (method<>'card' or purpose='purchase') and state='ready' and (candidate_transaction is not null or method in ('apple-pay','google-pay'))
+  where id=$1 and (method<>'card' or purpose='purchase' or $3) and state='ready' and (candidate_transaction is not null or method in ('apple-pay','google-pay'))
    and ($2::text is null or user_id=$2) and result_status<>'success' and not recovery_hold and ($3 or next_check_at<=clock_timestamp())
   returning user_id,cents,candidate_transaction,method`,[id,user,force])).rows[0];
  if(!row)return;

@@ -8,16 +8,26 @@ export async function mountWalletSelection({form,accountId,getCents,signal,back,
  if(choice?.accountId!==accountId||!choice.attempts||typeof choice.attempts!=='object')choice={accountId,method:null,cents:null,attempts:{}};
  for(const oldKey of [legacyKey,legacyKey+'.apple']){try{const d=JSON.parse(sessionStorage.getItem(oldKey));if(d?.accountId===accountId&&(names[d.method]||d.method==='card')&&validRef(d.ref)&&Number.isSafeInteger(d.cents))choice.attempts[d.method+':'+d.cents]??=d;}catch{}}
  const notice=el('p','','shop-error');notice.setAttribute('role','status');notice.hidden=true;form.append(notice);
- let config,selected=null,busy=false,dialog=null;const tiles=new Map(),actions=el('div',null,'wallet-topup-actions'),next=button('Balansa əlavə et',confirm,true);
+ let config,selected=null,busy=false,dialog=null,previous=null;const tiles=new Map(),actions=el('div',null,'wallet-topup-actions'),next=button('Balansa əlavə et',confirm,true);
  actions.hidden=true;next.classList.add('wallet-topup-continue');actions.append(next);(flow?.methodElement||form).append(actions);
  const say=text=>{notice.textContent=text;notice.hidden=!text;};
  const save=()=>{try{sessionStorage.setItem(key,JSON.stringify(choice));}catch{}};
  function amount(){const c=getCents(),l=config?.limits;if(!Number.isSafeInteger(c)||!Number.isSafeInteger(l?.minCents)||!Number.isSafeInteger(l?.maxCents)||c<l.minCents||c>l.maxCents)throw Error('Etibarlı məbləğ seçin.');return c;}
  function update(){let c;try{c=amount();}catch{}next.textContent=c===undefined?'Balansa əlavə et':'Balansa əlavə et · '+money(c);next.disabled=busy||!selected||c===undefined;actions.hidden=!selected;choice.method=selected;choice.cents=c??null;save();flow?.lockAmount?.(busy);for(const {tile} of tiles.values())tile.disabled=busy;}
- function select(method){if(busy)return;selected=names[method]?method:null;say('');update();}
+ function select(method){if(busy)return;selected=names[method]?method:null;say(previous?.status==='pending'?'Əvvəlki ödənişin nəticəsi yoxlanılır. İkinci ödəniş yaradılmayacaq.':previous?'Başqa ödəniş üsulu seçə bilərsiniz.':'');update();}
  async function load(){
   try{
    config=await request('status',{signal});if(signal.aborted)return;
+   const returned=new URLSearchParams(location.search).get('paymentReturn');
+   if(validRef(returned)){
+    const d=await request('checkout?ref='+encodeURIComponent(returned),{signal});if(signal.aborted)return;
+    if(d.purpose==='purchase')throw Error('Sifariş ödənişinə qayıdın.');
+    if(d.status==='success'){location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(returned));return;}
+    previous={ref:returned,status:d.status};choice.method=d.method;choice.cents=d.cents;
+    notice.className='shop-muted checkout-return-note';
+    say(d.status==='pending'?'Əvvəlki ödənişin nəticəsi yoxlanılır. İkinci ödəniş yaradılmayacaq.':'Başqa ödəniş üsulu seçə bilərsiniz.');
+    if(d.status==='pending'){const resume=el('a','Mövcud ödənişə davam et');resume.href='/odenis/epoint/odeme?ref='+encodeURIComponent(returned);form.append(resume);}
+   }
    for(const method of Object.keys(names)){
     if(config?.methods?.[method]!==true||!await deviceSupports(method)||signal.aborted)continue;
     const tile=walletTile(method,()=>select(method));tiles.set(method,tile);
@@ -26,6 +36,7 @@ export async function mountWalletSelection({form,accountId,getCents,signal,back,
    if(config?.enabled===true){const card=button('Epoint ilə ödə',()=>void start('card'),true);form.append(card);}
    const priorMethod=choice.method,priorCents=choice.cents;
    if(tiles.has(priorMethod)){selected=priorMethod;if(Number.isSafeInteger(priorCents))flow?.restoreCents?.(priorCents);flow?.select?.(selected);}
+   else if(Number.isSafeInteger(priorCents))flow?.restoreCents?.(priorCents);
    update();
   }catch{say('Ödəniş üsulları alınmadı.');const retry=button('Yenidən cəhd et',()=>{retry.disabled=true;retry.remove();void load();});form.append(retry);}
  }
@@ -41,10 +52,17 @@ export async function mountWalletSelection({form,accountId,getCents,signal,back,
   busy=true;update();say('Ödəniş səhifəsi açılır…');
   const slot=method+':'+cents;
   try{
-   let d=choice.attempts[slot];if(!validRef(d?.ref)||d.accountId!==accountId||d.method!==method||d.cents!==cents){d={ref:crypto.randomUUID(),accountId,method,cents,back:['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(back)?back:null};choice.attempts[slot]=d;}
+   if(!previous){const existing=Object.values(choice.attempts).filter(x=>x.accountId===accountId&&validRef(x.ref)).sort((a,b)=>(b.at||0)-(a.at||0))[0];if(existing)previous={ref:existing.ref};}
+   if(previous){
+    const current=await request('checkout?ref='+encodeURIComponent(previous.ref),{signal});
+    if(current.status==='success'){location.replace('/odenis/epoint/ugurlu?ref='+encodeURIComponent(previous.ref));return;}
+    if(current.status!=='failed'){say('Əvvəlki ödənişin nəticəsi hələ yoxlanılır. İkinci ödəniş yaradılmadı.');return;}
+    for(const [k,v]of Object.entries(choice.attempts))if(v.ref===previous.ref)delete choice.attempts[k];
+   }
+   let d=choice.attempts[slot];if(!validRef(d?.ref)||d.accountId!==accountId||d.method!==method||d.cents!==cents){d={ref:crypto.randomUUID(),accountId,method,cents,at:Date.now(),back:['/qrup','/odenis?mode=wallet','/odenis?mode=wallet&token=1'].includes(back)?back:null};choice.attempts[slot]=d;}
    // Persist BEFORE the only request that can create a provider operation.
    sessionStorage.setItem(key,JSON.stringify(choice));sessionStorage.setItem(method==='apple-pay'?legacyKey+'.apple':legacyKey,JSON.stringify(d));
-   const r=await request('start',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:d.ref,amount:(cents/100).toFixed(2),...(method==='card'?{}:{method})})});
+   const r=await request('start',{method:'POST',signal,headers:{'Content-Type':'application/json'},body:JSON.stringify({requestId:d.ref,amount:(cents/100).toFixed(2),...(method==='card'?{}:{method}),...(previous?{previousPayment:previous.ref}:{})})});
    if(signal.aborted)return;
    if(method==='card'&&r.state==='ready'){location.assign(r.redirect);return;}
    if(['ready','creating'].includes(r.state)){location.assign('/odenis/epoint/odeme?ref='+encodeURIComponent(d.ref));return;}

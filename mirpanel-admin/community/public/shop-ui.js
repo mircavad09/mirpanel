@@ -15,7 +15,7 @@ if(route==='/odenis')app.dataset.shopCheckout='';
 if(route==='/balans'){app.classList.add('shop-wallet-page');document.body.classList.add('wallet-page-active');}
 const readyForTokens=route==='/odenis'&&new URLSearchParams(location.search).get('token')==='1';
 const isToken=item=>item.productId==='mirpanel-token';
-const checkoutItems=()=>cart.checkout().filter(item=>isToken(item)===readyForTokens);
+const checkoutItems=()=>(returnedItems||cart.checkout()).filter(item=>isToken(item)===readyForTokens);
 const tokenPayload=items=>items[0]?.tokenCount?{tokenCount:items[0].tokenCount}:{};
 const walletLoading=app.querySelector('.shop-wallet-loading')?.cloneNode(true);
 const el=(t,text,cls)=>{const n=document.createElement(t);if(text!=null)n.textContent=text;if(cls)n.className=cls;return n;},link=(text,href)=>{const a=el('a',text,'shop-link');a.href=href;return a;},button=(text,fn,primary=false)=>{const b=el('button',text,primary?'shop-primary':'');b.type='button';b.onclick=fn;return b;};
@@ -23,6 +23,7 @@ let accountEpoch=0;
 let closed=false,working=false,profile=null,group=null,confirmationTimer,confirmationRefresh,confirmationReading=false,walletFlow;
 const resultChecks=new Map();
 let chosenPaymentMethod='wallet';
+let returnSelection=null,returnedItems=null;
 let checkoutView=route==='/odenis',consentAccepted=false,consentQuote='',paymentReady=false;
 const mobileCheckout=()=>matchMedia('(max-width:760px)').matches;
 function revealPayment(panel){
@@ -99,7 +100,7 @@ function backFromWallet(){const value=new URLSearchParams(location.search).get('
 function giftReturn(){return backFromWallet()==='/qrup'&&new URLSearchParams(location.search).get('flow')==='gift';}
 const pendingKey=readyForTokens?'mirpanel.cart.token-checkout.v1':'mirpanel.cart.checkout.v1';
 function savedCheckout(){try{return JSON.parse(localStorage.getItem(pendingKey)||'null');}catch{return null;}}
-async function requestKey(items,mode,methodId){const bytes=new TextEncoder().encode(JSON.stringify({items,mode,methodId})),digest=await crypto.subtle.digest('SHA-256',bytes),input=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''),old=savedCheckout();if(old?.input===input)return old;const value={input,requestId:crypto.randomUUID()};localStorage.setItem(pendingKey,JSON.stringify(value));return value;}
+async function requestKey(items,mode,methodId){const bytes=new TextEncoder().encode(JSON.stringify({items,mode,methodId})),digest=await crypto.subtle.digest('SHA-256',bytes),input=Array.from(new Uint8Array(digest),x=>x.toString(16).padStart(2,'0')).join(''),old=savedCheckout();if(old?.input===input&&old?.id!==returnSelection?.id)return old;const value={input,requestId:crypto.randomUUID()};localStorage.setItem(pendingKey,JSON.stringify(value));return value;}
 const checkoutMoney=c=>money(c).replace('.',',');
 function checkoutIcon(path){const span=el('span',null,'checkout-icon');span.innerHTML='<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">'+path+'</svg>';return span;}
 const cardIcon=()=>checkoutIcon('<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18m-14 5h4"/>'),walletIcon=()=>checkoutIcon('<path d="M20 8V6a2 2 0 0 0-2-2H6a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h12a2 2 0 0 0 2-2v-2M3 8h15"/><rect x="13" y="9" width="9" height="7" rx="2"/>');
@@ -109,6 +110,7 @@ async function payment(reveal=false,preview=null){
  paymentReady=false;
  error.textContent='';
  const completed=new URLSearchParams(location.search).get('completed'),pending=savedCheckout();
+ const returned=new URLSearchParams(location.search).get('paymentReturn');if(/^[a-f0-9-]{36}$/i.test(returned||'')){await restorePaymentSelection(returned);return;}
  const recovering=/^[0-9a-f-]{36}$/i.test(completed||'')||!!pending?.id;
  const items=checkoutItems();
  if(!items.length&&!recovering){location.replace('/sebet');return;}
@@ -209,22 +211,24 @@ function renderPayment(q,items,{pending=false,failure=false,reveal=false}={}){
   go.replaceChildren();
   if(go.disabled)go.append(checkoutIcon('<rect x="5" y="10" width="14" height="11" rx="2"/><path d="M8 10V7a4 4 0 1 1 8 0v3"/>'));
   go.append('Sifarişi tamamla'+(q.totalCents==null?'':' · '+checkoutMoney(q.totalCents)));
+  if(returnSelection?.status==='pending'){go.disabled=true;go.textContent='Əvvəlki ödənişin nəticəsi gözlənilir';}
  }
- async function submit(){if(!consentAccepted||!paymentReady||JSON.stringify(checkoutItems())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,'wallet','');group=await api('/checkout',{items,...tokenPayload(items),mode:'wallet',methodId:'',requestId:key.requestId,consentAccepted,expectedTotalCents:q.totalCents});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id,tokenCount:items[0]?.tokenCount,tokenTermsVersion:items[0]?.termsVersion}));await paymentGroup();if(group.tokenCount&&group.orderCreated===true&&group.paymentConfirmed===true&&group.orderCode)void playCheckoutSound('order',group.orderCode);}catch(e){if(e.status===409)await payment().catch(()=>{});throw e;}}
+ async function submit(){if(!consentAccepted||!paymentReady||JSON.stringify(checkoutItems())!==JSON.stringify(items))return refreshBasket();try{const key=await requestKey(items,'wallet','');group=await api('/checkout',{items,...tokenPayload(items),mode:'wallet',methodId:'',requestId:key.requestId,consentAccepted,expectedTotalCents:q.totalCents,...(returnSelection?{previousPayment:returnSelection.id}:{})});localStorage.setItem(pendingKey,JSON.stringify({...key,id:group.id,tokenCount:items[0]?.tokenCount,tokenTermsVersion:items[0]?.termsVersion}));await paymentGroup();if(group.tokenCount&&group.orderCreated===true&&group.paymentConfirmed===true&&group.orderCode)void playCheckoutSound('order',group.orderCode);}catch(e){if(e.status===409)await payment().catch(()=>{});throw e;}}
  async function submitElectronic(){
   if(!consentAccepted||!paymentReady||JSON.stringify(checkoutItems())!==JSON.stringify(items))return refreshBasket();
   const method=selectedMethod,key=await requestKey(items,'epoint',method);
   go.disabled=true;
   try{
-   const next=await api('/epoint',{items,mode:'epoint',epointMethod:method,requestId:key.requestId,consentAccepted:true,expectedTotalCents:q.totalCents});
+   const next=await api('/epoint',{items,mode:'epoint',epointMethod:method,requestId:key.requestId,consentAccepted:true,expectedTotalCents:q.totalCents,...(returnSelection?{previousPayment:returnSelection.id}:{})});
    if(next.method&&next.method!==method)throw Error('Ödəniş üsulu uyğun gəlmədi. Vəziyyəti yoxlayın.');if(typeof next.paymentUrl!=='string'||!/^\/odenis\/epoint\/(?:odeme|ugurlu)\?ref=[a-f0-9-]{36}$/.test(next.paymentUrl))throw Error('Ödəniş səhifəsi açıla bilmədi. Eyni əməliyyatın vəziyyətini yenidən yoxlayın.');localStorage.setItem(pendingKey,JSON.stringify({...key,id:next.id}));location.assign(next.paymentUrl);
-  }catch(e){if(e.code==='PAYMENT_LINK_EXPIRED')localStorage.removeItem(pendingKey);updateChoice();throw e;}
+   }catch(e){if(e.code==='PAYMENT_ALREADY_PAID'&&returnSelection){location.assign('/odenis/epoint/ugurlu?ref='+encodeURIComponent(returnSelection.id));return;}if(e.code==='PAYMENT_LINK_EXPIRED')localStorage.removeItem(pendingKey);updateChoice();throw e;}
  }
  updateChoice();checkoutLayout(q,choices);if(reveal)revealPayment(choices);
 }
 async function paymentGroup(clearCart=true){
  clearTimeout(confirmationTimer);confirmationRefresh=null;
  if(closed)return;
+ if(group.mode==='epoint'&&!group.paymentConfirmed){await restorePaymentSelection(group.id);return;}
  const rejected=group.items.some(x=>['rejected','expired','cancelled'].includes(x.status));
  if(group.state==='submitted'){
   if(clearCart&&(group.mode!=='epoint'||group.paymentConfirmed===true)){
@@ -302,6 +306,19 @@ async function paymentGroup(clearCart=true){
  })));
  app.replaceChildren(panel,error);
 }
+async function restorePaymentSelection(id){
+ const state=await readSession();if(!state.ok){await checkoutLogin();return;}profile=state.data.profile;
+ const d=await api('/payment-selection?id='+encodeURIComponent(id));if(closed)return;
+ if(d.status==='success'){group=await api('/checkout?id='+encodeURIComponent(id));await paymentGroup();return;}
+ const same=returnSelection?.id===id;returnSelection={id,status:d.status};returnedItems=d.items;group=null;if(!same)chosenPaymentMethod=d.method;
+ const quoteKey=JSON.stringify([d.items,d.quote.totalCents]);if(consentQuote!==quoteKey){consentAccepted=d.consentAccepted===true;consentQuote=quoteKey;}
+ paymentReady=true;viewCartKey=JSON.stringify(cart.read());basketURL('/odenis?paymentReturn='+encodeURIComponent(id));renderPayment(d.quote,d.items);
+ const note=el('p',d.status==='pending'?'Əvvəlki ödənişin nəticəsi yoxlanılır. İkinci ödəniş yaradılmayacaq.':'Başqa ödəniş üsulu seçə bilərsiniz.','checkout-return-note');note.setAttribute('role','status');
+ const choices=app.querySelector('.checkout-choices');choices.prepend(note);
+ if(d.status==='pending')choices.append(link('Mövcud ödənişə davam et','/odenis/epoint/odeme?ref='+encodeURIComponent(id)),button('Vəziyyəti yoxla',()=>void run(()=>restorePaymentSelection(id))));
+ const poll=()=>{if(!closed&&!document.hidden&&returnSelection?.id===id)void restorePaymentSelection(id).catch(()=>{});};
+ clearTimeout(confirmationTimer);confirmationRefresh=poll;const budget=resultChecks.get(id)||{attempts:0};resultChecks.set(id,budget);if(d.status==='pending'&&budget.attempts++<8)confirmationTimer=setTimeout(poll,15000);
+}
 function showTopupResult(saved){
  const result=el('section',null,'shop-result wallet-topup-result');result.dataset.result='paid';result.setAttribute('aria-labelledby','topupResultTitle');
  const badge=checkoutIcon('<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>');badge.classList.add('shop-result-badge');
@@ -341,7 +358,7 @@ function showWallet(data,{createWalletTopup,topupReviewTime}){
  const back=backFromWallet();
  if(back){const a=link(giftReturn()?'← Hədiyyəyə qayıt':'← Alışa qayıt',back);a.classList.add('shop-return');form.prepend(a);}
  app.replaceChildren(el('h1','Balansım'),hero,form,flow.element,status,error,walletQuestions(topupReviewTime));void flow.resume();
- void import('/community-assets/epoint-wallet.js?v=epoint-four-1').then(m=>{
+ void import('/community-assets/epoint-wallet.js?v=payment-return-1').then(m=>{
   if(!flowSignal.aborted)return m.mountEpointWallet({form:flow.digital,accountId:profile?.user_id??profile?.id,getCents:effective,signal:flowSignal,back,el,button,link,walletTile:flow.walletTile,showDigital:flow.showDigital,selectionFlow:{amountElement:form,methodElement:flow.element,select:method=>flow.selectDigital(method),lockAmount:locked=>{amount.disabled=locked;for(const p of presets.children)p.disabled=locked;},restoreCents:c=>{selectedCents=presetAmounts.includes(c/100)?c:null;amount.value=selectedCents===null?topupAmountText(c):'';for(const p of presets.children)p.setAttribute('aria-pressed',String(Number(p.dataset.cents)===selectedCents));update();}}});
  }).catch(()=>{if(!flowSignal.aborted)flow.digital.append(el('p','Ödəniş üsulları alınmadı.','shop-error'),button('Yenidən cəhd et',()=>location.reload()));});
 }
@@ -400,6 +417,11 @@ async function start(){
 }
 const dispose=()=>{closed=true;clearTimeout(confirmationTimer);for(const r of requests)r.abort();walletFlow?.abort();life.abort();document.body.classList.remove('wallet-page-active');};
 on(window,'focus',()=>{if(!document.hidden)void confirmationRefresh?.();});on(document,'visibilitychange',()=>{if(!document.hidden)void confirmationRefresh?.();});
+on(window,'pageshow',e=>{
+ if(!e.persisted||closed)return;
+ if(route==='/balans'){try{const d=JSON.parse(sessionStorage.getItem('mirpanel.epoint.wallet.v1')||'null'),a=JSON.parse(sessionStorage.getItem('mirpanel.epoint.wallet.v1.apple')||'null'),last=[d,a].filter(x=>x?.accountId===(profile?.user_id??profile?.id)&&/^[a-f0-9-]{36}$/i.test(x.ref)).sort((x,y)=>(y.at||0)-(x.at||0))[0];if(last)location.replace('/balans?paymentReturn='+encodeURIComponent(last.ref));}catch{}}
+ else if(savedCheckout()?.id)void run(()=>payment());
+});
 on(window,'pagehide',e=>{if(e.persisted)clearTimeout(confirmationTimer);else dispose();});on(window,'pageshow',()=>{if(!closed)void confirmationRefresh?.();});on(window,'mirpanel:account',e=>{
  const prior=profile?.user_id??profile?.id??null,next=e.detail?.user_id??e.detail?.id??null;profile=e.detail;
  if(prior===next)return;

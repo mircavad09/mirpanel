@@ -37,6 +37,8 @@ export function ensureEpointCheckout(pool){
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_status text not null default 'new';
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_code text;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists result_checked_at timestamptz;
+     alter table mirpanel_community.epoint_checkout_requests add column if not exists previous_attempt uuid;
+     create unique index if not exists epoint_checkout_one_successor_idx on mirpanel_community.epoint_checkout_requests(previous_attempt) where previous_attempt is not null;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists next_check_at timestamptz not null default clock_timestamp();
      alter table mirpanel_community.epoint_checkout_requests add column if not exists check_failures integer not null default 0;
      alter table mirpanel_community.epoint_checkout_requests add column if not exists purpose text not null default 'topup' check(purpose in ('topup','purchase'));
@@ -102,12 +104,15 @@ export async function startEpointCheckout(pool,user,body,{env=process.env,send=f
  const release=(await pool.query('select exists(select 1 from mirpanel_community.wallet_release where id and enabled) and exists(select 1 from mirpanel_community.shop_release where id and enabled) allowed')).rows[0];
  if(!release?.allowed)throw fail(503,'Balans xidməti aktiv deyil.');
  await ensureEpointCheckout(pool);
+ const previous=body.previousPayment;
+ if(previous!=null){if(!uuid.test(previous)||previous===id)throw fail(400,'Əvvəlki ödəniş istinadı düzgün deyil.');await requireResolvedEpoint(pool,user,previous,{env,send,purpose});}
  await ensureBalanceNumbers(pool);
  let walletId=null;
  if(wallet){walletId=(await epointWallets({env,send}))[method];if(!walletId||!/^\d+$/.test(walletId)||!Number.isSafeInteger(Number(walletId))||Number(walletId)<=0)throw fail(503,'Bu cüzdan Epoint hesabında əlçatan deyil.');}
- const inserted=await pool.query('insert into mirpanel_community.epoint_checkout_requests(id,user_id,cents,method,wallet_id,purpose) values($1,$2,$3,$4,$5,$6) on conflict(id) do nothing returning id',[id,user,cents,method,walletId,purpose]);
+ const inserted=await pool.query('insert into mirpanel_community.epoint_checkout_requests(id,user_id,cents,method,wallet_id,purpose,previous_attempt) values($1,$2,$3,$4,$5,$6,$7) on conflict do nothing returning id',[id,user,cents,method,walletId,purpose,previous||null]);
  if(!inserted.rowCount){
   const old=(await pool.query('select user_id,cents,state,method,redirect_url,purpose from mirpanel_community.epoint_checkout_requests where id=$1',[id])).rows[0];
+  if(!old&&previous)throw Object.assign(fail(409,'Əvvəlki cəhd üçün yeni ödəniş artıq başladılıb. Onun vəziyyətini yoxlayın.'),{code:'PAYMENT_PREVIOUS_PENDING'});
   if(old?.user_id!==user||old.cents!==cents||old.method!==method||old.purpose!==purpose)throw fail(409,'Ödəniş sorğusu uyğun deyil.');
   if(old.state==='ready'){
    const result=await readEpointCheckout(pool,user,id);
@@ -188,6 +193,17 @@ export async function readEpointPayment(pool,user,id,{env=process.env}={}){
  if(!['card','apple-pay','google-pay','birbank','m10'].includes(row?.method))throw fail(404,'Ödəniş tapılmadı.');
  const widget=['apple-pay','google-pay'].includes(row.method);
  return {...status,method:row.method,state:row.state,cents:Number(row.cents),...(row.state==='ready'&&status.status==='pending'?{[widget?'widget':'redirect']:redirectUrl(row.redirect_url,env)}:{})};
+}
+export async function requireResolvedEpoint(pool,user,id,{env=process.env,send=fetch,purpose='purchase'}={}){
+ if(!uuid.test(id||''))throw fail(400,'Əvvəlki ödəniş istinadı düzgün deyil.');
+ const old=(await pool.query('select purpose from mirpanel_community.epoint_checkout_requests where id=$1 and user_id=$2',[id,user])).rows[0];
+ if(!old||old.purpose!==purpose)throw fail(404,'Əvvəlki ödəniş bu hesaba aid deyil.');
+ const {reconcileEpoint}=await import('./epoint-reconcile.mjs');
+ await reconcileEpoint(pool,id,{env,send,user,force:true}).catch(()=>{});
+ const s=await readEpointCheckout(pool,user,id);
+ if(s.status==='success')throw Object.assign(fail(409,'Bu ödəniş artıq təsdiqlənib. Yeni ödəniş yaradılmadı.'),{code:'PAYMENT_ALREADY_PAID'});
+ if(s.status!=='failed')throw Object.assign(fail(409,'Əvvəlki ödənişin nəticəsi hələ yoxlanılır. İkinci ödəniş yaradılmadı. Mövcud ödənişlə davam edə bilərsiniz.'),{code:'PAYMENT_PREVIOUS_PENDING'});
+ return s;
 }
 export async function readAppleCheckout(pool,user,id){
  const result=await readEpointPayment(pool,user,id);

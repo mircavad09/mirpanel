@@ -1,3 +1,4 @@
+import {paymentSelectionURL} from './payment-return-selection.js?v=1';
 const uuid=v=>typeof v==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(v);
 const money=c=>(c/100).toFixed(2).replace('.',',')+' ₼';
 const attempts=[1000,2000,3000,5000,8000,13000,20000,30000];
@@ -41,6 +42,7 @@ async function mount(main,doc){
   try{
    if(!ref&&!await resolve())return;
    const d=await get('status?ref='+encodeURIComponent(ref));if(paused)return;
+   if(d.status!=='success'){stopped=true;location.replace(paymentSelectionURL(ref,d.purpose));return;}
    const purchase=d.purpose==='purchase',orderURL='/profil?tab=sifarislerim'+(d.orderCode?'&order='+encodeURIComponent(d.orderCode):'');
    orders.hidden=!purchase;orders.href=orderURL;history.hidden=purchase;back.hidden=purchase;products.hidden=false;
    if(purchase){history.hidden=true;reference.textContent=(d.orderCode?'Sifariş № '+d.orderCode+' · ':'Əməliyyat: '+ref+' · ')+(Number.isSafeInteger(d.cents)?money(d.cents):'');}
@@ -52,6 +54,7 @@ async function mount(main,doc){
     if(!purchase){balance.textContent='Cari balans: '+money(d.balanceCents);balance.hidden=false;reference.textContent='Əlavə olunan: '+money(d.cents);}
     try{sessionStorage.removeItem('mirpanel.epoint.return.v1');for(const key of ['mirpanel.epoint.wallet.v1','mirpanel.epoint.wallet.v1.apple'])if(read(sessionStorage,key)?.ref===ref)sessionStorage.removeItem(key);}catch{}
     window.dispatchEvent(new Event('mirpanel:balance-refresh'));void window.refreshCommunityNav?.();
+    try{const key='mirpanel.epoint.wallet.v1.selection',choice=read(sessionStorage,key);if(choice?.attempts){for(const [k,v]of Object.entries(choice.attempts))if(v.ref===ref)delete choice.attempts[k];sessionStorage.setItem(key,JSON.stringify(choice));}}catch{}
    }else if(d.status==='failed'){
     stopped=true;check.hidden=true;
     finish((d.openingExpired||d.openingFailed)?'Ödəniş səhifəsi açıla bilmədi':d.cancelled?'Ödəniş ləğv edildi':d.providerStatus==='returned'?'Ödəniş geri qaytarıldı':'Ödəniş tamamlanmadı',purchase?'Sifariş üçün uğurlu ödəniş təsdiqlənməyib. Vəsait çıxılıbsa dəstəyə müraciət edin.':'Bu əməliyyat üzrə balans artırılmadı. Vəsait çıxılıbsa dəstəyə müraciət edin.','rejected');

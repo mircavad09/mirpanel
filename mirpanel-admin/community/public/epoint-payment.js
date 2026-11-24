@@ -1,4 +1,5 @@
-import {walletDeviceSupports,appleMoney as money} from './epoint-wallet.js?v=payment-access-1';
+import {walletDeviceSupports,appleMoney as money} from './epoint-wallet.js?v=payment-return-1';
+import {paymentSelectionURL} from './payment-return-selection.js?v=1';
 const names={card:'Bank kartı — Visa / Mastercard','apple-pay':'Apple Pay','google-pay':'Google Pay',birbank:'Birbank',m10:'m10'};
 const validRef=value=>typeof value==='string'&&/^[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}$/.test(value);
 export async function showEpointPayment(doc=document){
@@ -7,7 +8,7 @@ export async function showEpointPayment(doc=document){
  if(!validRef(ref)){status.textContent='Ödəniş nömrəsi düzgün deyil. Balansa qayıdın.';return;}
  try{sessionStorage.setItem('mirpanel.epoint.return.v1',JSON.stringify({ref,at:Date.now()}));}catch{}
  const resultURL='/odenis/epoint/ugurlu?ref='+encodeURIComponent(ref);result.href=resultURL;result.hidden=false;login.href='/hesab?next='+encodeURIComponent('/odenis/epoint/odeme?ref='+ref);
- let running=false,frame=null,timer=null,frameTimer=null,count=0,hintAt=0,stopped=false,walletOpened=false;
+ let running=false,frame=null,timer=null,frameTimer=null,count=0,hintAt=0,stopped=false,walletOpened=false,lastPurpose='topup';
  async function refresh(){
   if(running||stopped)return;clearTimeout(timer);running=true;retry.disabled=true;retry.hidden=true;login.hidden=true;
   try{
@@ -15,6 +16,9 @@ export async function showEpointPayment(doc=document){
    if(!r.ok)throw Object.assign(Error(data.error||'Ödəniş məlumatı alınmadı.'),{status:r.status});
    const name=names[data.method];if(!name||!Number.isSafeInteger(data.cents)||data.cents<=0)throw Error('Ödəniş məlumatı uyğun deyil.');
    const purchase=data.purpose==='purchase';
+   lastPurpose=data.purpose;
+   const backLink=main.querySelector('a[href="/balans"],[data-payment-back]');if(backLink){backLink.dataset.paymentBack='';backLink.href=paymentSelectionURL(ref,data.purpose);backLink.textContent='Geri — Ödəniş üsulunu seç';}
+   if(data.status==='failed'){stopped=true;location.replace(paymentSelectionURL(ref,data.purpose));return;}
    main.querySelector('h1').textContent=name+(purchase?' ilə sifariş ödənişi':' ilə balans artırma');doc.title=name+' — MirPanel';const method=main.querySelector('[data-payment-method]');if(method)method.textContent=name;
    amount.textContent=(purchase?'Sifariş məbləği: ':'Balansa əlavə ediləcək: ')+money(data.cents);
    if(purchase){const back=main.querySelector('a[href="/balans"]');if(back){back.href='/odenis?completed='+encodeURIComponent(data.checkoutId);back.textContent='Geri — Sifarişə qayıt';}}
@@ -41,6 +45,6 @@ export async function showEpointPayment(doc=document){
  }
  retry.addEventListener('click',()=>{count=0;clearTimeout(frameTimer);if(frame){frame.remove();frame=null;}void refresh();});
  window.addEventListener('message',event=>{if(!frame||event.source!==frame.contentWindow||event.origin!==new URL(frame.src).origin||!['success','failed','error'].includes(event.data?.status)||Date.now()-hintAt<3000)return;hintAt=Date.now();status.textContent='Ödəniş yoxlanılır…';void refresh();});
- window.addEventListener('pagehide',()=>{clearTimeout(timer);clearTimeout(frameTimer);});window.addEventListener('pageshow',event=>{if(event.persisted){stopped=false;count=0;void refresh();}});window.addEventListener('focus',()=>{if(!stopped)void refresh();});doc.addEventListener('visibilitychange',()=>{if(!doc.hidden&&!stopped)void refresh();});await refresh();
+ window.addEventListener('pagehide',()=>{clearTimeout(timer);clearTimeout(frameTimer);});window.addEventListener('pageshow',event=>{if(event.persisted){location.replace(paymentSelectionURL(ref,lastPurpose));}});window.addEventListener('focus',()=>{if(!stopped)void refresh();});doc.addEventListener('visibilitychange',()=>{if(!doc.hidden&&!stopped)void refresh();});await refresh();
 }
 if(typeof document!=='undefined')void showEpointPayment();

@@ -44,7 +44,7 @@ async function api(route,options={}){
 export async function mountEpointWallet(options){
  // Public balance cards are selectors only. Keep the existing owner-only
  // diagnostic preview and non-card checkout controls on their legacy path.
- if(options.walletTile&&!options.preview){const m=await import('./wallet-selection.js?v=confirm-all-1');return m.mountWalletSelection({...options,request:api,deviceSupports:walletDeviceSupports});}
+ if(options.walletTile&&!options.preview){const m=await import('./wallet-selection.js?v=payment-return-1');return m.mountWalletSelection({...options,request:api,deviceSupports:walletDeviceSupports});}
  return mountLegacyEpoint(options);
 }
 async function mountLegacyEpoint({form,accountId,getCents,signal,back,el,button,link,walletOnly=false,walletTile,showDigital,amountHint,preview=false,fixedRequestId,appleFlow}){
