@@ -1157,7 +1157,7 @@ const DATA = {
       "stock": null,
       "stockEnabled": false,
       "seller": "",
-      "bestSeller": false,
+      "bestSeller": true,
       "orderFlow": "form_then_whatsapp",
       "formFields": [],
       "formTitle": "",
