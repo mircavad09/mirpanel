@@ -243,7 +243,7 @@ function withSeoScripts(html,earlyProductLinks=false) {
   next=next.replace(/(src=["'])\/?(home-sections|catalog-card|catalog-listing|order-confirmation|customer-pricing)\.js(?:\?[^"']*)?(["'])/g,'$1/$2.js?v=instant-filter-1$3');
   next=next.replace(/(href=["'])\/?(style|catalog-card)\.css(?:\?[^"']*)?(["'])/g,'$1/$2.css?v=instant-filter-1$3');
   next=next.replace(/(src=["'])\/?home-sections\.js(?:\?[^"']*)?(["'])/g,'$1/home-sections.js?v=compact-shelves-1$2');
-  next=next.replace(/(href=["'])\/?home-sections\.css(?:\?[^"']*)?(["'])/g,'$1/home-sections.css?v=compact-shelves-1$2');
+  next=next.replace(/(href=["'])\/?home-sections\.css(?:\?[^"']*)?(["'])/g,'$1/home-sections.css?v=compact-shelves-2$2');
   return next;
 }
 

@@ -52,6 +52,7 @@ try{for(const [engineName,engine] of [['chrome',chromium],['webkit',webkit]]){
   assert.equal(await design.locator('.home-mini-card').count(),2);
   assert.equal(await design.locator('.homeCardAdd,.homeCardDiscount,.homeCardSales,.homeCardInstant,del').count(),0);
   assert.equal(await design.locator('.home-mini-card strong').first().innerText(),'1,12 ₼');
+  const missingImage=design.locator('.home-mini-image img').first();await missingImage.evaluate(n=>n.dispatchEvent(new Event('error')));assert.equal(await missingImage.isVisible(),false);assert.equal(await design.locator('.home-mini-fallback').first().isVisible(),true);
   assert.equal(await design.locator('.home-mini-name').evaluateAll(ns=>new Set(ns.map(n=>n.getBoundingClientRect().height)).size),1);
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
   if(engineName==='chrome'&&[390,1440].includes(width)){
