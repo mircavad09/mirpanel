@@ -666,7 +666,7 @@ export function createPaymentStore(config,{epinbyCatalogCosts,epinbyOrderCosts}=
             ...(report?{reportCost:report.cost_price_snapshot,reportEstimated:report.estimated_cost,costEvidence:report.costEvidence}:{}),
             costBackfilledAt: order.cost_backfilled_at || null,
             currency: order.currency,
-            status: order.status==='cancelled' ? 'cancelled' : order.fulfillment_cancellation ? 'partial_cancelled'
+            status: order.payment_source==='epoint'&&!order.payment_confirmed&&['failed','error','returned'].includes(order.checkout_snapshot?.epointPayment?.providerStatus)?order.checkout_snapshot.epointPayment.cancelled?'cancelled':'rejected':order.status==='cancelled' ? 'cancelled' : order.fulfillment_cancellation ? 'partial_cancelled'
               : completedView||report||displayedCompletions.has(order.id) ? 'completed' : adminOrderStatus(order.status, reservation.status),
             ...(order.fulfillment_cancellation ? {cancellation:{lines:order.fulfillment_cancellation.lines,refundStatus:order.fulfillment_cancellation.refundStatus,refundCents:order.fulfillment_cancellation.refundCents,reason:order.fulfillment_cancellation.reason}} : {}),
             reservationStatus: reservation.status || "",

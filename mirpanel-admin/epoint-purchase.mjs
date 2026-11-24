@@ -39,7 +39,22 @@ export async function settlePurchase(c,result){
 export async function recordPurchaseStatus(pool,id,status,code){
  if(!(await pool.query("select to_regclass('mirpanel_community.epoint_purchases') present")).rows[0].present)return;
  const value={providerStatus:status,recoveryIssue:null,cancelled:['failed','error'].includes(status)&&['180','canceled','cancelled'].includes(code)};
- await pool.query("update public.payment_orders o set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=(select order_id from mirpanel_community.epoint_purchases where id=$1 and paid_at is null) and payment_source='epoint' and payment_confirmed is false",[id,JSON.stringify(value)]);
+ const c=await pool.connect();try{await c.query('begin;select pg_advisory_xact_lock(714025001)');
+ const p=(await c.query('select * from mirpanel_community.epoint_purchases where id=$1 for update',[id])).rows[0];
+ if(!p||p.paid_at){await c.query('commit');return;}
+ const o=(await c.query('select * from public.payment_orders where id=$1 for update',[p.order_id])).rows[0];
+ if(!o||o.payment_confirmed){await c.query('commit');return;}
+ if(o.checkout_snapshot?.epointPayment?.providerStatus!==status||o.checkout_snapshot?.epointPayment?.cancelled!==value.cancelled)await c.query("insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('system','epoint','order.epoint_status','order',$1,$2)",[o.id,{paymentId:id,status,code,source:'verified-provider-status'}]);
+ await c.query("update public.payment_orders set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=$1",[o.id,JSON.stringify(value)]);
+ // Only a verified terminal provider result releases an unused reservation.
+ if(['failed','error','returned'].includes(status)){
+  const used=(await c.query('select 1 from mirpanel_community.customer_order_deliveries where order_id=$1 limit 1',[o.id])).rowCount;
+  if(!used&&!o.fulfillment_cancellation){
+   if(!p.reservation_released_at){await c.query('select public.inventory_release($1,$2)',[o.reservation_id,o.id]);await c.query('update mirpanel_community.epoint_purchases set reservation_released_at=clock_timestamp() where id=$1',[id]);}
+   await c.query("update public.payment_reservations set status='expired',updated_at=clock_timestamp() where (id=$1 or cart_parent_reservation_id=$1) and status in('reserved','reviewing')",[o.reservation_id]);
+  }
+ }
+ await c.query('commit');}catch(e){await c.query('rollback');throw e;}finally{c.release();}
 }
 export async function drainEpointPurchases(pool,config){
  if(!(await pool.query("select to_regclass('mirpanel_community.epoint_purchases') present")).rows[0].present)return;
