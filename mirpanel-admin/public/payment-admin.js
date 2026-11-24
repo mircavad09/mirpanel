@@ -1243,6 +1243,12 @@
   function bootPayments() {
     if(['#decorations','#sekiller-ve-fonlar'].includes(location.hash))void loadBackgrounds();
     bindEvents(); setTimeout(openReviewToken, 400);
+    const reportLink=new URLSearchParams(location.search),reportOrder=reportLink.get('paymentOrder'),reportId=reportLink.get('orderId');
+    if(/^\d{1,12}$/.test(reportOrder||'')&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(reportId||''))setTimeout(async()=>{
+      document.querySelector('.navBtn[data-view="paymentOrders"]')?.click();
+      paymentState.orderQuery={...emptyQuery('all'),period:'all',search:reportOrder};paymentState.openOrders.set(reportId,true);renderOrderContext();
+      try{await loadOrders();document.querySelector('[data-payment-order-id="'+CSS.escape(reportId)+'"]')?.scrollIntoView({block:'center'});}catch(e){toast(e.message||'Sifariş açılmadı.');}
+    },400);
     const stockDelivered=()=>{refreshOrderCounts().catch(()=>{});if(!$p("paymentOrdersView")?.classList.contains("hidden")&&!orderRequests.size)loadOrders({automatic:true}).catch(()=>{});};
     window.addEventListener('mirpanel:ready-stock-delivered',stockDelivered);
     window.addEventListener('storage',e=>{if(e.key==='mirpanel.ready-stock-delivered')stockDelivered();});
