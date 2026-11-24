@@ -51,7 +51,7 @@ function identity(t) {
 }
 
 export async function mountShop({root, call, alive}) {
-  if(!document.querySelector('link[data-topup-finance]')){const css=el('link');css.rel='stylesheet';css.href='/admin-topup-finance.css?v=3';css.dataset.topupFinance='';document.head.append(css);}
+  {let css=document.querySelector('link[data-topup-finance]');if(!css){css=el('link');css.rel='stylesheet';css.dataset.topupFinance='';document.head.append(css);}const href='/admin-topup-finance.css?v=compact-operations-20261124';if(css.getAttribute('href')!==href)css.href=href;}
   let stopped = false, busy = false, rejectionDialog, receiptDialog, opened = false, loading = null, lastSnapshot = '';
   const params = new URLSearchParams(location.search);
   const target = params.get("topup");
@@ -191,24 +191,24 @@ export async function mountShop({root, call, alive}) {
   function renderCard(t) {
     const card = el("article", null, "topupCard");
     card.dataset.topupId = t.id;
-    const layout=el('div',null,'topupCompactLayout'),left=el('div',null,'topupCompactLeft'),right=el('div',null,'topupCompactRight');
+    const layout=el('div',null,'topupCompactLayout'),left=el('div',null,'topupCompactLeft'),right=el('div',null,'topupCompactRight'),reference=el('div',null,'topupOperationReference'),methodGroup=el('div',null,'topupOperationMethod'),times=el('div',null,'topupOperationTimes'),fees=el('div',null,'topupOperationFees');
     const status=el('span',labels[t.status]||'Naməlum status','topupStatus');status.dataset.status=t.status;
     const purchase=t.purpose==='purchase',paid=t.payment_success===true||!purchase&&t.credited_cents>0;
-    left.append(identity(t),el('small',purchase?'Məhsul alışı':'Balans artırma','topupPurpose'));
-    if(purchase){const order=el('a','Sifariş №'+t.order_code,'topupOperationNumber');order.href='/admin.html?'+new URLSearchParams({paymentOrder:t.order_code,orderId:t.order_id})+'#sifarisler';left.append(order);}
-    else left.append(el('small','Əməliyyat №'+(t.display_number||'Hələ verilməyib'),'topupOperationNumber'));
+    left.append(identity(t));reference.append(el('small',purchase?'Məhsul alışı':'Balans artırma','topupPurpose'));
+    if(purchase){const order=el('a','Sifariş №'+t.order_code,'topupOperationNumber');order.href='/admin.html?'+new URLSearchParams({paymentOrder:t.order_code,orderId:t.order_id})+'#sifarisler';reference.append(order);}
+    else reference.append(el('small','Əməliyyat №'+(t.display_number||'Hələ verilməyib'),'topupOperationNumber'));
     const bank=typeof t.card_bank==='string'?t.card_bank.trim():'';
     const method=methodNames[t.method]||'Kartdan karta';
-    left.append(el('span',method+(t.source!=='epoint'&&bank&&/^\d{4}$/.test(t.card_last4)?` · ${bank} •••• ${t.card_last4}`:''),'topupMethodLine'));
-    const created=time('Yaradılıb',t.created_at||t.submitted_at);created.className='topupCreated';left.append(created);
-    if(paid&&t.settled_at){const completed=time('Ödəniş təsdiqlənib',t.settled_at);completed.className='topupCompleted';left.append(completed);}
-    else left.append(el('span','Tamamlanıb: —','topupNotCompleted'));
+    methodGroup.append(el('span',method+(t.source!=='epoint'&&bank&&/^\d{4}$/.test(t.card_last4)?` · ${bank} •••• ${t.card_last4}`:''),'topupMethodLine'));
+    const created=time('Yaradılıb',t.created_at||t.submitted_at);created.className='topupCreated';times.append(created);
+    if(paid&&t.settled_at){const completed=time('Ödəniş təsdiqlənib',t.settled_at);completed.className='topupCompleted';times.append(completed);}
+    else times.append(el('span','Tamamlanıb: —','topupNotCompleted'));
     right.append(el('strong',money(t.gross_cents??t.requested_cents),'topupPaymentAmount'),status);
     const fee=t.estimated_fee_cents??t.actual_fee_cents,net=t.estimated_fee_cents!=null?t.calculated_net_cents:t.net_cents;
-    if(paid){if(!purchase)right.append(el('span','Balansa əlavə olunub: '+money(t.credited_cents)));if(fee!=null){right.append(el('span','Tarif komissiyası: '+(t.basis_points!=null&&Number(t.basis_points)!==0?`${Number(t.basis_points)/100}% · `:'')+money(fee)));if(net!=null)right.append(el('span','Komissiyadan sonra qalan: '+money(net)));}if(t.refund_cents)right.append(el('span','Banka geri ödəniş: '+money(t.refund_cents)));if(t.wallet_compensation_cents)right.append(el('span','MirPanel balansına kompensasiya: '+money(t.wallet_compensation_cents)));}
+    if(paid){if(!purchase)fees.append(el('span','Balansa əlavə olunub: '+money(t.credited_cents)));if(fee!=null){fees.append(el('span','Tarif komissiyası: '+(t.basis_points!=null&&Number(t.basis_points)!==0?`${Number(t.basis_points)/100}% · `:'')+money(fee)));if(net!=null)fees.append(el('span','Komissiyadan sonra qalan: '+money(net)));}if(t.refund_cents)fees.append(el('span','Banka geri ödəniş: '+money(t.refund_cents)));if(t.wallet_compensation_cents)fees.append(el('span','MirPanel balansına kompensasiya: '+money(t.wallet_compensation_cents)));}
     const canReceipt=t.receipt_available||t.source==='epoint'&&t.credited_cents>0;
     if(!purchase){const check=button('Çek',()=>showReceipt(t),'topupCheck');check.disabled=!canReceipt;check.title=canReceipt?(t.source==='epoint'?'MirPanel ödəniş təsdiqi':'Yüklənmiş çek'):'Tamamlanmış ödəniş sənədi yoxdur';right.append(check);}
-    layout.append(left,right);card.append(layout);
+    layout.append(left,reference,methodGroup,times,right,fees);card.append(layout);
     const technical=el('details',null,'topupTechnical');technical.append(el('summary','Ətraflı'),el('small','Daxili ID: '+t.id));
     if(t.method==='m10'&&t.opening_issue){left.append(el('strong','m10 keçidi alınmayıb — ödəniş ekranı açılmayıb.'));if(t.provider_trace)technical.append(el('small','İzləmə: '+t.provider_trace));}
     if(t.source==='epoint')technical.append(el('small','Epoint əməliyyat №: '+(t.provider_transaction||'Hələ verilməyib')),el('small','Sorğu: mp_ep_'+t.id));

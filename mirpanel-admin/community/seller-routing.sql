@@ -76,3 +76,6 @@ do $$declare n text;relation regclass;begin foreach n in array array['customer_o
  execute format('create trigger seller_fulfillment_guard before insert or update on %s for each row execute function mirpanel_community.seller_fulfillment_guard()',relation);
  end if;
 end loop;end $$;
+
+alter table mirpanel_community.seller_invitations add column if not exists revoked_at timestamptz;
+alter table mirpanel_community.seller_mail add column if not exists provider_service text;
