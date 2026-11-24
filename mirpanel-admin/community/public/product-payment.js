@@ -24,8 +24,10 @@ export async function productPaymentChoices({host,el,select,signal,getSelected=(
  const card=tile('card',{...methods.card,...(!available.has('card')?{detail:'Hazırda mövcud deyil'}:{})},!available.has('card'));
  primary.append(card);
  if(available.has('apple-pay'))primary.append(tile('apple-pay',methods['apple-pay']));
- const other=el('details',null,'checkout-other-methods'),summary=el('summary','Digər ödənişlər'),grid=el('div',null,'checkout-secondary-methods');
- summary.setAttribute('aria-label','Digər ödənişlər');other.append(summary,grid);
+ const other=el('details',null,'checkout-other-methods'),summary=el('summary','Digər ödəniş üsulları'),grid=el('div',null,'checkout-secondary-methods');
+ summary.setAttribute('aria-label','Digər ödəniş üsulları');summary.setAttribute('aria-expanded','false');
+ const chevron=el('span',null,'checkout-other-chevron');chevron.setAttribute('aria-hidden','true');summary.append(chevron);
+ other.addEventListener('toggle',()=>{summary.setAttribute('aria-expanded',String(other.open));if(other.open&&!matchMedia('(prefers-reduced-motion: reduce)').matches)grid.animate([{opacity:0,transform:'translateY(-5px)'},{opacity:1,transform:'translateY(0)'}],{duration:180,easing:'ease-out'});},{signal});other.append(summary,grid);
  if(available.has('google-pay'))grid.append(tile('google-pay',methods['google-pay']));
  grid.append(tile('birbank',{...methods.birbank,...(!available.has('birbank')?{detail:'Hazırda mövcud deyil'}:{})},!available.has('birbank')));
  grid.append(tile('m10',{...methods.m10,...(!available.has('m10')?{detail:'Hazırda mövcud deyil'}:{})},!available.has('m10')));
