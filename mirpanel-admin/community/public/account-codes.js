@@ -30,6 +30,8 @@ function credentialRows(delivery){
  return fields.filter(([,value])=>typeof value==='string'&&value.trim());
 }
 export function mountCodes({content,el,button,initial,initialRequest,validate,onData,onUnauthorized,api,spinner,ui={}}){
+ const requestedOrder=new URLSearchParams(location.search).get('order'),order=/^[A-Za-z0-9-]{1,40}$/.test(requestedOrder||'')?requestedOrder:null;
+ let openedOrder=false;
  const css='/community-assets/account-codes.css?v=code-artwork-1';
  if(!document.head.querySelector('link[data-account-codes]'))document.head.append(el('link',{rel:'stylesheet',href:css,'data-account-codes':''}));
  const life=new AbortController(),root=el('div',{class:'account-codes'}),status=el('p',{class:'codes-status',role:'status'}),list=el('div',{class:'codes-list'}),count=el('span',{class:'codes-count',hidden:''});
@@ -126,10 +128,10 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   const heading=el('div',{class:'codes-product-heading'},el('h2',{},row.title));
   if(row.orderCode!=null&&String(row.orderCode).trim())heading.append(el('span',{class:'codes-order-number'},'№ '+String(row.orderCode)));
   item.append(el('div',{class:'codes-product'},photo,el('div',{},heading,meta)),el('div',{class:'codes-actions'},toggle,copy),feedback,details);
-  return {item,row,hide};
+  return {item,row,hide,open:()=>toggle.click()};
  }
  let cards=[],fingerprint=null,category=ui.category??null,running=false,warmed=false;
- search.value=ui.search||'';
+ search.value=order?'':ui.search||'';if(order)category=null;
  const hide=()=>{for(const c of cards)c.hide();};
  const empty=el('p',{class:'codes-empty',hidden:''});root.append(empty);
  function filter(){
@@ -137,12 +139,12 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
   const query=normalize(search.value);
   let matches=0;
   for(const c of cards){
-   const visible=(!category||c.row.category?.key===category)&&normalize(c.row.title).includes(query);
+   const visible=(!order||String(c.row.orderCode)===order)&&(!category||c.row.category?.key===category)&&normalize(c.row.title).includes(query);
    if(!visible&&!c.item.hidden)c.hide();
    c.item.hidden=!visible;if(visible)matches++;
   }
   for(const b of filters.children)b.setAttribute('aria-pressed',String((b.dataset.category||null)===category));
-  empty.textContent=cards.length?'Axtarışa uyğun məhsul tapılmadı.':'Hələ kodunuz yoxdur.';
+  empty.textContent=order?'Bu sifariş üçün hazır təhvil məlumatı tapılmadı. Vəziyyəti Sifarişlərim bölməsində yoxlayın.':cards.length?'Axtarışa uyğun məhsul tapılmadı.':'Hələ kodunuz yoxdur.';
   empty.hidden=matches>0;
  }
  function paint(data,fresh=false){
@@ -161,6 +163,7 @@ export function mountCodes({content,el,button,initial,initialRequest,validate,on
    filters.replaceChildren(chip(null,'Hamısı',codes.length),...[...groups].sort((a,b)=>a[1].label.localeCompare(b[1].label,'az')).map(([key,g])=>chip(key,g.label,g.count)));
   }
   filter();onData?.(data);
+  if(order&&!openedOrder){const matching=cards.filter(c=>!c.item.hidden);if(matching.length){openedOrder=true;for(const c of matching)c.open();}}
   // Prepare only the first visible card, after a fresh owner-validated list.
   // Do not block the list or download every account's credentials in advance.
   const first=cards.find(c=>!c.item.hidden);

@@ -184,20 +184,20 @@
 
 /* Only the confirmed order result link; never pending results or token/top-up links. */
 @property --orders-success-edge-angle{syntax:'<angle>';initial-value:0deg;inherits:false}
-.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"]){
+.shop-page .product-payment-result[data-result=paid] .shop-result-primary{
  position:relative;isolation:isolate;overflow:hidden;
  border-color:#fff8;box-shadow:0 0 18px #ffc53d26,inset 0 0 0 1px #ffffff24;
 }
-.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])>span{position:relative;z-index:1}
-.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::before,
-.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::after{
+.shop-page .product-payment-result[data-result=paid] .shop-result-primary>span{position:relative;z-index:1}
+.shop-page .product-payment-result[data-result=paid] .shop-result-primary::before,
+.shop-page .product-payment-result[data-result=paid] .shop-result-primary::after{
  content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:0;
 }
-.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::before{
+.shop-page .product-payment-result[data-result=paid] .shop-result-primary::before{
  background:linear-gradient(110deg,transparent 39%,#ffffff0a 43%,#ffffff80 49%,#ffffffad 50%,#ffffff24 54%,transparent 60%);
  transform:translateX(-115%);animation:orders-success-sheen 3s ease-in-out infinite;
 }
-.shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::after{
+.shop-page .product-payment-result[data-result=paid] .shop-result-primary::after{
  padding:1px;background:conic-gradient(from var(--orders-success-edge-angle),transparent 0deg 295deg,#ffffff30 315deg,#fff 343deg,transparent 360deg);
  -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);
  -webkit-mask-composite:xor;mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);mask-composite:exclude;
@@ -206,8 +206,8 @@
 @keyframes orders-success-sheen{0%,12%{transform:translateX(-115%)}70%,100%{transform:translateX(115%)}}
 @keyframes orders-success-edge{to{--orders-success-edge-angle:360deg}}
 @media(prefers-reduced-motion:reduce){
- .shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::before,
- .shop-page .shop-result[data-result=paid]:not(.wallet-topup-result) .shop-result-action--orders:is([href*="tab=sifarislerim"],[href*="tab=orders"])::after{animation:none;content:none}
+ .shop-page .product-payment-result[data-result=paid] .shop-result-primary::before,
+ .shop-page .product-payment-result[data-result=paid] .shop-result-primary::after{animation:none;content:none}
 }
 
 /* Keep the support footer below the wallet in every initial load state. */
@@ -268,6 +268,18 @@
 .apple-topup-confirm button:disabled{opacity:.5;cursor:wait}
 .checkout-choices .checkout-warning[hidden]{display:none!important}
 .checkout-choices>.shop-link{display:flex;align-items:center;justify-content:center;margin-top:10px;text-align:center}
+
+/* Product purchase result: top-up results keep their own layout. */
+.shop-page .product-payment-result{width:min(100%,480px);padding:clamp(22px,5vw,36px)}
+.shop-page .product-payment-result .shop-result-action--codes{background:#ffb600;color:#111;font-weight:750}
+.shop-page .product-payment-result .shop-result-secondary{background:#292929;border-color:#575757;color:#fff;font-weight:500}
+.shop-page .product-payment-result .shop-result-action--home{border:0;background:transparent;color:#bdbdbd;font-size:14px;margin-top:4px}
+.shop-page .product-payment-result[data-result=paid] .shop-result-badge{animation:payment-confirm-in .55s ease-out both}
+.shop-page .product-payment-result[data-result=paid] .shop-result-badge svg path{stroke-dasharray:24;stroke-dashoffset:24;animation:payment-confirm-check .55s .15s ease-out forwards}
+.shop-page .product-payment-result .shop-result-poll-note{font-size:13px}
+@keyframes payment-confirm-in{from{opacity:0;transform:scale(.88)}to{opacity:1;transform:scale(1)}}
+@keyframes payment-confirm-check{to{stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.shop-page .product-payment-result[data-result=paid] .shop-result-badge,.shop-page .product-payment-result[data-result=paid] .shop-result-badge svg path{animation:none;stroke-dashoffset:0}}
 
 /* Payment selection only; basket, summary and result layouts stay unchanged. */
 .shop-checkout-grid .checkout-methods.checkout-payment-groups{display:block}
