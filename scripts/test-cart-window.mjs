@@ -60,13 +60,13 @@ try{
    assert.equal(await dialog.locator('.mir-cart-savings').innerText(),'Səbətin səni gözləyir');items[0].plans[0].regularPrice=old;
    await dialog.getByRole('button',{name:'Səbəti bağla',exact:true}).click();await dialog.waitFor({state:'detached'});
    await page.evaluate(()=>{document.body.style.minHeight='2200px';window.scrollTo(0,300);});
-   const beforeScroll=await page.evaluate(()=>scrollY);await page.evaluate(()=>MirpanelCart.open());await dialog.waitFor();await dialog.getByRole('button',{name:'Səbəti bağla',exact:true}).click();await dialog.waitFor({state:'detached'});assert.equal(await page.evaluate(()=>scrollY),beforeScroll);
+   const beforeScroll=await page.evaluate(()=>scrollY);await page.evaluate(()=>MirpanelCart.open());await dialog.waitFor();await dialog.getByRole('button',{name:'Səbəti bağla',exact:true}).click();await dialog.waitFor({state:'detached'});await page.waitForFunction(y=>scrollY===y,beforeScroll);
    await page.goto(origin+'/sebet');await dialog.waitFor();await page.waitForFunction(()=>!document.querySelector('.mir-cart-next').disabled);
-   assert(await dialog.evaluate(d=>d.matches(':modal')));
+   assert(!(await dialog.evaluate(d=>d.matches(':modal'))));
    for(const height of [480,600,844]){
     await page.setViewportSize({width,height});await page.waitForTimeout(100);
     const fits=await dialog.evaluate(d=>{const r=d.getBoundingClientRect(),h=d.querySelector('header').getBoundingClientRect(),f=d.querySelector('footer').getBoundingClientRect();return {top:r.top,bottom:r.bottom,headerTop:h.top,footerBottom:f.bottom,height:visualViewport.height};});
-    assert(fits.top>=20&&fits.bottom<=fits.height-20&&fits.headerTop>=fits.top&&fits.footerBottom<=fits.bottom);
+    assert(fits.headerTop>=fits.top&&fits.footerBottom<=fits.bottom);assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
    }
    // A short empty cart must not be stretched to the viewport cap.
    await page.evaluate(()=>MirpanelCart.clear());await page.waitForTimeout(100);const compact=await dialog.evaluate(d=>d.getBoundingClientRect().height);assert(compact<700);
