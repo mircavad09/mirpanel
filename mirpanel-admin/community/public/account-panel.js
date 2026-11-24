@@ -108,7 +108,9 @@ export function renderAccountPanel(ctx){
   const communityDispose=window.mirpanelPageDispose,initial=sessionLists.entries.get(listPath);
   const onLoaded=e=>{if(!e.detail.empty)content.querySelector('.account-recommendations')?.remove();if(e.detail.empty&&!content.querySelector('.account-recommendations'))void recommendations(content,run).catch(()=>{});};
   window.addEventListener('mirpanel:orders-loaded',onLoaded,{signal:life.signal});
-  disposeChild=window.mountBrowserOrders({initial,initialRequest:pending,ui,validate:ownData,onData:cache,onUnauthorized:unauthorized,profile:true,...(ctx.readOnly?{api:path=>api('/api/payments/'+path)}:{})});window.mirpanelPageDispose=communityDispose;
+  let refundedSignature='';
+  const orderData=d=>{cache(d);const signature=JSON.stringify((d?.orders||[]).filter(o=>o.cancellation?.refundStatus==='wallet_refunded').map(o=>[o.id,o.cancellation.at]));if(signature!=='[]'&&signature!==refundedSignature){refundedSignature=signature;void api('/api/community/state').then(v=>{if(!stopped&&run===load&&v?.profile?.user_id===verified){state.profile=v.profile;identityCard(v.profile);void window.refreshCommunityNav?.();}}).catch(()=>{});}};
+  disposeChild=window.mountBrowserOrders({initial,initialRequest:pending,ui,validate:ownData,onData:orderData,onUnauthorized:unauthorized,profile:true,...(ctx.readOnly?{api:path=>api('/api/payments/'+path)}:{})});window.mirpanelPageDispose=communityDispose;
   const child=disposeChild;disposeChild=()=>{window.removeEventListener('mirpanel:orders-loaded',onLoaded);child?.();};return;
  }
  const options={content,api,el,button,link,validate:ownData,initial:sessionLists.entries.get(listPath),initialRequest:pending,onData:cache,onUnauthorized:unauthorized,spinner,ui,readOnly:!!ctx.readOnly};

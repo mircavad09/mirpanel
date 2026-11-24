@@ -220,8 +220,10 @@
       <dl>${order.externalPayment?`<div><dt>Elektron ödəniş</dt><dd>${escp(order.externalPayment.hold?'Ləğv müraciəti — təhvil dayandırılıb, geri ödəniş təsdiqlənməyib':order.externalPayment.issue?order.externalPayment.issue:order.externalPayment.state==='awaiting_stock'?'Ödənilib — stok və təhvil yoxlaması gözlənilir':order.paymentConfirmed?'Ödəniş təsdiqlənib':'Provayder təsdiqi gözlənilir')}${order.externalPayment.feeCents!=null?` · Komissiya: ${escp(order.externalPayment.method==='apple-pay'?money(order.externalPayment.feeCents/100)+' · sahib tarifi':'Tarif təsdiqlənməyib')}`:''}</dd></div>`:''}${order.supplierProgress?.reason?`<div><dt>Epinby</dt><dd>${escp(order.supplierProgress.reason)}</dd></div>`:""}<div><dt><span>Məhsul</span>${artworkMarkup(order)}</dt><dd><ul>${lines.map((line,index)=>`<li>${escp(line)}${order.remainingDelivery?.[index]!=null?` <small>· ${Number(order.remainingDelivery[index])} ədəd qalıb</small>`:''}${fields?`<div class="paymentOrderLineFields" data-order-line-fields="${index}"></div>`:''}</li>`).join('')}</ul></dd></div><div><dt>Ödəniş üsulu</dt><dd>${escp(method)}</dd></div><div><dt>Müştəri</dt><dd>${escp(customer)}</dd></div>${order.reportCost!==undefined?`<div><dt>Maya</dt><dd>${order.reportCost===null?'Maya məlum deyil':money(order.reportCost)+(order.reportEstimated?' · Təxmini':'')}</dd></div>`:''}${order.cancellation?.reason?'<div><dt>Ləğv səbəbi</dt><dd style="white-space:pre-wrap">'+escp(order.cancellation.reason)+'</dd></div>':''}</dl>
       <div class="paymentOrderActions">
         ${order.costEvidence?.length?`<ul aria-label="Təchizatçı maya qeydləri">${order.costEvidence.flatMap(line=>line.costs.map(cost=>`<li>${escp(lines[line.lineIndex]||'Epinby paketi')} · ${escp(supplierEvidence(cost))}</li>`)).join('')}</ul>`:''}
+        <div class="paymentFulfillmentActions" style="display:grid;gap:8px">
         ${manage && displayStatus==='preparing' && !order.externalPayment?.hold && order.externalPayment?.state!=='awaiting_stock'?'<button class="btn primary" type="button" data-order-delivery>Təhvil ver</button>':''}
-        ${manage && deliveryQueue && order.paymentSource!=='epoint'?'<button class="btn danger" type="button" data-cancel-fulfillment>Ləğv et</button>':''}
+        ${manage && deliveryQueue && (order.paymentSource!=='epoint'||order.paymentConfirmed)?'<button class="btn danger" type="button" data-cancel-fulfillment>Ləğv et</button>':''}
+        </div>
         ${order.cancellation?`<small>${escp(order.cancellation.refundStatus==='wallet_refunded'?'Balansa qaytarılıb: ':'Kart üzrə əl ilə qaytarılmalıdır: ')}${escp(money(order.cancellation.refundCents/100,order.currency))}</small>`:''}
         ${manage && order.receiptAvailable && !deliveryQueue ? '<button class="btn" type="button" data-open-receipt>Çeki aç</button>' : ''}
         ${manage && reviewing ? order.workforce?.ownerRole==='employee' ? `<button class="btn" type="button" data-review-employee="${escp(order.id)}">Yoxla</button>` : '<button class="btn primary" type="button" data-approve-payment>Ödənişi təsdiqlə</button><button class="btn danger" type="button" data-reject-payment>Rədd et</button>' : ''}
@@ -871,9 +873,9 @@
       const url='/api/admin/payment-orders/'+id+'/cancel-fulfillment';
       try{
         const preview=await paymentApi(url);
-        const amount=money(preview.refundCents/100,'AZN');
-        const refund=preview.refundStatus==='wallet_refunded'?`Balansa qaytarılacaq: ${amount}.`:`Əl ilə karta qaytarılacaq: ${amount}. Köçürmə avtomatik icra edilmir.`;
-        const reason=await paymentActionDialog({title:`Sifariş №${preview.orderCode} ləğv edilsin?`,message:`Ödəniş üsulu: ${preview.method}. ${preview.full?'Bütün sifariş':'Yalnız təhvil verilməmiş vahidlər'} ləğv ediləcək. ${refund}`,confirmText:'Ləğvi təsdiqlə',danger:true,cancellationReason:true});
+        const amount=(preview.refundCents/100).toFixed(2).replace('.',',')+' ₼';
+        const refund=preview.refundStatus==='wallet_refunded'?`Sifarişin seçilmiş hissəsi ləğv ediləcək və ${amount} müştərinin MirPanel balansına əlavə olunacaq. Məbləğ bank kartına qaytarılmır.`:`Əl ilə karta qaytarılacaq: ${amount}. Köçürmə avtomatik icra edilmir.`;
+        const reason=await paymentActionDialog({title:`Sifariş №${preview.orderCode} ləğv edilsin?`,message:`Ödəniş üsulu: ${preview.method}. ${(preview.lines||[]).map(x=>`${x.title||'Məhsul'} · ${x.plan||''} · ${x.quantity} ədəd`).join('; ')}. ${refund}`,confirmText:'Ləğvi təsdiqlə',danger:true,cancellationReason:true});
         if(!reason)return;
         await paymentApi(url,{method:'POST',body:JSON.stringify({previewToken:preview.previewToken,reason})});
         invalidateOrders();toast('Ləğv qeydə alındı.');await loadOrders();
