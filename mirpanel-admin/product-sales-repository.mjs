@@ -47,10 +47,13 @@ export function createProductSalesRepository(client, {loadCatalog}) {
       total:(baseline.get(id)||0)+(counts.get(id)||0)})),realTotal:Number(raw.realTotal)||0,
       total:[...baseline.values()].reduce((sum,value)=>sum+value,0)+(Number(raw.realTotal)||0)};
   }
+  let publicRevision,revisionRequest;
   const publicSnapshot=publicReadCache(snapshot,{ttlMs:10000});
   return {
     snapshot,
     async publicProduct(id) {
+      const revision=await (revisionRequest??=rpc('product_sales_revision').finally(()=>{revisionRequest=null;}));
+      if(revision!==publicRevision){publicRevision=revision;publicSnapshot.invalidate();}
       const data = await publicSnapshot(), product = data.products.find(p=>p.productId===id && p.active);
       if (!product) throw failure('Məhsul tapılmadı.',404);
       return {initialized:!!data.initializedAt, productId:id,historical:product.historical,real:product.real,

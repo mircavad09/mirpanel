@@ -69,7 +69,7 @@
    })).then(v=>{
     if(!v)return;
     if(state!==scope||!line.isConnected||v.productId!==id||v.initialized!==true||!Number.isSafeInteger(v.productTotal)||v.productTotal<0)return;
-    line.textContent=new Intl.NumberFormat('en-US').format(v.productTotal).replaceAll(',',' ')+' dəfə satılıb';line.hidden=false;line.dataset.salesReady='';
+    line.textContent=new Intl.NumberFormat('en-US').format(v.productTotal).replaceAll(',',' ')+'+ dəfə satılıb';line.hidden=false;line.dataset.salesReady='';
    }).catch(()=>{}).finally(()=>{state.busy--;state.pending.delete(line);drain();});
   }};
   if(typeof IntersectionObserver!=='function'){state.queue.push(...nodes);drain();return;}
