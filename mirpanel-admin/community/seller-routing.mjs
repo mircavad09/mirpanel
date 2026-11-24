@@ -27,7 +27,7 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
   return null;
  }
  async function audit(c,task,who,action,reason=null,request=null){await c.query(`insert into ${S}seller_task_audit(task_id,actor,action,reason,request_id) values($1,$2,$3,$4,$5)`,[task,who,action,reason,request]);}
- async function routes(){const catalog=await loadCatalog();return (catalog.products||[]).filter(p=>p.active!==false).map(p=>({id:p.id,title:p.title,plans:(p.plans||[]).map((pl,i)=>({key:planKey(pl,i),name:pl.label||`${pl.months} aylıq`,signature:signature(pl),unsupported:p.id==='netflix'||!!epinbyPlan(p,pl)||p.supplier?.provider==='epinby'||pl.supplier?.provider==='epinby'}))}));}
+ async function routes(){const catalog=await loadCatalog();return (catalog.products||[]).filter(p=>p.active!==false).map(p=>({id:p.id,title:p.title,image:p.image||'',plans:(p.plans||[]).map((pl,i)=>({key:planKey(pl,i),name:pl.label||`${pl.months} aylıq`,signature:signature(pl),unsupported:p.id==='netflix'||!!epinbyPlan(p,pl)||p.supplier?.provider==='epinby'||pl.supplier?.provider==='epinby'}))}));}
  async function admin(input,who){
   if(!input){const [sellers,rules,members,tasks,history,mail,catalog,invitations]=await Promise.all([
    pool.query(`select id,name,email,user_id,active,created_at from ${S}routing_sellers order by created_at`),pool.query(`select * from ${S}seller_routes`),pool.query(`select * from ${S}seller_route_members`),
