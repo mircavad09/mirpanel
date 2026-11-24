@@ -128,7 +128,8 @@ export async function allocateReadyStock(c,securityFactory,orderId,items,actor='
  // Lock the order as well: cancellation uses that row lock.
  await c.query('select pg_advisory_xact_lock(714025001)');
  const order=(await c.query('select * from public.payment_orders where id=$1 for update',[orderId])).rows[0];
- if(!order||!paid(order)||order.fulfillment_cancellation)return;
+ if(!order||!paid(order)||order.fulfillment_cancellation||order.checkout_snapshot?.epointPayment?.fulfillmentHold)return;
+ if((await c.query("select to_regclass('mirpanel_community.fulfillment_holds') present")).rows[0].present&&(await c.query('select 1 from mirpanel_community.fulfillment_holds where order_id=$1 and released_at is null',[orderId])).rowCount)return;
  if(backlog)await drainReadyStock(c,securityFactory,{before:order});
  const done=await deliveryRecords(c,[orderId]);
  const dispatches=(await c.query("select to_regclass('mirpanel_community.api_dispatches') as name")).rows[0]?.name;

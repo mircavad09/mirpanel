@@ -8,7 +8,7 @@ export function signedEpoint(payload,env){
  return new URLSearchParams({data,signature:createHash('sha1').update(key).update(data).update(key).digest('base64')});
 }
 export async function epointPost(route,payload,{env=process.env,send=fetch}={}){
- if(!['token/widget','wallet/status','wallet/payment','get-status','request'].includes(route))throw Error('Unsupported Epoint route');
+ if(!['token/payment','token/widget','wallet/status','wallet/payment','get-status','request'].includes(route))throw Error('Unsupported Epoint route');
  const r=await send(EPOINT_API+route,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded',Accept:'application/json'},
   body:signedEpoint(payload,env),redirect:'error',signal:AbortSignal.timeout(12000)});
  if(!r.ok)throw fail(503,'Epoint hazırda cavab vermir. Ödənişin vəziyyətini yoxlayın.');

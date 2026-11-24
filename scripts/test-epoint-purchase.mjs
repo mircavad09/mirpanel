@@ -37,9 +37,9 @@ try{
   const send=async(url,options)=>{
    const p=JSON.parse(Buffer.from(options.body.get('data'),'base64'));
    if(url.endsWith('/wallet/status'))return Response.json({'9':'m10','10':'Birbank'});
-   if(url.endsWith('/get-status'))return Response.json({status,code:'000',amount:badAmount?11:10,currency:'AZN',transaction,order_id:'mp_ep_'+g.id});
+   if(url.endsWith('/get-status'))return Response.json({status,code:status==='success'?'succeeded':'000',amount:badAmount?11:10,currency:'AZN',transaction,order_id:'mp_ep_'+g.id});
    creates++;eq(p.amount,10);eq(p.order_id,'mp_ep_'+g.id);
-   return Response.json(method.endsWith('-pay')?{status:'success',widget_url:'https://epoint.az/synthetic-widget'}:{transaction,redirect_url:'https://epoint.az/synthetic-wallet'});
+   return Response.json(method.endsWith('-pay')?{status:'success',payment:{transaction,merchant_order_id:'mp_ep_'+g.id,total:10,widget_url:'https://epoint.az/synthetic-widget'}}:{transaction,redirect_url:'https://epoint.az/synthetic-wallet'});
   };
   const start=()=>startEpointCheckout(pool,'a',{method,requestId:g.id},{env,send,purchaseId:g.id});
   await Promise.all([start(),start()]);eq(creates,1);
@@ -55,6 +55,7 @@ try{
   eq((await pool.query('select fee_cents from epoint_purchases where id=$1',[g.id])).rows[0].fee_cents,method==='apple-pay'?30:0);
   eq((await pool.query("select count(*)::int n from wallet_ledger where request_id=$1",[g.id])).rows[0].n,0);
   await settleEpointResult(pool,callback());eq(await balance(),1500);
+  await assert.rejects(settleEpointResult(pool,{...callback(),transaction:'different-real-payment-'+g.id}),{status:409});checks++;
   eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,0);
   await Promise.all([drainEpointPurchases(pool,config),drainEpointPurchases(pool,config)]);
   eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[g.orderId])).rows[0].n,2);
@@ -67,8 +68,8 @@ try{
   const history=await paymentHistory(pool,'a',new URLSearchParams());eq(history.items.some(x=>x.id===g.id&&x.kind==='order'&&x.status==='approved'&&x.title.includes(method==='birbank'?'Birbank':method==='m10'?'m10':method==='apple-pay'?'Apple Pay':'Google Pay')),true);
   eq((await paymentHistory(pool,'b',new URLSearchParams())).items.some(x=>x.id===g.id),false);
  }
- // A paid notification after the reservation has expired remains a real paid
- // order, blocked from automatic fulfillment; it never becomes a wallet credit.
+ // A late verified payment may allocate only real remaining stock, once,
+ // even after its old inventory reservation expired. It is never wallet credit.
  const late=await shop.checkout(req,owner,{items:[ordinary],mode:'epoint',epointMethod:'birbank',requestId:id(),consentAccepted:true});
  await pool.query("update epoint_purchases set created_at=now()-interval '11 minutes' where id=$1",[late.id]);
  await drainEpointPurchases(pool,config);
@@ -78,8 +79,19 @@ try{
  await acceptEpointResult(pool,{id:late.id,cents:500,status:'success',transaction:lateTransaction,operationCode:'100'},{env,send:async()=>Response.json({transaction:lateTransaction,status:'success',code:'000',amount:5,currency:'AZN'})});
  eq((await readEpointPayment(pool,'a',late.id)).fulfillmentState,'awaiting_stock');
  await drainEpointPurchases(pool,config);
- eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[late.orderId])).rows[0].n,0);
+ eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[late.orderId])).rows[0].n,1);
+ await drainEpointPurchases(pool,config);eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[late.orderId])).rows[0].n,1);
  eq(await balance(),1500);
+ // Second real payment is accounted separately but cancellation hold forbids
+ // both direct and background allocation, with no refund or wallet mutation.
+ const held=await shop.checkout(req,owner,{items:[ordinary],mode:'epoint',epointMethod:'birbank',requestId:id(),consentAccepted:true});
+ await pool.query("insert into fulfillment_holds(order_id,reason,actor) values($1,'Synthetic cancellation request','synthetic-owner')",[held.orderId]);
+ const heldTx='held_'+held.id;
+ await startEpointCheckout(pool,'a',{requestId:held.id,method:'birbank'},{env,purchaseId:held.id,send:async url=>Response.json(url.endsWith('/wallet/status')?{'10':'Birbank'}:{transaction:heldTx,redirect_url:'https://epoint.az/synthetic'})});
+ await acceptEpointResult(pool,{id:held.id,cents:500,status:'success',transaction:heldTx,operationCode:'100'},{env,send:async()=>Response.json({transaction:heldTx,order_id:'mp_ep_'+held.id,status:'success',code:'succeeded',amount:5})});
+ await Promise.all([drainEpointPurchases(pool,config),drainEpointPurchases(pool,config)]);
+ eq((await readEpointPayment(pool,'a',held.id)).status,'success');eq((await pool.query('select count(*)::int n from customer_order_deliveries where order_id=$1',[held.orderId])).rows[0].n,0);eq(await balance(),1500);
+ await assert.rejects(pool.query("insert into customer_order_deliveries(id,order_id,line_index,quantity,message_cipher,actor) values($1,$2,0,1,'synthetic','test:auto')",[id(),held.orderId]),/FULFILLMENT_ON_HOLD/);checks++;
  await assert.rejects(shop.checkout(req,owner,{items:[{...ordinary,productId:'zero'}],mode:'epoint',epointMethod:'birbank',requestId:id(),consentAccepted:true}),{status:409});checks++;
  const count=Number((await pool.query('select count(*) n from epoint_purchases')).rows[0].n);
  let starts=0;const apiShop=createShop({context:async r=>({pool,user:r.user}),catalog:async()=>f.catalog,snapshot:()=>f.rpc('inventory_snapshot'),store:f.store,config,epointTransport:async url=>{
@@ -102,6 +114,10 @@ try{
  await acceptEpointResult(pool,{id:bundle.id,status:'success',transaction:bundleTx,cents:1100,operationCode:'100'},{env,send:async()=>Response.json({status:'success',transaction:bundleTx,amount:11,code:'000',currency:'AZN',order_id:'mp_ep_'+bundle.id})});
  await drainEpointPurchases(pool,config);eq((await readEpointPayment(pool,'a',bundle.id)).status,'success');eq(await balance(),1500);
  eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[bundle.orderId])).rows[0].n,1);
+ eq((await readEpointPayment(pool,'a',bundle.id)).fulfillmentState,'awaiting_stock');
+ const unlimited=f.catalog.products.find(p=>p.id==='unlimited');await saveReadyStock(pool,createPaymentSecurity(config),config.tokenSecret,f.catalog,'synthetic',{productId:'unlimited',index:0,planSignature:signature(unlimited.plans[0]),requestId:id(),autoWallet:true,messages:['Synthetic replenished account']});
+ await pool.query("update epoint_purchases set next_delivery_at=now() where id=$1",[bundle.id]);await Promise.all([drainEpointPurchases(pool,config),drainEpointPurchases(pool,config)]);eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[bundle.orderId])).rows[0].n,2);eq((await readEpointPayment(pool,'a',bundle.id)).fulfillmentState,'ready');
+ await drainEpointPurchases(pool,config);eq((await pool.query('select sum(quantity)::int n from customer_order_deliveries where order_id=$1',[bundle.orderId])).rows[0].n,2);
  const finiteQuote=await shop.quote(req,[{productId:'finite',planIndex:0,quantity:1}],owner);
  const finite={productId:'finite',planIndex:0,quantity:1,termsVersion:finiteQuote.items[0].termsVersion};
  const races=await Promise.allSettled([id(),id()].map(requestId=>shop.checkout(req,owner,{items:[finite],mode:'epoint',epointMethod:'birbank',requestId,consentAccepted:true,expectedTotalCents:600})));

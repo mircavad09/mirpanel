@@ -9,7 +9,7 @@ export function ensureEpointPurchases(pool){
   const task=(async()=>{await ensureEpointCheckout(pool);const c=await pool.connect();try{
    await c.query('begin');await c.query("set local lock_timeout='5s'");
    await c.query('select pg_advisory_xact_lock(714025001)');
-   await c.query(await readFile(new URL('./community/epoint-purchase.sql',import.meta.url),'utf8'));await c.query('commit');
+   await c.query(await readFile(new URL('./community/epoint-purchase.sql',import.meta.url),'utf8'));await c.query(await readFile(new URL('./community/fulfillment-holds.sql',import.meta.url),'utf8'));await c.query('commit');
   }catch(e){await c.query('rollback');throw e;}finally{c.release();}})();
   installed.set(pool,task);task.catch(()=>installed.delete(pool));
  }return installed.get(pool);
@@ -31,18 +31,19 @@ export async function settlePurchase(c,result){
  const state=p.reservation_released_at?'awaiting_stock':'queued';
  const fee=Math.floor((Number(p.cents)*p.fee_basis_points+5000)/10000);
  await c.query('update mirpanel_community.epoint_purchases set transaction=$2,paid_at=clock_timestamp(),state=$3,fee_cents=$4 where id=$1',[p.id,result.transaction,state,fee]);
- await c.query("update public.payment_orders set payment_confirmed=true,checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=$1",[p.order_id,JSON.stringify({state,providerStatus:'success',cancelled:false,feeCents:fee,feeSource:p.fee_source,feeBasisPoints:p.fee_basis_points,paid:true})]);
+ await c.query("update public.payment_orders set payment_confirmed=true,checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=$1",[p.order_id,JSON.stringify({state,providerStatus:'success',recoveryIssue:null,cancelled:false,feeCents:fee,feeSource:p.fee_source,feeBasisPoints:p.fee_basis_points,paid:true})]);
  await c.query("insert into public.payment_audit_log(actor_type,actor_ref,action,entity_type,entity_id,metadata) values('system','epoint','order.epoint_paid','order',$1,$2)",[p.order_id,{paymentId:p.id,method:p.method,transaction:result.transaction,cents:Number(p.cents),feeCents:fee,feeBasisPoints:p.fee_basis_points,feeSource:p.fee_source,state}]);
  return true;
 }
 export async function recordPurchaseStatus(pool,id,status,code){
  if(!(await pool.query("select to_regclass('mirpanel_community.epoint_purchases') present")).rows[0].present)return;
- const value={providerStatus:status,cancelled:['failed','error'].includes(status)&&['180','canceled','cancelled'].includes(code)};
+ const value={providerStatus:status,recoveryIssue:null,cancelled:['failed','error'].includes(status)&&['180','canceled','cancelled'].includes(code)};
  await pool.query("update public.payment_orders o set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment}',(checkout_snapshot->'epointPayment')||$2::jsonb) where id=(select order_id from mirpanel_community.epoint_purchases where id=$1 and paid_at is null) and payment_source='epoint' and payment_confirmed is false",[id,JSON.stringify(value)]);
 }
 export async function drainEpointPurchases(pool,config){
  if(!(await pool.query("select to_regclass('mirpanel_community.epoint_purchases') present")).rows[0].present)return;
- const ids=(await pool.query("select id from mirpanel_community.epoint_purchases where state='queued' or (paid_at is null and reservation_released_at is null and created_at<clock_timestamp()-interval '10 minutes') order by created_at limit 20")).rows;
+ await ensureEpointPurchases(pool);
+ const ids=(await pool.query("select id from mirpanel_community.epoint_purchases where (paid_at is not null and state in('queued','awaiting_stock') and next_delivery_at<=now()) or (paid_at is null and reservation_released_at is null and created_at<clock_timestamp()-interval '10 minutes') order by created_at limit 20")).rows;
  for(const {id} of ids){const c=await pool.connect();try{
   await c.query('begin');await c.query('select pg_advisory_xact_lock(714025001)');
   const p=(await c.query('select * from mirpanel_community.epoint_purchases where id=$1 for update',[id])).rows[0];
@@ -51,8 +52,11 @@ export async function drainEpointPurchases(pool,config){
    await c.query('select public.inventory_release($1,$2)',[order.reservation_id,order.id]);
    await c.query("update public.payment_reservations set status='expired',updated_at=clock_timestamp() where (id=$1 or cart_parent_reservation_id=$1) and status in ('reserved','reviewing')",[order.reservation_id]);
    await c.query('update mirpanel_community.epoint_purchases set reservation_released_at=clock_timestamp() where id=$1',[id]);
-  }else if(p.paid_at&&p.state==='queued'){
-   if(p.reservation_released_at||order.fulfillment_cancellation||['cancelled','rejected','expired'].includes(order.status)){
+  }else if(p.paid_at&&['queued','awaiting_stock'].includes(p.state)){
+   await c.query("update mirpanel_community.epoint_purchases set next_delivery_at=now()+interval '60 seconds' where id=$1",[id]);
+   const held=(await c.query("select 1 from mirpanel_community.fulfillment_holds where order_id=$1 and released_at is null",[order.id])).rowCount;
+   if(held){await c.query("update mirpanel_community.epoint_purchases set last_error='Ləğv müraciəti — təhvil dayandırılıb, geri ödəniş təsdiqlənməyib' where id=$1",[id]);await c.query('commit');continue;}
+   if(order.fulfillment_cancellation||['cancelled','rejected','expired'].includes(order.status)){
     await c.query("update mirpanel_community.epoint_purchases set state='awaiting_stock',last_error='Ödənilib — stok və təhvilin operator tərəfindən yoxlanması tələb olunur' where id=$1",[id]);
     await c.query("update public.payment_orders set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment,state}','\"awaiting_stock\"') where id=$1",[order.id]);
    }else{
@@ -60,7 +64,11 @@ export async function drainEpointPurchases(pool,config){
     order.checkout_snapshot.epointPayment.state='ready';
     const items=await readyStockOrderItems(c,order);
     await allocateReadyStock(c,()=>createPaymentSecurity(config),order.id,items,'epoint:auto');
-    await c.query("update mirpanel_community.epoint_purchases set state='ready',last_error=null where id=$1",[id]);
+    const totals=await c.query('select line_index,sum(quantity)::int n from mirpanel_community.customer_order_deliveries where order_id=$1 group by line_index',[order.id]);
+    const complete=items.length&&items.every((x,i)=>Number(totals.rows.find(r=>r.line_index===i)?.n||0)>=x.quantity);
+    const state=complete?'ready':'awaiting_stock',reason=complete?null:'Ödəniş qəbul edildi — uyğun hesab stoku və ya avtomatik təhvil qaydası gözlənilir';
+    await c.query('update mirpanel_community.epoint_purchases set state=$2,last_error=$3 where id=$1',[id,state,reason]);
+    await c.query("update public.payment_orders set checkout_snapshot=jsonb_set(checkout_snapshot,'{epointPayment,state}',to_jsonb($2::text)) where id=$1",[order.id,state]);
    }
   }
   await c.query('commit');
