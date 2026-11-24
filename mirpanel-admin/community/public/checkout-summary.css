@@ -23,3 +23,27 @@ html body .cart-checkout-summary .order-summary>header h2{font-size:20px;margin:
 html body .cart-checkout-summary .order-summary>header a{font-size:14px;font-weight:700;color:#ffda00;border-radius:0;white-space:nowrap;min-width:auto}
 html body .cart-checkout-summary .checkout-fee-note{font-size:13px;line-height:1.6;color:#bbb;font-weight:400;margin:14px 0}
 html body .cart-checkout-summary .checkout-amount{margin:0 0 14px}
+
+/* Compact order summary only; cart and payment sections keep their own styles. */
+html body .shop-page .shop-card.order-summary{background:#101010;border:1px solid #30302b;border-radius:18px;padding:20px;color:#f5f5f5}
+html body .order-summary>header{gap:10px;margin-bottom:12px}
+html body .order-summary>header h2,html body .cart-checkout-summary .order-summary>header h2{font-size:18px;line-height:1.35;margin:0;font-weight:600;min-width:0}
+html body .order-summary>header .order-summary-edit{color:#ffd400;background:transparent;border:0;padding:0;font-size:14px;line-height:1.3;min-width:auto;min-height:44px;white-space:nowrap;text-decoration:none}
+html body .order-summary .order-summary-item{grid-template-columns:48px minmax(0,1fr) max-content;gap:10px;padding:10px 0 14px;border-bottom:1px solid #292929}
+html body .order-summary .order-summary-art{width:48px;height:40px;border-radius:8px}
+html body .order-summary .order-summary-info{gap:3px;min-width:0}
+html body .order-summary .order-summary-info>strong{font-size:14px;font-weight:500;line-height:1.35;overflow-wrap:anywhere}
+html body .order-summary .order-summary-info>small{font-size:12px;line-height:1.4;color:#aaa}
+html body .order-summary .order-summary-info>.order-summary-warranty{color:#47c994}
+html body .order-summary .order-summary-price{color:#fff;font-size:14px;font-weight:650;text-align:right;white-space:nowrap}
+html body .order-summary .order-summary-totals{gap:12px;margin:18px 0 0}
+html body .order-summary .order-summary-totals>div{align-items:center;font-size:14px;line-height:1.4}
+html body .order-summary .order-summary-totals dt{color:#aaa;min-width:0}
+html body .order-summary .order-summary-totals dd{font-weight:500;text-align:right}
+html body .order-summary .order-summary-reference dd{color:#909090}
+html body .order-summary .order-summary-discount :is(dt,dd){color:#31c895;font-weight:600}
+.order-summary-discount-icon{display:inline-block;margin-right:6px;font-size:17px;line-height:1}
+html body .order-summary .order-summary-total{padding-top:14px;border-color:#292929}
+html body .order-summary .order-summary-total dt{color:#f5f5f5;font-size:18px;font-weight:600}
+html body .order-summary .order-summary-total dd{color:#ffd400;font-size:28px;line-height:1.2;font-weight:750}
+@media(max-width:350px){html body .shop-page .shop-card.order-summary{padding:15px}html body .order-summary>header h2,html body .cart-checkout-summary .order-summary>header h2{font-size:15px}html body .order-summary>header .order-summary-edit{font-size:13px}html body .order-summary .order-summary-item{grid-template-columns:40px minmax(0,1fr) max-content;gap:7px}html body .order-summary .order-summary-art{width:40px;height:35px}html body .order-summary .order-summary-price{font-size:13px}}
