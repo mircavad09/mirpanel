@@ -58,7 +58,8 @@ export function createOwnerCommunity(env=process.env,options={}){
   const renewalQueue=publicEnabled&&options.loadCatalog&&createScheduledRenewalWorker(pool,options.loadCatalog,()=>createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),{onWork:()=>{void readyQueue?.wake();void orderMailer?.wake();}});
   renewalQueue?.start();
   if(publicEnabled)await ensureSellerRouting(pool);
-  const sellers=publicEnabled&&createSellerRouting({pool,security:createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),loadCatalog:options.loadCatalog,send:orderSend,origin,idempotentMail:env.ORDER_MAIL_PROVIDER==='resend'||!!options.sendAuthEmail,roomStockSecret:env.PAYMENT_TOKEN_SECRET_B64,onDelivered:()=>orderMailer?.wake()});
+  const sellers=publicEnabled&&createSellerRouting({pool,security:createPaymentSecurity({encryptionKey:env.PAYMENT_ENCRYPTION_KEY_B64,tokenSecret:env.PAYMENT_TOKEN_SECRET_B64}),loadCatalog:options.loadCatalog,send:orderSend,origin,mailProvider:env.ORDER_MAIL_PROVIDER||'gmail',fallbackSend:env.ORDER_MAIL_PROVIDER==='resend'?send:null,idempotentMail:env.ORDER_MAIL_PROVIDER==='resend'||!!options.sendAuthEmail,roomStockSecret:env.PAYMENT_TOKEN_SECRET_B64,onDelivered:()=>orderMailer?.wake()});
+  sellers?.start();
   const auth=publicEnabled?makePublicAuth(pool,authConfig,send,welcome):makeOwnerAuth(pool,authConfig);runtime={pool,repo,group,auth,welcome,orderMailer,readyQueue,renewalQueue,sellers};return runtime;}catch(error){await pool.end().catch(()=>{});throw error;}}
  function init(){if(runtime)return Promise.resolve(runtime);if(!initializing)initializing=initializeRuntime().finally(()=>{initializing=null;});return initializing;}
  async function body(req){let n=0,parts=[];for await(const b of req){n+=b.length;if(n>16384)throw Object.assign(Error('Sorğu çox böyükdür.'),{status:413});parts.push(b);}try{return JSON.parse(Buffer.concat(parts).toString()||'{}');}catch{throw Object.assign(Error('Sorğu düzgün deyil.'),{status:400});}}
@@ -95,7 +96,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   }
   if(req.method==='POST'){
    const b=await body(req);
-   if(part==='/sellers')return json(res,200,await r.sellers.admin(b,owner.id));
+   if(part==='/sellers'){const result=await r.sellers.admin(b,owner.id);void r.sellers.wake();return json(res,200,result);}
    if(part==='/public-group')return json(res,200,await setPublicGroup(r.repo,owner,b));
    if(part==='/renewals')return json(res,200,await adminScheduledRenewals(r.pool,await options.loadCatalog(),b,owner.id));
    if(part==='/staff-role')return json(res,200,await setStaffRole(r.pool,owner.id,b));
@@ -153,7 +154,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   let event;
   try{event=await readOrderMailWebhook(req,env.ORDER_MAIL_RESEND_WEBHOOK_SECRET);}
   catch(error){return json(res,error.status||400,{ok:false}),true;}
-  try{const handled=!event||await (await init()).orderMailer.notice(event);return json(res,handled?200:503,{ok:handled}),true;}
+  try{const handled=!event||(event.seller?await (await init()).sellers.notice(event):await (await init()).orderMailer.notice(event));return json(res,handled?200:503,{ok:handled}),true;}
   catch{console.warn('ORDER_MAIL_WEBHOOK_STORAGE_ERROR');return json(res,503,{ok:false}),true;}
  }
  if(!['GET','HEAD','OPTIONS'].includes(req.method)&&req.headers.origin!==origin){json(res,403,{error:'Mənşə yoxlaması keçmədi.'});return true;}
@@ -169,7 +170,7 @@ export function createOwnerCommunity(env=process.env,options={}){
   const action=route.slice('/api/community/seller/'.length);
   if(req.method==='GET'&&action==='orders')return json(res,200,await runtime.sellers.list(user)),true;
   if(req.method==='GET'&&action==='details')return json(res,200,await runtime.sellers.details(user,u.searchParams.get('id'))),true;
-  if(req.method==='POST'){const input=await body(req);if(action==='accept')return json(res,200,await runtime.sellers.accept(user,input.token)),true;if(action==='action')return json(res,200,await runtime.sellers.perform(user,input)),true;}
+  if(req.method==='POST'){const input=await body(req);if(action==='inspect')return json(res,200,await runtime.sellers.inspect(user,input.token)),true;if(action==='accept')return json(res,200,await runtime.sellers.accept(user,input.token)),true;if(action==='action')return json(res,200,await runtime.sellers.perform(user,input)),true;}
   return json(res,404,{error:'Not found.'}),true;
  }
  if(publicEnabled)return await handlePublicCommunity({req,res,u,origin,runtime,json,html,body,catalog:options.loadCatalog,inventory:options.inventory});

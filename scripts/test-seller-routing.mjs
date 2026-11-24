@@ -20,11 +20,12 @@ const factory=()=>createSellerRouting({pool,security,loadCatalog:async()=>f.cata
 let router=factory(),sellerIds=[];
 async function buy(input=[{productId:'ordinary',planIndex:0,quantity:1}]){await pool.query("insert into wallet_accounts(user_id,cents) values('a',100000) on conflict(user_id) do update set cents=100000");const q=await shop.quote({user:'a'},input,'b'.repeat(64));return shop.checkout({user:'a'},'b'.repeat(64),{items:input.map((x,i)=>({...x,termsVersion:q.items[i].termsVersion})),mode:'wallet',requestId:id(),consentAccepted:true});}
 try{
+ f.catalog.products[0].title='TEST — No real fulfillment';
  await ensureSellerRouting(pool);await ensureSellerRouting(pool);
  await pool.query("insert into mirpanel_community.\"user\"(id,name,email,\"emailVerified\") values('seller1','Seller One','seller1@gmail.com',true),('seller2','Seller Two','seller2@gmail.com',true),('seller3','Seller Three','seller3@gmail.com',true)");
  for(let n=1;n<=3;n++){
   const requestId=id();await router.admin({action:'invite',name:'Seller '+n,email:user(n).email,requestId},'owner');await router.admin({action:'invite',name:'Seller '+n,email:user(n).email,requestId},'owner');await router.drainMail();
-  const email=messages.get('seller-invite:'+requestId);eq(email.subject,'You are invited to become a MirPanel seller');const token=email.textBody.match(/#invite=([a-f0-9]{64})/)[1];
+  const email=messages.get('seller-invite:'+requestId);eq(email.subject,'You’re invited to join MirPanel as a seller');const token=email.textBody.match(/#invite=([a-f0-9]{64})/)[1];
   await reject(router.accept(user(n===1?2:1),token),403);await router.accept(user(n),token);await reject(router.accept(user(n),token),410);
  }
  let state=await router.admin();sellerIds=state.sellers.map(s=>s.id);eq(state.sellers.length,3);
@@ -34,7 +35,7 @@ try{
  const order=await buy([{productId:'ordinary',planIndex:0,quantity:2},{productId:'unlimited',planIndex:0,quantity:1}]);await router.sync();await router.sync();state=await router.list(user(1));eq(state.items.length,1);const task=state.items[0];eq(task.quantity,2);
  await router.admin({action:'route',productId:'ordinary',planKey:'0',enabled:true,sellers:sellerIds},'owner');eq((await router.list(user(1))).items[0].state,'open','resaving route retains open work');
  await router.drainMail();await router.drainMail();eq([...messages.keys()].filter(k=>k.startsWith('seller-task:')).length,3,'one mail per eligible seller');
- for(const m of messages.values())if(m.subject.startsWith('New order')){eq(m.textBody.includes('a@example.test'),false);eq(m.textBody.includes('password'),false);eq(m.subject,'New order — Synthetic ordinary');}
+ for(const m of messages.values())if(m.subject.startsWith('New order')){eq(m.textBody.includes('a@example.test'),false);eq(m.textBody.includes('password'),false);eq(m.subject,'New order — TEST — No real fulfillment');}
  await reject(router.details(user(1),task.id),403);
  const contenders=await Promise.allSettled([1,2,3].map(n=>router.perform(user(n),{action:'claim',id:task.id,requestId:id()})));eq(contenders.filter(x=>x.status==='fulfilled').length,1,'only one atomic winner');
  const winner=contenders.findIndex(x=>x.status==='fulfilled')+1,other=winner===1?2:1,claimed=(await router.list(user(winner))).items[0];

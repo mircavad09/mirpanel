@@ -1,3 +1,4 @@
+import {OWNER_EMAIL} from './owner-auth.mjs';
 import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import {deliveryLines,adminDelivery} from './order-delivery.mjs';
@@ -11,7 +12,7 @@ const digest=v=>crypto.createHash('sha256').update(v).digest('hex');
 const text=(v,n)=>typeof v==='string'&&v.trim().length>0&&v.length<=n&&!/[\x00-\x1f]/.test(v);
 const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export async function ensureSellerRouting(pool){const c=await pool.connect();try{await c.query('begin;select pg_advisory_xact_lock(714025119)');await c.query(await fs.readFile(new URL('./seller-routing.sql',import.meta.url),'utf8'));await c.query('commit');}catch(e){await c.query('rollback');throw e;}finally{c.release();}}
-export function createSellerRouting({pool,security,loadCatalog,send,origin,roomStockSecret,onDelivered=()=>{},pollMs=15000,idempotentMail=false}){
+export function createSellerRouting({pool,security,loadCatalog,send,origin,roomStockSecret,onDelivered=()=>{},pollMs=15000,idempotentMail=false,mailProvider='resend',fallbackSend=null}){
  let timer,running,stopped=false;
  async function transaction(fn){const c=await pool.connect();try{await c.query('begin;select pg_advisory_xact_lock(714025001)');const result=await fn(c);await c.query('commit');return result;}catch(e){await c.query('rollback');throw e;}finally{c.release();}}
  async function actor(db,user){if(!user?.id||user.emailVerified!==true)throw fail(user?403:401,'Verified seller account required.');
@@ -32,15 +33,15 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
   if(!input){const [sellers,rules,members,tasks,history,mail,catalog,invitations]=await Promise.all([
    pool.query(`select id,name,email,user_id,active,created_at from ${S}routing_sellers order by created_at`),pool.query(`select * from ${S}seller_routes`),pool.query(`select * from ${S}seller_route_members`),
    pool.query(`select t.*,o.order_code,s.name seller_name,now()-coalesce(t.claimed_at,t.created_at)>interval '30 minutes' as delayed from ${S}seller_tasks t join public.payment_orders o on o.id=t.order_id left join ${S}routing_sellers s on s.id=t.seller_id order by t.created_at desc limit 500`),
-   pool.query(`select a.*,s.name seller_name from ${S}seller_task_audit a left join ${S}routing_sellers s on s.id::text=a.actor order by a.at desc limit 500`),pool.query(`select event_key,state,attempts,reason,provider_id,updated_at from ${S}seller_mail order by updated_at desc limit 100`),routes(),pool.query(`select i.id,i.seller_id,i.created_at,i.expires_at,i.accepted_at,m.state mail_state,m.reason mail_reason,m.updated_at mail_updated_at from ${S}seller_invitations i left join ${S}seller_mail m on m.invitation_id=i.id order by i.created_at desc limit 500`)]);
+   pool.query(`select a.*,s.name seller_name from ${S}seller_task_audit a left join ${S}routing_sellers s on s.id::text=a.actor order by a.at desc limit 500`),pool.query(`select event_key,state,attempts,reason,provider_id,updated_at from ${S}seller_mail order by updated_at desc limit 100`),routes(),pool.query(`select i.id,i.seller_id,i.created_at,i.expires_at,i.accepted_at,i.revoked_at,m.provider_service mail_provider,m.state mail_state,m.reason mail_reason,m.updated_at mail_updated_at from ${S}seller_invitations i left join ${S}seller_mail m on m.invitation_id=i.id order by i.created_at desc limit 500`)]);
    return {sellers:sellers.rows,routes:rules.rows,members:members.rows,tasks:tasks.rows,history:history.rows,mail:mail.rows,invitations:invitations.rows,catalog,entry:origin+'/satici'};
   }
   return transaction(async c=>{
    if(input.action==='invite'){
-    const email=String(input.email||'').toLowerCase().trim();if(!text(input.name,120)||!/^[-a-z0-9._+]+@gmail\.com$/.test(email)||!uuid(input.requestId))throw fail(400,'Ad, Gmail ünvanı və əməliyyat açarı tələb olunur.');
+    const email=String(input.email||'').toLowerCase().trim();if(email===OWNER_EMAIL)throw fail(409,'Sahib hesabına satıcı rolu verilmir. Ayrı satıcı hesabından istifadə edin.');if(!text(input.name,120)||!/^[-a-z0-9._+]+@gmail\.com$/.test(email)||!uuid(input.requestId))throw fail(400,'Ad, Gmail ünvanı və əməliyyat açarı tələb olunur.');
     const previous=(await c.query(`select i.id,s.email from ${S}seller_invitations i join ${S}routing_sellers s on s.id=i.seller_id where i.id=$1`,[input.requestId])).rows[0];if(previous){if(previous.email!==email)throw fail(409,'Təkrar dəvət sorğusunun ünvanı uyğun deyil.');return {queued:true,invitationId:previous.id,replayed:true};}
     let seller=(await c.query(`select * from ${S}routing_sellers where email=$1 for update`,[email])).rows[0];if(seller?.user_id)throw fail(409,'Satıcı artıq dəvəti qəbul edib.');
-    if(seller){const live=(await c.query(`select id from ${S}seller_invitations where seller_id=$1 and accepted_at is null and expires_at>now() order by created_at desc limit 1`,[seller.id])).rows[0];if(live)return {queued:true,invitationId:live.id,replayed:true};}
+    if(seller){const live=(await c.query(`select id from ${S}seller_invitations where seller_id=$1 and accepted_at is null and revoked_at is null and expires_at>now() order by created_at desc limit 1`,[seller.id])).rows[0];if(live)return {queued:true,invitationId:live.id,replayed:true};}
     if(!seller)seller=(await c.query(`insert into ${S}routing_sellers(id,name,email) values($1,$2,$3) returning *`,[crypto.randomUUID(),input.name.trim(),email])).rows[0];
     const token=crypto.randomBytes(32).toString('hex');await c.query(`update ${S}seller_invitations set expires_at=now() where seller_id=$1 and accepted_at is null`,[seller.id]);
     await c.query(`insert into ${S}seller_invitations(id,seller_id,token_hash,token_cipher,expires_at) values($1,$2,$3,$4,now()+interval '48 hours')`,[input.requestId,seller.id,digest(token),security.encryptSecret(token)]);
@@ -48,16 +49,21 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
    }
    if(input.action==='retryInvite'){
     if(!uuid(input.id))throw fail(400,'Dəvəti seçin.');
-    const job=(await c.query(`select m.* from ${S}seller_mail m join ${S}seller_invitations i on i.id=m.invitation_id where i.id=$1 and i.accepted_at is null and i.expires_at>now() for update of m`,[input.id])).rows[0];
+    const job=(await c.query(`select m.* from ${S}seller_mail m join ${S}seller_invitations i on i.id=m.invitation_id where i.id=$1 and i.accepted_at is null and i.revoked_at is null and i.expires_at>now() for update of m`,[input.id])).rows[0];
     if(!job)throw fail(409,'Aktiv dəvət tapılmadı.');
     if(job.state!=='failed')return {queued:job.state==='queued'||job.state==='sending',invitationId:input.id,replayed:true};
     await c.query(`update ${S}seller_mail set state='queued',next_at=now(),reason=null,updated_at=now() where event_key=$1`,[job.event_key]);
     await audit(c,null,who,'invite-retry',input.id);return {queued:true,invitationId:input.id};
    }
+   if(input.action==='revokeInvite'){
+    if(!uuid(input.id))throw fail(400,'Dəvəti seçin.');
+    const r=await c.query(`update ${S}seller_invitations set revoked_at=coalesce(revoked_at,now()),token_cipher='' where id=$1 and accepted_at is null returning id`,[input.id]);if(!r.rowCount)throw fail(409,'Gözləyən dəvət tapılmadı.');
+    await c.query(`update ${S}seller_mail set state='cancelled',reason='INVITATION_REVOKED',updated_at=now() where invitation_id=$1 and state in('queued','failed','uncertain')`,[input.id]);await audit(c,null,who,'invitation-revoked',input.id);return {ok:true};
+   }
    if(input.action==='seller'){
     if(!uuid(input.id)||typeof input.active!=='boolean')throw fail(400,'Satıcı seçin.');
     const seller=(await c.query(`update ${S}routing_sellers set active=$2 where id=$1 and (not $2 or user_id is not null) returning id`,[input.id,input.active])).rows[0];if(!seller)throw fail(409,'Əvvəl dəvət qəbul edilməlidir.');
-    if(!input.active)await c.query(`update ${S}seller_tasks set state='needs_review' where seller_id=$1 and state='claimed'`,[input.id]);await audit(c,null,who,input.active?'seller-enabled':'seller-disabled');return {ok:true};
+    if(!input.active)await c.query(`update ${S}seller_tasks set state='needs_review' where seller_id=$1 and state='claimed'`,[input.id]);await audit(c,null,who,input.active?'seller-enabled':'seller-disabled');const work=(await c.query(`select count(*)::int n from ${S}seller_tasks where seller_id=$1 and state='needs_review'`,[input.id])).rows[0].n;return {ok:true,reviewCount:work};
    }
    if(input.action==='route'){
     const catalog=await routes(),product=catalog.find(p=>p.id===input.productId),plan=product?.plans.find(p=>p.key===input.planKey);
@@ -106,9 +112,15 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
    created++;for(const seller of members){await c.query(`insert into ${S}seller_task_audience(task_id,seller_id) values($1,$2) on conflict do nothing`,[task.id,seller.id]);await c.query(`insert into ${S}seller_mail(event_key,seller_id,task_id) values($1,$2,$3) on conflict do nothing`,['seller-task:'+task.id+':'+seller.id,seller.id,task.id]);}
   }}return {created};
  });}
+ async function inspect(user,token){
+  if(!user?.id||!user.emailVerified)throw fail(user?403:401,'Sign in with the invited verified account.');if(!/^[a-f0-9]{64}$/.test(token||''))throw fail(400,'Invalid invitation.');
+  const i=(await pool.query(`select i.*,s.email from ${S}seller_invitations i join ${S}routing_sellers s on s.id=i.seller_id where token_hash=$1`,[digest(token)])).rows[0];
+  if(!i)throw fail(404,'Invitation not found.');if(user.email.toLowerCase()!==i.email)throw fail(403,'Sign in with the email address that received this invitation.');
+  return {state:i.revoked_at?'revoked':i.accepted_at?'accepted':new Date(i.expires_at)<=new Date()?'expired':'pending',expiresAt:i.expires_at};
+ }
  async function accept(user,token){if(!user?.id||user.emailVerified!==true)throw fail(user?403:401,'Sign in with the invited, verified Gmail account.');if(!/^[a-f0-9]{64}$/.test(token||''))throw fail(400,'Invalid invitation.');return transaction(async c=>{
   const invite=(await c.query(`select i.*,s.email from ${S}seller_invitations i join ${S}routing_sellers s on s.id=i.seller_id where token_hash=$1 for update of i,s`,[digest(token)])).rows[0];
-  if(!invite||invite.accepted_at||new Date(invite.expires_at)<=new Date())throw fail(410,'Invitation expired or already used.');if(user.email.toLowerCase()!==invite.email)throw fail(403,'Use the Gmail address that received this invitation.');
+  if(!invite)throw fail(404,'Invitation not found.');if(invite.email===OWNER_EMAIL)throw fail(409,'The protected owner account cannot join as a seller. Use a separate seller account.');if(invite.revoked_at)throw fail(410,'Invitation has been revoked.');if(invite.accepted_at)throw fail(410,'Invitation has already been accepted. Open your seller panel.');if(new Date(invite.expires_at)<=new Date())throw fail(410,'Invitation has expired. Ask the admin for a new invitation.');if(user.email.toLowerCase()!==invite.email)throw fail(403,'Use the Gmail address that received this invitation.');
   await c.query(`update ${S}routing_sellers set user_id=$2,active=true where id=$1`,[invite.seller_id,user.id]);await c.query(`update ${S}seller_invitations set accepted_at=now(),token_cipher='' where id=$1`,[invite.id]);await audit(c,null,invite.seller_id,'invitation-accepted');return {ok:true};
  });}
  async function member(c,seller,task,{assigned=false}={}){
@@ -161,20 +173,37 @@ export function createSellerRouting({pool,security,loadCatalog,send,origin,roomS
   const progress=await adminDelivery(pool,security,'seller:'+seller.id,t.order_id,null,{transaction:c});return {claimId:t.claim_id,fields,remaining:progress.lines.find(x=>x.index===t.line_index)?.remaining||0,renewal:!!snapshot?.renewalOrderCode};
  });}
  async function drainMail(){
+  if(fallbackSend)await pool.query(`update ${S}seller_mail set next_at=now() where state='queued' and reason in('SEND_DAILY_QUOTA','SEND_MONTHLY_QUOTA') and coalesce(provider_service,'resend')='resend' and next_at>now()`);
   // A provider idempotency key is reused across restarts for <24h. Beyond the
   // provider retention window an unknown result is reviewed, never resent.
-  await pool.query(`update ${S}seller_mail set state=case when coalesce(first_attempt_at,updated_at)>now()-interval '20 hours' then 'queued' else 'uncertain' end,reason='STALE_SENDING' where state='sending' and updated_at<now()-interval '2 minutes'`);
+  await pool.query(`update ${S}seller_mail set state=case when provider_service='gmail' then 'uncertain' when coalesce(first_attempt_at,updated_at)>now()-interval '20 hours' then 'queued' else 'uncertain' end,reason='STALE_SENDING' where state='sending' and updated_at<now()-interval '2 minutes'`);
   for(let i=0;i<4;i++){
    const job=(await pool.query(`with due as(select event_key from ${S}seller_mail where state='queued' and next_at<=now() order by next_at for update skip locked limit 1) update ${S}seller_mail m set state='sending',attempts=attempts+1,first_attempt_at=coalesce(first_attempt_at,now()),updated_at=now() from due where due.event_key=m.event_key returning m.*`)).rows[0];if(!job)return;
    if(job.uncertain_at&&new Date(job.first_attempt_at)<new Date(Date.now()-20*3600000)){await pool.query(`update ${S}seller_mail set state='uncertain',reason='IDEMPOTENCY_WINDOW_EXPIRED' where event_key=$1`,[job.event_key]);continue;}
-   const seller=(await pool.query(`select * from ${S}routing_sellers where id=$1`,[job.seller_id])).rows[0];let subject,textBody,url;
-   if(job.invitation_id){const invite=(await pool.query(`select * from ${S}seller_invitations where id=$1`,[job.invitation_id])).rows[0];if(invite.accepted_at||new Date(invite.expires_at)<=new Date()){await pool.query(`update ${S}seller_mail set state='cancelled' where event_key=$1`,[job.event_key]);continue;}url=origin+'/satici#invite='+security.decryptSecret(invite.token_cipher);subject='You are invited to become a MirPanel seller';textBody=`Hello ${seller.name},\n\nYou have been invited to the MirPanel seller panel. Sign in or create your account using this Gmail address, then accept the invitation. This single-use invitation expires in 48 hours. It does not grant administrator access.\n\n${url}\n\nIf you did not expect this invitation, ignore it.`;
+   let channel=job.provider_service||mailProvider;
+   try{
+   const seller=(await pool.query(`select * from ${S}routing_sellers where id=$1`,[job.seller_id])).rows[0];let subject,textBody,url;if(seller.email===OWNER_EMAIL){await pool.query(`update ${S}seller_mail set state='failed',reason='OWNER_ACCOUNT_PROTECTED',updated_at=now() where event_key=$1`,[job.event_key]);continue;}
+   if(job.invitation_id){const invite=(await pool.query(`select * from ${S}seller_invitations where id=$1`,[job.invitation_id])).rows[0];if(invite.revoked_at||invite.accepted_at||new Date(invite.expires_at)<=new Date()){await pool.query(`update ${S}seller_mail set state='cancelled' where event_key=$1`,[job.event_key]);continue;}url=origin+'/satici#invite='+security.decryptSecret(invite.token_cipher);subject='You’re invited to join MirPanel as a seller';textBody=`Hello ${seller.name},\n\nYou have been invited to the MirPanel seller panel. Sign in or create your account using this Gmail address, then accept the invitation. This single-use invitation expires at ${new Date(invite.expires_at).toISOString()} (UTC). It does not grant administrator access.\n\n${url}\n\nIf you did not expect this invitation, ignore it.`;
    }else{const task=(await pool.query(`select t.*,o.order_code from ${S}seller_tasks t join public.payment_orders o on o.id=t.order_id where t.id=$1`,[job.task_id])).rows[0];if(!seller.active){await pool.query(`update ${S}seller_mail set state='cancelled' where event_key=$1`,[job.event_key]);continue;}url=origin+'/satici?task='+task.id;subject='New order — '+task.title;textBody=`Hello ${seller.name},\n\nOrder ${task.order_code}\nProduct: ${task.title}\nPackage: ${task.plan_name}\nQuantity: ${task.quantity}\n\nSign in to view the current status and claim this order:\n${url}\n\nOnly the first eligible seller to claim can fulfill this order.`;}
-   const htmlBody=`<div style="font:16px/1.5 Arial;color:#111;background:#fff;padding:24px"><h2>${esc(subject)}</h2><p>${esc(textBody).replaceAll('\n','<br>')}</p><a href="${esc(url)}">Open secure seller panel</a></div>`;
-   try{const result=await send('order',{user:{email:seller.email},subject,textBody,htmlBody,idempotencyKey:job.event_key});if(!result?.id)throw Object.assign(Error(),{deliveryDisposition:'uncertain'});await pool.query(`update ${S}seller_mail set state='accepted',provider_id=$2,reason=null,updated_at=now() where event_key=$1`,[job.event_key,result.id]);}
-   catch(e){const retry=job.attempts<6&&(e.deliveryDisposition==='retry'||idempotentMail&&e.deliveryDisposition==='uncertain');const delay=Math.max(Number(e.retryAfterMs)||0,Math.min(3600000,1000*3**job.attempts));await pool.query(`update ${S}seller_mail set state=$2,reason=$3,next_at=now()+($4::bigint*interval '1 millisecond'),updated_at=now(),uncertain_at=case when $5 then coalesce(uncertain_at,now()) else uncertain_at end where event_key=$1`,[job.event_key,retry?'queued':e.deliveryDisposition==='uncertain'?'uncertain':'failed',e.deliveryCode||'SELLER_MAIL_FAILED',delay,e.deliveryDisposition==='uncertain']);}
+   const htmlBody=`<div style="font:16px/1.5 Arial;color:#111;background:#fff;padding:24px"><h2>${esc(subject)}</h2><p>${esc(textBody).replaceAll('\n','<br>')}</p><a href="${esc(url)}">${job.invitation_id?'Accept invitation':'Open secure seller panel'}</a></div>`;
+   const message={user:{email:seller.email},subject,textBody,htmlBody,idempotencyKey:job.event_key};
+   await pool.query(`update ${S}seller_mail set provider_service=$2 where event_key=$1`,[job.event_key,channel]);
+   let result;
+   try{result=await (channel==='gmail'&&fallbackSend?fallbackSend:send)('order',message);}
+   catch(e){
+    // Only an explicit Resend quota rejection is proof that no send occurred.
+    // Persist the chosen channel before Gmail; a restart/timeout cannot replay it.
+    if(channel!=='resend'||!fallbackSend||e.deliveryDisposition!=='retry'||!['SEND_DAILY_QUOTA','SEND_MONTHLY_QUOTA'].includes(e.deliveryCode))throw e;
+    channel='gmail';await pool.query(`update ${S}seller_mail set provider_service='gmail' where event_key=$1`,[job.event_key]);result=await fallbackSend('order',message);
+   }
+if(!result?.id)throw Object.assign(Error(),{deliveryDisposition:'uncertain'});await pool.query(`update ${S}seller_mail set state='accepted',provider_id=$2,reason=null,updated_at=now() where event_key=$1`,[job.event_key,result.id]);}
+   catch(e){const retry=e.deliveryDisposition==='retry'||channel!=='gmail'&&job.attempts<6&&idempotentMail&&e.deliveryDisposition==='uncertain';const delay=Math.max(Number(e.retryAfterMs)||0,Math.min(3600000,1000*3**job.attempts));await pool.query(`update ${S}seller_mail set state=$2,reason=$3,next_at=now()+($4::bigint*interval '1 millisecond'),updated_at=now(),uncertain_at=case when $5 then coalesce(uncertain_at,now()) else uncertain_at end where event_key=$1`,[job.event_key,retry?'queued':e.deliveryDisposition==='uncertain'?'uncertain':'failed',e.deliveryCode||'SELLER_MAIL_FAILED',delay,e.deliveryDisposition==='uncertain']);}
   }
  }
- async function tick(){if(stopped)return;if(running)return running;running=(async()=>{await sync();await drainMail();})().catch(()=>console.warn('SELLER_ROUTING_RETRY')).finally(()=>{running=null;});return running;}
- return {admin,accept,list,details,action,sync,drainMail,async perform(user,input){const result=await action(user,input);if(input.action==='complete')void Promise.resolve(onDelivered()).catch(()=>{});return result;},start(){if(timer)return;void tick();timer=setInterval(()=>void tick(),pollMs);timer.unref?.();},async stop(){stopped=true;clearInterval(timer);await running;}};
+ async function notice(event){
+  if(!event?.seller)return false;
+  await pool.query(`update ${S}seller_mail set reason=$2,updated_at=now() where provider_id=$1 and state='accepted' and (reason is distinct from 'RESEND_DELIVERED' or $2='RESEND_DELIVERED')`,[event.providerId,event.reason]);return true;
+ }
+ async function tick(){if(stopped)return;if(running)return running;running=(async()=>{await sync().catch(e=>console.warn('SELLER_SYNC_RETRY',e.code||'UNKNOWN'));await drainMail();})().catch(e=>console.warn('SELLER_MAIL_RETRY',e.code||'UNKNOWN')).finally(()=>{running=null;});return running;}
+ return {admin,inspect,accept,list,details,action,sync,drainMail,notice,wake:tick,async perform(user,input){const result=await action(user,input);if(input.action==='complete')void Promise.resolve(onDelivered()).catch(()=>{});return result;},start(){if(timer)return;void tick();timer=setInterval(()=>void tick(),pollMs);timer.unref?.();},async stop(){stopped=true;clearInterval(timer);await running;}};
 }
